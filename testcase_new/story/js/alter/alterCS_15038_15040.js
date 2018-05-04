@@ -28,7 +28,14 @@ function main(db)
       var lobPageSize = 524288;      
       dbcs.setAttributes({PageSize:pageSize, LobPageSize:lobPageSize});
       checkAlterCSResult(csName, "PageSize", pageSize);
-      checkAlterCSResult(csName, "LobPageSize", lobPageSize);   
+      checkAlterCSResult(csName, "LobPageSize", lobPageSize);
+      
+      println("---alter CS:pageSize and LobPageSize,the value is 0");
+      var defPageSize    = 65536;      
+      var defLobPageSize = 262144;      
+      dbcs.setAttributes({PageSize:0, LobPageSize:0 });
+      checkAlterCSResult(csName, "PageSize", defPageSize);
+      checkAlterCSResult(csName, "LobPageSize", defLobPageSize);   
       
       //clean
       commDropCS( db, csName, true, "clear cs" );       
