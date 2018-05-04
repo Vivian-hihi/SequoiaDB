@@ -41,6 +41,10 @@ function main()
    domain.setGroups({Groups:[group1]});
    checkDomain( db, domainName, [group1], undefined, undefined );
    
+   println("---domain setAtt groups---");
+   domain.setGroups({Groups:[group2]});
+   checkDomain( db, domainName, [group2], undefined, undefined );
+   
    db.dropDomain( domainName );
    println("---end the test---");
 }
