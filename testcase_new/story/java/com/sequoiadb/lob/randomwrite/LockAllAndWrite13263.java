@@ -5,6 +5,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import org.bson.BSONObject;
@@ -76,7 +77,7 @@ public class LockAllAndWrite13263 extends SdbTestBase {
             List<LobPart> parts = new ArrayList<>(threadNum);
             final int partSize = lobSize / threadNum;
             for (int i = 0; i < threadNum; ++i) {
-                parts.add(new LobPart(partSize * i, partSize * (i + 1)));
+                parts.add(new LobPart(partSize * i, partSize));
             }
 
             List<WriteLobThread> thrdList = new ArrayList<>(threadNum);
@@ -86,10 +87,10 @@ public class LockAllAndWrite13263 extends SdbTestBase {
                 thrdList.add(wLobThrd);
             }
             for (int i = 0; i < threadNum; ++i) {
-                thrdList.get(i).join();
+                Assert.assertTrue(thrdList.get(i).isSuccess(), thrdList.get(i).getErrorMsg());
             }
 
-            Assert.assertNotEquals(successTimes.get(), 0);
+            Assert.assertNotEquals(successTimes.get(), 0, "nobody succeed");
             byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
             RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
         } catch (BaseException e) {
@@ -132,11 +133,11 @@ public class LockAllAndWrite13263 extends SdbTestBase {
                     lob.seek(part.getOffset(), DBLob.SDB_LOB_SEEK_SET);
                     lob.write(part.getData());
                     updateExpData(part);
-                    System.out.println("offset: " + part.getOffset());
-                    byte[] identifier = new byte[16];
-                    System.arraycopy(part.getData(), 0, identifier, 0, identifier.length);
-                    System.out.println("part head: " + DatatypeConverter.printHexBinary(identifier));
                     successTimes.getAndIncrement();
+                } catch (BaseException e) {
+                    if (e.getErrorCode() != SDBError.SDB_LOB_LOCK_CONFLICTED.getErrorCode()) {
+                        throw e;
+                    }
                 }
             }
         }
