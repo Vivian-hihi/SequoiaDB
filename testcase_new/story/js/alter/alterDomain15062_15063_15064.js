@@ -16,7 +16,7 @@ function main()
    }
    //less two groups no split
    var allGroupName = getGroupName(db,true);         
-   if( 1 === allGroupName.length )
+   if( 2 >= allGroupName.length )
    {
       println("--least two groups");
       return ;

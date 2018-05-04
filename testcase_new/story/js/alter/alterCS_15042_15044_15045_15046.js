@@ -24,7 +24,7 @@ function main(db)
          return;
       }
       var groupNames = getGroupName(db);  
-      if( 1 == groupNames.length )
+      if( 1 === groupNames.length )
       {
          println("--least two groups");
          return ;
