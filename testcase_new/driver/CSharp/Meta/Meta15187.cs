@@ -35,7 +35,12 @@ namespace CSharp.Meta
         public void TestDelete15187() 
         {
             List<string> dataGroupNames = Common.getDataGroupNames(sdb);
-            if (dataGroupNames.Count < 3 || Common.isStandalone(sdb))
+            if (Common.isStandalone(sdb))
+            {
+                return;
+            }
+            dataGroupNames = Common.getDataGroupNames(sdb);
+            if (dataGroupNames.Count < 3)
             {
                 return;
             }

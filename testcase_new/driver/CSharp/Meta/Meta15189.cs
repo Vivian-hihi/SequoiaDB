@@ -40,8 +40,12 @@ namespace CSharp.Meta
         [TestMethod()]
         public void TestDelete15189()
         {
+            if (Common.isStandalone(sdb))
+            {
+                return;
+            }
             dataGroupNames = Common.getDataGroupNames(sdb);
-            if (dataGroupNames.Count < 3 || Common.isStandalone(sdb))
+            if (dataGroupNames.Count < 3)
             {
                 return;
             }
@@ -92,7 +96,6 @@ namespace CSharp.Meta
             option = new BsonDocument();
             option.Add("Group", dataGroupNames[0]);
             cl = cs.CreateCollection(clName, option);
-
 
         }
 

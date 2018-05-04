@@ -10,20 +10,25 @@ using CSharp.TestCommon;
 namespace CSharp.Meta
 {
     /**
-     * description: create cs
-     *              1.cs.Attributes() modify PageSize、LobPageSize、domian
-     *              2. connect cata db and check cs attribute
-     * testcase:    15238
+     * description: 
+     *              createCollectionSpace (String csName, BsonDocument options) 
+     *              getCollectionSpace (String csName) 
+     *              dropCollectionSpace (String csName) 
+     *              isCollectionSpaceExist (String csName)
+     *              1、创建CS，指定options参数，覆盖pageSize、Domain、LobPageSize，检查创建结果正确性； 
+     *              2、查询该CS名（getCS（）），检查查询结果正确性； 
+     *              3、删除CS，检查删除结果正确性（判断该CS已不存在）；  
+     * testcase:    14561
      * author:      chensiqin
-     * date:        2018/04/27
+     * date:        2018/05/03
     */
+
     [TestClass]
-    public class Meta15238
+    public class TestCreateAndDropCS14561
     {
         private Sequoiadb sdb = null;
-        private CollectionSpace localcs = null;
-        private string localCsName = "cs15238";
-        private string domainName = "domain15238"; 
+        private string csName = "csName14561";
+        private string domainName = "domain14561";
         private List<string> dataGroupNames = new List<string>();
 
         [TestInitialize()]
@@ -34,44 +39,52 @@ namespace CSharp.Meta
             sdb.Connect();
         }
 
-        [TestMethod()]
-        public void Test15238()
-        {  
+        [TestMethod]
+        public void Test14561()
+        {
             if (Common.isStandalone(sdb))
             {
                 return;
             }
             dataGroupNames = Common.getDataGroupNames(sdb);
-            localcs = sdb.CreateCollectionSpace(localCsName);
+            if (dataGroupNames.Count < 1)
+            {
+                return;
+            }
+            BsonDocument option = new BsonDocument();
             BsonArray arr = new BsonArray();
             arr.Add(dataGroupNames[0]);
-            arr.Add(dataGroupNames[1]);
-            BsonDocument option = new BsonDocument();
             option.Add("Groups", arr);
             sdb.CreateDomain(domainName, option);
+
             option = new BsonDocument();
-            option.Add("PageSize", 4096);
+            option.Add("PageSize", SDBConst.SDB_PAGESIZE_4K);
             option.Add("LobPageSize", 4096);
             option.Add("Domain", domainName);
-            localcs.SetAttributes(option);
-            CheckCSAttribute(option);
-            sdb.DropCollectionSpace(localCsName);
+            sdb.CreateCollectionSpace(csName, option);
+            CheckCSInfo(csName, option);
+
+            CollectionSpace cs = sdb.GetCollecitonSpace(csName);
+            Assert.AreEqual(csName, cs.Name);
+
+            sdb.DropCollectionSpace(csName);
+            Assert.IsFalse(sdb.IsCollectionSpaceExist(csName));
+
             sdb.DropDomain(domainName);
         }
 
-        private void CheckCSAttribute(BsonDocument expected)
+        private void CheckCSInfo(string ckCSName, BsonDocument expected)
         {
+            DBQuery query = new DBQuery();
             BsonDocument matcher = new BsonDocument();
             BsonDocument actual = new BsonDocument();
-            DBCursor cur = null;
-            matcher.Add("Name", localCsName);
+            matcher.Add("Name", ckCSName);
             ReplicaGroup cataRg = sdb.GetReplicaGroup("SYSCatalogGroup");
             Sequoiadb cataDB = cataRg.GetMaster().Connect();
             CollectionSpace sysCS = cataDB.GetCollecitonSpace("SYSCAT");
             DBCollection sysCL = sysCS.GetCollection("SYSCOLLECTIONSPACES");
-            DBQuery query = new DBQuery();
             query.Matcher = matcher;
-            cur = sysCL.Query(query);
+            DBCursor cur = sysCL.Query(query);
             Assert.IsNotNull(cur.Next());
             actual = cur.Current();
             Assert.AreEqual(expected.GetElement("PageSize").Value.ToString(), actual.GetElement("PageSize").Value.ToString());

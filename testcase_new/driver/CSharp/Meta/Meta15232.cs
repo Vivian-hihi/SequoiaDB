@@ -44,8 +44,12 @@ namespace CSharp.Meta
         [TestMethod()]
         public void Test15232()
         {
-            dataGroupNames = Common.getDataGroupNames(sdb);
             if (Common.isStandalone(sdb))
+            {
+                return;
+            }
+            dataGroupNames = Common.getDataGroupNames(sdb);
+            if (dataGroupNames.Count < 3)
             {
                 return;
             }
