@@ -116,6 +116,22 @@
     <Compile Include="Meta\Meta15225.cs" />
     <Compile Include="Meta\Meta15232.cs" />
     <Compile Include="Meta\Meta15238.cs" />
+    <Compile Include="Meta\TestAttachDetachCL14564.cs" />
+    <Compile Include="Meta\TestCL14563.cs" />
+    <Compile Include="Meta\TestCreateAndDropCS14560.cs" />
+    <Compile Include="Meta\TestCreateAndDropCS14561.cs" />
+    <Compile Include="Meta\TestCSCL14562.cs" />
+    <Compile Include="Meta\TestDeleteDomainAndCS14559.cs" />
+    <Compile Include="Meta\TestDomain14557.cs" />
+    <Compile Include="Meta\TestListDomains14558.cs" />
+    <Compile Include="Split\Common.cs" />
+    <Compile Include="Split\TestSplit14551.cs" />
+    <Compile Include="Split\TestSplit14552.cs" />
+    <Compile Include="Split\TestSplit14553.cs" />
+    <Compile Include="Split\TestSplit14554.cs" />
+    <Compile Include="Split\TestSplit14555.cs" />
+    <Compile Include="Split\TestSplit14556.cs" />
+    <Compile Include="Split\TestTasks14579.cs" />
     
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestCommon\Common.cs" />
