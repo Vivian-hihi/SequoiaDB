@@ -143,7 +143,7 @@ void LRUCache::put(int key, const struct dirMetaNode *value)
         return;
     }
 
-    if(size == capacity) 
+    if(size >= capacity) 
     {
         // remove rear page
         int k = dirList->getRearDir()->key;

@@ -826,6 +826,7 @@ INT32 sequoiaFS::init(INT32 argc, CHAR **argv, vector<string> *options4fuse)
     sequoiafsOptionMgr *optionMgr = getOptionMgr();
     string configs;    
     BSONObj options;
+    INT32 capacity = 0;
 
     //1. init options
     rc = optionMgr->init(argc, argv, options4fuse);
@@ -946,9 +947,10 @@ INT32 sequoiaFS::init(INT32 argc, CHAR **argv, vector<string> *options4fuse)
     {
         goto error;  
     } 
-    
+
+    capacity = optionMgr->getCacheSize() * 1024 * 1024 / sizeof(struct dirMetaNode);
     //5. init lru cache
-    InitLruCace(optionMgr->getCacheSize());
+    InitLruCace(capacity);
 done:
     releaseConnection(db);
     return rc;
@@ -1211,7 +1213,7 @@ error:
     goto done;
 }
 
-INT64 sequoiaFS::getDirIno(sdbCollection *sysDirMetaCl, string dirname, INT64 pid)
+INT64 sequoiaFS::getDirIno(sdbCollection *sysDirMetaCL, string dirname, INT64 pid)
 {
     INT64 id = 0;
     INT64 rc = SDB_OK;
@@ -1224,7 +1226,7 @@ INT64 sequoiaFS::getDirIno(sdbCollection *sysDirMetaCl, string dirname, INT64 pi
     INIT_DIR_NODE(dirNode);
     
     condition = BSON(SEQUOIAFS_NAME<<dirname<<SEQUOIAFS_PID<<(INT64)pid);    
-    rc = sysDirMetaCl->query(cursor, condition);
+    rc = sysDirMetaCL->query(cursor, condition);
     if(SDB_OK != rc)
     {
         PD_LOG(PDERROR, "Fail to query dir:%s, error=%d", dirname.c_str(), rc);
@@ -1245,7 +1247,7 @@ INT64 sequoiaFS::getDirIno(sdbCollection *sysDirMetaCl, string dirname, INT64 pi
     
     if(!exist)
     {
-        PD_LOG(PDERROR, "The dir::%s does not exist, error=%d", dirname.c_str(), rc);
+        PD_LOG(PDERROR, "The dir:%s does not exist, error=%d", dirname.c_str(), rc);
         rc = -ENOENT;
         goto error;
     }
@@ -1285,7 +1287,7 @@ error:
     goto done;
 }
 
-INT64 sequoiaFS::getDirPIno(sdbCollection *sysDirMetaCl, CHAR *pathStr, string *basePath)
+INT64 sequoiaFS::getDirPIno(sdbCollection *sysDirMetaCL, CHAR *pathStr, string *basePath)
 {
     char *dir;
     INT64 pid = 0;
@@ -1315,7 +1317,7 @@ INT64 sequoiaFS::getDirPIno(sdbCollection *sysDirMetaCl, CHAR *pathStr, string *
             pid = node->id;
             continue;
         }
-        pid = getDirIno(sysDirMetaCl, dirName[i], pid);
+        pid = getDirIno(sysDirMetaCL, dirName[i], pid);
         if(pid < 0)
         {
             goto error;
@@ -1393,7 +1395,7 @@ INT32 sequoiaFS::getattr(const CHAR *path, struct stat *sbuf)
     rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Fail to get cl:%s, error=%d", _sysFileMetaCLFullName.c_str(), rc);
+        PD_LOG(PDERROR, "Fail to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
         rc = -EIO;
         goto error;
     }    
@@ -1475,6 +1477,7 @@ INT32 sequoiaFS::readlink(const CHAR *path, CHAR * link, size_t size)
     sdb *db = NULL;
     CHAR *name = NULL;
     sdbCollection sysFileMetaCL;  
+    sdbCollection sysDirMetaCL;
     sdbCollectionSpace cs;
     CHAR *pathStr = NULL;
     BSONObj condition;  
@@ -1514,10 +1517,18 @@ INT32 sequoiaFS::readlink(const CHAR *path, CHAR * link, size_t size)
         goto error;
     }
 
-    pid = getDirPIno(&sysFileMetaCL, pathStr, &basePath);
+    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
+    if(SDB_OK != rc)
+    {
+        PD_LOG(PDERROR, "Fail to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
+        rc = -EIO;
+        goto error;
+    }    
+    
+    pid = getDirPIno(&sysDirMetaCL, pathStr, &basePath);
     if(pid < 0)
     {
-        PD_LOG(PDERROR, "Fail to get pid of dir:%s, error=%d", pathStr, rc);
+        PD_LOG(PDERROR, "Fail to get pid of dir:%s, error=%d", pathStr, pid);
         rc = pid;
         goto error;        
     }
@@ -1608,7 +1619,7 @@ INT32 sequoiaFS::mkdir(const CHAR *path, mode_t mode)
     sdbLob lob; 
     sdbCollection cl;
     sdbCollection sequenceCl;
-	sdbCollection sysDirMetaCl;   
+	sdbCollection sysDirMetaCL;   
     BSONObj condition; 
     sdbCursor cursor;
     BSONObj record;
@@ -1638,14 +1649,6 @@ INT32 sequoiaFS::mkdir(const CHAR *path, mode_t mode)
     if(SDB_OK != rc)
         goto error;
 
-    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCl);
-    if(SDB_OK != rc)
-    {
-        rc = -EIO;
-        PD_LOG(PDERROR, "Fail to get cl:%s, error=%d", _sysFileMetaCLFullName.c_str(), rc);
-        goto error;
-    }
-
     options = BSON("PreferedInstance" << "M");
     rc = db->setSessionAttr(options);
     if(SDB_OK != rc)
@@ -1654,12 +1657,20 @@ INT32 sequoiaFS::mkdir(const CHAR *path, mode_t mode)
         rc = -EIO;
         goto error;
     }  
+
+    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
+    if(SDB_OK != rc)
+    {
+        rc = -EIO;
+        PD_LOG(PDERROR, "Fail to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
+        goto error;
+    }
     
     rc = db->getCollection(SEQUOIAFS_META_ID_CL_FULL.c_str(), sequenceCl);
     if(SDB_OK != rc)
     {
         rc = -EIO;
-        PD_LOG(PDERROR, "Fail to get cl:%s, error=%d", _sysFileMetaCLFullName.c_str(), rc);
+        PD_LOG(PDERROR, "Fail to get cl:%s, error=%d", SEQUOIAFS_META_ID_CL_FULL.c_str(), rc);
         goto error;
     }    
     
@@ -1671,16 +1682,16 @@ INT32 sequoiaFS::mkdir(const CHAR *path, mode_t mode)
         goto error;
     }  
     
-    pid = getDirPIno(&sysDirMetaCl, pathStr, &basePath);
+    pid = getDirPIno(&sysDirMetaCL, pathStr, &basePath);
     if(pid < 0)
     {
-        PD_LOG(PDERROR, "Fail to get pid of dir:%s, error=%d", pathStr, rc);
+        PD_LOG(PDERROR, "Fail to get pid of dir:%s, error=%d", pathStr, pid);
         rc = pid;
         goto error;        
     }
      
     condition = BSON("Name"<<basePath<<"Pino"<<(INT64)pid);    
-    rc = sysDirMetaCl.query(cursor, condition);
+    rc = sysDirMetaCL.query(cursor, condition);
     if(SDB_OK != rc)
     {
         PD_LOG(PDERROR, "Fail to query dir:%s, error=%d", basePath.c_str(), rc);
@@ -1702,7 +1713,7 @@ INT32 sequoiaFS::mkdir(const CHAR *path, mode_t mode)
 
     if(exist)
     {
-        PD_LOG(PDERROR, "The dir:%s exists, error=%d", basePath.c_str(), rc);
+        PD_LOG(PDERROR, "The dir:%s exists", basePath.c_str());
         rc = -EEXIST;
         goto error;
     }
@@ -1723,7 +1734,7 @@ INT32 sequoiaFS::mkdir(const CHAR *path, mode_t mode)
     dirNode.mtime = mtime;
     dirNode.atime= mtime;
     
-    rc = doSetDirNodeAttr(sysDirMetaCl, dirNode);
+    rc = doSetDirNodeAttr(sysDirMetaCL, dirNode);
     if(SDB_OK != rc)
     {
         PD_LOG(PDERROR, "Failed to set attr, error=%d", rc);
@@ -1747,8 +1758,8 @@ INT32 sequoiaFS::unlink(const CHAR *path)
     INT32 rc = SDB_OK;
     sdb *db;
     CHAR *lobName = NULL;
-    sdbCollection sysMetaCl;   
-    sdbCollection sysFileMetaCL;      
+    sdbCollection sysFileMetaCL;  
+    sdbCollection sysDirMetaCL;    
     sdbCollection cl;  
     BOOLEAN exist = FALSE;  
     OID oid;
@@ -1782,6 +1793,14 @@ INT32 sequoiaFS::unlink(const CHAR *path)
         rc = -EIO;
         goto error;
     }  
+    
+    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
+    if(SDB_OK != rc)
+    {
+        PD_LOG(PDERROR, "Fail to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
+        rc = -EIO;
+        goto error;
+    }    
 
     rc = db->getCollection(_sysFileMetaCLFullName.c_str(), sysFileMetaCL);
     if(SDB_OK != rc)
@@ -1801,10 +1820,10 @@ INT32 sequoiaFS::unlink(const CHAR *path)
 
     pathStr = ossStrdup(path);
     lobName = basename(pathStr);           
-    pid = getDirPIno(&sysFileMetaCL, pathStr, &basePath);
+    pid = getDirPIno(&sysDirMetaCL, pathStr, &basePath);
     if(pid < 0)
     {
-        PD_LOG(PDERROR, "Failed to pid of dir:%s, error=%d", pathStr, rc);
+        PD_LOG(PDERROR, "Failed to pid of dir:%s, error=%d", pathStr, pid);
         rc = pid;
         goto error;        
     }
@@ -1895,7 +1914,7 @@ INT32 sequoiaFS::rmdir(const CHAR *path)
     sdb *db = NULL;
     sdbLob lob; 
     sdbCollection cl;
-    sdbCollection sysDirMetaCl;   
+    sdbCollection sysDirMetaCL;   
     BSONObj condition; 
     sdbCursor cursor;
     BSONObj record;
@@ -1915,7 +1934,7 @@ INT32 sequoiaFS::rmdir(const CHAR *path)
     if(SDB_OK != rc)
         goto error;
     
-    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCl);
+    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
     if(SDB_OK != rc)
     {
         rc = -EIO;
@@ -1932,16 +1951,16 @@ INT32 sequoiaFS::rmdir(const CHAR *path)
         goto error;
     }  
     
-    pid = getDirPIno(&sysDirMetaCl, pathStr, &basePath);
+    pid = getDirPIno(&sysDirMetaCL, pathStr, &basePath);
     if(pid < 0)
     {
-        PD_LOG(PDERROR, "Failed to get pid of dir:%s, error=%d", pathStr, rc);
+        PD_LOG(PDERROR, "Failed to get pid of dir:%s, error=%d", pathStr, pid);
         rc = pid;
         goto error;        
     }
       
     condition = BSON(SEQUOIAFS_NAME<<basePath<<SEQUOIAFS_PID<<(INT64)pid);    
-    rc =  sysDirMetaCl.del(condition);
+    rc =  sysDirMetaCL.del(condition);
     if(SDB_OK != rc)
     {
         PD_LOG(PDERROR, "Failed to delete dir:%s, error=%d", basePath.c_str(), rc);
@@ -1965,6 +1984,7 @@ INT32 sequoiaFS::symlink(const CHAR *path, const CHAR *link)
     sdb *db;
     CHAR *linkName = NULL;
     sdbCollection sysFileMetaCL; 
+    sdbCollection sysDirMetaCL;   
     BOOLEAN exist = FALSE;  
     OID oid;   
     CHAR *linkStr = NULL;  
@@ -2004,6 +2024,14 @@ INT32 sequoiaFS::symlink(const CHAR *path, const CHAR *link)
         goto error;
     }  
 
+    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
+    if(SDB_OK != rc)
+    {
+        PD_LOG(PDERROR, "Fail to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
+        rc = -EIO;
+        goto error;
+    }        
+
     rc = db->getCollection(_sysFileMetaCLFullName.c_str(), sysFileMetaCL);
     if(SDB_OK != rc)
     {
@@ -2012,10 +2040,10 @@ INT32 sequoiaFS::symlink(const CHAR *path, const CHAR *link)
         goto error;
     }    
 
-    pid = getDirPIno(&sysFileMetaCL, linkStr, &basePath);
+    pid = getDirPIno(&sysDirMetaCL, linkStr, &basePath);
     if(pid < 0)
     {
-        PD_LOG(PDERROR, "Failed to pid of dir:%s, error=%d", linkStr, rc);
+        PD_LOG(PDERROR, "Failed to pid of dir:%s, error=%d", linkStr, pid);
         rc = pid;
         goto error;        
     }
@@ -2032,7 +2060,7 @@ INT32 sequoiaFS::symlink(const CHAR *path, const CHAR *link)
     
     if(exist)
     {
-        PD_LOG(PDERROR, "Failed to create symlink:%s, it exists, error=%d", linkName, rc);
+        PD_LOG(PDERROR, "Failed to create symlink:%s, it exists", linkName);
         rc = -EEXIST;
         goto error;
 
@@ -2118,7 +2146,7 @@ INT32 sequoiaFS::rename(const CHAR *path, const CHAR *newpath)
     rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysFileMetaCLFullName.c_str(), rc);
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
         rc = -EIO;
         goto error;
     }
@@ -2126,7 +2154,7 @@ INT32 sequoiaFS::rename(const CHAR *path, const CHAR *newpath)
     rc = db->getCollection(_sysFileMetaCLFullName.c_str(), sysFileMetaCL);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysFileMetaCLFullName.c_str(), rc);
         rc = -EIO;
         goto error;
     }        
@@ -2135,7 +2163,7 @@ INT32 sequoiaFS::rename(const CHAR *path, const CHAR *newpath)
     newPino = getDirPIno(&sysDirMetaCL,newPathStr, &newbasePath);
     if(newPino < 0)
     {
-        PD_LOG(PDERROR, "Failed to get pid of newpath:%s, error=%d", newPathStr, rc);
+        PD_LOG(PDERROR, "Failed to get pid of newpath:%s, error=%d", newPathStr, newPino);
         rc = newPino;
         goto error;        
     }
@@ -2143,7 +2171,7 @@ INT32 sequoiaFS::rename(const CHAR *path, const CHAR *newpath)
     pid = getDirPIno(&sysDirMetaCL, pathStr, &basePath);
     if(pid < 0)
     {
-        PD_LOG(PDERROR, "Failed to get pid of dir:%s, error=%d", pathStr, rc);
+        PD_LOG(PDERROR, "Failed to get pid of dir:%s, error=%d", pathStr, pid);
         rc = pid;
         goto error;        
     }
@@ -2181,6 +2209,7 @@ INT32 sequoiaFS::link(const CHAR *path, const CHAR *newpath)
     CHAR *pathStr = NULL;
     sdbCursor cursor;
     sdbCollection sysFileMetaCL; 
+    sdbCollection sysDirMetaCL;   
     OID oid;   
     CHAR *linkStr = NULL;   
     BSONObj condition;  
@@ -2216,6 +2245,15 @@ INT32 sequoiaFS::link(const CHAR *path, const CHAR *newpath)
         goto error;
     }  
 
+    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
+    if(SDB_OK != rc)
+    {
+        PD_LOG(PDERROR, "Fail to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
+        rc = -EIO;
+        goto error;
+    }        
+
+
     rc = db->getCollection(_sysFileMetaCLFullName.c_str(), sysFileMetaCL);
     if(SDB_OK != rc)
     {
@@ -2225,10 +2263,10 @@ INT32 sequoiaFS::link(const CHAR *path, const CHAR *newpath)
     }
 
     pathStr = ossStrdup(path);
-    pid = getDirPIno(&sysFileMetaCL, pathStr, &basePath);
+    pid = getDirPIno(&sysDirMetaCL, pathStr, &basePath);
     if(pid < 0)
     {
-        PD_LOG(PDERROR, "Failed to get pid of dir:%s, error=%d", pathStr, rc);
+        PD_LOG(PDERROR, "Failed to get pid of dir:%s, error=%d", pathStr, pid);
         rc = pid;
         goto error;        
     }
@@ -2361,7 +2399,7 @@ INT32 sequoiaFS::chmod(const CHAR *path, mode_t mode)
     rc = db->getCollection(_sysFileMetaCLFullName.c_str(), sysFileMetaCL);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to get cl, error=%d", _sysFileMetaCLFullName.c_str(), rc);
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysFileMetaCLFullName.c_str(), rc);
         rc = -EIO;
         goto error;
     }
@@ -2369,7 +2407,7 @@ INT32 sequoiaFS::chmod(const CHAR *path, mode_t mode)
     rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to get cl, error=%d", _sysDirMetaCLFullName.c_str(), rc);
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
         rc = -EIO;
         goto error;
     }    
@@ -2454,7 +2492,7 @@ INT32 sequoiaFS::chown(const CHAR *path, uid_t uid, gid_t gid)
     rc = db->getCollection(_sysFileMetaCLFullName.c_str(), sysFileMetaCL);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to get cl, error=%d", _sysFileMetaCLFullName.c_str(), rc);
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysFileMetaCLFullName.c_str(), rc);
         rc = -EIO;
         goto error;
     }
@@ -2462,7 +2500,7 @@ INT32 sequoiaFS::chown(const CHAR *path, uid_t uid, gid_t gid)
     rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to get cl, error=%d", _sysDirMetaCLFullName.c_str(), rc);
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
         rc = -EIO;
         goto error;
     }    
@@ -2577,7 +2615,7 @@ INT32 sequoiaFS::truncate(const CHAR *path, off_t newsize)
     rc = sysFileMetaCL.query(cursor, condition);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to query lob, error=%d", fileName, rc);
+        PD_LOG(PDERROR, "Failed to query lob:%s, error=%d", fileName, rc);
         rc = -EIO;
         goto error;
     }
@@ -2600,14 +2638,14 @@ INT32 sequoiaFS::truncate(const CHAR *path, off_t newsize)
     ele = record.getField(SEQUOIAFS_LOBOID);            
     if(bson::String != ele.type())
     {
-        PD_LOG(PDERROR, "Invalid type of oid, error=%d", rc);
+        PD_LOG(PDERROR, "Invalid type of oid, the type is not string");
         rc = -EIO;
         goto error;               
     } 
 
     if(ele.String().empty())
     {
-        PD_LOG(PDERROR, "The oid is null, error=%d", rc);
+        PD_LOG(PDERROR, "The oid is null");
         rc = -EIO;
         goto error;   
     }
@@ -2616,7 +2654,7 @@ INT32 sequoiaFS::truncate(const CHAR *path, off_t newsize)
     rc = db->getCollection(_collection.c_str(), cl);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to get cl, error=%d", _collection.c_str(), rc);
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _collection.c_str(), rc);
         rc = -EIO;
         goto error;
     }
@@ -2697,7 +2735,7 @@ INT32 sequoiaFS::utime(const CHAR *path, struct utimbuf * ubuf)
     rc = db->getCollection(_sysFileMetaCLFullName.c_str(), sysFileMetaCL);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to get cl, error=%d", _sysFileMetaCLFullName.c_str(), rc);
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysFileMetaCLFullName.c_str(), rc);
         rc = -EIO;
         goto error;
     }
@@ -2705,7 +2743,7 @@ INT32 sequoiaFS::utime(const CHAR *path, struct utimbuf * ubuf)
     rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to get cl, error=%d", _sysDirMetaCLFullName.c_str(), rc);
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
         rc = -EIO;
         goto error;
     }    
@@ -2757,7 +2795,8 @@ INT32 sequoiaFS::open(const CHAR *path, struct fuse_file_info *fi)
     sdbLob *lob= new sdbLob(); 
     sdbCollection cl;
     sdbCollectionSpace cs;
-    sdbCollection *sysFileMetaCL = new sdbCollection();   
+	sdbCollection *sysFileMetaCL = new sdbCollection();  
+	sdbCollection *sysDirMetaCL = new sdbCollection();
     BSONObj condition;
     OID oid;
     INT64 pid = 0;
@@ -2802,16 +2841,24 @@ INT32 sequoiaFS::open(const CHAR *path, struct fuse_file_info *fi)
     rc = db->getCollection(_sysFileMetaCLFullName.c_str(), *sysFileMetaCL);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to get cl, error=%d", _sysDirMetaCLFullName.c_str(), rc);
         rc = -EIO;
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysFileMetaCLFullName.c_str(), rc);
         goto error;
     }
+
+    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), *sysDirMetaCL);
+    if(SDB_OK != rc)
+    {
+        rc = -EIO;
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
+        goto error;
+    }          
     
     fileName = basename(pathStr);
-    pid = getDirPIno(sysFileMetaCL, pathStr, &basePath);
+    pid = getDirPIno(sysDirMetaCL, pathStr, &basePath);
     if(pid < 0)
     {
-        PD_LOG(PDERROR, "Failed to get pid of dir, error=%d", pathStr, rc);
+        PD_LOG(PDERROR, "Failed to get pid of dir:%s, error=%d", pathStr, pid);
         rc = pid;
         goto error;        
     }
@@ -2821,7 +2868,7 @@ INT32 sequoiaFS::open(const CHAR *path, struct fuse_file_info *fi)
     rc = sysFileMetaCL->query(cursor, condition);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to query lob, error=%d", fileName, rc);
+        PD_LOG(PDERROR, "Failed to query lob:%s, error=%d", fileName, rc);
         rc = -EIO;
         goto error;
     }
@@ -2844,14 +2891,14 @@ INT32 sequoiaFS::open(const CHAR *path, struct fuse_file_info *fi)
     ele = record.getField(SEQUOIAFS_LOBOID);            
     if(bson::String != ele.type())
     {
-        PD_LOG(PDERROR, "Invalid type of oid, error=%d", rc);
+        PD_LOG(PDERROR, "Invalid type of oid, the type of oid is not string");
         rc = -EIO;
         goto error;               
     } 
 
     if(ele.String().empty())
     {
-        PD_LOG(PDERROR, "The oid is null, error=%d", rc);
+        PD_LOG(PDERROR, "The oid is null");
         rc = -EIO;
         goto error;   
     }
@@ -2860,7 +2907,7 @@ INT32 sequoiaFS::open(const CHAR *path, struct fuse_file_info *fi)
     rc = db->getCollection(_collection.c_str(), cl);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to get cl, error=%d", _collection.c_str(), rc);
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _collection.c_str(), rc);
         rc = -EIO;
         goto error;
     }
@@ -2881,6 +2928,7 @@ INT32 sequoiaFS::open(const CHAR *path, struct fuse_file_info *fi)
     
 done:
     SDB_OSS_FREE(pathStr);
+    delete sysDirMetaCL;
     return rc;   
     
 error:
@@ -3098,7 +3146,7 @@ INT32 sequoiaFS::opendir(const CHAR *path, struct fuse_file_info *fi)
     sdb *db = NULL;
     BSONObj condition; 
     sdbCollectionSpace cs;
-    sdbCollection *sysDirMetaCl = new sdbCollection;
+    sdbCollection *sysDirMetaCL = new sdbCollection;
     sdbCollection *sysFileMetaCL = new sdbCollection;   
     string csName = "dbfs";
     string clName = "lob";
@@ -3133,7 +3181,7 @@ INT32 sequoiaFS::opendir(const CHAR *path, struct fuse_file_info *fi)
     }    
 
 
-    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), *sysDirMetaCl);
+    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), *sysDirMetaCL);
     if(SDB_OK != rc)
     {
         PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
@@ -3149,7 +3197,7 @@ INT32 sequoiaFS::opendir(const CHAR *path, struct fuse_file_info *fi)
         goto error;
     }    
        
-    pid = getDirPIno(sysDirMetaCl, pathStr, &lobName);
+    pid = getDirPIno(sysDirMetaCL, pathStr, &lobName);
     if(pid < 0)
     {
         rc = pid;
@@ -3163,11 +3211,11 @@ INT32 sequoiaFS::opendir(const CHAR *path, struct fuse_file_info *fi)
     else
     {
        //get the ino of the dir
-       id = getDirIno(sysDirMetaCl, lobName, pid);
+       id = getDirIno(sysDirMetaCL, lobName, pid);
     }
     //look for files in the dir based on the ino of the dir       
     condition = BSON(SEQUOIAFS_PID<<id);  
-    rc = sysDirMetaCl->query(*cursorDir, condition);
+    rc = sysDirMetaCL->query(*cursorDir, condition);
     if(SDB_OK != rc)
     {
         PD_LOG(PDERROR, "Failed to query cl:%s, error=%d", clName.c_str(), rc);
@@ -3186,17 +3234,17 @@ INT32 sequoiaFS::opendir(const CHAR *path, struct fuse_file_info *fi)
     lh->hCursor[CURSOR_OF_META_DIR_CL] = cursorDir;
     lh->hCursor[CURSOR_OF_META_FILE_CL] = cursorFile;
     lh->hSdb = db;
-    lh->hSysDirMetaCL= sysDirMetaCl;
+    lh->hSysDirMetaCL= sysDirMetaCL;
     
     fi->fh = (intptr_t)(uint64_t)((void *)lh);
 
 done:
     SDB_OSS_FREE(pathStr);
+    delete sysFileMetaCL;
     return rc;
     
 error:
-    delete sysDirMetaCl;
-    delete sysFileMetaCL;
+    delete sysDirMetaCL;
     delete cursorDir;
     delete cursorFile;
     delete lh;
@@ -3267,7 +3315,6 @@ INT32 sequoiaFS::releasedir(const CHAR *path, struct fuse_file_info *fi)
     db = lh->hSdb;
 
     releaseConnection(db);    
-    delete lh->hSysFileMetaCL;
     delete lh->hSysDirMetaCL;
     if(lh->hCursor[CURSOR_OF_META_DIR_CL])
     {
@@ -3355,8 +3402,8 @@ INT32 sequoiaFS::create(const CHAR *path, mode_t mode, struct fuse_file_info *fi
     CHAR *fileName = NULL;
     sdbLob *lob= new sdbLob(); 
     sdbCollection cl;
-	sdbCollection *sysFileMetaCl = new sdbCollection();  
-	sdbCollection *sysDirMetaCl = new sdbCollection();     
+	sdbCollection *sysFileMetaCL = new sdbCollection();  
+	sdbCollection *sysDirMetaCL = new sdbCollection();     
     BSONObj condition;
     BSONObj record;
     OID oid;
@@ -3406,7 +3453,7 @@ INT32 sequoiaFS::create(const CHAR *path, mode_t mode, struct fuse_file_info *fi
         goto error;
     }    	
 
-    rc = db->getCollection(_sysFileMetaCLFullName.c_str(), *sysFileMetaCl);
+    rc = db->getCollection(_sysFileMetaCLFullName.c_str(), *sysFileMetaCL);
     if(SDB_OK != rc)
     {
         rc = -EIO;
@@ -3414,7 +3461,7 @@ INT32 sequoiaFS::create(const CHAR *path, mode_t mode, struct fuse_file_info *fi
         goto error;
     }
 
-    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), *sysDirMetaCl);
+    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), *sysDirMetaCL);
     if(SDB_OK != rc)
     {
         rc = -EIO;
@@ -3424,7 +3471,7 @@ INT32 sequoiaFS::create(const CHAR *path, mode_t mode, struct fuse_file_info *fi
     
     fileName = basename(pathStr);
     
-    pid = getDirPIno(sysDirMetaCl, pathStr, &basePath);
+    pid = getDirPIno(sysDirMetaCL, pathStr, &basePath);
     if(pid < 0)
     {
         PD_LOG(PDERROR, "Failed to get pid of dir:%s, error=%d", pathStr, rc);
@@ -3433,7 +3480,7 @@ INT32 sequoiaFS::create(const CHAR *path, mode_t mode, struct fuse_file_info *fi
     }
     fileName = (CHAR *)basePath.c_str();
     condition = BSON(SEQUOIAFS_NAME<<fileName<<SEQUOIAFS_PID<<(INT64)pid);
-    rc = doesLobExist(*sysFileMetaCl, fileName, condition, &exist, &oid, record);
+    rc = doesLobExist(*sysFileMetaCL, fileName, condition, &exist, &oid, record);
     if(SDB_OK != rc)
     {
         PD_LOG(PDERROR, "Failed to check lob:%s, error=%d", fileName, rc);
@@ -3519,7 +3566,7 @@ INT32 sequoiaFS::create(const CHAR *path, mode_t mode, struct fuse_file_info *fi
     fileNode.mtime = mtime;
     fileNode.mode= S_IFREG | 0644;
     //here to remove the Name uniq index, cause there may be some same name of files in different dirs 
-    rc = doSetFileNodeAttr(*sysFileMetaCl, fileNode);
+    rc = doSetFileNodeAttr(*sysFileMetaCL, fileNode);
     if(SDB_OK != rc)
     {
         PD_LOG(PDERROR, "Failed to set attr, error=%d", rc);
@@ -3529,7 +3576,8 @@ INT32 sequoiaFS::create(const CHAR *path, mode_t mode, struct fuse_file_info *fi
     PD_LOG(PDDEBUG, "Called: create() successfully, Name:%s", fileName);
     lh->hLob = lob;
     lh->hSdb = db;
-	lh->hSysFileMetaCL= sysFileMetaCl;
+	lh->hSysFileMetaCL= sysFileMetaCL;
+    lh->hSysDirMetaCL= sysDirMetaCL;
     fi->fh = (intptr_t)(uint64_t)((void *)lh);
     pthread_mutex_init(&lh->lock, NULL);
 
@@ -3539,8 +3587,8 @@ done:
     
 error:  
 	releaseConnection(db);
-	delete sysFileMetaCl;
-    delete sysDirMetaCl;
+    delete sysDirMetaCL;
+	delete sysFileMetaCL;
     delete lh;
     goto done;  
 
@@ -3670,7 +3718,9 @@ error:
 INT32 sequoiaFS::fgetattr(const CHAR *path, struct stat *buf, struct fuse_file_info *fi)
 {
     INT32 rc = SDB_OK;
-    CHAR *fileName = NULL;
+    CHAR *fileName = NULL;    
+    sdb *db = NULL;
+    BSONObj options;
     CHAR *pathStr = NULL;
     BSONObj condition;  
     sdbCursor *cursor = new sdbCursor;
@@ -3679,14 +3729,13 @@ INT32 sequoiaFS::fgetattr(const CHAR *path, struct stat *buf, struct fuse_file_i
     BSONObj record;
     BSONElement ele;  
     lobHandle *lh = NULL; 
-    sdbCollection *hSysFileMetaCL = NULL;
-    sdbCollection sysFileMetaCL;  
+    sdbCollection *sysFileMetaCL = NULL;  
     sdbCollection sysDirMetaCL;    
     string basePath;
     INT64 pid = 1;     
     
     lh = (lobHandle *)fi->fh;
-    hSysFileMetaCL = (sdbCollection *)lh->hSysFileMetaCL;
+    sysFileMetaCL = (sdbCollection *)lh->hSysFileMetaCL;
 
     PD_LOG(PDDEBUG, "Called: fgetattr(), path:%s", path);
     
@@ -3707,17 +3756,41 @@ INT32 sequoiaFS::fgetattr(const CHAR *path, struct stat *buf, struct fuse_file_i
     buf->st_nlink = 1;
     
     fileName = basename(pathStr);    
+    
+     rc = getConnection(&db);
+    if(SDB_OK != rc)
+    {
+        rc = -EIO;        
+        goto error;
+    }
 
-    pid = getDirPIno(hSysFileMetaCL, pathStr, &basePath);
+    options = BSON("PreferedInstance" << "M");
+    rc = db->setSessionAttr(options);
+    if(SDB_OK != rc)
+    {
+        PD_LOG(PDERROR, "Failed to set the preferred instance for read request in the current session (PreferedInstance:M), error=%d", rc);
+        rc = -EIO;
+        goto error;
+    }    
+
+    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
+    if(SDB_OK != rc)
+    {
+        PD_LOG(PDERROR, "Fail to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
+        rc = -EIO;
+        goto error;
+    }   
+
+    pid = getDirPIno(&sysDirMetaCL, pathStr, &basePath);
     if(pid < 0)
     {
-        PD_LOG(PDERROR, "Failed to get pid of dir:%s, error=%d", pathStr, rc);
+        PD_LOG(PDERROR, "Failed to get pid of dir:%s, error=%d", pathStr, pid);
         rc = pid;
         goto error;        
     }
   
     condition = BSON(SEQUOIAFS_NAME<<basePath<<SEQUOIAFS_PID<<(INT64)pid);   
-    rc = hSysFileMetaCL->query(*cursor, condition);
+    rc = sysFileMetaCL->query(*cursor, condition);
     if(SDB_OK != rc)
     {
         PD_LOG(PDERROR, "Failed to query lob:%s, error=%d", fileName, rc);
@@ -3756,6 +3829,7 @@ INT32 sequoiaFS::fgetattr(const CHAR *path, struct stat *buf, struct fuse_file_i
 
 done:    
     SDB_OSS_FREE(pathStr);
+    releaseConnection(db);
     return rc;
 error:
     goto done;
