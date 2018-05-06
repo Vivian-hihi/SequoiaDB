@@ -241,6 +241,7 @@ namespace engine
                                   SDB_DPSCB *dpsCB, BOOLEAN removeFile,
                                   BOOLEAN onlyEmpty ) ;
 
+      void _getCSList( vector<std::string> &csNameVec ) ;
    public:
       _SDB_DMSCB() ;
       virtual ~_SDB_DMSCB() ;

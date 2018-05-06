@@ -929,6 +929,21 @@ namespace engine
       PD_TRACE_EXIT ( SDB__SDB_DMSCB__CSCBNMMAPCLN );
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__GETCSLIST, "_SDB_DMSCB::_getCSList" )
+   void _SDB_DMSCB::_getCSList( vector<std::string> &csNameVec )
+   {
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB__GETCSLIST ) ;
+      ossScopedLock lock( &_mutex, SHARED ) ;
+
+      for ( CSCB_MAP_CONST_ITER itr = _cscbNameMap.begin();
+            itr != _cscbNameMap.end(); ++itr )
+      {
+         csNameVec.push_back( std::string( itr->first ) ) ;
+      }
+
+      PD_TRACE_EXIT( SDB__SDB_DMSCB__GETCSLIST ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_WRITABLE, "_SDB_DMSCB::writable" )
    INT32 _SDB_DMSCB::writable( _pmdEDUCB * cb )
    {
@@ -1786,35 +1801,58 @@ namespace engine
    void _SDB_DMSCB::dumpInfo( MON_CS_SIM_LIST &csList,
                               BOOLEAN sys, BOOLEAN dumpCL, BOOLEAN dumpIdx )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DUMPCSSIMPLE );
 
-      ossScopedLock _lock(&_mutex, SHARED) ;
+      vector<string> csNameVec ;
+      dmsStorageUnit *su = NULL ;
+      dmsStorageUnitID suID = DMS_INVALID_CS ;
+      BOOLEAN locked = FALSE ;
 
-      CSCB_MAP_CONST_ITER it ;
+      _getCSList( csNameVec ) ;
 
-      for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); ++it )
+      for ( vector<string>::iterator itr = csNameVec.begin();
+            itr != csNameVec.end(); ++itr )
       {
-         dmsStorageUnit *su = NULL ;
-         dmsStorageUnitID suID = (*it).second ;
-         SDB_DMS_CSCB *cscb = _cscbVec[suID] ;
-         if ( !cscb )
+         // As we do not take the cs metadata mutex here, so cs may have been
+         // dropped after we get the names.
+         rc = nameToSUAndLock( itr->c_str(), suID, &su ) ;
+         if ( rc )
          {
+            if ( SDB_DMS_CS_NOTEXIST != rc )
+            {
+               PD_LOG( PDERROR, "Failed to lock collectionspace[%s], rc: %d",
+                       itr->c_str(), rc ) ;
+            }
             continue ;
          }
+         locked = TRUE ;
 
-         su = cscb->_su ;
          SDB_ASSERT ( su, "storage unit pointer can't be NULL" ) ;
          if ( ( !sys && dmsIsSysCSName(su->CSName()) ) ||
               ( ossStrcmp ( su->CSName(), SDB_DMSTEMP_NAME ) == 0 ) )
          {
+            suUnlock( suID ) ;
+            locked = FALSE ;
             continue ;
          }
 
          monCSSimple cs ;
          su->dumpInfo( cs, sys, dumpCL, dumpIdx ) ;
          csList.insert ( cs ) ;
+         suUnlock( suID ) ;
+         locked = FALSE ;
       }
+
+   done:
       PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPCSSIMPLE );
+      return ;
+   error:
+      if ( locked )
+      {
+         suUnlock( suID ) ;
+      }
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPINFO, "_SDB_DMSCB::dumpInfo" )
