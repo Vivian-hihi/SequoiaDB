@@ -1,18 +1,17 @@
-/*
- * Copyright 2018 SequoiaDB Inc.
+/*    Copyright (C) 2011-2017 SequoiaDB Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
-*/
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 
 // This Header File is automatically generated, you MUST NOT modify this file anyway!
 // On the contrary, you can modify the xml file "sequoiadb/misc/autogen/rclist.xml" if necessary!
@@ -340,7 +339,8 @@ public enum SDBError {
     SDB_VALUE_OVERFLOW(                 -318,    "Data operation is overflowed"    ),
     SDB_LOB_PIECESINFO_OVERFLOW(        -319,    "LOB's pieces info is overflowed"    ),
     SDB_LOB_LOCK_CONFLICTED(            -320,    "LOB lock is conflicted"    ),
-    SDB_DMS_TRUNCATED(                  -321,    "Collection is truncated"    );
+    SDB_DMS_TRUNCATED(                  -321,    "Collection is truncated"    ),
+    SDB_RTN_CONF_NOT_TAKE_EFFECT(       -322,    "Some configuration changes didn't take effect"    );
 
     private int code;
     private String desc;
@@ -690,6 +690,7 @@ public enum SDBError {
         case  -319: return SDB_LOB_PIECESINFO_OVERFLOW;
         case  -320: return SDB_LOB_LOCK_CONFLICTED;
         case  -321: return SDB_DMS_TRUNCATED;
+        case  -322: return SDB_RTN_CONF_NOT_TAKE_EFFECT;
         default:    return null;
         }
     }

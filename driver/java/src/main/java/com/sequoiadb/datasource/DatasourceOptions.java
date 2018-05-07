@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package com.sequoiadb.datasource;
 
@@ -39,7 +39,7 @@ public class DatasourceOptions implements Cloneable {
     private int _checkInterval = 1 * 60 * 1000; // 1 min
     private int _syncCoordInterval = 0; // 0 min
     private boolean _validateConnection = false;
-    private ConnectStrategy _connectStrategy = ConnectStrategy.BALANCE;
+    private ConnectStrategy _connectStrategy = ConnectStrategy.SERIAL;
     private List<Object> _preferedInstance = null;
     private String _preferedInstanceMode = DEFAULT_PREFERRD_INSTANCE_MODE; // "random" or "ordered"
     private int _sessionTimeout = DEFAULT_SESSION_TIMEOUT;
@@ -114,12 +114,17 @@ public class DatasourceOptions implements Cloneable {
      * Set the interval for updating coord's addresses from catalog in milliseconds.
      * The updated coord addresses will cover the addresses in the pool.
      * When "syncCoordInterval" is 0, the pool will stop updating coord's addresses from
-     * catalog.
+     * catalog. when "syncCoordInterval" is less than 60,000 milliseconds,
+     * use 60,000 milliseconds instead.
      * @param syncCoordInterval Default to be 1 * 60 * 1000ms.
      * @since 2.2
      */
     public void setSyncCoordInterval(int syncCoordInterval) {
-        _syncCoordInterval = syncCoordInterval;
+        if (syncCoordInterval > 0 && syncCoordInterval < 60000) {
+            _syncCoordInterval = 60000;
+        } else {
+            _syncCoordInterval = syncCoordInterval;
+        }
     }
 
     /**
@@ -144,7 +149,11 @@ public class DatasourceOptions implements Cloneable {
      * @since 2.2
      */
     public void setConnectStrategy(ConnectStrategy strategy) {
-        _connectStrategy = strategy;
+        if (strategy == ConnectStrategy.BALANCE) {
+            _connectStrategy = ConnectStrategy.SERIAL;
+        } else {
+            _connectStrategy = strategy;
+        }
     }
 
     /**

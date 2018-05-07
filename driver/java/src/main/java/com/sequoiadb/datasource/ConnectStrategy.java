@@ -12,31 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package com.sequoiadb.datasource;
 
-/**
- * Data source connection strategy.
- */
+
 public enum ConnectStrategy {
-    /**
-     * Get connection serially from given addresses.
-     */
-    SERIAL,
-
-    /**
-     * Get connection random from given addresses.
-     */
-    RANDOM,
-
-    /**
-     * Local connection preferred.
-     */
-    LOCAL,
-
-    /**
-     * Load balance preferred.
-     */
-    BALANCE
+    SERIAL, RANDOM, LOCAL, BALANCE
 }
