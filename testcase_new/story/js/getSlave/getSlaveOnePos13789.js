@@ -16,8 +16,8 @@ function main()
    }
    
    testOneNode() ;
-   //testTwoNode() ;
-   //testTwoNodeNoMaster() ;
+   testTwoNode() ;
+   testTwoNodeNoMaster() ;
 }
 
 // only one node in rg, test getSlave
