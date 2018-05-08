@@ -190,7 +190,8 @@ public class ReleaseConnectionTest extends DataSourceTestBase {
 			int priorNum = datasource.getIdleConnNum();
 			DatasourceOptions option = new DatasourceOptions();
 			option.setCheckInterval(50);
-			option.setConnectStrategy(ConnectStrategy.SERIAL);
+			//option.setConnectStrategy(ConnectStrategy.SERIAL);
+			option.setConnectStrategy(ConnectStrategy.RANDOM);
 			datasource.updateDatasourceOptions(option);
 			datasource.releaseConnection(sdb);
 			Thread.sleep(100);
