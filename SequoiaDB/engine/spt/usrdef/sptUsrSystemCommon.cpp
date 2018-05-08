@@ -5019,15 +5019,18 @@ namespace engine
             }
          }
 
-         if ( 0 == valueSplit.size() )
+         if ( valueSplit.size() > 0 )
          {
-            continue ;
+            value = *( valueSplit.begin() ) ;
+            for( std::vector< string >::iterator vecItr = valueSplit.begin()+1;
+               vecItr != valueSplit.end(); vecItr++ )
+            {
+               value += ";" + ( *vecItr ) ;
+            }  
          }
-         value = *( valueSplit.begin() ) ;
-         for( std::vector< string >::iterator vecItr = valueSplit.begin()+1;
-              vecItr != valueSplit.end(); vecItr++ )
+         else
          {
-            value += ";" + ( *vecItr ) ;
+            value = "" ;
          }
          builder.append( key, value ) ;
       }
