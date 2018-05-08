@@ -1821,6 +1821,7 @@ namespace engine
 
       try
       {
+         UINT32 validCount = 0 ;
          BSONElement ele ;
          rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_GROUPNAME_NAME,
                                       pArgs->_targetName ) ;
@@ -1831,6 +1832,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+         ++validCount ;
 
          ele = pArgs->_boQuery.getField( CAT_HOST_FIELD_NAME ) ;
          if ( String != ele.type() )
@@ -1841,6 +1843,7 @@ namespace engine
             goto error ;
          }
          _pHostName = ele.valuestr() ;
+         ++validCount ;
 
          rc = rtnGetBooleanElement( pArgs->_boQuery, FIELD_NAME_ONLY_ATTACH,
                                     _onlyAttach ) ;
@@ -1855,6 +1858,10 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+         else
+         {
+            ++validCount ;
+         }
 
          /// check svcname
          ele = pArgs->_boQuery.getField( PMD_OPTION_SVCNAME ) ;
@@ -1866,6 +1873,7 @@ namespace engine
             goto error ;
          }
          _pSvcName = ele.valuestr() ;
+         ++validCount ;
 
          if ( _onlyAttach )
          {
@@ -1888,6 +1896,18 @@ namespace engine
                PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                        "rc: %d", FIELD_NAME_KEEP_DATA, getName(), rc ) ;
                rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            else
+            {
+               ++validCount ;
+            }
+
+            if ( pArgs->_boQuery.nFields() > validCount )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Unknown parameters in command's args[%s]",
+                       pArgs->_boQuery.toString().c_str() ) ;
                goto error ;
             }
          }
@@ -2192,6 +2212,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( COORD_REMOVENODE_PARSEMSG ) ;
 
+      UINT32 validCount = 0 ;
+
       try
       {
          BSONElement ele ;
@@ -2204,6 +2226,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+         ++validCount ;
 
          ele = pArgs->_boQuery.getField( CAT_HOST_FIELD_NAME ) ;
          if ( String != ele.type() )
@@ -2214,6 +2237,7 @@ namespace engine
             goto error ;
          }
          _pHostName = ele.valuestr() ;
+         ++validCount ;
 
          rc = rtnGetBooleanElement( pArgs->_boQuery, FIELD_NAME_ONLY_DETACH,
                                     _onlyDetach ) ;
@@ -2227,6 +2251,10 @@ namespace engine
                     "rc: %d", FIELD_NAME_ONLY_DETACH, getName(), rc ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
+         }
+         else
+         {
+            ++validCount ;
          }
 
          /// get enforce
@@ -2243,6 +2271,10 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+         else
+         {
+            ++validCount ;
+         }
 
          /// check svcname
          ele = pArgs->_boQuery.getField( PMD_OPTION_SVCNAME ) ;
@@ -2254,6 +2286,7 @@ namespace engine
             goto error ;
          }
          _pSvcName = ele.valuestr() ;
+         ++validCount ;
 
          if ( _onlyDetach )
          {
@@ -2278,6 +2311,18 @@ namespace engine
                rc = SDB_INVALIDARG ;
                goto error ;
             }
+            else
+            {
+               ++validCount ;
+            }
+         }
+
+         if ( pArgs->_boQuery.nFields() > validCount )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Unknown parameters in command's args[%s]",
+                    pArgs->_boQuery.toString().c_str() ) ;
+            goto error ;
          }
       }
       catch( std::exception &e )
