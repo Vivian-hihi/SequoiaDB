@@ -117,16 +117,32 @@ namespace engine
    INT32 _sptDBNode::fmpToBSON( const sptObject &value, BSONObj &retObj,
                                 string &errMsg )
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc = SDB_OK ;      
+      sptObject *rgObj = NULL ;
+      string rgName ;
       string nodeName ;
+      // get rg name
+      rc = value.getObjectField( SPT_NODE_RG_FIELD, &rgObj ) ;
+      if( SDB_OK != rc )
+      {
+         errMsg = "Failed to get rg js obj" ;
+         goto error ;
+      }
+      rgObj->getStringField( SPT_NODE_RGNAME_FIELD, rgName ) ;
+      // get node name
       rc = value.getStringField( SPT_NODE_NAME_FIELD, nodeName ) ;
       if( SDB_OK != rc )
       {
          errMsg = "Failed to get node _nodename field" ;
          goto error ;
       }
-      retObj = BSON( SPT_NODE_NAME_FIELD << nodeName ) ;
+      // build result
+      retObj = BSON( SPT_NODE_NAME_FIELD << rgName + ":" + nodeName ) ;
    done:
+      if ( NULL != rgObj )
+      {
+         SDB_OSS_DEL rgObj ;
+      }
       return rc ;
    error:
       goto done ;
@@ -209,6 +225,9 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to alloc memory for sptDBNode" ) ;
          goto error ;
       }
+      nodename = pNode->getNodeName() ;
+      hostname= pNode->getHostName() ;
+      svcname = pNode->getServiceName() ;
       pNode = NULL ;
 
       rc = rval.setUsrObjectVal< sptDBNode >( pSptNode ) ;
@@ -220,11 +239,11 @@ namespace engine
       pSptNode = NULL ;
 
       rval.addReturnValProperty( SPT_NODE_HOSTNAME_FIELD )->
-         setValue( pNode->getHostName() ) ;
+         setValue( hostname ) ;
       rval.addReturnValProperty( SPT_NODE_SVCNAME_FIELD )->
-         setValue( pNode->getServiceName() ) ;
+         setValue( svcname) ;
       rval.addReturnValProperty( SPT_NODE_NAME_FIELD )->
-         setValue( pNode->getNodeName() ) ;
+         setValue( nodename ) ;
       rval.addReturnValProperty( SPT_NODE_NODEID_FIELD )->setValue( nodeID ) ;
 
       pTmpProp = rval.addReturnValProperty( SPT_NODE_RG_FIELD ) ;

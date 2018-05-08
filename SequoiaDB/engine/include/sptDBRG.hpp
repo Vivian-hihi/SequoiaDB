@@ -112,7 +112,7 @@ namespace engine
          if( NULL == __sptRG__ )\
          {\
             rc = SDB_OOM ;\
-            detail = BSON( SPT_ERR << "Failed to alloc memory for sptDBCursor" ) ;\
+            detail = BSON( SPT_ERR << "Failed to alloc memory for sptDBRG" ) ;\
             goto error ;\
          }\
          rc = rval.setUsrObjectVal< sptDBRG >( __sptRG__ ) ;\

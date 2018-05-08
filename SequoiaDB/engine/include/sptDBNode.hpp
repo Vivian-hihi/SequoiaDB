@@ -41,6 +41,8 @@ namespace engine
    #define SPT_NODE_SVCNAME_FIELD   "_servicename"
    #define SPT_NODE_NODEID_FIELD    "_nodeid"
    #define SPT_NODE_RG_FIELD        "_rg"
+   #define SPT_NODE_RGNAME_FIELD    "_name"
+
    class _sptDBNode : public SDBObject
    {
    JS_DECLARE_CLASS( _sptDBNode )
