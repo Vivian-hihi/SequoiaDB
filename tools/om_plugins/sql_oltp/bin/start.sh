@@ -4,7 +4,7 @@
 currentPath=$(cd "$(dirname "$0")"; pwd)
 
 #config parameter
-binName="ssqloltp-plugin"
+binName="postgresql-plugin"
 extName="jar"
 javaPath="$currentPath/../../../java/jdk/bin/java"
 

@@ -4,9 +4,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SsqlOltpPlugin {
+public class PostgreSQLPlugin {
 
     public static void main(String[] args) {
-        SpringApplication.run(SsqlOltpPlugin.class, args);
+        SpringApplication.run(PostgreSQLPlugin.class, args);
     }
 }
