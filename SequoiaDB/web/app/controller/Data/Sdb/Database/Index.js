@@ -820,7 +820,7 @@
                   },
                   {
                      "name": "ReplSize",
-                     "webName":  $scope.autoLanguage( '副本数' ),
+                     "webName":  $scope.autoLanguage( '一致性写副本数' ),
                      "type": "int",
                      "required": true,
                      "value": 1,
@@ -944,7 +944,7 @@
                   },
                   {
                      "name": "ReplSize",
-                     "webName":  $scope.autoLanguage( '副本数' ),
+                     "webName":  $scope.autoLanguage( '一致性写副本数' ),
                      "type": "int",
                      "required": true,
                      "value": 1,
@@ -1092,7 +1092,7 @@
                   },
                   {
                      "name": "ReplSize",
-                     "webName":  $scope.autoLanguage( '副本数' ),
+                     "webName":  $scope.autoLanguage( '一致性写副本数' ),
                      "type": "int",
                      "required": true,
                      "value": 1,

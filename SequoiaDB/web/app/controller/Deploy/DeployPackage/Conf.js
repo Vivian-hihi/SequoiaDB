@@ -38,9 +38,9 @@
                "webName": $scope.autoLanguage( '安装包名' ),
                "type": "select",
                "required": true,
-               "value": 'sequoiasql-oltp',
+               "value": 'sequoiapostgresql',
                "valid": [
-                  { 'key': 'sequoiasql-oltp', 'value': 'sequoiasql-oltp' }
+                  { 'key': 'SequoiaPostgreSQL', 'value': 'sequoiapostgresql' }
                ]
             },
             {
@@ -48,7 +48,7 @@
                "webName": $scope.autoLanguage( '安装路径' ),
                "type": "string",
                "required": true,
-               "value": '/opt/sequoiasqloltp/',
+               "value": '/opt/sequoiapostgresql/',
                "valid": {
                   "min": 1
                }
@@ -219,7 +219,7 @@
                   hostInfo['Package'] = hostInfo['Package'] + ',' + packageInfo['Name'] ;
                }
             } ) ;
-            if( hostInfo['Package'].indexOf( 'sequoiasql-oltp' ) > 0 )
+            if( hostInfo['Package'].indexOf( 'sequoiapostgresql' ) > 0 )
             {
                hostInfo['Checked'] = false ;
             }
@@ -240,7 +240,7 @@
          else
          {
             $.each( SdbSwap.hostList, function( index, hostInfo ){
-               if( hostInfo['Package'].indexOf( 'sequoiasql-oltp' ) > 0 )
+               if( hostInfo['Package'].indexOf( 'sequoiapostgresql' ) > 0 )
                {
                   hostInfo['Checked'] = false ;
                }

@@ -3,12 +3,12 @@
    //部署包的缩写列表
    var packageShortName = {
       'sequoiadb': 'sdb',
-      'sequoiasql-oltp': 'ssql-oltp'
+      'sequoiapostgresql': 'pgsql'
    } ;
    //导航标题列表
    var navTitleName = {
       'sequoiadb': 'SequoiaDB',
-      'sequoiasql-oltp': 'SequoiaSQL-OLTP',
+      'sequoiapostgresql': 'SequoiaPostgreSQL',
       'hdfs': 'HDFS',
       'yarn': 'YARN'
    } ;
@@ -436,7 +436,7 @@
 
       function addMonitor( businessInfo )
       {
-         if( businessInfo['type'] == 'sequoiasql-oltp' )
+         if( businessInfo['type'] == 'sequoiapostgresql' )
          {
             return ;
          }
@@ -593,8 +593,8 @@
                $location.path( '/Data/SPARK-web/Index' ).search( params ) ; break ;
             case 'yarn':
                $location.path( '/Data/YARN-web/Index' ).search( params ) ; break ;
-            case 'sequoiasql-oltp':
-               $location.path( '/Data/OLTP-Database/Index' ).search( params ) ; break ;
+            case 'sequoiapostgresql':
+               $location.path( '/Data/PostgreSQL/Database/Index' ).search( params ) ; break ;
             default:
                break ;
             }

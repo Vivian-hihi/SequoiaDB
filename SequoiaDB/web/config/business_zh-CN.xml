@@ -4,7 +4,7 @@
       <BusinessDesc>SequoiaDB数据库</BusinessDesc>
    </FILLER>
    <FILLER>
-      <BusinessType>sequoiasql-oltp</BusinessType>
-      <BusinessDesc>SequoiaSQL OLTP</BusinessDesc>
+      <BusinessType>sequoiapostgresql</BusinessType>
+      <BusinessDesc>SequoiaPostgreSQL</BusinessDesc>
    </FILLER>
 </BusinessList>

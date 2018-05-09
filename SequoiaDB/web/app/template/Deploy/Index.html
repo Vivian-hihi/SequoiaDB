@@ -10,6 +10,8 @@
             </li>
          </ul>
       </div>
+
+      <!--业务页面-->
       <div ng-container="{offsetY:-50}"  ng-hide="currentPage!='module'">
          <div ng-windows="form as InstallModule.config" windows-callback="InstallModule.callback">
             <div form-create para="form"></div>
@@ -98,7 +100,7 @@
                   </div>
                   <div class="pull-left" ng-container="{offsetX:-100,height:40}">
                      <div class="Ellipsis2" style="font-weight:bold;height:21px;">
-                        <span ng-if="(moduleInfo['BusinessType']=='sequoiadb'&&moduleInfo['DeployMod']=='distribution')||moduleInfo['BusinessType']=='sequoiasql-oltp'">
+                        <span ng-if="(moduleInfo['BusinessType']=='sequoiadb'&&moduleInfo['DeployMod']=='distribution')||moduleInfo['BusinessType']=='sequoiapostgresql'">
                            <a class="linkButton" style="font-size:90%;" ng-if="moduleInfo['authority']" ng-attr="{'data-desc':autoLanguage('鉴权已开启。')}" ng-click="OpenShowAuthorityDropdown($event,moduleInfo['BusinessName'],moduleInfo['BusinessType'])">
                               <i class="fa fa-lock"></i>
                               <span>{{autoLanguage("鉴权")}} </span>
@@ -116,8 +118,8 @@
                            <span style="color:#ccc;font-size:100%;font-weight:normal;">|</span>
                         </span>
 
-                        <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb' || moduleInfo['BusinessType']=='sequoiasql-oltp'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
-                        <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb' && moduleInfo['BusinessType']!='sequoiasql-oltp'">{{moduleInfo['BusinessName']}}</span>
+                        <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb' || moduleInfo['BusinessType']=='sequoiapostgresql'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
+                        <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb' && moduleInfo['BusinessType']!='sequoiapostgresql'">{{moduleInfo['BusinessName']}}</span>
                      </div>
                      <div class="Ellipsis" style="font-size:90%;color:#666;">{{moduleInfo['BusinessType']}} {{moduleInfo['DeployMod']}}&nbsp;|&nbsp;<span ng-if="moduleInfo['AddtionType'] == 1">{{autoLanguage("添加时间")}}</span><span ng-if="moduleInfo['AddtionType'] == 0">{{autoLanguage("创建时间")}}</span>: {{moduleInfo['Time']['$timestamp'].substr(0,19)}}</div>
                   </div>
@@ -128,7 +130,7 @@
                   <i class="fa fa-circle" style="color:#00CC66;" ng-if="moduleInfo['Error']['Flag']==0"></i><i class="fa fa-circle error" ng-if="moduleInfo['Error']['Flag']!=0"></i>&nbsp;<span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']==0">{{autoLanguage("正常运行...")}}</span><span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']!=0">{{moduleInfo['Error']['Message']}}</span>
                </div>
 
-               <div ng-container="{offsetY:-100,marginTop:10,height:'auto'}" ng-if="moduleInfo['BusinessType']=='sequoiadb' || moduleInfo['BusinessType']=='sequoiasql-oltp'">
+               <div ng-container="{offsetY:-100,marginTop:10,height:'auto'}" ng-if="moduleInfo['BusinessType']=='sequoiadb' || moduleInfo['BusinessType']=='sequoiapostgresql'">
 
                   <div class="pull-left" style="max-width:650px;" ng-container="{width:'50%',height:140,offsetX:-30,marginRight:30}">
                      <div class="Ellipsis" style="height:35px;">
@@ -162,7 +164,7 @@
                      </div>
                      <div ng-container="{offsetY:-20}" create-chart="moduleInfo['Chart']['Module']"></div>
                   </div>
-                  <div class="pull-left" style="max-width:650px;min-height:145px;" ng-container="{width:'50%',height:'30w'}" ng-if="moduleInfo['BusinessType']=='sequoiasql-oltp'">
+                  <div class="pull-left" style="max-width:650px;min-height:145px;" ng-container="{width:'50%',height:'30w'}" ng-if="moduleInfo['BusinessType']=='sequoiapostgresql'">
                      <div style="height:20px;margin-bottom:15px;">
                         {{autoLanguage("业务关联信息")}}
                      </div>
@@ -214,33 +216,38 @@
 
          </div>
       </div>
-      <div ng-windows="info as UpdateHostIP.config" windows-callback="UpdateHostIP.callback">
-         <table class="table loosen border">
-            <tr style="background-color:#F1F4F5;height:30px;">
-               <td>{{autoLanguage("主机名")}}</td>
-               <td>{{autoLanguage("IP地址")}}</td>
-               <td>{{autoLanguage("状态")}}</td>
-            </tr>
-            <tr ng-repeat="hostInfo in UpdateHostList track by $index">
-               <td class="Ellipsis" style="word-break:break-all;">{{hostInfo['HostName']}}</td>
-               <td class="Ellipsis" style="word-break:break-all;">
-                  <input class="form-control" ng-if="hostInfo['Flag'] != 0" ng-model="hostInfo['IP']" />
-                  <span ng-if="hostInfo['Flag'] == 0" ng-bind="hostInfo['IP']"></span>
-               </td>
-               <td class="Ellipsis" style="word-break:break-all;">
-                  {{hostInfo['Status']}}
-               </td>
-            </tr>
-         </table>
-      </div>
 
-      <div ng-dropdown="config in RemoveHostDropdown.config" dropdown-event="RemoveHostDropdown.event" dropdown-callback="RemoveHostDropdown.callback">
-         <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="RemoveHostDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
-      </div>
-      <div ng-dropdown="config in EditHostDropdown.config" dropdown-event="EditHostDropdown.event" dropdown-callback="EditHostDropdown.callback">
-         <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="EditHostDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
-      </div>
+
+      <!--主机页面-->
       <div ng-container="{offsetY:-50}"  ng-hide="currentPage!='host'">
+         <!--更新主机弹窗-->
+         <div ng-windows="info as UpdateHostIP.config" windows-callback="UpdateHostIP.callback">
+            <table class="table loosen border">
+               <tr style="background-color:#F1F4F5;height:30px;">
+                  <td>{{autoLanguage("主机名")}}</td>
+                  <td>{{autoLanguage("IP地址")}}</td>
+                  <td>{{autoLanguage("状态")}}</td>
+               </tr>
+               <tr ng-repeat="hostInfo in UpdateHostList track by $index">
+                  <td class="Ellipsis" style="word-break:break-all;">{{hostInfo['HostName']}}</td>
+                  <td class="Ellipsis" style="word-break:break-all;">
+                     <input class="form-control" ng-if="hostInfo['Flag'] != 0" ng-model="hostInfo['IP']" />
+                     <span ng-if="hostInfo['Flag'] == 0" ng-bind="hostInfo['IP']"></span>
+                  </td>
+                  <td class="Ellipsis" style="word-break:break-all;">
+                     {{hostInfo['Status']}}
+                  </td>
+               </tr>
+            </table>
+         </div>
+         <!--删除主机下拉菜单-->
+         <div ng-dropdown="config in RemoveHostDropdown.config" dropdown-event="RemoveHostDropdown.event" dropdown-callback="RemoveHostDropdown.callback">
+            <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="RemoveHostDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
+         </div>
+         <!--主机操作下拉菜单-->
+         <div ng-dropdown="config in EditHostDropdown.config" dropdown-event="EditHostDropdown.event" dropdown-callback="EditHostDropdown.callback">
+            <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="EditHostDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
+         </div>
          <div ng-container="{height:40}">
             <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-disabled="clusterList.length==0" ng-click="AddHost()">{{autoLanguage("添加主机")}}</button>
             <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-disabled="clusterList.length==0" ng-click="OpenRemoveHost($event)">{{autoLanguage("删除主机")}} <i class="fa fa-caret-down"></i></button>
@@ -273,6 +280,8 @@
          </div>
       </div>
    </div>
+
+   <!--操作栏-->
    <div class="pull-right" ng-container="{width:270}">
       <div class="borderBox" style="padding:10px;overflow-y:auto;overflow-x:hidden;" ng-container="{offsetY:-119}">
          <div><b>{{autoLanguage("集群")}}</b></div>

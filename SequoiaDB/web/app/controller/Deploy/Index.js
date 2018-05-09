@@ -617,8 +617,8 @@
          {
          case 'sequoiadb':
             $location.path( '/Data/SDB-Database/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
-         case 'sequoiasql-oltp':
-            $location.path( '/Data/OLTP-Database/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
+         case 'sequoiapostgresql':
+            $location.path( '/Data/PostgreSQL/Database/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
          case 'sequoiasql':
             $location.path( '/Data/SQL-Metadata/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
          case 'hdfs':
@@ -1194,15 +1194,15 @@
                   {
                      $location.path( '/Deploy/SDB-Conf' ).search( { 'r': new Date().getTime() } ) ;
                   }
-                  //当业务类型是OLTP时
-                  else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiasql-oltp' )
+                  //当业务类型是PostgreSQL时
+                  else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiapostgresql' )
                   {
                      var checkSqlHost = 0 ;
                      $.each( $scope.HostList, function( index, hostInfo ){
                         if( hostInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
                         {
                            $.each( hostInfo['Packages'], function( packIndex, packInfo ){
-                              if( packInfo['Name'] == 'sequoiasql-oltp' )
+                              if( packInfo['Name'] == 'sequoiapostgresql' )
                               {
                                  ++checkSqlHost ;
                               }
@@ -1212,7 +1212,7 @@
                      if( checkSqlHost == 0 )
                      {
                         $scope.Components.Confirm.type = 3 ;
-                        $scope.Components.Confirm.context = $scope.autoLanguage( '创建 SequoiaSQL OLTP 业务需要主机已经部署 SequoiaSQL OLTP 包。' ) ;
+                        $scope.Components.Confirm.context = $scope.autoLanguage( '创建 SequoiaPostgreSQL 业务需要主机已经部署 SequoiaPostgreSQL 包。' ) ;
                         $scope.Components.Confirm.isShow = true ;
                         $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
                      }
@@ -1225,7 +1225,7 @@
                         businessConf['DeployMod'] = '' ;
                         businessConf['Property'] = [] ;
                         $rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
-                        $location.path( '/Deploy/OLTP-Mod' ).search( { 'r': new Date().getTime() } ) ;
+                        $location.path( '/Deploy/PostgreSQL-Mod' ).search( { 'r': new Date().getTime() } ) ;
                      }
                   }
                   else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiasql' )
@@ -2625,7 +2625,7 @@
          authorityform['inputList'][1]['value'] = '' ;
          authorityform['inputList'][2]['value'] = '' ;
 
-         if( businessType == 'sequoiasql-oltp' )
+         if( businessType == 'sequoiapostgresql' )
          {
             authorityform['inputList'][3] = {
                "name": "DbName",
@@ -2658,7 +2658,7 @@
                      'User': formVal['User'],
                      'Passwd': formVal['Password']
                   } ;
-                  if( businessType == 'sequoiasql-oltp' && typeof( formVal['DbName'] ) != 'undefined' )
+                  if( businessType == 'sequoiapostgresql' && typeof( formVal['DbName'] ) != 'undefined' )
                   {
                      data['DbName'] = formVal['DbName'] ;
                   }
@@ -2943,7 +2943,7 @@
             {
                ++sdbModule ;
             }
-            else if( moduleInfo['BusinessType'] == 'sequoiasql-oltp' )
+            else if( moduleInfo['BusinessType'] == 'sequoiapostgresql' )
             {
                ++sqlModule ;
             }
@@ -2980,17 +2980,17 @@
             return ;
          }
 
-         //获取oltp数据库列表
-         var queryOltpDatabase = function( cluster, module ){
+         //获取PostgreSQL数据库列表
+         var queryPgsqlDatabase = function( cluster, module ){
             var sql = 'SELECT datname FROM pg_database WHERE datname NOT LIKE \'template0\' AND datname NOT LIKE \'template1\'' ;
             var data = { 'Sql': sql } ;
             SdbRest.DataOperationV21( cluster, module, '/sql', data, {
                'success': function( dbList ){
-                  var oltpList = [] ;
+                  var pgsqlList = [] ;
                   $.each( dbList, function( index, dbInfo ){
-                     oltpList.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
+                     pgsqlList.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
                   } ) ;
-                  $scope.CreateRelationWindow['config']['inputList'][4]['valid'] = oltpList ;
+                  $scope.CreateRelationWindow['config']['inputList'][4]['valid'] = pgsqlList ;
                },
                'failed': function( errorInfo ){
                   _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -3068,7 +3068,7 @@
                   "type": "select",
                   "value": 0,
                   "valid": [
-                     { 'key': 'SequoiaSQL-OLTP - SequoiaDB', 'value': 0 }
+                     { 'key': 'SequoiaPostgreSQL - SequoiaDB', 'value': 0 }
                   ]
                },
                {
@@ -3085,7 +3085,7 @@
                         $scope.moduleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName'],
                         $scope.CreateRelationWindow['config']['inputList'][4]['value']
                      ) ;
-                     queryOltpDatabase( $scope.clusterList[$scope.currentCluster]['ClusterName'], value ) ;
+                     queryPgsqlDatabase( $scope.clusterList[$scope.currentCluster]['ClusterName'], value ) ;
                   }
                },
                {
@@ -3165,7 +3165,7 @@
          
          
          $.each( $scope.moduleList, function( index, moduleInfo ){
-            if( moduleInfo['BusinessType'] == 'sequoiasql-oltp' )
+            if( moduleInfo['BusinessType'] == 'sequoiapostgresql' )
             {
                $scope.CreateRelationWindow['config']['inputList'][2]['valid'].push(
                   { 'key': moduleInfo['BusinessName'], 'value': moduleInfo['BusinessName'] }
@@ -3189,7 +3189,7 @@
                return ;
             }
          } ) ;
-         queryOltpDatabase( $scope.clusterList[$scope.currentCluster]['ClusterName'], $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['key'] ) ;
+         queryPgsqlDatabase( $scope.clusterList[$scope.currentCluster]['ClusterName'], $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['key'] ) ;
          $scope.CreateRelationWindow['config']['inputList'][2]['value'] = $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['value'] ;
          $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
             '?_?',
@@ -3232,7 +3232,7 @@
                   "type": "select",
                   "value": 0,
                   "valid": [
-                     { 'key': 'SequoiaSQL-OLTP - SequoiaDB', 'value': 0 }
+                     { 'key': 'SequoiaPostgreSQL - SequoiaDB', 'value': 0 }
                   ]
                },
                {

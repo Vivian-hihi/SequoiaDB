@@ -1,8 +1,8 @@
 <DeployModList type="array">
 	<FILLER>
 		<DeployMod></DeployMod>
-		<WebName>SequoiaSQL OLTP</WebName>
-		<BusinessType>sequoiasql-oltp</BusinessType>
+		<WebName>SequoiaPostgreSQL</WebName>
+		<BusinessType>SequoiaPostgreSQL</BusinessType>
 		<Property type="array"></Property>
  	</FILLER>
 </DeployModList>

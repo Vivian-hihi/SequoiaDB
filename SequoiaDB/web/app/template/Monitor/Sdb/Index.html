@@ -86,8 +86,7 @@
                            <td style="font-weight:bold;">{{autoLanguage("会话数")}}</td>
                            <td>
                               <div class="Ellipsis">
-                                 <a class="linkButton" ng-if="SysConfig['Edition'] == 'Enterprise'" ng-click="GotoSessions()">{{moduleInfo['sessions']}}</a>
-                                 <span ng-if="SysConfig['Edition'] != 'Enterprise'">{{moduleInfo['sessions']}}</span>
+                                 <a class="linkButton" ng-click="GotoSessions()">{{moduleInfo['sessions']}}</a>
                               </div>
                            </td>
                         </tr>
@@ -95,8 +94,8 @@
                            <td style="font-weight:bold;">{{autoLanguage("域数")}}</td>
                            <td>
                               <div class="Ellipsis">
-                                 <a class="linkButton" ng-if="SysConfig['Edition'] == 'Enterprise' && ModuleMode != 'standalone'" ng-click="GotoDomains()">{{moduleInfo['domains']}}</a>
-                                 <span ng-if="SysConfig['Edition'] != 'Enterprise' || ModuleMode == 'standalone'">{{moduleInfo['domains']}}</span>
+                                 <a class="linkButton" ng-if="ModuleMode != 'standalone'" ng-click="GotoDomains()">{{moduleInfo['domains']}}</a>
+                                 <span ng-if=" ModuleMode == 'standalone'">{{moduleInfo['domains']}}</span>
                               </div>
                            </td>
                         </tr>
@@ -104,8 +103,8 @@
                            <td style="font-weight:bold;">{{autoLanguage("分区组数")}}</td>
                            <td>
                               <div class="Ellipsis">
-                                 <a class="linkButton" ng-if="SysConfig['Edition'] == 'Enterprise' && ModuleMode != 'standalone'" ng-click="GotoGroups()">{{moduleInfo['groups']}}</a>
-                                 <span ng-if="SysConfig['Edition'] != 'Enterprise' || ModuleMode == 'standalone'">{{moduleInfo['groups']}}</span>
+                                 <a class="linkButton" ng-if="ModuleMode != 'standalone'" ng-click="GotoGroups()">{{moduleInfo['groups']}}</a>
+                                 <span ng-if="ModuleMode == 'standalone'">{{moduleInfo['groups']}}</span>
                               </div>
                            </td>
                         </tr>
@@ -113,8 +112,8 @@
                            <td style="font-weight:bold;">{{autoLanguage("节点数")}}</td>
                            <td>
                               <div class="Ellipsis">
-                                 <a class="linkButton" ng-if="SysConfig['Edition'] == 'Enterprise' && ModuleMode != 'standalone'" ng-click="GotoNodeList()">{{moduleInfo['nodes']}}</a>
-                                 <span ng-if="SysConfig['Edition'] != 'Enterprise' || ModuleMode == 'standalone'">{{moduleInfo['nodes']}}</span>
+                                 <a class="linkButton" ng-if="ModuleMode != 'standalone'" ng-click="GotoNodeList()">{{moduleInfo['nodes']}}</a>
+                                 <span ng-if="ModuleMode == 'standalone'">{{moduleInfo['nodes']}}</span>
                               </div>
                            </td>
                         </tr>
@@ -122,8 +121,7 @@
                            <td style="font-weight:bold;">{{autoLanguage("集合数")}}</td>
                            <td>
                               <div class="Ellipsis">
-                                 <a class="linkButton" ng-if="SysConfig['Edition'] == 'Enterprise'" ng-click="GotoDatabase()">{{moduleInfo['cl']}}</a>
-                                 <span ng-if="SysConfig['Edition'] != 'Enterprise'">{{moduleInfo['cl']}}</span>
+                                 <a class="linkButton" ng-click="GotoDatabase()">{{moduleInfo['cl']}}</a>
                               </div>
                            </td>
                         </tr>
@@ -131,8 +129,7 @@
                            <td style="font-weight:bold;">{{autoLanguage("记录数")}}</td>
                            <td>
                               <div class="Ellipsis">
-                                 <a class="linkButton" ng-if="SysConfig['Edition'] == 'Enterprise'" ng-click="GotoDatabase()">{{moduleInfo['records']}}</a>
-                                 <span ng-if="SysConfig['Edition'] != 'Enterprise'">{{moduleInfo['records']}}</span>
+                                 <a class="linkButton" ng-click="GotoDatabase()">{{moduleInfo['records']}}</a>
                               </div>
                            </td>
                         </tr>
@@ -140,8 +137,7 @@
                            <td style="font-weight:bold;">{{autoLanguage("Lob数")}}</td>
                            <td>
                               <div class="Ellipsis">
-                                 <a class="linkButton" ng-if="SysConfig['Edition'] == 'Enterprise'" ng-click="GotoDatabase()">{{moduleInfo['lobs']}}</a>
-                                 <span ng-if="SysConfig['Edition'] != 'Enterprise'">{{moduleInfo['lobs']}}</span>
+                                 <a class="linkButton" ng-click="GotoDatabase()">{{moduleInfo['lobs']}}</a>
                               </div>
                            </td>
                         </tr>

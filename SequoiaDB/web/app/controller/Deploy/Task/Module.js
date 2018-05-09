@@ -39,9 +39,9 @@
          {
             $scope.stepList = _Deploy.BuildSdbShrinkStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
          }
-         else if( $scope.ModuleType == 'sequoiasql-oltp' )
+         else if( $scope.ModuleType == 'sequoiapostgresql' )
          {
-            $scope.stepList = _Deploy.BuildSdbOltpStep( $scope, $location, $scope['Url']['Action'] ) ;
+            $scope.stepList = _Deploy.BuildSdbPgsqlStep( $scope, $location, $scope['Url']['Action'] ) ;
          }
          else
          {
@@ -112,7 +112,7 @@
                'Flow':        '40%'
             } ;
          }
-         else if( moduleType == 'sequoiasql-oltp' )
+         else if( moduleType == 'sequoiapostgresql' )
          {
             $scope.TaskTable['title'] = {
                'Status':         '',
@@ -145,9 +145,9 @@
          {
             $location.path( '/Deploy/ZKP-Mod' ).search( { 'r': new Date().getTime() } ) ;
          }
-         else if( $scope.ModuleType == 'sequoiasql-oltp' )
+         else if( $scope.ModuleType == 'sequoiapostgresql' )
          {
-            $location.path( '/Deploy/OLTP-Mod' ).search( { 'r': new Date().getTime() } ) ;
+            $location.path( '/Deploy/PostgreSQL-Mod' ).search( { 'r': new Date().getTime() } ) ;
          }
       }
 
@@ -240,7 +240,7 @@
                         $scope.BarColor = 2 ;
                      }
                   }
-                  else if( $scope.ModuleType == 'zookeeper' || $scope.ModuleType == 'sequoiasql' || $scope.ModuleType == 'sequoiasql-oltp' )
+                  else if( $scope.ModuleType == 'zookeeper' || $scope.ModuleType == 'sequoiasql' || $scope.ModuleType == 'sequoiapostgresql' )
                   {
                      $.each( $scope.TaskInfo['ResultInfo'], function( index, nodeInfo ){
                         if( nodeInfo['errno'] != 0 )

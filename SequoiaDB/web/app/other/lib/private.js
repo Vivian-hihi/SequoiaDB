@@ -641,22 +641,22 @@ _Deploy.BuildSdbShrinkStep = function( $scope, $location, action, deployModule )
    return stepList ;
 }
 
-//生成安装SSQL-OLTP步骤图
-_Deploy.BuildSdbOltpStep = function( $scope, $location, action, deployModule ){
+//生成安装SequoiaPostgreSQL步骤图
+_Deploy.BuildSdbPgsqlStep = function( $scope, $location, action, deployModule ){
    var stepList = {
       'step': 0,
       'info': []
    }
    switch( action )
    {
-   case 'OLTP-Mod':
+   case 'PostgreSQL-Mod':
       stepList['step'] = 1 ;
       break ;
    case 'InstallModule':
       stepList['step'] = 2 ;
       break ;
    }
-   stepList['info'].push( { 'text': $scope.autoLanguage( '配置业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'OLTP-Mod') ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '配置业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'PostgreSQL-Mod') ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '安装业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
    return stepList ;
 }

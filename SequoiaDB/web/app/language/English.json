@@ -108,7 +108,7 @@
    "查询条件": "Condition",
    "处理器": "CPU",
    "传输速率": "Rate",
-   "创建 SequoiaSQL OLTP 业务需要主机已经部署 SequoiaSQL OLTP 包。": "Creating a SequoiaSQL OLTP business requires the host to deploy the SequoiaSQL OLTP package.",
+   "创建 SequoiaPostgreSQL 业务需要主机已经部署 SequoiaPostgreSQL 包。": "Creating a SequoiaPostgreSQL business requires the host to deploy the SequoiaPostgreSQL package.",
    "创建存储过程": "Create Procedure",
    "创建分区组": "Create Group",
    "创建关联": "Create Relation",
