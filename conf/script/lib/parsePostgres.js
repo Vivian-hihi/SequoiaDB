@@ -549,7 +549,7 @@ function ExecSsql( cmd, installPath, port, database, arg, timeout )
    var error = null ;
    var exec = installPath + '/bin/psql' ;
    //set LD_LIBRARY_PATH
-   //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiasqloltp/lib
+   //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiapostgresql/lib
    var libraryCmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:' ;
 
    libraryCmd += installPath + '/lib ;' ;
@@ -596,7 +596,7 @@ function test()
    var error = null ;
    var remote = new Remote( 'localhost', '11790' ) ;
    var cmd = remote.getCmd() ;
-   var installPath = '/opt/sequoiasqloltp' ;
+   var installPath = '/opt/sequoiapostgresql' ;
    var sql = '\\d' ;
 
    try

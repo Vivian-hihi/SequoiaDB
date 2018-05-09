@@ -338,7 +338,6 @@ var FIELD_CLUSTER_NAME2                    = ClusterName2 ;
 var FIELD_CONFIG                           = Config ;
 var FIELD_HOST_INFO                        = HostInfo ;
 var FIELD_SEQUOIADB                        = "sequoiadb" ;
-var FIELD_SEQUOIASQL_OLTP                  = "sequoiasql-oltp" ;
 var FIELD_HOSTLIST                         = "HostList" ;
 var FIELD_IP                               = IP ;
 var FIELD_HOSTS                            = Hosts ;
