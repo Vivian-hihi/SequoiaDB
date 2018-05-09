@@ -410,9 +410,9 @@ INT32 main(INT32 argc, CHAR *argv[])
     {
         if(-ENOENT == rc)
         {
-            ossPrintf("The cl:%s does not exist(error=%d), exit."OSS_NEWLINE, sfs->_collection.c_str(), rc);
+            ossPrintf("The cl:%s does not exist, exit."OSS_NEWLINE, sfs->_collection.c_str());
         }
-        ossPrintf("Failed to init(error=%d), exit."OSS_NEWLINE, rc);
+        ossPrintf("Failed to init, exit."OSS_NEWLINE);
         goto error;
     }
 
