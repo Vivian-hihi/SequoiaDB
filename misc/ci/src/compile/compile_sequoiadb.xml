@@ -31,7 +31,7 @@
       <antcall target="compile_hive_connector"/>
       <antcall target="compile_hadoop_connector"/>
       <antcall target="compile_spark_connector"/>
-      <antcall target="compile_ssqloltp_plugin"/>
+      <antcall target="compile_postgresql_plugin"/>
       <antcall target="build_driver_package"/>
       <if>
          <equals arg1="${IS_INCREMENTAL_COMPILE}" arg2="true"/>
@@ -222,8 +222,8 @@
       </exec>
    </target>
    
-   <target name="compile_ssqloltp_plugin">
-      <var name="src_dir" value="${srccode_dir}/tools/om_plugins/sql_oltp/source" />
+   <target name="compile_postgresql_plugin">
+      <var name="src_dir" value="${srccode_dir}/tools/om_plugins/postgresql/source" />
       <if>
          <equals arg1="${IS_DEBUG}" arg2="true"/>
          <then>
@@ -234,10 +234,10 @@
             <var name="cmd_mvn" value="versions:set -DnewVersion=${sequoiadb_version}"/>
          </else>
       </if>
-      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/sql_oltp/source" failonerror="true" logError="true">
+      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/postgresql/source" failonerror="true" logError="true">
          <arg line=" ${cmd_mvn} " />
       </exec>
-      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/sql_oltp/source" failonerror="true" logError="true">
+      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/postgresql/source" failonerror="true" logError="true">
          <arg line=" clean package -Drevision=${fdw_svn}" />
       </exec>
    </target>
