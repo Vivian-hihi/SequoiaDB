@@ -120,7 +120,7 @@ namespace CSharp.Crud.DataType
             BsonDocument expMatch = new BsonDocument { { "a", BsonMaxKey.Value }, { "b", 4 } };
             query.Matcher = expMatch;
             query.Selector = new BsonDocument { { "_id", new BsonDocument { { "$include", 0 } } } };
-            Console.WriteLine(query.ToJson());
+            //Console.WriteLine(query.ToJson());
             DBCursor cursor = cl.Query(query);
             while (cursor.Next() != null)
             {
