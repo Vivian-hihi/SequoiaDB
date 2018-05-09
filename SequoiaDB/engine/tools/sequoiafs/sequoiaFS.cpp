@@ -282,16 +282,6 @@ error:
     goto done;
 }
 
-static size_t name_hash(const char *name)
-{
-    uint64_t hash = 5381;
-    
-	for (; *name; name++)
-    {   
-		hash = hash * 31 + (unsigned char) *name;
-    }
-    return hash;
-}
 static size_t namePidHash(INT64 pid, const char *fullpath)
 {
 	uint64_t hash = 5381;
@@ -1825,10 +1815,10 @@ INT32 sequoiaFS::rmdir(const CHAR *path)
     INT32 rc = SDB_OK;
     sdb *db = NULL;
     sdbLob lob; 
-    sdbCollection cl;
-    sdbCollection sysDirMetaCL;   
+    sdbCollection cl; 
+    sdbCollection sysDirMetaCL;
+    sdbCollection sysFileMetaCL;  
     BSONObj condition; 
-    sdbCursor cursor;
     BSONObj record;
     OID oid;
     BSONObj obj;
@@ -1837,22 +1827,21 @@ INT32 sequoiaFS::rmdir(const CHAR *path)
     vector<string> dirName;  
     CHAR *pathStr = NULL;
     BSONObj options;
+    INT64 id;  
+    sdbCursor *tempCursor;  
+	sdbCursor *cursor[2];
+    INT32 i = 0;
+	INT32 count = 0;
 
+	cursor[0] = new sdbCursor();
+	cursor[1] = new sdbCursor();
     pathStr = ossStrdup(path);
 
     PD_LOG(PDDEBUG, "Called: rmdir(), path:%s", path);    
     
     rc = getConnection(&db);
     if(SDB_OK != rc)
-        goto error;
-    
-    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
-    if(SDB_OK != rc)
-    {
-        rc = -EIO;
-        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
-        goto error;
-    }
+        goto error;    
 
     options = BSON("PreferedInstance" << "M");
     rc = db->setSessionAttr(options);
@@ -1862,7 +1851,24 @@ INT32 sequoiaFS::rmdir(const CHAR *path)
         rc = -EIO;
         goto error;
     }  
-    
+
+    rc = db->getCollection(_sysDirMetaCLFullName.c_str(), sysDirMetaCL);
+    if(SDB_OK != rc)
+    {
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
+        rc = -EIO;
+        goto error;
+    }
+
+    rc = db->getCollection(_sysFileMetaCLFullName.c_str(), sysFileMetaCL);
+    if(SDB_OK != rc)
+    {
+        PD_LOG(PDERROR, "Failed to get cl:%s, error=%d", _sysFileMetaCLFullName.c_str(), rc);
+        rc = -EIO;
+        goto error;
+    }    
+
+	
     pid = getDirPIno(&sysDirMetaCL, pathStr, &basePath);
     if(pid < 0)
     {
@@ -1870,6 +1876,50 @@ INT32 sequoiaFS::rmdir(const CHAR *path)
         rc = pid;
         goto error;        
     }
+
+    if(basePath == "/")
+    {
+           id = 1;
+    }
+    else
+    {
+       //get the ino of the dir
+       id = getDirIno(&sysDirMetaCL, basePath, pid);
+    }
+
+	//look for files in the dir based on the ino of the dir       
+    condition = BSON(SEQUOIAFS_PID<<id);  
+    rc = sysDirMetaCL.query(*(cursor[0]), condition);
+    if(SDB_OK != rc)
+    {
+        PD_LOG(PDERROR, "Failed to query cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
+        rc = -EIO;
+        goto error;
+    }
+
+    rc = sysFileMetaCL.query(*(cursor[1]), condition);
+    if(SDB_OK != rc)
+    {
+        PD_LOG(PDERROR, "Failed to query cl:%s, error=%d", _sysFileMetaCLFullName.c_str(), rc);
+        rc = -EIO;
+        goto error;
+    }  
+
+    for(i = 0; i < NUM_OF_META_CL; i++)
+    {
+        tempCursor = cursor[i];
+        while(SDB_OK == tempCursor->next(record))
+        {
+            count++;
+        }
+    }
+
+	if(count)
+    {
+    	PD_LOG(PDERROR, "Failed to remove dir:%s, directory not empty", basePath.c_str());
+		rc = -ENOTEMPTY;
+		goto error;
+	}
       
     condition = BSON(SEQUOIAFS_NAME<<basePath<<SEQUOIAFS_PID<<(INT64)pid);    
     rc =  sysDirMetaCL.del(condition);
@@ -1881,6 +1931,8 @@ INT32 sequoiaFS::rmdir(const CHAR *path)
     }     
     
 done:
+	delete cursor[0];
+	delete cursor[1];
     SDB_OSS_FREE(pathStr);
     releaseConnection(db);
     return rc;    
@@ -3060,8 +3112,6 @@ INT32 sequoiaFS::opendir(const CHAR *path, struct fuse_file_info *fi)
     sdbCollectionSpace cs;
     sdbCollection *sysDirMetaCL = new sdbCollection;
     sdbCollection *sysFileMetaCL = new sdbCollection;   
-    string csName = "dbfs";
-    string clName = "lob";
     sdbCursor *cursorDir = new sdbCursor();
     sdbCursor *cursorFile = new sdbCursor();
     lobHandle *lh = new lobHandle; 
@@ -3130,7 +3180,7 @@ INT32 sequoiaFS::opendir(const CHAR *path, struct fuse_file_info *fi)
     rc = sysDirMetaCL->query(*cursorDir, condition);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to query cl:%s, error=%d", clName.c_str(), rc);
+        PD_LOG(PDERROR, "Failed to query cl:%s, error=%d", _sysDirMetaCLFullName.c_str(), rc);
         rc = -EIO;
         goto error;
     }
@@ -3138,7 +3188,7 @@ INT32 sequoiaFS::opendir(const CHAR *path, struct fuse_file_info *fi)
     rc = sysFileMetaCL->query(*cursorFile, condition);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to query cl:%s, error=%d", clName.c_str(), rc);
+        PD_LOG(PDERROR, "Failed to query cl:%s, error=%d", _sysFileMetaCLFullName.c_str(), rc);
         rc = -EIO;
         goto error;
     }    

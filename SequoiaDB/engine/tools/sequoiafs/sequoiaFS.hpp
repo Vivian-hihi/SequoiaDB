@@ -173,8 +173,7 @@ namespace sequoiafs
             _collection = "";
             _sysFileMetaCLFullName = "";
             _sysDirMetaCLFullName = "";
-            _mountpoint = "";
-            _autocreate = 0;                      
+            _mountpoint = "";                
         }
         
         ~sequoiaFS(){}
@@ -221,8 +220,7 @@ namespace sequoiafs
 
     public:
         string _collection;
-        string _mountpoint;
-        INT32 _autocreate;        
+        string _mountpoint;   
 
         //std::mutex _sequenceIdMutex;
     };
