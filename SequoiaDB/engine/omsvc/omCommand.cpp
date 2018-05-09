@@ -6187,7 +6187,7 @@ namespace engine
          condition = BSON( OM_BSON_HOSTNAME << "" <<
                            OM_BSON_ROLE << "" ) ;
       }
-      else if ( OM_BUSINESS_SEQUOIASQL_OLTP == _businessType )
+      else if ( OM_BUSINESS_SEQUOIAPOSTGRESQL == _businessType )
       {
          condition = BSON( OM_BSON_HOSTNAME << "" <<
                            OM_BSON_PORT << "" ) ;
@@ -10164,7 +10164,7 @@ namespace engine
       }
       else if ( OM_BUSINESS_SEQUOIASQL == _businessType )
       {
-         string deployMod = OM_SEQUOIASQL_DEPLOY_OLTP ;
+         string deployMod = OM_SEQUOIASQL_DEPLOY_OLAP ;
          BSONObj filter = BSON( OM_BSON_BUSINESS_INFO << "" ) ;
          BSONObj buzInfo = configInfo.filterFieldsUndotted( filter, TRUE ) ;
 
@@ -10478,7 +10478,7 @@ namespace engine
       }
 
       _businessType = businessInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
-      if( OM_BUSINESS_SEQUOIASQL_OLTP != _businessType )
+      if( OM_BUSINESS_SEQUOIAPOSTGRESQL != _businessType )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "Unsupported business type: name=%s, type=%s",
@@ -13186,7 +13186,7 @@ namespace engine
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
-      else if ( OM_BUSINESS_SEQUOIASQL_OLTP == _packageName )
+      else if ( OM_BUSINESS_SEQUOIAPOSTGRESQL == _packageName )
       {
          //do nothing
       }

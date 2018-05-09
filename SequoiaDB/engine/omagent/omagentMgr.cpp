@@ -1561,7 +1561,7 @@ namespace engine
                *type = OMA_TASK_INSTALL_DB ;
                goto done ;
             }
-            else if ( string(OMA_BUS_TYPE_SEQUOIASQL_OLTP) ==
+            else if ( string(OMA_BUS_TYPE_SEQUOIAPOSTGRESQL) ==
                                                          string(pBusinessType) )
             {
                *type = OMA_TASK_ADD_BUS ;
@@ -1603,7 +1603,7 @@ namespace engine
                *type = OMA_TASK_REMOVE_SSQL_OLAP ;
                goto done ;
             }
-            else if ( OMA_BUS_TYPE_SEQUOIASQL_OLTP == string(pBusinessType) )
+            else if ( OMA_BUS_TYPE_SEQUOIAPOSTGRESQL == string(pBusinessType) )
             {
                *type = OMA_TASK_REMOVE_BUS ;
                goto done ;

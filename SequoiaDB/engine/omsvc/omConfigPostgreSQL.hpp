@@ -15,7 +15,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-   Source File Name = omConfigSsqlOltp.hpp
+   Source File Name = omConfigPostgreSQL.hpp
 
    Dependencies: N/A
 
@@ -29,8 +29,8 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef OM_CONFIG_SSQL_OLTP_HPP_
-#define OM_CONFIG_SSQL_OLTP_HPP_ 
+#ifndef OM_CONFIG_POSTGRESQL_HPP_
+#define OM_CONFIG_POSTGRESQL_HPP_ 
 
 #include "omConfigBuilder.hpp"
 

@@ -15,7 +15,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-   Source File Name = omConfigSsqlOltp.cpp
+   Source File Name = omConfigPostgreSQL.cpp
 
    Dependencies: N/A
 
@@ -29,7 +29,7 @@
    Last Changed =
 
 *******************************************************************************/
-#include "omConfigSsqlOltp.hpp"
+#include "omConfigPostgreSQL.hpp"
 #include "omDef.hpp"
 #include <sstream>
 
@@ -221,7 +221,7 @@ namespace engine
    public:
       bool operator() ( const OmNode *node ) const
       {
-         if ( OM_BUSINESS_SEQUOIASQL_OLTP !=
+         if ( OM_BUSINESS_SEQUOIAPOSTGRESQL !=
                     node->getBusinessInfo().businessType )
          {
             return false ;

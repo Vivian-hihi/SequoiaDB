@@ -434,7 +434,7 @@ _IDX1\",key: {"OM_RELATIONSHIP_FIELD_NAME":1}, unique: true, enforced: true }"
    #define OM_BUSINESS_YARN                  "yarn"
    #define OM_BUSINESS_SEQUOIASQL            "sequoiasql"
    #define OM_BUSINESS_SEQUOIASQL_OLAP       "sequoiasql-olap"
-   #define OM_BUSINESS_SEQUOIASQL_OLTP       "sequoiasql-oltp"
+   #define OM_BUSINESS_SEQUOIAPOSTGRESQL     "sequoiapostgresql"
 
    /*
       discover businesss respone

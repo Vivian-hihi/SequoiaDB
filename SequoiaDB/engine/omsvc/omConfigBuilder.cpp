@@ -32,7 +32,7 @@
 #include "omConfigBuilder.hpp"
 #include "omConfigSdb.hpp"
 #include "omConfigZoo.hpp"
-#include "omConfigSsqlOltp.hpp"
+#include "omConfigPostgreSQL.hpp"
 #include "omConfigSsqlOlap.hpp"
 #include "omDef.hpp"
 #include "ossSocket.hpp"
@@ -822,7 +822,7 @@ namespace engine
             goto error ;
          }
       }
-      else if ( OM_BUSINESS_SEQUOIASQL_OLTP == businessInfo.businessType )
+      else if ( OM_BUSINESS_SEQUOIAPOSTGRESQL == businessInfo.businessType )
       {
          _builder = SDB_OSS_NEW OmSsqlOltpConfigBuilder( businessInfo ) ;
       }
