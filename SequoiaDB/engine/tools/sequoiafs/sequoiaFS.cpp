@@ -2078,6 +2078,7 @@ INT32 sequoiaFS::rename(const CHAR *path, const CHAR *newpath)
     CHAR *newPathStr = NULL;
     BSONObj rule;
     BSONObj condition;
+	BSONObj cond;
     string basePath;
     string newbasePath;
     INT64 pid =0;
@@ -2146,6 +2147,31 @@ INT32 sequoiaFS::rename(const CHAR *path, const CHAR *newpath)
     rc = isDir(&sysFileMetaCL, &sysDirMetaCL, lobName, pid, &is_dir);
     if(SDB_OK != rc)
         goto error;
+
+	//if it is a file, check the newfile exists or not, if exist, should delete it first
+	if(!is_dir)
+    {
+    	cond = BSON(SEQUOIAFS_NAME<<lobNewName<<SEQUOIAFS_PID<<(INT64)pid);  
+		rc = sysFileMetaCL.query(cursor, cond);
+		if(SDB_OK != rc)
+		{
+			PD_LOG(PDERROR, "Failed to query lob:%s, error=%d", lobName, rc);
+			rc = -EIO;
+			goto error;
+		}
+		
+		rc = cursor.current(record);
+		if(SDB_OK == rc)
+	    {
+			rc = unlink(newpath);
+			if(SDB_OK != rc)
+		    {
+				PD_LOG(PDERROR, "Failed to remove file:%s", newpath);
+				goto error;
+			}
+		}
+
+	}
 
     rc = doUpdateAttr(is_dir ? &sysDirMetaCL : &sysFileMetaCL, rule, condition);
     if(SDB_OK != rc)
@@ -3574,7 +3600,7 @@ INT32 sequoiaFS::ftruncate(const CHAR *path, off_t offset, struct fuse_file_info
     bson::OID oid;
     struct timeval tval;    
     BSONObj record;
-    
+    	
     PD_LOG(PDDEBUG, "Called: ftruncate(), path:%s, offset:%d", path, offset);
     
     lh = (lobHandle *)fi->fh;
