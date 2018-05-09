@@ -194,7 +194,6 @@ namespace sequoiafs
         }
         INT64 getDirIno(sdbCollection *sysMetaCl, string dirname, INT64 pino); 
         INT64 getDirPIno(sdbCollection *sysMetaCl, CHAR *pathStr, string *basePath);
-        INT32 getCSCLName();
         void getCoordHost();
         INT32 writeMapHistory(const CHAR *hosts); 
         INT32 initMetaCSCL(sdb *db, const string csName, const string clName, const CHAR *idxName, BOOLEAN createIndex);
@@ -202,8 +201,6 @@ namespace sequoiafs
     private:
         INT32 doSetDirNodeAttr(sdbCollection &cl, struct dirMetaNode &dirNode);
         INT32 doSetFileNodeAttr(sdbCollection &cl, struct fileMetaNode &fileNode);
-        INT32 parseCollection(const string collection, string *cs, string *cl);  
-
         INT32 getAndUpdateID(sdbCollection *cl, UINT64 *sequenceId);
         INT32 InitMetaID(sdb *db);
         INT32 do_access(struct stat *stbuf);

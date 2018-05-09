@@ -68,6 +68,10 @@
 #define SDB_SEQUOIAFS_USER_DEFAULT_NAME "sdbadmin"
 #define SDB_SEQUOIAFS_USER_DEFAULT_PASSWD "sdbadmin"
 
+const string SEQUOIAFS_META_CS = "sequoiafs";
+const string SEQUOIAFS_META_DIR_SUFFIX = "_dir";
+const string SEQUOIAFS_META_FILE_SUFFIX = "_file";
+
 namespace sequoiafs
 {
     class _sequoiafsOptionMgr : public engine::_pmdCfgRecord
@@ -77,7 +81,7 @@ namespace sequoiafs
             virtual ~_sequoiafsOptionMgr(){}
 
             INT32 init(INT32 argc, CHAR **argv, vector<string> *options4fuse);
-
+            INT32 save();
             void setSvcName(const CHAR *svcName);
             PDLEVEL getDiaglogLevel()const;
             const CHAR *getCfgFileName()const{return _cfgFileName;}
@@ -91,6 +95,7 @@ namespace sequoiafs
             const CHAR *getMetaDirCL()const{return _metaDirCollection;}   
             const INT32 getCacheSize()const{return _cacheSize;}
             CHAR *getDiaglogPath(){return _diagPath;}
+			INT32 parseCollection(const string collection, string *cs, string *cl);
             
 
         protected:
@@ -102,7 +107,9 @@ namespace sequoiafs
             CHAR _passwd[OSS_MAX_PATHSIZE + 1];    
             CHAR _collection[OSS_MAX_PATHSIZE + 1];  
             CHAR _metaFileCollection[OSS_MAX_PATHSIZE + 1];   
-            CHAR _metaDirCollection[OSS_MAX_PATHSIZE + 1];    
+            CHAR _metaDirCollection[OSS_MAX_PATHSIZE + 1]; 
+            CHAR _metaFileDefaultCollection[OSS_MAX_PATHSIZE + 1];   
+            CHAR _metaDirDefaultCollection[OSS_MAX_PATHSIZE + 1];  			
             INT32 _connectionNum; 
             INT32 _cacheSize;  
             CHAR _cfgPath[OSS_MAX_PATHSIZE + 1];

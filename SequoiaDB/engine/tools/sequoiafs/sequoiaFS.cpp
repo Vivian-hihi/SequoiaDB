@@ -43,9 +43,6 @@
 #include "ossVer.h"
 
 #define SEQUOIAFS_LOG_DIR "sequoiafslog"
-const string SEQUOIAFS_META_CS = "sequoiafs";
-const string SEQUOIAFS_META_DIR_SUFFIX = "_dir";
-const string SEQUOIAFS_META_FILE_SUFFIX = "_file";
 const string SEQUOIAFS_META_MAP_AUDIT_CL= "maphistory";
 const string SEQUOIAFS_META_ID_CL = "sequenceid";
 
@@ -348,7 +345,7 @@ INT32 buildDialogPath(CHAR *diaglogPath, CHAR *diaglogPathFromCmd, UINT32 bufSiz
         goto error;
     }
     
-    logPath = (ossStrcmp(diaglogPathFromCmd, "") != 0) ? currentPath :  diaglogPathFromCmd; 
+    logPath = (ossStrcmp(diaglogPathFromCmd, "") == 0) ? currentPath :  diaglogPathFromCmd; 
     //./diaglog/sequoiafs.log
     rc = engine::utilBuildFullPath(logPath, PMD_OPTION_DIAG_PATH, OSS_MAX_PATHSIZE, diaglogPath);
     if(rc)
@@ -463,35 +460,6 @@ error:
     goto done;
 }
 
-INT32 sequoiaFS::parseCollection(const string collection, string *cs, string *cl)
-{
-    INT32 rc = SDB_OK;
-    string clFullName;
-    size_t is_index = 0;
-    
-    clFullName = collection;
-    
-    is_index = clFullName.find('.');
-    if(is_index != std::string::npos)
-    {
-        *cl = clFullName.substr(is_index + 1);
-        *cs = clFullName.substr(0, is_index);
-    }
-
-    else
-    {   
-        rc = SDB_INVALIDARG;
-        ossPrintf("The input collection's pattern is wrong(error=%d), collecion:%s, exit."OSS_NEWLINE, rc, clFullName.c_str());  
-        goto error;
-    }
-    
-done:
-    return rc;
-error:
-    goto done;
-
-}
-
 void sequoiaFS::getCoordHost()
 {
     string hosts;
@@ -514,72 +482,6 @@ void sequoiaFS::getCoordHost()
         }
     }
     
-}
-
-INT32 sequoiaFS::getCSCLName()
-{
-    INT32 rc = SDB_OK;   
-    string clFullName;
-    INT64 hash = 1;
-    stringstream ss;
-
-    if("" == _collection)
-    {
-        rc = -1;
-        ossPrintf("The input mounted collection cannot be null, exit."OSS_NEWLINE);        
-        goto error;
-    }
-    
-    rc = parseCollection(_collection, &_csName, &_clName);
-    if(SDB_OK != rc)
-    {
-        goto error;
-    }
-
-    if(ossStrcmp(_optionMgr.getMetaFileCL(), "") != 0)
-    {
-        rc = parseCollection(_optionMgr.getMetaFileCL(), &_sysFileMetaCSName, &_sysFileMetaCLName);
-        if(SDB_OK != rc)
-        {
-            goto error;
-        }    
-        _sysFileMetaCLFullName = _sysFileMetaCSName + "." + _sysFileMetaCLName;
-    }    
-    
-    else
-    {
-        _sysFileMetaCSName = SEQUOIAFS_META_CS;      
-        hash = name_hash(_collection.c_str());
-        ss.str("");
-        ss << hash;
-        _sysFileMetaCLName = _clName.substr(0, 32) + SEQUOIAFS_META_FILE_SUFFIX + ss.str();
-        _sysFileMetaCLFullName = _sysFileMetaCSName + "." + _sysFileMetaCLName;
-        
-    }  
-
-    if(ossStrcmp(_optionMgr.getMetaDirCL(), "") != 0)
-    {
-        rc = parseCollection(_optionMgr.getMetaDirCL(), &_sysDirMetaCSName, &_sysDirMetaCLName);
-        if(SDB_OK != rc)
-        {
-            goto error;
-        }    
-        _sysDirMetaCLFullName = _sysDirMetaCSName + "." + _sysDirMetaCLName;
-    }      
-    else
-    {
-        _sysDirMetaCSName = SEQUOIAFS_META_CS;
-        hash = name_hash(_collection.c_str());
-        ss.str("");
-        ss << hash;
-        _sysDirMetaCLName = _clName.substr(0, 32) + SEQUOIAFS_META_DIR_SUFFIX + ss.str();
-        _sysDirMetaCLFullName = _sysDirMetaCSName + "." + _sysDirMetaCLName;
-    }
-    
-done:        
-    return rc;
-error:
-    goto done;
 }
 
 INT32 sequoiaFS::initMetaCSCL(sdb *db, const string csName, const string clName, const CHAR *idxName, BOOLEAN createIndex)
@@ -912,12 +814,21 @@ INT32 sequoiaFS::init(INT32 argc, CHAR **argv, vector<string> *options4fuse)
         goto error;
     }
 
-    rc = getCSCLName();
-    if(SDB_OK != rc)
-    {
-        goto error;
-    }    
+	_sysFileMetaCLFullName = optionMgr->getMetaFileCL();
+	_sysDirMetaCLFullName = optionMgr->getMetaDirCL();
 
+	rc = optionMgr->parseCollection(_sysDirMetaCLFullName, &_sysDirMetaCSName, &_sysDirMetaCLName);
+	if(SDB_OK != rc)
+    {
+		goto error;
+	}
+	
+	rc = optionMgr->parseCollection(_sysFileMetaCLFullName, &_sysFileMetaCSName, &_sysFileMetaCLName);
+	if(SDB_OK != rc)
+    {
+		goto error;
+	}
+	
     rc = initMetaCSCL(db, _sysDirMetaCSName, _sysDirMetaCLName, idxName, TRUE);
     if(SDB_OK != rc)
     {
@@ -948,6 +859,7 @@ INT32 sequoiaFS::init(INT32 argc, CHAR **argv, vector<string> *options4fuse)
         goto error;  
     } 
 
+    rc = optionMgr->save();
     capacity = optionMgr->getCacheSize() * 1024 * 1024 / sizeof(struct dirMetaNode);
     //5. init lru cache
     InitLruCace(capacity);

@@ -42,6 +42,69 @@
 using namespace engine;
 using namespace sequoiafs;
 
+static size_t name_hash(const char *name)
+{
+    uint64_t hash = 5381;
+    
+	for (; *name; name++)
+    {   
+		hash = hash * 31 + (unsigned char) *name;
+    }
+    return hash;
+}
+
+INT32 _sequoiafsOptionMgr::parseCollection(const string collection, string *cs, string *cl)
+{
+    INT32 rc = SDB_OK;
+    string clFullName;
+    size_t is_index = 0;
+    
+    clFullName = collection;
+    
+    is_index = clFullName.find('.');
+    if(is_index != std::string::npos)
+    {
+        *cl = clFullName.substr(is_index + 1);
+        *cs = clFullName.substr(0, is_index);
+    }
+
+    else
+    {   
+        rc = SDB_INVALIDARG;
+        ossPrintf("The input collection's pattern is wrong(error=%d), collecion:%s, exit."OSS_NEWLINE, rc, clFullName.c_str());  
+        goto error;
+    }
+    
+done:
+    return rc;
+error:
+    goto done;
+
+}
+
+
+INT32 _sequoiafsOptionMgr::save()
+{
+   INT32 rc = SDB_OK ;
+   std::string line ;
+
+   rc = pmdCfgRecord::toString( line, PMD_CFG_MASK_SKIP_UNFIELD ) ;
+   if ( SDB_OK != rc )
+   {
+	  PD_LOG( PDERROR, "Failed to get the line str:%d", rc ) ;
+	  goto error ;
+   }
+
+   rc = utilWriteConfigFile( _cfgFileName, line.c_str(), FALSE ) ;
+   PD_RC_CHECK( rc, PDERROR, "Failed to write config[%s], rc: %d",
+				_cfgFileName, rc ) ;
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 _sequoiafsOptionMgr::_sequoiafsOptionMgr()
 {
     ossMemset(_hosts, 0, sizeof(_hosts));
@@ -52,8 +115,7 @@ _sequoiafsOptionMgr::_sequoiafsOptionMgr()
     ossMemset(_metaDirCollection, 0, sizeof(_metaDirCollection));
     ossMemset(_cfgPath, 0, sizeof(_cfgPath));
     ossMemset(_cfgFileName, 0, sizeof(_cfgFileName));
-    ossMemset(_diagPath, 0, sizeof(_diagPath));
-    ossSnprintf(_cfgPath, sizeof(_cfgPath), "%s/../conf", PMD_CURRENT_PATH);     
+    ossMemset(_diagPath, 0, sizeof(_diagPath));  
 
     _connectionNum = SDB_SEQUOIAFS_CONNECTION_DEFAULT_NUM;
     _cacheSize = SDB_SEQUOIAFS_CACHE_DEFAULT_SIZE;
@@ -88,6 +150,13 @@ INT32 _sequoiafsOptionMgr::init(INT32 argc, CHAR **argv, vector<string> *options
     CHAR cfgTempPath[OSS_MAX_PATHSIZE + 1] = {0};
     const CHAR *tempPath;
     UINT32 i = 0;
+    INT64 hash = 1;
+    stringstream ss;
+	string tempStr;
+	string tempCSStr;
+	string tempCLStr;
+	string tempDirStr;
+	string tempFileStr;
     namespace po = boost::program_options;
 
     ossSnprintf(cfgTempPath, sizeof(cfgTempPath), "Usage:%s mountpoint [options]\n\nCommand options", argv[0]);
@@ -192,8 +261,25 @@ INT32 _sequoiafsOptionMgr::init(INT32 argc, CHAR **argv, vector<string> *options
         rc = SDB_PMD_VERSION_ONLY;
         goto done;
     }  
+
+    if(vmFromCmd.count(SDB_SEQUOIAFS_COLLECTION))
+    {    
+		tempStr = vmFromCmd[SDB_SEQUOIAFS_COLLECTION].as<string>();
+        hash = name_hash(tempStr.c_str());
+        ss.str("");
+        ss << hash;
+		rc = parseCollection(tempStr, &tempCSStr, &tempCLStr);
+		if(SDB_OK != rc)
+	    {
+			goto error;
+		}
+        tempFileStr= SEQUOIAFS_META_CS + "." + tempCLStr.substr(0, 32) + SEQUOIAFS_META_FILE_SUFFIX + ss.str();
+		ossSnprintf(_metaFileDefaultCollection, sizeof(_metaFileCollection), "%s", tempFileStr.c_str());
+		tempDirStr = SEQUOIAFS_META_CS + "." + tempCLStr.substr(0, 32) + SEQUOIAFS_META_DIR_SUFFIX + ss.str();
+		ossSnprintf(_metaDirDefaultCollection, sizeof(_metaDirCollection), "%s", tempDirStr.c_str());
+    }
     
-    tempPath = (vmFromCmd.count(SDB_SEQUOIAFS_CONF_PATH)) ? (vmFromCmd[SDB_SEQUOIAFS_CONF_PATH].as<string>().c_str()) : _cfgPath;
+    tempPath = (vmFromCmd.count(SDB_SEQUOIAFS_CONF_PATH)) ? (vmFromCmd[SDB_SEQUOIAFS_CONF_PATH].as<string>().c_str()) : PMD_CURRENT_PATH;
     ossMemset(cfgTempPath, 0, sizeof(cfgTempPath));
     cfgPath = ossGetRealPath(tempPath, cfgTempPath, OSS_MAX_PATHSIZE);
     if(!cfgPath)
@@ -263,9 +349,9 @@ INT32 _sequoiafsOptionMgr::doDataExchange(pmdCfgExchange *pEX)
     rdxString(pEX, SDB_SEQUOIAFS_COLLECTION, _collection, sizeof(_collection), TRUE, PMD_CFG_CHANGE_FORBIDDEN, "");
     rdvNotEmpty(pEX, _collection);    
     //--metafilecollection
-    rdxString(pEX, SDB_SEQUOIAFS_META_FILE_CL, _metaFileCollection, sizeof(_metaFileCollection), FALSE, PMD_CFG_CHANGE_FORBIDDEN, "");
+    rdxString(pEX, SDB_SEQUOIAFS_META_FILE_CL, _metaFileCollection, sizeof(_metaFileCollection), FALSE, PMD_CFG_CHANGE_FORBIDDEN, _metaFileDefaultCollection);
     //--metadircollection
-    rdxString(pEX, SDB_SEQUOIAFS_META_DIR_CL, _metaDirCollection, sizeof(_metaDirCollection), FALSE, PMD_CFG_CHANGE_FORBIDDEN, "");    
+    rdxString(pEX, SDB_SEQUOIAFS_META_DIR_CL, _metaDirCollection, sizeof(_metaDirCollection), FALSE, PMD_CFG_CHANGE_FORBIDDEN, _metaDirDefaultCollection);    
 
     //--connectionnum
     rdxInt(pEX, SDB_SEQUOIAFS_CONNECTION_NUM, _connectionNum, FALSE, PMD_CFG_CHANGE_FORBIDDEN, SDB_SEQUOIAFS_CONNECTION_DEFAULT_NUM);
@@ -285,7 +371,7 @@ INT32 _sequoiafsOptionMgr::doDataExchange(pmdCfgExchange *pEX)
     rdxPath(pEX, SDB_SEQUOIAFS_DIAGPATH, _diagPath, sizeof(_diagPath), FALSE, PMD_CFG_CHANGE_FORBIDDEN, PMD_CURRENT_PATH);
     //--diagnum
     rdxInt(pEX, SDB_SEQUOIAFS_DIAGNUM, _diagnum, FALSE, PMD_CFG_CHANGE_RUN, PD_DFT_FILE_NUM);
-    
+	rdvMinMax( pEX, _diagnum, PD_MIN_FILE_NUM, OSS_SINT32_MAX, TRUE ) ;    
     return getResult();
 }
 
