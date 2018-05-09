@@ -682,7 +682,7 @@
                {
                   var sql = 'CREATE TABLE ' + addQuotes( formVal1['tbName'] ) + ' ( ' ;
                }
-               var primaryKey = ',constraint ' + formVal1['tbName'] ;
+               var primaryKey = formVal1['tbName'] ;
                var primaryKey2 = ' primary key (' ;
                $.each( formVal2['fields'], function( index, fieldInfo ){
                   var subSql = '' ;
@@ -743,7 +743,7 @@
                //判断是否有主键
                if( primaryKey2.length > 14 )
                {
-                  sql = sql + primaryKey + primaryKey2 + ') )' ;
+                  sql = sql + ',constraint ' + addQuotes( primaryKey ) + primaryKey2 + ') )' ;
                }
                else
                {
