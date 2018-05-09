@@ -561,6 +561,8 @@ namespace engine
                goto done ;
             }
 
+            _repl->setLastConsultTick( pmdAcquireGlobalID() ) ;
+
             /// now we are sure the point of rollback exists.
             /// begin to rollback.
             while ( TRUE )
@@ -1104,6 +1106,7 @@ namespace engine
       _repl = sdbGetReplCB() ;
 
       _lastProcRequestID = 0 ;
+      _dbTick = pmdAcquireGlobalID() ;
 
       _info._info.setNice( SCHED_NICE_MIN ) ;
 
@@ -1377,6 +1380,13 @@ namespace engine
 
       if ( DPS_INVALID_LSN_OFFSET == req->next.offset )
       {
+         rc = SDB_CLS_SYNC_FAILED ;
+         goto done ;
+      }
+
+      if ( _repl->getLastConsultTick() > _dbTick )
+      {
+         _dbTick = pmdAcquireGlobalID() ;
          rc = SDB_CLS_SYNC_FAILED ;
          goto done ;
       }
