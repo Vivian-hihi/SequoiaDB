@@ -1,29 +1,29 @@
 {
    "route": [
       {
-         "path": "/Data/OLTP-Database/Index",
+         "path": "/Data/PostgreSQL/Database/Index",
          "options": {
-            "templateUrl": "./app/template/Data/OLTP/Database/Index.html",
+            "templateUrl": "./app/template/Data/PostgreSQL/Database/Index.html",
             "resolve": [
-               "./app/controller/Data/OLTP/Database/Index.js"
+               "./app/controller/Data/PostgreSQL/Database/Index.js"
             ]
          }
       },
       {
-         "path": "/Data/OLTP-Operate/Data",
+         "path": "/Data/PostgreSQL/Operate/Data",
          "options": {
-            "templateUrl": "./app/template/Data/OLTP/Operate/Data.html",
+            "templateUrl": "./app/template/Data/PostgreSQL/Operate/Data.html",
             "resolve": [
-               "./app/controller/Data/OLTP/Operate/Data.js"
+               "./app/controller/Data/PostgreSQL/Operate/Data.js"
             ]
          }
       },
       {
-         "path": "/Data/OLTP-Operate/Structure",
+         "path": "/Data/PostgreSQL/Operate/Structure",
          "options": {
-            "templateUrl": "./app/template/Data/OLTP/Operate/Structure.html",
+            "templateUrl": "./app/template/Data/PostgreSQL/Operate/Structure.html",
             "resolve": [
-               "./app/controller/Data/OLTP/Operate/Structure.js"
+               "./app/controller/Data/PostgreSQL/Operate/Structure.js"
             ]
          }
       }

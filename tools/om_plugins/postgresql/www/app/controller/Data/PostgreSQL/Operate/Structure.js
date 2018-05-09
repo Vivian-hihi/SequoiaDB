@@ -2,41 +2,36 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Data.OLTP.Structure.Ctrl', function( $scope, $location, $compile, SdbFunction, SdbRest, SdbSwap, SdbSignal ){
+   sacApp.controllerProvider.register( 'Data.PostgreSQL.Structure.Ctrl', function( $scope, $location, $compile, SdbFunction, SdbRest, SdbSwap, SdbSignal ){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       $scope.ModuleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
-      SdbSwap.dbName = SdbFunction.LocalData( 'OltpDbName' ) ;
-      SdbSwap.tbName = SdbFunction.LocalData( 'OltpTbName' ) ;
-      if( clusterName == null || moduleType != 'sequoiasql-oltp' || $scope.ModuleName == null || SdbSwap.tbName == null || SdbSwap.dbName == null )
+      SdbSwap.dbName = SdbFunction.LocalData( 'PgsqlDbName' ) ;
+      SdbSwap.tbName = SdbFunction.LocalData( 'PgsqlTbName' ) ;
+      if( clusterName == null || moduleType != 'sequoiapostgresql' || $scope.ModuleName == null || SdbSwap.tbName == null || SdbSwap.dbName == null )
       {
          $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return;
       }
       $scope.FullName   = SdbSwap.dbName + '.' + SdbSwap.tbName ;
-      SdbSwap.tbType    = SdbFunction.LocalData( 'OltpTbType' ) ;
+      SdbSwap.tbType    = SdbFunction.LocalData( 'PgsqlTbType' ) ;
       $scope.PrimaryKey = '' ;
 
       //获取字段信息
       $scope.QueryTableStruct = function(){
-         var sql = sprintf('SELECT \
-                   col.ordinal_position, \
-                   col.column_name, \
-                   col.data_type, \
-                   col.character_maximum_length, \
-                   col.numeric_precision, \
-                   col.numeric_scale, \
-                   col.is_nullable, \
-                   col.column_default, \
-                   des.description \
+         var sql = sprintf("SELECT \
+                   ordinal_position, \
+                   column_name, \
+                   data_type, \
+                   character_maximum_length, \
+                   numeric_precision, \
+                   numeric_scale, \
+                   is_nullable, \
+                   column_default \
                    FROM \
-                   information_schema.columns col LEFT JOIN pg_description des \
-                   ON col.table_name::regclass = des.objoid \
-                   AND col.ordinal_position = des.objsubid \
+                   information_schema.columns \
                    WHERE \
-                   table_name = \'?\' \
-                   ORDER BY \
-                   ordinal_position;', SdbSwap.tbName ) ;
+                   table_name = '?'", SdbSwap.tbName ) ;
          var data = { 'Sql': sql, 'DbName': SdbSwap.dbName } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( fieldList ){
@@ -301,7 +296,7 @@
          $scope.Components.Confirm.isShow = true ;
          $scope.Components.Confirm.okText = $scope.pAutoLanguage( '确定' ) ;
          $scope.Components.Confirm.ok = function(){
-            var sql = sprintf( 'alter table ? drop constraint ?', addQuotes( SdbSwap.tbName ), $scope.PrimaryKey ) ;
+            var sql = sprintf( 'alter table ? drop constraint ?', addQuotes( SdbSwap.tbName ), addQuotes( $scope.PrimaryKey ) ) ;
             execSql( sql ) ;
             $scope.PrimaryKey = '' ;
             $scope.Components.Confirm.isShow = false ;
@@ -549,7 +544,7 @@
    } ) ;
 
    //表格 控制器
-   sacApp.controllerProvider.register( 'Data.OLTP.Structure.Table.Ctrl', function( $scope, SdbSwap, SdbSignal ){
+   sacApp.controllerProvider.register( 'Data.PostgreSQL.Structure.Table.Ctrl', function( $scope, SdbSwap, SdbSignal ){
       //表格
       $scope.GridTable = {
          'title': {

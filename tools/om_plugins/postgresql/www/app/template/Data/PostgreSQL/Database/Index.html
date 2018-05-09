@@ -1,4 +1,4 @@
-<div ng-controller="Data.OLTP.Database.Ctrl" style="padding:10px 0;" ng-container="{}">
+<div ng-controller="Data.PostgreSQL.Database.Ctrl" style="padding:10px 0;" ng-container="{}">
    <div class="relativeBox" style="padding-left:15px;" ng-container="{}">
       <div class="underlineTab" style="" ng-container="{height:50,offsetX:-10}">
          <ul class="left">
@@ -42,7 +42,7 @@
             </div>
          </div>
       </div>
-      <div class="pull-left" ng-controller="Data.OLTP.Database.Window.Ctrl" ng-container="{width:270,offsetY:-50}" style="font-size:90%;">
+      <div class="pull-left" ng-controller="Data.PostgreSQL.Database.Window.Ctrl" ng-container="{width:270,offsetY:-50}" style="font-size:90%;">
          <div ng-windows="form as CreateTableWindow.config" windows-callback="CreateTableWindow.callback">
             <div form-create para="form['Form1']"></div>
             <div form-create para="form['Form2']"></div>

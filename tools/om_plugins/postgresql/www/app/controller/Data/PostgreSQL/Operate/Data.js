@@ -2,14 +2,14 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Data.OLTP.Data.Ctrl', function( $scope, $location, SdbSignal, SdbSwap, SdbFunction, SdbRest ){
+   sacApp.controllerProvider.register( 'Data.PostgreSQL.Data.Ctrl', function( $scope, $location, SdbSignal, SdbSwap, SdbFunction, SdbRest ){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       $scope.ModuleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
-      SdbSwap.dbName = SdbFunction.LocalData( 'OltpDbName' ) ;
-      SdbSwap.tbName = SdbFunction.LocalData( 'OltpTbName' ) ;
-      SdbSwap.tbType = SdbFunction.LocalData( 'OltpTbType' ) ;
-      if( clusterName == null || moduleType != 'sequoiasql-oltp' || $scope.ModuleName == null || SdbSwap.dbName == null || SdbSwap.tbName == null )
+      SdbSwap.dbName = SdbFunction.LocalData( 'PgsqlDbName' ) ;
+      SdbSwap.tbName = SdbFunction.LocalData( 'PgsqlTbName' ) ;
+      SdbSwap.tbType = SdbFunction.LocalData( 'PgsqlTbType' ) ;
+      if( clusterName == null || moduleType != 'sequoiapostgresql' || $scope.ModuleName == null || SdbSwap.dbName == null || SdbSwap.tbName == null )
       {
          $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return;
@@ -200,7 +200,7 @@
    } ) ;
 
    //操作 控制器
-   sacApp.controllerProvider.register( 'Data.OLTP.Data.Operate.Ctrl', function( $scope, $location, SdbSwap, SdbSignal, SdbRest ){
+   sacApp.controllerProvider.register( 'Data.PostgreSQL.Data.Operate.Ctrl', function( $scope, $location, SdbSwap, SdbSignal, SdbRest ){
       
       //跳过记录数
       SdbSwap.offset = 0 ;
@@ -287,7 +287,7 @@
          if( fieldList.length == 0 )
          {
             _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "当前数据表没有字段，无法进行该操作，是否前往表结构页面？" ), $scope.pAutoLanguage( '确定' ), function(){
-               $location.path( '/Data/OLTP-Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
+               $location.path( '/Data/PostgreSQL/Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
             } ) ;
          }
          else
@@ -551,7 +551,7 @@
          if( fieldList.length == 0 )
          {
             _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "当前数据表没有字段，无法进行该操作，是否前往表结构页面？" ), $scope.pAutoLanguage( '确定' ), function(){
-               $location.path( '/Data/OLTP-Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
+               $location.path( '/Data/PostgreSQL/Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
             } ) ;
          }
          else
@@ -800,7 +800,7 @@
          if( fieldList.length == 0 )
          {
             _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "当前数据表没有字段，无法进行该操作，是否前往表结构页面？" ), $scope.pAutoLanguage( '确定' ), function(){
-               $location.path( '/Data/OLTP-Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
+               $location.path( '/Data/PostgreSQL/Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
             } ) ;
          }
          else
@@ -881,7 +881,7 @@
          if( fieldList.length == 0 )
          {
             _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "当前数据表没有字段，无法进行该操作，是否前往表结构页面？" ), $scope.pAutoLanguage( '确定' ), function(){
-               $location.path( '/Data/OLTP-Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
+               $location.path( '/Data/PostgreSQL/Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
             } ) ;
          }
          else
@@ -1401,7 +1401,7 @@
    } ) ;
 
    //结果栏
-   sacApp.controllerProvider.register( 'Data.OLTP.Data.Result.Ctrl', function( $scope, SdbSignal ){
+   sacApp.controllerProvider.register( 'Data.PostgreSQL.Data.Result.Ctrl', function( $scope, SdbSignal ){
 
       SdbSignal.on( 'update_result', function( result ){
          $scope.ExecRc = result['rc'] ;
@@ -1411,7 +1411,7 @@
    } ) ;
 
    //sql语句输入框
-   sacApp.controllerProvider.register( 'Data.OLTP.Data.InputBox.Ctrl', function( $scope, SdbSwap, SdbSignal ){
+   sacApp.controllerProvider.register( 'Data.PostgreSQL.Data.InputBox.Ctrl', function( $scope, SdbSwap, SdbSignal ){
       
       $scope.SqlCommand = sprintf( 'SELECT * FROM ? LIMIT 30', addQuotes( SdbSwap.tbName ) ) ;
       
@@ -1435,7 +1435,7 @@
    } ) ;
 
    //表格
-   sacApp.controllerProvider.register( 'Data.OLTP.Data.Table.Ctrl', function( $scope, SdbFunction, SdbSwap, SdbSignal ){
+   sacApp.controllerProvider.register( 'Data.PostgreSQL.Data.Table.Ctrl', function( $scope, SdbFunction, SdbSwap, SdbSignal ){
       
       var isFirst = true ;
       //临时存查询结果，选择字段时使用

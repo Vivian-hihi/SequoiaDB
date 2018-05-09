@@ -1,14 +1,14 @@
-<div style="padding:10px 15px;" ng-controller="Data.OLTP.Structure.Ctrl" ng-container="{}">
+<div style="padding:10px 15px;" ng-controller="Data.PostgreSQL.Structure.Ctrl" ng-container="{}">
    <div class="underlineTab" ng-container="{height:50}">
       <ul class="right">
          <li class="text Ellipsis" style="width:350px;">
-            <b><a class="linkButton" href="#/Data/OLTP-Database/Index">{{ModuleName}}</a> <span style="font-size:80%; color:#666;">></span> {{FullName}}</b>
+            <b><a class="linkButton" href="#/Data/PostgreSQL/Database/Index">{{ModuleName}}</a> <span style="font-size:80%; color:#666;">></span> {{FullName}}</b>
          </li>
          <li class="active">
-            <a href="#/Data/OLTP-Operate/Structure">{{pAutoLanguage("表结构")}}</a>
+            <a href="#/Data/PostgreSQL/Operate/Structure">{{pAutoLanguage("表结构")}}</a>
          </li>
          <li>
-            <a href="#/Data/OLTP-Operate/Data">{{pAutoLanguage("数据")}}</a>
+            <a href="#/Data/PostgreSQL/Operate/Data">{{pAutoLanguage("数据")}}</a>
          </li>
       </ul>
    </div>
@@ -37,7 +37,7 @@
       <button class="topBtn" ng-class="{0:'disabled'}[PrimaryKey.length]" ng-disabled="PrimaryKey.length==0" ng-click="ShowDropPrimary()"><i class="fa fa-remove"></i> {{pAutoLanguage("移除主键")}}</button>
       <div class="clear-float"></div>
    </div>
-   <div ng-container="{marginTop:10,offsetY:-93,offsetX:-15}" ng-controller="Data.OLTP.Structure.Table.Ctrl" ng-table="GridTable['options']" table-title="GridTable['title']" table-content="info in GridTable['body']" table-callback="GridTable['callback']">
+   <div ng-container="{marginTop:10,offsetY:-93,offsetX:-15}" ng-controller="Data.PostgreSQL.Structure.Table.Ctrl" ng-table="GridTable['options']" table-title="GridTable['title']" table-content="info in GridTable['body']" table-callback="GridTable['callback']">
       <div class="Ellipsis" table-key="index">{{$index+1}}</div>
       <div class="Ellipsis" table-key="column_name">{{info.column_name}}</div>
       <div class="Ellipsis" table-key="operation">

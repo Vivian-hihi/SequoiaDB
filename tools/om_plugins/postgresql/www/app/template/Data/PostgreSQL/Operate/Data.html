@@ -1,18 +1,18 @@
-<div style="padding:10px 15px;" ng-controller="Data.OLTP.Data.Ctrl" ng-container="{}">
+<div style="padding:10px 15px;" ng-controller="Data.PostgreSQL.Data.Ctrl" ng-container="{}">
    <div class="underlineTab" ng-container="{height:50}">
       <ul class="right">
          <li class="text Ellipsis" style="width:350px;">
-            <b><a class="linkButton" href="#/Data/OLTP-Database/Index">{{ModuleName}}</a> <span style="font-size:80%; color:#666;">></span> {{FullName}}</b>
+            <b><a class="linkButton" href="#/Data/PostgreSQL/Database/Index">{{ModuleName}}</a> <span style="font-size:80%; color:#666;">></span> {{FullName}}</b>
          </li>
          <li>
-            <a href="#/Data/OLTP-Operate/Structure">{{pAutoLanguage("表结构")}}</a>
+            <a href="#/Data/PostgreSQL/Operate/Structure">{{pAutoLanguage("表结构")}}</a>
          </li>
          <li class="active">
-            <a href="#/Data/OLTP-Operate/Data">{{pAutoLanguage("数据")}}</a>
+            <a href="#/Data/PostgreSQL/Operate/Data">{{pAutoLanguage("数据")}}</a>
          </li>
       </ul>
    </div>
-   <div ng-controller="Data.OLTP.Data.Operate.Ctrl" ng-container="{height:25}">
+   <div ng-controller="Data.PostgreSQL.Data.Operate.Ctrl" ng-container="{height:25}">
       <div ng-windows="form as QueryWindow.config" windows-callback="QueryWindow.callback">
          <div form-create para="form"></div>
       </div>
@@ -63,10 +63,10 @@
 
       <div class="clear-float"></div>
    </div>
-   <div class="result Ellipsis" ng-controller="Data.OLTP.Data.Result.Ctrl" ng-class="{true:'success',false:'failed'}[ExecRc]" ng-container="{height:40,marginTop:12}">
+   <div class="result Ellipsis" ng-controller="Data.PostgreSQL.Data.Result.Ctrl" ng-class="{true:'success',false:'failed'}[ExecRc]" ng-container="{height:40,marginTop:12}">
       {{ExecResult}}
    </div>
-   <div ng-controller="Data.OLTP.Data.InputBox.Ctrl">
+   <div ng-controller="Data.PostgreSQL.Data.InputBox.Ctrl">
       <div style="margin-top:10px;height:95px;">
          <textarea class="form-control" style="height:95px;line-height:initial;font-family:inherit;" rows="5" spellcheck="false" ng-model="SqlCommand"></textarea>
       </div>
@@ -76,7 +76,7 @@
    </div>
 
   
-   <div ng-container="{marginTop:10,offsetY:-275}" ng-controller="Data.OLTP.Data.Table.Ctrl">
+   <div ng-container="{marginTop:10,offsetY:-275}" ng-controller="Data.PostgreSQL.Data.Table.Ctrl">
 
       <!--查看单条记录弹窗-->
       <div ng-windows="list as DataWindow.config" windows-callback="DataWindow.callback">

@@ -3,11 +3,11 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //主控制器
-   sacApp.controllerProvider.register( 'Data.OLTP.Database.Ctrl', function( $scope, $location, SdbFunction, $timeout, SdbRest, SdbPromise, SdbSignal, SdbSwap, Loading ){
+   sacApp.controllerProvider.register( 'Data.PostgreSQL.Database.Ctrl', function( $scope, $location, SdbFunction, $timeout, SdbRest, SdbPromise, SdbSignal, SdbSwap, Loading ){
       var clusterName    = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType     = SdbFunction.LocalData( 'SdbModuleType' ) ;
       $scope.ModuleName  = SdbFunction.LocalData( 'SdbModuleName' ) ;
-      if( clusterName == null || moduleType != 'sequoiasql-oltp' || $scope.ModuleName == null )
+      if( clusterName == null || moduleType != 'sequoiapostgresql' || $scope.ModuleName == null )
       {
          $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return;
@@ -138,7 +138,7 @@
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( result ){
                var url = $location.url() ;
-               if( url.indexOf( '/Data/OLTP-Database/Index' ) > -1 )
+               if( url.indexOf( '/Data/PostgreSQL/Database/Index' ) > -1 )
                {
                   if( result.length > 0 )
                   {
@@ -150,7 +150,7 @@
             },
             'complete': function(){
                var url = $location.url() ;
-               if( url.indexOf( '/Data/OLTP-Database/Index' ) > -1 )
+               if( url.indexOf( '/Data/PostgreSQL/Database/Index' ) > -1 )
                {
                   ++SdbSwap.counter ;
                   if( SdbSwap.counter2 == SdbSwap.counter )
@@ -352,15 +352,15 @@
 
       //进入数据操作页面
       $scope.GotoData = function( tableName, tableType ){
-         SdbFunction.LocalData( 'OltpDbName', $scope.CurrentDbName ) ;
-         SdbFunction.LocalData( 'OltpTbName', tableName ) ;
-         SdbFunction.LocalData( 'OltpTbType', tableType ) ;
-         $location.path( '/Data/OLTP-Operate/Data' ).search( { 'r': new Date().getTime() } ) ;
+         SdbFunction.LocalData( 'PgsqlDbName', $scope.CurrentDbName ) ;
+         SdbFunction.LocalData( 'PgsqlTbName', tableName ) ;
+         SdbFunction.LocalData( 'PgsqlTbType', tableType ) ;
+         $location.path( '/Data/PostgreSQL/Operate/Data' ).search( { 'r': new Date().getTime() } ) ;
       }
    } ) ;
 
    //弹窗操作控制器
-   sacApp.controllerProvider.register( 'Data.OLTP.Database.Window.Ctrl', function( $scope, $timeout, SdbFunction, SdbSignal, SdbSwap, Loading ){
+   sacApp.controllerProvider.register( 'Data.PostgreSQL.Database.Window.Ctrl', function( $scope, $timeout, SdbFunction, SdbSignal, SdbSwap, Loading ){
       //高度偏移量
       $scope.BoxHeight = { 'offsetY': -149 } ;
       //判断如果是Firefox浏览器的话，调整右侧表格高度

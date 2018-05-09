@@ -2,6 +2,7 @@
    "数据库列表": "Database List",
    "操作": "Operation",
    "创建数据库": "Create Database",
+   "删除数据表": "Drop Table",
    "删除数据库": "Drop Database",
    "创建数据表": "Create Table",
    "表名": "Name",
