@@ -629,8 +629,6 @@
          <fileset dir="${srccode_dir}/driver/php/release" includes="*.so" />
       </copy>
       
-      <touch file="${release_db_dir}/license/license_en.txt"/>
-      <touch file="${release_db_dir}/license/license_zh.txt"/>
       <if>
          <equals arg1="${IS_ENTERPRISE}" arg2="true"/>
          <then>
