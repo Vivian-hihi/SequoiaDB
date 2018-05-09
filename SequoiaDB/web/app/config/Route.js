@@ -1,4 +1,5 @@
 (function(){
+   window.SdbSacName = 'SAC' ;
    window.SdbSacManagerConf.nowRoute = [
       { path: '/Transfer',
         options: {
@@ -375,10 +376,10 @@
            resolve: resolveFun( [ './app/controller/Deploy/ExtendModule/Sdb/Install.js' ] )
         }
       },
-      { path: '/Deploy/OLTP-Mod',
+      { path: '/Deploy/PostgreSQL-Mod',
         options: {
-           templateUrl: './app/template/Deploy/InstallModule/OLTP/Mod.html',
-           resolve: resolveFun( [ './app/controller/Deploy/InstallModule/OLTP/Mod.js' ] )
+           templateUrl: './app/template/Deploy/InstallModule/PostgreSQL/Mod.html',
+           resolve: resolveFun( [ './app/controller/Deploy/InstallModule/PostgreSQL/Mod.js' ] )
         }
       },
       { path: '/Deploy/ZKP-Mod',
