@@ -303,7 +303,9 @@ TEST_F( evalJSTest12525, rgNode12525 )
    ASSERT_EQ( SDB_OK, rc ) << "fail to get rg " << rgName ;
    rc = rg.getMaster( node ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get master node" ;
-   const CHAR* nodeName = node.getNodeName() ;
+   string rgNameStr( rgName ) ;
+   string nodeNameStr( node.getNodeName() ) ;
+   const CHAR* nodeFullName = (rgNameStr + ":" + nodeNameStr).c_str() ;
 
    CHAR code[100] ;
    sprintf( code, "%s%s%s", "db.getRG( \"", rgName, "\" ).getMaster()" ) ;
@@ -317,7 +319,7 @@ TEST_F( evalJSTest12525, rgNode12525 )
    rc = cursor.next( obj ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
    ASSERT_EQ( "SdbNode", obj.getField( "className" ).String() ) << "wrong className" ;
-   ASSERT_EQ( nodeName, obj.getField( "value" ).Obj().getField( "_nodename" ).String() ) 
+   ASSERT_EQ( nodeFullName, obj.getField( "value" ).Obj().getField( "_nodename" ).String() ) 
          << "fail to check result" ;
    rc = cursor.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
