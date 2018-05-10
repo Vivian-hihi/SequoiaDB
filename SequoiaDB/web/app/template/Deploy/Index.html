@@ -121,7 +121,7 @@
                         <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb' || moduleInfo['BusinessType']=='sequoiapostgresql'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
                         <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb' && moduleInfo['BusinessType']!='sequoiapostgresql'">{{moduleInfo['BusinessName']}}</span>
                      </div>
-                     <div class="Ellipsis" style="font-size:90%;color:#666;">{{moduleInfo['BusinessType']}} {{moduleInfo['DeployMod']}}&nbsp;|&nbsp;<span ng-if="moduleInfo['AddtionType'] == 1">{{autoLanguage("添加时间")}}</span><span ng-if="moduleInfo['AddtionType'] == 0">{{autoLanguage("创建时间")}}</span>: {{moduleInfo['Time']['$timestamp'].substr(0,19)}}</div>
+                     <div class="Ellipsis" style="font-size:90%;color:#666;">{{moduleInfo['BusinessType']=='sequoiapostgresql'?'SequoiaPostgreSQL':moduleInfo['BusinessType']}} {{moduleInfo['DeployMod']}}&nbsp;|&nbsp;<span ng-if="moduleInfo['AddtionType'] == 1">{{autoLanguage("添加时间")}}</span><span ng-if="moduleInfo['AddtionType'] == 0">{{autoLanguage("创建时间")}}</span>: {{moduleInfo['Time']['$timestamp'].substr(0,19)}}</div>
                   </div>
                   <div class="clear-float"></div>
                </div>
@@ -268,12 +268,13 @@
             <div class="Ellipsis" table-key="BusinessName">
                <span ng-repeat="moduleInfo in moduleList track by $index">
                   <span ng-repeat="installInfo in moduleInfo['Location'] track by $index" ng-if="hostInfo['HostName']==installInfo['HostName']">
-                     <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a><span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'">{{moduleInfo['BusinessName']}}</span>&nbsp;
+                     <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'||moduleInfo['BusinessType']=='sequoiapostgresql'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
+                     <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'&&moduleInfo['BusinessType']!='sequoiapostgresql'">{{moduleInfo['BusinessName']}}</span>&nbsp;
                   </span>
                </span>
             </div>
             <div table-key="Packages">
-               <span class="Ellipsis badge badge-info ng-binding" style="font-size:90%;margin:3px 4px 3px 0;" ng-repeat="packageInfo in hostInfo['Packages'] track by $index">
+               <span class="Ellipsis badge badge-info ng-binding" style="font-size:90%;margin:3px 4px 3px 0;" ng-repeat="packageInfo in hostInfo['Packages'] track by $index" ng-attr="{'data-desc':packageInfo['Name']}">
                   {{abbreviate(packageInfo['Name'])}}<span ng-if="packageInfo['Version'].length>0">-{{packageInfo['Version']}}</span>
                </span>
             </div>

@@ -2991,6 +2991,7 @@
                      pgsqlList.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
                   } ) ;
                   $scope.CreateRelationWindow['config']['inputList'][4]['valid'] = pgsqlList ;
+                  $scope.CreateRelationWindow['config']['inputList'][4]['value'] = pgsqlList[0]['value'] ;
                },
                'failed': function( errorInfo ){
                   _IndexPublic.createRetryModel( $scope, errorInfo, function(){

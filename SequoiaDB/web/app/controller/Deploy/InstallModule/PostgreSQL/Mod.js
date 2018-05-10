@@ -14,7 +14,7 @@
          $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
-      $scope.stepList = _Deploy.BuildSdbOltpStep( $scope, $location, $scope['Url']['Action'] ) ;
+      $scope.stepList = _Deploy.BuildSdbPgsqlStep( $scope, $location, $scope['Url']['Action'] ) ;
       if( $scope.stepList['info'].length == 0 )
       {
          $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
@@ -95,7 +95,7 @@
                   if( hostInfo['ClusterName'] == clusterName )
                   {
                      $.each( hostInfo['Packages'], function( packageIndex, packageInfo ){
-                        if( packageInfo['Name'] == 'sequoiasql-oltp' )
+                        if( packageInfo['Name'] == 'sequoiapostgresql' )
                         {
                            hostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
                         }
@@ -119,7 +119,7 @@
          $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
       }
 
-      var installOltp = function( installConfig ){
+      var installPgsql = function( installConfig ){
          var data = { 'cmd': 'add business', 'ConfigInfo': JSON.stringify( installConfig ) } ;
          SdbRest.OmOperation( data, {
             'success': function( taskInfo ){
@@ -128,7 +128,7 @@
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  installOltp( installConfig ) ;
+                  installPgsql( installConfig ) ;
                   return true ;
                } ) ;
             }
@@ -221,7 +221,7 @@
             configure['Config'].push( nodeConfig ) ;
          } ) ;
          if( configure )
-            installOltp( configure ) ;
+            installPgsql( configure ) ;
       }
 
    } ) ;
