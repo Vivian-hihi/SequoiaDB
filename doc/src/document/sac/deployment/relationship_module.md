@@ -1,7 +1,7 @@
-关联业务是指使用SequoiaDB业务对接其他类型的业务，目前只支持对接SequoiaSQL-OLTP业务。
+关联业务是指使用SequoiaDB业务对接其他类型的业务，目前只支持对接SequoiaPostgreSQL业务。
 
 > **Note：**  
-> 使用关联业务需要SAC有[SequoiaDB业务](sac/deployment/add_module/config_module.md)以及[SequoiaSQL-OLTP业务](sac/deployment/add_module/install_oltp.md)。
+> 使用关联业务需要SAC有[SequoiaDB业务](sac/deployment/add_module/config_module.md)以及[SequoiaPostgreSQL业务](sac/deployment/add_module/install_oltp.md)。
 
 
 ###创建关联
@@ -21,7 +21,7 @@
 >
 > 数据库：选择关联的数据库名。  
 > 
-> preferedinstance：指定SequoiaSQL-OLTP 访问SequoiaDB 数据节点时，优先连接哪种角色的数据节点，默认为’a’，可输入参数’m’/’s’/’a’/1-7，分别表示master/slave/anyone/node1-node7。
+> preferedinstance：指定SequoiaPostgreSQL 访问SequoiaDB 数据节点时，优先连接哪种角色的数据节点，默认为’a’，可输入参数’m’/’s’/’a’/1-7，分别表示master/slave/anyone/node1-node7。
 >
 > transaction：设置SequoiaDB是否开启事务，默认为off。开启为on。  
 >

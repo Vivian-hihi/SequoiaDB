@@ -3464,9 +3464,9 @@
                         },
                         {
                            "id": 1501736518,
-                           "file": "install_oltp",
-                           "cn": "创建SequoiaSQL-OLTP业务",
-                           "en": "Install oltp"
+                           "file": "install_postgresql",
+                           "cn": "创建SequoiaPostgreSQL业务",
+                           "en": "Install postgresql"
                         }
                      ]
                   },
@@ -3860,9 +3860,9 @@
             },
             {
                "id": 1523182045,
-               "dir": "sequoiasqloltp_data",
-               "cn": "SequoiaSQL-OLTP数据操作",
-               "en": "SequoiaSQL-OLTP Data",
+               "dir": "postgresql_data",
+               "cn": "SequoiaPostgreSQL数据操作",
+               "en": "SequoiaPostgreSQL Data",
                "contents": [
                   {
                      "id": 1520921810,
