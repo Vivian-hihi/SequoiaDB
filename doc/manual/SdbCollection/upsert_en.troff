@@ -73,12 +73,7 @@ according to the parameter "cond", "update" does nothing, but
    occur. When "KeepShardingKey" is set to true, the sharding key
    field is retained.
 .sp 2
-   *  When the partition cl falls on only one group, sharding key
-   is allow to be updated. When the partition cl falls on multiple
-   groups, updating sharding key is not supported in this release.
-   For main cl, updating sharding key of main cl is also not
-   supported. Sub cl's sharding keys are allowed to be updated,
-   only when each sub cl falls on one group.
+   *  Sharding key is not allow to be updated. 
 .SH "Examples"
 
 .sp 2
@@ -238,7 +233,7 @@ of the field "age". Then it returns:
 Supposing that there is a partition cl named "bar" which sharding
 key is { age: 1 }.
 .sp 2
-db.foo.bar.update({$set:{age:1}}, {}, {}, {KeepShardingKey:true})
+db.foo.bar.upsert({$set:{age:1}}, {}, {}, {KeepShardingKey:true})
 .br
 This operation will update records including sharding key, with
 keeping sharding key. Then it returns:

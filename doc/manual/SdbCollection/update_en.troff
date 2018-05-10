@@ -66,12 +66,7 @@ Update records in a collection.
    occur. When "KeepShardingKey" is set to true, the sharding key
    field is retained.
 .sp 2
-   *  When the partition cl falls on only one group, sharding key
-   is allow to be updated. When the partition cl falls on multiple
-   groups, updating sharding key is not supported in this release.
-   For main cl, updating sharding key of main cl is also not
-   supported. Sub cl's sharding keys are allowed to be updated,
-   only when each sub cl falls on one group.
+   *  Sharding key is not allow to be updated.
 .SH "Examples"
 
 .sp 2
