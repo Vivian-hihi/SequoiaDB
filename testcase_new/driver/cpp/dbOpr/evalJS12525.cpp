@@ -303,9 +303,8 @@ TEST_F( evalJSTest12525, rgNode12525 )
    ASSERT_EQ( SDB_OK, rc ) << "fail to get rg " << rgName ;
    rc = rg.getMaster( node ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get master node" ;
-   string rgNameStr( rgName ) ;
-   string nodeNameStr( node.getNodeName() ) ;
-   const CHAR* nodeFullName = (rgNameStr + ":" + nodeNameStr).c_str() ;
+   CHAR nodeFullName[128] ;
+   sprintf( nodeFullName, "%s%s%s", rgName, ":", node.getNodeName() ) ;
 
    CHAR code[100] ;
    sprintf( code, "%s%s%s", "db.getRG( \"", rgName, "\" ).getMaster()" ) ;
