@@ -844,6 +844,10 @@ namespace engine
          SDB_ASSERT( NULL != info->newFunc, "null pointer of newFunc" ) ;
 
          _rtnContextBase* ctx = (*(info->newFunc))( contextId, eduId ) ;
+         if ( NULL == ctx )
+         {
+            return NULL ;
+         }
          SDB_ASSERT( ctx->name() == info->name, "name is wrong" ) ;
          SDB_ASSERT( ctx->getType() == info->type, "type is wrong" ) ;
          return ctx ;
