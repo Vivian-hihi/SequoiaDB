@@ -28,10 +28,10 @@ function queryandupdate()
 		'selector={a:"",b:""}',
 		'returnnew=true',
 		'flag=SDB_QUERY_KEEP_SHARDINGKEY_IN_UPDATE'],
-		[0],
+		[-178],
 		"Error occurs in "+getFuncName() );
 
-	/******check rest return**********/
+	/******check rest return**********//*
 	var rtnExp='{ "errno": 0 }{ "a": 2, "b": 2 }';
 	if(info==rtnExp)
 	{
@@ -41,9 +41,9 @@ function queryandupdate()
 	{
 		println("Error occurs in "+getFuncName()+"\nrest cmd: "+str+"\nreturn: "+info+'\nexpect return: '+rtnExp);
 		throw "rest return";
-	}
+	}*/
 	
-	/******check count is 1**********/
+	/******check count is 1**********//*
 	try
 	{
 		var recNum=varCL.find({a:2, b:2}).count();
@@ -56,7 +56,7 @@ function queryandupdate()
 	catch(e)
 	{
 		throw e;
-	}
+	}*/
 	
 }
 
