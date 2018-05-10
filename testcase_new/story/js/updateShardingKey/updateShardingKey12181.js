@@ -66,4 +66,4 @@ function main() {
     //drop collectionspace in clean
     commDropCS(db, csName, false, "Failed to drop CS.");
 }
-main();
+//main();

@@ -39,4 +39,4 @@ function main()
              "drop colleciton in the end" );
    
 }
-main();
+//main();

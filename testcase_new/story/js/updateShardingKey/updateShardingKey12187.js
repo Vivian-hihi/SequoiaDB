@@ -42,5 +42,5 @@ function main() {
 	commDropCS( db, csName, false, "Failed to drop CS.");
 }
 
-main();
+//main();
 
