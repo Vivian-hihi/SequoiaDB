@@ -267,14 +267,10 @@ namespace engine
       }
       if ( keepShardingKey )
       {
-         if ( hasShardingKey && 1 != _cataPtr->getGroupNum() )
+         if ( hasShardingKey )
          {
-            // num = 0, main cl, not allow sharding key of maincl
-            // num >= 2, cl which has been split, also not allow sharding key
             rc = SDB_UPDATE_SHARD_KEY ;
-            PD_LOG( PDERROR, "When the partition cl falls on two or more groups, "
-                    "or it is a main cl, the update rule don't allow sharding key. "
-                    "rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Sharding key cannot be updated, rc: %d", rc ) ;
             goto error ;
          }
          // can't set isChanged to FALSE, in case it is TRUE
