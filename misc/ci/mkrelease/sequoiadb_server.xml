@@ -539,7 +539,7 @@
         <!--keep variable in both running time and building time-->
         <stringParameter name="enterpriseversion" ask="0" value=""/>
         <stringParameter name="platform"          ask="0" value=""/>
-
+        
         <choiceParameter name="need_read_license">
             <ruleList>
                 <compareValues value1="${installer_ui}" logic="equals" value2="text"/>
@@ -548,7 +548,7 @@
             <default>false</default>
             <cliOptionShow>0</cliOptionShow>
             <explanation></explanation>
-            <description>${msg(Install.Paramers.LicenseRead.License.Information.Part)}</description>
+            <description>${msg(Install.Paramers.LicenseRead.License${enterpriseversion}.Information.Part)}</description>
             <optionList>
                 <option>
                     <text>${msg(Install.Paramers.LicenseRead.Agree.Description)}</text>
