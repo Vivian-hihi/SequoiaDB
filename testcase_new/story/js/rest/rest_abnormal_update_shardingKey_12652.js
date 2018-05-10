@@ -46,10 +46,11 @@ function updateAndCheck()
 	/*****valid hexadecimal 0x00008000*****/		
 	tryCatch(
 		["cmd="+word,"name="+csName+'.'+clName,'updator={$inc:{"a":1,"b":1}}','flag=0x00008000'],
-		[0],
+		[-178],
 		"updateAndCheck: fail to run rest command: " + word );	
 		
    // check	
+   /*
 	try
 	{
 		var size = varCL.count({a:2, b:2});
@@ -61,15 +62,16 @@ function updateAndCheck()
 	catch(e)
 	{
 		throw e;
-	}
+	}*/
 	
 	/*****valid decimal system 32768*****/		
 	tryCatch(
 		["cmd="+word,"name="+csName+'.'+clName,'updator={$inc:{"a":1,"b":1}}','flag=32768'],
-		[0],
+		[-178],
 		"updateAndCheck: fail to run rest command: " + word );	
 		
-   // check	
+   // check
+   /*	
 	try
 	{
 		var size = varCL.count({a:3, b:3});
@@ -81,15 +83,16 @@ function updateAndCheck()
 	catch(e)
 	{
 		throw e;
-	}
+	}*/
 	
 	/*****valid octal number system 100000*****/		
 	tryCatch(
 		["cmd="+word,"name="+csName+'.'+clName,'updator={$inc:{"a":1,"b":1}}','flag=100000'],
-		[0],
+		[-178],
 		"updateAndCheck: fail to run rest command: " + word );	
 		
    // check	
+   /*
 	try
 	{
 		var size = varCL.count({a:4, b:4});
@@ -101,7 +104,7 @@ function updateAndCheck()
 	catch(e)
 	{
 		throw e;
-	}
+	}*/
 			
 	/*****valid 123*****/	
 	tryCatch(

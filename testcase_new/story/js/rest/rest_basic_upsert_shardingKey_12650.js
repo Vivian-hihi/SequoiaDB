@@ -26,10 +26,11 @@ function upsert()
 		cl,
 		'updator={$inc:{a:1, b:1}}',
 		'flag=SDB_QUERY_KEEP_SHARDINGKEY_IN_UPDATE'],
-		[0],
+		[-178],
 		"Error occurs in "+getFuncName());
 	
 	/******check count is 1**********/
+	/*
 	try
 	{
 		var recNum=varCL.find({a:2, b:2}).count();
@@ -43,6 +44,7 @@ function upsert()
 	{
 		throw e;
 	}
+	*/
 }
 
 commDropCL(db,csName,clName,true,true,"drop cl in begin");

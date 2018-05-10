@@ -23,9 +23,9 @@ function updateAndCheck()
 	var word="update";
 	tryCatch(
 		["cmd="+word,"name="+csName+'.'+clName,'updator={$inc:{"a":1,"b":1}}','flag=SDB_QUERY_KEEP_SHARDINGKEY_IN_UPDATE'],
-		[0],
+		[-178],
 		"updateAndCheck: fail to run rest command: " + word );
-	/******check count is 1**********/
+	/******check count is 1**********//*
 	try
 	{
 		var size = varCL.count({a:2, b:2});
@@ -37,7 +37,7 @@ function updateAndCheck()
 	catch(e)
 	{
 		throw e;
-	}
+	}*/
 }
 
 commDropCL(db,csName,clName,true,true,"drop cl in begin");
