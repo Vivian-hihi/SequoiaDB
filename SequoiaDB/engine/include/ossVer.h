@@ -45,8 +45,9 @@
 #define SDB_ENGINE_VERSION_0           0
 #define SDB_ENGINE_VERSION_1           1
 #define SDB_ENGINE_VERSION_2           2
+#define SDB_ENGINE_VERSION_3           3
 
-#define SDB_ENGINE_VERISON_CURRENT     SDB_ENGINE_VERSION_2
+#define SDB_ENGINE_VERISON_CURRENT     SDB_ENGINE_VERSION_3
 
 /*
  *    SequoiaDB Engine Subversion
@@ -66,7 +67,7 @@
 #define SDB_ENGINE_SUBVERSION_13       13
 #define SDB_ENGINE_SUBVERSION_14       14
 
-#define SDB_ENGINE_SUBVERSION_CURRENT  SDB_ENGINE_SUBVERSION_10
+#define SDB_ENGINE_SUBVERSION_CURRENT  SDB_ENGINE_SUBVERSION_0
 
 /*
       SequoiaDB Engine Fix version
