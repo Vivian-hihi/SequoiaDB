@@ -66,7 +66,7 @@ namespace sequoiafs
     };
 
 
-    class DoublyLinkedList 
+    class DoublyLinkedList : public SDBObject
     {
         Node *front, *rear;
         
@@ -86,7 +86,7 @@ namespace sequoiafs
         Node* addDirToHead(int key,const struct dirMetaNode* value);   
     };
 
-    class LRUCache
+    class LRUCache : public SDBObject
     {
         int capacity, size;
         DoublyLinkedList *dirList;

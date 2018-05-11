@@ -110,7 +110,7 @@ namespace sequoiafs
         string symLink;
     };
 
-    class sequoiaFS
+    class sequoiaFS: public SDBObject
     {
     public:
         INT32 init(INT32 argc, CHAR **argv, vector<string> *options4fuse);
