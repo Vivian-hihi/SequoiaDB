@@ -238,11 +238,21 @@ namespace engine
                // pass through
             case SDB_LOB_MODE_TRUNCATE:
                rc = SDB_LOB_IS_IN_USE ;
+               PD_LOG( PDDEBUG, "LOB[%s] is owned by [%lld] in mode[%u] refCount[%d], rc=%d",
+                    lobAccessInfo->getOID().str().c_str(),
+                    lobAccessInfo->getAccessId(),
+                    lobAccessInfo->getRefCount(),
+                    lobAccessInfo->getMode(), rc ) ;
                goto error ;
             case SDB_LOB_MODE_READ:
                if ( SDB_LOB_MODE_READ != mode )
                {
                   rc = SDB_LOB_IS_IN_USE ;
+                  PD_LOG( PDDEBUG, "LOB[%s] is owned by [%lld] in mode[%u] refCount[%d], rc=%d",
+                    lobAccessInfo->getOID().str().c_str(),
+                    lobAccessInfo->getAccessId(),
+                    lobAccessInfo->getRefCount(),
+                    lobAccessInfo->getMode(), rc ) ;
                   goto error ;
                }
                else
@@ -256,6 +266,11 @@ namespace engine
                if ( SDB_LOB_MODE_WRITE != mode )
                {
                   rc = SDB_LOB_IS_IN_USE ;
+                  PD_LOG( PDDEBUG, "LOB[%s] is owned by [%lld] in mode[%u] refCount[%d], rc=%d",
+                    lobAccessInfo->getOID().str().c_str(),
+                    lobAccessInfo->getAccessId(),
+                    lobAccessInfo->getRefCount(),
+                    lobAccessInfo->getMode(), rc ) ;
                   goto error ;
                }
 
