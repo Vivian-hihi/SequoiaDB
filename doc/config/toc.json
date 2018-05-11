@@ -401,33 +401,33 @@
                      "en": "attention"
                   }
                ]
-            },
-            {
-               "id": 1525955869,
-               "dir": "sequoiafs",
-               "cn": "SequoiaFS",
-               "en": "SequoiaFS",
-               "contents": [
-                  {
-                     "id": 1525955897,
-                     "file": "overview",
-                     "cn": "概述",
-                     "en": "Overview"
-                  },
-                  {
-                     "id": 1525955905,
-                     "file": "install_deploy",
-                     "cn": "安装部署",
-                     "en": "Install and Deploy"
-                  },
-                  {
-                     "id": 1525956050,
-                     "file": "usage",
-                     "cn": "使用",
-                     "en": "Usage"
-                  }
-                ]
-            }
+            }            
+        ]
+      },
+      {
+        "id": 1525955869,
+        "dir": "sequoiafs",
+        "cn": "FileSystem引擎",
+        "en": "FileSystem Engine",
+        "contents": [
+          {
+             "id": 1525955897,
+             "file": "overview",
+             "cn": "概述",
+             "en": "Overview"
+          },
+          {
+             "id": 1525955905,
+             "file": "install_deploy",
+             "cn": "安装部署",
+             "en": "Install and Deploy"
+          },
+          {
+             "id": 1525956050,
+             "file": "usage",
+             "cn": "使用",
+             "en": "Usage"
+          }
         ]
       },
       {
