@@ -39,10 +39,10 @@
   ----------------------------------------------------------------------------
   由BitRock InstallBuilder评估本所建立
   
-  欢迎来到 SequoiaSQL MySql Server 安装程序
+  欢迎来到 SequoiaSQL MySQL Server 安装程序
 
   ------------------------------------------------------------
-  请指定 SequoiaSQL MySql Server 将会被安装到的目录
+  请指定 SequoiaSQL MySQL Server 将会被安装到的目录
   安装目录 /opt/sequoiasql/mysql
   ```
 
@@ -67,20 +67,20 @@
 
   ```
   ------------------------------------------------------------
-  设定现在已经准备将 SequoiaSQL MySql Server 安装到您的电脑.
+  设定现在已经准备将 SequoiaSQL MySQL Server 安装到您的电脑.
   您确定要继续? [Y/n]: 
   ```
     
 - 安装完成
 
   ```
-  正在安装 SequoiaSQL MySql Server 于您的电脑中，请稍候。
+  正在安装 SequoiaSQL MySQL Server 于您的电脑中，请稍候。
   安装中
   0% ______________ 50% ______________ 100%
   ########################################
   
   ------------------------------------------------------------
-  安装程序已经完成安装 SequoiaSQL MySql Server 于你的电脑中.
+  安装程序已经完成安装 SequoiaSQL MySQL Server 于你的电脑中.
   ```
 
 ##部署 SequoiaSQL MySQL ##
