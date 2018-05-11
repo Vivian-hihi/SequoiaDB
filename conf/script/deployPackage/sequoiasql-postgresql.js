@@ -16,21 +16,21 @@
 
 *******************************************************************************/
 /*
-@description: deploy sequoiapostgresql package
+@description: deploy sequoiasql-postgresql package
 @modify list:
    2017-09-12 JiaWen He  Init
 
 1. Generate plan
    @parameter
       var SYS_STEP = "Generate plan" ;
-      var BUS_JSON = {"_id":{"$oid":"59bb48afbe1f79df0fa98778"},"TaskID":8,"Type":7,"TypeDesc":"DEPLOY_PACKAGE","TaskName":"DEPLOY_PACKAGE","CreateTime":{"$timestamp":"2017-09-15-11.27.43.000000"},"EndTime":{"$timestamp":"2017-09-15-11.27.43.000000"},"Status":0,"StatusDesc":"INIT","AgentHost":"ubuntu-jw-02","AgentService":"11790","Info":{"ClusterName":"myCluster1","SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/opt/sequoiadb/packet/sequoiapostgresql-2.8.2-x86_64-enterprise-installer.run","PackageName":"sequoiapostgresql","InstallPath": "/opt/sequoiapostgresql/","Enforced":true,"HostInfo":[{"HostName":"ubuntu-jw-02","IP":"192.168.3.232","AgentService":"11790","SshPort":"22","User":"root","Passwd":"123"}]},"errno":0,"detail":"","Progress":0,"ResultInfo":[{"HostName":"ubuntu-jw-01","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]}]};
+      var BUS_JSON = {"_id":{"$oid":"59bb48afbe1f79df0fa98778"},"TaskID":8,"Type":7,"TypeDesc":"DEPLOY_PACKAGE","TaskName":"DEPLOY_PACKAGE","CreateTime":{"$timestamp":"2017-09-15-11.27.43.000000"},"EndTime":{"$timestamp":"2017-09-15-11.27.43.000000"},"Status":0,"StatusDesc":"INIT","AgentHost":"ubuntu-jw-02","AgentService":"11790","Info":{"ClusterName":"myCluster1","SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/opt/sequoiadb/packet/sequoiasql-postgresql-2.8.2-x86_64-enterprise-installer.run","PackageName":"sequoiasql-postgresql","InstallPath": "/opt/sequoiasql-postgresql/","Enforced":true,"HostInfo":[{"HostName":"ubuntu-jw-02","IP":"192.168.3.232","AgentService":"11790","SshPort":"22","User":"root","Passwd":"123"}]},"errno":0,"detail":"","Progress":0,"ResultInfo":[{"HostName":"ubuntu-jw-01","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]}]};
    @return
-      RET_JSON: the format is: {"Plan":[[{"cmd":"install","TaskID":8,"Info":{"PackageName":"sequoiapostgresql","InstallPath":"/opt/sequoiapostgresql/","InstallPacket":"/opt/sequoiadb/packet/sequoiapostgresql-2.8.2-x86_64-enterprise-installer.run","SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","HostInfo":{"HostName":"ubuntu-jw-01","IP":"192.168.3.231","AgentService":"11790","SshPort":"22","User":"root","Passwd":"123"}},"ResultInfo":{"HostName":"ubuntu-jw-01","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}}]]}
+      RET_JSON: the format is: {"Plan":[[{"cmd":"install","TaskID":8,"Info":{"PackageName":"sequoiasql-postgresql","InstallPath":"/opt/sequoiasql-postgresql/","InstallPacket":"/opt/sequoiadb/packet/sequoiasql-postgresql-2.8.2-x86_64-enterprise-installer.run","SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","HostInfo":{"HostName":"ubuntu-jw-01","IP":"192.168.3.231","AgentService":"11790","SshPort":"22","User":"root","Passwd":"123"}},"ResultInfo":{"HostName":"ubuntu-jw-01","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}}]]}
 
 2. Install package
    @parameter
       var SYS_STEP = "Doit" ;
-      var BUS_JSON = {"cmd":"install","TaskID":8,"Info":{"PackageName":"sequoiapostgresql","InstallPath":"/opt/sequoiapostgresql/","InstallPacket":"/opt/sequoiadb/packet/sequoiapostgresql-2.8.2-x86_64-enterprise-installer.run","SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","HostInfo":{"HostName":"ubuntu-jw-02","IP":"192.168.3.232","AgentService":"11790","SshPort":"22","User":"root","Passwd":"123"}},"ResultInfo":{"HostName":"ubuntu-jw-01","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}};
+      var BUS_JSON = {"cmd":"install","TaskID":8,"Info":{"PackageName":"sequoiasql-postgresql","InstallPath":"/opt/sequoiasql-postgresql/","InstallPacket":"/opt/sequoiadb/packet/sequoiasql-postgresql-2.8.2-x86_64-enterprise-installer.run","SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","HostInfo":{"HostName":"ubuntu-jw-02","IP":"192.168.3.232","AgentService":"11790","SshPort":"22","User":"root","Passwd":"123"}},"ResultInfo":{"HostName":"ubuntu-jw-01","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}};
    @return
       RET_JSON: the format is: {"HostName":"ubuntu-jw-02","Status":4,"StatusDesc":"FINISH","errno":0,"detail":"","Flow":[],"Progress":90}
 
@@ -138,7 +138,7 @@ function _getAgentPort( hostName )
 
 function GeneratePlan( taskID )
 {
-   var PD_LOGGER = new Logger( "sequoiapostgresql.js" ) ;
+   var PD_LOGGER = new Logger( "sequoiasql-postgresql.js" ) ;
    var plan = {} ;
    var planInfo      = BUS_JSON[FIELD_INFO] ;
    var resultInfo    = BUS_JSON[FIELD_RESULTINFO] ;
@@ -225,7 +225,7 @@ function GeneratePlan( taskID )
 
 function SendPackage( taskID )
 {
-   var PD_LOGGER = new Logger( "sequoiapostgresql.js" ) ;
+   var PD_LOGGER = new Logger( "sequoiasql-postgresql.js" ) ;
    var error = null ;
    var taskInfo      = BUS_JSON[FIELD_INFO] ;
    var resultInfo    = BUS_JSON[FIELD_RESULTINFO] ;
@@ -236,7 +236,7 @@ function SendPackage( taskID )
    var agentPort     = _getAgentPort( hostName ) ;
    var destPath      = '/tmp/packet' ;
    var destFileAddr  = hostName + ':' + agentPort + '@' + destPath +
-                       '/sequoiapostgresql.run' ;
+                       '/sequoiasql-postgresql.run' ;
    var remote        = null ;
    var file          = null ;
 
@@ -341,7 +341,7 @@ function _getVersion( hostName, user, pwd, sshPort, installPath )
 
 function InstallPackage( taskID )
 {
-   var PD_LOGGER = new Logger( "sequoiapostgresql.js" ) ;
+   var PD_LOGGER = new Logger( "sequoiasql-postgresql.js" ) ;
    var error = null ;
    var taskInfo      = BUS_JSON[FIELD_INFO] ;
    var resultInfo    = BUS_JSON[FIELD_RESULTINFO] ;
@@ -356,7 +356,7 @@ function InstallPackage( taskID )
    var sshPort       = hostInfo[FIELD_SSH_PORT] ;
    var user          = hostInfo[FIELD_USER] ;
    var pwd           = hostInfo[FIELD_PASSWD] ;
-   var destPath      = '/tmp/packet/sequoiapostgresql.run' ;
+   var destPath      = '/tmp/packet/sequoiasql-postgresql.run' ;
    var options = "" ;
 
    PD_LOGGER.setTaskId( taskID ) ;
@@ -462,7 +462,7 @@ function Error()
 
 function CheckResult( taskID )
 {
-   var PD_LOGGER = new Logger( "sequoiapostgresql.js" ) ;
+   var PD_LOGGER = new Logger( "sequoiasql-postgresql.js" ) ;
    var result = new commonResult() ;
    var resultInfo = BUS_JSON[FIELD_RESULTINFO] ;
 
@@ -490,7 +490,7 @@ function Rollback()
 
 function run()
 {
-   var PD_LOGGER = new Logger( "sequoiapostgresql.js" ) ;
+   var PD_LOGGER = new Logger( "sequoiasql-postgresql.js" ) ;
    var taskID = 0 ;
    var result = {} ;
 

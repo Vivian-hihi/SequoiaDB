@@ -16,16 +16,16 @@
 
 *******************************************************************************/
 /*
-@description: add sequoiapostgresql business
+@description: add sequoiasql-postgresql business
 @modify list:
    2017-10-09 JiaWen He  Init
 
 1. Generate plan
    @parameter
       var SYS_STEP = "Generate plan" ;
-      var BUS_JSON = {"TaskID":206,"Type":3,"TypeDesc":"REMOVE_BUSINESS","TaskName":"REMOVE_BUSINESS","CreateTime":{"$timestamp":"2017-10-09-19.54.16.000000"},"EndTime":{"$timestamp":"2017-10-09-19.54.16.000000"},"Status":0,"StatusDesc":"INIT","AgentHost":"ubuntu-jw-01","AgentService":"11790","Info":{"ClusterName":"myCluster1","BusinessType":"sequoiapostgresql","BusinessName":"myModule1","DeployMod":"","Config":[{"dbpath":"/opt/sequoiapostgresql/database/5432","port":"5432","shared_buffers":"128MB","log_timezone":"PRC","datestyle":"iso, ymd","timezone":"PRC","lc_messages":"zh_CN.UTF-8","lc_monetary":"zh_CN","lc_numeric":"zh_CN","lc_time":"zh_CN","default_text_search_config":"pg_catalog.simple","InstallPath":"/opt/sequoiapostgresql/","ClusterName":"myCluster1","HostName":"ubuntu-jw-02","IP":"192.168.3.232","Passwd":"123","SshPort":"22","User":"root"}]},"errno":0,"detail":"","Progress":0,"ResultInfo":[{"HostName":"ubuntu-jw-02","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]}]}
+      var BUS_JSON = {"TaskID":206,"Type":3,"TypeDesc":"REMOVE_BUSINESS","TaskName":"REMOVE_BUSINESS","CreateTime":{"$timestamp":"2017-10-09-19.54.16.000000"},"EndTime":{"$timestamp":"2017-10-09-19.54.16.000000"},"Status":0,"StatusDesc":"INIT","AgentHost":"ubuntu-jw-01","AgentService":"11790","Info":{"ClusterName":"myCluster1","BusinessType":"sequoiasql-postgresql","BusinessName":"myModule1","DeployMod":"","Config":[{"dbpath":"/opt/sequoiasql-postgresql/database/5432","port":"5432","shared_buffers":"128MB","log_timezone":"PRC","datestyle":"iso, ymd","timezone":"PRC","lc_messages":"zh_CN.UTF-8","lc_monetary":"zh_CN","lc_numeric":"zh_CN","lc_time":"zh_CN","default_text_search_config":"pg_catalog.simple","InstallPath":"/opt/sequoiasql-postgresql/","ClusterName":"myCluster1","HostName":"ubuntu-jw-02","IP":"192.168.3.232","Passwd":"123","SshPort":"22","User":"root"}]},"errno":0,"detail":"","Progress":0,"ResultInfo":[{"HostName":"ubuntu-jw-02","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]}]}
    @return
-      RET_JSON: the format is: {"Plan":[[{"TaskID":206,"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiapostgresql","BusinessName":"myModule1","Config":{"dbpath":"/opt/sequoiapostgresql/database/5432","port":"5432","shared_buffers":"128MB","log_timezone":"PRC","datestyle":"iso, ymd","timezone":"PRC","lc_messages":"zh_CN.UTF-8","lc_monetary":"zh_CN","lc_numeric":"zh_CN","lc_time":"zh_CN","default_text_search_config":"pg_catalog.simple","InstallPath":"/opt/sequoiapostgresql/","ClusterName":"myCluster1","HostName":"ubuntu-jw-02","IP":"192.168.3.232","Passwd":"123","SshPort":"22","User":"root","AgentService":"11790"}},"ResultInfo":{"HostName":"ubuntu-jw-02","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}}]]}
+      RET_JSON: the format is: {"Plan":[[{"TaskID":206,"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiasql-postgresql","BusinessName":"myModule1","Config":{"dbpath":"/opt/sequoiasql-postgresql/database/5432","port":"5432","shared_buffers":"128MB","log_timezone":"PRC","datestyle":"iso, ymd","timezone":"PRC","lc_messages":"zh_CN.UTF-8","lc_monetary":"zh_CN","lc_numeric":"zh_CN","lc_time":"zh_CN","default_text_search_config":"pg_catalog.simple","InstallPath":"/opt/sequoiasql-postgresql/","ClusterName":"myCluster1","HostName":"ubuntu-jw-02","IP":"192.168.3.232","Passwd":"123","SshPort":"22","User":"root","AgentService":"11790"}},"ResultInfo":{"HostName":"ubuntu-jw-02","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}}]]}
 
 2. remove business
    @parameter
@@ -278,7 +278,7 @@ function RemoveBusiness( PD_LOGGER )
    }
 
    //set LD_LIBRARY_PATH
-   //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiapostgresql/lib
+   //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiasql-postgresql/lib
    var libraryCmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:' ;
    libraryCmd += installPath + '/lib ;' ;
    exec = libraryCmd + exec ;
@@ -363,7 +363,7 @@ function Rollback( taskID )
 
 function run()
 {
-   var PD_LOGGER = new Logger( "sequoiapostgresql.js" ) ;
+   var PD_LOGGER = new Logger( "sequoiasql-postgresql.js" ) ;
    var taskID = 0 ;
    var result = {} ;
 

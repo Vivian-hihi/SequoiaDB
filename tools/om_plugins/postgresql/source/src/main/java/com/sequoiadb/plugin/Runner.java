@@ -31,8 +31,8 @@ public class Runner implements CommandLineRunner {
 
         logger.info("Event: Init");
 
-        pluginConf.setName("SequoiaPostgreSQL");
-        pluginConf.setType("sequoiapostgresql");
+        pluginConf.setName("SequoiaSQL-PostgreSQL");
+        pluginConf.setType("sequoiasql-postgresql");
 
         register.start();
     }
