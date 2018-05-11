@@ -28,7 +28,8 @@ namespace CSharp.Crud.Update
         private const string SHARD_KEY      = "a";
         private const string NON_SHARD_KEY  = "b";
 
-        [TestInitialize()]
+        //[TestInitialize()]
+        [Ignore]
         public void SetUp()
         {
             Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " begin: " + this.GetType().ToString());
@@ -40,7 +41,8 @@ namespace CSharp.Crud.Update
             cl = cs.CreateCollection(clName, options);
         }
         
-        [TestMethod()]
+        //[TestMethod()]
+        [Ignore]
         public void TestQueryAndUpdate12646()
         {
             BsonDocument oldDoc = new BsonDocument();
@@ -59,7 +61,8 @@ namespace CSharp.Crud.Update
             Assert.AreEqual(updatedDoc, newDoc);
         }
 
-        [TestCleanup()]
+        //[TestCleanup()]
+        [Ignore]
         public void TearDown()
         {
             try
