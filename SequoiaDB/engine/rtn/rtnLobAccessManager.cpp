@@ -290,6 +290,12 @@ namespace engine
             {
                *accessInfo = lobAccessInfo ;
             }
+
+            PD_LOG( PDDEBUG, "Get privilege of LOB[%s] by [%lld] in mode[%u] refCount[%d]",
+                    oid.str().c_str(),
+                    accessId,
+                    lobAccessInfo->getRefCount(),
+                    mode ) ;
          }
          else
          {
@@ -324,6 +330,12 @@ namespace engine
             {
                *accessInfo = lobAccessInfo ;
             }
+
+            PD_LOG( PDDEBUG, "Get privilege of LOB[%s] by [%lld] in mode[%u] refCount[%d]",
+                    oid.str().c_str(),
+                    accessId,
+                    lobAccessInfo->getRefCount(),
+                    mode ) ;
          }
       }
 
