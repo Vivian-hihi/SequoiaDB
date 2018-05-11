@@ -82,7 +82,7 @@ public class UpsertAsInc12616 extends SdbTestBase{
 	private CollectionSpace cs = null;
 	private static DBCollection cl = null;    
 	
-	@BeforeClass
+	@BeforeClass(enabled=false)
 	public void setUp(){
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -123,7 +123,7 @@ public class UpsertAsInc12616 extends SdbTestBase{
 		}		
 	}	
 	
-	@Test(dataProvider = "operData1")
+	@Test(enabled=false,dataProvider = "operData1")
 	public void testUpsert1(int setInsertValue,String matcher,String updateName,Object incValue,String[] expRecords){
 		try{		
 			BSONObject updateValue = new BasicBSONObject();
@@ -136,7 +136,7 @@ public class UpsertAsInc12616 extends SdbTestBase{
 		}		
 	}	
 		
-	@AfterClass
+	@AfterClass(enabled=false)
 	public void tearDown(){
 		try{
 			if(sdb.getCollectionSpace(SdbTestBase.csName).isCollectionExist(clName)){

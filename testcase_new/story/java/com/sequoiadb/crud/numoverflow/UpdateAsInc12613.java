@@ -57,7 +57,7 @@ public class UpdateAsInc12613 extends SdbTestBase{
 	private CollectionSpace cs = null;
 	private static DBCollection cl = null;    
 	
-	@BeforeClass
+	@BeforeClass(enabled=false)
 	public void setUp(){
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -75,7 +75,7 @@ public class UpdateAsInc12613 extends SdbTestBase{
 		NumOverflowUtils.insert(cl, records);
 	}
 	
-	@Test(dataProvider = "operData")
+	@Test(enabled=false,dataProvider = "operData")
 	public void testUpdateShardingKey(int matcherValue,String updateName, Object incValue,String []expRecords,
 			String expTypeToSdb,Boolean isVerifyTypeToJava,String typeToJava){
 		try{			
@@ -99,7 +99,7 @@ public class UpdateAsInc12613 extends SdbTestBase{
 	}	
 	
 		
-	@AfterClass
+	@AfterClass(enabled=false)
 	public void tearDown(){
 		try{
 			if(sdb.getCollectionSpace(SdbTestBase.csName).isCollectionExist(clName)){
