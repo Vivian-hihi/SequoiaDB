@@ -395,11 +395,21 @@ namespace engine
             // pass through
          case SDB_LOB_MODE_TRUNCATE:
             bucket.erase( key ) ;
+            PD_LOG( PDDEBUG, "Release privilege of LOB[%s] by [%lld] in mode[%u] refCount[%d]",
+                    oid.str().c_str(),
+                    accessId,
+                    lobAccessInfo->getRefCount(),
+                    mode ) ;
             SAFE_OSS_DELETE( lobAccessInfo ) ;
             break ;
          case SDB_LOB_MODE_READ:
             lobAccessInfo->lock();
             lobAccessInfo->decRefCount() ;
+            PD_LOG( PDDEBUG, "Release privilege of LOB[%s] by [%lld] in mode[%u] refCount[%d]",
+                    oid.str().c_str(),
+                    accessId,
+                    lobAccessInfo->getRefCount(),
+                    mode ) ;
             if ( lobAccessInfo->getRefCount() <= 0 )
             {
                bucket.erase( key ) ;
@@ -429,6 +439,11 @@ namespace engine
                goto error ;
             }
             lobAccessInfo->decRefCount() ;
+            PD_LOG( PDDEBUG, "Release privilege of LOB[%s] by [%lld] in mode[%u] refCount[%d]",
+                    oid.str().c_str(),
+                    accessId,
+                    lobAccessInfo->getRefCount(),
+                    mode ) ;
             if ( lobAccessInfo->getRefCount() <= 0 )
             {
                bucket.erase( key ) ;
@@ -447,12 +462,6 @@ namespace engine
                     lobAccessInfo->getMode() ) ;
             goto error ;
          }
-
-         PD_LOG( PDDEBUG, "Release privilege of LOB[%s] by [%lld] in mode[%u] refCount[%d]",
-                    oid.str().c_str(),
-                    accessId,
-                    lobAccessInfo->getRefCount(),
-                    mode ) ;
       }
 
    done:
