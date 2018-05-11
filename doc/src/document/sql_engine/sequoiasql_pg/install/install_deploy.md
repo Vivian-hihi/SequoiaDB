@@ -2,8 +2,8 @@
 
 ###安装前准备###
 
-- 使用 root 用户权限来安装 sequoiasql-postgresql
-- 检查 sequoiasql-postgresql 产品软件包是否与 SequoiaDB 版本一致 
+- 使用 root 用户权限来安装 SequoiaSQL PostgreSQL
+- 检查 SequoiaSQL PostgreSQL 产品软件包是否与 SequoiaDB 版本一致 
 - 如果需要图形界面模式安装，请确保 X Server 服务正在运行
 
 ###安装步骤###
