@@ -1,8 +1,8 @@
-SequoiaPostgreSQL数据库操作页面可以进行创建数据库、删除数据库、创建数据表、删除数据表等操作。
+SequoiaSQL-PostgreSQL数据库操作页面可以进行创建数据库、删除数据库、创建数据表、删除数据表等操作。
 
 ###创建数据库
-1. 从SAC左侧导航选择进入SequoiaPostgreSQL数据库操作页面。  
-  ![SequoiaPostgreSQL数据库](sac/data_operation/PostgreSQL/database_oltp.png)
+1. 从SAC左侧导航选择进入SequoiaSQL-PostgreSQL数据库操作页面。  
+  ![SequoiaSQL-PostgreSQL数据库](sac/data_operation/PostgreSQL/database_oltp.png)
 
 2. 点击右下角创建数据库，输入需要创建的数据库名后点击确定即可完成创建。
   ![创建数据库](sac/data_operation/PostgreSQL/add_database.png)
@@ -18,7 +18,7 @@ SequoiaPostgreSQL数据库操作页面可以进行创建数据库、删除数据
 2. 点击确定开始创建数据表。
 
 > **Note:**  
-> 创建完数据表后，可点击数据表名进入[数据操作](sac/sequoiasqloltp_data/record.md)
+> 创建完数据表后，可点击数据表名进入[数据操作](sac/postgresql_data/record.md)
 > 创建外部表不可定义主键和唯一键。
 
 ###删除数据库

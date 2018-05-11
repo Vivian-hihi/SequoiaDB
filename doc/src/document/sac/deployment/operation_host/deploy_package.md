@@ -1,4 +1,4 @@
-部署包是将指定的包部署到指定的主机中。目前只支持部署SequoiaPostgreSQL包。
+部署包是将指定的包部署到指定的主机中。目前只支持部署SequoiaSQL-PostgreSQL包。
 
 > **Note:**  
 > 部署包之前需要将包放在SAC所在主机的安装路径packet路径下，例：/opt/sequoiadb/packet。

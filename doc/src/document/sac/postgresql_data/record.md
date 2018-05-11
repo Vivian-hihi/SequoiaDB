@@ -1,4 +1,4 @@
-SequoiaPostgreSQL数据操作页面可以进行增删改查以及执行SQL操作。  
+SequoiaSQL-PostgreSQL数据操作页面可以进行增删改查以及执行SQL操作。  
 
 ###执行SQL
 在页面中的SQL执行框可输入需要执行的SQL语句进行执行。

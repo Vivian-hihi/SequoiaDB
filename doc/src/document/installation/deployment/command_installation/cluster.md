@@ -22,7 +22,7 @@
 
 **说明：**
 
-1. 本节以[高可用](planning_database_deployment.md)的方式部署为例，介绍配置和启动步骤。
+1. 本节以[高可用](installation/deployment/command_installation/planning_database_deployment.md)的方式部署为例，介绍配置和启动步骤。
 
 2. 以下操作步骤假设 SequoiaDB 程序安装在 /opt/sequoiadb 目录下。
 
