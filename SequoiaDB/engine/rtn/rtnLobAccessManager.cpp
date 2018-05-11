@@ -447,6 +447,12 @@ namespace engine
                     lobAccessInfo->getMode() ) ;
             goto error ;
          }
+
+         PD_LOG( PDDEBUG, "Release privilege of LOB[%s] by [%lld] in mode[%u] refCount[%d]",
+                    oid.str().c_str(),
+                    accessId,
+                    lobAccessInfo->getRefCount(),
+                    mode ) ;
       }
 
    done:
