@@ -13188,7 +13188,6 @@ namespace engine
       }
       else if ( OM_PACKAGE_SEQUOIA_POSTGRESQL == _packageName )
       {
-         //do nothing
       }
       else
       {

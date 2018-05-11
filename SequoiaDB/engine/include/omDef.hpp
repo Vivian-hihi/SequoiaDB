@@ -434,13 +434,13 @@ _IDX1\",key: {"OM_RELATIONSHIP_FIELD_NAME":1}, unique: true, enforced: true }"
    #define OM_BUSINESS_YARN                  "yarn"
    #define OM_BUSINESS_SEQUOIASQL            "sequoiasql"
    #define OM_BUSINESS_SEQUOIASQL_OLAP       "sequoiasql-olap"
-   #define OM_BUSINESS_SEQUOIAPOSTGRESQL     "sequoiapostgresql"
+   #define OM_BUSINESS_SEQUOIAPOSTGRESQL     "sequoiasql-postgresql"
 
    /*
       install package name
    */
    #define OM_PACKAGE_SEQUOIADB              OM_BUSINESS_SEQUOIADB
-   #define OM_PACKAGE_SEQUOIA_POSTGRESQL     "sequoia-postgresql"
+   #define OM_PACKAGE_SEQUOIA_POSTGRESQL     OM_BUSINESS_SEQUOIAPOSTGRESQL
 
    /*
       discover businesss respone
