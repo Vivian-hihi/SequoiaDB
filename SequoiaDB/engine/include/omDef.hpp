@@ -437,6 +437,12 @@ _IDX1\",key: {"OM_RELATIONSHIP_FIELD_NAME":1}, unique: true, enforced: true }"
    #define OM_BUSINESS_SEQUOIAPOSTGRESQL     "sequoiapostgresql"
 
    /*
+      install package name
+   */
+   #define OM_PACKAGE_SEQUOIADB              OM_BUSINESS_SEQUOIADB
+   #define OM_PACKAGE_SEQUOIA_POSTGRESQL     "sequoia-postgresql"
+
+   /*
       discover businesss respone
    */
    #define OM_BUSINESS_RES_HOSTS             "hosts"

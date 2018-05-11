@@ -23,7 +23,7 @@
 
    Change Activity:
    defect Date        Who Description
-   ====== =========== === ==============================================
+   ====== =========== === ==============================================   
           06/12/2014  LYB Initial Draft
           04/01/2017  HJW Increase extend business and shrink business
 
@@ -13178,7 +13178,7 @@ namespace engine
       }
 
       //check package
-      if ( OM_BUSINESS_SEQUOIADB == _packageName )
+      if ( OM_PACKAGE_SEQUOIADB == _packageName )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "the host already has package: package=%s",
@@ -13186,7 +13186,7 @@ namespace engine
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
-      else if ( OM_BUSINESS_SEQUOIAPOSTGRESQL == _packageName )
+      else if ( OM_PACKAGE_SEQUOIA_POSTGRESQL == _packageName )
       {
          //do nothing
       }
