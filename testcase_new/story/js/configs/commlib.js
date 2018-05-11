@@ -49,7 +49,7 @@ var Configs = ( function() {
       this.runConfigs.push( new ConfDesp( "startshifttime", "int", 600, 1200, "some" ) ) ;
       this.runConfigs.push( new ConfDesp( "preferedinstance", "string", "M", "S", 123 ) ) ;
       this.runConfigs.push( new ConfDesp( "preferedinstancemode", "string", "random", "ordered", 123 ) ) ;
-      this.runConfigs.push( new ConfDesp( "directioninlob", "bool", "FALSE", "TRUE", false ) ) ;
+      this.runConfigs.push( new ConfDesp( "directioinlob", "bool", "FALSE", "TRUE", false ) ) ;
       this.runConfigs.push( new ConfDesp( "sparsefile", "bool", "FALSE", "TRUE", null ) ) ;
       this.runConfigs.push( new ConfDesp( "weight", "int", 10, 20, "asdafd" ) ) ;
       this.runConfigs.push( new ConfDesp( "usessl", "bool", "FALSE", "TRUE", true ) ) ;

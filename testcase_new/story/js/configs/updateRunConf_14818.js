@@ -9,6 +9,7 @@ function updateDefault( db, host, svc )
 {
    // pick a random run conf
    var runConf = getRandomRunConf() ;
+   println( "test run conf: " + runConf ) ;
    var confName = runConf.name ;
    var defVal = runConf.defVal ;
    var snapshotInfo = getConfFromSnapshot( host, svc ) ;
@@ -18,7 +19,7 @@ function updateDefault( db, host, svc )
       throw buildException( "updateDefault", null, "check conf " + confName,
             defVal, snapshotVal ) ;
    }
-   println( "test run conf: " + runConf ) ;
+   
    
    // before update, get conf file info
    var fileInfo = getConfFromFile( host, svc ) ;
