@@ -1,8 +1,8 @@
 <project>
-    <shortName>sequoiasql</shortName>
-    <fullName>SequoiaSQL MySql Server</fullName>
+    <shortName>sequoiasql-mysql</shortName>
+    <fullName>Sequoiasql MySQL Server</fullName>
     <version>1.0</version>
-    <installerFilename>${product_shortname}-${sql_type}-${product_version}-${platform}${edition}-installer.${platform_exec_suffix}</installerFilename>
+    <installerFilename>${product_shortname}-${product_version}-${platform}${edition}-installer.${platform_exec_suffix}</installerFilename>
     <allowLanguageSelection>1</allowLanguageSelection>
     <allowedLanguages>en zh_CN</allowedLanguages>
 
@@ -76,7 +76,7 @@
             <format>%Y-%m-%d-%H:%M:%S</format>
         </createTimeStamp>                 
         <setInstallerVariable name="project.rollbackBackupDirectory" value="${installdir}/rollback/BackupDir_${time}"/> 
-        <setInstallerVariable name="sys_conf_file" value="/etc/default/sequoiasql" persist="1"/>
+        <setInstallerVariable name="sys_conf_file" value="/etc/default/sequoiasql-mysql" persist="1"/>
         <setInstallerVariable name="add_user_done"                   value="false"/>
         <setInstallerVariable name="add_group_done"                  value="false"/>
         <setInstallerVariable name="add_sysconf_done"                value="false"/>
@@ -125,7 +125,7 @@
             <description>Installer.Parameter.installdir.description</description>
             <explanation>Installer.Parameter.installdir.explanation</explanation>
             <value></value>
-            <default>${platform_install_prefix}/${product_shortname}/${sql_type}</default>
+            <default>${platform_install_prefix}/sequoiasql/mysql</default>
             <allowEmptyValue>0</allowEmptyValue>
             <ask>yes</ask>
             <cliOptionName>prefix</cliOptionName>
@@ -353,7 +353,7 @@
             </substitutionList>
         </substitute>
         
-        <!--write /etc/default/sequoiasqloltp-->
+        <!--write /etc/default/sequoiasql-mysql-->
         <deleteFile path="${sys_conf_file}"/>
         <touchFile path="${sys_conf_file}"/>
         <setInstallerVariable name="add_sysconf_done" value="true">
@@ -418,7 +418,7 @@
     <singleInstanceCheck>1</singleInstanceCheck>
     <defaultUnixGroup>${groupname}</defaultUnixGroup>
     <defaultUnixOwner>${username}</defaultUnixOwner>
-    <vendor>SequoiaSQL</vendor>
+    <vendor>SequoiaSQL-MySQL</vendor>
 
 </project>
 
