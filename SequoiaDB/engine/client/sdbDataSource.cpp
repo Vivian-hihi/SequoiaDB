@@ -245,20 +245,23 @@ namespace sdbclient
                   rc = SDB_OOM ;
                   goto error ;
                }
-               rc = _createConnWorker->start() ;
-               if ( SDB_OK != rc )
+               if(_needbgtask)
                {
-                  goto error ;
-               }
-               rc = _destroyConnWorker->start() ;
-               if ( SDB_OK != rc )
-               {
-                  goto error ;
-               }
-               rc = _bgTaskWorker->start() ;
-               if ( SDB_OK != rc )
-               {
-                  goto error ;
+                   rc = _createConnWorker->start() ;
+                   if ( SDB_OK != rc )
+                   {
+                      goto error ;
+                   }
+                   rc = _destroyConnWorker->start() ;
+                   if ( SDB_OK != rc )
+                   {
+                      goto error ;
+                   }
+                   rc = _bgTaskWorker->start() ;
+                   if ( SDB_OK != rc )
+                   {
+                      goto error ;
+                   }
                }
 
                _isEnabled = TRUE ;
@@ -279,7 +282,7 @@ namespace sdbclient
       SAFE_OSS_DELETE(_destroyConnWorker) ;
       SAFE_OSS_DELETE(_bgTaskWorker) ;
       goto done  ;
-   }
+   }  
 
    // disable data source, stop background task
    INT32 sdbDataSource::disable()
@@ -300,25 +303,28 @@ namespace sdbclient
             _toStopWorkers = TRUE ;
 
             INT32 rc = SDB_OK ;
-            // join
-            rc = _createConnWorker->waitStop() ;
-            if ( SDB_OK != rc )
+            if(_needbgtask)
             {
-               ret = rc ;
-               goto error ;// TODO:(new) when it failed, we leave the 
-                           //other background thread alone?
-            }
-            rc = _destroyConnWorker->waitStop() ;
-            if ( SDB_OK != rc )
-            {
-               ret = rc ;
-               goto error ;
-            }
-            rc = _bgTaskWorker->waitStop() ;
-            if ( SDB_OK != rc )
-            {
-               ret = rc ;
-               goto error ;
+                // join
+                rc = _createConnWorker->waitStop() ;
+                if ( SDB_OK != rc )
+                {
+                   ret = rc ;
+                   goto error ;// TODO:(new) when it failed, we leave the 
+                               //other background thread alone?
+                }
+                rc = _destroyConnWorker->waitStop() ;
+                if ( SDB_OK != rc )
+                {
+                   ret = rc ;
+                   goto error ;
+                }
+                rc = _bgTaskWorker->waitStop() ;
+                if ( SDB_OK != rc )
+                {
+                   ret = rc ;
+                   goto error ;
+                }
             }
 
             // clear data source

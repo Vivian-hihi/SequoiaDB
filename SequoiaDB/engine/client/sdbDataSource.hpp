@@ -92,7 +92,8 @@ namespace sdbclient
          _toStopWorkers(FALSE),
          _createConnWorker(NULL),
          _destroyConnWorker(NULL),
-         _bgTaskWorker(NULL) {}
+         _bgTaskWorker(NULL),
+         _needbgtask(TRUE){}
 
       /** \fn ~sdbDataSource()
          \brief The destructor of sdbDataSource
@@ -174,13 +175,13 @@ namespace sdbclient
          \retval Others Operation Fail
       */
       INT32 enable() ;
-
       /** \fn INT32 disable()
          \brief Disable sdbDataSource
          \retval SDB_OK Operation Success
          \retval Others Operation Fail
       */
       INT32 disable() ;
+
 
       /** \fn INT32 getConnection(sdb*& conn, INT64 timeoutsec = 5000)
          \brief Get a connection form sdbDataSource
@@ -206,6 +207,13 @@ namespace sdbclient
          \brief Close sdbDataSource
       */
       void close() ;
+      
+      // TODO: temporary add para (BOOL needbgtask = TRUE) 
+      /** \fn void disableBgtask()
+         \brief do not start bgtask threads
+      */
+      void disableBgtask(){_needbgtask = FALSE;}
+      
 
    
 //#if defined (_DEBUG)
@@ -276,6 +284,8 @@ namespace sdbclient
       BOOLEAN                 _isInited ;
       // if is enabled
       BOOLEAN                 _isEnabled ;
+      // TODO: temporary add para (BOOL needbgtask = TRUE) 
+      BOOLEAN                 _needbgtask;
 
    private:
       BOOLEAN                 _toCreateConn ;

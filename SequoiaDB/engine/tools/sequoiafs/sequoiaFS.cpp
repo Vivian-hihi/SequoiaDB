@@ -394,7 +394,9 @@ INT32 sequoiaFS::initDataSource(const CHAR * userName, const CHAR *passwd, const
         ossPrintf("Fail to init stlbDataSouce(error=%d)"OSS_NEWLINE, rc);
         goto error;
     }
-
+    
+    ds.disableBgtask();
+    
     // enable sdbDataSource
     rc = ds.enable();
     if(SDB_OK != rc)
