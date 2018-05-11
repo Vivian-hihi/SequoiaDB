@@ -1,7 +1,7 @@
 {
    "route": [
       {
-         "path": "/Data/PostgreSQL/Database/Index",
+         "path": "/Data/SequoiaSQL/PostgreSQL/Database/Index",
          "options": {
             "templateUrl": "./app/template/Data/PostgreSQL/Database/Index.html",
             "resolve": [
@@ -10,7 +10,7 @@
          }
       },
       {
-         "path": "/Data/PostgreSQL/Operate/Data",
+         "path": "/Data/SequoiaSQL/PostgreSQL/Operate/Data",
          "options": {
             "templateUrl": "./app/template/Data/PostgreSQL/Operate/Data.html",
             "resolve": [
@@ -19,7 +19,7 @@
          }
       },
       {
-         "path": "/Data/PostgreSQL/Operate/Structure",
+         "path": "/Data/SequoiaSQL/PostgreSQL/Operate/Structure",
          "options": {
             "templateUrl": "./app/template/Data/PostgreSQL/Operate/Structure.html",
             "resolve": [

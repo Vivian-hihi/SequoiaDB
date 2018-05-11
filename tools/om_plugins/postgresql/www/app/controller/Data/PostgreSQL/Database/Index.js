@@ -7,7 +7,7 @@
       var clusterName    = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType     = SdbFunction.LocalData( 'SdbModuleType' ) ;
       $scope.ModuleName  = SdbFunction.LocalData( 'SdbModuleName' ) ;
-      if( clusterName == null || moduleType != 'sequoiapostgresql' || $scope.ModuleName == null )
+      if( clusterName == null || moduleType != 'sequoiasql-postgresql' || $scope.ModuleName == null )
       {
          $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return;
@@ -138,7 +138,7 @@
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( result ){
                var url = $location.url() ;
-               if( url.indexOf( '/Data/PostgreSQL/Database/Index' ) > -1 )
+               if( url.indexOf( '/Data/SequoiaSQL/PostgreSQL/Database/Index' ) > -1 )
                {
                   if( result.length > 0 )
                   {
@@ -150,7 +150,7 @@
             },
             'complete': function(){
                var url = $location.url() ;
-               if( url.indexOf( '/Data/PostgreSQL/Database/Index' ) > -1 )
+               if( url.indexOf( '/Data/SequoiaSQL/PostgreSQL/Database/Index' ) > -1 )
                {
                   ++SdbSwap.counter ;
                   if( SdbSwap.counter2 == SdbSwap.counter )
@@ -355,7 +355,7 @@
          SdbFunction.LocalData( 'PgsqlDbName', $scope.CurrentDbName ) ;
          SdbFunction.LocalData( 'PgsqlTbName', tableName ) ;
          SdbFunction.LocalData( 'PgsqlTbType', tableType ) ;
-         $location.path( '/Data/PostgreSQL/Operate/Data' ).search( { 'r': new Date().getTime() } ) ;
+         $location.path( '/Data/SequoiaSQL/PostgreSQL/Operate/Data' ).search( { 'r': new Date().getTime() } ) ;
       }
    } ) ;
 

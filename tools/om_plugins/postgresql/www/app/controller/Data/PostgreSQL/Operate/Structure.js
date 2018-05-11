@@ -8,7 +8,7 @@
       $scope.ModuleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
       SdbSwap.dbName = SdbFunction.LocalData( 'PgsqlDbName' ) ;
       SdbSwap.tbName = SdbFunction.LocalData( 'PgsqlTbName' ) ;
-      if( clusterName == null || moduleType != 'sequoiapostgresql' || $scope.ModuleName == null || SdbSwap.tbName == null || SdbSwap.dbName == null )
+      if( clusterName == null || moduleType != 'sequoiasql-postgresql' || $scope.ModuleName == null || SdbSwap.tbName == null || SdbSwap.dbName == null )
       {
          $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return;

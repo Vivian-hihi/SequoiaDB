@@ -9,7 +9,7 @@
       SdbSwap.dbName = SdbFunction.LocalData( 'PgsqlDbName' ) ;
       SdbSwap.tbName = SdbFunction.LocalData( 'PgsqlTbName' ) ;
       SdbSwap.tbType = SdbFunction.LocalData( 'PgsqlTbType' ) ;
-      if( clusterName == null || moduleType != 'sequoiapostgresql' || $scope.ModuleName == null || SdbSwap.dbName == null || SdbSwap.tbName == null )
+      if( clusterName == null || moduleType != 'sequoiasql-postgresql' || $scope.ModuleName == null || SdbSwap.dbName == null || SdbSwap.tbName == null )
       {
          $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return;
@@ -287,7 +287,7 @@
          if( fieldList.length == 0 )
          {
             _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "当前数据表没有字段，无法进行该操作，是否前往表结构页面？" ), $scope.pAutoLanguage( '确定' ), function(){
-               $location.path( '/Data/PostgreSQL/Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
+               $location.path( '/Data/SequoiaSQL/PostgreSQL/Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
             } ) ;
          }
          else
@@ -558,7 +558,7 @@
          if( fieldList.length == 0 )
          {
             _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "当前数据表没有字段，无法进行该操作，是否前往表结构页面？" ), $scope.pAutoLanguage( '确定' ), function(){
-               $location.path( '/Data/PostgreSQL/Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
+               $location.path( '/Data/SequoiaSQL/PostgreSQL/Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
             } ) ;
          }
          else
@@ -807,7 +807,7 @@
          if( fieldList.length == 0 )
          {
             _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "当前数据表没有字段，无法进行该操作，是否前往表结构页面？" ), $scope.pAutoLanguage( '确定' ), function(){
-               $location.path( '/Data/PostgreSQL/Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
+               $location.path( '/Data/SequoiaSQL/PostgreSQL/Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
             } ) ;
          }
          else
@@ -888,7 +888,7 @@
          if( fieldList.length == 0 )
          {
             _IndexPublic.createInfoModel( $scope, $scope.pAutoLanguage( "当前数据表没有字段，无法进行该操作，是否前往表结构页面？" ), $scope.pAutoLanguage( '确定' ), function(){
-               $location.path( '/Data/PostgreSQL/Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
+               $location.path( '/Data/SequoiaSQL/PostgreSQL/Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
             } ) ;
          }
          else
