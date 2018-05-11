@@ -95,7 +95,7 @@
                   if( hostInfo['ClusterName'] == clusterName )
                   {
                      $.each( hostInfo['Packages'], function( packageIndex, packageInfo ){
-                        if( packageInfo['Name'] == 'sequoiapostgresql' )
+                        if( packageInfo['Name'] == 'sequoiasql-postgresql' )
                         {
                            hostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
                         }

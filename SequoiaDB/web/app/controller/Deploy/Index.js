@@ -617,8 +617,8 @@
          {
          case 'sequoiadb':
             $location.path( '/Data/SDB-Database/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
-         case 'sequoiapostgresql':
-            $location.path( '/Data/PostgreSQL/Database/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
+         case 'sequoiasql-postgresql':
+            $location.path( '/Data/SequoiaSQL/PostgreSQL/Database/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
          case 'sequoiasql':
             $location.path( '/Data/SQL-Metadata/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
          case 'hdfs':
@@ -1195,14 +1195,14 @@
                      $location.path( '/Deploy/SDB-Conf' ).search( { 'r': new Date().getTime() } ) ;
                   }
                   //当业务类型是PostgreSQL时
-                  else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiapostgresql' )
+                  else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiasql-postgresql' )
                   {
                      var checkSqlHost = 0 ;
                      $.each( $scope.HostList, function( index, hostInfo ){
                         if( hostInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
                         {
                            $.each( hostInfo['Packages'], function( packIndex, packInfo ){
-                              if( packInfo['Name'] == 'sequoiapostgresql' )
+                              if( packInfo['Name'] == 'sequoiasql-postgresql' )
                               {
                                  ++checkSqlHost ;
                               }
@@ -1212,7 +1212,7 @@
                      if( checkSqlHost == 0 )
                      {
                         $scope.Components.Confirm.type = 3 ;
-                        $scope.Components.Confirm.context = $scope.autoLanguage( '创建 SequoiaPostgreSQL 业务需要主机已经部署 SequoiaPostgreSQL 包。' ) ;
+                        $scope.Components.Confirm.context = $scope.autoLanguage( '创建 SequoiaSQL-PostgreSQL 业务需要主机已经部署 SequoiaSQL-PostgreSQL 包。' ) ;
                         $scope.Components.Confirm.isShow = true ;
                         $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
                      }
@@ -2625,7 +2625,7 @@
          authorityform['inputList'][1]['value'] = '' ;
          authorityform['inputList'][2]['value'] = '' ;
 
-         if( businessType == 'sequoiapostgresql' )
+         if( businessType == 'sequoiasql-postgresql' )
          {
             authorityform['inputList'][3] = {
                "name": "DbName",
@@ -2658,7 +2658,7 @@
                      'User': formVal['User'],
                      'Passwd': formVal['Password']
                   } ;
-                  if( businessType == 'sequoiapostgresql' && typeof( formVal['DbName'] ) != 'undefined' )
+                  if( businessType == 'sequoiasql-postgresql' && typeof( formVal['DbName'] ) != 'undefined' )
                   {
                      data['DbName'] = formVal['DbName'] ;
                   }
@@ -2943,7 +2943,7 @@
             {
                ++sdbModule ;
             }
-            else if( moduleInfo['BusinessType'] == 'sequoiapostgresql' )
+            else if( moduleInfo['BusinessType'] == 'sequoiasql-postgresql' )
             {
                ++sqlModule ;
             }
@@ -3075,7 +3075,7 @@
                   "type": "select",
                   "value": 0,
                   "valid": [
-                     { 'key': 'SequoiaPostgreSQL - SequoiaDB', 'value': 0 }
+                     { 'key': 'SequoiaSQL-PostgreSQL - SequoiaDB', 'value': 0 }
                   ]
                },
                {
@@ -3166,7 +3166,7 @@
          
          
          $.each( $scope.moduleList, function( index, moduleInfo ){
-            if( moduleInfo['BusinessType'] == 'sequoiapostgresql' )
+            if( moduleInfo['BusinessType'] == 'sequoiasql-postgresql' )
             {
                $scope.CreateRelationWindow['config']['inputList'][2]['valid'].push(
                   { 'key': moduleInfo['BusinessName'], 'value': moduleInfo['BusinessName'] }
@@ -3228,7 +3228,7 @@
                   "type": "select",
                   "value": 0,
                   "valid": [
-                     { 'key': 'SequoiaPostgreSQL - SequoiaDB', 'value': 0 }
+                     { 'key': 'SequoiaSQL-PostgreSQL - SequoiaDB', 'value': 0 }
                   ]
                },
                {

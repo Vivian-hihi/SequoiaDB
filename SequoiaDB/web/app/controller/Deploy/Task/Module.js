@@ -39,7 +39,7 @@
          {
             $scope.stepList = _Deploy.BuildSdbShrinkStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
          }
-         else if( $scope.ModuleType == 'sequoiapostgresql' )
+         else if( $scope.ModuleType == 'sequoiasql-postgresql' )
          {
             $scope.stepList = _Deploy.BuildSdbPgsqlStep( $scope, $location, $scope['Url']['Action'] ) ;
          }
@@ -112,7 +112,7 @@
                'Flow':        '40%'
             } ;
          }
-         else if( moduleType == 'sequoiapostgresql' )
+         else if( moduleType == 'sequoiasql-postgresql' )
          {
             $scope.TaskTable['title'] = {
                'Status':         '',
@@ -145,7 +145,7 @@
          {
             $location.path( '/Deploy/ZKP-Mod' ).search( { 'r': new Date().getTime() } ) ;
          }
-         else if( $scope.ModuleType == 'sequoiapostgresql' )
+         else if( $scope.ModuleType == 'sequoiasql-postgresql' )
          {
             $location.path( '/Deploy/PostgreSQL-Mod' ).search( { 'r': new Date().getTime() } ) ;
          }
@@ -240,7 +240,7 @@
                         $scope.BarColor = 2 ;
                      }
                   }
-                  else if( $scope.ModuleType == 'zookeeper' || $scope.ModuleType == 'sequoiasql' || $scope.ModuleType == 'sequoiapostgresql' )
+                  else if( $scope.ModuleType == 'zookeeper' || $scope.ModuleType == 'sequoiasql' || $scope.ModuleType == 'sequoiasql-postgresql' )
                   {
                      $.each( $scope.TaskInfo['ResultInfo'], function( index, nodeInfo ){
                         if( nodeInfo['errno'] != 0 )

@@ -641,7 +641,7 @@ _Deploy.BuildSdbShrinkStep = function( $scope, $location, action, deployModule )
    return stepList ;
 }
 
-//生成安装SequoiaPostgreSQL步骤图
+//生成安装sequoiasql-postgresql步骤图
 _Deploy.BuildSdbPgsqlStep = function( $scope, $location, action, deployModule ){
    var stepList = {
       'step': 0,

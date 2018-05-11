@@ -100,7 +100,7 @@
                   </div>
                   <div class="pull-left" ng-container="{offsetX:-100,height:40}">
                      <div class="Ellipsis2" style="font-weight:bold;height:21px;">
-                        <span ng-if="(moduleInfo['BusinessType']=='sequoiadb'&&moduleInfo['DeployMod']=='distribution')||moduleInfo['BusinessType']=='sequoiapostgresql'">
+                        <span ng-if="(moduleInfo['BusinessType']=='sequoiadb'&&moduleInfo['DeployMod']=='distribution')||moduleInfo['BusinessType']=='sequoiasql-postgresql'">
                            <a class="linkButton" style="font-size:90%;" ng-if="moduleInfo['authority']" ng-attr="{'data-desc':autoLanguage('鉴权已开启。')}" ng-click="OpenShowAuthorityDropdown($event,moduleInfo['BusinessName'],moduleInfo['BusinessType'])">
                               <i class="fa fa-lock"></i>
                               <span>{{autoLanguage("鉴权")}} </span>
@@ -118,10 +118,10 @@
                            <span style="color:#ccc;font-size:100%;font-weight:normal;">|</span>
                         </span>
 
-                        <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb' || moduleInfo['BusinessType']=='sequoiapostgresql'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
-                        <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb' && moduleInfo['BusinessType']!='sequoiapostgresql'">{{moduleInfo['BusinessName']}}</span>
+                        <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb' || moduleInfo['BusinessType']=='sequoiasql-postgresql'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
+                        <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb' && moduleInfo['BusinessType']!='sequoiasql-postgresql'">{{moduleInfo['BusinessName']}}</span>
                      </div>
-                     <div class="Ellipsis" style="font-size:90%;color:#666;">{{moduleInfo['BusinessType']=='sequoiapostgresql'?'SequoiaPostgreSQL':moduleInfo['BusinessType']}} {{moduleInfo['DeployMod']}}&nbsp;|&nbsp;<span ng-if="moduleInfo['AddtionType'] == 1">{{autoLanguage("添加时间")}}</span><span ng-if="moduleInfo['AddtionType'] == 0">{{autoLanguage("创建时间")}}</span>: {{moduleInfo['Time']['$timestamp'].substr(0,19)}}</div>
+                     <div class="Ellipsis" style="font-size:90%;color:#666;">{{moduleInfo['BusinessType']}} {{moduleInfo['DeployMod']}}&nbsp;|&nbsp;<span ng-if="moduleInfo['AddtionType'] == 1">{{autoLanguage("添加时间")}}</span><span ng-if="moduleInfo['AddtionType'] == 0">{{autoLanguage("创建时间")}}</span>: {{moduleInfo['Time']['$timestamp'].substr(0,19)}}</div>
                   </div>
                   <div class="clear-float"></div>
                </div>
@@ -130,7 +130,7 @@
                   <i class="fa fa-circle" style="color:#00CC66;" ng-if="moduleInfo['Error']['Flag']==0"></i><i class="fa fa-circle error" ng-if="moduleInfo['Error']['Flag']!=0"></i>&nbsp;<span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']==0">{{autoLanguage("正常运行...")}}</span><span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']!=0">{{moduleInfo['Error']['Message']}}</span>
                </div>
 
-               <div ng-container="{offsetY:-100,marginTop:10,height:'auto'}" ng-if="moduleInfo['BusinessType']=='sequoiadb' || moduleInfo['BusinessType']=='sequoiapostgresql'">
+               <div ng-container="{offsetY:-100,marginTop:10,height:'auto'}" ng-if="moduleInfo['BusinessType']=='sequoiadb' || moduleInfo['BusinessType']=='sequoiasql-postgresql'">
 
                   <div class="pull-left" style="max-width:650px;" ng-container="{width:'50%',height:140,offsetX:-30,marginRight:30}">
                      <div class="Ellipsis" style="height:35px;">
@@ -164,7 +164,7 @@
                      </div>
                      <div ng-container="{offsetY:-20}" create-chart="moduleInfo['Chart']['Module']"></div>
                   </div>
-                  <div class="pull-left" style="max-width:650px;min-height:145px;" ng-container="{width:'50%',height:'30w'}" ng-if="moduleInfo['BusinessType']=='sequoiapostgresql'">
+                  <div class="pull-left" style="max-width:650px;min-height:145px;" ng-container="{width:'50%',height:'30w'}" ng-if="moduleInfo['BusinessType']=='sequoiasql-postgresql'">
                      <div style="height:20px;margin-bottom:15px;">
                         {{autoLanguage("业务关联信息")}}
                      </div>
@@ -268,8 +268,8 @@
             <div class="Ellipsis" table-key="BusinessName">
                <span ng-repeat="moduleInfo in moduleList track by $index">
                   <span ng-repeat="installInfo in moduleInfo['Location'] track by $index" ng-if="hostInfo['HostName']==installInfo['HostName']">
-                     <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'||moduleInfo['BusinessType']=='sequoiapostgresql'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
-                     <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'&&moduleInfo['BusinessType']!='sequoiapostgresql'">{{moduleInfo['BusinessName']}}</span>&nbsp;
+                     <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'||moduleInfo['BusinessType']=='sequoiasql-postgresql'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
+                     <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'&&moduleInfo['BusinessType']!='sequoiasql-postgresql'">{{moduleInfo['BusinessName']}}</span>&nbsp;
                   </span>
                </span>
             </div>

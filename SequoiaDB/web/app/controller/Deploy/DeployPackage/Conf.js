@@ -38,9 +38,9 @@
                "webName": $scope.autoLanguage( '安装包名' ),
                "type": "select",
                "required": true,
-               "value": 'sequoia-postgresql',
+               "value": 'sequoiasql-postgresql',
                "valid": [
-                  { 'key': 'SequoiaPostgreSQL', 'value': 'sequoia-postgresql' }
+                  { 'key': 'SequoiaSQL-PostgreSQL', 'value': 'sequoiasql-postgresql' }
                ]
             },
             {
@@ -219,7 +219,7 @@
                   hostInfo['Package'] = hostInfo['Package'] + ',' + packageInfo['Name'] ;
                }
             } ) ;
-            if( hostInfo['Package'].indexOf( 'sequoiapostgresql' ) > 0 )
+            if( hostInfo['Package'].indexOf( 'sequoiasql-postgresql' ) > 0 )
             {
                hostInfo['Checked'] = false ;
             }
@@ -240,7 +240,7 @@
          else
          {
             $.each( SdbSwap.hostList, function( index, hostInfo ){
-               if( hostInfo['Package'].indexOf( 'sequoiapostgresql' ) > 0 )
+               if( hostInfo['Package'].indexOf( 'sequoiasql-postgresql' ) > 0 )
                {
                   hostInfo['Checked'] = false ;
                }

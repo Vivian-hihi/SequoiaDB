@@ -3,7 +3,7 @@
       <Name>dbpath</Name>
       <WebName>dbpath</WebName>
       <Type>path</Type>
-      <Default>/opt/sequoiasqloltp/database/</Default>
+      <Default>/opt/sequoiasql/postgresql/database/</Default>
       <Valid></Valid>
       <Display>text box</Display>
       <Edit>true</Edit>
