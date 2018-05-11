@@ -95,9 +95,9 @@ class TestUpdateShardingKey12634 extends PHPUnit_Framework_TestCase
       
       self::$dbh -> upsertRecs( self::$clDB );
       $errno = self::$dbh -> getErrno();
-      $this -> assertEquals( 0, $errno );
+      $this -> assertEquals( -178, $errno );
    }
-   
+   /*
    function test_find()
    {
       echo "\n---Begin to find records after update.\n";
@@ -111,7 +111,7 @@ class TestUpdateShardingKey12634 extends PHPUnit_Framework_TestCase
       $expValue = 2;  
       $this -> assertEquals( $expValue, $recsArray[0]['a'] );
       $this -> assertEquals( $expValue, $recsArray[0]['b'] );
-   }
+   }*/
    
    public static function tearDownAfterClass()
    {
