@@ -395,6 +395,12 @@ namespace sdbclient
             // not reach max count
             else
             {
+                // TODO: add this temporary to avoid bgtask not working  
+               if( 0 == _strategy->getNormalCoordNum() )
+               {
+                   _retrieveAddrFromAbnormalList();
+			   }
+            
                if ( 0 == _strategy->getNormalCoordNum() )
                {  
                   rc = SDB_DS_NO_REACHABLE_COORD ;
