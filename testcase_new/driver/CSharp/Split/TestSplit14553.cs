@@ -30,7 +30,8 @@ namespace CSharp.Split
         private List<string> dataGroupNames = new List<string>();
         List<BsonDocument> list = new List<BsonDocument>();
 
-        [TestInitialize()]
+        //[TestInitialize()]
+        [Ignore]
         public void SetUp()
         {
             Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " begin: " + this.GetType().ToString());
@@ -38,7 +39,8 @@ namespace CSharp.Split
             sdb.Connect();
         }
 
-        [TestMethod]
+        //[TestMethod]
+        [Ignore]
         public void Test14553()
         {
             if (Common.isStandalone(sdb))
@@ -132,7 +134,8 @@ namespace CSharp.Split
             cl.BulkInsert(list, SDBConst.FLG_INSERT_CONTONDUP);
         }
 
-        [TestCleanup()]
+        //[TestCleanup()]
+        [Ignore]
         public void TearDown()
         {
             if (sdb != null)
