@@ -25,7 +25,8 @@ namespace CSharp.Crud.Update
         private DBCollection cl = null;
         private string clName = "upsert12647";
 
-        [TestInitialize()]
+       // [TestInitialize()]
+        [Ignore]
         public void SetUp()
         {
             Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " begin: " + this.GetType().ToString());
@@ -49,7 +50,8 @@ namespace CSharp.Crud.Update
             InsertDatas();
         }
 
-        [TestMethod()]
+       // [TestMethod()]
+        [Ignore]
         public void TestUpsertShardingKey12647()
         {
             if (Common.IsStandalone(sdb))
@@ -61,7 +63,8 @@ namespace CSharp.Crud.Update
             NoUpsertShardingKey();
         }
 
-        [TestCleanup()]
+        //[TestCleanup()]
+        [Ignore]
         public void TearDown()
         {
             try

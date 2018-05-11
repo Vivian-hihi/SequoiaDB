@@ -17,7 +17,7 @@ namespace CSharp.Crud.Update
      * author:      wuyan
      * date:        2018/3/13
     */
-    [TestClass]
+    [TestClass]  
     public class UpdateShardingKey12645
     {
         private Sequoiadb sdb = null;
@@ -25,7 +25,8 @@ namespace CSharp.Crud.Update
         private DBCollection cl = null;
         private string clName = "update12645";
 
-        [TestInitialize()]
+        //[TestInitialize()]
+          [Ignore]
         public void SetUp()
         {
             Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " begin: " + this.GetType().ToString());
@@ -49,7 +50,8 @@ namespace CSharp.Crud.Update
             InsertDatas();
         }
 
-        [TestMethod()]
+        //[TestMethod(),Ignore]   
+        [Ignore]
         public void TestUpdateShardingKey12645()
         {
             if (Common.IsStandalone(sdb))
@@ -59,7 +61,8 @@ namespace CSharp.Crud.Update
             UpdateShardingKey();
         }
 
-        [TestCleanup()]
+       // [TestCleanup()]
+          [Ignore]
         public void TearDown()
         {
             try
