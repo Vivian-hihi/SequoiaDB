@@ -20,5 +20,6 @@ SequoiaDB 通过与 Elasticsearch 配合提供全文检索能力。在 SequoiaDB
 - 在空集合或者只有很少量数据的集合上创建全文索引。在写入压力不是太大的情况下，通常在若干秒（典型值如 1~5 秒）内，新增的数据即可被搜索到。
 
 ##相关内容##
+* [全文检索环境部属](database_management/text_search/deploy.md)
 * [搜索引擎适配器](database_management/text_search/sdbseadapter.md)
 * [全文检索语法](database_management/text_search/text_search_grammer.md)
