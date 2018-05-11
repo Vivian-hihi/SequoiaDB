@@ -531,7 +531,7 @@ namespace engine
       goto done ;
    }
 
-   #define OM_DBPATH_SSQL_OLTP "sequoiasqloltp"
+   #define OM_DBPATH_POSTGRESQL "postgresql"
 
    INT32 OmSsqlOltpConfigBuilder::_getDBPath( OmHost& host,
                                               const string& diskPath,
@@ -551,7 +551,7 @@ namespace engine
          {
             ss << OSS_FILE_SEP ;
          }
-         ss << OM_DBPATH_SSQL_OLTP << OSS_FILE_SEP
+         ss << OM_BUSINESS_SEQUOIASQL << OSS_FILE_SEP << OM_DBPATH_POSTGRESQL
             << OM_DBPATH_PREFIX_DATABASE << OSS_FILE_SEP
             << serviceName ;
          if ( 0 != i )
