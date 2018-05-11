@@ -241,8 +241,8 @@ namespace engine
                PD_LOG( PDDEBUG, "LOB[%s] is owned by [%lld] in mode[%u] refCount[%d], rc=%d",
                     lobAccessInfo->getOID().str().c_str(),
                     lobAccessInfo->getAccessId(),
-                    lobAccessInfo->getRefCount(),
-                    lobAccessInfo->getMode(), rc ) ;
+                    lobAccessInfo->getMode(),
+                    lobAccessInfo->getRefCount(), rc ) ;
                goto error ;
             case SDB_LOB_MODE_READ:
                if ( SDB_LOB_MODE_READ != mode )
@@ -251,8 +251,8 @@ namespace engine
                   PD_LOG( PDDEBUG, "LOB[%s] is owned by [%lld] in mode[%u] refCount[%d], rc=%d",
                     lobAccessInfo->getOID().str().c_str(),
                     lobAccessInfo->getAccessId(),
-                    lobAccessInfo->getRefCount(),
-                    lobAccessInfo->getMode(), rc ) ;
+                    lobAccessInfo->getMode(),
+                    lobAccessInfo->getRefCount(), rc ) ;
                   goto error ;
                }
                else
@@ -269,8 +269,8 @@ namespace engine
                   PD_LOG( PDDEBUG, "LOB[%s] is owned by [%lld] in mode[%u] refCount[%d], rc=%d",
                     lobAccessInfo->getOID().str().c_str(),
                     lobAccessInfo->getAccessId(),
-                    lobAccessInfo->getRefCount(),
-                    lobAccessInfo->getMode(), rc ) ;
+                    lobAccessInfo->getMode(),
+                    lobAccessInfo->getRefCount(), rc ) ;
                   goto error ;
                }
 
@@ -294,8 +294,8 @@ namespace engine
             PD_LOG( PDDEBUG, "Get privilege of LOB[%s] by [%lld] in mode[%u] refCount[%d]",
                     oid.str().c_str(),
                     accessId,
-                    lobAccessInfo->getRefCount(),
-                    mode ) ;
+                    mode,
+                    lobAccessInfo->getRefCount() ) ;
          }
          else
          {
@@ -334,8 +334,8 @@ namespace engine
             PD_LOG( PDDEBUG, "Get privilege of LOB[%s] by [%lld] in mode[%u] refCount[%d]",
                     oid.str().c_str(),
                     accessId,
-                    lobAccessInfo->getRefCount(),
-                    mode ) ;
+                    mode,
+                    lobAccessInfo->getRefCount() ) ;
          }
       }
 
@@ -398,8 +398,8 @@ namespace engine
             PD_LOG( PDDEBUG, "Release privilege of LOB[%s] by [%lld] in mode[%u] refCount[%d]",
                     oid.str().c_str(),
                     accessId,
-                    lobAccessInfo->getRefCount(),
-                    mode ) ;
+                    mode,
+                    lobAccessInfo->getRefCount() ) ;
             SAFE_OSS_DELETE( lobAccessInfo ) ;
             break ;
          case SDB_LOB_MODE_READ:
@@ -408,8 +408,8 @@ namespace engine
             PD_LOG( PDDEBUG, "Release privilege of LOB[%s] by [%lld] in mode[%u] refCount[%d]",
                     oid.str().c_str(),
                     accessId,
-                    lobAccessInfo->getRefCount(),
-                    mode ) ;
+                    mode,
+                    lobAccessInfo->getRefCount() ) ;
             if ( lobAccessInfo->getRefCount() <= 0 )
             {
                bucket.erase( key ) ;
@@ -442,8 +442,8 @@ namespace engine
             PD_LOG( PDDEBUG, "Release privilege of LOB[%s] by [%lld] in mode[%u] refCount[%d]",
                     oid.str().c_str(),
                     accessId,
-                    lobAccessInfo->getRefCount(),
-                    mode ) ;
+                    mode,
+                    lobAccessInfo->getRefCount() ) ;
             if ( lobAccessInfo->getRefCount() <= 0 )
             {
                bucket.erase( key ) ;
