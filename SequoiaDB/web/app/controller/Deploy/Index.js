@@ -2992,6 +2992,12 @@
                   } ) ;
                   $scope.CreateRelationWindow['config']['inputList'][4]['valid'] = pgsqlList ;
                   $scope.CreateRelationWindow['config']['inputList'][4]['value'] = pgsqlList[0]['value'] ;
+                  $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
+                     '?_?_?',
+                     $scope.CreateRelationWindow['config']['inputList'][2]['value'],
+                     $scope.moduleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName'],
+                     $scope.CreateRelationWindow['config']['inputList'][4]['value']
+                  ) ;
                },
                'failed': function( errorInfo ){
                   _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -3080,12 +3086,6 @@
                   "value": '',
                   "valid": [],
                   "onChange": function( name, key, value ){
-                     $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
-                        '?_?_?',
-                        value,
-                        $scope.moduleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName'],
-                        $scope.CreateRelationWindow['config']['inputList'][4]['value']
-                     ) ;
                      queryPgsqlDatabase( $scope.clusterList[$scope.currentCluster]['ClusterName'], value ) ;
                   }
                },
@@ -3192,11 +3192,6 @@
          } ) ;
          queryPgsqlDatabase( $scope.clusterList[$scope.currentCluster]['ClusterName'], $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['key'] ) ;
          $scope.CreateRelationWindow['config']['inputList'][2]['value'] = $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['value'] ;
-         $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
-            '?_?',
-            $scope.CreateRelationWindow['config']['inputList'][2]['value'],
-            $scope.moduleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName']
-         ) ;
          $scope.CreateRelationWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
             var isAllClear = $scope.CreateRelationWindow['config'].check() ;
             if( isAllClear )
