@@ -1,6 +1,6 @@
 <project>
     <shortName>sequoiasql-mysql</shortName>
-    <fullName>Sequoiasql MySQL Server</fullName>
+    <fullName>SequoiaSQL MySQL Server</fullName>
     <version>1.0</version>
     <installerFilename>${product_shortname}-${product_version}-${platform}${edition}-installer.${platform_exec_suffix}</installerFilename>
     <allowLanguageSelection>1</allowLanguageSelection>
