@@ -120,7 +120,13 @@ namespace engine
       rc = _prepareNextSubContext( eduCB, FALSE ) ;
       if ( rc )
       {
-         if ( SDB_DMS_EOC != rc )
+         if ( SDB_DMS_EOC == rc )
+         {
+            _hitEnd = TRUE ;
+            rc = SDB_OK ;
+            goto done ;
+         }
+         else
          {
             PD_LOG( PDERROR, "Prepare next sub context failed[ %d ]", rc ) ;
          }
