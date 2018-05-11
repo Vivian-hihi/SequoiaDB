@@ -551,9 +551,9 @@ namespace engine
          {
             ss << OSS_FILE_SEP ;
          }
-         ss << OM_BUSINESS_SEQUOIASQL << OSS_FILE_SEP << OM_DBPATH_POSTGRESQL
-            << OM_DBPATH_PREFIX_DATABASE << OSS_FILE_SEP
-            << serviceName ;
+         ss << OM_BUSINESS_SEQUOIASQL << OSS_FILE_SEP <<
+               OM_DBPATH_POSTGRESQL << OSS_FILE_SEP <<
+               OM_DBPATH_PREFIX_DATABASE << OSS_FILE_SEP << serviceName ;
          if ( 0 != i )
          {
             ss << "_" << i ;
