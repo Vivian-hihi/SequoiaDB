@@ -525,7 +525,14 @@
                   //执行
                   if( formValue['execType'] == 0 )
                   {
-                     SdbSignal.commit( 'exec_sql', { 'sql': sql, 'isUser': true, 'isUpdateSql': true, 'gotoFirst': true } ) ;
+                     if( SdbSignal.commit( 'getTableLength' )[0] == 0 )
+                     {
+                        SdbSignal.commit( 'exec_sql', { 'sql': sql, 'isUser': true, 'isUpdateSql': true } ) ;
+                     }
+                     else
+                     {
+                        SdbSignal.commit( 'exec_sql', { 'sql': sql, 'isUser': true, 'isUpdateSql': true, 'gotoFirst': true } ) ;
+                     }
                   }
                   else
                   {
