@@ -2485,6 +2485,9 @@ namespace engine
                                         cb, dpscb ) ;
             PD_RC_CHECK( rc, PDERROR, "External operation on truncate "
                          "collection failed, rc: %d", rc ) ;
+            rc = handler->done( DMS_EXTOPR_TYPE_TRUNCATE, cb, dpscb ) ;
+            PD_RC_CHECK( rc, PDERROR, "External done operation failed, rc: %d",
+                         rc ) ;
          }
          else
          {
@@ -2551,13 +2554,6 @@ namespace engine
                                 oldCLID ) ;
          _pEventHolder->onTruncateCL( DMS_EVENT_MASK_ALL, clItem, newCLID,
                                       cb, dpscb ) ;
-      }
-
-      if ( handler )
-      {
-         rc = handler->done( DMS_EXTOPR_TYPE_TRUNCATE, cb, dpscb ) ;
-         PD_RC_CHECK( rc, PDERROR, "External done operation failed, rc: %d",
-                      rc ) ;
       }
 
    done:

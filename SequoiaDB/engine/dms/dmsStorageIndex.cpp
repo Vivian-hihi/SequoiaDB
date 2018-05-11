@@ -50,7 +50,7 @@
 
 using namespace bson ;
 
-#define DMS_MAX_TEXT_IDX_NUM        4
+#define DMS_MAX_TEXT_IDX_NUM        1
 
 namespace engine
 {
@@ -694,6 +694,12 @@ namespace engine
                            "_extDataHandler is NULL" ) ;
                _pDataSu->regExtDataHandler( _pStorageInfo->_extDataHandler ) ;
             }
+            rc = _pDataSu->getExtDataHandler()->onCrtTextIdx( getSuName(),
+                                                              context->mb()->_collectionName,
+                                                              indexCB.getName(),
+                                                              cb, dpscb ) ;
+            PD_RC_CHECK( rc, PDERROR, "External onCreate failed when creating "
+                         "text index[%d]", rc ) ;
          }
 
          // calc the reserve size
@@ -1441,8 +1447,7 @@ namespace engine
 
             rc = handler->onInsert( _pDataSu->getSuName(),
                                     context->mb()->_collectionName,
-                                    indexCB.getName(),
-                                    indexCB, inputObj, cb ) ;
+                                    indexCB.getName(), indexCB, inputObj, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Insert on text index failed[ %d ]",
                          rc ) ;
          }

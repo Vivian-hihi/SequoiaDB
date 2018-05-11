@@ -436,6 +436,9 @@ namespace engine
                                           _eduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "External handle on text index rebuild "
                    "failed: %d", rc ) ;
+      rc = _extHandler->done( DMS_EXTOPR_TYPE_REBUILDIDX, _eduCB, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "External done on text index rebuild failed: "
+                   "%d", rc ) ;
       // Now the capped cs and cl have been created. So if any failure below,
       // they need to be dropped.
       hasRebuild = TRUE ;

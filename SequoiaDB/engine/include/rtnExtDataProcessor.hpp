@@ -46,7 +46,9 @@
 #include "pmdEDU.hpp"
 #include "utilConcurrentMap.hpp"
 #include "rtnExtOprDef.hpp"
+#include "dmsStorageDataCommon.hpp"
 
+#define RTN_EXT_PROCESSOR_NAME_SZ   255
 namespace engine
 {
    struct _rtnExtProcessorMeta
@@ -77,15 +79,17 @@ namespace engine
       INT32 init( const CHAR *csName, const CHAR *clName,
                   const CHAR *idxName, const BSONObj &idxKeyDef ) ;
 
-      /*
-       * Why prepare and done? The commit LSN should be the same on primary and
-       * slaves. If we write before the log DPS, the commit LSN will be newer
-       * than that on the slave.
-       */
-      INT32 prepareInsert( const BSONObj &inputObj, BSONObj &recordObj ) ;
-      INT32 prepareDelete( const BSONObj &inputObj, BSONObj &recordObj ) ;
-      INT32 prepareUpdate( const BSONObj &originalObj,
-                           const BSONObj &newObj, BSONObj &recordObj ) ;
+      // User can set a name for the processor. If not set explicitly, it will
+      // be set to the same with the full name of the capped cl by default.
+      INT32 setName( const CHAR *name ) ;
+      const CHAR* getName() const ;
+
+      INT32 processInsert( const BSONObj &inputObj, pmdEDUCB *cb,
+                           SDB_DPSCB *dpsCB = NULL ) ;
+      INT32 processDelete( const BSONObj &inputObj, pmdEDUCB *cb,
+                           SDB_DPSCB *dpsCB = NULL ) ;
+      INT32 processUpdate( const BSONObj &originalObj, const BSONObj &newObj,
+                           pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
 
       INT32 doWrite( pmdEDUCB *cb, BSONObj &record, SDB_DPSCB *dpsCB = NULL ) ;
       INT32 doDropP1( pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
@@ -95,12 +99,15 @@ namespace engine
       INT32 doUnload( _pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
       INT32 doRebuild( pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
 
+      INT32 done( pmdEDUCB *cb ) ;
+      INT32 abort() ;
+
       const rtnExtProcessorMeta& getMeta() const { return _meta ; }
       INT32 updateMeta( const rtnExtProcessorMeta& meta ) ;
       BOOLEAN isOwnedBy( const CHAR *csName, const CHAR *clName = NULL,
                          const CHAR *idxName = NULL ) ;
 
-      static void getExtDataNames( const CHAR *csName,
+      static void genExtDataNames( const CHAR *csName,
                                    const CHAR *clName,
                                    const CHAR *idxName,
                                    CHAR *extCSName,
@@ -109,45 +116,62 @@ namespace engine
                                    UINT32 clNameBufSize ) ;
 
    private:
-      void _lock() ;
-      void _unlock() ;
       INT32 _prepareCSAndCL( const CHAR *csName, const CHAR *clName,
                              _pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
+
+      /*
+       * Why prepare and done? The commit LSN should be the same on primary and
+       * slaves. If we write before the log DPS, the commit LSN will be newer
+       * than that on the slave.
+       */
+      INT32 _prepareInsert( const BSONObj &inputObj, BSONObj &recordObj ) ;
+      INT32 _prepareDelete( const BSONObj &inputObj, BSONObj &recordObj ) ;
+      INT32 _prepareUpdate( const BSONObj &originalObj, const BSONObj &newObj,
+                            BSONObj &recordObj ) ;
 
       INT32 _prepareRecord( const CHAR *name, _rtnExtOprType oprType,
                             const bson::OID *dataOID,
                             const BSONObj *dataObj,
                             BSONObj &recordObj ) ;
 
+      const CHAR* _getExtCLShortName() const ;
+
    private:
-      rtnExtProcessorMeta _meta ;
-      CHAR _cappedCSName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
-      CHAR _cappedCLName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
-      ossSpinXLatch _latch ;
+      dmsMBContext         *_mbContext ;
+      CHAR                 _name[ RTN_EXT_PROCESSOR_NAME_SZ + 1 ] ;
+      rtnExtProcessorMeta  _meta ;
+      CHAR                 _cappedCSName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
+      CHAR                 _cappedCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
+      BOOLEAN              _needUpdateLSN ;
    } ;
    typedef _rtnExtDataProcessor rtnExtDataProcessor ;
 
    class _rtnExtDataProcessorMgr : public SDBObject
    {
-      typedef std::multimap<UINT32, rtnExtDataProcessor *>   PROCESSOR_MAP ;
-      typedef PROCESSOR_MAP::iterator                        PROCESSOR_MAP_ITR ;
+      typedef std::map<const CHAR*, rtnExtDataProcessor *>  PROCESSOR_MAP ;
+      typedef PROCESSOR_MAP::iterator                       PROCESSOR_MAP_ITR ;
+      typedef std::map<const CHAR*, ossRWMutex *>           PROCESSOR_LATCH_MAP ;
+      typedef PROCESSOR_LATCH_MAP::iterator                 PROCESSOR_LATCH_MAP_ITR ;
+      typedef std::map<std::string, ossRWMutex *>           CS_LATCH_MAP ;
+      typedef CS_LATCH_MAP::iterator                        CS_LATCH_MAP_ITR ;
    public:
       _rtnExtDataProcessorMgr() ;
       ~_rtnExtDataProcessorMgr () ;
 
-      INT32 addProcessor( const CHAR *csName, const CHAR *clName,
-                          const CHAR *idxName, const BSONObj &idxKeyDef,
-                          rtnExtDataProcessor** processor ) ;
+      INT32 createProcessor( const CHAR *csName, const CHAR *clName,
+                             const CHAR *idxName, const BSONObj &idxKeyDef,
+                             rtnExtDataProcessor *&processor ) ;
+      void destroyProcessor( rtnExtDataProcessor *&processor ) ;
 
-      void getProcessors( const CHAR *csName,
-                          vector<rtnExtDataProcessor *> &processorVec ) ;
+      INT32 addProcessor( rtnExtDataProcessor *processor ) ;
 
-      void getProcessors( const CHAR *csName, const CHAR *clName,
-                          vector<rtnExtDataProcessor *> &processorVec ) ;
-
-      INT32 getProcessor( const CHAR *csName, const CHAR *clName,
-                          const CHAR *idxName,
-                          rtnExtDataProcessor **processor ) ;
+      INT32 number()  ;
+      INT32 getProcessorsAndLock( const CHAR *csName, const CHAR *clName,
+                                  const CHAR *idxName, OSS_LATCH_MODE lockType,
+                                  std::vector<rtnExtDataProcessor *> &processors ) ;
+      void unlockProcessor( const CHAR *name, OSS_LATCH_MODE lockType ) ;
+      void unlockProcessors( std::vector<rtnExtDataProcessor *> &processors,
+                             OSS_LATCH_MODE lockType ) ;
 
       void delProcessor( rtnExtDataProcessor **processor ) ;
 
@@ -155,9 +179,11 @@ namespace engine
       UINT32 _genProcessorKey( const CHAR *csName, const CHAR *clName,
                                const CHAR *idxName ) ;
    private:
-      ossRWMutex     _mutex ;
-      // Use a hash map to manage all the processors.
-      PROCESSOR_MAP  _processorMap ;
+      // Mutex to protect meta data change.
+      ossSpinSLatch       _mutex ;
+      // Map key is processor name, the same with the capped cl name.
+      PROCESSOR_MAP       _processorMap ;
+      PROCESSOR_LATCH_MAP _latchMap ;
    } ;
    typedef _rtnExtDataProcessorMgr rtnExtDataProcessorMgr ;
 

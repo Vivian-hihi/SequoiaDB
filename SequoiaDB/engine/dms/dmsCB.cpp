@@ -1456,7 +1456,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
       IDmsExtDataHandler *extHandler = NULL ;
-      BOOLEAN extOprFinish = FALSE ;
 
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DELCS ) ;
 
@@ -1464,23 +1463,6 @@ namespace engine
       {
          rc = SDB_INVALIDARG ;
          goto error ;
-      }
-
-      _mutex.get_shared () ;
-      rc = _CSCBNameLookup( pName, &pCSCB ) ;
-      _mutex.release_shared () ;
-      if ( rc )
-      {
-         goto error ;
-      }
-
-      extHandler = pCSCB->_su->data()->getExtDataHandler() ;
-      if ( extHandler )
-      {
-         rc = extHandler->onDelCS( pCSCB->_su->CSName(), cb,
-                                   removeFile, dpsCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "External operation on delete cs failed, "
-                      "rc: %d", rc ) ;
       }
 
       rc = _CSCBNameRemove ( pName, cb, dpsCB, onlyEmpty, pCSCB ) ;
@@ -1494,16 +1476,25 @@ namespace engine
          goto error ;
       }
 
+      extHandler = pCSCB->_su->data()->getExtDataHandler() ;
       if ( extHandler )
       {
-         rc = extHandler->done( DMS_EXTOPR_TYPE_DROPCS, cb, dpsCB ) ;
+         // If external operation failed, we do not go to error. Manually
+         // cleanup may be needed.
+         rc = extHandler->onDelCS( pCSCB->_su->CSName(), cb,
+                                   removeFile, dpsCB ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "External done operation failed, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "External operation on delete cs failed, "
+                      "rc: %d", rc ) ;
          }
          else
          {
-            extOprFinish = TRUE ;
+            rc = extHandler->done( DMS_EXTOPR_TYPE_DROPCS, cb, dpsCB ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "External done operation failed, rc: %d", rc ) ;
+            }
          }
       }
 
@@ -1529,10 +1520,6 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DELCS, rc );
       return rc ;
    error :
-      if ( extHandler && !extOprFinish )
-      {
-         extHandler->abortOperation( DMS_EXTOPR_TYPE_DROPCS, cb ) ;
-      }
       goto done ;
    }
 
@@ -1632,23 +1619,6 @@ namespace engine
          goto error ;
       }
 
-      _mutex.get_shared () ;
-      rc = _CSCBNameLookup( pName, &pCSCB ) ;
-      _mutex.release_shared () ;
-      if ( rc )
-      {
-         goto error ;
-      }
-
-      extHandler = pCSCB->_su->data()->getExtDataHandler() ;
-      if ( extHandler )
-      {
-         rc = extHandler->onDelCS( pCSCB->_su->CSName(),
-                                   cb, TRUE, dpsCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "External operation on drop CS[ %s ] failed,"
-                      " rc: %d", pName, rc ) ;
-      }
-
       rc = _CSCBNameRemoveP1( pName, cb, dpsCB ) ;
       if ( rc )
       {
@@ -1657,14 +1627,38 @@ namespace engine
          goto error ;
       }
 
+      // The cscb of the cs is now in the deleting vector. Try to delete all the
+      // capped collections of the text indices in it.
+      _mutex.get_shared() ;
+      rc = _CSCBNameLookup( pName, &pCSCB, NULL, FALSE ) ;
+      _mutex.release_shared() ;
+      PD_RC_CHECK( rc, PDERROR, "Find collection space[ %s ] failed, rc: %d",
+                   pName, rc ) ;
+
+      extHandler = pCSCB->_su->data()->getExtDataHandler() ;
+      if ( extHandler )
+      {
+         rc = extHandler->onDelCS( pName, cb, TRUE, dpsCB ) ;
+         if ( rc )
+         {
+            // If external operation failed, we should resume by cancel the
+            // the remove.
+            PD_LOG( PDERROR, "External operation on drop CS[ %s ] failed,"
+                    " rc: %d", pName, rc ) ;
+            INT32 rcTmp = _CSCBNameRemoveP1Cancel( pName, cb, dpsCB ) ;
+            if ( rcTmp )
+            {
+               PD_LOG( PDERROR, "Cancel remove cs name failed, rc: %d",
+                       rcTmp ) ;
+            }
+            goto error ;
+         }
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DROPCSP1, rc );
       return rc ;
    error :
-      if ( extHandler )
-      {
-         extHandler->abortOperation( DMS_EXTOPR_TYPE_DROPCS, cb ) ;
-      }
       goto done ;
    }
 
@@ -1682,13 +1676,13 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      rc = _CSCBNameRemoveP1Cancel( pName, cb, dpsCB );
-      PD_RC_CHECK( rc, PDERROR,
-                   "failed to cancel remove cs(rc=%d)",
-                   rc );
 
+      // Until now the cs is still not visible to other operations, as the cscb
+      // is in the deleting vector. So abort the external operation before
+      // the P1Cancel below. As once the cancel is done, the cs is exposed to
+      // other operations, and parallel scenarios should be considered.
       _mutex.get_shared () ;
-      rc = _CSCBNameLookup( pName, &pCSCB ) ;
+      rc = _CSCBNameLookup( pName, &pCSCB, NULL, FALSE ) ;
       _mutex.release_shared () ;
       if ( rc )
       {
@@ -1704,10 +1698,15 @@ namespace engine
          if ( extHandler )
          {
             rc = extHandler->abortOperation( DMS_EXTOPR_TYPE_DROPCS, cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "External operation on drop CS[ %s ] "
-                         "failed, rc: %d", pName, rc ) ;
+            PD_RC_CHECK( rc, PDERROR, "External abort operation on drop "
+                         "CS[ %s ] failed, rc: %d", pName, rc ) ;
          }
       }
+
+      rc = _CSCBNameRemoveP1Cancel( pName, cb, dpsCB );
+      PD_RC_CHECK( rc, PDERROR,
+                   "failed to cancel remove cs(rc=%d)",
+                   rc );
 
    done :
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DROPCSP1CANCEL, rc );
@@ -1807,7 +1806,6 @@ namespace engine
       vector<string> csNameVec ;
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
-      BOOLEAN locked = FALSE ;
 
       _getCSList( csNameVec ) ;
 
@@ -1826,14 +1824,12 @@ namespace engine
             }
             continue ;
          }
-         locked = TRUE ;
 
          SDB_ASSERT ( su, "storage unit pointer can't be NULL" ) ;
          if ( ( !sys && dmsIsSysCSName(su->CSName()) ) ||
               ( ossStrcmp ( su->CSName(), SDB_DMSTEMP_NAME ) == 0 ) )
          {
             suUnlock( suID ) ;
-            locked = FALSE ;
             continue ;
          }
 
@@ -1841,18 +1837,9 @@ namespace engine
          su->dumpInfo( cs, sys, dumpCL, dumpIdx ) ;
          csList.insert ( cs ) ;
          suUnlock( suID ) ;
-         locked = FALSE ;
       }
 
-   done:
       PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPCSSIMPLE );
-      return ;
-   error:
-      if ( locked )
-      {
-         suUnlock( suID ) ;
-      }
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPINFO, "_SDB_DMSCB::dumpInfo" )

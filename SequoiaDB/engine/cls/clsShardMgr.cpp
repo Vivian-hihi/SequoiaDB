@@ -2820,7 +2820,7 @@ namespace engine
 
       CHAR cappedCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
 
-      rtnExtDataProcessor::getExtDataNames( csInfo->_name, clInfo->_clname,
+      rtnExtDataProcessor::genExtDataNames( csInfo->_name, clInfo->_clname,
                                             idxInfo->getIndexName(), NULL, 0,
                                             cappedCLName,
                                             DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;

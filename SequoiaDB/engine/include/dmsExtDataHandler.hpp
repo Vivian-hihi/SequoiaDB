@@ -54,7 +54,8 @@ namespace engine
       DMS_EXTOPR_TYPE_TRUNCATE,
       DMS_EXTOPR_TYPE_DROPCS,
       DMS_EXTOPR_TYPE_DROPCL,
-      DMS_EXTOPR_TYPE_DROPIDX
+      DMS_EXTOPR_TYPE_DROPIDX,
+      DMS_EXTOPR_TYPE_REBUILDIDX
    } ;
    typedef enum _DMS_EXTOPR_TYPE DMS_EXTOPR_TYPE ;
 
@@ -78,6 +79,10 @@ namespace engine
 
       virtual INT32 onDelCL( const CHAR *csName, const CHAR *clName,
                              _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) = 0;
+
+      virtual INT32 onCrtTextIdx( const CHAR *csName, const CHAR *clName,
+                                  const CHAR *idxName, _pmdEDUCB *cb,
+                                  SDB_DPSCB *dpscb = NULL ) = 0 ;
 
       virtual INT32 onDropTextIdx( const CHAR *csName, const CHAR *clName,
                                    const CHAR *idxName, _pmdEDUCB *cb,
