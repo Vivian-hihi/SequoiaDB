@@ -375,9 +375,13 @@ namespace engine
             goto error ;
          }
 
+         // lobAccessInfo->getAccessId() can be not -1 in write mode
+         // when a context lock the whole LOB,
+         // but the refCount should be decrease
          if ( -1 != accessId &&
               -1 != lobAccessInfo->getAccessId() &&
-              accessId != lobAccessInfo->getAccessId() )
+              accessId != lobAccessInfo->getAccessId() &&
+              SDB_LOB_MODE_WRITE != lobAccessInfo->getMode() )
          {
             SDB_ASSERT( accessId != lobAccessInfo->getAccessId(), 
                         "incorrect accessId" ) ;
