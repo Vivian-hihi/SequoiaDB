@@ -40,7 +40,7 @@ public class TestUpdateShardingKey12628 extends SdbTestBase{
 	private CollectionSpace cs = null;
 	private DBCollection cl ;	
 	
-	@BeforeClass
+	@BeforeClass(enabled=false)
 	public void setUp(){		
 		System.out.println(this.getClass().getName()+" begin at "
 				+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
@@ -67,7 +67,7 @@ public class TestUpdateShardingKey12628 extends SdbTestBase{
 	*2.update ShardingKey by  update(BSONObject matcher, BSONObject modifier, BSONObject hint,  int flag)
 	*3.update ShardingKey by update( DBQuery query )
 	*/
-	@Test
+	@Test(enabled=false)
 	public void updateShardingKey(){
 		try{
 			//update ShardingKey by  update (String matcher, String modifier, String hint,int flag) 
@@ -117,7 +117,7 @@ public class TestUpdateShardingKey12628 extends SdbTestBase{
 		}
 	}	
 
-	@AfterClass
+	@AfterClass(enabled=false)
 	public void tearDown(){
 		try{
 			if(cs.isCollectionExist(clName)){

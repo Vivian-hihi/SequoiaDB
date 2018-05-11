@@ -38,7 +38,7 @@ public class TestUpsertShardingKey12629 extends SdbTestBase{
 	private CollectionSpace cs = null;
 	private DBCollection cl ;	
 	
-	@BeforeClass
+	@BeforeClass(enabled=false)
 	public void setUp(){		
 		System.out.println(this.getClass().getName()+" begin at "
 				+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
@@ -63,7 +63,7 @@ public class TestUpsertShardingKey12629 extends SdbTestBase{
 	*1.insert new data when condtion is not matched
 	*2.when matching to the condition,update the corresponding data	
 	*/
-	@Test
+	@Test(enabled=false)
 	public void upsertShardingKey(){
 		try{
 			//matching to the condition 
@@ -103,7 +103,7 @@ public class TestUpsertShardingKey12629 extends SdbTestBase{
 		}
 	}	
 
-	@AfterClass
+	@AfterClass(enabled=false)
 	public void tearDown(){
 		try{
 			if(cs.isCollectionExist(clName)){
