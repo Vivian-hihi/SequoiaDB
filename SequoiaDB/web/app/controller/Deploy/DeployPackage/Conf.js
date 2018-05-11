@@ -38,9 +38,9 @@
                "webName": $scope.autoLanguage( '安装包名' ),
                "type": "select",
                "required": true,
-               "value": 'sequoiapostgresql',
+               "value": 'sequoia-postgresql',
                "valid": [
-                  { 'key': 'SequoiaPostgreSQL', 'value': 'sequoiapostgresql' }
+                  { 'key': 'SequoiaPostgreSQL', 'value': 'sequoia-postgresql' }
                ]
             },
             {
@@ -48,7 +48,7 @@
                "webName": $scope.autoLanguage( '安装路径' ),
                "type": "string",
                "required": true,
-               "value": '/opt/sequoiapostgresql/',
+               "value": '/opt/sequoiasql/postgresql/',
                "valid": {
                   "min": 1
                }
