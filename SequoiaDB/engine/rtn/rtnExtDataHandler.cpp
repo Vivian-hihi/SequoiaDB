@@ -62,42 +62,51 @@ namespace engine
       _cleanup() ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTBASE_DONE, "_rtnExtContextBase::done" )
    INT32 _rtnExtContextBase::done( pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTCONTEXTBASE_DONE ) ;
 
       rc = _onDone( cb, dpscb ) ;
       PD_RC_CHECK( rc, PDERROR, "Operation _onDone failed[ %d ]", rc ) ;
 
    done:
       _cleanup() ;
+      PD_TRACE_EXITRC( SDB__RTNEXTCONTEXTBASE_DONE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTBASE_ABORT, "_rtnExtContextBase::abort" )
    INT32 _rtnExtContextBase::abort( pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTCONTEXTBASE_ABORT ) ;
 
       rc = _onAbort( cb, dpscb ) ;
       PD_RC_CHECK( rc, PDERROR, "Operation _onAbort failed[ %d ]", rc ) ;
 
    done:
       _cleanup() ;
+      PD_TRACE_EXITRC( SDB__RTNEXTCONTEXTBASE_ABORT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTBASE__CLEANUP, "_rtnExtContextBase::_cleanup" )
    void _rtnExtContextBase::_cleanup()
    {
+      PD_TRACE_ENTRY( SDB__RTNEXTCONTEXTBASE__CLEANUP ) ;
       if ( _processorLocked )
       {
          _processorMgr->unlockProcessors( _processors, _lockType ) ;
          _processors.clear() ;
          _processorLocked = FALSE ;
       }
+      PD_TRACE_EXIT( SDB__RTNEXTCONTEXTBASE__CLEANUP ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTBASE_APPENDPROCESSORS, "_rtnExtContextBase::appendProcessors" )
@@ -123,6 +132,7 @@ namespace engine
       }
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTREBUILDIDXCTX_OPEN, "_rtnExtRebuildIdxCtx::open" )
    INT32 _rtnExtRebuildIdxCtx::open( rtnExtDataProcessorMgr *processorMgr,
                                      const CHAR *csName, const CHAR *clName,
                                      const CHAR *idxName,
@@ -130,6 +140,7 @@ namespace engine
                                      SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTREBUILDIDXCTX_OPEN ) ;
       BOOLEAN newProcessor = FALSE ;
       BOOLEAN processorAdded = FALSE ;
       SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
@@ -196,6 +207,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTREBUILDIDXCTX_OPEN, rc ) ;
       return rc ;
    error:
       if ( newProcessor )
@@ -249,12 +261,14 @@ namespace engine
    {
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTINSERTCTX_OPEN, "_rtnExtInsertCtx::open" )
    INT32 _rtnExtInsertCtx::open( rtnExtDataProcessorMgr *processorMgr,
                                  const CHAR *csName, const CHAR *clName,
                                  const CHAR *idxName, const BSONObj &object,
                                  pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTINSERTCTX_OPEN ) ;
       std::vector<rtnExtDataProcessor *> processors ;
 
       SDB_ASSERT( processorMgr && csName && clName && idxName,
@@ -280,6 +294,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Process insert failed[ %d ]", rc ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTINSERTCTX_OPEN, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -294,12 +309,14 @@ namespace engine
    {
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDELETECTX_OPEN, "_rtnExtInsertCtx::open" )
    INT32 _rtnExtDeleteCtx::open( rtnExtDataProcessorMgr *processorMgr,
                                  const CHAR *csName, const CHAR *clName,
                                  const CHAR *idxName, const BSONObj &object,
                                  pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDELETECTX_OPEN ) ;
       std::vector<rtnExtDataProcessor *> processors ;
 
       SDB_ASSERT( processorMgr && csName && clName && idxName,
@@ -324,6 +341,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Process delete failed[ %d ]", rc ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDELETECTX_OPEN, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -338,6 +356,7 @@ namespace engine
    {
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTUPDATECTX_OPEN, "_rtnExtUpdateCtx::open" )
    INT32 _rtnExtUpdateCtx::open( rtnExtDataProcessorMgr *processorMgr,
                                  const CHAR *csName, const CHAR *clName,
                                  const CHAR *idxName, const BSONObj &oldObj,
@@ -345,6 +364,7 @@ namespace engine
                                  SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTUPDATECTX_OPEN ) ;
       std::vector<rtnExtDataProcessor *> processors ;
 
       SDB_ASSERT( processorMgr && csName && clName && idxName,
@@ -371,6 +391,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Process update failed[ %d ]", rc ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTUPDATECTX_OPEN, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -386,12 +407,14 @@ namespace engine
    {
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDROPOPRCTX_OPEN, "_rtnExtDropOprCtx::open" )
    INT32 _rtnExtDropOprCtx::open( rtnExtDataProcessorMgr *processorMgr,
                                   const CHAR *csName, const CHAR *clName,
                                   const CHAR *idxName, pmdEDUCB *cb,
                                   BOOLEAN removeFiles, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDROPOPRCTX_OPEN ) ;
       vector <rtnExtDataProcessor *> processorVecP1 ;
 
       _processorMgr = processorMgr ;
@@ -419,6 +442,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDROPOPRCTX_OPEN, rc ) ;
       return rc ;
    error:
       if ( _removeFiles )
@@ -494,11 +518,13 @@ namespace engine
    {
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTTRUNCATECTX_OPEN, "_rtnExtTruncateCtx::open" )
    INT32 _rtnExtTruncateCtx::open( rtnExtDataProcessorMgr *processorMgr,
                                    const CHAR *csName, const CHAR *clName,
                                    pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTTRUNCATECTX_OPEN ) ;
       std::vector<rtnExtDataProcessor *> processors ;
       vector<rtnExtDataProcessor *> processorP1 ;
 
@@ -524,6 +550,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTTRUNCATECTX_OPEN, rc ) ;
       return rc ;
    error:
       INT32 rcTmp = SDB_OK ;
@@ -743,6 +770,42 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_CHECK, "_rtnExtDataHandler::check" )
+   INT32 _rtnExtDataHandler::check( DMS_EXTOPR_TYPE type, const CHAR *csName,
+                                    const CHAR *clName, const CHAR *idxName,
+                                    pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_CHECK ) ;
+
+      std::vector<rtnExtDataProcessor *> processors ;
+
+      rc = _edpMgr->getProcessorsAndLock( csName, clName, idxName, SHARED,
+                                          processors ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get processors for cs[ %s ] and cl[ %s ] "
+                   "failed[ %d ]", csName, clName, rc ) ;
+      SDB_ASSERT( 1 == processors.size(), "More than 1 processor for the cl" ) ;
+
+      {
+         rtnExtDataProcessor *processor = processors.front() ;
+         if ( processor )
+         {
+            rc = processor->check() ;
+            PD_RC_CHECK( rc, PDERROR, "Processor check failed[ %d ]", rc ) ;
+         }
+      }
+
+   done:
+      if ( processors.size() > 0 )
+      {
+         _edpMgr->unlockProcessors( processors, SHARED ) ;
+      }
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_CHECK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONOPENTEXTIDX, "_rtnExtDataHandler::onOpenTextIdx" )
    INT32 _rtnExtDataHandler::onOpenTextIdx( const CHAR *csName,
                                             const CHAR *clName,
@@ -833,12 +896,14 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONCRTTEXTIDX, "_rtnExtDataHandler::onCrtTextIdx" )
    INT32 _rtnExtDataHandler::onCrtTextIdx( const CHAR *csName,
                                            const CHAR *clName,
                                            const CHAR *idxName,
                                            pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONCRTTEXTIDX ) ;
 
       if ( _edpMgr->number() >= RTN_TEXTIDX_MAX_NUM )
       {
@@ -849,6 +914,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONCRTTEXTIDX, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -996,13 +1062,6 @@ namespace engine
       BSONObj processData ;
 
       if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
-      {
-         goto done ;
-      }
-
-      // Called by _onInsertFail when insertion fail. No record should be insert
-      // into the capped collection.
-      if ( !dpscb )
       {
          goto done ;
       }

@@ -84,6 +84,7 @@ namespace engine
       INT32 setName( const CHAR *name ) ;
       const CHAR* getName() const ;
 
+      INT32 check() ;
       INT32 processInsert( const BSONObj &inputObj, pmdEDUCB *cb,
                            SDB_DPSCB *dpsCB = NULL ) ;
       INT32 processDelete( const BSONObj &inputObj, pmdEDUCB *cb,

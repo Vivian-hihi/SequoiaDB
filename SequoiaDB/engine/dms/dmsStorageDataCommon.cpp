@@ -2785,6 +2785,7 @@ namespace engine
       CHAR *pMergedData             = NULL ;
       _dmsCompressorEntry *compressorEntry = &_compressorEntry[context->mbID()] ;
       UINT32 textIdxNum             = 0 ;
+      IDmsExtDataHandler * handler  = NULL ;
 
       try
       {
@@ -2909,6 +2910,19 @@ namespace engine
             goto error ;
          }
 
+         textIdxNum = context->mbStat()->_textIdxNum ;
+         if ( textIdxNum > 0 )
+         {
+            handler = getExtDataHandler() ;
+            if ( handler )
+            {
+               rc = handler->check( DMS_EXTOPR_TYPE_INSERT, getSuName(),
+                                    context->mb()->_collectionName, NULL, cb ) ;
+               PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
+                            "rc: %d", rc ) ;
+            }
+         }
+
          if ( position >= 0 )
          {
             rc = _allocRecordSpaceByPos( context, dmsRecordSize, position,
@@ -2952,7 +2966,6 @@ namespace engine
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INSERT, 1 ) ;
          _incWriteRecord() ;
 
-         textIdxNum = context->mbStat()->_textIdxNum ;
          // insert object's indexes
          rc = _pIdxSU->indexesInsert( context, pExtent->_logicID,
                                       insertObj, foundRID, cb ) ;
@@ -2987,13 +3000,9 @@ namespace engine
                                                    cb->isDoRollback() ) ;
       }
 
-      if ( textIdxNum > 0 )
+      if ( handler )
       {
-         IDmsExtDataHandler* handler = getExtDataHandler() ;
-         if ( handler )
-         {
-            handler->done( DMS_EXTOPR_TYPE_INSERT, cb ) ;
-         }
+         handler->done( DMS_EXTOPR_TYPE_INSERT, cb ) ;
       }
 
    done:

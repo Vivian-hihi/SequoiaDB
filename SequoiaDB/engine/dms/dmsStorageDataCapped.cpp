@@ -2113,7 +2113,7 @@ namespace engine
       if ( workExtInfo->_freeSpace < sizeReq )
       {
          // Before allocationg another extent, check size limitation.
-         if ( _sizeExceedLimit( context, DMS_CAP_EXTENT_SZ ) )
+         if ( !spaceEnough( context, DMS_CAP_EXTENT_SZ ) )
          {
             if ( _overwriteOnExceed( context ) )
             {

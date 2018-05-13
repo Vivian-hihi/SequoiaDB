@@ -206,6 +206,8 @@ namespace engine
 
       virtual INT32 postDataRestored( dmsMBContext * context ) ;
 
+      OSS_INLINE BOOLEAN spaceEnough( dmsMBContext *context, UINT32 newSize ) ;
+
    private:
       virtual const CHAR* _getEyeCatcher() const ;
       virtual INT32 _onOpened() ;
@@ -322,8 +324,7 @@ namespace engine
       OSS_INLINE void _updateStatInfo( dmsMBContext *context,
                                        UINT32 recordSize,
                                        const dmsRecordData &recordData ) ;
-      OSS_INLINE BOOLEAN _sizeExceedLimit( dmsMBContext *context,
-                                           UINT32 newSize ) ;
+
       OSS_INLINE BOOLEAN _numExceedLimit( dmsMBContext *context, UINT32 size ) ;
       OSS_INLINE BOOLEAN _overwriteOnExceed( dmsMBContext *context ) ;
       OSS_INLINE void _recLid2ExtLidAndOffset( INT64 logicalID,
@@ -441,14 +442,14 @@ namespace engine
       _updateCLStat( _mbStatInfo[ context->mbID() ], recordSize, recordData ) ;
    }
 
-   OSS_INLINE BOOLEAN _dmsStorageDataCapped::_sizeExceedLimit( dmsMBContext *context,
-                                                               UINT32 newSize )
+   OSS_INLINE BOOLEAN _dmsStorageDataCapped::spaceEnough( dmsMBContext *context,
+                                                          UINT32 newSize )
    {
       const dmsMBStatInfo *mbStatInfo = getMBStatInfo( context->mbID() ) ;
       SDB_ASSERT( mbStatInfo, "mbStatInfo should not be NULL" ) ;
 
       return (((UINT64)mbStatInfo->_totalDataPages << pageSizeSquareRoot()) + newSize)
-             > (UINT64)_options[context->mbID()]->_maxSize ;
+             <= (UINT64)_options[context->mbID()]->_maxSize ;
    }
 
    OSS_INLINE BOOLEAN _dmsStorageDataCapped::_numExceedLimit( dmsMBContext *context,

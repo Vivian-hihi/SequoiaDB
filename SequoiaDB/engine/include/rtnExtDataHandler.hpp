@@ -251,6 +251,10 @@ namespace engine
                                     const CHAR *idxName, CHAR *buff,
                                     UINT32 buffSize ) ;
 
+      virtual INT32 check( DMS_EXTOPR_TYPE type, const CHAR *csName,
+                           const CHAR *clName, const CHAR *idxName,
+                           pmdEDUCB *cb ) ;
+
       virtual INT32 onOpenTextIdx( const CHAR *csName, const CHAR *clName,
                                    const CHAR *idxName,
                                    const BSONObj &idxKeyDef ) ;
