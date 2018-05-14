@@ -80,15 +80,26 @@ class TestUpdateShardingKey12633 extends PHPUnit_Framework_TestCase
    {
       self::$dbh = new UpdateShardingKey12633();
       
-      echo "\n---Begin to ready parameter.\n";
-      self::$csName = self::$dbh -> COMMCSNAME;
-      self::$clName = self::$dbh -> COMMCLNAME.'12633';
-      
-      echo "\n---Begin to drop cl in the begin.\n";
-      self::$dbh -> dropCL( self::$csName, self::$clName, true );
-      
-      echo "\n---Begin to create cl.\n";
-      self::$clDB = self::$dbh -> createCL( self::$csName, self::$clName );
+      if( self::$dbh -> commIsStandlone() === false )
+      {
+         echo "\n---Begin to ready parameter.\n";
+         self::$csName = self::$dbh -> COMMCSNAME;
+         self::$clName = self::$dbh -> COMMCLNAME.'12633';
+         
+         echo "\n---Begin to drop cl in the begin.\n";
+         self::$dbh -> dropCL( self::$csName, self::$clName, true );
+         
+         echo "\n---Begin to create cl.\n";
+         self::$clDB = self::$dbh -> createCL( self::$csName, self::$clName );
+      }
+   }
+   
+   public function setUp()
+   {
+      if( self::$dbh -> commIsStandlone() === true )
+      {
+         $this -> markTestSkipped( "Database is standlone." );
+      }
    }
    
    function test_insert()
