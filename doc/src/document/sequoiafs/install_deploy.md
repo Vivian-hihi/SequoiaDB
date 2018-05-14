@@ -8,13 +8,12 @@ https://github.com/libfuse/libfuse/releases/download/fuse_2_9_4/fuse-2.9.4.tar.g
 ###编译安装步骤###
 （1）解压源码包  
   
-  ```shell
+  ```lang-javascript
  $tar -xzvf fuse-2.9.4.tar.gz  
   ```    
 （2）进行编译安装    
 
-  ```shell 
- $./makeconf.sh  
+  ```lang-javascript 
  $./configure  
  $make   
  $make install

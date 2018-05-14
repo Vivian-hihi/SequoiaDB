@@ -15,12 +15,13 @@
 |--metadircollection   | -d	| 指定目录元数据集合全名，默认根据目标映射集合生成对应集合名称                           |       		   | 否       |
 |--connectionnum	   | -n	| 指定初始化连接池大小，取值范围[50-1000]                                                | 50    		   | 否       |
 |--cachesize	       | -s	| 目录LRU缓存大小，单位M，取值范围[1-200]                                                | 2     		   | 否       |
-|--confpath	           | -c	| 配置文件路径，默认安装目录下../conf/sequoiafs.conf                                     |       		   | 否       |
+|--confpath	           | -c	| 配置文件路径，默认为当前目录下的sequoiafs.conf                                         |       		   | 否       |
 |--diagnum		       |    | 指定日志文件最大个数，-1表示无限制                                                     | 20    		   | 否       |
 |--diagpath		       |    | 指定日志文件目录，默认当前目录下diaglog                                                |       		   | 否       |
 |--autocreate		   |    | 如果未显示指定文件和目录元数据集合全名，即未指定-d和-f，则需要指定该选项进行自动生成   |       		   | 否       |
 |mountpoint	           | 	| 指定映射集合的目标挂载目录                                                             |       		   | 是       |
 
+注意：配置文件模板位于conf/sample/sequoiafs.conf
 
 ##FUSE选项##
 | 参数		                | 描述	
@@ -119,12 +120,16 @@
 ###挂载目录###
 (1)将sequoiadb的foo.bar集合映射到本地的mountpoint目录，指定文件元数据和目录元数据集合默认生成
 
-```shell
+```lang-javascript
 $/opt/sequoiadb/bin/sequoiafs -i localhost:11810 -l foo.bar -c /opt/sequoiadb/conf --autocreate /opt/sequoiadb/mountpoint
 ```
+
+注意：不要在mountpoint目录里进行执行挂载命令。
+
 即可在mountpoint目录下进行普通文件操作，例如文件的创建、删除和读写。
 
-```shell
+
+```lang-javascript
 $touch testfile
 $echo "hello, this is a testfile!" >> testfile
 $mkdir testdir
@@ -132,7 +137,7 @@ $mkdir testdir
 ![](sequoiafs/mount.png)   
 除了用系统命令进行文件和目录的操作外，还可以利用通用的文件操作API进行操作，支持的API如上表。
 
-```c
+```lang-javascript
 #include<stdio.h>
 #include<sys/stat.h>
 #include<unistd.h>
@@ -196,12 +201,15 @@ error:
 ###卸载目录###
 卸载目录可以使用fuse自带的程序fusermount
 
-```shell
+```lang-javascript
 $fusermount -u /opt/sequoiadb/mountpoint
 ```
+
+注意：卸载前要确保mountpoint目录及其子目录已退出，未被引用。
+
 也可以直接kill程序
 
-```shell
+```lang-javascript
 $ps -ef | grep sequoiafs
 $kill 程序PID
 ```
