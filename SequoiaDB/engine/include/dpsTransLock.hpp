@@ -120,6 +120,9 @@ namespace engine
       // if get lock failed then append to wait-queue but not wait
       INT32 tryOrAppendX( _pmdEDUCB *eduCB, const dpsTransLockId &lockId );
 
+      // try to get record-S-lock, like tryOrAppendX
+      INT32 tryOrAppendS( _pmdEDUCB *eduCB, const dpsTransLockId &lockId );
+
       INT32 wait( _pmdEDUCB *eduCB, const dpsTransLockId &lockId );
 
       BOOLEAN hasWait( const dpsTransLockId &lockId );
@@ -153,6 +156,10 @@ namespace engine
                                     const dpsTransLockId &lockId,
                                     dpsTransCBLockInfo *pLockInfo,
                                     DPS_TRANSLOCK_TYPE lockType ) ;
+
+      INT32 tryOrAppendLock( _pmdEDUCB *eduCB,
+                             const dpsTransLockId &lockId,
+                             DPS_TRANSLOCK_TYPE lockType );
 
    private:
       LockBucketLst           _bucketLst;

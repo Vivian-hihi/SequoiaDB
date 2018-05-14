@@ -36,7 +36,7 @@
 #ifndef COORD_QUERY_OPERATOR_HPP__
 #define COORD_QUERY_OPERATOR_HPP__
 
-#include "coordOperator.hpp"
+#include "coordTransOperator.hpp"
 #include "coordContext.hpp"
 
 using namespace bson ;
@@ -70,7 +70,7 @@ namespace engine
    /*
       _coordQueryOperator define
    */
-   class _coordQueryOperator : public _coordOperator
+   class _coordQueryOperator : public _coordTransOperator
    {
       public:
          _coordQueryOperator( BOOLEAN readOnly = TRUE ) ;
@@ -99,6 +99,9 @@ namespace engine
                                              rtnContextBuf *buf = NULL ) ;
 
       protected:
+
+         virtual void         _prepareForTrans( pmdEDUCB *cb, MsgHeader *pMsg ) ;
+
          INT32                _queryOrDoOnCL( MsgHeader *pMsg,
                                               pmdEDUCB *cb,
                                               rtnContextCoord **pContext,

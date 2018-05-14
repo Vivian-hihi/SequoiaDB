@@ -89,7 +89,7 @@ namespace engine
       _extent              = NULL ;
       _pTransCB            = NULL ;
       _curRID._extent      = curExtentID ;
-      _recordXLock         = FALSE ;
+      _recordLock          = -1 ;
       _needUnLock          = FALSE ;
       _cb                  = NULL ;
 
@@ -97,7 +97,13 @@ namespace engine
            DMS_ACCESS_TYPE_DELETE == _accessType ||
            DMS_ACCESS_TYPE_INSERT == _accessType )
       {
-         _recordXLock = TRUE ;
+         _recordLock = EXCLUSIVE ;
+      }
+      else if ( pmdGetOptionCB()->transIsolation() != TRANS_ISOLATION_RU
+                && ( DMS_ACCESS_TYPE_QUERY == _accessType
+                     || DMS_ACCESS_TYPE_FETCH == _accessType ) )
+      {
+         _recordLock = SHARED ;
       }
    }
 
@@ -105,7 +111,7 @@ namespace engine
    {
       _extent     = NULL ;
 
-      if ( FALSE == _firstRun && _recordXLock &&
+      if ( FALSE == _firstRun && _recordLock != -1 &&
            DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
@@ -191,8 +197,8 @@ namespace engine
 
    void _dmsExtScannerBase::stop()
    {
-      if ( FALSE == _firstRun && _recordXLock &&
-           DMS_INVALID_OFFSET != _curRID._offset )
+      if ( FALSE == _firstRun && _recordLock != -1
+           && DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
                                       &_curRID ) ;
@@ -221,9 +227,9 @@ namespace engine
       _pTransCB         = pmdGetKRCB()->getTransCB() ;
       SDB_BPSCB *pBPSCB = pmdGetKRCB()->getBPSCB () ;
       BOOLEAN   bPreLoadEnabled = pBPSCB->isPreLoadEnabled() ;
-      INT32 lockType    = _recordXLock ? EXCLUSIVE : SHARED ;
+      INT32 lockType    = _recordLock == EXCLUSIVE ? EXCLUSIVE : SHARED ;
 
-      if ( _recordXLock && DPS_INVALID_TRANS_ID == cb->getTransID() )
+      if ( _recordLock != -1 && DPS_INVALID_TRANS_ID == cb->getTransID() )
       {
          _needUnLock = TRUE ;
       }
@@ -305,10 +311,18 @@ namespace engine
          _curRecordPtr = _recordRW.readPtr( 0 ) ;
          _next = _curRecordPtr->getNextOffset() ;
 
-         if ( _recordXLock )
+         if ( _recordLock != -1 )
          {
-            rc = _pTransCB->tryOrAppendX( cb, _pSu->logicalID(),
-                                          _context->mbID(), &_curRID ) ;
+            if ( EXCLUSIVE == _recordLock )
+            {
+               rc = _pTransCB->tryOrAppendX( cb, _pSu->logicalID(),
+                                             _context->mbID(), &_curRID ) ;
+            }
+            else
+            {
+               rc = _pTransCB->tryOrAppendS( cb, _pSu->logicalID(),
+                                             _context->mbID(), &_curRID ) ;
+            }
             if ( rc )
             {
                PD_CHECK( SDB_DPS_TRANS_APPEND_TO_WAIT == rc, rc, error, PDERROR,
@@ -347,7 +361,7 @@ namespace engine
 
          if ( _curRecordPtr->isDeleting() )
          {
-            if ( _recordXLock )
+            if ( _recordLock != -1 )
             {
                INT32 rc1 = _pSu->deleteRecord( _context, _curRID,
                                                0, cb, NULL ) ;
@@ -463,7 +477,7 @@ namespace engine
             }
          }
 
-         if ( _recordXLock )
+         if ( _recordLock != -1 )
          {
             _pTransCB->transLockRelease( cb, _pSu->logicalID(),
                                          _context->mbID(), &_curRID ) ;
@@ -477,7 +491,7 @@ namespace engine
    done:
       return rc ;
    error:
-      if ( lockedRecord && _recordXLock )
+      if ( lockedRecord && _recordLock != -1 )
       {
          _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
                                       &_curRID ) ;
@@ -520,10 +534,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       _pTransCB = pmdGetKRCB()->getTransCB() ;
-      INT32 lockType = _recordXLock ? EXCLUSIVE : SHARED ;
+      INT32 lockType = EXCLUSIVE == _recordLock ? EXCLUSIVE : SHARED ;
       BOOLEAN inRange = FALSE ;
 
-      if ( _recordXLock && DPS_INVALID_TRANS_ID == cb->getTransID() )
+      if ( _recordLock != -1 && DPS_INVALID_TRANS_ID == cb->getTransID() )
       {
          _needUnLock = TRUE ;
       }
@@ -884,7 +898,7 @@ namespace engine
       rc = _getExtScanner() ;
       PD_RC_CHECK( rc, PDERROR, "Get extent scanner failed, rc: %d", rc ) ;
 
-      lockType = _extScanner->_recordXLock ? EXCLUSIVE : SHARED ;
+      lockType = EXCLUSIVE == _extScanner->_recordLock ? EXCLUSIVE : SHARED ;
 
       if ( !_context->isMBLock( lockType ) )
       {
@@ -1001,7 +1015,7 @@ namespace engine
       _skipNum             = skipNum ;
       _firstRun            = TRUE ;
       _pTransCB            = NULL ;
-      _recordXLock         = FALSE ;
+      _recordLock          = -1 ;
       _needUnLock          = FALSE ;
       _cb                  = NULL ;
       _scanner             = scanner ;
@@ -1018,14 +1032,20 @@ namespace engine
            DMS_ACCESS_TYPE_DELETE == _accessType ||
            DMS_ACCESS_TYPE_INSERT == _accessType )
       {
-         _recordXLock = TRUE ;
+         _recordLock = EXCLUSIVE ;
+      }
+      else if ( pmdGetOptionCB()->transIsolation() != TRANS_ISOLATION_RU
+                && ( DMS_ACCESS_TYPE_FETCH == _accessType
+                     || DMS_ACCESS_TYPE_QUERY == _accessType ) )
+      {
+         _recordLock = SHARED ;
       }
    }
 
    _dmsIXSecScanner::~_dmsIXSecScanner ()
    {
-      if ( FALSE == _firstRun && _recordXLock &&
-           DMS_INVALID_OFFSET != _curRID._offset )
+      if ( FALSE == _firstRun && _recordLock != -1
+           && DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
                                       &_curRID ) ;
@@ -1114,13 +1134,13 @@ namespace engine
 
       if ( _countOnly )
       {
-         _recordXLock = FALSE ;
+         _recordLock = SHARED ;
       }
-      if ( _recordXLock )
+      if ( EXCLUSIVE == _recordLock )
       {
          lockType = EXCLUSIVE ;
       }
-      if ( _recordXLock && DPS_INVALID_TRANS_ID == cb->getTransID() )
+      if ( _recordLock != -1 && DPS_INVALID_TRANS_ID == cb->getTransID() )
       {
          _needUnLock = TRUE ;
       }
@@ -1148,7 +1168,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _scanner->resumeScan( _recordXLock ? FALSE : TRUE ) ;
+      rc = _scanner->resumeScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to resum ixscan, rc: %d", rc ) ;
 
       _cb   = cb ;
@@ -1225,7 +1245,8 @@ namespace engine
 
       while ( _onceRestNum-- > 0 && 0 != _maxRecords )
       {
-         rc = _scanner->advance( _curRID, _recordXLock ? FALSE : TRUE ) ;
+         rc = _scanner->advance( _curRID,
+                                 EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
          if ( SDB_IXM_EOC == rc )
          {
             _eof = TRUE ;
@@ -1301,10 +1322,18 @@ namespace engine
 
          _recordRW = _pSu->record2RW( _curRID, _context->mbID() ) ;
          _curRecordPtr = _recordRW.readPtr( 0 ) ;
-         if ( _recordXLock )
+         if ( _recordLock != -1 )
          {
-            rc = _pTransCB->tryOrAppendX( cb, _pSu->logicalID(),
-                                          _context->mbID(), &_curRID ) ;
+            if ( EXCLUSIVE == _recordLock )
+            {
+               rc = _pTransCB->tryOrAppendX( cb, _pSu->logicalID(),
+                                             _context->mbID(), &_curRID ) ;
+            }
+            else
+            {
+               rc = _pTransCB->tryOrAppendS( cb, _pSu->logicalID(),
+                                             _context->mbID(), &_curRID ) ;
+            }
             if ( rc )
             {
                PD_CHECK( SDB_DPS_TRANS_APPEND_TO_WAIT == rc, rc, error, PDERROR,
@@ -1312,7 +1341,7 @@ namespace engine
                          "rc: %d", rc ) ;
                // now haved append to lock-wait-queue, release latch and then
                // wait the lock
-               rc = _scanner->pauseScan( _recordXLock ? FALSE : TRUE ) ;
+               rc = _scanner->pauseScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to pause ixscan, rc: %d", rc ) ;
 
                _context->pause() ;
@@ -1341,7 +1370,7 @@ namespace engine
                   rc = SDB_DMS_INCOMPATIBLE_MODE ;
                   goto error ;
                }
-               rc = _scanner->resumeScan( _recordXLock ? FALSE : TRUE ) ;
+               rc = _scanner->resumeScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Failed to resume ixscan, rc: %d", rc ) ;
@@ -1352,9 +1381,9 @@ namespace engine
 
          if ( _curRecordPtr->isDeleting() )
          {
-            if ( _recordXLock )
+            if ( _recordLock != -1 )
             {
-               rc = _scanner->pauseScan( _recordXLock ? FALSE : TRUE ) ;
+               rc = _scanner->pauseScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to pause ixscan, rc: %d", rc ) ;
 
                rc = _pSu->deleteRecord( _context, _curRID, 0, cb, NULL ) ;
@@ -1364,7 +1393,7 @@ namespace engine
                           "rc: %d", rc ) ;
                }
 
-               rc = _scanner->resumeScan( _recordXLock ? FALSE : TRUE ) ;
+               rc = _scanner->resumeScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to resume ixscan, rc: %d", rc ) ;
 
                _pTransCB->transLockRelease( cb, _pSu->logicalID(),
@@ -1465,7 +1494,7 @@ namespace engine
             }
          }
 
-         if ( _recordXLock )
+         if ( _recordLock != -1 )
          {
             _pTransCB->transLockRelease( cb, _pSu->logicalID(),
                                          _context->mbID(), &_curRID ) ;
@@ -1475,7 +1504,7 @@ namespace engine
 
       rc = SDB_DMS_EOC ;
       {
-         INT32 rcTmp = _scanner->pauseScan( _recordXLock ? FALSE : TRUE ) ;
+         INT32 rcTmp = _scanner->pauseScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
          if ( rcTmp )
          {
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rcTmp ) ;
@@ -1487,7 +1516,7 @@ namespace engine
    done:
       if ( SDB_OK == rc && ( _onceRestNum <= 0 || 0 == _maxRecords ) )
       {
-         rc = _scanner->pauseScan( _recordXLock ? FALSE : TRUE ) ;
+         rc = _scanner->pauseScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rc ) ;
@@ -1496,7 +1525,7 @@ namespace engine
 
       return rc ;
    error:
-      if ( lockedRecord && _recordXLock )
+      if ( lockedRecord && _recordLock != -1 )
       {
          _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
                                       &_curRID ) ;
@@ -1510,15 +1539,15 @@ namespace engine
 
    void _dmsIXSecScanner::stop ()
    {
-      if ( FALSE == _firstRun && _recordXLock &&
-           DMS_INVALID_OFFSET != _curRID._offset )
+      if ( FALSE == _firstRun && _recordLock != -1
+           && DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
                                       &_curRID ) ;
       }
       if ( DMS_INVALID_OFFSET != _curRID._offset )
       {
-         INT32 rc = _scanner->pauseScan( _recordXLock ? FALSE : TRUE ) ;
+         INT32 rc = _scanner->pauseScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rc ) ;

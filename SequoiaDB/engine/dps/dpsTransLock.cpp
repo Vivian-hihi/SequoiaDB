@@ -1230,17 +1230,32 @@ namespace engine
       goto done;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCK_TRYORAPPENDX, "dpsTransLock::tryOrAppendX" )
    INT32 dpsTransLock::tryOrAppendX( _pmdEDUCB *eduCB,
                                      const dpsTransLockId &lockId )
    {
-      PD_TRACE_ENTRY( SDB_DPSTRANSLOCK_TRYORAPPENDX ) ;
+      return tryOrAppendLock( eduCB, lockId, DPS_TRANSLOCK_X ) ;
+   }
+
+   INT32 dpsTransLock::tryOrAppendS( _pmdEDUCB *eduCB,
+                                     const dpsTransLockId &lockId )
+   {
+      return tryOrAppendLock( eduCB, lockId, DPS_TRANSLOCK_S) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCK_TRYORAPPENDLOCK, "dpsTransLock::tryOrAppendLock" )
+   INT32 dpsTransLock::tryOrAppendLock( _pmdEDUCB *eduCB,
+                                        const dpsTransLockId &lockId,
+                                        DPS_TRANSLOCK_TYPE lockType )
+   {
+      PD_TRACE_ENTRY( SDB_DPSTRANSLOCK_TRYORAPPENDLOCK ) ;
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
       SDB_ASSERT( lockId._collectionID != DMS_INVALID_MBID,
                   "invalid collectionID" ) ;
       SDB_ASSERT(( lockId._recordExtentID != DMS_INVALID_EXTENT &&
                    lockId._recordOffset != DMS_INVALID_OFFSET ),
                   "invalid recordID" ) ;
+      SDB_ASSERT( (DPS_TRANSLOCK_S == lockType || DPS_TRANSLOCK_X == lockType),
+                  "Only support S or X lock for record!" ) ;
 
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
@@ -1252,14 +1267,21 @@ namespace engine
       iLockId = lockId ;
       iLockId._recordExtentID = DMS_INVALID_EXTENT;
       iLockId._recordOffset = DMS_INVALID_OFFSET;
-      rc = tryIX( eduCB, iLockId);
+      if ( DPS_TRANSLOCK_X == lockType )
+      {
+         rc = tryIX( eduCB, iLockId) ;
+      }
+      else
+      {
+         rc = tryIS( eduCB, iLockId) ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Failed to get the intention-lock, "
-                   "get X-lock failed(rc=%d)", rc );
+                   "get lock failed(rc=%d, type=%d)", rc, lockType );
 
       // search in self-educb,
       // it means got the lock if found
       pLockInfo = eduCB->getTransLock( lockId );
-      if ( pLockInfo != NULL && pLockInfo->isLockMatch( DPS_TRANSLOCK_X ))
+      if ( pLockInfo != NULL && pLockInfo->isLockMatch( lockType ))
       {
          // if lock-type is matched,
          // then increase reference and return success
@@ -1271,7 +1293,7 @@ namespace engine
       {
          // got the lock, but lock-level is not match.
          // try to upgrade lock-level
-         rc = tryUpgradeOrAppendHead( eduCB, lockId, pLockInfo, DPS_TRANSLOCK_X );
+         rc = tryUpgradeOrAppendHead( eduCB, lockId, pLockInfo, lockType );
          if ( SDB_OK == rc )
          {
             pLockInfo->incRef();
@@ -1279,14 +1301,14 @@ namespace engine
       }
       else
       {
-         // try to get X-Lock
+         // try to get Lock
          // search in lock-bucket-list
          rc = getBucket( lockId, pLockBucket );
          PD_CHECK( SDB_OK == rc, rc, errorclear, PDERROR,
-                   "Failed to get the lock-bucket, get X-lock failed(rc=%d)",
-                   rc );
-         eduCB->addLockInfo( lockId, DPS_TRANSLOCK_X );
-         rc = pLockBucket->tryAcquireOrAppend( eduCB, lockId, DPS_TRANSLOCK_X );
+                   "Failed to get the lock-bucket, get lock failed(rc=%d, type=%d)",
+                   rc, lockType );
+         eduCB->addLockInfo( lockId, lockType );
+         rc = pLockBucket->tryAcquireOrAppend( eduCB, lockId, lockType );
          if ( rc )
          {
             if ( SDB_DPS_TRANS_APPEND_TO_WAIT == rc )
@@ -1297,10 +1319,11 @@ namespace engine
          }
       }
       PD_CHECK( SDB_OK == rc, rc, errorclear, PDERROR,
-                "Failed to get the X-lock(rc=%d)", rc );
+                "Failed to get the lock(rc=%d, type=%d)",
+                rc, lockType );
 
    done:
-      PD_TRACE_EXIT ( SDB_DPSTRANSLOCK_TRYORAPPENDX );
+      PD_TRACE_EXIT ( SDB_DPSTRANSLOCK_TRYORAPPENDLOCK );
       return rc;
    errorclear:
       release( eduCB, iLockId );
@@ -1313,19 +1336,40 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCK_WAIT ) ;
       INT32 rc = SDB_OK;
+      dpsTransCBLockInfo *pLockInfo = NULL ;
       dpsLockBucket *pLockBucket = NULL;
-      rc = getBucket( lockId, pLockBucket );
+      rc = getBucket( lockId, pLockBucket ) ;
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                 "Failed to get the lock-bucket, get X-lock failed(rc=%d)",
                 rc );
-      rc = pLockBucket->waitLockX( eduCB, lockId );
-      PD_RC_CHECK( rc, PDERROR, "Wait lock failed(rc=%d)", rc );
+      pLockInfo = eduCB->getTransLock( lockId ) ;
+      SDB_ASSERT( pLockInfo != NULL, "Can't find lockinfo in eduCB!" ) ;
+      rc = pLockBucket->waitLock( eduCB, lockId, pLockInfo->getType() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Wait lock failed(rc=%d)", rc ) ;
 
    done:
       PD_TRACE_EXIT ( SDB_DPSTRANSLOCK_WAIT );
-      return rc;
+      return rc ;
    error:
-      goto done;
+      dpsTransLockId iLockId ;      
+      if ( lockId._collectionID != DMS_INVALID_MBID )
+      {
+         iLockId = lockId;
+         if ( lockId._recordOffset != DMS_INVALID_OFFSET )
+         {
+            // release the collection's intention-lock
+            iLockId._recordExtentID = DMS_INVALID_EXTENT;
+            iLockId._recordOffset = DMS_INVALID_OFFSET;
+         }
+         else
+         {
+            // release the space's S-LOCK
+            iLockId._collectionID = DMS_INVALID_MBID;
+         }
+         release( eduCB, iLockId );
+      }
+      eduCB->delLockInfo( lockId ) ;
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCK_HASWAIT, "dpsTransLock::hasWait" )

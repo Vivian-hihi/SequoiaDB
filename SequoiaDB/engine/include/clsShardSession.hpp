@@ -156,6 +156,11 @@ namespace engine
                                       INT32 &ignoredNum ) ;
          INT32 _onTransDeleteReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                       INT64 &delNum ) ;
+         INT32 _onTransQueryReqMsg ( NET_HANDLE handle, MsgHeader *msg, 
+                                     rtnContextBuf &buffObj, INT32 &startingPos,
+                                     INT64 &contextID ) ;
+         INT32 _onTransGetMoreReqMsg ( MsgHeader *msg, rtnContextBuf &buffObj,
+                                       INT32 &startingPos, INT64 &contextID ) ;
          INT32 _onSessionInitReqMsg ( MsgHeader *msg ) ;
 
          INT32 _onCatalogChangeNtyMsg( MsgHeader *msg ) ;

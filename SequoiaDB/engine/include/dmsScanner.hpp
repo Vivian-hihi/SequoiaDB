@@ -141,7 +141,7 @@ namespace engine
          dmsOffset            _next ;
          BOOLEAN              _firstRun ;
          dpsTransCB           *_pTransCB ;
-         BOOLEAN              _recordXLock ;
+         INT8                 _recordLock ;
          BOOLEAN              _needUnLock ;
          _pmdEDUCB            *_cb ;
    };
@@ -297,7 +297,7 @@ namespace engine
          const dmsRecord      *_curRecordPtr ;
          BOOLEAN              _firstRun ;
          dpsTransCB           *_pTransCB ;
-         BOOLEAN              _recordXLock ;
+         INT8                 _recordLock ;
          BOOLEAN              _needUnLock ;
          _pmdEDUCB            *_cb ;
          _rtnIXScanner        *_scanner ;

@@ -96,8 +96,10 @@ const CHAR* msgType2String( MSG_TYPE msgType, BOOLEAN isCommand )
          return "UPDATE" ;
       case MSG_BS_SQL_REQ :
          return "SQL" ;
+      case MSG_BS_TRANS_QUERY_REQ :
       case MSG_BS_QUERY_REQ :
          return isCommand ? "COMMAND" : "QUERY" ;
+      case MSG_BS_TRANS_GETMORE_REQ :
       case MSG_BS_GETMORE_REQ :
          return "GETMORE" ;
       case MSG_BS_DELETE_REQ :

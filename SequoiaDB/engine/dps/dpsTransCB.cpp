@@ -763,6 +763,20 @@ namespace engine
       return _TransLock.tryOrAppendX( eduCB, lockId );
    }
 
+   INT32 dpsTransCB::tryOrAppendS( _pmdEDUCB *eduCB, UINT32 logicCSID,
+                                   UINT16 collectionID,
+                                   const dmsRecordID *recordID )
+   {
+      if ( !_isOn )
+      {
+         return SDB_OK ;
+      }
+      SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" ) ;
+      SDB_ASSERT( recordID, "recordID can't be NULL" ) ;
+      dpsTransLockId lockId( logicCSID, collectionID, recordID );
+      return _TransLock.tryOrAppendS( eduCB, lockId );
+   }
+
    INT32 dpsTransCB::waitLock( _pmdEDUCB * eduCB, UINT32 logicCSID,
                               UINT16 collectionID,
                               const dmsRecordID *recordID )

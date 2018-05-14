@@ -85,6 +85,14 @@ namespace engine
       PMD_CFG_DATA_BSON                      // BSON
    } ;
 
+   enum PMD_TRANS_ISOLATION_LEVEL
+   {
+      TRANS_ISOLATION_RU = 0, // READ UNCOMMITTED
+      TRANS_ISOLATION_RC = 1, // READ COMMITTED
+      TRANS_ISOLATION_RR,     // REPEATABLE READ
+      TRANS_ISOLATION_S       // SERIALIZABLE
+   };
+
    /*
       _pmdParamValue define
    */
@@ -551,6 +559,7 @@ namespace engine
          OSS_INLINE UINT32 replBucketSize () const { return _replBucketSize ; }
          OSS_INLINE BOOLEAN transactionOn () const { return _transactionOn ; }
          OSS_INLINE UINT32 transTimeout () const { return _transTimeout; }
+         OSS_INLINE UINT32 transIsolation () const { return _transIsolation; }
          OSS_INLINE BOOLEAN memDebugEnabled () const { return _memDebugEnabled ; }
          OSS_INLINE UINT32 memDebugSize () const { return _memDebugSize ; }
          OSS_INLINE UINT32 indexScanStep () const { return _indexScanStep ; }
@@ -652,6 +661,7 @@ namespace engine
          UINT32      _traceBufSz ;
          BOOLEAN     _transactionOn ;
          UINT32      _transTimeout ;
+         UINT32      _transIsolation ;
          UINT32      _sharingBreakTime ;
          UINT32      _startShiftTime ;
          UINT32      _logBuffSize ;

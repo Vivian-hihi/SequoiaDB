@@ -2085,6 +2085,13 @@ done:
       rdxUInt( pEX, PMD_OPTION_TRANSTIMEOUT, _transTimeout, FALSE, PMD_CFG_CHANGE_RUN,
                PMD_DFT_TRANS_TIMEOUT, TRUE ) ;
       rdvMinMax( pEX, _transTimeout, 0, 3600, TRUE ) ;
+      // --transisolation
+      rdxUInt( pEX, PMD_OPTION_TRANS_ISOLATION, _transIsolation, FALSE,
+               PMD_CFG_CHANGE_REBOOT, 0, TRUE ) ;
+      if ( _transIsolation != TRANS_ISOLATION_RC )
+      {
+         _transIsolation = TRANS_ISOLATION_RU ;
+      }
       // --sharingBreak
       rdxUInt( pEX, PMD_OPTION_SHARINGBRK, _sharingBreakTime, FALSE, PMD_CFG_CHANGE_RUN,
                PMD_OPTION_BRK_TIME_DEFAULT, TRUE ) ;

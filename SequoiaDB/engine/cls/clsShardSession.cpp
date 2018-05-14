@@ -409,9 +409,11 @@ namespace engine
             case MSG_BS_QUERY_REQ :
                rc = _onQueryReqMsg ( handle, msg, buffObj, startFrom,
                                      contextID ) ;
+               isNeedRollback = (SDB_DMS_EOC == rc || SDB_OK == rc) ? FALSE : TRUE ;
                break ;
             case MSG_BS_GETMORE_REQ :
                rc = _onGetMoreReqMsg ( msg, buffObj, startFrom, contextID ) ;
+               isNeedRollback = (SDB_DMS_EOC == rc || SDB_OK == rc) ? FALSE : TRUE ;
                break ;
             case MSG_BS_TRANS_UPDATE_REQ :
                isNeedRollback = TRUE ;
@@ -434,6 +436,15 @@ namespace engine
             case MSG_BS_TRANS_DELETE_REQ :
                isNeedRollback = TRUE ;
                rc = _onTransDeleteReqMsg ( handle, msg, contextID ) ;
+               break ;
+            case MSG_BS_TRANS_QUERY_REQ :
+               rc = _onTransQueryReqMsg( handle, msg, buffObj, startFrom,
+                                         contextID ) ;
+               isNeedRollback = (SDB_DMS_EOC == rc || SDB_OK == rc) ? FALSE : TRUE ;
+               break ;
+            case MSG_BS_TRANS_GETMORE_REQ :
+               rc = _onTransGetMoreReqMsg ( msg, buffObj, startFrom, contextID ) ;
+               isNeedRollback = (SDB_DMS_EOC == rc || SDB_OK == rc) ? FALSE : TRUE ;
                break ;
             case MSG_BS_KILL_CONTEXT_REQ :
                rc = _onKillContextsReqMsg ( handle, msg ) ;
@@ -1709,6 +1720,34 @@ namespace engine
          return SDB_DPS_TRANS_NO_TRANS;
       }
       return _onDeleteReqMsg( handle, msg, delNum );
+   }
+
+   INT32 _clsShdSession::_onTransQueryReqMsg( NET_HANDLE handle,
+                                              MsgHeader * msg,
+                                              rtnContextBuf & buffObj,
+                                              INT32 & startingPos,
+                                              INT64 & contextID )
+   {
+      if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
+      {
+         return SDB_DPS_TRANS_NO_TRANS;
+      }
+      return _onQueryReqMsg( handle, msg, buffObj, startingPos,
+                             contextID ) ;
+   }
+
+   INT32 _clsShdSession::_onTransGetMoreReqMsg( MsgHeader * msg,
+                                                rtnContextBuf &buffObj,
+                                                INT32 & startingPos,
+                                                INT64 &contextID )
+   {
+      if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
+      {
+         _pEDUCB->contextDelete( contextID ) ;
+         return SDB_DPS_TRANS_NO_TRANS;
+      }
+      return _onGetMoreReqMsg( msg, buffObj, startingPos,
+                               contextID ) ;
    }
 
    void _clsShdSession::_login()

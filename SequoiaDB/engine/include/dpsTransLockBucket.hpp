@@ -80,7 +80,8 @@ namespace engine
 
       BOOLEAN hasWait( const dpsTransLockId &lockId );
 
-      INT32 waitLockX( _pmdEDUCB *eduCB, const dpsTransLockId &lockId );
+      INT32 waitLock( _pmdEDUCB *eduCB, const dpsTransLockId &lockId,
+                      DPS_TRANSLOCK_TYPE lockType );
 
 
    private:

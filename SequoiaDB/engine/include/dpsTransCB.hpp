@@ -232,6 +232,10 @@ namespace engine
       INT32 tryOrAppendX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                           UINT16 collectionID, const dmsRecordID *recordID );
 
+      // try to get record-S-lock, like tryOrAppendX
+      INT32 tryOrAppendS( _pmdEDUCB *eduCB, UINT32 logicCSID,
+                          UINT16 collectionID, const dmsRecordID *recordID );
+
       // waitting for the lock
       INT32 waitLock( _pmdEDUCB *eduCB, UINT32 logicCSID,
                       UINT16 collectionID, const dmsRecordID *recordID ) ;

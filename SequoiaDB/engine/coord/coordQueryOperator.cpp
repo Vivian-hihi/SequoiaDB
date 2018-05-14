@@ -622,6 +622,11 @@ namespace engine
                              &sucGrpLst, pQueryConf, buf ) ;
    }
 
+   void _coordQueryOperator::_prepareForTrans( pmdEDUCB *cb, MsgHeader *pMsg )
+   {
+      pMsg->opCode = MSG_BS_TRANS_QUERY_REQ ;
+   }
+
    INT32 _coordQueryOperator::_queryOrDoOnCL( MsgHeader *pMsg,
                                               pmdEDUCB *cb,
                                               rtnContextCoord **pContext,

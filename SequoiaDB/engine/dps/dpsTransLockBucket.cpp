@@ -147,8 +147,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_WAITLOCKX, "dpsLockBucket::waitLockX" )
-   INT32 dpsLockBucket::waitLockX( _pmdEDUCB *eduCB,
-                                   const dpsTransLockId &lockId )
+   INT32 dpsLockBucket::waitLock( _pmdEDUCB *eduCB,
+                                  const dpsTransLockId &lockId,
+                                  DPS_TRANSLOCK_TYPE lockType )
    {
       PD_TRACE_ENTRY( SDB_DPSLOCKBUCKET_WAITLOCKX ) ;
       INT32 rc = SDB_OK;
@@ -181,7 +182,7 @@ namespace engine
             goto error ;
          }
 
-         rc = appendToRun( eduCB, DPS_TRANSLOCK_X, pLockUnit );
+         rc = appendToRun( eduCB, lockType, pLockUnit );
          if ( rc )
          {
             // lock failed, go on to wait until timeout
@@ -318,6 +319,7 @@ namespace engine
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
       SDB_ASSERT( pLockUnit, "pLockUnit can't be null" ) ;
       INT32 rc = SDB_OK;
+      dpsTransLockRunList::iterator iter ;
       if ( !checkCompatible( eduCB, lockType, pLockUnit) )
       {
          rc = SDB_DPS_TRANS_LOCK_INCOMPATIBLE;
@@ -325,7 +327,12 @@ namespace engine
       }
 
       // the lock-type is compatible, add the EDU to run-queue
-      pLockUnit->_runList[eduCB->getTID()] = lockType;
+      iter = pLockUnit->_runList.find( eduCB->getTID() ) ;
+      if ( iter == pLockUnit->_runList.end()
+           || iter->second < lockType )
+      {
+         pLockUnit->_runList[eduCB->getTID()] = lockType;
+      }
    done:
       PD_TRACE_EXIT ( SDB_DPSLOCKBUCKET_APPENDTORUN );
       return rc ;
