@@ -46,7 +46,7 @@ function upsert()
 	}
 	*/
 }
-
+/*
 commDropCL(db,csName,clName,true,true,"drop cl in begin");
 
 var opt={ReplSize:0, ShardingKey:{a:1}};
@@ -56,3 +56,4 @@ insertRecs();
 upsert();
 
 commDropCL(db, csName, clName, false,true, "drop cl in clean in finally");
+*/

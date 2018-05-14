@@ -39,7 +39,7 @@ function updateAndCheck()
 		throw e;
 	}*/
 }
-
+/*
 commDropCL(db,csName,clName,true,true,"drop cl in begin");
 
 var opt = {ReplSize:0, ShardingKey:{a:1}};
@@ -49,3 +49,4 @@ insertRecs();
 updateAndCheck();
 
 commDropCL(db, csName, clName, false,false, "drop cl in clean");
+*/

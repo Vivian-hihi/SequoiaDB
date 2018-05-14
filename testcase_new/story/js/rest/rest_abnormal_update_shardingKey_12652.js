@@ -8,7 +8,7 @@ var csName=COMMCSNAME;
 var clName=COMMCLNAME + "12652";
 var varCL;
 
-main();
+//main();
 
 function main(){
    if( commIsStandalone( db ) )
