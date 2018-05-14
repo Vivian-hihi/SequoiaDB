@@ -11,8 +11,9 @@
 ##操作##
 
   > **Note：**  
-  > 在进行下列操作前，请确保 SequoiaSQL 已经安装，并将当前目录切换至 SequoiaSQL 安装的根目录。  
-  > SQL节点的详细操作，请参考 [SQL引擎安装部署](sql_engine/sequoiasql/install/install_deploy.md)
+  > 一、以下操作以SequoiaSQL-PostgreSQL为例。  
+  > 二、在进行下列操作前，请确保 SequoiaSQL 已经安装，并将当前目录切换至 SequoiaSQL 安装的根目录。  
+  > 三、SQL节点的详细操作，请参考 [SQL引擎安装部署](sql_engine/sequoiasql/install/install_deploy.md)
 
 - 创建SQL节点
 
@@ -40,8 +41,8 @@
 
     ```lang-javascript
    $ bin/sdb_sql_ctl status
-   INSTANCE   PID      SVCNAME   PGDATA                        PGLOG                                   
-   myinst     20502    5432      /opt/sequoiasqloltp/pg_data   /opt/sequoiasqloltp/pg_data/myinst.log     
+   INSTANCE   PID      SVCNAME   PGDATA                               PGLOG                                   
+   myinst     20502    5432      /opt/sequoiasql/postgresql/pg_data   /opt/sequoiasql/postgresql/pg_data/myinst.log     
    Total: 1; Run: 1
    ```
 

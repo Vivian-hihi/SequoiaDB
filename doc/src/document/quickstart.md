@@ -1,23 +1,23 @@
-本入门教程使用 SequoiaDB 2.8.5 及 SequoiaSQL 2.8.5 在 Ubuntu 12.04 上搭建一个基础运行环境，以快速了解 SequoiaDB 及 SequoiaSQL 的基本功能 。
+本入门教程使用 SequoiaDB 3.0 及 SequoiaSQL-PostgreSQL 3.0 在 Ubuntu 12.04 上搭建一个基础运行环境，以快速了解 SequoiaDB 及 SequoiaSQL 的基本功能 。
 
 ##安装 SequoiaDB##
 安装过程需要使用操作系统 root 用户权限。
 
 ###安装介质准备###
-从 [SequoiaDB 官网](http://www.sequoiadb.com/cn/index.php?a=index&m=Download) 下载 SequoiaDB 2.8.5 及 SequoiaSQL 2.8.5 的安装包，并上传到目标主机上。
+从 [SequoiaDB 官网](http://www.sequoiadb.com/cn/index.php?a=index&m=Download) 下载 SequoiaDB 3.0 及 SequoiaSQL-PostgreSQL 3.0 的安装包，并上传到目标主机上。
 
 ###安装步骤###
 
-- 以 root 用户登陆目标主机，解压 SequoiaDB 安装包 sequoiadb-2.8.5-linux_x86_64-installer.tar.gz，并给解压得到的 run 包增加可执行权限
+- 以 root 用户登陆目标主机，解压 SequoiaDB 安装包 sequoiadb-3.0-linux_x86_64-installer.tar.gz，并给解压得到的 run 包增加可执行权限
 
   ```lang-javascript
-  $ tar zxvf sequoiadb-2.8.5-linux_x86_64-installer.tar.gz 
-  $ chmod u+x sequoiadb-2.8.5-linux_x86_64-installer.run
+  $ tar zxvf sequoiadb-3.0-linux_x86_64-installer.tar.gz 
+  $ chmod u+x sequoiadb-3.0-linux_x86_64-installer.run
   ```
 - 运行安装程序  
     
   ```lang-javascript
-  $ ./sequoiadb-2.8.5-linux_x86_64-installer.run --mode text --SMS false
+  $ ./sequoiadb-3.0-linux_x86_64-installer.run --mode text --SMS false
   ```
 
 - 程序提示选择向导语言，输入2，选择中文
@@ -143,24 +143,24 @@
 
   ```lang-javascript
   $ sequoiadb  --version
-  SequoiaDB version: 2.8.5
-  Release: 34299
-  2018-02-12-12.24.46
+  SequoiaDB version: 3.0
+  Release: 35669
+  2018-05-14-00.39.08
   ```
 
 ##安装 SequoiaSQL##
 
-- 以 root 用户登陆目标主机，解压 SequoiaSQL 安装包 sequoiasql-oltp-2.8.5-x86_64-installer.tar.gz，并给解压得到的 run 包增加可执行权限
+- 以 root 用户登陆目标主机，解压 SequoiaSQL 安装包 sequoiasql-postgresql-3.0-x86_64-installer.tar.gz，并给解压得到的 run 包增加可执行权限
 
   ```lang-javascript
-  $ tar zxvf sequoiasql-oltp-2.8.5-x86_64-installer.tar.gz
-  $ chmod u+x sequoiasql-oltp-2.8.5-x86_64-installer.run
+  $ tar zxvf sequoiasql-postgresql-3.0-x86_64-installer.tar.gz
+  $ chmod u+x sequoiasql-postgresql-3.0-x86_64-installer.run
   ```
 
 - 运行安装程序  
     
   ```lang-javascript
-  $ ./sequoiasql-oltp-2.8.5-x86_64-installer.run --mode text
+  $ ./sequoiasql-postgresql-3.0-x86_64-installer.run --mode text
   ```
 
 - 程序提示选择向导语言，输入2，选择中文
@@ -173,17 +173,17 @@
   Please choose an option [1] :2
   ```
 
-- 输入安装路径后按回车（可直接按回车使用默认路径 /opt/sequoiasqloltp ）
+- 输入安装路径后按回车（可直接按回车使用默认路径 /opt/sequoiasql/postgresql ）
 
   ```
   ----------------------------------------------------------------------------
   由BitRock InstallBuilder评估本所建立
   
-  欢迎来到 SequoiaSQL Server 安装程序
+  欢迎来到 SequoiaSQL PostgreSQL Server 安装程序
 
   ------------------------------------------------------------
-  请指定 SequoiaSQLServer 将会被安装到的目录
-  安装目录 [/opt/sequoiasqloltp]:
+  请指定 SequoiaSQL PostgreSQL Server 将会被安装到的目录
+  安装目录 [/opt/sequoiasql/postgresql]:
   ```
 
 - 提示输入用户名和用户组（默认创建 sdbadmin 用户和 sdbadmin_group 用户组），该用户名用于运行 SequoiaSQL 服务，本次均直接按回车使用默认值
@@ -191,7 +191,7 @@
   ```
   ------------------------------------------------------------
   数据库管理用户配置
-  配置用于启动 SequoiaSQL 的用户名、用户组和密码
+  配置用于启动SequoiaSQL PostgreSQL的用户名、用户组和密码
   用户名 [sdbadmin]:
   用户组 [sdbadmin_group]:
   ```
@@ -207,30 +207,29 @@
 
   ```
   ------------------------------------------------------------
-  设定现在已经准备将 SequoiaSQL Server 安装到您的电脑.
+  设定现在已经准备将 SequoiaSQL PostgreSQL Server 安装到您的电脑.
   您确定要继续? [Y/n]: 
   ```
     
 - 安装完成
 
   ```
-  正在安装 SequoiaSQL Server 于您的电脑中，请稍候。
+  正在安装 SequoiaSQL PostgreSQL Server 于您的电脑中，请稍候。
   安装中
   0% ______________ 50% ______________ 100%
   ########################################
-  添加了系统服务: Ssql-oltp.
-  #
+  
   ------------------------------------------------------------
-  安装程序已经完成安装 SequoiaSQL Server 于你的电脑中.
+  安装程序已经完成安装 SequoiaSQL PostgreSQL Server 于你的电脑中
   ```
 
 - 安装检查
 
-  切换到 sdbadmin 用户，使用如下命令如能正常查到 SequoiaSQL 的版本信息，说明安装成功。
+  切换到 sdbadmin 用户，使用如下命令如能正常查到 SequoiaSQL-PostgreSQL 的版本信息，说明安装成功。
 
   ```lang=java-script
   $ sdb_sql_ctl --version
-  2.8.5
+  3.0
   ```
 
 ## 操作环境准备 ##
@@ -255,7 +254,7 @@
 
 2. 创建 SequoiaSQL 实例
 
-- 以 sdbadmin 用户登陆 SequoiaSQL 所在主机，切换到 SequoiaSQL 安装目录
+- 以 sdbadmin 用户登陆 SequoiaSQL-PostgreSQL 所在主机，切换到 SequoiaSQL-PostgreSQL 安装目录
 
   ```lang-javascript
   $ cd /opt/sequoiasqloltp
@@ -316,7 +315,7 @@
 
    ```lang-javascript
    foo=# create extension sdb_fdw;
-   REATE EXTENSION
+   CREATE EXTENSION
    ```
   
 - 配置与SequoiaDB连接参数
