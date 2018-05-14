@@ -3058,6 +3058,7 @@ namespace engine
       dmsRecord *pRecord            = NULL ;
       dmsRecordData recordData ;
       UINT32 textIdxNum             = 0 ;
+      IDmsExtDataHandler *handler   = NULL ;
 
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
@@ -3065,6 +3066,19 @@ namespace engine
                  context->toString().c_str() ) ;
          rc = SDB_SYS ;
          goto error ;
+      }
+
+      textIdxNum = context->mbStat()->_textIdxNum ;
+      if ( textIdxNum > 0 )
+      {
+         handler = getExtDataHandler() ;
+         if ( handler )
+         {
+            rc = handler->check( DMS_EXTOPR_TYPE_DELETE, getSuName(),
+                                 context->mb()->_collectionName, NULL, cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
+                         "rc: %d", rc ) ;
+         }
       }
 
 #ifdef _DEBUG
@@ -3173,7 +3187,6 @@ namespace engine
                   }
                }
 
-               textIdxNum = context->mbStat()->_textIdxNum ;
                // then delete indexes
                rc = _pIdxSU->indexesDelete( context, pExtent->_logicID,
                                             delObject, recordID, cb ) ;
@@ -3258,13 +3271,9 @@ namespace engine
                                                    cb->isDoRollback() ) ;
       }
 
-      if ( textIdxNum > 0 )
+      if ( handler )
       {
-         IDmsExtDataHandler* handler = getExtDataHandler() ;
-         if ( handler )
-         {
-            handler->done( DMS_EXTOPR_TYPE_DELETE, cb ) ;
-         }
+         handler->done( DMS_EXTOPR_TYPE_DELETE, cb ) ;
       }
 
    done :
@@ -3308,6 +3317,7 @@ namespace engine
       const dmsRecord *pRecord = NULL ;
       dmsRecordData recordData ;
       UINT32 textIdxNum = 0 ;
+      IDmsExtDataHandler *handler = NULL ;
 
       rc = _operationPermChk( DMS_ACCESS_TYPE_UPDATE ) ;
       PD_RC_CHECK( rc, PDERROR,
@@ -3319,6 +3329,19 @@ namespace engine
                  context->toString().c_str() ) ;
          rc = SDB_SYS ;
          goto error ;
+      }
+
+      textIdxNum = context->mbStat()->_textIdxNum ;
+      if ( textIdxNum > 0 )
+      {
+         handler = getExtDataHandler() ;
+         if ( handler )
+         {
+            rc = handler->check( DMS_EXTOPR_TYPE_UPDATE, getSuName(),
+                                 context->mb()->_collectionName, NULL, cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
+                         "rc: %d", rc ) ;
+         }
       }
 
       try
@@ -3447,8 +3470,6 @@ namespace engine
          // increase update counter
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_UPDATE, 1 ) ;
          _incWriteRecord() ;
-
-         textIdxNum = context->mbStat()->_textIdxNum ;
       }
       catch( std::exception &e )
       {
@@ -3487,13 +3508,9 @@ namespace engine
                                                    cb->isDoRollback() ) ;
       }
 
-      if ( textIdxNum > 0 )
+      if ( handler )
       {
-         IDmsExtDataHandler* handler = getExtDataHandler() ;
-         if ( handler )
-         {
-            handler->done( DMS_EXTOPR_TYPE_UPDATE, cb ) ;
-         }
+         handler->done( DMS_EXTOPR_TYPE_UPDATE, cb ) ;
       }
 
    done :
