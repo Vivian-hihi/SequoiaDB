@@ -127,20 +127,33 @@ function checkResultByDataNode(clName)
       var cur = sdb.snapshot(4,{"Name":clFullName});
       var tmpcur = cur.current().toObj()["Details"][0];
       
-      var expAttribute = tmpcur.Attribute;
-      var expCompressionType = tmpcur.CompressionType;
-      var expDictionaryCreated = tmpcur.DictionaryCreated;
-      if (expAttribute  !== "Compressed")
+      var actAttribute = tmpcur.Attribute;
+      var actCompressionType = tmpcur.CompressionType;
+      var actDictionaryCreated = tmpcur.DictionaryCreated;
+      
+      var sleepInteval=10;
+      var sleepDuration=0;
+      var maxSleepDuration=30000; 
+      while( actDictionaryCreated != true && sleepDuration < maxSleepDuration )
+         {            
+            sleep( sleepInteval );
+            sleepDuration += sleepInteval; 
+            var cur1 = sdb.snapshot(4,{"Name":clFullName}).current().toObj()["Details"][0];
+            var actDictionaryCreated = cur1.DictionaryCreated;  
+            println("---test="+actDictionaryCreated);          
+         }  
+      
+      if (actAttribute  !== "Compressed")
       {         
-         throw buildException("test fieldvalue", "check field", "value is wrong", expAttribute, "Compressed");
+         throw buildException("test Attribute", "check field", "value is wrong", "Compressed", actAttribute);
       }
-      if (expCompressionType  !== "lzw")
+      if (actCompressionType  !== "lzw")
       {         
-         throw buildException("test fieldvalue", "check field", "value is wrong", expCompressionType, "lzw");
+         throw buildException("test CompressionType", "check field", "value is wrong", "lzw", actCompressionType);
       }
-      if (expDictionaryCreated  !== true)
+      if (actDictionaryCreated  !== true)
       {         
-         throw buildException("test fieldvalue", "check field", "value is wrong", expDictionaryCreated, "true");
+         throw buildException("test DictionaryCreated", "check field", "value is wrong", "true", actDictionaryCreated);
       }
    }
    catch( e )
