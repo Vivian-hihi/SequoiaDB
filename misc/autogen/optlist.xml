@@ -1779,5 +1779,28 @@
       <typeofweb>num</typeofweb>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_TRANS_ISOLATION</name>
+      <long>transisolation</long>
+      <description>
+         <en>Specify the isolation level of transaction, 0 for RU, 1 for RC. Default is 0</en>
+         <cn>指定事务的隔离级别，0为RU级别，1为RC级别。默认为0。</cn>
+      </description>
+      <detail>
+         <en>1. Specify the isolation level of transaction. Value is 0/1. Default is 0.<fig></fig>
+             2. 0: RU, read uncommited<fig></fig>
+             3. 1: RC, read commited.<fig></fig>
+         </en>
+         <cn>1、指定事务隔离级别，默认是0。<fig></fig>
+             2、0: RU，读未提交。<fig></fig>
+             3、1: RC, 读已提交。<fig></fig>
+         </cn>
+      </detail>
+      <type>int</type>
+      <default>0</default>
+      <hidden>false</hidden>
+      <typeofweb>num</typeofweb>
+   </opt>
+
 </optlist>
 
