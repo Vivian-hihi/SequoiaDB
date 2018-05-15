@@ -298,6 +298,7 @@ void trim( char *str )
    }
    
    memcpy( str, pbegin, pend - pbegin + 1 ) ;
+   str[pend - pbegin + 1] = 0 ;
 }
 
 INT32 changeNodeConf( const CHAR* svc, const CHAR* conf, const CHAR* value )
