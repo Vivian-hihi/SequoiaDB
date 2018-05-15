@@ -415,18 +415,24 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDROPOPRCTX_OPEN ) ;
+      std::vector<rtnExtDataProcessor *> processors ;
       vector <rtnExtDataProcessor *> processorVecP1 ;
 
       _processorMgr = processorMgr ;
       rc = processorMgr->getProcessorsAndLock( csName, clName, idxName,
-                                               EXCLUSIVE, _processors ) ;
+                                               EXCLUSIVE, processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Get processors failed[ %d ]", rc ) ;
+      if ( 0 == processors.size() )
+      {
+         goto done ;
+      }
       _processorLocked = TRUE ;
       _lockType = EXCLUSIVE ;
       _removeFiles = removeFiles ;
+      _appendProcessors( processors ) ;
 
-      for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
-            itr != _processors.end(); ++itr )
+      for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
+            itr != processors.end(); ++itr )
       {
          if ( _removeFiles )
          {
@@ -532,13 +538,12 @@ namespace engine
       rc = processorMgr->getProcessorsAndLock( csName, clName, NULL,
                                                EXCLUSIVE, processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Get processors failed[ %d ]", rc ) ;
-      _processorLocked = TRUE ;
-      _lockType = EXCLUSIVE ;
       if ( 0 == processors.size() )
       {
          goto done ;
       }
-
+      _processorLocked = TRUE ;
+      _lockType = EXCLUSIVE ;
       _appendProcessors( processors ) ;
 
       for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
