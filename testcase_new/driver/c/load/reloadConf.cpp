@@ -59,7 +59,7 @@ INT32 isMasterNode( sdbReplicaGroupHandle rg, const CHAR* host, const CHAR* svc,
    const CHAR *host1, *svc1 ;
 
    do {
-      ossSleep( 1000 ) ;
+      ossSleep( 10 ) ;
       rc = sdbGetNodeMaster( rg, &master ) ;
    } while( rc == SDB_CLS_NODE_NOT_EXIST ) ;
    CHECK_RC( SDB_OK, rc, "fail to get master node" ) ;
@@ -123,7 +123,7 @@ done:
 error:
    goto done ;
 }
-
+/*
 INT32 createCsClInRg( sdbConnectionHandle db, sdbReplicaGroupHandle rg, 
                       const CHAR* csName, const CHAR* clName )
 {
@@ -151,7 +151,8 @@ done:
 error:
    goto done ;
 }
-
+*/
+/*
 INT32 insertDoc( sdbConnectionHandle db, const CHAR* csName, 
                  const CHAR* clName )
 {
@@ -179,7 +180,8 @@ done:
 error:
    goto done ;
 }
-
+*/
+/*
 INT32 getLSN( sdbConnectionHandle db, SINT64* offset, INT32* version )
 {
    INT32 rc = SDB_OK ;
@@ -189,7 +191,7 @@ INT32 getLSN( sdbConnectionHandle db, SINT64* offset, INT32* version )
    bson_init( &obj ) ;
    bson_iterator it, sub_it ;
 
-   bson_append_string( &sel, "CurrentLSN", "" ) ;
+   bson_append_string( &sel, "CompleteLSN", "" ) ;
    bson_finish( &sel ) ;
    rc = sdbGetSnapshot( db, SDB_SNAP_DATABASE, NULL, &sel, NULL, &cursor ) ;
    CHECK_RC( SDB_OK, rc, "fail to get snapshot database" ) ;
@@ -197,7 +199,7 @@ INT32 getLSN( sdbConnectionHandle db, SINT64* offset, INT32* version )
    rc = sdbNext( cursor, &obj ) ;
    CHECK_RC( SDB_OK, rc, "fail to get next" ) ;
 
-   bson_find( &it, &obj, "CurrentLSN" ) ;
+   bson_find( &it, &obj, "CompleteLSN" ) ;
    bson_iterator_subiterator( &it, &sub_it ) ;
    bson_iterator_next( &sub_it ) ;
    *offset = bson_iterator_long( &sub_it ) ;
@@ -215,7 +217,8 @@ done:
 error:
    goto done ;
 } 
-
+*/
+/*
 // wait sync finish, lsn is equal
 INT32 waitSync( sdbReplicaGroupHandle rg, const CHAR* host, const CHAR* svc )
 {
@@ -238,7 +241,7 @@ INT32 waitSync( sdbReplicaGroupHandle rg, const CHAR* host, const CHAR* svc )
    CHECK_RC( SDB_OK, rc, "fail to connect master node %s:%s", host1, svc1 ) ;
 
    do {
-      ossSleep( 1000 ) ;
+      ossSleep( 10 ) ;
       rc = getLSN( db, &offset, &version ) ;
       CHECK_RC( SDB_OK, rc, "fail to get lsn of node" ) ;
       rc = getLSN( db1, &offset1, &version1 ) ;
@@ -257,6 +260,45 @@ done:
 error:
    goto done ;
 }
+*/
+
+void trim( char *str )
+{
+   char *pbegin = str;
+   char *pend = str + strlen(str) - 1 ; 
+   while ( *pbegin )
+   {
+      if ( *pbegin == ' ' ||
+           *pbegin == '\t' ||
+           *pbegin == '\r' ||
+           *pbegin == '\n')
+      {
+         ++pbegin;
+      }
+      else
+      {
+         break ;
+      }
+   }
+   
+   while ( *pend )
+   {
+      if ( *pend == ' ' ||
+           *pend == '\t' ||
+           *pend == '\r' ||
+           *pend == '\n')
+      {
+         *pend = 0 ;
+         --pend;
+      }
+      else
+      {
+         break ;
+      }
+   }
+   
+   memcpy( str, pbegin, pend - pbegin + 1 ) ;
+}
 
 INT32 changeNodeConf( const CHAR* svc, const CHAR* conf, const CHAR* value )
 {
@@ -264,52 +306,131 @@ INT32 changeNodeConf( const CHAR* svc, const CHAR* conf, const CHAR* value )
 
    CHAR installPath[ MAX_NAME_SIZE+1 ] = { 0 } ;
    CHAR confFile[ MAX_NAME_SIZE+1 ] = { 0 } ;
-   FILE* fp = NULL ;
+   CHAR bakConfFile[ MAX_NAME_SIZE+1 ] = { 0 } ;
+   FILE* fpOld, *fpNew = NULL ;
    CHAR buffer[ MAX_NAME_SIZE+1 ] = { 0 } ;
    sprintf( buffer, "%s%s%s", conf, "=", value ) ;
-   CHAR s[ MAX_NAME_SIZE ] ;
+   CHAR s[ MAX_NAME_SIZE ] ={0};
    INT32 len = 0 ;
 
    rc = getInstallPath( installPath ) ;
    CHECK_RC( SDB_OK, rc, "fail to get installPath" ) ;
+   sprintf( bakConfFile, "%s%s%s%s", installPath, "/conf/local/", svc, "/sdb.conf.bak" ) ;
    sprintf( confFile, "%s%s%s%s", installPath, "/conf/local/", svc, "/sdb.conf" ) ;
-   fp = fopen( confFile, "r+" ) ;
+   rc = rename( confFile, bakConfFile ) ;
+   CHECK_RC( SDB_OK, rc, "fail to rename" ) ;
+   
+   fpOld = fopen( bakConfFile, "r" ) ;
+   fpNew = fopen( confFile, "w+" ) ;
+   if( !fpOld || !fpNew )
+   {
+      printf( "fail to open conf file: %s|%s\n", confFile, bakConfFile ) ;
+      goto error ;
+   }
+
+   while( fgets( s, sizeof( s ), fpOld ) )
+   {
+      //len += strlen( s ) ;
+      trim( s ) ;
+      CHAR* idx = strstr( s, conf ) ;
+      if( idx && idx == s )
+      {
+         //len -= strlen( s ) ;
+         break ;
+      }
+      fputs( s, fpNew ) ; 
+      fputc( '\n', fpNew ) ;
+      //rc = fputs( s, fpNew ) ; 
+      //CHECK_RC( EOF, rc, "fail to fputs" ) ;
+   }
+   /*
+   if( fseek( fp, len, SEEK_SET ) )
+   {
+      printf( "fail to seek file,file: %s, offset: %d\n", confFile, len ) ;
+      goto error ;
+   }*/
+   //fprintf( fp, "%s", buffer ) ;
+   //fclose( fp ) ;
+   
+   fprintf( fpNew, "%s\n", buffer ) ;
+done:
+   if ( NULL != fpNew )
+   {
+      fclose( fpNew );
+   }
+   
+   if ( NULL != fpOld )
+   {
+      fclose( fpOld );
+      unlink( bakConfFile ) ;
+   }
+   return rc ;
+error:
+   rc = SDB_TEST_ERROR ;
+   
+   goto done ;
+}
+
+
+BOOLEAN checkConfig( const CHAR* svc, const char* key, const char* val )
+{
+   CHAR confFile[ MAX_NAME_SIZE+1 ] = { 0 } ;
+   CHAR installPath[ MAX_NAME_SIZE+1 ] = { 0 } ;
+   CHAR s[ MAX_NAME_SIZE ] ={0};
+   INT32 rc = SDB_OK ;
+   FILE* fp = NULL ;
+   CHAR* pos = NULL ;
+   
+   rc = getInstallPath( installPath ) ;
+   if ( rc != SDB_OK )
+   {
+      printf( "fail to get installPath\n") ;
+      goto error ;
+   }
+ 
+   sprintf( confFile, "%s%s%s%s", installPath, "/conf/local/", svc, "/sdb.conf" ) ;
+   
+   fp = fopen( confFile, "r" ) ;
    if( !fp )
    {
-      printf( "fail to open conf file: %s\n", confFile ) ;
+      printf( "fail to open conf file: %s\n", confFile) ;
       goto error ;
    }
 
    while( fgets( s, sizeof( s ), fp ) )
    {
-      len += strlen( s ) ;
-      CHAR* idx = strstr( s, conf ) ;
-      if( idx )
+      CHAR* idx = NULL ;
+      trim( s ) ;
+      idx = strstr( s, key ) ;
+      if( idx && idx == s )
       {
-         len -= strlen( s ) ;
          break ;
       }
    }
-   if( fseek( fp, len, SEEK_SET ) )
+   
+   
+   pos = strstr( s, "=" ) ;
+   if ( NULL != pos && *(pos+1) != '\0' )
    {
-      printf( "fail to seek file,file: %s, offset: %d\n", confFile, len ) ;
-      goto error ;
+      pos = pos + 1;
+      trim( pos ) ;
+      if ( 0 == strncmp( pos, val, strlen(pos) ) )
+      {
+         return TRUE ;
+      }
    }
-   fprintf( fp, "%s", buffer ) ;
-   fclose( fp ) ;
-
-done:
-   return rc ;
 error:
-   rc = SDB_TEST_ERROR ;
-   goto done ;
+   return FALSE ;
 }
 
 TEST( reloadConf, weight )
 {
    INT32 rc = SDB_OK ;
+   BOOLEAN res = FALSE ;
 
    sdbConnectionHandle db = SDB_INVALID_HANDLE ;
+   sdbConnectionHandle dataDb = SDB_INVALID_HANDLE ;
+   BOOLEAN isMaster = FALSE ;
    rc = sdbConnect( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd(), &db ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to connect sdb" ;
 
@@ -317,6 +438,7 @@ TEST( reloadConf, weight )
    sdbReplicaGroupHandle rg = SDB_INVALID_HANDLE ;
    sdbNodeHandle node = SDB_INVALID_HANDLE ;
    const CHAR *host, *svc ;
+   const CHAR *dataHost, *dataSvc ;
    rc = createSlaveNode( db, &rg, &node, &host, &svc ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    printf( "node: host %s, svc %s\n", host, svc ) ;
@@ -324,7 +446,8 @@ TEST( reloadConf, weight )
    // start node
    rc = sdbStartNode( node ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to start node" ;
-
+   
+   /*
    // create cs cl and insert doc in rg in case rg have no dps log
    const CHAR* csName = "reloadConfTestCs" ;
    const CHAR* clName = "reloadConfTestCl" ;
@@ -332,19 +455,29 @@ TEST( reloadConf, weight )
    ASSERT_EQ( SDB_OK, rc ) ;
    rc = insertDoc( db, csName, clName ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-
    // wait sync
    rc = waitSync( rg, host, svc ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-
+   */
    // change slave node weight to 20
    rc = changeNodeConf( svc, "weight", "20" ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-
+   
    // reload conf
    rc = sdbReloadConfig( db, NULL ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to reload conf" ;
-
+   
+   rc = sdbGetNodeAddr( node, &dataHost, &dataSvc, NULL, NULL) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to exec sdbGetNodeAddr" ;
+   rc = sdbConnect( dataHost, dataSvc, ARGS->user(), ARGS->passwd(), &dataDb) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to exec sdbConnect(" << dataHost << "," << dataSvc <<")" ;
+   rc = sdbFlushConfigure( dataDb, NULL );
+   ASSERT_EQ( SDB_OK, rc ) << "fail to exec sdbFlushConfigure" ;
+   
+   res = checkConfig( svc, "weight", "20" ) ;
+   ASSERT_EQ( res, TRUE ) << "fail to exec sdbReloadConfig" ;
+   
+   /*
    // reelect and check master
    bson option ;
    bson_init( &option ) ;
@@ -353,7 +486,7 @@ TEST( reloadConf, weight )
    rc = sdbReelect( rg, &option ) ;
    bson_destroy( &option ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to reelect in rg" ;
-   BOOLEAN isMaster = FALSE ;
+   
    rc = isMasterNode( rg, host, svc, &isMaster ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    if( isMaster )
@@ -369,13 +502,13 @@ TEST( reloadConf, weight )
    // drop cs 
    rc = sdbDropCollectionSpace( db, csName ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs" ;  
-
+   */
    // stop and remove node
    rc = sdbStopNode( node ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to stop node" ;
    do
    {
-      ossSleep( 1000 ) ;
+      ossSleep( 10 ) ;
       rc = isMasterNode( rg, host, svc, &isMaster ) ;
       ASSERT_EQ( SDB_OK, rc ) << "fail to check node is master node or not" ;
    } while( isMaster ) ;
@@ -384,6 +517,8 @@ TEST( reloadConf, weight )
 
    sdbDisconnect( db ) ;
    sdbReleaseConnection( db ) ;
+   sdbDisconnect( dataDb ) ;
+   sdbReleaseConnection( dataDb ) ;
    sdbReleaseReplicaGroup( rg ) ;
    sdbReleaseNode( node ) ;
 }
