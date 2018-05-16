@@ -111,6 +111,7 @@ namespace seadapter
 
       // Check if the mark of normal collection end has been written in ES.
       INT32 _chkDoneMark( BOOLEAN &found ) ;
+      INT32 _validate( const BSONObj &obj, BOOLEAN &valid ) ;
       INT32 _consult() ;
       INT32 _onSDBEOC() ;
       INT32 _startOver() ;
@@ -135,6 +136,7 @@ namespace seadapter
       BSONObj                 _indexDef ;
       BSONObj                 _queryCond ;
       BSONObj                 _selector ; // Should contain _id and index fields.
+      seIndexMeta             _meta ;
       utilESClt               *_esClt ;
       SEADPT_SESSION_STATUS   _status ;
       INT64                   _lastPopLID ;
@@ -147,6 +149,8 @@ namespace seadapter
                                              // A new query can be started only
                                              // when it's FALSE.
       INT64                   _expectLID ;
+      UINT32                  _expectRecHash ;
+      BOOLEAN                 _emptyResultSet ;
       utilESBulkBuilder       _bulkBuilder ;
    } ;
    typedef _seAdptIndexSession seAdptIndexSession ;

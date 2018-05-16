@@ -219,6 +219,18 @@ namespace seadapter
       goto done ;
    }
 
+   BOOLEAN _seIndexSessionMgr::sessionMetaCheck( const seIndexMeta &idxMeta )
+   {
+      seIdxMetaMgr *idxMetaCache = _pAdptCB->getIdxMetaCache() ;
+      seIndexMeta *target = NULL ;
+
+      idxMetaCache->lock( SHARED ) ;
+      target = idxMetaCache->getIdxMeta( idxMeta )  ;
+      idxMetaCache->unlock( SHARED ) ;
+
+      return ( NULL != target ) ;
+   }
+
    SDB_SESSION_TYPE _seIndexSessionMgr::_prepareCreate( UINT64 sessionID,
                                                         INT32 startType,
                                                         INT32 opCode )

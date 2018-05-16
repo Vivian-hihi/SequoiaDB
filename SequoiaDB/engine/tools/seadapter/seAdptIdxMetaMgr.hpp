@@ -124,6 +124,21 @@ namespace seadapter
             return _indexDef ;
          }
 
+         UINT32 getCSLID() const
+         {
+            return _csLogicalID ;
+         }
+
+         UINT32 getCLLID() const
+         {
+            return _clLogicalID ;
+         }
+
+         UINT32 getIdxLID() const
+         {
+            return _idxLogicalID ;
+         }
+
          std::string toString() const
          {
             try

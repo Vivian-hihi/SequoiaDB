@@ -136,6 +136,8 @@ namespace seadapter
 
       INT32 setOptionMgr( const seAdptOptionsMgr *optionMgr ) ;
       const seAdptOptionsMgr *getOptionMgr() const { return _optionMgr ; }
+
+      BOOLEAN sessionMetaCheck( const seIndexMeta &idxMeta ) ;
    protected:
       virtual SDB_SESSION_TYPE _prepareCreate( UINT64 sessionID,
                                                INT32 startType,

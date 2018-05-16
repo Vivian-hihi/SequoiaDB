@@ -43,10 +43,14 @@
 
 #define SEADPT_FIELD_NAME_RID        "_rid"
 #define SEADPT_FIELD_NAME_LID        "_lid"
+#define SEADPT_FIELD_NAME_CSLID      "_cslid"
+#define SEADPT_FIELD_NAME_CLLID      "_cllid"
+#define SEADPT_FIELD_NAME_IDXLID     "_idxlid"
 #define SEADPT_OPERATOR_STR_OR       "$or"
 #define SEADPT_OPERATOR_STR_EXIST    "$exists"
 #define SEADPT_OPERATOR_STR_INCLUDE  "$include"
 #define SEADPT_TID(sessionID)        ((UINT32)(sessionID & 0xFFFFFFFF))
+#define SEADPT_INVALID_LID           -1
 
 namespace seadapter
 {
@@ -89,6 +93,7 @@ namespace seadapter
                   && !idxMeta->getIdxDef().isEmpty(),
                   "Index definition is invalid" ) ;
 
+      // TODO: YSD temporary duplication. Need to clean.
       _origCLFullName = idxMeta->getOrigCLName() ;
       _cappedCLFullName = idxMeta->getCappedCLName() ;
       _origCLVersion = -1 ;
@@ -96,13 +101,16 @@ namespace seadapter
       _indexName = idxMeta->getEsIdxName() ;
       _typeName = idxMeta->getEsTypeName() ;
       _indexDef = idxMeta->getIdxDef().copy() ;
+      _meta = *idxMeta ;
       _esClt = NULL ;
       _status = SEADPT_SESSION_STAT_CONSULT ;
       _lastPopLID = -1 ;
       _quit = FALSE ;
       _queryCtxID = -1 ;
       _queryBusy = FALSE ;
-      _expectLID = -1 ;
+      _expectLID = SEADPT_INVALID_LID ;
+      _expectRecHash = 0 ;
+      _emptyResultSet = TRUE ;
    }
 
    _seAdptIndexSession::~_seAdptIndexSession()
@@ -172,7 +180,7 @@ namespace seadapter
             if ( 0 == docObjs.size() )
             {
                _lastPopLID = -1 ;
-               _expectLID = -1 ;
+               _expectLID = SEADPT_INVALID_LID ;
             }
             else
             {
@@ -205,7 +213,7 @@ namespace seadapter
          {
             if ( 0 == docObjs.size() )
             {
-               if ( 0 == _expectLID )
+               if ( -1 == _expectLID )
                {
                   _lastPopLID = -1 ;
                   _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
@@ -415,7 +423,7 @@ namespace seadapter
                   BSONObj condition ;
                   if ( _lastPopLID >= 0 )
                   {
-                     condition = BSON( "_id" << BSON( "$gt" << _lastPopLID ) ) ;
+                     condition = BSON( "_id" << BSON( "$gte" << _expectLID ) ) ;
                   }
                   rc = _queryCappedCollection( condition ) ;
                   PD_RC_CHECK( rc, PDERROR,
@@ -808,7 +816,11 @@ namespace seadapter
          {
             // When reach to the end of the original collection, switch to capped
             // collection. Write an end mark of _lid : -1.
-            BSONObj emptyObj = BSON( SEADPT_FIELD_NAME_LID << _expectLID ) ;
+            _expectLID = -1 ;
+            BSONObj emptyObj = BSON( SEADPT_FIELD_NAME_CSLID << _meta.getCSLID() <<
+                                     SEADPT_FIELD_NAME_CLLID << _meta.getCLLID() <<
+                                     SEADPT_FIELD_NAME_IDXLID << _meta.getIdxLID() <<
+                                     SEADPT_FIELD_NAME_LID << _expectLID ) ;
             rc = _markProgress( emptyObj ) ;
             PD_RC_CHECK( rc, PDERROR, "Write end mark[_lid: %lld] for normal "
                          "collection[ %s ] on search engine failed[ %d ]",
@@ -925,6 +937,7 @@ namespace seadapter
       INT64 nextLastLID = -1 ;
       vector<BSONObj> docObjs ;
       INT64 logicalID = -1 ;
+      UINT32 lastObjHash = 0 ;
 
       rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
                             &numReturned, docObjs ) ;
@@ -940,6 +953,27 @@ namespace seadapter
       // will be started in onTimer.
       if ( SDB_DMS_EOC == rc )
       {
+         // If the expected LID is -1 and the capped collection is empty, there
+         // are two possibilities:
+         // (1) All records in the original collection have been processed, and
+         //     no more record change after the index creation
+         // (2) The capped collection has been re-created. That may happen when
+         //     the collection is re-created, or the original table is truncated.
+         // So we check the meta data. If it's the second condition, let's just
+         // quit. The new worker will drop and create the ES index during
+         // consult.
+         if ( SEADPT_INVALID_LID == _expectLID && _emptyResultSet )
+         {
+            if ( FALSE == ((_seIndexSessionMgr *)_pSessionMgr)->sessionMetaCheck( _meta ) )
+            {
+               // Not able to find the record we expected in the capped collection.
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Can not find expected record in capped "
+                       "collection[ %s ]", _cappedCLFullName.c_str() ) ;
+               goto error ;
+            }
+         }
+         _emptyResultSet = TRUE ;
          rc = SDB_OK ;
          _setQueryBusyFlag( FALSE ) ;
          PD_LOG( PDDEBUG, "All records in capped collection[ %s ] have been "
@@ -960,9 +994,40 @@ namespace seadapter
       {
          if ( docObjs.size() > 0 )
          {
+            // Check if the first record is the one we expected. If not, start
+            // over again. Check only once in one query round.
+            if ( _emptyResultSet && ( SEADPT_INVALID_LID != _expectLID )
+                 && ( 0 != _expectRecHash ) )
+            {
+               BSONObj firstObj = docObjs.front() ;
+               UINT32 objHash = ossHash( firstObj.objdata(),
+                                         firstObj.objsize() ) ;
+               if ( objHash != _expectRecHash )
+               {
+                  rc = SDB_SYS ;
+                  PD_LOG( PDERROR, "The first record in capped collection[ %s ]"
+                          " is not as we expected", _cappedCLFullName.c_str() ) ;
+                  goto error ;
+               }
+               _emptyResultSet = FALSE ;
+               // If only one, it's the last one we processed in the last round.
+               // No new data has been added. So nothing to do. Just try to get
+               // more records.
+               if ( docObjs.size() == 1 )
+               {
+                  rc = _sendGetmoreReq( contextID, msg->requestID ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Send get more request failed[ %d ]", rc ) ;
+                  goto done ;
+               }
+            }
             BSONObj lastObj = docObjs.back() ;
             BSONElement lidEle = lastObj.getField( SEADPT_FIELD_NAME_ID ) ;
             nextLastLID = lidEle.Long() ;
+            lastObjHash = ossHash( lastObj.objdata(), lastObj.objsize() ) ;
+            if ( _emptyResultSet )
+            {
+               _emptyResultSet = FALSE ;
+            }
          }
 
          rc = _bulkPrepare() ;
@@ -1063,7 +1128,10 @@ namespace seadapter
       // After each batch of data processed successfully, pop the last batch of
       // data out. If -1 == _lastPopLID, it's the first time. We do not pop in
       // this round, just to fetch the next batch of results.
-      if ( _lastPopLID >= 0 )
+      // If _expectRecHash is 0, this is the first round after startup. We do
+      // not clean any thing this round. Otherwise, all records in capped
+      // collection may be cleaned.
+      if ( _lastPopLID >= 0 && 0 != _expectRecHash )
       {
          rc = _cleanData( _lastPopLID ) ;
          PD_RC_CHECK( rc, PDERROR, "Clean data failed[ %d ]", rc ) ;
@@ -1078,6 +1146,8 @@ namespace seadapter
       PD_LOG( PDDEBUG, "Change last pop LogicalID from [ %lld ] to [ %lld ]",
               _lastPopLID, nextLastLID ) ;
       _lastPopLID = nextLastLID ;
+      _expectLID = nextLastLID ;
+      _expectRecHash = lastObjHash ;
 
    done:
       return rc ;
@@ -1144,7 +1214,10 @@ namespace seadapter
 
    INT32 _seAdptIndexSession::_updateProgress( INT64 logicalID )
    {
-      BSONObj lidObj = BSON( SEADPT_FIELD_NAME_LID << logicalID ) ;
+      BSONObj lidObj = BSON( SEADPT_FIELD_NAME_CSLID << _meta.getCSLID() <<
+                             SEADPT_FIELD_NAME_CLLID << _meta.getCLLID() <<
+                             SEADPT_FIELD_NAME_IDXLID << _meta.getIdxLID() <<
+                             SEADPT_FIELD_NAME_LID << logicalID ) ;
       return _markProgress( lidObj ) ;
    }
 
@@ -1168,6 +1241,31 @@ namespace seadapter
                                   SDB_SEADPT_COMMIT_ID,
                                   found ) ;
       PD_RC_CHECK( rc, PDERROR, "Check document existense failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_validate( const BSONObj &obj, BOOLEAN &valid )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN validate = FALSE ;
+      try
+      {
+         validate = ( ( (UINT32)obj.getIntField( SEADPT_FIELD_NAME_CSLID ) == _meta.getCSLID() ) &&
+         ( (UINT32)obj.getIntField( SEADPT_FIELD_NAME_CLLID ) == _meta.getCLLID() ) &&
+         ( (UINT32)obj.getIntField( SEADPT_FIELD_NAME_CLLID ) == _meta.getIdxLID() ) ) ;
+
+         valid = validate ;
+       }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
 
    done:
       return rc ;
@@ -1258,14 +1356,22 @@ namespace seadapter
             goto error ;
          }
 
+         {
+            BOOLEAN valid = FALSE ;
+            rc = _validate( resultObj, valid ) ;
+            PD_RC_CHECK( rc, PDERROR, "Validate of ES document failed[ %d ]",
+                         rc ) ;
+            if ( FALSE == valid )
+            {
+               rc = _startOver() ;
+               PD_RC_CHECK( rc, PDERROR, "Start over again failed[ %d ]", rc ) ;
+               goto done ;
+            }
+         }
          // Get the commit logical id as expect logical id.
          lidEle = resultObj.getField( SEADPT_FIELD_NAME_LID ) ;
          PD_LOG( PDDEBUG, "Commit object: %s", resultObj.toString().c_str() ) ;
          _expectLID = lidEle.numberLong() ;
-         if ( -1 == _expectLID )
-         {
-            _expectLID = 0 ;
-         }
 
          rc = _queryLastCappedRecLID( TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Query first logical id failed[ %d ]", rc ) ;

@@ -429,7 +429,6 @@ namespace engine
       _processorLocked = TRUE ;
       _lockType = EXCLUSIVE ;
       _removeFiles = removeFiles ;
-      _appendProcessors( processors ) ;
 
       for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
             itr != processors.end(); ++itr )
@@ -448,11 +447,20 @@ namespace engine
       }
 
    done:
+      if ( _processorLocked )
+      {
+         _appendProcessors( processors ) ;
+      }
       PD_TRACE_EXITRC( SDB__RTNEXTDROPOPRCTX_OPEN, rc ) ;
       return rc ;
    error:
       if ( _removeFiles )
       {
+         for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
+               itr != _processors.end(); ++itr )
+         {
+            (*itr)->doDropP1Cancel( cb, NULL ) ;
+         }
          for ( vector<rtnExtDataProcessor *>::iterator itr = processorVecP1.begin();
                itr != processorVecP1.end(); ++itr )
          {
@@ -544,7 +552,6 @@ namespace engine
       }
       _processorLocked = TRUE ;
       _lockType = EXCLUSIVE ;
-      _appendProcessors( processors ) ;
 
       for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
             itr != processors.end(); ++itr )
@@ -555,10 +562,19 @@ namespace engine
       }
 
    done:
+      if ( _processorLocked )
+      {
+         _appendProcessors( processors ) ;
+      }
       PD_TRACE_EXITRC( SDB__RTNEXTTRUNCATECTX_OPEN, rc ) ;
       return rc ;
    error:
       INT32 rcTmp = SDB_OK ;
+      for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
+            itr != _processors.end(); ++itr )
+      {
+         (*itr)->doDropP1Cancel( cb, NULL ) ;
+      }
       for ( vector<rtnExtDataProcessor *>::iterator itr = processorP1.begin();
             itr != processorP1.end(); ++itr )
       {
