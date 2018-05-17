@@ -438,6 +438,13 @@ namespace engine
                rc = _onTransDeleteReqMsg ( handle, msg, contextID ) ;
                break ;
             case MSG_BS_TRANS_QUERY_REQ :
+               rc = _checkPrimaryStatus() ;
+               if ( SDB_OK != rc )
+               {
+                  isNeedRollback = TRUE ;
+                  PD_LOG( PDINFO, "failed to check primary status:%d", rc ) ;
+                  break ;
+               }
                rc = _onTransQueryReqMsg( handle, msg, buffObj, startFrom,
                                          contextID ) ;
                isNeedRollback = (SDB_DMS_EOC == rc || SDB_OK == rc) ? FALSE : TRUE ;

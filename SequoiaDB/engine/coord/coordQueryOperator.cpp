@@ -410,7 +410,7 @@ namespace engine
       }
       else
       {
-         coordSendOptions sendOpt ;
+         coordSendOptions sendOpt( cb->isTransaction() ) ;
 
          // add last op info
          MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
