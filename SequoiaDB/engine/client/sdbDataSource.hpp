@@ -87,13 +87,13 @@ namespace sdbclient
          _globalMutex(),
          _isInited(FALSE),
          _isEnabled(FALSE),
+         _needbgtask(TRUE),
          _toCreateConn(FALSE),
          _toDestroyConn(FALSE),
          _toStopWorkers(FALSE),
          _createConnWorker(NULL),
          _destroyConnWorker(NULL),
-         _bgTaskWorker(NULL),
-         _needbgtask(TRUE){}
+         _bgTaskWorker(NULL){}
 
       /** \fn ~sdbDataSource()
          \brief The destructor of sdbDataSource
