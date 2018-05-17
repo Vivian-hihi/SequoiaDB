@@ -47,9 +47,9 @@ class TestGetSlave14814 extends PHPUnit_Framework_TestCase
          else if( $nodeName != $firstNodeName )
             $hasDiffNode = true;
       }
-      if( !$hasDiffNode )
+      if( !$hasDiffNode ) {
          $this -> assertFail( "getSlave() is not equal probability" );
-
+      }
       // seqDB-14815 getSlave() with one position
       $hasDiffNode = false;
       for( $i = 0; $i < 5; $i++ )
@@ -64,9 +64,10 @@ class TestGetSlave14814 extends PHPUnit_Framework_TestCase
          else if( $nodeName != $firstNodeName )
             $hasDiffNode = true;
       }
-      if( $hasDiffNode )
+      if( $hasDiffNode ) {
          $this -> assertFail( "getSlave()'s position not work" );
-
+      }
+      
       // seqDB-14816 getSlave() without multi-position
       $hasDiffNode = false;
       $firstNodeName = '';
@@ -83,8 +84,9 @@ class TestGetSlave14814 extends PHPUnit_Framework_TestCase
          else if( $nodeName != $firstNodeName )
             $hasDiffNode = true;
       }
-      if( !$hasDiffNode )
+      if( !$hasDiffNode ) {
          $this -> assertFail( "getSlave() is not equal probability" );
+      }
    }
    
    public static function tearDownAfterClass()
