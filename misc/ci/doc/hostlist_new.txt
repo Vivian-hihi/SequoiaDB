@@ -7,19 +7,22 @@
 #doc compile
 192.168.10.200 ci-cmpl-doc
 
+#cshap  test
+192.168.10.199 sequoiadb   jenkins_1
+
 #branch2.6/1.12 doc compile
 192.168.28.240 test-ci-ubun1
 
 #trunk g3d3
 192.168.28.192 test-ci-suse2
 192.168.28.113 test-ci-cent2
-192.168.28.201 test-ci-ubun7
+192.168.28.135 test-ci-ubun9（ubun14.04）
 
 #trunk g1d3
 192.168.28.112 test-ci-cent1
 192.168.28.193 test-ci-suse3
 192.168.28.103 test-ci-rhel2
-
+ 
 #trunk standalone
 192.168.28.191 test-ci-suse1
 
@@ -104,16 +107,35 @@
 
 #scm
 192.168.28.121 scm-ci-jenkins-master
-192.168.28.173 scm-test-ci-suse1
-192.168.28.122 scm-test-ci-ubun1
-192.168.28.171 scm-test-ci-rhel1
-192.168.28.172 scm-test-ci-cent6
-192.168.30.122 scm-ci-test-ubun1
 
-#scm
-192.168.30.121 scm-jenkins-master
-192.168.30.122 scm-test-ci-ubun1
+#scm db
+192.168.28.173 scm-test-ci-suse1（控制机）
+192.168.28.171 scm-test-ci-rhel1
+192.168.28.122 scm-test-ci-ubun1
+192.168.28.172 scm-test-ci-cent6
+192.168.28.137 scm-ci-test-ubun1
+
+#scm   ceph
+192.168.28.201 scm-test-ci-ubun7（控制机）
+192.168.28.131 scm-test-ci-ubun14
+192.168.28.132 scm-test-ci-cent8
+192.168.28.133 scm-test-ci-cent7
+192.168.28.134 scm-test-ci-rhel2
+
+部署微服务机器
+192.168.28.138 scm-test-ci-ubun2
+192.168.28.139 scm-test-ci-cent1
+192.168.28.140 scm-test-ci-cent2（网关）
+192.168.28.141 scm-test-ci-rhel3（网关）
+
+#scm zookeeper环境 
+192.168.30.188 scm-ci-test-suse2
+
+#mysql compile
+192.168.28.136 scm-test-ci-suse2
  
+192.168.30.187 scm-ci-test-suse1(暂时没用)
+192.168.30.190 scm-ci-test-suse3(暂时没用)
 新做一台suse12 sp2
 
 
