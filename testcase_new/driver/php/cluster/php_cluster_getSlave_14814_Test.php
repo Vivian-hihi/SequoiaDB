@@ -16,6 +16,7 @@ class TestGetSlave14814 extends PHPUnit_Framework_TestCase
    
    public static function setUpBeforeClass()
    {
+      echo "\n---Begin to run TestGetSlave14814.";
       self::$db = new Sequoiadb();
       $err = self::$db -> connect(globalParameter::getHostName().':'. 
                                   globalParameter::getCoordPort()) ;
@@ -48,7 +49,7 @@ class TestGetSlave14814 extends PHPUnit_Framework_TestCase
             $hasDiffNode = true;
       }
       if( !$hasDiffNode ) {
-         $this -> assertFail( "getSlave() is not equal probability" );
+         throw new Exception( "getSlave() is not equal probability" );
       }
       // seqDB-14815 getSlave() with one position
       $hasDiffNode = false;
@@ -65,7 +66,7 @@ class TestGetSlave14814 extends PHPUnit_Framework_TestCase
             $hasDiffNode = true;
       }
       if( $hasDiffNode ) {
-         $this -> assertFail( "getSlave()'s position not work" );
+         throw new Exception( "getSlave()'s position not work" );
       }
       
       // seqDB-14816 getSlave() without multi-position
@@ -85,13 +86,14 @@ class TestGetSlave14814 extends PHPUnit_Framework_TestCase
             $hasDiffNode = true;
       }
       if( !$hasDiffNode ) {
-         $this -> assertFail( "getSlave() is not equal probability" );
+         throw new Exception( "getSlave() is not equal probability" );
       }
    }
    
    public static function tearDownAfterClass()
    {
       self::$db -> close();
+      echo "\n---End to run TestGetSlave14814.";
    }
 
    private function isStandAlone( $db )
@@ -103,7 +105,7 @@ class TestGetSlave14814 extends PHPUnit_Framework_TestCase
       else if( $errno == 0 )
          return false;
       else
-         $this -> assertFail("unexpected sdb error: ".$errno);
+         throw new Exception("unexpected sdb error: ".$errno);
    }
 
    private function getMultiNodeGroup( $db )

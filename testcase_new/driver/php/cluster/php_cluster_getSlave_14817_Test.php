@@ -14,6 +14,7 @@ class TestGetSlave14817 extends PHPUnit_Framework_TestCase
    
    public static function setUpBeforeClass()
    {
+      echo "\n---Begin to run TestGetSlave14817.";
       self::$db = new Sequoiadb();
       $err = self::$db -> connect(globalParameter::getHostName().':'. 
                                   globalParameter::getCoordPort()) ;
@@ -40,6 +41,7 @@ class TestGetSlave14817 extends PHPUnit_Framework_TestCase
    public static function tearDownAfterClass()
    {
       self::$db -> close();
+      echo "\n---End to run TestGetSlave14817.";
    }
 
    private function isStandAlone( $db )
@@ -51,7 +53,7 @@ class TestGetSlave14817 extends PHPUnit_Framework_TestCase
       else if( $errno == 0 )
          return false;
       else
-         $this -> assertFail("unexpected sdb error: ".$errno);
+         throw new Exception("unexpected sdb error: ".$errno);
    }
 
    private function getDataGroup( $db )
