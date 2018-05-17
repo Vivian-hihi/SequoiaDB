@@ -25,7 +25,7 @@ namespace CSharp.Crud.DataType
         private DBCollection cl = null;
         private const string clName = "cl14592";
         private List<BsonDocument> validDocs = null;
-        private List<BsonDocument> invalidDocs = null;
+        // private List<BsonDocument> invalidDocs = null;
         private List<BsonDocument> specialDocs = null;
 
         [TestInitialize()]
@@ -48,32 +48,23 @@ namespace CSharp.Crud.DataType
                 new BsonDocument("zero", new BsonDocument { { "$decimal", "0" } }),
                 new BsonDocument("fromDecimal", new BsonDecimal(new Decimal(1)))
             };
-            invalidDocs = new List<BsonDocument>
-            {
+            // invalidDocs = new List<BsonDocument>
+            // {
                 // new BsonDocument("overPrecision", new BsonDecimal("11", 1, 0)),      // compile error
                 // new BsonDocument("overPrecision", new BsonDecimal("1", 1001, 0)),    // compile error
                 // new BsonDocument("overPrecision", new BsonDecimal("1", 0, 0)),       // compile error
                 // new BsonDocument("notDigital", new BsonDecimal("abc", 100, 0)),      // compile error
-                new BsonDocument("overPrecision", new BsonDocument
-                        { { "$decimal", "11" }, { "$precision", new BsonArray { 1, 0 } } }),
-                new BsonDocument("overPrecision", new BsonDocument
-                        { { "$decimal", "1" }, { "$precision", new BsonArray { 1001, 0 } } }),
-                new BsonDocument("overPrecision", new BsonDocument
-                        { { "$decimal", "1" }, { "$precision", new BsonArray { 0, 0 } } }),
-                new BsonDocument("notDigital", new BsonDocument
-                        { { "$decimal", "abc" } }),
-            };
-            // TODO: INF is not supported for SEQUOIADBMAINSTREAM-3363
+            // };
             specialDocs = new List<BsonDocument>
             {
                 new BsonDocument("MAX", new BsonDecimal("MAX")),
                 new BsonDocument("MAX", new BsonDecimal("max")),
-                // new BsonDocument("MAX", new BsonDecimal("INF")),
-                // new BsonDocument("MAX", new BsonDecimal("inf")),
+                new BsonDocument("MAX", new BsonDecimal("INF")),
+                new BsonDocument("MAX", new BsonDecimal("inf")),
                 new BsonDocument("MIN", new BsonDecimal("MIN")),
                 new BsonDocument("MIN", new BsonDecimal("min")),
-                // new BsonDocument("MIN", new BsonDecimal("-INF")),
-                // new BsonDocument("MIN", new BsonDecimal("-inf")),
+                new BsonDocument("MIN", new BsonDecimal("-INF")),
+                new BsonDocument("MIN", new BsonDecimal("-inf")),
                 new BsonDocument("NaN", new BsonDecimal("NAN")),
                 new BsonDocument("NaN", new BsonDecimal("nan"))
             };
@@ -91,22 +82,6 @@ namespace CSharp.Crud.DataType
 
             cl.Delete(null);
             Assert.AreEqual(0, cl.GetCount(null));
-
-            // TODO: fail for SEQUOIADBMAINSTREAM-3363
-            // for (int i = 0; i < invalidDocs.Count; ++i)
-            // {
-            //     try 
-            //     {
-            //         BsonDocument doc = invalidDocs.ElementAt(i);
-            //         cl.Insert(doc);
-            //         Assert.Fail(doc.ToJson() + " shouldn't be inserted successfully");
-            //     }
-            //     catch (BaseException e)
-            //     {
-            //         if (e.ErrorCode != -6) // SDB_INVALID_ARG
-            //             throw e;
-            //     }
-            // }
 
             cl.BulkInsert(specialDocs, 0);
             List<BsonDocument> readSpDocs = QueryAndReturnAll(cl);
