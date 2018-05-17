@@ -35,7 +35,7 @@ class TestGetSlave14814 extends PHPUnit_Framework_TestCase
       // seqDB-14814 getSlave() without position
       $hasDiffNode = false;
       $firstNodeName = '';
-      for( $i = 0; $i < 10; $i++ )
+      for( $i = 0; $i < 20; $i++ )
       {
          $node = $group -> getSlave();
          $this -> assertEquals( 0, self::$db -> getError() ['errno'] );
@@ -72,7 +72,7 @@ class TestGetSlave14814 extends PHPUnit_Framework_TestCase
       // seqDB-14816 getSlave() without multi-position
       $hasDiffNode = false;
       $firstNodeName = '';
-      for( $i = 0; $i < 10; $i++ )
+      for( $i = 0; $i < 20; $i++ )
       {
          $node = $group -> getSlave([1, 2, 3]);
          $this -> assertEquals( 0, self::$db -> getError() ['errno'] );
