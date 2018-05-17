@@ -2153,7 +2153,7 @@ INT32 sequoiaFS::rename(const CHAR *path, const CHAR *newpath)
 	//if it is a file, check the newfile exists or not, if exist, should delete it first
 	if(!is_dir)
     {
-    	cond = BSON(SEQUOIAFS_NAME<<lobNewName<<SEQUOIAFS_PID<<(INT64)pid);  
+    	cond = BSON(SEQUOIAFS_NAME<<lobNewName<<SEQUOIAFS_PID<<(INT64)newPino);  
 		rc = sysFileMetaCL.query(cursor, cond);
 		if(SDB_OK != rc)
 		{
