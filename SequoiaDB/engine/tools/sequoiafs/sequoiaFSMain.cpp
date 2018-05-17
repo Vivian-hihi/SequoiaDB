@@ -429,17 +429,17 @@ INT32 main(INT32 argc, CHAR *argv[])
         goto error;
     }
 
-    if(lobFuseOption.is_help_sfs)
+    if(lobFuseOption.is_help_sfs || lobFuseOption.is_version)
     {
         goto done;
     }    
 
-    if(lobFuseOption.is_help || lobFuseOption.is_version)
+    if(lobFuseOption.is_help)
     {
-        rc = fuse_opt_add_arg(&fuseArgs, lobFuseOption.is_help?"--help":"--version");
+        rc = fuse_opt_add_arg(&fuseArgs, "--help");
         if(0 != rc)
         {    
-            ossPrintf("Failed to add arg:\"%s\" (error=%d), exit."OSS_NEWLINE, lobFuseOption.is_help?"--help":"--version", rc);
+            ossPrintf("Failed to add arg:\"%s\" (error=%d), exit."OSS_NEWLINE, "--help", rc);
             goto error;
         }        
     }    
