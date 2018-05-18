@@ -133,6 +133,12 @@
             <var name="cmd" value=". -DWITH_BOOST=${MYSQL_BOOST_DIR}/boost_1_59_0/ -DCMAKE_INSTALL_PREFIX=${mysqltarget} -DMYSQL_DATADIR=${mysqltarget}/data -DCMAKE_BUILD_TYPE=Release -DSDB_VER=${tmp_sdb_version}_${fdw_svn}"/>
          </else>
       </if>
+      <if>
+         <equals arg1="${IS_ENTERPRISE}" arg2="true" />
+         <then>  
+            <var name="cmd" value="${cmd} -DSDB_ENTERPRISE=enterprise"/>
+         </then>
+      </if>
       <echo>cmake ${cmd} in dir ${MYSQL_SRCCODE}</echo>
       <exec executable="cmake" dir="${MYSQL_SRCCODE}" failonerror="true" logError="true">
          <arg line=" ${cmd} " />
@@ -147,7 +153,9 @@
          <arg line=" install " />
       </exec>
       
-      
+      <copy todir="${mysqltarget}">
+         <fileset dir="${srccode_dir}/misc/ci/mysqlrelease" includes="license/*" />
+      </copy>
    </target>
    
    <target name="build_run_package">
