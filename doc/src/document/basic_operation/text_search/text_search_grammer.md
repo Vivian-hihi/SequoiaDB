@@ -1,19 +1,19 @@
 1. 创建全文索引
 
-	创建全文索引时，只需指定索引类型为 "text" 即可：
+	创建全文索引时，只需指定索引类型为 "text" 即可，索引的其它选项对全文索引无效，因此无需指定：
 
 	```lang-javascript
-	db.cs.cl.createIndex('idx', {name:"text", address:"text"})
+	> db.cs.cl.createIndex('idx', {name:"text", address:"text"})
 	```
 	
-	可指定一个或多个字段，需要注意的是在创建时 text 类型不可与其它任何类型混用。一个集合上最多创建 1 个全文索引，数据库中最多存在 64 个全文索引。每创建一个全文索引，会在数据节点上对应地创建一个固定集合空间及固定集合（集合与集合空间同名，以 SYS_ 开头，与全文索引的对应关系可通过集合的 listIndexes() 进行查询）。
+	可指定一个或多个字段，需要注意的是在创建时 text 类型不可与其它任何类型混用。一个集合上最多创建 1 个全文索引，数据库中最多存在 64 个全文索引。每创建一个全文索引，会在数据节点上对应地创建一个固定集合空间及固定集合（集合与集合空间同名，以 SYS_ 开头，与全文索引的对应关系可通过直连数据节点并使用 listIndexes() 进行查询）。
 
 2. 删除全文索引
 
 	删除全文索引使用 dropIndex 语法，指定索引名即可。
 	
 	```lang-javascript
-	db.cs.cl.dropIndex('idx')
+	> db.cs.cl.dropIndex('idx')
 	```
 	在索引被删除时，其对应的固定集合空间也会一并删除。
 	
@@ -22,7 +22,7 @@
 	SequoiaDB 适配的全文检索引擎为 Elasticsearch，通过在 SequoiaDB 的查询语法中包含 Elasticsearch 的搜索条件来进行全文检索。基本语法结构为：
 	
 	```lang-javascript
-	db.cs.cl.find( { "" : { $Text : <search command> } } ).[hint({"":<name>})]
+	> db.cs.cl.find( { "" : { $Text : <search command> } } ).[hint({"":<name>})]
 	```
 
 	其中的 search command 即 Elasticsearch 的搜索条件。在存在多个全文索引的情况下，需要通过 hint 指定使用的索引。当只有一个全文索引时无需指定。

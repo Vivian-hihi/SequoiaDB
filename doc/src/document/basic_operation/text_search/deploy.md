@@ -1,18 +1,43 @@
-要使用全文检索功能，需要完成 Elasticsearch 集群、SequoiaDB 集群及搜索引擎适配器部属。
+全文检索功能需要在 SequoiaDB 集群环境下使用，单机模式暂不支持。要使用全文检索功能，需要完成 Elasticsearch 集群、SequoiaDB 集群及搜索引擎适配器部署。
 ##软件安装
 
-### SequoiaDB 搜索引擎适配器安装
-SequoiaDB 的搜索引擎适配器已包含在软件发布包中，在进行 SequoiaDB 安装的时候会一并完成安装，其可执行程序为安装目录下的 bin/sdbseadapter。
+### SequoiaDB 及搜索引擎适配器安装
+SequoiaDB 的搜索引擎适配器已包含在软件发布包中，按照 SequoiaDB 的安装步骤正常完成安装即可。适配器可执行程序为安装目录下的 bin/sdbseadapter。
 
 ### Elasticsearch 安装 
 
-请到 [Elasticsearch 官网](www.elastic.co)下载 Elasticsearch 安装包，并按照实际业务需要，参考 Elasticsearch 相关文档完成软件安装及集群部属。当前 SequoiaDB 适配的 Elasticsearch 版本为 6.2.2。
+请到 [Elasticsearch 官网](www.elastic.co)下载 Elasticsearch 安装包，并按照实际业务需要，参考 Elasticsearch 相关文档完成软件安装及集群部署。当前 SequoiaDB 适配的 Elasticsearch 版本为 6.2.2。
 
-##组网
 
-以下是一个简略的组网示例。三台主要上分布着 SequoiaDB 的三个复制组的所有数据节点。蓝色为 SequoiaDB 数据节点，绿色为与每个节点对应的适配器节点，最下面为 Elasticsearch 集群环境。
-![](basic_operation/full_text_search_deploy.jpg)
+## 配置全文检索运行环境
 
-- 每一个数据节点启动一个对应的适配器节点。适配器启动的时候必需指定配置文件路径，且一个配置文件只能启动一个适配器实例。尝试使用同一个配置文件启动多个适配器将会失败。配置项内容请参考[搜索引擎适配器](basic_operation/text_search/sdbseadapter.md)章节内容。
+### SequoiaDB 及 Elasticsearch 部署
+请参考 SequoiaDB 及 Elasticsearch 的相关指导，完成 SequoiaDB 及 Elasticsearch 集群的部署，并确保其正常运行。
 
-- 适配器的配置文件可放在任意可访问的路径下。为了方便管理和查看，建议在软件安装目录的 conf 下创建子目录，并在其中按照连接的节点端口号再创建子目录存放。
+### 搜索引擎适配器部署
+#### 适配器节点配置文件准备
+每一个数据节点（包括主节点和备节点）需要启动一个对应的适配器节点，二者需要运行在同一台主机上。适配器启动的时候必需指定配置文件路径，且一个配置文件只能启动一个适配器实例。尝试使用同一个配置文件启动多个适配器实例将会失败。
+
+当需要使用全文检索功能时，在 SequoiaDB 安装目录的 conf 目录下，创建 seadapter 目录，并在该目录下，按适配器对应的数据节点的服务端口号，分别创建下层子目录并存放一份配置文件。配置文件模板可从 conf/samples/sdbseadapter.conf 拷贝，文件名应保持一致，然后依次对配置文件内容进行修改。详细的配置项内容请参考[搜索引擎适配器](basic_operation/text_search/sdbseadapter.md)章节内容。
+
+#### 适配器节点启动
+目前适配器进程通过手工方式启动，通过 -c 指定配置文件路径（不需要带配置文件名）：
+
+```lang-javascript
+$ nohup sdbseadapter -c <conf_path> &
+```
+
+可使用 ps 命令查看是否所有适配器进程均已启动成功：
+
+```lang-javascript
+$ ps -ef | grep sdbseadapter
+```
+
+结果参考：
+
+```lang-javascript
+sdbseadapter(11837) A
+```
+
+括号内为其监听搜索请求的端口号。
+全文检索环境部署完成之后，在允许的情况下，建议参考[全文检索语法](basic_operation/text_search/text_search_grammer.md)进行简单的功能验证。
