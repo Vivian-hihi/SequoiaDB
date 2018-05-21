@@ -9149,6 +9149,7 @@ namespace engine
       {
          PD_LOG( PDWARNING, "Failed to init environment for executing js script, "
                  "rc = %d", rc ) ;
+         goto error ;
       }
 
    done:
@@ -9217,6 +9218,7 @@ namespace engine
       {
          PD_LOG( PDWARNING, "Failed to init environment for executing js script, "
                  "rc = %d", rc ) ;
+         goto error ;
       }
 
    done:
