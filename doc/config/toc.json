@@ -456,10 +456,24 @@
           },
           {
              "id": 1525956050,
-             "file": "usage",
+             "dir": "usage",
              "cn": "使用",
-             "en": "Usage"
-          }
+             "en": "Usage",
+			 "contents": [
+			 {
+			 "id": 1525956060,
+			 "file": "mount",
+			 "cn": "挂载目录",
+			 "en": "Mount"			 
+			 },
+			 {
+			 "id": 1525956070,
+			 "file": "unmount",
+			 "cn": "卸载目录",
+			 "en": "Unmount"
+			 }	
+			 ]
+          }          	  
         ]
       },
       {
