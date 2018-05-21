@@ -70,5 +70,115 @@
 
 #define HTTP_OPRATION_TIMEOUT    10000
 
+#include "http_parser.hpp"
+#include "restDefine.hpp"
+
+typedef std::map<const CHAR *,const CHAR *, cmp_str> COLNAME_MAP ;
+#if defined(_WINDOWS)
+typedef COLNAME_MAP::iterator COLNAME_MAP_IT ;
+#else
+typedef std::map<const CHAR *,const CHAR *>::iterator COLNAME_MAP_IT ;
+#endif
+
+struct httpConnection
+{
+/* request */
+
+   //key size
+   INT32 _tempKeyLen ;
+   //value size
+   INT32 _tempValueLen ;
+   // \r\n number
+   INT32 _CRLFNum ;
+   //http header buffer size
+   INT32 _headerSize ;
+   //http body buffer size
+   INT32 _bodySize ;
+   //recv temp a part of the body size
+   INT32 _partSize ;
+   //temp query size
+   INT32 _querySize ;
+
+/* response */
+
+   //response first record size
+   INT32 _firstRecordSize ;
+   //response body size
+   INT32 _responseSize ;
+   //chunk model
+   BOOLEAN _isChunk ;
+   //is send http header(chunk model)
+   BOOLEAN _isSendHttpHeader ;
+
+/* request */
+
+   //flag is parser key or value, true: key, false: value
+   BOOLEAN _isKey ;
+   //client send common type
+   HTTP_PARSE_COMMAND _common ;
+   //get file's type
+   HTTP_DATA_TYPE _fileType ;
+   //source header buffer
+   CHAR *_pSourceHeaderBuf ;
+   //recv header buffer
+   CHAR *_pHeaderBuf ;
+   //recv temp a part of the body
+   CHAR *_pPartBody ;
+   //recv body buffer
+   CHAR *_pBodyBuf ;
+   //send buffer
+   CHAR *_pSendBuffer ;
+   //temp key buffer
+   CHAR *_pTempKey ;
+   //temp value buffer ;
+   CHAR *_pTempValue ;
+   //temp query
+   CHAR *_pQuery ;
+   //path
+   const CHAR *_pPath ;
+
+   //http parser
+   http_parser _httpParser ;
+   //header list
+   COLNAME_MAP _requestHeaders ;
+   //query list
+   COLNAME_MAP _requestQuery ;
+
+/* response */
+
+   std::map<const CHAR *,const CHAR *, cmp_str> _responseHeaders ;
+   std::vector<httpResponse> _responseBody ;
+
+/* public */
+
+   httpConnection() : _tempKeyLen(0),
+                      _tempValueLen(0),
+                      _CRLFNum(0),
+                      _headerSize(0),
+                      _bodySize(0),
+                      _partSize(0),
+                      _querySize(0),
+                      _firstRecordSize(0),
+                      _responseSize(0),
+                      _isChunk(FALSE),
+                      _isSendHttpHeader(FALSE),
+                      _isKey(TRUE),
+                      _common(COM_CMD),
+                      _fileType(HTTP_FILE_DEFAULT),
+                      _pSourceHeaderBuf(NULL),
+                      _pHeaderBuf(NULL),
+                      _pPartBody(NULL),
+                      _pBodyBuf(NULL),
+                      _pSendBuffer(NULL),
+                      _pTempKey(NULL),
+                      _pTempValue(NULL),
+                      _pQuery(NULL),
+                      _pPath(NULL)
+   {
+      _httpParser.data = this ;
+   }
+
+} ;
+
 #endif /* UTIL_HTTP_DEF_HPP_ */
 

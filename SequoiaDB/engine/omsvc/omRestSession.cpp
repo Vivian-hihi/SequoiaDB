@@ -66,60 +66,60 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB_OMRESTSN_PROMSG, "_omRestSession::_processMsg" )
-   INT32 _omRestSession::_processMsg( HTTP_PARSE_COMMON command, 
-                                      const CHAR *pFilePath )
+   INT32 _omRestSession::_processMsg( restRequest &request,
+                                      restResponse &response )
    {
       //PD_TRACE_ENTRY( SDB_OMRESTSN_PROMSG );
       INT32 rc = SDB_OK ;
-      restAdaptor *pAdaptor   = sdbGetPMDController()->getRestAdptor() ;
-      const CHAR *pSubCommand = NULL ;
+      restAdaptor *pAdaptor = sdbGetPMDController()->getRestAdptor() ;
+      string subCommand ;
 
-      pAdaptor->getQuery( this, OM_REST_FIELD_COMMAND, &pSubCommand ) ;
-      if ( NULL != pSubCommand )
+      subCommand = request.getQuery( OM_REST_FIELD_COMMAND ) ;
+      if ( FALSE == subCommand.empty() )
       {
-         if ( ossStrcasecmp( pSubCommand, OM_REGISTER_PLUGIN_REQ ) == 0 )
+         if ( ossStrcasecmp( subCommand.c_str(), OM_REGISTER_PLUGIN_REQ ) == 0 )
          {
-            rc = _registerPlugin( pAdaptor ) ;
+            rc = _registerPlugin( request, response ) ;
             if ( rc )
             {
                PD_LOG_MSG( PDERROR, "register plugin failed:rc=%d", rc ) ;
-               _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+               _sendOpError2Web( rc, pAdaptor, response, this, _pEDUCB ) ;
             }
             goto done ;
          }
-         else if ( ossStrcasecmp( pSubCommand, OM_LOGOUT_REQ ) == 0 )
+         else if ( ossStrcasecmp( subCommand.c_str(), OM_LOGOUT_REQ ) == 0 )
          {
             if ( isAuthOK() )
             {
                doLogout() ;
-               pAdaptor->sendResponse( this, HTTP_OK ) ;
+               pAdaptor->sendRest( socket(), &response ) ;
                goto done ;
             }
             else
             {
                rc = SDB_PMD_SESSION_NOT_EXIST ;
                PD_LOG_MSG( PDERROR, "session is not exist:rc=%d", rc ) ;
-               _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+               _sendOpError2Web( rc, pAdaptor, response, this, _pEDUCB ) ;
                goto done ;
             }
          }
-         else if ( ossStrcasecmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
+         else if ( ossStrcasecmp( subCommand.c_str(), OM_LOGIN_REQ ) == 0 )
          {
-            rc = _processBusinessMsg( pAdaptor ) ;
+            rc = _processBusinessMsg( pAdaptor, request, response ) ;
             if ( rc )
             {
                PD_LOG_MSG( PDERROR, "login failed:rc=%d", rc ) ;
-               _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+               _sendOpError2Web( rc, pAdaptor, response, this, _pEDUCB ) ;
             }
 
             goto done ;
          }
       }
 
-      if ( COM_GETFILE == command )
+      if ( COM_GETFILE == request.getCommand() )
       {
          //get file
-         rc = _actionGetFile( pFilePath ) ;
+         rc = _actionGetFile( request, response ) ;
          if ( rc )
          {
             PD_LOG_MSG( PDERROR, "failed to get file: rc=%d", rc ) ;
@@ -128,7 +128,10 @@ namespace engine
       }
       else
       {
-         rc = _actionCmd( pFilePath ) ;
+         //close keep-alive
+         response.setConnectionClose() ;
+
+         rc = _actionCmd( request, response ) ;
          if ( rc )
          {
             PD_LOG_MSG( PDERROR, "failed to exec common: rc=%d", rc ) ;
@@ -451,12 +454,21 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omRestSession::_registerPlugin( restAdaptor *pAdaptor )
+   INT32 _omRestSession::_registerPlugin( restRequest &request,
+                                          restResponse &response )
    {
       INT32 rc = SDB_OK ;
       omRestCommandBase *pOmCommand = NULL ;
+      restAdaptor *pAdaptor = sdbGetPMDController()->getRestAdptor() ;
+      const CHAR* hostName = pmdGetKRCB()->getHostName();
+      string localAgentHost = hostName ;
+      string localAgentPort = sdbGetOMManager()->getLocalAgentPort() ;
 
-      pOmCommand = SDB_OSS_NEW omRegisterPluginsCommand( pAdaptor, this ) ;
+      pOmCommand = SDB_OSS_NEW omRegisterPluginsCommand( this, pAdaptor,
+                                                         &request, &response,
+                                                         localAgentHost,
+                                                         localAgentPort,
+                                                         _wwwRootPath ) ;
       if ( NULL == pOmCommand )
       {
          rc = SDB_OOM ;
@@ -478,30 +490,30 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omRestSession::_setSpecifyNode( const CHAR *pSdbHostName,
-                                          const CHAR *pSdbSvcName,
+   INT32 _omRestSession::_setSpecifyNode( const string &sdbHostName,
+                                          const string &sdbSvcName,
                                           list<omNodeInfo> &nodeList )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN isFind = FALSE ;
       list<omNodeInfo>::iterator iter ;
 
-      if( ( pSdbHostName == NULL && pSdbSvcName != NULL ) ||
-          ( pSdbHostName != NULL && pSdbSvcName == NULL ) )
+      if( ( TRUE == sdbHostName.empty() && FALSE == sdbSvcName.empty() ) ||
+          ( FALSE == sdbHostName.empty() && TRUE == sdbSvcName.empty() ) )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "fail to get %s,rc=%d",
-                 pSdbHostName == NULL ?
+                 sdbHostName.empty() ?
                  OM_REST_HEAD_SDBHOSTNAME :OM_REST_HEAD_SDBSERVICENAME, rc ) ;
          goto error ;
       }
 
-      if( pSdbHostName != NULL && pSdbSvcName != NULL )
+      if( FALSE == sdbHostName.empty() && FALSE == sdbSvcName.empty() )
       {
          for( iter = nodeList.begin(); iter != nodeList.end(); ++iter )
          {
-            if( iter->hostName.compare( pSdbHostName ) == 0 &&
-                iter->service.compare( pSdbSvcName ) == 0 )
+            if( iter->hostName.compare( sdbHostName.c_str() ) == 0 &&
+                iter->service.compare( sdbSvcName.c_str() ) == 0 )
             {
                omNodeInfo tmpNodeInfo = *iter ;
                nodeList.erase( iter ) ;
@@ -515,8 +527,9 @@ namespace engine
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "specified node does not exist,"
                     " %s: %s, %s: %s, rc=%d",
-                    OM_REST_HEAD_SDBHOSTNAME, pSdbHostName,
-                    OM_REST_HEAD_SDBSERVICENAME, pSdbSvcName, rc ) ;
+                    OM_REST_HEAD_SDBHOSTNAME, sdbHostName.c_str(),
+                    OM_REST_HEAD_SDBSERVICENAME, sdbSvcName.c_str(),
+                    rc ) ;
             goto error ;
          }
       }
@@ -527,50 +540,54 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omRestSession::_processSdbTransferMsg( restAdaptor *pAdaptor,
+   INT32 _omRestSession::_processSdbTransferMsg( restRequest &request,
+                                                 restResponse &response,
                                                  const CHAR *pClusterName,
                                                  const CHAR *pBusinessName )
    {
       INT32 rc        = SDB_OK ;
+      INT32 rtnCode   = SDB_OK ;
       INT64 contextID = -1 ;
       rtnContextBuf contextBuff ;
+      rtnContextBuf fetchOneBuff ;
       BOOLEAN needReplay = FALSE ;
       MsgHeader *msg = NULL ;
+      restAdaptor *pAdaptor = sdbGetPMDController()->getRestAdptor() ;
       _omTransferProcessor *transProcessor = NULL ;
       list<omNodeInfo> nodeList ;
-      const CHAR *pSdbUser      = NULL ;
-      const CHAR *pSdbPasswd    = NULL ;
-      const CHAR *pSdbHostName  = NULL ;
-      const CHAR *pSdbSvcName   = NULL ;
-      
+      string sdbUser ;
+      string sdbPasswd ;
+      string sdbHostName ;
+      string sdbSvcName ;
+
+      //check session
       if ( !isAuthOK() )
       {
          rc = SDB_PMD_SESSION_NOT_EXIST ;
          PD_LOG( PDERROR, "session is not exist:rc=%d", rc ) ;
-         _sendOpError2Web( rc, pAdaptor, this, eduCB() ) ;
-         goto error ;
-      }
-      
-      pAdaptor->getHttpHeader( this, OM_REST_HEAD_SDBUSER, &pSdbUser ) ;
-      pAdaptor->getHttpHeader( this, OM_REST_HEAD_SDBPASSWD, &pSdbPasswd ) ;
-      rc = _getBusinessAccessNode( pClusterName, pBusinessName, 
-                                   pSdbUser, pSdbPasswd, nodeList ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "get business info failed:rc=%d", rc ) ;
-         _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+         _sendOpError2Web( rc, pAdaptor, response, this, eduCB() ) ;
          goto error ;
       }
 
-      pAdaptor->getHttpHeader( this, OM_REST_HEAD_SDBHOSTNAME,
-                               &pSdbHostName ) ;
-      pAdaptor->getHttpHeader( this, OM_REST_HEAD_SDBSERVICENAME,
-                               &pSdbSvcName ) ;
-      rc = _setSpecifyNode( pSdbHostName, pSdbSvcName, nodeList ) ;
-      if ( SDB_OK != rc )
+      sdbUser = request.getHeader( OM_REST_HEAD_SDBUSER ) ;
+      sdbPasswd = request.getHeader( OM_REST_HEAD_SDBPASSWD ) ;
+      rc = _getBusinessAccessNode( pClusterName, pBusinessName, 
+                                   sdbUser.c_str(), sdbPasswd.c_str(),
+                                   nodeList ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "get business info failed:rc=%d", rc ) ;
+         _sendOpError2Web( rc, pAdaptor, response, this, _pEDUCB ) ;
+         goto error ;
+      }
+
+      sdbHostName = request.getHeader( OM_REST_HEAD_SDBHOSTNAME ) ;
+      sdbSvcName = request.getHeader( OM_REST_HEAD_SDBSERVICENAME ) ;
+      rc = _setSpecifyNode( sdbHostName, sdbSvcName, nodeList ) ;
+      if ( rc )
       {
          PD_LOG( PDERROR, "set specify node failed:rc=%d", rc ) ;
-         _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+         _sendOpError2Web( rc, pAdaptor, response, this, _pEDUCB ) ;
          goto error ;
       }
 
@@ -581,144 +598,146 @@ namespace engine
          PD_LOG( PDERROR, "new _omTransferProcessor failed" ) ;
          goto error ;
       }
+
       transProcessor->attach( this ) ;
-      rc = _translateMSG( pAdaptor, &msg ) ;
-      if ( SDB_OK != rc )
+      rc = _translateMSG( pAdaptor, request, &msg ) ;
+      if ( rc )
       {
          PD_LOG( PDERROR, "translate message failed:rc=%d", rc ) ;
-         _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+         _sendOpError2Web( rc, pAdaptor, response, this, _pEDUCB ) ;
          goto error ;
       }
 
-      rc = transProcessor->processMsg( msg, contextBuff, contextID, 
-                                      needReplay ) ;
-      if ( SDB_OK != rc )
+      rtnCode = transProcessor->processMsg( msg, contextBuff, contextID, 
+                                       needReplay ) ;
+      if ( rtnCode )
       {
-         BSONObjBuilder builder ;
-         if ( contextBuff.recordNum() != 0 )
-         {
-            BSONObj errorInfo( contextBuff.data() ) ;
-            if ( !errorInfo.hasField( OM_REST_RES_RETCODE ) )
-            {
-               builder.append( OM_REST_RES_RETCODE, rc ) ;
-            }
-            builder.appendElements( errorInfo ) ;
-         }
-         else
-         {
-            BSONObj errorInfo = utilGetErrorBson( rc, 
-                                          _pEDUCB->getInfo( EDU_INFO_ERROR ) ) ;
-            builder.appendElements( errorInfo ) ;
-         }
-
-         BSONObj tmp = builder.obj() ;
-         pAdaptor->setOPResult( this, rc, tmp ) ;
+         rc = rtnCode ;
+         _sendOpError2Web( rc, pAdaptor, response, this, _pEDUCB ) ;
+         goto error ;
       }
-      else 
+
+      if ( -1 != contextID )
       {
-         rtnContextBuf fetchOneBuff ;
-         if ( -1 != contextID )
+         rc = _fetchOneContext( contextID, fetchOneBuff ) ;
+         if ( rc )
          {
-            rc = _fetchOneContext( contextID, fetchOneBuff ) ;
-            if ( SDB_OK != rc )
+            PD_LOG_MSG( PDERROR, "fetch context failed:rc=%d", rc ) ;
+            _sendOpError2Web( rc, pAdaptor, response, this, _pEDUCB ) ;
+            goto error ;
+         }
+      }
+
+      response.setChunkModal() ;
+
+      rc = pAdaptor->sendHeader( socket(), &response ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to send rest header: rc=%d",
+                     rc ) ;
+         goto error ;
+      }
+
+      //send result
+      {
+         BSONObj tmp = BSON( OM_REST_RES_RETCODE << rtnCode ) ;
+
+         rc = pAdaptor->sendChunk( socket(), tmp.objdata(),
+                                   tmp.objsize(), 1 ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "failed to send chunk: rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      if ( 0 != fetchOneBuff.recordNum() )
+      {
+         rc = pAdaptor->sendChunk( socket(),
+                                   fetchOneBuff.data(),
+                                   fetchOneBuff.size(),
+                                   fetchOneBuff.recordNum() ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "failed to send chunk: rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      if ( -1 != contextID )
+      {
+         rtnContext *pContext = _pRTNCB->contextFind( contextID ) ;
+
+         while ( NULL != pContext )
+         {
+            rtnContextBuf tmpContextBuff ;
+
+            rc = pContext->getMore( -1, tmpContextBuff, _pEDUCB ) ;
+            if ( rc )
             {
-               PD_LOG_MSG( PDERROR, "fetch context failed:rc=%d", rc ) ;
-               disconnect() ;
-               //_sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+               _pRTNCB->contextDelete( contextID, _pEDUCB ) ;
+               contextID = -1 ;
+               if ( SDB_DMS_EOC != rc )
+               {
+                  PD_LOG_MSG( PDERROR, "getmore failed:rc=%d", rc ) ;
+                  goto error ;
+               }
+
+               rc = SDB_OK ;
+               break ;
+            }
+
+            rc = pAdaptor->sendChunk( socket(),
+                                      fetchOneBuff.data(),
+                                      fetchOneBuff.size(),
+                                      fetchOneBuff.recordNum() ) ;
+            if ( rc )
+            {
+               PD_LOG_MSG( PDERROR, "failed to send chunk: rc=%d", rc ) ;
                goto error ;
             }
-            if ( -1 != contextID )
-            {
-               // -1 != contextID means we have more data to send. 
-               // so we should enable chunk mod;
-               pAdaptor->setChunkModal( this ) ;
-            }
-         }
-
-         BSONObj tmp = BSON( OM_REST_RES_RETCODE << rc ) ;
-         pAdaptor->setOPResult( this, rc, tmp ) ;
-         if ( 0 != contextBuff.recordNum() )
-         {
-            pAdaptor->appendHttpBody( this, contextBuff.data(), 
-                                      contextBuff.size(), 
-                                      contextBuff.recordNum() ) ;
-         }
-
-         if ( 0 != fetchOneBuff.recordNum() )
-         {
-            pAdaptor->appendHttpBody( this, fetchOneBuff.data(), 
-                                      fetchOneBuff.size(), 
-                                      fetchOneBuff.recordNum() ) ;
-         }
-
-         if ( -1 != contextID )
-         {
-            rtnContext *pContext = _pRTNCB->contextFind( contextID ) ;
-            while ( NULL != pContext )
-            {
-               rtnContextBuf tmpContextBuff ;
-               rc = pContext->getMore( -1, tmpContextBuff, _pEDUCB ) ;
-               if ( SDB_OK == rc )
-               {
-                  rc = pAdaptor->appendHttpBody( this, tmpContextBuff.data(), 
-                                                 tmpContextBuff.size(), 
-                                                 tmpContextBuff.recordNum() ) ;
-                  if ( SDB_OK != rc )
-                  {
-                     PD_LOG_MSG( PDERROR, "append http body failed:rc=%d", 
-                                 rc ) ;
-                     disconnect() ;
-                     //_sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
-                     goto error ;
-                  }
-               }
-               else 
-               {
-                  _pRTNCB->contextDelete( contextID, _pEDUCB ) ;
-                  contextID = -1 ;
-                  if ( SDB_DMS_EOC != rc )
-                  {
-                     PD_LOG_MSG( PDERROR, "getmore failed:rc=%d", rc ) ;
-                     disconnect() ;
-                     //_sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
-                     goto error ;
-                  }
-
-                  rc = SDB_OK ;
-                  break ;
-               }
-            }
          }
       }
 
-      pAdaptor->sendResponse( this, HTTP_OK ) ;
+      //send chunk end message
+      rc = pAdaptor->sendChunk( socket(), NULL, 0, 0, FALSE ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to send chunk: rc=%d", rc ) ;
+         goto error ;
+      }
+
    done:
       if ( -1 != contextID )
       {
          _pRTNCB->contextDelete( contextID, _pEDUCB ) ;
          contextID = -1 ;
       }
+
       if ( NULL != transProcessor )
       {
          transProcessor->detach() ;
          SDB_OSS_DEL transProcessor ;
          transProcessor = NULL ;
       }
+
       if ( NULL != msg )
       {
          SDB_OSS_FREE( msg ) ;
          msg = NULL ;
       }
+
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _omRestSession::_processOMRestMsg( const CHAR *pFilePath )
+   INT32 _omRestSession::_processOMRestMsg( restRequest &request,
+                                            restResponse &response )
    {
       INT32 rc = SDB_OK ;
       omRestCommandBase *pOmCommand = NULL ;
-      pOmCommand = _createCommand( pFilePath ) ;
+      pOmCommand = _createCommand( request, response ) ;
       if ( NULL == pOmCommand )
       {
          rc = SDB_INVALIDARG ;
@@ -739,17 +758,23 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omRestSession::_actionGetFile( const CHAR *pFilePath )
+   INT32 _omRestSession::_actionGetFile( restRequest &request,
+                                         restResponse &response )
    {
       INT32 rc = SDB_OK ;
       omRestCommandBase *pCommand = NULL ;
       restAdaptor *pAdptor = sdbGetPMDController()->getRestAdptor() ;
+      const CHAR* hostName = pmdGetKRCB()->getHostName();
+      string localAgentHost = hostName ;
+      string localAgentPort = sdbGetOMManager()->getLocalAgentPort() ;
 
-      PD_LOG( PDDEBUG, "OM: getfile command:file=%s", pFilePath ) ;
+      PD_LOG( PDDEBUG, "OM: getfile command:file=%s",
+              request.getRequestPath().c_str() ) ;
 
-      pCommand = SDB_OSS_NEW omGetFileCommand( pAdptor, this,
-                                               _wwwRootPath.c_str(),
-                                               pFilePath ) ;
+      pCommand = SDB_OSS_NEW omGetFileCommand( this, pAdptor,
+                                               &request, &response,
+                                               localAgentHost, localAgentPort,
+                                               _wwwRootPath ) ;
       if ( NULL == pCommand )
       {
          rc = SDB_OOM ;
@@ -770,14 +795,31 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omRestSession::_forwardPlugin( restAdaptor *pAdptor,
-                                         const string &businessType )
+   INT32 _omRestSession::_forwardPlugin( restRequest &request,
+                                         restResponse &response )
    {
       INT32 rc = SDB_OK ;
       omRestCommandBase *pCommand = NULL ;
+      restAdaptor *pAdptor = sdbGetPMDController()->getRestAdptor() ;
+      const CHAR* hostName = pmdGetKRCB()->getHostName();
+      string localAgentHost = hostName ;
+      string localAgentPort = sdbGetOMManager()->getLocalAgentPort() ;
 
-      pCommand = SDB_OSS_NEW omForwardPluginCommand( pAdptor, this,
-                                                     businessType ) ;
+      if ( !isAuthOK() )
+      {
+         rc = SDB_PMD_SESSION_NOT_EXIST ;
+         PD_LOG( PDERROR, "session is not exist:rc=%d", rc ) ;
+         _sendOpError2Web( rc, pAdptor, response, this, eduCB() ) ;
+
+         PD_LOG( PDEVENT, "OM: redirect to:%s", OM_REST_LOGIN_HTML ) ;
+         goto error ;
+      }
+
+      pCommand = SDB_OSS_NEW omForwardPluginCommand( this, pAdptor,
+                                                     &request, &response,
+                                                     localAgentHost,
+                                                     localAgentPort,
+                                                     _wwwRootPath ) ;
       if ( NULL == pCommand )
       {
          rc = SDB_OOM ;
@@ -798,44 +840,46 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omRestSession::_actionCmd( const CHAR *pFilePath )
+   INT32 _omRestSession::_actionCmd( restRequest &request,
+                                     restResponse &response )
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pClusterName  = NULL ;
-      const CHAR *pBusinessName = NULL ;
       restAdaptor *pAdaptor = sdbGetPMDController()->getRestAdptor() ;
+      string clusterName ;
+      string businessName ;
 
-      pAdaptor->getHttpHeader( this, OM_REST_HEAD_CLUSTERNAME, &pClusterName ) ;
-      pAdaptor->getHttpHeader( this, OM_REST_HEAD_BUSINESSNAME, 
-                               &pBusinessName ) ;
-      if ( NULL == pClusterName || NULL == pBusinessName )
+      clusterName  = request.getHeader( OM_REST_HEAD_CLUSTERNAME ) ;
+      businessName = request.getHeader( OM_REST_HEAD_BUSINESSNAME ) ;
+      if ( clusterName.empty() || businessName.empty() )
       {
-         rc = _processOMRestMsg( pFilePath ) ;
+         rc = _processOMRestMsg( request, response ) ;
       }
       else
       {
          string businessType ;
          string deployMode ;
 
-         rc = _getBusinessInfo( pClusterName, pBusinessName, businessType, 
-                                deployMode ) ;
+         rc = _getBusinessInfo( clusterName.c_str(), businessName.c_str(),
+                                businessType, deployMode ) ;
          if ( rc )
          {
             PD_LOG_MSG( PDERROR, "get business info failed:cluster=%s,"
-            "business=%s,rc=%d", pClusterName, pBusinessName, rc ) ;
-            _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+                                 "business=%s,rc=%d",
+                        clusterName.c_str(), businessName.c_str(), rc ) ;
+            _sendOpError2Web( rc, pAdaptor, response, this, _pEDUCB ) ;
             goto error ;
          }
 
          if ( OM_BUSINESS_SEQUOIADB == businessType )
          {
-            rc = _processSdbTransferMsg( pAdaptor, pClusterName, 
-                                         pBusinessName ) ;
+            rc = _processSdbTransferMsg( request, response,
+                                         clusterName.c_str(),
+                                         businessName.c_str() ) ;
          }
          else
          {
             //forward to the plugin
-            rc = _forwardPlugin( pAdaptor, businessType ) ;
+            rc = _forwardPlugin( request, response ) ;
          }
       }
 
@@ -845,362 +889,53 @@ namespace engine
       goto done ;
    }
 
-   omRestCommandBase *_omRestSession::_createCommand( const CHAR *pFilePath )
+   omRestCommandBase *_omRestSession::_createCommand( restRequest &request,
+                                                      restResponse &response )
    {
       INT32 rc = SDB_OK ;
       omRestCommandBase *commandIf = NULL ;
-      restAdaptor *pAdptor         = NULL ;
+      restAdaptor *pAdptor = sdbGetPMDController()->getRestAdptor() ;
       const CHAR* hostName = pmdGetKRCB()->getHostName();
-      pAdptor = sdbGetPMDController()->getRestAdptor() ;
       string localAgentHost = hostName ;
       string localAgentPort = sdbGetOMManager()->getLocalAgentPort() ;
+      string subCommand ;
 
-      const CHAR *pSubCommand = NULL ;
-      pAdptor->getQuery( this, OM_REST_FIELD_COMMAND, &pSubCommand ) ;
-      if ( NULL == pSubCommand )
+      subCommand = request.getQuery( OM_REST_FIELD_COMMAND ) ;
+      if ( subCommand.empty() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "get command failed:filed=%s,rc=%d",
                      OM_REST_FIELD_COMMAND, rc ) ;
-         _sendOpError2Web( rc, pAdptor, this, eduCB() ) ;
+         _sendOpError2Web( rc, pAdptor, response, this, eduCB() ) ;
          goto error ;
       }
 
-      PD_LOG( PDDEBUG, "OM: command:command=%s", pSubCommand ) ;
-      if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) != 0
-           && ossStrcmp( pSubCommand, OM_CHECK_SESSION_REQ ) != 0
-           && !isAuthOK() )
+      PD_LOG( PDDEBUG, "OM: command:command=%s", subCommand.c_str() ) ;
+
+      if ( OM_LOGIN_REQ != subCommand && OM_CHECK_SESSION_REQ != subCommand &&
+           !isAuthOK() )
       {
          // except login_rep and check_seesion_req, other commands can only 
          // execute in authrity status
          rc = SDB_PMD_SESSION_NOT_EXIST ;
          PD_LOG( PDERROR, "session is not exist:rc=%d", rc ) ;
-         _sendOpError2Web( rc, pAdptor, this, eduCB() ) ;
+         _sendOpError2Web( rc, pAdptor, response, this, eduCB() ) ;
 
          PD_LOG( PDEVENT, "OM: redirect to:%s", OM_REST_LOGIN_HTML ) ;
          goto error ;
       }
 
-      if ( ossStrcasecmp( pSubCommand, OM_CHANGE_PASSWD_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omChangePasswdCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_CHECK_SESSION_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omCheckSessionCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_CREATE_CLUSTER_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omCreateClusterCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_QUERY_CLUSTER_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omQueryClusterCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_SCAN_HOST_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omScanHostCommand( pAdptor, this, 
-                                    localAgentHost, localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_CHECK_HOST_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omCheckHostCommand( pAdptor, this, 
-                                    localAgentHost, localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_ADD_HOST_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omAddHostCommand( pAdptor, this, 
-                                    localAgentHost, localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_LIST_HOST_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omListHostCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_QUERY_HOST_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omQueryHostCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_LIST_BUSINESS_TYPE_REQ ) 
-                                                                       == 0 )
-      {
-         commandIf = SDB_OSS_NEW omListBusinessTypeCommand( pAdptor, this, 
-                                    _wwwRootPath.c_str(), pFilePath ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_GET_BUSINESS_TEMPLATE_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omGetBusinessTemplateCommand( pAdptor, 
-                                    this, _wwwRootPath.c_str(), pFilePath ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_CONFIG_BUSINESS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omGetBusinessConfigCommand( pAdptor, this, 
-                                                             _wwwRootPath ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_INSTALL_BUSINESS_REQ) == 0 )
-      {
-         string filePath( pFilePath ) ;
-
-         commandIf = SDB_OSS_NEW omAddBusinessCommand( pAdptor, this, 
-                                    _wwwRootPath, filePath, 
-                                    localAgentHost, localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_LIST_NODE_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omListNodeCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_GET_NODE_CONF_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omGetNodeConfCommand( pAdptor, this ) ;
-      }
-      else if( ossStrcasecmp( pSubCommand, OM_QUERY_NODE_CONF_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omQueryNodeConfCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_LIST_BUSINESS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omListBusinessCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_QUERY_BUSINESS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omQueryBusinessCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_CLUSTER_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omRemoveClusterCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_HOST_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omRemoveHostCommand( pAdptor, this,
-                                    localAgentHost, localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_BUSINESS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omRemoveBusinessCommand( pAdptor, this,
-                                    localAgentHost, localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_QUERY_HOST_STATUS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omQueryHostStatusCommand( pAdptor, this,
-                                    localAgentHost, localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_PREDICT_CAPACITY_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omPredictCapacity( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_LIST_TASK_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omListTaskCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_QUERY_TASK_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omQueryTaskCommand( pAdptor, this, 
-                                           localAgentHost, localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_GET_LOG_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omGetLogCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_SET_BUSINESS_AUTH_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omSetBusinessAuthCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_REMOVE_BUSINESS_AUTH_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omRemoveBusinessAuthCommand( pAdptor, 
-                                                              this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_QUERY_BUSINESS_AUTH_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omQueryBusinessAuthCommand( pAdptor, 
-                                                             this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_DISCOVER_BUSINESS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omDiscoverBusinessCommand( pAdptor, this,
-                                                            localAgentHost,
-                                                            localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_UNDISCOVER_BUSINESS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omUnDiscoverBusinessCommand( pAdptor, 
-                                                              this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_SSQL_EXEC_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omSsqlExecCommand( pAdptor, this, 
-                                                    localAgentHost,
-                                                    localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_INTERRUPT_TASK_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omInterruptTaskCommand( pAdptor, this, 
-                                                         localAgentHost,
-                                                         localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_TASK_STRATEGY_LIST_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyList( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_TASK_STRATEGY_ADD_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyInsert( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_TASK_STRATEGY_UPDATE_NICE_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyUpdateNice( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_TASK_STRATEGY_ADD_IPS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyAddIps( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_TASK_STRATEGY_DEL_IPS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyDelIps( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_TASK_STRATEGY_DEL_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyDel( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_TASK_STRATEGY_UPDATE_STAT_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyUpdateStatus( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand,
-                               OM_TASK_STRATEGY_UPDATE_SORT_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyUpdateSortID( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand,
-                               OM_TASK_STRATEGY_UPDATE_USER_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyUpdateUser( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_TASK_ADD_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyTaskInsert( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_TASK_LIST_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyTaskList( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_TASK_UPDATE_STATUS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyUpdateTaskStatus( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_TASK_DEL_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyTaskDel( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand,
-                               OM_TASK_STRATEGY_FLUSH ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omStrategyFlush( pAdptor, this ) ;
-      }
-
-      else if ( ossStrcasecmp( pSubCommand, 
-                               OM_LIST_HOST_BUSINESS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omListHostBusinessCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_UPDATE_HOST_INFO_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omUpdateHostInfoCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_GET_SYSTEM_INFO_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omGetSystemInfoCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_EXTEND_BUSINESS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omExtendBusinessCommand(
-                                                      pAdptor, this,
-                                                      _wwwRootPath.c_str(),
-                                                      localAgentHost,
-                                                      localAgentPort ) ;
-      }
-      else if( ossStrcasecmp( pSubCommand, OM_SHRINK_BUSINESS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omShrinkBusinessCommand(
-                                                      pAdptor, this,
-                                                      _wwwRootPath.c_str(),
-                                                      localAgentHost,
-                                                      localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand,
-                               OM_SYNC_BUSINESS_CONF_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omSyncBusinessConfigureCommand(
-                                                           pAdptor,
-                                                           this,
-                                                           localAgentHost,
-                                                           localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_GRANT_SYSCONF_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omGrantSysConfigureCommand( pAdptor,
-                                                             this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_UNBIND_BUSINESS_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omUnbindBusinessCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_UNBIND_HOST_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omUnbindHostCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_DEPLOY_PACKAGE_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omDeployPackageCommand( pAdptor, this,
-                                                         localAgentHost,
-                                                         localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand,
-                               OM_CREATE_RELATIONSHIP_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omCreateRelationshipCommand(
-                                                         pAdptor, this,
-                                                         localAgentHost,
-                                                         localAgentPort ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand,
-                               OM_REMOVE_RELATIONSHIP_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omRemoveRelationshipCommand(
-                                                         pAdptor, this,
-                                                         localAgentHost,
-                                                         localAgentPort ) ;
-
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_LIST_RELATIONSHIP_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omListRelationshipCommand( pAdptor, this ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_LIST_PLUGIN_REQ ) == 0 )
-      {
-         commandIf = SDB_OSS_NEW omListPluginsCommand( pAdptor, this ) ;
-      }
-      else
+      commandIf = getOmRestCmdBuilder()->create( subCommand.c_str(),
+                                                 this, pAdptor,
+                                                 &request, &response,
+                                                 localAgentHost, localAgentPort,
+                                                 _wwwRootPath ) ;
+      if ( NULL == commandIf )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "command is unrecognized:command=%s,rc=%d",
-                     pSubCommand, rc ) ;
-         _sendOpError2Web( rc, pAdptor, this, eduCB() ) ;
+                     subCommand.c_str(), rc ) ;
+         _sendOpError2Web( rc, pAdptor, response, this, eduCB() ) ;
          goto error ;
       }
 

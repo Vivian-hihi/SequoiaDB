@@ -3641,11 +3641,12 @@ namespace engine
    	}
    }
 
-   omRestTool::omRestTool( restAdaptor *pRestAdaptor,
-                           pmdRestSession *pRestSession )
+   omRestTool::omRestTool( ossSocket *socket, restAdaptor *pRestAdaptor,
+                           restResponse *response )
    {
+      _socket = socket ;
       _pRestAdaptor = pRestAdaptor ;
-      _pRestSession = pRestSession ;
+      _response = response ;
    }
 
    void omRestTool::sendRecord2Web( list<BSONObj> &records,
@@ -3658,13 +3659,11 @@ namespace engine
          if( pFilter )
          {
             BSONObj tmp = iter->filterFieldsUndotted( *pFilter, inFilter ) ;
-            _pRestAdaptor->appendHttpBody( _pRestSession, tmp.objdata(),
-                                          tmp.objsize(), 1 ) ;
+            _response->appendBody( tmp.objdata(), tmp.objsize(), 1 ) ;
          }
          else
          {
-            _pRestAdaptor->appendHttpBody( _pRestSession, iter->objdata(),
-                                          iter->objsize(), 1 ) ;
+            _response->appendBody( iter->objdata(), iter->objsize(), 1 ) ;
          }
       }
 
@@ -3699,15 +3698,14 @@ namespace engine
       }
 
       res = resBuilder.obj() ;
-      _pRestAdaptor->setOPResult( _pRestSession, rc, res ) ;
-      _pRestAdaptor->sendResponse( _pRestSession, HTTP_OK ) ;
+      _response->setOPResult( rc, res ) ;
+      _pRestAdaptor->sendRest( _socket, _response ) ;
 
    }
 
    INT32 omRestTool::appendResponeContent( const BSONObj &content )
    {
-      return _pRestAdaptor->appendHttpBody( _pRestSession, content.objdata(),
-                                            content.objsize(), 1 ) ;
+      return _response->appendBody( content.objdata(), content.objsize(), 1 ) ;
    }
 
    void omRestTool::appendResponeMsg( const BSONObj &msg )
@@ -3982,11 +3980,9 @@ namespace engine
       return _errorDetail ;
    }
 
-   omArgOptions::omArgOptions( restAdaptor *pRestAdaptor,
-                               pmdRestSession *pRestSession )
+   omArgOptions::omArgOptions( restRequest *pRequest )
    {
-      _rest = pRestAdaptor ;
-      _session = pRestSession ;
+      _request = pRequest ;
    }
 
    INT32 omArgOptions::parseRestArg( const CHAR *pFormat, ... )
@@ -4031,27 +4027,21 @@ namespace engine
          else
          {
             const CHAR *pField = va_arg( vaList, const CHAR * ) ;
-            const CHAR *pValue = NULL ;
+            string value ;
 
             SDB_ASSERT( ( NULL != pField ), "pField can not null" ) ;
 
-            _rest->getQuery( _session, pField, &pValue ) ;
-            if ( NULL == pValue || 0 == ossStrlen( pValue ) )
+            if ( FALSE == isOptional &&
+                 FALSE == _request->isQueryArgExist( pField ) )
             {
-               if ( FALSE == isOptional )
-               {
-                  rc = SDB_INVALIDARG ;
-                  _errorMsg.setError( TRUE, "get rest info failed: %s is NULL",
-                                      pField ) ;
-                  PD_LOG( PDERROR, _errorMsg.getError() ) ;
-                  goto error ;
-               }
-               else
-               {
-                  ++specWalk ;
-                  continue ;
-               }
+               rc = SDB_INVALIDARG ;
+               _errorMsg.setError( TRUE, "get rest info failed: %s is NULL",
+                                   pField ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
             }
+
+            value = _request->getQuery( pField ) ;
 
             if ( 's' == character )
             {
@@ -4060,7 +4050,31 @@ namespace engine
 
                SDB_ASSERT( ( NULL != pArg ), "pArg can not null" ) ;
 
-               *pArg = string( pValue ) ;
+               if ( value.length() > 0 )
+               {
+                  *pArg = value ;
+               }
+            }
+            else if ( 'S' == character )
+            {
+               //string
+               string *pArg = va_arg( vaList, string * ) ;
+
+               SDB_ASSERT( ( NULL != pArg ), "pArg can not null" ) ;
+
+               if ( FALSE == isOptional && value.empty() )
+               {
+                  rc = SDB_INVALIDARG ;
+                  _errorMsg.setError( TRUE, "get rest info failed: %s is NULL",
+                                      pField ) ;
+                  PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                  goto error ;
+               }   
+
+               if ( value.length() > 0 )
+               {
+                  *pArg = value ;
+               }
             }
             else if ( 'l' == character )
             {
@@ -4069,7 +4083,28 @@ namespace engine
 
                SDB_ASSERT( ( NULL != pArg ), "pArg can not null" ) ;
 
-               *pArg = ossAtoi( pValue ) ;
+               if ( FALSE == isOptional && value.empty() )
+               {
+                  rc = SDB_INVALIDARG ;
+                  _errorMsg.setError( TRUE, "get rest info failed: %s is NULL",
+                                      pField ) ;
+                  PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                  goto error ;
+               }
+
+               if ( value.length() > 0 )
+               {
+                  if ( FALSE == ossIsInteger( value.c_str() ) )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     _errorMsg.setError( TRUE, "invalid value: %s = %s",
+                                         pField, value.c_str() ) ;
+                     PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                     goto error ;
+                  }
+
+                  *pArg = ossAtoi( value.c_str() ) ;
+               }
             }
             else if ( 'L' == character )
             {
@@ -4078,32 +4113,64 @@ namespace engine
 
                SDB_ASSERT( ( NULL != pArg ), "pArg can not null" ) ;
 
-               *pArg = ossAtoll( pValue ) ;
+               if ( FALSE == isOptional && value.empty() )
+               {
+                  rc = SDB_INVALIDARG ;
+                  _errorMsg.setError( TRUE, "get rest info failed: %s is NULL",
+                                      pField ) ;
+                  PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                  goto error ;
+               }
+
+               if ( value.length() > 0 )
+               {
+                  if ( FALSE == ossIsInteger( value.c_str() ) )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     _errorMsg.setError( TRUE, "invalid value: %s = %s",
+                                         pField, value.c_str() ) ;
+                     PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                     goto error ;
+                  }
+
+                  *pArg = ossAtoll( value.c_str() ) ;
+               }
             }
             else if ( 'b' == character )
             {
                //bool
                BOOLEAN *pArg = va_arg( vaList, BOOLEAN * ) ;
-               string value = string( pValue ) ;
 
                SDB_ASSERT( ( NULL != pArg ), "pArg can not null" ) ;
 
-               if ( "true" == value || "TRUE" == value || "True" == value )
-               {
-                  *pArg = TRUE ;
-               }
-               else if ( "false" == value || "FALSE" == value ||
-                         "False" == value )
-               {
-                  *pArg = FALSE ;
-               }
-               else
+               if ( FALSE == isOptional && value.empty() )
                {
                   rc = SDB_INVALIDARG ;
-                  _errorMsg.setError( TRUE, "get rest info failed: %s invalid",
+                  _errorMsg.setError( TRUE, "get rest info failed: %s is NULL",
                                       pField ) ;
                   PD_LOG( PDERROR, _errorMsg.getError() ) ;
                   goto error ;
+               }
+
+               if ( value.length() > 0 )
+               {
+                  if ( "true" == value || "TRUE" == value || "True" == value )
+                  {
+                     *pArg = TRUE ;
+                  }
+                  else if ( "false" == value || "FALSE" == value ||
+                            "False" == value )
+                  {
+                     *pArg = FALSE ;
+                  }
+                  else
+                  {
+                     rc = SDB_INVALIDARG ;
+                     _errorMsg.setError( TRUE, "get rest info failed: %s invalid",
+                                         pField ) ;
+                     PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                     goto error ;
+                  }
                }
             }
             else if ( 'j' == character )
@@ -4113,13 +4180,25 @@ namespace engine
 
                SDB_ASSERT( ( NULL != pArg ), "pArg can not null" ) ;
 
-               rc = fromjson( pValue, *pArg ) ;
-               if ( rc )
+               if ( FALSE == isOptional && value.empty() )
                {
-                  _errorMsg.setError( TRUE, "get rest info failed: %s invalid",
+                  rc = SDB_INVALIDARG ;
+                  _errorMsg.setError( TRUE, "get rest info failed: %s is NULL",
                                       pField ) ;
                   PD_LOG( PDERROR, _errorMsg.getError() ) ;
                   goto error ;
+               }
+
+               if ( value.length() > 0 )
+               {
+                  rc = fromjson( value.c_str(), *pArg ) ;
+                  if ( rc )
+                  {
+                     _errorMsg.setError( TRUE, "get rest info failed: %s invalid",
+                                         pField ) ;
+                     PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                     goto error ;
+                  }
                }
             }
             else

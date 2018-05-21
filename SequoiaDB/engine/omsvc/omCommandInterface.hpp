@@ -91,12 +91,45 @@ namespace engine
       list<simpleNetInfo> netInfo ;
    } ;
 
+   #define OMREST_CLASS_PARAMETER pmdRestSession *pRestSession,\
+                                  restAdaptor *pRestAdaptor,\
+                                  restRequest *pRequest,\
+                                  restResponse *pResponse,\
+                                  const string &localAgentHost,\
+                                  const string &localAgentService,\
+                                  const string &rootPath
+
+   #define OMREST_CLASS_INPUT_PARAMETER pRestSession,\
+                                        pRestAdaptor,\
+                                        pRequest,\
+                                        pResponse,\
+                                        localAgentHost,\
+                                        localAgentService,\
+                                        rootPath
+
+
+   #define DECLARE_OMREST_CMD_AUTO_REGISTER()                           \
+      public:                                                           \
+         static omRestCommandBase* newThis( OMREST_CLASS_PARAMETER ) ;  \
+
+   #define IMPLEMENT_OMREST_CMD_AUTO_REGISTER(theClass)                       \
+      omRestCommandBase* theClass::newThis( OMREST_CLASS_PARAMETER )          \
+      {                                                                       \
+         return SDB_OSS_NEW theClass( OMREST_CLASS_INPUT_PARAMETER ) ;        \
+      }                                                                       \
+      _omRestCmdAssit theClass##Assit( theClass::newThis ) ;                  \
+
+
    class omRestCommandBase : public omCommandInterafce
    {
       public:
-
-         omRestCommandBase( restAdaptor *pRestAdaptor,
-                            pmdRestSession *pRestSession ) ;
+         omRestCommandBase( pmdRestSession *pRestSession,
+                            restAdaptor *pRestAdaptor,
+                            restRequest *pRequest,
+                            restResponse *pResponse,
+                            const string &localAgentHost,
+                            const string &localAgentService,
+                            const string &rootPath ) ;
 
          virtual ~omRestCommandBase() ;
 
@@ -104,6 +137,8 @@ namespace engine
          virtual INT32     init( pmdEDUCB * cb ) ;
          virtual bool      isFetchAgentResponse( UINT64 requestID ) ;
          virtual INT32     doAgentResponse ( MsgHeader* pAgentResponse ) ;
+
+         virtual const CHAR * name () = 0 ;
 
       protected:
          INT32             _queryTable( const string &tableName, 
@@ -158,19 +193,82 @@ namespace engine
                                            set< string > &IPs ) ;
          
       protected:
-         SDB_RTNCB         *_pRTNCB ;
-         SDB_DMSCB         *_pDMDCB ;
-         pmdKRCB           *_pKRCB ;
-         SDB_DMSCB         *_pDMSCB ;
+         SDB_RTNCB        *_pRTNCB ;
+         SDB_DMSCB        *_pDMDCB ;
+         pmdKRCB          *_pKRCB ;
+         SDB_DMSCB        *_pDMSCB ;
 
-         pmdEDUCB          *_cb ;
+         pmdEDUCB         *_cb ;
+
+         pmdRestSession   *_restSession ;
+         restAdaptor      *_restAdaptor ;
+         restRequest      *_request ;
+         restResponse     *_response ;
 
          string            _errorDetail ;
-         restAdaptor*      _restAdaptor ;
-         pmdRestSession*   _restSession ;
+         string            _localAgentHost ;
+         string            _localAgentService ;
+         string            _rootPath ;
 
          omErrorTool       _errorMsg ;
    } ;
+
+   typedef omRestCommandBase* (*OMREST_NEW_FUNC)( OMREST_CLASS_PARAMETER ) ;
+
+   /*
+      _omRestCmdAssit
+   */
+   class _omRestCmdAssit : public SDBObject
+   {
+   public:
+      _omRestCmdAssit( OMREST_NEW_FUNC ) ;
+      virtual ~_omRestCmdAssit() ;
+   } ;
+
+   struct _classComp
+   {
+      bool operator()( const CHAR *lhs, const CHAR *rhs ) const
+      {
+         return ossStrcmp( lhs, rhs ) < 0 ;
+      }
+   } ;
+
+   typedef map<const CHAR*, OMREST_NEW_FUNC, _classComp> MAP_OACMD ;
+#if defined (_WINDOWS)
+   typedef MAP_OACMD::iterator MAP_OACMD_IT ;
+#else
+   typedef map<const CHAR*, OMREST_NEW_FUNC>::iterator MAP_OACMD_IT ;
+#endif // _WINDOWS
+
+   /*
+      _omRestCmdBuilder
+   */
+   class _omRestCmdBuilder : public SDBObject
+   {
+   friend class _omRestCmdAssit ;
+
+   public:
+      _omRestCmdBuilder () ;
+      ~_omRestCmdBuilder () ;
+
+   public:
+      omRestCommandBase *create ( const CHAR *command,
+                                  OMREST_CLASS_PARAMETER ) ;
+
+      void release ( omRestCommandBase *&pCommand ) ;
+
+      INT32 _register ( const CHAR *name, OMREST_NEW_FUNC pFunc ) ;
+
+      OMREST_NEW_FUNC _find ( const CHAR * name ) ;
+
+   private:
+      MAP_OACMD _cmdMap ;
+   } ;
+
+   /*
+      get om rest command builder
+   */
+   _omRestCmdBuilder* getOmRestCmdBuilder() ;
 
    class omAgentReqBase : public omCommandInterafce
    {

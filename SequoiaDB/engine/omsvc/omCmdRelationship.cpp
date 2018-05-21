@@ -44,16 +44,7 @@ namespace engine
 {
 
    // ***************** omCreateRelationshipCommand ****************************
-   omCreateRelationshipCommand::omCreateRelationshipCommand(
-                                                   restAdaptor *pRestAdaptor,
-                                                   pmdRestSession *pRestSession,
-                                                   string &localAgentHost,
-                                                   string &localAgentService )
-                        : omAuthCommand( pRestAdaptor, pRestSession ),
-                          _localAgentHost( localAgentHost ),
-                          _localAgentService( localAgentService )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omCreateRelationshipCommand ) ;
 
    omCreateRelationshipCommand::~omCreateRelationshipCommand()
    {
@@ -65,8 +56,8 @@ namespace engine
       BSONObj fromBuzInfo ;
       BSONObj toBuzInfo ;
       BSONObj options ;
-      omArgOptions option( _restAdaptor, _restSession ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omArgOptions option( _request ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
 
       _setFileLanguageSep() ;
 
@@ -422,16 +413,7 @@ namespace engine
    }
 
    // ***************** omRemoveRelationshipCommand ****************************
-   omRemoveRelationshipCommand::omRemoveRelationshipCommand(
-                                                   restAdaptor *pRestAdaptor,
-                                                   pmdRestSession *pRestSession,
-                                                   string &localAgentHost,
-                                                   string &localAgentService )
-                        : omAuthCommand( pRestAdaptor, pRestSession ),
-                          _localAgentHost( localAgentHost ),
-                          _localAgentService( localAgentService )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omRemoveRelationshipCommand ) ;
 
    omRemoveRelationshipCommand::~omRemoveRelationshipCommand()
    {
@@ -443,8 +425,8 @@ namespace engine
       BSONObj fromBuzInfo ;
       BSONObj toBuzInfo ;
       BSONObj options ;
-      omArgOptions option( _restAdaptor, _restSession ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omArgOptions option( _request ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
 
       _setFileLanguageSep() ;
 
@@ -774,12 +756,7 @@ namespace engine
    }
 
    // ***************** omListRelationshipCommand ****************************
-   omListRelationshipCommand::omListRelationshipCommand(
-                                                restAdaptor *pRestAdaptor,
-                                                pmdRestSession *pRestSession )
-                        : omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omListRelationshipCommand ) ;
 
    omListRelationshipCommand::~omListRelationshipCommand()
    {
@@ -791,7 +768,7 @@ namespace engine
       list<BSONObj> relationshipList ;
       list<BSONObj>::iterator iter ;
       omDatabaseTool dbTool( _cb ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
 
       _setFileLanguageSep() ;
 

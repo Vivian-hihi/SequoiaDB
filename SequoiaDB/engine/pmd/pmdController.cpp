@@ -162,8 +162,7 @@ namespace engine
       pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
       EDUID eduID = PMD_INVALID_EDUID ;
 
-      rc = _restAdptor.init( _fixBufSize, _maxRestBodySize, _restTimeout ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to init rest adaptor, rc: %d", rc ) ;
+      _restAdptor.init( _fixBufSize, _maxRestBodySize, _restTimeout ) ;
 
       // start time sync edu
       rc = pEDUMgr->startEDU( EDU_TYPE_SYNCCLOCK, NULL, &eduID ) ;

@@ -38,25 +38,12 @@
 
 #include "core.hpp"
 #include <sys/types.h>
-#if defined(_WIN32) && !defined(__MINGW32__) && (!defined(_MSC_VER) || _MSC_VER<1600)
-#include <BaseTsd.h>
-#include <stddef.h>
-typedef __int8 int8_t;
-typedef unsigned __int8 uint8_t;
-typedef __int16 int16_t;
-typedef unsigned __int16 uint16_t;
-typedef __int32 int32_t;
-typedef unsigned __int32 uint32_t;
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
-#else
-#include <stdint.h>
-#endif
 #include <map>
 #include <vector>
+#include <string>
 #include "ossUtil.h"
 
-enum HTTP_PARSE_COMMON
+enum HTTP_PARSE_COMMAND
 {
    COM_CMD = 0,
    COM_GETFILE
@@ -72,7 +59,7 @@ enum HTTP_RESPONSE_CODE
    HTTP_VERSION                  /* 505 http version not supported */
 } ;
 
-enum HTTP_FILE_TYPE
+enum HTTP_DATA_TYPE
 {
    HTTP_FILE_HTML = 0,
    HTTP_FILE_JS,
@@ -93,51 +80,24 @@ enum HTTP_FILE_TYPE
    HTTP_FILE_UNKNOW
 } ;
 
-struct http_parser {
-  /** PRIVATE **/
-  unsigned int type : 2;         /* enum http_parser_type */
-  unsigned int flags : 6;        /* F_* values from 'flags' enum; semi-public */
-  unsigned int state : 8;        /* enum state from http_parser.c */
-  unsigned int header_state : 8; /* enum header_state from http_parser.c */
-  unsigned int index : 8;        /* index into current matcher */
-
-  uint32_t nread;          /* # bytes read in various scenarios */
-  uint64_t content_length; /* # bytes in body (0 if no Content-Length header) */
-
-  /** READ-ONLY **/
-  unsigned short http_major;
-  unsigned short http_minor;
-  unsigned int status_code : 16; /* responses only */
-  unsigned int method : 8;       /* requests only */
-  unsigned int http_errno : 7;
-
-  /* 1 = Upgrade header was present and the parser has exited because of that.
-   * 0 = No upgrade header present.
-   * Should be checked when http_parser_execute() returns in addition to
-   * error checking.
-   */
-  unsigned int upgrade : 1;
-
-  /** PUBLIC **/
-  void *data; /* A pointer to get hook to the "connection" or "socket" object */
-};
-
 /* struct */
 struct cmp_str
 {
-   bool operator() ( const char *a, const char *b )
+   bool operator() ( const std::string &a, const std::string &b )
    {
-      int aLen = ossStrlen( a ) ;
-      int bLen = ossStrlen( b ) ;
-      return ossStrncasecmp( a, b, aLen > bLen ? aLen : bLen ) < 0 ;
+      int aLen = a.length() ;
+      int bLen = b.length() ;
+
+      return ossStrncasecmp( a.c_str(), b.c_str(),
+                             aLen > bLen ? aLen : bLen ) < 0 ;
    }
 } ;
 
-typedef std::map<const CHAR *,const CHAR *, cmp_str> COLNAME_MAP ;
+typedef std::map<const std::string, std::string, cmp_str> REST_COLNAME_MAP ;
 #if defined(_WINDOWS)
-typedef COLNAME_MAP::iterator COLNAME_MAP_IT ;
+typedef REST_COLNAME_MAP::iterator REST_COLNAME_MAP_IT ;
 #else
-typedef std::map<const CHAR *,const CHAR *>::iterator COLNAME_MAP_IT ;
+typedef std::map<const std::string, std::string>::iterator REST_COLNAME_MAP_IT ;
 #endif
 
 struct httpResponse
@@ -146,104 +106,127 @@ struct httpResponse
    const CHAR *pBuffer ;
 } ;
 
-struct httpConnection
-{
+
+//struct httpConnection
+//{
 /* request */
 
    //key size
-   INT32 _tempKeyLen ;
+   //INT32 _tempKeyLen ;
+
    //value size
-   INT32 _tempValueLen ;
+   //INT32 _tempValueLen ;
+
    // \r\n number
-   INT32 _CRLFNum ;
+   //INT32 _CRLFNum ;
+
    //http header buffer size
-   INT32 _headerSize ;
+   //INT32 _headerSize ;
+
    //http body buffer size
-   INT32 _bodySize ;
+   //INT32 _bodySize ;
+
    //recv temp a part of the body size
-   INT32 _partSize ;
+   //INT32 _partSize ;
+
    //temp query size
-   INT32 _querySize ;
+   //INT32 _querySize ;
 
 /* response */
 
    //response first record size
-   INT32 _firstRecordSize ;
+   //INT32 _firstRecordSize ;
    //response body size
-   INT32 _responseSize ;
+   //INT32 _responseSize ;
+
    //chunk model
-   BOOLEAN _isChunk ;
+   //BOOLEAN _isChunk ;
+
    //is send http header(chunk model)
-   BOOLEAN _isSendHttpHeader ;
+   //BOOLEAN _isSendHttpHeader ;
 
 /* request */
 
    //flag is parser key or value, true: key, false: value
-   BOOLEAN _isKey ;
+   //BOOLEAN _isKey ;
+
    //client send common type
-   HTTP_PARSE_COMMON _common ;
+   //HTTP_PARSE_COMMON _common ;
+
    //get file's type
-   HTTP_FILE_TYPE _fileType ;
+   //HTTP_FILE_TYPE _fileType ;
+
    //source header buffer
-   CHAR *_pSourceHeaderBuf ;
+   //CHAR *_pSourceHeaderBuf ;
+
    //recv header buffer
-   CHAR *_pHeaderBuf ;
+   //CHAR *_pHeaderBuf ;
+
    //recv temp a part of the body
-   CHAR *_pPartBody ;
+   //CHAR *_pPartBody ;
+
    //recv body buffer
-   CHAR *_pBodyBuf ;
+   //CHAR *_pBodyBuf ;
+
    //send buffer
-   CHAR *_pSendBuffer ;
+   //CHAR *_pSendBuffer ;
+
    //temp key buffer
-   CHAR *_pTempKey ;
+   //CHAR *_pTempKey ;
+
    //temp value buffer ;
-   CHAR *_pTempValue ;
+   //CHAR *_pTempValue ;
+
    //temp query
-   CHAR *_pQuery ;
+   //CHAR *_pQuery ;
+
    //path
-   const CHAR *_pPath ;
+   //const CHAR *_pPath ;
 
    //http parser
-   http_parser _httpParser ;
+   //http_parser _httpParser ;
+
    //header list
-   COLNAME_MAP _requestHeaders ;
+   //COLNAME_MAP _headerList ;
+
    //query list
-   COLNAME_MAP _requestQuery ;
+   //COLNAME_MAP _queryList ;
 
 /* response */
 
-   std::map<const CHAR *,const CHAR *, cmp_str> _responseHeaders ;
-   std::vector<httpResponse> _responseBody ;
+   //std::map<const CHAR *,const CHAR *, cmp_str> _responseHeaders ;
+
+   //std::vector<httpResponse> _responseBody ;
 
 /* public */
 
-   httpConnection() : _tempKeyLen(0),
-                      _tempValueLen(0),
-                      _CRLFNum(0),
-                      _headerSize(0),
-                      _bodySize(0),
-                      _partSize(0),
-                      _querySize(0),
-                      _firstRecordSize(0),
-                      _responseSize(0),
-                      _isChunk(FALSE),
-                      _isSendHttpHeader(FALSE),
-                      _isKey(TRUE),
-                      _common(COM_CMD),
-                      _fileType(HTTP_FILE_DEFAULT),
-                      _pSourceHeaderBuf(NULL),
-                      _pHeaderBuf(NULL),
-                      _pPartBody(NULL),
-                      _pBodyBuf(NULL),
-                      _pSendBuffer(NULL),
-                      _pTempKey(NULL),
-                      _pTempValue(NULL),
-                      _pQuery(NULL),
-                      _pPath(NULL)
-   {
-      _httpParser.data = this ;
-   }
+   //httpConnection() : //_tempKeyLen(0),
+                      //_tempValueLen(0),
+                      //_CRLFNum(0),
+                      //_headerSize(0),
+                      //_bodySize(0),
+                      //_partSize(0),
+                      //_querySize(0),
+                      //_firstRecordSize(0),
+                      //_responseSize(0),
+                      //_isChunk(FALSE),
+                      //_isSendHttpHeader(FALSE),
+                      //_isKey(TRUE),
+                      //_common(COM_CMD),
+                      //_fileType(HTTP_FILE_DEFAULT),
+                      //_pSourceHeaderBuf(NULL),
+                      //_pHeaderBuf(NULL),
+                      //_pPartBody(NULL),
+                      //_pBodyBuf(NULL),
+                      //_pSendBuffer(NULL),
+                      //_pTempKey(NULL),
+                      //_pTempValue(NULL),
+                      //_pQuery(NULL),
+                      //_pPath(NULL)
+//   {
+ //     _httpParser.data = this ;
+ //  }
 
-} ;
+//} ;
 
 #endif // REST_DEFINE_HPP__

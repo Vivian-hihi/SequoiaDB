@@ -340,7 +340,8 @@ namespace engine
    {
    public:
 
-      omRestTool( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+      omRestTool( ossSocket *socket, restAdaptor *pRestAdaptor,
+                  restResponse *response ) ;
 
       void sendRecord2Web( list<BSONObj> &records,
                            const BSONObj *pFilter = NULL,
@@ -356,9 +357,9 @@ namespace engine
       void appendResponeMsg( const BSONObj &msg ) ;
 
    private:
-
+      ossSocket      *_socket ;
       restAdaptor    *_pRestAdaptor ;
-      pmdRestSession *_pRestSession ;
+      restResponse   *_response ;
 
       list<BSONObj> _msgList ;
    } ;
@@ -410,7 +411,7 @@ namespace engine
    class omArgOptions : public SDBObject
    {
    public:
-      omArgOptions( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+      omArgOptions( restRequest *pRequest ) ;
 
       INT32 parseRestArg( const CHAR *pFormat, ... ) ;
 
@@ -420,8 +421,7 @@ namespace engine
       INT32 _parserArg( const CHAR *pFormat, va_list &vaList ) ;
 
    private:
-      restAdaptor      *_rest ;
-      pmdRestSession   *_session ;
+      restRequest      *_request ;
       omErrorTool       _errorMsg ;
 
    } ;

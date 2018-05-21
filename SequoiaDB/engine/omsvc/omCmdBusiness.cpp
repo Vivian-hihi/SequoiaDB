@@ -43,12 +43,7 @@ using namespace boost::property_tree;
 namespace engine
 {
    // ***************** omUnbindBusinessCommand *****************************
-   omUnbindBusinessCommand::omUnbindBusinessCommand(
-                                                restAdaptor *pRestAdaptor,
-                                                pmdRestSession *pRestSession )
-         : omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omUnbindBusinessCommand ) ;
 
    omUnbindBusinessCommand::~omUnbindBusinessCommand()
    {
@@ -57,8 +52,8 @@ namespace engine
    INT32 omUnbindBusinessCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
-      omArgOptions option( _restAdaptor, _restSession ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omArgOptions option( _request ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
       omDatabaseTool dbTool( _cb ) ;
 
       _setFileLanguageSep() ;
@@ -151,19 +146,7 @@ namespace engine
    }
 
    // ***************** omRemoveBusinessCommand *****************************
-   omRemoveBusinessCommand::omRemoveBusinessCommand( restAdaptor *pRestAdaptor,
-                                                   pmdRestSession *pRestSession,
-                                                   string localAgentHost,
-                                                   string localAgentService )
-                           : omAuthCommand( pRestAdaptor, pRestSession ),
-                           _localAgentHost( localAgentHost ),
-                           _localAgentService( localAgentService )
-   {
-   }
-
-   omRemoveBusinessCommand::~omRemoveBusinessCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omRemoveBusinessCommand ) ;
 
    INT32 omRemoveBusinessCommand::doCommand()
    {
@@ -172,8 +155,8 @@ namespace engine
       BSONObj buzInfo ;
       BSONObj taskConfig ;
       BSONArray resultInfo ;
-      omArgOptions option( _restAdaptor, _restSession ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omArgOptions option( _request ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
 
       _setFileLanguageSep() ;
 

@@ -64,7 +64,7 @@ function lackName(){
 }
 
 function lackCmdAndName(){
-	tryCatch([""] , [0] , getFuncName()+"Error occurs");
+	tryCatch([""] , [-100] , getFuncName()+"Error occurs");
 }
 
 function misspell(){

@@ -53,17 +53,22 @@ namespace engine
          virtual SDB_SESSION_TYPE sessionType() const ;
 
       protected:
-         virtual INT32     _processMsg( HTTP_PARSE_COMMON command, 
-                                        const CHAR *pFilePath ) ;
+         virtual INT32     _processMsg( restRequest &request,
+                                        restResponse &response ) ;
 
       protected:
-         INT32             _processOMRestMsg( const CHAR *pFilePath ) ;
-         INT32             _setSpecifyNode( const CHAR *pSdbHostName,
-                                            const CHAR *pSdbSvcName,
+         INT32             _processOMRestMsg( restRequest &request,
+                                              restResponse &response ) ;
+
+         INT32             _setSpecifyNode( const string &sdbHostName,
+                                            const string &sdbSvcName,
                                             list<omNodeInfo> &nodeList ) ;
-         INT32             _processSdbTransferMsg( restAdaptor *pAdaptor,
-                                                const CHAR *pClusterName,
-                                                const CHAR *pBusinessName ) ;
+
+         INT32 _processSdbTransferMsg( restRequest &request,
+                                       restResponse &response,
+                                       const CHAR *pClusterName,
+                                       const CHAR *pBusinessName ) ;
+
          INT32             _getBusinessAccessNode( const CHAR *pClusterName,
                                                    const CHAR *pBusinessName,
                                                    const CHAR *pSdbUser,
@@ -85,17 +90,20 @@ namespace engine
                                         list<BSONObj> &records ) ;
          BOOLEAN           _isClusterExist( const CHAR *pClusterName ) ;
 
-         INT32 _registerPlugin( restAdaptor *pAdaptor ) ;
+         INT32 _registerPlugin( restRequest &request, restResponse &response ) ;
 
       private:
-         INT32 _actionGetFile( const CHAR *pFilePath ) ;
+         INT32 _actionGetFile( restRequest &request,
+                               restResponse &response ) ;
 
-         INT32 _forwardPlugin( restAdaptor *pAdptor,
-                               const string &businessType ) ;
+         INT32 _forwardPlugin( restRequest &request,
+                               restResponse &response ) ;
 
-         INT32 _actionCmd( const CHAR *pFilePath ) ;
+         INT32 _actionCmd( restRequest &request,
+                           restResponse &response ) ;
 
-         omRestCommandBase *_createCommand( const CHAR *pFilePath ) ;
+         omRestCommandBase* _createCommand( restRequest &request,
+                                            restResponse &response ) ;
 
    } ;
    typedef _omRestSession omRestSession ;

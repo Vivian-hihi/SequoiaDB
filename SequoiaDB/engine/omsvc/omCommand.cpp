@@ -23,7 +23,7 @@
 
    Change Activity:
    defect Date        Who Description
-   ====== =========== === ==============================================   
+   ====== =========== === ==============================================
           06/12/2014  LYB Initial Draft
           04/01/2017  HJW Increase extend business and shrink business
 
@@ -410,23 +410,13 @@ namespace engine
    }
 
    // *****************omAuthCommand *****************************
-   omAuthCommand::omAuthCommand( restAdaptor *pRestAdaptor,
-                                 pmdRestSession *pRestSession )
-   : omRestCommandBase( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omAuthCommand::~omAuthCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omAuthCommand ) ;
 
    string omAuthCommand::_getLanguage()
    {
-      const CHAR *pLanguage = NULL ;
-      _restAdaptor->getHttpHeader( _restSession, OM_REST_HEAD_LANGUAGE,
-                                   &pLanguage ) ;
-      if ( NULL != pLanguage
-           && ossStrcasecmp( pLanguage, OM_REST_LANGUAGE_EN ) == 0 )
+      string language = _request->getHeader( OM_REST_HEAD_LANGUAGE ) ;
+
+      if ( OM_REST_LANGUAGE_EN == language )
       {
          return OM_REST_LANGUAGE_EN ;
       }
@@ -446,89 +436,20 @@ namespace engine
                                        BSONObj &order, BSONObj &hint,
                                        SINT64 &numSkip, SINT64 &numReturn )
    {
-      const CHAR *pSelector = NULL ;
-      const CHAR *pMatcher  = NULL ;
-      const CHAR *pOrder    = NULL ;
-      const CHAR *pHint     = NULL ;
-      const CHAR *pSkip     = NULL ;
-      const CHAR *pReturn   = NULL ;
-      INT32 rc = SDB_OK ;
-      _restAdaptor->getQuery( _restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
-      if ( NULL != pSelector )
-      {
-         rc = fromjson( pSelector, selector ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                        "rc=%d", pSelector, rc ) ;
-            goto error ;
-         }
-      }
-
-      _restAdaptor->getQuery(_restSession, FIELD_NAME_FILTER, &pMatcher ) ;
-      if( NULL == pMatcher )
-      {
-         _restAdaptor->getQuery( _restSession, REST_KEY_NAME_MATCHER, &pMatcher ) ;
-      }
-      if ( NULL != pMatcher )
-      {
-         rc = fromjson( pMatcher, matcher ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                        "rc=%d", pMatcher, rc ) ;
-            goto error ;
-         }
-      }
-
-      _restAdaptor->getQuery(_restSession, FIELD_NAME_SORT, &pOrder ) ;
-      if( NULL == pOrder )
-      {
-         _restAdaptor->getQuery( _restSession,
-                                 REST_KEY_NAME_ORDERBY,
-                                 &pOrder ) ;
-      }
-      if ( NULL != pOrder )
-      {
-         rc = fromjson( pOrder, order ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                        "rc=%d", pOrder, rc ) ;
-            goto error ;
-         }
-      }
-
-      _restAdaptor->getQuery(_restSession, FIELD_NAME_HINT, &pHint ) ;
-      if ( NULL != pHint )
-      {
-         rc = fromjson( pHint, hint ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                        "rc=%d", pHint, rc ) ;
-            goto error ;
-         }
-      }
+      omArgOptions option( _request ) ;
 
       numSkip = 0 ;
-      _restAdaptor->getQuery(_restSession, FIELD_NAME_SKIP, &pSkip ) ;
-      if ( NULL != pSkip )
-      {
-         numSkip = ossAtoll( pSkip ) ;
-      }
-
       numReturn = -1 ;
-      _restAdaptor->getQuery(_restSession, REST_KEY_NAME_LIMIT, &pReturn ) ;
-      if ( NULL != pReturn )
-      {
-         numReturn = ossAtoll( pReturn ) ;
-      }
 
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return option.parseRestArg( "|jjjjjjLL",
+                                  FIELD_NAME_SELECTOR,   &selector,
+                                  REST_KEY_NAME_MATCHER, &matcher,
+                                  FIELD_NAME_FILTER,     &matcher,
+                                  REST_KEY_NAME_ORDERBY, &order,
+                                  FIELD_NAME_SORT,       &order,
+                                  FIELD_NAME_HINT,       &hint,
+                                  FIELD_NAME_SKIP,       &numSkip,
+                                  REST_KEY_NAME_LIMIT,   &numReturn ) ;
    }
 
    void omAuthCommand::_decryptPasswd( const string &encryptPasswd,
@@ -600,24 +521,23 @@ namespace engine
 
    INT32 omAuthCommand::doCommand()
    {
-      const CHAR *pUserName        = NULL ;
-      const CHAR *pPasswd          = NULL ;
-      const CHAR *pTime            = NULL ;
       INT32 rc                     = SDB_OK ;
       ossSocket *socket            = NULL ;
       BSONObjBuilder authBuilder ;
       BSONObjBuilder resBuilder ;
       BSONObj bsonRes ;
       BSONObj bsonAuth ;
+      string userName ;
+      string passwd ;
+      string time ;
+      string sessionId ;
+      omArgOptions option( _request ) ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_NAME,
-                              &pUserName ) ;
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_PASSWD,
-                              &pPasswd ) ;
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_TIMESTAMP, &pTime ) ;
-      if ( ( NULL == pUserName ) || ( NULL == pPasswd ) || ( NULL == pTime ) )
+      rc = option.parseRestArg( "sss", OM_REST_FIELD_LOGIN_NAME,   &userName,
+                                       OM_REST_FIELD_LOGIN_PASSWD, &passwd,
+                                       OM_REST_FIELD_TIMESTAMP,    &time ) ;
+      if ( rc )
       {
-         rc = SDB_INVALIDARG ;
          _errorDetail = string( OM_REST_FIELD_LOGIN_NAME ) + " or "
                         + OM_REST_FIELD_LOGIN_PASSWD + " or "
                         + OM_REST_FIELD_TIMESTAMP + " is null" ;
@@ -626,8 +546,8 @@ namespace engine
          goto error ;
       }
 
-      authBuilder.append( SDB_AUTH_USER, pUserName ) ;
-      authBuilder.append( SDB_AUTH_PASSWD, pPasswd ) ;
+      authBuilder.append( SDB_AUTH_USER, userName ) ;
+      authBuilder.append( SDB_AUTH_PASSWD, passwd ) ;
       bsonAuth = authBuilder.obj() ;
       rc = sdbGetOMManager()->authenticate( bsonAuth, _cb ) ;
       if ( SDB_OK != rc )
@@ -652,17 +572,18 @@ namespace engine
          goto error ;
       }
 
-      rc = _restSession->doLogin( pUserName, socket->getLocalIP() ) ;
+      rc = _restSession->doLogin( userName, socket->getLocalIP() ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "do login failed:user=%s, ip=%u", pUserName,
+         PD_LOG( PDERROR, "do login failed:user=%s, ip=%u", userName.c_str(),
                  socket->getLocalIP() ) ;
          _sendErrorRes2Web( SDB_SYS, "system error" ) ;
          goto error ;
       }
 
-      _restAdaptor->appendHttpHeader( _restSession, OM_REST_HEAD_SESSIONID,
-                                      _restSession->getSessionID() ) ;
+      sessionId = _restSession->getSessionID() ;
+
+      _response->putHeader( OM_REST_HEAD_SESSIONID, sessionId ) ;
       _sendOKRes2Web() ;
    done:
       return rc ;
@@ -671,22 +592,7 @@ namespace engine
    }
 
    // ******************** omExtendBusinessCommand *****************************
-   omExtendBusinessCommand::omExtendBusinessCommand(
-                                                restAdaptor *pRestAdaptor,
-                                                pmdRestSession *pRestSession,
-                                                const CHAR *pRootPath,
-                                                string& localAgentHost,
-                                                string& localAgentService )
-                           :omAuthCommand( pRestAdaptor, pRestSession ),
-                            _rootPath( pRootPath ),
-                            _localAgentHost( localAgentHost ),
-                            _localAgentService( localAgentService )
-   {
-   }
-
-   omExtendBusinessCommand::~omExtendBusinessCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omExtendBusinessCommand ) ;
 
    INT32 omExtendBusinessCommand::doCommand()
    {
@@ -747,8 +653,8 @@ namespace engine
 
       {
          BSONObj result = BSON( OM_BSON_TASKID << (long long)taskID ) ;
-         _restAdaptor->appendHttpBody( _restSession, result.objdata(),
-                                       result.objsize(), 1 ) ;
+
+         _request->appendBody( result.objdata(), result.objsize(), 1 ) ;
          _sendOKRes2Web() ;
       }
 
@@ -762,11 +668,11 @@ namespace engine
    INT32 omExtendBusinessCommand::_getRestInfo( BSONObj &extendConfig,
                                                 string& extendConfigMod )
    {
-      INT32 rc          = SDB_OK ;
-      const CHAR *pInfo = NULL ;
+      INT32 rc = SDB_OK ;
+      string configInfo ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_CONFIGINFO, &pInfo ) ;
-      if( NULL == pInfo )
+      configInfo = _request->getQuery( OM_REST_FIELD_CONFIGINFO ) ;
+      if( configInfo.empty() )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "rest field is null:field=%s",
@@ -775,17 +681,17 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pInfo, extendConfig ) ;
+      rc = fromjson( configInfo.c_str(), extendConfig ) ;
       if( rc )
       {
          _errorMsg.setError( TRUE, "invalid json: %s=%s",
-                             OM_REST_FIELD_CONFIGINFO, pInfo ) ;
+                             OM_REST_FIELD_CONFIGINFO, configInfo.c_str() ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
 
       _clusterName = extendConfig.getStringField( OM_BSON_CLUSTER_NAME ) ;
-      if( _clusterName == "" )
+      if( _clusterName.empty() )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "%s is empty", OM_BSON_CLUSTER_NAME ) ;
@@ -794,7 +700,7 @@ namespace engine
       }
 
       _businessName = extendConfig.getStringField( OM_BSON_BUSINESS_NAME ) ;
-      if( _businessName == "" )
+      if( _businessName.empty() )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "%s is empty", OM_BSON_BUSINESS_NAME ) ;
@@ -803,7 +709,7 @@ namespace engine
       }
 
       extendConfigMod = extendConfig.getStringField( OM_BSON_DEPLOY_MOD ) ;
-      if( extendConfigMod == "" )
+      if( extendConfigMod.empty() )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "%s is empty", OM_BSON_DEPLOY_MOD ) ;
@@ -1318,30 +1224,14 @@ namespace engine
    }
 
    // ******************* omShrinkBusinessCommand ****************************
-
-   omShrinkBusinessCommand::omShrinkBusinessCommand(
-                                                   restAdaptor *pRestAdaptor,
-                                                   pmdRestSession *pRestSession,
-                                                   const CHAR *pRootPath,
-                                                   string& localAgentHost,
-                                                   string& localAgentService )
-                                 : omAuthCommand( pRestAdaptor, pRestSession ),
-                                   _rootPath( pRootPath ),
-                                   _localAgentHost( localAgentHost ),
-                                   _localAgentService( localAgentService )
-   {
-   }
-
-   omShrinkBusinessCommand::~omShrinkBusinessCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omShrinkBusinessCommand ) ;
 
    INT32 omShrinkBusinessCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
       INT64 taskID = -1 ;
       omDatabaseTool dbTool( _cb ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
       BSONObj shrinkConfig ;
       BSONObj hostInfoInBusiness ;
       vector<simpleAddressInfo> addressList ;
@@ -1387,8 +1277,8 @@ namespace engine
 
       {
          BSONObj result = BSON( OM_BSON_TASKID << (long long)taskID ) ;
-         _restAdaptor->appendHttpBody( _restSession, result.objdata(),
-                                       result.objsize(), 1 ) ;
+
+         _response->appendBody( result.objdata(), result.objsize(), 1 ) ;
       }
 
       restTool.sendOkRespone() ;
@@ -1403,10 +1293,10 @@ namespace engine
    INT32 omShrinkBusinessCommand::_getRestInfo( BSONObj &shrinkConfig )
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pInfo = NULL ;
+      string configInfo ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_CONFIGINFO, &pInfo ) ;
-      if( NULL == pInfo )
+      configInfo = _request->getQuery( OM_REST_FIELD_CONFIGINFO ) ;
+      if( configInfo.empty() )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "rest field is null:field=%s",
@@ -1415,11 +1305,11 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pInfo, shrinkConfig ) ;
+      rc = fromjson( configInfo.c_str(), shrinkConfig ) ;
       if( rc )
       {
          _errorMsg.setError( TRUE, "invalid json: %s=%s",
-                             OM_REST_FIELD_CONFIGINFO, pInfo ) ;
+                             OM_REST_FIELD_CONFIGINFO, configInfo.c_str() ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
@@ -1870,15 +1760,7 @@ namespace engine
    }
 
    // ********************onLogoutCommand********************************
-   omLogoutCommand::omLogoutCommand( restAdaptor *pRestAdaptor,
-                                     pmdRestSession *pRestSession )
-                   :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omLogoutCommand::~omLogoutCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omLogoutCommand ) ;
 
    INT32 omLogoutCommand::doCommand()
    {
@@ -1888,88 +1770,23 @@ namespace engine
    }
 
    // *****************omChangePasswdCommand *****************************
-   omChangePasswdCommand::omChangePasswdCommand( restAdaptor *pRestAdaptor,
-                                                 pmdRestSession *pRestSession )
-                         :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omChangePasswdCommand::~omChangePasswdCommand()
-   {
-   }
-
-   INT32 omChangePasswdCommand::_getRestDetail( string &user, string &oldPasswd,
-                                                string &newPasswd, string &time )
-   {
-      INT32 rc               = SDB_OK ;
-      const CHAR *pUser      = NULL ;
-      const CHAR *pOldPasswd = NULL ;
-      const CHAR *pNewPasswd = NULL ;
-      const CHAR *pTime      = NULL ;
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_NAME, &pUser ) ;
-      if ( NULL == pUser )
-      {
-         rc           = SDB_INVALIDARG ;
-         _errorDetail = string( OM_REST_FIELD_LOGIN_NAME ) + " is null" ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-         goto error ;
-      }
-
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_PASSWD,
-                              &pOldPasswd ) ;
-      if ( NULL == pOldPasswd )
-      {
-         rc           = SDB_INVALIDARG ;
-         _errorDetail = string( OM_REST_FIELD_LOGIN_PASSWD ) + " is null" ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-         goto error ;
-      }
-
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_NEW_PASSWD,
-                              &pNewPasswd ) ;
-      if ( NULL == pNewPasswd )
-      {
-         rc           = SDB_INVALIDARG ;
-         _errorDetail = string( OM_REST_FIELD_NEW_PASSWD ) + " is null" ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-         goto error ;
-      }
-
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_TIMESTAMP, &pTime ) ;
-      if ( NULL == pTime )
-      {
-         rc           = SDB_INVALIDARG ;
-         _errorDetail = string( OM_REST_FIELD_TIMESTAMP ) + " is null" ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-         goto error ;
-      }
-
-      user      = pUser ;
-      newPasswd = pNewPasswd ;
-      oldPasswd = pOldPasswd ;
-      time      = pTime ;
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omChangePasswdCommand ) ;
 
    INT32 omChangePasswdCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
       string user ;
       string oldPasswd ;
-//      string oldDecryptPasswd ;
-//      md5::md5digest oldDigest ;
       string newPasswd ;
-//      string newDecryptPasswd ;
-//      md5::md5digest newDigest ;
       string time ;
-
       BSONObj bsonAuth ;
+      omArgOptions option( _request ) ;
 
-      rc = _getRestDetail( user, oldPasswd, newPasswd, time ) ;
-      if ( SDB_OK != rc )
+      rc = option.parseRestArg( "ssss", OM_REST_FIELD_LOGIN_NAME,    &user,
+                                        OM_REST_FIELD_LOGIN_PASSWD,  &oldPasswd,
+                                        OM_REST_FIELD_NEW_PASSWD,    &newPasswd,
+                                        OM_REST_FIELD_TIMESTAMP,     &time ) ;
+      if ( rc )
       {
          PD_LOG( PDERROR, "get rest info failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
@@ -1978,7 +1795,7 @@ namespace engine
 
       if ( user != _restSession->getLoginUserName() )
       {
-         rc           = SDB_INVALIDARG ;
+         rc = SDB_INVALIDARG ;
          _errorDetail = string( "can't not change other usr's passwd:" )
                         + "myusr=" + _restSession->getLoginUserName()
                         + ",usr=" + user ;
@@ -2023,23 +1840,15 @@ namespace engine
    }
 
    // *****************omCheckSessionCommand *****************************
-   omCheckSessionCommand::omCheckSessionCommand( restAdaptor *pRestAdaptor,
-                                                 pmdRestSession *pRestSession )
-                         :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omCheckSessionCommand::~omCheckSessionCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omCheckSessionCommand ) ;
 
    INT32 omCheckSessionCommand::doCommand()
    {
+      string sessionId ;
       BSONObjBuilder bsonBuilder ;
-      const CHAR* sessionID = NULL ;
-      _restAdaptor->getHttpHeader( _restSession, OM_REST_HEAD_SESSIONID,
-                                   &sessionID ) ;
-      if ( NULL != sessionID && _restSession->isAuthOK() )
+
+      sessionId = _request->getHeader( OM_REST_HEAD_SESSIONID ) ;
+      if ( FALSE != sessionId.empty() && _restSession->isAuthOK() )
       {
          _sendOKRes2Web() ;
       }
@@ -2052,30 +1861,20 @@ namespace engine
    }
 
    // *****************omCreateClusterCommand *****************************
-   omCreateClusterCommand::omCreateClusterCommand( restAdaptor *pRestAdaptor,
-                                                 pmdRestSession *pRestSession )
-                                 : omAuthCommand( pRestAdaptor,
-                                                  pRestSession )
-   {
-   }
-
-   omCreateClusterCommand::~omCreateClusterCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omCreateClusterCommand ) ;
 
    INT32 omCreateClusterCommand::_getRestInfo( string &clusterName,
                                                BSONObj &clusterInfo )
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pClusterInfo = NULL ;
+      string clusterInfoStr ;
       string sdbUsr ;
       string sdbPasswd ;
       string sdbUsrGroup ;
       BSONElement grantConfEle ;
 
-      _restAdaptor->getQuery(_restSession, OM_REST_CLUSTER_INFO,
-                             &pClusterInfo ) ;
-      if ( NULL == pClusterInfo )
+      clusterInfoStr = _request->getQuery( OM_REST_CLUSTER_INFO ) ;
+      if ( clusterInfoStr.empty() ) 
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "invalid argument:%s is null,rc=%d",
@@ -2084,12 +1883,12 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pClusterInfo, clusterInfo ) ;
+      rc = fromjson( clusterInfoStr.c_str(), clusterInfo ) ;
       if ( rc )
       {
          _errorMsg.setError( TRUE, "change rest field to BSONObj failed:"
                                    "src=%s,rc=%d",
-                             pClusterInfo, rc ) ;
+                             clusterInfoStr.c_str(), rc ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
@@ -2194,7 +1993,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string clusterName ;
       BSONObj clusterInfo ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
       omDatabaseTool dbTool( _cb ) ;
 
       _setFileLanguageSep() ;
@@ -2240,15 +2039,7 @@ namespace engine
    }
 
    // *****************omQueryClusterCommand *****************************
-   omQueryClusterCommand::omQueryClusterCommand( restAdaptor *pRestAdaptor,
-                                                 pmdRestSession *pRestSession )
-                         : omCheckSessionCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omQueryClusterCommand::~omQueryClusterCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omQueryClusterCommand ) ;
 
    INT32 omQueryClusterCommand::doCommand()
    {
@@ -2284,8 +2075,7 @@ namespace engine
       iter = records.begin() ;
       while ( iter != records.end() )
       {
-         rc = _restAdaptor->appendHttpBody( _restSession, iter->objdata(),
-                                            iter->objsize(), 1 ) ;
+         rc = _response->appendBody( iter->objdata(), iter->objsize(), 1 ) ;
          if ( rc )
          {
             PD_LOG_MSG( PDERROR, "falied to append http body:rc=%d", rc ) ;
@@ -2306,27 +2096,19 @@ namespace engine
    }
 
    // ***************** omUpdateHostInfoCommand *****************************
-   omUpdateHostInfoCommand::omUpdateHostInfoCommand( restAdaptor *pRestAdaptor,
-                                                  pmdRestSession *pRestSession )
-                          : omCheckSessionCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omUpdateHostInfoCommand::~omUpdateHostInfoCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omUpdateHostInfoCommand ) ;
 
    INT32 omUpdateHostInfoCommand::_getUpdateInfo(
                                                map< string, string > &mapHost )
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pHostInfo = NULL ;
+      string hostInfoStr ;
       BSONObj hostInfo ;
       BSONElement hostsEle ;
+
       //{ HostInfo: [ { HostName:"", IP:"" } ] }
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_HOST_INFO,
-                              &pHostInfo ) ;
-      if ( NULL == pHostInfo )
+      hostInfoStr = _request->getQuery( OM_REST_FIELD_HOST_INFO ) ;
+      if ( hostInfoStr.empty() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "rest field is null:field=%s",
@@ -2334,11 +2116,11 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pHostInfo, hostInfo ) ;
+      rc = fromjson( hostInfoStr.c_str(), hostInfo ) ;
       if ( rc )
       {
          PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                     "rc=%d", pHostInfo, rc ) ;
+                     "rc=%d", hostInfoStr.c_str(), rc ) ;
          goto error ;
       }
 
@@ -2493,19 +2275,7 @@ namespace engine
 
 
    // ***************** omScanHostCommand *****************************
-   omScanHostCommand::omScanHostCommand( restAdaptor *pRestAdaptor,
-                                         pmdRestSession *pRestSession,
-                                         const string &localAgentHost,
-                                         const string &localAgentService )
-                     : omCheckSessionCommand( pRestAdaptor, pRestSession ),
-                       _localAgentHost( localAgentHost ),
-                       _localAgentService( localAgentService )
-   {
-   }
-
-   omScanHostCommand::~omScanHostCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omScanHostCommand ) ;
 
    void omScanHostCommand::_generateHostList(
                                              list<omScanHostInfo> &hostInfoList,
@@ -2573,8 +2343,7 @@ namespace engine
       list<BSONObj>::iterator iter = hostResult.begin() ;
       while ( iter != hostResult.end() )
       {
-         rc = _restAdaptor->appendHttpBody( _restSession, iter->objdata(),
-                                       iter->objsize(), 1 ) ;
+         rc = _response->appendBody( iter->objdata(), iter->objsize(), 1 ) ;
          if ( rc )
          {
             PD_LOG(PDERROR, "Failed to appendHttpBody:rc=%d", rc ) ;
@@ -2787,13 +2556,12 @@ namespace engine
       const CHAR* pGlobalPasswd    = NULL ;
       const CHAR* pGlobalSshPort   = NULL ;
       const CHAR* pGlobalAgentPort = NULL ;
-      const CHAR* pHostInfo        = NULL ;
+      string hostInfoStr ;
       BSONObj bsonHostInfo ;
       BSONElement element ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_HOST_INFO,
-                              &pHostInfo ) ;
-      if ( NULL == pHostInfo )
+      hostInfoStr = _request->getQuery( OM_REST_FIELD_HOST_INFO ) ;
+      if ( hostInfoStr.empty() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "rest field is null:field=%s",
@@ -2801,11 +2569,11 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pHostInfo, bsonHostInfo ) ;
+      rc = fromjson( hostInfoStr.c_str(), bsonHostInfo ) ;
       if ( rc )
       {
          PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                     "rc=%d", pHostInfo, rc ) ;
+                     "rc=%d", hostInfoStr.c_str(), rc ) ;
          goto error ;
       }
 
@@ -3214,18 +2982,7 @@ namespace engine
    }
 
    // *****************omCheckHostCommand *****************************
-   omCheckHostCommand::omCheckHostCommand( restAdaptor *pRestAdaptor,
-                                           pmdRestSession *pRestSession,
-                                           const string &localAgentHost,
-                                           const string &localAgentService )
-                      : omScanHostCommand( pRestAdaptor, pRestSession,
-                                           localAgentHost, localAgentService )
-   {
-   }
-
-   omCheckHostCommand::~omCheckHostCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omCheckHostCommand ) ;
 
    void omCheckHostCommand::_eraseFromListByIP(
                                             list<omScanHostInfo> &hostInfoList,
@@ -3931,14 +3688,13 @@ namespace engine
       const CHAR* pGlobalPasswd    = NULL ;
       const CHAR* pGlobalSshPort   = NULL ;
       const CHAR* pGlobalAgentPort = NULL ;
-      const CHAR* pHostInfo        = NULL ;
+      string hostInfoStr ;
       BSONObj bsonHostInfo ;
       BSONElement element ;
 
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_HOST_INFO,
-                              &pHostInfo ) ;
-      if ( NULL == pHostInfo )
+      hostInfoStr = _request->getQuery( OM_REST_FIELD_HOST_INFO ) ;
+      if ( hostInfoStr.empty() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "%s is null:rc=%d", OM_REST_FIELD_HOST_INFO,
@@ -3946,11 +3702,11 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pHostInfo, bsonHostInfo ) ;
+      rc = fromjson( hostInfoStr.c_str(), bsonHostInfo ) ;
       if ( rc )
       {
          PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                     "rc=%d", pHostInfo, rc ) ;
+                     "rc=%d", hostInfoStr.c_str(), rc ) ;
          goto error ;
       }
 
@@ -4091,18 +3847,7 @@ namespace engine
    }
 
    // *****************omAddHostCommand *****************************
-   omAddHostCommand::omAddHostCommand( restAdaptor *pRestAdaptor,
-                                       pmdRestSession *pRestSession,
-                                       const string &localAgentHost,
-                                       const string &localAgentService )
-                    : omScanHostCommand( pRestAdaptor, pRestSession,
-                                         localAgentHost, localAgentService )
-   {
-   }
-
-   omAddHostCommand::~omAddHostCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omAddHostCommand ) ;
 
    INT32 omAddHostCommand::_getRestHostList( string &clusterName,
                                              list<BSONObj> &hostInfo )
@@ -4112,14 +3857,13 @@ namespace engine
       const CHAR* pGlobalPasswd    = NULL ;
       const CHAR* pGlobalSshPort   = NULL ;
       const CHAR* pGlobalAgentPort = NULL ;
-      const CHAR* pHostInfo        = NULL ;
+      string hostInfoStr ;
       string installPath ;
       BSONObj bsonHostInfo ;
       BSONElement element ;
 
-      _restAdaptor->getQuery(_restSession, OM_REST_FIELD_HOST_INFO,
-                             &pHostInfo ) ;
-      if ( NULL == pHostInfo )
+      hostInfoStr = _request->getQuery( OM_REST_FIELD_HOST_INFO ) ;
+      if ( hostInfoStr.empty() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "rest field miss:field=%s",
@@ -4127,11 +3871,11 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pHostInfo, bsonHostInfo ) ;
+      rc = fromjson( hostInfoStr.c_str(), bsonHostInfo ) ;
       if ( rc )
       {
          PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                     "rc=%d", pHostInfo, rc ) ;
+                     "rc=%d", hostInfoStr.c_str(), rc ) ;
          goto error ;
       }
 
@@ -4352,6 +4096,7 @@ namespace engine
          {
             string diskName ;
             BSONElement ele = iter.next() ;
+
             if ( ele.type() != Object )
             {
                continue ;
@@ -4636,8 +4381,8 @@ namespace engine
 
       {
          BSONObj result = BSON( OM_BSON_TASKID << (long long)taskID ) ;
-         _restAdaptor->appendHttpBody( _restSession, result.objdata(),
-                                       result.objsize(), 1 ) ;
+
+         _response->appendBody( result.objdata(), result.objsize(), 1 ) ;
          _sendOKRes2Web() ;
       }
 
@@ -4648,15 +4393,7 @@ namespace engine
    }
 
    // *****************omListHostCommand *****************************
-   omListHostCommand::omListHostCommand( restAdaptor *pRestAdaptor,
-                                         pmdRestSession *pRestSession )
-                     : omCheckSessionCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omListHostCommand::~omListHostCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omListHostCommand ) ;
 
    void omListHostCommand::_sendHostInfo2Web( list<BSONObj> &hosts )
    {
@@ -4665,8 +4402,8 @@ namespace engine
       while ( iter != hosts.end() )
       {
          BSONObj tmp = iter->filterFieldsUndotted( filter, false ) ;
-         _restAdaptor->appendHttpBody( _restSession, tmp.objdata(),
-                                       tmp.objsize(), 1 ) ;
+
+         _response->appendBody( tmp.objdata(), tmp.objsize(), 1 ) ;
          iter++ ;
       }
 
@@ -4677,31 +4414,29 @@ namespace engine
 
    INT32 omListHostCommand::doCommand()
    {
-      INT32 rc                  = SDB_OK ;
-      const CHAR *pClusterName  = NULL ;
-      const CHAR *pBusiness     = NULL ;
+      INT32 rc = SDB_OK ;
+      string clusterName ;
+      string businessName ;
       list<BSONObj> records ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_CLUSTER_NAME,
-                              &pClusterName ) ;
-      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME,
-                              &pBusiness ) ;
-      if( NULL != pClusterName )
+      clusterName = _request->getQuery( OM_REST_FIELD_CLUSTER_NAME ) ;
+      businessName = _request->getQuery( OM_REST_BUSINESS_NAME ) ;
+      if( FALSE == clusterName.empty() )
       {
          BSONObj selector = BSON( OM_HOST_FIELD_NAME << 1
                                   << OM_HOST_FIELD_IP << 1) ;
-         BSONObj matcher  = BSON( OM_HOST_FIELD_CLUSTERNAME << pClusterName ) ;
+         BSONObj matcher  = BSON( OM_HOST_FIELD_CLUSTERNAME << clusterName ) ;
          BSONObj order ;
          BSONObj hint ;
          rc = _queryTable( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint,
                            0, 0, -1, records ) ;
       }
-      else if ( NULL != pBusiness )
+      else if ( FALSE == businessName.empty() )
       {
          list<BSONObj> tmpRecords ;
          BSONObj selector = BSON( OM_CONFIGURE_FIELD_HOSTNAME << 1 ) ;
          BSONObj matcher  = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME
-                                  << pBusiness ) ;
+                                  << businessName ) ;
          BSONObj order ;
          BSONObj hint ;
          rc = _queryTable( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order,
@@ -4744,15 +4479,7 @@ namespace engine
    }
 
    // *****************omQueryHostCommand *****************************
-   omQueryHostCommand::omQueryHostCommand( restAdaptor *pRestAdaptor,
-                                           pmdRestSession *pRestSession )
-                      :omListHostCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omQueryHostCommand::~omQueryHostCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omQueryHostCommand ) ;
 
    INT32 omQueryHostCommand::doCommand()
    {
@@ -4793,20 +4520,7 @@ namespace engine
    }
 
    // *****************omListBusinessTypeCommand *****************************
-   omListBusinessTypeCommand::omListBusinessTypeCommand(
-                                                restAdaptor *pRestAdaptor,
-                                                pmdRestSession *pRestSession,
-                                                const CHAR *pRootPath,
-                                                const CHAR *pSubPath )
-                             : omCheckSessionCommand( pRestAdaptor,
-                                                      pRestSession ),
-                              _rootPath( pRootPath ), _subPath( pSubPath )
-   {
-   }
-
-   omListBusinessTypeCommand::~omListBusinessTypeCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omListBusinessTypeCommand ) ;
 
    BOOLEAN omListBusinessTypeCommand::_isArray( ptree &pt )
    {
@@ -5010,9 +4724,7 @@ namespace engine
          list<BSONObj>::iterator iter = businessList.begin() ;
          while ( iter != businessList.end() )
          {
-
-            _restAdaptor->appendHttpBody( _restSession, iter->objdata(),
-                                          iter->objsize(), 1 ) ;
+            _response->appendBody( iter->objdata(), iter->objsize(), 1 ) ;
             iter++ ;
          }
       }
@@ -5023,22 +4735,8 @@ namespace engine
       goto done ;
    }
 
-   // *****************omGetBusinessTemplateCommand *****************************
-   omGetBusinessTemplateCommand::omGetBusinessTemplateCommand(
-                                                   restAdaptor *pRestAdaptor,
-                                                   pmdRestSession *pRestSession,
-                                                   const CHAR *pRootPath,
-                                                   const CHAR *pSubPath )
-                                :omListBusinessTypeCommand( pRestAdaptor,
-                                                            pRestSession,
-                                                            pRootPath,
-                                                            pSubPath )
-   {
-   }
-
-   omGetBusinessTemplateCommand::~omGetBusinessTemplateCommand()
-   {
-   }
+   // *****************omGetBusinessTemplateCommand ****************************
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omGetBusinessTemplateCommand ) ;
 
    INT32 omGetBusinessTemplateCommand::_readConfTemplate(
                                                 const string &businessType,
@@ -5099,8 +4797,6 @@ namespace engine
    INT32 omGetBusinessTemplateCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
-      const CHAR* pBusinessType  = NULL ;
-      const CHAR* pOperationType = NULL ;
       list<BSONObj> deployModList ;
       list<BSONObj>::iterator iter ;
       string businessType ;
@@ -5108,31 +4804,26 @@ namespace engine
 
       _setFileLanguageSep() ;
 
+      omArgOptions option( _request ) ;
       omConfigTool configTool( _rootPath, _languageFileSep ) ;
 
-      _restAdaptor->getQuery(_restSession, OM_REST_BUSINESS_TYPE,
-                             &pBusinessType ) ;
-      if ( NULL == pBusinessType )
+      rc = option.parseRestArg( "s|s",
+                                OM_REST_BUSINESS_TYPE, &businessType,
+                                OM_BSON_OPERATION_TYPE, &operationType ) ;
+      if ( rc )
       {
-         _errorDetail = string( "rest field:" ) + OM_REST_BUSINESS_TYPE
-                        + " is null" ;
-         rc = SDB_INVALIDARG ;
+         _errorDetail = "failed to get rest args" ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 
-      businessType = pBusinessType ;
-
-      _restAdaptor->getQuery( _restSession, OM_BSON_OPERATION_TYPE,
-                              &pOperationType ) ;
-      if ( pOperationType == NULL )
+      if ( operationType.empty() )
       {
          operationType = OM_FIELD_OPERATION_DEPLOY ;
       }
       else
       {
-         operationType = pOperationType ;
          if( operationType != OM_FIELD_OPERATION_DEPLOY &&
              operationType != OM_FIELD_OPERATION_EXTEND )
          {
@@ -5141,7 +4832,7 @@ namespace engine
             PD_LOG( PDERROR, "%s is invalid: %s=%s, rc=%d",
                     OM_BSON_OPERATION_TYPE,
                     OM_BSON_OPERATION_TYPE,
-                    pOperationType,
+                    operationType.c_str(),
                     rc ) ;
             _sendErrorRes2Web( rc, _errorDetail ) ;
             goto error ;
@@ -5163,8 +4854,7 @@ namespace engine
       iter = deployModList.begin() ;
       while ( iter != deployModList.end() )
       {
-         _restAdaptor->appendHttpBody( _restSession, iter->objdata(),
-                                       iter->objsize(), 1 ) ;
+         _response->appendBody( iter->objdata(), iter->objsize(), 1 ) ;
          iter++ ;
       }
 
@@ -5177,27 +4867,15 @@ namespace engine
    }
 
    // ***************** Get Business Config *****************************
-   omGetBusinessConfigCommand::omGetBusinessConfigCommand(
-                                                 restAdaptor *pRestAdaptor,
-                                                 pmdRestSession *pRestSession,
-                                                 string &rootPath )
-                           : omAuthCommand( pRestAdaptor, pRestSession ),
-                           _rootPath( rootPath )
-
-   {
-   }
-
-   omGetBusinessConfigCommand::~omGetBusinessConfigCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omGetBusinessConfigCommand ) ;
 
    INT32 omGetBusinessConfigCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
       BSONObj templateInfo ;
       BSONObj deployModInfo ;
-      omArgOptions option( _restAdaptor, _restSession ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omArgOptions option( _request ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
 
       _setFileLanguageSep() ;
 
@@ -5726,23 +5404,7 @@ namespace engine
    }
 
    // ***************** Add Business *****************************
-   omAddBusinessCommand::omAddBusinessCommand( restAdaptor *pRestAdaptor,
-                                               pmdRestSession *pRestSession,
-                                               string &rootPath,
-                                               string &path,
-                                               string &localAgentHost,
-                                               string &localAgentService )
-                     : omAuthCommand( pRestAdaptor, pRestSession ),
-                     _rootPath( rootPath ),
-                     _localAgentHost( localAgentHost ),
-                     _localAgentService( localAgentService ),
-                     _force( FALSE )
-   {
-   }
-
-   omAddBusinessCommand::~omAddBusinessCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omAddBusinessCommand ) ;
 
    INT32 omAddBusinessCommand::doCommand()
    {
@@ -5751,8 +5413,8 @@ namespace engine
       BSONObj configInfo ;
       BSONObj taskConfig ;
       BSONArray resultInfo ;
-      omArgOptions option( _restAdaptor, _restSession ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omArgOptions option( _request ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
 
       _setFileLanguageSep() ;
 
@@ -6180,17 +5842,17 @@ namespace engine
       else if ( OM_BUSINESS_ZOOKEEPER == _businessType )
       {
          condition = BSON( OM_BSON_HOSTNAME << "" <<
-                           OM_BSON_ZOOID << "" ) ;
+                           OM_BSON_ZOOID    << "" ) ;
       }
       else if ( OM_BUSINESS_SEQUOIASQL_OLAP == _businessType )
       {
          condition = BSON( OM_BSON_HOSTNAME << "" <<
-                           OM_BSON_ROLE << "" ) ;
+                           OM_BSON_ROLE     << "" ) ;
       }
       else if ( OM_BUSINESS_SEQUOIAPOSTGRESQL == _businessType )
       {
          condition = BSON( OM_BSON_HOSTNAME << "" <<
-                           OM_BSON_PORT << "" ) ;
+                           OM_BSON_PORT     << "" ) ;
       }
       else
       {
@@ -6285,8 +5947,8 @@ namespace engine
                newNodeConfigBuilder.append( OM_TASKINFO_FIELD_SSHPORT,
                                             sshPort ) ;
 
-               ss << pmdGetKRCB()->getHostName() << ":"
-                  << pmdGetKRCB()->getOptionCB()->getOMService() ;
+               ss << pmdGetKRCB()->getHostName() << ":" <<
+                     pmdGetKRCB()->getOptionCB()->getOMService() ;
 
                newNodeConfigBuilder.append( OM_BSON_OM_ADDR, ss.str() ) ;
             }
@@ -6375,15 +6037,7 @@ namespace engine
 
 
    // *****************omListTaskCommand *****************************
-   omListTaskCommand::omListTaskCommand( restAdaptor *pRestAdaptor,
-                                         pmdRestSession *pRestSession )
-                     :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omListTaskCommand::~omListTaskCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omListTaskCommand ) ;
 
    INT32 omListTaskCommand::_getTaskList( list<BSONObj> &taskList )
    {
@@ -6462,10 +6116,10 @@ namespace engine
    {
       BSONObjBuilder opBuilder ;
       list<BSONObj>::iterator iter = taskList.begin() ;
+
       while ( iter != taskList.end() )
       {
-         _restAdaptor->appendHttpBody( _restSession, iter->objdata(),
-                                       iter->objsize(), 1 ) ;
+         _response->appendBody( iter->objdata(), iter->objsize(), 1 ) ;
          iter++ ;
       }
 
@@ -6496,18 +6150,7 @@ namespace engine
    }
 
    // *****************omQueryTaskCommand *****************************
-   omQueryTaskCommand::omQueryTaskCommand( restAdaptor *pRestAdaptor,
-                                           pmdRestSession *pRestSession,
-                                           const string &localAgentHost,
-                                           const string &localAgentService )
-                      :omScanHostCommand( pRestAdaptor, pRestSession,
-                                          localAgentHost, localAgentService)
-   {
-   }
-
-   omQueryTaskCommand::~omQueryTaskCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omQueryTaskCommand ) ;
 
    void omQueryTaskCommand::_modifyTaskInfo( BSONObj &task )
    {
@@ -6556,8 +6199,7 @@ namespace engine
    void omQueryTaskCommand::_sendOneTaskInfo2Web( BSONObj &oneTask )
    {
       _modifyTaskInfo( oneTask ) ;
-      _restAdaptor->appendHttpBody( _restSession, oneTask.objdata(),
-                                    oneTask.objsize(), 1 ) ;
+      _response->appendBody( oneTask.objdata(), oneTask.objsize(), 1 ) ;
       _sendOKRes2Web() ;
 
       return ;
@@ -6569,9 +6211,9 @@ namespace engine
       while ( iter != tasks.end() )
       {
          BSONObj result = *iter ;
+
          _modifyTaskInfo( result ) ;
-         _restAdaptor->appendHttpBody( _restSession, result.objdata(),
-                                       result.objsize(), 1 ) ;
+         _response->appendBody( result.objdata(), result.objsize(), 1 ) ;
          iter++ ;
       }
 
@@ -6834,15 +6476,7 @@ namespace engine
    }
 
    // *****************omListNodeCommand *****************************
-   omListNodeCommand::omListNodeCommand( restAdaptor *pRestAdaptor,
-                                         pmdRestSession *pRestSession )
-                     :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omListNodeCommand::~omListNodeCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omListNodeCommand ) ;
 
    INT32 omListNodeCommand::_getNodeList( string businessName,
                                           list<simpleNodeInfo> &nodeList )
@@ -6922,11 +6556,11 @@ namespace engine
       while ( iter != nodeList.end() )
       {
          BSONObj node ;
+
          node = BSON( OM_BSON_FIELD_HOST_NAME << (*iter).hostName
                       << OM_BSON_FIELD_ROLE << (*iter).role
                       << OM_BSON_FIELD_SVCNAME << (*iter).svcName ) ;
-         _restAdaptor->appendHttpBody( _restSession, node.objdata(),
-                                       node.objsize(), 1 ) ;
+         _response->appendBody( node.objdata(), node.objsize(), 1 ) ;
          iter++ ;
       }
 
@@ -6937,13 +6571,12 @@ namespace engine
 
    INT32 omListNodeCommand::doCommand()
    {
-      INT32 rc                  = SDB_OK ;
-      const CHAR *businessName  = NULL ;
+      INT32 rc = SDB_OK ;
+      string businessName ;
       list<simpleNodeInfo> nodeList ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME,
-                              &businessName ) ;
-      if ( NULL == businessName )
+      businessName = _request->getQuery( OM_REST_BUSINESS_NAME ) ;
+      if ( businessName.empty() )
       {
          _errorDetail = "rest field miss:" + string( OM_REST_BUSINESS_NAME ) ;
          rc = SDB_INVALIDARG ;
@@ -6968,15 +6601,7 @@ namespace engine
    }
 
    // *****************omGetNodeConfCommand *****************************
-   omGetNodeConfCommand::omGetNodeConfCommand( restAdaptor *pRestAdaptor,
-                                               pmdRestSession *pRestSession )
-                          :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omGetNodeConfCommand::~omGetNodeConfCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omGetNodeConfCommand ) ;
 
    void omGetNodeConfCommand::_expandNodeInfo( BSONObj &oneConfig,
                                                const string &svcName,
@@ -7072,8 +6697,7 @@ namespace engine
    {
       if ( !nodeInfo.isEmpty() )
       {
-          _restAdaptor->appendHttpBody( _restSession, nodeInfo.objdata(),
-                                        nodeInfo.objsize(), 1 ) ;
+          _response->appendBody( nodeInfo.objdata(), nodeInfo.objsize(), 1 ) ;
       }
       _sendOKRes2Web() ;
       return ;
@@ -7082,13 +6706,13 @@ namespace engine
    INT32 omGetNodeConfCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
-      const CHAR* pHostName = NULL ;
-      const CHAR* pSvcName  = NULL ;
+      string hostName ;
+      string svcName ;
       BSONObj nodeInfo ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_HOST_NAME, &pHostName ) ;
-      _restAdaptor->getQuery( _restSession, OM_REST_SVCNAME, &pSvcName ) ;
-      if ( NULL == pHostName || NULL == pSvcName )
+      hostName = _request->getQuery( OM_REST_HOST_NAME ) ;
+      svcName  = _request->getQuery( OM_REST_SVCNAME ) ;
+      if ( hostName.empty() || svcName.empty() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "rest field miss:field=%s or field=%s",
@@ -7098,7 +6722,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _getNodeInfo( pHostName, pSvcName, nodeInfo ) ;
+      rc = _getNodeInfo( hostName, svcName, nodeInfo ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
@@ -7115,15 +6739,7 @@ namespace engine
    }
 
    // *****************omQueryNodeConfCommand *****************************
-   omQueryNodeConfCommand::omQueryNodeConfCommand( restAdaptor *pRestAdaptor,
-                                                  pmdRestSession *pRestSession )
-                  :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omQueryNodeConfCommand::~omQueryNodeConfCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omQueryNodeConfCommand ) ;
 
    INT32 omQueryNodeConfCommand::doCommand()
    {
@@ -7135,7 +6751,7 @@ namespace engine
       BSONObj order ;
       BSONObj hint ;
       list<BSONObj> nodes ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
 
       rc = _getQueryPara( selector, matcher, order, hint, skip, returnNum ) ;
       if( rc )
@@ -7165,15 +6781,7 @@ namespace engine
 
 
    // *****************omListBusinessCommand *****************************
-   omListBusinessCommand::omListBusinessCommand( restAdaptor *pRestAdaptor,
-                                                 pmdRestSession *pRestSession )
-                         :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omListBusinessCommand::~omListBusinessCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omListBusinessCommand ) ;
 
    INT32 omListBusinessCommand::doCommand()
    {
@@ -7253,8 +6861,7 @@ namespace engine
       list<BSONObj>::iterator iter = businessList.begin() ;
       while ( iter != businessList.end() )
       {
-         _restAdaptor->appendHttpBody( _restSession, iter->objdata(),
-                                       iter->objsize(), 1 ) ;
+         _response->appendBody( iter->objdata(), iter->objsize(), 1 ) ;
          iter++ ;
       }
 
@@ -7264,17 +6871,7 @@ namespace engine
    }
 
    // *****************omListHostBusinessCommand***************************
-   omListHostBusinessCommand::omListHostBusinessCommand(
-                                                 restAdaptor *pRestAdaptor,
-                                                 pmdRestSession *pRestSession )
-                             :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-
-   }
-
-   omListHostBusinessCommand::~omListHostBusinessCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omListHostBusinessCommand ) ;
 
    INT32 omListHostBusinessCommand::doCommand()
    {
@@ -7354,8 +6951,7 @@ namespace engine
       list<BSONObj>::iterator iter = businessList.begin() ;
       while ( iter != businessList.end() )
       {
-         _restAdaptor->appendHttpBody( _restSession, iter->objdata(),
-                                       iter->objsize(), 1 ) ;
+         _response->appendBody( iter->objdata(), iter->objsize(), 1 ) ;
          iter++ ;
       }
 
@@ -7365,15 +6961,7 @@ namespace engine
    }
 
    // *****************omQueryBusinessCommand *****************************
-   omQueryBusinessCommand::omQueryBusinessCommand( restAdaptor *pRestAdaptor,
-                                                  pmdRestSession *pRestSession )
-                          :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omQueryBusinessCommand::~omQueryBusinessCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omQueryBusinessCommand ) ;
 
    void omQueryBusinessCommand::_sendBusinessInfo2Web(
                                                   list<BSONObj> &businessInfo )
@@ -7381,8 +6969,7 @@ namespace engine
       list<BSONObj>::iterator iter = businessInfo.begin() ;
       while ( iter != businessInfo.end() )
       {
-         _restAdaptor->appendHttpBody( _restSession, iter->objdata(),
-                                       iter->objsize(), 1 ) ;
+         _response->appendBody( iter->objdata(), iter->objsize(), 1 ) ;
          iter++ ;
       }
 
@@ -7430,18 +7017,7 @@ namespace engine
    }
 
    // *****************omStartBusinessCommand *****************************
-   omStartBusinessCommand::omStartBusinessCommand( restAdaptor *pRestAdaptor,
-                                                   pmdRestSession *pRestSession,
-                                                   string localAgentHost,
-                                                   string localAgentService )
-                          :omScanHostCommand( pRestAdaptor, pRestSession,
-                                             localAgentHost, localAgentService )
-   {
-   }
-
-   omStartBusinessCommand::~omStartBusinessCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStartBusinessCommand ) ;
 
    INT32 omStartBusinessCommand::_getNodeInfo( const string &businessName,
                                                BSONObj &nodeInfos,
@@ -7686,18 +7262,7 @@ namespace engine
    }
 
    // *****************omStopBusinessCommand *****************************
-   omStopBusinessCommand::omStopBusinessCommand( restAdaptor *pRestAdaptor,
-                                                 pmdRestSession *pRestSession,
-                                                 string localAgentHost,
-                                                 string localAgentService )
-                         :omScanHostCommand( pRestAdaptor, pRestSession,
-                                             localAgentHost, localAgentService )
-   {
-   }
-
-   omStopBusinessCommand::~omStopBusinessCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStopBusinessCommand ) ;
 
    INT32 omStopBusinessCommand::doCommand()
    {
@@ -7706,15 +7271,7 @@ namespace engine
    }
 
    // *****************omRemoveClusterCommand *****************************
-   omRemoveClusterCommand::omRemoveClusterCommand( restAdaptor *pRestAdaptor,
-                                                  pmdRestSession *pRestSession )
-                          :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omRemoveClusterCommand::~omRemoveClusterCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omRemoveClusterCommand ) ;
 
    INT32 omRemoveClusterCommand::_getClusterExistFlag(
                                                       const string &clusterName,
@@ -7825,14 +7382,13 @@ namespace engine
    INT32 omRemoveClusterCommand::doCommand()
    {
       INT32 rc                   = SDB_OK ;
-      const CHAR *clusterName    = NULL ;
       BOOLEAN isClusterExist     = FALSE ;
-      BSONObj result ;
       BOOLEAN isClusterExistHost = FALSE ;
+      string clusterName ;
+      BSONObj result ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_CLUSTER_NAME,
-                              &clusterName ) ;
-      if ( NULL == clusterName )
+      clusterName = _request->getQuery( OM_REST_FIELD_CLUSTER_NAME ) ;
+      if ( clusterName.empty() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "rest field is miss:field=%s",
@@ -7854,7 +7410,8 @@ namespace engine
       if ( !isClusterExist )
       {
          rc = SDB_DMS_RECORD_NOTEXIST ;
-         PD_LOG_MSG( PDERROR, "%s is not exist:rc=%d", clusterName, rc ) ;
+         PD_LOG_MSG( PDERROR, "%s is not exist:rc=%d",
+                     clusterName.c_str(), rc ) ;
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto done ;
@@ -7873,7 +7430,7 @@ namespace engine
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "host exist in cluster, host should be removed "
-                     "first:cluster=%s", clusterName ) ;
+                     "first:cluster=%s", clusterName.c_str() ) ;
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
@@ -7899,20 +7456,7 @@ namespace engine
    }
 
    // *****************omRemoveHostCommand *****************************
-   omRemoveHostCommand::omRemoveHostCommand( restAdaptor *pRestAdaptor,
-                                             pmdRestSession *pRestSession,
-                                             string &localAgentHost,
-                                             string &localAgentService )
-               : omAuthCommand( pRestAdaptor, pRestSession ),
-                 _localAgentHost( localAgentHost ),
-                 _localAgentService( localAgentService )
-
-   {
-   }
-
-   omRemoveHostCommand::~omRemoveHostCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omRemoveHostCommand ) ;
 
    INT32 omRemoveHostCommand::doCommand()
    {
@@ -7924,8 +7468,8 @@ namespace engine
       BSONObj hostsInfo ;
       BSONObj taskConfig ;
       BSONArray resultInfo ;
-      omArgOptions option( _restAdaptor, _restSession ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omArgOptions option( _request ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
 
       _setFileLanguageSep() ;
 
@@ -8174,32 +7718,19 @@ namespace engine
       goto done ;
    }
 
-   // *****************omGetFileCommand *****************************
-   omQueryHostStatusCommand::omQueryHostStatusCommand(
-                                                   restAdaptor *pRestAdaptor,
-                                                   pmdRestSession *pRestSession,
-                                                   string localAgentHost,
-                                                   string localAgentService )
-                            :omStartBusinessCommand( pRestAdaptor, pRestSession,
-                                                    localAgentHost,
-                                                    localAgentService )
-   {
-   }
-
-   omQueryHostStatusCommand::~omQueryHostStatusCommand()
-   {
-   }
+   // *****************omQueryHostStatusCommand *****************************
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omQueryHostStatusCommand ) ;
 
    INT32 omQueryHostStatusCommand::_getRestHostList(
                                                     list<string> &hostNameList )
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pHostInfo = NULL ;
+      string hostInfoStr ;
       BSONObj hostInfo ;
       BSONObj hostInfoArray ;
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_HOST_INFO,
-                              &pHostInfo ) ;
-      if ( NULL == pHostInfo )
+
+      hostInfoStr = _request->getQuery( OM_REST_FIELD_HOST_INFO ) ;
+      if ( hostInfoStr.empty() )
       {
          _errorDetail = "rest field:" + string( OM_REST_FIELD_HOST_INFO )
                         + " is null" ;
@@ -8208,11 +7739,11 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pHostInfo, hostInfo ) ;
+      rc = fromjson( hostInfoStr.c_str(), hostInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                     "rc=%d", pHostInfo, rc ) ;
+                     "rc=%d", hostInfoStr.c_str(), rc ) ;
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
@@ -8243,7 +7774,8 @@ namespace engine
          _errorDetail = "rest field:" + string( OM_REST_FIELD_HOST_INFO )
                         + " is invalid" ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s:rest=%s", _errorDetail.c_str(), pHostInfo ) ;
+         PD_LOG( PDERROR, "%s:rest=%s", _errorDetail.c_str(),
+                 hostInfoStr.c_str() ) ;
          goto error ;
       }
    done:
@@ -8831,8 +8363,7 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->appendHttpBody( _restSession, bsonStatus.objdata(),
-                                    bsonStatus.objsize(), 1 ) ;
+      _response->appendBody( bsonStatus.objdata(), bsonStatus.objsize(), 1 ) ;
       _sendOKRes2Web() ;
 
    done:
@@ -8841,16 +8372,8 @@ namespace engine
       goto done ;
    }
 
-   // *****************omGetFileCommand *****************************
-   omPredictCapacity::omPredictCapacity( restAdaptor *pRestAdaptor,
-                                         pmdRestSession *pRestSession )
-                     : omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omPredictCapacity::~omPredictCapacity()
-   {
-   }
+   // *****************omPredictCapacity *****************************
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omPredictCapacity ) ;
 
    INT32 omPredictCapacity::_getHostList( BSONObj &hostInfos,
                                           list<string> &hostNameList )
@@ -8983,11 +8506,11 @@ namespace engine
                                           INT32 &replicaNum, INT32 &groupNum )
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pTemplate = NULL ;
+      string templateStr ;
       BSONObj bsonTemplate ;
-      _restAdaptor->getQuery( _restSession, OM_REST_TEMPLATE_INFO,
-                              &pTemplate ) ;
-      if ( NULL == pTemplate )
+
+      templateStr = _request->getQuery( OM_REST_TEMPLATE_INFO ) ;
+      if ( templateStr.empty() )
       {
          _errorDetail = "rest field:" + string( OM_REST_TEMPLATE_INFO )
                         + " is null" ;
@@ -8996,11 +8519,11 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pTemplate, bsonTemplate ) ;
+      rc = fromjson( templateStr.c_str(), bsonTemplate ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                     "rc=%d", pTemplate, rc ) ;
+                     "rc=%d", templateStr.c_str(), rc ) ;
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          goto error ;
       }
@@ -9175,8 +8698,9 @@ namespace engine
          predict = BSON( OM_BSON_FIELD_TOTAL_SIZE << (long long)totalSize
                          << OM_BSON_FIELD_VALID_SIZE << (long long)validSize
                          << OM_BSON_FIELD_REDUNDANCY_RATE << redundancyRate ) ;
-         _restAdaptor->appendHttpBody( _restSession, predict.objdata(),
-                                       predict.objsize(), 1) ;
+
+         _response->appendBody( predict.objdata(), predict.objsize(), 1) ;
+
          _sendOKRes2Web() ;
       }
 
@@ -9187,17 +8711,7 @@ namespace engine
    }
 
    // *****************omGetLogCommand *****************************
-   omGetLogCommand::omGetLogCommand( restAdaptor *pRestAdaptor,
-                                     pmdRestSession *pRestSession )
-                   :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-      _restAdaptor = pRestAdaptor ;
-      _restSession = pRestSession ;
-   }
-
-   omGetLogCommand::~omGetLogCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omGetLogCommand ) ;
 
    INT32 omGetLogCommand::_getFileContent( string filePath,
                                            CHAR **pFileContent,
@@ -9254,13 +8768,12 @@ namespace engine
       INT32 rc             = SDB_OK ;
       CHAR *pContent       = NULL ;
       INT32 contentLength  = 0 ;
-      const CHAR *pSubPath = NULL ;
       CHAR currentPath[ OSS_MAX_PATHSIZE + 1 ] ;
       CHAR logPath[ OSS_MAX_PATHSIZE + 1 ] ;
+      string subPath ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_LOG_NAME,
-                              &pSubPath ) ;
-      if ( NULL == pSubPath )
+      subPath = _request->getQuery( OM_REST_LOG_NAME ) ;
+      if ( subPath.empty() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "get rest field failed:field=%s",
@@ -9277,7 +8790,7 @@ namespace engine
 
       ossSnprintf( logPath, OSS_MAX_PATHSIZE, "%s%s..%s%s%s%s%s%s", currentPath,
                    OSS_FILE_SEP, OSS_FILE_SEP, OM_CONF_PATH_STR, OSS_FILE_SEP,
-                   OM_LOG_PATH_STR, OSS_FILE_SEP, pSubPath ) ;
+                   OM_LOG_PATH_STR, OSS_FILE_SEP, subPath.c_str() ) ;
       rc = _getFileContent( logPath, &pContent, contentLength ) ;
       if ( SDB_OK != rc )
       {
@@ -9286,9 +8799,9 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->appendHttpBody( _restSession, pContent, contentLength, 1,
-                                    FALSE ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _response->appendBody( pContent, contentLength, 1, FALSE ) ;
+
+      _restAdaptor->sendRest( _restSession->socket(), _response ) ;
 
    done:
       if ( NULL != pContent )
@@ -9297,23 +8810,13 @@ namespace engine
       }
       return rc ;
    error:
-      _restAdaptor->appendHttpBody( _restSession, "1", 0, 1, FALSE ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _response->appendBody( "1", 0, 1, FALSE ) ;
+      _restAdaptor->sendRest( _restSession->socket(), _response ) ;
       goto done ;
    }
 
    // *****************omSetBusinessAuthCommand *****************************
-
-   omSetBusinessAuthCommand::omSetBusinessAuthCommand(
-                                                  restAdaptor *pRestAdaptor,
-                                                  pmdRestSession *pRestSession )
-                            :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omSetBusinessAuthCommand::~omSetBusinessAuthCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omSetBusinessAuthCommand ) ;
 
    INT32 omSetBusinessAuthCommand::doCommand()
    {
@@ -9324,8 +8827,8 @@ namespace engine
       string dbName ;
       BSONObj authOptions ;
       omDatabaseTool dbTool( _cb ) ;
-      omArgOptions option( _restAdaptor, _restSession ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omArgOptions option( _request ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
 
       _setFileLanguageSep() ;
 
@@ -9371,28 +8874,17 @@ namespace engine
       goto done ;
    }
    // *****************omRemoveBusinessAuthCommand*****************************
-   omRemoveBusinessAuthCommand::omRemoveBusinessAuthCommand(
-                                                  restAdaptor *pRestAdaptor,
-                                                  pmdRestSession *pRestSession )
-                               :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-
-   }
-
-   omRemoveBusinessAuthCommand::~omRemoveBusinessAuthCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omRemoveBusinessAuthCommand ) ;
 
    INT32 omRemoveBusinessAuthCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pBusinessName = NULL ;
+      string businessName ;
       BSONObj deletor ;
       BSONObj hint ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME,
-                              &pBusinessName ) ;
-      if ( NULL == pBusinessName )
+      businessName = _request->getQuery( OM_REST_BUSINESS_NAME ) ;
+      if ( businessName.empty() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "get rest field failed:field=%s",
@@ -9400,7 +8892,8 @@ namespace engine
          goto error ;
       }
 
-      deletor = BSON( OM_AUTH_FIELD_BUSINESS_NAME << pBusinessName ) ;
+      deletor = BSON( OM_AUTH_FIELD_BUSINESS_NAME << businessName ) ;
+
       rc = rtnDelete( OM_CS_DEPLOY_CL_BUSINESS_AUTH, deletor, hint, 0, _cb ) ;
       if ( SDB_OK != rc )
       {
@@ -9419,16 +8912,7 @@ namespace engine
    }
 
    // *****************omQueryBusinessAuthCommand *****************************
-   omQueryBusinessAuthCommand::omQueryBusinessAuthCommand(
-                                                  restAdaptor *pRestAdaptor,
-                                                  pmdRestSession *pRestSession )
-                              :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omQueryBusinessAuthCommand::~omQueryBusinessAuthCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omQueryBusinessAuthCommand ) ;
 
    void omQueryBusinessAuthCommand::_sendAuthInfo2Web( list<BSONObj> &authInfo )
    {
@@ -9437,8 +8921,8 @@ namespace engine
       while ( iter != authInfo.end() )
       {
          BSONObj tmp = iter->filterFieldsUndotted( filter, false ) ;
-         _restAdaptor->appendHttpBody( _restSession, tmp.objdata(),
-                                       tmp.objsize(), 1 ) ;
+
+         _response->appendBody( tmp.objdata(), tmp.objsize(), 1 ) ;
          iter++ ;
       }
 
@@ -9483,53 +8967,7 @@ namespace engine
    }
 
    // ****************omDiscoverBusinessCommand**********************
-   omDiscoverBusinessCommand::omDiscoverBusinessCommand(
-                                                 restAdaptor *pRestAdaptor,
-                                                 pmdRestSession *pRestSession,
-                                                 string &localAgentHost,
-                                                 string &localAgentService )
-                             : omAuthCommand( pRestAdaptor, pRestSession ),
-                               _localAgentHost( localAgentHost ),
-                               _localAgentService( localAgentService )
-
-   {
-   }
-
-   omDiscoverBusinessCommand::~omDiscoverBusinessCommand()
-   {
-   }
-
-   INT32 omDiscoverBusinessCommand::_getRestInfo( BSONObj &configInfo )
-   {
-      INT32 rc = SDB_OK ;
-      const CHAR *pConfigInfo = NULL ;
-
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_CONFIGINFO,
-                              &pConfigInfo ) ;
-      if ( NULL == pConfigInfo )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "get rest field failed:field=%s",
-                             OM_REST_FIELD_CONFIGINFO ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-      rc = fromjson( pConfigInfo, configInfo ) ;
-      if ( rc )
-      {
-         _errorMsg.setError( TRUE, "change rest field to BSONObj failed:"
-                                   "src=%s,rc=%d",
-                             pConfigInfo, rc ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omDiscoverBusinessCommand ) ;
 
    INT32 omDiscoverBusinessCommand::_checkHostPort( const string &address,
                                                     const string &port )
@@ -10218,14 +9656,15 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj configInfo ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omArgOptions option( _request ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
 
       _setFileLanguageSep() ;
 
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
 
-      rc = _getRestInfo( configInfo ) ;
-      if ( SDB_OK != rc )
+      rc = option.parseRestArg( "j", OM_REST_FIELD_CONFIGINFO, &configInfo ) ;
+      if ( rc )
       {
          PD_LOG( PDERROR, "failed to get rest business info,rc=%d", rc ) ;
          goto error ;
@@ -10253,16 +9692,7 @@ namespace engine
       goto done ;
    }
 
-   omUnDiscoverBusinessCommand::omUnDiscoverBusinessCommand(
-                                                restAdaptor *pRestAdaptor,
-                                                pmdRestSession *pRestSession )
-                               :omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
-
-   omUnDiscoverBusinessCommand::~omUnDiscoverBusinessCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omUnDiscoverBusinessCommand ) ;
 
    INT32 omUnDiscoverBusinessCommand::_UnDiscoverBusiness(
                                                    const string &clusterName,
@@ -10320,50 +9750,16 @@ namespace engine
       goto done ;
    }
 
-   INT32 omUnDiscoverBusinessCommand::_getRestBusinessInfo(
-                                                       string &clusterName,
-                                                       string &businessName )
-   {
-      const CHAR *pClusterName  = NULL ;
-      const CHAR *pBusinessName = NULL ;
-      INT32 rc = SDB_OK ;
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_CLUSTER_NAME,
-                              &pClusterName ) ;
-      if ( NULL == pClusterName )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s",
-                     OM_REST_FIELD_CLUSTER_NAME ) ;
-         goto error ;
-      }
-
-      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME,
-                              &pBusinessName ) ;
-      if ( NULL == pBusinessName )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s",
-                     OM_REST_BUSINESS_NAME) ;
-         goto error ;
-      }
-
-      clusterName  = pClusterName ;
-      businessName = pBusinessName ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 omUnDiscoverBusinessCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
       string clusterName ;
       string businessName ;
+      omArgOptions option( _request ) ;
 
-      rc = _getRestBusinessInfo( clusterName,  businessName ) ;
-      if ( SDB_OK != rc )
+      rc = option.parseRestArg( "ss", OM_REST_FIELD_CLUSTER_NAME, &clusterName,
+                                      OM_REST_BUSINESS_NAME, &businessName ) ;
+      if ( rc )
       {
          PD_LOG( PDERROR, "get business info failed:rc=%d", rc ) ;
          goto error ;
@@ -10385,27 +9781,15 @@ namespace engine
       goto done ;
    }
 
-   omSsqlExecCommand::omSsqlExecCommand( restAdaptor *pRestAdaptor,
-                                         pmdRestSession *pRestSession,
-                                         const string &localAgentHost,
-                                         const string &localAgentPort )
-                     : omAuthCommand( pRestAdaptor, pRestSession ),
-                       _localAgentHost( localAgentHost ),
-                       _localAgentService( localAgentPort )
-   {
-   }
-
-   omSsqlExecCommand::~omSsqlExecCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omSsqlExecCommand ) ;
 
    INT32 omSsqlExecCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
       string dbName ;
       string sql ;
-      omArgOptions option( _restAdaptor, _restSession ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omArgOptions option( _request ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
       omDatabaseTool dbTool( _cb ) ;
 
       _setFileLanguageSep() ;
@@ -10608,30 +9992,20 @@ namespace engine
       goto done ;
    }
 
-   omInterruptTaskCommand::omInterruptTaskCommand( restAdaptor *pRestAdaptor,
-                                                  pmdRestSession *pRestSession,
-                                                  const string &localAgentHost,
-                                                  const string &localAgentPort )
-                          :omScanHostCommand( pRestAdaptor, pRestSession,
-                                              localAgentHost, localAgentPort )
-   {
-   }
-
-   omInterruptTaskCommand::~omInterruptTaskCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omInterruptTaskCommand ) ;
 
    INT32 omInterruptTaskCommand::_parseInterruptTaskInfo()
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pTaskID = NULL ;
+      string taskID ;
       BSONObj selector ;
       BSONObj matcher ;
       BSONObj order ;
       BSONObj hint ;
       list<BSONObj> records ;
-      _restAdaptor->getQuery( _restSession, FIELD_NAME_TASKID, &pTaskID ) ;
-      if ( NULL == pTaskID )
+
+      taskID = _request->getQuery( FIELD_NAME_TASKID ) ;
+      if ( taskID.empty() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "get rest field failed:field=%s",
@@ -10639,7 +10013,7 @@ namespace engine
          goto error ;
       }
 
-      _taskID = ossAtoll( pTaskID ) ;
+      _taskID = ossAtoll( taskID.c_str() ) ;
 
       matcher = BSON( OM_TASKINFO_FIELD_TASKID << _taskID ) ;
       rc = _queryTable( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order,
@@ -10816,36 +10190,37 @@ namespace engine
    }
 
    // ***************** omForwardPluginCommand  *****************************
-   omForwardPluginCommand::omForwardPluginCommand(
-                                                restAdaptor *pRestAdaptor,
-                                                pmdRestSession *pRestSession,
-                                                const string &businessType )
-                                 : omAuthCommand( pRestAdaptor, pRestSession )
-   {
-      _businessType = businessType ;
-   }
-
-   omForwardPluginCommand::~omForwardPluginCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omForwardPluginCommand ) ;
 
    #define OM_FORWARD_TIMEOUT (10000)
    INT32 omForwardPluginCommand::doCommand()
    {
       UINT16 port = 0 ;
       INT32 rc = SDB_OK ;
-      INT32 headerSize = 0 ;
-      INT32 bodySize   = 0 ;
-      const CHAR *pHttpHeader = NULL ;
-      const CHAR *pHttpBody   = NULL ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
       omDatabaseTool dbTool( _cb ) ;
       BSONObj pluginInfo ;
+      BSONObj buzInfo ;
       string serviceName ;
+      string businessName ;
+      string businessType ;
 
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
 
-      rc = dbTool.getPluginInfoByBusinessType( _businessType, pluginInfo ) ;
+      businessName = _request->getHeader( OM_REST_HEAD_BUSINESSNAME ) ;
+
+      rc = dbTool.getOneBusinessInfo( businessName, buzInfo ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "get business info failed: business=%s,rc=%d",
+                             businessName.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      businessType = buzInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+
+      rc = dbTool.getPluginInfoByBusinessType( businessType, pluginInfo ) ;
       if ( rc )
       {
          _errorMsg.setError( TRUE, "Set socket keep alive failed[ %d ]", rc ) ;
@@ -10873,7 +10248,8 @@ namespace engine
                                    OSS_SOCKET_KEEP_CONTER ) ;
          if ( rc )
          {
-            _errorMsg.setError( TRUE, "Set socket keep alive failed[ %d ]", rc ) ;
+            _errorMsg.setError( TRUE, "Set socket keep alive failed[ %d ]",
+                                rc ) ;
             PD_LOG( PDERROR, _errorMsg.getError() ) ;
             goto error ;
          }
@@ -10886,26 +10262,32 @@ namespace engine
             goto error ;
          }
 
-         headerSize  = _restAdaptor->getRequestHeaderSize( _restSession ) ;
-         pHttpHeader = _restAdaptor->getRequestHeader( _restSession ) ;
-
-         rc = pmdSend( pHttpHeader, headerSize, &client,
-                       _cb, OM_FORWARD_TIMEOUT ) ;
+         rc = _restAdaptor->sendRest( &client, _request ) ;
          if ( rc )
          {
-            _errorMsg.setError( TRUE, "failed to forward http header: rc=%d",
+            _errorMsg.setError( TRUE, "failed to forward request: rc=%d", rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         rc = _restAdaptor->recvHeader( &client, _response ) ;
+         if ( rc )
+         {
+            _errorMsg.setError( TRUE, "failed to recv response header: rc=%d",
                                 rc ) ;
             PD_LOG( PDERROR, _errorMsg.getError() ) ;
             goto error ;
          }
 
-         bodySize  = _restAdaptor->getRequestBodySize( _restSession ) ;
-         pHttpBody = _restAdaptor->getRequestBody( _restSession ) ;
+         _response->forceWrite() ;
 
-         rc = pmdSend( pHttpBody, bodySize, &client, _cb, OM_FORWARD_TIMEOUT ) ;
+         _response->setConnectionClose() ;
+
+         rc = _restAdaptor->sendHeader( _restSession->socket(), _response ) ;
          if ( rc )
          {
-            _errorMsg.setError( TRUE, "failed to forward http body: rc=%d",
+            _errorMsg.setError( TRUE, "failed to forward response header: "
+                                      "rc=%d",
                                 rc ) ;
             PD_LOG( PDERROR, _errorMsg.getError() ) ;
             goto error ;
@@ -10913,22 +10295,29 @@ namespace engine
 
          while( !_cb->isInterrupted() )
          {
-            INT32 recvSize = 0 ;
-            CHAR tmpBuf[256] ;
-
-            rc = client.recv( tmpBuf, 256, recvSize, OSS_SOCKET_DFT_TIMEOUT,
-                              0, FALSE, FALSE ) ;
-            if ( rc )
+            rc = _restAdaptor->recvBody( &client, _response ) ;
+            if ( SDB_REST_RECV_SIZE == rc || SDB_OK == rc )
             {
-               if ( SDB_TIMEOUT == rc )
+               rc = _restAdaptor->sendBody( _restSession->socket(),
+                                            _response ) ;
+               if ( rc )
                {
-                  continue;
+                  _errorMsg.setError( TRUE, "failed to forward response body: "
+                                            "rc=%d",
+                                      rc ) ;
+                  PD_LOG( PDERROR, _errorMsg.getError() ) ;
+                  goto error ;
                }
-               break ;
+            }
+            else if ( rc )
+            {
+               _errorMsg.setError( TRUE, "failed to recv response body: rc=%d",
+                                   rc ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
             }
 
-            rc = _restSession->sendData( tmpBuf, recvSize, OM_FORWARD_TIMEOUT ) ;
-            if ( rc )
+            if ( SDB_OK == rc )
             {
                break ;
             }
@@ -10943,40 +10332,24 @@ namespace engine
    }
 
    // *****************omGetFileCommand *****************************
-   omGetFileCommand::omGetFileCommand( restAdaptor *pRestAdaptor,
-                                       pmdRestSession *pRestSession,
-                                       const CHAR *pRootPath,
-                                       const CHAR *pSubPath )
-                    :omGetLogCommand( pRestAdaptor, pRestSession )
-   {
-      _restAdaptor = pRestAdaptor ;
-      _restSession = pRestSession ;
-      _rootPath    = pRootPath ;
-      _subPath     = pSubPath ;
-   }
-
-   omGetFileCommand::~omGetFileCommand()
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omGetFileCommand ) ;
 
    INT32 omGetFileCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
       INT32 contentLength = 0 ;
       CHAR *pContent      = NULL ;
-      const CHAR *pClusterName  = NULL ;
-      const CHAR *pBusinessName = NULL ;
       restFileController* transfer = NULL ;
-      string realSubPath = _subPath ;
+      string realSubPath = _request->getRequestPath() ;
+      string clusterName ;
+      string businessName ;
 
       transfer = restFileController::getTransferInstance() ;
-      transfer->getTransferedPath( _subPath.c_str(), realSubPath ) ;
+      transfer->getTransferedPath( realSubPath.c_str(), realSubPath ) ;
 
-      _restAdaptor->getHttpHeader( _restSession, OM_REST_HEAD_CLUSTERNAME,
-                                   &pClusterName ) ;
-      _restAdaptor->getHttpHeader( _restSession, OM_REST_HEAD_BUSINESSNAME,
-                                   &pBusinessName ) ;
-      if ( NULL == pClusterName || NULL == pBusinessName )
+      clusterName  = _request->getHeader( OM_REST_HEAD_CLUSTERNAME ) ;
+      businessName = _request->getHeader( OM_REST_HEAD_BUSINESSNAME ) ;
+      if ( clusterName.empty() || businessName.empty() )
       {
          rc = _getFileContent( _rootPath + realSubPath, &pContent,
                                contentLength ) ;
@@ -10987,13 +10360,14 @@ namespace engine
          string businessType ;
          BSONObj businessInfo ;
 
-         rc = dbTool.getOneBusinessInfo( pBusinessName, businessInfo ) ;
+         rc = dbTool.getOneBusinessInfo( businessName, businessInfo ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "failed to get business info: cluster=%s,"
                              "business=%s, rc=%d",
-                    pClusterName, pBusinessName, rc ) ;
-            _restAdaptor->sendResponse( _restSession, HTTP_SERVICUNAVA ) ;
+                    clusterName.c_str(), businessName.c_str(), rc ) ;
+            _response->setResponse( HTTP_SERVICUNAVA ) ;
+            _restAdaptor->sendRest( _restSession->socket(), _response ) ;
             goto error ;
          }
 
@@ -11017,7 +10391,8 @@ namespace engine
                PD_LOG( PDERROR, "failed to get plugin info: "
                                 "business type=%s, rc=%d",
                        businessType.c_str(), rc ) ;
-               _restAdaptor->sendResponse( _restSession, HTTP_SERVICUNAVA ) ;
+               _response->setResponse( HTTP_SERVICUNAVA ) ;
+               _restAdaptor->sendRest( _restSession->socket(), _response ) ;
                goto error ;
             }
 
@@ -11031,9 +10406,9 @@ namespace engine
                                     OSS_MAX_PATHSIZE, pluginPath ) ;
             if ( rc )
             {
-               PD_LOG( PDERROR, "plugin path is too long: rc=%d",
-                       rc ) ;
-               _restAdaptor->sendResponse( _restSession, HTTP_SERVICUNAVA ) ;
+               PD_LOG( PDERROR, "plugin path is too long: rc=%d", rc ) ;
+               _response->setResponse( HTTP_SERVICUNAVA ) ;
+               _restAdaptor->sendRest( _restSession->socket(), _response ) ;
                goto error ;
             }
 
@@ -11050,21 +10425,22 @@ namespace engine
          {
             PD_LOG( PDEVENT, "OM: file no found:%s, rc=%d",
                     realSubPath.c_str(), rc ) ;
-            _restAdaptor->sendResponse( _restSession, HTTP_NOTFOUND ) ;
+            _response->setResponse( HTTP_NOTFOUND ) ;
+            _restAdaptor->sendRest( _restSession->socket(), _response ) ;
          }
          else
          {
             PD_LOG( PDEVENT, "OM: open file failed:%s, rc=%d",
                     realSubPath.c_str(), rc ) ;
-            _restAdaptor->sendResponse( _restSession, HTTP_SERVICUNAVA ) ;
+            _response->setResponse( HTTP_SERVICUNAVA ) ;
+            _restAdaptor->sendRest( _restSession->socket(), _response ) ;
          }
 
          goto error ;
       }
 
-      _restAdaptor->appendHttpBody( _restSession, pContent, contentLength, 1,
-                                    FALSE ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _response->appendBody( pContent, contentLength, 1, FALSE ) ;
+      _restAdaptor->sendRest( _restSession->socket(), _response ) ;
 
    done:
       if ( NULL != pContent )
@@ -11148,12 +10524,6 @@ namespace engine
       return true ;
    }
 
-   omStrategyCmdBase::omStrategyCmdBase( restAdaptor *pRestAdaptor,
-                                         pmdRestSession *pRestSession )
-   : omRestCommandBase( pRestAdaptor, pRestSession )
-   {
-   }
-
    omStrategyCmdBase::~omStrategyCmdBase()
    {
    }
@@ -11162,29 +10532,15 @@ namespace engine
                                                   string &bizName )
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pValTmp = NULL ;
+      omArgOptions option( _request ) ;
 
-      _restAdaptor->getQuery( _restSession, OM_BSON_CLUSTER_NAME,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] )
+      rc = option.parseRestArg( "ss", OM_BSON_CLUSTER_NAME, &clsName,
+                                      OM_BSON_BUSINESS_NAME, &bizName ) ;
+      if( rc )
       {
-          _errorDetail = string( "Failed to get the field("
-                                 OM_BSON_CLUSTER_NAME")" ) ;
-          rc = SDB_INVALIDARG ;
-          goto error ;
+         _errorDetail = "Failed to get rest args" ;
+         goto error ;
       }
-      clsName = pValTmp ;
-
-      _restAdaptor->getQuery( _restSession, OM_BSON_BUSINESS_NAME,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] )
-      {
-          _errorDetail = string( "Failed to get the field("
-                                  OM_BSON_BUSINESS_NAME")" ) ;
-          rc = SDB_INVALIDARG ;
-          goto error ;
-      }
-      bizName = pValTmp ;
 
       /// check business exist
       if ( !_isClusterExist( clsName ) ||
@@ -11201,11 +10557,7 @@ namespace engine
       goto done ;
    }
 
-   omStrategyTaskInsert::omStrategyTaskInsert( restAdaptor *pRestAdaptor,
-                                               pmdRestSession *pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyTaskInsert ) ;
 
    omStrategyTaskInsert::~omStrategyTaskInsert()
    {
@@ -11214,9 +10566,12 @@ namespace engine
    INT32 omStrategyTaskInsert::doCommand()
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pValTmp = NULL ;
       omTaskInfo inputInfo ;
-      string clsName, bizName ;
+      string taskName ;
+      string clsName ;
+      string bizName ;
+      string status ;
+      omArgOptions option( _request ) ;
 
       SDB_ASSERT( _restAdaptor != NULL && _restSession != NULL,
                   "_restAdaptor and _restSession can't be null!" ) ;
@@ -11226,25 +10581,23 @@ namespace engine
       {
          goto error ;
       }
+
       inputInfo.setClusterName( clsName ) ;
       inputInfo.setBusinessName( bizName ) ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_TASK_NAME,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp )
+      rc = option.parseRestArg( "s|s", OM_REST_FIELD_TASK_NAME, &taskName,
+                                       OM_REST_FIELD_STATUS, &status ) ;
+      if( rc )
       {
-          _errorDetail = string( "Failed to get the field("
-                                 OM_REST_FIELD_TASK_NAME")" ) ;
-          rc = SDB_INVALIDARG ;
-          goto error ;
+         _errorDetail = "Failed to get rest args" ;
+         goto error ;
       }
-      inputInfo.setTaskName( pValTmp ) ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_STATUS,
-                              &pValTmp ) ;
-      if ( pValTmp && 0 != pValTmp[0] )
+      inputInfo.setTaskName( taskName ) ;
+
+      if ( FALSE == status.empty() )
       {
-         inputInfo.setStatus( ossAtoi( pValTmp ) ) ;
+         inputInfo.setStatus( ossAtoi( status.c_str() ) ) ;
       }
 
       inputInfo.setCreator( _restSession->getLoginUserName() ) ;
@@ -11268,11 +10621,7 @@ namespace engine
       goto done ;
    }
 
-   omStrategyTaskList::omStrategyTaskList( restAdaptor *pRestAdaptor,
-                                           pmdRestSession *pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyTaskList ) ;
 
    omStrategyTaskList::~omStrategyTaskList()
    {
@@ -11336,8 +10685,7 @@ namespace engine
                   goto error ;
                }
             }
-            rc = _restAdaptor->appendHttpBody( _restSession, objTmp.objdata(),
-                                               objTmp.objsize(), 1 ) ;
+            rc = _response->appendBody( objTmp.objdata(), objTmp.objsize(), 1 ) ;
             if ( rc )
             {
                PD_LOG_MSG( PDERROR, "failed to append http body:rc=%d", rc ) ;
@@ -11360,11 +10708,7 @@ namespace engine
       goto done ;
    }
 
-   omStrategyUpdateTaskStatus::omStrategyUpdateTaskStatus( restAdaptor *pRestAdaptor,
-                                                           pmdRestSession *pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyUpdateTaskStatus ) ;
 
    omStrategyUpdateTaskStatus::~omStrategyUpdateTaskStatus()
    {
@@ -11374,8 +10718,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT32 status = 0 ;
-      const CHAR *pValTmp = NULL ;
       string clsName, bizName, taskName ;
+      omArgOptions option( _request ) ;
 
       SDB_ASSERT( _restAdaptor != NULL && _restSession != NULL,
                   "_restAdaptor and _restSession can't be null!" ) ;
@@ -11386,27 +10730,21 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_TASK_NAME,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] )
+      rc = option.parseRestArg( "sl", OM_REST_FIELD_TASK_NAME, &taskName,
+                                      OM_REST_FIELD_STATUS, &status ) ;
+      if( rc )
+      {
+         _errorDetail = "Failed to get rest args" ;
+         goto error ;
+      }
+
+      if ( taskName.empty() )
       {
           _errorDetail = string( "Failed to get the field("
                                  OM_REST_FIELD_TASK_NAME")" ) ;
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      taskName = pValTmp ;
-
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_STATUS,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] )
-      {
-          _errorDetail = string( "Failed to get the field("
-                                 OM_REST_FIELD_STATUS")" ) ;
-          rc = SDB_INVALIDARG ;
-          goto error ;
-      }
-      status = ossAtoi( pValTmp ) ;
 
       rc = omGetStrategyMgr()->updateTaskStatus( clsName, bizName, taskName,
                                                  status, _cb ) ;
@@ -11425,11 +10763,7 @@ namespace engine
       goto done ;
    }
 
-   omStrategyTaskDel::omStrategyTaskDel( restAdaptor * pRestAdaptor,
-                                         pmdRestSession * pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyTaskDel ) ;
 
    omStrategyTaskDel::~omStrategyTaskDel()
    {
@@ -11438,8 +10772,8 @@ namespace engine
    INT32 omStrategyTaskDel::doCommand()
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pValTmp = NULL ;
       string clsName, bizName, taskName ;
+      omArgOptions option( _request ) ;
 
       SDB_ASSERT( _restAdaptor != NULL && _restSession != NULL,
                   "_restAdaptor and _restSession can't be null!" ) ;
@@ -11450,16 +10784,14 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_TASK_NAME,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] )
+      option.parseRestArg( "s", OM_REST_FIELD_TASK_NAME, &taskName ) ;
+      if ( taskName.empty() )
       {
           _errorDetail = string( "Failed to get the field("
                                  OM_REST_FIELD_TASK_NAME")" ) ;
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      taskName = pValTmp ;
 
       rc = omGetStrategyMgr()->delTask( clsName, bizName,
                                         taskName, _cb ) ;
@@ -11478,11 +10810,7 @@ namespace engine
       goto done ;
    }
 
-   omStrategyInsert::omStrategyInsert( restAdaptor *pRestAdaptor, 
-                                       pmdRestSession *pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyInsert ) ;
 
    omStrategyInsert::~omStrategyInsert()
    {
@@ -11491,9 +10819,14 @@ namespace engine
    INT32 omStrategyInsert::doCommand()
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pValTmp = NULL ;
+      INT64 sortID = 0 ;
       omTaskStrategyInfo inputInfo ;
       string clsName, bizName ;
+      string taskName ;
+      string nice ;
+      string userName ;
+      string ips ;
+      omArgOptions option( _request ) ;
 
       SDB_ASSERT( _restAdaptor != NULL && _restSession != NULL,
                   "_restAdaptor and _restSession can't be null!" ) ;
@@ -11506,56 +10839,53 @@ namespace engine
       inputInfo.setClusterName( clsName ) ;
       inputInfo.setBusinessName( bizName ) ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_TASK_NAME,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] )
+      rc = option.parseRestArg( "ss|ssL", OM_REST_FIELD_TASK_NAME, &taskName,
+                                          OM_REST_FIELD_NICE,      &nice,
+                                          OM_REST_FIELD_USER_NAME, &userName,
+                                          OM_REST_FIELD_IPS,       &ips,
+                                          OM_REST_FIELD_SORT_ID,   &sortID ) ;
+      if ( rc )
+      {
+          _errorDetail = string( "Failed to parse rest arg" ) ;
+          rc = SDB_INVALIDARG ;
+          goto error ;
+      }
+
+      if ( taskName.empty() )
       {
           _errorDetail = string( "Failed to get the field("
                                  OM_REST_FIELD_TASK_NAME")" ) ;
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      inputInfo.setTaskName( pValTmp ) ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_NICE,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] ||
-           !ossIsInteger( pValTmp ) )
+      inputInfo.setTaskName( taskName ) ;
+
+      if ( nice.empty() || !ossIsInteger( nice.c_str() ) )
       {
           _errorDetail = string( "Failed to get the field("
                                  OM_REST_FIELD_NICE")" ) ;
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      inputInfo.setNice( ossAtoi( pValTmp ) ) ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_STATUS,
-                              &pValTmp ) ;
-      if ( pValTmp && 0 != pValTmp[0] )
+      inputInfo.setNice( ossAtoi( nice.c_str() ) ) ;
+
+      if ( _request->isQueryArgExist( OM_REST_FIELD_SORT_ID ) )
       {
-         inputInfo.setStatus( ossAtoi( pValTmp ) ) ;
+         inputInfo.setSortID( sortID ) ;
       }
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_SORT_ID,
-                              &pValTmp ) ;
-      if ( pValTmp != NULL )
+      if ( _request->isQueryArgExist( OM_REST_FIELD_USER_NAME ) )
       {
-         inputInfo.setSortID( ossAtoll( pValTmp ) ) ;
+         inputInfo.setUserName( userName ) ;
       }
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_USER_NAME,
-                              &pValTmp ) ;
-      if ( pValTmp != NULL )
-      {
-         inputInfo.setUserName( pValTmp ) ;
-      }
-
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_IPS,
-                              &pValTmp ) ;
-      if ( pValTmp != NULL )
+      if ( _request->isQueryArgExist( OM_REST_FIELD_IPS ) )
       {
          set< string > ipSet ;
-         rc = _parseIPsField( pValTmp, ipSet ) ;
+
+         rc = _parseIPsField( ips.c_str(), ipSet ) ;
          if ( rc != SDB_OK )
          {
             _errorDetail = string( "Failed to parse the field("
@@ -11582,11 +10912,7 @@ namespace engine
       goto done ;
    }
 
-   omStrategyList::omStrategyList( restAdaptor *pRestAdaptor, 
-                                   pmdRestSession *pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyList ) ;
 
    omStrategyList::~omStrategyList()
    {
@@ -11599,7 +10925,6 @@ namespace engine
       const SINT32 maxNumToReturn = 1000 ;
       rtnContextBuf buffObj ;
       BSONObj objTmp ;
-      const CHAR *pValTmp = NULL ;
       string clsName, bizName, taskName ;
 
       rc = _getAndCheckBusiness( clsName, bizName ) ;
@@ -11608,12 +10933,7 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_TASK_NAME,
-                              &pValTmp ) ;
-      if ( pValTmp )
-      {
-         taskName = pValTmp ;
-      }
+      taskName = _request->getQuery( OM_REST_FIELD_TASK_NAME ) ;
 
       rc = omGetStrategyMgr()->queryStrategys( clsName, bizName,
                                                taskName, contextID,
@@ -11657,8 +10977,8 @@ namespace engine
                   goto error ;
                }
             }
-            rc = _restAdaptor->appendHttpBody( _restSession, objTmp.objdata(),
-                                               objTmp.objsize(), 1 ) ;
+
+            rc = _response->appendBody( objTmp.objdata(), objTmp.objsize(), 1 ) ;
             if ( rc )
             {
                PD_LOG_MSG( PDERROR, "failed to append http body:rc=%d", rc ) ;
@@ -11681,11 +11001,7 @@ namespace engine
       goto done ;
    }
 
-   omStrategyUpdateNice::omStrategyUpdateNice( restAdaptor *pRestAdaptor,
-                                               pmdRestSession *pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyUpdateNice ) ;
 
    omStrategyUpdateNice::~omStrategyUpdateNice()
    {
@@ -11696,8 +11012,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 nice = 0 ;
       INT64 ruleId = 0 ;
-      const CHAR *pValTmp = NULL ;
       string clsName, bizName ;
+      string niceStr ;
+      string ruleIdStr ;
+      omArgOptions option( _request ) ;
 
       SDB_ASSERT( _restAdaptor != NULL && _restSession != NULL,
                   "_restAdaptor and _restSession can't be null!" ) ;
@@ -11708,29 +11026,34 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_NICE,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] ||
-           !ossIsInteger( pValTmp ) )
+      rc = option.parseRestArg( "ss", OM_REST_FIELD_NICE,    &niceStr,
+                                      OM_REST_FIELD_RULE_ID, &ruleIdStr ) ;
+      if ( rc )
+      {
+          _errorDetail = string( "Failed to parse rest arg" ) ;
+          rc = SDB_INVALIDARG ;
+          goto error ;
+      }
+
+      if ( niceStr.empty() || !ossIsInteger( niceStr.c_str() ) )
       {
           _errorDetail = string( "Failed to get the field("
                                   OM_REST_FIELD_NICE")" ) ;
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      nice = ossAtoi( pValTmp ) ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_RULE_ID,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] ||
-           !ossIsInteger( pValTmp ) )
+      nice = ossAtoi( niceStr.c_str() ) ;
+
+      if ( ruleIdStr.empty() || !ossIsInteger( ruleIdStr.c_str() ) )
       {
           _errorDetail = string( "Failed to get the field("
                                   OM_REST_FIELD_RULE_ID")" ) ;
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      ruleId = ossAtoll( pValTmp ) ;
+
+      ruleId = ossAtoll( ruleIdStr.c_str() ) ;
 
       rc = omGetStrategyMgr()->updateStrategyNiceById( nice, ruleId,
                                                        clsName, bizName,
@@ -11750,11 +11073,7 @@ namespace engine
       goto done ;
    }
 
-   omStrategyAddIps::omStrategyAddIps( restAdaptor *pRestAdaptor,
-                                       pmdRestSession *pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyAddIps ) ;
 
    omStrategyAddIps::~omStrategyAddIps()
    {
@@ -11765,8 +11084,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT64 ruleId = 0 ;
       set< string > IPs ;
-      const CHAR *pValTmp = NULL ;
       string clsName, bizName ;
+      string ruleIdStr ;
+      string ipsStr ;
+      omArgOptions option( _request ) ;
 
       SDB_ASSERT( _restAdaptor != NULL && _restSession != NULL,
                   "_restAdaptor and _restSession can't be null!" ) ;
@@ -11777,28 +11098,26 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_RULE_ID,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] ||
-           !ossIsInteger( pValTmp ) )
+      rc = option.parseRestArg( "ss", OM_REST_FIELD_RULE_ID, &ruleIdStr,
+                                      OM_REST_FIELD_IPS,     &ipsStr ) ;
+      if ( rc )
+      {
+          _errorDetail = string( "Failed to parse rest arg" ) ;
+          rc = SDB_INVALIDARG ;
+          goto error ;
+      }
+
+      if ( ruleIdStr.empty() || !ossIsInteger( ruleIdStr.c_str() ) )
       {
           _errorDetail = string( "Failed to get the field("
                                   OM_REST_FIELD_RULE_ID")" ) ;
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      ruleId = ossAtoll( pValTmp ) ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_IPS,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp )
-      {
-          _errorDetail = string( "Failed to get the field("
-                                  OM_REST_FIELD_IPS")" ) ;
-          rc = SDB_INVALIDARG ;
-          goto error ;
-      }
-      rc = _parseIPsField( pValTmp, IPs ) ;
+      ruleId = ossAtoll( ruleIdStr.c_str() ) ;
+
+      rc = _parseIPsField( ipsStr.c_str(), IPs ) ;
       if ( rc != SDB_OK )
       {
          _errorDetail = string( "Failed to parse the field("
@@ -11824,11 +11143,7 @@ namespace engine
       goto done ;
    }
 
-   omStrategyDelIps::omStrategyDelIps( restAdaptor *pRestAdaptor,
-                                       pmdRestSession *pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyDelIps ) ;
 
    omStrategyDelIps::~omStrategyDelIps()
    {
@@ -11839,8 +11154,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT64 ruleId = 0 ;
       set< string > IPs ;
-      const CHAR *pValTmp = NULL ;
       string clsName, bizName ;
+      string ruleIdStr ;
+      string ipsStr ;
+      omArgOptions option( _request ) ;
 
       SDB_ASSERT( _restAdaptor != NULL && _restSession != NULL,
                   "_restAdaptor and _restSession can't be null!" ) ;
@@ -11851,28 +11168,26 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_RULE_ID,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] ||
-           !ossIsInteger( pValTmp ) )
+      rc = option.parseRestArg( "ss", OM_REST_FIELD_RULE_ID, &ruleIdStr,
+                                      OM_REST_FIELD_IPS,     &ipsStr ) ;
+      if ( rc )
+      {
+          _errorDetail = string( "Failed to parse rest arg" ) ;
+          rc = SDB_INVALIDARG ;
+          goto error ;
+      }
+
+      if ( ruleIdStr.empty() || !ossIsInteger( ruleIdStr.c_str() ) )
       {
           _errorDetail = string( "Failed to get the field("
                                   OM_REST_FIELD_RULE_ID")" ) ;
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      ruleId = ossAtoll( pValTmp ) ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_IPS,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp )
-      {
-          _errorDetail = string( "Failed to get the field("
-                                 OM_REST_FIELD_IPS")" ) ;
-          rc = SDB_INVALIDARG ;
-          goto error ;
-      }
-      rc = _parseIPsField( pValTmp, IPs ) ;
+      ruleId = ossAtoll( ruleIdStr.c_str() ) ;
+
+      rc = _parseIPsField( ipsStr.c_str(), IPs ) ;
       if ( rc != SDB_OK )
       {
          _errorDetail = string( "Failed to parse the field("
@@ -11898,11 +11213,7 @@ namespace engine
       goto done ;
    }
 
-   omStrategyDel::omStrategyDel( restAdaptor *pRestAdaptor,
-                                 pmdRestSession *pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyDel ) ;
 
    omStrategyDel::~omStrategyDel()
    {
@@ -11912,8 +11223,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT64 ruleId = 0 ;
-      const CHAR *pValTmp = NULL ;
       string clsName, bizName ;
+      string ruleIdStr ;
+      omArgOptions option( _request ) ;
 
       SDB_ASSERT( _restAdaptor != NULL && _restSession != NULL,
                   "_restAdaptor and _restSession can't be null!" ) ;
@@ -11924,17 +11236,22 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_RULE_ID,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] ||
-           !ossIsInteger( pValTmp ) )
+      rc = option.parseRestArg( "s", OM_REST_FIELD_RULE_ID, &ruleIdStr ) ;
+      if ( rc )
+      {
+         _errorDetail = string( "Failed to parse rest arg" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( ruleIdStr.empty() || !ossIsInteger( ruleIdStr.c_str() ) )
       {
           _errorDetail = string( "Failed to get the field("
                                  OM_REST_FIELD_RULE_ID")" ) ;
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      ruleId = ossAtoll( pValTmp ) ;
+      ruleId = ossAtoll( ruleIdStr.c_str() ) ;
 
       rc = omGetStrategyMgr()->delStrategyById( ruleId,
                                                 clsName, bizName,
@@ -11954,11 +11271,7 @@ namespace engine
       goto done ;
    }
 
-   omStrategyUpdateStatus::omStrategyUpdateStatus( restAdaptor *pRestAdaptor, 
-                                                   pmdRestSession *pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyUpdateStatus ) ;
 
    omStrategyUpdateStatus::~omStrategyUpdateStatus()
    {
@@ -11969,8 +11282,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT64 ruleId = 0 ;
       INT32 status ;
-      const CHAR *pValTmp = NULL ;
       string clsName, bizName ;
+      string ruleIdStr ;
+      string statusStr ;
+      omArgOptions option( _request ) ;
 
       SDB_ASSERT( _restAdaptor != NULL && _restSession != NULL,
                   "_restAdaptor and _restSession can't be null!" ) ;
@@ -11981,28 +11296,33 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_RULE_ID,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] ||
-           !ossIsInteger( pValTmp ) )
+      rc = option.parseRestArg( "ss", OM_REST_FIELD_RULE_ID, &ruleIdStr,
+                                      OM_REST_FIELD_STATUS,  &statusStr ) ;
+      if ( rc )
+      {
+         _errorDetail = string( "Failed to parse rest arg" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( ruleIdStr.empty() || !ossIsInteger( ruleIdStr.c_str() ) )
       {
           _errorDetail = string( "Failed to get the field("
                                  OM_REST_FIELD_RULE_ID")" ) ;
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      ruleId = ossAtoll( pValTmp ) ;
+      ruleId = ossAtoll( ruleIdStr.c_str() ) ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_STATUS,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] )
+      if ( statusStr.empty() )
       {
           _errorDetail = string( "Failed to get the field("
                                  OM_REST_FIELD_STATUS")" ) ;
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      status = ossAtoi( pValTmp ) ;
+
+      status = ossAtoi( statusStr.c_str() ) ;
 
       rc = omGetStrategyMgr()->updateStrategyStatusById( status, ruleId,
                                                          clsName, bizName,
@@ -12022,11 +11342,7 @@ namespace engine
       goto done ;
    }
 
-   omStrategyUpdateSortID::omStrategyUpdateSortID( restAdaptor *pRestAdaptor, 
-                                                   pmdRestSession *pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyUpdateSortID ) ;
 
    omStrategyUpdateSortID::~omStrategyUpdateSortID()
    {
@@ -12037,8 +11353,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT64 ruleId = 0 ;
       INT64 sortId = 0 ;
-      const CHAR *pValTmp = NULL ;
       string clsName, bizName ;
+      string ruleIdStr ;
+      string sortIdStr ;
+      omArgOptions option( _request ) ;
 
       SDB_ASSERT( _restAdaptor != NULL && _restSession != NULL,
                   "_restAdaptor and _restSession can't be null!" ) ;
@@ -12049,29 +11367,34 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_RULE_ID,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] ||
-           !ossIsInteger( pValTmp ) )
+      rc = option.parseRestArg( "ss", OM_REST_FIELD_RULE_ID, &ruleIdStr,
+                                      OM_REST_FIELD_SORT_ID, &sortIdStr ) ;
+      if ( rc )
+      {
+         _errorDetail = string( "Failed to parse rest arg" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( ruleIdStr.empty() || !ossIsInteger( ruleIdStr.c_str() ) )
       {
           _errorDetail = string( "Failed to get the field("
                                  OM_REST_FIELD_RULE_ID")" ) ;
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      ruleId = ossAtoll( pValTmp ) ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_SORT_ID,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] ||
-           !ossIsInteger( pValTmp ) )
+      ruleId = ossAtoll( ruleIdStr.c_str() ) ;
+
+      if ( sortIdStr.empty() || !ossIsInteger( sortIdStr.c_str() ) )
       {
           _errorDetail = string( "Failed to get the field("
                                   OM_REST_FIELD_SORT_ID")" ) ;
           rc = SDB_INVALIDARG ;
           goto error ;
       }
-      sortId = ossAtoll( pValTmp ) ;
+
+      sortId = ossAtoll( sortIdStr.c_str() ) ;
 
       rc = omGetStrategyMgr()->updateStrategySortIDById( sortId, ruleId,
                                                          clsName, bizName,
@@ -12091,11 +11414,8 @@ namespace engine
       goto done ;
    }
 
-   omStrategyUpdateUser::omStrategyUpdateUser( restAdaptor *pRestAdaptor, 
-                                               pmdRestSession *pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   /* omStrategyUpdateUser */
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyUpdateUser ) ;
 
    omStrategyUpdateUser::~omStrategyUpdateUser()
    {
@@ -12105,8 +11425,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT64 ruleId = 0 ;
-      const CHAR *pValTmp = NULL ;
+      string userName ;
       string clsName, bizName ;
+      omArgOptions option( _request ) ;
 
       SDB_ASSERT( _restAdaptor != NULL && _restSession != NULL,
                   "_restAdaptor and _restSession can't be null!" ) ;
@@ -12117,29 +11438,16 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_RULE_ID,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp || 0 == pValTmp[0] ||
-           !ossIsInteger( pValTmp ) )
+      rc = option.parseRestArg( "sL", OM_REST_FIELD_USER_NAME, &userName,
+                                      OM_REST_FIELD_RULE_ID,   &ruleId ) ;
+      if ( rc )
       {
-          _errorDetail = string( "Failed to get the field("
-                                 OM_REST_FIELD_RULE_ID")" ) ;
-          rc = SDB_INVALIDARG ;
-          goto error ;
-      }
-      ruleId = ossAtoll( pValTmp ) ;
-
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_USER_NAME,
-                              &pValTmp ) ;
-      if ( NULL == pValTmp )
-      {
-          _errorDetail = string( "Failed to get the field("
-                                  OM_REST_FIELD_USER_NAME")" ) ;
-          rc = SDB_INVALIDARG ;
-          goto error ;
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
       }
 
-      rc = omGetStrategyMgr()->updateStrategyUserById( pValTmp, ruleId,
+      rc = omGetStrategyMgr()->updateStrategyUserById( userName.c_str(), ruleId,
                                                        clsName, bizName,
                                                        _cb ) ;
       if ( rc != SDB_OK )
@@ -12147,6 +11455,7 @@ namespace engine
          _errorDetail = string( "Failed to update task strategy user" ) ;
          goto error ;
       }
+
       _sendOKRes2Web() ;
 
    done:
@@ -12157,11 +11466,7 @@ namespace engine
       goto done ;
    }
 
-   omStrategyFlush::omStrategyFlush( restAdaptor * pRestAdaptor,
-                                     pmdRestSession * pRestSession )
-   : omStrategyCmdBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omStrategyFlush ) ;
 
    omStrategyFlush::~omStrategyFlush()
    {
@@ -12192,11 +11497,7 @@ namespace engine
       goto done ;
    }
 
-   omGetSystemInfoCommand::omGetSystemInfoCommand( restAdaptor *pRestAdaptor,
-                                                   pmdRestSession *pRestSession )
-   : omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omGetSystemInfoCommand ) ;
 
    omGetSystemInfoCommand::~omGetSystemInfoCommand()
    {
@@ -12234,9 +11535,11 @@ namespace engine
                   e.what() ) ;
          goto error ;
       }
+
       ob = systemInfo.obj() ;
-      _restAdaptor->appendHttpBody( _restSession, ob.objdata(),
-                                    ob.objsize(), 1 ) ;
+
+      _response->appendBody( ob.objdata(), ob.objsize(), 1 ) ;
+
       _sendOKRes2Web() ;
    done:
       return rc ;
@@ -12245,16 +11548,7 @@ namespace engine
       goto done ;
    }
 
-   omSyncBusinessConfigureCommand::omSyncBusinessConfigureCommand(
-                                                restAdaptor *pRestAdaptor,
-                                                pmdRestSession *pRestSession,
-                                                string &localAgentHost,
-                                                string &localAgentService )
-         : omAuthCommand( pRestAdaptor, pRestSession ),
-           _localAgentHost( localAgentHost ),
-           _localAgentService( localAgentService )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omSyncBusinessConfigureCommand ) ;
 
    omSyncBusinessConfigureCommand::~omSyncBusinessConfigureCommand()
    {
@@ -12267,17 +11561,20 @@ namespace engine
       string deployMod ;
       BSONObj businessInfo ;
       vector<simpleAddressInfo> addressList ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
       omDatabaseTool dbTool( _cb ) ;
+      omArgOptions option( _request ) ;
 
       _setFileLanguageSep() ;
 
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
 
-      rc = _getRestInfo() ;
+      rc = option.parseRestArg( "ss", OM_CLUSTER_FIELD_NAME, &_clusterName,
+                                      OM_BUSINESS_FIELD_NAME, &_businessName ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "_getRestInfo failed:rc=%d", rc ) ;
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
 
@@ -12366,42 +11663,6 @@ namespace engine
       return rc ;
    error:
       restTool.sendRespone( rc, _errorMsg.getError() ) ;
-      goto done ;
-   }
-
-   INT32 omSyncBusinessConfigureCommand::_getRestInfo()
-   {
-      INT32 rc = SDB_OK ;
-      const CHAR *pClusterName  = NULL ;
-      const CHAR *pBusinessName = NULL ;
-
-      _restAdaptor->getQuery( _restSession, OM_CLUSTER_FIELD_NAME,
-                              &pClusterName ) ;
-      if ( NULL == pClusterName || 0 == ossStrlen( pClusterName ) )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
-                             OM_CLUSTER_FIELD_NAME ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-      _clusterName = pClusterName ;
-
-      _restAdaptor->getQuery( _restSession, OM_BUSINESS_FIELD_NAME,
-                              &pBusinessName ) ;
-      if ( NULL == pBusinessName || 0 == ossStrlen( pBusinessName ) )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
-                             OM_BUSINESS_FIELD_NAME ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-      _businessName = pBusinessName ;
-
-   done:
-      return rc ;
-   error:
       goto done ;
    }
 
@@ -12661,97 +11922,10 @@ namespace engine
       request = builder.obj() ;
    }
 
-   omGrantSysConfigureCommand::omGrantSysConfigureCommand(
-                                                restAdaptor *pRestAdaptor,
-                                                pmdRestSession *pRestSession )
-         : omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omGrantSysConfigureCommand ) ;
 
    omGrantSysConfigureCommand::~omGrantSysConfigureCommand()
    {
-   }
-
-   INT32 omGrantSysConfigureCommand::_getRestInfo()
-   {
-      INT32 rc = SDB_OK ;
-      const CHAR *pClusterName  = NULL ;
-      const CHAR *pName         = NULL ;
-      const CHAR *pPrivilege    = NULL ;
-      string privilege ;
-
-      //ClusterName
-      _restAdaptor->getQuery( _restSession, OM_CLUSTER_FIELD_NAME,
-                              &pClusterName ) ;
-      if ( NULL == pClusterName || 0 == ossStrlen( pClusterName ) )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
-                             OM_CLUSTER_FIELD_NAME ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-      _clusterName = pClusterName ;
-
-      //Name
-      _restAdaptor->getQuery( _restSession, OM_CLUSTER_FIELD_GRANTNAME,
-                              &pName ) ;
-      if ( NULL == pName || 0 == ossStrlen( pName ) )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
-                             OM_CLUSTER_FIELD_GRANTNAME ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-      _grantName = pName ;
-
-      if ( OM_CLUSTER_FIELD_HOSTFILE != _grantName &&
-           OM_CLUSTER_FIELD_ROOTUSER != _grantName )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "invalid argument:%s=%s",
-                             OM_CLUSTER_FIELD_GRANTNAME, _grantName.c_str() ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-      //Privilege
-      _restAdaptor->getQuery( _restSession, OM_CLUSTER_FIELD_PRIVILEGE,
-                              &pPrivilege ) ;
-      if ( NULL == pPrivilege || 0 == ossStrlen( pPrivilege ) )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
-                             OM_CLUSTER_FIELD_PRIVILEGE ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-      privilege = pPrivilege ;
-
-      if ( OM_VALUE_BOOLEAN_TRUE1 == privilege ||
-           OM_VALUE_BOOLEAN_TRUE2 == privilege )
-      {
-         _privilege = TRUE ;
-      }
-      else if ( OM_VALUE_BOOLEAN_FALSE1 == privilege ||
-                OM_VALUE_BOOLEAN_FALSE2 == privilege )
-      {
-         _privilege = FALSE ;
-      }
-      else
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "invalid argument:%s=%s",
-                             OM_CLUSTER_FIELD_PRIVILEGE, privilege.c_str() ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
    INT32 omGrantSysConfigureCommand::_checkCluster()
@@ -12803,16 +11977,21 @@ namespace engine
    INT32 omGrantSysConfigureCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
+      omArgOptions option( _request ) ;
 
       _setFileLanguageSep() ;
 
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
 
-      rc = _getRestInfo() ;
+      rc = option.parseRestArg( "SSb",
+                                 OM_CLUSTER_FIELD_NAME,      &_clusterName,
+                                 OM_CLUSTER_FIELD_GRANTNAME, &_grantName,
+                                 OM_CLUSTER_FIELD_PRIVILEGE, &_privilege ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "_getRestInfo failed:rc=%d", rc ) ;
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
 
@@ -12854,11 +12033,7 @@ namespace engine
       goto done ;
    }
 
-   omUnbindHostCommand::omUnbindHostCommand( restAdaptor *pRestAdaptor,
-                                             pmdRestSession *pRestSession )
-         : omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omUnbindHostCommand ) ;
 
    omUnbindHostCommand::~omUnbindHostCommand()
    {
@@ -12867,7 +12042,7 @@ namespace engine
    INT32 omUnbindHostCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
       omDatabaseTool dbTool( _cb ) ;
       list<string> hostList ;
 
@@ -12919,41 +12094,15 @@ namespace engine
    INT32 omUnbindHostCommand::_getRestInfo( list<string> &hostList )
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pClusterName = NULL ;
-      const CHAR *pHostInfo    = NULL ;
       BSONObj hostInfo ;
       BSONElement element ;
+      omArgOptions option( _request ) ;
 
-      //ClusterName
-      _restAdaptor->getQuery( _restSession, OM_CLUSTER_FIELD_NAME,
-                              &pClusterName ) ;
-      if ( NULL == pClusterName || 0 == ossStrlen( pClusterName ) )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
-                             OM_CLUSTER_FIELD_NAME ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-      _clusterName = pClusterName ;
-
-      //HostInfo
-      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_HOST_INFO,
-                              &pHostInfo ) ;
-      if ( NULL == pHostInfo )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "get rest info failed: %s is NULL",
-                             OM_REST_FIELD_HOST_INFO ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-      rc = fromjson( pHostInfo, hostInfo ) ;
+      rc = option.parseRestArg( "Sj", OM_CLUSTER_FIELD_NAME, &_clusterName,
+                                      OM_REST_FIELD_HOST_INFO, &hostInfo ) ;
       if ( rc )
       {
-         _errorMsg.setError( TRUE, "failed to convert bson: json=%s,rc=%d",
-                             pHostInfo, rc ) ;
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
@@ -13054,16 +12203,7 @@ namespace engine
       goto done ;
    }
 
-   omDeployPackageCommand::omDeployPackageCommand( restAdaptor *pRestAdaptor,
-                                                   pmdRestSession *pRestSession,
-                                                   string &localAgentHost,
-                                                   string &localAgentService )
-         : omAuthCommand( pRestAdaptor, pRestSession ),
-           _enforced( FALSE ),
-           _localAgentHost( localAgentHost ),
-           _localAgentService( localAgentService )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omDeployPackageCommand ) ;
 
    omDeployPackageCommand::~omDeployPackageCommand()
    {
@@ -13079,8 +12219,8 @@ namespace engine
       BSONObj hostsInfo ;
       BSONObj taskConfig ;
       BSONArray resultInfo ;
-      omArgOptions option( _restAdaptor, _restSession ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omArgOptions option( _request ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
 
       _setFileLanguageSep() ;
 
@@ -13188,6 +12328,7 @@ namespace engine
       }
       else if ( OM_PACKAGE_SEQUOIA_POSTGRESQL == _packageName )
       {
+         //do nothing
       }
       else
       {
@@ -13443,12 +12584,7 @@ namespace engine
       goto done ;
    }
 
-   omRegisterPluginsCommand::omRegisterPluginsCommand(
-                                                restAdaptor *pRestAdaptor,
-                                                pmdRestSession *pRestSession )
-                     : omRestCommandBase( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omRegisterPluginsCommand ) ;
 
    omRegisterPluginsCommand::~omRegisterPluginsCommand()
    {
@@ -13463,8 +12599,8 @@ namespace engine
       string role ;
       string businessType ;
       string publicKey ;
-      omArgOptions option( _restAdaptor, _restSession ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omArgOptions option( _request ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
 
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
 
@@ -13687,11 +12823,7 @@ namespace engine
       goto done ;
    }
 
-   omListPluginsCommand::omListPluginsCommand( restAdaptor *pRestAdaptor,
-                                               pmdRestSession *pRestSession )
-                     : omAuthCommand( pRestAdaptor, pRestSession )
-   {
-   }
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omListPluginsCommand ) ;
 
    omListPluginsCommand::~omListPluginsCommand()
    {
@@ -13703,7 +12835,7 @@ namespace engine
       list<BSONObj> pluginList ;
       list<BSONObj>::iterator iter ;
       omDatabaseTool dbTool( _cb ) ;
-      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
 
       _setFileLanguageSep() ;
 

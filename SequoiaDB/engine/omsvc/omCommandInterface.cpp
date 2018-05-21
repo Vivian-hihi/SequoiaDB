@@ -48,16 +48,24 @@ namespace engine
    {
    }
 
-   omRestCommandBase::omRestCommandBase( restAdaptor *pRestAdaptor, 
-                                         pmdRestSession *pRestSession )
+   omRestCommandBase::omRestCommandBase( pmdRestSession *pRestSession,
+                                         restAdaptor *pRestAdaptor, 
+                                         restRequest *pRequest,
+                                         restResponse *pResponse,
+                                         const string &localAgentHost,
+                                         const string &localAgentService,
+                                         const string &rootPath )
    {
-      _pKRCB  = pmdGetKRCB() ;
-      _pDMDCB = _pKRCB->getDMSCB() ;
-      _pRTNCB = _pKRCB->getRTNCB() ;
-      _pDMSCB = _pKRCB->getDMSCB() ;
       _cb     = NULL ;
-      _restAdaptor = pRestAdaptor ;
+
       _restSession = pRestSession ;
+      _restAdaptor = pRestAdaptor ;
+      _request     = pRequest ;
+      _response    = pResponse ;
+
+      _localAgentHost    = localAgentHost ;
+      _localAgentService = localAgentService ;
+      _rootPath          = rootPath ;
    }
 
    omRestCommandBase::~omRestCommandBase()
@@ -67,6 +75,11 @@ namespace engine
    INT32 omRestCommandBase::init( pmdEDUCB * cb )
    {
       _cb = cb ;
+
+      _pKRCB  = pmdGetKRCB() ;
+      _pDMDCB = _pKRCB->getDMSCB() ;
+      _pRTNCB = _pKRCB->getRTNCB() ;
+      _pDMSCB = _pKRCB->getDMSCB() ;
 
       return SDB_OK ;
    }
@@ -928,7 +941,7 @@ namespace engine
                           << OM_REST_RES_DESP << getErrDesp( rc )
                           << OM_REST_RES_DETAIL << detail ) ;
 
-      _restAdaptor->setOPResult( _restSession, rc, res ) ;
+      _response->setOPResult( rc, res ) ;
    }
 
    void omRestCommandBase::_sendOKRes2Web()
@@ -939,7 +952,8 @@ namespace engine
    void omRestCommandBase::_sendErrorRes2Web( INT32 rc, const CHAR* detail )
    {
       _setOPResult( rc, detail ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _response->setResponse( HTTP_OK ) ;
+      _restAdaptor->sendRest( _restSession->socket(), _response ) ;
    }
 
    void omRestCommandBase::_sendErrorRes2Web( INT32 rc, const string &detail )
@@ -985,6 +999,117 @@ namespace engine
       goto done ;
    }
 
+   /*
+      _omRestCmdAssit
+   */
+   _omRestCmdAssit::_omRestCmdAssit( OMREST_NEW_FUNC pFunc )
+   {
+      if ( pFunc )
+      {
+         omRestCommandBase *pCommand = (*pFunc)( NULL, NULL, NULL, NULL,
+                                                 "", "", "" ) ;
+         if ( pCommand )
+         {
+            getOmRestCmdBuilder()->_register ( pCommand->name(), pFunc ) ;
+            SDB_OSS_DEL pCommand ;
+            pCommand = NULL ;
+         }
+      }
+   }
+
+   _omRestCmdAssit::~_omRestCmdAssit ()
+   {
+   }
+
+   
+   /*
+      _omRestCmdBuilder
+   */
+   _omRestCmdBuilder::_omRestCmdBuilder ()
+   {
+   }
+
+   _omRestCmdBuilder::~_omRestCmdBuilder ()
+   {
+   }
+
+   omRestCommandBase* _omRestCmdBuilder::create( const CHAR *command,
+                                                 OMREST_CLASS_PARAMETER )
+   {
+      OMREST_NEW_FUNC pFunc = _find ( command ) ;
+
+      if ( pFunc )
+      {
+         SDB_ASSERT ( pRestSession, "pRestSession is NULL" ) ;
+         SDB_ASSERT ( pRestAdaptor, "pRestAdaptor is NULL" ) ;
+         SDB_ASSERT ( pRequest,     "pRequest is NULL" ) ;
+         SDB_ASSERT ( pResponse,    "pResponse is NULL" ) ;
+
+         return (*pFunc)( OMREST_CLASS_INPUT_PARAMETER ) ;
+      }
+
+      return NULL ;
+   }
+
+   void _omRestCmdBuilder::release ( omRestCommandBase *&pCommand )
+   {
+      if ( pCommand )
+      {
+         SDB_OSS_DEL pCommand ;
+         pCommand = NULL ;
+      }
+   }
+
+   INT32 _omRestCmdBuilder::_register ( const CHAR *name, OMREST_NEW_FUNC pFunc )
+   {
+      INT32 rc = SDB_OK ;
+      pair< MAP_OACMD_IT, BOOLEAN > ret ;
+
+      if ( ossStrlen( name ) == 0 )
+      {
+         goto done ;
+      }
+
+      ret = _cmdMap.insert( pair<const CHAR*, OMREST_NEW_FUNC>(name, pFunc) ) ;
+      if ( FALSE == ret.second )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to register om rest command[%s], "
+                      "already exist", name ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   OMREST_NEW_FUNC _omRestCmdBuilder::_find ( const CHAR *name )
+   {
+      if ( name )
+      {
+         MAP_OACMD_IT it = _cmdMap.find( name ) ;
+         if ( it != _cmdMap.end() )
+         {
+            return it->second ;
+         }
+      }
+      return NULL ;
+   }
+
+   /*
+      get om rest command builder
+   */
+   _omRestCmdBuilder* getOmRestCmdBuilder()
+   {
+      static _omRestCmdBuilder cmdBuilder ;
+      return &cmdBuilder ;
+   }
+
+   /*
+      omAgentReqBase
+   */
    omAgentReqBase::omAgentReqBase( BSONObj &request )
                   :_request( request.copy() ), _response( BSONObj() )
    {

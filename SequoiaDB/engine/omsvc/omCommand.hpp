@@ -91,16 +91,26 @@ namespace engine
          SINT64      _contextID ;
    } ;
 
+   #define REST_CONSTRUCTOR_PARA_INHERIT( classA, classB ) \
+      classA( OMREST_CLASS_PARAMETER ): classB( OMREST_CLASS_INPUT_PARAMETER )
+
    class omAuthCommand : public omRestCommandBase
    {
       public:
-         omAuthCommand( restAdaptor *pRestAdaptor,
-                        pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omAuthCommand, omRestCommandBase )
+         {
+         }
 
-         ~omAuthCommand() ;
+         ~omAuthCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
 
       public:
          virtual INT32   doCommand() ;
+
+         virtual const CHAR* name() { return "" ; }
 
       protected:
          void            _decryptPasswd( const string &encryptPasswd,
@@ -124,14 +134,18 @@ namespace engine
    class omExtendBusinessCommand : public omAuthCommand
    {
    public:
-      omExtendBusinessCommand( restAdaptor *pRestAdaptor,
-                               pmdRestSession *pRestSession,
-                               const CHAR *pRootPath,
-                               string &localAgentHost,
-                               string &localAgentService ) ;
-      ~omExtendBusinessCommand() ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omExtendBusinessCommand, omAuthCommand )
+      {
+      }
 
-   public:
+      ~omExtendBusinessCommand()
+      {
+      }
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_EXTEND_BUSINESS_REQ ; }
+
       virtual INT32 doCommand() ;
 
    private:
@@ -155,9 +169,6 @@ namespace engine
                                      BSONArray &resultInfo ) ;
 
    private:
-      string _rootPath ;
-      string _localAgentHost ;
-      string _localAgentService ;
       string _clusterName ;
       string _businessName ;
       string _businessType ;
@@ -167,14 +178,18 @@ namespace engine
    class omShrinkBusinessCommand : public omAuthCommand
    {
    public:
-      omShrinkBusinessCommand( restAdaptor *pRestAdaptor,
-                               pmdRestSession *pRestSession,
-                               const CHAR *pRootPath,
-                               string &localAgentHost,
-                               string &localAgentService ) ;
-      ~omShrinkBusinessCommand() ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omShrinkBusinessCommand, omAuthCommand )
+      {
+      }
 
-   public:
+      ~omShrinkBusinessCommand()
+      {
+      }
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_SHRINK_BUSINESS_REQ ; }
+
       virtual INT32 doCommand() ;
 
    private:
@@ -198,9 +213,6 @@ namespace engine
                                      BSONArray &resultInfo ) ;
 
    private:
-      string _rootPath ;
-      string _localAgentHost ;
-      string _localAgentService ;
       string _clusterName ;
       string _businessName ;
       string _businessType ;
@@ -210,38 +222,54 @@ namespace engine
    class omLogoutCommand : public omAuthCommand
    {
       public:
-         omLogoutCommand( restAdaptor *pRestAdaptor,
-                          pmdRestSession *pRestSession ) ;
-         ~omLogoutCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omLogoutCommand, omAuthCommand )
+         {
+         }
 
-      public:
+         ~omLogoutCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_LOGOUT_REQ ; }
+
          virtual INT32   doCommand() ;
    };
 
    class omChangePasswdCommand : public omAuthCommand
    {
       public:
-         omChangePasswdCommand( restAdaptor *pRestAdaptor,
-                                pmdRestSession *pRestSession ) ;
-         ~omChangePasswdCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omChangePasswdCommand, omAuthCommand )
+         {
+         }
 
-      public:
+         ~omChangePasswdCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_CHANGE_PASSWD_REQ ; }
+
          virtual INT32   doCommand() ;
-
-      private:
-         INT32           _getRestDetail( string &user, string &oldPasswd,
-                                         string &newPasswd, string &time ) ;
    };
 
    class omCheckSessionCommand : public omAuthCommand
    {
       public:
-         omCheckSessionCommand( restAdaptor *pRestAdaptor,
-                                pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omCheckSessionCommand, omAuthCommand )
+         {
+         }
 
-         ~omCheckSessionCommand() ;
+         ~omCheckSessionCommand()
+         {
+         }
 
-      public:
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_CHECK_SESSION_REQ ; }
+
          virtual INT32   doCommand() ;
 
       protected:
@@ -250,11 +278,18 @@ namespace engine
    class omCreateClusterCommand : public omAuthCommand
    {
    public:
+      REST_CONSTRUCTOR_PARA_INHERIT( omCreateClusterCommand,
+                                     omAuthCommand )
+      {
+      }
 
-      omCreateClusterCommand( restAdaptor *pRestAdaptor,
-                              pmdRestSession *pRestSession ) ;
+      ~omCreateClusterCommand()
+      {
+      }
 
-      virtual ~omCreateClusterCommand() ;
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_CREATE_CLUSTER_REQ ; }
 
       virtual INT32 doCommand() ;
 
@@ -267,10 +302,18 @@ namespace engine
    class omQueryClusterCommand : public omCheckSessionCommand
    {
       public:
-         omQueryClusterCommand( restAdaptor *pRestAdaptor,
-                                pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omQueryClusterCommand,
+                                        omCheckSessionCommand )
+         {
+         }
 
-         ~omQueryClusterCommand() ;
+         ~omQueryClusterCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_QUERY_CLUSTER_REQ ; }
 
       public:
          virtual INT32   doCommand() ;
@@ -312,12 +355,19 @@ namespace engine
    class omUpdateHostInfoCommand : public omCheckSessionCommand
    {
       public:
-         omUpdateHostInfoCommand( restAdaptor *pRestAdaptor,
-                                  pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omUpdateHostInfoCommand,
+                                        omCheckSessionCommand )
+         {
+         }
 
-         ~omUpdateHostInfoCommand() ;
+         ~omUpdateHostInfoCommand()
+         {
+         }
 
-      public:
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_UPDATE_HOST_INFO_REQ ; }
+
          virtual INT32   doCommand() ;
 
       protected:
@@ -330,14 +380,19 @@ namespace engine
    class omScanHostCommand : public omCheckSessionCommand
    {
       public:
-         omScanHostCommand( restAdaptor *pRestAdaptor,
-                            pmdRestSession *pRestSession,
-                            const string &localAgentHost,
-                            const string &localAgentService ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omScanHostCommand,
+                                        omCheckSessionCommand )
+         {
+         }
 
-         ~omScanHostCommand() ;
+         ~omScanHostCommand()
+         {
+         }
 
-      public:
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_SCAN_HOST_REQ ; }
+
          virtual INT32   doCommand() ;
 
       protected:
@@ -369,27 +424,24 @@ namespace engine
                                          BSONObj &response,
                                          list<BSONObj> &bsonResult ) ;
          INT32           _checkRestHostInfo( BSONObj &hostInfo ) ;
-
-      protected:
-         string          _localAgentHost ;
-         string          _localAgentService ;
-
-      private:
-
-
    };
 
    class omCheckHostCommand : public omScanHostCommand
    {
       public:
-         omCheckHostCommand( restAdaptor *pRestAdaptor,
-                             pmdRestSession *pRestSession,
-                             const string &localAgentHost,
-                             const string &localAgentService ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omCheckHostCommand,
+                                        omScanHostCommand )
+         {
+         }
 
-         ~omCheckHostCommand() ;
+         ~omCheckHostCommand()
+         {
+         }
 
-      public:
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_CHECK_HOST_REQ ; }
+
          virtual INT32   doCommand() ;
 
       private:
@@ -450,14 +502,18 @@ namespace engine
    class omAddHostCommand : public omScanHostCommand
    {
       public:
-         omAddHostCommand( restAdaptor *pRestAdaptor,
-                           pmdRestSession *pRestSession,
-                           const string &localAgentHost,
-                           const string &localAgentService ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omAddHostCommand, omScanHostCommand )
+         {
+         }
 
-         ~omAddHostCommand() ;
+         ~omAddHostCommand()
+         {
+         }
 
-      public:
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_ADD_HOST_REQ ; }
+
          virtual INT32   doCommand() ;
 
       protected:
@@ -493,11 +549,19 @@ namespace engine
    class omListHostCommand : public omCheckSessionCommand
    {
       public:
-         omListHostCommand( restAdaptor *pRestAdaptor,
-                            pmdRestSession *pRestSession ) ;
-         ~omListHostCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omListHostCommand,
+                                        omCheckSessionCommand )
+         {
+         }
 
-      public:
+         ~omListHostCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_LIST_HOST_REQ ; }
+
          virtual INT32   doCommand() ;
 
       protected:
@@ -509,12 +573,18 @@ namespace engine
    class omQueryHostCommand : public omListHostCommand
    {
       public:
-         omQueryHostCommand( restAdaptor *pRestAdaptor,
-                             pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omQueryHostCommand, omListHostCommand )
+         {
+         }
 
-         ~omQueryHostCommand() ;
+         ~omQueryHostCommand()
+         {
+         }
 
-      public:
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_QUERY_HOST_REQ ; }
+
          virtual INT32   doCommand() ;
 
       private:
@@ -523,13 +593,19 @@ namespace engine
    class omListBusinessTypeCommand : public omCheckSessionCommand
    {
       public:
-         omListBusinessTypeCommand( restAdaptor *pRestAdaptor,
-                                    pmdRestSession *pRestSession,
-                                    const CHAR *pRootPath,
-                                    const CHAR *pSubPath ) ;
-         virtual ~omListBusinessTypeCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omListBusinessTypeCommand,
+                                        omCheckSessionCommand )
+         {
+         }
 
-      public:
+         ~omListBusinessTypeCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_LIST_BUSINESS_TYPE_REQ ; }
+
          virtual INT32  doCommand() ;
 
       protected:
@@ -541,23 +617,24 @@ namespace engine
          BOOLEAN        _isArray( ptree &pt ) ;
 
          INT32          _getBusinessList( list<BSONObj> &businessList ) ;
-
-      protected:
-         string          _rootPath ;
-         string          _subPath ;
-
    } ;
 
    class omGetBusinessTemplateCommand : public omListBusinessTypeCommand
    {
       public:
-         omGetBusinessTemplateCommand( restAdaptor *pRestAdaptor,
-                                         pmdRestSession *pRestSession,
-                                         const CHAR *pRootPath,
-                                         const CHAR *pSubPath ) ;
-         virtual ~omGetBusinessTemplateCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omGetBusinessTemplateCommand,
+                                        omListBusinessTypeCommand )
+         {
+         }
 
-      public:
+         ~omGetBusinessTemplateCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_GET_BUSINESS_TEMPLATE_REQ ; }
+
          virtual INT32  doCommand() ;
 
       protected:
@@ -572,11 +649,18 @@ namespace engine
    class omGetBusinessConfigCommand : public omAuthCommand
    {
    public:
-      omGetBusinessConfigCommand( restAdaptor *pRestAdaptor,
-                                  pmdRestSession *pRestSession,
-                                  string &rootPath ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omGetBusinessConfigCommand,
+                                     omAuthCommand )
+      {
+      }
 
-      ~omGetBusinessConfigCommand() ;
+      ~omGetBusinessConfigCommand()
+      {
+      }
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_CONFIG_BUSINESS_REQ ; }
 
       virtual INT32 doCommand() ;
 
@@ -603,7 +687,6 @@ namespace engine
                               const BSONObj &deployModInfo ) ;
 
    private:
-      string _rootPath ;
       string _clusterName ;
       string _deployMod ;
       string _businessType ;
@@ -614,14 +697,18 @@ namespace engine
    class omAddBusinessCommand : public omAuthCommand
    {
    public:
-      omAddBusinessCommand( restAdaptor *pRestAdaptor,
-                            pmdRestSession *pRestSession,
-                            string &rootPath,
-                            string &path,
-                            string &localAgentHost,
-                            string &localAgentService ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omAddBusinessCommand, omAuthCommand )
+      {
+         _force = FALSE ;
+      }
 
-      ~omAddBusinessCommand() ;
+      ~omAddBusinessCommand()
+      {
+      }
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_INSTALL_BUSINESS_REQ ; }
 
       virtual INT32 doCommand() ;
 
@@ -646,9 +733,6 @@ namespace engine
                          INT64 &taskID ) ;
 
    private:
-      string _rootPath ;
-      string _localAgentHost ;
-      string _localAgentService ;
       string _clusterName ;
       string _businessName ;
       string _businessType ;
@@ -659,11 +743,18 @@ namespace engine
    class omListTaskCommand : public omAuthCommand
    {
       public:
-         omListTaskCommand( restAdaptor *pRestAdaptor,
-                            pmdRestSession *pRestSession ) ;
-         virtual ~omListTaskCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omListTaskCommand, omAuthCommand )
+         {
+         }
 
-      public:
+         ~omListTaskCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_LIST_TASK_REQ ; }
+
          virtual INT32  doCommand() ;
 
       private:
@@ -674,13 +765,18 @@ namespace engine
    class omQueryTaskCommand : public omScanHostCommand
    {
       public:
-         omQueryTaskCommand( restAdaptor *pRestAdaptor,
-                             pmdRestSession *pRestSession,
-                             const string &localAgentHost,
-                             const string &localAgentService ) ;
-         virtual ~omQueryTaskCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omQueryTaskCommand, omScanHostCommand )
+         {
+         }
 
-      public:
+         ~omQueryTaskCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_QUERY_TASK_REQ ; }
+
          virtual INT32  doCommand() ;
 
       protected:
@@ -699,11 +795,18 @@ namespace engine
    class omListNodeCommand : public omAuthCommand
    {
       public:
-         omListNodeCommand( restAdaptor *pRestAdaptor,
-                            pmdRestSession *pRestSession ) ;
-         virtual ~omListNodeCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omListNodeCommand, omAuthCommand )
+         {
+         }
 
-      public:
+         ~omListNodeCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_LIST_NODE_REQ ; }
+
          virtual INT32  doCommand() ;
 
       private:
@@ -715,11 +818,18 @@ namespace engine
    class omGetNodeConfCommand : public omAuthCommand
    {
       public:
-         omGetNodeConfCommand( restAdaptor *pRestAdaptor,
-                               pmdRestSession *pRestSession ) ;
-         virtual ~omGetNodeConfCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omGetNodeConfCommand, omAuthCommand )
+         {
+         }
 
-      public:
+         ~omGetNodeConfCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_GET_NODE_CONF_REQ ; }
+
          virtual INT32  doCommand() ;
 
       private:
@@ -735,22 +845,36 @@ namespace engine
    class omQueryNodeConfCommand : public omAuthCommand
    {
    public:
-      omQueryNodeConfCommand( restAdaptor *pRestAdaptor,
-                              pmdRestSession *pRestSession ) ;
-      virtual ~omQueryNodeConfCommand() ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omQueryNodeConfCommand, omAuthCommand )
+      {
+      }
 
-   public:
+      ~omQueryNodeConfCommand()
+      {
+      }
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_QUERY_NODE_CONF_REQ ; }
+
       virtual INT32 doCommand() ;
    } ;
 
    class omQueryBusinessCommand : public omAuthCommand
    {
       public:
-         omQueryBusinessCommand( restAdaptor *pRestAdaptor,
-                                 pmdRestSession *pRestSession ) ;
-         virtual ~omQueryBusinessCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omQueryBusinessCommand, omAuthCommand )
+         {
+         }
 
-      public:
+         ~omQueryBusinessCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_QUERY_BUSINESS_REQ ; }
+
          virtual INT32  doCommand() ;
 
       private:
@@ -760,11 +884,18 @@ namespace engine
    class omListBusinessCommand : public omAuthCommand
    {
       public:
-         omListBusinessCommand( restAdaptor *pRestAdaptor,
-                                pmdRestSession *pRestSession ) ;
-         virtual ~omListBusinessCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omListBusinessCommand, omAuthCommand )
+         {
+         }
 
-      public:
+         ~omListBusinessCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_LIST_BUSINESS_REQ ; }
+
          virtual INT32  doCommand() ;
 
       private:
@@ -774,11 +905,19 @@ namespace engine
    class omListHostBusinessCommand : public omAuthCommand
    {
       public:
-         omListHostBusinessCommand( restAdaptor *pRestAdaptor,
-                                    pmdRestSession *pRestSession ) ;
-         virtual ~omListHostBusinessCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omListHostBusinessCommand,
+                                        omAuthCommand )
+         {
+         }
 
-      public:
+         ~omListHostBusinessCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_LIST_HOST_BUSINESS_REQ ; }
+
          virtual INT32  doCommand() ;
 
       private:
@@ -788,13 +927,19 @@ namespace engine
    class omStartBusinessCommand : public omScanHostCommand
    {
       public:
-         omStartBusinessCommand( restAdaptor *pRestAdaptor,
-                                 pmdRestSession *pRestSession,
-                                 string localAgentHost,
-                                 string localAgentService ) ;
-         virtual ~omStartBusinessCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStartBusinessCommand,
+                                        omScanHostCommand )
+         {
+         }
 
-      public:
+         ~omStartBusinessCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return "" ; }
+
          virtual INT32  doCommand() ;
 
       protected:
@@ -813,24 +958,37 @@ namespace engine
    class omStopBusinessCommand : public omScanHostCommand
    {
       public:
-         omStopBusinessCommand( restAdaptor *pRestAdaptor,
-                                pmdRestSession *pRestSession,
-                                string localAgentHost,
-                                string localAgentService ) ;
-         virtual ~omStopBusinessCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStopBusinessCommand,
+                                        omScanHostCommand )
+         {
+         }
 
-      public:
+         ~omStopBusinessCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return "" ; }
+
          virtual INT32  doCommand() ;
    } ;
 
    class omRemoveClusterCommand : public omAuthCommand
    {
       public:
-         omRemoveClusterCommand( restAdaptor *pRestAdaptor,
-                                pmdRestSession *pRestSession ) ;
-         virtual ~omRemoveClusterCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omRemoveClusterCommand, omAuthCommand )
+         {
+         }
 
-      public:
+         ~omRemoveClusterCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_REMOVE_CLUSTER_REQ ; }
+
          virtual INT32  doCommand() ;
 
       private:
@@ -844,12 +1002,17 @@ namespace engine
    class omRemoveHostCommand : public omAuthCommand
    {
    public:
-      omRemoveHostCommand( restAdaptor *pRestAdaptor,
-                           pmdRestSession *pRestSession,
-                           string &localAgentHost,
-                           string &localAgentService ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omRemoveHostCommand, omAuthCommand )
+      {
+      }
 
-      virtual ~omRemoveHostCommand() ;
+      ~omRemoveHostCommand()
+      {
+      }
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_REMOVE_HOST_REQ ; }
 
       virtual INT32  doCommand() ;
 
@@ -864,19 +1027,22 @@ namespace engine
 
    private:
       string _clusterName ;
-      string _localAgentHost ;
-      string _localAgentService ;
    } ;
 
    class omRemoveBusinessCommand : public omAuthCommand
    {
    public:
-      omRemoveBusinessCommand( restAdaptor *pRestAdaptor,
-                               pmdRestSession *pRestSession,
-                               string localAgentHost,
-                               string localAgentService ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omRemoveBusinessCommand, omAuthCommand )
+      {
+      }
 
-      virtual ~omRemoveBusinessCommand() ;
+      ~omRemoveBusinessCommand()
+      {
+      }
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_REMOVE_BUSINESS_REQ ; }
 
       virtual INT32 doCommand() ;
 
@@ -903,21 +1069,24 @@ namespace engine
       string _businessName ;
       string _businessType ;
       string _deployMod ;
-      string _localAgentHost ;
-      string _localAgentService ;
    } ;
 
    class omQueryHostStatusCommand : public omStartBusinessCommand
    {
       public:
-         omQueryHostStatusCommand( restAdaptor *pRestAdaptor,
-                                   pmdRestSession *pRestSession,
-                                   string localAgentHost,
-                                   string localAgentService ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omQueryHostStatusCommand,
+                                        omStartBusinessCommand )
+         {
+         }
 
-         ~omQueryHostStatusCommand() ;
+         ~omQueryHostStatusCommand()
+         {
+         }
 
-      public:
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_QUERY_HOST_STATUS_REQ ; }
+
          virtual INT32   doCommand() ;
 
       private:
@@ -943,12 +1112,18 @@ namespace engine
    class omPredictCapacity : public omAuthCommand
    {
       public:
-         omPredictCapacity( restAdaptor *pRestAdaptor,
-                            pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omPredictCapacity, omAuthCommand )
+         {
+         }
 
-         ~omPredictCapacity() ;
+         ~omPredictCapacity()
+         {
+         }
 
-      public:
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_PREDICT_CAPACITY_REQ ; }
+
          virtual INT32   doCommand() ;
 
       private:
@@ -972,51 +1147,78 @@ namespace engine
    class omGetLogCommand : public omAuthCommand
    {
       public:
-         omGetLogCommand( restAdaptor *pRestAdaptor,
-                          pmdRestSession *pRestSession ) ;
-         virtual ~omGetLogCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omGetLogCommand, omAuthCommand )
+         {
+         }
 
-      public:
+         ~omGetLogCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_GET_LOG_REQ ; }
+
          virtual INT32   doCommand() ;
 
       protected:
          INT32           _getFileContent( string filePath, CHAR **pFileContent,
                                           INT32 &fileContentLen ) ;
-
-      protected:
    } ;
 
    class omSetBusinessAuthCommand : public omAuthCommand
    {
    public:
-      omSetBusinessAuthCommand( restAdaptor *pRestAdaptor,
-                                pmdRestSession *pRestSession ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omSetBusinessAuthCommand, omAuthCommand )
+      {
+      }
 
-      virtual ~omSetBusinessAuthCommand() ;
+      ~omSetBusinessAuthCommand()
+      {
+      }
 
-   public:
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_SET_BUSINESS_AUTH_REQ ; }
+
       virtual INT32 doCommand() ;
    } ;
 
    class omRemoveBusinessAuthCommand : public omAuthCommand
    {
       public:
-         omRemoveBusinessAuthCommand( restAdaptor *pRestAdaptor,
-                                      pmdRestSession *pRestSession ) ;
-         virtual ~omRemoveBusinessAuthCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omRemoveBusinessAuthCommand,
+                                        omAuthCommand )
+         {
+         }
 
-      public:
+         ~omRemoveBusinessAuthCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_REMOVE_BUSINESS_AUTH_REQ ; }
+
          virtual INT32   doCommand() ;
    } ;
 
    class omQueryBusinessAuthCommand : public omAuthCommand
    {
       public:
-         omQueryBusinessAuthCommand( restAdaptor *pRestAdaptor,
-                                     pmdRestSession *pRestSession ) ;
-         virtual ~omQueryBusinessAuthCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omQueryBusinessAuthCommand,
+                                        omAuthCommand )
+         {
+         }
 
-      public:
+         ~omQueryBusinessAuthCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_QUERY_BUSINESS_AUTH_REQ ; }
+
          virtual INT32   doCommand() ;
 
       protected:
@@ -1026,19 +1228,21 @@ namespace engine
    class omDiscoverBusinessCommand : public omAuthCommand
    {
    public:
+      REST_CONSTRUCTOR_PARA_INHERIT( omDiscoverBusinessCommand, omAuthCommand )
+      {
+      }
 
-      omDiscoverBusinessCommand( restAdaptor *pRestAdaptor,
-                                 pmdRestSession *pRestSession,
-                                 string &localAgentHost,
-                                 string &localAgentService ) ;
+      ~omDiscoverBusinessCommand()
+      {
+      }
 
-      virtual ~omDiscoverBusinessCommand() ;
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_DISCOVER_BUSINESS_REQ ; }
 
       virtual INT32 doCommand() ;
 
    private:
-
-      INT32 _getRestInfo( BSONObj &configInfo ) ;
 
       INT32 _checkHostPort( const string &hostName, const string &port ) ;
       INT32 _checkBusinssCFG( BSONObj &configInfo ) ;
@@ -1069,38 +1273,47 @@ namespace engine
       string _clusterName ;
       string _businessName ;
       string _businessType ;
-      string _localAgentHost ;
-      string _localAgentService ;
 
    } ;
 
    class omUnDiscoverBusinessCommand : public omAuthCommand
    {
       public:
-         omUnDiscoverBusinessCommand( restAdaptor *pRestAdaptor,
-                                      pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omUnDiscoverBusinessCommand,
+                                        omAuthCommand )
+         {
+         }
 
-         virtual ~omUnDiscoverBusinessCommand() ;
+         ~omUnDiscoverBusinessCommand()
+         {
+         }
 
-      public:
-         virtual INT32   doCommand() ;
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_UNDISCOVER_BUSINESS_REQ ; }
+
+         virtual INT32 doCommand() ;
 
       protected:
-         INT32           _getRestBusinessInfo( string &clusterName,
-                                               string &businessName ) ;
-
-         INT32           _UnDiscoverBusiness( const string &clusterName,
-                                              const string &businessName ) ;
+         INT32 _UnDiscoverBusiness( const string &clusterName,
+                                    const string &businessName ) ;
    } ;
 
    class omSsqlExecCommand : public omAuthCommand
    {
    public:
-      omSsqlExecCommand( restAdaptor *pRestAdaptor,
-                         pmdRestSession *pRestSession,
-                         const string &localAgentHost,
-                         const string &localAgentPort ) ;
-      virtual ~omSsqlExecCommand() ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omSsqlExecCommand, omAuthCommand )
+      {
+      }
+
+      ~omSsqlExecCommand()
+      {
+      }
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_SSQL_EXEC_REQ ; }
+
       virtual INT32 doCommand() ;
 
    private:
@@ -1113,21 +1326,24 @@ namespace engine
       string _clusterName ;
       string _businessName ;
       string _businessType ;
-      string _localAgentHost ;
-      string _localAgentService ;
    } ;
 
    class omInterruptTaskCommand : public omScanHostCommand
    {
       public:
-         omInterruptTaskCommand( restAdaptor *pRestAdaptor,
-                                 pmdRestSession *pRestSession,
-                                 const string &localAgentHost,
-                                 const string &localAgentPort ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omInterruptTaskCommand,
+                                        omScanHostCommand )
+         {
+         }
 
-         virtual ~omInterruptTaskCommand() ;
+         ~omInterruptTaskCommand()
+         {
+         }
 
-      public:
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return OM_INTERRUPT_TASK_REQ ; }
+
          virtual INT32   doCommand() ;
 
       public:
@@ -1146,33 +1362,39 @@ namespace engine
    class omForwardPluginCommand : public omAuthCommand
    {
    public:
-      omForwardPluginCommand( restAdaptor *pRestAdaptor,
-                              pmdRestSession *pRestSession,
-                              const string &businessType ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omForwardPluginCommand, omAuthCommand )
+      {
+      }
 
-      ~omForwardPluginCommand() ;
+      ~omForwardPluginCommand()
+      {
+      }
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return "" ; }
 
       virtual INT32 doCommand() ;
-
-   private:
-      string _businessType ;
    } ;
 
    class omGetFileCommand : public omGetLogCommand
    {
       public:
-         omGetFileCommand( restAdaptor *pRestAdaptor,
-                           pmdRestSession *pRestSession,
-                           const CHAR *pRootPath, const CHAR *pSubPath ) ;
-         virtual ~omGetFileCommand() ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omGetFileCommand, omGetLogCommand )
+         {
+         }
 
-      public:
+         ~omGetFileCommand()
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return "" ; }
+
          virtual INT32   doCommand() ;
-         virtual INT32   undoCommand() ;
 
-      protected:
-         string          _rootPath ;
-         string          _subPath ;
+         virtual INT32   undoCommand() ;
    };
 
    class restFileController : public SDBObject
@@ -1200,8 +1422,14 @@ namespace engine
    class omStrategyCmdBase : public omRestCommandBase
    {
       public:
-         omStrategyCmdBase( restAdaptor *pRestAdaptor,
-                            pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyCmdBase, omRestCommandBase )
+         {
+         }
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+         virtual const CHAR* name() { return "" ; }
+
          virtual ~omStrategyCmdBase() ;
 
       protected:
@@ -1213,12 +1441,18 @@ namespace engine
    {
       public:
 
+         virtual const CHAR* name() { return OM_TASK_ADD_REQ ; }
+
          virtual INT32 doCommand() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
 
       public:
 
-         omStrategyTaskInsert( restAdaptor *pRestAdaptor,
-                               pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyTaskInsert,
+                                        omStrategyCmdBase )
+         {
+         }
 
          ~omStrategyTaskInsert() ;
    } ;
@@ -1227,214 +1461,305 @@ namespace engine
    {
       public:
 
+         virtual const CHAR* name() { return OM_TASK_LIST_REQ ; }
+
          virtual INT32   doCommand() ;
 
       public:
 
-         omStrategyTaskList( restAdaptor *pRestAdaptor,
-                             pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyTaskList, omStrategyCmdBase )
+         {
+         }
 
          ~omStrategyTaskList() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    };
 
    class omStrategyUpdateTaskStatus : public omStrategyCmdBase
    {
       public:
 
+         virtual const CHAR* name() { return OM_TASK_UPDATE_STATUS_REQ ; }
+
          virtual INT32   doCommand() ;
 
       public:
 
-         omStrategyUpdateTaskStatus( restAdaptor *pRestAdaptor,
-                                     pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyUpdateTaskStatus,
+                                        omStrategyCmdBase )
+         {
+         }
 
          ~omStrategyUpdateTaskStatus() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    };
 
    class omStrategyTaskDel : public omStrategyCmdBase
    {
       public:
 
+         virtual const CHAR* name() { return OM_TASK_DEL_REQ ; }
+
          virtual INT32 doCommand() ;
 
       public:
 
-         omStrategyTaskDel( restAdaptor *pRestAdaptor, 
-                            pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyTaskDel, omStrategyCmdBase )
+         {
+         }
 
          ~omStrategyTaskDel() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    };
 
    class omStrategyInsert : public omStrategyCmdBase
    {
       public:
 
+         virtual const CHAR* name() { return OM_TASK_STRATEGY_ADD_REQ ; }
+
          virtual INT32 doCommand() ;
 
       public:
 
-         omStrategyInsert( restAdaptor *pRestAdaptor, 
-                           pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyInsert, omStrategyCmdBase )
+         {
+         }
 
          ~omStrategyInsert() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    } ;
 
    class omStrategyList : public omStrategyCmdBase
    {
       public:
 
+         virtual const CHAR* name() { return OM_TASK_STRATEGY_LIST_REQ ; }
+
          virtual INT32   doCommand() ;
 
       public:
 
-         omStrategyList( restAdaptor *pRestAdaptor, 
-                         pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyList, omStrategyCmdBase )
+         {
+         }
 
          ~omStrategyList() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    } ;
 
    class omStrategyUpdateNice : public omStrategyCmdBase
    {
-      public:
+   public:
 
-         virtual INT32   doCommand() ;
+      virtual const CHAR* name() { return OM_TASK_STRATEGY_UPDATE_NICE_REQ ; }
 
-      public:
+      virtual INT32   doCommand() ;
 
-         omStrategyUpdateNice( restAdaptor *pRestAdaptor,
-                               pmdRestSession *pRestSession ) ;
+   public:
 
-         ~omStrategyUpdateNice() ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omStrategyUpdateNice, omStrategyCmdBase )
+      {
+      }
+
+      ~omStrategyUpdateNice() ;
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    };
 
    class omStrategyAddIps : public omStrategyCmdBase
    {
       public:
 
+         virtual const CHAR* name() { return OM_TASK_STRATEGY_ADD_IPS_REQ ; }
+
          virtual INT32   doCommand() ;
 
       public:
 
-         omStrategyAddIps( restAdaptor *pRestAdaptor,
-                           pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyAddIps, omStrategyCmdBase )
+         {
+         }
 
          ~omStrategyAddIps() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    };
 
    class omStrategyDelIps : public omStrategyCmdBase
    {
       public:
 
+         virtual const CHAR* name() { return OM_TASK_STRATEGY_DEL_IPS_REQ ; }
+
          virtual INT32   doCommand() ;
 
       public:
 
-         omStrategyDelIps( restAdaptor *pRestAdaptor,
-                           pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyDelIps, omStrategyCmdBase )
+         {
+         }
 
          ~omStrategyDelIps() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    };
 
    class omStrategyDel : public omStrategyCmdBase
    {
       public:
 
+         virtual const CHAR* name() { return OM_TASK_STRATEGY_DEL_REQ ; }
+
          virtual INT32   doCommand() ;
 
       public:
 
-         omStrategyDel( restAdaptor *pRestAdaptor,
-                        pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyDel, omStrategyCmdBase )
+         {
+         }
 
          ~omStrategyDel() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    };
 
    class omStrategyUpdateStatus : public omStrategyCmdBase
    {
       public:
 
+         virtual const CHAR* name() { return OM_TASK_STRATEGY_UPDATE_STAT_REQ ; }
+
          virtual INT32   doCommand() ;
 
       public:
 
-         omStrategyUpdateStatus( restAdaptor *pRestAdaptor, 
-                                 pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyUpdateStatus,
+                                        omStrategyCmdBase )
+         {
+         }
 
          ~omStrategyUpdateStatus() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    };
 
    class omStrategyUpdateSortID : public omStrategyCmdBase
    {
       public:
 
+         virtual const CHAR* name() { return OM_TASK_STRATEGY_UPDATE_SORT_REQ ; }
+
          virtual INT32   doCommand() ;
 
       public:
 
-         omStrategyUpdateSortID( restAdaptor *pRestAdaptor, 
-                                 pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyUpdateSortID,
+                                        omStrategyCmdBase )
+         {
+         }
 
          ~omStrategyUpdateSortID() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    } ;
 
    class omStrategyUpdateUser : public omStrategyCmdBase
    {
       public:
 
+         virtual const CHAR* name() { return OM_TASK_STRATEGY_UPDATE_USER_REQ ; }
+
          virtual INT32   doCommand() ;
 
       public:
 
-         omStrategyUpdateUser( restAdaptor *pRestAdaptor, 
-                               pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyUpdateUser,
+                                        omStrategyCmdBase )
+         {
+         }
 
          ~omStrategyUpdateUser() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    } ;
 
    class omStrategyFlush : public omStrategyCmdBase
    {
       public:
 
+         virtual const CHAR* name() { return OM_TASK_STRATEGY_FLUSH ; }
+
          virtual INT32   doCommand() ;
 
       public:
 
-         omStrategyFlush( restAdaptor *pRestAdaptor, 
-                          pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omStrategyFlush, omStrategyCmdBase )
+         {
+         }
 
          ~omStrategyFlush() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    } ;
 
    class omGetSystemInfoCommand : public omAuthCommand
    {
       public:
 
+         virtual const CHAR* name() { return OM_GET_SYSTEM_INFO_REQ ; }
+
          virtual INT32   doCommand() ;
 
       public:
 
-         omGetSystemInfoCommand( restAdaptor *pRestAdaptor,
-                                 pmdRestSession *pRestSession ) ;
+         REST_CONSTRUCTOR_PARA_INHERIT( omGetSystemInfoCommand, omAuthCommand )
+         {
+         }
 
          ~omGetSystemInfoCommand() ;
+
+         DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
    };
 
    class omSyncBusinessConfigureCommand : public omAuthCommand
    {
    public:
 
-      omSyncBusinessConfigureCommand( restAdaptor *pRestAdaptor,
-                                      pmdRestSession *pRestSession,
-                                      string &localAgentHost,
-                                      string &localAgentService ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omSyncBusinessConfigureCommand,
+                                     omAuthCommand )
+      {
+      }
 
       ~omSyncBusinessConfigureCommand();
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+
+      virtual const CHAR* name() { return OM_SYNC_BUSINESS_CONF_REQ ; }
 
       virtual INT32 doCommand() ;
 
    private:
-
-      INT32 _getRestInfo() ;
 
       void _parseHostMap( const BSONObj &hosts, map<string, string> &hostMap ) ;
 
@@ -1455,24 +1780,25 @@ namespace engine
       string _clusterName ;
       string _businessName ;
       string _businessType ;
-      string _localAgentHost ;
-      string _localAgentService ;
    } ;
 
    class omGrantSysConfigureCommand : public omAuthCommand
    {
    public:
-
-      omGrantSysConfigureCommand( restAdaptor *pRestAdaptor,
-                                  pmdRestSession *pRestSession ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omGrantSysConfigureCommand,
+                                     omAuthCommand )
+      {
+      }
 
       ~omGrantSysConfigureCommand() ;
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_GRANT_SYSCONF_REQ ; }
 
       virtual INT32 doCommand() ;
 
    private:
-
-      INT32 _getRestInfo() ;
 
       INT32 _checkCluster() ;
 
@@ -1489,10 +1815,15 @@ namespace engine
    class omUnbindBusinessCommand : public omAuthCommand
    {
    public:
-      omUnbindBusinessCommand( restAdaptor *pRestAdaptor,
-                               pmdRestSession *pRestSession ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omUnbindBusinessCommand, omAuthCommand )
+      {
+      }
 
       ~omUnbindBusinessCommand() ;
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_UNBIND_BUSINESS_REQ ; }
 
       virtual INT32 doCommand() ;
 
@@ -1508,10 +1839,15 @@ namespace engine
    class omUnbindHostCommand : public omAuthCommand
    {
    public:
-      omUnbindHostCommand( restAdaptor *pRestAdaptor,
-                           pmdRestSession *pRestSession ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omUnbindHostCommand, omAuthCommand )
+      {
+      }
 
       ~omUnbindHostCommand() ;
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_UNBIND_HOST_REQ ; }
 
       virtual INT32 doCommand() ;
 
@@ -1527,12 +1863,16 @@ namespace engine
    class omDeployPackageCommand : public omAuthCommand
    {
    public:
-      omDeployPackageCommand( restAdaptor *pRestAdaptor,
-                              pmdRestSession *pRestSession,
-                              string &localAgentHost,
-                              string &localAgentService ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omDeployPackageCommand, omAuthCommand )
+      {
+         _enforced = FALSE ;
+      }
 
       ~omDeployPackageCommand() ;
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_DEPLOY_PACKAGE_REQ ; }
 
       virtual INT32 doCommand() ;
 
@@ -1551,8 +1891,6 @@ namespace engine
 
    private:
       BOOLEAN  _enforced ;
-      string   _localAgentHost ;
-      string   _localAgentService ;
       string   _clusterName ;
       string   _packageName ;
       string   _installPath ;
@@ -1564,12 +1902,16 @@ namespace engine
    class omCreateRelationshipCommand : public omAuthCommand
    {
    public:
-      omCreateRelationshipCommand( restAdaptor *pRestAdaptor,
-                                   pmdRestSession *pRestSession,
-                                   string &localAgentHost,
-                                   string &localAgentService ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omCreateRelationshipCommand,
+                                     omAuthCommand )
+      {
+      }
 
       ~omCreateRelationshipCommand() ;
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_CREATE_RELATIONSHIP_REQ ; }
 
       virtual INT32 doCommand() ;
 
@@ -1586,8 +1928,6 @@ namespace engine
                               BSONObj &request ) ;
 
    private:
-      string _localAgentHost ;
-      string _localAgentService ;
       string _name ;
       string _fromBuzName ;
       string _toBuzName ;
@@ -1596,12 +1936,16 @@ namespace engine
    class omRemoveRelationshipCommand : public omAuthCommand
    {
    public:
-      omRemoveRelationshipCommand( restAdaptor *pRestAdaptor,
-                                   pmdRestSession *pRestSession,
-                                   string &localAgentHost,
-                                   string &localAgentService ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omRemoveRelationshipCommand,
+                                     omAuthCommand )
+      {
+      }
 
       ~omRemoveRelationshipCommand() ;
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_REMOVE_RELATIONSHIP_REQ ; }
 
       virtual INT32 doCommand() ;
 
@@ -1619,8 +1963,6 @@ namespace engine
                               BSONObj &request ) ;
 
    private:
-      string _localAgentHost ;
-      string _localAgentService ;
       string _name ;
       string _fromBuzName ;
       string _toBuzName ;
@@ -1629,10 +1971,15 @@ namespace engine
    class omListRelationshipCommand : public omAuthCommand
    {
    public:
-      omListRelationshipCommand( restAdaptor *pRestAdaptor,
-                                 pmdRestSession *pRestSession ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omListRelationshipCommand, omAuthCommand )
+      {
+      }
 
       ~omListRelationshipCommand() ;
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_LIST_RELATIONSHIP_REQ ; }
 
       virtual INT32 doCommand() ;
    } ;
@@ -1640,12 +1987,19 @@ namespace engine
    class omRegisterPluginsCommand : public omRestCommandBase
    {
    public:
-      omRegisterPluginsCommand( restAdaptor *pRestAdaptor,
-                                pmdRestSession *pRestSession ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omRegisterPluginsCommand,
+                                     omRestCommandBase )
+      {
+      }
 
       ~omRegisterPluginsCommand() ;
 
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return "" ; }
+
       virtual INT32 doCommand() ;
+
    private:
       INT32 _check( const string &role, const string &publicKey ) ;
 
@@ -1662,10 +2016,15 @@ namespace engine
    class omListPluginsCommand : public omAuthCommand
    {
    public:
-      omListPluginsCommand( restAdaptor *pRestAdaptor,
-                            pmdRestSession *pRestSession ) ;
+      REST_CONSTRUCTOR_PARA_INHERIT( omListPluginsCommand, omAuthCommand )
+      {
+      }
 
       ~omListPluginsCommand() ;
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_LIST_PLUGIN_REQ ; }
 
       virtual INT32 doCommand() ;
    } ;

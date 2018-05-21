@@ -1457,8 +1457,11 @@ namespace engine
          const CHAR* hostName = pmdGetKRCB()->getHostName();
          string localAgentHost = hostName ;
          string localAgentPort = this->getLocalAgentPort() ;
-         omInterruptTaskCommand interruptTask( NULL, NULL, localAgentHost,
-                                               localAgentPort ) ;
+
+         omInterruptTaskCommand interruptTask( NULL, NULL, NULL, NULL,
+                                               localAgentHost, localAgentPort,
+                                               "" ) ;
+
          interruptTask.init( pmdGetThreadEDUCB() ) ;
          taskIDEle = task.getField( OM_TASKINFO_FIELD_TASKID ) ;
          taskID    = taskIDEle.Long() ;

@@ -27,8 +27,6 @@ public class HttpController {
 
     @RequestMapping(value = "/sql")
     public String exec_sql(HttpServletRequest request, HttpServletResponse response) {
-        response.addHeader("Connection", "close");
-
         List<BSONObject> content = new ArrayList<BSONObject>();
 
         String ClusterName = request.getHeader("SdbClusterName");
