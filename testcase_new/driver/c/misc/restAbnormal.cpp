@@ -19,7 +19,7 @@
 #include "arguments.hpp"
 
 #define BUFLEN    1024
-#define RESTPORT  11814
+#define RESTPORT  11814 
 
 INT32 checkServer()
 {
@@ -125,7 +125,7 @@ TEST( restAbnormal, multiSend )
       pos += rc ;
    }
    printf( "%s\n", totalrecvbuf ) ;
-   CHAR* p = strstr( totalrecvbuf, "\r\n\r\n{ \"errno\": 0 }" ) ;
+   CHAR* p = strstr( totalrecvbuf, "\r\n{ \"errno\": 0 }" ) ;
    ASSERT_STRNE( NULL, p ) << "check recieve message error";
    free( totalrecvbuf ) ;
    close( sockfd ) ; 
