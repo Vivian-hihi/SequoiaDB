@@ -7685,9 +7685,10 @@ error :
          goto error ;
       }
 
+      rc = replyFlag ;
       _pErrorBuf = NULL ;
       _errorBufSize = 0 ;
-      if ( replyFlag != SDB_OK )
+      if ( SDB_OK != replyFlag && SDB_DMS_EOC != replyFlag)
       {
          INT32 dataOff     = 0 ;
          INT32 dataSize    = 0 ;
@@ -7710,10 +7711,16 @@ error :
             }
          }
          result = FALSE ;
-         rc = replyFlag ;
-         goto done ;
       }
-      result = TRUE ;
+      else if ( SDB_DMS_EOC == replyFlag )
+      {
+         result = FALSE ;
+      }
+      else
+      {
+         result = TRUE ;
+      }
+
    done :
       return rc ;
    error :
