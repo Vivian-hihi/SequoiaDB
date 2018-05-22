@@ -6,7 +6,7 @@ SequoiaDB 的搜索引擎适配器已包含在软件发布包中，按照 Sequoi
 
 ### Elasticsearch 安装 
 
-请到 [Elasticsearch 官网](www.elastic.co)下载 Elasticsearch 安装包，并按照实际业务需要，参考 Elasticsearch 相关文档完成软件安装及集群部署。当前 SequoiaDB 适配的 Elasticsearch 版本为 6.2.2。
+请到 [Elasticsearch 官网](http://www.elastic.co)下载 Elasticsearch 安装包，并按照实际业务需要，参考 Elasticsearch 相关文档完成软件安装及集群部署。当前 SequoiaDB 适配的 Elasticsearch 版本为 6.2.2。
 
 
 ## 配置全文检索运行环境
