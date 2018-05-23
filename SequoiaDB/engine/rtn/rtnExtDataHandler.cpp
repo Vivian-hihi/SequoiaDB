@@ -794,7 +794,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_CHECK, "_rtnExtDataHandler::check" )
    INT32 _rtnExtDataHandler::check( DMS_EXTOPR_TYPE type, const CHAR *csName,
                                     const CHAR *clName, const CHAR *idxName,
-                                    pmdEDUCB *cb )
+                                    const BSONObj *object,
+                                    const BSONObj *objNew, pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_CHECK ) ;
@@ -811,7 +812,7 @@ namespace engine
          rtnExtDataProcessor *processor = processors.front() ;
          if ( processor )
          {
-            rc = processor->check() ;
+            rc = processor->check( type, object, objNew ) ;
             PD_RC_CHECK( rc, PDERROR, "Processor check failed[ %d ]", rc ) ;
          }
       }

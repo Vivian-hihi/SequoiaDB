@@ -84,7 +84,9 @@ namespace engine
       INT32 setName( const CHAR *name ) ;
       const CHAR* getName() const ;
 
-      INT32 check() ;
+      INT32 check( DMS_EXTOPR_TYPE type, const BSONObj *object,
+                   const BSONObj *objectNew ) ;
+
       INT32 processInsert( const BSONObj &inputObj, pmdEDUCB *cb,
                            SDB_DPSCB *dpsCB = NULL ) ;
       INT32 processDelete( const BSONObj &inputObj, pmdEDUCB *cb,
@@ -144,6 +146,9 @@ namespace engine
       CHAR                 _cappedCSName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
       CHAR                 _cappedCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
       BOOLEAN              _needUpdateLSN ;
+      BSONObjSet           _keySet ;
+      BSONObjSet           _keySetNew ;
+      BOOLEAN              _needOprRec ;
    } ;
    typedef _rtnExtDataProcessor rtnExtDataProcessor ;
 

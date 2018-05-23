@@ -2917,7 +2917,8 @@ namespace engine
             if ( handler )
             {
                rc = handler->check( DMS_EXTOPR_TYPE_INSERT, getSuName(),
-                                    context->mb()->_collectionName, NULL, cb ) ;
+                                    context->mb()->_collectionName, NULL,
+                                    &insertObj, NULL, cb ) ;
                PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
                             "rc: %d", rc ) ;
             }
@@ -3068,19 +3069,6 @@ namespace engine
          goto error ;
       }
 
-      textIdxNum = context->mbStat()->_textIdxNum ;
-      if ( textIdxNum > 0 )
-      {
-         handler = getExtDataHandler() ;
-         if ( handler )
-         {
-            rc = handler->check( DMS_EXTOPR_TYPE_DELETE, getSuName(),
-                                 context->mb()->_collectionName, NULL, cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
-                         "rc: %d", rc ) ;
-         }
-      }
-
 #ifdef _DEBUG
       if ( !dmsAccessAndFlagCompatiblity ( context->mb()->_flag,
                                            DMS_ACCESS_TYPE_DELETE ) )
@@ -3158,6 +3146,21 @@ namespace engine
             try
             {
                delObject = BSONObj( recordData.data() ) ;
+
+               textIdxNum = context->mbStat()->_textIdxNum ;
+               if ( textIdxNum > 0 )
+               {
+                  handler = getExtDataHandler() ;
+                  if ( handler )
+                  {
+                     rc = handler->check( DMS_EXTOPR_TYPE_DELETE, getSuName(),
+                                          context->mb()->_collectionName, NULL,
+                                          &delObject, NULL, cb ) ;
+                     PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
+                                  "rc: %d", rc ) ;
+                  }
+               }
+
                // first to reserve dps
                if ( NULL != dpscb )
                {
@@ -3331,19 +3334,6 @@ namespace engine
          goto error ;
       }
 
-      textIdxNum = context->mbStat()->_textIdxNum ;
-      if ( textIdxNum > 0 )
-      {
-         handler = getExtDataHandler() ;
-         if ( handler )
-         {
-            rc = handler->check( DMS_EXTOPR_TYPE_UPDATE, getSuName(),
-                                 context->mb()->_collectionName, NULL, cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
-                         "rc: %d", rc ) ;
-         }
-      }
-
       try
       {
          extRW = extent2RW( recordID._extent, context->mbID() ) ;
@@ -3414,6 +3404,20 @@ namespace engine
                PD_LOG ( PDERROR, "Failed to create modified record, rc: %d",
                         rc ) ;
                goto error ;
+            }
+
+            textIdxNum = context->mbStat()->_textIdxNum ;
+            if ( textIdxNum > 0 )
+            {
+               handler = getExtDataHandler() ;
+               if ( handler )
+               {
+                  rc = handler->check( DMS_EXTOPR_TYPE_UPDATE, getSuName(),
+                                       context->mb()->_collectionName, NULL,
+                                       &obj, &newobj, cb ) ;
+                  PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
+                               "rc: %d", rc ) ;
+               }
             }
 
             if ( NULL != dpscb )

@@ -253,7 +253,8 @@ namespace engine
 
       virtual INT32 check( DMS_EXTOPR_TYPE type, const CHAR *csName,
                            const CHAR *clName, const CHAR *idxName,
-                           pmdEDUCB *cb ) ;
+                           const BSONObj *object,
+                           const BSONObj *objNew, pmdEDUCB *cb ) ;
 
       virtual INT32 onOpenTextIdx( const CHAR *csName, const CHAR *clName,
                                    const CHAR *idxName,

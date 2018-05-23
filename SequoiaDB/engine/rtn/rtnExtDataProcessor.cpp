@@ -87,6 +87,7 @@ namespace engine
       ossMemset( _cappedCSName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
       ossMemset( _cappedCLName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
       _needUpdateLSN = FALSE ;
+      _needOprRec = FALSE ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR__RTNEXTDATAPROCESSOR ) ;
    }
 
@@ -174,7 +175,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_CHECK, "_rtnExtDataProcessor::check" )
-   INT32 _rtnExtDataProcessor::check()
+   INT32 _rtnExtDataProcessor::check( DMS_EXTOPR_TYPE type,
+                                      const BSONObj *object,
+                                      const BSONObj *objectNew )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_CHECK ) ;
@@ -184,20 +187,85 @@ namespace engine
       const CHAR *collection = NULL ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
-      rc = rtnResolveCollectionNameAndLock ( _cappedCLName, dmsCB, &su,
-                                             &collection, suID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name: %s, "
-                   "rc: %d", _cappedCLName, rc ) ;
-      rc = su->data()->getMBContext( &context, collection, -1 ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
-                   "rc: %d", collection, rc ) ;
-
-      if ( FALSE == ((dmsStorageDataCapped *)su->data())->spaceEnough( context,
-                                                         DMS_RECORD_MAX_SZ ) )
+      // Onley check for insert/delete/update when object is not empty.
+      if ( type > DMS_EXTOPR_TYPE_UPDATE || !object )
       {
-         rc = SDB_OSS_UP_TO_LIMIT ;
-         PD_LOG( PDERROR, "Storage space is not enough for operation" ) ;
-         goto error ;
+         goto done ;
+      }
+
+      _keySet.clear() ;
+      _keySetNew.clear() ;
+      _needOprRec = FALSE ;
+
+      {
+         // Get the key set
+         ixmIndexKeyGen keygen( _meta._idxKeyDef, GEN_OBJ_KEEP_FIELD_NAME ) ;
+         rc = keygen.getKeys( *object, _keySet, NULL, TRUE, FALSE, TRUE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Generate key from object[ % ] failed[ %d ]",
+                      object->toString().c_str(), rc ) ;
+
+         if ( DMS_EXTOPR_TYPE_UPDATE != type )
+         {
+            _needOprRec = ( _keySet.size() > 0 ) ;
+         }
+         else
+         {
+            SDB_ASSERT( objectNew, "New object is NULL" ) ;
+            // If it's update, need to get the new key set.
+            rc = keygen.getKeys( *objectNew, _keySetNew,
+                                 NULL, TRUE, FALSE, TRUE ) ;
+            PD_RC_CHECK( rc, PDERROR, "Generate key from object[ %s ] "
+                         "failed[ %d ]", objectNew->toString().c_str(), rc ) ;
+
+            {
+               BSONObjSet::iterator origItr = _keySet.begin() ;
+               BSONObjSet::iterator newItr = _keySetNew.begin() ;
+
+               // There are only two scenarioes that we do not insert operation
+               // record:
+               // 1. Both old and new records have no index field.
+               // 2. Both old and new records have index field(s) but they are the
+               //    same.
+               while ( origItr != _keySet.end() && newItr != _keySetNew.end() )
+               {
+                  if ( !( *origItr == *newItr ) )
+                  {
+                     break ;
+                  }
+                  origItr++ ;
+                  newItr++ ;
+               }
+
+               if ( ( origItr == _keySet.end() ) && ( newItr == _keySetNew.end() ) )
+               {
+                  _needOprRec = FALSE ;
+               }
+               else
+               {
+                  _needOprRec = TRUE ;
+               }
+            }
+         }
+      }
+
+      // If the object contains the index field, check the
+      if ( _needOprRec )
+      {
+         rc = rtnResolveCollectionNameAndLock ( _cappedCLName, dmsCB, &su,
+                                                &collection, suID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name: %s, "
+                      "rc: %d", _cappedCLName, rc ) ;
+         rc = su->data()->getMBContext( &context, collection, -1 ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
+                      "rc: %d", collection, rc ) ;
+
+         if ( FALSE == ((dmsStorageDataCapped *)su->data())->spaceEnough( context,
+                                                            DMS_RECORD_MAX_SZ ) )
+         {
+            rc = SDB_OSS_UP_TO_LIMIT ;
+            PD_LOG( PDERROR, "Storage space is not enough for operation" ) ;
+            goto error ;
+         }
       }
 
    done:
@@ -498,6 +566,8 @@ namespace engine
          SDB_ASSERT( _mbContext, "mbContext should not be NULL" ) ;
          _mbContext->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
       }
+      _keySet.clear() ;
+      _keySetNew.clear() ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_DONE ) ;
       return SDB_OK ;
    }
@@ -508,6 +578,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_ABORT ) ;
       _mbContext = NULL ;
       _needUpdateLSN = FALSE ;
+      _keySet.clear() ;
+      _keySetNew.clear() ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_ABORT ) ;
       return SDB_OK ;
    }
@@ -734,21 +806,17 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PREPAREINSERT ) ;
-      BSONObjSet keySet ;
       OID oid ;
+
+      if ( !_needOprRec )
+      {
+         goto done ;
+      }
 
       try
       {
          BSONElement ele ;
-         ixmIndexKeyGen keygen( _meta._idxKeyDef, GEN_OBJ_KEEP_FIELD_NAME ) ;
-         // If any field is an array, it should keep that format instead of
-         // being breaking into separate objects.
-         rc = keygen.getKeys( inputObj, keySet, NULL, TRUE, FALSE, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Generate key from object failed[ %d ]",
-                      rc ) ;
-
-         SDB_ASSERT( keySet.size() <= 1, "Key set size should be 1" ) ;
-         if ( 0 == keySet.size() )
+         if ( 0 == _keySet.size() )
          {
             // No index key in the record, skip.
             goto done ;
@@ -767,7 +835,7 @@ namespace engine
          oid = ele.OID() ;
 
          {
-            BSONObjSet::iterator it = keySet.begin();
+            BSONObjSet::iterator it = _keySet.begin();
             BSONObj object( *it ) ;
             rc = _prepareRecord( _cappedCLName, RTN_EXT_INSERT,
                                  &oid, &object, recordObj ) ;
@@ -796,20 +864,16 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PREPAREDELETE ) ;
       OID oid ;
-      BSONObjSet keySet ;
+
+      if ( !_needOprRec )
+      {
+         goto done ;
+      }
 
       try
       {
          BSONElement ele ;
-         ixmIndexKeyGen keygen( _meta._idxKeyDef, GEN_OBJ_KEEP_FIELD_NAME ) ;
-         // If any field is an array, it should keep that format instead of
-         // being breaking into separate objects.
-         rc = keygen.getKeys( inputObj, keySet, NULL, TRUE, FALSE, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Generate key from object failed[ %d ]",
-                      rc ) ;
-
-         SDB_ASSERT( keySet.size() <= 1, "Key set size should be 1" ) ;
-         if ( 0 == keySet.size() )
+         if ( 0 == _keySet.size() )
          {
             // No index key in the record, skip.
             goto done ;
@@ -851,50 +915,21 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PREPAREUPDATE ) ;
-      BSONObjSet keySetOri ;
-      BSONObjSet keySetNew ;
       OID oid ;
+
+      if ( !_needOprRec )
+      {
+         goto done ;
+      }
 
       try
       {
          BSONElement ele ;
-
-         // Check if the keys of the index are the same with before. If yes,
-         // nothing needs to be done.
-         ixmIndexKeyGen keygen( _meta._idxKeyDef, GEN_OBJ_KEEP_FIELD_NAME ) ;
-         rc = keygen.getKeys( originalObj, keySetOri, NULL,
-                              TRUE, FALSE, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Generate key from object[ %s ] "
-                      "failed[ %d ]", originalObj.toString().c_str(), rc ) ;
-         rc = keygen.getKeys( newObj, keySetNew, NULL, TRUE, FALSE, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Generate key from object[ %s ] "
-                      "failed[ %d ]", newObj.toString().c_str(), rc ) ;
-
-         if ( 0 == keySetNew.size() )
+         if ( 0 == _keySetNew.size() )
          {
             rc = _prepareDelete( originalObj, recordObj ) ;
             PD_RC_CHECK( rc, PDERROR, "Prepare for delete failed[ %d ]", rc ) ;
             goto done ;
-         }
-
-         {
-            BSONObjSet::iterator origItr = keySetOri.begin() ;
-            BSONObjSet::iterator newItr = keySetNew.begin() ;
-
-            while ( origItr != keySetOri.end() && newItr != keySetNew.end() )
-            {
-               if ( !( *origItr == *newItr ) )
-               {
-                  break ;
-               }
-               origItr++ ;
-               newItr++ ;
-            }
-
-            if ( ( origItr == keySetOri.end() ) && ( newItr == keySetNew.end() ) )
-            {
-               goto done ;
-            }
          }
 
          ele = newObj.getField( DMS_ID_KEY_NAME ) ;
@@ -907,9 +942,9 @@ namespace engine
          }
 
          oid = ele.OID() ;
-         SDB_ASSERT( 1 == keySetNew.size(), "Key set size should be 1" ) ;
+         SDB_ASSERT( 1 == _keySetNew.size(), "Key set size should be 1" ) ;
          {
-            BSONObjSet::iterator it = keySetNew.begin();
+            BSONObjSet::iterator it = _keySetNew.begin();
             BSONObj object( *it ) ;
             rc = _prepareRecord( _cappedCLName, RTN_EXT_UPDATE,
                                  &oid, &object, recordObj ) ;
