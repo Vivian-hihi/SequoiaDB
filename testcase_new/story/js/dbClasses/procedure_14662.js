@@ -27,19 +27,18 @@ function main( db )
    evalSdbCollection( db ) ;
    evalSdbCursor( db ) ;
    evalSdbQuery( db ) ;
-   // TODO: comment for SEQUOIADBMAINSTREAM-3485
-   // evalSdbReplicaGroup( db ) ;
-   // evalSdbNode( db ) ;
+   evalSdbReplicaGroup( db ) ;
+   evalSdbNode( db ) ;
    evalSdbDomain( db ) ;
    evalCLCount( db ) ;
-   // evalBinData( db ) ;
-   // evalObjectId( db ) ;
-   // evalTimestamp( db ) ;
-   // evalRegex( db ) ;
-   // evalMinKey( db ) ;
-   // evalMaxKey( db ) ;
-   // evalNumberLong( db ) ;
-   // evalSdbDate( db ) ;
+   // evalBinData( db ) ; // TODO: fail for SEQUOIADBMAINSTREAM-3549
+   evalObjectId( db ) ;
+   evalTimestamp( db ) ;
+   // evalRegex( db ) ; // TODO: fail for SEQUOIADBMAINSTREAM-3548
+   evalMinKey( db ) ;
+   evalMaxKey( db ) ;
+   evalNumberLong( db ) ;
+   // evalSdbDate( db ) ; // TODO: fail for SEQUOIADBMAINSTREAM-3548
    
    commDropCL( db, COMMCSNAME, clName ) ;
 }
@@ -239,11 +238,11 @@ function evalBinData( db )
    var type = "1" ;
    var bindata = db.eval( "getBinData( \"" + data + "\", \"" + type + "\" )" ) ;
    println( "bindata instanceof BinData: " + ( bindata instanceof BinData ) ) ;
-   var obj = bindata.toObj() ;
-   if( obj["_data"] !== data || obj["_type"] !== type )
+   var expectval = BinData( data, type ) ;
+   if( bindata.toString() !== expectval.toString() )
    {
       throw buildException( "evalBinData", null, "get BinData",
-            data + " " + type, bindata ) ;
+            expectval, bindata ) ;
    }
    db.removeProcedure( "getBinData" ) ;
 }
@@ -255,11 +254,11 @@ function evalObjectId( db )
    var data = "55713f7953e6769804000001" ;
    var oid = db.eval( "getObjectId( \"" + data + "\" )" ) ;
    println( "oid instanceof ObjectId: " + ( oid instanceof ObjectId ) ) ;
-   var obj = oid.toObj() ;
-   if( obj["_str"] !== data )
+   var expectval = ObjectId( data ) ;
+   if( oid.toString() !== expectval.toString() )
    {
       throw buildException( "evalObjectId", null, "get ObjectId",
-            data, oid ) ;
+            expectval, oid ) ;
    }
    db.removeProcedure( "getObjectId" ) ;
 }
@@ -271,11 +270,11 @@ function evalTimestamp( db )
    var time = "2015-06-05-16.10.33.000000" ;
    var timestamp = db.eval( "getTimestamp( \"" + time + "\" )" ) ;
    println( "timestamp instanceof Timestamp: " + ( timestamp instanceof Timestamp ) ) ;
-   var obj = timestamp.toObj() ;
-   if( obj["_t"] !== time )
+   var expectval = Timestamp( time ) ;
+   if( timestamp.toString() !== expectval.toString() )
    {
       throw buildException( "evalTimestamp", null, "get Timestamp",
-            time, timestamp ) ;
+            expectval, timestamp ) ;
    }
    db.removeProcedure( "getTimestamp" ) ;
 }
@@ -288,11 +287,12 @@ function evalRegex( db )
    var options = "i" ;
    var regex = db.eval( "getRegex( \"" + pattern + "\", \"" + options + "\" )" ) ;
    println( "regex instanceof Regex: " + ( regex instanceof Regex ) ) ;
-   var obj = regex.toObj() ;
-   if( obj["_regex"] !== pattern || obj["_option"] !== options )
+   println( regex ) ;
+   var expectval = Regex( pattern, options ) ;
+   if( regex.toString() !== expectval.toString() )
    {
       throw buildException( "evalRegex", null, "get Regex",
-            pattern + " " + options, regex ) ;
+            expectval, regex ) ;
    }
    db.removeProcedure( "getRegex" ) ;
 }
@@ -322,10 +322,10 @@ function evalNumberLong( db )
    var number = 2147483648 ;
    var numberLong = db.eval( "getNumberLong( " + number + " )" ) ;
    println( "numberLong instanceof NumberLong: " + ( numberLong instanceof NumberLong ) ) ;
-   var obj = numberLong.toObj() ;
-   if( obj["_v"] !== number )
+   var expectval = NumberLong( number ) ;
+   if( numberLong.toString() !== expectval.toString() )
    {
-      throw buildException( "evalNumberLong", null, "get NumberLong", number, numberLong ) ;
+      throw buildException( "evalNumberLong", null, "get NumberLong", expectval, numberLong ) ;
    }
    db.removeProcedure( "getNumberLong" ) ;
 }
@@ -337,10 +337,11 @@ function evalSdbDate( db )
    var date = "2015-03-13" ;
    var sdbDate = db.eval( "getSdbDate( \"" + date + "\" )" ) ;
    println( "sdbDate instanceof SdbDate: " + ( sdbDate instanceof SdbDate ) ) ;
-   var obj = sdbDate.toObj() ;
-   if( obj["_d"] !== date )
-   {
-      throw buildException( "evalSdbDate", null, "get SdbDate", date, sdbDate ) ;
-   }
+   println( sdbDate ) ;
+   // var obj = sdbDate.toObj() ;
+   // if( obj["_d"] !== date )
+   // {
+   //    throw buildException( "evalSdbDate", null, "get SdbDate", date, sdbDate ) ;
+   // }
    db.removeProcedure( "getSdbDate" ) ;
 }
