@@ -217,6 +217,9 @@ namespace engine
       bool              isPathUsed( const string& path ) const ;
       INT32             addNode( OmNode* node ) ;
       INT32             addDisk( const simpleDiskInfo& disk ) ;
+      void              appendDeployPath( const string &packageName,
+                                          string &deployPath ) ;
+      string            getDeployPath( const string &packageName ) ;
       const simpleDiskInfo*   getDisk( const string path ) ;
 
       // count all the nodes for which Predicate pred returns true
@@ -237,6 +240,7 @@ namespace engine
 
    private:
       string                        _hostName ;
+      map<const string, string>     _deployPathes ;
       map<string, simpleDiskInfo>   _disks ;
       set<string>                   _usedPorts ;
       set<string>                   _usedDisks ;

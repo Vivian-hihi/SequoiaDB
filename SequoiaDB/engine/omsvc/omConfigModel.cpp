@@ -571,6 +571,26 @@ namespace engine
       goto done ;
    }
 
+   void OmHost::appendDeployPath( const string &packageName,
+                                  string &deployPath )
+   {
+      _deployPathes.insert( make_pair( packageName, deployPath ) ) ;
+   }
+
+   string OmHost::getDeployPath( const string &packageName )
+   {
+      map<const string, string>::iterator it ;
+      string deployPath ;
+
+      it = _deployPathes.find( packageName ) ;
+      if ( it != _deployPathes.end() )
+      {
+         deployPath = it->second ;
+      }
+
+      return deployPath ;
+   }
+
    const simpleDiskInfo* OmHost::getDisk( const string path )
    {
       INT32 maxFitSize = 0 ;
@@ -854,7 +874,8 @@ namespace engine
       if ( hostName == "" )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "invalid host name: %s", hostNodeInfo.toString().c_str() ) ;
+         PD_LOG_MSG( PDERROR, "invalid host name: %s",
+                     hostNodeInfo.toString().c_str() ) ;
          goto error ;
       }
 
@@ -865,6 +886,27 @@ namespace engine
          PD_LOG_MSG( PDERROR, "failed to alloc new OmHost: %s, out of memory",
                  hostName.c_str() ) ;
          goto error ;
+      }
+
+      {
+         BSONObj packages = hostNodeInfo.getObjectField(
+                                                      OM_HOST_FIELD_PACKAGES ) ;
+
+         {
+            BSONObjIterator iter( packages ) ;
+
+            while ( iter.more() )
+            {
+               BSONElement ele = iter.next() ;
+               BSONObj packageInfo = ele.embeddedObject() ;
+               string packageName = packageInfo.getStringField(
+                                                   OM_HOST_FIELD_PACKAGENAME ) ;
+               string installPath = packageInfo.getStringField(
+                                                   OM_HOST_FIELD_INSTALLPATH ) ;
+
+               host->appendDeployPath( packageName, installPath ) ;
+            }
+         }
       }
 
       {
