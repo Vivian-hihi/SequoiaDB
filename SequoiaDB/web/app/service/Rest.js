@@ -1266,7 +1266,7 @@
 
       g.getPing = function( complete ){
          var time1 = $.now() ;
-         g.getFile( './app/language/test', true, function( text ){
+         g.getFile( './app/language/test.txt', true, function( text ){
             var time2 = $.now() ;
             complete( time2 - time1 ) ;
          }, function(){
