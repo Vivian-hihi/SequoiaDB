@@ -575,6 +575,7 @@ namespace engine
       INT32 rc1                    = 0 ;
       const CHAR *indexName        = NULL ;
       UINT16 indexType             = 0 ;
+      BOOLEAN newTextIdx           = FALSE ;
 
       if ( !ixmIndexCB::validateKey ( index, isSys ) )
       {
@@ -688,6 +689,7 @@ namespace engine
                goto error ;
             }
             context->mbStat()->_textIdxNum++ ;
+            newTextIdx = TRUE ;
             if ( NULL == _pDataSu->getExtDataHandler() )
             {
                SDB_ASSERT( _pStorageInfo->_extDataHandler,
@@ -814,6 +816,12 @@ namespace engine
       if ( DMS_INVALID_EXTENT != rootExtentID )
       {
          releaseExtent ( rootExtentID ) ;
+      }
+      if ( newTextIdx )
+      {
+         context->mbStat()->_textIdxNum-- ;
+         SDB_ASSERT( 0 == context->mbStat()->_textIdxNum,
+                     "Text index number should be 0" ) ;
       }
       if ( SDB_OK == rc )
       {

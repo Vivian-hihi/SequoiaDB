@@ -279,12 +279,10 @@ namespace engine
                                                EXCLUSIVE, processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
       _lockType = EXCLUSIVE ;
-      SDB_ASSERT( 1 == processors.size(), "Processor number is wrong" ) ;
-      if ( 1 != processors.size() )
+      SDB_ASSERT( processors.size() <= 1, "Processor number is wrong" ) ;
+      if ( 0 == processors.size() )
       {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Get external processor failed[ %d ]", rc ) ;
-         goto error ;
+         goto done ;
       }
 
       _appendProcessors( processors ) ;
@@ -327,13 +325,12 @@ namespace engine
                                                EXCLUSIVE, processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
       _lockType = EXCLUSIVE ;
-      SDB_ASSERT( 1 == processors.size(), "Processor number is wrong" ) ;
-      if ( 1 != processors.size() )
+      SDB_ASSERT( processors.size() <= 1, "Processor number is wrong" ) ;
+      if ( 0 == processors.size() )
       {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Get external processor failed[ %d ]", rc ) ;
-         goto error ;
+         goto done ;
       }
+
       _appendProcessors( processors ) ;
       _processorLocked = TRUE ;
 
@@ -375,16 +372,13 @@ namespace engine
                                                EXCLUSIVE, processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
       _lockType = EXCLUSIVE ;
-      SDB_ASSERT( 1 == processors.size(), "Processor number is wrong" ) ;
-      if ( 1 != processors.size() )
+      SDB_ASSERT( processors.size() <= 1, "Processor number is wrong" ) ;
+      if ( 0 == processors.size() )
       {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Get external processor failed[ %d ]", rc ) ;
-         goto error ;
+         goto done ;
       }
 
       _appendProcessors( processors ) ;
-
       _processorLocked = TRUE ;
 
       rc = processors.back()->processUpdate( oldObj, newObj, cb, NULL ) ;
@@ -806,7 +800,12 @@ namespace engine
                                           processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Get processors for cs[ %s ] and cl[ %s ] "
                    "failed[ %d ]", csName, clName, rc ) ;
-      SDB_ASSERT( 1 == processors.size(), "More than 1 processor for the cl" ) ;
+
+      SDB_ASSERT( processors.size() <= 1, "Processor number is wrong" ) ;
+      if ( 0 == processors.size() )
+      {
+         goto done ;
+      }
 
       {
          rtnExtDataProcessor *processor = processors.front() ;
