@@ -60,8 +60,6 @@ const SDB_COORD_GROUP_NAME         = "SYSCoord" ;
 const SDB_CATALOG_GROUP_NAME       = "SYSCatalogGroup" ;
 const SDB_SPARE_GROUP_NAME         = "SYSSpare" ;
 
-var SDB_PRINT_JSON_FORMAT          = true ;
-
 const SDB_JSON_PARSE               = JSON.parse ;
 // end Global Constants
 
@@ -354,13 +352,6 @@ function isEmptyObject(obj) {
    }
 
    return true;
-}
-
-function jsonFormat(pretty) {
-   if (pretty == undefined){
-      pretty = true;
-   }
-   SDB_PRINT_JSON_FORMAT = pretty;
 }
 
 // end Global functions

@@ -22,6 +22,14 @@ const SDB_FILE_SHAREWROTE =    SDB_FILE_SHAREREAD | 0x00000020 ;
 const SDB_FILE_READONLY =      0x00000004 | SDB_FILE_SHAREREAD ;
 const SDB_FILE_WRITEONLY =     0x00000008 ;
 const SDB_FILE_READWRITE =     0x00000004 | SDB_FILE_WRITEONLY ;
+var SDB_PRINT_JSON_FORMAT        = true ;
+
+function jsonFormat(pretty) {
+   if (pretty == undefined){
+      pretty = true;
+   }
+   SDB_PRINT_JSON_FORMAT = pretty;
+}
 
 // BSONObj
 BSONObj.prototype.toObj = function() {
@@ -29,13 +37,21 @@ BSONObj.prototype.toObj = function() {
 }
 
 BSONObj.prototype.toString = function() {
-   try
+   if ( typeof(SDB_PRINT_JSON_FORMAT) == "undefined" ||
+        SDB_PRINT_JSON_FORMAT )
    {
-      var obj = this.toObj() ;
-      var str = JSON.stringify( obj, undefined, 2 ) ;
-      return str ;
+      try
+      {
+         var obj = this.toObj();
+         var str = JSON.stringify ( obj, undefined, 2 ) ;
+         return str ;
+      }
+      catch ( e )
+      {
+         return this.toJson() ;
+      }
    }
-   catch( e )
+   else
    {
       return this.toJson() ;
    }
