@@ -654,7 +654,8 @@ namespace engine
       {
          BSONObj result = BSON( OM_BSON_TASKID << (long long)taskID ) ;
 
-         _request->appendBody( result.objdata(), result.objsize(), 1 ) ;
+         _response->appendBody( result.objdata(), result.objsize(), 1 ) ;
+
          _sendOKRes2Web() ;
       }
 
