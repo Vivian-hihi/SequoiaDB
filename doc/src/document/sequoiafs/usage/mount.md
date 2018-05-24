@@ -196,7 +196,7 @@ Takes 0.019212s.
 |CreateTime | 创建时间             |
 |ModifyTime | 修改时间	           |
 |AccessTime	| 访问时间             |
-|SymLink	| 软连接               |
+|SymLink	| 软链接               |
 
 
 DB节点查看文件元数据集合，可以查到testfile文件元数据信息记录。  
@@ -254,7 +254,7 @@ Takes 0.010137s.
 |CreateTime | 创建时间             |
 |ModifyTime | 修改时间	           |
 |AccessTime	| 访问时间             |
-|SymLink	| 软连接               |
+|SymLink	| 软链接               |
 
 从上表可以看出，文件元数据和目录元数据大致相同，不同的是，文件实际对应着一个Lob文件（通过LobOid映射到该文件），以保存文件的实际内容。并且文件没有ID属性，因为文件只从属于某个目录，所以只需要PID属性。
 
@@ -281,7 +281,7 @@ Takes 0.010137s.
 |--collection	       | -l	| 指定需要映射的集合全名                                                                 |       		   | 是       |
 |--metafilecollection  | -f	| 指定文件元数据集合全名，默认根据目标映射集合<br>生成对应集合名称                       |       		   | 否       |
 |--metadircollection   | -d	| 指定目录元数据集合全名，默认根据目标映射集合<br>生成对应集合名称                       |       		   | 否       |
-|--connectionnum	   | -n	| 指定初始化连接池大小，取值范围[50-1000]                                                | 50    		   | 否       |
+|--connectionnum	   | -n	| 指定连接池最大支持连接数大小，取值范围[50-1000]                                                | 100    		   | 否       |
 |--cachesize	       | -s	| 目录LRU缓存大小，单位M，取值范围[1-200]                                                | 2     		   | 否       |
 |--confpath	           | -c	| 配置文件路径，默认为当前目录下的sequoiafs.conf                                         |       		   | 否       |
 |--diagnum		       |    | 指定日志文件最大个数，-1表示无限制                                                     | 20    		   | 否       |
@@ -406,7 +406,7 @@ SequoiaFS现支持以下文件操作API：
 |           | struct utimebuf * buf	   |                                                                                                          |
 |link()	    | const char *oldpath	   | 创建链接文件（硬链接）                                                                                   |
 |           | const char *newpath	   |                                                                                                          |
-|unlink()	| const char * pathname	   | 删除指定文件，如果该文件为最后的连接点，则文件会被删除。<br>如果为符号链接，则链接删除。                 |
+|unlink()	| const char * pathname	   | 删除指定文件，如果该文件为最后的链接点，则文件会被删除。<br>如果为符号链接，则链接删除。                 |
 |symlink()	| const char *oldpath	   | 创建符号链接文件, oldpath指定文件允许不存在。                                                            |
 |           | const char *newpath	   |                                                                                                          |
 |truncate()	| const char *pathname     | 截取文件内容，将path指定的文件大小改为参数length的大小，<br>如果原来文件比length大，则超过的部分会被删除。|
