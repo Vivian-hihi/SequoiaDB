@@ -634,8 +634,7 @@ INT32 sequoiaFS::InitMetaID(sdb *db)
         PD_LOG(PDERROR, "The sequenceid of sequoiafs.sequenceid is %d, should not small than %d", value, ROOT_ID);
         rc = -EINVAL;
         goto error;
-    }
-    
+    }    
 
 done:
     return rc;
@@ -728,13 +727,7 @@ INT32 sequoiaFS::init(INT32 argc, CHAR **argv, vector<string> *options4fuse)
     {
         rc = SDB_OK;
         goto done;
-    }
-    
-    else if(SDB_PMD_NOT_SPECIFY_AUTOCREATE == rc)
-    {
-        ossPrintf("Failed to resolving arguments(error=%d), exit."OSS_NEWLINE, rc);
-        goto error;
-    }
+    }    
     
     else if(SDB_OK != rc)
     {
@@ -855,6 +848,7 @@ INT32 sequoiaFS::init(INT32 argc, CHAR **argv, vector<string> *options4fuse)
     capacity = optionMgr->getCacheSize() * 1024 * 1024 / sizeof(struct dirMetaNode);
     //5. init lru cache
     InitLruCace(capacity);
+
 done:
     releaseConnection(db);
     return rc;

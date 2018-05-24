@@ -100,6 +100,7 @@ namespace sequoiafs
 
         protected:
             virtual INT32 doDataExchange(engine::pmdCfgExchange *pEX);
+            virtual INT32 postLoaded( engine::PMD_CFG_STEP step );
 
         private:
             CHAR _hosts[OSS_MAX_PATHSIZE + 1];
@@ -107,16 +108,15 @@ namespace sequoiafs
             CHAR _passwd[OSS_MAX_PATHSIZE + 1];    
             CHAR _collection[OSS_MAX_PATHSIZE + 1];  
             CHAR _metaFileCollection[OSS_MAX_PATHSIZE + 1];   
-            CHAR _metaDirCollection[OSS_MAX_PATHSIZE + 1]; 
-            CHAR _metaFileDefaultCollection[OSS_MAX_PATHSIZE + 1];   
-            CHAR _metaDirDefaultCollection[OSS_MAX_PATHSIZE + 1];  			
+            CHAR _metaDirCollection[OSS_MAX_PATHSIZE + 1]; 		
             INT32 _connectionNum; 
             INT32 _cacheSize;  
             CHAR _cfgPath[OSS_MAX_PATHSIZE + 1];
             CHAR _cfgFileName[OSS_MAX_PATHSIZE + 1];
             CHAR _diagPath[OSS_MAX_PATHSIZE + 1];
             INT32 _diagnum;
-            UINT16 _diagLevel;            
+            UINT16 _diagLevel;   
+            BOOLEAN _hasOptionAutocreate;
 
     };
     typedef _sequoiafsOptionMgr sequoiafsOptionMgr;

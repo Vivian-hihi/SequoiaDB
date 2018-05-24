@@ -120,6 +120,7 @@ _sequoiafsOptionMgr::_sequoiafsOptionMgr()
     _connectionNum = SDB_SEQUOIAFS_CONNECTION_DEFAULT_NUM;
     _cacheSize = SDB_SEQUOIAFS_CACHE_DEFAULT_SIZE;
     _diagLevel = PDWARNING;
+    _hasOptionAutocreate = FALSE;
 }
 
 PDLEVEL _sequoiafsOptionMgr::getDiaglogLevel()const
@@ -150,7 +151,6 @@ INT32 _sequoiafsOptionMgr::init(INT32 argc, CHAR **argv, vector<string> *options
     CHAR cfgTempPath[OSS_MAX_PATHSIZE + 1] = {0};
     const CHAR *tempPath;
     UINT32 i = 0;
-    INT64 hash = 1;
     stringstream ss;
 	string tempStr;
 	string tempCSStr;
@@ -262,22 +262,18 @@ INT32 _sequoiafsOptionMgr::init(INT32 argc, CHAR **argv, vector<string> *options
         goto done;
     }  
 
-    if(vmFromCmd.count(SDB_SEQUOIAFS_COLLECTION))
-    {    
-		tempStr = vmFromCmd[SDB_SEQUOIAFS_COLLECTION].as<string>();
-        hash = name_hash(tempStr.c_str());
-        ss.str("");
-        ss << hash;
-		rc = parseCollection(tempStr, &tempCSStr, &tempCLStr);
-		if(SDB_OK != rc)
-	    {
-			goto error;
-		}
-        tempFileStr= SEQUOIAFS_META_CS + "." + tempCLStr.substr(0, 32) + SEQUOIAFS_META_FILE_SUFFIX + ss.str();
-		ossSnprintf(_metaFileDefaultCollection, sizeof(_metaFileCollection), "%s", tempFileStr.c_str());
-		tempDirStr = SEQUOIAFS_META_CS + "." + tempCLStr.substr(0, 32) + SEQUOIAFS_META_DIR_SUFFIX + ss.str();
-		ossSnprintf(_metaDirDefaultCollection, sizeof(_metaDirCollection), "%s", tempDirStr.c_str());
+    if(vmFromCmd.count(SDB_SEQUOIAFS_AUTOCREATE))
+    {
+        _hasOptionAutocreate = TRUE;
     }
+
+    if((vmFromCmd.count(SDB_SEQUOIAFS_META_DIR_CL) || vmFromCmd.count(SDB_SEQUOIAFS_META_FILE_CL)) &&\
+        _hasOptionAutocreate)
+    {
+        ossPrintf("If \"--autocreate\" is specified, no need to specify \"-d\" or \"-f\"."OSS_NEWLINE);
+        rc = SDB_INVALIDARG;
+        goto error;
+    } 
     
     tempPath = (vmFromCmd.count(SDB_SEQUOIAFS_CONF_PATH)) ? (vmFromCmd[SDB_SEQUOIAFS_CONF_PATH].as<string>().c_str()) : PMD_CURRENT_PATH;
     ossMemset(cfgTempPath, 0, sizeof(cfgTempPath));
@@ -318,15 +314,11 @@ INT32 _sequoiafsOptionMgr::init(INT32 argc, CHAR **argv, vector<string> *options
         goto error;
     }
 
-    if((!vmFromCmd.count(SDB_SEQUOIAFS_META_DIR_CL) || !vmFromCmd.count(SDB_SEQUOIAFS_META_FILE_CL)) &&\
-        (ossStrcmp(_metaFileCollection, "") == 0 || ossStrcmp(_metaDirCollection, "") == 0) &&\
-        !vmFromCmd.count(SDB_SEQUOIAFS_AUTOCREATE))
+    rc = postLoaded(engine::PMD_CFG_STEP_INIT);
+    if(SDB_OK != rc)
     {
-        ossPrintf("If both \"-d\" and \"-f\" are not specified, you need to specify \"--autocreate\" to auto create meta collections."OSS_NEWLINE);
-        rc = SDB_PMD_NOT_SPECIFY_AUTOCREATE;
-        goto done;
-    }   
-    
+        goto error;
+    }    
     
 done:    
     *options4fuse = unregisted_str;
@@ -349,9 +341,9 @@ INT32 _sequoiafsOptionMgr::doDataExchange(pmdCfgExchange *pEX)
     rdxString(pEX, SDB_SEQUOIAFS_COLLECTION, _collection, sizeof(_collection), TRUE, PMD_CFG_CHANGE_FORBIDDEN, "");
     rdvNotEmpty(pEX, _collection);    
     //--metafilecollection
-    rdxString(pEX, SDB_SEQUOIAFS_META_FILE_CL, _metaFileCollection, sizeof(_metaFileCollection), FALSE, PMD_CFG_CHANGE_FORBIDDEN, _metaFileDefaultCollection);
+    rdxString(pEX, SDB_SEQUOIAFS_META_FILE_CL, _metaFileCollection, sizeof(_metaFileCollection), FALSE, PMD_CFG_CHANGE_FORBIDDEN, "");
     //--metadircollection
-    rdxString(pEX, SDB_SEQUOIAFS_META_DIR_CL, _metaDirCollection, sizeof(_metaDirCollection), FALSE, PMD_CFG_CHANGE_FORBIDDEN, _metaDirDefaultCollection);    
+    rdxString(pEX, SDB_SEQUOIAFS_META_DIR_CL, _metaDirCollection, sizeof(_metaDirCollection), FALSE, PMD_CFG_CHANGE_FORBIDDEN, "");   
 
     //--connectionnum
     rdxInt(pEX, SDB_SEQUOIAFS_CONNECTION_NUM, _connectionNum, FALSE, PMD_CFG_CHANGE_FORBIDDEN, SDB_SEQUOIAFS_CONNECTION_DEFAULT_NUM);
@@ -374,5 +366,52 @@ INT32 _sequoiafsOptionMgr::doDataExchange(pmdCfgExchange *pEX)
 	rdvMinMax( pEX, _diagnum, PD_MIN_FILE_NUM, OSS_SINT32_MAX, TRUE ) ;    
     return getResult();
 }
+
+INT32 _sequoiafsOptionMgr::postLoaded( PMD_CFG_STEP step )
+{
+    INT32 rc = SDB_OK ;
+    INT64 hash = 1;
+    stringstream ss;
+	string tempCSStr;
+	string tempCLStr;
+	string tempDirStr;
+	string tempFileStr;
+
+    if(_hasOptionAutocreate)
+    {
+		rc = parseCollection(_collection, &tempCSStr, &tempCLStr);
+		if(SDB_OK != rc)
+	    {
+			goto error;
+		}
+        hash = name_hash(_collection);
+        ss.str("");
+        ss << hash;
+        tempFileStr= SEQUOIAFS_META_CS + "." + tempCLStr.substr(0, 32) + SEQUOIAFS_META_FILE_SUFFIX + ss.str();
+		ossSnprintf(_metaFileCollection, sizeof(_metaFileCollection), "%s", tempFileStr.c_str());
+		tempDirStr = SEQUOIAFS_META_CS + "." + tempCLStr.substr(0, 32) + SEQUOIAFS_META_DIR_SUFFIX + ss.str();
+		ossSnprintf(_metaDirCollection, sizeof(_metaDirCollection), "%s", tempDirStr.c_str());
+    }
+    else if(0 == ossStrcmp(_metaFileCollection, "") || 0 == ossStrcmp(_metaDirCollection, ""))
+    {
+        if(0 == ossStrcmp(_metaFileCollection, "") && 0 == ossStrcmp(_metaDirCollection, ""))
+        {
+            ossPrintf("Warning: Fields [metadircollection] and [metafilecollection] are empty, need to specify \"--autocreate\" to create automatically."OSS_NEWLINE);
+        }
+        else
+        {
+            ossPrintf("Warning: Field [%s] is empty."OSS_NEWLINE, (0 == ossStrcmp(_metaFileCollection, ""))?"metafilecollection":"metadircollection");
+        }
+        rc = SDB_INVALIDARG;
+    }
+
+    
+done:
+return rc ;
+error:
+goto done ;
+
+}
+
 
 
