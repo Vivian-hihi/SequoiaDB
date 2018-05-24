@@ -245,23 +245,20 @@ namespace sdbclient
                   rc = SDB_OOM ;
                   goto error ;
                }
-               if(_needbgtask)
+               rc = _createConnWorker->start() ;
+               if ( SDB_OK != rc )
                {
-                   rc = _createConnWorker->start() ;
-                   if ( SDB_OK != rc )
-                   {
-                      goto error ;
-                   }
-                   rc = _destroyConnWorker->start() ;
-                   if ( SDB_OK != rc )
-                   {
-                      goto error ;
-                   }
-                   rc = _bgTaskWorker->start() ;
-                   if ( SDB_OK != rc )
-                   {
-                      goto error ;
-                   }
+                  goto error ;
+               }
+               rc = _destroyConnWorker->start() ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
+               rc = _bgTaskWorker->start() ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
                }
 
                _isEnabled = TRUE ;
@@ -282,7 +279,7 @@ namespace sdbclient
       SAFE_OSS_DELETE(_destroyConnWorker) ;
       SAFE_OSS_DELETE(_bgTaskWorker) ;
       goto done  ;
-   }  
+   }
 
    // disable data source, stop background task
    INT32 sdbDataSource::disable()
@@ -303,28 +300,25 @@ namespace sdbclient
             _toStopWorkers = TRUE ;
 
             INT32 rc = SDB_OK ;
-            if(_needbgtask)
+            // join
+            rc = _createConnWorker->waitStop() ;
+            if ( SDB_OK != rc )
             {
-                // join
-                rc = _createConnWorker->waitStop() ;
-                if ( SDB_OK != rc )
-                {
-                   ret = rc ;
-                   goto error ;// TODO:(new) when it failed, we leave the 
-                               //other background thread alone?
-                }
-                rc = _destroyConnWorker->waitStop() ;
-                if ( SDB_OK != rc )
-                {
-                   ret = rc ;
-                   goto error ;
-                }
-                rc = _bgTaskWorker->waitStop() ;
-                if ( SDB_OK != rc )
-                {
-                   ret = rc ;
-                   goto error ;
-                }
+               ret = rc ;
+               goto error ;// TODO:(new) when it failed, we leave the 
+                           //other background thread alone?
+            }
+            rc = _destroyConnWorker->waitStop() ;
+            if ( SDB_OK != rc )
+            {
+               ret = rc ;
+               goto error ;
+            }
+            rc = _bgTaskWorker->waitStop() ;
+            if ( SDB_OK != rc )
+            {
+               ret = rc ;
+               goto error ;
             }
 
             // clear data source
@@ -401,12 +395,6 @@ namespace sdbclient
             // not reach max count
             else
             {
-                // TODO: add this temporary to avoid bgtask not working  
-               if( 0 == _strategy->getNormalCoordNum() )
-               {
-                   _retrieveAddrFromAbnormalList();
-			   }
-            
                if ( 0 == _strategy->getNormalCoordNum() )
                {  
                   rc = SDB_DS_NO_REACHABLE_COORD ;

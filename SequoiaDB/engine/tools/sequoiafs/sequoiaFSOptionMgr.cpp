@@ -117,7 +117,7 @@ _sequoiafsOptionMgr::_sequoiafsOptionMgr()
     ossMemset(_cfgFileName, 0, sizeof(_cfgFileName));
     ossMemset(_diagPath, 0, sizeof(_diagPath));  
 
-    _connectionNum = SDB_SEQUOIAFS_CONNECTION_DEFAULT_NUM;
+    _connectionNum = SDB_SEQUOIAFS_CONNECTION_DEFAULT_MAX_NUM;
     _cacheSize = SDB_SEQUOIAFS_CACHE_DEFAULT_SIZE;
     _diagLevel = PDWARNING;
     _hasOptionAutocreate = FALSE;
@@ -176,7 +176,7 @@ INT32 _sequoiafsOptionMgr::init(INT32 argc, CHAR **argv, vector<string> *options
         (PMD_COMMANDS_STRING(SDB_SEQUOIAFS_COLLECTION,      ",l"), po::value<std::string>(), "the target collection that be mounted")
         (PMD_COMMANDS_STRING(SDB_SEQUOIAFS_META_DIR_CL,     ",d"), po::value<std::string>(), "the dir meta collection, default:sequoiafs.dirMetaCL")
         (PMD_COMMANDS_STRING(SDB_SEQUOIAFS_META_FILE_CL,    ",f"), po::value<std::string>(), "the file meta collection, default:sequoiafs.fileMetaCL")
-        (PMD_COMMANDS_STRING(SDB_SEQUOIAFS_CONNECTION_NUM,  ",n"), po::value<INT32>(),       "the init connection num of the connection pool, default:50, value range: [50-1000]")
+        (PMD_COMMANDS_STRING(SDB_SEQUOIAFS_CONNECTION_NUM,  ",n"), po::value<INT32>(),       "the max connection num of the connection pool, default:100, value range: [50-1000]")
         (PMD_COMMANDS_STRING(SDB_SEQUOIAFS_CACHE_SIZE,      ",s"), po::value<INT32>(),       "the chache size(unit:M) of dir meta, default:2, value range: [1-200]")
         (PMD_COMMANDS_STRING(SDB_SEQUOIAFS_CONF_PATH,       ",c"), po::value<std::string>(), "the path of configure file, default: ./conf/sequoiafs.conf")        
         (PMD_COMMANDS_STRING(SDB_SEQUOIAFS_DIAGLEVEL,       ",g"), po::value<INT32>(),       "diagnostic level, default:3, value range: [0-5]")        
@@ -256,7 +256,7 @@ INT32 _sequoiafsOptionMgr::init(INT32 argc, CHAR **argv, vector<string> *options
 
     if(vmFromCmd.count(SDB_SEQUOIAFS_VERSION))
     {
-        ossPrintVersion("sequoiafs version");
+        ossPrintVersion("SequoiaFS version");
         unregisted_str.push_back("--version");
         rc = SDB_PMD_VERSION_ONLY;
         goto done;
@@ -346,7 +346,7 @@ INT32 _sequoiafsOptionMgr::doDataExchange(pmdCfgExchange *pEX)
     rdxString(pEX, SDB_SEQUOIAFS_META_DIR_CL, _metaDirCollection, sizeof(_metaDirCollection), FALSE, PMD_CFG_CHANGE_FORBIDDEN, "");   
 
     //--connectionnum
-    rdxInt(pEX, SDB_SEQUOIAFS_CONNECTION_NUM, _connectionNum, FALSE, PMD_CFG_CHANGE_FORBIDDEN, SDB_SEQUOIAFS_CONNECTION_DEFAULT_NUM);
+    rdxInt(pEX, SDB_SEQUOIAFS_CONNECTION_NUM, _connectionNum, FALSE, PMD_CFG_CHANGE_FORBIDDEN, SDB_SEQUOIAFS_CONNECTION_DEFAULT_MAX_NUM);
     rdvMinMax(pEX, _connectionNum, 50, 1000, TRUE);
 
     //--cachesize

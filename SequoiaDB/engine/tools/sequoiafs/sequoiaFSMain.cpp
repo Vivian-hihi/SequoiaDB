@@ -412,6 +412,13 @@ INT32 main(INT32 argc, CHAR *argv[])
         {
             ossPrintf("The cl:%s does not exist, exit."OSS_NEWLINE, sfs->_collection.c_str());
         }
+
+        rc = sfs->closeDataSource();
+        if(SDB_OK != rc)
+        {
+            ossPrintf("Failed to start close conn pool(error=%d), exit."OSS_NEWLINE, rc);   
+            goto error;
+        }        
         ossPrintf("Failed to init, exit."OSS_NEWLINE);
         goto error;
     }
@@ -441,15 +448,15 @@ INT32 main(INT32 argc, CHAR *argv[])
         {    
             ossPrintf("Failed to add arg:\"%s\" (error=%d), exit."OSS_NEWLINE, "--help", rc);
             goto error;
-        }        
-    }    
+        }
+    }
 
     if(lobFuseOption.mountpoint)
     {
         sfs->_mountpoint = lobFuseOption.mountpoint;
         rc = fuse_opt_add_arg(&fuseArgs, lobFuseOption.mountpoint);
         if(0 != rc)
-        {    
+        {
             ossPrintf("Failed to add arg:%s (error=%d), exit."OSS_NEWLINE, lobFuseOption.mountpoint, rc);
             goto error;
         }
@@ -459,7 +466,15 @@ INT32 main(INT32 argc, CHAR *argv[])
         {
             ossPrintf("Failed to write map history collection(error=%d), exit."OSS_NEWLINE, rc); 
             goto error;  
-        }            
+        }
+
+        //close datasource to avoid the bgtask threads being closed by fuse_main, 
+        //start when first called getattr, 
+        rc = sfs->disableDataSource();
+        if(SDB_OK != rc)
+        {
+            goto error;
+        }        
     } 
     
     else if(!lobFuseOption.is_help && !lobFuseOption.is_version)
@@ -468,7 +483,7 @@ INT32 main(INT32 argc, CHAR *argv[])
         rc = SDB_INVALIDARG;
         goto error;
     }
-    
+        
     rc = fuse_main(fuseArgs.argc, fuseArgs.argv, &sfsFuseOper, NULL);  
     if(SDB_OK != rc && !lobFuseOption.is_help && !lobFuseOption.is_version)
     {

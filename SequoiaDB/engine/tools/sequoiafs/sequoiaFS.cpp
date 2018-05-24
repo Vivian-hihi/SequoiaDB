@@ -84,6 +84,8 @@ using namespace sequoiafs;
 #define ROOT_ID 1
 const INT32 BUFSIZE=1000;
 
+BOOLEAN enableDataSource = FALSE;
+
 LRUCache *lrucache;
 
 pthread_mutex_t mutex;
@@ -370,7 +372,7 @@ sequoiafsOptionMgr * sequoiaFS::getOptionMgr()
 void sequoiaFS::setDataSourceConf(const CHAR * userName, const CHAR *passwd, const INT32 connNum)
 {
     conf.setUserInfo(userName, passwd);
-    conf.setConnCntInfo(connNum, 10, 20, MAXCNT);
+    conf.setConnCntInfo(50, 10, 20, connNum);
     conf.setCheckIntervalInfo( 60, 0 );
     conf.setSyncCoordInterval( 30 );
     conf.setConnectStrategy( DS_STY_BALANCE );
@@ -394,9 +396,7 @@ INT32 sequoiaFS::initDataSource(const CHAR * userName, const CHAR *passwd, const
         ossPrintf("Fail to init stlbDataSouce(error=%d)"OSS_NEWLINE, rc);
         goto error;
     }
-    
-    ds.disableBgtask();
-    
+        
     // enable sdbDataSource
     rc = ds.enable();
     if(SDB_OK != rc)
@@ -412,6 +412,25 @@ error:
     goto done;
 }
 
+INT32 sequoiaFS::disableDataSource()
+{
+    INT32 rc = SDB_OK;
+
+    rc = ds.disable();
+    if(SDB_OK != rc)
+    {
+        ossPrintf("Fail to disable sdbDataSource(error=%d)"OSS_NEWLINE, rc);
+        goto error;
+    } 
+    
+done:
+    return rc;
+error:
+    goto done;    
+
+}
+
+
 INT32 sequoiaFS::closeDataSource()
 {
     INT32 rc = SDB_OK;
@@ -419,10 +438,9 @@ INT32 sequoiaFS::closeDataSource()
     PD_LOG(PDDEBUG, "Called: closeDataSource()");
     
     // disable sdbDataSource
-    rc = ds.disable();
+    rc = disableDataSource();
     if(SDB_OK != rc)
     {
-        ossPrintf("Fail to disable sdbDataSource(error=%d)"OSS_NEWLINE, rc);
         goto error;
     } // dose sdbDataSource
     ds.close();
@@ -569,7 +587,7 @@ error:
 
 }
 
-INT32 sequoiaFS::InitMetaID(sdb *db)
+INT32 sequoiaFS::initMetaID(sdb *db)
 {
     INT32 rc = SDB_OK;
     INT32 ret = SDB_OK;
@@ -838,7 +856,7 @@ INT32 sequoiaFS::init(INT32 argc, CHAR **argv, vector<string> *options4fuse)
         goto error;  
     }
 
-    rc = InitMetaID(db);
+    rc = initMetaID(db);
     if(SDB_OK != rc)
     {
         goto error;  
@@ -1253,6 +1271,18 @@ INT32 sequoiaFS::getattr(const CHAR *path, struct stat *sbuf)
 
     PD_LOG(PDDEBUG, "Called: getattr(). Path:%s", path);	
     ossMemset(sbuf, 0, sizeof(struct stat));
+
+    if(!enableDataSource)
+    {
+        rc = ds.enable();
+        if(SDB_OK != rc)
+        {
+            PD_LOG(PDERROR, "Fail to enable sdbDataSource(error=%d), exit", rc);
+            rc = -EIO;
+            goto error;
+        }
+        enableDataSource = TRUE;
+    }
     
     sbuf->st_uid = uid;
     sbuf->st_gid = gid;

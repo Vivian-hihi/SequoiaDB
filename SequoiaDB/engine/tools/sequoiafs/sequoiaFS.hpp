@@ -185,6 +185,7 @@ namespace sequoiafs
         INT32 doesLobExist(sdbCollection &cl, const CHAR *lobName, BSONObj &condition, BOOLEAN *exist, OID *oid, BSONObj &record);
         void setDataSourceConf(const CHAR * userName, const CHAR *passwd, const INT32 connNum);
         int initDataSource(const CHAR * userName, const CHAR *passwd, const INT32 connNum);
+        INT32 disableDataSource();
         INT32 closeDataSource();
         INT32 getConnection(sdb **connection);
         void releaseConnection(sdb *connection)
@@ -201,7 +202,7 @@ namespace sequoiafs
         INT32 doSetDirNodeAttr(sdbCollection &cl, struct dirMetaNode &dirNode);
         INT32 doSetFileNodeAttr(sdbCollection &cl, struct fileMetaNode &fileNode);
         INT32 getAndUpdateID(sdbCollection *cl, UINT64 *sequenceId);
-        INT32 InitMetaID(sdb *db);
+        INT32 initMetaID(sdb *db);
         INT32 do_access(struct stat *stbuf);
         INT32 isDir(sdbCollection *sysFileMetaCL, sdbCollection *sysDirMetaCL, CHAR *name, INT64 pid, BOOLEAN *is_dir);        
     private:
