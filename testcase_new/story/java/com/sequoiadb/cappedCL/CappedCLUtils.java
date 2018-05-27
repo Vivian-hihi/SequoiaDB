@@ -200,6 +200,7 @@ public class CappedCLUtils {
 			}
 			return true;
 		}catch(BaseException e){
+			e.printStackTrace();
 			return false;
 		}finally {
 			System.out.println("--------" + className + " end to check logicalId---------");
