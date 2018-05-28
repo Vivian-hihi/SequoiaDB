@@ -3021,10 +3021,10 @@ INT32 sequoiaFS::write(const CHAR *path, const CHAR *buf, size_t size, off_t off
     sysFileMetaCL = (sdbCollection *)lh->hSysFileMetaCL;
     
     pthread_mutex_lock(&lh->lock);    
-    rc = lob->seek(offset, SDB_LOB_SEEK_SET);
+    rc = lob->lockAndSeek(offset, size);
     if(SDB_OK != rc)
     {
-        PD_LOG(PDERROR, "Failed to seek lob, error=%d", rc);
+        PD_LOG(PDERROR, "Failed to lockAndseek lob, error=%d", rc);
         rc = -EIO;
         goto error;
     }
