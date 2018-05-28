@@ -140,7 +140,6 @@ namespace engine
       omSdbConnector *conn = NULL ;
       MsgHeader *result    = NULL ;
       rtnContext *pContext = NULL ;
-      omManager *om = sdbGetOMManager() ;
       _omContextTransfer *pTmpContext = NULL ;
 
       contextID = -1 ;
