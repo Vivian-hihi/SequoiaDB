@@ -1819,7 +1819,13 @@ INT32 sequoiaFS::unlink(const CHAR *path)
         }
     
         rc = cl.removeLob(oid);
-        if(SDB_OK != rc)
+        //if lob didnot exist, ignore the error
+        if(SDB_FNE == rc)
+        {
+            PD_LOG(PDERROR, "Failed to remove lob:%s, oid:%s, error=%d", lobName, oid.toString().c_str(), rc);
+            rc = SDB_OK;
+        }
+        else if(SDB_OK != rc)
         {
             PD_LOG(PDERROR, "Failed to remove lob:%s, oid:%s, error=%d", lobName, oid.toString().c_str(), rc);
             rc = -EIO;
