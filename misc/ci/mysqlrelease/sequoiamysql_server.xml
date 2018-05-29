@@ -415,12 +415,30 @@
         <!--write /etc/default/sequoiasql-mysql-->
         <deleteFile path="${sys_conf_file}"/>
         <touchFile path="${sys_conf_file}"/>
+        <setInstallerVariable name="md5_info_file" value="${installdir}/checksum.md5"/>
+        <setInstallerVariable name="version_info_file" value="${installdir}/version.info"/>
+        <deleteFile path="${md5_info_file}"/>
+        <touchFile path="${md5_info_file}"/>
+        <changeOwnerAndGroup>
+            <files>${md5_info_file}</files>
+            <group>${groupname}</group>
+            <owner>${username}</owner>
+        </changeOwnerAndGroup>
+        <deleteFile path="${version_info_file}"/>
+        <touchFile path="${version_info_file}"/>
+        <changeOwnerAndGroup>
+            <files>${version_info_file}</files>
+            <group>${groupname}</group>
+            <owner>${username}</owner>
+        </changeOwnerAndGroup>
         <setInstallerVariable name="add_sysconf_done" value="true">
              <ruleList>
                  <compareText logic="equals" text="${program_exit_code}" value="0"/>
              </ruleList>
         </setInstallerVariable>
         <addFilesToUninstaller files="${sys_conf_file}"/>
+        <addFilesToUninstaller files="${md5_info_file}"/>
+        <addFilesToUninstaller files="${version_info_file}"/>
         <changePermissions files="${sys_conf_file}" permissions="0644"/>
         <propertiesFileSet>
             <file>${sys_conf_file}</file>
@@ -448,7 +466,14 @@
             <key>MD5</key>
             <value>${md5sum}</value>
         </propertiesFileSet>
-
+        <addTextToFile>
+            <file>${md5_info_file}</file>
+            <text>${md5sum}</text>
+        </addTextToFile>
+        <addTextToFile>
+            <file>${version_info_file}</file>
+            <text>${product_version}</text>
+        </addTextToFile>
     </postInstallationActionList>
 
     <installationAbortedActionList>
