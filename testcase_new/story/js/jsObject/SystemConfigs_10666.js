@@ -98,8 +98,8 @@ function toolGetConfigs( cmd, dir )
       var value = "" ;
       for( var k = 0;k < fileContent.length-1;k++ )
       {
-         if( fileContent[k] === "" ) 
-            continue ;
+         //if( fileContent[k] === "" ) 
+         //   continue ;
          // 制表符替换成四个空格
          value += fileContent[k].replace( /\t/g, '    ' ) + ";" ;
       }
