@@ -587,12 +587,12 @@ namespace engine
 
       rtnCode = getProcessor()->processMsg( msg, contextBuff, contextID,
                                             needReplay ) ;
-      if ( SDB_OK != rtnCode )
+      if ( rtnCode )
       {
          BSONObj tmp ;
          BSONObjBuilder builder ;
 
-         if ( contextBuff.recordNum() != 0 )
+         if ( contextBuff.recordNum() > 0 )
          {
             BSONObj errorInfo( contextBuff.data() ) ;
 
@@ -612,12 +612,12 @@ namespace engine
 
          tmp = builder.obj() ;
 
-         response.setOPResult( rc, tmp ) ;
+         response.setOPResult( rtnCode, tmp ) ;
 
          rc = pAdaptor->sendRest( socket(), &response ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "failed to send rest response: rc=%d", rc ) ;
+            PD_LOG( PDERROR, "failed to send response: rc=%d", rc ) ;
             goto error ;
          }
 
@@ -626,37 +626,21 @@ namespace engine
 
       _dealWithLoginReq( rtnCode, request, response ) ;
 
-      response.setChunkModal() ;
-
-      //send http header
-      rc = pAdaptor->sendHeader( socket(), &response ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "failed to send rest header: rc=%d", rc ) ;
-         goto error ;
-      }
-
       {
          BSONObj tmp = BSON( OM_REST_RES_RETCODE << rtnCode ) ;
 
-         rc = pAdaptor->sendChunk( socket(), tmp.objdata(),
-                                   tmp.objsize(), 1 ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "failed to send chunk: rc=%d", rc ) ;
-            goto error ;
-         }
+         response.setOPResult( rtnCode, tmp ) ;
       }
 
       if ( contextBuff.recordNum() > 0 )
       {
-         rc = pAdaptor->sendChunk( socket(),
-                                   contextBuff.data(),
-                                   contextBuff.size(),
-                                   contextBuff.recordNum() ) ;
+         rc = pAdaptor->setResBody( socket(), &response,
+                                    contextBuff.data(),
+                                    contextBuff.size(),
+                                    contextBuff.recordNum() ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "failed to send chunk: rc=%d", rc ) ;
+            PD_LOG( PDERROR, "failed to send response: rc=%d", rc ) ;
             goto error ;
          }
       }
@@ -667,10 +651,8 @@ namespace engine
 
          while ( NULL != pContext )
          {
-            rtnContextBuf tmpContextBuff ;
-
-            rc = pContext->getMore( -1, tmpContextBuff, _pEDUCB ) ;
-            if ( SDB_OK != rc )
+            rc = pContext->getMore( -1, contextBuff, _pEDUCB ) ;
+            if ( rc )
             {
                _pRTNCB->contextDelete( contextID, _pEDUCB ) ;
                contextID = -1 ;
@@ -686,23 +668,22 @@ namespace engine
                break ;
             }
 
-            rc = pAdaptor->sendChunk( socket(),
-                                      tmpContextBuff.data(),
-                                      tmpContextBuff.size(),
-                                      tmpContextBuff.recordNum() ) ;
+            rc = pAdaptor->setResBody( socket(), &response,
+                                       contextBuff.data(),
+                                       contextBuff.size(),
+                                       contextBuff.recordNum() ) ;
             if ( rc )
             {
-               PD_LOG( PDERROR, "failed to send chunk: rc=%d", rc ) ;
+               PD_LOG( PDERROR, "failed to send response: rc=%d", rc ) ;
                goto error ;
             }
          }
       }
 
-      //send chunk end message
-      rc = pAdaptor->sendChunk( socket(), NULL, 0, 0, FALSE ) ;
+      rc = pAdaptor->setResBodyEnd( socket(), &response ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "failed to send chunk: rc=%d", rc ) ;
+         PD_LOG( PDERROR, "failed to send response: rc=%d", rc ) ;
          goto error ;
       }
 

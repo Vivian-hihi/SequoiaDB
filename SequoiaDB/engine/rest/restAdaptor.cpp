@@ -45,6 +45,9 @@
 #include "rtnContext.hpp"
 #include "../util/url.h"
 
+/* response body cache max size */
+#define RESPONSE_MAX_CACHE_SIZE  (64*1024*1024)
+
 /* once recv size */
 #define REST_ONCE_RECV_SIZE       1024
 
@@ -478,6 +481,107 @@ namespace engine
          if( rc )
          {
             PD_LOG ( PDERROR, "Failed to send chunk data, rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 restAdaptor::setResBody( ossSocket *sock, restResponse *response,
+                                  const CHAR *pBuffer, INT32 length,
+                                  INT32 number, BOOLEAN isObjBuffer )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( sock, "socket is NULL" ) ;
+      SDB_ASSERT( response, "response is NULL" ) ;
+
+      if ( !response->isChunkModal() )
+      {
+         if ( response->getBodySize() + length > RESPONSE_MAX_CACHE_SIZE )
+         {
+            response->setChunkModal() ;
+
+            //send http header
+            rc = sendHeader( sock, response ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "failed to send rest header: rc=%d", rc ) ;
+               goto error ;
+            }
+
+            //send http body
+            rc = _sendBodyWithChunk( sock, response ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "failed to send body with chunk: rc=%d", rc ) ;
+               goto error ;
+            }
+
+            rc = setResBody( sock, response, pBuffer, length,
+                             number, isObjBuffer ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "failed to send response: rc=%d", rc ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            rc = response->appendBody( pBuffer, length, number, isObjBuffer ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "failed to append response body: rc=%d", rc ) ;
+               goto error ;
+            }
+         }
+      }
+      else
+      {
+         rc = sendChunk( sock, pBuffer, length, number, isObjBuffer ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to send chunk, rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 restAdaptor::setResBodyEnd( ossSocket *sock, restResponse *response )
+   {
+      if ( !response->isChunkModal() )
+      {
+         return sendRest( sock, response ) ;
+      }
+      else
+      {
+         return sendChunk( sock, NULL, 0, 0, FALSE ) ;
+      }
+   }
+
+   INT32 restAdaptor::_sendBodyWithChunk( ossSocket *sock,
+                                          restResponse *response )
+   {
+      INT32 rc = SDB_OK ;
+      std::vector<string>::iterator it ;
+
+      for( it = response->_bodyContent.begin();
+           it != response->_bodyContent.end(); ++it )
+      {
+         string context = *it ;
+
+         rc = _sendChunkData( sock, context.c_str(), context.length() ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
             goto error ;
          }
       }
@@ -1049,15 +1153,6 @@ namespace engine
 
             json = record.toString( FALSE, TRUE ) ;
 
-            if( _bodyContent.size() == 0 )
-            {
-               string result = REST_RESULT_STRING_OK ;
-
-               _bodyContent.push_back( result ) ;
-
-               _bodySize += result.length() ;
-            }
-
             _bodyContent.push_back( json ) ;
 
             _bodySize += json.length() ;
@@ -1623,20 +1718,27 @@ namespace engine
    {
       SDB_ASSERT( !_isChunk, "chunk mode can not call appendBody" ) ;
 
+      if( isObjBuffer && _bodyContent.size() == 0 )
+      {
+         string result = REST_RESULT_STRING_OK ;
+
+         _bodyContent.push_back( result ) ;
+
+         _bodySize += result.length() ;
+      }
+
       return restBase::appendBody( pBuffer, length, number, isObjBuffer ) ;
    }
 
-   INT32 restResponse::setResponse( HTTP_RESPONSE_CODE rspCode )
+   void restResponse::setResponse( HTTP_RESPONSE_CODE rspCode )
    {
-      INT32 rc = SDB_OK ;
       SDB_ASSERT( _write, "rest is read only" ) ;
 
-      return rc ;
+      _rspCode = rspCode ;
    }
 
-   INT32 restResponse::setOPResult( INT32 result, const BSONObj &info )
+   void restResponse::setOPResult( INT32 result, const BSONObj &info )
    {
-      INT32 rc = SDB_OK ;
       SDB_ASSERT( _write, "rest is read only" ) ;
       string json = info.toString( FALSE, TRUE ) ;
 
@@ -1652,8 +1754,6 @@ namespace engine
       }
 
       _bodySize += json.length() ;
-
-      return rc ;
    }
 
    void restResponse::setKeepAlive()

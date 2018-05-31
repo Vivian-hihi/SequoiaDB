@@ -91,7 +91,15 @@ namespace engine
       INT32 sendChunk( ossSocket *sock, const CHAR *pBuffer, INT32 length,
                        INT32 number = 0, BOOLEAN isObjBuffer = TRUE ) ;
 
+      INT32 setResBody( ossSocket *sock, restResponse *response,
+                        const CHAR *pBuffer, INT32 length,
+                        INT32 number = 0, BOOLEAN isObjBuffer = TRUE ) ;
+
+      INT32 setResBodyEnd( ossSocket *sock, restResponse *response ) ;
+
    protected:
+      INT32 _sendBodyWithChunk( ossSocket *sock, restResponse *response ) ;
+
       BOOLEAN _isEndOfHeader( restBase *pRest, CHAR *buffer,
                               INT32 size, INT32 &offset ) ;
 
@@ -330,9 +338,9 @@ namespace engine
       INT32 appendBody( const CHAR *pBuffer, INT32 length,
                         INT32 number = 0, BOOLEAN isObjBuffer = TRUE ) ;
 
-      INT32 setResponse( HTTP_RESPONSE_CODE rspCode ) ;
+      void setResponse( HTTP_RESPONSE_CODE rspCode ) ;
 
-      INT32 setOPResult( INT32 result, const BSONObj &info ) ;
+      void setOPResult( INT32 result, const BSONObj &info ) ;
 
       void setKeepAlive() ;
 
