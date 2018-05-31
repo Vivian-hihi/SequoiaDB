@@ -85,7 +85,7 @@ function checkSsh( hostname, user, passwd, port )
 {
    try
    {
-      var ssh = new Ssh( hostname, user, passwd, port ) ;
+      var ssh = newSsh( hostname, user, passwd, port ) ;
       ssh.close() ;
       return true ;
    }
@@ -243,4 +243,31 @@ function checkLocalFile( filename, mode, content )
             content, actual ) ;
    }
    file.close() ;
+}
+
+
+/******************************************************************************
+*@Description : ssh at least three times
+*@author      : luweikang          
+******************************************************************************/
+function newSsh( hostname, sdbUser, sdbPasswd, sshPort)
+{
+   var sshSuccess = false;
+   for(var i = 0; i < 3; i++)
+   {
+      
+      try
+      {   
+         var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort );
+         sshSuccess = true;
+         break;
+      }catch( e ){
+         println("ssh failed: "+ e);
+      }
+   }
+   if( sshSuccess === false )
+   {
+      throw buildException( "newSsh()", null, "three retries failed", "ssh success", "ssh failed" );
+   }
+   return ssh;
 }

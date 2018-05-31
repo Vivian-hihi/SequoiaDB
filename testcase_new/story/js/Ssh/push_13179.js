@@ -23,7 +23,7 @@ function testPush( hostname )
    file.write( content ) ;
    file.close() ;
    
-   var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort ) ;
+   var ssh = newSsh( hostname, sdbUser, sdbPasswd, sshPort ) ;
    ssh.push( srcFile, dstFile ) ;
    ssh.close() ;
    
@@ -50,7 +50,7 @@ function testPushWithMode( hostname )
    file.write( content ) ;
    file.close() ;
    
-   var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort ) ;
+   var ssh = newSsh( hostname, sdbUser, sdbPasswd, sshPort ) ;
    for( var i = 0;i < modes.length;i++ )
    {
       ssh.push( srcFile, dstFile, modes[i] ) ;
@@ -71,7 +71,7 @@ function testPushNotExist( hostname )
    
    rmLocalFile( srcFile ) ;
    
-   var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort ) ;
+   var ssh = newSsh( hostname, sdbUser, sdbPasswd, sshPort ) ;
    try
    {
       ssh.push( srcFile, dstFile ) ;
@@ -102,7 +102,7 @@ function testPushSrcPermission( hostname )
    
    rmLocalFile( srcFile ) ;
    rmRemoteFile( hostname, dstFile ) ;
-   var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort ) ;
+   var ssh = newSsh( hostname, sdbUser, sdbPasswd, sshPort ) ;
    
    for( var i = 0;i < srcModes.length;i++ )
    {
@@ -156,7 +156,7 @@ function testPushDstExisted( hostname )
    file.close() ;
    remote.close() ;
    
-   var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort ) ;
+   var ssh = newSsh( hostname, sdbUser, sdbPasswd, sshPort ) ;
    ssh.push( srcFile, dstFile ) ;
    ssh.close() ;
    
@@ -183,7 +183,7 @@ function testPushDstPermission( hostname )
    file.write( srcContent ) ;
    file.close() ;
    var remote = new Remote( hostname, CMSVCNAME ) ;
-   var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort ) ;
+   var ssh = newSsh( hostname, sdbUser, sdbPasswd, sshPort ) ;
    
    for( var i = 0;i < dstModes.length;i++ )
    {

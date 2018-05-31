@@ -6,7 +6,7 @@
 ******************************************************************************/
 function testIP( hostname )
 {
-   var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort ) ;
+   var ssh = newSsh( hostname, sdbUser, sdbPasswd, sshPort ) ;
    var localIp = ssh.getLocalIP() ;
    var expect = getLocalIPAddr() ;
    if( localIp !== expect )

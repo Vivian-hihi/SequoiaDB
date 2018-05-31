@@ -7,7 +7,7 @@
 ******************************************************************************/
 function testClose( hostname )
 {
-   var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort ) ;
+   var ssh = newSsh( hostname, sdbUser, sdbPasswd, sshPort ) ;
    ssh.close() ;
    
    try

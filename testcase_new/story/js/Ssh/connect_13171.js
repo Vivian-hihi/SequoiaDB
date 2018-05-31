@@ -73,7 +73,7 @@ function testSshNormal( hostname )
 {
    try
    {
-      var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort ) ;
+      var ssh = newSsh( hostname, sdbUser, sdbPasswd, sshPort ) ;
       ssh.close() ;
    }
    catch( e )

@@ -7,7 +7,7 @@
 ******************************************************************************/
 function testExecNormal( hostname )
 {
-   var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort ) ;
+   var ssh = newSsh( hostname, sdbUser, sdbPasswd, sshPort ) ;
    var host = ssh.exec( "hostname" ).split( "\n" )[0] ;
    if( host !== hostname )
    {
@@ -31,7 +31,7 @@ function testExecNormal( hostname )
 
 function testExecAbnormal( hostname )
 {
-   var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort ) ;
+   var ssh = newSsh( hostname, sdbUser, sdbPasswd, sshPort ) ;
    try
    {
       ssh.exec( "led" ) ;
