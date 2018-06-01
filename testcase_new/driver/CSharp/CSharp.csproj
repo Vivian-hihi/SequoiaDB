@@ -137,6 +137,9 @@
     <Compile Include="TestCommon\Common.cs" />
     <Compile Include="TestCommon\Config.cs" />
     <Compile Include="TestCommon\SdbTestBase.cs" />
+    
+    <Compile Include="Cluster\ClusterManager15242.cs" />
+    <Compile Include="Cluster\Common.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
