@@ -141,9 +141,11 @@ namespace engine
       _timeout = timeout ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RESTADAPTOR_RECVHEADER, "restAdaptor::recvHeader" )
    INT32 restAdaptor::recvHeader( ossSocket *sock, restBase *pRest )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RESTADAPTOR_RECVHEADER ) ;
       SDB_ASSERT( sock, "sock is NULL" ) ;
       SDB_ASSERT( pRest, "pRest is NULL" ) ;
       INT32 recvSize = 0 ;
@@ -238,14 +240,17 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_RESTADAPTOR_RECVHEADER, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RESTADAPTOR_RECVBODY, "restAdaptor::recvBody" )
    INT32 restAdaptor::recvBody( ossSocket *sock, restBase *pRest )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RESTADAPTOR_RECVBODY ) ;
       SDB_ASSERT( sock, "socket is NULL" ) ;
       SDB_ASSERT( pRest, "pRest is NULL" ) ;
       string chunk ;
@@ -291,6 +296,7 @@ namespace engine
       }
 
   done:
+      PD_TRACE_EXITRC ( SDB_RESTADAPTOR_RECVBODY, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -318,9 +324,13 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RESTADAPTOR_SENDHEADER, "restAdaptor::sendHeader" )
    INT32 restAdaptor::sendHeader( ossSocket *sock, restBase *pRest )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RESTADAPTOR_SENDHEADER ) ;
+      SDB_ASSERT( sock, "socket is NULL" ) ;
+      SDB_ASSERT( pRest, "pRest is NULL" ) ;
       CHAR CRLF[3] = { REST_STRING_CR, REST_STRING_LF, 0 } ;
       string restHeader = pRest->_generateHeader() ;
       REST_COLNAME_MAP_IT it ;
@@ -398,14 +408,19 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_RESTADAPTOR_SENDHEADER, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RESTADAPTOR_SENDBODY, "restAdaptor::sendBody" )
    INT32 restAdaptor::sendBody( ossSocket *sock, restBase *pRest )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RESTADAPTOR_SENDBODY ) ;
+      SDB_ASSERT( sock, "socket is NULL" ) ;
+      SDB_ASSERT( pRest, "pRest is NULL" ) ;
       std::vector<string>::iterator it ;
 
       if ( pRest->_bodyContent.size() > 0 )
@@ -434,16 +449,20 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_RESTADAPTOR_SENDBODY, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RESTADAPTOR_SENDCHUNK, "restAdaptor::sendChunk" )
    INT32 restAdaptor::sendChunk( ossSocket *sock, const CHAR *pBuffer,
                                  INT32 length, INT32 number,
                                  BOOLEAN isObjBuffer )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RESTADAPTOR_SENDCHUNK ) ;
+      SDB_ASSERT( sock, "socket is NULL" ) ;
 
       if( isObjBuffer )
       {
@@ -486,16 +505,19 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_RESTADAPTOR_SENDCHUNK, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RESTADAPTOR_SETRESBODY, "restAdaptor::setResBody" )
    INT32 restAdaptor::setResBody( ossSocket *sock, restResponse *response,
                                   const CHAR *pBuffer, INT32 length,
                                   INT32 number, BOOLEAN isObjBuffer )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RESTADAPTOR_SETRESBODY ) ;
       SDB_ASSERT( sock, "socket is NULL" ) ;
       SDB_ASSERT( response, "response is NULL" ) ;
 
@@ -550,6 +572,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_RESTADAPTOR_SETRESBODY, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -696,9 +719,11 @@ namespace engine
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RESTADAPTOR__RECVRESTBODY, "restAdaptor::_recvRestBody" )
    INT32 restAdaptor::_recvRestBody( ossSocket *sock, restBase *pRest )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RESTADAPTOR__RECVRESTBODY ) ;
       SDB_ASSERT( sock, "socket is NULL" ) ;
       SDB_ASSERT( pRest, "pRest is NULL" ) ;
       INT32 bodySize = 0 ;
@@ -780,15 +805,18 @@ namespace engine
          }
       }
 
-  done:
+   done:
+      PD_TRACE_EXITRC ( SDB_RESTADAPTOR__RECVRESTBODY, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RESTADAPTOR__RECVRESTCHUNK, "restAdaptor::_recvRestChunk" )
    INT32 restAdaptor::_recvRestChunk( ossSocket *sock, restBase *pRest )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RESTADAPTOR__RECVRESTCHUNK ) ;
       SDB_ASSERT( sock, "socket is NULL" ) ;
       SDB_ASSERT( pRest, "pRest is NULL" ) ;
       INT32 receivedSize = 0 ;
@@ -858,14 +886,17 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_RESTADAPTOR__RECVRESTCHUNK, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RESTADAPTOR__RECVRESTIDENTITY, "restAdaptor::_recvRestIdentity" )
    INT32 restAdaptor::_recvRestIdentity( ossSocket *sock, restBase *pRest )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RESTADAPTOR__RECVRESTIDENTITY ) ;
       SDB_ASSERT( sock, "socket is NULL" ) ;
       SDB_ASSERT( pRest, "pRest is NULL" ) ;
       INT32 receivedSize = 0 ;
@@ -930,15 +961,18 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_RESTADAPTOR__RECVRESTIDENTITY, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RESTADAPTOR__SENDCHUNKDATA, "restAdaptor::_sendChunkData" )
    INT32 restAdaptor::_sendChunkData( ossSocket *sock, const CHAR *pBuffer,
                                       INT32 length )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RESTADAPTOR__SENDCHUNKDATA ) ;
       SDB_ASSERT( sock, "socket is NULL" ) ;
 
       if ( pBuffer )
@@ -985,15 +1019,21 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_RESTADAPTOR__SENDCHUNKDATA, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RESTADAPTOR__SENDDATA, "restAdaptor::_sendData" )
    INT32 restAdaptor::_sendData( ossSocket *sock, const CHAR* pData, INT32 size,
                                  BOOLEAN block, INT32 *pSentLen )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RESTADAPTOR__SENDDATA ) ;
+      SDB_ASSERT( sock, "socket is NULL" ) ;
+      SDB_ASSERT( pData, "data is NULL" ) ;
       INT32 sentSize = 0 ;
       INT32 totalSentSize = 0 ;
 
@@ -1014,13 +1054,18 @@ namespace engine
          *pSentLen = totalSentSize ;
       }
 
+      PD_TRACE_EXITRC ( SDB_RESTADAPTOR__SENDDATA, rc ) ;
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RESTADAPTOR__RECVDATA, "restAdaptor::_recvData" )
    INT32 restAdaptor::_recvData( ossSocket *sock, CHAR* pData, INT32 size,
                                  BOOLEAN block, INT32 *pRecvLen )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RESTADAPTOR__RECVDATA ) ;
+      SDB_ASSERT( sock, "socket is NULL" ) ;
+      SDB_ASSERT( pData, "data is NULL" ) ;
       INT32 receivedSize = 0 ;
       INT32 totalReceivedSize = 0 ;
 
@@ -1041,6 +1086,7 @@ namespace engine
          *pRecvLen = totalReceivedSize ;
       }
 
+      PD_TRACE_EXITRC ( SDB_RESTADAPTOR__RECVDATA, rc ) ;
       return rc ;
    }
 
