@@ -433,9 +433,17 @@ function Skip()
    var installPath   = taskInfo[FIELD_INSTALL_PATH] ;
    var hostName      = hostInfo[FIELD_HOSTNAME] ;
 
-   resultInfo[FIELD_FLOW].push( sprintf( "The host has deployed the " +
-                                         "package: host [?], path[?]",
-                                         hostName, installPath ) ) ;
+   var sshPort = hostInfo[FIELD_SSH_PORT] ;
+   var user    = hostInfo[FIELD_USER] ;
+   var pwd     = hostInfo[FIELD_PASSWD] ;
+
+   var version = _getVersion( hostName, user, pwd, sshPort, installPath ) ;
+
+   resultInfo[FIELD_VERSION] = version ;
+
+   resultInfo[FIELD_FLOW].push( sprintf( "The host has deployed the package: " +
+                                         "version[?], host [?], path[?]",
+                                         version, hostName, installPath ) ) ;
 
    return resultInfo ;
 }
