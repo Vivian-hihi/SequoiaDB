@@ -139,6 +139,7 @@ testFiles = [
    [ "./misc/bindata11734.cpp" ],
    # [ "./misc/memcheck12559.cpp" ], # manual
    [ "./misc/configs14878.cpp" ], # sync
+   [ "./misc/invalidFlag15381.cpp" ],
    [ "./ssl/sslFalse9649.cpp" ],
    [ "./ssl/sslTrue9648.cpp" ],  # config
    [ "./monitor/getListContexts12526.cpp" ],
