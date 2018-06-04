@@ -344,7 +344,7 @@ namespace engine
       } while ( TRUE ) ;
 
    done:
-      _clearMsgData() ; 
+      _clearMsgData() ;
       PD_TRACE_EXITRC( COORD_LOBSTREAM_OPENOTHERSTREAMS, rc ) ;
       return rc ;
    error:
@@ -792,7 +792,7 @@ namespace engine
          {
             break ;
          }
-         else 
+         else
          {
             rc = _reopenSubStreams( cb ) ;
             if ( SDB_OK != rc )
@@ -1079,7 +1079,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_READV ) ;
 
-      DONE_LST doneLst ; 
+      DONE_LST doneLst ;
       BOOLEAN needReshard = TRUE ;
       MsgOpLob header ;
       RTN_LOB_TUPLES newTuples ;
@@ -1109,7 +1109,7 @@ namespace engine
                {
                   goto error ;
                }
- 
+
                rc = _getPool().push( _emptyPageBuf, t.tuple.columns.len,
                                      RTN_LOB_GET_OFFSET_OF_LOB(
                                          pageSize,
@@ -1140,7 +1140,7 @@ namespace engine
 
       _initHeader( header, MSG_BS_LOB_READ_REQ,
                    0, -1 ) ;
-      
+
       do
       {
          _clearMsgData() ;
@@ -1506,7 +1506,7 @@ namespace engine
 
          if ( RETRY_TAG_NULL == tag )
          {
-            break ;            
+            break ;
          }
          else
          {
@@ -1581,7 +1581,7 @@ namespace engine
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_EXTRACTMETA, "_coordLobStream::_extractMeta" )   
+   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_EXTRACTMETA, "_coordLobStream::_extractMeta" )
    INT32 _coordLobStream::_extractMeta( const MsgOpReply *header,
                                         bson::BSONObj &metaObj,
                                         _rtnLobDataPool::tuple &dataTuple )
@@ -1825,7 +1825,7 @@ namespace engine
          if ( SDB_OK == flags ||
               ( pIgoreErr && pIgoreErr->count( flags ) > 0 ) )
          {
-            /// pReply will be released by _clearMsgData()    
+            /// pReply will be released by _clearMsgData()
             _results.push_back( pReply ) ;
             continue ;
          }
@@ -1838,7 +1838,10 @@ namespace engine
          CoordGroupMap::iterator it = _mapGroupInfo.find( id.columns.groupID ) ;
          if ( it == _mapGroupInfo.end() )
          {
-            SDB_ASSERT( FALSE, "Group info is not exist" ) ;
+            // Before the data node registers on catalog successfully, it may
+            // return the error code of -222, and the id above is 0.
+            SDB_ASSERT( SDB_INVALID_ROUTEID == flags,
+                        "Group info is not exist" ) ;
             flags = SDB_COOR_NO_NODEGROUP_INFO ;
          }
          else if ( !nodeSpecified &&
@@ -1897,7 +1900,7 @@ namespace engine
       _groupSession.resetSubSession() ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_REOPENSUBSTREAMS, "_coordLobStream::_reopenSubStreams" ) 
+   // PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_REOPENSUBSTREAMS, "_coordLobStream::_reopenSubStreams" )
    INT32 _coordLobStream::_reopenSubStreams( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -2086,7 +2089,7 @@ namespace engine
       std::vector<MsgOpReply *>::const_iterator itr = _results.begin() ;
       for ( ; itr != _results.end(); ++itr )
       {
-         SDB_ASSERT( SDB_OK == ( *itr )->flags, "impossible" ) ; 
+         SDB_ASSERT( SDB_OK == ( *itr )->flags, "impossible" ) ;
          rc = _add2DoneLst( ( *itr )->header.routeID.columns.groupID,
                             doneLst ) ;
          if ( SDB_OK != rc )
