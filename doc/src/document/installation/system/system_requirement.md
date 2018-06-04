@@ -60,11 +60,18 @@
          ```lang-javascript
          $ hostname sdbserver1
          ```
-     2. 打开 /etc/sysconfig/network 文件；  
-         
+     2. RedHat7 以下的系统，打开 /etc/sysconfig/network 文件；  
+             
          ```lang-javascript
          $ vi /etc/sysconfig/network
          ```
+
+         如果是 RedHat7 系统，则打开 /etc/hostname 文件：    
+             
+         ```lang-javascript
+         $ vi /etc/hostname
+         ```
+
      3. 将 HOSTNAME 一行修改为 HOSTNAME = sdbserver1 （其中sdbserver1 为新主机名）；
 
          ```
