@@ -168,6 +168,9 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
     val ignoreDuplicateKey: Boolean = properties.get(SdbConfig.IgnoreDuplicateKey)
         .map(_.toBoolean).getOrElse(SdbConfig.DefaultIgnoreDuplicateKey)
 
+    val ignoreNullField: Boolean = properties.get(SdbConfig.IgnoreNullField)
+        .map(_.toBoolean).getOrElse(SdbConfig.DefaultIgnoreNullField)
+
     val useSelector: String = properties
         .getOrElse(SdbConfig.UseSelector, SdbConfig.DefaultUseSelector)
 
@@ -277,6 +280,7 @@ object SdbConfig {
     val ShardingPartitionSingleNode = "shardingpartitionsinglenode"
     val PreferredLocation = "preferredlocation"
     val IgnoreDuplicateKey = "ignoreduplicatekey"
+    val IgnoreNullField = "ignorenullfield"
     val UseSelector = "useselector"
     val SelectorDiff = "selectordiff"
     val PageSize = "pagesize"
@@ -337,6 +341,7 @@ object SdbConfig {
         ShardingPartitionSingleNode,
         PreferredLocation,
         IgnoreDuplicateKey,
+        IgnoreNullField,
         UseSelector,
         SelectorDiff,
         ScanType,
@@ -375,6 +380,7 @@ object SdbConfig {
     val DefaultShardingPartitionSingleNode = false
     val DefaultPreferredLocation = false
     val DefaultIgnoreDuplicateKey = false
+    val DefaultIgnoreNullField = false
     val DefaultUseSelector = USE_SELECTOR_ENABLE
     val DefaultSelectorDiff = 2
     val DefaultPageSize = 1024 * 64
