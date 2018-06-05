@@ -223,7 +223,7 @@
    </target>
    
    <target name="compile_postgresql_plugin">
-      <var name="src_dir" value="${srccode_dir}/tools/om_plugins/postgresql/source" />
+      <var name="src_dir" value="${srccode_dir}/tools/om_plugins/sequoiasql/source" />
       <if>
          <equals arg1="${IS_DEBUG}" arg2="true"/>
          <then>
@@ -234,10 +234,10 @@
             <var name="cmd_mvn" value="versions:set -DnewVersion=${sequoiadb_version}"/>
          </else>
       </if>
-      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/postgresql/source" failonerror="true" logError="true">
+      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/sequoiasql/source" failonerror="true" logError="true">
          <arg line=" ${cmd_mvn} " />
       </exec>
-      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/postgresql/source" failonerror="true" logError="true">
+      <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/sequoiasql/source" failonerror="true" logError="true">
          <arg line=" clean package -Drevision=${fdw_svn}" />
       </exec>
    </target>
