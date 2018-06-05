@@ -17,7 +17,7 @@
 package com.sequoiadb.spark
 
 import com.sequoiadb.base.{DBCursor, Sequoiadb}
-import com.sequoiadb.exception.BaseException
+import com.sequoiadb.exception.{BaseException, SDBError}
 import org.bson.BSONObject
 import org.bson.types.BasicBSONList
 
@@ -125,7 +125,9 @@ private object SdbPartitioner extends Logging {
                 cursor = sdb.exec("select NodeName, ServiceStatus, Status from $SNAPSHOT_SYSTEM")
             } catch {
                 case e: BaseException =>
-                    if (e.getErrorType.equals("SDB_INVALIDARG")) {
+                    // data scheduler can't execute SQL, and will report SDB_OPTION_NOT_SUPPORT
+                    if (e.getErrorCode == SDBError.SDB_INVALIDARG.getErrorCode ||
+                        e.getErrorCode == SDBError.SDB_OPTION_NOT_SUPPORT.getErrorCode) {
                         cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_SYSTEM,
                             null.asInstanceOf[BSONObject], null, null)
                     } else {
@@ -158,7 +160,7 @@ private object SdbPartitioner extends Logging {
             cursor.close()
         } catch {
             case e: BaseException =>
-                if (!e.getErrorType.equals("SDB_RTN_COORD_ONLY")) {
+                if (e.getErrorCode != SDBError.SDB_RTN_COORD_ONLY.getErrorCode) {
                     throw e
                 }
             case x: Throwable => throw x
@@ -186,19 +188,21 @@ private object SdbPartitioner extends Logging {
                 val group = obj.get("Group").asInstanceOf[BasicBSONList]
                 for (node <- group) {
                     val nodeObj = node.asInstanceOf[BSONObject]
+                    val status = nodeObj.get("Status").asInstanceOf[Int]
+                    if (status == 1) {
+                        val hostName = nodeObj.get("HostName")
+                        val service = nodeObj.get("Service").asInstanceOf[BasicBSONList]
+                        for (port <- service) {
+                            val portObj = port.asInstanceOf[BSONObject]
+                            val serviceType = portObj.get("Type").asInstanceOf[Int]
+                            if (serviceType == 0) {
+                                val serviceName = portObj.get("Name").asInstanceOf[String]
 
-                    val hostName = nodeObj.get("HostName")
-                    val service = nodeObj.get("Service").asInstanceOf[BasicBSONList]
-                    for (port <- service) {
-                        val portObj = port.asInstanceOf[BSONObject]
-                        val serviceType = portObj.get("Type").asInstanceOf[Int]
-                        if (serviceType == 0) {
-                            val serviceName = portObj.get("Name").asInstanceOf[String]
+                                val node = hostName + ":" + serviceName
 
-                            val node = hostName + ":" + serviceName
-
-                            if (abnormalNodes.isEmpty || !abnormalNodes.contains(node)) {
-                                nodeList += node
+                                if (abnormalNodes.isEmpty || !abnormalNodes.contains(node)) {
+                                    nodeList += node
+                                }
                             }
                         }
                     }
@@ -209,7 +213,7 @@ private object SdbPartitioner extends Logging {
             cursor.close()
         } catch {
             case e: BaseException =>
-                if (!e.getErrorType.equals("SDB_RTN_COORD_ONLY")) {
+                if (e.getErrorCode != SDBError.SDB_RTN_COORD_ONLY.getErrorCode) {
                     throw e
                 }
             case x: Throwable => throw x
