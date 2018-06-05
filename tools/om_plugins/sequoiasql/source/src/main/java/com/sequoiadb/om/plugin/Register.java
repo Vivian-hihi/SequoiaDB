@@ -1,7 +1,9 @@
-package com.sequoiadb.plugin;
+package com.sequoiadb.om.plugin;
 
-import com.sequoiadb.plugin.config.OmsvcConfig;
-import com.sequoiadb.plugin.config.PluginConfig;
+import com.sequoiadb.om.plugin.config.MySQLConfig;
+import com.sequoiadb.om.plugin.config.OmsvcConfig;
+import com.sequoiadb.om.plugin.config.PluginConfig;
+import com.sequoiadb.om.plugin.config.PostgreSQLConfig;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,18 +30,29 @@ public class Register extends TimerTask {
     private OmsvcConfig omConf;
 
     @Autowired
-    private PluginConfig pluginConf;
+    private PostgreSQLConfig pgConfig;
+
+    @Autowired
+    private MySQLConfig mysqlConfig;
 
     public void start() {
         timer.schedule(this, 0, 1000);
     }
 
-    public synchronized boolean register(){
-        boolean rc = registerPlugin();
-        if ( rc ) {
+    public synchronized boolean register(boolean isInit) {
+
+        if (isInit) {
+            pgConfig.setIsRegister(false);
+            mysqlConfig.setIsRegister(false);
+        }
+
+        boolean rc1 = registerPlugin(pgConfig);
+        boolean rc2 = registerPlugin(mysqlConfig);
+        if (rc1 && rc2) {
+            logger.info("Event: timer cancel");
             timer.cancel();
         }
-        return rc;
+        return rc1 && rc2;
     }
 
     public synchronized boolean isTimeout() {
@@ -48,10 +61,14 @@ public class Register extends TimerTask {
     }
 
     public void run() {
-        register();
+        register(false);
     }
 
-    private boolean registerPlugin() {
+    private boolean registerPlugin(PluginConfig config) {
+
+        if (config.getIsRegister()) {
+            return true;
+        }
 
         String url = "http://" + omConf.getHostName() + ":" + omConf.getHttpname();
 
@@ -59,11 +76,11 @@ public class Register extends TimerTask {
 
         LinkedMultiValueMap<String, String> para = new LinkedMultiValueMap<String, String>();
         para.put("cmd", Collections.singletonList("register plugin"));
-        para.put("Name", Collections.singletonList(pluginConf.getName()));
-        para.put("HostName", Collections.singletonList(pluginConf.getHostName()));
-        para.put("ServiceName", Collections.singletonList(pluginConf.getSvcname()));
-        para.put("Role", Collections.singletonList(pluginConf.getRole()));
-        para.put("Type", Collections.singletonList(pluginConf.getType()));
+        para.put("Name", Collections.singletonList(config.getName()));
+        para.put("HostName", Collections.singletonList(config.getHostName()));
+        para.put("ServiceName", Collections.singletonList(config.getSvcname()));
+        para.put("Role", Collections.singletonList(config.getRole()));
+        para.put("Type", Collections.singletonList(config.getType()));
         para.put("PublicKey", Collections.singletonList(pluginPublicKey));
 
         HttpHeaders httpHeaders = new HttpHeaders();
@@ -84,8 +101,9 @@ public class Register extends TimerTask {
                 omConf.setUser(Crypto.decrypt(pluginPublicKey, result.getString("user")));
                 omConf.setPasswd(Crypto.decrypt(pluginPublicKey, result.getString("passwd")));
                 omConf.setLeaseTime(result.getLong("leaseTime"));
-                logger.info("Event: register plugin success");
+                logger.info("Event: " + config.getType() + " plugin success");
                 //logger.info("%s %s %s %d %d\r\n", omSvcname, omUser, omPasswd, registerTime, leaseTime);
+                config.setIsRegister(true);
                 return true;
             }
         } catch (Exception e) {

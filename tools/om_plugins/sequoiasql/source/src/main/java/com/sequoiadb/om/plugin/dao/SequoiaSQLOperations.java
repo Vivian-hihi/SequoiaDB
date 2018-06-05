@@ -1,22 +1,22 @@
-package com.sequoiadb.plugin.dao;
+package com.sequoiadb.om.plugin.dao;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
-public class SqlOperations {
+public class SequoiaSQLOperations {
 
-    private final Logger logger = LoggerFactory.getLogger(SqlOperations.class);
+    protected final Logger logger = LoggerFactory.getLogger(PostgreSQLOperations.class);
+    protected String className = "";
+    protected String scheme = "";
+    protected String defaultDBName = "";
 
-    SqlOperations() throws ClassNotFoundException {
-        Class.forName("org.postgresql.Driver");
+    SequoiaSQLOperations() throws ClassNotFoundException {
     }
 
     public List<BSONObject> query(String hostName, String svcname,
@@ -27,8 +27,14 @@ public class SqlOperations {
         ResultSet rs = null;
         List<BSONObject> content = new ArrayList<BSONObject>();
 
+        Class.forName(className);
+
+        if (dbName == null || dbName.trim().length() == 0) {
+            dbName = defaultDBName;
+        }
+
         try {
-            c = DriverManager.getConnection("jdbc:postgresql://" + hostName + ":" + svcname + "/" + dbName, user, pwd);
+            c = DriverManager.getConnection(scheme + "://" + hostName + ":" + svcname + "/" + dbName, user, pwd);
 
             stmt = c.createStatement();
 
@@ -50,7 +56,7 @@ public class SqlOperations {
         return content;
     }
 
-    private void resultSetClose(ResultSet rs) {
+    protected void resultSetClose(ResultSet rs) {
         try {
             if (rs != null) {
                 rs.close();
@@ -60,7 +66,7 @@ public class SqlOperations {
         }
     }
 
-    private void statementClose(Statement stmt) {
+    protected void statementClose(Statement stmt) {
         try {
             if (stmt != null) {
                 stmt.close();
@@ -70,7 +76,7 @@ public class SqlOperations {
         }
     }
 
-    private void ConnectionClose(Connection c) {
+    protected void ConnectionClose(Connection c) {
         try {
             if (c != null) {
                 c.close();
@@ -80,7 +86,7 @@ public class SqlOperations {
         }
     }
 
-    private BSONObject resultSet2Bson(ResultSet rs) throws SQLException {
+    protected BSONObject resultSet2Bson(ResultSet rs) throws SQLException {
         BSONObject bson = new BasicBSONObject();
         ResultSetMetaData metaData = rs.getMetaData();
         int columnCount = metaData.getColumnCount();

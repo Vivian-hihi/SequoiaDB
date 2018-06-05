@@ -1,4 +1,4 @@
-package com.sequoiadb.plugin.config;
+package com.sequoiadb.om.plugin.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;

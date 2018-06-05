@@ -1,4 +1,4 @@
-package com.sequoiadb.plugin.dao;
+package com.sequoiadb.om.plugin.dao;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
@@ -6,8 +6,8 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-import com.sequoiadb.plugin.Register;
-import com.sequoiadb.plugin.config.OmsvcConfig;
+import com.sequoiadb.om.plugin.Register;
+import com.sequoiadb.om.plugin.config.OmsvcConfig;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
@@ -109,7 +109,7 @@ public class DbOperations {
                 } catch (BaseException e) {
                     if (e.getErrorCode() == SDBError.SDB_AUTH_AUTHORITY_FORBIDDEN.getErrorCode()) {
                         if (i < 5) {
-                            register.register();
+                            register.register(true);
                             continue;
                         } else {
                             logger.warn(e.getMessage());

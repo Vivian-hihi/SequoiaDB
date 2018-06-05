@@ -1,12 +1,12 @@
-package com.sequoiadb.plugin;
+package com.sequoiadb.om.plugin;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PostgreSQLPlugin {
+public class SequoiaSQLPlugin {
 
     public static void main(String[] args) {
-        SpringApplication.run(PostgreSQLPlugin.class, args);
+        SpringApplication.run(SequoiaSQLPlugin.class, args);
     }
 }

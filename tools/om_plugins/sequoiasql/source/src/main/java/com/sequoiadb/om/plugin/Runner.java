@@ -1,16 +1,13 @@
-package com.sequoiadb.plugin;
+package com.sequoiadb.om.plugin;
 
-import com.sequoiadb.plugin.dao.SqlOperations;
-import com.sequoiadb.plugin.config.OmsvcConfig;
-import com.sequoiadb.plugin.config.PluginConfig;
-import org.bson.BSONObject;
+import com.sequoiadb.om.plugin.config.MySQLConfig;
+import com.sequoiadb.om.plugin.config.OmsvcConfig;
+import com.sequoiadb.om.plugin.config.PostgreSQLConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 public class Runner implements CommandLineRunner {
@@ -22,7 +19,10 @@ public class Runner implements CommandLineRunner {
     private OmsvcConfig omConf;
 
     @Autowired
-    private PluginConfig pluginConf;
+    private PostgreSQLConfig pgConf;
+
+    @Autowired
+    private MySQLConfig mysqlConf;
 
     @Override
     public void run(String... strings) throws Exception {
@@ -31,8 +31,11 @@ public class Runner implements CommandLineRunner {
 
         logger.info("Event: Init");
 
-        pluginConf.setName("SequoiaSQL-PostgreSQL");
-        pluginConf.setType("sequoiasql-postgresql");
+        pgConf.setName("SequoiaSQL");
+        pgConf.setType("sequoiasql-postgresql");
+
+        mysqlConf.setName("SequoiaSQL");
+        mysqlConf.setType("sequoiasql-mysql");
 
         register.start();
     }

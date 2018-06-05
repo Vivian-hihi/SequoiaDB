@@ -4,7 +4,7 @@
 currentPath=$(cd "$(dirname "$0")"; pwd)
 
 #config parameter
-binName="postgresql-plugin"
+binName="sequoiasql-plugin"
 extName="jar"
 
 

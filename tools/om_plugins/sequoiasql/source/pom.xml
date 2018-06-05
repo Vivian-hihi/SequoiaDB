@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.sequoiadb</groupId>
-    <artifactId>postgresql-plugin</artifactId>
+    <artifactId>sequoiasql-plugin</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.9.RELEASE</version>
+        <version>1.5.13.RELEASE</version>
     </parent>
 
     <dependencies>
@@ -35,6 +35,13 @@
             <artifactId>postgresql</artifactId>
             <version>9.3-1104-jdbc41</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.46</version>
+        </dependency>
+
 
     </dependencies>
     <build>
