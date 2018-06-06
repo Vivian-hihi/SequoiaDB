@@ -54,6 +54,11 @@ function _getPluginList()
       var fileInfo = record.toObj() ;
       var fileName = fileInfo[FIELD_NAME2] ;
 
+      if ( fileName == 'SequoiaSQL-PostgreSQL' )
+      {
+         continue ;
+      }
+
       if( File.isDir( rootPath + "/" + fileName ) )
       {
          plugins.push( fileName ) ;
