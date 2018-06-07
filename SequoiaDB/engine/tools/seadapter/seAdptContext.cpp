@@ -41,6 +41,7 @@
 #include "seAdptDef.hpp"
 #include "rtnSimpleCondParser.hpp"
 #include "utilESKeywordDef.hpp"
+#include "utilESUtil.hpp"
 
 using namespace bson ;
 
@@ -48,6 +49,7 @@ using namespace bson ;
 #define SEADPT_FETCH_BATCH_SIZE     10000
 #define SEADPT_FETCH_MAX_SIZE       100000
 #define SEADPT_ES_ID_FILTER_PATH    "filter_path=_scroll_id,hits.hits._id"
+#define SEADPT_ES_MAX_ID_SIZE       256
 
 namespace seadapter
 {
@@ -541,11 +543,14 @@ namespace seadapter
       BSONArray idArray ;
 
       BSONObj obj ;
+      UINT32 bufSize = SEADPT_ES_MAX_ID_SIZE ;
+      CHAR idBuff[ SEADPT_ES_MAX_ID_SIZE ] = { 0 } ;
 
       try
       {
          while ( !objBuff.eof() )
          {
+            BSONType type ;
             objBuff.nextObj( obj ) ;
             idValue = obj.getStringField( SEADPT_ID_KEY_NAME ) ;
             SDB_ASSERT( idValue, "id value should not be NULL" ) ;
@@ -555,14 +560,60 @@ namespace seadapter
                continue ;
             }
 
-            bson::OID oid( idValue ) ;
-            arrayBuilder.append( oid ) ;
+            bufSize = SEADPT_ES_MAX_ID_SIZE ;
+            ossMemset( idBuff, 0, bufSize ) ;
+            rc = decodeID( idValue, idBuff, bufSize, type ) ;
+            PD_RC_CHECK( rc, PDERROR, "Decode id[ %s ] failed[ %d ]",
+                         idValue, rc ) ;
+            switch ( type )
+            {
+            case NumberDouble:
+               arrayBuilder.append( *(FLOAT64 *)idBuff ) ;
+               break ;
+            case String:
+               arrayBuilder.append( idBuff ) ;
+               break ;
+            case Object:
+            {
+               BSONObj subObj( idBuff ) ;
+               arrayBuilder.append( subObj ) ;
+               break ;
+            }
+            case jstOID:
+               arrayBuilder.append( *(bson::OID *)idBuff ) ;
+               break ;
+            case NumberInt:
+               arrayBuilder.append( *(INT32 *)idBuff ) ;
+               break ;
+            case NumberLong:
+               arrayBuilder.append( *(INT64 *)idBuff ) ;
+               break ;
+            case Bool:
+               arrayBuilder.append( (bool)(*idBuff) ) ;
+               break ;
+            case Date:
+               arrayBuilder.append( *(Date_t *)idBuff ) ;
+               break ;
+            case Timestamp:
+            {
+               UINT64 *totalMillSec = (UINT64 *)idBuff ;
+               arrayBuilder.appendTimestamp( *totalMillSec ) ;
+               break ;
+            }
+            default:
+               PD_LOG( PDERROR, "Unsupported type of record[ %d ]",
+                       obj.toString().c_str() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
          }
 
          idArray = arrayBuilder.arr() ;
 
          condition = BSON( "_id" << BSON( "$in" << idArray ) ) ;
          condition.getOwned() ;
+         PD_LOG( PDDEBUG, "New in condition: %s",
+                 condition.toString().c_str() ) ;
       }
       catch ( std::exception &e )
       {
@@ -570,8 +621,6 @@ namespace seadapter
          rc = SDB_SYS ;
          goto error ;
       }
-
-      PD_LOG( PDDEBUG, "New in condition: %s", condition.toString().c_str() ) ;
 
    done:
       return rc ;

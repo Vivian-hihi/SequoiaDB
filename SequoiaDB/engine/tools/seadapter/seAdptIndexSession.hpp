@@ -43,12 +43,11 @@
 #include "pmdAsyncSession.hpp"
 #include "dmsExtDataHandler.hpp"
 #include "rtnExtOprDef.hpp"
+#include "seAdptDef.hpp"
 #include "seAdptMgr.hpp"
 #include "utilESBulkBuilder.hpp"
 
 using namespace bson ;
-
-#define SEADPT_FIELD_NAME_ID         "_id"
 
 namespace seadapter
 {
@@ -101,8 +100,10 @@ namespace seadapter
       INT32 _queryCappedCollection( BSONObj &condition ) ;
       INT32 _cleanData( INT64 recLID ) ;
       INT32 _parseSrcData( const BSONObj &origObj, _rtnExtOprType &oprType,
-                           const CHAR **origOID, INT64 &logicalID,
+                           string& finalID, INT64 &logicalID,
                            BSONObj &sourceObj ) ;
+      INT32 _formatNormalRec( const BSONObj &origRecord, string &finalID,
+                              BSONObj &finalRecord ) ;
       INT32 _processNormalCLRecords( NET_HANDLE handle, MsgHeader *msg ) ;
 
       INT32 _processCappedCLRecords( NET_HANDLE handle, MsgHeader *msg ) ;
@@ -164,7 +165,7 @@ namespace seadapter
       lidStr << logicalID ;
 
       rc = _esClt->documentExist( _indexName.c_str(), _typeName.c_str(),
-                                  SEADPT_FIELD_NAME_ID, lidStr.str().c_str(),
+                                  SDB_SEADPT_FIELD_NAME_ID, lidStr.str().c_str(),
                                   found ) ;
       PD_RC_CHECK( rc, PDERROR, "Document existence check failed[ %d ]", rc ) ;
    done:

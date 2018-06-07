@@ -77,17 +77,17 @@ namespace seadapter
       }
    }
 
-   INT32 _utilESBulkActionBase::setID( const CHAR *id )
+   INT32 _utilESBulkActionBase::setID( const std::string &id )
    {
       INT32 rc = SDB_OK ;
-      if ( !id )
+      if ( id.empty() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "_id is NULL" ) ;
          goto error ;
       }
 
-      _id = std::string( id ) ;
+      _id = id ;
 
    done:
       return rc ;

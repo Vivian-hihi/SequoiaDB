@@ -44,11 +44,12 @@
 #include <string>
 #include <vector>
 
-using bson::BSONObj ;
+using namespace bson ;
 
 namespace seadapter
 {
    // Elasticsearch field datatypes.
+   // Note: Any change here should also change getTypeStr.
    enum ES_DATA_TYPE
    {
       ES_TEXT,
@@ -77,7 +78,7 @@ namespace seadapter
          const ES_DATA_TYPE getType() const { return _type ; }
 
          // Reserved, maybe need to set more parameters in future.
-         // INT32 setParams( BSONObj *parameters = NULL ) { }
+         // INT32 setParams( const BSONObj &parameters ) ;
 
       private:
          std::string    _name ;
@@ -102,6 +103,9 @@ namespace seadapter
          vector<_utilESMapProp> _properties ;
    } ;
    typedef _utilESMapping utilESMapping ;
+
+   INT32 encodeID( const BSONElement &idEle, string &id ) ;
+   INT32 decodeID( const CHAR *id, CHAR *raw, UINT32 &len, BSONType &type ) ;
 }
 
 #endif /* UTIL_ESUTIL_HPP__ */

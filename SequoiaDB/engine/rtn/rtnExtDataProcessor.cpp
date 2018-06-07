@@ -664,44 +664,18 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__PREPARERECORD, "_rtnExtDataProcessor::_prepareRecord" )
    INT32 _rtnExtDataProcessor::_prepareRecord( const CHAR *name,
                                                _rtnExtOprType oprType,
-                                               const bson::OID *dataOID,
+                                               const BSONElement &idEle,
                                                const BSONObj *dataObj,
                                                BSONObj &recordObj )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR__PREPARERECORD ) ;
       BSONObjBuilder objBuilder ;
-      BOOLEAN oidRequired = FALSE ;
-      BOOLEAN dataRequired = FALSE ;
 
-      switch ( oprType )
+      if ( RTN_EXT_INVALID == oprType )
       {
-         case RTN_EXT_INSERT:  // insert
-         case RTN_EXT_UPDATE:  // update
-            oidRequired = TRUE ;
-            dataRequired = TRUE ;
-            break ;
-         case RTN_EXT_DELETE:  // delete
-            oidRequired = TRUE ;
-            dataRequired = FALSE ;
-            break ;
-         default:
-            PD_LOG( PDERROR, "Invalid operation type[ %d ]", oprType ) ;
-            rc = SDB_SYS ;
-            goto error ;
-      }
-
-      if ( oidRequired && ( !dataOID || !dataOID->isSet() ) )
-      {
-         PD_LOG( PDERROR, "_id should be specified for current operation" ) ;
          rc = SDB_SYS ;
-         goto error ;
-      }
-
-      if ( dataRequired && !dataObj )
-      {
-         PD_LOG( PDERROR, "Data object is NULL for operation" ) ;
-         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Invalid operation type[ %d ]", oprType ) ;
          goto error ;
       }
 
@@ -710,14 +684,17 @@ namespace engine
          // 1. Append operation type.
          objBuilder.append( FIELD_NAME_TYPE, oprType ) ;
          // 2. Append the _id as _rid.
-         if ( oidRequired )
-         {
-            objBuilder.append( RTN_FIELD_NAME_RID, dataOID->str().c_str() ) ;
-         }
-
+         objBuilder.appendAs( idEle, RTN_FIELD_NAME_RID ) ;
          // 3. Append data if necessarry.
-         if ( dataRequired )
+         if ( RTN_EXT_INSERT == oprType || RTN_EXT_UPDATE == oprType )
          {
+            if ( !dataObj )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Data object is NULL for operation type[ %d ]",
+                       oprType ) ;
+               goto error ;
+            }
             objBuilder.append( RTN_FIELD_NAME_SOURCE, *dataObj ) ;
          }
 
@@ -807,7 +784,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PREPAREINSERT ) ;
-      OID oid ;
 
       if ( !_needOprRec )
       {
@@ -825,7 +801,7 @@ namespace engine
 
          // Get the _id from the insert object.
          ele = inputObj.getField( DMS_ID_KEY_NAME ) ;
-         if ( EOO == ele.type() )
+         if ( ele.eoo() )
          {
             PD_LOG( PDERROR, "Text index can not be used if record has no _id "
                     "field" ) ;
@@ -833,13 +809,11 @@ namespace engine
             goto error ;
          }
 
-         oid = ele.OID() ;
-
          {
             BSONObjSet::iterator it = _keySet.begin();
             BSONObj object( *it ) ;
             rc = _prepareRecord( _cappedCLName, RTN_EXT_INSERT,
-                                 &oid, &object, recordObj ) ;
+                                 ele, &object, recordObj ) ;
             PD_RC_CHECK( rc, PDERROR, "Add operation record failed[ %d ]",
                          rc ) ;
          }
@@ -864,7 +838,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PREPAREDELETE ) ;
-      OID oid ;
 
       if ( !_needOprRec )
       {
@@ -888,10 +861,9 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         oid = ele.OID() ;
 
          rc = _prepareRecord( _cappedCLName, RTN_EXT_DELETE,
-                              &oid, NULL, recordObj ) ;
+                              ele, NULL, recordObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Add operation record failed[ %d ]",
                       rc ) ;
       }
@@ -916,7 +888,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PREPAREUPDATE ) ;
-      OID oid ;
 
       if ( !_needOprRec )
       {
@@ -942,13 +913,13 @@ namespace engine
             goto error ;
          }
 
-         oid = ele.OID() ;
          SDB_ASSERT( 1 == _keySetNew.size(), "Key set size should be 1" ) ;
+
          {
             BSONObjSet::iterator it = _keySetNew.begin();
             BSONObj object( *it ) ;
             rc = _prepareRecord( _cappedCLName, RTN_EXT_UPDATE,
-                                 &oid, &object, recordObj ) ;
+                                 ele, &object, recordObj ) ;
             PD_RC_CHECK( rc, PDERROR, "Add operation record failed[ %d ]",
                          rc ) ;
          }

@@ -37,10 +37,14 @@
 
 *******************************************************************************/
 #include "pd.hpp"
+#include "ossUtil.hpp"
 #include "utilESUtil.hpp"
+#include "../../util/hex.h"
 #include <sstream>
 
 using bson::BSONObjBuilder ;
+
+#define UTIL_ESID_ENCODE_PREFIX     'x'
 
 namespace seadapter
 {
@@ -152,6 +156,138 @@ namespace seadapter
          PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
          goto error ;
       }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // For OID type, the final id is the hex string of the _id value.
+   // For other supported types, the format is as follows:
+   //        x<type code><value code>
+   // 'x' specifies this is an encoded id. The next char is its bson type.
+   // After that, it's the raw data of the id value.
+   INT32 encodeID( const BSONElement &idEle, string &id )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *value = NULL ;
+      INT32 valSize = 0 ;
+      BOOLEAN idReady = FALSE ;
+
+      try
+      {
+         switch ( idEle.type() )
+         {
+            case NumberDouble:
+            case NumberInt:
+            case NumberLong:
+            case Object:
+            case Bool:
+            case Date:
+            case Timestamp:
+               value = idEle.value() ;
+               valSize = idEle.valuesize();
+               break ;
+            case String:
+               value = idEle.valuestrsafe() ;
+               valSize = idEle.valuestrsize() ;
+               break ;
+            case jstOID:
+               // For oid type, it's already converted to hex. We do not encode
+               // again.
+               id = idEle.OID().str() ;
+               idReady = TRUE ;
+               break ;
+            default:
+               // Return -6 in case of unsupported type.
+               rc = SDB_INVALIDARG ;
+               goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
+
+      if ( !idReady )
+      {
+         CHAR bType = (CHAR)( idEle.type() ) ;
+         id = UTIL_ESID_ENCODE_PREFIX +
+              engine::toHexLower( (const void *)&bType, 1 )
+              + engine::toHexLower( value, valSize ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 decodeID( const CHAR *id, CHAR *raw, UINT32 &len, BSONType &type )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *p = NULL ;
+      UINT32 idLen = 0 ;
+
+      if ( !id )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "id to decode is empty" ) ;
+         goto error ;
+      }
+
+      idLen = ossStrlen( id ) ;
+      p = id ;
+      if ( UTIL_ESID_ENCODE_PREFIX != *p )
+      {
+         // For compatibility with elder version(3.0).
+         bson::OID oid ;
+         SDB_ASSERT( 24 == idLen, "id size is not 24" ) ;
+         if ( len <= sizeof( bson::OID ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Buffer size[ %u ] is too small", len ) ;
+            goto error ;
+         }
+
+         {
+            type = bson::jstOID ;
+            const string idStr( id ) ;
+            bson::OID oid( idStr ) ;
+            len = sizeof( bson::OID ) ;
+            ossMemcpy( raw, (CHAR *)&oid, len ) ;
+         }
+      }
+      else
+      {
+         CHAR bType = 0 ;
+         UINT32 targetLen = 0 ;
+
+         p++ ;
+         bType = engine::fromHex( p ) ;
+         type = (BSONType)bType ;
+         p += 2 ;
+
+         targetLen = ( idLen - 3 ) / 2 ;
+         if ( len <= targetLen )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Buffer size[ %u ] is too small", len ) ;
+            goto error ;
+         }
+
+         for ( UINT32 i = 0; i < targetLen; ++i )
+         {
+            raw[ i ] = engine::fromHex( p ) ;
+            p += 2 ;
+         }
+
+         raw[ targetLen ] = '\0' ;
+         len = targetLen ;
+      }
+
    done:
       return rc ;
    error:

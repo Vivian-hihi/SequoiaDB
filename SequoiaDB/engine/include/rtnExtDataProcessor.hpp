@@ -134,7 +134,7 @@ namespace engine
                             BSONObj &recordObj ) ;
 
       INT32 _prepareRecord( const CHAR *name, _rtnExtOprType oprType,
-                            const bson::OID *dataOID,
+                            const BSONElement &idEle,
                             const BSONObj *dataObj,
                             BSONObj &recordObj ) ;
 

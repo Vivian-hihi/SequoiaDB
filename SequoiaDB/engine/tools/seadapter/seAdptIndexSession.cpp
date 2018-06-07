@@ -42,7 +42,6 @@
 #include "seAdptDef.hpp"
 #include "utilESUtil.hpp"
 
-#define SEADPT_FIELD_NAME_RID        "_rid"
 #define SEADPT_FIELD_NAME_LID        "_lid"
 #define SEADPT_FIELD_NAME_CSLID      "_cslid"
 #define SEADPT_FIELD_NAME_CLLID      "_cllid"
@@ -190,7 +189,7 @@ namespace seadapter
                try
                {
                   _lastPopLID =
-                     docObjs[0].getField(SEADPT_FIELD_NAME_ID).Number() ;
+                     docObjs[0].getField( SDB_SEADPT_FIELD_NAME_ID ).Number() ;
                }
                catch ( std::exception &e )
                {
@@ -239,7 +238,7 @@ namespace seadapter
                SDB_ASSERT( 1 == docObjs.size(),
                            "Returned object number is wrong" ) ;
                INT64 firstLID =
-                  docObjs[0].getField(SEADPT_FIELD_NAME_ID).Number() ;
+                  docObjs[0].getField( SDB_SEADPT_FIELD_NAME_ID ).Number() ;
                if ( _expectLID >= firstLID )
                {
                   _lastPopLID = _expectLID ;
@@ -469,7 +468,7 @@ namespace seadapter
          BSONObj existTmp = BSON( SEADPT_OPERATOR_STR_EXIST << 1 ) ;
          BSONObj includeObj = BSON( SEADPT_OPERATOR_STR_INCLUDE << 1 ) ;
 
-         selectorBuilder.appendObject( SEADPT_FIELD_NAME_ID,
+         selectorBuilder.appendObject( SDB_SEADPT_FIELD_NAME_ID,
                                        includeObj.objdata(),
                                        includeObj.objsize() ) ;
 
@@ -477,7 +476,7 @@ namespace seadapter
          {
             BSONElement ele = idxItr.next() ;
             const CHAR *fieldName = ele.fieldName() ;
-            SDB_ASSERT( 0 != ossStrcmp( fieldName, SEADPT_FIELD_NAME_ID ),
+            SDB_ASSERT( 0 != ossStrcmp( fieldName, SDB_SEADPT_FIELD_NAME_ID ),
                         "Text index should not include _id" ) ;
             selectorBuilder.appendObject( fieldName, includeObj.objdata(),
                                           includeObj.objsize() ) ;
@@ -615,14 +614,14 @@ namespace seadapter
       {
          // In the capped collection, the field name of logical id is '_id', and
          // the original '_id' is named '_rid'.
-         selector = BSON( SEADPT_FIELD_NAME_ID << "" ) ;
+         selector = BSON( SDB_SEADPT_FIELD_NAME_ID << "" ) ;
          if ( reverse )
          {
-            orderBy = BSON( SEADPT_FIELD_NAME_ID << 1 ) ;
+            orderBy = BSON( SDB_SEADPT_FIELD_NAME_ID << 1 ) ;
          }
          else
          {
-            orderBy = BSON( SEADPT_FIELD_NAME_ID << -1 ) ;
+            orderBy = BSON( SDB_SEADPT_FIELD_NAME_ID << -1 ) ;
          }
 
          rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize, _cappedCLFullName.c_str(),
@@ -721,39 +720,48 @@ namespace seadapter
    // Parse the original object and get the items we want.
    INT32 _seAdptIndexSession::_parseSrcData( const BSONObj &origObj,
                                              _rtnExtOprType &oprType,
-                                             const CHAR **origOID,
+                                             string& finalID,
                                              INT64 &logicalID,
                                              BSONObj &sourceObj )
    {
       INT32 rc = SDB_OK ;
       INT32 type = 0 ;
 
-      SDB_ASSERT( origOID, "OID pointer should not be NULL" ) ;
-
       try
       {
-         BSONElement lidField = origObj.getField( SEADPT_FIELD_NAME_ID ) ;
+         BSONElement lidField = origObj.getField( SDB_SEADPT_FIELD_NAME_ID ) ;
+         BSONElement ridEle = origObj.getField( SDB_SEADPT_FIELD_NAME_RID ) ;
          type = origObj.getIntField( FIELD_NAME_TYPE ) ;
 
-         if ( type < RTN_EXT_INSERT || type > RTN_EXT_UPDATE )
+         if ( lidField.eoo() || ridEle.eoo() )
          {
-            PD_LOG( PDERROR, "Operation type[ %d ] is invalid in source object",
-                    type ) ;
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "_id or _rid not found in record: %s",
+                    origObj.toString().c_str() ) ;
+            goto error ;
+         }
+
+         if ( RTN_EXT_INVALID == type )
+         {
+            PD_LOG( PDERROR, "Operation type[ %d ] is invalid in "
+                    "source record: %s", type, origObj.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         rc = encodeID( ridEle, finalID ) ;
+         if ( rc )
+         {
+            if ( SDB_INVALIDARG != rc )
+            {
+               PD_LOG( PDERROR, "Encode id[ %s ] failed[ %d ]",
+                       ridEle.toString().c_str(), rc ) ;
+            }
             goto error ;
          }
 
          oprType = ( _rtnExtOprType )type ;
          logicalID = lidField.Long() ;
-
-         *origOID = origObj.getStringField( SEADPT_FIELD_NAME_RID ) ;
-         if ( 0 == ossStrcmp( *origOID, "" ) )
-         {
-            PD_LOG( PDERROR, "_rid for the original record is invalid. "
-                  "Object: %s", origObj.toString().c_str() ) ;
-            rc = SDB_SYS ;
-            goto done ;
-         }
 
          {
             BSONObjBuilder builder ;
@@ -778,16 +786,87 @@ namespace seadapter
             }
 
             sourceObj = builder.obj() ;
-
-            PD_LOG( PDDEBUG, "Operation type: %d, _lid: %lld, _id: %s, "
+            PD_LOG( PDDEBUG, "Operation type: %d, _lid: %lld, "
                     "_source: %s", oprType, logicalID,
-                    *origOID, sourceObj.toString().c_str() ) ;
+                    sourceObj.toString().c_str() ) ;
          }
       }
       catch ( std::exception &e )
       {
          PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
          rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_formatNormalRec( const BSONObj &origRecord,
+                                                string &finalID,
+                                                BSONObj &finalRecord )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      BOOLEAN hasOID = FALSE ;
+      BSONElement idEle ;
+      BOOLEAN hasStrField = FALSE ;
+
+      try
+      {
+         // Only keep the string fields. Fields of other type(include oid)
+         // will be ignored.
+         for ( BSONObj::iterator eleItr = origRecord.begin(); eleItr.more(); )
+         {
+            BSONElement ele = eleItr.next() ;
+            // Only keep the _id field and other fields of type String.
+            if ( 0 == ossStrcmp( ele.fieldName(), SDB_SEADPT_FIELD_NAME_ID ) )
+            {
+               hasOID = TRUE ;
+               idEle = ele ;
+            }
+            else if ( String == ele.type() )
+            {
+               builder.append( ele ) ;
+               if ( !hasStrField )
+               {
+                  hasStrField = TRUE ;
+               }
+            }
+         }
+
+         if ( !hasOID )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "No _id field in record: %s",
+                    origRecord.toString( false, true ).c_str() ) ;
+            goto error ;
+         }
+
+         // Only when there are index field of string type that we add the _rid
+         // field. Otherwise, the final object should be empty.
+         if ( hasStrField )
+         {
+            rc = encodeID( idEle, finalID ) ;
+            if ( rc )
+            {
+               if ( SDB_INVALIDARG != rc )
+               {
+                  PD_LOG( PDERROR, "Encode id[ %s ] failed[ %d ]",
+                          idEle.toString().c_str(), rc ) ;
+               }
+               goto error ;
+            }
+         }
+
+         finalRecord = builder.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
          goto error ;
       }
 
@@ -809,15 +888,13 @@ namespace seadapter
       INT32 startFrom = 0 ;
       INT32 numReturned = 0 ;
       vector<BSONObj> docObjs ;
-      BOOLEAN idExist = TRUE ;
 
       try
       {
          if ( SDB_DMS_EOC == reply->flags )
          {
             // When reach to the end of the original collection, switch to capped
-            // collection. Write an end mark of _lid : -1.
-            _expectLID = -1 ;
+            // collection.
             BSONObj emptyObj = BSON( SEADPT_FIELD_NAME_CSLID << _meta.getCSLID() <<
                                      SEADPT_FIELD_NAME_CLLID << _meta.getCLLID() <<
                                      SEADPT_FIELD_NAME_IDXLID << _meta.getIdxLID() <<
@@ -855,47 +932,27 @@ namespace seadapter
          for ( vector<BSONObj>::const_iterator itr = docObjs.begin();
                itr != docObjs.end(); ++itr )
          {
-            BSONObj newNameObj ;
-            string idStr ;
-            BSONObjBuilder builder ;
-            BSONObj sourceObj ;
-            BSONElement idEle ;
-            OID id ;
-            BSONElement sourceEle ;
-
-            idExist = itr->getObjectID( idEle ) ;
-            if ( !idExist )
-            {
-               PD_LOG( PDERROR, "_id dose not exist in source object" ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
-
-            // Only keep the string fields. Fields of other type(include oid)
-            // will be ignored.
-            for ( BSONObj::iterator eleItr = itr->begin(); eleItr.more(); )
-            {
-               BSONElement ele = eleItr.next() ;
-               if ( String == ele.type() )
-               {
-                  builder.append( ele ) ;
-               }
-            }
-
-            sourceObj = builder.done() ;
-            // If no string field at all, ignore the whole document.
-            if ( sourceObj.isEmpty() )
+            BSONObj finalRec ;
+            string finalID ;
+            rc = _formatNormalRec( *itr, finalID, finalRec ) ;
+            if ( SDB_INVALIDARG == rc || finalRec.isEmpty() )
             {
                continue ;
+            }
+            else if ( rc )
+            {
+               PD_LOG( PDERROR, "Format record[ %s ] failed[ %d ]",
+                       itr->toString( false, true ).c_str(), rc ) ;
+               goto error ;
             }
 
             {
                utilESActionIndex item( _indexName.c_str(), _typeName.c_str() ) ;
-               rc = item.setID( idEle.OID().toString().c_str() ) ;
+               rc = item.setID( finalID ) ;
                PD_RC_CHECK( rc, PDERROR, "Set _id for action failed[ %d ]",
                             rc ) ;
-               rc = item.setSourceData( sourceObj.toString(false, true).c_str(),
-                                        sourceObj.toString(false, true).length(),
+               rc = item.setSourceData( finalRec.toString(false, true).c_str(),
+                                        finalRec.toString(false, true).length(),
                                         TRUE ) ;
                PD_RC_CHECK( rc, PDERROR, "Set source data for action "
                             "failed[ %d ]", rc ) ;
@@ -1022,7 +1079,7 @@ namespace seadapter
                }
             }
             BSONObj lastObj = docObjs.back() ;
-            BSONElement lidEle = lastObj.getField( SEADPT_FIELD_NAME_ID ) ;
+            BSONElement lidEle = lastObj.getField( SDB_SEADPT_FIELD_NAME_ID ) ;
             nextLastLID = lidEle.Long() ;
             lastObjHash = ossHash( lastObj.objdata(), lastObj.objsize() ) ;
             if ( _emptyResultSet )
@@ -1035,22 +1092,34 @@ namespace seadapter
          PD_RC_CHECK( rc, PDERROR, "Prepare of bulk operation failed[ %d ]",
                       rc ) ;
 
-         for ( vector<BSONObj>::const_iterator itr = docObjs.begin();
-               itr != docObjs.end(); ++itr )
+         vector<BSONObj>::const_iterator itr = docObjs.begin() ;
+
+         // We always get one more record, if the _expectLID is not -1. So the
+         // first one should be filtered out.
+         if ( SEADPT_INVALID_LID != _expectLID )
+         {
+            itr++ ;
+         }
+         for ( ; itr != docObjs.end(); ++itr )
          {
             BSONObj newNameObj ;
             string idStr ;
             BSONObj sourceObj ;
             _rtnExtOprType oprType = RTN_EXT_INVALID ;
-            const CHAR *origOID = NULL ;
+            string finalID ;
             BSONElement sourceEle ;
 
-            // Parse and the original object into 4 items: operation type, id,
-            // source data( the real data to be indexed on Elasticsearch ).
-            rc = _parseSrcData( *itr, oprType, &origOID, logicalID, sourceObj ) ;
-            PD_RC_CHECK( rc, PDERROR, "Get id string and source object "
-                         "failed[ %d ]", rc ) ;
-
+            rc = _parseSrcData( *itr, oprType, finalID, logicalID, sourceObj ) ;
+            if ( rc )
+            {
+               if ( SDB_INVALIDARG == rc )
+               {
+                  continue ;
+               }
+               PD_LOG( PDERROR, "Get id string and source object failed[ %d ]",
+                       rc ) ;
+               goto error ;
+            }
 
             if ( sourceObj.isEmpty() )
             {
@@ -1076,7 +1145,7 @@ namespace seadapter
                   {
                      utilESActionIndex item( _indexName.c_str(),
                                              _typeName.c_str() ) ;
-                     rc = item.setID( origOID ) ;
+                     rc = item.setID( finalID ) ;
                      PD_RC_CHECK( rc, PDERROR, "Set _id for action "
                                   "failed[ %d ]", rc ) ;
                      rc = item.setSourceData( sourceObj.toString(false, true).c_str(),
@@ -1093,7 +1162,7 @@ namespace seadapter
                   {
                      utilESActionDelete item( _indexName.c_str(),
                                               _typeName.c_str() ) ;
-                     rc = item.setID( origOID ) ;
+                     rc = item.setID( finalID ) ;
                      PD_RC_CHECK( rc, PDERROR, "Set _id for action "
                                   "failed[ %d ]", rc ) ;
                      rc = _bulkProcess( item ) ;
@@ -1257,7 +1326,7 @@ namespace seadapter
       {
          validate = ( ( (UINT32)obj.getIntField( SEADPT_FIELD_NAME_CSLID ) == _meta.getCSLID() ) &&
          ( (UINT32)obj.getIntField( SEADPT_FIELD_NAME_CLLID ) == _meta.getCLLID() ) &&
-         ( (UINT32)obj.getIntField( SEADPT_FIELD_NAME_CLLID ) == _meta.getIdxLID() ) ) ;
+         ( (UINT32)obj.getIntField( SEADPT_FIELD_NAME_IDXLID ) == _meta.getIdxLID() ) ) ;
 
          valid = validate ;
        }

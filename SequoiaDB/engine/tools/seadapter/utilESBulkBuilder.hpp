@@ -88,7 +88,7 @@ namespace seadapter
          _utilESBulkActionBase( const CHAR *index, const CHAR *type ) ;
          virtual ~_utilESBulkActionBase() ;
 
-         INT32 setID( const CHAR *id ) ;
+         INT32 setID( const std::string &id ) ;
          INT32 setSourceData( const CHAR *sourceData, INT32 length,
                               BOOLEAN copy = FALSE ) ;
 

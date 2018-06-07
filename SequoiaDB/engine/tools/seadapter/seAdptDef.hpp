@@ -52,6 +52,8 @@ namespace seadapter
    #define SDB_SEADPT_SVC_ID           0
    #define SDB_SEADPT_MAX_IDXNAME_SZ   255
    #define SDB_SEADPT_COMMIT_ID        "SDBCOMMIT"
+   #define SDB_SEADPT_FIELD_NAME_ID    "_id"
+   #define SDB_SEADPT_FIELD_NAME_RID   "_rid"
 
    #define SDB_SEADPT_EXE_FILE_NAME    "sdbseadapter"
    #define SDB_SEADPT_CFG_FILE_NAME    SDB_SEADPT_EXE_FILE_NAME".conf"
