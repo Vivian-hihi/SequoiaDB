@@ -538,7 +538,7 @@
       <mkdir dir="${release_db_dir}/www" />
       <mkdir dir="${release_db_dir}/spark" />
       <mkdir dir="${release_db_dir}/plugins" />
-      <mkdir dir="${release_db_dir}/plugins/SequoiaSQL-PostgreSQL" />
+      <mkdir dir="${release_db_dir}/plugins/SequoiaSQL" />
       
       <copy file="${srccode_dir}/driver/C#.Net/build/release/sequoiadb.dll" 
             tofile="${release_db_dir}/CSharp/sequoiadb.dll" />
@@ -579,15 +579,15 @@
          <fileset dir="${srccode_dir}/driver/spark/target" includes="*.jar" />
       </copy>
       
-      <copy todir="${release_db_dir}/plugins/SequoiaSQL-PostgreSQL" >
-         <fileset dir="${srccode_dir}/tools/om_plugins/postgresql" includes="**/*" excludes="source/**/*"/>
+      <copy todir="${release_db_dir}/plugins/SequoiaSQL" >
+         <fileset dir="${srccode_dir}/tools/om_plugins/sequoiasql" includes="**/*" excludes="source/**/*"/>
       </copy>
       
-      <copy todir="${release_db_dir}/plugins/SequoiaSQL-PostgreSQL/bin" >
-         <fileset dir="${srccode_dir}/tools/om_plugins/postgresql/source/target" includes="*.jar" />
+      <copy todir="${release_db_dir}/plugins/SequoiaSQL/bin" >
+         <fileset dir="${srccode_dir}/tools/om_plugins/sequoiasql/source/target" includes="*.jar" />
       </copy>
       
-      <delete dir="${release_db_dir}/plugins/SequoiaSQL-PostgreSQL/source" failonerror="false"/>
+      <delete dir="${release_db_dir}/plugins/SequoiaSQL/source" failonerror="false"/>
       
       <copy todir="${release_db_dir}/include">
          <fileset dir="${srccode_dir}/client/include" includes="**/*" />
