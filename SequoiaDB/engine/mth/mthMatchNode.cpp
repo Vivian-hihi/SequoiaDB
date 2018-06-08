@@ -688,8 +688,7 @@ namespace engine
 
    void _mthMatchNode::sortByWeight()
    {
-      UINT32 i = 0 ;
-      for ( ; i < _children.size() ; i++ )
+      for ( UINT32 i = 0; i < _children.size() ; i++ )
       {
          _mthMatchNode *child = _children[ i ] ;
          child->sortByWeight() ;
@@ -700,7 +699,7 @@ namespace engine
          std::sort( _children.begin(), _children.end(), mthCompareNode ) ;
 
          // rewrite _idx_in_parent
-         for ( ; i < _children.size() ; i++ )
+         for ( UINT32 i = 0; i < _children.size() ; i++ )
          {
             _mthMatchNode *child = _children[ i ] ;
             child->_idx_in_parent = i ;
