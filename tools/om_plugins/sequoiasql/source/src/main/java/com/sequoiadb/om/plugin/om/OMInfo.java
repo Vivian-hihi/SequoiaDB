@@ -1,4 +1,4 @@
-package com.sequoiadb.om.plugin.config;
+package com.sequoiadb.om.plugin.om;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -6,10 +6,10 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 @Component
-public class OmsvcConfig {
+public class OMInfo {
 
     @Autowired
-    private PublicConfig publicConf;
+    private PluginConfig publicConf;
 
     private String hostName = "127.0.0.1";
     private String httpname;
@@ -75,7 +75,7 @@ public class OmsvcConfig {
 @Component
 @ConfigurationProperties
 @PropertySource("file:../../plugin.conf")
-class PublicConfig {
+class PluginConfig {
 
     private String omhttpname = "8000";
 

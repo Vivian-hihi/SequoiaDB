@@ -1,4 +1,4 @@
-package com.sequoiadb.om.plugin;
+package com.sequoiadb.om.plugin.common;
 
 import sun.misc.BASE64Decoder;
 

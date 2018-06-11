@@ -3,10 +3,9 @@ package com.sequoiadb.om.plugin;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 
-import com.sequoiadb.om.plugin.dao.DbOperations;
-import com.sequoiadb.om.plugin.dao.MySQLOperations;
-import com.sequoiadb.om.plugin.dao.PostgreSQLOperations;
+import com.sequoiadb.om.plugin.dao.DaoFactory;
 import com.sequoiadb.om.plugin.dao.SequoiaSQLOperations;
+import com.sequoiadb.om.plugin.om.OMClient;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,41 +18,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-public class HttpController {
+public class SQLController {
 
     @Autowired
-    private DbOperations dbo;
+    private OMClient omCtrl;
 
     @Autowired
-    private PostgreSQLOperations pgsqlo;
-
-    @Autowired
-    private MySQLOperations mysqlo;
-
-    @RequestMapping(value = "/postgresql")
-    public String exec_pgsql(HttpServletRequest request, HttpServletResponse response) {
-        return exec_sql(request, response, pgsqlo);
-    }
-
-    @RequestMapping(value = "/mysql")
-    public String exec_mysql(HttpServletRequest request, HttpServletResponse response) {
-        return exec_sql(request, response, mysqlo);
-    }
+    private DaoFactory factory;
 
     @RequestMapping(value = "/sql")
-    public String exec_sql(HttpServletRequest request, HttpServletResponse response) {
+    public String sql(HttpServletRequest request, HttpServletResponse response) {
         String type = request.getParameter("Type");
 
-        if (type == "mysql") {
-            return exec_sql(request, response, mysqlo);
-        } else {
-            return exec_sql(request, response, pgsqlo);
-        }
-    }
+        type = type.trim();
 
-    @RequestMapping(value = "*")
-    public void defaultPage(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        return exec_sql(request, response, factory.getDao(type));
     }
 
     private String exec_sql(HttpServletRequest request, HttpServletResponse response, SequoiaSQLOperations ssqlo) {
@@ -79,7 +58,7 @@ public class HttpController {
         StringBuilder sqlSvcname = new StringBuilder();
 
         try {
-            dbo.getSsqlInfo(ClusterName, BusinessName, sqlHostName, sqlSvcname);
+            omCtrl.getSsqlInfo(ClusterName, BusinessName, sqlHostName, sqlSvcname);
         } catch (BaseException e) {
             return outputResult(e.getErrorCode(), "Failed to get " + BusinessName + " service info", e.getMessage(), content);
         }
@@ -93,7 +72,7 @@ public class HttpController {
         StringBuilder sqlDbName = new StringBuilder();
 
         try {
-            dbo.getSsqlAccountInfo(ClusterName, BusinessName, sqlUser, sqlPasswd, sqlDbName);
+            omCtrl.getSsqlAccountInfo(ClusterName, BusinessName, sqlUser, sqlPasswd, sqlDbName);
         } catch (BaseException e) {
             return outputResult(e.getErrorCode(), "Failed to get " + BusinessName + " auth info", e.getMessage(), content);
         }

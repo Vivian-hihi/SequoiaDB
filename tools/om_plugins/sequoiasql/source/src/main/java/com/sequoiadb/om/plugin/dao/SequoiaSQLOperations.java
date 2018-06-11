@@ -9,15 +9,12 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SequoiaSQLOperations {
+public abstract class SequoiaSQLOperations {
 
     protected final Logger logger = LoggerFactory.getLogger(PostgreSQLOperations.class);
     protected String className = "";
     protected String scheme = "";
     protected String defaultDBName = "";
-
-    SequoiaSQLOperations() throws ClassNotFoundException {
-    }
 
     public List<BSONObject> query(String hostName, String svcname,
                                   String user, String pwd,
