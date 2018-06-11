@@ -30,6 +30,10 @@ public class SQLController {
     public String sql(HttpServletRequest request, HttpServletResponse response) {
         String type = request.getParameter("Type");
 
+        if (type == null) {
+            type = "";
+        }
+
         type = type.trim();
 
         return exec_sql(request, response, factory.getDao(type));
