@@ -51,7 +51,11 @@ class TestDataNode12499(testlib.SdbTestBase):
       
       #create cs cl
       cs = self.db.create_collection_space(self.cs_name)
-      cl = cs.create_collection(self.cl_name, {"Group":self.data_rg_name})
+      cl = cs.create_collection(self.cl_name, {"Group":self.data_rg_name,"ReplSize":0})
+      
+      #insert record to keep slave node create cl success
+      record = [{"a": 1}, {"a": 2}]
+      cl.bulk_insert(0, record)
       
       # detach node
       data_rg_slave_service = data_rg.get_slave().get_servicename()
