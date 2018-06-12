@@ -94,8 +94,10 @@ public class OMClient implements ApplicationListener<EmbeddedServletContainerIni
         return false;
     }
 
-    public synchronized void getSsqlInfo(String clusterName, String businessName, StringBuilder hostName, StringBuilder svcname) {
+    public synchronized SequoiaSQLNode getSsqlInfo(String clusterName, String businessName) {
         connect();
+
+        SequoiaSQLNode node = new SequoiaSQLNode();
 
         CollectionSpace cs = db.getCollectionSpace("SYSDEPLOY");
         DBCollection cl = cs.getCollection("SYSCONFIGURE");
@@ -107,17 +109,21 @@ public class OMClient implements ApplicationListener<EmbeddedServletContainerIni
         DBCursor cur = cl.query(queryCondition, null, null, null);
         if (cur.hasNext()) {
             BSONObject record = cur.getNext();
-            hostName.append((String) record.get("HostName"));
+            node.setHostName((String) record.get("HostName"));
             BasicBSONList configs = (BasicBSONList) record.get("Config");
             if (configs.size() > 0) {
                 BSONObject config = (BSONObject) configs.get(0);
-                svcname.append((String) config.get("port"));
+                node.setSvcName((String) config.get("port"));
             }
         }
+
+        return node;
     }
 
-    public synchronized void getSsqlAccountInfo(String clusterName, String businessName, StringBuilder user, StringBuilder passwd, StringBuilder defaultDb) {
+    public synchronized NodeAuth getSsqlAccountInfo(String clusterName, String businessName) {
         connect();
+
+        NodeAuth auth = new NodeAuth();
 
         CollectionSpace cs = db.getCollectionSpace("SYSDEPLOY");
         DBCollection cl = cs.getCollection("SYSBUSINESSAUTH");
@@ -128,17 +134,19 @@ public class OMClient implements ApplicationListener<EmbeddedServletContainerIni
         DBCursor cur = cl.query(queryCondition, null, null, null);
         if (cur.hasNext()) {
             BSONObject record = cur.getNext();
-            user.append((String) record.get("User"));
-            passwd.append((String) record.get("Passwd"));
-            defaultDb.append((String) record.get("DbName"));
+
+            auth.setUser((String) record.get("User"));
+            auth.setPasswd((String) record.get("Passwd"));
+            auth.setDefaultDb((String) record.get("DbName"));
         }
 
-        if (user.length() == 0) {
-            getClusterInfo(clusterName, user);
+        if (auth.getUser() == null || auth.getUser().length() == 0) {
+            auth.setUser(getClusterInfo(clusterName));
         }
+        return auth;
     }
 
-    private void getClusterInfo(String clusterName, StringBuilder user) {
+    private String getClusterInfo(String clusterName) {
         CollectionSpace cs = db.getCollectionSpace("SYSDEPLOY");
         DBCollection cl = cs.getCollection("SYSCLUSTER");
 
@@ -148,8 +156,9 @@ public class OMClient implements ApplicationListener<EmbeddedServletContainerIni
         DBCursor cur = cl.query(queryCondition, null, null, null);
         if (cur.hasNext()) {
             BSONObject record = cur.getNext();
-            user.append((String) record.get("SdbUser"));
+            return (String) record.get("SdbUser");
         }
+        return null;
     }
 
     private void connect() throws BaseException {

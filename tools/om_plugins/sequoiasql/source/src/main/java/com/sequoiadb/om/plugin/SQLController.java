@@ -5,9 +5,13 @@ import com.sequoiadb.exception.SDBError;
 
 import com.sequoiadb.om.plugin.dao.DaoFactory;
 import com.sequoiadb.om.plugin.dao.SequoiaSQLOperations;
+import com.sequoiadb.om.plugin.om.NodeAuth;
 import com.sequoiadb.om.plugin.om.OMClient;
+import com.sequoiadb.om.plugin.om.SequoiaSQLNode;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +23,8 @@ import java.util.List;
 
 @RestController
 public class SQLController {
+
+    private final Logger logger = LoggerFactory.getLogger(SQLController.class);
 
     @Autowired
     private OMClient omCtrl;
@@ -57,39 +63,36 @@ public class SQLController {
         }
 
         Sql = Sql.trim();
-
-        StringBuilder sqlHostName = new StringBuilder();
-        StringBuilder sqlSvcname = new StringBuilder();
+        SequoiaSQLNode node;
 
         try {
-            omCtrl.getSsqlInfo(ClusterName, BusinessName, sqlHostName, sqlSvcname);
+            node = omCtrl.getSsqlInfo(ClusterName, BusinessName);
         } catch (BaseException e) {
             return outputResult(e.getErrorCode(), "Failed to get " + BusinessName + " service info", e.getMessage(), content);
         }
 
-        if (sqlHostName.length() == 0 || sqlSvcname.length() == 0) {
+        if (node.getHostName() == null || node.getHostName().length() == 0 ||
+                node.getSvcName() == null || node.getSvcName().isEmpty()) {
             return outputResult(SDBError.SDB_SYS.getErrorCode(), "Failed to get " + BusinessName + " service info", SDBError.SDB_SYS.getErrorDescription(), content);
         }
 
-        StringBuilder sqlUser = new StringBuilder();
-        StringBuilder sqlPasswd = new StringBuilder();
-        StringBuilder sqlDbName = new StringBuilder();
+        NodeAuth auth;
 
         try {
-            omCtrl.getSsqlAccountInfo(ClusterName, BusinessName, sqlUser, sqlPasswd, sqlDbName);
+            auth = omCtrl.getSsqlAccountInfo(ClusterName, BusinessName);
         } catch (BaseException e) {
             return outputResult(e.getErrorCode(), "Failed to get " + BusinessName + " auth info", e.getMessage(), content);
         }
 
         if (DbName == null || DbName.trim().length() == 0) {
-            if (sqlDbName.toString().length() > 0) {
-                DbName = sqlDbName.toString();
+            if (auth.getDefaultDb() != null && auth.getDefaultDb().length() > 0) {
+                DbName = auth.getDefaultDb();
             }
         }
 
         try {
-            content = ssqlo.query(sqlHostName.toString(), sqlSvcname.toString(),
-                    sqlUser.toString(), sqlPasswd.toString(), DbName, Sql);
+            content = ssqlo.query(node.getHostName(), node.getSvcName(),
+                    auth.getUser(), auth.getPasswd(), DbName, Sql);
         } catch (Exception e) {
             return outputResult(-1, e.getMessage(), "", content);
         }
