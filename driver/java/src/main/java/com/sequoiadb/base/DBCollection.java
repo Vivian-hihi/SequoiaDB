@@ -20,7 +20,6 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.request.*;
 import com.sequoiadb.message.response.SdbReply;
-
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
