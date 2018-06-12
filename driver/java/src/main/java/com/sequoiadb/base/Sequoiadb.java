@@ -2049,12 +2049,12 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
-     * this API is for test purpose
+     * Send message to server.
      *
-     * @param message
+     * @param message The message to send to server.
      */
     public void msg(String message) {
-        TestRequest request = new TestRequest(message);
+        MessageRequest request = new MessageRequest(message);
         SdbReply response = requestAndResponse(request);
         throwIfError(response);
     }

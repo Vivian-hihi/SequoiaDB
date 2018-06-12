@@ -18,11 +18,10 @@ package com.sequoiadb.util;
 
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-import org.bson.*;
+import org.bson.BSON;
+import org.bson.BSONObject;
 import org.bson.types.BSONDecimal;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.MessageDigest;
