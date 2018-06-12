@@ -305,7 +305,8 @@ _IDX1\",key: {"OM_RELATIONSHIP_FIELD_NAME":1}, unique: true, enforced: true }"
    #define OM_PLUGINS_FIELD_SERVICENAME         "ServiceName"
    #define OM_PLUGINS_FIELD_UPDATETIME          "UpdateTime"
    #define OM_CS_DEPLOY_CL_PLUGINSIDX1          "{name:\"SYSDEPLOY_PLUGINS_IDX1\
-\",key: {"OM_PLUGINS_FIELD_NAME":1}, unique: true, enforced: true }"
+\",key: {"OM_PLUGINS_FIELD_NAME":1,"OM_PLUGINS_FIELD_BUSINESSTYPE":1}, \
+unique: true, enforced: true }"
    #define OM_CS_DEPLOY_CL_PLUGINSIDX2          "{name:\"SYSDEPLOY_PLUGINS_IDX2\
 \",key: {"OM_PLUGINS_FIELD_BUSINESSTYPE":1}, unique: true, enforced: true }"
 
@@ -435,13 +436,15 @@ _IDX1\",key: {"OM_RELATIONSHIP_FIELD_NAME":1}, unique: true, enforced: true }"
    #define OM_BUSINESS_YARN                  "yarn"
    #define OM_BUSINESS_SEQUOIASQL            "sequoiasql"
    #define OM_BUSINESS_SEQUOIASQL_OLAP       "sequoiasql-olap"
-   #define OM_BUSINESS_SEQUOIAPOSTGRESQL     "sequoiasql-postgresql"
+   #define OM_BUSINESS_SEQUOIASQL_POSTGRESQL "sequoiasql-postgresql"
+   #define OM_BUSINESS_SEQUOIASQL_MYSQL      "sequoiasql-mysql"
 
    /*
       install package name
    */
    #define OM_PACKAGE_SEQUOIADB              OM_BUSINESS_SEQUOIADB
-   #define OM_PACKAGE_SEQUOIA_POSTGRESQL     OM_BUSINESS_SEQUOIAPOSTGRESQL
+   #define OM_PACKAGE_SEQUOIASQL_POSTGRESQL  OM_BUSINESS_SEQUOIASQL_POSTGRESQL
+   #define OM_PACKAGE_SEQUOIASQL_MYSQL       OM_BUSINESS_SEQUOIASQL_MYSQL
 
    /*
       discover businesss respone

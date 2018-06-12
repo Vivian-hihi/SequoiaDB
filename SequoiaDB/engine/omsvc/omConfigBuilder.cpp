@@ -823,7 +823,7 @@ namespace engine
             goto error ;
          }
       }
-      else if ( OM_BUSINESS_SEQUOIAPOSTGRESQL == businessInfo.businessType )
+      else if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == businessInfo.businessType )
       {
          _builder = SDB_OSS_NEW OmSsqlOltpConfigBuilder( businessInfo ) ;
       }

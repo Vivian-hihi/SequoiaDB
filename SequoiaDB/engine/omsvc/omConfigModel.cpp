@@ -68,7 +68,7 @@ namespace engine
       {
          _node = SDB_OSS_NEW OmSsqlOlapNode() ;
       }
-      else if ( businessType == OM_BUSINESS_SEQUOIAPOSTGRESQL )
+      else if ( businessType == OM_BUSINESS_SEQUOIASQL_POSTGRESQL )
       {
          _node = SDB_OSS_NEW OmSsqlOltpNode() ;
       }

@@ -36,11 +36,173 @@
 #include "rtn.hpp"
 #include "msgMessage.hpp"
 #include "../bson/lib/md5.hpp"
+#include "ossPath.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
+   INT32 getPacketFile( const string &businessType, string &filePath )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR tmpPath[ OSS_MAX_PATHSIZE + 1 ] = "" ;
+      string filter = businessType + "*" ;
+      multimap< string, string> mapFiles ;
+
+      ossGetEWD( tmpPath, OSS_MAX_PATHSIZE ) ;
+      utilCatPath( tmpPath, OSS_MAX_PATHSIZE, ".." ) ;
+      utilCatPath( tmpPath, OSS_MAX_PATHSIZE, OM_PACKET_SUBPATH ) ;
+
+      if ( NULL == ossGetRealPath( tmpPath, tmpPath, OSS_MAX_PATHSIZE ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "path is invalid:path=%s,rc=%d", tmpPath, rc ) ;
+         goto error ;
+      }
+
+      rc = ossEnumFiles( tmpPath, mapFiles, filter.c_str() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "path is invalid:path=%s,filter=%s,rc=%d",
+                     tmpPath, filter.c_str(), rc ) ;
+         goto error ;
+      }
+
+      if ( mapFiles.size() != 1 )
+      {
+         rc = SDB_FNE ;
+         PD_LOG_MSG( PDERROR, "path is invalid:path=%s,filter=%s,count=%d",
+                     tmpPath, filter.c_str(), mapFiles.size() ) ;
+         goto error ;
+      }
+
+      filePath = mapFiles.begin()->second ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 getMaxTaskID( INT64 &taskID )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+      SINT64 contextID   = -1 ;
+      pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
+      pmdKRCB *pKRCB     = pmdGetKRCB() ;
+      _SDB_DMSCB *pdmsCB = pKRCB->getDMSCB() ;
+      _SDB_RTNCB *pRtnCB = pKRCB->getRTNCB() ;
+
+      taskID = 0 ;
+
+      selector    = BSON( OM_TASKINFO_FIELD_TASKID << 1 ) ;
+      orderBy     = BSON( OM_TASKINFO_FIELD_TASKID << -1 ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, orderBy,
+                     hint, 0, cb, 0, 1, pdmsCB, pRtnCB, contextID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get taskid failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      {
+         BSONElement ele ;
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore ( contextID, 1, buffObj, cb, pRtnCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               goto done ;
+            }
+
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+            goto error ;
+         }
+
+         BSONObj result( buffObj.data() ) ;
+         ele    = result.getField( OM_TASKINFO_FIELD_TASKID ) ;
+         taskID = ele.numberLong() ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         pRtnCB->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 createTask( INT32 taskType, INT64 taskID, const string &taskName,
+                     const string &agentHost, const string &agentService,
+                     const BSONObj &taskInfo, const BSONArray &resultInfo )
+   {
+      INT32 rc     = SDB_OK ;
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      BSONObj record ;
+
+      BSONObjBuilder builder ;
+      time_t now = time( NULL ) ;
+      builder.append( OM_TASKINFO_FIELD_TASKID, taskID ) ;
+      builder.append( OM_TASKINFO_FIELD_TYPE, taskType ) ;
+      builder.append( OM_TASKINFO_FIELD_TYPE_DESC,
+                      getTaskTypeStr( taskType ) ) ;
+      builder.append( OM_TASKINFO_FIELD_NAME, taskName ) ;
+      builder.appendTimestamp( OM_TASKINFO_FIELD_CREATE_TIME,
+                               (unsigned long long)now * 1000, 0 ) ;
+      builder.appendTimestamp( OM_TASKINFO_FIELD_END_TIME,
+                               (unsigned long long)now * 1000, 0 ) ;
+      builder.append( OM_TASKINFO_FIELD_STATUS, OM_TASK_STATUS_INIT ) ;
+      builder.append( OM_TASKINFO_FIELD_STATUS_DESC,
+                      getTaskStatusStr( OM_TASK_STATUS_INIT ) ) ;
+      builder.append( OM_TASKINFO_FIELD_AGENTHOST, agentHost ) ;
+      builder.append( OM_TASKINFO_FIELD_AGENTPORT, agentService ) ;
+      builder.append( OM_TASKINFO_FIELD_INFO, taskInfo ) ;
+      builder.append( OM_TASKINFO_FIELD_ERRNO, SDB_OK ) ;
+      builder.append( OM_TASKINFO_FIELD_DETAIL, "" ) ;
+      builder.append( OM_TASKINFO_FIELD_PROGRESS, 0 ) ;
+      builder.append( OM_TASKINFO_FIELD_RESULTINFO, resultInfo ) ;
+
+      record = builder.obj() ;
+      rc = rtnInsert( OM_CS_DEPLOY_CL_TASKINFO, record, 1, 0, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "insert task failed:rc=%d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 removeTask( INT64 taskID )
+   {
+      INT32 rc = SDB_OK ;
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      BSONObj deletor ;
+      BSONObj hint ;
+      deletor = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
+      rc = rtnDelete( OM_CS_DEPLOY_CL_TASKINFO, deletor, hint, 0, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "rtnDelete task failed:taskID="OSS_LL_PRINT_FORMAT
+                 ",rc=%d", taskID, rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
    INT32 omXmlTool::readXml2Bson( const string &fileName, BSONObj &obj )
    {
@@ -2074,26 +2236,18 @@ namespace engine
       BSONObj hint ;
       BSONObjBuilder updatorBuilder ;
 
-      if ( authUser.empty() )
+      if ( !authUser.empty() )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "user cannot be empty" ) ;
-         goto error ;
+         updatorBuilder.append( OM_AUTH_FIELD_USER, authUser ) ;
+         updatorBuilder.append( OM_AUTH_FIELD_PASSWD, authPasswd ) ;
       }
 
-      if ( authPasswd.empty() )
+      if ( !options.isEmpty() )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "password cannot be empty" ) ;
-         goto error ;
+         updatorBuilder.appendElements( options ) ;
       }
 
-      updatorBuilder.append( OM_AUTH_FIELD_BUSINESS_NAME, businessName ) ;
-      updatorBuilder.append( OM_AUTH_FIELD_USER, authUser ) ;
-      updatorBuilder.append( OM_AUTH_FIELD_PASSWD, authPasswd ) ;
-      updatorBuilder.appendElements( options ) ;
-
-      updator = BSON( "$replace" << updatorBuilder.obj() ) ;
+      updator = BSON( "$set" << updatorBuilder.obj() ) ;
 
       rc = rtnUpdate( OM_CS_DEPLOY_CL_BUSINESS_AUTH, condition, updator, hint,
                       FLG_UPDATE_UPSERT | FLG_UPDATE_RETURNNUM,
@@ -3032,7 +3186,8 @@ namespace engine
       builder.appendTimestamp( OM_PLUGINS_FIELD_UPDATETIME,
                                (unsigned long long)now * 1000, 0 ) ;
 
-      condition = BSON( OM_PLUGINS_FIELD_NAME << name ) ;
+      condition = BSON( OM_PLUGINS_FIELD_NAME << name <<
+                        OM_PLUGINS_FIELD_BUSINESSTYPE << businessType ) ;
       updator = BSON( "$replace" << builder.obj() ) ;
 
       rc = rtnUpdate( OM_CS_DEPLOY_CL_PLUGINS, condition, updator, hint,
@@ -3044,6 +3199,28 @@ namespace engine
                           "condition=%s,updator=%s,rc=%d",
                  condition.toString().c_str(),
                  updator.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::removePlugin( const string &name,
+                                       const string &businessType )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj condition = BSON(OM_PLUGINS_FIELD_NAME << name <<
+                               OM_PLUGINS_FIELD_BUSINESSTYPE << businessType ) ;
+      BSONObj hint ;
+
+      rc = rtnDelete( OM_CS_DEPLOY_CL_PLUGINS, condition, hint, 0, _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to remove plugin: rc=%d",
+                 OM_CS_DEPLOY_CL_PLUGINS, rc ) ;
          goto error ;
       }
 
@@ -3468,6 +3645,36 @@ namespace engine
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to create index: name=%s, rc=%d",
+                 pCollection, rc ) ;
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::removeCollectionIndex( const CHAR *pCollection,
+                                                const CHAR *pIndex )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj indexDef ;
+      BSONElement ele ;
+
+      rc = fromjson ( pIndex, indexDef ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to build index object, rc = %d", rc ) ;
+         goto error ;
+      }
+
+      ele = indexDef.getField( IXM_NAME_FIELD ) ;
+
+      rc = rtnDropIndexCommand( pCollection, ele, _cb, _pDMSCB, NULL, TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to drop index: name=%s, rc=%d",
                  pCollection, rc ) ;
          goto error ;
       }

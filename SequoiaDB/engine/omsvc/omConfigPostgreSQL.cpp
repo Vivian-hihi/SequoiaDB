@@ -222,7 +222,7 @@ namespace engine
    public:
       bool operator() ( const OmNode *node ) const
       {
-         if ( OM_BUSINESS_SEQUOIAPOSTGRESQL !=
+         if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL !=
                     node->getBusinessInfo().businessType )
          {
             return false ;

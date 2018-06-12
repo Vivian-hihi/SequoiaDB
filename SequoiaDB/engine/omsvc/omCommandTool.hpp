@@ -64,6 +64,14 @@ namespace engine
       string port ;
    } ;
 
+   INT32 getPacketFile( const string &businessType, string &filePath ) ;
+   INT32 getMaxTaskID( INT64 &taskID ) ;
+   INT32 createTask( INT32 taskType, INT64 taskID,
+                     const string &taskName, const string &agentHost,
+                     const string &agentService, const BSONObj &taskInfo,
+                     const BSONArray &resultInfo ) ;
+   INT32 removeTask( INT64 taskID ) ;
+
    class omXmlTool : public SDBObject
    {
    public:
@@ -256,12 +264,13 @@ namespace engine
 
       //plugin
       BOOLEAN isPluginExist( const string &name ) ;
-      BOOLEAN isPluginBusinessTypeExist( const string& businessType ) ;
+      BOOLEAN isPluginBusinessTypeExist( const string &businessType ) ;
       INT32 getPluginInfoByBusinessType( const string &businessType,
                                          BSONObj &info ) ;
       INT32 getPluginList( list<BSONObj> &pluginList ) ;
-      INT32 upsertPlugin( const string &name, const string&businessType,
+      INT32 upsertPlugin( const string &name, const string &businessType,
                           const string &serviceName ) ;
+      INT32 removePlugin( const string &name, const string &businessType ) ;
 
       //trans
       INT32 addPackageOfHosts( set<string> &hostList,
@@ -282,6 +291,9 @@ namespace engine
       INT32 createCollection( const CHAR *pCollection ) ;
       INT32 createCollectionIndex( const CHAR *pCollection,
                                    const CHAR *pIndex ) ;
+      INT32 removeCollectionIndex( const CHAR *pCollection,
+                                   const CHAR *pIndex ) ;
+
    private:
       //task
       INT32 _getOneTasktInfo( const BSONObj &matcher, const BSONObj &selector,

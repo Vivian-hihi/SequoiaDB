@@ -179,6 +179,7 @@ namespace engine
          INT32             _updateBusinessTable() ;
          INT32             _updateClusterTable() ;
          INT32             _updateHostTable() ;
+         INT32             _updatePluginIndex() ;
          INT32             _updateTable() ;
 
          INT32             _createJobs() ;
@@ -186,6 +187,10 @@ namespace engine
          INT32             _createCollectionIndex ( const CHAR *pCollection,
                                                     const CHAR *pIndex,
                                                     pmdEDUCB *cb ) ;
+
+         INT32             _dropCollectionIndex( const CHAR *pCollection,
+                                                 const CHAR *pIndex,
+                                                 pmdEDUCB *cb ) ;
 
          INT32             _createCollection ( const CHAR *pCollection,
                                                pmdEDUCB *cb ) ;

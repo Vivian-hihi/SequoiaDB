@@ -288,7 +288,7 @@ namespace engine
       if ( OM_BUSINESS_SEQUOIADB != _businessType &&
            OM_BUSINESS_ZOOKEEPER != _businessType &&
            OM_BUSINESS_SEQUOIASQL_OLAP != _businessType &&
-           OM_BUSINESS_SEQUOIAPOSTGRESQL != _businessType )
+           OM_BUSINESS_SEQUOIASQL_POSTGRESQL != _businessType )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "Unsupported business type: type=%s",
@@ -373,7 +373,7 @@ namespace engine
          taskConfigBuilder.append( OM_TASKINFO_FIELD_SDBUSERGROUP,
                                    sdbUserGroup ) ;
       }
-      else if( OM_BUSINESS_SEQUOIAPOSTGRESQL == _businessType )
+      else if( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == _businessType )
       {
       }
 
@@ -485,7 +485,7 @@ namespace engine
       {
          filter = BSON( OM_SSQL_OLAP_CONF_ROLE << "" ) ;
       }
-      else if( OM_BUSINESS_SEQUOIAPOSTGRESQL == _businessType )
+      else if( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == _businessType )
       {
          filter = BSON( OM_BSON_PORT << "" ) ;
       }

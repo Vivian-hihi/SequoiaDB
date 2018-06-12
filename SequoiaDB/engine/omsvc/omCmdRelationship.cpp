@@ -126,7 +126,7 @@ namespace engine
 
       //check business type
       businessType = fromBuzInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
-      if ( OM_BUSINESS_SEQUOIAPOSTGRESQL != businessType )
+      if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL != businessType )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "Unsupported business type: name=%s, type=%s",
@@ -292,7 +292,7 @@ namespace engine
          fromBuilder.append( OM_BSON_INFO, fromBuzInfo ) ;
 
          businessType = fromBuzInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
-         if ( OM_BUSINESS_SEQUOIAPOSTGRESQL == businessType )
+         if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == businessType )
          {
             filter = BSON( OM_CONFIGURE_FIELD_PORT2 << "" <<
                            OM_CONFIGURE_FIELD_INSTALLPATH << "" ) ;
@@ -635,7 +635,7 @@ namespace engine
          fromBuilder.append( OM_BSON_INFO, fromBuzInfo ) ;
 
          businessType = fromBuzInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
-         if ( OM_BUSINESS_SEQUOIAPOSTGRESQL == businessType )
+         if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == businessType )
          {
             filter = BSON( OM_CONFIGURE_FIELD_PORT2 << "" <<
                            OM_CONFIGURE_FIELD_INSTALLPATH << "" ) ;

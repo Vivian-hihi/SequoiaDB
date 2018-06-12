@@ -471,13 +471,6 @@ namespace engine
          goto error ;
       }
 
-      rc = dbTool.createCollectionIndex( OM_CS_DEPLOY_CL_PLUGINS,
-                                         OM_CS_DEPLOY_CL_PLUGINSIDX2 ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-
       {
          CHAR passwd[OM_DEFAULT_PLUGIN_PASSWD_SIZE] ;
 
@@ -1085,6 +1078,43 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omManager::_updatePluginIndex()
+   {
+      INT32 rc = SDB_OK ;
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      omDatabaseTool dbTool( cb ) ;
+
+      dbTool.removePlugin( "SequoiaSQL-PostgreSQL",
+                           OM_BUSINESS_SEQUOIASQL_POSTGRESQL ) ;
+
+      rc = dbTool.createCollectionIndex( OM_CS_DEPLOY_CL_PLUGINS,
+                                         OM_CS_DEPLOY_CL_PLUGINSIDX1 ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to create index: name=%s, rc=%d",
+                 OM_CS_DEPLOY_CL_PLUGINS, rc ) ;
+         goto error ;
+      }
+
+      rc = dbTool.removeCollectionIndex( OM_CS_DEPLOY_CL_PLUGINS,
+                                         OM_CS_DEPLOY_CL_PLUGINSIDX2 ) ;
+      if ( SDB_IXM_NOTEXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to drop index: name=%s, rc=%d",
+                 OM_CS_DEPLOY_CL_PLUGINS, rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _omManager::_updateTable()
    {
       INT32 rc = SDB_OK ;
@@ -1110,6 +1140,14 @@ namespace engine
       {
          PD_LOG( PDERROR, "update table failed:table=%s,rc=%d", 
                  OM_CS_DEPLOY_CL_HOST, rc ) ;
+         goto error ;
+      }
+
+      rc = _updatePluginIndex() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "update table index failed:table=%s,rc=%d", 
+                 OM_CS_DEPLOY_CL_PLUGINS, rc ) ;
          goto error ;
       }
 
