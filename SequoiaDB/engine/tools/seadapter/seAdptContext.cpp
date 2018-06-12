@@ -574,11 +574,8 @@ namespace seadapter
                arrayBuilder.append( idBuff ) ;
                break ;
             case Object:
-            {
-               BSONObj subObj( idBuff ) ;
-               arrayBuilder.append( subObj ) ;
+               arrayBuilder.append( BSONObj( (const CHAR *)idBuff ) ) ;
                break ;
-            }
             case jstOID:
                arrayBuilder.append( *(bson::OID *)idBuff ) ;
                break ;
@@ -595,9 +592,13 @@ namespace seadapter
                arrayBuilder.append( *(Date_t *)idBuff ) ;
                break ;
             case Timestamp:
+               arrayBuilder.appendTimestamp( *(UINT64 *)idBuff ) ;
+               break ;
+            case NumberDecimal:
             {
-               UINT64 *totalMillSec = (UINT64 *)idBuff ;
-               arrayBuilder.appendTimestamp( *totalMillSec ) ;
+               bsonDecimal number ;
+               number.fromBsonValue( idBuff ) ;
+               arrayBuilder.append( number ) ;
                break ;
             }
             default:

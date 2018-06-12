@@ -185,6 +185,7 @@ namespace seadapter
             case Bool:
             case Date:
             case Timestamp:
+            case NumberDecimal:
                value = idEle.value() ;
                valSize = idEle.valuesize();
                break ;
