@@ -60,7 +60,7 @@ class TestDataNode12499(testlib.SdbTestBase):
       # attach node with config
       spare_rg.attach_node(data_hostname, data_rg_slave_service, {"KeepData": True})
       spare_rg.start()
-            
+		
       # check data
       cl_full_name = self.cl_name_qualified
       spare_data = client(data_hostname, data_rg_slave_service)
@@ -88,6 +88,11 @@ class TestDataNode12499(testlib.SdbTestBase):
       self.db.remove_replica_group("SYSSpare")
    
    def tearDown(self):
+      try:
+         self.db.drop_collection_space(self.cs_name)
+      except SDBBaseError as e:
+         print("cs dropped already.")
+         
       self.remove_rg(self.data_rg_name, 'tear_down_fail')
       self.remove_rg('SYSSpare', 'tear_down_fail')
       self.db.disconnect()
