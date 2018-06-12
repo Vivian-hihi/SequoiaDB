@@ -11,6 +11,7 @@
 	- 32-bit integer
 	- 64-bit integer
 	- double
+	- decimal
 	- string
 	- ObjectID
 	- boolean
