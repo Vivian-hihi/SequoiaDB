@@ -1,9 +1,9 @@
 1. 创建全文索引
 
-	创建全文索引时，只需在字段定义中指定索引类型为 "text" 即可，索引的其它选项对全文索引无效，因此无需指定：
+	创建全文索引使用现有的语法结构，增加全文索引类型 "text"，在索引的 key 定义中指定。索引的其它选项对全文索引无效，因此无需指定。以下语句在集合 foo.bar 的 name 及 address 字段上创建复合全文索引：
 
 	```lang-javascript
-	> db.cs.cl.createIndex('idx', {name:"text", address:"text"})
+	> db.foo.bar.createIndex('idx', {name:"text", address:"text"})
 	```
 	
 	可指定一个或多个字段，需要注意的是在创建时 text 类型不可与其它任何类型混用。每创建一个全文索引，会在数据节点上对应地创建一个固定集合空间及固定集合（集合与集合空间同名，以 SYS_ 开头，与全文索引的对应关系可通过直连数据节点并使用 listIndexes() 进行查询）。文档在 Elasticsearch 中进行索引时，会使用原始集合中文档的 _id 字段的值生成 Elasticsearch 中文档的 _id，支持的原始文档的 _id 类型包括：
