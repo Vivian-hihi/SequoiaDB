@@ -30,6 +30,8 @@ Detach a node in the current partition group, but its configuration information 
 
     1. `KeepData` ( *Bool* ): Whether to keep the original data of the current node, default to be false.
 
+    1. `enforced` ( *Bool* ): Whether to detach the node forcibly , default to be false.
+
 **Note:**
 
 1. It can not detach when the node is master or when only has a node in current group.
