@@ -1376,7 +1376,8 @@ namespace engine
       try
       {
          builder.append( "LobSize", lob.getSize() ) ;
-         builder.appendTimestamp( "CreateTime", createTime ) ;
+         builder.appendTimestamp( "CreateTime", createTime,
+                                  (createTime - ( createTime / 1000 * 1000 ) ) * 1000) ;
       }
       catch( std::exception )
       {
