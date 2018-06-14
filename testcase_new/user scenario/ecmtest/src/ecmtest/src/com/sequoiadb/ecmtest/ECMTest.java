@@ -22,6 +22,9 @@ import java.util.Properties ;
 import java.util.Queue ;
 import java.util.concurrent.ExecutorService ;
 import java.util.concurrent.Executors ;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import org.bson.BSONObject ;
 import org.bson.BasicBSONObject ;
@@ -360,14 +363,14 @@ public class ECMTest {
             System.err.println("threadCount is zero");
             System.exit( 1 );
         }
-        ExecutorService executor = Executors.newFixedThreadPool( thrdNum ) ;
+        ExecutorService fixedThreadPool = Executors.newFixedThreadPool( thrdNum ) ;
         int writeTranCountPreMin = Integer.parseInt( prop
                 .getProperty( "writeTranCountPerMins" ).trim() ) ;
         int readTranCountPerMin = Integer.parseInt( prop
                 .getProperty( "readTranCountPerMins" ).trim() ) ;
         int maxWriteTranCountPerMin = Integer.parseInt( prop
                 .getProperty( "maxWriteTranCountPerMins" ).trim() ) ;
-
+        
         long start = System.currentTimeMillis() ;
         long prevWCnt = 0 ;
         long prevRCnt = 0 ;
@@ -381,6 +384,25 @@ public class ECMTest {
         boolean stopWrite = false ;
         boolean stopRead = false ;
 
+        int timedTaskCount = Integer.parseInt( prop
+                .getProperty( "timedTaskCount" ).trim() ) ;
+        int timedTaskPeriod = Integer.parseInt( prop
+                .getProperty( "timedTaskPeriod" ).trim() ) ;
+        int timedTaskDelay = Integer.parseInt( prop
+                .getProperty( "timedTaskDelay" ).trim() ) ;
+        int timedTaskBatchCount = Integer.parseInt( prop
+                .getProperty( "timedTaskBatchCount" ).trim() ) ;
+        
+        ScheduledExecutorService scheduledThreadPool = 
+                Executors.newScheduledThreadPool( timedTaskCount );
+        Queue< ECMTimedTask > tTaskQueue = new LinkedList< ECMTimedTask >() ;
+        for (int i = 1; i <= timedTaskCount; ++i) {
+            ECMTimedTask tTask = new ECMTimedTask( dataDir, ds, timedTaskBatchCount );
+            scheduledThreadPool.scheduleAtFixedRate(tTask, timedTaskDelay * i,
+                    timedTaskPeriod, TimeUnit.MILLISECONDS);
+            tTaskQueue.offer(tTask);
+        }
+
         while ( !isExit ) {
             if ( !stopWrite || wBusyQueue.isEmpty()) {
                 for ( int pos = 0; pos < 3; ++pos ) {
@@ -388,7 +410,7 @@ public class ECMTest {
                     if ( wTask == null ) {
                         wTask =  new ECMWriteTask( dataDir, ds ) ;
                     }
-                    executor.execute( wTask ) ;
+                    fixedThreadPool.execute( wTask ) ;
                     wBusyQueue.add( wTask ) ;
                 }
             }
@@ -399,7 +421,7 @@ public class ECMTest {
                     if ( rTask == null ) {
                         rTask = new ECMReadTask( ds ) ;
                     }
-                    executor.execute( rTask ) ;
+                    fixedThreadPool.execute( rTask ) ;
                     rBusyQueue.add( rTask ) ;
                 }
             }
@@ -470,6 +492,10 @@ public class ECMTest {
                 for ( ECMReadTask rTask : rFreeQueue ) {
                     rTask.outputStat() ;
                 }
+                
+                for ( ECMTimedTask tTask : tTaskQueue) {
+                    tTask.outputStat();
+                }
             }
 
             if ( current - start >= 60000
@@ -489,7 +515,8 @@ public class ECMTest {
             }
         }
 
-        executor.shutdown() ;
+        scheduledThreadPool.shutdown();
+        fixedThreadPool.shutdown() ;
         this.ds.close() ;
     }
 

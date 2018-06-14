@@ -45,9 +45,6 @@ public class Const {
     public static final String ECM_DOMAIN_NAEM = ECM_CS_NAME + "Domain" ;
     public static final int lobPageSize = 131072 ;
     
-    public static int getTest(){
-        return 1;
-    }
     
     
     

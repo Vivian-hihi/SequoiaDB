@@ -110,7 +110,7 @@ public class ECMTask {
         System.out.println(String.format( "%s task:%d max spend time: %.2f ms", taskType, taskID, max * 1.0 / 1000000 ));
         System.out.println(String.format( "%s task:%d min spend time: %.2f ms", taskType, taskID, min * 1.0 / 1000000 ));
         double avg = calcAvgSpendTime() ;
-        System.out.println(String.format( "%s task:%d avg spend time: %.2f ms", taskType,taskID, avg / 1000000 ));
+        System.out.println(String.format( "%s task:%d avg spend time: %.2f ms", taskType, taskID, avg / 1000000 ));
     }
     
     public void outputWarn(){
