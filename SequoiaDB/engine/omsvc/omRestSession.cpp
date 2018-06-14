@@ -315,10 +315,9 @@ namespace engine
       goto done ;
    } 
 
-   INT32 _omRestSession::_getBusinessAccessNode( const CHAR *pClusterName,
+   INT32 _omRestSession::_getBusinessAccessNode( restRequest &request,
+                                                 const CHAR *pClusterName,
                                                  const CHAR *pBusinessName,
-                                                 const CHAR *pSdbUser,
-                                                 const CHAR *pSdbPasswd,
                                                  list<omNodeInfo> &nodeList )
    {
       INT32 rc = SDB_OK ;
@@ -326,6 +325,7 @@ namespace engine
       string deployMode ;
       string user ;
       string passwd ;
+
       rc = _getBusinessInfo( pClusterName, pBusinessName, businessType, 
                              deployMode ) ;
       if ( SDB_OK != rc )
@@ -343,10 +343,17 @@ namespace engine
          goto error ;
       }
 
-      if ( NULL == pSdbUser || NULL == pSdbPasswd )
+      if ( request.isHeaderExist( OM_REST_HEAD_SDBUSER ) &&
+           request.isHeaderExist( OM_REST_HEAD_SDBPASSWD ) )
+      {
+         user   = request.getHeader( OM_REST_HEAD_SDBUSER ) ;
+         passwd = request.getHeader( OM_REST_HEAD_SDBPASSWD ) ;
+      }
+      else
       {
          md5::md5digest digest ;
          string tmpPasswd ;
+
          rc = _getBusinessAuth( pClusterName, pBusinessName, user, tmpPasswd ) ;
          if ( SDB_OK != rc )
          {
@@ -357,11 +364,6 @@ namespace engine
          md5::md5( ( const void * )tmpPasswd.c_str(), 
                    tmpPasswd.length(), digest) ;
          passwd = md5::digestToString( digest ) ;
-      }
-      else
-      {
-         user   = pSdbUser ;
-         passwd = pSdbPasswd ;
       }
 
       {
@@ -555,8 +557,6 @@ namespace engine
       restAdaptor *pAdaptor = sdbGetPMDController()->getRestAdptor() ;
       _omTransferProcessor *transProcessor = NULL ;
       list<omNodeInfo> nodeList ;
-      string sdbUser ;
-      string sdbPasswd ;
       string sdbHostName ;
       string sdbSvcName ;
 
@@ -569,10 +569,7 @@ namespace engine
          goto error ;
       }
 
-      sdbUser = request.getHeader( OM_REST_HEAD_SDBUSER ) ;
-      sdbPasswd = request.getHeader( OM_REST_HEAD_SDBPASSWD ) ;
-      rc = _getBusinessAccessNode( pClusterName, pBusinessName, 
-                                   sdbUser.c_str(), sdbPasswd.c_str(),
+      rc = _getBusinessAccessNode( request, pClusterName, pBusinessName, 
                                    nodeList ) ;
       if ( rc )
       {

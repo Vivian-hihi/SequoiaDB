@@ -70,11 +70,11 @@ namespace engine
                                        const CHAR *pClusterName,
                                        const CHAR *pBusinessName ) ;
 
-         INT32             _getBusinessAccessNode( const CHAR *pClusterName,
-                                                   const CHAR *pBusinessName,
-                                                   const CHAR *pSdbUser,
-                                                   const CHAR *pSdbPasswd,
-                                                  list<omNodeInfo> &nodeList ) ;
+         INT32 _getBusinessAccessNode( restRequest &request,
+                                       const CHAR *pClusterName,
+                                       const CHAR *pBusinessName,
+                                       list<omNodeInfo> &nodeList ) ;
+
          INT32             _getBusinessAuth( const CHAR *pClusterName,
                                              const CHAR *pBusinessName,
                                              string &user, string &passwd ) ;
