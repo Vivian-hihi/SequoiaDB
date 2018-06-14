@@ -404,7 +404,7 @@
       </if>
       <hostinfo prefix="host" />
       <resourcecount property="corefilenum">
-         <fileset dir="${CI_WORK_DIR}" includes="testcase/**/*core*" excludes="testcase/**/*core*.jar"/>
+         <fileset dir="${CI_WORK_DIR}" includes="testcase/**/*core*" excludes="testcase/**/*core*.jar,testcase/**/org.eclipse.jdt.core.prefs"/>
       </resourcecount>
       <touch file="${report_dir}/${host.NAME}_testcase_core.log"/>
       <if>
