@@ -330,13 +330,6 @@ INT32 buildDialogPath(CHAR *diaglogPath, CHAR *diaglogPathFromCmd, UINT32 bufSiz
         ossPrintf("Get working directory failed: %d"OSS_NEWLINE, rc);
         goto error;
     }
-
-    rc = ossChDir(currentPath);    
-    if(rc)
-    {
-        ossPrintf("Build log path failed: %d"OSS_NEWLINE, rc);
-        goto error;
-    }
     
     logPath = (ossStrcmp(diaglogPathFromCmd, "") == 0) ? currentPath :  diaglogPathFromCmd; 
     //./diaglog/sequoiafs.log
@@ -1269,6 +1262,8 @@ INT32 sequoiaFS::getattr(const CHAR *path, struct stat *sbuf)
     INT64 pid = 0;
     BOOLEAN is_dir =TRUE;
     BSONObj options;
+    INT32 blocks;
+    INT32 pageSize = getpagesize();
 
     PD_LOG(PDDEBUG, "Called: getattr(). Path:%s", path);	
     ossMemset(sbuf, 0, sizeof(struct stat));
@@ -1288,15 +1283,7 @@ INT32 sequoiaFS::getattr(const CHAR *path, struct stat *sbuf)
     sbuf->st_uid = uid;
     sbuf->st_gid = gid;
     pathStr = ossStrdup(path);    
-
-    if(ossStrcmp(path, "/") == 0)
-    {
-        sbuf->st_mode = S_IFDIR | 0755;
-        sbuf->st_nlink = 2;
-        sbuf->st_size = 4096;
-        goto done;
-    }
-
+    
     rc = getConnection(&db);
     if(SDB_OK != rc)
     {
@@ -1335,13 +1322,50 @@ INT32 sequoiaFS::getattr(const CHAR *path, struct stat *sbuf)
         rc = pid;
         goto error;
     }
+    
+    if(ossStrcmp(path, "/") == 0)
+    {
+        condition = BSON(SEQUOIAFS_PID<<pid); 
+        rc = sysDirMetaCL.query(*cursor, condition);
+        if(SDB_OK != rc)
+        {
+            PD_LOG(PDERROR, "Fail to get files belong to the root, error=%d", rc);
+            rc = -EIO;
+            goto error;
+        }
+
+        while(SDB_OK == rc)
+        {
+            rc = cursor->next(record);        
+            if(SDB_OK != rc)
+            {
+                if(SDB_DMS_EOC == rc)
+                {
+                    rc = SDB_OK;
+                    break;
+                }
+                PD_LOG(PDERROR, "Fail to get files belong to the root, error=%d", rc);
+                rc = -EIO;
+                goto error;
+            } 
+            nlink++;
+        }
+        
+        sbuf->st_mode = S_IFDIR | 0755;
+        sbuf->st_nlink = 2 + nlink;
+        sbuf->st_size = pageSize;
+        blocks = sbuf->st_size / pageSize;
+        blocks = (sbuf->st_size % pageSize == 0) ? blocks : blocks + 1;
+        sbuf->st_blocks = blocks * 8;
+        goto done;
+    }    
 
     condition = BSON(SEQUOIAFS_NAME<<lobName<<SEQUOIAFS_PID<<pid); 
     //If didn't get the record from sys file meta cl, then search the sys dir meta cl. 
     rc = isDir(&sysFileMetaCL, &sysDirMetaCL, (CHAR *)lobName.c_str(), pid, &is_dir);
     if(SDB_OK != rc)
     {
-        goto error;  
+        goto error;
     }
 
     rc = (is_dir?sysDirMetaCL:sysFileMetaCL).query(*cursor, condition);
@@ -1367,7 +1391,8 @@ INT32 sequoiaFS::getattr(const CHAR *path, struct stat *sbuf)
         rc = -EIO;
         goto error;
     }     
-    
+
+    nlink = 0;
     rc = getRecordField(record, (CHAR *)SEQUOIAFS_SIZE, (void *)(&sbuf->st_size), NumberLong);    
     rc += getRecordField(record, (CHAR *)SEQUOIAFS_CREATE_TIME, (void *)(&sbuf->st_ctime), NumberLong);  
     rc += getRecordField(record, (CHAR *)SEQUOIAFS_ACCESS_TIME, (void *)(&sbuf->st_atime), NumberLong);      
@@ -1386,8 +1411,10 @@ INT32 sequoiaFS::getattr(const CHAR *path, struct stat *sbuf)
     sbuf->st_nlink = nlink;
     sbuf->st_ctime /= 1000;     
     sbuf->st_mtime /= 1000;   
-    sbuf->st_atime /= 1000;   
-    
+    sbuf->st_atime /= 1000;
+    blocks = sbuf->st_size / pageSize;
+    blocks = (sbuf->st_size % pageSize == 0) ? blocks : blocks + 1;
+    sbuf->st_blocks = blocks * 8; 
     rc = SDB_OK;    
     
 done:
@@ -1552,6 +1579,7 @@ INT32 sequoiaFS::mkdir(const CHAR *path, mode_t mode)
     BSONObj condition; 
     sdbCursor cursor;
     BSONObj record;
+    BSONObj rule;
     OID oid;
     BSONObj obj;
     BOOLEAN exist = TRUE; 
@@ -1619,7 +1647,7 @@ INT32 sequoiaFS::mkdir(const CHAR *path, mode_t mode)
         goto error;        
     }
      
-    condition = BSON("Name"<<basePath<<"Pino"<<(INT64)pid);    
+    condition = BSON(SEQUOIAFS_NAME<<basePath<<SEQUOIAFS_PID<<(INT64)pid);    
     rc = sysDirMetaCL.query(cursor, condition);
     if(SDB_OK != rc)
     {
@@ -1655,7 +1683,7 @@ INT32 sequoiaFS::mkdir(const CHAR *path, mode_t mode)
     dirNode.mode = S_IFDIR | mode;
     dirNode.uid = uid;
     dirNode.gid = gid;
-    dirNode.nLink = 0;
+    dirNode.nLink = 2;
     dirNode.pid= pid;
     dirNode.id = id;
     dirNode.size = 4096;
@@ -1667,6 +1695,15 @@ INT32 sequoiaFS::mkdir(const CHAR *path, mode_t mode)
     if(SDB_OK != rc)
     {
         PD_LOG(PDERROR, "Failed to set attr, error=%d", rc);
+        goto error;
+    }
+    
+    /*add subdir no on parent dir*/
+    condition = BSON(SEQUOIAFS_ID<<(INT64)pid);
+    rule = BSON("$inc"<<BSON(SEQUOIAFS_NLINK<<1));
+    rc = doUpdateAttr(&sysDirMetaCL, rule, condition);    
+    if(SDB_OK != rc)
+    {
         goto error;
     }
     

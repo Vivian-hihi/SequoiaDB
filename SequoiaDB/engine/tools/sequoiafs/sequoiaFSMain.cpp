@@ -36,14 +36,11 @@
 *******************************************************************************/
 
 #include"sequoiaFSMain.hpp"
-#include"boost/filesystem.hpp"
 
 using namespace std;
 using namespace sequoiafs;
 
 sequoiaFS *sfs = new sequoiaFS();
-CHAR curPath[PATH_MAX];
-
 
 #define SDB_LOB_VALID_CHECK() \
 { \
@@ -342,19 +339,12 @@ static INT32 sfsProcessArg(void *data, const CHAR *arg, INT32 key, struct fuse_a
         case FUSE_OPT_KEY_NONOPT:
             if (!option->mountpoint) 
             {
-                CHAR mountpoint[PATH_MAX];  
-                
-                ossSnprintf(mountpoint, sizeof(mountpoint), "%s", curPath);
-                rc = engine::utilCatPath(mountpoint, PATH_MAX, arg);
-                if(SDB_OK != rc)
+                CHAR mountpoint[PATH_MAX];
+                if (realpath(arg, mountpoint) == NULL) 
                 {
-                    ossPrintf("Failed to build mounpoint path(error=%d), exit"OSS_NEWLINE, rc); 
-                    goto error;
-                }                
-                
-                if (!boost::filesystem::exists(mountpoint)) 
-                {
-                    ossPrintf("fuse: bad mount point `%s': %s"OSS_NEWLINE, arg, strerror(errno));
+                    fprintf(stderr,
+                        "fuse: bad mount point `%s': %s\n",
+                        arg, strerror(errno));
                     rc = -1;
                     goto error;
                 }
@@ -362,7 +352,7 @@ static INT32 sfsProcessArg(void *data, const CHAR *arg, INT32 key, struct fuse_a
             } 
             else 
             {
-                ossPrintf("fuse: invalid argument `%s'"OSS_NEWLINE, arg);
+                fprintf(stderr, "fuse: invalid argument `%s'\n", arg);
                 rc = -1;
                 goto error;
             }
@@ -384,7 +374,7 @@ INT32 sfsOptInitArgs(struct fuse_args *args)
     arg->argc = 0;    
     if(!arg)
     {
-        ossPrintf("Failed to malloc mem for argv"OSS_NEWLINE);
+        std::cerr<<"Failed to malloc mem for argv"<<endl;
         rc = SDB_OOM;
         goto error;
     }
@@ -413,16 +403,9 @@ INT32 main(INT32 argc, CHAR *argv[])
         goto error;
     }
     ossMemset(optionTemp, 0, OSS_MAX_PATHSIZE);
-    ossSnprintf(optionTemp, strlen(argv[0]) + 1, "%s", argv[0]);
+    sprintf(optionTemp, "%s", argv[0]);
     fuse_opt_add_arg(&fuseArgs, optionTemp);    
 
-    rc = ossGetCWD(curPath, PATH_MAX);
-    if(SDB_OK != rc)
-    {
-        ossPrintf("failed to get current path, error:%d\n"OSS_NEWLINE, rc);  
-        goto error;
-    }
-    
     rc = sfs->init(argc, argv, &options4fuse);
     if(SDB_OK != rc)
     {
