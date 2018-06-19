@@ -411,7 +411,7 @@
          <equals arg1="${corefilenum}" arg2="0"/>
          <else>
             <for param="corfilename">
-               <fileset dir="${CI_WORK_DIR}/testcase/" includes="**/*core*" excludes="**/*core*.jar"/>
+               <fileset dir="${CI_WORK_DIR}/testcase/" includes="**/*core*" excludes="**/*core*.jar,user\ scenario/*"/>
                <sequential>
                   <echo message="${host.NAME}   ${host.ADDR4}   @{corfilename} &#10;" file="${report_dir}/${host.NAME}_testcase_core.log" append="true"/>
                </sequential>
