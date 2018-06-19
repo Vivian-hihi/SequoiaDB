@@ -2632,20 +2632,6 @@ SDB_EXPORT INT32 sdbForceStepUp( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbTruncateCollection( sdbConnectionHandle cHandle,
                                         const CHAR *fullName ) ;
 
-/* \fn INT32 sdbPop( sdbConnectionHandle cHandle,
-                      const CHAR *fullName,
-                      bson *options )
-    \brief pop records from capped collection
-    \param [in] cHandle The handle of connection.
-    \param [in] fullName The full name of collection to be popped, eg: foo.bar.
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
-SDB_EXPORT INT32 sdbPop( sdbConnectionHandle cHandle,
-                         const CHAR *fullName,
-                         bson *options ) ;
-
-
 /** \fn INT32 sdbDetachNode( sdbReplicaGroupHandle cHandle,
                              const CHAR *hostName,
                              const CHAR *serviceName,
@@ -2764,6 +2750,18 @@ SDB_EXPORT INT32 sdbDisableCompression ( sdbCollectionHandle cHandle ) ;
 */
 SDB_EXPORT INT32 sdbCLSetAttributes ( sdbCollectionHandle cHandle,
                                       const bson * args ) ;
+
+/* \fn INT32 sdbPop( sdbCollectionHandle cHandle, bson *options )
+    \brief pop records from capped collection
+    \param [in] cHandle The handle of connection
+    \param [in] fullName The full name of collection to be popped, eg: foo.bar
+    \param [in] options Pop target and direction, including "LogicalID" and "Direction".
+                Direction is optional. Its default value is 1.
+                e.g. { LogicalID:100, Direction:1 }
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbPop( sdbCollectionHandle cHandle, bson *options ) ;
 
 /* \fn INT32 sdbGetDCName( sdbDCHandle cHandle, CHAR *pBuffer, INT32 size )
     \brief Get the name of the data center

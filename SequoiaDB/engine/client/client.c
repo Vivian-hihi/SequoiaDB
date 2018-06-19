@@ -10935,26 +10935,26 @@ error:
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbPop( sdbConnectionHandle cHandle,
-                         const CHAR *fullName,
-                         bson *options )
+SDB_EXPORT INT32 sdbPop( sdbCollectionHandle cHandle, bson *options )
 {
    INT32 rc = SDB_OK ;
    bson newObj ;
    BOOLEAN bsoninit = FALSE ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct *)cHandle ;
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection = (sdbConnectionStruct *)(cs->_connection) ;
 
-   if ( NULL == fullName || 0 == ossStrlen( fullName ) )
+   if ( !cs->_collectionFullName[0] || !options )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
 
    BSON_INIT( newObj ) ;
-   BSON_APPEND( newObj, FIELD_NAME_COLLECTION, fullName, string ) ;
+   BSON_APPEND( newObj, FIELD_NAME_COLLECTION,
+                cs->_collectionFullName, string ) ;
 
-   if ( NULL != options )
    {
       bson_iterator it ;
       bson_iterator_init( &it, options ) ;
@@ -10975,7 +10975,8 @@ SDB_EXPORT INT32 sdbPop( sdbConnectionHandle cHandle,
    }
    BSON_FINISH( newObj ) ;
 
-   rc = _runCommand( cHandle, connection->_sock, &connection->_pSendBuffer,
+   rc = _runCommand( cs->_connection, connection->_sock,
+                     &connection->_pSendBuffer,
                      &connection->_sendBufferSize,
                      &connection->_pReceiveBuffer,
                      &connection->_receiveBufferSize,
