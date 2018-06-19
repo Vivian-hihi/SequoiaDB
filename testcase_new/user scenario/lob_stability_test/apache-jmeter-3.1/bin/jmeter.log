@@ -1,0 +1,89 @@
+2018/06/16 15:57:00 INFO  - jmeter.util.JMeterUtils: Setting Locale to zh_CN 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: Loading user properties from: C:\Documents and Settings\linsuqiang\桌面\lob_stability_test\apache-jmeter-3.1\bin\user.properties 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: Loading system properties from: C:\Documents and Settings\linsuqiang\桌面\lob_stability_test\apache-jmeter-3.1\bin\system.properties 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: Copyright (c) 1998-2016 The Apache Software Foundation 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: Version 3.1 r1770033 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: java.version=1.8.0_112 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: java.vm.name=Java HotSpot(TM) 64-Bit Server VM 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: os.name=Windows 2003 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: os.arch=amd64 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: os.version=5.2 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: file.encoding=GBK 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: Max memory     =1597505536 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: Available Processors =2 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: Default Locale=中文 (中国) 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: JMeter  Locale=中文 (中国) 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: JMeterHome=C:\Documents and Settings\linsuqiang\桌面\lob_stability_test\apache-jmeter-3.1 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: user.dir  =C:\Documents and Settings\linsuqiang\桌面\lob_stability_test\apache-jmeter-3.1\bin 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: PWD       =C:\Documents and Settings\linsuqiang\桌面\lob_stability_test\apache-jmeter-3.1\bin 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: IP: 192.168.10.86 Name: win2003-lsq FullName: win2003-lsq 
+2018/06/16 15:57:00 INFO  - jmeter.gui.action.LookAndFeelCommand: Using look and feel: javax.swing.plaf.metal.MetalLookAndFeel [Metal, CrossPlatform] 
+2018/06/16 15:57:00 INFO  - jmeter.JMeter: Loaded icon properties from org/apache/jmeter/images/icon.properties 
+2018/06/16 15:57:07 INFO  - jmeter.engine.util.CompoundVariable: Note: Function class names must contain the string: '.functions.' 
+2018/06/16 15:57:07 INFO  - jmeter.engine.util.CompoundVariable: Note: Function class names must not contain the string: '.gui.' 
+2018/06/16 15:57:21 WARN  - org.jmeterplugins.repository.PluginManagerMenuItem: Failed to load plugin updates info java.net.UnknownHostException: jmeter-plugins.org
+	at java.net.Inet4AddressImpl.lookupAllHostAddr(Native Method)
+	at java.net.InetAddress$2.lookupAllHostAddr(Unknown Source)
+	at java.net.InetAddress.getAddressesFromNameService(Unknown Source)
+	at java.net.InetAddress.getAllByName0(Unknown Source)
+	at java.net.InetAddress.getAllByName(Unknown Source)
+	at java.net.InetAddress.getAllByName(Unknown Source)
+	at org.apache.http.impl.conn.SystemDefaultDnsResolver.resolve(SystemDefaultDnsResolver.java:45)
+	at org.apache.http.impl.conn.DefaultClientConnectionOperator.resolveHostname(DefaultClientConnectionOperator.java:262)
+	at org.apache.http.impl.conn.DefaultClientConnectionOperator.openConnection(DefaultClientConnectionOperator.java:161)
+	at org.apache.http.impl.conn.ManagedClientConnectionImpl.open(ManagedClientConnectionImpl.java:328)
+	at org.apache.http.impl.client.DefaultRequestDirector.tryConnect(DefaultRequestDirector.java:612)
+	at org.apache.http.impl.client.DefaultRequestDirector.execute(DefaultRequestDirector.java:447)
+	at org.apache.http.impl.client.AbstractHttpClient.doExecute(AbstractHttpClient.java:884)
+	at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:82)
+	at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:107)
+	at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:55)
+	at org.jmeterplugins.repository.JARSourceHTTP.getJSON(JARSourceHTTP.java:104)
+	at org.jmeterplugins.repository.JARSourceHTTP.getRepo(JARSourceHTTP.java:135)
+	at org.jmeterplugins.repository.PluginManager.load(PluginManager.java:49)
+	at org.jmeterplugins.repository.PluginManagerMenuItem.<init>(PluginManagerMenuItem.java:28)
+	at org.jmeterplugins.repository.PluginManagerMenuCreator.getMenuItemsAtLocation(PluginManagerMenuCreator.java:22)
+	at org.apache.jmeter.gui.util.JMeterMenuBar.addPluginsMenuItems(JMeterMenuBar.java:572)
+	at org.apache.jmeter.gui.util.JMeterMenuBar.makeOptionsMenu(JMeterMenuBar.java:349)
+	at org.apache.jmeter.gui.util.JMeterMenuBar.createMenuBar(JMeterMenuBar.java:268)
+	at org.apache.jmeter.gui.util.JMeterMenuBar.<init>(JMeterMenuBar.java:161)
+	at org.apache.jmeter.gui.MainFrame.init(MainFrame.java:493)
+	at org.apache.jmeter.gui.MainFrame.<init>(MainFrame.java:241)
+	at org.apache.jmeter.JMeter.startGui(JMeter.java:330)
+	at org.apache.jmeter.JMeter.start(JMeter.java:483)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.apache.jmeter.NewDriver.main(NewDriver.java:259)
+
+2018/06/16 15:57:22 INFO  - jmeter.gui.util.MenuFactory: Skipping org.apache.jmeter.assertions.BSFAssertion 
+2018/06/16 15:57:23 INFO  - jmeter.gui.util.MenuFactory: Skipping org.apache.jmeter.extractor.BSFPostProcessor 
+2018/06/16 15:57:23 INFO  - jmeter.gui.util.MenuFactory: Skipping org.apache.jmeter.modifiers.BSFPreProcessor 
+2018/06/16 15:57:23 INFO  - jmeter.protocol.http.sampler.HTTPSamplerBase: Parser for text/html is org.apache.jmeter.protocol.http.parser.LagartoBasedHtmlParser 
+2018/06/16 15:57:23 INFO  - jmeter.protocol.http.sampler.HTTPSamplerBase: Parser for application/xhtml+xml is org.apache.jmeter.protocol.http.parser.LagartoBasedHtmlParser 
+2018/06/16 15:57:23 INFO  - jmeter.protocol.http.sampler.HTTPSamplerBase: Parser for application/xml is org.apache.jmeter.protocol.http.parser.LagartoBasedHtmlParser 
+2018/06/16 15:57:23 INFO  - jmeter.protocol.http.sampler.HTTPSamplerBase: Parser for text/xml is org.apache.jmeter.protocol.http.parser.LagartoBasedHtmlParser 
+2018/06/16 15:57:23 INFO  - jmeter.protocol.http.sampler.HTTPSamplerBase: Parser for text/vnd.wap.wml is org.apache.jmeter.protocol.http.parser.RegexpHTMLParser 
+2018/06/16 15:57:23 INFO  - jmeter.protocol.http.sampler.HTTPSamplerBase: Parser for text/css is org.apache.jmeter.protocol.http.parser.CssParser 
+2018/06/16 15:57:24 INFO  - jorphan.exec.KeyToolUtils: keytool found at 'C:\Program Files\Java\jre1.8.0_112\bin\keytool' 
+2018/06/16 15:57:24 INFO  - jmeter.protocol.http.proxy.ProxyControl: HTTP(S) Test Script Recorder SSL Proxy will use keys that support embedded 3rd party resources in file C:\Documents and Settings\linsuqiang\桌面\lob_stability_test\apache-jmeter-3.1\bin\proxyserver.jks 
+2018/06/16 15:57:25 INFO  - jmeter.gui.util.MenuFactory: Skipping org.apache.jmeter.protocol.java.sampler.BSFSampler 
+2018/06/16 15:57:25 INFO  - jmeter.gui.util.MenuFactory: Skipping org.apache.jmeter.protocol.mongodb.config.MongoSourceElement 
+2018/06/16 15:57:25 INFO  - jmeter.gui.util.MenuFactory: Skipping org.apache.jmeter.protocol.mongodb.sampler.MongoScriptSampler 
+2018/06/16 15:57:26 INFO  - jmeter.gui.util.MenuFactory: Skipping org.apache.jmeter.timers.BSFTimer 
+2018/06/16 15:57:26 INFO  - jmeter.gui.util.MenuFactory: Skipping org.apache.jmeter.visualizers.BSFListener 
+2018/06/16 15:57:26 INFO  - jmeter.gui.util.MenuFactory: Skipping org.apache.jmeter.visualizers.MonitorHealthVisualizer 
+2018/06/16 15:57:26 INFO  - jmeter.samplers.SampleResult: Note: Sample TimeStamps are START times 
+2018/06/16 15:57:26 INFO  - jmeter.samplers.SampleResult: sampleresult.default.encoding is set to ISO-8859-1 
+2018/06/16 15:57:26 INFO  - jmeter.samplers.SampleResult: sampleresult.useNanoTime=true 
+2018/06/16 15:57:26 INFO  - jmeter.samplers.SampleResult: sampleresult.nanoThreadSleep=5000 
+2018/06/16 15:58:29 INFO  - jmeter.services.FileServer: Default base='C:\Documents and Settings\linsuqiang\桌面\lob_stability_test\apache-jmeter-3.1\bin' 
+2018/06/16 15:58:29 INFO  - jmeter.gui.action.Load: Loading file: C:\Documents and Settings\linsuqiang\桌面\lob_stability_test\resource\exec-plan.jmx 
+2018/06/16 15:58:29 INFO  - jmeter.services.FileServer: Set new base='C:\Documents and Settings\linsuqiang\桌面\lob_stability_test\resource' 
+2018/06/16 15:58:29 INFO  - jmeter.save.SaveService: Testplan (JMX) version: 2.2. Testlog (JTL) version: 2.2 
+2018/06/16 15:58:29 INFO  - jmeter.save.SaveService: Using SaveService properties file encoding UTF-8 
+2018/06/16 15:58:29 INFO  - jmeter.save.SaveService: Using SaveService properties version 3.1 
+2018/06/16 15:58:29 INFO  - jmeter.save.SaveService: All converter versions present and correct 
+2018/06/16 15:58:29 INFO  - jmeter.save.SaveService: Loading file: C:\Documents and Settings\linsuqiang\桌面\lob_stability_test\resource\exec-plan.jmx 
+2018/06/16 15:58:30 INFO  - jmeter.services.FileServer: Set new base='C:\Documents and Settings\linsuqiang\桌面\lob_stability_test\resource' 
