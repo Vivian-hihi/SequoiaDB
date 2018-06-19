@@ -36,7 +36,6 @@
 #include "sptObjDesc.hpp"
 #include "ossUtil.hpp"
 #include "sptCommon.hpp"
-#include "ossProc.hpp"
 #include <algorithm>
 using namespace std ;
 namespace engine
@@ -208,9 +207,7 @@ namespace engine
       }
       else
       {
-         CHAR ewdPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-         ossGetEWD( ewdPath, OSS_MAX_PATHSIZE ) ;
-         prefixPath = ewdPath ;
+         prefixPath = "."OSS_FILE_SEP ;
       }
 
       pName = prefixPath.c_str() ;
