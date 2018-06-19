@@ -253,7 +253,7 @@ namespace engine
             rc = decimal.add( inc, result ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG_MSG( PDERROR, "decimal add failed:v1=%s,v2=%s,rc=%d", 
+               PD_LOG_MSG( PDERROR, "decimal add failed:v1=%s,v2=%s,rc=%d",
                            decimal.toString().c_str(),
                            inc.toString().c_str(), rc ) ;
                goto error ;
@@ -340,7 +340,7 @@ namespace engine
                bb.append ( in.fieldName(), result64) ;
                ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result64, "$set" ) ;
             }
-            else 
+            else
             {
                //32 bit overflow or underflow happened
                rc = SDB_VALUE_OVERFLOW ;
@@ -2555,7 +2555,7 @@ namespace engine
             b.append( e ) ;
          }
 
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, e.fieldName(), 
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, e.fieldName(),
                               "$replace" ) ;
       }
 
@@ -2563,7 +2563,7 @@ namespace engine
       while ( i < _modifierElements.size() )
       {
          const CHAR *pTmpFieldName = _modifierElements[i]._toModify.fieldName() ;
-         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, _modifierElements[i]._toModify, 
+         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, _modifierElements[i]._toModify,
                               pTmpFieldName, "$replace" ) ;
          b.append( _modifierElements[i]._toModify ) ;
          ++i ;
@@ -3026,7 +3026,7 @@ namespace engine
          if ( NULL != srcShardingKey )
          {
             BSONObjSet keySet ;
-            rc = _shardingKeyGen->getKeys( source, keySet, NULL, TRUE, TRUE, TRUE ) ;
+            rc = _shardingKeyGen->getKeys( source, keySet, NULL, TRUE, TRUE ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG ( PDERROR, "Failed to get sharding key from obj: %s, rc=%d",
@@ -3043,7 +3043,7 @@ namespace engine
          if ( NULL != dstShardingKey )
          {
             BSONObjSet keySet ;
-            rc = _shardingKeyGen->getKeys( target, keySet, NULL, TRUE, TRUE, TRUE ) ;
+            rc = _shardingKeyGen->getKeys( target, keySet, NULL, TRUE, TRUE ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG ( PDERROR, "Failed to get sharding key from obj: %s, rc=%d",

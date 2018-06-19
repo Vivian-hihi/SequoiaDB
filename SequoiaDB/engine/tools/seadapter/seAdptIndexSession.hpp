@@ -92,7 +92,6 @@ namespace seadapter
       virtual void _onDetach() ;
 
    private:
-      void  _updateCLVersion( INT32 version ) ;
       void  _switchStatus( SEADPT_SESSION_STATUS newStatus ) ;
       INT32 _sendGetmoreReq( INT64 contextID, UINT64 requestID ) ;
       INT32 _queryOrigCollection() ;

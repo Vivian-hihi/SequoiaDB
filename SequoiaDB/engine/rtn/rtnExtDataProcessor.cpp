@@ -188,7 +188,7 @@ namespace engine
       const CHAR *collection = NULL ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
-      // Onley check for insert/delete/update when object is not empty.
+      // Only check for insert/delete/update when object is not empty.
       if ( type > DMS_EXTOPR_TYPE_UPDATE || !object )
       {
          goto done ;
@@ -200,13 +200,23 @@ namespace engine
 
       {
          // Get the key set
+         BSONElement arrayEle ;
          ixmIndexKeyGen keygen( _meta._idxKeyDef, GEN_OBJ_KEEP_FIELD_NAME ) ;
-         rc = keygen.getKeys( *object, _keySet, NULL, TRUE, FALSE, TRUE ) ;
+         rc = keygen.getKeys( *object, _keySet, &arrayEle, TRUE, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Generate key from object[ % ] failed[ %d ]",
                       object->toString().c_str(), rc ) ;
 
+         // Record with array in its index key will never be indexed on
+         // Elasticsearch, and no record for it will be inserted into capped
+         // collection.
          if ( DMS_EXTOPR_TYPE_UPDATE != type )
          {
+            // Array for insert and delete, skip.
+            if ( _keySet.size() > 1 )
+            {
+               _keySet.clear() ;
+               goto done ;
+            }
             _needOprRec = ( _keySet.size() > 0 ) ;
          }
          else
@@ -214,7 +224,7 @@ namespace engine
             SDB_ASSERT( objectNew, "New object is NULL" ) ;
             // If it's update, need to get the new key set.
             rc = keygen.getKeys( *objectNew, _keySetNew,
-                                 NULL, TRUE, FALSE, TRUE ) ;
+                                 NULL, TRUE, TRUE ) ;
             PD_RC_CHECK( rc, PDERROR, "Generate key from object[ %s ] "
                          "failed[ %d ]", objectNew->toString().c_str(), rc ) ;
 
@@ -222,7 +232,7 @@ namespace engine
                BSONObjSet::iterator origItr = _keySet.begin() ;
                BSONObjSet::iterator newItr = _keySetNew.begin() ;
 
-               // There are only two scenarioes that we do not insert operation
+               // There are only two scenarios that we do not insert operation
                // record:
                // 1. Both old and new records have no index field.
                // 2. Both old and new records have index field(s) but they are the
@@ -245,6 +255,13 @@ namespace engine
                {
                   _needOprRec = TRUE ;
                }
+            }
+
+            // New record contains array. It will not be inserted. If there is
+            // old record, it will be deleted on ES.
+            if ( _keySetNew.size() > 1 )
+            {
+               _keySetNew.clear() ;
             }
          }
       }

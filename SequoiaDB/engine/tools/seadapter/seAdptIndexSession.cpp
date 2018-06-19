@@ -529,21 +529,12 @@ namespace seadapter
       goto done ;
    }
 
-   void _seAdptIndexSession::_updateCLVersion( INT32 version )
-   {
-      PD_LOG( PDDEBUG, "Change local version for collection[ %s ] from [ %d ] "
-              "to [ %d ] according to catalog", _origCLFullName.c_str(),
-              _origCLVersion, version ) ;
-      _origCLVersion = version ;
-   }
-
    void _seAdptIndexSession::_switchStatus( SEADPT_SESSION_STATUS newStatus )
    {
       PD_LOG( PDDEBUG, "Switch status from [ %s ] to [ %s ]",
               _seadptStatus2Desp( _status ), _seadptStatus2Desp( newStatus ) ) ;
       _status = newStatus ;
    }
-
 
    INT32 _seAdptIndexSession::_sendGetmoreReq( INT64 contextID,
                                                UINT64 requestID )
@@ -1107,7 +1098,6 @@ namespace seadapter
             BSONObj sourceObj ;
             _rtnExtOprType oprType = RTN_EXT_INVALID ;
             string finalID ;
-            BSONElement sourceEle ;
 
             rc = _parseSrcData( *itr, oprType, finalID, logicalID, sourceObj ) ;
             if ( rc )

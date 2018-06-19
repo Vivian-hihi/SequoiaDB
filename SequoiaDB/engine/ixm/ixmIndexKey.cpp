@@ -130,7 +130,6 @@ namespace engine
       INT32 getKeys ( const BSONObj &obj, BOOLEAN isKeepKeyName,
                       BSONObjSet &keys,
                       BSONElement *pArrEle,
-                      BOOLEAN transform = TRUE,
                       BOOLEAN ignoreUndefined = FALSE ) const
       {
          INT32 rc = SDB_OK ;
@@ -142,8 +141,7 @@ namespace engine
          try
          {
             rc = _getKeys( fieldNames, obj, isKeepKeyName, keys,
-                           &arrEle, transform,
-                           ignoreUndefined ) ;
+                           &arrEle, ignoreUndefined ) ;
          }
          catch ( std::exception &e )
          {
@@ -181,7 +179,6 @@ namespace engine
                       BOOLEAN isKeepKeyName,
                       BSONObjSet &keys,
                       BSONElement *arrEle,
-                      BOOLEAN transform = TRUE,
                       BOOLEAN ignoreUndefined = FALSE ) const
       {
          INT32 rc = SDB_OK ;
@@ -246,7 +243,7 @@ namespace engine
             rc = SDB_OK ;
             goto done ;
          }
-         else if ( !arrEle->eoo() && transform )
+         else if ( !arrEle->eoo() )
          {
             rc = _genKeyWithArrayEle( keyEles, fieldNames,
                                       arrEle,
@@ -517,7 +514,6 @@ namespace engine
    INT32 _ixmIndexKeyGen::getKeys ( const BSONObj &obj, BSONObjSet &keys,
                                     BSONElement *pArrEle,
                                     BOOLEAN isKeepKeyName,
-                                    BOOLEAN transform,
                                     BOOLEAN ignoreUndefined ) const
    {
       ixmKeyGenerator g (this) ;
@@ -526,8 +522,7 @@ namespace engine
          *pArrEle = BSONElement() ;
       }
       return g.getKeys ( obj, isKeepKeyName, keys,
-                         pArrEle, transform,
-                         ignoreUndefined ) ;
+                         pArrEle, ignoreUndefined ) ;
    }
 
    IndexSuitability _ixmIndexKeyGen::suitability( const BSONObj &query ,
