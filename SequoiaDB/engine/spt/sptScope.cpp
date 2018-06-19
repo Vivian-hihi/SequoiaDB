@@ -36,6 +36,7 @@
 #include "sptObjDesc.hpp"
 #include "ossUtil.hpp"
 #include "sptCommon.hpp"
+#include "ossProc.hpp"
 #include <algorithm>
 using namespace std ;
 namespace engine
@@ -175,4 +176,52 @@ namespace engine
       }
       return isExist ;
    }
+
+   string _sptScope::calcImportPath( const string &filename )
+   {
+      BOOLEAN isAbsolute = FALSE ;
+      const CHAR *pName = filename.c_str() ;
+      string prefixPath ;
+
+#if defined (_LINUX)
+      if ( '/' == pName[0] )
+      {
+         isAbsolute = TRUE ;
+      }
+#else
+      if ( '\\' == pName[0] || ( 0 != pName[0] && ':' == pName[1] ) )
+      {
+         isAbsolute = TRUE ;
+      }
+#endif // _LINUX
+
+      if ( isAbsolute )
+      {
+         return filename ;
+      }
+
+      if ( _fileNameStack.size() > 0 )
+      {
+         string lastfile = *_fileNameStack.rbegin() ;
+         UINT32 pos = lastfile.find_last_of( OSS_FILE_SEP_CHAR ) ;
+         prefixPath = lastfile.substr( 0, pos ) ;
+      }
+      else
+      {
+         CHAR ewdPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+         ossGetEWD( ewdPath, OSS_MAX_PATHSIZE ) ;
+         prefixPath = ewdPath ;
+      }
+
+      pName = prefixPath.c_str() ;
+      UINT32 len = ossStrlen( pName ) ;
+      if ( len > 0 && pName[ len -1 ] != OSS_FILE_SEP_CHAR )
+      {
+         prefixPath += OSS_FILE_SEP_CHAR ;
+      }
+      prefixPath += filename ;
+
+      return prefixPath ;
+   }
+
 }

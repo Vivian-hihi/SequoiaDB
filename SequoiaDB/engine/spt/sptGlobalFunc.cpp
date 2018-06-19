@@ -593,7 +593,6 @@ JS_MAPPING_END()
       string err ;
       string content ;
       const sptResultVal *pResultVal = NULL ;
-      CHAR realPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       // get filename
       rc = arg.getString( 0, filename ) ;
@@ -607,15 +606,6 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << "filename must be string" ) ;
          goto error ;
       }
-
-      // get full pathname
-      if( NULL == ossGetRealPath( filename.c_str(), realPath, OSS_MAX_PATHSIZE ) )
-      {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "Failed to get full path of file" ) ;
-         goto error ;
-      }
-      fullPath = realPath ;
 
       // get scope by access private data
       {
@@ -632,6 +622,8 @@ JS_MAPPING_END()
             goto error ;
          }
       }
+
+      fullPath = pScope->calcImportPath( filename ) ;
 
       // if only import once, need to check list to avoid importing repeatedly
       if( TRUE == importOnce )

@@ -101,8 +101,10 @@ namespace engine
       INT32 getStackSize() ;
       void addJSFileNameToList( const string &filename ) ;
       void clearJSFileNameList() ;
-      BOOLEAN isJSFileNameExistInStack( const string &filename ) ;
-      BOOLEAN isJSFileNameExistInList( const string &filename ) ;
+      BOOLEAN  isJSFileNameExistInStack( const string &filename ) ;
+      BOOLEAN  isJSFileNameExistInList( const string &filename ) ;
+
+      string   calcImportPath( const string &filename ) ;
 
    public:
       virtual INT32 start( UINT32 loadMask = SPT_OBJ_MASK_ALL ) = 0 ;
