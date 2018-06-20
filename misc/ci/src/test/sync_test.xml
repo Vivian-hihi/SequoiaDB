@@ -41,7 +41,7 @@
       <delete dir="${case_basedir}" failonerror="false" />
       <mkdir dir="${case_basedir}"/>
       <copy todir="${case_basedir}">
-         <fileset dir="${WORKSPACE}/sequoiadb/testcase" excludes="${WORKSPACE}/sequoiadb/testcase/user\ scenario"/>
+         <fileset dir="${WORKSPACE}/sequoiadb/testcase" excludes="${WORKSPACE}/sequoiadb/testcase/user scenario"/>
       </copy>
       <if>
          <equals arg1="${plat_form}" arg2="PPC" />
