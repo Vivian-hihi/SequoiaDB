@@ -332,9 +332,9 @@ namespace engine
       rval.addReturnValProperty( SPT_BINDATA_DATA_FIELD )->setValue( binData ) ;
       rval.addReturnValProperty( SPT_BINDATA_TYPE_FIELD )->setValue( type ) ;
    done:
-      SAFE_OSS_DELETE( pBinData ) ;
       return rc ;
    error:
+      SAFE_OSS_DELETE( pBinData ) ;
       goto done ;
    }
 }
