@@ -6,7 +6,7 @@
 
 ##标示##
 
-SDB_SNAP_HEALH
+SDB_SNAP_HEALTH
 
 ###字段信息###
 
