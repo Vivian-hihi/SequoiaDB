@@ -91,8 +91,6 @@ namespace engine
 #define DMS_MIN_EXTENT_SZ(x)   (x)
 #define DMS_BEST_UP_EXTENT_SZ  (16*1024*1024)
 
-#define DMS_COMPRESS_RATIO_THRESHOLD      ( 95 )
-
 #define DMS_ID_KEY_NAME        "_id"
 
 #define DMS_COLLECTION_NAME_SZ      127

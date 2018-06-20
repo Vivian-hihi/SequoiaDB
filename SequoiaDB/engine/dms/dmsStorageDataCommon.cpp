@@ -2825,7 +2825,7 @@ namespace engine
                // Compression is valid and ratio is less the threshold
                if ( SDB_OK == rc &&
                     compressedDataSize + sizeof(UINT32) < recordData.orgLen() &&
-                    compressRatio < DMS_COMPRESS_RATIO_THRESHOLD )
+                    compressRatio < UTIL_COMPRESSOR_DFT_MIN_RATIO )
                {
                   // 4 bytes len + compressed record
                   dmsRecordSize = compressedDataSize + sizeof(UINT32) ;
