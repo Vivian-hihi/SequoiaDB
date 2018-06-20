@@ -34,7 +34,7 @@ Detach a node in the current partition group, but its configuration information 
 
 **Note:**
 
-1. It can not detach when the node is master or when only has a node in current group.
+1. It can not detach the last node which own CS/CL in the replica group.
 Never open KeepData if the node does not originally belong to the current group.
 2. The separated nodes will no longer be managed by the cluster. Please join other groups as soon as possible..
 
