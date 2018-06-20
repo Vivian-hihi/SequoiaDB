@@ -7,6 +7,10 @@
 * 删除接口 - 不再兼容 
 * 废弃接口 - 保持兼容性
 
+**Version 3.0**
+
+None.
+
 **Version 2.10**
 
 1. com.sequoiadb.base.Sequoiadb 内容变更： 
@@ -37,7 +41,7 @@
 	* 增加disableCompression方法，对集合关闭压缩功能
 	* 增加setAttributes方法，对集合的属性进行修改
 
-3. com.sequoiadb.base.DBCusor 内容变更：
+3. com.sequoiadb.base.DBCursor 内容变更：
 
 	* 实现java.io.Closeable接口，在JDK1.7上支持资源自动释放。
 	* getNext和getNextRaw方法可以混合交替使用。
