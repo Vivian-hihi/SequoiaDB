@@ -183,7 +183,7 @@ namespace sequoiafs
         INT32 getRecordField(BSONObj &record, CHAR *fieldName, void *value, BSONType type);
         INT32 getRecord();
         INT32 doUpdateAttr(sdbCollection *cl, const BSONObj &rule, const BSONObj &condition = _sdbStaticObject, const BSONObj &hint = _sdbStaticObject);
-        INT32 doesLobExist(sdbCollection &cl, const CHAR *lobName, BSONObj &condition, BOOLEAN *exist, OID *oid, BSONObj &record);
+        INT32 doesFileExist(sdbCollection &cl, const CHAR *lobName, BSONObj &condition, BOOLEAN *exist, OID *oid, BSONObj &record);
         void setDataSourceConf(const CHAR * userName, const CHAR *passwd, const INT32 connNum);
         int initDataSource(const CHAR * userName, const CHAR *passwd, const INT32 connNum);
         INT32 disableDataSource();
@@ -202,7 +202,7 @@ namespace sequoiafs
     private:
         INT32 doSetDirNodeAttr(sdbCollection &cl, struct dirMetaNode &dirNode);
         INT32 doSetFileNodeAttr(sdbCollection &cl, struct fileMetaNode &fileNode);
-        INT32 getAndUpdateID(sdbCollection *cl, UINT64 *sequenceId);
+        INT32 getAndUpdateID(sdbCollection *cl, INT64 *sequenceId);
         INT32 initMetaID(sdb *db);
         INT32 do_access(struct stat *stbuf);
         INT32 isDir(sdbCollection *sysFileMetaCL, sdbCollection *sysDirMetaCL, CHAR *name, INT64 pid, BOOLEAN *is_dir);        
