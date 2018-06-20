@@ -246,7 +246,7 @@ namespace engine
       sptDBDate *pDate = SDB_OSS_NEW sptDBDate() ;
       BSONType type ;
       BSONElement ele ;
-      if( NULL != pDate )
+      if( NULL == pDate )
       {
          rc = SDB_OOM ;
          detail = BSON( SPT_ERR << "Failed to new sptDBDate obj" ) ;

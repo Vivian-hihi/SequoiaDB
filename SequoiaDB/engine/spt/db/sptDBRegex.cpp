@@ -231,6 +231,8 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to set return obj" ) ;
          goto error ;
       }
+      rval.addReturnValProperty( SPT_REGEX_REGEX_FIELD )->setValue( regexStr ) ;
+      rval.addReturnValProperty( SPT_REGEX_OPTION_FIELD )->setValue( option ) ;
    done:
       return rc ;
    error:
