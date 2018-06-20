@@ -1758,6 +1758,18 @@
                            "cn": "getCoordRG()",
                            "en": "getCoordRG()"
                         },
+						{
+                           "id": 1432290821,
+                           "file": "getSpareRG",
+                           "cn": "getSpareRG()",
+                           "en": "getSpareRG()"
+                        },
+                        {
+                           "id": 1432290820,
+                           "file": "createSpareRG",
+                           "cn": "createSpareRG()",
+                           "en": "createSpareRG()"
+                        },
                         {
                            "id": 1432190789,
                            "file": "getCS",
@@ -1853,6 +1865,12 @@
                            "file": "removeCoordRG",
                            "cn": "removeCoordRG()",
                            "en": "removeCoordRG()"
+                        },
+                        {
+                           "id": 1432290822,
+                           "file": "removeSpareRG",
+                           "cn": "removeSpareRG()",
+                           "en": "removeSpareRG()"
                         },
                         {
                            "id": 1432190805,
@@ -1973,18 +1991,6 @@
                            "file": "stopRG",
                            "cn": "stopRG()",
                            "en": "stopRG()"
-                        },
-                        {
-                           "id": 1432290820,
-                           "file": "createSpareRG",
-                           "cn": "createSpareRG()",
-                           "en": "createSpareRG()"
-                        },
-                        {
-                           "id": 1432290821,
-                           "file": "removeSpareRG",
-                           "cn": "removeSpareRG()",
-                           "en": "removeSpareRG()"
                         }
                      ]
                   },

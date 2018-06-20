@@ -2,6 +2,7 @@
 ***db.removeSpareRG()***
 
 删除数据库中的SYSSpare组
+
 ##参数描述##
 无
 

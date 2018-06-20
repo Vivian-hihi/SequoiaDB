@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-createSpareRG \- Create unique spare group.
+createSpareRG \- Create spareRG
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]db.createSpareRG()\f[]\f[]
@@ -14,10 +14,10 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Create unique SpareRG.
+Create SpareRG.
 .SH "Examples"
 
 .sp 2
-Create unique SpareRG.
+Create SpareRG.
 .sp 2
 db.createSpareRG()
