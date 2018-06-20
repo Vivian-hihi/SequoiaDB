@@ -142,8 +142,15 @@ namespace engine
          for( UINT32 index = 0; index < arg.argc(); index++ )
          {
             INT32 pos = -1 ;
-            rc = arg.getNative( index, &pos, SPT_NATIVE_INT32 ) ;
-            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            if (arg.isInt(index))
+            {
+               rc = arg.getNative( index, &pos, SPT_NATIVE_INT32 ) ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+            }
+            if( SDB_OK != rc )
             {
                detail = BSON( SPT_ERR << "pos must be int" ) ;
                goto error ;
