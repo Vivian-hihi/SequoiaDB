@@ -207,7 +207,7 @@ namespace engine
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *clShortName = NULL ;
       BOOLEAN writable = FALSE ;
-      BSONElement positionELe ;
+      BSONElement positionEle ;
       INT64 position = -1 ;
 
       rc = dmsCB->writable( cb ) ;
@@ -229,22 +229,34 @@ namespace engine
       // Insertion on capped collection should be done by position.
       if ( DMS_STORAGE_CAPPED == su->type() )
       {
-         positionELe = obj.getField( DMS_ID_KEY_NAME ) ;
-         if ( NumberLong != positionELe.type() )
+         positionEle = obj.getField( DMS_ID_KEY_NAME ) ;
+         if ( NumberLong != positionEle.type() )
          {
             PD_LOG( PDERROR, "Field _id type[ %d ] is not as expected"
-                    "[ %d ]", positionELe.type(), NumberLong ) ;
+                    "[ %d ]", positionEle.type(), NumberLong ) ;
             rc = SDB_SYS ;
             goto error ;
          }
 
-         position = positionELe.numberLong() ;
+         position = positionEle.numberLong() ;
       }
 
       rc = su->insertRecord( clShortName, obj, cb, dpsCB, TRUE,
                              TRUE, NULL, position ) ;
-      PD_RC_CHECK( rc, PDERROR, "Insert record by position[ %lld ] failed, "
-                   "rc: %d", positionELe.numberLong(), rc) ;
+      if ( rc )
+      {
+         if ( ( SDB_IXM_DUP_KEY == rc ) &&
+              ( FLG_INSERT_CONTONDUP & flags ) )
+         {
+            rc = SDB_OK ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Insert record by position[ %lld ] failed, "
+                    "rc: %d", positionEle.numberLong(), rc) ;
+            goto error ;
+         }
+      }
 
    done:
       if ( DMS_INVALID_CS != suID )
