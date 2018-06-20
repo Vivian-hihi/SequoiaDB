@@ -808,17 +808,15 @@ TEST_F( sdbParaVerify, pop )
    INT32 rc = SDB_OK ;
 
    // test sdbPop
-   const CHAR* clFullName = "foo.bar" ;
-   rc = sdbPop( NULL, clFullName, NULL ) ;
+   //const CHAR* clFullName = "foo.bar" ;
+   rc = sdbPop( NULL, NULL ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
-   rc = sdbPop( SDB_INVALID_HANDLE, clFullName, NULL ) ;
+   rc = sdbPop( SDB_INVALID_HANDLE,  NULL ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
-   rc = sdbPop( cs, clFullName, NULL ) ;
+   rc = sdbPop( cs,  NULL ) ;
    ASSERT_EQ( SDB_CLT_INVALID_HANDLE, rc ) ;
-   rc = sdbPop( db, NULL, NULL ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
-   rc = sdbPop( db, "", NULL ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = sdbPop( db, NULL ) ;
+   ASSERT_EQ( SDB_CLT_INVALID_HANDLE, rc ) ;
 }
 
 TEST_F( sdbParaVerify, sync )

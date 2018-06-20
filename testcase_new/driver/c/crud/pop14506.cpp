@@ -122,7 +122,7 @@ TEST_F( popTest14506, directionNegative )
    bson_append_int( &option, "LogicalID", logicalID1 ) ;
    bson_append_int( &option, "Direction", -1 ) ;
    bson_finish( &option ) ;
-   rc = sdbPop( db, clFullName, &option ) ;
+   rc = sdbPop( cl, &option ) ;
    bson_destroy( &option ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to pop" ;
 
@@ -147,7 +147,7 @@ TEST_F( popTest14506, directionPositive )
    bson_append_int( &option, "LogicalID", logicalID2 ) ;
    bson_append_int( &option, "Direction", 1 ) ;
    bson_finish( &option ) ;
-   rc = sdbPop( db, clFullName, &option ) ;
+   rc = sdbPop( cl, &option ) ;
    bson_destroy( &option ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to pop" ;
 
