@@ -48,6 +48,7 @@
    }
 }
 
+/*
 const _help = function( className, funcName, isInstance ) {
    if ( isInstance == undefined )
    {
@@ -125,6 +126,7 @@ SdbDomain.help = function( func ) {
 SdbDomain.prototype.help = function( func ) {
    _help( "SdbDomain", func, true ) ;
 }
+*/
 
 // SdbQuery
 SdbQuery.prototype.help = function( func ) {
@@ -161,10 +163,12 @@ SdbQuery.prototype.help = function( func ) {
 
 }
 
+/*
 // SdbDC
 SdbDC.help = function( func ) {
    _help( "SdbDC", func, false ) ;
 }
+*/
 
 SdbDC.prototype.help = function( func ) {
    // _help( "SdbDC", func, true ) ;
