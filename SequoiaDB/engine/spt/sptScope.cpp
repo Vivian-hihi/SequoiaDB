@@ -36,6 +36,7 @@
 #include "sptObjDesc.hpp"
 #include "ossUtil.hpp"
 #include "sptCommon.hpp"
+#include "ossIO.hpp"
 #include <algorithm>
 using namespace std ;
 namespace engine
@@ -202,21 +203,32 @@ namespace engine
       if ( _fileNameStack.size() > 0 )
       {
          string lastfile = *_fileNameStack.rbegin() ;
-         UINT32 pos = lastfile.find_last_of( OSS_FILE_SEP_CHAR ) ;
+         UINT64 pos1 = lastfile.find_last_of( '/' ) ;
+         UINT64 pos2 = lastfile.find_last_of( '\\' ) ;
+         UINT64 pos = pos1 ;
+         if ( pos2 != string::npos && ( string::npos == pos || pos2 > pos ) )
+         {
+            pos = pos2 ;
+         }
          prefixPath = lastfile.substr( 0, pos ) ;
       }
       else
       {
-         prefixPath = "."OSS_FILE_SEP ;
+         CHAR szPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+         ossGetCWD( szPath, OSS_MAX_PATHSIZE ) ;
+         prefixPath = szPath ;
       }
 
-      pName = prefixPath.c_str() ;
-      UINT32 len = ossStrlen( pName ) ;
-      if ( len > 0 && pName[ len -1 ] != OSS_FILE_SEP_CHAR )
+      if ( !filename.empty() )
       {
-         prefixPath += OSS_FILE_SEP_CHAR ;
+         pName = prefixPath.c_str() ;
+         UINT32 len = ossStrlen( pName ) ;
+         if ( len > 0 && pName[ len -1 ] != OSS_FILE_SEP_CHAR )
+         {
+            prefixPath += OSS_FILE_SEP_CHAR ;
+         }
+         prefixPath += filename ;
       }
-      prefixPath += filename ;
 
       return prefixPath ;
    }

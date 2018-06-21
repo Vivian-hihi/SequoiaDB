@@ -57,11 +57,15 @@ JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, showClassfull)
 JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, forceGC )
 JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, displayManual )
 JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, displayMethod )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, getExePath )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, getCurPath )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, getRootPath )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, sleep )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, traceFmt )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, globalHelp )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, importJSFile )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, importJSFileOnce )
+JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, catPath )
 
 JS_BEGIN_MAPPING( _sptGlobalFunc, "" )
    JS_ADD_GLOBAL_FUNC( "getLastErrMsg", getLastErrorMsg )
@@ -81,6 +85,10 @@ JS_BEGIN_MAPPING( _sptGlobalFunc, "" )
    JS_ADD_GLOBAL_FUNC( "forceGC", forceGC )
    JS_ADD_GLOBAL_FUNC( "import", importJSFile )
    JS_ADD_GLOBAL_FUNC( "importOnce", importJSFileOnce )
+   JS_ADD_GLOBAL_FUNC( "getExePath", getExePath )
+   JS_ADD_GLOBAL_FUNC( "getCurPath", getCurPath )
+   JS_ADD_GLOBAL_FUNC( "getRootPath", getRootPath )
+   JS_ADD_GLOBAL_FUNC( "catPath", catPath )
 JS_MAPPING_END()
 
    INT32 _sptGlobalFunc::getLastErrorMsg( const _sptArguments &arg,
@@ -566,6 +574,124 @@ JS_MAPPING_END()
       goto done ;
    }
 
+   INT32 _sptGlobalFunc::getExePath( const _sptArguments &arg,
+                                     _sptReturnVal &rval,
+                                     BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR szPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      rc = ossGetEWD( szPath, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to get EWD" ) ;
+         goto error ;
+      }
+
+      rval.getReturnVal().setValue( szPath ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptGlobalFunc::getRootPath( const _sptArguments &arg,
+                                      _sptReturnVal &rval,
+                                      BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR szPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      rc = ossGetCWD( szPath, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to get CWD" ) ;
+         goto error ;
+      }
+
+      rval.getReturnVal().setValue( szPath ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptGlobalFunc::getCurPath( const _sptArguments &arg,
+                                     _sptReturnVal &rval,
+                                     BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      sptScope *pScope = NULL ;
+
+      sptPrivateData *pPivateData = arg.getPrivateData() ;
+      if( NULL == pPivateData )
+      {
+         detail = BSON( SPT_ERR << "Failed to get private data" ) ;
+         goto error ;
+      }
+      pScope = pPivateData->getScope() ;
+      if( NULL == pScope )
+      {
+         detail = BSON( SPT_ERR << "Failed to get scope" ) ;
+         goto error ;
+      }
+
+      rval.getReturnVal().setValue( pScope->calcImportPath( "" ) ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptGlobalFunc::catPath( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      string pathTmp ;
+      string path ;
+      UINT32 index = 0 ;
+
+      while( index < arg.argc() )
+      {
+         rc = arg.getString( index, pathTmp ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "path must be string" ) ;
+            goto error ;
+         }
+
+         if ( 0 == index )
+         {
+            path = pathTmp ;
+         }
+         else
+         {
+            const CHAR *ptr = path.c_str() ;
+            UINT32 len = ossStrlen( ptr ) ;
+
+            if ( len > 0 && OSS_FILE_SEP_CHAR != ptr[ len - 1 ] &&
+                 ( pathTmp.empty() || pathTmp.at( 0 ) != OSS_FILE_SEP_CHAR ) )
+            {
+               path += OSS_FILE_SEP ;
+            }
+            path += pathTmp ;
+         }
+
+         ++index ;
+      }
+
+      rval.getReturnVal().setValue( path ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptGlobalFunc::importJSFile( const _sptArguments &arg,
                                        _sptReturnVal &rval,
                                        bson::BSONObj &detail )
@@ -593,6 +719,7 @@ JS_MAPPING_END()
       string err ;
       string content ;
       const sptResultVal *pResultVal = NULL ;
+      CHAR realPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       // get filename
       rc = arg.getString( 0, filename ) ;
@@ -623,7 +750,15 @@ JS_MAPPING_END()
          }
       }
 
-      fullPath = pScope->calcImportPath( filename ) ;
+      // get full pathname
+      if( NULL == ossGetRealPath( pScope->calcImportPath( filename ).c_str(),
+                                  realPath, OSS_MAX_PATHSIZE ) )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Failed to get full path of file" ) ;
+         goto error ;
+      }
+      fullPath = realPath ;
 
       // if only import once, need to check list to avoid importing repeatedly
       if( TRUE == importOnce )

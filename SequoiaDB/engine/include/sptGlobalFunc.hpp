@@ -113,6 +113,23 @@ namespace engine
       static INT32 importJSFileOnce( const _sptArguments &arg,
                                      _sptReturnVal &rval,
                                      bson::BSONObj &detail ) ;
+
+      static INT32 getExePath( const _sptArguments &arg,
+                               _sptReturnVal &rval,
+                               bson::BSONObj &detail ) ;
+
+      static INT32 getCurPath( const _sptArguments &arg,
+                               _sptReturnVal &rval,
+                               bson::BSONObj &detail ) ;
+
+      static INT32 getRootPath( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail ) ;
+
+      static INT32 catPath( const _sptArguments &arg,
+                            _sptReturnVal &rval,
+                            bson::BSONObj &detail ) ;
+
    protected:
       static INT32 _showClassInner( const _sptArguments &arg,
                                     const string &className,
