@@ -62,10 +62,9 @@ namespace engine
    {
       UINT32 size = vecObjs.size() ;
       UINT32 i = 0 ;
-      if( objName.empty() )
-      {
-         return -1 ;
-      }
+
+      /// when objName is empty, will find the global func's object
+
       for ( ; i < size ; ++i )
       {
          if ( !vecObjs[ i ] )
