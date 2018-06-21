@@ -39,7 +39,7 @@
 #include "omagentDef.hpp"
 #include "sptUsrFileContent.hpp"
 #include "sptUsrRemote.hpp"
-#include "sptScope.hpp"
+//#include "sptScope.hpp"
 #include <boost/algorithm/string.hpp>
 #include "../bson/lib/md5.hpp"
 
@@ -145,7 +145,7 @@ JS_MAPPING_END()
       INT32 iMode = 0 ;
       BSONObjBuilder opBuilder ;
       string err ;
-      sptScope *pScope = NULL ;
+      //sptScope *pScope = NULL ;
 
       // get filename
       rc = arg.getString( 0, filename ) ;
@@ -182,7 +182,7 @@ JS_MAPPING_END()
          opBuilder.append( SPT_FILE_COMMON_FIELD_MODE, iMode ) ;
       }
 
-      // get scope by access private data
+/*      // get scope by access private data
       {
          sptPrivateData *pPivateData = arg.getPrivateData() ;
          if( NULL == pPivateData )
@@ -199,7 +199,8 @@ JS_MAPPING_END()
       }
 
       rc = _fileCommon.open( pScope->calcImportPath( filename),
-                             opBuilder.obj(), err ) ;
+                             opBuilder.obj(), err ) ;*/
+      rc = _fileCommon.open( filename, opBuilder.obj(), err ) ;
       if ( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << err ) ;
