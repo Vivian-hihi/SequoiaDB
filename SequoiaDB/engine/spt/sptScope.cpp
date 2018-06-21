@@ -204,12 +204,15 @@ namespace engine
       {
          string lastfile = *_fileNameStack.rbegin() ;
          UINT64 pos1 = lastfile.find_last_of( '/' ) ;
-         UINT64 pos2 = lastfile.find_last_of( '\\' ) ;
          UINT64 pos = pos1 ;
+
+#if defined (_WINDOWS)
+         UINT64 pos2 = lastfile.find_last_of( '\\' ) ;
          if ( pos2 != string::npos && ( string::npos == pos || pos2 > pos ) )
          {
             pos = pos2 ;
          }
+#endif // _WINDOWS
          prefixPath = lastfile.substr( 0, pos ) ;
       }
       else

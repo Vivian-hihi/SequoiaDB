@@ -118,9 +118,9 @@ namespace engine
                                _sptReturnVal &rval,
                                bson::BSONObj &detail ) ;
 
-      static INT32 getCurPath( const _sptArguments &arg,
-                               _sptReturnVal &rval,
-                               bson::BSONObj &detail ) ;
+      static INT32 getSelfPath( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail ) ;
 
       static INT32 getRootPath( const _sptArguments &arg,
                                 _sptReturnVal &rval,

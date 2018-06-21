@@ -58,7 +58,7 @@ JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, forceGC )
 JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, displayManual )
 JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, displayMethod )
 JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, getExePath )
-JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, getCurPath )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, getSelfPath )
 JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, getRootPath )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, sleep )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, traceFmt )
@@ -86,7 +86,7 @@ JS_BEGIN_MAPPING( _sptGlobalFunc, "" )
    JS_ADD_GLOBAL_FUNC( "import", importJSFile )
    JS_ADD_GLOBAL_FUNC( "importOnce", importJSFileOnce )
    JS_ADD_GLOBAL_FUNC( "getExePath", getExePath )
-   JS_ADD_GLOBAL_FUNC( "getCurPath", getCurPath )
+   JS_ADD_GLOBAL_FUNC( "getSelfPath", getSelfPath )
    JS_ADD_GLOBAL_FUNC( "getRootPath", getRootPath )
    JS_ADD_GLOBAL_FUNC( "catPath", catPath )
 JS_MAPPING_END()
@@ -618,9 +618,9 @@ JS_MAPPING_END()
       goto done ;
    }
 
-   INT32 _sptGlobalFunc::getCurPath( const _sptArguments &arg,
-                                     _sptReturnVal &rval,
-                                     BSONObj &detail )
+   INT32 _sptGlobalFunc::getSelfPath( const _sptArguments &arg,
+                                      _sptReturnVal &rval,
+                                      BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
       sptScope *pScope = NULL ;
