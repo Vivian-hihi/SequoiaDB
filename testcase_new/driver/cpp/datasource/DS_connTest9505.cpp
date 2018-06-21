@@ -268,6 +268,7 @@ TEST_F( connTest9505, disableWithoutRelease9521 )
    rc = ds.disable() ;
 	ASSERT_EQ( SDB_OK, rc ) << "fail to disable datasource" ;
 
+   // 此处不应该如此使用，请参考SEQUOIADBMAINSTREAM-2854以了解更多信息。
    // ASSERT_EQ( 1, conn->isValid() ) << "fail to check connection valid" ;  connection invalid
    // conn->disconnect() ;  core
 }
