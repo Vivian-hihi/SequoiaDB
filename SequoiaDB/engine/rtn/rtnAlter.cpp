@@ -1066,6 +1066,16 @@ namespace engine
             }
             PD_RC_CHECK( rc, PDERROR, "Failed to create id index" ) ;
          }
+         else if ( !localTask->isAutoIndexID() )
+         {
+            rc = su->dropIndex( collection, IXM_ID_KEY_NAME, cb, NULL,
+                                TRUE, mbContext ) ;
+            if ( SDB_IXM_NOTEXIST == rc )
+            {
+               rc = SDB_OK ;
+            }
+            PD_RC_CHECK( rc, PDERROR, "Failed to drop id index" ) ;
+         }
       }
 
    done :
