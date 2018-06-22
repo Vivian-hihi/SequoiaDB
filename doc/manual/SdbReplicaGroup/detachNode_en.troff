@@ -40,13 +40,14 @@ Can be the following options:
 .IP "1." 3
 \f[C]KeepData\f[] ( \f[I]Bool\f[] ): Whether to keep the original data of the
 current node, default to be false.
-\f[C]enforced\f[] ( \f[I]Bool\f[] ): Whether to detach the node forcily, default to be false.
+.IP "2." 3
+\f[C]enforced\f[] ( \f[I]Bool\f[] ): Whether to detach the node forcibly ,
+default to be false.
 .RE
 .PP
 \f[B]Note:\f[]
 .IP "1." 3
-It can not detach the last node which owns CS/CL in the replica group.
-group.
+It can not detach the last node which own CS/CL in the replica group.
 Never open KeepData if the node does not originally belong to the current group.
 .IP "2." 3
 The separated nodes will no longer be managed by the cluster.
