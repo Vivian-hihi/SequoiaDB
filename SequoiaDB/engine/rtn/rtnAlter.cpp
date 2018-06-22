@@ -1066,7 +1066,7 @@ namespace engine
             }
             PD_RC_CHECK( rc, PDERROR, "Failed to create id index" ) ;
          }
-         else if ( !localTask->isAutoIndexID() )
+         else
          {
             rc = su->dropIndex( collection, IXM_ID_KEY_NAME, cb, NULL,
                                 TRUE, mbContext ) ;
