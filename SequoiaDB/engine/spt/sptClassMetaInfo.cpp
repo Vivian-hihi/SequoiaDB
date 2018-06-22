@@ -261,33 +261,10 @@ namespace engine
                   << rc << ERROR_END ;
                goto error ;
             }
-            if ( std::string::npos != vec[0].find( lmatcher ) &&
+            if ( ( lmatcher.empty() || vec[0].compare( lmatcher ) ==0 ) &&
                  std::string::npos != vec[1].find( lfuzzyFuncName ) )
             {
                output.push_back( *it ) ;
-               /*
-               // TODO: remove it, if possible
-               std::size_t pos = 0 ;
-               if ( matcher == "" )
-               {
-                  if ( std::string::npos != it->find( SPT_GLOBAL_CLASS ) )
-                  {
-                     pos = it->find(SPT_CLASS_SEPARATOR) + 
-                        ossStrlen( SPT_CLASS_SEPARATOR ) ;
-                     output.push_back( it->substr( pos  ) ) ;                   
-                  }
-                  else
-                  {
-                     output.push_back( *it ) ;
-                  }
-               }
-               else
-               {
-                  pos = it->find(SPT_CLASS_SEPARATOR) + 
-                     ossStrlen( SPT_CLASS_SEPARATOR ) ;
-                  output.push_back( it->substr( pos  ) ) ;
-               }
-               */
             }
          }
       }
