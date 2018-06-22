@@ -87,7 +87,7 @@ public class TestSnappy6633 extends SdbTestBase {
             
             // check result
             checkUpserted(cl);
-            // SnappyUilts.checkCompressed(cl, dataGroupName);
+            SnappyUilts.checkCompressed(cl, dataGroupName);
         }catch(BaseException e){
             e.printStackTrace();
             Assert.fail(e.getMessage());
