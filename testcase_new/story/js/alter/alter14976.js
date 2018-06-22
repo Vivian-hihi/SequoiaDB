@@ -36,8 +36,19 @@ function main()
    println("---test alter AutoIndexId to false---");
    cl1.setAttributes({ AutoIndexId: false} );
    checkSnapshot( db, SDB_SNAP_CATALOG, csName, clName1, "AutoIndexId", false);
-   cl1.remove();
-   
+   try
+   {
+      cl1.remove();
+       throw "FORBID_REMOVE_ERR";
+   }
+   catch( e )
+   { 
+      if( e != -279 )
+      {
+         throw e;
+      }
+   }
+
    println("---test alter AutoIndexId to true---");
    cl2.setAttributes({ AutoIndexId: true} );
    checkSnapshot( db, SDB_SNAP_CATALOG, csName, clName2, "AutoIndexId", true);
