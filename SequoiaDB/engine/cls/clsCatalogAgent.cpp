@@ -436,6 +436,7 @@ namespace engine
       _maxSize = 0 ;
       _maxRecNum = 0 ;
       _overwrite = FALSE ;
+      _autoIdxId = TRUE ;
    }
 
    _clsCatalogSet::~_clsCatalogSet ()
@@ -630,6 +631,7 @@ namespace engine
       _maxSize = 0 ;
       _maxRecNum = 0 ;
       _overwrite = FALSE ;
+      _autoIdxId = TRUE ;
       PD_TRACE_EXIT ( SDB__CLSCTSET__CLEAR ) ;
    }
 
@@ -1715,6 +1717,19 @@ namespace engine
             goto error ;
          }
          _overwrite = ele.boolean() ;
+      }
+
+      ele = catSet.getField( CAT_AUTO_INDEX_ID ) ;
+      if ( !ele.eoo() )
+      {
+         if ( !ele.isBoolean() )
+         {
+            PD_LOG( PDERROR, "Type of AutoIndexId is not bool: %d",
+                    ele.type() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _autoIdxId = ele.boolean() ;
       }
 
       //update sharding key, optional, default false

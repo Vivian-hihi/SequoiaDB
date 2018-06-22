@@ -542,6 +542,25 @@ namespace engine
                    SDB_OPTION_NOT_SUPPORT, error, PDERROR,
                    "Failed to check [%s]: collection [%s] is capped",
                    _task->getActionName(), _dataName.c_str() ) ;
+
+         // Can not change AutoIndexId from true to false when split is in
+         // progress.
+         if ( !localTask->isAutoIndexID() )
+         {
+            INT64 splitTaskNum = 0 ;
+            rc = catGetTaskCountByType( _dataName.c_str(), cb, CLS_TASK_SPLIT,
+                                        splitTaskNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get split task number for "
+                         "collection [%s]", _dataName.c_str() ) ;
+            if ( splitTaskNum > 0 )
+            {
+               rc = SDB_OPTION_NOT_SUPPORT ;
+               PD_LOG( PDERROR, "Can not change AutoIndexId to false when "
+                       "collection [%s] is being splitted",
+                       _dataName.c_str() ) ;
+               goto error ;
+            }
+         }
       }
 
    done :

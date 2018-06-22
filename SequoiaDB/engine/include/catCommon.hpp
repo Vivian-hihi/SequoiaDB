@@ -203,6 +203,8 @@ namespace engine
    INT32 catAddTask( BSONObj & taskObj, pmdEDUCB *cb, INT16 w ) ;
    INT32 catGetTask( UINT64 taskID, BSONObj &obj, pmdEDUCB *cb ) ;
    INT32 catGetTaskCount ( const CHAR * collection, pmdEDUCB * cb, INT64 & count ) ;
+   INT32 catGetTaskCountByType( const CHAR * collection, pmdEDUCB * cb,
+                                CLS_TASK_TYPE type, INT64 & count ) ;
    INT32 catGetTaskStatus( UINT64 taskID, INT32 &status, pmdEDUCB *cb ) ;
    INT32 catUpdateTaskStatus( UINT64 taskID, INT32 status, pmdEDUCB *cb,
                               INT16 w ) ;

@@ -1709,6 +1709,33 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETTASKCOUNTBYTYPE, "catGetTaskCountByType" )
+   INT32 catGetTaskCountByType( const CHAR * collection, pmdEDUCB * cb,
+                                CLS_TASK_TYPE type, INT64 & count )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATGETTASKCOUNTBYTYPE ) ;
+      SDB_ASSERT( NULL != collection, "Collection is invalid" ) ;
+      SDB_ASSERT( CLS_TASK_SPLIT == type, "Task type is invalid" ) ;
+
+      BSONObj selector ;
+      BSONObj hint ;
+      BSONObj matcher = BSON( CAT_COLLECTION_NAME << collection  <<
+                              CAT_TASKTYPE_NAME << type ) ;
+
+      rc = catGetObjectCount( CAT_TASK_INFO_COLLECTION, selector,
+                              matcher, hint, cb, count ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get task count for collection [%s]",
+                   "rc: %d", collection, rc ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB_CATGETTASKCOUNTBYTYPE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETTASKSTATUS, "catGetTaskStatus" )
    INT32 catGetTaskStatus( UINT64 taskID, INT32 & status, pmdEDUCB * cb )
    {
