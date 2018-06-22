@@ -57,7 +57,7 @@ public class SnappyUilts extends SdbTestBase {
         for(int i = 0; i < recSum; i++){
             BSONObject rec = new BasicBSONObject();
             rec.put("a", i);
-            rec.put("b", "abcabcabcabcabcabcabcabcabc123123123");
+            rec.put("b", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
             recs.add(rec);
         }
         cl.bulkInsert(recs, 0);
