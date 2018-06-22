@@ -533,7 +533,7 @@ namespace engine
    INT32 _sptSPScope::_loadUsrDefObj( _sptObjDesc *desc )
    {
       INT32 rc = SDB_OK ;
-      if ( !desc->isIgnoredName() )
+      if ( !desc->isGlobal() )
       {
          rc = _loadUsrClass( desc ) ;
       }

@@ -41,6 +41,7 @@
 #include <string>
 #include <vector>
 #include "client.hpp"
+#include "pd.hpp"
 using namespace std ;
 
 namespace engine
@@ -95,7 +96,8 @@ namespace engine
    {
    public:
       _sptObjDesc()
-      :_init(FALSE), _prototypeDef( NULL ), _parent( NULL ), _isHide( FALSE )
+      :_init(FALSE), _prototypeDef( NULL ), _parent( NULL ),
+       _isHide( FALSE ), _isGlobal( FALSE )
       {}
 
       virtual ~_sptObjDesc(){}
@@ -124,6 +126,7 @@ namespace engine
 
       void setClassName( const CHAR *name )
       {
+         SDB_ASSERT( name && *name, "name can't be empty" ) ;
          _jsClassName.assign( name ) ;
       }
       void setParent( const _sptObjDesc *parent )
@@ -133,6 +136,10 @@ namespace engine
       void setHide( BOOLEAN hide )
       {
          _isHide = hide ;
+      }
+      void setGlobal( BOOLEAN isGlobal )
+      {
+         _isGlobal = isGlobal ;
       }
 
       void setClassDef( const JSClass &def )
@@ -145,10 +152,6 @@ namespace engine
          _prototypeDef = proto ;
       }
 
-      BOOLEAN isIgnoredName() const
-      {
-         return _jsClassName.empty() ;
-      }
       BOOLEAN isIgnoredParent() const
       {
          return !_parent ? TRUE : FALSE ;
@@ -156,6 +159,10 @@ namespace engine
       BOOLEAN isHide() const
       {
          return _isHide ;
+      }
+      BOOLEAN isGlobal() const
+      {
+         return _isGlobal ;
       }
 
       void  ignoredName()
@@ -243,6 +250,7 @@ namespace engine
       const JSObject*   _prototypeDef ;
       const _sptObjDesc *_parent ;
       BOOLEAN     _isHide ;
+      BOOLEAN     _isGlobal ;
       // toBSON module
       UINT32 _cvtFlags ;
       std::string _specialFieldName ;

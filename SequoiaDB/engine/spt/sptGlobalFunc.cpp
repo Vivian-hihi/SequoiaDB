@@ -67,7 +67,9 @@ JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, importJSFile )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, importJSFileOnce )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, catPath )
 
-JS_BEGIN_MAPPING( _sptGlobalFunc, "" )
+JS_BEGIN_MAPPING( _sptGlobalFunc, SPT_GLOBAL_STR )
+   setGlobal( TRUE ) ; /// set global
+   /// Define func
    JS_ADD_GLOBAL_FUNC( "getLastErrMsg", getLastErrorMsg )
    JS_ADD_GLOBAL_FUNC( "setLastErrMsg", setLastErrorMsg )
    JS_ADD_GLOBAL_FUNC( "getLastError", getLastError )
@@ -522,7 +524,7 @@ JS_MAPPING_END()
          /// get global function
          names.clear() ;
          sptGetObjFactory()->getClassStaticFuncNames( context,
-                                                      "",
+                                                      SPT_GLOBAL_STR,
                                                       names,
                                                       showHide ) ;
          ss << "Global functions:" << endl ;

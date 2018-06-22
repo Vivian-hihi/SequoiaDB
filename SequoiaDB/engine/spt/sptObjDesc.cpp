@@ -63,7 +63,10 @@ namespace engine
       UINT32 size = vecObjs.size() ;
       UINT32 i = 0 ;
 
-      /// when objName is empty, will find the global func's object
+      if ( objName.empty() )
+      {
+         return -1 ;
+      }
 
       for ( ; i < size ; ++i )
       {
@@ -472,13 +475,8 @@ namespace engine
    void _sptObjFactory::_sortAndAssert( SPT_VEC_OBJDESC &vecObj,
                                         const sptObjDesc *desc )
    {
-      /// no name
-      if ( desc->isIgnoredName() )
-      {
-         vecObj.push_back( desc ) ;
-      }
       /// no parent
-      else if ( desc->isIgnoredParent() )
+      if ( desc->isIgnoredParent() )
       {
          vecObj.push_back( desc ) ;
       }
@@ -538,7 +536,7 @@ namespace engine
       {
          desc = _vecObjs[ i ] ;
 
-         if ( !desc || desc->isIgnoredName() )
+         if ( !desc || desc->isGlobal() )
          {
             continue ;
          }

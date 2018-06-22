@@ -48,6 +48,8 @@ namespace engine
 
    #define SPT_ERR               "ErrMsg"
 
+   #define SPT_GLOBAL_STR        "Global"
+
    /*
       SPT_PROP_ATTR define
    */
