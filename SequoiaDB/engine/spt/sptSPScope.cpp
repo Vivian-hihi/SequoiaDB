@@ -133,7 +133,7 @@ namespace engine
          }
       }
    done:
-      return rc ;
+      return TRUE ;
    error:
       if ( !ss.str().empty() )
       {
@@ -209,7 +209,7 @@ namespace engine
       }
 
    done:
-      return rc ;
+      return TRUE ;
    error:
       if ( !ss.str().empty() )
       {
