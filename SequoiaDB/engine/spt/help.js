@@ -29,8 +29,8 @@
 	  println("   --Get help information:");
       println("   help(<method>)                                     - Help on specified method, e.g. help(\'createCS\').");
       println("   db.help()                                          - Help on db methods.");
-      println("   db.cs.help()                                       - Help on collection space methods.");
-      println("   db.cs.cl.help()                                    - Help on collection methods.");
+      println("   db.<csname>.help()                                 - Help on collection space methods.");
+      println("   db.<csname>.<clname>.help()                        - Help on collection methods.");
 	  println("   help('help')                                       - For more detail of help.");
 	  println("");
 	  println("   --Global functions: ");
