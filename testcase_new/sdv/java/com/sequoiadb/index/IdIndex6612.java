@@ -63,10 +63,10 @@ public class IdIndex6612 extends SdbTestBase {
     public void createIndex() throws InterruptedException {
         Split splitThread = new Split();
         splitThread.start();
-        Thread.sleep(300+new Random().nextInt(200));
+        Thread.sleep(300 + new Random().nextInt(200));
         Sequoiadb db1 = null;
         try {
-            db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        	db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             DBCollection cl1 = db1.getCollectionSpace(SdbTestBase.csName)
                     .getCollection(clName);
             cl1.createIdIndex(new BasicBSONObject());
@@ -77,7 +77,7 @@ public class IdIndex6612 extends SdbTestBase {
             }
         }
 
-        Assert.assertTrue(splitThread.isSuccess(),splitThread.getErrorMsg());
+        Assert.assertTrue(splitThread.isSuccess(), splitThread.getErrorMsg());
     }
 
     /**
@@ -93,7 +93,13 @@ public class IdIndex6612 extends SdbTestBase {
                         .getCollection(clName);
                 cl2.split(srcGroupName, destGroupName, 50);
                 checkSplit();
-            } finally {
+            }catch(BaseException e){
+            	if(e.getErrorCode() != -279){
+            		e.printStackTrace();
+            		throw e;
+            	}
+            
+            }finally {
                 if (db2 != null) {
                     db2.disconnect();
                 }
@@ -173,14 +179,12 @@ public class IdIndex6612 extends SdbTestBase {
         destDataNode = sdb.getReplicaGroup(destGroupName).getMaster().connect();
         DBCollection destCL = destDataNode.getCollectionSpace(csName).getCollection(clName);
         long count = destCL.getCount("{$and:[{_id:{$gte:5000}},{_id:{$lt:10000}}]}");
-        Assert.assertEquals(count, 5000);// 目标组数据应当含有上述查询数据
-        Assert.assertEquals(destCL.getCount(), 5000); // // 目标组数据应当仅含有上述查询数据
+        Assert.assertEquals(count, 0);// 切分失败，目标组数据应当不包含上述查询数据
         // 源组数据量检查
         srcDataNode = sdb.getReplicaGroup(srcGroupName).getMaster().connect();
         DBCollection destCL2 = srcDataNode.getCollectionSpace(csName).getCollection(clName);
-        long count2 = destCL2.getCount("{$and:[{_id:{$gte:0}},{_id:{$lt:5000}}]}");
-        Assert.assertEquals(count2, 5000);// 源组数据应当含有上述查询数据
-        Assert.assertEquals(destCL.getCount(), 5000); // // 源组数据应当仅含有上述查询数据
+        long count2 = destCL2.getCount("{$and:[{_id:{$gte:0}},{_id:{$lt:10000}}]}");
+        Assert.assertEquals(count2, 10000);// 切分失败，源组数据应当包含上述查询数据
         // coord数据查询
         cursor = this.cl.query(null, null, "{_id:1}", null);
         List<BSONObject> actual = new ArrayList<BSONObject>();
