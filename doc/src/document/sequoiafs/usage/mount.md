@@ -43,7 +43,7 @@ Takes 2.466226s.
 ####2、在FS节点上创建挂载目录及配置文件####
 挂载目录mountpoint为FS节点上的目录，用以挂载映射远程DB节点的目标集合，所以需要在FS节点上创建该目录。
 
-启动SequoiaFS时还会从配置文件中读取配置参数，所以首次启动前需要创建配置文件并进行参数设置，配置文件及日志路径建议参考[配置文件规则](sequoiafs/usage/mount.md#配置文件及日志路径规则)进行设置，以防止出现多次映射时互相覆盖的情况。
+启动SequoiaFS时可以指定从配置文件中读取配置参数，建议首次启动前创建配置文件并进行参数设置，配置文件及日志路径建议参考[配置文件规则](sequoiafs/usage/mount.md#配置文件及日志路径规则)进行设置，以防止出现多次映射时互相覆盖的情况。
 
 ```lang-javascript
 $mkdir -p /opt/sequoiadb/mountpoint
@@ -64,7 +64,7 @@ $touch /opt/sequoiafs/conf/foo_bar/001/sequoiafs.conf
 通过-i或者--hosts进行指定远程DB节点（协调节点），一旦挂载之后，mountpoint目录下的所有文件的属性信息会存放在远程DB节点上的目录元数据集合及文件元数据集合中，而文件内容会以lob的形式存放在目标集合下。目录元数据集合和文件元数据集合可以分别通过-d(或--metadircollection)和-f（或--metafilecollection）在进行指定，也可以直接通过指定--autocreate默认生成，该例指定默认生成。
 
 ```lang-javascript
-$sequoiafs /opt/sequoiadb/mountpoint -i localhost:11810 -l foo.bar --autocreate -c /opt/sequoiafs/conf/foo_bar/001/ --diagpath  /opt/sequoiafs/log/foo_bar/001/ -o big_writes -o auto_unmount
+$sequoiafs /opt/sequoiadb/mountpoint -i localhost:11810 -l foo.bar --autocreate -c /opt/sequoiafs/conf/foo_bar/001/ --diagpath  /opt/sequoiafs/log/foo_bar/001/ -o big_writes -o auto_unmount -o max_write=131072 -o max_read=131072
 ```
 这里除了SequoiaFS相关参数，还指定了FUSE的参数-o big_writes（开启大页写）和-o auto_unmount（强杀进程时自动unmount目录），具体参数详情可以参见[FUSE选项](sequoiafs/usage/mount.md#FUSE选项)。
  
@@ -182,21 +182,21 @@ Takes 0.019212s.
 ```
 目录元数据信息的具体含义如下：
 
-|记录名称   | 描述说明             |
-|-----------|----------------------|
-|_id  	| 对象ID	       	       |
-|Name	| 目录名称      	       |
-|Mode	| 目录属性模式             |
-|Uid	| 目录属主	               |
-|Gid    | 目录组属主               |
-|Pid  	| 目录父目录ID，不同于_id  |
-|Id	    | 目录ID                   |
-|NLink	| 目录link                 |
-|Size	| 目录大小	               |
-|CreateTime | 创建时间             |
-|ModifyTime | 修改时间	           |
-|AccessTime	| 访问时间             |
-|SymLink	| 软链接               |
+|记录名称   | 描述说明             |数据类型|
+|-----------|----------------------|--------|
+|_id  	| 对象ID	       	       | OID  |
+|Name	| 目录名称      	       |字符串|
+|Mode	| 目录属性模式             |整数|
+|Uid	| 目录属主	               |整数|
+|Gid    | 目录组属主               |整数|
+|Pid  	| 目录父目录ID，不同于_id  |长整数|
+|Id	    | 目录ID                   |长整数|
+|NLink	| 目录link                 |整数|
+|Size	| 目录大小	               |长整数|
+|CreateTime | 创建时间             |长整数|
+|ModifyTime | 修改时间	           |长整数|
+|AccessTime	| 访问时间             |长整数|
+|SymLink	| 软链接               |字符串|
 
 
 DB节点查看文件元数据集合，可以查到testfile文件元数据信息记录。  
@@ -240,26 +240,26 @@ Takes 0.010137s.
 ```
 文件元数据信息具体含义如下：
 
-|记录名称   | 描述说明             |
-|-----------|----------------------|
-|_id  	| 对象ID	       	       |
-|Name	| 文件名称      	       |
-|Mode	| 文件属性模式             |
-|Uid	| 文件属主	               |
-|Gid    | 文件组属主               |
-|Pid  	| 文件父目录ID，不同于_id  |
-|LobOid | 文件对应lob对象ID        |
-|NLink	| 文件link数               |
-|Size	| 文件大小	               |
-|CreateTime | 创建时间             |
-|ModifyTime | 修改时间	           |
-|AccessTime	| 访问时间             |
-|SymLink	| 软链接               |
+|记录名称   | 描述说明             |数据类型|
+|-----------|----------------------|--------|
+|_id  	| 对象ID	       	       | OID  |
+|Name	| 文件名称      	       |字符串|
+|Mode	| 文件属性模式             |整数|
+|Uid	| 文件属主	               |整数|
+|Gid    | 文件组属主               |整数|
+|Pid  	| 文件父目录ID，不同于_id  |长整数|
+|LobOid | 文件对应lob对象ID        |字符串|
+|NLink	| 文件link数               |整数|
+|Size	| 文件大小	               |长整数|
+|CreateTime | 创建时间             |长整数|
+|ModifyTime | 修改时间	           |长整数|
+|AccessTime	| 访问时间             |长整数|
+|SymLink	| 软链接               |字符串|
 
 从上表可以看出，文件元数据和目录元数据大致相同，不同的是，文件实际对应着一个Lob文件（通过LobOid映射到该文件），以保存文件的实际内容。并且文件没有ID属性，因为文件只从属于某个目录，所以只需要PID属性。
 
 >**注意**  
->以上5张表使用时，只能通过FS挂载目录进行操作，不能直接通过登录DB节点去更改数据，否则会破坏FS文件系统结构。
+>以上5张表使用时，最好通过SequoiaFS映射目录进行操作，如果需要通过DB客户端进行操作时，变更元数据信息时，数据结构要符合以上表格中的各记录数据类型，否则FS文件系统会读取异常。
 
 接下来，即可在/opt/sequoiadb/mountpoint/目录下进行一系列文件操作，如创建删除文件，写入读取文件以及修改文件属性等。
 
