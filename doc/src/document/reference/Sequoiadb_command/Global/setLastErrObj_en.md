@@ -18,7 +18,7 @@ Global
 
 	Object for error message.
 
-	The [error object](reference/Sequoiadb_command/BSONObj/BSONObj.md) contains the follow filds:
+	The [error object](reference/Sequoiadb_command/BSONObj/BSONObj.md) contains the follow fields:
 
 	* errno: (Int32) error code.
 	* description: (String) the description of error code.
