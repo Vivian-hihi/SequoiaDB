@@ -1668,7 +1668,7 @@ done:
 
       if ( value < minV )
       {
-         ossPrintf( "Waring: Field[%s] value[%u] is less than min value[%u]\n",
+         ossPrintf( "Waring: Field[%s] value[%d] is less than min value[%d]\n",
                     _curFieldName.c_str(), value, minV ) ;
          if ( autoAdjust )
          {
@@ -1682,7 +1682,7 @@ done:
       }
       else if ( value > maxV )
       {
-         ossPrintf( "Waring: Field[%s] value[%u] is more than max value[%u]\n",
+         ossPrintf( "Waring: Field[%s] value[%d] is more than max value[%d]\n",
                  _curFieldName.c_str(), value, maxV ) ;
          if ( autoAdjust )
          {

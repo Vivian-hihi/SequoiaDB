@@ -86,24 +86,27 @@ error:
 
 INT32 _sequoiafsOptionMgr::save()
 {
-   INT32 rc = SDB_OK ;
-   std::string line ;
+    INT32 rc = SDB_OK ;
+    std::string line ;
 
-   rc = pmdCfgRecord::toString( line, PMD_CFG_MASK_SKIP_UNFIELD ) ;
-   if ( SDB_OK != rc )
-   {
-	  PD_LOG( PDERROR, "Failed to get the line str:%d", rc ) ;
-	  goto error ;
-   }
+    if(ossStrcmp(_cfgPath, "") != 0)
+    {
+        rc = pmdCfgRecord::toString( line, PMD_CFG_MASK_SKIP_UNFIELD ) ;
+        if ( SDB_OK != rc )
+        {
+          PD_LOG( PDERROR, "Failed to get the line str:%d", rc ) ;
+          goto error ;
+        }
 
-   rc = utilWriteConfigFile( _cfgFileName, line.c_str(), FALSE ) ;
-   PD_RC_CHECK( rc, PDERROR, "Failed to write config[%s], rc: %d",
-				_cfgFileName, rc ) ;
+        rc = utilWriteConfigFile( _cfgFileName, line.c_str(), FALSE ) ;
+        PD_RC_CHECK( rc, PDERROR, "Failed to write config[%s], rc: %d",
+        			_cfgFileName, rc ) ;
+    }
 
 done:
-   return rc ;
+    return rc ;
 error:
-   goto done ;
+    goto done ;
 }
 
 _sequoiafsOptionMgr::_sequoiafsOptionMgr()
@@ -274,7 +277,7 @@ INT32 _sequoiafsOptionMgr::init(INT32 argc, CHAR **argv, vector<string> *options
         ossPrintf("If \"--autocreate\" is specified, no need to specify \"-d\" or \"-f\"."OSS_NEWLINE);
         rc = SDB_INVALIDARG;
         goto error;
-    } 
+    }
     
     tempPath = (vmFromCmd.count(SDB_SEQUOIAFS_CONF_PATH)) ? (vmFromCmd[SDB_SEQUOIAFS_CONF_PATH].as<string>().c_str()) : PMD_CURRENT_PATH;
     ossMemset(cfgTempPath, 0, sizeof(cfgTempPath));
@@ -297,15 +300,18 @@ INT32 _sequoiafsOptionMgr::init(INT32 argc, CHAR **argv, vector<string> *options
         goto error;
     }
 
-    rc = engine::utilReadConfigureFile(_cfgFileName, desc, vmFromFile);
-    if(SDB_OK != rc)
+    rc = ossAccess( _cfgFileName, OSS_MODE_READ );
+    if ( SDB_OK == rc )
     {
-        if(vmFromCmd.count(SDB_SEQUOIAFS_CONF_PATH))
-            std::cerr << "ERROR: Read configuration file[" << _cfgFileName << "] failed[" << rc << "]" << endl;
-        else
-            std::cerr << "ERROR: Read default configuration file[" << _cfgFileName << "] failed[" << rc << "]" << endl;
-
-        goto error;
+        rc = engine::utilReadConfigureFile(_cfgFileName, desc, vmFromFile);
+        if(SDB_OK != rc)
+        {
+            if(vmFromCmd.count(SDB_SEQUOIAFS_CONF_PATH))
+            {
+                std::cerr << "ERROR: Read configuration file[" << _cfgFileName << "] failed[" << rc << "]" << endl;
+                goto error;
+            }
+        }
     }
 
     rc = pmdCfgRecord::init(&vmFromFile, &vmFromCmd);
@@ -359,18 +365,18 @@ INT32 _sequoiafsOptionMgr::doDataExchange(pmdCfgExchange *pEX)
     rdvMinMax(pEX, _diagLevel, PDSEVERE, PDDEBUG, TRUE);
 
     //--confpath
-    rdxPath(pEX, SDB_SEQUOIAFS_CONF_PATH, _cfgPath, sizeof(_cfgPath), FALSE, PMD_CFG_CHANGE_FORBIDDEN, PMD_CURRENT_PATH);    
+    rdxPath(pEX, SDB_SEQUOIAFS_CONF_PATH, _cfgPath, sizeof(_cfgPath), FALSE, PMD_CFG_CHANGE_FORBIDDEN, "");    
     //--diagpath
     rdxPath(pEX, SDB_SEQUOIAFS_DIAGPATH, _diagPath, sizeof(_diagPath), FALSE, PMD_CFG_CHANGE_FORBIDDEN, PMD_CURRENT_PATH);
     //--diagnum
     rdxInt(pEX, SDB_SEQUOIAFS_DIAGNUM, _diagnum, FALSE, PMD_CFG_CHANGE_RUN, PD_DFT_FILE_NUM);
-	rdvMinMax( pEX, _diagnum, PD_MIN_FILE_NUM, OSS_SINT32_MAX, TRUE ) ;    
+	rdvMinMax( pEX, _diagnum, (INT32)PD_MIN_FILE_NUM, (INT32)OSS_SINT32_MAX, TRUE ) ;    
     return getResult();
 }
 
 INT32 _sequoiafsOptionMgr::postLoaded( PMD_CFG_STEP step )
 {
-    INT32 rc = SDB_OK ;
+    INT32 rc = SDB_OK;
     INT64 hash = 1;
     stringstream ss;
 	string tempCSStr;

@@ -359,16 +359,18 @@ done:
 error:
     goto done;
 }
+
 sequoiafsOptionMgr * sequoiaFS::getOptionMgr()
 {
     return &_optionMgr;
 }
+
 void sequoiaFS::setDataSourceConf(const CHAR * userName, const CHAR *passwd, const INT32 connNum)
 {
     conf.setUserInfo(userName, passwd);
     conf.setConnCntInfo(50, 10, 20, connNum);
-    conf.setCheckIntervalInfo( 60, 0 );
-    conf.setSyncCoordInterval( 30 );
+    conf.setCheckIntervalInfo( 60*1000, 0 );
+    conf.setSyncCoordInterval( 60*1000 );
     conf.setConnectStrategy( DS_STY_BALANCE );
     conf.setValidateConnection( TRUE );
     conf.setUseSSL( FALSE );
