@@ -124,6 +124,10 @@ namespace engine
                                            set<string> &setFunc,
                                            BOOLEAN showHide = FALSE ) = 0 ;
 
+      virtual void   getObjFunNames( const string &className,
+                                     set< string > &setFunc,
+                                     BOOLEAN showHide = FALSE ) = 0 ;
+
       virtual void   getObjFunNames( const void *pObj,
                                      set<string> &setFunc,
                                      BOOLEAN showHide = FALSE ) = 0 ;

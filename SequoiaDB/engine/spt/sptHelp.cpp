@@ -50,26 +50,24 @@ using std::endl ;
 
 namespace engine
 {
-
-   string _sptHelp::_lang = "en" ;
-   
-   _sptHelp::_sptHelp()
+   _sptHelp::_sptHelp() : 
+      _lang("en"),
+      _meta()
    {
-      _meta = sptClassMetaInfo( _lang ) ;
    }
-   
+
    _sptHelp& _sptHelp::getInstance()
    {
       static _sptHelp help ;
       return help ;
    }
-   
-   void _sptHelp::setLanguage( const string &lang )
+
+   void _sptHelp::init( const string &lang, sptScope *scope )
    {
-      _lang = lang ;
+      _lang = lang == "cn" ? "cn" : "en" ;
+      _meta = sptClassMetaInfo( _lang, scope ) ;
    }
-
-
+   
    // "fuzzyFuncName" can be "Oma/Oma::createCoord/createCoord" or something like 
    // "create" for fuzzy searching 
    INT32 _sptHelp::displayManual( const string &fuzzyFuncName,

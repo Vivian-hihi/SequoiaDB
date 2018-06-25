@@ -40,6 +40,8 @@
 #include "core.hpp"
 #include "../bson/bson.h"
 #include "sptObjDesc.hpp"
+#include "sptSPScope.hpp"
+
 
 #include <vector>
 #include <map>
@@ -79,11 +81,13 @@ namespace engine
       static _sptFuncDef&         getInstance() ;
       
    public:
+      INT32                       init( sptScope *scope ) ;
       const MAP_FUNC_DEF_INFO&    getFuncDefInfo() ;
-
+      
    private:
-      INT32                       _init() ;
-      INT32                       _loadFuncInfo( _sptObjDesc *desc ) ;
+      INT32                       _loadFuncInfo( string &className, 
+                                       const set< string > & setFunc,
+                                       const set< string > & setStaticFunc ) ;
       INT32                       _insert( const string &className, 
                                            const string &funcName,
                                            INT32 type ) ;

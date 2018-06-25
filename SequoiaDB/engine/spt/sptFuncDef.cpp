@@ -41,7 +41,6 @@ namespace engine
 
    _sptFuncDef::_sptFuncDef()
    {
-      _init() ;
    }
 
    _sptFuncDef& _sptFuncDef::getInstance()
@@ -50,53 +49,58 @@ namespace engine
       return obj ;
    }
 
-   const MAP_FUNC_DEF_INFO& _sptFuncDef::getFuncDefInfo()
-   {
-      return _map_func_def ;
-   }
-
-   INT32 _sptFuncDef::_init()
+   INT32 _sptFuncDef::init( sptScope *scope )
    {
       INT32 rc = SDB_OK ;
-      SPT_VEC_OBJDESC vecObjs ;
-      sptGetObjFactory()->getObjDescs( vecObjs ) ;
-      for ( UINT32 i = 0 ; i < vecObjs.size() ; ++i )
+      set< string > setClass ;
+      set< string >::iterator it ;
+
+      sptGetObjFactory()->getClassNames( setClass, FALSE ) ;
+      it = setClass.begin() ;
+      for ( ; it != setClass.end(); ++it )
       {
-         sptObjDesc *desc = (sptObjDesc*)vecObjs[ i ] ;
-         rc = _loadFuncInfo( desc ) ;
+         string className = *it ;
+         set< string > setFunc ;
+         set< string > setStaticFunc ;
+         scope->getObjFunNames( className, setFunc, FALSE ) ;
+         scope->getObjStaticFunNames( className, setStaticFunc, FALSE ) ;
+         rc = _loadFuncInfo( className, setFunc, setStaticFunc ) ;
          if ( rc )
          {
             ossPrintf( "Load the functions of class[%s] failed, "
-                       "rc: %d"OSS_NEWLINE, desc->getJSClassName(), rc ) ;
+                       "rc: %d"OSS_NEWLINE, className, rc ) ;
             goto error ;
          }
       }
+      
    done:
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _sptFuncDef::_loadFuncInfo( _sptObjDesc *desc )
+   const MAP_FUNC_DEF_INFO& _sptFuncDef::getFuncDefInfo()
    {
-      const CHAR *objName = desc->getJSClassName() ;
-      const _sptFuncMap &fMap = desc->getFuncMap() ;
-      const sptFuncMap::NORMAL_FUNCS &memberFuncs = fMap.getMemberFuncs() ;
-      const sptFuncMap::NORMAL_FUNCS &staticFuncs = fMap.getStaticFuncs() ;
+      return _map_func_def ;
+   }
 
+   INT32 _sptFuncDef::_loadFuncInfo( string &className, 
+                                       const set< string > & setFunc,
+                                       const set< string > & setStaticFunc )
+   {
       // register constructor
-      _insert( objName, objName, SPT_FUNC_CONSTRUCTOR ) ;
+      _insert( className, className, SPT_FUNC_CONSTRUCTOR ) ;
       // register instance method for help
-      sptFuncMap::NORMAL_FUNCS::const_iterator itr = memberFuncs.begin() ;
-      for ( ; itr != memberFuncs.end() && !itr->first.empty() ; itr++ )
+      set< string >::iterator itr = setFunc.begin() ;
+      for ( ; itr != setFunc.end() ; ++itr )
       {
-         _insert( objName, itr->first.c_str(), SPT_FUNC_INSTANCE ) ;
+         _insert( className, *itr, SPT_FUNC_INSTANCE ) ;
       }
       // register static method for help
-      itr = staticFuncs.begin() ;
-      for ( ; itr != staticFuncs.end() && !itr->first.empty() ;  itr++ )
+      itr = setStaticFunc.begin() ;
+      for ( ; itr != setStaticFunc.end() ; ++itr )
       {
-         _insert( objName, itr->first.c_str(), SPT_FUNC_STATIC ) ;
+         _insert( className, *itr, SPT_FUNC_STATIC ) ;
       }
       return SDB_OK ;
    }

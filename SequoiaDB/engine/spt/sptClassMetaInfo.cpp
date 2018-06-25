@@ -210,14 +210,17 @@ namespace engine
 
    _sptClassMetaInfo::_sptClassMetaInfo() 
    {
-      _lang    = SPT_LANG_EN ;
-      _initOK  = FALSE ;
+      _lang = SPT_LANG_EN ;
+      _scope = NULL ;
+      _initOK = FALSE ;
    }
 
-   _sptClassMetaInfo::_sptClassMetaInfo( const string &lang ) 
+   _sptClassMetaInfo::_sptClassMetaInfo( const string &lang, 
+                                         sptScope *scope ) 
    {
       _lang = lang == "cn" ? SPT_LANG_CN : SPT_LANG_EN ;
-      _initOK  = SDB_OK == _init() ? TRUE : FALSE ;
+      _scope = scope ;
+      _initOK = SDB_OK == _init() ? TRUE : FALSE ;
    }
 
    // fuzzyFuncName maybe "xxx::yyy" or "xxx" or "yyy"
@@ -413,6 +416,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       stringstream ss ;
 
+      sptFuncDef::getInstance().init( _scope ) ;
       _map_func_def_info = sptFuncDef::getInstance().getFuncDefInfo() ;
       if ( _map_func_def_info.size() <= 0 )
       {

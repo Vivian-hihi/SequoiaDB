@@ -87,7 +87,7 @@ namespace engine
    {
    public:
       _sptClassMetaInfo() ;
-      _sptClassMetaInfo( const string &lang ) ;
+      _sptClassMetaInfo( const string &lang, sptScope *scope ) ;
       ~_sptClassMetaInfo() {}
 
    public:
@@ -127,6 +127,7 @@ namespace engine
    private:
       SPT_LANG                    _lang ;
       BOOLEAN                     _initOK ;
+      sptScope                    *_scope ;
       MAP_FUNC_META_INFO          _map_func_meta_info ;
       vector<string>              _functions ;
    } ;

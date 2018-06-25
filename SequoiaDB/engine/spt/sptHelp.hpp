@@ -56,7 +56,7 @@ namespace engine
       
    public:
       static _sptHelp&            getInstance() ;
-      static void                 setLanguage( const string &lang ) ;
+      void                        init( const string &lang, sptScope *scope ) ;
       INT32                       displayManual( const string &fuzzyFuncName,
                                                  const string &matcher,
                                                  BOOLEAN isInstance ) ;
@@ -84,7 +84,7 @@ namespace engine
                                                      INT32 lineLen, 
                                                      INT32 *offset ) ;
    private:
-      static string               _lang ;
+      string                      _lang ;
       sptClassMetaInfo            _meta ;
    } ;
    typedef class _sptHelp sptHelp ;

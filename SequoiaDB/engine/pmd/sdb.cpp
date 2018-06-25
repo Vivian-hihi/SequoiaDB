@@ -418,9 +418,9 @@ INT32 enterInteractiveMode ( sptScope *scope, const CHAR *lang )
    SDB_ASSERT ( scope , "invalid argument" ) ;
    PD_TRACE_ENTRY ( SDB_ENTERINTATVMODE );
 
-   // set language for dispaly help info
-   sptHelp::setLanguage( lang ) ;
-
+   // set language and scope for dispaly help info
+   sptHelp::getInstance().init( lang, scope ) ;
+   
    // set sdb defined can continue get next line function
    setCanContinueNextLineCallback( boost::bind( sdbdefCanContinueGetNextLine,
                                                 scope, _1 ) ) ;

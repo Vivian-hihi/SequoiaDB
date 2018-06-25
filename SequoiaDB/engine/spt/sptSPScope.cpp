@@ -54,6 +54,7 @@ namespace engine
 {
    #define JS_ERROBJ_FILENAME    "fileName"
    #define JS_ERROBJ_LINENO      "lineNumber"
+   
    /*
       case 1: when no argument, we display the functions of class/instance
       case 2: when getting argument in format of "Oma"/"Oma.createCoord"
@@ -65,14 +66,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       stringstream ss ;
       SDB_ASSERT( NULL != cx && NULL != vp, "can not be NULL" ) ;
-
+   
       jsval jsVal = JSVAL_VOID ;
       JSObject *constructor = NULL ;
       JSString *jsStr = NULL ;
       CHAR *pStr = NULL ;
       _sptSPArguments arg( cx, argc, vp ) ;
       string jsClassName ;
-
+   
       // set return value
       JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
       // try to get the js class name
@@ -106,7 +107,7 @@ namespace engine
       }
       jsClassName.assign( pStr ) ;
       JS_free( cx, pStr ) ;
-
+   
       // display method or manpage
       if ( arg.argc() == 0 )
       {
@@ -451,6 +452,7 @@ namespace engine
          }
          JS_SetContextPrivate( _context, privateData ) ;
       }
+
    done:
       return rc ;
    error:
@@ -952,6 +954,14 @@ namespace engine
    {
       sptGetObjFactory()->getClassStaticFuncNames( _context, objName,
                                                    setFunc, showHide ) ;
+   }
+
+   void _sptSPScope::getObjFunNames( const string &className,
+                                          set< string > &setFunc,
+                                          BOOLEAN showHide )
+   {
+      sptGetObjFactory()->getClassFuncNames( _context, className,
+                                             setFunc, showHide ) ;
    }
 
    void _sptSPScope::getObjFunNames( const void *pObj,
