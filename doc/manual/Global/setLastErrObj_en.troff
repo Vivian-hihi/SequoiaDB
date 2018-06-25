@@ -19,7 +19,7 @@ Global
 .PP
 Object for error message.
 .PP
-The error object contains the follow filds:
+The error object contains the follow fields:
 .IP \[bu] 2
 errno: (Int32) error code.
 .IP \[bu] 2

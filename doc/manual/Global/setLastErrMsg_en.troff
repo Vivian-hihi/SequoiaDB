@@ -16,7 +16,7 @@ Global
 When error happen, we can use this API to set the error message.
 .SH PARAMETERS
 .IP \[bu] 2
-\f[C]error\ code\f[] ( \f[I]String\f[]， \f[I]Required\f[] )
+\f[C]msg\f[] ( \f[I]String\f[]， \f[I]Required\f[] )
 .RS 2
 .PP
 The error massage to set.
