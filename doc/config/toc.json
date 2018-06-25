@@ -2583,6 +2583,12 @@
                            "file": "stopAllNodes",
                            "cn": "stopAllNodes()",
                            "en": "stopAllNodes()"
+                        },
+						{
+                           "id": 1529910092,
+                           "file": "setNodeConfigs",
+                           "cn": "setNodeConfigs()",
+                           "en": "setNodeConfigs()"
                         }
                      ]
                   },
