@@ -4,7 +4,7 @@ setLastErrObj - Set the error object of last operation.
 
 ##SYNOPSIS##
 
-**getLastErrObj()**
+**setLastErrObj(\<obj\>)**
 
 ##CATEGORY##
 

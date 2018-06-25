@@ -16,7 +16,7 @@ Global
 
 ##参数##
 
-* `error code` ( *String*， *必填* )
+* `msg` ( *String*， *必填* )
 
 	错误信息。
 

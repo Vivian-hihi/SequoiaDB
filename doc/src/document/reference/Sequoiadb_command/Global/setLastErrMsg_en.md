@@ -4,7 +4,7 @@ setLastErrMsg - Set the error message of last operation.
 
 ##SYNOPSIS##
 
-**setLastErrMsg()**
+**setLastErrMsg(\<msg\>)**
 
 ##CATEGORY##
 
@@ -16,7 +16,7 @@ When error happen, we can use this API to set the error message.
 
 ##PARAMETERS##
 
-* `error code` ( *String*， *Required* )
+* `msg` ( *String*， *Required* )
 
 	The error massage to set.
 
