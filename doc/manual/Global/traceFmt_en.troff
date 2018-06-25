@@ -12,23 +12,20 @@ traceFmt \- Format trace input to output by type.
 .PP
 Global
 .SH DESCRIPTION
-.sp 2
-Format trace input to output by type.
-.sp 2
-\f formatType (int)\fR
-.br
-       specifies the type of output file, contains the following types:
-        0 : output flw file, contains several analysis files for dump ;
-        1 : output fmt file, the file format of the dump file ;
-.sp 2
-\f input  (string)\fR
-.br
-       Name of dump file, which produced by db.traceOff().
-.sp 2
-\f output  (string)\fR
-.br
-       Name of out file.
+.PP
+// TODO:
+.SH PARAMETERS
+.PP
+// TODO:
+.SH RETURN VALUE
+.PP
+// TODO:
+.SH ERRORS
+.PP
+// TODO:
+.SH HISTORY
+.PP
+Since v1.0.
 .SH EXAMPLES
-.sp 2
-traceFmt(0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.flw") ;
-traceFmt(1, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.fmt") ;
+.PP
+// TODO:

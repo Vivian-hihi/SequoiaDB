@@ -23,8 +23,14 @@ db.traceOff() 导出来的 trace
 \f[C]formatType\f[] ( \f[I]Int32\f[]， \f[I]必填\f[] )
 .RS 2
 .PP
-格式类型。
+traceFmt输出两种信息:
 .RE
+.PP
+0：输出分析文件，包含线程的执行序列（flw文件）；
+.PP
+1：输出dump记录信息（fmt文件）；
+.PP
+注：formatType为0时同时伴随着另外三个文件：函数的执行时间分析（CSV文件）、执行时间峰值（except文件）、trace记录错误信息（error文件）；formatType为其他值时默认按第一种方式输出
 .IP \[bu] 2
 \f[C]input\f[] ( \f[I]String\f[]， \f[I]必填\f[] )
 .RS 2
@@ -35,7 +41,7 @@ db.traceOff() 导出来的二进制文件。
 \f[C]output\f[] ( \f[I]String\f[]， \f[I]必填\f[] )
 .RS 2
 .PP
-格式化后输出的可读文件。
+输出的目标文件。
 .RE
 .SH 返回值
 .PP
