@@ -66,7 +66,7 @@ namespace engine
          tmpValue -= 1 ;
          hashCode &= tmpValue ;
       }
-      return hashCode ;      
+      return hashCode ;
    }
 
    UINT32 _utilBSONHasherObsolete::hash( const bson::BSONElement &e )
@@ -106,6 +106,7 @@ namespace engine
       case NumberDouble:
       case NumberLong:
       case NumberInt:
+      case NumberDecimal:
       {
          FLOAT64 dv = e.Number() ;
          UINT64 uv = dv ;

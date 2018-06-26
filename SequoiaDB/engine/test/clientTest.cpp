@@ -865,7 +865,7 @@ INT32 admin ( string Command, vector<string> arg )
          if ( arg.size() < 2 )
          {
             g_tid = -1 ;
-            printf(" change local tid to %d\n", ossGetCurrentThreadID() ) ;
+            printf(" change local tid to %ld\n", ossGetCurrentThreadID() ) ;
          }
          else
          {
@@ -2054,7 +2054,7 @@ INT32 queryC ( const CHAR *collectionSpace, const CHAR *collection )
    }
    {
       MsgOpQuery *query = (MsgOpQuery*)pOutBuffer ;
-      query->version = g_Version ;      
+      query->version = g_Version ;
    }
 
    rc = msgSend () ;

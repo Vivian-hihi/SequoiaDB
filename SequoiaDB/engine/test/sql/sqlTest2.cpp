@@ -63,7 +63,7 @@ BOOLEAN readLine ( const char* prompt, char* p, int length )
    ret = getNextCommand( prompt, &readstr ) ;
    if ( readstr )
    {
-      if ( ossStrlen( readstr ) >= length )
+      if ( ossStrlen( readstr ) >= (unsigned int)length )
       {
          cout << "input is to long" << std::endl ;
          ret = FALSE ;

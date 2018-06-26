@@ -1189,6 +1189,8 @@ static void refreshMultiLine(struct linenoiseState *l)
     if (write(fd,ab.b,ab.len) == -1) {} /* Can't recover from write error. */
     abFree(&ab);
 
+    PD_TRACE_EXIT ( SDB_REFRESHMULTILINE );
+    return;
 #else
     REDIS_NOTUSED( seq ) ;
     REDIS_NOTUSED( fd ) ;
@@ -1360,12 +1362,13 @@ static void refreshMultiLine(struct linenoiseState *l)
 
     /* record the position for next refresh */
     l->oldpos = l->pos ;
-#endif
+
 done:
     PD_TRACE_EXIT ( SDB_REFRESHMULTILINE );
     return;
 error:
     goto done;
+#endif
 }
 
 /* Calls the two low level functions refreshSingleLine() or
