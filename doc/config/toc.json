@@ -1577,46 +1577,112 @@
                      "en": "Global",
                      "contents": [
                         {
-                           "id": 1432190766,
-                           "file": "traceFmt",
-                           "cn": "traceFmt()",
-                           "en": "traceFmt()"
+                           "id": 1529976601,
+                           "file": "help",
+                           "cn": "help()",
+                           "en": "help()"
                         },
                         {
-                           "id": 1477902869,
-                           "file": "getLastError",
-                           "cn": "getLastError()",
-                           "en": "getLastError()"
+                           "id": 1529976602,
+                           "file": "print",
+                           "cn": "print()",
+                           "en": "print()"
                         },
                         {
-                           "id": 1477902870,
+                           "id": 1529976603,
+                           "file": "sleep",
+                           "cn": "sleep()",
+                           "en": "sleep()"
+                        },
+                        {
+                           "id": 1529976604,
+                           "file": "forceGC",
+                           "cn": "forceGC()",
+                           "en": "forceGC()"
+                        },
+                        {
+                           "id": 1529976605,
+                           "file": "getErr",
+                           "cn": "getErr()",
+                           "en": "getErr()"
+                        },
+                        {
+                           "id": 1529976606,
                            "file": "getLastErrMsg",
                            "cn": "getLastErrMsg()",
                            "en": "getLastErrMsg()"
                         },
                         {
-                           "id": 1482317447,
+                           "id": 1529976607,
                            "file": "getLastErrObj",
                            "cn": "getLastErrObj()",
                            "en": "getLastErrObj()"
                         },
                         {
-                           "id": 1502694296,
+                           "id": 1529976608,
+                           "file": "getLastError",
+                           "cn": "getLastError()",
+                           "en": "getLastError()"
+                        },
+                        {
+                           "id": 1529976615,
+                           "file": "setLastErrMsg",
+                           "cn": "setLastErrMsg()",
+                           "en": "setLastErrMsg()"
+                        },
+                        {
+                           "id": 1529976616,
+                           "file": "setLastErrObj",
+                           "cn": "setLastErrObj()",
+                           "en": "setLastErrObj()"
+                        },
+                        {
+                           "id": 1529976617,
+                           "file": "setLastError",
+                           "cn": "setLastError()",
+                           "en": "setLastError()"
+                        },
+                        {
+                           "id": 1529976609,
+                           "file": "getExePath",
+                           "cn": "getExePath()",
+                           "en": "getExePath()"
+                        },
+                        {
+                           "id": 1529976610,
+                           "file": "getRootPath",
+                           "cn": "getRootPath()",
+                           "en": "getRootPath()"
+                        },
+                        {
+                           "id": 1529976611,
+                           "file": "getSelfPath",
+                           "cn": "getSelfPath()",
+                           "en": "getSelfPath()"
+                        },
+                        {
+                           "id": 1529976612,
                            "file": "import",
                            "cn": "import()",
                            "en": "import()"
                         },
                         {
-                           "id": 1502694324,
+                           "id": 1529976613,
                            "file": "importOnce",
                            "cn": "importOnce()",
                            "en": "importOnce()"
                         },
                         {
-                           "id": 1509607624,
+                           "id": 1529976614,
                            "file": "jsonFormat",
                            "cn": "jsonFormat()",
                            "en": "jsonFormat()"
+                        },
+                        {
+                           "id": 1432190718,
+                           "file": "traceFmt",
+                           "cn": "traceFmt()",
+                           "en": "traceFmt()"
                         }
                      ]
                   },
