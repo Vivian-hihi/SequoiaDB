@@ -81,10 +81,10 @@ namespace engine
       static _sptFuncDef&         getInstance() ;
       
    public:
-      INT32                       init( sptScope *scope ) ;
       const MAP_FUNC_DEF_INFO&    getFuncDefInfo() ;
       
    private:
+      INT32                       _init() ;
       INT32                       _loadFuncInfo( string &className, 
                                        const set< string > & setFunc,
                                        const set< string > & setStaticFunc ) ;

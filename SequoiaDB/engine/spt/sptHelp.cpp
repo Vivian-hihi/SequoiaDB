@@ -50,10 +50,12 @@ using std::endl ;
 
 namespace engine
 {
-   _sptHelp::_sptHelp() : 
-      _lang("en"),
-      _meta()
-   {
+
+   string _sptHelp::_lang = "en" ;
+   
+   _sptHelp::_sptHelp()
+   {      
+      _meta = sptClassMetaInfo( _lang ) ;
    }
 
    _sptHelp& _sptHelp::getInstance()
@@ -62,10 +64,9 @@ namespace engine
       return help ;
    }
 
-   void _sptHelp::init( const string &lang, sptScope *scope )
+   void _sptHelp::setLanguage( const string &lang )
    {
       _lang = lang == "cn" ? "cn" : "en" ;
-      _meta = sptClassMetaInfo( _lang, scope ) ;
    }
    
    // "fuzzyFuncName" can be "Oma/Oma::createCoord/createCoord" or something like 

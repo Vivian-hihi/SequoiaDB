@@ -34,6 +34,9 @@
 
 *******************************************************************************/
 #include "sptFuncDef.hpp"
+#include "sptSPScope.hpp"
+#include "sptContainer.hpp"
+
 #include "ossUtil.hpp"
 
 namespace engine
@@ -41,6 +44,7 @@ namespace engine
 
    _sptFuncDef::_sptFuncDef()
    {
+      _init() ;
    }
 
    _sptFuncDef& _sptFuncDef::getInstance()
@@ -49,12 +53,31 @@ namespace engine
       return obj ;
    }
 
-   INT32 _sptFuncDef::init( sptScope *scope )
+   INT32 _sptFuncDef::_init()
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc = SDB_OK ;      
+      engine::sptContainer container ;
+      engine::sptScope *scope = NULL ;
       set< string > setClass ;
       set< string >::iterator it ;
 
+      // get a temp scope
+      rc = container.init() ;
+      if ( rc )
+      {
+         ossPrintf( "Failed to init container, rc: %d"OSS_NEWLINE, rc ) ;
+         goto error ;
+      }
+      scope = container.newScope() ;
+      if ( !scope )
+      {
+         rc = SDB_SYS ;
+         ossPrintf( "Failed to new scope in container, rc: %d"OSS_NEWLINE, rc ) ;
+         goto error ;
+
+      }
+
+      // get functions in all the js class
       sptGetObjFactory()->getClassNames( setClass, FALSE ) ;
       it = setClass.begin() ;
       for ( ; it != setClass.end(); ++it )
@@ -74,6 +97,11 @@ namespace engine
       }
       
    done:
+      if ( scope )
+      {
+         container.releaseScope( scope ) ;
+      }
+      container.fini() ;
       return rc ;
    error:
       goto done ;
