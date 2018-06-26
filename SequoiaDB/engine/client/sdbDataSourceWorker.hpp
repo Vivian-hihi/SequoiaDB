@@ -69,7 +69,7 @@ namespace sdbclient
    class sdbDSWorker : public SDBObject
    {
    public:
-      sdbDSWorker( workerFunc func, void* args, BOOLEAN managed = FALSE ) ;
+      sdbDSWorker( workerFunc func, void* args ) ;
       ~sdbDSWorker() ;
       INT32 start() ;
       INT32 waitStop() ;
@@ -77,7 +77,6 @@ namespace sdbclient
    private:
       sdbDSWorkThread         _thread ;
       BOOLEAN                 _started ;
-      BOOLEAN                 _managed ;
    } ;
 }
 

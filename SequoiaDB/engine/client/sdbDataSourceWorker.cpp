@@ -127,17 +127,14 @@ namespace sdbclient
 
 #endif
 
-   sdbDSWorker::sdbDSWorker( workerFunc func, void* args, BOOLEAN managed )
-      : _thread( func, args ),
-      _managed( managed )
+   sdbDSWorker::sdbDSWorker( workerFunc func, void* args )
+      : _thread( func, args )
    {
       _started = FALSE ;
    }
 
    sdbDSWorker::~sdbDSWorker()
    {
-      if (_managed)
-         SAFE_OSS_DELETE( _thread.args ) ;
    }
 
    INT32 sdbDSWorker::start()
