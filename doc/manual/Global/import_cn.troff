@@ -5,7 +5,7 @@
 .hy
 .SH 名称
 .PP
-import \- 导入执行指定的 js 文件
+import \- 导入执行指定的 js 文件。
 .SH 语法
 .PP
 \f[B]import(<filename>)\f[]

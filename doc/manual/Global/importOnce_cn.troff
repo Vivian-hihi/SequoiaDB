@@ -5,7 +5,7 @@
 .hy
 .SH 名称
 .PP
-importOnce \- 全局只导入执行一次指定的 js 文件
+importOnce \- 全局只导入执行一次指定的 js 文件。
 .SH 语法
 .PP
 \f[B]importOnce(<filename>)\f[]
