@@ -68,7 +68,7 @@ namespace engine
          if ( rc )
          {
             ossPrintf( "Load the functions of class[%s] failed, "
-                       "rc: %d"OSS_NEWLINE, className, rc ) ;
+                       "rc: %d"OSS_NEWLINE, className.c_str(), rc ) ;
             goto error ;
          }
       }
