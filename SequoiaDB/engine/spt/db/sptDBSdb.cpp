@@ -1446,7 +1446,6 @@ namespace engine
       SDB_SPD_RES_TYPE valueType ;
       BSONObj errMsg ;
       BSONObj nextRecord ;
-      BOOLEAN needKill = FALSE ;
       rc = arg.getString( 0, code, FALSE ) ;
       if( SDB_OK != rc )
       {
@@ -1471,7 +1470,7 @@ namespace engine
       }
       if ( FMP_RES_TYPE_VOID == valueType )
       {
-         needKill = TRUE ;
+         // ignore
       }
       else if ( FMP_RES_TYPE_STR == valueType ||
                 FMP_RES_TYPE_NUMBER == valueType ||
@@ -1485,7 +1484,6 @@ namespace engine
          {
             detail = BSON( SPT_ERR << "Failed to fetch" ) ;
             goto error ;
-            needKill = TRUE ;
          }
          ele = nextRecord.getField( FMP_RES_VALUE ) ;
          type = ele.type() ;
@@ -1544,7 +1542,6 @@ namespace engine
             detail = BSON( SPT_ERR << "Failed to fetch bson obj" ) ;
             goto error ;
          }
-         needKill = TRUE ;
          ele = nextRecord.getField( FMP_RES_VALUE ) ;
          type = ele.type() ;
          if ( String != type )
@@ -1624,6 +1621,7 @@ namespace engine
          goto error ;
       }
    done:
+      cursor.close() ;
       return rc ;
    error:
       goto done ;

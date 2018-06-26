@@ -70,7 +70,7 @@ namespace engine
       }
       *obj = SDB_OSS_NEW sptSPObject( _cx, jsObj ) ;
    done:
-      return SDB_OK ;
+      return rc ;
    error:
       goto done ;
    }

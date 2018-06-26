@@ -100,14 +100,12 @@ namespace engine
          BSONObj tmpObj ;
          JSObject *eleObj = NULL ;
          jsval val ;
-         JSType type ;
          if( !JS_GetElement( _cx, obj, i, &val ) )
          {
             rc = SDB_INVALIDARG ;
             _setErrMsg( "Failed to get array element", FALSE ) ;
             goto error ;
          }
-         type = JS_TypeOfValue( _cx, val ) ;
          if( JSTYPE_OBJECT != JS_TypeOfValue( _cx, val ) )
          {
             rc = SDB_INVALIDARG ;
