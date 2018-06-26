@@ -812,8 +812,6 @@ namespace engine
 
    done:
       return rc ;
-   error:
-      goto done ;
    }
 
    const CHAR* _optQgmAggrFilterSty::strategyName() const

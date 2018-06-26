@@ -1904,7 +1904,7 @@ namespace engine
                ++validCount ;
             }
 
-            if ( pArgs->_boQuery.nFields() > validCount )
+            if ( (UINT32)pArgs->_boQuery.nFields() > validCount )
             {
                rc = SDB_INVALIDARG ;
                PD_LOG( PDERROR, "Unknown parameters in command's args[%s]",
@@ -2318,7 +2318,7 @@ namespace engine
             }
          }
 
-         if ( pArgs->_boQuery.nFields() > validCount )
+         if ( (UINT32)pArgs->_boQuery.nFields() > validCount )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "Unknown parameters in command's args[%s]",

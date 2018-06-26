@@ -375,7 +375,7 @@ namespace engine
             pInfo->fromBSON( ptr->toBSON( OM_STRATEGY_MASK_BASEINFO ), FALSE ) ;
 
             if ( pItem->_ptr.get() &&
-                 ( pItem->_ptr->getTaskID() != pInfo->getTaskID() ||
+                 ( pItem->_ptr->getTaskID() != (UINT64)pInfo->getTaskID() ||
                    0 != ossStrcmp( pItem->_ptr->getTaskName(),
                                    pInfo->getTaskName() ) ) )
             {
