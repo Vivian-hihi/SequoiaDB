@@ -2579,7 +2579,7 @@ namespace import
             len--;
          }
          else if (_startWith(head, len,
-                             (cosnt CHAR *)CSV_UTF8_FULL_WIDTH_SPACE,
+                             (const CHAR *)CSV_UTF8_FULL_WIDTH_SPACE,
                              CSV_UTF8_FULL_WIDTH_SPACE_LEN))
          {
             head = head + CSV_UTF8_FULL_WIDTH_SPACE_LEN;
@@ -2638,7 +2638,7 @@ namespace import
             len--;
          }
          else if (_endWith(str, len,
-                           (cosnt CHAR *)CSV_UTF8_FULL_WIDTH_SPACE,
+                           (const CHAR *)CSV_UTF8_FULL_WIDTH_SPACE,
                            CSV_UTF8_FULL_WIDTH_SPACE_LEN))
          {            tail = tail - CSV_UTF8_FULL_WIDTH_SPACE_LEN;
             len = len - CSV_UTF8_FULL_WIDTH_SPACE_LEN;
