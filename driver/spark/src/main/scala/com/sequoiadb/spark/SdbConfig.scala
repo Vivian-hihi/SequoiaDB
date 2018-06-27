@@ -400,6 +400,7 @@ object SdbConfig {
         val opt = new ConfigOptions()
         opt.setConnectTimeout(3000)
         opt.setMaxAutoConnectRetryTime(0)
+        opt.setSocketKeepAlive(true)
         opt
     }
 }
