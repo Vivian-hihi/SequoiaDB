@@ -4168,11 +4168,6 @@ namespace engine
          builder.appendBool ( CAT_DOMAIN_AUTO_REBALANCE, clInfo._autoRebalance ) ;
       }
 
-      if ( mask & UTIL_CL_AUTOIDXID_FIELD )
-      {
-         builder.appendBool( CAT_AUTO_INDEX_ID, clInfo._autoIndexId ) ;
-      }
-
       if ( mask & UTIL_CL_MAXREC_FIELD )
       {
          builder.append( CAT_CL_MAX_RECNUM, (INT64)clInfo._maxRecNum ) ;

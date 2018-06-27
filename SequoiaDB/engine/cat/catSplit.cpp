@@ -445,11 +445,18 @@ namespace engine
                 "Could not split main-collection",
                 opCode, clName.c_str() ) ;
 
-      PD_CHECK( cataSet.getAutoIdxId(),
-                SDB_RTN_AUTOINDEXID_IS_FALSE, error, PDERROR,
-                "Failed to split step [%d] on [%s]: "
-                "Could not split collection when AutoIndexId is false",
-                opCode, clName.c_str() ) ;
+      // Could not split when no $id index.
+      {
+         UINT32 attribute = cataSet.getAttribute() ;
+         if ( OSS_BIT_TEST( attribute, DMS_MB_ATTR_NOIDINDEX ) )
+         {
+            rc = SDB_RTN_AUTOINDEXID_IS_FALSE ;
+            PD_LOG( PDERROR, "Failed to split step [%d] on [%s]: "
+                    "Could not split collection when AutoIndexId is false",
+                    opCode, clName.c_str() ) ;
+            goto error ;
+         }
+      }
 
       mainCLName = cataSet.getMainCLName() ;
       if ( !mainCLName.empty() )

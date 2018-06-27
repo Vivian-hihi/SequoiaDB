@@ -316,6 +316,7 @@ namespace engine
                                                  catCtxLockMgr & lockMgr )
    {
       INT32 rc = SDB_OK ;
+      INT64 splitTaskNum = 0 ;
 
       PD_TRACE_ENTRY( SDB_CATCTXALTERCLTASK__CHKDROPIDIDX ) ;
 
@@ -323,6 +324,18 @@ namespace engine
                 SDB_OPTION_NOT_SUPPORT, error, PDERROR,
                 "Failed to check [%s]: collection [%s] is capped",
                 _task->getActionName(), _dataName.c_str() ) ;
+
+      rc = catGetTaskCountByType( _dataName.c_str(), cb, CLS_TASK_SPLIT,
+                                  splitTaskNum ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get split task number for "
+                   "collection [%s]", _dataName.c_str() ) ;
+      if ( splitTaskNum > 0 )
+      {
+         rc = SDB_OPTION_NOT_SUPPORT ;
+         PD_LOG( PDERROR, "Can not change AutoIndexId to false when collection "
+                 "[%s] is being splitted" ) ;
+         goto error ;
+      }
 
    done :
       PD_TRACE_EXITRC( SDB_CATCTXALTERCLTASK__CHKDROPIDIDX, rc ) ;
@@ -1107,13 +1120,14 @@ namespace engine
 
       if ( localTask->testArgumentMask( UTIL_CL_AUTOIDXID_FIELD ) )
       {
-         // Note: no need to set DMS_MB_ATTR_NOIDINDEX if AutoIndexID is false,
-         // should set DMS_MB_ATTR_NOIDINDEX in dropIDIndex()
          if ( localTask->isAutoIndexID() )
          {
             OSS_BIT_CLEAR( attribute, DMS_MB_ATTR_NOIDINDEX ) ;
          }
-         setBuilder.appendBool( CAT_AUTO_INDEX_ID, localTask->isAutoIndexID() ) ;
+         else
+         {
+            OSS_BIT_SET( attribute, DMS_MB_ATTR_NOIDINDEX ) ;
+         }
       }
 
       if ( localTask->testArgumentMask( UTIL_CL_AUTOREBALANCE_FIELD ) )

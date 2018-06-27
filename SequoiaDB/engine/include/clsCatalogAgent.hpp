@@ -259,7 +259,6 @@ namespace engine
          INT64 getMaxSize() const { return _maxSize ; }
          INT64 getMaxRecNum() const { return _maxRecNum ; }
          BOOLEAN getOverWrite() const { return _overwrite ; }
-         BOOLEAN getAutoIdxId() const { return _autoIdxId ; }
       protected:
          _clsCatalogSet    *next () ;
          INT32             next ( _clsCatalogSet * next ) ;
@@ -328,7 +327,6 @@ namespace engine
          INT64             _maxSize ;
          INT64             _maxRecNum ;
          BOOLEAN           _overwrite ;
-         BOOLEAN           _autoIdxId ;
    };
    typedef class _clsCatalogSet clsCatalogSet ;
 
