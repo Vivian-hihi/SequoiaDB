@@ -35,7 +35,7 @@ function main()
    //这个地方写测试步骤
    println("---test alter AutoIndexId to false---");
    cl1.setAttributes({ AutoIndexId: false} );
-   checkSnapshot( db, SDB_SNAP_CATALOG, csName, clName1, "AutoIndexId", false);
+   //checkSnapshot( db, SDB_SNAP_CATALOG, csName, clName1, "AutoIndexId", false);
    try
    {
       cl1.remove();
@@ -51,7 +51,7 @@ function main()
 
    println("---test alter AutoIndexId to true---");
    cl2.setAttributes({ AutoIndexId: true} );
-   checkSnapshot( db, SDB_SNAP_CATALOG, csName, clName2, "AutoIndexId", true);
+   //checkSnapshot( db, SDB_SNAP_CATALOG, csName, clName2, "AutoIndexId", true);
    cl2.remove();
    
    commDropCL( db, csName, clName1, true, false, "clean cl1" );

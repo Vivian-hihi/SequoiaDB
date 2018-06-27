@@ -6,7 +6,7 @@
              test c: alter replsize
              test d: alter strictDataMode             
              alter() only test alter field value;
-@author£º2018-4-27 wuyan  Init
+@authorï¿½ï¿½2018-4-27 wuyan  Init
 ***************************************************************************** */
 var clName= CHANGEDPREFIX + "_altercl_15034"; 
 
@@ -36,7 +36,7 @@ function main(db)
       
       //check alter result
       checkAlterResult( clName, "EnsureShardingIndex", ensureShardingIndex );      
-      checkAlterResult( clName, "AutoIndexId", autoIndexId );
+      //checkAlterResult( clName, "AutoIndexId", autoIndexId );
       checkIdIndexResult( dbcl );    
       checkAlterResult( clName, "ReplSize", replSize );
       checkAlterResult( clName, "AttributeDesc","StrictDataMode");     
