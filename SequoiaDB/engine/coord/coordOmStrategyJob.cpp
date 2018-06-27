@@ -85,7 +85,6 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB() ;
       CoordCB *pCoord = krcb->getCoordCB() ;
       coordResource *pResource = pCoord->getResource() ;
-      coordOmStrategyAgent *pOmAgent = pResource->getOmStrategyAgent() ;
       CoordGroupInfoPtr omGroupPtr = pResource->getOmGroupInfo() ;
 
       return 0 == omGroupPtr->nodeCount() ? FALSE : TRUE ;

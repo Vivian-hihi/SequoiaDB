@@ -70,7 +70,6 @@ namespace engine
 
    INT32 _schedDispatchJob::doit()
    {
-      INT32 rc = SDB_OK ;
       BOOLEAN bPop = FALSE ;
       MsgHeader *pHeader = NULL ;
       NET_HANDLE handle = NET_INVALID_HANDLE ;
@@ -87,10 +86,8 @@ namespace engine
             SDB_ASSERT( PMD_EDU_MEM_ALLOC == memType,
                         "Mem type must be PMD_EDU_MEM_ALLOC" ) ;
 
-            rc = _pSessionMgr->dispatchMsg( handle, pHeader,
-                                            memType, TRUE,
-                                            &hasDispatched ) ;
-
+            _pSessionMgr->dispatchMsg( handle, pHeader,memType,
+                                       TRUE,&hasDispatched ) ;
             if ( !hasDispatched )
             {
                SDB_OSS_FREE( ( CHAR* )pHeader ) ;
