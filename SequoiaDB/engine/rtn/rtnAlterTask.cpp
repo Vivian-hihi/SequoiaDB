@@ -1059,6 +1059,9 @@ namespace engine
                 "Failed to get field [%s]: it is not supported yet",
                 FIELD_NAME_NAME ) ;
 
+      PD_CHECK( _conflictCheck(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                "Options conflict in alter option" ) ;
+
       // ReplSize and ShardingKey is allowed in main-collection
       if ( !testArgumentMask( ~( UTIL_CL_REPLSIZE_FIELD |
                                  UTIL_CL_SHDKEY_FIELD ) ) )
@@ -1076,6 +1079,18 @@ namespace engine
 
    error :
       goto done ;
+   }
+
+   BOOLEAN _rtnCLSetAttributeTask::_conflictCheck()
+   {
+      BOOLEAN pass = TRUE ;
+
+      if ( _shardingArgument.isAutoSplit() && !_autoIndexID )
+      {
+         pass = FALSE ;
+      }
+
+      return pass ;
    }
 
    /*

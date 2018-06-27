@@ -636,6 +636,8 @@ namespace engine
          {
             return _strictDataMode ;
          }
+      private:
+         BOOLEAN _conflictCheck() ;
 
       protected :
          rtnCLShardingArgument      _shardingArgument ;
