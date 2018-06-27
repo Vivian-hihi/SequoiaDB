@@ -3064,9 +3064,6 @@ namespace import
          // time zone: +/-XXXX
          case 'Z':
          {
-            INT32 gmtHour = 0 ;
-            INT32 gmtMinute = 0 ;
-            INT32 hourStrLen = 0 ;
             INT32 sign = 1 ;
 
             fmt++;
@@ -3105,8 +3102,6 @@ namespace import
          case '-':
          {
             INT32 sign = 1 ;
-            INT32 hour = 0 ;
-            INT32 minute = 0 ;
 
             if ( '-' == fmt[0] )
             {
@@ -3207,8 +3202,6 @@ namespace import
          while( TRUE )
          {
             INT32 sign = 1 ;
-            INT32 hour = 0 ;
-            INT32 minute = 0 ;
 
             if ( '+' == fmt[0] )
             {

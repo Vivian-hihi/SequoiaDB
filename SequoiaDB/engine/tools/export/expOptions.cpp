@@ -594,6 +594,7 @@ namespace exprt
       return i ;
    }
 
+/*
    static INT32 getDel( const string &rawChar, CHAR &chr ) 
    {
       INT32 rc = SDB_OK ;
@@ -635,6 +636,7 @@ namespace exprt
       rc = SDB_INVALIDARG ;
       goto done ;
    }
+*/
 
    static INT32 _convertAsciiChar( const string& in, string& out )
    {
