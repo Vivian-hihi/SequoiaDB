@@ -71,7 +71,7 @@ namespace seadapter
       SDB_ASSERT( ARRAY_SIZE(_statDescription) ==
                   ( SEADPT_SESSION_STAT_MAX - 1 ),
                   "Stat enum and description size dose not match" ) ;
-      if ( status > sizeof( _statDescription ) )
+      if ( status >= SEADPT_SESSION_STAT_MAX )
       {
          return NULL ;
       }
