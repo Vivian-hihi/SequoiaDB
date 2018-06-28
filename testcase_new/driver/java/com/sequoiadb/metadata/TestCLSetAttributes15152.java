@@ -84,7 +84,7 @@ public class TestCLSetAttributes15152 extends SdbTestBase{
         option.put("AutoSplit", true);
         option.put("CompressionType", "lzw");
         option.put("Compressed", true);
-        option.put("AutoIndexId", false);
+        //option.put("AutoIndexId", false);
         option.put("EnsureShardingIndex", false);
         option.put("ReplSize", 2);
         option.put("StrictDataMode", true);
@@ -113,7 +113,6 @@ public class TestCLSetAttributes15152 extends SdbTestBase{
             Assert.assertEquals(actual.get("AutoSplit").toString(), expected.get("AutoSplit").toString());
             Assert.assertEquals(actual.get("CompressionTypeDesc").toString(), expected.get("CompressionType").toString());
             Assert.assertEquals(actual.get("AttributeDesc").toString(), "Compressed | StrictDataMode");
-            Assert.assertEquals(actual.get("AutoIndexId").toString(), expected.get("AutoIndexId").toString());
             Assert.assertEquals(actual.get("EnsureShardingIndex").toString(), expected.get("EnsureShardingIndex").toString());
             Assert.assertEquals(actual.get("ReplSize").toString(), expected.get("ReplSize").toString());
             cur.close();

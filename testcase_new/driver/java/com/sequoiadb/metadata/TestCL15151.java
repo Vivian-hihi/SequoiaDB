@@ -204,8 +204,7 @@ public class TestCL15151 extends SdbTestBase{
             Assert.assertEquals(actual.get("Partition").toString(), expected.get("Partition").toString());
             Assert.assertEquals(actual.get("AutoSplit").toString(), expected.get("AutoSplit").toString());
             Assert.assertEquals(actual.get("CompressionTypeDesc").toString(), expected.get("CompressionType").toString());
-            Assert.assertEquals(actual.get("AttributeDesc").toString(), "Compressed | StrictDataMode");
-            Assert.assertEquals(actual.get("AutoIndexId").toString(), expected.get("AutoIndexId").toString());
+            Assert.assertEquals(actual.get("AttributeDesc").toString(), "Compressed | NoIDIndex | StrictDataMode");
             Assert.assertEquals(actual.get("EnsureShardingIndex").toString(), expected.get("EnsureShardingIndex").toString());
             Assert.assertEquals(actual.get("ReplSize").toString(), expected.get("ReplSize").toString());
             cur.close();

@@ -98,7 +98,7 @@ public class TestAlterCappedCL15227 extends SdbTestBase{
             long expectSize = 1024 * 1024 * 1024;
             Assert.assertEquals(actual.get("Size").toString(), expectSize + "");
             Assert.assertEquals(actual.get("Max").toString(), expected.get("Max").toString());
-            Assert.assertEquals(actual.get("AutoIndexId").toString(), expected.get("AutoIndexId").toString());
+            //Assert.assertEquals(actual.get("AutoIndexId").toString(), expected.get("AutoIndexId").toString());
             Assert.assertEquals(actual.get("AttributeDesc").toString(), "NoIDIndex | Capped");
         }
         else
