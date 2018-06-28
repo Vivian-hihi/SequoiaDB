@@ -38,8 +38,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * @class SequoiadbDatasource
- * @brief The implements for SequoiaDB data source
+ * The implements for SequoiaDB data source
  * @since v1.12.6 & v2.2
  */
 public class SequoiadbDatasource {
