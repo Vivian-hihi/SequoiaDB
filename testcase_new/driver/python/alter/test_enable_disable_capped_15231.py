@@ -5,6 +5,7 @@
 # @author:     liuxiaoxuan 2018-04-27
 
 import unittest
+from bson.py3compat import (long_type)
 from pysequoiadb.error import SDBBaseError
 from alter.commlib import *
 from lib import testlib
@@ -35,8 +36,8 @@ class TestEnableDisableCapped15231(testlib.SdbTestBase):
       expect_cs_attributes = [{'Type': 1}]
       self.check_collection_space_attributes(expect_cs_attributes, condition = {'Name' : self.cs_name})
       
-      # check cl attributes after enable 
-      expect_cl_attributes = [{'AttributeDesc': 'NoIDIndex | Capped', 'AutoIndexId': False, 'Max': 10000, 'Size': 33554432}]
+      # check cl attributes after enable (AutoIndexId cannot show on snapshot(8))
+      expect_cl_attributes = [{'AttributeDesc': 'NoIDIndex | Capped', 'Max': long_type(10000), 'Size': long_type(33554432)}]
       self.check_collection_attributes(expect_cl_attributes, condition = {'Name' : self.cs_name + '.' + cl_name})
       
       # disable capped, must fail

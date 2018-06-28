@@ -4,6 +4,7 @@
 # @author:     liuxiaoxuan 2018-04-25
 
 import unittest
+from bson.py3compat import (long_type)
 from pysequoiadb.error import (SDBBaseError)
 from alter.commlib import *
 from lib import testlib
@@ -41,14 +42,15 @@ class TestAlterCL15214(testlib.SdbTestBase):
       expect_attributes2 = [new_attributes];
       self.check_collection_attributes(expect_attributes2, condition = {'Name' : self.cs_name + '.' + self.cl_name})
       
-      # alter index attributes
+      # alter index attributes (AutoIndexId cannot show on snapshot(8))
       alter_opts3 = {'AutoIndexId': False}
       self.cl.alter(options = alter_opts3)
       
       # check attributes
       # include alter_opts2
+      opts3_attributes = {'AttributeDesc': 'Compressed | NoIDIndex'}
       new_attributes = expect_attributes2[0].copy()
-      new_attributes.update(alter_opts3)
+      new_attributes.update(opts3_attributes)
       expect_attributes3 = [new_attributes];
       self.check_collection_attributes(expect_attributes3, condition = {'Name' : self.cs_name + '.' + self.cl_name})
       
@@ -57,7 +59,7 @@ class TestAlterCL15214(testlib.SdbTestBase):
       self.cl.alter(options = alter_opts4)
       
       # check attributes
-      opts4_attributes = {'ReplSize': 3, 'AttributeDesc': 'Compressed | StrictDataMode'}
+      opts4_attributes = {'ReplSize': 3, 'AttributeDesc': 'Compressed | NoIDIndex | StrictDataMode'}
       # include alter_opts3
       new_attributes = expect_attributes3[0].copy()
       new_attributes.update(opts4_attributes)
@@ -72,7 +74,7 @@ class TestAlterCL15214(testlib.SdbTestBase):
       capped_cl.alter(options = alter_opts5)
       
       # check capped cl attributes
-      expect_attributes5 = [{'AttributeDesc': 'NoIDIndex | Capped', 'AutoIndexId': False, 'Max': 9999999, 'OverWrite': True, 'Size': 33554432}]
+      expect_attributes5 = [{'AttributeDesc': 'NoIDIndex | Capped', 'Max': long_type(9999999), 'OverWrite': True, 'Size': long_type(33554432)}]
       self.check_collection_attributes(expect_attributes5, condition = {'Name' : 'cappedcs15214.cappedcl15214'})
     
       # drop cappedcs

@@ -40,7 +40,7 @@ def get_collection_attributes(db, **kwargs):
    # check useful key
    do_check_keys = ['ShardingKey', 'ShardingType', 'Partition', 'EnsureShardingIndex',
                     'AutoSplit', 'AttributeDesc', 'CompressionType', 'CompressionTypeDesc',
-                    'AutoIndexId', 'ReplSize', 'Max', 'OverWrite', 'Size']
+                    'ReplSize', 'Max', 'OverWrite', 'Size']
    for x in act_cl_attrs:
       for key in x.copy():
          if key not in do_check_keys:

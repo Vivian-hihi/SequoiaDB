@@ -43,13 +43,13 @@ class TestMeteData12446(testlib.SdbTestBase):
       except_cl_options_1 = {"Attribute": 3, "AttributeDesc": "Compressed | NoIDIndex",
                              "CompressionType": 1, "CompressionTypeDesc": "lzw",
                              "ShardingKey": {"a": 1}, "EnsureShardingIndex": False,
-                             "ShardingType": "range", "AutoIndexId": False}
+                             "ShardingType": "range"}
       self.check_cl_snapshot_8(self.cs_name + "." + cl_names[0], except_cl_options_1)
       
       except_cl_options_2 = {"Attribute": 3, "AttributeDesc": "Compressed | NoIDIndex",
                              "CompressionType": 0, "CompressionTypeDesc": "snappy",
                              "ShardingKey": {"a": 1}, "EnsureShardingIndex": False,
-                             "ShardingType": "range", "AutoIndexId": False}
+                             "ShardingType": "range"}
       self.check_cl_snapshot_8(self.cs_name + "." + cl_names[1], except_cl_options_2)
       
    def tearDown(self):

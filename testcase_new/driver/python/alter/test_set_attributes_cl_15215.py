@@ -4,6 +4,7 @@
 # @author:     liuxiaoxuan 2018-04-25
 
 import unittest
+from bson.py3compat import (long_type)
 from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
 from alter.commlib import *
 from lib import testlib
@@ -40,13 +41,14 @@ class TestCLSetAttributes15215(testlib.SdbTestBase):
       expect_attributes2 = [new_attributes];
       self.check_collection_attributes(expect_attributes2, condition = {'Name' : self.cs_name + '.' + self.cl_name})
       
-      # alter index attributes
+      # alter index attributes (AutoIndexId cannot show on snapshot(8))
       alter_opts3 = {'AutoIndexId': False}
       self.cl.set_attributes(options = alter_opts3)
       
       # check attributes
+      opts3_attributes = {'AttributeDesc': 'Compressed | NoIDIndex'}
       new_attributes = expect_attributes2[0].copy()
-      new_attributes.update(alter_opts3)
+      new_attributes.update(opts3_attributes)
       expect_attributes3 = [new_attributes];
       self.check_collection_attributes(expect_attributes3, condition = {'Name' : self.cs_name + '.' + self.cl_name})
       
@@ -55,7 +57,7 @@ class TestCLSetAttributes15215(testlib.SdbTestBase):
       self.cl.set_attributes(options = alter_opts4)
       
       # check attributes
-      opts4_attributes = {'ReplSize': 3, 'AttributeDesc': 'Compressed | StrictDataMode'}
+      opts4_attributes = {'ReplSize': 3, 'AttributeDesc': 'Compressed | NoIDIndex | StrictDataMode'}
       new_attributes = expect_attributes3[0].copy()
       new_attributes.update(opts4_attributes)
       expect_attributes4 = [new_attributes];
@@ -69,7 +71,7 @@ class TestCLSetAttributes15215(testlib.SdbTestBase):
       capped_cl.set_attributes(options = alter_opts5)
       
       # check capped cl attributes
-      expect_attributes5 = [{'AttributeDesc': 'NoIDIndex | Capped', 'AutoIndexId': False, 'Max': 9999999, 'OverWrite': True, 'Size': 33554432}]
+      expect_attributes5 = [{'AttributeDesc': 'NoIDIndex | Capped', 'Max': long_type(9999999), 'OverWrite': True, 'Size': long_type(33554432)}]
       self.check_collection_attributes(expect_attributes5, condition = {'Name' : 'cappedcs15215.cappedcl15215'})
     
       # drop cappedcs
