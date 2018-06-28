@@ -82,7 +82,6 @@ namespace CSharp.Meta
                 {"AutoSplit", true},
                 {"CompressionType", "lzw"},
                 {"Compressed", true},
-                {"AutoIndexId", false},
                 {"EnsureShardingIndex", false},
                 {"ReplSize", 2},
                 {"StrictDataMode", true}

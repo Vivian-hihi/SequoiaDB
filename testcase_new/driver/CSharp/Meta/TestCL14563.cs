@@ -116,8 +116,7 @@ namespace CSharp.Meta
             Assert.AreEqual(expected.GetElement("Partition").Value.ToString(), actual.GetElement("Partition").Value.ToString());
             Assert.AreEqual(expected.GetElement("AutoSplit").Value.ToString(), actual.GetElement("AutoSplit").Value.ToString());
             Assert.AreEqual(expected.GetElement("CompressionType").Value.ToString(), actual.GetElement("CompressionTypeDesc").Value.ToString());
-            Assert.AreEqual("Compressed | StrictDataMode", actual.GetElement("AttributeDesc").Value.ToString());
-            Assert.AreEqual(expected.GetElement("AutoIndexId").Value.ToString(), actual.GetElement("AutoIndexId").Value.ToString());
+            Assert.AreEqual("Compressed | NoIDIndex | StrictDataMode", actual.GetElement("AttributeDesc").Value.ToString());
             Assert.AreEqual(expected.GetElement("EnsureShardingIndex").Value.ToString(), actual.GetElement("EnsureShardingIndex").Value.ToString());
             Assert.AreEqual(expected.GetElement("ReplSize").Value.ToString(), actual.GetElement("ReplSize").Value.ToString());
             cur.Close();

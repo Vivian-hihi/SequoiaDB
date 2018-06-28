@@ -93,7 +93,6 @@ namespace CSharp.Meta
                 long expectSize = 1024 * 1024 * 1024;
                 Assert.AreEqual(expectSize + "", actual.GetElement("Size").Value.ToString());
                 Assert.AreEqual(expected.GetElement("Max").Value.ToString(), actual.GetElement("Max").Value.ToString());
-                Assert.AreEqual(expected.GetElement("AutoIndexId").Value.ToString(), actual.GetElement("AutoIndexId").Value.ToString());
                 Assert.AreEqual("NoIDIndex | Capped", actual.GetElement("AttributeDesc").Value.ToString());
             }
             else
