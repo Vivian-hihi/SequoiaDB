@@ -188,7 +188,6 @@ class TestCS15229 extends PHPUnit_Framework_TestCase
       $this -> assertEquals( "2147483648", $clInfo["Size"] -> __toString() );
       $this -> assertEquals( "10000", $clInfo["Max"] -> __toString() );
       $this -> assertFalse(  $clInfo["OverWrite"] );
-      $this -> assertFalse(  $clInfo["AutoIndexId"] );
    }
    
    function test_alterDisableCapped01()
