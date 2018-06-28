@@ -78,9 +78,6 @@ namespace CSharp.Meta
                     {"CompressionType", "lzw"}}}});
             alterArray.Add(new BsonDocument{
                 {"Name","set attributes"},
-                {"Args",new BsonDocument{{"AutoIndexId", false}}}});
-            alterArray.Add(new BsonDocument{
-                {"Name","set attributes"},
                 {"Args",new BsonDocument{{"ReplSize", 3}}}});
             alterArray.Add(new BsonDocument{
                 {"Name","set attributes"},
