@@ -45,18 +45,3 @@ SdbTestcaseConf.prototype.getHostList = function(){
    this._parse() ;
    return this.config['Host'] ;
 }
-
-SdbTestcaseConf.prototype.getOM = function(){
-   this._parse() ;
-
-   for( var i in this.config['Host'] )
-   {
-      var hostInfo = this.config['Host'][i] ;
-      if( hostInfo['isOm'] == 'true' )
-      {
-         return hostInfo ;
-      }
-   }
-
-   return null ;
-}

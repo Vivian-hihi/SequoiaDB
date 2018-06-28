@@ -11,27 +11,24 @@ runomtest.sh是用来测试om svc的API的脚本。
                "HostName": "h1",
                "IP": "192.168.20.151",
                "User": "root",
-               "Passwd": "sequoiadb1",
-               "IsOM": true
+               "Passwd": "sequoiadb1"
            },
            {
                "HostName": "h2",
                "IP": "192.168.20.152",
                "User": "root",
-               "Passwd": "sequoiadb2",
-               "IsOM": false
+               "Passwd": "sequoiadb2"
            },
            {
                "HostName": "h3",
                "IP": "192.168.20.153",
                "User": "root",
-               "Passwd": "sequoiadb3",
-               "IsOM": false
+               "Passwd": "sequoiadb3"
            }
        ]
    }
 
-   HostName：主机名；IP：该主机的IP地址；User：管理员用户名，现在必须要root；
-   Passwd：管理员密码；IsOM：是不是用作OM，必须有一台主机安装OM
+   HostName：主机名；IP：该主机的IP地址；User：管理员用户名，现在必须要root；Passwd：管理员密码；
+
 3. 执行runomtest.sh，命令行执行示例：./runomtest.sh -hn 192.168.20.151 -sp sequoiadb1
    runomtest.sh可以执行 ./runomtest.sh --help来查看参数
