@@ -175,37 +175,10 @@ namespace seadapter
             goto error ;
          }
 
-         if ( SEADPT_SESSION_STAT_QUERY_LAST_LID == _status )
+         if ( SEADPT_SESSION_STAT_CLEAN_DATA == _status )
          {
-            if ( 0 == docObjs.size() )
-            {
-               _lastPopLID = -1 ;
-               _expectLID = SEADPT_INVALID_LID ;
-            }
-            else
-            {
-               SDB_ASSERT( 1 == docObjs.size(),
-                           "Returned object number is wrong" ) ;
-               try
-               {
-                  _lastPopLID =
-                     docObjs[0].getField( SDB_SEADPT_FIELD_NAME_ID ).Number() ;
-               }
-               catch ( std::exception &e )
-               {
-                  PD_LOG( PDERROR, "Unexpected exception occurred: %s",
-                          e.what() ) ;
-                  rc = SDB_SYS ;
-                  goto error ;
-               }
-
-               // Remember the logical id of the last record in capped
-               // collection. After finishing processing the original
-               // collection, we'll start here.
-               _expectLID = _lastPopLID ;
-               PD_LOG( PDDEBUG, "Last logical id in capped collection[ %s ] is "
-                       "[ %lld ]", _cappedCLFullName.c_str(), _lastPopLID ) ;
-            }
+            _lastPopLID = -1 ;
+            _expectLID = SEADPT_INVALID_LID ;
             _switchStatus( SEADPT_SESSION_STAT_QUERY_NORMAL_TBL ) ;
             goto done ;
          }
@@ -593,38 +566,26 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptIndexSession::_queryLastCappedRecLID( BOOLEAN reverse )
+   INT32 _seAdptIndexSession::_queryOneCappedRec()
    {
       INT32 rc = SDB_OK ;
       MsgHeader *msg = NULL ;
       INT32 bufSize = 0 ;
       BSONObj selector ;
-      BSONObj orderBy ;
 
       try
       {
          // In the capped collection, the field name of logical id is '_id', and
          // the original '_id' is named '_rid'.
          selector = BSON( SDB_SEADPT_FIELD_NAME_ID << "" ) ;
-         if ( reverse )
-         {
-            orderBy = BSON( SDB_SEADPT_FIELD_NAME_ID << 1 ) ;
-         }
-         else
-         {
-            orderBy = BSON( SDB_SEADPT_FIELD_NAME_ID << -1 ) ;
-         }
-
          rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize, _cappedCLFullName.c_str(),
                                 FLG_QUERY_WITH_RETURNDATA, 0, 0, 1, NULL,
-                                &selector, &orderBy, NULL, _pEDUCB ) ;
+                                &selector, NULL, NULL, _pEDUCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Build query message failed[ %d ]", rc ) ;
          msg->TID = SEADPT_TID( _sessionID ) ;
          rc = sdbGetSeAdapterCB()->sendToDataNode( msg ) ;
-         PD_RC_CHECK( rc, PDERROR, "Send query message to data node failed[ %d ]",
-                      rc ) ;
-         PD_LOG( PDDEBUG, "Send query on capped collection[ %s ] to data node "
-               "successfully", _cappedCLFullName.c_str() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Send query message to data node "
+                      "failed[ %d ]", rc ) ;
       }
       catch ( std::exception &e )
       {
@@ -632,6 +593,45 @@ namespace seadapter
          PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
          goto error ;
       }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_truncateSrcCappedData()
+   {
+      INT32 rc = SDB_OK ;
+      MsgHeader *msg = NULL ;
+      INT32 bufSize = 0 ;
+      BSONObj query ;
+      const BSONObj emptyObj ;
+
+      try
+      {
+         BSONObjBuilder builder ;
+         builder.append( FIELD_NAME_COLLECTION, _cappedCLFullName.c_str() ) ;
+         query = builder.obj() ;
+      }
+      catch ( exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() );
+         goto error ;
+      }
+
+      rc = msgBuildQueryCMDMsg( (CHAR **)&msg, &bufSize,
+                                CMD_ADMIN_PREFIX CMD_NAME_TRUNCATE,
+                                query,emptyObj, emptyObj, emptyObj, 0,
+                                _pEDUCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build truncate message failed[ %d ]", rc ) ;
+      msg->TID = SEADPT_TID( _sessionID ) ;
+      rc = sdbGetSeAdapterCB()->sendToDataNode( msg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send truncate message to data node "
+                   "failed[ %d ]", rc ) ;
+      PD_LOG( PDDEBUG, "Send truncate command on capped collection[ %s ] to "
+              "data node successfully", _cappedCLFullName.c_str() ) ;
 
    done:
       return rc ;
@@ -1377,17 +1377,15 @@ namespace seadapter
          PD_LOG( PDEVENT, "Target index[ %s ] dose not exist on search engine. "
                  "Start all over again and the index will be re-created",
                  _indexName.c_str() ) ;
+         rc = _truncateSrcCappedData() ;
+         PD_RC_CHECK( rc, PDERROR, "Clean source capped data failed[ %d ]",
+                      rc ) ;
+         PD_LOG( PDEVENT, "No index on search engine. Clean the source capped "
+                 "data successfully" ) ;
 
          rc = _createIndex() ;
          PD_RC_CHECK( rc, PDERROR, "Create index failed[ %d ]", rc ) ;
-
-         rc = _queryLastCappedRecLID() ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Query last logical id failed[ %d ]", rc ) ;
-            goto error ;
-         }
-         _switchStatus( SEADPT_SESSION_STAT_QUERY_LAST_LID ) ;
+         _switchStatus( SEADPT_SESSION_STAT_CLEAN_DATA ) ;
          goto done ;
       }
 
@@ -1400,13 +1398,14 @@ namespace seadapter
             PD_LOG( PDEVENT, "Commit mark for index[ %s ] "
                     "dose not exist. Index will be dropped and recreated",
                     _indexName.c_str() ) ;
+
+            rc = _truncateSrcCappedData() ;
+            PD_RC_CHECK( rc, PDERROR, "Clean source capped data failed[ %d ]",
+                      rc ) ;
             rc = _createIndex( TRUE ) ;
             PD_RC_CHECK( rc, PDERROR, "Create index by force failed[ %d ]",
                          rc ) ;
-
-            rc = _queryLastCappedRecLID() ;
-            PD_RC_CHECK( rc, PDERROR, "Query first logical id failed[ %d ]", rc ) ;
-            _switchStatus( SEADPT_SESSION_STAT_QUERY_LAST_LID ) ;
+            _switchStatus( SEADPT_SESSION_STAT_CLEAN_DATA ) ;
             goto done ;
          }
          else if ( rc )
@@ -1433,7 +1432,7 @@ namespace seadapter
          PD_LOG( PDDEBUG, "Commit object: %s", resultObj.toString().c_str() ) ;
          _expectLID = lidEle.numberLong() ;
 
-         rc = _queryLastCappedRecLID( TRUE ) ;
+         rc = _queryOneCappedRec() ;
          PD_RC_CHECK( rc, PDERROR, "Query first logical id failed[ %d ]", rc ) ;
          _switchStatus( SEADPT_SESSION_STAT_COMP_LAST_LID ) ;
          goto done ;

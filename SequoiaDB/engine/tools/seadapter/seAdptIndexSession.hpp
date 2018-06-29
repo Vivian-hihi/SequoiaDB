@@ -57,7 +57,7 @@ namespace seadapter
       SEADPT_SESSION_STAT_BEGIN,             // Start from the beginning,
                                              // query normal collection.
       SEADPT_SESSION_STAT_UPDATE_CL_VERSION, // Update collection version.
-      SEADPT_SESSION_STAT_QUERY_LAST_LID,
+      SEADPT_SESSION_STAT_CLEAN_DATA,
       SEADPT_SESSION_STAT_COMP_LAST_LID,
       SEADPT_SESSION_STAT_QUERY_NORMAL_TBL,
       SEADPT_SESSION_STAT_QUERY_CAP_TBL,
@@ -95,7 +95,8 @@ namespace seadapter
       void  _switchStatus( SEADPT_SESSION_STATUS newStatus ) ;
       INT32 _sendGetmoreReq( INT64 contextID, UINT64 requestID ) ;
       INT32 _queryOrigCollection() ;
-      INT32 _queryLastCappedRecLID( BOOLEAN reverse = FALSE ) ;
+      INT32 _queryOneCappedRec() ;
+      INT32 _truncateSrcCappedData() ;
       INT32 _queryCappedCollection( BSONObj &condition ) ;
       INT32 _cleanData( INT64 recLID ) ;
       INT32 _parseSrcData( const BSONObj &origObj, _rtnExtOprType &oprType,
