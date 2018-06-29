@@ -63,7 +63,9 @@ namespace engine
 {
 
    #define JUDGE_RC( rc ) if ( SDB_OK != rc ) { goto error ; }
-
+   #define ISALLOWRUNCHANGE( level )   ( ( level == PMD_CFG_CHANGE_REBOOT || \
+                                       level == PMD_CFG_CHANGE_FORBIDDEN ) ? \
+                                       FALSE : TRUE )
    #define PMD_OPTION_BRK_TIME_DEFAULT (7000)
    #define PMD_OPTION_OPR_TIME_DEFAULT (300000)
    #define PMD_OPTION_DFT_MAXPOOL      (50)
@@ -113,9 +115,28 @@ namespace engine
       _pVMFile    = NULL ;
       _pVMCmd     = NULL ;
       _isWhole    = FALSE ;
+      _pMapColdKeyField = NULL ;
 
       SDB_ASSERT( _pMapKeyField, "Map key field can't be NULL" ) ;
    }
+
+   _pmdCfgExchange::_pmdCfgExchange ( MAP_K2V *pMapField,
+                                      MAP_K2V *pMapColdField,
+                                      const BSONObj &dataObj,
+                                      BOOLEAN load,
+                                      PMD_CFG_STEP step,
+                                      UINT32 mask )
+      :_pMapKeyField( pMapField ), _pMapColdKeyField(pMapColdField),
+      _cfgStep( step ),  _isLoad( load ), _dataObj( dataObj ), _mask( mask )
+      {
+         _dataType   = PMD_CFG_DATA_BSON ;
+         _pVMFile    = NULL ;
+         _pVMCmd     = NULL ;
+         _isWhole    = FALSE ;
+
+         SDB_ASSERT( _pMapKeyField, "Map key field can't be NULL" ) ;
+         SDB_ASSERT( _pMapColdKeyField, "Map cold key field can't be NULL" ) ;
+      }
 
    _pmdCfgExchange::_pmdCfgExchange( MAP_K2V *pMapField,
                                      po::variables_map *pVMCmd,
@@ -128,6 +149,7 @@ namespace engine
    {
       _dataType   = PMD_CFG_DATA_CMD ;
       _isWhole    = FALSE ;
+      _pMapColdKeyField = NULL ;
 
       SDB_ASSERT( _pMapKeyField, "Map key field can't be NULL" ) ;
    }
@@ -143,7 +165,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT32 readValue ;
-      BOOLEAN fieldStatus = TRUE ;
 
       if ( PMD_CFG_DATA_BSON == _dataType )
       {
@@ -185,55 +206,7 @@ namespace engine
 
       if ( SDB_OK == rc )
       {
-         // if user-input value equals current value, treat as unfield
-         if ( value == readValue )
-         {
-            fieldStatus = FALSE ;
-         }
-         if ( PMD_CFG_STEP_PRECHG == _cfgStep )
-         {
-            (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue, FALSE,
-                                                            FALSE, changeLevel ) ;
-         }
-         else if ( PMD_CFG_STEP_CHG == _cfgStep )
-         {
-            if ( PMD_CFG_CHANGE_REBOOT == changeLevel )
-            {
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue,
-                                                               !fieldStatus,
-                                                               fieldStatus,
-                                                               changeLevel ) ;
-            }
-            else if ( PMD_CFG_CHANGE_RUN == changeLevel )
-            {
-               value = readValue ;
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue, TRUE,
-                                                               fieldStatus,
-                                                               changeLevel ) ;
-            }
-            else if ( PMD_CFG_CHANGE_FORBIDDEN == changeLevel )
-            {
-               MAP_K2V::iterator it = _pMapKeyField->find( pFieldName ) ;
-               if ( _pMapKeyField->end() != it )
-               {
-                  it->second._hasField = FALSE ;
-                  it->second._hasMapped = fieldStatus ;
-               }
-               else
-               {
-                  (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue,
-                                                                  fieldStatus,
-                                                                  TRUE, 
-                                                                  changeLevel ) ;
-               }
-            }
-         }
-         else
-         {
-            value = readValue ;
-            (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue, TRUE,
-                                                            TRUE, changeLevel ) ;
-         }
+         _saveToMapInt(pFieldName, value, readValue, changeLevel, FALSE ) ;
       }
 
       return rc ;
@@ -244,67 +217,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( PMD_CFG_STEP_RESTORE == _cfgStep )
-      {
-         BOOLEAN fieldStatus = TRUE ;
-
-         if ( hasField( pFieldName ) )
-         {
-            // if default value equals current value, treat as unfield
-            if ( value == defaultValue )
-            {
-               fieldStatus = FALSE ;
-            }
-
-            if ( PMD_CFG_CHANGE_REBOOT == changeLevel )
-            {
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( defaultValue,
-                                                               !fieldStatus,
-                                                               fieldStatus,
-                                                               changeLevel ) ;
-            }
-            else if ( PMD_CFG_CHANGE_RUN == changeLevel )
-            {
-               value = defaultValue ;
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( defaultValue, TRUE,
-                                                               fieldStatus,
-                                                               changeLevel ) ;
-            }
-            else if ( PMD_CFG_CHANGE_FORBIDDEN == changeLevel )
-            {
-               MAP_K2V::iterator it = _pMapKeyField->find( pFieldName ) ;
-               if ( _pMapKeyField->end() != it )
-               {
-                  it->second._hasField = FALSE ;
-                  it->second._hasMapped = fieldStatus ;
-               }
-               else
-               {
-                  (*_pMapKeyField)[ pFieldName ] = pmdParamValue( defaultValue,
-                                                                  fieldStatus,
-                                                                  TRUE, 
-                                                                  changeLevel ) ;
-               }
-            }
-         }
-         goto done ;
-      }
-
       rc = readInt( pFieldName, value, changeLevel ) ;
       if ( SDB_FIELD_NOT_EXIST == rc )
       {
-         if ( PMD_CFG_STEP_PRECHG == _cfgStep ||
-              ( PMD_CFG_STEP_CHG == _cfgStep &&
-                PMD_CFG_CHANGE_FORBIDDEN == changeLevel ) )
-         {
-            rc = SDB_OK ;
-            goto done ;
-         }
-         value = defaultValue ;
+         _saveToMapInt(pFieldName, value, defaultValue, changeLevel, TRUE ) ;
          rc = SDB_OK ;
-         (*_pMapKeyField)[ pFieldName ] = pmdParamValue( value, TRUE, FALSE) ;
       }
-done:
+
       return rc ;
    }
 
@@ -313,7 +232,6 @@ done:
    {
       INT32 rc = SDB_OK ;
       string readValue ;
-      BOOLEAN fieldStatus = TRUE ;
 
       if ( PMD_CFG_DATA_BSON == _dataType )
       {
@@ -355,57 +273,8 @@ done:
 
       if ( SDB_OK == rc )
       {
-         // if user-input value equals current value, treat as unfield
-         if ( 0 == ossStrcasecmp( pValue, readValue.c_str() ) )
-         {
-            fieldStatus = FALSE ;
-         }
-         if ( PMD_CFG_STEP_PRECHG == _cfgStep )
-         {
-            (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue, FALSE,
-                                                            FALSE, changeLevel ) ;
-         }
-         else if ( PMD_CFG_STEP_CHG == _cfgStep )
-         {
-            if ( PMD_CFG_CHANGE_REBOOT == changeLevel )
-            {
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue,
-                                                               !fieldStatus,
-                                                               fieldStatus,
-                                                               changeLevel ) ;
-            }
-            else if ( PMD_CFG_CHANGE_RUN == changeLevel )
-            {
-               ossStrncpy( pValue, readValue.c_str(), len ) ;
-               pValue[ len - 1 ] = 0 ;
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue, TRUE,
-                                                               fieldStatus,
-                                                               changeLevel ) ;
-            }
-            else if ( PMD_CFG_CHANGE_FORBIDDEN == changeLevel )
-            {
-               MAP_K2V::iterator it = _pMapKeyField->find( pFieldName ) ;
-               if ( _pMapKeyField->end() != it )
-               {
-                  it->second._hasField = FALSE ;
-                  it->second._hasMapped = fieldStatus ;
-               }
-               else
-               {
-                  (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue,
-                                                                  fieldStatus,
-                                                                  TRUE, 
-                                                                  changeLevel ) ;
-               }
-            }
-         }
-         else
-         {
-            ossStrncpy( pValue, readValue.c_str(), len ) ;
-            pValue[ len - 1 ] = 0 ;
-            (*_pMapKeyField)[ pFieldName ] = pmdParamValue( readValue.c_str(), TRUE,
-                                                            TRUE, changeLevel ) ;
-         }
+         _saveToMapString( pFieldName, pValue, len, readValue,
+                           changeLevel, FALSE );
       }
 
       return rc ;
@@ -418,69 +287,14 @@ done:
    {
       INT32 rc = SDB_OK ;
 
-      if ( PMD_CFG_STEP_RESTORE == _cfgStep )
-      {
-         if ( hasField( pFieldName ) )
-         {
-            BOOLEAN fieldStatus = TRUE ;
-            // if default value equals current value, treat as unfield
-            if ( 0 == ossStrcasecmp( pValue, pDefault ) )
-            {
-               fieldStatus = FALSE ;
-            }
-
-            if ( PMD_CFG_CHANGE_REBOOT == changeLevel )
-            {
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( pDefault,
-                                                               !fieldStatus,
-                                                               fieldStatus,
-                                                               changeLevel ) ;
-            }
-            else if ( PMD_CFG_CHANGE_RUN == changeLevel )
-            {
-               ossStrncpy( pValue, pDefault, len ) ;
-               pValue[ len - 1 ] = 0 ;
-               (*_pMapKeyField)[ pFieldName ] = pmdParamValue( pDefault, TRUE,
-                                                               fieldStatus,
-                                                               changeLevel ) ;
-            }
-            else if ( PMD_CFG_CHANGE_FORBIDDEN == changeLevel )
-            {
-               MAP_K2V::iterator it = _pMapKeyField->find( pFieldName ) ;
-               if ( _pMapKeyField->end() != it )
-               {
-                  it->second._hasField = FALSE ;
-                  it->second._hasMapped = fieldStatus ;
-               }
-               else
-               {
-                  (*_pMapKeyField)[ pFieldName ] = pmdParamValue( pDefault,
-                                                                  fieldStatus,
-                                                                  TRUE, 
-                                                                  changeLevel ) ;
-               }
-            }
-         }
-         goto done ;
-      }
-
       rc = readString( pFieldName, pValue, len, changeLevel ) ;
       if ( SDB_FIELD_NOT_EXIST == rc && pDefault )
       {
-         if ( PMD_CFG_STEP_PRECHG == _cfgStep ||
-              ( PMD_CFG_STEP_CHG == _cfgStep &&
-                PMD_CFG_CHANGE_FORBIDDEN == changeLevel ) )
-         {
-            rc = SDB_OK ;
-            goto done ;
-         }
-         ossStrncpy( pValue, pDefault, len ) ;
-         pValue[ len - 1 ] = 0 ;
+         _saveToMapString( pFieldName, pValue, len, pDefault,
+                           changeLevel, TRUE ) ;
          rc = SDB_OK ;
-
-         (*_pMapKeyField)[ pFieldName ] = pmdParamValue( pValue, TRUE, FALSE) ;
       }
-   done:
+
       return rc ;
    }
 
@@ -494,7 +308,7 @@ done:
       }
       else if ( PMD_CFG_DATA_CMD == _dataType )
       {
-         _strStream << pFieldName << " = " << value << OSS_NEWLINE ;
+         _strStream << pFieldName << "=" << value << OSS_NEWLINE ;
       }
       else
       {
@@ -515,7 +329,7 @@ done:
       }
       else if ( PMD_CFG_DATA_CMD == _dataType )
       {
-         _strStream << pFieldName << " = " << pValue << OSS_NEWLINE ;
+         _strStream << pFieldName << "=" << pValue << OSS_NEWLINE ;
       }
       else
       {
@@ -552,7 +366,8 @@ done:
          it = mapKeyValue.begin() ;
          while ( it != mapKeyValue.end() )
          {
-            if ( FALSE == it->second._hasMapped )
+            if ( FALSE == it->second._hasMapped &&
+                 it->second._level != PMD_CFG_CHANGE_REBOOT )
             {
                _dataBuilder.append( it->first, it->second._value ) ;
             }
@@ -569,7 +384,7 @@ done:
          {
             if ( FALSE == it->second._hasMapped )
             {
-               _strStream << it->first << " = " << it->second._value
+               _strStream << it->first << "=" << it->second._value
                           << OSS_NEWLINE ;
             }
             ++it ;
@@ -585,6 +400,7 @@ done:
    {
       po::variables_map::iterator it = pVM->begin() ;
       MAP_K2V::iterator itKV ;
+      MAP_K2V::iterator itKVCold ;
       while ( it != pVM->end() )
       {
          itKV = _pMapKeyField->find( it->first ) ;
@@ -592,6 +408,15 @@ done:
          {
             ++it ;
             continue ;
+         }
+         if ( _pMapColdKeyField )
+         {
+            itKVCold = _pMapColdKeyField->find( it->first ) ;
+            if ( itKVCold != _pMapColdKeyField->end() &&
+                 TRUE == itKVCold->second._hasMapped )
+            {
+               continue ;
+            }
          }
          try
          {
@@ -619,6 +444,62 @@ done:
       }
    }
 
+   void _pmdCfgExchange::_saveToMapInt( const CHAR * pFieldName,
+                                        INT32 &value, const INT32 &newValue,
+                                        PMD_CFG_CHANGE changeLevel,
+                                        BOOLEAN useDefault )
+   {
+      BOOLEAN hasFieldValue = useDefault ? FALSE : TRUE ;
+
+      if ( PMD_CFG_STEP_CHG == _cfgStep &&
+           !ISALLOWRUNCHANGE( changeLevel ) )
+      {
+         if ( NULL != _pMapColdKeyField )
+         {
+            (*_pMapColdKeyField)[ pFieldName ] = pmdParamValue( newValue, TRUE,
+                                                                hasFieldValue,
+                                                                changeLevel ) ;
+         }
+      }
+      else
+      {
+
+         value = newValue ;
+         (*_pMapKeyField)[ pFieldName ] = pmdParamValue( newValue, TRUE,
+                                                         hasFieldValue,
+                                                         changeLevel ) ;
+      }
+   }
+
+   void _pmdCfgExchange::_saveToMapString( const CHAR *pFieldName, 
+                                           CHAR *pValue, UINT32 len,
+                                           const string &newValue,
+                                           PMD_CFG_CHANGE changeLevel,
+                                           BOOLEAN useDefault )
+   {
+      BOOLEAN hasFieldValue = useDefault ? FALSE : TRUE ;
+
+      if ( PMD_CFG_STEP_CHG == _cfgStep &&
+           !ISALLOWRUNCHANGE( changeLevel ) )
+      {
+         if ( NULL != _pMapColdKeyField )
+         {
+            (*_pMapColdKeyField)[ pFieldName ] = pmdParamValue( newValue, TRUE,
+                                                                hasFieldValue,
+                                                                changeLevel ) ;
+         }
+      }
+      else
+      {
+
+         ossStrncpy( pValue, newValue.c_str(), len ) ;
+         pValue[ len - 1 ] = 0 ;
+         (*_pMapKeyField)[ pFieldName ] = pmdParamValue( newValue, TRUE,
+                                                         hasFieldValue,
+                                                         changeLevel ) ;
+      }
+   }
+
    MAP_K2V* _pmdCfgExchange::getKVMap()
    {
       if ( PMD_CFG_DATA_CMD == _dataType )
@@ -635,6 +516,7 @@ done:
       else
       {
          MAP_K2V::iterator itKV ;
+         MAP_K2V::iterator itKVCold ;
          BSONObjIterator it( _dataObj ) ;
          while ( it.more() )
          {
@@ -645,6 +527,16 @@ done:
                  TRUE == itKV->second._hasMapped )
             {
                continue ;
+            }
+
+            if ( _pMapColdKeyField )
+            {
+               itKVCold = _pMapColdKeyField->find( e.fieldName() ) ;
+               if ( itKVCold != _pMapColdKeyField->end() &&
+                    TRUE == itKVCold->second._hasMapped )
+               {
+                  continue ;
+               }
             }
 
             if ( String == e.type() )
@@ -847,26 +739,17 @@ done:
       goto done ;
    }
 
-   INT32 _pmdCfgRecord::update( const BSONObj &fileConfig, 
-                                const BSONObj &userConfig,
-                                BOOLEAN useDefault,
-                                BSONObj &errorObj,
-                                string &confFileStr )
+   INT32 _pmdCfgRecord::update( const BSONObj &userConfig,
+                                BOOLEAN setForRestore,
+                                BSONObj &errorObj )
    {
       INT32 rc = SDB_OK ;
       BSONObj oldCfg ;
       MAP_K2V mapKeyField ;
-      MAP_K2V::iterator it ;
+      MAP_K2V mapColdKeyField ;
       BOOLEAN locked = FALSE ;
-      BSONObjBuilder errorObjBuilder ;
-      BSONArrayBuilder rebootArrBuilder ;
-      BSONArrayBuilder forbidArrBuilder ;
-      stringstream strStream ;
-      pmdCfgExchange ex1( &mapKeyField, fileConfig, TRUE, PMD_CFG_STEP_PRECHG ) ;
-      pmdCfgExchange ex2( &mapKeyField, userConfig, TRUE, PMD_CFG_STEP_CHG ) ;
-      pmdCfgExchange ex3( &mapKeyField, userConfig, TRUE, PMD_CFG_STEP_RESTORE ) ;
-      MAP_K2V::iterator itKV ;
-      BSONObjIterator iter( fileConfig ) ;
+      pmdCfgExchange ex( &mapKeyField, &mapColdKeyField, 
+                         userConfig, TRUE, PMD_CFG_STEP_CHG ) ;
 
       // save old cfg
       rc = toBSON( oldCfg, 0 ) ;
@@ -875,113 +758,38 @@ done:
       _mutex.get() ;
       locked = TRUE ;
 
-      // stage 1, mark cfg from config file
-      rc = doDataExchange( &ex1 ) ;
+      if ( TRUE == setForRestore )
+      {
+         ex.setWhole( TRUE ) ;
+      }
 
-      // stage 2, update new cfg
-      if ( !useDefault )
-      {
-         rc = doDataExchange( &ex2 ) ;
-      }
-      else
-      {
-         rc = doDataExchange( &ex3 ) ;
-      }
+      rc = doDataExchange( &ex ) ;
       if ( rc )
       {
          goto restore ;
       }
+
       rc = postLoaded( PMD_CFG_STEP_CHG ) ;
+      if ( rc )
+      {
+         goto restore ;
+      }
+
+      /// make kv map
+      ex.getKVMap() ;
+
+      rc = _saveUpdateChange( mapKeyField, mapColdKeyField,
+                              setForRestore, errorObj ) ;
+
       if ( rc )
       {
          goto restore ;
       }
       ++_changeID ;
 
-      try
+      if ( TRUE == setForRestore )
       {
-         it = mapKeyField.begin() ;
-         while ( it != mapKeyField.end() )
-         {
-            switch ( it->second._level )
-            {
-               case PMD_CFG_CHANGE_RUN :
-                  if ( !( useDefault &&
-                       !(FALSE == it->second._hasField &&
-                         FALSE == it->second._hasMapped ) ) )
-                  {
-                     strStream << it->first << "=" << it->second._value
-                               << OSS_NEWLINE ;
-                  }
-                  break ;
-               case PMD_CFG_CHANGE_REBOOT :
-                  if ( TRUE == it->second._hasField )
-                  {
-                     rebootArrBuilder.append( it->first ) ;
-                  }
-                  if ( !( useDefault &&
-                       !(FALSE == it->second._hasField &&
-                         FALSE == it->second._hasMapped ) ) )
-                  {
-                     strStream << it->first << "=" << it->second._value
-                               << OSS_NEWLINE ;
-                  }
-                  break ;
-               case PMD_CFG_CHANGE_FORBIDDEN :
-                  if ( TRUE == it->second._hasField )
-                  {
-                     if ( TRUE == it->second._hasMapped )
-                     {
-                        forbidArrBuilder.append( it->first ) ;
-                     }
-                  }
-                  else
-                  {
-                     if ( TRUE == it->second._hasMapped)
-                     {
-                        forbidArrBuilder.append( it->first ) ;
-                     }
-                     strStream << it->first << "=" << it->second._value
-                               << OSS_NEWLINE ;
-                  }
-                  break ;
-               default : break ;
-            }
-
-            if ( it->second._hasMapped )
-            {
-               _mapKeyValue[ it->first ] = it->second ;
-            }
-            ++it ;
-         }
-
-         // add remaining configs in config file back
-         while ( iter.more() )
-         {
-            BSONElement e = iter.next() ;
-
-            itKV = mapKeyField.find( e.fieldName() ) ;
-            if ( itKV != mapKeyField.end() )
-            {
-               continue ;
-            }
-
-            strStream << e.fieldName() << "=" << e.valuestrsafe()
-                      << OSS_NEWLINE ;
-         }
-
-         // contents to write to config file
-         confFileStr = strStream.str() ;
-
-         errorObjBuilder.append( "Reboot", rebootArrBuilder.arr() ) ;
-         errorObjBuilder.append( "Forbidden", forbidArrBuilder.arr() ) ;
-         errorObj = errorObjBuilder.obj() ;
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDWARNING, "Exception during config update: %s",
-                 e.what() ) ;
-         goto error ;
+         _purgeFieldMap( mapKeyField ) ;
       }
 
       // change notify
@@ -1214,6 +1022,121 @@ done:
       return SDB_OK ;
    }
 
+   void _pmdCfgRecord::_updateFieldMap( pmdCfgExchange *pEX,
+                                        const CHAR *pFieldName,
+                                        const CHAR *pValue,
+                                        PMD_CFG_CHANGE changeLevel )
+   {
+      if ( PMD_CFG_STEP_CHG == pEX->getCfgStep() &&
+           !ISALLOWRUNCHANGE( changeLevel ) )
+      {
+         MAP_K2V::iterator it = _mapColdKeyValue.find( pFieldName ) ;
+         if ( it != _mapColdKeyValue.end() )
+         {
+            it->second._value = pValue ;
+         }
+      }
+      else
+      {
+         MAP_K2V::iterator it = _mapKeyValue.find( pFieldName ) ;
+         if ( it != _mapKeyValue.end() )
+         {
+            it->second._value = pValue ;
+         }
+      }
+   }
+
+   void _pmdCfgRecord::_purgeFieldMap( MAP_K2V &mapKeyField )
+   {
+      MAP_K2V::iterator itSelf ;
+      itSelf = _mapKeyValue.begin() ;
+      while( itSelf != _mapKeyValue.end() )
+      {
+         if ( !itSelf->second._hasMapped &&
+              mapKeyField.find( itSelf->first ) == mapKeyField.end() )
+         {
+            _mapKeyValue.erase( itSelf++ ) ;
+         }
+         else
+         {
+            ++itSelf ;
+         }
+      }
+   }
+
+   INT32 _pmdCfgRecord::_saveUpdateChange( MAP_K2V &mapKeyField,
+                                           MAP_K2V &mapColdKeyField,
+                                           BOOLEAN setForRestore,
+                                           BSONObj &errorObj )
+   {
+      INT32 rc = SDB_OK ;
+      MAP_K2V::iterator iter ;
+      MAP_K2V::iterator iterCold ;
+      MAP_K2V::iterator itSelf ;
+      MAP_K2V::iterator iterColdSelf ;
+      BSONObjBuilder errorObjBuilder ;
+      BSONArrayBuilder rebootArrBuilder ;
+      BSONArrayBuilder forbidArrBuilder ;
+
+      iter = mapKeyField.begin() ;
+      while ( iter != mapKeyField.end() )
+      {
+         if ( TRUE == setForRestore &&
+              TRUE == iter->second._hasField )
+         {
+            ++iter ;
+            continue ;
+         }
+         _mapKeyValue[ iter->first ] = iter->second ;
+         ++iter ;
+      }
+
+      try
+      {
+         iterCold = mapColdKeyField.begin() ;
+         while ( iterCold != mapColdKeyField.end() )
+         {
+            if ( TRUE == setForRestore &&
+                 TRUE == iterCold->second._hasField )
+            {
+               ++iterCold ;
+               continue ;
+            }
+
+            if ( PMD_CFG_CHANGE_REBOOT == iterCold->second._level )
+            {
+               _mapColdKeyValue[ iterCold->first ] = iterCold->second ;
+            }
+
+            itSelf = _mapKeyValue.find( iterCold->first ) ;
+            if ( itSelf != _mapKeyValue.end() &&
+                 itSelf->second._value != iterCold->second._value )
+            {
+               if ( PMD_CFG_CHANGE_REBOOT == iterCold->second._level )
+               {
+                  rebootArrBuilder.append( iterCold->first ) ;
+               }
+               else if ( PMD_CFG_CHANGE_FORBIDDEN == iterCold->second._level )
+               {
+                  forbidArrBuilder.append( iterCold->first ) ;
+               }
+            }
+            ++iterCold ;
+         }
+
+         errorObjBuilder.append( "Reboot", rebootArrBuilder.arr() ) ;
+         errorObjBuilder.append( "Forbidden", forbidArrBuilder.arr() ) ;
+         errorObj = errorObjBuilder.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDWARNING, "Exception during config update: %s",
+                 e.what() ) ;
+         rc = SDB_SYS ;
+      }
+      return rc ;
+   }
+
    BOOLEAN _pmdCfgRecord::hasField( const CHAR * pFieldName )
    {
       if ( _mapKeyValue.find( pFieldName ) == _mapKeyValue.end() )
@@ -1352,28 +1275,56 @@ done:
       }
       else
       {
-         if ( 0 == ossStrcmp( pValue, pDefaultValue ) )
-         {
-            if ( hideParam && pEX->isSkipHideDefault() )
-            {
-               goto done ;
-            }
-            else if ( !hideParam && pEX->isSkipNormalDefault() )
-            {
-               goto done ;
-            }
-         }
+          MAP_K2V::iterator it ;
+          MAP_K2V::iterator itCold ;
 
-         if ( pEX->isSkipUnField() )
-         {
-            MAP_K2V::iterator it = _mapKeyValue.find( pFieldName ) ;
-            if ( it == _mapKeyValue.end() || !it->second._hasField )
-            {
-               goto done ;
-            }
-         }
+          /// 1. when is default
+          if ( 0 == ossStrcmp( pValue, pDefaultValue ) )
+          {
+             if ( hideParam && pEX->isSkipHideDefault() )
+             {
+                goto done ;
+             }
+             else if ( !hideParam && pEX->isSkipNormalDefault() )
+             {
+                goto done ;
+             }
+          }
 
-         _result = pEX->writeString( pFieldName, pValue ) ;
+          /// 2. skip unfield
+          if ( pEX->isSkipUnField() )
+          {
+             it = _mapKeyValue.find( pFieldName ) ;
+             itCold = _mapColdKeyValue.end() ;
+
+             if ( pEX->isLocalMode() && PMD_CFG_CHANGE_REBOOT == changeLevel )
+             {
+                if ( _mapColdKeyValue.end() != ( itCold = _mapColdKeyValue.find( pFieldName ) ) )
+                {
+                   it = _mapKeyValue.end() ;
+                }
+             }
+
+             if ( ( it == _mapKeyValue.end() || !it->second._hasField ) &&
+                  ( itCold == _mapColdKeyValue.end() || !itCold->second._hasField ) )
+             {
+                goto done ;
+             }
+          }
+
+         if ( PMD_CFG_CHANGE_REBOOT != changeLevel ||
+              !pEX->isLocalMode() ||
+              ( _mapKeyValue.end() != ( it = _mapKeyValue.find( pFieldName ) ) &&
+                0 != ossStrcmp( pValue, it->second._value.c_str() ) ) ||
+              ( _mapColdKeyValue.end() == ( itCold = _mapColdKeyValue.find( pFieldName ) ) ) )
+         {
+             _result = pEX->writeString( pFieldName, pValue ) ;
+         }
+         else
+         {
+             _result = pEX->writeString( pFieldName, 
+                                              itCold->second._value.c_str() ) ;
+         }
          if ( _result )
          {
             PD_LOG( PDWARNING, "Write field[%s] failed, rc: %d",
@@ -1414,12 +1365,10 @@ done:
                utilCatPath( pValue, len, "" ) ;
             }
          }
+
          /// update map's value
-         MAP_K2V::iterator it = _mapKeyValue.find( pFieldName ) ;
-         if ( it != _mapKeyValue.end() )
-         {
-            it->second._value = pValue ;
-         }
+         _updateFieldMap( pEX, pFieldName, pValue, changeLevel ) ;
+
       }
       return _result ;
    }
@@ -1455,6 +1404,7 @@ done:
                                      BOOLEAN hideParam )
    {
       CHAR szTmp[ PMD_MAX_ENUM_STR_LEN + 1 ] = {0} ;
+      string boolValue ;
       ossStrcpy( szTmp, value ? "TRUE" : "FALSE" ) ;
       _result = rdxString( pEX, pFieldName, szTmp, sizeof(szTmp), required,
                            changeLevel, defaultValue ? "TRUE" : "FALSE",
@@ -1466,12 +1416,10 @@ done:
             value = defaultValue ;
          }
 
-         /// update map's value
-         MAP_K2V::iterator it = _mapKeyValue.find( pFieldName ) ;
-         if ( it != _mapKeyValue.end() )
-         {
-            it->second._value = value ? "TRUE" : "FALSE" ;
-         }
+         // update map's value
+         boolValue = value ? "TRUE" : "FALSE" ;
+         _updateFieldMap( pEX, pFieldName, boolValue.c_str(), changeLevel ) ;
+
       }
       return _result ;
    }
@@ -1523,28 +1471,56 @@ done:
       }
       else
       {
-         if ( value == defaultValue )
-         {
-            if ( hideParam && pEX->isSkipHideDefault() )
-            {
-               goto done ;
-            }
-            else if ( !hideParam && pEX->isSkipNormalDefault() )
-            {
-               goto done ;
-            }
-         }
+          MAP_K2V::iterator it ;
+          MAP_K2V::iterator itCold ;
 
-         if ( pEX->isSkipUnField() )
-         {
-            MAP_K2V::iterator it = _mapKeyValue.find( pFieldName ) ;
-            if ( it == _mapKeyValue.end() || !it->second._hasField )
-            {
-               goto done ;
-            }
-         }
+          /// 1. when is default
+          if ( value == defaultValue )
+          {
+             if ( hideParam && pEX->isSkipHideDefault() )
+             {
+                goto done ;
+             }
+             else if ( !hideParam && pEX->isSkipNormalDefault() )
+             {
+                goto done ;
+             }
+          }
 
-         _result = pEX->writeInt( pFieldName, value ) ;
+          /// 2. skip unfield
+          if ( pEX->isSkipUnField() )
+          {
+             it = _mapKeyValue.find( pFieldName ) ;
+             itCold = _mapColdKeyValue.end() ;
+
+             if ( pEX->isLocalMode() && PMD_CFG_CHANGE_REBOOT == changeLevel )
+             {
+                if ( _mapColdKeyValue.end() != ( itCold = _mapColdKeyValue.find( pFieldName ) ) )
+                {
+                   it = _mapKeyValue.end() ;
+                }
+             }
+
+             if ( ( it == _mapKeyValue.end() || !it->second._hasField ) &&
+                  ( itCold == _mapColdKeyValue.end() || !itCold->second._hasField ) )
+             {
+                goto done ;
+             }
+          }
+
+         if ( PMD_CFG_CHANGE_REBOOT != changeLevel ||
+              !pEX->isLocalMode() ||
+              ( _mapKeyValue.end() != ( it = _mapKeyValue.find( pFieldName ) ) &&
+                value != ossAtoi( it->second._value.c_str() ) ) ||
+              ( _mapColdKeyValue.end() == ( itCold = _mapColdKeyValue.find( pFieldName ) ) ) )
+         {
+             _result = pEX->writeInt( pFieldName, value ) ;
+         }
+         else
+         {
+             _result = pEX->writeInt( pFieldName, 
+                                      ossAtoi( itCold->second._value.c_str() ) ) ;
+         }
          if ( _result )
          {
             PD_LOG( PDWARNING, "Write field[%s] failed, rc: %d",
@@ -3055,66 +3031,6 @@ done:
 
    done:
       PD_TRACE_EXIT ( SDB__PMDOPTMGR_REFLUSH2FILE) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _pmdOptionsMgr::changeConfig( const BSONObj &objData,
-                                       BSONObj &errorObj,
-                                       BOOLEAN useDefault )
-   {
-      INT32 rc = SDB_OK ;
-
-      pmdOptionsCB tmpCB ;
-      BSONObj configObj ;
-      string confFileStr ;
-      CHAR conf[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-
-      rc = tmpCB.initFromFile( getConfFile(), FALSE ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Error while Reading from config file[%s], rc: %d",
-                 getConfFile(), rc ) ;
-         goto error ;
-      }
-
-      rc = tmpCB.toBSON( configObj, PMD_CFG_MASK_SKIP_UNFIELD ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Convert config to bson failed, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      rc = update( configObj, objData, useDefault, errorObj, confFileStr ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-      rc = utilBuildFullPath( _krcbConfPath, PMD_DFT_CONF,
-                              OSS_MAX_PATHSIZE, conf ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to build full path of configure file, "
-                 "rc: %d", rc ) ;
-         goto error;
-      }
-
-      {
-         ossScopedLock lock( &_mutex ) ;
-
-         rc = utilWriteConfigFile( conf, confFileStr.c_str(), FALSE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to write config[%s], rc: %d",
-                      conf, rc ) ;
-
-         // save notify
-         if ( getConfigHandler() )
-         {
-            getConfigHandler()->onConfigSave() ;
-         }
-      }
-
-   done:
       return rc ;
    error:
       goto done ;

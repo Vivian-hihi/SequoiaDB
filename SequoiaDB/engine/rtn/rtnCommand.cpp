@@ -2213,47 +2213,17 @@ namespace engine
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnUpdateConfig)
-
-   _rtnUpdateConfig::_rtnUpdateConfig()
+   _configOprBase::_configOprBase()
    {
    }
 
-   _rtnUpdateConfig::~_rtnUpdateConfig()
+   _configOprBase::~_configOprBase()
    {
    }
 
-   const CHAR* _rtnUpdateConfig::name()
-   {
-      return NAME_UPDATE_CONFIG ;
-   }
-
-   RTN_COMMAND_TYPE _rtnUpdateConfig::type()
-   {
-      return CMD_UPDATE_CONFIG ;
-   }
-
-   INT32 _rtnUpdateConfig::init( INT32 flags, INT64 numToSkip,
-                                 INT64 numToReturn,
-                                 const CHAR *pMatcherBuff,
-                                 const CHAR * pSelectBuff,
-                                 const CHAR * pOrderByBuff,
-                                 const CHAR * pHintBuff )
-   {
-      BSONObj options = BSONObj( pMatcherBuff ) ;
-      _newCfgObj = options.getObjectField( FIELD_NAME_CONFIGS ) ;
-      _newCfgObj.getOwned() ;
-
-      return SDB_OK ;
-   }
-
-   INT32 _rtnUpdateConfig::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                                 _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                                 INT16 w, INT64 * pContextID )
+   INT32 _configOprBase::_errorReport( BSONObj &returnObj )
    {
       INT32 rc = SDB_OK ;
-      pmdOptionsCB *optCB = pmdGetOptionCB() ;
-      BSONObj returnObj ;
       string returnStr;
       INT32 rebootCount = 0 ;
       BOOLEAN rebootFirstEntry  = TRUE ;
@@ -2262,22 +2232,12 @@ namespace engine
       BSONElement rebootEle ;
       BSONElement forbidEle ;
 
-      rc = optCB->changeConfig( _newCfgObj, returnObj ) ;
-
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Update config[%s] failed, rc: %d",
-                 _newCfgObj.toString().c_str(), rc ) ;
-         goto error ;
-      }
-
       try
       {
          rebootEle = returnObj.getField( "Reboot" ) ;
          if ( Array == rebootEle.type() )
          {
-            BSONArray array = BSONArray( rebootEle.embeddedObject() ) ;
-            BSONObjIterator iter( array );
+            BSONObjIterator iter( rebootEle.embeddedObject() ) ;
             while ( iter.more() )
             {
                BSONElement ele = iter.next() ;
@@ -2285,9 +2245,9 @@ namespace engine
                {
                   if ( TRUE == rebootFirstEntry )
                   {
-                     returnStr += "Config" ;
-                     returnStr += " '" ;
+                     returnStr += "Config '" ;
                      returnStr +=  ele.valuestr() ;
+
                      rebootFirstEntry = FALSE ;
                   }
                   else
@@ -2317,8 +2277,7 @@ namespace engine
          forbidEle = returnObj.getField( "Forbidden" ) ;
          if ( Array == forbidEle.type() )
          {
-            BSONArray array = BSONArray( forbidEle.embeddedObject() ) ;
-            BSONObjIterator iter( array );
+            BSONObjIterator iter( forbidEle.embeddedObject() ) ;
             while ( iter.more() )
             {
                BSONElement ele = iter.next() ;
@@ -2326,8 +2285,7 @@ namespace engine
                {
                   if ( TRUE == forbidFirstEntry )
                   {
-                     returnStr += " Config" ;
-                     returnStr += " '" ;
+                     returnStr += " Config '" ;
                      returnStr +=  ele.valuestr() ;
                      forbidFirstEntry = FALSE ;
                   }
@@ -2357,7 +2315,8 @@ namespace engine
       }
       catch( std::exception &e )
       {
-         PD_LOG( PDWARNING, "Exception during updateConf info parsing: %s",
+         PD_LOG( PDWARNING, "Exception during updateConf/deleteConf \
+                 info parsing: %s",
                  e.what() ) ;
          goto error ;
       }
@@ -2367,6 +2326,125 @@ namespace engine
          rc = SDB_RTN_CONF_NOT_TAKE_EFFECT ;
          PD_LOG_MSG( PDERROR, returnStr.c_str() ) ;
       }
+done:
+   return rc ;
+error:
+   goto done ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnUpdateConfig)
+
+   _rtnUpdateConfig::_rtnUpdateConfig()
+   {
+   }
+
+   _rtnUpdateConfig::~_rtnUpdateConfig()
+   {
+   }
+
+   const CHAR* _rtnUpdateConfig::name()
+   {
+      return NAME_UPDATE_CONFIG ;
+   }
+
+   RTN_COMMAND_TYPE _rtnUpdateConfig::type()
+   {
+      return CMD_UPDATE_CONFIG ;
+   }
+
+   INT32 _rtnUpdateConfig::init( INT32 flags, INT64 numToSkip,
+                                 INT64 numToReturn,
+                                 const CHAR *pMatcherBuff,
+                                 const CHAR * pSelectBuff,
+                                 const CHAR * pOrderByBuff,
+                                 const CHAR * pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj options = BSONObj( pMatcherBuff ) ;
+      BSONObj cfgObj = options.getObjectField( FIELD_NAME_CONFIGS ) ;
+      _newCfgObj.getOwned() ;
+      BSONObjBuilder newObjBuilder ;
+
+      try
+      {
+         BSONObjIterator iter( cfgObj );
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            if ( ele.isNumber() || String == ele.type() )
+            {
+               newObjBuilder.append( ele ) ;
+            }
+            else if ( Bool == ele.type() )
+            {
+               newObjBuilder.append( ele.fieldName(), ele.Bool() ? "TRUE" : "FALSE" ) ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Field[%s] type[%d] is not number/boolean/string", ele.fieldName(),
+                       ele.type() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDWARNING, "Exception during updateConf init: %s",
+                 e.what() ) ;
+      }
+
+      _newCfgObj = newObjBuilder.obj() ;
+
+      done:
+         return rc ;
+      error:
+         goto done ;
+   }
+
+   INT32 _rtnUpdateConfig::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                 _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                                 INT16 w, INT64 * pContextID )
+   {
+      INT32 rc = SDB_OK ;
+      pmdOptionsCB *optCB = pmdGetOptionCB() ;
+      BSONObj returnObj ;
+      pmdOptionsCB tmpOptionsCB ;
+      BSONObj userConfig ;
+
+      // check config value validity
+      rc = tmpOptionsCB.restore( _newCfgObj, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Error while checking update configuration[%s], rc: %d",
+                 _newCfgObj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = tmpOptionsCB.toBSON( userConfig, PMD_CFG_MASK_SKIP_UNFIELD ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Convert config to bson failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = optCB->update( userConfig, FALSE, returnObj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Update config[%s] failed, rc: %d",
+                 _newCfgObj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = optCB->reflush2File( PMD_CFG_MASK_SKIP_UNFIELD | PMD_CFG_MASK_MODE_LOCAL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Reflush update config[%s] to file failed, rc: %d",
+                 _newCfgObj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = _errorReport( returnObj ) ;
 
    done:
       return rc ;
@@ -2415,16 +2493,37 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdOptionsCB *optCB = pmdGetOptionCB() ;
       BSONObj returnObj ;
-      string returnStr;
-      INT32 rebootCount = 0 ;
-      BOOLEAN rebootFirstEntry  = TRUE ;
-      INT32 forbidCount = 0 ;
-      BOOLEAN forbidFirstEntry  = TRUE ;
-      BSONElement rebootEle ;
-      BSONElement forbidEle ;
+      BSONObj currentConf ;
+      BSONObjBuilder deleteConfBuilder ;
 
-      rc = optCB->changeConfig( _newCfgObj, returnObj, TRUE ) ;
+      rc = optCB->toBSON( currentConf, 0 ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Construct delete config[%s] failed, rc: %d",
+                 _newCfgObj.toString().c_str(), rc ) ;
+         goto error ;
+      }
 
+      try
+      {
+         BSONObj::iterator confIter = currentConf.begin() ;
+         while ( confIter.more() )
+         {
+            BSONElement elem = confIter.next() ;
+            if ( !_newCfgObj.hasField( elem.fieldName() ) )
+            {
+               deleteConfBuilder.append( elem ) ;
+            }
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDWARNING, "Exception during deleteConf contructing: %s",
+                 e.what() ) ;
+         goto error ;
+      }
+
+      rc = optCB->update( deleteConfBuilder.obj(), TRUE, returnObj ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Delete config[%s] failed, rc: %d",
@@ -2432,102 +2531,15 @@ namespace engine
          goto error ;
       }
 
-      try
+      rc = optCB->reflush2File( PMD_CFG_MASK_SKIP_UNFIELD | PMD_CFG_MASK_MODE_LOCAL ) ;
+      if ( rc )
       {
-         rebootEle = returnObj.getField( "Reboot" ) ;
-         if ( Array == rebootEle.type() )
-         {
-            BSONArray array = BSONArray( rebootEle.embeddedObject() ) ;
-            BSONObjIterator iter( array );
-            while ( iter.more() )
-            {
-               BSONElement ele = iter.next() ;
-               if ( String == ele.type() )
-               {
-                  if ( TRUE == rebootFirstEntry )
-                  {
-                     returnStr += "Config" ;
-                     returnStr += " '" ;
-                     returnStr +=  ele.valuestr() ;
-                     rebootFirstEntry = FALSE ;
-                  }
-                  else
-                  {
-                     returnStr += ", '" ;
-                     returnStr +=  ele.valuestr() ;
-                  }
-                  returnStr += "'" ;
-                  rebootCount++ ;
-               }
-               if ( 3 == rebootCount )
-               {
-                  break ;
-               }
-            }
-         }
-
-         if ( rebootCount > 0 && rebootCount < 3 )
-         {
-            returnStr += " require(s) restart to take effect." ;
-         }
-         else if ( rebootCount == 3 )
-         {
-            returnStr += ", etc. require(s) restart to take effect." ;
-         }
-
-         forbidEle = returnObj.getField( "Forbidden" ) ;
-         if ( Array == forbidEle.type() )
-         {
-            BSONArray array = BSONArray( forbidEle.embeddedObject() ) ;
-            BSONObjIterator iter( array );
-            while ( iter.more() )
-            {
-               BSONElement ele = iter.next() ;
-               if ( String == ele.type() )
-               {
-                  if ( TRUE == forbidFirstEntry )
-                  {
-                     returnStr += " Config" ;
-                     returnStr += " '" ;
-                     returnStr +=  ele.valuestr() ;
-                     forbidFirstEntry = FALSE ;
-                  }
-                  else
-                  {
-                     returnStr += ", '" ;
-                     returnStr +=  ele.valuestr() ;
-                  }
-                  returnStr += "'" ;
-                  forbidCount++ ;
-               }
-               if ( 3 == forbidCount )
-               {
-                  break ;
-               }
-            }
-         }
-
-         if ( forbidCount > 0 && forbidCount < 3 )
-         {
-            returnStr += " cannot be changed." ;
-         }
-         else if ( forbidCount == 3 )
-         {
-            returnStr += ", etc. cannot be changed." ;
-         }
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDWARNING, "Exception during deleteConf info parsing: %s",
-                 e.what() ) ;
+         PD_LOG( PDERROR, "Reflush update config[%s] to file failed, rc: %d",
+                 _newCfgObj.toString().c_str(), rc ) ;
          goto error ;
       }
 
-      if ( rebootCount > 0 || forbidCount > 0 )
-      {
-         rc = SDB_RTN_CONF_NOT_TAKE_EFFECT ;
-         PD_LOG_MSG( PDERROR, returnStr.c_str() ) ;
-      }
+      rc = _errorReport( returnObj ) ;
 
    done:
       return rc ;

@@ -67,9 +67,7 @@ namespace engine
    {
       PMD_CFG_STEP_INIT       = 0,           // initialize
       PMD_CFG_STEP_REINIT,                   // re-init
-      PMD_CFG_STEP_PRECHG,                    // preliminary change
-      PMD_CFG_STEP_CHG,                       // change in runtime
-      PMD_CFG_STEP_RESTORE                    // restore to default value
+      PMD_CFG_STEP_CHG                       // change in runtime
    } ;
 
    enum PMD_CFG_CHANGE
@@ -141,6 +139,7 @@ namespace engine
    #define PMD_CFG_MASK_SKIP_UNFIELD         0x00000001
    #define PMD_CFG_MASK_SKIP_NORMALDFT       0x00000002
    #define PMD_CFG_MASK_SKIP_HIDEDFT         0x00000004
+   #define PMD_CFG_MASK_MODE_LOCAL           0x00000008
 
    /*
       _pmdCfgExchange define
@@ -151,6 +150,12 @@ namespace engine
 
       public:
          _pmdCfgExchange ( MAP_K2V *pMapField,
+                           const BSONObj &dataObj,
+                           BOOLEAN load = TRUE,
+                           PMD_CFG_STEP step = PMD_CFG_STEP_INIT,
+                           UINT32 mask = 0 ) ;
+         _pmdCfgExchange ( MAP_K2V *pMapField,
+                           MAP_K2V *pMapColdField,
                            const BSONObj &dataObj,
                            BOOLEAN load = TRUE,
                            PMD_CFG_STEP step = PMD_CFG_STEP_INIT,
@@ -199,6 +204,10 @@ namespace engine
          {
             return ( _mask & PMD_CFG_MASK_SKIP_NORMALDFT ) ? TRUE : FALSE ;
          }
+         BOOLEAN isLocalMode() const
+         {
+            return ( _mask & PMD_CFG_MASK_MODE_LOCAL ) ? TRUE : FALSE ;
+         }
          BOOLEAN isWhole() const { return _isWhole ; }
 
       private:
@@ -206,9 +215,19 @@ namespace engine
          MAP_K2V*    getKVMap() ;
 
          void        _makeKeyValueMap( po::variables_map *pVM ) ;
+         void        _saveToMapInt( const CHAR * pFieldName,
+                                    INT32 &value,const INT32 &newValue,
+                                    PMD_CFG_CHANGE changeLevel,
+                                    BOOLEAN useDefault ) ;
+         void        _saveToMapString( const CHAR *pFieldName, 
+                                       CHAR *pValue, UINT32 len,
+                                       const string &newValue,
+                                       PMD_CFG_CHANGE changeLevel,
+                                       BOOLEAN useDefault ) ;
 
       private:
          MAP_K2V*                _pMapKeyField ;
+         MAP_K2V*                _pMapColdKeyField ;
          PMD_CFG_STEP            _cfgStep ;
          BOOLEAN                 _isLoad ;
 
@@ -283,11 +302,9 @@ namespace engine
          INT32 change( const BSONObj &objData,
                        BOOLEAN isWhole = FALSE ) ;
 
-         INT32 update( const BSONObj &fileConfig, 
-                       const BSONObj &userConfig,
-                       BOOLEAN useDefault,
-                       BSONObj &errorObj,
-                       string &confFileStr ) ;
+         INT32 update( const BSONObj &userConfig,
+                       BOOLEAN setForRestore,
+                       BSONObj &errorObj ) ;
 
          INT32 toBSON ( BSONObj &objData,
                         UINT32 mask = PMD_CFG_MASK_SKIP_HIDEDFT ) ;
@@ -318,6 +335,15 @@ namespace engine
          INT32  _addToFieldMap( const string &key, const string &value,
                                 BOOLEAN hasMapped = TRUE,
                                 BOOLEAN hasField = TRUE ) ;
+         void  _updateFieldMap( pmdCfgExchange *pEX,
+                                const CHAR *pFieldName,
+                                const CHAR *pValue,
+                                PMD_CFG_CHANGE changeLevel ) ;
+         void  _purgeFieldMap( MAP_K2V &mapKeyField ) ;
+         INT32  _saveUpdateChange( MAP_K2V &mapKeyField,
+                                   MAP_K2V &mapColdKeyField,
+                                   BOOLEAN setForRestore,
+                                   BSONObj &errorObj ) ;
 
       protected:
          virtual INT32 doDataExchange( pmdCfgExchange *pEX ) = 0 ;
@@ -388,6 +414,7 @@ namespace engine
          IConfigHandle                       *_pConfigHander ;
 
          MAP_K2V                             _mapKeyValue ;
+         MAP_K2V                             _mapColdKeyValue ;
       protected:
          ossSpinXLatch                       _mutex ;
 
@@ -425,9 +452,6 @@ namespace engine
          INT32 makeAllDir() ;
 
          INT32 reflush2File( UINT32 mask = PMD_CFG_MASK_SKIP_UNFIELD ) ;
-
-         INT32 changeConfig( const BSONObj &objData, BSONObj &errorObj,
-                             BOOLEAN useDefault = FALSE ) ;
 
       public:
          OSS_INLINE const CHAR *getConfPath() const

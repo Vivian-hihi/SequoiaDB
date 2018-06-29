@@ -960,7 +960,15 @@ namespace engine
                               INT16 w = 1, INT64 *pContextID = NULL ) ;
    } ;
 
-   class _rtnUpdateConfig : public _rtnCommand
+   class _configOprBase : public _rtnCommand
+   {
+      protected:
+         _configOprBase() ;
+         virtual ~_configOprBase() ;
+         virtual INT32 _errorReport( BSONObj &returnObj ) ;
+   } ;
+
+   class _rtnUpdateConfig : public _configOprBase
    {
       DECLARE_CMD_AUTO_REGISTER()
 
@@ -983,7 +991,7 @@ namespace engine
          BSONObj _newCfgObj ;
    } ;
 
-   class _rtnDeleteConfig : public _rtnCommand
+   class _rtnDeleteConfig : public _configOprBase
    {
       DECLARE_CMD_AUTO_REGISTER()
 
