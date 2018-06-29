@@ -1825,13 +1825,13 @@
                            "en": "getCoordRG()"
                         },
 						{
-                           "id": 1432290821,
+                           "id": 1432192788,
                            "file": "getSpareRG",
                            "cn": "getSpareRG()",
                            "en": "getSpareRG()"
                         },
                         {
-                           "id": 1432290820,
+                           "id": 1432192771,
                            "file": "createSpareRG",
                            "cn": "createSpareRG()",
                            "en": "createSpareRG()"
@@ -1933,7 +1933,7 @@
                            "en": "removeCoordRG()"
                         },
                         {
-                           "id": 1432290822,
+                           "id": 1432192805,
                            "file": "removeSpareRG",
                            "cn": "removeSpareRG()",
                            "en": "removeSpareRG()"
