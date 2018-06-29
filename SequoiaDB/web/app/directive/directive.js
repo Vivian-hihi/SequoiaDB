@@ -2951,6 +2951,9 @@
                            case 'group':
                               isAllClear = $scope.Setting.checkInput( inputInfo.child ) ;
                               break ;
+                           case 'inline':
+                              isAllClear = $scope.Setting.checkInput( inputInfo.child ) ;
+                              break ;
                            case 'list':
                               if( inputInfo.valid && inputInfo.valid.min == 0 && inputInfo.child.length == 1 )
                               {
@@ -3038,6 +3041,9 @@
                               returnValue[ inputInfo.name ] = inputInfo.value ;
                               break ;
                            case 'group':
+                              returnValue[ inputInfo.name ] = $scope.Setting.getValue( inputInfo.child ) ;
+                              break ;
+                           case 'inline':
                               returnValue[ inputInfo.name ] = $scope.Setting.getValue( inputInfo.child ) ;
                               break ;
                            case 'list':
