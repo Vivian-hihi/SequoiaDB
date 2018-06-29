@@ -22,10 +22,7 @@ function testIllegalPos()
 {
    var rg = db.createRG( rgName ) ;
 
-   //问题单3524使用1.2不变凑无，注释
-   //var errorPos = [ "a", 0, 8, 1.2, -10 ] ;
-   
-   var errorPos = [ "a", 0, 8, -10 ] ;
+   var errorPos = [ "a", 0, 8, 1.2, -10 ] ;
    
    for( var i = 0;i < errorPos.length;i++ )
    {
