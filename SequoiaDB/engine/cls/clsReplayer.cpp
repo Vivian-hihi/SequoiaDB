@@ -1352,6 +1352,14 @@ namespace engine
                           1, _dpsCB ) ;
    }
 
+   static BOOLEAN _isTextIdx( const BSONObj &index )
+   {
+      BSONObj idxDef = index.getObjectField( IXM_FIELD_NAME_KEY ) ;
+      BSONElement ele = idxDef.firstElement() ;
+
+      return ( 0 == ossStrcmp( ele.valuestrsafe(), IXM_TEXT_KEY_TYPE ) ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_STARTINXJOB, "startIndexJob" )
    INT32 startIndexJob ( RTN_JOB_TYPE type,
                          const dpsLogRecordHeader *recordHeader,
@@ -1393,7 +1401,7 @@ namespace engine
          }
       }
 
-      if ( pmdGetKRCB()->isRestore() )
+      if ( pmdGetKRCB()->isRestore() || _isTextIdx( index ) )
       {
          useSync = TRUE ;
       }
