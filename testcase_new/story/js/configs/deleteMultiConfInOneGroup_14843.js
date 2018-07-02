@@ -182,12 +182,29 @@ function deleteForbid( db, rgName, nodes )
    }
    
    // delete forbid conf
+   var errConfigs = ["dbpath", "confpath", "svcname", "role", "omaddr", "archivepath", "catalogaddr"];
+   var hasError = false;
+   var include1 = errConfigs.indexOf(forbidConf1.name);
+   var include2 = errConfigs.indexOf(forbidConf2.name);   
+   if((include1!=-1)||(include2!=-1))
+   {
+      hasError = true;
+   }
+
    var config = {} ;
    config[ forbidConf1.name ] = 1 ;
    config[ forbidConf2.name ] = 1 ;
    var option = {} ; 
    option[ "GroupName" ] = rgName ;
-   deleteConf( db, config, option, -264 ) ;
+   if(hasError)
+   {
+      deleteConf( db, config, option, -264 ) ;
+   }
+   else
+   {
+       deleteConf( db, config, option );
+   }
+   
    
    // check delete with snapshot and file
    for( var i = 0;i < nodes.length;i++ )

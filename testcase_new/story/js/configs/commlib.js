@@ -98,8 +98,8 @@ var Configs = ( function() {
       this.rebootConfigs.push( new ConfDesp( "instanceid", "int", 0, 1, "aassada" ) ) ;
 
       // register forbid configs
-      this.forbidConfigs.push( new ConfDesp( "dbpath", "path", "./", "", null ) ) ;
-      this.forbidConfigs.push( new ConfDesp( "indexpath", "path", "", "", null ) ) ;
+      this.forbidConfigs.push( new ConfDesp( "dbpath", "path", "./", "", null ) ) ; 
+      this.forbidConfigs.push( new ConfDesp( "indexpath", "path", "", "", null ) ) ;  
       this.forbidConfigs.push( new ConfDesp( "confpath", "path", "./", "", null ) ) ;
       this.forbidConfigs.push( new ConfDesp( "logpath", "path", "", "", null ) ) ;
       this.forbidConfigs.push( new ConfDesp( "wwwpath", "path", "", "", null ) ) ;
@@ -109,14 +109,14 @@ var Configs = ( function() {
       this.forbidConfigs.push( new ConfDesp( "catalogname", "string", "", "", null ) ) ;
       this.forbidConfigs.push( new ConfDesp( "httpname", "string", "", "", null ) ) ;
       this.forbidConfigs.push( new ConfDesp( "omname", "string", "", "", null ) ) ;
-      this.forbidConfigs.push( new ConfDesp( "role", "string", "standalone", "data", "person" ) ) ;
-      this.forbidConfigs.push( new ConfDesp( "catalogaddr", "string", "", "", null ) ) ;
+      this.forbidConfigs.push( new ConfDesp( "role", "string", "standalone", "data", "person" ) ) ; 
+      this.forbidConfigs.push( new ConfDesp( "catalogaddr", "string", "", "", null ) ) ; 
       this.forbidConfigs.push( new ConfDesp( "logfilesz", "int", 64, 128, "10" ) ) ;
       this.forbidConfigs.push( new ConfDesp( "logfilenum", "int", 20, 10, "128" ) ) ;
-      this.forbidConfigs.push( new ConfDesp( "lobpath", "path", "", "", null ) ) ;
+      this.forbidConfigs.push( new ConfDesp( "lobpath", "path", "", "", null ) ) ;  
       this.forbidConfigs.push( new ConfDesp( "lobmetapath", "path", "", "", null ) ) ;
-      this.forbidConfigs.push( new ConfDesp( "omaddr", "string", "", "", null ) ) ;
-      this.forbidConfigs.push( new ConfDesp( "archivepath", "path", "", "", null ) ) ;
+      this.forbidConfigs.push( new ConfDesp( "omaddr", "string", "", "", null ) ) ; 
+      this.forbidConfigs.push( new ConfDesp( "archivepath", "path", "", "", null ) ) ; 
 
       // register unknown configs
       this.unknowConfigs.push( new ConfDesp( "cataloglist", "string", "", "", null ) ) ;
