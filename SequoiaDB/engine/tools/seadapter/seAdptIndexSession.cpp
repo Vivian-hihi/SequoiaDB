@@ -182,7 +182,7 @@ namespace seadapter
             _switchStatus( SEADPT_SESSION_STAT_QUERY_NORMAL_TBL ) ;
             goto done ;
          }
-         else if ( SEADPT_SESSION_STAT_COMP_LAST_LID == _status )
+         else if ( SEADPT_SESSION_STAT_COMP_LID == _status )
          {
             if ( 0 == docObjs.size() )
             {
@@ -212,14 +212,7 @@ namespace seadapter
                            "Returned object number is wrong" ) ;
                INT64 firstLID =
                   docObjs[0].getField( SDB_SEADPT_FIELD_NAME_ID ).Number() ;
-               if ( _expectLID >= firstLID )
-               {
-                  _lastPopLID = _expectLID ;
-                  _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
-                  _setQueryBusyFlag( FALSE ) ;
-                  goto done ;
-               }
-               else
+               if ( SEADPT_INVALID_LID != _expectLID && _expectLID < firstLID )
                {
                   // ERROR
                   // need to clean the index and start over
@@ -230,8 +223,14 @@ namespace seadapter
                   rc = _startOver() ;
                   PD_RC_CHECK( rc, PDERROR, "Restart the index work "
                                "failed[ %d ]", rc ) ;
-                  goto done ;
                }
+               else
+               {
+                  _lastPopLID = _expectLID ;
+                  _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
+                  _setQueryBusyFlag( FALSE ) ;
+               }
+               goto done ;
             }
          }
 
@@ -1434,7 +1433,7 @@ namespace seadapter
 
          rc = _queryOneCappedRec() ;
          PD_RC_CHECK( rc, PDERROR, "Query first logical id failed[ %d ]", rc ) ;
-         _switchStatus( SEADPT_SESSION_STAT_COMP_LAST_LID ) ;
+         _switchStatus( SEADPT_SESSION_STAT_COMP_LID ) ;
          goto done ;
       }
       catch ( std::exception &e )

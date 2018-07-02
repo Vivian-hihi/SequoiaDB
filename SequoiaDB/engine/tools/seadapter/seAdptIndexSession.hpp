@@ -58,7 +58,7 @@ namespace seadapter
                                              // query normal collection.
       SEADPT_SESSION_STAT_UPDATE_CL_VERSION, // Update collection version.
       SEADPT_SESSION_STAT_CLEAN_DATA,
-      SEADPT_SESSION_STAT_COMP_LAST_LID,
+      SEADPT_SESSION_STAT_COMP_LID,
       SEADPT_SESSION_STAT_QUERY_NORMAL_TBL,
       SEADPT_SESSION_STAT_QUERY_CAP_TBL,
       SEADPT_SESSION_STAT_POP_CAP,
