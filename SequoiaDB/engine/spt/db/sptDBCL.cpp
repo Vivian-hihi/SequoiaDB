@@ -1949,8 +1949,8 @@ namespace engine
       }
       sptCL = NULL ;
 
-      rval.getReturnVal().setName( clName ) ;
-      rval.getReturnVal().setAttr( SPT_PROP_READONLY ) ;
+      //rval.getReturnVal().setName( clName ) ;
+      //rval.getReturnVal().setAttr( SPT_PROP_READONLY ) ;
       rval.addReturnValProperty( SPT_CL_NAME_FIELD )->setValue( clName ) ;
 
       pTmpProp = rval.addReturnValProperty( SPT_CL_CS_FIELD ) ;
