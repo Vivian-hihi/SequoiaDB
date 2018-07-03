@@ -2,47 +2,36 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Data.PostgreSQL.Structure.Ctrl', function( $scope, $location, $compile, SdbFunction, SdbRest, SdbSwap, SdbSignal ){
+   sacApp.controllerProvider.register( 'Data.MySQL.Structure.Ctrl', function( $scope, $location, $compile, SdbFunction, SdbRest, SdbSwap, SdbSignal ){
       var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       $scope.ModuleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
-      SdbSwap.dbName = SdbFunction.LocalData( 'PgsqlDbName' ) ;
-      SdbSwap.tbName = SdbFunction.LocalData( 'PgsqlTbName' ) ;
-      if( clusterName == null || moduleType != 'sequoiasql-postgresql' || $scope.ModuleName == null || SdbSwap.tbName == null || SdbSwap.dbName == null )
+      SdbSwap.dbName = SdbFunction.LocalData( 'MysqlDbName' ) ;
+      SdbSwap.tbName = SdbFunction.LocalData( 'MysqlTbName' ) ;
+      if( clusterName == null || moduleType != 'sequoiasql-mysql' || $scope.ModuleName == null || SdbSwap.tbName == null || SdbSwap.dbName == null )
       {
          $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return;
       }
       $scope.FullName   = SdbSwap.dbName + '.' + SdbSwap.tbName ;
-      SdbSwap.tbType    = SdbFunction.LocalData( 'PgsqlTbType' ) ;
-      $scope.PrimaryKey = '' ;
+      SdbSwap.tbType    = SdbFunction.LocalData( 'MysqlTbType' ) ;
+      $scope.PrimaryKey = false ;
+      SdbSwap.indexList = [] ;
 
       //获取字段信息
       $scope.QueryTableStruct = function(){
-         var sql = sprintf("SELECT \
-                   ordinal_position, \
-                   column_name, \
-                   data_type, \
-                   character_maximum_length, \
-                   numeric_precision, \
-                   numeric_scale, \
-                   is_nullable, \
-                   column_default \
-                   FROM \
-                   information_schema.columns \
-                   WHERE \
-                   table_name = '?'", SdbSwap.tbName ) ;
-         var data = { 'Sql': sql, 'DbName': SdbSwap.dbName } ;
+         var sql = sprintf( "SELECT TABLE_NAME,COLUMN_NAME,COLUMN_DEFAULT,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '?' AND TABLE_SCHEMA = '?' ORDER BY ORDINAL_POSITION", SdbSwap.tbName, SdbSwap.dbName ) ;
+
+         var data = { 'Sql': sql, 'DbName': SdbSwap.dbName, 'Type': 'mysql' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( fieldList ){
                SdbSignal.commit( 'setTableData', fieldList ) ;
-               if( SdbSwap.tbType == 'table' )
-               {
-                  SdbSignal.commit( 'setPrimarySelect', fieldList ) ;
-                  var sql = sprintf( 'select pg_constraint.conname as pk_name from pg_constraint  inner join pg_class \
- on pg_constraint.conrelid = pg_class.oid where pg_class.relname = \'?\' and pg_constraint.contype=\'p\'', SdbSwap.tbName ) ;
-                  execSql( sql, true ) ;
-               }
+               
+               SdbSignal.commit( 'setPrimarySelect', fieldList ) ;
+
+               //查询索引
+               var sql = sprintf( 'select * from information_schema.STATISTICS where TABLE_SCHEMA = "?" and TABLE_NAME = "?"', SdbSwap.dbName, SdbSwap.tbName ) ;
+               execSql( sql, true ) ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -53,19 +42,24 @@
          } ) ;
       }
 
-      $scope.QueryTableStruct() ;
-      
       //执行sql
-      var execSql = function( sql, isQueryPrimary ){
-         var data = { 'Sql': sql, 'DbName': SdbSwap.dbName } ;
+      var execSql = function( sql, isQueryIndex ){
+         var data = { 'Sql': sql, 'DbName': SdbSwap.dbName, 'Type': 'mysql' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( result ){
-               //重新查询字段列表
-               if( isQueryPrimary )
+               //是否重新查询字段列表
+               if( isQueryIndex )
                {
+                  $scope.PrimaryKey = false ;
+                  SdbSwap.indexList = result ;
                   if( result.length > 0 )
                   {
-                     $scope.PrimaryKey = result[0]['pk_name'] ;
+                     $.each( result, function( index, info ){
+                        if( info['INDEX_NAME'] == 'PRIMARY' )
+                        {
+                           $scope.PrimaryKey = true ;
+                        }
+                     } ) ;
                   }
                }
                else
@@ -116,27 +110,25 @@
                         {
                            "name": "type",
                            "type": "select",
-                           "value": "integer",
+                           "value": "int",
                            "valid": [
+                              { "key": 'tinyint', "value": "tinyint" },
                               { "key": 'smallint', "value": "smallint" },
-                              { "key": 'integer', "value": "integer" },
+                              { "key": 'mediumint', "value": "mediumint" },
+                              { "key": 'int', "value": "int" },
                               { "key": 'bigint', "value": "bigint" },
+                              { "key": 'float', "value": "float" },
+                              { "key": 'double', "value": "double" },
                               { "key": 'decimal', "value": "decimal" },
-                              { "key": 'numeric', "value": "numeric" },
-                              { "key": 'real', "value": "real" },
-                              { "key": 'double precision', "value": "double precision" },
-                              { "key": 'serial', "value": "serial" },
-                              { "key": 'bigserial', "value": "bigserial" },
-                              { "key": 'money', "value": "money" },
-                              { "key": 'varchar', "value": "varchar" },
-                              { "key": 'character', "value": "character" },
-                              { "key": 'char', "value": "char" },
-                              { "key": 'text', "value": "text" },
-                              { "key": 'timestamp', "value": "timestamp" },
-                              { "key": 'interval', "value": "interval" },
                               { "key": 'date', "value": "date" },
-                              { "key": 'time', "value": "time" },
-                              { "key": 'boolean', "value": "boolean" }
+                              { "key": 'datetime', "value": "datetime" },
+                              { "key": 'timestamp', "value": "timestamp" },
+                              { "key": 'char', "value": "char" },
+                              { "key": 'varchar', "value": "varchar" },
+                              { "key": 'text', "value": "text" },
+                              { "key": 'binary', "value": "binary" },
+                              { "key": 'blob', "value": "blob" },
+                              { "key": 'null', "value": "null" }
                            ]
                         },
                         {
@@ -173,14 +165,14 @@
             if( isClear )
             {
                var value = $scope.AddFieldWindow['config'].getValue() ;
-               var sql = sprintf( 'ALTER TABLE ? ', addQuotes( SdbSwap.tbName ) ) ;
+               var sql = sprintf( 'ALTER TABLE ? ', SdbSwap.tbName ) ;
                $.each( value['fields'], function( index, fieldInfo ){
                   var subSql = '' ;
                   if( index > 0 )
                   {
                      subSql += ', ' ;
                   }
-                  subSql += 'ADD ' + addQuotes( fieldInfo['name'] ) + ' ' + fieldInfo['type'] ;
+                  subSql += 'ADD ' + fieldInfo['name'] + ' ' + fieldInfo['type'] ;
                   if( isNaN( fieldInfo['length'] ) == false )
                   {
                      switch( fieldInfo['type'] )
@@ -233,8 +225,8 @@
       } ;
 
       //打开 设置主键 弹窗
-      $scope.ShowSetPrimary = function(){
-         if( $scope.FieldsSelect.length > 0 )
+      var showSetPrimary = function(){
+         if( !$scope.PrimaryKey )
          {
             $scope.SetPrimaryWindow['config'] = {
                'inputList': [
@@ -258,7 +250,7 @@
                ]
             } ;
             $scope.SetPrimaryWindow['callback']['SetOkButton']( $scope.pAutoLanguage('确定'), function(){
-               var sql = sprintf( 'ALTER TABLE ? ADD PRIMARY KEY ', addQuotes( SdbSwap.tbName ) ) ;
+               var sql = sprintf( 'ALTER TABLE ? ADD PRIMARY KEY ', SdbSwap.tbName ) ;
                var formValue = $scope.SetPrimaryWindow['config'].getValue() ;
                var isFrist = true ;
                var existList = {} ;
@@ -276,7 +268,7 @@
                         if( existList[field['field']] )
                         sql += ',' ;
                      }
-                     sql += addQuotes( field['field'] ) ;
+                     sql += field['field'] ;
                   }
                } ) ;
                sql += ')' ;
@@ -290,17 +282,197 @@
       }
 
       //移除主键
-      $scope.ShowDropPrimary = function(){
-         $scope.Components.Confirm.type = 3 ;
-         $scope.Components.Confirm.context = sprintf( $scope.pAutoLanguage( '是否确定删除主键：?？' ), $scope.PrimaryKey) ;
-         $scope.Components.Confirm.isShow = true ;
-         $scope.Components.Confirm.okText = $scope.pAutoLanguage( '确定' ) ;
-         $scope.Components.Confirm.ok = function(){
-            var sql = sprintf( 'alter table ? drop constraint ?', addQuotes( SdbSwap.tbName ), addQuotes( $scope.PrimaryKey ) ) ;
-            execSql( sql ) ;
-            $scope.PrimaryKey = '' ;
-            $scope.Components.Confirm.isShow = false ;
+      var showDropPrimary = function(){
+         if( $scope.PrimaryKey )
+         {
+            $scope.Components.Confirm.type = 3 ;
+            $scope.Components.Confirm.context = sprintf( $scope.pAutoLanguage( '是否确定删除主键？' ) ) ;
+            $scope.Components.Confirm.isShow = true ;
+            $scope.Components.Confirm.okText = $scope.pAutoLanguage( '确定' ) ;
+            $scope.Components.Confirm.ok = function(){
+               var sql = sprintf( 'alter table ? drop primary key', SdbSwap.tbName ) ;
+               execSql( sql ) ;
+               $scope.Components.Confirm.isShow = false ;
+            }
          }
+      }
+
+      //创建索引 弹窗
+      $scope.CreateIndexWindow = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 创建索引
+      var showCreateIndex = function(){
+         $scope.CreateIndexWindow['config'] = {
+            'inputList': [
+               {
+                  "name": "fields",
+                  "webName": $scope.pAutoLanguage( '字段' ),
+                  "required": true,
+                  "type": "list",
+                  "child":[
+                     [
+                        {
+                           "name": "field",
+                           "type": "select",
+                           "value": $scope.FieldsSelect[0]['key'],
+                           "default": $scope.FieldsSelect[0]['key'],
+                           "valid": $scope.FieldsSelect
+                        }
+                     ]
+                  ]
+               },
+               {
+                  "name": "type",
+                  "webName": $scope.pAutoLanguage( '索引类型' ),
+                  "required": true,
+                  "type": "select",
+                  "value": "normal",
+                  "valid": [
+                     { 'key': $scope.pAutoLanguage( '普通索引' ), 'value': 'normal' },
+                     { 'key': $scope.pAutoLanguage( '唯一索引' ), 'value': 'unique' }
+                  ]
+               }
+            ]
+         }
+         $scope.CreateIndexWindow['callback']['SetTitle']( $scope.pAutoLanguage( '创建索引' ) ) ;
+         $scope.CreateIndexWindow['callback']['SetIcon']( 'fa-edit' ) ;
+         $scope.CreateIndexWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
+            var sql = '' ;
+            var formValue = $scope.CreateIndexWindow['config'].getValue() ;
+            if( formValue['type'] == 'normal' )
+            {
+               sql = sprintf( 'alter table ? add index ', SdbSwap.tbName ) ; 
+            }
+            else
+            {
+               sql = sprintf( 'alter table ? add unique ', SdbSwap.tbName ) ; 
+            }
+            var isFrist = true ;
+            var existList = {} ;
+            $.each( formValue['fields'], function( index, field ){
+               if( typeof( existList[field['field']] ) == 'undefined' )
+               {
+                  existList[field['field']] = true ;
+                  if( isFrist )
+                  {
+                     sql += '(' ;
+                     isFrist = false ;
+                  }
+                  else
+                  {
+                     if( existList[field['field']] )
+                     sql += ',' ;
+                  }
+                  sql += field['field'] ;
+               }
+            } ) ;
+            sql += ')' ;
+
+            execSql( sql ) ;
+            $scope.CreateIndexWindow['callback']['Close']() ;
+         } ) ;
+         $scope.CreateIndexWindow['callback']['Open']() ;
+      }
+      
+      //删除索引 弹窗
+      $scope.DropIndexWindow = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 删除索引
+      var showDropIndex = function(){
+         if( SdbSwap.indexList.length > 0 )
+         {
+            var selectList = [] ;
+            $.each( SdbSwap.indexList, function( index, info ){
+               selectList.push( { 'key': info['INDEX_NAME'], 'value': info['INDEX_NAME'] } ) ;
+            } ) ;
+            $scope.DropIndexWindow['config'] = {
+               'inputList': [
+                  {
+                     "name": "index",
+                     "webName": $scope.pAutoLanguage( '索引名' ),
+                     "required": true,
+                     "type": "select",
+                     "value": selectList[0]['value'],
+                     "valid": selectList
+                  }
+               ]
+            } ;
+            $scope.DropIndexWindow['callback']['SetTitle']( $scope.pAutoLanguage( '索引信息' ) ) ;
+            $scope.DropIndexWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
+               var formValue = $scope.DropIndexWindow['config'].getValue() ;
+               var sql = '' ;
+               if( formValue['index'] == 'PRIMARY' )
+               {
+                  sql = sprintf( 'alter table ? drop primary key', SdbSwap.tbName ) ;
+               }
+               else
+               {
+                  sql = sprintf( 'alter table ? drop index ?', SdbSwap.tbName, formValue['index'] ) ;
+               }
+               execSql( sql ) ;
+               $scope.DropIndexWindow['callback']['Close']() ;
+            } ) ;
+            $scope.DropIndexWindow['callback']['Open']() ;
+         }
+      }
+
+      //索引操作 下拉菜单
+      $scope.IndexDropdown = {
+         'config': [],
+         'callback': {}
+      } ;
+
+      //打开 索引操作
+      $scope.ShowIndexDropdown = function( event ){
+         $scope.IndexDropdown['config'] = [
+            { 'key': $scope.pAutoLanguage( '创建索引' ) },
+            { 'key': $scope.pAutoLanguage( '删除索引' ), 'disabled': SdbSwap.indexList.length>0 ? false : true },
+            { 'key': $scope.pAutoLanguage( '设置主键' ), 'disabled': $scope.PrimaryKey },
+            { 'key': $scope.pAutoLanguage( '移除主键' ), 'disabled': !$scope.PrimaryKey }
+         ] ;
+         $scope.IndexDropdown['OnClick'] = function( index ){
+            if( index == 0 )
+            {
+               showCreateIndex() ;
+            }
+            else if( index == 1 )
+            {
+               showDropIndex() ;
+            }
+            else if( index == 2 )
+            {
+               showSetPrimary() ;
+            }
+            else
+            {
+               showDropPrimary() ;
+            }
+
+            $scope.IndexDropdown['callback']['Close']() ;
+         }
+         $scope.IndexDropdown['callback']['Open']( event.currentTarget ) ;
+      }
+
+      //索引信息 弹窗
+      $scope.IndexListWindow = {
+         'config': [],
+         'callback': {}
+      } ;
+
+      //打开 索引信息
+      $scope.ShowIndexList = function(){
+         $scope.IndexListWindow['config'] = SdbSwap.indexList ;
+         $scope.IndexListWindow['callback']['SetTitle']( $scope.pAutoLanguage( '索引信息' ) ) ;
+         $scope.IndexListWindow['callback']['SetCloseButton']( $scope.pAutoLanguage( '关闭' ), function(){
+            $scope.IndexListWindow['callback']['Close']() ;
+         } ) ;
+         $scope.IndexListWindow['callback']['Open']() ;
       }
 
       //删除字段 弹窗
@@ -314,7 +486,7 @@
          if( fieldList.length > 0 )
          {
             $.each( fieldList, function( index, field ){
-               $scope.FieldsSelect.push( { 'key': field['column_name'], 'value': field['column_name'] } ) ;
+               $scope.FieldsSelect.push( { 'key': field['COLUMN_NAME'], 'value': field['COLUMN_NAME'] } ) ;
             } ) ;
          }
       } ) ;
@@ -326,59 +498,11 @@
          $scope.Components.Confirm.isShow = true ;
          $scope.Components.Confirm.okText = $scope.pAutoLanguage( '确定' ) ;
          $scope.Components.Confirm.ok = function(){
-            var sql = sprintf( 'alter table ? drop column ?', addQuotes( SdbSwap.tbName ), addQuotes( fieldName ) ) ;
+            var sql = sprintf( 'alter table ? drop column ?', SdbSwap.tbName, fieldName ) ;
             execSql( sql ) ;
             $scope.Components.Confirm.isShow = false ;
          }
       } ) ;
-
-      //重命名字段 弹窗
-      $scope.RenameFieldWindow = {
-         'config': {},
-         'callback': {}
-      } ;
-      
-      //打开 重命名字段 弹窗
-      var showRenameField = function( fieldName ){
-         $scope.RenameFieldWindow['config'] = {
-            'inputList': [
-               {
-                  "name": "oldFieldName",
-                  "webName": $scope.pAutoLanguage( '原字段名' ),
-                  "type": "string",
-                  "required": true,
-                  "disabled": true,
-                  "value": fieldName
-               },
-               {
-                  "name": "newFieldName",
-                  "webName": $scope.pAutoLanguage( '新字段名' ),
-                  "type": "string",
-                  "required": true,
-                  "value": "",
-                  "valid": {
-                     "min": 1,
-                     "max": 63,
-                     "regex": "^[a-zA-Z_]+[0-9a-zA-Z_]*$",
-                     "regexError": sprintf( $scope.pAutoLanguage( '?由字母和数字或\"_\"组成，并且以字母或\"_\"起头。' ), $scope.pAutoLanguage( '字段名' ) )
-                  }
-               }
-            ]
-         }
-         $scope.RenameFieldWindow['callback']['SetTitle']( $scope.pAutoLanguage( '修改字段名' ) ) ;
-         $scope.RenameFieldWindow['callback']['SetIcon']( 'fa-edit' ) ;
-         $scope.RenameFieldWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
-            var isClear = $scope.RenameFieldWindow['config'].check() ;
-            if( isClear == true )
-            {
-               var formVal = $scope.RenameFieldWindow['config'].getValue() ;
-               var sql = sprintf( 'alter table ? rename column ? to ?', addQuotes( SdbSwap.tbName ), addQuotes( fieldName ), addQuotes( formVal['newFieldName'] ) ) ;
-               execSql( sql ) ;
-               $scope.RenameFieldWindow['callback']['Close']() ;
-            }
-         } ) ;
-         $scope.RenameFieldWindow['callback']['Open']() ;
-      }
 
       //设置字段默认值 弹窗
       $scope.SetfFieldDefaultWindow = {
@@ -416,7 +540,7 @@
             if( isClear == true )
             {
                var formVal = $scope.SetfFieldDefaultWindow['config'].getValue() ;
-               var sql = sprintf( 'alter table ? alter column ? set default ?', addQuotes( SdbSwap.tbName ), addQuotes( fieldName ), sqlEscape( formVal['default'] ) ) ;
+               var sql = sprintf( 'alter table ? alter ? set default ?', SdbSwap.tbName, fieldName, sqlEscape( formVal['default'] ) ) ;
                execSql( sql ) ;
                $scope.SetfFieldDefaultWindow['callback']['Close']() ;
             }
@@ -431,86 +555,89 @@
          $scope.Components.Confirm.isShow = true ;
          $scope.Components.Confirm.okText = $scope.pAutoLanguage( '确定' ) ;
          $scope.Components.Confirm.ok = function(){
-            var sql = sprintf( 'alter table ? alter column ? drop default', addQuotes( SdbSwap.tbName ), addQuotes( fieldName ) ) ;
+            var sql = sprintf( 'alter table ? alter ? drop default', SdbSwap.tbName, fieldName ) ;
             execSql( sql ) ;
             $scope.Components.Confirm.isShow = false ;
          }
       }
 
-      //修改字段类型 弹窗
-      $scope.SetfFieldTypetWindow = {
+      //修改字段 弹窗
+      $scope.EditFieldWindow = {
          'config': {},
          'callback': {}
       } ;
 
-      //打开 修改字段类型 弹窗
-      var showSetFieldType = function( fieldName, type ){
-         $scope.SetfFieldTypetWindow['config'] = {
+      //打开 修改字段 弹窗
+      var showEditField= function( fieldName, type ){
+         $scope.EditFieldWindow['config'] = {
             'inputList': [
                {
                   "name": "fieldName",
                   "webName": $scope.pAutoLanguage( '字段名' ),
                   "type": "string",
                   "required": true,
-                  "disabled": true,
                   "value": fieldName
                },
                {
-                  "name": "oldType",
-                  "webName": $scope.pAutoLanguage( '原字段类型' ),
-                  "type": "string",
-                  "disabled": true,
-                  "value": type
+                  "name": "newType",
+                  "webName": $scope.pAutoLanguage( '字段类型' ),
+                  "type": "select",
+                  "value": type,
+                  "valid": [
+                     { "key": 'tinyint', "value": "tinyint" },
+                     { "key": 'smallint', "value": "smallint" },
+                     { "key": 'mediumint', "value": "mediumint" },
+                     { "key": 'int', "value": "int" },
+                     { "key": 'bigint', "value": "bigint" },
+                     { "key": 'float', "value": "float" },
+                     { "key": 'double', "value": "double" },
+                     { "key": 'decimal', "value": "decimal" },
+                     { "key": 'date', "value": "date" },
+                     { "key": 'datetime', "value": "datetime" },
+                     { "key": 'timestamp', "value": "timestamp" },
+                     { "key": 'char', "value": "char" },
+                     { "key": 'varchar', "value": "varchar" },
+                     { "key": 'text', "value": "text" },
+                     { "key": 'binary', "value": "binary" },
+                     { "key": 'blob', "value": "blob" },
+                     { "key": 'null', "value": "null" }
+                  ]
                },
                {
-                  "name": "newType",
-                  "webName": $scope.pAutoLanguage( '新字段类型' ),
-                  "type": "select",
-                  "value": "integer",
-                  "valid": [
-                     { "key": 'smallint', "value": "smallint" },
-                     { "key": 'integer', "value": "integer" },
-                     { "key": 'bigint', "value": "bigint" },
-                     { "key": 'decimal', "value": "decimal" },
-                     { "key": 'numeric', "value": "numeric" },
-                     { "key": 'real', "value": "real" },
-                     { "key": 'double precision', "value": "double precision" },
-                     { "key": 'serial', "value": "serial" },
-                     { "key": 'bigserial', "value": "bigserial" },
-                     { "key": 'money', "value": "money" },
-                     { "key": 'varchar', "value": "varchar" },
-                     { "key": 'character', "value": "character" },
-                     { "key": 'char', "value": "char" },
-                     { "key": 'text', "value": "text" },
-                     { "key": 'timestamp', "value": "timestamp" },
-                     { "key": 'interval', "value": "interval" },
-                     { "key": 'date', "value": "date" },
-                     { "key": 'time', "value": "time" },
-                     { "key": 'boolean', "value": "boolean" }
-                  ]
-               }
+                  "name": "length",
+                  "webName": $scope.pAutoLanguage( "长度" ),
+                  "type": "int",
+                  "value": "",
+                  "valid": {
+                     "min": 0,
+                     "empty": true
+                  }
+               },
             ]
          }
-         $scope.SetfFieldTypetWindow['callback']['SetTitle']( $scope.pAutoLanguage( '修改字段类型' ) ) ;
-         $scope.SetfFieldTypetWindow['callback']['SetIcon']( 'fa-edit' ) ;
-         $scope.SetfFieldTypetWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
-            var isClear = $scope.SetfFieldTypetWindow['config'].check() ;
+         $scope.EditFieldWindow['callback']['SetTitle']( $scope.pAutoLanguage( '修改字段' ) ) ;
+         $scope.EditFieldWindow['callback']['SetIcon']( 'fa-edit' ) ;
+         $scope.EditFieldWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
+            var isClear = $scope.EditFieldWindow['config'].check() ;
             if( isClear == true )
             {
-               var formVal = $scope.SetfFieldTypetWindow['config'].getValue() ;
-               var sql = sprintf( 'alter table ? alter column ? type ?', addQuotes( SdbSwap.tbName ), addQuotes( fieldName ), formVal['newType'] ) ;
+               var formVal = $scope.EditFieldWindow['config'].getValue() ;
+               var sql = sprintf( 'alter table ? modify ? ?', SdbSwap.tbName, fieldName, formVal['newType'] ) ;
+               if( formVal['length'] > 0 )
+               {
+                  sql += sprintf( '(?)', formVal['length'] ) ;
+               }
                execSql( sql ) ;
-               $scope.SetfFieldTypetWindow['callback']['Close']() ;
+               $scope.EditFieldWindow['callback']['Close']() ;
             }
          } ) ;
-         $scope.SetfFieldTypetWindow['callback']['Open']() ;
+         $scope.EditFieldWindow['callback']['Open']() ;
       }
 
       //编辑字段 下拉菜单
       $scope.EditFieldDropdown = {
          'config': [
-            { 'key': $scope.pAutoLanguage( '修改字段名' ) },
-            { 'key': $scope.pAutoLanguage( '修改字段类型' ) },
+            { 'key': $scope.pAutoLanguage( '修改字段' ) },
             { 'key': $scope.pAutoLanguage( '设置默认值' ) },
             { 'key': $scope.pAutoLanguage( '删除默认值' ) }
          ],
@@ -522,13 +649,9 @@
          $scope.EditFieldDropdown['OnClick'] = function( index ){
             if( index == 0 )
             {
-               showRenameField( result['field'] ) ;
+               showEditField( result['field'], result['type'] ) ;
             }
             else if( index == 1 )
-            {
-               showSetFieldType( result['field'], result['type'] ) ;
-            }
-            else if( index == 2 )
             {
                showSetDefault( result['field'] ) ;
             }
@@ -536,42 +659,42 @@
             {
                shwoRemoveDefault( result['field'] ) ;
             }
+
             $scope.EditFieldDropdown['callback']['Close']() ;
          }
          $scope.EditFieldDropdown['callback']['Open']( result['event'].currentTarget ) ;
       } ) ;
-
    } ) ;
 
    //表格 控制器
-   sacApp.controllerProvider.register( 'Data.PostgreSQL.Structure.Table.Ctrl', function( $scope, SdbSwap, SdbSignal ){
+   sacApp.controllerProvider.register( 'Data.MySQL.Structure.Table.Ctrl', function( $scope, SdbSwap, SdbSignal ){
       //表格
       $scope.GridTable = {
          'title': {
-            'index' : '#',
-            'column_name'      : $scope.pAutoLanguage( '字段名' ),
+            'index'            : '#',
+            'COLUMN_NAME'      : $scope.pAutoLanguage( '字段名' ),
             'operation'        : '',
-            'data_type'        : $scope.pAutoLanguage( '类型' ),
-            'column_default'   : $scope.pAutoLanguage( '默认值' ),
-            'is_nullable'      : $scope.pAutoLanguage( '空' )
+            'DATA_TYPE'        : $scope.pAutoLanguage( '类型' ),
+            'COLUMN_DEFAULT'   : $scope.pAutoLanguage( '默认值' ),
+            'IS_NULLABLE'      : $scope.pAutoLanguage( '空' )
          },
          'body': [],
          'options': {
             'width': {
-               'index' : '35px',
-               'column_name'      : '25%',
+               'index'            : '35px',
+               'COLUMN_NAME'      : '25%',
                'operation'        : '60px',
-               'data_type'        : '25%',
-               'column_default'   : '25%',
-               'is_nullable'      : '25%'
+               'DATA_TYPE'        : '25%',
+               'COLUMN_DEFAULT'   : '25%',
+               'IS_NULLABLE'      : '25%'
             },
             'sort': {
-               'index' : true,
-               'column_name'      : true,
+               'index'            : true,
+               'COLUMN_NAME'      : true,
                'operation'        : false,
-               'data_type'        : true,
-               'column_default'   : true,
-               'is_nullable'      : true
+               'DATA_TYPE'        : true,
+               'COLUMN_DEFAULT'   : true,
+               'IS_NULLABLE'      : true
             },
             'max': 50
          }
@@ -591,6 +714,7 @@
       $scope.ShowDropFieldWindow = function( fieldName ){
          SdbSignal.commit( 'ShowDropFieldWindow', fieldName ) ;
       }
+      $scope.QueryTableStruct() ;
 
    } ) ;
 
