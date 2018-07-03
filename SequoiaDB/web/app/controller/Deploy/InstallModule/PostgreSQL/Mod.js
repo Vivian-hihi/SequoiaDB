@@ -91,6 +91,7 @@
          var data = { 'cmd': 'query host' } ;
          SdbRest.OmOperation( data, {
             'success': function( hostList ){
+               configure['HostInfo'] = [] ;
                $.each( hostList, function( index, hostInfo ){
                   if( hostInfo['ClusterName'] == clusterName )
                   {
@@ -98,11 +99,11 @@
                         if( packageInfo['Name'] == 'sequoiasql-postgresql' )
                         {
                            hostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
+                           configure['HostInfo'].push( { 'HostName': hostInfo['HostName'] } ) ; 
                         }
                      } ) ;
                   }
                } ) ;
-               configure['HostInfo'] = [ { 'HostName': hostSelectList[0]['value'] } ] ;
                getModuleConfig() ;
             },
             'failed': function( errorInfo ){

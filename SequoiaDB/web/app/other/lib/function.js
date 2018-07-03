@@ -1752,6 +1752,28 @@ function sizeConvert( num )
 	return rn ;
 }
 
+/*
+   自动换算容量
+   num 单位 字节
+*/
+function sizeConvert2( num )
+{
+	var rn = '1 KB' ;
+	if( num >= 1024 && num < 1048576 )
+	{
+		rn = twoDecimalPlaces( num / 1024 ) + ' KB' ;
+	}
+	else if ( num >= 1048576 && num < 1073741824 )
+	{
+		rn = twoDecimalPlaces( num / 1048576 ) + ' MB' ;
+	}
+	else if ( num >= 1073741824 )
+	{
+		rn = twoDecimalPlaces( num / 1073741824 ) + ' GB' ;
+	}
+	return rn ;
+}
+
 //检测端口
 function checkPort( str )
 {

@@ -3,12 +3,14 @@
    //部署包的缩写列表
    var packageShortName = {
       'sequoiadb': 'sdb',
-      'sequoiasql-postgresql': 'pgsql'
+      'sequoiasql-postgresql': 'pgsql',
+      'sequoiasql-mysql': 'mysql'
    } ;
    //导航标题列表
    var navTitleName = {
       'sequoiadb': 'SequoiaDB',
       'sequoiasql-postgresql': 'SequoiaSQL-PostgreSQL',
+      'sequoiasql-mysql': 'SequoiaSQL-MySQL',
       'hdfs': 'HDFS',
       'yarn': 'YARN'
    } ;
@@ -206,10 +208,30 @@
          _IndexTop.logout( $location, SdbFunction ) ;
       }
 
-      $scope.Top.UserOperateMenu = [
-         { 'html': $compile( '<div style="padding:5px 10px;" ng-click="Top.ShowChangePasswd()">' + $scope.autoLanguage( '修改密码' ) + '</div>' )( $scope ) },
-         { 'html': $compile( '<div style="padding:5px 10px;" ng-click="Top.Logout()">' + $scope.autoLanguage( '注销' ) + '</div>' )( $scope ) }
-      ] ;
+      //用户操作下拉菜单
+      $scope.Top.UserOperateDropdown = {
+         'config': [
+            { 'key': $scope.autoLanguage( '修改密码' ) },
+            { 'key': $scope.autoLanguage( '注销' ) }
+         ],
+         'OnClick': function( index ){
+            if( index == 0 )
+            {
+               $scope.Top.ShowChangePasswd() ;
+            }
+            else if( index == 1 )
+            {
+               $scope.Top.Logout() ;
+            }
+            $scope.Top.UserOperateDropdown['callback']['Close']() ;
+         },
+         'callback': {}
+      }
+
+      //打开用户操作下拉菜单
+      $scope.Top.OpenUserOperate = function( event ){
+         $scope.Top.UserOperateDropdown['callback']['Open']( event.currentTarget ) ;
+      }
 
       var NoticeFrench = {
          'title': $scope.autoLanguage( '通知列表' ),
@@ -436,7 +458,7 @@
 
       function addMonitor( businessInfo )
       {
-         if( businessInfo['type'] == 'sequoiasql-postgresql' )
+         if( businessInfo['type'] == 'sequoiasql-postgresql' || businessInfo['type'] == 'sequoiasql-mysql' )
          {
             return ;
          }
@@ -595,6 +617,8 @@
                $location.path( '/Data/YARN-web/Index' ).search( params ) ; break ;
             case 'sequoiasql-postgresql':
                $location.path( '/Data/SequoiaSQL/PostgreSQL/Database/Index' ).search( params ) ; break ;
+            case 'sequoiasql-mysql':
+               $location.path( '/Data/SequoiaSQL/MySQL/Database/Index' ).search( params ) ; break ;
             default:
                break ;
             }

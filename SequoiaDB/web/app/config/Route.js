@@ -382,6 +382,12 @@
            resolve: resolveFun( [ './app/controller/Deploy/InstallModule/PostgreSQL/Mod.js' ] )
         }
       },
+      { path: '/Deploy/MySQL-Mod',
+        options: {
+           templateUrl: './app/template/Deploy/InstallModule/MySQL/Mod.html',
+           resolve: resolveFun( [ './app/controller/Deploy/InstallModule/MySQL/Mod.js' ] )
+        }
+      },
       { path: '/Deploy/ZKP-Mod',
         options: {
            templateUrl: './app/template/Deploy/InstallModule/Zookeeper/Mod.html',

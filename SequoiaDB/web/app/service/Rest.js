@@ -536,7 +536,14 @@
          var errJson = [] ;
          var arrLen ;
 
-         cmd = data['cmd'] ;
+         if ( typeof( data['Sql'] ) == 'string' )
+         {
+            cmd = 'sql' ;
+         }
+         else
+         {
+            cmd = data['cmd'] ;
+         }
          options['errJson'] = errJson ;
 
          if( options['v'] == 'v1' )
@@ -553,18 +560,29 @@
             if( typeof( json ) == 'string' )
             {
                jsonArr = JSON.parse( json ) ;
+               arrLen = jsonArr.length ;
             }
             else
             {
                jsonArr = json ;
+               arrLen = jsonArr.length ;
             }
             if( isArray( jsonArr ) == false )
             {
                jsonArr = [ jsonArr ] ;
+               arrLen = jsonArr.length ;
             }
             if( options['parseJson'] == false )
             {
                //还没实现
+            }
+         }
+
+         if ( arrLen > 0 )
+         {
+            if( isNaN( jsonArr[0]['status'] ) == false )
+            {
+               jsonArr[0]['errno'] = jsonArr[0]['status'] ;
             }
          }
 
@@ -624,6 +642,12 @@
          {
             //其他错误
             jsonArr[0]['cmd'] = cmd ;
+
+            if ( typeof( jsonArr[0]['description'] ) == 'undefined' && typeof( jsonArr[0]['message'] ) == 'string' )
+            {
+               jsonArr[0]['description'] = jsonArr[0]['message'] ;
+               jsonArr[0]['detail'] = jsonArr[0]['message'] ;
+            }
 
             try
             {
@@ -767,13 +791,17 @@
                      parseJson:  是否解析记录, 默认true
                               true:  解析记录    返回格式 [ {xxx}, {xxx}, ... ]
                               false: 不解析记录  返回格式 [ "xxx", "xxx", ... ]
-                     errJson:  []   传出参数, 解析错误的json, 只有解析失败才会有
       */
       g._sendAjax = function( type, url, data, event, options ){
 
          if( g._errorNum > 0 )
          {
             g._errorTask.push( { 'type': type, 'url': url, 'data': data, 'event': event, 'options': options } ) ;
+            return ;
+         }
+
+         if( options['scope'] !== false && options['scope'] !== $location.url() )
+         {
             return ;
          }
 
@@ -806,14 +834,26 @@
 
          $.ajax( { 'type': type, 'url': url, 'data': data,
             'beforeSend': function( XMLHttpRequest ){
+               if( options['scope'] !== false && options['scope'] !== $location.url() )
+               {
+                  return ;
+               }
                restBeforeSend( XMLHttpRequest ) ;
                return g._eventBefore( type, url, data, event, options, XMLHttpRequest ) ;
             },
             'success': function( json, textStatus, jqXHR ){
+               if( options['scope'] !== false && options['scope'] !== $location.url() )
+               {
+                  return ;
+               }
                g._errorNum = 0 ;
                g._eventSuccess( type, url, data, event, options, json, textStatus, jqXHR ) ;
             },
             'error': function( XMLHttpRequest, textStatus, errorThrown ) {
+               if( options['scope'] !== false && options['scope'] !== $location.url() )
+               {
+                  return ;
+               }
                if( XMLHttpRequest.status == 404 )
                {
                   g._eventError( type, url, data, event, options, XMLHttpRequest, textStatus, errorThrown ) ;
