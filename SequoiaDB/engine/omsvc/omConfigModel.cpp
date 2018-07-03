@@ -36,6 +36,7 @@
 #include "omConfigZoo.hpp"
 #include "omConfigSsqlOlap.hpp"
 #include "omConfigPostgreSQL.hpp"
+#include "omConfigMySQL.hpp"
 #include "pd.hpp"
 #include <sstream>
 
@@ -71,6 +72,10 @@ namespace engine
       else if ( businessType == OM_BUSINESS_SEQUOIASQL_POSTGRESQL )
       {
          _node = SDB_OSS_NEW OmSsqlOltpNode() ;
+      }
+      else if ( businessType == OM_BUSINESS_SEQUOIASQL_MYSQL )
+      {
+         _node = SDB_OSS_NEW OmMySQLNode() ;
       }
       else
       {

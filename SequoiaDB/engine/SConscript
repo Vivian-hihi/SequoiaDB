@@ -471,6 +471,7 @@ omsvcFiles = [
       "omsvc/omConfigZoo.cpp",
       "omsvc/omConfigSsqlOlap.cpp",
       "omsvc/omConfigPostgreSQL.cpp",
+      "omsvc/omConfigMySQL.cpp",
       "omsvc/omSdbAdaptor.cpp",
       "omsvc/omStrategyObserverJob.cpp"
       ]

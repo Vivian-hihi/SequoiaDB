@@ -34,6 +34,7 @@
 #include "omConfigSdb.hpp"
 #include "omConfigZoo.hpp"
 #include "omConfigPostgreSQL.hpp"
+#include "omConfigMySQL.hpp"
 #include "omConfigSsqlOlap.hpp"
 #include "omDef.hpp"
 #include "ossSocket.hpp"
@@ -826,6 +827,10 @@ namespace engine
       else if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == businessInfo.businessType )
       {
          _builder = SDB_OSS_NEW OmSsqlOltpConfigBuilder( businessInfo ) ;
+      }
+      else if ( OM_BUSINESS_SEQUOIASQL_MYSQL == businessInfo.businessType )
+      {
+         _builder = SDB_OSS_NEW OmMySQLConfigBuilder( businessInfo ) ;
       }
       else if ( OM_BUSINESS_SEQUOIASQL_OLAP == businessInfo.businessType )
       {
