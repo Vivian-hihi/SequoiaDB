@@ -88,9 +88,9 @@ public class TestSplit10525C extends SdbTestBase{
     }
     
     public void testCoordSplitResult(List<String> rgNames) {
+    	List<BSONObject> actual = new ArrayList<BSONObject>();
         try {
             //连接coord节点验证数据是否正确
-            List<BSONObject> actual = new ArrayList<BSONObject>();
             DBCursor cursor = this.cl.query(null,null,"{\"_id\":1}",null);
             while( cursor.hasNext() ) {
                 BSONObject obj = cursor.getNext();
@@ -99,6 +99,8 @@ public class TestSplit10525C extends SdbTestBase{
             cursor.close();
             Assert.assertEquals(actual, this.insertRecods);
         } catch (BaseException e) {
+        	System.out.println("actual:" + actual);
+        	System.out.println("insertRecods:" + this.insertRecods);
             Assert.fail(e.getMessage());
         }
     }
