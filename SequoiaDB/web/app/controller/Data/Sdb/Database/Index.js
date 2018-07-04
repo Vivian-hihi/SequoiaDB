@@ -2410,7 +2410,7 @@
                   //条件
                   var splitquery = {} ;
                   var splitendquery = {} ;
-                  if( type = 'hash' )
+                  if( type == 'hash' )
                   {
                      var fieldName = value['condition']['field'] ;
                      splitquery[ fieldName ]    = autoTypeConvert( value['condition']['start'], true ) ;
@@ -2418,6 +2418,7 @@
                      data['splitquery'] = JSON.stringify( splitquery ) ;
                      data['splitendquery'] = JSON.stringify( splitendquery ) ;
                   }
+                  else
                   {
                      $.each( value['condition'], function( index, conditionInfo ){
                         var fieldName = conditionInfo['field'] ;
