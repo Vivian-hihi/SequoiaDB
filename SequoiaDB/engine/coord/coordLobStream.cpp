@@ -1835,13 +1835,10 @@ namespace engine
                  flags, pReply->startFrom ) ;
 
          // get group info
-         CoordGroupMap::iterator it = _mapGroupInfo.find( id.columns.groupID ) ;
+         CoordGroupMap::iterator it = _mapGroupInfo.find(
+                                 pSub->getNodeID().columns.groupID ) ;
          if ( it == _mapGroupInfo.end() )
          {
-            // Before the data node registers on catalog successfully, it may
-            // return the error code of -222, and the id above is 0.
-            SDB_ASSERT( SDB_INVALID_ROUTEID == flags,
-                        "Group info is not exist" ) ;
             flags = SDB_COOR_NO_NODEGROUP_INFO ;
          }
          else if ( !nodeSpecified &&

@@ -1224,7 +1224,9 @@ namespace engine
       {
          /// do nothing
       }
-      else if ( SDB_CLS_FULL_SYNC == flag || SDB_RTN_IN_REBUILD == flag )
+      else if ( SDB_CLS_FULL_SYNC == flag ||
+                SDB_RTN_IN_REBUILD == flag ||
+                SDB_INVALID_ROUTEID == flag )
       {
          if( groupPtr.get() )
          {
