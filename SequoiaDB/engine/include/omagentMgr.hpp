@@ -47,6 +47,7 @@
 #include "omagentMsgDef.hpp"
 #include "omagentTask.hpp"
 #include "omagentJob.hpp"
+#include "omagentPluginMgr.hpp"
 
 #include <string>
 #include <map>
@@ -281,6 +282,7 @@ namespace engine
          netRouteAgent              _netAgent ;
          omAgentNodeMgr             _nodeMgr ;
          sptContainer               _sptScopePool ;
+         omAgentPluginMgr           _pluginMgr ;
 
          ossEvent                   _attachEvent ;
          UINT32                     _oneSecTimer ;

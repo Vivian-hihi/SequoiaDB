@@ -228,6 +228,7 @@ dpsFiles = [
 omagentFiles = [
       "omagent/omagentMgr.cpp",
       "omagent/omagentNodeMgr.cpp",
+      "omagent/omagentPluginMgr.cpp",
       "omagent/omagentUtil.cpp",
       "omagent/omagentSession.cpp",
       "omagent/omagentHelper.cpp",

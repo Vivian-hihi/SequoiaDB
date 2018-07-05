@@ -323,18 +323,12 @@ namespace engine
       ossStrncpy( _omAddress, omAddrLine.c_str(), OSS_MAX_PATHSIZE ) ;
       _omAddress[ OSS_MAX_PATHSIZE ] = 0 ;
       /// make omaddress to field
-      if ( 0 != _omAddress[ 0 ] )
-      {
-         _addToFieldMap( SDBCM_CONF_OMADDR, _omAddress, TRUE, TRUE ) ;
-      }
+      _addToFieldMap( SDBCM_CONF_OMADDR, _omAddress, TRUE, TRUE ) ;
 
       // make IsGeneralAgent to field
-      if ( TRUE == _isGeneralAgent )
-      {
-         _addToFieldMap( SDBCM_CONF_ISGENERAL,
-                         _isGeneralAgent ? "TRUE" : "FALSE",
-                         TRUE, TRUE ) ;
-      }
+      _addToFieldMap( SDBCM_CONF_ISGENERAL,
+                      _isGeneralAgent ? "TRUE" : "FALSE",
+                      TRUE, _isGeneralAgent ) ;
 
       return SDB_OK ;
    }
@@ -630,6 +624,14 @@ namespace engine
          goto error ;
       }
 
+      // 5. init plugin manager
+      rc = _pluginMgr.init( &_options ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init plugin manager, rc: %d", rc ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
@@ -736,60 +738,11 @@ namespace engine
          }
       }
 
-      rc = _runStartPluginTask() ;
-      if( rc )
+      rc = _pluginMgr.active() ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to start plugin task, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to active plugin manager, rc: %d", rc ) ;
          goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omAgentMgr::_runStartPluginTask()
-   {
-      INT32 rc = SDB_OK ;
-      // new job
-      EDUID eduID = PMD_INVALID_EDUID ;
-      _omagentJob *pJob = NULL ;
-      _omaTask *pTask = NULL ;
-
-      pTask = SDB_OSS_NEW _omaStartPluginsTask( 0 ) ;
-      if ( NULL == pTask )
-      {
-         PD_LOG ( PDERROR, "Failed to alloc memory for running task "
-                  "with the plugin starter task" ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-
-      {
-         omaTaskPtr myTaskPtr( pTask ) ;
-         BSONObj info ;
-
-         pJob = SDB_OSS_NEW _omagentJob( myTaskPtr, info, NULL ) ;
-         if ( !pJob )
-         {
-            PD_LOG ( PDERROR, "Failed to alloc memory for running job "
-                     "with the plugin starter job" ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-
-         // start job
-         rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, &eduID,
-                                        FALSE ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to start plugin starter task, rc = %d",
-                     rc ) ;
-            goto done ;
-         }
-
-         pTask->setJobInfo( eduID ) ;
       }
 
    done:
@@ -818,58 +771,9 @@ namespace engine
       // 4. set force
       _sessionMgr.setForced() ;
 
-      _runStopPluginTask() ;
+      _pluginMgr.deactive() ;
 
       return SDB_OK ;
-   }
-
-   INT32 _omAgentMgr::_runStopPluginTask()
-   {
-      INT32 rc = SDB_OK ;
-      // new job
-      EDUID eduID = PMD_INVALID_EDUID ;
-      _omagentJob *pJob = NULL ;
-      _omaTask *pTask = NULL ;
-
-      pTask = SDB_OSS_NEW _omaStopPluginsTask( 0 ) ;
-      if ( NULL == pTask )
-      {
-         PD_LOG ( PDERROR, "Failed to alloc memory for running task "
-                  "with the plugin stop task" ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-
-      {
-         omaTaskPtr myTaskPtr( pTask ) ;
-         BSONObj info ;
-
-         pJob = SDB_OSS_NEW _omagentJob( myTaskPtr, info, NULL ) ;
-         if ( !pJob )
-         {
-            PD_LOG ( PDERROR, "Failed to alloc memory for running job "
-                     "with the plugin stop job" ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-
-         // start job
-         rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, &eduID,
-                                        FALSE ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to start plugin stop task, rc = %d",
-                     rc ) ;
-            goto done ;
-         }
-
-         pTask->setJobInfo( eduID ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _omAgentMgr::fini()
@@ -887,6 +791,8 @@ namespace engine
       _nodeMgr.fini() ;
       _sessionMgr.fini() ;
       _sptScopePool.fini() ;
+
+      _pluginMgr.fini() ;
 
       return SDB_OK ;
    }
@@ -975,6 +881,8 @@ namespace engine
 
       // effect pd level
       setPDLevel( getOptions()->getDiagLevel() ) ;
+
+      _pluginMgr.onConfigChange() ;
    }
 
    INT32 _omAgentMgr::_prepareTask()
