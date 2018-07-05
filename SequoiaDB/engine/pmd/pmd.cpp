@@ -471,13 +471,13 @@ namespace engine
          _mainEDU = NULL ;
       }
 
+      _svcTaskMgr.fini() ;
+
       if ( !normalStop && _eduMgr.dumpAbnormalEDU() > 0 )
       {
          PD_LOG( PDSEVERE, "Stop all EDUs timeout, crashed." ) ;
          ossPanic() ;
       }
-
-      _svcTaskMgr.fini() ;
    }
 
    void _SDB_KRCB::onConfigChange ( UINT32 changeID )
