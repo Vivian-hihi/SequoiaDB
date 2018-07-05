@@ -143,7 +143,18 @@
             </copy>
          </sequential>
       </for>
-      
+      <!--backup omdata and conf/log-->
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="OM"/>
+         <then>
+            <copy todir="${backup_basedir}/${backup_reltdir}">
+               <fileset dir="${INSTALL_DIR}/conf" includes="log/**/*"/>
+            </copy>
+            <copy todir="${backup_basedir}/${backup_reltdir}">
+               <fileset dir="${INSTALL_DIR}/database" includes="sms/**/*"/>
+            </copy>
+         </then>
+      </if>
       <!--backup conf-->
       <copy todir="${backup_basedir}/${backup_reltdir}">
          <fileset dir="${INSTALL_DIR}/conf" includes="local/**/*"/>
