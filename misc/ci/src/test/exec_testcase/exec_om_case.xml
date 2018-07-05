@@ -120,13 +120,13 @@
       <attribute name="prefix"/>
       <attribute name="casefullname" />   
       <sequential>
-         <detectenv detectfile="${testcase_dir}/lib/before_usecase.js" prefix="${prefix}" 
+         <detectenv detectfile="${testcase_dir}/common/before_usecase.js" prefix="${prefix}" 
                     output="before_output" envisok="envrc"/>
          <runonecase jsfile="@{casefullname}"
                      prefix="${prefix}" 
                      report="@{reportdir}/${testcase_name}.xml"
                      rc="caserc" />
-         <detectenv detectfile="${testcase_dir}/lib/after_usecase.js" prefix="${prefix}" envisok="envrc"/>  
+         <detectenv detectfile="${testcase_dir}/common/after_usecase.js" prefix="${prefix}" envisok="envrc"/>  
       </sequential>
    </macrodef>
    
@@ -157,11 +157,11 @@
          
          <!--execute-->
          <var name="func_exist" unset="true"/>
-         <available property="func_exist" file="${jsdir}/../lib/func.js" />       
+         <available property="func_exist" file="${jsdir}/../common/func.js" />       
          <if>
             <isset property="func_exist" />
             <then>
-               <var name="func_option" value="${jsdir}/../lib/func.js," />
+               <var name="func_option" value="${jsdir}/../common/func.js," />
             </then>
             <else>                             
                <var name="func_option" value="" />             
