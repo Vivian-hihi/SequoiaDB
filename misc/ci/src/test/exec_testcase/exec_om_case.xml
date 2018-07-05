@@ -124,6 +124,7 @@
                     output="before_output" envisok="envrc"/>
          <runonecase jsfile="@{casefullname}"
                      prefix="${prefix}" 
+                     beforeoutput="${before_output}" 
                      report="@{reportdir}/${testcase_name}.xml"
                      rc="caserc" />
          <detectenv detectfile="${testcase_dir}/common/after_usecase.js" prefix="${prefix}" envisok="envrc"/>  
