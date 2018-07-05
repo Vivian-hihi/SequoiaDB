@@ -39,9 +39,6 @@
       <replace file="${report_dir}/all_prepare.xml" token='TESTCASE_TYPE' value='${testcase_type}'/>
       <replace file="${report_dir}/all_prepare.xml" token='TESTSUIT_NAME' value='all_prepare'/>
       <replace file="${report_dir}/all_prepare.xml" token='TESTCASE_NAME' value='all_prepare'/>
-      <if>
-         <equals arg1="${envrc}" arg2="0" />
-         <else>
             <hostinfo prefix="host" />
             <var name="backup_reltdir" value="${TEST_TYPE}_${DEPLOY_MODE}_${BUILD_NUMBER}.tar.gz"/>
             <var name="download_url" value="&#10;DOWNLOAD DIAGLOG :&#10;http://192.168.30.185:8081/${backup_reltdir}&#10;" />
@@ -49,8 +46,6 @@
             <var name="ms1" value="RETURN CODE: ${envrc}&#10;"/>
             <var name="ms2" value="OUTPUT MESSAGE:&#10;${screen_output}&#10;&#10;"/>
             <replace file="${report_dir}/all_prepare.xml" token="ERROR_MESSAGE" value="${ms0}${ms1}${ms2}"/>
-         </else>
-      </if>
       
       <if>
          <equals arg1="${envrc}" arg2="0"/>
