@@ -25,6 +25,7 @@
          </else>
       </if>
       <prefix resultproperty="prefix"/>
+      <detectenv detectfile="${testcase_dir}/common/all_clean.js" prefix="${prefix}" envisok="envrc"/>
       <detectenv detectfile="${testcase_dir}/common/all_prepare.js" prefix="${prefix}" envisok="envrc" output="screen_output"/> 
       <if>
          <equals arg1="${envrc}" arg2="0" />
