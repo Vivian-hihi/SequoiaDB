@@ -43,7 +43,7 @@
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 
-namespace seadapter 
+namespace seadapter
 {
    #define UTIL_OPERATOR_EYECATCHER          '$'
    #define FIELD_NAME_TEXT                   "$Text"
@@ -99,10 +99,7 @@ namespace seadapter
    void _rtnCondNodeFactory::releaseNode( rtnCondNode* node )
    {
       PD_TRACE_ENTRY( SDB__RTNCONDNODEFACTORY_RELEASENODE ) ;
-      if ( node )
-      {
-         node->release() ;
-      }
+      SAFE_OSS_DELETE( node ) ;
       PD_TRACE_EXIT( SDB__RTNCONDNODEFACTORY_RELEASENODE ) ;
    }
 

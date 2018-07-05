@@ -208,18 +208,6 @@ namespace engine
       return TRUE ;
    }
 
-   void _mthMatchLogicAndNode::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchLogicAndNode() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    void _mthMatchLogicAndNode::evalEstimation ( const optCollectionStat *pCollectionStat,
                                                 double &selectivity,
                                                 UINT32 &cpuCost )
@@ -325,18 +313,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   void _mthMatchLogicOrNode::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchLogicOrNode() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    void _mthMatchLogicOrNode::evalEstimation ( const optCollectionStat *pCollectionStat,
                                                double &selectivity,
                                                UINT32 &cpuCost )
@@ -430,18 +406,6 @@ namespace engine
    BOOLEAN _mthMatchLogicNotNode::isTotalConverted()
    {
       return FALSE ;
-   }
-
-   void _mthMatchLogicNotNode::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchLogicNotNode() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    void _mthMatchLogicNotNode::evalEstimation ( const optCollectionStat *pCollectionStat,

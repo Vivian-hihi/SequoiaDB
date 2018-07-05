@@ -72,15 +72,8 @@ namespace engine
          string toString() ;
 
          // func *p = new ( _mthNodeAllocator *allocator ) func( _mthNodeAllocator *allocator )
-         // use p->release() to release p. and do not use p anymore.
          void* operator new ( size_t size, _mthNodeAllocator *allocator ) ;
-         // do not call delete p directly
          void operator delete ( void *p ) ;
-         // just make the compiler shut up (windows's warning)
-         void operator delete ( void *p, _mthNodeAllocator *allocator ) ;
-
-
-         virtual void release() = 0 ;
 
       public:
          virtual void clear() ;
@@ -113,7 +106,6 @@ namespace engine
          virtual ~_mthMatchFuncABS() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual void clear() ;
          virtual INT32 getType() ;
@@ -131,7 +123,6 @@ namespace engine
          virtual ~_mthMatchFuncCEILING() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -144,7 +135,6 @@ namespace engine
          virtual ~_mthMatchFuncFLOOR() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -157,7 +147,6 @@ namespace engine
          virtual ~_mthMatchFuncLOWER() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -170,7 +159,6 @@ namespace engine
          virtual ~_mthMatchFuncUPPER() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -183,7 +171,6 @@ namespace engine
          virtual ~_mthMatchFuncLTRIM() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -196,7 +183,6 @@ namespace engine
          virtual ~_mthMatchFuncRTRIM() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -209,7 +195,6 @@ namespace engine
          virtual ~_mthMatchFuncTRIM() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -222,7 +207,6 @@ namespace engine
          virtual ~_mthMatchFuncSTRLEN() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -235,7 +219,6 @@ namespace engine
          virtual ~_mthMatchFuncSUBSTR() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -257,7 +240,6 @@ namespace engine
          virtual ~_mthMatchFuncMOD() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -277,7 +259,6 @@ namespace engine
          virtual ~_mthMatchFuncADD() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -297,7 +278,6 @@ namespace engine
          virtual ~_mthMatchFuncSUBTRACT() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -317,7 +297,6 @@ namespace engine
          virtual ~_mthMatchFuncMULTIPLY() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -337,7 +316,6 @@ namespace engine
          virtual ~_mthMatchFuncDIVIDE() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -357,7 +335,6 @@ namespace engine
          virtual ~_mthMatchFuncCAST() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -378,7 +355,6 @@ namespace engine
          virtual ~_mthMatchFuncSLICE() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -402,7 +378,6 @@ namespace engine
          virtual ~_mthMatchFuncSIZE() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -422,7 +397,6 @@ namespace engine
          virtual ~_mthMatchFuncTYPE() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -447,7 +421,6 @@ namespace engine
          INT32 getLen() ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -473,7 +446,6 @@ namespace engine
          void getElement( BSONElement &ele ) ;
 
       public:
-         virtual void release() ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
@@ -776,7 +748,6 @@ namespace engine
          virtual BOOLEAN isTotalConverted() ;
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
                                              const rtnParamList *parameters ) ;
-         virtual void release() ;
 
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
@@ -806,7 +777,6 @@ namespace engine
          virtual INT32 execute( const BSONObj &obj,
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
-         virtual void release() ;
 
       protected :
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
@@ -819,9 +789,6 @@ namespace engine
          _mthMatchOpNodeLT( _mthNodeAllocator *allocator,
                             const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeLT() ;
-
-      public:
-         virtual void release() ;
 
       protected:
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
@@ -886,9 +853,6 @@ namespace engine
          _mthMatchOpNodeGT( _mthNodeAllocator *allocator,
                             const mthNodeConfig *config ) ;
          virtual ~_mthMatchOpNodeGT() ;
-
-      public:
-         virtual void release() ;
 
       protected:
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
@@ -962,7 +926,6 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual void release() ;
 
       protected:
          virtual INT32 _init( const CHAR *fieldName,
@@ -1000,7 +963,6 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual void release() ;
 
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
@@ -1025,7 +987,6 @@ namespace engine
          virtual BOOLEAN isTotalConverted() ;
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
                                              const rtnParamList *parameters ) ;
-         virtual void release() ;
 
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
@@ -1058,7 +1019,6 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual void release() ;
 
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
@@ -1088,7 +1048,6 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual void release() ;
 
       protected:
          virtual INT32 _init( const CHAR *fieldName,
@@ -1120,7 +1079,6 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual void release() ;
 
       protected:
          virtual INT32 _init( const CHAR *fieldName,
@@ -1148,7 +1106,6 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual void release() ;
 
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
@@ -1178,7 +1135,6 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual void release() ;
 
          virtual INT32 calcPredicate( rtnPredicateSet &predicateSet,
                                       const rtnParamList * paramList ) ;
@@ -1210,7 +1166,6 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual void release() ;
 
       protected:
          virtual INT32 _init( const CHAR *fieldName,
@@ -1249,7 +1204,6 @@ namespace engine
          virtual const CHAR *getOperatorStr() ;
          virtual BOOLEAN isTotalConverted() ;
          virtual UINT32 getWeight() ;
-         virtual void release() ;
 
       public:
          BOOLEAN matches( const BSONElement &ele ) ;

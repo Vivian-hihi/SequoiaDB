@@ -98,15 +98,22 @@ namespace engine
       void *p = NULL ;
       if ( size > 0 )
       {
+         // In order to get the allocator when deleting the object, reserve
+         // space to store the address of the allocator at the head of the
+         // actual allocated space.
+         size_t reserveSize = size + sizeof( ossValuePtr ) ;
          if ( pAllocator )
          {
-            p = pAllocator->allocate( size ) ;
+            p = pAllocator->allocate( reserveSize ) ;
          }
 
          if ( NULL == p )
          {
-            p = SDB_OSS_MALLOC( size ) ;
+            p = SDB_OSS_MALLOC( reserveSize ) ;
          }
+
+         *(ossValuePtr *)p = (ossValuePtr)pAllocator ;
+         p = (CHAR *)p + sizeof( ossValuePtr ) ;
       }
 
       return p ;
@@ -114,20 +121,13 @@ namespace engine
 
    void _optPlanNode::operator delete ( void *p )
    {
-      SDB_OSS_FREE( p ) ;
-   }
-
-   void _optPlanNode::operator delete ( void *p,
-                                        optPlanAllocator *pAllocator,
-                                        std::nothrow_t )
-   {
-      if ( pAllocator && pAllocator->isAllocatedByme( p ) )
+      if ( p )
       {
-         // Do nothing
-      }
-      else
-      {
-         SDB_OSS_FREE( p ) ;
+         void *beginAddr = (void *)( (CHAR *)p - sizeof( ossValuePtr ) ) ;
+         if ( 0 == *(ossValuePtr *)beginAddr )
+         {
+            SDB_OSS_FREE( beginAddr ) ;
+         }
       }
    }
 
@@ -143,7 +143,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTPLANNODE_DELCHILDNODES, "_optPlanNode::deleteChildNodes" )
-   void _optPlanNode::deleteChildNodes ( optPlanAllocator *pAllocator )
+   void _optPlanNode::deleteChildNodes ()
    {
       PD_TRACE_ENTRY( SDB_OPTPLANNODE_DELCHILDNODES ) ;
 
@@ -154,8 +154,8 @@ namespace engine
          _optPlanNode *pChildNode = ( *iter ) ;
          iter = _childNodes.erase( iter ) ;
 
-         pChildNode->deleteChildNodes( pAllocator ) ;
-         pChildNode->release( pAllocator ) ;
+         pChildNode->deleteChildNodes() ;
+         SDB_OSS_DEL pChildNode ;
       }
 
       PD_TRACE_EXIT( SDB_OPTPLANNODE_DELCHILDNODES ) ;
@@ -1069,18 +1069,6 @@ namespace engine
    {
    }
 
-   void _optTbScanNode::release ( optPlanAllocator * pAllocator )
-   {
-      if ( pAllocator && pAllocator->isAllocatedByme( this ) )
-      {
-         this->~_optTbScanNode() ;
-      }
-      else
-      {
-         SDB_OSS_DEL this ;
-      }
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTTBSCAN_PREEVAL, "_optTbScanNode::preEvaluate" )
    void _optTbScanNode::preEvaluate ( const rtnQueryOptions & queryOptions,
                                       optAccessPlanHelper & planHelper,
@@ -1520,18 +1508,6 @@ namespace engine
 
    _optIxScanNode::~_optIxScanNode ()
    {
-   }
-
-   void _optIxScanNode::release ( optPlanAllocator * pAllocator )
-   {
-      if ( pAllocator && pAllocator->isAllocatedByme( this ) )
-      {
-         this->~_optIxScanNode() ;
-      }
-      else
-      {
-         SDB_OSS_DEL this ;
-      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTIXSCAN_PREEVAL, "_optIxScanNode::preEvaluate" )
@@ -2413,18 +2389,6 @@ namespace engine
    {
    }
 
-   void _optSortNode::release ( optPlanAllocator * pAllocator )
-   {
-      if ( pAllocator && pAllocator->isAllocatedByme( this ) )
-      {
-         this->~_optSortNode() ;
-      }
-      else
-      {
-         SDB_OSS_DEL this ;
-      }
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSORT_PREEVAL, "_optSortNode::preEvaluate" )
    void _optSortNode::preEvaluate ( const rtnQueryOptions & queryOptions,
                                     UINT64 sortBufferSize )
@@ -3017,10 +2981,7 @@ namespace engine
       return rc ;
 
    error :
-      if ( NULL != newNode )
-      {
-         newNode->release( pAllocator ) ;
-      }
+      SAFE_OSS_DELETE( newNode ) ;
       // Ignore errors
       rc = SDB_OK ;
       goto done ;
@@ -3316,18 +3277,6 @@ namespace engine
    {
    }
 
-   void _optMainCLMergeNode::release ( optPlanAllocator * pAllocator )
-   {
-      if ( pAllocator && pAllocator->isAllocatedByme( this ) )
-      {
-         this->~_optMainCLMergeNode() ;
-      }
-      else
-      {
-         SDB_OSS_DEL this ;
-      }
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTMERGENODE__EVALEMPRUNCOST, "_optMainCLMergeNode::_evaluateEmptyRunCost" )
    void _optMainCLMergeNode::_evaluateEmptyRunCost ()
    {
@@ -3481,18 +3430,6 @@ namespace engine
 
    _optCoordMergeNode::~_optCoordMergeNode ()
    {
-   }
-
-   void _optCoordMergeNode::release ( optPlanAllocator * pAllocator )
-   {
-      if ( pAllocator && pAllocator->isAllocatedByme( this ) )
-      {
-         this->~_optCoordMergeNode() ;
-      }
-      else
-      {
-         SDB_OSS_DEL this ;
-      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCOORDNODE__EVALEMPRUNCOST, "_optCoordMergeNode::_evaluateEmptyRunCost" )

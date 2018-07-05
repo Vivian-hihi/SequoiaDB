@@ -154,15 +154,7 @@ namespace engine
          void * operator new ( size_t size, optPlanAllocator *pAllocator,
                                std::nothrow_t ) ;
 
-         // NOTE: Delete operators should not be called
          void operator delete ( void *p ) ;
-
-         // Overload delete operator to keep compiler quiet
-         // NOTE: Delete operators should not be called
-         void operator delete ( void *p, optPlanAllocator *pAllocator,
-                                std::nothrow_t ) ;
-
-         virtual void release ( optPlanAllocator * pAllocator ) = 0 ;
 
          OSS_INLINE optPlanNodeList & getChildNodes ()
          {
@@ -176,7 +168,7 @@ namespace engine
 
          void addChildNode ( _optPlanNode *pChildNode ) ;
 
-         void deleteChildNodes ( optPlanAllocator *pAllocator ) ;
+         void deleteChildNodes () ;
 
          OSS_INLINE virtual UINT32 getChildNodeNum () const
          {
@@ -656,8 +648,6 @@ namespace engine
 
          virtual ~_optTbScanNode () ;
 
-         virtual void release ( optPlanAllocator * pAllocator ) ;
-
          OSS_INLINE virtual OPT_PLAN_NODE_TYPE getType () const
          {
             return OPT_PLAN_TB_SCAN ;
@@ -725,8 +715,6 @@ namespace engine
                           const rtnContext * context ) ;
 
          virtual ~_optIxScanNode () ;
-
-         virtual void release ( optPlanAllocator * pAllocator ) ;
 
          OSS_INLINE virtual OPT_PLAN_NODE_TYPE getType () const
          {
@@ -925,8 +913,6 @@ namespace engine
 
          virtual ~_optSortNode () ;
 
-         virtual void release ( optPlanAllocator * pAllocator ) ;
-
          OSS_INLINE virtual OPT_PLAN_NODE_TYPE getType () const
          {
             return OPT_PLAN_SORT ;
@@ -1108,8 +1094,6 @@ namespace engine
 
          virtual ~_optMainCLMergeNode () ;
 
-         virtual void release ( optPlanAllocator * pAllocator ) ;
-
          OSS_INLINE virtual OPT_PLAN_NODE_TYPE getType () const
          {
             return OPT_PLAN_MERGE ;
@@ -1170,8 +1154,6 @@ namespace engine
          _optCoordMergeNode ( const rtnContext * context ) ;
 
          virtual ~_optCoordMergeNode () ;
-
-         virtual void release ( optPlanAllocator * pAllocator ) ;
 
          OSS_INLINE virtual OPT_PLAN_NODE_TYPE getType () const
          {

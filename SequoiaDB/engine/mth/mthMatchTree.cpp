@@ -236,7 +236,7 @@ namespace engine
 
    void _mthMatchNodeFactory::releaseNode( _mthMatchNode *node )
    {
-      node->release() ;
+      SAFE_OSS_DELETE( node ) ;
    }
 
    _mthMatchTree* _mthMatchNodeFactory::createTree()
@@ -342,7 +342,7 @@ namespace engine
 
    void _mthMatchNodeFactory::releaseFunc( _mthMatchFunc *func )
    {
-      func->release() ;
+      SAFE_OSS_DELETE( func ) ;
    }
 
    _mthMatchNodeFactory *mthGetMatchNodeFactory()

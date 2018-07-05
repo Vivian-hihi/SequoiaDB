@@ -77,8 +77,8 @@ namespace engine
 
       if ( _pRootNode && _ownedPath )
       {
-         _pRootNode->deleteChildNodes( _pAllocator ) ;
-         _pRootNode->release( _pAllocator ) ;
+         _pRootNode->deleteChildNodes() ;
+         SDB_OSS_DEL _pRootNode ;
       }
       _pRootNode = NULL ;
       _ownedPath = TRUE ;

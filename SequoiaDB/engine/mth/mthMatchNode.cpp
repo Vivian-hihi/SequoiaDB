@@ -550,15 +550,22 @@ namespace engine
       void *p = NULL ;
       if ( size > 0 )
       {
-         if ( NULL != allocator )
+         // In order to get the allocator when deleting the object, reserve
+         // space to store the address of the allocator at the head of the
+         // actual allocated space.
+         size_t reserveSize = size + sizeof( ossValuePtr ) ;
+         if ( allocator )
          {
-            p = allocator->allocate( size ) ;
+            p = allocator->allocate( reserveSize ) ;
          }
 
          if ( NULL == p )
          {
-            p = SDB_OSS_MALLOC( size ) ;
+            p = SDB_OSS_MALLOC( reserveSize ) ;
          }
+
+         *(ossValuePtr *)p = (ossValuePtr)allocator ;
+         p = (CHAR *)p + sizeof( ossValuePtr ) ;
       }
 
       return p ;
@@ -566,18 +573,13 @@ namespace engine
 
    void _mthMatchNode::operator delete( void *p )
    {
-      SDB_OSS_FREE(p) ;
-   }
-
-   void _mthMatchNode::operator delete( void *p, _mthNodeAllocator *allocator )
-   {
-      if ( NULL != allocator && allocator->isAllocatedByme( p ) )
+      if ( p )
       {
-         // do nothing here
-      }
-      else
-      {
-         SDB_OSS_FREE(p) ;
+         void *beginAddr = (void *)( (CHAR *)p - sizeof( ossValuePtr ) ) ;
+         if ( 0 == *(ossValuePtr *)beginAddr )
+         {
+            SDB_OSS_FREE( beginAddr ) ;
+         }
       }
    }
 

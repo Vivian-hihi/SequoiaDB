@@ -81,10 +81,7 @@ namespace seadapter
 
       public:
          void* operator new( size_t size, rtnCondNodeAllocator *allocator ) ;
-         // Invoked by release. Do NOT call directly.
          void operator delete( void *p ) ;
-         // Just avoid warning when compiling on windows.
-         void operator delete( void *p, rtnCondNodeAllocator *allocator ) ;
 
          virtual void init( const CHAR *fieldName ) ;
          virtual INT32 addChild( _rtnCondNode *child ) ;
@@ -94,7 +91,6 @@ namespace seadapter
          _rtnCondNode* getParent() ;
 
          virtual void clear() ;
-         virtual void release() = 0 ;
          virtual RTN_COND_NODE_TYPE getType() = 0 ;
          virtual const CHAR* getOperatorStr() = 0 ;
          virtual BSONObj toBson() = 0 ;
@@ -142,7 +138,6 @@ namespace seadapter
          virtual RTN_COND_NODE_TYPE getType() ;
          virtual const CHAR* getOperatorStr() ;
          virtual BSONObj toBson() ;
-         virtual void release() ;
 
          BSONElement getElement() const { return _element ; }
       private:
@@ -161,7 +156,6 @@ namespace seadapter
          virtual RTN_COND_NODE_TYPE getType() ;
          virtual const CHAR* getOperatorStr() ;
          virtual BSONObj toBson() ;
-         virtual void release() ;
          BSONElement getElement() const { return _element ; }
       private:
          BSONElement _element ;
@@ -175,7 +169,6 @@ namespace seadapter
          ~_rtnCondLogicNode() ;
       public:
          virtual BSONObj toBson() ;
-         virtual void release() ;
    } ;
    typedef _rtnCondLogicNode rtnCondLogicNode ;
 
@@ -188,7 +181,6 @@ namespace seadapter
       public:
          virtual RTN_COND_NODE_TYPE getType() ;
          virtual const CHAR* getOperatorStr() ;
-         virtual void release() ;
    } ;
    typedef _rtnCondLogicAndNode rtnCondLogicAndNode ;
 
@@ -201,7 +193,6 @@ namespace seadapter
       public:
          virtual RTN_COND_NODE_TYPE getType() ;
          virtual const CHAR* getOperatorStr() ;
-         virtual void release() ;
    } ;
    typedef _rtnCondLogicOrNode rtnCondLogicOrNode ;
 
@@ -214,7 +205,6 @@ namespace seadapter
       public:
          virtual RTN_COND_NODE_TYPE getType() ;
          virtual const CHAR* getOperatorStr() ;
-         virtual void release() ;
    } ;
    typedef _rtnCondLogicNotNode rtnCondLogicNotNode ;
 

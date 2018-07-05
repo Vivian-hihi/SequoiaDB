@@ -100,15 +100,22 @@ namespace engine
       void *p = NULL ;
       if ( size > 0 )
       {
-         if ( NULL != allocator )
+         // In order to get the allocator when deleting the object, reserve
+         // space to store the address of the allocator at the head of the
+         // actual allocated space.
+         size_t reserveSize = size + sizeof( ossValuePtr ) ;
+         if ( allocator )
          {
-            p = allocator->allocate( size ) ;
+            p = allocator->allocate( reserveSize ) ;
          }
 
          if ( NULL == p )
          {
-            p = SDB_OSS_MALLOC( size ) ;
+            p = SDB_OSS_MALLOC( reserveSize ) ;
          }
+
+         *(ossValuePtr *)p = (ossValuePtr)allocator ;
+         p = (CHAR *)p + sizeof( ossValuePtr ) ;
       }
 
       return p ;
@@ -116,18 +123,13 @@ namespace engine
 
    void _mthMatchFunc::operator delete( void *p )
    {
-      SDB_OSS_FREE(p) ;
-   }
-
-   void _mthMatchFunc::operator delete( void *p, _mthNodeAllocator *allocator )
-   {
-      if ( NULL != allocator && allocator->isAllocatedByme( p ) )
+      if ( p )
       {
-         // do nothing here
-      }
-      else
-      {
-         SDB_OSS_FREE(p) ;
+         void *beginAddr = (void *)( (CHAR *)p - sizeof( ossValuePtr ) ) ;
+         if ( 0 == *(ossValuePtr *)beginAddr )
+         {
+            SDB_OSS_FREE( beginAddr ) ;
+         }
       }
    }
 
@@ -164,18 +166,6 @@ namespace engine
    _mthMatchFuncABS::~_mthMatchFuncABS()
    {
       clear() ;
-   }
-
-   void _mthMatchFuncABS::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncABS() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    INT32 _mthMatchFuncABS::call( const BSONElement &in, BSONObj &out )
@@ -232,18 +222,6 @@ namespace engine
       clear() ;
    }
 
-   void _mthMatchFuncCEILING::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncCEILING() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    INT32 _mthMatchFuncCEILING::call( const BSONElement &in, BSONObj &out )
    {
       INT32 rc = SDB_OK ;
@@ -279,18 +257,6 @@ namespace engine
    _mthMatchFuncFLOOR::~_mthMatchFuncFLOOR()
    {
       clear() ;
-   }
-
-   void _mthMatchFuncFLOOR::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncFLOOR() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    INT32 _mthMatchFuncFLOOR::call( const BSONElement &in, BSONObj &out )
@@ -330,18 +296,6 @@ namespace engine
       clear() ;
    }
 
-   void _mthMatchFuncLOWER::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncLOWER() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    INT32 _mthMatchFuncLOWER::call( const BSONElement &in, BSONObj &out )
    {
       INT32 rc = SDB_OK ;
@@ -377,18 +331,6 @@ namespace engine
    _mthMatchFuncUPPER::~_mthMatchFuncUPPER()
    {
       clear() ;
-   }
-
-   void _mthMatchFuncUPPER::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncUPPER() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    INT32 _mthMatchFuncUPPER::call( const BSONElement &in, BSONObj &out )
@@ -428,18 +370,6 @@ namespace engine
       clear() ;
    }
 
-   void _mthMatchFuncLTRIM::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncLTRIM() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    INT32 _mthMatchFuncLTRIM::call( const BSONElement &in, BSONObj &out )
    {
       INT32 rc = SDB_OK ;
@@ -475,18 +405,6 @@ namespace engine
    _mthMatchFuncRTRIM::~_mthMatchFuncRTRIM()
    {
       clear() ;
-   }
-
-   void _mthMatchFuncRTRIM::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncRTRIM() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    INT32 _mthMatchFuncRTRIM::call( const BSONElement &in, BSONObj &out )
@@ -526,18 +444,6 @@ namespace engine
       clear() ;
    }
 
-   void _mthMatchFuncTRIM::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncTRIM() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    INT32 _mthMatchFuncTRIM::call( const BSONElement &in, BSONObj &out )
    {
       INT32 rc = SDB_OK ;
@@ -573,18 +479,6 @@ namespace engine
    _mthMatchFuncSTRLEN::~_mthMatchFuncSTRLEN()
    {
       clear() ;
-   }
-
-   void _mthMatchFuncSTRLEN::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncSTRLEN() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    INT32 _mthMatchFuncSTRLEN::call( const BSONElement &in, BSONObj &out )
@@ -624,18 +518,6 @@ namespace engine
    _mthMatchFuncSUBSTR::~_mthMatchFuncSUBSTR()
    {
       clear() ;
-   }
-
-   void _mthMatchFuncSUBSTR::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncSUBSTR() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    INT32 _mthMatchFuncSUBSTR::call( const BSONElement &in, BSONObj &out )
@@ -761,18 +643,6 @@ namespace engine
       clear() ;
    }
 
-   void _mthMatchFuncMOD::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncMOD() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    INT32 _mthMatchFuncMOD::call( const BSONElement &in, BSONObj &out )
    {
       INT32 rc = SDB_OK ;
@@ -831,18 +701,6 @@ namespace engine
    _mthMatchFuncADD::~_mthMatchFuncADD()
    {
       clear() ;
-   }
-
-   void _mthMatchFuncADD::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncADD() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    INT32 _mthMatchFuncADD::call( const BSONElement &in, BSONObj &out )
@@ -906,18 +764,6 @@ namespace engine
       clear() ;
    }
 
-   void _mthMatchFuncSUBTRACT::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncSUBTRACT() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    INT32 _mthMatchFuncSUBTRACT::call( const BSONElement &in, BSONObj &out )
    {
       INT32 rc = SDB_OK ;
@@ -979,18 +825,6 @@ namespace engine
       clear() ;
    }
 
-   void _mthMatchFuncMULTIPLY::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncMULTIPLY() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    INT32 _mthMatchFuncMULTIPLY::call( const BSONElement &in, BSONObj &out )
    {
       INT32 rc = SDB_OK ;
@@ -1050,18 +884,6 @@ namespace engine
    _mthMatchFuncDIVIDE::~_mthMatchFuncDIVIDE()
    {
       clear() ;
-   }
-
-   void _mthMatchFuncDIVIDE::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncDIVIDE() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    INT32 _mthMatchFuncDIVIDE::call( const BSONElement &in, BSONObj &out )
@@ -1131,18 +953,6 @@ namespace engine
    _mthMatchFuncCAST::~_mthMatchFuncCAST()
    {
       clear() ;
-   }
-
-   void _mthMatchFuncCAST::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncCAST() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    INT32 _mthMatchFuncCAST::call( const BSONElement &in, BSONObj &out )
@@ -1264,18 +1074,6 @@ namespace engine
    _mthMatchFuncSLICE::~_mthMatchFuncSLICE()
    {
       clear() ;
-   }
-
-   void _mthMatchFuncSLICE::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncSLICE() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    INT32 _mthMatchFuncSLICE::call( const BSONElement &in, BSONObj &out )
@@ -1441,18 +1239,6 @@ namespace engine
       clear() ;
    }
 
-   void _mthMatchFuncSIZE::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncSIZE() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    INT32 _mthMatchFuncSIZE::call( const BSONElement &in, BSONObj &out )
    {
       INT32 rc = SDB_OK ;
@@ -1504,18 +1290,6 @@ namespace engine
       _mthMatchFuncTYPE::~_mthMatchFuncTYPE()
       {
          clear() ;
-      }
-
-      void _mthMatchFuncTYPE::release()
-      {
-         if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-         {
-            this->~_mthMatchFuncTYPE() ;
-         }
-         else
-         {
-            delete this ;
-         }
       }
 
       INT32 _mthMatchFuncTYPE::call( const BSONElement &in, BSONObj &out )
@@ -1587,18 +1361,6 @@ namespace engine
    INT32 _mthMatchFuncRETURNMATCH::getLen()
    {
       return _len ;
-   }
-
-   void _mthMatchFuncRETURNMATCH::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncRETURNMATCH() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    INT32 _mthMatchFuncRETURNMATCH::call( const BSONElement &in, BSONObj &out )
@@ -1691,18 +1453,6 @@ namespace engine
    _mthMatchFuncEXPAND::~_mthMatchFuncEXPAND()
    {
       clear() ;
-   }
-
-   void _mthMatchFuncEXPAND::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchFuncEXPAND() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    INT32 _mthMatchFuncEXPAND::call( const BSONElement &in, BSONObj &out )
@@ -3065,18 +2815,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   void _mthMatchOpNodeET::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeET() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    void _mthMatchOpNodeET::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                              double &selectivity,
                                              UINT32 &cpuCost )
@@ -3173,18 +2911,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }
-
-   void _mthMatchOpNodeNE::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeNE() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    void _mthMatchOpNodeNE::_evalEstimation ( const optCollectionStat *pCollectionStat,
@@ -3313,18 +3039,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   void _mthMatchOpNodeLT::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeLT() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    void _mthMatchOpNodeLT::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                              double &selectivity,
                                              UINT32 &cpuCost )
@@ -3448,18 +3162,6 @@ namespace engine
 
       result = FALSE ;
       return SDB_OK ;
-   }
-
-   void _mthMatchOpNodeGT::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeGT() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    void _mthMatchOpNodeGT::_evalEstimation ( const optCollectionStat *pCollectionStat,
@@ -3707,18 +3409,6 @@ namespace engine
       goto done ;
    }
 
-   void _mthMatchOpNodeIN::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeIN() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    void _mthMatchOpNodeIN::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                              double &selectivity,
                                              UINT32 &cpuCost )
@@ -3834,18 +3524,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }
-
-   void _mthMatchOpNodeNIN::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeNIN() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    //**************_mthMatchOpNodeALL*****************************
@@ -4134,18 +3812,6 @@ namespace engine
       goto done ;
    }
 
-   void _mthMatchOpNodeALL::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeALL() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    //**************_mthMatchOpNodeEXISTS*****************************
    _mthMatchOpNodeEXISTS::_mthMatchOpNodeEXISTS( _mthNodeAllocator *allocator,
                                                  const mthNodeConfig *config )
@@ -4211,18 +3877,6 @@ namespace engine
 
          result = FALSE ;
          return SDB_OK ;
-      }
-   }
-
-   void _mthMatchOpNodeEXISTS::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeEXISTS() ;
-      }
-      else
-      {
-         delete this ;
       }
    }
 
@@ -4379,18 +4033,6 @@ namespace engine
       goto done ;
    }
 
-   void _mthMatchOpNodeMOD::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeMOD() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    //**************_mthMatchOpNodeTYPE*****************************
    _mthMatchOpNodeTYPE::_mthMatchOpNodeTYPE( _mthNodeAllocator *allocator,
                                              const mthNodeConfig *config )
@@ -4443,18 +4085,6 @@ namespace engine
    {
       result = left.type() == _type ;
       return SDB_OK ;
-   }
-
-   void _mthMatchOpNodeTYPE::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeTYPE() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    //**************_mthMatchOpNodeISNULL*****************************
@@ -4526,17 +4156,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   void _mthMatchOpNodeISNULL::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeISNULL() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
 
    //**************_mthMatchOpNodeEXPAND*****************************
    _mthMatchOpNodeEXPAND::_mthMatchOpNodeEXPAND( _mthNodeAllocator *allocator,
@@ -4590,18 +4209,6 @@ namespace engine
    {
       result = TRUE ;
       return SDB_OK ;
-   }
-
-   void _mthMatchOpNodeEXPAND::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeEXPAND() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    //**************_mthMatchOpNodeELEMMATCH*****************************
@@ -4782,18 +4389,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }
-
-   void _mthMatchOpNodeELEMMATCH::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeELEMMATCH() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    void _mthMatchOpNodeELEMMATCH::_evalEstimation ( const optCollectionStat *pCollectionStat,
@@ -5054,18 +4649,6 @@ namespace engine
          }
       default:
          return FALSE ;
-      }
-   }
-
-   void _mthMatchOpNodeRegex::release()
-   {
-      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_mthMatchOpNodeRegex() ;
-      }
-      else
-      {
-         delete this ;
       }
    }
 

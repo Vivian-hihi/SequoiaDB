@@ -42,7 +42,7 @@
 #include "rtnTrace.hpp"
 #include "rtnSimpleCondNode.hpp"
 
-namespace seadapter 
+namespace seadapter
 {
    _rtnCondNode::_rtnCondNode( rtnCondNodeAllocator *allocator )
    {
@@ -62,15 +62,22 @@ namespace seadapter
       void *p = NULL ;
       if ( size > 0 )
       {
-         if ( NULL != allocator )
+         // In order to get the allocator when deleting the object, reserve
+         // space to store the address of the allocator at the head of the
+         // actual allocated space.
+         size_t reserveSize = size + sizeof( ossValuePtr ) ;
+         if ( allocator )
          {
-            p = allocator->allocate( size ) ;
+            p = allocator->allocate( reserveSize ) ;
          }
 
          if ( NULL == p )
          {
-            p = SDB_OSS_MALLOC( size ) ;
+            p = SDB_OSS_MALLOC( reserveSize ) ;
          }
+
+         *(ossValuePtr *)p = (ossValuePtr)allocator ;
+         p = (CHAR *)p + sizeof( ossValuePtr ) ;
       }
 
       return p ;
@@ -78,19 +85,13 @@ namespace seadapter
 
    void _rtnCondNode::operator delete( void *p )
    {
-      SAFE_OSS_FREE( p ) ;
-   }
-
-   void _rtnCondNode::operator delete( void *p,
-                                       rtnCondNodeAllocator *allocator )
-   {
-      if ( NULL != allocator && allocator->isAllocatedByme( p ) )
+      if ( p )
       {
-         // do nothing
-      }
-      else
-      {
-         SAFE_OSS_FREE( p ) ;
+         void *beginAddr = (void *)( (CHAR *)p - sizeof( ossValuePtr ) ) ;
+         if ( 0 == *(ossValuePtr *)beginAddr )
+         {
+            SDB_OSS_FREE( beginAddr ) ;
+         }
       }
    }
 
@@ -113,8 +114,8 @@ namespace seadapter
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONDNODE_UPDATECHILD, "_rtnCondNode::updateChild" )
    INT32 _rtnCondNode::updateChild( rtnCondNode *child,
-                                     rtnCondNode *newChild,
-                                     const BSONElement &element )
+                                    rtnCondNode *newChild,
+                                    const BSONElement &element )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCONDNODE_UPDATECHILD ) ;
@@ -131,7 +132,7 @@ namespace seadapter
       newChild->_idxInParent = child->_idxInParent ;
       newChild->_parent = this ;
       // Release the old child.
-      child->release() ;
+      SDB_OSS_DEL child ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNCONDNODE_UPDATECHILD, rc ) ;
@@ -228,18 +229,6 @@ namespace seadapter
       return builder.obj() ;
    }
 
-   void _rtnCondNormalNode::release()
-   {
-      if ( _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_rtnCondNormalNode() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    _rtnCondTextNode::_rtnCondTextNode( rtnCondNodeAllocator *allocator )
    : _rtnCondNode( allocator )
    {
@@ -276,18 +265,6 @@ namespace seadapter
       return builder.obj() ;
    }
 
-   void _rtnCondTextNode::release()
-   {
-      if ( _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_rtnCondTextNode() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    _rtnCondLogicNode::_rtnCondLogicNode( rtnCondNodeAllocator *allocator )
    : _rtnCondNode( allocator )
    {
@@ -318,18 +295,6 @@ namespace seadapter
       return builder.obj() ;
    }
 
-   void _rtnCondLogicNode::release()
-   {
-      if ( _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_rtnCondLogicNode() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    _rtnCondLogicAndNode::_rtnCondLogicAndNode( rtnCondNodeAllocator *allocator )
    : _rtnCondLogicNode( allocator )
    {
@@ -348,18 +313,6 @@ namespace seadapter
    const CHAR* _rtnCondLogicAndNode::getOperatorStr()
    {
       return RTN_OPERATOR_STR_AND ;
-   }
-
-   void _rtnCondLogicAndNode::release()
-   {
-      if ( _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_rtnCondLogicAndNode() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 
    _rtnCondLogicOrNode::_rtnCondLogicOrNode( rtnCondNodeAllocator *allocator )
@@ -382,18 +335,6 @@ namespace seadapter
       return RTN_OPERATOR_STR_OR ;
    }
 
-   void _rtnCondLogicOrNode::release()
-   {
-      if ( _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_rtnCondLogicOrNode() ;
-      }
-      else
-      {
-         delete this ;
-      }
-   }
-
    _rtnCondLogicNotNode::_rtnCondLogicNotNode( rtnCondNodeAllocator *allocator )
    : _rtnCondLogicNode( allocator )
    {
@@ -412,18 +353,6 @@ namespace seadapter
    const CHAR* _rtnCondLogicNotNode::getOperatorStr()
    {
       return RTN_OPERATOR_STR_NOT ;
-   }
-
-   void _rtnCondLogicNotNode::release()
-   {
-      if ( _allocator && _allocator->isAllocatedByme( this ) )
-      {
-         this->~_rtnCondLogicNotNode() ;
-      }
-      else
-      {
-         delete this ;
-      }
    }
 }
 

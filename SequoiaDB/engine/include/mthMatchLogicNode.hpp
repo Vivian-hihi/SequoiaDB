@@ -59,7 +59,7 @@ namespace engine
          virtual ~_mthMatchLogicNode() ;
 
       public: /* from parent */
-         virtual INT32 init( const CHAR *fieldName, 
+         virtual INT32 init( const CHAR *fieldName,
                              const BSONElement &element ) ;
          virtual void clear() ;
          virtual void setWeight( UINT32 weight ) ;
@@ -69,7 +69,7 @@ namespace engine
          virtual BSONObj toParamBson ( const rtnParamList &parameters ) ;
 
       protected:
-         virtual INT32 _init( const CHAR *fieldName, 
+         virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &element ) ;
          virtual void _clear() ;
 
@@ -87,11 +87,10 @@ namespace engine
       public:
          virtual INT32 getType() ;
          virtual const CHAR* getOperatorStr() ;
-         virtual INT32 execute( const BSONObj &obj, 
+         virtual INT32 execute( const BSONObj &obj,
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual void release() ;
          virtual void evalEstimation ( const optCollectionStat *pCollectionStat,
                                        double &selectivity, UINT32 &cpuCost ) ;
    } ;
@@ -106,14 +105,13 @@ namespace engine
       public:
          virtual INT32 getType() ;
          virtual const CHAR* getOperatorStr() ;
-         virtual INT32 execute( const BSONObj &obj, 
+         virtual INT32 execute( const BSONObj &obj,
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
          virtual INT32 calcPredicate( rtnPredicateSet &predicateSet,
                                       const rtnParamList * paramList ) ;
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
                                              const rtnParamList *parameters ) ;
-         virtual void release() ;
          virtual void evalEstimation ( const optCollectionStat *pCollectionStat,
                                        double &selectivity, UINT32 &cpuCost ) ;
    } ;
@@ -128,7 +126,7 @@ namespace engine
       public:
          virtual INT32 getType() ;
          virtual const CHAR* getOperatorStr() ;
-         virtual INT32 execute( const BSONObj &obj, 
+         virtual INT32 execute( const BSONObj &obj,
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
          virtual INT32 calcPredicate( rtnPredicateSet &predicateSet,
@@ -136,7 +134,6 @@ namespace engine
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder,
                                              const rtnParamList *parameters ) ;
          virtual BOOLEAN isTotalConverted() ;
-         virtual void release() ;
          virtual void evalEstimation ( const optCollectionStat *pCollectionStat,
                                        double &selectivity, UINT32 &cpuCost ) ;
    } ;
