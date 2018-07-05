@@ -558,15 +558,18 @@ namespace engine
          if ( isRootPath && deployPath.length() > 0 )
          {
             ss << deployPath ;
+            if ( OSS_FILE_SEP_CHAR != deployPath.at( deployPath.length() -1 ) )
+            {
+               ss << OSS_FILE_SEP ;
+            }
          }
          else
          {
             ss << diskPath ;
-         }
-
-         if ( OSS_FILE_SEP_CHAR != diskPath.at( diskPath.length() -1 ) )
-         {
-            ss << OSS_FILE_SEP ;
+            if ( OSS_FILE_SEP_CHAR != diskPath.at( diskPath.length() -1 ) )
+            {
+               ss << OSS_FILE_SEP ;
+            }
          }
 
          if ( FALSE == isRootPath )
