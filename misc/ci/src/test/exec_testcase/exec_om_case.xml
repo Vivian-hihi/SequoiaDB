@@ -89,8 +89,7 @@
          <echo message="exec cmd: ${INSTALL_DIR}/bin/sdb ${cmd1} ${cmd2}"/>      
          <var name="@{output}" unset="true"/>
          <var name="@{envisok}" unset="true"/>
-         <exec executable="${INSTALL_DIR}/bin/sdb" 
-               timeout="300000" 
+         <exec executable="${INSTALL_DIR}/bin/sdb"  
                outputproperty="@{output}" 
                resultproperty="@{envisok}"
                failonerror="false">
@@ -186,16 +185,6 @@
             </else>
          </if>
          
-         <if>
-            <equals arg1="${TEST_TYPE}" arg2="LARGEDATATEST" />
-            <then>               
-               <var name="timelimit" value="28800000" />
-            </then>
-            <else>
-               <var name="timelimit" value="1800000" />
-            </else>
-         </if>
-         
          <var name="cmd1" value="-f &quot;${func_option}${commlib_option}@{jsfile}&quot;" />
          <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='${prefix}';var COORDSVCNAME='${SVCNAME}';var COORDHOSTNAME='localhost';var TESTCASEDIR='${jsdir}';&quot;" />
          <echo message="exec cmd: ${INSTALL_DIR}/bin/sdb ${cmd1} ${cmd2}"/>      
@@ -204,7 +193,6 @@
          <var name="@{rc}" unset="true"/>
          <exec executable="${INSTALL_DIR}/bin/sdb" 
                dir="${jsdir}" 
-               timeout="${timelimit}" 
                outputproperty="screen_output" 
                resultproperty="@{rc}"
                failonerror="false">

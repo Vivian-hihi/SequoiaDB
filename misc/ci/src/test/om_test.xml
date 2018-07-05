@@ -114,7 +114,6 @@
                   <dirset dir="@{casetype}" includes="js"/>
                </path>
                <sequential>
-                  <echo message="111111"/>
                   <var name="testcase_totaltype" unset="true"/>
                   <basename property="testcase_totaltype" file="@{casetype}"/>
                   <var name="testcase_subtype" unset="true"/>
