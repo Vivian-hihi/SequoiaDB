@@ -211,14 +211,29 @@ function _startPlugins( isChange )
 
 function _getOmConfig()
 {
-   var httpName = "8000" ;
-   var cursor = Sdbtool.listNodes( { "type": "om", "expand": true } ) ;
+   var isFind = false ;
+   var httpName = "11784" ;
+   var cursor = Sdbtool.listNodes( { "type": "om", "mode": "run", "expand": true } ) ;
+   var record ;
 
    while( record = cursor.next() )
    {
       var omInfo = record.toObj() ;
       httpName = omInfo[FIELD_HTTP_NAME] ;
+      isFind = true ;
       break ;
+   }
+
+   if( isFind == false )
+   {
+      cursor = Sdbtool.listNodes( { "type": "om", "mode": "local", "expand": true } ) ;
+      while( record = cursor.next() )
+      {
+         var omInfo = record.toObj() ;
+         httpName = omInfo[FIELD_HTTP_NAME] ;
+         isFind = true ;
+         break ;
+      }
    }
 
    return httpName ;
