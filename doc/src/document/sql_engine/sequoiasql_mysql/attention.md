@@ -8,4 +8,6 @@
 
 4、通过mysql创建的索引，不可直接在SequoiaDB上对索引执行删除或修改操作
 
-5、一个mysql节点仅可与一个SequoiaDB集群对接，不支持跨多个SequoiaDB集群
+5、复合唯一索引仅支持所有字段null值重复，不允许部分字段null值重复，例如：允许出现(null,null)和(null,null)重复值，但不允许出现(1,null)和(1,null)重复值
+
+6、一个mysql节点仅可与一个SequoiaDB集群对接，不支持跨多个SequoiaDB集群
