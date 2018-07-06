@@ -35,8 +35,7 @@ function main(db)
       dbcl.alter({EnsureShardingIndex:ensureShardingIndex,AutoIndexId:autoIndexId,ReplSize:replSize,StrictDataMode:strictDataMode}); 
       
       //check alter result
-      checkAlterResult( clName, "EnsureShardingIndex", ensureShardingIndex );      
-      //checkAlterResult( clName, "AutoIndexId", autoIndexId );
+      checkAlterResult( clName, "EnsureShardingIndex", ensureShardingIndex );   
       checkIdIndexResult( dbcl );    
       checkAlterResult( clName, "ReplSize", replSize );
       checkAlterResult( clName, "AttributeDesc","StrictDataMode");     
