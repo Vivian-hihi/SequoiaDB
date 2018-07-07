@@ -38,6 +38,13 @@ abstract class SdbPartitioner(config: SdbConfig, filter: SdbFilter)
     def computePartitions(): Array[SdbPartition]
 }
 
+private class NodeInfo(val host: String, val port: Int, val group: String,
+                       val instanceId: Int, val isPrimary: Boolean) {
+    val url: String = host + ":" + port
+
+    override def toString: String = s"$host:$port{group: $group,instanceId: $instanceId, isPrimary: $isPrimary}"
+}
+
 private object SdbPartitioner extends Logging {
     def apply(config: SdbConfig, filter: SdbFilter): SdbPartitioner = {
         val mode = determinatePartitionMode(config, filter)
@@ -169,8 +176,8 @@ private object SdbPartitioner extends Logging {
         map.toMap
     }
 
-    def getReplicaGroups(sdb: Sequoiadb): Map[String, List[String]] = {
-        val map = new mutable.HashMap[String, List[String]]()
+    def getDataGroups(sdb: Sequoiadb): Map[String, List[NodeInfo]] = {
+        val map = new mutable.HashMap[String, List[NodeInfo]]()
 
         val abnormalNodes = getAbnormalNodes(sdb)
         if (abnormalNodes.nonEmpty) {
@@ -183,32 +190,52 @@ private object SdbPartitioner extends Logging {
                 val obj = cursor.getNext
 
                 val groupName = obj.get("GroupName").asInstanceOf[String]
-                val nodeList = ArrayBuffer[String]()
+                if (!groupName.equals("SYSCatalogGroup") && !groupName.equals("SYSCoord")) {
+                    val nodeList = ArrayBuffer[NodeInfo]()
 
-                val group = obj.get("Group").asInstanceOf[BasicBSONList]
-                for (node <- group) {
-                    val nodeObj = node.asInstanceOf[BSONObject]
-                    val status = nodeObj.get("Status").asInstanceOf[Int]
-                    if (status == 1) {
-                        val hostName = nodeObj.get("HostName")
-                        val service = nodeObj.get("Service").asInstanceOf[BasicBSONList]
-                        for (port <- service) {
-                            val portObj = port.asInstanceOf[BSONObject]
-                            val serviceType = portObj.get("Type").asInstanceOf[Int]
-                            if (serviceType == 0) {
-                                val serviceName = portObj.get("Name").asInstanceOf[String]
+                    val primaryNodeId = if (obj.containsField("PrimaryNode")) {
+                        obj.get("PrimaryNode").asInstanceOf[Int]
+                    } else {
+                        -1
+                    }
+                    val group = obj.get("Group").asInstanceOf[BasicBSONList]
+                    var id: Int = 0
+                    for (node <- group) {
+                        id += 1
+                        val nodeObj = node.asInstanceOf[BSONObject]
+                        val status = nodeObj.get("Status").asInstanceOf[Int]
+                        if (status == 1) {
+                            val hostName = nodeObj.get("HostName").asInstanceOf[String]
+                            val service = nodeObj.get("Service").asInstanceOf[BasicBSONList]
+                            val nodeId = nodeObj.get("NodeID").asInstanceOf[Int]
+                            val instanceId = if (nodeObj.containsField("instanceid")) {
+                                nodeObj.get("instanceid").asInstanceOf[Int]
+                            } else {
+                                id
+                            }
+                            for (port <- service) {
+                                val portObj = port.asInstanceOf[BSONObject]
+                                val serviceType = portObj.get("Type").asInstanceOf[Int]
+                                if (serviceType == 0) {
+                                    val serviceName = portObj.get("Name").asInstanceOf[String]
 
-                                val node = hostName + ":" + serviceName
+                                    val node = hostName + ":" + serviceName
 
-                                if (abnormalNodes.isEmpty || !abnormalNodes.contains(node)) {
-                                    nodeList += node
+                                    if (abnormalNodes.isEmpty || !abnormalNodes.contains(node)) {
+                                        val nodeInfo = new NodeInfo(hostName, serviceName.toInt,
+                                            groupName, instanceId, nodeId == primaryNodeId)
+                                        nodeList += nodeInfo
+                                        logInfo(s"node=$nodeInfo")
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                map += (groupName -> nodeList.sorted.toList)
+                    if (nodeList.nonEmpty) {
+                        map += (groupName -> nodeList.sortBy(_.url).toList)
+                    }
+                }
             }
             cursor.close()
         } catch {
@@ -483,10 +510,9 @@ private class NodeSelector {
         }
     }
 
-    def increaseNodeRefCount(url: String): Unit = {
-        val u = url.split(':')
-        val hostName = u(0).trim
-        val port = u(1).trim.toInt
+    private def increaseNodeRefCount(nodeInfo: NodeInfo): Unit = {
+        val hostName = nodeInfo.host
+        val port = nodeInfo.port
 
         ensureNode(hostName, port)
 
@@ -497,19 +523,18 @@ private class NodeSelector {
         node.refCount += 1
     }
 
-    def getLeastUsedNode(urls: List[String]): String = {
+    private def getLeastUsedNode(nodeInfos: List[NodeInfo]): NodeInfo = {
         var leastUsedHost: Host = null
         var leastUsedNode: Node = null
-        var leastUsedUrl: String = null
+        var leastUsedNodeInfo: NodeInfo = null
 
-        if (urls == null || urls.isEmpty) {
+        if (nodeInfos == null || nodeInfos.isEmpty) {
             throw new SdbException("Null or empty urls")
         }
 
-        urls.foreach { url =>
-            val u = url.split(':')
-            val hostName = u(0).trim
-            val port = u(1).trim.toInt
+        nodeInfos.foreach { nodeInfo =>
+            val hostName = nodeInfo.host
+            val port = nodeInfo.port
 
             ensureNode(hostName, port)
 
@@ -519,24 +544,120 @@ private class NodeSelector {
             if (leastUsedNode == null) {
                 leastUsedHost = host
                 leastUsedNode = node
-                leastUsedUrl = url
+                leastUsedNodeInfo = nodeInfo
             } else {
                 if (host != leastUsedHost) {
                     if (host.refCount < leastUsedHost.refCount) {
                         leastUsedHost = host
                         leastUsedNode = node
-                        leastUsedUrl = url
+                        leastUsedNodeInfo = nodeInfo
                     }
                 } else {
                     if (node.refCount < leastUsedNode.refCount) {
                         leastUsedNode = node
-                        leastUsedUrl = url
+                        leastUsedNodeInfo = nodeInfo
                     }
                 }
             }
         }
 
-        leastUsedUrl
+        leastUsedNodeInfo
+    }
+
+    private def getNodeByPreferredInstance(nodeInfos: List[NodeInfo],
+                                           preferredInstance: SdbPreferredInstance)
+    : NodeInfo = {
+        var preferredNode: NodeInfo = null
+        if (preferredInstance.isMasterTendency) {
+            preferredNode = getNodeByMasterTendency(
+                nodeInfos, preferredInstance.instanceIdArray, preferredInstance.mode)
+        } else if (preferredInstance.isSlaveTendency) {
+            preferredNode = getNodeBySlaveTendency(
+                nodeInfos, preferredInstance.instanceIdArray, preferredInstance.mode)
+        } else {
+            preferredNode = getNodeByAnyTendency(
+                nodeInfos, preferredInstance.instanceIdArray, preferredInstance.mode)
+        }
+
+        preferredNode
+    }
+
+    private def getNodeByMode(nodeInfos: List[NodeInfo], mode: PreferredInstanceMode): NodeInfo = {
+        if (mode == PreferredInstanceMode.Ordered) {
+            nodeInfos.head
+        } else {
+            getLeastUsedNode(nodeInfos)
+        }
+    }
+
+    private def getNodeByMasterTendency(nodeInfos: List[NodeInfo],
+                                        instances: Array[Int],
+                                        mode: PreferredInstanceMode)
+    : NodeInfo = {
+        var nodes = nodeInfos.filter(node => instances.contains(node.instanceId)).filter(_.isPrimary)
+        if (nodes.nonEmpty) {
+            return nodes.head
+        }
+
+        nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
+        if (nodes.nonEmpty) {
+            return getNodeByMode(nodes, mode)
+        }
+
+        nodes = nodeInfos.filter(_.isPrimary)
+        if (nodes.nonEmpty) {
+            return nodes.head
+        }
+
+        getLeastUsedNode(nodeInfos)
+    }
+
+    private def getNodeBySlaveTendency(nodeInfos: List[NodeInfo],
+                                       instances: Array[Int],
+                                       mode: PreferredInstanceMode)
+    : NodeInfo = {
+        var nodes = nodeInfos.filter(node => instances.contains(node.instanceId)).filter(!_.isPrimary)
+        if (nodes.nonEmpty) {
+            return getNodeByMode(nodes, mode)
+        }
+
+        nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
+        if (nodes.nonEmpty) {
+            return getNodeByMode(nodes, mode)
+        }
+
+        nodes = nodeInfos.filter(!_.isPrimary)
+        if (nodes.nonEmpty) {
+            return getLeastUsedNode(nodes)
+        }
+
+        getLeastUsedNode(nodeInfos)
+    }
+
+    private def getNodeByAnyTendency(nodeInfos: List[NodeInfo],
+                                     instances: Array[Int],
+                                     mode: PreferredInstanceMode)
+    : NodeInfo = {
+        val nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
+        if (nodes.nonEmpty) {
+            return getNodeByMode(nodes, mode)
+        }
+
+        getLeastUsedNode(nodeInfos)
+    }
+
+    def selectNode(nodeInfos: List[NodeInfo], config: SdbConfig): NodeInfo = {
+        val preferredInstance = config.preferredInstance
+        var nodeInfo: NodeInfo = null
+
+        if (preferredInstance.nonPreferred) {
+            nodeInfo = getLeastUsedNode(nodeInfos)
+        } else {
+            nodeInfo = getNodeByPreferredInstance(nodeInfos, preferredInstance)
+        }
+
+        increaseNodeRefCount(nodeInfo)
+        nodeInfo
     }
 }
 
@@ -589,11 +710,13 @@ private[spark] class SdbShardingPartitioner(config: SdbConfig, filter: SdbFilter
     override def computePartitions(): Array[SdbPartition] = {
         val partitions = ArrayBuffer[SdbPartition]()
 
+        logInfo(s"preferredInstance: ${config.preferredInstance}")
+
         val sdb = new Sequoiadb(config.host, config.username, config.password, SdbConfig.SdbConnectionOptions)
         try {
             val nodeSelector = new NodeSelector
 
-            val groups = SdbPartitioner.getReplicaGroups(sdb)
+            val groups = SdbPartitioner.getDataGroups(sdb)
             val shardings = SdbPartitioner.getShardingInfo(sdb, config, filter)
 
             for (sharding <- shardings) {
@@ -601,16 +724,15 @@ private[spark] class SdbShardingPartitioner(config: SdbConfig, filter: SdbFilter
                 if (sharding.groupName == "") {
                     urls = List(sharding.nodeName)
                 } else {
-                    val groupNodeUrls = groups(sharding.groupName)
-                    if (groupNodeUrls.isEmpty) {
+                    val groupNodeInfos = groups(sharding.groupName)
+                    if (groupNodeInfos.isEmpty) {
                         throw new SdbException(s"Group ${sharding.groupName} has no normal node")
                     }
-                    if (config.shardingPartitionSingleNode) {
-                        val url = nodeSelector.getLeastUsedNode(groupNodeUrls)
-                        nodeSelector.increaseNodeRefCount(url)
-                        urls = List(url)
+                    if (config.shardingPartitionSingleNode || config.preferredInstance.isPreferred) {
+                        val nodeInfo = nodeSelector.selectNode(groupNodeInfos, config)
+                        urls = List(nodeInfo.url)
                     } else {
-                        urls = groupNodeUrls
+                        urls = groupNodeInfos.map(_.url)
                     }
                 }
 
@@ -635,12 +757,17 @@ private[spark] class SdbDatablockPartitioner(config: SdbConfig, filter: SdbFilte
     extends SdbPartitioner(config, filter) {
 
     override def computePartitions(): Array[SdbPartition] = {
-        var groups: Map[String, List[String]] = null
+        var groups: Map[String, List[NodeInfo]] = null
         var shardings: List[ShardingInfo] = null
+
+        logInfo(s"preferredInstance: ${config.preferredInstance}")
 
         val sdb = new Sequoiadb(config.host, config.username, config.password, SdbConfig.SdbConnectionOptions)
         try {
-            groups = SdbPartitioner.getReplicaGroups(sdb)
+            groups = SdbPartitioner.getDataGroups(sdb)
+            if (groups.isEmpty) {
+                throw new SdbException(s"SequoiaDB has no normal node")
+            }
             shardings = SdbPartitioner.getShardingInfo(sdb, config, filter)
         } finally {
             sdb.disconnect()
@@ -677,7 +804,7 @@ private[spark] class SdbDatablockPartitioner(config: SdbConfig, filter: SdbFilte
         SdbPartitioner.shufflePartitions(partitions)
     }
 
-    private def getQueryMetas(groups: Map[String, List[String]],
+    private def getQueryMetas(groups: Map[String, List[NodeInfo]],
                               shardings: List[ShardingInfo])
     : Array[QueryMeta] = {
         val queryMetas = ArrayBuffer[QueryMeta]()
@@ -688,12 +815,12 @@ private[spark] class SdbDatablockPartitioner(config: SdbConfig, filter: SdbFilte
             if (sharding.groupName == "") {
                 url = sharding.nodeName
             } else {
-                val groupNodeUrls = groups(sharding.groupName)
-                if (groupNodeUrls.isEmpty) {
+                val groupNodeInfos = groups(sharding.groupName)
+                if (groupNodeInfos.isEmpty) {
                     throw new SdbException(s"Group ${sharding.groupName} has no normal node")
                 }
-                url = nodeSelector.getLeastUsedNode(groupNodeUrls)
-                nodeSelector.increaseNodeRefCount(url)
+                val nodeInfo = nodeSelector.selectNode(groupNodeInfos, config)
+                url = nodeInfo.url
             }
 
             val metas = SdbPartitioner.getQueryMeta(url, sharding.csName, sharding.clName, config)

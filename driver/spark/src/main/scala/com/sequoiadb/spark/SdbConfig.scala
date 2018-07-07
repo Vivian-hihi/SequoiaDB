@@ -20,6 +20,9 @@ import com.sequoiadb.net.ConfigOptions
 import org.bson.BSONObject
 import org.bson.util.JSON
 
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * SequoiaDB configurations
   *
@@ -162,6 +165,40 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
     val preferredLocation: Boolean = properties.get(SdbConfig.PreferredLocation)
         .map(_.toBoolean).getOrElse(SdbConfig.DefaultPreferredLocation)
 
+    private val preferredInstanceMode: PreferredInstanceMode = properties
+        .getOrElse(SdbConfig.PreferredInstanceMode, SdbConfig.DefaultPreferredInstanceMode).toLowerCase match {
+        case SdbConfig.PREFERRED_INSTANCE_MODE_RANDOM => PreferredInstanceMode.Random
+        case SdbConfig.PREFERRED_INSTANCE_MODE_ORDERED => PreferredInstanceMode.Ordered
+        case _ =>
+            invalidConfigValue(SdbConfig.PreferredInstanceMode, preferredInstanceMode)
+    }
+
+    private val _preferredInstance: Array[String] = properties
+        .getOrElse(SdbConfig.PreferredInstance, SdbConfig.DefaultPreferredInstance)
+        .split(",").map(_.trim)
+
+    for (preferred <- _preferredInstance) {
+        preferred.toUpperCase match {
+            case SdbConfig.PREFERRED_INSTANCE_MASTER =>
+            case SdbConfig.PREFERRED_INSTANCE_SLAVE =>
+            case SdbConfig.PREFERRED_INSTANCE_ANY =>
+            case s: String => {
+                try {
+                    val id = s.toInt
+                    if (id <= 0 && id > 255) {
+                        invalidConfigValue(SdbConfig.PreferredInstance, _preferredInstance)
+                    }
+                } catch {
+                    case _: Throwable =>
+                        invalidConfigValue(SdbConfig.PreferredInstance, _preferredInstance)
+                }
+            }
+        }
+    }
+
+    val preferredInstance: SdbPreferredInstance =
+        new SdbPreferredInstance(_preferredInstance, preferredInstanceMode)
+
     val shardingPartitionSingleNode: Boolean = properties.get(SdbConfig.ShardingPartitionSingleNode)
         .map(_.toBoolean).getOrElse(SdbConfig.DefaultShardingPartitionSingleNode)
 
@@ -279,6 +316,8 @@ object SdbConfig {
     val PartitionMaxNum = "partitionmaxnum"
     val ShardingPartitionSingleNode = "shardingpartitionsinglenode"
     val PreferredLocation = "preferredlocation"
+    val PreferredInstance = "preferredinstance"
+    val PreferredInstanceMode = "preferredinstancemode"
     val IgnoreDuplicateKey = "ignoreduplicatekey"
     val IgnoreNullField = "ignorenullfield"
     val UseSelector = "useselector"
@@ -308,6 +347,13 @@ object SdbConfig {
     val SCAN_TYPE_IXSCAN = "ixscan"
     val SCAN_TYPE_TBSCAN = "tbscan"
     val SCAN_TYPE_AUTO = "auto"
+
+    val PREFERRED_INSTANCE_MODE_RANDOM = "random"
+    val PREFERRED_INSTANCE_MODE_ORDERED = "ordered"
+
+    val PREFERRED_INSTANCE_MASTER = "M"
+    val PREFERRED_INSTANCE_SLAVE = "S"
+    val PREFERRED_INSTANCE_ANY = "A"
 
     val USE_SELECTOR_ENABLE = "enable"
     val USE_SELECTOR_DISABLE = "disable"
@@ -340,6 +386,8 @@ object SdbConfig {
         PartitionMaxNum,
         ShardingPartitionSingleNode,
         PreferredLocation,
+        PreferredInstance,
+        PreferredInstanceMode,
         IgnoreDuplicateKey,
         IgnoreNullField,
         UseSelector,
@@ -371,26 +419,28 @@ object SdbConfig {
     val DefaultSamplingWithId = false
     val DefaultSamplingSingle = true
     val DefaultBulkSize = 500
-    val DefaultCursorType = CURSOR_TYPE_FAST
+    val DefaultCursorType: String = CURSOR_TYPE_FAST
     val DefaultFastCursorBufSize = 500
     val DefaultFastCursorDecoderNum = 2
-    val DefaultPartitionMode = PARTITION_MODE_AUTO
+    val DefaultPartitionMode: String = PARTITION_MODE_AUTO
     val DefaultPartitionBlockNum = 4
     val DefaultPartitionMaxNum = 1000
     val DefaultShardingPartitionSingleNode = false
     val DefaultPreferredLocation = false
+    val DefaultPreferredInstanceMode: String = PREFERRED_INSTANCE_MODE_RANDOM
+    val DefaultPreferredInstance: String = PREFERRED_INSTANCE_ANY
     val DefaultIgnoreDuplicateKey = false
     val DefaultIgnoreNullField = false
-    val DefaultUseSelector = USE_SELECTOR_ENABLE
+    val DefaultUseSelector: String = USE_SELECTOR_ENABLE
     val DefaultSelectorDiff = 2
-    val DefaultPageSize = 1024 * 64
-    val DefaultLobPageSize = 1024 * 256
+    val DefaultPageSize: Int = 1024 * 64
+    val DefaultLobPageSize: Int = 1024 * 256
     val DefaultDomain = ""
     val DefaultShardingKey = ""
-    val DefaultShardingType = SHARDING_TYPE_HASH
+    val DefaultShardingType: String = SHARDING_TYPE_HASH
     val DefaultCLPartition = 1024
     val DefaultReplicaSize = 1
-    val DefaultCompressionType = COMPRESSION_TYPE_NONE
+    val DefaultCompressionType: String = COMPRESSION_TYPE_NONE
     val DefaultAutoSplit = false
     val DefaultGroup = ""
 
@@ -403,4 +453,61 @@ object SdbConfig {
         opt.setSocketKeepAlive(true)
         opt
     }
+}
+
+class SdbPreferredInstance(val instances: Array[String], val mode: PreferredInstanceMode) extends Serializable {
+    private var _instanceIdArray: ArrayBuffer[Int] = mutable.ArrayBuffer()
+
+    private var _instanceTendency: Option[String] = None
+
+    for (instance <- instances) {
+        instance.toUpperCase match {
+            case SdbConfig.PREFERRED_INSTANCE_MASTER |
+                 SdbConfig.PREFERRED_INSTANCE_SLAVE |
+                 SdbConfig.PREFERRED_INSTANCE_ANY => if (_instanceTendency.isEmpty) {
+                _instanceTendency = Option(instance)
+            }
+            case s: String => {
+                val id = s.toInt
+                _instanceIdArray += id
+            }
+        }
+    }
+
+    val instanceIdArray: Array[Int] = _instanceIdArray.distinct.toArray
+
+    def nonPreferred: Boolean = instanceIdArray.isEmpty &&
+        (_instanceTendency.isEmpty ||
+            _instanceTendency.get.equals(SdbConfig.PREFERRED_INSTANCE_ANY))
+
+    def isPreferred: Boolean = !nonPreferred
+
+    def hasInstanceTendency: Boolean = _instanceTendency.nonEmpty
+
+    def hasInstanceId: Boolean = instanceIdArray.nonEmpty
+
+    def isMasterTendency: Boolean = _instanceTendency.fold(false)(_.equals(SdbConfig.PREFERRED_INSTANCE_MASTER))
+
+    def isSlaveTendency: Boolean = _instanceTendency.fold(false)(_.equals(SdbConfig.PREFERRED_INSTANCE_SLAVE))
+
+    def isAnyTendency: Boolean = _instanceTendency.fold(true)(_.equals(SdbConfig.PREFERRED_INSTANCE_ANY))
+
+    private def arrayToString[T](array: Array[T]): String = {
+        val builder: StringBuilder = new StringBuilder()
+        builder.append("[")
+        var i = 0
+        for (v <- array) {
+            builder.append(v)
+            i += 1
+            if (i < array.length) {
+                builder.append(", ")
+            }
+        }
+        builder.append("]")
+        builder.toString()
+    }
+
+    override def toString: String =
+        s"{mode:$mode, instances: ${arrayToString(instanceIdArray)}, " +
+            s"tendency: ${_instanceTendency.getOrElse(SdbConfig.PREFERRED_INSTANCE_ANY)}}"
 }

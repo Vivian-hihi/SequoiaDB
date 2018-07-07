@@ -42,7 +42,8 @@ class SdbRelation(@transient val sqlContext: SQLContext,
         with Logging
         with Serializable {
 
-    logInfo(s"SdbRelation{config: $config, providedSchema: $providedSchema}")
+    logInfo(s"SdbRelation{config: $config, providedSchema: $providedSchema, " +
+        s"preferredInstance: ${config.preferredInstance}}")
 
     private lazy val lazySchema: StructType = {
         val conf: SdbConfig = if (config.samplingSingle) {
