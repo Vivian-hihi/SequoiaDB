@@ -6,5 +6,6 @@ public class MySQLOperations extends SequoiaSQLOperations {
         className = "com.mysql.jdbc.Driver";
         scheme = "jdbc:mysql";
         defaultDBName = "mysql";
+        defaultUser = "root";
     }
 }

@@ -15,6 +15,7 @@ public abstract class SequoiaSQLOperations {
     protected String className = "";
     protected String scheme = "";
     protected String defaultDBName = "";
+    protected String defaultUser = "";
 
     public List<BSONObject> query(String hostName, String svcname,
                                   String user, String pwd,
@@ -51,6 +52,10 @@ public abstract class SequoiaSQLOperations {
             ConnectionClose(c);
         }
         return content;
+    }
+
+    public String getDefaultUser(){
+        return defaultUser;
     }
 
     protected void resultSetClose(ResultSet rs) {

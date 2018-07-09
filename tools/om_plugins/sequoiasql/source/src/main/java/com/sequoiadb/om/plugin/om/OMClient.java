@@ -120,7 +120,7 @@ public class OMClient implements ApplicationListener<EmbeddedServletContainerIni
         return node;
     }
 
-    public synchronized NodeAuth getSsqlAccountInfo(String clusterName, String businessName) {
+    public synchronized NodeAuth getSsqlAccountInfo(String clusterName, String businessName, String defaultUser) {
         connect();
 
         NodeAuth auth = new NodeAuth();
@@ -141,7 +141,11 @@ public class OMClient implements ApplicationListener<EmbeddedServletContainerIni
         }
 
         if (auth.getUser() == null || auth.getUser().length() == 0) {
-            auth.setUser(getClusterInfo(clusterName));
+            if (defaultUser == null || defaultUser.length() == 0) {
+                auth.setUser(getClusterInfo(clusterName));
+            } else {
+                auth.setUser(defaultUser);
+            }
         }
         return auth;
     }

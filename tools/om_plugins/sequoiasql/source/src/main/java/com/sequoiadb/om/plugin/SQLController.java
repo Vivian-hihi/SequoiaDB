@@ -79,7 +79,7 @@ public class SQLController {
         NodeAuth auth;
 
         try {
-            auth = omCtrl.getSsqlAccountInfo(ClusterName, BusinessName);
+            auth = omCtrl.getSsqlAccountInfo(ClusterName, BusinessName, ssqlo.getDefaultUser());
         } catch (BaseException e) {
             return outputResult(e.getErrorCode(), "Failed to get " + BusinessName + " auth info", e.getMessage(), content);
         }
