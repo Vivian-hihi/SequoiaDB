@@ -182,7 +182,7 @@ function deleteForbid( db, rgName, nodes )
    }
    
    // delete forbid conf
-   var errConfigs = ["dbpath", "confpath", "svcname", "role", "omaddr", "archivepath", "catalogaddr"];
+   var errConfigs = ["dbpath", "confpath", "svcname", "role",  "catalogaddr"];
    var hasError = false;
    var include1 = errConfigs.indexOf(forbidConf1.name);
    var include2 = errConfigs.indexOf(forbidConf2.name);   
