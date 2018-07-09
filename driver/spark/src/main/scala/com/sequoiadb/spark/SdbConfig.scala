@@ -465,7 +465,7 @@ class SdbPreferredInstance(val instances: Array[String], val mode: PreferredInst
             case SdbConfig.PREFERRED_INSTANCE_MASTER |
                  SdbConfig.PREFERRED_INSTANCE_SLAVE |
                  SdbConfig.PREFERRED_INSTANCE_ANY => if (_instanceTendency.isEmpty) {
-                _instanceTendency = Option(instance)
+                _instanceTendency = Option(instance.toUpperCase)
             }
             case s: String => {
                 val id = s.toInt
@@ -492,22 +492,7 @@ class SdbPreferredInstance(val instances: Array[String], val mode: PreferredInst
 
     def isAnyTendency: Boolean = _instanceTendency.fold(true)(_.equals(SdbConfig.PREFERRED_INSTANCE_ANY))
 
-    private def arrayToString[T](array: Array[T]): String = {
-        val builder: StringBuilder = new StringBuilder()
-        builder.append("[")
-        var i = 0
-        for (v <- array) {
-            builder.append(v)
-            i += 1
-            if (i < array.length) {
-                builder.append(", ")
-            }
-        }
-        builder.append("]")
-        builder.toString()
-    }
-
     override def toString: String =
-        s"{mode:$mode, instances: ${arrayToString(instanceIdArray)}, " +
+        s"{mode:$mode, instances: ${instanceIdArray.mkString("[", ",", "]")}, " +
             s"tendency: ${_instanceTendency.getOrElse(SdbConfig.PREFERRED_INSTANCE_ANY)}}"
 }

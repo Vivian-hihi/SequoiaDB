@@ -564,27 +564,22 @@ private class NodeSelector {
         leastUsedNodeInfo
     }
 
-    private def getNodeByPreferredInstance(nodeInfos: List[NodeInfo],
-                                           preferredInstance: SdbPreferredInstance)
-    : NodeInfo = {
-        var preferredNode: NodeInfo = null
-        if (preferredInstance.isMasterTendency) {
-            preferredNode = getNodeByMasterTendency(
-                nodeInfos, preferredInstance.instanceIdArray, preferredInstance.mode)
-        } else if (preferredInstance.isSlaveTendency) {
-            preferredNode = getNodeBySlaveTendency(
-                nodeInfos, preferredInstance.instanceIdArray, preferredInstance.mode)
-        } else {
-            preferredNode = getNodeByAnyTendency(
-                nodeInfos, preferredInstance.instanceIdArray, preferredInstance.mode)
-        }
-
-        preferredNode
-    }
-
-    private def getNodeByMode(nodeInfos: List[NodeInfo], mode: PreferredInstanceMode): NodeInfo = {
+    private def getNodeByMode(nodeInfos: List[NodeInfo], instances: Array[Int], mode: PreferredInstanceMode): NodeInfo = {
         if (mode == PreferredInstanceMode.Ordered) {
-            nodeInfos.head
+            val orderedNodeInfos = nodeInfos.sortWith((left, right) => {
+                val leftIndex = instances.indexOf(left.instanceId)
+                val rightIndex = instances.indexOf(right.instanceId)
+                if (leftIndex != -1 && rightIndex != -1) {
+                    leftIndex < rightIndex
+                } else if (leftIndex != -1 && rightIndex == -1) {
+                    false
+                } else if (leftIndex == -1 && rightIndex != -1) {
+                    true
+                } else {
+                    true
+                }
+            })
+            orderedNodeInfos.head
         } else {
             getLeastUsedNode(nodeInfos)
         }
@@ -594,14 +589,14 @@ private class NodeSelector {
                                         instances: Array[Int],
                                         mode: PreferredInstanceMode)
     : NodeInfo = {
-        var nodes = nodeInfos.filter(node => instances.contains(node.instanceId)).filter(_.isPrimary)
+        var nodes = nodeInfos.filter(node => node.isPrimary && instances.contains(node.instanceId))
         if (nodes.nonEmpty) {
             return nodes.head
         }
 
         nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
         if (nodes.nonEmpty) {
-            return getNodeByMode(nodes, mode)
+            return getNodeByMode(nodes, instances, mode)
         }
 
         nodes = nodeInfos.filter(_.isPrimary)
@@ -616,14 +611,14 @@ private class NodeSelector {
                                        instances: Array[Int],
                                        mode: PreferredInstanceMode)
     : NodeInfo = {
-        var nodes = nodeInfos.filter(node => instances.contains(node.instanceId)).filter(!_.isPrimary)
+        var nodes = nodeInfos.filter(node => !node.isPrimary && instances.contains(node.instanceId))
         if (nodes.nonEmpty) {
-            return getNodeByMode(nodes, mode)
+            return getNodeByMode(nodes, instances, mode)
         }
 
         nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
         if (nodes.nonEmpty) {
-            return getNodeByMode(nodes, mode)
+            return getNodeByMode(nodes, instances, mode)
         }
 
         nodes = nodeInfos.filter(!_.isPrimary)
@@ -640,7 +635,7 @@ private class NodeSelector {
     : NodeInfo = {
         val nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
         if (nodes.nonEmpty) {
-            return getNodeByMode(nodes, mode)
+            return getNodeByMode(nodes, instances, mode)
         }
 
         getLeastUsedNode(nodeInfos)
@@ -652,8 +647,15 @@ private class NodeSelector {
 
         if (preferredInstance.nonPreferred) {
             nodeInfo = getLeastUsedNode(nodeInfos)
+        } else if (preferredInstance.isMasterTendency) {
+            nodeInfo = getNodeByMasterTendency(
+                nodeInfos, preferredInstance.instanceIdArray, preferredInstance.mode)
+        } else if (preferredInstance.isSlaveTendency) {
+            nodeInfo = getNodeBySlaveTendency(
+                nodeInfos, preferredInstance.instanceIdArray, preferredInstance.mode)
         } else {
-            nodeInfo = getNodeByPreferredInstance(nodeInfos, preferredInstance)
+            nodeInfo = getNodeByAnyTendency(
+                nodeInfos, preferredInstance.instanceIdArray, preferredInstance.mode)
         }
 
         increaseNodeRefCount(nodeInfo)
