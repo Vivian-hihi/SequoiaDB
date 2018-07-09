@@ -540,6 +540,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONElement configEle ;
 
+      if ( TRUE == _force )
+      {
+         _properties.setForce() ;
+      }
+
       configEle = bsonConfig.getField( OM_BSON_FIELD_CONFIG ) ;
       if ( configEle.eoo() || Array != configEle.type() )
       {

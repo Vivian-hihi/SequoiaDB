@@ -5147,9 +5147,10 @@ namespace engine
          condition = BSON( OM_BSON_HOSTNAME << "" <<
                            OM_BSON_PORT     << "" ) ;
       }
-      else
+      else if ( OM_BUSINESS_SEQUOIASQL_MYSQL == _businessType )
       {
-         SDB_ASSERT( FALSE, _businessType.c_str() ) ;
+         condition = BSON( OM_BSON_HOSTNAME << "" <<
+                           OM_BSON_PORT     << "" ) ;
       }
 
       rc = dbTool.getClusterInfo( _clusterName, clusterInfo ) ;

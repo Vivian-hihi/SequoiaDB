@@ -1470,12 +1470,6 @@ namespace engine
                *type = OMA_TASK_INSTALL_DB ;
                goto done ;
             }
-            else if ( string(OMA_BUS_TYPE_SEQUOIAPOSTGRESQL) ==
-                                                         string(pBusinessType) )
-            {
-               *type = OMA_TASK_ADD_BUS ;
-               goto done ;
-            }
             else if ( string(OMA_BUS_TYPE_ZOOKEEPER) == string(pBusinessType) )
             {
                *type = OMA_TASK_INSTALL_ZN ;
@@ -1489,10 +1483,8 @@ namespace engine
             }
             else
             {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "Unknow task sub type with name[%s], "
-                           "rc = %d", pBusinessType, rc ) ;
-               goto error ;
+               *type = OMA_TASK_ADD_BUS ;
+               goto done ;
             }
          }
          else if( OMA_TASK_REMOVE_BUS == taskType )
