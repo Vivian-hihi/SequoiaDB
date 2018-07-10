@@ -824,18 +824,6 @@ namespace engine
       _businessType = buzInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
       _deployMod    = buzInfo.getStringField( OM_BUSINESS_FIELD_DEPLOYMOD ) ;
 
-      if ( OM_BUSINESS_SEQUOIADB != _businessType &&
-           OM_BUSINESS_ZOOKEEPER != _businessType &&
-           OM_BUSINESS_SEQUOIASQL_OLAP != _businessType &&
-           OM_BUSINESS_SEQUOIASQL_POSTGRESQL != _businessType )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "Unsupported business type: type=%s",
-                             _businessType.c_str() ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
    done:
       return rc ;
    error:
@@ -865,26 +853,8 @@ namespace engine
       taskConfigBuilder.append( OM_BSON_BUSINESS_NAME, _businessName ) ;
       taskConfigBuilder.append( OM_BSON_DEPLOY_MOD, _deployMod ) ;
 
-      if ( OM_BUSINESS_SEQUOIADB == _businessType )
-      {
-         string authUser ;
-         string authPasswd ;
-
-         rc = dbTool.getAuth( _businessName, authUser, authPasswd ) ;
-         if ( rc )
-         {
-            _errorMsg.setError( TRUE, "failed to get business auth: "
-                                      "name=%s, rc=%d",
-                                _businessName.c_str(), rc ) ;
-            PD_LOG( PDERROR, _errorMsg.getError() ) ;
-            goto error ;
-         }
-
-         taskConfigBuilder.append( OM_TASKINFO_FIELD_AUTH_USER, authUser ) ;
-         taskConfigBuilder.append( OM_TASKINFO_FIELD_AUTH_PASSWD, authPasswd ) ;
-      }
-      else if ( OM_BUSINESS_ZOOKEEPER == _businessType ||
-                OM_BUSINESS_SEQUOIASQL_OLAP == _businessType )
+      if ( OM_BUSINESS_ZOOKEEPER == _businessType ||
+           OM_BUSINESS_SEQUOIASQL_OLAP == _businessType )
       {
          string sdbUser ;
          string sdbPasswd ;
@@ -912,8 +882,35 @@ namespace engine
          taskConfigBuilder.append( OM_TASKINFO_FIELD_SDBUSERGROUP,
                                    sdbUserGroup ) ;
       }
-      else if( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == _businessType )
+      else
       {
+         BSONObj authInfo ;
+         string authUser ;
+         string authPasswd ;
+         string defaultDBName ;
+
+         rc = dbTool.getAuth( _businessName, authInfo ) ;
+         if ( rc )
+         {
+            _errorMsg.setError( TRUE, "failed to get business auth: "
+                                      "name=%s, rc=%d",
+                                _businessName.c_str(), rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         authUser = authInfo.getStringField( OM_AUTH_FIELD_USER ) ;
+         authPasswd = authInfo.getStringField( OM_AUTH_FIELD_PASSWD ) ;
+         defaultDBName = authInfo.getStringField( OM_BSON_DB_NAME ) ;
+
+         taskConfigBuilder.append( OM_TASKINFO_FIELD_AUTH_USER, authUser ) ;
+         taskConfigBuilder.append( OM_TASKINFO_FIELD_AUTH_PASSWD, authPasswd ) ;
+
+         if( !defaultDBName.empty() )
+         {
+            taskConfigBuilder.append( OM_TASKINFO_FIELD_DBNAME,
+                                      defaultDBName ) ;
+         }
       }
 
       for ( iter = configList.begin(); iter != configList.end(); ++iter )

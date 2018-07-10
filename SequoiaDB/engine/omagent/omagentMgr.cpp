@@ -1504,17 +1504,10 @@ namespace engine
                *type = OMA_TASK_REMOVE_SSQL_OLAP ;
                goto done ;
             }
-            else if ( OMA_BUS_TYPE_SEQUOIAPOSTGRESQL == string(pBusinessType) )
+            else
             {
                *type = OMA_TASK_REMOVE_BUS ;
                goto done ;
-            }
-            else
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "Unknow task sub type with name[%s], "
-                           "rc = %d", pBusinessType, rc ) ;
-               goto error ;
             }
          }
          else if( taskType == OMA_TASK_EXTEND_BUZ )

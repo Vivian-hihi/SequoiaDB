@@ -140,6 +140,7 @@ namespace engine
    #define OM_PUBLIC_FIELD_USER                 "User"
    #define OM_PUBLIC_FIELD_PASSWD               "Passwd"
    #define OM_PUBLIC_FIELD_HOSTNAME             "HostName"
+   #define OM_PUBLIC_FIELD_DBNAME               "DbName"
 
    /******* SYSCLUSTER *******/
    #define OM_CS_DEPLOY_CL_CLUSTER              OM_CS_DEPLOY".SYSCLUSTER"
@@ -276,6 +277,7 @@ key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
    #define OM_TASKINFO_FIELD_DEPLOY_MOD         OM_PUBLIC_FIELD_DEPLOY_MOD
    #define OM_TASKINFO_FIELD_AUTH_USER          "AuthUser"
    #define OM_TASKINFO_FIELD_AUTH_PASSWD        "AuthPasswd"
+   #define OM_TASKINFO_FIELD_DBNAME             OM_PUBLIC_FIELD_DBNAME
 
    #define OM_CS_DEPLOY_CL_TASKINFOIDX1      "{name:\"SYSDEPLOY_TASKINFO_IDX1\",key: {"\
 OM_TASKINFO_FIELD_TASKID":1}, unique: true, enforced: true } "
