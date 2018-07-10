@@ -260,7 +260,7 @@ function _updateRoot( remote, cmd, installPath, dbpath )
 
 function _createUser( remote, cmd, installPath, dbpath, user, passwd )
 {
-   var str = sprintf( "grant all privileges on *.* to ?@'?' identified by '?';\nflush privileges;", user, System.getHostName(), passwd ) ;
+   var str = sprintf( "grant all privileges on *.* to ?@'%' identified by '?';\nflush privileges;", user, passwd ) ;
    var error = _generateSqlFile( remote, str ) ;
    if( error !== null )
    {

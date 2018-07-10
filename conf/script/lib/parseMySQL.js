@@ -1,24 +1,27 @@
 import( catPath( getSelfPath(), 'parseSSQL.js' ) ) ;
 
-function ExecSsql( cmd, installPath, port, database, arg, timeout )
+function ExecSsql( cmd, installPath, port, user, passwd, database, arg, timeout )
 {
    var rc = SDB_OK ;
    var error = null ;
-   var exec = installPath + '/bin/psql' ;
-   //set LD_LIBRARY_PATH
-   //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiapostgresql/lib
-   var libraryCmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:' ;
-
-   libraryCmd += installPath + '/lib ;' ;
-
-   exec = libraryCmd + exec ;
+   var exec = installPath + '/bin/mysql' ;
+   var result = {
+      'rc': true,
+      'field': {},
+      'value': [],
+      'attr': ''
+   } ;
 
    if( isNaN( timeout ) )
    {
       timeout = 600000 ;
    }
 
-   arg = database + ' -p ' + port + ' -c "' + arg + '" -P "border=2"' ;
+   arg = '-t -D ' + database + ' -h 127.0.0.1  -P ' + port + ' -e "' + arg + '" -u ' + user ;
+   if( passwd && passwd.length > 0 )
+   {
+      exec = sprintf( 'export MYSQL_PWD=?;', passwd ) + exec ;
+   }
 
    try
    {
@@ -38,7 +41,12 @@ function ExecSsql( cmd, installPath, port, database, arg, timeout )
    }
 
    var output = cmd.getLastOut() ;
-   var result = ParseSSQL( output ) ;
+   if( output.length == 0 )
+   {
+      return result ;
+   }
+
+   result = ParseSSQL( output ) ;
    if( result['rc'] != true )
    {
       error = new SdbError( SDB_SYS, "failed to exec sql" ) ;
@@ -51,14 +59,14 @@ function ExecSsql( cmd, installPath, port, database, arg, timeout )
 function test()
 {
    var error = null ;
-   var remote = new Remote( 'localhost', '11790' ) ;
+   var remote = new Remote( '192.168.3.232', '11790' ) ;
    var cmd = remote.getCmd() ;
-   var installPath = '/opt/sequoiapostgresql' ;
-   var sql = '\\d' ;
+   var installPath = '/opt/sequoiasql/mysql' ;
+   var sql = '' ;
 
    try
    {
-      var result = ExecSsql( cmd, installPath, "5432", "postgres", sql ) ;
+      var result = ExecSsql( cmd, installPath, "3306", "mysql", sql ) ;
       print( "\nResult:\n" + JSON.stringify( result, null, 3 ) + "\n\n" ) ;
    }
    catch( e )
