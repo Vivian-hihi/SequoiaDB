@@ -809,6 +809,52 @@ namespace engine
       goto done ;
    }
 
+   #define OM_TASK_MANAGER_GRANT_TYPE_CREATE_USER "create new user"
+   INT32 omAddBusinessTask::_storeBusinessAuth( BSONObj &taskInfo )
+   {
+      INT32 rc = SDB_OK ;
+      omDatabaseTool dbTool( pmdGetThreadEDUCB() ) ;
+      string businessName ;
+      string businessType ;
+      BSONObj configs ;
+
+      configs = taskInfo.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+      businessName = taskInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      businessType = taskInfo.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      if ( OM_BUSINESS_SEQUOIASQL_MYSQL == businessType )
+      {
+         BSONObjIterator iter( configs ) ;
+
+         if ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj oneNode = ele.embeddedObject() ;
+            string grantType ;
+
+            grantType = oneNode.getStringField( OM_PUBLIC_FIELD_GRANT_TYPE ) ;
+            if ( OM_TASK_MANAGER_GRANT_TYPE_CREATE_USER == grantType )
+            {
+               string user ;
+               string passwd ;
+
+               user = oneNode.getStringField( OM_TASKINFO_FIELD_AUTH_USER ) ;
+               passwd = oneNode.getStringField( OM_TASKINFO_FIELD_AUTH_PASSWD );
+               rc = dbTool.upsertAuth( businessName, user, passwd ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "failed to add business auth:rc=%d", rc ) ;
+                  goto error ;
+               }
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omAddBusinessTask::_updateBizHostInfo( const string &businessName )
    {
       INT32 rc = SDB_OK ;
@@ -849,6 +895,13 @@ namespace engine
 
       rc = _storeConfigInfo( taskInfoValue ) ;
       PD_RC_CHECK( rc, PDERROR, "store configure info failed:rc=%d", rc ) ;
+
+      rc = _storeBusinessAuth( taskInfoValue ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "store business auth failed:rc=%d", rc ) ;
+         goto error ;
+      }
 
       businessName = taskInfoValue.getStringField( OM_BSON_BUSINESS_NAME );
       rc = _updateBizHostInfo( businessName ) ;

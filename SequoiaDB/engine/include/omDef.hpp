@@ -141,6 +141,7 @@ namespace engine
    #define OM_PUBLIC_FIELD_PASSWD               "Passwd"
    #define OM_PUBLIC_FIELD_HOSTNAME             "HostName"
    #define OM_PUBLIC_FIELD_DBNAME               "DbName"
+   #define OM_PUBLIC_FIELD_GRANT_TYPE           "GrantType"
 
    /******* SYSCLUSTER *******/
    #define OM_CS_DEPLOY_CL_CLUSTER              OM_CS_DEPLOY".SYSCLUSTER"

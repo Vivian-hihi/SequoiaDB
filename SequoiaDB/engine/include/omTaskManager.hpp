@@ -143,6 +143,8 @@ namespace engine
 
       INT32             _storeConfigInfo( BSONObj &taskInfoValue ) ;
 
+      INT32 _storeBusinessAuth( BSONObj &taskInfo ) ;
+
    private:
       INT64             _taskID ;
       INT32             _taskType ;
