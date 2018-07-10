@@ -376,7 +376,7 @@ function CreateInst( PD_LOGGER )
    resultInfo[FIELD_FLOW].push( sprintf( "Finish to create instance [?]",
                                          hostName ) ) ;
 
-   if( config['GrantType'] == 0 )
+   if( config[FIELD_GRANT_TYPE] == 0 )
    {
       error = _updateRoot( remote, cmd, installPath, dbpath ) ;
       if ( error !== null )
@@ -391,10 +391,10 @@ function CreateInst( PD_LOGGER )
          return resultInfo ;
       }
    }
-   else if( config['GrantType'] == 1 )
+   else if( config[FIELD_GRANT_TYPE] == 1 )
    {
-      var user = config['AuthUser'] ;
-      var passwd = config['AuthPasswd'] ;
+      var user = config[FIELD_AUTH_USER] ;
+      var passwd = config[FIELD_AUTH_PASSWD] ;
 
       error = _createUser( remote, cmd, installPath, dbpath, user, passwd ) ;
       if ( error !== null )

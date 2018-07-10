@@ -363,6 +363,7 @@ var FIELD_DB_NAME                          = DbName ;
 var FIELD_OM_ADDR                          = "omaddr" ;
 var FIELD_AUTH_USER                        = AuthUser ;
 var FIELD_AUTH_PASSWD                      = AuthPasswd ;
+var FIELD_GRANT_TYPE                       = 'GrantType' ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;
