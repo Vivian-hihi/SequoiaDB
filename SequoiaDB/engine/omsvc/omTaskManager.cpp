@@ -220,6 +220,37 @@ namespace engine
    {
    }
 
+   INT32 omTaskBase::_getTaskInfo( INT64 taskID, BSONObj &taskInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector = BSON( OM_TASKINFO_FIELD_INFO << 1 ) ;
+      BSONObj matcher  = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+      BSONObj tmpTaskInfo ;
+
+      rc = queryOneTask( selector, matcher, orderBy, hint, tmpTaskInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "get task info failed:taskID="
+                          OSS_LL_PRINT_FORMAT",rc=%d",
+                 taskID, rc ) ;
+         goto error ;
+      }
+
+      taskInfo = tmpTaskInfo.getObjectField( OM_TASKINFO_FIELD_INFO ).copy() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omTaskBase::getTaskInfo( BSONObj &taskInfo )
+   {
+      return SDB_OK ;
+   }
+
    INT32 omTaskBase::checkUpdateInfo(const BSONObj & updateInfo)
    {
       INT32 rc = SDB_OK ;
@@ -810,13 +841,21 @@ namespace engine
    }
 
    #define OM_TASK_MANAGER_GRANT_TYPE_CREATE_USER "create new user"
-   INT32 omAddBusinessTask::_storeBusinessAuth( BSONObj &taskInfo )
+   INT32 omAddBusinessTask::_storeBusinessAuth()
    {
       INT32 rc = SDB_OK ;
       omDatabaseTool dbTool( pmdGetThreadEDUCB() ) ;
       string businessName ;
       string businessType ;
       BSONObj configs ;
+      BSONObj taskInfo ;
+
+      rc = _getTaskInfo( _taskID, taskInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "failed to get task info, rc=%d", rc ) ;
+         goto error ;
+      }
 
       configs = taskInfo.getObjectField( OM_BSON_FIELD_CONFIG ) ;
       businessName = taskInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
@@ -875,35 +914,29 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string businessName ;
-      BSONObj selector ;
-      BSONObj matcher ;
-      BSONObj orderBy ;
-      BSONObj hint ;
       BSONObj taskInfo ;
-      BSONObj taskInfoValue ;
 
-      selector = BSON( OM_TASKINFO_FIELD_INFO << 1 ) ;
-      matcher  = BSON( OM_TASKINFO_FIELD_TASKID << _taskID ) ;
-      rc = queryOneTask( selector, matcher, orderBy, hint, taskInfo ) ;
-      PD_RC_CHECK( rc, PDERROR, "get task info failed:taskID="
-                   OSS_LL_PRINT_FORMAT",rc=%d", _taskID, rc ) ;
+      rc = getTaskInfo( taskInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to get task info, rc=%d", rc ) ;
+         goto error ;
+      }
 
-      taskInfoValue = taskInfo.getObjectField( OM_TASKINFO_FIELD_INFO ) ;
-
-      rc = _storeBusinessInfo( taskInfoValue ) ;
+      rc = _storeBusinessInfo( taskInfo ) ;
       PD_RC_CHECK( rc, PDERROR, "store business info failed:rc=%d", rc ) ;
 
-      rc = _storeConfigInfo( taskInfoValue ) ;
+      rc = _storeConfigInfo( taskInfo ) ;
       PD_RC_CHECK( rc, PDERROR, "store configure info failed:rc=%d", rc ) ;
 
-      rc = _storeBusinessAuth( taskInfoValue ) ;
+      rc = _storeBusinessAuth() ;
       if ( rc )
       {
          PD_LOG( PDERROR, "store business auth failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      businessName = taskInfoValue.getStringField( OM_BSON_BUSINESS_NAME );
+      businessName = taskInfo.getStringField( OM_BSON_BUSINESS_NAME );
       rc = _updateBizHostInfo( businessName ) ;
       PD_RC_CHECK( rc, PDERROR, "update business host info failed:rc=%d", rc ) ;
 
@@ -939,64 +972,80 @@ namespace engine
          goto error ;
       }
 
-//      {
-//         // get local result info
-//         BSONObj selector ;
-//         BSONObj matcher = BSON( OM_TASKINFO_FIELD_TASKID << _taskID ) ;
-//         BSONObj orderBy ;
-//         BSONObj hint ;
-//         rc = queryOneTask( selector, matcher, orderBy, hint, localTask ) ;
-//         if ( SDB_OK != rc )
-//         {
-//            PD_LOG( PDERROR, "query task failed:taskID="OSS_LL_PRINT_FORMAT
-//                    ",rc=%d", _taskID, rc ) ;
-//            goto error ;
-//         }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
-//         localResultInfo = localTask.getObjectField( 
-//                                              OM_TASKINFO_FIELD_RESULTINFO ) ;
-//      }
+   INT32 omAddBusinessTask::getTaskInfo( BSONObj &taskInfo )
+   {
+      INT32 rc = SDB_OK ;
+      string businessType ;
+      BSONObj tmpTaskInfo ;
 
-//      resultInfoEle = updateInfo.getField( OM_TASKINFO_FIELD_RESULTINFO ) ;
-//      if ( Array != resultInfoEle.type() )
-//      {
-//         rc = SDB_INVALIDARG ;
-//         PD_LOG( PDERROR, "%s is not Array type", 
-//                 OM_TASKINFO_FIELD_RESULTINFO ) ;
-//         goto error ;
-//      }
-//      agentResultInfo = resultInfoEle.embeddedObject() ;
-//      {
-//         BSONObj filter = BSON( OM_BSON_FIELD_HOST_NAME << ""
-//                                << OM_CONF_DETAIL_SVCNAME << "" 
-//                                << OM_CONF_DETAIL_ROLE << "" 
-//                                << OM_CONF_DETAIL_DATAGROUPNAME << "" ) ;
-//         BSONObjIterator iterResult( agentResultInfo ) ;
-//         while ( iterResult.more() )
-//         {
-//            BSONObj find ;
-//            BSONObj oneResult ;
-//            BSONElement ele = iterResult.next() ;
-//            if ( ele.type() != Object )
-//            {
-//               rc = SDB_INVALIDARG ;
-//               PD_LOG( PDERROR, "%s's element is not Object type", 
-//                       OM_TASKINFO_FIELD_RESULTINFO ) ;
-//               goto error ;
-//            }
+      rc = _getTaskInfo( _taskID, tmpTaskInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "failed to get task info, rc=%d", rc ) ;
+         goto error ;
+      }
 
-//            oneResult = ele.embeddedObject() ;
-//            find      = oneResult.filterFieldsUndotted( filter, true ) ;
-//            if ( !isInElement( localResultInfo, OM_TASKINFO_FIELD_RESULTINFO, 
-//                               find ) )
-//            {
-//               rc = SDB_INVALIDARG ;
-//               PD_LOG( PDERROR, "agent's result is not in localTask:"
-//                       "agentResult=%s", find.toString().c_str() ) ;
-//               goto error ;
-//            }
-//         }
-//      }
+      businessType = tmpTaskInfo.getStringField(
+                                          OM_TASKINFO_FIELD_BUSINESS_TYPE ) ;
+
+      if ( OM_BUSINESS_SEQUOIASQL_MYSQL == businessType )
+      {
+         BSONObj taskInfoFilter = BSON( OM_TASKINFO_FIELD_CONFIG << 1 ) ;
+         BSONObj nodeFilter = BSON( OM_PUBLIC_FIELD_GRANT_TYPE    << 1 <<
+                                    OM_TASKINFO_FIELD_AUTH_USER   << 1 <<
+                                    OM_TASKINFO_FIELD_AUTH_PASSWD << 1 ) ;
+         BSONObj taskInfoData ;
+         BSONObj tmpTaskInfoConfig ;
+         BSONObj taskInfoConfig ;
+         BSONArrayBuilder nodesBuilder ;
+         BSONObjBuilder taskInfoBuilder ;
+
+         taskInfoData = tmpTaskInfo.filterFieldsUndotted( taskInfoFilter,
+                                                          FALSE ) ;
+
+         tmpTaskInfoConfig = tmpTaskInfo.filterFieldsUndotted( taskInfoFilter,
+                                                               TRUE ) ;
+
+         taskInfoConfig = tmpTaskInfoConfig.getObjectField(
+                                                OM_TASKINFO_FIELD_CONFIG ) ;
+
+         {
+            BSONObjIterator iter( taskInfoConfig ) ;
+
+            while ( iter.more() )
+            {
+               BSONObj nodeInfo ;
+               BSONObj newNodeInfo ;
+               BSONElement ele = iter.next() ;
+
+               if ( ele.type() != Object )
+               {
+                  continue ;
+               }
+
+               nodeInfo = ele.embeddedObject() ;
+               newNodeInfo = nodeInfo.filterFieldsUndotted( nodeFilter, FALSE );
+               nodesBuilder.append( newNodeInfo ) ;
+            }
+         }
+
+         taskInfoBuilder.appendElements( taskInfoData ) ;
+         taskInfoBuilder.append( OM_TASKINFO_FIELD_CONFIG,
+                                 nodesBuilder.arr() ) ;
+
+         tmpTaskInfo = taskInfoBuilder.obj() ;
+         taskInfo = tmpTaskInfo.copy() ;
+      }
+      else
+      {
+         taskInfo = tmpTaskInfo.copy() ;
+      }
 
    done:
       return rc ;
@@ -1691,65 +1740,6 @@ namespace engine
          goto error ;
       }
 
-//      {
-//         // get local result info
-//         BSONObj selector ;
-//         BSONObj matcher = BSON( OM_TASKINFO_FIELD_TASKID << _taskID ) ;
-//         BSONObj orderBy ;
-//         BSONObj hint ;
-//         rc = queryOneTask( selector, matcher, orderBy, hint, localTask ) ;
-//         if ( SDB_OK != rc )
-//         {
-//            PD_LOG( PDERROR, "query task failed:taskID="OSS_LL_PRINT_FORMAT
-//                    ",rc=%d", _taskID, rc ) ;
-//            goto error ;
-//         }
-
-//         localResultInfo = localTask.getObjectField( 
-//                                              OM_TASKINFO_FIELD_RESULTINFO ) ;
-//      }
-
-//      resultInfoEle = updateInfo.getField( OM_TASKINFO_FIELD_RESULTINFO ) ;
-//      if ( Array != resultInfoEle.type() )
-//      {
-//         rc = SDB_INVALIDARG ;
-//         PD_LOG( PDERROR, "%s is not Array type", 
-//                 OM_TASKINFO_FIELD_RESULTINFO ) ;
-//         goto error ;
-//      }
-//      agentResultInfo = resultInfoEle.embeddedObject() ;
-//      {
-//         BSONObj filter = BSON( OM_BSON_FIELD_HOST_NAME << ""
-//                                << OM_CONF_DETAIL_SVCNAME << "" 
-//                                << OM_CONF_DETAIL_ROLE << "" 
-//                                << OM_CONF_DETAIL_DATAGROUPNAME << "" ) ;
-//         BSONObjIterator iterResult( agentResultInfo ) ;
-//         while ( iterResult.more() )
-//         {
-//            BSONObj find ;
-//            BSONObj oneResult ;
-//            BSONElement ele = iterResult.next() ;
-//            if ( ele.type() != Object )
-//            {
-//               rc = SDB_INVALIDARG ;
-//               PD_LOG( PDERROR, "%s's element is not Object type", 
-//                       OM_TASKINFO_FIELD_RESULTINFO ) ;
-//               goto error ;
-//            }
-
-//            oneResult = ele.embeddedObject() ;
-//            find      = oneResult.filterFieldsUndotted( filter, true ) ;
-//            if ( !isInElement( localResultInfo, OM_TASKINFO_FIELD_RESULTINFO, 
-//                               find ) )
-//            {
-//               rc = SDB_INVALIDARG ;
-//               PD_LOG( PDERROR, "agent's result is not in localTask:"
-//                       "agentResult=%s", find.toString().c_str() ) ;
-//               goto error ;
-//            }
-//         }
-//      }
-
    done:
       return rc ;
    error:
@@ -1810,21 +1800,37 @@ namespace engine
    {
    }
 
-   INT32 omTaskManager::_updateTask( INT64 taskID, 
-                                     const BSONObj &taskUpdateInfo )
+   INT32 omTaskManager::_updateTask( omTaskBase *pTask, INT64 taskID,
+                                     const BSONObj &taskUpdateInfo,
+                                     BOOLEAN isFinish )
    {
       INT32 rc = SDB_OK ;
-      BSONObjBuilder builder ;
-      builder.appendElements( taskUpdateInfo ) ;
-      time_t now = time( NULL ) ;
-      builder.appendTimestamp( OM_TASKINFO_FIELD_END_TIME, now * 1000, 0 ) ;
-      BSONObj selector = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
-      BSONObj updator  = BSON( "$set" << builder.obj() ) ;
-      BSONObj hint ;
       INT64 updateNum = 0 ;
+      time_t now = time( NULL ) ;
+      BSONObj selector = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
+      BSONObj updator ;
+      BSONObj hint ;
+      BSONObj taskInfo ;
+      BSONObjBuilder builder ;
+
+      builder.appendElements( taskUpdateInfo ) ;
+
+      if ( isFinish )
+      {
+         pTask->getTaskInfo( taskInfo ) ;
+         if ( !taskInfo.isEmpty() )
+         {
+            builder.append( OM_TASKINFO_FIELD_INFO, taskInfo ) ;
+         }
+      }
+
+      builder.appendTimestamp( OM_TASKINFO_FIELD_END_TIME, now * 1000, 0 ) ;
+
+      updator  = BSON( "$set" << builder.obj() ) ;
+
       rc = rtnUpdate( OM_CS_DEPLOY_CL_TASKINFO, selector, updator, hint, 0, 
                       pmdGetThreadEDUCB(), &updateNum ) ;
-      if ( SDB_OK != rc || 0 == updateNum )
+      if ( rc || 0 == updateNum )
       {
          PD_LOG( PDERROR, "update task failed:table=%s,updateNum=%d,taskID="
                  OSS_LL_PRINT_FORMAT",updator=%s,selector=%s,rc=%d",
@@ -2024,7 +2030,7 @@ namespace engine
          }
       }
 
-      rc = _updateTask( taskID, taskUpdateInfo ) ;
+      rc = _updateTask( pTask, taskID, taskUpdateInfo, isFinish ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "update task failed:taskID="OSS_LL_PRINT_FORMAT

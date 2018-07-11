@@ -54,17 +54,23 @@ namespace engine
 
    class omTaskBase : public SDBObject
    {
-      public:
-         omTaskBase() ;
-         virtual ~omTaskBase() ;
-      public:
-         virtual INT32     finish( BSONObj &resultInfo ) = 0 ;
+   public:
+      omTaskBase() ;
+      virtual ~omTaskBase() ;
 
-         virtual INT32     getType() = 0 ;
+   public:
+      virtual INT32 finish( BSONObj &resultInfo ) = 0 ;
 
-         virtual INT64     getTaskID() = 0 ;
+      virtual INT32 getType() = 0 ;
 
-         virtual INT32     checkUpdateInfo( const BSONObj &updateInfo ) ;
+      virtual INT64 getTaskID() = 0 ;
+
+      virtual INT32 checkUpdateInfo( const BSONObj &updateInfo ) ;
+
+      virtual INT32 getTaskInfo( BSONObj &taskInfo ) ;
+
+   protected:
+      INT32 _getTaskInfo( INT64 taskID, BSONObj &taskInfo ) ;
    };
 
    class omAddHostTask : public omTaskBase
@@ -136,6 +142,8 @@ namespace engine
 
       virtual INT32     checkUpdateInfo( const BSONObj &updateInfo ) ;
 
+      virtual INT32 getTaskInfo( BSONObj &taskInfo ) ;
+
    private:
       INT32             _storeBusinessInfo( BSONObj &taskInfoValue ) ;
 
@@ -143,7 +151,7 @@ namespace engine
 
       INT32             _storeConfigInfo( BSONObj &taskInfoValue ) ;
 
-      INT32 _storeBusinessAuth( BSONObj &taskInfo ) ;
+      INT32 _storeBusinessAuth() ;
 
    private:
       INT64             _taskID ;
@@ -291,8 +299,9 @@ namespace engine
                                        vector< BSONObj >&tasks ) ;
 
       private:
-         INT32             _updateTask( INT64 taskID, 
-                                        const BSONObj &taskUpdateInfo ) ;
+         INT32 _updateTask( omTaskBase *pTask, INT64 taskID, 
+                            const BSONObj &taskUpdateInfo,
+                            BOOLEAN isFinish ) ;
 
          INT32             _getTaskType( INT64 taskID, INT32 &taskType ) ;
 
