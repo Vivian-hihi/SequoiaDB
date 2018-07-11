@@ -9,7 +9,7 @@
       var deplpyModule = $rootScope.tempData( 'Deploy', 'Module' ) ;
       SdbSwap.clusterName  = $rootScope.tempData( 'Deploy', 'ClusterName' ) ;
       SdbSwap.hostList = $rootScope.tempData( 'Deploy', 'HostList' ) ;
-      if( deployModel == null || SdbSwap.clusterName == null || deplpyModule == null )
+      if( deployModel == null || SdbSwap.clusterName == null || deplpyModule == null || SdbSwap.hostList == null )
       {
          $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
@@ -40,8 +40,21 @@
                "required": true,
                "value": 'sequoiasql-postgresql',
                "valid": [
-                  { 'key': 'SequoiaSQL-PostgreSQL', 'value': 'sequoiasql-postgresql' }
-               ]
+                  { 'key': 'SequoiaSQL-PostgreSQL', 'value': 'sequoiasql-postgresql' },
+                  { 'key': 'SequoiaSQL-MySQL', 'value': 'sequoiasql-mysql' }
+               ],
+               "onChange": function( name, key, value ){
+                  if( value == 'sequoiasql-mysql' )
+                  {
+                     $scope.Form['inputList'][2]['value'] = '/opt/sequoiasql/mysql/' ;
+                  }
+                  else
+                  {
+                     $scope.Form['inputList'][2]['value'] = '/opt/sequoiasql/postgresql/' ;
+                  }
+
+                  SdbSignal.commit( "GetCheck", [  $scope.Form['inputList'][5]['value'], value ] ) ;
+               }
             },
             {
                "name": "InstallPath",
@@ -82,7 +95,7 @@
                ],
                "onChange": function( name, key, value ){
                   //切换强制安装修改选中主机
-                  SdbSignal.commit( "GetEnforced", value ) ;
+                  SdbSignal.commit( "GetCheck", [ value, $scope.Form['inputList'][1]['value'] ] ) ;
                }
             }
          ]
@@ -229,9 +242,9 @@
 
       }
 
-      //切换强制安装修改选中主机
-      SdbSignal.on( 'GetEnforced', function( value ){
-         if( value == true )
+      //检测主机是否可以部署包
+      SdbSignal.on( 'GetCheck', function( result ){
+         if( result[0] == true )
          {
             $.each( SdbSwap.hostList, function( index, hostInfo ){
                hostInfo['Checked'] = true ;
@@ -240,15 +253,18 @@
          else
          {
             $.each( SdbSwap.hostList, function( index, hostInfo ){
-               if( hostInfo['Package'].indexOf( 'sequoiasql-postgresql' ) > 0 )
+               if( hostInfo['Package'].indexOf( result[1] ) < 0 )
+               {
+                  hostInfo['Checked'] = true ;
+               }
+               else
                {
                   hostInfo['Checked'] = false ;
                }
             } ) ;
          }
       } ) ;
-
-
+      
       //修改主机信息 弹窗
       $scope.ChangeHostInfoWindow = {
          'config': {},
