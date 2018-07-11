@@ -7,4 +7,8 @@
       <BusinessType>sequoiasql-postgresql</BusinessType>
       <BusinessDesc>SequoiaSQL-PostgreSQL</BusinessDesc>
    </FILLER>
+   <FILLER>
+      <BusinessType>sequoiasql-mysql</BusinessType>
+      <BusinessDesc>SequoiaSQL-MySQL</BusinessDesc>
+   </FILLER>
 </BusinessList>

@@ -661,6 +661,26 @@ _Deploy.BuildSdbPgsqlStep = function( $scope, $location, action, deployModule ){
    return stepList ;
 }
 
+//生成安装sequoiasql-mysql步骤图
+_Deploy.BuildSdbMysqlStep = function( $scope, $location, action, deployModule ){
+   var stepList = {
+      'step': 0,
+      'info': []
+   }
+   switch( action )
+   {
+   case 'MySQL-Mod':
+      stepList['step'] = 1 ;
+      break ;
+   case 'InstallModule':
+      stepList['step'] = 2 ;
+      break ;
+   }
+   stepList['info'].push( { 'text': $scope.autoLanguage( '配置业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'MySQL-Mod') ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '安装业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
+   return stepList ;
+}
+
 //生成部署安装包步骤图
 _Deploy.BuildDeployPackageStep = function( $scope, $location, action, deployModule ){
    var stepList = {

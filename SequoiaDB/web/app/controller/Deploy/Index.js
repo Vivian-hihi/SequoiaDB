@@ -146,6 +146,10 @@
          SdbRest.OmOperation( null, {
             'init': function(){
                queryHostList = { 'HostInfo': [] } ;
+               if( typeof( SdbSwap.hostList ) == 'undefined' )
+               {
+                  SdbSwap.hostList = [] ;
+               }
                $.each( SdbSwap.hostList, function( index, hostInfo ){
                   if( isFirstQueryHostStatus || hostInfo['ClusterName'] == $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] )
                   {
