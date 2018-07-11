@@ -2474,7 +2474,8 @@
       //打开 关联操作 下拉菜单
       $scope.OpenRelationDropdown = function( event ){
          var disabled = false ;
-         var sqlModule = 0 ;
+         var pgsqlModule = 0 ;
+         var mysqlModule = 0 ;
          var sdbModule = 0 ;
          $.each( $scope.ModuleList, function( index, moduleInfo ){
             if( moduleInfo['BusinessType'] == 'sequoiadb' )
@@ -2483,10 +2484,14 @@
             }
             else if( moduleInfo['BusinessType'] == 'sequoiasql-postgresql' )
             {
-               ++sqlModule ;
+               ++pgsqlModule ;
+            }
+            else if( moduleInfo['BusinessType'] == 'sequoiasql-mysql' )
+            {
+               ++mysqlModule ;
             }
          } ) ;
-         if( sqlModule == 0 || sdbModule == 0 )
+         if( ( pgsqlModule == 0 && mysqlModule == 0 ) || sdbModule == 0 )
          {
             createRelationDisabled = true ;
          }
@@ -2517,6 +2522,9 @@
          {
             return ;
          }
+         var pgsqlDbList = [] ;
+         var pgsqlBusList = [] ;
+         var mysqlBusList = [] ;
 
          //获取postgresql数据库列表
          var queryPgsqlDatabase = function( cluster, module ){
@@ -2524,12 +2532,11 @@
             var data = { 'Sql': sql } ;
             SdbRest.DataOperationV21( cluster, module, '/sql', data, {
                'success': function( dbList ){
-                  var pgsqlList = [] ;
                   $.each( dbList, function( index, dbInfo ){
-                     pgsqlList.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
+                     pgsqlDbList.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
                   } ) ;
-                  $scope.CreateRelationWindow['config']['inputList'][4]['valid'] = pgsqlList ;
-                  $scope.CreateRelationWindow['config']['inputList'][4]['value'] = pgsqlList[0]['value'] ;
+                  $scope.CreateRelationWindow['config']['inputList'][4]['valid'] = pgsqlDbList ;
+                  $scope.CreateRelationWindow['config']['inputList'][4]['value'] = pgsqlDbList[0]['value'] ;
                   $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
                      '?_?_?',
                      $scope.CreateRelationWindow['config']['inputList'][2]['value'],
@@ -2551,11 +2558,20 @@
 
          //选择被关联业务之后查询该业务下的coord节点
          var listCoordNodes = function( index ){
+            var type = 0 ;
+            if( $scope.CreateRelationWindow['config']['inputList'][1]['value'] == 0 )
+            {
+               type = 7 ;
+            }
+            else
+            {
+               type = 4 ;
+            }
             var eachNodeList = function( nodeList ){
-                $.each( nodeList, function( nodeIndex, nodeInfo ){
+               $.each( nodeList, function( nodeIndex, nodeInfo ){
                   if( nodeInfo['Role'] == 'coord' || nodeInfo['Role'] == 'standalone' )
                   {
-                     $scope.CreateRelationWindow['config']['inputList'][7]['valid']['list'].push( {
+                     $scope.CreateRelationWindow['config']['inputList'][type]['valid']['list'].push( {
                         'key': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
                         'value': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
                         'checked': false
@@ -2567,7 +2583,7 @@
                   }
                } ) ;
             }
-            $scope.CreateRelationWindow['config']['inputList'][7]['valid']['list'] = [] ;
+            $scope.CreateRelationWindow['config']['inputList'][type]['valid']['list'] = [] ;
             if( typeof( $scope.ModuleList[index]['BusinessInfo'] ) == 'undefined' )
             {
                var moduleName = $scope.ModuleList[index]['BusinessName'] ;
@@ -2613,8 +2629,78 @@
                   "type": "select",
                   "value": 0,
                   "valid": [
-                     { 'key': 'SequoiaSQL-PostgreSQL - SequoiaDB', 'value': 0 }
-                  ]
+                     { 'key': 'SequoiaSQL-PostgreSQL - SequoiaDB', 'value': 0 },
+                     { 'key': 'SequoiaSQL-MySQL - SequoiaDB', 'value': 1 }
+                  ],
+                  "onChange": function( name, key, value ){
+                     if( value == 0 )
+                     {
+                        $scope.CreateRelationWindow['config']['inputList'].splice( 4, 0, {
+                           "name": 'DbName',
+                           "webName": $scope.autoLanguage( '数据库' ),
+                           "type": "select",
+                           "required": true,
+                           "value": pgsqlDbList[0]['value'],
+                           "valid": pgsqlDbList,
+                           "onChange": function( name, key, value ){
+                              $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
+                                 '?_?_?',
+                                 $scope.CreateRelationWindow['config']['inputList'][2]['value'],
+                                 $scope.ModuleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName'],
+                                 key
+                              ) ;
+                           }
+                        },
+                        {
+                           "name": "preferedinstance",
+                           "webName": "preferedinstance",
+                           "type": "select",
+                           "value": 'a',
+                           "valid":[
+                              { 'key': 's', 'value': 's' },
+                              { 'key': 'm', 'value': 'm' },
+                              { 'key': 'a', 'value': 'a' },
+                              { 'key': '1', 'value': '1' },
+                              { 'key': '2', 'value': '2' },
+                              { 'key': '3', 'value': '3' },
+                              { 'key': '4', 'value': '4' },
+                              { 'key': '5', 'value': '5' },
+                              { 'key': '6', 'value': '6' },
+                              { 'key': '7', 'value': '7' }
+                           ]
+                        },
+                        {
+                           "name": "transaction",
+                           "webName": "transaction",
+                           "type": "select",
+                           "value": "off",
+                           "valid":[
+                              { 'key': 'on', 'value': 'on' },
+                              { 'key': 'off', 'value': 'off' }
+                           ]
+                        } ) ;
+                        
+                        $scope.CreateRelationWindow['config']['inputList'][2]['valid'] = pgsqlBusList ;
+                        $scope.CreateRelationWindow['config']['inputList'][2]['value'] = pgsqlBusList[0]['value'] ;
+                        $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
+                           '?_?_?',
+                           $scope.CreateRelationWindow['config']['inputList'][2]['value'],
+                           $scope.ModuleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName'],
+                           $scope.CreateRelationWindow['config']['inputList'][4]['value']
+                        ) ;
+                     }  
+                     else
+                     {
+                        $scope.CreateRelationWindow['config']['inputList'].splice( 4, 3 ) ;
+                        $scope.CreateRelationWindow['config']['inputList'][2]['valid'] = mysqlBusList ;
+                        $scope.CreateRelationWindow['config']['inputList'][2]['value'] = mysqlBusList[0]['value'] ;
+                        $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
+                           '?_?',
+                           $scope.CreateRelationWindow['config']['inputList'][2]['value'],
+                           $scope.ModuleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName']
+                        ) ;
+                     }
+                  }
                },
                {
                   "name": "From",
@@ -2624,7 +2710,18 @@
                   "value": '',
                   "valid": [],
                   "onChange": function( name, key, value ){
-                     queryPgsqlDatabase( $scope.ClusterList[$scope.CurrentCluster]['ClusterName'], value ) ;
+                     if( $scope.CreateRelationWindow['config']['inputList'][1]['value'] == 0 )
+                     {
+                        queryPgsqlDatabase( $scope.ClusterList[$scope.CurrentCluster]['ClusterName'], value ) ;
+                     }
+                     else
+                     {
+                        $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
+                           '?_?',
+                           $scope.CreateRelationWindow['config']['inputList'][2]['value'],
+                           $scope.ModuleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName']
+                        ) ;
+                     }
                   }
                },
                {
@@ -2636,12 +2733,24 @@
                   "valid":[],
                   "onChange": function( name, key, value ){
                      listCoordNodes( value ) ;
-                     $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
-                        '?_?_?',
-                        $scope.CreateRelationWindow['config']['inputList'][2]['value'],
-                        $scope.ModuleList[value]['BusinessName'],
-                        $scope.CreateRelationWindow['config']['inputList'][4]['value']
-                     ) ;
+                     if( $scope.CreateRelationWindow['config']['inputList'][1]['value'] == 1 )
+                     {
+                        $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
+                           '?_?',
+                           $scope.CreateRelationWindow['config']['inputList'][2]['value'],
+                           $scope.ModuleList[value]['BusinessName']
+                        ) ;
+                     }
+                     else
+                     {
+                        $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
+                           '?_?_?',
+                           $scope.CreateRelationWindow['config']['inputList'][2]['value'],
+                           $scope.ModuleList[value]['BusinessName'],
+                           $scope.CreateRelationWindow['config']['inputList'][4]['value']
+                        ) ;
+                     }
+                     
                   }
                },
                {
@@ -2650,7 +2759,7 @@
                   "type": "select",
                   "required": true,
                   "value": "",
-                  "valid":[],
+                  "valid":pgsqlDbList,
                   "onChange": function( name, key, value ){
                      $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
                         '?_?_?',
@@ -2704,9 +2813,11 @@
          $.each( $scope.ModuleList, function( index, moduleInfo ){
             if( moduleInfo['BusinessType'] == 'sequoiasql-postgresql' )
             {
-               $scope.CreateRelationWindow['config']['inputList'][2]['valid'].push(
-                  { 'key': moduleInfo['BusinessName'], 'value': moduleInfo['BusinessName'] }
-               ) ;
+               pgsqlBusList.push( { 'key': moduleInfo['BusinessName'], 'value': moduleInfo['BusinessName'] } ) ;
+            }
+            else if( moduleInfo['BusinessType'] == 'sequoiasql-mysql' )
+            {
+               mysqlBusList.push( { 'key': moduleInfo['BusinessName'], 'value': moduleInfo['BusinessName'] } ) ;
             }
             else if( moduleInfo['BusinessType'] == 'sequoiadb' )
             {
@@ -2726,7 +2837,33 @@
                return ;
             }
          } ) ;
-         queryPgsqlDatabase( $scope.ClusterList[$scope.CurrentCluster]['ClusterName'], $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['key'] ) ;
+
+         if( pgsqlBusList.length > 0 )
+         {
+            if( mysqlBusList.length == 0 )
+            {
+               $scope.CreateRelationWindow['config']['inputList'][1]['valid'] = [
+                  { 'key': 'SequoiaSQL-PostgreSQL - SequoiaDB', 'value': 0 }
+               ] ;
+            }
+            $scope.CreateRelationWindow['config']['inputList'][2]['valid'] = pgsqlBusList ;
+            queryPgsqlDatabase( $scope.ClusterList[$scope.CurrentCluster]['ClusterName'], $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['key'] ) ;
+         }
+         else
+         {
+            $scope.CreateRelationWindow['config']['inputList'][2]['valid'] = mysqlBusList ;
+            $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
+               '?_?',
+               $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['key'],
+               $scope.CreateRelationWindow['config']['inputList'][3]['valid'][0]['key']
+            ) ;
+            $scope.CreateRelationWindow['config']['inputList'][1]['valid'] = [
+               { 'key': 'SequoiaSQL-MySQL - SequoiaDB', 'value': 1 }
+            ] ;
+            $scope.CreateRelationWindow['config']['inputList'][1]['value'] = 1 ;
+            $scope.CreateRelationWindow['config']['inputList'].splice( 4, 3 ) ;
+         }
+
          $scope.CreateRelationWindow['config']['inputList'][2]['value'] = $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['value'] ;
          $scope.CreateRelationWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
             var isAllClear = $scope.CreateRelationWindow['config'].check() ;
@@ -2734,7 +2871,21 @@
             {
                var formVal = $scope.CreateRelationWindow['config'].getValue() ;
                formVal['To'] = $scope.ModuleList[formVal['To']]['BusinessName'] ;
-               createRelation( formVal ) ;               
+               if( formVal['Type'] == 1 )
+               {
+                  $scope.Components.Confirm.type = 1 ;
+                  $scope.Components.Confirm.context = $scope.autoLanguage( '创建关联将重启MySQL服务，是否继续？' ) ;
+                  $scope.Components.Confirm.isShow = true ;
+                  $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+                  $scope.Components.Confirm.ok = function(){
+                     $scope.Components.Confirm.isShow = false ;
+                     createRelation( formVal ) ;               
+                  }
+               }
+               else
+               {
+                  createRelation( formVal ) ;               
+               }
             }
             return isAllClear ;
          } ) ;

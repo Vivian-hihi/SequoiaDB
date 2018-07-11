@@ -171,7 +171,7 @@
                      </div>
                      <div ng-container="{offsetY:-20}" create-chart="moduleInfo['Chart']['Module']"></div>
                   </div>
-                  <div class="pull-left" style="max-width:650px;min-height:145px;" ng-container="{width:'50%',height:'30w'}" ng-if="moduleInfo['BusinessType']=='sequoiasql-postgresql'">
+                  <div class="pull-left" style="max-width:650px;min-height:145px;" ng-container="{width:'50%',height:'30w'}" ng-if="moduleInfo['BusinessType']=='sequoiasql-postgresql'||moduleInfo['BusinessType']=='sequoiasql-mysql'">
                      <div style="height:20px;margin-bottom:15px;">
                         {{autoLanguage("业务关联信息")}}
                      </div>
@@ -274,8 +274,8 @@
             <div class="Ellipsis" table-key="BusinessName">
                <span ng-repeat="moduleInfo in ModuleList track by $index">
                   <span ng-repeat="installInfo in moduleInfo['Location'] track by $index" ng-if="hostInfo['HostName']==installInfo['HostName']">
-                     <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'||moduleInfo['BusinessType']=='sequoiasql-postgresql'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
-                     <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'&&moduleInfo['BusinessType']!='sequoiasql-postgresql'">{{moduleInfo['BusinessName']}}</span>&nbsp;
+                     <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'||moduleInfo['BusinessType']=='sequoiasql-postgresql'||moduleInfo['BusinessType']=='sequoiasql-mysql'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
+                     <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'&&moduleInfo['BusinessType']!='sequoiasql-postgresql'&&moduleInfo['BusinessType']!='sequoiasql-mysql'">{{moduleInfo['BusinessName']}}</span>&nbsp;
                   </span>
                </span>
             </div>
