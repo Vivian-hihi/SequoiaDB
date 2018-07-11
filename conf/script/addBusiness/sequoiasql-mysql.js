@@ -43,6 +43,8 @@
       RET_JSON: the format is: {"errno":0,"detail":""}
 */
 
+import( catPath( getSelfPath(), '../lib/parseMySQL.js' ) ) ;
+
 function _getAgentPort( hostName )
 {
    return Oma.getAOmaSvcName( hostName ) ;
@@ -200,73 +202,70 @@ function _getLogMessage( PD_LOGGER, cmd, installPath, businessName )
    return cmd.getLastOut() ;
 }
 
-function _generateSqlFile( remote, sqlContent )
+function _execSql( PD_LOGGER, port, user, passwd, cmd, installPath, sql, database )
 {
-   var fileName = '/tmp/tmp_mysql_exec.sql' ;
+   var result = null ;
+
+   if( typeof( database ) != 'string' || database.length == 0 )
+   {
+      database = 'mysql' ;
+   }
+
+   if( typeof( user ) != 'string' || user.length == 0 )
+   {
+      user = 'root' ;
+   }
+
+   if( typeof( passwd ) != 'string' || passwd.length == 0 )
+   {
+      passwd = '' ;
+   }
+
+   try
+   {
+      result = ExecSsql( cmd, installPath, port, user, passwd, database, sql ) ;
+   }
+   catch( e )
+   {
+      PD_LOGGER.logTask( PDERROR, e ) ;
+      throw e ;
+   }
+
+   return result['value'] ;
+}
+
+function _updateRoot( PD_LOGGER, port, cmd, installPath )
+{
+   var str = "update mysql.user set host = '%' where user = 'root';\nflush privileges;" ;
    var error = null ;
-   var file ;
 
    try
    {
-      file = remote.getFile() ;
-      file.remove( fileName ) ;
+      _execSql( PD_LOGGER, port, 'root', '', cmd, installPath, str ) ;
    }
    catch( e )
    {
-   }
-
-   try
-   {
-      file = remote.getFile( fileName ) ;
-      file.write( sqlContent ) ;
-   }
-   catch( e )
-   {
-      if( typeof( e ) == "number" )
-      {
-         error = new SdbError( e, "failed to generate sql file" ) ;
-      }
-      else
-      {
-         error = new SdbError( SDB_SYS, "failed to generate sql file" ) ;
-      }
+      error = e ;
    }
 
    return error ;
 }
 
-function _execSqlFile( cmd, installPath, dbpath )
-{
-   var fileName  = '/tmp/tmp_mysql_exec.sql' ;
-   var mysqlFile = installPath + '/bin/mysql' ;
-   var sockFile  = dbpath + '/mysqld.sock' ;
-   var timeout = 600000 ;
-   var args = '' ;
-
-   args = '-u root -S ' + sockFile + ' < ' + fileName ;
-   return _runRemoteCmd( cmd, mysqlFile, args, timeout ) ;
-}
-
-function _updateRoot( remote, cmd, installPath, dbpath )
-{
-   var str = "update mysql.user set host = '%' where user = 'root';\nflush privileges;" ;
-   var error = _generateSqlFile( remote, str ) ;
-   if( error !== null )
-   {
-      return error ;
-   }
-   return _execSqlFile( cmd, installPath, dbpath ) ;
-}
-
-function _createUser( remote, cmd, installPath, dbpath, user, passwd )
+function _createUser( PD_LOGGER, port, cmd, installPath, user, passwd )
 {
    var str = sprintf( "grant all privileges on *.* to ?@'%' identified by '?';\nflush privileges;", user, passwd ) ;
-   var error = _generateSqlFile( remote, str ) ;
-   if( error !== null )
+   var error = null ;
+
+   try
    {
-      return error ;
+      _execSql( PD_LOGGER, port, 'root', '', cmd, installPath, str ) ;
    }
-   return _execSqlFile( cmd, installPath, dbpath ) ;
+   catch( e )
+   {
+      error = e ;
+   }
+
+   return error ;
 }
 
 function CreateInst( PD_LOGGER )
@@ -376,9 +375,9 @@ function CreateInst( PD_LOGGER )
    resultInfo[FIELD_FLOW].push( sprintf( "Finish to create instance [?]",
                                          hostName ) ) ;
 
-   if( config[FIELD_GRANT_TYPE] == 0 )
+   if( config[FIELD_GRANT_TYPE] == 'grant root' )
    {
-      error = _updateRoot( remote, cmd, installPath, dbpath ) ;
+      error = _updateRoot( PD_LOGGER, port, cmd, installPath ) ;
       if ( error !== null )
       {
          PD_LOGGER.logTask( PDEVENT, cmd.getCommand() ) ;
@@ -391,12 +390,12 @@ function CreateInst( PD_LOGGER )
          return resultInfo ;
       }
    }
-   else if( config[FIELD_GRANT_TYPE] == 1 )
+   else if( config[FIELD_GRANT_TYPE] == 'create new user' )
    {
       var user = config[FIELD_AUTH_USER] ;
       var passwd = config[FIELD_AUTH_PASSWD] ;
 
-      error = _createUser( remote, cmd, installPath, dbpath, user, passwd ) ;
+      error = _createUser( PD_LOGGER, port, cmd, installPath, user, passwd ) ;
       if ( error !== null )
       {
          resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
