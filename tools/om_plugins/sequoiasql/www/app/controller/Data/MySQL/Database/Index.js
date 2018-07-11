@@ -96,7 +96,7 @@
 
       //获取database列表
       var queryDbList = function(){
-         var sql = 'select * from information_schema.SCHEMATA where SCHEMA_NAME != "information_schema" and SCHEMA_NAME != "performance_schema" and SCHEMA_NAME != "mysql"' ;
+         var sql = 'select * from information_schema.SCHEMATA where SCHEMA_NAME != "information_schema" and SCHEMA_NAME != "performance_schema" and SCHEMA_NAME != "mysql" and SCHEMA_NAME != "sys"' ;
          var data = { 'Sql': sql, 'DbName': $scope.CurrentDbName, 'Type': 'mysql' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( dbList ){
@@ -106,7 +106,7 @@
                }
 
                //数据库列表补全系统数据库
-               dbList.push( { 'SCHEMA_NAME': 'information_schema' }, { 'SCHEMA_NAME': 'performance_schema' }, { 'SCHEMA_NAME': 'mysql' } ) ;
+               dbList.push( { 'SCHEMA_NAME': 'information_schema' }, { 'SCHEMA_NAME': 'mysql' }, { 'SCHEMA_NAME': 'performance_schema' }, { 'SCHEMA_NAME': 'sys' } ) ;
 
                $scope.DatabaseList = dbList ;
                //设置当前选择数据库
@@ -174,6 +174,10 @@
          var data = { 'Sql': sql, 'DbName': $scope.CurrentDbName, 'Type': 'mysql' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( result ){
+               if( dbName == $scope.CurrentDbName )
+               {
+                  $scope.CurrentDbName = 'mysql' ;
+               }
                queryDbList() ;
             },
             'failed': function( errorInfo ){

@@ -612,7 +612,7 @@
                      "min": 0,
                      "empty": true
                   }
-               },
+               }
             ]
          }
          $scope.EditFieldWindow['callback']['SetTitle']( $scope.pAutoLanguage( '修改字段' ) ) ;
