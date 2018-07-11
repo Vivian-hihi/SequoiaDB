@@ -626,6 +626,8 @@ namespace engine
          goto error ;
       }
 
+      dbTool.removeAuth( _businessName ) ;
+
       restTool.sendOkRespone() ;
 
    done:
