@@ -100,15 +100,11 @@
          var data = { 'Sql': sql, 'DbName': $scope.CurrentDbName, 'Type': 'mysql' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( dbList ){
-               if( dbList.length <= 0 )
-               {
-                  return ;
-               }
-
                //数据库列表补全系统数据库
                dbList.push( { 'SCHEMA_NAME': 'information_schema' }, { 'SCHEMA_NAME': 'mysql' }, { 'SCHEMA_NAME': 'performance_schema' }, { 'SCHEMA_NAME': 'sys' } ) ;
 
                $scope.DatabaseList = dbList ;
+
                //设置当前选择数据库
                if( $scope.CurrentDbName == 'mysql' )
                {
@@ -1020,6 +1016,10 @@
 
       //打开 删除数据库 弹窗
       $scope.ShowRemoveDatabase = function(){
+         if( $scope.DatabaseList.length == 4 )
+         {
+            return ;
+         }
          var listValue = [] ;
          var defaultDb = null ;
          $.each( $scope.DatabaseList, function( index, databaseName ){
@@ -1027,7 +1027,13 @@
             {
                defaultDb = databaseName["SCHEMA_NAME"] ;
             }
-            listValue.push( { 'key': databaseName["SCHEMA_NAME"], 'value': databaseName["SCHEMA_NAME"] } ) ;
+            if( databaseName["SCHEMA_NAME"] != 'information_schema' &&
+                databaseName["SCHEMA_NAME"] != 'mysql' &&
+                databaseName["SCHEMA_NAME"] != 'sys' &&
+                databaseName["SCHEMA_NAME"] != 'performance_schema' )
+            {
+               listValue.push( { 'key': databaseName["SCHEMA_NAME"], 'value': databaseName["SCHEMA_NAME"] } ) ;
+            }
          } ) ;
          $scope.RemoveDatabaseWindow['config'] = {
             inputList: [

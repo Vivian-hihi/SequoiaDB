@@ -26,6 +26,33 @@
                "./app/controller/Data/PostgreSQL/Operate/Structure.js"
             ]
          }
+      },
+      {
+         "path": "/Data/SequoiaSQL/MySQL/Database/Index",
+         "options": {
+            "templateUrl": "./app/template/Data/MySQL/Database/Index.html",
+            "resolve": [
+               "./app/controller/Data/MySQL/Database/Index.js"
+            ]
+         }
+      },
+      {
+         "path": "/Data/SequoiaSQL/MySQL/Operate/Data",
+         "options": {
+            "templateUrl": "./app/template/Data/MySQL/Operate/Data.html",
+            "resolve": [
+               "./app/controller/Data/MySQL/Operate/Data.js"
+            ]
+         }
+      },
+      {
+         "path": "/Data/SequoiaSQL/MySQL/Operate/Structure",
+         "options": {
+            "templateUrl": "./app/template/Data/MySQL/Operate/Structure.html",
+            "resolve": [
+               "./app/controller/Data/MySQL/Operate/Structure.js"
+            ]
+         }
       }
    ]
 }
