@@ -169,9 +169,12 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
         .getOrElse(SdbConfig.PreferredInstanceMode, SdbConfig.DefaultPreferredInstanceMode).toLowerCase match {
         case SdbConfig.PREFERRED_INSTANCE_MODE_RANDOM => PreferredInstanceMode.Random
         case SdbConfig.PREFERRED_INSTANCE_MODE_ORDERED => PreferredInstanceMode.Ordered
-        case _ =>
-            invalidConfigValue(SdbConfig.PreferredInstanceMode, preferredInstanceMode)
+        case s: String =>
+            invalidConfigValue(SdbConfig.PreferredInstanceMode, s)
     }
+
+    private val preferredInstanceStrict: Boolean = properties.get(SdbConfig.PreferredInstanceStrict)
+        .map(_.toBoolean).getOrElse(SdbConfig.DefaultPreferredInstanceStrict)
 
     private val _preferredInstance: Array[String] = properties
         .getOrElse(SdbConfig.PreferredInstance, SdbConfig.DefaultPreferredInstance)
@@ -186,18 +189,18 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
                 try {
                     val id = s.toInt
                     if (id <= 0 && id > 255) {
-                        invalidConfigValue(SdbConfig.PreferredInstance, _preferredInstance)
+                        invalidConfigValue(SdbConfig.PreferredInstance, _preferredInstance.mkString(","))
                     }
                 } catch {
                     case _: Throwable =>
-                        invalidConfigValue(SdbConfig.PreferredInstance, _preferredInstance)
+                        invalidConfigValue(SdbConfig.PreferredInstance, _preferredInstance.mkString(","))
                 }
             }
         }
     }
 
     val preferredInstance: SdbPreferredInstance =
-        new SdbPreferredInstance(_preferredInstance, preferredInstanceMode)
+        new SdbPreferredInstance(_preferredInstance, preferredInstanceMode, preferredInstanceStrict)
 
     val shardingPartitionSingleNode: Boolean = properties.get(SdbConfig.ShardingPartitionSingleNode)
         .map(_.toBoolean).getOrElse(SdbConfig.DefaultShardingPartitionSingleNode)
@@ -318,6 +321,7 @@ object SdbConfig {
     val PreferredLocation = "preferredlocation"
     val PreferredInstance = "preferredinstance"
     val PreferredInstanceMode = "preferredinstancemode"
+    val PreferredInstanceStrict = "preferredinstancestrict"
     val IgnoreDuplicateKey = "ignoreduplicatekey"
     val IgnoreNullField = "ignorenullfield"
     val UseSelector = "useselector"
@@ -388,6 +392,7 @@ object SdbConfig {
         PreferredLocation,
         PreferredInstance,
         PreferredInstanceMode,
+        PreferredInstanceStrict,
         IgnoreDuplicateKey,
         IgnoreNullField,
         UseSelector,
@@ -429,6 +434,7 @@ object SdbConfig {
     val DefaultPreferredLocation = false
     val DefaultPreferredInstanceMode: String = PREFERRED_INSTANCE_MODE_RANDOM
     val DefaultPreferredInstance: String = PREFERRED_INSTANCE_ANY
+    val DefaultPreferredInstanceStrict: Boolean = true
     val DefaultIgnoreDuplicateKey = false
     val DefaultIgnoreNullField = false
     val DefaultUseSelector: String = USE_SELECTOR_ENABLE
@@ -455,7 +461,7 @@ object SdbConfig {
     }
 }
 
-class SdbPreferredInstance(val instances: Array[String], val mode: PreferredInstanceMode) extends Serializable {
+class SdbPreferredInstance(val instances: Array[String], val mode: PreferredInstanceMode, val strict: Boolean) extends Serializable {
     private var _instanceIdArray: ArrayBuffer[Int] = mutable.ArrayBuffer()
 
     private var _instanceTendency: Option[String] = None
@@ -494,5 +500,5 @@ class SdbPreferredInstance(val instances: Array[String], val mode: PreferredInst
 
     override def toString: String =
         s"{mode:$mode, instances: ${instanceIdArray.mkString("[", ",", "]")}, " +
-            s"tendency: ${_instanceTendency.getOrElse(SdbConfig.PREFERRED_INSTANCE_ANY)}}"
+            s"tendency: ${_instanceTendency.getOrElse(SdbConfig.PREFERRED_INSTANCE_ANY)}, strict:$strict}"
 }

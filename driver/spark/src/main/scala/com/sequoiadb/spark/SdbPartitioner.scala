@@ -586,9 +586,9 @@ private class NodeSelector {
     }
 
     private def getNodeByMasterTendency(nodeInfos: List[NodeInfo],
-                                        instances: Array[Int],
-                                        mode: PreferredInstanceMode)
+                                        preferredInstance: SdbPreferredInstance)
     : NodeInfo = {
+        val instances = preferredInstance.instanceIdArray
         var nodes = nodeInfos.filter(node => node.isPrimary && instances.contains(node.instanceId))
         if (nodes.nonEmpty) {
             return nodes.head
@@ -596,7 +596,12 @@ private class NodeSelector {
 
         nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
         if (nodes.nonEmpty) {
-            return getNodeByMode(nodes, instances, mode)
+            return getNodeByMode(nodes, instances, preferredInstance.mode)
+        }
+
+        if (preferredInstance.strict) {
+            throw new SdbException(s"No node available in strict master tendency, " +
+                s"nodes: $nodeInfos, instances: ${instances.mkString("[", ",", "]")}")
         }
 
         nodes = nodeInfos.filter(_.isPrimary)
@@ -608,17 +613,22 @@ private class NodeSelector {
     }
 
     private def getNodeBySlaveTendency(nodeInfos: List[NodeInfo],
-                                       instances: Array[Int],
-                                       mode: PreferredInstanceMode)
+                                       preferredInstance: SdbPreferredInstance)
     : NodeInfo = {
+        val instances = preferredInstance.instanceIdArray
         var nodes = nodeInfos.filter(node => !node.isPrimary && instances.contains(node.instanceId))
         if (nodes.nonEmpty) {
-            return getNodeByMode(nodes, instances, mode)
+            return getNodeByMode(nodes, instances, preferredInstance.mode)
         }
 
         nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
         if (nodes.nonEmpty) {
-            return getNodeByMode(nodes, instances, mode)
+            return getNodeByMode(nodes, instances, preferredInstance.mode)
+        }
+
+        if (preferredInstance.strict) {
+            throw new SdbException(s"No node available in strict slave tendency, " +
+                s"nodes: $nodeInfos, instances: ${instances.mkString("[", ",", "]")}")
         }
 
         nodes = nodeInfos.filter(!_.isPrimary)
@@ -630,12 +640,17 @@ private class NodeSelector {
     }
 
     private def getNodeByAnyTendency(nodeInfos: List[NodeInfo],
-                                     instances: Array[Int],
-                                     mode: PreferredInstanceMode)
+                                     preferredInstance: SdbPreferredInstance)
     : NodeInfo = {
+        val instances = preferredInstance.instanceIdArray
         val nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
         if (nodes.nonEmpty) {
-            return getNodeByMode(nodes, instances, mode)
+            return getNodeByMode(nodes, instances, preferredInstance.mode)
+        }
+
+        if (preferredInstance.strict) {
+            throw new SdbException(s"No node available in strict any tendency, " +
+                s"nodes: $nodeInfos, instances: ${instances.mkString("[", ",", "]")}")
         }
 
         getLeastUsedNode(nodeInfos)
@@ -649,13 +664,13 @@ private class NodeSelector {
             nodeInfo = getLeastUsedNode(nodeInfos)
         } else if (preferredInstance.isMasterTendency) {
             nodeInfo = getNodeByMasterTendency(
-                nodeInfos, preferredInstance.instanceIdArray, preferredInstance.mode)
+                nodeInfos, preferredInstance)
         } else if (preferredInstance.isSlaveTendency) {
             nodeInfo = getNodeBySlaveTendency(
-                nodeInfos, preferredInstance.instanceIdArray, preferredInstance.mode)
+                nodeInfos, preferredInstance)
         } else {
             nodeInfo = getNodeByAnyTendency(
-                nodeInfos, preferredInstance.instanceIdArray, preferredInstance.mode)
+                nodeInfos, preferredInstance)
         }
 
         increaseNodeRefCount(nodeInfo)
