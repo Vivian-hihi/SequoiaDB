@@ -68,7 +68,9 @@
                      "required": true,
                      "value": '',
                      "valid": {
-                        "min" : 1
+                        "min": 1,
+                        "max": 127,
+                        "regex": '^[0-9a-zA-Z]+$'
                      }
                   },
                   {

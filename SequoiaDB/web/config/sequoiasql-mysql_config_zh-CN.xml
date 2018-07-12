@@ -1,13 +1,13 @@
 <Property type="array">
    <FILLER>
       <Name>dbpath</Name>
-      <WebName>dbpath</WebName>
+      <WebName>数据路径</WebName>
       <Type>path</Type>
       <Default>/opt/sequoiasql/mysql/data/</Default>
       <Valid></Valid>
       <Display>text box</Display>
       <Edit>true</Edit>
-      <Desc>Data storing path</Desc>
+      <Desc>数据存储路径</Desc>
       <Level>0</Level>
       <DynamicEdit>false</DynamicEdit>
       <BatchEdit>false</BatchEdit>
@@ -15,13 +15,13 @@
    </FILLER>
    <FILLER>
       <Name>port</Name>
-      <WebName>port</WebName>
+      <WebName>服务名</WebName>
       <Type>port</Type>
       <Default>3306</Default>
       <Valid></Valid>
       <Display>edit box</Display>
       <Edit>true</Edit>
-      <Desc>Local service port</Desc>
+      <Desc>本地服务端口</Desc>
       <Level>0</Level>
       <DynamicEdit>false</DynamicEdit>
       <BatchEdit>false</BatchEdit>

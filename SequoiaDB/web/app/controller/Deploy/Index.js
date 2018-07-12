@@ -2905,49 +2905,71 @@
          {
             return;
          }
+         
+         var relationInfoList = [] ;
+
+         $.each( SdbSwap.relationshipList, function( index, relationInfo ){
+            $.each( $scope.ModuleList, function( index2, moduleInfo ){
+               if( relationInfo['To'] == moduleInfo['BusinessName'] )
+               {
+                  relationInfo['To'] = relationInfo['To'] + '  ( ' + moduleInfo['BusinessType'] + ' )' ;
+               }
+               if( relationInfo['From'] == moduleInfo['BusinessName'] )
+               {
+                  relationInfo['From'] = relationInfo['From'] + '  ( ' + moduleInfo['BusinessType'] + ' )' ;
+               }
+            } ) ;
+            
+            relationInfoList.push(
+               { 'key': relationInfo['Name'], 'value': index, 'to': relationInfo['To'], 'from': relationInfo['From'] }
+            ) ;
+         } ) ;
+
          $scope.RemoveRelationWindow['config'] = {
             inputList: [
-               {
-                  "name": "Type",
-                  "webName": $scope.autoLanguage( '关联类型' ),
-                  "required": true,
-                  "type": "select",
-                  "value": 0,
-                  "valid": [
-                     { 'key': 'SequoiaSQL-PostgreSQL - SequoiaDB', 'value': 0 }
-                  ]
-               },
                {
                   "name": "Name",
                   "webName": $scope.autoLanguage( '关联名' ),
                   "type": "select",
                   "required": true,
-                  "value": '',
-                  "valid": []
+                  "value": relationInfoList[0]['value'],
+                  "valid": relationInfoList,
+                  "onChange": function( name, key, value ){
+                     $scope.RemoveRelationWindow['config']['inputList'][1]['value'] = relationInfoList[value]['from'] ;
+                     $scope.RemoveRelationWindow['config']['inputList'][2]['value'] = relationInfoList[value]['to'] ;
+                  }
+               },
+               {
+                  "name": "from",
+                  "webName": $scope.autoLanguage( '关联业务名' ),
+                  "type": "string",
+                  "disabled": true,
+                  "value": relationInfoList[0]['from']
+               },
+               {
+                  "name": "to",
+                  "webName": $scope.autoLanguage( '被关联业务名' ),
+                  "type": "string",
+                  "disabled": true,
+                  "value": relationInfoList[0]['to']
                }
             ]
          } ;
 
-         $.each( SdbSwap.relationshipList, function( index, relationInfo ){
-            $scope.RemoveRelationWindow['config']['inputList'][1]['valid'].push(
-               { 'key': relationInfo['Name'], 'value': relationInfo['Name'] }
-            ) ;
-         } ) ;
-         $scope.RemoveRelationWindow['config']['inputList'][1]['value'] = $scope.RemoveRelationWindow['config']['inputList'][1]['valid'][0]['value'] ;
 
          $scope.RemoveRelationWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
             var isAllClear = $scope.RemoveRelationWindow['config'].check() ;
             if( isAllClear )
             {
                var formVal = $scope.RemoveRelationWindow['config'].getValue() ;
-               removeRelation( formVal['Name'] ) ;
+               removeRelation( relationInfoList[formVal['Name']]['key'] ) ;
             }
             return isAllClear ;
          } ) ;
          $scope.RemoveRelationWindow['callback']['SetTitle']( $scope.autoLanguage( '解除关联' ) ) ;
          $scope.RemoveRelationWindow['callback']['Open']() ;
       }
-
+      
       //关联信息 弹窗
       $scope.RelationshipWindow = {
          'config': [],

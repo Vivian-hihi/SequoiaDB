@@ -113,7 +113,7 @@
    "创建分区组": "Create Group",
    "创建关联": "Create Relation",
    "创建关联成功：?": "Create Relation successfully: ?",
-   "创建关联将重启MySQL服务，是否继续创建？": "Creating an association will restart the MySQL service. Do you want to continue creating it?",
+   "创建关联将重启MySQL服务，是否继续？": "Creating an association will restart the MySQL service. Do you want to continue creating it?",
    "创建集合": "Create Collection",
    "创建集合空间": "Create Collection Space",
    "创建集合空间。": "Create Collection Space.",
