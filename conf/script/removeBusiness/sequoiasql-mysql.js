@@ -211,7 +211,7 @@ function _checkData( PD_LOGGER, resultInfo, port, user, passwd, cmd, installPath
       try
       {
          //get list of relations
-         var sql = sprintf( 'select * from information_schema.TABLES where TABLE_SCHEMA = \\"?\\"', dbInfo['SCHEMA_NAME'] ) ;
+         var sql = sprintf( 'select * from information_schema.TABLES where TABLE_SCHEMA = "?"', dbInfo['SCHEMA_NAME'] ) ;
          tableList = _execSql( PD_LOGGER, port, user, passwd, cmd,
                                installPath, sql, dbInfo['SCHEMA_NAME'] ) ;
       }

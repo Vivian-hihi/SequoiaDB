@@ -1,5 +1,22 @@
 import( catPath( getSelfPath(), 'parseSSQL.js' ) ) ;
 
+function _string_encode_by_cmd( str ){
+   str = strReplaceAll( str, "\\", "\\\\" ) ;
+   str = strReplaceAll( str, '"', '\\"' ) ;
+   return '"' + str + '"' ;
+}
+
+function _string_encode_by_no_quotes( str ){
+   str = strReplaceAll( str, "\\", "\\\\" ) ;
+   str = strReplaceAll( str, '"', '\\"' ) ;
+   str = strReplaceAll( str, "'", "\\'" ) ;
+   str = strReplaceAll( str, "!", "\\!" ) ;
+   str = strReplaceAll( str, "&", "\\&" ) ;
+   str = strReplaceAll( str, '(', '\\(' ) ;
+   str = strReplaceAll( str, ')', '\\)' ) ;
+   return str ;
+}
+
 function ExecSsql( cmd, installPath, port, user, passwd, database, arg, timeout )
 {
    var rc = SDB_OK ;
@@ -17,7 +34,11 @@ function ExecSsql( cmd, installPath, port, user, passwd, database, arg, timeout 
       timeout = 600000 ;
    }
 
-   arg = '-t -D ' + database + ' -h 127.0.0.1  -P ' + port + ' -e "' + arg + '" -u ' + user ;
+   arg = _string_encode_by_cmd( arg ) ;
+   user = _string_encode_by_cmd( user ) ;
+   passwd = _string_encode_by_no_quotes( passwd ) ;
+
+   arg = '-t -D ' + database + ' -h 127.0.0.1  -P ' + port + ' -e ' + arg + ' -u ' + user ;
    if( passwd && passwd.length > 0 )
    {
       exec = sprintf( 'export MYSQL_PWD=?;', passwd ) + exec ;

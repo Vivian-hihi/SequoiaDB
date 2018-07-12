@@ -203,6 +203,11 @@ function strTrim ( str )
    return str.replace(/(^\s*)|(\s*$)/g, "") ;
 }
 
+function strReplaceAll( str, findStr, replaceStr )
+{
+   return str.split( findStr ).join( replaceStr ) ;
+}
+
 /* *****************************************************************************
 @discretion: remove "\'" and "\"" in a string
 @author: Tanzhaobo
