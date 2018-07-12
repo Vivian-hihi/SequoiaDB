@@ -42,19 +42,6 @@ public class BinFormatTest6608 extends SdbTestBase{
 	
 	@Test
 	public void test(){
-	    // TODO: fail for SEQUOIADBMAINSTREAM-2163
-		// BSONObject value1 = new BasicBSONObject();
-		// value1.put("$binary", "aGVsbG8gd29ybGQ");
-		// value1.put("$type", 1);
-		// BSONObject doc1 = new BasicBSONObject("key1", value1);
-		// try {
-		// 	cl.insert(doc1);
-		// 	Assert.fail(doc1 + " should not be inserted");
-		// } catch(BaseException e) {
-		// 	if (e.getErrorCode() != -6)
-		// 		throw e;
-		// }
-
 		try {
 			BSONObject doc2 = (BSONObject) JSON.parse("{ a: { '$binary': 'aGVsbG8gd29ybGQ', '$type': '1' } } ");
 			cl.insert(doc2);
