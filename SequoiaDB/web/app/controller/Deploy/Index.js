@@ -153,18 +153,15 @@
                $.each( SdbSwap.hostList, function( index, hostInfo ){
                   if( isFirstQueryHostStatus || hostInfo['ClusterName'] == $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] )
                   {
+                     if( typeof( hostInfo['HostName'] ) == 'undefined' )
+                     {
+                        return ;
+                     }
                      queryHostList['HostInfo'].push( { 'HostName': hostInfo['HostName'] } ) ;
                   }
                } ) ;
                isFirstQueryHostStatus = false ;
                return { 'cmd': 'query host status', 'HostInfo': JSON.stringify( queryHostList ) } ;
-            },
-            'before': function(){
-               if( queryHostList['HostInfo'].length == 0 )
-               {
-                  setTimeout( queryHostStatus, 1 ) ;
-                  return false ;
-               }
             },
             'success': function( hostStatusList ){
                $.each( hostStatusList[0]['HostInfo'], function( index, statusInfo ){
