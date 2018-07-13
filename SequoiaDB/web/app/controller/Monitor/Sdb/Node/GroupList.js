@@ -24,7 +24,7 @@
       //分区组列表
       $scope.GroupList = [] ;
       $scope.clList = [] ;
-
+      $scope.NumConnects = '-' ;
       //新表格
       $scope.GroupTable = {
          'title': {
@@ -147,7 +147,7 @@
 
       //获取coord节点状态
       var getCoordStatus = function( groupInfo, nodesInfo, hostname, svcname ){
-         var sql = 'SELECT NodeName FROM $SNAPSHOT_DB WHERE GLOBAL=false' ;
+         var sql = 'SELECT NodeName, TotalNumConnects FROM $SNAPSHOT_DB WHERE GLOBAL=false' ;
          SdbRest.Exec( sql, {
             'before': function( jqXHR ){
                jqXHR.setRequestHeader( 'SdbHostName', hostname ) ;
@@ -157,6 +157,7 @@
                if( dbInfo.length > 0 )
                {
                   dbInfo = dbInfo[0] ;
+                  $scope.NumConnects = dbInfo['TotalNumConnects'] ;
                   if( dbInfo['NodeName'] != hostname + ':' + svcname ) //om虽然连接成功，但是已经切换到其他coord节点了，所以还是失败的
                   {
                      groupInfo['ErrNodes'].push( { 'NodeName': hostname + ':' + svcname, 'Flag': -15 } ) ;
