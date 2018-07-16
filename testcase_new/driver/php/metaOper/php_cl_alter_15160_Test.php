@@ -154,7 +154,7 @@ class TestCS15160 extends PHPUnit_Framework_TestCase
       $this -> assertArrayNotHasKey( 'ShardingKey', $clInfo );
       $this -> assertArrayNotHasKey( 'ShardingType', $clInfo );
       $this -> assertArrayNotHasKey( 'Partition', $clInfo );
-      //$this -> assertArrayNotHasKey( 'AutoSplit', $clInfo );
+      $this -> assertArrayNotHasKey( 'AutoSplit', $clInfo );
       $this -> assertArrayNotHasKey( 'EnsureShardingIndex', $clInfo );
    }
    
