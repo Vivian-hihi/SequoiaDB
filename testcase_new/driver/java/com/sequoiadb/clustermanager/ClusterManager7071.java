@@ -15,7 +15,7 @@ import com.sequoiadb.base.Node.NodeStatus;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.clustermanager.CommLib;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -90,7 +90,10 @@ public class ClusterManager7071 extends SdbTestBase{
 				sdb.removeReplicaGroup(dataRGName);
 			}			
 		}		
-		dataRGAdd = sdb.createReplicaGroup(dataRGName);		
+		dataRGAdd = sdb.createReplicaGroup(dataRGName);
+        Assert.assertTrue(sdb.isRelicaGroupExist(dataRGName));
+        int dataRGId = dataRGAdd.getId();
+        Assert.assertTrue(sdb.isReplicaGroupExist(dataRGId));
 		
 		//create data node
 		Node data = null;
@@ -128,5 +131,8 @@ public class ClusterManager7071 extends SdbTestBase{
 		Assert.assertEquals(dataReplicaGroup.getGroupName(), dataRGName);
 //		Assert.assertEquals(sdb1, sdb);
 		Assert.assertEquals(status, NodeStatus.SDB_NODE_ACTIVE);
+		
+		Assert.assertTrue(dataRGAdd.isNodeExist(nodeName));
+		Assert.assertTrue(dataRGAdd.isNodeExist(dataHostName, port));
 	}
 }
