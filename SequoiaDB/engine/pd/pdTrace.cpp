@@ -566,7 +566,7 @@ INT32 _pdTraceCB::_addTidFilter( UINT32 tid )
    }
    // here we need to insert the tid filter into list
    // first we have to make sure we still have enough room
-   if ( _numBP >= PD_TRACE_MAX_MONITORED_THREAD_NUM )
+   if ( _nMonitoredNum >= PD_TRACE_MAX_MONITORED_THREAD_NUM )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
