@@ -2,7 +2,9 @@ Java 驱动的连接池提供给用户一个快速获取连接实例的途径。
 
 ##连接池用法##
 
-使用类 SequoiadbDatasource 的 getConnection 方法从连接池中获取一个连接，使用 releaseConnection 方法把取出的连接放回连接池。当连接池使用的连接数到达连接上限时，下一个请求连接的操作将会等待一段时间，若在规定的时间内无空闲的连接可用，将抛出异常。类 ConfigOptions 可以设置建立连接的各项参数。类 DatasourceOptions 可以设置连接池的各种参数。
+使用类 SequoiadbDatasource 的 getConnection 方法从连接池中获取一个连接，使用 releaseConnection 方法把取出的连接放回连接池。当连接池使用的连接数到达连接上限时，下一个请求连接的操作将会等待一段时间（默认超时时间为5秒），若在规定的时间内无空闲的连接可用，将抛出异常。类 ConfigOptions 可以设置建立连接的各项参数。类 DatasourceOptions 可以设置连接池的各种参数。
+
+**注：所有使用连接池的客户机器都需要在本地配置服务端协调节点的主机名/IP地址映射关系。**
 
 详情请查看相关 [Java API](api/java/html/index.html) 介绍。
 
