@@ -11,11 +11,11 @@ fusermount version: 2.9.4
 
 ##安装fuselib##
 ###安装前准备###
-- 使用root用户权限安装fuselib库
 - 下载fuselib的源码包   
 [fuse-2.9.4.tar.gz](https://github.com/libfuse/libfuse/releases/download/fuse_2_9_4/fuse-2.9.4.tar.gz)     
 
 ###编译安装步骤###
+以root用户编译安装fuselib库   
 （1）解压源码包  
   
 ```lang-javascript
