@@ -31,14 +31,14 @@ function main( db )
    evalSdbNode( db ) ;
    evalSdbDomain( db ) ;
    evalCLCount( db ) ;
-   // evalBinData( db ) ; // TODO: fail for SEQUOIADBMAINSTREAM-3549
+   evalBinData( db ) ;
    evalObjectId( db ) ;
    evalTimestamp( db ) ;
-   // evalRegex( db ) ; // TODO: fail for SEQUOIADBMAINSTREAM-3548
+   evalRegex( db ) ;
    evalMinKey( db ) ;
    evalMaxKey( db ) ;
    evalNumberLong( db ) ;
-   // evalSdbDate( db ) ; // TODO: fail for SEQUOIADBMAINSTREAM-3548
+   evalSdbDate( db ) ;
    
    commDropCL( db, COMMCSNAME, clName ) ;
 }
@@ -287,7 +287,6 @@ function evalRegex( db )
    var options = "i" ;
    var regex = db.eval( "getRegex( \"" + pattern + "\", \"" + options + "\" )" ) ;
    println( "regex instanceof Regex: " + ( regex instanceof Regex ) ) ;
-   println( regex ) ;
    var expectval = Regex( pattern, options ) ;
    if( regex.toString() !== expectval.toString() )
    {
@@ -337,11 +336,10 @@ function evalSdbDate( db )
    var date = "2015-03-13" ;
    var sdbDate = db.eval( "getSdbDate( \"" + date + "\" )" ) ;
    println( "sdbDate instanceof SdbDate: " + ( sdbDate instanceof SdbDate ) ) ;
-   println( sdbDate ) ;
-   // var obj = sdbDate.toObj() ;
-   // if( obj["_d"] !== date )
-   // {
-   //    throw buildException( "evalSdbDate", null, "get SdbDate", date, sdbDate ) ;
-   // }
+   var expectval = SdbDate( date ) ;
+   if( sdbDate.toString() !== expectval.toString() )
+   {
+      throw buildException( "evalSdbDate", null, "get SdbDate", date, sdbDate ) ;
+   }
    db.removeProcedure( "getSdbDate" ) ;
 }
