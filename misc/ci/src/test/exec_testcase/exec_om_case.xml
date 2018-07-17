@@ -51,10 +51,14 @@
             <replace file="${report_dir}/all_prepare.xml" token="ERROR_MESSAGE" value="${ms0}${ms1}${ms2}"/>
          </else>
       </if>
-      
+      <if>
+         <equals arg1="${envrc}" arg2="0" />
+         <then>
             <processonesuit suitfullname="${testcase_dir}"
                             prefix="${prefix}"
                             reportdir="${report_dir}"/>
+         </then>
+      </if>
             <detectenv detectfile="${testcase_dir}/common/all_clean.js" prefix="${prefix}" envisok="envrc"/> 
    </target>
 
