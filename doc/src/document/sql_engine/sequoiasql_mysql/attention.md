@@ -1,4 +1,4 @@
-##以下功能暂不支持：##
+##Sequoiasql-mysql使用注意事项：##
 
 1、不支持设置自增字段
 
@@ -10,4 +10,6 @@
 
 5、复合唯一索引仅支持所有字段null值重复，不允许部分字段null值重复，例如：允许出现(null,null)和(null,null)重复值，但不允许出现(1,null)和(1,null)重复值
 
-6、一个mysql节点仅可与一个SequoiaDB集群对接，不支持跨多个SequoiaDB集群
+6、建表时默认创建分区表。如在分区表建立新的唯一索引，必须包含其分区键（分区键依次优先选择主键，唯一键及第一个字段）。如需更改创建分区表配置见[配置说明](sql_engine/sequoiasql_mysql/connection.md#配置说明)
+
+7、一个mysql节点仅可与一个SequoiaDB集群对接，不支持跨多个SequoiaDB集群
