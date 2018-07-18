@@ -447,7 +447,7 @@ namespace engine
       if ( !pJob )
       {
          rc = SDB_OOM ;
-         PD_LOG( PDERROR, "Alloc cache job failed" ) ;
+         PD_LOG( PDERROR, "Alloc sync job failed" ) ;
          goto error ;
       }
       rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID  ) ;
