@@ -1408,7 +1408,7 @@
       } ;
 
       //打开 添加业务 弹窗
-      var showInstallModule = function(){
+      $scope.ShowInstallModule = function(){
          if( $scope.ClusterList.length > 0 )
          {
             if( $scope.HostNum == 0 )
@@ -1418,7 +1418,7 @@
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.okText = $scope.autoLanguage( '安装主机' ) ;
                $scope.Components.Confirm.ok = function(){
-                  $scope.AddHost() ;
+                  SdbSignal.commit( 'addHost' ) ;
                }
                return ;
             }
@@ -1601,7 +1601,7 @@
       } ;
 
       //打开 发现业务 弹窗
-      var showAppendModule = function(){
+      $scope.ShowAppendModule = function(){
          if( $scope.ClusterList.length > 0 )
          {
             $scope.AppendModule['config'] = {
@@ -2118,7 +2118,7 @@
                } ) ;
             }
          }, {
-            'showLoading': false
+            'showLoading': true
          } ) ;
       }
 
@@ -2198,7 +2198,7 @@
                   } ) ;
                }
             }, {
-               'showLoading': false
+               'showLoading': true
             } ) ;
             return true ;
          }
@@ -2283,11 +2283,11 @@
          'OnClick': function( index ){
             if( index == 0 )
             {
-               showInstallModule() ;
+               $scope.ShowInstallModule() ;
             }
             else
             {
-               showAppendModule() ;
+               $scope.ShowAppendModule() ;
             }
             $scope.AddModuleDropdown['callback']['Close']() ;
          },
@@ -2412,7 +2412,7 @@
                } ) ;
             }
          }, {
-            'showLoading': false
+            'showLoading': true
          } ) ;
       }
 
@@ -2444,7 +2444,7 @@
                } ) ;
             }
          }, {
-            'showLoading': false
+            'showLoading': true
          } ) ;
       }
 
@@ -2906,19 +2906,21 @@
          var relationInfoList = [] ;
 
          $.each( SdbSwap.relationshipList, function( index, relationInfo ){
+            var from = '' ;
+            var to = '' ;
             $.each( $scope.ModuleList, function( index2, moduleInfo ){
                if( relationInfo['To'] == moduleInfo['BusinessName'] )
                {
-                  relationInfo['To'] = relationInfo['To'] + '  ( ' + moduleInfo['BusinessType'] + ' )' ;
+                  to = relationInfo['To'] + '  ( ' + moduleInfo['BusinessType'] + ' )' ;
                }
                if( relationInfo['From'] == moduleInfo['BusinessName'] )
                {
-                  relationInfo['From'] = relationInfo['From'] + '  ( ' + moduleInfo['BusinessType'] + ' )' ;
+                  from = relationInfo['From'] + '  ( ' + moduleInfo['BusinessType'] + ' )' ;
                }
             } ) ;
             
             relationInfoList.push(
-               { 'key': relationInfo['Name'], 'value': index, 'to': relationInfo['To'], 'from': relationInfo['From'] }
+               { 'key': relationInfo['Name'], 'value': index, 'to': to, 'from': from }
             ) ;
          } ) ;
 
@@ -3102,6 +3104,10 @@
             $location.path( '/Deploy/ScanHost' ).search( { 'r': new Date().getTime() } ) ;
          }
       }
+
+      SdbSignal.on( 'addHost', function(){
+         $scope.AddHost() ;
+      } ) ;
 
       //删除主机
       $scope.RemoveHost = function(){
