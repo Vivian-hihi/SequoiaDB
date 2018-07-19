@@ -65,6 +65,7 @@ namespace engine
    } ;
 
    INT32 getPacketFile( const string &businessType, string &filePath ) ;
+   BOOLEAN pathCompare( const string &p1, const string &p2 ) ;
    INT32 getMaxTaskID( INT64 &taskID ) ;
    INT32 createTask( INT32 taskType, INT64 taskID,
                      const string &taskName, const string &agentHost,

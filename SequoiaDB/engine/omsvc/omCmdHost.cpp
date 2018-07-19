@@ -267,7 +267,7 @@ namespace engine
 
                      if ( _packageName == pkgInfo.getStringField(
                                                 OM_HOST_FIELD_PACKAGENAME ) &&
-                          _installPath != installPath )
+                          FALSE == pathCompare( _installPath, installPath ) )
                      {
                         rc = SDB_INVALIDARG ;
                         _errorMsg.setError( TRUE, " the host already install "

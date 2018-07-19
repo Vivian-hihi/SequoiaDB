@@ -83,6 +83,27 @@ namespace engine
       goto done ;
    }
 
+   BOOLEAN pathCompare( const string &p1, const string &p2 )
+   {
+      INT32 len1 = p1.length() ;
+      INT32 len2 = p2.length() ;
+
+      if ( len1 == len2 && p1 == p2 )
+      {
+         return TRUE ;
+      }
+      else if ( len1 - len2 == 1 )
+      {
+         return ( p1 == p2 + OSS_FILE_SEP_CHAR ) ? TRUE : FALSE ;
+      }
+      else if ( len2 - len1 == 1 )
+      {
+         return ( p1 + OSS_FILE_SEP_CHAR == p2 ) ? TRUE : FALSE ;
+      }
+
+      return FALSE ;
+   }
+
    INT32 getMaxTaskID( INT64 &taskID )
    {
       INT32 rc = SDB_OK ;

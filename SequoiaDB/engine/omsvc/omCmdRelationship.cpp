@@ -104,7 +104,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT64 taskID = -1 ;
-      string businessType ;
       omDatabaseTool dbTool( _cb ) ;
 
       //get from business info
@@ -124,17 +123,6 @@ namespace engine
          goto error ;
       }
 
-      //check business type
-      businessType = fromBuzInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
-      if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL != businessType )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "Unsupported business type: name=%s, type=%s",
-                             _fromBuzName.c_str(), businessType.c_str() ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
       //get to business info
       rc = dbTool.getOneBusinessInfo( _toBuzName, toBuzInfo ) ;
       if ( SDB_DMS_RECORD_NOTEXIST == rc )
@@ -148,17 +136,6 @@ namespace engine
       else if ( rc )
       {
          _errorMsg.setError( TRUE, "failed to get business info,rc=%d", rc ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-      //check business type
-      businessType = toBuzInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
-      if ( OM_BUSINESS_SEQUOIADB != businessType )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "Unsupported business type: name=%s, type=%s",
-                             _toBuzName.c_str(), businessType.c_str() ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
@@ -315,11 +292,20 @@ namespace engine
                   BSONObjBuilder nodeInfoBuilder ;
                   BSONElement ele = configIter.next() ;
                   BSONObj tmpNodeInfo = ele.embeddedObject() ;
-                  BSONObj nodeInfo = tmpNodeInfo.filterFieldsUndotted( filter,
-                                                                       TRUE ) ;
 
                   nodeInfoBuilder.append( OM_BSON_HOSTNAME, hostName ) ;
-                  nodeInfoBuilder.appendElements( nodeInfo ) ;
+
+                  if ( filter.isEmpty() )
+                  {
+                     nodeInfoBuilder.appendElements( tmpNodeInfo ) ;
+                  }
+                  else
+                  {
+                     BSONObj nodeInfo = tmpNodeInfo.filterFieldsUndotted(
+                                                               filter, TRUE ) ;
+
+                     nodeInfoBuilder.appendElements( nodeInfo ) ;
+                  }
 
                   configBuilder.append( nodeInfoBuilder.obj() ) ;
                }
@@ -658,11 +644,20 @@ namespace engine
                   BSONObjBuilder nodeInfoBuilder ;
                   BSONElement ele = configIter.next() ;
                   BSONObj tmpNodeInfo = ele.embeddedObject() ;
-                  BSONObj nodeInfo = tmpNodeInfo.filterFieldsUndotted( filter,
-                                                                       TRUE ) ;
 
                   nodeInfoBuilder.append( OM_BSON_HOSTNAME, hostName ) ;
-                  nodeInfoBuilder.appendElements( nodeInfo ) ;
+
+                  if ( filter.isEmpty() )
+                  {
+                     nodeInfoBuilder.appendElements( tmpNodeInfo ) ;
+                  }
+                  else
+                  {
+                     BSONObj nodeInfo = tmpNodeInfo.filterFieldsUndotted(
+                                                               filter, TRUE ) ;
+
+                     nodeInfoBuilder.appendElements( nodeInfo ) ;
+                  }
 
                   configBuilder.append( nodeInfoBuilder.obj() ) ;
                }
