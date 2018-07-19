@@ -12,16 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package com.sequoiadb.base;
 
 import org.bson.BSONObject;
 
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Query expression of SequoiaDB.
@@ -81,11 +78,13 @@ public class DBQuery {
      */
     public static final int FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE = 0x00008000;
 
-    final static Map<Integer, Integer> flagsMap = new HashMap<Integer, Integer>();
+    // [ [ oldFlag, newFlag ], ... ]
+    private final static int[][] flagsMap = new int[0][2];
 
     static {
         // add mapping flags as below, if necessary:
-        //flagsMap.put(FLG_QUERY_STRINGOUT, NEW_FLG_QUERY_STRINGOUT);
+        //flagsMap[0][0] = FLG_QUERY_STRINGOUT;
+        //flagsMap[0][1] = NEW_FLG_QUERY_STRINGOUT;
     }
 
     public DBQuery() {
@@ -224,25 +223,25 @@ public class DBQuery {
      * @param flag The query flag as below:
      *             DBQuery.FLG_QUERY_STRINGOUT
      *             DBQuery.FLG_QUERY_FORCE_HINT
-     *             DBQuery.LG_QUERY_PARALLED
+     *             DBQuery.FLG_QUERY_PARALLED
      *             DBQuery.FLG_QUERY_WITH_RETURNDATA
      */
     public void setFlag(int flag) {
         this.flag = flag;
     }
 
-    static int regulateFlags(final int flags) {
-        int erasedFlags = flags;
-        int mergedFlags = 0;
-        Iterator<Map.Entry<Integer, Integer>> entries = flagsMap.entrySet().iterator();
-        while (entries.hasNext()) {
-            Map.Entry<Integer, Integer> entry = entries.next();
-            if (((erasedFlags & entry.getKey()) != 0) && (entry.getKey() != entry.getValue())) {
-                erasedFlags &= ~entry.getKey();
-                mergedFlags |= entry.getValue();
+    static int regulateFlags(int flags) {
+        if (flagsMap.length > 0) {
+            int newFlags = 0;
+            for (int[] flagMap : flagsMap) {
+                if ((flags & flagMap[0]) != 0) {
+                    flags &= ~flagMap[0];
+                    newFlags |= flagMap[1];
+                }
             }
+            flags |= newFlags;
         }
-        return erasedFlags | mergedFlags;
+        return flags;
     }
 
     static int eraseFlags(final int flags, List<Integer> erasedFlags) {
@@ -250,7 +249,7 @@ public class DBQuery {
             return flags;
         }
         int newFlags = flags;
-        for(int flag : erasedFlags) {
+        for (int flag : erasedFlags) {
             if ((newFlags & flag) != 0) {
                 newFlags &= ~flag;
             }
@@ -263,7 +262,7 @@ public class DBQuery {
             return flags;
         }
         int newFlags = 0;
-        for(int flag : reservedFlags) {
+        for (int flag : reservedFlags) {
             if ((flag & flags) != 0) {
                 newFlags |= flag;
             }
