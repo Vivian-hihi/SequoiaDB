@@ -1,24 +1,30 @@
 以下操作均在MySQL shell 环境下执行。
 ##连接MySQL与SequoiaDB##
 
-1. 配置SequoiaDB连接地址
+1.指定socket登录MySQL shell
+
+ ```lang-javascript
+ # /opt/sequoiasql/mysql/bin/mysql -u root -p -S /opt/sequoiasql/mysql/data3306/mysqld.sock
+ ```
+
+2. 配置SequoiaDB连接地址
    默认的SequoiaDB连接地址为“localhost:11810”，如需修改可通过bin/sdb_mysql_ctl工具、命令行或配置文件的方式进行修改，具体修改方法详见后面的[配置说明](sql_engine/sequoiasql_mysql/connection.md#配置说明)
 
-2. 创建数据库实例
+3. 创建数据库实例
 
  ```lang-javascript
  mysql> create database cs;
  mysql> use cs;
  ```
 
-3. 创建表
+4. 创建表
 
  ```lang-javascript
  mysql> create table cl(a int, b int, c text, primary key(a, b) ) engine = SequoiaDB ;
  mysql> create table cl1(a int, b int, unique index idx_a(a) ) engine = SequoiaDB ;
  ```
 
-4. 基本数据操作
+5. 基本数据操作
 
  ```lang-javascript
  mysql> insert into cl values(1, 101, "SequoiaDB test");
@@ -30,7 +36,7 @@
  mysql> delete from cl where b=102;
  ```
 
-5. 创建索引
+6. 创建索引
 
    使用非索引字段（"c"）执行查询时，访问计划信息如下：
 
@@ -62,7 +68,7 @@
 
  ```
 
-6. 存储过程
+7. 存储过程
 
  ```lang-javascript
  mysql> delimiter //
@@ -74,7 +80,7 @@
  mysql> call delete_match();
  ```
 
-7. 视图
+8. 视图
 
  ```lang-javascript
  mysql> create view
