@@ -1,46 +1,24 @@
 以下操作均在MySQL shell 环境下执行。
 ##连接MySQL与SequoiaDB##
 
-1. 登录MySQL shell
+1. 配置SequoiaDB连接地址
+   默认的SequoiaDB连接地址为“localhost:11810”，如需修改可通过bin/sdb_mysql_ctl工具、命令行或配置文件的方式进行修改，具体修改方法详见后面的[配置说明](sql_engine/sequoiasql_mysql/connection.md#配置说明)
 
- ```lang-javascript
- # /opt/sequoiasql/mysql/bin/mysql -u root -p
- ```
-
-2. 加载SequoiaDB插件
-
- ```lang-javascript
- mysql> install plugin sequoiadb soname 'ha_sequoiadb.so';
- ```
-
-3. 查询存储引擎
-
- ```lang-javascript
- mysql> show storage engines;
- ```
-当显示出现以下记录时，说明SequoiaDB插件安装成功
-
- ```lang-javascript
- | SequoiaDB | YES | SequoiaDB storage engine | YES | NO | NO |
- ```
-4. 配置SequoiaDB连接地址
-   默认的SequoiaDB连接地址为“localhost:11810”，如需修改可通过命令行或配置文件的方式进行修改，具体修改方法详见后面的[配置说明](sql_engine/sequoiasql_mysql/connection.md#配置说明)
-
-5. 创建数据库实例
+2. 创建数据库实例
 
  ```lang-javascript
  mysql> create database cs;
  mysql> use cs;
  ```
 
-6. 创建表
+3. 创建表
 
  ```lang-javascript
  mysql> create table cl(a int, b int, c text, primary key(a, b) ) engine = SequoiaDB ;
  mysql> create table cl1(a int, b int, unique index idx_a(a) ) engine = SequoiaDB ;
  ```
 
-7. 基本数据操作
+4. 基本数据操作
 
  ```lang-javascript
  mysql> insert into cl values(1, 101, "SequoiaDB test");
@@ -52,7 +30,7 @@
  mysql> delete from cl where b=102;
  ```
 
-8. 创建索引
+5. 创建索引
 
    使用非索引字段（"c"）执行查询时，访问计划信息如下：
 
@@ -84,7 +62,7 @@
 
  ```
 
-9. 存储过程
+6. 存储过程
 
  ```lang-javascript
  mysql> delimiter //
@@ -96,7 +74,7 @@
  mysql> call delete_match();
  ```
 
-10. 视图
+7. 视图
 
  ```lang-javascript
  mysql> create view
@@ -113,7 +91,15 @@
 
 1. 配置SequoiaDB连接地址  
    默认的SequoiaDB连接地址为“localhost:11810”，可以通过以下两种方式修改该地址：  
-   (1)修改配置文件/etc/my.cnf，在[mysqld]下添加如下配置：  
+   (1)通过bin/sdb_mysql_ctl指定端口号修改
+
+ ```lang-javascript
+    # ./bin/sdb_mysql_ctl config 3306 sequoiadb_conn_addr 192.168.20.37:11810,192.168.20.38:11810
+ ```
+
+      注意：改操作目前会修改所有实例sequoiadb_conn_addr的值
+
+   (2)修改安装路径下的配置文件my.cnf，在[mysqldN]下添加如下配置（N表示正整数）：  
 
  ```lang-javascript
  sequoiadb_conn_addr=192.168.20.37:11810,192.168.20.38:11810
@@ -121,7 +107,7 @@
 
 	  注意：修改配置文件后需要重新启动MySQL服务
 
-   (2)通过MySQL shell修改  
+   (3)通过MySQL shell修改  
 
  ```lang-javascript
  mysql> SET GLOBAL sequoiadb_conn_addr='192.168.20.37:11810,192.168.20.38:11810';
@@ -139,7 +125,7 @@
    默认情况下，在mysql上创建表将同步在SequoiaDB上创建对应的分区表（hash分区，包含所有分区组）。  
    分区键优先使用主键字段，如果建表时没有创建主键则使用唯一键，如果没有创建唯一键则使用第一个字段。  
    用户可以通过将配置参数“sequoiadb_use_partition”设置为“OFF”禁止创建默认分区表，该配置参数同样可以在shell命令行和配置文件中修改：  
-   (1)修改配置文件/etc/my.cnf，在[mysqld]下添加如下配置：  
+   (1)修改安装路径下的配置文件my.cnf，在[mysqldN]下添加如下配置（N表示正整数）：  
 
  ```lang-javascript
  sequoiadb_use_partition=OFF

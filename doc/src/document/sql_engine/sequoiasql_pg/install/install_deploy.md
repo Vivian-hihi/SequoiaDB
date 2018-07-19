@@ -17,7 +17,7 @@
 - 运行安装程序  
     
   ```lang-javascript
-  $ ./sequoiasql-postgresql-2.8.1-x86_64-enterprise-installer.run --mode text
+  # ./sequoiasql-postgresql-2.8.1-x86_64-enterprise-installer.run --mode text
   ```
 
   >**Note:**   
