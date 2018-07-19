@@ -95,7 +95,7 @@ public class DBCursor implements Closeable {
      * Calling this function after the cursor have been closed
      * will throw BaseException with error SDB_RTN_CONTEXT_NOTEXIST
      *
-     * @return the next date or null if the cursor is empty
+     * @return the next data or null if the cursor is empty
      * or the cursor is closed
      * @throws BaseException If error happens.
      */
@@ -110,11 +110,11 @@ public class DBCursor implements Closeable {
     }
 
     /**
-     * Get raw date of next record.
+     * Get raw data of next record.
      * Calling this function after the cursor have been closed
      * will throw BaseException with error SDB_RTN_CONTEXT_NOTEXIST
      *
-     * @return a byte array of raw date of next record or null
+     * @return a byte array of raw data of next record or null
      * if the cursor is empty
      * @throws BaseException If error happens.
      */
@@ -133,7 +133,7 @@ public class DBCursor implements Closeable {
      * Calling this function after the cursor have been closed
      * will throw BaseException with error SDB_RTN_CONTEXT_NOTEXIST
      *
-     * @return the current date or null if the cursor is empty
+     * @return the current data or null if the cursor is empty
      * @throws BaseException If error happens.
      */
     public BSONObject getCurrent() throws BaseException {
