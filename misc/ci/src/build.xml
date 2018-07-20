@@ -475,12 +475,6 @@
          <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
          <property name="BUILD_NUMBER" value="${BUILD_NUMBER}"/>
       </ant>
-       
-      <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">
-         <property name="TEST_TYPE" value="${TEST_TYPE}"/>
-         <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
-         <property name="plat_form" value="${plat_form}"/>
-      </ant>
       
       <antcallback target="status_file.get_build_status" return="build_status"/>
       
