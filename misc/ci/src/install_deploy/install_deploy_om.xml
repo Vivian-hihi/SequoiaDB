@@ -92,6 +92,8 @@
    </target>
    
    <target name="ready_pg_package" depends="">
+      <var name="package_name" unset="true"/>
+      <var name="package_fullname" unset="true"/>
       <!--get run package name-->
       <property name="package_dir" location="${WORKSPACE}/archive/current" />
       <first id="package_fullname">
@@ -99,6 +101,7 @@
       </first>
       <property name="package_fullname" location="${toString:package_fullname}" />
       <basename property="package_name_part" file="${package_fullname}" suffix=".run"/>
+      <var name="package_name" unset="true"/>
       <property name="package_name" value="${package_name_part}.run" />     
       
       <!--copy run package to remote host-->
@@ -118,6 +121,8 @@
    </target>
    
    <target name="ready_mysql_package" depends="">
+      <var name="package_name" unset="true"/>
+      <var name="package_fullname" unset="true"/>
       <!--get run package name-->
       <property name="package_dir" location="${WORKSPACE}/archive/current" />
       <first id="package_fullname">
