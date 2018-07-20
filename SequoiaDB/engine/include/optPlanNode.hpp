@@ -141,7 +141,7 @@ namespace engine
 
    typedef _utilList< optPlanNode * > optPlanNodeList ;
 
-   class _optPlanNode : public SDBObject
+   class _optPlanNode
    {
       public :
          _optPlanNode () ;
@@ -151,7 +151,7 @@ namespace engine
 
          virtual ~_optPlanNode () ;
 
-         void * operator new ( size_t size, optPlanAllocator *pAllocator,
+         void * operator new ( size_t size, optPlanAllocator *allocator,
                                std::nothrow_t ) ;
 
          void operator delete ( void *p ) ;

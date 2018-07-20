@@ -51,6 +51,15 @@
 
 using namespace bson;
 
+// Memory for _optPlanNode may be allocated in two ways:
+// 1. By using malloc.
+// 2. By using user specified allocator(instances of optPlanAllocator).
+// The actions when releasing these two kinds of node are different.
+// So a type flag is added at the head of the actual allocated memory.
+#define OPT_MEM_TYPE_SIZE            sizeof(INT32)
+#define OPT_MEM_BY_USER_ALLOCATOR    0
+#define OPT_MEM_BY_DFT_ALLOCATOR     1
+
 namespace engine
 {
 
@@ -92,39 +101,54 @@ namespace engine
    }
 
    void * _optPlanNode::operator new ( size_t size,
-                                       optPlanAllocator *pAllocator,
+                                       optPlanAllocator *allocator,
                                        std::nothrow_t )
    {
       void *p = NULL ;
       if ( size > 0 )
       {
-         // In order to get the allocator when deleting the object, reserve
-         // space to store the address of the allocator at the head of the
-         // actual allocated space.
-         size_t reserveSize = size + sizeof( ossValuePtr ) ;
-         if ( pAllocator )
+         // In order to know if the memory is allocated by malloc() when
+         // deleting the object, reserve space for a flag at the head of the
+         // allocated space.
+         size_t reserveSize = size + OPT_MEM_TYPE_SIZE ;
+         if ( allocator )
          {
-            p = pAllocator->allocate( reserveSize ) ;
+            p = allocator->allocate( reserveSize ) ;
          }
 
          if ( NULL == p )
          {
             p = SDB_OSS_MALLOC( reserveSize ) ;
+            if ( NULL == p )
+            {
+               goto error ;
+            }
+            *(INT32 *)p = OPT_MEM_BY_DFT_ALLOCATOR ;
          }
-
-         *(ossValuePtr *)p = (ossValuePtr)pAllocator ;
-         p = (CHAR *)p + sizeof( ossValuePtr ) ;
+         else
+         {
+            *(INT32 *)p = OPT_MEM_BY_USER_ALLOCATOR ;
+         }
+         // Seek address which can actually be used by the user.
+         p = (CHAR *)p + OPT_MEM_TYPE_SIZE ;
       }
 
+   done:
       return p ;
+   error:
+      goto done ;
    }
 
    void _optPlanNode::operator delete ( void *p )
    {
       if ( p )
       {
-         void *beginAddr = (void *)( (CHAR *)p - sizeof( ossValuePtr ) ) ;
-         if ( 0 == *(ossValuePtr *)beginAddr )
+         void *beginAddr = (void *)( (CHAR *)p - OPT_MEM_TYPE_SIZE ) ;
+         // Only release memory allocted by SDB_OSS_MALLOC().
+         // Objects allocated by instances of _utilAllocator(allocator is not
+         // NULL in new) will not be released seperately, as they are allocated
+         // in a stack. They space is released when the allocator is destroyed.
+         if ( OPT_MEM_BY_DFT_ALLOCATOR == *(INT32 *)beginAddr )
          {
             SDB_OSS_FREE( beginAddr ) ;
          }

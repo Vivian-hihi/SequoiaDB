@@ -550,10 +550,10 @@ namespace engine
       void *p = NULL ;
       if ( size > 0 )
       {
-         // In order to get the allocator when deleting the object, reserve
-         // space to store the address of the allocator at the head of the
-         // actual allocated space.
-         size_t reserveSize = size + sizeof( ossValuePtr ) ;
+         // In order to know if the memory is allocated by malloc() when
+         // deleting the object, reserve space for a flag at the head of the
+         // allocated space.
+         size_t reserveSize = size + MTH_MEM_TYPE_SIZE ;
          if ( allocator )
          {
             p = allocator->allocate( reserveSize ) ;
@@ -562,21 +562,36 @@ namespace engine
          if ( NULL == p )
          {
             p = SDB_OSS_MALLOC( reserveSize ) ;
+            if ( NULL == p )
+            {
+               goto error ;
+            }
+            *(INT32 *)p = MTH_MEM_BY_DFT_ALLOCATOR ;
          }
-
-         *(ossValuePtr *)p = (ossValuePtr)allocator ;
-         p = (CHAR *)p + sizeof( ossValuePtr ) ;
+         else
+         {
+            *(INT32 *)p = MTH_MEM_BY_USER_ALLOCATOR ;
+         }
+         // Seek address which can actually be used by the user.
+         p = (CHAR *)p + MTH_MEM_TYPE_SIZE ;
       }
 
+   done:
       return p ;
+   error:
+      goto done ;
    }
 
    void _mthMatchNode::operator delete( void *p )
    {
       if ( p )
       {
-         void *beginAddr = (void *)( (CHAR *)p - sizeof( ossValuePtr ) ) ;
-         if ( 0 == *(ossValuePtr *)beginAddr )
+         void *beginAddr = (void *)( (CHAR *)p - MTH_MEM_TYPE_SIZE ) ;
+         // Only release memory allocted by SDB_OSS_MALLOC().
+         // Objects allocated by instances of _utilAllocator(allocator is not
+         // NULL in new) will not be released seperately, as they are allocated
+         // in a stack. They space is released when the allocator is destroyed.
+         if ( MTH_MEM_BY_DFT_ALLOCATOR == *(INT32 *)beginAddr )
          {
             SDB_OSS_FREE( beginAddr ) ;
          }

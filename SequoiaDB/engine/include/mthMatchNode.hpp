@@ -360,6 +360,15 @@ namespace engine
          UINT32 _index ;
    } ;
 
+   // Memory for _mthMatchNode may be allocated in two ways:
+   // 1. By using malloc.
+   // 2. By using user specified allocator(instances of _mthNodeAllocator).
+   // The actions when releasing these two kinds of node are different.
+   // So a type flag is added at the head of the actual allocated memory.
+   #define MTH_MEM_TYPE_SIZE            sizeof(INT32)
+   #define MTH_MEM_BY_USER_ALLOCATOR    0
+   #define MTH_MEM_BY_DFT_ALLOCATOR     1
+
    // Allocator for _mthMatchNode
    typedef _utilAllocator<MTH_ALLOCATOR_SIZE> _mthNodeAllocator ;
 
