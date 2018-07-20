@@ -57,9 +57,9 @@
             <processonesuit suitfullname="${testcase_dir}"
                             prefix="${prefix}"
                             reportdir="${report_dir}"/>
+            <detectenv detectfile="${testcase_dir}/common/all_clean.js" prefix="${prefix}" envisok="envrc"/> 
          </then>
       </if>
-            <detectenv detectfile="${testcase_dir}/common/all_clean.js" prefix="${prefix}" envisok="envrc"/> 
    </target>
 
    <macrodef name="detectenv">
