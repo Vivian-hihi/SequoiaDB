@@ -40,7 +40,7 @@ function checkLogicalID( dbcl, findConf, selectConf, sortConf, limitConf, skipCo
          if(logicalIDs[i] !== expectIDs[i])
          {
             println("prev " + logicalIDs[i-1] + " prev " + expectIDs[i-1]);
-            println("dbcl:" + dbcl + "error occurs in the " + i  + "th record," + "actualID:" + logicalIDs[i] + ",expectID: " + expectIDs[i]);
+            println("error occurs in the " + i  + "th record," + "actualID:" + logicalIDs[i] + ",expectID: " + expectIDs[i]);
             throw "LOGICAL_ID_NOT_EQUAL";
          }
       }
