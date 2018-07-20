@@ -735,13 +735,14 @@ namespace engine
       }
 
       // Allocate activity buffer
-      _pFreeActivityIDs = new( std::nothrow ) UINT32[ activityNum ] ;
+      _pFreeActivityIDs = ( UINT32* ) SDB_OSS_MALLOC( activityNum *
+                                                      sizeof( UINT32 ) ) ;
       if ( NULL == _pFreeActivityIDs )
       {
          goto error ;
       }
 
-      _pActivities = new( std::nothrow ) optCachedPlanActivity[ activityNum ] ;
+      _pActivities = SDB_OSS_NEW optCachedPlanActivity[ activityNum ] ;
       if ( NULL == _pActivities )
       {
          goto error ;
@@ -787,11 +788,11 @@ namespace engine
 
       if ( NULL != _pFreeActivityIDs )
       {
-         delete [] _pFreeActivityIDs ;
+         SDB_OSS_FREE( _pFreeActivityIDs ) ;
       }
       if ( NULL != _pActivities )
       {
-         delete [] _pActivities ;
+         SDB_OSS_DEL [] _pActivities ;
       }
       _pFreeActivityIDs = NULL ;
       _pActivities = NULL ;
@@ -823,11 +824,11 @@ namespace engine
       INT32 activityID = OPT_INVALID_ACT_ID ;
       BOOLEAN criticalMode = FALSE ;
 
-      if ( _freeIndexEnd.peek() >= OPT_PLAN_CACHE_UINT64_LIMIT )
+      if ( _freeIndexEnd.fetch() >= OPT_PLAN_CACHE_UINT64_LIMIT )
       {
          criticalMode = TRUE ;
       }
-      else if ( _cachedPlanCount.peek() > _highWaterMark )
+      else if ( _cachedPlanCount.fetch() > _highWaterMark )
       {
          signalPlanClearJob() ;
          criticalMode = TRUE ;
@@ -864,7 +865,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_OPTCPMON_CHKFREEIDX ) ;
 
-      if ( _freeIndexEnd.peek() >= OPT_PLAN_CACHE_UINT64_LIMIT &&
+      if ( _freeIndexEnd.fetch() >= OPT_PLAN_CACHE_UINT64_LIMIT &&
            _clearThread.compareAndSwap( 0, 1 ) )
       {
          // Only one thread could enter this branch
@@ -880,45 +881,52 @@ namespace engine
          }
 
          PD_LOG( PDDEBUG, "Cached Plan Monitor: free index is too large "
-                 "[ %llu - %llu ], need reset", _freeIndexBegin.peek(),
-                 _freeIndexEnd.peek() ) ;
+                 "[ %llu - %llu ], need reset", _freeIndexBegin.fetch(),
+                 _freeIndexEnd.fetch() ) ;
 
-         // The clear lock is exclusive, safe to update the end index
-         UINT64 newFreeIndexEnd = _freeIndexEnd.peek() % _activityNum ;
-         _freeIndexEnd.init( newFreeIndexEnd ) ;
+         UINT64 tmpIndexEnd = _freeIndexEnd.fetch() ;
+         UINT64 newFreeIndexEnd = 0 ;
+         while( TRUE )
+         {
+            newFreeIndexEnd = tmpIndexEnd % _activityNum ;
+            if ( tmpIndexEnd == _freeIndexEnd.compareAndSwapWithReturn(
+                                 tmpIndexEnd, newFreeIndexEnd ) )
+            {
+               break ;
+            }
+            tmpIndexEnd = _freeIndexEnd.fetch() ;
+         }
 
          // After last step, the end index is smaller than the begin index.
          // In that case, although the thread to cache plan passed the
          // allocating test, it is not able to allocate activity any more
 
          // Must loop until the begin index is reset
-         UINT64 oldFreeIndexBegin = _freeIndexBegin.peek() ;
-         UINT64 tmpFreeIndexBegin = oldFreeIndexBegin ;
+         UINT64 tmpFreeIndexBegin = _freeIndexBegin.fetch() ;
          UINT64 newFreeIndexBegin = 0 ;
          while ( TRUE )
          {
-            newFreeIndexBegin = oldFreeIndexBegin % _activityNum ;
-            tmpFreeIndexBegin = _freeIndexBegin.compareAndSwapWithReturn(
-                                    oldFreeIndexBegin, newFreeIndexBegin ) ;
-            if ( tmpFreeIndexBegin == oldFreeIndexBegin )
+            newFreeIndexBegin = tmpFreeIndexBegin % _activityNum ;
+            if ( tmpFreeIndexBegin == _freeIndexBegin.compareAndSwapWithReturn(
+                                    tmpFreeIndexBegin, newFreeIndexBegin ) )
             {
                break ;
             }
-            oldFreeIndexBegin = tmpFreeIndexBegin ;
+            tmpFreeIndexBegin = _freeIndexBegin.fetch() ;
          }
 
          if ( newFreeIndexBegin > newFreeIndexEnd )
          {
-            _freeIndexEnd.init( newFreeIndexEnd + _activityNum ) ;
+            _freeIndexEnd.add( _activityNum ) ;
          }
 
          PD_LOG( PDDEBUG, "Cached Plan Monitor: free index reseted "
-                 "[ %llu - %llu ]", _freeIndexBegin.peek(),
-                 _freeIndexEnd.peek() ) ;
+                 "[ %llu - %llu ]", _freeIndexBegin.fetch(),
+                 _freeIndexEnd.fetch() ) ;
 
          // Allow to allocate now
-         _allocateThread.init( 0 ) ;
-         _clearThread.init( 0 ) ;
+         _allocateThread.swap( 0 ) ;
+         _clearThread.swap( 0 ) ;
       }
 
       PD_TRACE_EXIT( SDB_OPTCPMON_CHKFREEIDX ) ;
@@ -935,7 +943,7 @@ namespace engine
       if ( _accessTimestamp.peek() > OPT_PLAN_CACHE_UINT64_LIMIT )
       {
          PD_LOG( PDDEBUG, "Cached Plan Monitor: access timestamp reseted" ) ;
-         _accessTimestamp.init( 0 ) ;
+         _accessTimestamp.swap( 0 ) ;
          _lastClearTimestamp = 0 ;
       }
 
@@ -963,10 +971,10 @@ namespace engine
          UINT32 lastClockIndex = _clockIndex ;
 
          // Check again after lock
-         UINT32 cachedPlanCount = _cachedPlanCount.peek() ;
+         UINT32 cachedPlanCount = _cachedPlanCount.fetch() ;
          if ( cachedPlanCount < _highWaterMark )
          {
-            _clearThread.init( 0 ) ;
+            _clearThread.swap( 0 ) ;
             goto done ;
          }
 
@@ -1043,7 +1051,7 @@ namespace engine
                  _cachedPlanCount.peek() ) ;
 
          _lastClearTimestamp = _accessTimestamp.inc() ;
-         _clearThread.init( 0 ) ;
+         _clearThread.swap( 0 ) ;
       }
 
    done :
@@ -1070,7 +1078,7 @@ namespace engine
          if ( criticalMode &&
               _freeIndexEnd.compare( _freeIndexBegin.peek() ) )
          {
-            _allocateThread.init( 0 ) ;
+            _allocateThread.swap( 0 ) ;
             goto done ;
          }
 
@@ -1079,13 +1087,13 @@ namespace engine
 
          if ( criticalMode )
          {
-            _allocateThread.init( 0 ) ;
+            _allocateThread.swap( 0 ) ;
          }
 
          // In critical mode, safe to allocate without checking the end index
          // But in non-critical mode, we need to check the end index
          if ( criticalMode ||
-              freeActivityIndex < _freeIndexEnd.peek() )
+              freeActivityIndex < _freeIndexEnd.fetch() )
          {
             activityID = _pFreeActivityIDs[ freeActivityIndex % _activityNum ] ;
             optCachedPlanActivity &activity = _pActivities[ activityID ] ;
