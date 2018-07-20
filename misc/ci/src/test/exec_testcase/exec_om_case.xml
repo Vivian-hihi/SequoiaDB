@@ -162,11 +162,11 @@
          
          <!--execute-->
          <var name="func_exist" unset="true"/>
-         <available property="func_exist" file="${jsdir}/../common/func.js" />       
+         <available property="func_exist" file="${jsdir}/common/func.js" />       
          <if>
             <isset property="func_exist" />
             <then>
-               <var name="func_option" value="${jsdir}/../common/func.js," />
+               <var name="func_option" value="${jsdir}/common/func.js," />
             </then>
             <else>                             
                <var name="func_option" value="" />             
