@@ -111,7 +111,7 @@
                   request="COPY FILE ${package_fullname} TODIRECTORY /opt/sequoiadb/packet TOMACHINE @{testhost}"
                   throwBuildException="1"/>
             <staf location="@{testhost}" service="PROCESS"
-                  request="START SHELL COMMAND chmod +x ${CI_WORK_DIR}/${package_name} WAIT 1m"
+                  request="START SHELL COMMAND chmod +x /opt/sequoiadb/packet/${package_name} WAIT 1m"
                   throwBuildException="1"/>     
          </sequential>
       </for>
@@ -137,7 +137,7 @@
                   request="COPY FILE ${package_fullname} TODIRECTORY /opt/sequoiadb/packet TOMACHINE @{testhost}"
                   throwBuildException="1"/>
             <staf location="@{testhost}" service="PROCESS"
-                  request="START SHELL COMMAND chmod +x ${CI_WORK_DIR}/${package_name} WAIT 1m"
+                  request="START SHELL COMMAND chmod +x /opt/sequoiadb/packet/${package_name} WAIT 1m"
                   throwBuildException="1"/>     
          </sequential>
       </for>
