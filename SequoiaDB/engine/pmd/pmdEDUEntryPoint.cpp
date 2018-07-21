@@ -74,7 +74,7 @@ namespace engine
    INT32 pmdSignalTestEntryPoint( pmdEDUCB *cb, void *arg )
    {
       pmdEDUCB *mainCB = ( pmdEDUCB* )arg ;
-      INT32 interval = pmdGetOptionCB()->getSignalInterval() ;
+      UINT32 interval = pmdGetOptionCB()->getSignalInterval() ;
       UINT32 timeCounter = 0 ;
 
       while( !cb->isDisconnected() )
@@ -83,7 +83,7 @@ namespace engine
          ++timeCounter ;
          interval = pmdGetOptionCB()->getSignalInterval() ;
 
-         if ( interval > 0 && timeCounter > (UINT32)interval )
+         if ( interval > 0 && timeCounter > interval )
          {
             ossPThreadKill( mainCB->getThreadID(), OSS_TEST_SIGNAL ) ;
             timeCounter = 0 ;

@@ -90,6 +90,7 @@ namespace engine
    #define PMD_DFT_SYNC_RECORDNUM      (0)
    #define PMD_DFT_ARCHIVE_TIMEOUT     (600) // 10 minutes
    #define PMD_DFT_ARCHIVE_EXPIRED     (240) // 10 days
+   #define PMD_MAX_ARCHIVE_EXPIRED     (4294967295/360) // hours to minutes
    #define PMD_DFT_ARCHIVE_QUOTA       (10)  // 10 GB
    #define PMD_DFT_DMS_CHK_INTERVAL    (0)   // disable
    #define PMD_DFT_CACHE_MERGE_SZ      (0)   // ms
@@ -1544,9 +1545,19 @@ namespace engine
                         (INT32)defaultValue, hideParam ) ;
       if ( SDB_OK == _result && pEX->isLoad() )
       {
+         if ( tmpValue < 0 )
+         {
+            _result = SDB_INVALIDARG ;
+            ossPrintf( "Waring: Field[%s] value[%d] is less than min value 0\n",
+                       pFieldName, tmpValue ) ;
+            goto error ;
+         }
          value = (UINT32)tmpValue ;
       }
+   done:
       return _result ;
+   error:
+      goto done ;
    }
 
    INT32 _pmdCfgRecord::rdxShort( pmdCfgExchange *pEX, const CHAR *pFieldName,
@@ -1574,9 +1585,19 @@ namespace engine
                         (INT32)defaultValue, hideParam ) ;
       if ( SDB_OK == _result && pEX->isLoad() )
       {
+         if ( tmpValue < 0 )
+         {
+            _result = SDB_INVALIDARG ;
+            ossPrintf( "Waring: Field[%s] value[%d] is less than min value 0\n",
+                       pFieldName, tmpValue ) ;
+            goto error ;
+         }
          value = (UINT16)tmpValue ;
       }
+   done:
       return _result ;
+   error:
+      goto done ;
    }
 
    INT32 _pmdCfgRecord::rdvMinMax( pmdCfgExchange *pEX, UINT32 &value,
@@ -2137,7 +2158,7 @@ namespace engine
                PMD_CFG_CHANGE_RUN, PMD_DFT_EXTEND_THRESHOLD, TRUE ) ;
       rdvMinMax( pEX, _extendThreshold, 0, 128, TRUE ) ;
       // --signalinterval
-      rdxInt( pEX, PMD_OPTION_SIGNAL_INTERVAL, _signalInterval, FALSE,
+      rdxUInt( pEX, PMD_OPTION_SIGNAL_INTERVAL, _signalInterval, FALSE,
               PMD_CFG_CHANGE_RUN, 0, TRUE ) ;
       // --maxcachesize
       rdxUInt( pEX, PMD_OPTION_MAX_CACHE_SIZE, _maxCacheSize, FALSE,
@@ -2179,6 +2200,7 @@ namespace engine
       // --archiveexpired
       rdxUInt( pEX, PMD_OPTION_ARCHIVE_EXPIRED, _archiveExpired, FALSE,
                PMD_CFG_CHANGE_RUN, PMD_DFT_ARCHIVE_EXPIRED, FALSE ) ;
+      rdvMinMax( pEX, _archiveExpired, 0, PMD_MAX_ARCHIVE_EXPIRED, TRUE ) ;
 
       // --archivequota
       rdxUInt( pEX, PMD_OPTION_ARCHIVE_QUOTA, _archiveQuota, FALSE,
@@ -2230,6 +2252,8 @@ namespace engine
       // --svcscheduler
       rdxUInt( pEX, PMD_OPTION_SVCSCHEDULER, _svcSchedulerType, FALSE,
                PMD_CFG_CHANGE_REBOOT, 0, FALSE ) ;
+      rdvMinMax( pEX, _svcSchedulerType, SCHED_TYPE_NONE, SCHED_TYPE_CONTAINER,
+                 TRUE ) ;
 
       // --svcmaxconcurrency
       rdxUInt( pEX, PMD_OPTION_SVC_MAX_CONCURRENCY, _svcMaxConcurrency, FALSE,

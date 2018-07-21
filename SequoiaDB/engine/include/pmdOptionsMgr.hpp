@@ -606,7 +606,7 @@ namespace engine
          OSS_INLINE UINT32 getOprTimeout() const { return _oprtimeout ; }
          OSS_INLINE UINT32 getOverFlowRatio() const { return _overflowRatio ; }
          OSS_INLINE UINT32 getExtendThreshold() const { return _extendThreshold ; }
-         OSS_INLINE INT32  getSignalInterval() const { return _signalInterval ; }
+         OSS_INLINE UINT32 getSignalInterval() const { return _signalInterval ; }
          OSS_INLINE UINT32 getMaxCacheSize() const { return _maxCacheSize ; }
          OSS_INLINE UINT32 getMaxCacheJob() const { return _maxCacheJob ; }
          OSS_INLINE UINT32 getMaxSyncJob() const { return _maxSyncJob ; }
@@ -705,7 +705,7 @@ namespace engine
          UINT32      _oprtimeout ;
          UINT32      _overflowRatio ;     // %
          UINT32      _extendThreshold ;   // MB
-         INT32       _signalInterval ;
+         UINT32      _signalInterval ;
          UINT32      _maxCacheSize ;      // MB
          UINT32      _maxCacheJob ;
          UINT32      _maxSyncJob ;
