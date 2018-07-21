@@ -124,6 +124,8 @@
       <attribute name="prefix"/>
       <attribute name="casefullname" />   
       <sequential>
+         <var name="testcase_name" unset="true" />
+         <basename property="testcase_name" file="@{casefullname}" suffix=".js"/>
          <detectenv detectfile="${testcase_dir}/common/before_usecase.js" prefix="${prefix}" 
                     output="before_output" envisok="envrc"/>
          <runonecase jsfile="@{casefullname}"
