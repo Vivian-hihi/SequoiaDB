@@ -89,8 +89,6 @@ namespace engine
          // No signals
          if ( SDB_TIMEOUT == rc )
          {
-            monitor->checkAccessTimestamp() ;
-            monitor->checkFreeIndexes() ;
             continue ;
          }
 

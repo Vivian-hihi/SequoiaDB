@@ -57,7 +57,6 @@ namespace engine
    #define OPT_PLAN_CACHE_ACT_HIGH_PERC   ( 0.80 )
    #define OPT_PLAN_CACHE_ACT_LOW_PERC    ( 0.50 )
    #define OPT_PLAN_CACHE_AVG_BUCKET_SIZE ( 3 )
-   #define OPT_PLAN_CACHE_UINT64_LIMIT    ( 0xFFFFFFFF00000000uLL )
 
    class _optCachedPlanMonitor ;
    typedef class _optCachedPlanMonitor optCachedPlanMonitor ;
@@ -244,22 +243,13 @@ namespace engine
                _pActivities[ activityID ].setPlan( NULL, 0 ) ;
                UINT64 freeActivityIndex = _freeIndexEnd.inc() % _activityNum ;
                _pFreeActivityIDs[ freeActivityIndex ] = activityID ;
+               _cachedPlanCount.dec() ;
             }
          }
 
          OSS_INLINE UINT32 getCachedPlanCount () const
          {
             return _cachedPlanCount.peek() ;
-         }
-
-         OSS_INLINE void incCachedPlanCount ()
-         {
-            _cachedPlanCount.inc() ;
-         }
-
-         OSS_INLINE void decCachedPlanCount ( UINT32 count = 1 )
-         {
-            _cachedPlanCount.sub( count ) ;
          }
 
          OSS_INLINE ossRWMutex *getClearLock ()
@@ -276,13 +266,8 @@ namespace engine
 
          void clearCachedPlans () ;
 
-         void checkFreeIndexes () ;
-
-         void checkAccessTimestamp () ;
-
       protected :
-         INT32 _allocateActivity ( optAccessPlan *pPlan,
-                                   BOOLEAN criticalMode ) ;
+         INT32 _allocateActivity ( optAccessPlan *pPlan ) ;
 
       protected :
          // Begin to the free index, where to get free activities
@@ -296,9 +281,6 @@ namespace engine
 
          // Thread flag to clearing procedure
          ossAtomic32 _clearThread ;
-
-         // Thread flag to allocate activity during clearing procedure
-         ossAtomic32 _allocateThread ;
 
          // Mutex to protect clearing procedure
          ossRWMutex _clearLock ;

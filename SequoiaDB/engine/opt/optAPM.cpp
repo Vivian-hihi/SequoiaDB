@@ -130,7 +130,6 @@ namespace engine
          // We need to reset the activity ID to check if
          // someone else is also deleting this plan
          _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
-         _pMonitor->decCachedPlanCount( 1 ) ;
       }
       pPlan->release() ;
 
@@ -144,8 +143,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB_OPTAPCACHES_INVALIDSUPLANS ) ;
 
       SDB_ASSERT( pCachedPlanMgr, "pCachedPlanMgr is invalid" ) ;
-
-      UINT32 deleteCount = 0 ;
 
       ossScopedRWLock scopedLock( &_bucketNumLock, SHARED ) ;
 
@@ -176,7 +173,6 @@ namespace engine
                         // We need to reset the activity ID to check if someone
                         // else is also deleting this plan
                         _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
-                        deleteCount ++ ;
                      }
 
                      pPlan->release() ;
@@ -192,11 +188,6 @@ namespace engine
          }
       }
 
-      if ( deleteCount > 0 )
-      {
-         _pMonitor->decCachedPlanCount( deleteCount ) ;
-      }
-
       PD_TRACE_EXIT( SDB_OPTAPCACHES_INVALIDSUPLANS ) ;
    }
 
@@ -207,8 +198,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB_OPTAPCACHES_INVALIDCLPLANS ) ;
 
       SDB_ASSERT( pCachedPlanMgr, "pCachedPlanMgr is invalid" ) ;
-
-      UINT32 deleteCount = 0 ;
 
       ossScopedRWLock scopedLock( &_bucketNumLock, SHARED ) ;
 
@@ -240,7 +229,6 @@ namespace engine
                         // We need to reset the activity ID to check if someone
                         // else is also deleting this plan
                         _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
-                        deleteCount ++ ;
                      }
                      else if ( clearBit )
                      {
@@ -276,11 +264,6 @@ namespace engine
          }
       }
 
-      if ( deleteCount > 0 )
-      {
-         _pMonitor->decCachedPlanCount( deleteCount ) ;
-      }
-
       PD_TRACE_EXIT( SDB_OPTAPCACHES_INVALIDCLPLANS ) ;
    }
 
@@ -288,8 +271,6 @@ namespace engine
    void _optAccessPlanCache::invalidateAllPlans ()
    {
       PD_TRACE_ENTRY( SDB_OPTAPCACHES_INVALIDALLPLANS ) ;
-
-      UINT32 deleteCount = 0 ;
 
       ossScopedRWLock scopedLock( &_bucketNumLock, SHARED ) ;
 
@@ -313,7 +294,6 @@ namespace engine
                   // We need to reset the activity ID to check if someone
                   // else is also deleting this plan
                   _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
-                  deleteCount ++ ;
                }
                pPlan->release() ;
                pPlan = pNextPlan ;
@@ -327,11 +307,6 @@ namespace engine
          }
       }
 
-      if ( deleteCount > 0 )
-      {
-         _pMonitor->decCachedPlanCount( deleteCount ) ;
-      }
-
       PD_TRACE_EXIT( SDB_OPTAPCACHES_INVALIDALLPLANS ) ;
    }
 
@@ -341,8 +316,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB_OPTAPCACHES_INVALIDCLPLANS_NAME ) ;
 
       SDB_ASSERT( NULL != pCLFullName, "collection name is invalid" ) ;
-
-      UINT32 deleteCount = 0 ;
 
       ossScopedRWLock scopedLock( &_bucketNumLock, SHARED ) ;
 
@@ -370,7 +343,6 @@ namespace engine
                      // We need to reset the activity ID to check if someone
                      // else is also deleting this plan
                      _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
-                     deleteCount ++ ;
                   }
                   pPlan->release() ;
                }
@@ -385,11 +357,6 @@ namespace engine
          }
       }
 
-      if ( deleteCount > 0 )
-      {
-         _pMonitor->decCachedPlanCount( deleteCount ) ;
-      }
-
       PD_TRACE_EXIT( SDB_OPTAPCACHES_INVALIDCLPLANS_NAME ) ;
    }
 
@@ -399,8 +366,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB_OPTAPCACHES_INVALIDSUPLANS_NAME ) ;
 
       SDB_ASSERT( NULL != pCSName, "collection space name is invalid" ) ;
-
-      UINT32 deleteCount = 0 ;
 
       ossScopedRWLock scopedLock( &_bucketNumLock, SHARED ) ;
 
@@ -442,7 +407,6 @@ namespace engine
                      // We need to reset the activity ID to check if someone
                      // else is also deleting this plan
                      _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
-                     deleteCount ++ ;
                   }
                   pPlan->release() ;
                }
@@ -455,11 +419,6 @@ namespace engine
          {
             SDB_ASSERT( pBucket, "pBucket is invalid" ) ;
          }
-      }
-
-      if ( deleteCount > 0 )
-      {
-         _pMonitor->decCachedPlanCount( deleteCount ) ;
       }
 
       PD_TRACE_EXIT( SDB_OPTAPCACHES_INVALIDSUPLANS_NAME ) ;
@@ -689,7 +648,6 @@ namespace engine
      _freeIndexEnd( 0 ),
      _pFreeActivityIDs( NULL ),
      _clearThread( 0 ),
-     _allocateThread( 0 ),
      _activityNum( 0 ),
      _highWaterMark( 0 ),
      _lowWaterMark( 0 ),
@@ -761,7 +719,6 @@ namespace engine
       _freeIndexBegin.init( 0 ) ;
       _freeIndexEnd.init( _activityNum ) ;
       _clearThread.init( 0 ) ;
-      _allocateThread.init( 0 ) ;
       _clockIndex = 0 ;
 
       _cachedPlanCount.init( 0 ) ;
@@ -802,7 +759,6 @@ namespace engine
       _freeIndexBegin.init( 0 ) ;
       _freeIndexEnd.init( 0 ) ;
       _clearThread.init( 0 ) ;
-      _allocateThread.init( 0 ) ;
       _clockIndex = 0 ;
       _pPlanCache = NULL ;
 
@@ -822,34 +778,32 @@ namespace engine
       PD_TRACE_ENTRY( SDB_OPTCPMON_SETACT ) ;
 
       INT32 activityID = OPT_INVALID_ACT_ID ;
-      BOOLEAN criticalMode = FALSE ;
 
-      if ( _freeIndexEnd.fetch() >= OPT_PLAN_CACHE_UINT64_LIMIT )
-      {
-         criticalMode = TRUE ;
-      }
-      else if ( _cachedPlanCount.fetch() > _highWaterMark )
+      if ( _cachedPlanCount.inc() > _highWaterMark )
       {
          signalPlanClearJob() ;
-         criticalMode = TRUE ;
       }
 
-      activityID = _allocateActivity( pPlan, criticalMode ) ;
-
+      activityID = _allocateActivity( pPlan ) ;
       if ( OPT_INVALID_ACT_ID == activityID )
       {
-         goto error ;
+         _cachedPlanCount.dec() ;
+      }
+      else
+      {
+         optCachedPlanActivity &activity = _pActivities[ activityID ] ;
+
+         SDB_ASSERT( activity.isEmpty(), "Activity is not empty" ) ;
+
+         pPlan->setActivityID( activityID ) ;
+         activity.setPlan( pPlan, _accessTimestamp.inc() ) ;
+         activity.incPeriodAccessCount() ;
+
+         result = TRUE ;
       }
 
-      result = TRUE ;
-
-   done :
       PD_TRACE_EXIT( SDB_OPTCPMON_SETACT ) ;
       return result ;
-
-   error :
-      result = FALSE ;
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON_SIGNALJOB, "_optCachedPlanMonitor::signalPlanClearJob" )
@@ -858,96 +812,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB_OPTCPMON_SIGNALJOB ) ;
       _clearEvent.signal() ;
       PD_TRACE_EXIT( SDB_OPTCPMON_SIGNALJOB ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON_CHKFREEIDX, "_optCachedPlanMonitor::checkFreeIndexes" )
-   void _optCachedPlanMonitor::checkFreeIndexes ()
-   {
-      PD_TRACE_ENTRY( SDB_OPTCPMON_CHKFREEIDX ) ;
-
-      if ( _freeIndexEnd.fetch() >= OPT_PLAN_CACHE_UINT64_LIMIT &&
-           _clearThread.compareAndSwap( 0, 1 ) )
-      {
-         // Only one thread could enter this branch
-
-         // Lock the clear lock exclusively, so other threads could not
-         // remove plans during this procedure
-         ossScopedRWLock scopedLock( &_clearLock, EXCLUSIVE ) ;
-
-         // Must disable the allocation
-         while ( !_allocateThread.compareAndSwap( 0, 1 ) )
-         {
-            ossSleep( 100 ) ;
-         }
-
-         PD_LOG( PDDEBUG, "Cached Plan Monitor: free index is too large "
-                 "[ %llu - %llu ], need reset", _freeIndexBegin.fetch(),
-                 _freeIndexEnd.fetch() ) ;
-
-         UINT64 tmpIndexEnd = _freeIndexEnd.fetch() ;
-         UINT64 newFreeIndexEnd = 0 ;
-         while( TRUE )
-         {
-            newFreeIndexEnd = tmpIndexEnd % _activityNum ;
-            if ( tmpIndexEnd == _freeIndexEnd.compareAndSwapWithReturn(
-                                 tmpIndexEnd, newFreeIndexEnd ) )
-            {
-               break ;
-            }
-            tmpIndexEnd = _freeIndexEnd.fetch() ;
-         }
-
-         // After last step, the end index is smaller than the begin index.
-         // In that case, although the thread to cache plan passed the
-         // allocating test, it is not able to allocate activity any more
-
-         // Must loop until the begin index is reset
-         UINT64 tmpFreeIndexBegin = _freeIndexBegin.fetch() ;
-         UINT64 newFreeIndexBegin = 0 ;
-         while ( TRUE )
-         {
-            newFreeIndexBegin = tmpFreeIndexBegin % _activityNum ;
-            if ( tmpFreeIndexBegin == _freeIndexBegin.compareAndSwapWithReturn(
-                                    tmpFreeIndexBegin, newFreeIndexBegin ) )
-            {
-               break ;
-            }
-            tmpFreeIndexBegin = _freeIndexBegin.fetch() ;
-         }
-
-         if ( newFreeIndexBegin > newFreeIndexEnd )
-         {
-            _freeIndexEnd.add( _activityNum ) ;
-         }
-
-         PD_LOG( PDDEBUG, "Cached Plan Monitor: free index reseted "
-                 "[ %llu - %llu ]", _freeIndexBegin.fetch(),
-                 _freeIndexEnd.fetch() ) ;
-
-         // Allow to allocate now
-         _allocateThread.swap( 0 ) ;
-         _clearThread.swap( 0 ) ;
-      }
-
-      PD_TRACE_EXIT( SDB_OPTCPMON_CHKFREEIDX ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON_CHKACTIME, "_optCachedPlanMonitor::checkAccessTimestamp" )
-   void _optCachedPlanMonitor::checkAccessTimestamp ()
-   {
-      PD_TRACE_ENTRY( SDB_OPTCPMON_CHKACTIME ) ;
-
-      // Safe to reset access time if it is too large
-      // NOTE: plans with large access timestamp without reset would not pass
-      // the -EPSILON clear score test in clearing process
-      if ( _accessTimestamp.peek() > OPT_PLAN_CACHE_UINT64_LIMIT )
-      {
-         PD_LOG( PDDEBUG, "Cached Plan Monitor: access timestamp reseted" ) ;
-         _accessTimestamp.swap( 0 ) ;
-         _lastClearTimestamp = 0 ;
-      }
-
-      PD_TRACE_EXIT( SDB_OPTCPMON_CHKACTIME ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON_CLEARCP, "_optCachedPlanMonitor::clearCachedPlans" )
@@ -1059,65 +923,22 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCPMON__ALLOCACT, "_optCachedPlanMonitor::_allocateActivity" )
-   INT32 _optCachedPlanMonitor::_allocateActivity ( optAccessPlan *pPlan,
-                                                    BOOLEAN criticalMode )
+   INT32 _optCachedPlanMonitor::_allocateActivity ( optAccessPlan *pPlan )
    {
       INT32 activityID = OPT_INVALID_ACT_ID ;
 
       PD_TRACE_ENTRY( SDB_OPTCPMON__ALLOCACT ) ;
 
-      // During clearing processing, to be safe, only one thread could
-      // allocate activity
-      criticalMode |= _clearThread.compare( 1 ) ;
-
-      if ( !criticalMode ||
-           _allocateThread.compareAndSwap( 0, 1 ) )
+      if ( _cachedPlanCount.fetch() < _activityNum )
       {
-         // During clearing and the activities are full, could not allocate
-         // activity for the plan
-         if ( criticalMode &&
-              _freeIndexEnd.compare( _freeIndexBegin.peek() ) )
-         {
-            _allocateThread.swap( 0 ) ;
-            goto done ;
-         }
-
+         UINT64 tmpEndIndex = _freeIndexEnd.fetch() ;
          // Get free activity from free index
          UINT64 freeActivityIndex = _freeIndexBegin.inc() ;
 
-         if ( criticalMode )
-         {
-            _allocateThread.swap( 0 ) ;
-         }
+         SDB_ASSERT( freeActivityIndex < tmpEndIndex,
+                     "AcitvityIndex must < tmpEndIndex" ) ;
 
-         // In critical mode, safe to allocate without checking the end index
-         // But in non-critical mode, we need to check the end index
-         if ( criticalMode ||
-              freeActivityIndex < _freeIndexEnd.fetch() )
-         {
-            activityID = _pFreeActivityIDs[ freeActivityIndex % _activityNum ] ;
-            optCachedPlanActivity &activity = _pActivities[ activityID ] ;
-
-            SDB_ASSERT( activity.isEmpty(), "Activity is not empty" ) ;
-
-            pPlan->setActivityID( activityID ) ;
-            activity.setPlan( pPlan, _accessTimestamp.inc() ) ;
-            activity.incPeriodAccessCount() ;
-         }
-         else
-         {
-            // The begin index caught with the end index, which means:
-            // 1. the indexes are reseting for too large index values
-            // 2. the number of cached plans reached the maximum limitation
-
-            // The clear job is handling the first case, and the second case
-            // will be handled by the next query by notifying the clear job
-
-            // The allocated index will be reused in the next round after
-            // the end index catching up with the begin index by clearing
-
-            // Do nothing here
-         }
+         activityID = _pFreeActivityIDs[ freeActivityIndex % _activityNum ] ;
       }
 
    done :
@@ -2216,11 +2037,6 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_OPTAPM__CACHEAP ) ;
 
-      // Pre-increase the cached plan count, so the monitor could test if
-      // the number of cached plans will exceed the high water mark with this
-      // new plan
-      _monitor.incCachedPlanCount() ;
-
       cached = _planCache.addPlan( pPlan ) ;
       if ( cached )
       {
@@ -2231,7 +2047,6 @@ namespace engine
             if ( _planCache.removeItem( pPlan ) )
             {
                cached = FALSE ;
-               _monitor.decCachedPlanCount( 1 ) ;
             }
          }
          else
@@ -2243,15 +2058,9 @@ namespace engine
             if ( !pPlan->isCached() )
             {
                _monitor.resetActivity( pPlan->resetActivityID() ) ;
-               // NOTE: no need to decrease cached plan count, The dropCL
-               // will do it
                cached = FALSE ;
             }
          }
-      }
-      else
-      {
-         _monitor.decCachedPlanCount( 1 ) ;
       }
 
       PD_TRACE_EXIT( SDB_OPTAPM__CACHEAP ) ;
