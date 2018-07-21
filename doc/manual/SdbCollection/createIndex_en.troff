@@ -71,6 +71,8 @@ Create an index for the collection to accelerate query.
 .sp 2
    *  Index name should not be null string. It should not contain
    "." or "$". The length of it should be no more than 127B.
+.sp 2
+   *  The number of the index fields should be no more than 32.
 .SH "Examples"
 
 .sp 2
