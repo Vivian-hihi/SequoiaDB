@@ -19,6 +19,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using SequoiaDB.Bson;
 using System.Collections.Generic;
+using System.Text;
 
 namespace DriverTest
 {
@@ -33,10 +34,8 @@ namespace DriverTest
         Sequoiadb sdb = null;
         CollectionSpace cs = null;
         DBCollection coll = null;
-        //string csName = "testfoo";
-        //string cName = "testbar";
-        string csName = "testfoo";
-        string cName = "testbar";
+        string csName = "testfoo_cs";
+        string cName = "testbar_cs";
 
         public TestContext TestContext
         {
@@ -61,6 +60,7 @@ namespace DriverTest
         [TestInitialize()]
         public void MyTestInitialize()
         {
+            //BsonDefaults.MaxDocumentSize = 16 * 1024 * 1024;
             try
             {
                 sdb = new Sequoiadb(config.conf.Coord.Address);
@@ -1549,6 +1549,44 @@ namespace DriverTest
             Assert.AreEqual("cba", doc[filed2].AsString);
             doc = cursor.Next();
             Assert.IsNull(doc);
+        }
+
+        [TestMethod()]
+        [Ignore] // jira_3357
+        public void BigRecordTest()
+        {
+            string csName = "testfoo";
+            string clName = "testbar";
+            DBCollection cl = sdb.GetCollecitonSpace(csName).GetCollection(clName);
+            DBCursor cursor = cl.Query();
+            BsonDocument record = cursor.Next();
+            BsonValue bsonValue = record.GetValue("bindata");
+            Assert.IsTrue(bsonValue.IsBsonBinaryData);
+            BsonBinaryData binData = bsonValue.AsBsonBinaryData;
+            byte[] bytes = binData.Bytes;
+            int binSize = 15 * 1024 * 1024;
+            for (int i = 0; i < binSize; ++i) 
+            {
+                Assert.AreEqual('a', (char)bytes[i]);
+            }
+        }
+
+        [TestMethod()]
+        public void jira_3353_invalidBinary() {
+             List<BsonDocument> invalidDocs = new List<BsonDocument> 
+            { 
+                new BsonDocument("wrongType", new BsonDocument { { "$binary", "" }, { "$type", 1000 } }), 
+                new BsonDocument("wrongBinStr", new BsonDocument { { "$binary", "aGVsbG8gd29ybGQ%%%%%="}, { "$type", 1 } }) 
+            };
+            coll.BulkInsert(invalidDocs, 0);
+            byte[] array = Encoding.UTF8.GetBytes("");
+            byte[] array2 = Encoding.UTF8.GetBytes("aGVsbG8gd29ybGQ%%%%%=");
+            List<BsonDocument> invalidDocs2 = new List<BsonDocument> 
+            { 
+                new BsonDocument("wrongType", new BsonBinaryData(array, BsonBinarySubType.UserDefined)),
+                new BsonDocument("wrongBinStr", new BsonBinaryData(array2, BsonBinarySubType.UserDefined))
+            };
+            coll.BulkInsert(invalidDocs2, 0);
         }
 
     }

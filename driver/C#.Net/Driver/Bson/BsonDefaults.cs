@@ -44,7 +44,7 @@ namespace SequoiaDB.Bson
         }
 
         /// <summary>
-        /// Gets or sets the default max document size. The default is 16MiB + 16K.
+        /// Gets or sets the default max document size. The default is 16MiB.
         /// </summary>
         public static int MaxDocumentSize
         {
