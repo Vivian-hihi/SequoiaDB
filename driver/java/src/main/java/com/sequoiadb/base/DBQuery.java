@@ -48,7 +48,7 @@ public class DBQuery {
     public static final int FLG_QUERY_FORCE_HINT = 0x00000080;
 
     /**
-     * Enable parallel sub query, each sub query will finish scanning diffent part of the data.
+     * Enable parallel sub query, each sub query will finish scanning different part of the data.
      */
     public static final int FLG_QUERY_PARALLED = 0x00000100;
 
@@ -253,6 +253,14 @@ public class DBQuery {
             if ((newFlags & flag) != 0) {
                 newFlags &= ~flag;
             }
+        }
+        return newFlags;
+    }
+
+    static int eraseSingleFlag(final int flags, int erasedFlag) {
+        int newFlags = flags;
+        if ((newFlags & erasedFlag) != 0) {
+            newFlags &= ~erasedFlag;
         }
         return newFlags;
     }
