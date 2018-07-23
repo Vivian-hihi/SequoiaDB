@@ -56,7 +56,7 @@ function svnUp()
 function compile()
 {
    sleep 1
-   compileCmd="scons "
+   compileCmd="scons -s"
    if [ $isRelease -eq 0 ] ; then
       compileCmd=${compileCmd}" --dd"
    fi
