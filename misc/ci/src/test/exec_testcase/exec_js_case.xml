@@ -167,8 +167,17 @@
                            beforeoutput="${before_output}"
                            report="@{reportdir}/${testcase_name}.xml"
                            rc="caserc" />
-               
-               <detectenv detectfile="${testcase_dir}/lib/after_usecase.js" prefix="${prefix}" envisok="envrc"/>                                  
+               <if>
+                  <and>
+                     <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
+                     <not>
+                        <equals arg1="${caserc}" arg2="0"/>
+                     </not>
+                  </and>
+                  <else>
+                     <detectenv detectfile="${testcase_dir}/lib/after_usecase.js" prefix="${prefix}" envisok="envrc"/>
+                  </else>
+               </if>
                   
             </else>
          </if>
