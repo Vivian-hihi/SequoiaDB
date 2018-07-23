@@ -38,7 +38,13 @@ SdbOMCtrl.prototype._checkResponse = function( arg, response ){
             cmd = 'sql' ;
          }
 
-         throw new Error( _sprintf( "failed to ?: rc=?, detail: ?\nRequest cmd: ?", cmd, data[0]['errno'], data[0]['detail'], this.request.getRequestCmd() ) ) ;
+         var detail = data[0]['detail'] ;
+         if( !detail || detail.length == 0 )
+         {
+            detail = data[0]['description'] ;
+         }
+
+         throw new Error( _sprintf( "failed to ?: rc=?, detail: ?\nRequest cmd: ?", cmd, data[0]['errno'], detail, this.request.getRequestCmd() ) ) ;
       }
 
       if( data.length > 1 )
