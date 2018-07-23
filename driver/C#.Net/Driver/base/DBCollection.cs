@@ -712,6 +712,13 @@ namespace SequoiaDB
         public DBCursor Query(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
                               long skipRows, long returnRows, int flag)
         {
+            flag = DBQuery.eraseSingleFlag(flag, DBQuery.FLG_QUERY_EXPLAIN);
+            return _Query(query, selector, orderBy, hint, skipRows, returnRows, flag);
+        }
+
+        private DBCursor _Query(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
+                              long skipRows, long returnRows, int flag)
+        {
             int newFlags = DBQuery.RegulateFlag(flag);
             BsonDocument dummyObj = new BsonDocument();
             if (query == null)
@@ -782,8 +789,6 @@ namespace SequoiaDB
                 newHint.Merge(hint);
             }
             newHint.Add(SequoiadbConstants.FIELD_MODIFY, modify);
-
-            flag = DBQuery.EraseFlags(flag, DBQuery.FLG_QUERY_EXPLAIN);
             flag |= DBQuery.FLG_QUERY_MODIFY;
             return Query(query, selector, orderBy, newHint, skipRows, returnRows, flag);
         }
@@ -919,7 +924,7 @@ namespace SequoiaDB
                 newObj.Add(SequoiadbConstants.FIELD_OPTIONS, options);
             }
 
-            return Query(query, selector, orderBy, newObj, skipRows, returnRows, flag | DBQuery.FLG_QUERY_EXPLAIN);
+            return _Query(query, selector, orderBy, newObj, skipRows, returnRows, flag | DBQuery.FLG_QUERY_EXPLAIN);
         }
 
         /** \fn DBCursor GetIndexes()
