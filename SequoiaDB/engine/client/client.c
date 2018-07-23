@@ -6402,7 +6402,7 @@ SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
    }
    BSON_FINISH ( newObj ) ;
 
-   rc = sdbQuery1( cHandle, condition, selector, orderBy, &newObj,
+   rc = _sdbQuery( cHandle, condition, selector, orderBy, &newObj,
                    numToSkip, numToReturn, flag | FLG_QUERY_EXPLAIN,
                    handle ) ;
    if ( rc )
@@ -6431,6 +6431,23 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
 }
 
 SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
+                             bson *condition,
+                             bson *select,
+                             bson *orderBy,
+                             bson *hint,
+                             INT64 numToSkip,
+                             INT64 numToReturn,
+                             INT32 flags,
+                             sdbCursorHandle *handle )
+{
+	// remove the explain flag
+	flags &= ~FLG_QUERY_EXPLAIN ;
+	return _sdbQuery( cHandle, condition, select, orderBy, hint, 
+		numToSkip, numToReturn, flags, handle ) ;
+}
+
+
+INT32 _sdbQuery ( sdbCollectionHandle cHandle,
                              bson *condition,
                              bson *select,
                              bson *orderBy,

@@ -1596,7 +1596,6 @@ do                                                            \
    {
       INT32 rc = SDB_OK ;
       sdbCursor cursor ;
-      flag &= ~FLG_QUERY_EXPLAIN ;
       flag |= FLG_QUERY_WITH_RETURNDATA ;
       rc = query( cursor,
                   condition,

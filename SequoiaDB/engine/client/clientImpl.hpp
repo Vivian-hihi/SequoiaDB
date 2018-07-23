@@ -244,6 +244,8 @@ namespace sdbclient
                    )
       {
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
+         // remove the explain flag
+         flag &= ~FLG_QUERY_EXPLAIN ;
          return query ( &cursor.pCursor,
                         condition, selected, orderBy, hint,
                         numToSkip, numToReturn, flag ) ;
