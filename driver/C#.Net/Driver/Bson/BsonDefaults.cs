@@ -20,9 +20,10 @@ using System.Text;
 
 namespace SequoiaDB.Bson
 {
-    /// <summary>
-    /// A static helper class containing BSON defaults.
-    /// </summary>
+
+    /** \class BsonDefaults
+     *  \brief A static helper class containing BSON defaults.
+     */
     public static class BsonDefaults
     {
         // private static fields

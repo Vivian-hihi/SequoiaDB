@@ -26,9 +26,9 @@ using SequoiaDB.Bson.Serialization;
 namespace SequoiaDB.Bson
 {
 
-    /// <summary>
-    /// A static class containing BSON utility methods.
-    /// </summary>
+    /** \class BsonUtils
+     *  \brief A static class containing BSON utility methods.
+     */
     public static class BsonUtils
     {
 

@@ -342,8 +342,9 @@ namespace SequoiaDB
         }
 
         /** \fn Node GetSlave()
-         *  \brief Get the slave node of current group
-         *  \return The fitted node or null
+         *  \brief Get the slave node in the specified positions,
+         *         when have no slave node in the specified positions, return master node.
+         *  \return The fitted node.
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -353,13 +354,13 @@ namespace SequoiaDB
         }
 
         /** \fn Node GetSlave(params int[] positions)
-         *  \brief Get the slave node of current group
-         *  \param positions The positions of nodes.
+         *  \brief Get the slave node in the specified positions,
+         *         when have no slave node in the specified positions, return master node.
          *  \param positions The positions of nodes.
          *      The position of a node is depended on the index of the node
          *      defined in catalog. But the beginning position of a node is start
          *      from 1 instead of 0, so it can be 1-7. 
-         *  \return The fitted node or null
+         *  \return The fitted node.
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -379,12 +380,13 @@ namespace SequoiaDB
         }
 
         /** \fn Node GetSlave(IList<int> positions)
-         *  \brief Get the slave node of current group
+         *  \brief Get the slave node in the specified positions,
+         *         when have no slave node in the specified positions, return master node.
          *  \param positions The positions of nodes.
          *      The position of a node is depended on the index of the node
          *      defined in catalog. But the beginning position of a node is start
          *      from 1 instead of 0, so it can be 1-7. 
-         *  \return The fitted node or null
+         *  \return The fitted node.
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
