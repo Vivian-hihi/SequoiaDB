@@ -6367,6 +6367,88 @@ error :
    goto done ;
 }
 
+static INT32 _sdbQuery ( sdbCollectionHandle cHandle,
+                              bson *condition,
+                              bson *select,
+                              bson *orderBy,
+                              bson *hint,
+                              INT64 numToSkip,
+                              INT64 numToReturn,
+                              INT32 flags,
+                              sdbCursorHandle *handle )
+{
+   INT32 rc                        = SDB_OK ;
+   INT32 newFlags                  = 0 ;
+   sdbCursorHandle cursor          = SDB_INVALID_HANDLE ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+
+   if ( !cs->_collectionFullName[0] || !handle )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( 0 != flags )
+   {
+      rc = regulateQueryFlags( &newFlags, flags ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   }
+
+   if ( 1 == numToReturn )
+   {
+      newFlags |= FLG_QUERY_WITH_RETURNDATA ;
+   }
+
+   rc = _runCommand2( cs->_connection,
+                      &cs->_pSendBuffer, &cs->_sendBufferSize,
+                      &cs->_pReceiveBuffer, &cs->_receiveBufferSize,
+                      cs->_collectionFullName,
+                      newFlags, 0, numToSkip, numToReturn,
+                      condition, select, orderBy, hint,
+                      &cursor ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+   rc = updateCachedObject( rc, connection->_tb, cs->_collectionFullName ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+   // check return cursor
+   if ( SDB_INVALID_HANDLE == cursor )
+   {
+      // build an empty cursor for return
+      rc = _buildEmptyCursor( cs->_connection, &cursor ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      if ( SDB_INVALID_HANDLE == cursor )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   }
+
+   *handle = cursor ;
+done :
+   return rc ;
+error :
+   if ( SDB_INVALID_HANDLE != cursor )
+   {
+      sdbReleaseCursor( cursor ) ;
+   }
+   SET_INVALID_HANDLE( handle ) ;
+   goto done ;
+}
+
 SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
                               bson *condition,
                               bson *selector,
@@ -6444,89 +6526,6 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
 	flags &= ~FLG_QUERY_EXPLAIN ;
 	return _sdbQuery( cHandle, condition, select, orderBy, hint, 
 		numToSkip, numToReturn, flags, handle ) ;
-}
-
-
-INT32 _sdbQuery ( sdbCollectionHandle cHandle,
-                             bson *condition,
-                             bson *select,
-                             bson *orderBy,
-                             bson *hint,
-                             INT64 numToSkip,
-                             INT64 numToReturn,
-                             INT32 flags,
-                             sdbCursorHandle *handle )
-{
-   INT32 rc                        = SDB_OK ;
-   INT32 newFlags                  = 0 ;
-   sdbCursorHandle cursor          = SDB_INVALID_HANDLE ;
-   sdbConnectionStruct *connection = NULL ;
-   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
-   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
-
-   if ( !cs->_collectionFullName[0] || !handle )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-
-   if ( 0 != flags )
-   {
-      rc = regulateQueryFlags( &newFlags, flags ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-   }
-
-   if ( 1 == numToReturn )
-   {
-      newFlags |= FLG_QUERY_WITH_RETURNDATA ;
-   }
-
-   rc = _runCommand2( cs->_connection,
-                      &cs->_pSendBuffer, &cs->_sendBufferSize,
-                      &cs->_pReceiveBuffer, &cs->_receiveBufferSize,
-                      cs->_collectionFullName,
-                      newFlags, 0, numToSkip, numToReturn,
-                      condition, select, orderBy, hint,
-                      &cursor ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-   rc = updateCachedObject( rc, connection->_tb, cs->_collectionFullName ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-   // check return cursor
-   if ( SDB_INVALID_HANDLE == cursor )
-   {
-      // build an empty cursor for return
-      rc = _buildEmptyCursor( cs->_connection, &cursor ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-      if ( SDB_INVALID_HANDLE == cursor )
-      {
-         rc = SDB_SYS ;
-         goto error ;
-      }
-   }
-
-   *handle = cursor ;
-done :
-   return rc ;
-error :
-   if ( SDB_INVALID_HANDLE != cursor )
-   {
-      sdbReleaseCursor( cursor ) ;
-   }
-   SET_INVALID_HANDLE( handle ) ;
-   goto done ;
 }
 
 static INT32 _mergeBson( bson* to, bson* from )
