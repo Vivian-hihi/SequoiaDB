@@ -59,7 +59,8 @@ function main()
    var dbclSlave2 = db2.getCS(csName2).getCL(clName);
 	
    //执行统计
-   analyze( db );
+   analyze( db, {CollectionSpace: csName1} );
+   analyze( db, {CollectionSpace: csName2} );
    
    //检查主备同步
    checkConsistency(db, null, null, groups);

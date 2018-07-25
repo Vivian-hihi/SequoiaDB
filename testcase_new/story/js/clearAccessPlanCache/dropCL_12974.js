@@ -10,16 +10,16 @@ function main()
    var groups = new Array();
    for(var i=0; i< allGroups.length;i++){groups.push(allGroups[i][0].GroupName);}
    
+   var csName = COMMCSNAME + "_12974";
    var clName1 = COMMCLNAME + "_12974_1";
    var clName2 = COMMCLNAME + "_12974_2";
-   var clFullName1 = COMMCSNAME + "." + clName1;
-   var clFullName2 = COMMCSNAME + "." + clName2;
+   var clFullName1 = csName + "." + clName1;
+   var clFullName2 = csName + "." + clName2;
    var insertNum = 2000;
 	var sameValues = 9000;
    
    //清理环境
-   commDropCL( db, COMMCSNAME, clName1, true, true,"drop CL in the beginning" ) ;
-   commDropCL( db, COMMCSNAME, clName2, true, true,"drop CL in the beginning" ) ;
+   commDropCS( db, csName, true, "drop subcs before test" );   
    
    //获取数据组
    var temp = commGetGroups( db );
@@ -29,8 +29,8 @@ function main()
    
    //创建2个cl在同一个数据组上
    var CLOption = { Group: groupName };
-   var dbcl1 = commCreateCLByOption( db, COMMCSNAME, clName1, CLOption);
-   var dbcl2 = commCreateCLByOption( db, COMMCSNAME, clName2, CLOption);
+   var dbcl1 = commCreateCLByOption( db, csName, clName1, CLOption);
+   var dbcl2 = commCreateCLByOption( db, csName, clName2, CLOption);
    
    //创建索引
    commCreateIndex( dbcl1, "a", {a:1});
@@ -46,22 +46,22 @@ function main()
 	//获取主备节点
 	var db1 = new Sdb(db);
    db1.setSessionAttr( { PreferedInstance: "m" } );
-   var dbclPrimary1 = db1.getCS(COMMCSNAME).getCL(clName1);
-   var dbclPrimary2 = db1.getCS(COMMCSNAME).getCL(clName2);
+   var dbclPrimary1 = db1.getCS(csName).getCL(clName1);
+   var dbclPrimary2 = db1.getCS(csName).getCL(clName2);
    var db2 = new Sdb(db);
    db2.setSessionAttr( { PreferedInstance: "s" } );
-   var dbclSlave1 = db2.getCS(COMMCSNAME).getCL(clName1);
-   var dbclSlave2 = db2.getCS(COMMCSNAME).getCL(clName2);
+   var dbclSlave1 = db2.getCS(csName).getCL(clName1);
+   var dbclSlave2 = db2.getCS(csName).getCL(clName2);
 	
    //执行统计
-   analyze( db );
+   analyze( db, {CollectionSpace: csName} );
    
    //检查主备同步
    checkConsistency(db, null, null, groups);
 
    //检查统计信息
-   checkStat( db, COMMCSNAME, clName1, "a", true, true );
-   checkStat( db, COMMCSNAME, clName2, "a", true, true );
+   checkStat( db, csName, clName1, "a", true, true );
+   checkStat( db, csName, clName2, "a", true, true );
    
    //cl1、cl2中执行查询
    findConf = {a:sameValues};
@@ -82,7 +82,7 @@ function main()
 	checkSnapShotAccessPlans( clFullName2, expAccessPlan, actAccessPlan );
    
    //drop cl
-   commDropCL( db, COMMCSNAME, clName1) ;
+   commDropCL( db, csName, clName1) ;
   
    var groups = new Array();
    groups.push( groupName );
@@ -91,8 +91,8 @@ function main()
    checkConsistency(db, null, null, groups);
    
    //检查统计信息
-   checkStat( db, COMMCSNAME, clName1, "a", false, false, groups );
-   checkStat( db, COMMCSNAME, clName2, "a", true, true );
+   checkStat( db, csName, clName1, "a", false, false, groups );
+   checkStat( db, csName, clName2, "a", true, true );
    
    //检查访问计划快照
    var expAccessPlan = [];
@@ -105,22 +105,22 @@ function main()
 	checkSnapShotAccessPlans( clFullName2, expAccessPlan, actAccessPlan );
 
    //再次创建cl、创建索引、插入相同数据
-   var dbcl1 = commCreateCLByOption( db, COMMCSNAME, clName1, CLOption);
+   var dbcl1 = commCreateCLByOption( db, csName, clName1, CLOption);
    commCreateIndex( dbcl1, "a", {a:1});
 	
    insertDiffDatas( dbcl1, insertNum );
 	insertSameDatas( dbcl1, insertNum, sameValues );
 	
 	//获取主备节点
-   var dbclPrimary1 = db1.getCS(COMMCSNAME).getCL(clName1);
-   var dbclSlave1 = db2.getCS(COMMCSNAME).getCL(clName1);
+   var dbclPrimary1 = db1.getCS(csName).getCL(clName1);
+   var dbclSlave1 = db2.getCS(csName).getCL(clName1);
    
    //检查主备同步
    checkConsistency(db, null, null, groups);
    
    //检查统计信息
-   checkStat( db, COMMCSNAME, clName1, "a", false, false );
-   checkStat( db, COMMCSNAME, clName2, "a", true, true );
+   checkStat( db, csName, clName1, "a", false, false );
+   checkStat( db, csName, clName2, "a", true, true );
    
    //cl1中执行查询
 	query( dbclPrimary1, findConf, null, null, insertNum );
@@ -138,8 +138,8 @@ function main()
 	checkSnapShotAccessPlans( clFullName2, expAccessPlan, actAccessPlan );
 
    //清空环境
-   commDropCL( db, COMMCSNAME, clName1, true, true,"drop CL in the end" ) ;
-   commDropCL( db, COMMCSNAME, clName2, true, true,"drop CL in the end" ) ;
+   commDropCL( db, csName, clName1, true, true,"drop CL in the end" ) ;
+   commDropCL( db, csName, clName2, true, true,"drop CL in the end" ) ;
    db1.close();
    db2.close();
    
