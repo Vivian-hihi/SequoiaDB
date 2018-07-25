@@ -97,8 +97,17 @@ namespace engine
    public:
       _sptObjDesc()
       :_init(FALSE), _prototypeDef( NULL ), _parent( NULL ),
-       _isHide( FALSE ), _isGlobal( FALSE )
-      {}
+       _isHide( FALSE ), _isGlobal( FALSE ), _cvtFlags( 0 )
+      {
+         _cvtToBSONFunc = NULL , 
+         _cvtToBoolFunc = NULL ;
+         _cvtToIntFunc = NULL ;
+         _cvtToDoubleFunc = NULL ;
+         _cvtToStringFunc = NULL ;
+         _fmpToBSONFunc = NULL ;
+         _fmpToCursorFunc = NULL ;
+         _bsonToJSObjFunc = NULL ;
+      }
 
       virtual ~_sptObjDesc(){}
    public:
