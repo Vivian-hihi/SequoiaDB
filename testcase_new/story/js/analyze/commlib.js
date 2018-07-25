@@ -248,7 +248,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat, 
    if( clExistStat == undefined ){ clExistStat = true;}
    if( indexExistStat == undefined ){ indexExistStat = true;}
    if( groups == undefined ){var groups = commGetCLGroups( db, csName + "." + clName );}
-
+   
    //get all nodes
    var datas = getNodesInGroups(db, groups);
    
@@ -807,10 +807,16 @@ function getSplitAccessPlans( db, findConf, selectorConf, sortConf )
 **************************************/
 function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans, groups )
 {
-   var expAccessPlans = new Array();
+   var expAccessPlans = expectAccessPlans;
+   if(groups !== undefined){
+      var datas = getNodesInGroups(db, groups);
+   }else{
+      var groups = commGetCLGroups( db, clFullName );
+      var datas = getNodesInGroups(db, groups);
+   }
    
    //判断独立模式、存在1组1节点模式的集群、cl不存在的情况下可能存在不同的预期结果
-   if(commIsStandalone(db) == true){
+   /*if(commIsStandalone(db) == true){
       for(var i = 0; i < expectAccessPlans.length / 2; i++)
       {
         expAccessPlans.push(expectAccessPlans[i]);
@@ -850,7 +856,7 @@ function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans
       }else{
          expAccessPlans = expectAccessPlans;
       }
-   }
+   }*/
 	
    //校验计划个数
    if( expAccessPlans.length !==  actAccessPlans.length )
@@ -882,4 +888,109 @@ function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans
       }
    }
    println("check accessPlan snapshot success");
-}                                                                          
+} 
+
+/************************************
+*@Description: 按组获取主子表访问计划快照
+*@author:      zhaoyu
+*@createDate:  2018.1.24
+**************************************/
+function getMainclAccessPlans( db, findConf, sortConf, selectorConf )
+{
+   if ( typeof(findConf) == "undefined" ) { findConf = null; }
+   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+   if ( typeof(selectorConf) == "undefined" ) { selectorConf = null; }
+   
+   //保存主子表所有组的访问计划
+   var accessPlans = new Array();
+   
+   var rc = db.snapshot(11, findConf, sortConf, selectorConf ).toArray();
+   for(var i= 0; i< rc.length; i++)
+   {
+      //保存单个组的访问计划快照
+      var groupAccessPlans = eval("(" + rc[i] + ")");
+      var accessPlanObj = {};
+      for( var f in groupAccessPlans)
+      {
+         if(f == "GroupName" || f == "ScanType" || f == "IndexName" )
+         {
+            accessPlanObj[f] = groupAccessPlans[f];
+         }
+      }
+      accessPlans.push(accessPlanObj);  
+   }
+   return accessPlans;
+   
+}
+
+/************************************
+*@Description: 检查访问计划快照
+*@author:      liuxiaoxuan
+*@createDate:  2018.01.15
+**************************************/
+function checkMainclAccessPlans( expAccessPlans, actAccessPlans )
+{
+   //校验计划个数
+   if( expAccessPlans.length !==  actAccessPlans.length )
+   {
+       println('expAccessPlans: ' + JSON.stringify(expAccessPlans) + ", actAccessPlans: " + JSON.stringify(actAccessPlans));
+       throw buildException("check length", "accessPlan length", "check failed!",
+								expAccessPlans.length, actAccessPlans.length);
+   }
+	
+   //校验查询计划，不校验元素顺序
+   var newExpAccessPlans = new Array();
+   var newActAccessPlans = new Array();
+   for(var i = 0; i < expAccessPlans.length; i++)
+	{
+      var newObj1 = objSortByKey(actAccessPlans[i]);
+      newActAccessPlans.push(newObj1);
+   
+      var newObj2 = objSortByKey(expAccessPlans[i]);
+      newExpAccessPlans.push(newObj2);   
+   }
+	    	 
+   for(var i = 0; i < expAccessPlans.length; i++)
+   {
+      if(JSON.stringify(newActAccessPlans).indexOf(JSON.stringify(newExpAccessPlans[i])) === -1
+            || JSON.stringify(newExpAccessPlans).indexOf(JSON.stringify(newActAccessPlans[i])) === -1)
+      {
+         throw buildException("check access plan", "access plan", "fail", 
+   		                  JSON.stringify(newExpAccessPlans), JSON.stringify(newActAccessPlans));
+      }
+   }
+   println("check accessPlan snapshot success");
+}
+
+                                                                     
+/************************************
+*@Description: split 
+*@author:      zhaoyu
+*@createdate:  2018.1.25
+**************************************/
+function split( csName, clName, srcGroupName, desGroupName, startCondition, endCondition )
+{
+   var CL = db.getCS(csName).getCL(clName);
+   try
+   {
+      println("--begin split") 
+   	if ( typeof(startCondition) === "number" ) //percentage split
+   	{
+   		CL.split( srcGroupName, desGroupName, startCondition );
+   	}
+   	else if ( typeof(startCondition) === "object" && endCondition === undefined ) //range split without end condition
+   	{
+   		CL.split( srcGroupName, desGroupName, startCondition );
+   		println("startCondition=" + startCondition)
+   	}
+   	else if ( typeof(startCondition) === "object" && typeof(endCondition) === "object" ) //range split with end condition
+   	{
+   		CL.split( srcGroupName, desGroupName, startCondition, endCondition );
+   	}	
+   	println("--end split")
+   
+   }catch(e)
+   {
+      throw e;
+   }
+}

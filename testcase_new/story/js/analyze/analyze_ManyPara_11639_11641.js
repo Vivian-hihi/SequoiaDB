@@ -27,10 +27,8 @@ function main()
 	
 	var findConf = {a:sameValues};
 	var findConf = {a:sameValues};
-	var expAccessPlan1 = [{ScanType:"tbscan", IndexName:""},
-                         {ScanType:"tbscan", IndexName:""}];
-   var expAccessPlan2 = [{ScanType:"ixscan", IndexName:"a"},
-                         {ScanType:"ixscan", IndexName:"a"}];  
+	var expAccessPlan1 = [{ScanType:"tbscan", IndexName:""}];
+   var expAccessPlan2 = [{ScanType:"ixscan", IndexName:"a"}];  
    var expAccessPlan3 = [];
    
    //清理环境
@@ -50,9 +48,9 @@ function main()
    var db1 = new Sdb(db);
    db1.setSessionAttr( { PreferedInstance: "m" } );
    var dbclPrimary = db1.getCS(csName).getCL(clName);
-   var db2 = new Sdb(db);
-   db2.setSessionAttr( { PreferedInstance: "s" } );
-   var dbclSlave = db2.getCS(csName).getCL(clName);
+   //var db2 = new Sdb(db);
+   //db2.setSessionAttr( { PreferedInstance: "s" } );
+   //var dbclSlave = db2.getCS(csName).getCL(clName);
 	
 	//检查统计信息
    checkConsistency(db, csName, clName);
@@ -60,7 +58,7 @@ function main()
    
    //执行查询
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -80,7 +78,7 @@ function main()
    
    //执行查询
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -101,7 +99,7 @@ function main()
    
    //执行查询
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -123,7 +121,7 @@ function main()
    
    //执行查询
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -145,7 +143,7 @@ function main()
    
    //执行查询
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -167,7 +165,7 @@ function main()
    
    //执行查询
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -201,7 +199,7 @@ function main()
    //清理环境
    commDropCS( db, csName);
    db1.close();
-   db2.close();
+   //db2.close();
   
  }
  main()

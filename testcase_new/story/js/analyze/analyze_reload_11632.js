@@ -20,9 +20,9 @@ function main()
    db1.setSessionAttr( {PreferedInstance: "m"} );
    var dbclPrimary = db1.getCS(csName).getCL(clName);
    
-   db1 = new Sdb(db);
-   db1.setSessionAttr( {PreferedInstance: "s"} );
-   var dbclSlave = db1.getCS(csName).getCL(clName);
+//   db1 = new Sdb(db);
+//   db1.setSessionAttr( {PreferedInstance: "s"} );
+//   var dbclSlave = db1.getCS(csName).getCL(clName);
                               	
    //insert datas
    var insertNums = 3000;
@@ -57,19 +57,17 @@ function main()
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
                                        
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+//   var actExplains = getCommonExplain( dbclSlave, findConf);
+//   checkExplain( actExplains, expExplains );
                       	
    //query
    query(dbclPrimary, findConf, null, null, insertNums);
-   query(dbclSlave, findConf, null, null, insertNums);
+//   query(dbclSlave, findConf, null, null, insertNums);
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: cl_full_name };
    var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [{ScanType:"tbscan", IndexName:""},
-	                      {ScanType:"tbscan", IndexName:""}];
-                     
+   var expAccessPlans = [{ScanType:"tbscan", IndexName:""}];	                           
    checkSnapShotAccessPlans(cl_full_name, expAccessPlans, actAccessPlans);   
    
    println("check result before default analyze !");
@@ -97,19 +95,17 @@ function main()
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
                                              
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+//   var actExplains = getCommonExplain( dbclSlave, findConf);
+//   checkExplain( actExplains, expExplains );
 
    //query
    query(dbclPrimary, findConf, null, null, insertNums);
-   query(dbclSlave, findConf, null, null, insertNums);
+//   query(dbclSlave, findConf, null, null, insertNums);
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: cl_full_name };
    var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [{ScanType:"ixscan", IndexName:"a"},
-	                      {ScanType:"ixscan", IndexName:"a"}];
-                     
+   var expAccessPlans = [{ScanType:"ixscan", IndexName:"a"}];                  
    checkSnapShotAccessPlans(cl_full_name, expAccessPlans, actAccessPlans);   
                                               
    println("check result after default analyze !");
@@ -141,19 +137,18 @@ function main()
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
                                                 
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+//   var actExplains = getCommonExplain( dbclSlave, findConf);
+//   checkExplain( actExplains, expExplains );
    
    //query
    query(dbclPrimary, findConf, null, null, insertNums);
-   query(dbclSlave, findConf, null, null, insertNums);
+//   query(dbclSlave, findConf, null, null, insertNums);
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: cl_full_name };
    var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [{ScanType:"tbscan", IndexName:""},
-	                      {ScanType:"tbscan", IndexName:""}];
-                     
+   var expAccessPlans = [{ScanType:"tbscan", IndexName:""}];
+  
    checkSnapShotAccessPlans(cl_full_name, expAccessPlans, actAccessPlans);
                                           	
    println("check result after reload analyze success!");
@@ -179,19 +174,17 @@ function main()
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
                   
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+//   var actExplains = getCommonExplain( dbclSlave, findConf);
+//   checkExplain( actExplains, expExplains );
    
    //query
    query(dbclPrimary, findConf, null, null, insertNums);
-   query(dbclSlave, findConf, null, null, insertNums);
+//   query(dbclSlave, findConf, null, null, insertNums);
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: cl_full_name };
    var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [{ScanType:"tbscan", IndexName:""},
-	                      {ScanType:"tbscan", IndexName:""}];
-                     
+   var expAccessPlans = [{ScanType:"tbscan", IndexName:""}];	                                       
    checkSnapShotAccessPlans(cl_full_name, expAccessPlans, actAccessPlans);
                               	
    println("check result after truncate invalidate!");
@@ -208,9 +201,8 @@ function main()
    //check out snapshot access plans
 	var accessFindOption = { Collection: cl_full_name };
    var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [{ScanType:"tbscan", IndexName:""},
-	                      {ScanType:"tbscan", IndexName:""}];
-                     
+   var expAccessPlans = [{ScanType:"tbscan", IndexName:""}];
+	                                 
    checkSnapShotAccessPlans(cl_full_name, expAccessPlans, actAccessPlans);   
                      
    //check the query explain after analyze
@@ -220,19 +212,18 @@ function main()
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
                                                 
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+//   var actExplains = getCommonExplain( dbclSlave, findConf);
+//   checkExplain( actExplains, expExplains );
    
    //query
    query(dbclPrimary, findConf, null, null, insertNums);
-   query(dbclSlave, findConf, null, null, insertNums);
+//   query(dbclSlave, findConf, null, null, insertNums);
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: cl_full_name };
    var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [{ScanType:"tbscan", IndexName:""},
-	                      {ScanType:"tbscan", IndexName:""}];
-                     
+   var expAccessPlans = [{ScanType:"tbscan", IndexName:""}];
+	                                        
    checkSnapShotAccessPlans(cl_full_name, expAccessPlans, actAccessPlans);
                                           	
    println("check result after modify analyze info again success!");
@@ -258,19 +249,18 @@ function main()
    var actExplains = getCommonExplain( dbclPrimary, findConf);
    checkExplain( actExplains, expExplains );
                   
-   var actExplains = getCommonExplain( dbclSlave, findConf);
-   checkExplain( actExplains, expExplains );
+//   var actExplains = getCommonExplain( dbclSlave, findConf);
+//   checkExplain( actExplains, expExplains );
    
    //query
    query(dbclPrimary, findConf, null, null, insertNums);
-   query(dbclSlave, findConf, null, null, insertNums);
+//   query(dbclSlave, findConf, null, null, insertNums);
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: cl_full_name };
    var actAccessPlans = getCommonAccessPlans(db, accessFindOption);
-   var expAccessPlans = [{ScanType:"ixscan", IndexName:"a"},
-	                      {ScanType:"ixscan", IndexName:"a"}];
-                     
+   var expAccessPlans = [{ScanType:"ixscan", IndexName:"a"}];
+	                      
    checkSnapShotAccessPlans(cl_full_name, expAccessPlans, actAccessPlans);
                               	
    println("check result after truncate invalidate again!");

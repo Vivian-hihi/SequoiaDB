@@ -33,9 +33,9 @@ function main()
    db1.setSessionAttr( {PreferedInstance: "m"} );
    var dbclPrimary = db1.getCS(csName).getCL(clName);
    
-   db1 = new Sdb(db);
-   db1.setSessionAttr( {PreferedInstance: "s"} );
-   var dbclSlave = db1.getCS(csName).getCL(clName);
+//   db1 = new Sdb(db);
+//   db1.setSessionAttr( {PreferedInstance: "s"} );
+//   var dbclSlave = db1.getCS(csName).getCL(clName);
                                                                    	
    //insert datas
    var insertNums = 3000;
@@ -83,16 +83,16 @@ function main()
    checkExplain( actExplains1, expExplains1 );
    checkExplain( actExplains2, expExplains2 );
                                               
-   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
-   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
-   checkExplain( actExplains1, expExplains1 );
-   checkExplain( actExplains2, expExplains2 );                                              
+//   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
+//   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
+//   checkExplain( actExplains1, expExplains1 );
+//   checkExplain( actExplains2, expExplains2 );                                              
                           	
    //query
    query( dbclPrimary, findConf1, null, null, insertNums );
    query( dbclPrimary, findConf2, null, null, insertNums );
-   query( dbclSlave, findConf1, null, null, insertNums );
-   query( dbclSlave, findConf2, null, null, insertNums );
+//   query( dbclSlave, findConf1, null, null, insertNums );
+//   query( dbclSlave, findConf2, null, null, insertNums );
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: cl_full_name };
@@ -100,11 +100,8 @@ function main()
    var actAccessPlans = getSplitAccessPlans(db, accessFindOption);   
    var expAccessPlans = [{ScanType:"tbscan", IndexName:"", GroupName:srcGroupName},
 	                      {ScanType:"tbscan", IndexName:"", GroupName :srcGroupName},
-                         {ScanType:"ixscan", IndexName:"b", GroupName :destGroupName},
-	                      {ScanType:"tbscan", IndexName:"", GroupName:srcGroupName},
-	                      {ScanType:"tbscan", IndexName:"", GroupName :srcGroupName},
                          {ScanType:"ixscan", IndexName:"b", GroupName :destGroupName}];
-                     
+	                                         
    checkSnapShotAccessPlans(cl_full_name, expAccessPlans, actAccessPlans);
                            
    println("check result before default analyze !");
@@ -139,16 +136,16 @@ function main()
    checkExplain( actExplains1, expExplains1 );
    checkExplain( actExplains2, expExplains2 );
                                               
-   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
-   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
-   checkExplain( actExplains1, expExplains1 );
-   checkExplain( actExplains2, expExplains2 );   
+//   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
+//   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
+//   checkExplain( actExplains1, expExplains1 );
+//   checkExplain( actExplains2, expExplains2 );   
 
    //query
    query( dbclPrimary, findConf1, null, null, insertNums );
    query( dbclPrimary, findConf2, null, null, insertNums );
-   query( dbclSlave, findConf1, null, null, insertNums );
-   query( dbclSlave, findConf2, null, null, insertNums );
+//   query( dbclSlave, findConf1, null, null, insertNums );
+//   query( dbclSlave, findConf2, null, null, insertNums );
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: cl_full_name };
@@ -156,11 +153,8 @@ function main()
    var actAccessPlans = getSplitAccessPlans(db, accessFindOption);   
    var expAccessPlans = [{ScanType:"ixscan", IndexName:"$shard", GroupName:srcGroupName},
 	                      {ScanType:"ixscan", IndexName:"b", GroupName :srcGroupName},
-                         {ScanType:"ixscan", IndexName:"b", GroupName :destGroupName},
-	                      {ScanType:"ixscan", IndexName:"$shard", GroupName:srcGroupName},
-	                      {ScanType:"ixscan", IndexName:"b", GroupName :srcGroupName},
                          {ScanType:"ixscan", IndexName:"b", GroupName :destGroupName}];
-                     
+	                                    
    checkSnapShotAccessPlans(cl_full_name, expAccessPlans, actAccessPlans);   
                          
    println("check result after default analyze with index !");
@@ -203,16 +197,16 @@ function main()
    checkExplain( actExplains1, expExplains1 );
    checkExplain( actExplains2, expExplains2 );
                                               
-   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
-   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
-   checkExplain( actExplains1, expExplains1 );
-   checkExplain( actExplains2, expExplains2 );             
+//   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
+//   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
+//   checkExplain( actExplains1, expExplains1 );
+//   checkExplain( actExplains2, expExplains2 );             
                         
    //query
    query( dbclPrimary, findConf1, null, null, insertNums );
    query( dbclPrimary, findConf2, null, null, insertNums );
-   query( dbclSlave, findConf1, null, null, insertNums );
-   query( dbclSlave, findConf2, null, null, insertNums );
+//   query( dbclSlave, findConf1, null, null, insertNums );
+//   query( dbclSlave, findConf2, null, null, insertNums );
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: cl_full_name };
@@ -220,11 +214,8 @@ function main()
    var actAccessPlans = getSplitAccessPlans(db, accessFindOption);   
    var expAccessPlans = [{ScanType:"tbscan", IndexName:"", GroupName:srcGroupName},
 	                      {ScanType:"tbscan", IndexName:"", GroupName :srcGroupName},
-                         {ScanType:"tbscan", IndexName:"", GroupName :destGroupName},
-	                      {ScanType:"tbscan", IndexName:"", GroupName:srcGroupName},
-	                      {ScanType:"tbscan", IndexName:"", GroupName :srcGroupName},
                          {ScanType:"tbscan", IndexName:"", GroupName :destGroupName}];
-                     
+	                       
    checkSnapShotAccessPlans(cl_full_name, expAccessPlans, actAccessPlans);  
                         
    println("check result after reload analyze!");
@@ -258,16 +249,16 @@ function main()
    checkExplain( actExplains1, expExplains1 );
    checkExplain( actExplains2, expExplains2 );
                                               
-   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
-   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
-   checkExplain( actExplains1, expExplains1 );
-   checkExplain( actExplains2, expExplains2 );           
+//   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
+//   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
+//   checkExplain( actExplains1, expExplains1 );
+//   checkExplain( actExplains2, expExplains2 );           
                 
    //query
    query( dbclPrimary, findConf1, null, null, insertNums );
    query( dbclPrimary, findConf2, null, null, insertNums );
-   query( dbclSlave, findConf1, null, null, insertNums );
-   query( dbclSlave, findConf2, null, null, insertNums );
+//   query( dbclSlave, findConf1, null, null, insertNums );
+//   query( dbclSlave, findConf2, null, null, insertNums );
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: cl_full_name };
@@ -275,11 +266,8 @@ function main()
    var actAccessPlans = getSplitAccessPlans(db, accessFindOption);   
    var expAccessPlans = [{ScanType:"tbscan", IndexName:"", GroupName:srcGroupName},
 	                      {ScanType:"tbscan", IndexName:"", GroupName :srcGroupName},
-                         {ScanType:"tbscan", IndexName:"", GroupName :destGroupName},
-	                      {ScanType:"tbscan", IndexName:"", GroupName:srcGroupName},
-	                      {ScanType:"tbscan", IndexName:"", GroupName :srcGroupName},
                          {ScanType:"tbscan", IndexName:"", GroupName :destGroupName}];
-                     
+	                                  
    checkSnapShotAccessPlans(cl_full_name, expAccessPlans, actAccessPlans); 
                 
    println("check result after truncate invalidate!");
@@ -306,16 +294,16 @@ function main()
    checkExplain( actExplains1, expExplains1 );
    checkExplain( actExplains2, expExplains2 );
                                               
-   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
-   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
-   checkExplain( actExplains1, expExplains1 );
-   checkExplain( actExplains2, expExplains2 );           
+//   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
+//   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
+//   checkExplain( actExplains1, expExplains1 );
+//   checkExplain( actExplains2, expExplains2 );           
                                  	
    //query
    query( dbclPrimary, findConf1, null, null, insertNums );
    query( dbclPrimary, findConf2, null, null, insertNums );
-   query( dbclSlave, findConf1, null, null, insertNums );
-   query( dbclSlave, findConf2, null, null, insertNums );
+//   query( dbclSlave, findConf1, null, null, insertNums );
+//   query( dbclSlave, findConf2, null, null, insertNums );
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: cl_full_name };
@@ -323,11 +311,8 @@ function main()
    var actAccessPlans = getSplitAccessPlans(db, accessFindOption);   
    var expAccessPlans = [{ScanType:"tbscan", IndexName:"", GroupName:srcGroupName},
 	                      {ScanType:"tbscan", IndexName:"", GroupName :srcGroupName},
-                         {ScanType:"tbscan", IndexName:"", GroupName :destGroupName},
-	                      {ScanType:"tbscan", IndexName:"", GroupName:srcGroupName},
-	                      {ScanType:"tbscan", IndexName:"", GroupName :srcGroupName},
                          {ScanType:"tbscan", IndexName:"", GroupName :destGroupName}];
-                     
+	                                      
    checkSnapShotAccessPlans(cl_full_name, expAccessPlans, actAccessPlans); 
                                     
    println("check result after modify SYS info but without reload analyze!");
@@ -359,16 +344,16 @@ function main()
    checkExplain( actExplains1, expExplains1 );
    checkExplain( actExplains2, expExplains2 );
                                               
-   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
-   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
-   checkExplain( actExplains1, expExplains1 );
-   checkExplain( actExplains2, expExplains2 );                        
+//   var actExplains1 = getSplitExplain( dbclSlave, findConf1);
+//   var actExplains2 = getSplitExplain( dbclSlave, findConf2);
+//   checkExplain( actExplains1, expExplains1 );
+//   checkExplain( actExplains2, expExplains2 );                        
                                                
    //query
    query( dbclPrimary, findConf1, null, null, insertNums );
    query( dbclPrimary, findConf2, null, null, insertNums );
-   query( dbclSlave, findConf1, null, null, insertNums );
-   query( dbclSlave, findConf2, null, null, insertNums );
+//   query( dbclSlave, findConf1, null, null, insertNums );
+//   query( dbclSlave, findConf2, null, null, insertNums );
    
    //check out snapshot access plans
 	var accessFindOption = { Collection: cl_full_name };
@@ -376,11 +361,8 @@ function main()
    var actAccessPlans = getSplitAccessPlans(db, accessFindOption);   
    var expAccessPlans = [{ScanType:"ixscan", IndexName:"$shard", GroupName:srcGroupName},
 	                      {ScanType:"ixscan", IndexName:"b", GroupName :srcGroupName},
-                         {ScanType:"ixscan", IndexName:"b", GroupName :destGroupName},
-	                      {ScanType:"ixscan", IndexName:"$shard", GroupName:srcGroupName},
-	                      {ScanType:"ixscan", IndexName:"b", GroupName :srcGroupName},
                          {ScanType:"ixscan", IndexName:"b", GroupName :destGroupName}];
-                     
+	                             
    checkSnapShotAccessPlans(cl_full_name, expAccessPlans, actAccessPlans); 
                                                
    println("check result after truncate invalidate again!");

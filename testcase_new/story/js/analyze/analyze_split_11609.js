@@ -41,10 +41,10 @@ function main()
    var dbclPrimary1 = db1.getCS(csName).getCL(clName1);
    var dbclPrimary2 = db1.getCS(csName).getCL(clName2);
    
-   db1 = new Sdb(db);
-   db1.setSessionAttr( {PreferedInstance: "s"} );
-   var dbclSlave1 = db1.getCS(csName).getCL(clName1);
-   var dbclSlave2 = db1.getCS(csName).getCL(clName2);
+//   db1 = new Sdb(db);
+//   db1.setSessionAttr( {PreferedInstance: "s"} );
+//   var dbclSlave1 = db1.getCS(csName).getCL(clName1);
+//   var dbclSlave2 = db1.getCS(csName).getCL(clName2);
   	 
    //insert datas
    var insertNums = 3000;
@@ -86,9 +86,9 @@ function main()
    var expExplains1 = [{ScanType:"ixscan", IndexName:"$shard",
                         GroupName :srcGroupName1, ReturnNum:insertNums}];
    var expExplains2 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName1, ReturnNum:insertNums},
-                       {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName1, ReturnNum:0}];    
+                       {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName1,   ReturnNum:0}];    
    var expExplains3 = [{ScanType:"ixscan", IndexName:"$shard",GroupName :destGroupName2, ReturnNum:insertNums}];          
-   var expExplains4 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName2, ReturnNum:0},
+   var expExplains4 = [{ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName2,                    ReturnNum:0},
                        {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName2, ReturnNum:insertNums}];
 	
    var actExplains1 = getSplitExplain( dbclPrimary1, findConf1);
@@ -101,25 +101,25 @@ function main()
    checkExplain( actExplains3, expExplains3 );
    checkExplain( actExplains4, expExplains4 );
                                                              	
-   var actExplains1 = getSplitExplain( dbclSlave1, findConf1);
-   var actExplains2 = getSplitExplain( dbclSlave1, findConf2);
-   var actExplains3 = getSplitExplain( dbclSlave2, findConf1);
-   var actExplains4 = getSplitExplain( dbclSlave2, findConf2);
+//   var actExplains1 = getSplitExplain( dbclSlave1, findConf1);
+//   var actExplains2 = getSplitExplain( dbclSlave1, findConf2);
+//   var actExplains3 = getSplitExplain( dbclSlave2, findConf1);
+//   var actExplains4 = getSplitExplain( dbclSlave2, findConf2);
    
-   checkExplain( actExplains1, expExplains1 );
-   checkExplain( actExplains2, expExplains2 );
-   checkExplain( actExplains3, expExplains3 );
-   checkExplain( actExplains4, expExplains4 );
+//   checkExplain( actExplains1, expExplains1 );
+//   checkExplain( actExplains2, expExplains2 );
+//   checkExplain( actExplains3, expExplains3 );
+//   checkExplain( actExplains4, expExplains4 );
    
    //query
    query(dbclPrimary1, findConf1, null, null, insertNums);
    query(dbclPrimary1, findConf2, null, null, insertNums);
    query(dbclPrimary2, findConf1, null, null, insertNums);
    query(dbclPrimary2, findConf2, null, null, insertNums);
-   query(dbclSlave1, findConf1, null, null, insertNums);
-   query(dbclSlave1, findConf2, null, null, insertNums);
-   query(dbclSlave2, findConf1, null, null, insertNums);
-   query(dbclSlave2, findConf2, null, null, insertNums);
+//   query(dbclSlave1, findConf1, null, null, insertNums);
+//   query(dbclSlave1, findConf2, null, null, insertNums);
+//   query(dbclSlave2, findConf1, null, null, insertNums);
+//   query(dbclSlave2, findConf2, null, null, insertNums);
    
    //check out snapshot access plans
 	var accessFindOption1 = { Collection: clFullName1 };
@@ -128,19 +128,14 @@ function main()
    var actAccessPlans1 = getSplitAccessPlans(db, accessFindOption1);
    var actAccessPlans2 = getSplitAccessPlans(db, accessFindOption2);
    
-   var expAccessPlans1 = [{ScanType:"ixscan", IndexName:"$shard", GroupName :srcGroupName1 },
-                          {ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName1},
-                          {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName1},
-	                       {ScanType:"ixscan", IndexName:"$shard", GroupName :srcGroupName1 },
+   var expAccessPlans1 = [{ScanType:"ixscan", IndexName:"$shard", GroupName :                        srcGroupName1 },
                           {ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName1},
                           {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName1}];
+	                      
    var expAccessPlans2 = [{ScanType:"ixscan", IndexName:"$shard",GroupName :destGroupName2},
 	                       {ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName2},
-                          {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName2},
-                          {ScanType:"ixscan", IndexName:"$shard",GroupName :destGroupName2},
-	                       {ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName2},
                           {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName2}];
-                      
+                                 
    checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
    checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
                                                               	
@@ -192,25 +187,25 @@ function main()
    checkExplain( actExplains3, expExplains3 );
    checkExplain( actExplains4, expExplains4 );
                                                              	
-   var actExplains1 = getSplitExplain( dbclSlave1, findConf1);
-   var actExplains2 = getSplitExplain( dbclSlave1, findConf2);
-   var actExplains3 = getSplitExplain( dbclSlave2, findConf1);
-   var actExplains4 = getSplitExplain( dbclSlave2, findConf2);
+//   var actExplains1 = getSplitExplain( dbclSlave1, findConf1);
+//   var actExplains2 = getSplitExplain( dbclSlave1, findConf2);
+//   var actExplains3 = getSplitExplain( dbclSlave2, findConf1);
+//   var actExplains4 = getSplitExplain( dbclSlave2, findConf2);
    
-   checkExplain( actExplains1, expExplains1 );
-   checkExplain( actExplains2, expExplains2 );
-   checkExplain( actExplains3, expExplains3 );
-   checkExplain( actExplains4, expExplains4 );
+//   checkExplain( actExplains1, expExplains1 );
+//   checkExplain( actExplains2, expExplains2 );
+//   checkExplain( actExplains3, expExplains3 );
+//   checkExplain( actExplains4, expExplains4 );
    
    //query
    query(dbclPrimary1, findConf1, null, null, insertNums);
    query(dbclPrimary1, findConf2, null, null, insertNums);
    query(dbclPrimary2, findConf1, null, null, insertNums);
    query(dbclPrimary2, findConf2, null, null, insertNums);
-   query(dbclSlave1, findConf1, null, null, insertNums);
-   query(dbclSlave1, findConf2, null, null, insertNums);
-   query(dbclSlave2, findConf1, null, null, insertNums);
-   query(dbclSlave2, findConf2, null, null, insertNums);
+//   query(dbclSlave1, findConf1, null, null, insertNums);
+//   query(dbclSlave1, findConf2, null, null, insertNums);
+//   query(dbclSlave2, findConf1, null, null, insertNums);
+//   query(dbclSlave2, findConf2, null, null, insertNums);
    
    //check out snapshot access plans
 	var accessFindOption1 = { Collection: clFullName1 };
@@ -221,17 +216,12 @@ function main()
    
    var expAccessPlans1 = [{ScanType:"tbscan", IndexName:"", GroupName :srcGroupName1 },
                           {ScanType:"tbscan", IndexName:"",GroupName :srcGroupName1},
-                          {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName1},
-	                       {ScanType:"tbscan", IndexName:"", GroupName :srcGroupName1 },
-                          {ScanType:"tbscan", IndexName:"",GroupName :srcGroupName1},
                           {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName1}];
+	                      
    var expAccessPlans2 = [{ScanType:"tbscan", IndexName:"",GroupName :destGroupName2},
 	                       {ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName2},
-                          {ScanType:"tbscan", IndexName:"",GroupName :destGroupName2},
-                          {ScanType:"tbscan", IndexName:"",GroupName :destGroupName2},
-	                       {ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName2},
                           {ScanType:"tbscan", IndexName:"",GroupName :destGroupName2}];
-                      
+                          
    checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
    checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
                                                                   
@@ -283,25 +273,25 @@ function main()
    checkExplain( actExplains3, expExplains3 );
    checkExplain( actExplains4, expExplains4 );
                                                              	
-   var actExplains1 = getSplitExplain( dbclSlave1, findConf1);
-   var actExplains2 = getSplitExplain( dbclSlave1, findConf2);
-   var actExplains3 = getSplitExplain( dbclSlave2, findConf1);
-   var actExplains4 = getSplitExplain( dbclSlave2, findConf2);
+//   var actExplains1 = getSplitExplain( dbclSlave1, findConf1);
+//   var actExplains2 = getSplitExplain( dbclSlave1, findConf2);
+//   var actExplains3 = getSplitExplain( dbclSlave2, findConf1);
+//   var actExplains4 = getSplitExplain( dbclSlave2, findConf2);
    
-   checkExplain( actExplains1, expExplains1 );
-   checkExplain( actExplains2, expExplains2 );
-   checkExplain( actExplains3, expExplains3 );
-   checkExplain( actExplains4, expExplains4 );
+//   checkExplain( actExplains1, expExplains1 );
+//   checkExplain( actExplains2, expExplains2 );
+//   checkExplain( actExplains3, expExplains3 );
+//   checkExplain( actExplains4, expExplains4 );
    
    //query
    query(dbclPrimary1, findConf1, null, null, insertNums);
    query(dbclPrimary1, findConf2, null, null, insertNums);
    query(dbclPrimary2, findConf1, null, null, insertNums);
    query(dbclPrimary2, findConf2, null, null, insertNums);
-   query(dbclSlave1, findConf1, null, null, insertNums);
-   query(dbclSlave1, findConf2, null, null, insertNums);
-   query(dbclSlave2, findConf1, null, null, insertNums);
-   query(dbclSlave2, findConf2, null, null, insertNums);
+//   query(dbclSlave1, findConf1, null, null, insertNums);
+//   query(dbclSlave1, findConf2, null, null, insertNums);
+//   query(dbclSlave2, findConf1, null, null, insertNums);
+//   query(dbclSlave2, findConf2, null, null, insertNums);
    
    //check out snapshot access plans
 	var accessFindOption1 = { Collection: clFullName1 };
@@ -312,17 +302,11 @@ function main()
    
    var expAccessPlans1 = [{ScanType:"tbscan", IndexName:"", GroupName :srcGroupName1 },
                           {ScanType:"tbscan", IndexName:"",GroupName :srcGroupName1},
-                          {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName1},
-	                       {ScanType:"tbscan", IndexName:"", GroupName :srcGroupName1 },
-                          {ScanType:"tbscan", IndexName:"",GroupName :srcGroupName1},
                           {ScanType:"ixscan", IndexName:"b",GroupName :destGroupName1}];
+	                      
    var expAccessPlans2 = [{ScanType:"tbscan", IndexName:"",GroupName :destGroupName2},
 	                       {ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName2},
-                          {ScanType:"tbscan", IndexName:"",GroupName :destGroupName2},
-                          {ScanType:"tbscan", IndexName:"",GroupName :destGroupName2},
-	                       {ScanType:"ixscan", IndexName:"b",GroupName :srcGroupName2},
-                          {ScanType:"tbscan", IndexName:"",GroupName :destGroupName2}];
-                      
+                          {ScanType:"tbscan", IndexName:"",GroupName :destGroupName2}];                             
    checkSnapShotAccessPlans(clFullName1, expAccessPlans1, actAccessPlans1);
    checkSnapShotAccessPlans(clFullName2, expAccessPlans2, actAccessPlans2);
                                                                   

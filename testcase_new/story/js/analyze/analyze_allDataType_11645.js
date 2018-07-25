@@ -10,10 +10,8 @@ function main()
    var clFullName = COMMCSNAME + "." + clName;
    var insertNum = 2000;
 
-   var expAccessPlan1 = [{ScanType:"tbscan", IndexName:""},
-                         {ScanType:"tbscan", IndexName:""}];
-   var expAccessPlan2 = [{ScanType:"ixscan", IndexName:"a"},
-                         {ScanType:"ixscan", IndexName:"a"}];  
+   var expAccessPlan1 = [{ScanType:"tbscan", IndexName:""}];
+   var expAccessPlan2 = [{ScanType:"ixscan", IndexName:"a"}];  
    var expAccessPlan3 = [];
    
    //字符串
@@ -35,9 +33,9 @@ function main()
    var db1 = new Sdb(db);
    db1.setSessionAttr( { PreferedInstance: "m" } );
    var dbclPrimary = db1.getCS(COMMCSNAME).getCL(clName);
-   var db2 = new Sdb(db);
-   db2.setSessionAttr( { PreferedInstance: "s" } );
-   var dbclSlave = db2.getCS(COMMCSNAME).getCL(clName);
+   //var db2 = new Sdb(db);
+   //db2.setSessionAttr( { PreferedInstance: "s" } );
+   //var dbclSlave = db2.getCS(COMMCSNAME).getCL(clName);
 	
 	//检查统计信息
    checkConsistency(db, COMMCSNAME, clName);
@@ -46,7 +44,7 @@ function main()
    //执行查询
    var findConf = {a:sameValues};
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -65,7 +63,7 @@ function main()
    
    //执行查询
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -91,7 +89,7 @@ function main()
    //执行查询
    var findConf = {a:sameValues};
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -110,7 +108,7 @@ function main()
    
    //执行查询
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -136,7 +134,7 @@ function main()
    //执行查询
    var findConf = {a:sameValues};
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -155,7 +153,7 @@ function main()
    
    //执行查询
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -181,7 +179,7 @@ function main()
    //执行查询
    var findConf = {a:sameValues};
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -200,7 +198,7 @@ function main()
    
    //执行查询
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -226,7 +224,7 @@ function main()
    //执行查询
    var findConf = {a:sameValues};
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -246,7 +244,7 @@ function main()
    //执行查询
    var findConf = {a:sameValues};
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var actAccessPlan = getCommonAccessPlans( db, {Collection: clFullName} );
@@ -284,31 +282,26 @@ function main()
    //执行查询
    var findConf = {a:sameValues1};
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    var findConf = {a:{$et:sameValues2}};
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    var findConf = {a:sameValues3};
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    var findConf = {a:sameValues4};
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    var findConf = {a:sameValues5};
    query( dbclPrimary, findConf, null, null, insertNum );
-   query( dbclSlave, findConf, null, null, insertNum  );
+   //query( dbclSlave, findConf, null, null, insertNum  );
    
    //检查访问计划快照
    var expAccessPlan2 = [{ScanType:"ixscan", IndexName:"a"},
-                         {ScanType:"ixscan", IndexName:"a"},
-                         {ScanType:"ixscan", IndexName:"a"},
-                         {ScanType:"ixscan", IndexName:"a"},
-                         {ScanType:"ixscan", IndexName:"a"},
-                         {ScanType:"ixscan", IndexName:"a"},
                          {ScanType:"ixscan", IndexName:"a"},
                          {ScanType:"ixscan", IndexName:"a"},
                          {ScanType:"ixscan", IndexName:"a"},
@@ -319,7 +312,7 @@ function main()
    //清理环境
    commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" );
    db1.close();
-   db2.close();
+   //db2.close();
   
  }
  main()
