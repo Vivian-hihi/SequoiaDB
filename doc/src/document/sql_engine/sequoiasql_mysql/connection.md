@@ -174,7 +174,7 @@
 	| DOUBLE          | DOUBLE            |                                                                   |
 	| DECIMAL         | DECIMAL           |                                                                   |
 	| DATE            | DATE              |                                                                   |
-	| DATETIME        | TIMESTAMP         |取值范围：1902-01-01 00:00:00.000000 至 2037-12-31 23:59:59.999999 |
+	| DATETIME        | TIMESTAMP         |取值范围：1000-01-01 00:00:00.000000 至 9999-12-31 23:59:59.999999 |
 	| TIMESTAMP       | TIMESTAMP         |取值范围：1902-01-01 00:00:00.000000 至 2037-12-31 23:59:59.999999 |
 	| CHAR            | STRING            |                                                                   |
 	| VARCHAR         | STRING            |                                                                   |
