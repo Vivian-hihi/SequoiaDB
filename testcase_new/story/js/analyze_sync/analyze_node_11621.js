@@ -42,9 +42,6 @@ function main()
    var expAccessPlan2 = [{ScanType:"ixscan", IndexName:"a"},
                          {ScanType:"ixscan", IndexName:"a"}];
    var expAccessPlan3 =[];
-   var expAccessPlan4 = [{ScanType:"tbscan", IndexName:""},
-                         {ScanType:"ixscan", IndexName:"a"}];
-   var expAccessPlan5 = [{ScanType:"ixscan", IndexName:"a"}];
    
    //清理环境
    commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the beginning" ) ;

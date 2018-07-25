@@ -50,6 +50,16 @@ function main()
          println("only one group");
          return ;
       }
+      
+      //判断1节点模式
+      var groups = new Array();
+      groups[0] = commGetGroups( db )[0][0].GroupName;
+      var nodes = getNodesInGroups(db, groups);  
+      if( 1 === nodes[0].length )
+      {
+         println("only one node");
+         return ;
+      }
    }
    catch( e )
    {

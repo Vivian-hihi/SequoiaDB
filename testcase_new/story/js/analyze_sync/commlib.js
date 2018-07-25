@@ -807,10 +807,16 @@ function getSplitAccessPlans( db, findConf, selectorConf, sortConf )
 **************************************/
 function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans, groups )
 {
-   var expAccessPlans = new Array();
+   var expAccessPlans = expectAccessPlans;
+   if(groups !== undefined){
+      var datas = getNodesInGroups(db, groups);
+   }else{
+      var groups = commGetCLGroups( db, clFullName );
+      var datas = getNodesInGroups(db, groups);
+   }
    
    //判断独立模式、存在1组1节点模式的集群、cl不存在的情况下可能存在不同的预期结果
-   if(commIsStandalone(db) == true){
+   /*if(commIsStandalone(db) == true){
       for(var i = 0; i < expectAccessPlans.length / 2; i++)
       {
         expAccessPlans.push(expectAccessPlans[i]);
@@ -850,7 +856,7 @@ function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans
       }else{
          expAccessPlans = expectAccessPlans;
       }
-   }
+   }*/
 	
    //校验计划个数
    if( expAccessPlans.length !==  actAccessPlans.length )
