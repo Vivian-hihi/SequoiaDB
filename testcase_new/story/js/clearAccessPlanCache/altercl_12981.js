@@ -108,8 +108,8 @@ function main()
    analyze( db, options );
    
    //检查主备同步
-   checkConsistency(db, null, null, groups);
-                                                        	
+   checkConsistency(db, null, null, groups); 
+	
    //check after analyze before alter
    checkStat( db, csName, clName1, "$shard", true, false );
    checkStat( db, csName, clName2, "$shard", true, false );
@@ -172,6 +172,12 @@ function main()
    //检查主备同步
    checkConsistency(db, null, null, groups);
          
+   //检查shard索引是否创建完成
+	var expectIndexInfo1 = {'name' : '$shard', 'key' : {'a0' : 1}};
+   checkIndexCompleted( csName, clName1, expectIndexInfo1); 
+	var expectIndexInfo2 = {'name' : '$shard', 'key' : {'a1' : 1}};
+   checkIndexCompleted( csName, clName2, expectIndexInfo2); 	
+	
    //check alter before analyze       
    checkStat( db, csName, clName1, "$shard", true, false );
    checkStat( db, csName, clName2, "$shard", true, false );
@@ -228,6 +234,12 @@ function main()
    //split CLs
    var group1 = ClSplitOneTimes( csName, clName1, 50 );
    var group2 = ClSplitOneTimes( csName, clName2, 50 );
+	
+	//检查切分后shard索引是否已同步到每个节点
+	var expectIndexInfo1 = {'name' : '$shard', 'key' : {'a0' : 1}};
+   checkIndexCompleted( csName, clName1, expectIndexInfo1); 
+	var expectIndexInfo2 = {'name' : '$shard', 'key' : {'a1' : 1}};
+   checkIndexCompleted( csName, clName2, expectIndexInfo2); 
    
    var srcGroupName1 = group1[0].GroupName;
    var destGroupName1 = group1[1].GroupName;
@@ -339,7 +351,7 @@ function main()
 	
    var actAccessPlans1 = getSplitAccessPlans(db, accessFindOption1);
    var actAccessPlans2 = getSplitAccessPlans(db, accessFindOption2);
-   
+		 
    var expAccessPlans1 = [{GroupName: srcGroupName1, ScanType:"tbscan", IndexName:""},
 	                       {GroupName: srcGroupName1, ScanType:"tbscan", IndexName:""},
                           {GroupName: destGroupName1, ScanType:"tbscan", IndexName:""},
@@ -374,4 +386,84 @@ function alterCL( dbcl, alterOption )
    }
 }
 
+function checkIndexCompleted( csName, clName, expectIndexInfo)
+{
+	//the longest waiting time is 600S
+   var isCompleted = false;
+   var timeout = 600;
+   var doTimes = 0; 
+	
+	while(true)
+   {
+      isCompleted = isIndexCompleted( csName, clName, expectIndexInfo)
+      if(!isCompleted)
+      {
+         if(doTimes < timeout)
+         {
+            ++doTimes;
+            sleep(1000);
+				println("check " + doTimes + " times");
+         }
+         else
+         {
+            throw "check index complete time out";
+         }     
+      }
+      else 
+      {
+         break;
+      }
+   }
+}
+
+function isIndexCompleted( csName, clName, expectIndexInfo)
+{
+	var clFullName = csName + "." + clName;
+	var groups = commGetCLGroups( db, clFullName );
+   var datas = getNodesInGroups(db, groups);
+	
+	//check index info
+   for(var i in datas)
+   {
+      var nodesInGroup = datas[i];
+		//check all nodes in each group
+      for(var j = 0; j < nodesInGroup.length; j++)
+      {
+			var isIdxCompleted = false;
+         try
+         {
+				var dbcl = nodesInGroup[j].getCS(csName).getCL(clName);
+				var actIndexInfo = dbcl.listIndexes().toArray();
+				var expectIndexName = expectIndexInfo['name'];
+				var expectIndexKey = expectIndexInfo['key'];   
+				for(var x = 0; x < actIndexInfo.length; x++)
+				{
+					actIndexInfo[x] = eval('(' + actIndexInfo[x] + ')');
+					actIndexName = actIndexInfo[x]['IndexDef']['name'];
+					actIndexKey = actIndexInfo[x]['IndexDef']['key'];
+					if( actIndexName == expectIndexName 
+					      && JSON.stringify(actIndexKey) == JSON.stringify(expectIndexKey) )
+					{	
+						isIdxCompleted = true;		
+					}
+				}
+								
+				//one of nodes have not index, print indexes detail of that node  
+				if(!isIdxCompleted)
+				{
+					println("node " + nodesInGroup[j] + " in " + clFullName + " is not correct, listIndexes: " + JSON.stringify(actIndexInfo));
+					return false;
+				}
+				
+         }
+         catch(e)
+         {
+            println("check index info fail", e, "check", "check success", e);
+				return false;
+         }	   
+         
+      }      
+   }
+	return true;
+}
 main();
