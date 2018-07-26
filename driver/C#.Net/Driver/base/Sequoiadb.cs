@@ -209,7 +209,7 @@ namespace SequoiaDB
          */
         public Sequoiadb(string host, int port)
         {
-            if (host == null || host.Length == 0 || port < 0 || port > 65536)
+            if (host == null || host.Length == 0 || port <= 0 || port > 65535)
             {
                 throw new BaseException("SDB_INVALIDARG");
             }
