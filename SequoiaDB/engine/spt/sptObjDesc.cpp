@@ -598,10 +598,13 @@ namespace engine
          }
          builder.append( key, tmpObj ) ;
       }
-      rc = _cvtToBSONFunc( key, value, isSpecialObj, builder, errMsg ) ;
-      if( SDB_OK != rc )
+      else
       {
-         goto error ;
+         rc = _cvtToBSONFunc( key, value, isSpecialObj, builder, errMsg ) ;
+         if( SDB_OK != rc )
+         {
+            goto error ;
+         }
       }
    done:
       return rc ;
