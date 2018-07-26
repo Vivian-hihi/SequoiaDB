@@ -453,6 +453,10 @@ namespace SequoiaDB
          */
         public void Update(DBQuery query)
         {
+            if (query == null)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
             _Update(query.Flag, query.Matcher, query.Modifier, query.Hint);
         }
 
