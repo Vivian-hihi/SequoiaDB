@@ -171,6 +171,10 @@ namespace SequoiaDB
          */
         public Sequoiadb(string connString)
         {
+            if (connString == null || connString.Length == 0) 
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
             serverAddress = new ServerAddress(connString);
         }
 
@@ -180,8 +184,10 @@ namespace SequoiaDB
          */
         public Sequoiadb(List<string> connStrings)
         {
-            if (connStrings.Count == 0)
+            if (connStrings == null || connStrings.Count == 0)
+            {
                 throw new BaseException("SDB_INVALIDARG");
+            }
             serverAddresses = new ServerAddress[connStrings.Count];
             for (int i = 0; i < connStrings.Count; i++)
             {
@@ -203,6 +209,10 @@ namespace SequoiaDB
          */
         public Sequoiadb(string host, int port)
         {
+            if (host == null || host.Length == 0 || port < 0 || port > 65536)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
             serverAddress = new ServerAddress(host, port);
         }
 
@@ -552,7 +562,7 @@ namespace SequoiaDB
          */
         public CollectionSpace CreateCollectionSpace(string csName, int pageSize)
         {
-            if (csName == null ||
+            if (csName == null || csName.Length == 0 ||
                 pageSize != SDBConst.SDB_PAGESIZE_4K &&
                 pageSize != SDBConst.SDB_PAGESIZE_8K &&
                 pageSize != SDBConst.SDB_PAGESIZE_16K &&
@@ -581,7 +591,7 @@ namespace SequoiaDB
          */
         public CollectionSpace CreateCollectionSpace(string csName, BsonDocument options)
         {
-            if (csName == null )
+            if (csName == null || csName.Length == 0)
             {
                 throw new BaseException("SDB_INVALIDARG");
             }
@@ -602,6 +612,10 @@ namespace SequoiaDB
          */
         public void DropCollectionSpace(string csName) 
         {
+            if (csName == null || csName.Length == 0) 
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
             SDBMessage rtn = AdminCommand(SequoiadbConstants.DROP_CMD, SequoiadbConstants.COLSPACE, csName);
             int flags = rtn.Flags;
             if (flags != 0)
@@ -619,6 +633,10 @@ namespace SequoiaDB
          */
         public CollectionSpace GetCollecitonSpace(string csName) 
         {
+            if (csName == null || csName.Length == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
             // create cs from cache
             if (FetchCache(csName))
                 return new CollectionSpace(this, csName);
@@ -640,6 +658,10 @@ namespace SequoiaDB
          */
         public bool IsCollectionSpaceExist(string csName)
         {
+            if (csName == null || csName.Length == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
             string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.TEST_CMD + " "
                              + SequoiadbConstants.COLSPACE;
             BsonDocument condition = new BsonDocument();
@@ -691,6 +713,10 @@ namespace SequoiaDB
          */
         public DBCursor Exec(string sql)
         {
+            if (sql == null || sql.Length == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
             SDBMessage sdbMessage = new SDBMessage();
             sdbMessage.OperationCode = Operation.OP_SQL;
             sdbMessage.RequestID = 0;
@@ -725,6 +751,10 @@ namespace SequoiaDB
          */
         public void ExecUpdate(string sql)
         {
+            if (sql == null || sql.Length == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
             SDBMessage sdbMessage = new SDBMessage();
             sdbMessage.OperationCode = Operation.OP_SQL;
             sdbMessage.RequestID = 0;
@@ -1558,6 +1588,10 @@ namespace SequoiaDB
          */
         public ReplicaGroup GetReplicaGroup(string groupName)
         {
+            if (groupName == null || groupName.Length == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
             BsonDocument matcher = new BsonDocument();
             BsonDocument dummyobj = new BsonDocument();
             matcher.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
@@ -1644,8 +1678,10 @@ namespace SequoiaDB
          */
         public ReplicaGroup CreateReplicaGroup(string groupName)
         {
-            if (groupName == null)
+            if (groupName == null || groupName.Length == 0)
+            {
                 throw new BaseException("SDB_INVALIDARG");
+            }
             string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " "
                              + SequoiadbConstants.GROUP;
             BsonDocument condition = new BsonDocument();
@@ -1669,8 +1705,10 @@ namespace SequoiaDB
          */
         public void RemoveReplicaGroup(string groupName)
         {
-            if (groupName == null)
+            if (groupName == null || groupName.Length == 0)
+            {
                 throw new BaseException("SDB_INVALIDARG");
+            }
             string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.REMOVE_CMD + " "
                              + SequoiadbConstants.GROUP;
             BsonDocument condition = new BsonDocument();
@@ -1695,8 +1733,11 @@ namespace SequoiaDB
         public void CreateReplicaCataGroup(string hostName, int port, string dbpath,
                                             BsonDocument configure)
         {
-            if (hostName == null || port == 0 || dbpath == null)
+            if (hostName == null || hostName.Length == 0 || port <= 0 || port > 65536 ||
+                dbpath == null || dbpath.Length == 0)
+            {
                 throw new BaseException("SDB_INVALIDARG");
+            }
             string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " "
                              + SequoiadbConstants.CATALOG + " " + SequoiadbConstants.GROUP;
             BsonDocument condition = new BsonDocument();
@@ -1945,6 +1986,10 @@ namespace SequoiaDB
 
         private SDBMessage CreateCS(string csName, BsonDocument options)
         {
+            if (csName == null || csName.Length == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " " + SequoiadbConstants.COLSPACE;
             BsonDocument cObj = new BsonDocument();
             BsonDocument dummyObj = new BsonDocument();
