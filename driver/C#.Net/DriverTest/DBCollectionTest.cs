@@ -1589,5 +1589,68 @@ namespace DriverTest
             coll.BulkInsert(invalidDocs2, 0);
         }
 
+        [TestMethod]
+        public void jira_3350_invalidDateTime()
+        {
+            long MILLISEC_PER_DAY =  24 * 3600 * 1000;
+            List<BsonDocument> invalidDocs = new List<BsonDocument> { 
+                new BsonDocument("0", new BsonDateTime(0)), 
+                new BsonDocument("-1", new BsonDateTime(-1)), 
+                new BsonDocument("-1 day", new BsonDateTime(-1 * MILLISEC_PER_DAY )), 
+                new BsonDocument("overMax", new BsonDateTime(long.MaxValue)), 
+                new BsonDocument("overMin", new BsonDateTime(long.MinValue)) 
+            };
+            coll.BulkInsert(invalidDocs, 0);
+        }
+
+        [TestMethod()]
+        public void jira_3348_BsonTimestampTest()
+        {
+            long errorTimestamp1 = ((long)2177423999 << 32) + 0; // expect is 2038-12-31 23:59:59, but it is: -9094779208479014912L
+            long errorTimestamp2 = (253402271999L << 32) + 0; // expect is 9999-12-31 23:59:59, but it is: -3429381062000640L
+            int maxIntSec = 2147483647;
+            int minIntSec = -2147483648;
+            long timestamp1 = ((long)maxIntSec << 32) + 0;
+            long timestamp2 = ((long)minIntSec << 32) + 0;
+            BsonDocument insertor1 = new BsonDocument { { "a", new BsonTimestamp(timestamp1) }, { "b", 1 } };
+            BsonDocument insertor2 = new BsonDocument { { "a", new BsonTimestamp(timestamp2) }, { "b", 2 } };
+            BsonDocument insertor3 = new BsonDocument { { "a", new BsonTimestamp(maxIntSec, int.MaxValue) }, { "b", 3 } };
+            BsonDocument insertor4 = new BsonDocument { { "a", new BsonTimestamp(maxIntSec, int.MinValue) }, { "b", 4 } };
+            BsonDocument insertor5 = new BsonDocument { { "a", new BsonTimestamp(minIntSec, int.MaxValue) }, { "b", 5 } };
+            BsonDocument insertor6 = new BsonDocument { { "a", new BsonTimestamp(minIntSec, int.MinValue) }, { "b", 6 } };
+            coll.Insert(insertor1);
+            coll.Insert(insertor2);
+            coll.Insert(insertor3);
+            coll.Insert(insertor4);
+            coll.Insert(insertor5);
+            coll.Insert(insertor6);
+            DBCursor cursor = coll.Query();
+            BsonDocument record;
+            List<BsonDocument> bsonList = new List<BsonDocument>();
+            while ((record = cursor.Next()) != null) 
+            {
+                bsonList.Add(record);
+                Console.WriteLine("record is: " + record);
+            }
+
+            Assert.AreEqual(maxIntSec, bsonList[0].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(0, bsonList[0].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(minIntSec, bsonList[1].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(0, bsonList[1].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(maxIntSec, bsonList[2].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(int.MaxValue, bsonList[2].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(maxIntSec, bsonList[3].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(int.MinValue, bsonList[3].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(minIntSec, bsonList[4].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(int.MaxValue, bsonList[4].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(minIntSec, bsonList[5].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(int.MinValue, bsonList[5].GetValue("a").AsBsonTimestamp.Increment);
+        }
+
     }
 }
