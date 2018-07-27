@@ -148,7 +148,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const sptObjDesc *objDesc = NULL ;
+      JSIdArray *properties = NULL ;
       string className = getClassName( cx, obj ) ;
+
       if( !className.empty() )
       {
          objDesc = this->findObj( className ) ;
@@ -159,7 +161,7 @@ namespace engine
          jsid id ;
          jsval fieldName ;
          std::string name ;
-         JSIdArray *properties = JS_Enumerate( cx, obj ) ;
+         properties = JS_Enumerate( cx, obj ) ;
          if ( NULL == properties || 0 == properties->length )
          {
             // Object is normal js object
@@ -192,6 +194,11 @@ namespace engine
       if( SDB_OK == rc )
       {
          *pDesc = objDesc ;
+      }
+      /// free
+      if ( properties )
+      {
+         JS_DestroyIdArray( cx, properties ) ;
       }
       return rc ;
    error:
