@@ -96,7 +96,7 @@ namespace engine
    {
    public:
       _sptObjDesc()
-      :_init(FALSE), _prototypeDef( NULL ), _parent( NULL ),
+      :_init(FALSE), _parent( NULL ),
        _isHide( FALSE ), _isGlobal( FALSE ), _cvtFlags( 0 )
       {
          _cvtToBSONFunc = NULL , 
@@ -128,10 +128,6 @@ namespace engine
       {
          return _init ? &_classDef : NULL ;
       }
-      const JSObject *getPrototypeDef() const
-      {
-         return _prototypeDef ;
-      }
 
       void setClassName( const CHAR *name )
       {
@@ -155,10 +151,6 @@ namespace engine
       {
          _classDef = def ;
          _init = TRUE ;
-      }
-      void setClassPrototype( const JSObject *proto )
-      {
-         _prototypeDef = proto ;
       }
 
       BOOLEAN isIgnoredParent() const
@@ -256,7 +248,6 @@ namespace engine
       _sptFuncMap _funcMap ;
       BOOLEAN     _init ;
       JSClass     _classDef ;
-      const JSObject*   _prototypeDef ;
       const _sptObjDesc *_parent ;
       BOOLEAN     _isHide ;
       BOOLEAN     _isGlobal ;

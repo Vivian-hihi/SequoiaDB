@@ -499,14 +499,8 @@ namespace engine
 
    void _sptSPScope::shutdown()
    {
-      SPT_VEC_OBJDESC vecObjs ;
-      sptGetObjFactory()->getObjDescs( vecObjs ) ;
-      for ( UINT32 i = 0 ; i < vecObjs.size() ; ++i )
-      {
-         sptObjDesc *desc = (sptObjDesc*)vecObjs[ i ] ;
-         // JSObject will be free if destroy context, can't be accessed after
-         desc->setClassPrototype( NULL ) ;
-      }
+      _mapName2Proto.clear() ;
+
       if ( NULL != _context )
       {
          sptPrivateData* p = (sptPrivateData*)JS_GetContextPrivate( _context ) ;
@@ -644,13 +638,17 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         rc = _loadUsrClass( const_cast< sptObjDesc* >( parentDesc ) ) ;
-         if( SDB_OK != rc )
+
+         if ( !_hasPrototype( parentDesc->getJSClassName() ) )
          {
-            ossPrintf( "Failed to load parent class" ) ;
-            goto error ;
+            rc = _loadUsrClass( const_cast< sptObjDesc* >( parentDesc ) ) ;
+            if( SDB_OK != rc )
+            {
+               ossPrintf( "Failed to load parent class" ) ;
+               goto error ;
+            }
          }
-         parent_proto = (JSObject*)parentDesc->getPrototypeDef() ;
+         parent_proto = (JSObject*)_getPrototype( parentDesc->getJSClassName() ) ;
       }
 
       /// one for instance help method, another for FS_END
@@ -745,7 +743,8 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         desc->setClassPrototype( prototype ) ;
+
+         _addPrototype( objName, prototype ) ;
       }
 
    done:
@@ -978,6 +977,32 @@ namespace engine
    {
       JSObject *pJSObj = ( JSObject* )pObj ;
       return sptGetObjFactory()->getObjPropNames( _context, pJSObj, setProp ) ;
+   }
+
+   void _sptSPScope::_addPrototype( const string &name,
+                                    const JSObject *obj )
+   {
+      _mapName2Proto[name] = obj ;
+   }
+
+   const JSObject* _sptSPScope::_getPrototype( const string &name ) const
+   {
+      MAP_NAME_2_PROTOTYPE::const_iterator it = _mapName2Proto.find( name ) ;
+      if ( it != _mapName2Proto.end() )
+      {
+         return it->second ;
+      }
+      return NULL ;
+   }
+
+   BOOLEAN _sptSPScope::_hasPrototype( const string &name ) const
+   {
+      MAP_NAME_2_PROTOTYPE::const_iterator it = _mapName2Proto.find( name ) ;
+      if ( it != _mapName2Proto.end() )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
    }
 }
 
