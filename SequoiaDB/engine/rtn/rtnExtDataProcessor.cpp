@@ -266,7 +266,8 @@ namespace engine
          }
       }
 
-      // If the object contains the index field, check the
+      // If the object contains the index field, check if the capped collection
+      // has enough free space.
       if ( _needOprRec )
       {
          rc = rtnResolveCollectionNameAndLock ( _cappedCLName, dmsCB, &su,
@@ -287,6 +288,10 @@ namespace engine
       }
 
    done:
+      if ( context )
+      {
+         su->data()->releaseMBContext( context ) ;
+      }
       if ( DMS_INVALID_SUID != suID )
       {
          dmsCB->suUnlock( suID, SHARED ) ;
