@@ -25,22 +25,19 @@ Return the amount of matching records in current collection.
        records in the collection. If it is not null, it will
        count records that match the conditions.
 .sp 2
-       \fBFormat\fR
+\fBhint (json object)\fR
 .br
-              The method "count()" contains field named "cond".
-              It is a JSON object.
-.br
-              {[{"Field name 1":{"match 1":"value 1"},"Field name
-              2":{"match 2":"value 2"},...}]}
+       The same with the 'hint' in 'query.hint()'.
+
 .SH "Examples"
 
 .sp 2
-Count all the records in collection "bar" without specifying
+1. Count all the records in collection "bar" without specifying
 "cond".
 .sp 2
-db.foo.bar.count()
+> db.foo.bar.count()
 .sp 2
-Count records that both contain the value "Tom" on the field
+2. Count records that both contain the value "Tom" on the field
 "name" and the value on the field "age" is greater than 25.
 .sp 2
-db.foo.bar.count({name:"Tom",age:{$gt:25}})
+> db.foo.bar.count({name:"Tom",age:{$gt:25}})

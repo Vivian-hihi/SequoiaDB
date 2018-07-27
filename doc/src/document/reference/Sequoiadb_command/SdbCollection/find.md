@@ -30,7 +30,7 @@ Collection
 
 	查询返回记录的字段名。为空时，返回记录的所有字段；如果指定的字段名记录中不存在，则按用户设定的内容原样返回。如：{"name":"","age":"","addr":""}。
 
-* `hint` ( *Object*， *选填* )
+* [`hint`](reference/Sequoiadb_command/SdbQuery/hint.md) ( *Object*， *选填* )
 
 	指定查询使用索引的情况。
 	* 不指定`hint`：查询是否使用索引及使用哪个索引将由数据库决定；
