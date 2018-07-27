@@ -7049,6 +7049,20 @@ error :
       CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] ;
       BOOLEAN r ;
       SINT64 contextID = 0 ;
+      const CHAR *pUN = "" ;
+      const CHAR *pPW = "" ;
+
+      if ( !pHostName || port <= 0 || port > 65535 )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      
+      if ( pUsrName && pPasswd )
+      {
+         pUN = pUsrName ;
+         pPW = pPasswd ;
+      }
 
       rc = _connect( pHostName, port ) ;
       if ( SDB_OK != rc )
@@ -7062,14 +7076,14 @@ error :
          goto error ;
       }
 
-      rc = md5Encrypt( pPasswd, md5, SDB_MD5_DIGEST_LENGTH*2+1) ;
+      rc = md5Encrypt( pPW, md5, SDB_MD5_DIGEST_LENGTH*2+1 ) ;
       if ( rc )
       {
          goto error ;
       }
 
       rc = clientBuildAuthMsg( &_pSendBuffer, &_sendBufferSize,
-                               pUsrName, md5, 0, _endianConvert ) ;
+                               pUN, md5, 0, _endianConvert ) ;
       if ( rc )
       {
          goto error ;
@@ -7540,6 +7554,12 @@ error :
    {
       INT32 rc = SDB_OK ;
       UINT16 port ;
+      
+      if ( !pHostName || !pServiceName )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
       rc = ossSocket::getPort ( pServiceName, port ) ;
       if ( rc )
       {
@@ -7921,7 +7941,6 @@ error :
    {
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
-      INT32 nameLength    = ossStrlen ( pCollectionFullName ) ;
       BSONObj newObj ;
       string command = string ( CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTION ) ;
       if ( !_sock )
@@ -7929,8 +7948,9 @@ error :
          rc = SDB_NOT_CONNECTED ;
          goto error ;
       }
-      if ( !pCollectionFullName || nameLength > CLIENT_CS_NAMESZ +
-           CLIENT_COLLECTION_NAMESZ + 1 || !collection )
+      if ( !pCollectionFullName || !collection ||
+           ossStrlen ( pCollectionFullName ) > 
+           CLIENT_CS_NAMESZ + CLIENT_COLLECTION_NAMESZ + 1 )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -7982,16 +8002,16 @@ error :
    {
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
-      INT32 nameLength = ossStrlen ( pCollectionSpaceName ) ;
       BSONObj newObj ;
-      string command = string ( CMD_ADMIN_PREFIX
-                                CMD_NAME_TEST_COLLECTIONSPACE ) ;
+      string command      = string ( CMD_ADMIN_PREFIX
+                                     CMD_NAME_TEST_COLLECTIONSPACE ) ;
       if ( !_sock )
       {
          rc = SDB_NOT_CONNECTED ;
          goto error ;
       }
-      if ( nameLength > CLIENT_CS_NAMESZ || !cs )
+      if ( !pCollectionSpaceName || !cs ||
+           ossStrlen ( pCollectionSpaceName ) > CLIENT_CS_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -8043,11 +8063,11 @@ error :
    {
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
-      INT32 nameLength = ossStrlen ( pCollectionSpaceName ) ;
       BSONObj newObj ;
-      string command = string ( CMD_ADMIN_PREFIX
-                                CMD_NAME_CREATE_COLLECTIONSPACE ) ;
-      if ( nameLength > CLIENT_CS_NAMESZ || !cs )
+      string command      = string ( CMD_ADMIN_PREFIX
+                                     CMD_NAME_CREATE_COLLECTIONSPACE ) ;
+      if ( !pCollectionSpaceName || !cs ||
+           ossStrlen ( pCollectionSpaceName ) > CLIENT_CS_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -8091,18 +8111,16 @@ error :
    {
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
-      INT32 nameLength = ossStrlen ( pCollectionSpaceName ) ;
       BSONObjBuilder bob ;
       BSONObj newObj ;
       string command = string ( CMD_ADMIN_PREFIX
                                 CMD_NAME_CREATE_COLLECTIONSPACE ) ;
-      if ( nameLength > CLIENT_CS_NAMESZ || !cs )
+      if ( !pCollectionSpaceName || !cs ||
+           ossStrlen ( pCollectionSpaceName ) > CLIENT_CS_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
-
       // build bson
       try
       {
@@ -8154,11 +8172,11 @@ error :
    {
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
-      INT32 nameLength = ossStrlen ( pCollectionSpaceName ) ;
       BSONObj newObj ;
       string command = string ( CMD_ADMIN_PREFIX
                                 CMD_NAME_DROP_COLLECTIONSPACE ) ;
-      if ( nameLength > CLIENT_CS_NAMESZ )
+      if ( !pCollectionSpaceName ||
+           ossStrlen ( pCollectionSpaceName ) > CLIENT_CS_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -8205,7 +8223,8 @@ error :
       BSONObj record ;
       BSONObj condition ;
       BSONElement ele ;
-      if ( !pName || !result )
+      if ( !pName || !result ||
+           ossStrlen ( pName ) > CLIENT_REPLICAGROUP_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -8326,7 +8345,8 @@ error :
       _sdbReplicaGroupImpl *replset = NULL ;
       string command = string ( CMD_ADMIN_PREFIX CMD_NAME_CREATE_GROUP ) ;
 
-      if ( ossStrlen ( pName ) > CLIENT_REPLICAGROUP_NAMESZ || !rg )
+      if ( !pName || !rg ||
+           ossStrlen ( pName ) > CLIENT_REPLICAGROUP_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -8362,23 +8382,16 @@ error :
    {
       INT32 rc = SDB_OK ;
       BOOLEAN result = FALSE ;
-      INT32 nameLength = 0 ;
       BSONObjBuilder ob ;
       BSONObj newObj ;
       const CHAR *pCommand = CMD_ADMIN_PREFIX CMD_NAME_REMOVE_GROUP ;
-      const CHAR *pName = FIELD_NAME_GROUPNAME ;
-      if ( !pReplicaGroupName )
+      if ( !pReplicaGroupName ||
+         ossStrlen( pReplicaGroupName ) > CLIENT_REPLICAGROUP_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      nameLength = ossStrlen( pReplicaGroupName ) ;
-      if ( 0 == nameLength || CLIENT_REPLICAGROUP_NAMESZ < nameLength )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      ob.append ( pName, pReplicaGroupName ) ;
+      ob.append ( FIELD_NAME_GROUPNAME, pReplicaGroupName ) ;
       newObj = ob.obj() ;
       rc = _runCommand ( pCommand, result, &newObj ) ;
       if ( rc )
@@ -8457,7 +8470,7 @@ error :
       _sdbReplicaGroupImpl *replset = NULL ;
       string command = string ( CMD_ADMIN_PREFIX CMD_NAME_ACTIVE_GROUP ) ;
 
-      if ( ossStrlen ( pName ) > CLIENT_REPLICAGROUP_NAMESZ || !rg )
+      if ( !pName || ossStrlen ( pName ) > CLIENT_REPLICAGROUP_NAMESZ || !rg )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -8495,6 +8508,12 @@ error :
       BOOLEAN locked = FALSE ;
       BOOLEAN result ;
       SINT64 contextID = 0 ;
+
+      if ( !sql )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
       rc = clientValidateSql( sql, FALSE ) ;
       if ( SDB_OK != rc )
@@ -8540,6 +8559,12 @@ error :
       BOOLEAN locked = FALSE ;
       BOOLEAN r ;
       SINT64 contextID = 0 ;
+
+      if ( !sql || !result )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
       rc = clientValidateSql( sql, TRUE ) ;
       if ( SDB_OK != rc )
@@ -8803,6 +8828,12 @@ error :
       BSONObj newObj ;
       BSONObjBuilder ob ;
 
+      if ( !spName )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       ob.append ( FIELD_NAME_FUNC, spName ) ;
       newObj = ob.obj() ;
 
@@ -8857,6 +8888,12 @@ error :
       BSONObj newObj ;
       BSONObjBuilder ob ;
       const MsgOpReply *replyHeader = NULL ;
+
+      if ( !code )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
       ob.appendCode ( FIELD_NAME_FUNC, code ) ;
       ob.appendIntOrLL ( FIELD_NAME_FUNCTYPE, FMP_FUNC_TYPE_JS ) ;
