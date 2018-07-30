@@ -32,7 +32,7 @@ according to the parameter "cond", "update" does nothing, but
 .sp 2
 \fBhint (json object)\fR
 .br
-       Specify access plan.
+       The same with the 'hint' in 'query.hint()'.
 .sp 2
 \fBsetOnInsert (json object)\fR
 .br
@@ -46,24 +46,6 @@ according to the parameter "cond", "update" does nothing, but
 .br
        The sharding key in update rule is not filtered.
        Default value: false.
-.sp 2
-       \fBFormat\fR
-.br
-              The definition of upsert() must contain field "rule"
-              which should be a json object. "cond" "options" and
-              "hint" are optional fields. "hint" is a json object
-              that include one field, the field name will be
-              ignored, and its value specifies the index name,
-              when the value of the field is null, all the
-              records in the collection will be accessed, its
-              format is {"":null} or {"":"<indexname>"}.
-.br
-              {< {<{""update operator 1"":{field name
-              1:"value"},"update operator 2":{"field name
-              2":"value 2"},...}>,[{"field name 1":{"match
-              operator 1":"value 1"},"field name 2":{"match
-              operator 2":"value 2"},...}],[{"":"index
-              name"|null}]}
 .sp 2
 \fBNote: \fR
 .sp 2

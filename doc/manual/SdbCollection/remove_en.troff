@@ -24,22 +24,7 @@ Delete records from the current collection.
 .sp 2
 \fBhint (json object)\fR
 .br
-       Specify access plan.
-.sp 2
-       \fBFormat\fR
-.br
-              The "cond" is a json object. When it is null (e.g.
-              {} ), delete all records in the collection. "hint"
-              is a json object that contains a single element.
-              The field name of this element is ignored. But the
-              value of the field in it is specified as the name
-              of index which is needed to visit. When the value
-              of field is null, it will visit all the records in
-              the collection.
-.br
-              {[{"Field name 1":{"Match Operator 1":"value
-              1","Field name 2":{"Match Operator 2":"value
-              2"},...}],[{"":"index name"|null}]}
+       The same with the 'hint' in 'query.hint()'.
 .SH "Examples"
 
 .sp 2
