@@ -43,7 +43,7 @@ search result can be iterated in the client.
       to use the index and which index to be used. 
 	* when 'hint' is {"":null}, table scan.
 	* when 'hint' contains only one index, such as: {"":"myIdx"}, the query will be
-      made using the index named "myIdx" in the currrent collection.
+      made using the index named "myIdx" in the currrent collection; However, when index "myIdx" does not exist in current collection, query goes with table scan.
 	* when 'hint' contains several indexes, such as: {"1":"idx1","2":"idx2","3":"idx3"},
  	  the query	will be made using one of the three indexes described above. Which 
 	  index is used eventually, determined by the database evaluation.
