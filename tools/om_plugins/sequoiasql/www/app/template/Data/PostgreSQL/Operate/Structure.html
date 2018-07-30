@@ -13,10 +13,19 @@
       </ul>
    </div>
    <div ng-container="{height:30}">
+      <div ng-dropdown="config in IndexDropdown.config" dropdown-event="IndexDropdown.event" dropdown-callback="IndexDropdown.callback">
+         <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="IndexDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
+      </div>
       <div ng-dropdown="config in EditFieldDropdown.config" dropdown-event="EditFieldDropdown.event" dropdown-callback="EditFieldDropdown.callback">
          <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="EditFieldDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
       </div>
       <div ng-windows="form as AddFieldWindow.config" windows-callback="AddFieldWindow.callback">
+         <div form-create para="form"></div>
+      </div>
+      <div ng-windows="form as CreateIndexWindow.config" windows-callback="CreateIndexWindow.callback">
+         <div form-create para="form"></div>
+      </div>
+      <div ng-windows="form as DropIndexWindow.config" windows-callback="DropIndexWindow.callback">
          <div form-create para="form"></div>
       </div>
       <div ng-windows="form as RenameFieldWindow.config" windows-callback="RenameFieldWindow.callback">
@@ -33,8 +42,7 @@
       </div>
       <button class="topBtn" ng-click="QueryTableStruct()"><i class="fa fa-refresh"></i> {{pAutoLanguage("刷新")}}</button>
       <button class="topBtn" ng-click="ShowAddField()"><i class="fa fa-plus"></i> {{pAutoLanguage("添加字段")}}</button>
-      <button class="topBtn" ng-class="{0:'disabled'}[FieldsSelect.length]" ng-disabled="FieldsSelect.length==0" ng-click="ShowSetPrimary()"><i class="fa fa-plus"></i> {{pAutoLanguage("设置主键")}}</button>
-      <button class="topBtn" ng-class="{0:'disabled'}[PrimaryKey.length]" ng-disabled="PrimaryKey.length==0" ng-click="ShowDropPrimary()"><i class="fa fa-remove"></i> {{pAutoLanguage("移除主键")}}</button>
+      <button class="topBtn" ng-class="{0:'disabled'}[FieldsSelect.length]" ng-disabled="FieldsSelect.length==0" ng-click="ShowIndexDropdown($event)">{{pAutoLanguage("索引操作")}} <i class="fa fa-caret-down"></i></button>
       <div class="clear-float"></div>
    </div>
    <div ng-container="{marginTop:10,offsetY:-93,offsetX:-15}" ng-controller="Data.PostgreSQL.Structure.Table.Ctrl" ng-table="GridTable['options']" table-title="GridTable['title']" table-content="info in GridTable['body']" table-callback="GridTable['callback']">

@@ -15,7 +15,8 @@
       }
       $scope.FullName   = SdbSwap.dbName + '.' + SdbSwap.tbName ;
       SdbSwap.tbType    = SdbFunction.LocalData( 'PgsqlTbType' ) ;
-      $scope.PrimaryKey = '' ;
+      var indexList = [] ;
+      var primaryKey = '' ;
 
       //获取字段信息
       $scope.QueryTableStruct = function(){
@@ -39,8 +40,7 @@
                if( SdbSwap.tbType == 'table' )
                {
                   SdbSignal.commit( 'setPrimarySelect', fieldList ) ;
-                  var sql = sprintf( 'select pg_constraint.conname as pk_name from pg_constraint  inner join pg_class \
- on pg_constraint.conrelid = pg_class.oid where pg_class.relname = \'?\' and pg_constraint.contype=\'p\'', SdbSwap.tbName ) ;
+                  var sql = sprintf( 'SELECT A.SCHEMANAME,A.TABLENAME,A.INDEXNAME,C.INDISUNIQUE,C.INDISPRIMARY FROM PG_AM B LEFT JOIN PG_CLASS F ON B.OID = F.RELAM LEFT JOIN PG_STAT_ALL_INDEXES E ON F.OID = E.INDEXRELID LEFT JOIN PG_INDEX C ON E.INDEXRELID = C.INDEXRELID LEFT OUTER JOIN PG_DESCRIPTION D ON C.INDEXRELID = D.OBJOID, PG_INDEXES A WHERE A.SCHEMANAME = E.SCHEMANAME AND A.TABLENAME = E.RELNAME AND A.INDEXNAME = E.INDEXRELNAME AND E.SCHEMANAME = \'public\' AND E.RELNAME = \'?\'', SdbSwap.tbName ) ;
                   execSql( sql, true ) ;
                }
             },
@@ -56,16 +56,29 @@
       $scope.QueryTableStruct() ;
       
       //执行sql
-      var execSql = function( sql, isQueryPrimary ){
+      var execSql = function( sql, isQueryIndex ){
          var data = { 'Sql': sql, 'DbName': SdbSwap.dbName } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( result ){
                //重新查询字段列表
-               if( isQueryPrimary )
+               if( isQueryIndex )
                {
+                  primaryKey = '' ;
+                  indexList = [] ;
                   if( result.length > 0 )
                   {
-                     $scope.PrimaryKey = result[0]['pk_name'] ;
+                     $.each( result, function( index, info ){
+                        if( info['indisprimary'] == 't' )
+                        {
+                           primaryKey = info['indexname'] ;
+                           return ;
+                        }
+                        else
+                        {
+                           indexList.push( { 'indexname': info['indexname'] } ) ;
+                        }
+                     } ) ;
+                     //$scope.PrimaryKey = result[0]['pk_name'] ;
                   }
                }
                else
@@ -233,8 +246,8 @@
       } ;
 
       //打开 设置主键 弹窗
-      $scope.ShowSetPrimary = function(){
-         if( $scope.FieldsSelect.length > 0 )
+      var showSetPrimary = function(){
+         if( primaryKey.length == 0 )
          {
             $scope.SetPrimaryWindow['config'] = {
                'inputList': [
@@ -290,16 +303,18 @@
       }
 
       //移除主键
-      $scope.ShowDropPrimary = function(){
-         $scope.Components.Confirm.type = 3 ;
-         $scope.Components.Confirm.context = sprintf( $scope.pAutoLanguage( '是否确定删除主键：?？' ), $scope.PrimaryKey) ;
-         $scope.Components.Confirm.isShow = true ;
-         $scope.Components.Confirm.okText = $scope.pAutoLanguage( '确定' ) ;
-         $scope.Components.Confirm.ok = function(){
-            var sql = sprintf( 'alter table ? drop constraint ?', addQuotes( SdbSwap.tbName ), addQuotes( $scope.PrimaryKey ) ) ;
-            execSql( sql ) ;
-            $scope.PrimaryKey = '' ;
-            $scope.Components.Confirm.isShow = false ;
+      var showDropPrimary = function(){
+         if( primaryKey.length > 0 )
+         {
+            $scope.Components.Confirm.type = 3 ;
+            $scope.Components.Confirm.context = sprintf( $scope.pAutoLanguage( '是否确定删除主键：?？' ), primaryKey) ;
+            $scope.Components.Confirm.isShow = true ;
+            $scope.Components.Confirm.okText = $scope.pAutoLanguage( '确定' ) ;
+            $scope.Components.Confirm.ok = function(){
+               var sql = sprintf( 'alter table ? drop constraint ?', addQuotes( SdbSwap.tbName ), addQuotes( primaryKey ) ) ;
+               execSql( sql ) ;
+               $scope.Components.Confirm.isShow = false ;
+            }
          }
       }
 
@@ -308,6 +323,122 @@
          'config': {},
          'callback': {}
       } ;
+      //索引操作 下拉菜单
+      $scope.IndexDropdown = {
+         'config': [],
+         'callback': {}
+      } ;
+
+      //打开 索引操作
+      $scope.ShowIndexDropdown = function( event ){
+         $scope.IndexDropdown['config'] = [
+            { 'key': $scope.pAutoLanguage( '创建索引' ) },
+            { 'key': $scope.pAutoLanguage( '删除索引' ), 'disabled': indexList.length>0 ? false : true },
+            { 'key': $scope.pAutoLanguage( '设置主键' ), 'disabled': primaryKey.length>0 },
+            { 'key': $scope.pAutoLanguage( '移除主键' ), 'disabled': primaryKey.length==0 }
+         ] ;
+         $scope.IndexDropdown['OnClick'] = function( index ){
+            if( index == 0 )
+            {
+               showCreateIndex() ;
+            }
+            else if( index == 1 )
+            {
+               showDropIndex() ;
+            }
+            else if( index == 2 )
+            {
+               showSetPrimary() ;
+            }
+            else
+            {
+               showDropPrimary() ;
+            }
+
+            $scope.IndexDropdown['callback']['Close']() ;
+         }
+         $scope.IndexDropdown['callback']['Open']( event.currentTarget ) ;
+      }
+
+      //创建索引 弹窗
+      $scope.CreateIndexWindow = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 创建索引
+      var showCreateIndex = function(){
+         $scope.CreateIndexWindow['config'] = {
+            'inputList': [
+               {
+                  "name": "fields",
+                  "webName": $scope.pAutoLanguage( '字段' ),
+                  "required": true,
+                  "type": "list",
+                  "child":[
+                     [
+                        {
+                           "name": "field",
+                           "type": "select",
+                           "value": $scope.FieldsSelect[0]['key'],
+                           "default": $scope.FieldsSelect[0]['key'],
+                           "valid": $scope.FieldsSelect
+                        }
+                     ]
+                  ]
+               },
+               {
+                  "name": "type",
+                  "webName": $scope.pAutoLanguage( '索引类型' ),
+                  "required": true,
+                  "type": "select",
+                  "value": "normal",
+                  "valid": [
+                     { 'key': $scope.pAutoLanguage( '普通索引' ), 'value': 'normal' },
+                     { 'key': $scope.pAutoLanguage( '唯一索引' ), 'value': 'unique' }
+                  ]
+               }
+            ]
+         }
+         $scope.CreateIndexWindow['callback']['SetTitle']( $scope.pAutoLanguage( '创建索引' ) ) ;
+         $scope.CreateIndexWindow['callback']['SetIcon']( 'fa-edit' ) ;
+         $scope.CreateIndexWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
+            var sql = '' ;
+            var formValue = $scope.CreateIndexWindow['config'].getValue() ;
+            if( formValue['type'] == 'normal' )
+            {
+               sql = sprintf( 'create index on ?', SdbSwap.tbName ) ; 
+            }
+            else
+            {
+               sql = sprintf( 'create unique index on ?', SdbSwap.tbName ) ; 
+            }
+            var isFrist = true ;
+            var existList = {} ;
+            $.each( formValue['fields'], function( index, field ){
+               if( typeof( existList[field['field']] ) == 'undefined' )
+               {
+                  existList[field['field']] = true ;
+                  if( isFrist )
+                  {
+                     sql += '(' ;
+                     isFrist = false ;
+                  }
+                  else
+                  {
+                     if( existList[field['field']] )
+                     sql += ',' ;
+                  }
+                  sql += field['field'] ;
+               }
+            } ) ;
+            sql += ')' ;
+
+            execSql( sql ) ;
+            $scope.CreateIndexWindow['callback']['Close']() ;
+         } ) ;
+         $scope.CreateIndexWindow['callback']['Open']() ;
+      }
 
       SdbSignal.on( 'setPrimarySelect', function( fieldList ){
          $scope.FieldsSelect = [] ;
@@ -318,6 +449,44 @@
             } ) ;
          }
       } ) ;
+
+      //删除索引 弹窗
+      $scope.DropIndexWindow = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 删除索引
+      var showDropIndex = function(){
+         if( indexList.length > 0 )
+         {
+            var selectList = [] ;
+            $.each( indexList, function( index, info ){
+               selectList.push( { 'key': info['indexname'], 'value': info['indexname'] } ) ;
+            } ) ;
+            $scope.DropIndexWindow['config'] = {
+               'inputList': [
+                  {
+                     "name": "index",
+                     "webName": $scope.pAutoLanguage( '索引名' ),
+                     "required": true,
+                     "type": "select",
+                     "value": selectList[0]['value'],
+                     "valid": selectList
+                  }
+               ]
+            } ;
+            $scope.DropIndexWindow['callback']['SetTitle']( $scope.pAutoLanguage( '删除索引' ) ) ;
+            $scope.DropIndexWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
+               var formValue = $scope.DropIndexWindow['config'].getValue() ;
+               var sql = '' ;
+               sql = sprintf( 'drop index ?', formValue['index'] ) ;
+               execSql( sql ) ;
+               $scope.DropIndexWindow['callback']['Close']() ;
+            } ) ;
+            $scope.DropIndexWindow['callback']['Open']() ;
+         }
+      }
 
       //打开 删除字段 弹窗
       SdbSignal.on( 'ShowDropFieldWindow', function( fieldName ){

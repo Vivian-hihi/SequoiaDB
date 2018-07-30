@@ -622,7 +622,7 @@
             if( isClear == true )
             {
                var formVal = $scope.EditFieldWindow['config'].getValue() ;
-               var sql = sprintf( 'alter table ? modify ? ?', SdbSwap.tbName, fieldName, formVal['newType'] ) ;
+               var sql = sprintf( 'alter table ? change ? ? ?', SdbSwap.tbName, fieldName, formVal['fieldName'], formVal['newType'] ) ;
                if( formVal['length'] > 0 )
                {
                   sql += sprintf( '(?)', formVal['length'] ) ;

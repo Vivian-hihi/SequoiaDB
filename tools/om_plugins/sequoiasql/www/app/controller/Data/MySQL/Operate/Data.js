@@ -222,7 +222,7 @@
 
       //获取字段列表
       var queryTableStruct = function(){
-         var sql = sprintf( "SELECT TABLE_NAME,COLUMN_NAME,DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '?' AND TABLE_SCHEMA = '?' ORDER BY ORDINAL_POSITION", SdbSwap.tbName, SdbSwap.dbName ) ;
+         var sql = sprintf( "SELECT TABLE_NAME,COLUMN_NAME,COLUMN_DEFAULT,DATA_TYPE,IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '?' AND TABLE_SCHEMA = '?' ORDER BY ORDINAL_POSITION", SdbSwap.tbName, SdbSwap.dbName ) ;
          var data = { 'Sql': sql, 'DbName': SdbSwap.dbName, 'Type': 'mysql' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( result ){
@@ -233,7 +233,7 @@
                      { 'type': 'textual', 'value': fieldInfo['COLUMN_NAME'] },
                      { 'type': 'textual', 'value': fieldInfo['DATA_TYPE'] },
                      { 'type': 'checkbox', 'value': false, 'disabled': disabled },
-                     { 'type': 'string' }
+                     { 'type': 'string', 'value': fieldInfo['COLUMN_DEFAULT'] }
                   ] ;
                   insertGridData.push( insertLine ) ;
                } ) ;
@@ -723,7 +723,6 @@
                            break ;
                         case 'IN':
                         case 'NOT IN':
-                           alert(filterInfo['logic'])
                            var tmp = trim( filterInfo['value'] ) ;
                            if( tmp.charAt(0) == '(' && tmp.charAt(tmp.length - 1) == ')' )
                            {
@@ -796,6 +795,7 @@
                grid: { 'tdModel': 'auto', 'gridModel': 'fixed', titleWidth: [ 30, 20, '100px', 50 ] },
                inputList: $.extend( true, {}, insertGridData )
             } ;
+
             $scope.InsertWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定'), function(){
                $scope.ErrorTip = '' ;
                var value = $scope.InsertWindow['config'].getValue() ;
@@ -822,7 +822,7 @@
                   fields += field ;
                   if( operate == false )
                   {
-                     if( typeof( param ) == 'undefined' )
+                     if( typeof( param ) == 'undefined' || param === null )
                      {
                         params += '\'\'' ;
                      }
