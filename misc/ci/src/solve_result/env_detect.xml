@@ -184,7 +184,7 @@
                   <fileset dir="@{dirname}" includes=".RESTART_BY_CHANGECONF"/>
                </path-elements>
             </countstr>
-            <math result="expect_cnt" operand1="${start_cnt_by_tool}" operation="+" operand2="1" datatype="int"/>
+            <math result="expect_cnt" operand1="${start_cnt_by_tool}" operation="+" operand2="2" datatype="int"/>
             <if>
                <isgreaterthan arg1="${str_count}" arg2="${expect_cnt}"/>
                <then>
