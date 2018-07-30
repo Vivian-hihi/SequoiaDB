@@ -11,7 +11,7 @@
 
 > **Note:**
 >
-> * hint 参数是一个包含一个单一元素的 Json 对象，该元素的字段名会被忽略，而其字段值则指定为需要访问索引的名称，当字段值为 null 时，则遍历集合中所有的记录。
+> * 参数`cond`和`hint`的用法与[find()](reference/Sequoiadb_command/SdbCollection/find.md)的相同。
 
 ##返回值##
 

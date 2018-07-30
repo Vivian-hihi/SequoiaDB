@@ -21,11 +21,11 @@
 
 > **Note:**
 >
-> * hint 参数是一个包含一个单一字段的 Json 对象，字段名会被忽略，而其字段值则指定为需要访问索引的名称，当字段值为 null 时，则遍历集合中所有的记录，它的格式为{"":null}或者{"":"<indexname>"}。
+> * 参数`hint`的用法与[find()](reference/Sequoiadb_command/SdbCollection/find.md)的相同。
 >
-> * 当 cond 参数在集合中匹配不到记录时，upsert 会生成一条记录插入到集合中。记录生成规则为：首先从 cond 参数中取出 $et 和 $all 操作符对应的键值对，没有的时候生成空记录。然后使用 rule 规则对其做更新操作，最后加入 setOnInsert 中的键值对。
+> * 当 `cond` 参数在集合中匹配不到记录时，upsert 会生成一条记录插入到集合中。记录生成规则为：首先从 cond 参数中取出 $et 和 $all 操作符对应的键值对，没有的时候生成空记录。然后使用 rule 规则对其做更新操作，最后加入 setOnInsert 中的键值对。
 >
-> * 当 KeepShardingKey 为 false 时，如果包含对分区键的更新操作，将自动剔除掉对分区键的更新，但其他字段更新生效，且不会发生错误。当 KeepShardingKey 为 true 时，将会保留分区键字段。
+> * 当 `KeepShardingKey` 为 false 时，如果包含对分区键的更新操作，将自动剔除掉对分区键的更新，但其他字段更新生效，且不会发生错误。当 KeepShardingKey 为 true 时，将会保留分区键字段。
 >
 > * 目前切分表上，不允许更新分区键。
 

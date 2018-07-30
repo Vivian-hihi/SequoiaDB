@@ -20,9 +20,9 @@
 
 > **Note:**
 >
-> * hint 参数是一个包含一个单一字段的 Json 对象，字段名会被忽略，而其字段值则指定为需要访问索引的名称，当字段值为 null 时，则遍历集合中所有的记录，它的格式为{"":null}或者{"":"<indexname>"}。
+> * 参数`hint`的用法与[find()](reference/Sequoiadb_command/SdbCollection/find.md)的相同。
 >
-> * 当 KeepShardingKey 为 false 时，如果包含对分区键的更新操作，将自动剔除掉对分区键的更新，但其他字段更新生效，且不会发生错误。当 KeepShardingKey 为 true 时，将会保留分区键字段。
+> * 当 `KeepShardingKey` 为 false 时，如果包含对分区键的更新操作，将自动剔除掉对分区键的更新，但其他字段更新生效，且不会发生错误。当 KeepShardingKey 为 true 时，将会保留分区键字段。
 >
 > * 目前切分表上，不允许更新分区键。
 
