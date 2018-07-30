@@ -8,13 +8,13 @@
 find \- Select records from database.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.collectionspace.collection.find([cond],[sel])\f[]\f[]
+\f[B]db.collectionspace.collection.find([cond],[sel])\f[]
 .PP
-\f[B]\f[I]db.collectionspace.collection.find([cond],[sel]).hint([hint])\f[]\f[]
+\f[B]db.collectionspace.collection.find([cond],[sel]).hint([hint])\f[]
 .PP
-\f[B]\f[I]db.collectionspace.collection.find([cond],[sel]).skip([skipNum]).limit([retNum]).sort([sort])\f[]\f[]
+\f[B]db.collectionspace.collection.find([cond],[sel]).skip([skipNum]).limit([retNum]).sort([sort])\f[]
 .PP
-\f[B]\f[I]db.collectionspace.collection.find([cond],[sel])[.hint([hint])][.skip([skipNum])][.limit([retNum])][.sort([sort])]\f[]\f[]
+\f[B]db.collectionspace.collection.find([cond],[sel])[.hint([hint])][.skip([skipNum])][.limit([retNum])][.sort([sort])]\f[]
 .SH CATEGORY
 .PP
 Collection
@@ -54,7 +54,9 @@ use the index and which index to be used.
 when \[aq]hint\[aq] is {"":null}, table scan.
 .IP \[bu] 2
 when \[aq]hint\[aq] contains only one index, such as: {"":"myIdx"}, the query
-will be made using the index named "myIdx" in the currrent collection.
+will be made using the index named "myIdx" in the currrent collection; However,
+when index "myIdx" does not exist in current collection, query goes with table
+scan.
 .IP \[bu] 2
 when \[aq]hint\[aq] contains several indexes, such as:
 {"1":"idx1","2":"idx2","3":"idx3"}, the query will be made using one of the
@@ -228,7 +230,10 @@ T}
 when exception happen, use getLastError() to get the error code and use
 getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
-.SH Examples
+.SH HISTORY
+.PP
+Since v1.0.
+.SH EXAMPLES
 .IP "1." 3
 query all the records without specified condition and selector.
 .nf
@@ -269,7 +274,7 @@ field "name".
 specifed which index to be use to query.
 .nf
 \f[C]
->\ db.foo.test.find(\ {age:\ {$exists:1}\ }\ ).hint(\ {\ "":\ "ageIndex"\ }\ )
+\ \ \ >\ db.foo.test.find(\ {age:\ {$exists:1}\ }\ ).hint(\ {\ "":\ "ageIndex"\ }\ )
 {
 \ \ \ \ "_id":\ {
 \ \ \ \ \ \ \ \ "$oid":\ "5812feb6c842af52b6000007"
