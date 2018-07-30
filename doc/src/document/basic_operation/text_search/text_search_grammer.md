@@ -34,7 +34,7 @@
 	删除全文索引使用 dropIndex 语法，指定索引名即可。
 	
 	```lang-javascript
-	> db.cs.cl.dropIndex('idx')
+	> db.foo.bar.dropIndex('idx')
 	```
 	在索引被删除时，其对应的固定集合空间也会一并删除。
 	
@@ -43,7 +43,7 @@
 	SequoiaDB 适配的全文检索引擎为 Elasticsearch，通过在 SequoiaDB 的查询语法中包含 Elasticsearch 的搜索条件来进行全文检索。基本语法结构为：
 	
 	```lang-javascript
-	> db.cs.cl.find( { "" : { $Text : <search command> } } ).[hint({"":<name>})]
+	> db.foo.bar.find( { "" : { $Text : <search command> } } ).[hint({"":<name>})]
 	```
 
 	其中的 search command 即 Elasticsearch 的搜索条件。在存在多个全文索引的情况下，需要通过 hint 指定使用的索引。当只有一个全文索引时无需指定。
