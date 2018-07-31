@@ -70,7 +70,7 @@ public class TestLobSplitAndRead7849 extends SdbTestBase {
 		ReadLobsTask readLobsTask = new ReadLobsTask();
 		readLobsTask.start(100);
 		SplitCL splitCL = new SplitCL();
-		splitCL.start();
+		splitCL.start();	
 		Assert.assertTrue( readLobsTask.isSuccess(), readLobsTask.getErrorMsg());
 		Assert.assertTrue( splitCL.isSuccess(), splitCL.getErrorMsg());		
 		
@@ -128,6 +128,10 @@ public class TestLobSplitAndRead7849 extends SdbTestBase {
         			String curMd5 = LobOprUtils.getMd5(rbuff);
         			String prevMd5 = oidAndMd5.getMd5();
         			Assert.assertEquals(curMd5, prevMd5);		
+        		}catch(BaseException e){			
+        			if ( e.getErrorCode() != -4 ){
+        				Assert.fail(e.getErrorType()+":"+e.getMessage());
+        			}
         		}
         	}            
         }
