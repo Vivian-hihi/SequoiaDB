@@ -941,7 +941,6 @@ namespace engine
          activityID = _pFreeActivityIDs[ freeActivityIndex % _activityNum ] ;
       }
 
-   done :
       PD_TRACE_EXIT( SDB_OPTCPMON__ALLOCACT ) ;
       return activityID ;
    }
