@@ -11552,6 +11552,12 @@ SDB_EXPORT INT32 sdbLoadCollectionSpace( sdbConnectionHandle cHandle,
    BOOLEAN bsoninit = FALSE ;
    bson query ;
 
+   if ( !csName || !*csName || ossStrlen ( csName ) > CLIENT_CS_NAMESZ )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
    BSON_INIT( query ) ;
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    BSON_APPEND( query, FIELD_NAME_NAME, csName, string ) ;
@@ -11582,6 +11588,12 @@ SDB_EXPORT INT32 sdbLoadCollectionSpace( sdbConnectionHandle cHandle,
                       CMD_ADMIN_PREFIX CMD_NAME_LOAD_COLLECTIONSPACE,
                       0, 0, -1, -1,
                       &query, NULL, NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = insertCachedObject( connection->_tb, csName ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -11643,6 +11655,13 @@ SDB_EXPORT INT32 sdbUnloadCollectionSpace( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+
+   rc = removeCachedObject( connection->_tb, csName, FALSE ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
 
 done:
    BSON_DESTROY( query ) ;
@@ -11863,6 +11882,13 @@ SDB_EXPORT INT32 sdbRenameCollectionSpace( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+
+   rc = removeCachedObject( connection->_tb, pOldName, FALSE ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
 
 done:
    BSON_DESTROY( query ) ;
