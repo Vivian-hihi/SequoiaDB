@@ -18,7 +18,57 @@ TEST(debug, debug)
    ASSERT_TRUE( 1 == 1 ) ;
 }
 
+
 /*
+TEST(debug, load_unload_rename_cs_cl)
+{
+   sdbConnectionHandle connection = 0 ;
+   sdbCollectionHandle collection = 0 ;
+   sdbCursorHandle cursor         = 0 ;
+   sdbCSHandle cs                 = 0 ;
+   sdbCSHandle cs2                = 0 ;
+   INT32 rc                       = SDB_OK ;
+   bson obj ;
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // unload/load cs
+   rc = sdbUnloadCollectionSpace( connection, COLLECTION_SPACE_NAME, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbLoadCollectionSpace( connection, COLLECTION_SPACE_NAME, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // rename cs/cl
+   rc = sdbRenameCollectionSpace( connection, COLLECTION_SPACE_NAME, "tmp", NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbGetCollectionSpace( connection, "tmp", &cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbGetCollectionSpace( connection, "tmp", &cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbRenameCollection( cs, COLLECTION_NAME, "tmp", NULL ) ;   
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbRenameCollection( cs, "tmp", COLLECTION_NAME, NULL ) ;   
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbRenameCollectionSpace( connection, "tmp", COLLECTION_SPACE_NAME, NULL ) ;   
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbGetCollectionSpace( connection, COLLECTION_SPACE_NAME, &cs2 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbGetCollectionSpace( connection, COLLECTION_SPACE_NAME, &cs2 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+
+   sdbDisconnect ( connection ) ;
+   sdbReleaseCursor ( cursor ) ;
+   sdbReleaseCS ( cs ) ;
+   sdbReleaseCS ( cs2 ) ;
+   sdbReleaseCollection ( collection ) ;
+   sdbReleaseConnection ( connection ) ;
+}
+
+
 TEST(debug,sdbGetList_SDB_LIST_GROUPS)
 {
    sdbConnectionHandle db         = 0 ;
