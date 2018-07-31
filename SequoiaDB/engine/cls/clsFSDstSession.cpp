@@ -439,6 +439,7 @@ namespace engine
    INT32 _clsDataDstBaseSession::_extractMeta( const CHAR *objdata,
                                                string &cs,
                                                string &collection,
+                                               utilCLUniqueID &clUniqueID,
                                                UINT32 &pageSize,
                                                UINT32 &attributes,
                                                INT32 &lobPageSize,
@@ -453,13 +454,16 @@ namespace engine
          BSONObj obj( objdata ) ;
          BSONElement pageEle ;
          BSONElement collecionEle ;
+         BSONElement uniqueIDEle ;
          BSONElement ele ;
          BSONElement attri ;
          BSONElement compressorType ;
          BSONElement lobPageEle ;
          BSONElement typeEle ;
          BSONElement extOptEle ;
-         BSONElement csEle = obj.getField( CLS_FS_CS_NAME ) ;
+         BSONElement csEle ;
+
+         csEle = obj.getField( CLS_FS_CS_NAME ) ;
          PD_LOG( PDDEBUG, "Session[%s]: get meta data: %s", sessionName(),
                  obj.toString().c_str() ) ;
          if ( csEle.eoo() || String != csEle.type() )
@@ -474,6 +478,19 @@ namespace engine
             goto error ;
          }
          collection = collecionEle.String() ;
+
+         uniqueIDEle = obj.getField( CLS_FS_COLLECTION_UNIQUEID ) ;
+         if ( !uniqueIDEle.eoo() )
+         {
+            if ( NumberLong == uniqueIDEle.type() )
+            {
+               clUniqueID = (UINT64)uniqueIDEle.numberLong() ;
+            }
+            else
+            {
+               goto error ;
+            }
+         }
 
          ele = obj.getField( CLS_FS_CS_META_NAME ) ;
          if ( ele.eoo() || !ele.isABSONObj() )
@@ -660,6 +677,8 @@ namespace engine
          INT32 rc = SDB_OK ;
          string cs ;
          string collection ;
+         utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
+         utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
          UINT32 pageSize = 0 ;
          UINT32 attributes = 0 ;
          UTIL_COMPRESSOR_TYPE compType = UTIL_COMPRESSOR_INVALID ;
@@ -671,7 +690,7 @@ namespace engine
          DMS_STORAGE_TYPE csType = DMS_STORAGE_NORMAL ;
          // extract the meta response
          if ( SDB_OK != _extractMeta( objdata,
-                                      cs, collection,
+                                      cs, collection, clUniqueID,
                                       pageSize,
                                       attributes,
                                       lobPageSize,
@@ -698,11 +717,15 @@ namespace engine
          PD_LOG( PDEVENT, "Session[%s]: Begin to sync collection[%s]",
                  sessionName(), fullName ) ;
 
+         // get cs unique id
+         csUniqueID = utilGetCSUniqueID( clUniqueID ) ;
+
          // create local cs and collection
-         rc = _replayer.replayCrtCS( cs.c_str(), pageSize, lobPageSize,
+         rc = _replayer.replayCrtCS( cs.c_str(), csUniqueID,
+                                     pageSize, lobPageSize,
                                      csType, eduCB() ) ;
-         rc = _replayer.replayCrtCollection( fullName, attributes,
-                                             eduCB(), compType,
+         rc = _replayer.replayCrtCollection( fullName, clUniqueID,
+                                             attributes, eduCB(), compType,
                                              ( extOptions.isEmpty() ?
                                                NULL : &extOptions ) ) ;
          if ( SDB_OK != rc && SDB_DMS_EXIST != rc )
@@ -1379,6 +1402,7 @@ namespace engine
          while ( itCS != _mapEmptyCS.end() )
          {
             rc = _replayer.replayCrtCS( itCS->first.c_str(),
+                                        itCS->second.csUniqueID,
                                         itCS->second.pageSize,
                                         itCS->second.lobPageSize,
                                         itCS->second.type,
@@ -1761,9 +1785,11 @@ namespace engine
                BSONElement elePageSZ = csObj.getField( CLS_FS_PAGE_SIZE ) ;
                BSONElement eleLobPageSZ = csObj.getField( CLS_FS_LOB_PAGE_SIZE ) ;
                BSONElement eleType = csObj.getField( CLS_FS_CS_TYPE ) ;
+               BSONElement eleID = csObj.getField( CLS_FS_CS_UNIQUEID ) ;
                INT32 pageSz = 0 ;
                INT32 lobPageSz = DMS_DEFAULT_LOB_PAGE_SZ ;
                DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ;
+               utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
 
                if ( String != eleName.type() ||
                     NumberInt != elePageSZ.type() )
@@ -1811,9 +1837,20 @@ namespace engine
                   }
                }
 
+               if ( EOO != eleID.type() ||
+                    NumberInt != eleID.type() )
+               {
+                  PD_LOG( PDERROR, "Session[%s]: parse a collection space "
+                          "ele[%s] failed", sessionName(),
+                          next.toString().c_str() ) ;
+                  goto error ;
+               }
+               csUniqueID = ( utilCLUniqueID )eleID.numberInt() ;
+
                _mapEmptyCS[ eleName.str() ] = clsCSInfoTuple( pageSz,
                                                               lobPageSz,
-                                                              type ) ;
+                                                              type,
+                                                              csUniqueID ) ;
             }
          }
 

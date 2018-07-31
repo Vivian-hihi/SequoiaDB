@@ -294,6 +294,9 @@ namespace engine
                                     INT32 assignType,
                                     _pmdEDUCB * cb,
                                     std::vector<UINT32> & groupIDList ) ;
+
+   private :
+      utilCLUniqueID _clUniqueID ;
    } ;
 
    typedef class _catCtxCreateCL catCtxCreateCL ;
@@ -389,7 +392,6 @@ namespace engine
       virtual INT32 _makeReply ( rtnContextBuf &buffObj ) ;
 
    protected :
-      BSONObj     _alterArguments ;
       rtnAlterJob _alterJob ;
    } ;
 

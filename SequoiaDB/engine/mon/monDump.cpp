@@ -2306,6 +2306,7 @@ namespace engine
 
          /// add name & space name
          ob.append ( FIELD_NAME_NAME, full._name ) ;
+         ob.append ( FIELD_NAME_UNIQUEID, (INT64)full._clUniqueID ) ;
          const CHAR *pDot = ossStrchr( full._name, '.' ) ;
          if ( pDot )
          {
@@ -2559,6 +2560,8 @@ namespace engine
 
          /// add name & space name
          ob.append ( FIELD_NAME_NAME, full._name ) ;
+         ob.append ( FIELD_NAME_UNIQUEID, full._csUniqueID ) ;
+
          /// add detial
          BSONArrayBuilder sub( ob.subarrayStart( FIELD_NAME_COLLECTION ) ) ;
          // do not list detailed collections if we are on temp cs
@@ -3059,6 +3062,7 @@ namespace engine
 
          /// add name & space name
          ob.append ( FIELD_NAME_NAME, su._name ) ;
+         ob.append ( FIELD_NAME_UNIQUEID, su._csUniqueID ) ;
          ob.append ( FIELD_NAME_ID, su._CSID ) ;
          ob.append ( FIELD_NAME_LOGICAL_ID, su._logicalCSID ) ;
          ob.append ( FIELD_NAME_PAGE_SIZE, su._pageSize ) ;

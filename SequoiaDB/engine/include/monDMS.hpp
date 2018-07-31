@@ -280,11 +280,13 @@ namespace engine
    {
    public :
       CHAR _name [ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
+      utilCLUniqueID _clUniqueID ;
       MON_CL_DETAIL_MAP _details ;
 
       _monCollection()
       {
          _name[ 0 ]  = 0 ;
+         _clUniqueID = UTIL_INVALID_UNIQUEID ;
       }
       OSS_INLINE BOOLEAN operator<(const _monCollection &r) const
       {
@@ -342,12 +344,14 @@ namespace engine
          dmsStorageUnitID _suID ;
          UINT32 _logicalID ;
          MON_CL_SIM_VEC _clList ;
+         utilCSUniqueID _csUniqueID ;
 
          _monCSSimple ()
          {
             _name[ 0 ] = 0 ;
             _suID = DMS_INVALID_SUID ;
             _logicalID = DMS_INVALID_LOGICCSID ;
+            _csUniqueID = UTIL_INVALID_UNIQUEID ;
          }
 
          BOOLEAN operator< ( const _monCSSimple &r ) const
@@ -400,6 +404,7 @@ namespace engine
    {
    public :
       CHAR _name [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
+      utilCSUniqueID _csUniqueID ;
       MON_CL_SIM_VEC _collections ;
       INT32 _pageSize ;
       INT32 _clNum ;
@@ -429,6 +434,7 @@ namespace engine
       _monCollectionSpace ()
       {
          ossMemset ( _name, 0, sizeof(_name)) ;
+         _csUniqueID = UTIL_INVALID_UNIQUEID ;
          _pageSize = 0 ;
          _clNum    = 0 ;
          _totalRecordNum = 0 ;
@@ -455,6 +461,7 @@ namespace engine
       _monCollectionSpace ( const _monCollectionSpace &right )
       {
          ossStrcpy ( _name, right._name ) ;
+         _csUniqueID = right._csUniqueID ;
          _collections = right._collections ;
          _pageSize = right._pageSize ;
          _clNum    = right._clNum ;
@@ -491,6 +498,7 @@ namespace engine
       _monCollectionSpace &operator= (const _monCollectionSpace &right)
       {
          ossStrcpy ( _name, right._name ) ;
+         _csUniqueID = right._csUniqueID ;
          _collections = right._collections ;
          _pageSize = right._pageSize ;
          _clNum    = right._clNum ;
@@ -527,6 +535,7 @@ namespace engine
    {
    public :
       CHAR _name [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
+      utilCSUniqueID _csUniqueID ;
       dmsStorageUnitID _CSID ;
       UINT32 _logicalCSID ;
       SINT32 _pageSize ;
@@ -554,6 +563,7 @@ namespace engine
       _monStorageUnit()
       {
          _name[ 0 ] = 0 ;
+         _csUniqueID = UTIL_INVALID_UNIQUEID ;
          _CSID = -1 ;
          _logicalCSID = 0 ;
          _pageSize = 0 ;

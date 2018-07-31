@@ -108,8 +108,10 @@ namespace engine
    class _CoordCataInfo : public SDBObject
    {
    public:
-      _CoordCataInfo( INT32 version, const char *pCollectionName )
-      :_catlogSet ( pCollectionName, FALSE )
+      _CoordCataInfo( INT32 version,
+                      const char *pCollectionName,
+                      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID )
+      :_catlogSet ( pCollectionName, clUniqueID, FALSE )
       {
          _catlogSet.setSKSite( clsGetShardingKeySite() ) ;
       }
@@ -267,6 +269,11 @@ namespace engine
          return _catlogSet.name() ;
       }
 
+      utilCLUniqueID clUniqueID() const
+      {
+         return _catlogSet.clUniqueID() ;
+      }
+
       UINT32 getShardingKeySiteID() const
       {
          return _catlogSet.getShardingKeySiteID() ;
@@ -282,8 +289,8 @@ namespace engine
    private:
       // if the catalogue-info is update, build a new one, don't modify the old
       _CoordCataInfo()
-      :_catlogSet( NULL, FALSE ) 
-      {}  
+      :_catlogSet( NULL, FALSE )
+      {}
 
    private:
       clsCatalogSet        _catlogSet ;

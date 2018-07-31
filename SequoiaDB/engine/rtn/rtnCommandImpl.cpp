@@ -1049,7 +1049,9 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCREATECSCOMMAND, "rtnCreateCollectionSpaceCommand" )
    INT32 rtnCreateCollectionSpaceCommand ( const CHAR *pCollectionSpace,
                                            pmdEDUCB *cb, SDB_DMSCB *dmsCB,
-                                           SDB_DPSCB *dpsCB, INT32 pageSize,
+                                           SDB_DPSCB *dpsCB,
+                                           utilCSUniqueID csUniqueID,
+                                           INT32 pageSize,
                                            INT32 lobPageSize,
                                            DMS_STORAGE_TYPE type,
                                            BOOLEAN sysCall )
@@ -1130,7 +1132,8 @@ namespace engine
       }
 
       // new storage unit, will insert into dmsCB->addCollectionSpace
-      su = SDB_OSS_NEW dmsStorageUnit ( pCollectionSpace, 1,
+      su = SDB_OSS_NEW dmsStorageUnit ( pCollectionSpace,
+                                        csUniqueID, 1,
                                         pmdGetBuffPool(),
                                         pageSize,
                                         lobPageSize,
@@ -1180,8 +1183,9 @@ namespace engine
          goto error ;
       }
 
-      PD_LOG( PDEVENT, "Create collectionspace[%s] succeed, PageSize:%u, "
-              "LobPageSize:%u", pCollectionSpace, pageSize, lobPageSize ) ;
+      PD_LOG( PDEVENT, "Create collectionspace[name: %s, id: %u] succeed, "
+              "PageSize:%u, LobPageSize:%u", pCollectionSpace,
+              csUniqueID, pageSize, lobPageSize ) ;
 
    done :
       // Unlock the existing storage unit
@@ -1213,6 +1217,7 @@ namespace engine
                                       _pmdEDUCB * cb,
                                       SDB_DMSCB *dmsCB,
                                       SDB_DPSCB *dpsCB,
+                                      utilCLUniqueID clUniqueID,
                                       UTIL_COMPRESSOR_TYPE compressorType,
                                       INT32 flags,
                                       BOOLEAN sysCall,
@@ -1222,7 +1227,7 @@ namespace engine
       return rtnCreateCollectionCommand ( pCollection,
                                           obj, attributes,
                                           cb, dmsCB, dpsCB,
-                                          compressorType,
+                                          clUniqueID, compressorType,
                                           flags, sysCall, extOptions ) ;
    }
 
@@ -1230,9 +1235,10 @@ namespace engine
    INT32 rtnCreateCollectionCommand ( const CHAR *pCollection,
                                       const BSONObj &shardingKey,
                                       UINT32 attributes,
-                                      _pmdEDUCB * cb,
+                                      _pmdEDUCB *cb,
                                       SDB_DMSCB *dmsCB,
                                       SDB_DPSCB *dpsCB,
+                                      utilCLUniqueID clUniqueID,
                                       UTIL_COMPRESSOR_TYPE compType,
                                       INT32 flags, BOOLEAN sysCall,
                                       const BSONObj *extOptions )
@@ -1244,10 +1250,10 @@ namespace engine
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       dmsStorageUnit *su    = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
-      const CHAR *pCollectionShortName = NULL ;
       BOOLEAN writable      = FALSE ;
-      UINT16 collectionID = DMS_INVALID_MBID ;
-      UINT32 logicalID = DMS_INVALID_CLID ;
+      UINT16 collectionID   = DMS_INVALID_MBID ;
+      UINT32 logicalID      = DMS_INVALID_CLID ;
+      const CHAR *pCollectionShortName = NULL ;
 
       // Check writable before su lock
       rc = dmsCB->writable( cb ) ;
@@ -1271,14 +1277,15 @@ namespace engine
          temp [ pCollectionShortName - pCollection - 1 ] = '\0' ;
          if ( SDB_OK == rtnCreateCollectionSpaceCommand ( temp, cb,
                                                           dmsCB, dpsCB,
+                                                          UTIL_INVALID_UNIQUEID,
                                                           DMS_PAGE_SIZE_DFT,
                                                           DMS_DEFAULT_LOB_PAGE_SZ,
                                                           type,
                                                           sysCall ) )
          {
             //restore '\0' to '.'
-            rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB,
-                                                   &su, &pCollectionShortName,
+            rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
+                                                   &pCollectionShortName,
                                                    suID ) ;
          }
       }
@@ -1301,7 +1308,8 @@ namespace engine
       }
 
       rc = su->data()->addCollection ( pCollectionShortName, &collectionID,
-                                       attributes, cb, dpsCB, 0, sysCall,
+                                       clUniqueID, attributes, cb,
+                                       dpsCB, 0, sysCall,
                                        compType, &logicalID, extOptions ) ;
       if ( rc )
       {
@@ -1353,16 +1361,18 @@ namespace engine
          mbAttr2String( attributes, attrStr, sizeof( attrStr ) - 1 ) ;
          if ( extOptions && !extOptions->isEmpty())
          {
-            PD_LOG( PDEVENT, "Create collection[%s] succeed, ShardingKey:%s, "
-                    "Attr:%s(0x%08x), CompressType:%s(%d), External options:%s",
-                    pCollection, shardingKey.toString().c_str(), attrStr,
+            PD_LOG( PDEVENT, "Create collection[name: %s, id: %llu] succeed, "
+                    "ShardingKey:%s, Attr:%s(0x%08x), CompressType:%s(%d), "
+                    "External options:%s", pCollection, clUniqueID,
+                    shardingKey.toString().c_str(), attrStr,
                     attributes, utilCompressType2String( (UINT8)compType ),
                     compType, extOptions->toString().c_str() ) ;
          }
          else
          {
-            PD_LOG( PDEVENT, "Create collection[%s] succeed, ShardingKey:%s, "
-                    "Attr:%s(0x%08x), CompressType:%s(%d)", pCollection,
+            PD_LOG( PDEVENT, "Create collection[name: %s, id: %llu] succeed, "
+                    "ShardingKey:%s, Attr:%s(0x%08x), CompressType:%s(%d)",
+                    pCollection, clUniqueID,
                     shardingKey.toString().c_str(), attrStr, attributes,
                     utilCompressType2String( (UINT8)compType ),
                     compType ) ;
@@ -1399,7 +1409,8 @@ namespace engine
                                  SDB_DMSCB *dmsCB,
                                  SDB_DPSCB *dpsCB,
                                  BOOLEAN isSys,
-                                 INT32 sortBufferSize )
+                                 INT32 sortBufferSize,
+                                 utilCLUniqueID clUniqueID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCREATEINDEXCOMMAND ) ;
@@ -1415,8 +1426,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
       writable = TRUE ;
 
-      rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
-                                             &pCollectionShortName, suID ) ;
+      rc = rtnResolveCollectionNameAndLock( pCollection, clUniqueID, dmsCB, &su,
+                                            &pCollectionShortName, suID ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
@@ -1431,8 +1442,8 @@ namespace engine
          goto error ;
       }
 
-      rc = su->createIndex ( pCollectionShortName, indexObj,
-                             cb, dpsCB, isSys, NULL, sortBufferSize ) ;
+      rc = su->createIndex ( pCollectionShortName, indexObj, cb, dpsCB,
+                             isSys, NULL, sortBufferSize, clUniqueID ) ;
       if ( rc )
       {
          // SDB_IXM_EXIST may happen when user mistakenly type index name with
@@ -1442,8 +1453,9 @@ namespace engine
          goto error ;
       }
 
-      PD_LOG( PDEVENT, "Create index[%s] for collection[%s] succeed",
-              indexObj.toString().c_str(), pCollection ) ;
+      PD_LOG( PDEVENT,
+              "Create index[%s] for collection[name: %s, id: %llu] succeed",
+              indexObj.toString().c_str(), pCollection, clUniqueID ) ;
 
    done :
       if ( DMS_INVALID_CS != suID )
@@ -1466,7 +1478,8 @@ namespace engine
                                pmdEDUCB *cb,
                                SDB_DMSCB *dmsCB,
                                SDB_DPSCB *dpsCB,
-                               BOOLEAN sysCall )
+                               BOOLEAN sysCall,
+                               utilCLUniqueID clUniqueID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDROPINDEXCOMMAND ) ;
@@ -1491,8 +1504,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
       writable = TRUE ;
 
-      rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
-                                             &pCollectionShortName, suID ) ;
+      rc = rtnResolveCollectionNameAndLock( pCollection, clUniqueID, dmsCB, &su,
+                                            &pCollectionShortName, suID ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
@@ -1503,12 +1516,13 @@ namespace engine
       if ( identifier.type() == jstOID )
       {
          identifier.Val(oid) ;
-         rc = su->dropIndex ( pCollectionShortName, oid, cb, dpsCB, sysCall ) ;
+         rc = su->dropIndex ( pCollectionShortName, oid, cb, dpsCB, sysCall,
+                              NULL, clUniqueID ) ;
       }
       else if ( identifier.type() == String )
       {
          rc = su->dropIndex ( pCollectionShortName, identifier.valuestr(),
-                              cb, dpsCB, sysCall ) ;
+                              cb, dpsCB, sysCall, NULL, clUniqueID ) ;
       }
       else
       {
@@ -1523,8 +1537,9 @@ namespace engine
          goto error ;
       }
 
-      PD_LOG( PDEVENT, "Drop index[%s] for collection[%s] succeed",
-              identifier.toString().c_str(), pCollection ) ;
+      PD_LOG( PDEVENT,
+              "Drop index[%s] for collection[name: %s, id: %llu] succeed",
+              identifier.toString().c_str(), pCollection, clUniqueID ) ;
 
    done :
       if ( DMS_INVALID_CS != suID )

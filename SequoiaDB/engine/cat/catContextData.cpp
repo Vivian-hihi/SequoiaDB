@@ -921,7 +921,9 @@ namespace engine
 
                ++iterSubCL ;
             }
-         } else {
+         }
+         else
+         {
             std::string mainCLName = cataSet.getMainCLName() ;
             if ( !mainCLName.empty() )
             {
@@ -1219,6 +1221,7 @@ namespace engine
    {
       _executeAfterLock = TRUE ;
       _needRollback = TRUE ;
+      _clUniqueID = UTIL_INVALID_UNIQUEID ;
    }
 
    _catCtxCreateCL::~_catCtxCreateCL ()
@@ -1385,6 +1388,19 @@ namespace engine
          goto error ;
       }
 
+      // get unique id
+      {
+         BSONElement ele = boSpace.getField( CAT_CS_CLUNIQUEHWM ) ;
+         PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                   "Failed to get field[%s], type: %d",
+                   CAT_CS_CLUNIQUEHWM, ele.type() );
+
+         clInfo._clUniqueID = (INT64)ele.numberLong() + 1 ;
+         _clUniqueID = clInfo._clUniqueID ;
+
+         fieldMask |= UTIL_CL_UNIQUEID_FIELD ;
+      }
+
       /// choose a group to create cl
       rc = _chooseGroupOfCl( boDomain, boSpace, clInfo, cb,
                              _groupList, splitList ) ;
@@ -1424,11 +1440,13 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXCREATECL_EXECUTE_INT ) ;
 
-      rc = catCreateCLStep( _targetName, _boTarget,
+      rc = catCreateCLStep( _targetName, _clUniqueID, _boTarget,
                             cb, _pDmsCB, _pDpsCB, w ) ;
       PD_RC_CHECK( rc, PDERROR,
-                   "Failed to create collection [%s], rc: %d",
-                   _targetName.c_str(), rc ) ;
+                   "Failed to create collection[name: %s, id: %llu], rc: %d",
+                   _targetName.c_str(), _clUniqueID, rc ) ;
+      PD_LOG( PDDEBUG, "Create collection[name: %s, id: %llu] succeed.",
+              _targetName.c_str(), _clUniqueID ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB_CATCTXCREATECL_EXECUTE_INT, rc ) ;
@@ -1974,7 +1992,9 @@ namespace engine
 
                ++iterSubCL ;
             }
-         } else {
+         }
+         else
+         {
             std::string mainCLName = cataSet.getMainCLName() ;
             if ( !mainCLName.empty() )
             {
@@ -2250,6 +2270,8 @@ namespace engine
                    "collection [%s], rc: %d", task->getActionName(),
                    _targetName.c_str(), rc ) ;
 
+      // It will add into collectionSet with other cl.
+      // So we can lock cl and lock sharding after.
       catTask->disableLocks() ;
 
       rc = catTask->checkTask( cb, *lockMgr ) ;

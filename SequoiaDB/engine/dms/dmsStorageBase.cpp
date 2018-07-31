@@ -1107,6 +1107,18 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dmsStorageBase::setCSUniqueID( utilCSUniqueID csUniqueID )
+   {
+      INT32 rc = SDB_OK ;
+
+      _pStorageInfo->_csUniqueID = csUniqueID ;
+      _dmsHeader->_csUniqueID    = csUniqueID ;
+
+      rc = flushHeader( TRUE ) ;
+
+      return SDB_OK ;
+   }
+
    INT32 _dmsStorageBase::setLobPageSize ( UINT32 lobPageSize )
    {
       INT32 rc = SDB_OK ;
@@ -1289,6 +1301,7 @@ namespace engine
       pHeader->_commitFlag = 0 ;
       pHeader->_commitLsn  = ~0 ;
       pHeader->_commitTime = 0 ;
+      pHeader->_csUniqueID = _pStorageInfo->_csUniqueID ;
    }
 
    INT32 _dmsStorageBase::_checkPageSize( dmsStorageUnitHeader * pHeader )
@@ -1426,6 +1439,11 @@ namespace engine
                  _segmentPages ) ;
          rc = SDB_SYS ;
          goto error ;
+      }
+
+      if ( _pStorageInfo->_csUniqueID != pHeader->_csUniqueID )
+      {
+         _pStorageInfo->_csUniqueID = pHeader->_csUniqueID ;
       }
 
       PD_LOG ( PDDEBUG, "Validated storage unit file %s\n"

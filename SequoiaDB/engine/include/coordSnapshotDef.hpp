@@ -132,6 +132,7 @@
 
 #define COORD_SNAPSHOTCL_INPUT         "{$project:{\
                                                 Name:1,\
+                                                UniqueID:1,\
                                                 GroupName:\"$Details.$[0].GroupName\",\
                                                 ID:\"$Details.$[0].ID\",\
                                                 LogicalID:\"$Details.$[0].LogicalID\",\
@@ -149,6 +150,7 @@
                                        }\n\
                                        {$project:{\
                                                 Name:1,\
+                                                UniqueID:1,\
                                                 GroupName:1,\
                                                 Details:{ID:1,LogicalID:1,Sequence:1,\
                                                          Indexes:1,Status:1,TotalRecords:1,TotalDataPages:1,\
@@ -160,18 +162,21 @@
                                                 _id:{Name:\"$Name\",\
                                                      GroupName:\"$GroupName\"},\
                                                 Name:{$first:\"$Name\"},\
+                                                UniqueID:{$first:\"$UniqueID\"},\
                                                 Group:{$push:\"$Details\"},\
                                                 GroupName:{$first:\"$GroupName\"}\
                                                 }\
                                        }\n\
                                        {$project:{\
                                                 Name:1,\
+                                                UniqueID:1,\
                                                 Details:{GroupName:1,Group:1}\
                                                 }\
                                        }\n\
                                        {$group:{\
                                                 _id:\"$Name\",\
                                                 Name:{$first:\"$Name\"},\
+                                                UniqueID:{$first:\"$UniqueID\"},\
                                                 Details:{$push:\"$Details\"}\
                                                 }\
                                        }\n\
@@ -181,6 +186,7 @@
 #define COORD_SNAPSHOTCS_INPUT         "{$group:{\
                                                 _id:\"$Name\",\
                                                 Name:{$first:\"$Name\"},\
+                                                UniqueID:{$first:\"$UniqueID\"},\
                                                 PageSize:{$first:\"$PageSize\"},\
                                                 LobPageSize:{$first:\"$LobPageSize\"},\
                                                 TotalSize:{$sum:\"$TotalSize\"},\

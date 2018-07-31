@@ -66,6 +66,7 @@ namespace engine
       std::string    name ;
       UINT32         groupID ;
       NET_HANDLE     netHandle ;
+      utilCLUniqueID clUniqueID ;
 
       _clsEventItem ()
       {
@@ -74,6 +75,7 @@ namespace engine
          requestID = 0 ;
          groupID = 0 ;
          netHandle = NET_INVALID_HANDLE ;
+         clUniqueID = UTIL_INVALID_UNIQUEID ;
       }
    } ;
    typedef class _clsEventItem clsEventItem ;
@@ -84,12 +86,13 @@ namespace engine
    class _clsCSEventItem : public SDBObject
    {
       public:
-         std::string    csName ;
-         ossEvent       event ;
-         UINT32         pageSize ;
-         UINT32         lobPageSize ;
-         DMS_STORAGE_TYPE    type ;
-         NET_HANDLE     netHandle ;
+         std::string       csName ;
+         ossEvent          event ;
+         UINT32            pageSize ;
+         UINT32            lobPageSize ;
+         DMS_STORAGE_TYPE  type ;
+         NET_HANDLE        netHandle ;
+         utilCSUniqueID    csUniqueID ;
 
          _clsCSEventItem()
          {
@@ -97,6 +100,7 @@ namespace engine
             lobPageSize = 0 ;
             type = DMS_STORAGE_NORMAL ;
             netHandle = NET_INVALID_HANDLE ;
+            csUniqueID = UTIL_INVALID_UNIQUEID ;
          }
    } ;
    typedef _clsCSEventItem clsCSEventItem ;
@@ -145,6 +149,9 @@ namespace engine
       typedef std::map<std::string, clsEventItem*>       MAP_CAT_EVENT ;
       typedef MAP_CAT_EVENT::iterator                    MAP_CAT_EVENT_IT ;
 
+      typedef std::map<utilCLUniqueID, clsEventItem*>    MAP_CLID_EVENT ;
+      typedef MAP_CLID_EVENT::iterator                   MAP_CLID_EVENT_IT ;
+
       typedef std::map<UINT32, clsEventItem*>            MAP_NM_EVENT ;
       typedef MAP_NM_EVENT::iterator                     MAP_NM_EVENT_IT ;
 
@@ -182,21 +189,22 @@ namespace engine
          clsFreezingWindow *getFreezingWindow() ;
          clsDCMgr* getDCMgr() ;
 
-         INT32 getAndLockCataSet( const CHAR *name, clsCatalogSet **ppSet,
+         INT32 getAndLockCataSet( const CHAR *name, utilCLUniqueID clUniqueID,
+                                  clsCatalogSet **ppSet,
                                   BOOLEAN noWithUpdate = TRUE,
                                   INT64 waitMillSec = CLS_SHARD_TIMEOUT,
                                   BOOLEAN *pUpdated = NULL ) ;
          INT32 unlockCataSet( clsCatalogSet *catSet ) ;
 
          INT32 getAndLockGroupItem( UINT32 id, clsGroupItem **ppItem,
-                                     BOOLEAN noWithUpdate = TRUE,
-                                     INT64 waitMillSec = CLS_SHARD_TIMEOUT,
-                                     BOOLEAN *pUpdated = NULL ) ;
+                                    BOOLEAN noWithUpdate = TRUE,
+                                    INT64 waitMillSec = CLS_SHARD_TIMEOUT,
+                                    BOOLEAN *pUpdated = NULL ) ;
          INT32 unlockGroupItem( clsGroupItem *item ) ;
 
-         INT32 rGetCSInfo( const CHAR *csName, UINT32 &pageSize,
-                           UINT32 &lobPageSize,
-                           DMS_STORAGE_TYPE &type,
+         INT32 rGetCSInfo( const CHAR *csName, utilCSUniqueID &csUniqueID,
+                           UINT32 &pageSize,
+                           UINT32 &lobPageSize, DMS_STORAGE_TYPE &type,
                            INT64 waitMillSec = CLS_SHARD_TIMEOUT ) ;
 
          INT32 updateDCBaseInfo() ;
@@ -215,6 +223,10 @@ namespace engine
 
          INT32 syncUpdateCatalog ( const CHAR *pCollectionName,
                                    INT64 millsec = CLS_SHARD_TIMEOUT ) ;
+         INT32 syncUpdateCatalog ( utilCLUniqueID clUniqueID,
+                                   const CHAR *pCollectionName,
+                                   INT64 millsec = CLS_SHARD_TIMEOUT ) ;
+
          INT32 syncUpdateGroupInfo ( UINT32 groupID,
                                      INT64 millsec = CLS_SHARD_TIMEOUT ) ;
          NodeID nodeID () const ;
@@ -231,19 +243,24 @@ namespace engine
                                   INT64 millsec = 0 ) ;
 
          INT32 _sendCatalogReq ( const CHAR *pCollectionName,
+                                 utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID,
                                  UINT64 requestID = 0,
                                  NET_HANDLE *pHandle = NULL,
-                                 INT64 millsec = 0 ) ;
+                                 INT64 millsec = 0
+                               ) ;
 
          INT32 _sendGroupReq ( UINT32 groupID, UINT64 requestID = 0,
                                NET_HANDLE *pHandle = NULL,
                                INT64 millsec = 0 ) ;
 
-         INT32 _sendCSInfoReq ( const CHAR *pCSName, UINT64 requestID = 0,
+         INT32 _sendCSInfoReq ( const CHAR *pCSName,
+                                utilCSUniqueID csUniqueID,
+                                UINT64 requestID = 0,
                                 NET_HANDLE *pHandle = NULL,
                                 INT64 millsec = 0 ) ;
 
          clsEventItem *_findCatSyncEvent ( const CHAR *pCollectionName,
+                                           utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID,
                                            BOOLEAN bCreate = FALSE ) ;
          clsEventItem *_findCatSyncEvent ( UINT64 requestID ) ;
 
@@ -281,6 +298,7 @@ namespace engine
          clsDCMgr                      *_pDCMgr ;
          ossSpinXLatch                 _catLatch ;
          MAP_CAT_EVENT                 _mapSyncCatEvent ;
+         MAP_CLID_EVENT                _mapSyncCLIDEvent ;
          MAP_NM_EVENT                  _mapSyncNMEvent ;
          MAP_CS_EVENT                  _mapSyncCSEvent ;
          UINT64                        _requestID ;

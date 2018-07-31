@@ -121,6 +121,7 @@ namespace engine
             SDB_RTNCB *pRtnCB = krcb->getRTNCB() ;
 
             const _monCollectionSpace &cs = *iterCS ;
+            utilCSUniqueID csUniqueID = cs._csUniqueID ;
             UINT32 pageSize = DMS_PAGE_SIZE_DFT ;
             UINT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
             DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ;
@@ -142,7 +143,8 @@ namespace engine
             }
 
             // Lock space first
-            rc = pDmsCB->nameToSUAndLock( cs._name, suID, &su, SHARED ) ;
+            rc = pDmsCB->nameToSUAndLock( cs._name, csUniqueID,
+                                          suID, &su, SHARED ) ;
 
             if ( SDB_OK != rc )
             {
@@ -159,7 +161,8 @@ namespace engine
                continue ;
             }
 
-            rc = pShdMgr->rGetCSInfo( cs._name, pageSize, lobPageSize, type ) ;
+            rc = pShdMgr->rGetCSInfo( cs._name, csUniqueID, pageSize,
+                                      lobPageSize, type ) ;
 
             pDmsCB->suUnlock( suID, SHARED ) ;
             suID = DMS_INVALID_SUID ;
@@ -172,9 +175,9 @@ namespace engine
 
             PD_LOG( PDWARNING,
                     "clsStorageCheckJob: "
-                    "space [%s] doesn't exist in catalog but exists in "
+                    "space[name: %s, id: %u] doesn't exist in catalog but exists in "
                     "storage, remove it from storage",
-                    cs._name ) ;
+                    cs._name, csUniqueID ) ;
 
             do
             {
@@ -196,15 +199,15 @@ namespace engine
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDWARNING,
-                          "clsStorageCheckJob: "
-                          "failed to open DelCS context [%s], rc: %d",
-                          cs._name, rc ) ;
+                          "clsStorageCheckJob: failed to "
+                          "open DelCS context[name: %s, id: %u], rc: %d",
+                          cs._name, csUniqueID, rc ) ;
                   break ;
                }
 
                // Now, check the catalog again, if someone re-create the
                // collection space, kill the context
-               rc = pShdMgr->rGetCSInfo( cs._name, pageSize,
+               rc = pShdMgr->rGetCSInfo( cs._name, csUniqueID, pageSize,
                                          lobPageSize, type ) ;
                if ( SDB_DMS_CS_NOTEXIST != rc )
                {

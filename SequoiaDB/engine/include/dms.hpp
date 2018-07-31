@@ -40,6 +40,7 @@
 #define DMS_HPP_
 #include "core.hpp"
 #include "oss.hpp"
+#include "utilUniqueID.hpp"
 
 #include <string>
 

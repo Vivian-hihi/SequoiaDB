@@ -568,6 +568,7 @@ namespace engine
 
       BSONObj indexDef ;
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
+      utilCLUniqueID clUniqueID    = UTIL_INVALID_UNIQUEID ;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
       dpsTransCB *pTransCB         = pmdGetKRCB()->getTransCB();
@@ -710,7 +711,9 @@ namespace engine
          {
             _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
                                    sizeof(fullName) ) ;
-            rc = dpsIXCrt2Record( fullName, indexDef, record ) ;
+            clUniqueID = context->mb()->_clUniqueID ;
+
+            rc = dpsIXCrt2Record( fullName, clUniqueID, indexDef, record ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build record:%d", rc ) ;
 
             rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
@@ -1015,6 +1018,7 @@ namespace engine
    {
       INT32 rc                     = SDB_OK ;
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
+      utilCLUniqueID clUniqueID    = UTIL_INVALID_UNIQUEID ;
       dpsTransCB *pTransCB         = pmdGetKRCB()->getTransCB() ;
       dpsMergeInfo info ;
       dpsLogRecord &record  = info.getMergeBlock().record() ;
@@ -1092,8 +1096,9 @@ namespace engine
          if ( dpscb )
          {
             indexDef = indexCB.getDef().getOwned() ;
+            clUniqueID = context->mb()->_clUniqueID ;
 
-            rc = dpsIXDel2Record( fullName, indexDef, record ) ;
+            rc = dpsIXDel2Record( fullName, clUniqueID, indexDef, record ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
 
             rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;

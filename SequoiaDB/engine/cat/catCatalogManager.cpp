@@ -214,6 +214,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_QUERYSPACEINFO ) ;
       const CHAR *csName = NULL ;
+      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
       BSONObj boSpace ;
       BOOLEAN isExist = FALSE ;
       vector< UINT32 > groups ;
@@ -222,9 +223,16 @@ namespace engine
       try
       {
          BSONObj boQuery( pQuery ) ;
-         rtnGetStringElement( boQuery,  CAT_COLLECTION_SPACE_NAME, &csName ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                      CAT_COLLECTION_SPACE_NAME, rc ) ;
+         rc = rtnGetIntElement( boQuery, CAT_CS_UNIQUEID,
+                                (INT32&)csUniqueID ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = rtnGetStringElement( boQuery, CAT_COLLECTION_SPACE_NAME,
+                                      &csName ) ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s] or field[%s], "
+                      "rc: %d", CAT_COLLECTION_SPACE_NAME,
+                       CAT_CS_UNIQUEID, rc ) ;
       }
       catch ( std::exception &e )
       {
@@ -235,15 +243,25 @@ namespace engine
 
       PD_TRACE1 ( SDB_CATALOGMGR_QUERYSPACEINFO, PD_PACK_STRING ( csName ) ) ;
 
-      rc = catCheckSpaceExist( csName, isExist, boSpace, _pEduCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Check collection space[%s] exist failed, "
-                   "rc: %d", csName, rc ) ;
-      PD_TRACE1 ( SDB_CATALOGMGR_QUERYSPACEINFO,PD_PACK_INT ( isExist ) ) ;
+      // check cs exist or not
+      rc = catCheckSpaceExist( csName, csUniqueID, isExist, boSpace, _pEduCB ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Check collection space[name: %s, id: %u] exist failed, "
+                   "rc: %d", csName, csUniqueID, rc ) ;
 
+      PD_TRACE1 ( SDB_CATALOGMGR_QUERYSPACEINFO,PD_PACK_INT ( isExist ) ) ;
       if ( !isExist )
       {
          rc = SDB_DMS_CS_NOTEXIST ;
          goto error ;
+      }
+
+      // get cs name
+      if ( NULL == csName )
+      {
+         rc = rtnGetStringElement( boSpace, CAT_COLLECTION_SPACE_NAME, &csName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+                      CAT_COLLECTION_SPACE_NAME, rc ) ;
       }
 
       // get collection space all groups
@@ -667,16 +685,13 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CHECKCSOBJ, "catCatalogueManager::_checkCSObj" )
-   INT32 catCatalogueManager::_checkCSObj( const BSONObj & infoObj,
-                                           catCSInfo & csInfo )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CHECKCSOBJ, "catCatalogueManager::_checkAndGetCSInfo" )
+   INT32 catCatalogueManager::_checkAndGetCSInfo( const BSONObj & infoObj,
+                                                  catCSInfo & csInfo )
    {
       INT32 rc = SDB_OK ;
 
-      csInfo._pCSName = NULL ;
-      csInfo._domainName = NULL ;
-      csInfo._pageSize = DMS_PAGE_SIZE_DFT ;
-      csInfo._lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
+      csInfo.reset() ;
       INT32 expected = 0 ;
 
       PD_TRACE_ENTRY ( SDB_CATALOGMGR__CHECKCSOBJ ) ;
@@ -769,6 +784,11 @@ namespace engine
       PD_CHECK( infoObj.nFields() == expected, SDB_INVALIDARG, error, PDERROR,
                 "unexpected fields exsit." ) ;
 
+      rc = catUpdateCSUniqueID( _pEduCB, _majoritySize(), csInfo._csUniqueID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Fail to get cs unique id, rc: %d.", rc ) ;
+
+      csInfo._clUniqueHWM = ossPack32To64( csInfo._csUniqueID, 0 ) ;
+
    done:
       PD_TRACE_EXITRC ( SDB_CATALOGMGR__CHECKCSOBJ, rc ) ;
       return rc ;
@@ -816,7 +836,7 @@ namespace engine
       catCtxLockMgr lockMgr ;
 
       // check cs obj
-      rc = _checkCSObj( createObj, csInfo ) ;
+      rc = _checkAndGetCSInfo( createObj, csInfo ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Check create collection space obj [%s] failed, rc: %d",
                    createObj.toString().c_str(), rc ) ;
@@ -903,8 +923,8 @@ namespace engine
       }
 
       PD_LOG( PDDEBUG,
-              "Created collection space [%s]",
-              csName ) ;
+              "Created collection space[name: %s, id: %u] succeed.",
+              csName, csInfo._csUniqueID ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB_CATALOGMGR__CREATECS, rc ) ;

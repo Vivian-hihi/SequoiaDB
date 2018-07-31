@@ -107,7 +107,8 @@ namespace engine
                                         INT32 version,
                                         BOOLEAN *isMainCL = NULL,
                                         INT16 *w = NULL,
-                                        CHAR *mainCLName = NULL ) ;
+                                        CHAR *mainCLName = NULL,
+                                        utilCLUniqueID *clUniqueID = NULL ) ;
 
          /// valid: replSize == NULL and clientW != NULL
          ///        replSize != NULL and clientW == NULL
@@ -138,7 +139,7 @@ namespace engine
                                  INT32 &insertedNum, INT32 &ignoredNum ) ;
          INT32 _onDeleteReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                  INT64 &delNum ) ;
-         INT32 _onQueryReqMsg ( NET_HANDLE handle, MsgHeader *msg, 
+         INT32 _onQueryReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                 rtnContextBuf &buffObj, INT32 &startingPos,
                                 INT64 &contextID ) ;
          INT32 _onGetMoreReqMsg ( MsgHeader *msg, rtnContextBuf &buffObj,
@@ -157,7 +158,7 @@ namespace engine
                                       INT32 &ignoredNum ) ;
          INT32 _onTransDeleteReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                       INT64 &delNum ) ;
-         INT32 _onTransQueryReqMsg ( NET_HANDLE handle, MsgHeader *msg, 
+         INT32 _onTransQueryReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                      rtnContextBuf &buffObj, INT32 &startingPos,
                                      INT64 &contextID ) ;
          INT32 _onTransGetMoreReqMsg ( MsgHeader *msg, rtnContextBuf &buffObj,

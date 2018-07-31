@@ -47,12 +47,13 @@ namespace engine
    {
       DPS_LOG_PUBLIC_INVALID = 0,
       DPS_LOG_PUBLIC_BEGIN = 200,
-      DPS_LOG_PUBLIC_FULLNAME = 201,
+      DPS_LOG_PUBLIC_FULLNAME = 201,         // cl full name
       DPS_LOG_PUBLIC_TRANSID = 202,
       DPS_LOG_PUBLIC_PRETRANS = 203,
       DPS_LOG_PUBLIC_RELATED_TRANS = 204,    // only for rollback trans,
                                              // mapping to really trans lsn
-      DPS_LOG_PUBLIC_FIRSTTRANS = 205
+      DPS_LOG_PUBLIC_FIRSTTRANS = 205,
+      DPS_LOG_PUBLIC_CLUNIQUEID = 206        // cl unique id
    } ;
 
 /// number in public can not be used in definition !
@@ -88,7 +89,8 @@ namespace engine
       DPS_LOG_CSCRT_CSNAME = 1,
       DPS_LOG_CSCRT_PAGESIZE = 2,
       DPS_LOG_CSCRT_LOBPAGESZ = 3,
-      DPS_LOG_CSCRT_CSTYPE = 4
+      DPS_LOG_CSCRT_CSTYPE = 4,
+      DPS_LOG_CSCRT_CSUNIQUEID = 5
    } ;
 
    enum DPS_LOG_CSDEL
@@ -98,7 +100,7 @@ namespace engine
 
    enum DPS_LOG_CSRENAME
    {
-      DPS_LOG_CSRENAME_CSNAME       = 1,
+      DPS_LOG_CSRENAME_CSNAME = 1,
       DPS_LOG_CSRENAME_NEWNAME      = 2
    } ;
 
@@ -126,9 +128,9 @@ namespace engine
 
    enum DPS_LOG_CLRENAME
    {
-      DPS_LOG_CLRENAME_CSNAME =1,
-      DPS_LOG_CLRENAME_CLOLDNAME =2,
-      DPS_LOG_CLRENAME_CLNEWNAME =3,
+      DPS_LOG_CLRENAME_CSNAME = 1 ,
+      DPS_LOG_CLRENAME_CLOLDNAME = 2 ,
+      DPS_LOG_CLRENAME_CLNEWNAME = 3
    } ;
 
    enum DPS_LOG_CLTRUNC

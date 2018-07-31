@@ -92,6 +92,7 @@ namespace engine
                               INT16 w = 1, INT64 *pContextID = NULL ) = 0 ;
 
          virtual void setMainCLName ( const CHAR * mainCL ) {}
+         virtual void setCLUniqueID( utilCLUniqueID clUniqueID ) {}
 
       protected:
          INT32             _fromService ;
@@ -511,12 +512,15 @@ namespace engine
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
 
+         virtual void setCLUniqueID( utilCLUniqueID clUniqueID ) ;
+
       private:
          void _clean( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB ) ;
       protected:
          const CHAR              *_collectionName ;
          BSONObj                 _shardingKey ;
          UINT32                  _attributes ;
+         utilCLUniqueID          _clUniqueID ;
          UTIL_COMPRESSOR_TYPE    _compressorType ;
          BSONObj                 _extOptions ; // Store options accorrding to attributes.
    };
@@ -544,6 +548,7 @@ namespace engine
 
      protected:
          const CHAR                 *_spaceName ;
+         utilCSUniqueID             _csUniqueID ;
          INT32                      _pageSize ;
          INT32                      _lobPageSize ;
          DMS_STORAGE_TYPE           _storageType ;

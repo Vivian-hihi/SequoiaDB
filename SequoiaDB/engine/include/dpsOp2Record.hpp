@@ -104,6 +104,7 @@ namespace engine
                         INT8 &direction ) ;
 
    INT32 dpsCSCrt2Record( const CHAR *csName,
+                          const utilCSUniqueID &csUniqueID,
                           const INT32 &pageSize,
                           const INT32 &lobPageSize,
                           const INT32 &type,
@@ -111,6 +112,7 @@ namespace engine
 
    INT32 dpsRecord2CSCrt( const CHAR *logRecord,
                           const CHAR **csName,
+                          utilCSUniqueID &csUniqueID,
                           INT32 &pageSize,
                           INT32 &lobPageSize,
                           INT32 &type ) ;
@@ -130,6 +132,7 @@ namespace engine
                              const CHAR **newCSName ) ;
 
    INT32 dpsCLCrt2Record( const CHAR *fullName,
+                          const utilCLUniqueID &clUniqueID,
                           const UINT32 &attribute,
                           const UINT8 &compressorType,
                           const BSONObj *extOptions,
@@ -137,6 +140,7 @@ namespace engine
 
    INT32 dpsRecord2CLCrt( const CHAR *logRecord,
                           const CHAR **fullName,
+                          utilCLUniqueID &clUniqueID,
                           UINT32 &attribute,
                           UINT8 &compressorType,
                           BSONObj &extOptions ) ;
@@ -148,19 +152,23 @@ namespace engine
                           const CHAR **fullName ) ;
 
    INT32 dpsIXCrt2Record( const CHAR *fullName,
+                          const utilCLUniqueID &clUniqueID,
                           const BSONObj &index,
                           dpsLogRecord &record ) ;
 
    INT32 dpsRecord2IXCrt( const CHAR *logRecord,
                           const CHAR **fullName,
+                          utilCLUniqueID &clUniqueID,
                           BSONObj &index ) ;
 
    INT32 dpsIXDel2Record( const CHAR *fullName,
+                          const utilCLUniqueID &clUniqueID,
                           const BSONObj &index,
                           dpsLogRecord &record ) ;
 
    INT32 dpsRecord2IXDel( const CHAR *logRecord,
                           const CHAR **fullName,
+                          utilCLUniqueID &clUniqueID,
                           BSONObj &index ) ;
 
    INT32 dpsCLRename2Record( const CHAR *csName,

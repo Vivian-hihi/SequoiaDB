@@ -61,6 +61,9 @@
 
 #define CAT_COLLECTION_SPACE_NAME         FIELD_NAME_NAME
 #define CAT_COLLECTION_NAME               FIELD_NAME_NAME
+#define CAT_CS_UNIQUEID                   FIELD_NAME_UNIQUEID
+#define CAT_CL_UNIQUEID                   FIELD_NAME_UNIQUEID
+#define CAT_CS_CLUNIQUEHWM                "CLUniqueHWM"
 #define CAT_PAGE_SIZE_NAME                FIELD_NAME_PAGE_SIZE
 #define CAT_COLLECTION                    FIELD_NAME_COLLECTION
 #define CAT_COLLECTIONSPACE               FIELD_NAME_COLLECTIONSPACE

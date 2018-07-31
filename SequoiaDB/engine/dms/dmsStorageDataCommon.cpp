@@ -832,7 +832,8 @@ namespace engine
 
          if ( DMS_IS_MB_INUSE ( _dmsMME->_mbList[i]._flag ) )
          {
-            _collectionNameInsert ( _dmsMME->_mbList[i]._collectionName, i ) ;
+            _collectionNameInsert ( _dmsMME->_mbList[i]._collectionName, i,
+                                    _dmsMME->_mbList[i]._clUniqueID ) ;
 
             _mbStatInfo[i]._totalRecords = _dmsMME->_mbList[i]._totalRecords ;
             _mbStatInfo[i]._totalDataPages =
@@ -1939,6 +1940,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_ADDCOLLECTION, "_dmsStorageDataCommon::addCollection" )
    INT32 _dmsStorageDataCommon::addCollection( const CHAR * pName,
                                                UINT16 * collectionID,
+                                               utilCLUniqueID clUniqueID,
                                                UINT32 attributes,
                                                pmdEDUCB * cb,
                                                SDB_DPSCB * dpscb,
@@ -1971,6 +1973,7 @@ namespace engine
 
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
 
+      // check cl name
       rc = dmsCheckCLName ( pName, sysCollection ) ;
       PD_RC_CHECK( rc, PDERROR, "Invalid collection name %s, rc: %d",
                    pName, rc ) ;
@@ -1979,7 +1982,7 @@ namespace engine
       if ( dpscb )
       {
          rc = dpsCLCrt2Record( _clFullName(pName, fullName, sizeof(fullName)),
-                               attributes, compressionType,
+                               clUniqueID, attributes, compressionType,
                                extOptions, record ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
 
@@ -2014,7 +2017,7 @@ namespace engine
       metalocked = TRUE ;
 
       // then let's make sure the collection name does not exist
-      if ( DMS_INVALID_MBID != _collectionNameLookup ( pName ) )
+      if ( DMS_INVALID_MBID != _collectionNameLookup ( pName, clUniqueID ) )
       {
          rc = SDB_DMS_EXIST ;
          goto error ;
@@ -2047,12 +2050,13 @@ namespace engine
       // set mb meta data and header data
       logicalID = _dmsHeader->_MBHWM++ ;
       mb = &_dmsMME->_mbList[newCollectionID] ;
-      mb->reset( pName, newCollectionID, logicalID, attributes, compressionType ) ;
+      mb->reset( pName, clUniqueID, newCollectionID, logicalID,
+                 attributes, compressionType ) ;
       _mbStatInfo[ newCollectionID ].reset() ;
       _mbStatInfo[ newCollectionID ]._startLID = logicalID ;
 
       _dmsHeader->_numMB++ ;
-      _collectionNameInsert( pName, newCollectionID ) ;
+      _collectionNameInsert( pName, newCollectionID, clUniqueID ) ;
 
       if ( isBlockScanSupport() )
       {
@@ -2206,6 +2210,7 @@ namespace engine
       BOOLEAN isTransLocked   = FALSE ;
       BOOLEAN getContext      = FALSE ;
       BOOLEAN metalocked      = FALSE ;
+      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
 
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
 
@@ -2331,10 +2336,14 @@ namespace engine
       // release mb lock
       context->mbUnlock() ;
 
+      // get unique id from mb. Because if the cl is in _collectionIDMap, and
+      // we don't erase it, it may cause core dump.
+      clUniqueID = context->mb()->_clUniqueID ;
+
       // change metadata
       ossLatch( &_metadataLatch, EXCLUSIVE ) ;
       metalocked = TRUE ;
-      _collectionNameRemove( pName ) ;
+      _collectionNameRemove( pName, clUniqueID ) ;
       DMS_SET_MB_FREE( context->mb()->_flag ) ;
       _dmsHeader->_numMB-- ;
 

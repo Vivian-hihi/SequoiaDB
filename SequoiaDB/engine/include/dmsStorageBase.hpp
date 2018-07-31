@@ -95,6 +95,8 @@ namespace engine
       DMS_STORAGE_TYPE _type ;
       IDmsExtDataHandler *_extDataHandler ;
 
+      utilCSUniqueID _csUniqueID ;
+
       _dmsStorageInfo ()
       {
          _pageSize      = DMS_PAGE_SIZE_DFT ;
@@ -114,6 +116,8 @@ namespace engine
          _curLSNOnStart  = ~0 ;
          _type = DMS_STORAGE_NORMAL ;
          _extDataHandler = NULL ;
+
+         _csUniqueID     = UTIL_INVALID_UNIQUEID ;
       }
    };
    typedef _dmsStorageInfo dmsStorageInfo ;
@@ -138,7 +142,8 @@ namespace engine
       UINT32 _commitFlag ;                               // commit flag
       UINT64 _commitLsn ;                                // commit LSN
       UINT64 _commitTime ;                               // commit timestamp
-      CHAR   _pad [ 65336 ] ;
+      utilCSUniqueID _csUniqueID ;                       // cs unique id
+      CHAR   _pad [ 65332 ] ;
 
       _dmsStorageUnitHeader()
       {
@@ -152,6 +157,7 @@ namespace engine
          ossMemset( this, 0, DMS_PAGE_SIZE_MAX ) ;
          _commitLsn = ~0 ;
       }
+
    } ;
    typedef _dmsStorageUnitHeader dmsStorageUnitHeader ;
    #define DMS_HEADER_SZ   sizeof(dmsStorageUnitHeader)
@@ -461,6 +467,8 @@ namespace engine
 
          INT32 renameStorage( const CHAR *csName,
                               const CHAR *suFileName ) ;
+
+         INT32 setCSUniqueID( utilCSUniqueID csUniqueID ) ;
 
          INT32 setLobPageSize ( UINT32 lobPageSize ) ;
 

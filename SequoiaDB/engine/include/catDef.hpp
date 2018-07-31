@@ -58,8 +58,12 @@
                                           CAT_GROUPID_NAME":1}, unique: true, enforced: true } "
 #define CAT_COLLECTION_SPACE_NAMEIDX      "{name:\"SYSIDX1\",key: {"\
                                           CAT_COLLECTION_SPACE_NAME":1}, unique: true, enforced: true } "
+#define CAT_COLLECTION_SPACE_IDIDX        "{name:\"SYSIDX2\",key: {"\
+                                          CAT_CS_UNIQUEID":1}, unique: true, enforced: true } "
 #define CAT_COLLECTION_NAMEIDX            "{name:\"SYSIDX1\",key: {"\
                                           CAT_COLLECTION_NAME":1}, unique: true, enforced: true } "
+#define CAT_COLLECTION_IDIDX              "{name:\"SYSIDX2\",key: {"\
+                                          CAT_CL_UNIQUEID":1}, unique: true, enforced: true } "
 #define CAT_TASK_INFO_CLOBJIDX            "{name:\"SYSIDX1\",key: {"\
                                           CAT_TASKID_NAME":1}, unique: true }"
 #define CAT_DOMAIN_NAMEIDX                "{name:\"SYSIDX1\",key: {"\

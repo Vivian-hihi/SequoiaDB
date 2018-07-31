@@ -145,6 +145,7 @@ namespace engine
 
    /* Collection[CAT_COLLECTION_SPACE_COLLECTION] functions: */
    INT32 catAddCL2CS( const CHAR *csName, const CHAR *clName,
+                      utilCLUniqueID clUniqueID,
                       pmdEDUCB *cb, _SDB_DMSCB * dmsCB,
                       _dpsLogWrapper * dpsCB, INT16 w ) ;
 
@@ -166,6 +167,11 @@ namespace engine
                        _dpsLogWrapper * dpsCB,
                        INT16 w ) ;
    INT32 catCheckSpaceExist( const char *pSpaceName,
+                             BOOLEAN &isExist,
+                             BSONObj &obj,
+                             pmdEDUCB *cb ) ;
+   INT32 catCheckSpaceExist( const char *pSpaceName,
+                             utilCSUniqueID csUniqueID,
                              BOOLEAN &isExist,
                              BSONObj &obj,
                              pmdEDUCB *cb ) ;
@@ -238,6 +244,7 @@ namespace engine
    INT32 catUpdateDCStatus( const CHAR *pField, BOOLEAN status,
                             pmdEDUCB *cb, INT16 w,
                             _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB ) ;
+   INT32 catUpdateCSUniqueID( pmdEDUCB *cb, INT16 w, UINT32& CSID ) ;
 
    /* Other Tools */
    INT32 catPraseFunc( const BSONObj &func, BSONObj &parsed ) ;
@@ -324,7 +331,8 @@ namespace engine
                          INT16 w ) ;
 
    /* Create Collection */
-   INT32 catCreateCLStep ( const string &clName, BSONObj &boCollection,
+   INT32 catCreateCLStep ( const string &clName, utilCLUniqueID clUniqueID,
+                           BSONObj &boCollection,
                            _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
                            INT16 w ) ;
 

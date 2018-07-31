@@ -75,10 +75,12 @@ namespace engine
       INT32 replayByBucket( dpsLogRecordHeader *recordHeader,
                             _pmdEDUCB *eduCB, _clsBucket *pBucket ) ;
 
-      INT32 replayCrtCS( const CHAR *cs, INT32 pageSize, INT32 lobPageSize,
+      INT32 replayCrtCS( const CHAR *cs, utilCSUniqueID csUniqueID,
+                         INT32 pageSize, INT32 lobPageSize,
                          DMS_STORAGE_TYPE type, _pmdEDUCB *eduCB ) ;
 
       INT32 replayCrtCollection( const CHAR *collection,
+                                 utilCLUniqueID clUniqueID,
                                  UINT32 attributes,
                                  _pmdEDUCB *eduCB,
                                  UTIL_COMPRESSOR_TYPE compType,

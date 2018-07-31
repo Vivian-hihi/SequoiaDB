@@ -369,7 +369,8 @@ printf ( "dmsStorageUnitHeader size = %d\n", sizeof ( engine::_dmsStorageUnit::_
       }
       collectionName[stringSize] = 0 ;
       printf("CollectionName: %s, NumPages: %d\n", collectionName, pages ) ;
-      rc = myUnit->data()->addCollection( collectionName, NULL, 0, NULL, NULL,
+      rc = myUnit->data()->addCollection( collectionName, NULL,
+                                          UTIL_INVALID_UNIQUEID, 0, NULL, NULL,
                                           pages, TRUE ) ;
       if ( rc )
       {
@@ -398,7 +399,8 @@ printf ( "dmsStorageUnitHeader size = %d\n", sizeof ( engine::_dmsStorageUnit::_
    }
    printf("add 4096 pages extent");
    t1 = boost::posix_time::microsec_clock::local_time() ;
-   rc = myUnit->data()->addCollection( BIG_COLLECTION_NAME, NULL, 0, NULL, NULL,
+   rc = myUnit->data()->addCollection( BIG_COLLECTION_NAME, NULL,
+                                       UTIL_INVALID_UNIQUEID, 0, NULL, NULL,
                                        4096, TRUE ) ;
    if ( rc )
    {

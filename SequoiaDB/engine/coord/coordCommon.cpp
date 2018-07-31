@@ -235,13 +235,22 @@ namespace engine
 
       try
       {
-         BSONElement eName, eVersion ;
-         // Check types of name and version elements
+         BSONElement eName, eID, eVersion ;
+         // Check types of name, id, version elements
          eName = obj.getField( CAT_CATALOGNAME_NAME ) ;
          if ( String != eName.type() )
          {
             PD_LOG( PDERROR, "Failed to get field[%s] from obj[%s]",
                     CAT_CATALOGNAME_NAME, obj.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         eID = obj.getField( CAT_CL_UNIQUEID ) ;
+         if ( !eID.isNumber() )
+         {
+            PD_LOG( PDERROR, "Failed to get field[%s] from obj[%s]",
+                    CAT_CL_UNIQUEID, obj.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -256,7 +265,8 @@ namespace engine
          }
 
          pCataInfoTmp = SDB_OSS_NEW CoordCataInfo( eVersion.number(),
-                                                   eName.valuestr() ) ;
+                                                   eName.valuestr(),
+                                                   (UINT64)eID.number() ) ;
          if ( !pCataInfoTmp )
          {
             PD_LOG( PDERROR, "Allocate memory for catalog info failed" ) ;
@@ -318,7 +328,7 @@ namespace engine
                SDB_CAT_NO_MATCH_CATALOG == flag ) ;
    }
 
-   // return TRUE if we should delete the node 
+   // return TRUE if we should delete the node
    BOOLEAN  coordCheckNodeReplyFlag( INT32 flag )
    {
       switch( flag )

@@ -231,6 +231,7 @@ namespace engine
    INT32 rtnCreateCollectionSpaceCommand ( const CHAR *pCollectionSpace,
                                            pmdEDUCB *cb,
                                            SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
+                                           utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID,
                                            INT32 pageSize = DMS_PAGE_SIZE_DFT,
                                            INT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ,
                                            DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL,
@@ -241,6 +242,7 @@ namespace engine
                                       pmdEDUCB *cb,
                                       SDB_DMSCB *dmsCB,
                                       SDB_DPSCB *dpsCB,
+                                      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID,
                                       UTIL_COMPRESSOR_TYPE compressorType =
                                           UTIL_COMPRESSOR_INVALID,
                                       INT32 flags = 0,
@@ -253,6 +255,7 @@ namespace engine
                                       _pmdEDUCB * cb,
                                       SDB_DMSCB *dmsCB,
                                       SDB_DPSCB *dpsCB,
+                                      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID,
                                       UTIL_COMPRESSOR_TYPE compressorType =
                                           UTIL_COMPRESSOR_INVALID,
                                       INT32 flags = 0,
@@ -305,8 +308,24 @@ namespace engine
                                   dmsStorageUnitID &suID,
                                   OSS_LATCH_MODE lockType = SHARED,
                                   INT32 millisec = -1 ) ;
+   INT32 rtnCollectionSpaceLock ( const CHAR *pCollectionSpaceName,
+                                  utilCSUniqueID csUniqueID,
+                                  SDB_DMSCB *dmsCB,
+                                  BOOLEAN loadFile,
+                                  dmsStorageUnit **ppsu,
+                                  dmsStorageUnitID &suID,
+                                  OSS_LATCH_MODE lockType = SHARED,
+                                  INT32 millisec = -1 ) ;
 
    INT32 rtnResolveCollectionNameAndLock ( const CHAR *pCollectionFullName,
+                                           SDB_DMSCB *dmsCB,
+                                           dmsStorageUnit **ppsu,
+                                           const CHAR **ppCollectionName,
+                                           dmsStorageUnitID &suID,
+                                           OSS_LATCH_MODE lockType = SHARED,
+                                           INT32 millisec = -1 ) ;
+   INT32 rtnResolveCollectionNameAndLock ( const CHAR *pCollectionFullName,
+                                           utilCLUniqueID clUniqueID,
                                            SDB_DMSCB *dmsCB,
                                            dmsStorageUnit **ppsu,
                                            const CHAR **ppCollectionName,
@@ -379,7 +398,8 @@ namespace engine
                                  SDB_DMSCB *dmsCB,
                                  SDB_DPSCB *dpsCB,
                                  BOOLEAN isSys = FALSE,
-                                 INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
+                                 INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE,
+                                 utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
 
    INT32 rtnDropCollectionCommand ( const CHAR *pCollection,
                                     _pmdEDUCB *cb,
@@ -420,7 +440,8 @@ namespace engine
                                pmdEDUCB *cb,
                                SDB_DMSCB *dmsCB,
                                SDB_DPSCB *dpsCB,
-                               BOOLEAN sysCall = FALSE ) ;
+                               BOOLEAN sysCall = FALSE,
+                               utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
 
    INT32 rtnGetCount ( const rtnQueryOptions & options,
                        SDB_DMSCB *dmsCB,
@@ -576,7 +597,6 @@ namespace engine
    INT32 rtnCollectionsInSameSpace ( const CHAR *pCLNameA, UINT32 lengthA,
                                      const CHAR *pCLNameB, UINT32 lengthB,
                                      BOOLEAN &inSameSpace ) ;
-
 }
 
 #endif

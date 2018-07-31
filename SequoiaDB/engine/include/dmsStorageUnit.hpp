@@ -266,6 +266,7 @@ namespace engine
 
       public:
          _dmsStorageUnit ( const CHAR *pSUName,
+                           UINT32 csUniqueID,
                            UINT32 sequence,
                            utilCacheMgr *pMgr,
                            INT32 pageSize = DMS_PAGE_SIZE_DFT,
@@ -284,6 +285,8 @@ namespace engine
          INT32 remove () ;
 
          INT32 renameCS( const CHAR *pNewName ) ;
+
+         INT32 setCSUniqueID( utilCSUniqueID csUniqueID ) ;
          INT32 setLobPageSize ( UINT32 lobPageSize ) ;
 
          dmsStorageDataCommon *data() { return _pDataSu ; }
@@ -303,6 +306,10 @@ namespace engine
          dmsStorageUnitID CSID() const
          {
             return _pDataSu ? _pDataSu->CSID() : DMS_INVALID_SUID ;
+         }
+         utilCSUniqueID CSUniqueID() const
+         {
+            return _storageInfo._csUniqueID ;
          }
 
          DMS_STORAGE_TYPE type() const { return _storageInfo._type ; }
@@ -440,17 +447,20 @@ namespace engine
                                 _pmdEDUCB * cb, SDB_DPSCB *dpscb,
                                 BOOLEAN isSys = FALSE,
                                 dmsMBContext *context = NULL,
-                                INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
+                                INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE,
+                                utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
 
          INT32    dropIndex( const CHAR *pName, const CHAR *indexName,
                              _pmdEDUCB * cb, SDB_DPSCB *dpscb,
                              BOOLEAN isSys = FALSE,
-                             dmsMBContext *context = NULL ) ;
+                             dmsMBContext *context = NULL,
+                             utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
 
          INT32    dropIndex( const CHAR *pName, OID &indexOID,
                              _pmdEDUCB * cb, SDB_DPSCB *dpscb,
                              BOOLEAN isSys = FALSE,
-                             dmsMBContext *context = NULL ) ;
+                             dmsMBContext *context = NULL,
+                             utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
 
          INT32    countCollection ( const CHAR *pName,
                                     INT64 &recordNum,

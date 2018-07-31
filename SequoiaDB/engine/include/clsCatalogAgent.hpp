@@ -49,6 +49,8 @@
 #include "msgCatalogDef.h"
 #include "utilCompression.hpp"
 #include "utilSet.hpp"
+#include "dms.hpp"
+#include "utilUniqueID.hpp"
 
 using namespace bson ;
 
@@ -173,6 +175,8 @@ namespace engine
 
       public:
          _clsCatalogSet ( const CHAR * name, BOOLEAN saveName = TRUE ) ;
+         _clsCatalogSet ( const CHAR * name, UINT64 clUniqueID,
+                          BOOLEAN saveName = TRUE ) ;
          ~_clsCatalogSet () ;
 
          void setSKSite( _clsShardingKeySite *pSite ) { _pSite = pSite ; }
@@ -183,7 +187,10 @@ namespace engine
          INT32             getHashPartition() const { return _partition ;}
          UINT32            getPartitionBit() const { return _square ; }
          bool              ensureShardingIndex() const { return _ensureShardingIndex ; }
+         void              setName( const CHAR* name );
          const CHAR        *name () const ;
+         void              setCLUniqueID ( utilCLUniqueID clUniqueID ) ;
+         utilCLUniqueID    clUniqueID () const ;
          VEC_GROUP_ID      *getAllGroupID () ;
          UINT32            getAllGroupID ( VEC_GROUP_ID &vecGroup ) const ;
          UINT32            groupCount () const ;
@@ -300,6 +307,7 @@ namespace engine
          UINT16            _shardingType ;
          bool              _ensureShardingIndex ;
          std::string       _name ;
+         UINT64            _clUniqueID ;
 
          _clsCatalogSet    *_next ;
          clsCatalogItem    *_lastItem ;
@@ -317,7 +325,7 @@ namespace engine
          UINT32            _attribute ;
          std::multimap<UINT32, std::string> _subCLList ;
          BOOLEAN           _isMainCL ;
-         std::string       _mainCLName;
+         std::string       _mainCLName ;
          UINT32            _internalV ;
          UINT32            _maxID ;
          /// sharding key site id, 0: invalid
@@ -332,8 +340,12 @@ namespace engine
 
    class _clsCatalogAgent : public SDBObject
    {
+      // map< hash value of cl name, catalog info >
       typedef std::map<UINT32, _clsCatalogSet*>       CAT_MAP ;
       typedef CAT_MAP::iterator                       CAT_MAP_IT ;
+      // map< unique id of cl, catalog info >
+      typedef std::map<utilCLUniqueID, _clsCatalogSet*> ID_CAT_MAP ;
+      typedef ID_CAT_MAP::iterator                    ID_CAT_MAP_IT ;
 
       public:
          _clsCatalogAgent () ;
@@ -342,17 +354,20 @@ namespace engine
       public:
          INT32   catVersion () ;
          INT32   collectionVersion ( const CHAR* name ) ;
-         INT32   collectionW ( const CHAR * name ) ;
-         INT32   collectionInfo ( const CHAR * name , INT32 &version, UINT32 &w ) ;
+         INT32   collectionW ( const CHAR* name ) ;
+         INT32   collectionInfo ( const CHAR* name , INT32 &version, UINT32 &w ) ;
          void    getAllNames( std::vector<string> &names ) ;
 
-         _clsCatalogSet *collectionSet ( const CHAR * name ) ;
+         clsCatalogSet* collectionSet ( const CHAR* name,
+                                        utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
 
          INT32   updateCatalog ( INT32 version, UINT32 groupID,
                                  const CHAR* objdata, UINT32 length,
                                  _clsCatalogSet **ppSet = NULL ) ;
-         INT32   clear ( const CHAR* name, CHAR * mainCL = NULL ) ;
-         INT32   clearBySpaceName ( const CHAR* name,
+
+         INT32   clear ( const CHAR* name,
+                         CHAR* mainCL = NULL ) ;
+         INT32   clearBySpaceName ( const CHAR* csName,
                                     vector< string > *pRelatedCLs = NULL,
                                     _utilSet< string > * pMainCLs = NULL ) ;
          /// caller need to hold the write lock
@@ -364,10 +379,13 @@ namespace engine
          INT32   release_w () ;
 
       protected:
-         _clsCatalogSet * _addCollectionSet ( const CHAR * name ) ;
+         _clsCatalogSet* _addCollectionSet ( const CHAR * name,
+                                             utilCLUniqueID clUniqueID =
+                                                   UTIL_INVALID_UNIQUEID ) ;
 
       private:
          CAT_MAP                       _mapCatalog ;
+         ID_CAT_MAP                    _mapIDCatalog ;
          INT32                         _catVersion ;
          ossRWMutex                    _rwMutex ;
    };

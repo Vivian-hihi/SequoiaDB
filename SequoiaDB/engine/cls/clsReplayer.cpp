@@ -448,11 +448,12 @@ namespace engine
          case LOG_TYPE_CS_CRT :
          {
             const CHAR *cs = NULL ;
+            utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
             INT32 pageSize = 0 ;
             INT32 lobPageSize = 0 ;
             INT32 type = 0 ;
-            rc = dpsRecord2CSCrt( (CHAR *)recordHeader,
-                                  &cs, pageSize, lobPageSize, type ) ;
+            rc = dpsRecord2CSCrt( (CHAR *)recordHeader, &cs, csUniqueID,
+                                  pageSize, lobPageSize, type ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -466,7 +467,8 @@ namespace engine
             }
 
             rc = rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB, _dpsCB,
-                                                  pageSize, lobPageSize,
+                                                  csUniqueID,
+                                                   pageSize, lobPageSize,
                                                   (DMS_STORAGE_TYPE)type ) ;
             if ( SDB_DMS_CS_EXIST == rc )
             {
@@ -507,18 +509,19 @@ namespace engine
          case LOG_TYPE_CL_CRT :
          {
             const CHAR *cl = NULL ;
+            utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
             UINT32 attribute = 0 ;
             UINT8 compType = UTIL_COMPRESSOR_INVALID ;
             BSONObj extOptions ;
-            rc = dpsRecord2CLCrt( (CHAR *)recordHeader, &cl, attribute,
-                                  compType, extOptions ) ;
+            rc = dpsRecord2CLCrt( (CHAR *)recordHeader, &cl, clUniqueID,
+                                  attribute, compType, extOptions ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
             }
 
             rc = rtnCreateCollectionCommand( cl, attribute, eduCB, _dmsCB,
-                                             _dpsCB,
+                                             _dpsCB, clUniqueID,
                                              (UTIL_COMPRESSOR_TYPE)compType,
                                              0, TRUE,
                                              ( extOptions.isEmpty() ?
@@ -994,11 +997,12 @@ namespace engine
          case LOG_TYPE_CS_CRT :
          {
             const CHAR *cs = NULL ;
+            utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
             INT32 pageSize = 0 ;
             INT32 lobPageSize = 0 ;
             INT32 type = 0 ;
-            rc = dpsRecord2CSCrt( (const CHAR *)recordHeader,
-                                  &cs, pageSize, lobPageSize, type ) ;
+            rc = dpsRecord2CSCrt( (const CHAR *)recordHeader, &cs, csUniqueID,
+                                  pageSize, lobPageSize, type ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -1022,10 +1026,12 @@ namespace engine
          case LOG_TYPE_CL_CRT :
          {
             const CHAR *fullname = NULL ;
+            utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
             UINT32 attribute = 0 ;
             UINT8 compType = UTIL_COMPRESSOR_INVALID ;
             BSONObj extOptions ;
-            rc = dpsRecord2CLCrt( (const CHAR *)recordHeader, &fullname,
+            rc = dpsRecord2CLCrt( (const CHAR *)recordHeader,
+                                  &fullname, clUniqueID,
                                   attribute, compType, extOptions ) ;
             if ( SDB_OK != rc )
             {
@@ -1289,7 +1295,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsReplayer::replayCrtCS( const CHAR *cs, INT32 pageSize,
+   INT32 _clsReplayer::replayCrtCS( const CHAR *cs, utilCSUniqueID csUniqueID,
+                                    INT32 pageSize,
                                     INT32 lobPageSize, DMS_STORAGE_TYPE type,
                                     _pmdEDUCB *eduCB )
    {
@@ -1298,13 +1305,14 @@ namespace engine
       if ( SDB_DMS_CS_NOTEXIST == rc )
       {
          rc = rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB,
-                                               _dpsCB, pageSize,
+                                               _dpsCB, csUniqueID, pageSize,
                                                lobPageSize, type, TRUE ) ;
       }
       return rc ;
    }
 
    INT32 _clsReplayer::replayCrtCollection( const CHAR *collection,
+                                            utilCLUniqueID clUniqueID,
                                             UINT32 attributes,
                                             _pmdEDUCB *eduCB,
                                             UTIL_COMPRESSOR_TYPE compType,
@@ -1315,7 +1323,7 @@ namespace engine
       if ( SDB_DMS_NOTEXIST == rc )
       {
          rc = rtnCreateCollectionCommand( collection, attributes, eduCB,
-                                          _dmsCB, _dpsCB, compType,
+                                          _dmsCB, _dpsCB, clUniqueID, compType,
                                           0, TRUE, extOptions ) ;
       }
       return rc ;
@@ -1369,6 +1377,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_STARTINXJOB );
       const CHAR *fullname = NULL ;
+      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
       BSONObj index ;
       rtnIndexJob *indexJob = NULL ;
       clsCatalogSet *pCatSet = NULL ;
@@ -1383,7 +1392,7 @@ namespace engine
       else if ( LOG_TYPE_IX_CRT == recordHeader->_type)
       {
          rc = dpsRecord2IXCrt( (CHAR *)recordHeader,
-                               &fullname,
+                               &fullname, clUniqueID,
                                index ) ;
          if ( SDB_OK != rc )
          {
@@ -1393,7 +1402,7 @@ namespace engine
       else
       {
          rc = dpsRecord2IXDel( (CHAR *)recordHeader,
-                               &fullname,
+                               &fullname, clUniqueID,
                                index ) ;
          if ( SDB_OK != rc )
          {
@@ -1407,7 +1416,8 @@ namespace engine
       }
       else
       {
-         sdbGetShardCB()->getAndLockCataSet( fullname, &pCatSet, TRUE ) ;
+         sdbGetShardCB()->getAndLockCataSet( fullname, clUniqueID,
+                                             &pCatSet, TRUE ) ;
          if ( pCatSet && CLS_REPLSET_MAX_NODE_SIZE == pCatSet->getW() )
          {
             useSync = TRUE ;
@@ -1415,7 +1425,7 @@ namespace engine
          sdbGetShardCB()->unlockCataSet( pCatSet ) ;
       }
 
-      indexJob = SDB_OSS_NEW rtnIndexJob( type, fullname,
+      indexJob = SDB_OSS_NEW rtnIndexJob( type, fullname, clUniqueID,
                                           index, dpsCB,
                                           recordHeader->_lsn,
                                           isRollBack ) ;

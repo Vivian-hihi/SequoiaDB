@@ -500,6 +500,7 @@ namespace engine
    _rtnCreateCollection::_rtnCreateCollection ()
    :_collectionName ( NULL ),
     _attributes( 0 ),
+    _clUniqueID( UTIL_INVALID_UNIQUEID ),
     _compressorType( UTIL_COMPRESSOR_INVALID )
    {
    }
@@ -750,7 +751,7 @@ namespace engine
 
       rc = rtnCreateCollectionCommand ( _collectionName, _shardingKey,
                                         _attributes, cb, dmsCB, dpsCB,
-                                        _compressorType, 0, FALSE,
+                                        _clUniqueID, _compressorType, 0, FALSE,
                                         ( _extOptions.isEmpty() ?
                                          NULL : &_extOptions ) ) ;
 
@@ -783,6 +784,11 @@ namespace engine
       goto done ;
    }
 
+   void _rtnCreateCollection::setCLUniqueID( utilCLUniqueID clUniqueID )
+   {
+      _clUniqueID = clUniqueID ;
+   }
+
    // Clean when error happened.
    // The main job here is to remove the collection space if this is the only
    // collection in the collection space.
@@ -811,7 +817,8 @@ namespace engine
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollectionspace)
    _rtnCreateCollectionspace::_rtnCreateCollectionspace ()
-   :_spaceName ( NULL ),
+   :_spaceName( NULL ),
+    _csUniqueID( UTIL_INVALID_UNIQUEID ),
     _pageSize( 0 ),
     _lobPageSize( 0 ),
     _storageType( DMS_STORAGE_NORMAL )
@@ -883,7 +890,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__RTNCREATECS_DOIT ) ;
 
       rc = rtnCreateCollectionSpaceCommand ( _spaceName, cb, dmsCB,
-                                             dpsCB, _pageSize,
+                                             dpsCB, _csUniqueID, _pageSize,
                                              _lobPageSize, _storageType ) ;
 
       if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )

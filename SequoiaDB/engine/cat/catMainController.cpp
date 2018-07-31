@@ -581,6 +581,12 @@ namespace engine
       {
          goto error ;
       }
+      rc = _createSysIndex ( CAT_COLLECTION_SPACE_COLLECTION,
+                             CAT_COLLECTION_SPACE_IDIDX, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
       // create SYSCAT.SYSCOLLECTIONS
       rc = _createSysCollection ( CAT_COLLECTION_INFO_COLLECTION, cb ) ;
@@ -590,6 +596,12 @@ namespace engine
       }
       rc = _createSysIndex ( CAT_COLLECTION_INFO_COLLECTION,
                              CAT_COLLECTION_NAMEIDX, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _createSysIndex ( CAT_COLLECTION_INFO_COLLECTION,
+                             CAT_COLLECTION_IDIDX, cb ) ;
       if ( rc )
       {
          goto error ;

@@ -1049,6 +1049,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU, "_dmsStorageUnit::_dmsStorageUnit" )
    _dmsStorageUnit::_dmsStorageUnit ( const CHAR *pSUName,
+                                      UINT32 csUniqueID,
                                       UINT32 sequence,
                                       utilCacheMgr *pMgr,
                                       INT32 pageSize,
@@ -1082,6 +1083,7 @@ namespace engine
       _storageInfo._lobdPageSize = lobPageSize ;
       ossStrncpy( _storageInfo._suName, pSUName, DMS_SU_NAME_SZ ) ;
       _storageInfo._suName[DMS_SU_NAME_SZ] = 0 ;
+      _storageInfo._csUniqueID = csUniqueID ;
       _storageInfo._sequence = sequence ;
       _storageInfo._overflowRatio = options->getOverFlowRatio() ;
       _storageInfo._extentThreshold = options->getExtendThreshold() << 20 ;
@@ -1370,6 +1372,25 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__DMSSU_RENAMECS, rc ) ;
       return rc ;
    error:
+      goto done ;
+   }
+
+   INT32 _dmsStorageUnit::setCSUniqueID( utilCSUniqueID csUniqueID )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _pDataSu->setCSUniqueID( csUniqueID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set cs unique id in data storage "
+                   "unit, rc: %d", rc ) ;
+
+      rc = _pIndexSu->setCSUniqueID( csUniqueID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set cs unique id in index storage "
+                   "unit, rc: %d", rc ) ;
+
+      _storageInfo._csUniqueID = csUniqueID ;
+   done :
+      return rc ;
+   error :
       goto done ;
    }
 
@@ -1759,7 +1780,8 @@ namespace engine
    INT32 _dmsStorageUnit::createIndex( const CHAR *pName, const BSONObj &index,
                                        pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                        BOOLEAN isSys, dmsMBContext * context,
-                                       INT32 sortBufferSize )
+                                       INT32 sortBufferSize,
+                                       utilCLUniqueID clUniqueID )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
@@ -1768,7 +1790,7 @@ namespace engine
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
 
-         rc = _pDataSu->getMBContext( &context, pName, -1 ) ;
+         rc = _pDataSu->getMBContext( &context, pName, clUniqueID, -1 ) ;
          PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
                       "rc: %d", pName, rc ) ;
          getContext = TRUE ;
@@ -1795,19 +1817,21 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DROPINDEX, "_dmsStorageUnit::dropIndex" )
    INT32 _dmsStorageUnit::dropIndex( const CHAR *pName, const CHAR *indexName,
                                      pmdEDUCB *cb, SDB_DPSCB *dpscb,
-                                     BOOLEAN isSys, dmsMBContext *context )
+                                     BOOLEAN isSys, dmsMBContext *context,
+                                     utilCLUniqueID clUniqueID )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
-
       PD_TRACE_ENTRY ( SDB__DMSSU_DROPINDEX ) ;
+
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
 
-         rc = _pDataSu->getMBContext( &context, pName, -1 ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
-                      "rc: %d", pName, rc ) ;
+         rc = _pDataSu->getMBContext( &context, pName, clUniqueID, -1 ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Get collection[name: %s, id: %llu] mb context failed, "
+                      "rc: %d", pName, clUniqueID, rc ) ;
          getContext = TRUE ;
       }
 
@@ -1831,7 +1855,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DROPINDEX1, "_dmsStorageUnit::dropIndex" )
    INT32 _dmsStorageUnit::dropIndex( const CHAR *pName, OID &indexOID,
                                      pmdEDUCB *cb, SDB_DPSCB *dpscb,
-                                     BOOLEAN isSys, dmsMBContext *context )
+                                     BOOLEAN isSys, dmsMBContext *context,
+                                     utilCLUniqueID clUniqueID )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
@@ -1841,9 +1866,10 @@ namespace engine
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
 
-         rc = _pDataSu->getMBContext( &context, pName, -1 ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
-                      "rc: %d", pName, rc ) ;
+         rc = _pDataSu->getMBContext( &context, pName, clUniqueID, -1 ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Get collection[name: %s, id: %llu] mb context failed, "
+                      "rc: %d", pName, clUniqueID, rc ) ;
          getContext = TRUE ;
       }
 
@@ -2783,7 +2809,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO_SU ) ;
 
       storageUnit.setName( CSName() ) ;
-
+      storageUnit._csUniqueID = CSUniqueID() ;
       storageUnit._pageSize = getPageSize() ;
       storageUnit._lobPageSize = getLobPageSize() ;
       storageUnit._sequence = CSSequence() ;
@@ -2807,6 +2833,7 @@ namespace engine
       collectionSpace.setName( CSName() ) ;
       collectionSpace._suID = CSID() ;
       collectionSpace._logicalID = LogicalCSID() ;
+      collectionSpace._csUniqueID = CSUniqueID() ;
 
       if ( dumpCL )
       {
@@ -2834,6 +2861,7 @@ namespace engine
 
       ossMemset( collectionSpace._name, 0, sizeof(collectionSpace._name) ) ;
       ossStrncpy( collectionSpace._name, CSName(), DMS_COLLECTION_SPACE_NAME_SZ );
+      collectionSpace._csUniqueID = CSUniqueID() ;
       collectionSpace._pageSize = getPageSize() ;
       collectionSpace._lobPageSize = getLobPageSize() ;
       collectionSpace._totalSize = totalSize() ;
@@ -3082,6 +3110,7 @@ namespace engine
                 "Invalid mbID [%u], metablock is not in-used", mbID ) ;
 
       collection.setName( CSName(), mb->_collectionName ) ;
+      collection._clUniqueID = mb->_clUniqueID ;
 
       {
          detailedInfo &info = collection.addDetails( CSSequence(),

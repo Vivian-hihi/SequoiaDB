@@ -150,6 +150,7 @@ namespace engine
          }
       } ;
       std::map<const CHAR*, dmsStorageUnitID, cmp_cscb> _cscbNameMap ;
+      std::map<utilCSUniqueID, dmsStorageUnitID>        _cscbIDMap ;
       std::vector<SDB_DMS_CSCB*>          _cscbVec ;
       std::vector<SDB_DMS_CSCB*>          _delCscbVec ;
       std::vector<ossRWMutex*>            _latchVec ;
@@ -170,6 +171,10 @@ namespace engine
       typedef std::map<const CHAR*,
                        dmsStorageUnitID>::iterator CSCB_MAP_ITER ;
 #endif
+      typedef std::map<utilCSUniqueID,
+                       dmsStorageUnitID>::const_iterator CSCB_ID_MAP_CONST_ITER ;
+      typedef std::map<utilCSUniqueID,
+                       dmsStorageUnitID>::iterator CSCB_ID_MAP_ITER ;
 
       /*
        * Queue of collections which are waitting for dictionaies creation.
@@ -202,22 +207,32 @@ namespace engine
    private:
       void  _logCSCBNameMap () ;
 
-      INT32 _CSCBNameInsert ( const CHAR *pName, UINT32 topSequence,
+      INT32 _CSCBNameInsert ( const CHAR *pName,
+                              utilCSUniqueID csUniqueID,
+                              UINT32 topSequence,
                               _dmsStorageUnit *su,
                               dmsStorageUnitID &suID ) ;
 
       INT32 _CSCBNameLookup ( const CHAR *pName,
                               SDB_DMS_CSCB **cscb,
-                              dmsStorageUnitID *suID = NULL,
+                              dmsStorageUnitID *pSuID = NULL,
+                              BOOLEAN exceptDeleting = TRUE ) ;
+      INT32 _CSCBNameLookup ( const CHAR *pName,
+                              utilCSUniqueID csUniqueID,
+                              SDB_DMS_CSCB **cscb,
+                              dmsStorageUnitID *pSuID = NULL,
                               BOOLEAN exceptDeleting = TRUE ) ;
 
       INT32 _CSCBNameLookupAndLock ( const CHAR *pName,
+                                     utilCSUniqueID csUniqueID,
                                      dmsStorageUnitID &suID,
                                      SDB_DMS_CSCB **cscb,
                                      OSS_LATCH_MODE lockType = SHARED,
                                      INT32 millisec = -1 ) ;
+
       void _CSCBRelease ( dmsStorageUnitID suID,
                           OSS_LATCH_MODE lockType = SHARED ) ;
+
       INT32 _CSCBNameRemove ( const CHAR *pName, _pmdEDUCB *cb,
                               SDB_DPSCB *dpsCB, BOOLEAN onlyEmpty,
                               SDB_DMS_CSCB *&pCSCB ) ;
@@ -231,6 +246,7 @@ namespace engine
                                 _pmdEDUCB *cb,
                                 SDB_DPSCB *dpsCB,
                                 SDB_DMS_CSCB *&pCSCB ) ;
+
       void _CSCBNameMapCleanup () ;
 
       INT32 _CSCBRename( const CHAR *pName,
@@ -256,7 +272,14 @@ namespace engine
       virtual INT32  fini () ;
       virtual void   onConfigChange() ;
 
-      INT32 nameToSUAndLock ( const CHAR *pName, dmsStorageUnitID &suID,
+      INT32 nameToSUAndLock ( const CHAR *pName,
+                              dmsStorageUnitID &suID,
+                              _dmsStorageUnit **su,
+                              OSS_LATCH_MODE lockType = SHARED,
+                              INT32 millisec = -1 ) ;
+      INT32 nameToSUAndLock ( const CHAR *pName,
+                              utilCSUniqueID csUniqueID,
+                              dmsStorageUnitID &suID,
                               _dmsStorageUnit **su,
                               OSS_LATCH_MODE lockType = SHARED,
                               INT32 millisec = -1 ) ;

@@ -1118,7 +1118,7 @@ namespace engine
          goto error ;
       }
 
-      // Forced to remove last data node, should deavtive the group
+      // Forced to remove last data node, should deactive the group
       if ( _forced &&  1 == _nodeCount && !isSpareGroup &&
            SDB_ROLE_DATA == groupRole )
       {

@@ -472,6 +472,7 @@ namespace engine
    void _clsDataSrcBaseSession::_constructMeta( BSONObj &obj,
                                                 const CHAR *cs,
                                                 const CHAR *collection,
+                                                utilCLUniqueID clUniqueID,
                                                 _dmsStorageUnit *su )
    {
       PD_TRACE_ENTRY ( SDB__CLSDSBS__CONSTMETA );
@@ -498,6 +499,7 @@ namespace engine
       builder2.append( CLS_FS_CS_META_NAME, builder1.obj() ) ;
       builder2.append( CLS_FS_CS_NAME, cs ) ;
       builder2.append( CLS_FS_COLLECTION_NAME, collection ) ;
+      builder2.append( CLS_FS_COLLECTION_UNIQUEID, (INT64)clUniqueID );
       obj = builder2.obj() ;
       PD_TRACE_EXIT ( SDB__CLSDSBS__CONSTMETA );
       return ;
@@ -1094,6 +1096,7 @@ namespace engine
       _dmsStorageUnit *su = NULL ;
       dmsMBContext *mbContext = NULL ;
       UINT64 curCollection = ~0 ;
+      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
 
       MsgClsFSMetaRes res ;
       res.header.header.TID = header->TID ;
@@ -1174,7 +1177,7 @@ namespace engine
             goto error ;
          }
 
-         // get cur cs and cl logical id
+         // get cur cs and cl logical id, unique id
          rc = su->data()->getMBContext( &mbContext, collection, SHARED ) ;
          if ( rc )
          {
@@ -1182,6 +1185,8 @@ namespace engine
                      "rc: %d", sessionName(), collection, rc ) ;
             goto error ;
          }
+
+         clUniqueID = mbContext->mb()->_clUniqueID ;
 
          curCollection = ossPack32To64 ( su->LogicalCSID(),
                                          mbContext->clLID() ) ;
@@ -1220,7 +1225,7 @@ namespace engine
             }
             _curCollection = curCollection ;
          }
-         _constructMeta( meta, cs, collection, su ) ;
+         _constructMeta( meta, cs, collection, clUniqueID, su ) ;
          PD_LOG( PDDEBUG, "Session[%s]: get meta [%s]", sessionName(),
                  meta.toString().c_str() ) ;
          res.header.header.messageLength = sizeof( MsgClsFSMetaRes ) +

@@ -570,6 +570,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CSCRT2RECORD, "dpsCSCrt2Record" )
    INT32 dpsCSCrt2Record( const CHAR *csName,
+                          const utilCSUniqueID &csUniqueID,
                           const INT32 &pageSize,
                           const INT32 &lobPageSize,
                           const INT32 &type,
@@ -590,9 +591,18 @@ namespace engine
          goto error ;
       }
 
+      rc = record.push( DPS_LOG_CSCRT_CSUNIQUEID,
+                        sizeof( csUniqueID ),
+                        (CHAR *)( &csUniqueID ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to push cs unique id to record, rc: %d", rc ) ;
+         goto error ;
+      }
+
       rc = record.push( DPS_LOG_CSCRT_PAGESIZE,
-                        sizeof( pageSize),
-                        (CHAR *)( &pageSize)) ;
+                        sizeof( pageSize ),
+                        (CHAR *)( &pageSize ) ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to push pagesize to record, rc: %d", rc ) ;
@@ -600,8 +610,8 @@ namespace engine
       }
 
       rc = record.push( DPS_LOG_CSCRT_LOBPAGESZ,
-                        sizeof( lobPageSize),
-                        (CHAR *)( &lobPageSize)) ;
+                        sizeof( lobPageSize ),
+                        (CHAR *)( &lobPageSize ) ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to push lob pagesize to record, rc: %d", rc ) ;
@@ -628,6 +638,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2CSCRT, "dpsRecord2CSCrt" )
    INT32 dpsRecord2CSCrt( const CHAR *logRecord,
                           const CHAR **csName,
+                          utilCSUniqueID &csUniqueID,
                           INT32 &pageSize,
                           INT32 &lobPageSize,
                           INT32 &type )
@@ -644,13 +655,20 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itrCsName, itrPageSize, itrLobPageSz, itrType ;
+      dpsLogRecord::iterator itrCsName, itrUniqueID, itrPageSize,
+                             itrLobPageSz, itrType ;
       itrCsName = record.find( DPS_LOG_CSCRT_CSNAME ) ;
       if ( !itrCsName.valid() )
       {
          PD_LOG( PDERROR, "Failed to find tag csname in record" ) ;
          rc = SDB_SYS ;
          goto error ;
+      }
+
+      itrUniqueID = record.find( DPS_LOG_CSCRT_CSUNIQUEID ) ;
+      if ( itrUniqueID.valid() )
+      {
+         csUniqueID = *((utilCSUniqueID *)itrUniqueID.value()) ;
       }
 
       itrPageSize = record.find( DPS_LOG_CSCRT_PAGESIZE ) ;
@@ -841,6 +859,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CLCRT2RECORD, "dpsCLCrt2Record" )
    INT32 dpsCLCrt2Record( const CHAR *fullName,
+                          const utilCLUniqueID &clUniqueID,
                           const UINT32 &attribute,
                           const UINT8 &compressorType,
                           const BSONObj *extOptions,
@@ -858,6 +877,15 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to push fullname to record, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_PUBLIC_CLUNIQUEID,
+                        sizeof( clUniqueID ),
+                        (const CHAR *)(&clUniqueID)) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to push cl unique id to record, rc: %d",rc ) ;
          goto error ;
       }
 
@@ -905,6 +933,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2CLCRT, "dpsRecord2CLCrt" )
    INT32 dpsRecord2CLCrt( const CHAR *logRecord,
                           const CHAR **fullName,
+                          utilCLUniqueID &clUniqueID,
                           UINT32 &attribute,
                           UINT8 &compressorType,
                           BSONObj &extOptions )
@@ -932,6 +961,12 @@ namespace engine
       }
 
       *fullName = recordItr.value() ;
+
+      recordItr = record.find( DPS_LOG_PUBLIC_CLUNIQUEID ) ;
+      if ( recordItr.valid() )
+      {
+         clUniqueID = *((utilCLUniqueID *)recordItr.value() ) ;
+      }
 
       recordItr = record.find( DPS_LOG_CLCRT_ATTRIBUTE ) ;
       if ( recordItr.valid() )
@@ -1033,6 +1068,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_IXCRT2RECORD, "dpsIXCrt2Record" )
    INT32 dpsIXCrt2Record( const CHAR *fullName,
+                          const utilCLUniqueID &clUniqueID,
                           const BSONObj &index,
                           dpsLogRecord &record )
    {
@@ -1047,6 +1083,15 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to push fullname to record, rc: %d",rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_PUBLIC_CLUNIQUEID,
+                        sizeof( clUniqueID ),
+                        (CHAR *)( &clUniqueID ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to push cl unique id to record, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -1070,6 +1115,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2IXCRT, "dpsRecord2IXCrt" )
    INT32 dpsRecord2IXCrt( const CHAR *logRecord,
                           const CHAR **fullName,
+                          utilCLUniqueID &clUniqueID,
                           BSONObj &index )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2IXCRT ) ;
@@ -1084,13 +1130,19 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itrFullName, itrIndex, itrMode ;
+      dpsLogRecord::iterator itrFullName, itrUniqueID, itrIndex, itrMode ;
       itrFullName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
          PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
          rc = SDB_SYS ;
          goto error ;
+      }
+
+      itrUniqueID = record.find( DPS_LOG_PUBLIC_CLUNIQUEID ) ;
+      if ( itrUniqueID.valid() )
+      {
+         clUniqueID = *((utilCLUniqueID*)itrUniqueID.value()) ;
       }
 
       itrIndex = record.find( DPS_LOG_IXCRT_IX ) ;
@@ -1113,6 +1165,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_IXDEL2RECORD, "dpsIXDel2Record" )
    INT32 dpsIXDel2Record( const CHAR *fullName,
+                          const utilCLUniqueID &clUniqueID,
                           const BSONObj &index,
                           dpsLogRecord &record )
    {
@@ -1128,6 +1181,15 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to push fullname to record, rc: %d",rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_PUBLIC_CLUNIQUEID,
+                        sizeof( clUniqueID ),
+                        (CHAR *)( &clUniqueID ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to push cl unique id to record, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -1151,6 +1213,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2IXDEL, "dpsRecord2IXDel" )
    INT32 dpsRecord2IXDel( const CHAR *logRecord,
                           const CHAR **fullName,
+                          utilCLUniqueID &clUniqueID,
                           BSONObj &index )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2IXDEL ) ;
@@ -1165,13 +1228,19 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itrFullName, itrIndex ;
+      dpsLogRecord::iterator itrFullName, itrUniqueID, itrIndex ;
       itrFullName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
          PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
          rc = SDB_SYS ;
          goto error ;
+      }
+
+      itrUniqueID = record.find( DPS_LOG_PUBLIC_CLUNIQUEID ) ;
+      if ( itrUniqueID.valid() )
+      {
+         clUniqueID = *((utilCLUniqueID*)itrUniqueID.value()) ;
       }
 
       itrIndex = record.find( DPS_LOG_IXCRT_IX ) ;

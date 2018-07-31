@@ -564,13 +564,14 @@ namespace engine
 
                      if ( !checkOnly )
                      {
-                        storageUnit = SDB_OSS_NEW dmsStorageUnit ( csName,
-                                                                   sequence,
-                                                                   pmdGetBuffPool(),
-                                                                   DMS_PAGE_SIZE_DFT,
-                                                                   DMS_DEFAULT_LOB_PAGE_SZ,
-                                                                   DMS_STORAGE_NORMAL,
-                                                                   rtnGetExtDataHandler() ) ;
+                        storageUnit = SDB_OSS_NEW dmsStorageUnit( csName,
+                                                                  UTIL_INVALID_UNIQUEID,
+                                                                  sequence,
+                                                                  pmdGetBuffPool(),
+                                                                  DMS_PAGE_SIZE_DFT,
+                                                                  DMS_DEFAULT_LOB_PAGE_SZ,
+                                                                  DMS_STORAGE_NORMAL,
+                                                                  rtnGetExtDataHandler() ) ;
                         if ( !storageUnit )
                         {
                            PD_LOG_MSG ( PDERROR, "Failed to allocate "
@@ -715,6 +716,7 @@ namespace engine
                                                          sequence ) )
                   {
                      storageUnit = SDB_OSS_NEW dmsStorageUnit ( csName,
+                                                                UTIL_INVALID_UNIQUEID,
                                                                 sequence,
                                                                 pmdGetBuffPool(),
                                                                 DMS_PAGE_SIZE_DFT,
@@ -980,8 +982,23 @@ namespace engine
       goto done ;
    }
 
+   INT32 rtnCollectionSpaceLock ( const CHAR *pCollectionSpaceName,
+                                  SDB_DMSCB *dmsCB,
+                                  BOOLEAN loadFile,
+                                  dmsStorageUnit **ppsu,
+                                  dmsStorageUnitID &suID,
+                                  OSS_LATCH_MODE lockType,
+                                  INT32 millisec )
+   {
+      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+      return rtnCollectionSpaceLock( pCollectionSpaceName, csUniqueID,
+                                     dmsCB, loadFile, ppsu, suID,
+                                     lockType, millisec ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCSLOCK, "rtnCollectionSpaceLock" )
    INT32 rtnCollectionSpaceLock ( const CHAR *pCollectionSpaceName,
+                                  utilCSUniqueID csUniqueID,
                                   SDB_DMSCB *dmsCB,
                                   BOOLEAN loadFile,
                                   dmsStorageUnit **ppsu,
@@ -996,7 +1013,7 @@ namespace engine
       SDB_ASSERT ( ppsu, "storage unit can't be NULL" ) ;
 
    retry:
-      rc = dmsCB->nameToSUAndLock ( pCollectionSpaceName, suID,
+      rc = dmsCB->nameToSUAndLock ( pCollectionSpaceName, csUniqueID, suID,
                                     ppsu, lockType, millisec ) ;
       if ( SDB_OK == rc )
       {
@@ -1039,8 +1056,24 @@ namespace engine
       goto done ;
    }
 
+   INT32 rtnResolveCollectionNameAndLock ( const CHAR *pCollectionFullName,
+                                           SDB_DMSCB *dmsCB,
+                                           dmsStorageUnit **ppsu,
+                                           const CHAR **ppCollectionName,
+                                           dmsStorageUnitID &suID,
+                                           OSS_LATCH_MODE lockType,
+                                           INT32 millisec )
+   {
+      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
+      return rtnResolveCollectionNameAndLock( pCollectionFullName,
+                                              clUniqueID, dmsCB, ppsu,
+                                              ppCollectionName, suID,
+                                              lockType, millisec ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRESOLVECLNAL, "rtnResolveCollectionNameAndLock" )
    INT32 rtnResolveCollectionNameAndLock ( const CHAR *pCollectionFullName,
+                                           utilCLUniqueID clUniqueID,
                                            SDB_DMSCB *dmsCB,
                                            dmsStorageUnit **ppsu,
                                            const CHAR **ppCollectionName,
@@ -1055,6 +1088,7 @@ namespace engine
       SDB_ASSERT ( ppsu, "storage unit can't be NULL" ) ;
       CHAR *pDot = NULL ;
       CHAR *pDot1 = NULL ;
+      utilCSUniqueID csUniqueID = utilGetCSUniqueID( clUniqueID );
       CHAR strCollectionFullName [ DMS_COLLECTION_SPACE_NAME_SZ +
                                    DMS_COLLECTION_NAME_SZ + 2 ] = {0} ;
       if ( ossStrlen ( pCollectionFullName ) > DMS_COLLECTION_SPACE_NAME_SZ +
@@ -1093,7 +1127,7 @@ namespace engine
                              pCollectionFullName ;
       }
 
-      rc = rtnCollectionSpaceLock ( strCollectionFullName, dmsCB,
+      rc = rtnCollectionSpaceLock ( strCollectionFullName, csUniqueID, dmsCB,
                                     FALSE, ppsu, suID, lockType, millisec ) ;
       if ( rc )
       {
@@ -1665,6 +1699,7 @@ namespace engine
       if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc )
       {
          rc = rtnCreateCollectionCommand( pCLFullName, 0, cb, dmsCB, dpsCB,
+                                          UTIL_INVALID_UNIQUEID,
                                           UTIL_COMPRESSOR_INVALID,
                                           FLG_CREATE_WHEN_NOT_EXIST, sys ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create collection[%s], rc: %d",

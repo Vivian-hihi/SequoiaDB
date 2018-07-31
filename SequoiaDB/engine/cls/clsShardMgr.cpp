@@ -959,9 +959,16 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SYNCUPDCAT, "_clsShardMgr::syncUpdateCatalog" )
    INT32 _clsShardMgr::syncUpdateCatalog ( const CHAR *pCollectionName,
-                                           INT64 millsec )
+                                           const INT64 millsec )
+   {
+      return syncUpdateCatalog( UTIL_INVALID_UNIQUEID, pCollectionName,
+                                millsec ) ;
+   }
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SYNCUPDCAT, "_clsShardMgr::syncUpdateCatalog" )
+   INT32 _clsShardMgr::syncUpdateCatalog ( utilCLUniqueID clUniqueID,
+                                           const CHAR *pCollectionName,
+                                           const INT64 millsec )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_SYNCUPDCAT );
@@ -970,6 +977,7 @@ namespace engine
       UINT32 retryTimes = 0 ;
       BOOLEAN needRetry = FALSE ;
       BOOLEAN hasUpCataGrp = FALSE ;
+      BOOLEAN hasUniqueID = UTIL_INVALID_UNIQUEID == clUniqueID ? FALSE : TRUE ;
 
       if ( !pCollectionName )
       {
@@ -985,7 +993,7 @@ namespace engine
       // look for sync event from cache
       // memory will be released in this function, when there's no thread
       // wait for the event
-      pEventInfo = _findCatSyncEvent( pCollectionName, TRUE ) ;
+      pEventInfo = _findCatSyncEvent( pCollectionName, clUniqueID, TRUE ) ;
       if ( !pEventInfo )
       {
          _catLatch.release () ;
@@ -999,8 +1007,8 @@ namespace engine
       if ( FALSE == pEventInfo->send )
       {
          // if the event has not been sent, let's send to catalog
-         rc = _sendCatalogReq ( pCollectionName, 0, &(pEventInfo->netHandle),
-                                millsec ) ;
+         rc = _sendCatalogReq ( pCollectionName, clUniqueID, 0,
+                                &(pEventInfo->netHandle), millsec ) ;
          if ( SDB_OK == rc )
          {
             pEventInfo->send = TRUE ;
@@ -1076,7 +1084,14 @@ namespace engine
             //release the event info
             SDB_OSS_DEL pEventInfo ;
             pEventInfo = NULL ;
-            _mapSyncCatEvent.erase ( pCollectionName ) ;
+            if ( hasUniqueID )
+            {
+               _mapSyncCLIDEvent.erase ( clUniqueID ) ;
+            }
+            else
+            {
+               _mapSyncCatEvent.erase ( pCollectionName ) ;
+            }
          }
 
          _catLatch.release () ;
@@ -1378,6 +1393,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__SNDCATREQ, "_clsShardMgr::_sendCatalogReq" )
    INT32 _clsShardMgr::_sendCatalogReq ( const CHAR *pCollectionName,
+                                         utilCLUniqueID clUniqueID,
                                          UINT64 requestID,
                                          NET_HANDLE *pHandle,
                                          INT64 millsec )
@@ -1396,7 +1412,14 @@ namespace engine
       // build BSON object
       try
       {
-         query = BSON ( CAT_COLLECTION_NAME << pCollectionName ) ;
+         if ( UTIL_INVALID_UNIQUEID == clUniqueID )
+         {
+            query = BSON ( CAT_COLLECTION_NAME << pCollectionName ) ;
+         }
+         else
+         {
+            query = BSON ( CAT_CL_UNIQUEID << (INT64)clUniqueID ) ;
+         }
       }
       catch ( std::exception &e )
       {
@@ -1426,7 +1449,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__SENDCSINFOREQ, "_clsShardMgr::_sendCSInfoReq" )
-   INT32 _clsShardMgr::_sendCSInfoReq( const CHAR * pCSName, UINT64 requestID,
+   INT32 _clsShardMgr::_sendCSInfoReq( const CHAR * pCSName,
+                                       utilCSUniqueID csUniqueID,
+                                       UINT64 requestID,
                                        NET_HANDLE *pHandle, INT64 millsec )
    {
       INT32 rc = SDB_OK ;
@@ -1443,7 +1468,14 @@ namespace engine
       // build query
       try
       {
-         query = BSON ( CAT_COLLECTION_SPACE_NAME << pCSName ) ;
+         if ( UTIL_INVALID_UNIQUEID == csUniqueID )
+         {
+            query = BSON ( CAT_COLLECTION_SPACE_NAME << pCSName ) ;
+         }
+         else
+         {
+            query = BSON ( CAT_CS_UNIQUEID << (INT64)csUniqueID ) ;
+         }
       }
       catch ( std::exception &e )
       {
@@ -1460,8 +1492,9 @@ namespace engine
       {
          // we use debug level here since we don't want this message
          // flush diaglog if catalog is offline
-         PD_LOG ( PDDEBUG, "send collection space req[name: %s, requestID: "
-                  "%lld, rc: %d]", pCSName, requestID, rc ) ;
+         PD_LOG ( PDDEBUG,
+                  "send collection space req[name: %s, id: %u,requestID: "
+                  "%lld, rc: %d]", pCSName, csUniqueID, requestID, rc ) ;
          goto error ;
       }
 
@@ -1854,10 +1887,22 @@ namespace engine
          //signal collection info event, since the previous pEVentInfo
          //could be NULL ( if it's async call, requestID is 0 ), we'll have
          //to check for pEventInfo here again
-         BSONElement ele = objList[0].getField ( CAT_COLLECTION_NAME ) ;
-         clsEventItem *pEventInfo = _findCatSyncEvent( ele.str().c_str(),
-                                                       FALSE ) ;
-         if ( pEventInfo )
+         BSONElement ele1 = objList[0].getField ( CAT_COLLECTION_NAME ) ;
+         BSONElement ele2 = objList[0].getField ( CAT_CL_UNIQUEID ) ;
+         string clName = ele1.str() ;
+         utilCLUniqueID CLID = ( UINT64 ) ele2.numberLong() ;
+         clsEventItem *pEventInfo = _findCatSyncEvent( clName.c_str(), CLID ) ;
+         if ( !pEventInfo )
+         {
+            goto done ;
+         }
+         if ( pEventInfo->requestID == msg->requestID )
+         {
+            pEventInfo->event.signalAll ( rc ) ;
+            goto done ;
+         }
+         pEventInfo = _findCatSyncEvent( clName.c_str() ) ;
+         if ( pEventInfo && pEventInfo->requestID == msg->requestID )
          {
             pEventInfo->event.signalAll ( rc ) ;
          }
@@ -1871,29 +1916,51 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__FNDCATSYNCEV, "_clsShardMgr::_findCatSyncEvent" )
    clsEventItem *_clsShardMgr::_findCatSyncEvent ( const CHAR * pCollectionName,
+                                                   utilCLUniqueID clUniqueID,
                                                    BOOLEAN bCreate )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR__FNDCATSYNCEV );
       SDB_ASSERT ( pCollectionName , "Collection name can't be NULL" ) ;
 
+      BOOLEAN hasUniqueID = UTIL_INVALID_UNIQUEID == clUniqueID ? FALSE : TRUE ;
       clsEventItem *pEventInfo = NULL ;
-      MAP_CAT_EVENT_IT it = _mapSyncCatEvent.find ( pCollectionName ) ;
-      if ( it != _mapSyncCatEvent.end() )
+      MAP_CLID_EVENT_IT it1 ;
+      MAP_CAT_EVENT_IT it2 ;
+
+      /// search from id-map, if find out nothing, then search from name-map
+      if ( hasUniqueID )
       {
-         pEventInfo = it->second ;
+         it1 = _mapSyncCLIDEvent.find ( clUniqueID ) ;
+         if ( it1 != _mapSyncCLIDEvent.end() )
+         {
+            pEventInfo = it1->second ;
+            goto done ;
+         }
+      }
+
+      it2 = _mapSyncCatEvent.find ( pCollectionName ) ;
+      if ( it2 != _mapSyncCatEvent.end() )
+      {
+         pEventInfo = it2->second ;
          goto done ;
       }
 
-      if ( !bCreate )
+      /// If it has clUniqueID, insert new event item to id-map.
+      /// If it hasn't clUniqueID, insert to name-map. Just only insert one map.
+      if ( bCreate )
       {
-         goto done ;
+         pEventInfo = SDB_OSS_NEW _clsEventItem ;
+         pEventInfo->name = pCollectionName ;
+         pEventInfo->clUniqueID = clUniqueID ;
+         if ( hasUniqueID )
+         {
+            _mapSyncCLIDEvent[ clUniqueID ] = pEventInfo ;
+         }
+         else
+         {
+            _mapSyncCatEvent[ pCollectionName ] = pEventInfo ;
+         }
       }
-
-      //create new event info
-      pEventInfo = SDB_OSS_NEW _clsEventItem ;
-      pEventInfo->name = pCollectionName ;
-      //add to map
-      _mapSyncCatEvent[pCollectionName] = pEventInfo ;
 
    done:
       PD_TRACE_EXIT ( SDB__CLSSHDMGR__FNDCATSYNCEV );
@@ -1905,7 +1972,10 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR__FNDCATSYNCEVN );
       clsEventItem *pEventInfo = NULL ;
-      MAP_CAT_EVENT_IT it = _mapSyncCatEvent.begin() ;
+      MAP_CAT_EVENT_IT it ;
+      MAP_CLID_EVENT_IT idit ;
+
+      it = _mapSyncCatEvent.begin() ;
       while ( it != _mapSyncCatEvent.end() )
       {
          pEventInfo = it->second ;
@@ -1915,6 +1985,18 @@ namespace engine
          }
          ++it ;
       }
+
+      idit = _mapSyncCLIDEvent.begin() ;
+      while ( idit != _mapSyncCLIDEvent.end() )
+      {
+         pEventInfo = idit->second ;
+         if ( pEventInfo->requestID == requestID )
+         {
+            goto done ;
+         }
+         ++idit ;
+      }
+
       pEventInfo = NULL ;
    done :
       PD_TRACE_EXIT ( SDB__CLSSHDMGR__FNDCATSYNCEVN );
@@ -1999,6 +2081,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_GETANDLOCKCATSET, "_clsShardMgr::getAndLockCataSet" )
    INT32 _clsShardMgr::getAndLockCataSet( const CHAR * name,
+                                          utilCLUniqueID clUniqueID,
                                           clsCatalogSet **ppSet,
                                           BOOLEAN noWithUpdate,
                                           INT64 waitMillSec,
@@ -2013,14 +2096,14 @@ namespace engine
       while ( SDB_OK == rc )
       {
          _pCatAgent->lock_r() ;
-         *ppSet = _pCatAgent->collectionSet( name ) ;
+         *ppSet = _pCatAgent->collectionSet( name, clUniqueID ) ;
          // if we can't find the name and request to update catalog
          // we'll call syncUpdateCatalog and refind again
          if ( !(*ppSet) && noWithUpdate )
          {
             _pCatAgent->release_r() ;
             // request to update catalog
-            rc = syncUpdateCatalog( name, waitMillSec ) ;
+            rc = syncUpdateCatalog( clUniqueID, name, waitMillSec ) ;
             if ( rc )
             {
                // if we can't find the collection and not able to update
@@ -2122,6 +2205,7 @@ namespace engine
    }
 
    INT32 _clsShardMgr::rGetCSInfo( const CHAR * csName,
+                                   utilCSUniqueID &csUniqueID,
                                    UINT32 &pageSize,
                                    UINT32 &lobPageSize,
                                    DMS_STORAGE_TYPE &type,
@@ -2161,7 +2245,7 @@ namespace engine
       ++retryTimes ;
       needRetry = FALSE ;
       // send request
-      rc = _sendCSInfoReq( csName, requestID, &(item->netHandle),
+      rc = _sendCSInfoReq( csName, csUniqueID, requestID, &(item->netHandle),
                            waitMillSec ) ;
       if ( rc )
       {
@@ -2212,6 +2296,10 @@ namespace engine
       PD_RC_CHECK( rc, PDWARNING, "Get collection space[%s] info failed, "
                    "rc: %d", csName, rc ) ;
 
+      if ( UTIL_INVALID_UNIQUEID == csUniqueID )
+      {
+         csUniqueID = item->csUniqueID ;
+      }
       pageSize = item->pageSize ;
       lobPageSize = item->lobPageSize ;
       type = item->type ;
@@ -2457,6 +2545,16 @@ namespace engine
          else
          {
             csItem->type = DMS_STORAGE_NORMAL ;
+         }
+
+         ele = objList[0].getField( CAT_CS_UNIQUEID ) ;
+         if ( ele.isNumber() )
+         {
+            csItem->csUniqueID = (UINT32)ele.numberInt() ;
+         }
+         else
+         {
+            csItem->csUniqueID = UTIL_INVALID_UNIQUEID ;
          }
       }
 

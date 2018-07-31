@@ -248,6 +248,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__CSCBNMINST, "_SDB_DMSCB::_CSCBNameInsert" )
    INT32 _SDB_DMSCB::_CSCBNameInsert ( const CHAR *pName,
+                                       utilCSUniqueID csUniqueID,
                                        UINT32 topSequence,
                                        _dmsStorageUnit *su,
                                        dmsStorageUnitID &suID )
@@ -255,6 +256,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB__CSCBNMINST );
       SDB_DMS_CSCB *cscb = NULL ;
+
       if ( 0 == _freeList.size() )
       {
          rc = SDB_DMS_SU_OUTRANGE ;
@@ -273,7 +275,10 @@ namespace engine
       _freeList.pop_back() ;
       _cscbNameMap[cscb->_name] = suID ;
       _cscbVec[suID] = cscb ;
-
+      if ( csUniqueID != UTIL_INVALID_UNIQUEID )
+      {
+         _cscbIDMap[csUniqueID] = suID ;
+      }
    done :
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB__CSCBNMINST, rc );
       return rc ;
@@ -283,33 +288,63 @@ namespace engine
 
    INT32 _SDB_DMSCB::_CSCBNameLookup ( const CHAR *pName,
                                        SDB_DMS_CSCB **cscb,
-                                       dmsStorageUnitID *suID,
+                                       dmsStorageUnitID *pSuID,
                                        BOOLEAN exceptDeleting )
    {
-      INT32 rc = SDB_OK ;
+      utilCSUniqueID uid = UTIL_INVALID_UNIQUEID ;
+      return _CSCBNameLookup( pName, uid, cscb, pSuID, exceptDeleting ) ;
+   }
+
+   INT32 _SDB_DMSCB::_CSCBNameLookup ( const CHAR *pName,
+                                       utilCSUniqueID csUniqueID,
+                                       SDB_DMS_CSCB **cscb,
+                                       dmsStorageUnitID *pSuID,
+                                       BOOLEAN exceptDeleting )
+   {
       SDB_ASSERT( cscb, "cscb can't be null!" ) ;
 
-      CSCB_MAP_CONST_ITER it ;
+      INT32 rc = SDB_OK ;
+      dmsStorageUnitID suID  = DMS_INVALID_SUID ;
+      dmsStorageUnitID suID1 = DMS_INVALID_SUID ;
+      dmsStorageUnitID suID2 = DMS_INVALID_SUID ;
 
-      if ( _cscbNameMap.end() == (it = _cscbNameMap.find(pName)) )
+      if ( UTIL_INVALID_UNIQUEID != csUniqueID )
+      {
+         CSCB_ID_MAP_CONST_ITER it = _cscbIDMap.find( csUniqueID ) ;
+         if ( it != _cscbIDMap.end() )
+         {
+            suID = suID1 = it->second ;
+         }
+      }
+      else if ( pName )
+      {
+         CSCB_MAP_CONST_ITER it = _cscbNameMap.find( pName ) ;
+         if ( it != _cscbNameMap.end() )
+         {
+            suID = suID2 = it->second ;
+         }
+      }
+
+      if ( DMS_INVALID_SUID == suID )
       {
          rc = SDB_DMS_CS_NOTEXIST ;
          goto error;
       }
-      if ( suID )
+
+      if ( pSuID )
       {
-         *suID = it->second ;
+         *pSuID = suID ;
       }
 
-      if ( _cscbVec[(*it).second] )
+      if ( _cscbVec[ suID ] )
       {
-         *cscb = _cscbVec[(*it).second] ;
+         *cscb = _cscbVec[ suID ] ;
       }
-      else if ( _delCscbVec[(*it).second] )
+      else if ( _delCscbVec[ suID ] )
       {
          if ( !exceptDeleting )
          {
-            *cscb = _delCscbVec[(*it).second] ;
+            *cscb = _delCscbVec[ suID ] ;
          }
          else
          {
@@ -332,6 +367,7 @@ namespace engine
    }
 
    INT32 _SDB_DMSCB::_CSCBNameLookupAndLock ( const CHAR *pName,
+                                              utilCSUniqueID csUniqueID,
                                               dmsStorageUnitID &suID,
                                               SDB_DMS_CSCB **cscb,
                                               OSS_LATCH_MODE lockType,
@@ -340,7 +376,7 @@ namespace engine
       INT32 rc = SDB_OK;
       SDB_ASSERT( cscb, "cscb can't be null!" );
 
-      rc = _CSCBNameLookup( pName, cscb, &suID, TRUE ) ;
+      rc = _CSCBNameLookup( pName, csUniqueID, cscb, &suID, TRUE ) ;
       if ( rc )
       {
          goto error ;
@@ -398,6 +434,7 @@ namespace engine
       UINT32 logRecSize = 0;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
+      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
 
       _mutex.get_shared () ;
       rc = _CSCBNameLookup( pName, &pCSCB, &suID, TRUE ) ;
@@ -481,9 +518,16 @@ namespace engine
          }
          isTransLocked = TRUE ;
       }
+      // get unique id from su. Because if the cs is in _cscbIDMap, and
+      // we don't erase it, it may cause core dump.
+      csUniqueID = pCSCB->_su->CSUniqueID() ;
 
       _cscbVec[ suID ] = NULL ;
       _cscbNameMap.erase( pName ) ;
+      if ( csUniqueID != UTIL_INVALID_UNIQUEID )
+      {
+         _cscbIDMap.erase( csUniqueID ) ;
+      }
       _freeList.push_back ( suID ) ;
 
       // log here
@@ -812,6 +856,7 @@ namespace engine
       UINT32 logRecSize = 0 ;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
+      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
 
       if ( NULL != dpsCB )
       {
@@ -862,8 +907,16 @@ namespace engine
          }
          isTransLocked = TRUE ;
       }
+      // get unique id from su. Because if the cl is in _cscbIDMap, and
+      // we don't erase it, it may cause core dump.
+      csUniqueID = pCSCB->_su->CSUniqueID() ;
+
       _delCscbVec[ suID ] = NULL ;
       _cscbNameMap.erase( pName ) ;
+      if ( csUniqueID != UTIL_INVALID_UNIQUEID )
+      {
+         _cscbIDMap.erase( csUniqueID ) ;
+      }
       _freeList.push_back ( suID ) ;
 
       // log here
@@ -927,6 +980,7 @@ namespace engine
          }
       }
       _cscbNameMap.clear() ;
+      _cscbIDMap.clear() ;
       PD_TRACE_EXIT ( SDB__SDB_DMSCB__CSCBNMMAPCLN );
    }
 
@@ -1251,6 +1305,18 @@ namespace engine
                                        OSS_LATCH_MODE lockType,
                                        INT32 millisec )
    {
+      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+      return nameToSUAndLock( pName, csUniqueID, suID,
+                              su, lockType, millisec ) ;
+   }
+
+   INT32 _SDB_DMSCB::nameToSUAndLock ( const CHAR *pName,
+                                       utilCSUniqueID csUniqueID,
+                                       dmsStorageUnitID &suID,
+                                       _dmsStorageUnit **su,
+                                       OSS_LATCH_MODE lockType,
+                                       INT32 millisec )
+   {
       INT32 rc = SDB_OK;
 
       SDB_DMS_CSCB *cscb = NULL;
@@ -1260,9 +1326,8 @@ namespace engine
          return SDB_INVALIDARG ;
       }
       ossScopedLock _lock(&_mutex, SHARED) ;
-      rc = _CSCBNameLookupAndLock( pName, suID,
-                                   &cscb, lockType,
-                                   millisec ) ;
+      rc = _CSCBNameLookupAndLock( pName, csUniqueID, suID, &cscb,
+                                   lockType, millisec ) ;
       if ( SDB_OK == rc )
       {
          *su = cscb->_su ;
@@ -1352,6 +1417,7 @@ namespace engine
       INT32 type = 0 ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
       _SDB_RTNCB *pRtnCB = pmdGetKRCB()->getRTNCB() ;
+      utilCSUniqueID csUniqueID = su->CSUniqueID() ;
 
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_ADDCS );
 
@@ -1368,7 +1434,8 @@ namespace engine
       if ( NULL != dpsCB )
       {
          // reserved log-size
-         rc = dpsCSCrt2Record( pName, pageSize, lobPageSz, type, record ) ;
+         rc = dpsCSCrt2Record( pName, csUniqueID, pageSize,
+                               lobPageSz, type, record ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to build record:%d", rc ) ;
@@ -1388,7 +1455,7 @@ namespace engine
       _mutex.get() ;
       isLocked = TRUE ;
 
-      rc = _CSCBNameLookup( pName, &cscb ) ;
+      rc = _CSCBNameLookup( pName, csUniqueID, &cscb ) ;
       if ( SDB_OK == rc )
       {
          rc = SDB_DMS_CS_EXIST;
@@ -1399,7 +1466,7 @@ namespace engine
          goto error;
       }
 
-      rc = _CSCBNameInsert ( pName, topSequence, su, suID ) ;
+      rc = _CSCBNameInsert ( pName, csUniqueID, topSequence, su, suID ) ;
       // write dps
       if ( SDB_OK == rc && dpsCB )
       {

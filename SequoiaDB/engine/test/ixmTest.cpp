@@ -79,7 +79,8 @@ int main ( int argc, char **argv )
       printf("Failed to open collection, rc = %d\n", rc ) ;
       return 0 ;
    }
-   rc = myUnit.data()->addCollection("test", NULL, 0, NULL, NULL, 1 ) ;
+   rc = myUnit.data()->addCollection( "test", NULL, UTIL_INVALID_UNIQUEID,
+                                      0, NULL, NULL, 1 ) ;
    if ( rc )
    {
       if ( SDB_DMS_EXIST != rc )

@@ -663,7 +663,7 @@ namespace engine
             pmdIncErrNum( _replyHeader.flags ) ;
          }
       }
- 
+
    done:
       eduCB()->writingDB( FALSE ) ;
       MON_END_OP( _pEDUCB->getMonAppCB() ) ;
@@ -686,10 +686,12 @@ namespace engine
          ++index ;
       }
 
+      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
       UINT32 pageSize = DMS_PAGE_SIZE_DFT ;
       UINT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
       DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ;
-      rc = _pShdMgr->rGetCSInfo( csName, pageSize, lobPageSize, type ) ;
+      rc = _pShdMgr->rGetCSInfo( csName, csUniqueID,
+                                 pageSize, lobPageSize, type ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Session[%s]: Get collection space[%s] page "
@@ -698,7 +700,8 @@ namespace engine
          goto error ;
       }
       rc = rtnCreateCollectionSpaceCommand( csName, _pEDUCB, _pDmsCB, _pDpsCB,
-                                            pageSize, lobPageSize, type ) ;
+                                            csUniqueID, pageSize,
+                                            lobPageSize, type ) ;
       if ( SDB_DMS_CS_EXIST == rc )
       {
          rc = SDB_OK ;
@@ -730,6 +733,7 @@ namespace engine
       UINT32 groupCount       = 0 ;
       BSONObj shardingKey ;
       vector< string > subCLList ;
+      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
       UTIL_COMPRESSOR_TYPE compType = UTIL_COMPRESSOR_INVALID ;
       BSONObj extOptions ;
       BSONObjBuilder builder ;
@@ -764,6 +768,7 @@ namespace engine
       attribute = set->getAttribute() ;
       isMainCL = set->isMainCL() ;
       groupCount = set->groupCount() ;
+      clUniqueID = set->clUniqueID() ;
       compType = set->getCompressType() ;
       if ( OSS_BIT_TEST( attribute, DMS_MB_ATTR_CAPPED ) )
       {
@@ -815,7 +820,7 @@ namespace engine
          }
 
          rc = rtnCreateCollectionCommand( clFullName, shardingKey, attribute,
-                                          _pEDUCB, _pDmsCB, _pDpsCB,
+                                          _pEDUCB, _pDmsCB, _pDpsCB, clUniqueID,
                                           compType, 0, FALSE, &extOptions ) ;
          if ( SDB_DMS_EXIST == rc )
          {
@@ -1245,6 +1250,7 @@ namespace engine
       INT16 replSize = 0 ;
       INT16 w = 1 ;
       _rtnCommand *pCommand = NULL ;
+      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
       CHAR mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
 
       rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
@@ -1447,8 +1453,8 @@ namespace engine
          if ( pCommand->collectionFullName() )
          {
             rc = _checkCLStatusAndGetSth( pCommand->collectionFullName(),
-                                          pQuery->version,
-                                          &_isMainCL, &replSize, mainCLName ) ;
+                                          pQuery->version, &_isMainCL,
+                                          &replSize, mainCLName, &clUniqueID ) ;
 
             if ( SDB_OK != rc )
             {
@@ -1466,6 +1472,7 @@ namespace engine
             }
 
             pCommand->setMainCLName( mainCLName ) ;
+            pCommand->setCLUniqueID ( clUniqueID ) ;
          }
          else if ( CMD_CREATE_COLLECTIONSPACE == pCommand->type() ||
                    CMD_DROP_COLLECTIONSPACE == pCommand->type() )
@@ -4249,7 +4256,8 @@ namespace engine
                                                   INT32 version,
                                                   BOOLEAN *isMainCL,
                                                   INT16 *w,
-                                                  CHAR *mainCLName )
+                                                  CHAR *mainCLName,
+                                                  utilCLUniqueID *clUniqueID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDSESS__CHECKCLSANDGET ) ;
@@ -4298,6 +4306,10 @@ namespace engine
       curVer = set->getVersion() ;
       groupCount = set->groupCount() ;
       mainCL = set->isMainCL() ;
+      if(  NULL != clUniqueID )
+      {
+         *clUniqueID = set->clUniqueID() ;
+      }
       if ( NULL != mainCLName && !set->getMainCLName().empty() )
       {
          ossStrncpy( mainCLName, set->getMainCLName().c_str(),

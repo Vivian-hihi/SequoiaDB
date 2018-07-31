@@ -1021,9 +1021,10 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CAATADDCL2CS, "catAddCL2CS" )
-   INT32 catAddCL2CS( const CHAR * csName, const CHAR * clName,
-                      pmdEDUCB * cb, SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB,
-                      INT16 w )
+   INT32 catAddCL2CS( const CHAR * csName,
+                      const CHAR * clName, utilCLUniqueID clUniqueID,
+                      pmdEDUCB * cb, SDB_DMSCB * dmsCB,
+                      SDB_DPSCB * dpsCB, INT16 w )
    {
       INT32 rc = SDB_OK ;
 
@@ -1033,12 +1034,17 @@ namespace engine
       BSONObjBuilder updateBuild ;
       BSONObjBuilder sub( updateBuild.subobjStart("$addtoset") ) ;
 
-      BSONObj newCLObj = BSON( CAT_COLLECTION_NAME << clName ) ;
+      BSONObj newCLObj = BSON( CAT_COLLECTION_NAME << clName <<
+                               CAT_CL_UNIQUEID << (INT64)clUniqueID ) ;
       BSONObjBuilder sub1( sub.subarrayStart( CAT_COLLECTION ) ) ;
       sub1.append( "0", newCLObj ) ;
       sub1.done() ;
 
       sub.done() ;
+
+      BSONObj uniqueIDObj = BSON( CAT_CS_CLUNIQUEHWM << 1 );
+      updateBuild.appendObject( "$inc", uniqueIDObj.objdata() ) ;
+
       BSONObj updator = updateBuild.obj() ;
       BSONObj hint ;
 
@@ -1075,7 +1081,7 @@ namespace engine
                    clFullName.c_str(), rc ) ;
 
       {
-         BSONObj modifier = BSON( "$pull" << BSON( CAT_COLLECTION <<
+         BSONObj modifier = BSON( "$pull_by" << BSON( CAT_COLLECTION <<
                                      BSON( CAT_COLLECTION_NAME << szCLName ) ) ) ;
          BSONObj matcher = BSON( CAT_COLLECTION_SPACE_NAME << szCSName ) ;
          BSONObj dummy ;
@@ -1234,16 +1240,31 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCHECKSPACEEXIST, "catCheckSpaceExist" )
    INT32 catCheckSpaceExist( const char *pSpaceName, BOOLEAN &isExist,
                              BSONObj &obj, pmdEDUCB *cb )
    {
-      INT32 rc           = SDB_OK ;
-      isExist            = FALSE ;
+      return catCheckSpaceExist( pSpaceName, UTIL_INVALID_UNIQUEID,
+                                 isExist, obj, cb ) ;
+   }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCHECKSPACEEXIST, "catCheckSpaceExist" )
+   INT32 catCheckSpaceExist( const char *pSpaceName, utilCSUniqueID csUniqueID,
+                             BOOLEAN &isExist, BSONObj &obj, pmdEDUCB *cb )
+   {
+      INT32 rc           = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATCHECKSPACEEXIST ) ;
-      BSONObj matcher = BSON( CAT_COLLECTION_SPACE_NAME << pSpaceName ) ;
-      BSONObj dummyObj ;
+
+      isExist            = FALSE ;
+      BSONObj matcher, dummyObj ;
+
+      if ( UTIL_INVALID_UNIQUEID == csUniqueID )
+      {
+         matcher = BSON( CAT_COLLECTION_SPACE_NAME << pSpaceName ) ;
+      }
+      else
+      {
+         matcher = BSON( CAT_CS_UNIQUEID << csUniqueID ) ;
+      }
 
       rc = catGetOneObj( CAT_COLLECTION_SPACE_COLLECTION, dummyObj, matcher,
                          dummyObj, cb, obj ) ;
@@ -2256,6 +2277,54 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUPCSUID, "catUpdateCSUniqueID" )
+   INT32 catUpdateCSUniqueID( pmdEDUCB *cb, INT16 w, UINT32& CSID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATUPCSUID ) ;
+
+      INT64 updateNum = 0 ;
+      BSONObj dummy, result ;
+      BSONObj matcher = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
+      BSONObj updator = BSON( "$inc" << BSON( FIELD_NAME_CSUNIQUEHWM << 1 ) );
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
+      SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
+
+      rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
+                      dummy, 0, cb, dmsCB, dpsCB, w, &updateNum ) ;
+      PD_RC_CHECK( rc, PDERROR, "Fail to update obj[%s] to collection[%s], "
+                   "rc: %d", updator.toString().c_str(),
+                   CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+
+      rc = catGetOneObj( CAT_SYSDCBASE_COLLECTION_NAME, dummy, matcher,
+                         dummy, cb, result ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to match obj[%s] from collection[%s], "
+                   "rc: %d", matcher.toString().c_str(),
+                   CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+
+      try
+      {
+         BSONElement ele = result.getField( FIELD_NAME_CSUNIQUEHWM ) ;
+         PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                   "Failed to get field[%s], type: %d", FIELD_NAME_CSUNIQUEHWM,
+                   ele.type() );
+         CSID = (INT32)ele.numberInt() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATUPCSUID, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATPRASEFUNC, "catPraseFunc" )
    INT32 catPraseFunc( const BSONObj &func, BSONObj &parsed )
    {
@@ -2494,7 +2563,7 @@ namespace engine
 
       BOOLEAN isExist = FALSE ;
 
-      rc = catCheckCollectionExist( clName.c_str(), isExist, boCollection, cb ) ;
+      rc = catCheckCollectionExist( clName.c_str(), isExist, boCollection, cb );
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to get info of collection [%s], rc: %d",
                    clName.c_str(), rc ) ;
@@ -3098,9 +3167,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCREATECLSTEP, "catCreateCLStep" )
-   INT32 catCreateCLStep ( const string &clName, BSONObj &boCollection,
-                           _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
-                           INT16 w )
+   INT32 catCreateCLStep ( const string &clName, utilCLUniqueID clUniqueID,
+                           BSONObj &boCollection, _pmdEDUCB *cb,
+                           SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB, INT16 w )
    {
       INT32 rc = SDB_OK ;
 
@@ -3127,7 +3196,8 @@ namespace engine
                    CAT_COLLECTION_INFO_COLLECTION, rc ) ;
 
       // update collection space info
-      rc = catAddCL2CS( szSpace, szCollection, cb, pDmsCB, pDpsCB, w ) ;
+      rc = catAddCL2CS( szSpace, szCollection, clUniqueID,
+                        cb, pDmsCB, pDpsCB, w ) ;
       if ( SDB_OK != rc )
       {
          /// Rollback immediately instead of waiting for a kill context signal
@@ -3522,16 +3592,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCHECKANDBUILDCATARECORD ) ;
 
-      clInfo._pCLName            = NULL ;
-      clInfo._replSize           = 1 ;
-      clInfo._enSureShardIndex   = true ;
-      clInfo._pShardingType      = CAT_SHARDING_TYPE_HASH ;
-      clInfo._shardPartition     = CAT_SHARDING_PARTITION_DEFAULT ;
-      clInfo._isHash             = TRUE ;
-      clInfo._isSharding         = FALSE ;
-      clInfo._isMainCL           = false;
-      clInfo._strictDataMode     = FALSE ;
-      clInfo._assignType         = ASSIGN_RANDOM ;
+      clInfo.reset() ;
 
       fieldMask = 0 ;
 
@@ -4018,6 +4079,10 @@ namespace engine
       if ( mask & UTIL_CL_NAME_FIELD )
       {
          builder.append( CAT_CATALOGNAME_NAME, clInfo._pCLName ) ;
+      }
+      if ( mask & UTIL_CL_UNIQUEID_FIELD )
+      {
+         builder.append( CAT_CL_UNIQUEID, (INT64)clInfo._clUniqueID ) ;
       }
 
       /// this is not specified by user.

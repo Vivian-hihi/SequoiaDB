@@ -190,6 +190,9 @@ namespace engine
                               " SU Name     : %s"OSS_NEWLINE,
                               header->_name ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
+                              " CS Unique ID: %d"OSS_NEWLINE,
+                              header->_csUniqueID ) ;
+         len += ossSnprintf ( outBuf + len, outSize - len,
                               " Sequence    : %d"OSS_NEWLINE,
                               header->_sequence ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
@@ -408,6 +411,11 @@ namespace engine
          len += ossSnprintf( outBuf + len, outSize - len,
                              OSS_NEWLINE" Collection name   : %s"OSS_NEWLINE,
                              mb->_collectionName ) ;
+
+         len += ossSnprintf( outBuf + len, outSize - len,
+                             " CL Unique ID      : %ld"OSS_NEWLINE,
+                             mb->_clUniqueID ) ;
+
          len += ossSnprintf( outBuf + len, outSize - len,
                              " Flag              : 0x%04lx (%s)"OSS_NEWLINE,
                              mb->_flag, tmpStr ) ;

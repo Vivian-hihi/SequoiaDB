@@ -65,18 +65,22 @@ namespace engine
       INT32 pageSize ;
       INT32 lobPageSize ;
       DMS_STORAGE_TYPE type ;
+      utilCSUniqueID csUniqueID ;
 
-      _clsCSInfoTuple( INT32 ps, INT32 lps, DMS_STORAGE_TYPE sType )
+      _clsCSInfoTuple( INT32 ps, INT32 lps, DMS_STORAGE_TYPE sType,
+                       utilCSUniqueID csid )
       :pageSize( ps ),
        lobPageSize( lps ),
-       type( sType )
+       type( sType ),
+       csUniqueID( csid )
       {
       }
 
       _clsCSInfoTuple()
       :pageSize( 0 ),
        lobPageSize( 0 ),
-       type( DMS_STORAGE_NORMAL )
+       type( DMS_STORAGE_NORMAL ),
+       csUniqueID( UTIL_INVALID_UNIQUEID )
       {
       }
    } ;
@@ -137,6 +141,7 @@ namespace engine
          INT32          _extractMeta( const CHAR *objdata,
                                       string &cs,
                                       string &collection,
+                                      utilCLUniqueID &clUniqueID,
                                       UINT32 &pageSize,
                                       UINT32 &attributes,
                                       INT32 &lobPageSize,

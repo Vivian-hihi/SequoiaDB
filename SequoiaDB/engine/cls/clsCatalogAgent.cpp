@@ -414,6 +414,37 @@ namespace engine
    {
       _saveName = saveName ;
       _name = name ;
+      _clUniqueID = UTIL_INVALID_UNIQUEID ;
+      _version = -1 ;
+      _w = 1 ;
+      _next = NULL ;
+      _lastItem = NULL ;
+      _pOrder = NULL ;
+      _pKeyGen = NULL ;
+      _isWholeRange = TRUE ;
+      _groupCount = 0 ;
+      _shardingType = CLS_CA_SHARDINGTYPE_NONE ;
+      _ensureShardingIndex = true ;
+      _partition = CAT_SHARDING_PARTITION_DEFAULT ;
+      ossIsPowerOf2( _partition, &_square ) ;
+      _attribute = 0 ;
+      _isMainCL = FALSE ;
+      _internalV = 0 ;
+      _maxID = 0 ;
+      _skSiteID = 0 ;
+      _pSite = NULL ;
+      _compressType = UTIL_COMPRESSOR_INVALID ;
+      _maxSize = 0 ;
+      _maxRecNum = 0 ;
+      _overwrite = FALSE ;
+   }
+
+   _clsCatalogSet::_clsCatalogSet ( const CHAR * name, UINT64 clUniqueID,
+                                    BOOLEAN saveName )
+   {
+      _saveName = saveName ;
+      _name = name ;
+      _clUniqueID = clUniqueID ;
       _version = -1 ;
       _w = 1 ;
       _next = NULL ;
@@ -469,9 +500,24 @@ namespace engine
       return _w ;
    }
 
+   void _clsCatalogSet::setName( const CHAR* name )
+   {
+      _name = name ;
+   }
+
    const CHAR *_clsCatalogSet::name () const
    {
       return _name.c_str() ;
+   }
+
+   void _clsCatalogSet::setCLUniqueID( utilCLUniqueID clUniqueID )
+   {
+      _clUniqueID = clUniqueID ;
+   }
+
+   utilCLUniqueID _clsCatalogSet::clUniqueID() const
+   {
+      return _clUniqueID ;
    }
 
    VEC_GROUP_ID *_clsCatalogSet::getAllGroupID ()
@@ -2433,34 +2479,53 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CLSET, "_clsCatalogAgent::collectionSet" )
-   _clsCatalogSet *_clsCatalogAgent::collectionSet ( const CHAR * name )
+   clsCatalogSet *_clsCatalogAgent::collectionSet ( const CHAR* name,
+                                                    utilCLUniqueID clUniqueID )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT_CLSET ) ;
       _clsCatalogSet *set = NULL ;
-      UINT32 hashCode = ossHash ( name ) ;
-      CAT_MAP_IT it = _mapCatalog.find ( hashCode ) ;
-      if ( it != _mapCatalog.end() )
+
+      // first find by id, if findout nothing, then find by name
+      if ( UTIL_INVALID_UNIQUEID != clUniqueID )
       {
-         set = it->second ;
-         while ( set )
+         ID_CAT_MAP_IT it = _mapIDCatalog.find ( clUniqueID ) ;
+         if ( it != _mapIDCatalog.end() )
          {
-            if ( ossStrcmp ( set->name(), name ) == 0 )
-            {
-               goto done ;
-            }
-            set = set->next () ;
+            set = it->second ;
+            goto done ;
          }
       }
+
+      if ( NULL == set && name )
+      {
+         UINT32 hashCode = ossHash ( name ) ;
+         CAT_MAP_IT it = _mapCatalog.find ( hashCode ) ;
+         if ( it != _mapCatalog.end() )
+         {
+            set = it->second ;
+            while ( set )
+            {
+               if ( ossStrcmp ( set->name(), name ) == 0 )
+               {
+                  goto done ;
+               }
+               set = set->next () ;
+            }
+         }
+      }
+
    done:
       PD_TRACE_EXIT ( SDB__CLSCTAGENT_CLSET ) ;
       return set ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT__ADDCLSET, "_clsCatalogAgent::_addCollectionSet" )
-   _clsCatalogSet *_clsCatalogAgent::_addCollectionSet ( const CHAR * name )
+   _clsCatalogSet *_clsCatalogAgent::_addCollectionSet ( const CHAR * name,
+                                                         utilCLUniqueID clUniqueID )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT__ADDCLSET ) ;
-      _clsCatalogSet *catSet = SDB_OSS_NEW _clsCatalogSet ( name, FALSE ) ;
+      _clsCatalogSet *catSet = SDB_OSS_NEW _clsCatalogSet ( name, clUniqueID,
+                                                            FALSE ) ;
       if ( !catSet )
       {
          return NULL ;
@@ -2482,6 +2547,11 @@ namespace engine
             rootSet = rootSet->next () ;
          }
          rootSet->next ( catSet ) ;
+      }
+
+      if ( UTIL_INVALID_UNIQUEID != clUniqueID )
+      {
+         _mapIDCatalog[ clUniqueID ] = catSet ;
       }
 
       PD_TRACE_EXIT ( SDB__CLSCTAGENT__ADDCLSET ) ;
@@ -2506,18 +2576,44 @@ namespace engine
       try
       {
          BSONObj catalog ( objdata ) ;
+         string clName ;
+         UINT64 clUniqueID = UTIL_INVALID_UNIQUEID ;
+
+         /// get cl name and cl id
          BSONElement ele = catalog.getField ( CAT_COLLECTION_NAME ) ;
          if ( ele.type() != String )
          {
             rc = SDB_SYS ;
-            PD_LOG ( PDERROR, "collection name type error" ) ;
+            PD_LOG ( PDERROR, "collection name type[%d] error", ele.type() ) ;
             goto error ;
          }
+         clName = ele.str() ;
 
-         catSet = collectionSet ( ele.str().c_str() ) ;
-         if ( !catSet )
+         ele = catalog.getField ( CAT_CL_UNIQUEID ) ;
+         if ( ele.type() != NumberLong )
          {
-            catSet = _addCollectionSet ( ele.str().c_str() ) ;
+            rc = SDB_SYS ;
+            PD_LOG ( PDERROR, "collection id type[%d] error", ele.type() ) ;
+            goto error ;
+         }
+         clUniqueID = (UINT64)ele.numberLong() ;
+
+         /// add cata info to cache map
+         catSet = collectionSet ( clName.c_str(), clUniqueID ) ;
+         if ( catSet )
+         {
+            if ( ossStrcmp( clName.c_str(), catSet->name() ) != 0 )
+            {
+               catSet->setName( clName.c_str() ) ;
+            }
+            else if ( clUniqueID != catSet->clUniqueID() )
+            {
+               catSet->setCLUniqueID( clUniqueID ) ;
+            }
+         }
+         else
+         {
+            catSet = _addCollectionSet ( clName.c_str(), clUniqueID ) ;
          }
 
          if ( !catSet )
@@ -2531,8 +2627,8 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "Update catalogSet[%s] failed[rc:%d]",
-                     ele.str().c_str(), rc ) ;
-            clear( ele.str().c_str() ) ;
+                     clName.c_str(), rc ) ;
+            clear( clName.c_str() ) ;
          }
 
          if ( ppSet )
@@ -2562,6 +2658,7 @@ namespace engine
       _clsCatalogSet *preSet = NULL ;
       _clsCatalogSet *curSet = NULL ;
       UINT32 hashCode = ossHash ( name ) ;
+      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
 
       CAT_MAP_IT it = _mapCatalog.find ( hashCode ) ;
       if ( it != _mapCatalog.end() )
@@ -2578,6 +2675,7 @@ namespace engine
                               DMS_COLLECTION_FULL_NAME_SZ ) ;
                   mainCL[ DMS_COLLECTION_FULL_NAME_SZ ] = '\0' ;
                }
+               clUniqueID = curSet->clUniqueID() ;
                break ;
             }
             preSet = curSet ;
@@ -2604,12 +2702,21 @@ namespace engine
          }
       }
 
+      if ( UTIL_INVALID_UNIQUEID != clUniqueID )
+      {
+         ID_CAT_MAP_IT it = _mapIDCatalog.find ( clUniqueID ) ;
+         if ( it != _mapIDCatalog.end() )
+         {
+            _mapIDCatalog.erase ( it ) ;
+         }
+      }
+
       PD_TRACE_EXIT ( SDB__CLSCTAGENT_CLEAR ) ;
       return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CRBYSPACENAME, "_clsCatalogAgent::clearBySpaceName" )
-   INT32 _clsCatalogAgent::clearBySpaceName ( const CHAR * name,
+   INT32 _clsCatalogAgent::clearBySpaceName ( const CHAR * csName,
                                               vector< string > *pRelatedCLs,
                                               _utilSet< string > * pMainCLs )
    {
@@ -2617,11 +2724,12 @@ namespace engine
       _clsCatalogSet *preSet = NULL ;
       _clsCatalogSet *curSet = NULL ;
       _clsCatalogSet *tmpSet = NULL ;
-      UINT32 nameLen = ossStrlen(name) ;
+      UINT32 nameLen = ossStrlen(csName) ;
       BOOLEAN itAdd  = TRUE ;
       _utilSet< string > mainCLList ;
       _utilSet< string >::iterator iterMain ;
       CAT_MAP_IT it = _mapCatalog.begin() ;
+      utilCLUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
 
       if ( NULL == pMainCLs )
       {
@@ -2644,13 +2752,13 @@ namespace engine
             /// add sub collections
             if ( pRelatedCLs &&
                  0 == ossStrncmp( curSet->_mainCLName.c_str(),
-                                  name, nameLen ) &&
+                                  csName, nameLen ) &&
                  '.' == curSet->_mainCLName.at( nameLen ) )
             {
                pRelatedCLs->push_back( curSet->_name ) ;
             }
 
-            if ( ossStrncmp ( curSet->name(), name, nameLen ) == 0
+            if ( ossStrncmp ( curSet->name(), csName, nameLen ) == 0
                && (curSet->name())[nameLen] == '.' )
             {
                string strMainCL = curSet->getMainCLName() ;
@@ -2658,6 +2766,9 @@ namespace engine
                {
                   pMainCLs->insert( strMainCL ) ;
                }
+
+               csUniqueID = utilGetCSUniqueID( curSet->clUniqueID() ) ;
+
                tmpSet = curSet ;
                curSet = curSet->next () ;
 
@@ -2698,6 +2809,21 @@ namespace engine
          ++iterMain ;
       }
 
+      if ( csUniqueID != UTIL_INVALID_UNIQUEID )
+      {
+         ID_CAT_MAP_IT it = _mapIDCatalog.begin() ;
+         while ( it != _mapIDCatalog.end() )
+         {
+            utilCSUniqueID curCSID = utilGetCSUniqueID( it->first ) ;
+            if ( curCSID == csUniqueID )
+            {
+               _mapIDCatalog.erase(it) ;
+               break ;
+            }
+            it++ ;
+         }
+      }
+
    done:
       PD_TRACE_EXIT ( SDB__CLSCTAGENT_CRBYSPACENAME ) ;
       return SDB_OK ;
@@ -2714,6 +2840,7 @@ namespace engine
          ++it ;
       }
       _mapCatalog.clear ();
+      _mapIDCatalog.clear ();
 
       PD_TRACE_EXIT ( SDB__CLSCTAGENT_CLALL ) ;
       return SDB_OK ;

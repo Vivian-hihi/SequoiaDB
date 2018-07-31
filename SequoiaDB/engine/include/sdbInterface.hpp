@@ -355,6 +355,22 @@ namespace engine
    typedef _IRemoteSite IRemoteSite ;
 
    /*
+      _IOperation define
+   */
+   class _IOperation : public SDBObject
+   {
+      public:
+         _IOperation() {}
+         virtual ~_IOperation() {}
+
+      public:
+         virtual UINT64 getID() const = 0 ;
+         virtual void setID( UINT64 ID ) = 0 ;
+         virtual void clear() = 0 ;
+   } ;
+   typedef _IOperation IOperation ;
+
+   /*
       _IExecutor define
    */
    class _IExecutor : public SDBObject
@@ -445,6 +461,11 @@ namespace engine
          virtual INT64     contextPeek() = 0 ;
          virtual BOOLEAN   contextFind( INT64 contextID ) = 0 ;
          virtual UINT32    contextNum() = 0 ;
+
+         /*
+            User Operation Related
+         */
+         virtual IOperation* getOperation() = 0 ;
 
    } ;
    typedef _IExecutor IExecutor ;

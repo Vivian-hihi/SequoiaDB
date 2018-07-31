@@ -52,6 +52,7 @@
 #include "dpsDef.hpp"
 #include "monCB.hpp"
 #include "monEDU.hpp"
+#include "utilUniqueID.hpp"
 
 #if defined ( SDB_ENGINE )
 #include "dpsLogDef.hpp"
@@ -93,6 +94,25 @@ namespace engine
    } ;
 
    class _pmdEDUMgr ;
+
+   /*
+      _pmdOperation define
+   */
+   class _pmdUserOperation : public IOperation
+   {
+      public:
+         _pmdUserOperation() ;
+         virtual ~_pmdUserOperation() {} ;
+
+      public:
+         virtual UINT64 getID() const { return _clUniqueID ; }
+         virtual void setID( UINT64 ID ) ;
+         virtual void clear() ;
+
+      private:
+         utilCLUniqueID _clUniqueID ;
+   } ;
+   typedef _pmdUserOperation pmdUserOperation ;
 
    /*
       _pmdEDUCB define
@@ -191,6 +211,11 @@ namespace engine
          virtual INT64     contextPeek() ;
          virtual BOOLEAN   contextFind( INT64 contextID ) ;
          virtual UINT32    contextNum() ;
+
+         /*
+            User Operation Related
+         */
+         virtual IOperation* getOperation() { return _operation ; }
 
    public:
       _pmdEDUCB( _pmdEDUMgr *mgr, INT32 type ) ;
@@ -491,6 +516,8 @@ namespace engine
       UINT32                   _alignedMemSize ;
 
       SET_CONTEXT             _contextList ;
+
+      pmdUserOperation        *_operation ;
 
    };
    typedef class _pmdEDUCB pmdEDUCB ;
