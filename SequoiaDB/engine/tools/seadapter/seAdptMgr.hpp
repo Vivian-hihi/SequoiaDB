@@ -299,7 +299,6 @@ namespace seadapter
 
    seAdptCB* sdbGetSeAdapterCB() ;
    seAdptOptionsMgr* sdbGetSeAdptOptions() ;
-   seSvcSessionMgr* sdbGetSeAgentCB() ;
    utilESCltFactory* sdbGetSeCltFactory() ;
 }
 

@@ -1674,11 +1674,6 @@ namespace seadapter
       return sdbGetSeAdapterCB()->getOptions() ;
    }
 
-   seSvcSessionMgr* sdbGetSeAgentCB()
-   {
-      return sdbGetSeAdapterCB()->getSeAgentMgr() ;
-   }
-
    utilESCltFactory* sdbGetSeCltFactory()
    {
       return sdbGetSeAdapterCB()->getSeCltFactory() ;
