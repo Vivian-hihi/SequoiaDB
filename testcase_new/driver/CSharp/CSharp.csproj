@@ -53,6 +53,13 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Crud\Analyze\AnalyzeAll14256.cs" />
+    <Compile Include="Crud\Analyze\AnalyzeCommon.cs" />
+    <Compile Include="Crud\Analyze\AnalyzeCs14257.cs" />
+    <Compile Include="Crud\Analyze\AnalyzeCl14258.cs" />
+    <Compile Include="Crud\Analyze\AnalyzeIndex14259.cs" />
+    <Compile Include="Crud\Analyze\AnalyzeGroup14260.cs" />
+    <Compile Include="Crud\Analyze\AnalyzeInexistCl14261.cs" />
     <Compile Include="Crud\DataType\BinData14587.cs" />
     <Compile Include="Crud\DataType\Bool14590.cs" />
     <Compile Include="Crud\DataType\DateTime14589.cs" />
@@ -132,18 +139,16 @@
     <Compile Include="Split\TestSplit14555.cs" />
     <Compile Include="Split\TestSplit14556.cs" />
     <Compile Include="Split\TestTasks14579.cs" />
-    
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestCommon\Common.cs" />
     <Compile Include="TestCommon\Config.cs" />
     <Compile Include="TestCommon\SdbTestBase.cs" />
-    
     <Compile Include="Cluster\ClusterManager15242.cs" />
     <Compile Include="Cluster\Common.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <Content Include="Config.xml" />
+      <Content Include="Config.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

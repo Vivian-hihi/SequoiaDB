@@ -30,6 +30,25 @@ namespace CSharp.TestCommon
             return false;
 		}
 
+        public static List<string> getDataGroupNames(Sequoiadb sdb)
+        {
+            List<string> list = new List<string>();
+            BsonDocument matcher = new BsonDocument();
+            BsonDocument selector = new BsonDocument();
+            BsonDocument orderBy = new BsonDocument();
+            matcher.Add("Role", 0);
+            selector.Add("GroupName", "");
+            DBCursor cursor = sdb.GetList(7, matcher, selector, null);
+            while (cursor.Next() != null)
+            {
+                BsonDocument doc = cursor.Current();
+                BsonElement element = doc.GetElement("GroupName");
+                list.Add(element.Value.ToString());
+            }
+            cursor.Close();
+            return list;
+        }
+
         /// <summary>
         /// judge whether two BsonDocuments equal. 
         /// this func can adapt disorder key.
