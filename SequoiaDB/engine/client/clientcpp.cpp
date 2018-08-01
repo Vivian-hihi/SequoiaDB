@@ -7052,7 +7052,7 @@ error :
       const CHAR *pUN = "" ;
       const CHAR *pPW = "" ;
 
-      if ( !pHostName || port <= 0 || port > 65535 )
+      if ( !pHostName || !*pHostName || port <= 0 || port > 65535 )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -7558,7 +7558,7 @@ error :
       INT32 rc = SDB_OK ;
       UINT16 port ;
       
-      if ( !pHostName || !pServiceName )
+      if ( !pHostName || !*pHostName || !pServiceName || !*pServiceName )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -7951,7 +7951,7 @@ error :
          rc = SDB_NOT_CONNECTED ;
          goto error ;
       }
-      if ( !pCollectionFullName || !collection ||
+      if ( !pCollectionFullName || !*pCollectionFullName || !collection ||
            ossStrlen ( pCollectionFullName ) > 
            CLIENT_CS_NAMESZ + CLIENT_COLLECTION_NAMESZ + 1 )
       {
@@ -8013,7 +8013,7 @@ error :
          rc = SDB_NOT_CONNECTED ;
          goto error ;
       }
-      if ( !pCollectionSpaceName || !cs ||
+      if ( !pCollectionSpaceName || !*pCollectionSpaceName || !cs ||
            ossStrlen ( pCollectionSpaceName ) > CLIENT_CS_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
@@ -8069,7 +8069,7 @@ error :
       BSONObj newObj ;
       string command      = string ( CMD_ADMIN_PREFIX
                                      CMD_NAME_CREATE_COLLECTIONSPACE ) ;
-      if ( !pCollectionSpaceName || !cs ||
+      if ( !pCollectionSpaceName || !*pCollectionSpaceName || !cs ||
            ossStrlen ( pCollectionSpaceName ) > CLIENT_CS_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
@@ -8118,7 +8118,7 @@ error :
       BSONObj newObj ;
       string command = string ( CMD_ADMIN_PREFIX
                                 CMD_NAME_CREATE_COLLECTIONSPACE ) ;
-      if ( !pCollectionSpaceName || !cs ||
+      if ( !pCollectionSpaceName || !*pCollectionSpaceName || !cs ||
            ossStrlen ( pCollectionSpaceName ) > CLIENT_CS_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
@@ -8178,7 +8178,7 @@ error :
       BSONObj newObj ;
       string command = string ( CMD_ADMIN_PREFIX
                                 CMD_NAME_DROP_COLLECTIONSPACE ) ;
-      if ( !pCollectionSpaceName ||
+      if ( !pCollectionSpaceName || !*pCollectionSpaceName ||
            ossStrlen ( pCollectionSpaceName ) > CLIENT_CS_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
@@ -8226,7 +8226,7 @@ error :
       BSONObj record ;
       BSONObj condition ;
       BSONElement ele ;
-      if ( !pName || !result ||
+      if ( !pName || !*pName || !result ||
            ossStrlen ( pName ) > CLIENT_REPLICAGROUP_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
@@ -8348,7 +8348,7 @@ error :
       _sdbReplicaGroupImpl *replset = NULL ;
       string command = string ( CMD_ADMIN_PREFIX CMD_NAME_CREATE_GROUP ) ;
 
-      if ( !pName || !rg ||
+      if ( !pName || !*pName || !rg ||
            ossStrlen ( pName ) > CLIENT_REPLICAGROUP_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
@@ -8388,7 +8388,7 @@ error :
       BSONObjBuilder ob ;
       BSONObj newObj ;
       const CHAR *pCommand = CMD_ADMIN_PREFIX CMD_NAME_REMOVE_GROUP ;
-      if ( !pReplicaGroupName ||
+      if ( !pReplicaGroupName || !*pReplicaGroupName ||
          ossStrlen( pReplicaGroupName ) > CLIENT_REPLICAGROUP_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
@@ -8473,7 +8473,8 @@ error :
       _sdbReplicaGroupImpl *replset = NULL ;
       string command = string ( CMD_ADMIN_PREFIX CMD_NAME_ACTIVE_GROUP ) ;
 
-      if ( !pName || ossStrlen ( pName ) > CLIENT_REPLICAGROUP_NAMESZ || !rg )
+      if ( !pName || !*pName || 
+           ossStrlen ( pName ) > CLIENT_REPLICAGROUP_NAMESZ || !rg )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -8831,7 +8832,7 @@ error :
       BSONObj newObj ;
       BSONObjBuilder ob ;
 
-      if ( !spName )
+      if ( !spName || !*spName )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -8892,7 +8893,7 @@ error :
       BSONObjBuilder ob ;
       const MsgOpReply *replyHeader = NULL ;
 
-      if ( !code )
+      if ( !code || !*code )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
