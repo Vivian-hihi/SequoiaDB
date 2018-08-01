@@ -217,10 +217,24 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
+     * @return IP address of SequoiaDB server.
+     */
+    public String getIP() {
+        return socketAddress.getAddress().getHostAddress();
+    }
+
+    /**
      * @return Service port of SequoiaDB server.
      */
     public int getPort() {
         return socketAddress.getPort();
+    }
+
+    /**
+     * @return the node name of current coord node in format of "ip:port".
+     */
+    public String getNodeName() {
+        return getIP() + ":" + getPort();
     }
 
     @Override
