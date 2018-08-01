@@ -3180,6 +3180,7 @@ namespace engine
       collection.setName( CSName(), mb->_collectionName ) ;
       collection._blockID = mb->_blockID ;
       collection._logicalID = mb->_logicalID ;
+      collection._clUniqueID = mb->_clUniqueID ;
 
    done :
       PD_TRACE_EXITRC( SDB__DMSSU__DUMPCLINFO_CLSIMPLE, rc ) ;

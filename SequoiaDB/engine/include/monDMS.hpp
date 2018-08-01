@@ -222,6 +222,7 @@ namespace engine
 
          UINT16 _blockID ;
          UINT32 _logicalID ;
+         utilCLUniqueID _clUniqueID ;
 
          MON_IDX_LIST _idxList ;
 
@@ -232,6 +233,7 @@ namespace engine
             _csname[ 0 ] = 0 ;
             _blockID = 0 ;
             _logicalID = 0 ;
+            _clUniqueID = UTIL_INVALID_UNIQUEID ;
          }
 
          BOOLEAN operator< (const _monCLSimple &r) const

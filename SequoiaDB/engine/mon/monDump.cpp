@@ -2259,7 +2259,8 @@ namespace engine
          it = _collectionList.begin() ;
          const monCLSimple &simple = *it ;
 
-         ob.append ( FIELD_NAME_NAME, simple._name ) ;
+         ob.append ( FIELD_NAME_NAME,     simple._name ) ;
+         ob.append ( FIELD_NAME_UNIQUEID, (INT64)simple._clUniqueID ) ;
 
          obj = ob.obj () ;
 
