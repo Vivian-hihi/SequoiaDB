@@ -96,7 +96,7 @@ public class Node {
     }
 
     /**
-     * Connect to current node with the same username and password.
+     * Connect to current node with the same username and password of coordination node.
      *
      * @return The Sequoiadb instance of current node.
      * @throws BaseException If error happens.
@@ -129,7 +129,10 @@ public class Node {
     /**
      * Get the Sequoiadb of current node.
      *
-     * @return The Sequoiadb object of current node.
+     * @return The Sequoiadb object of current node or null for having not
+     * connected to the current node yet.
+     * @see Node#connect()
+     * @see Node#connect(String, String)
      */
     public Sequoiadb getSdb() {
         return sequoiadb;

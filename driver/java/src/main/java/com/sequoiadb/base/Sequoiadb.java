@@ -1729,7 +1729,7 @@ public class Sequoiadb implements Closeable {
     /**
      * List all the replica group.
      *
-     * @return cursor of all collection space names
+     * @return information of all replica groups.
      * @throws BaseException If error happens.
      */
     public DBCursor listReplicaGroups() throws BaseException {
