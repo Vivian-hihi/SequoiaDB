@@ -193,7 +193,7 @@ namespace engine
       goto done ;
    }
 
-   BOOLEAN utilStrIgnoreCaseStartsWith( const string& str, const string& substr )
+   BOOLEAN utilStrStartsWithIgnoreCase( const string& str, const string& substr )
    {
       if ( str.empty() || substr.empty() || str.size() < substr.size() )
       {

@@ -74,6 +74,8 @@ namespace engine
       return str.compare( 0, substr.size(), substr ) == 0 ? TRUE : FALSE ;
    }
 
+   BOOLEAN utilStrStartsWithIgnoreCase( const string& str, const string& substr ) ;
+
    OSS_INLINE BOOLEAN utilStrEndsWith( const string& str, const string& substr )
    {
       if ( str.empty() || substr.empty() )
@@ -84,8 +86,6 @@ namespace engine
       return str.compare( str.size() - substr.size(), substr.size(), substr ) == 0 ?
                TRUE : FALSE ;
    }
-
-   BOOLEAN utilStrIgnoreCaseStartsWith( const string& str, const string& substr ) ;
 
    INT32 utilStrToUpper( const CHAR *src, CHAR *&upper ) ;
 
