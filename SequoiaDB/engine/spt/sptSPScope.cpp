@@ -628,6 +628,11 @@ namespace engine
       JSFunctionSpec *fSpecs = NULL ;
       JSFunctionSpec *sfSpecs = NULL ;
 
+      if ( _hasPrototype( objName ) )
+      {
+         goto done ;
+      }
+
       if ( !desc->isIgnoredParent() )
       {
          parentDesc = desc->getParent() ;
