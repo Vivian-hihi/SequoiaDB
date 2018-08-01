@@ -40,6 +40,7 @@
       #define SPT_OPTIONBASE_HINT_FIELD          "_hint"
       #define SPT_OPTIONBASE_SKIP_FIELD          "_skip"
       #define SPT_OPTIONBASE_LIMIT_FIELD         "_limit"
+      #define SPT_OPTIONBASE_FLAGS_FIELD         "_flags"
 
       class _sptDBOptionBase : public SDBObject
       {
@@ -52,27 +53,7 @@
                           _sptReturnVal &rval,
                           bson::BSONObj &detail ) ;
          INT32 destruct() ;
-         INT32 cond( const _sptArguments &arg,
-                     _sptReturnVal &rval,
-                     bson::BSONObj &detail ) ;
-         INT32 sel( const _sptArguments &arg,
-                     _sptReturnVal &rval,
-                     bson::BSONObj &detail ) ;
-         INT32 sort( const _sptArguments &arg,
-                     _sptReturnVal &rval,
-                     bson::BSONObj &detail ) ;
-         INT32 hint( const _sptArguments &arg,
-                     _sptReturnVal &rval,
-                     bson::BSONObj &detail ) ;
-         INT32 skip( const _sptArguments &arg,
-                     _sptReturnVal &rval,
-                     bson::BSONObj &detail ) ;
-         INT32 limit( const _sptArguments &arg,
-                     _sptReturnVal &rval,
-                     bson::BSONObj &detail ) ;
-         INT32 flags( const _sptArguments &arg,
-                     _sptReturnVal &rval,
-                     bson::BSONObj &detail ) ;
+
          static INT32 cvtToBSON( const CHAR* key, const sptObject &value,
                                  BOOLEAN isSpecialObj, BSONObjBuilder& builder,
                                  string &errMsg ) ;
