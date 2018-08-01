@@ -551,6 +551,7 @@ namespace engine
          virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
          virtual UINT32  _addInfoMask() const ;
+         virtual BSONObj _getOptObj() const ;
 
       private:
          virtual const CHAR *getIntrCMDName() ;

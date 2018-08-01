@@ -7288,7 +7288,10 @@ error :
                                  INT32 snapType,
                                  const BSONObj &condition,
                                  const BSONObj &selector,
-                                 const BSONObj &orderBy
+                                 const BSONObj &orderBy,
+                                 const BSONObj &hint,
+                                 INT32 numToSkip,
+                                 INT32 numToRet
                                )
    {
       INT32 rc                        = SDB_OK ;
@@ -7353,11 +7356,11 @@ error :
       }
       lock () ;
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
-                                    p, 0, 0, 0, -1,
+                                    p, 0, 0, numToSkip, numToRet,
                                     condition.objdata(),
                                     selector.objdata(),
                                     orderBy.objdata(),
-                                    NULL, _endianConvert ) ;
+                                    hint.objdata(), _endianConvert ) ;
       if ( rc )
       {
          goto error ;

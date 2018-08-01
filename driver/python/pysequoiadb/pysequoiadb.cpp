@@ -153,14 +153,18 @@ __METHOD_IMP(sdb_get_snapshot)
    PYOBJECT *bson_condition       = NULL ;
    PYOBJECT *bson_selector        = NULL ;
    PYOBJECT *bson_order_by        = NULL ;
+   PYOBJECT *bson_hint            = NULL ;
+   SINT64   num_to_skip           = 0 ;
+   SINT64   num_to_return         = -1 ;
    sdb *client                    = NULL ;
    sdbCursor *cursor              = NULL ;
    const bson::BSONObj *condition = NULL ;
    const bson::BSONObj *selector  = NULL ;
    const bson::BSONObj *order_by  = NULL ;
+   const bson::BSONObj *hint      = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOiOOO", &obj, &cursor_obj, &snap_type,
-      &bson_condition, &bson_selector, &bson_order_by ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OOiOOOOll", &obj, &cursor_obj, &snap_type,
+      &bson_condition, &bson_selector, &bson_order_by, &bson_hint, &num_to_skip, &num_to_return ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -171,9 +175,11 @@ __METHOD_IMP(sdb_get_snapshot)
    CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
    CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
 
-   rc = client->getSnapshot( *cursor, snap_type, *condition,
-      *selector, *order_by ) ;
+   rc = client->getSnapshot( *cursor, snap_type,  
+                             *condition, *selector, *order_by, *hint,
+                             num_to_skip, num_to_return ) ;
    if ( rc )
    {
       goto done ;
@@ -183,6 +189,7 @@ done:
    DELETE_CPPOBJECT( condition ) ;
    DELETE_CPPOBJECT( selector ) ;
    DELETE_CPPOBJECT( order_by ) ;
+   DELETE_CPPOBJECT( hint ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 

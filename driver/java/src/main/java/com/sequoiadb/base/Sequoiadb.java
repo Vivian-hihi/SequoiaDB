@@ -1279,6 +1279,64 @@ public class Sequoiadb implements Closeable {
         return new DBCursor(response, this);
     }
 
+    /**
+     * Get snapshot of the database.
+     *
+     * @param snapType The snapshot types are as below:
+     *                 <dl>
+     *                 <dt>Sequoiadb.SDB_SNAP_CONTEXTS             : Get all contexts' snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_CONTEXTS_CURRENT     : Get the current context's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_SESSIONS             : Get all sessions' snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_SESSIONS_CURRENT     : Get the current session's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_COLLECTIONS          : Get the collections' snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_COLLECTIONSPACES     : Get the collection spaces' snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_DATABASE             : Get database's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_SYSTEM               : Get system's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_CATALOG              : Get catalog's snapshot
+     *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS         : Get snapshot of transactions in current session
+     *                 <dt>Sequoiadb.SDB_SNAP_TRANSACTIONS_CURRENT : Get snapshot of all the transactions
+     *                 <dt>SequoiaDB.SDB_SNAP_ACCESSPLANS          : Get the snapshot of cached access plans
+     *                 <dt>Sequoiadb.SDB_SNAP_HEALTH               : Get the snapshot of node health detection
+     *                 <dt>Sequoiadb.SDB_SNAP_CONFIGS              : Get the snapshot of node configurations
+     *                 </dl>
+     * @param matcher  the matching rule, match all the documents if null
+     * @param selector the selective rule, return the whole document if null
+     * @param orderBy  the ordered rule, never sort if null
+	 * @param hint     the hint rule, the options provided for specific snapshot type
+	                   format:{ '$Options': { <options> } }
+	 * @param skipRows   skip the first numToSkip documents, never skip if this parameter is 0
+     * @param returnRows return the specified amount of documents,
+     *                   when returnRows is 0, return nothing,
+     *                   when returnRows is -1, return all the documents   
+     * @return the DBCursor instance of the result
+     * @throws BaseException If error happens.
+     */
+    public DBCursor getSnapshot(int snapType, BSONObject matcher,
+                                BSONObject selector, BSONObject orderBy,
+                                BSONObject hint, long skipRows, long returnRows) throws BaseException {
+        String command = getSnapshotCommand(snapType);
+
+        QueryRequest request = new QueryRequest(command, matcher, selector, orderBy, hint, skipRows, returnRows, 0);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            if (flag == SDBError.SDB_DMS_EOC.getErrorCode()) {
+                return null;
+            } else {
+                String msg = "matcher = " + matcher +
+                        ", selector = " + selector +
+                        ", orderBy = " + orderBy +
+                        ", hint = " + hint +
+                        ", skipRows = " + skipRows +
+                        ", returnRows = " + returnRows;
+                throwIfError(response, msg);
+            }
+        }
+
+        return new DBCursor(response, this);
+    }
+
     private String getSnapshotCommand(int snapType) {
         switch (snapType) {
             case SDB_SNAP_CONTEXTS:

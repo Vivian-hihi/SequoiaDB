@@ -3588,14 +3588,20 @@ namespace sdbclient
                                   INT32 snapType,
                                   const bson::BSONObj &condition = _sdbStaticObject,
                                   const bson::BSONObj &selector  = _sdbStaticObject,
-                                  const bson::BSONObj &orderBy   = _sdbStaticObject
+                                  const bson::BSONObj &orderBy   = _sdbStaticObject,
+                                  const bson::BSONObj &hint      = _sdbStaticObject,
+                                  INT32 numToSkip = 0,
+                                  INT32 numToRet = -1
                                 ) = 0 ;
 
       virtual INT32 getSnapshot ( sdbCursor &cursor,
                                   INT32 snapType,
                                   const bson::BSONObj &condition = _sdbStaticObject,
                                   const bson::BSONObj &selector  = _sdbStaticObject,
-                                  const bson::BSONObj &orderBy   = _sdbStaticObject
+                                  const bson::BSONObj &orderBy   = _sdbStaticObject,
+                                  const bson::BSONObj &hint      = _sdbStaticObject,
+                                  INT32 numToSkip = 0,
+                                  INT32 numToRet = -1
                                 ) = 0 ;
 
       virtual INT32 resetSnapshot ( const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
@@ -4074,10 +4080,15 @@ namespace sdbclient
         SDB_SNAP_TRANSACTIONS_CURRENT : Get snapshot of all the transactions
         SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
         SDB_SNAP_HEALTH           : Get snapshot of node health detection
+        SDB_SNAP_CONFIGS          : Get snapshot of node configurations
 
+    \param [in] numToSkip Skip the first numToSkip documents, default is 0
+    \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
     \param [in] condition The matching rule, match all the documents if not provided.
     \param [in] select The selective rule, return the whole document if not provided.
     \param [in] orderBy The ordered rule, result set is unordered if not provided.
+    \param [in] hint The options provided for specific snapshot type.
+                format:{ '$Options': { <options> } }
     \param [out] cursor The return cursor object of query.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -4086,8 +4097,10 @@ namespace sdbclient
                           INT32 snapType,
                           const bson::BSONObj &condition = _sdbStaticObject,
                           const bson::BSONObj &selector  = _sdbStaticObject,
-                          const bson::BSONObj &orderBy   = _sdbStaticObject
-                        )
+                          const bson::BSONObj &orderBy   = _sdbStaticObject,
+                          const bson::BSONObj &hint      = _sdbStaticObject,
+                          SINT64 numToSkip = 0,
+                          SINT64 numToRet = -1 )
       {
          if ( !pSDB )
          {
@@ -4095,9 +4108,9 @@ namespace sdbclient
          }
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pSDB->getSnapshot ( cursor, snapType, condition,
-                                    selector, orderBy ) ;
+                                    selector, orderBy, hint, 
+                                    numToSkip, numToRet ) ;
       }
-
 
 /* \fn  INT32 getSnapshot (_sdbCursor **cursor,
                           INT32 snapType,
@@ -4121,10 +4134,15 @@ namespace sdbclient
         SDB_SNAP_TRANSACTIONS_CURRENT : Get snapshot of all the transactions
         SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
         SDB_SNAP_HEALTH           : Get snapshot of node health detection
+        SDB_SNAP_CONFIGS          : Get snapshot of node configurations
 
      \param [in] condition The matching rule, match all the documents if not provided.
      \param [in] select The selective rule, return the whole document if not provided.
      \param [in] orderBy The ordered rule, result set is unordered if not provided.
+     \param [in] hint The options provided for specific snapshot type.
+                 format:{ '$Options': { <options> } }
+     \param [in] numToSkip Skip the first numToSkip documents, default is 0
+     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
      \param [out] cursor The return cursor handle of query.
      \retval SDB_OK Operation Success
      \retval Others Operation Fail
@@ -4133,13 +4151,16 @@ namespace sdbclient
                           INT32 snapType,
                           const bson::BSONObj &condition = _sdbStaticObject,
                           const bson::BSONObj &selector = _sdbStaticObject,
-                          const bson::BSONObj &orderBy = _sdbStaticObject
-                        )
+                          const bson::BSONObj &orderBy = _sdbStaticObject,
+                          const bson::BSONObj &hint   = _sdbStaticObject,
+                          SINT64 numToSkip = 0,
+                          SINT64 numToRet = -1 )
       {
          if ( !pSDB )
             return SDB_NOT_CONNECTED ;
          return pSDB->getSnapshot ( cursor, snapType, condition,
-                                    selector, orderBy ) ;
+                                    selector, orderBy, hint, 
+                                    numToSkip, numToRet ) ;
       }
 
 /** \fn INT32 resetSnapshot ( const bson::BSONObj &options )

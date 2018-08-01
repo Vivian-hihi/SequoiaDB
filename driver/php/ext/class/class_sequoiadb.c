@@ -297,22 +297,30 @@ PHP_METHOD( SequoiaDB, snapshot )
    zval *pSelector  = NULL ;
    zval *pOrderBy   = NULL ;
    zval *pHint      = NULL ;
+   zval *pNumToSkip = NULL ;
+   zval *pNumToReturn = NULL ;
+   INT64 numToSkip  = 0 ;
+   INT64 numToReturn = -1 ;
    zval *pThisObj   = getThis() ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
    sdbCursorHandle cursor         = SDB_INVALID_HANDLE ;
    bson condition ;
    bson selector ;
    bson orderBy ;
+   bson hint ;
    bson_init( &condition ) ;
    bson_init( &selector ) ;
    bson_init( &orderBy ) ;
+   bson_init( &hint ) ;
    PHP_SET_ERRNO_OK( TRUE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "|zzzzz",
+   if ( PHP_GET_PARAMETERS( "|zzzzzzz",
                             &pType,
                             &pCondition,
                             &pSelector,
                             &pOrderBy,
-                            &pHint ) == FAILURE )
+                            &pHint,
+                            &pNumToSkip,
+                            &pNumToReturn ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -337,17 +345,38 @@ PHP_METHOD( SequoiaDB, snapshot )
    {
       goto error ;
    }
+   rc = php_auto2Bson( pHint, &hint TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = php_zval2Long( pNumToSkip, &numToSkip TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = php_zval2Long( pNumToReturn, &numToReturn TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   
    PHP_READ_HANDLE( pThisObj,
                     connection,
                     sdbConnectionHandle,
                     SDB_HANDLE_NAME,
                     connectionDesc ) ;
-   rc = sdbGetSnapshot( connection,
-                        type,
-                        &condition,
-                        &selector,
-                        &orderBy,
-                        &cursor ) ;
+
+   rc = sdbGetSnapshot1( connection,
+                         type,
+                         &condition,
+                         &selector,
+                         &orderBy,
+                         &hint,
+                         numToSkip,
+                         numToReturn,
+                         &cursor ) ;
+
    if( rc )
    {
       goto error ;
@@ -361,6 +390,7 @@ done:
    bson_destroy( &condition ) ;
    bson_destroy( &selector ) ;
    bson_destroy( &orderBy ) ;
+   bson_destroy( &hint ) ;
    return ;
 error:
    RETVAL_NULL() ;

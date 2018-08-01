@@ -2717,7 +2717,107 @@
                            "file": "NumberDecimal",
                            "cn": "NumberDecimal",
                            "en": "NumberDecimal"
-                        }
+                        },
+						{
+						   "id": 1533038433,
+                           "dir": "SdbSnapshotOption",
+                           "cn": "SdbSnapshotOption",
+                           "en": "SdbSnapshotOption",
+                           "contents": [
+						      {
+                                 "id": 1533038566,
+                                 "file": "cond",
+                                 "cn": "cond",
+                                 "en": "cond"
+							  },
+							  {
+                                 "id": 1533038567,
+                                 "file": "sel",
+                                 "cn": "sel",
+                                 "en": "sel"
+							  },
+							  {
+                                 "id": 1533038567,
+                                 "file": "sort",
+                                 "cn": "sort",
+                                 "en": "sort"
+							  },
+							  {
+                                 "id": 1533038568,
+                                 "file": "options",
+                                 "cn": "options",
+                                 "en": "options"
+							  },
+							  {
+                                 "id": 1533038569,
+                                 "file": "skip",
+                                 "cn": "skip",
+                                 "en": "skip"
+							  },
+							  {
+                                 "id": 1533038570,
+                                 "file": "limit",
+                                 "cn": "limit",
+                                 "en": "limit"
+							  }
+						   ]
+						},
+                        {
+						   "id": 1533087921,
+                           "dir": "SdbQueryOption",
+                           "cn": "SdbQueryOption",
+                           "en": "SdbQueryOption",
+                           "contents": [
+						      {
+                                 "id": 1533087940,
+                                 "file": "cond",
+                                 "cn": "cond",
+                                 "en": "cond"
+							  },
+							  {
+                                 "id": 1533087941,
+                                 "file": "sel",
+                                 "cn": "sel",
+                                 "en": "sel"
+							  },
+							  {
+                                 "id": 1533087942,
+                                 "file": "sort",
+                                 "cn": "sort",
+                                 "en": "sort"
+							  },
+							  {
+                                 "id": 1533087943,
+                                 "file": "hint",
+                                 "cn": "hint",
+                                 "en": "hint"
+							  },
+							  {
+                                 "id": 1533087944,
+                                 "file": "skip",
+                                 "cn": "skip",
+                                 "en": "skip"
+							  },
+							  {
+                                 "id": 1533087945,
+                                 "file": "limit",
+                                 "cn": "limit",
+                                 "en": "limit"
+							  },
+							  {
+                                 "id": 1533087946,
+                                 "file": "update",
+                                 "cn": "update",
+                                 "en": "update"
+							  },
+							  {
+                                 "id": 1533087947,
+                                 "file": "remove",
+                                 "cn": "remove",
+                                 "en": "remove"
+							  }
+						   ]
+						}
                      ]
                   }
                ]

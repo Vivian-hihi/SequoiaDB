@@ -35,7 +35,6 @@
 using sdbclient::_sdbCursor ;
 namespace engine
 {
-   #define SPT_QUERY_NAME           "SdbQuery"
    #define SPT_QUERY_QUERY_FIELD    "_query"
    #define SPT_QUERY_SELECT_FIELD   "_select"
    #define SPT_QUERY_SORT_FIELD     "_sort"

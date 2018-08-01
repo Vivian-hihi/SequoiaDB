@@ -509,7 +509,12 @@ class SequoiaDB
     *
     * @param $orderBy an array or the string argument. The ordered rule, never sort if null.
     *
-    * @param $hint	an array or the string argument. This parameter is reserved and must be null.
+    * @param $hint an array or the string argument. The options provided for specific snapshot type.
+    *        format:{ '$Options': { <options> } }
+    *
+    * @param $numToSkip an integer argument.  Skip the first numToSkip records, never skip if this parameter is 0.
+    *
+    * @param $numToReturn an integer argument. Only return numToReturn records, return all if this parameter is -1.
     *
     * @return Returns a new SequoiaCursor object.
     *
@@ -534,8 +539,7 @@ class SequoiaDB
     * }
     * @endcode
    */
-   public function snapshot( integer $type, array|string $condition = null, array|string $selector = null, array|string $orderBy = null, array|string $hint = null ){}
-
+   public function snapshot( integer $type, array|string $condition = null, array|string $selector = null, array|string $orderBy = null, array|string $hint = null, integer $numToSkip = 0, integer $numToReturn = -1 ){}
    /**
     * Reset the snapshot.
     *

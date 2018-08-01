@@ -1020,6 +1020,32 @@ namespace engine
       return MON_MASK_NODE_NAME ;
    }
 
+   BSONObj _rtnSnapshotConfigs::_getOptObj() const
+   {
+      try
+      {
+         BSONObjIterator itor ;
+         BSONElement elem ;
+         string optionsTag = string( "$" ) + FIELD_NAME_OPTIONS ;
+         BSONObj hintObj( _hintBuff ) ;
+         itor = hintObj.begin() ;
+         while ( itor.more() )
+         {
+            elem = itor.next() ;
+            if ( 0 == ossStrcasecmp( elem.fieldName(), optionsTag.c_str() ) )
+            {
+               return hintObj.getObjectField( elem.fieldName() ) ;
+            }
+         }
+
+         return BSONObj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+      }
+   }
+
    const CHAR* _rtnSnapshotConfigs::getIntrCMDName()
    {
       return CMD_NAME_SNAPSHOT_CONFIGS_INTR ;

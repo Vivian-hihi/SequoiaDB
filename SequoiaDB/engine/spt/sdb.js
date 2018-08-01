@@ -513,6 +513,12 @@ SdbCollection.prototype.count = function( condition ) {
 }
 
 SdbCollection.prototype.find = function( query, select ) {
+
+   if ( query instanceof SdbQueryOption )
+   {
+      return this.rawFind( query );
+   }
+
    var queryObj = new SdbQuery();
    queryObj._query = {};
    queryObj._select = {} ;
@@ -532,6 +538,11 @@ SdbCollection.prototype.find = function( query, select ) {
 }
 
 SdbCollection.prototype.findOne = function( query, select ) {
+   if ( query instanceof SdbQueryOption )
+   {
+      return this.rawFind( query.limit(1) );
+   }
+
    var queryObj = new SdbQuery() ;
    queryObj._query = {};
    queryObj._select = {} ;
@@ -1074,3 +1085,119 @@ SdbDate.prototype.toString = function() {
    return "SdbDate(\"" + this._d + "\")" ;
 }
 // end SdbDate
+
+// SdbOptionBase
+
+SdbOptionBase.prototype.cond = function(cond) {
+   this._cond = BSONObj(cond) ;
+   return this ;
+}
+
+SdbOptionBase.prototype.sel = function(sel) {
+   this._sel = BSONObj(sel) ;
+   return this ;
+}
+
+SdbOptionBase.prototype.sort = function(sort) {
+   this._sort = BSONObj(sort) ;
+   return this ;
+}
+
+SdbOptionBase.prototype.hint = function(hint) {
+   this._hint = BSONObj(hint) ;
+   return this ;
+}
+
+SdbOptionBase.prototype.skip = function(skip) {
+   this._skip = skip ;
+   return this ;
+}
+
+SdbOptionBase.prototype.limit = function(limit) {
+   this._limit = limit ;
+   return this ;
+}
+
+SdbOptionBase.prototype.flags = function(flags) {
+   this._flags = flags ;
+   return this ;
+}
+
+SdbOptionBase.prototype.toString = function() {
+   return this.__className__ + "(" + "\"cond\": " + this._cond.toJson() + 
+          ", \"sel\": " + this._sel.toJson() + 
+          ", \"sort\": " + this._sort.toJson() +
+          ", \"hint\": " + this._hint.toJson() +
+          ", \"skip\": " + this._skip +
+          ", \"limit\": " + this._limit +
+          ", \"flags\": " + this._flags + ")" ;
+}
+
+// end SdbOptionBase
+
+// SdbSnapshotOption
+
+SdbSnapshotOption.prototype.options = function(options) {
+   if (undefined != options && (typeof options) != "object") {
+      throw "SdbSnapshotOption.update(): param should be object";
+   }
+
+   this._hint = BSONObj({$Options:BSONObj(options)}) ;
+   return this ;
+}
+
+// end SdbSnapshotOption
+
+// SdbQueryOption
+
+SdbQueryOption.prototype.update = function( rule, returnNew, options ) {
+   if ((typeof rule) != "object" || isEmptyObject(rule)) {
+      throw "SdbQueryOption.update(): the 1st param should be non-empty object";
+   }
+   if (undefined != returnNew && (typeof returnNew) != "boolean") {
+      throw "SdbQueryOption.update(): the 2nd param should be boolean";
+   }
+   if (undefined != options && (typeof options) != "object") {
+      throw "SdbQueryOption.update(): the 3rd param should be object";
+   }
+
+   var hintObj = eval('(' + this._hint.toString() + ')');
+
+   if (undefined == this._hint) {
+      this._hint = {};
+   } else if ( undefined != hintObj.$Modify ) {
+      throw "SdbQueryOption.update(): duplicate modification";
+   }
+
+   var modify = {};
+   modify.OP = "update";
+   modify.Update = rule;
+   modify.ReturnNew = (returnNew != undefined) ? returnNew : false;
+   this._hint = BSONObj({$Modify:BSONObj(modify)});
+
+   if (undefined != options) {
+      this._options = options;
+   }
+
+   return this;
+}
+
+SdbQueryOption.prototype.remove = function() {
+
+   var hintObj = eval('(' + this._hint.toString() + ')');
+
+   if (undefined == this._hint) {
+      this._hint = {};
+   } else if ( undefined != hintObj.$Modify ) {
+      throw "SdbQueryOption.remove(): duplicate modification";
+   }
+
+   var modify = {};
+   modify.OP = "remove";
+   modify.Remove = true;
+   this._hint = BSONObj({$Modify:BSONObj(modify)});
+
+   return this;
+}
+
+// end SdbQueryOption

@@ -360,6 +360,52 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
                                   bson *orderBy,
                                   sdbCursorHandle *handle ) ;
 
+/** \fn INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
+                               INT32 snapType,
+                               bson *condition,
+                               bson *selector,
+                               bson *orderBy,
+                               sdbCursorHandle *handle )
+    \brief Get the snapshot
+    \param [in] cHandle The connection handle
+    \param [in] snapType The snapshot type as below
+
+        SDB_SNAP_CONTEXTS         : Get the snapshot of all the contexts
+        SDB_SNAP_CONTEXTS_CURRENT : Get the snapshot of current context
+        SDB_SNAP_SESSIONS         : Get the snapshot of all the sessions
+        SDB_SNAP_SESSIONS_CURRENT : Get the snapshot of current session
+        SDB_SNAP_COLLECTIONS      : Get the snapshot of all the collections
+        SDB_SNAP_COLLECTIONSPACES : Get the snapshot of all the collection spaces
+        SDB_SNAP_DATABASE         : Get the snapshot of the database
+        SDB_SNAP_SYSTEM           : Get the snapshot of the system
+        SDB_SNAP_CATALOG          : Get the snapshot of the catalog
+        SDB_SNAP_TRANSACTIONS     : Get snapshot of transactions in current session
+        SDB_SNAP_TRANSACTIONS_CURRENT : Get snapshot of all the transactions
+        SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
+        SDB_SNAP_HEALTH           : Get snapshot of node health detection
+        SDB_SNAP_CONFIGS          : Get snapshot of node configurations
+
+    \param [in] condition The matching rule, match all the documents if null
+    \param [in] select The selective rule, return the whole document if null
+    \param [in] orderBy The ordered rule, never sort if null
+    \param [in] hint The options provided for specific snapshot type.
+                format:{ '$Options': { <options> } }
+    \param [in] numToSkip Skip the first numToSkip documents, default is 0
+    \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
+    \param [out] handle The cursor handle of current query
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbGetSnapshot1 ( sdbConnectionHandle cHandle,
+                                  INT32 snapType,
+                                  bson *condition,
+                                  bson *selector,
+                                  bson *orderBy,
+                                  bson *hint,
+                                  SINT64 numToskip,
+                                  SINT64 numToRet,
+                                  sdbCursorHandle *handle ) ;
+
 /** \fn INT32 sdbResetSnapshot ( sdbConnectionHandle cHandle,
  *                               bson *options )
     \brief Reset the snapshot

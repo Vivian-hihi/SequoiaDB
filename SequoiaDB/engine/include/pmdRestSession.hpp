@@ -343,6 +343,7 @@ namespace engine
                                        restRequest &request,
                                        BSONObj &match, BSONObj &selector,
                                        BSONObj &order ) ;
+
          INT32       _convertListContextsCurrent( restAdaptor *pAdaptor,
                                                   restRequest &request,
                                                   MsgHeader **msg ) ;
@@ -421,6 +422,12 @@ namespace engine
                                           MsgHeader **msg ) ;
 
          //snapshot
+         INT32       _convertSnapshotBase( restAdaptor *pAdaptor,
+                                           restRequest &request,
+                                           BSONObj &match, BSONObj &selector,
+                                           BSONObj &order, BSONObj &hint,
+                                           SINT64* skip, SINT64* returnRow ) ;
+
          INT32       _convertSnapshotContext( restAdaptor *pAdaptor,
                                               restRequest &request,
                                               MsgHeader **msg ) ;

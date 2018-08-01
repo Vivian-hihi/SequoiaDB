@@ -38,6 +38,8 @@
 #include "sptDBCL.hpp"
 #include "sptDBNode.hpp"
 #include "sptDBDomain.hpp"
+#include "sptDBOptionBase.hpp"
+#include "sptDBSnapshotOption.hpp"
 #include "sptBsonobj.hpp"
 #include "ossSocket.hpp"
 #include "msgDef.hpp"
@@ -749,15 +751,20 @@ namespace engine
    }
 
    INT32 _sptDBSdb::snapshot( const _sptArguments &arg,
-                               _sptReturnVal &rval,
-                               bson::BSONObj &detail )
+                              _sptReturnVal &rval,
+                              bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
       _sdbCursor *pCursor = NULL ;
       INT32 snapshotType = 0 ;
+      BSONObj obj ;
+      string objectName ;
       BSONObj cond ;
       BSONObj sel ;
       BSONObj order ;
+      BSONObj hint ;
+      INT32 numToSkip = 0 ;
+      INT32 numToRet = -1 ;
 
       rc = arg.getNative( 0, &snapshotType, SPT_NATIVE_INT32 ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -772,32 +779,78 @@ namespace engine
       }
       if( !arg.isNull( 1 ) )
       {
-         rc = arg.getBsonobj( 1, cond, SPT_CONVERT_MATCHER ) ;
+         objectName = arg.getUserObjClassName( 1 ) ;
+      }
+
+      if ( SPT_OPTIONBASE_NAME == objectName ||
+           SPT_SNAPSHOTOPTION_NAME == objectName )
+      {
+         rc = arg.getBsonobj( 1, obj ) ;
          if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
          {
             detail = BSON( SPT_ERR << "Cond must be obj" ) ;
             goto error ;
          }
-      }
-      if( !arg.isNull( 2 ) )
-      {
-         rc = arg.getBsonobj( 2, sel ) ;
-         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+
+         if ( obj.hasField( SPT_OPTIONBASE_COND_FIELD ) )
          {
-            detail = BSON( SPT_ERR << "Sel must be obj" ) ;
-            goto error ;
+            cond = obj.getObjectField( SPT_OPTIONBASE_COND_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_SEL_FIELD ) )
+         {
+            sel = obj.getObjectField( SPT_OPTIONBASE_SEL_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_SORT_FIELD ) )
+         {
+            order = obj.getObjectField( SPT_OPTIONBASE_SORT_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_HINT_FIELD ) )
+         {
+            hint = obj.getObjectField( SPT_OPTIONBASE_HINT_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_SKIP_FIELD ) )
+         {
+            numToSkip = obj.getIntField( SPT_OPTIONBASE_SKIP_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_LIMIT_FIELD ) )
+         {
+            numToRet = obj.getIntField( SPT_OPTIONBASE_LIMIT_FIELD ) ;
          }
       }
-      if( !arg.isNull( 3 ) )
+      else
       {
-         rc = arg.getBsonobj( 3, order ) ;
-         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         if( !arg.isNull( 1 ) )
          {
-            detail = BSON( SPT_ERR << "Order must be obj" ) ;
-            goto error ;
+            rc = arg.getBsonobj( 1, cond, SPT_CONVERT_MATCHER ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "Cond must be obj" ) ;
+               goto error ;
+            }
+         }
+
+         if( !arg.isNull( 2 ) )
+         {
+            rc = arg.getBsonobj( 2, sel ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "Sel must be obj" ) ;
+               goto error ;
+            }
+         }
+         if( !arg.isNull( 3 ) )
+         {
+            rc = arg.getBsonobj( 3, order ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "Order must be obj" ) ;
+               goto error ;
+            }
          }
       }
-      rc = _sptSdb.getSnapshot( &pCursor, snapshotType, cond, sel, order ) ;
+      rc = _sptSdb.getSnapshot( &pCursor, snapshotType,
+                                cond, sel, order, hint,
+                                numToSkip, numToRet ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to get snapshot" ) ;

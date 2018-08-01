@@ -4,6 +4,8 @@ find - 查询记录。
 
 ##语法##
 
+**db.collectionspace.collection.find([SdbQueryOption])**
+
 **db.collectionspace.collection.find([cond],[sel])**
 
 **db.collectionspace.collection.find([cond],[sel]).hint([hint])**
@@ -22,6 +24,10 @@ Collection
 
 ##参数##
 
+* `SdbQueryOption` ( *Object*， *选填* )
+
+	统一指定 cond/sel/sort/hint/skip/limit/update/remove 参数。使用方法可参考[SdbQueryOption](reference/Sequoiadb_command/SpecialObjects/SdbQueryOption/cond.md)。
+
 * `cond` ( *Object*， *选填* )
 
 	记录匹配条件。为空时，查询所有记录；不为空时，查询符合条件记录。如：{"age":{"$gt":30}}。关于匹配条件的使用，可参考[匹配符](reference/operator/match_operator/overview.md)。
@@ -30,12 +36,12 @@ Collection
 
 	查询返回记录的字段名。为空时，返回记录的所有字段；如果指定的字段名记录中不存在，则按用户设定的内容原样返回。如：{"name":"","age":"","addr":""}。
 
-* [`hint`](reference/Sequoiadb_command/SdbQuery/hint.md) ( *Object*， *选填* )
+* `hint` ( *Object*， *选填* )
 
 	指定查询使用索引的情况。
 	* 不指定`hint`：查询是否使用索引及使用哪个索引将由数据库决定；
 	* `hint`为{"":null}：查询走表扫描；
-	* `hint`为单个索引：如：{"":"myIdx"}，表示查询将使用当前集合中名字为"myIdx"的索引进行查找；若"myIdx"索引不存在，查询将走表扫描；
+	* `hint`为单个索引：如：{"":"myIdx"}，表示查询将使用当前集合中名字为"myIdx"的索引进行；
 	* `hint`为多个索引：如：{"1":"idx1","2":"idx2","3":"idx3"}，
                         表示查询将使用上述三个索引之一进行。
                         具体使用哪一个，由数据库评估决定。

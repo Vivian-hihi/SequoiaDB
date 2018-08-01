@@ -32,6 +32,8 @@
 #include "sptDBCL.hpp"
 #include "sptDBCS.hpp"
 #include "sptDBCursor.hpp"
+#include "sptDBOptionBase.hpp"
+#include "sptDBQueryOption.hpp"
 #include "msg.h"
 #include "msgDef.h"
 #include "ossFile.hpp"
@@ -146,6 +148,7 @@ namespace engine
                             bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
+      BSONObj obj ;
       BSONObj cond ;
       BSONObj sel ;
       BSONObj order ;
@@ -155,79 +158,129 @@ namespace engine
       INT32 numToRet = -1 ;
       INT32 flags = 0 ;
       _sdbCursor *pCursor = NULL ;
+      string objectName ;
 
       if( !arg.isNull( 0 ) )
       {
-         rc = arg.getBsonobj( 0, cond, FALSE ) ;
+         objectName = arg.getUserObjClassName( 0 ) ;
+      }
+
+      if ( SPT_OPTIONBASE_NAME == objectName ||
+           SPT_QUERYOPTION_NAME == objectName )
+      {
+         rc = arg.getBsonobj( 0, obj ) ;
          if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
          {
             detail = BSON( SPT_ERR << "Cond must be obj" ) ;
             goto error ;
          }
-      }
-      if( !arg.isNull( 1 ) )
-      {
-         rc = arg.getBsonobj( 1, sel ) ;
-         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+
+         if ( obj.hasField( SPT_OPTIONBASE_COND_FIELD ) )
          {
-            detail = BSON( SPT_ERR << "Sel must be obj" ) ;
-            goto error ;
+            cond = obj.getObjectField( SPT_OPTIONBASE_COND_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_SEL_FIELD ) )
+         {
+            sel = obj.getObjectField( SPT_OPTIONBASE_SEL_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_SORT_FIELD ) )
+         {
+            order = obj.getObjectField( SPT_OPTIONBASE_SORT_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_HINT_FIELD ) )
+         {
+            hint = obj.getObjectField( SPT_OPTIONBASE_HINT_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_SKIP_FIELD ) )
+         {
+            numToSkip = obj.getIntField( SPT_OPTIONBASE_SKIP_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_LIMIT_FIELD ) )
+         {
+            numToRet = obj.getIntField( SPT_OPTIONBASE_LIMIT_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_QUERYOPTION_OPTIONS_FIELD ) )
+         {
+            options = obj.getObjectField( SPT_QUERYOPTION_OPTIONS_FIELD ) ;
          }
       }
-      if( !arg.isNull( 2 ) )
+      else
       {
-         rc = arg.getBsonobj( 2, order ) ;
-         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         if( !arg.isNull( 0 ) )
          {
-            detail = BSON( SPT_ERR << "Sort must be obj" ) ;
-            goto error ;
+            rc = arg.getBsonobj( 0, cond, FALSE ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "Cond must be obj" ) ;
+               goto error ;
+            }
          }
-      }
-      if( !arg.isNull( 3 ) )
-      {
-         rc = arg.getBsonobj( 3, hint ) ;
-         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         if( !arg.isNull( 1 ) )
          {
-            detail = BSON( SPT_ERR << "Hint must be obj" ) ;
-            goto error ;
+            rc = arg.getBsonobj( 1, sel ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "Sel must be obj" ) ;
+               goto error ;
+            }
          }
-      }
-      if( !arg.isNull( 4 ) )
-      {
-         rc = arg.getNative( 4, &numToSkip, SPT_NATIVE_INT32 ) ;
-         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         if( !arg.isNull( 2 ) )
          {
-            detail = BSON( SPT_ERR << "SkipNum must be number" ) ;
-            goto error ;
+            rc = arg.getBsonobj( 2, order ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "Sort must be obj" ) ;
+               goto error ;
+            }
          }
-      }
-      if( !arg.isNull( 5 ) )
-      {
-         rc = arg.getNative( 5, &numToRet, SPT_NATIVE_INT32 ) ;
-         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         if( !arg.isNull( 3 ) )
          {
-            detail = BSON( SPT_ERR << "RetNum must be number" ) ;
-            goto error ;
+            rc = arg.getBsonobj( 3, hint ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "Hint must be obj" ) ;
+               goto error ;
+            }
          }
-      }
-      if( !arg.isNull( 6 ) )
-      {
-         rc = arg.getNative( 6, &flags, SPT_NATIVE_INT32 ) ;
-         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         if( !arg.isNull( 4 ) )
          {
-            detail = BSON( SPT_ERR << "Flags must be number" ) ;
-            goto error ;
+            rc = arg.getNative( 4, &numToSkip, SPT_NATIVE_INT32 ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "SkipNum must be number" ) ;
+               goto error ;
+            }
          }
-      }
-      if( !arg.isNull( 7 ) )
-      {
-         rc = arg.getBsonobj( 7, options ) ;
-         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         if( !arg.isNull( 5 ) )
          {
-            detail = BSON( SPT_ERR << "Options must be obj" ) ;
-            goto error ;
+            rc = arg.getNative( 5, &numToRet, SPT_NATIVE_INT32 ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "RetNum must be number" ) ;
+               goto error ;
+            }
          }
+         if( !arg.isNull( 6 ) )
+         {
+            rc = arg.getNative( 6, &flags, SPT_NATIVE_INT32 ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "Flags must be number" ) ;
+               goto error ;
+            }
+         }
+         if( !arg.isNull( 7 ) )
+         {
+            rc = arg.getBsonobj( 7, options ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "Options must be obj" ) ;
+               goto error ;
+            }
+         }
+
       }
+
       if( Object == hint.getField( FIELD_NAME_MODIFY ).type() )
       {
          flags |= FLG_QUERY_MODIFY ;

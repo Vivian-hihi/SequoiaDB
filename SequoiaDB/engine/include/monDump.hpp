@@ -607,6 +607,8 @@ namespace engine
       private:
          UINT32                  _addInfoMask ;
          BOOLEAN                 _hitEnd ;
+         BOOLEAN                 _isLocalMode ;
+         BOOLEAN                 _isExpand ;
 
    } ;
    typedef _monConfigsFetch monConfigsFetch ;

@@ -69,7 +69,10 @@ spt2Files = [
       "spt/db/sptDBNumberLong.cpp",
       "spt/db/sptDBNumberDecimal.cpp",
       "spt/db/sptDBQuery.cpp",
-      "spt/db/sptDBCount.cpp"
+      "spt/db/sptDBCount.cpp",
+      "spt/db/sptDBOptionBase.cpp",
+      "spt/db/sptDBSnapshotOption.cpp",
+      "spt/db/sptDBQueryOption.cpp"
       ]
 
 ossFiles = [

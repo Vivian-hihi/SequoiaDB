@@ -883,6 +883,171 @@ namespace SequoiaDB
             return new DBCursor(rtn, this);
         }
 
+        /** \fn DBCursor GetSnapshot(int snapType, BsonDocument matcher, BsonDocument selector,
+                                     BsonDocument orderBy, BsonDocument hint)
+         *  \brief Get the snapshots of specified type
+         *  \param snapType The specified type as below:
+         *  
+         *      SDBConst.SDB_SNAP_CONTEXTS
+         *      SDBConst.SDB_SNAP_CONTEXTS_CURRENT
+         *      SDBConst.SDB_SNAP_SESSIONS
+         *      SDBConst.SDB_SNAP_SESSIONS_CURRENT
+         *      SDBConst.SDB_SNAP_COLLECTIONS
+         *      SDBConst.SDB_SNAP_COLLECTIONSPACES
+         *      SDBConst.SDB_SNAP_DATABASE
+         *      SDBConst.SDB_SNAP_SYSTEM
+         *      SDBConst.SDB_SNAP_CATALOG
+         *      SDBConst.SDB_SNAP_TRANSACTIONS
+         *      SDBConst.SDB_SNAP_TRANSACTIONS_CURRENT
+         *      SDBConst.SDB_SNAP_ACCESSPLANS
+         *      SDBConst.SDB_SNAP_HEALTH
+         *      SDBConst.SDB_SNAP_CONFIGS
+         *      
+         *  \param matcher The matching condition or null
+         *  \param selector The selective rule or null
+         *  \param orderBy The ordered rule or null
+         *  \param hint The options provided for specific snapshot type or null
+                      Format:{ '$Options': { <options> } }
+         *  \return A DBCursor of all the fitted objects or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public DBCursor GetSnapshot(int snapType, BsonDocument matcher, BsonDocument selector,
+                                    BsonDocument orderBy, BsonDocument hint)
+        {
+            return GetSnapshot(snapType, matcher, selector, orderBy, hint, 0, -1);
+        }
+
+        /** \fn DBCursor GetSnapshot(int snapType, BsonDocument matcher, BsonDocument selector,
+                                    BsonDocument orderBy, BsonDocument hint = null,
+                                    long skipRows = 0, long returnRows = -1)
+         *  \brief Get the snapshots of specified type
+         *  \param snapType The specified type as below:
+         *  
+         *      SDBConst.SDB_SNAP_CONTEXTS
+         *      SDBConst.SDB_SNAP_CONTEXTS_CURRENT
+         *      SDBConst.SDB_SNAP_SESSIONS
+         *      SDBConst.SDB_SNAP_SESSIONS_CURRENT
+         *      SDBConst.SDB_SNAP_COLLECTIONS
+         *      SDBConst.SDB_SNAP_COLLECTIONSPACES
+         *      SDBConst.SDB_SNAP_DATABASE
+         *      SDBConst.SDB_SNAP_SYSTEM
+         *      SDBConst.SDB_SNAP_CATALOG
+         *      SDBConst.SDB_SNAP_TRANSACTIONS
+         *      SDBConst.SDB_SNAP_TRANSACTIONS_CURRENT
+         *      SDBConst.SDB_SNAP_ACCESSPLANS
+         *      SDBConst.SDB_SNAP_HEALTH
+         *      SDBConst.SDB_SNAP_CONFIGS
+         *      
+         *  \param matcher The matching condition or null
+         *  \param selector The selective rule or null
+         *  \param orderBy The ordered rule or null
+         *  \param hint The options provided for specific snapshot type or null
+                      Format:{ '$Options': { <options> } }
+         *  \param skipRows
+         *            Skip the first numToSkip documents, never skip if this parameter is 0
+         *  \param returnRows
+         *            Return the specified amount of documents,
+         *            when returnRows is 0, return nothing,
+         *            when returnRows is -1, return all the documents
+         *  \return A DBCursor of all the fitted objects or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public DBCursor GetSnapshot(int snapType, BsonDocument matcher, BsonDocument selector,
+                                    BsonDocument orderBy, BsonDocument hint,
+                                    long skipRows, long returnRows)
+        {
+            string command = null;
+            switch (snapType)
+            {
+                case SDBConst.SDB_SNAP_CONTEXTS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.CONTEXTS;
+                    break;
+                case SDBConst.SDB_SNAP_CONTEXTS_CURRENT:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.CONTEXTS_CUR;
+                    break;
+                case SDBConst.SDB_SNAP_SESSIONS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.SESSIONS;
+                    break;
+                case SDBConst.SDB_SNAP_SESSIONS_CURRENT:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.SESSIONS_CUR;
+                    break;
+                case SDBConst.SDB_SNAP_COLLECTIONS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.COLLECTIONS;
+                    break;
+                case SDBConst.SDB_SNAP_COLLECTIONSPACES:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.COLSPACES;
+                    break;
+                case SDBConst.SDB_SNAP_DATABASE:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.DATABASE;
+                    break;
+                case SDBConst.SDB_SNAP_SYSTEM:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.SYSTEM;
+                    break;
+                case SDBConst.SDB_SNAP_CATALOG:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.CATA;
+                    break;
+                case SDBConst.SDB_SNAP_TRANSACTIONS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.TRANSACTIONS;
+                    break;
+                case SDBConst.SDB_SNAP_TRANSACTIONS_CURRENT:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.TRANSACTIONS_CURRENT;
+                    break;
+                case SDBConst.SDB_SNAP_ACCESSPLANS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                              SequoiadbConstants.ACCESSPLANS;
+                    break;
+                case SDBConst.SDB_SNAP_HEALTH:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.HEALTH;
+                    break;
+                case SDBConst.SDB_SNAP_CONFIGS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.CONFIGS;
+                    break;  
+                default:
+                    throw new BaseException("SDB_INVALIDARG");
+            }
+
+            BsonDocument dummyObj = new BsonDocument();
+            if (matcher == null)
+                matcher = dummyObj;
+            if (selector == null)
+                selector = dummyObj;
+            if (orderBy == null)
+                orderBy = dummyObj;
+
+            if (returnRows < 0)
+            {
+                returnRows = -1;
+            }
+
+            SDBMessage rtn = AdminCommand(command, matcher, selector, orderBy, hint, skipRows, returnRows, 0);
+
+            int flags = rtn.Flags;
+            if (flags != 0)
+                if (flags == SequoiadbConstants.SDB_DMS_EOC)
+                    return null;
+                else
+                {
+                    throw new BaseException(flags);
+                }
+
+            return new DBCursor(rtn, this);
+        }
+
         /** \fn DBCursor GetList(int listType)
          *  \brief Get the informations of specified type
          *  \param listType The specified type as below:
@@ -2110,6 +2275,65 @@ namespace SequoiaDB
             byte[] request = SDBMessageHelper.BuildQueryRequest(sdbMessage, isBigEndian);
             if(connection == null)
                 throw new BaseException("SDB_NOT_CONNECTED");
+            connection.SendMessage(request);
+            SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+            rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
+            return rtnSDBMessage;
+        }
+
+        private SDBMessage AdminCommand(string command, BsonDocument query, BsonDocument selector, BsonDocument orderBy,
+                                        BsonDocument hint, long skipRows, long returnRows, int flag)
+        {
+            BsonDocument dummyObj = new BsonDocument();
+            SDBMessage sdbMessage = new SDBMessage();
+            sdbMessage.OperationCode = Operation.OP_QUERY;
+            sdbMessage.CollectionFullName = command;
+            sdbMessage.Version = SequoiadbConstants.DEFAULT_VERSION;
+            sdbMessage.W = SequoiadbConstants.DEFAULT_W;
+            sdbMessage.Padding = 0;
+            sdbMessage.Flags = flag;
+            sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
+            sdbMessage.RequestID = 0;
+            sdbMessage.SkipRowsCount = skipRows;
+            sdbMessage.ReturnRowsCount = returnRows;
+            // matcher
+            if (query == null)
+            {
+                sdbMessage.Matcher = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Matcher = query;
+            }
+            // selector
+            if (selector == null)
+            {
+                sdbMessage.Selector = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Selector = selector;
+            }
+            // orderBy
+            if (orderBy == null)
+            {
+                sdbMessage.OrderBy = dummyObj;
+            }
+            else
+            {
+                sdbMessage.OrderBy = orderBy;
+            }
+            // hint
+            if (hint == null)
+            {
+                sdbMessage.Hint = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Hint = hint;
+            }
+
+            byte[] request = SDBMessageHelper.BuildQueryRequest(sdbMessage, isBigEndian);
             connection.SendMessage(request);
             SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
             rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);

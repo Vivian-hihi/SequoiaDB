@@ -454,15 +454,22 @@ class client(object):
         """Get the snapshots of specified type.
 
         Parameters:
-           Name           Type  Info:
-           snap_type      int   The type of snapshot, see Info as below
-           **kwargs             Useful options are below
-           - condition    dict  The matching rule, match all the documents
-                                      if not provided.
-           - selector     dict  The selective rule, return the whole
-                                      document if not provided.
-           - order_by     dict  The ordered rule, result set is unordered
-                                      if not provided.
+           Name              Type     Info:
+           snap_type         int      The type of snapshot, see Info as below
+           **kwargs                   Useful options are below
+           - condition       dict     The matching rule, match all the documents
+                                            if not provided.
+           - selector        dict     The selective rule, return the whole
+                                            document if not provided.
+           - order_by        dict     The ordered rule, result set is unordered
+                                            if not provided.
+           - hint            dict     The options provided for specific snapshot type.
+                                      Format:{ '$Options': { <options> } }
+           - num_to_skip     long     Skip the first numToSkip documents,
+                                            default is 0L.
+           - num_to_return   long     Only return numToReturn documents,
+                                            default is -1L for returning
+                                            all results.
         Return values:
            a cursor object of query
         Exceptions:
@@ -492,6 +499,9 @@ class client(object):
         bson_condition = None
         bson_selector = None
         bson_order_by = None
+        bson_hint = None
+        num_to_skip = 0
+        num_to_return = -1
 
         if "condition" in kwargs:
             if not isinstance(kwargs.get("condition"), dict):
@@ -505,11 +515,24 @@ class client(object):
             if not isinstance(kwargs.get("order_by"), dict):
                 raise SDBTypeError("order_by in kwargs must be an instance of dict")
             bson_order_by = bson.BSON.encode(kwargs.get("order_by"))
+        if "hint" in kwargs:
+            if not isinstance(kwargs.get("hint"), dict):
+                raise SDBTypeError("hint in kwargs must be an instance of dict")
+            bson_hint = bson.BSON.encode(kwargs.get("hint"))
+        if "num_to_skip" in kwargs:
+            if not isinstance(kwargs.get("num_to_skip"), int):
+                raise SDBTypeError("num_to_skip must be an instance of int")
+            num_to_skip = kwargs.get("num_to_skip")
+        if "num_to_return" in kwargs:
+        if not isinstance(kwargs.get("num_to_return"), int):
+                raise SDBTypeError("num_to_return must be an instance of int")
+            num_to_return = kwargs.get("num_to_return")
 
         result = cursor()
         try:
             rc = sdb.sdb_get_snapshot(self._client, result._cursor, snap_type,
-                                      bson_condition, bson_selector, bson_order_by)
+                                      bson_condition, bson_selector, bson_order_by,
+                                      bson_hint, num_to_skip, num_to_return)
             raise_if_error(rc, "Failed to get snapshot: %d" % snap_type)
         except SDBBaseError:
             del result

@@ -1298,7 +1298,7 @@ namespace engine
              it = _mapKeyValue.find( pFieldName ) ;
              itCold = _mapColdKeyValue.end() ;
 
-             if ( pEX->isLocalMode() && PMD_CFG_CHANGE_REBOOT == changeLevel )
+             if ( PMD_CFG_CHANGE_REBOOT == changeLevel )
              {
                 if ( _mapColdKeyValue.end() != ( itCold = _mapColdKeyValue.find( pFieldName ) ) )
                 {
@@ -1324,7 +1324,7 @@ namespace engine
          else
          {
              _result = pEX->writeString( pFieldName, 
-                                              itCold->second._value.c_str() ) ;
+                                         itCold->second._value.c_str() ) ;
          }
          if ( _result )
          {
@@ -1494,7 +1494,7 @@ namespace engine
              it = _mapKeyValue.find( pFieldName ) ;
              itCold = _mapColdKeyValue.end() ;
 
-             if ( pEX->isLocalMode() && PMD_CFG_CHANGE_REBOOT == changeLevel )
+             if ( PMD_CFG_CHANGE_REBOOT == changeLevel )
              {
                 if ( _mapColdKeyValue.end() != ( itCold = _mapColdKeyValue.find( pFieldName ) ) )
                 {

@@ -1132,22 +1132,29 @@ namespace sdbclient
                           INT32 snapType,
                           const BSONObj &condition = _sdbStaticObject,
                           const BSONObj &selector = _sdbStaticObject,
-                          const BSONObj &orderBy = _sdbStaticObject
-                         ) ;
+                          const BSONObj &orderBy = _sdbStaticObject,
+                          const BSONObj &hint   = _sdbStaticObject,
+                          INT32 numToSkip = 0,
+                          INT32 numToRet  = -1 ) ;
 
       INT32 getSnapshot ( sdbCursor &cursor,
                           INT32 snapType,
                           const BSONObj &condition = _sdbStaticObject,
                           const BSONObj &selector = _sdbStaticObject,
-                          const BSONObj &orderBy = _sdbStaticObject
-                         )
+                          const BSONObj &orderBy = _sdbStaticObject,
+                          const BSONObj &hint   = _sdbStaticObject,
+                          INT32 numToSkip = 0,
+                          INT32 numToRet  = -1 )
       {
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return getSnapshot ( &cursor.pCursor,
                               snapType,
                               condition,
                               selector,
-                              orderBy ) ;
+                              orderBy,
+                              hint,
+                              numToSkip,
+                              numToRet ) ;
       }
 
       INT32 getList ( _sdbCursor **cursor,

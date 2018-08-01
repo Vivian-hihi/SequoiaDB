@@ -2853,64 +2853,11 @@ namespace engine
                                               BSONObj &match, BSONObj &selector,
                                               BSONObj &order )
    {
-      INT32 rc = SDB_OK ;
-      string matchStr ;
-      string selectorStr ;
-      string orderStr ;
-
-      matchStr = request.getQuery( FIELD_NAME_FILTER ) ;
-      if ( matchStr.empty() )
-      {
-         matchStr = request.getQuery( REST_KEY_NAME_MATCHER ) ;
-      }
-
-      selectorStr = request.getQuery( FIELD_NAME_SELECTOR ) ;
-
-      orderStr = request.getQuery( FIELD_NAME_SORT ) ;
-      if ( orderStr.empty() )
-      {
-         orderStr = request.getQuery( REST_KEY_NAME_ORDERBY ) ;
-      }
-
-      if ( FALSE == matchStr.empty() )
-      {
-         rc = fromjson( matchStr.c_str(), match, 0 ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "
-                        "value=%s", FIELD_NAME_FILTER, REST_KEY_NAME_MATCHER,
-                        matchStr.c_str() ) ;
-            goto error ;
-         }
-      }
-
-      if ( FALSE == selectorStr.empty() )
-      {
-         rc = fromjson( selectorStr.c_str(), selector, 0 ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s",
-                        FIELD_NAME_SELECTOR, selectorStr.c_str() ) ;
-            goto error ;
-         }
-      }
-
-      if ( FALSE == orderStr.empty() )
-      {
-         rc = fromjson( orderStr.c_str(), order, 0 ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "
-                        "value=%s", FIELD_NAME_SORT, REST_KEY_NAME_ORDERBY,
-                        orderStr.c_str() ) ;
-            goto error ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      BSONObj hint ;
+      SINT64  skip ;
+      SINT64  returnRow ;
+      return _convertSnapshotBase( pAdaptor, request, match, selector,
+                                   order, hint, &skip, &returnRow ) ;
    }
 
    INT32 RestToMSGTransfer::_convertListContexts( restAdaptor *pAdaptor,
@@ -3777,6 +3724,106 @@ namespace engine
 //      goto done ;
 //   }
 
+   INT32 RestToMSGTransfer::_convertSnapshotBase( restAdaptor *pAdaptor,
+                                                  restRequest &request,
+                                                  BSONObj &match, BSONObj &selector,
+                                                  BSONObj &order,
+                                                  BSONObj &hint,
+                                                  SINT64* skip,
+                                                  SINT64* returnRow )
+   {
+      INT32 rc = SDB_OK ;
+      string matchStr ;
+      string selectorStr ;
+      string orderStr ;
+      string hintStr ;
+      string skipStr ;
+      string returnRowStr ;
+
+      matchStr = request.getQuery( FIELD_NAME_FILTER ) ;
+      if ( matchStr.empty() )
+      {
+         matchStr = request.getQuery( REST_KEY_NAME_MATCHER ) ;
+      }
+
+      selectorStr = request.getQuery( FIELD_NAME_SELECTOR ) ;
+
+      orderStr = request.getQuery( FIELD_NAME_SORT ) ;
+      if ( orderStr.empty() )
+      {
+         orderStr = request.getQuery( REST_KEY_NAME_ORDERBY ) ;
+      }
+      hintStr = request.getQuery( FIELD_NAME_HINT ) ;
+      skipStr = request.getQuery( FIELD_NAME_SKIP ) ;
+
+      returnRowStr = request.getQuery( FIELD_NAME_RETURN_NUM ) ;
+      if ( returnRowStr.empty() )
+      {
+         returnRowStr = request.getQuery( REST_KEY_NAME_LIMIT ) ;
+      }
+
+      if ( FALSE == matchStr.empty() )
+      {
+         rc = fromjson( matchStr.c_str(), match, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "
+                        "value=%s", FIELD_NAME_FILTER, REST_KEY_NAME_MATCHER,
+                        matchStr.c_str() ) ;
+            goto error ;
+         }
+      }
+
+      if ( FALSE == selectorStr.empty() )
+      {
+         rc = fromjson( selectorStr.c_str(), selector, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s",
+                        FIELD_NAME_SELECTOR, selectorStr.c_str() ) ;
+            goto error ;
+         }
+      }
+
+      if ( FALSE == orderStr.empty() )
+      {
+         rc = fromjson( orderStr.c_str(), order, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "
+                        "value=%s", FIELD_NAME_SORT, REST_KEY_NAME_ORDERBY,
+                        orderStr.c_str() ) ;
+            goto error ;
+         }
+      }
+
+      if ( FALSE == hintStr.empty() )
+      {
+         rc = fromjson( hintStr.c_str(), hint, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s",
+                        FIELD_NAME_HINT, hintStr.c_str() ) ;
+            goto error ;
+         }
+      }
+
+      if ( FALSE == skipStr.empty() )
+      {
+         *skip = ossAtoll( skipStr.c_str() ) ;
+      }
+
+      if ( FALSE == returnRowStr.empty() )
+      {
+         *returnRow = ossAtoll( returnRowStr.c_str() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 RestToMSGTransfer::_convertSnapshotContext( restAdaptor *pAdaptor,
                                                      restRequest &request,
                                                      MsgHeader **msg )
@@ -3785,18 +3832,23 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
+      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
+                                 hint, &skip, &returnRow ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
                              &selector, &order, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -3822,19 +3874,24 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX
                               CMD_NAME_SNAPSHOT_CONTEXTS_CURRENT ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
+      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
+                                 hint, &skip, &returnRow ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
                              &selector, &order, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -3859,18 +3916,23 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONS ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
+      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
+                                 hint, &skip, &returnRow ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
                              &selector, &order, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -3896,19 +3958,24 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX
                               CMD_NAME_SNAPSHOT_SESSIONS_CURRENT ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
+      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
+                                 hint, &skip, &returnRow ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
                              &selector, &order, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -3933,18 +4000,23 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_COLLECTIONS ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
+      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
+                                 hint, &skip, &returnRow ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
                              &selector, &order, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -3970,19 +4042,24 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX
                               CMD_NAME_SNAPSHOT_COLLECTIONSPACES ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
+      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
+                                 hint, &skip, &returnRow ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
                              &selector, &order, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -4007,18 +4084,23 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_DATABASE ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
+      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
+                                 hint, &skip, &returnRow ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
                              &selector, &order, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -4043,18 +4125,23 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SYSTEM ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
+      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
+                                 hint, &skip, &returnRow ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
                              &selector, &order, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -4079,18 +4166,23 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CATA ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
+      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
+                                 hint, &skip, &returnRow ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
                              &selector, &order, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -4115,18 +4207,23 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_ACCESSPLANS ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
+      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
+                                 hint, &skip, &returnRow ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
                              &selector, &order, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -4151,18 +4248,23 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_HEALTH ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
+      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
+                                 hint, &skip, &returnRow ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
                              &selector, &order, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -4187,19 +4289,24 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONFIGS ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
+      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
+                                 hint, &skip, &returnRow ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
-                             &selector, &order, NULL ) ;
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
+                             &selector, &order, &hint ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",

@@ -3790,6 +3790,8 @@ namespace engine
    {
       _addInfoMask   = 0 ;
       _hitEnd        = TRUE ;
+      _isLocalMode   = FALSE ;
+      _isExpand      = TRUE ;
    }
 
    _monConfigsFetch::~_monConfigsFetch()
@@ -3802,10 +3804,51 @@ namespace engine
                                 UINT32 addInfoMask,
                                 const BSONObj obj )
    {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObjIterator itor ;
+         BSONElement elem ;
+         itor = obj.begin() ;
+         while ( itor.more() )
+         {
+            elem = itor.next() ;
+            if ( 0 == ossStrcasecmp( elem.fieldName(), "mode" ) )
+            {
+               if ( elem.String() == "local" )
+               {
+                  _isLocalMode = TRUE ;
+               }
+            }
+            if ( 0 == ossStrcasecmp( elem.fieldName(), "expand" ) )
+            {
+               if ( elem.type() == bson::Bool )
+               {
+                  _isExpand = elem.boolean() ;
+               }
+               else if ( elem.type() == bson::String )
+               {
+                  ossStrToBoolean( elem.valuestr(), &_isExpand ) ;
+               }
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to read configs options ",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
       _addInfoMask = addInfoMask ;
       _hitEnd = FALSE ;
 
-      return SDB_OK ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    const CHAR* _monConfigsFetch::getName() const
@@ -3823,6 +3866,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__MONCONFIGSFETCH_FETCH ) ;
       INT32 rc             = SDB_OK ;
+      INT32 mask           = 0 ;
 
       if ( _hitEnd )
       {
@@ -3837,7 +3881,16 @@ namespace engine
          /// add system info
          monAppendSystemInfo( ob, _addInfoMask ) ;
 
-         rc = pmdGetOptionCB()->toBSON( tmpObj, 0 ) ;
+         if ( !_isExpand )
+         {
+            mask |= PMD_CFG_MASK_SKIP_UNFIELD ;
+         }
+         if ( _isLocalMode )
+         {
+            mask |= PMD_CFG_MASK_MODE_LOCAL ; 
+         }
+
+         rc = pmdGetOptionCB()->toBSON( tmpObj, mask ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR, "Failed to generate config, rc: %d", rc ) ;
