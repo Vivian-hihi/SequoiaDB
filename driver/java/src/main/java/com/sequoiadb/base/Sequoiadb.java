@@ -1069,6 +1069,7 @@ public class Sequoiadb implements Closeable {
      * @param query    The matching rule, match all the documents if null.
      * @param selector The selective rule, return the whole document if null.
      * @param orderBy  The ordered rule, never sort if null.
+     * @return The target information by cursor.
      * @throws BaseException If error happens.
      */
     public DBCursor getList(int listType, BSONObject query, BSONObject selector, BSONObject orderBy) throws BaseException {
@@ -1077,15 +1078,11 @@ public class Sequoiadb implements Closeable {
         SdbReply response = requestAndResponse(request);
 
         int flags = response.getFlag();
-        if (flags != 0) {
-            if (flags == SDBError.SDB_DMS_EOC.getErrorCode()) {
-                return null;
-            } else {
-                String msg = "query = " + query +
-                        ", selector = " + selector +
-                        ", orderBy = " + orderBy;
-                throwIfError(response, msg);
-            }
+        if (flags != 0 && flags != SDBError.SDB_DMS_EOC.getErrorCode()) {
+            String msg = "query = " + query +
+                    ", selector = " + selector +
+                    ", orderBy = " + orderBy;
+            throwIfError(response, msg);
         }
 
         return new DBCursor(response, this);
