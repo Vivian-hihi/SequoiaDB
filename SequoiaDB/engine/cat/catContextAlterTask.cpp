@@ -333,7 +333,7 @@ namespace engine
       {
          rc = SDB_OPTION_NOT_SUPPORT ;
          PD_LOG( PDERROR, "Can not change AutoIndexId to false when collection "
-                 "[%s] is being splitted" ) ;
+                 "[%s] is being splitted", _dataName.c_str() ) ;
          goto error ;
       }
 
