@@ -3792,6 +3792,7 @@ namespace engine
    _omaRemoveDBBusTask::_omaRemoveDBBusTask( INT64 taskID )
    : _omaTask( taskID )
    {
+      _force         = FALSE ;
       _taskType      = OMA_TASK_REMOVE_DB ;
       _taskName      = OMA_TASK_NAME_REMOVE_DB_BUSINESS ;
       _isStandalone  = FALSE ;
@@ -4234,6 +4235,8 @@ namespace engine
          goto error ;
       }
 
+      omaGetBooleanElement( hostInfoObj, OMA_FIELD_FORCE, _force ) ;
+
       // 5. get cfg info for temporay coord
       rc = omaGetStringElement ( hostInfoObj, OMA_FIELD_CLUSTERNAME, &pStr ) ;
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
@@ -4497,6 +4500,7 @@ namespace engine
          bab.append( *it2 ) ;
       }
       builder.appendArray( OMA_FIELD_UNINSTALLGROUPNAMES, bab.arr() ) ;
+      builder.appendBool( OMA_FIELD_FORCE, _force ) ;
       obj = builder.obj() ;
    }
 

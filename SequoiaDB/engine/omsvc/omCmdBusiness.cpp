@@ -704,8 +704,9 @@ namespace engine
 
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
 
-      rc = option.parseRestArg( "s",
-                                OM_REST_FIELD_BUSINESS_NAME, &_businessName ) ;
+      rc = option.parseRestArg( "s|b",
+                                OM_REST_FIELD_BUSINESS_NAME, &_businessName,
+                                OM_REST_FIELD_FORCE, &_force ) ;
       if ( rc )
       {
          _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
@@ -850,6 +851,7 @@ namespace engine
                      OM_HOST_FIELD_PASSWD << "" <<
                      OM_HOST_FIELD_SSHPORT << "" ) ;
 
+      taskConfigBuilder.appendBool( OM_BSON_FORCE, _force ) ;
       taskConfigBuilder.append( OM_BSON_CLUSTER_NAME, _clusterName ) ;
       taskConfigBuilder.append( OM_BSON_BUSINESS_TYPE, _businessType ) ;
       taskConfigBuilder.append( OM_BSON_BUSINESS_NAME, _businessName ) ;

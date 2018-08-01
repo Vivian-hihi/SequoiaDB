@@ -1035,6 +1035,7 @@ namespace engine
    public:
       REST_CONSTRUCTOR_PARA_INHERIT( omRemoveBusinessCommand, omAuthCommand )
       {
+         _force = FALSE ;
       }
 
       ~omRemoveBusinessCommand()
@@ -1066,10 +1067,11 @@ namespace engine
                          INT64 &taskID ) ;
       
    private:
-      string _clusterName ;
-      string _businessName ;
-      string _businessType ;
-      string _deployMod ;
+      BOOLEAN  _force ;
+      string   _clusterName ;
+      string   _businessName ;
+      string   _businessType ;
+      string   _deployMod ;
    } ;
 
    class omQueryHostStatusCommand : public omStartBusinessCommand

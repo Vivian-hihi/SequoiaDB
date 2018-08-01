@@ -117,6 +117,7 @@ namespace engine
    #define OM_BSON_LEASETIME                    "LeaseTime"
    #define OM_BSON_LEASETIME2                   "leaseTime"
    #define OM_BSON_OM_ADDR                      "omaddr"
+   #define OM_BSON_FORCE                        "Force"
 
    /***************** XML field *****************/
    #define OM_XML_FIELD_BUSINESS_TYPE           "BusinessType"

@@ -61,6 +61,7 @@ function GeneratePlan( PD_LOGGER )
    var businessName  = planInfo[FIELD_BUSINESS_NAME] ;
    var authUser      = planInfo[FIELD_AUTH_USER] ;
    var authPasswd    = planInfo[FIELD_AUTH_PASSWD] ;
+   var force         = planInfo[FIELD_FORCE] ;
    var hostNum       = 0 ;
    var progressStep  = 0 ;
 
@@ -87,7 +88,8 @@ function GeneratePlan( PD_LOGGER )
 
       installConfig[FIELD_TASKID] = taskID ;
       installConfig[FIELD_INFO]   = {} ;
-      installConfig[FIELD_INFO][FIELD_CLUSTER_NAME] = clusterName ;
+      installConfig[FIELD_INFO][FIELD_FORCE]         = force ;
+      installConfig[FIELD_INFO][FIELD_CLUSTER_NAME]  = clusterName ;
       installConfig[FIELD_INFO][FIELD_BUSINESS_TYPE] = businessType ;
       installConfig[FIELD_INFO][FIELD_BUSINESS_NAME] = businessName ;
       installConfig[FIELD_INFO][FIELD_AUTH_USER] = authUser ;
@@ -251,6 +253,7 @@ function RemoveBusiness( PD_LOGGER )
    var resultInfo = BUS_JSON[FIELD_RESULTINFO] ;
    var config     = taskInfo[FIELD_CONFIG] ;
 
+   var force         = taskInfo[FIELD_FORCE] ;
    var clusterName   = taskInfo[FIELD_CLUSTER_NAME] ;
    var businessType  = taskInfo[FIELD_BUSINESS_TYPE] ;
    var businessName  = taskInfo[FIELD_BUSINESS_NAME] ;
@@ -295,7 +298,8 @@ function RemoveBusiness( PD_LOGGER )
       return resultInfo ;
    }
 
-   if( _checkData( PD_LOGGER, resultInfo, port, authUser, authPasswd, cmd, installPath ) )
+   if( force == false &&
+       _checkData( PD_LOGGER, resultInfo, port, authUser, authPasswd, cmd, installPath ) )
    {
       return resultInfo ;
    }

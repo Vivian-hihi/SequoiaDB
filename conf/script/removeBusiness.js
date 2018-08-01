@@ -25,7 +25,7 @@ function main()
 {
    var PD_LOGGER = new Logger( "removeBusiness.js" ) ;
 
-   PD_LOGGER.logComm( PDEVENT, sprintf( "Begin to remove business, Step [?]",
+   PD_LOGGER.log( PDEVENT, sprintf( "Begin to remove business, Step [?]",
                                         SYS_STEP ) ) ;
 
    var taskInfo     = BUS_JSON[FIELD_INFO] ;
@@ -37,7 +37,7 @@ function main()
       var error = new SdbError( SDB_INVALIDARG,
                                 sprintf( "Invalid business type [?]",
                                          businessType ) ) ;
-      PD_LOGGER.logTask( PDERROR, error ) ;
+      PD_LOGGER.log( PDERROR, error ) ;
       throw error ;
    }
 

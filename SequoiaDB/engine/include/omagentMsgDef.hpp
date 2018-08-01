@@ -163,6 +163,7 @@
 #define OMA_FIELD_USERTAG                          "UserTag"
 #define OMA_FIELD_USERTAG2                         "usertag"
 #define OMA_FIELD_USERTAG3                         "usertag"
+#define OMA_FIELD_FORCE                            "Force"
 
 // host info
 #define OMA_FIELD_HOST                             "Host"

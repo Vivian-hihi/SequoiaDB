@@ -222,7 +222,7 @@ namespace engine
          vector<InstDBBusInfo>                  _standalone ;
          vector<InstDBBusInfo>                  _catalog ;
          vector<InstDBBusInfo>                  _coord ;
-         map< string, vector<InstDBBusInfo> >   _mapGroups ;                        
+         map< string, vector<InstDBBusInfo> >   _mapGroups ;
          
          // temporary coord info
          string                                 _tmpCoordSvcName ;
@@ -291,6 +291,8 @@ namespace engine
          INT32 _removeDataRG() ;
 
       private:
+         BOOLEAN _force ;
+
          BSONObj                           _removeDBBusRawInfo ;
          BOOLEAN                           _isStandalone ;
          vector< pair<string, string> >    _resultOrder ;

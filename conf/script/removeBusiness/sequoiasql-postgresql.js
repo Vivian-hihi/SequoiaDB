@@ -57,6 +57,7 @@ function GeneratePlan( PD_LOGGER )
    var clusterName   = planInfo[FIELD_CLUSTER_NAME] ;
    var businessType  = planInfo[FIELD_BUSINESS_TYPE] ;
    var businessName  = planInfo[FIELD_BUSINESS_NAME] ;
+   var force         = planInfo[FIELD_FORCE] ;
    var hostNum       = 0 ;
    var progressStep  = 0 ;
 
@@ -83,7 +84,8 @@ function GeneratePlan( PD_LOGGER )
 
       installConfig[FIELD_TASKID] = taskID ;
       installConfig[FIELD_INFO]   = {} ;
-      installConfig[FIELD_INFO][FIELD_CLUSTER_NAME] = clusterName ;
+      installConfig[FIELD_INFO][FIELD_FORCE]         = force ;
+      installConfig[FIELD_INFO][FIELD_CLUSTER_NAME]  = clusterName ;
       installConfig[FIELD_INFO][FIELD_BUSINESS_TYPE] = businessType ;
       installConfig[FIELD_INFO][FIELD_BUSINESS_NAME] = businessName ;
       installConfig[FIELD_INFO][FIELD_CONFIG] = config ;
@@ -235,6 +237,7 @@ function RemoveBusiness( PD_LOGGER )
    var resultInfo = BUS_JSON[FIELD_RESULTINFO] ;
    var config     = taskInfo[FIELD_CONFIG] ;
 
+   var force         = taskInfo[FIELD_FORCE] ;
    var clusterName   = taskInfo[FIELD_CLUSTER_NAME] ;
    var businessType  = taskInfo[FIELD_BUSINESS_TYPE] ;
    var businessName  = taskInfo[FIELD_BUSINESS_NAME] ;
@@ -283,7 +286,8 @@ function RemoveBusiness( PD_LOGGER )
    libraryCmd += installPath + '/lib ;' ;
    exec = libraryCmd + exec ;
 
-   if( _checkData( PD_LOGGER, resultInfo, port, cmd, installPath ) )
+   if( force == false &&
+       _checkData( PD_LOGGER, resultInfo, port, cmd, installPath ) )
    {
       return resultInfo ;
    }
