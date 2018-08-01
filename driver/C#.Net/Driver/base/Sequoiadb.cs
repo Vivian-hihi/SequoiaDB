@@ -1182,13 +1182,10 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(command, matcher, selector, orderBy, dummyObj);
 
             int flags = rtn.Flags;
-            if (flags != 0)
-                if (flags == SequoiadbConstants.SDB_DMS_EOC)
-                    return null;
-                else
-                {
-                    throw new BaseException(flags);
-                }
+            if (flags != 0 && flags == SequoiadbConstants.SDB_DMS_EOC)
+            {
+                throw new BaseException(flags);
+            }
 
             return new DBCursor(rtn, this);
         }

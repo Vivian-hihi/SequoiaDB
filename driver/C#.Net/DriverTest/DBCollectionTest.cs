@@ -1652,5 +1652,18 @@ namespace DriverTest
             Assert.AreEqual(int.MinValue, bsonList[5].GetValue("a").AsBsonTimestamp.Increment);
         }
 
+        [TestMethod]
+        public void jira_3333()
+        {
+            DBCursor cursor = sdb.GetList(SDBConst.SDB_LIST_TASKS, null, null, null);
+            BsonDocument doc;
+            while ((doc = cursor.Next()) != null) 
+            {
+                Console.WriteLine("doc is: " + doc);
+            }
+        }
+
+        
+
     }
 }
