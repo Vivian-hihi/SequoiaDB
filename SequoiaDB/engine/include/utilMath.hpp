@@ -48,6 +48,15 @@
 namespace engine
 {
 
+   OSS_INLINE INT64 utilAbs( INT64 value )
+   {
+      return value >= 0 ? value : -value ;
+   }
+
+   OSS_INLINE INT32 utilAbs( INT32 value )
+   {
+      return value >= 0 ? value : -value ;
+   }
 
    //
    // overflow check in basic operation

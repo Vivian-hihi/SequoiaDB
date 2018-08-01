@@ -193,6 +193,17 @@ namespace engine
       goto done ;
    }
 
+   BOOLEAN utilStrIgnoreCaseStartsWith( const string& str, const string& substr )
+   {
+      if ( str.empty() || substr.empty() || str.size() < substr.size() )
+      {
+         return FALSE ;
+      }
+
+      return ossStrncasecmp( str.c_str(), substr.c_str(), substr.size() ) == 0 ?
+               TRUE : FALSE ;
+   }
+
    BOOLEAN utilStrIsDigit( const string& str )
    {
       for ( UINT32 i = 0 ; i < str.size() ; i++ )

@@ -85,6 +85,8 @@ namespace engine
                TRUE : FALSE ;
    }
 
+   BOOLEAN utilStrIgnoreCaseStartsWith( const string& str, const string& substr ) ;
+
    INT32 utilStrToUpper( const CHAR *src, CHAR *&upper ) ;
 
    BOOLEAN utilStrIsDigit( const string& str ) ;
