@@ -507,8 +507,6 @@ namespace engine
    BOOLEAN _dmsStorageBase::canSync( BOOLEAN &force ) const
    {
       force = FALSE ;
-      UINT64 oldestTick = _getOldestWriteTick() ;
-      UINT64 oldTimeSpan = 0 ;
 
       if ( !_syncEnable )
       {
@@ -520,23 +518,9 @@ namespace engine
          return TRUE ;
       }
 
-      if ( (UINT64)~0 != oldestTick )
-      {
-         oldTimeSpan = pmdGetTickSpanTime( oldestTick ) ;
-      }
-
       if ( 0 != _commitFlag && _dirtyList.dirtyNumber() <= 0 )
       {
          return FALSE ;
-      }
-      else if ( _syncInterval > 0 &&
-                oldTimeSpan >= _syncNoWriteTime &&
-                oldTimeSpan > 60 * _syncInterval )
-      {
-         /// If has a collection that don't write over very mush times,
-         /// need to flush by force
-         force = TRUE ;
-         return TRUE ;
       }
       else if ( _syncRecordNum > 0 && _writeReordNum >= _syncRecordNum )
       {
@@ -545,22 +529,42 @@ namespace engine
          force = TRUE ;
          return TRUE ;
       }
-      else if ( pmdGetTickSpanTime( _lastWriteTick ) < _syncNoWriteTime )
+      else
       {
-         return FALSE ;
-      }
-      else if ( _syncInterval > 0 )
-      {
-         ossTimestamp tm ;
-         ossGetCurrentTime( tm ) ;
-         UINT64 curTime = tm.time * 1000 + tm.microtm / 1000 ;
+         UINT64 oldestTick = _getOldestWriteTick() ;
+         UINT64 oldTimeSpan = 0 ;
 
-         if ( curTime - _lastSyncTime >= _syncInterval )
+         if ( (UINT64)~0 != oldestTick )
          {
-            PD_LOG( PDDEBUG, "Time interval threshold tiggered, "
-                    "CurTime:%llu, LastSyncTime:%llu, SyncInterval:%u",
-                    curTime, _lastSyncTime, _syncInterval ) ;
+            oldTimeSpan = pmdGetTickSpanTime( oldestTick ) ;
+         }
+
+         if ( _syncInterval > 0 &&
+              oldTimeSpan >= _syncNoWriteTime &&
+              oldTimeSpan > 60 * _syncInterval )
+         {
+            /// If has a collection that don't write over very mush times,
+            /// need to flush by force
+            force = TRUE ;
             return TRUE ;
+         }
+         else if ( pmdGetTickSpanTime( _lastWriteTick ) < _syncNoWriteTime )
+         {
+            return FALSE ;
+         }
+         else if ( _syncInterval > 0 )
+         {
+            ossTimestamp tm ;
+            ossGetCurrentTime( tm ) ;
+            UINT64 curTime = tm.time * 1000 + tm.microtm / 1000 ;
+
+            if ( curTime - _lastSyncTime >= _syncInterval )
+            {
+               PD_LOG( PDDEBUG, "Time interval threshold tiggered, "
+                       "CurTime:%llu, LastSyncTime:%llu, SyncInterval:%u",
+                       curTime, _lastSyncTime, _syncInterval ) ;
+               return TRUE ;
+            }
          }
       }
       return FALSE ;
