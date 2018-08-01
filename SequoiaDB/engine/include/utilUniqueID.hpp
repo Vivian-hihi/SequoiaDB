@@ -51,11 +51,6 @@ namespace engine
    {
       return clUniqueID >> 32 ;
    }
-
-   OSS_INLINE utilCLUniqueID utilBuildCLUniqueID( utilCSUniqueID csUniqueID )
-   {
-      return (utilCLUniqueID)csUniqueID << 32 ;
-   }
 }
 
 #endif //UTIL_UNIQUEID_HPP_
