@@ -1926,7 +1926,9 @@ namespace engine
                                             CLS_FS_LOB_PAGE_SIZE <<
                                             itCS->_lobPageSize <<
                                             CLS_FS_CS_TYPE <<
-                                            itCS->_type ) ) ;
+                                            itCS->_type <<
+                                            CLS_FS_CS_UNIQUEID <<
+                                            itCS->_csUniqueID ) ) ;
             }
          }
          b.appendArray( CLS_FS_CSNAMES, csArrayBuilder.arr() ) ;

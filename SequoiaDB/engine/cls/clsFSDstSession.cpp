@@ -1837,8 +1837,7 @@ namespace engine
                   }
                }
 
-               if ( EOO != eleID.type() ||
-                    NumberInt != eleID.type() )
+               if ( NumberInt != eleID.type() )
                {
                   PD_LOG( PDERROR, "Session[%s]: parse a collection space "
                           "ele[%s] failed", sessionName(),
