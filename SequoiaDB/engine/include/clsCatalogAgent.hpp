@@ -175,7 +175,7 @@ namespace engine
 
       public:
          _clsCatalogSet ( const CHAR * name, BOOLEAN saveName = TRUE ) ;
-         _clsCatalogSet ( const CHAR * name, UINT64 clUniqueID,
+         _clsCatalogSet ( UINT64 clUniqueID, const CHAR * name,
                           BOOLEAN saveName = TRUE ) ;
          ~_clsCatalogSet () ;
 

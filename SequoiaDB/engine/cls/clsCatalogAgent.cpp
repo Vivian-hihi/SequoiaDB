@@ -439,7 +439,7 @@ namespace engine
       _overwrite = FALSE ;
    }
 
-   _clsCatalogSet::_clsCatalogSet ( const CHAR * name, UINT64 clUniqueID,
+   _clsCatalogSet::_clsCatalogSet ( UINT64 clUniqueID, const CHAR * name,
                                     BOOLEAN saveName )
    {
       _saveName = saveName ;
@@ -2524,7 +2524,7 @@ namespace engine
                                                          utilCLUniqueID clUniqueID )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT__ADDCLSET ) ;
-      _clsCatalogSet *catSet = SDB_OSS_NEW _clsCatalogSet ( name, clUniqueID,
+      _clsCatalogSet *catSet = SDB_OSS_NEW _clsCatalogSet ( clUniqueID, name,
                                                             FALSE ) ;
       if ( !catSet )
       {
