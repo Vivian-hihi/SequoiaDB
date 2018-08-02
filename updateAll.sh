@@ -64,6 +64,7 @@ function compile()
 
    echo "====================Begin to complie====================================="
    echo "CMD: $compileCmd"
+   echo "** Note: Compiler will only print out error and warning information!  **"
    $compileCmd
    ret=$?
    if [ $ret -eq 0 ] ; then
