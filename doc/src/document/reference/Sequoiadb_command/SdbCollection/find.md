@@ -26,7 +26,7 @@ Collection
 
 * `SdbQueryOption` ( *Object*， *选填* )
 
-	统一指定 cond/sel/sort/hint/skip/limit/update/remove 参数。使用方法可参考[SdbQueryOption](reference/Sequoiadb_command/SpecialObjects/SdbQueryOption/cond.md)。
+	统一指定 cond/sel/sort/hint/skip/limit/update/remove 参数。使用方法可参考[SdbQueryOption](reference/Sequoiadb_command/SpecialObjects/SdbQueryOption.md)。
 
 * `cond` ( *Object*， *选填* )
 
