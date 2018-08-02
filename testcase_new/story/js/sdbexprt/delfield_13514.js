@@ -34,7 +34,7 @@ function testExprtImprt()
 {
    var csvfile = workDir + "sdbexprt13514.csv" ;
    cmd.run( "rm -rf " + csvfile ) ;
-   var asc = getRandomInt( 0, 128 ) ;
+   var asc = "0x23" ;
    println( "ascii for delfield is: " + asc ) ;
    var command = installPath + "bin/sdbexprt" +
                  " -s " + COORDHOSTNAME +
@@ -55,7 +55,7 @@ function testExprtImprt()
              " -l " + clname1 +
              " --file " + csvfile +
              " --type csv " +
-             " -e " + asc +
+             " -e " + "'\\35'" +
              " --fields='a string,b string'" +
              " --headerline true" ;  
    testRunCommand( command ) ;

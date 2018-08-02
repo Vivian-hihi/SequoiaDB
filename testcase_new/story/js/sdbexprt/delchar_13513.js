@@ -7,8 +7,8 @@
 var csname = COMMCSNAME ;
 var clname = COMMCLNAME + "_sdbexprt13513" ;
 var clname1 = COMMCLNAME + "_sdbimprt13513" ;
-var doc = { a: 1, b: "exprtTest" } ;
-var expRecs = [ "{\"a\":1,\"b\":\"exprtTest\"}" ] ;
+var doc = { c: 1, d: "exprtTest" } ;
+var expRecs = [ "{\"c\":1,\"d\":\"exprtTest\"}" ] ;
 
 main() ;
 
@@ -31,7 +31,7 @@ function testExprtImprt()
 {
    var csvfile = workDir + "sdbexprt13513.csv" ;
    cmd.run( "rm -rf " + csvfile ) ;
-   var asc = getRandomInt( 0, 128 ) ;
+   var asc = "0x12" ;
    println( "ascii for delchar is: " + asc ) ;
    var command = installPath + "bin/sdbexprt" +
                  " -s " + COORDHOSTNAME +
@@ -41,7 +41,7 @@ function testExprtImprt()
                  " --file " + csvfile + 
                  " --type csv" +
                  " -a " + asc + 
-                 " --fields a,b" ;
+                 " --fields c,d" ;
    testRunCommand( command ) ;
    
    command = installPath + "bin/sdbimprt" +
@@ -51,10 +51,9 @@ function testExprtImprt()
              " -l " + clname1 +
              " --file " + csvfile +
              " --type csv " +
-             " -a " + asc +
+             " -a " + "'\\18'" +
              " --headerline true " +
-             " --fields='a int,b string'" ; 
+             " --fields='c int,d string'" ; 
    testRunCommand( command ) ;
-   
    cmd.run( "rm -rf " + csvfile ) ;
 }
