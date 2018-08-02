@@ -1244,6 +1244,8 @@
 
    //业务控制器
    sacApp.controllerProvider.register( 'Deploy.Index.Module.Ctrl', function( $scope, $rootScope, $location, SdbFunction, SdbRest, SdbSignal, SdbSwap ){
+
+      $scope.UninstallTips = '' ;
       //业务扩容 弹窗
       $scope.ExtendWindow = {
          'config': {},
@@ -1893,10 +1895,10 @@
       }
 
       //卸载业务
-      var uninstallModule = function( index ){
+      var uninstallModule = function( index, isForce ){
          if( typeof( $scope.ModuleList[index]['AddtionType'] ) == 'undefined' || $scope.ModuleList[index]['AddtionType'] != 1 )
          {
-            var data = { 'cmd': 'remove business', 'BusinessName': $scope.ModuleList[index]['BusinessName'] } ;
+            var data = { 'cmd': 'remove business', 'BusinessName': $scope.ModuleList[index]['BusinessName'], 'force': isForce } ;
             SdbRest.OmOperation( data, {
                'success': function( taskInfo ){
                   $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
@@ -1947,6 +1949,7 @@
                $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
                return ;
             }
+            $scope.UninstallTips = '' ;
             var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
             $scope.UninstallModuleWindow['config'] = {
                'inputList': [
@@ -1956,6 +1959,26 @@
                      "type": "select",
                      "value": null,
                      "valid": []
+                  },
+                  {
+                     "name": 'force',
+                     "webName": $scope.autoLanguage( '删除业务数据' ),
+                     "type": "select",
+                     "value": false,
+                     "valid": [
+                        { 'key': $scope.autoLanguage( '否' ),  'value': false },
+                        { 'key': $scope.autoLanguage( '是' ),  'value': true  }
+                     ],
+                     "onChange": function( name, key, value ){
+                        if( value == true )
+                        {
+                           $scope.UninstallTips = $scope.autoLanguage( '提示：选择删除数据将清空该业务所有数据！' ) ;
+                        }
+                        else
+                        {
+                           $scope.UninstallTips = '' ;
+                        }
+                     }
                   }
                ]
             }
@@ -1974,7 +1997,21 @@
                if( isAllClear )
                {
                   var formVal = $scope.UninstallModuleWindow['config'].getValue() ;
-                  uninstallModule( formVal['moduleIndex'] ) ;
+                  if( formVal['force'] == true )
+                  {
+                     $scope.Components.Confirm.type = 2 ;
+                     $scope.Components.Confirm.context = $scope.autoLanguage( '该操作将删除该业务所有数据，是否确定继续？' ) ;
+                     $scope.Components.Confirm.isShow = true ;
+                     $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+                     $scope.Components.Confirm.ok = function(){
+                        uninstallModule( formVal['moduleIndex'], formVal['force'] ) ;
+                        $scope.Components.Confirm.isShow = false ;
+                     }
+                  }
+                  else
+                  {
+                     uninstallModule( formVal['moduleIndex'], formVal['force'] ) ;
+                  }
                }
                return isAllClear ;
             } ) ;

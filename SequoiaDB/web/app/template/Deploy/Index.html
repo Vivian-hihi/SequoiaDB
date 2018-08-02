@@ -30,6 +30,7 @@
          </div>
          <div ng-windows="form as UninstallModuleWindow.config" windows-callback="UninstallModuleWindow.callback">
             <div form-create para="form"></div>
+            <div class="error">{{UninstallTips}}</div>
          </div>
          <div ng-windows="form as ExtendWindow.config" windows-callback="ExtendWindow.callback">
             <div form-create para="form"></div>
