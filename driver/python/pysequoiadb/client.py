@@ -524,7 +524,7 @@ class client(object):
                 raise SDBTypeError("num_to_skip must be an instance of int")
             num_to_skip = kwargs.get("num_to_skip")
         if "num_to_return" in kwargs:
-        if not isinstance(kwargs.get("num_to_return"), int):
+            if not isinstance(kwargs.get("num_to_return"), int):
                 raise SDBTypeError("num_to_return must be an instance of int")
             num_to_return = kwargs.get("num_to_return")
 
