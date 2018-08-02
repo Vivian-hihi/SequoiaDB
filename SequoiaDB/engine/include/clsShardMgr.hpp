@@ -93,6 +93,7 @@ namespace engine
          DMS_STORAGE_TYPE  type ;
          NET_HANDLE        netHandle ;
          utilCSUniqueID    csUniqueID ;
+         vector< PAIR_CLNAME_ID > clList ;
 
          _clsCSEventItem()
          {
@@ -205,6 +206,7 @@ namespace engine
          INT32 rGetCSInfo( const CHAR *csName, utilCSUniqueID &csUniqueID,
                            UINT32 &pageSize,
                            UINT32 &lobPageSize, DMS_STORAGE_TYPE &type,
+                           vector< PAIR_CLNAME_ID >& clList,
                            INT64 waitMillSec = CLS_SHARD_TIMEOUT ) ;
 
          INT32 updateDCBaseInfo() ;

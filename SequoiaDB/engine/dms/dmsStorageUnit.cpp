@@ -1375,23 +1375,20 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageUnit::setCSUniqueID( utilCSUniqueID csUniqueID )
+   INT32 _dmsStorageUnit::chgCSUniqueID( utilCSUniqueID csUniqueID )
    {
-      INT32 rc = SDB_OK ;
+      utilCSUniqueID orgID = CSUniqueID() ;
 
-      rc = _pDataSu->setCSUniqueID( csUniqueID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to set cs unique id in data storage "
-                   "unit, rc: %d", rc ) ;
+      if ( orgID != csUniqueID )
+      {
+         _pDataSu->setCSUniqueID( csUniqueID ) ;
+         _pIndexSu->setCSUniqueID( csUniqueID ) ;
+         PD_LOG ( PDDEBUG,
+                  "Change cs[%s] unique id, org: %u, new: %u",
+                  CSName(), orgID, csUniqueID ) ;
+      }
 
-      rc = _pIndexSu->setCSUniqueID( csUniqueID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to set cs unique id in index storage "
-                   "unit, rc: %d", rc ) ;
-
-      _storageInfo._csUniqueID = csUniqueID ;
-   done :
-      return rc ;
-   error :
-      goto done ;
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SETLOBPAGESIZE, "_dmsStorageUnit::setLobPageSize" )

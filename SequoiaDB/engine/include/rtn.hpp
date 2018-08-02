@@ -278,6 +278,17 @@ namespace engine
                                   SDB_DMSCB *dmsCB,
                                   BOOLEAN checkOnly = FALSE ) ;
 
+   INT32 rtnLoadCollectionSpace ( const CHAR *pCSName,
+                                  const CHAR *dataPath,
+                                  const CHAR *indexPath,
+                                  const CHAR *lobPath,
+                                  const CHAR *lobMetaPath,
+                                  pmdEDUCB *cb,
+                                  SDB_DMSCB *dmsCB,
+                                  BOOLEAN checkOnly,
+                                  utilCSUniqueID *csUniqueIDInCata,
+                                  vector< PAIR_CLNAME_ID > clListInCata ) ;
+
    INT32 rtnLoadCollectionSpaces ( const CHAR *dataPath,
                                    const CHAR *indexPath,
                                    const CHAR *lobPath,

@@ -931,6 +931,8 @@ namespace engine
          INT32 truncateCollectionLoads( const CHAR *pName,
                                         dmsMBContext *context = NULL ) ;
 
+         INT32 chgCLUniqueID( vector< PAIR_CLNAME_ID > clList ) ;
+
          INT32 renameCollection ( const CHAR *oldName, const CHAR *newName,
                                   _pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                   BOOLEAN sysCollection = FALSE ) ;
@@ -1211,6 +1213,7 @@ namespace engine
                                                                  utilCLUniqueID clUniqueID )
    {
       _collectionNameMap[ ossStrdup( pName ) ] = mbID ;
+
       if ( clUniqueID != UTIL_INVALID_UNIQUEID )
       {
          _collectionIDMap[ clUniqueID ] = mbID ;
@@ -1252,6 +1255,7 @@ namespace engine
          _collectionNameMap.erase( it ) ;
          SDB_OSS_FREE( const_cast<CHAR *>(tp) ) ;
       }
+
       if ( clUniqueID != UTIL_INVALID_UNIQUEID )
       {
          _collectionIDMap.erase( clUniqueID ) ;

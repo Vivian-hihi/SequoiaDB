@@ -130,6 +130,7 @@ namespace engine
             SINT64 contextID = -1 ;
             rtnContextDelCS *pDelContext = NULL ;
             rtnContextBuf buffObj ;
+            vector< PAIR_CLNAME_ID > clList ;
 
             PD_LOG( PDDEBUG,
                     "clsStorageCheckJob: checking space [%s]",
@@ -162,7 +163,7 @@ namespace engine
             }
 
             rc = pShdMgr->rGetCSInfo( cs._name, csUniqueID, pageSize,
-                                      lobPageSize, type ) ;
+                                      lobPageSize, type, clList ) ;
 
             pDmsCB->suUnlock( suID, SHARED ) ;
             suID = DMS_INVALID_SUID ;
@@ -208,7 +209,7 @@ namespace engine
                // Now, check the catalog again, if someone re-create the
                // collection space, kill the context
                rc = pShdMgr->rGetCSInfo( cs._name, csUniqueID, pageSize,
-                                         lobPageSize, type ) ;
+                                         lobPageSize, type, clList ) ;
                if ( SDB_DMS_CS_NOTEXIST != rc )
                {
                   PD_LOG( PDWARNING,

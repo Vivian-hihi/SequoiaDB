@@ -92,7 +92,6 @@ namespace engine
                               INT16 w = 1, INT64 *pContextID = NULL ) = 0 ;
 
          virtual void setMainCLName ( const CHAR * mainCL ) {}
-         virtual void setCLUniqueID( utilCLUniqueID clUniqueID ) {}
 
       protected:
          INT32             _fromService ;
@@ -512,7 +511,7 @@ namespace engine
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
 
-         virtual void setCLUniqueID( utilCLUniqueID clUniqueID ) ;
+         void setCLUniqueID( utilCLUniqueID clUniqueID ) ;
 
       private:
          void _clean( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB ) ;
@@ -1412,9 +1411,15 @@ namespace engine
                            _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                            INT16 w = 1, INT64 *pContextID = NULL ) ;
 
-   protected:
-      const CHAR        *_csName ;
+      const CHAR* csName () { return _csName ; }
+      void setCSUniqueID ( utilCSUniqueID csUniqueID ) ;
+      void setCLInfo ( const vector< PAIR_CLNAME_ID >& clList ) ;
 
+   protected:
+      const CHAR                 *_csName ;
+      BOOLEAN                    _needChangeID ;
+      utilCSUniqueID             _csUniqueID ;
+      vector< PAIR_CLNAME_ID >   _clList ;
    } ;
 
    class _rtnUnloadCollectionSpace : public _rtnLoadCollectionSpace

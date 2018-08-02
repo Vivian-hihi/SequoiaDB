@@ -513,6 +513,22 @@ namespace engine
       goto done ;
    }
 
+   INT32 rtnLoadCollectionSpace ( const CHAR *pCSName,
+                                  const CHAR *dataPath,
+                                  const CHAR *indexPath,
+                                  const CHAR *lobPath,
+                                  const CHAR *lobMetaPath,
+                                  pmdEDUCB *cb,
+                                  SDB_DMSCB *dmsCB,
+                                  BOOLEAN checkOnly )
+   {
+      utilCSUniqueID *csUniqueIDInCata = NULL ;
+      vector< PAIR_CLNAME_ID > clListInCata ;
+      return rtnLoadCollectionSpace( pCSName, dataPath, indexPath, lobPath,
+                                     lobMetaPath, cb, dmsCB, checkOnly,
+                                     csUniqueIDInCata, clListInCata ) ;
+   }
+
    // load a single collection name from given path
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOADCS, "rtnLoadCollectionSpace" )
    INT32 rtnLoadCollectionSpace ( const CHAR *pCSName,
@@ -522,7 +538,9 @@ namespace engine
                                   const CHAR *lobMetaPath,
                                   pmdEDUCB *cb,
                                   SDB_DMSCB *dmsCB,
-                                  BOOLEAN checkOnly )
+                                  BOOLEAN checkOnly,
+                                  utilCSUniqueID *csUniqueIDInCata,
+                                  vector< PAIR_CLNAME_ID > clListInCata )
    {
       SDB_ASSERT ( pCSName, "pCSName can't be NULL" ) ;
       SDB_ASSERT ( dataPath, "data path can't be NULL" ) ;
@@ -603,7 +621,12 @@ namespace engine
                                                     optCB->getSyncRecordNum(),
                                                     optCB->getSyncDirtyRatio() ) ;
                         storageUnit->setSyncDeep( optCB->isSyncDeep() ) ;
-
+                        /// db.loadCS() may need to set unique id
+                        if ( csUniqueIDInCata )
+                        {
+                           storageUnit->chgCSUniqueID( *csUniqueIDInCata ) ;
+                           storageUnit->data()->chgCLUniqueID( clListInCata ) ;
+                        }
                         /// add collectionspace
                         rc = dmsCB->addCollectionSpace ( csName, sequence,
                                                          storageUnit, NULL,

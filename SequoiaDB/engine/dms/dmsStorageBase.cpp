@@ -1113,12 +1113,10 @@ namespace engine
 
    INT32 _dmsStorageBase::setCSUniqueID( utilCSUniqueID csUniqueID )
    {
-      INT32 rc = SDB_OK ;
-
       _pStorageInfo->_csUniqueID = csUniqueID ;
       _dmsHeader->_csUniqueID    = csUniqueID ;
 
-      rc = flushHeader( TRUE ) ;
+      flushHeader( TRUE ) ;
 
       return SDB_OK ;
    }

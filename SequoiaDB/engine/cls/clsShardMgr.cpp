@@ -2209,6 +2209,7 @@ namespace engine
                                    UINT32 &pageSize,
                                    UINT32 &lobPageSize,
                                    DMS_STORAGE_TYPE &type,
+                                   vector< PAIR_CLNAME_ID >& clList,
                                    INT64 waitMillSec )
    {
       INT32 rc = SDB_OK ;
@@ -2303,6 +2304,7 @@ namespace engine
       pageSize = item->pageSize ;
       lobPageSize = item->lobPageSize ;
       type = item->type ;
+      clList = item->clList ;
 
    done:
       _catLatch.get() ;
@@ -2555,6 +2557,30 @@ namespace engine
          else
          {
             csItem->csUniqueID = UTIL_INVALID_UNIQUEID ;
+         }
+
+         // "Collection": [ { "Name": "dog1", "UniqueID": 2667174690817 } ,
+         //                 { "Name": "dog2", "UniqueID": 2667174690818 } ]
+         ele = objList[0].getField( CAT_COLLECTION ) ;
+         if ( Array == ele.type() )
+         {
+            BSONObjIterator it( ele.embeddedObject() ) ;
+            while ( it.more() )
+            {
+               BSONElement subEle = it.next() ;
+               if ( Object == subEle.type() )
+               {
+                  BSONObj clObj = subEle.embeddedObject() ;
+                  BSONElement nameE = clObj.getField( CAT_COLLECTION_NAME ) ;
+                  BSONElement idE = clObj.getField( CAT_CL_UNIQUEID ) ;
+                  if ( String != nameE.type() || !idE.isNumber())
+                  {
+                     continue ;
+                  }
+                  PAIR_CLNAME_ID cl( nameE.String(), (UINT64)idE.numberLong() );
+                  csItem->clList.push_back( cl ) ;
+               }
+            }
          }
       }
 

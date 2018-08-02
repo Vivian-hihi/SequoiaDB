@@ -286,7 +286,7 @@ namespace engine
 
          INT32 renameCS( const CHAR *pNewName ) ;
 
-         INT32 setCSUniqueID( utilCSUniqueID csUniqueID ) ;
+         INT32 chgCSUniqueID( utilCSUniqueID csUniqueID ) ;
          INT32 setLobPageSize ( UINT32 lobPageSize ) ;
 
          dmsStorageDataCommon *data() { return _pDataSu ; }

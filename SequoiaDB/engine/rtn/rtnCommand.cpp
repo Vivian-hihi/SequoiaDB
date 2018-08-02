@@ -3929,8 +3929,10 @@ error:
 
    IMPLEMENT_CMD_AUTO_REGISTER( _rtnLoadCollectionSpace )
    _rtnLoadCollectionSpace::_rtnLoadCollectionSpace()
+   : _csName( NULL ),
+     _needChangeID( FALSE ),
+     _csUniqueID( UTIL_INVALID_UNIQUEID )
    {
-      _csName = NULL ;
    }
    _rtnLoadCollectionSpace::~_rtnLoadCollectionSpace()
    {
@@ -3979,12 +3981,40 @@ error:
                                         _dpsLogWrapper *dpsCB,
                                         INT16 w , INT64 *pContextID )
    {
-      return rtnLoadCollectionSpace( _csName,
-                                     pmdGetOptionCB()->getDbPath(),
-                                     pmdGetOptionCB()->getIndexPath(),
-                                     pmdGetOptionCB()->getLobPath(),
-                                     pmdGetOptionCB()->getLobMetaPath(),
-                                     cb, dmsCB, FALSE ) ;
+      INT32 rc = SDB_OK ;
+
+      if ( _needChangeID )
+      {
+         rc = rtnLoadCollectionSpace( _csName,
+                                      pmdGetOptionCB()->getDbPath(),
+                                      pmdGetOptionCB()->getIndexPath(),
+                                      pmdGetOptionCB()->getLobPath(),
+                                      pmdGetOptionCB()->getLobMetaPath(),
+                                      cb, dmsCB, FALSE,
+                                      &_csUniqueID, _clList ) ;
+      }
+      else
+      {
+         rc = rtnLoadCollectionSpace( _csName,
+                                      pmdGetOptionCB()->getDbPath(),
+                                      pmdGetOptionCB()->getIndexPath(),
+                                      pmdGetOptionCB()->getLobPath(),
+                                      pmdGetOptionCB()->getLobMetaPath(),
+                                      cb, dmsCB, FALSE ) ;
+      }
+
+      return rc ;
+   }
+
+   void _rtnLoadCollectionSpace::setCSUniqueID( utilCSUniqueID csUniqueID )
+   {
+      _csUniqueID = csUniqueID ;
+      _needChangeID = TRUE ;
+   }
+
+   void _rtnLoadCollectionSpace::setCLInfo ( const vector< PAIR_CLNAME_ID >& clList )
+   {
+      _clList = clList ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER( _rtnUnloadCollectionSpace )

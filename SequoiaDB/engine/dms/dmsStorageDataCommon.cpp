@@ -2628,6 +2628,41 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dmsStorageDataCommon::chgCLUniqueID( vector< PAIR_CLNAME_ID > clList )
+   {
+      vector< PAIR_CLNAME_ID >::iterator it = clList.begin() ;
+      for ( ; it != clList.end() ; it++ )
+      {
+         const CHAR* clName = it->first.c_str() ;
+         utilCLUniqueID newID = it->second ;
+         utilCLUniqueID orgID = UTIL_INVALID_UNIQUEID ;
+         UINT16 mbID = DMS_INVALID_MBID ;
+
+         mbID = _collectionNameLookup( clName ) ;
+         if ( DMS_INVALID_MBID == mbID )
+         {
+            continue ;
+         }
+         orgID = _dmsMME->_mbList[mbID]._clUniqueID ;
+
+         if ( orgID != newID )
+         {
+            _dmsMME->_mbList[mbID]._clUniqueID = newID ;
+
+            _collectionNameRemove ( clName, orgID ) ;
+            _collectionNameInsert ( clName, mbID, newID ) ;
+
+            PD_LOG ( PDDEBUG,
+                     "Change cl[%s] unique id, org: %llu, new: %llu",
+                     clName, orgID, newID ) ;
+         }
+      }
+
+      flushMME( isSyncDeep() ) ;
+
+      return SDB_OK ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_RENAMECOLLECTION, "_dmsStorageDataCommon::renameCollecion" )
    INT32 _dmsStorageDataCommon::renameCollection( const CHAR * oldName,
                                                   const CHAR * newName,

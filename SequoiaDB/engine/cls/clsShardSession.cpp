@@ -690,8 +690,9 @@ namespace engine
       UINT32 pageSize = DMS_PAGE_SIZE_DFT ;
       UINT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
       DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ;
+      vector< PAIR_CLNAME_ID > clList ;
       rc = _pShdMgr->rGetCSInfo( csName, csUniqueID,
-                                 pageSize, lobPageSize, type ) ;
+                                 pageSize, lobPageSize, type, clList ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Session[%s]: Get collection space[%s] page "
@@ -1472,7 +1473,12 @@ namespace engine
             }
 
             pCommand->setMainCLName( mainCLName ) ;
-            pCommand->setCLUniqueID ( clUniqueID ) ;
+
+            if ( CMD_CREATE_COLLECTION == pCommand->type() )
+            {
+               _rtnCreateCollection *pCrtCL = (_rtnCreateCollection*)pCommand ;
+               pCrtCL->setCLUniqueID( clUniqueID ) ;
+            }
          }
          else if ( CMD_CREATE_COLLECTIONSPACE == pCommand->type() ||
                    CMD_DROP_COLLECTIONSPACE == pCommand->type() )
@@ -1483,6 +1489,29 @@ namespace engine
                PD_LOG( PDERROR, "failed to check repl status:%d", rc ) ;
                goto error ;
             }
+         }
+         else if ( CMD_LOAD_COLLECTIONSPACE == pCommand->type() )
+         {
+            _rtnLoadCollectionSpace *pLoadcs = (_rtnLoadCollectionSpace*)pCommand ;
+            utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+            UINT32 pageSize = DMS_PAGE_SIZE_DFT ;
+            UINT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
+            DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ;
+            vector< PAIR_CLNAME_ID > clList ;
+
+            rc = _pShdMgr->rGetCSInfo( pLoadcs->csName(), csUniqueID,
+                                       pageSize, lobPageSize, type, clList ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Session[%s]: Get collection space[%s] unique "
+                       "id from catalog failed, rc: %d", sessionName(),
+                       pLoadcs->csName(), rc ) ;
+               goto error ;
+            }
+
+            pLoadcs = (_rtnLoadCollectionSpace*)pCommand ;
+            pLoadcs->setCSUniqueID( csUniqueID ) ;
+            pLoadcs->setCLInfo( clList ) ;
          }
 
          PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;
