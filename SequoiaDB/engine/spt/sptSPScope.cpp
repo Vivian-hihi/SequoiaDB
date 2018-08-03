@@ -753,8 +753,14 @@ namespace engine
       }
 
    done:
-      delete []fSpecs ;
-      delete []sfSpecs ;
+      if ( NULL != fSpecs )
+      {
+         delete []fSpecs ;
+      }
+      if ( NULL != sfSpecs )
+      {
+         delete []sfSpecs ;
+      }
       return rc ;
    error:
       goto done ;
