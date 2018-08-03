@@ -73,9 +73,10 @@ namespace SequoiaDB
         public const int FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE = 0x00008000;
 
 
-        internal static readonly Dictionary<int, int> flagsDir = new Dictionary<int, int>() {
-            // add mapping flags as below, if necessary:
-            //{FLG_QUERY_FORCE_HINT, NEW_FLG_QUERY_FORCE_HINT}
+        internal readonly static int[][] flagsMap = new int[0][]{
+           // add mapping flags as below, if necessary:
+           // new int[] {oldFlag, newFlag}, ...
+           //new int[] {FLG_QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA},
         };
 
        /** \property Matcher
@@ -130,20 +131,22 @@ namespace SequoiaDB
             set { flag = value; }
         }
 
-        internal static int RegulateFlag(int flags)
+        internal static int RegulateFlags(int flags)
         {
-            int erasedFlags = flags;
-            int mergedFlags = 0;
-
-            foreach(KeyValuePair<int,int> item in flagsDir)
+            if (flagsMap.Length > 0)
             {
-                if ((0 != (erasedFlags & item.Key)) && (item.Key != item.Value))
+                int newFlags = 0;
+                foreach (int[] flagMap in flagsMap)
                 {
-                    erasedFlags &= ~item.Key;
-                    mergedFlags |= item.Value;
+                    if ((flags & flagMap[0]) != 0)
+                    {
+                        flags &= ~flagMap[0];
+                        newFlags |= flagMap[1];
+                    }
                 }
+                flags |= newFlags;
             }
-            return erasedFlags | mergedFlags;
+            return flags;
         }
 
         internal static int EraseFlags(int flags, params int[] erasedFlags)
