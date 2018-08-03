@@ -71,6 +71,8 @@ namespace engine
       RTN_JOB_SCHED_PREPARE      = 22,
       RTN_JOB_SCHED_DISPATCH     = 23,
 
+      RTN_JOB_GTS_DISPATH        = 24,
+
       RTN_JOB_MAX
    } ;
 

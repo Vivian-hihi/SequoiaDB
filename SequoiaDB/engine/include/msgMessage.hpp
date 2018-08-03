@@ -303,6 +303,24 @@ INT32 msgBuildSysInfoReply ( CHAR **ppBuffer, INT32 *pBufferSize,
 INT32 msgExtractSysInfoReply ( CHAR *pBuffer, BOOLEAN &endianConvert,
                                INT32 *osType ) ;
 
+INT32 msgBuildSequenceAcquireMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                                  UINT64 reqID, const BSONObj& options,
+                                  engine::IExecutor *cb = NULL ) ;
+
+INT32 msgBuildSequenceCreateMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                                 UINT64 reqID, const BSONObj& options,
+                                 engine::IExecutor *cb = NULL ) ;
+
+INT32 msgBuildSequenceDropMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                               UINT64 reqID, const BSONObj& options,
+                               engine::IExecutor *cb = NULL ) ;
+
+INT32 msgBuildSequenceAlterMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                                UINT64 reqID, const BSONObj& options,
+                                engine::IExecutor *cb = NULL ) ;
+
+INT32 msgExtractSequenceMsg( CHAR *pBuffer, BSONObj& options ) ;
+
 INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                                   engine::IExecutor *cb = NULL );
 

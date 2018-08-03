@@ -501,7 +501,12 @@ catFiles = [
       "cat/catContextData.cpp",
       "cat/catContextNode.cpp",
       "cat/catContextTask.cpp",
-      "cat/catContextAlterTask.cpp"
+      "cat/catContextAlterTask.cpp",
+      "cat/catGTSManager.cpp",
+      "cat/catGTSMsgHandler.cpp",
+      "cat/catGTSMsgJob.cpp",
+      "cat/catSequence.cpp",
+      "cat/catSequenceManager.cpp"
       ]
 
 coordFiles = [

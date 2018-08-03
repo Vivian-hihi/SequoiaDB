@@ -49,6 +49,7 @@
 #include "catMainController.hpp"
 #include "catCatalogManager.hpp"
 #include "catNodeManager.hpp"
+#include "catGTSManager.hpp"
 #include "catDCManager.hpp"
 #include "sdbInterface.hpp"
 #include "catLevelLock.hpp"
@@ -141,6 +142,10 @@ namespace engine
          {
             return &_catMainCtrl ;
          }
+         catGTSManager* getCatGTSMgr()
+         {
+            return &_catGTSMgr ;
+         }
          catCatalogueManager* getCatlogueMgr()
          {
             return &_catlogueMgr ;
@@ -195,6 +200,7 @@ namespace engine
          catMainController    _catMainCtrl ;
          catCatalogueManager  _catlogueMgr ;
          catNodeManager       _catNodeMgr ;
+         catGTSManager        _catGTSMgr ;
          catDCManager         _catDCMgr ;
          catLevelLockMgr      _levelLockMgr ;
 

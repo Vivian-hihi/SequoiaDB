@@ -1914,6 +1914,87 @@ INT32 msgExtractSql( CHAR *pBuffer, CHAR **sql )
    return rc ;
 }
 
+static INT32 msgBuildSequenceMsg( CHAR **ppBuffer, INT32 *bufferSize, INT32 sequenceOpCode,
+                                  UINT64 reqID, const BSONObj& options,
+                                  engine::IExecutor *cb )
+{
+   INT32 rc = SDB_OK ;
+
+   rc = msgBuildQueryMsg( ppBuffer, bufferSize, "", 0, reqID, 0, -1,
+                          &options, NULL, NULL, NULL, cb ) ;
+   if ( SDB_OK == rc )
+   {
+      MsgHeader* msg = (MsgHeader*)(*ppBuffer) ;
+      msg->opCode = sequenceOpCode ;
+   }
+   else
+   {
+      PD_LOG( PDERROR, "Failed to build sequence msg, opCode=%d, rc=%d",
+              sequenceOpCode, rc ) ;
+   }
+
+   return rc ;
+}
+
+INT32 msgBuildSequenceAcquireMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                                  UINT64 reqID, const BSONObj& options,
+                                  engine::IExecutor *cb )
+{
+   return msgBuildSequenceMsg( ppBuffer, bufferSize, MSG_GTS_SEQUENCE_ACQUIRE_REQ,
+                               reqID, options, cb ) ;
+}
+
+INT32 msgBuildSequenceCreateMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                                 UINT64 reqID, const BSONObj& options,
+                                 engine::IExecutor *cb )
+{
+   return msgBuildSequenceMsg( ppBuffer, bufferSize, MSG_GTS_SEQUENCE_CREATE_REQ,
+                               reqID, options, cb ) ;
+}
+
+INT32 msgBuildSequenceDropMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                               UINT64 reqID, const BSONObj& options,
+                               engine::IExecutor *cb )
+{
+   return msgBuildSequenceMsg( ppBuffer, bufferSize, MSG_GTS_SEQUENCE_DROP_REQ,
+                               reqID, options, cb ) ;
+}
+
+INT32 msgBuildSequenceAlterMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                                UINT64 reqID, const BSONObj& options,
+                                engine::IExecutor *cb )
+{
+   return msgBuildSequenceMsg( ppBuffer, bufferSize, MSG_GTS_SEQUENCE_ALTER_REQ,
+                               reqID, options, cb ) ;
+}
+
+INT32 msgExtractSequenceMsg( CHAR *pBuffer, BSONObj& options )
+{
+   INT32 rc = SDB_OK ;
+   CHAR* query = NULL ;
+
+   rc = msgExtractQuery( pBuffer, NULL, NULL, NULL, NULL, &query, NULL, NULL, NULL ) ;
+   if ( SDB_OK == rc )
+   {
+      try
+      {
+         options = BSONObj( query ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+      }
+   }
+   else
+   {
+      PD_LOG( PDERROR, "Failed to extract sequence msg, rc=%d", rc ) ;
+   }
+
+   return rc ;
+}
+
+
 INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                                   IExecutor *cb )
 {

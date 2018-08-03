@@ -183,16 +183,19 @@ namespace engine
 
       // 3. member objs init
       rc = _catMainCtrl.init() ;
-      PD_RC_CHECK( rc, PDERROR, "Init main controller failed, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init main controller, rc: %d", rc ) ;
+
+      rc = _catGTSMgr.init() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init cat GTS manager, rc: %d", rc ) ;
 
       rc = _catlogueMgr.init() ;
-      PD_RC_CHECK( rc, PDERROR, "Init catlogue manager failed, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init catlogue manager, rc: %d", rc ) ;
 
       rc = _catNodeMgr.init() ;
-      PD_RC_CHECK( rc, PDERROR, "Init cat node manager failed, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init cat node manager, rc: %d", rc ) ;
 
       rc = _catDCMgr.init() ;
-      PD_RC_CHECK( rc, PDERROR, "Init cat dc manager failed, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init cat dc manager, rc: %d", rc ) ;
 
       // 4. create listen
       PD_TRACE1 ( SDB_CATALOGCB_INIT,
@@ -282,6 +285,7 @@ namespace engine
       _catDCMgr.fini() ;
       _catNodeMgr.fini() ;
       _catlogueMgr.fini() ;
+      _catGTSMgr.fini() ;
       _catMainCtrl.fini() ;
 
       // unregister event handle

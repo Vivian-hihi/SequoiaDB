@@ -98,6 +98,7 @@ namespace engine
 
       if ( _pCatCB )
       {
+         _pCatCB->getCatGTSMgr()->attachCB( cb ) ;
          _pCatCB->getCatlogueMgr()->attachCB( cb ) ;
          _pCatCB->getCatNodeMgr()->attachCB( cb ) ;
          _pCatCB->getCatDCMgr()->attachCB( cb ) ;
@@ -116,6 +117,7 @@ namespace engine
          _pCatCB->getCatDCMgr()->detachCB( cb ) ;
          _pCatCB->getCatlogueMgr()->detachCB( cb ) ;
          _pCatCB->getCatNodeMgr()->detachCB( cb ) ;
+         _pCatCB->getCatGTSMgr()->detachCB( cb ) ;
       }
       _pEDUCB = NULL ;
       _changeEvent.signal() ;
@@ -310,6 +312,7 @@ namespace engine
          if ( rc )
          {
             PD_LOG( PDERROR, "Failed to build sys info reply, rc: %d", rc ) ;
+            // set SDB_NET_BROKEN_MSG, so netFrame will close the connection
             rc = SDB_NET_BROKEN_MSG ;
          }
          else
@@ -319,9 +322,26 @@ namespace engine
                                                   (UINT32)replySize ) ;
          }
       }
+      else if ( MSG_GTS_BEGIN < header->opCode &&
+                header->opCode < MSG_GTS_END )
+      {
+         rc = _pCatCB->getCatGTSMgr()->handleMsg( handle, header ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to handle GTS msg, rc: %d", rc ) ;
+            // set SDB_NET_BROKEN_MSG, so netFrame will close the connection
+            rc = SDB_NET_BROKEN_MSG ;
+         }
+      }
       else
       {
          rc = _postMsg( handle, header ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to post catalog msg, rc: %d", rc ) ;
+            // set SDB_NET_BROKEN_MSG, so netFrame will close the connection
+            rc = SDB_NET_BROKEN_MSG ;
+         }
       }
 
       PD_TRACE_EXITRC ( SDB_CATMAINCT_HANDLEMSG, rc ) ;
@@ -710,16 +730,20 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_ACTIVE ) ;
 
+      rc = _pCatCB->getCatGTSMgr()->active() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to active catalog GTS manager, rc: %d",
+                   rc ) ;
+
       rc = _pCatCB->getCatNodeMgr()->active() ;
-      PD_RC_CHECK( rc, PDERROR, "Active catalog node manager failed, rc: %d",
+      PD_RC_CHECK( rc, PDERROR, "Failed to active catalog node manager, rc: %d",
                    rc ) ;
 
       rc = _pCatCB->getCatlogueMgr()->active() ;
-      PD_RC_CHECK( rc, PDERROR, "Active catalog manager failed, rc: %d",
+      PD_RC_CHECK( rc, PDERROR, "Failed to active catalog manager, rc: %d",
                    rc ) ;
 
       rc = _pCatCB->getCatDCMgr()->active() ;
-      PD_RC_CHECK( rc, PDERROR, "Active cata dc manager failed, rc: %d",
+      PD_RC_CHECK( rc, PDERROR, "Failed to active cata dc manager, rc: %d",
                    rc ) ;
 
    done:
@@ -739,6 +763,7 @@ namespace engine
       _pCatCB->getCatDCMgr()->deactive() ;
       _pCatCB->getCatNodeMgr()->deactive() ;
       _pCatCB->getCatlogueMgr()->deactive() ;
+      _pCatCB->getCatGTSMgr()->deactive() ;
 
       _changeEvent.signal() ;
 
