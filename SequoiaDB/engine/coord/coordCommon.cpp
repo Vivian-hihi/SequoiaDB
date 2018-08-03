@@ -236,6 +236,8 @@ namespace engine
       try
       {
          BSONElement eName, eID, eVersion ;
+         utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
+
          // Check types of name, id, version elements
          eName = obj.getField( CAT_CATALOGNAME_NAME ) ;
          if ( String != eName.type() )
@@ -247,7 +249,15 @@ namespace engine
          }
 
          eID = obj.getField( CAT_CL_UNIQUEID ) ;
-         if ( !eID.isNumber() )
+         if ( eID.eoo() )
+         {
+            // it is ok, catalog hasn't been upgraded to new version.
+         }
+         else if ( eID.isNumber() )
+         {
+            clUniqueID = ( utilCLUniqueID ) eID.numberLong() ;
+         }
+         else
          {
             PD_LOG( PDERROR, "Failed to get field[%s] from obj[%s]",
                     CAT_CL_UNIQUEID, obj.toString().c_str() ) ;
@@ -266,7 +276,7 @@ namespace engine
 
          pCataInfoTmp = SDB_OSS_NEW CoordCataInfo( eVersion.number(),
                                                    eName.valuestr(),
-                                                   (UINT64)eID.number() ) ;
+                                                   clUniqueID ) ;
          if ( !pCataInfoTmp )
          {
             PD_LOG( PDERROR, "Allocate memory for catalog info failed" ) ;

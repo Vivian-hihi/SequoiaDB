@@ -1844,7 +1844,9 @@ namespace engine
          INT32 version = 0 ;
          UINT32 groupCount = 0 ;
          const CHAR *pCLType = "normal" ;
+         utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
          string collectionName ;
+
          rc = msgExtractReply ( (CHAR *)msg, &flag, &contextID, &startFrom,
                                 &numReturned, objList ) ;
          if ( SDB_OK != rc )
@@ -1864,6 +1866,7 @@ namespace engine
             version = catSet->getVersion() ;
             groupCount = catSet->groupCount() ;
             collectionName = catSet->name() ;
+            clUniqueID = catSet->clUniqueID() ;
             if ( catSet->isMainCL() )
             {
                pCLType = "main" ;
@@ -1880,20 +1883,18 @@ namespace engine
             goto error ;
          }
 
-         PD_LOG ( PDEVENT, "Update catalog[name: %s, version:%u, type: %s, "
+         PD_LOG ( PDEVENT,
+                  "Update catalog[name: %s, id: %llu, version:%u, type: %s, "
                   "group count: %d, rc: %d]", collectionName.c_str(),
-                  version, pCLType, groupCount, rc ) ;
+                  clUniqueID, version, pCLType, groupCount, rc ) ;
 
          //signal collection info event, since the previous pEVentInfo
          //could be NULL ( if it's async call, requestID is 0 ), we'll have
          //to check for pEventInfo here again
-         BSONElement ele1 = objList[0].getField ( CAT_COLLECTION_NAME ) ;
-         BSONElement ele2 = objList[0].getField ( CAT_CL_UNIQUEID ) ;
-         string clName = ele1.str() ;
-         utilCLUniqueID CLID = ( UINT64 ) ele2.numberLong() ;
-         clsEventItem *pEventInfo = _findCatSyncEvent( clName.c_str(), CLID ) ;
+         pEventInfo = _findCatSyncEvent( collectionName.c_str(), clUniqueID ) ;
          if ( !pEventInfo )
          {
+            // we have already looked up by name and id, find out nothing
             goto done ;
          }
          if ( pEventInfo->requestID == msg->requestID )
@@ -1901,7 +1902,13 @@ namespace engine
             pEventInfo->event.signalAll ( rc ) ;
             goto done ;
          }
-         pEventInfo = _findCatSyncEvent( clName.c_str() ) ;
+
+         if ( UTIL_INVALID_UNIQUEID == clUniqueID )
+         {
+            // we have already looked up by name, so just goto done.
+            goto done ;
+         }
+         pEventInfo = _findCatSyncEvent( collectionName.c_str() ) ;
          if ( pEventInfo && pEventInfo->requestID == msg->requestID )
          {
             pEventInfo->event.signalAll ( rc ) ;
@@ -2204,6 +2211,10 @@ namespace engine
       return SDB_OK ;
    }
 
+   /*
+    if csUniqueID != 0, means it is a input parameter
+    if csUniqueID == 0, means it is a output parameter
+    */
    INT32 _clsShardMgr::rGetCSInfo( const CHAR * csName,
                                    utilCSUniqueID &csUniqueID,
                                    UINT32 &pageSize,
@@ -2550,17 +2561,23 @@ namespace engine
          }
 
          ele = objList[0].getField( CAT_CS_UNIQUEID ) ;
-         if ( ele.isNumber() )
+         if ( ele.eoo() )
          {
-            csItem->csUniqueID = (UINT32)ele.numberInt() ;
+            // it is ok, catalog hasn't been upgraded to new version.
+            csItem->csUniqueID = UTIL_INVALID_UNIQUEID ;
+         }
+         else if ( ele.isNumber() )
+         {
+            csItem->csUniqueID = ( utilCSUniqueID ) ele.numberInt() ;
          }
          else
          {
             csItem->csUniqueID = UTIL_INVALID_UNIQUEID ;
          }
 
-         // "Collection": [ { "Name": "dog1", "UniqueID": 2667174690817 } ,
-         //                 { "Name": "dog2", "UniqueID": 2667174690818 } ]
+         // eg:
+         // { "Collection": [ { "Name": "bar1", "UniqueID": 2667174690817 } ,
+         //                   { "Name": "bar2", "UniqueID": 2667174690818 } ] }
          ele = objList[0].getField( CAT_COLLECTION ) ;
          if ( Array == ele.type() )
          {

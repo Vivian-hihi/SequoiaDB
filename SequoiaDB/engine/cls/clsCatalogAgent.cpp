@@ -2590,13 +2590,20 @@ namespace engine
          clName = ele.str() ;
 
          ele = catalog.getField ( CAT_CL_UNIQUEID ) ;
-         if ( ele.type() != NumberLong )
+         if ( ele.eoo() )
+         {
+            // it is ok, catalog hasn't been upgraded to new version.
+         }
+         else if ( NumberLong == ele.type() )
+         {
+            clUniqueID = ( utilCLUniqueID ) ele.numberLong() ;
+         }
+         else
          {
             rc = SDB_SYS ;
             PD_LOG ( PDERROR, "collection id type[%d] error", ele.type() ) ;
             goto error ;
          }
-         clUniqueID = (UINT64)ele.numberLong() ;
 
          /// add cata info to cache map
          catSet = collectionSet ( clName.c_str(), clUniqueID ) ;
