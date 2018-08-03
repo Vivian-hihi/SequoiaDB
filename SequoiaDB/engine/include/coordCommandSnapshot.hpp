@@ -173,6 +173,7 @@ namespace engine
       public:
          _coordCMDSnapshotDataBaseIntr() ;
          virtual ~_coordCMDSnapshotDataBaseIntr() ;
+         virtual void _preSet( pmdEDUCB *cb, coordCtrlParam &ctrlParam ) ;
    } ;
    typedef _coordCMDSnapshotDataBaseIntr coordCMDSnapshotDataBaseIntr ;
 

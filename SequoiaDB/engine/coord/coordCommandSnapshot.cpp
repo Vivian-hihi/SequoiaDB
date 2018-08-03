@@ -228,6 +228,13 @@ namespace engine
    {
    }
 
+   void _coordCMDSnapshotDataBaseIntr::_preSet( pmdEDUCB *cb,
+                                                coordCtrlParam &ctrlParam )
+   {
+      // catalog / data has been selected in constructor of _coordCtrlParam
+      ctrlParam._role[ SDB_ROLE_COORD ] = 1 ;
+   }
+
    /*
       _coordCMDSnapshotSystem implement
    */
@@ -307,7 +314,7 @@ namespace engine
    void _coordCMDSnapshotHealthIntr::_preSet( pmdEDUCB *cb,
                                               coordCtrlParam &ctrlParam )
    {
-      // catalog / data has been set with default 1
+      // catalog / data has been selected in constructor of _coordCtrlParam
       ctrlParam._role[ SDB_ROLE_COORD ] = 1 ;
    }
 
