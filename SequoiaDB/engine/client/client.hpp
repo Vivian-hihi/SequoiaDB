@@ -1898,13 +1898,17 @@ namespace sdbclient
          return pNode->getNodeName () ;
       }
 
-      // get node id of the current node
+/** \fn INT32 getNodeID( INT32 &nodeID )
+    \brief Get node id of the current node.
+    \return The node id.
+*/
       INT32 getNodeID( INT32 &nodeID ) const
       {
          if ( !pNode )
             return SDB_NOT_CONNECTED ;
          return pNode->getNodeID( nodeID ) ;
       }
+      
 /** \fn INT32  stop ()
     \brief Stop the node.
     \retval SDB_OK Operation Success
@@ -2675,7 +2679,7 @@ namespace sdbclient
     \param [in] options Reserved argument
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
-      */
+*/
       INT32 renameCollection( const CHAR* oldName, const CHAR* newName,
                               const bson::BSONObj &options = _sdbStaticObject )
       {
@@ -2684,17 +2688,17 @@ namespace sdbclient
          return pCollectionSpace->renameCollection( oldName, newName, options ) ;
       }
 
-      /* \fn INT32 alterCollectionSpace ( const bson::BSONObj & options )
-          \brief Alter collection space.
-          \param [in] options The options of collection space to be changed, e.g. { "PageSize": 4096, "Domain": "mydomain" }.
+/* \fn INT32 alterCollectionSpace ( const bson::BSONObj & options )
+    \brief Alter collection space.
+    \param [in] options The options of collection space to be changed, e.g. { "PageSize": 4096, "Domain": "mydomain" }.
 
-              PageSize     : The page size of the collection space
-              LobPageSize  : The page size of LOB objects in the collection space
-              Domain       : The domain which the collection space belongs to
+        PageSize     : The page size of the collection space
+        LobPageSize  : The page size of LOB objects in the collection space
+        Domain       : The domain which the collection space belongs to
 
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
-       */
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+ */
       INT32 alterCollectionSpace ( const bson::BSONObj & options )
       {
          if ( NULL == pCollectionSpace )
@@ -2704,15 +2708,15 @@ namespace sdbclient
          return pCollectionSpace->alterCollectionSpace( options ) ;
       }
 
-      /* \fn INT32 setDomain ( const bson::BSONObj & options )
-          \brief Alter collection space to set domain.
-          \param [in] options The options of collection space to be changed.
+/* \fn INT32 setDomain ( const bson::BSONObj & options )
+    \brief Alter collection space to set domain.
+    \param [in] options The options of collection space to be changed.
 
-              Domain       : The domain which the collection space belongs to
+        Domain       : The domain which the collection space belongs to
 
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
-       */
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+ */
       INT32 setDomain ( const bson::BSONObj & options )
       {
          if ( NULL == pCollectionSpace )
@@ -2722,11 +2726,11 @@ namespace sdbclient
          return pCollectionSpace->setDomain( options ) ;
       }
 
-      /* \fn INT32 removeDomain ()
-          \brief Alter collection space to remove domain.
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
-       */
+/* \fn INT32 removeDomain ()
+    \brief Alter collection space to remove domain.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+ */
       INT32 removeDomain ()
       {
          if ( NULL == pCollectionSpace )
@@ -2736,11 +2740,11 @@ namespace sdbclient
          return pCollectionSpace->removeDomain() ;
       }
 
-      /* \fn INT32 enableCapped ()
-          \brief Alter collection space to enable capped.
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
-       */
+/* \fn INT32 enableCapped ()
+    \brief Alter collection space to enable capped.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+ */
       INT32 enableCapped ()
       {
          if ( NULL == pCollectionSpace )
@@ -2750,11 +2754,11 @@ namespace sdbclient
          return pCollectionSpace->enableCapped() ;
       }
 
-      /* \fn INT32 disableCapped ()
-          \brief Alter collection space to disable capped.
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
-       */
+/* \fn INT32 disableCapped ()
+    \brief Alter collection space to disable capped.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+ */
       INT32 disableCapped ()
       {
          if ( NULL == pCollectionSpace )
@@ -2764,17 +2768,17 @@ namespace sdbclient
          return pCollectionSpace->disableCapped() ;
       }
 
-      /* \fn INT32 setAttributes ( const bson::BSONObj & options )
-          \brief Alter collection space.
-          \param [in] options The options of collection space to be changed, e.g. { "PageSize": 4096, "Domain": "mydomain" }.
+/* \fn INT32 setAttributes ( const bson::BSONObj & options )
+    \brief Alter collection space.
+    \param [in] options The options of collection space to be changed, e.g. { "PageSize": 4096, "Domain": "mydomain" }.
 
-              PageSize     : The page size of the collection space
-              LobPageSize  : The page size of LOB objects in the collection space
-              Domain       : The domain which the collection space belongs to
+        PageSize     : The page size of the collection space
+        LobPageSize  : The page size of LOB objects in the collection space
+        Domain       : The domain which the collection space belongs to
 
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
-       */
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+ */
       INT32 setAttributes ( const bson::BSONObj & options )
       {
          if ( NULL == pCollectionSpace )
@@ -2987,13 +2991,6 @@ namespace sdbclient
          return pDomain->listCollectionSpacesInDomain ( cursor ) ;
       }
 
-/** \fn INT32 listCollectionSpacesInDomain ( _sdbCursor **cursor ) ;
-    \brief List all the collection spaces in current domain.
-    \param [in] cHandle The domain handle
-    \param [out] cursor The sdbCursor object of result
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
       INT32 listCollectionSpacesInDomain ( _sdbCursor **cursor )
       {
          if ( !pDomain )
@@ -3032,12 +3029,6 @@ namespace sdbclient
          return pDomain->listCollectionsInDomain ( cursor ) ;
       }
 
-/** \fn INT32 listReplicaGroupInDomain( _sdbCursor **cursor )
-    \brief List all the replicagroup in current domain.
-    \param [out] cursor The cursor of current query
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
       INT32 listReplicaGroupInDomain( _sdbCursor **cursor )
       {
          if ( !pDomain )
@@ -3534,6 +3525,10 @@ namespace sdbclient
          return pLob->getModificationTime() ;
       }
 
+/** \fn INT32 getPiecesInfoNum ()
+    \brief Get the count of lob's pieces.
+    \retval the count of lob's pieces
+*/
       INT32 getPiecesInfoNum()
       {
          if ( !pLob )
@@ -3541,6 +3536,10 @@ namespace sdbclient
          return pLob->getPiecesInfoNum() ;
       }
 
+/** \fn bson::BSONArray getPiecesInfo()
+    \brief Get lob's pieces.
+    \retval The array of lob's pieces.
+*/
       bson::BSONArray getPiecesInfo()
       {
          if ( !pLob )
@@ -4058,12 +4057,14 @@ namespace sdbclient
          pSDB->disconnect () ;
       }
 
-/** \fn  INT32 getSnapshot ( sdbCursor &cursor,
+/** \fn INT32 getSnapshot ( sdbCursor &cursor,
                           INT32 snapType,
-                          const bson::BSONObj &condition,
-                          const bson::BSONObj &selector,
-                          const bson::BSONObj &orderBy
-                        )
+                          const bson::BSONObj &condition = _sdbStaticObject,
+                          const bson::BSONObj &selector  = _sdbStaticObject,
+                          const bson::BSONObj &orderBy   = _sdbStaticObject,
+                          const bson::BSONObj &hint      = _sdbStaticObject,
+                          SINT64 numToSkip = 0,
+                          SINT64 numToRet = -1 )
     \brief Get the snapshots of specified type.
     \param [in] snapType The snapshot type as below
 

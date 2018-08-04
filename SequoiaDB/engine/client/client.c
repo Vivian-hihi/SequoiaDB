@@ -11353,9 +11353,9 @@ SDB_EXPORT INT32 sdbDisableCompression ( sdbCollectionHandle cHandle )
 }
 
 SDB_EXPORT INT32 sdbCLSetAttributes ( sdbCollectionHandle cHandle,
-                                      const bson * args )
+                                               const bson *options )
 {
-   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_SET_ATTR, args, FALSE ) ;
+   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_SET_ATTR, options, FALSE ) ;
 }
 
 static INT32 _setDCName ( sdbDCHandle cHandle,

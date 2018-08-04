@@ -360,12 +360,15 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
                                   bson *orderBy,
                                   sdbCursorHandle *handle ) ;
 
-/** \fn INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
-                               INT32 snapType,
-                               bson *condition,
-                               bson *selector,
-                               bson *orderBy,
-                               sdbCursorHandle *handle )
+/** \fn INT32 sdbGetSnapshot1 ( sdbConnectionHandle cHandle,
+                                  INT32 snapType,
+                                  bson *condition,
+                                  bson *selector,
+                                  bson *orderBy,
+                                  bson *hint,
+                                  SINT64 numToskip,
+                                  SINT64 numToRet,
+                                  sdbCursorHandle *handle )
     \brief Get the snapshot
     \param [in] cHandle The connection handle
     \param [in] snapType The snapshot type as below
@@ -435,8 +438,10 @@ SDB_EXPORT INT32 sdbResetSnapshot ( sdbConnectionHandle cHandle,
 
 /** \fn INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
                               UINT32 traceBufferSize,
-                              CHAR *component,
-                              CHAR *breakpoint )
+                              CHAR * component,
+                              CHAR * breakPoint ,
+                              UINT32 *tids,
+                              UINT32 nTids )
     \brief Start trace with given trace buffer size and component list
     \param [in] cHandle The connection handle
     \param [in] traceBufferSize The size for trace buffer on bytes
@@ -468,6 +473,8 @@ SDB_EXPORT INT32 sdbResetSnapshot ( sdbConnectionHandle cHandle,
         spt    : Scripting
         util   : Utilities
     \param [in] breakpoint The functions need to break, separated by comma (,)
+	\param [in] tids The array of target threads.
+	\param [in] nTids The length of the array of target threads.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -2458,7 +2465,8 @@ SDB_EXPORT INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
                                      bson *condition ) ;
 
 /** \fn INT32 sdbForceSession( sdbConnectionHandle cHandle,
-                               SINT64 sessionID )
+                               SINT64 sessionID,
+                               bson *options )
     \brief interrupte the session
     \param [in] cHandle The connection handle
     \param [in] sessionID The id of the session which we want to inerrupt
@@ -2778,7 +2786,7 @@ SDB_EXPORT INT32 sdbEnableCompression ( sdbCollectionHandle cHandle,
 SDB_EXPORT INT32 sdbDisableCompression ( sdbCollectionHandle cHandle ) ;
 
 /** \fn INT32 sdbCLSetAttributes ( sdbCollectionHandle cHandle,
-                                   bson *options  )
+                                   const bson *options  )
     \brief Alter the specified collection
     \param [in] cHandle The collection handle
     \param [in] options The options are as following:
@@ -2795,7 +2803,7 @@ SDB_EXPORT INT32 sdbDisableCompression ( sdbCollectionHandle cHandle ) ;
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbCLSetAttributes ( sdbCollectionHandle cHandle,
-                                      const bson * args ) ;
+                                               const bson *options ) ;
 
 /* \fn INT32 sdbPop( sdbCollectionHandle cHandle, bson *options )
     \brief pop records from capped collection
@@ -3096,10 +3104,11 @@ SDB_EXPORT INT32 sdbRenameCollectionSpace( sdbConnectionHandle cHandle,
                                            bson *options ) ;
 
 /** \fn void sdbSetConnectionInterruptFunc( sdbConnectionHandle cHandle,
- *                                          socketInterruptFunc func )
- *  \param [in] cHandle The handle of connection.
- *  \param [in] func The function that check the app is interrupt or not
- *  \retval void
+                                            socketInterruptFunc func )
+    \brief Set the callback function for connection interruption.
+    \param [in] cHandle The handle of connection.
+    \param [in] func The function that check the app is interrupt or not
+    \retval void
  */
 SDB_EXPORT void sdbSetConnectionInterruptFunc(
                                           sdbConnectionHandle cHandle,
