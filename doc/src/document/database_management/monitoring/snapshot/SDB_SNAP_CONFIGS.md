@@ -12,12 +12,16 @@ SDB_SNAP_CONFIGS
 
 字段信息详见[数据库配置](database_management/runtime_configuration.md)一节。
 
-##快照参数描述##
+##快照参数##
 
 | 参数名 | 参数类型 | 描述 | 是否必填 |
 | ------ | -------- | ---- | -------- |
 | mode   |	String  | 指定返回配置的模式。在 Run 模式下，显示当前运行时配置信息，在 Local 模式下，显示配置文件中配置信息。如 { "mode": "local" }。默认为 Run。 | 否 |
 | expand |	Bool/String  | 指定返回配置的详细程度。为 false 时仅显示配置文件中对应配置的情况，为 true 时显示所有配置。如 { "expand": false }。默认为 true。| 否 |
+
+> **Note:**
+
+>在查询快照时指定快照参数，请参考 [SdbSnapshotOption](reference/Sequoiadb_command/SpecialObjects/SdbSnapshotOption.md)。
 
 ##示例##
 

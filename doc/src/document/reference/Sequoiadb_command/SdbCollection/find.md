@@ -4,8 +4,6 @@ find - 查询记录。
 
 ##语法##
 
-**db.collectionspace.collection.find([SdbQueryOption])**
-
 **db.collectionspace.collection.find([cond],[sel])**
 
 **db.collectionspace.collection.find([cond],[sel]).hint([hint])**
@@ -13,6 +11,8 @@ find - 查询记录。
 **db.collectionspace.collection.find([cond],[sel]).skip([skipNum]).limit([retNum]).sort([sort])**
 
 **db.collectionspace.collection.find([cond],[sel])[.hint([hint])][.skip([skipNum])][.limit([retNum])][.sort([sort])]**
+
+**db.collectionspace.collection.find([SdbQueryOption])**
 
 ##类别##
 
@@ -23,10 +23,6 @@ Collection
 选择集合的记录，并通过游标（cursor）将记录返回。在 SequoiaDB 中，游标是一个指针，指向一个查询结果集，客户端可以通过游标遍历检索结果。
 
 ##参数##
-
-* `SdbQueryOption` ( *Object*， *选填* )
-
-	统一指定 cond/sel/sort/hint/skip/limit/update/remove 参数。使用方法可参考[SdbQueryOption](reference/Sequoiadb_command/SpecialObjects/SdbQueryOption.md)。
 
 * `cond` ( *Object*， *选填* )
 
@@ -60,6 +56,10 @@ Collection
 	* 不指定`sort`：表示不对结果集做排序；
 	* 字段名的值为1：表示按该字段名升序排序；
 	* 字段名的值为-1：表示按该字段名降序排序。
+
+* `SdbQueryOption` ( *Object*， *选填* )
+
+	使用一个对象来指定记录查询参数。使用方法可参考[SdbQueryOption](reference/Sequoiadb_command/SpecialObjects/SdbQueryOption.md)。
 
 **注意：**
 

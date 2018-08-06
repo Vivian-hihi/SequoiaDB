@@ -15,7 +15,7 @@
 | cond 				| Json 对象 | 选择条件，只返回 cond 字段指定的节点或分区组的快照信息，为 null 时，返回整个集群的快照信息。 	| 否 |
 | sel 				| Json 对象 | 选择返回字段名。为 null 时，返回所有的字段名。 	| 否 |
 | sort 				| Json 对象 | 对返回的记录按选定的字段排序。1为升序；-1为降序。 | 否 |
-| SdbSnapshotOption	| Json 对象 | 统一指定 cond/sel/sort/skip/limit/options 参数，使用方法请参考 [SdbSnapshotOption](reference/Sequoiadb_command/SpecialObjects/SdbSnapshotOption.md) | 否 |
+| SdbSnapshotOption	| Json 对象 | 使用一个对象来指定快照查询参数，使用方法请参考 [SdbSnapshotOption](reference/Sequoiadb_command/SpecialObjects/SdbSnapshotOption.md) | 否 |
 
 > **Note:**
 

@@ -906,8 +906,8 @@ namespace SequoiaDB
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
          *  \param orderBy The ordered rule or null
-         *  \param hint The options provided for specific snapshot type or null
-                      Format:{ '$Options': { <options> } }
+         *  \param hint The options provided for specific snapshot type or null,
+                      Format:{ '$Options': { \<options\> } }
          *  \return A DBCursor of all the fitted objects or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
@@ -942,8 +942,8 @@ namespace SequoiaDB
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
          *  \param orderBy The ordered rule or null
-         *  \param hint The options provided for specific snapshot type or null
-                      Format:{ '$Options': { <options> } }
+         *  \param hint The options provided for specific snapshot type or null,
+                      Format:{ '$Options': { \<options\> } }
          *  \param skipRows
          *            Skip the first numToSkip documents, never skip if this parameter is 0
          *  \param returnRows

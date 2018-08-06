@@ -1,30 +1,89 @@
-统一指定 cond/sel/sort/skip/limit/options 参数。
+指定快照查询参数。
 
+包括指定选择条件、返回字段名、排序情况、快照参数以及对返回结果集的处理等参数。
 
 ##语法##
 
-***SdbSnapshotOption.cond([cond]).sel([sel]).sort([sort]).options([options]).skip([skipNum]).limit([retNum])***
+***SdbSnapshotOption[.cond(\<cond\>)][.sel(\<sel\>)][.sort(\<sort\>)][.options(\<options\>)][.skip(\<skipNum\>)][.limit(\<retNum\>)]***
 
-##参数描述##
+***SdbSnapshotOption[.cond(\<cond\>)][.skip(\<skipNum\>)][.limit(\<retNum\>)]***
+
+***SdbSnapshotOption[.cond(\<cond\>)].options([options])***
+
+##方法##
+
+###cond###
+
+ ( *可选方法* )
+
+选择条件。
 
 | 参数名 			| 参数类型 	| 描述 		| 是否必填 |
 | ------ 			| ------ 	| ------ 	| ------   |
-| cond 				| Json 对象 | 选择条件，只返回 cond 字段指定的节点或分区组的快照信息，为 null 时，返回整个集群的快照信息。 	| 否 |
-| sel 				| Json 对象 | 选择返回字段名。为 null 时，返回所有的字段名。 	| 否 |
-| sort 				| Json 对象 | 对返回的记录按选定的字段排序。1为升序；-1为降序。 | 否 |
-| options|	Json 对象 | 指定快照参数，因不同快照类型而异，在对应[快照类型](database_management/monitoring/snapshot/snapshot.md)查看选项及示例。目前拥有快照参数的有[配置快照](database_management/monitoring/snapshot/SDB_SNAP_CONFIGS.md)。| 否 |
-| skipNum | int | 自定义结果集从哪条记录返回。 | 否 |
-| retNum  |	int | 自定义返回结果集的记录条数。 | 否 |
+|cond |	Json 对象 | 选择条件，只返回 cond 字段指定的节点或分区组的快照信息，为 null 时，返回整个集群的快照信息。 | 是 |
 
+###sel###
 
+ ( *可选方法* )
+
+查询返回记录的字段名。
+
+| 参数名 			| 参数类型 	| 描述 		| 是否必填 |
+| ------ 			| ------ 	| ------ 	| ------   |
+|sel     |Json 对象 | 选择返回字段名。为 null 时，返回所有的字段名。 | 是 |
 
 > **Note：**
 
 >* sel 参数是一个json结构，如：{字段名:字段值}，字段值一般指定为空串。sel中指定的字段名在记录中存在，设置字段值不生效；不存在则返回sel中指定的字段名和字段值。
 >* 记录中字段值类型为数组的，我们可以在sel中指定该字段名，用"."操作符加上双引号("")来引用数组元素。
-> skip() 方法的定义格式包含 skipNum 参数，它是 int 类型。如果不设定 num 的内容或者设定 num 的值为0，相当于返回所有的结果集；如果想从结果集的第3条记录开始返回，可是设置 num 的值等于2。
-> 2. limit() 方法的定义格式包含 retNum 参数，它是 int 类型。如果不设定 num 的内容，相当于返回所有的结果集记录。如果想返回结果集的前5条记录，可是设置 num 的值为5。
 
+###sort###
+
+ ( *可选方法* )
+
+查询返回记录的字段名。
+
+| 参数名 			| 参数类型 	| 描述 		| 是否必填 |
+| ------ 			| ------ 	| ------ 	| ------   |
+|sort |	Json 对象 | 指定结果集按指定字段名排序的情况。字段名的值为1或者-1，如：{"name":1,"age":-1}。1代表升序；-1代表降序。 如果不设定 sort 则表示不对结果集做排序。 | 是 |
+
+###options###
+
+ ( *可选方法* )
+
+查询返回记录的字段名。
+
+| 参数名 			| 参数类型 	| 描述 		| 是否必填 |
+| ------ 			| ------ 	| ------ 	| ------   |
+| options   |	Json 对象 | 指定快照参数，因不同快照类型而异，在对应[快照类型](database_management/monitoring/snapshot/snapshot.md)查看选项及示例。目前拥有快照参数的有[配置快照](database_management/monitoring/snapshot/SDB_SNAP_CONFIGS.md)。  | 是 |
+
+###skip###
+
+ ( *可选方法* )
+
+查询返回记录的字段名。
+
+| 参数名 			| 参数类型 	| 描述 		| 是否必填 |
+| ------ 			| ------ 	| ------ 	| ------   |
+| skipNum | int | 自定义从结果集哪条记录开始返回。默认值为0，表示从第一条记录开始返回。 | 是 |
+
+> **Note：**
+
+>如果不设定 skipNum 的内容或者设定 skipNum 的值为0，相当于返回所有的结果集；如果想从结果集的第3条记录开始返回，可是设置 skipNum 的值等于2。
+
+###limit###
+
+ ( *可选方法* )
+
+查询返回记录的字段名。
+
+| 参数名 			| 参数类型 	| 描述 		| 是否必填 |
+| ------ 			| ------ 	| ------ 	| ------   |
+| retNum | int | 自定义返回结果集的记录条数。默认值为-1，表示返回从`skipNum`位置开始到结果集结束位置的所有记录。 | 是 |
+
+> **Note：**
+
+>如果不设定 retNum 的内容，相当于返回所有的结果集记录。如果想返回结果集的前5条记录，可是设置 retNum 的值为5。
 
 ##返回值##
 
@@ -115,7 +174,7 @@
 	}
 	```
 
-* 查看数据组 db1 中数据节点 20000 上配置文件中的配置信息
+* 查看数据组 db1 中数据节点 20000 上配置文件中的配置信息并指定快照参数。
 
 	```lang-javascript
 	> var option = new SdbSnapshotOption().cond( { GroupName:'db1', SvcName:'20000' } ).options( { "mode": "local", "expand": false } )
