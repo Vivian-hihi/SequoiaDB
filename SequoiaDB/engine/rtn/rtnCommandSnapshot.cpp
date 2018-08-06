@@ -1037,13 +1037,13 @@ namespace engine
                return hintObj.getObjectField( elem.fieldName() ) ;
             }
          }
-
          return BSONObj() ;
       }
       catch( std::exception &e )
       {
          PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
       }
+      return BSONObj() ;
    }
 
    const CHAR* _rtnSnapshotConfigs::getIntrCMDName()
