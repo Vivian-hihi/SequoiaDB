@@ -129,13 +129,7 @@ namespace seadapter
       OSS_INLINE INT32 _findRecWithLID( INT64 logicalID, BOOLEAN &found ) ;
 
    private:
-      string                  _origCLFullName ;
-      string                  _cappedCLFullName ;
       INT32                   _origCLVersion ;
-      string                  _origIdxName ;
-      string                  _indexName ;
-      string                  _typeName ;
-      BSONObj                 _indexDef ;
       BSONObj                 _queryCond ;
       BSONObj                 _selector ; // Should contain _id and index fields.
       seIndexMeta             _meta ;
@@ -164,9 +158,10 @@ namespace seadapter
       std::ostringstream lidStr ;
       lidStr << logicalID ;
 
-      rc = _esClt->documentExist( _indexName.c_str(), _typeName.c_str(),
-                                  SDB_SEADPT_FIELD_NAME_ID, lidStr.str().c_str(),
-                                  found ) ;
+      rc = _esClt->documentExist( _meta.getEsIdxName().c_str(),
+                                  _meta.getEsTypeName().c_str(),
+                                  SDB_SEADPT_FIELD_NAME_ID,
+                                  lidStr.str().c_str(), found ) ;
       PD_RC_CHECK( rc, PDERROR, "Document existence check failed[ %d ]", rc ) ;
    done:
       return rc ;

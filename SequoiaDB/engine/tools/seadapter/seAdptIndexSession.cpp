@@ -93,14 +93,7 @@ namespace seadapter
                   && !idxMeta->getIdxDef().isEmpty(),
                   "Index definition is invalid" ) ;
 
-      // TODO: YSD temporary duplication. Need to clean.
-      _origCLFullName = idxMeta->getOrigCLName() ;
-      _cappedCLFullName = idxMeta->getCappedCLName() ;
       _origCLVersion = -1 ;
-      _origIdxName = idxMeta->getOrigIdxName();
-      _indexName = idxMeta->getEsIdxName() ;
-      _typeName = idxMeta->getEsTypeName() ;
-      _indexDef = idxMeta->getIdxDef().copy() ;
       _meta = *idxMeta ;
       _esClt = NULL ;
       _status = SEADPT_SESSION_STAT_CONSULT ;
@@ -199,7 +192,7 @@ namespace seadapter
                   PD_LOG( PDERROR, "The expected logical id is [ %lld ], but "
                           "the capped collection [ %s ] is empty. Begin to "
                           "start all over again", _expectLID,
-                          _cappedCLFullName.c_str() ) ;
+                          _meta.getCappedCLName().c_str() ) ;
                   rc = _startOver() ;
                   PD_RC_CHECK( rc, PDERROR, "Restart the index work "
                                "failed[ %d ]", rc ) ;
@@ -219,7 +212,8 @@ namespace seadapter
                   PD_LOG( PDERROR, "The expected logical id is [ %lld ], but "
                           "the actual first logical id in capped collection "
                           "[ %s ] is [ %lld ]. Begin to start all over again",
-                          _expectLID, _cappedCLFullName.c_str(), firstLID ) ;
+                          _expectLID, _meta.getCappedCLName().c_str(),
+                          firstLID ) ;
                   rc = _startOver() ;
                   PD_RC_CHECK( rc, PDERROR, "Restart the index work "
                                "failed[ %d ]", rc ) ;
@@ -353,12 +347,12 @@ namespace seadapter
          case SEADPT_SESSION_STAT_BEGIN:
             {
                INT32 clVersion = -1 ;
-               rc = sdbGetSeAdapterCB()->syncUpdateCLVersion( _origCLFullName.c_str(),
+               rc = sdbGetSeAdapterCB()->syncUpdateCLVersion( _meta.getOrigCLName().c_str(),
                                                               OSS_ONE_SEC, eduCB(),
                                                               clVersion ) ;
                PD_RC_CHECK( rc, PDERROR, "Update collection version failed" ) ;
                PD_LOG( PDDEBUG, "Change cl[ %s ] version from [ %d ] to [ %d ]"
-                       "accorrding to catalog", _origCLFullName.c_str(),
+                       "accorrding to catalog", _meta.getOrigCLName().c_str(),
                        _origCLVersion, clVersion ) ;
                _origCLVersion = clVersion ;
                _switchStatus( SEADPT_SESSION_STAT_QUERY_NORMAL_TBL ) ;
@@ -370,20 +364,20 @@ namespace seadapter
             if ( !_isQueryBusy() )
             {
                INT32 clVersion = -1 ;
-               rc = sdbGetSeAdapterCB()->syncUpdateCLVersion( _origCLFullName.c_str(),
+               rc = sdbGetSeAdapterCB()->syncUpdateCLVersion( _meta.getOrigCLName().c_str(),
                                                               OSS_ONE_SEC, eduCB(),
                                                               clVersion ) ;
                PD_RC_CHECK( rc, PDERROR, "Update collection version "
                             "failed[ %d ]", rc ) ;
                PD_LOG( PDDEBUG, "Change cl[ %s ] version from [ %d ] to [ %d ]"
-                       "accorrding to catalog", _origCLFullName.c_str(),
+                       "accorrding to catalog", _meta.getOrigCLName().c_str(),
                        _origCLVersion, clVersion ) ;
                _origCLVersion = clVersion ;
 
                rc = _queryOrigCollection() ;
                PD_RC_CHECK( rc, PDERROR,
                             "Query original collection[ %s ] failed[ %d ]",
-                            _origCLFullName.c_str(), rc ) ;
+                            _meta.getOrigCLName().c_str(), rc ) ;
                _setQueryBusyFlag( TRUE ) ;
             }
             break ;
@@ -400,7 +394,7 @@ namespace seadapter
                   rc = _queryCappedCollection( condition ) ;
                   PD_RC_CHECK( rc, PDERROR,
                                "Query capped collection[ %s ] failed[ %d ]",
-                               _cappedCLFullName.c_str(), rc ) ;
+                               _meta.getCappedCLName().c_str(), rc ) ;
                   _setQueryBusyFlag( TRUE ) ;
                }
                catch ( std::exception &e )
@@ -408,7 +402,7 @@ namespace seadapter
                   rc = SDB_SYS ;
                   PD_LOG( PDERROR, "Unexpected exception occurred when query "
                           "capped collection[ %s ], error: %s",
-                          _cappedCLFullName.c_str(), e.what() ) ;
+                          _meta.getCappedCLName().c_str(), e.what() ) ;
                   goto error ;
                }
             }
@@ -435,7 +429,7 @@ namespace seadapter
       {
          BSONObjBuilder queryBuilder ;
          BSONObjBuilder selectorBuilder ;
-         BSONObjIterator idxItr( _indexDef ) ;
+         BSONObjIterator idxItr( _meta.getIdxDef() ) ;
          BSONArrayBuilder queryObj( queryBuilder.subarrayStart( SEADPT_OPERATOR_STR_OR ) ) ;
          BSONObj existTmp = BSON( SEADPT_OPERATOR_STR_EXIST << 1 ) ;
          BSONObj includeObj = BSON( SEADPT_OPERATOR_STR_INCLUDE << 1 ) ;
@@ -468,9 +462,9 @@ namespace seadapter
          PD_LOG( PDEVENT, "New index task starts: original collection[ %s ], "
                  "index[ %s ], capped collection[ %s ], search engine "
                  "index[ %s ], search engine type[ %s ]",
-                 _origCLFullName.c_str(), _origIdxName.c_str(),
-                 _cappedCLFullName.c_str(), _indexName.c_str(),
-                 _typeName.c_str() ) ;
+                 _meta.getOrigCLName().c_str(), _meta.getOrigIdxName().c_str(),
+                 _meta.getCappedCLName().c_str(), _meta.getEsIdxName().c_str(),
+                 _meta.getEsTypeName().c_str() ) ;
       }
       catch ( std::exception &e )
       {
@@ -546,7 +540,7 @@ namespace seadapter
       INT32 bufSize = 0 ;
 
       rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize,
-                              _origCLFullName.c_str(),
+                              _meta.getOrigCLName().c_str(),
                               0, 0, 0, -1, &_queryCond, &_selector,
                               NULL, NULL, _pEDUCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Build query message failed[ %d ]", rc ) ;
@@ -557,7 +551,7 @@ namespace seadapter
                    rc ) ;
 
       PD_LOG( PDDEBUG, "Send query on normal collection[ %s ] to data node "
-              "successfully", _origCLFullName.c_str() ) ;
+              "successfully", _meta.getOrigCLName().c_str() ) ;
 
    done:
       return rc ;
@@ -577,7 +571,8 @@ namespace seadapter
          // In the capped collection, the field name of logical id is '_id', and
          // the original '_id' is named '_rid'.
          selector = BSON( SDB_SEADPT_FIELD_NAME_ID << "" ) ;
-         rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize, _cappedCLFullName.c_str(),
+         rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize,
+                                _meta.getCappedCLName().c_str(),
                                 FLG_QUERY_WITH_RETURNDATA, 0, 0, 1, NULL,
                                 &selector, NULL, NULL, _pEDUCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Build query message failed[ %d ]", rc ) ;
@@ -610,7 +605,8 @@ namespace seadapter
       try
       {
          BSONObjBuilder builder ;
-         builder.append( FIELD_NAME_COLLECTION, _cappedCLFullName.c_str() ) ;
+         builder.append( FIELD_NAME_COLLECTION,
+                         _meta.getCappedCLName().c_str() ) ;
          query = builder.obj() ;
       }
       catch ( exception &e )
@@ -630,7 +626,7 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Send truncate message to data node "
                    "failed[ %d ]", rc ) ;
       PD_LOG( PDDEBUG, "Send truncate command on capped collection[ %s ] to "
-              "data node successfully", _cappedCLFullName.c_str() ) ;
+              "data node successfully", _meta.getCappedCLName().c_str() ) ;
 
    done:
       return rc ;
@@ -647,7 +643,7 @@ namespace seadapter
       PD_LOG( PDDEBUG, "Query condition: %s", condition.toString().c_str() ) ;
 
       rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize,
-                             _cappedCLFullName.c_str(),
+                             _meta.getCappedCLName().c_str(),
                              0, 0, 0, -1,
                              ( condition.isEmpty() ) ? NULL : &condition,
                              NULL, NULL, NULL, _pEDUCB ) ;
@@ -657,7 +653,7 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Send query message to data node failed[ %d ]",
                    rc ) ;
       PD_LOG( PDDEBUG, "Send query on capped collection[ %s ] to data node "
-              "successfully", _cappedCLFullName.c_str() ) ;
+              "successfully", _meta.getCappedCLName().c_str() ) ;
    done:
       return rc ;
    error:
@@ -675,7 +671,8 @@ namespace seadapter
 
       try
       {
-         builder.append( FIELD_NAME_COLLECTION, _cappedCLFullName.c_str() ) ;
+         builder.append( FIELD_NAME_COLLECTION,
+                         _meta.getCappedCLName().c_str() ) ;
          builder.appendIntOrLL( FIELD_NAME_LOGICAL_ID, recLID ) ;
          builder.appendIntOrLL( FIELD_NAME_DIRECTION, 1 ) ;
 
@@ -892,10 +889,10 @@ namespace seadapter
             rc = _markProgress( emptyObj ) ;
             PD_RC_CHECK( rc, PDERROR, "Write end mark[_lid: %lld] for normal "
                          "collection[ %s ] on search engine failed[ %d ]",
-                         _expectLID, _origCLFullName.c_str(), rc ) ;
+                         _expectLID, _meta.getOrigCLName().c_str(), rc ) ;
             PD_LOG( PDEVENT, "Write end mark[_lid: %lld] for normal "
                     "collection[ %s ] on search engine successfully",
-                    _expectLID, _origCLFullName.c_str() ) ;
+                    _expectLID, _meta.getOrigCLName().c_str() ) ;
             _switchStatus( SEADPT_SESSION_STAT_QUERY_CAP_TBL ) ;
             _setQueryBusyFlag( FALSE ) ;
             goto done ;
@@ -937,7 +934,7 @@ namespace seadapter
             }
 
             {
-               utilESActionIndex item( _indexName.c_str(), _typeName.c_str() ) ;
+               utilESActionIndex item( _meta.getEsIdxName().c_str(), _meta.getEsTypeName().c_str() ) ;
                rc = item.setID( finalID ) ;
                PD_RC_CHECK( rc, PDERROR, "Set _id for action failed[ %d ]",
                             rc ) ;
@@ -1017,7 +1014,7 @@ namespace seadapter
                // Not able to find the record we expected in the capped collection.
                rc = SDB_SYS ;
                PD_LOG( PDERROR, "Can not find expected record in capped "
-                       "collection[ %s ]", _cappedCLFullName.c_str() ) ;
+                       "collection[ %s ]", _meta.getCappedCLName().c_str() ) ;
                goto error ;
             }
          }
@@ -1026,7 +1023,7 @@ namespace seadapter
          _setQueryBusyFlag( FALSE ) ;
          PD_LOG( PDDEBUG, "All records in capped collection[ %s ] have been "
                  "processed. Ready to start a new query on it",
-                 _cappedCLFullName.c_str() ) ;
+                 _meta.getCappedCLName().c_str() ) ;
          goto done ;
       }
       else if ( SDB_OK != rc )
@@ -1054,7 +1051,8 @@ namespace seadapter
                {
                   rc = SDB_SYS ;
                   PD_LOG( PDERROR, "The first record in capped collection[ %s ]"
-                          " is not as we expected", _cappedCLFullName.c_str() ) ;
+                          " is not as we expected",
+                          _meta.getCappedCLName().c_str() ) ;
                   goto error ;
                }
                _emptyResultSet = FALSE ;
@@ -1064,7 +1062,8 @@ namespace seadapter
                if ( docObjs.size() == 1 )
                {
                   rc = _sendGetmoreReq( contextID, msg->requestID ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Send get more request failed[ %d ]", rc ) ;
+                  PD_RC_CHECK( rc, PDERROR,
+                               "Send get more request failed[ %d ]", rc ) ;
                   goto done ;
                }
             }
@@ -1132,8 +1131,8 @@ namespace seadapter
                case RTN_EXT_INSERT:
                case RTN_EXT_UPDATE:
                   {
-                     utilESActionIndex item( _indexName.c_str(),
-                                             _typeName.c_str() ) ;
+                     utilESActionIndex item( _meta.getEsIdxName().c_str(),
+                                             _meta.getEsTypeName().c_str() ) ;
                      rc = item.setID( finalID ) ;
                      PD_RC_CHECK( rc, PDERROR, "Set _id for action "
                                   "failed[ %d ]", rc ) ;
@@ -1149,8 +1148,8 @@ namespace seadapter
                   break ;
                case RTN_EXT_DELETE:
                   {
-                     utilESActionDelete item( _indexName.c_str(),
-                                              _typeName.c_str() ) ;
+                     utilESActionDelete item( _meta.getEsIdxName().c_str(),
+                                              _meta.getEsTypeName().c_str() ) ;
                      rc = item.setID( finalID ) ;
                      PD_RC_CHECK( rc, PDERROR, "Set _id for action "
                                   "failed[ %d ]", rc ) ;
@@ -1231,7 +1230,7 @@ namespace seadapter
          rc = reply->flags ;
          PD_LOG( PDERROR, "Get more data from capped collection[ %s ] failed"
                  "[ %d ]. Try to start from the beinning...",
-                 _cappedCLFullName.c_str(), rc ) ;
+                 _meta.getCappedCLName().c_str(), rc ) ;
          // Change the status back to begin to start over.
          _switchStatus( SEADPT_SESSION_STAT_BEGIN ) ;
          goto error ;
@@ -1253,7 +1252,7 @@ namespace seadapter
 
       try
       {
-         rc = _esClt->indexDocument( _indexName.c_str(), _typeName.c_str(),
+         rc = _esClt->indexDocument( _meta.getEsIdxName().c_str(), _meta.getEsTypeName().c_str(),
                                      SDB_SEADPT_COMMIT_ID,
                                      infoObj.toString().c_str() ) ;
          PD_RC_CHECK( rc, PDERROR, "Index document failed[ %d ]", rc ) ;
@@ -1295,8 +1294,8 @@ namespace seadapter
          }
       }
 
-      rc = _esClt->documentExist( _indexName.c_str(),
-                                  _typeName.c_str(),
+      rc = _esClt->documentExist( _meta.getEsIdxName().c_str(),
+                                  _meta.getEsTypeName().c_str(),
                                   SDB_SEADPT_COMMIT_ID,
                                   found ) ;
       PD_RC_CHECK( rc, PDERROR, "Check document existense failed[ %d ]", rc ) ;
@@ -1355,6 +1354,7 @@ namespace seadapter
       BSONObj resultObj ;
       BSONElement lidEle ;
       BSONObj condition ;
+      const CHAR *esIdxName = _meta.getEsIdxName().c_str() ;
 
       if ( !_esClt )
       {
@@ -1368,14 +1368,14 @@ namespace seadapter
       }
 
       // 1. Check index existence.
-      rc = _esClt->indexExist( _indexName.c_str(), found ) ;
+      rc = _esClt->indexExist( esIdxName, found ) ;
       PD_RC_CHECK( rc, PDERROR, "Check index[ %s ] existence on search engine "
-                   "failed[ %d ]", _indexName.c_str(), rc ) ;
+                   "failed[ %d ]", esIdxName, rc ) ;
       if ( !found )
       {
          PD_LOG( PDEVENT, "Target index[ %s ] dose not exist on search engine. "
                  "Start all over again and the index will be re-created",
-                 _indexName.c_str() ) ;
+                 esIdxName ) ;
          rc = _truncateSrcCappedData() ;
          PD_RC_CHECK( rc, PDERROR, "Clean source capped data failed[ %d ]",
                       rc ) ;
@@ -1390,13 +1390,13 @@ namespace seadapter
 
       try
       {
-         rc = _esClt->getDocument( _indexName.c_str(), _typeName.c_str(),
+         rc = _esClt->getDocument( esIdxName, _meta.getEsTypeName().c_str(),
                                    SDB_SEADPT_COMMIT_ID, resultObj, FALSE ) ;
          if ( SDB_INVALIDARG == rc )
          {
             PD_LOG( PDEVENT, "Commit mark for index[ %s ] "
                     "dose not exist. Index will be dropped and recreated",
-                    _indexName.c_str() ) ;
+                    esIdxName ) ;
 
             rc = _truncateSrcCappedData() ;
             PD_RC_CHECK( rc, PDERROR, "Clean source capped data failed[ %d ]",
@@ -1469,7 +1469,7 @@ namespace seadapter
          // So let's quit.
          PD_LOG( PDEVENT, "Collection[ %s ] can not be found on catalog. It "
                  "may have been dropped. Task ready to exit.",
-                 _origCLFullName.c_str() ) ;
+                 _meta.getOrigCLName().c_str() ) ;
          rc = SDB_DMS_NOTEXIST ;
          goto error ; ;
       }
@@ -1498,7 +1498,7 @@ namespace seadapter
 
       rc = _dropIndex() ;
       PD_RC_CHECK( rc, PDERROR, "Drop index[ %s ] on search engine "
-                   "failed[ %d ]", _indexName.c_str(), rc ) ;
+                   "failed[ %d ]", _meta.getEsIdxName().c_str(), rc ) ;
 
       _switchStatus( SEADPT_SESSION_STAT_CONSULT ) ;
       _setQueryBusyFlag( FALSE ) ;
@@ -1548,7 +1548,7 @@ namespace seadapter
          {
             PD_LOG( PDDEBUG, "Bulk operation data: %s",
                     _bulkBuilder.getData() ) ;
-            rc = _esClt->bulk( _indexName.c_str(), _typeName.c_str(),
+            rc = _esClt->bulk( _meta.getEsIdxName().c_str(), _meta.getEsTypeName().c_str(),
                                _bulkBuilder.getData() ) ;
             PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]" ) ;
             _bulkBuilder.reset() ;
@@ -1580,7 +1580,7 @@ namespace seadapter
       {
          PD_LOG( PDDEBUG, "Bulk operation data: %s",
                  _bulkBuilder.getData() ) ;
-         rc = _esClt->bulk( _indexName.c_str(), _typeName.c_str(),
+         rc = _esClt->bulk( _meta.getEsIdxName().c_str(), _meta.getEsTypeName().c_str(),
                             _bulkBuilder.getData() ) ;
          PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]", rc ) ;
       }
@@ -1615,25 +1615,26 @@ namespace seadapter
    {
       INT32 rc = SDB_OK ;
       BOOLEAN found = FALSE ;
+      const CHAR *esIdxName = _meta.getEsIdxName().c_str() ;
 
-      rc = _esClt->indexExist( _indexName.c_str(), found ) ;
+      rc = _esClt->indexExist( esIdxName, found ) ;
       PD_RC_CHECK( rc, PDERROR, "Check index[ %s ] existence on search engine "
-                   "failed[ %d ]", _indexName.c_str(), rc ) ;
+                   "failed[ %d ]", esIdxName, rc ) ;
       if ( found )
       {
          if ( force )
          {
-            rc = _esClt->dropIndex( _indexName.c_str() ) ;
+            rc = _esClt->dropIndex( esIdxName ) ;
             PD_RC_CHECK( rc, PDERROR, "Drop index[ %s ] on search engine "
-                            "failed[ %d ]", _indexName.c_str(), rc ) ;
+                            "failed[ %d ]", esIdxName, rc ) ;
             PD_LOG( PDEVENT, "Index[ %s ] dropped successfully",
-                    _indexName.c_str() ) ;
+                    esIdxName ) ;
          }
          else
          {
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "Duplicated index[ %s ] exists on search engine, "
-                    "rc[ %d ]", _indexName.c_str(), rc ) ;
+                    "rc[ %d ]", esIdxName, rc ) ;
             goto error ;
          }
       }
@@ -1641,9 +1642,9 @@ namespace seadapter
       try
       {
          BSONObj mappingObj ;
-         utilESMapping mapping( _indexName.c_str(), _typeName.c_str() ) ;
+         utilESMapping mapping( esIdxName, _meta.getEsTypeName().c_str() ) ;
 
-         BSONObjIterator itr( _indexDef ) ;
+         BSONObjIterator itr( _meta.getIdxDef() ) ;
          while ( itr.more() )
          {
             BSONElement ele = itr.next() ;
@@ -1653,13 +1654,13 @@ namespace seadapter
          rc = mapping.toObj( mappingObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Build mapping object failed[ %d ]", rc ) ;
 
-         rc = _esClt->createIndex( _indexName.c_str(),
+         rc = _esClt->createIndex( esIdxName,
                                    mappingObj.toString( FALSE, TRUE).c_str() ) ;
          PD_RC_CHECK( rc, PDERROR, "Create index[ %s ] with mapping[ %s ] on "
-                      "search engine failed[ %d ]", _indexName.c_str(),
+                      "search engine failed[ %d ]", esIdxName,
                       mappingObj.toString( FALSE, TRUE).c_str(), rc ) ;
          PD_LOG( PDEVENT, "Create index[ %s ] with mapping[ %s ] on "
-                 "search engine successfully", _indexName.c_str(),
+                 "search engine successfully", esIdxName,
                  mappingObj.toString( FALSE, TRUE).c_str() ) ;
       }
       catch ( std::exception &e )
@@ -1679,18 +1680,18 @@ namespace seadapter
    {
       INT32 rc = SDB_OK ;
       BOOLEAN found = FALSE ;
+      const CHAR *esIdxName = _meta.getEsIdxName().c_str() ;
 
-      rc = _esClt->indexExist( _indexName.c_str(), found ) ;
+      rc = _esClt->indexExist( esIdxName, found ) ;
       PD_RC_CHECK( rc, PDERROR, "Check index[ %s ] existence on search engine "
-                   "failed[ %d ]", _indexName.c_str(), rc ) ;
+                   "failed[ %d ]", esIdxName, rc ) ;
 
       if ( found )
       {
-         rc = _esClt->dropIndex( _indexName.c_str() ) ;
+         rc = _esClt->dropIndex( esIdxName ) ;
          PD_RC_CHECK( rc, PDERROR, "Drop index[ %s ] on search engine "
-                         "failed[ %d ]", _indexName.c_str(), rc ) ;
-         PD_LOG( PDEVENT, "Index[ %s ] dropped successfully",
-                 _indexName.c_str() ) ;
+                         "failed[ %d ]", esIdxName, rc ) ;
+         PD_LOG( PDEVENT, "Index[ %s ] dropped successfully", esIdxName ) ;
       }
 
    done:

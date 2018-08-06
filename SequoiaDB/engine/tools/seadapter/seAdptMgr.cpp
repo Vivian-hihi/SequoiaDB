@@ -552,7 +552,7 @@ namespace seadapter
       else if ( timerID == _idxUpdateTimerID )
       {
          // Only send the index update request when adapter is successfully
-         // registered.
+         // registered, and Elasticsearch is online.
          if ( NET_INVALID_TIMER_ID == _regTimerID
               && NET_INVALID_TIMER_ID == _esDetectTimerID )
          {
@@ -1521,20 +1521,22 @@ namespace seadapter
       INT32 startFrom = 0 ;
       INT32 numReturned = 0 ;
       vector<BSONObj> objVec ;
-      BSONElement ele ;
       BOOLEAN updated = FALSE ;
       BOOLEAN upgrade = FALSE ;
+      const INT32 expectReplySz = 1 ;
 
       rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
                             &numReturned, objVec ) ;
-      PD_RC_CHECK( rc, PDERROR, "Extract index update reply failed[ %d ]",
-                   rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Extract index information query reply failed[ %d ]", rc ) ;
       rc = flag ;
-      PD_RC_CHECK( rc, PDERROR, "Index update request failed[ %d ]", rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Index information query request failed[ %d ]", rc ) ;
 
-      if ( 1 != objVec.size() )
+      // All text indices information should be replied in one object.
+      if ( expectReplySz != numReturned || expectReplySz != objVec.size() )
       {
-         PD_LOG( PDERROR, "Register reply is not as expected" ) ;
+         PD_LOG( PDERROR, "Reply of index information is not as expected" ) ;
          rc = SDB_SYS ;
          goto error ;
       }

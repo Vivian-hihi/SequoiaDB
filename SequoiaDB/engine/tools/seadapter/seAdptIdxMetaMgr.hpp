@@ -165,6 +165,7 @@ namespace seadapter
          }
 
       private:
+         // Index information version.
          INT64       _version ;
          string      _origCLName ;
          string      _origIdxName ;
