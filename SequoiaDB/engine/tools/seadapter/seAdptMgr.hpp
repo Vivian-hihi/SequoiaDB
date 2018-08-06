@@ -248,8 +248,6 @@ namespace seadapter
                               BOOLEAN &updated, BOOLEAN &upgrade ) ;
       INT32 _parseIndexInfo( const BSONElement *ele, seIndexMeta &idxMeta ) ;
 
-      void _genESIdxName( UINT32 csLID, UINT32 clLID, INT32 idxLID,
-                          CHAR *esIdxName, UINT32 buffSize ) ;
       void _genESIdxName( seIndexMeta &idxMeta ) ;
 
       BOOLEAN _isESOnline() ;

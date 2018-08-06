@@ -1642,18 +1642,14 @@ namespace seadapter
       _indexNetRtAgent.removeTimer( timerID ) ;
    }
 
-   void _seAdptCB::_genESIdxName( UINT32 csLID, UINT32 clLID, INT32 idxLID,
-                                  CHAR *esIdxName, UINT32 buffSize )
-   {
-      ossSnprintf( esIdxName, buffSize, ES_SYS_PREFIX"_%u_%u_%d",
-                   csLID, clLID, idxLID ) ;
-   }
-
    void _seAdptCB::_genESIdxName( seIndexMeta &idxMeta )
    {
       // ES index name is in the format of cappedCLName_groupName.
       std::string::size_type pos = idxMeta.getCappedCLName().find('.') ;
       std::string cappedCLName = idxMeta.getCappedCLName().substr( pos + 1 ) ;
+      // From ES6.0, one index can contain only one type. So we need to append
+      // the group name to the ES index name, to handle index data splited to
+      // more than one group.
       std::string esIdx = cappedCLName + "_" + _peerGroupName ;
       // ES index names should be in lower case.
       std::transform( esIdx.begin(), esIdx.end(), esIdx.begin(), ::tolower ) ;
