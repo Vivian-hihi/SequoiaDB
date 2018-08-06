@@ -1968,7 +1968,7 @@ INT32 msgBuildSequenceAlterMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                reqID, options, cb ) ;
 }
 
-INT32 msgExtractSequenceMsg( CHAR *pBuffer, BSONObj& options )
+INT32 msgExtractSequenceRequestMsg( CHAR *pBuffer, BSONObj& options )
 {
    INT32 rc = SDB_OK ;
    CHAR* query = NULL ;
@@ -1993,7 +1993,6 @@ INT32 msgExtractSequenceMsg( CHAR *pBuffer, BSONObj& options )
 
    return rc ;
 }
-
 
 INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                                   IExecutor *cb )

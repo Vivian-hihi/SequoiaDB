@@ -448,7 +448,7 @@ namespace engine
 
       _catSequenceManager* seqMgr = _gtsMgr->getSequenceMgr() ;
 
-      rc = msgExtractSequenceMsg( (CHAR*) msg, options ) ;
+      rc = msgExtractSequenceRequestMsg( (CHAR*) msg, options ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -508,7 +508,7 @@ namespace engine
 
       _catSequenceManager* seqMgr = _gtsMgr->getSequenceMgr() ;
 
-      rc = msgExtractSequenceMsg( (CHAR*) msg, options ) ;
+      rc = msgExtractSequenceRequestMsg( (CHAR*) msg, options ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -552,7 +552,7 @@ namespace engine
 
       _catSequenceManager* seqMgr = _gtsMgr->getSequenceMgr() ;
 
-      rc = msgExtractSequenceMsg( (CHAR*) msg, options ) ;
+      rc = msgExtractSequenceRequestMsg( (CHAR*) msg, options ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -596,7 +596,7 @@ namespace engine
 
       _catSequenceManager* seqMgr = _gtsMgr->getSequenceMgr() ;
 
-      rc = msgExtractSequenceMsg( (CHAR*) msg, options ) ;
+      rc = msgExtractSequenceRequestMsg( (CHAR*) msg, options ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
