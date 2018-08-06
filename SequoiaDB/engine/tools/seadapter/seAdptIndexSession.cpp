@@ -43,7 +43,7 @@
 #include "utilESUtil.hpp"
 
 #define SEADPT_FIELD_NAME_LID        "_lid"
-#define SEADPT_FIELD_NAME_CSLID      "_cslid"
+#define SEADPT_FIELD_NAME_CLUID      "_cluid"
 #define SEADPT_FIELD_NAME_CLLID      "_cllid"
 #define SEADPT_FIELD_NAME_IDXLID     "_idxlid"
 #define SEADPT_OPERATOR_STR_OR       "$or"
@@ -882,7 +882,7 @@ namespace seadapter
          {
             // When reach to the end of the original collection, switch to capped
             // collection.
-            BSONObj emptyObj = BSON( SEADPT_FIELD_NAME_CSLID << _meta.getCSLID() <<
+            BSONObj emptyObj = BSON( SEADPT_FIELD_NAME_CLUID << (INT64)_meta.getCLUID() <<
                                      SEADPT_FIELD_NAME_CLLID << _meta.getCLLID() <<
                                      SEADPT_FIELD_NAME_IDXLID << _meta.getIdxLID() <<
                                      SEADPT_FIELD_NAME_LID << _expectLID ) ;
@@ -1272,8 +1272,8 @@ namespace seadapter
 
    INT32 _seAdptIndexSession::_updateProgress( INT64 logicalID )
    {
-      BSONObj lidObj = BSON( SEADPT_FIELD_NAME_CSLID << _meta.getCSLID() <<
-                             SEADPT_FIELD_NAME_CLLID << _meta.getCLLID() <<
+      BSONObj lidObj = BSON( SEADPT_FIELD_NAME_CLUID << (INT64)_meta.getCLUID()
+                             << SEADPT_FIELD_NAME_CLLID << _meta.getCLLID() <<
                              SEADPT_FIELD_NAME_IDXLID << _meta.getIdxLID() <<
                              SEADPT_FIELD_NAME_LID << logicalID ) ;
       return _markProgress( lidObj ) ;
@@ -1312,7 +1312,7 @@ namespace seadapter
       BOOLEAN validate = FALSE ;
       try
       {
-         validate = ( ( (UINT32)obj.getIntField( SEADPT_FIELD_NAME_CSLID ) == _meta.getCSLID() ) &&
+         validate = ( ( (UINT32)obj.getIntField( SEADPT_FIELD_NAME_CLUID ) == _meta.getCLUID() ) &&
          ( (UINT32)obj.getIntField( SEADPT_FIELD_NAME_CLLID ) == _meta.getCLLID() ) &&
          ( (UINT32)obj.getIntField( SEADPT_FIELD_NAME_IDXLID ) == _meta.getIdxLID() ) ) ;
 

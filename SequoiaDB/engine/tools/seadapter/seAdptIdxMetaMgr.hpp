@@ -43,11 +43,12 @@
 #include "oss.hpp"
 #include "../bson/bson.hpp"
 #include "ossRWMutex.hpp"
+#include "utilUniqueID.hpp"
 
 #include <string>
 
 using bson::BSONObj ;
-using engine::ossRWMutex ;
+using namespace engine ;
 
 namespace seadapter
 {
@@ -61,7 +62,7 @@ namespace seadapter
          void setVersion( INT64 version ) ;
          void setCLName( const CHAR *clFullName ) ;
          void setIdxName( const CHAR *idxName ) ;
-         void setCSLogicalID( UINT32 logicalID ) ;
+         void setCLUniqID( utilCLUniqueID clUniqID ) ;
          void setCLLogicalID( UINT32 logicalID ) ;
          void setIdxLogicalID( UINT32 logicalID ) ;
          void setCappedCLName( const CHAR *cappedCLFullName ) ;
@@ -85,7 +86,7 @@ namespace seadapter
                      _esIdxName == r._esIdxName &&
                      _esTypeName == r._esTypeName &&
                      _indexDef == r._indexDef &&
-                     _csLogicalID == r._csLogicalID &&
+                     _clUniqID == r._clUniqID &&
                      _clLogicalID == r._clLogicalID &&
                      _idxLogicalID == r._idxLogicalID ) ;
          }
@@ -125,9 +126,9 @@ namespace seadapter
             return _indexDef ;
          }
 
-         UINT32 getCSLID() const
+         utilCLUniqueID getCLUID() const
          {
-            return _csLogicalID ;
+            return _clUniqID ;
          }
 
          UINT32 getCLLID() const
@@ -147,7 +148,7 @@ namespace seadapter
                std::stringstream ss ;
                ss << "original cl[" << _origCLName << "], "
                   << "capped cl[" << _cappedCLName << "], "
-                  << "CS logical id[" << _csLogicalID << "], "
+                  << "CL unique id[" << _clUniqID << "], "
                   << "CL logical id[" << _clLogicalID << "], "
                   << "es index[" << _esIdxName << "], "
                   << "es type[" << _esTypeName << "], "
@@ -166,16 +167,16 @@ namespace seadapter
 
       private:
          // Index information version.
-         INT64       _version ;
-         string      _origCLName ;
-         string      _origIdxName ;
-         UINT32      _csLogicalID ;
-         UINT32      _clLogicalID ;
-         UINT32      _idxLogicalID ;
-         string      _cappedCLName ;
-         string      _esIdxName ;
-         string      _esTypeName ;
-         BSONObj     _indexDef ;  // Used for fetching data from original collection.
+         INT64          _version ;
+         string         _origCLName ;
+         string         _origIdxName ;
+         utilCLUniqueID _clUniqID ;
+         UINT32         _clLogicalID ;
+         UINT32         _idxLogicalID ;
+         string         _cappedCLName ;
+         string         _esIdxName ;
+         string         _esTypeName ;
+         BSONObj        _indexDef ;  // Used for fetching data from original collection.
    } ;
    typedef _seIndexMeta seIndexMeta ;
 

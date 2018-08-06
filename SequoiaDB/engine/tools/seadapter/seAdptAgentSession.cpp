@@ -201,8 +201,6 @@ namespace seadapter
 
       string indexName ;
       string typeName ;
-      seIdxMetaMgr *idxMetaCache = NULL ;
-      BOOLEAN cacheLocked = FALSE ;
       seAdptContextQuery *context = NULL ;
 
       rc = msgExtractQuery( (CHAR *)msg, &flag, &pCollectionName,
@@ -266,11 +264,6 @@ namespace seadapter
       }
 
    done:
-      if ( cacheLocked )
-      {
-         SDB_ASSERT( idxMetaCache, "Index meta cache should not be NULL" ) ;
-         idxMetaCache->unlock( SHARED ) ;
-      }
       return rc ;
    error:
       if ( context )

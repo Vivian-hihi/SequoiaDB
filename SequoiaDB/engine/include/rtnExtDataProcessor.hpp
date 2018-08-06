@@ -49,8 +49,7 @@
 #include "rtnExtOprDef.hpp"
 #include "dmsStorageDataCommon.hpp"
 
-#define RTN_EXT_PROCESSOR_NAME_SZ      255
-#define RTN_EXT_PROCESSOR_INVALID_ID   -1
+#define RTN_EXT_PROCESSOR_INVALID_ID   (-1)
 namespace engine
 {
    // Metadata of the compressor.
@@ -70,7 +69,7 @@ namespace engine
       {
          _clUniqID = clUniqID ;
          _idxName = idxName ;
-         _idxKeyDef = idxKeyDef.copy() ;   // need to copy or not ???
+         _idxKeyDef = idxKeyDef.copy() ;
          return SDB_OK ;
       }
    } ;
@@ -110,7 +109,6 @@ namespace engine
       INT32 processUpdate( const BSONObj &originalObj, const BSONObj &newObj,
                            pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
 
-      INT32 doWrite( pmdEDUCB *cb, BSONObj &record, SDB_DPSCB *dpsCB = NULL ) ;
       INT32 doDropP1( pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
       INT32 doDropP1Cancel( pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
       INT32 doDropP2( pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
@@ -122,8 +120,6 @@ namespace engine
       INT32 abort() ;
 
       const rtnExtProcessorMeta& getMeta() const { return _meta ; }
-
-      INT32 updateMeta( const rtnExtProcessorMeta& meta ) ;
 
       BOOLEAN isOwnedBy( utilCSUniqueID csUniqID,
                          utilCLUniqueID clUniqID = UTIL_INVALID_UNIQUEID,
@@ -146,7 +142,7 @@ namespace engine
       INT32 _prepareUpdate( const BSONObj &originalObj, const BSONObj &newObj,
                             BSONObj &recordObj ) ;
 
-      INT32 _prepareRecord( const CHAR *name, _rtnExtOprType oprType,
+      INT32 _prepareRecord( _rtnExtOprType oprType,
                             const BSONElement &idEle,
                             const BSONObj *dataObj,
                             BSONObj &recordObj ) ;
@@ -154,9 +150,9 @@ namespace engine
       const CHAR* _getExtCLShortName() const ;
 
    private:
-      dmsMBContext         *_mbContext ;  // TODO: YSD 在哪里释放的 ?
+      // MB context of the capped collection. Used to update LSN information.
+      dmsMBContext         *_mbContext ;
       INT64                _id ;
-      // CHAR                 _name[ RTN_EXT_PROCESSOR_NAME_SZ + 1 ] ;
       rtnExtProcessorMeta  _meta ;
       CHAR                 _cappedCSName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
       CHAR                 _cappedCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
@@ -185,9 +181,9 @@ namespace engine
 
       INT32 activateProcessor( rtnExtDataProcessor *processor ) ;
 
-      void destroyProcessor( rtnExtDataProcessor *&processor ) ;
+      void delProcessor( rtnExtDataProcessor **processor ) ;
 
-      INT32 number()  ;
+      UINT32 number()  ;
 
       INT32 getProcessorsByCS( utilCSUniqueID csUniqID, OSS_LATCH_MODE lockType,
                                std::vector<rtnExtDataProcessor *> &processors ) ;
@@ -204,12 +200,6 @@ namespace engine
       void unlockProcessors( std::vector<rtnExtDataProcessor *> &processors,
                              OSS_LATCH_MODE lockType ) ;
 
-      void delProcessor( rtnExtDataProcessor **processor ) ;
-
-   private:
-      UINT32 _genProcessorKey( const CHAR *csName, const CHAR *clName,
-                               const CHAR *idxName ) ;
-      INT32 _activateProcessor( rtnExtDataProcessor *processor ) ;
    private:
       // Mutex to protect meta data change.
       ossSpinSLatch        _mutex ;

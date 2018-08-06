@@ -44,7 +44,7 @@ namespace seadapter
    _seIndexMeta::_seIndexMeta()
    {
       _version = -1 ;
-      _csLogicalID = 0 ;
+      _clUniqID = UTIL_INVALID_UNIQUEID ;
       _clLogicalID = 0 ;
       _idxLogicalID = 0 ;
    }
@@ -82,9 +82,9 @@ namespace seadapter
       _origIdxName = idxName ;
    }
 
-   void _seIndexMeta::setCSLogicalID( UINT32 logicalID )
+   void _seIndexMeta::setCLUniqID( utilCLUniqueID clUniqID )
    {
-      _csLogicalID = logicalID ;
+      _clUniqID = clUniqID ;
    }
 
    void _seIndexMeta::setCLLogicalID( UINT32 logicalID )

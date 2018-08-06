@@ -37,23 +37,20 @@
 
 *******************************************************************************/
 #include "pmd.hpp"
-#include "sptCommon.hpp"
 #include "seAdptMgr.hpp"
 #include "seAdptAgentSession.hpp"
 #include "seAdptIndexSession.hpp"
-#include "seAdptDef.hpp"
 #include "msgMessage.hpp"
 
 #define DATA_NODE_GRP_ID                        10000
 #define DATA_NODE_ID                            10000
 #define SEADPT_NAME_CAPPED_COLLECTION           "CappedCL"
-#define SEADPT_INIT_TEXT_INDEX_VERSION          -1
+#define SEADPT_INIT_TEXT_INDEX_VERSION          (-1)
 #define SEADPT_IDX_UPDATE_INTERVAL              ( 5 * OSS_ONE_SEC )
 #define SEADPT_CAT_RETRY_MAX_TIMES              3
 #define SEADPT_PORT_STR_SZ                      10
 #define SEADPT_MAX_PORT                         65535
 #define SEADPT_SVC_PORT_PLUS                    7
-#define ES_SYS_PREFIX                           "sys"
 
 namespace seadapter
 {
@@ -131,7 +128,6 @@ namespace seadapter
    INT32 _seIndexSessionMgr::refreshTasks( BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
-      BSONElement ele ;
       std::set< UINT64 > obsoleteSessions ;
       seIdxMetaMgr* idxMetaCache = _pAdptCB->getIdxMetaCache() ;
 
@@ -954,7 +950,7 @@ namespace seadapter
       BSONObj idxDef ;
       BSONObj key ;
       BSONElement lidEle ;
-      UINT32 csLogicalID = 0 ;
+      utilCLUniqueID clUniqID = UTIL_INVALID_UNIQUEID ;
       UINT32 clLogicalID = 0 ;
       UINT32 idxLogicalID = 0 ;
 
@@ -1002,7 +998,7 @@ namespace seadapter
             goto error ;
          }
 
-         lidEle = idxObj.getField( FIELD_NAME_LOGICAL_ID ) ;
+         lidEle = idxObj.getField( FIELD_NAME_ID ) ;
          if ( Array != lidEle.type() )
          {
             rc = SDB_SYS ;
@@ -1021,7 +1017,7 @@ namespace seadapter
             }
             else
             {
-               csLogicalID = (UINT32)lidObj.getIntField( "0" ) ;
+               clUniqID = (UINT32)lidObj.getIntField( "0" ) ;
                clLogicalID = (UINT32)lidObj.getIntField( "1" ) ;
                idxLogicalID = (UINT32)lidObj.getIntField( "2" ) ;
             }
@@ -1033,7 +1029,7 @@ namespace seadapter
          rc = idxMeta.setIdxDef( key ) ;
          PD_RC_CHECK( rc, PDERROR, "Set index difinition failed[ %d ]", rc ) ;
 
-         idxMeta.setCSLogicalID( csLogicalID ) ;
+         idxMeta.setCLUniqID( clUniqID ) ;
          idxMeta.setCLLogicalID( clLogicalID ) ;
          idxMeta.setIdxLogicalID( idxLogicalID ) ;
 

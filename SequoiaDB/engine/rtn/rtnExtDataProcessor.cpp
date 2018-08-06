@@ -37,10 +37,8 @@
 
 *******************************************************************************/
 #include "rtnExtDataProcessor.hpp"
-#include "pmd.hpp"
 #include "rtn.hpp"
 #include "rtnTrace.hpp"
-#include "../bson/lib/md5.hpp"
 #include "dmsStorageDataCapped.hpp"
 
 // Currently we set the size limit of capped collection to 30GB. This may change
@@ -91,9 +89,6 @@ namespace engine
       // Use the collection unique id as the processor id.
       _id = clUniqID ;
 
-      // Set default processor name.
-      // setName( _cappedCLName ) ;
-
       rc = dmsCB->nameToSUAndLock( _cappedCSName, suID, &su, SHARED ) ;
       if ( rc )
       {
@@ -111,60 +106,35 @@ namespace engine
          }
       }
 
-      // TODO: YSD Why get the mb context here ?
+      // Get the mb context for the capped collection, to update the LSN
+      // information after write operation.
       rc = su->data()->getMBContext( &_mbContext, _getExtCLShortName(), -1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Get mbContext for collection[ %s ] "
                    "failed[ %d ]", _cappedCLName, rc ) ;
-
-      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_INIT ) ;
 
    done:
       if ( DMS_INVALID_SUID != suID )
       {
          dmsCB->suUnlock( suID, SHARED ) ;
       }
+
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_INIT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
-
-/*
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_SETNAME, "_rtnExtDataProcessor::setName" )
-   INT32 _rtnExtDataProcessor::setName( const CHAR *name )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_SETNAME ) ;
-      if ( !name || ossStrlen( name ) > RTN_EXT_PROCESSOR_NAME_SZ )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Name for processor is invalid" ) ;
-         goto error ;
-      }
-
-      ossStrncpy( _name, name, RTN_EXT_PROCESSOR_NAME_SZ + 1 ) ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_SETNAME, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   const CHAR* _rtnExtDataProcessor::getName() const
-   {
-      return _name ;
-   }
-*/
 
    INT64 _rtnExtDataProcessor::getID()
    {
       return _id ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_SETTARGETNAMES, "_rtnExtDataProcessor::setTargetNames" )
    INT32 _rtnExtDataProcessor::setTargetNames( const CHAR *csName,
                                                const CHAR *clName )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_SETTARGETNAMES ) ;
       SDB_ASSERT( csName, "cs name is NULL" ) ;
       SDB_ASSERT( csName, "cl name is NULL" ) ;
 
@@ -186,6 +156,7 @@ namespace engine
       ossStrncpy( _cappedCLName, clName, DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_SETTARGETNAMES, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -422,29 +393,6 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_DOWRITE, "_rtnExtDataProcessor::doWrite" )
-   INT32 _rtnExtDataProcessor::doWrite( pmdEDUCB *cb, BSONObj &record,
-                                        SDB_DPSCB *dpsCB )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_DOWRITE ) ;
-      INT32 insertNum = 0 ;
-      INT32 ignoreNum = 0 ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-
-      // Pass dpsCB as NULL as we don't want to write dps log. The replication
-      // of external data totally relies on the original data.
-      rc = rtnInsert( _cappedCLName, record, 1, 0,
-                      cb, dmsCB, dpsCB, 1, &insertNum, &ignoreNum ) ;
-      PD_RC_CHECK( rc, PDERROR, "Insert record failed[ %d ]", rc ) ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_DOWRITE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_DODROPP1, "_rtnExtDataProcessor::doDropP1" )
    INT32 _rtnExtDataProcessor::doDropP1( pmdEDUCB *cb, SDB_DPSCB *dpsCB )
    {
@@ -594,8 +542,7 @@ namespace engine
       goto done ;
    }
 
-
-   // Update the commit LSN information.
+   // Update the commit LSN information for the capped collection.
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_DONE, "_rtnExtDataProcessor::done" )
    INT32 _rtnExtDataProcessor::done( pmdEDUCB *cb )
    {
@@ -615,26 +562,11 @@ namespace engine
    INT32 _rtnExtDataProcessor::abort()
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_ABORT ) ;
-      _mbContext = NULL ;
       _needUpdateLSN = FALSE ;
       _keySet.clear() ;
       _keySetNew.clear() ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_ABORT ) ;
       return SDB_OK ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_UPDATEMETA, "_rtnExtDataProcessor::updateMeta" )
-   INT32 _rtnExtDataProcessor::updateMeta(const rtnExtProcessorMeta & meta)
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_UPDATEMETA ) ;
-      rc = init( meta._clUniqID, meta._idxName.c_str(), meta._idxKeyDef ) ;
-      PD_RC_CHECK( rc, PDERROR, "Init processor failed[ %d ]", rc ) ;
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_UPDATEMETA, rc ) ;
-      return rc ;
-   error:
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__ISOWNEDBY, "_rtnExtDataProcessor::isOwnedBy" )
@@ -684,8 +616,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__PREPARERECORD, "_rtnExtDataProcessor::_prepareRecord" )
-   INT32 _rtnExtDataProcessor::_prepareRecord( const CHAR *name,
-                                               _rtnExtOprType oprType,
+   INT32 _rtnExtDataProcessor::_prepareRecord( _rtnExtOprType oprType,
                                                const BSONElement &idEle,
                                                const BSONObj *dataObj,
                                                BSONObj &recordObj )
@@ -835,8 +766,7 @@ namespace engine
          {
             BSONObjSet::iterator it = _keySet.begin();
             BSONObj object( *it ) ;
-            rc = _prepareRecord( _cappedCLName, RTN_EXT_INSERT,
-                                 ele, &object, recordObj ) ;
+            rc = _prepareRecord( RTN_EXT_INSERT, ele, &object, recordObj ) ;
             PD_RC_CHECK( rc, PDERROR, "Add operation record failed[ %d ]",
                          rc ) ;
          }
@@ -885,8 +815,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _prepareRecord( _cappedCLName, RTN_EXT_DELETE,
-                              ele, NULL, recordObj ) ;
+         rc = _prepareRecord( RTN_EXT_DELETE, ele, NULL, recordObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Add operation record failed[ %d ]",
                       rc ) ;
       }
@@ -941,8 +870,7 @@ namespace engine
          {
             BSONObjSet::iterator it = _keySetNew.begin();
             BSONObj object( *it ) ;
-            rc = _prepareRecord( _cappedCLName, RTN_EXT_UPDATE,
-                                 ele, &object, recordObj ) ;
+            rc = _prepareRecord( RTN_EXT_UPDATE, ele, &object, recordObj ) ;
             PD_RC_CHECK( rc, PDERROR, "Add operation record failed[ %d ]",
                          rc ) ;
          }
@@ -966,7 +894,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR__GETEXTCLSHORTNAME ) ;
       UINT32 curPos = 0 ;
-      UINT32 fullLen = ossStrlen( _cappedCLName ) ;
+      UINT32 fullLen = (UINT32)ossStrlen( _cappedCLName ) ;
       const CHAR *clShortName = NULL ;
 
       if ( 0 == fullLen )
@@ -1055,15 +983,11 @@ namespace engine
       goto done ;
    }
 
-   void _rtnExtDataProcessorMgr::destroyProcessor( rtnExtDataProcessor *&processor )
-   {
-      SDB_OSS_DEL processor ;
-      processor = NULL ;
-   }
-
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_ACTIVATEPROCESSOR, "_rtnExtDataProcessorMgr::activateProcessor" )
    INT32 _rtnExtDataProcessorMgr::activateProcessor( rtnExtDataProcessor *processor )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_ACTIVATEPROCESSOR ) ;
       ossRWMutex *mutex = NULL ;
 
       SDB_ASSERT( processor, "Processor is NULL" ) ;
@@ -1093,6 +1017,7 @@ namespace engine
       _mutex.release() ;
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSORMGR_ACTIVATEPROCESSOR, rc ) ;
       return rc ;
    error:
       if ( mutex )
@@ -1102,17 +1027,19 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnExtDataProcessorMgr::number()
+   UINT32 _rtnExtDataProcessorMgr::number()
    {
       ossScopedLock lock( &_mutex, SHARED ) ;
       return _processorMap.size() ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORSBYCS, "_rtnExtDataProcessorMgr::getProcessorsByCS" )
    INT32 _rtnExtDataProcessorMgr::getProcessorsByCS( utilCSUniqueID csUniqID,
                                                      OSS_LATCH_MODE lockType,
                                                      std::vector<rtnExtDataProcessor *> &processors )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORSBYCS ) ;
 
       if ( UTIL_INVALID_UNIQUEID == csUniqID )
       {
@@ -1140,16 +1067,19 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORSBYCS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORSBYCL, "_rtnExtDataProcessorMgr::getProcessorsByCL" )
    INT32 _rtnExtDataProcessorMgr::getProcessorsByCL( utilCLUniqueID clUniqID,
                                                      OSS_LATCH_MODE lockType,
                                                      std::vector<rtnExtDataProcessor *> &processors )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORSBYCL ) ;
 
       if ( UTIL_INVALID_UNIQUEID == clUniqID )
       {
@@ -1179,17 +1109,20 @@ namespace engine
       SDB_ASSERT( processors.size() <=1, "Processors on cl greater than 1" ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORSBYCL, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORBYIDX, "_rtnExtDataProcessorMgr::getProcessorByIdx" )
    INT32 _rtnExtDataProcessorMgr::getProcessorByIdx( utilCLUniqueID clUniqID,
                                                      const CHAR *idxName,
                                                      OSS_LATCH_MODE lockType,
                                                      rtnExtDataProcessor *&processor )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORBYIDX ) ;
 
       if ( UTIL_INVALID_UNIQUEID == clUniqID )
       {
@@ -1219,6 +1152,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORBYIDX, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1296,19 +1230,6 @@ namespace engine
       *processor = NULL ;
 
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_DELPROCESSOR ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR__GENPROCESSORKEY, "_rtnExtDataProcessorMgr::_genProcessorKey" )
-   UINT32 _rtnExtDataProcessorMgr::_genProcessorKey( const CHAR *csName,
-                                                     const CHAR *clName,
-                                                     const CHAR *idxName )
-   {
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR__GENPROCESSORKEY ) ;
-      SDB_ASSERT( csName && clName && idxName, "Names can not be NULL" ) ;
-
-      string srcStr = string( csName ) + string( clName ) + string( idxName ) ;
-      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR__GENPROCESSORKEY ) ;
-      return ossHash( srcStr.c_str() ) ;
    }
 
    rtnExtDataProcessorMgr* rtnGetExtDataProcessorMgr()
