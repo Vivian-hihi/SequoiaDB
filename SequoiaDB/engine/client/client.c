@@ -6521,14 +6521,7 @@ static INT32 _sdbQuery ( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   if ( 0 != flags )
-   {
-      rc = regulateQueryFlags( &newFlags, flags ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-   }
+   newFlags = regulateQueryFlags( flags ) ;
 
    if ( 1 == numToReturn )
    {
