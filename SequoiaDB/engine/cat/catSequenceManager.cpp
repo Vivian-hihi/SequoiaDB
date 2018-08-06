@@ -373,7 +373,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
-      BOOLEAN changed = FALSE ;
       _catSequence* cache = NULL ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR_RESET_SEQ ) ;
 

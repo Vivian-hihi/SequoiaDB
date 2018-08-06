@@ -55,7 +55,7 @@ namespace engine
       _maxValue = OSS_SINT64_MAX ;
       _increment = 1 ;
       _cacheSize = 10000 ;
-      _acquireSize = 1000 ;
+      _acquireSize = 100 ;
       _cycled = FALSE ;
       _initial = TRUE ;
       _exceeded = FALSE ;
