@@ -3219,11 +3219,11 @@ namespace engine
          {
             if ( _storageInfo._extDataHandler )
             {
-               _storageInfo._extDataHandler->getExtDataName( CSName(),
-                                                mb->_collectionName,
-                                                indexCB.getName(),
-                                                indexItem._extDataName,
-                                                DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
+               _storageInfo._extDataHandler->getExtDataName( mb->_clUniqueID,
+                                                             indexCB.getName(),
+                                                             NULL, 0,
+                                                             indexItem._extDataName,
+                                                             DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
             }
          }
 
@@ -3270,11 +3270,11 @@ namespace engine
             {
                if ( _storageInfo._extDataHandler )
                {
-                  _storageInfo._extDataHandler->getExtDataName( CSName(),
-                                                   mb->_collectionName,
-                                                   indexCB.getName(),
-                                                   resultIndex._extDataName,
-                                                   DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
+                  _storageInfo._extDataHandler->getExtDataName( mb->_clUniqueID,
+                                                                indexCB.getName(),
+                                                                NULL, 0,
+                                                                resultIndex._extDataName,
+                                                                DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
                }
             }
 

@@ -1549,7 +1549,7 @@ namespace engine
       {
          // If external operation failed, we do not go to error. Manually
          // cleanup may be needed.
-         rc = extHandler->onDelCS( pCSCB->_su->CSName(), cb,
+         rc = extHandler->onDelCS( pCSCB->_su->CSUniqueID(), cb,
                                    removeFile, dpsCB ) ;
          if ( rc )
          {
@@ -1706,7 +1706,7 @@ namespace engine
       extHandler = pCSCB->_su->data()->getExtDataHandler() ;
       if ( extHandler )
       {
-         rc = extHandler->onDelCS( pName, cb, TRUE, dpsCB ) ;
+         rc = extHandler->onDelCS( pCSCB->_su->CSUniqueID(), cb, TRUE, dpsCB ) ;
          if ( rc )
          {
             // If external operation failed, we should resume by cancel the

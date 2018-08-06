@@ -2490,8 +2490,7 @@ namespace engine
          handler = getExtDataHandler() ;
          if ( handler )
          {
-            rc = handler->onTruncateCL( getSuName(),
-                                        context->mb()->_collectionName,
+            rc = handler->onTruncateCL( context->mb()->_clUniqueID,
                                         cb, dpscb ) ;
             PD_RC_CHECK( rc, PDERROR, "External operation on truncate "
                          "collection failed, rc: %d", rc ) ;
@@ -2961,9 +2960,9 @@ namespace engine
             handler = getExtDataHandler() ;
             if ( handler )
             {
-               rc = handler->check( DMS_EXTOPR_TYPE_INSERT, getSuName(),
-                                    context->mb()->_collectionName, NULL,
-                                    &insertObj, NULL, cb ) ;
+               rc = handler->check( DMS_EXTOPR_TYPE_INSERT,
+                                    context->mb()->_clUniqueID,
+                                    NULL, &insertObj, NULL, cb ) ;
                PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
                             "rc: %d", rc ) ;
             }
@@ -3198,8 +3197,8 @@ namespace engine
                   handler = getExtDataHandler() ;
                   if ( handler )
                   {
-                     rc = handler->check( DMS_EXTOPR_TYPE_DELETE, getSuName(),
-                                          context->mb()->_collectionName, NULL,
+                     rc = handler->check( DMS_EXTOPR_TYPE_DELETE,
+                                          context->mb()->_clUniqueID, NULL,
                                           &delObject, NULL, cb ) ;
                      PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
                                   "rc: %d", rc ) ;
@@ -3457,8 +3456,8 @@ namespace engine
                handler = getExtDataHandler() ;
                if ( handler )
                {
-                  rc = handler->check( DMS_EXTOPR_TYPE_UPDATE, getSuName(),
-                                       context->mb()->_collectionName, NULL,
+                  rc = handler->check( DMS_EXTOPR_TYPE_UPDATE,
+                                       context->mb()->_clUniqueID, NULL,
                                        &obj, &newobj, cb ) ;
                   PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
                                "rc: %d", rc ) ;

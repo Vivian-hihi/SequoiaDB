@@ -206,8 +206,7 @@ namespace engine
                      }
                      if ( extHandler )
                      {
-                        rc = extHandler->onOpenTextIdx( _pDataSu->getSuName(),
-                                                        _pDataSu->_dmsMME->_mbList[i]._collectionName,
+                        rc = extHandler->onOpenTextIdx( _pDataSu->_dmsMME->_mbList[i]._clUniqueID,
                                                         indexCB.getName(),
                                                         indexCB.keyPattern() ) ;
                         PD_RC_CHECK( rc, PDERROR, "External on text index open "
@@ -698,12 +697,11 @@ namespace engine
                            "_extDataHandler is NULL" ) ;
                _pDataSu->regExtDataHandler( _pStorageInfo->_extDataHandler ) ;
             }
-            rc = _pDataSu->getExtDataHandler()->onCrtTextIdx( getSuName(),
-                                                              context->mb()->_collectionName,
+            rc = _pDataSu->getExtDataHandler()->onCrtTextIdx( context->mb()->_clUniqueID,
                                                               indexCB.getName(),
                                                               cb, dpscb ) ;
-            PD_RC_CHECK( rc, PDERROR, "External onCreate failed when creating "
-                         "text index[%d]", rc ) ;
+            PD_RC_CHECK( rc, PDERROR, "External onCrtTextIdx failed when "
+                         "creating text index[%d]", rc ) ;
          }
 
          // calc the reserve size
@@ -1128,8 +1126,7 @@ namespace engine
                rc = SDB_SYS ;
                goto error ;
             }
-            rc = extDataHandler->onDropTextIdx( _pDataSu->getSuName(),
-                                                context->mb()->_collectionName,
+            rc = extDataHandler->onDropTextIdx( context->mb()->_clUniqueID,
                                                 indexCB.getName(), cb, NULL ) ;
             PD_RC_CHECK( rc, PDERROR, "External data process of dropping "
                          "text index failed[ %d ]", rc ) ;
@@ -1459,9 +1456,8 @@ namespace engine
                goto error ;
             }
 
-            rc = handler->onInsert( _pDataSu->getSuName(),
-                                    context->mb()->_collectionName,
-                                    indexCB.getName(), indexCB, inputObj, cb ) ;
+            rc = handler->onInsert( context->mb()->_clUniqueID,
+                                    indexCB.getName(), inputObj, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Insert on text index failed[ %d ]",
                          rc ) ;
          }
@@ -1714,10 +1710,9 @@ namespace engine
                goto error ;
             }
 
-            rc = handler->onUpdate( _pDataSu->getSuName(),
-                                    context->mb()->_collectionName,
-                                    indexCB.getName(),
-                                    indexCB, originalObj, newObj, cb ) ;
+            rc = handler->onUpdate( context->mb()->_clUniqueID,
+                                    indexCB.getName(), originalObj,
+                                    newObj, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Update on text index failed[ %d ]",
                          rc ) ;
          }
@@ -1849,10 +1844,8 @@ namespace engine
                goto error ;
             }
 
-            rc = handler->onDelete( _pDataSu->getSuName(),
-                                    context->mb()->_collectionName,
-                                    indexCB.getName(),
-                                    indexCB, inputObj, cb ) ;
+            rc = handler->onDelete( context->mb()->_clUniqueID,
+                                    indexCB.getName(), inputObj, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Delete on text index failed[ %d ]",
                          rc ) ;
          }

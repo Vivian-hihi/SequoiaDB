@@ -364,12 +364,15 @@ namespace engine
       extHandler = _su->data()->getExtDataHandler() ;
       if ( extHandler )
       {
-         rc = _su->data()->getMBContext( &_mbContext, _clShortName,
-                                         EXCLUSIVE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
-                      "rc: %d", pCollectionName, rc ) ;
+         if ( !_mbContext )
+         {
+            rc = _su->data()->getMBContext( &_mbContext, _clShortName,
+                                            EXCLUSIVE ) ;
+            PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
+                         "rc: %d", pCollectionName, rc ) ;
+         }
 
-         rc = extHandler->onDelCL( _su->CSName(), _clShortName,
+         rc = extHandler->onDelCL( _mbContext->mb()->_clUniqueID,
                                    cb, getDPSCB() ) ;
          PD_RC_CHECK( rc, PDERROR, "External operation on delete cl failed, "
                       "rc: %d", rc ) ;

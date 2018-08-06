@@ -2970,18 +2970,17 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDMGR__BUILDTEXTIDXOBJ ) ;
+      string cappedCSName ;
+      string cappedCLName ;
 
-      CHAR cappedCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
-
-      rtnExtDataProcessor::genExtDataNames( csInfo->_name, clInfo->_clname,
-                                            idxInfo->getIndexName(), NULL, 0,
-                                            cappedCLName,
-                                            DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
+      rtnExtDataProcessor::genExtDataNames( clInfo->_clUniqueID,
+                                            idxInfo->getIndexName(),
+                                            cappedCSName, cappedCLName ) ;
 
       try
       {
          builder.append( FIELD_NAME_COLLECTION, clInfo->_name ) ;
-         builder.append( CLS_NAME_CAPPED_COLLECTION, cappedCLName ) ;
+         builder.append( CLS_NAME_CAPPED_COLLECTION, cappedCLName.c_str() ) ;
          builder.appendObject( FIELD_NAME_INDEX,
                                idxInfo->_indexDef.objdata(),
                                idxInfo->_indexDef.objsize() ) ;
@@ -2989,8 +2988,8 @@ namespace engine
          // Append logical ids of cl and index as an array. They are used by
          // the adapter to identify different indices with the same meta data.
          BSONArrayBuilder lidObjs( builder.subarrayStart( FIELD_NAME_LOGICAL_ID ) ) ;
-         lidObjs.append( csInfo->_logicalID ) ;
-         lidObjs.append( clInfo->_logicalID ) ;
+         lidObjs.append( csInfo->_csUniqueID ) ;
+         lidObjs.append( (INT64)clInfo->_clUniqueID ) ;
          lidObjs.append( idxInfo->_indexLID ) ;
          lidObjs.done() ;
 

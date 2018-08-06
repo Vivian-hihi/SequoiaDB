@@ -67,9 +67,16 @@ namespace engine
       virtual INT32 done( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
       virtual INT32 abort( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
    protected:
+      void _appendProcessor( rtnExtDataProcessor *processor ) ;
       void _appendProcessors( const vector< rtnExtDataProcessor * >& processorVec ) ;
-      virtual INT32 _onDone( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) { return SDB_OK ; }
-      virtual INT32 _onAbort( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) { return SDB_OK ; }
+      virtual INT32 _onDone( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL )
+      {
+         return SDB_OK ;
+      }
+      virtual INT32 _onAbort( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL )
+      {
+         return SDB_OK ;
+      }
 
    private:
       void _cleanup() ;
@@ -96,8 +103,7 @@ namespace engine
       virtual ~_rtnExtRebuildIdxCtx() ;
 
       INT32 open( rtnExtDataProcessorMgr *processorMgr,
-                  const CHAR *csName, const CHAR *clName,
-                  const CHAR *idxName,
+                  utilCLUniqueID clUniqID, const CHAR *idxName,
                   const BSONObj &idxKeyDef, pmdEDUCB *cb,
                   SDB_DPSCB *dpscb = NULL ) ;
    } ;
@@ -112,7 +118,6 @@ namespace engine
 
    private:
       virtual INT32 _onDone( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
-      // virtual INT32 _onAbort( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
    } ;
    typedef _rtnExtDataOprCtx rtnExtDataOprCtx ;
 
@@ -123,9 +128,9 @@ namespace engine
       ~_rtnExtInsertCtx() ;
 
       virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
-                          const CHAR *csName, const CHAR *clName,
-                          const CHAR *idxName, const BSONObj &object,
-                          _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+                          utilCLUniqueID clUniqID, const CHAR *idxName,
+                          const BSONObj &object, _pmdEDUCB *cb,
+                          SDB_DPSCB *dpscb = NULL ) ;
    } ;
    typedef _rtnExtInsertCtx rtnExtInsertCtx ;
 
@@ -136,9 +141,9 @@ namespace engine
       ~_rtnExtDeleteCtx() ;
 
       virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
-                          const CHAR *csName, const CHAR *clName,
-                          const CHAR *idxName, const BSONObj &object,
-                          _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+                          utilCLUniqueID clUniqID, const CHAR *idxName,
+                          const BSONObj &object, _pmdEDUCB *cb,
+                          SDB_DPSCB *dpscb = NULL ) ;
    } ;
    typedef _rtnExtDeleteCtx rtnExtDeleteCtx ;
 
@@ -149,63 +154,73 @@ namespace engine
       ~_rtnExtUpdateCtx() ;
 
       virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
-                          const CHAR *csName, const CHAR *clName,
-                          const CHAR *idxName, const BSONObj &oldObj,
-                          const BSONObj &newObj, pmdEDUCB *cb,
-                          SDB_DPSCB *dpscb = NULL ) ;
+                          utilCLUniqueID clUniqID, const CHAR *idxName,
+                          const BSONObj &oldObj, const BSONObj &newObj,
+                          pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
    } ;
    typedef _rtnExtUpdateCtx rtnExtUpdateCtx ;
 
-   class _rtnExtDropOprCtx : public _rtnExtContextBase
-   {
-   public:
-      _rtnExtDropOprCtx( DMS_EXTOPR_TYPE type ) ;
-      virtual ~_rtnExtDropOprCtx() ;
-
-      virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
-                          const CHAR *csName, const CHAR *clName,
-                          const CHAR *idxName, pmdEDUCB *cb,
-                          BOOLEAN removeFiles, SDB_DPSCB *dpscb = NULL ) ;
-
-   private:
-      virtual INT32 _onDone( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
-      virtual INT32 _onAbort( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
-   private:
-      BOOLEAN _removeFiles ;
-   } ;
-   typedef _rtnExtDropOprCtx rtnExtDropOprCtx ;
-
-   class _rtnExtDropCSCtx : public _rtnExtDropOprCtx
+   class _rtnExtDropCSCtx : public _rtnExtContextBase
    {
    public:
       _rtnExtDropCSCtx()
-      : _rtnExtDropOprCtx( DMS_EXTOPR_TYPE_DROPCS )
+      : _rtnExtContextBase( DMS_EXTOPR_TYPE_DROPCS ),
+        _removeFiles( FALSE )
       {
       }
 
       ~_rtnExtDropCSCtx() {}
+
+      virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
+                          utilCSUniqueID csUniqID, pmdEDUCB *cb,
+                          BOOLEAN removeFiles, SDB_DPSCB *dpscb = NULL ) ;
+
+   private:
+      INT32 _onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+      INT32 _onAbort( pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+
+   private:
+      BOOLEAN _removeFiles ;
    } ;
    typedef _rtnExtDropCSCtx rtnExtDropCSCtx ;
 
-   class _rtnExtDropCLCtx : public _rtnExtDropOprCtx
+   class _rtnExtDropCLCtx : public _rtnExtContextBase
    {
    public:
       _rtnExtDropCLCtx()
-      : _rtnExtDropOprCtx( DMS_EXTOPR_TYPE_DROPCL )
+      : _rtnExtContextBase( DMS_EXTOPR_TYPE_DROPCL ),
+        _clUniqID( UTIL_INVALID_UNIQUEID )
       {
       }
       ~_rtnExtDropCLCtx() {}
+
+      virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
+                          utilCLUniqueID clUniqID, pmdEDUCB *cb,
+                          SDB_DPSCB *dpscb = NULL ) ;
+
+   private:
+      INT32 _onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+      INT32 _onAbort( pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+   private:
+      utilCLUniqueID _clUniqID ;
    } ;
    typedef _rtnExtDropCLCtx rtnExtDropCLCtx ;
 
-   class _rtnExtDropIdxCtx : public _rtnExtDropOprCtx
+   class _rtnExtDropIdxCtx : public _rtnExtContextBase
    {
    public:
       _rtnExtDropIdxCtx()
-      : _rtnExtDropOprCtx( DMS_EXTOPR_TYPE_DROPIDX )
+      : _rtnExtContextBase( DMS_EXTOPR_TYPE_DROPIDX )
       {
       }
       ~_rtnExtDropIdxCtx() {}
+
+      virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
+                          utilCLUniqueID clUniqID, const CHAR *idxName,
+                          pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+   private:
+      INT32 _onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+      INT32 _onAbort( pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
    } ;
    typedef _rtnExtDropIdxCtx rtnExtDropIdxCtx ;
 
@@ -216,9 +231,11 @@ namespace engine
       ~_rtnExtTruncateCtx() ;
 
       virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
-                          const CHAR *csName, const CHAR *clName,
-                          _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+                          utilCLUniqueID clUniqueID, _pmdEDUCB *cb,
+                          SDB_DPSCB *dpscb = NULL ) ;
+
       virtual INT32 _onDone( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+
       virtual INT32 _onAbort( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
    } ;
    typedef _rtnExtTruncateCtx rtnExtTruncateCtx ;
@@ -248,55 +265,52 @@ namespace engine
       virtual ~_rtnExtDataHandler() ;
 
    public:
-      virtual INT32 getExtDataName( const CHAR *csName, const CHAR *clName,
-                                    const CHAR *idxName, CHAR *buff,
-                                    UINT32 buffSize ) ;
+      virtual INT32 getExtDataName( utilCLUniqueID clUniqID,
+                                    const CHAR *idxName,
+                                    CHAR *extCSName,
+                                    UINT32 csNameBufSize,
+                                    CHAR *extCLName,
+                                    UINT32 clNameBufSize ) ;
 
-      virtual INT32 check( DMS_EXTOPR_TYPE type, const CHAR *csName,
-                           const CHAR *clName, const CHAR *idxName,
-                           const BSONObj *object,
+      virtual INT32 check( DMS_EXTOPR_TYPE type, utilCLUniqueID clUniqID,
+                           const CHAR *idxName, const BSONObj *object,
                            const BSONObj *objNew, pmdEDUCB *cb ) ;
 
-      virtual INT32 onOpenTextIdx( const CHAR *csName, const CHAR *clName,
-                                   const CHAR *idxName,
+      virtual INT32 onOpenTextIdx( utilCLUniqueID csUniqID, const CHAR *idxName,
                                    const BSONObj &idxKeyDef ) ;
 
-      virtual INT32 onDelCS( const CHAR *csName, pmdEDUCB *cb,
+      virtual INT32 onDelCS( utilCSUniqueID csUniqID, pmdEDUCB *cb,
                              BOOLEAN removeFiles, SDB_DPSCB *dpscb = NULL ) ;
 
-      virtual INT32 onDelCL( const CHAR *csName, const CHAR *clName,
-                             pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+      virtual INT32 onDelCL( utilCLUniqueID clUniqID, pmdEDUCB *cb,
+                             SDB_DPSCB *dpscb = NULL ) ;
 
-      virtual INT32 onCrtTextIdx( const CHAR *csName, const CHAR *clName,
-                                  const CHAR *idxName, _pmdEDUCB *cb,
-                                  SDB_DPSCB *dpscb = NULL ) ;
+      virtual INT32 onCrtTextIdx( utilCLUniqueID clUniqID, const CHAR *idxName,
+                                  _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
 
-      virtual INT32 onDropTextIdx( const CHAR *csName, const CHAR *clName,
-                                   const CHAR *idxName, _pmdEDUCB *cb,
+      virtual INT32 onDropTextIdx( utilCLUniqueID clUniqID, const CHAR *idxName,
+                                   _pmdEDUCB *cb,
                                    SDB_DPSCB *dpscb = NULL ) ;
 
-      virtual INT32 onRebuildTextIdx( const CHAR *csName, const CHAR *clName,
+      virtual INT32 onRebuildTextIdx( utilCLUniqueID clUniqID,
                                       const CHAR *idxName,
                                       const BSONObj &idxKeyDef, _pmdEDUCB *cb,
                                       SDB_DPSCB *dpscb = NULL ) ;
 
-      virtual INT32 onInsert( const CHAR *csName, const CHAR *clName,
-                              const CHAR *idxName,  const ixmIndexCB &indexCB,
+      virtual INT32 onInsert( utilCLUniqueID clUniqID, const CHAR *idxName,
                               const BSONObj &object, _pmdEDUCB* cb,
                               SDB_DPSCB *dpscb = NULL ) ;
 
-      virtual INT32 onDelete( const CHAR *csName, const CHAR *clName,
-                              const CHAR *idxName, const ixmIndexCB &indexCB,
+      virtual INT32 onDelete( utilCLUniqueID clUniqID, const CHAR *idxName,
                               const BSONObj &object, _pmdEDUCB* cb,
                               SDB_DPSCB *dpscb = NULL ) ;
 
-      virtual INT32 onUpdate( const CHAR *csName, const CHAR *clName,
-                              const CHAR *idxName, const ixmIndexCB &indexCB,
+      virtual INT32 onUpdate( utilCLUniqueID clUniqID, const CHAR *idxName,
                               const BSONObj &orignalObj, const BSONObj &newObj,
                               _pmdEDUCB* cb, SDB_DPSCB *dpscb = NULL ) ;
 
-      INT32 onTruncateCL( const CHAR *csName, const CHAR *clName,
-                           _pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
+      INT32 onTruncateCL( utilCLUniqueID clUniqID, _pmdEDUCB *cb,
+                          SDB_DPSCB *dpsCB = NULL ) ;
 
       virtual INT32 done( DMS_EXTOPR_TYPE type, _pmdEDUCB *cb,
                           SDB_DPSCB *dpscb = NULL ) ;

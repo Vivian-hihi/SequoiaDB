@@ -104,6 +104,7 @@ namespace engine
 
    private:
       IDmsExtDataHandler *_extHandler ;
+      utilCLUniqueID _clUniqID ;
       CHAR _collectionName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
       CHAR _idxName[ IXM_INDEX_NAME_SIZE + 1 ] ;
    } ;

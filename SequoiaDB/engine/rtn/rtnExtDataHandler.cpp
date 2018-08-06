@@ -110,6 +110,11 @@ namespace engine
       PD_TRACE_EXIT( SDB__RTNEXTCONTEXTBASE__CLEANUP ) ;
    }
 
+   void _rtnExtContextBase::_appendProcessor( rtnExtDataProcessor *processor )
+   {
+      _processors.push_back( processor ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTBASE_APPENDPROCESSORS, "_rtnExtContextBase::appendProcessors" )
    void _rtnExtContextBase::_appendProcessors( const vector< rtnExtDataProcessor * >& processorVec )
    {
@@ -135,18 +140,16 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTREBUILDIDXCTX_OPEN, "_rtnExtRebuildIdxCtx::open" )
    INT32 _rtnExtRebuildIdxCtx::open( rtnExtDataProcessorMgr *processorMgr,
-                                     const CHAR *csName, const CHAR *clName,
+                                     utilCLUniqueID clUniqID,
                                      const CHAR *idxName,
                                      const BSONObj &idxKeyDef, pmdEDUCB *cb,
                                      SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTREBUILDIDXCTX_OPEN ) ;
-      BOOLEAN newProcessor = FALSE ;
-      BOOLEAN processorAdded = FALSE ;
       SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
       rtnExtDataProcessor *processor = NULL ;
-      std::vector<rtnExtDataProcessor *> processors ;
+      BOOLEAN newProcessor = FALSE ;
 
       // Index will be rebuilt in the following cases:
       // 1. One new index is created.
@@ -168,29 +171,34 @@ namespace engine
 
       _processorMgr = processorMgr ;
 
-      rc = processorMgr->getProcessorsAndLock( csName, clName, idxName,
-                                               EXCLUSIVE, processors ) ;
+      // TODO: YSD bug: deadlock in recovery after crash. Processors will be
+      // locked here in exclusive mode, but not released(no _onDone in rebuild
+      // index context).
+      rc = processorMgr->getProcessorByIdx( clUniqID, idxName,
+                                            EXCLUSIVE, processor ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor for index "
                    "failed[ %d ]", rc ) ;
       _processorMgr = processorMgr ;
 
-      if ( 0 == processors.size() )
+      if ( !processor )
       {
          if ( create )
          {
-            rc = processorMgr->createProcessor( csName, clName, idxName,
-                                                idxKeyDef, processor ) ;
-            PD_RC_CHECK( rc, PDERROR, "Create processor for collection[ %s.%s ]"
-                         " and index[ %s ] failed[ %d ]", csName, clName,
-                         idxName, rc ) ;
+            // The processor can only be used after the rebuild is done. So do
+            // not activate the processor when create it.
+            rc = processorMgr->createProcessor( clUniqID, idxName, idxKeyDef,
+                                                processor, FALSE ) ;
+            PD_RC_CHECK( rc, PDERROR, "Create external processor failed[ %d ]",
+                         rc ) ;
             newProcessor = TRUE ;
             rc = processor->doRebuild( cb, NULL ) ;
             PD_RC_CHECK( rc, PDERROR, "Rebuild of index failed[ %d ]", rc ) ;
 
-            rc = processorMgr->addProcessor( processor ) ;
+            rc = processorMgr->activateProcessor( processor ) ;
             PD_RC_CHECK( rc, PDERROR, "Add processor for index failed[ %d ]",
                          rc ) ;
-            processorAdded = TRUE ;
+
+            // TODO: YSD Need to lock the processor.
          }
          else
          {
@@ -203,7 +211,8 @@ namespace engine
       {
          _processorLocked = TRUE ;
          _lockType = EXCLUSIVE ;
-         rc = processors.front()->doRebuild( cb, NULL ) ;
+         _appendProcessor( processor ) ;
+         rc = processor->doRebuild( cb, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Rebuild of index failed[ %d ]", rc ) ;
       }
 
@@ -213,14 +222,7 @@ namespace engine
    error:
       if ( newProcessor )
       {
-         if ( processorAdded )
-         {
-            _processorMgr->delProcessor( &processor ) ;
-         }
-         else
-         {
-            _processorMgr->destroyProcessor( processor ) ;
-         }
+         _processorMgr->delProcessor( &processor ) ;
       }
       goto done ;
    }
@@ -264,32 +266,30 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTINSERTCTX_OPEN, "_rtnExtInsertCtx::open" )
    INT32 _rtnExtInsertCtx::open( rtnExtDataProcessorMgr *processorMgr,
-                                 const CHAR *csName, const CHAR *clName,
-                                 const CHAR *idxName, const BSONObj &object,
-                                 pmdEDUCB *cb, SDB_DPSCB *dpscb )
+                                 utilCLUniqueID clUniqID, const CHAR *idxName,
+                                 const BSONObj &object, pmdEDUCB *cb,
+                                 SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTINSERTCTX_OPEN ) ;
-      std::vector<rtnExtDataProcessor *> processors ;
+      rtnExtDataProcessor *processor = NULL ;
 
-      SDB_ASSERT( processorMgr && csName && clName && idxName,
-                  "Invalid argument" ) ;
+      SDB_ASSERT( processorMgr && idxName, "Invalid argument" ) ;
 
       _processorMgr = processorMgr ;
-      rc = processorMgr->getProcessorsAndLock( csName, clName, idxName,
-                                               EXCLUSIVE, processors ) ;
+      rc = processorMgr->getProcessorByIdx( clUniqID, idxName,
+                                            EXCLUSIVE, processor ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
       _lockType = EXCLUSIVE ;
-      SDB_ASSERT( processors.size() <= 1, "Processor number is wrong" ) ;
-      if ( 0 == processors.size() )
+      if ( !processor )
       {
          goto done ;
       }
 
-      _appendProcessors( processors ) ;
+      _appendProcessor( processor ) ;
       _processorLocked = TRUE ;
 
-      rc = processors.back()->processInsert( object, cb, NULL ) ;
+      rc = processor->processInsert( object, cb, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Process insert failed[ %d ]", rc ) ;
 
    done:
@@ -310,32 +310,30 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDELETECTX_OPEN, "_rtnExtInsertCtx::open" )
    INT32 _rtnExtDeleteCtx::open( rtnExtDataProcessorMgr *processorMgr,
-                                 const CHAR *csName, const CHAR *clName,
-                                 const CHAR *idxName, const BSONObj &object,
-                                 pmdEDUCB *cb, SDB_DPSCB *dpscb )
+                                 utilCLUniqueID clUniqID, const CHAR *idxName,
+                                 const BSONObj &object, pmdEDUCB *cb,
+                                 SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDELETECTX_OPEN ) ;
-      std::vector<rtnExtDataProcessor *> processors ;
+      rtnExtDataProcessor *processor = NULL ;
 
-      SDB_ASSERT( processorMgr && csName && clName && idxName,
-                  "Invalid argument" ) ;
+      SDB_ASSERT( processorMgr && idxName, "Invalid argument" ) ;
 
       _processorMgr = processorMgr ;
-      rc = processorMgr->getProcessorsAndLock( csName, clName, idxName,
-                                               EXCLUSIVE, processors ) ;
+      rc = processorMgr->getProcessorByIdx( clUniqID, idxName,
+                                            EXCLUSIVE, processor ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
       _lockType = EXCLUSIVE ;
-      SDB_ASSERT( processors.size() <= 1, "Processor number is wrong" ) ;
-      if ( 0 == processors.size() )
+      if ( !processor )
       {
          goto done ;
       }
 
-      _appendProcessors( processors ) ;
+      _appendProcessor( processor ) ;
       _processorLocked = TRUE ;
 
-      rc = processors.back()->processDelete( object, cb, NULL ) ;
+      rc = processor->processDelete( object, cb, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Process delete failed[ %d ]", rc ) ;
 
    done:
@@ -356,33 +354,30 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTUPDATECTX_OPEN, "_rtnExtUpdateCtx::open" )
    INT32 _rtnExtUpdateCtx::open( rtnExtDataProcessorMgr *processorMgr,
-                                 const CHAR *csName, const CHAR *clName,
-                                 const CHAR *idxName, const BSONObj &oldObj,
-                                 const BSONObj &newObj, pmdEDUCB *cb,
-                                 SDB_DPSCB *dpscb )
+                                 utilCLUniqueID clUniqID, const CHAR *idxName,
+                                 const BSONObj &oldObj, const BSONObj &newObj,
+                                 pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTUPDATECTX_OPEN ) ;
-      std::vector<rtnExtDataProcessor *> processors ;
+      rtnExtDataProcessor *processor = NULL ;
 
-      SDB_ASSERT( processorMgr && csName && clName && idxName,
-                  "Invalid argument" ) ;
+      SDB_ASSERT( processorMgr && idxName, "Invalid argument" ) ;
 
       _processorMgr = processorMgr ;
-      rc = processorMgr->getProcessorsAndLock( csName, clName, idxName,
-                                               EXCLUSIVE, processors ) ;
+      rc = processorMgr->getProcessorByIdx( clUniqID, idxName,
+                                            EXCLUSIVE, processor ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
       _lockType = EXCLUSIVE ;
-      SDB_ASSERT( processors.size() <= 1, "Processor number is wrong" ) ;
-      if ( 0 == processors.size() )
+      if ( !processor )
       {
          goto done ;
       }
 
-      _appendProcessors( processors ) ;
+      _appendProcessor( processor ) ;
       _processorLocked = TRUE ;
 
-      rc = processors.back()->processUpdate( oldObj, newObj, cb, NULL ) ;
+      rc = processor->processUpdate( oldObj, newObj, cb, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Process update failed[ %d ]", rc ) ;
 
    done:
@@ -392,31 +387,17 @@ namespace engine
       goto done ;
    }
 
-   _rtnExtDropOprCtx::_rtnExtDropOprCtx( DMS_EXTOPR_TYPE type )
-   : _rtnExtContextBase( type ),
-     _removeFiles( FALSE )
-   {
-   }
-
-   _rtnExtDropOprCtx::~_rtnExtDropOprCtx()
-   {
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDROPOPRCTX_OPEN, "_rtnExtDropOprCtx::open" )
-   INT32 _rtnExtDropOprCtx::open( rtnExtDataProcessorMgr *processorMgr,
-                                  const CHAR *csName, const CHAR *clName,
-                                  const CHAR *idxName, pmdEDUCB *cb,
-                                  BOOLEAN removeFiles, SDB_DPSCB *dpscb )
+   INT32 _rtnExtDropCSCtx::open( rtnExtDataProcessorMgr *processorMgr,
+                                 utilCSUniqueID csUniqID, pmdEDUCB *cb,
+                                 BOOLEAN removeFiles, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDROPOPRCTX_OPEN ) ;
       std::vector<rtnExtDataProcessor *> processors ;
       vector <rtnExtDataProcessor *> processorVecP1 ;
 
       _processorMgr = processorMgr ;
-      rc = processorMgr->getProcessorsAndLock( csName, clName, idxName,
-                                               EXCLUSIVE, processors ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get processors failed[ %d ]", rc ) ;
+      rc = processorMgr->getProcessorsByCS( csUniqID, EXCLUSIVE, processors ) ;
+      PD_RC_CHECK( rc, PDERROR, "Prepare processors failed[ %d ]", rc ) ;
       if ( 0 == processors.size() )
       {
          goto done ;
@@ -446,7 +427,6 @@ namespace engine
       {
          _appendProcessors( processors ) ;
       }
-      PD_TRACE_EXITRC( SDB__RTNEXTDROPOPRCTX_OPEN, rc ) ;
       return rc ;
    error:
       if ( _removeFiles )
@@ -465,12 +445,10 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDROPOPRCTX_DONE, "_rtnExtDropOprCtx::done" )
-   INT32 _rtnExtDropOprCtx::_onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   INT32 _rtnExtDropCSCtx::_onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       INT32 ret = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDROPOPRCTX_DONE ) ;
 
       // For drop operation, the processors need to be removed.
       for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end();)
@@ -488,7 +466,7 @@ namespace engine
             }
          }
          // Unlock and delete all processors.
-         _processorMgr->unlockProcessor( (*itr)->getName(), EXCLUSIVE ) ;
+         _processorMgr->unlockProcessor( (*itr)->getID(), EXCLUSIVE ) ;
          _processorMgr->delProcessor( &(*itr ) ) ;
          _processors.erase( itr ) ;
       }
@@ -499,22 +477,191 @@ namespace engine
       }
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDROPOPRCTX_DONE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDROPOPRCTX_ABORT, "_rtnExtDropOprCtx::abort" )
-   INT32 _rtnExtDropOprCtx::_onAbort( pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   INT32 _rtnExtDropCSCtx::_onAbort( pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
-      PD_TRACE_ENTRY( SDB__RTNEXTDROPOPRCTX_ABORT ) ;
       for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end(); )
       {
          (*itr)->doDropP1Cancel( cb, dpscb ) ;
          _processors.erase( itr ) ;
       }
-      PD_TRACE_EXIT( SDB__RTNEXTDROPOPRCTX_ABORT ) ;
+
+      return SDB_OK ;
+   }
+
+   INT32 _rtnExtDropCLCtx::open( rtnExtDataProcessorMgr *processorMgr,
+                                 utilCLUniqueID clUniqID, pmdEDUCB *cb,
+                                 SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      std::vector<rtnExtDataProcessor *> processors ;
+      vector <rtnExtDataProcessor *> processorVecP1 ;
+
+      _processorMgr = processorMgr ;
+      rc = processorMgr->getProcessorsByCL( clUniqID, EXCLUSIVE, processors ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get processors failed[ %d ]", rc ) ;
+      if ( 0 == processors.size() )
+      {
+         goto done ;
+      }
+      _processorLocked = TRUE ;
+      _lockType = EXCLUSIVE ;
+
+      for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
+            itr != processors.end(); ++itr )
+      {
+         rc = (*itr)->doDropP1( cb, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Processor drop operation failed[ %d ]",
+                      rc ) ;
+         processorVecP1.push_back( *itr ) ;
+      }
+
+   done:
+      if ( _processorLocked )
+      {
+         _appendProcessors( processors ) ;
+      }
+      return rc ;
+   error:
+      for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
+            itr != _processors.end(); ++itr )
+      {
+         (*itr)->doDropP1Cancel( cb, NULL ) ;
+      }
+      for ( vector<rtnExtDataProcessor *>::iterator itr = processorVecP1.begin();
+            itr != processorVecP1.end(); ++itr )
+      {
+         (*itr)->doDropP1Cancel( cb, NULL ) ;
+      }
+      goto done ;
+   }
+
+   INT32 _rtnExtDropCLCtx::_onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 ret = SDB_OK ;
+
+      // For drop operation, the processors need to be removed.
+      for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end();)
+      {
+         ret = (*itr)->doDropP2( cb, dpscb ) ;
+         if ( ret )
+         {
+            PD_LOG( PDERROR, "Do drop phase 2 failed[ %d ]", rc ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = ret ;
+            }
+         }
+         // Unlock and delete all processors.
+         _processorMgr->unlockProcessor( (*itr)->getID(), EXCLUSIVE ) ;
+         _processorMgr->delProcessor( &(*itr ) ) ;
+         _processors.erase( itr ) ;
+      }
+      _processorLocked = FALSE ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnExtDropCLCtx::_onAbort( pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   {
+      for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end(); )
+      {
+         (*itr)->doDropP1Cancel( cb, dpscb ) ;
+         _processors.erase( itr ) ;
+      }
+      return SDB_OK ;
+   }
+
+   INT32 _rtnExtDropIdxCtx::open( rtnExtDataProcessorMgr *processorMgr,
+                                  utilCLUniqueID clUniqID, const CHAR *idxName,
+                                  pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      rtnExtDataProcessor *processor = NULL ;
+
+      _processorMgr = processorMgr ;
+      rc = processorMgr->getProcessorByIdx( clUniqID, idxName,
+                                            EXCLUSIVE, processor ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get processors failed[ %d ]", rc ) ;
+      if ( !processor )
+      {
+         goto done ;
+      }
+      _processorLocked = TRUE ;
+      _lockType = EXCLUSIVE ;
+
+      rc = processor->doDropP1( cb, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Processor drop operation failed[ %d ]", rc ) ;
+
+   done:
+      if ( _processorLocked )
+      {
+         _appendProcessor( processor ) ;
+      }
+      return rc ;
+   error:
+      for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
+            itr != _processors.end(); ++itr )
+      {
+         (*itr)->doDropP1Cancel( cb, NULL ) ;
+      }
+
+      goto done ;
+   }
+
+   INT32 _rtnExtDropIdxCtx::_onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 ret = SDB_OK ;
+
+      // For drop operation, the processors need to be removed.
+      for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end();)
+      {
+         ret = (*itr)->doDropP2( cb, dpscb ) ;
+         if ( ret )
+         {
+            PD_LOG( PDERROR, "Do drop phase 2 failed[ %d ]", rc ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = ret ;
+            }
+         }
+         // Unlock and delete all processors.
+         _processorMgr->unlockProcessor( (*itr)->getID(), EXCLUSIVE ) ;
+         _processorMgr->delProcessor( &(*itr ) ) ;
+         _processors.erase( itr ) ;
+      }
+      _processorLocked = FALSE ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnExtDropIdxCtx::_onAbort( pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   {
+      for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end(); )
+      {
+         (*itr)->doDropP1Cancel( cb, dpscb ) ;
+         _processors.erase( itr ) ;
+      }
       return SDB_OK ;
    }
 
@@ -529,8 +676,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTTRUNCATECTX_OPEN, "_rtnExtTruncateCtx::open" )
    INT32 _rtnExtTruncateCtx::open( rtnExtDataProcessorMgr *processorMgr,
-                                   const CHAR *csName, const CHAR *clName,
-                                   pmdEDUCB *cb, SDB_DPSCB *dpscb )
+                                   utilCLUniqueID clUniqueID, pmdEDUCB *cb,
+                                   SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTTRUNCATECTX_OPEN ) ;
@@ -538,8 +685,7 @@ namespace engine
       vector<rtnExtDataProcessor *> processorP1 ;
 
       _processorMgr = processorMgr ;
-      rc = processorMgr->getProcessorsAndLock( csName, clName, NULL,
-                                               EXCLUSIVE, processors ) ;
+      rc = processorMgr->getProcessorsByCL( clUniqueID, EXCLUSIVE, processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Get processors failed[ %d ]", rc ) ;
       if ( 0 == processors.size() )
       {
@@ -756,71 +902,84 @@ namespace engine
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_GETEXTDATANAME, "_rtnExtDataHandler::getExtDataName" )
-   INT32 _rtnExtDataHandler::getExtDataName( const CHAR *csName,
-                                             const CHAR *clName,
+   INT32 _rtnExtDataHandler::getExtDataName( utilCLUniqueID clUniqID,
                                              const CHAR *idxName,
-                                             CHAR *buff, UINT32 buffSize )
+                                             CHAR *extCSName,
+                                             UINT32 csNameBufSize,
+                                             CHAR *extCLName,
+                                             UINT32 clNameBufSize )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_GETEXTDATANAME ) ;
-      SDB_ASSERT( csName && clName && idxName, "Names should not be NULL" ) ;
-      if ( !buff )
+      ostringstream name ;
+
+      if ( UTIL_INVALID_UNIQUEID == clUniqID )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Buffer is not valid" ) ;
+         PD_LOG( PDERROR, "Collection unique id is invalid" ) ;
          goto error ;
       }
-      else if ( buffSize < DMS_COLLECTION_FULL_NAME_SZ + 1 )
+
+      name << SYS_PREFIX"_" << clUniqID << "_" << idxName ;
+      if ( extCSName && csNameBufSize > 0 )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Buffer size too small" ) ;
-         goto error ;
+         ossSnprintf( extCSName, csNameBufSize, name.str().c_str() ) ;
       }
-      rtnExtDataProcessor::genExtDataNames( csName, clName, idxName, NULL, 0,
-                                            buff, buffSize ) ;
+
+      if ( extCLName && clNameBufSize )
+      {
+         ossSnprintf( extCLName, clNameBufSize,
+                      "%s.%s", name.str().c_str(), name.str().c_str() ) ;
+      }
+
    done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_GETEXTDATANAME, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_CHECK, "_rtnExtDataHandler::check" )
-   INT32 _rtnExtDataHandler::check( DMS_EXTOPR_TYPE type, const CHAR *csName,
-                                    const CHAR *clName, const CHAR *idxName,
+   INT32 _rtnExtDataHandler::check( DMS_EXTOPR_TYPE type,
+                                    utilCLUniqueID clUniqID,
+                                    const CHAR *idxName,
                                     const BSONObj *object,
-                                    const BSONObj *objNew, pmdEDUCB *cb )
+                                    const BSONObj *objNew,
+                                    pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_CHECK ) ;
 
+      rtnExtDataProcessor *processor = NULL ;
       std::vector<rtnExtDataProcessor *> processors ;
 
-      rc = _edpMgr->getProcessorsAndLock( csName, clName, idxName, SHARED,
-                                          processors ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get processors for cs[ %s ] and cl[ %s ] "
-                   "failed[ %d ]", csName, clName, rc ) ;
-
-      SDB_ASSERT( processors.size() <= 1, "Processor number is wrong" ) ;
-      if ( 0 == processors.size() )
+      if ( idxName )
       {
-         goto done ;
+         rc = _edpMgr->getProcessorByIdx( clUniqID, idxName, SHARED,
+                                          processor ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
+      }
+      else
+      {
+         rc = _edpMgr->getProcessorsByCL( clUniqID, SHARED, processors ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get external processors failed[ %d ]",
+                      rc ) ;
+         SDB_ASSERT( processors.size() <= 1, "Processor number is wrong" ) ;
+         if ( 0 == processors.size() )
+         {
+            goto done ;
+         }
+         processor = processors.front() ;
       }
 
+      if ( processor )
       {
-         rtnExtDataProcessor *processor = processors.front() ;
-         if ( processor )
-         {
-            rc = processor->check( type, object, objNew ) ;
-            PD_RC_CHECK( rc, PDERROR, "Processor check failed[ %d ]", rc ) ;
-         }
+         rc = processor->check( type, object, objNew ) ;
+         PD_RC_CHECK( rc, PDERROR, "Processor check failed[ %d ]", rc ) ;
       }
 
    done:
-      if ( processors.size() > 0 )
+      if ( processor )
       {
-         _edpMgr->unlockProcessors( processors, SHARED ) ;
+         _edpMgr->unlockProcessor( processor->getID(), SHARED ) ;
       }
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_CHECK, rc ) ;
       return rc ;
@@ -829,8 +988,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONOPENTEXTIDX, "_rtnExtDataHandler::onOpenTextIdx" )
-   INT32 _rtnExtDataHandler::onOpenTextIdx( const CHAR *csName,
-                                            const CHAR *clName,
+   INT32 _rtnExtDataHandler::onOpenTextIdx( utilCLUniqueID clUniqID,
                                             const CHAR *idxName,
                                             const BSONObj &idxKeyDef )
    {
@@ -838,12 +996,9 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONOPENTEXTIDX ) ;
       rtnExtDataProcessor *processor = NULL ;
 
-      rc = _edpMgr->createProcessor( csName, clName, idxName,
-                                     idxKeyDef, processor ) ;
-      PD_RC_CHECK( rc, PDERROR, "Create external processor for cl[ %s.%s ], "
-                   "and index[%s] failed[ %d ]", csName, clName, idxName, rc ) ;
-      rc = _edpMgr->addProcessor( processor ) ;
-      PD_RC_CHECK( rc, PDERROR, "Add external processor failed[ %d ]", rc ) ;
+      rc = _edpMgr->createProcessor( clUniqID, idxName, idxKeyDef,
+                                     processor, TRUE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Create external processor failed[ %d ]", rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONOPENTEXTIDX, rc ) ;
@@ -851,20 +1006,20 @@ namespace engine
    error:
       if ( processor )
       {
-         _edpMgr->destroyProcessor( processor ) ;
+         _edpMgr->delProcessor( &processor ) ;
       }
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDELCS, "_rtnExtDataHandler::onDelCS" )
-   INT32 _rtnExtDataHandler::onDelCS( const CHAR *csName, pmdEDUCB *cb,
+   INT32 _rtnExtDataHandler::onDelCS( utilCSUniqueID csUniqID, pmdEDUCB *cb,
                                       BOOLEAN removeFiles, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDELCS ) ;
-      rtnExtDropOprCtx *context = NULL ;
+      rtnExtDropCSCtx *context = NULL ;
 
-      context = (rtnExtDropOprCtx *)_contextMgr.findContext( cb->getTID() ) ;
+      context = (rtnExtDropCSCtx *)_contextMgr.findContext( cb->getTID() ) ;
       if ( !context )
       {
          rc = _contextMgr.createContext( DMS_EXTOPR_TYPE_DROPCS,
@@ -872,7 +1027,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
       }
 
-      rc = context->open( _edpMgr, csName, NULL, NULL, cb, removeFiles, NULL ) ;
+      rc = context->open( _edpMgr, csUniqID, cb, removeFiles, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Open external delete cs context failed[ %d ]",
                    rc ) ;
 
@@ -888,14 +1043,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDELCL, "_rtnExtDataHandler::onDelCL" )
-   INT32 _rtnExtDataHandler::onDelCL( const CHAR *csName, const CHAR *clName,
-                                      pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   INT32 _rtnExtDataHandler::onDelCL( utilCLUniqueID clUniqID, pmdEDUCB *cb,
+                                      SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDELCL ) ;
-      rtnExtDropOprCtx *context = NULL ;
+      rtnExtDropCLCtx *context = NULL ;
 
-      context = (rtnExtDropOprCtx *)_contextMgr.findContext( cb->getTID() ) ;
+      context = (rtnExtDropCLCtx *)_contextMgr.findContext( cb->getTID() ) ;
       if ( !context )
       {
          rc = _contextMgr.createContext( DMS_EXTOPR_TYPE_DROPCL,
@@ -903,7 +1058,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
       }
 
-      rc = context->open( _edpMgr, csName, clName, NULL, cb, TRUE, NULL ) ;
+      rc = context->open( _edpMgr, clUniqID, cb, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Open external delete cs context failed[ %d ]",
                    rc ) ;
 
@@ -919,10 +1074,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONCRTTEXTIDX, "_rtnExtDataHandler::onCrtTextIdx" )
-   INT32 _rtnExtDataHandler::onCrtTextIdx( const CHAR *csName,
-                                           const CHAR *clName,
-                                           const CHAR *idxName,
-                                           pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   INT32 _rtnExtDataHandler::onCrtTextIdx( utilCLUniqueID clUniqID,
+                                           const CHAR *idxName, pmdEDUCB *cb,
+                                           SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONCRTTEXTIDX ) ;
@@ -943,8 +1097,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX, "_rtnExtDataHandler::onDropTextIdx" )
-   INT32 _rtnExtDataHandler::onDropTextIdx( const CHAR *csName,
-                                            const CHAR *clName,
+   INT32 _rtnExtDataHandler::onDropTextIdx( utilCLUniqueID clUniqID,
                                             const CHAR *idxName,
                                             pmdEDUCB *cb,
                                             SDB_DPSCB *dpscb )
@@ -952,14 +1105,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX ) ;
       SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
-      rtnExtDropOprCtx *context = NULL ;
+      rtnExtDropIdxCtx *context = NULL ;
 
       if ( SDB_DB_FULLSYNC == dbStatus )
       {
          goto done ;
       }
 
-      context = (rtnExtDropOprCtx *)_contextMgr.findContext( cb->getTID() ) ;
+      context = (rtnExtDropIdxCtx *)_contextMgr.findContext( cb->getTID() ) ;
       if ( !context )
       {
          rc = _contextMgr.createContext( DMS_EXTOPR_TYPE_DROPIDX,
@@ -971,8 +1124,7 @@ namespace engine
       // dropping cs or cl. Nothing should be done in that cases.
       if ( DMS_EXTOPR_TYPE_DROPIDX == context->getType() )
       {
-         rc = context->open( _edpMgr, csName, clName,
-                             idxName, cb, TRUE, NULL ) ;
+         rc = context->open( _edpMgr, clUniqID, idxName, cb, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Open external drop context failed[ %d ]",
                       rc ) ;
       }
@@ -989,18 +1141,17 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONREBUILDTEXTIDX, "_rtnExtDataHandler::onRebuildTextIdx" )
-   INT32 _rtnExtDataHandler::onRebuildTextIdx( const CHAR *csName,
-                                               const CHAR *clName,
+   INT32 _rtnExtDataHandler::onRebuildTextIdx( utilCLUniqueID clUniqID,
                                                const CHAR *idxName,
                                                const BSONObj &idxKeyDef,
-                                               pmdEDUCB *cb, SDB_DPSCB *dpscb )
+                                               pmdEDUCB *cb,
+                                               SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONREBUILDTEXTIDX ) ;
       rtnExtRebuildIdxCtx *context = NULL ;
 
-      SDB_ASSERT( csName && clName && idxName && cb,
-                  "Names and cb should not be NULL" ) ;
+      SDB_ASSERT( cb, "cb should not be NULL" ) ;
 
       context = (rtnExtRebuildIdxCtx *)_contextMgr.findContext( cb->getTID() ) ;
       if ( !context )
@@ -1010,8 +1161,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
       }
 
-      rc = context->open( _edpMgr, csName, clName, idxName,
-                          idxKeyDef, cb, NULL ) ;
+      rc = context->open( _edpMgr, clUniqID, idxName, idxKeyDef, cb, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Open external rebuild context failed[ %d ]",
                    rc ) ;
 
@@ -1027,10 +1177,10 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONINSERT, "_rtnExtDataHandler::onInsert" )
-   INT32 _rtnExtDataHandler::onInsert( const CHAR *csName, const CHAR *clName,
+   INT32 _rtnExtDataHandler::onInsert( utilCLUniqueID clUniqID,
                                        const CHAR *idxName,
-                                       const ixmIndexCB &indexCB,
-                                       const BSONObj &object, _pmdEDUCB* cb,
+                                       const BSONObj &object,
+                                       pmdEDUCB* cb,
                                        SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
@@ -1051,7 +1201,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
       }
 
-      rc = context->open( _edpMgr, csName, clName, idxName, object, cb, NULL ) ;
+      rc = context->open( _edpMgr, clUniqID, idxName, object, cb, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context for insert failed[ %d ]", rc ) ;
 
    done:
@@ -1070,9 +1220,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONDELETE, "_rtnExtDataHandler::onDelete" )
-   INT32 _rtnExtDataHandler::onDelete( const CHAR *csName, const CHAR *clName,
+   INT32 _rtnExtDataHandler::onDelete( utilCLUniqueID clUniqID,
                                        const CHAR *idxName,
-                                       const ixmIndexCB &indexCB,
                                        const BSONObj &object, _pmdEDUCB* cb,
                                        SDB_DPSCB *dpscb )
    {
@@ -1096,7 +1245,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
       }
 
-      rc = context->open( _edpMgr, csName, clName, idxName, object, cb, NULL ) ;
+      rc = context->open( _edpMgr, clUniqID, idxName, object, cb, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context for insert failed[ %d ]", rc ) ;
 
    done:
@@ -1115,9 +1264,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONUPDATE, "_rtnExtDataHandler::onUpdate" )
-   INT32 _rtnExtDataHandler::onUpdate( const CHAR *csName, const CHAR *clName,
+   INT32 _rtnExtDataHandler::onUpdate( utilCLUniqueID clUniqID,
                                        const CHAR *idxName,
-                                       const ixmIndexCB &indexCB,
                                        const BSONObj &orignalObj,
                                        const BSONObj &newObj,
                                        pmdEDUCB* cb,
@@ -1142,7 +1290,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
       }
 
-      rc = context->open( _edpMgr, csName, clName, idxName, orignalObj,
+      rc = context->open( _edpMgr, clUniqID, idxName, orignalObj,
                           newObj, cb, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context for insert failed[ %d ]", rc ) ;
 
@@ -1162,8 +1310,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONTRUNCATECL, "_rtnExtDataHandler::onTruncateCL" )
-   INT32 _rtnExtDataHandler::onTruncateCL( const CHAR *csName,
-                                           const CHAR *clName,
+   INT32 _rtnExtDataHandler::onTruncateCL( utilCLUniqueID clUniqID,
                                            pmdEDUCB *cb,
                                            SDB_DPSCB *dpsCB )
    {
@@ -1180,7 +1327,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
       }
 
-      rc = context->open( _edpMgr, csName, clName, cb, NULL ) ;
+      rc = context->open( _edpMgr, clUniqID, cb, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context for truncate failed[ %d ]", rc ) ;
 
    done:

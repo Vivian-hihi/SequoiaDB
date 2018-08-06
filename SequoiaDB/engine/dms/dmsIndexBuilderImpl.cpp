@@ -380,7 +380,8 @@ namespace engine
                                              pmdEDUCB* eduCB,
                                              dmsExtentID indexExtentID)
    : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexExtentID ),
-     _extHandler( NULL )
+     _extHandler( NULL ),
+     _clUniqID( UTIL_INVALID_UNIQUEID )
    {
       ossMemset( _collectionName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
       ossMemset( _idxName, 0, IXM_INDEX_NAME_SIZE + 1 ) ;
@@ -403,6 +404,7 @@ namespace engine
       _extHandler = _suData->getExtDataHandler() ;
       PD_CHECK( _extHandler, SDB_SYS, error, PDERROR,
                 "External data handle is NULL" ) ;
+      _clUniqID = _mbContext->mb()->_clUniqueID ;
 
       ossStrncpy( _collectionName, _mbContext->mb()->_collectionName,
                   DMS_COLLECTION_NAME_SZ + 1 ) ;
@@ -432,9 +434,14 @@ namespace engine
       BOOLEAN hasRebuild = FALSE ;
       INT32 idxID = 0 ;
 
-      rc = _extHandler->onRebuildTextIdx( _suData->getSuName(), _collectionName,
-                                          _idxName, _indexCB->keyPattern(),
-                                          _eduCB ) ;
+      if ( !_extHandler )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "External handler is NULL" ) ;
+         goto error ;
+      }
+      rc = _extHandler->onRebuildTextIdx( _clUniqID, _indexCB->getName(),
+                                          _indexCB->keyPattern(), _eduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "External handle on text index rebuild "
                    "failed: %d", rc ) ;
       rc = _extHandler->done( DMS_EXTOPR_TYPE_REBUILDIDX, _eduCB, NULL ) ;
@@ -496,9 +503,7 @@ namespace engine
          if ( ( SDB_DMS_NOTEXIST != rc ) && ( SDB_DMS_TRUNCATED != rc ) &&
               ( SDB_DMS_INVALID_INDEXCB != rc ) )
          {
-            INT32 rcTmp = _extHandler->onDropTextIdx( _suData->getSuName(),
-                                                      _collectionName,
-                                                      _idxName,
+            INT32 rcTmp = _extHandler->onDropTextIdx( _clUniqID, _idxName,
                                                       _eduCB, NULL ) ;
             if ( rcTmp )
             {

@@ -49,18 +49,30 @@
 #include "rtnExtOprDef.hpp"
 #include "dmsStorageDataCommon.hpp"
 
-#define RTN_EXT_PROCESSOR_NAME_SZ   255
+#define RTN_EXT_PROCESSOR_NAME_SZ      255
+#define RTN_EXT_PROCESSOR_INVALID_ID   -1
 namespace engine
 {
+   // Metadata of the compressor.
    struct _rtnExtProcessorMeta
    {
-      string  _csName ;
-      string  _clName ;
-      string  _idxName ;
-      BSONObj _idxKeyDef ;
+      utilCLUniqueID _clUniqID ;
+      string         _idxName ;
+      BSONObj        _idxKeyDef ;
 
-      INT32 init( const CHAR *csName, const CHAR *clName, const CHAR *idxName,
-                  const BSONObj &idxKeyDef );
+      _rtnExtProcessorMeta()
+      : _clUniqID( UTIL_INVALID_UNIQUEID )
+      {
+      }
+
+      INT32 init( utilCLUniqueID clUniqID, const CHAR *idxName,
+                  const BSONObj &idxKeyDef )
+      {
+         _clUniqID = clUniqID ;
+         _idxName = idxName ;
+         _idxKeyDef = idxKeyDef.copy() ;   // need to copy or not ???
+         return SDB_OK ;
+      }
    } ;
    typedef _rtnExtProcessorMeta rtnExtProcessorMeta ;
 
@@ -77,13 +89,16 @@ namespace engine
       _rtnExtDataProcessor() ;
       ~_rtnExtDataProcessor() ;
 
-      INT32 init( const CHAR *csName, const CHAR *clName,
-                  const CHAR *idxName, const BSONObj &idxKeyDef ) ;
+      INT32 init( utilCLUniqueID clUniqID, const CHAR *idxName,
+                  const BSONObj &idxKeyDef ) ;
 
       // User can set a name for the processor. If not set explicitly, it will
       // be set to the same with the full name of the capped cl by default.
-      INT32 setName( const CHAR *name ) ;
-      const CHAR* getName() const ;
+      // INT32 setName( const CHAR *name ) ;
+      // const CHAR* getName() const ;
+
+      INT64 getID() ;
+      INT32 setTargetNames( const CHAR *csName, const CHAR *clName ) ;
 
       INT32 check( DMS_EXTOPR_TYPE type, const BSONObj *object,
                    const BSONObj *objectNew ) ;
@@ -107,17 +122,15 @@ namespace engine
       INT32 abort() ;
 
       const rtnExtProcessorMeta& getMeta() const { return _meta ; }
+
       INT32 updateMeta( const rtnExtProcessorMeta& meta ) ;
-      BOOLEAN isOwnedBy( const CHAR *csName, const CHAR *clName = NULL,
+
+      BOOLEAN isOwnedBy( utilCSUniqueID csUniqID,
+                         utilCLUniqueID clUniqID = UTIL_INVALID_UNIQUEID,
                          const CHAR *idxName = NULL ) ;
 
-      static void genExtDataNames( const CHAR *csName,
-                                   const CHAR *clName,
-                                   const CHAR *idxName,
-                                   CHAR *extCSName,
-                                   UINT32 csNameBufSize,
-                                   CHAR *extCLName,
-                                   UINT32 clNameBufSize ) ;
+      static void genExtDataNames( utilCLUniqueID clUniqID, const CHAR *idxName,
+                                   string &extCSName, string &extCLName ) ;
 
    private:
       INT32 _prepareCSAndCL( const CHAR *csName, const CHAR *clName,
@@ -141,8 +154,9 @@ namespace engine
       const CHAR* _getExtCLShortName() const ;
 
    private:
-      dmsMBContext         *_mbContext ;
-      CHAR                 _name[ RTN_EXT_PROCESSOR_NAME_SZ + 1 ] ;
+      dmsMBContext         *_mbContext ;  // TODO: YSD 在哪里释放的 ?
+      INT64                _id ;
+      // CHAR                 _name[ RTN_EXT_PROCESSOR_NAME_SZ + 1 ] ;
       rtnExtProcessorMeta  _meta ;
       CHAR                 _cappedCSName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
       CHAR                 _cappedCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
@@ -155,28 +169,38 @@ namespace engine
 
    class _rtnExtDataProcessorMgr : public SDBObject
    {
-      typedef std::map<const CHAR*, rtnExtDataProcessor *>  PROCESSOR_MAP ;
-      typedef PROCESSOR_MAP::iterator                       PROCESSOR_MAP_ITR ;
-      typedef std::map<const CHAR*, ossRWMutex *>           PROCESSOR_LATCH_MAP ;
-      typedef PROCESSOR_LATCH_MAP::iterator                 PROCESSOR_LATCH_MAP_ITR ;
-      typedef std::map<std::string, ossRWMutex *>           CS_LATCH_MAP ;
-      typedef CS_LATCH_MAP::iterator                        CS_LATCH_MAP_ITR ;
+      typedef std::map<INT64, rtnExtDataProcessor *> PROCESSOR_MAP ;
+      typedef std::map<INT64, rtnExtDataProcessor *>::iterator PROCESSOR_MAP_ITR ;
+      typedef std::map<INT64, ossRWMutex *>           PROCESSOR_LATCH_MAP ;
+      typedef std::map<INT64, ossRWMutex *>::iterator PROCESSOR_LATCH_MAP_ITR ;
    public:
       _rtnExtDataProcessorMgr() ;
       ~_rtnExtDataProcessorMgr () ;
 
-      INT32 createProcessor( const CHAR *csName, const CHAR *clName,
-                             const CHAR *idxName, const BSONObj &idxKeyDef,
-                             rtnExtDataProcessor *&processor ) ;
+      // activate: Once activated, the processor can be used by other threads.
+      INT32 createProcessor( utilCLUniqueID clUniqID, const CHAR *idxName,
+                             const BSONObj &idxKeyDef,
+                             rtnExtDataProcessor *&processor,
+                             BOOLEAN activate = TRUE ) ;
+
+      INT32 activateProcessor( rtnExtDataProcessor *processor ) ;
+
       void destroyProcessor( rtnExtDataProcessor *&processor ) ;
 
-      INT32 addProcessor( rtnExtDataProcessor *processor ) ;
-
       INT32 number()  ;
-      INT32 getProcessorsAndLock( const CHAR *csName, const CHAR *clName,
-                                  const CHAR *idxName, OSS_LATCH_MODE lockType,
-                                  std::vector<rtnExtDataProcessor *> &processors ) ;
-      void unlockProcessor( const CHAR *name, OSS_LATCH_MODE lockType ) ;
+
+      INT32 getProcessorsByCS( utilCSUniqueID csUniqID, OSS_LATCH_MODE lockType,
+                               std::vector<rtnExtDataProcessor *> &processors ) ;
+
+      INT32 getProcessorsByCL( utilCLUniqueID clUniqID, OSS_LATCH_MODE lockType,
+                               std::vector<rtnExtDataProcessor *> &processors ) ;
+
+      INT32 getProcessorByIdx( utilCLUniqueID clUniqID, const CHAR *idxName,
+                               OSS_LATCH_MODE lockType,
+                               rtnExtDataProcessor *&processor ) ;
+
+      void unlockProcessor( INT64 processorID, OSS_LATCH_MODE lockType ) ;
+
       void unlockProcessors( std::vector<rtnExtDataProcessor *> &processors,
                              OSS_LATCH_MODE lockType ) ;
 
@@ -185,12 +209,13 @@ namespace engine
    private:
       UINT32 _genProcessorKey( const CHAR *csName, const CHAR *clName,
                                const CHAR *idxName ) ;
+      INT32 _activateProcessor( rtnExtDataProcessor *processor ) ;
    private:
       // Mutex to protect meta data change.
-      ossSpinSLatch       _mutex ;
+      ossSpinSLatch        _mutex ;
       // Map key is processor name, the same with the capped cl name.
-      PROCESSOR_MAP       _processorMap ;
-      PROCESSOR_LATCH_MAP _latchMap ;
+      PROCESSOR_MAP        _processorMap ;
+      PROCESSOR_LATCH_MAP  _latchMap ;
    } ;
    typedef _rtnExtDataProcessorMgr rtnExtDataProcessorMgr ;
 
