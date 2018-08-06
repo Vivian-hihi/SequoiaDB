@@ -888,6 +888,7 @@ typedef struct _flagMappingItem flagMappingItem ;
 INT32 regulateQueryFlags( INT32 flags )
 {
    INT32 newFlags = flags ;
+   UINT32 i = 0 ;
 
    static const flagMappingItem __mapping[] = {
       // add mapping flags as below, if necessary:
@@ -896,7 +897,7 @@ INT32 regulateQueryFlags( INT32 flags )
    static const UINT32 __mappingSize = sizeof( __mapping ) /
                                        sizeof( flagMappingItem ) ;
 
-   for ( UINT32 i = 0; i < __mappingSize; i++ )
+   for ( i = 0 ; i < __mappingSize ; i++ )
    {
       if ( ( __mapping[i]._new != __mapping[i]._original ) &&
            ( __mapping[i]._original & flags ))
