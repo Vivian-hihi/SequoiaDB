@@ -4,17 +4,20 @@
 
 ##语法##
 
-***SdbSnapshotOption[.cond(\<cond\>)][.sel(\<sel\>)][.sort(\<sort\>)][.options(\<options\>)][.skip(\<skipNum\>)][.limit(\<retNum\>)]***
+**SdbSnapshotOption[.cond(\<cond\>)]  
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.sel(\<sel\>)]  
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.sort(\<sort\>)]  
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.options(\<options\>)]  
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.skip(\<skipNum\>)]  
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.limit(\<retNum\>)]**
 
-***SdbSnapshotOption[.cond(\<cond\>)][.skip(\<skipNum\>)][.limit(\<retNum\>)]***
+**SdbSnapshotOption[.cond(\<cond\>)][.skip(\<skipNum\>)][.limit(\<retNum\>)]**
 
-***SdbSnapshotOption[.cond(\<cond\>)].options([options])***
+**SdbSnapshotOption[.cond(\<cond\>)].options(\<options\>)**
 
 ##方法##
 
-###cond###
-
- ( *可选方法* )
+###cond(\<cond\>)###
 
 选择条件。
 
@@ -22,9 +25,7 @@
 | ------ 			| ------ 	| ------ 	| ------   |
 |cond |	Json 对象 | 选择条件，只返回 cond 字段指定的节点或分区组的快照信息，为 null 时，返回整个集群的快照信息。 | 是 |
 
-###sel###
-
- ( *可选方法* )
+###sel(\<sel\>)###
 
 查询返回记录的字段名。
 
@@ -37,9 +38,7 @@
 >* sel 参数是一个json结构，如：{字段名:字段值}，字段值一般指定为空串。sel中指定的字段名在记录中存在，设置字段值不生效；不存在则返回sel中指定的字段名和字段值。
 >* 记录中字段值类型为数组的，我们可以在sel中指定该字段名，用"."操作符加上双引号("")来引用数组元素。
 
-###sort###
-
- ( *可选方法* )
+###sort(\<sort\>)###
 
 查询返回记录的字段名。
 
@@ -47,9 +46,7 @@
 | ------ 			| ------ 	| ------ 	| ------   |
 |sort |	Json 对象 | 指定结果集按指定字段名排序的情况。字段名的值为1或者-1，如：{"name":1,"age":-1}。1代表升序；-1代表降序。 如果不设定 sort 则表示不对结果集做排序。 | 是 |
 
-###options###
-
- ( *可选方法* )
+###options(\<options\>)###
 
 查询返回记录的字段名。
 
@@ -57,9 +54,7 @@
 | ------ 			| ------ 	| ------ 	| ------   |
 | options   |	Json 对象 | 指定快照参数，因不同快照类型而异，在对应[快照类型](database_management/monitoring/snapshot/snapshot.md)查看选项及示例。目前拥有快照参数的有[配置快照](database_management/monitoring/snapshot/SDB_SNAP_CONFIGS.md)。  | 是 |
 
-###skip###
-
- ( *可选方法* )
+###skip(\<skipNum\>)###
 
 查询返回记录的字段名。
 
@@ -71,9 +66,7 @@
 
 >如果不设定 skipNum 的内容或者设定 skipNum 的值为0，相当于返回所有的结果集；如果想从结果集的第3条记录开始返回，可是设置 skipNum 的值等于2。
 
-###limit###
-
- ( *可选方法* )
+###limit(\<retNum\>)###
 
 查询返回记录的字段名。
 

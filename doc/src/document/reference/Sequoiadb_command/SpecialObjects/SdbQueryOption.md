@@ -5,20 +5,24 @@
 
 ##语法##
 
-***SdbQueryOption[.cond(\<cond\>)][.sel(\<sel\>)][.sort(\<sort\>)][.hint(\<hint\>)][.skip(\<skipNum\>)][.limit(\<retNum\>)][.update(\<rule>, [returnNew], [options])][.remove()]***
+**SdbQueryOption[.cond(\<cond\>)]  
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;[.sel(\<sel\>)]  
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;[.sort(\<sort\>)]  
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;[.hint(\<hint\>)]  
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;[.skip(\<skipNum\>)]  
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;[.limit(\<retNum\>)]  
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;[.update(\<rule\>, [returnNew], [options])]  
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;[.remove()]**
 
-***SdbQueryOption[.cond(\<cond\>)][.skip(\<skipNum\>)][.limit(\<retNum\>)]***
+**SdbQueryOption[.cond(<cond>)][.skip(<skipNum>)][.limit(<retNum>)]**
 
-***SdbQueryOption[.cond(\<cond\>)][.update(\<rule>, [returnNew], [options])]***
+**SdbQueryOption[.cond(\<cond\>)][.update(\<rule\>, [returnNew], [options])]**
 
-***SdbQueryOption[.cond(\<cond\>)][.remove()]***
-
+**SdbQueryOption[.cond(\<cond\>)][.remove()]**
 
 ##方法##
 
-###cond###
-
- ( *可选方法* )
+###cond(\<cond\>)###
 
 记录匹配条件。
 
@@ -26,9 +30,7 @@
 | ------ 			| ------ 	| ------ 	| ------   |
 |cond |	Json 对象 | 为空时，查询所有记录；不为空时，查询符合条件记录。如：{"age":{"$gt":30}}。关于匹配条件的使用，可参考[匹配符](reference/operator/match_operator/overview.md)。 | 是 |
 
-###sel###
-
- ( *可选方法* )
+###sel(\<sel\>)###
 
 查询返回记录的字段名。
 
@@ -41,9 +43,7 @@
 >* sel 参数是一个json结构，如：{字段名:字段值}，字段值一般指定为空串。sel中指定的字段名在记录中存在，设置字段值不生效；不存在则返回sel中指定的字段名和字段值。
 >* 记录中字段值类型为数组的，我们可以在sel中指定该字段名，用"."操作符加上双引号("")来引用数组元素。
 
-###sort###
-
- ( *可选方法* )
+###sort(\<sort\>)###
 
 查询返回记录的字段名。
 
@@ -51,9 +51,7 @@
 | ------ 			| ------ 	| ------ 	| ------   |
 |sort |	Json 对象 | 指定结果集按指定字段名排序的情况。字段名的值为1或者-1，如：{"name":1,"age":-1}。1代表升序；-1代表降序。 如果不设定 sort 则表示不对结果集做排序。 | 是 |
 
-###hint###
-
- ( *可选方法* )
+###hint(\<hint\>)###
 
 查询返回记录的字段名。
 
@@ -68,9 +66,7 @@
                         表示查询将使用上述三个索引之一进行。
                         具体使用哪一个，由数据库评估决定。
 
-###skip###
-
- ( *可选方法* )
+###skip(\<skip\>)###
 
 查询返回记录的字段名。
 
@@ -82,9 +78,7 @@
 
 >如果不设定 skipNum 的内容或者设定 skipNum 的值为0，相当于返回所有的结果集；如果想从结果集的第3条记录开始返回，可是设置 skipNum 的值等于2。
 
-###limit###
-
- ( *可选方法* )
+###limit(\<retNum\>)###
 
 查询返回记录的字段名。
 
@@ -96,15 +90,11 @@
 
 >如果不设定 retNum 的内容，相当于返回所有的结果集记录。如果想返回结果集的前5条记录，可是设置 retNum 的值为5。
 
-###remove###
-
- ( *可选方法* )
+###remove()###
 
 删除查询后的结果集。
 
-###update###
-
- ( *可选方法* )
+###update(\<rule\>, [returnNew], [options])###
 
 更新查询后的结果集。
 
