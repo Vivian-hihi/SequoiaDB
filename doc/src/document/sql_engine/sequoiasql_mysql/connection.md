@@ -9,7 +9,7 @@
 
 2. 配置SequoiaDB连接地址
 
-   默认的SequoiaDB连接地址为“localhost:11810”，如需修改可通过bin/sdb_mysql_ctl工具、命令行或配置文件的方式进行修改，具体修改方法详见后面的[配置说明](sql_engine/sequoiasql_mysql/connection.md#配置说明)
+   默认的SequoiaDB连接地址为“localhost:11810”，如需修改可通过bin/sdb_mysql_ctl工具或配置文件的方式进行修改，具体修改方法详见后面的[配置说明](sql_engine/sequoiasql_mysql/connection.md#配置说明)
 
 3. 创建数据库实例
 
@@ -114,14 +114,6 @@
 
 	  注意：修改配置文件后需要重新启动MySQL服务
 
-   (3)通过MySQL shell修改  
-
- ```lang-javascript
- mysql> SET GLOBAL sequoiadb_conn_addr='192.168.20.37:11810,192.168.20.38:11810';
- ```
-
-	  注意：通过shell方式进行的配置为临时有效，当重启MySQL服务后配置将失效。如果需要配置永久生效则必须通过修改配置文件。  
- 
  配置完成后，可以通过以下命令查看配置结果
 
  ```lang-javascript
@@ -131,7 +123,7 @@
 2. 配置分区表  
    默认情况下，在mysql上创建表将同步在SequoiaDB上创建对应的分区表（hash分区，包含所有分区组）。  
    分区键优先使用主键字段，如果建表时没有创建主键则使用唯一键，如果没有创建唯一键则使用第一个字段。  
-   用户可以通过将配置参数“sequoiadb_use_partition”设置为“OFF”禁止创建默认分区表，该配置参数同样可以在shell命令行和配置文件中修改：  
+   用户可以通过将配置参数“sequoiadb_use_partition”设置为“OFF”禁止创建默认分区表，该配置参数可以在shell命令行和配置文件中修改：  
    (1)修改安装路径下的配置文件my.cnf，在[mysqldN]下添加如下配置（N表示正整数）：  
 
  ```lang-javascript
@@ -146,6 +138,8 @@
  mysql> SET GLOBAL sequoiadb_use_partition=OFF;
  ```
 
+	  注意：通过shell方式进行的配置为临时有效，当重启MySQL服务后配置将失效。如果需要配置永久生效则必须通过修改配置文件。  
+ 
 3. 建表参数  
    在mysql上创建表时，也可以通过comment参数传入自定义分区表配置，comment参数为json格式，具体配置参数如下表：
  
