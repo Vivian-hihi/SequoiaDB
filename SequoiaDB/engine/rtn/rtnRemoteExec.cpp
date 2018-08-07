@@ -113,7 +113,8 @@ namespace engine
       rc = utilReadConfigureFile ( conf, desc, vm ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to read configure file, rc = %d", rc ) ;
+         PD_LOG ( PDERROR,
+                  "Failed to read configure file[%s], rc = %d", conf, rc ) ;
          goto error ;
       }
       else if ( vm.count(hostname2) )
@@ -229,7 +230,7 @@ namespace engine
          SINT32 startFrom = 0 ;
          SINT32 numReturned = 0 ;
          vector<BSONObj> objLst ;
-        
+
          // extract message
          rc = msgExtractReply ( pReceiveBuffer, retCode, &contextID,
                                 &startFrom, &numReturned, objLst ) ;
