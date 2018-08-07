@@ -65,6 +65,16 @@
             </ruleList>
         </throwError>
         <consoleWrite text="ok&#xA;"/>
+        
+        <!--check ${installdir}/bin/sequoiadb exist-->
+        <consoleWrite text="${msg(Upgrade.NormalMsg.SequoiadbExist)}"/>
+        <throwError>
+            <text>${msg(Upgrade.ErrorMsg.SequoiadbExist)}</text>
+            <ruleList>
+                <fileTest condition="not_exists" path="${installdir}/bin/sequoiadb"/>
+            </ruleList>
+        </throwError>
+        <consoleWrite text="ok&#xA;"/>
 
         <!--check version compatibility-->
         <setInstallerVariable name="old_version" value="0"/>
