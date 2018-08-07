@@ -17,7 +17,7 @@ public class BucketVersioningController {
         return bucketName + "@versioning";
     }
 
-    @GetMapping(value = "/{bucketname", params = RestParamDefine.VERSIONING)
+    @GetMapping(value = "/{bucketname}", params = RestParamDefine.VERSIONING)
     public String getBucketVersioning(@PathVariable("bucketname") String bucketName){
         return bucketName + "&versioning";
     }

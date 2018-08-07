@@ -20,10 +20,9 @@ public class BucketDelimiterController {
         return bucketName + "@delimiter";
     }
 
-    @GetMapping(value = "/{bucketname", params = RestParamDefine.DELIMITER)
+    @GetMapping(value = "/{bucketname}", params = RestParamDefine.DELIMITER)
     public String getBucketDelimiter(@PathVariable("bucketname") String bucketName) {
         return bucketName + "&versioning";
     }
-
 
 }

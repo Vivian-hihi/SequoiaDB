@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.sequoias3.exception.S3ServerException;
+import com.sequoias3.core.Error;
 
 @ControllerAdvice
 public class RestExceptionHandler {
@@ -19,80 +20,40 @@ public class RestExceptionHandler {
     //TODO: write sequoiadbs3's reponse
     private static final String ERROR_ATTRIBUTE = "X-S3-ERROR";
 
-    private static class ExceptionBody {
-
-        private long timestamp;
-        private int status;
-        private String error;
-        private String exception;
-        private String message;
-        private String path;
-
-        ExceptionBody(S3ServerException e, String path) {
-            this.timestamp = System.currentTimeMillis();
-            this.status = e.getError().getErrorCode();
-            this.error = e.getError().getErrorDescription();
-            this.exception = e.getClass().getName();
-            this.message = e.getMessage();
-            this.path = path;
-        }
-
-        ExceptionBody(Exception e, String path) {
-            this.timestamp = System.currentTimeMillis();
-            this.status = HttpStatus.INTERNAL_SERVER_ERROR.value();
-            this.error = "INTERNAL_SERVER_ERROR";
-            this.exception = e.getClass().getName();
-            this.message = e.getMessage();
-            this.path = path;
-        }
-
-        public long getTimestamp() {
-            return timestamp;
-        }
-
-        public int getStatus() {
-            return status;
-        }
-
-        public String getError() {
-            return error;
-        }
-
-        public String getException() {
-            return exception;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        @Override
-        public String toString() {
-            return String
-                    .format("{\"timestamp\":%d,\"status\":%d,\"error\":\"%s\",\"exception\":\"%s\",\"message\":\"%s\",\"path\":\"%s\"}",
-                            timestamp, status, error, exception, message, path);
-        }
-    }
-
     @ExceptionHandler(S3ServerException.class)
     @ResponseBody
     public ResponseEntity s3ExceptionHandler(S3ServerException e, HttpServletRequest request,
             HttpServletResponse response) {
-        String msg = String.format("request=%s, errcode=%d", request.getRequestURI(), e.getError()
-                .getErrorCode());
+        String msg = String.format("request=%s, errcode=%s", request.getRequestURI(), e.getError()
+                .getCode());
         logger.error(msg, e);
 
         HttpStatus status;
         switch (e.getError()) {
+            case INVALID_ARGUMENT:
+            case MISSING_ARGUMENT:
+            case USER_CREATE_NAME_INVALID:
+            case USER_CREATE_ROLE_INVALID:
+                status = HttpStatus.BAD_REQUEST;
+                break;
+            case INVALID_AUTHORIZATION:
+                status = HttpStatus.UNAUTHORIZED;
+                break;
+            case INVALID_ADMINISTRATOR:
+            case USER_DELETE_LAST_ADMIN:
+                status = HttpStatus.FORBIDDEN;
+                break;
+            case USER_NOT_EXIST:
+                status = HttpStatus.NOT_FOUND;
+                break;
+            case USER_CREATE_EXIST:
+                status = HttpStatus.CONFLICT;
+                break;
             default:
                 status = HttpStatus.INTERNAL_SERVER_ERROR;
         }
 
-        ExceptionBody exceptionBody = new ExceptionBody(e, request.getRequestURI());
+        Error exceptionBody = new Error(e, request.getRequestURI());
         return ResponseEntity.status(status).body(exceptionBody);
     }
 
@@ -104,7 +65,7 @@ public class RestExceptionHandler {
 
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
-        ExceptionBody exceptionBody = new ExceptionBody(e, request.getRequestURI());
+        Error exceptionBody = new Error(e, request.getRequestURI());
         if ("HEAD".equalsIgnoreCase(request.getMethod())) {
             String error = exceptionBody.toString();
             response.setHeader(ERROR_ATTRIBUTE, error);

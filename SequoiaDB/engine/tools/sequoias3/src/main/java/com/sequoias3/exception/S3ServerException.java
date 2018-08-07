@@ -20,6 +20,6 @@ public class S3ServerException extends Exception {
 
     @Override
     public String toString() {
-        return super.toString() + ", errorCode=" + error.getErrorCode();
+        return super.toString() + ", errorCode=" + error.getErrIndex();
     }
 }

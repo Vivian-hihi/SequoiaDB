@@ -12,7 +12,6 @@ public class BucketController {
     private static final Logger logger = LoggerFactory.getLogger(BucketController.class);
 
     @PutMapping(value="/{bucketname}")
-    @ResponseBody
     public String putBucket(@PathVariable("bucketname") String bucketName)
             throws S3ServerException {
         logger.info("bucket=" + bucketName);

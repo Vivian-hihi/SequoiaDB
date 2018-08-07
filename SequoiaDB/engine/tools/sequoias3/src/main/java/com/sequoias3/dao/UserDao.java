@@ -8,5 +8,14 @@ public interface UserDao {
 
     void deleteUser(String userName) throws S3ServerException;
 
-    User getUser(String userName) throws S3ServerException;
+    void updateUserKeys(String userName, String accessKeyId, String secretAccessKey)
+            throws S3ServerException;
+
+    User getUserByName(String userName) throws S3ServerException;
+
+    User getUserByAccessKeyID(String accessKeyID) throws S3ServerException;
+
+    int getMaxID()throws S3ServerException;
+
+    long getCountByRole(String role) throws S3ServerException;
 }
