@@ -1,6 +1,6 @@
 /******************************************************************************
 *@Description : test js object ssh function:  
-*               var ssh = new Ssh( hostname, [user], [password], [port] )
+*               var ssh = newSsh( hostname, [user], [password], [port] )
 *               seqDB-13171:使用ssh连接未建立信赖关系的用户(不指定密码)
 *               seqDB-13172:使用ssh连接主机用户，用户密码错误
 *               seqDB-13173:使用ssh连接主机用户，端口错误
@@ -12,7 +12,7 @@ function testSshWithoutPasswd( hostname )
 {
    try
    {
-      var ssh = new Ssh( hostname, sdbUser ) ;
+      var ssh = newSsh(hostname, sdbUser, undefined, undefined, -6 ) ;
       ssh.close() ;
    }
    catch( e )
@@ -29,7 +29,7 @@ function testSshWithIllegalPara( hostname )
 {
    try
    {
-      var ssh = new Ssh( hostname, sdbUser, "ssss" ) ;
+      var ssh = newSsh( hostname, sdbUser, "ssss", undefined, -6 ) ;
       throw 0 ;
    }
    catch( e )
@@ -42,7 +42,7 @@ function testSshWithIllegalPara( hostname )
    }
    try
    {
-      var ssh = new Ssh( hostname, sdbUser, sdbPasswd, 24 ) ;
+      var ssh = newSsh( hostname, sdbUser, sdbPasswd, 24, -79) ;
       throw 0 ;
    }
    catch( e )
@@ -59,7 +59,7 @@ function testSshWithDefault( hostname )
 {
    try
    {
-      var ssh = new Ssh( hostname ) ;
+      var ssh = newSsh( hostname ) ;
       ssh.close() ;
    }
    catch( e )

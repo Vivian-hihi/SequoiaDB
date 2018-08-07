@@ -250,7 +250,7 @@ function checkLocalFile( filename, mode, content )
 *@Description : ssh at least three times
 *@author      : luweikang          
 ******************************************************************************/
-function newSsh( hostname, sdbUser, sdbPasswd, sshPort)
+function newSsh(hostname, sdbUser, sdbPasswd, sshPort, error)
 {
    var sshSuccess = false;
    for(var i = 0; i < 3; i++)
@@ -258,11 +258,32 @@ function newSsh( hostname, sdbUser, sdbPasswd, sshPort)
       
       try
       {   
-         var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort );
+         if(hostname == undefined)
+         {
+            var ssh = new Ssh( );
+         }
+         else if(sdbUser == undefined)
+         {
+            var ssh = new Ssh( hostname );
+         }
+         else if(sdbPasswd == undefined)
+         {
+            var ssh = new Ssh( hostname, sdbUser );
+         }
+         else if(sshPort == undefined)
+         {
+            var ssh = new Ssh( hostname, sdbUser, sdbPasswd );
+         }
+         else
+         {
+            var ssh = new Ssh( hostname, sdbUser, sdbPasswd, sshPort );
+         }
          sshSuccess = true;
          break;
       }catch( e ){
-         println("ssh failed: "+ e);
+         if(e == error){
+            throw e;
+         }
       }
    }
    if( sshSuccess === false )
