@@ -1,5 +1,6 @@
 package com.sequoias3.service.impl;
 
+import com.sun.istack.internal.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ public class UserServiceImpl implements UserService {
         try {
             // TODO: 1.check admin user and password
             //       2.check username & role
+            
 
             //       3.generate accesskey etc.
             String accessKeyID = "accessKeyID";
@@ -35,7 +37,6 @@ public class UserServiceImpl implements UserService {
 
             UserAuthKey authKey = new UserAuthKey();
             authKey.setAccessKeyID(accessKeyID);
-            authKey.setAccessKeys(accessKeys);
             authKey.setSecretAccessKey(secretAccessKey);
             return authKey;
         }

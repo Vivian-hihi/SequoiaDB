@@ -17,7 +17,7 @@ import com.sequoias3.exception.S3ServerException;
 public class RestExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(RestExceptionHandler.class);
     //TODO: write sequoiadbs3's reponse
-    private static final String ERROR_ATTRIBUTE = "X-SCM-ERROR";
+    private static final String ERROR_ATTRIBUTE = "X-S3-ERROR";
 
     private static class ExceptionBody {
 
@@ -93,14 +93,7 @@ public class RestExceptionHandler {
         }
 
         ExceptionBody exceptionBody = new ExceptionBody(e, request.getRequestURI());
-        if ("HEAD".equalsIgnoreCase(request.getMethod())) {
-            String error = exceptionBody.toString();
-            response.setHeader(ERROR_ATTRIBUTE, error);
-            return ResponseEntity.status(status).build();
-        }
-        else {
-            return ResponseEntity.status(status).body(exceptionBody);
-        }
+        return ResponseEntity.status(status).body(exceptionBody);
     }
 
     @ExceptionHandler(Exception.class)
