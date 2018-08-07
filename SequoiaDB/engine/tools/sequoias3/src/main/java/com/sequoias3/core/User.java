@@ -12,23 +12,43 @@ public class User {
     private String accessKeyID;
     private String secretAccessKey;
 
-    public String getUserName() { return userName; }
+    public String getUserName() {
+        return userName;
+    }
 
-    public void setUserName(String username) { this.userName = username; }
+    public void setUserName(String username) {
+        this.userName = username;
+    }
 
-    public int getUserId() { return userId; }
+    public int getUserId() {
+        return userId;
+    }
 
-    public void setUserId(int userId) { this.userId = userId; }
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
 
-    public String getRole() { return role; }
+    public String getRole() {
+        return role;
+    }
 
-    public void setRole(String role) { this.role = role; }
+    public void setRole(String role) {
+        this.role = role;
+    }
 
-    public String getAccessKeyID() { return accessKeyID; }
+    public String getAccessKeyID() {
+        return accessKeyID;
+    }
 
-    public void setAccessKeyID(String accessKeyID) { this.accessKeyID = accessKeyID; }
+    public void setAccessKeyID(String accessKeyID) {
+        this.accessKeyID = accessKeyID;
+    }
 
-    public String getSecretAccessKey() { return secretAccessKey; }
+    public String getSecretAccessKey() {
+        return secretAccessKey;
+    }
 
-    public void setSecretAccessKey(String secretAccessKey) { this.secretAccessKey = secretAccessKey; }
+    public void setSecretAccessKey(String secretAccessKey) {
+        this.secretAccessKey = secretAccessKey;
+    }
 }

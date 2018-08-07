@@ -8,6 +8,11 @@ public class AccessKeys {
     private String accessKeyID;
     private String secretAccessKey;
 
+    public AccessKeys(String accessKeyID, String secretAccessKey) {
+        this.accessKeyID = accessKeyID;
+        this.secretAccessKey = secretAccessKey;
+    }
+
     public String getAccessKeyID() {
         return accessKeyID;
     }

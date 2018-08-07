@@ -15,7 +15,7 @@ public interface UserDao {
 
     User getUserByAccessKeyID(String accessKeyID) throws S3ServerException;
 
-    int getMaxID()throws S3ServerException;
+    int getMaxID() throws S3ServerException;
 
     long getCountByRole(String role) throws S3ServerException;
 }

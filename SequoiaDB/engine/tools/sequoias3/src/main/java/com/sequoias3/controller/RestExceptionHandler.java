@@ -1,8 +1,7 @@
 package com.sequoias3.controller;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.sequoias3.core.Error;
+import com.sequoias3.exception.S3ServerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -11,8 +10,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.sequoias3.exception.S3ServerException;
-import com.sequoias3.core.Error;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @ControllerAdvice
 public class RestExceptionHandler {
@@ -23,9 +22,9 @@ public class RestExceptionHandler {
     @ExceptionHandler(S3ServerException.class)
     @ResponseBody
     public ResponseEntity s3ExceptionHandler(S3ServerException e, HttpServletRequest request,
-            HttpServletResponse response) {
-        String msg = String.format("request=%s, errcode=%s", request.getRequestURI(), e.getError()
-                .getCode());
+                                             HttpServletResponse response) {
+        String msg = String.format("request=%s, errcode=%s, message=%s", request.getRequestURI(), e.getError()
+                .getCode(), e.getMessage());
         logger.error(msg, e);
 
         HttpStatus status;
@@ -59,7 +58,7 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity unexpectedExceptionHandler(Exception e, HttpServletRequest request,
-            HttpServletResponse response) throws Exception {
+                                                     HttpServletResponse response) throws Exception {
         String msg = String.format("request=%s", request.getRequestURI());
         logger.error(msg, e);
 
@@ -70,8 +69,7 @@ public class RestExceptionHandler {
             String error = exceptionBody.toString();
             response.setHeader(ERROR_ATTRIBUTE, error);
             return ResponseEntity.status(status).build();
-        }
-        else {
+        } else {
             return ResponseEntity.status(status).body(exceptionBody);
         }
     }

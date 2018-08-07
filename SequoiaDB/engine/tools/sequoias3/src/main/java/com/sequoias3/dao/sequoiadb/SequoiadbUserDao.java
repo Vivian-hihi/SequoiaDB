@@ -1,24 +1,24 @@
 package com.sequoias3.dao.sequoiadb;
 
-import com.sequoias3.common.RestParamDefine;
-import com.sequoias3.dao.DaoCollectionDefine;
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
-
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoias3.config.SequoiadbConfig;
 import com.sequoias3.core.User;
+import com.sequoias3.dao.DaoCollectionDefine;
 import com.sequoias3.dao.UserDao;
 import com.sequoias3.exception.S3ServerException;
-
-import javax.jws.soap.SOAPBinding;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 @Repository("UserDao")
 public class SequoiadbUserDao implements UserDao {
+    private static final Logger logger = LoggerFactory.getLogger(SequoiadbUserDao.class);
     @Autowired
     SdbDataSourceWrapper sdbDatasourceWrapper;
 
@@ -41,15 +41,16 @@ public class SequoiadbUserDao implements UserDao {
             newUser.put(User.JSON_KEY_SECRET_ACCESS_KEY, user.getSecretAccessKey());
 
             cl.insert(newUser);
-        }
-        finally {
+        } catch (BaseException e) {
+            logger.warn("insertUser failed. errorMessage = " + e.getMessage(), e);
+            throw e;
+        } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
     }
 
     @Override
     public void deleteUser(String userName) throws S3ServerException {
-        // TODO Auto-generated method stub
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -60,15 +61,17 @@ public class SequoiadbUserDao implements UserDao {
             deleteUser.put(User.JSON_KEY_USERNAME, userName);
 
             cl.delete(deleteUser);
-        }
-        finally {
+        } catch (BaseException e) {
+            logger.warn("deleteUser failed. errorMessage = " + e.getMessage(), e);
+            throw e;
+        } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
     }
 
     @Override
     public void updateUserKeys(String userName, String accessKeyId, String secretAccessKey)
-        throws S3ServerException{
+            throws S3ServerException {
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -81,18 +84,19 @@ public class SequoiadbUserDao implements UserDao {
             modifier.put(User.JSON_KEY_ACCESS_KEY_ID, accessKeyId);
             modifier.put(User.JSON_KEY_SECRET_ACCESS_KEY, secretAccessKey);
             BSONObject setModifier = new BasicBSONObject();
-            setModifier.put(DaoCollectionDefine.MODIFY_PREFIX, modifier);
+            setModifier.put(DaoCollectionDefine.MODIFY_SET, modifier);
 
-            cl.update(matcher,setModifier,null);
-        }
-        finally {
+            cl.update(matcher, setModifier, null);
+        } catch (BaseException e) {
+            logger.warn("updateUserKeys failed. errorMessage = " + e.getMessage(), e);
+            throw e;
+        } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
     }
 
     @Override
     public User getUserByName(String userName) throws S3ServerException {
-        // TODO Auto-generated method stub
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -101,27 +105,22 @@ public class SequoiadbUserDao implements UserDao {
 
             BSONObject matcher = new BasicBSONObject();
             matcher.put(User.JSON_KEY_USERNAME, userName);
-            BSONObject queryResult = cl.queryOne(matcher,null,null,null,0);
-            User user = new User();
-
-            if (null == queryResult){
-                return  null;
+            BSONObject queryResult = cl.queryOne(matcher, null, null, null, 0);
+            if (null == queryResult) {
+                return null;
             }
 
-            if (queryResult.containsField(User.JSON_KEY_USERNAME)){user.setUserName(queryResult.get(User.JSON_KEY_USERNAME).toString());}
-            if (queryResult.containsField(User.JSON_KEY_USERID)){user.setUserId((int)(queryResult.get(User.JSON_KEY_USERID)));}
-            if (queryResult.containsField(User.JSON_KEY_ROLE)){user.setRole(queryResult.get(User.JSON_KEY_ROLE).toString());}
-            if (queryResult.containsField(User.JSON_KEY_ACCESS_KEY_ID)){user.setAccessKeyID(queryResult.get(User.JSON_KEY_ACCESS_KEY_ID).toString());}
-            if (queryResult.containsField(User.JSON_KEY_SECRET_ACCESS_KEY)){user.setSecretAccessKey(queryResult.get(User.JSON_KEY_SECRET_ACCESS_KEY).toString());}
-            return user;
-        }
-        finally {
+            return convertBsonToUser(queryResult);
+        } catch (BaseException e) {
+            logger.warn("getUserByName failed. errorMessage = " + e.getMessage(), e);
+            throw e;
+        } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
     }
 
     @Override
-    public User getUserByAccessKeyID(String accessKeyID) throws S3ServerException{
+    public User getUserByAccessKeyID(String accessKeyID) throws S3ServerException {
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -130,27 +129,22 @@ public class SequoiadbUserDao implements UserDao {
 
             BSONObject matcher = new BasicBSONObject();
             matcher.put(User.JSON_KEY_ACCESS_KEY_ID, accessKeyID);
-            BSONObject queryResult = cl.queryOne(matcher,null,null,null,0);
-            User user = new User();
-
-            if (null == queryResult){
-                return  null;
+            BSONObject queryResult = cl.queryOne(matcher, null, null, null, 0);
+            if (null == queryResult) {
+                return null;
             }
 
-            if (queryResult.containsField(User.JSON_KEY_USERNAME)){user.setUserName(queryResult.get(User.JSON_KEY_USERNAME).toString());}
-            if (queryResult.containsField(User.JSON_KEY_USERID)){user.setUserId((int)(queryResult.get(User.JSON_KEY_USERID)));}
-            if (queryResult.containsField(User.JSON_KEY_ROLE)){user.setRole(queryResult.get(User.JSON_KEY_ROLE).toString());}
-            if (queryResult.containsField(User.JSON_KEY_ACCESS_KEY_ID)){user.setRole(queryResult.get(User.JSON_KEY_ACCESS_KEY_ID).toString());}
-            if (queryResult.containsField(User.JSON_KEY_SECRET_ACCESS_KEY)){user.setSecretAccessKey(queryResult.get(User.JSON_KEY_SECRET_ACCESS_KEY).toString());}
-            return user;
-        }
-        finally {
+            return convertBsonToUser(queryResult);
+        } catch (BaseException e) {
+            logger.warn("getUserByAccessKeyID failed. errorMessage = " + e.getMessage(), e);
+            throw e;
+        } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
     }
 
     @Override
-    public int getMaxID() throws S3ServerException{
+    public int getMaxID() throws S3ServerException {
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -160,24 +154,26 @@ public class SequoiadbUserDao implements UserDao {
             BSONObject selector = new BasicBSONObject();
             selector.put(User.JSON_KEY_USERID, "");
             BSONObject orderBy = new BasicBSONObject();
-            orderBy.put(User.JSON_KEY_USERID,-1);
-            BSONObject queryResult = cl.queryOne(null,selector,orderBy,null,0);
+            orderBy.put(User.JSON_KEY_USERID, -1);
+            BSONObject queryResult = cl.queryOne(null, selector, orderBy, null, 0);
 
             if (null != queryResult) {
-                return (int)(queryResult.get(User.JSON_KEY_USERID));
-            }
-            else {
+                return (int) (queryResult.get(User.JSON_KEY_USERID));
+            } else {
+                //TODO:给系统初始启动时另外提供接口查询是否有管理员用户，如果没有创建一个默认的管理员，直接用getCountByRole
                 return 0;
             }
 
-        }finally {
+        } catch (BaseException e) {
+            logger.warn("getMaxID failed. errorMessage = " + e.getMessage(), e);
+            throw e;
+        } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
-
     }
 
     @Override
-    public long getCountByRole(String role) throws S3ServerException{
+    public long getCountByRole(String role) throws S3ServerException {
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -186,12 +182,32 @@ public class SequoiadbUserDao implements UserDao {
 
             BSONObject matcher = new BasicBSONObject();
             matcher.put(User.JSON_KEY_ROLE, role);
-            long count = cl.getCount(matcher);
-
-            return count;
-        }
-        finally {
+            return cl.getCount(matcher);
+        } catch (BaseException e) {
+            logger.warn("getCountByRole failed. errorMessage = " + e.getMessage(), e);
+            throw e;
+        } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
+    }
+
+    private User convertBsonToUser(BSONObject bsonObject) {
+        User user = new User();
+        if (bsonObject.containsField(User.JSON_KEY_USERNAME)) {
+            user.setUserName(bsonObject.get(User.JSON_KEY_USERNAME).toString());
+        }
+        if (bsonObject.containsField(User.JSON_KEY_USERID)) {
+            user.setUserId((int) (bsonObject.get(User.JSON_KEY_USERID)));
+        }
+        if (bsonObject.containsField(User.JSON_KEY_ROLE)) {
+            user.setRole(bsonObject.get(User.JSON_KEY_ROLE).toString());
+        }
+        if (bsonObject.containsField(User.JSON_KEY_ACCESS_KEY_ID)) {
+            user.setAccessKeyID(bsonObject.get(User.JSON_KEY_ACCESS_KEY_ID).toString());
+        }
+        if (bsonObject.containsField(User.JSON_KEY_SECRET_ACCESS_KEY)) {
+            user.setSecretAccessKey(bsonObject.get(User.JSON_KEY_SECRET_ACCESS_KEY).toString());
+        }
+        return user;
     }
 }

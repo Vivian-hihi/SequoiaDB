@@ -1,11 +1,12 @@
 package com.sequoias3.config;
 
-import java.nio.charset.Charset;
-import java.util.List;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.sequoias3.core.AccessKeys;
+import com.sequoias3.core.Error;
 import com.sequoias3.core.serial.ErrorSerializer;
+import com.sequoias3.core.serial.UserAuthKeySerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -16,10 +17,8 @@ import org.springframework.web.servlet.config.annotation.ContentNegotiationConfi
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.sequoias3.core.serial.UserAuthKeySerializer;
-import com.sequoias3.core.Error;
+import java.nio.charset.Charset;
+import java.util.List;
 
 @Configuration
 @EnableWebMvc
@@ -40,7 +39,6 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter {
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         super.configureMessageConverters(converters);
 
-        //AccessKeys
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         converter.setDefaultCharset(Charset.forName("UTF-8"));
         converters.add(converter);

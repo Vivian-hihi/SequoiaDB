@@ -10,7 +10,7 @@ import java.io.IOException;
 public class ErrorSerializer extends StdSerializer<Error> {
     private static final long serialVersionUID = 5087465916766420390L;
 
-    public ErrorSerializer(){
+    public ErrorSerializer() {
         super(Error.class);
     }
 
@@ -21,7 +21,7 @@ public class ErrorSerializer extends StdSerializer<Error> {
         gen.writeStringField(Error.JSON_CODE, error.getCode());
         gen.writeStringField(Error.JSON_MESSAGE, error.getMessage());
         gen.writeStringField(Error.JSON_RESOURCE, error.getResource());
-        gen.writeNumberField(Error.JSON_REQUESTID, error.getRequestId());
+        //gen.writeNumberField(Error.JSON_REQUESTID, error.getRequestId());
         gen.writeEndObject();
     }
 }

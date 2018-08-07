@@ -1,5 +1,6 @@
 package com.sequoias3;
 
+import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -7,6 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class SequoiaS3Application {
 
     public static void main(String[] args) {
-        SpringApplication.run(SequoiaS3Application.class, args);
+        SpringApplication app = new SpringApplication(SequoiaS3Application.class);
+        app.setBannerMode(Banner.Mode.OFF);
+        app.run(args);
     }
 }
