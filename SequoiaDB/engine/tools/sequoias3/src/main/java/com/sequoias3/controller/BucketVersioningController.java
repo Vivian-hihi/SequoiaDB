@@ -24,5 +24,4 @@ public class BucketVersioningController {
     public String getBucketVersioning(@PathVariable("bucketname") String bucketName) {
         return bucketName + "&versioning";
     }
-
 }

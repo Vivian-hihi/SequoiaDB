@@ -32,6 +32,24 @@ public class ObjectController {
         return "get object by versionId";
     }
 
+    @GetMapping(value = "/{bucketname", params = RestParamDefine.LIST_TYPE2)
+    public String listObjects(@PathVariable("bucketname") String bucketName,
+                              @RequestParam(RestParamDefine.PREFIX) String prefix,
+                              @RequestParam(RestParamDefine.DELIMITER) String delimiter,
+                              @RequestParam(RestParamDefine.STRAT_AFTER) String startAfter,
+                              @RequestParam(RestParamDefine.MAX_KEYS) String maxKeys) {
+        return bucketName + "list-type=2";
+    }
+
+    @GetMapping(value = "/{bucketname", params = RestParamDefine.VERSIONS)
+    public String listObjectsVersions(@PathVariable("bucketname") String bucketName,
+                                      @RequestParam(RestParamDefine.PREFIX) String prefix,
+                                      @RequestParam(RestParamDefine.DELIMITER) String delimiter,
+                                      @RequestParam(RestParamDefine.STRAT_AFTER) String startAfter,
+                                      @RequestParam(RestParamDefine.MAX_KEYS) String maxKeys) {
+        return bucketName + "&versions";
+    }
+
     @DeleteMapping("/{bucketname}/**")
     public String deleteObject(@PathVariable("bucketname") String bucketName) {
         logger.info("delete object");

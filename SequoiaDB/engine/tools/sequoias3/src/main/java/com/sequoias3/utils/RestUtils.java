@@ -21,7 +21,9 @@ public class RestUtils {
         //       1.get access key id
         String accessKeyId = "";
         int beginIndex = authorization.indexOf(RestParamDefine.REST_CREDENTIAL);
-        if (beginIndex == -1) throw new S3ServerException(S3Error.INVALID_AUTHORIZATION, "Invalid user");
+        if (beginIndex == -1) {
+            throw new S3ServerException(S3Error.INVALID_ACCESSKEYID, "Invalid accessKeyId. authorization = " + authorization);
+        }
 
         int endIndex = authorization.indexOf(RestParamDefine.REST_DELIMITER, beginIndex);
         if (endIndex != -1) {
@@ -33,7 +35,7 @@ public class RestUtils {
         //       2.check access key
         User user = userDao.getUserByAccessKeyID(accessKeyId);
         if (null == user) {
-            throw new S3ServerException(S3Error.INVALID_AUTHORIZATION, "Invalid user");
+            throw new S3ServerException(S3Error.INVALID_ACCESSKEYID, "Invalid accessKeyId. accessKeyId = " + accessKeyId);
         }
 
         //       3.check signature

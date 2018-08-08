@@ -1,6 +1,7 @@
 package com.sequoias3.controller;
 
 import com.sequoias3.common.RestParamDefine;
+import com.sequoias3.common.UserParamDefine;
 import com.sequoias3.core.User;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
@@ -26,62 +27,56 @@ public class UserController {
     @PostMapping(value = "/users/{username}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity createUser(@RequestParam(value = RestParamDefine.ROLE, required = false) String role,
                                      @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
-                                     @PathVariable("username") String username)
+                                     @PathVariable(RestParamDefine.USER_NAME) String username)
             throws S3ServerException {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
 
-        if (!adminUser.getRole().equals(RestParamDefine.ROLE_ADMIN)) {
+        if (!adminUser.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
             throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR, "not an admin user.adminUser=" + adminUser.getUserName() + ",role=" + adminUser.getRole());
         }
 
         logger.info("creating user:adminName={},user={},role={}", adminUser.getUserName(), username, role);
         return ResponseEntity.ok()
-                .header("x-amz-id-2", " JuKZqmXuiwFeDQxhD7M8KtsKobSzWA1QEjLbTMTagkKdBX2z7Il1jGhDeJ3j6s80 ")
-                .header("x-amz-requestid", "32FE2CEB32F5EE25")
                 .body(userService.createUser(username, role));
     }
 
     @PutMapping(value = "/users/{username}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity updateUser(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
-                                     @PathVariable("username") String username)
+                                     @PathVariable(RestParamDefine.USER_NAME) String username)
             throws S3ServerException {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
 
-        if (!adminUser.getRole().equals(RestParamDefine.ROLE_ADMIN)) {
+        if (!adminUser.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
             throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR, "not an admin user.adminUser=" + adminUser.getUserName() + ",role=" + adminUser.getRole());
         }
 
         logger.info("creating user:admin={},user={}", adminUser.getUserName(), username);
         return ResponseEntity.ok()
-                .header("x-amz-id-2", " JuKZqmXuiwFeDQxhD7M8KtsKobSzWA1QEjLbTMTagkKdBX2z7Il1jGhDeJ3j6s80 ")
-                .header("x-amz-requestid", "32FE2CEB32F5EE25")
                 .body(userService.updateUser(username));
     }
 
     @GetMapping(value = "/users/{username}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity getUser(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
-                                  @PathVariable("username") String username)
+                                  @PathVariable(RestParamDefine.USER_NAME) String username)
             throws S3ServerException {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
 
-        if (!adminUser.getRole().equals(RestParamDefine.ROLE_ADMIN)) {
+        if (!adminUser.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
             throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR, "not an admin user.adminUser=" + adminUser.getUserName() + ",role=" + adminUser.getRole());
         }
 
         logger.info("get user:admin={},user={}", adminUser.getUserName(), username);
         return ResponseEntity.ok()
-                .header("x-amz-id-2", " JuKZqmXuiwFeDQxhD7M8KtsKobSzWA1QEjLbTMTagkKdBX2z7Il1jGhDeJ3j6s80 ")
-                .header("x-amz-requestid", "32FE2CEB32F5EE25")
                 .body(userService.getUser(username));
     }
 
     @DeleteMapping(value = "/users/{username}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity deleteUser(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
-                                     @PathVariable("username") String username)
+                                     @PathVariable(RestParamDefine.USER_NAME) String username)
             throws S3ServerException {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
 
-        if (!adminUser.getRole().equals(RestParamDefine.ROLE_ADMIN)) {
+        if (!adminUser.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
             throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR, "not an admin user.adminUser=" + adminUser.getUserName() + ",role=" + adminUser.getRole());
         }
 

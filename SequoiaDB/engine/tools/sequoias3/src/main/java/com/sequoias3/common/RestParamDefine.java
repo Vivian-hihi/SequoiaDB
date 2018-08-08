@@ -3,7 +3,6 @@ package com.sequoias3.common;
 public class RestParamDefine {
     public static final String USER_NAME = "username";
     public static final String ROLE = "role";
-    public static final String PASSWORD = "password";
     public static final String AUTHORIZATION = "authorization";
 
     public static final String VERSIONING = "versioning";
@@ -16,9 +15,6 @@ public class RestParamDefine {
     public static final String CONTINUATIONTOKEN = "continuationtoken";
     public static final String STRAT_AFTER = "start-after";
     public static final String MAX_KEYS = "max-keys";
-
-    public static final String ROLE_ADMIN = "admin";
-    public static final String ROLE_NORMAL = "normal";
 
     public static final String REST_CREDENTIAL = "Credential=";
     public static final String REST_DELIMITER = "/";

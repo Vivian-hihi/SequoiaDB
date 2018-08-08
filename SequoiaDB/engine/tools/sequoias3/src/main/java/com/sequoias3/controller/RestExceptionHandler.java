@@ -35,9 +35,7 @@ public class RestExceptionHandler {
             case USER_CREATE_ROLE_INVALID:
                 status = HttpStatus.BAD_REQUEST;
                 break;
-            case INVALID_AUTHORIZATION:
-                status = HttpStatus.UNAUTHORIZED;
-                break;
+            case INVALID_ACCESSKEYID:
             case INVALID_ADMINISTRATOR:
             case USER_DELETE_LAST_ADMIN:
                 status = HttpStatus.FORBIDDEN;

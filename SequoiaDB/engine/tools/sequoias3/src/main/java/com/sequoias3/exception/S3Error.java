@@ -11,8 +11,9 @@ public enum S3Error {
     //403
     INVALID_ADMINISTRATOR(-701, "AccessDenied", "Not admin user."),
 
-    //401
-    INVALID_AUTHORIZATION(-702, "AccessDenied", "Invalid authorization."),
+    //403
+    INVALID_ACCESSKEYID(-702, "InvalidAccessKeyId", "Invalid accessKeyId."),
+    SIGNATURE_NOT_MATCH(-703, "SignatureDoesNotMatch", "Signature does not match."),
 
     // service error
     USER_NOT_EXIST(-800, "NoSuchUser", "User not exist."),

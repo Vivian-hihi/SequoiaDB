@@ -42,7 +42,7 @@ public class SequoiadbUserDao implements UserDao {
 
             cl.insert(newUser);
         } catch (BaseException e) {
-            logger.warn("insertUser failed. errorMessage = " + e.getMessage(), e);
+            logger.error("insertUser failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -62,7 +62,7 @@ public class SequoiadbUserDao implements UserDao {
 
             cl.delete(deleteUser);
         } catch (BaseException e) {
-            logger.warn("deleteUser failed. errorMessage = " + e.getMessage(), e);
+            logger.error("deleteUser failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -88,7 +88,7 @@ public class SequoiadbUserDao implements UserDao {
 
             cl.update(matcher, setModifier, null);
         } catch (BaseException e) {
-            logger.warn("updateUserKeys failed. errorMessage = " + e.getMessage(), e);
+            logger.error("updateUserKeys failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -112,7 +112,7 @@ public class SequoiadbUserDao implements UserDao {
 
             return convertBsonToUser(queryResult);
         } catch (BaseException e) {
-            logger.warn("getUserByName failed. errorMessage = " + e.getMessage(), e);
+            logger.error("getUserByName failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -136,7 +136,7 @@ public class SequoiadbUserDao implements UserDao {
 
             return convertBsonToUser(queryResult);
         } catch (BaseException e) {
-            logger.warn("getUserByAccessKeyID failed. errorMessage = " + e.getMessage(), e);
+            logger.error("getUserByAccessKeyID failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -160,12 +160,10 @@ public class SequoiadbUserDao implements UserDao {
             if (null != queryResult) {
                 return (int) (queryResult.get(User.JSON_KEY_USERID));
             } else {
-                //TODO:给系统初始启动时另外提供接口查询是否有管理员用户，如果没有创建一个默认的管理员，直接用getCountByRole
                 return 0;
             }
-
         } catch (BaseException e) {
-            logger.warn("getMaxID failed. errorMessage = " + e.getMessage(), e);
+            logger.error("getMaxID failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -184,7 +182,7 @@ public class SequoiadbUserDao implements UserDao {
             matcher.put(User.JSON_KEY_ROLE, role);
             return cl.getCount(matcher);
         } catch (BaseException e) {
-            logger.warn("getCountByRole failed. errorMessage = " + e.getMessage(), e);
+            logger.error("getCountByRole failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
