@@ -76,9 +76,6 @@ do                                     \
 /** class name 'sdbReplicaNode' will be deprecated in version 2.x, use 'sdbNode' instead of it. */
 #define sdbReplicaNode         sdbNode
 
-/** class name 'activateReplicaGroup' will be deprecated in version 2.x, use 'sdbReplicaGroup' instead of it. */
-#define activateReplicaGroup   sdbReplicaGroup
-
 /** Force to use specified hint to query, if database have no index assigned by the hint, fail to query. */
 #define QUERY_FORCE_HINT                  0x00000080
 /** Enable parallel sub query, each sub query will finish scanning different part of the data. */
