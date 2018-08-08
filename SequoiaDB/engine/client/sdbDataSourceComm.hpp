@@ -60,10 +60,10 @@ namespace sdbclient
 
    enum DATASOURCE_STRATEGY
    {
-      DS_STY_SERIAL,             /**serial strategy*/
-      DS_STY_RANDOM,             /**random strategy*/
-      DS_STY_LOCAL,              /**local strategy*/
-      DS_STY_BALANCE             /**balance strategy*/
+      DS_STY_SERIAL,             /**< serial strategy */
+      DS_STY_RANDOM,             /**< random strategy */
+      DS_STY_LOCAL,              /**< local strategy */
+      DS_STY_BALANCE             /**< balance strategy */
    } ;
 
    /** \class sdbDataSourceConf

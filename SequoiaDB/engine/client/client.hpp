@@ -50,10 +50,15 @@ do                                     \
 
 #define DLLEXPORT SDB_EXPORT
 
+/** define page size to 4k */
 #define SDB_PAGESIZE_4K           4096
+/** define page size to 8k */
 #define SDB_PAGESIZE_8K           8192
+/** define page size to 16k */
 #define SDB_PAGESIZE_16K          16384
+/** define page size to 32k */
 #define SDB_PAGESIZE_32K          32768
+/** define page size to 64k */
 #define SDB_PAGESIZE_64K          65536
 /** 0 means using database's default pagesize, it 64k now */
 #define SDB_PAGESIZE_DEFAULT      0
@@ -71,7 +76,8 @@ do                                     \
 /** class name 'sdbReplicaNode' will be deprecated in version 2.x, use 'sdbNode' instead of it. */
 #define sdbReplicaNode         sdbNode
 
-#define activateReplicaGroup   activateReplicaGroup
+/** class name 'activateReplicaGroup' will be deprecated in version 2.x, use 'sdbReplicaGroup' instead of it. */
+#define activateReplicaGroup   sdbReplicaGroup
 
 /** Force to use specified hint to query, if database have no index assigned by the hint, fail to query. */
 #define QUERY_FORCE_HINT                  0x00000080
@@ -3078,7 +3084,7 @@ namespace sdbclient
 
    } ;
 
-   /** \class  sdbDataCenter
+   /* \class  sdbDataCenter
        \brief Database operation interfaces of data center.
    */
    class DLLEXPORT sdbDataCenter

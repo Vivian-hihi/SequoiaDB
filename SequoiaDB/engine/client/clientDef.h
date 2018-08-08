@@ -25,48 +25,77 @@
 
 #include "ossTypes.h"
 
-// define value for snapshot
+/** snapshot of all the contexts of all the sessions */
 #define SDB_SNAP_CONTEXTS         0
+/** snapshot of the contexts of current session */
 #define SDB_SNAP_CONTEXTS_CURRENT 1
+/** snapshot of all the sessions */
 #define SDB_SNAP_SESSIONS         2
+/** snapshot of current session */
 #define SDB_SNAP_SESSIONS_CURRENT 3
+/** snapshot of collections */
 #define SDB_SNAP_COLLECTIONS      4
+/** snapshot of collection spaces */
 #define SDB_SNAP_COLLECTIONSPACES 5
+/** snapshot of database */
 #define SDB_SNAP_DATABASE         6
+/** snapshot of system */
 #define SDB_SNAP_SYSTEM           7
+/** snapshot of catalog */
 #define SDB_SNAP_CATALOG          8
+/** snapshot of all the transactions of all the sessions */
 #define SDB_SNAP_TRANSACTIONS     9
+/** snapshot of all transactions of current session */
 #define SDB_SNAP_TRANSACTIONS_CURRENT 10
+/** snapshot of access plans */
 #define SDB_SNAP_ACCESSPLANS      11
+/** snapshot of health */
 #define SDB_SNAP_HEALTH           12
+/** snapshot of configs */
 #define SDB_SNAP_CONFIGS          13
+/** snapshot of service tasks */
 #define SDB_SNAP_SVCTASKS         14
 
-// define value for list
+/** snapshot of all the contexts of all the sessions */
 #define SDB_LIST_CONTEXTS         0
+/** snapshot of the contexts of current session */
 #define SDB_LIST_CONTEXTS_CURRENT 1
+/** snapshot of all the sessions */
 #define SDB_LIST_SESSIONS         2
+/** snapshot of current session */
 #define SDB_LIST_SESSIONS_CURRENT 3
+/** snapshot of collections */
 #define SDB_LIST_COLLECTIONS      4
+/** snapshot of collection spaces */
 #define SDB_LIST_COLLECTIONSPACES 5
+/** snapshot of strorage units */
 #define SDB_LIST_STORAGEUNITS     6
+/** snapshot of all the groups */
 #define SDB_LIST_GROUPS           7
+/** snapshot of store procedures */
 #define SDB_LIST_STOREPROCEDURES  8
+/** snapshot of domains */
 #define SDB_LIST_DOMAINS          9
+/** snapshot of tasks */
 #define SDB_LIST_TASKS            10
+/** snapshot of all the transactions of all the sessions */
 #define SDB_LIST_TRANSACTIONS     11
+/** snapshot of all transactions of current session */
 #define SDB_LIST_TRANSACTIONS_CURRENT 12
+/** snapshot of service tasks */
 #define SDB_LIST_SVCTASKS         14
+// reserved
 #define SDB_LIST_CL_IN_DOMAIN     129
+// reserved
 #define SDB_LIST_CS_IN_DOMAIN     130
 
 
-
+/** define the callback for interruption when read/write data */
 typedef BOOLEAN (*socketInterruptFunc)(void) ;
 
+/** define cache strategy for CPP client to improve performance */
 typedef struct _sdbClientConf
 {
-   // used for cache strategy
    BOOLEAN enableCacheStrategy ; /**< The flag to OPEN the cache strategy */
    UINT32  cacheTimeInterval ;   /**< The life cycle(in seconds) of cached object */
 } sdbClientConf ;
