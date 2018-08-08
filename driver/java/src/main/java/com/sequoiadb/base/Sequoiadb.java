@@ -2311,12 +2311,13 @@ public class Sequoiadb implements Closeable {
     // errorMsg Object to avoid unnecessary toString() invoke when no error happened
     void throwIfError(CommonResponse response, Object errorMsg) throws BaseException {
         if (response.getFlag() != 0) {
+            String remoteAddress = "remote address[" + getNodeName() + "]";
             BSONObject errorObj = response.getErrorObj();
             String detail = getErrorDetail(errorObj, errorMsg);
             if (detail != null && !detail.isEmpty()) {
-                throw new BaseException(response.getFlag(), detail);
+                throw new BaseException(response.getFlag(), remoteAddress + ", " + detail);
             } else {
-                throw new BaseException(response.getFlag());
+                throw new BaseException(response.getFlag(), remoteAddress);
             }
         }
     }
@@ -2324,12 +2325,13 @@ public class Sequoiadb implements Closeable {
     // dependent implementation but not invoke throwIfError(r,o) to avoid duplicate stack trace
     void throwIfError(CommonResponse response) throws BaseException {
         if (response.getFlag() != 0) {
+            String remoteAddress = "remote address[" + getNodeName() + "]";
             BSONObject errorObj = response.getErrorObj();
             String detail = getErrorDetail(errorObj, null);
             if (detail != null && !detail.isEmpty()) {
-                throw new BaseException(response.getFlag(), detail);
+                throw new BaseException(response.getFlag(), remoteAddress + ", " + detail);
             } else {
-                throw new BaseException(response.getFlag());
+                throw new BaseException(response.getFlag(), remoteAddress);
             }
         }
     }
