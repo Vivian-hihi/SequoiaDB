@@ -152,7 +152,7 @@ TEST_F( timeTest9499, keepAliveTimoutNotZero9504 )
    ASSERT_EQ( 0, ds.getIdleConnNum() ) << "fail to check idle conn num after sleep" ;
 }
 
-/* 2419问题单回归后打开
+// 2419问题单回归后打开
 // 设置keepAliveTimeout != 0,检查连接有效性
 TEST_F( timeTest9499, keepAliveTimoutNotZeroAgain9504 )
 {
@@ -193,7 +193,6 @@ TEST_F( timeTest9499, keepAliveTimoutNotZeroAgain9504 )
    ossSleep( 10*1000 ) ;
    ASSERT_EQ( 0, ds.getIdleConnNum() ) ;
 }
-*/
 
 // 出池检验连接有效性,停节点后获取不到连接
 TEST_F( timeTest9499, trueTest9501 )
