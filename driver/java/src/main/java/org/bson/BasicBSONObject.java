@@ -92,6 +92,10 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
 		this(false);
 	}
 
+	/**
+	 * Creates an empty object. by default, key won't be sorted
+	 * @param size this parament does not work.
+	 */
 	public BasicBSONObject(int size) {
 		this(false);
 	}

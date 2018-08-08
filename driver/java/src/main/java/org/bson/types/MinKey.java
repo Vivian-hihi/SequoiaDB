@@ -26,6 +26,9 @@ public class MinKey implements Serializable {
 
     private static final long serialVersionUID = 4075901136671855684L;
 
+    /**
+     * Construct an MaxKey object.
+     */
     public MinKey() {
     }
 

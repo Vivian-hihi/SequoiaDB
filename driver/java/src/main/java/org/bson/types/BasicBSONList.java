@@ -28,7 +28,7 @@ import java.util.*;
 /**
  * Utility class to allow array <code>BSONObject</code>s to be created.
  * <p>
- * Note: MongoDB will also create arrays from <code>java.util.List</code>s.
+ * Note: can also create arrays from <code>java.util.List</code>s.
  * </p>
  * <p>
  * <blockquote>
@@ -292,6 +292,11 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
 		return (T) colletion;
 	}
 
+	/**
+	 * Get all the BSON values.
+	 * @return All the BSON values by "java.util#Collection<Object>".
+	 * @throws Exception IllegalArgumentException when the type of BSON value is not supported.
+	 */
 	public Object asList() {
 		Collection<Object> colletion = new LinkedList<Object>();
 		for (String key : this.keySet()) {

@@ -98,14 +98,28 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         return null;
     }
 
+    /**
+     * Construct ObjectId by java.util.Date.
+     */
     public ObjectId( Date time ){
         this(time, _genmachine, _nextInc.getAndIncrement());
     }
 
+    /**
+     * Construct ObjectId.
+     * @param time Date time.
+     * @param  inc Increment.
+     */
     public ObjectId( Date time , int inc ){
         this( time , _genmachine , inc );
     }
 
+    /**
+     * Construct ObjectId.
+     * @param time Date time.
+     * @param machine the number of machine.
+     * @param  inc Increment.
+     */
     public ObjectId( Date time , int machine , int inc ){
         _time = (int)(time.getTime() / 1000);
         _machine = machine;
@@ -140,6 +154,10 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         _new = false;
     }
 
+    /**
+     * Construct ObjectId instance by 12 bytes data..
+     * @param b array of 12 bytes data.
+     */
     public ObjectId( byte[] b ){
         if ( b.length != 12 )
             throw new IllegalArgumentException( "need 12 bytes" );
@@ -273,24 +291,30 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         return _compareUnsigned( _inc , id._inc );
     }
 
+    /**
+     * @return the machine number of this ID.
+     */
     public int getMachine(){
         return _machine;
     }
 
     /**
-     * Gets the time of this ID, in milliseconds
+     * @return the time of this ID, in milliseconds
      */
     public long getTime(){
         return _time * 1000L;
     }
 
     /**
-     * Gets the time of this ID, in seconds
+     * @return the time of this ID, in seconds
      */
     public int getTimeSecond(){
         return _time;
     }
 
+    /**
+     * @return the increment of this ID.
+     */
     public int getInc(){
         return _inc;
     }
@@ -305,10 +329,16 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         return _inc;
     }
 
+    /**
+     * @return tell the current ID has been used or not.
+     */
     public boolean isNew(){
         return _new;
     }
 
+    /**
+     * set the current ID has been used.
+     */
     public void notNew(){
         _new = false;
     }

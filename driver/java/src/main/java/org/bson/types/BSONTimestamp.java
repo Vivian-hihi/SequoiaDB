@@ -25,8 +25,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * this is used for internal increment values.
- * for storing normal dates in MongoDB, you should use java.util.Date
+ * this is used for storing timestamp.
+ * for storing normal dates in database, you should use java.util.Date
  * <b>time</b> is seconds since epoch
  * <b>inc<b> is an ordinal
  */
@@ -36,11 +36,19 @@ public class BSONTimestamp implements Serializable {
     
     static final boolean D = Boolean.getBoolean( "DEBUG.DBTIMESTAMP" );
 
+    /**
+     * Construct an empty BSONTimestamp.
+     */
     public BSONTimestamp(){
         _inc = 0;
         _time = new Date(0L );
     }
 
+    /**
+     * Construct BSONTimestamp.
+     * @param time seconds since epoch
+     * @param inc the increment
+     */
     public BSONTimestamp(int time, int inc ) {
         _time = new Date( time * 1000L );
         _inc = inc;
@@ -64,14 +72,14 @@ public class BSONTimestamp implements Serializable {
     }
 
     /**
-     * @return get Date of time and inc in milliseconds since epoch
+     * @return Date of time and inc in milliseconds since epoch.
      */
     public Date toDate() {
         return new Date(getTime() * 1000L + getInc() / 1000L);
     }
 
     /**
-     * @return get Timestamp of time in milliseconds and inc in nanoseconds since epoch
+     * @return Timestamp of time in milliseconds and inc in nanoseconds since epoch
      */
     public Timestamp toTimestamp() {
         Timestamp ts = new Timestamp(getTime() * 1000L);

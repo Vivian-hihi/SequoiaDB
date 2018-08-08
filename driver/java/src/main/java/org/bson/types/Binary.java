@@ -54,14 +54,23 @@ public class Binary implements Serializable {
         this.data = data;
     }
 
+    /**
+     * @return the type of binary data.
+     */
     public byte getType() {
         return type;
     }
 
+    /**
+     * @return the binary data.
+     */
     public byte[] getData() {
         return data;
     }
 
+    /**
+     * @return the length of binary data.
+     */
     public int length() {
         return data.length;
     }
