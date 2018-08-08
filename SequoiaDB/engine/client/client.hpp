@@ -2688,7 +2688,7 @@ namespace sdbclient
          return pCollectionSpace->renameCollection( oldName, newName, options ) ;
       }
 
-/* \fn INT32 alterCollectionSpace ( const bson::BSONObj & options )
+/** \fn INT32 alterCollectionSpace ( const bson::BSONObj & options )
     \brief Alter collection space.
     \param [in] options The options of collection space to be changed, e.g. { "PageSize": 4096, "Domain": "mydomain" }.
 
@@ -2698,7 +2698,7 @@ namespace sdbclient
 
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
- */
+*/
       INT32 alterCollectionSpace ( const bson::BSONObj & options )
       {
          if ( NULL == pCollectionSpace )
@@ -2708,7 +2708,7 @@ namespace sdbclient
          return pCollectionSpace->alterCollectionSpace( options ) ;
       }
 
-/* \fn INT32 setDomain ( const bson::BSONObj & options )
+/** \fn INT32 setDomain ( const bson::BSONObj & options )
     \brief Alter collection space to set domain.
     \param [in] options The options of collection space to be changed.
 
@@ -2716,7 +2716,7 @@ namespace sdbclient
 
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
- */
+*/
       INT32 setDomain ( const bson::BSONObj & options )
       {
          if ( NULL == pCollectionSpace )
@@ -2726,11 +2726,11 @@ namespace sdbclient
          return pCollectionSpace->setDomain( options ) ;
       }
 
-/* \fn INT32 removeDomain ()
+/** \fn INT32 removeDomain ()
     \brief Alter collection space to remove domain.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
- */
+*/
       INT32 removeDomain ()
       {
          if ( NULL == pCollectionSpace )
@@ -2740,11 +2740,11 @@ namespace sdbclient
          return pCollectionSpace->removeDomain() ;
       }
 
-/* \fn INT32 enableCapped ()
+/** \fn INT32 enableCapped ()
     \brief Alter collection space to enable capped.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
- */
+*/
       INT32 enableCapped ()
       {
          if ( NULL == pCollectionSpace )
@@ -2754,11 +2754,11 @@ namespace sdbclient
          return pCollectionSpace->enableCapped() ;
       }
 
-/* \fn INT32 disableCapped ()
+/** \fn INT32 disableCapped ()
     \brief Alter collection space to disable capped.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
- */
+*/
       INT32 disableCapped ()
       {
          if ( NULL == pCollectionSpace )
@@ -2768,7 +2768,7 @@ namespace sdbclient
          return pCollectionSpace->disableCapped() ;
       }
 
-/* \fn INT32 setAttributes ( const bson::BSONObj & options )
+/** \fn INT32 setAttributes ( const bson::BSONObj & options )
     \brief Alter collection space.
     \param [in] options The options of collection space to be changed, e.g. { "PageSize": 4096, "Domain": "mydomain" }.
 
@@ -2778,7 +2778,7 @@ namespace sdbclient
 
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
- */
+*/
       INT32 setAttributes ( const bson::BSONObj & options )
       {
          if ( NULL == pCollectionSpace )
