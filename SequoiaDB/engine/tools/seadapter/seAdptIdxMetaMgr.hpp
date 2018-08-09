@@ -56,7 +56,6 @@ namespace seadapter
    {
       public:
          _seIndexMeta() ;
-         _seIndexMeta( const CHAR *clFullName, const CHAR *idxName ) ;
          ~_seIndexMeta() ;
 
          void setVersion( INT64 version ) ;

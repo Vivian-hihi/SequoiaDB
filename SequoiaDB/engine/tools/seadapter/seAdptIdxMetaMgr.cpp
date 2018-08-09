@@ -49,18 +49,6 @@ namespace seadapter
       _idxLogicalID = 0 ;
    }
 
-   _seIndexMeta::_seIndexMeta( const CHAR *clFullName, const CHAR *idxName )
-   {
-      SDB_ASSERT( clFullName, "Collection name is NULL" ) ;
-      SDB_ASSERT( idxName, "Index name is NULL" ) ;
-
-      _version = -1 ;
-      _origCLName = clFullName ;
-      _origIdxName = idxName ;
-      _clLogicalID = 0 ;
-      _idxLogicalID = 0 ;
-   }
-
    _seIndexMeta::~_seIndexMeta()
    {
    }
