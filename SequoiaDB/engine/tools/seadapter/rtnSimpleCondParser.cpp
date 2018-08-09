@@ -41,7 +41,6 @@
 #include "ossUtil.hpp"
 #include "pd.hpp"
 #include "pdTrace.hpp"
-#include "rtnTrace.hpp"
 
 namespace seadapter
 {
@@ -64,11 +63,9 @@ namespace seadapter
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONDNODEFACTORY_CREATENODE, "_rtnCondNodeFactory::createNode" )
    rtnCondNode* _rtnCondNodeFactory::createNode( rtnCondNodeAllocator *allocator,
                                                  RTN_COND_NODE_TYPE type)
    {
-      PD_TRACE_ENTRY( SDB__RTNCONDNODEFACTORY_CREATENODE ) ;
       rtnCondNode *node = NULL ;
       switch ( type )
       {
@@ -91,16 +88,12 @@ namespace seadapter
             break ;
       }
 
-      PD_TRACE_EXIT( SDB__RTNCONDNODEFACTORY_CREATENODE ) ;
       return node ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONDNODEFACTORY_RELEASENODE, "_rtnCondNodeFactory::releaseNode" )
    void _rtnCondNodeFactory::releaseNode( rtnCondNode* node )
    {
-      PD_TRACE_ENTRY( SDB__RTNCONDNODEFACTORY_RELEASENODE ) ;
       SAFE_OSS_DELETE( node ) ;
-      PD_TRACE_EXIT( SDB__RTNCONDNODEFACTORY_RELEASENODE ) ;
    }
 
    _rtnSimpleCondParseTree::_rtnSimpleCondParseTree()
@@ -115,11 +108,9 @@ namespace seadapter
       clear() ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE_PARSE, "_rtnSimpleCondParseTree::parse" )
    INT32 _rtnSimpleCondParseTree::parse( const BSONObj &object )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE_PARSE ) ;
       _condition = object.copy() ;
       _root = rtnGetCondNodeFactory()->createNode( &_allocator,
                                                    RTN_COND_NODE_LOGIC_AND ) ;
@@ -144,21 +135,17 @@ namespace seadapter
       }
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNSIMPLECONDPARSETREE_PARSE, rc ) ;
       return rc ;
    error:
       clear() ;
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE_CLEAR, "_rtnSimpleCondParseTree::clear" )
    void _rtnSimpleCondParseTree::clear()
    {
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE_CLEAR ) ;
       _releaseTree( _root ) ;
       _root = NULL ;
       _textNode = NULL ;
-      PD_TRACE_EXIT( SDB__RTNSIMPLECONDPARSETREE_CLEAR ) ;
    }
 
    BOOLEAN _rtnSimpleCondParseTree::hasTextCond()
@@ -171,12 +158,10 @@ namespace seadapter
       return _textNode ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE_UPDATENODE, "_rtnSimpleCondParseTree::updateNode" )
    INT32 _rtnSimpleCondParseTree::updateNode( rtnCondNode *node,
                                               const BSONElement &newEle )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE_UPDATENODE ) ;
       rtnCondNode *parent = NULL ;
 
       rtnCondNormalNode *normalNode = (rtnCondNormalNode *)
@@ -197,7 +182,6 @@ namespace seadapter
       _textNode = normalNode ;
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNSIMPLECONDPARSETREE_UPDATENODE, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -216,12 +200,10 @@ namespace seadapter
       }
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE__PARSEELEMENT, "_rtnSimpleCondParseTree::_parseElement" )
    INT32 _rtnSimpleCondParseTree::_parseElement( const BSONElement &ele,
                                                  rtnCondNode *parent )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE__PARSEELEMENT ) ;
       PD_LOG( PDDEBUG, "Element to parse: %s", ele.toString().c_str() ) ;
       switch( ele.type() )
       {
@@ -239,18 +221,15 @@ namespace seadapter
                    ele.toString().c_str(), rc ) ;
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNSIMPLECONDPARSETREE__PARSEELEMENT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE__PARSEOBJECTELEMENT, "_rtnSimpleCondParseTree::_parseObjectElement" )
    INT32 _rtnSimpleCondParseTree::_parseObjectElement( const BSONElement &ele,
                                                        rtnCondNode *parent )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE__PARSEOBJECTELEMENT ) ;
       INT32 keysFormat = 0 ;
       const CHAR *fieldName = ele.fieldName() ;
 
@@ -286,18 +265,15 @@ namespace seadapter
       }
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNSIMPLECONDPARSETREE__PARSEOBJECTELEMENT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE__PARSEARRAYELEMENT, "_rtnSimpleCondParseTree::_praseArrayElement" )
    INT32 _rtnSimpleCondParseTree::_praseArrayElement( const BSONElement &ele,
                                                       rtnCondNode *parent )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE__PARSEARRAYELEMENT ) ;
       const CHAR *fieldName = ele.fieldName() ;
 
       // Array element should be in logical operation or a normal array.
@@ -333,18 +309,15 @@ namespace seadapter
       }
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNSIMPLECONDPARSETREE__PARSEARRAYELEMENT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE__PARSENORMALELEMENT, "_rtnSimpleCondParseTree::_parseNormalElement" )
    INT32 _rtnSimpleCondParseTree::_parseNormalElement( const BSONElement &ele,
                                                        rtnCondNode *parent )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE__PARSENORMALELEMENT ) ;
       const CHAR *fieldName = ele.fieldName() ;
       rtnCondNormalNode *normalNode = (rtnCondNormalNode *)
          rtnGetCondNodeFactory()->createNode( &_allocator,
@@ -362,18 +335,15 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Add child node failed[ %d ]", rc ) ;
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNSIMPLECONDPARSETREE__PARSENORMALELEMENT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE__PARSELOGICAND, "_rtnSimpleCondParseTree::_parseLogicAnd" )
    INT32 _rtnSimpleCondParseTree::_parseLogicAnd( const BSONElement &ele,
                                                   rtnCondNode *parent )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE__PARSELOGICAND ) ;
       // create a logical node and add to parent.
       // then parse the logical items.
       rtnCondLogicAndNode *logicAndNode = (rtnCondLogicAndNode *)
@@ -395,18 +365,15 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Parse logical element[ %s ] failed[ %d ]",
                    ele.toString().c_str(), rc ) ;
    done:
-      PD_TRACE_EXITRC( SDB__RTNSIMPLECONDPARSETREE__PARSELOGICAND, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE__PARSELOGICOR, "_rtnSimpleCondParseTree::_parseLogicOr" )
    INT32 _rtnSimpleCondParseTree::_parseLogicOr( const BSONElement &ele,
                                                  rtnCondNode *parent )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE__PARSELOGICOR ) ;
 
       rtnCondLogicOrNode *logicOrNode = (rtnCondLogicOrNode *)
          rtnGetCondNodeFactory()->createNode( &_allocator,
@@ -427,18 +394,15 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Parse logical element[ %s ] failed[ %d ]",
                    ele.toString().c_str(), rc ) ;
    done:
-      PD_TRACE_EXITRC( SDB__RTNSIMPLECONDPARSETREE__PARSELOGICOR, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE__PARSELOGICNOT, "_rtnSimpleCondParseTree::_parseLogicNot" )
    INT32 _rtnSimpleCondParseTree::_parseLogicNot( const BSONElement &ele,
                                                   rtnCondNode *parent )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE__PARSELOGICNOT ) ;
 
       rtnCondLogicNotNode *logicNotNode = (rtnCondLogicNotNode *)
          rtnGetCondNodeFactory()->createNode( &_allocator,
@@ -459,20 +423,17 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Parse logical element[ %s ] failed[ %d ]",
                    ele.toString().c_str(), rc ) ;
    done:
-      PD_TRACE_EXITRC( SDB__RTNSIMPLECONDPARSETREE__PARSELOGICNOT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE__PARSEOPTEXT, "_rtnSimpleCondParseTree::_parseOpText" )
    INT32 _rtnSimpleCondParseTree::_parseOpText( const BSONElement &ele,
                                                 rtnCondNode *parent )
    {
       // The format of a text search condition is as follows:
       // { "" : { "Text" : { ... } } }
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE__PARSEOPTEXT ) ;
       rtnCondTextNode *textNode = NULL ;
       const CHAR *fieldName = ele.fieldName() ;
       rtnCondNode *parentTmp = parent ;
@@ -531,18 +492,15 @@ namespace seadapter
       }
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNSIMPLECONDPARSETREE__PARSEOPTEXT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE__PARSELOGICELEMENTS, "_rtnSimpleCondParseTree::_parseLogicElements" )
    INT32 _rtnSimpleCondParseTree::_parseLogicElements( const BSONElement &ele,
                                                        rtnCondNode *parent )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE__PARSELOGICELEMENTS ) ;
       BSONObjIterator itr ( ele.embeddedObject() ) ;
       while ( itr.more() )
       {
@@ -589,16 +547,13 @@ namespace seadapter
       }
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNSIMPLECONDPARSETREE__PARSELOGICELEMENTS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE__GETELEMENTKEYSFORMAT, "_rtnSimpleCondParseTree::_getElementKeysFormat" )
    INT32 _rtnSimpleCondParseTree::_getElementKeysFormat( const BSONElement &ele )
    {
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE__GETELEMENTKEYSFORMAT ) ;
       const CHAR *eFieldName = NULL ;
       INT32 opCount = 0 ;
       INT32 normalCount = 0 ;
@@ -643,14 +598,11 @@ namespace seadapter
          eleKeyType = UTIL_ELEMENT_KEY_ALL_NORMAL ;
       }
 
-      PD_TRACE_EXIT( SDB__RTNSIMPLECONDPARSETREE__GETELEMENTKEYSFORMAT ) ;
       return eleKeyType ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSIMPLECONDPARSETREE__RELEASETREE, "_rtnSimpleCondParseTree::_releaseTree" )
    void _rtnSimpleCondParseTree::_releaseTree( rtnCondNode *root )
    {
-      PD_TRACE_ENTRY( SDB__RTNSIMPLECONDPARSETREE__RELEASETREE ) ;
       if ( !root )
       {
          return ;
@@ -664,7 +616,6 @@ namespace seadapter
       }
 
       rtnGetCondNodeFactory()->releaseNode( root ) ;
-      PD_TRACE_EXIT( SDB__RTNSIMPLECONDPARSETREE__RELEASETREE ) ;
    }
 
    rtnCondNodeFactory* rtnGetCondNodeFactory()

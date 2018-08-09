@@ -39,7 +39,6 @@
 
 #include "pd.hpp"
 #include "pdTrace.hpp"
-#include "rtnTrace.hpp"
 #include "rtnSimpleCondNode.hpp"
 
 // Memory for _rtnCondNode may be allocated in two ways:
@@ -124,25 +123,20 @@ namespace seadapter
       _fieldName = fieldName ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONDNODE_ADDCHILD, "_rtnCondNode::addChild" )
    INT32 _rtnCondNode::addChild( rtnCondNode *child )
    {
-      PD_TRACE_ENTRY( SDB__RTNCONDNODE_ADDCHILD ) ;
       _children.push_back( child ) ;
       child->_idxInParent = _children.size() - 1 ;
       child->_parent = this ;
 
-      PD_TRACE_EXIT( SDB__RTNCONDNODE_ADDCHILD ) ;
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONDNODE_UPDATECHILD, "_rtnCondNode::updateChild" )
    INT32 _rtnCondNode::updateChild( rtnCondNode *child,
                                     rtnCondNode *newChild,
                                     const BSONElement &element )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNCONDNODE_UPDATECHILD ) ;
 
       if ( !child || !newChild ||
            child->_idxInParent >= (INT32)_children.size() )
@@ -159,7 +153,6 @@ namespace seadapter
       SDB_OSS_DEL child ;
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNCONDNODE_UPDATECHILD, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -170,15 +163,12 @@ namespace seadapter
       return _parent ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONDNODE_CLEAR, "_rtnCondNode::clear" )
    void _rtnCondNode::clear()
    {
-      PD_TRACE_ENTRY( SDB__RTNCONDNODE_CLEAR ) ;
       _fieldName.clear() ;
       _parent = NULL ;
       _children.clear() ;
       _idxInParent = -1 ;
-      PD_TRACE_EXIT( SDB__RTNCONDNODE_CLEAR ) ;
    }
 
    _rtnCondNodeItr::_rtnCondNodeItr( rtnCondNode *node )
@@ -300,10 +290,8 @@ namespace seadapter
       clear() ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONDLOGICNODE_TOBSON, "_rtnCondLogicNode::toBson" )
    BSONObj _rtnCondLogicNode::toBson()
    {
-      PD_TRACE_ENTRY( SDB__RTNCONDLOGICNODE_TOBSON ) ;
       BSONObjBuilder builder ;
       BSONArrayBuilder sub( builder.subarrayStart( getOperatorStr() ) ) ;
       UTIL_CONDNODE_VEC::iterator itr = _children.begin() ;
@@ -315,7 +303,6 @@ namespace seadapter
 
       sub.doneFast() ;
 
-      PD_TRACE_EXIT( SDB__RTNCONDLOGICNODE_TOBSON ) ;
       return builder.obj() ;
    }
 
