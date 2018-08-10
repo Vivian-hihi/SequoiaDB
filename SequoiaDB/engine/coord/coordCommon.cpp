@@ -424,7 +424,11 @@ namespace engine
                      if ( tmpNew.objdata() != tmpObj.objdata() )
                      {
                         modify = TRUE ;
-                        sub.append( tmpNew ) ;
+
+                        if ( !tmpNew.isEmpty() )
+                        {
+                           sub.append( tmpNew ) ;
+                        }
                      }
                      else
                      {
@@ -661,7 +665,11 @@ namespace engine
                      if ( tmpNew.objdata() != tmpObj.objdata() )
                      {
                         isModify = TRUE ;
-                        sub.append( tmpNew ) ;
+
+                        if ( !tmpNew.isEmpty() )
+                        {
+                           sub.append( tmpNew ) ;
+                        }
                      }
                      else
                      {
@@ -781,7 +789,11 @@ namespace engine
                      if ( tmpNew.objdata() != tmpObj.objdata() )
                      {
                         isModify = TRUE ;
-                        sub.append( tmpNew ) ;
+
+                        if ( !tmpNew.isEmpty() )
+                        {
+                           sub.append( tmpNew ) ;
+                        }
                      }
                      else
                      {
