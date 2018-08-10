@@ -10,18 +10,8 @@ sequoiafs mountpoint [options]
 
 两者可以是相同节点也可以是不同节点，可以在一个FS节点上的不同目录下，映射挂载同一DB集群节点或不同DB集群节点，也可以在不同FS节点进行映射挂载同一DB集群节点。  
 
-本例以FS节点和DB节点为同一节点进行说明，DB节点为一常见普通集群，安装部署了一个coord、三个catalog和三个data节点，如下。
+以下例子中DB节点为一常见普通集群，部署了一个coord、三个catalog和三个data节点，在FS节点上利用SequoiaFS挂载映射目录。
 
-```
-sequoiadb  11840         catalog     22367     1      2      N    SYSCatalogGroup      2018-05-17-13.35.07  /opt/sequoiadb/database/cata/11840/
-sequoiadb  11900         data        22370     1000   1000   N    datagroup            2018-05-17-13.35.07  /opt/sequoiadb/database/data/11900/
-sequoiadb  11910         data        22373     1000   1001   N    datagroup            2018-05-17-13.35.07  /opt/sequoiadb/database/data/11910/
-sequoiadb  11810         coord       22376     -      -      Y    SYSCoord             2018-05-17-13.35.07  /opt/sequoiadb/database/coord/11810/
-sequoiadb  11820         catalog     22379     1      3      Y    SYSCatalogGroup      2018-05-17-13.35.07  /opt/sequoiadb/database/cata/11820/
-sequoiadb  11830         catalog     22382     1      1      N    SYSCatalogGroup      2018-05-17-13.35.07  /opt/sequoiadb/database/cata/11830/
-sequoiadb  11920         data        22385     1000   1002   Y    datagroup            2018-05-17-13.35.07  /opt/sequoiadb/database/data/11920/ 
-```
-现开始利用SequoiaFS进行挂载目录：
 ####1、在DB节点上创建目标集合####
 首次启动时，需要在远程DB节点上创建映射的目标集合collection。后面挂载目录之后，mountpoint目录下的所有文件的实际内容会以lob的形式存放在该集合下。而所有文件的属性信息会分别存放在目录元数据集合和文件元数据集合中。
 
