@@ -589,22 +589,24 @@ private class NodeSelector {
                                         preferredInstance: SdbPreferredInstance)
     : NodeInfo = {
         val instances = preferredInstance.instanceIdArray
-        var nodes = nodeInfos.filter(node => node.isPrimary && instances.contains(node.instanceId))
-        if (nodes.nonEmpty) {
-            return nodes.head
+        if (instances.nonEmpty) {
+            var nodes = nodeInfos.filter(node => node.isPrimary && instances.contains(node.instanceId))
+            if (nodes.nonEmpty) {
+                return nodes.head
+            }
+
+            nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
+            if (nodes.nonEmpty) {
+                return getNodeByMode(nodes, instances, preferredInstance.mode)
+            }
+
+            if (preferredInstance.strict) {
+                throw new SdbException(s"No node available in strict master tendency, " +
+                    s"nodes: $nodeInfos, instances: ${instances.mkString("[", ",", "]")}")
+            }
         }
 
-        nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
-        if (nodes.nonEmpty) {
-            return getNodeByMode(nodes, instances, preferredInstance.mode)
-        }
-
-        if (preferredInstance.strict) {
-            throw new SdbException(s"No node available in strict master tendency, " +
-                s"nodes: $nodeInfos, instances: ${instances.mkString("[", ",", "]")}")
-        }
-
-        nodes = nodeInfos.filter(_.isPrimary)
+        val nodes = nodeInfos.filter(_.isPrimary)
         if (nodes.nonEmpty) {
             return nodes.head
         }
@@ -616,22 +618,24 @@ private class NodeSelector {
                                        preferredInstance: SdbPreferredInstance)
     : NodeInfo = {
         val instances = preferredInstance.instanceIdArray
-        var nodes = nodeInfos.filter(node => !node.isPrimary && instances.contains(node.instanceId))
-        if (nodes.nonEmpty) {
-            return getNodeByMode(nodes, instances, preferredInstance.mode)
+        if (instances.nonEmpty) {
+            var nodes = nodeInfos.filter(node => !node.isPrimary && instances.contains(node.instanceId))
+            if (nodes.nonEmpty) {
+                return getNodeByMode(nodes, instances, preferredInstance.mode)
+            }
+
+            nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
+            if (nodes.nonEmpty) {
+                return getNodeByMode(nodes, instances, preferredInstance.mode)
+            }
+
+            if (preferredInstance.strict) {
+                throw new SdbException(s"No node available in strict slave tendency, " +
+                    s"nodes: $nodeInfos, instances: ${instances.mkString("[", ",", "]")}")
+            }
         }
 
-        nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
-        if (nodes.nonEmpty) {
-            return getNodeByMode(nodes, instances, preferredInstance.mode)
-        }
-
-        if (preferredInstance.strict) {
-            throw new SdbException(s"No node available in strict slave tendency, " +
-                s"nodes: $nodeInfos, instances: ${instances.mkString("[", ",", "]")}")
-        }
-
-        nodes = nodeInfos.filter(!_.isPrimary)
+        val nodes = nodeInfos.filter(!_.isPrimary)
         if (nodes.nonEmpty) {
             return getLeastUsedNode(nodes)
         }
@@ -643,14 +647,16 @@ private class NodeSelector {
                                      preferredInstance: SdbPreferredInstance)
     : NodeInfo = {
         val instances = preferredInstance.instanceIdArray
-        val nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
-        if (nodes.nonEmpty) {
-            return getNodeByMode(nodes, instances, preferredInstance.mode)
-        }
+        if (instances.nonEmpty) {
+            val nodes = nodeInfos.filter(node => instances.contains(node.instanceId))
+            if (nodes.nonEmpty) {
+                return getNodeByMode(nodes, instances, preferredInstance.mode)
+            }
 
-        if (preferredInstance.strict) {
-            throw new SdbException(s"No node available in strict any tendency, " +
-                s"nodes: $nodeInfos, instances: ${instances.mkString("[", ",", "]")}")
+            if (preferredInstance.strict) {
+                throw new SdbException(s"No node available in strict any tendency, " +
+                    s"nodes: $nodeInfos, instances: ${instances.mkString("[", ",", "]")}")
+            }
         }
 
         getLeastUsedNode(nodeInfos)
