@@ -430,6 +430,7 @@
 #define FIELD_NAME_CAPPED                    "Capped"
 #define FIELD_NAME_TEXT                      "$Text"
 #define FIELD_NAME_CONFIGS                   "Configs"
+#define FIELD_NAME_SEQUENCE_NAME             "Name"
 
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"
@@ -562,6 +563,7 @@
 #define CMD_NAME_SETSESS_ATTR                "set session attribute"
 #define CMD_NAME_GETSESS_ATTR                "get session attribute"
 #define CMD_NAME_INVALIDATE_CACHE            "invalidate cache"
+#define CMD_NAME_INVALIDATE_SEQUENCE_CACHE   "invalidate sequence cache"
 #define CMD_NAME_FORCE_SESSION               "force session"
 #define CMD_NAME_LIST_LOBS                   "list lobs"
 #define CMD_NAME_ALTER_DC                    "alter dc"

@@ -49,6 +49,7 @@ namespace engine
 
    public:
       OSS_INLINE const std::string& name() const { return _name ; }
+      OSS_INLINE const bson::OID oid() const { return _oid ; }
       OSS_INLINE BOOLEAN internal() const { return _internal ; }
       OSS_INLINE INT64 version() const { return _version ; }
       OSS_INLINE INT64 cachedValue() const { return _cachedValue ; }
@@ -63,6 +64,7 @@ namespace engine
       OSS_INLINE BOOLEAN initial() const { return _initial ; }
       OSS_INLINE BOOLEAN exceeded() const { return _exceeded ; }
 
+      void setOID( const bson::OID oid ) ;
       void setInternal( BOOLEAN internal ) ;
       void setCachedValue( INT64 cachedValue ) ;
       void setVersion( INT64 version ) ;
@@ -87,6 +89,7 @@ namespace engine
 
    private:
       std::string    _name ;           // sequence name
+      bson::OID      _oid ;            // sequence oid
       BOOLEAN        _internal ;       // system internal defined
       INT64          _version ;        // sequence version
       INT64          _cachedValue ;    // cached current value, only in cache

@@ -555,7 +555,9 @@ coordFiles = [
       "coord/coordOmProxy.cpp",
       "coord/coordOmStrategyAccessor.cpp",
       "coord/coordOmCache.cpp",
-      "coord/coordOmStrategyJob.cpp"
+      "coord/coordOmStrategyJob.cpp",
+      "coord/coordSequenceAgent.cpp",
+      "coord/coordCommandSequence.cpp"
       ]
 
 aggrFiles = [

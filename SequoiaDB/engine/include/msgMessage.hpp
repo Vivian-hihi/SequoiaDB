@@ -319,7 +319,13 @@ INT32 msgBuildSequenceAlterMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                 UINT64 reqID, const BSONObj& options,
                                 engine::IExecutor *cb = NULL ) ;
 
+INT32 msgBuildSequenceInvalidateCacheMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                                          const CHAR *sequenceName, UINT64 reqID,
+                                          engine::IExecutor *cb = NULL ) ;
+
 INT32 msgExtractSequenceRequestMsg( CHAR *pBuffer, BSONObj& options ) ;
+
+INT32 msgExtractSequenceAcquireReply( CHAR *pBuffer, BSONObj& options ) ;
 
 INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                                   engine::IExecutor *cb = NULL );

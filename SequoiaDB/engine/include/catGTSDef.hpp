@@ -39,6 +39,7 @@
 // SEQUENCE
 
 #define CAT_SEQUENCE_NAME              "Name"
+#define CAT_SEQUENCE_OID               "_id"
 #define CAT_SEQUENCE_VERSION           "Version"
 #define CAT_SEQUENCE_CURRENT_VALUE     "CurrentValue"
 #define CAT_SEQUENCE_INCREMENT         "Increment"

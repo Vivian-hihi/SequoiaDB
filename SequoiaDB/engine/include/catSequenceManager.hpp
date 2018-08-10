@@ -46,6 +46,7 @@ namespace engine
 {
    struct _catSequenceAcquirer: public SDBObject
    {
+      bson::OID oid ;
       INT64 nextValue ;
       INT32 acquireSize ;
       INT32 increment ;
@@ -77,7 +78,7 @@ namespace engine
       INT32 createSequence( const std::string& name, const bson::BSONObj& options, _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 dropSequence( const std::string& name, _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 alterSequence( const std::string& name, const bson::BSONObj& options, _pmdEDUCB* eduCB, INT16 w ) ;
-      INT32 acquireSequence( const std::string& name, _catSequenceAcquirer& acquirer, _pmdEDUCB* eduCB, INT16 w ) ;
+      INT32 acquireSequence( const std::string& name, const bson::OID oid, _catSequenceAcquirer& acquirer, _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 resetSequence( const std::string& name, _pmdEDUCB* eduCB, INT16 w ) ;
 
    private:

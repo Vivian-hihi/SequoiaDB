@@ -50,6 +50,7 @@ namespace engine
    class _pmdEDUCB ;
    class _netRouteAgent ;
    class _IOmProxy ;
+   class _coordSequenceAgent ;
 
    /*
       _coordResource define
@@ -94,6 +95,10 @@ namespace engine
          _netRouteAgent*   getRouteAgent() ;
          _IOmProxy*        getOmProxy() ;
          _coordOmStrategyAgent* getOmStrategyAgent() ;
+         OSS_INLINE _coordSequenceAgent* getSequenceAgent()
+         {
+            return _pSequenceAgent ;
+         }
 
       public:
 
@@ -259,6 +264,7 @@ namespace engine
          _IOmProxy                        *_pOmProxy ;
          _coordOmStrategyAgent            *_pOmStrategyAgent ;
 
+         _coordSequenceAgent              *_pSequenceAgent ;
    } ;
    typedef _coordResource coordResource ;
 

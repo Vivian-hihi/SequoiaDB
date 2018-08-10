@@ -47,6 +47,7 @@
 #include "rtnCB.hpp"
 #include "rtn.hpp"
 #include "coordOmProxy.hpp"
+#include "coordSequenceAgent.hpp"
 #include "../bson/bson.h"
 #include "utilArray.hpp"
 
@@ -89,6 +90,7 @@ namespace engine
       _pOptionsCB = NULL ;
       _pOmProxy = NULL ;
       _pOmStrategyAgent = NULL ;
+      _pSequenceAgent = NULL ;
    }
 
    _coordResource::~_coordResource()
@@ -171,6 +173,21 @@ namespace engine
          goto error ;
       }
 
+      _pSequenceAgent = SDB_OSS_NEW _coordSequenceAgent() ;
+      if ( NULL == _pSequenceAgent )
+      {
+         PD_LOG( PDERROR, "Failed to alloc sequence agent" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      rc = _pSequenceAgent->init( this ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to init sequence agent, rc=%d", rc ) ;
+         goto error ;
+      }
+
    done:
       if ( pCataGroup )
       {
@@ -200,6 +217,13 @@ namespace engine
       {
          SDB_OSS_DEL _pOmProxy ;
          _pOmProxy = NULL ;
+      }
+
+      if ( _pSequenceAgent )
+      {
+         _pSequenceAgent->fini() ;
+         SDB_OSS_DEL _pSequenceAgent ;
+         _pSequenceAgent = NULL ;
       }
    }
 

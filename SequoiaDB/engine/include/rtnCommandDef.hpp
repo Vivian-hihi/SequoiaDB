@@ -100,6 +100,7 @@ namespace engine
 #define NAME_LINK_COLLECTION                 CMD_NAME_LINK_CL
 #define NAME_UNLINK_COLLECTION               CMD_NAME_UNLINK_CL
 #define NAME_INVALIDATE_CACHE                CMD_NAME_INVALIDATE_CACHE
+#define NAME_INVALIDATE_SEQUENCE_CACHE       CMD_NAME_INVALIDATE_SEQUENCE_CACHE
 #define NAME_FORCE_SESSION                   CMD_NAME_FORCE_SESSION
 #define NAME_LIST_LOBS                       CMD_NAME_LIST_LOBS
 #define NAME_REELECT                         CMD_NAME_REELECT
@@ -268,7 +269,6 @@ namespace engine
       CMD_DELETE_CONFIG                      = 203,
 
       CMD_REMOVE_BACKUP                      = 210,
-
       CMD_INVALIDATE_CACHE                   = 220,
       CMD_FORCE_SESSION                      = 221,
       CMD_LIST_LOB                           = 222,
@@ -277,8 +277,8 @@ namespace engine
 
       CMD_SYNC_DB                            = 251,
       CMD_POP                                = 252,
-
       CMD_ANALYZE                            = 253,
+      CMD_INVALIDATE_SEQUENCE_CACHE          = 254,
 
       CMD_UNKNOW                             = 65535
    };

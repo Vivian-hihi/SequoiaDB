@@ -54,7 +54,7 @@ namespace engine
       _minValue = 1 ;
       _maxValue = OSS_SINT64_MAX ;
       _increment = 1 ;
-      _cacheSize = 10000 ;
+      _cacheSize = 1000 ;
       _acquireSize = 100 ;
       _cycled = FALSE ;
       _initial = TRUE ;
@@ -63,6 +63,11 @@ namespace engine
 
    _catSequence::~_catSequence()
    {
+   }
+
+   void _catSequence::setOID( const bson::OID oid )
+   {
+      _oid = oid ;
    }
 
    void _catSequence::setInternal( BOOLEAN internal )
@@ -144,6 +149,7 @@ namespace engine
          BSONObjBuilder builder ;
          if ( !forUpdate )
          {
+            builder.append( CAT_SEQUENCE_OID, _oid ) ;
             builder.append( CAT_SEQUENCE_NAME, _name ) ;
             builder.append( CAT_SEQUENCE_INTERNAL, (bool)_internal ) ;
          }
@@ -185,6 +191,7 @@ namespace engine
       other.setExceeded( _exceeded ) ;
       if ( withInternalField )
       {
+         other.setOID( _oid ) ;
          other.setVersion( _version ) ;
          other.setInternal( _internal ) ;
       }

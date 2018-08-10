@@ -75,10 +75,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObj obj ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR_CREATE_SEQ ) ;
-      
+
       _catSequence sequence = _catSequence( name ) ;
 
-      rc = sequence.setOptions( options, TRUE, TRUE ) ;
+      rc = sequence.setOptions( options, TRUE, FALSE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to set sequence[%s], rc=%d",
@@ -86,6 +86,7 @@ namespace engine
          goto error ;
       }
 
+      sequence.setOID( OID::gen() ) ;
       sequence.setVersion( 0 ) ;
       sequence.setInitial( TRUE ) ;
 
@@ -258,6 +259,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR_ACQUIRE_SEQ, "_catSequenceManager::acquireSequence" )
    INT32 _catSequenceManager::acquireSequence( const std::string& name,
+                                               const bson::OID oid,
                                                _catSequenceAcquirer& acquirer,
                                                _pmdEDUCB* eduCB, INT16 w )
    {
@@ -319,6 +321,13 @@ namespace engine
          sequence = NULL ;
       }
 
+      // check oid
+      if ( oid.isSet() && oid != cache->oid() )
+      {
+         PD_LOG( PDWARNING, "Mismatch oid(%s) for sequence[%s, %s]",
+                 oid.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
+      }
+
       if ( cache->increment() > 0 )
       {
          rc = _acquireAscendingSequence( *cache, acquirer, needUpdate ) ;
@@ -334,6 +343,8 @@ namespace engine
                  name.c_str(), rc ) ;
          goto error ;
       }
+
+      acquirer.oid = cache->oid() ;
 
       if ( needUpdate )
       {

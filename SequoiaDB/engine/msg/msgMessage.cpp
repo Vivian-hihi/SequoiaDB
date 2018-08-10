@@ -43,6 +43,7 @@
 #include "msgDef.h"
 #include "pdTrace.hpp"
 #include "msgTrace.hpp"
+#include "../bson/bsonobj.h"
 #include <stddef.h>
 
 using namespace engine ;
@@ -1968,6 +1969,42 @@ INT32 msgBuildSequenceAlterMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                reqID, options, cb ) ;
 }
 
+INT32 msgBuildSequenceInvalidateCacheMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                                          const CHAR *sequenceName, UINT64 reqID,
+                                          engine::IExecutor *cb )
+{
+   static const BSONObj emptyObj ;
+   INT32 rc = SDB_OK ;
+   BSONObj boQuery;
+
+   SDB_ASSERT ( ppBuffer && bufferSize && sequenceName,
+                "Invalid input" ) ;
+
+   try
+   {
+      boQuery = BSON( FIELD_NAME_SEQUENCE_NAME << sequenceName ) ;
+   }
+   catch ( exception &e )
+   {
+      rc = SDB_SYS ;
+      PD_LOG ( PDERROR,
+               "Failed to build invalidate sequence cache message, unexpected exception: %s",
+               e.what() );
+      goto error;
+   }
+
+   rc = msgBuildQueryCMDMsg( ppBuffer, bufferSize,
+                             CMD_ADMIN_PREFIX CMD_NAME_INVALIDATE_SEQUENCE_CACHE,
+                             boQuery, emptyObj, emptyObj, emptyObj,
+                             reqID, cb ) ;
+   PD_RC_CHECK( rc, PDERROR, "Failed to build invalidate sequence cache message, rc: %d", rc ) ;
+
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
 INT32 msgExtractSequenceRequestMsg( CHAR *pBuffer, BSONObj& options )
 {
    INT32 rc = SDB_OK ;
@@ -1992,6 +2029,57 @@ INT32 msgExtractSequenceRequestMsg( CHAR *pBuffer, BSONObj& options )
    }
 
    return rc ;
+}
+
+INT32 msgExtractSequenceAcquireReply( CHAR *pBuffer, BSONObj& options )
+{
+   INT32 rc = SDB_OK ;
+   MsgOpReply *pReply = (MsgOpReply*)pBuffer ;
+   INT32 offset = ossRoundUpToMultipleX ( sizeof ( MsgOpReply ), 4 ) ;
+   INT32 numReturned = pReply->numReturned ;
+   BSONObj obj ;
+
+   if ( numReturned > 1 )
+   {
+      rc = SDB_INVALIDARG ;
+      PD_LOG( PDERROR, "More than 1 objects returned for sequence acquire request" ) ;
+      goto error ;
+   }
+
+   if ( offset < pReply->header.messageLength )
+   {
+      try
+      {
+         obj = BSONObj( (CHAR*)pBuffer + offset ) ;
+         SDB_ASSERT( obj.objsize() >= 5, "obj size must grater or equal 5" ) ;
+         MSG_CHECK_BSON_LENGTH( obj.objsize() ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Unexpected exception happened when extracting acquire sequence reply: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   }
+
+   if ( obj.isEmpty() )
+   {
+      if ( SDB_OK == pReply->flags )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "No object returned for sequence acquire request" ) ;
+         goto error ;
+      }
+   }
+   else
+   {
+      options = obj ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize,

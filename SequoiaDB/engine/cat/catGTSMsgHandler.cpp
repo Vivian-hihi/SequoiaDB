@@ -440,6 +440,7 @@ namespace engine
       BSONElement ele ;
       BSONObj options ;
       string name ;
+      OID oid ;
       _catSequenceAcquirer acquirer ;
 
       PD_TRACE_ENTRY( SDB_GTS_MSG_HANDLER__PROCESS_SEQ_ACQUIRE ) ;
@@ -462,10 +463,22 @@ namespace engine
                  ele.type(), CAT_SEQUENCE_NAME ) ;
          goto error ;
       }
-
       name = ele.String() ;
 
-      rc = seqMgr->acquireSequence( name, acquirer, eduCB, _catCB->majoritySize( TRUE ) ) ;
+      ele = options.getField( CAT_SEQUENCE_OID ) ;
+      if ( jstOID == ele.type() )
+      {
+         oid = ele.OID() ;
+      }
+      else if ( EOO != ele.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid type[%d] of sequence options[%s]",
+                 ele.type(), CAT_SEQUENCE_OID ) ;
+         goto error ;
+      }
+
+      rc = seqMgr->acquireSequence( name, oid, acquirer, eduCB, _catCB->majoritySize( TRUE ) ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -475,6 +488,7 @@ namespace engine
       {
          BSONObj result = BSON(
             CAT_SEQUENCE_NAME << name <<
+            CAT_SEQUENCE_OID << acquirer.oid <<
             CAT_SEQUENCE_NEXT_VALUE << acquirer.nextValue <<
             CAT_SEQUENCE_ACQUIRE_SIZE << acquirer.acquireSize <<
             CAT_SEQUENCE_INCREMENT << acquirer.increment
