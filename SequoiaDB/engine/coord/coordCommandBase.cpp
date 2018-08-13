@@ -801,7 +801,6 @@ namespace engine
       CoordGroupList groupLst ;
       SET_ROUTEID sendNodes ;
       BSONObj newFilterObj ;
-      BOOLEAN hasParseRetry = FALSE ;
 
       CHAR *pNewMsg = NULL ;
       INT32 newMsgSize = 0 ;
@@ -879,12 +878,11 @@ namespace engine
       /// 5. parse nodes
       rc = coordGetGroupNodes( _pResource, cb, *pFilterObj,
                                ctrlParam._emptyFilterSel,
-                               ( 0 == groupLst.size() ? ( hasParseRetry ?
-                                 expectGrpLst : allGroupLst ) : groupLst ),
+                               ( 0 == groupLst.size() ? expectGrpLst : groupLst ),
                                sendNodes, &newFilterObj,
                                ppContext ? FALSE : TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get nodes, rc: %d", rc ) ;
-      if ( sendNodes.size() == 0 && !hasParseRetry )
+      if ( sendNodes.size() == 0 )
       {
          PD_LOG( PDWARNING, "Node specfic nodes[%s]",
                  pFilterObj->toString().c_str() ) ;
@@ -895,19 +893,10 @@ namespace engine
       {
          hasNodeOrGroupFilter = TRUE ;
       }
-      /// not use specail group
-      else if ( 0 == groupLst.size() )
+      /// use specail group
+      else if ( 0 == groupLst.size() && ctrlParam._useSpecialNode )
       {
-         if ( ctrlParam._useSpecialNode )
-         {
-            sendNodes = ctrlParam._specialNodes ;
-         }
-         else if ( !hasParseRetry &&
-                   allGroupLst.size() != expectGrpLst.size() )
-         {
-            hasParseRetry = TRUE ;
-            goto parseNode ;
-         }
+         sendNodes = ctrlParam._specialNodes ;
       }
       *pFilterObj = newFilterObj ;
 
