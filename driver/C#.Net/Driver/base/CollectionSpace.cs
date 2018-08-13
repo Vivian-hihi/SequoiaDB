@@ -106,7 +106,9 @@ namespace SequoiaDB
                 return false;
             }
             else
-                throw new BaseException(flags);
+            {
+                throw new BaseException(flags, rtn.ErrorObject);
+            }
         }
 
         /** \fn DBCollection CreateCollection(string collectionName)
@@ -150,7 +152,7 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(command, cObj, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             sdb.UpsertCache(fullName);
             return new DBCollection(this, collectionName);
         }
@@ -168,7 +170,7 @@ namespace SequoiaDB
                 fullName);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             sdb.RemoveCache(fullName);
         }
 
@@ -329,7 +331,7 @@ namespace SequoiaDB
            int flags = rtn.Flags;
            if (flags != 0)
            {
-               throw new BaseException(flags);
+               throw new BaseException(flags, rtn.ErrorObject);
            }
        }
 

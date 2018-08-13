@@ -1663,7 +1663,92 @@ namespace DriverTest
             }
         }
 
-        
+        [TestMethod]
+        public void errorObjectTest()
+        {
+            // case 1:
+            try
+            {
+                BsonDocument rule = new BsonDocument();
+                rule.Add("$seta", 1);
+                coll.Update(null, rule, null);
+                Assert.Fail();
+            }
+            catch (BaseException e)
+            {
+                int errorCode = e.ErrorCode;
+                String errorType = e.ErrorType;
+                String errorMsg = e.Message;
+                BsonDocument errorObj = e.ErrorObject;
+                Console.WriteLine("error code is: " + errorCode);
+                Console.WriteLine("error type is: " + errorType);
+                Console.WriteLine("error msg  is: " + errorMsg);
+                Console.WriteLine("error obj  is: " + errorObj);
+                Assert.AreEqual("SDB_INVALIDARG", errorType);
+                Assert.AreEqual(-6, errorCode);
+                Assert.IsNotNull(errorObj);
+            }
+        }
+
+        [TestMethod]
+        public void errorObjectWithLobOperationTest()
+        {
+            ObjectId oid = new ObjectId(1, 1, 1, 1);
+            DBLob lob = null;
+            DBLob lob2 = null;
+
+            // case 1:
+            try
+            {
+                lob = coll.OpenLob(oid, DBLob.SDB_LOB_READ);
+            }
+            catch (BaseException e)
+            {
+                int errorCode = e.ErrorCode;
+                String errorType = e.ErrorType;
+                String errorMsg = e.Message;
+                BsonDocument errorObj = e.ErrorObject;
+                Console.WriteLine("error code is: " + errorCode);
+                Console.WriteLine("error type is: " + errorType);
+                Console.WriteLine("error msg  is: " + errorMsg);
+                Console.WriteLine("error obj  is: " + errorObj);
+            }
+            
+            // case 2:
+            try
+            {
+                lob = coll.CreateLob(oid);
+                lob.Close();
+                lob = coll.OpenLob(oid, DBLob.SDB_LOB_WRITE);
+                lob2 = coll.OpenLob(oid, DBLob.SDB_LOB_WRITE);
+
+                lob.Lock(1, 10);
+                lob2.Lock(1, 10);
+            }
+            catch (BaseException e)
+            {
+                int errorCode = e.ErrorCode;
+                String errorType = e.ErrorType;
+                String errorMsg = e.Message;
+                BsonDocument errorObj = e.ErrorObject;
+                Console.WriteLine("error code is: " + errorCode);
+                Console.WriteLine("error type is: " + errorType);
+                Console.WriteLine("error msg  is: " + errorMsg);
+                Console.WriteLine("error obj  is: " + errorObj);
+            }
+            finally
+            {
+                if (lob != null)
+                {
+                    lob.Close();
+                }
+                if (lob2 != null)
+                {
+                    lob2.Close();
+                }
+            }
+            
+        }
 
     }
 }

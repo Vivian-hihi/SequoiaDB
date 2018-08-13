@@ -381,7 +381,7 @@ namespace SequoiaDB
                 flags = rtnSDBMessage.Flags;
                 if (flags != 0)
                 {
-                    throw new BaseException(flags);
+                    throw new BaseException(flags, rtnSDBMessage.ErrorObject);
                 }
             }
             catch (System.Exception)
@@ -417,7 +417,7 @@ namespace SequoiaDB
             rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
         }
 
         /** \fn void RemoveUser(string username, string password)
@@ -446,7 +446,7 @@ namespace SequoiaDB
             rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
         }
 
         /** \fn void TransactionBegin()
@@ -466,7 +466,7 @@ namespace SequoiaDB
             rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
         }
 
         /** \fn void TransactionCommit()
@@ -486,7 +486,7 @@ namespace SequoiaDB
             rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
         }
 
         /** \fn void TransactionRollback()
@@ -506,7 +506,7 @@ namespace SequoiaDB
             rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
         }
 
         /** \fn void ChangeConnectionOptions(ConfigOptions opts)
@@ -599,7 +599,7 @@ namespace SequoiaDB
             SDBMessage rtn = CreateCS(csName, options);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             UpsertCache(csName);
             return new CollectionSpace(this, csName);
         }
@@ -619,7 +619,7 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(SequoiadbConstants.DROP_CMD, SequoiadbConstants.COLSPACE, csName);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             RemoveCache(csName);
         }
 
@@ -680,7 +680,7 @@ namespace SequoiaDB
                 return false;
             }
             else
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
         }
         /** \fn DBCursor ListCollectionSpaces()
          *  \brief List all the collecion space
@@ -733,7 +733,7 @@ namespace SequoiaDB
                     return null;
                 else
                 {
-                    throw new BaseException(flags);
+                    throw new BaseException(flags, rtnSDBMessage.ErrorObject);
                 }
             }
             if (  null == rtnSDBMessage.ContextIDList ||
@@ -766,7 +766,7 @@ namespace SequoiaDB
             rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
         }
 
         /** \fn DBCursor GetSnapshot(int snapType, BsonDocument matcher, BsonDocument selector,
@@ -877,7 +877,7 @@ namespace SequoiaDB
                     return null;
                 else
                 {
-                    throw new BaseException(flags);
+                    throw new BaseException(flags, rtn.ErrorObject);
                 }
 
             return new DBCursor(rtn, this);
@@ -1042,7 +1042,7 @@ namespace SequoiaDB
                     return null;
                 else
                 {
-                    throw new BaseException(flags);
+                    throw new BaseException(flags, rtn.ErrorObject);
                 }
 
             return new DBCursor(rtn, this);
@@ -1184,7 +1184,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0 && flags == SequoiadbConstants.SDB_DMS_EOC)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
 
             return new DBCursor(rtn, this);
@@ -1223,7 +1223,7 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(command, options, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
         }
 
         /** \fn void BackupOffline(BsonDocument options)
@@ -1272,7 +1272,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
         }
 
@@ -1314,7 +1314,7 @@ namespace SequoiaDB
                 if(flags == SequoiadbConstants.SDB_DMS_EOC)
                     return null;
                 else
-                    throw new BaseException(flags);
+                    throw new BaseException(flags, rtn.ErrorObject);
             }
             cursor = new DBCursor(rtn, this);
             return cursor;
@@ -1350,7 +1350,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
         }
 
@@ -1377,7 +1377,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
             // return the result by cursor
             DBCursor cursor = null;
@@ -1412,7 +1412,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
         }
 
@@ -1441,7 +1441,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
         }
 
@@ -1532,7 +1532,7 @@ namespace SequoiaDB
             // check return flag
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
         }
 
         /** \fn BsonDocument GetSessionAttr()
@@ -1556,7 +1556,7 @@ namespace SequoiaDB
             // check return flag
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             DBCursor cursor = new DBCursor(rtn, this);
             result = cursor.Next();
             if (result == null)
@@ -1655,7 +1655,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
             return new Domain(this, domainName);
         }
@@ -1685,7 +1685,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
         }
 
@@ -1853,7 +1853,7 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(command, condition, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             else
                 return GetReplicaGroup(groupName);
         }
@@ -1880,7 +1880,7 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(command, condition, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
         }
         /** \fn void CreateReplicaCataGroup(string hostName, int port, string dbpath,
                                             BsonDocument configure) 
@@ -1925,7 +1925,7 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(command, condition, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);    
+                throw new BaseException(flags, rtn.ErrorObject);    
         }
 
         /** \fn ReplicaGroup ActivateReplicaGroup(string groupName)
@@ -2016,7 +2016,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
         }
 
@@ -2067,7 +2067,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
         }
 
@@ -2110,7 +2110,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
         }
 
@@ -2142,7 +2142,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
         }
 
@@ -2363,7 +2363,7 @@ namespace SequoiaDB
                         hasMore = false;
                     else
                     {
-                        throw new BaseException(flags);
+                        throw new BaseException(flags, rtnSDBMessage.ErrorObject);
                     }
                 }
                 else
@@ -2400,7 +2400,7 @@ namespace SequoiaDB
             rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
         }
    }
 }

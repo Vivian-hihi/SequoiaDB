@@ -230,7 +230,7 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(command, configuration, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             else
                 return GetNode(hostName, port);
         }
@@ -272,7 +272,7 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(command, config, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
         }
 
         /** \fn Node GetMaster()
@@ -676,7 +676,7 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(command, newObj, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
         }
 
         /** \fn void DetachNode( string hostName,
@@ -714,7 +714,7 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(command, newObj, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
         }
 
         private SDBMessage AdminCommand(string command, BsonDocument arg1, BsonDocument arg2,

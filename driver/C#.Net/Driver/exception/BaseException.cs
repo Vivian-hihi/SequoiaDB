@@ -15,6 +15,7 @@
 */
 
 using System;
+using SequoiaDB.Bson;
 
 /** \namespace SequoiaDB
  *  \brief SequoiaDB Driver for C#.Net
@@ -32,16 +33,19 @@ namespace SequoiaDB
         private string message;
         private string errorType;
         private int errorCode;
+        private BsonDocument errorObject;
 
         /// <summary>
         /// Expection throw by sequoiadb.
         /// </summary>
         /// <param name="errorCode">The error code return by engine</param>
         /// <param name="detail">The error Detail</param>
-        internal BaseException(int errorCode, string detail)
+        /// <param name="errorObject">The error object return from engine</param>
+        internal BaseException(int errorCode, String detail, BsonDocument errorObject)
         {
             try
             {
+                this.errorObject = errorObject;
                 if (detail != null && detail != "")
                 {
                     this.message = SDBErrorLookup.GetErrorDescriptionByCode(errorCode) +
@@ -62,10 +66,39 @@ namespace SequoiaDB
             }
         }
 
-        internal BaseException(int errorCode):this(errorCode, "")
+        /// <summary>
+        /// Expection throw by sequoiadb.
+        /// </summary>
+        /// <param name="errorCode">The error code return by engine</param>
+        /// <param name="detail">The error Detail</param>
+        internal BaseException(int errorCode, string detail)
+            : this(errorCode, detail, null)
         {
         }
 
+        /// <summary>
+        /// Expection throw by sequoiadb.
+        /// </summary>
+        /// <param name="errorCode">The error code return by engine</param>
+        /// <param name="errorObject">The error object return from engine</param>
+        internal BaseException(int errorCode, BsonDocument errorObject)
+            : this(errorCode, "", errorObject)
+        {
+        }
+
+        /// <summary>
+        /// Expection throw by sequoiadb.
+        /// </summary>
+        /// <param name="errorCode">The error code to throw</param>
+        internal BaseException(int errorCode)
+            : this(errorCode, "")
+        {
+        }
+
+        /// <summary>
+        /// Expection throw by sequoiadb.
+        /// </summary>
+        /// <param name="errorType">The error type to throw</param>
         internal BaseException(string errorType)
         {
             try
@@ -112,6 +145,19 @@ namespace SequoiaDB
             get
             {
                 return this.errorCode;
+            }
+        }
+
+        /** \property ErrorObject
+         *  \brief Get the error object. When database try to tell the user what error happen in engine,
+         *         it will  merge all the error information, and return it by an BSONObject. When no detail,
+         *         error object is null.
+         */
+        public BsonDocument ErrorObject
+        {
+            get
+            {
+                return this.errorObject;
             }
         }
     }

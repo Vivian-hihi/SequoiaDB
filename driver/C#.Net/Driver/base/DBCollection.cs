@@ -151,7 +151,7 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(command, matcher, dummyObj, dummyObj, dummyObj, -1, -1, 0);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             // upsert cache
             sdb.UpsertCache(collectionFullName);
         }
@@ -184,7 +184,7 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(command, matcher, dummyObj, dummyObj, dummyObj, -1, -1, 0);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             // upsert cache
             sdb.UpsertCache(collectionFullName);
         }
@@ -236,7 +236,7 @@ namespace SequoiaDB
             // check return flag
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
             // build cursor object to get result from database
             DBCursor cursor = new DBCursor(rtnSDBMessage, this);
             BsonDocument result = cursor.Next();
@@ -288,7 +288,7 @@ namespace SequoiaDB
             // check return flag
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
             // build cursor object to get result from database
             DBCursor cursor = new DBCursor(rtnSDBMessage, this);
             BsonDocument result = cursor.Next();
@@ -376,7 +376,7 @@ namespace SequoiaDB
             int errorCode = rtnSDBMessage.Flags;
             if (errorCode != 0)
             {
-                throw new BaseException(errorCode);
+                throw new BaseException(errorCode, rtnSDBMessage.ErrorObject);
             }
             // upsert cache
             sdb.UpsertCache(collectionFullName);
@@ -438,7 +438,7 @@ namespace SequoiaDB
             int errorCode = rtnSDBMessage.Flags;
             if (errorCode != 0)
             {
-                throw new BaseException(errorCode);
+                throw new BaseException(errorCode, rtnSDBMessage.ErrorObject);
             }
             // upsert cache
             sdb.UpsertCache(collectionFullName);
@@ -760,7 +760,7 @@ namespace SequoiaDB
                 }
                 else
                 {
-                    throw new BaseException(errorCode);
+                    throw new BaseException(errorCode, rtnSDBMessage.ErrorObject);
                 }
             // upsert cache
             sdb.UpsertCache(collectionFullName);
@@ -953,7 +953,7 @@ namespace SequoiaDB
                     return null;
                 else
                 {
-                    throw new BaseException(flags);
+                    throw new BaseException(flags, rtn.ErrorObject);
                 }
             // upsert cache
             sdb.UpsertCache(collectionFullName);
@@ -987,7 +987,7 @@ namespace SequoiaDB
                     return null;
                 else
                 {
-                    throw new BaseException(flags);
+                    throw new BaseException(flags, rtn.ErrorObject);
                 }
             // upsert cache
             sdb.UpsertCache(collectionFullName);
@@ -1044,7 +1044,7 @@ namespace SequoiaDB
             SDBMessage rtn = AdminCommand(commandString, dropObj, dummyObj, dummyObj, dummyObj, -1, -1, 0);
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             // upsert cache
             sdb.UpsertCache(collectionFullName);
         }
@@ -1079,7 +1079,7 @@ namespace SequoiaDB
             SDBMessage rtnSDBMessage = AdminCommand(commandString, matcher, dummyObj, dummyObj, newHint, 0, -1, 0);
             int errorCode = rtnSDBMessage.Flags;
             if (errorCode != 0)
-                throw new BaseException(errorCode);
+                throw new BaseException(errorCode, rtnSDBMessage.ErrorObject);
             // upsert cache
             sdb.UpsertCache(collectionFullName);
             List<BsonDocument> rtn = GetMoreCommand(rtnSDBMessage);
@@ -1136,7 +1136,7 @@ namespace SequoiaDB
                     return null;
                 else
                 {
-                    throw new BaseException(flags);
+                    throw new BaseException(flags, rtnSDBMessage.ErrorObject);
                 }
             // upsert cache
             sdb.UpsertCache(collectionFullName);
@@ -1196,7 +1196,7 @@ namespace SequoiaDB
                     return null;
                 else
                 {
-                    throw new BaseException(flags);
+                    throw new BaseException(flags, rtnSDBMessage.ErrorObject);
                 }
             // upsert cache
             sdb.UpsertCache(collectionFullName);
@@ -1236,7 +1236,7 @@ namespace SequoiaDB
             // check the return flag
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
             // upsert cache
             sdb.UpsertCache(collectionFullName);
         }
@@ -1268,7 +1268,7 @@ namespace SequoiaDB
             // check the return flag
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
             // upsert cache
             sdb.UpsertCache(collectionFullName);
         }
@@ -1292,7 +1292,7 @@ namespace SequoiaDB
             // check the return flag
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
             // upsert cache
             sdb.UpsertCache(collectionFullName);
         }
@@ -1344,7 +1344,7 @@ namespace SequoiaDB
             // check the return flag
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
             // upsert cache
             sdb.UpsertCache(collectionFullName);
         }
@@ -1429,7 +1429,7 @@ namespace SequoiaDB
                 }
                 else
                 {
-                    throw new BaseException(flags);
+                    throw new BaseException(flags, rtnSDBMessage.ErrorObject);
                 }
             }
             // upsert cache
@@ -1531,7 +1531,7 @@ namespace SequoiaDB
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
             }
             // upsert cache
             sdb.UpsertCache(collectionFullName);
@@ -1573,7 +1573,7 @@ namespace SequoiaDB
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
             }
             // upsert cache
             sdb.UpsertCache(collectionFullName);
@@ -1598,7 +1598,7 @@ namespace SequoiaDB
             // check the return flag
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
             // upsert cache
             sdb.UpsertCache(collectionFullName);
         }
@@ -1752,7 +1752,7 @@ namespace SequoiaDB
             int errorCode = rtnSDBMessage.Flags;
             if (errorCode != 0)
             {
-                throw new BaseException(errorCode);
+                throw new BaseException(errorCode, rtnSDBMessage.ErrorObject);
             }
             // upsert cache
             sdb.UpsertCache(collectionFullName);
@@ -1780,7 +1780,7 @@ namespace SequoiaDB
 
             int flags = rtn.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             // upsert cache
             sdb.UpsertCache(collectionFullName);
         }
@@ -1869,7 +1869,7 @@ namespace SequoiaDB
                         hasMore = false;
                     else
                     {
-                        throw new BaseException(flags);
+                        throw new BaseException(flags, rtnSDBMessage.ErrorObject);
                     }
                 else
                 {

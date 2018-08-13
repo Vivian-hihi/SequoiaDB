@@ -115,7 +115,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
         }
 
@@ -167,7 +167,7 @@ namespace SequoiaDB
             int flags = rtn.Flags;
             if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtn.ErrorObject);
             }
         }
 

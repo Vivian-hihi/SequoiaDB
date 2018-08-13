@@ -66,7 +66,7 @@ namespace SequoiaDB
             if (errorCode != 0)
             {
                 // TODO: need to throw error detail(return from engine) out
-                throw new BaseException(errorCode);
+                throw new BaseException(errorCode, rtnSDBMessage.ErrorObject);
             }
             // try to build return cursor
             if (SequoiadbConstants.DEFAULT_CONTEXTID == rtnSDBMessage.ContextIDList[0] &&

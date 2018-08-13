@@ -187,7 +187,7 @@ namespace SequoiaDB
             int errorCode = retInfo.Flags;
             if (0 != errorCode)
             {
-                throw new BaseException(errorCode);
+                throw new BaseException(errorCode, retInfo.ErrorObject);
             }
             // update the last update time
             List<BsonDocument> resultSet = retInfo.ObjectList;
@@ -440,7 +440,7 @@ namespace SequoiaDB
             int flag = retInfo.Flags;
             if (0 != flag)
             {
-                throw new BaseException(flag);
+                throw new BaseException(flag, retInfo.ErrorObject);
             }
         }
 
@@ -563,7 +563,7 @@ namespace SequoiaDB
             int rc = retInfo.Flags;
             if (rc != 0)
             {
-                throw new BaseException(rc);
+                throw new BaseException(rc, retInfo.ErrorObject);
             }
             /// get lob's meta info returned from engine
             List<BsonDocument> objList = retInfo.ObjectList;
@@ -685,7 +685,7 @@ namespace SequoiaDB
             int flag = retInfo.Flags;
             if (0 != flag)
             {
-                throw new BaseException(flag);
+                throw new BaseException(flag, retInfo.ErrorObject);
             }
             _currentOffset += len;
             _lobSize = Math.Max(_lobSize, _currentOffset);
@@ -734,7 +734,7 @@ namespace SequoiaDB
             }
             if (rc != 0)
             {
-                throw new BaseException(rc);
+                throw new BaseException(rc, retInfo.ErrorObject);
             }
             // sanity check
             // return message is |MsgOpReply|_MsgLobTuple|data|

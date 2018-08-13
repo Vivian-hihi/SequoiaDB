@@ -37,6 +37,7 @@ namespace SequoiaDB
         public BsonDocument Insertor { get; set; }
         public BsonDocument Modifier { get; set; }
         public List<BsonDocument> ObjectList { get; set; }
+        public BsonDocument ErrorObject { get; set; }
         private byte[] nodeID = new byte[12];
         public byte[] NodeID
         {

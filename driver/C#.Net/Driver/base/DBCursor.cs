@@ -221,7 +221,7 @@ namespace SequoiaDB
             }
             else if (flags != 0)
             {
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
             }
             else
             {
@@ -248,7 +248,7 @@ namespace SequoiaDB
             rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
-                throw new BaseException(flags);
+                throw new BaseException(flags, rtnSDBMessage.ErrorObject);
 
             connection = null;
             contextId = -1;
