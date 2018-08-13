@@ -16,6 +16,8 @@
 
 package com.sequoiadb.exception;
 
+import org.bson.BSONObject;
+
 import java.util.Arrays;
 
 /**
@@ -28,6 +30,7 @@ public class BaseException extends RuntimeException {
     private int errcode;
     private SDBError error;
     private String detail;
+    private BSONObject errorObject;
 
 
     /**
@@ -93,6 +96,19 @@ public class BaseException extends RuntimeException {
     }
 
     /**
+     * @param errCode The error code return by engine.
+     * @param detail  The error detail.
+     * @param errorObject The error object return from engine.
+     * @since 3.0.1
+     */
+    public BaseException(int errCode, String detail, BSONObject errorObject) {
+        this.errcode = errCode;
+        this.error = SDBError.getSDBError(errCode);
+        this.detail = detail;
+        this.errorObject = errorObject;
+    }
+
+    /**
      * @param errorType The error type.
      * @deprecated
      */
@@ -146,4 +162,16 @@ public class BaseException extends RuntimeException {
     public int getErrorCode() {
         return errcode;
     }
+
+    /**
+     * Get the error object. When database try to tell the user what error happen in engine,
+     * it will  merge all the error information, and return it by an BSONObject. When no detail,
+     * error object is null.
+     *
+     * @return The error object got from engine..
+     */
+    public BSONObject getErrorObject() {
+        return errorObject;
+    }
+
 }

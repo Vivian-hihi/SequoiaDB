@@ -2315,9 +2315,9 @@ public class Sequoiadb implements Closeable {
             BSONObject errorObj = response.getErrorObj();
             String detail = getErrorDetail(errorObj, errorMsg);
             if (detail != null && !detail.isEmpty()) {
-                throw new BaseException(response.getFlag(), remoteAddress + ", " + detail);
+                throw new BaseException(response.getFlag(), remoteAddress + ", " + detail, errorObj);
             } else {
-                throw new BaseException(response.getFlag(), remoteAddress);
+                throw new BaseException(response.getFlag(), remoteAddress, errorObj);
             }
         }
     }
@@ -2329,9 +2329,9 @@ public class Sequoiadb implements Closeable {
             BSONObject errorObj = response.getErrorObj();
             String detail = getErrorDetail(errorObj, null);
             if (detail != null && !detail.isEmpty()) {
-                throw new BaseException(response.getFlag(), remoteAddress + ", " + detail);
+                throw new BaseException(response.getFlag(), remoteAddress + ", " + detail, errorObj);
             } else {
-                throw new BaseException(response.getFlag(), remoteAddress);
+                throw new BaseException(response.getFlag(), remoteAddress, errorObj);
             }
         }
     }
