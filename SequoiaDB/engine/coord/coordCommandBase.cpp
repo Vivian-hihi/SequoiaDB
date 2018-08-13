@@ -874,7 +874,6 @@ namespace engine
          *pFilterObj = newFilterObj ;
       }
 
-   parseNode:
       /// 5. parse nodes
       rc = coordGetGroupNodes( _pResource, cb, *pFilterObj,
                                ctrlParam._emptyFilterSel,
