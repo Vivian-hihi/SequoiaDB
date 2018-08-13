@@ -24,6 +24,7 @@ import org.bson.types.BasicBSONList
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.util.Random
 import scala.util.control.Breaks
 
 /**
@@ -532,7 +533,11 @@ private class NodeSelector {
             throw new SdbException("Null or empty urls")
         }
 
-        nodeInfos.foreach { nodeInfo =>
+        // choose a random start position
+        val (list1, list2) = nodeInfos.splitAt(Random.nextInt(nodeInfos.length))
+        val nodes = list2 ++ list1
+
+        nodes.foreach { nodeInfo =>
             val hostName = nodeInfo.host
             val port = nodeInfo.port
 
