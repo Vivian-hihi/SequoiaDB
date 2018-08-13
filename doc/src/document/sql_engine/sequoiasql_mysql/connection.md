@@ -172,7 +172,8 @@
 	| TIMESTAMP       | TIMESTAMP         |取值范围：1902-01-01 00:00:00.000000 至 2037-12-31 23:59:59.999999 |
 	| CHAR            | STRING            |                                                                   |
 	| VARCHAR         | STRING            |                                                                   |
-	| TEXT            | STRING            |                                                                   |
+	| TEXT            | STRING            |最大长度16MB                                                       |
 	| BINARY          | BINARY            |                                                                   |
-	| BLOB            | BINARY            |                                                                   |
+	| VARBINARY       | BINARY            |                                                                   |
+	| BLOB            | BINARY            |最大长度16MB                                                       |
 	| NULL            | UNDEFINE          |                                                                   |
