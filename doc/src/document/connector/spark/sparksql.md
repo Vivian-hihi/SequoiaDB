@@ -40,7 +40,7 @@ create <[temporary] table| temporary view> <tableName> [(schema)] using com.sequ
 |partitionmaxnum|最大分区数量，在按datablock分区时有效。取值大于等于0，等于0时表示不限制分区最大数量。由于partitionMaxNum的限制，每个分区的数据块数可能与partitionBlockNum不同。|int|1000|否|
 |preferredinstance|指定分区优先选择的节点实例。取值可以为"M","S","A"（不区分大小写），以及实例ID的组合。 如果指定多个"M", "S", "A"实例，则只有第一个生效。实例ID取值为1-255。如果多个实例ID和"M"一起指定，则在有多个实例符合时的会在符合的实例中优先选择主节点；而当没有实例符合时，也会在其它节点中优先选择主节点。如果多个实例ID和"S"一起指定，则在有多个实例符合时的会在符合的实例中优先选择备节点；而当没有实例符合时，也会在其它节点中优先选择备节点。"A"表示任意节点。如果没有匹配的实例，将随机选择。|string|"A"|否|
 |preferredinstancemode|在preferredinstance有多个实例符合时的选择模式，取值可以是"random","ordered"。"random"表示从候选实例中随机选择，"ordered"表示按候选实例的顺序选择。|string|"random"|否|
-|preferredinstancestrict|在preferredinstance指定的的实例ID都不符合时是否报错。|boolean|true|否|
+|preferredinstancestrict|在preferredinstance指定的实例ID都不符合时是否报错。|boolean|true|否|
 |ignoreduplicatekey|向表中插入数据时忽略主键重复的错误。|boolean|false|否|
 |ignorenullfield|向表中插入数据时忽略值为null的字段。|boolean|false|否|
 |pagesize|create tabel as select创建集合空间时指定数据页大小。如果集合空间已存在，则忽略该参数。|int|65536|否|
