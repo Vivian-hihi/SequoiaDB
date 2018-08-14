@@ -261,10 +261,8 @@ namespace engine
       define
    */
    #define PMD_CONF_DIR_NAME           "conf"
-   #define PMD_RUN_DIR_NAME            "run"
    #define PMD_DFT_CONF                "sdb.conf"
    #define PMD_DFT_CAT                 "sdb.cat"
-   #define PMD_DFT_RUN                 "sdb.id"
    #define PMD_OPTION_DIAG_PATH        "diaglog"
    #define PMD_OPTION_AUDIT_PATH       PMD_OPTION_DIAG_PATH
    #define PMD_OPTION_LOG_PATH         "replicalog"
