@@ -881,14 +881,7 @@ namespace engine
                                sendNodes, &newFilterObj,
                                ppContext ? FALSE : TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get nodes, rc: %d", rc ) ;
-      if ( sendNodes.size() == 0 )
-      {
-         PD_LOG( PDWARNING, "Node specfic nodes[%s]",
-                 pFilterObj->toString().c_str() ) ;
-         rc = SDB_CLS_NODE_NOT_EXIST ;
-         goto error ;
-      }
-      else if ( pFilterObj->objdata() != newFilterObj.objdata() )
+      if ( pFilterObj->objdata() != newFilterObj.objdata() )
       {
          hasNodeOrGroupFilter = TRUE ;
       }
