@@ -1413,13 +1413,13 @@ namespace engine
 
       const CHAR* csName () { return _csName ; }
       void setCSUniqueID ( utilCSUniqueID csUniqueID ) ;
-      void setCLInfo ( const vector< PAIR_CLNAME_ID >& clList ) ;
+      void setCLInfo ( const BSONObj& clInfoObj ) ;
 
    protected:
       const CHAR                 *_csName ;
       BOOLEAN                    _needChangeID ;
       utilCSUniqueID             _csUniqueID ;
-      vector< PAIR_CLNAME_ID >   _clList ;
+      BSONObj                    _clInfoObj ;
    } ;
 
    class _rtnUnloadCollectionSpace : public _rtnLoadCollectionSpace

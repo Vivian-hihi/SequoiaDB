@@ -2627,9 +2627,15 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageDataCommon::chgCLUniqueID( vector< PAIR_CLNAME_ID > clList )
+   INT32 _dmsStorageDataCommon::chgCLUniqueID( const vector<PAIR_CLNAME_ID>& clList,
+                                               BOOLEAN needLock )
    {
-      vector< PAIR_CLNAME_ID >::iterator it = clList.begin() ;
+      if ( needLock )
+      {
+         ossScopedLock lock( &_metadataLatch, EXCLUSIVE ) ;
+      }
+
+      vector< PAIR_CLNAME_ID >::const_iterator it = clList.begin() ;
       for ( ; it != clList.end() ; it++ )
       {
          const CHAR* clName = it->first.c_str() ;

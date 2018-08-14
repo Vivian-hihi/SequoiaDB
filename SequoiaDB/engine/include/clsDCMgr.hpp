@@ -97,6 +97,8 @@ namespace engine
          BOOLEAN        isActivated() const { return _activated ; }
          BOOLEAN        isReadonly() const { return _readonly ; }
 
+         utilCSUniqueID getCSUniqueHWM() const { return _csUniqueHWM ; }
+
          const CHAR*    getClusterName() const ;
          const CHAR*    getBusinessName() const ;
          const CHAR*    getAddress() const ;
@@ -132,6 +134,7 @@ namespace engine
          string         _address ;
          BOOLEAN        _activated ;
          BOOLEAN        _readonly ;
+         utilCSUniqueID _csUniqueHWM ;
 
          string         _imageClusterName ;
          string         _imageBusinessName ;
@@ -275,7 +278,7 @@ namespace engine
                                    BOOLEAN useCBMem = FALSE ) ;
 
          /*
-            Only for catalog group info is empty, and the msg is end to 
+            Only for catalog group info is empty, and the msg is end to
             catalog service, not shard service
          */
          INT32 _syncSend2PeerCatGroup( pmdEDUCB *cb, MsgHeader *msg,
@@ -284,7 +287,7 @@ namespace engine
                                        BOOLEAN useCBMem = FALSE ) ;
 
          /*
-            Process cat group response, this result will update to 
+            Process cat group response, this result will update to
             _pNodeMgrAgent.
          */
          INT32 _processCatGrpRes( pmdEDUCB *cb, MsgHeader *pRes,
@@ -295,7 +298,7 @@ namespace engine
          */
          INT32 _processGrpQueryRes( pmdEDUCB *cb, MsgHeader *pRes ) ;
          /*
-            Process catalog query response, this result will update to 
+            Process catalog query response, this result will update to
             _pCatAgent
          */
          INT32 _processCatQueryRes( pmdEDUCB *cb, MsgHeader *pRes ) ;

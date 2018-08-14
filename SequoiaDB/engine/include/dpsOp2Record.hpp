@@ -304,6 +304,16 @@ namespace engine
                            INT32 & objectType,
                            bson::BSONObj & alterObject ) ;
 
+   INT32 dpsAddUniqueID2Record ( const CHAR* csname,
+                                 const utilCSUniqueID& csUniqueID,
+                                 const bson::BSONObj& clInfoObj,
+                                 dpsLogRecord& record ) ;
+
+   INT32 dpsRecord2AddUniqueID ( const CHAR* logRecord,
+                                 const CHAR** csname,
+                                 utilCSUniqueID& csUniqueID,
+                                 bson::BSONObj & clInfoObj ) ;
+
 }
 
 #endif

@@ -523,10 +523,10 @@ namespace engine
                                   BOOLEAN checkOnly )
    {
       utilCSUniqueID *csUniqueIDInCata = NULL ;
-      vector< PAIR_CLNAME_ID > clListInCata ;
+      BSONObj clInfoInCata ;
       return rtnLoadCollectionSpace( pCSName, dataPath, indexPath, lobPath,
                                      lobMetaPath, cb, dmsCB, checkOnly,
-                                     csUniqueIDInCata, clListInCata ) ;
+                                     csUniqueIDInCata, clInfoInCata ) ;
    }
 
    // load a single collection name from given path
@@ -540,7 +540,7 @@ namespace engine
                                   SDB_DMSCB *dmsCB,
                                   BOOLEAN checkOnly,
                                   utilCSUniqueID *csUniqueIDInCata,
-                                  vector< PAIR_CLNAME_ID > clListInCata )
+                                  const BSONObj& clInfoInCata )
    {
       SDB_ASSERT ( pCSName, "pCSName can't be NULL" ) ;
       SDB_ASSERT ( dataPath, "data path can't be NULL" ) ;
@@ -625,7 +625,8 @@ namespace engine
                         if ( csUniqueIDInCata )
                         {
                            storageUnit->chgCSUniqueID( *csUniqueIDInCata ) ;
-                           storageUnit->data()->chgCLUniqueID( clListInCata ) ;
+                           dmsStorageDataCommon* data = storageUnit->data();
+                           data->chgCLUniqueID( utilBson2ClPair( clInfoInCata ) ) ;
                         }
                         /// add collectionspace
                         rc = dmsCB->addCollectionSpace ( csName, sequence,
@@ -785,6 +786,12 @@ namespace engine
                                 "space[%s], rc: %d", csName, rc ) ;
                         PMD_RESTART_DB( rc ) ;
                         goto error ;
+                     }
+
+                     if ( !dmsIsSysCSName( csName ) &&
+                          UTIL_INVALID_UNIQUEID == storageUnit->CSUniqueID() )
+                     {
+                        dmsCB->setInvalidUniqueID( TRUE ) ;
                      }
 
                      // Note: do not call onLoad here

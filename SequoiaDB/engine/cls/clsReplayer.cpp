@@ -844,7 +844,8 @@ namespace engine
 
             while ( TRUE )
             {
-               rc = rtnAlter( objectName, objectType, alterObject, eduCB, _dpsCB ) ;
+               rc = rtnAlter( objectName, objectType, alterObject,
+                              eduCB, _dpsCB ) ;
                if ( SDB_LOCK_FAILED == rc )
                {
                   ossSleep( 100 ) ;
@@ -853,6 +854,34 @@ namespace engine
                break ;
             }
             PD_RC_CHECK( rc, PDERROR, "Failed to alter object, rc: %d", rc ) ;
+
+            break ;
+         }
+         case LOG_TYPE_ADDUNIQUEID :
+         {
+            const CHAR * csname = NULL ;
+            utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+            BSONObj clInfoObj ;
+
+            rc = dpsRecord2AddUniqueID( (CHAR *)recordHeader, &csname,
+                                         csUniqueID, clInfoObj ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            while ( TRUE )
+            {
+               rc = rtnChangeUniqueID( csname, csUniqueID, clInfoObj,
+                                       eduCB, _dmsCB, _dpsCB ) ;
+               if ( SDB_LOCK_FAILED == rc )
+               {
+                  ossSleep( 100 ) ;
+                  continue ;
+               }
+               break ;
+            }
+            PD_RC_CHECK( rc, PDERROR, "Failed to add unique id, rc: %d", rc ) ;
 
             break ;
          }
@@ -1140,6 +1169,34 @@ namespace engine
             /// cant not rollback, return fail.
             rc = SDB_CLS_REPLAY_LOG_FAILED ;
             goto error ;
+         }
+         case LOG_TYPE_ADDUNIQUEID :
+         {
+            const CHAR * csname = NULL ;
+            utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+            BSONObj clInfoObj, emptyObj ;
+
+            rc = dpsRecord2AddUniqueID( (CHAR *)recordHeader, &csname,
+                                         csUniqueID, clInfoObj ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            while ( TRUE )
+            {
+               rc = rtnChangeUniqueID( csname, UTIL_INVALID_UNIQUEID, emptyObj,
+                                       eduCB, _dmsCB, _dpsCB ) ;
+               if ( SDB_LOCK_FAILED == rc )
+               {
+                  ossSleep( 100 ) ;
+                  continue ;
+               }
+               break ;
+            }
+            PD_RC_CHECK( rc, PDERROR, "Failed to add unique id, rc: %d", rc ) ;
+
+            break ;
          }
          case LOG_TYPE_TS_COMMIT :
          case LOG_TYPE_DUMMY :

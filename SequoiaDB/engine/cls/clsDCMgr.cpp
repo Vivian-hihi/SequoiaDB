@@ -70,6 +70,7 @@ namespace engine
       _imageIsEnabled = FALSE ;
       _activated = TRUE ;
       _readonly = FALSE ;
+      _csUniqueHWM = 0 ;
 
       _orgObj = BSONObj() ;
       _imageGroups.clear() ;
@@ -140,6 +141,16 @@ namespace engine
       if ( Bool == e.type() )
       {
          _readonly = e.Bool() ? TRUE : FALSE ;
+      }
+      else if ( !e.eoo() )
+      {
+         goto error ;
+      }
+
+      e = obj.getField( FIELD_NAME_CSUNIQUEHWM ) ;
+      if ( e.isNumber() )
+      {
+         _csUniqueHWM = (utilCSUniqueID)e.numberInt() ;
       }
       else if ( !e.eoo() )
       {

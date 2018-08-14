@@ -738,12 +738,14 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to active catalog node manager, rc: %d",
                    rc ) ;
 
-      rc = _pCatCB->getCatlogueMgr()->active() ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to active catalog manager, rc: %d",
-                   rc ) ;
-
       rc = _pCatCB->getCatDCMgr()->active() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to active cata dc manager, rc: %d",
+                   rc ) ;
+
+      // catCatalogueManager::active() should be executed after
+      // catDCManager::active(), because it need to query SYSDCBASE
+      rc = _pCatCB->getCatlogueMgr()->active() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to active catalog manager, rc: %d",
                    rc ) ;
 
    done:
@@ -751,6 +753,7 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_CATMAINCT_ACTIVE, rc ) ;
       return rc ;
    error:
+      PMD_RESTART_DB( rc ) ;
       goto done ;
    }
 

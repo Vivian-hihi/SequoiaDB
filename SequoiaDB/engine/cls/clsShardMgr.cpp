@@ -1474,7 +1474,11 @@ namespace engine
          }
          else
          {
-            query = BSON ( CAT_CS_UNIQUEID << (INT64)csUniqueID ) ;
+            // During the upgrade process, it may happen that data is new,
+            // while catalog is still old. In this case, if data only sends id,
+            // catalog will not be able to handle it.
+            query = BSON ( CAT_COLLECTION_SPACE_NAME << pCSName <<
+                           CAT_CS_UNIQUEID << (INT64)csUniqueID ) ;
          }
       }
       catch ( std::exception &e )
@@ -2217,10 +2221,10 @@ namespace engine
     */
    INT32 _clsShardMgr::rGetCSInfo( const CHAR * csName,
                                    utilCSUniqueID &csUniqueID,
-                                   UINT32 &pageSize,
-                                   UINT32 &lobPageSize,
-                                   DMS_STORAGE_TYPE &type,
-                                   vector< PAIR_CLNAME_ID >& clList,
+                                   UINT32 *pageSize,
+                                   UINT32 *lobPageSize,
+                                   DMS_STORAGE_TYPE *type,
+                                   BSONObj *clInfo,
                                    INT64 waitMillSec )
    {
       INT32 rc = SDB_OK ;
@@ -2312,10 +2316,22 @@ namespace engine
       {
          csUniqueID = item->csUniqueID ;
       }
-      pageSize = item->pageSize ;
-      lobPageSize = item->lobPageSize ;
-      type = item->type ;
-      clList = item->clList ;
+      if ( pageSize )
+      {
+         *pageSize = item->pageSize ;
+      }
+      if ( lobPageSize )
+      {
+         *lobPageSize = item->lobPageSize ;
+      }
+      if ( type )
+      {
+         *type = item->type ;
+      }
+      if ( clInfo )
+      {
+         *clInfo = item->clInfo.getOwned() ;
+      }
 
    done:
       _catLatch.get() ;
@@ -2581,23 +2597,7 @@ namespace engine
          ele = objList[0].getField( CAT_COLLECTION ) ;
          if ( Array == ele.type() )
          {
-            BSONObjIterator it( ele.embeddedObject() ) ;
-            while ( it.more() )
-            {
-               BSONElement subEle = it.next() ;
-               if ( Object == subEle.type() )
-               {
-                  BSONObj clObj = subEle.embeddedObject() ;
-                  BSONElement nameE = clObj.getField( CAT_COLLECTION_NAME ) ;
-                  BSONElement idE = clObj.getField( CAT_CL_UNIQUEID ) ;
-                  if ( String != nameE.type() || !idE.isNumber())
-                  {
-                     continue ;
-                  }
-                  PAIR_CLNAME_ID cl( nameE.String(), (UINT64)idE.numberLong() );
-                  csItem->clList.push_back( cl ) ;
-               }
-            }
+            csItem->clInfo = ele.embeddedObject().getOwned() ;
          }
       }
 

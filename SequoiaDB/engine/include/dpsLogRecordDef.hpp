@@ -184,6 +184,13 @@ namespace engine
       DPS_LOG_ALTER_OBJECT
    } ;
 
+   enum DPS_LOG_ADDUNIQUEID
+   {
+      DPS_LOG_ADDUNIQUEID_CSNAME = 1,
+      DPS_LOG_ADDUNIQUEID_CSUNIQUEID,
+      DPS_LOG_ADDUNIQUEID_CLINFO
+   } ;
+
 }
 
 #endif

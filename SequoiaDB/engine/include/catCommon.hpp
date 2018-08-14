@@ -157,7 +157,8 @@ namespace engine
                           const vector<string> &deleteCLLst,
                           pmdEDUCB * cb, SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB,
                           INT16 w ) ;
-   INT32 catUpdateCSCLs( const string &csName, vector<string> &collections,
+   INT32 catUpdateCSCLs( const string &csName,
+                         vector< PAIR_CLNAME_ID > &collections,
                          pmdEDUCB *cb, _SDB_DMSCB * dmsCB, _dpsLogWrapper * dpsCB,
                          INT16 w ) ;
    INT32 catUpdateCS ( const CHAR * csName,
@@ -244,6 +245,9 @@ namespace engine
    INT32 catUpdateDCStatus( const CHAR *pField, BOOLEAN status,
                             pmdEDUCB *cb, INT16 w,
                             _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB ) ;
+
+   INT32 catSetCSUniqueHWM( pmdEDUCB *cb, INT16 w, UINT32 csUniqueHWM ) ;
+
    INT32 catUpdateCSUniqueID( pmdEDUCB *cb, INT16 w, UINT32& CSID ) ;
 
    /* Other Tools */

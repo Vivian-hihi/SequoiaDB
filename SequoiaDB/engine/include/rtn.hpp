@@ -287,7 +287,7 @@ namespace engine
                                   SDB_DMSCB *dmsCB,
                                   BOOLEAN checkOnly,
                                   utilCSUniqueID *csUniqueIDInCata,
-                                  vector< PAIR_CLNAME_ID > clListInCata ) ;
+                                  const BSONObj& clInfoInCata ) ;
 
    INT32 rtnLoadCollectionSpaces ( const CHAR *dataPath,
                                    const CHAR *indexPath,
@@ -487,6 +487,10 @@ namespace engine
    INT32 rtnPopCommand( const CHAR *pCollectionName, INT64 logicalID,
                         pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
                         INT16 w, INT8 direction = 1 ) ;
+
+   INT32 rtnChangeUniqueID( const CHAR* csName, utilCSUniqueID csUniqueID,
+                            const BSONObj& clInfoObj, pmdEDUCB* cb,
+                            SDB_DMSCB* dmsCB, SDB_DPSCB* dpsCB ) ;
 
    INT32 rtnTestIndex( const CHAR *pCollection,
                        const CHAR *pIndexName,

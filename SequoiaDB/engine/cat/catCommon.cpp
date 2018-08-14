@@ -1112,7 +1112,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_CATDELCLSFROMCS ) ;
 
       BSONObj boSpace, boCollections ;
-      vector<string> remainCLs ;
+      vector< PAIR_CLNAME_ID > remainCLs ;
       BOOLEAN isExist = FALSE ;
 
       rc = catCheckSpaceExist( csName.c_str(), isExist, boSpace, cb ) ;
@@ -1134,16 +1134,24 @@ namespace engine
          {
             BSONElement ele = iter.next() ;
             string collection ;
+            utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
             rc = rtnGetSTDStringElement( ele.embeddedObject(),
                                          CAT_COLLECTION_NAME,
                                          collection ) ;
             PD_CHECK( SDB_OK == rc, SDB_CAT_CORRUPTION, error, PDWARNING,
                       "Failed to get the field [%s], rc: %d",
                       CAT_COLLECTION_NAME, ele.toString().c_str(), rc ) ;
+            rc = rtnGetNumberLongElement( ele.embeddedObject(),
+                                          CAT_CL_UNIQUEID,
+                                          (INT64&)clUniqueID ) ;
+            PD_CHECK( SDB_OK == rc, SDB_CAT_CORRUPTION, error, PDWARNING,
+                      "Failed to get the field [%s], rc: %d",
+                      CAT_CL_UNIQUEID, ele.toString().c_str(), rc ) ;
             if ( find( deleteCLLst.begin(), deleteCLLst.end(), collection ) ==
                  deleteCLLst.end() )
             {
-               remainCLs.push_back( collection ) ;
+               PAIR_CLNAME_ID clPair( collection, clUniqueID ) ;
+               remainCLs.push_back( clPair ) ;
             }
          }
       }
@@ -1160,7 +1168,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUPDATECSCL, "catUpdateCSCLs" )
-   INT32 catUpdateCSCLs( const string &csName, vector<string> &collections,
+   INT32 catUpdateCSCLs( const string &csName,
+                         vector< PAIR_CLNAME_ID > &collections,
                          pmdEDUCB *cb, _SDB_DMSCB * dmsCB, _dpsLogWrapper * dpsCB,
                          INT16 w )
    {
@@ -1174,11 +1183,12 @@ namespace engine
       BSONObjBuilder builder ;
       BSONObjBuilder subBuilder( builder.subobjStart( "$set" ) ) ;
       BSONArrayBuilder arrBuilder( subBuilder.subarrayStart( CAT_COLLECTION ) ) ;
-      for ( vector<string>::iterator iter = collections.begin() ;
+      for ( vector<PAIR_CLNAME_ID>::iterator iter = collections.begin() ;
             iter != collections.end() ;
             ++ iter )
       {
-         arrBuilder << BSON( CAT_COLLECTION_NAME << (*iter) ) ;
+         arrBuilder << BSON( CAT_COLLECTION_NAME << iter->first
+                          << CAT_CL_UNIQUEID << (INT64)iter->second ) ;
       }
       arrBuilder.done() ;
       subBuilder.done() ;
@@ -2277,13 +2287,35 @@ namespace engine
       goto done ;
    }
 
+   INT32 catSetCSUniqueHWM( pmdEDUCB *cb, INT16 w, UINT32 csUniqueHWM )
+   {
+      INT32 rc = SDB_OK ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
+      SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
+
+      BSONObj matcher = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
+      BSONObj updator = BSON( "$set" <<
+                              BSON( FIELD_NAME_CSUNIQUEHWM << csUniqueHWM ) );
+
+      rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
+                      BSONObj(), 0, cb, dmsCB, dpsCB, w ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Fail to update obj[%s] in collection[%s], rc: %d",
+                   updator.toString().c_str(),
+                   CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUPCSUID, "catUpdateCSUniqueID" )
    INT32 catUpdateCSUniqueID( pmdEDUCB *cb, INT16 w, UINT32& CSID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_CATUPCSUID ) ;
 
-      INT64 updateNum = 0 ;
       BSONObj dummy, result ;
       BSONObj matcher = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
       BSONObj updator = BSON( "$inc" << BSON( FIELD_NAME_CSUNIQUEHWM << 1 ) );
@@ -2292,7 +2324,7 @@ namespace engine
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
 
       rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
-                      dummy, 0, cb, dmsCB, dpsCB, w, &updateNum ) ;
+                      dummy, 0, cb, dmsCB, dpsCB, w ) ;
       PD_RC_CHECK( rc, PDERROR, "Fail to update obj[%s] to collection[%s], "
                    "rc: %d", updator.toString().c_str(),
                    CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;

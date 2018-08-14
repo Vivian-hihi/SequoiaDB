@@ -177,7 +177,8 @@ utilFiles = [
       "util/utilFileStream.cpp",
       "util/utilZlibStream.cpp",
       "util/utilJsonFile.cpp",
-      "util/utilMath.cpp"
+      "util/utilMath.cpp",
+      "util/utilUniqueID.cpp"
       ]
 
 rtnFiles = [
@@ -425,7 +426,8 @@ clsFiles = [
       "cls/clsDCMgr.cpp",
       "cls/clsLocalValidation.cpp",
       "cls/clsStorageCheckJob.cpp",
-      "cls/clsRegAssit.cpp"
+      "cls/clsRegAssit.cpp",
+      "cls/clsUniqueIDCheckJob.cpp"
       ]
 
 dpsFiles = [

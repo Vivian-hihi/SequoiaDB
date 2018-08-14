@@ -1892,7 +1892,7 @@ namespace engine
          }
          *pageSize = *( ( UINT32 * )( itr.value() ) ) ;
       }
-      
+
    done:
       PD_TRACE_EXITRC( SDB__DPS_RECORD2LOBW, rc ) ;
       return rc ;
@@ -2543,7 +2543,7 @@ namespace engine
       dpsLogRecord::iterator iterRecord ;
 
       rc = record.load( logRecord ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to load ix create record, rc: %d",rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to load alter record, rc: %d",rc ) ;
 
       iterRecord = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       PD_CHECK( iterRecord.value(), SDB_SYS, error, PDERROR,
@@ -2570,4 +2570,93 @@ namespace engine
    error :
       goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_UID2RECORD, "dpsAddUniqueID2Record" )
+   INT32 dpsAddUniqueID2Record ( const CHAR* csname,
+                                 const utilCSUniqueID& csUniqueID,
+                                 const bson::BSONObj& clInfoObj,
+                                 dpsLogRecord& record )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_UID2RECORD ) ;
+
+      dpsLogRecordHeader & header = record.head() ;
+
+      header._type = LOG_TYPE_ADDUNIQUEID ;
+
+      rc = record.push( DPS_LOG_ADDUNIQUEID_CSNAME,
+                        ossStrlen( csname ) + 1,
+                        csname ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to push csname to record, rc: %d",
+                   rc ) ;
+
+      rc = record.push( DPS_LOG_ADDUNIQUEID_CSUNIQUEID,
+                        sizeof( csUniqueID ),
+                        ( const CHAR * )( &csUniqueID ) ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to push cs unique id, rc: %d",
+                   rc ) ;
+
+      rc = record.push( DPS_LOG_ADDUNIQUEID_CLINFO,
+                        clInfoObj.objsize(),
+                        clInfoObj.objdata() ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to push cl info, rc: %d",
+                   rc ) ;
+
+      header._length = record.alignedLen() ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__DPS_UID2RECORD, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2UID, "dpsRecord2AddUniqueID" )
+   INT32 dpsRecord2AddUniqueID ( const CHAR* logRecord,
+                                 const CHAR** csname,
+                                 utilCSUniqueID& csUniqueID,
+                                 bson::BSONObj & clInfoObj )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2UID ) ;
+
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
+
+      dpsLogRecord record ;
+      dpsLogRecord::iterator it ;
+
+      rc = record.load( logRecord ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to load add unique id record, rc: %d",
+                   rc ) ;
+
+      it = record.find( DPS_LOG_ADDUNIQUEID_CSNAME ) ;
+      PD_CHECK( it.value(), SDB_SYS, error, PDERROR,
+                "Failed to find tag cs name in record" ) ;
+
+      ( *csname ) = it.value() ;
+
+      it = record.find( DPS_LOG_ADDUNIQUEID_CSUNIQUEID ) ;
+      PD_CHECK( it.value(), SDB_SYS, error, PDERROR,
+                "Failed to find tag cs unique id in record" ) ;
+
+      csUniqueID = *( (utilCSUniqueID *)( it.value() ) ) ;
+
+      it = record.find( DPS_LOG_ADDUNIQUEID_CLINFO ) ;
+      PD_CHECK( it.value(), SDB_SYS, error, PDERROR,
+                "Failed to find tag cl info in record" ) ;
+
+      clInfoObj = BSONObj( it.value() ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2UID, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+
 }

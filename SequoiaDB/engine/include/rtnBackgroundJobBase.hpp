@@ -73,6 +73,8 @@ namespace engine
 
       RTN_JOB_GTS_DISPATH        = 24,
 
+      RTN_JOB_CLS_UNIQUEID_CHECK = 25,
+
       RTN_JOB_MAX
    } ;
 

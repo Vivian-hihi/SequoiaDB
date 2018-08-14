@@ -2033,5 +2033,41 @@ namespace engine
    error:
       goto done ;
    }
+
+   INT32 rtnChangeUniqueID( const CHAR* csName,
+                            utilCSUniqueID csUniqueID,
+                            const BSONObj& clInfoObj,
+                            pmdEDUCB* cb,
+                            SDB_DMSCB* dmsCB, SDB_DPSCB* dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN writable = FALSE ;
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      writable = TRUE ;
+
+      dmsCB->changeUniqueID( csName, csUniqueID, clInfoObj, cb, dpsCB ) ;
+
+      if ( rc == SDB_OK )
+      {
+         PD_LOG( PDDEBUG,
+                 "Change unique id, cs name: %s, cs unique id: %u, cl info: %s",
+                 csName, csUniqueID, clInfoObj.toString().c_str() ) ;
+      }
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to change unique id, "
+                   "cs name: %s, cs unique id: %u, cl info: %s, rc: %d",
+                   csName, csUniqueID, clInfoObj.toString().c_str(), rc ) ;
+
+   done :
+      if ( writable )
+      {
+         dmsCB->writeDown( cb ) ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
 }
 

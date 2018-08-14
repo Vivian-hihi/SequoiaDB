@@ -196,6 +196,7 @@ namespace engine
       SINT64                  _writeCounter;
       UINT8                   _dmsCBState;
       UINT32                  _logicalSUID ;
+      BOOLEAN                 _hasInvalidUniqueID ;
 
       dmsTempSUMgr            _tempSUMgr ;
       dmsStatSUMgr            _statSUMgr ;
@@ -293,6 +294,10 @@ namespace engine
       void suUnlock ( dmsStorageUnitID suID,
                       OSS_LATCH_MODE lockType = SHARED ) ;
 
+      INT32 changeUniqueID( const CHAR* csname,
+                            utilCSUniqueID csUniqueID, const BSONObj& clInfoObj,
+                            pmdEDUCB* cb, SDB_DPSCB* dpsCB ) ;
+
       INT32 addCollectionSpace ( const CHAR *pName, UINT32 topSequence,
                                  _dmsStorageUnit *su, _pmdEDUCB *cb,
                                  SDB_DPSCB *dpsCB, BOOLEAN isCreate ) ;
@@ -324,6 +329,10 @@ namespace engine
       void dumpInfo ( INT64 &totalFileSize );
 
       void dumpPageMapCSInfo( MON_CSNAME_VEC &vecCS ) ;
+
+      UINT32 hasInvalidUniqueID() const ;
+
+      UINT32 setInvalidUniqueID( BOOLEAN hasInvalid ) ;
 
       dmsTempSUMgr *getTempSUMgr () ;
 

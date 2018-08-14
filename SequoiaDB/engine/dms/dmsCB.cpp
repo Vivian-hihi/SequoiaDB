@@ -87,6 +87,7 @@ namespace engine
    :_writeCounter(0),
     _dmsCBState(DMS_STATE_NORMAL),
     _logicalSUID(0),
+    _hasInvalidUniqueID( FALSE ),
     _tempSUMgr( this ),
     _statSUMgr( this ),
     _ixmKeySorterCreator( NULL )
@@ -1396,6 +1397,156 @@ namespace engine
       _CSCBRelease( suID, lockType ) ;
    }
 
+   INT32 _SDB_DMSCB::changeUniqueID( const CHAR* csname,
+                                     utilCSUniqueID csUniqueID,
+                                     const BSONObj& clInfoObj,
+                                     pmdEDUCB* cb,
+                                     SDB_DPSCB* dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isReserved = FALSE ;
+      dpsMergeInfo info ;
+      dpsLogRecord &record = info.getMergeBlock().record() ;
+      UINT32 logRecSize = 0 ;
+      dpsTransCB* pTransCB = pmdGetKRCB()->getTransCB();
+      SDB_DMS_CSCB* cscb = NULL ;
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      dmsStorageUnit* su = NULL ;
+      BOOLEAN isLatchLocked = FALSE ;
+      BOOLEAN isMetaLocked = FALSE ;
+
+      _mutex.get_shared () ;
+      rc = _CSCBNameLookup( csname, &cscb, &suID, TRUE ) ;
+      _mutex.release_shared () ;
+
+      if ( rc )
+      {
+         goto error ;
+      }
+      su = cscb->_su ;
+
+      // reserved log-size
+      if ( dpsCB )
+      {
+         rc = dpsAddUniqueID2Record( csname, csUniqueID, clInfoObj, record ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build record:%d", rc ) ;
+
+         rc = dpsCB->checkSyncControl( record.alignedLen(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
+
+         logRecSize = record.alignedLen() ;
+         rc = pTransCB->reservedLogSpace( logRecSize, cb );
+         PD_RC_CHECK( rc, PDERROR,
+                     "Failed to reserved log space(length=%u)",
+                     logRecSize );
+         isReserved = TRUE ;
+      }
+
+      // change cl unique id
+      if ( !clInfoObj.isEmpty() )
+      {
+         dmsStorageUnit* suTmp = NULL ;
+         dmsStorageUnitID suTmpID = DMS_INVALID_SUID ;
+         rc = nameToSUAndLock( csname, suTmpID, &suTmp, SHARED ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         else if ( suTmpID != suID )
+         {
+            suUnlock ( suTmpID ) ;
+            rc = SDB_DMS_CS_NOTEXIST ;
+            goto error ;
+         }
+
+         su->data()->chgCLUniqueID( utilBson2ClPair( clInfoObj ), TRUE ) ;
+
+         suUnlock ( suID ) ;
+      }
+
+   retry :
+      // now let's lock the collectionspace, if we can't lock it, let's return
+      // false. we shouldn't wait forever
+      if ( SDB_OK != _latchVec[suID]->lock_w( OSS_ONE_SEC ) )
+      {
+         rc = SDB_LOCK_FAILED ;
+         goto error ;
+      }
+      isLatchLocked = TRUE ;
+      if ( !_mutex.try_get() )
+      {
+         _latchVec[suID]->release_w () ;
+         isLatchLocked = FALSE ;
+         ossSleep( 50 ) ;
+         goto retry ;
+      }
+      isMetaLocked = TRUE ;
+
+      // there is a small timing hole before getting the latch, so we have
+      // to get current suID again to verify
+      {
+         dmsStorageUnitID suTmpID = DMS_INVALID_SUID ;
+         SDB_DMS_CSCB *tmpCSCB = NULL ;
+         rc = _CSCBNameLookup( csname, &tmpCSCB, &suTmpID, TRUE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         else if ( suTmpID != suID )
+         {
+            rc = SDB_DMS_CS_NOTEXIST ;
+            goto error ;
+         }
+      }
+
+      // change cs unique id
+      {
+         utilCSUniqueID oldCSUniqueID = su->CSUniqueID() ;
+         if ( oldCSUniqueID != UTIL_INVALID_UNIQUEID )
+         {
+            _cscbIDMap.erase( oldCSUniqueID ) ;
+         }
+         if ( csUniqueID != UTIL_INVALID_UNIQUEID )
+         {
+            _cscbIDMap[ csUniqueID ] = suID ;
+         }
+      }
+
+      su->chgCSUniqueID( csUniqueID ) ;
+
+      // write dps
+      if ( SDB_OK == rc && dpsCB )
+      {
+         info.setInfoEx( cscb->_su->LogicalCSID(), ~0, DMS_INVALID_EXTENT, cb );
+         rc = dpsCB->prepare ( info ) ;
+         PD_RC_CHECK ( rc, PDERROR,
+                       "Failed to insert cscrt into log, rc = %d",
+                       rc ) ;
+
+         _mutex.release() ;
+         isMetaLocked = FALSE ;
+
+         dpsCB->writeData( info ) ;
+      }
+
+   done :
+      if ( isMetaLocked )
+      {
+         _mutex.release () ;
+      }
+      if ( isLatchLocked )
+      {
+         _latchVec[suID]->release_w() ;
+      }
+      if ( isReserved )
+      {
+         pTransCB->releaseLogSpace( logRecSize, cb );
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_ADDCS, "_SDB_DMSCB::addCollectionSpace" )
    INT32 _SDB_DMSCB::addCollectionSpace( const CHAR * pName,
                                          UINT32 topSequence,
@@ -2064,6 +2215,16 @@ namespace engine
          /// push back
          vecCS.push_back( monCSName( cscb->_name ) ) ;
       }
+   }
+
+   UINT32 _SDB_DMSCB::hasInvalidUniqueID() const
+   {
+      return _hasInvalidUniqueID ;
+   }
+
+   UINT32 _SDB_DMSCB::setInvalidUniqueID( BOOLEAN hasInvalid )
+   {
+      _hasInvalidUniqueID = hasInvalid ;
    }
 
    dmsTempSUMgr *_SDB_DMSCB::getTempSUMgr ()

@@ -93,7 +93,7 @@ namespace engine
          DMS_STORAGE_TYPE  type ;
          NET_HANDLE        netHandle ;
          utilCSUniqueID    csUniqueID ;
-         vector< PAIR_CLNAME_ID > clList ;
+         BSONObj           clInfo ;
 
          _clsCSEventItem()
          {
@@ -203,10 +203,12 @@ namespace engine
                                     BOOLEAN *pUpdated = NULL ) ;
          INT32 unlockGroupItem( clsGroupItem *item ) ;
 
-         INT32 rGetCSInfo( const CHAR *csName, utilCSUniqueID &csUniqueID,
-                           UINT32 &pageSize,
-                           UINT32 &lobPageSize, DMS_STORAGE_TYPE &type,
-                           vector< PAIR_CLNAME_ID >& clList,
+         INT32 rGetCSInfo( const CHAR *csName,
+                           utilCSUniqueID &csUniqueID,
+                           UINT32 *pageSize = NULL,
+                           UINT32 *lobPageSize = NULL,
+                           DMS_STORAGE_TYPE *type = NULL,
+                           BSONObj *clInfo = NULL,
                            INT64 waitMillSec = CLS_SHARD_TIMEOUT ) ;
 
          INT32 updateDCBaseInfo() ;

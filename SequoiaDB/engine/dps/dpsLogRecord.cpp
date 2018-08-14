@@ -1414,6 +1414,70 @@ namespace engine
 
             break ;
          }
+         case LOG_TYPE_ADDUNIQUEID :
+         {
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Type   : %s(%d)"OSS_NEWLINE,
+                                "ADD UNIQUEID", LOG_TYPE_ADDUNIQUEID ) ;
+
+            dpsLogRecord::iterator itr ;
+            itr = this->find( DPS_LOG_ADDUNIQUEID_CSNAME ) ;
+            if ( !itr.valid() )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    "*ERROR* : %s"OSS_NEWLINE,
+                                    "Failed to find cs name in record" ) ;
+               PD_LOG( PDERROR, "Failed to find cs name in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 " CSName : %s"OSS_NEWLINE,
+                                 itr.value() ) ;
+
+            itr = this->find( DPS_LOG_ADDUNIQUEID_CSUNIQUEID ) ;
+            if ( !itr.valid() )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    "*ERROR* : %s"OSS_NEWLINE,
+                                    "Failed to find cs unique id in record" ) ;
+               PD_LOG( PDERROR, "Failed to find cs unique id in record" ) ;
+               goto done ;
+            }
+
+            {
+               utilCSUniqueID csUniqueID = *(utilCSUniqueID *)( itr.value() ) ;
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    " CS UniqueID : %u"OSS_NEWLINE,
+                                    csUniqueID ) ;
+            }
+
+            itr = this->find( DPS_LOG_ADDUNIQUEID_CLINFO ) ;
+            if ( !itr.valid() )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    "*ERROR* : %s"OSS_NEWLINE,
+                                    "Failed to find cl info in record" ) ;
+               PD_LOG( PDERROR, "Failed to find cl info in record" ) ;
+               goto done ;
+            }
+
+            try
+            {
+               BSONObj clInfoObj( itr.value() ) ;
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    " CLInfo :%s"OSS_NEWLINE,
+                                    clInfoObj.toString( TRUE ).c_str() ) ;
+            }
+            catch ( std::exception &e )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    "*ERROR* : %s: %s"OSS_NEWLINE,
+                                    "Invalid add unique id record", e.what() ) ;
+               goto done ;
+            }
+
+            break ;
+         }
          default:
          {
             // something goes wrong here, but let's just continue

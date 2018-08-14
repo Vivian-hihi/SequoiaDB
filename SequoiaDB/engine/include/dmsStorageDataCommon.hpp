@@ -931,7 +931,8 @@ namespace engine
          INT32 truncateCollectionLoads( const CHAR *pName,
                                         dmsMBContext *context = NULL ) ;
 
-         INT32 chgCLUniqueID( vector< PAIR_CLNAME_ID > clList ) ;
+         INT32 chgCLUniqueID( const vector<PAIR_CLNAME_ID>& clList,
+                              BOOLEAN needLock = FALSE ) ;
 
          INT32 renameCollection ( const CHAR *oldName, const CHAR *newName,
                                   _pmdEDUCB *cb, SDB_DPSCB *dpscb,

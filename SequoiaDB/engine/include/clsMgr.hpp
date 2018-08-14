@@ -309,6 +309,8 @@ namespace engine
          map< UINT64, UINT64 >         _mapTaskID ;
          ossSpinSLatch                 _clsLatch ;
 
+         EDUID                         _uniqueCheckJobEduID ;
+
          UINT64                        _regTimerID ;
          UINT32                        _regFailedTimes ;
          UINT64                        _oneSecTimerID ;

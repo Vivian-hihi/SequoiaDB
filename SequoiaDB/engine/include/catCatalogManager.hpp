@@ -216,8 +216,11 @@ namespace engine
 
       INT32 _assignGroup( vector< UINT32 > *pGoups, UINT32 &groupID ) ;
 
+      INT32 _checkAllCSCLUniqueID() ;
    private:
       INT16 _majoritySize() ;
+      INT32 _setCSCLUniqueID( string csName, const BSONObj& boCollections,
+                              UINT32 csUniqueID ) ;
 
    private:
       sdbCatalogueCB       *_pCatCB;

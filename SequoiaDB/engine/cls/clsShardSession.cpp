@@ -690,9 +690,8 @@ namespace engine
       UINT32 pageSize = DMS_PAGE_SIZE_DFT ;
       UINT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
       DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ;
-      vector< PAIR_CLNAME_ID > clList ;
       rc = _pShdMgr->rGetCSInfo( csName, csUniqueID,
-                                 pageSize, lobPageSize, type, clList ) ;
+                                 &pageSize, &lobPageSize, &type ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Session[%s]: Get collection space[%s] page "
@@ -1494,13 +1493,10 @@ namespace engine
          {
             _rtnLoadCollectionSpace *pLoadcs = (_rtnLoadCollectionSpace*)pCommand ;
             utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
-            UINT32 pageSize = DMS_PAGE_SIZE_DFT ;
-            UINT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
-            DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ;
-            vector< PAIR_CLNAME_ID > clList ;
+            BSONObj clInfoObj ;
 
             rc = _pShdMgr->rGetCSInfo( pLoadcs->csName(), csUniqueID,
-                                       pageSize, lobPageSize, type, clList ) ;
+                                       NULL, NULL, NULL, &clInfoObj ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "Session[%s]: Get collection space[%s] unique "
@@ -1511,7 +1507,7 @@ namespace engine
 
             pLoadcs = (_rtnLoadCollectionSpace*)pCommand ;
             pLoadcs->setCSUniqueID( csUniqueID ) ;
-            pLoadcs->setCLInfo( clList ) ;
+            pLoadcs->setCLInfo( clInfoObj ) ;
          }
 
          PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;

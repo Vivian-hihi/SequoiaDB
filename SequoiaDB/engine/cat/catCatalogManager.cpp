@@ -68,8 +68,18 @@ namespace engine
 
    INT32 catCatalogueManager::active()
    {
+      INT32 rc = SDB_OK ;
+
+      rc = _checkAllCSCLUniqueID() ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to check cs/cl unique id, rc: %d", rc ) ;
+
       _taskMgr.setTaskID( catGetMaxTaskID( _pEduCB ) ) ;
-      return SDB_OK ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 catCatalogueManager::deactive()
@@ -682,6 +692,202 @@ namespace engine
                     taskID, tmpRC ) ;
          }
       }
+      goto done ;
+   }
+
+   INT32 catCatalogueManager::_setCSCLUniqueID( string csName,
+                                                const BSONObj& boCollections,
+                                                UINT32 csUniqueID )
+   {
+      INT32 rc = SDB_OK ;
+      vector< PAIR_CLNAME_ID > clInfoList ;
+      vector< PAIR_CLNAME_ID >::iterator clIt ;
+      BSONObj dummyObj ;
+      UINT64 clUniqueHWM = ossPack32To64( csUniqueID, 0 ) ;
+
+      // generator cl unique id
+      BSONObjIterator iter( boCollections ) ;
+      while ( iter.more() )
+      {
+         BSONElement ele = iter.next() ;
+         string collection ;
+         PAIR_CLNAME_ID clPair ;
+
+         rc = rtnGetSTDStringElement( ele.embeddedObject(),
+                                      CAT_COLLECTION_NAME,
+                                      collection ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get the field [%s] from [%s], rc: %d",
+                      CAT_COLLECTION_NAME, ele.toString().c_str(), rc ) ;
+
+         clPair = std::make_pair( collection, ++clUniqueHWM ) ;
+         clInfoList.push_back( clPair ) ;
+      }
+
+      // set cl unique id
+      for ( clIt = clInfoList.begin() ; clIt != clInfoList.end() ; clIt++ )
+      {
+         string clFullName = csName + '.' + clIt->first ;
+         BSONObj setInfo = BSON( CAT_CL_UNIQUEID << (INT64)clIt->second ) ;
+         rc = catUpdateCatalog( clFullName.c_str(), setInfo,
+                                dummyObj, _pEduCB, _majoritySize() ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to update cl catalog info, rc: %d", rc ) ;
+      }
+
+      // set cl list in cs
+      rc = catUpdateCSCLs( csName, clInfoList,
+                           _pEduCB, _pDmsCB, _pDpsCB, _majoritySize() ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                      "Failed to update cl list in cs, rc: %d", rc ) ;
+
+      // set cs unique id
+      {
+         BSONObj setObject = BSON( CAT_CS_UNIQUEID << csUniqueID <<
+                                   CAT_CS_CLUNIQUEHWM << (INT64)clUniqueHWM ) ;
+         rc = catUpdateCS( csName.c_str(), setObject, dummyObj,
+                           _pEduCB, _pDmsCB, _pDpsCB, _majoritySize() ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to update cs catalog info, rc: %d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 catCatalogueManager::_checkAllCSCLUniqueID()
+   {
+      INT32 rc                = SDB_OK ;
+      SINT64 contextID        = -1 ;
+      SDB_RTNCB *rtnCB        = pmdGetKRCB()->getRTNCB() ;
+      UINT32 csUniqueHWM      = 0 ;
+      INT32 curCSHWM          = 0 ;
+      UINT32 iRec             = 0 ;
+      BSONObj matcher = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
+      BSONObj orderby = BSON( CAT_CS_UNIQUEID << -1 ) ;
+      BSONObj dummyObj, resultObj ;
+      rtnContextBuf buffObj ;
+
+      // Check [CSUniqueHWM] field exists or not.
+      // If the field exists, check uniqueid task has been done.
+      rc = catGetOneObj( CAT_SYSDCBASE_COLLECTION_NAME, dummyObj, matcher,
+                         dummyObj, _pEduCB, resultObj ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to query from %s, rc: %d",
+                   CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+      rc = rtnGetIntElement( resultObj, FIELD_NAME_CSUNIQUEHWM, curCSHWM ) ;
+      if ( SDB_OK == rc )
+      {
+         goto done ;
+      }
+      if ( rc && rc != SDB_FIELD_NOT_EXIST )
+      {
+         goto error ;
+      }
+
+      // get all cs
+      rc = rtnQuery( CAT_COLLECTION_SPACE_COLLECTION,
+                     dummyObj, dummyObj, orderby, dummyObj,
+                     0, _pEduCB, 0, -1, _pDmsCB, rtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to query from %s, rc: %d",
+                   CAT_COLLECTION_SPACE_COLLECTION, rc ) ;
+
+      while( TRUE )
+      {
+         iRec++ ;
+
+         rc = rtnGetMore( contextID, 1, buffObj, _pEduCB, rtnCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               contextID = -1 ;
+               break ;
+            }
+            goto error ;
+         }
+
+         const CHAR *csName = NULL ;
+         utilCSUniqueID maxUniqueID = UTIL_INVALID_UNIQUEID ;
+         BSONObj boCollections ;
+         BSONObj boSpace( buffObj.data() ) ;
+         INT32 result = SDB_OK ;
+
+         // sort by { UniqueID: -1 }, the first one is the cs with max unique id
+         rc = rtnGetIntElement( boSpace, CAT_CS_UNIQUEID, (INT32&)maxUniqueID );
+         if ( 1 == iRec )
+         {
+            csUniqueHWM = maxUniqueID ;
+         }
+         if ( rc == SDB_OK )
+         {
+            continue ;
+         }
+         else if ( rc == SDB_FIELD_NOT_EXIST )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get field[%s] from [%s], rc: %d",
+                      CAT_CS_UNIQUEID, boSpace.toString().c_str(), rc ) ;
+
+         // get cs name and its cl list
+         rc = rtnGetStringElement( boSpace, CAT_COLLECTION_SPACE_NAME,
+                                   &csName ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get field[%s] from [%s], rc: %d",
+                      CAT_COLLECTION_SPACE_NAME, boSpace.toString().c_str(), rc ) ;
+
+         rc = rtnGetArrayElement( boSpace, CAT_COLLECTION, boCollections ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get the field [%s] from [%s], rc: %d",
+                      CAT_COLLECTION, boSpace.toString().c_str(), rc ) ;
+
+         // set cs and cl unqiue id
+         rc = catTransBegin( _pEduCB ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to begin trans, rc: %d", rc ) ;
+
+         result = _setCSCLUniqueID( csName, boCollections, ++csUniqueHWM ) ;
+         if ( result )
+         {
+            PD_LOG( PDERROR,
+                    "Failed to set cs and its cl unique id, rc: %d",
+                    result ) ;
+         }
+
+         rc = catTransEnd( result, _pEduCB, _pDpsCB ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to end trans, rc: %d", rc ) ;
+         if ( result )
+         {
+            rc = result ;
+            goto error ;
+         }
+
+      }
+
+      // set cs uniqueid hwm in finally
+      if ( csUniqueHWM != 0 )
+      {
+         rc = catSetCSUniqueHWM( _pEduCB, _majoritySize(), csUniqueHWM ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to set cs unqiue id high water mask, rc: %d",
+                      rc ) ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         buffObj.release() ;
+         rtnCB->contextDelete( contextID, _pEduCB ) ;
+      }
+      return rc ;
+   error:
       goto done ;
    }
 

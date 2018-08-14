@@ -51,6 +51,7 @@
 #include "schedTaskAdapter.hpp"
 #include "schedPrepareJob.hpp"
 #include "schedDispatchJob.hpp"
+#include "clsUniqueIDCheckJob.hpp"
 
 using namespace bson ;
 
@@ -535,6 +536,7 @@ namespace engine
     _replServiceID ( MSG_ROUTE_REPL_SERVICE ),
     _taskMgr( 0x7FFFFFFF ),
     _taskID ( 0 ),
+    _uniqueCheckJobEduID( PMD_INVALID_EDUID ),
     _regTimerID ( CLS_INVALID_TIMERID ),
     _regFailedTimes( 0 ),
     _oneSecTimerID ( CLS_INVALID_TIMERID )
@@ -1064,16 +1066,29 @@ namespace engine
       // for "post trigger" event
       if ( SDB_EVT_OCCUR_AFTER == type )
       {
-         // if change to primary, need to start query task
          if ( primary )
          {
+            // start unqiue id check
+            SDB_DMSCB* pDmsCB = pmdGetKRCB()->getDMSCB() ;
+            if ( pDmsCB->hasInvalidUniqueID() )
+            {
+               startUniqueIDCheckJob( &_uniqueCheckJobEduID ) ;
+            }
+
+            // start query task
             BSONObj match = BSON ( CAT_TARGETID_NAME <<
                                    _selfNodeID.columns.groupID ) ;
             startTaskCheck( match ) ;
          }
-         // if change to secondary, need to clean up all query task
          else
          {
+            // stop unqiue id check
+            if ( _uniqueCheckJobEduID != PMD_INVALID_EDUID )
+            {
+               stopUniqueIDCheckJob( _uniqueCheckJobEduID ) ;
+            }
+
+            // clean up all query task
             ossScopedLock lock ( &_clsLatch, EXCLUSIVE ) ;
             _mapTaskQuery.clear () ;
          }

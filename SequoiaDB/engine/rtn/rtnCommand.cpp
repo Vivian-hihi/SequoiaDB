@@ -3991,7 +3991,7 @@ error:
                                       pmdGetOptionCB()->getLobPath(),
                                       pmdGetOptionCB()->getLobMetaPath(),
                                       cb, dmsCB, FALSE,
-                                      &_csUniqueID, _clList ) ;
+                                      &_csUniqueID, _clInfoObj ) ;
       }
       else
       {
@@ -4012,9 +4012,9 @@ error:
       _needChangeID = TRUE ;
    }
 
-   void _rtnLoadCollectionSpace::setCLInfo ( const vector< PAIR_CLNAME_ID >& clList )
+   void _rtnLoadCollectionSpace::setCLInfo ( const BSONObj& clInfoObj )
    {
-      _clList = clList ;
+      _clInfoObj = clInfoObj.getOwned() ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER( _rtnUnloadCollectionSpace )

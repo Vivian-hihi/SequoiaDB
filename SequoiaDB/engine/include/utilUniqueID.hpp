@@ -37,6 +37,9 @@
 
 #include "ossTypes.hpp"
 #include "ossUtil.hpp"
+#include "../bson/bsonobj.h"
+
+using namespace bson ;
 
 namespace engine
 {
@@ -51,6 +54,8 @@ namespace engine
    {
       return clUniqueID >> 32 ;
    }
+
+   vector<PAIR_CLNAME_ID> utilBson2ClPair( const BSONObj& clInfoObj ) ;
 }
 
 #endif //UTIL_UNIQUEID_HPP_
