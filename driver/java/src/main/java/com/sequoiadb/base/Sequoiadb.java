@@ -2136,9 +2136,9 @@ public class Sequoiadb implements Closeable {
      *                for more details. Some of its optional parameters are as bellow:
      *
      *                <ul>
-     *                <li>Global(Bool)                      : The id(s) of replica group(s) which to be backuped
-     *                <li>GroupID(INT32 or INT32 Array)     : The name(s) of replica group(s) which to be backuped
-     *                <li>GroupName(String or String Array) : The name for the backup
+     *                <li>Global(Bool)                      : execute this command in global or not. While 'options' is null, it's equals to {Glocal: true}.
+     *                <li>GroupID(INT32 or INT32 Array)     : specified one or several groups by their group IDs. e.g. {GroupID:[1001, 1002]}.
+     *                <li>GroupName(String or String Array) : specified one or several groups by their group names. e.g. {GroupID:"group1"}.
      *                <li>...
      *                </ul>
      * @return void
