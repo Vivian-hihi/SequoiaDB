@@ -2146,10 +2146,7 @@ public class Sequoiadb implements Closeable {
     public void invalidateCache(BSONObject options) {
         AdminRequest request = new AdminRequest(AdminCommand.INVALIDATE_CACHE, options);
         SdbReply response = requestAndResponse(request);
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throwIfError(response);
-        }
+        throwIfError(response);
     }
 
     private String getListCommand(int listType) {
