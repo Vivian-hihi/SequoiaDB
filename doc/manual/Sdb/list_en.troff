@@ -79,13 +79,13 @@ db.list(SDB_LIST_CONTEXTS)
 .sp 2
 Return:
 .sp 2
-     {
+      {
 .br
         "SessionID": 4,
 .br
         "Contexts": [ 0 ]
 .br
-        } ...
+      } ...
 .sp 2
 Specify the value of "listType" as SDB_LIST_STORAGEUNITS:
 .sp 2
@@ -93,9 +93,11 @@ db.list(SDB_LIST_STORAGEUNITS)
 .sp 2
 Return:
 .sp 2
-    {
+      {
 .br
         "Name": "foo", 
+.br
+        "UniqueID": 61, 
 .br
         "ID": 4094,
 .br
@@ -111,7 +113,7 @@ Return:
 .br
         "Size": 172032000 
 .br
-        } 
+      } 
 .sp 2
 db.list(SDB_LIST_STORAGEUNITS,{"Logical ID":{$gt:1}},{Name:"space",ID:2},{Name:1})
 .sp 2
@@ -133,4 +135,4 @@ values of "Name" in these records are sorted in ascending order.
 .br
         "Name": "name"
 .br
-       }...
+      }...
