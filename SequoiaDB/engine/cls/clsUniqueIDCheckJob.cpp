@@ -37,6 +37,7 @@
 #include "monDMS.hpp"
 #include "dmsStorageUnit.hpp"
 #include "rtn.hpp"
+#include "clsTrace.hpp"
 
 namespace engine
 {
@@ -62,9 +63,12 @@ namespace engine
       return FALSE ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSUIDCHKJOB_DOIT, "_clsUniqueIDCheckJob::doit" )
    INT32 _clsUniqueIDCheckJob::doit()
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSUIDCHKJOB_DOIT ) ;
+
       pmdEDUCB *cb = eduCB() ;
       pmdKRCB* pKrcb = pmdGetKRCB() ;
       SDB_DMSCB *pDmsCB = pKrcb->getDMSCB() ;
@@ -183,11 +187,15 @@ namespace engine
       {
          pDmsCB->setInvalidUniqueID( FALSE ) ;
       }
+      PD_TRACE_EXITRC( SDB__CLSUIDCHKJOB_DOIT, rc ) ;
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_STARTUIDCHKJOB, "startUniqueIDCheckJob" )
    INT32 startUniqueIDCheckJob ( EDUID* pEDUID )
    {
+      PD_TRACE_ENTRY( SDB_STARTUIDCHKJOB ) ;
+
       INT32 rc = SDB_OK ;
       clsUniqueIDCheckJob *pJob = NULL ;
 
@@ -201,13 +209,17 @@ namespace engine
       rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB_STARTUIDCHKJOB, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_STOPUIDCHKJOB, "startUniqueIDCheckJob" )
    INT32 stopUniqueIDCheckJob ( EDUID& EDUID )
    {
+      PD_TRACE_ENTRY( SDB_STOPUIDCHKJOB ) ;
+
       if ( PMD_INVALID_EDUID != EDUID )
       {
          pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
@@ -219,6 +231,8 @@ namespace engine
 
          EDUID = PMD_INVALID_EDUID ;
       }
+
+      PD_TRACE_EXIT( SDB_STOPUIDCHKJOB ) ;
       return SDB_OK ;
    }
 }

@@ -305,16 +305,14 @@ namespace engine
       SDB_ASSERT( cscb, "cscb can't be null!" ) ;
 
       INT32 rc = SDB_OK ;
-      dmsStorageUnitID suID  = DMS_INVALID_SUID ;
-      dmsStorageUnitID suID1 = DMS_INVALID_SUID ;
-      dmsStorageUnitID suID2 = DMS_INVALID_SUID ;
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
 
       if ( UTIL_INVALID_UNIQUEID != csUniqueID )
       {
          CSCB_ID_MAP_CONST_ITER it = _cscbIDMap.find( csUniqueID ) ;
          if ( it != _cscbIDMap.end() )
          {
-            suID = suID1 = it->second ;
+            suID = it->second ;
          }
       }
       else if ( pName )
@@ -322,7 +320,7 @@ namespace engine
          CSCB_MAP_CONST_ITER it = _cscbNameMap.find( pName ) ;
          if ( it != _cscbNameMap.end() )
          {
-            suID = suID2 = it->second ;
+            suID = it->second ;
          }
       }
 
@@ -1397,6 +1395,7 @@ namespace engine
       _CSCBRelease( suID, lockType ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CHGUID, "_SDB_DMSCB::changeUniqueID" )
    INT32 _SDB_DMSCB::changeUniqueID( const CHAR* csname,
                                      utilCSUniqueID csUniqueID,
                                      const BSONObj& clInfoObj,
@@ -1404,6 +1403,8 @@ namespace engine
                                      SDB_DPSCB* dpsCB )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_CHGUID ) ;
+
       BOOLEAN isReserved = FALSE ;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
@@ -1542,6 +1543,7 @@ namespace engine
       {
          pTransCB->releaseLogSpace( logRecSize, cb );
       }
+      PD_TRACE_EXITRC( SDB__SDB_DMSCB_CHGUID, rc ) ;
       return rc ;
    error :
       goto done ;
@@ -2222,7 +2224,7 @@ namespace engine
       return _hasInvalidUniqueID ;
    }
 
-   UINT32 _SDB_DMSCB::setInvalidUniqueID( BOOLEAN hasInvalid )
+   void _SDB_DMSCB::setInvalidUniqueID( BOOLEAN hasInvalid )
    {
       _hasInvalidUniqueID = hasInvalid ;
    }

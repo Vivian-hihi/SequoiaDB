@@ -2287,9 +2287,12 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATSETUHWM, "catSetCSUniqueHWM" )
    INT32 catSetCSUniqueHWM( pmdEDUCB *cb, INT16 w, UINT32 csUniqueHWM )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATSETUHWM ) ;
+
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
@@ -2305,6 +2308,7 @@ namespace engine
                    updator.toString().c_str(),
                    CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
    done :
+      PD_TRACE_EXITRC( SDB_CATSETUHWM, rc ) ;
       return rc ;
    error :
       goto done ;

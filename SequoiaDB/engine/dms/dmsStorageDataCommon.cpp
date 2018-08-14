@@ -2627,9 +2627,12 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_CHGUID, "_dmsStorageDataCommon::chgCLUniqueID" )
    INT32 _dmsStorageDataCommon::chgCLUniqueID( const vector<PAIR_CLNAME_ID>& clList,
                                                BOOLEAN needLock )
    {
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON_CHGUID ) ;
+
       if ( needLock )
       {
          ossScopedLock lock( &_metadataLatch, EXCLUSIVE ) ;
@@ -2665,6 +2668,7 @@ namespace engine
 
       flushMME( isSyncDeep() ) ;
 
+      PD_TRACE_EXIT( SDB__DMSSTORAGEDATACOMMON_CHGUID ) ;
       return SDB_OK ;
    }
 

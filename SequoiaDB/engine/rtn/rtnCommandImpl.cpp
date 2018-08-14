@@ -2034,12 +2034,14 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCHGUID, "rtnChangeUniqueID" )
    INT32 rtnChangeUniqueID( const CHAR* csName,
                             utilCSUniqueID csUniqueID,
                             const BSONObj& clInfoObj,
                             pmdEDUCB* cb,
                             SDB_DMSCB* dmsCB, SDB_DPSCB* dpsCB )
    {
+      PD_TRACE_ENTRY( SDB_RTNCHGUID ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN writable = FALSE ;
 
@@ -2065,6 +2067,7 @@ namespace engine
       {
          dmsCB->writeDown( cb ) ;
       }
+      PD_TRACE_EXITRC( SDB_RTNCHGUID, rc ) ;
       return rc ;
    error :
       goto done ;

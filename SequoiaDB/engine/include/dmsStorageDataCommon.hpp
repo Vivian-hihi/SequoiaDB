@@ -1223,16 +1223,14 @@ namespace engine
    OSS_INLINE UINT16 _dmsStorageDataCommon::_collectionNameLookup( const CHAR * pName,
                                                                    utilCLUniqueID clUniqueID )
    {
-      UINT16 mbID  = DMS_INVALID_MBID ;
-      UINT16 mbID1 = DMS_INVALID_MBID ;
-      UINT16 mbID2 = DMS_INVALID_MBID ;
+      UINT16 mbID = DMS_INVALID_MBID ;
 
       if ( UTIL_INVALID_UNIQUEID != clUniqueID )
       {
          COLID_MAP_CIT it = _collectionIDMap.find( clUniqueID ) ;
          if ( it != _collectionIDMap.end() )
          {
-            mbID = mbID1 = it->second ;
+            mbID = it->second ;
          }
       }
       else if ( pName )
@@ -1240,7 +1238,7 @@ namespace engine
          COLNAME_MAP_CIT it = _collectionNameMap.find( pName ) ;
          if ( it != _collectionNameMap.end() )
          {
-            mbID = mbID2 = it->second ;
+            mbID = it->second ;
          }
       }
 

@@ -332,7 +332,7 @@ namespace engine
 
       UINT32 hasInvalidUniqueID() const ;
 
-      UINT32 setInvalidUniqueID( BOOLEAN hasInvalid ) ;
+      void setInvalidUniqueID( BOOLEAN hasInvalid ) ;
 
       dmsTempSUMgr *getTempSUMgr () ;
 

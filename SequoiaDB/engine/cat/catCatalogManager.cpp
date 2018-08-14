@@ -695,11 +695,14 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__SETUID, "catCatalogueManager::_setCSCLUniqueID" )
    INT32 catCatalogueManager::_setCSCLUniqueID( string csName,
                                                 const BSONObj& boCollections,
                                                 UINT32 csUniqueID )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATALOGMGR__SETUID ) ;
+
       vector< PAIR_CLNAME_ID > clInfoList ;
       vector< PAIR_CLNAME_ID >::iterator clIt ;
       BSONObj dummyObj ;
@@ -752,14 +755,18 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB_CATALOGMGR__SETUID, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CHKUID, "catCatalogueManager::_checkAllCSCLUniqueID" )
    INT32 catCatalogueManager::_checkAllCSCLUniqueID()
    {
       INT32 rc                = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATALOGMGR__CHKUID ) ;
+
       SINT64 contextID        = -1 ;
       SDB_RTNCB *rtnCB        = pmdGetKRCB()->getRTNCB() ;
       UINT32 csUniqueHWM      = 0 ;
@@ -886,6 +893,7 @@ namespace engine
          buffObj.release() ;
          rtnCB->contextDelete( contextID, _pEduCB ) ;
       }
+      PD_TRACE_EXITRC( SDB_CATALOGMGR__CHKUID, rc ) ;
       return rc ;
    error:
       goto done ;
