@@ -436,6 +436,25 @@ namespace engine
 
       if ( withInternalField )
       {
+         // CAT_SEQUENCE_OID
+         ele = options.getField( CAT_SEQUENCE_OID ) ;
+         if ( jstOID == ele.type() )
+         {
+            OID oid = ele.OID() ;
+            if ( this->oid() != oid )
+            {
+               this->setOID( oid ) ;
+               _changed = TRUE ;
+            }
+         }
+         else if ( EOO != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
+                    ele.type(), CAT_SEQUENCE_OID ) ;
+            goto error ;
+         }
+
          // CAT_SEQUENCE_VERSION
          ele = options.getField( CAT_SEQUENCE_VERSION ) ;
          if ( NumberInt == ele.type() || NumberLong == ele.type() )
