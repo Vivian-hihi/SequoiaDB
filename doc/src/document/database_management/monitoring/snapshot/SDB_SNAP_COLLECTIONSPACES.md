@@ -14,10 +14,12 @@ SDB_SNAP_COLLECTIONSPACES
 
 | 字段名          | 类型       | 描述                                         |
 | --------------- | ---------- | -------------------------------------------- |
-| NodeName        | 字符串      | 集合空间所属节点名（主机名：端口号）              |
-| GroupName       | 字符串      | 集合空间所属分区组名                            |
-| Name            | 字符串      | 集合空间名                                   |
-| Collection      | 字符串数组 | 集合空间中所包含的所有集合                   |
+| NodeName        | 字符串     | 集合空间所属节点名（主机名：端口号）         |
+| GroupName       | 字符串     | 集合空间所属分区组名                         |
+| Name            | 字符串     | 集合空间名                                   |
+| UniqueID        | 整型       | 集合空间的UniqueID，在集群上全局唯一         |
+| Collection.Name | 字符串     | 集合空间所包含的集合的名字                   |
+| Collection.UniqueID | 长整型 | 集合空间所包含的集合的UniqueID               |
 | PageSize        | 整型       | 集合空间数据页大小（单位：字节）             |
 | LobPageSize     | 整型       | 集合空间大对象数据页大小（单位：字节）       |
 | MaxCapacitySize | 长整型     | 集合空间的最大容量上限（单位：字节）         |
@@ -47,7 +49,9 @@ SDB_SNAP_COLLECTIONSPACES
 | 字段名          | 类型       | 描述                                         |
 | --------------- | ---------- | -------------------------------------------- |
 | Name            | 字符串     | 集合空间名                                   |
-| Collection      | 字符串数组 | 集合空间中所包含的所有集合                   |
+| UniqueID        | 整型       | 集合空间的UniqueID，在集群上全局唯一         |
+| Collection.Name | 字符串     | 集合空间所包含的集合的名字                   |
+| Collection.UniqueID | 长整型 | 集合空间所包含的集合的UniqueID               |
 | PageSize        | 整型       | 集合空间数据页大小（单位：字节）             |
 | LobPageSize     | 整型       | 集合空间大对象数据页大小（单位：字节）       |
 | TotalSize       | 长整型     | 集合空间的总大小（单位：字节）               |
@@ -68,9 +72,11 @@ SDB_SNAP_COLLECTIONSPACES
   "NodeName": "r520-8:11890",
   "GroupName": "group1",
   "Name": "foo",
+  "UniqueID": 61,
   "Collection": [
     {
-      "Name": "bar"
+      "Name": "bar",
+      "UniqueID": 261993005057
     }
   ],
   "PageSize": 65536,
@@ -105,6 +111,7 @@ SDB_SNAP_COLLECTIONSPACES
 > coord.snapshot( SDB_SNAP_COLLECTIONSPACES )
 {
   "Name": "foo",
+  "UniqueID": 61,
   "PageSize": 4096,  
   "LobPageSize": 262144,
   "TotalSize": 918945792,
@@ -117,7 +124,8 @@ SDB_SNAP_COLLECTIONSPACES
   "FreeLobSize": 140771328,
   "Collection": [
     {
-      "Name": "bar"
+      "Name": "bar",
+      "UniqueID": 261993005057
     }
   ],
   "Group": [

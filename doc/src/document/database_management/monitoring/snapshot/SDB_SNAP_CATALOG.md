@@ -15,6 +15,7 @@ SDB_SNAP_CATALOG
 | 字段名              | 类型   | 描述                         |
 | ------------------- | ------ | ---------------------------- |
 | Name                | 字符串 | 集合完整名                   |
+| UniqueID            | 长整型 | 集合的UniqueID，在集群上全局唯一 |
 | EnsureShardingIndex | 布尔   | 是否自动为分区键字段创建索引 |
 | ReplSize            | 整型   | 执行修改操作时需要同步的副本数<br>当执行更新、插入、删除记录等操作时，仅当指定副本数的节点都完成操作时才返回操作结果 |
 | ShardingKey         | 对象   | 数据分区类型：<br>- range：数据按分区键值的范围进行分区存储<br>- hash：数据按分区键的哈希值进行分区存储 |
@@ -37,6 +38,7 @@ SDB_SNAP_CATALOG
     "$oid": "5247a2bc60080822db1cfba2"
   },
   "Name": "foo.bar",
+  "UniqueID": 261993005057,
   "Version": 1,
   "Attribute": 0,
   "AttributeDesc": "",
