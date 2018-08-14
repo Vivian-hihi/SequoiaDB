@@ -7,8 +7,11 @@ import com.sequoiadb.test.common.Constants;
 import com.sequoiadb.test.common.ConstantsInsert;
 import com.sequoiadb.testdata.SDBTestHelper;
 import com.sequoiadb.testdata.TotalReadValue;
+import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.Binary;
+import org.bson.util.JSON;
 import org.junit.*;
 
 import java.util.ArrayList;
@@ -32,7 +35,9 @@ public class DBCollectionTest {
 
     @AfterClass
     public static void afterClass() throws Exception {
-        sdb.disconnect();
+        if (sdb != null) {
+            sdb.disconnect();
+        }
     }
 
     @Before
@@ -551,6 +556,102 @@ public class DBCollectionTest {
             e.printStackTrace();
         }
         return list;
+    }
+
+    @Test
+    @Ignore // jira_3357
+    public void jira_3357_insertBigRecord() {
+        final int recordSize = 15 * 1024 * 1024;
+        byte[] binData = new byte[recordSize];
+
+        for(int i = 0; i < recordSize; ++i) {
+            binData[i] = 'a';
+        }
+
+        Binary binary = new Binary(binData);
+        BSONObject object = new BasicBSONObject();
+        object.put("bindata", binary);
+        cl.insert(object);
+    }
+
+    @Test
+	@Ignore
+    public void jira_() {
+        String csName = "testfoo_cs";
+        String clName = "testbar_cs";
+        DBCollection coll = sdb.getCollectionSpace(csName).getCollection(clName);
+        DBCursor cursor = coll.query();
+        while(cursor.hasNext()) {
+            BSONObject object = cursor.getNext();
+            System.out.println("record is: " + object);
+        }
+    }
+
+    @Test
+    @Ignore
+    public void jira_aa() {
+        BSONObject obj = new BasicBSONObject();
+        obj.put("date", new Date());
+        cl.delete("");
+        cl.insert(obj);
+        DBCursor cursor = cl.query("", "", "", "", 0, 0);
+        sdb.closeAllCursors();
+        while (cursor.hasNext()) {
+            System.out.println("record is: " + cursor.getNext());
+        }
+    }
+
+    @Test
+    @Ignore
+    public void jira_bb() {
+        Sequoiadb db =  new Sequoiadb("192.168.20.165", 11810, "", "");
+        String coordIP = sdb.getReplicaGroup("SYSCatalogGroup").getSlave().getHostName();
+        System.out.println("coordIP is: " + coordIP);
+        ReplicaGroup rg = db.getReplicaGroup("group1");
+        Node data = rg.createNode(coordIP, 21000, "/opt/sequoiadb/database/data/20000");
+        rg.start();
+        String hostName = data.getHostName();
+        System.out.println("hostName is: " + hostName);
+    }
+
+    @Test
+    @Ignore
+    public void jira_cc() {
+        DBCursor cursor = sdb.getList(Sequoiadb.SDB_LIST_COLLECTIONS, null, null, null);
+        while(cursor.hasNext()) {
+            BSONObject obj = cursor.getNext();
+            System.out.println(obj);
+        }
+    }
+
+    @Test
+    public void jira_3269() throws InterruptedException {
+        String csName = "jira_3269";
+        String clName = "jira_3269";
+        try {
+            ClientOptions clientOptions = new ClientOptions();
+            clientOptions.setEnableCache(true);
+            clientOptions.setCacheInterval(2000);
+            Sequoiadb.initClient(clientOptions);
+            Sequoiadb db1 = new Sequoiadb("192.168.20.165", 11810, "", "");
+            Sequoiadb db2 = new Sequoiadb("192.168.20.165", 11810, "", "");
+            db1.createCollectionSpace(csName).createCollection(clName);
+            CollectionSpace cs2 = db2.getCollectionSpace(csName);
+            DBCollection cl2 = cs2.getCollection(clName);
+            Thread.sleep(2000);
+            db1.getCollectionSpace(csName).dropCollection(clName);
+            cs2.getCollection(clName);
+        } finally {
+            sdb.dropCollectionSpace(csName);
+        }
+    }
+
+    @Test
+    public void invalidateCacheTest() {
+        BSONObject options = new BasicBSONObject();
+        options.put("Role", "coord");
+        sdb.invalidateCache(null);
+        sdb.invalidateCache(options);
     }
 
 }

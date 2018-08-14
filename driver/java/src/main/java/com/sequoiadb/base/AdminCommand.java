@@ -116,4 +116,6 @@ final class AdminCommand {
     final static String SHUTDOWN_NODE = PREFIX + "shutdown node";
     final static String CREATE_NODE = PREFIX + "create node";
     final static String REMOVE_NODE = PREFIX + "remove node";
+
+    final static String INVALIDATE_CACHE = PREFIX + "invalidate cache";
 }

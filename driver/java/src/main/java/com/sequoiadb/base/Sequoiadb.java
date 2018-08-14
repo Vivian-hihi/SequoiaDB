@@ -2128,6 +2128,30 @@ public class Sequoiadb implements Closeable {
         throwIfError(response);
     }
 
+    /**
+     * Clear the cache of the nodes (data/coord node).
+     * @param options The control options:(Only take effect in coordinate nodes).
+     *                About the parameter 'options', please reference to the official
+     *                website(www.sequoiadb.com) and then search "命令位置参数"
+     *                for more details. Some of its optional parameters are as bellow:
+     *
+     *                <ul>
+     *                <li>Global(Bool)                      : The id(s) of replica group(s) which to be backuped
+     *                <li>GroupID(INT32 or INT32 Array)     : The name(s) of replica group(s) which to be backuped
+     *                <li>GroupName(String or String Array) : The name for the backup
+     *                <li>...
+     *                </ul>
+     * @return void
+     */
+    public void invalidateCache(BSONObject options) {
+        AdminRequest request = new AdminRequest(AdminCommand.INVALIDATE_CACHE, options);
+        SdbReply response = requestAndResponse(request);
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throwIfError(response);
+        }
+    }
+
     private String getListCommand(int listType) {
         switch (listType) {
             case SDB_LIST_CONTEXTS:
