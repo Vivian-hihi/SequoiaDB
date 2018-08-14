@@ -109,6 +109,7 @@ namespace SequoiaDB
         public const string CMD_NAME_GET_DCINFO = "get dcinfo";
         public const string CMD_NAME_UPDATE_CONFIG = "update config";
         public const string CMD_NAME_DELETE_CONFIG = "delete config";
+        public const string CMD_NAME_INVALIDATE_CACHE = "invalidate cache";
         public const string CMD_VALUE_NAME_CREATE = "create image";
         public const string CMD_VALUE_NAME_REMOVE = "remove image";
         public const string CMD_VALUE_NAME_ATTACH = "attach groups";

@@ -2146,6 +2146,31 @@ namespace SequoiaDB
             }
         }
 
+        /** \fn void InvalidateCache(BsonDocument options)
+         *  \brief Clear the cache of the nodes (data/coord node).
+         *  \param options The control options:(Only take effect in coordinate nodes)
+        
+                Global(Bool): execute this command in global or not. While 'options' is null, it's equals to {Glocal: true}.
+                GroupID(INT32 or INT32 Array): specified one or several groups by their group IDs. e.g. {GroupID:[1001, 1002]}.
+                GroupName(String or String Array): specified one or several groups by their group names. e.g. {GroupID:"group1"}.
+                ...
+
+         *  \note About the parameter 'options', please reference to the official website(www.sequoiadb.com) and then search "命令位置参数" for more details.
+         *  \return void
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void InvalidateCache(BsonDocument options)
+        {
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_NAME_INVALIDATE_CACHE;
+            SDBMessage rtn = AdminCommand(command, options, null, null, null);
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags, rtn.ErrorObject);
+            }
+        }
+
         private SDBMessage CreateCS(string csName, BsonDocument options)
         {
             if (csName == null || csName.Length == 0)

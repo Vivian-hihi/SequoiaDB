@@ -1750,5 +1750,14 @@ namespace DriverTest
             
         }
 
+        [TestMethod]
+        public void invalidateCacheTest() 
+        {
+            BsonDocument options = new BsonDocument();           
+            options.Add("Role", "coord");
+            sdb.InvalidateCache(null);
+            sdb.InvalidateCache(options);
+        }
+
     }
 }
