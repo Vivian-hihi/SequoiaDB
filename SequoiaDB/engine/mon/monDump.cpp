@@ -2572,7 +2572,10 @@ namespace engine
                   it1!= full._collections.end();
                   it1++ )
             {
-               sub.append (BSON ( FIELD_NAME_NAME << (*it1)._name ) ) ;
+               sub.append ( BSON ( FIELD_NAME_NAME <<
+                                   it1->_name <<
+                                   FIELD_NAME_UNIQUEID <<
+                                   (INT64)it1->_clUniqueID ) ) ;
             }
          }
          sub.done() ;
@@ -3886,7 +3889,7 @@ namespace engine
          }
          if ( _isLocalMode )
          {
-            mask |= PMD_CFG_MASK_MODE_LOCAL ; 
+            mask |= PMD_CFG_MASK_MODE_LOCAL ;
          }
 
          rc = pmdGetOptionCB()->toBSON( tmpObj, mask ) ;
