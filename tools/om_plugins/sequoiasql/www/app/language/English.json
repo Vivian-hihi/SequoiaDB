@@ -117,5 +117,6 @@
    "行数": "Row",
    "表大小": "Table size",
    "创建时间": "Create Time",
-   "关闭": "Cloes"
+   "关闭": "Cloes",
+   "是否需要对接SequoiaDB的decimal字段": "Do you need to butt the decimal field of SequoiaDB"
 }

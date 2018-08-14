@@ -647,6 +647,18 @@
                         }
                      ]
                   ]
+               },
+               {
+                  "name": "decimal",
+                  "webName": 'decimal',
+                  "type": "select",
+                  "desc": $scope.pAutoLanguage( "是否需要对接SequoiaDB的decimal字段" ),
+                  "required": true,
+                  "value": 'off',
+                  "valid": [
+                     { "key": "off", "value": "off" },
+                     { "key": "on",  "value": "on" }
+                  ]
                }
             ]
          } ;
@@ -751,7 +763,7 @@
                }
                if( formVal1['type'] == 'foreign' )
                {
-                  var subSql = ' SERVER ' + formVal2['foreign_server'] + ' OPTIONS( collectionspace \'' + formVal2['csName'] + '\', collection \'' + formVal2['clName'] + '\' )' ;
+                  var subSql = ' SERVER ' + formVal2['foreign_server'] + ' OPTIONS( collectionspace \'' + formVal2['csName'] + '\', collection \'' + formVal2['clName'] + '\', decimal \'' + formVal2['decimal'] + '\' )' ;
                   sql += subSql ;
                }
                $scope.createTable( sql, formVal1['dbName'] ) ;
