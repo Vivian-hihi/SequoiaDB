@@ -40,7 +40,7 @@
 #include "msgMessageFormat.hpp"
 #include "msgDef.h"
 #include "pmdEDU.hpp"
-#include "../bson/bsonobj.h"
+#include "ossLatch.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 #include "pd.hpp"
@@ -89,6 +89,16 @@ namespace engine
          _acquireSize-- ;
       }
 
+      OSS_INLINE void lock()
+      {
+         _latch.get() ;
+      }
+
+      OSS_INLINE void unlock()
+      {
+         _latch.release() ;
+      }
+
       void copyFrom( const _coordSequence& other )
       {
          // do not change name
@@ -104,6 +114,7 @@ namespace engine
       INT64          _nextValue ;
       INT32          _acquireSize ;
       INT32          _increment ;
+      ossSpinXLatch  _latch ;
    } ;
    typedef _coordSequence coordSequence ;
 
@@ -126,101 +137,6 @@ namespace engine
    void _coordSequenceAgent::fini()
    {
       clear() ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT_GET_NEXT_VALUE, "_coordSequenceAgent::getNextValue" )
-   INT32 _coordSequenceAgent::getNextValue( const std::string& name, INT64& nextValue, _pmdEDUCB* eduCB )
-   {
-      INT32 rc = SDB_OK ;
-      _coordSequence* cache = NULL ;
-      _coordSequence* sequence = NULL ;
-      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT_GET_NEXT_VALUE ) ;
-
-      COORD_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
-      BUCKET_XLOCK( bucket ) ;
-
-      COORD_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
-      if ( bucket.end() != iter )
-      {
-         cache = (*iter).second ;
-      }
-      else
-      {
-         _coordSequence seq = _coordSequence( name ) ;
-
-         rc = _acquireSequence( seq, eduCB ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
-                    name.c_str(), rc ) ;
-            goto error ;
-         }
-
-         sequence = SDB_OSS_NEW _coordSequence( name ) ;
-         if ( NULL == sequence )
-         {
-            rc = SDB_OOM ;
-            PD_LOG( PDERROR, "Failed to alloc sequence[%s], rc=%d",
-                    name.c_str(), rc ) ;
-            goto error ;
-         }
-
-         sequence->copyFrom( seq ) ;
-
-         try
-         {
-            bucket.insert( COORD_SEQ_MAP::value_type( name, sequence ) ) ;
-         }
-         catch( std::exception& e )
-         {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to insert sequence[%s] to cache", name.c_str() ) ;
-            goto error ;
-         }
-
-         cache = sequence ;
-         sequence = NULL ;
-      }
-
-      SDB_ASSERT( cache->acquireSize() >= 0, "AcquireSize should >= 0" ) ;
-
-      if ( cache->acquireSize() == 0 )
-      {
-         rc = _acquireSequence( *cache, eduCB ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
-                    name.c_str(), rc ) ;
-            if ( SDB_SEQUENCE_NOT_EXIST == rc )
-            {
-               // remove cache if sequence not exist
-               bucket.erase( name ) ;
-               SDB_OSS_DEL( cache ) ;
-               cache = NULL ;
-            }
-            goto error ;
-         }
-
-         if ( cache->acquireSize() == 0 )
-         {
-            SDB_ASSERT( FALSE, "AcquireSize == 0" ) ;
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Invalid AcquireSize of sequence[%s], rc=%d",
-                    name.c_str(), rc ) ;
-            goto error ;
-         }
-      }
-
-      cache->decreaseAcquireSize() ;
-      nextValue = cache->nextValue() ;
-      cache->setNextValue( cache->nextValue() + cache->increment() ) ;
-
-   done:
-      SAFE_OSS_DELETE( sequence ) ;
-      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT_GET_NEXT_VALUE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT_REMOVE_CACHE, "_coordSequenceAgent::removeCache" )
@@ -269,6 +185,213 @@ namespace engine
       }
 
       PD_TRACE_EXIT( SDB_COORD_SEQ_AGENT_CLEAR ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT_GET_NEXT_VALUE, "_coordSequenceAgent::getNextValue" )
+   INT32 _coordSequenceAgent::getNextValue( const std::string& name, INT64& nextValue, _pmdEDUCB* eduCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT_GET_NEXT_VALUE ) ;
+      BOOLEAN noCache = FALSE ;
+      bson::OID oid ;
+
+      rc = _getNextValueBySLock( name, nextValue, noCache, oid, eduCB ) ;
+      if ( SDB_OK == rc )
+      {
+         // if no sequence cache, should get bucket by XLock
+         if ( noCache )
+         {
+            rc = _getNextValueByXLock( name, nextValue, eduCB ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+         }
+      }
+      else
+      {
+         if ( SDB_SEQUENCE_NOT_EXIST == rc )
+         {
+            // remove cache if sequence not exist
+            _removeCacheByOID( name, oid ) ;
+         }
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT_GET_NEXT_VALUE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_SLOCK, "_coordSequenceAgent::_getNextValueBySLock" )
+   INT32 _coordSequenceAgent::_getNextValueBySLock( const std::string& name, INT64& nextValue, BOOLEAN& noCache, bson::OID& oid, _pmdEDUCB* eduCB )
+   {
+      INT32 rc = SDB_OK ;
+      _coordSequence* cache = NULL ;
+      BOOLEAN cacheLocked = FALSE ;
+      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_SLOCK ) ;
+
+      COORD_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
+      BUCKET_SLOCK( bucket ) ;
+
+      COORD_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
+      if ( bucket.end() != iter )
+      {
+         cache = (*iter).second ;
+         noCache = FALSE ;
+      }
+      else
+      {
+         // no sequence cache, should get bucket by XLock
+         noCache = TRUE ;
+         goto done ;
+      }
+
+      cache->lock() ;
+      cacheLocked = TRUE ;
+
+      rc = _getNextValueFromCache( *cache, nextValue, eduCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
+                 name.c_str(), rc ) ;
+         // if rc==SDB_SEQUENCE_NOT_EXIST, we should delete the cache
+         // here we get SLOCK, so we need to get XLOCK to delete the cache
+         // check the oid consistency when delete cache
+         oid = cache->oid() ;
+         goto error ;
+      }
+
+   done:
+      if ( cacheLocked )
+      {
+         cache->unlock() ;
+      }
+      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_SLOCK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_XLOCK, "_coordSequenceAgent::_getNextValueByXLock" )
+   INT32 _coordSequenceAgent::_getNextValueByXLock( const std::string& name, INT64& nextValue, _pmdEDUCB* eduCB )
+   {
+      INT32 rc = SDB_OK ;
+      _coordSequence* cache = NULL ;
+      _coordSequence* sequence = NULL ;
+      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_XLOCK ) ;
+
+      COORD_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
+      BUCKET_XLOCK( bucket ) ;
+
+      COORD_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
+      if ( bucket.end() != iter )
+      {
+         cache = (*iter).second ;
+      }
+      else
+      {
+         _coordSequence seq = _coordSequence( name ) ;
+
+         rc = _acquireSequence( seq, eduCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
+                    name.c_str(), rc ) ;
+            goto error ;
+         }
+
+         sequence = SDB_OSS_NEW _coordSequence( name ) ;
+         if ( NULL == sequence )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Failed to alloc sequence[%s], rc=%d",
+                    name.c_str(), rc ) ;
+            goto error ;
+         }
+
+         sequence->copyFrom( seq ) ;
+
+         try
+         {
+            bucket.insert( COORD_SEQ_MAP::value_type( name, sequence ) ) ;
+         }
+         catch( std::exception& e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to insert sequence[%s] to cache", name.c_str() ) ;
+            goto error ;
+         }
+
+         cache = sequence ;
+         sequence = NULL ;
+      }
+
+      // we have got XLOCK, so no need to lock cache
+
+      rc = _getNextValueFromCache( *cache, nextValue, eduCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get next value of sequence[%s], rc=%d",
+                 name.c_str(), rc ) ;
+         if ( SDB_SEQUENCE_NOT_EXIST == rc )
+         {
+            // remove cache if sequence not exist
+            // we have got XLOCK, so we can delete it directly
+            bucket.erase( name ) ;
+            SDB_OSS_DEL( cache ) ;
+            cache = NULL ;
+         }
+         goto error ;
+      }
+
+   done:
+      SAFE_OSS_DELETE( sequence ) ;
+      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_XLOCK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_FROM_CACHE, "_coordSequenceAgent::_getNextValueFromCache" )
+   INT32 _coordSequenceAgent::_getNextValueFromCache( _coordSequence& seq, INT64& nextValue, _pmdEDUCB* eduCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_FROM_CACHE ) ;
+
+      SDB_ASSERT( seq.acquireSize() >= 0, "AcquireSize should >= 0" ) ;
+
+      if ( seq.acquireSize() == 0 )
+      {
+         rc = _acquireSequence( seq, eduCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
+                    seq.name().c_str(), rc ) ;
+            goto error ;
+         }
+
+         if ( seq.acquireSize() == 0 )
+         {
+            SDB_ASSERT( FALSE, "AcquireSize == 0" ) ;
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Invalid AcquireSize of sequence[%s], rc=%d",
+                    seq.name().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+      seq.decreaseAcquireSize() ;
+      nextValue = seq.nextValue() ;
+      seq.setNextValue( seq.nextValue() + seq.increment() ) ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_FROM_CACHE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__ACQUIRE_SEQ, "_coordSequenceAgent::_acquireSequence" )
@@ -526,6 +649,31 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__REMOVE_CACHE_BY_OID, "_coordSequenceAgent::_removeCacheByOID" )
+   BOOLEAN _coordSequenceAgent::_removeCacheByOID( const std::string& name, bson::OID& oid )
+   {
+      BOOLEAN removed = FALSE ;
+      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__REMOVE_CACHE_BY_OID ) ;
+
+      COORD_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
+      BUCKET_XLOCK( bucket ) ;
+
+      COORD_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
+      if ( bucket.end() != iter )
+      {
+         _coordSequence* cache = (*iter).second ;
+         if ( cache->oid() == oid )
+         {
+            bucket.erase( name ) ;
+            SDB_OSS_DEL( cache ) ;
+            removed = TRUE ;
+         }
+      }
+
+      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__REMOVE_CACHE_BY_OID, removed ) ;
+      return removed ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_INVALIDATE_CACHE, "coordInvalidateSequenceCache" )

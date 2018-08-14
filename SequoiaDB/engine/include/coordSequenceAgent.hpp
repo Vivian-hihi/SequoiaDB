@@ -36,8 +36,9 @@
 
 #include "oss.hpp"
 #include "ossUtil.hpp"
-#include "utilConcurrentMap.hpp"
 #include "msg.h"
+#include "utilConcurrentMap.hpp"
+#include "../bson/bsonobj.h"
 #include <string>
 
 namespace engine
@@ -49,7 +50,7 @@ namespace engine
    class _coordSequenceAgent: public SDBObject
    {
    private:
-      typedef utilConcurrentMap<std::string, _coordSequence*> COORD_SEQ_MAP ;
+      typedef utilConcurrentMap<std::string, _coordSequence*, 64> COORD_SEQ_MAP ;
    public:
       _coordSequenceAgent() ;
       ~_coordSequenceAgent() ;
@@ -63,8 +64,12 @@ namespace engine
       void clear() ;
 
    private:
+      INT32 _getNextValueByXLock( const std::string& sequenceName, INT64& nextValue, _pmdEDUCB* eduCB ) ;
+      INT32 _getNextValueBySLock( const std::string& sequenceName, INT64& nextValue, BOOLEAN& noCache, bson::OID& oid, _pmdEDUCB* eduCB ) ;
+      INT32 _getNextValueFromCache( _coordSequence& seq, INT64& nextValue, _pmdEDUCB* eduCB ) ;
       INT32 _acquireSequence( _coordSequence& seq, _pmdEDUCB* eduCB ) ;
       INT32 _processAcquireReply( MsgHeader* msg, _coordSequence& seq ) ;
+      BOOLEAN _removeCacheByOID( const std::string& sequenceName, bson::OID& oid ) ;
 
    private:
       _coordResource*   _resource ;
