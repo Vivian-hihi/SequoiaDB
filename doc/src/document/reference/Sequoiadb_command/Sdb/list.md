@@ -45,18 +45,19 @@
 
 	```lang-javascript
 	> db.list( SDB_LIST_STORAGEUNITS )
-	{
-	  "NodeName": "ubuntu-200-043:11830",
-	  "Name": "foo",
-	  "ID": 4094,
-	  "LogicalID": 186,
-	  "PageSize": 65536,
-	  "LobPageSize": 262144,
-	  "Sequence": 1,
-	  "NumCollections": 1,
-	  "CollectionHWM": 1,
-	  "Size": 306315264
-	}
+    {
+      "NodeName": "ubuntu-200-043:11830",
+      "Name": "foo",
+      "UniqueID": 61,
+      "ID": 4094,
+      "LogicalID": 186,
+      "PageSize": 65536,
+      "LobPageSize": 262144,
+      "Sequence": 1,
+      "NumCollections": 1,
+      "CollectionHWM": 1,
+      "Size": 306315264
+    }
 	```
 
 * 返回符合条件 LogicalID 大于1的记录，并且每条记录只返回 Name 和 ID 这两个字段，记录按 Name 字段的值升序排序
