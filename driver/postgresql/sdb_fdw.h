@@ -48,9 +48,9 @@
 #define SDB_TUPLE_COST_MULTIPLIER      5
 
 #define SDB_MAX_KEY_COLUMN_COUNT       (10)
-#define SDB_MAX_KEY_COLUMN_LENGTH      (20)
+#define SDB_MAX_KEY_COLUMN_LENGTH      (30)
 
-#define SDB_MAX_INDEX_NUM              (10)
+#define SDB_MAX_INDEX_NUM              (20)
 
 #define SDB_MAX_SERVICE_LENGTH         (256)
 
@@ -159,6 +159,9 @@ struct SdbExecState
    sdbConnectionHandle hConnection ;
    sdbCollectionHandle hCollection ;
    sdbbson queryDocument ; /* query request */
+   sdbbson sortDocument ; /* sort request */
+   INT64 offset ;
+   INT64 limit ;
 
    /* sdb server options */
    char *sdbServerList[ INITIAL_ARRAY_CAPACITY ];
