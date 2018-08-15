@@ -86,6 +86,7 @@ const zend_function_entry sdbFun[] = {
    PHP_ME( SequoiaDB, close,                 NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, isValid,               NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, syncDB,                NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDB, invalidateCache,       NULL, ZEND_ACC_PUBLIC )
    //snapshot & list
    PHP_ME( SequoiaDB, snapshot,              NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, resetSnapshot,         NULL, ZEND_ACC_PUBLIC )

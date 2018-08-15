@@ -438,7 +438,7 @@ class SequoiaDB
     *                                               Deep              : (INT32) Flush with deep mode or not. 1 in default. 0 for non-deep mode,1 for deep mode,-1 means use the configuration with server.
     *                                               Block             : (Bool) Flush with block mode or not. false in default.
     *                                               CollectionSpace   : (String) Specify the collectionspace to sync. If not set, will sync all the collectionspaces and logs, otherwise, will only sync the collectionspace specified.
-    *                                               Location Elements	: (Only take effect in coordinate nodes) GroupID:INT32, GroupName:String, NodeID:INT32, HostName:String, svcname:String ...
+    *                                               Location Elements : (Only take effect in coordinate nodes) GroupID:INT32, GroupName:String, NodeID:INT32, HostName:String, svcname:String ...
     *                                               @endcode
     *
     * @return Returns the result, default return array.
@@ -482,6 +482,66 @@ class SequoiaDB
     * @endcode
    */
    public function syncDB( array|string $options = null ){}
+
+   /**
+    * Clear node cache.
+    *
+    * @param $condition an array or the string argument . Filter condition:
+    *                                               @code
+    *                                               If the GroupID, GroupName, NodeID, HostName, and svcname fields are set, this field is ignored.
+    *                                               Global    : true | false
+    *
+    *                                               The default is all groups, the relationship between GroupID and GroupName is or.
+    *                                               GroupID   : 1001 | [ 1001, 1002, ... ], 
+    *                                               GroupName : "group1" | [ "group1", "group2", ... ]
+    *
+    *                                               The default is all nodes in the group, the relationship between GroupID and GroupName is and.
+    *                                               NodeID    : 1001 | [ 1001, 1002, ... ]
+    *                                               HostName  : "host1" | [ "host1", "host2", ... ]
+    *                                               svcname   : "11810" | [ "11810", "11820", ... ]
+    *                                               @endcode
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * 1. Clear all node cache.
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $result = $db -> invalidateCache() ;
+    * var_dump( $result ) ;
+    * @endcode
+    * 2. Clear specified group cache.
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $result = $db -> invalidateCache( array( 'GroupName' => 'group1' ) ) ;
+    * var_dump( $result ) ;
+    * @endcode
+    * 3. Clear specified node cache.
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $result = $db -> invalidateCache( array( 'HostName' => 'host1', 'svcname' => '11810' ) ) ;
+    * var_dump( $result ) ;
+    * @endcode
+   */
+   public function invalidateCache( array|string $condition = array( 'Global' => true ) ){}
 
    /**
     * Get the snapshot.
