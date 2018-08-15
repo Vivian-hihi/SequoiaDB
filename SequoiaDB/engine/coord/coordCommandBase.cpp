@@ -874,6 +874,7 @@ namespace engine
          *pFilterObj = newFilterObj ;
       }
 
+   parseNode:
       /// 5. parse nodes
       rc = coordGetGroupNodes( _pResource, cb, *pFilterObj,
                                ctrlParam._emptyFilterSel,
@@ -885,8 +886,16 @@ namespace engine
       {
          hasNodeOrGroupFilter = TRUE ;
       }
-      /// use specail group
-      else if ( 0 == groupLst.size() && ctrlParam._useSpecialNode )
+
+      if ( sendNodes.size() == 0 && hasNodeOrGroupFilter )
+      {
+         PD_LOG( PDWARNING, "No specific nodes[%s]",
+                 pFilterObj->toString().c_str() ) ;
+         rc = SDB_CLS_NODE_NOT_EXIST ;
+         goto error ;
+      }
+      /// if not specify groups and nodes, use specail group
+      else if ( !hasNodeOrGroupFilter && ctrlParam._useSpecialNode )
       {
          sendNodes = ctrlParam._specialNodes ;
       }
