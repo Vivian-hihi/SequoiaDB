@@ -731,8 +731,6 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__RTNCREATECL_INIT, rc ) ;
       return rc ;
    error :
-      _clean( pmdGetThreadEDUCB(), pmdGetKRCB()->getDMSCB(),
-              pmdGetKRCB()->getDPSCB() ) ;
       goto done ;
    }
 
@@ -808,7 +806,7 @@ namespace engine
          if ( rc && SDB_DMS_CS_NOT_EMPTY != rc )
          {
             // Just logging the error, but can do nothing about it.
-            PD_LOG( PDERROR, "Drop new created collection space[%s] failed, "
+            PD_LOG( PDWARNING, "Drop new created collection space[%s] failed, "
                     "rc: %d", csName.c_str(), rc ) ;
          }
       }
