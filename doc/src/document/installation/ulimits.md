@@ -59,7 +59,7 @@ sequoiadb(11800) (20111) C
 sequoiadb(11830) (20129) D
 sequoiadb(11810) (20132) S
 $
-$ # 查看协调节点进程20132的ulimit值
+$ # 查看协调节点进程20132的ulimit信息
 $ cat /proc/20132/limits 
 Limit                     Soft Limit           Hard Limit           Units     
 Max cpu time              unlimited            unlimited            seconds   
@@ -79,3 +79,23 @@ Max nice priority         0                    0
 Max realtime priority     0                    0                    
 Max realtime timeout      unlimited            unlimited            us     
 ```
+
+也可通过[节点健康检测快照](database_management/monitoring/snapshot/SDB_SNAP_HEALTH.md)查询各个节点的ulimit信息
+
+```lang-javascript
+> db=new Sdb( 'localhost: 11810' )
+> db.snapshot( SDB_SNAP_HEALTH )
+{
+  ...
+  "Ulimit": {
+    "CoreFileSize": -1,
+    "VirtualMemory": -1,
+    "OpenFiles": 1024,
+    "NumProc": 23948,
+    "FileSize": -1
+  }
+  ...
+}
+...
+```
+
