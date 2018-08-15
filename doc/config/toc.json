@@ -1607,19 +1607,19 @@
                            "en": "getErr()"
                         },
                         {
-                           "id": 1529976606,
+                           "id": 1477902870,
                            "file": "getLastErrMsg",
                            "cn": "getLastErrMsg()",
                            "en": "getLastErrMsg()"
                         },
                         {
-                           "id": 1529976607,
+                           "id": 1482317447,
                            "file": "getLastErrObj",
                            "cn": "getLastErrObj()",
                            "en": "getLastErrObj()"
                         },
                         {
-                           "id": 1529976608,
+                           "id": 1477902869,
                            "file": "getLastError",
                            "cn": "getLastError()",
                            "en": "getLastError()"
@@ -1661,25 +1661,25 @@
                            "en": "getSelfPath()"
                         },
                         {
-                           "id": 1529976612,
+                           "id": 1502694296,
                            "file": "import",
                            "cn": "import()",
                            "en": "import()"
                         },
                         {
-                           "id": 1529976613,
+                           "id": 1502694324,
                            "file": "importOnce",
                            "cn": "importOnce()",
                            "en": "importOnce()"
                         },
                         {
-                           "id": 1529976614,
+                           "id": 1509607624,
                            "file": "jsonFormat",
                            "cn": "jsonFormat()",
                            "en": "jsonFormat()"
                         },
                         {
-                           "id": 1432190718,
+                           "id": 1432190766,
                            "file": "traceFmt",
                            "cn": "traceFmt()",
                            "en": "traceFmt()"
@@ -1825,13 +1825,13 @@
                            "en": "getCoordRG()"
                         },
 						{
-                           "id": 1432192788,
+                           "id": 1432290821,
                            "file": "getSpareRG",
                            "cn": "getSpareRG()",
                            "en": "getSpareRG()"
                         },
                         {
-                           "id": 1432192771,
+                           "id": 1432290820,
                            "file": "createSpareRG",
                            "cn": "createSpareRG()",
                            "en": "createSpareRG()"
@@ -1933,7 +1933,7 @@
                            "en": "removeCoordRG()"
                         },
                         {
-                           "id": 1432192805,
+                           "id": 1432290822,
                            "file": "removeSpareRG",
                            "cn": "removeSpareRG()",
                            "en": "removeSpareRG()"
