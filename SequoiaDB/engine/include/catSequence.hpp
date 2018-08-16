@@ -91,7 +91,7 @@ namespace engine
       void setInitial( BOOLEAN initial ) ;
       void setExceeded( BOOLEAN exceeded ) ;
       INT32 toBSONObj( bson::BSONObj& obj, BOOLEAN forUpdate ) const ;
-      void copyTo( _catSequence& other, BOOLEAN withInternalField ) const ;
+      void copyFrom( const _catSequence& other, BOOLEAN withInternalField = TRUE ) ;
       INT32 setOptions( const bson::BSONObj& options, BOOLEAN init, BOOLEAN withInternalField, BOOLEAN* changed = NULL ) ;
       INT32 validate() const ;
 

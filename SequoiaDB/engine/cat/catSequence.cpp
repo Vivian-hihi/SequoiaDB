@@ -176,24 +176,24 @@ namespace engine
       return rc ;
    }
 
-   void _catSequence::copyTo( _catSequence& other, BOOLEAN withInternalField ) const
+   void _catSequence::copyFrom( const _catSequence& other, BOOLEAN withInternalField )
    {
-      other.setCurrentValue( _currentValue ) ;
-      other.setCachedValue( _cachedValue ) ;
-      other.setIncrement( _increment ) ;
-      other.setStartValue( _startValue ) ;
-      other.setMinValue( _minValue ) ;
-      other.setMaxValue( _maxValue ) ;
-      other.setCacheSize( _cacheSize ) ;
-      other.setAcquireSize( _acquireSize ) ;
-      other.setCycled( _cycled ) ;
-      other.setInitial( _initial ) ;
-      other.setExceeded( _exceeded ) ;
+      _currentValue = other.currentValue() ;
+      _cachedValue = other.cachedValue() ;
+      _increment = other.increment() ;
+      _startValue = other.startValue() ;
+      _minValue = other.minValue() ;
+      _maxValue = other.maxValue() ;
+      _cacheSize = other.cacheSize() ;
+      _acquireSize = other.acquireSize() ;
+      _cycled = other.cycled() ;
+      _initial = other.initial() ;
+      _exceeded = other.exceeded() ;
       if ( withInternalField )
       {
-         other.setOID( _oid ) ;
-         other.setVersion( _version ) ;
-         other.setInternal( _internal ) ;
+         _oid = other.oid() ;
+         _version = other.version() ;
+         _internal = other.internal() ;
       }
    }
 

@@ -183,7 +183,7 @@ namespace engine
       if ( bucket.end() != iter )
       {
          cache = (*iter).second ;
-         cache->copyTo( sequence, TRUE ) ;
+         sequence.copyFrom( *cache ) ;
       }
       else
       {
@@ -247,7 +247,7 @@ namespace engine
 
       if ( NULL != cache )
       {
-         sequence.copyTo( *cache, TRUE ) ;
+         cache->copyFrom( sequence ) ;
       }
 
    done:
@@ -314,7 +314,7 @@ namespace engine
       if ( bucket.end() != iter )
       {
          cache = (*iter).second ;
-         cache->copyTo( sequence, TRUE ) ;
+         sequence.copyFrom( *cache ) ;
       }
       else
       {
@@ -360,7 +360,7 @@ namespace engine
 
       if ( NULL != cache )
       {
-         sequence.copyTo( *cache, TRUE ) ;
+         cache->copyFrom( sequence ) ;
       }
 
    done:
