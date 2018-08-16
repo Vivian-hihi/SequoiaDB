@@ -473,7 +473,10 @@ namespace engine
                     ele.type(), CAT_SEQUENCE_VERSION ) ;
             goto error ;
          }
+      }
 
+      if ( init || withInternalField )
+      {
          // CAT_SEQUENCE_INTERNAL
          ele = options.getField( CAT_SEQUENCE_INTERNAL ) ;
          if ( Bool == ele.type() )
