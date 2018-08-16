@@ -422,6 +422,9 @@ namespace engine
 
       _isActive = FALSE ;
 
+      /// start dead check
+      _eduMgr.startDeadCheck() ;
+
       // Deactive all registered cbs
       for ( index = SDB_CB_MAX ; index > 0 ; --index )
       {
@@ -478,6 +481,9 @@ namespace engine
          PD_LOG( PDSEVERE, "Stop all EDUs timeout, crashed." ) ;
          ossPanic() ;
       }
+
+      /// stop dead check
+      _eduMgr.stopDeadCheck() ;
    }
 
    void _SDB_KRCB::onConfigChange ( UINT32 changeID )

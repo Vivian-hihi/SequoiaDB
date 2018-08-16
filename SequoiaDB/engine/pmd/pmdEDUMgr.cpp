@@ -69,6 +69,7 @@ namespace engine
    {
       _pResource = NULL ;
       _pMonitorThd = NULL ;
+      _pDeadCheckThd = NULL ;
    }
 
    _pmdEDUMgr::~_pmdEDUMgr()
@@ -156,6 +157,46 @@ namespace engine
       }
 
       return normalStop ;
+   }
+
+   INT32 _pmdEDUMgr::startDeadCheck( INT64 timeout )
+   {
+      INT32 rc = SDB_OK ;
+
+      /// create dead check thread
+      try
+      {
+         _pDeadCheckThd = new boost::thread( boost::bind( &pmdEDUMgr::deadCheck,
+                                                          this,
+                                                          timeout )
+                                          ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDSEVERE, "Failed to create dead check thread: %s",
+                  e.what() ) ;
+         delete _pDeadCheckThd ;
+         _pDeadCheckThd = NULL ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _pmdEDUMgr::stopDeadCheck()
+   {
+      _deadCheckEvent.signal() ;
+
+      if ( _pDeadCheckThd )
+      {
+         _pDeadCheckThd->join() ;
+         delete _pDeadCheckThd ;
+         _pDeadCheckThd = NULL ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DUMPINFO, "_pmdEDUMgr::dumpInfo" )
@@ -1875,6 +1916,35 @@ namespace engine
             PD_LOG( PDDEBUG, "Create Idle edu[ID:%lld]", eduID ) ;
             idleLowSize = calIdleLowSize( &runSize, &idleSize,
                                           &sysSize, &poolSize ) ;
+         }
+      }
+   }
+
+   void _pmdEDUMgr::deadCheck( INT64 timeout )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 restTimeout = timeout > PMD_STOP_MIN_TIMEOUT ?
+                          timeout : PMD_STOP_MIN_TIMEOUT ;
+
+      while( TRUE )
+      {
+         rc = _deadCheckEvent.wait( OSS_ONE_SEC ) ;
+         if ( SDB_OK == rc )
+         {
+            /// has safety quit
+            break ;
+         }
+
+         restTimeout -= OSS_ONE_SEC ;
+
+         if ( restTimeout <= 0 )
+         {
+            /// panic the process
+            PD_LOG( PDSEVERE, "The programme is dead over %d secs, "
+                    "panic itself", timeout / OSS_ONE_SEC ) ;
+            ossPanic() ;
+
+            break ;
          }
       }
    }

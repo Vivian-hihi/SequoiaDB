@@ -68,7 +68,8 @@ namespace engine
 
    typedef boost::shared_ptr<ossEvent>       pmdEventPtr ;
 
-   #define PMD_STOP_TIMEOUT      ( 600000 )  /// 10 mins
+   #define PMD_STOP_TIMEOUT               ( 600000 )  /// 10 mins
+   #define PMD_STOP_DEADCHECK_TIMEOUT     ( PMD_STOP_TIMEOUT + 60000 )
 
    /*
       _pmdEDUMgr define
@@ -99,6 +100,9 @@ namespace engine
          INT32             init( IResource *pResource ) ;
          BOOLEAN           reset( INT64 timeout = PMD_STOP_TIMEOUT ) ;
          UINT32            dumpAbnormalEDU() ;
+
+         INT32             startDeadCheck( INT64 timeout = PMD_STOP_DEADCHECK_TIMEOUT ) ;
+         void              stopDeadCheck() ;
 
          UINT32            countIOService() ;
          UINT32            size() ;
@@ -230,8 +234,10 @@ namespace engine
 
          IResource                  *_pResource ;
          boost::thread              *_pMonitorThd ;
+         boost::thread              *_pDeadCheckThd ;
 
          ossAutoEvent               _monitorEvent ;
+         ossAutoEvent               _deadCheckEvent ;
 
       private:
          /*
@@ -242,6 +248,7 @@ namespace engine
                                  pmdEventPtr ePtr,
                                  BOOLEAN &quitWithException ) ;
          void  monitor() ;
+         void  deadCheck( INT64 timeout ) ;
    };
    typedef _pmdEDUMgr pmdEDUMgr ;
 
