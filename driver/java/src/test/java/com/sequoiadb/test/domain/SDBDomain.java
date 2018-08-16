@@ -34,19 +34,20 @@ public class SDBDomain {
 
     @Before
     public void setUp() throws Exception {
-        if (!isCluster)
+        if (!isCluster) {
             return;
+        }
         // domain
         BSONObject options = new BasicBSONObject();
         BSONObject arr = new BasicBSONList();
-//		arr.put("0", "db1");
         arr.put("0", Constants.GROUPNAME);
         options.put("Groups", arr);
         if (sdb.isDomainExist(Constants.TEST_DOMAIN_NAME)) {
             sdb.dropDomain(Constants.TEST_DOMAIN_NAME);
             dm = sdb.createDomain(Constants.TEST_DOMAIN_NAME, options);
-        } else
+        } else {
             dm = sdb.createDomain(Constants.TEST_DOMAIN_NAME, options);
+        }
     }
 
     @After

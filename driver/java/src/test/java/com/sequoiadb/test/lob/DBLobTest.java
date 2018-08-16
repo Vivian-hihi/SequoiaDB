@@ -1,9 +1,11 @@
 package com.sequoiadb.test.lob;
 
 import com.sequoiadb.base.*;
+import com.sequoiadb.datasource.SequoiadbDatasource;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.test.common.Constants;
+import com.sequoiadb.test.common.Helper;
 import com.sequoiadb.testdata.SDBTestHelper;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -15,6 +17,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.Assert.assertEquals;
 
@@ -22,6 +26,7 @@ public class DBLobTest {
     private static Sequoiadb sdb;
     private static CollectionSpace cs;
     private static DBCollection cl;
+    private static SequoiadbDatasource ds;
 
     private static final String LOB_SIZE = "Size";
     private static final String LOB_AVAILABLE = "Available";
@@ -39,6 +44,8 @@ public class DBLobTest {
 
     @Before
     public void setUp() throws Exception {
+        ds = new SequoiadbDatasource(Arrays.asList(Constants.COOR_NODE_CONN),
+                "admin", "admin", null, null);
         // sdb
         sdb = new Sequoiadb(Constants.COOR_NODE_CONN, "admin", "admin");
         // cs
@@ -62,6 +69,70 @@ public class DBLobTest {
         } catch (BaseException e) {
             e.printStackTrace();
         }
+        if (ds != null) {
+            ds.close();
+        }
+    }
+
+    class ReadLobTask implements Runnable {
+        ObjectId objectId;
+        int serialNum;
+        ReadLobTask(ObjectId objectId, int serialNum) {
+            this.objectId = objectId;
+            this.serialNum = serialNum;
+        }
+        @Override
+        public void run() {
+            int bufSize = 1024;
+            byte[] buffer = new byte[bufSize];
+            DBLob lob = null;
+            try {
+                lob = ds.getConnection().getCollectionSpace(Constants.TEST_CS_NAME_1).
+                        getCollection(Constants.TEST_CL_NAME_1).openLob(objectId);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                Assert.fail();
+            }
+            try {
+                while(lob.read(buffer) != -1);
+            } finally {
+                lob.close();
+            }
+            Helper.print("finish thread: " + serialNum);
+        }
+    }
+
+    @Test
+    public void testLobConcurrentReading() {
+        ObjectId objectId = new ObjectId();
+        // write lob
+        DBLob lob = cl.createLob(objectId);
+        String str = "hello world";
+        try {
+            for (int i = 0; i < 10000; i++) {
+                lob.write(str.getBytes());
+            }
+        } finally {
+            lob.close();
+        }
+        // concurrent read lob
+        int threadCount = 50;
+        Thread[] threads = new Thread[threadCount];
+        for (int i = 0; i < threadCount; ++i) {
+            threads[i] = new Thread(new ReadLobTask(objectId, i));
+        }
+        for(int i = 0; i < threadCount; ++i) {
+            threads[i].start();
+        }
+        for(int i = 0; i < threadCount; ++i) {
+            try {
+                threads[i].join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                Assert.fail();
+            }
+        }
+        Helper.print("finish running!");
     }
 
     /*

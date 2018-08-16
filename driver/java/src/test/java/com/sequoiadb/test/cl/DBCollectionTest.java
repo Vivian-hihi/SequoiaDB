@@ -625,6 +625,7 @@ public class DBCollectionTest {
     }
 
     @Test
+    @Ignore
     public void jira_3269() throws InterruptedException {
         String csName = "jira_3269";
         String clName = "jira_3269";

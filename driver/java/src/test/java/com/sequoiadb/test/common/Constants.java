@@ -9,8 +9,8 @@ import org.bson.BasicBSONObject;
 public class Constants {
     public final static int PORT = Integer.valueOf(TestConfig.getSinglePort());
     public final static String HOST = TestConfig.getSingleHost();
-    public final static int NODE_PORT = TestConfig.getNodePort();
-    public final static String NODE_HOST = TestConfig.getNodeHost();
+    public final static String DATA_HOST = TestConfig.getDataHost();
+    public final static int DATA_PORT = TestConfig.getDataPort();
     public final static String BACKUPPATH = "/opt/sequoiadb/database/test/backup";
     public final static String DATAPATH4 = "/opt/sequoiadb/database/test/data4";
 
@@ -27,7 +27,7 @@ public class Constants {
     public final static int SDB_PAGESIZE_4K = 4 * 1024;
 
     // replicaGroup
-    public final static String GROUPNAME = TestConfig.getSingleGroup();
+    public final static String GROUPNAME = TestConfig.getDataGroupName();
     public final static String TEST_RG_NAME_SRC = "testRGSrc";
     public final static String TEST_RG_NAME_DEST = "testRGDest";
     public final static String CATALOGRGNAME = "SYSCatalogGroup";

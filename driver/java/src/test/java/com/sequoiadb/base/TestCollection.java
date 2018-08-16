@@ -1,6 +1,9 @@
 package com.sequoiadb.base;
 
 import com.sequoiadb.test.SingleCSTestCase;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.bson.types.Binary;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -69,4 +72,5 @@ public class TestCollection extends SingleCSTestCase {
         cs.dropCollection(clName);
         assertFalse(cs.isCollectionExist(clName));
     }
+
 }

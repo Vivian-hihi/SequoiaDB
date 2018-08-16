@@ -252,13 +252,13 @@ public class TestBSON {
             BSONTimestamp timestamp = new BSONTimestamp(10000, 1000000);
             Assert.fail();
         } catch (IllegalArgumentException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         try {
             BSONTimestamp timestamp = new BSONTimestamp(10000, -1);
             Assert.fail();
         } catch (IllegalArgumentException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         BSONTimestamp timestamp1 = new BSONTimestamp(10000, 0);
         BSONTimestamp timestamp2 = new BSONTimestamp(10000, 999999);

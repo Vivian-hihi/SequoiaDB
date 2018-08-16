@@ -16,8 +16,8 @@ public class NoteTest {
     private static Sequoiadb sdb;
     private static ReplicaGroup rg = null;
     private static Node node = null;
-    private static final String nodeHost = Constants.NODE_HOST;
-    private static final int nodePort = Constants.NODE_PORT;
+    private static final String nodeHost = Constants.DATA_HOST;
+    private static final int nodePort = Constants.DATA_PORT;
     private static boolean isCluster = true;
 
     @BeforeClass
