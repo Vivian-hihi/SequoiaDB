@@ -268,6 +268,7 @@ namespace engine
       if ( cacheLocked )
       {
          cache->unlock() ;
+         cacheLocked = FALSE ;
       }
       PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_SLOCK, rc ) ;
       return rc ;
