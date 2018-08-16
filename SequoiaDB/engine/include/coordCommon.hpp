@@ -188,6 +188,12 @@ namespace engine
                                  BSONObj *pNewObj = NULL,
                                  BOOLEAN strictCheck = FALSE ) ;
 
+   void     coordFilterGroupsByRole( CoordGroupList &groupList,
+                                     INT32 *pRoleFilter ) ;
+
+   void     coordFilterNodesByRole( SET_ROUTEID &nodes,
+                                    INT32 *pRoleFilter ) ;
+
 }
 
 #endif // COORD_COMMON_HPP__

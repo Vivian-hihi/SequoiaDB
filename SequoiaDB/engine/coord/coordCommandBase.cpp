@@ -801,6 +801,8 @@ namespace engine
       CoordGroupList groupLst ;
       SET_ROUTEID sendNodes ;
       BSONObj newFilterObj ;
+      BOOLEAN hasParseRetry = FALSE ;
+      BOOLEAN specificRole = FALSE ;
 
       CHAR *pNewMsg = NULL ;
       INT32 newMsgSize = 0 ;
@@ -819,6 +821,11 @@ namespace engine
                                    &newFilterObj, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "prase control param failed, rc: %d", rc ) ;
       *pFilterObj = newFilterObj ;
+
+      if ( ctrlParam._parseMask & COORD_CTRL_MASK_ROLE )
+      {
+         specificRole = TRUE ;
+      }
 
       /// 4. parse groups
       rc = _pResource->updateGroupList( allGroupLst, cb, NULL,
@@ -854,6 +861,12 @@ namespace engine
          if ( pFilterObj->objdata() != newFilterObj.objdata() )
          {
             hasNodeOrGroupFilter = TRUE ;
+
+            if ( specificRole )
+            {
+               /// filter group by role
+               coordFilterGroupsByRole( groupLst, ctrlParam._role ) ;
+            }
          }
          else if ( ctrlParam._useSpecialGrp )
          {
@@ -878,26 +891,41 @@ namespace engine
       /// 5. parse nodes
       rc = coordGetGroupNodes( _pResource, cb, *pFilterObj,
                                ctrlParam._emptyFilterSel,
-                               ( 0 == groupLst.size() ? expectGrpLst : groupLst ),
+                               ( 0 == groupLst.size() ? ( hasParseRetry ?
+                                 expectGrpLst : allGroupLst ) : groupLst ),
                                sendNodes, &newFilterObj,
                                ppContext ? FALSE : TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get nodes, rc: %d", rc ) ;
-      if ( pFilterObj->objdata() != newFilterObj.objdata() )
-      {
-         hasNodeOrGroupFilter = TRUE ;
-      }
-
-      if ( sendNodes.size() == 0 && hasNodeOrGroupFilter )
+      if ( sendNodes.size() == 0 && !hasParseRetry )
       {
          PD_LOG( PDWARNING, "No specific nodes[%s]",
                  pFilterObj->toString().c_str() ) ;
          rc = SDB_CLS_NODE_NOT_EXIST ;
          goto error ;
       }
-      /// if not specify groups and nodes, use specail group
-      else if ( !hasNodeOrGroupFilter && ctrlParam._useSpecialNode )
+      else if ( pFilterObj->objdata() != newFilterObj.objdata() )
       {
-         sendNodes = ctrlParam._specialNodes ;
+         hasNodeOrGroupFilter = TRUE ;
+
+         if ( specificRole )
+         {
+            /// Filter nodes by role
+            coordFilterNodesByRole( sendNodes, ctrlParam._role ) ;
+         }
+      }
+      /// if has not specify group, use the specail groups
+      else if ( 0 == groupLst.size() )
+      {
+         if ( ctrlParam._useSpecialNode )
+         {
+            sendNodes = ctrlParam._specialNodes ;
+         }
+         else if ( !hasParseRetry &&
+                   allGroupLst.size() != expectGrpLst.size() )
+         {
+            hasParseRetry = TRUE ;
+            goto parseNode ;
+         }
       }
       *pFilterObj = newFilterObj ;
 

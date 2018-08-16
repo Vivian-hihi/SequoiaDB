@@ -882,5 +882,53 @@ namespace engine
       goto done ;
    }
 
+   void coordFilterGroupsByRole( CoordGroupList &groupList,
+                                 INT32 *pRoleFilter )
+   {
+      CoordGroupList::iterator it = groupList.begin() ;
+      while( it != groupList.end() )
+      {
+         if ( ( !pRoleFilter[ SDB_ROLE_DATA ] &&
+                it->second >= DATA_GROUP_ID_BEGIN &&
+                it->second <= DATA_GROUP_ID_END ) ||
+              ( !pRoleFilter[ SDB_ROLE_CATALOG ] &&
+                CATALOG_GROUPID == it->second ) ||
+              ( !pRoleFilter[ SDB_ROLE_COORD ] &&
+                COORD_GROUPID == it->second ) )
+         {
+            it = groupList.erase( it ) ;
+         }
+         else
+         {
+            ++it ;
+         }
+      }
+   }
+
+   void coordFilterNodesByRole( SET_ROUTEID &nodes, INT32 *pRoleFilter )
+   {
+      MsgRouteID nodeID ;
+      SET_ROUTEID::iterator it = nodes.begin() ;
+      while( it != nodes.end() )
+      {
+         nodeID.value = *it ;
+
+         if ( ( !pRoleFilter[ SDB_ROLE_DATA ] &&
+                nodeID.columns.groupID >= DATA_GROUP_ID_BEGIN &&
+                nodeID.columns.groupID <= DATA_GROUP_ID_END ) ||
+              ( !pRoleFilter[ SDB_ROLE_CATALOG ] &&
+                CATALOG_GROUPID == nodeID.columns.groupID ) ||
+              ( !pRoleFilter[ SDB_ROLE_COORD ] &&
+                COORD_GROUPID == nodeID.columns.groupID ) )
+         {
+            nodes.erase( it++ ) ;
+         }
+         else
+         {
+            ++it ;
+         }
+      }
+   }
+
 }
 
