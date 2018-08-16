@@ -4,7 +4,6 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.lob.basicoperation.LobOprUtils;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -14,7 +13,10 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
@@ -96,10 +98,10 @@ public class LobTest13228 extends SdbTestBase {
     	DBLob lob = dbcl.createLob(id);
     	
     	byte[] initData = getRandomBytes(initDataSize);
-        String initMd5 = LobOprUtils.getMd5(initData);
+        String initMd5 = getMd5(initData);
     	
         byte[] appendData = getRandomBytes(appendDataSize);
-        String appendMd5 = LobOprUtils.getMd5(appendData);
+        String appendMd5 = getMd5(appendData);
         
 		lob.write(initData);
         
@@ -124,16 +126,16 @@ public class LobTest13228 extends SdbTestBase {
         }
 
         if (appendPosition > initDataSize) { 
-        	String previnitMd5 = LobOprUtils.getMd5(Arrays.copyOfRange(actual, 0, initDataSize));
+        	String previnitMd5 = getMd5(Arrays.copyOfRange(actual, 0, initDataSize));
             Assert.assertEquals(previnitMd5, initMd5);
             
-            String prevappendMd5 = LobOprUtils.getMd5(Arrays.copyOfRange(actual, appendPosition, appendPosition + appendDataSize));
+            String prevappendMd5 = getMd5(Arrays.copyOfRange(actual, appendPosition, appendPosition + appendDataSize));
             Assert.assertEquals(prevappendMd5, appendMd5);
             
             //比较lob size 信息是否正确
             Assert.assertEquals(lob.getSize(),initDataSize + seekSize + appendDataSize);
         } else{	
-        	String prevappendMd5 = LobOprUtils.getMd5(Arrays.copyOfRange(actual, appendPosition, appendPosition + appendDataSize));
+        	String prevappendMd5 = getMd5(Arrays.copyOfRange(actual, appendPosition, appendPosition + appendDataSize));
         	Assert.assertEquals(prevappendMd5,appendMd5);
         	
         	//比较lob size 信息是否正确
@@ -149,7 +151,7 @@ public class LobTest13228 extends SdbTestBase {
     	DBLob lob = dbcl.createLob(id);
     	
         byte[] appendData = getRandomBytes(appendDataSize);
-        String appendMd5 = LobOprUtils.getMd5(appendData);
+        String appendMd5 = getMd5(appendData);
         
         if(seekType == DBLob.SDB_LOB_SEEK_END){
         	lob.seek(0, seekType);
@@ -163,15 +165,38 @@ public class LobTest13228 extends SdbTestBase {
         
         //check the result
         if(seekType != DBLob.SDB_LOB_SEEK_END){
-        	String previnitMd5 = LobOprUtils.getMd5(Arrays.copyOfRange(actual, seekSize, seekSize + appendDataSize));
+        	String previnitMd5 = getMd5(Arrays.copyOfRange(actual, seekSize, seekSize + appendDataSize));
         	Assert.assertEquals(appendMd5, previnitMd5);
         	
             Assert.assertEquals(lob.getSize(),seekSize + appendDataSize);
         } else{
-        	String previnitMd5 = LobOprUtils.getMd5(actual);
+        	String previnitMd5 = getMd5(actual);
         	Assert.assertEquals(appendMd5, previnitMd5);
         	
         	Assert.assertEquals(lob.getSize(),appendDataSize);
         }
+    }
+    public static String getMd5(Object inbuff){
+        MessageDigest md5 = null;
+        String value = "";
+        
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+            if(inbuff instanceof ByteBuffer){
+                md5.update((ByteBuffer)inbuff);
+            }else if(inbuff instanceof String){
+                md5.update(((String)inbuff).getBytes());
+            }else if(inbuff instanceof byte[]){
+            	md5.update((byte[]) inbuff);
+            }else{
+            	Assert.fail("invalid parameter!");
+            }
+            BigInteger bi = new BigInteger(1, md5.digest());
+            value = bi.toString(16);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            Assert.fail("fail to get md5!"+e.getMessage());
+        }
+        return value;
     }
 }
