@@ -54,6 +54,15 @@
 namespace engine
 {
 
+   /*
+      limits.conf
+   */
+   #define UTIL_OPTION_LIMIT_CORE       "core_file_size"
+   #define UTIL_OPTION_LIMIT_DATA       "data_seg_size"
+   #define UTIL_OPTION_LIMIT_FILESIZE   "file_size"
+   #define UTIL_OPTION_LIMIT_VM         "virtual_memory"
+   #define UTIL_OPTION_LIMIT_FD         "open_files"
+
    INT32 utilReadConfigureFile( const CHAR *file,
                                 po::options_description &desc,
                                 po::variables_map &vm )
@@ -520,11 +529,11 @@ namespace engine
 
       /// load limits.conf
       limitDesc.add_options()
-      ( PMD_OPTION_LIMIT_CORE,      po::value<INT64>(), "" )
-      ( PMD_OPTION_LIMIT_DATA,      po::value<INT64>(), "" )
-      ( PMD_OPTION_LIMIT_FILESIZE,  po::value<INT64>(), "" )
-      ( PMD_OPTION_LIMIT_VM,        po::value<INT64>(), "" )
-      ( PMD_OPTION_LIMIT_FD,        po::value<INT64>(), "" ) ;
+      ( UTIL_OPTION_LIMIT_CORE,      po::value<INT64>(), "" )
+      ( UTIL_OPTION_LIMIT_DATA,      po::value<INT64>(), "" )
+      ( UTIL_OPTION_LIMIT_FILESIZE,  po::value<INT64>(), "" )
+      ( UTIL_OPTION_LIMIT_VM,        po::value<INT64>(), "" )
+      ( UTIL_OPTION_LIMIT_FD,        po::value<INT64>(), "" ) ;
       rc = utilReadConfigureFile( confFileName, limitDesc, limitVarmap ) ;
       if ( rc )
       {
@@ -541,15 +550,15 @@ namespace engine
       }
 
       /// set ulimit and check
-      vec.push_back( make_pair<string,string>( PMD_OPTION_LIMIT_CORE,
+      vec.push_back( make_pair<string,string>( UTIL_OPTION_LIMIT_CORE,
                                                OSS_LIMIT_CORE_SZ ) ) ;
-      vec.push_back( make_pair<string,string>( PMD_OPTION_LIMIT_DATA,
+      vec.push_back( make_pair<string,string>( UTIL_OPTION_LIMIT_DATA,
                                                OSS_LIMIT_DATA_SEG_SZ ) ) ;
-      vec.push_back( make_pair<string,string>( PMD_OPTION_LIMIT_FILESIZE,
+      vec.push_back( make_pair<string,string>( UTIL_OPTION_LIMIT_FILESIZE,
                                                OSS_LIMIT_FILE_SZ ) ) ;
-      vec.push_back( make_pair<string,string>( PMD_OPTION_LIMIT_VM,
+      vec.push_back( make_pair<string,string>( UTIL_OPTION_LIMIT_VM,
                                                OSS_LIMIT_VIRTUAL_MEM ) ) ;
-      vec.push_back( make_pair<string,string>( PMD_OPTION_LIMIT_FD,
+      vec.push_back( make_pair<string,string>( UTIL_OPTION_LIMIT_FD,
                                                OSS_LIMIT_OPEN_FILE ) ) ;
       for( it = vec.begin() ; it != vec.end() ; it++ )
       {

@@ -302,15 +302,6 @@ namespace engine
    #define SDB_RUN_MODE_TYPE_RUN_STR    "run"
 
    /*
-      limits.conf
-   */
-   #define PMD_OPTION_LIMIT_CORE       "core_file_size"
-   #define PMD_OPTION_LIMIT_DATA       "data_seg_size"
-   #define PMD_OPTION_LIMIT_FILESIZE   "file_size"
-   #define PMD_OPTION_LIMIT_VM         "virtual_memory"
-   #define PMD_OPTION_LIMIT_FD         "open_files"
-
-   /*
      SDBLIST_TYPE_STR
    */
    #define SDBLIST_TYPE_OMA_STR    "cm"
