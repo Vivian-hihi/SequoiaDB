@@ -13,14 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class BucketVersioningController {
     private static final Logger logger = LoggerFactory.getLogger(BucketController.class);
 
-    @PutMapping(value = "/{bucketname}", params = RestParamDefine.VERSIONING)
+    @PutMapping(value = "/{bucketname:.+}", params = RestParamDefine.VERSIONING)
     public String putBucketVerisoning(@PathVariable("bucketname") String bucketName)
             throws S3ServerException {
         logger.info("bucket=" + bucketName + "@versioning");
         return bucketName + "@versioning";
     }
 
-    @GetMapping(value = "/{bucketname}", params = RestParamDefine.VERSIONING)
+    @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.VERSIONING)
     public String getBucketVersioning(@PathVariable("bucketname") String bucketName) {
         return bucketName + "&versioning";
     }

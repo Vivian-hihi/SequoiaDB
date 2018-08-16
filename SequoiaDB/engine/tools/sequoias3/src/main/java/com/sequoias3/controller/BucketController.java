@@ -3,14 +3,17 @@ package com.sequoias3.controller;
 import com.sequoias3.common.RestParamDefine;
 import com.sequoias3.core.User;
 import com.sequoias3.exception.S3ServerException;
+import com.sequoias3.service.BucketService;
 import com.sequoias3.utils.RestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Enumeration;
+
 
 @RestController
 public class BucketController {
@@ -19,33 +22,42 @@ public class BucketController {
     @Autowired
     RestUtils restUtils;
 
-    @PutMapping(value = "/{bucketname}")
-    public String putBucket(@PathVariable("bucketname") String bucketName,
-                            @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
-            throws S3ServerException {
-        User adminUser = restUtils.getOperatorByAuthorization(authorization);
+    @Autowired
+    BucketService bucketService;
 
-        logger.info("Create bucket bucketName = " + bucketName);
-        return bucketName;
+    @PutMapping(value = "/{bucketname:.+}", produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity putBucket(@PathVariable("bucketname") String bucketName,
+                                    @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                    HttpServletRequest httpServletRequest)
+            throws S3ServerException {
+        User operator = restUtils.getOperatorByAuthorization(authorization);
+
+        logger.info("URI = "+httpServletRequest.getRequestURI()+"  bucketname = "+bucketName);
+        logger.info("Create bucket bucketName = " + bucketName+"  operator="+operator.getUserName());
+        bucketService.createBucket(operator.getUserId(),bucketName);
+        return ResponseEntity.ok()
+                .header(RestParamDefine.LOCATION, RestParamDefine.REST_DELIMITER+bucketName)
+                .build();
     }
 
-    @GetMapping()
-    public String listBuckets() {
-        return "Get Service";
+    @GetMapping(produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity listBuckets( @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+            throws S3ServerException {
+        User operator = restUtils.getOperatorByAuthorization(authorization);
+
+        logger.info("get bucket:owner="+operator.getUserName());
+        return ResponseEntity.ok()
+                .body(bucketService.getService(operator));
     }
 
-
-    @DeleteMapping(value = "/{bucketname}")
-    public String deleteBucket(@PathVariable("bucketname") String bucketName)
+    @DeleteMapping(value = "/{bucketname:.+}", produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity deleteBucket(@PathVariable("bucketname") String bucketName,
+                               @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
             throws S3ServerException {
-        logger.info("bucket=" + bucketName);
-        return bucketName;
-    }
+        User operator = restUtils.getOperatorByAuthorization(authorization);
 
-    @DeleteMapping(value = "/{bucketname}", params = "force")
-    public String deleteBucketForce(@PathVariable("bucketname") String bucketName)
-            throws S3ServerException {
-        logger.info("bucket=" + bucketName + "&force");
-        return bucketName + "&force";
+        logger.info("delete bucket:bucket=" + bucketName+"operator="+operator.getUserName());
+        bucketService.deleteBucket(operator.getUserId(), bucketName);
+        return ResponseEntity.noContent().build();
     }
 }

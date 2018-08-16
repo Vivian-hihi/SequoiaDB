@@ -26,7 +26,7 @@ public class SequoiadbUserDao implements UserDao {
     SequoiadbConfig config;
 
     @Override
-    public void insertUser(User user) throws S3ServerException {
+    public void insertUser(User user) throws S3ServerException , BaseException {
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -41,7 +41,7 @@ public class SequoiadbUserDao implements UserDao {
             newUser.put(User.JSON_KEY_SECRET_ACCESS_KEY, user.getSecretAccessKey());
 
             cl.insert(newUser);
-        } catch (BaseException e) {
+        } catch (Exception e) {
             logger.error("insertUser failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
@@ -61,7 +61,7 @@ public class SequoiadbUserDao implements UserDao {
             deleteUser.put(User.JSON_KEY_USERNAME, userName);
 
             cl.delete(deleteUser);
-        } catch (BaseException e) {
+        } catch (Exception e) {
             logger.error("deleteUser failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
@@ -87,7 +87,7 @@ public class SequoiadbUserDao implements UserDao {
             setModifier.put(DaoCollectionDefine.MODIFY_SET, modifier);
 
             cl.update(matcher, setModifier, null);
-        } catch (BaseException e) {
+        } catch (Exception e) {
             logger.error("updateUserKeys failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
@@ -111,7 +111,7 @@ public class SequoiadbUserDao implements UserDao {
             }
 
             return convertBsonToUser(queryResult);
-        } catch (BaseException e) {
+        } catch (Exception e) {
             logger.error("getUserByName failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
@@ -120,7 +120,7 @@ public class SequoiadbUserDao implements UserDao {
     }
 
     @Override
-    public User getUserByAccessKeyID(String accessKeyID) throws S3ServerException {
+    public User getUserByAccessKeyID(String accessKeyID) throws S3ServerException{
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();

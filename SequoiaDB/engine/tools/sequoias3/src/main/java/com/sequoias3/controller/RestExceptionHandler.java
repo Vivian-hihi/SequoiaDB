@@ -30,20 +30,27 @@ public class RestExceptionHandler {
         HttpStatus status;
         switch (e.getError()) {
             case INVALID_ARGUMENT:
-            case MISSING_ARGUMENT:
             case USER_CREATE_NAME_INVALID:
             case USER_CREATE_ROLE_INVALID:
+            case BUCKET_INVALID_BUCKETNAME:
+            case BUCKET_TOO_MANY_BUCKETS:
                 status = HttpStatus.BAD_REQUEST;
                 break;
             case INVALID_ACCESSKEYID:
             case INVALID_ADMINISTRATOR:
-            case USER_DELETE_LAST_ADMIN:
+            case USER_DELETE_INIT_ADMIN:
+            case SIGNATURE_NOT_MATCH:
+            case ACCESS_DENIED:
                 status = HttpStatus.FORBIDDEN;
                 break;
             case USER_NOT_EXIST:
+            case BUCKET_NOT_EXIST:
                 status = HttpStatus.NOT_FOUND;
                 break;
             case USER_CREATE_EXIST:
+            case BUCKET_ALREADY_EXIST:
+            case BUCKET_ALREADY_OWNEDYOU:
+            case BUCKET_NOT_EMPTY:
                 status = HttpStatus.CONFLICT;
                 break;
             default:

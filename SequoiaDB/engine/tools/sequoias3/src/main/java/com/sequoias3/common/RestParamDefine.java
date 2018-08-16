@@ -16,6 +16,8 @@ public class RestParamDefine {
     public static final String STRAT_AFTER = "start-after";
     public static final String MAX_KEYS = "max-keys";
 
+    public static final String LOCATION = "location";
+
     public static final String REST_CREDENTIAL = "Credential=";
     public static final String REST_DELIMITER = "/";
 }

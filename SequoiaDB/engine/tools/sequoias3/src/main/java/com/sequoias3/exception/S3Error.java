@@ -2,34 +2,46 @@ package com.sequoias3.exception;
 
 public enum S3Error {
 
-    UNKNOWN_ERROR(-1, "Unknown error", "Unknown error"),
+    UNKNOWN_ERROR(-1, "InternalError", "We encountered an internal error. Please try again."),
 
-    // 400
-    INVALID_ARGUMENT(-900, "InvalidArgument", "Invalid argument."),
-    MISSING_ARGUMENT(-901, "MissingArgument", "Missing argument"),
+    // dao error
+    DAO_GETCONN_ERROR(-401, "GetDBConnectFail", "Get connection failed."),
 
-    //403
+    //bucket error
+    BUCKET_CREATE_FAILED(-500, "CreateBucketFailed", "Create bucket failed"),
+    BUCKET_DELETE_FAILED(-501, "DeleteBucketFailed", "Delete bucket failed"),
+    BUCKET_GET_SERVICE_FAILED(-502, "GetServiceFailed", "Get service failed"),
+
+    BUCKET_NOT_EXIST(-510, "NoSuchBucket", "The speciﬁed bucket does not exist."),
+    BUCKET_INVALID_BUCKETNAME(-511, "InvalidBucketName", "The speciﬁed bucket Name is not valid."),
+    BUCKET_ALREADY_EXIST(-512, "BucketAlreadyExists", "The requested bucket name is not available. The bucket namespace is shared by all users of the system. Please select a diﬀerent name and try again."),
+    BUCKET_ALREADY_OWNEDYOU(-513, "BucketAlreadyOwnedByYou", "Your previous request to create the named bucket succeeded and you already own it."),
+    BUCKET_NOT_EMPTY(-514, "BucketNotEmpty", "The bucket you tried to delete is not empty."),
+    BUCKET_TOO_MANY_BUCKETS(-515, "TooManyBuckets", "You have attempted to create more buckets than allowed."),
+
+    //object
+
+    //authorization
     INVALID_ADMINISTRATOR(-701, "AccessDenied", "Not admin user."),
-
-    //403
     INVALID_ACCESSKEYID(-702, "InvalidAccessKeyId", "Invalid accessKeyId."),
     SIGNATURE_NOT_MATCH(-703, "SignatureDoesNotMatch", "Signature does not match."),
+    ACCESS_DENIED(-704, "AccessDenied", "Access Denied."),
 
-    // service error
-    USER_NOT_EXIST(-800, "NoSuchUser", "User not exist."),
+    // User
     USER_CREATE_FAILED(-801, "AddUserFailed", "Create user failed."),
+    USER_DELETE_FAILED(-810, "DelUserFailed", "Delete user failed."),
+    USER_UPDATE_FAILED(-820, "UpdateUserFailed", "Update user failed."),
+    USER_GET_FAILED(-830, "GetUserFailed", "Get user failed."),
+    USER_NOT_EXIST(-800, "NoSuchUser", "User not exist."),
     USER_CREATE_NAME_INVALID(-802, "AddUserFailed", "The username is invalid."),
     USER_CREATE_ROLE_INVALID(-803, "AddUserFailed", "The role is invalid."),
     USER_CREATE_EXIST(-804, "AddUserFailed", "The username is exist."),
 
-    USER_DELETE_FAILED(-810, "DelUserFailed", "Delete user failed."),
-    USER_DELETE_LAST_ADMIN(-811, "DelUserFailed", "Init admin user cannot be delete."),
+    USER_DELETE_INIT_ADMIN(-811, "DelUserFailed", "Init admin user cannot be delete."),
 
-    USER_UPDATE_FAILED(-820, "UpdateUserFailed", "Update user failed."),
-    USER_GET_FAILED(-830, "GetUserFailed", "Get user failed."),
 
-    // dao error
-    DAO_GETCONN_ERROR(-601, "GetDBConnectFail", "Get connection failed.");
+    // 400
+    INVALID_ARGUMENT(-900, "InvalidArgument", "Invalid argument.");
 
     private int errIndex;
     private String code;

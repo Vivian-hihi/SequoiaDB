@@ -1,26 +1,44 @@
 package com.sequoias3.core;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Date;
+
 public class Bucket {
     public static final String BUCKET_ID               = "ID";
     public static final String BUCKET_NAME             = "Name";
     public static final String BUCKET_OWNERID          = "OwnerID";
-    public static final String BUCKET_CREATETIME       = "CreateDate";
-    public static final String BUCKET_REGION           = "Region";
+    public static final String BUCKET_CREATETIME       = "CreationDate";
     public static final String BUCKET_VERSIONINGSTATUS = "VersioningStatus";
     public static final String BUCKET_DELIMITER        = "Delimiter";
-    private int    bucketId;
+
+    @JsonIgnore
+    private long    bucketId;
+
+    @JsonProperty(BUCKET_NAME)
     private String bucketName;
+
+    @JsonIgnore
     private int    ownerId;
-    private String createDate;
-    private String region;
+
+    @JsonProperty(BUCKET_CREATETIME)
+    private String formatDate;
+
+    @JsonIgnore
+    private Date date;
+
+    @JsonIgnore
     private String versioningStatus;
+
+    @JsonIgnore
     private String delimiter;
 
-    public void setBucketId(int bucketId){
+    public void setBucketId(long bucketId){
         this.bucketId = bucketId;
     }
 
-    public int getBucketId(){
+    public long getBucketId(){
         return this.bucketId;
     }
 
@@ -40,20 +58,20 @@ public class Bucket {
         return this.ownerId;
     }
 
-    public void setBucketCreateDate(String createDate){
-        this.createDate = createDate;
+    public void setFormatDate(String creationDate){
+        this.formatDate = creationDate;
     }
 
-    public String getCreateDate(){
-        return this.createDate;
+    public String getFormatDate(){
+        return this.formatDate;
     }
 
-    public void setRegion(String region){
-        this.region = region;
+    public void setDate(Date date) {
+        this.date = date;
     }
 
-    public String getRegion(){
-        return region;
+    public Date getDate() {
+        return date;
     }
 
     public void setVersioningStatus(String versioningStatus){

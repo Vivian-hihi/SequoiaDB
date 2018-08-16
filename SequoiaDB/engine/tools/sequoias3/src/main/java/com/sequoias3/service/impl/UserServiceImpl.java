@@ -4,10 +4,11 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.common.InitAdminUserDefine;
-import com.sequoias3.common.RestParamDefine;
 import com.sequoias3.common.UserParamDefine;
 import com.sequoias3.core.AccessKeys;
+import com.sequoias3.core.Bucket;
 import com.sequoias3.core.User;
+import com.sequoias3.dao.BucketDao;
 import com.sequoias3.dao.UserDao;
 import com.sequoias3.exception.*;
 import com.sequoias3.service.UserService;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 @Service
@@ -25,6 +27,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserDao userDao;
+
+    @Autowired
+    private BucketDao bucketDao;
 
     @Override
     public AccessKeys createUser(String newUserName,
@@ -134,11 +139,16 @@ public class UserServiceImpl implements UserService {
 
             if (userName.equals(InitAdminUserDefine.ADMIN_NAME)) {
                 logger.info("Init admin user cannot be delete.");
-                throw new S3ServerException(S3Error.USER_DELETE_LAST_ADMIN, "Last admin user cannot be delete.");
+                throw new S3ServerException(S3Error.USER_DELETE_INIT_ADMIN, "Last admin user cannot be delete.");
             }
-            //       2.check bucket
 
-            //       3.delete buckets
+            //       2.check bucket
+            //       3.delete objects
+            //       4.delete buckets
+            List<Bucket> bucketList = bucketDao.getBucketListByOwnerID(user.getUserId());
+            for (int i = 0; i < bucketList.size(); i++) {
+                bucketDao.deleteBucket(bucketList.get(i).getBucketName());
+            }
 
             //       4.delete user
             userDao.deleteUser(userName);

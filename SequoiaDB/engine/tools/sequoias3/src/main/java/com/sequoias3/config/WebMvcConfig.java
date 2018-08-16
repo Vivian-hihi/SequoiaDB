@@ -3,10 +3,9 @@ package com.sequoias3.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.sequoias3.core.AccessKeys;
+import com.sequoias3.core.*;
 import com.sequoias3.core.Error;
-import com.sequoias3.core.serial.ErrorSerializer;
-import com.sequoias3.core.serial.UserAuthKeySerializer;
+import com.sequoias3.core.serial.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -45,13 +44,12 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter {
 
         ObjectMapper mapper = converter.getObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addSerializer(AccessKeys.class, new UserAuthKeySerializer());
+        //module.addSerializer(Error.class, new ErrorSerializer());
         module.addSerializer(Error.class, new ErrorSerializer());
         mapper.registerModule(module);
 
         XmlMapper mapperXml = new XmlMapper();
         SimpleModule moduleXml = new SimpleModule();
-        moduleXml.addSerializer(AccessKeys.class, new UserAuthKeySerializer());
         moduleXml.addSerializer(Error.class, new ErrorSerializer());
         mapperXml.registerModule(moduleXml);
 
