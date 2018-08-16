@@ -1094,7 +1094,7 @@ sdbConnectionHandle sdbGetConnectionHandle( const char **serverList,
    connect->isTransactionOn = 0 ;
    pool->numConnections++ ;
 
-   if ( strcmp( transaction, SDB_TRANSACTION_ON ) == 0 )
+   if ( strcmp( transaction, SDB_OPTION_ON ) == 0 )
    {
       elog( DEBUG1, "trans begin[%s]", connect->connName ) ;
       rc = sdbTransactionBegin( connect->hConnection ) ;
@@ -1768,6 +1768,13 @@ void sdbPreprocessLimit(PlannerInfo *root, INT64 *offset, INT64 *limit)
 
    if (list_length(parse->rtable) > 1)
    {
+      // can't support more than one table
+      return;
+   }
+
+   if (list_length(parse->groupClause) > 0)
+   {
+      // limit is affect in group result, not in the original records.
       return;
    }
 

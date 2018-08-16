@@ -346,6 +346,8 @@ int sdbGetSdbServerOptions( Oid foreignTableId, SdbExecState *sdbExecState )
 
    sdbExecState->transaction        = options.transaction ;
    sdbExecState->isUseDecimal       = options.isUseDecimal ;
+   sdbExecState->isPushDownSort     = options.isPushDownSort;
+   sdbExecState->isPushDownLimit    = options.isPushDownLimit;
 
    return 0 ;
 }
@@ -396,6 +398,8 @@ void initSdbExecState( SdbExecState *sdbExecState )
 
    sdbExecState->offset = 0 ;
    sdbExecState->limit = -1 ;
+   sdbExecState->isPushDownSort = 1 ;
+   sdbExecState->isPushDownLimit = 1 ;
 }
 
 Const *serializeString( const char *s )
@@ -495,6 +499,12 @@ List *serializeSdbExecState( SdbExecState *fdwState )
 
    /* limit */
    result = lappend( result, serializeInt64( fdwState->limit ) ) ;
+
+   /* isPushDownSort */
+   result = lappend(result, serializeInt(fdwState->isPushDownSort)) ;
+
+   /* isPushDownLimit */
+   result = lappend(result, serializeInt(fdwState->isPushDownLimit)) ;
 
    /* _id_addr */
    result = lappend( result, serializeUint64( fdwState->bson_record_addr ) ) ;
@@ -601,6 +611,14 @@ SdbExecState *deserializeSdbExecState( List *sdbExecStateList )
    /* limit */
    fdwState->limit = deserializeInt64( lfirst( cell ) ) ;
    cell = lnext( cell ) ;
+
+   /* isPushDownSort */
+   fdwState->isPushDownSort = (int)DatumGetInt32(((Const *)lfirst(cell))->constvalue) ;
+   cell = lnext(cell) ;
+
+   /* isPushDownLimit */
+   fdwState->isPushDownLimit = (int)DatumGetInt32(((Const *)lfirst(cell))->constvalue) ;
+   cell = lnext(cell) ;
 
    /* _id_addr */
    fdwState->bson_record_addr = deserializeUint64( lfirst( cell ) ) ;
@@ -2558,6 +2576,8 @@ void sdbGetOptions( Oid foreignTableId, SdbInputOptions *options )
    CHAR *transaction          = NULL ;
    CHAR *pUseDecimal          = NULL ;
    INT32 isUseDecimal         = 0 ;
+   CHAR *pPushDownSortAndLimit = NULL ;
+
    if( NULL == options )
       goto done ;
    /* address name */
@@ -2637,22 +2657,52 @@ void sdbGetOptions( Oid foreignTableId, SdbInputOptions *options )
    transaction = sdbGetOptionValue( foreignTableId, OPTION_NAME_TRANSACTION ) ;
    if ( NULL == transaction )
    {
-      transaction = pstrdup( DEFAULT_TRANSACTION ) ;
+      transaction = pstrdup( SDB_OPTION_OFF ) ;
    }
 
    /* OPTION_NAME_USEDECIMAL */
    pUseDecimal = sdbGetOptionValue( foreignTableId, OPTION_NAME_USEDECIMAL ) ;
    if ( NULL == pUseDecimal )
    {
-      pUseDecimal = pstrdup( DEFAULT_DECIMAL ) ;
+      pUseDecimal = pstrdup( SDB_OPTION_OFF ) ;
    }
-   if ( strcmp( pUseDecimal, SDB_DECIMAL_ON ) == 0 )
+   if ( strcmp( pUseDecimal, SDB_OPTION_ON ) == 0 )
    {
       isUseDecimal = 1 ;
    }
    else
    {
       isUseDecimal = 0 ;
+   }
+
+   /* OPTION_NAME_PUSHDOWNSORT */
+   pPushDownSortAndLimit = sdbGetOptionValue(foreignTableId, OPTION_NAME_PUSHDOWNSORT) ;
+   if (NULL == pPushDownSortAndLimit)
+   {
+      pPushDownSortAndLimit = pstrdup(SDB_OPTION_ON) ;
+   }
+   if (strcmp(pPushDownSortAndLimit, SDB_OPTION_ON) == 0)
+   {
+      options->isPushDownSort = 1 ;
+   }
+   else
+   {
+      options->isPushDownSort = 0 ;
+   }
+
+   /* OPTION_NAME_PUSHDOWNLIMIT */
+   pPushDownSortAndLimit = sdbGetOptionValue(foreignTableId, OPTION_NAME_PUSHDOWNLIMIT) ;
+   if (NULL == pPushDownSortAndLimit)
+   {
+      pPushDownSortAndLimit = pstrdup(SDB_OPTION_ON) ;
+   }
+   if (strcmp(pPushDownSortAndLimit, SDB_OPTION_ON) == 0)
+   {
+      options->isPushDownLimit = 1 ;
+   }
+   else
+   {
+      options->isPushDownLimit = 0 ;
    }
 
    /* fill up the result structure */
@@ -3562,7 +3612,7 @@ static void SdbGetForeignPaths( PlannerInfo *root,
     */
    totalCost = totalStartupCost + totalCPUCost + totalDiskCost ;
 
-   if ( isSortCanPushDown(root, baserel->relid ) )
+   if ( fdw_state->isPushDownSort && isSortCanPushDown(root, baserel->relid ) )
    {
       sort_path = root->sort_pathkeys ;
    }
@@ -3641,35 +3691,45 @@ static ForeignScan *SdbGetForeignPlan( PlannerInfo *root,
    ForeignScan *foreignScan  = NULL ;
    List *foreignPrivateList  = NIL ;
    List *columnList          = NIL ;
+   INT32 rcCondition = SDB_OK ;
 
    SdbExecState *fdw_state   = ( SdbExecState * )baserel->fdw_private ;
    sdbGetColumnKeyInfo( fdw_state ) ;
+
+   elog( DEBUG1, "SdbGetForeignPlan:bestPath=%s", nodeToString(bestPath) ) ;
 
    /* We keep all restriction clauses at PG ide to re-check */
    restrictionClauses = extract_actual_clauses( restrictionClauses, FALSE ) ;
    /* construct the query sdbbson document */
 
-   sdbGenerateFilterCondition( foreignTableId, baserel, fdw_state->isUseDecimal,
-                               &fdw_state->queryDocument ) ;
+   rcCondition = sdbGenerateFilterCondition( foreignTableId, baserel,
+                                             fdw_state->isUseDecimal,
+                                             &fdw_state->queryDocument ) ;
    sdbPrintBson( &fdw_state->queryDocument, DEBUG1, "SdbGetForeignPlan query" ) ;
-
-   elog( DEBUG1, "SdbGetForeignPlan:bestPath=%s", nodeToString(bestPath) ) ;
-   sdbGenerateSortCondition( baserel->relid, foreignTableId, bestPath->path.pathkeys,
-                             &fdw_state->sortDocument ) ;
-   sdbPrintBson( &fdw_state->sortDocument, DEBUG1, "SdbGetForeignPlan sort" ) ;
-   sdbPreprocessLimit( root, &fdw_state->offset, &fdw_state->limit );
-   /*
-      Notice: while offset and limit is still work outside foreign scan.
-      we should adjust the offset and limit that send to SequoiaDB.
-   */
-   if (0 != fdw_state->offset)
+   if (fdw_state->isPushDownSort)
    {
-      if (-1 != fdw_state->limit)
-      {
-         fdw_state->limit = fdw_state->limit + fdw_state->offset;
-      }
-      fdw_state->offset = 0;
+      sdbGenerateSortCondition( baserel->relid, foreignTableId, bestPath->path.pathkeys,
+                                &fdw_state->sortDocument ) ;
    }
+
+   // push down sort and limit if all condition can push down
+   if (fdw_state->isPushDownLimit && SDB_OK == rcCondition)
+   {
+      sdbPreprocessLimit( root, &fdw_state->offset, &fdw_state->limit );
+      /*
+         Notice: while offset and limit is still work outside foreign scan.
+         we should adjust the offset and limit that send to SequoiaDB.
+      */
+      if (0 != fdw_state->offset)
+      {
+         if (-1 != fdw_state->limit)
+         {
+            fdw_state->limit = fdw_state->limit + fdw_state->offset;
+         }
+         fdw_state->offset = 0;
+      }
+   }
+
 
    fdw_state->bson_record_addr = sdbCreateBsonRecordAddr() ;
    foreignPrivateList = serializeSdbExecState( fdw_state ) ;

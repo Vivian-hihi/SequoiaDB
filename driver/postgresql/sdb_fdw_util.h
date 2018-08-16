@@ -101,8 +101,6 @@ void debugClauseInfo( PlannerInfo *root, RelOptInfo *baserel, Oid tableID ) ;
 
 void sdbPreprocessLimit(PlannerInfo *root, INT64 *offset, INT64 *limit);
 
-
-
 /* record cache */
 typedef struct
 {
