@@ -313,6 +313,31 @@ namespace DriverTest
             Assert.AreEqual(str, doc.ToString());
         }
 
+        [TestMethod]
+        public void BsonTimestampIncTest()
+        {
+            try
+            {
+                BsonTimestamp timestamp = new BsonTimestamp(1000, 1000000);
+                Assert.Fail();
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            try
+            {
+                BsonTimestamp timestamp = new BsonTimestamp(1000, -1);
+                Assert.Fail();
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                Console.WriteLine(e.StackTrace);
+            }
+            BsonTimestamp timestamp1 = new BsonTimestamp(1000, 0);
+            BsonTimestamp timestamp2 = new BsonTimestamp(1000, 999999);
+
+        }
 
     }
 }
