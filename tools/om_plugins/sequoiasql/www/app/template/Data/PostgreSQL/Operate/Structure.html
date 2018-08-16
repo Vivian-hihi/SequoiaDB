@@ -5,7 +5,7 @@
             <b><a class="linkButton" href="#/Data/SequoiaSQL/PostgreSQL/Database/Index">{{ModuleName}}</a> <span style="font-size:80%; color:#666;">></span> {{FullName}}</b>
          </li>
          <li class="active">
-            <a href="#/Data/SequoiaSQL/PostgreSQL/Operate/Structure">{{pAutoLanguage("表结构")}}</a>
+            <a href="#/Data/SequoiaSQL/PostgreSQL/Operate/Structure">{{pAutoLanguage("表信息")}}</a>
          </li>
          <li>
             <a href="#/Data/SequoiaSQL/PostgreSQL/Operate/Data">{{pAutoLanguage("数据")}}</a>
@@ -49,10 +49,10 @@
       <div class="Ellipsis" table-key="index">{{$index+1}}</div>
       <div class="Ellipsis" table-key="column_name">{{info.column_name}}</div>
       <div class="Ellipsis" table-key="operation">
-         <a class="linkButton" ng-click="ShowEditFieldDropdown( $event, info['column_name'], info['data_type'] )" ng-attr="{'data-desc':pAutoLanguage('编辑字段')}"><i class="fa fa-edit"></i></a>
+         <a class="linkButton" ng-click="ShowEditFieldDropdown( $event, info['column_name'], info['data_type'], info['character_maximum_length'] )" ng-attr="{'data-desc':pAutoLanguage('编辑字段')}"><i class="fa fa-edit"></i></a>
          <a class="linkButton" ng-click="ShowDropFieldWindow( info['column_name'] )" ng-attr="{'data-desc':pAutoLanguage('删除字段')}"><i class="fa fa-remove"></i></a>
       </div>
-      <div class="Ellipsis" table-key="data_type">{{info.data_type}}</div>
+      <div class="Ellipsis" table-key="data_type">{{info.data_type}}<span ng-if="info.character_maximum_length != null">({{info.character_maximum_length}})</span></div>
       <div class="Ellipsis" table-key="column_default">{{info.column_default}}</div>
       <div class="Ellipsis" table-key="is_nullable">{{info.is_nullable=='YES'?true:false}}</div>
    </div>

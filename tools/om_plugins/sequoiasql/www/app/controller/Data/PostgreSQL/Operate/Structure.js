@@ -613,7 +613,11 @@
       } ;
 
       //打开 修改字段类型 弹窗
-      var showSetFieldType = function( fieldName, type ){
+      var showSetFieldType = function( fieldName, type, length ){
+         if( length === null )
+         {
+            length = '' ;
+         }
          $scope.SetfFieldTypetWindow['config'] = {
             'inputList': [
                {
@@ -625,17 +629,10 @@
                   "value": fieldName
                },
                {
-                  "name": "oldType",
-                  "webName": $scope.pAutoLanguage( '原字段类型' ),
-                  "type": "string",
-                  "disabled": true,
-                  "value": type
-               },
-               {
                   "name": "newType",
-                  "webName": $scope.pAutoLanguage( '新字段类型' ),
+                  "webName": $scope.pAutoLanguage( '字段类型' ),
                   "type": "select",
-                  "value": "integer",
+                  "value": type,
                   "valid": [
                      { "key": 'smallint', "value": "smallint" },
                      { "key": 'integer', "value": "integer" },
@@ -657,6 +654,16 @@
                      { "key": 'time', "value": "time" },
                      { "key": 'boolean', "value": "boolean" }
                   ]
+               },
+               {
+                  "name": "length",
+                  "webName": $scope.pAutoLanguage( "长度" ),
+                  "type": "int",
+                  "value": length,
+                  "valid": {
+                     "min": 0,
+                     "empty": true
+                  }
                }
             ]
          }
@@ -668,6 +675,10 @@
             {
                var formVal = $scope.SetfFieldTypetWindow['config'].getValue() ;
                var sql = sprintf( 'alter table ? alter column ? type ?', addQuotes( SdbSwap.tbName ), addQuotes( fieldName ), formVal['newType'] ) ;
+               if( formVal['length'] > 0 )
+               {
+                  sql = sprintf( '?(?)', sql, formVal['length'] ) ;
+               }
                execSql( sql ) ;
                $scope.SetfFieldTypetWindow['callback']['Close']() ;
             }
@@ -695,7 +706,7 @@
             }
             else if( index == 1 )
             {
-               showSetFieldType( result['field'], result['type'] ) ;
+               showSetFieldType( result['field'], result['type'], result['length'] ) ;
             }
             else if( index == 2 )
             {
@@ -752,8 +763,8 @@
       } ) ;
 
       //打开 编辑字段 下拉菜单
-      $scope.ShowEditFieldDropdown = function( event, fieldName, fieldType ){
-         SdbSignal.commit( 'ShowEditFieldDropdown', { 'event': event, 'field': fieldName, 'type': fieldType } ) ;
+      $scope.ShowEditFieldDropdown = function( event, fieldName, fieldType, fieldLength ){
+         SdbSignal.commit( 'ShowEditFieldDropdown', { 'event': event, 'field': fieldName, 'type': fieldType, 'length': fieldLength } ) ;
       }
 
       //打开 删除字段 弹窗

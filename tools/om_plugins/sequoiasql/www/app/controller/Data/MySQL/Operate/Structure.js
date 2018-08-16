@@ -568,7 +568,11 @@
       } ;
 
       //打开 修改字段 弹窗
-      var showEditField= function( fieldName, type ){
+      var showEditField= function( fieldName, type, length ){
+         if( length === null )
+         {
+            length = '' ;
+         }
          $scope.EditFieldWindow['config'] = {
             'inputList': [
                {
@@ -607,7 +611,7 @@
                   "name": "length",
                   "webName": $scope.pAutoLanguage( "长度" ),
                   "type": "int",
-                  "value": "",
+                  "value": length,
                   "valid": {
                      "min": 0,
                      "empty": true
@@ -649,7 +653,7 @@
          $scope.EditFieldDropdown['OnClick'] = function( index ){
             if( index == 0 )
             {
-               showEditField( result['field'], result['type'] ) ;
+               showEditField( result['field'], result['type'], result['length'] ) ;
             }
             else if( index == 1 )
             {
@@ -706,8 +710,8 @@
       } ) ;
 
       //打开 编辑字段 下拉菜单
-      $scope.ShowEditFieldDropdown = function( event, fieldName, fieldType ){
-         SdbSignal.commit( 'ShowEditFieldDropdown', { 'event': event, 'field': fieldName, 'type': fieldType } ) ;
+      $scope.ShowEditFieldDropdown = function( event, fieldName, fieldType, fieldLength ){
+         SdbSignal.commit( 'ShowEditFieldDropdown', { 'event': event, 'field': fieldName, 'type': fieldType, 'length': fieldLength } ) ;
       }
 
       //打开 删除字段 弹窗
