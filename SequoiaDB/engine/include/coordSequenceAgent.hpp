@@ -69,7 +69,7 @@ namespace engine
       INT32 _getNextValueFromCache( _coordSequence& seq, INT64& nextValue, _pmdEDUCB* eduCB ) ;
       INT32 _acquireSequence( _coordSequence& seq, _pmdEDUCB* eduCB ) ;
       INT32 _processAcquireReply( MsgHeader* msg, _coordSequence& seq ) ;
-      BOOLEAN _removeCacheByOID( const std::string& sequenceName, bson::OID& oid ) ;
+      BOOLEAN _removeCacheByOID( const std::string& sequenceName, bson::OID oid ) ;
 
    private:
       _coordResource*   _resource ;

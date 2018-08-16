@@ -652,7 +652,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__REMOVE_CACHE_BY_OID, "_coordSequenceAgent::_removeCacheByOID" )
-   BOOLEAN _coordSequenceAgent::_removeCacheByOID( const std::string& name, bson::OID& oid )
+   BOOLEAN _coordSequenceAgent::_removeCacheByOID( const std::string& name, bson::OID oid )
    {
       BOOLEAN removed = FALSE ;
       PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__REMOVE_CACHE_BY_OID ) ;
@@ -664,6 +664,7 @@ namespace engine
       if ( bucket.end() != iter )
       {
          _coordSequence* cache = (*iter).second ;
+         // if oid not equal, means the cache has been changed, can't delete
          if ( cache->oid() == oid )
          {
             bucket.erase( name ) ;
