@@ -977,7 +977,6 @@ int main ( int argc , CHAR **argv )
    INT32             rc       = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_SDB_MAIN );
    ArgInfo           argInfo ;
-   CHAR currentPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
    setlocale(LC_CTYPE, "zh_CN.UTF-8");
 #if defined( _LINUX )
@@ -985,13 +984,6 @@ int main ( int argc , CHAR **argv )
 #endif // _LINUX
    //
    linenoiseSetCompletionCallback( (linenoiseCompletionCallback*)lineComplete ) ;
-
-   rc = ossGetEWD( currentPath, OSS_MAX_PATHSIZE ) ;
-   if ( rc )
-   {
-      std::cout << "Get current path failed: " << rc << std::endl ;
-      goto error ;
-   }
 
    rc = container.init() ;
    if ( rc )
