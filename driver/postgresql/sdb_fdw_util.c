@@ -301,7 +301,14 @@ bool isSortCanPushDown( PlannerInfo *root, Index foreignTableIndex )
 
    if ( list_length(root->parse->rtable) > 1 )
    {
+      // can't support more than one table
       elog( DEBUG1, "isSortCanPushDown:root->parse->rtable is greater than 1" ) ;
+      return false ;
+   }
+
+   if (list_length(root->parse->groupClause) > 0)
+   {
+      // sort is affect in group result, not in the original records.
       return false ;
    }
 

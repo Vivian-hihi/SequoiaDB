@@ -2131,7 +2131,6 @@ INT32 sdbGenerateFilterCondition ( Oid foreign_id, RelOptInfo *baserel,
    expr_state.foreign_table_id    = foreign_id ;
    expr_state.is_use_decimal      = isUseDecimal ;
 
-
    sdbbson_destroy( condition ) ;
    sdbbson_init( condition ) ;
    foreach( cell, baserel->baserestrictinfo )
@@ -3729,7 +3728,6 @@ static ForeignScan *SdbGetForeignPlan( PlannerInfo *root,
          fdw_state->offset = 0;
       }
    }
-
 
    fdw_state->bson_record_addr = sdbCreateBsonRecordAddr() ;
    foreignPrivateList = serializeSdbExecState( fdw_state ) ;
