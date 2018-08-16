@@ -755,6 +755,13 @@ namespace engine
       }
 
    done:
+      if ( SDB_OK == rc )
+      {
+         PD_LOG( PDEVENT, "Set unique id, "
+                 "Set unique id, cs name: %d, cs id: %u, cl info: %s",
+                 csName.c_str(), csUniqueID,
+                 boCollections.toString( TRUE ).c_str() ) ;
+      }
       PD_TRACE_EXITRC( SDB_CATALOGMGR__SETUID, rc ) ;
       return rc ;
    error:
@@ -776,6 +783,8 @@ namespace engine
       BSONObj orderby = BSON( CAT_CS_UNIQUEID << -1 ) ;
       BSONObj dummyObj, resultObj ;
       rtnContextBuf buffObj ;
+
+      PD_LOG( PDDEBUG, "Begin checkAllCSCLUniqueID" );
 
       // Check [CSUniqueHWM] field exists or not.
       // If the field exists, check uniqueid task has been done.
@@ -823,6 +832,8 @@ namespace engine
          BSONObj boCollections ;
          BSONObj boSpace( buffObj.data() ) ;
          INT32 result = SDB_OK ;
+
+         PD_LOG( PDDEBUG, "Begin to check cs[%s]", boSpace.toString().c_str() );
 
          // sort by { UniqueID: -1 }, the first one is the cs with max unique id
          rc = rtnGetIntElement( boSpace, CAT_CS_UNIQUEID, (INT32&)maxUniqueID );
