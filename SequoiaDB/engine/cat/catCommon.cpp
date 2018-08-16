@@ -969,7 +969,7 @@ namespace engine
       rc = rtnUpdate( CAT_DOMAIN_COLLECTION, matcher, modifier,
                       dummy, 0, cb, dmsCB, dpsCB, w ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to update collection: %s, match: %s, "
-                   "updator: %s, rc: %d", CAT_COLLECTION_SPACE_COLLECTION,
+                   "updator: %s, rc: %d", CAT_DOMAIN_COLLECTION,
                    matcher.toString().c_str(), modifier.toString().c_str(),
                    rc ) ;
 
@@ -979,7 +979,7 @@ namespace engine
       rc = rtnUpdate( CAT_DOMAIN_COLLECTION, matcher, modifier2,
                       dummy, 0, cb, dmsCB, dpsCB, w ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to update collection: %s, match: %s, "
-                   "updator: %s, rc: %d", CAT_COLLECTION_SPACE_COLLECTION,
+                   "updator: %s, rc: %d", CAT_DOMAIN_COLLECTION,
                    matcher.toString().c_str(), modifier2.toString().c_str(),
                    rc ) ;
 
