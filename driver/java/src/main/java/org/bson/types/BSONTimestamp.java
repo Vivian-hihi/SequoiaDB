@@ -48,6 +48,7 @@ public class BSONTimestamp implements Serializable {
      * Construct BSONTimestamp.
      * @param time seconds since epoch.
      * @param inc microseconds in range of [0us, 999999us].
+     * @exception IllegalArgumentException
      */
     public BSONTimestamp(int time, int inc ) {
         if (inc > 999999 || inc < 0) {
