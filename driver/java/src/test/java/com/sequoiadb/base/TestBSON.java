@@ -6,6 +6,7 @@ import org.bson.*;
 import org.bson.io.Bits;
 import org.bson.types.*;
 import org.bson.util.JSON;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -243,5 +244,23 @@ public class TestBSON {
         BSONObject exp3 = (BSONObject) JSON.parse("{'no':{'$numberLong':'8223372036854775296'}}");
         BSONObject exp4 = (BSONObject) JSON.parse("{'no':{'$numberLong':'8223372036854775296'}}");
         assertEquals(exp3, exp4);
+    }
+
+    @Test
+    public void testBSONTimestampInc() {
+        try {
+            BSONTimestamp timestamp = new BSONTimestamp(10000, 1000000);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+        try {
+            BSONTimestamp timestamp = new BSONTimestamp(10000, -1);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+        BSONTimestamp timestamp1 = new BSONTimestamp(10000, 0);
+        BSONTimestamp timestamp2 = new BSONTimestamp(10000, 999999);
     }
 }

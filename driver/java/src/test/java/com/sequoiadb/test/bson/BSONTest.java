@@ -13,9 +13,7 @@ import org.bson.types.BSONTimestamp;
 import org.junit.*;
 
 import java.sql.Timestamp;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertThat;
@@ -163,6 +161,16 @@ public class BSONTest {
                 append("max", new BSONDecimal("inf")).
                 append("MIN", new BSONDecimal("-INF")).
                 append("min", new BSONDecimal("-inf"));
+        cl.insert(obj);
+    }
+
+    @Test
+    public void BSONArrayTest() {
+        List list = new ArrayList();
+        list.add("1");
+        list.add("2");
+        BSONObject obj = new BasicBSONObject();
+        obj.put("arr", list);
         cl.insert(obj);
     }
 
