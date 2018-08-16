@@ -138,7 +138,7 @@ namespace engine
       if ( msgNum > 0 )
       {
          while( _activeJobNum < _maxJobNum &&
-                msgNum / 10000 > (UINT32)_activeJobNum )
+                msgNum / 1000 > (UINT32)_activeJobNum )
          {
             ossScopedLock lock( &_jobLatch ) ;
 

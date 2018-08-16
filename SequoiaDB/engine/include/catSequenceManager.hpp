@@ -63,7 +63,7 @@ namespace engine
    class _catSequenceManager: public SDBObject
    {
    private:
-      typedef utilConcurrentMap<std::string, _catSequence*> CAT_SEQ_MAP ;
+      typedef utilConcurrentMap<std::string, _catSequence*, 64> CAT_SEQ_MAP ;
       // disallow copy and assign
       _catSequenceManager( const _catSequenceManager& ) ;
       void operator=( const _catSequenceManager& ) ;
@@ -75,19 +75,31 @@ namespace engine
       INT32 active() ;
       INT32 deactive() ;
 
-      INT32 createSequence( const std::string& name, const bson::BSONObj& options, _pmdEDUCB* eduCB, INT16 w ) ;
+      INT32 createSequence( const std::string& name, const bson::BSONObj& options,
+                            _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 dropSequence( const std::string& name, _pmdEDUCB* eduCB, INT16 w ) ;
-      INT32 alterSequence( const std::string& name, const bson::BSONObj& options, _pmdEDUCB* eduCB, INT16 w ) ;
-      INT32 acquireSequence( const std::string& name, const bson::OID oid, _catSequenceAcquirer& acquirer, _pmdEDUCB* eduCB, INT16 w ) ;
+      INT32 alterSequence( const std::string& name, const bson::BSONObj& options,
+                           _pmdEDUCB* eduCB, INT16 w ) ;
+      INT32 acquireSequence( const std::string& name, const bson::OID oid, _catSequenceAcquirer& acquirer,
+                             _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 resetSequence( const std::string& name, _pmdEDUCB* eduCB, INT16 w ) ;
 
    private:
       INT32 _insertSequence( bson::BSONObj& sequence, _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 _deleteSequence( const std::string& name, _pmdEDUCB* eduCB, INT16 w ) ;
-      INT32 _updateSequence( const std::string& name, const bson::BSONObj& options, _pmdEDUCB* eduCB, INT16 w ) ;
+      INT32 _updateSequence( const std::string& name, const bson::BSONObj& options,
+                             _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 _findSequence( const std::string& name, bson::BSONObj& sequence, _pmdEDUCB* eduCB ) ;
+      INT32 _acquireSequenceBySLock( const std::string& name, const bson::OID oid,
+                                     _catSequenceAcquirer& acquirer, BOOLEAN& noCache,
+                                     _pmdEDUCB* eduCB, INT16 w ) ;
+      INT32 _acquireSequenceByXLock( const std::string& name, const bson::OID oid, _catSequenceAcquirer& acquirer,
+                                     _pmdEDUCB* eduCB, INT16 w ) ;
+      INT32 _acquireSequenceFromCache( _catSequence& sequence, _catSequenceAcquirer& acquirer,
+                                       _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 _acquireAscendingSequence( _catSequence& sequence, _catSequenceAcquirer& acquirer, BOOLEAN& needUpdate ) ;
       INT32 _acquireDescendingSequence( _catSequence& sequence, _catSequenceAcquirer& acquirer, BOOLEAN& needUpdate ) ;
+      BOOLEAN _removeCacheByOID( const std::string& name, bson::OID oid ) ;
       void  _cleanCache( BOOLEAN needFlush ) ;
 
    private:

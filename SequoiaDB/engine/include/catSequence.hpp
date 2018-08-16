@@ -36,6 +36,7 @@
 
 #include "oss.hpp"
 #include "ossUtil.hpp"
+#include "ossLatch.hpp"
 #include "../bson/bson.hpp"
 #include <string>
 
@@ -63,6 +64,16 @@ namespace engine
       OSS_INLINE BOOLEAN cycled() const { return _cycled ; }
       OSS_INLINE BOOLEAN initial() const { return _initial ; }
       OSS_INLINE BOOLEAN exceeded() const { return _exceeded ; }
+
+      OSS_INLINE void lock()
+      {
+         _latch.get() ;
+      }
+
+      OSS_INLINE void unlock()
+      {
+         _latch.release() ;
+      }
 
       void setOID( const bson::OID oid ) ;
       void setInternal( BOOLEAN internal ) ;
@@ -103,6 +114,7 @@ namespace engine
       BOOLEAN        _cycled ;         // true if cycle is allowed
       BOOLEAN        _initial ;        // sequence is unused
       BOOLEAN        _exceeded ;       // sequence is exceeded, only in cache
+      ossSpinXLatch  _latch ;
    } ;
    typedef _catSequence catSequence ;
 }

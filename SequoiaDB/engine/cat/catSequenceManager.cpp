@@ -264,115 +264,33 @@ namespace engine
                                                _pmdEDUCB* eduCB, INT16 w )
    {
       INT32 rc = SDB_OK ;
-      _catSequence* cache = NULL ;
-      _catSequence* sequence = NULL ;
-      BOOLEAN needUpdate = FALSE ;
+      BOOLEAN noCache = FALSE ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR_ACQUIRE_SEQ ) ;
 
-      CAT_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
-      BUCKET_XLOCK( bucket ) ;
-
-      CAT_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
-      if ( bucket.end() != iter )
+      rc = _acquireSequenceBySLock( name, oid, acquirer, noCache, eduCB, w ) ;
+      if ( SDB_OK == rc )
       {
-         cache = (*iter).second ;
+         // if no sequence cache, should get bucket by XLock
+         if ( noCache )
+         {
+            rc = _acquireSequenceByXLock( name, oid, acquirer, eduCB, w ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+         }
       }
       else
       {
-         BSONObj seqObj ;
-
-         rc = _findSequence( name, seqObj, eduCB ) ;
-         if ( SDB_OK != rc )
+         if ( SDB_SEQUENCE_NOT_EXIST == rc )
          {
-            PD_LOG( PDERROR, "Failed to find sequence[%s] from system collection, rc=%d",
-                    name.c_str(), rc ) ;
-            goto error ;
+            // remove cache if sequence not exist
+            _removeCacheByOID( name, acquirer.oid ) ;
          }
-
-         sequence = SDB_OSS_NEW _catSequence( name ) ;
-         if ( NULL == sequence )
-         {
-            rc = SDB_OOM ;
-            PD_LOG( PDERROR, "Failed to alloc sequence[%s], rc=%d",
-                    name.c_str(), rc ) ;
-            goto error ;
-         }
-
-         rc = sequence->setOptions( seqObj, FALSE, TRUE ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to set sequence[%s], rc=%d",
-                    name.c_str(), rc ) ;
-            goto error ;
-         }
-
-         try
-         {
-            bucket.insert( CAT_SEQ_MAP::value_type( name, sequence ) ) ;
-         }
-         catch( std::exception& e )
-         {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to insert sequence[%s] to cache", name.c_str() ) ;
-            goto error ;
-         }
-
-         cache = sequence ;
-         sequence = NULL ;
-      }
-
-      // check oid
-      if ( oid.isSet() && oid != cache->oid() )
-      {
-         PD_LOG( PDWARNING, "Mismatch oid(%s) for sequence[%s, %s]",
-                 oid.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
-      }
-
-      if ( cache->increment() > 0 )
-      {
-         rc = _acquireAscendingSequence( *cache, acquirer, needUpdate ) ;
-      }
-      else
-      {
-         rc = _acquireDescendingSequence( *cache, acquirer, needUpdate );
-      }
-
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
-                 name.c_str(), rc ) ;
          goto error ;
       }
 
-      acquirer.oid = cache->oid() ;
-
-      if ( needUpdate )
-      {
-         BSONObj options ;
-         try
-         {
-            options = BSON( CAT_SEQUENCE_CURRENT_VALUE << cache->currentValue()
-                         << CAT_SEQUENCE_INITIAL << (bool) cache->initial() ) ;
-         }
-         catch( std::exception& e )
-         {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to build bson, exception: %s, rc=%d",
-                    e.what(), rc ) ;
-            goto error ;
-         }
-
-         rc = _updateSequence( name, options, eduCB, w ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to update sequence[%s], rc=%d",
-                    name.c_str(), rc ) ;
-            goto error ;
-         }
-      }
-
    done:
-      SAFE_OSS_DELETE( sequence ) ;
       PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR_ACQUIRE_SEQ, rc ) ;
       return rc ;
    error:
@@ -447,6 +365,220 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR_RESET_SEQ, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_SLOCK, "_catSequenceManager::_acquireSequenceBySLock" )
+   INT32 _catSequenceManager::_acquireSequenceBySLock( const std::string& name,
+                                                       const bson::OID oid,
+                                                       _catSequenceAcquirer& acquirer,
+                                                       BOOLEAN& noCache,
+                                                       _pmdEDUCB* eduCB, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      _catSequence* cache = NULL ;
+      BOOLEAN cacheLocked = FALSE ;
+      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_SLOCK ) ;
+
+      CAT_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
+      BUCKET_SLOCK( bucket ) ;
+
+      CAT_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
+      if ( bucket.end() != iter )
+      {
+         cache = (*iter).second ;
+         noCache = FALSE ;
+      }
+      else
+      {
+         // no sequence cache, should get bucket by XLock
+         noCache = TRUE ;
+         goto done ;
+      }
+
+      cache->lock() ;
+      cacheLocked = TRUE ;
+
+      // check oid
+      if ( oid.isSet() && oid != cache->oid() )
+      {
+         PD_LOG( PDWARNING, "Mismatch oid(%s) for sequence[%s, %s]",
+                 oid.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
+      }
+
+      rc = _acquireSequenceFromCache( *cache, acquirer, eduCB, w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
+                 name.c_str(), rc ) ;
+         // if rc==SDB_SEQUENCE_NOT_EXIST, we should delete the cache
+         // here we get SLOCK, so we need to get XLOCK to delete the cache
+         // check the oid consistency when delete cache
+         acquirer.oid = cache->oid() ;
+         goto error ;
+      }
+
+   done:
+      if ( cacheLocked )
+      {
+         cache->unlock() ;
+         cacheLocked = FALSE ;
+      }
+      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_SLOCK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_XLOCK, "_catSequenceManager::_acquireSequenceByXLock" )
+   INT32 _catSequenceManager::_acquireSequenceByXLock( const std::string& name,
+                                                       const bson::OID oid,
+                                                       _catSequenceAcquirer& acquirer,
+                                                       _pmdEDUCB* eduCB, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      _catSequence* cache = NULL ;
+      _catSequence* sequence = NULL ;
+      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_XLOCK ) ;
+
+      CAT_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
+      BUCKET_XLOCK( bucket ) ;
+
+      CAT_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
+      if ( bucket.end() != iter )
+      {
+         cache = (*iter).second ;
+      }
+      else
+      {
+         BSONObj seqObj ;
+
+         rc = _findSequence( name, seqObj, eduCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to find sequence[%s] from system collection, rc=%d",
+                    name.c_str(), rc ) ;
+            goto error ;
+         }
+
+         sequence = SDB_OSS_NEW _catSequence( name ) ;
+         if ( NULL == sequence )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Failed to alloc sequence[%s], rc=%d",
+                    name.c_str(), rc ) ;
+            goto error ;
+         }
+
+         rc = sequence->setOptions( seqObj, FALSE, TRUE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to set sequence[%s], rc=%d",
+                    name.c_str(), rc ) ;
+            goto error ;
+         }
+
+         try
+         {
+            bucket.insert( CAT_SEQ_MAP::value_type( name, sequence ) ) ;
+         }
+         catch( std::exception& e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to insert sequence[%s] to cache", name.c_str() ) ;
+            goto error ;
+         }
+
+         cache = sequence ;
+         sequence = NULL ;
+      }
+
+      // check oid
+      if ( oid.isSet() && oid != cache->oid() )
+      {
+         PD_LOG( PDWARNING, "Mismatch oid(%s) for sequence[%s, %s]",
+                 oid.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
+      }
+
+      rc = _acquireSequenceFromCache( *cache, acquirer, eduCB, w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
+                 name.c_str(), rc ) ;
+         if ( SDB_SEQUENCE_NOT_EXIST == rc )
+         {
+            // remove cache if sequence not exist
+            // we have got XLOCK, so we can delete it directly
+            bucket.erase( name ) ;
+            SDB_OSS_DEL( cache ) ;
+            cache = NULL ;
+         }
+         goto error ;
+      }
+
+   done:
+      SAFE_OSS_DELETE( sequence ) ;
+      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_XLOCK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_FROM_CACHE, "_catSequenceManager::_acquireSequenceFromCache" )
+   INT32 _catSequenceManager::_acquireSequenceFromCache( _catSequence& seq, _catSequenceAcquirer& acquirer,
+                                                         _pmdEDUCB* eduCB, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN needUpdate = FALSE ;
+      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_FROM_CACHE ) ;
+
+      if ( seq.increment() > 0 )
+      {
+         rc = _acquireAscendingSequence( seq, acquirer, needUpdate ) ;
+      }
+      else
+      {
+         rc = _acquireDescendingSequence( seq, acquirer, needUpdate );
+      }
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
+                 seq.name().c_str(), rc ) ;
+         goto error ;
+      }
+
+      acquirer.oid = seq.oid() ;
+
+      if ( needUpdate )
+      {
+         BSONObj options ;
+         try
+         {
+            options = BSON( CAT_SEQUENCE_CURRENT_VALUE << seq.currentValue()
+                         << CAT_SEQUENCE_INITIAL << (bool) seq.initial() ) ;
+         }
+         catch( std::exception& e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to build bson, exception: %s, rc=%d",
+                    e.what(), rc ) ;
+            goto error ;
+         }
+
+         rc = _updateSequence( seq.name(), options, eduCB, w ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to update sequence[%s], rc=%d",
+                    seq.name().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_FROM_CACHE, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -890,6 +1022,32 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__REMOVE_CACHE_BY_OID, "_catSequenceManager::_removeCacheByOID" )
+   BOOLEAN _catSequenceManager::_removeCacheByOID( const std::string& name, bson::OID oid )
+   {
+      BOOLEAN removed = FALSE ;
+      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__REMOVE_CACHE_BY_OID ) ;
+
+      CAT_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
+      BUCKET_XLOCK( bucket ) ;
+
+      CAT_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
+      if ( bucket.end() != iter )
+      {
+         _catSequence* cache = (*iter).second ;
+         // if oid not equal, means the cache has been changed, can't delete
+         if ( cache->oid() == oid )
+         {
+            bucket.erase( name ) ;
+            SDB_OSS_DEL( cache ) ;
+            removed = TRUE ;
+         }
+      }
+
+      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__REMOVE_CACHE_BY_OID, removed ) ;
+      return removed ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__CLEAN_CACHE, "_catSequenceManager::_cleanCache" )
