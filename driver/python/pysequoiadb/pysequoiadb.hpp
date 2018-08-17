@@ -55,6 +55,8 @@ __METHOD_DECLARE(sdb_get_domain) ;
 __METHOD_DECLARE(sdb_sync) ;
 __METHOD_DECLARE(sdb_get_datacenter) ;
 __METHOD_DECLARE(sdb_analyze) ;
+__METHOD_DECLARE(sdb_get_last_error) ;
+__METHOD_DECLARE(sdb_clear_last_error) ;
 
 ///< collection space
 __METHOD_DECLARE(create_cs) ;

@@ -2,9 +2,59 @@
 #include "ossUtil.hpp"
 #include "ossVer.hpp"
 #include "client.hpp"
+#include <stdlib.h>
 ///< implement client
 
 using namespace sdbclient;
+
+static ossOnce errorCallbackOnce = OSS_ONCE_INIT ;
+static OSS_THREAD_LOCAL CHAR* errorBuf = NULL ;
+static OSS_THREAD_LOCAL INT32 errorBufSize = 0 ;
+
+static void sdbErrorReplyCallback( const CHAR *pErrorObj,
+                                   UINT32 objSize,
+                                   INT32 flag,
+                                   const CHAR *pDescription,
+                                   const CHAR *pDetail )
+{
+   //bson::BSONObj errObj = bson::BSONObj( pErrorObj ) ;
+   if ( NULL != errorBuf )
+   {
+      free( errorBuf ) ;
+      errorBuf = NULL ;
+      errorBufSize = 0 ;
+   }
+   errorBuf = (CHAR*) malloc( objSize ) ;
+   if ( NULL == errorBuf )
+   {
+       return ;
+   }
+   memcpy( errorBuf, pErrorObj, objSize ) ;
+   errorBufSize = objSize ;
+}
+
+static void sdbSetErrorReplyCallback()
+{
+   sdbSetErrorOnReplyCallback( sdbErrorReplyCallback ) ;
+}
+
+__METHOD_IMP(sdb_get_last_error)
+{
+   BOOLEAN hasErrObj = ( NULL != errorBuf) ? TRUE : FALSE ;
+   return MAKE_RETURN_INT_PYBYTES_SIZE( hasErrObj, errorBuf, errorBufSize ) ;
+}
+
+__METHOD_IMP(sdb_clear_last_error)
+{
+   if ( NULL != errorBuf )
+   {
+      free( errorBuf ) ;
+      errorBuf = NULL ;
+      errorBufSize = 0 ;
+   }
+
+   return MAKE_RETURN_INT( SDB_OK ) ;
+}
 
 __METHOD_IMP(sdb_create_client)
 {
@@ -22,6 +72,8 @@ __METHOD_IMP(sdb_create_client)
    {
       useSSL = TRUE ;
    }
+
+   ossOnceRun( &errorCallbackOnce, sdbSetErrorReplyCallback ) ;
 
    NEW_CPPOBJECT_INIT( client, sdb, useSSL ) ;
    if ( NULL == client )
@@ -4655,6 +4707,8 @@ static PyMethodDef sequoiadb_methods[] = {
    {"sdb_sync",                        sdb_sync,                        METH_VARARGS},
    {"sdb_get_datacenter",              sdb_get_datacenter,              METH_VARARGS},
    {"sdb_analyze",                     sdb_analyze,                     METH_VARARGS},
+   {"sdb_get_last_error",              sdb_get_last_error,              METH_VARARGS},
+   {"sdb_clear_last_error",            sdb_clear_last_error,            METH_VARARGS},
 
    /** cs */
    {"create_cs",                       create_cs,                       METH_VARARGS},
