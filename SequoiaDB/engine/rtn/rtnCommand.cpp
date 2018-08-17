@@ -2320,8 +2320,8 @@ namespace engine
       }
       catch( std::exception &e )
       {
-         PD_LOG( PDWARNING, "Exception during updateConf/deleteConf \
-                 info parsing: %s",
+         PD_LOG( PDWARNING, "Exception during updateConf/deleteConf "
+                 "info parsing: %s",
                  e.what() ) ;
          goto error ;
       }
