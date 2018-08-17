@@ -96,15 +96,15 @@ class client(object):
 
         Parameters:
            Name       Type      Info:
-           host       str       The hostname or IP address of dbserver,
-                                      if None, "localhost" will be insteaded
-           service    str/int   The service name or port number of dbserver,
-                                      if None, "11810" will be insteaded
-           user       str       The user name to access to database,
-                                      if None, "" will be insteaded
-           psw        str       The user password to access to database,
-                                      if None, "" will be insteaded
-           ssl        bool      decide to use ssl or not, default is False.
+           host       str       The hostname or IP address of SequoiaDB server.
+                                      If None, "localhost" will be used.
+           service    str/int   The service name or port number of SequoiaDB server.
+                                      If None, "11810" will be used.
+           user       str       The user name to access to SequoiaDB server.
+                                      If None, "" will be used.
+           psw        str       The user password to access to SequoiaDB server.
+                                      If None, "" will be used.
+           ssl        bool      Decide whether to use ssl or not, default is False.
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
