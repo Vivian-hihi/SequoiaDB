@@ -507,6 +507,15 @@ namespace SequoiaDB
             return _modificationTime;
         }
 
+        /** \fn          bool IsEof()
+         *  \brief       Check whether current offset has reached to the max size of current lob.
+         *  \return      Return true if yes while false for not.
+         */
+        public bool IsEof()
+        {
+            return _currentOffset >= _lobSize;
+        }
+
         /************************************** private methond **************************************/
 
         private void _Open()
