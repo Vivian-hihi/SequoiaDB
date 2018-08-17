@@ -6029,7 +6029,6 @@ error :
       _collection = NULL ;
       _contextID = -1 ;
       _mode = -1 ;
-//      _currentOffset = 0 ;
       _cachedOffset = 0 ;
       _cachedSize = 0 ;
       _dataCache = NULL ;
