@@ -177,21 +177,27 @@ public class DBLobTest {
     public void testCreateWriteLob() throws BaseException {
         // create a lob and write data into this lob
         DBLob lob = cl.createLob();
+        Assert.assertTrue(lob.isEof());
         String data = new String("HelloWorld1234567890");
         lob.write(data.getBytes());
+        Assert.assertTrue(lob.isEof());
         lob.close();
+        Assert.assertTrue(lob.isEof());
 
         ObjectId id = lob.getID();
 
         // read data from the lob just created.
         DBLob rLob = cl.openLob(id);
+        Assert.assertFalse(rLob.isEof());
 
         byte[] b = new byte[5];
         int len = rLob.read(b);
         assertEquals(5, len);
+        Assert.assertFalse(rLob.isEof());
         String rData = new String(b, 0, len);
         assertEquals(true, rData.equals(data.substring(0, 5)));
         rLob.close();
+        Assert.assertFalse(rLob.isEof());
     }
 
     @Test
@@ -282,6 +288,7 @@ public class DBLobTest {
         // create two lob
         DBLob lob = cl.createLob();
         lob.close();
+        Assert.assertTrue(lob.isEof());
 
         ObjectId id1 = lob.getID();
 
@@ -354,11 +361,17 @@ public class DBLobTest {
         byte[] tmp = new byte[1000];
         while ((len = rLob.read(tmp)) > 0) {
             total += len;
-            if (total > allSize)
+            if (total >= allSize) {
                 break;
+            }
+            if (total != allSize) {
+                Assert.assertFalse(rLob.isEof());
+            }
         }
+        Assert.assertTrue(rLob.isEof());
         assertEquals(allSize, total);
         rLob.close();
+        Assert.assertTrue(rLob.isEof());
         //remove lob
         cl.removeLob(id);
     }
@@ -897,6 +910,11 @@ public class DBLobTest {
         for (int i = end; i < output_bytes.length; i++) {
             Assert.assertEquals(0, output_bytes[i]);
         }
+
+    }
+
+    @Test
+    public void isEofTest() {
 
     }
 

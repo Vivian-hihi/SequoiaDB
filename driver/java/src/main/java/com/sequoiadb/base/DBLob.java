@@ -182,5 +182,12 @@ public interface DBLob extends Closeable {
      * @throws BaseException If error happens.
      */
     void close() throws BaseException;
+
+    /**
+     * Check whether current offset has reached to the max size of the current lob.
+     *
+     * @return Return true if yes while false for not.
+     */
+    boolean isEof();
 }
 

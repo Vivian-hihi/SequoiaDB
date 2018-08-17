@@ -236,6 +236,7 @@ class DBLobImpl implements DBLob {
                 _modificationTime = (Long) obj.get(FIELD_NAME_LOB_MODIFICATION_TIME);
             }
         }
+
     }
 
     /**
@@ -494,6 +495,16 @@ class DBLobImpl implements DBLob {
     public void lockAndSeek(long offset, long length) throws BaseException {
         lock(offset, length);
         seek(offset, SDB_LOB_SEEK_SET);
+    }
+
+    /**
+     * Check whether current offset has reached to the max size of current lob.
+     *
+     * @return Return true if yes while false for not.
+     */
+    @Override
+    public boolean isEof() {
+        return _currentOffset >= _lobSize;
     }
 
     private int _reviseReadLen(int needLen) {
