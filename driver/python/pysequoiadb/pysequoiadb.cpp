@@ -17,7 +17,6 @@ static void sdbErrorReplyCallback( const CHAR *pErrorObj,
                                    const CHAR *pDescription,
                                    const CHAR *pDetail )
 {
-   //bson::BSONObj errObj = bson::BSONObj( pErrorObj ) ;
    if ( NULL != errorBuf )
    {
       free( errorBuf ) ;
