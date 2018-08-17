@@ -39,6 +39,7 @@ namespace CSharp.Crud.DataType
             InsertAndQueryTimestampData();
             UpdateTimestampData();
             DeleteTimestampData();
+            jira_3348_BsonTimestampTest();
         }
 
         [TestCleanup()]
@@ -46,7 +47,7 @@ namespace CSharp.Crud.DataType
         {
             try
             {
-                cs.DropCollection(clName);                
+                cs.DropCollection(clName);
             }
             finally
             {
@@ -58,28 +59,77 @@ namespace CSharp.Crud.DataType
             }
         }
 
-        private void InsertAndQueryTimestampData()
+        public void jira_3348_BsonTimestampTest()
         {
-            //insert date           
-            
-            long timestamp1 = (-6847833601L << 32) + 0;           
-            long timestamp2= (253402271999L << 32) + 0; 
-            //timestamp : 1752-12-31 23:59:59  
+            cs.DropCollection(clName);
+            cl = cs.CreateCollection(clName);
+            int maxIntSec = 2147483647;
+            int minIntSec = -2147483648;
+            int secmin = 0;
+            int secmax = 999999;
+            long timestamp1 = ((long)maxIntSec << 32) + 0;
+            long timestamp2 = ((long)minIntSec << 32) + 0;
             BsonDocument insertor1 = new BsonDocument { { "a", new BsonTimestamp(timestamp1) }, { "b", 1 } };
-            //timestamp : 9999-12-31
             BsonDocument insertor2 = new BsonDocument { { "a", new BsonTimestamp(timestamp2) }, { "b", 2 } };
-            //timestamp : 1902-01-01 00:00:00
-            BsonDocument insertor3 = new BsonDocument { { "a", new BsonTimestamp(-2145945600, 0)}, { "b", 3 } };
-            //timestamp:  2037-12-31 23:59:59.999999
-            BsonDocument insertor4 = new BsonDocument { { "a", new BsonTimestamp(2145887999, 999999) }, { "b", 4 } };
-            //timestamp:  1970-01-01            
-            BsonDocument insertor5 = new BsonDocument { { "a", new BsonTimestamp(-28801,0) }, { "b", 5 } }; 
+            BsonDocument insertor3 = new BsonDocument { { "a", new BsonTimestamp(maxIntSec, secmax) }, { "b", 3 } };
+            BsonDocument insertor4 = new BsonDocument { { "a", new BsonTimestamp(maxIntSec, secmin) }, { "b", 4 } };
+            BsonDocument insertor5 = new BsonDocument { { "a", new BsonTimestamp(minIntSec, secmax) }, { "b", 5 } };
+            BsonDocument insertor6 = new BsonDocument { { "a", new BsonTimestamp(minIntSec, secmin) }, { "b", 6 } };
             cl.Insert(insertor1);
             cl.Insert(insertor2);
             cl.Insert(insertor3);
             cl.Insert(insertor4);
             cl.Insert(insertor5);
-          
+            cl.Insert(insertor6);
+            DBCursor cursor = cl.Query();
+            BsonDocument record;
+            List<BsonDocument> bsonList = new List<BsonDocument>();
+            while ((record = cursor.Next()) != null)
+            {
+                bsonList.Add(record);
+            }
+
+            Assert.AreEqual(maxIntSec, bsonList[0].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(0, bsonList[0].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(minIntSec, bsonList[1].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(0, bsonList[1].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(maxIntSec, bsonList[2].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(secmax, bsonList[2].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(maxIntSec, bsonList[3].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(secmin, bsonList[3].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(minIntSec, bsonList[4].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(secmax, bsonList[4].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(minIntSec, bsonList[5].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(secmin, bsonList[5].GetValue("a").AsBsonTimestamp.Increment);
+        } 
+
+        private void InsertAndQueryTimestampData()
+        {
+            //insert date           
+
+            long timestamp1 = (-6847833601L << 32) + 0;
+            long timestamp2 = (253402271999L << 32) + 0;
+            //timestamp : 1752-12-31 23:59:59  
+            BsonDocument insertor1 = new BsonDocument { { "a", new BsonTimestamp(timestamp1) }, { "b", 1 } };
+            //timestamp : 9999-12-31
+            BsonDocument insertor2 = new BsonDocument { { "a", new BsonTimestamp(timestamp2) }, { "b", 2 } };
+            //timestamp : 1902-01-01 00:00:00
+            BsonDocument insertor3 = new BsonDocument { { "a", new BsonTimestamp(-2145945600, 0) }, { "b", 3 } };
+            //timestamp:  2037-12-31 23:59:59.999999
+            BsonDocument insertor4 = new BsonDocument { { "a", new BsonTimestamp(2145887999, 999999) }, { "b", 4 } };
+            //timestamp:  1970-01-01            
+            BsonDocument insertor5 = new BsonDocument { { "a", new BsonTimestamp(-28801, 0) }, { "b", 5 } };
+            cl.Insert(insertor1);
+            cl.Insert(insertor2);
+            cl.Insert(insertor3);
+            cl.Insert(insertor4);
+            cl.Insert(insertor5);
+
             //test query        
             BsonDocument matcherConf1 = new BsonDocument { { "a", new BsonTimestamp(timestamp1) } };
             QueryAndCheckResult(matcherConf1, insertor1);
@@ -87,7 +137,7 @@ namespace CSharp.Crud.DataType
             QueryAndCheckResult(insertor2, insertor2);
             BsonDocument matcherConf3 = new BsonDocument { { "a", new BsonTimestamp(2145887999, 999999) } };
             QueryAndCheckResult(insertor3, insertor3);
-            BsonDocument matcherConf4 = new BsonDocument { { "a", new BsonTimestamp(-28801, 0)} };
+            BsonDocument matcherConf4 = new BsonDocument { { "a", new BsonTimestamp(-28801, 0) } };
             QueryAndCheckResult(insertor4, insertor4);
 
             //check insert records num 
@@ -122,7 +172,7 @@ namespace CSharp.Crud.DataType
             long deleteCount = cl.GetCount(matcher);
             Assert.AreEqual(0, deleteCount);
             long existNum = 4;
-            Assert.AreEqual(existNum, cl.GetCount(null));            
+            Assert.AreEqual(existNum, cl.GetCount(null));
         }
 
         private void QueryAndCheckResult(BsonDocument cond, BsonDocument expRecord)
@@ -136,7 +186,7 @@ namespace CSharp.Crud.DataType
                 actObj = cursor.Current();
             }
             cursor.Close();
-            Console.WriteLine("expRecord="+expRecord.ToJson());
+            Console.WriteLine("expRecord=" + expRecord.ToJson());
             Console.WriteLine("actRecord=" + actObj.ToJson());
             Assert.AreEqual(expRecord, actObj);
         }
