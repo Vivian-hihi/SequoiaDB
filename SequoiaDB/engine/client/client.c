@@ -10742,6 +10742,24 @@ error:
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbLobIsEof( sdbLobHandle lobHandle, BOOLEAN *result )
+{
+   INT32 rc = SDB_OK ;
+   sdbLobStruct *lob = ( sdbLobStruct * )lobHandle ;
+
+   HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
+   if ( !result )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   *result = lob->_currentOffset >= lob->_lobSize ? TRUE : FALSE ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 static INT32 _sdbRunCmdOfLob( sdbCollectionHandle cHandle,
                               const CHAR *cmd,
                               const bson *obj,

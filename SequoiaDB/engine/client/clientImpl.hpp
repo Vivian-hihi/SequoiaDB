@@ -997,6 +997,8 @@ namespace sdbclient
 
       virtual bson::BSONArray getPiecesInfo() ;
 
+      virtual BOOLEAN isEof() ;
+
    } ;
 
    typedef class _sdbLobImpl sdbLobImpl ;

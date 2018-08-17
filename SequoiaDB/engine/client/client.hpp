@@ -3300,6 +3300,8 @@ namespace sdbclient
 
       virtual bson::BSONArray getPiecesInfo() = 0 ;
 
+      virtual BOOLEAN isEof() = 0 ;
+
    } ;
 
    /** \class  sdbLob
@@ -3549,6 +3551,18 @@ namespace sdbclient
             return bson::BSONArray() ;
          return pLob->getPiecesInfo() ;
       }
+
+      /** \fn BOOLEAN isEof()
+          \brief Check whether current offset has reached to the max size of current lob.
+          \retval Return true if yes while false for not.
+      */
+      BOOLEAN isEof()
+      {
+         if ( !pLob )
+            return TRUE ;
+         return pLob->isEof() ;
+      }
+
    } ;
 
    class DLLEXPORT _sdb
