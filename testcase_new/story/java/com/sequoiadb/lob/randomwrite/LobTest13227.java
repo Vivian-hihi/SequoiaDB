@@ -7,7 +7,10 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+
+import org.bson.BSONObject;
 import org.bson.types.ObjectId;
+import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -54,6 +57,8 @@ public class LobTest13227 extends SdbTestBase {
         cs = db.getCollectionSpace(csName);
         if(CommLib.isStandAlone(db))
             throw new SkipException("");
+        dbcl = cs.createCollection(clName,
+        		(BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
     }
 
     @AfterClass
@@ -75,8 +80,8 @@ public class LobTest13227 extends SdbTestBase {
             protected void exec() throws Exception {
                 DBLob lob = null;
                 lob = this.dbcl.createLob(oid);
-                canRead.set(true);
                 lob.write(expectBytes);
+                canRead.set(true);
                 lob.close();
             }
         };
@@ -96,7 +101,6 @@ public class LobTest13227 extends SdbTestBase {
                         Thread.sleep(500);
                     }
                 }
-                
             }
         }.ignoreExceptionCode(SDBError.SDB_FNE.getErrorCode())
                 .ignoreExceptionCode(SDBError.SDB_LOB_IS_IN_USE.getErrorCode());
