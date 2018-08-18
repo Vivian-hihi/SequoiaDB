@@ -27,12 +27,10 @@ public class BucketController {
 
     @PutMapping(value = "/{bucketname:.+}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity putBucket(@PathVariable("bucketname") String bucketName,
-                                    @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
-                                    HttpServletRequest httpServletRequest)
+                                    @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        logger.info("URI = "+httpServletRequest.getRequestURI()+"  bucketname = "+bucketName);
         logger.info("Create bucket bucketName = " + bucketName+"  operator="+operator.getUserName());
         bucketService.createBucket(operator.getUserId(),bucketName);
         return ResponseEntity.ok()

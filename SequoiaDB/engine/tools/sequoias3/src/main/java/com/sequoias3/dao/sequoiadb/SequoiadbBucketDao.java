@@ -4,8 +4,6 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
-import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.config.SequoiadbConfig;
 import com.sequoias3.core.Bucket;
 import com.sequoias3.dao.BucketDao;
@@ -14,16 +12,13 @@ import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.utils.DataFormatUtils;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
-import org.bson.types.BSONTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.List;
 
 @Repository("BucketDao")
 public class SequoiadbBucketDao implements BucketDao {
@@ -36,7 +31,7 @@ public class SequoiadbBucketDao implements BucketDao {
     SequoiadbConfig config;
 
     @Override
-    public void insertBucket(Bucket bucket) throws S3ServerException,ParseException {
+    public void insertBucket(Bucket bucket) throws S3ServerException {
 
         Sequoiadb sdb = null;
         try {
@@ -48,8 +43,7 @@ public class SequoiadbBucketDao implements BucketDao {
             newBucket.put(Bucket.BUCKET_ID, bucket.getBucketId());
             newBucket.put(Bucket.BUCKET_NAME, bucket.getBucketName());
             newBucket.put(Bucket.BUCKET_OWNERID, bucket.getOwnerId());
-            BSONTimestamp timestamp = new BSONTimestamp(bucket.getDate());
-            newBucket.put(Bucket.BUCKET_CREATETIME, timestamp);
+            newBucket.put(Bucket.BUCKET_CREATETIME, bucket.getTimeMillis());
             newBucket.put(Bucket.BUCKET_VERSIONINGSTATUS, bucket.getVersioningStatus());
             newBucket.put(Bucket.BUCKET_DELIMITER, bucket.getDelimiter());
 
@@ -109,7 +103,7 @@ public class SequoiadbBucketDao implements BucketDao {
     }
 
     @Override
-    public ArrayList<Bucket> getBucketListByOwnerID(int ownerId) throws S3ServerException {
+    public List<Bucket> getBucketListByOwnerID(int ownerId) throws S3ServerException {
         Sequoiadb sdb = null;
         ArrayList<Bucket> bucketList = new ArrayList<Bucket>();
         try {
@@ -126,8 +120,6 @@ public class SequoiadbBucketDao implements BucketDao {
                 Bucket bucket = convertBsonToBucket(record);
                 bucketList.add(bucket);
             }
-
-            bucketList.trimToSize();
             return bucketList;
         }catch (Exception e) {
             logger.error("deleteBucket failed. errorMessage = " + e.getMessage(), e);
@@ -152,8 +144,7 @@ public class SequoiadbBucketDao implements BucketDao {
             BSONObject queryResult = cl.queryOne(null, selector, orderBy, null, 0);
 
             if (null != queryResult) {
-                long number = (long) (queryResult.get(Bucket.BUCKET_ID));
-                return number;
+                return (long) (queryResult.get(Bucket.BUCKET_ID));
             } else {
                 return 0;
             }
@@ -188,27 +179,14 @@ public class SequoiadbBucketDao implements BucketDao {
 
     private Bucket convertBsonToBucket(BSONObject bsonObject) {
         Bucket bucket = new Bucket();
-        if (bsonObject.containsField(Bucket.BUCKET_ID)) {
-            bucket.setBucketId((long)bsonObject.get(Bucket.BUCKET_ID));
-        }
-        if (bsonObject.containsField(Bucket.BUCKET_NAME)){
-            bucket.setBucketName(bsonObject.get(Bucket.BUCKET_NAME).toString());
-        }
-        if (bsonObject.containsField(Bucket.BUCKET_OWNERID)){
-            bucket.setOwnerId((int)bsonObject.get(Bucket.BUCKET_OWNERID));
-        }
-        if (bsonObject.containsField(Bucket.BUCKET_CREATETIME)){
-            BSONTimestamp createDate= (BSONTimestamp) bsonObject.get(Bucket.BUCKET_CREATETIME);
-            bucket.setDate(createDate.getDate());
-            bucket.setFormatDate(DataFormatUtils.formatDate(createDate.getDate()));
-        }
-        if (bsonObject.containsField(Bucket.BUCKET_VERSIONINGSTATUS)){
-            bucket.setVersioningStatus(bsonObject.get(Bucket.BUCKET_VERSIONINGSTATUS).toString());
-        }
-        if (bsonObject.containsField(Bucket.BUCKET_DELIMITER)){
-            bucket.setDelimiter(bsonObject.get(Bucket.BUCKET_DELIMITER).toString());
-        }
-
+        bucket.setBucketId((long)bsonObject.get(Bucket.BUCKET_ID));
+        bucket.setBucketName(bsonObject.get(Bucket.BUCKET_NAME).toString());
+        bucket.setOwnerId((int)bsonObject.get(Bucket.BUCKET_OWNERID));
+        bucket.setTimeMillis((long)bsonObject.get(Bucket.BUCKET_CREATETIME));
+        bucket.setFormatDate(DataFormatUtils.formatDate((long)bsonObject.get(Bucket.BUCKET_CREATETIME)));
+        bucket.setVersioningStatus(bsonObject.get(Bucket.BUCKET_VERSIONINGSTATUS).toString());
+        bucket.setDelimiter(bsonObject.get(Bucket.BUCKET_DELIMITER).toString());
+        //TODO:如果某字段不存在，应存在异常，如何识别，规避
         return bucket;
     }
 }

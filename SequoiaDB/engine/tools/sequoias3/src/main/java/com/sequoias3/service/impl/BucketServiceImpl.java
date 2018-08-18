@@ -38,16 +38,15 @@ public class BucketServiceImpl implements BucketService {
     public void createBucket(int ownerID, String bucketName) throws S3ServerException {
         int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
 
+        //check bucketname
+        if (!isValidBucketName(bucketName)){
+            throw new S3ServerException(S3Error.BUCKET_INVALID_BUCKETNAME,
+                    "Invalid bucket name. bucket name = "+bucketName);
+        }
+        String newBucketName = bucketName.toLowerCase();
         while (tryTime > 0){
             tryTime--;
             try {
-                //check bucketname
-                if (!isValidBucketName(bucketName)){
-                    throw new S3ServerException(S3Error.BUCKET_INVALID_BUCKETNAME,
-                            "Invalid bucket name. bucket name = "+bucketName);
-                }
-                String newBucketName = bucketName.toLowerCase();
-
                 //check duplicate bucket
                 Bucket result = bucketDao.getBucketByName(newBucketName);
                 if (null != result){
@@ -61,7 +60,7 @@ public class BucketServiceImpl implements BucketService {
                 }
 
                 //check bucket number
-                long bucketLimit=bucketConfig.getLimit();
+                long bucketLimit = bucketConfig.getLimit();
                 long bucketCount = bucketDao.getBucketNumber(ownerID);
                 if (bucketCount >= bucketLimit){
                     throw new S3ServerException(S3Error.BUCKET_TOO_MANY_BUCKETS,
@@ -74,7 +73,7 @@ public class BucketServiceImpl implements BucketService {
                 bucket.setBucketId(bucketDao.getMaxID()+1);
                 bucket.setBucketName(newBucketName);
                 bucket.setOwnerId(ownerID);
-                bucket.setDate(new Date());
+                bucket.setTimeMillis(System.currentTimeMillis());
                 bucket.setVersioningStatus(DBParamDefine.DB_AUTO_VERSIONING_STATUS);
                 bucket.setDelimiter(DBParamDefine.DB_AUTO_DELIMITER);
                 bucketDao.insertBucket(bucket);

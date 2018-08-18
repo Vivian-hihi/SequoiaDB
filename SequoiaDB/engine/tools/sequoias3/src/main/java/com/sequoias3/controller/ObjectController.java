@@ -35,14 +35,14 @@ public class ObjectController {
     }
 
     @GetMapping(value="/{bucketname:.+}", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity listObjectsVersion1(@PathVariable("bucketname") String bucketName,
+    public ResponseEntity listObjectsV1(@PathVariable("bucketname") String bucketName,
                             HttpServletRequest httpServletRequest) {
         logger.info("listObjectsVersion1"+httpServletRequest.getRequestURL());
         return ResponseEntity.ok().build();
     }
 
     @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.LIST_TYPE2, produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity listObjectsVersion2(@PathVariable("bucketname") String bucketName,
+    public ResponseEntity listObjectsV2(@PathVariable("bucketname") String bucketName,
                                               @RequestParam(value = RestParamDefine.PREFIX, required = false) String prefix,
                                               @RequestParam(value = RestParamDefine.DELIMITER, required = false) String delimiter,
                                               @RequestParam(value = RestParamDefine.STRAT_AFTER, required = false) String startAfter,

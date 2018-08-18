@@ -8,9 +8,9 @@ public enum S3Error {
     DAO_GETCONN_ERROR(-401, "GetDBConnectFail", "Get connection failed."),
 
     //bucket error
-    BUCKET_CREATE_FAILED(-500, "CreateBucketFailed", "Create bucket failed"),
-    BUCKET_DELETE_FAILED(-501, "DeleteBucketFailed", "Delete bucket failed"),
-    BUCKET_GET_SERVICE_FAILED(-502, "GetServiceFailed", "Get service failed"),
+    BUCKET_CREATE_FAILED(-500, "CreateBucketFailed", "Create bucket failed."),
+    BUCKET_DELETE_FAILED(-501, "DeleteBucketFailed", "Delete bucket failed."),
+    BUCKET_GET_SERVICE_FAILED(-502, "GetServiceFailed", "Get service failed."),
 
     BUCKET_NOT_EXIST(-510, "NoSuchBucket", "The speciﬁed bucket does not exist."),
     BUCKET_INVALID_BUCKETNAME(-511, "InvalidBucketName", "The speciﬁed bucket Name is not valid."),
@@ -33,11 +33,11 @@ public enum S3Error {
     USER_UPDATE_FAILED(-820, "UpdateUserFailed", "Update user failed."),
     USER_GET_FAILED(-830, "GetUserFailed", "Get user failed."),
     USER_NOT_EXIST(-800, "NoSuchUser", "User not exist."),
-    USER_CREATE_NAME_INVALID(-802, "AddUserFailed", "The username is invalid."),
-    USER_CREATE_ROLE_INVALID(-803, "AddUserFailed", "The role is invalid."),
-    USER_CREATE_EXIST(-804, "AddUserFailed", "The username is exist."),
+    USER_CREATE_NAME_INVALID(-802, "InvalidUserName", "The username is invalid."),
+    USER_CREATE_ROLE_INVALID(-803, "InvalidRole", "The role is invalid."),
+    USER_CREATE_EXIST(-804, "UserAlreadyExists", "The username is exist."),
 
-    USER_DELETE_INIT_ADMIN(-811, "DelUserFailed", "Init admin user cannot be delete."),
+    USER_DELETE_INIT_ADMIN(-811, "InitAdminCannotDelete", "Init admin user cannot be delete."),
 
 
     // 400

@@ -6,8 +6,8 @@ import java.util.Date;
 public class DataFormatUtils {
     public static final String DATA_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
-    public static String formatDate(Date date){
+    public static String formatDate(long time){
         SimpleDateFormat sdf = new SimpleDateFormat(DATA_PATTERN);
-        return sdf.format(date);
+        return sdf.format(new Date(time));
     }
 }

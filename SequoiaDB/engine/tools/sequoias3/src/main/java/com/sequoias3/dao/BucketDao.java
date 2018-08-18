@@ -5,6 +5,7 @@ import com.sequoias3.exception.S3ServerException;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.List;
 
 public interface BucketDao {
     void insertBucket(Bucket bucket) throws S3ServerException,ParseException;
@@ -13,7 +14,7 @@ public interface BucketDao {
 
     Bucket getBucketByName(String bucketName) throws S3ServerException;
 
-    ArrayList<Bucket> getBucketListByOwnerID(int ownerId) throws S3ServerException;
+    List<Bucket> getBucketListByOwnerID(int ownerId) throws S3ServerException;
 
     long getMaxID() throws S3ServerException;
 

@@ -26,7 +26,7 @@ public class Bucket {
     private String formatDate;
 
     @JsonIgnore
-    private Date date;
+    private long timeMillis;
 
     @JsonIgnore
     private String versioningStatus;
@@ -66,12 +66,12 @@ public class Bucket {
         return this.formatDate;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
+    public void setTimeMillis(long timeMillis) {
+        this.timeMillis = timeMillis;
     }
 
-    public Date getDate() {
-        return date;
+    public long getTimeMillis() {
+        return timeMillis;
     }
 
     public void setVersioningStatus(String versioningStatus){
