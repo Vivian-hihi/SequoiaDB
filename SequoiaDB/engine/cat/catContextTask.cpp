@@ -585,7 +585,7 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, e.what() ) ;
+         PD_LOG_MSG( PDERROR, "%s", e.what() ) ;
          PD_LOG( PDERROR, "Create index: %s, cl name: %s, rc: %d.",
                  _boIdxKey.toString().c_str(), _dataName.c_str(), rc ) ;
          goto error ;
