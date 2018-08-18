@@ -896,7 +896,7 @@ namespace engine
       {
          pmdCfgExchange ex( &_mapKeyValue, NULL, NULL, FALSE,
                             PMD_CFG_STEP_INIT, mask ) ;
-         INT32 rc = doDataExchange( &ex ) ;
+         rc = doDataExchange( &ex ) ;
          if ( SDB_OK == rc )
          {
             UINT32 dataLen = 0 ;
