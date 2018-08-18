@@ -367,8 +367,7 @@ namespace engine
          it = mapKeyValue.begin() ;
          while ( it != mapKeyValue.end() )
          {
-            if ( FALSE == it->second._hasMapped &&
-                 it->second._level != PMD_CFG_CHANGE_REBOOT )
+            if ( FALSE == it->second._hasMapped )
             {
                _dataBuilder.append( it->first, it->second._value ) ;
             }
