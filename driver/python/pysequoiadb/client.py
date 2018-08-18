@@ -1721,3 +1721,23 @@ class client(object):
         rc = sdb.sdb_analyze(self._client, bson_options)
         raise_if_error(rc, "Failed to analyze")
 
+    def invalidate_cache(self, options=None):
+        """Clean up cache in nodes(Data/Coordinator nodes).
+
+        Parameters:
+            Name         Type     Info:
+            options      dict     The control options:
+                Global(Bool): execute this command in global or not. While 'options' is null, it's equals to {Global: true}.
+                GroupID(INT32 or INT32 Array): specified one or several groups by their group IDs. e.g. {GroupID:[1001, 1002]}.
+                GroupName(String or String Array): specified one or several groups by their group names. e.g. {GroupID:"group1"}.
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        bson_options = None
+        if options is not None:
+            if not isinstance(options, dict):
+                raise SDBTypeError("options must be an instance of dict")
+            bson_options = bson.BSON.encode(options)
+
+        rc = sdb.sdb_invalidate_cache(self._client, bson_options)
+        raise_if_error(rc, "Failed to invalidate cache")
