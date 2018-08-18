@@ -225,4 +225,24 @@ class SequoiaLob
     * @endcode
    */
    public function lockAndSeek( integer|SequoiaINT64 offset, integer|SequoiaINT64 length ){}
+
+   /**
+    * Check whether current offset has reached to the max size of current lob.
+    *
+    * @return Returns the result.
+    *
+    * @retval boolean isEof
+    *
+    * Example:
+    * @code
+    * $err = $lobObj -> seek( 0, SDB_LOB_END ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to call seek, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $result = $lobObj -> isEof() ;
+    * var_dump ( $result ) ;
+    * @endcode
+   */
+   public function isEof(){}
 }

@@ -306,6 +306,7 @@ const zend_function_entry lobFun[] = {
    PHP_ME( SequoiaLob, seek,          NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaLob, lock,          NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaLob, lockAndSeek,   NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaLob, isEof,         NULL, ZEND_ACC_PUBLIC )
    PHP_FE_END
 };
 

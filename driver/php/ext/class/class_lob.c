@@ -201,7 +201,7 @@ error:
 PHP_METHOD( SequoiaLob, seek )
 {
    INT32 rc = SDB_OK ;
-   SDB_LOB_SEEK 	whence = SDB_LOB_SEEK_SET ;
+   SDB_LOB_SEEK  whence = SDB_LOB_SEEK_SET ;
    SINT64 offset        = 0 ;
    zval *pOffset        = NULL ;
    zval *pWhence        = NULL ;
@@ -341,3 +341,31 @@ error:
    goto done ;
 }
 
+PHP_METHOD( SequoiaLob, isEof )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN result   = FALSE ;
+   zval *pThisObj   = getThis() ;
+   sdbLobHandle lob = SDB_INVALID_HANDLE ;
+
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+
+   PHP_READ_HANDLE( pThisObj,
+                    lob,
+                    sdbLobHandle,
+                    SDB_LOB_HANDLE_NAME,
+                    lobDesc ) ;
+
+   rc = sdbLobIsEof( lob, &result ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+done:
+   RETVAL_BOOL( result ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
