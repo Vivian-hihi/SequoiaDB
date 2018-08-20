@@ -46,30 +46,29 @@ using namespace std ;
 
 class dbFuncParamTest : public testBase {} ;
 
-// comment some part of code for bug JIRA-2870
 TEST_F( dbFuncParamTest, connect12694 )
 {
    INT32 rc = SDB_OK ;
    const CHAR *pConnAddrs[1] ;
    pConnAddrs[0] = ARGS->coordUrl() ;
 
-//   // pHostName NULL // TODO: bug
-//   rc = db.connect( NULL, ARGS->port() ) ; 
-//   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
-//   rc = db.connect( NULL, ARGS->port() , ARGS->user(), ARGS->passwd() ) ;
-//   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
-//   rc = db.connect( NULL, ARGS->svcName() ) ;
-//   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
-//   rc = db.connect( NULL, ARGS->svcName(), ARGS->user(), ARGS->passwd() ) ;
-//   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   // pHostName NULL 
+   rc = db.connect( NULL, ARGS->port() ) ; 
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.connect( NULL, ARGS->port() , ARGS->user(), ARGS->passwd() ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.connect( NULL, ARGS->svcName() ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.connect( NULL, ARGS->svcName(), ARGS->user(), ARGS->passwd() ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
 
-//   // pServiceName NULL // TODO: bug
-//   const CHAR *pNullSvcName = NULL ;
-//   rc = db.connect( ARGS->hostName(), pNullSvcName ) ;
-//   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
-//   rc = db.connect( ARGS->hostName(), pNullSvcName, ARGS->user(), ARGS->passwd() ) ;
-//   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
-//
+   // pServiceName NULL 
+   const CHAR *pNullSvcName = NULL ;
+   rc = db.connect( ARGS->hostName(), pNullSvcName ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.connect( ARGS->hostName(), pNullSvcName, ARGS->user(), ARGS->passwd() ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+
    // pUsrName NULL
    //rc = db.connect( ARGS->hostName(), ARGS->port() , NULL, ARGS->passwd() ) ;
    //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
@@ -78,7 +77,7 @@ TEST_F( dbFuncParamTest, connect12694 )
    rc = db.connect( pConnAddrs, 1, NULL, ARGS->passwd() ) ;
    EXPECT_EQ( SDB_INVALIDARG, rc ) ;
 
-//   // pPasswd NULL // TODO: bug
+//   // pPasswd NULL // TODO: NULL means "", needed to be tested.
 //   rc = db.connect( ARGS->hostName(), ARGS->port() , ARGS->user(), NULL ) ;
 //   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
 //   rc = db.connect( ARGS->hostName(), ARGS->svcName(), ARGS->user(), NULL ) ;
@@ -90,10 +89,10 @@ TEST_F( dbFuncParamTest, connect12694 )
    rc = db.connect( pNullConnAddrs, 1, ARGS->user(), ARGS->passwd() ) ;
    EXPECT_EQ( SDB_INVALIDARG, rc ) ;
 
-//   const CHAR *pInvalidUrlConnAddrs[1] ; // TODO: bug
-//   pInvalidUrlConnAddrs[0] = "localhost11810" ;
-//   rc = db.connect( pInvalidUrlConnAddrs, 1, ARGS->user(), ARGS->passwd() ) ;
-//   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   const CHAR *pInvalidUrlConnAddrs[1] ;
+   pInvalidUrlConnAddrs[0] = "localhost11810" ;
+   rc = db.connect( pInvalidUrlConnAddrs, 1, ARGS->user(), ARGS->passwd() ) ;
+   EXPECT_EQ( SDB_NET_CANNOT_CONNECT, rc ) ;
 
    // invalid arrSize
    rc = db.connect( pConnAddrs, -1, ARGS->user(), ARGS->passwd() ) ;
@@ -184,8 +183,8 @@ TEST_F( dbFuncParamTest, getCollection12699 )
 {
    INT32 rc = SDB_OK ;
    sdbCollection cl ;
-   //rc = db.getCollection( NULL, cl ) ; // TODO: bug
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.getCollection( NULL, cl ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
    string longStr( 300, 'a' ) ; // must more than 255
    rc = db.getCollection( longStr.c_str(), cl ) ;
    EXPECT_EQ( SDB_INVALIDARG, rc ) ;
@@ -195,8 +194,8 @@ TEST_F( dbFuncParamTest, getCollectionSpace12700 )
 {
    INT32 rc = SDB_OK ;
    sdbCollectionSpace cs ;
-   //rc = db.getCollectionSpace( NULL, cs ) ; // TODO: bug
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.getCollectionSpace( NULL, cs ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
    string longStr( 200, 'a' ) ; // must more than 127
    rc = db.getCollectionSpace( longStr.c_str(), cs ) ;
    EXPECT_EQ( SDB_INVALIDARG, rc ) ;
@@ -209,10 +208,10 @@ TEST_F( dbFuncParamTest, createCollectionSpace12701 )
    BSONObj option ;
    
    // pCollectionSpaceName NULL
-   //rc = db.createCollectionSpace( NULL, SDB_PAGESIZE_4K, cs ) ; // TODO: bug
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
-   //rc = db.createCollectionSpace( NULL, option, cs ) ;
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.createCollectionSpace( NULL, SDB_PAGESIZE_4K, cs ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.createCollectionSpace( NULL, option, cs ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
    
    // long pCollectionSpaceName
    string longStr( 200, 'a' ) ; // must more than 127
@@ -225,8 +224,8 @@ TEST_F( dbFuncParamTest, createCollectionSpace12701 )
 TEST_F( dbFuncParamTest, dropCollectionSpace12702 )
 {
    INT32 rc = SDB_OK ;
-   //rc = db.dropCollectionSpace( NULL ) ; // TODO: bug
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.dropCollectionSpace( NULL ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
    string longStr( 200, 'a' ) ; // must more than 127
    rc = db.dropCollectionSpace( longStr.c_str() ) ;
    EXPECT_EQ( SDB_INVALIDARG, rc ) ;
@@ -237,11 +236,11 @@ TEST_F( dbFuncParamTest, getReplicaGroup12703 )
    INT32 rc = SDB_OK ;
    sdbReplicaGroup result ;
 
-   //rc = db.getReplicaGroup( NULL, result ) ; // TODO: bug
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
-   //string longStr( 200, 'a' ) ; // must more than 127
-   //rc = db.getReplicaGroup( longStr.c_str(), result ) ;
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.getReplicaGroup( NULL, result ) ;
+   EXPECT_EQ( SDB_CLS_GRP_NOT_EXIST, rc ) ;
+   string longStr( 200, 'a' ) ; // must more than 127
+   rc = db.getReplicaGroup( longStr.c_str(), result ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
 }
 
 TEST_F( dbFuncParamTest, createReplicaGroup12704 )
@@ -249,8 +248,8 @@ TEST_F( dbFuncParamTest, createReplicaGroup12704 )
    INT32 rc = SDB_OK ;
    sdbReplicaGroup replicGroup ;
 
-   //rc = db.createReplicaGroup( NULL, replicGroup ) ; // TODO: bug
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.createReplicaGroup( NULL, replicGroup ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
    string longStr( 200, 'a' ) ; // must more than 127
    rc = db.createReplicaGroup( longStr.c_str(), replicGroup ) ;
    EXPECT_EQ( SDB_INVALIDARG, rc ) ;
@@ -298,8 +297,8 @@ TEST_F( dbFuncParamTest, activateReplicaGroup12707 )
    INT32 rc = SDB_OK ;
    // pName NULL
    sdbReplicaGroup replicGroup ;
-   //rc = db.activateReplicaGroup( NULL, replicGroup ) ; // TODO: bug
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.activateReplicaGroup( NULL, replicGroup ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
    
    // pName long string
    string longStr( 200, 'a' ) ; // must more than 127
@@ -310,8 +309,8 @@ TEST_F( dbFuncParamTest, activateReplicaGroup12707 )
 TEST_F( dbFuncParamTest, execUpdate12708 )
 {
    INT32 rc = SDB_OK ;
-   //rc = db.execUpdate( NULL ) ; // TODO: bug
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.execUpdate( NULL ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
    rc = db.execUpdate( "select * from student" ) ;
    EXPECT_EQ( SDB_INVALIDARG, rc ) ;
 }
@@ -321,10 +320,10 @@ TEST_F( dbFuncParamTest, exec12709 )
    INT32 rc = SDB_OK ;
    sdbCursor cursor ;
 
-   //rc = db.exec( NULL, cursor ) ; // TODO: bug
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
-   //rc = cursor.close() ;
-   //EXPECT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
+   rc = db.exec( NULL, cursor ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = cursor.close() ;
+   EXPECT_EQ( SDB_OK, rc ) << "fail to close cursor" ;
 
    rc = db.exec( "update student set age = 25 where stu_id = '01'", cursor ) ;
    EXPECT_EQ( SDB_INVALIDARG, rc ) ;
@@ -342,8 +341,8 @@ TEST_F( dbFuncParamTest, crtJSProcedure12710 )
 TEST_F( dbFuncParamTest, rmProcedure12711 )
 {
    INT32 rc = SDB_OK ;
-   //rc = db.rmProcedure( NULL ) ; // TODO: bug
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.rmProcedure( NULL ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
 }
 
 TEST_F( dbFuncParamTest, evalJS12712 )
@@ -353,8 +352,8 @@ TEST_F( dbFuncParamTest, evalJS12712 )
    sdbCursor cursor ;
    BSONObj errmsg ;
 
-   //rc = db.evalJS( NULL, type, cursor, errmsg ) ; // TODO: bug
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.evalJS( NULL, type, cursor, errmsg ) ;
+   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
 }
 
 TEST_F( dbFuncParamTest, waitTasks12713 )
@@ -367,8 +366,8 @@ TEST_F( dbFuncParamTest, waitTasks12713 )
 
    // num zero
    SINT64 *taskIDs = new SINT64[1];
-   //rc = db.waitTasks( taskIDs, 0 ) ; // TODO: bug
-   //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = db.waitTasks( taskIDs, 0 ) ;
+   EXPECT_EQ( SDB_OK, rc ) ; // empty is ok
 
    // num nagetive
    rc = db.waitTasks( taskIDs, -1 ) ;
