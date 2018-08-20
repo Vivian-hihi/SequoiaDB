@@ -38,6 +38,8 @@
 #include "pdTrace.hpp"
 #include "catTrace.hpp"
 #include "pd.hpp"
+#include <string>
+#include <set>
 
 using namespace bson ;
 
@@ -648,6 +650,45 @@ namespace engine
       }
 
       return TRUE ;
+   }
+
+   INT32 _catSequence::validateFieldNames( const bson::BSONObj& options )
+   {
+      static std::string fieldNameArray[] = {
+         CAT_SEQUENCE_NAME,
+         CAT_SEQUENCE_OID,
+         CAT_SEQUENCE_VERSION,
+         CAT_SEQUENCE_CURRENT_VALUE,
+         CAT_SEQUENCE_INCREMENT,
+         CAT_SEQUENCE_START_VALUE,
+         CAT_SEQUENCE_MIN_VALUE,
+         CAT_SEQUENCE_MAX_VALUE,
+         CAT_SEQUENCE_CACHE_SIZE,
+         CAT_SEQUENCE_ACQUIRE_SIZE,
+         CAT_SEQUENCE_CYCLED,
+         CAT_SEQUENCE_INTERNAL,
+         CAT_SEQUENCE_INITIAL,
+         CAT_SEQUENCE_NEXT_VALUE
+      } ;
+      static std::set<std::string> fieldNames( fieldNameArray,
+         fieldNameArray + sizeof( fieldNameArray ) / sizeof( *fieldNameArray ) ) ;
+
+      INT32 rc = SDB_OK ;
+      BSONObjIterator iter( options ) ;
+
+      while ( iter.more() )
+      {
+         BSONElement ele = iter.next() ;
+         std::string fieldName = ele.fieldName() ;
+         if ( fieldNames.find( fieldName ) == fieldNames.end() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Unknown sequence field: %s", fieldName.c_str() ) ;
+            break ;
+         }
+      }
+
+      return rc ;
    }
 }
 

@@ -78,6 +78,14 @@ namespace engine
 
       _catSequence sequence = _catSequence( name ) ;
 
+      rc = _catSequence::validateFieldNames( options ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Invalid options of sequence[%s], rc=%d",
+                 name.c_str(), rc ) ;
+         goto error ;
+      }
+
       rc = sequence.setOptions( options, TRUE, FALSE ) ;
       if ( SDB_OK != rc )
       {
@@ -146,8 +154,8 @@ namespace engine
       if ( bucket.end() != iter )
       {
          _catSequence* sequence = (*iter).second ;
-         SDB_OSS_DEL sequence ;
          bucket.erase( name ) ;
+         SDB_OSS_DEL sequence ;
       }
 
       rc = _deleteSequence( name, eduCB, w ) ;

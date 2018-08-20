@@ -97,6 +97,7 @@ namespace engine
 
    public:
       static BOOLEAN isValidName( const std::string& name, BOOLEAN internal ) ;
+      static INT32 validateFieldNames( const bson::BSONObj& options ) ;
 
    private:
       std::string    _name ;           // sequence name
