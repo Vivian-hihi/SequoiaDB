@@ -4335,6 +4335,27 @@ error:
    goto done ;
 }
 
+__METHOD_IMP(lob_is_eof)
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN isEof = FALSE ;
+   PYOBJECT *obj = NULL ;
+   sdbLob  *lob  = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "O", &obj) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   isEof = lob->isEof() ;
+
+done:
+   return MAKE_RETURN_INT_INT( rc, isEof ) ;
+error:
+   goto done ;
+}
 
 ///< data center implement
 __METHOD_IMP(create_dc)
@@ -4752,6 +4773,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cs_enable_capped",                cs_enable_capped,                METH_VARARGS},
    {"cs_disable_capped",               cs_disable_capped,               METH_VARARGS},
    {"cs_set_attributes",               cs_set_attributes,               METH_VARARGS},
+
    /** cl */
    {"create_cl",                       create_cl,                       METH_VARARGS},
    {"release_cl",                      release_cl,                      METH_VARARGS},
@@ -4793,12 +4815,14 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cl_enable_compression",           cl_enable_compression,           METH_VARARGS},
    {"cl_disable_compression",          cl_disable_compression,          METH_VARARGS},
    {"cl_set_attributes",               cl_set_attributes,               METH_VARARGS},
+
    /** cr */
    {"create_cursor",                   create_cursor,                   METH_VARARGS},
    {"release_cursor",                  release_cursor,                  METH_VARARGS},
    {"cr_next",                         cr_next,                         METH_VARARGS},
    {"cr_current",                      cr_current,                      METH_VARARGS},
    {"cr_close",                        cr_close,                        METH_VARARGS},
+
    /** domain */
    {"create_domain",                   create_domain,                   METH_VARARGS},
    {"release_domain",                  release_domain,                  METH_VARARGS},
@@ -4809,6 +4833,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"domain_set_attributes",           domain_set_attributes,           METH_VARARGS},
    {"domain_list_cs",                  domain_list_cs,                  METH_VARARGS},
    {"domain_list_cl",                  domain_list_cl,                  METH_VARARGS},
+
    /** gp */
    {"create_group",                    create_group,                    METH_VARARGS},
    {"release_group",                   release_group,                   METH_VARARGS},
@@ -4825,6 +4850,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"gp_start",                        gp_start,                        METH_VARARGS},
    {"gp_stop",                         gp_stop,                         METH_VARARGS},
    {"gp_is_catalog",                   gp_is_catalog,                   METH_VARARGS},
+
    /** nd */
    {"create_node",                     create_node,                     METH_VARARGS},
    {"release_node",                    release_node,                    METH_VARARGS},
@@ -4835,6 +4861,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"nd_get_nodename",                 nd_get_nodename,                 METH_VARARGS},
    {"nd_stop",                         nd_stop,                         METH_VARARGS},
    {"nd_start",                        nd_start,                        METH_VARARGS},
+
    /** lob */
    {"create_lob",                      lob_create,                      METH_VARARGS},
    {"release_lob",                     lob_release,                     METH_VARARGS},
@@ -4848,6 +4875,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"lob_get_oid",                     lob_get_oid,                     METH_VARARGS},
    {"lob_get_create_time",             lob_get_create_time,             METH_VARARGS},
    {"lob_get_modification_time",       lob_get_modification_time,       METH_VARARGS},
+   {"lob_is_eof",                      lob_is_eof,                      METH_VARARGS},
 
    /** data center */
    {"create_dc",                       create_dc,                       METH_VARARGS},

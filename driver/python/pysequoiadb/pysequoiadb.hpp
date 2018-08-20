@@ -158,6 +158,7 @@ __METHOD_DECLARE(lob_get_create_time) ;
 __METHOD_DECLARE(lob_get_modification_time) ;
 __METHOD_DECLARE(lob_get_size) ;
 __METHOD_DECLARE(lob_get_oid) ;
+__METHOD_DECLARE(lob_is_eof) ;
 
 ///< data center
 __METHOD_DECLARE(create_dc) ;

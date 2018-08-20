@@ -192,3 +192,14 @@ class lob(object):
 
         rc = sdb.lob_write(self._handle, data, length)
         raise_if_error(rc, "Failed to write data to lob")
+
+    def is_eof(self):
+        """Check whether current offset has reached the max size of current lob.
+        :return: True if current offset has reached the max size, otherwise False.
+        """
+        rc, is_eof = sdb.lob_is_eof(self._handle)
+        raise_if_error(rc, "Failed to check EOF")
+        if 1 == is_eof:
+            return True
+        else:
+            return False
