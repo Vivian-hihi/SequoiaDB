@@ -3981,6 +3981,36 @@ error :
    goto done ;
 }
 
+__METHOD_IMP(gp_reelect)
+{
+   INT32 rc                = 0 ;
+   PYOBJECT *obj           = NULL ;
+   PYOBJECT *options       = NULL ;
+   const bson::BSONObj *bson_options = NULL ;
+   Group *replica_group    = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &options ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, Group, replica_group ) ;
+   CAST_PYBSON_TO_CPPBSON( options, bson_options ) ;
+
+   rc = replica_group->reelect( *bson_options ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   DELETE_CPPOBJECT( bson_options ) ;
+   return MAKE_RETURN_INT( rc ) ;
+error :
+   goto done ;
+}
+
 /// implement node
 __METHOD_IMP(create_node)
 {
@@ -4968,6 +4998,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"gp_start",                        gp_start,                        METH_VARARGS},
    {"gp_stop",                         gp_stop,                         METH_VARARGS},
    {"gp_is_catalog",                   gp_is_catalog,                   METH_VARARGS},
+   {"gp_reelect",                      gp_reelect,                      METH_VARARGS},
 
    /** nd */
    {"create_node",                     create_node,                     METH_VARARGS},

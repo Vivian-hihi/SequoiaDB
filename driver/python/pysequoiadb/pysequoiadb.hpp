@@ -137,6 +137,7 @@ __METHOD_DECLARE(gp_detach_node) ;
 __METHOD_DECLARE(gp_start) ;
 __METHOD_DECLARE(gp_stop) ;
 __METHOD_DECLARE(gp_is_catalog) ;
+__METHOD_DECLARE(gp_reelect) ;
 
 ///< node
 __METHOD_DECLARE(create_node) ;

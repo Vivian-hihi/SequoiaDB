@@ -373,3 +373,22 @@ class replicagroup(object):
         rc = sdb.gp_detach_node(self._group,
                                 hostname, servicename, bson_options)
         raise_if_error(rc, "Failed to detach node")
+
+    def reelect(self, options=None):
+        """Reelect in current group.
+
+        Parameters:
+           Name         Type     Info:
+           options      dict     The control parameters:
+                                 Seconds: (Type: int) Specify how long the reelect should be done. Default value is 30.
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        if options is not None and not isinstance(options, dict):
+            raise SDBTypeError("options must be an instance of dict")
+        if options is None:
+            options = {}
+        bson_options = bson.BSON.encode(options)
+
+        rc = sdb.gp_reelect(self._group, bson_options)
+        raise_if_error(rc, "Failed to reelect")
