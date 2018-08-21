@@ -1,7 +1,5 @@
 package com.sequoias3.service.impl;
 
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.SDBError;
 import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.config.BucketConfig;
 import com.sequoias3.core.*;
@@ -10,16 +8,12 @@ import com.sequoias3.dao.UserDao;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.service.BucketService;
-import com.sequoias3.utils.DataFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 
 @Service
 public class BucketServiceImpl implements BucketService {
@@ -78,16 +72,13 @@ public class BucketServiceImpl implements BucketService {
                 bucket.setDelimiter(DBParamDefine.DB_AUTO_DELIMITER);
                 bucketDao.insertBucket(bucket);
                 return;
-            }catch (BaseException e){
-                logger.warn("Create user failed. ", e);
-                if (e.getErrorType() == SDBError.SDB_IXM_DUP_KEY.name() && tryTime > 0) {
+            }catch (S3ServerException e) {
+                logger.warn("Create user failed. bucketname="+bucketName, e);
+                if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex() && tryTime > 0) {
                     continue;
                 } else {
-                    throw new S3ServerException(S3Error.BUCKET_CREATE_FAILED,
-                            "create bucket failed. bucketname="+bucketName, e);
+                    throw e;
                 }
-            }catch (S3ServerException e) {
-                throw e;
             }catch (Exception e){
                 throw new S3ServerException(S3Error.BUCKET_CREATE_FAILED,
                         "create bucket failed. bucketname="+bucketName, e);

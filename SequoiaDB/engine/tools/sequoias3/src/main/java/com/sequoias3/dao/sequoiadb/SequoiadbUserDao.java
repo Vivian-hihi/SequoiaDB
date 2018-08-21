@@ -4,10 +4,12 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import com.sequoias3.config.SequoiadbConfig;
 import com.sequoias3.core.User;
 import com.sequoias3.dao.DaoCollectionDefine;
 import com.sequoias3.dao.UserDao;
+import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -26,7 +28,7 @@ public class SequoiadbUserDao implements UserDao {
     SequoiadbConfig config;
 
     @Override
-    public void insertUser(User user) throws S3ServerException , BaseException {
+    public void insertUser(User user) throws S3ServerException{
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -41,6 +43,12 @@ public class SequoiadbUserDao implements UserDao {
             newUser.put(User.JSON_KEY_SECRET_ACCESS_KEY, user.getSecretAccessKey());
 
             cl.insert(newUser);
+        }catch (BaseException e){
+            if (e.getErrorType() == SDBError.SDB_IXM_DUP_KEY.name()) {
+                throw new S3ServerException(S3Error.DAO_DUPLICATE_KEY, "Duplicate key.");
+            } else {
+                throw e;
+            }
         } catch (Exception e) {
             logger.error("insertUser failed. errorMessage = " + e.getMessage(), e);
             throw e;

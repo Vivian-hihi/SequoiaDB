@@ -1,7 +1,5 @@
 package com.sequoias3.service.impl;
 
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.SDBError;
 import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.common.InitAdminUserDefine;
 import com.sequoias3.common.UserParamDefine;
@@ -65,15 +63,13 @@ public class UserServiceImpl implements UserService {
                 userDao.insertUser(u);
                 return new AccessKeys(accessKeyID, secretAccessKey);
 
-            } catch (BaseException e) {
+            }catch (S3ServerException e) {
                 logger.warn("Create user failed. ", e);
-                if (e.getErrorType() == SDBError.SDB_IXM_DUP_KEY.name() && tryTime > 0) {
+                if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex() && tryTime > 0) {
                     continue;
                 } else {
-                    throw new S3CreateUserException("create user failed.username=" + newUserName, e);
+                    throw e;
                 }
-            } catch (S3ServerException e) {
-                throw e;
             } catch (Exception e) {
                 throw new S3CreateUserException("create user failed:username="+ newUserName, e);
             }

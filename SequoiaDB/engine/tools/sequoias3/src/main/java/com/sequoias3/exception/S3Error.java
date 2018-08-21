@@ -6,6 +6,7 @@ public enum S3Error {
 
     // dao error
     DAO_GETCONN_ERROR(-401, "GetDBConnectFail", "Get connection failed."),
+    DAO_DUPLICATE_KEY(-402, "DuplicateKey", "Duplicate key."),
 
     //bucket error
     BUCKET_CREATE_FAILED(-500, "CreateBucketFailed", "Create bucket failed."),
@@ -20,6 +21,7 @@ public enum S3Error {
     BUCKET_TOO_MANY_BUCKETS(-515, "TooManyBuckets", "You have attempted to create more buckets than allowed."),
 
     //object
+    OBJECT_INVALID_KEY(-601, "InvalidKey","Invalid Key."),
 
     //authorization
     INVALID_ADMINISTRATOR(-701, "AccessDenied", "Not admin user."),

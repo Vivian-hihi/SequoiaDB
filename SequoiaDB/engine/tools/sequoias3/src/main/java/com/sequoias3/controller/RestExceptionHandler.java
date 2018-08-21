@@ -16,7 +16,6 @@ import javax.servlet.http.HttpServletResponse;
 @ControllerAdvice
 public class RestExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(RestExceptionHandler.class);
-    //TODO: write sequoiadbs3's reponse
     private static final String ERROR_ATTRIBUTE = "X-S3-ERROR";
 
     @ExceptionHandler(S3ServerException.class)

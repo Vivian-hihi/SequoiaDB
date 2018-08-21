@@ -4,10 +4,13 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import com.sequoias3.config.SequoiadbConfig;
 import com.sequoias3.core.Bucket;
 import com.sequoias3.dao.BucketDao;
 import com.sequoias3.dao.DaoCollectionDefine;
+import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.utils.DataFormatUtils;
 import org.bson.BSONObject;
@@ -48,7 +51,14 @@ public class SequoiadbBucketDao implements BucketDao {
             newBucket.put(Bucket.BUCKET_DELIMITER, bucket.getDelimiter());
 
             cl.insert(newBucket);
-        }catch (Exception e) {
+        }catch (BaseException e){
+            if (e.getErrorType() == SDBError.SDB_IXM_DUP_KEY.name()) {
+                throw new S3ServerException(S3Error.DAO_DUPLICATE_KEY, "Duplicate key.");
+            } else {
+                throw e;
+            }
+        }
+        catch (Exception e) {
             logger.error("insertBucket failed. errorMessage = " + e.getMessage(), e);
             throw e;
         }finally {
@@ -186,7 +196,6 @@ public class SequoiadbBucketDao implements BucketDao {
         bucket.setFormatDate(DataFormatUtils.formatDate((long)bsonObject.get(Bucket.BUCKET_CREATETIME)));
         bucket.setVersioningStatus(bsonObject.get(Bucket.BUCKET_VERSIONINGSTATUS).toString());
         bucket.setDelimiter(bsonObject.get(Bucket.BUCKET_DELIMITER).toString());
-        //TODO:如果某字段不存在，应存在异常，如何识别，规避
         return bucket;
     }
 }
