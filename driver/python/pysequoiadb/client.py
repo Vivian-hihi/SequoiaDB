@@ -1757,5 +1757,26 @@ class client(object):
             if not isinstance(options, dict):
                 raise SDBTypeError("options must be an instance of dict")
             bson_options = bson.BSON.encode(options)
+        if not isinstance(session_id, int) and not isinstance(session_id, long_type):
+            raise SDBTypeError("session_id must be an instance of int or long")
         rc = sdb.sdb_force_session(self._client, session_id, bson_options)
         raise_if_error(rc, "Failed to force session[%d] in %s" % (session_id, str(options)))
+
+    def reload_config(self, options=None):
+        """Reload configurations.
+
+        Parameters:
+            Name         Type     Info
+            options      dict     Command location parameters.
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        bson_options = None
+        if options is not None:
+            if not isinstance(options, dict):
+                raise SDBTypeError("options must be an instance of dict")
+            bson_options = bson.BSON.encode(options)
+
+        rc = sdb.sdb_reload_config(self._client, bson_options)
+        raise_if_error(rc, "Failed to reload config")
+
