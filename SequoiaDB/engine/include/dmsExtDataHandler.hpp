@@ -87,7 +87,6 @@ namespace engine
                              _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) = 0;
 
       virtual INT32 onCrtTextIdx( utilCLUniqueID clUniqID,
-                                  const CHAR *csName, const CHAR *clName,
                                   const BSONObj &index, BSONObj &newIndex,
                                   _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) = 0 ;
 

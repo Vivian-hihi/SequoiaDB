@@ -138,9 +138,10 @@ namespace engine
          void     decStatFreeSpace ( UINT16 mbID, UINT16 size ) ;
 
       private:
+         // newIndex - 'ExtDataName' will be added into index.
          INT32    _createTextIdx( _dmsMBContext *context,
                                   const BSONObj &index,
-                                  _pmdEDUCB *cb, BSONObj &newIndex ) ;
+                                  _pmdEDUCB *cb, BSONObj &finalIndex ) ;
 
          // if indexLID == DMS_INALID_EXTENT, it will get from index cb
          INT32    _rebuildIndex ( _dmsMBContext *context,

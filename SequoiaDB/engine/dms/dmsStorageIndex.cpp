@@ -577,7 +577,7 @@ namespace engine
       const CHAR *indexName        = NULL ;
       UINT16 indexType             = 0 ;
       BOOLEAN newTextIdx           = FALSE ;
-      BSONObj newIndex ;
+      BSONObj finalIndex ;
 
       if ( !ixmIndexCB::validateKey ( index, isSys ) )
       {
@@ -665,17 +665,17 @@ namespace engine
 
       if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, indexType ) )
       {
-         rc = _createTextIdx( context, index, cb, newIndex ) ;
+         rc = _createTextIdx( context, index, cb, finalIndex ) ;
          PD_RC_CHECK( rc, PDERROR, "Create text index failed, rc: %d", rc ) ;
       }
       else
       {
-         newIndex = index ;
+         finalIndex = index ;
       }
 
       {
          // initialize index control block, set flag to invalid
-         ixmIndexCB indexCB ( extentID, newIndex, context->mbID(), this,
+         ixmIndexCB indexCB ( extentID, finalIndex, context->mbID(), this,
                               context ) ;
          // verify the index control block is initialized
          if ( !indexCB.isInitialized() )
@@ -781,14 +781,12 @@ namespace engine
                         DMS_MB_ATTR_NOIDINDEX ) ;
       }
 
-      // TODO: YSD increase text index number of the collection.
-
       if ( _pDataSu->_pEventHolder )
       {
          dmsEventCLItem clItem( context->mb()->_collectionName,
                                 context->mbID(),
                                 context->clLID() ) ;
-         dmsEventIdxItem idxItem ( indexName, indexLID, newIndex ) ;
+         dmsEventIdxItem idxItem ( indexName, indexLID, finalIndex ) ;
          _pDataSu->_pEventHolder->onCreateIndex( DMS_EVENT_MASK_ALL, clItem,
                                                  idxItem, cb, dpscb ) ;
       }
@@ -1205,31 +1203,29 @@ namespace engine
    INT32 _dmsStorageIndex::_createTextIdx( dmsMBContext *context,
                                            const BSONObj &index,
                                            pmdEDUCB *cb,
-                                           BSONObj &newIndex )
+                                           BSONObj &finalIndex )
    {
       INT32 rc = SDB_OK ;
       IDmsExtDataHandler *handler = _pStorageInfo->_extDataHandler ;
+      SDB_ASSERT( handler, "External handler is NULL" ) ;
 
       if ( context->mbStat()->_textIdxNum >= DMS_MAX_TEXT_IDX_NUM )
       {
          rc = SDB_DMS_MAX_INDEX ;
-         PD_LOG( PDERROR, "Max number of text indexes have been created "
-                          "already" ) ;
+         PD_LOG( PDERROR, "Max number of text indexes[%d] have been created "
+                          "already", DMS_MAX_TEXT_IDX_NUM ) ;
          goto error ;
       }
 
       if ( NULL == _pDataSu->getExtDataHandler() )
-
       {
-         SDB_ASSERT( _pStorageInfo->_extDataHandler,
-                     "_extDataHandler is NULL" ) ;
          _pDataSu->regExtDataHandler( handler ) ;
       }
 
-      rc = handler->onCrtTextIdx( context->mb()->_clUniqueID, getSuName(),
-                                  context->mb()->_collectionName,
-                                  index, newIndex, cb, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get external data name failed, rc: %d", rc ) ;
+      rc = handler->onCrtTextIdx( context->mb()->_clUniqueID,
+                                  index, finalIndex, cb, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "External operation on create text index "
+                   "failed, rc: %d", rc ) ;
 
    done:
       return rc ;
@@ -1722,7 +1718,8 @@ namespace engine
          }
 
          if ( IXM_EXTENT_HAS_TYPE( indexCB.getIndexType(),
-                                   IXM_EXTENT_TYPE_TEXT ) )
+                                   IXM_EXTENT_TYPE_TEXT )
+              && IXM_INDEX_FLAG_NORMAL == indexCB.getFlag() )
          {
             IDmsExtDataHandler *handler = _pDataSu->getExtDataHandler() ;
             if ( !handler )
@@ -1855,7 +1852,8 @@ namespace engine
          }
 
          if ( IXM_EXTENT_HAS_TYPE( indexCB.getIndexType(),
-                                   IXM_EXTENT_TYPE_TEXT ) )
+                                   IXM_EXTENT_TYPE_TEXT )
+              && IXM_INDEX_FLAG_NORMAL == indexCB.getFlag() )
          {
             IDmsExtDataHandler *handler = _pDataSu->getExtDataHandler() ;
             if ( !handler )

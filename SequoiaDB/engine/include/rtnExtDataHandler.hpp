@@ -77,7 +77,6 @@ namespace engine
                              pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
 
       virtual INT32 onCrtTextIdx( utilCLUniqueID clUniqID,
-                                  const CHAR *csName, const CHAR *clName,
                                   const BSONObj &index, BSONObj &newIndex,
                                   _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
 
@@ -119,6 +118,9 @@ namespace engine
       INT32 _extendIndexDef( const CHAR *csName, const CHAR *clName,
                              ixmIndexCB &indexCB ) ;
 
+      // For compatibility with version 3.0. The external name rule is
+      // different. This is used during upgrading from version 3.0, to append
+      // 'ExtDataName' to indexCB.
       void _getExtDataNameV1( const CHAR *csName, const CHAR *clName,
                               const CHAR *idxName, string &extName ) ;
    private:

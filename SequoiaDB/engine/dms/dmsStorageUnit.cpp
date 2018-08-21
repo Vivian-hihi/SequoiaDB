@@ -3218,6 +3218,8 @@ namespace engine
                                    indexCB.getIndexType() )
               && IXM_INDEX_FLAG_NORMAL == indexCB.getFlag() )
          {
+            SDB_ASSERT( indexCB.getExtDataName(),
+                        "External data name is NULL") ;
             ossStrncpy( indexItem._extDataName, indexCB.getExtDataName(),
                         DMS_MAX_EXT_NAME_SIZE + 1 ) ;
          }
@@ -3260,20 +3262,6 @@ namespace engine
             resultIndex._version = indexCB.version () ;
             // copy the index def to it's owned buffer
             resultIndex._indexDef = indexCB.getDef().copy () ;
-            /*
-            if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT,
-                                      indexCB.getIndexType() ) )
-            {
-               if ( _storageInfo._extDataHandler )
-               {
-                  _storageInfo._extDataHandler->getExtDataName( mb->_clUniqueID,
-                                                                indexCB.getName(),
-                                                                resultIndex._extDataName,
-                                                                DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
-               }
-            }
-            */
-
             rc = SDB_OK ;
             break ;
          }

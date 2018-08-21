@@ -53,13 +53,18 @@ namespace engine
    {
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_GETEXTDATANAME, "_rtnExtDataHandler::getExtDataName" )
    INT32 _rtnExtDataHandler::getExtDataName( utilCLUniqueID clUniqID,
                                              const CHAR *idxName,
                                              CHAR *extName,
                                              UINT32 buffSize )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_GETEXTDATANAME ) ;
       ostringstream name ;
+
+      SDB_ASSERT( idxName, "Index name is NULL") ;
+      SDB_ASSERT( extName, "Buffer is empty" ) ;
 
       if ( UTIL_INVALID_UNIQUEID == clUniqID )
       {
@@ -69,12 +74,19 @@ namespace engine
       }
 
       name << SYS_PREFIX"_" << clUniqID << "_" << idxName ;
-      if ( extName && buffSize > 0 )
+      if ( buffSize < name.str().length() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Buffer size[ %d ] is too small, expected[ %d ]",
+                 buffSize, name.str().length() ) ;
+      }
+      if ( extName )
       {
          ossSnprintf( extName, buffSize, name.str().c_str() ) ;
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_GETEXTDATANAME, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -237,14 +249,14 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONCRTTEXTIDX, "_rtnExtDataHandler::onCrtTextIdx" )
    INT32 _rtnExtDataHandler::onCrtTextIdx( utilCLUniqueID clUniqID,
-                                           const CHAR *csName,
-                                           const CHAR *clName,
                                            const BSONObj &index,
                                            BSONObj &newIndex,
                                            pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONCRTTEXTIDX ) ;
       BSONObj keys = index.getObjectField( IXM_KEY_FIELD ) ;
       const CHAR *idxName = index.getStringField( IXM_NAME_FIELD ) ;
 
@@ -284,6 +296,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONCRTTEXTIDX, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -625,31 +638,50 @@ namespace engine
       return ( ossStrlen( indexCB.getExtDataName() ) > 0 ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__EXTENDINDEXDEF, "_rtnExtDataHandler::_extendIndexDef" )
    INT32 _rtnExtDataHandler::_extendIndexDef( const CHAR *csName,
                                               const CHAR *clName,
                                               ixmIndexCB &indexCB )
    {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__EXTENDINDEXDEF ) ;
       string extName ;
       BSONObj extendObj ;
       _getExtDataNameV1( csName, clName, indexCB.getName(), extName )  ;
 
-      extendObj = BSON( FIELD_NAME_EXT_DATA_NAME << extName.c_str() ) ;
-      indexCB.extendDef( extendObj.firstElement() ) ;
+      try
+      {
+         extendObj = BSON( FIELD_NAME_EXT_DATA_NAME << extName.c_str() ) ;
+         indexCB.extendDef( extendObj.firstElement() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
 
-      return SDB_OK ;
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER__EXTENDINDEXDEF, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__GETEXTDATANAMEV1, "_rtnExtDataHandler::_getExtDataNameV1" )
    void _rtnExtDataHandler::_getExtDataNameV1( const CHAR *csName,
                                                const CHAR *clName,
                                                const CHAR *idxName,
                                                string &extName )
    {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__GETEXTDATANAMEV1 ) ;
       string srcStr = string( csName ) + string( clName ) + string( idxName ) ;
       UINT32 hashVal = ossHash( srcStr.c_str() ) ;
       string md5Val = md5::md5simpledigest( srcStr.c_str() ) ;
       ostringstream name ;
       name << SYS_PREFIX"_" << hashVal << md5Val.substr( 0, 4 ) ;
       extName = name.str() ;
+      PD_TRACE_EXIT( SDB__RTNEXTDATAHANDLER__GETEXTDATANAMEV1 ) ;
    }
 
    rtnExtDataHandler* rtnGetExtDataHandler()

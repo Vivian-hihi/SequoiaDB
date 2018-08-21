@@ -130,9 +130,6 @@ namespace engine
 
       BOOLEAN isOwnedByExt( const CHAR *targetName ) ;
 
-      static void genExtDataNames( utilCLUniqueID clUniqID, const CHAR *idxName,
-                                   string &extCSName, string &extCLName ) ;
-
    private:
       INT32 _prepareCSAndCL( const CHAR *csName, const CHAR *clName,
                              _pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;

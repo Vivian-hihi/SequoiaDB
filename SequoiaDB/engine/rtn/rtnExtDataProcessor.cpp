@@ -80,6 +80,9 @@ namespace engine
       dmsStorageUnit *su = NULL ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
+      SDB_ASSERT( csName && clName && idxName && targetName,
+                  "Names should not be NULL") ;
+
       rc = _meta.init( csName, clName, idxName, targetName, idxKeyDef ) ;
       PD_RC_CHECK( rc, PDERROR, "Processor meta init failed[ %d ]", rc ) ;
 
@@ -594,24 +597,6 @@ namespace engine
       return ( 0 == ossStrcmp( targetName, _meta._targetName.c_str() ) ) ;
    }
 
-   // The format of external data name is: SYS_<cl unique id>_<idx logical id>
-   void _rtnExtDataProcessor::genExtDataNames( utilCLUniqueID clUniqID,
-                                               const CHAR *idxName,
-                                               string &extCSName,
-                                               string &extCLName )
-   {
-      ostringstream name ;
-
-      if ( UTIL_INVALID_UNIQUEID == clUniqID )
-      {
-         return ;
-      }
-
-      name << SYS_PREFIX"_" << clUniqID << "_" << idxName ;
-      extCSName = name.str() ;
-      extCLName = extCSName + "." + extCSName ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__PREPARERECORD, "_rtnExtDataProcessor::_prepareRecord" )
    INT32 _rtnExtDataProcessor::_prepareRecord( _rtnExtOprType oprType,
                                                const BSONElement &idEle,
@@ -1029,9 +1014,11 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_RMPROCESSORENTRY, "_rtnExtDataProcessorMgr::rmProcessorEntry" )
    void _rtnExtDataProcessorMgr::rmProcessorEntry( vector<rtnExtDataProcessor *> &processors,
                                                    INT32 lockType )
    {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_RMPROCESSORENTRY ) ;
       ossScopedLock lock( &_mutex, EXCLUSIVE ) ;
 
       for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
@@ -1049,10 +1036,13 @@ namespace engine
          _processorMap.erase( (*itr)->getID() ) ;
          _latchMap.erase( mItr ) ;
       }
+      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_RMPROCESSORENTRY ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSOR, "_rtnExtDataProcessorMgr::destroyProcessor" )
    void _rtnExtDataProcessorMgr::destroyProcessor( vector<rtnExtDataProcessor *> &processors )
    {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSOR ) ;
       for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
             itr != processors.end(); ++itr )
       {
@@ -1060,6 +1050,7 @@ namespace engine
       }
 
       processors.clear() ;
+      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSOR ) ;
    }
 
    UINT32 _rtnExtDataProcessorMgr::number()
