@@ -380,11 +380,11 @@ namespace engine
                                              pmdEDUCB* eduCB,
                                              dmsExtentID indexExtentID)
    : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexExtentID ),
-     _extHandler( NULL ),
-     _clUniqID( UTIL_INVALID_UNIQUEID )
+     _extHandler( NULL )
    {
       ossMemset( _collectionName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
       ossMemset( _idxName, 0, IXM_INDEX_NAME_SIZE + 1 ) ;
+      ossMemset( _extDataName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
    }
 
    _dmsIndexExtBuilder::~_dmsIndexExtBuilder()
@@ -404,11 +404,13 @@ namespace engine
       _extHandler = _suData->getExtDataHandler() ;
       PD_CHECK( _extHandler, SDB_SYS, error, PDERROR,
                 "External data handle is NULL" ) ;
-      _clUniqID = _mbContext->mb()->_clUniqueID ;
 
       ossStrncpy( _collectionName, _mbContext->mb()->_collectionName,
                   DMS_COLLECTION_NAME_SZ + 1 ) ;
       ossStrncpy( _idxName, _indexCB->getName(), IXM_INDEX_NAME_SIZE + 1 ) ;
+      ossStrncpy( _extDataName, _indexCB->getExtDataName(),
+                  DMS_COLLECTION_NAME_SZ + 1 ) ;
+      _keyDef = _indexCB->keyPattern() ;
 
       // We are going to create the capped cs and cl. During the whole process,
       // no use of the index is allowed.
@@ -440,8 +442,11 @@ namespace engine
          PD_LOG( PDERROR, "External handler is NULL" ) ;
          goto error ;
       }
-      rc = _extHandler->onRebuildTextIdx( _clUniqID, _indexCB->getName(),
-                                          _indexCB->keyPattern(), _eduCB ) ;
+
+      rc = _extHandler->onRebuildTextIdx( _suIndex->getSuName(),
+                                          _collectionName, _idxName,
+                                          _extDataName, _keyDef,
+                                          _eduCB, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "External handle on text index rebuild "
                    "failed: %d", rc ) ;
       rc = _extHandler->done( DMS_EXTOPR_TYPE_REBUILDIDX, _eduCB, NULL ) ;
@@ -486,6 +491,7 @@ namespace engine
       // smoothly. Set set the index as CREATING and it will be set as NORMAL
       // in _finish() of dmsIndexRebuilder.
       _indexCB->setFlag( IXM_INDEX_FLAG_CREATING ) ;
+      _mbContext->mbStat()->_textIdxNum++ ;
 
    done:
       if ( mbLocked )
@@ -503,8 +509,7 @@ namespace engine
          if ( ( SDB_DMS_NOTEXIST != rc ) && ( SDB_DMS_TRUNCATED != rc ) &&
               ( SDB_DMS_INVALID_INDEXCB != rc ) )
          {
-            INT32 rcTmp = _extHandler->onDropTextIdx( _clUniqID, _idxName,
-                                                      _eduCB, NULL ) ;
+            INT32 rcTmp = _extHandler->onDropTextIdx( _extDataName, _eduCB, NULL ) ;
             if ( rcTmp )
             {
                PD_LOG( PDERROR, "External operation on drop text index failed, "

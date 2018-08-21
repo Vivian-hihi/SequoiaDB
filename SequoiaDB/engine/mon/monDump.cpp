@@ -962,7 +962,7 @@ namespace engine
             extDataName = indexItem.getExtDataName() ;
             if ( ossStrlen( extDataName ) > 0 )
             {
-               builder.append( FIELD_NAME_EXTERNAL_DATA_NAME, extDataName ) ;
+               builder.append( FIELD_NAME_EXT_DATA_NAME, extDataName ) ;
             }
             obj = builder.obj() ;
             rc = context->monAppend( obj ) ;

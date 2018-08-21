@@ -731,6 +731,14 @@ namespace engine
       BOOLEAN isSameDef( const BSONObj &defObj,
                          BOOLEAN strict = FALSE ) const ;
 
+      // Extend the index definition. Only append new element.
+      INT32 extendDef( const BSONElement &ele ) ;
+
+      // INT32 appendDef() ;
+      const CHAR *getExtDataName() const
+      {
+         return _infoObj.getStringField( FIELD_NAME_EXT_DATA_NAME ) ;
+      }
    } ;
    typedef class _ixmIndexCB ixmIndexCB ;
 

@@ -39,14 +39,14 @@
 #ifndef DMS_EXTDATAHANDLER_HPP__
 #define DMS_EXTDATAHANDLER_HPP__
 
-#include "core.hpp"
 #include "oss.hpp"
 #include "dpsLogWrapper.hpp"
 #include "monDMS.hpp"
-#include "../bson/oid.h"
 
 namespace engine
 {
+   class _dmsMBContext ;
+
    enum _DMS_EXTOPR_TYPE
    {
       DMS_EXTOPR_TYPE_INSERT = 0,
@@ -69,50 +69,55 @@ namespace engine
    public:
       virtual INT32 getExtDataName( utilCLUniqueID clUniqID,
                                     const CHAR *idxName,
-                                    CHAR *extCSName,
-                                    UINT32 csNameBufSize,
-                                    CHAR *extCLName,
-                                    UINT32 clNameBufSize ) = 0 ;
+                                    CHAR *extName,
+                                    UINT32 buffSize ) = 0 ;
 
-      virtual INT32 check( DMS_EXTOPR_TYPE type, utilCLUniqueID clUniqID,
-                           const CHAR *idxName, const BSONObj *object,
-                           const BSONObj *objNew, _pmdEDUCB *cb ) = 0 ;
+      virtual INT32 check( DMS_EXTOPR_TYPE type, const CHAR *csName,
+                           const CHAR *clName, const CHAR *idxName,
+                           const BSONObj *object, const BSONObj *objNew,
+                           _pmdEDUCB *cb ) = 0 ;
 
-      virtual INT32 onOpenTextIdx( utilCLUniqueID clUniqID, const CHAR *idxName,
-                                   const BSONObj &idxKeyDef ) = 0 ;
+      virtual INT32 onOpenTextIdx( const CHAR *csName, const CHAR *clName,
+                                   ixmIndexCB &indexCB ) = 0 ;
 
-      virtual INT32 onDelCS( utilCSUniqueID csUniqID, _pmdEDUCB *cb,
+      virtual INT32 onDelCS( const CHAR *csName, _pmdEDUCB *cb,
                              BOOLEAN removeFiles, SDB_DPSCB *dpscb = NULL ) = 0 ;
 
-      virtual INT32 onDelCL( utilCLUniqueID clUniqID, _pmdEDUCB *cb,
-                             SDB_DPSCB *dpscb = NULL ) = 0;
+      virtual INT32 onDelCL( const CHAR *csName, const CHAR *clName,
+                             _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) = 0;
 
-      virtual INT32 onCrtTextIdx( utilCLUniqueID clUniqID, const CHAR *idxName,
+      virtual INT32 onCrtTextIdx( utilCLUniqueID clUniqID,
+                                  const CHAR *csName, const CHAR *clName,
+                                  const BSONObj &index, BSONObj &newIndex,
                                   _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) = 0 ;
 
-      virtual INT32 onDropTextIdx( utilCLUniqueID clUniqID, const CHAR *idxName,
-                                   _pmdEDUCB *cb,
+      virtual INT32 onDropTextIdx( const CHAR *extName, _pmdEDUCB *cb,
                                    SDB_DPSCB *dpscb = NULL ) = 0 ;
 
-      virtual INT32 onRebuildTextIdx( utilCLUniqueID clUniqID,
-                                      const CHAR *idxName,
+      virtual INT32 onRebuildTextIdx( const CHAR *csName, const CHAR *clName,
+                                      const CHAR *idxName, const CHAR *extName,
                                       const BSONObj &idxKeyDef, _pmdEDUCB *cb,
                                       SDB_DPSCB *dpscb = NULL ) = 0 ;
 
-      virtual INT32 onInsert( utilCLUniqueID clUniqID, const CHAR *idxName,
-                              const BSONObj &object, _pmdEDUCB* cb,
-                              SDB_DPSCB *dpscb = NULL ) = 0 ;
-
-      virtual INT32 onDelete( utilCLUniqueID clUniqID, const CHAR *idxName,
-                              const BSONObj &object, _pmdEDUCB* cb,
-                              SDB_DPSCB *dpscb = NULL ) = 0 ;
-
-      virtual INT32 onUpdate( utilCLUniqueID clUniqID, const CHAR *idxName,
-                              const BSONObj &orignalObj, const BSONObj &newObj,
+      virtual INT32 onInsert( const CHAR *extName, const BSONObj &object,
                               _pmdEDUCB* cb, SDB_DPSCB *dpscb = NULL ) = 0 ;
 
-      virtual INT32 onTruncateCL( utilCLUniqueID clUniqID, _pmdEDUCB *cb,
-                                  SDB_DPSCB *dpsCB = NULL ) = 0 ;
+      virtual INT32 onDelete( const CHAR *extName, const BSONObj &object,
+                              _pmdEDUCB* cb, SDB_DPSCB *dpscb = NULL ) = 0 ;
+
+      virtual INT32 onUpdate( const CHAR *extName, const BSONObj &orignalObj,
+                              const BSONObj &newObj, _pmdEDUCB* cb,
+                              SDB_DPSCB *dpscb = NULL ) = 0 ;
+
+      virtual INT32 onTruncateCL( const CHAR *csName, const CHAR *clName,
+                                  _pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) = 0 ;
+
+      virtual INT32 onRenameCS( const CHAR *oldCSName, const CHAR *newCSName,
+                                _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) = 0 ;
+
+      virtual INT32 onRenameCL( const CHAR *csName, const CHAR *oldCLName,
+                                const CHAR *newCLName, _pmdEDUCB *cb,
+                                SDB_DPSCB *dpscb = NULL ) = 0 ;
 
       virtual INT32 done( DMS_EXTOPR_TYPE type, _pmdEDUCB *cb,
                           SDB_DPSCB *dpscb = NULL ) = 0 ;

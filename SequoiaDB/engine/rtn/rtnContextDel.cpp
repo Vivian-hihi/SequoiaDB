@@ -372,8 +372,7 @@ namespace engine
                          "rc: %d", pCollectionName, rc ) ;
          }
 
-         rc = extHandler->onDelCL( _mbContext->mb()->_clUniqueID,
-                                   cb, getDPSCB() ) ;
+         rc = extHandler->onDelCL( _su->CSName(), _clShortName, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "External operation on delete cl failed, "
                       "rc: %d", rc ) ;
       }

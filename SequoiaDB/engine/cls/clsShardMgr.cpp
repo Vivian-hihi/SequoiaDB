@@ -2970,12 +2970,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDMGR__BUILDTEXTIDXOBJ ) ;
-      string cappedCSName ;
-      string cappedCLName ;
-
-      rtnExtDataProcessor::genExtDataNames( clInfo->_clUniqueID,
-                                            idxInfo->getIndexName(),
-                                            cappedCSName, cappedCLName ) ;
+      string cappedCLName = string( idxInfo->_extDataName )
+                            + "." + string( idxInfo->_extDataName ) ;
 
       try
       {

@@ -245,7 +245,7 @@ namespace seadapter
          {
             if ( vItr->getVersion() != excludeVer )
             {
-               mItr->second.erase( vItr ) ;
+               metaVec.erase( vItr ) ;
             }
             else
             {
@@ -261,7 +261,7 @@ namespace seadapter
          }
          else
          {
-            mItr++ ;
+            ++mItr ;
          }
       }
    }

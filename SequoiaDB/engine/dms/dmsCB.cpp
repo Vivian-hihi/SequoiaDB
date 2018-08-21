@@ -1702,8 +1702,7 @@ namespace engine
       {
          // If external operation failed, we do not go to error. Manually
          // cleanup may be needed.
-         rc = extHandler->onDelCS( pCSCB->_su->CSUniqueID(), cb,
-                                   removeFile, dpsCB ) ;
+         rc = extHandler->onDelCS( pCSCB->_name, cb, removeFile ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "External operation on delete cs failed, "
@@ -1711,7 +1710,7 @@ namespace engine
          }
          else
          {
-            rc = extHandler->done( DMS_EXTOPR_TYPE_DROPCS, cb, dpsCB ) ;
+            rc = extHandler->done( DMS_EXTOPR_TYPE_DROPCS, cb ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "External done operation failed, rc: %d", rc ) ;
@@ -1859,7 +1858,7 @@ namespace engine
       extHandler = pCSCB->_su->data()->getExtDataHandler() ;
       if ( extHandler )
       {
-         rc = extHandler->onDelCS( pCSCB->_su->CSUniqueID(), cb, TRUE, dpsCB ) ;
+         rc = extHandler->onDelCS( pCSCB->_name, cb, TRUE ) ;
          if ( rc )
          {
             // If external operation failed, we should resume by cancel the
@@ -1964,7 +1963,7 @@ namespace engine
       extHandler = pCSCB->_su->data()->getExtDataHandler() ;
       if ( extHandler )
       {
-         rc = extHandler->done( DMS_EXTOPR_TYPE_DROPCS, cb, dpsCB ) ;
+         rc = extHandler->done( DMS_EXTOPR_TYPE_DROPCS, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "External operation on drop CS[ %s ] failed,"
                       " rc: %d", pName, rc ) ;
       }

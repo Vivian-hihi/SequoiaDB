@@ -399,6 +399,44 @@ namespace engine
       return rs;
    }
 
+   // Append extra fields to index definition. This is added in version 3.0.1,
+   // in order to append an external data name into indexCB(For text index).
+   // As in version 3.0, the name is not stored and was generated every time
+   // when used.
+   // Note: Only append, no existing part of the definition should be modified.
+   INT32 _ixmIndexCB::extendDef( const BSONElement &ele )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      BSONObj newDef ;
+      dmsExtRW extRW ;
+      ixmIndexCBExtent *pExtent = NULL ;
+
+      try
+      {
+         builder.appendElements( _infoObj ) ;
+         builder.append( ele ) ;
+         newDef = builder.done() ;
+
+         extRW = _pIndexSu->extent2RW( _extentID, _extent->_mbID ) ;
+         pExtent = extRW.writePtr<ixmIndexCBExtent>( 0, (UINT32)_pageSize ) ;
+
+         ossMemcpy( ((CHAR *) pExtent) + IXM_INDEX_CB_EXTENT_METADATA_SIZE,
+                    newDef.objdata(), (size_t)newDef.objsize() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "occur unexpected error(%s)", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /*
       Local static variable define
    */

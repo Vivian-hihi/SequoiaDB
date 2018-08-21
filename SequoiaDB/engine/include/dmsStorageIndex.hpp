@@ -45,9 +45,6 @@
 
 using namespace bson ;
 
-// Default Size of the capped collection used by the text index.
-#define DMS_DFT_TEXTINDEX_BUFF_SIZE             (30 * 1024 * 1024 * 1024LL)
-
 namespace engine
 {
 
@@ -141,12 +138,9 @@ namespace engine
          void     decStatFreeSpace ( UINT16 mbID, UINT16 size ) ;
 
       private:
-         INT32    _createIndex( _dmsMBContext *context,
-                                const BSONObj &index,
-                                _pmdEDUCB * cb,
-                                SDB_DPSCB *dpscb,
-                                BOOLEAN isSys,
-                                INT32 sortBufferSize ) ;
+         INT32    _createTextIdx( _dmsMBContext *context,
+                                  const BSONObj &index,
+                                  _pmdEDUCB *cb, BSONObj &newIndex ) ;
 
          // if indexLID == DMS_INALID_EXTENT, it will get from index cb
          INT32    _rebuildIndex ( _dmsMBContext *context,

@@ -65,7 +65,7 @@ namespace engine
       dmsExtentID    _scanExtLID ;
       dmsExtentID    _indexLID ;
       BSONObj        _indexDef ;
-      CHAR           _extDataName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
+      CHAR           _extDataName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
 
       _monIndex()
       {
@@ -73,7 +73,7 @@ namespace engine
          _version = 0 ;
          _scanExtLID = -1 ;
          _indexLID = -1 ;
-         ossMemset( _extDataName, 0, DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
+         ossMemset( _extDataName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
       }
 
       OSS_INLINE const CHAR *getIndexName () const
@@ -127,7 +127,7 @@ namespace engine
 
       OSS_INLINE const CHAR* getExtDataName() const
       {
-         return _extDataName ;
+         return _indexDef.getStringField( FIELD_NAME_EXT_DATA_NAME ) ;
       }
    } ;
 
