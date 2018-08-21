@@ -1780,3 +1780,28 @@ class client(object):
         rc = sdb.sdb_reload_config(self._client, bson_options)
         raise_if_error(rc, "Failed to reload config")
 
+    def set_pdlevel(self, level, options=None):
+        """Set PD log level of node.
+
+        Parameters:
+            Name         Type     Info
+            level        int      PD log level, the value can be 0~5.
+                                  0: SEVERE
+                                  1: ERROR
+                                  2: EVENT
+                                  3: WARNING
+                                  4: INFO
+                                  5: DEBUG
+            options      dict     Command location parameters.
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        bson_options = None
+        if options is not None:
+            if not isinstance(options, dict):
+                raise SDBTypeError("options must be an instance of dict")
+            bson_options = bson.BSON.encode(options)
+        if not isinstance(level, int) or not (0 <= level <= 5):
+            raise SDBTypeError("session_id must be an instance of int and in the range [0, 5]")
+        rc = sdb.sdb_set_pdlevel(self._client, level, bson_options)
+        raise_if_error(rc, "Failed to set pd level[%d] in %s" % (level, str(options)))
