@@ -41,7 +41,6 @@
 #include "../bson/lib/md5.hpp"
 
 #define RTN_TEXTIDX_MAX_NUM        64
-#define DMS_MAX_EXT_NAME_SIZE      DMS_COLLECTION_SPACE_NAME_SZ
 
 namespace engine
 {

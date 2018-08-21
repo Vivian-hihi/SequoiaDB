@@ -384,7 +384,7 @@ namespace engine
    {
       ossMemset( _collectionName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
       ossMemset( _idxName, 0, IXM_INDEX_NAME_SIZE + 1 ) ;
-      ossMemset( _extDataName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
+      ossMemset( _extDataName, 0, DMS_MAX_EXT_NAME_SIZE + 1 ) ;
    }
 
    _dmsIndexExtBuilder::~_dmsIndexExtBuilder()
@@ -409,7 +409,7 @@ namespace engine
                   DMS_COLLECTION_NAME_SZ + 1 ) ;
       ossStrncpy( _idxName, _indexCB->getName(), IXM_INDEX_NAME_SIZE + 1 ) ;
       ossStrncpy( _extDataName, _indexCB->getExtDataName(),
-                  DMS_COLLECTION_NAME_SZ + 1 ) ;
+                  DMS_MAX_EXT_NAME_SIZE + 1 ) ;
       _keyDef = _indexCB->keyPattern() ;
 
       // We are going to create the capped cs and cl. During the whole process,

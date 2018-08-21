@@ -3219,7 +3219,7 @@ namespace engine
               && IXM_INDEX_FLAG_NORMAL == indexCB.getFlag() )
          {
             ossStrncpy( indexItem._extDataName, indexCB.getExtDataName(),
-                        DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
+                        DMS_MAX_EXT_NAME_SIZE + 1 ) ;
          }
 
          // add
