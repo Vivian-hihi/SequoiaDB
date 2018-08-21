@@ -6,9 +6,11 @@
 ****************************************************/
 
 var analyzeCsName = "analyze14229";
-db.createCS( analyzeCsName );
+commDropCS( db, analyzeCsName, /*ignoreNotExist*/true );
+commCreateCS( db, analyzeCsName, /*ignoreExisted*/false );
 var nonAnalyzeCsName = "nonAnalyze14229";
-db.createCS( nonAnalyzeCsName );
+commDropCS( db, nonAnalyzeCsName, /*ignoreNotExist*/true );
+commCreateCS( db, nonAnalyzeCsName, /*ignoreExisted*/false );
 
 var clNumPerCs = 2;
 var analyzeClArray = [];
@@ -38,5 +40,5 @@ for( var i = 0; i < analyzeClArray.length; i++ )
 for( var i = 0; i < nonAnalyzeClArray.length; i++ )
    checkScanTypeByExplain( nonAnalyzeClArray[i], "ixscan" ) ;
 
-db.dropCS( analyzeCsName );
-db.dropCS( nonAnalyzeCsName );
+commDropCS( db, analyzeCsName, /*ignoreNotExist*/false );
+commDropCS( db, nonAnalyzeCsName, /*ignoreNotExist*/false );
