@@ -82,3 +82,28 @@
   ------------------------------------------------------------
   安装程序已经完成安装 SequoiaSQL MySQL Server 于你的电脑中.
   ```
+
+##SequoiaSQL MySQL实例管理##
+
+#####注意: 安装完成后实例已经自动启动，无需执行以下启动步骤。
+
+安装SequoiaSQL MySQL时，会自动添加默认实例，默认端口号为3306，默认数据目录为安装路径下的data3306.
+
+1. 启动实例
+
+ ```lang-javascript
+ # /opt/sequoiasql/mysql/bin/sdb_mysql_ctl start 3306
+ ```
+
+2. 停止实例
+
+ ```lang-javascript
+ # /opt/sequoiasql/mysql/bin/sdb_mysql_ctl stop 3306
+ ```
+
+3. 查看实例状态
+
+ ```lang-javascript
+ # /opt/sequoiasql/mysql/bin/sdb_mysql_ctl status 3306
+ ```
+ 
