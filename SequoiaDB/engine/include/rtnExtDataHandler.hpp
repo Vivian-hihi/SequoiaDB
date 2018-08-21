@@ -84,8 +84,6 @@ namespace engine
    protected:
       typedef vector< rtnExtDataProcessor * > EDP_VEC ;
       typedef EDP_VEC::iterator EDP_VEC_ITR ;
-      typedef vector< BSONObj > OBJ_VEC ;
-      typedef OBJ_VEC::iterator OBJ_VEC_ITR ;
 
       DMS_EXTOPR_TYPE         _type ;
       UINT32                  _id ;
@@ -316,10 +314,6 @@ namespace engine
                           SDB_DPSCB *dpscb = NULL ) ;
 
       virtual INT32 abortOperation( DMS_EXTOPR_TYPE type, _pmdEDUCB *cb ) ;
-
-   private:
-      INT32 _prepareCSAndCL( const CHAR *csName, const CHAR *clName,
-                             pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
 
    private:
       rtnExtDataProcessorMgr  *_edpMgr ;
