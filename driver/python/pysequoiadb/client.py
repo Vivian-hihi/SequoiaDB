@@ -1805,3 +1805,22 @@ class client(object):
             raise SDBTypeError("session_id must be an instance of int and in the range [0, 5]")
         rc = sdb.sdb_set_pdlevel(self._client, level, bson_options)
         raise_if_error(rc, "Failed to set pd level[%d] in %s" % (level, str(options)))
+
+    def force_stepup(self, options=None):
+        """Force a slave node to be master.
+
+        Parameters:
+            Name         Type     Info
+            options      dict     The control parameters:
+                                  Seconds: (Type: int) Duration to be master. Default is 120.
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        bson_options = None
+        if options is not None:
+            if not isinstance(options, dict):
+                raise SDBTypeError("options must be an instance of dict")
+            bson_options = bson.BSON.encode(options)
+
+        rc = sdb.sdb_force_stepup(self._client, bson_options)
+        raise_if_error(rc, "Failed to force step up")

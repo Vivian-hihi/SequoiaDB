@@ -1600,6 +1600,34 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
+__METHOD_IMP(sdb_force_stepup)
+{
+    INT32 rc                    = 0 ;
+    PYOBJECT *obj               = NULL ;
+    PYOBJECT *bson_option       = NULL ;
+    sdb *client                 = NULL ;
+    const bson::BSONObj *option = NULL ;
+
+    if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_option ) )
+    {
+       rc = SDB_INVALIDARGS ;
+       goto done ;
+    }
+
+    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+    CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
+
+    rc = client->forceStepUp( *option ) ;
+    if ( rc )
+    {
+       goto done ;
+    }
+
+done:
+   DELETE_CPPOBJECT( option ) ;
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 ///< implement collection space
 __METHOD_IMP(create_cs)
 {
@@ -4847,6 +4875,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"sdb_force_session",               sdb_force_session,               METH_VARARGS},
    {"sdb_reload_config",               sdb_reload_config,               METH_VARARGS},
    {"sdb_set_pdlevel",                 sdb_set_pdlevel,                 METH_VARARGS},
+   {"sdb_force_stepup",                sdb_force_stepup,                METH_VARARGS},
 
    /** cs */
    {"create_cs",                       create_cs,                       METH_VARARGS},

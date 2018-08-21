@@ -61,6 +61,7 @@ __METHOD_DECLARE(sdb_clear_last_error) ;
 __METHOD_DECLARE(sdb_force_session) ;
 __METHOD_DECLARE(sdb_reload_config) ;
 __METHOD_DECLARE(sdb_set_pdlevel) ;
+__METHOD_DECLARE(sdb_force_stepup) ;
 
 ///< collection space
 __METHOD_DECLARE(create_cs) ;
