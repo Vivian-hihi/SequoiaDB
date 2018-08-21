@@ -407,11 +407,11 @@
             var formValue = $scope.CreateIndexWindow['config'].getValue() ;
             if( formValue['type'] == 'normal' )
             {
-               sql = sprintf( 'create index on ?', SdbSwap.tbName ) ; 
+               sql = sprintf( 'create index on ?', addQuotes( SdbSwap.tbName ) ) ; 
             }
             else
             {
-               sql = sprintf( 'create unique index on ?', SdbSwap.tbName ) ; 
+               sql = sprintf( 'create unique index on ?', addQuotes( SdbSwap.tbName ) ) ; 
             }
             var isFrist = true ;
             var existList = {} ;
@@ -429,7 +429,7 @@
                      if( existList[field['field']] )
                      sql += ',' ;
                   }
-                  sql += field['field'] ;
+                  sql += addQuotes( field['field'] ) ;
                }
             } ) ;
             sql += ')' ;
@@ -480,7 +480,7 @@
             $scope.DropIndexWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
                var formValue = $scope.DropIndexWindow['config'].getValue() ;
                var sql = '' ;
-               sql = sprintf( 'drop index ?', formValue['index'] ) ;
+               sql = sprintf( 'drop index ?', addQuotes( formValue['index'] ) ) ;
                execSql( sql ) ;
                $scope.DropIndexWindow['callback']['Close']() ;
             } ) ;

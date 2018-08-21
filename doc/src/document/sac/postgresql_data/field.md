@@ -24,12 +24,20 @@
 从字段列表中选择需要删除默认值的字段，点击该行中的编辑图标，选择删除默认值即可对字段默认值进行删除操作。
 ![删除默认值](sac/data_operation/PostgreSQL/drop_default.png)
 
+###创建索引
+点击页面中的索引操作按钮、创建索引，选择需要设置的字段，点击确定即可。
+![创建索引](sac/data_operation/PostgreSQL/create_index.png)
+
+###删除索引
+点击页面中的索引操作按钮、删除索引，选择需要删除的索引，点击确定即可删除。
+![删除索引](sac/data_operation/PostgreSQL/drop_index.png)
+
 ###设置主键
-点击页面中的设置主键按钮，选择需要设置为主键的字段，点击确定即可。
+点击页面中的索引操作按钮、设置主键，选择需要设置为主键的字段，点击确定即可。
 ![设置主键](sac/data_operation/PostgreSQL/set_primary.png)
 
 ###移除主键
-点击页面中的移除主键按钮，点击确定即可删除当前表的主键。
+点击页面中的索引操作按钮、移除主键，点击确定即可删除当前表的主键。
 ![移除主键](sac/data_operation/PostgreSQL/drop_primary.png)
 
 > ***Note：***
