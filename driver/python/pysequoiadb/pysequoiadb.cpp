@@ -1514,6 +1514,35 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
+__METHOD_IMP(sdb_force_session)
+{
+    INT32 rc                    = 0 ;
+    PYOBJECT *obj               = NULL ;
+    PYOBJECT *bson_option       = NULL ;
+    sdb *client                 = NULL ;
+    INT64 sessionID             = 0 ;
+    const bson::BSONObj *option = NULL ;
+
+    if ( !PARSE_PYTHON_ARGS( args, "OLO", &obj, &sessionID, &bson_option ) )
+    {
+       rc = SDB_INVALIDARGS ;
+       goto done ;
+    }
+
+    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+    CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
+
+    rc = client->forceSession( sessionID, *option ) ;
+    if ( rc )
+    {
+       goto done ;
+    }
+
+done:
+   DELETE_CPPOBJECT( option ) ;
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 ///< implement collection space
 __METHOD_IMP(create_cs)
 {
@@ -4758,6 +4787,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"sdb_invalidate_cache",            sdb_invalidate_cache,            METH_VARARGS},
    {"sdb_get_last_error",              sdb_get_last_error,              METH_VARARGS},
    {"sdb_clear_last_error",            sdb_clear_last_error,            METH_VARARGS},
+   {"sdb_force_session",               sdb_force_session,               METH_VARARGS},
 
    /** cs */
    {"create_cs",                       create_cs,                       METH_VARARGS},

@@ -1741,3 +1741,21 @@ class client(object):
 
         rc = sdb.sdb_invalidate_cache(self._client, bson_options)
         raise_if_error(rc, "Failed to invalidate cache")
+
+    def force_session(self, session_id, options=None):
+        """Terminate current operation of the specified session.
+
+        Parameters:
+            Name         Type     Info
+            session_id   int/long The id of session whose current operation is to be terminated.
+            options      dict     Command location parameters.
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        bson_options = None
+        if options is not None:
+            if not isinstance(options, dict):
+                raise SDBTypeError("options must be an instance of dict")
+            bson_options = bson.BSON.encode(options)
+        rc = sdb.sdb_force_session(self._client, session_id, bson_options)
+        raise_if_error(rc, "Failed to force session[%d] in %s" % (session_id, str(options)))
