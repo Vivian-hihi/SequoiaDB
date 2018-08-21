@@ -717,10 +717,16 @@ namespace engine
       }
 
       compressor = getCompressorByType( type ) ;
-      if ( NULL != compressor )
+      SDB_ASSERT( compressor, "compressor pointer should not be NULL" ) ;
+      if ( !compressor )
       {
-         _compressorEntry[mbID].setCompressor( compressor ) ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Failed to get compressor for collection[%s], "
+                 "type: %d, rc: %d", _dmsMME->_mbList[mbID]._collectionName,
+                 type, rc ) ;
+         goto error ;
       }
+      _compressorEntry[mbID].setCompressor( compressor ) ;
 
       if ( DMS_INVALID_EXTENT != dictExtID )
       {
@@ -875,7 +881,7 @@ namespace engine
             /*
              * In version before 2.0, the byte _compressorType is taking now was
              * set to 0. But in the new version, 0 means using snappy to
-             * compress. So during the upgrading, set the _comrpessorType to -1
+             * compress. So during the upgrading, set the _comrpessorType to 255
              * ( UTIL_COMPRESSOR_INVALID).
              */
             if ( upgradeDictInfo
@@ -948,7 +954,9 @@ namespace engine
       /* Initialize compressor entries for collections. */
       for ( UINT16 i = 0 ; i < DMS_MME_SLOTS ; ++i )
       {
-         if ( DMS_IS_MB_INUSE( _dmsMME->_mbList[i]._flag ) )
+         if ( DMS_IS_MB_INUSE ( _dmsMME->_mbList[i]._flag ) &&
+              OSS_BIT_TEST( _dmsMME->_mbList[i]._attributes,
+                            DMS_MB_ATTR_COMPRESSED ) )
          {
             rc = _initCompressorEntry( i ) ;
             PD_RC_CHECK( rc, PDERROR,
@@ -2054,6 +2062,7 @@ namespace engine
                  attributes, compressionType ) ;
       _mbStatInfo[ newCollectionID ].reset() ;
       _mbStatInfo[ newCollectionID ]._startLID = logicalID ;
+	  _compressorEntry[ newCollectionID ].reset() ;
 
       _dmsHeader->_numMB++ ;
       _collectionNameInsert( pName, newCollectionID, clUniqueID ) ;
@@ -2490,7 +2499,7 @@ namespace engine
          handler = getExtDataHandler() ;
          if ( handler )
          {
-            rc = handler->onTruncateCL( getSuName(), 
+            rc = handler->onTruncateCL( getSuName(),
                                         context->mb()->_collectionName, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "External operation on truncate "
                          "collection failed, rc: %d", rc ) ;
