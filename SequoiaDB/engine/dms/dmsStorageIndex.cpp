@@ -578,6 +578,7 @@ namespace engine
       UINT16 indexType             = 0 ;
       BOOLEAN isTextIndex          = FALSE ;
       BSONObj finalIndex ;
+      BSONObj extraFieldsObj ;
 
       if ( !ixmIndexCB::validateKey ( index, isSys ) )
       {
@@ -668,6 +669,11 @@ namespace engine
       {
          rc = _createTextIdx( context, index, cb, finalIndex ) ;
          PD_RC_CHECK( rc, PDERROR, "Create text index failed, rc: %d", rc ) ;
+         // In replication log, we don't want the external name. Otherwise the
+         // key validation on slave will fail. So we do some filter here.
+         // extraObject contains fields added by _createTextIdx. They will be
+         // removed before writing the log blow.
+         extraFieldsObj = finalIndex.filterFieldsUndotted( index, false ) ;
       }
       else
       {
@@ -691,7 +697,18 @@ namespace engine
          //set logical id
          indexLID = context->mb()->_indexHWCount ;
          indexCB.setLogicalID( indexLID ) ;
-         indexDef = indexCB.getDef().getOwned() ;
+         // Get the index definition from indexCB instead of using index
+         // directly, because extra fields may have been added to the
+         // definition. For example, _id is added on primary node.
+         indexDef = indexCB.getDef() ;
+
+         if ( isTextIndex )
+         {
+            // Remove extra fields added by callback functions.
+            indexDef = indexDef.filterFieldsUndotted( extraFieldsObj, false ) ;
+         }
+
+         indexDef.getOwned() ;
 
          // calc the reserve size
          if ( dpscb )
@@ -1205,6 +1222,9 @@ namespace engine
       goto done ;
    }
 
+   // finalIndex: For text index, the definition may be changed in callback
+   //             function. Currently 'ExtDataName' is added. The updated
+   //             definition will be copied into the meta page.
    INT32 _dmsStorageIndex::_createTextIdx( dmsMBContext *context,
                                            const BSONObj &index,
                                            pmdEDUCB *cb,
