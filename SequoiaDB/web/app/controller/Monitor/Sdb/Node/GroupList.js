@@ -24,7 +24,7 @@
       //分区组列表
       $scope.GroupList = [] ;
       $scope.clList = [] ;
-      $scope.NumConnects = '-' ;
+      $scope.NumConnects = 0 ;
       //新表格
       $scope.GroupTable = {
          'title': {
@@ -157,7 +157,6 @@
                if( dbInfo.length > 0 )
                {
                   dbInfo = dbInfo[0] ;
-                  $scope.NumConnects = dbInfo['TotalNumConnects'] ;
                   if( dbInfo['NodeName'] != hostname + ':' + svcname ) //om虽然连接成功，但是已经切换到其他coord节点了，所以还是失败的
                   {
                      groupInfo['ErrNodes'].push( { 'NodeName': hostname + ':' + svcname, 'Flag': -15 } ) ;
@@ -167,6 +166,33 @@
             'failed':function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   getCoordStatus( groupInfo, nodesInfo, hostname, svcname ) ;
+                  return true ;
+               } ) ;
+            }
+         },{
+            'showLoading': false
+         } ) ;
+      }
+
+      //获取coord连接数
+      var getConnectionNum = function(){
+         var sql = 'SELECT TotalNumConnects FROM $SNAPSHOT_DB WHERE Role = "coord"' ;
+         SdbRest.Exec( sql, {
+            'success': function( result ){
+               if( result.length > 0 )
+               {
+                  $scope.NumConnects = 0 ;
+                  $.each( result, function( index, info ){
+                     if( typeof( info['ErrNodes'] ) == 'undefined' )
+                     {
+                        $scope.NumConnects += info['TotalNumConnects'] ;
+                     }
+                  } ) ;
+               }
+            }, 
+            'failed':function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getConnectionNum() ;
                   return true ;
                } ) ;
             }
@@ -313,6 +339,7 @@
          SdbRest.DataOperation( data, {
             'success':function( groups ){
                $scope.GroupList = groups ;
+               getConnectionNum() ;
                getClInfo() ;
             },
             'failed': function( errorInfo ){
