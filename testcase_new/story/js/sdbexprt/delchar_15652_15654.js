@@ -24,19 +24,18 @@ function main()
   	//16进制与字母混合多字符分隔符
    	testExprtDelcharJson("abc0x2A0x3f", clname) ;
    	checkResultByImprtJson("abc*?", clname1, cl1);
-   	//优化后可以尽量识别可识别的字符
    	testExprtDelcharJson("0x2Aabc0x3f", clname) ;
    	checkResultByImprtJson("'*abc?'", clname1, cl1);
    	//10进制ascii码和字母混合分隔符
    	testExprtDelcharJson("\\\\107a", clname) ;
    	checkResultByImprtJson("'ka'", clname1, cl1)
-   	//10进制ascii码和数字混合分隔符（优化，尽量识别）
+   	//10进制ascii码和数字混合分隔符
    	testExprtDelcharJson("\\\\1071", clname) ;
    	checkResultByImprtJson("'k1'", clname1, cl1);
    	//16进制分隔符
    	testExprtDelcharJson("0x2A", clname);
    	checkResultByImprtJson("'*'", clname1, cl1);
-   	//不能识别的分隔符，保持原样
+   	//不能识别的分隔符
    	testExprtDelcharJson("0xx", clname) ;
    	checkResultByImprtJson("'0xx'", clname1, cl1);
    	//汉字分隔符
@@ -47,19 +46,18 @@ function main()
    	//16进制与字母混合多字符分隔符
    	testExprtDelcharCsv("abc0x2A0x3f", clname) ;
    	checkResultByImprtCsv("abc*?", clname1, cl1);
-   	//优化后可以尽量识别可识别的字符
    	testExprtDelcharCsv("0x2Aabc0x3f", clname) ;
    	checkResultByImprtCsv("'*abc?'", clname1, cl1);
    	//10进制ascii码和字母混合分隔符
    	testExprtDelcharCsv("\\\\107a", clname) ;
    	checkResultByImprtCsv("'ka'", clname1, cl1);
-   	//10进制ascii码和数字混合分隔符（优化，尽量识别）
+   	//10进制ascii码和数字混合分隔符
    	testExprtDelcharCsv("\\\\1071",clname) ;
    	checkResultByImprtCsv("'k1'", clname1, cl1);
    	//16进制分隔符
    	testExprtDelcharCsv("0x2A", clname) ;
    	checkResultByImprtCsv("'*'", clname1, cl1);
-   	//不能识别的分隔符，保持原样
+   	//不能识别的分隔符
    	testExprtDelcharCsv("0xx", clname) ;
    	checkResultByImprtCsv("'0xx'", clname1, cl1);
    	//汉字分隔符
