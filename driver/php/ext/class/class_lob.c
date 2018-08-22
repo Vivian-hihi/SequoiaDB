@@ -343,7 +343,6 @@ error:
 
 PHP_METHOD( SequoiaLob, isEof )
 {
-   INT32 rc = SDB_OK ;
    BOOLEAN result   = FALSE ;
    zval *pThisObj   = getThis() ;
    sdbLobHandle lob = SDB_INVALID_HANDLE ;
@@ -356,16 +355,7 @@ PHP_METHOD( SequoiaLob, isEof )
                     SDB_LOB_HANDLE_NAME,
                     lobDesc ) ;
 
-   rc = sdbLobIsEof( lob, &result ) ;
-   if( rc )
-   {
-      goto error ;
-   }
+   result = sdbLobIsEof( lob ) ;
 
-done:
    RETVAL_BOOL( result ) ;
-   return ;
-error:
-   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
-   goto done ;
 }
