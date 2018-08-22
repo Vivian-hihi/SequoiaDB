@@ -491,7 +491,6 @@ namespace engine
       // smoothly. Set set the index as CREATING and it will be set as NORMAL
       // in _finish() of dmsIndexRebuilder.
       _indexCB->setFlag( IXM_INDEX_FLAG_CREATING ) ;
-      _mbContext->mbStat()->_textIdxNum++ ;
 
    done:
       if ( mbLocked )

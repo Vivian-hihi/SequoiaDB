@@ -3068,6 +3068,7 @@ namespace engine
       BSONObj infoObj ;
       BSONObjBuilder builder ;
       BOOLEAN isPrimary = pmdIsPrimary() ;
+      INT32 totalTextIdxNum = 0 ;
 
       try
       {
@@ -3102,24 +3103,36 @@ namespace engine
                         continue ;
                      }
                      // Only dump text indices in normal status.
-                     if ( IXM_INDEX_FLAG_NORMAL == idxItr->_indexFlag &&
-                          IXM_EXTENT_TYPE_TEXT == idxType )
+                     if ( IXM_EXTENT_TYPE_TEXT == idxType )
                      {
-                        BSONObjBuilder subBuilder( indexObjs.subobjStart() ) ;
-                        rc = _buildTextIdxObj( &*csItr, &*clItr, &*idxItr,
-                                               subBuilder ) ;
-                        if ( rc )
+                        // The engine and the adapter use text version to know
+                        // changes of text indices. On engine side, the version
+                        // is increased during rebuilding, before the index is
+                        // marked as NORMAL. In that case, the adapter should
+                        // request for the information again in next round. So
+                        // we send the total text index number. Adapter should
+                        // check it to know whether all text index information
+                        // has been sent.
+                        ++totalTextIdxNum ;
+                        if ( IXM_INDEX_FLAG_NORMAL == idxItr->_indexFlag )
                         {
-                           PD_LOG( PDERROR, "Build text index object failed[ %d ]",
-                                   rc ) ;
-                           // do not goto error, continue with the remainning
-                           // indices
+                           BSONObjBuilder subBuilder( indexObjs.subobjStart() ) ;
+                           rc = _buildTextIdxObj( &*csItr, &*clItr, &*idxItr,
+                                                  subBuilder ) ;
+                           if ( rc )
+                           {
+                              PD_LOG( PDERROR, "Build text index object failed[ %d ]",
+                                      rc ) ;
+                              // do not goto error, continue with the remainning
+                              // indices
+                           }
                         }
                      }
                   }
                }
             }
             indexObjs.done() ;
+            builder.append( FIELD_NAME_TOTAL_COUNT, totalTextIdxNum ) ;
          }
 
          obj = builder.obj() ;

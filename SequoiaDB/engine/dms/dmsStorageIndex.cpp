@@ -576,7 +576,7 @@ namespace engine
       INT32 rc1                    = 0 ;
       const CHAR *indexName        = NULL ;
       UINT16 indexType             = 0 ;
-      BOOLEAN newTextIdx           = FALSE ;
+      BOOLEAN isTextIndex          = FALSE ;
       BSONObj finalIndex ;
 
       if ( !ixmIndexCB::validateKey ( index, isSys ) )
@@ -663,7 +663,8 @@ namespace engine
          goto error ;
       }
 
-      if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, indexType ) )
+      isTextIndex = IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, indexType ) ;
+      if ( isTextIndex )
       {
          rc = _createTextIdx( context, index, cb, finalIndex ) ;
          PD_RC_CHECK( rc, PDERROR, "Create text index failed, rc: %d", rc ) ;
@@ -791,6 +792,11 @@ namespace engine
                                                  idxItem, cb, dpscb ) ;
       }
 
+      // After everything is done, increase the text index number.
+      if ( isTextIndex )
+      {
+         context->mbStat()->_textIdxNum++ ;
+      }
       /// creating index may cost long time. we mark file dirty again here.
    done :
       if ( 0 != logRecSize )
@@ -806,12 +812,6 @@ namespace engine
       if ( DMS_INVALID_EXTENT != rootExtentID )
       {
          releaseExtent ( rootExtentID ) ;
-      }
-      if ( newTextIdx )
-      {
-         context->mbStat()->_textIdxNum-- ;
-         SDB_ASSERT( 0 == context->mbStat()->_textIdxNum,
-                     "Text index number should be 0" ) ;
       }
       if ( SDB_OK == rc )
       {
@@ -1136,8 +1136,13 @@ namespace engine
             context->mbStat()->_uniqueIdxNum-- ;
          }
 
-         if ( extDataHandler )
+         // Maybe we are deleting the index because of error when creating it.
+         // In that case, the _textIdxNum may have not increase. So we only need
+         // to decrease it when it's greater than 0.
+         if ( extDataHandler && ( context->mbStat()->_textIdxNum > 0 ) )
          {
+            SDB_ASSERT( 1 == context->mbStat()->_textIdxNum,
+                        "Only support 1 text index now" ) ;
             context->mbStat()->_textIdxNum-- ;
          }
 

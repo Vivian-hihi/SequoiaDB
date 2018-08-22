@@ -865,6 +865,7 @@ namespace seadapter
             peerVersion = ele.numberLong() ;
             if ( peerVersion != _localIdxVer )
             {
+               INT32 textIdxNum = obj.getIntField( FIELD_NAME_TOTAL_COUNT ) ;
                BSONElement idxEles = obj.getField( FIELD_NAME_INDEXES ) ;
                if ( EOO == idxEles.type() )
                {
@@ -909,9 +910,21 @@ namespace seadapter
                      _idxMetaCache.unlock( EXCLUSIVE ) ;
                   }
 
-                  PD_LOG( PDDEBUG, "Change local version from [ %d ] to [ %d ]",
-                          _localIdxVer, peerVersion ) ;
-                  _localIdxVer = peerVersion ;
+                  if ( textIdxNum == (INT32)idxElements.size() )
+                  {
+                     PD_LOG( PDDEBUG, "Change local version from [ %d ] to [ %d ]",
+                             _localIdxVer, peerVersion ) ;
+                     _localIdxVer = peerVersion ;
+                  }
+                  else
+                  {
+                     PD_LOG( PDWARNING, "Not all text indices information are "
+                                        "received. Total: %d, actual received:"
+                                        " %d. Local index version will remain "
+                                        "unchanged. Local: %lld. Peer: %lld",
+                             textIdxNum, idxElements.size(),
+                             _localIdxVer, peerVersion ) ;
+                  }
                   updated = TRUE ;
 
                   _idxMetaCache.lock( EXCLUSIVE ) ;
@@ -1551,6 +1564,8 @@ namespace seadapter
          if ( ( updated && isDataNodePrimary() ) || upgrade ||
               ( !_indexerOn && isDataNodePrimary() ) )
          {
+            PD_LOG( PDEVENT, "Index information updated or data node upgrade. "
+                             "Refresh index tasks") ;
             rc = _idxSessionMgr.refreshTasks( objVec[0] ) ;
             PD_RC_CHECK( rc, PDERROR, "Update text index information failed[ %d ]",
                          rc ) ;
