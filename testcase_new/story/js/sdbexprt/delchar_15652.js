@@ -5,56 +5,73 @@
 * @author      : wangkexin
 * 
 ************************************************************************/
-var csname = COMMCSNAME ;
-var clname = COMMCLNAME + "_sdbexprt15652" ;
-var clname1 = COMMCLNAME + "_sdbimprt15652" ;
-var doc = { a: 1 , b: "exprtTest" } ;
-var expRecs = [ "{\"a\":1,\"b\":\"exprtTest\"}" ] ;
-var cl = commCreateCL( db, csname, clname, 0 ) ;
-var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
+
+
    
 main() ;
 
 function main()
 {
-   cl.insert( doc ) ; 
-  
-   testExprtImprtJson("abc0x2A0x3f","abc*?") ;
-   check()
-   testExprtImprtJson("0x2Aabc0x3f","'*abc?'") ;
-   check()
-   testExprtImprtJson("\\\\107a","'ka'") ;
-   check()
-   testExprtImprtJson("\\\\1071","'k1'") ;
-   check()
-   testExprtImprtJson("0x2A","'*'") ;
-   check()
-   testExprtImprtJson("0xx","'0xx'") ;
-   check()
-   testExprtImprtJson("分隔符","'分隔符'") ;
-   check()
+		var clname = COMMCLNAME + "_sdbexprt15652" ;
+		var clname1 = COMMCLNAME + "_sdbimprt15652" ;
+		var doc = { a: 1 , b: "exprtTest" } ;
+		
+		var cl = commCreateCL( db, COMMCSNAME, clname, 0 ) ;
+		var cl1 = commCreateCL( db, COMMCSNAME, clname1, 0 ) ;
+   	cl.insert( doc ) ; 
    
-   testExprtImprtCsv("abc0x2A0x3f","abc*?") ;
-   check()
-   testExprtImprtCsv("0x2Aabc0x3f","'*abc?'") ;
-   check()
-   testExprtImprtCsv("\\\\107a","'ka'") ;
-   check()
-   testExprtImprtCsv("\\\\1071","'k1'") ;
-   check()
-   testExprtImprtCsv("0x2A","'*'") ;
-   check()
-   testExprtImprtCsv("0xx","'0xx'") ;
-   check()
-   testExprtImprtCsv("分隔符","'分隔符'") ;
-   check()
+  	//JSON文件
+  	//16进制与字母混合多字符分隔符
+   	testExprtImprtJson("abc0x2A0x3f","abc*?",clname,clname1) ;
+   	check(cl1)
+   	//优化后可以尽量识别可识别的字符
+   	testExprtImprtJson("0x2Aabc0x3f","'*abc?'",clname,clname1) ;
+   	check(cl1)
+   	//10进制ascii码和字母混合分隔符
+   	testExprtImprtJson("\\\\107a","'ka'",clname,clname1) ;
+   	check(cl1)
+   	//10进制ascii码和数字混合分隔符（优化，尽量识别）
+   	testExprtImprtJson("\\\\1071","'k1'",clname,clname1) ;
+   	check(cl1)
+   	//16进制分隔符
+   	testExprtImprtJson("0x2A","'*'",clname,clname1) ;
+   	check(cl1)
+   	//不能识别的分隔符，保持原样
+   	testExprtImprtJson("0xx","'0xx'",clname,clname1) ;
+   	check(cl1)
+   	//汉字分隔符
+   	testExprtImprtJson("分隔符","'分隔符'",clname,clname1) ;
+   	check(cl1)
+   
+   	//CSV文件
+   	//16进制与字母混合多字符分隔符
+   	testExprtImprtCsv("abc0x2A0x3f","abc*?",clname,clname1) ;
+   	check(cl1)
+   	//优化后可以尽量识别可识别的字符
+   	testExprtImprtCsv("0x2Aabc0x3f","'*abc?'",clname,clname1) ;
+   	check(cl1)
+   	//10进制ascii码和字母混合分隔符
+   	testExprtImprtCsv("\\\\107a","'ka'",clname,clname1) ;
+   	check(cl1)
+   	//10进制ascii码和数字混合分隔符（优化，尽量识别）
+   	testExprtImprtCsv("\\\\1071","'k1'",clname,clname1) ;
+   	check(cl1)
+   	//16进制分隔符
+   	testExprtImprtCsv("0x2A","'*'",clname,clname1) ;
+   	check(cl1)
+   	//不能识别的分隔符，保持原样
+   	testExprtImprtCsv("0xx","'0xx'",clname,clname1) ;
+   	check(cl1)
+   	//汉字分隔符
+   	testExprtImprtCsv("分隔符","'分隔符'",clname,clname1) ;
+   	check(cl1)
    
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   	commDropCL( db, COMMCSNAME, clname ) ;
+   	commDropCL( db, COMMCSNAME, clname1 ) ;
 }
 
-function testExprtImprtJson(asc,asc1)
+function testExprtImprtJson(asc,asc1,clname,clname1)
 {
    var jsonfile = workDir + "sdbexprt15652.json" ;
    cmd.run( "rm -rf " + jsonfile ) ;
@@ -62,7 +79,7 @@ function testExprtImprtJson(asc,asc1)
    var command = installPath + "bin/sdbexprt" +
                  " -s " + COORDHOSTNAME +
                  " -p " + COORDSVCNAME + 
-                 " -c " + csname + 
+                 " -c " + COMMCSNAME + 
                  " -l " + clname +
                  " --file " + jsonfile + 
                  " --type json" +
@@ -73,7 +90,7 @@ function testExprtImprtJson(asc,asc1)
   command = installPath + "bin/sdbimprt" +
              " -s " + COORDHOSTNAME +
              " -p " + COORDSVCNAME +
-             " -c " + csname +
+             " -c " + COMMCSNAME +
              " -l " + clname1 +
              " --file " + jsonfile +
              " --type json" +
@@ -84,7 +101,7 @@ function testExprtImprtJson(asc,asc1)
   cmd.run( "rm -rf " + jsonfile ) ;
 }
 
-function testExprtImprtCsv(asc ,asc1)
+function testExprtImprtCsv(asc ,asc1,clname,clname1)
 {
    var csvfile = workDir + "sdbexprt15652.csv" ;
    cmd.run( "rm -rf " + csvfile ) ;
@@ -92,7 +109,7 @@ function testExprtImprtCsv(asc ,asc1)
    var command = installPath + "bin/sdbexprt" +
                  " -s " + COORDHOSTNAME +
                  " -p " + COORDSVCNAME + 
-                 " -c " + csname + 
+                 " -c " + COMMCSNAME + 
                  " -l " + clname +
                  " --file " + csvfile + 
                  " --type csv" +
@@ -103,7 +120,7 @@ function testExprtImprtCsv(asc ,asc1)
    command = installPath + "bin/sdbimprt" +
              " -s " + COORDHOSTNAME +
              " -p " + COORDSVCNAME +
-             " -c " + csname +
+             " -c " + COMMCSNAME +
              " -l " + clname1 +
              " --file " + csvfile +
              " --type csv" +
@@ -113,7 +130,8 @@ function testExprtImprtCsv(asc ,asc1)
    testRunCommand( command ) ;
    cmd.run( "rm -rf " + csvfile ) ;
 }
-function check(){
+function check(cl1){
+	var expRecs = [ "{\"a\":1,\"b\":\"exprtTest\"}" ] ;
 	var cursor = cl1.find( {}, { _id: { $include: 0 } } ) ;
   var actRecs = getRecords( cursor ) ;
   checkRecords( expRecs, actRecs ) ;
