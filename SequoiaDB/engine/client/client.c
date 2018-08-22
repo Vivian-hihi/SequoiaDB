@@ -10742,20 +10742,16 @@ error:
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbLobIsEof( sdbLobHandle lobHandle, BOOLEAN *result )
+SDB_EXPORT BOOLEAN sdbLobIsEof( sdbLobHandle lobHandle )
 {
    INT32 rc = SDB_OK ;
+   BOOLEAN result = TRUE ;
+   CLIENT_UNUSED( rc ) ;
    sdbLobStruct *lob = ( sdbLobStruct * )lobHandle ;
-
    HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
-   if ( !result )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   *result = lob->_currentOffset >= lob->_lobSize ? TRUE : FALSE ;
+   result = lob->_currentOffset >= lob->_lobSize ? TRUE : FALSE ;
 done:
-   return rc ;
+   return result ;
 error:
    goto done ;
 }

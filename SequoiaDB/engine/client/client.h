@@ -2618,14 +2618,13 @@ SDB_EXPORT INT32 sdbGetLobCreateTime( sdbLobHandle lobHandle,
 SDB_EXPORT INT32 sdbGetLobModificationTime( sdbLobHandle lobHandle,
                                             UINT64 *millis ) ;
 
-/** \fn INT32 sdbLobIsEof( sdbLobHandle lobHandle, BOOLEAN *result )
+/** \fn BOOLEAN sdbLobIsEof( sdbLobHandle lobHandle )
     \brief Check whether current offset has reached to the max size of current lob.
     \param [in] lobHandle The large object handle
-    \param [out] result Return true if yes while false for not.
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
+    \retval Return true if yes while false for not, 
+            while the input handle is invalid, return true.
 */
-SDB_EXPORT INT32 sdbLobIsEof( sdbLobHandle lobHandle, BOOLEAN *result ) ;
+SDB_EXPORT BOOLEAN sdbLobIsEof( sdbLobHandle lobHandle ) ;
 
 
 /** \fn INT32 sdbSeekLob( sdbLobHandle lobHandle,
