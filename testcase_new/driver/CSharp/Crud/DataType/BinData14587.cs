@@ -47,7 +47,7 @@ namespace CSharp.Crud.DataType
             validDocs = new List<BsonDocument> 
             {
                 new BsonDocument("zeroBin", new BsonBinaryData(new byte[0])),
-                new BsonDocument("bigBin", new BsonBinaryData(new byte[2 * 1024 * 1024], BsonBinarySubType.Binary)), // max document size is 4M
+                new BsonDocument("bigBin", new BsonBinaryData(new byte[15 * 1024 * 1024], BsonBinarySubType.Binary)),
                 new BsonDocument("udfBin", new BsonBinaryData(new byte[16], BsonBinarySubType.UserDefined)),
                 new BsonDocument("zeroBson", new BsonDocument { { "$binary", "" }, { "$type", 1 } }),
                 new BsonDocument("normalBson", new BsonDocument { { "$binary", "aGVsbG8gd29ybGQ="}, { "$type", 1 } }),

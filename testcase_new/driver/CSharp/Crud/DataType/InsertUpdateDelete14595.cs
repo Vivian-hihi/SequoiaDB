@@ -86,27 +86,18 @@ namespace CSharp.Crud.DataType
             }
         }
 
-        private List<BsonDocument> InsertDatas(int len)
+        private void InsertDatas(int len)
         {
-            List<BsonDocument> dataList = new List<BsonDocument>();
             for (int i = 0; i < len; i++)
             {
-                //insert  4M  string   data
-                string str = "11111111";
-                while (System.Text.Encoding.ASCII.GetBytes(str).Length / 1048576 < 2)
-                {
-                    str += str;
-                }
+                string str = "";
+                str.PadRight((15 * 1024 * 1024), '1');
                 BsonDocument strObject = new BsonDocument();
                 strObject.Add("obj", str);
                 strObject.Add("age", 24);
                 strObject.Add("str1", "zhangsan"+i);
-                dataList.Add(strObject);
+                cl.Insert(strObject);
             }
-
-            cl.BulkInsert(dataList, 0);
-            
-            return dataList;
         }
 
     }

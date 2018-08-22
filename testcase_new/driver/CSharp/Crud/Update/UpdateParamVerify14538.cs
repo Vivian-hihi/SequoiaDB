@@ -56,17 +56,16 @@ namespace CSharp.Crud.Update
                     throw e;
             }
 
-            // TODO: fail for SEQUOIADBMAINSTREAM-3340
-            //try
-            //{
-            //    cl.Update(/*DBQuery*/null);
-            //    Assert.Fail("update shouldn't succeed when DBQuery is null");
-            //}
-            //catch (BaseException e)
-            //{
-            //    if (e.ErrorCode != -6) // SDB_INVALID_ARG
-            //        throw e;
-            //}
+            try
+            {
+                cl.Update(/*DBQuery*/null);
+                Assert.Fail("update shouldn't succeed when DBQuery is null");
+            }
+            catch (BaseException e)
+            {
+                if (e.ErrorCode != -6) // SDB_INVALID_ARG
+                    throw e;
+            }
         }
 
         [TestMethod()]
