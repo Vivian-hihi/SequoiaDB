@@ -422,7 +422,7 @@
                         }
                         else
                         {
-                           sql += ' AND ' ;
+                           sql += sprintf( ' ? ', formValue['filter']['model'] ) ;
                         }
                         switch( operate )
                         {
@@ -693,7 +693,7 @@
                         }
                         else
                         {
-                           sql += ' ' + formValue['filter']['model'] + ' ' ;
+                           sql += sprintf( ' ? ', formValue['filter']['model'] ) ;
                         }
 
                         switch( filterInfo['logic'] )
@@ -973,7 +973,7 @@
                         }
                         else
                         {
-                           condition += ' AND ' ;
+                           condition += sprintf( ' ? ', formValue['filter']['model'] ) ;
                         }
                         switch( operate )
                         {
@@ -1101,7 +1101,7 @@
             $.each( fieldList, function( index, fieldInfo ){
                var insertLine = [
                   { 'type': 'textual', 'value': fieldInfo['COLUMN_NAME'] },
-                  { 'type': 'textual', 'value': fieldInfo['data_type'] },
+                  { 'type': 'textual', 'value': fieldInfo['DATA_TYPE'] },
                   { 'type': 'string', 'value': data[fieldInfo['COLUMN_NAME']] }
                ] ;
                $scope.EditWindow['config']['inputList'].push( insertLine ) ;

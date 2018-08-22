@@ -450,7 +450,7 @@
                         }
                         else
                         {
-                           sql += ' AND ' ;
+                           sql += sprintf( ' ? ', formValue['filter']['model'] ) ;
                         }
                         switch( operate )
                         {
@@ -721,7 +721,7 @@
                         }
                         else
                         {
-                           sql += ' ' + formValue['filter']['model'] + ' ' ;
+                           sql += sprintf( ' ? ', formValue['filter']['model'] ) ;
                         }
 
                         switch( filterInfo['logic'] )
@@ -1001,7 +1001,7 @@
                         }
                         else
                         {
-                           condition += ' AND ' ;
+                           condition += sprintf( ' ? ', formValue['filter']['model'] ) ;
                         }
                         switch( operate )
                         {
