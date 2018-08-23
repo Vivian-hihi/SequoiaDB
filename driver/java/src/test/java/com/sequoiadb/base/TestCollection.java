@@ -3,7 +3,9 @@ package com.sequoiadb.base;
 import com.sequoiadb.test.SingleCSTestCase;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;

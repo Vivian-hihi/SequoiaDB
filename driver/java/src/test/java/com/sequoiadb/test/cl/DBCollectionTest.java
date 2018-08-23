@@ -10,6 +10,7 @@ import com.sequoiadb.testdata.TotalReadValue;
 import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.util.JSON;
 import org.junit.*;
@@ -653,6 +654,59 @@ public class DBCollectionTest {
         options.put("Role", "coord");
         sdb.invalidateCache(null);
         sdb.invalidateCache(options);
+    }
+
+    @Test
+    public void testBSONTimestamp() {
+        BSONTimestamp ts1 = new BSONTimestamp(10000, 1000000);
+        Assert.assertEquals(10001, ts1.getTime());
+        Assert.assertEquals(0, ts1.getInc());
+
+        BSONTimestamp ts2 = new BSONTimestamp(10000, -1);
+        Assert.assertEquals(9999, ts2.getTime());
+        Assert.assertEquals(999999, ts2.getInc());
+
+        BSONTimestamp ts3 = new BSONTimestamp(10000, 0);
+        Assert.assertEquals(10000, ts3.getTime());
+        Assert.assertEquals(0, ts3.getInc());
+
+        BSONTimestamp ts4 = new BSONTimestamp(10000, 999999);
+        Assert.assertEquals(10000, ts4.getTime());
+        Assert.assertEquals(999999, ts4.getInc());
+
+        int time = 1534942305;
+        int inc = 123456789;
+        int incSec = 123456789 / 1000000;
+        int incMSec = 123456789 % 1000000;
+        int incMSec2 = 1000000 - incMSec;
+        BSONTimestamp ts5 = new BSONTimestamp(time, inc);
+        Assert.assertEquals(time + incSec, ts5.getTime());
+        Assert.assertEquals(incMSec, ts5.getInc());
+
+        BSONTimestamp ts6 = new BSONTimestamp(time, -inc);
+        Assert.assertEquals(time - incSec - 1, ts6.getTime());
+        Assert.assertEquals(incMSec2, ts6.getInc());
+
+        BSONTimestamp ts7 = new BSONTimestamp(-time, inc);
+        Assert.assertEquals(-time + incSec, ts7.getTime());
+        Assert.assertEquals(incMSec, ts7.getInc());
+
+        BSONTimestamp ts8 = new BSONTimestamp(-time, -inc);
+        Assert.assertEquals(-time - incSec - 1, ts8.getTime());
+        Assert.assertEquals(incMSec2, ts8.getInc());
+
+        BasicBSONObject object = new BasicBSONObject();
+        object.append("ts1", ts1).
+                append("ts2", ts2).
+                append("ts3", ts3).
+                append("ts4", ts4).
+                append("ts5", ts5).
+                append("ts6", ts6).
+                append("ts7", ts7).
+                append("ts8", ts8);
+        cl.insert(object);
+        BSONObject result = cl.queryOne();
+        System.out.println("result is: " + result);
     }
 
 }

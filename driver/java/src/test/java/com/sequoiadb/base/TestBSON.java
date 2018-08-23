@@ -248,19 +248,41 @@ public class TestBSON {
 
     @Test
     public void testBSONTimestampInc() {
-        try {
-            BSONTimestamp timestamp = new BSONTimestamp(10000, 1000000);
-            Assert.fail();
-        } catch (IllegalArgumentException e) {
-            //e.printStackTrace();
-        }
-        try {
-            BSONTimestamp timestamp = new BSONTimestamp(10000, -1);
-            Assert.fail();
-        } catch (IllegalArgumentException e) {
-            //e.printStackTrace();
-        }
-        BSONTimestamp timestamp1 = new BSONTimestamp(10000, 0);
-        BSONTimestamp timestamp2 = new BSONTimestamp(10000, 999999);
+        BSONTimestamp ts1 = new BSONTimestamp(10000, 1000000);
+        Assert.assertEquals(10001, ts1.getTime());
+        Assert.assertEquals(0, ts1.getInc());
+
+        BSONTimestamp ts2 = new BSONTimestamp(10000, -1);
+        Assert.assertEquals(9999, ts2.getTime());
+        Assert.assertEquals(999999, ts2.getInc());
+
+        BSONTimestamp ts3 = new BSONTimestamp(10000, 0);
+        Assert.assertEquals(10000, ts3.getTime());
+        Assert.assertEquals(0, ts3.getInc());
+
+        BSONTimestamp ts4 = new BSONTimestamp(10000, 999999);
+        Assert.assertEquals(10000, ts4.getTime());
+        Assert.assertEquals(999999, ts4.getInc());
+
+        int time = 1534942305;
+        int inc = 123456789;
+        int incSec = 123456789 / 1000000;
+        int incMSec = 123456789 % 1000000;
+        int incMSec2 = 1000000 - incMSec;
+        BSONTimestamp ts5 = new BSONTimestamp(time, inc);
+        Assert.assertEquals(time + incSec, ts5.getTime());
+        Assert.assertEquals(incMSec, ts5.getInc());
+
+        BSONTimestamp ts6 = new BSONTimestamp(time, -inc);
+        Assert.assertEquals(time - incSec - 1, ts6.getTime());
+        Assert.assertEquals(incMSec2, ts6.getInc());
+
+        BSONTimestamp ts7 = new BSONTimestamp(-time, inc);
+        Assert.assertEquals(-time + incSec, ts7.getTime());
+        Assert.assertEquals(incMSec, ts7.getInc());
+
+        BSONTimestamp ts8 = new BSONTimestamp(-time, -inc);
+        Assert.assertEquals(-time - incSec - 1, ts8.getTime());
+        Assert.assertEquals(incMSec2, ts8.getInc());
     }
 }
