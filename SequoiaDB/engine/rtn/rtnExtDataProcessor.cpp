@@ -444,11 +444,13 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_DODROPP1CANCEL ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
 
       rc = rtnDropCollectionSpaceP1Cancel( _cappedCSName, cb, dmsCB,
                                            dpsCB, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Cancel dropping collection space[ %s ] in "
                    "phase 1 failed[ %d ]", _cappedCSName, rc ) ;
+      rtnCB->incTextIdxVersion() ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_DODROPP1CANCEL, rc ) ;
