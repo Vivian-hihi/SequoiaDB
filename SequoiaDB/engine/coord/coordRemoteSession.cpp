@@ -1093,6 +1093,7 @@ namespace engine
       _pResource = NULL ;
       _pPropSite = NULL ;
       _pGroupSel = NULL ;
+      _pRemoteHandle = NULL ;
    }
 
    _coordGroupSessionCtrl::~_coordGroupSessionCtrl()
@@ -1111,11 +1112,13 @@ namespace engine
 
    void _coordGroupSessionCtrl::init( coordResource *pResource,
                                       coordSessionPropSite *pPropSite,
-                                      coordGroupSel *pGroupSel )
+                                      coordGroupSel *pGroupSel,
+                                      IRemoteSessionHandler *pRemoteHandle )
    {
       _pResource = pResource ;
       _pPropSite = pPropSite ;
       _pGroupSel = pGroupSel ;
+      _pRemoteHandle = pRemoteHandle ;
    }
 
    void _coordGroupSessionCtrl::incRetry()
@@ -1234,6 +1237,12 @@ namespace engine
                                       netResult2Status( flag ) ) ;
          }
       }
+      else if ( ( SDB_UNKNOWN_MESSAGE == flag ||
+                  SDB_CLS_UNKNOW_MSG == flag ) &&
+                 _pRemoteHandle )
+      {
+         _pRemoteHandle->setUserData( coordRemoteHandlerBase::INIT_V0 ) ;
+      }
       else
       {
          bRetry = FALSE ;
@@ -1328,8 +1337,6 @@ namespace engine
          SDB_ASSERT( FALSE, "Prop site can't be NULL" ) ;
          goto error ;
       }
-      _groupSel.init( pResource, _pPropSite ) ;
-      _groupCtrl.init( pResource, _pPropSite, &_groupSel ) ;
 
       if ( 0 == _timeout )
       {
@@ -1339,6 +1346,10 @@ namespace engine
       {
          pHandle = &_baseHandle ;
       }
+
+      _groupSel.init( pResource, _pPropSite ) ;
+      _groupCtrl.init( pResource, _pPropSite, &_groupSel, pHandle ) ;
+
       _pSession = _pSite->addSession( _timeout, pHandle ) ;
       if ( !_pSession )
       {

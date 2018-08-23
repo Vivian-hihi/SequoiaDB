@@ -56,6 +56,7 @@ namespace engine
    */
    _coordRemoteHandlerBase::_coordRemoteHandlerBase()
    {
+      _initType = INIT_V1 ;
    }
 
    _coordRemoteHandlerBase::~_coordRemoteHandlerBase()
@@ -77,10 +78,8 @@ namespace engine
       /// do nothing
    }
 
-   /*
-   INT32 _coordRemoteHandlerBase::onSendConnect( _pmdSubSession *pSub,
-                                                 const MsgHeader *pReq,
-                                                 BOOLEAN isFirst )
+
+   INT32 _coordRemoteHandlerBase::_onSendConnectOld( _pmdSubSession *pSub )
    {
       INT32 rc = SDB_OK ;
       pmdEDUCB *cb = NULL ;
@@ -113,13 +112,19 @@ namespace engine
    error:
       goto done ;
    }
-   */
 
    INT32 _coordRemoteHandlerBase::onSendConnect( _pmdSubSession *pSub,
                                                  const MsgHeader *pReq,
                                                  BOOLEAN isFirst )
    {
-      return _buildPacketWithSessionInit( pSub->parent(), pSub ) ;
+      if ( INIT_V0 == _initType )
+      {
+         return _onSendConnectOld( pSub ) ;
+      }
+      else
+      {
+         return _buildPacketWithSessionInit( pSub->parent(), pSub ) ;
+      }
    }
 
    INT32 _coordRemoteHandlerBase::_buildPacketWithSessionInit( _pmdRemoteSession *pSession,
@@ -403,6 +408,18 @@ namespace engine
    done:
       /// ignore error
       return SDB_OK ;
+   }
+
+   void _coordRemoteHandlerBase::setUserData( UINT64 data )
+   {
+      if ( (INT32)data == INIT_V0 )
+      {
+         _initType = INIT_V0 ;
+      }
+      else
+      {
+         _initType = INIT_V1 ;
+      }
    }
 
    INT32 _coordRemoteHandlerBase::_buildPacket( _pmdRemoteSession *pSession,

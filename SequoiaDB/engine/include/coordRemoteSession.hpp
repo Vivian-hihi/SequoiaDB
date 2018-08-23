@@ -266,7 +266,8 @@ namespace engine
 
          void        init( coordResource *pResource,
                            coordSessionPropSite *pPropSite,
-                           coordGroupSel *pGroupSel ) ;
+                           coordGroupSel *pGroupSel,
+                           IRemoteSessionHandler *pRemoteHandle ) ;
 
          BOOLEAN     canRetry( INT32 flag,
                                const MsgRouteID &nodeID,
@@ -293,6 +294,7 @@ namespace engine
          coordResource           *_pResource ;
          coordSessionPropSite    *_pPropSite ;
          coordGroupSel           *_pGroupSel ;
+         IRemoteSessionHandler   *_pRemoteHandle ;
 
    } ;
    typedef _coordGroupSessionCtrl coordGroupSessionCtrl ;

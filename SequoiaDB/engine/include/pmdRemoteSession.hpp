@@ -99,6 +99,8 @@ namespace engine
          {
             return SDB_OK ;
          }
+
+         virtual void   setUserData( UINT64 data ) {}
    } ;
    typedef _IRemoteSessionHandler IRemoteSessionHandler ;
 

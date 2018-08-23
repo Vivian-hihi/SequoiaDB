@@ -53,6 +53,12 @@ namespace engine
    class _coordRemoteHandlerBase : public _IRemoteSessionHandler
    {
       public:
+         enum SESSION_INIT_TYPE
+         {
+            INIT_V0,
+            INIT_V1
+         } ;
+      public:
          _coordRemoteHandlerBase() ;
          virtual ~_coordRemoteHandlerBase() ;
 
@@ -80,6 +86,8 @@ namespace engine
          virtual INT32  onSend( _pmdRemoteSession *pSession,
                                 _pmdSubSession *pSub ) ;
 
+         virtual void   setUserData( UINT64 data ) ;
+
       protected:
 
          INT32          _sessionInit( _pmdRemoteSession *pSession,
@@ -96,6 +104,11 @@ namespace engine
 
          INT32          _buildPacketWithSessionInit( _pmdRemoteSession *pSession,
                                                      _pmdSubSession *pSub ) ;
+
+         INT32          _onSendConnectOld( _pmdSubSession *pSub ) ;
+
+      private:
+         SESSION_INIT_TYPE    _initType ;
 
    } ;
    typedef _coordRemoteHandlerBase coordRemoteHandlerBase ;
