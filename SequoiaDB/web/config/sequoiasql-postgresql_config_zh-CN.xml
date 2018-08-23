@@ -1815,7 +1815,7 @@
       <WebName>log error verbosity</WebName>
       <Type>string</Type>
       <Default></Default>
-      <Valid>,TERSE/DEFAULT/VERBOSE</Valid>
+      <Valid>,TERSE,DEFAULT,VERBOSE</Valid>
       <Display>select box</Display>
       <Edit>true</Edit>
       <Desc></Desc>
