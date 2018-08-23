@@ -123,7 +123,7 @@ PHP_METHOD( SequoiaTimestamp, __construct )
       pDriverTimestamp->micros = 0 ;
    }
 
-   if ( pDriverTimestamp->micros < 0 &&
+   if ( pDriverTimestamp->micros < 0 ||
         pDriverTimestamp->micros >= TIMESTAMP_MAX_INC )
    {
       INT32 sec = pDriverTimestamp->micros / TIMESTAMP_MAX_INC ;
