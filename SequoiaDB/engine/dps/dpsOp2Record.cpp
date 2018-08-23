@@ -880,7 +880,7 @@ namespace engine
          goto error ;
       }
 
-      rc = record.push( DPS_LOG_PUBLIC_CLUNIQUEID,
+      rc = record.push( DPS_LOG_CLCRT_CLUNIQUEID,
                         sizeof( clUniqueID ),
                         (const CHAR *)(&clUniqueID)) ;
       if ( SDB_OK != rc )
@@ -962,7 +962,7 @@ namespace engine
 
       *fullName = recordItr.value() ;
 
-      recordItr = record.find( DPS_LOG_PUBLIC_CLUNIQUEID ) ;
+      recordItr = record.find( DPS_LOG_CLCRT_CLUNIQUEID ) ;
       if ( recordItr.valid() )
       {
          clUniqueID = *((utilCLUniqueID *)recordItr.value() ) ;
@@ -1068,7 +1068,6 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_IXCRT2RECORD, "dpsIXCrt2Record" )
    INT32 dpsIXCrt2Record( const CHAR *fullName,
-                          const utilCLUniqueID &clUniqueID,
                           const BSONObj &index,
                           dpsLogRecord &record )
    {
@@ -1083,15 +1082,6 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to push fullname to record, rc: %d",rc ) ;
-         goto error ;
-      }
-
-      rc = record.push( DPS_LOG_PUBLIC_CLUNIQUEID,
-                        sizeof( clUniqueID ),
-                        (CHAR *)( &clUniqueID ) ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to push cl unique id to record, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -1115,7 +1105,6 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2IXCRT, "dpsRecord2IXCrt" )
    INT32 dpsRecord2IXCrt( const CHAR *logRecord,
                           const CHAR **fullName,
-                          utilCLUniqueID &clUniqueID,
                           BSONObj &index )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2IXCRT ) ;
@@ -1130,19 +1119,13 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itrFullName, itrUniqueID, itrIndex, itrMode ;
+      dpsLogRecord::iterator itrFullName, itrIndex, itrMode ;
       itrFullName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
          PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
          rc = SDB_SYS ;
          goto error ;
-      }
-
-      itrUniqueID = record.find( DPS_LOG_PUBLIC_CLUNIQUEID ) ;
-      if ( itrUniqueID.valid() )
-      {
-         clUniqueID = *((utilCLUniqueID*)itrUniqueID.value()) ;
       }
 
       itrIndex = record.find( DPS_LOG_IXCRT_IX ) ;
@@ -1165,7 +1148,6 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_IXDEL2RECORD, "dpsIXDel2Record" )
    INT32 dpsIXDel2Record( const CHAR *fullName,
-                          const utilCLUniqueID &clUniqueID,
                           const BSONObj &index,
                           dpsLogRecord &record )
    {
@@ -1181,15 +1163,6 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to push fullname to record, rc: %d",rc ) ;
-         goto error ;
-      }
-
-      rc = record.push( DPS_LOG_PUBLIC_CLUNIQUEID,
-                        sizeof( clUniqueID ),
-                        (CHAR *)( &clUniqueID ) ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to push cl unique id to record, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -1213,7 +1186,6 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2IXDEL, "dpsRecord2IXDel" )
    INT32 dpsRecord2IXDel( const CHAR *logRecord,
                           const CHAR **fullName,
-                          utilCLUniqueID &clUniqueID,
                           BSONObj &index )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2IXDEL ) ;
@@ -1228,19 +1200,13 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itrFullName, itrUniqueID, itrIndex ;
+      dpsLogRecord::iterator itrFullName, itrIndex ;
       itrFullName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
          PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
          rc = SDB_SYS ;
          goto error ;
-      }
-
-      itrUniqueID = record.find( DPS_LOG_PUBLIC_CLUNIQUEID ) ;
-      if ( itrUniqueID.valid() )
-      {
-         clUniqueID = *((utilCLUniqueID*)itrUniqueID.value()) ;
       }
 
       itrIndex = record.find( DPS_LOG_IXCRT_IX ) ;

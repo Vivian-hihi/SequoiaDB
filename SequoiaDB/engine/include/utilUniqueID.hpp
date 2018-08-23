@@ -56,6 +56,8 @@ namespace engine
    }
 
    vector<PAIR_CLNAME_ID> utilBson2ClPair( const BSONObj& clInfoObj ) ;
+
+   BSONObj utilUnsetUniqueID( const BSONObj& clInfoObj ) ;
 }
 
 #endif //UTIL_UNIQUEID_HPP_

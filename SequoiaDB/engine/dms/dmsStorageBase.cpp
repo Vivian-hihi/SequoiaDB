@@ -1111,12 +1111,15 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageBase::setCSUniqueID( utilCSUniqueID csUniqueID )
+   INT32 _dmsStorageBase::updateCSUniqueIDFromInfo()
    {
-      _pStorageInfo->_csUniqueID = csUniqueID ;
-      _dmsHeader->_csUniqueID    = csUniqueID ;
+      // if the cs without lob, lobd file isn't exist, then _dmsHeader is NULL.
+      if ( _dmsHeader )
+      {
+         _dmsHeader->_csUniqueID = _pStorageInfo->_csUniqueID ;
 
-      flushHeader( TRUE ) ;
+         flushHeader( TRUE ) ;
+      }
 
       return SDB_OK ;
    }

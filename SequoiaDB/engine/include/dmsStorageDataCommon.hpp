@@ -855,10 +855,6 @@ namespace engine
          OSS_INLINE INT32  getMBContext( dmsMBContext **pContext,
                                          const CHAR* pName,
                                          INT32 lockType = -1 ) ;
-         OSS_INLINE INT32  getMBContext( dmsMBContext **pContext,
-                                         const CHAR* pName,
-                                         utilCLUniqueID clUniqueID,
-                                         INT32 lockType = -1 ) ;
 
          OSS_INLINE INT32  checkMBContext( const CHAR *pName, UINT16 mbID ) ;
          OSS_INLINE void   releaseMBContext( dmsMBContext *&pContext ) ;
@@ -932,7 +928,7 @@ namespace engine
                                         dmsMBContext *context = NULL ) ;
 
          INT32 chgCLUniqueID( const vector<PAIR_CLNAME_ID>& clList,
-                              BOOLEAN needLock = FALSE ) ;
+                              BOOLEAN setOnlyIfInvalid = TRUE ) ;
 
          INT32 renameCollection ( const CHAR *oldName, const CHAR *newName,
                                   _pmdEDUCB *cb, SDB_DPSCB *dpscb,
@@ -1139,20 +1135,16 @@ namespace engine
       private:
          void               _initializeMME () ;
 
-         OSS_INLINE void    _collectionNameInsert( const CHAR *pName,
-                                                   UINT16 mbID,
-                                                   utilCLUniqueID clUniqueID =
-                                                      UTIL_INVALID_UNIQUEID
-                                                 ) ;
-         OSS_INLINE UINT16  _collectionNameLookup( const CHAR *pName,
-                                                   utilCLUniqueID clUniqueID =
-                                                      UTIL_INVALID_UNIQUEID
-                                                 ) ;
-         OSS_INLINE void    _collectionNameRemove( const CHAR *pName,
-                                                   utilCLUniqueID clUniqueID =
-                                                      UTIL_INVALID_UNIQUEID
-                                                 ) ;
-         OSS_INLINE void    _collectionNameMapCleanup () ;
+         OSS_INLINE void _collectionInsert( const CHAR *pName,
+                                            UINT16 mbID,
+                                            utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
+
+         OSS_INLINE UINT16 _collectionNameLookup( const CHAR *pName ) ;
+         OSS_INLINE UINT16 _collectionIdLookup( utilCLUniqueID clUniqueID ) ;
+
+         OSS_INLINE void _collectionRemove( const CHAR *pName,
+                                            utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
+         OSS_INLINE void _collectionMapCleanup () ;
 
          INT32          _logDPS( SDB_DPSCB *dpsCB, dpsMergeInfo &info,
                                  _pmdEDUCB * cb, ossSLatch *pLatch,
@@ -1209,9 +1201,9 @@ namespace engine
    /*
       OSS_INLINE functions :
    */
-   OSS_INLINE void _dmsStorageDataCommon::_collectionNameInsert( const CHAR * pName,
-                                                                 UINT16 mbID,
-                                                                 utilCLUniqueID clUniqueID )
+   OSS_INLINE void _dmsStorageDataCommon::_collectionInsert( const CHAR * pName,
+                                                             UINT16 mbID,
+                                                             utilCLUniqueID clUniqueID )
    {
       _collectionNameMap[ ossStrdup( pName ) ] = mbID ;
 
@@ -1220,11 +1212,22 @@ namespace engine
          _collectionIDMap[ clUniqueID ] = mbID ;
       }
    }
-   OSS_INLINE UINT16 _dmsStorageDataCommon::_collectionNameLookup( const CHAR * pName,
-                                                                   utilCLUniqueID clUniqueID )
+   OSS_INLINE UINT16 _dmsStorageDataCommon::_collectionNameLookup( const CHAR * pName )
    {
       UINT16 mbID = DMS_INVALID_MBID ;
-
+      if ( pName )
+      {
+         COLNAME_MAP_CIT it = _collectionNameMap.find( pName ) ;
+         if ( it != _collectionNameMap.end() )
+         {
+            mbID = it->second ;
+         }
+      }
+      return mbID ;
+   }
+   OSS_INLINE UINT16 _dmsStorageDataCommon::_collectionIdLookup( utilCLUniqueID clUniqueID )
+   {
+      UINT16 mbID = DMS_INVALID_MBID ;
       if ( UTIL_INVALID_UNIQUEID != clUniqueID )
       {
          COLID_MAP_CIT it = _collectionIDMap.find( clUniqueID ) ;
@@ -1233,19 +1236,10 @@ namespace engine
             mbID = it->second ;
          }
       }
-      else if ( pName )
-      {
-         COLNAME_MAP_CIT it = _collectionNameMap.find( pName ) ;
-         if ( it != _collectionNameMap.end() )
-         {
-            mbID = it->second ;
-         }
-      }
-
       return mbID ;
    }
-   OSS_INLINE void _dmsStorageDataCommon::_collectionNameRemove( const CHAR * pName,
-                                                                 utilCLUniqueID clUniqueID )
+   OSS_INLINE void _dmsStorageDataCommon::_collectionRemove( const CHAR * pName,
+                                                             utilCLUniqueID clUniqueID )
    {
       COLNAME_MAP_IT it = _collectionNameMap.find( pName ) ;
       if ( _collectionNameMap.end() != it )
@@ -1260,7 +1254,7 @@ namespace engine
          _collectionIDMap.erase( clUniqueID ) ;
       }
    }
-   OSS_INLINE void _dmsStorageDataCommon::_collectionNameMapCleanup ()
+   OSS_INLINE void _dmsStorageDataCommon::_collectionMapCleanup ()
    {
       COLNAME_MAP_CIT it = _collectionNameMap.begin() ;
 
@@ -1385,22 +1379,13 @@ namespace engine
                                                          const CHAR* pName,
                                                          INT32 lockType )
    {
-      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
-      return getMBContext( pContext, pName, clUniqueID, lockType ) ;
-   }
-
-   OSS_INLINE INT32 _dmsStorageDataCommon::getMBContext( dmsMBContext ** pContext,
-                                                         const CHAR * pName,
-                                                         utilCLUniqueID clUniqueID,
-                                                         INT32 lockType )
-   {
       UINT16 mbID = DMS_INVALID_MBID ;
       UINT32 clLID = DMS_INVALID_CLID ;
       UINT32 startLID = DMS_INVALID_CLID ;
 
       // metadata shared lock
       _metadataLatch.get_shared() ;
-      mbID = _collectionNameLookup( pName, clUniqueID ) ;
+      mbID = _collectionNameLookup( pName ) ;
       if ( DMS_INVALID_MBID != mbID )
       {
          clLID = _dmsMME->_mbList[mbID]._logicalID ;

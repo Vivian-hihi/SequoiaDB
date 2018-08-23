@@ -2092,7 +2092,6 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_GETANDLOCKCATSET, "_clsShardMgr::getAndLockCataSet" )
    INT32 _clsShardMgr::getAndLockCataSet( const CHAR * name,
-                                          utilCLUniqueID clUniqueID,
                                           clsCatalogSet **ppSet,
                                           BOOLEAN noWithUpdate,
                                           INT64 waitMillSec,
@@ -2107,14 +2106,14 @@ namespace engine
       while ( SDB_OK == rc )
       {
          _pCatAgent->lock_r() ;
-         *ppSet = _pCatAgent->collectionSet( name, clUniqueID ) ;
+         *ppSet = _pCatAgent->collectionSet( name ) ;
          // if we can't find the name and request to update catalog
          // we'll call syncUpdateCatalog and refind again
          if ( !(*ppSet) && noWithUpdate )
          {
             _pCatAgent->release_r() ;
             // request to update catalog
-            rc = syncUpdateCatalog( clUniqueID, name, waitMillSec ) ;
+            rc = syncUpdateCatalog( name, waitMillSec ) ;
             if ( rc )
             {
                // if we can't find the collection and not able to update

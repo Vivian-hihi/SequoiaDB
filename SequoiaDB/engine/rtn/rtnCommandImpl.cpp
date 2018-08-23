@@ -1254,6 +1254,7 @@ namespace engine
       UINT16 collectionID   = DMS_INVALID_MBID ;
       UINT32 logicalID      = DMS_INVALID_CLID ;
       const CHAR *pCollectionShortName = NULL ;
+      utilCSUniqueID csUniqueID = utilGetCSUniqueID( clUniqueID ) ;
 
       // Check writable before su lock
       rc = dmsCB->writable( cb ) ;
@@ -1277,7 +1278,7 @@ namespace engine
          temp [ pCollectionShortName - pCollection - 1 ] = '\0' ;
          if ( SDB_OK == rtnCreateCollectionSpaceCommand ( temp, cb,
                                                           dmsCB, dpsCB,
-                                                          UTIL_INVALID_UNIQUEID,
+                                                          csUniqueID,
                                                           DMS_PAGE_SIZE_DFT,
                                                           DMS_DEFAULT_LOB_PAGE_SZ,
                                                           type,
@@ -1409,8 +1410,7 @@ namespace engine
                                  SDB_DMSCB *dmsCB,
                                  SDB_DPSCB *dpsCB,
                                  BOOLEAN isSys,
-                                 INT32 sortBufferSize,
-                                 utilCLUniqueID clUniqueID )
+                                 INT32 sortBufferSize )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCREATEINDEXCOMMAND ) ;
@@ -1426,8 +1426,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
       writable = TRUE ;
 
-      rc = rtnResolveCollectionNameAndLock( pCollection, clUniqueID, dmsCB, &su,
-                                            &pCollectionShortName, suID ) ;
+      rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
+                                             &pCollectionShortName, suID ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
@@ -1442,8 +1442,8 @@ namespace engine
          goto error ;
       }
 
-      rc = su->createIndex ( pCollectionShortName, indexObj, cb, dpsCB,
-                             isSys, NULL, sortBufferSize, clUniqueID ) ;
+      rc = su->createIndex ( pCollectionShortName, indexObj,
+                             cb, dpsCB, isSys, NULL, sortBufferSize ) ;
       if ( rc )
       {
          // SDB_IXM_EXIST may happen when user mistakenly type index name with
@@ -1453,9 +1453,8 @@ namespace engine
          goto error ;
       }
 
-      PD_LOG( PDEVENT,
-              "Create index[%s] for collection[name: %s, id: %llu] succeed",
-              indexObj.toString().c_str(), pCollection, clUniqueID ) ;
+      PD_LOG( PDEVENT, "Create index[%s] for collection[%s] succeed",
+              indexObj.toString().c_str(), pCollection ) ;
 
    done :
       if ( DMS_INVALID_CS != suID )
@@ -1478,8 +1477,7 @@ namespace engine
                                pmdEDUCB *cb,
                                SDB_DMSCB *dmsCB,
                                SDB_DPSCB *dpsCB,
-                               BOOLEAN sysCall,
-                               utilCLUniqueID clUniqueID )
+                               BOOLEAN sysCall )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDROPINDEXCOMMAND ) ;
@@ -1504,8 +1502,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
       writable = TRUE ;
 
-      rc = rtnResolveCollectionNameAndLock( pCollection, clUniqueID, dmsCB, &su,
-                                            &pCollectionShortName, suID ) ;
+      rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
+                                             &pCollectionShortName, suID ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
@@ -1516,13 +1514,12 @@ namespace engine
       if ( identifier.type() == jstOID )
       {
          identifier.Val(oid) ;
-         rc = su->dropIndex ( pCollectionShortName, oid, cb, dpsCB, sysCall,
-                              NULL, clUniqueID ) ;
+         rc = su->dropIndex ( pCollectionShortName, oid, cb, dpsCB, sysCall ) ;
       }
       else if ( identifier.type() == String )
       {
          rc = su->dropIndex ( pCollectionShortName, identifier.valuestr(),
-                              cb, dpsCB, sysCall, NULL, clUniqueID ) ;
+                              cb, dpsCB, sysCall ) ;
       }
       else
       {
@@ -1537,9 +1534,8 @@ namespace engine
          goto error ;
       }
 
-      PD_LOG( PDEVENT,
-              "Drop index[%s] for collection[name: %s, id: %llu] succeed",
-              identifier.toString().c_str(), pCollection, clUniqueID ) ;
+      PD_LOG( PDEVENT, "Drop index[%s] for collection[%s] succeed",
+              identifier.toString().c_str(), pCollection ) ;
 
    done :
       if ( DMS_INVALID_CS != suID )
@@ -2039,7 +2035,8 @@ namespace engine
                             utilCSUniqueID csUniqueID,
                             const BSONObj& clInfoObj,
                             pmdEDUCB* cb,
-                            SDB_DMSCB* dmsCB, SDB_DPSCB* dpsCB )
+                            SDB_DMSCB* dmsCB, SDB_DPSCB* dpsCB,
+                            BOOLEAN setOnlyIfInvalid )
    {
       PD_TRACE_ENTRY( SDB_RTNCHGUID ) ;
       INT32 rc = SDB_OK ;
@@ -2049,18 +2046,9 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
       writable = TRUE ;
 
-      dmsCB->changeUniqueID( csName, csUniqueID, clInfoObj, cb, dpsCB ) ;
-
-      if ( rc == SDB_OK )
-      {
-         PD_LOG( PDDEBUG,
-                 "Change unique id, cs name: %s, cs unique id: %u, cl info: %s",
-                 csName, csUniqueID, clInfoObj.toString().c_str() ) ;
-      }
-
-      PD_RC_CHECK( rc, PDERROR, "Failed to change unique id, "
-                   "cs name: %s, cs unique id: %u, cl info: %s, rc: %d",
-                   csName, csUniqueID, clInfoObj.toString().c_str(), rc ) ;
+      rc = dmsCB->changeUniqueID( csName, csUniqueID, clInfoObj,
+                                  cb, dpsCB, setOnlyIfInvalid ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to change unique id, rc: %d", rc ) ;
 
    done :
       if ( writable )

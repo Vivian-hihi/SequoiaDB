@@ -174,9 +174,9 @@ namespace engine
       typedef MAP_CAT_ITEM_IT                            POSITION ;
 
       public:
-         _clsCatalogSet ( const CHAR * name, BOOLEAN saveName = TRUE ) ;
-         _clsCatalogSet ( UINT64 clUniqueID, const CHAR * name,
-                          BOOLEAN saveName = TRUE ) ;
+         _clsCatalogSet ( const CHAR * name,
+                          BOOLEAN saveName = TRUE,
+                          UINT64 clUniqueID = UTIL_INVALID_UNIQUEID ) ;
          ~_clsCatalogSet () ;
 
          void setSKSite( _clsShardingKeySite *pSite ) { _pSite = pSite ; }
@@ -187,9 +187,7 @@ namespace engine
          INT32             getHashPartition() const { return _partition ;}
          UINT32            getPartitionBit() const { return _square ; }
          bool              ensureShardingIndex() const { return _ensureShardingIndex ; }
-         void              setName( const CHAR* name );
          const CHAR        *name () const ;
-         void              setCLUniqueID ( utilCLUniqueID clUniqueID ) ;
          utilCLUniqueID    clUniqueID () const ;
          VEC_GROUP_ID      *getAllGroupID () ;
          UINT32            getAllGroupID ( VEC_GROUP_ID &vecGroup ) const ;

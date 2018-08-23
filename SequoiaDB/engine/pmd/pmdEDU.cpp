@@ -82,23 +82,6 @@ namespace engine
       return desp ;
    }
 
-   _pmdUserOperation::_pmdUserOperation()
-   :_clUniqueID( UTIL_INVALID_UNIQUEID )
-   {
-   }
-
-   void _pmdUserOperation::setID( UINT64 ID )
-   {
-      // if it is cs operation, csUniqueID will place in
-      // first 16bit of _clUniqueID
-      _clUniqueID = ID ;
-   }
-
-   void _pmdUserOperation::clear()
-   {
-      _clUniqueID = UTIL_INVALID_UNIQUEID ;
-   }
-
    /*
       _pmdEDUCB implement
    */
@@ -157,7 +140,6 @@ namespace engine
          ossMemset( _pErrorBuff, 0, EDU_ERROR_BUFF_SIZE + 1 ) ;
       }
 
-      _operation = new pmdUserOperation() ;
    }
 
    _pmdEDUCB::~_pmdEDUCB ()
@@ -178,11 +160,6 @@ namespace engine
 
       clear() ;
 
-      if ( _operation )
-      {
-         delete _operation ;
-         _operation = NULL ;
-      }
    }
 
    void _pmdEDUCB::clear()
@@ -249,7 +226,6 @@ namespace engine
       SDB_ASSERT( _totalCatchSize == 0 , "Catch size is error" ) ;
       SDB_ASSERT( _totalMemSize == 0, "Memory size is error" ) ;
 
-      _operation->clear() ;
    }
 
    string _pmdEDUCB::toString() const

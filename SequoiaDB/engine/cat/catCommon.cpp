@@ -1042,8 +1042,8 @@ namespace engine
 
       sub.done() ;
 
-      BSONObj uniqueIDObj = BSON( CAT_CS_CLUNIQUEHWM << 1 );
-      updateBuild.appendObject( "$inc", uniqueIDObj.objdata() ) ;
+      BSONObj uniqueIDObj = BSON( CAT_CS_CLUNIQUEHWM << (INT64)clUniqueID );
+      updateBuild.appendObject( "$set", uniqueIDObj.objdata() ) ;
 
       BSONObj updator = updateBuild.obj() ;
       BSONObj hint ;
@@ -4116,10 +4116,9 @@ namespace engine
       {
          builder.append( CAT_CATALOGNAME_NAME, clInfo._pCLName ) ;
       }
-      if ( mask & UTIL_CL_UNIQUEID_FIELD )
-      {
-         builder.append( CAT_CL_UNIQUEID, (INT64)clInfo._clUniqueID ) ;
-      }
+
+      builder.append( CAT_CL_UNIQUEID, (INT64)clInfo._clUniqueID ) ;
+
 
       /// this is not specified by user.
       builder.append( CAT_CATALOGVERSION_NAME,
@@ -4184,7 +4183,7 @@ namespace engine
             PD_LOG_MSG(PDERROR, "Partition can not less than group number of domain."
                    "partition = %d, group number = %d", totalBound, grpSize);
             goto error;
-		 }
+         }
 
          for ( std::map<std::string, UINT32>::const_iterator iterGrp = splitLst.begin();
                iterGrp != splitLst.end();

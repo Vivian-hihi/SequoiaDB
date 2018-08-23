@@ -1070,7 +1070,7 @@ namespace engine
          {
             // start unqiue id check
             SDB_DMSCB* pDmsCB = pmdGetKRCB()->getDMSCB() ;
-            if ( pDmsCB->hasInvalidUniqueID() )
+            if ( pDmsCB->invalidCSUniqueIDCnt() > pDmsCB->localCSCnt() )
             {
                startUniqueIDCheckJob( &_uniqueCheckJobEduID ) ;
             }

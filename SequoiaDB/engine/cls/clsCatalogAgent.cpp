@@ -410,37 +410,9 @@ namespace engine
    /*
    note: _clsCatalogSet implement
    */
-   _clsCatalogSet::_clsCatalogSet ( const CHAR * name, BOOLEAN saveName )
-   {
-      _saveName = saveName ;
-      _name = name ;
-      _clUniqueID = UTIL_INVALID_UNIQUEID ;
-      _version = -1 ;
-      _w = 1 ;
-      _next = NULL ;
-      _lastItem = NULL ;
-      _pOrder = NULL ;
-      _pKeyGen = NULL ;
-      _isWholeRange = TRUE ;
-      _groupCount = 0 ;
-      _shardingType = CLS_CA_SHARDINGTYPE_NONE ;
-      _ensureShardingIndex = true ;
-      _partition = CAT_SHARDING_PARTITION_DEFAULT ;
-      ossIsPowerOf2( _partition, &_square ) ;
-      _attribute = 0 ;
-      _isMainCL = FALSE ;
-      _internalV = 0 ;
-      _maxID = 0 ;
-      _skSiteID = 0 ;
-      _pSite = NULL ;
-      _compressType = UTIL_COMPRESSOR_INVALID ;
-      _maxSize = 0 ;
-      _maxRecNum = 0 ;
-      _overwrite = FALSE ;
-   }
-
-   _clsCatalogSet::_clsCatalogSet ( UINT64 clUniqueID, const CHAR * name,
-                                    BOOLEAN saveName )
+   _clsCatalogSet::_clsCatalogSet ( const CHAR * name,
+                                    BOOLEAN saveName,
+                                    UINT64 clUniqueID )
    {
       _saveName = saveName ;
       _name = name ;
@@ -500,19 +472,9 @@ namespace engine
       return _w ;
    }
 
-   void _clsCatalogSet::setName( const CHAR* name )
-   {
-      _name = name ;
-   }
-
    const CHAR *_clsCatalogSet::name () const
    {
       return _name.c_str() ;
-   }
-
-   void _clsCatalogSet::setCLUniqueID( utilCLUniqueID clUniqueID )
-   {
-      _clUniqueID = clUniqueID ;
    }
 
    utilCLUniqueID _clsCatalogSet::clUniqueID() const
@@ -2524,8 +2486,9 @@ namespace engine
                                                          utilCLUniqueID clUniqueID )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT__ADDCLSET ) ;
-      _clsCatalogSet *catSet = SDB_OSS_NEW _clsCatalogSet ( clUniqueID, name,
-                                                            FALSE ) ;
+      _clsCatalogSet *catSet = SDB_OSS_NEW _clsCatalogSet ( name,
+                                                            FALSE,
+                                                            clUniqueID) ;
       if ( !catSet )
       {
          return NULL ;
@@ -2607,18 +2570,13 @@ namespace engine
 
          /// add cata info to cache map
          catSet = collectionSet ( clName.c_str(), clUniqueID ) ;
-         if ( catSet )
+         if ( catSet &&
+              ossStrcmp( clName.c_str(), catSet->name() ) != 0 )
          {
-            if ( ossStrcmp( clName.c_str(), catSet->name() ) != 0 )
-            {
-               catSet->setName( clName.c_str() ) ;
-            }
-            else if ( clUniqueID != catSet->clUniqueID() )
-            {
-               catSet->setCLUniqueID( clUniqueID ) ;
-            }
+            clear( clName.c_str() ) ;
+            catSet = NULL ;
          }
-         else
+         if ( !catSet )
          {
             catSet = _addCollectionSet ( clName.c_str(), clUniqueID ) ;
          }

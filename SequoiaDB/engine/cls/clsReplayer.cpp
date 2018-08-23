@@ -1185,8 +1185,9 @@ namespace engine
 
             while ( TRUE )
             {
-               rc = rtnChangeUniqueID( csname, UTIL_INVALID_UNIQUEID, emptyObj,
-                                       eduCB, _dmsCB, _dpsCB ) ;
+               rc = rtnChangeUniqueID( csname, UTIL_INVALID_UNIQUEID,
+                                       utilUnsetUniqueID( clInfoObj ),
+                                       eduCB, _dmsCB, _dpsCB, FALSE ) ;
                if ( SDB_LOCK_FAILED == rc )
                {
                   ossSleep( 100 ) ;
@@ -1434,7 +1435,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_STARTINXJOB );
       const CHAR *fullname = NULL ;
-      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
       BSONObj index ;
       rtnIndexJob *indexJob = NULL ;
       clsCatalogSet *pCatSet = NULL ;
@@ -1449,7 +1449,7 @@ namespace engine
       else if ( LOG_TYPE_IX_CRT == recordHeader->_type)
       {
          rc = dpsRecord2IXCrt( (CHAR *)recordHeader,
-                               &fullname, clUniqueID,
+                               &fullname,
                                index ) ;
          if ( SDB_OK != rc )
          {
@@ -1459,7 +1459,7 @@ namespace engine
       else
       {
          rc = dpsRecord2IXDel( (CHAR *)recordHeader,
-                               &fullname, clUniqueID,
+                               &fullname,
                                index ) ;
          if ( SDB_OK != rc )
          {
@@ -1473,8 +1473,7 @@ namespace engine
       }
       else
       {
-         sdbGetShardCB()->getAndLockCataSet( fullname, clUniqueID,
-                                             &pCatSet, TRUE ) ;
+         sdbGetShardCB()->getAndLockCataSet( fullname, &pCatSet, TRUE ) ;
          if ( pCatSet && CLS_REPLSET_MAX_NODE_SIZE == pCatSet->getW() )
          {
             useSync = TRUE ;
@@ -1482,7 +1481,7 @@ namespace engine
          sdbGetShardCB()->unlockCataSet( pCatSet ) ;
       }
 
-      indexJob = SDB_OSS_NEW rtnIndexJob( type, fullname, clUniqueID,
+      indexJob = SDB_OSS_NEW rtnIndexJob( type, fullname,
                                           index, dpsCB,
                                           recordHeader->_lsn,
                                           isRollBack ) ;

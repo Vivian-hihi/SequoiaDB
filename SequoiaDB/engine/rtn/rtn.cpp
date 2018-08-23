@@ -621,13 +621,6 @@ namespace engine
                                                     optCB->getSyncRecordNum(),
                                                     optCB->getSyncDirtyRatio() ) ;
                         storageUnit->setSyncDeep( optCB->isSyncDeep() ) ;
-                        /// db.loadCS() may need to set unique id
-                        if ( csUniqueIDInCata )
-                        {
-                           storageUnit->chgCSUniqueID( *csUniqueIDInCata ) ;
-                           dmsStorageDataCommon* data = storageUnit->data();
-                           data->chgCLUniqueID( utilBson2ClPair( clInfoInCata ) ) ;
-                        }
                         /// add collectionspace
                         rc = dmsCB->addCollectionSpace ( csName, sequence,
                                                          storageUnit, NULL,
@@ -651,6 +644,18 @@ namespace engine
                         }
 
                         storageUnit = NULL ;
+
+                        /// db.loadCS() may need to set unique id
+                        if ( csUniqueIDInCata )
+                        {
+                           rc = dmsCB->changeUniqueID( csName,
+                                                       *csUniqueIDInCata,
+                                                       clInfoInCata,
+                                                       cb, NULL, FALSE ) ;
+                           PD_RC_CHECK( rc, PDERROR,
+                                        "Failed to change unique id, rc: %d",
+                                        rc ) ;
+                        }
 
                         /*
                          * Scan all the collections, to check if any one should be
@@ -786,12 +791,6 @@ namespace engine
                                 "space[%s], rc: %d", csName, rc ) ;
                         PMD_RESTART_DB( rc ) ;
                         goto error ;
-                     }
-
-                     if ( !dmsIsSysCSName( csName ) &&
-                          UTIL_INVALID_UNIQUEID == storageUnit->CSUniqueID() )
-                     {
-                        dmsCB->setInvalidUniqueID( TRUE ) ;
                      }
 
                      // Note: do not call onLoad here
@@ -1012,23 +1011,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnCollectionSpaceLock ( const CHAR *pCollectionSpaceName,
-                                  SDB_DMSCB *dmsCB,
-                                  BOOLEAN loadFile,
-                                  dmsStorageUnit **ppsu,
-                                  dmsStorageUnitID &suID,
-                                  OSS_LATCH_MODE lockType,
-                                  INT32 millisec )
-   {
-      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
-      return rtnCollectionSpaceLock( pCollectionSpaceName, csUniqueID,
-                                     dmsCB, loadFile, ppsu, suID,
-                                     lockType, millisec ) ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCSLOCK, "rtnCollectionSpaceLock" )
    INT32 rtnCollectionSpaceLock ( const CHAR *pCollectionSpaceName,
-                                  utilCSUniqueID csUniqueID,
                                   SDB_DMSCB *dmsCB,
                                   BOOLEAN loadFile,
                                   dmsStorageUnit **ppsu,
@@ -1043,7 +1027,7 @@ namespace engine
       SDB_ASSERT ( ppsu, "storage unit can't be NULL" ) ;
 
    retry:
-      rc = dmsCB->nameToSUAndLock ( pCollectionSpaceName, csUniqueID, suID,
+      rc = dmsCB->nameToSUAndLock ( pCollectionSpaceName, suID,
                                     ppsu, lockType, millisec ) ;
       if ( SDB_OK == rc )
       {
@@ -1086,24 +1070,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnResolveCollectionNameAndLock ( const CHAR *pCollectionFullName,
-                                           SDB_DMSCB *dmsCB,
-                                           dmsStorageUnit **ppsu,
-                                           const CHAR **ppCollectionName,
-                                           dmsStorageUnitID &suID,
-                                           OSS_LATCH_MODE lockType,
-                                           INT32 millisec )
-   {
-      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
-      return rtnResolveCollectionNameAndLock( pCollectionFullName,
-                                              clUniqueID, dmsCB, ppsu,
-                                              ppCollectionName, suID,
-                                              lockType, millisec ) ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRESOLVECLNAL, "rtnResolveCollectionNameAndLock" )
    INT32 rtnResolveCollectionNameAndLock ( const CHAR *pCollectionFullName,
-                                           utilCLUniqueID clUniqueID,
                                            SDB_DMSCB *dmsCB,
                                            dmsStorageUnit **ppsu,
                                            const CHAR **ppCollectionName,
@@ -1118,7 +1086,6 @@ namespace engine
       SDB_ASSERT ( ppsu, "storage unit can't be NULL" ) ;
       CHAR *pDot = NULL ;
       CHAR *pDot1 = NULL ;
-      utilCSUniqueID csUniqueID = utilGetCSUniqueID( clUniqueID );
       CHAR strCollectionFullName [ DMS_COLLECTION_SPACE_NAME_SZ +
                                    DMS_COLLECTION_NAME_SZ + 2 ] = {0} ;
       if ( ossStrlen ( pCollectionFullName ) > DMS_COLLECTION_SPACE_NAME_SZ +
@@ -1157,7 +1124,7 @@ namespace engine
                              pCollectionFullName ;
       }
 
-      rc = rtnCollectionSpaceLock ( strCollectionFullName, csUniqueID, dmsCB,
+      rc = rtnCollectionSpaceLock ( strCollectionFullName, dmsCB,
                                     FALSE, ppsu, suID, lockType, millisec ) ;
       if ( rc )
       {

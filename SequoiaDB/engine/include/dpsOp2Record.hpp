@@ -152,23 +152,19 @@ namespace engine
                           const CHAR **fullName ) ;
 
    INT32 dpsIXCrt2Record( const CHAR *fullName,
-                          const utilCLUniqueID &clUniqueID,
                           const BSONObj &index,
                           dpsLogRecord &record ) ;
 
    INT32 dpsRecord2IXCrt( const CHAR *logRecord,
                           const CHAR **fullName,
-                          utilCLUniqueID &clUniqueID,
                           BSONObj &index ) ;
 
    INT32 dpsIXDel2Record( const CHAR *fullName,
-                          const utilCLUniqueID &clUniqueID,
                           const BSONObj &index,
                           dpsLogRecord &record ) ;
 
    INT32 dpsRecord2IXDel( const CHAR *logRecord,
                           const CHAR **fullName,
-                          utilCLUniqueID &clUniqueID,
                           BSONObj &index ) ;
 
    INT32 dpsCLRename2Record( const CHAR *csName,

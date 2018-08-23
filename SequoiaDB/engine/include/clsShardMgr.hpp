@@ -190,7 +190,7 @@ namespace engine
          clsFreezingWindow *getFreezingWindow() ;
          clsDCMgr* getDCMgr() ;
 
-         INT32 getAndLockCataSet( const CHAR *name, utilCLUniqueID clUniqueID,
+         INT32 getAndLockCataSet( const CHAR *name,
                                   clsCatalogSet **ppSet,
                                   BOOLEAN noWithUpdate = TRUE,
                                   INT64 waitMillSec = CLS_SHARD_TIMEOUT,

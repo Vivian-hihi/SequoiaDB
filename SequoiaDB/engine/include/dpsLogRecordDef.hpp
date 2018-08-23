@@ -52,8 +52,7 @@ namespace engine
       DPS_LOG_PUBLIC_PRETRANS = 203,
       DPS_LOG_PUBLIC_RELATED_TRANS = 204,    // only for rollback trans,
                                              // mapping to really trans lsn
-      DPS_LOG_PUBLIC_FIRSTTRANS = 205,
-      DPS_LOG_PUBLIC_CLUNIQUEID = 206        // cl unique id
+      DPS_LOG_PUBLIC_FIRSTTRANS = 205
    } ;
 
 /// number in public can not be used in definition !
@@ -108,7 +107,8 @@ namespace engine
    {
       DPS_LOG_CLCRT_ATTRIBUTE = 1,
       DPS_LOG_CLCRT_COMPRESS_TYPE = 2,
-      DPS_LOG_CLCRT_EXT_OPTIONS = 3
+      DPS_LOG_CLCRT_EXT_OPTIONS = 3,
+      DPS_LOG_CLCRT_CLUNIQUEID
    } ;
 
    enum DPS_LOG_CLDEL

@@ -196,7 +196,11 @@ namespace engine
       SINT64                  _writeCounter;
       UINT8                   _dmsCBState;
       UINT32                  _logicalSUID ;
-      BOOLEAN                 _hasInvalidUniqueID ;
+
+      // how many cs with invalid unique id, except system cs
+      UINT32                  _invalidCSUniqueIDCnt ;
+      // how many cs don't exist on catalog, except system cs
+      UINT32                  _localCSCnt ;
 
       dmsTempSUMgr            _tempSUMgr ;
       dmsStatSUMgr            _statSUMgr ;
@@ -209,7 +213,6 @@ namespace engine
       void  _logCSCBNameMap () ;
 
       INT32 _CSCBNameInsert ( const CHAR *pName,
-                              utilCSUniqueID csUniqueID,
                               UINT32 topSequence,
                               _dmsStorageUnit *su,
                               dmsStorageUnitID &suID ) ;
@@ -218,18 +221,26 @@ namespace engine
                               SDB_DMS_CSCB **cscb,
                               dmsStorageUnitID *pSuID = NULL,
                               BOOLEAN exceptDeleting = TRUE ) ;
-      INT32 _CSCBNameLookup ( const CHAR *pName,
-                              utilCSUniqueID csUniqueID,
-                              SDB_DMS_CSCB **cscb,
-                              dmsStorageUnitID *pSuID = NULL,
-                              BOOLEAN exceptDeleting = TRUE ) ;
+      INT32 _CSCBIdLookup ( utilCSUniqueID csUniqueID,
+                            SDB_DMS_CSCB **cscb,
+                            dmsStorageUnitID *pSuID = NULL,
+                            BOOLEAN exceptDeleting = TRUE ) ;
+      INT32 _CSCBLookup ( const CHAR *pName,
+                          utilCSUniqueID csUniqueID,
+                          SDB_DMS_CSCB **cscb,
+                          dmsStorageUnitID *pSuID = NULL,
+                          BOOLEAN exceptDeleting = TRUE ) ;
 
       INT32 _CSCBNameLookupAndLock ( const CHAR *pName,
-                                     utilCSUniqueID csUniqueID,
                                      dmsStorageUnitID &suID,
                                      SDB_DMS_CSCB **cscb,
                                      OSS_LATCH_MODE lockType = SHARED,
                                      INT32 millisec = -1 ) ;
+      INT32 _CSCBIdLookupAndLock ( utilCSUniqueID csUniqueID,
+                                   dmsStorageUnitID &suID,
+                                   SDB_DMS_CSCB **cscb,
+                                   OSS_LATCH_MODE lockType = SHARED,
+                                   INT32 millisec = -1 ) ;
 
       void _CSCBRelease ( dmsStorageUnitID suID,
                           OSS_LATCH_MODE lockType = SHARED ) ;
@@ -260,6 +271,11 @@ namespace engine
                                   BOOLEAN onlyEmpty ) ;
 
       void _getCSList( vector<std::string> &csNameVec ) ;
+
+      void _invalidCSUniqueIDCntInc() ;
+
+      void _invalidCSUniqueIDCntDec() ;
+
    public:
       _SDB_DMSCB() ;
       virtual ~_SDB_DMSCB() ;
@@ -278,12 +294,11 @@ namespace engine
                               _dmsStorageUnit **su,
                               OSS_LATCH_MODE lockType = SHARED,
                               INT32 millisec = -1 ) ;
-      INT32 nameToSUAndLock ( const CHAR *pName,
-                              utilCSUniqueID csUniqueID,
-                              dmsStorageUnitID &suID,
-                              _dmsStorageUnit **su,
-                              OSS_LATCH_MODE lockType = SHARED,
-                              INT32 millisec = -1 ) ;
+      INT32 idToSUAndLock ( utilCSUniqueID csUniqueID,
+                            dmsStorageUnitID &suID,
+                            _dmsStorageUnit **su,
+                            OSS_LATCH_MODE lockType = SHARED,
+                            INT32 millisec = -1 ) ;
 
       INT32 verifySUAndLock ( const dmsEventSUItem *pSUItem,
                               _dmsStorageUnit **ppSU,
@@ -294,9 +309,18 @@ namespace engine
       void suUnlock ( dmsStorageUnitID suID,
                       OSS_LATCH_MODE lockType = SHARED ) ;
 
+      INT32 changeCSUniqueID( _dmsStorageUnit* su,
+                              utilCSUniqueID csUniqueID,
+                              pmdEDUCB* cb,
+                              SDB_DPSCB* dpsCB,
+                              BOOLEAN setOnlyIfInvalid = TRUE ) ;
+
       INT32 changeUniqueID( const CHAR* csname,
-                            utilCSUniqueID csUniqueID, const BSONObj& clInfoObj,
-                            pmdEDUCB* cb, SDB_DPSCB* dpsCB ) ;
+                            utilCSUniqueID csUniqueID,
+                            const BSONObj& clInfoObj,
+                            pmdEDUCB* cb,
+                            SDB_DPSCB* dpsCB,
+                            BOOLEAN setOnlyIfInvalid = TRUE ) ;
 
       INT32 addCollectionSpace ( const CHAR *pName, UINT32 topSequence,
                                  _dmsStorageUnit *su, _pmdEDUCB *cb,
@@ -330,9 +354,11 @@ namespace engine
 
       void dumpPageMapCSInfo( MON_CSNAME_VEC &vecCS ) ;
 
-      UINT32 hasInvalidUniqueID() const ;
+      UINT32 invalidCSUniqueIDCnt() const ;
 
-      void setInvalidUniqueID( BOOLEAN hasInvalid ) ;
+      UINT32 localCSCnt() const ;
+
+      void setLocalCSCnt( UINT32 cnt ) ;
 
       dmsTempSUMgr *getTempSUMgr () ;
 

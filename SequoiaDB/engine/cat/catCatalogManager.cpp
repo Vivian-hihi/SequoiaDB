@@ -70,9 +70,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      rc = _checkAllCSCLUniqueID() ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to check cs/cl unique id, rc: %d", rc ) ;
+      if ( !_pCatCB->isDCReadonly() )
+      {
+         rc = _checkAllCSCLUniqueID() ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check cs/cl unique id, rc: %d", rc ) ;
+      }
 
       _taskMgr.setTaskID( catGetMaxTaskID( _pEduCB ) ) ;
 
@@ -757,7 +760,7 @@ namespace engine
    done:
       if ( SDB_OK == rc )
       {
-         PD_LOG( PDEVENT, "Set unique id, "
+         PD_LOG( PDEVENT,
                  "Set unique id, cs name: %d, cs id: %u, cl info: %s",
                  csName.c_str(), csUniqueID,
                  boCollections.toString( TRUE ).c_str() ) ;
@@ -1009,11 +1012,6 @@ namespace engine
       PD_CHECK( infoObj.nFields() == expected, SDB_INVALIDARG, error, PDERROR,
                 "unexpected fields exsit." ) ;
 
-      rc = catUpdateCSUniqueID( _pEduCB, _majoritySize(), csInfo._csUniqueID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Fail to get cs unique id, rc: %d.", rc ) ;
-
-      csInfo._clUniqueHWM = ossPack32To64( csInfo._csUniqueID, 0 ) ;
-
    done:
       PD_TRACE_EXITRC ( SDB_CATALOGMGR__CHECKCSOBJ, rc ) ;
       return rc ;
@@ -1128,6 +1126,12 @@ namespace engine
                    "Assign group for collection space [%s] failed, rc: %d",
                    csName, rc ) ;
       catGroupID2Name( groupID, strGroupName, _pEduCB ) ;
+
+      // set CSUniqueHWM, get cs unique id
+      rc = catUpdateCSUniqueID( _pEduCB, _majoritySize(), csInfo._csUniqueID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Fail to get cs unique id, rc: %d.", rc ) ;
+
+      csInfo._clUniqueHWM = ossPack32To64( csInfo._csUniqueID, 0 ) ;
 
       // insert new Collection Space record
       {

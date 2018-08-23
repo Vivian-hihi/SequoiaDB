@@ -19,7 +19,7 @@
 
    Descriptive Name =
 
-   When/how to use:
+   When/how to use: Process CS/CL Unique ID
 
    Dependencies: N/A
 
@@ -36,15 +36,22 @@
 #include "utilUniqueID.hpp"
 #include "msgDef.h"
 #include "../bson/bsonobjiterator.h"
+#include "../bson/bsonobjbuilder.h"
 
 using namespace bson ;
 
 namespace engine
 {
-   // clInfoObj eg:
+   // input: clInfoObj
    // [
-   //   { "Name": "bar1", "UniqueID": 2667174690817 } ,
-   //   { "Name": "bar2", "UniqueID": 2667174690818 }
+   //    { "Name": "bar1", "UniqueID": 2667174690817 } ,
+   //    { "Name": "bar2", "UniqueID": 2667174690818 }
+   // ]
+   //
+   // output: vector<pair>
+   // [
+   //    < "bar1", 2667174690817 > ,
+   //    < "bar2", 2667174690818 >
    // ]
    vector<PAIR_CLNAME_ID> utilBson2ClPair( const BSONObj& clInfoObj )
    {
@@ -71,4 +78,39 @@ namespace engine
       return clList ;
    }
 
+   // input: clInfoObj
+   // [
+   //    { "Name": "bar1", "UniqueID": 2667174690817 } ,
+   //    { "Name": "bar2", "UniqueID": 2667174690818 }
+   // ]
+   //
+   // outpu: BSONObj
+   // [
+   //    { "Name": "bar1", "UniqueID": 0 } ,
+   //    { "Name": "bar2", "UniqueID": 0 }
+   // ]
+   BSONObj utilUnsetUniqueID( const BSONObj& clInfoObj )
+   {
+      BSONArrayBuilder arrBuilder ;
+
+      BSONObjIterator it( clInfoObj ) ;
+      while ( it.more() )
+      {
+         BSONElement subEle = it.next() ;
+         if ( Object == subEle.type() )
+         {
+            BSONObj clObj = subEle.embeddedObject() ;
+            BSONElement nameE = clObj.getField( FIELD_NAME_NAME ) ;
+            BSONElement idE = clObj.getField( FIELD_NAME_UNIQUEID ) ;
+            if ( String != nameE.type() || !idE.isNumber() )
+            {
+               continue ;
+            }
+            arrBuilder << BSON( FIELD_NAME_NAME << nameE.String()
+                             << FIELD_NAME_UNIQUEID << UTIL_INVALID_UNIQUEID ) ;
+         }
+      }
+
+      return arrBuilder.arr() ;
+   }
 }

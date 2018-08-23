@@ -286,14 +286,12 @@ namespace engine
 
          INT32 renameCS( const CHAR *pNewName ) ;
 
-         INT32 chgCSUniqueID( utilCSUniqueID csUniqueID ) ;
          INT32 setLobPageSize ( UINT32 lobPageSize ) ;
 
          dmsStorageDataCommon *data() { return _pDataSu ; }
          dmsStorageIndex   *index() { return _pIndexSu ; }
          dmsStorageLob     *lob() { return _pLobSu ; }
          utilCacheUnit     *cacheUnit() { return _pCacheUnit ; }
-         dmsStorageInfo    *storageInfo() { return &_storageInfo ; }
 
          INT32       getPageSize() const { return _storageInfo._pageSize ; }
          INT32       getLobPageSize() const { return _storageInfo._lobdPageSize ; }
@@ -408,6 +406,9 @@ namespace engine
          OSS_INLINE void  _setCSID( dmsStorageUnitID CSID ) ;
 
          INT32        _resetCollection( dmsMBContext *context ) ;
+      // for dmsCB
+      private:
+         dmsStorageInfo* _getStorageInfo() { return &_storageInfo ; }
 
       public:
          // Position is used to specify the insert position of the record.
@@ -447,20 +448,17 @@ namespace engine
                                 _pmdEDUCB * cb, SDB_DPSCB *dpscb,
                                 BOOLEAN isSys = FALSE,
                                 dmsMBContext *context = NULL,
-                                INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE,
-                                utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
+                                INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
 
          INT32    dropIndex( const CHAR *pName, const CHAR *indexName,
                              _pmdEDUCB * cb, SDB_DPSCB *dpscb,
                              BOOLEAN isSys = FALSE,
-                             dmsMBContext *context = NULL,
-                             utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
+                             dmsMBContext *context = NULL ) ;
 
          INT32    dropIndex( const CHAR *pName, OID &indexOID,
                              _pmdEDUCB * cb, SDB_DPSCB *dpscb,
                              BOOLEAN isSys = FALSE,
-                             dmsMBContext *context = NULL,
-                             utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
+                             dmsMBContext *context = NULL ) ;
 
          INT32    countCollection ( const CHAR *pName,
                                     INT64 &recordNum,

@@ -740,7 +740,7 @@ namespace engine
                                  " CLName : %s"OSS_NEWLINE,
                                  itrCL.value() ) ;
 
-            itrCL = this->find( DPS_LOG_PUBLIC_CLUNIQUEID ) ;
+            itrCL = this->find( DPS_LOG_CLCRT_CLUNIQUEID ) ;
             if ( itrCL.valid() )
             {
                len += ossSnprintf ( outBuf + len, outSize - len,
@@ -795,7 +795,7 @@ namespace engine
                                  " Type   : %s(%d)"OSS_NEWLINE,
                                  "IX CREATE", LOG_TYPE_IX_CRT ) ;
 
-            dpsLogRecord::iterator itrFullName, itrID, itrIX ;
+            dpsLogRecord::iterator itrFullName, itrIX ;
             itrFullName = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrFullName.valid() )
             {
@@ -809,14 +809,6 @@ namespace engine
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  " CLName : %s"OSS_NEWLINE,
                                  itrFullName.value() ) ;
-
-            itrID = this->find( DPS_LOG_PUBLIC_CLUNIQUEID ) ;
-            if ( itrID.valid() )
-            {
-               len += ossSnprintf ( outBuf + len, outSize - len,
-                                    " UniqueID : %llu"OSS_NEWLINE,
-                                    *( (utilCLUniqueID *)itrID.value() ) ) ;
-            }
 
             itrIX = this->find( DPS_LOG_IXCRT_IX ) ;
             if ( !itrIX.valid() )
@@ -850,7 +842,7 @@ namespace engine
                                  " Type   : %s(%d)"OSS_NEWLINE,
                                  "IX DROP", LOG_TYPE_IX_DELETE ) ;
 
-            dpsLogRecord::iterator itrFullName, itrIX, itrID ;
+            dpsLogRecord::iterator itrFullName, itrIX ;
             itrFullName = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrFullName.valid() )
             {
@@ -864,14 +856,6 @@ namespace engine
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  " CLName : %s"OSS_NEWLINE,
                                  itrFullName.value() ) ;
-
-            itrID = this->find( DPS_LOG_PUBLIC_CLUNIQUEID ) ;
-            if ( itrID.valid() )
-            {
-               len += ossSnprintf ( outBuf + len, outSize - len,
-                                    " UniqueID : %llu"OSS_NEWLINE,
-                                    *( (utilCLUniqueID *)itrID.value() ) ) ;
-            }
 
             itrIX = this->find(DPS_LOG_IXDEL_IX ) ;
             if ( !itrIX.valid() )

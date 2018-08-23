@@ -1397,8 +1397,6 @@ namespace engine
 
          clInfo._clUniqueID = (INT64)ele.numberLong() + 1 ;
          _clUniqueID = clInfo._clUniqueID ;
-
-         fieldMask |= UTIL_CL_UNIQUEID_FIELD ;
       }
 
       /// choose a group to create cl

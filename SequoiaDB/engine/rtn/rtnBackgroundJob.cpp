@@ -50,8 +50,7 @@ namespace engine
    ////////////////////////////////////////////////////////////////////////////
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNINDEXJOB__RTNINDEXJOB, "_rtnIndexJob::_rtnIndexJob" )
-   _rtnIndexJob::_rtnIndexJob ( RTN_JOB_TYPE type,
-                                const CHAR *pCLName, utilCLUniqueID clUniqueID,
+   _rtnIndexJob::_rtnIndexJob ( RTN_JOB_TYPE type, const CHAR *pCLName,
                                 const BSONObj & indexObj, SDB_DPSCB * dpsCB,
                                 UINT64 offset, BOOLEAN isRollBack )
    {
@@ -59,7 +58,6 @@ namespace engine
       _type = type ;
       ossStrncpy ( _clFullName, pCLName, DMS_COLLECTION_FULL_NAME_SZ ) ;
       _clFullName[DMS_COLLECTION_FULL_NAME_SZ] = 0 ;
-      _clUniqueID = clUniqueID ;
       _indexObj = indexObj.copy() ;
       _dpsCB = dpsCB ;
       _dmsCB = pmdGetKRCB()->getDMSCB() ;
@@ -106,8 +104,7 @@ namespace engine
                   dmsMBContext *mbContext = NULL ;
                   dmsExtentID idxExtent = DMS_INVALID_EXTENT ;
 
-                  rc = rtnResolveCollectionNameAndLock ( _clFullName,
-                                                         _clUniqueID, _dmsCB,
+                  rc = rtnResolveCollectionNameAndLock ( _clFullName, _dmsCB,
                                                          &su, &pCLShortName,
                                                          suID ) ;
                   if ( SDB_OK != rc )
@@ -118,7 +115,7 @@ namespace engine
                   }
 
                   rc = su->data()->getMBContext( &mbContext, pCLShortName,
-                                                 _clUniqueID, SHARED ) ;
+                                                 SHARED ) ;
                   if ( SDB_OK != rc )
                   {
                      PD_LOG ( PDERROR, "Lock collection[%s] failed, rc = %d",
@@ -238,17 +235,14 @@ namespace engine
 
       switch ( _type )
       {
-         // only rtnIndexJob need to use uniqueID, because it is a background
-         // task. The rename task may be completed before this job.
          case RTN_JOB_CREATE_INDEX :
             rc = rtnCreateIndexCommand( _clFullName, _indexObj, eduCB(),
                                         _dmsCB, _dpsCB, TRUE,
-                                        SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE,
-                                        _clUniqueID ) ;
+                                        SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
             break ;
          case RTN_JOB_DROP_INDEX :
             rc = rtnDropIndexCommand( _clFullName, _indexEle, eduCB(),
-                                      _dmsCB, _dpsCB, TRUE, _clUniqueID ) ;
+                                      _dmsCB, _dpsCB, TRUE ) ;
             break ;
          default :
             PD_LOG ( PDERROR, "Index job not support this type[%d]", _type ) ;

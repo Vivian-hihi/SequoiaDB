@@ -319,24 +319,8 @@ namespace engine
                                   dmsStorageUnitID &suID,
                                   OSS_LATCH_MODE lockType = SHARED,
                                   INT32 millisec = -1 ) ;
-   INT32 rtnCollectionSpaceLock ( const CHAR *pCollectionSpaceName,
-                                  utilCSUniqueID csUniqueID,
-                                  SDB_DMSCB *dmsCB,
-                                  BOOLEAN loadFile,
-                                  dmsStorageUnit **ppsu,
-                                  dmsStorageUnitID &suID,
-                                  OSS_LATCH_MODE lockType = SHARED,
-                                  INT32 millisec = -1 ) ;
 
    INT32 rtnResolveCollectionNameAndLock ( const CHAR *pCollectionFullName,
-                                           SDB_DMSCB *dmsCB,
-                                           dmsStorageUnit **ppsu,
-                                           const CHAR **ppCollectionName,
-                                           dmsStorageUnitID &suID,
-                                           OSS_LATCH_MODE lockType = SHARED,
-                                           INT32 millisec = -1 ) ;
-   INT32 rtnResolveCollectionNameAndLock ( const CHAR *pCollectionFullName,
-                                           utilCLUniqueID clUniqueID,
                                            SDB_DMSCB *dmsCB,
                                            dmsStorageUnit **ppsu,
                                            const CHAR **ppCollectionName,
@@ -409,8 +393,7 @@ namespace engine
                                  SDB_DMSCB *dmsCB,
                                  SDB_DPSCB *dpsCB,
                                  BOOLEAN isSys = FALSE,
-                                 INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE,
-                                 utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
+                                 INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
 
    INT32 rtnDropCollectionCommand ( const CHAR *pCollection,
                                     _pmdEDUCB *cb,
@@ -451,8 +434,7 @@ namespace engine
                                pmdEDUCB *cb,
                                SDB_DMSCB *dmsCB,
                                SDB_DPSCB *dpsCB,
-                               BOOLEAN sysCall = FALSE,
-                               utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
+                               BOOLEAN sysCall = FALSE ) ;
 
    INT32 rtnGetCount ( const rtnQueryOptions & options,
                        SDB_DMSCB *dmsCB,
@@ -490,7 +472,8 @@ namespace engine
 
    INT32 rtnChangeUniqueID( const CHAR* csName, utilCSUniqueID csUniqueID,
                             const BSONObj& clInfoObj, pmdEDUCB* cb,
-                            SDB_DMSCB* dmsCB, SDB_DPSCB* dpsCB ) ;
+                            SDB_DMSCB* dmsCB, SDB_DPSCB* dpsCB,
+                            BOOLEAN setOnlyIfInvalid = TRUE ) ;
 
    INT32 rtnTestIndex( const CHAR *pCollection,
                        const CHAR *pIndexName,

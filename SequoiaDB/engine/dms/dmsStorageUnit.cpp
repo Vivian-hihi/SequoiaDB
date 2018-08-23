@@ -1375,22 +1375,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageUnit::chgCSUniqueID( utilCSUniqueID csUniqueID )
-   {
-      utilCSUniqueID orgID = CSUniqueID() ;
-
-      if ( orgID != csUniqueID )
-      {
-         _pDataSu->setCSUniqueID( csUniqueID ) ;
-         _pIndexSu->setCSUniqueID( csUniqueID ) ;
-         PD_LOG ( PDDEBUG,
-                  "Change cs[%s] unique id, org: %u, new: %u",
-                  CSName(), orgID, csUniqueID ) ;
-      }
-
-      return SDB_OK ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SETLOBPAGESIZE, "_dmsStorageUnit::setLobPageSize" )
    INT32 _dmsStorageUnit::setLobPageSize ( UINT32 lobPageSize )
    {
@@ -1777,8 +1761,7 @@ namespace engine
    INT32 _dmsStorageUnit::createIndex( const CHAR *pName, const BSONObj &index,
                                        pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                        BOOLEAN isSys, dmsMBContext * context,
-                                       INT32 sortBufferSize,
-                                       utilCLUniqueID clUniqueID )
+                                       INT32 sortBufferSize )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
@@ -1787,7 +1770,7 @@ namespace engine
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
 
-         rc = _pDataSu->getMBContext( &context, pName, clUniqueID, -1 ) ;
+         rc = _pDataSu->getMBContext( &context, pName, -1 ) ;
          PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
                       "rc: %d", pName, rc ) ;
          getContext = TRUE ;
@@ -1814,21 +1797,19 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DROPINDEX, "_dmsStorageUnit::dropIndex" )
    INT32 _dmsStorageUnit::dropIndex( const CHAR *pName, const CHAR *indexName,
                                      pmdEDUCB *cb, SDB_DPSCB *dpscb,
-                                     BOOLEAN isSys, dmsMBContext *context,
-                                     utilCLUniqueID clUniqueID )
+                                     BOOLEAN isSys, dmsMBContext *context )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
-      PD_TRACE_ENTRY ( SDB__DMSSU_DROPINDEX ) ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSU_DROPINDEX ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
 
-         rc = _pDataSu->getMBContext( &context, pName, clUniqueID, -1 ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Get collection[name: %s, id: %llu] mb context failed, "
-                      "rc: %d", pName, clUniqueID, rc ) ;
+         rc = _pDataSu->getMBContext( &context, pName, -1 ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
+                      "rc: %d", pName, rc ) ;
          getContext = TRUE ;
       }
 
@@ -1852,8 +1833,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DROPINDEX1, "_dmsStorageUnit::dropIndex" )
    INT32 _dmsStorageUnit::dropIndex( const CHAR *pName, OID &indexOID,
                                      pmdEDUCB *cb, SDB_DPSCB *dpscb,
-                                     BOOLEAN isSys, dmsMBContext *context,
-                                     utilCLUniqueID clUniqueID )
+                                     BOOLEAN isSys, dmsMBContext *context )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
@@ -1863,10 +1843,9 @@ namespace engine
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
 
-         rc = _pDataSu->getMBContext( &context, pName, clUniqueID, -1 ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Get collection[name: %s, id: %llu] mb context failed, "
-                      "rc: %d", pName, clUniqueID, rc ) ;
+         rc = _pDataSu->getMBContext( &context, pName, -1 ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
+                      "rc: %d", pName, rc ) ;
          getContext = TRUE ;
       }
 

@@ -81,7 +81,9 @@ namespace engine
 
       PD_LOG( PDDEBUG, "clsUniqueIDCheckJob: start job" ) ;
 
-      while ( !PMD_IS_DB_DOWN() && pmdIsPrimary() )
+      while ( !PMD_IS_DB_DOWN() &&
+              pmdIsPrimary() &&
+              pDmsCB->invalidCSUniqueIDCnt() > pDmsCB->localCSCnt() )
       {
          /*
           * Before any one is found in the queue, the status of this thread is
@@ -117,7 +119,7 @@ namespace engine
          // 2. loop each cs
          MON_CS_LIST csList ;
          std::set<_monCollectionSpace>::const_iterator iterCS ;
-         BOOLEAN hasInvalidCS = FALSE ;
+         UINT32 localCSCnt = 0 ;
 
          pDmsCB->dumpInfo( csList, FALSE ) ;
 
@@ -148,11 +150,7 @@ namespace engine
 
             if ( SDB_DMS_CS_NOTEXIST == rc )
             {
-               // the cs created by local, we needn't process this cs
-            }
-            else
-            {
-               hasInvalidCS = TRUE ;
+               localCSCnt++ ;
             }
             if ( rc )
             {
@@ -174,19 +172,10 @@ namespace engine
 
          }// end for
 
-         // if all the cs are done, then exit this job
-         if ( !hasInvalidCS )
-         {
-            rc = SDB_OK ;
-            break ;
-         }
+         pDmsCB->setLocalCSCnt( localCSCnt ) ;
 
       }// end while
 
-      if ( SDB_OK == rc )
-      {
-         pDmsCB->setInvalidUniqueID( FALSE ) ;
-      }
       PD_TRACE_EXITRC( SDB__CLSUIDCHKJOB_DOIT, rc ) ;
       return rc ;
    }

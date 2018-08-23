@@ -111,7 +111,7 @@ namespace engine
       _CoordCataInfo( INT32 version,
                       const char *pCollectionName,
                       utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID )
-      :_catlogSet ( clUniqueID, pCollectionName, FALSE )
+      :_catlogSet ( pCollectionName, FALSE, clUniqueID )
       {
          _catlogSet.setSKSite( clsGetShardingKeySite() ) ;
       }
@@ -289,8 +289,7 @@ namespace engine
    private:
       // if the catalogue-info is update, build a new one, don't modify the old
       _CoordCataInfo()
-      :_catlogSet( (const CHAR*)NULL, FALSE ) //without (const CHAR*), windows
-                                              //compiler will print ambiguous error
+      :_catlogSet( NULL, FALSE )
       {}
 
    private:

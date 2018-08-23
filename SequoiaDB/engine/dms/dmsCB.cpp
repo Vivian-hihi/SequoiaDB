@@ -87,7 +87,8 @@ namespace engine
    :_writeCounter(0),
     _dmsCBState(DMS_STATE_NORMAL),
     _logicalSUID(0),
-    _hasInvalidUniqueID( FALSE ),
+    _invalidCSUniqueIDCnt( 0 ),
+    _localCSCnt( 0 ),
     _tempSUMgr( this ),
     _statSUMgr( this ),
     _ixmKeySorterCreator( NULL )
@@ -215,7 +216,7 @@ namespace engine
             su->setSyncDeep( syncDeep ) ;
 
             /// update cache info
-            dmsStorageInfo *pInfo = su->storageInfo() ;
+            dmsStorageInfo *pInfo = su->_getStorageInfo() ;
             utilCacheUnit *pCache = su->cacheUnit() ;
 
             pInfo->_overflowRatio = optCB->getOverFlowRatio() ;
@@ -249,7 +250,6 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__CSCBNMINST, "_SDB_DMSCB::_CSCBNameInsert" )
    INT32 _SDB_DMSCB::_CSCBNameInsert ( const CHAR *pName,
-                                       utilCSUniqueID csUniqueID,
                                        UINT32 topSequence,
                                        _dmsStorageUnit *su,
                                        dmsStorageUnitID &suID )
@@ -257,6 +257,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB__CSCBNMINST );
       SDB_DMS_CSCB *cscb = NULL ;
+      utilCSUniqueID csUniqueID = su->CSUniqueID() ;
 
       if ( 0 == _freeList.size() )
       {
@@ -292,15 +293,24 @@ namespace engine
                                        dmsStorageUnitID *pSuID,
                                        BOOLEAN exceptDeleting )
    {
-      utilCSUniqueID uid = UTIL_INVALID_UNIQUEID ;
-      return _CSCBNameLookup( pName, uid, cscb, pSuID, exceptDeleting ) ;
+      return _CSCBLookup( pName, UTIL_INVALID_UNIQUEID,
+                              cscb, pSuID, exceptDeleting ) ;
    }
 
-   INT32 _SDB_DMSCB::_CSCBNameLookup ( const CHAR *pName,
-                                       utilCSUniqueID csUniqueID,
-                                       SDB_DMS_CSCB **cscb,
-                                       dmsStorageUnitID *pSuID,
-                                       BOOLEAN exceptDeleting )
+   INT32 _SDB_DMSCB::_CSCBIdLookup ( utilCSUniqueID csUniqueID,
+                                     SDB_DMS_CSCB **cscb,
+                                     dmsStorageUnitID *pSuID,
+                                     BOOLEAN exceptDeleting )
+   {
+      return _CSCBLookup( NULL, csUniqueID, cscb, pSuID, exceptDeleting ) ;
+   }
+
+   // look up by name or unique id
+   INT32 _SDB_DMSCB::_CSCBLookup ( const CHAR *pName,
+                                   utilCSUniqueID csUniqueID,
+                                   SDB_DMS_CSCB **cscb,
+                                   dmsStorageUnitID *pSuID,
+                                   BOOLEAN exceptDeleting )
    {
       SDB_ASSERT( cscb, "cscb can't be null!" ) ;
 
@@ -366,7 +376,6 @@ namespace engine
    }
 
    INT32 _SDB_DMSCB::_CSCBNameLookupAndLock ( const CHAR *pName,
-                                              utilCSUniqueID csUniqueID,
                                               dmsStorageUnitID &suID,
                                               SDB_DMS_CSCB **cscb,
                                               OSS_LATCH_MODE lockType,
@@ -375,7 +384,43 @@ namespace engine
       INT32 rc = SDB_OK;
       SDB_ASSERT( cscb, "cscb can't be null!" );
 
-      rc = _CSCBNameLookup( pName, csUniqueID, cscb, &suID, TRUE ) ;
+      rc = _CSCBNameLookup( pName, cscb, &suID, TRUE ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      if ( EXCLUSIVE == lockType )
+      {
+         rc = _latchVec[suID]->lock_w( millisec ) ;
+      }
+      else
+      {
+         rc = _latchVec[suID]->lock_r( millisec ) ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      suID = DMS_INVALID_CS ;
+      *cscb = NULL ;
+      goto done ;
+   }
+
+   INT32 _SDB_DMSCB::_CSCBIdLookupAndLock ( utilCSUniqueID csUniqueID,
+                                            dmsStorageUnitID &suID,
+                                            SDB_DMS_CSCB **cscb,
+                                            OSS_LATCH_MODE lockType,
+                                            INT32 millisec )
+   {
+      INT32 rc = SDB_OK;
+      SDB_ASSERT( cscb, "cscb can't be null!" );
+
+      rc = _CSCBIdLookup( csUniqueID, cscb, &suID, TRUE ) ;
       if ( rc )
       {
          goto error ;
@@ -426,11 +471,11 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB__CSCBNMREMV );
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
       UINT32 csLID = ~0 ;
-      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
-      BOOLEAN isTransLocked = FALSE;
-      BOOLEAN isReserved = FALSE;
+      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
+      BOOLEAN isTransLocked = FALSE ;
+      BOOLEAN isReserved = FALSE ;
       BOOLEAN isLocked = FALSE ;
-      UINT32 logRecSize = 0;
+      UINT32 logRecSize = 0 ;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
       utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
@@ -1298,39 +1343,54 @@ namespace engine
       unblockWrite( cb ) ;
    }
 
-   INT32 _SDB_DMSCB::nameToSUAndLock ( const CHAR *pName,
-                                       dmsStorageUnitID &suID,
-                                       _dmsStorageUnit **su,
-                                       OSS_LATCH_MODE lockType,
-                                       INT32 millisec )
+   INT32 _SDB_DMSCB::idToSUAndLock ( utilCSUniqueID csUniqueID,
+                                     dmsStorageUnitID &suID,
+                                     _dmsStorageUnit **su,
+                                     OSS_LATCH_MODE lockType,
+                                     INT32 millisec )
    {
-      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
-      return nameToSUAndLock( pName, csUniqueID, suID,
-                              su, lockType, millisec ) ;
+      INT32 rc = SDB_OK ;
+      SDB_DMS_CSCB *cscb = NULL ;
+
+      SDB_ASSERT( su, "su can't be null!" ) ;
+      if ( UTIL_INVALID_UNIQUEID == csUniqueID )
+      {
+         return SDB_INVALIDARG ;
+      }
+
+      ossScopedLock _lock( &_mutex, SHARED ) ;
+      rc = _CSCBIdLookupAndLock( csUniqueID, suID, &cscb,
+                                 lockType, millisec ) ;
+      if ( SDB_OK == rc )
+      {
+         *su = cscb->_su ;
+      }
+
+      return rc ;
    }
 
    INT32 _SDB_DMSCB::nameToSUAndLock ( const CHAR *pName,
-                                       utilCSUniqueID csUniqueID,
                                        dmsStorageUnitID &suID,
                                        _dmsStorageUnit **su,
                                        OSS_LATCH_MODE lockType,
                                        INT32 millisec )
    {
-      INT32 rc = SDB_OK;
-
-      SDB_DMS_CSCB *cscb = NULL;
-      SDB_ASSERT( su, "su can't be null!" );
+      INT32 rc = SDB_OK ;
+      SDB_DMS_CSCB *cscb = NULL ;
+      SDB_ASSERT( su, "su can't be null!" ) ;
       if ( !pName )
       {
          return SDB_INVALIDARG ;
       }
-      ossScopedLock _lock(&_mutex, SHARED) ;
-      rc = _CSCBNameLookupAndLock( pName, csUniqueID, suID, &cscb,
+
+      ossScopedLock _lock( &_mutex, SHARED ) ;
+      rc = _CSCBNameLookupAndLock( pName, suID, &cscb,
                                    lockType, millisec ) ;
       if ( SDB_OK == rc )
       {
          *su = cscb->_su ;
       }
+
       return rc ;
    }
 
@@ -1395,12 +1455,84 @@ namespace engine
       _CSCBRelease( suID, lockType ) ;
    }
 
+   INT32 _SDB_DMSCB::changeCSUniqueID( _dmsStorageUnit* su,
+                                       utilCSUniqueID csUniqueID,
+                                       pmdEDUCB* cb,
+                                       SDB_DPSCB* dpsCB,
+                                       BOOLEAN setOnlyIfInvalid )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_DMS_CSCB* cscb = NULL ;
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      dmsStorageInfo* suInfo = NULL ;
+      const CHAR* csname = su->CSName() ;
+      utilCSUniqueID orgUniqueID = su->CSUniqueID() ;
+
+      if ( setOnlyIfInvalid && orgUniqueID != UTIL_INVALID_UNIQUEID )
+      {
+         goto done ;
+      }
+      if ( orgUniqueID == csUniqueID )
+      {
+         goto done ;
+      }
+
+      // change unique id in storage unit
+      suInfo = su->_getStorageInfo() ;
+      suInfo->_csUniqueID = csUniqueID ;
+
+      su->_pDataSu->updateCSUniqueIDFromInfo() ;
+      su->_pIndexSu->updateCSUniqueIDFromInfo() ;
+      su->_pLobSu->updateCSUniqueIDFromInfo() ;
+
+      PD_LOG ( PDDEBUG,
+               "Change cs[%s] unique id, org: %u, new: %u",
+               csname, orgUniqueID, csUniqueID ) ;
+
+      // get su id
+      rc = _CSCBNameLookup( csname, &cscb, &suID ) ;
+      if ( rc || DMS_INVALID_SUID == suID )
+      {
+         PD_LOG( PDERROR,
+                 "Failed to look up cs[%s], suID: %d, rc: %d",
+                 csname, suID, rc ) ;
+         goto error ;
+      }
+
+      // change map
+      if ( orgUniqueID != UTIL_INVALID_UNIQUEID )
+      {
+         _cscbIDMap.erase( orgUniqueID ) ;
+      }
+      if ( csUniqueID != UTIL_INVALID_UNIQUEID )
+      {
+         _cscbIDMap[ csUniqueID ] = suID ;
+      }
+
+      if ( orgUniqueID != UTIL_INVALID_UNIQUEID &&
+           csUniqueID  == UTIL_INVALID_UNIQUEID )
+      {
+         _invalidCSUniqueIDCntInc() ;
+      }
+      if ( orgUniqueID == UTIL_INVALID_UNIQUEID &&
+           csUniqueID  != UTIL_INVALID_UNIQUEID )
+      {
+         _invalidCSUniqueIDCntDec() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CHGUID, "_SDB_DMSCB::changeUniqueID" )
    INT32 _SDB_DMSCB::changeUniqueID( const CHAR* csname,
                                      utilCSUniqueID csUniqueID,
                                      const BSONObj& clInfoObj,
                                      pmdEDUCB* cb,
-                                     SDB_DPSCB* dpsCB )
+                                     SDB_DPSCB* dpsCB,
+                                     BOOLEAN setOnlyIfInvalid )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__SDB_DMSCB_CHGUID ) ;
@@ -1460,7 +1592,8 @@ namespace engine
             goto error ;
          }
 
-         su->data()->chgCLUniqueID( utilBson2ClPair( clInfoObj ), TRUE ) ;
+         su->data()->chgCLUniqueID( utilBson2ClPair( clInfoObj ),
+                                    setOnlyIfInvalid ) ;
 
          suUnlock ( suID ) ;
       }
@@ -1501,19 +1634,7 @@ namespace engine
       }
 
       // change cs unique id
-      {
-         utilCSUniqueID oldCSUniqueID = su->CSUniqueID() ;
-         if ( oldCSUniqueID != UTIL_INVALID_UNIQUEID )
-         {
-            _cscbIDMap.erase( oldCSUniqueID ) ;
-         }
-         if ( csUniqueID != UTIL_INVALID_UNIQUEID )
-         {
-            _cscbIDMap[ csUniqueID ] = suID ;
-         }
-      }
-
-      su->chgCSUniqueID( csUniqueID ) ;
+      changeCSUniqueID( su, csUniqueID, cb, dpsCB, setOnlyIfInvalid ) ;
 
       // write dps
       if ( SDB_OK == rc && dpsCB )
@@ -1531,6 +1652,12 @@ namespace engine
       }
 
    done :
+      if ( rc == SDB_OK )
+      {
+         PD_LOG( PDEVENT,
+                 "Change unique id, cs name: %s, cs unique id: %u, cl info: %s",
+                 csname, csUniqueID, clInfoObj.toString().c_str() ) ;
+      }
       if ( isMetaLocked )
       {
          _mutex.release () ;
@@ -1608,7 +1735,7 @@ namespace engine
       _mutex.get() ;
       isLocked = TRUE ;
 
-      rc = _CSCBNameLookup( pName, csUniqueID, &cscb ) ;
+      rc = _CSCBNameLookup( pName, &cscb ) ;
       if ( SDB_OK == rc )
       {
          rc = SDB_DMS_CS_EXIST;
@@ -1619,7 +1746,18 @@ namespace engine
          goto error;
       }
 
-      rc = _CSCBNameInsert ( pName, csUniqueID, topSequence, su, suID ) ;
+      rc = _CSCBIdLookup( csUniqueID, &cscb ) ;
+      if ( SDB_OK == rc )
+      {
+         rc = SDB_DMS_CS_EXIST;
+         goto error;
+      }
+      else if ( rc != SDB_DMS_CS_NOTEXIST )
+      {
+         goto error;
+      }
+
+      rc = _CSCBNameInsert ( pName, topSequence, su, suID ) ;
       // write dps
       if ( SDB_OK == rc && dpsCB )
       {
@@ -1654,6 +1792,12 @@ namespace engine
       }
 
    done :
+      if ( SDB_OK == rc &&
+           !dmsIsSysCSName( pName ) &&
+           UTIL_INVALID_UNIQUEID == csUniqueID )
+      {
+         _invalidCSUniqueIDCntInc() ;
+      }
       if ( isLocked )
       {
          _mutex.release() ;
@@ -1677,6 +1821,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
       IDmsExtDataHandler *extHandler = NULL ;
+      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
 
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DELCS ) ;
 
@@ -1696,6 +1841,8 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
+
+      csUniqueID = pCSCB->_su->CSUniqueID() ;
 
       extHandler = pCSCB->_su->data()->getExtDataHandler() ;
       if ( extHandler )
@@ -1737,6 +1884,12 @@ namespace engine
       }
 
    done :
+      if ( SDB_OK == rc &&
+           !dmsIsSysCSName( pName ) &&
+           UTIL_INVALID_UNIQUEID == csUniqueID )
+      {
+         _invalidCSUniqueIDCntDec() ;
+      }
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DELCS, rc );
       return rc ;
    error :
@@ -2218,14 +2371,29 @@ namespace engine
       }
    }
 
-   UINT32 _SDB_DMSCB::hasInvalidUniqueID() const
+   UINT32 _SDB_DMSCB::invalidCSUniqueIDCnt() const
    {
-      return _hasInvalidUniqueID ;
+      return _invalidCSUniqueIDCnt ;
    }
 
-   void _SDB_DMSCB::setInvalidUniqueID( BOOLEAN hasInvalid )
+   void _SDB_DMSCB::_invalidCSUniqueIDCntInc()
    {
-      _hasInvalidUniqueID = hasInvalid ;
+      _invalidCSUniqueIDCnt++ ;
+   }
+
+   void _SDB_DMSCB::_invalidCSUniqueIDCntDec()
+   {
+      _invalidCSUniqueIDCnt-- ;
+   }
+
+   UINT32 _SDB_DMSCB::localCSCnt() const
+   {
+      return _localCSCnt ;
+   }
+
+   void _SDB_DMSCB::setLocalCSCnt( UINT32 cnt )
+   {
+      _localCSCnt = cnt ;
    }
 
    dmsTempSUMgr *_SDB_DMSCB::getTempSUMgr ()

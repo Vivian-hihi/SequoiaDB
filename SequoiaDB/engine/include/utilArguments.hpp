@@ -59,7 +59,6 @@ namespace engine
    #define UTIL_CL_MAXSIZE_FIELD             ( 0x00004000 )
    #define UTIL_CL_OVERWRITE_FIELD           ( 0x00008000 )
    #define UTIL_CL_STRICTDATAMODE_FIELD      ( 0x00010000 )
-   #define UTIL_CL_UNIQUEID_FIELD            ( 0x00020000 )
 
    #define UTIL_CS_NAME_FIELD                ( 0x00000001 )
    #define UTIL_CS_DOMAIN_FIELD              ( 0x00000002 )

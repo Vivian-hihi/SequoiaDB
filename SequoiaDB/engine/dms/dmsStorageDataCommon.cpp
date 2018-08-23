@@ -492,7 +492,7 @@ namespace engine
    _dmsStorageDataCommon::~_dmsStorageDataCommon ()
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_DESC ) ;
-      _collectionNameMapCleanup() ;
+      _collectionMapCleanup() ;
 
       vector<dmsMBContext*>::iterator it = _vecContext.begin() ;
       while ( it != _vecContext.end() )
@@ -838,8 +838,8 @@ namespace engine
 
          if ( DMS_IS_MB_INUSE ( _dmsMME->_mbList[i]._flag ) )
          {
-            _collectionNameInsert ( _dmsMME->_mbList[i]._collectionName, i,
-                                    _dmsMME->_mbList[i]._clUniqueID ) ;
+            _collectionInsert ( _dmsMME->_mbList[i]._collectionName, i,
+                                _dmsMME->_mbList[i]._clUniqueID ) ;
 
             _mbStatInfo[i]._totalRecords = _dmsMME->_mbList[i]._totalRecords ;
             _mbStatInfo[i]._totalDataPages =
@@ -2025,7 +2025,12 @@ namespace engine
       metalocked = TRUE ;
 
       // then let's make sure the collection name does not exist
-      if ( DMS_INVALID_MBID != _collectionNameLookup ( pName, clUniqueID ) )
+      if ( DMS_INVALID_MBID != _collectionNameLookup ( pName ) )
+      {
+         rc = SDB_DMS_EXIST ;
+         goto error ;
+      }
+      if ( DMS_INVALID_MBID != _collectionIdLookup ( clUniqueID ) )
       {
          rc = SDB_DMS_EXIST ;
          goto error ;
@@ -2065,7 +2070,7 @@ namespace engine
 	  _compressorEntry[ newCollectionID ].reset() ;
 
       _dmsHeader->_numMB++ ;
-      _collectionNameInsert( pName, newCollectionID, clUniqueID ) ;
+      _collectionInsert( pName, newCollectionID, clUniqueID ) ;
 
       if ( isBlockScanSupport() )
       {
@@ -2352,7 +2357,7 @@ namespace engine
       // change metadata
       ossLatch( &_metadataLatch, EXCLUSIVE ) ;
       metalocked = TRUE ;
-      _collectionNameRemove( pName, clUniqueID ) ;
+      _collectionRemove( pName, clUniqueID ) ;
       DMS_SET_MB_FREE( context->mb()->_flag ) ;
       _dmsHeader->_numMB-- ;
 
@@ -2638,14 +2643,11 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_CHGUID, "_dmsStorageDataCommon::chgCLUniqueID" )
    INT32 _dmsStorageDataCommon::chgCLUniqueID( const vector<PAIR_CLNAME_ID>& clList,
-                                               BOOLEAN needLock )
+                                               BOOLEAN setOnlyIfInvalid )
    {
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON_CHGUID ) ;
 
-      if ( needLock )
-      {
-         ossScopedLock lock( &_metadataLatch, EXCLUSIVE ) ;
-      }
+      ossScopedLock lock( &_metadataLatch, EXCLUSIVE ) ;
 
       vector< PAIR_CLNAME_ID >::const_iterator it = clList.begin() ;
       for ( ; it != clList.end() ; it++ )
@@ -2655,6 +2657,7 @@ namespace engine
          utilCLUniqueID orgID = UTIL_INVALID_UNIQUEID ;
          UINT16 mbID = DMS_INVALID_MBID ;
 
+         // get current unique id
          mbID = _collectionNameLookup( clName ) ;
          if ( DMS_INVALID_MBID == mbID )
          {
@@ -2662,17 +2665,27 @@ namespace engine
          }
          orgID = _dmsMME->_mbList[mbID]._clUniqueID ;
 
-         if ( orgID != newID )
+         // set new unique id only if current id is invalid
+         if ( setOnlyIfInvalid && UTIL_INVALID_UNIQUEID != orgID )
          {
-            _dmsMME->_mbList[mbID]._clUniqueID = newID ;
-
-            _collectionNameRemove ( clName, orgID ) ;
-            _collectionNameInsert ( clName, mbID, newID ) ;
-
-            PD_LOG ( PDDEBUG,
-                     "Change cl[%s] unique id, org: %llu, new: %llu",
-                     clName, orgID, newID ) ;
+            continue ;
          }
+
+         // skip this cl when orginal id is the same as new id
+         if ( orgID == newID )
+         {
+            continue ;
+         }
+
+         // set new unique id
+         _dmsMME->_mbList[mbID]._clUniqueID = newID ;
+
+         _collectionRemove ( clName, orgID ) ;
+         _collectionInsert ( clName, mbID, newID ) ;
+
+         PD_LOG ( PDDEBUG,
+                  "Change cl[%s] unique id, org: %llu, new: %llu",
+                  clName, orgID, newID ) ;
       }
 
       flushMME( isSyncDeep() ) ;
@@ -2744,8 +2757,8 @@ namespace engine
          goto error ;
       }
 
-      _collectionNameRemove ( oldName ) ;
-      _collectionNameInsert ( newName, mbID ) ;
+      _collectionRemove ( oldName ) ;
+      _collectionInsert ( newName, mbID ) ;
       ossMemset ( _dmsMME->_mbList[mbID]._collectionName, 0,
                   DMS_COLLECTION_NAME_SZ ) ;
       ossStrncpy ( _dmsMME->_mbList[mbID]._collectionName, newName,

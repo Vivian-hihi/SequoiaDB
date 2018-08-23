@@ -468,7 +468,7 @@ namespace engine
          INT32 renameStorage( const CHAR *csName,
                               const CHAR *suFileName ) ;
 
-         INT32 setCSUniqueID( utilCSUniqueID csUniqueID ) ;
+         INT32 updateCSUniqueIDFromInfo() ;
 
          INT32 setLobPageSize ( UINT32 lobPageSize ) ;
 

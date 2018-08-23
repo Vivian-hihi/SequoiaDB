@@ -55,7 +55,7 @@ namespace engine
    {
       public:
          _rtnIndexJob ( RTN_JOB_TYPE type,
-                        const CHAR *pCLName, utilCLUniqueID clUniqueID,
+                        const CHAR *pCLName,
                         const BSONObj &indexObj, SDB_DPSCB *dpsCB,
                         UINT64 offset, BOOLEAN isRollBack ) ;
 
@@ -74,7 +74,6 @@ namespace engine
       protected:
          RTN_JOB_TYPE            _type ;
          CHAR                    _clFullName[DMS_COLLECTION_FULL_NAME_SZ + 1] ;
-         utilCLUniqueID          _clUniqueID ;
          std::string             _indexName ;
          std::string             _jobName ;
          BSONObj                 _indexObj ;
