@@ -52,6 +52,12 @@ class SequoiaTimestamp
     * $timeObj = new SequoiaTimestamp( 946656000 ) ;
     * $arr = array( 'time' => $timeObj ) ; // json ==> { "time": { "$timestamp": "2000-01-01-00.00.00.000000" } }
     * @endcode
+    *
+    * integer(millisecond) and integer(increase). ( Available/Support on 3.0.1 or newer version. )
+    * @code
+    * $timeObj = new SequoiaTimestamp( 946656000, 1234 ) ;
+    * $arr = array( 'time' => $timeObj ) ; // json ==> { "time": { "$timestamp": "2000-01-01-00.00.00.001234" } }
+    * @endcode
    */
    public function __construct( string|integer $timestamp ){}
 
