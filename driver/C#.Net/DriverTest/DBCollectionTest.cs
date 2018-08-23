@@ -1761,5 +1761,62 @@ namespace DriverTest
             sdb.InvalidateCache(options);
         }
 
+        [TestMethod]
+        public void BsonTimestampIncTest()
+        {
+            BsonTimestamp ts1 = new BsonTimestamp(10000, 1000000);
+            Assert.AreEqual(10001, ts1.Timestamp);
+            Assert.AreEqual(0, ts1.Increment);
+
+            BsonTimestamp ts2 = new BsonTimestamp(10000, -1);
+            Assert.AreEqual(9999, ts2.Timestamp);
+            Assert.AreEqual(999999, ts2.Increment);
+
+            BsonTimestamp ts3 = new BsonTimestamp(10000, 0);
+            Assert.AreEqual(10000, ts3.Timestamp);
+            Assert.AreEqual(0, ts3.Increment);
+
+            BsonTimestamp ts4 = new BsonTimestamp(10000, 999999);
+            Assert.AreEqual(10000, ts4.Timestamp);
+            Assert.AreEqual(999999, ts4.Increment);
+
+            int time = 1534942305;
+            int inc = 123456789;
+            int incSec = 123456789 / 1000000;
+            int incMSec = 123456789 % 1000000;
+            int incMSec2 = 1000000 - incMSec;
+            BsonTimestamp ts5 = new BsonTimestamp(time, inc);
+            Assert.AreEqual(time + incSec, ts5.Timestamp);
+            Assert.AreEqual(incMSec, ts5.Increment);
+
+            BsonTimestamp ts6 = new BsonTimestamp(time, -inc);
+            Assert.AreEqual(time - incSec - 1, ts6.Timestamp);
+            Assert.AreEqual(incMSec2, ts6.Increment);
+
+            BsonTimestamp ts7 = new BsonTimestamp(-time, inc);
+            Assert.AreEqual(-time + incSec, ts7.Timestamp);
+            Assert.AreEqual(incMSec, ts7.Increment);
+
+            BsonTimestamp ts8 = new BsonTimestamp(-time, -inc);
+            Assert.AreEqual(-time - incSec - 1, ts8.Timestamp);
+            Assert.AreEqual(incMSec2, ts8.Increment);
+
+            BsonDocument doc = new BsonDocument();
+            doc.Add("ts1", ts1);
+            doc.Add("ts2", ts2);
+            doc.Add("ts3", ts3);
+            doc.Add("ts4", ts4);
+            doc.Add("ts5", ts5);
+            doc.Add("ts6", ts6);
+            doc.Add("ts7", ts7);
+            doc.Add("ts8", ts8);
+            coll.Insert(doc);
+            DBCursor cursor = coll.Query();
+            BsonDocument result = cursor.Next();
+            Console.WriteLine("result is: " + result);
+
+        }
+
+
     }
 }
