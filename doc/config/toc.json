@@ -4031,6 +4031,32 @@
                      "en": "Field"
                   }
                ]
+            },
+            {
+               "id": 1534834766,
+               "dir": "mysql_data",
+               "cn": "SequoiaSQL-MySQL数据操作",
+               "en": "SequoiaSQL-MySQL Data",
+               "contents": [
+                  {
+                     "id": 1534834767,
+                     "file": "database",
+                     "cn": "数据库",
+                     "en": "Database"
+                  },
+                  {
+                     "id": 1534834768,
+                     "file": "record",
+                     "cn": "数据操作",
+                     "en": "Record"
+                  },
+                  {
+                     "id": 1534834769,
+                     "file": "field",
+                     "cn": "字段结构",
+                     "en": "Field"
+                  }
+               ]
             }
          ]
       },
