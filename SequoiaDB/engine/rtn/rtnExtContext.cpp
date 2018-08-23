@@ -166,8 +166,8 @@ namespace engine
 
       _processorMgr = processorMgr ;
 
-      rc = processorMgr->getProcessorByIdx( csName, clName, idxName,
-                                            EXCLUSIVE, processor ) ;
+      rc = processorMgr->getProcessorByExtName( extName, EXCLUSIVE,
+                                                processor ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor for index "
                                 "failed[ %d ]", rc ) ;
       _processorMgr = processorMgr ;
@@ -187,7 +187,7 @@ namespace engine
             rc = processor->doRebuild( cb, dpscb ) ;
             PD_RC_CHECK( rc, PDERROR, "Rebuild of index failed[ %d ]", rc ) ;
 
-            rc = processorMgr->activateProcessor( processor ) ;
+            rc = processorMgr->activateProcessor( processor->getID(), FALSE ) ;
             PD_RC_CHECK( rc, PDERROR, "Add processor for index failed[ %d ]",
                          rc ) ;
          }
@@ -212,7 +212,10 @@ namespace engine
    error:
       if ( newProcessor )
       {
-         _processorMgr->delProcessor( &processor ) ;
+         vector<rtnExtDataProcessor *> processors ;
+         processors.push_back( processor ) ;
+         _processorMgr->destroyProcessors( processors, _lockType ) ;
+         _lockType = -1 ;
       }
       goto done ;
    }
@@ -246,7 +249,7 @@ namespace engine
    }
 
    _rtnExtInsertCtx::_rtnExtInsertCtx()
-         : _rtnExtDataOprCtx( DMS_EXTOPR_TYPE_INSERT )
+   : _rtnExtDataOprCtx( DMS_EXTOPR_TYPE_INSERT )
    {
    }
 
@@ -266,6 +269,13 @@ namespace engine
       SDB_ASSERT( processorMgr && extName, "Invalid argument" ) ;
 
       _processorMgr = processorMgr ;
+
+      // Why add EXCLUSIVE lock here? To make sure of the right order of records
+      // insertted into capped collection.
+      // This lock cooperates with mb lock of original collection. It's taken
+      // inside the protection of the mb lock, and released after the mb lock
+      // released(after writting dps log). So we need this lock to ensure the
+      // write order.
       rc = processorMgr->getProcessorByExtName( extName, EXCLUSIVE,
                                                 processor ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
@@ -288,7 +298,7 @@ namespace engine
    }
 
    _rtnExtDeleteCtx::_rtnExtDeleteCtx()
-         : _rtnExtDataOprCtx( DMS_EXTOPR_TYPE_DELETE )
+   : _rtnExtDataOprCtx( DMS_EXTOPR_TYPE_DELETE )
    {
    }
 
@@ -330,7 +340,7 @@ namespace engine
    }
 
    _rtnExtUpdateCtx::_rtnExtUpdateCtx()
-         : _rtnExtDataOprCtx( DMS_EXTOPR_TYPE_UPDATE )
+   : _rtnExtDataOprCtx( DMS_EXTOPR_TYPE_UPDATE )
    {
    }
 
@@ -400,7 +410,8 @@ namespace engine
       // But operations on other cs are not affected. So concurrency should be
       // considered when finally removing the processors.
       _processorMgr = processorMgr ;
-      rc = processorMgr->getProcessorsByCS( csName, -1, processors ) ;
+
+      rc = processorMgr->getProcessorsByCS( csName, SHARED, processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Prepare processors failed[ %d ]", rc ) ;
 
       // May be there is no text indices in this cs any more.
@@ -444,10 +455,7 @@ namespace engine
    INT32 _rtnExtDropCSCtx::_onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
-      INT32 ret = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDROPCSCTX__ONDONE ) ;
-
-      _processorMgr->rmProcessorEntry( _processorP1, _lockType ) ;
 
       // For drop operation, the processors need to be removed.
       for ( EDP_VEC_ITR itr = _processorP1.begin(); itr != _processorP1.end();
@@ -455,8 +463,8 @@ namespace engine
       {
          if ( _removeFiles )
          {
-            ret = (*itr)->doDropP2( cb, dpscb ) ;
-            if ( ret )
+            rc = (*itr)->doDropP2( cb, dpscb ) ;
+            if ( rc )
             {
                // Write error log, but continue.
                PD_LOG( PDERROR, "Do drop phase 2 failed[ %d ]", rc ) ;
@@ -465,10 +473,11 @@ namespace engine
       }
 
       // Take the meta lock and delete the processors.
-      _processorMgr->destroyProcessor( _processorP1 ) ;
+      _processorMgr->destroyProcessors( _processorP1, EXCLUSIVE ) ;
       // _processors and _processorP! are the same.
       _processorP1.clear() ;
       _processors.clear() ;
+      _lockType = -1 ;
 
       PD_TRACE_EXITRC( SDB__RTNEXTDROPCSCTX__ONDONE, rc ) ;
       return SDB_OK ;
@@ -547,37 +556,25 @@ namespace engine
    INT32 _rtnExtDropCLCtx::_onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
-      INT32 ret = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDROPCLCTX__ONDONE ) ;
 
       // For drop operation, the processors need to be removed.
-      for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end();)
+      for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end();
+            ++itr )
       {
-         ret = (*itr)->doDropP2( cb, dpscb ) ;
-         if ( ret )
+         rc = (*itr)->doDropP2( cb, dpscb ) ;
+         if ( rc )
          {
             PD_LOG( PDERROR, "Do drop phase 2 failed[ %d ]", rc ) ;
-            if ( SDB_OK == rc )
-            {
-               rc = ret ;
-            }
          }
          // Unlock and delete all processors.
-         _processorMgr->unlockProcessor( (*itr)->getID(), _lockType ) ;
-         _processorMgr->delProcessor( &(*itr ) ) ;
-         _processors.erase( itr ) ;
       }
+      _processorMgr->destroyProcessors( _processors, EXCLUSIVE ) ;
+      _processors.clear() ;
       _lockType = -1 ;
-      if ( rc )
-      {
-         goto error ;
-      }
 
-   done:
       PD_TRACE_EXITRC( SDB__RTNEXTDROPCLCTX__ONDONE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDROPCLCTX__ONABORT, "_rtnExtDropCLCtx::_onAbort")
@@ -640,7 +637,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDROPIDXCTX__ONDONE ) ;
 
       // For drop operation, the processors need to be removed.
-      for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end();)
+      for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end();
+            ++itr )
       {
          ret = (*itr)->doDropP2( cb, dpscb ) ;
          if ( ret )
@@ -652,10 +650,9 @@ namespace engine
             }
          }
          // Unlock and delete all processors.
-         _processorMgr->unlockProcessor( (*itr)->getID(), _lockType ) ;
-         _processorMgr->delProcessor( &(*itr ) ) ;
-         _processors.erase( itr ) ;
       }
+      _processorMgr->destroyProcessors( _processors, _lockType ) ;
+      _processors.clear() ;
       _lockType = -1 ;
       if ( rc )
       {
@@ -714,7 +711,7 @@ namespace engine
       for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
             itr != processors.end(); ++itr )
       {
-         rc = (*itr)->doDropP1( cb, NULL ) ;
+         rc = (*itr)->doDropP1( cb, dpscb ) ;
          PD_RC_CHECK( rc, PDERROR, "Drop phase 1 failed[ %d ]", rc ) ;
          processorP1.push_back( *itr ) ;
       }

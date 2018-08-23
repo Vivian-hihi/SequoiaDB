@@ -44,9 +44,11 @@
 #include "pmdEDU.hpp"
 #include "utilConcurrentMap.hpp"
 #include "rtnExtOprDef.hpp"
-#include "dmsStorageDataCommon.hpp"
+#include "dmsStorageUnit.hpp"
 
 #define RTN_EXT_PROCESSOR_INVALID_ID   (-1)
+#define RTN_EXT_PROCESSOR_MAX_NUM       64
+
 namespace engine
 {
    // Metadata of the processor.
@@ -75,8 +77,25 @@ namespace engine
          _idxKeyDef = idxKeyDef.copy() ;
          return SDB_OK ;
       }
+
+      void reset()
+      {
+         _csName.clear() ;
+         _clName.clear() ;
+         _idxName.clear() ;
+         _targetName.clear() ;
+         _idxKeyDef = BSONObj() ;
+      }
    } ;
    typedef _rtnExtProcessorMeta rtnExtProcessorMeta ;
+
+   enum _rtnExtProcessorStat
+   {
+      RTN_EXT_PROCESSOR_NORMAL = 0,
+      RTN_EXT_PROCESSOR_CREATING,
+      RTN_EXT_PROCESSOR_INVALID
+   };
+   typedef _rtnExtProcessorStat rtnExtProcessorStat ;
 
    /*
     * One processor is according to one text index. It handles operations on the
@@ -91,16 +110,17 @@ namespace engine
       _rtnExtDataProcessor() ;
       ~_rtnExtDataProcessor() ;
 
-      INT32 init( INT64 id, const CHAR *csName, const CHAR *clName,
+      INT32 init( INT32 id, const CHAR *csName, const CHAR *clName,
                   const CHAR *idxName, const CHAR *targetName,
                   const BSONObj &idxKeyDef ) ;
+      void  reset() ;
 
-      // User can set a name for the processor. If not set explicitly, it will
-      // be set to the same with the full name of the capped cl by default.
-      // INT32 setName( const CHAR *name ) ;
-      // const CHAR* getName() const ;
+      INT32 getID() ;
 
-      INT64 getID() ;
+      rtnExtProcessorStat stat() const ;
+
+      void active() ;
+
       INT32 setTargetNames( const CHAR *extName ) ;
 
       INT32 check( DMS_EXTOPR_TYPE type, const BSONObj *object,
@@ -123,12 +143,10 @@ namespace engine
       INT32 done( pmdEDUCB *cb ) ;
       INT32 abort() ;
 
-      const rtnExtProcessorMeta& getMeta() const { return _meta ; }
-
       BOOLEAN isOwnedBy( const CHAR *csName, const CHAR *clName = NULL,
-                         const CHAR *idxName = NULL ) ;
+                         const CHAR *idxName = NULL ) const ;
 
-      BOOLEAN isOwnedByExt( const CHAR *targetName ) ;
+      BOOLEAN isOwnedByExt( const CHAR *targetName ) const ;
 
    private:
       INT32 _prepareCSAndCL( const CHAR *csName, const CHAR *clName,
@@ -152,9 +170,11 @@ namespace engine
       const CHAR* _getExtCLShortName() const ;
 
    private:
+      rtnExtProcessorStat  _stat ;
       // MB context of the capped collection. Used to update LSN information.
+      dmsStorageUnit       *_su ;
       dmsMBContext         *_mbContext ;
-      INT64                _id ;
+      INT32                _id ;
       rtnExtProcessorMeta  _meta ;
       CHAR                 _cappedCSName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
       CHAR                 _cappedCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
@@ -167,10 +187,6 @@ namespace engine
 
    class _rtnExtDataProcessorMgr : public SDBObject
    {
-      typedef std::map<INT64, rtnExtDataProcessor *> PROCESSOR_MAP ;
-      typedef std::map<INT64, rtnExtDataProcessor *>::iterator PROCESSOR_MAP_ITR ;
-      typedef std::map<INT64, ossRWMutex *>           PROCESSOR_LATCH_MAP ;
-      typedef std::map<INT64, ossRWMutex *>::iterator PROCESSOR_LATCH_MAP_ITR ;
    public:
       _rtnExtDataProcessorMgr() ;
       ~_rtnExtDataProcessorMgr () ;
@@ -182,17 +198,10 @@ namespace engine
                              rtnExtDataProcessor *&processor,
                              BOOLEAN activate = TRUE ) ;
 
-      INT32 activateProcessor( rtnExtDataProcessor *processor ) ;
+      INT32 activateProcessor( INT32 id, BOOLEAN inProtection ) ;
 
-      void delProcessor( rtnExtDataProcessor **processor ) ;
-
-      // Remove the processor entries, but not delete them. It's used when the
-      // caller want to make them unvisiable and then do some clean job.
-      // Caller should call destroyProcessor to free the processors later.
-      void rmProcessorEntry( vector<rtnExtDataProcessor *> &processors,
-                             INT32 lockType ) ;
-
-      void destroyProcessor( vector<rtnExtDataProcessor *> &processors ) ;
+      void destroyProcessors( vector<rtnExtDataProcessor*> &processors,
+                              INT32 lockType = -1 ) ;
 
       UINT32 number()  ;
 
@@ -210,7 +219,7 @@ namespace engine
       INT32 getProcessorByExtName( const CHAR *extName, INT32 lockType,
                                    rtnExtDataProcessor *&processor ) ;
 
-      void unlockProcessor( INT64 processorID, INT32 lockType ) ;
+      void unlockProcessor( INT32 processorID, INT32 lockType ) ;
 
       void unlockProcessors( std::vector<rtnExtDataProcessor *> &processors,
                              INT32 lockType ) ;
@@ -218,10 +227,10 @@ namespace engine
    private:
       // Mutex to protect meta data change.
       ossSpinSLatch        _mutex ;
-      // Map key is processor name, the same with the capped cl name.
-      PROCESSOR_MAP        _processorMap ;
-      PROCESSOR_LATCH_MAP  _latchMap ;
-      ossAtomicSigned64    _processorID ;
+      UINT16               _number ;
+      rtnExtDataProcessor  _processors[ RTN_EXT_PROCESSOR_MAX_NUM ] ;
+      ossRWMutex           _processorLocks[ RTN_EXT_PROCESSOR_MAX_NUM ] ;
+      rtnExtDataProcessor  *_pendingProcessor ;
    } ;
    typedef _rtnExtDataProcessorMgr rtnExtDataProcessorMgr ;
 

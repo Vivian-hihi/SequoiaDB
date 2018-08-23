@@ -40,8 +40,6 @@
 #include "rtnExtDataHandler.hpp"
 #include "../bson/lib/md5.hpp"
 
-#define RTN_TEXTIDX_MAX_NUM        64
-
 namespace engine
 {
    _rtnExtDataHandler::_rtnExtDataHandler( rtnExtDataProcessorMgr *edpMgr )
@@ -182,7 +180,9 @@ namespace engine
    error:
       if ( processor )
       {
-         _edpMgr->delProcessor( &processor ) ;
+         vector<rtnExtDataProcessor *> processors ;
+         processors.push_back( processor ) ;
+         _edpMgr->destroyProcessors( processors ) ;
       }
       goto done ;
    }
@@ -265,11 +265,11 @@ namespace engine
 
       SDB_ASSERT( idxName, "index name is null") ;
 
-      if ( _edpMgr->number() >= RTN_TEXTIDX_MAX_NUM )
+      if ( _edpMgr->number() >= RTN_EXT_PROCESSOR_MAX_NUM )
       {
          rc = SDB_OSS_UP_TO_LIMIT ;
          PD_LOG( PDERROR, "Max number of text indices[%d] has been created",
-                 RTN_TEXTIDX_MAX_NUM ) ;
+                 RTN_EXT_PROCESSOR_MAX_NUM ) ;
          goto error ;
       }
 
@@ -286,8 +286,9 @@ namespace engine
          BSONObjBuilder builder ;
          CHAR extName[ DMS_MAX_EXT_NAME_SIZE + 1 ] = { 0 };
 
-         getExtDataName( clUniqID, idxName, extName,
-                         DMS_MAX_EXT_NAME_SIZE + 1 ) ;
+         rc = getExtDataName( clUniqID, idxName, extName,
+                              DMS_MAX_EXT_NAME_SIZE + 1 ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get external data name failed[ %d ]", rc ) ;
 
          builder.appendElements( index ) ;
          builder.append( FIELD_NAME_EXT_DATA_NAME, extName,
