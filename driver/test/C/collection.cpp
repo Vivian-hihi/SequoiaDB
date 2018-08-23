@@ -2388,6 +2388,72 @@ TEST( collection, alter_collection )
    sdbReleaseConnection ( db ) ;
 }
 
+TEST( collection, bson_timestamp_over_millis )
+{
+   sdbConnectionHandle connection = 0 ;
+   sdbCollectionHandle collection = 0 ;
+   sdbCursorHandle cursor         = 0 ;
+   INT32 rc                       = SDB_OK ;
+   const char *key                = NULL ;
+   int value                      = 0 ;
+   int sec = 1534942305 ;
+   const CHAR *expect = "{ \"ts1\": { \"$timestamp\": \"2018-08-22-20.51.45.000000\" }, \"ts2\": { \"$timestamp\": \"2018-08-22-20.51.44.999999\" }, \"ts3\": { \"$timestamp\": \"2018-08-22-20.51.45.000001\" }, \"ts4\": { \"$timestamp\": \"2018-08-22-20.53.48.456789\" }, \"ts5\": { \"$timestamp\": \"2018-08-22-20.49.41.543211\" }, \"ts6\": { \"$timestamp\": \"1921-05-12-19.10.18.456789\" }, \"ts7\": { \"$timestamp\": \"1921-05-12-19.06.11.543211\" } }" ;
+   bson obj ;
+   bson_iterator it ;
+   bson_init( &obj ) ;
+   bson_append_timestamp2( &obj, "ts1", sec, 0 ) ;
+   bson_append_timestamp2( &obj, "ts2", sec, -1 ) ;
+   bson_append_timestamp2( &obj, "ts3", sec, 1 ) ;
+   bson_append_timestamp2( &obj, "ts4", sec, 123456789 ) ;
+   bson_append_timestamp2( &obj, "ts5", sec, -123456789 ) ;
+   bson_append_timestamp2( &obj, "ts6", -sec, 123456789 ) ;
+   bson_append_timestamp2( &obj, "ts7", -sec, -123456789 ) ;
+   bson_finish( &obj ) ;
+   bson selector ;
+   bson_init( &selector ) ;
+   bson_append_start_object( &selector, "_id" ) ;
+   bson_append_int( &selector, "$include", 0 ) ;
+   bson_append_finish_object( &selector ) ;
+   bson_finish( &selector ) ;
+   bson sel ;
+   json2bson2( "{ \"_id\": { \"$include\": 0 } }", &sel ) ;
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection ( connection,
+                        COLLECTION_FULL_NAME ,
+                        &collection ) ;
+
+   rc = sdbInsert( collection, &obj ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_TRUE( rc == SDB_OK ) ;
+   bson_destroy( &obj ) ;
+   // execute query
+   rc = sdbQuery1 ( collection, NULL, &selector,
+                   NULL, NULL, 0, -1, 0, &cursor ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_TRUE( rc == SDB_OK ) ;
+   printf( "The records queried are as below:" OSS_NEWLINE ) ;
+   bson_destroy( &selector ) ;
+   bson_init ( &obj ) ;
+   char buff[500] = { 0 } ;
+   while( SDB_OK == ( rc = sdbNext( cursor, &obj ) ) )
+   {
+      bson_print( &obj ) ;
+      bsonToJson( buff, 500, &obj, false, false ) ;
+      //printf( "buff is: %s\n", buff ) ;
+      ASSERT_EQ( 0, strncmp( expect, buff, strlen( expect ) ) ) ;
+      bson_destroy( &obj ) ;
+   }
+
+   sdbDisconnect ( connection ) ;
+   sdbReleaseCollection ( collection ) ;
+   sdbReleaseConnection ( connection ) ;
+}
+
 TEST( collection, create_and_remove_id_index )
 {
    sdbConnectionHandle db = 0 ;

@@ -540,11 +540,11 @@ void displayRecord( sdbCursorHandle *cursor )
    bson_destroy( &obj ) ;
    if( rc != SDB_DMS_EOC )
    {
-      printf("Failed to display records.\n") ;
+      printf( "Failed to display records, rc = %d.\n", rc ) ;
    }
    else
    {
-      printf("All the records have been display.\n") ;
+      printf( "All the records have been display.\n" ) ;
    }
 }
 
