@@ -1861,16 +1861,58 @@ TEST( collection, create_remove_id_index )
    db.disconnect() ;
 }
 
+TEST( collection, bson_timestamp_test )
+{
+   sdb connection ;
+   sdbCollectionSpace cs ;
+   sdbCollection cl ;
+   sdbCursor cursor ;
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   const CHAR *expect = "{ \"ts1\": {\"$timestamp\": \"2018-08-22-20.51.45.000000\"}, \"ts2\": {\"$timestamp\": \"2018-08-22-20.51.45.000001\"}, \"ts3\": {\"$timestamp\": \"2018-08-22-20.53.48.456789\"}, \"ts4\": {\"$timestamp\": \"1921-05-12-19.10.18.456789\"} }" ;
+   INT32 rc                                 = SDB_OK ;
+   INT64 ms = 1534942305000 ;
+   BSONObj obj ;
+   BSONObjBuilder bob ;
+   bob.appendTimestamp( "ts1", ms, 0 ) ;
+   bob.appendTimestamp( "ts2", ms, 1 ) ;
+   bob.appendTimestamp( "ts3", ms, 123456789 ) ;
+   bob.appendTimestamp( "ts4", -ms, 123456789 ) ;
+   obj = bob.obj() ;
+   BSONObj sel =  BSON( "_id" << BSON("$include" << 0) ) ;
+   BSONObj empty ;
+   // initialize the work environment
+   rc = initEnv() ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get collection
+   rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get collection
+   rc = getCollection( cs, COLLECTION_NAME, cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // insert records
+   rc = cl.insert( obj ) ;
+   CHECK_MSG("%s%d","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // query all the record in this collection
+   rc = cl.query( cursor, empty, sel ) ;
+   CHECK_MSG("%s%d","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get the current record
+   rc = cursor.current( obj ) ;
+   CHECK_MSG("%s%d","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   cout<<"The current record is:"<<endl;
+   cout<< obj.toString() <<endl ;
+   ASSERT_EQ( 0, strncmp( expect, obj.toString().c_str(), strlen(expect) ) ) ;
+   // disconnect the connection
+   connection.disconnect() ;
+}
 
-
-
-// TODO:
-/*
-
-queryOne
-create // deprecated
-drop   // deprecated
-explain
-
-
-*/
