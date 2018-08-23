@@ -41,6 +41,7 @@ PHP_METHOD( SequoiaTimestamp, __construct )
 {
    INT32 rc = SDB_OK ;
    zval *pTimestamp  = NULL ;
+   zval *pMicros     = NULL ;
    zval *pThisObj    = getThis() ;
    struct phpTimestamp *pDriverTimestamp = (struct phpTimestamp *)\
             emalloc( sizeof( struct phpTimestamp ) ) ;
@@ -53,7 +54,7 @@ PHP_METHOD( SequoiaTimestamp, __construct )
    pDriverTimestamp->second = 0 ;
    pDriverTimestamp->micros = 0 ;
 
-   if( PHP_GET_PARAMETERS( "|z", &pTimestamp ) == FAILURE )
+   if( PHP_GET_PARAMETERS( "|zz", &pTimestamp, &pMicros ) == FAILURE )
    {
       goto error ;
    }
@@ -63,7 +64,15 @@ PHP_METHOD( SequoiaTimestamp, __construct )
       if( Z_TYPE_P( pTimestamp ) == IS_LONG )
       {
          pDriverTimestamp->second = Z_LVAL_P( pTimestamp ) ;
-         pDriverTimestamp->micros = 0 ;
+
+         if( pMicros && Z_TYPE_P( pMicros ) == IS_LONG )
+         {
+            pDriverTimestamp->micros = Z_LVAL_P( pMicros ) ;
+         }
+         else
+         {
+            pDriverTimestamp->micros = 0 ;
+         }
       }
       else if( Z_TYPE_P( pTimestamp ) == IS_STRING )
       {
@@ -109,6 +118,12 @@ PHP_METHOD( SequoiaTimestamp, __construct )
    else
    {
       pDriverTimestamp->second = (INT32)time( NULL ) ;
+      pDriverTimestamp->micros = 0 ;
+   }
+
+   if ( pDriverTimestamp->micros < 0 ||
+        pDriverTimestamp->micros > 999999 )
+   {
       pDriverTimestamp->micros = 0 ;
    }
 
