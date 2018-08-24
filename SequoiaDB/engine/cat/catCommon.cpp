@@ -4631,7 +4631,6 @@ namespace engine
       set<string>    fieldStrSet ;
       size_t         i ;
       BSONObj        obj ;
-      catSequence    sequence( "" ) ;
       BSONObj        seqOpt ;
 
       for ( i = 0 ; i < options.size() ; ++i )
@@ -4691,11 +4690,15 @@ namespace engine
          }
 
          // Check sequence options valid.
+         catSequence sequence( "SYS_UNKNOW_" + fieldStr + "_SEQ" ) ;
          seqOpt = catGetSequenceOptions( obj ) ;
-         rc = sequence.validateFieldNames( seqOpt ) ;
+         rc = catSequence::validateFieldNames( seqOpt ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "AutoIncrement sequence options is invalid" ) ;
          rc = sequence.setOptions( seqOpt, TRUE, FALSE ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "AutoIncrement sequence options is invalid" ) ;
+         rc = sequence.validate() ;
          PD_RC_CHECK( rc, PDWARNING,
                       "AutoIncrement sequence options is invalid" ) ;
       }
@@ -4722,11 +4725,13 @@ namespace engine
       BSONObj              autoIncMeta ;
       BSONObj              autoIncOpt ;
       BSONObj              seqOpt ;
-      catSequenceManager   sequenceMgr ;
+      catSequenceManager   *pSeqMgr ;
       string               fieldName ;
       string               seqName ;
       INT32                tmpRC ;
       BOOLEAN              found ;
+
+      pSeqMgr = sdbGetCatalogueCB()->getCatGTSMgr()->getSequenceMgr() ;
 
       if ( boCollection.hasField( CAT_AUTOINCREMENT ) )
       {
@@ -4755,11 +4760,11 @@ namespace engine
                       autoIncMeta.toString().c_str() ) ;
 
             seqOpt = catGetSequenceOptions( autoIncOpt ) ;
-            rc = sequenceMgr.createSequence( seqName, seqOpt, cb, w ) ;
+            rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
             if ( SDB_SEQUENCE_EXIST == rc )
             {
-               sequenceMgr.dropSequence( seqName, cb, w ) ;
-               rc = sequenceMgr.createSequence( seqName, seqOpt, cb, w ) ;
+               pSeqMgr->dropSequence( seqName, cb, w ) ;
+               rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
             }
             PD_RC_CHECK ( rc, PDWARNING,
                           "Failed to create sequence on field [%s] with options [%s], rc: %d",
@@ -4775,10 +4780,10 @@ namespace engine
       for ( i = 0 ; i < autoIncMetaArr.size() ; ++i )
       {
          seqName = autoIncMeta.getField( CAT_AUTOINC_SEQ ).String() ;
-         tmpRC = sequenceMgr.dropSequence( seqName, cb, w ) ;
+         tmpRC = pSeqMgr->dropSequence( seqName, cb, w ) ;
          if ( tmpRC != SDB_OK && tmpRC != SDB_SEQUENCE_NOT_EXIST )
          {
-            PD_LOG( PDWARNING, "Failed to rollback create sequence [%s], rc: %d",
+            PD_LOG( PDWARNING, "Failed to rollback creating sequence [%s], rc: %d",
                     seqName.c_str(), tmpRC ) ;
          }
       }
@@ -4794,7 +4799,9 @@ namespace engine
       size_t               i ;
       vector<BSONElement>  autoIncArr ;
       string               seqName ;
-      catSequenceManager   sequenceMgr ;
+      catSequenceManager   *pSeqMgr ;
+
+      pSeqMgr = sdbGetCatalogueCB()->getCatGTSMgr()->getSequenceMgr() ;
 
       if ( boCollection.hasField( CAT_AUTOINCREMENT ) )
       {
@@ -4803,7 +4810,7 @@ namespace engine
          for ( i = 0 ; i < autoIncArr.size() ; ++i )
          {
             seqName = autoIncArr[i].Obj().getField( FIELD_NAME_AUTOINC_SEQ ).String() ;
-            rc = sequenceMgr.dropSequence( seqName, cb, w ) ;
+            rc = pSeqMgr->dropSequence( seqName, cb, w ) ;
             if ( SDB_OK != rc && SDB_SEQUENCE_NOT_EXIST != rc )
             {
                PD_LOG( PDWARNING, "Failed to remove sequence [%s], rc: %d",
