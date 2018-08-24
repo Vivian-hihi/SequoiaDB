@@ -296,7 +296,8 @@ namespace engine
                                     std::vector<UINT32> & groupIDList ) ;
 
    private :
-      utilCLUniqueID _clUniqueID ;
+      utilCLUniqueID    _clUniqueID ;
+      vector<BSONObj>   _autoIncOptArr ;
    } ;
 
    typedef class _catCtxCreateCL catCtxCreateCL ;

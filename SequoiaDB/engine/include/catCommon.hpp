@@ -438,6 +438,14 @@ namespace engine
    /* Catalog group sync control */
    void catSetSyncW ( INT16 w ) ;
    INT16 catGetSyncW () ;
+
+   /* AutoIncrement */
+   INT32 catCheckAutoIncrementValid( const vector<BSONObj> &options ) ;
+   INT32 catCreateAutoIncSequence( const BSONObj &boCollection,
+                                   const vector<BSONObj> &optionArr, 
+                                   _pmdEDUCB *cb, INT16 w ) ;
+   INT32 catDropAutoIncSequence( const BSONObj &boCollection, _pmdEDUCB *cb, INT16 w ) ;
+   BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt ) ;
 }
 
 #endif //CAT_COMMON_HPP__

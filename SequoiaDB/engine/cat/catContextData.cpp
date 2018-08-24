@@ -1421,6 +1421,9 @@ namespace engine
                       "Build new collection catalog record failed, rc: %d",
                       rc ) ;
 
+         // meta data has no sequence information. so it will be passed by private member.
+         _autoIncOptArr = clInfo._autoIncrement ;
+
          _boTarget = boNewObj.getOwned() ;
       }
 
@@ -1435,8 +1438,14 @@ namespace engine
    INT32 _catCtxCreateCL::_executeInternal ( _pmdEDUCB *cb, INT16 w )
    {
       INT32 rc = SDB_OK ;
+      INT32 tmpRC = SDB_OK ;
 
       PD_TRACE_ENTRY ( SDB_CATCTXCREATECL_EXECUTE_INT ) ;
+
+      rc = catCreateAutoIncSequence( _boTarget, _autoIncOptArr, cb, w ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to create system sequences of collection[%s], rc: %d",
+                   _targetName.c_str(), rc ) ;
 
       rc = catCreateCLStep( _targetName, _clUniqueID, _boTarget,
                             cb, _pDmsCB, _pDpsCB, w ) ;
@@ -1450,6 +1459,12 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_CATCTXCREATECL_EXECUTE_INT, rc ) ;
       return rc ;
    error :
+      tmpRC = catDropAutoIncSequence( _boTarget, cb, w ) ;
+      if ( SDB_OK != tmpRC )
+      {
+         PD_LOG( PDWARNING, "Failed to rollback creating sequences of "
+                 "collection[%s], rc: %d", _targetName.c_str(), tmpRC ) ;
+      }
       goto done ;
    }
 
@@ -1459,6 +1474,22 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY ( SDB_CATCTXCREATECL_ROLLBACK_INT ) ;
+
+      BSONObj boCollection ;
+
+      rc = catGetCollection( _targetName, boCollection, cb ) ;
+      if ( SDB_OK == rc )
+      {
+         rc = catDropAutoIncSequence( boCollection, cb, w ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to remove system sequences of collection [%s], rc: %d",
+                      _targetName.c_str(), rc ) ;
+      }
+      else
+      {
+         PD_LOG( PDWARNING, "Failed to get system sequences of collection [%s], rc: %d",
+                 _targetName.c_str(), rc ) ;
+      }
 
       rc = catDropCLStep( _targetName, _version, TRUE, cb, _pDmsCB, _pDpsCB, w ) ;
       PD_RC_CHECK( rc, PDWARNING,
