@@ -221,7 +221,11 @@ INT32 sfsBmap(const CHAR *path, size_t blocksize, uint64_t *idx)
     return sfs->bmap(path, blocksize, idx);
 }
 INT32 sfsIoctl(const CHAR *path, INT32 cmd, void *arg,
-                 struct fuse_file_info *fi, UINT32 flags, void *data){return 0;}
+              struct fuse_file_info *fi, UINT32 flags, void *data)
+{    
+    SDB_LOB_VALID_CHECK();
+    return sfs->ioctl(path, cmd, arg, fi, flags, data);
+}
 INT32 sfsPoll(const CHAR *path, struct fuse_file_info *fi,
              struct fuse_pollhandle *ph, unsigned *reventsp){return 0;}
 INT32 sfsWrite_buf(const CHAR *path, struct fuse_bufvec *buf, off_t off,

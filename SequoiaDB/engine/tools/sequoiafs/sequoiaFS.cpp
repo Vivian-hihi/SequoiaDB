@@ -36,7 +36,9 @@
 *******************************************************************************/
 
 #include "sequoiaFS.hpp"
-#include<sys/time.h>
+#include <sys/time.h>
+#include <asm/ioctls.h>
+#include <linux/errno.h>
 #include "sequoiaFSLruCache.hpp"
 #include "sequoiaFSOptionMgr.hpp"
 #include "omagentDef.hpp"
@@ -80,6 +82,7 @@ const string SEQUOIAFS_META_ID_CL_FULL = SEQUOIAFS_META_CS + "." + SEQUOIAFS_MET
 
 
 #define MAXCNT 1000
+#define ENOIOCTLCMD 515
 
 using namespace sequoiafs;
 #define ROOT_ID 1
@@ -4010,6 +4013,22 @@ error:
     goto done;
 
 }
+
+INT32 sequoiaFS::ioctl(const CHAR *path, INT32 cmd, void *arg,
+              struct fuse_file_info *fi, UINT32 flags, void *data)
+{
+   INT32 rc = SDB_OK;
+   
+   switch(cmd)
+   {
+   case TCGETS:
+   default:
+      rc = - ENOIOCTLCMD;      
+   }
+
+   return rc;
+}
+
 
 INT32 sequoiaFS::flock(const CHAR *path, struct fuse_file_info *fi, INT32 op)
 {
