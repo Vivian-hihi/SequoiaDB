@@ -59,36 +59,6 @@ protected:
    }
 } ;
 
-INT32 checkDocs( sdbCursorHandle cursor, const INT32 expDocNum )
-{
-	INT32 rc = SDB_OK ;
-   bson obj ;
-   bson_init( &obj ) ;
-   bson_iterator it ;
-   INT32 actDocNum = 0 ;
-
-   while( !( rc = sdbNext( cursor, &obj ) ) )
-   {
-      bson_print( &obj ) ;
-      bson_find( &it, &obj, "a" ) ;
-      INT32 value = bson_iterator_int( &it ) ;
-      if( 1 != value )
-      {
-         rc = SDB_TEST_ERROR ;
-         CHECK_RC( SDB_OK, rc, "wrong document value %d", value ) ;
-      }
-      ++actDocNum;
-   }
-	CHECK_RC( SDB_DMS_EOC, rc, "fail to get next" ) ;
-   rc = SDB_OK ;
-   CHECK_RC( expDocNum, actDocNum, "wrong docNum" ) ;
-done:
-   bson_destroy( &obj ) ;
-	return rc ;
-error:
-	goto done ;
-}
-
 TEST_F( invalidFlag15382, test )
 {
 	INT32 rc = SDB_OK ;
@@ -108,30 +78,15 @@ TEST_F( invalidFlag15382, test )
    bson_append_finish_object( update ) ;
    bson_finish( update ) ;
 
+
    rc = sdbQuery1( cl, dftCond, dftSelect, dftOrder, dftHint, dftSkipNum, dftReturnNum, invalidFlag, &cursor ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   rc = checkDocs( cursor, docNum ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   rc = sdbCloseCursor( cursor ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   sdbReleaseCursor( cursor ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
 
    rc = sdbQueryAndUpdate( cl, dftCond, dftSelect, dftOrder, dftHint, update,
                            dftSkipNum, dftReturnNum, invalidFlag, false, &cursor ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   rc = checkDocs( cursor, docNum ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   rc = sdbCloseCursor( cursor ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   sdbReleaseCursor( cursor ) ;
-   bson_destroy( update ) ;
+   ASSERT_EQ( SDB_RTN_INVALID_HINT, rc ) ; // force hint flag is on
 
    rc = sdbQueryAndRemove( cl, dftCond, dftSelect, dftOrder, dftHint, 
                            dftSkipNum, dftReturnNum, invalidFlag, &cursor ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   rc = checkDocs( cursor, docNum ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   rc = sdbCloseCursor( cursor ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   sdbReleaseCursor( cursor ) ;
+   ASSERT_EQ( SDB_RTN_INVALID_HINT, rc ) ; // force hint flag is on
 }

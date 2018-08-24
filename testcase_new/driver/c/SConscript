@@ -65,7 +65,7 @@ testFiles = [
    [ "./misc/snapshotSys14118.cpp" ],
    [ "./misc/resetSnapshot14424.cpp" ], # sync
    [ "./misc/configs14875.cpp" ], # sync
-   # [ "./misc/invalidFlag15382.cpp" ], # SEQUOIADBMAINSTREAM-3371
+   [ "./misc/invalidFlag15382.cpp" ],
    [ "./load/loadUnloadCS.cpp" ],
    [ "./load/reloadConf.cpp" ],
    [ "./load/rename.cpp" ],
