@@ -699,15 +699,13 @@ namespace engine
          // Get the index definition from indexCB instead of using index
          // directly, because extra fields may have been added to the
          // definition. For example, _id is added on primary node.
-         indexDef = indexCB.getDef() ;
+         indexDef = indexCB.getDef().getOwned() ;
 
          if ( isTextIndex )
          {
             // Remove extra fields added by callback functions.
             indexDef = indexDef.filterFieldsUndotted( extraFieldsObj, false ) ;
          }
-
-         indexDef.getOwned() ;
 
          // calc the reserve size
          if ( dpscb )
