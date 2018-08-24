@@ -6645,10 +6645,10 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
                              INT32 flags,
                              sdbCursorHandle *handle )
 {
-	// remove the explain flag
-	flags &= ~FLG_QUERY_EXPLAIN ;
-	return _sdbQuery( cHandle, condition, select, orderBy, hint, 
-		numToSkip, numToReturn, flags, handle ) ;
+    // remove the explain flag
+    flags &= ~FLG_QUERY_EXPLAIN ;
+    return _sdbQuery( cHandle, condition, select, orderBy, hint, 
+                      numToSkip, numToReturn, flags, handle ) ;
 }
 
 static INT32 _mergeBson( bson* to, bson* from )
@@ -10746,8 +10746,8 @@ SDB_EXPORT BOOLEAN sdbLobIsEof( sdbLobHandle lobHandle )
 {
    INT32 rc = SDB_OK ;
    BOOLEAN result = TRUE ;
-   CLIENT_UNUSED( rc ) ;
    sdbLobStruct *lob = ( sdbLobStruct * )lobHandle ;
+   CLIENT_UNUSED( rc ) ;
    HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
    result = lob->_currentOffset >= lob->_lobSize ? TRUE : FALSE ;
 done:
