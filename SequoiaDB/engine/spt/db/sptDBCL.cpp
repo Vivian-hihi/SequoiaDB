@@ -37,6 +37,8 @@
 #include "msg.h"
 #include "msgDef.h"
 #include "ossFile.hpp"
+#include "utilStr.hpp"
+
 using namespace bson ;
 using namespace sdbclient ;
 namespace engine
@@ -1349,6 +1351,12 @@ namespace engine
          detail = BSON( SPT_ERR << "Oid must be string" ) ;
          goto error ;
       }
+      if ( !utilIsValidOID( oidStr.c_str() ) )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Oid string invalid" ) ;
+         goto error ;
+      }
 
       rc = arg.getString( 1, filePath ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -1465,6 +1473,13 @@ namespace engine
          detail = BSON( SPT_ERR << "Oid must be string" ) ;
          goto error ;
       }
+      if ( !utilIsValidOID( oidStr.c_str() ) )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Oid string invalid" ) ;
+         goto error ;
+      }
+
       // Call driver
       oid.init( oidStr ) ;
       rc = _cl.removeLob( oid ) ;
