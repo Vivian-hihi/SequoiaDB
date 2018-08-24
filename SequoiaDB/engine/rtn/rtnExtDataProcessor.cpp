@@ -128,8 +128,10 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_RESET, "_rtnExtDataProcessor::reset" )
    void _rtnExtDataProcessor::reset()
    {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_RESET ) ;
       BSONObj emptyObj ;
       _stat = RTN_EXT_PROCESSOR_INVALID ;
       if ( _su && _mbContext )
@@ -145,6 +147,7 @@ namespace engine
       _keySet.clear() ;
       _keySetNew.clear() ;
       _needOprRec = FALSE ;
+      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_RESET ) ;
    }
 
    INT32 _rtnExtDataProcessor::getID()
@@ -1309,9 +1312,11 @@ namespace engine
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_UNLOCKPROCESSORS ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSORS, "_rtnExtDataProcessorMgr::destroyProcessors" )
    void _rtnExtDataProcessorMgr::destroyProcessors( vector<rtnExtDataProcessor*> &processors,
                                                     INT32 lockType )
    {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSORS ) ;
       ossScopedLock _lock( &_mutex, EXCLUSIVE ) ;
 
       for ( vector<rtnExtDataProcessor*>::iterator itr = processors.begin();
@@ -1333,6 +1338,7 @@ namespace engine
             _processorLocks[id].release_w() ;
          }
       }
+      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSORS ) ;
    }
 
    rtnExtDataProcessorMgr* rtnGetExtDataProcessorMgr()
