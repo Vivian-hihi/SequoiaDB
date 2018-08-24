@@ -72,10 +72,10 @@ namespace engine
                                     CHAR *extName,
                                     UINT32 buffSize ) = 0 ;
 
-      virtual INT32 check( DMS_EXTOPR_TYPE type, const CHAR *csName,
-                           const CHAR *clName, const CHAR *idxName,
-                           const BSONObj *object, const BSONObj *objNew,
-                           _pmdEDUCB *cb ) = 0 ;
+      virtual INT32 prepare( DMS_EXTOPR_TYPE type, const CHAR *csName,
+                             const CHAR *clName, const CHAR *idxName,
+                             const BSONObj *object, const BSONObj *objNew,
+                             _pmdEDUCB *cb) = 0 ;
 
       virtual INT32 onOpenTextIdx( const CHAR *csName, const CHAR *clName,
                                    ixmIndexCB &indexCB ) = 0 ;

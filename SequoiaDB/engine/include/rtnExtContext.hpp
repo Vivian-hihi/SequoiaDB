@@ -46,6 +46,19 @@
 
 namespace engine
 {
+   // Context status. We need this because in one operation, we may invoke
+   // different callback functions of different types. The typical scenario is
+   // insertion. If data is inserted, and index insertion fails due to
+   // duplicated key, deleteRecord will be called. Then callback fuction for
+   // delete will be created. In that case, no record should be inserted into
+   // capped collection. The total operation should be cancelled.
+   enum _rtnExtContextStat
+   {
+      EXT_CTX_STAT_NORMAL = 0,
+      EXT_CTX_STAT_ABORTING
+   };
+   typedef _rtnExtContextStat rtnExtContextStat ;
+
    // The life circle of this context is in each operation. It holds all the
    // text index processors of one collection.
    class _rtnExtContextBase : public SDBObject
@@ -67,6 +80,16 @@ namespace engine
       DMS_EXTOPR_TYPE getType() const
       {
          return _type ;
+      }
+
+      void setStat( rtnExtContextStat stat )
+      {
+         _stat = stat ;
+      }
+
+      rtnExtContextStat getStat() const
+      {
+         return _stat ;
       }
 
       virtual INT32 done( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
@@ -101,6 +124,7 @@ namespace engine
 
       DMS_EXTOPR_TYPE         _type ;
       UINT32                  _id ;
+      rtnExtContextStat       _stat ;
       rtnExtDataProcessorMgr  *_processorMgr ;
       EDP_VEC                 _processors ;
       INT32                   _lockType ;

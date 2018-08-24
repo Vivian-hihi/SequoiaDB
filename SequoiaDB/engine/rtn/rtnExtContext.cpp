@@ -48,6 +48,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTCONTEXTBASE__RTNEXTCONTEXTBASE ) ;
       _type = type ;
       _id = 0 ;
+      _stat = EXT_CTX_STAT_NORMAL ;
       _processorMgr = NULL ;
       _lockType = -1 ;
       PD_TRACE_EXIT( SDB__RTNEXTCONTEXTBASE__RTNEXTCONTEXTBASE ) ;
@@ -64,8 +65,16 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTCONTEXTBASE_DONE ) ;
 
-      rc = _onDone( cb, dpscb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Operation _onDone failed[ %d ]", rc ) ;
+      if ( EXT_CTX_STAT_NORMAL == _stat )
+      {
+         rc = _onDone( cb, dpscb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Operation _onDone failed[ %d ]", rc ) ;
+      }
+      else if ( EXT_CTX_STAT_ABORTING == _stat )
+      {
+         rc = _onAbort( cb, dpscb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Operation _onAbort failed[ %d ]", rc ) ;
+      }
 
    done:
       _cleanup() ;

@@ -59,10 +59,10 @@ namespace engine
                                     CHAR *extName,
                                     UINT32 buffSize ) ;
 
-      virtual INT32 check( DMS_EXTOPR_TYPE type, const CHAR *csName,
-                           const CHAR *clName, const CHAR *idxName,
-                           const BSONObj *object, const BSONObj *objNew,
-                           pmdEDUCB *cb ) ;
+      virtual INT32 prepare( DMS_EXTOPR_TYPE type, const CHAR *csName,
+                             const CHAR *clName, const CHAR *idxName,
+                             const BSONObj *object, const BSONObj *objNew,
+                             pmdEDUCB *cb ) ;
 
       virtual INT32 onOpenTextIdx( const CHAR *csName, const CHAR *clName,
                                    ixmIndexCB &indexCB ) ;
@@ -115,8 +115,15 @@ namespace engine
 
    private:
       BOOLEAN _hasExtName( const ixmIndexCB &indexCB ) ;
+
       INT32 _extendIndexDef( const CHAR *csName, const CHAR *clName,
                              ixmIndexCB &indexCB ) ;
+
+      INT32 _check( DMS_EXTOPR_TYPE type, const CHAR *csName,
+                    const CHAR *clName, const CHAR *idxName,
+                    const BSONObj *object, const BSONObj *objNew ) ;
+
+      INT32 _prepareCtx( DMS_EXTOPR_TYPE type, pmdEDUCB *cb ) ;
 
       // For compatibility with version 3.0. The external name rule is
       // different. This is used during upgrading from version 3.0, to append

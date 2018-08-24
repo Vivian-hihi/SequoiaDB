@@ -219,8 +219,6 @@ namespace engine
       INT32 getProcessorByExtName( const CHAR *extName, INT32 lockType,
                                    rtnExtDataProcessor *&processor ) ;
 
-      void unlockProcessor( INT32 processorID, INT32 lockType ) ;
-
       void unlockProcessors( std::vector<rtnExtDataProcessor *> &processors,
                              INT32 lockType ) ;
 

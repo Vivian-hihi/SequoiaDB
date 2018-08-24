@@ -90,58 +90,28 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_CHECK, "_rtnExtDataHandler::check" )
-   INT32 _rtnExtDataHandler::check( DMS_EXTOPR_TYPE type,
-                                    const CHAR *csName,
-                                    const CHAR *clName,
-                                    const CHAR *idxName,
-                                    const BSONObj *object,
-                                    const BSONObj *objNew,
-                                    pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_PREPARE, "_rtnExtDataHandler::prepare" )
+   INT32 _rtnExtDataHandler::prepare( DMS_EXTOPR_TYPE type,
+                                      const CHAR *csName,
+                                      const CHAR *clName,
+                                      const CHAR *idxName,
+                                      const BSONObj *object,
+                                      const BSONObj *objNew,
+                                      pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_CHECK ) ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_PREPARE ) ;
 
-      rtnExtDataProcessor *processor = NULL ;
-      std::vector<rtnExtDataProcessor *> processors ;
+      rc = _check( type, csName, clName, idxName, object, objNew ) ;
+      PD_RC_CHECK( rc, PDERROR, "External data process checking failed[ %d ]",
+                   rc ) ;
 
-      if ( idxName )
-      {
-         rc = _edpMgr->getProcessorByIdx( csName, clName, idxName, SHARED,
-                                          processor ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
-      }
-      else if ( clName )
-      {
-         rc = _edpMgr->getProcessorsByCL( csName, clName, SHARED, processors ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get external processors failed[ %d ]",
-                      rc ) ;
-         SDB_ASSERT( processors.size() <= 1, "Processor number is wrong" ) ;
-         if ( 0 == processors.size() )
-         {
-            goto done ;
-         }
-         processor = processors.front() ;
-      }
-      else
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Collection is empty for check" ) ;
-         goto error ;
-      }
-
-      if ( processor )
-      {
-         rc = processor->check( type, object, objNew ) ;
-         PD_RC_CHECK( rc, PDERROR, "Processor check failed[ %d ]", rc ) ;
-      }
+      rc = _prepareCtx( type, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Prepare external operation context "
+                                "failed[ %d ]", rc ) ;
 
    done:
-      if ( processor )
-      {
-         _edpMgr->unlockProcessor( processor->getID(), SHARED ) ;
-      }
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_CHECK, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_PREPARE, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -393,23 +363,27 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONINSERT ) ;
-      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
-      rtnExtInsertCtx *context = NULL ;
+      rtnExtContextBase *context = NULL ;
 
-      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      context = _contextMgr.findContext( cb->getTID() ) ;
+      if ( !context )
+      {
+         SDB_ASSERT( FALSE, "context not found" ) ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Context for delete not found" ) ;
+         goto error ;
+      }
+
+      if ( EXT_CTX_STAT_ABORTING == context->getStat() )
       {
          goto done ;
       }
 
-      context = (rtnExtInsertCtx *)_contextMgr.findContext( cb->getTID() ) ;
-      if ( !context )
-      {
-         rc = _contextMgr.createContext( DMS_EXTOPR_TYPE_INSERT,
-                                         cb, (rtnExtContextBase**)&context ) ;
-         PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
-      }
+      SDB_ASSERT( DMS_EXTOPR_TYPE_INSERT == context->getType(),
+                  "Type not match") ;
 
-      rc = context->open( _edpMgr, extName, object, cb, dpscb ) ;
+      rc = static_cast<rtnExtInsertCtx*>(context)->open( _edpMgr, extName,
+                                                         object, cb, dpscb ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context for insert failed[ %d ]", rc ) ;
 
    done:
@@ -435,26 +409,28 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDELETE ) ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
-      SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
-      rtnExtDeleteCtx *context = NULL ;
-      BSONObj processData ;
+      rtnExtContextBase *context = NULL ;
 
-      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      context = _contextMgr.findContext( cb->getTID() ) ;
+      if ( !context )
+      {
+         SDB_ASSERT( FALSE, "context not found" ) ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Context for delete not found" ) ;
+         goto error ;
+      }
+
+      if ( EXT_CTX_STAT_ABORTING == context->getStat() )
       {
          goto done ;
       }
 
-      context = (rtnExtDeleteCtx *)_contextMgr.findContext( cb->getTID() ) ;
-      if ( !context )
-      {
-         rc = _contextMgr.createContext( DMS_EXTOPR_TYPE_DELETE,
-                                         cb, (rtnExtContextBase**)&context ) ;
-         PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
-      }
+      SDB_ASSERT( DMS_EXTOPR_TYPE_DELETE == context->getType(),
+                  "Type not match") ;
 
-      rc = context->open( _edpMgr, extName, object, cb, dpscb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Open context for insert failed[ %d ]", rc ) ;
+      rc = static_cast<rtnExtDeleteCtx *>(context)->open( _edpMgr, extName,
+                                                          object, cb, dpscb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Open context for delete failed[ %d ]", rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDELETE, rc ) ;
@@ -480,26 +456,29 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONUPDATE ) ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
-      SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
-      rtnExtUpdateCtx *context = NULL ;
+      rtnExtContextBase *context = NULL ;
 
-      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      context = _contextMgr.findContext( cb->getTID() ) ;
+      if ( !context )
+      {
+         SDB_ASSERT( FALSE, "context not found" ) ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Context for delete not found" ) ;
+         goto error ;
+      }
+
+      if ( EXT_CTX_STAT_ABORTING == context->getStat() )
       {
          goto done ;
       }
 
-      context = (rtnExtUpdateCtx *)_contextMgr.findContext( cb->getTID() ) ;
-      if ( !context )
-      {
-         rc = _contextMgr.createContext( DMS_EXTOPR_TYPE_UPDATE,
-                                         cb, (rtnExtContextBase**)&context ) ;
-         PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
-      }
+      SDB_ASSERT( DMS_EXTOPR_TYPE_UPDATE == context->getType(),
+                  "Type not match") ;
 
-      rc = context->open( _edpMgr, extName, orignalObj,
-                          newObj, cb, dpscb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Open context for insert failed[ %d ]", rc ) ;
+      rc = static_cast<rtnExtUpdateCtx*>(context)->open( _edpMgr, extName,
+                                                         orignalObj, newObj,
+                                                         cb, dpscb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Open context for update failed[ %d ]", rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONUPDATE, rc ) ;
@@ -664,6 +643,95 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER__EXTENDINDEXDEF, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_CHECK, "_rtnExtDataHandler::check" )
+   INT32 _rtnExtDataHandler::_check( DMS_EXTOPR_TYPE type,
+                                     const CHAR *csName,
+                                     const CHAR *clName,
+                                     const CHAR *idxName,
+                                     const BSONObj *object,
+                                     const BSONObj *objNew )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_CHECK ) ;
+
+      std::vector<rtnExtDataProcessor *> processors ;
+
+      if ( idxName )
+      {
+         rtnExtDataProcessor *processor = NULL ;
+         rc = _edpMgr->getProcessorByIdx( csName, clName, idxName, SHARED,
+                                          processor ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
+         processors.push_back( processor ) ;
+      }
+      else if ( clName )
+      {
+         rc = _edpMgr->getProcessorsByCL( csName, clName, SHARED, processors ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get external processors failed[ %d ]",
+                      rc ) ;
+         SDB_ASSERT( processors.size() <= 1, "Processor number is wrong" ) ;
+         if ( 0 == processors.size() )
+         {
+            goto done ;
+         }
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Collection is empty for check" ) ;
+         goto error ;
+      }
+
+      for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
+            itr != processors.end(); ++itr )
+      {
+         rc = (*itr)->check( type, object, objNew ) ;
+         PD_RC_CHECK( rc, PDERROR, "Processor check failed[ %d ]", rc ) ;
+      }
+
+   done:
+      if ( processors.size() > 0 )
+      {
+         _edpMgr->unlockProcessors( processors, SHARED ) ;
+      }
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_CHECK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__PREPARECTX, "_rtnExtDataHandler::_prepareCtx" )
+   INT32 _rtnExtDataHandler::_prepareCtx( DMS_EXTOPR_TYPE type, pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__PREPARECTX ) ;
+      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
+      rtnExtContextBase *context = NULL ;
+
+      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
+
+      context = _contextMgr.findContext( cb->getTID() ) ;
+      if ( !context )
+      {
+         rc = _contextMgr.createContext( type, cb, &context ) ;
+         PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
+      }
+      else if ( type != context->getType() )
+      {
+         context->setStat( EXT_CTX_STAT_ABORTING ) ;
+         goto done ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER__PREPARECTX, rc ) ;
       return rc ;
    error:
       goto done ;

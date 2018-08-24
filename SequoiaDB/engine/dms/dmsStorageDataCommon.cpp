@@ -2992,10 +2992,10 @@ namespace engine
             handler = getExtDataHandler() ;
             if ( handler )
             {
-               rc = handler->check( DMS_EXTOPR_TYPE_INSERT,
-                                    getSuName(),
-                                    context->mb()->_collectionName,
-                                    NULL, &insertObj, NULL, cb ) ;
+               rc = handler->prepare( DMS_EXTOPR_TYPE_INSERT,
+                                      getSuName(),
+                                      context->mb()->_collectionName,
+                                      NULL, &insertObj, NULL, cb ) ;
                PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
                             "rc: %d", rc ) ;
             }
@@ -3230,10 +3230,10 @@ namespace engine
                   handler = getExtDataHandler() ;
                   if ( handler )
                   {
-                     rc = handler->check( DMS_EXTOPR_TYPE_DELETE,
-                                          getSuName(),
-                                          context->mb()->_collectionName, NULL,
-                                          &delObject, NULL, cb ) ;
+                     rc = handler->prepare( DMS_EXTOPR_TYPE_DELETE,
+                                            getSuName(),
+                                            context->mb()->_collectionName, NULL,
+                                            &delObject, NULL, cb ) ;
                      PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
                                   "rc: %d", rc ) ;
                   }
@@ -3490,10 +3490,10 @@ namespace engine
                handler = getExtDataHandler() ;
                if ( handler )
                {
-                  rc = handler->check( DMS_EXTOPR_TYPE_UPDATE,
-                                       getSuName(),
-                                       context->mb()->_collectionName, NULL,
-                                       &obj, &newobj, cb ) ;
+                  rc = handler->prepare( DMS_EXTOPR_TYPE_UPDATE,
+                                         getSuName(),
+                                         context->mb()->_collectionName, NULL,
+                                         &obj, &newobj, cb ) ;
                   PD_RC_CHECK( rc, PDERROR, "External operation check failed, "
                                "rc: %d", rc ) ;
                }

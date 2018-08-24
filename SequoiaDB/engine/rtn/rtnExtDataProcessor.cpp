@@ -258,8 +258,8 @@ namespace engine
                   {
                      break ;
                   }
-                  origItr++ ;
-                  newItr++ ;
+                  ++origItr ;
+                  ++newItr ;
                }
 
                if ( ( origItr == _keySet.end() ) && ( newItr == _keySetNew.end() ) )
@@ -1266,31 +1266,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_UNLOCKPROCESSOR, "_rtnExtDataProcessorMgr::unlockProcessor" )
-   void _rtnExtDataProcessorMgr::unlockProcessor( INT32 processorID,
-                                                  INT32 lockType )
-   {
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_UNLOCKPROCESSOR ) ;
-
-      if ( ( SHARED != lockType && EXCLUSIVE != lockType ) ||
-           processorID < 0 || (processorID > RTN_EXT_PROCESSOR_MAX_NUM - 1) )
-      {
-         return ;
-      }
-
-      ossScopedLock ( &_mutex, SHARED ) ;
-      ossRWMutex *mutex = &_processorLocks[processorID] ;
-      if ( SHARED == lockType )
-      {
-         mutex->release_r() ;
-      }
-      else
-      {
-         mutex->release_w() ;
-      }
-      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_UNLOCKPROCESSOR ) ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_UNLOCKPROCESSORS, "_rtnExtDataProcessorMgr::unlockProcessors" )
    void _rtnExtDataProcessorMgr::unlockProcessors( std::vector<rtnExtDataProcessor *> &processors,
                                                    INT32 lockType )
@@ -1306,7 +1281,15 @@ namespace engine
          for ( std::vector<rtnExtDataProcessor *>::iterator itr = processors.begin() ;
                itr != processors.end(); ++itr )
          {
-            unlockProcessor( (*itr)->getID(), lockType ) ;
+            ossRWMutex *mutex = &_processorLocks[ (*itr)->getID() ] ;
+            if ( SHARED == lockType )
+            {
+               mutex->release_r() ;
+            }
+            else
+            {
+               mutex->release_w() ;
+            }
          }
       }
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_UNLOCKPROCESSORS ) ;
