@@ -3615,6 +3615,12 @@
                            "file": "install_postgresql",
                            "cn": "创建SequoiaSQL-PostgreSQL业务",
                            "en": "Install SequoiaSQL-PostgreSQL"
+                        },
+                        {
+                           "id": 1534834770,
+                           "file": "install_mysql",
+                           "cn": "创建SequoiaSQL-MySQL业务",
+                           "en": "Install SequoiaSQL-MySQL"
                         }
                      ]
                   },
