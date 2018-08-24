@@ -254,7 +254,7 @@ Takes 0.010137s.
 接下来，即可在/opt/sequoiadb/mountpoint/目录下进行一系列文件操作，如创建删除文件，写入读取文件以及修改文件属性等。
 
 >**说明**  
->关于系统命令，支持基于以上接口的一些常见系统命令如mkdir、vi、cp、rm、touch、cat、mv、ln、chown、chmod、truncate等，超出以上接口之外的系统命令暂时不支持，如tar、unzip压缩等命令。    
+>关于系统命令，支持基于以上接口的一些常见系统命令如mkdir、vi、cp、rm、touch、cat、mv、ln、chown、chmod、truncate、tar等，超出以上接口之外的系统命令暂时不支持，如unzip压缩等命令。    
 
  
 ###选项###
