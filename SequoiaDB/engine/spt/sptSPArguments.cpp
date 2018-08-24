@@ -127,7 +127,8 @@ namespace engine
 
    INT32 _sptSPArguments::getBsonobj( UINT32 pos,
                                       bson::BSONObj &value,
-                                      BOOLEAN strict ) const
+                                      BOOLEAN strict,
+                                      BOOLEAN allowNull ) const
    {
       INT32 rc = SDB_OK ;
       JSObject *jsObj = NULL ;
@@ -155,12 +156,19 @@ namespace engine
          goto error ;
       }
 
-      jsObj = JSVAL_TO_OBJECT( *val ) ;
-      if ( NULL == jsObj )
+      if ( TRUE == JSVAL_IS_NULL( *val ) && TRUE == allowNull )
       {
-         PD_LOG( PDERROR, "failed to convert jsval to object" ) ;
-         rc = SDB_SYS ;
-         goto error ;
+         jsObj = JS_NewObject( _context, NULL, NULL, NULL ) ;
+      }
+      else
+      {
+         jsObj = JSVAL_TO_OBJECT( *val ) ;
+         if ( NULL == jsObj )
+         {
+            PD_LOG( PDERROR, "failed to convert jsval to object" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
       }
 
       rc = convertor.toBson( jsObj, value ) ;
