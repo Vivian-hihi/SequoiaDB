@@ -64,7 +64,8 @@ namespace engine
     _dmsCB( NULL ),
     _writeDMS( FALSE ),
     _hasLobPrivilege( FALSE ),
-    _reopened( FALSE )
+    _reopened( FALSE ),
+    _isMetaWrote( FALSE )
    {
       _pData = NULL ;
       _dataLen = 0 ;
@@ -239,9 +240,17 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_CREATEONLY == _mode && !updated )
+      if ( SDB_LOB_MODE_CREATEONLY == _mode )
       {
-         _written.insert( sequence ) ;
+         if ( !updated )
+         {
+            _written.insert( sequence ) ;
+         }
+
+         if ( DMS_LOB_META_SEQUENCE == sequence )
+         {
+            _isMetaWrote = TRUE ;
+         }
       }
 
    done:
@@ -351,6 +360,22 @@ namespace engine
 
          _accessInfo->unlock() ;
          accessInfoLocked = FALSE ;
+      }
+      else if ( DMS_LOB_META_SEQUENCE == sequence &&
+                SDB_LOB_MODE_CREATEONLY == _mode &&
+                0 == offset && !_isMetaWrote )
+      {
+         // Before SequoiaDB 3.0, we send UPDATE message to
+         // complete lob when close lob in CREATEONLY mode.
+         // And in 3.0.1 we also send UPDATE message,
+         // in order to compatible with version<3.0.
+         // But actually we should WRITE the meta sequence.
+         rc = write( sequence, offset, len, data, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+            goto error ;
+         }
       }
       else
       {

@@ -174,6 +174,7 @@ namespace engine
       BOOLEAN              _writeDMS ;
       BOOLEAN              _hasLobPrivilege ;
       BOOLEAN              _reopened ;
+      BOOLEAN              _isMetaWrote ; // used in CREATEONLY mode
    } ;
    typedef class _rtnContextShdOfLob rtnContextShdOfLob ;
 }

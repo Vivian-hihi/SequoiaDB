@@ -1301,7 +1301,13 @@ namespace engine
       PD_TRACE_ENTRY( COORD_LOBSTREAM_COMPLETELOB ) ;
       if ( SDB_LOB_MODE_CREATEONLY == _getMode() )
       {
-         rc = _write( tuple, cb ) ;
+         // Before SequoiaDB 3.0, we send UPDATE message to
+         // complete lob when close lob in CREATEONLY mode.
+         // And in 3.0.1 we also send UPDATE message,
+         // in order to compatible with version<3.0.
+         // But actually we should WRITE the meta sequence.
+         // See also _rtnContextShdOfLob::update().
+         rc = _update( tuple, cb ) ;
       }
       else if ( SDB_LOB_MODE_WRITE == _getMode() ||
                 SDB_LOB_MODE_TRUNCATE == _getMode() )
