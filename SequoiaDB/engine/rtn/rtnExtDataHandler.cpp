@@ -43,13 +43,59 @@
 namespace engine
 {
    _rtnExtDataHandler::_rtnExtDataHandler( rtnExtDataProcessorMgr *edpMgr )
+   : _enabled( TRUE ),
+     _refCount( 0 ),
+     _edpMgr( edpMgr )
    {
-      _edpMgr = edpMgr ;
    }
 
    _rtnExtDataHandler::~_rtnExtDataHandler()
    {
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ENABLE, "_rtnExtDataHandler::enable" )
+   void _rtnExtDataHandler::enable()
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ENABLE ) ;
+      ossScopedRWLock scopeLock( &_mutex, EXCLUSIVE ) ;
+
+      SDB_ASSERT( 0 == _refCount.fetch(), "Reference number is not 0" ) ;
+      _enabled = TRUE ;
+      PD_TRACE_EXIT( SDB__RTNEXTDATAHANDLER_ENABLE ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_DISABLE, "_rtnExtDataHandler::disable" )
+   INT32 _rtnExtDataHandler::disable( INT32 timeout )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_DISABLE ) ;
+      ossScopedRWLock scopeLock( &_mutex, EXCLUSIVE ) ;
+
+      while ( _refCount.fetch() > 0 )
+      {
+         ossSleep( OSS_ONE_SEC ) ;
+         if ( timeout >= OSS_ONE_SEC )
+         {
+            timeout -= OSS_ONE_SEC ;
+         }
+         else
+         {
+            rc = SDB_TIMEOUT ;
+            PD_LOG( PDERROR, "Failed to disable external handler "
+                             "in %d milliseconds", timeout ) ;
+            goto error ;
+         }
+      }
+
+      _enabled = FALSE ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_DISABLE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_GETEXTDATANAME, "_rtnExtDataHandler::getExtDataName" )
    INT32 _rtnExtDataHandler::getExtDataName( utilCLUniqueID clUniqID,
@@ -364,10 +410,15 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONINSERT ) ;
       rtnExtContextBase *context = NULL ;
+      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
 
       context = _contextMgr.findContext( cb->getTID() ) ;
       if ( !context )
       {
+         if ( SDB_DB_FULLSYNC == dbStatus || SDB_DB_REBUILDING == dbStatus )
+         {
+            goto done ;
+         }
          SDB_ASSERT( FALSE, "context not found" ) ;
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "Context for delete not found" ) ;
@@ -410,10 +461,15 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDELETE ) ;
       rtnExtContextBase *context = NULL ;
+      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
 
       context = _contextMgr.findContext( cb->getTID() ) ;
       if ( !context )
       {
+         if ( SDB_DB_FULLSYNC == dbStatus || SDB_DB_REBUILDING == dbStatus )
+         {
+            goto done ;
+         }
          SDB_ASSERT( FALSE, "context not found" ) ;
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "Context for delete not found" ) ;
@@ -457,10 +513,15 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONUPDATE ) ;
       rtnExtContextBase *context = NULL ;
+      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
 
       context = _contextMgr.findContext( cb->getTID() ) ;
       if ( !context )
       {
+         if ( SDB_DB_FULLSYNC == dbStatus || SDB_DB_REBUILDING == dbStatus )
+         {
+            goto done ;
+         }
          SDB_ASSERT( FALSE, "context not found" ) ;
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "Context for delete not found" ) ;
@@ -512,6 +573,9 @@ namespace engine
          rc = _contextMgr.createContext( DMS_EXTOPR_TYPE_TRUNCATE,
                                          cb, (rtnExtContextBase**)&context ) ;
          PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
+         rc = _hold() ;
+         PD_RC_CHECK( rc, PDERROR, "Take hold of external handler failed[ %d ]",
+                      rc ) ;
       }
 
       rc = context->open( _edpMgr, csName, clName, cb, dpscb ) ;
@@ -524,6 +588,7 @@ namespace engine
       if ( context )
       {
          _contextMgr.delContext( context->getID(), cb ) ;
+         _release() ;
       }
       goto done ;
    }
@@ -572,6 +637,12 @@ namespace engine
       if ( context && ownContext )
       {
          _contextMgr.delContext( context->getID(), cb ) ;
+         if ( _holdingType( type ) )
+         {
+            SDB_ASSERT( _refCount.fetch() > 0, "External handler reference count "
+                                               "is not greater than 0" ) ;
+            _release() ;
+         }
       }
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_DONE, rc ) ;
       return rc ;
@@ -606,6 +677,12 @@ namespace engine
       if ( context && ownContext )
       {
          _contextMgr.delContext( context->getID(), cb ) ;
+         if ( _holdingType( type ) )
+         {
+            SDB_ASSERT( _refCount.fetch() > 0, "External handler reference count "
+                                               "is not greater than 0" ) ;
+            _release() ;
+         }
       }
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ABORTOPERATION, rc ) ;
       return rc ;
@@ -712,6 +789,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__PREPARECTX ) ;
       SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
       rtnExtContextBase *context = NULL ;
+      BOOLEAN newContext = FALSE ;
+      BOOLEAN hasHold = FALSE ;
 
       if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
       {
@@ -723,6 +802,11 @@ namespace engine
       {
          rc = _contextMgr.createContext( type, cb, &context ) ;
          PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
+         newContext = TRUE ;
+         rc = _hold() ;
+         PD_RC_CHECK( rc, PDERROR, "Take hold of external handler failed[ %d ]",
+                      rc ) ;
+         hasHold = TRUE ;
       }
       else if ( type != context->getType() )
       {
@@ -734,6 +818,16 @@ namespace engine
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER__PREPARECTX, rc ) ;
       return rc ;
    error:
+      if ( newContext )
+      {
+         _contextMgr.delContext( context->getID(), cb ) ;
+         if ( hasHold )
+         {
+            SDB_ASSERT( _refCount.fetch() > 0, "External handler reference count is "
+                           "not greater than 0" ) ;
+            _release() ;
+         }
+      }
       goto done ;
    }
 

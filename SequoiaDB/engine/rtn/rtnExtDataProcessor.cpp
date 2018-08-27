@@ -134,11 +134,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_RESET ) ;
       BSONObj emptyObj ;
       _stat = RTN_EXT_PROCESSOR_INVALID ;
-      if ( _su && _mbContext )
-      {
-         _su->data()->releaseMBContext( _mbContext ) ;
-      }
       _su = NULL ;
+      _mbContext = NULL ;
       _id = RTN_EXT_PROCESSOR_INVALID_ID ;
       _meta.reset() ;
       ossMemset( _cappedCSName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
@@ -469,10 +466,16 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_DODROPP2 ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
+      if ( _su && _mbContext )
+      {
+         _su->data()->releaseMBContext( _mbContext ) ;
+      }
+
       rc = rtnDropCollectionSpaceP2( _cappedCSName, cb, dmsCB,
                                      dpsCB, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Phase 1 of dropping collection space[ %s ] "
                    "failed[ %d ]", _cappedCSName, rc ) ;
+      _su = NULL ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_DODROPP2, rc ) ;

@@ -229,10 +229,11 @@ namespace engine
                                MAP_SU_STATUS &validCLs ) ;
       void  _processValidCLs(  MAP_SU_STATUS &validCLs ) ;
       INT32 _constructBeginRspData( BSONObj &obj, MAP_SU_STATUS &validCLs ) ;
+      BOOLEAN _hasExternalData() const ;
 
    private:
       _dpsMessageBlock           _lsnSearchMB ;
-
+      BOOLEAN                    _extHandlerDisabled ;
    } ;
    typedef class _clsFSSrcSession clsFSSrcSession ;
 

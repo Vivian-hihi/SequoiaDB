@@ -53,6 +53,7 @@
 #include "rtnContextLob.hpp"
 #include "rtnContextData.hpp"
 #include "msgMessageFormat.hpp"
+#include "rtnExtDataHandler.hpp"
 #include <set>
 
 using namespace bson ;
@@ -62,6 +63,7 @@ namespace engine
 
 #define CLS_SYNC_MAX_TIME                 (5)         // second
 #define CLS_FS_SRC_MAX_NO_MSG_TIME        (3600000)   // 1 hour
+#define CLS_FS_DISABLE_EXTDATA_TIME       (10000)
 
 #define CLS_IS_LOB_LOG( type )\
         ( LOG_TYPE_LOB_WRITE == ( type ) || \
@@ -459,7 +461,10 @@ namespace engine
          for ( ; itr != _indexs.end(); itr++ )
          {
             BSONObjBuilder index ;
-            array.append( itr->_indexDef ) ;
+            BSONObj filter = BSON( FIELD_NAME_EXT_DATA_NAME << "" ) ;
+            BSONObj finalIdx =
+                  itr->_indexDef.filterFieldsUndotted( filter, false ) ;
+            array.append( finalIdx ) ;
          }
          builder.append( CLS_FS_INDEXES, array.arr() ) ;
          obj = builder.obj() ;
@@ -1488,12 +1493,18 @@ namespace engine
    _clsFSSrcSession::_clsFSSrcSession( UINT64 sessionID,
                                        _netRouteAgent *agent )
    :_clsDataSrcBaseSession( sessionID, agent ),
-    _lsnSearchMB( 1024 )
+    _lsnSearchMB( 1024 ),
+    _extHandlerDisabled( FALSE )
    {
    }
 
    _clsFSSrcSession::~_clsFSSrcSession()
    {
+      if ( _extHandlerDisabled )
+      {
+         rtnGetExtDataHandler()->enable() ;
+         PD_LOG( PDEVENT, "External data handler resumed" ) ;
+      }
    }
 
    SDB_SESSION_TYPE _clsFSSrcSession::sessionType() const
@@ -1576,6 +1587,23 @@ namespace engine
          _reset() ;
          BSONObj obj ;
 
+         // Check if there is any text index. If yes, disable the external
+         // handler.
+         if ( _hasExternalData() )
+         {
+            rc = rtnGetExtDataHandler()->disable( CLS_FS_DISABLE_EXTDATA_TIME ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Disable external data handler failed[ %d ]",
+                       rc ) ;
+               _disconnect() ;
+               goto done ;
+            }
+            _extHandlerDisabled = TRUE ;
+            PD_LOG( PDEVENT, "Disable external data handler "
+                             "during full sync" ) ;
+         }
+
          /// get expcect lsn
          _lsn = dpscb->expectLsn() ;
          msg.lsn = _lsn ;
@@ -1651,6 +1679,13 @@ namespace engine
          PD_LOG( PDEVENT, "Session[%s]: Full sync has been done",
                  sessionName() ) ;
          _quit = TRUE ;
+      }
+
+      if ( _extHandlerDisabled )
+      {
+         rtnGetExtDataHandler()->enable() ;
+         PD_LOG( PDEVENT, "External data handler resumed" ) ;
+         _extHandlerDisabled  = FALSE ;
       }
 
    //done:
@@ -1969,6 +2004,47 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   BOOLEAN _clsFSSrcSession::_hasExternalData() const
+   {
+      BOOLEAN result = FALSE ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      MON_CS_SIM_LIST csList ;
+
+      dmsCB->dumpInfo( csList, FALSE, TRUE, TRUE ) ;
+      for ( MON_CS_SIM_LIST::iterator csItr = csList.begin();
+            csItr != csList.end(); ++csItr )
+      {
+         for ( MON_CL_SIM_VEC::const_iterator clItr = csItr->_clList.begin();
+               clItr != csItr->_clList.end(); ++clItr )
+         {
+            for ( MON_IDX_LIST::const_iterator idxItr = clItr->_idxList.begin();
+                  idxItr != clItr->_idxList.end(); ++idxItr )
+            {
+               INT32 rcTmp = SDB_OK ;
+               UINT16 idxType = IXM_EXTENT_TYPE_NONE ;
+               rcTmp = idxItr->getIndexType( idxType ) ;
+               if ( rcTmp )
+               {
+                  // Only warning, and process the remaining ones.
+                  PD_LOG( PDERROR, "Get type of index failed[ %d ], cs[ %s ],"
+                                   " cl[ %s ], index[ %s ]",
+                          rcTmp, csItr->_name, clItr->_name,
+                          idxItr->getIndexName() ) ;
+                  continue;
+               }
+               // Only dump text indices in normal status.
+               if ( IXM_EXTENT_TYPE_TEXT == idxType )
+               {
+                  result = TRUE;
+                  goto done ;
+               }
+            }
+         }
+      }
+   done:
+      return result ;
    }
 
    INT32 _clsFSSrcSession::_extractBeginBody( const BSONObj &obj,

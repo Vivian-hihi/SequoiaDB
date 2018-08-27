@@ -54,6 +54,11 @@ namespace engine
       virtual ~_rtnExtDataHandler() ;
 
    public:
+
+      void enable() ;
+
+      INT32 disable( INT32 timeout ) ;
+
       virtual INT32 getExtDataName( utilCLUniqueID clUniqID,
                                     const CHAR *idxName,
                                     CHAR *extName,
@@ -119,6 +124,12 @@ namespace engine
       INT32 _extendIndexDef( const CHAR *csName, const CHAR *clName,
                              ixmIndexCB &indexCB ) ;
 
+      OSS_INLINE INT32 _hold() ;
+
+      OSS_INLINE void _release() ;
+
+      OSS_INLINE BOOLEAN _holdingType( DMS_EXTOPR_TYPE type ) const ;
+
       INT32 _check( DMS_EXTOPR_TYPE type, const CHAR *csName,
                     const CHAR *clName, const CHAR *idxName,
                     const BSONObj *object, const BSONObj *objNew ) ;
@@ -131,10 +142,52 @@ namespace engine
       void _getExtDataNameV1( const CHAR *csName, const CHAR *clName,
                               const CHAR *idxName, string &extName ) ;
    private:
+      BOOLEAN                 _enabled ;
+      ossRWMutex              _mutex ;
+      ossAtomic32             _refCount ;
       rtnExtDataProcessorMgr  *_edpMgr ;
       rtnExtContextMgr        _contextMgr ;
    } ;
    typedef _rtnExtDataHandler rtnExtDataHandler ;
+
+   OSS_INLINE INT32 _rtnExtDataHandler::_hold()
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _mutex.lock_r( OSS_ONE_SEC ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to lock external handler "
+                                "in %d milliseconds", OSS_ONE_SEC ) ;
+      if ( !_enabled )
+      {
+         rc = SDB_CLS_FULL_SYNC ;
+         PD_LOG( PDERROR, "External data handler is not enabled. Maybe some "
+                          "full sync is in progress and this node is source") ;
+         goto error ;
+      }
+      _refCount.inc() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   OSS_INLINE void _rtnExtDataHandler::_release()
+   {
+      SDB_ASSERT( _enabled, "External data handler is not enabled" ) ;
+      SDB_ASSERT( _refCount.fetch() > 0, "External handler reference "
+                                         "is not greater than 0" ) ;
+      _refCount.dec() ;
+      _mutex.release_r() ;
+   }
+
+   OSS_INLINE BOOLEAN _rtnExtDataHandler::_holdingType( DMS_EXTOPR_TYPE type ) const
+   {
+      return ( ( DMS_EXTOPR_TYPE_INSERT == type ) ||
+               ( DMS_EXTOPR_TYPE_DELETE == type ) ||
+               ( DMS_EXTOPR_TYPE_UPDATE == type ) ||
+               ( DMS_EXTOPR_TYPE_TRUNCATE == type ) ) ;
+   }
 
    rtnExtDataHandler* rtnGetExtDataHandler() ;
 }

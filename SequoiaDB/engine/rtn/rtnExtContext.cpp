@@ -411,6 +411,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDROPCSCTX_OPEN ) ;
+      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
+
       vector<rtnExtDataProcessor *> processors ;
 
       // When we reach here, other sessions are not able to see THIS cs any
@@ -419,6 +421,10 @@ namespace engine
       // But operations on other cs are not affected. So concurrency should be
       // considered when finally removing the processors.
       _processorMgr = processorMgr ;
+      if ( SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
 
       rc = processorMgr->getProcessorsByCS( csName, SHARED, processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Prepare processors failed[ %d ]", rc ) ;
@@ -428,7 +434,7 @@ namespace engine
       {
          goto done ;
       }
-      _lockType = -1 ;
+      _lockType = SHARED ;
       _removeFiles = removeFiles ;
       _eduCB = cb ;
       _dpsCB = dpscb ;
@@ -526,9 +532,15 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDROPCLCTX_OPEN ) ;
+      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
       vector<rtnExtDataProcessor *> processors ;
 
       _processorMgr = processorMgr ;
+      if ( SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
+
       rc = processorMgr->getProcessorsByCL( csName, clName,
                                             EXCLUSIVE, processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Get processors failed[ %d ]", rc ) ;
