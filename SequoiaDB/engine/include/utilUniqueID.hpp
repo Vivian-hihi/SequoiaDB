@@ -37,7 +37,7 @@
 
 #include "ossTypes.hpp"
 #include "ossUtil.hpp"
-#include "../bson/bsonobj.h"
+#include "../bson/bson.hpp"
 
 using namespace bson ;
 

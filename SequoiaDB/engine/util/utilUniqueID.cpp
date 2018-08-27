@@ -35,8 +35,6 @@
 *******************************************************************************/
 #include "utilUniqueID.hpp"
 #include "msgDef.h"
-#include "../bson/bsonobjiterator.h"
-#include "../bson/bsonobjbuilder.h"
 
 using namespace bson ;
 
