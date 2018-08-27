@@ -75,12 +75,20 @@ namespace CSharp.Crud.DataType
             BsonDocument insertor4 = new BsonDocument { { "a", new BsonTimestamp(maxIntSec, secmin) }, { "b", 4 } };
             BsonDocument insertor5 = new BsonDocument { { "a", new BsonTimestamp(minIntSec, secmax) }, { "b", 5 } };
             BsonDocument insertor6 = new BsonDocument { { "a", new BsonTimestamp(minIntSec, secmin) }, { "b", 6 } };
+            BsonDocument insertor7 = new BsonDocument { { "a", new BsonTimestamp(minIntSec, -1) }, { "b", 7 } };
+            BsonDocument insertor8 = new BsonDocument { { "a", new BsonTimestamp(minIntSec, 1000000) }, { "b", 8 } };
+            BsonDocument insertor9 = new BsonDocument { { "a", new BsonTimestamp(maxIntSec, -1) }, { "b", 9 } };
+            BsonDocument insertor10 = new BsonDocument { { "a", new BsonTimestamp(maxIntSec, 1000000) }, { "b", 10 } };
             cl.Insert(insertor1);
             cl.Insert(insertor2);
             cl.Insert(insertor3);
             cl.Insert(insertor4);
             cl.Insert(insertor5);
             cl.Insert(insertor6);
+            cl.Insert(insertor7);
+            cl.Insert(insertor8);
+            cl.Insert(insertor9);
+            cl.Insert(insertor10);
             DBCursor cursor = cl.Query();
             BsonDocument record;
             List<BsonDocument> bsonList = new List<BsonDocument>();
@@ -106,6 +114,18 @@ namespace CSharp.Crud.DataType
 
             Assert.AreEqual(minIntSec, bsonList[5].GetValue("a").AsBsonTimestamp.Timestamp);
             Assert.AreEqual(secmin, bsonList[5].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(minIntSec - 1, bsonList[6].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(999999, bsonList[6].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(minIntSec + 1, bsonList[7].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(0, bsonList[7].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(maxIntSec - 1, bsonList[8].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(999999, bsonList[8].GetValue("a").AsBsonTimestamp.Increment);
+
+            Assert.AreEqual(maxIntSec + 1, bsonList[9].GetValue("a").AsBsonTimestamp.Timestamp);
+            Assert.AreEqual(0, bsonList[9].GetValue("a").AsBsonTimestamp.Increment);
         } 
 
         private void InsertAndQueryTimestampData()
