@@ -306,6 +306,7 @@ namespace engine
    }
 
    // look up by name or unique id
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__CSCBLOOK, "_SDB_DMSCB::_CSCBLookup" )
    INT32 _SDB_DMSCB::_CSCBLookup ( const CHAR *pName,
                                    utilCSUniqueID csUniqueID,
                                    SDB_DMS_CSCB **cscb,
@@ -315,6 +316,8 @@ namespace engine
       SDB_ASSERT( cscb, "cscb can't be null!" ) ;
 
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB__CSCBLOOK ) ;
+
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
 
       if ( UTIL_INVALID_UNIQUEID != csUniqueID )
@@ -370,6 +373,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__SDB_DMSCB__CSCBLOOK, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1455,6 +1459,7 @@ namespace engine
       _CSCBRelease( suID, lockType ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CHGCSUID, "_SDB_DMSCB::changeCSUniqueID" )
    INT32 _SDB_DMSCB::changeCSUniqueID( _dmsStorageUnit* su,
                                        utilCSUniqueID csUniqueID,
                                        pmdEDUCB* cb,
@@ -1462,6 +1467,8 @@ namespace engine
                                        BOOLEAN setOnlyIfInvalid )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_CHGCSUID ) ;
+
       SDB_DMS_CSCB* cscb = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
       dmsStorageInfo* suInfo = NULL ;
@@ -1521,6 +1528,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__SDB_DMSCB_CHGCSUID, rc ) ;
       return rc ;
    error:
       goto done ;
