@@ -585,11 +585,7 @@ namespace engine
       if ( _needUpdateLSN )
       {
          SDB_ASSERT( _mbContext, "mbContext should not be NULL" ) ;
-         if ( SDB_OK == _mbContext->mbLock( EXCLUSIVE ) )
-         {
-            _mbContext->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
-            _mbContext->mbUnlock() ;
-         }
+         _mbContext->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
       }
       _keySet.clear() ;
       _keySetNew.clear() ;

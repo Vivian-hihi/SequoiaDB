@@ -57,10 +57,11 @@ namespace engine
    void _rtnExtDataHandler::enable()
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ENABLE ) ;
-      ossScopedRWLock scopeLock( &_mutex, EXCLUSIVE ) ;
-
-      SDB_ASSERT( 0 == _refCount.fetch(), "Reference number is not 0" ) ;
-      _enabled = TRUE ;
+      if ( !_enabled )
+      {
+         _enabled = TRUE ;
+         PD_LOG( PDEVENT, "External data handler enabled" ) ;
+      }
       PD_TRACE_EXIT( SDB__RTNEXTDATAHANDLER_ENABLE ) ;
    }
 
@@ -69,7 +70,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_DISABLE ) ;
-      ossScopedRWLock scopeLock( &_mutex, EXCLUSIVE ) ;
+      BOOLEAN currentStat = _enabled ;
+
+      // Disable and wait for all current users to finish.
+      _enabled = FALSE ;
 
       while ( _refCount.fetch() > 0 )
       {
@@ -83,11 +87,13 @@ namespace engine
             rc = SDB_TIMEOUT ;
             PD_LOG( PDERROR, "Failed to disable external handler "
                              "in %d milliseconds", timeout ) ;
+            // If not all users are gone in specified time, restore the status.
+            _enabled = currentStat ;
             goto error ;
          }
       }
 
-      _enabled = FALSE ;
+      PD_LOG( PDEVENT, "External data handler disabled" ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_DISABLE, rc ) ;

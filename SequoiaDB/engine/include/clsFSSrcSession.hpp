@@ -233,7 +233,6 @@ namespace engine
 
    private:
       _dpsMessageBlock           _lsnSearchMB ;
-      BOOLEAN                    _extHandlerDisabled ;
    } ;
    typedef class _clsFSSrcSession clsFSSrcSession ;
 

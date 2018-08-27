@@ -143,7 +143,6 @@ namespace engine
                               const CHAR *idxName, string &extName ) ;
    private:
       BOOLEAN                 _enabled ;
-      ossRWMutex              _mutex ;
       ossAtomic32             _refCount ;
       rtnExtDataProcessorMgr  *_edpMgr ;
       rtnExtContextMgr        _contextMgr ;
@@ -154,9 +153,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      rc = _mutex.lock_r( OSS_ONE_SEC ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to lock external handler "
-                                "in %d milliseconds", OSS_ONE_SEC ) ;
       if ( !_enabled )
       {
          rc = SDB_CLS_FULL_SYNC ;
@@ -165,6 +161,12 @@ namespace engine
          goto error ;
       }
       _refCount.inc() ;
+
+      // Double check if it has been disabled by someone else.
+      if ( !_enabled )
+      {
+         _refCount.dec() ;
+      }
 
    done:
       return rc ;
@@ -178,7 +180,6 @@ namespace engine
       SDB_ASSERT( _refCount.fetch() > 0, "External handler reference "
                                          "is not greater than 0" ) ;
       _refCount.dec() ;
-      _mutex.release_r() ;
    }
 
    OSS_INLINE BOOLEAN _rtnExtDataHandler::_holdingType( DMS_EXTOPR_TYPE type ) const

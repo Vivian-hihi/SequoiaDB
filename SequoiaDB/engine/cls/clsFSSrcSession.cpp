@@ -1493,18 +1493,14 @@ namespace engine
    _clsFSSrcSession::_clsFSSrcSession( UINT64 sessionID,
                                        _netRouteAgent *agent )
    :_clsDataSrcBaseSession( sessionID, agent ),
-    _lsnSearchMB( 1024 ),
-    _extHandlerDisabled( FALSE )
+    _lsnSearchMB( 1024 )
    {
    }
 
    _clsFSSrcSession::~_clsFSSrcSession()
    {
-      if ( _extHandlerDisabled )
-      {
-         rtnGetExtDataHandler()->enable() ;
-         PD_LOG( PDEVENT, "External data handler resumed" ) ;
-      }
+      rtnGetExtDataHandler()->enable() ;
+      PD_LOG( PDEVENT, "External data handler resumed" ) ;
    }
 
    SDB_SESSION_TYPE _clsFSSrcSession::sessionType() const
@@ -1587,23 +1583,6 @@ namespace engine
          _reset() ;
          BSONObj obj ;
 
-         // Check if there is any text index. If yes, disable the external
-         // handler.
-         if ( _hasExternalData() )
-         {
-            rc = rtnGetExtDataHandler()->disable( CLS_FS_DISABLE_EXTDATA_TIME ) ;
-            if ( rc )
-            {
-               PD_LOG( PDERROR, "Disable external data handler failed[ %d ]",
-                       rc ) ;
-               _disconnect() ;
-               goto done ;
-            }
-            _extHandlerDisabled = TRUE ;
-            PD_LOG( PDEVENT, "Disable external data handler "
-                             "during full sync" ) ;
-         }
-
          /// get expcect lsn
          _lsn = dpscb->expectLsn() ;
          msg.lsn = _lsn ;
@@ -1648,6 +1627,25 @@ namespace engine
                     routeID2String( header->routeID ).c_str(),
                     _lsn.version, _lsn.offset ) ;
 
+            // Disable external data handler. Currently external handler is
+            // about text indices. As capped collections for text indices are
+            // required to be exactly the same on primary and slave nodes, and
+            // during full sync, the original collection and the capped
+            // collection are syncing seperately by themselves. If any write
+            // operation happened on primary capped collection, it will finally
+            // result in data mismatch on primary and salve. So we directly
+            // disable the external handler during the full sync. It will be
+            // enabled after full sync is done or aborted.
+            rc = rtnGetExtDataHandler()->disable( CLS_FS_DISABLE_EXTDATA_TIME ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Disable external data handler failed[ %d ]",
+                       rc ) ;
+               _disconnect() ;
+               goto done ;
+            }
+            PD_LOG( PDEVENT, "Disable external data handler "
+                             "during full sync" ) ;
             _quit = FALSE ;
          }
          else
@@ -1681,12 +1679,7 @@ namespace engine
          _quit = TRUE ;
       }
 
-      if ( _extHandlerDisabled )
-      {
-         rtnGetExtDataHandler()->enable() ;
-         PD_LOG( PDEVENT, "External data handler resumed" ) ;
-         _extHandlerDisabled  = FALSE ;
-      }
+      rtnGetExtDataHandler()->enable() ;
 
    //done:
       PD_TRACE_EXIT ( SDB__CLSFSSS_HNDEND );
