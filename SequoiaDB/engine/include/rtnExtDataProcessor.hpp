@@ -169,6 +169,11 @@ namespace engine
 
       const CHAR* _getExtCLShortName() const ;
 
+      // Whether the corresponding capped collection has enough free space.
+      INT32 _spaceCheck( UINT32 size ) ;
+
+      INT32 _updateSpaceInfo( UINT64 &freeSpace ) ;
+
    private:
       rtnExtProcessorStat  _stat ;
       // MB context of the capped collection. Used to update LSN information.
@@ -182,6 +187,7 @@ namespace engine
       BSONObjSet           _keySet ;
       BSONObjSet           _keySetNew ;
       BOOLEAN              _needOprRec ;
+      UINT64               _freeSpace ;
    } ;
    typedef _rtnExtDataProcessor rtnExtDataProcessor ;
 

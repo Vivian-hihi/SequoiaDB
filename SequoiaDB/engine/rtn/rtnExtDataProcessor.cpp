@@ -62,11 +62,16 @@ namespace engine
       ossMemset( _cappedCLName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
       _needUpdateLSN = FALSE ;
       _needOprRec = FALSE ;
+      _freeSpace = 0 ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR__RTNEXTDATAPROCESSOR ) ;
    }
 
    _rtnExtDataProcessor::~_rtnExtDataProcessor()
    {
+      if ( _su && _mbContext )
+      {
+         _su->data()->releaseMBContext( _mbContext ) ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_INIT, "_rtnExtDataProcessor::init" )
@@ -90,29 +95,6 @@ namespace engine
       rc = setTargetNames( targetName ) ;
       PD_RC_CHECK( rc, PDERROR, "Set target names failed[ %d ]", rc ) ;
       _id = id ;
-
-      rc = dmsCB->nameToSUAndLock( _cappedCSName, suID, &_su, SHARED ) ;
-      if ( rc )
-      {
-         if ( SDB_DMS_CS_NOTEXIST == rc )
-         {
-            // Index is being created. _mbContext will be set in the rebuild.
-            rc = SDB_OK ;
-            goto done ;
-         }
-         else
-         {
-            PD_LOG( PDERROR, "Lock collection space[ %s ] failed[ %d ]",
-                   _cappedCSName, rc ) ;
-            goto error ;
-         }
-      }
-
-      // Get the mb context for the capped collection, to update the LSN
-      // information after write operation.
-      rc = _su->data()->getMBContext( &_mbContext, _getExtCLShortName(), -1 ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get mbContext for collection[ %s ] "
-                   "failed[ %d ]", _cappedCLName, rc ) ;
       _stat = RTN_EXT_PROCESSOR_CREATING ;
 
    done:
@@ -144,6 +126,7 @@ namespace engine
       _keySet.clear() ;
       _keySetNew.clear() ;
       _needOprRec = FALSE ;
+      _freeSpace = 0 ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_RESET ) ;
    }
 
@@ -194,11 +177,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_CHECK ) ;
-      dmsMBContext *context = NULL ;
-      dmsStorageUnit *su = NULL ;
-      dmsStorageUnitID suID = DMS_INVALID_SUID ;
-      const CHAR *collection = NULL ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
       // Only check for insert/delete/update when object is not empty.
       if ( type > DMS_EXTOPR_TYPE_UPDATE || !object )
@@ -278,36 +256,7 @@ namespace engine
          }
       }
 
-      // If the object contains the index field, check if the capped collection
-      // has enough free space.
-      if ( _needOprRec )
-      {
-         rc = rtnResolveCollectionNameAndLock ( _cappedCLName, dmsCB, &su,
-                                                &collection, suID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name: %s, "
-                      "rc: %d", _cappedCLName, rc ) ;
-         rc = su->data()->getMBContext( &context, collection, -1 ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
-                      "rc: %d", collection, rc ) ;
-
-         if ( FALSE == ((dmsStorageDataCapped *)su->data())->spaceEnough( context,
-                                                            DMS_RECORD_MAX_SZ ) )
-         {
-            rc = SDB_OSS_UP_TO_LIMIT ;
-            PD_LOG( PDERROR, "Storage space is not enough for operation" ) ;
-            goto error ;
-         }
-      }
-
    done:
-      if ( context )
-      {
-         su->data()->releaseMBContext( context ) ;
-      }
-      if ( DMS_INVALID_SUID != suID )
-      {
-         dmsCB->suUnlock( suID, SHARED ) ;
-      }
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_CHECK, rc ) ;
       return rc ;
    error:
@@ -333,6 +282,9 @@ namespace engine
       {
          goto done ;
       }
+
+      rc = _spaceCheck( recordObj.objsize() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Space check failed[ %d ]", rc ) ;
 
       rc = rtnInsert( _cappedCLName, recordObj, 1, 0,
                       cb, dmsCB, dpsCB, 1, &insertNum, &ignoreNum ) ;
@@ -367,6 +319,9 @@ namespace engine
       {
          goto done ;
       }
+
+      rc = _spaceCheck( recordObj.objsize() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Space check failed[ %d ]", rc ) ;
 
       rc = rtnInsert( _cappedCLName, recordObj, 1, 0,
                       cb, dmsCB, dpsCB, 1, &insertNum, &ignoreNum ) ;
@@ -403,6 +358,9 @@ namespace engine
       {
          goto done ;
       }
+
+      rc = _spaceCheck( recordObj.objsize() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Space check failed[ %d ]", rc ) ;
 
       rc = rtnInsert( _cappedCLName, recordObj, 1, 0,
                       cb, dmsCB, dpsCB, 1, &insertNum, &ignoreNum ) ;
@@ -526,7 +484,6 @@ namespace engine
       SDB_DB_STATUS dbStatus = krcb->getDBStatus() ;
       SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
-      dmsStorageUnit *su = NULL ;
 
       // In case of rebuilding, we don't know whether the capped collections are
       // valid or not. So we directly drop and re-create the capped collection
@@ -557,14 +514,6 @@ namespace engine
       rc = _prepareCSAndCL( _cappedCSName, _cappedCLName, cb, dpsCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Create capped collection[ %s.%s ] "
                    "failed[ %d ]", _cappedCSName, _cappedCLName, rc ) ;
-
-      rc = dmsCB->nameToSUAndLock( _cappedCSName, suID, &su, SHARED ) ;
-      PD_RC_CHECK( rc, PDERROR, "Lock collection space[ %s ] failed[ %d ]",
-                   _cappedCSName, rc ) ;
-
-      rc = su->data()->getMBContext( &_mbContext, _getExtCLShortName(), -1 ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get mbContext for collection[ %s ] "
-                   "failed[ %d ]", _cappedCLName, rc ) ;
 
    done:
       if ( DMS_INVALID_SUID != suID )
@@ -943,6 +892,76 @@ namespace engine
    done:
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR__GETEXTCLSHORTNAME ) ;
       return clShortName ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__SPACECHECK, "_rtnExtDataProcessor::_spaceCheck" )
+   INT32 _rtnExtDataProcessor::_spaceCheck( UINT32 size )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR__SPACECHECK ) ;
+      if ( _freeSpace < size )
+      {
+         // If cached size is not enough, let's sync the information. The capped
+         // collection may have been popped by the search engine adapter.
+         rc = _updateSpaceInfo( _freeSpace ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update space information for collection"
+                                   "[ %s ] failed[ %d ]",
+                      _cappedCLName, rc ) ;
+
+         // If space still not enough after update, report error.
+         if ( _freeSpace < size )
+         {
+            rc = SDB_OSS_UP_TO_LIMIT ;
+            PD_LOG( PDERROR, "Space not enough, request size[ %u ]", size ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR__SPACECHECK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__UPDATESPACEINFO, "_rtnExtDataProcessor::_updateSpaceInfo" )
+   INT32 _rtnExtDataProcessor::_updateSpaceInfo( UINT64 &freeSpace )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR__UPDATESPACEINFO ) ;
+      const dmsMBStatInfo *mbStat = NULL ;
+      UINT64 remainSize = 0 ;
+      UINT32 remainExtentNum = 0 ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      dmsStorageUnitID suID = DMS_INVALID_CS ;
+
+      if ( !_su )
+      {
+         rc = dmsCB->nameToSUAndLock( _cappedCSName, suID, &_su ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get capped collection space[ %d ] "
+                                   "failed[ %d ]", _cappedCSName, rc ) ;
+         SDB_ASSERT( !_mbContext, "mbContext is not NULL") ;
+         rc = _su->data()->getMBContext( &_mbContext, _getExtCLShortName(),
+                                         -1 ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get mbcontext for collection[ %s ] "
+                                   "failed[ %d ]", _cappedCLName, rc ) ;
+      }
+
+      mbStat = _mbContext->mbStat() ;
+
+      remainSize = RTN_CAPPED_CL_MAXSIZE -
+            ( mbStat->_totalDataPages << _su->data()->pageSize() ) ;
+
+      remainExtentNum = remainSize / DMS_CAP_EXTENT_SZ ;
+      remainSize -= ( remainExtentNum * DMS_EXTENT_METADATA_SZ ) ;
+
+      freeSpace = mbStat->_totalDataFreeSpace + remainSize ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR__UPDATESPACEINFO, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    _rtnExtDataProcessorMgr::_rtnExtDataProcessorMgr()

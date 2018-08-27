@@ -176,7 +176,6 @@ namespace engine
 
    OSS_INLINE void _rtnExtDataHandler::_release()
    {
-      SDB_ASSERT( _enabled, "External data handler is not enabled" ) ;
       SDB_ASSERT( _refCount.fetch() > 0, "External handler reference "
                                          "is not greater than 0" ) ;
       _refCount.dec() ;
