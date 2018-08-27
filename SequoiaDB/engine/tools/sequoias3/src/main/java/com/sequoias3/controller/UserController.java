@@ -24,7 +24,7 @@ public class UserController {
     @Autowired
     RestUtils restUtils;
 
-    @PostMapping(value = "/users/{username}", produces = MediaType.APPLICATION_XML_VALUE)
+    @PostMapping(value = "/users/{username:.+}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity createUser(@RequestParam(value = RestParamDefine.ROLE, required = false) String role,
                                      @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
                                      @PathVariable(RestParamDefine.USER_NAME) String username)
@@ -40,7 +40,7 @@ public class UserController {
                 .body(userService.createUser(username, role));
     }
 
-    @PutMapping(value = "/users/{username}", produces = MediaType.APPLICATION_XML_VALUE)
+    @PutMapping(value = "/users/{username:.+}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity updateUser(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
                                      @PathVariable(RestParamDefine.USER_NAME) String username)
             throws S3ServerException {
@@ -55,7 +55,7 @@ public class UserController {
                 .body(userService.updateUser(username));
     }
 
-    @GetMapping(value = "/users/{username}", produces = MediaType.APPLICATION_XML_VALUE)
+    @GetMapping(value = "/users/{username:.+}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity getUser(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
                                   @PathVariable(RestParamDefine.USER_NAME) String username)
             throws S3ServerException {
@@ -70,7 +70,7 @@ public class UserController {
                 .body(userService.getUser(username));
     }
 
-    @DeleteMapping(value = "/users/{username}", produces = MediaType.APPLICATION_XML_VALUE)
+    @DeleteMapping(value = "/users/{username:.+}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity deleteUser(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
                                      @PathVariable(RestParamDefine.USER_NAME) String username)
             throws S3ServerException {
