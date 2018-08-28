@@ -4,7 +4,7 @@
 1. 指定socket登录MySQL shell
 
  ```lang-javascript
- # /opt/sequoiasql/mysql/bin/mysql -u root -p -S /opt/sequoiasql/mysql/data3306/mysqld.sock
+ # /opt/sequoiasql/mysql/bin/mysql --defaults-file=/opt/sequoiasql/mysql/my.cnf -u root -p -S /opt/sequoiasql/mysql/data3306/mysqld.sock
  ```
 
 2. 配置SequoiaDB连接地址
