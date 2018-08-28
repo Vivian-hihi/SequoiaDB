@@ -958,6 +958,10 @@ namespace engine
       freeSpace = mbStat->_totalDataFreeSpace + remainSize ;
 
    done:
+      if ( DMS_INVALID_CS != suID )
+      {
+         dmsCB->suUnlock( suID ) ;
+      }
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR__UPDATESPACEINFO, rc ) ;
       return rc ;
    error:
