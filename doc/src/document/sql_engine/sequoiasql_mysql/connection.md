@@ -1,10 +1,11 @@
 以下操作均在MySQL shell 环境下执行。
 ##连接MySQL与SequoiaDB##
 
-1. 指定socket登录MySQL shell
+1. 登录MySQL shell
 
  ```lang-javascript
- # /opt/sequoiasql/mysql/bin/mysql --defaults-file=/opt/sequoiasql/mysql/my.cnf -u root -p -S /opt/sequoiasql/mysql/data3306/mysqld.sock
+ $ export MYSQL_HOME=/opt/sequoiasql/mysql
+ $ ${MYSQL_HOME}/bin/mysql --defaults-file=${MYSQL_HOME}/my.cnf -S ${MYSQL_HOME}/data3306/mysqld.sock -u root -p
  ```
 
 2. 配置SequoiaDB连接地址
