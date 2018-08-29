@@ -822,6 +822,20 @@ namespace seadapter
                   hasStrField = TRUE ;
                }
             }
+            else if ( Array == ele.type() )
+            {
+               // Array with only one element(String type) will be indexed.
+               BSONObjIterator itr( ele.embeddedObject() ) ;
+               BSONElement subEle = itr.next() ;
+               if ( !itr.more() && ( String == subEle.type() ) )
+               {
+                  builder.appendAs( subEle, ele.fieldName() ) ;
+                  if ( !hasStrField )
+                  {
+                     hasStrField = TRUE ;
+                  }
+               }
+            }
          }
 
          if ( !hasOID )
