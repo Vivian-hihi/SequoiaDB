@@ -74,6 +74,16 @@ namespace CSharp.Crud.Query
             returnRows = 0;
             queryDocs = QueryAndReturnDoc(cl, matcher, selector, orderBy, hint, skipRows, returnRows, 0);
             Assert.AreEqual(0, queryDocs.Count, "query should return nothing, but get " + queryDocs.ToJson());
+            try
+            {
+                queryDocs = QueryAndReturnDoc(cl, matcher, selector, orderBy, hint, skipRows, returnRows, -100);
+            }
+            catch (BaseException e)
+            {
+                Assert.AreEqual(-6, e.ErrorCode);
+            }
+
+
         }
 
         [TestCleanup()]

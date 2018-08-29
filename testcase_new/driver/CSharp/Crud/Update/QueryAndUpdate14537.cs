@@ -98,7 +98,14 @@ namespace CSharp.Crud.Update
                 list.Add(doc);
             }
             cursor.Close();
-
+            cursor = cl.QueryAndUpdate(query, selector, orderBy, hint, update, skipRows, 1, -100, returnNew);
+            while (cursor.Next() != null)
+            {
+                BsonDocument doc = cursor.Current();
+                doc.Remove("_id");
+                Assert.AreEqual("{ \"a\" : 3, \"b\" : 2 }", doc.ToString());
+            }
+            cursor.Close();
             return list;
         } 
 
