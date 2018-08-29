@@ -144,6 +144,7 @@ public class TestQueryAndRemove7089 extends SdbTestBase{
             }
             cursor.close();
             Assert.assertEquals(actual, 2);
+
         }catch (BaseException e) {
             Assert.fail("Sequoiadb driver TestQueryAndRemove7089 checkQueryAndRemove error:" + e.getMessage());
         }

@@ -137,6 +137,16 @@ public class testQueryAndUpdate7088 extends SdbTestBase{
             List<BSONObject> expectedList= new ArrayList<BSONObject>();
             Assert.assertEquals(actualList, expectedList, "Sequoiadb driver testQueryAndUpdate7088 checkQueryAndUpdate" +
                     "actualList:" +actualList.toString() + "; expectedList:" + expectedList.toString());
+            
+            dbCursor = this.cl.queryAndUpdate(matcher, selector, orderBy, hint, update, skipRows, 1, -100, returnNew);
+            while( dbCursor.hasNext() ) {
+                BSONObject obj = dbCursor.getNext();
+                obj.removeField("height");
+                obj.removeField("age");
+                Assert.assertEquals(obj.toString(), 
+                        "{ \"_id\" : 6 , \"name\" : \"zhangsan6\" }");
+            }
+            dbCursor.close();
         }catch (BaseException e) {
             Assert.fail("Sequoiadb driver testQueryAndUpdate7088 checkQueryAndUpdate error:" + e.getMessage());
         }

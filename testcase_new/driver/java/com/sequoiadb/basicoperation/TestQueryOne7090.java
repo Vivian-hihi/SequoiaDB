@@ -112,9 +112,15 @@ public class TestQueryOne7090 extends SdbTestBase{
             BSONObject expectedObject = null;
             Assert.assertEquals(actualObject, expectedObject, "Sequoiadb driver TestQueryOne7090 checkQueryOneNoData" +
                     "actualList:" +actualObject + "; expectedList:" + expectedObject);
+            try {
+                this.cl.queryOne(matcher, selector, orderBy, hint, -100);
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -6);
+            }
         }catch (BaseException e) {
             Assert.fail("Sequoiadb driver TestQueryOne7090 checkQueryOne error:" + e.getMessage());
         }
+        
     }
     
     @AfterClass

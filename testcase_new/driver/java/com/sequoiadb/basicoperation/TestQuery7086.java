@@ -135,6 +135,11 @@ public class TestQuery7086 extends SdbTestBase{
           }
           Assert.assertEquals(actualList, expectedList, "actualList:" +actualList.toString() 
                   + "; expectedList:" + expectedList.toString());
+          try {
+            this.cl.query(matcher, selector, orderBy, hint, skipRows, returnRows, -100);
+        } catch (BaseException e) {
+            Assert.assertEquals(e.getErrorCode(), -6);
+        }
         }catch (BaseException e) {
             Assert.fail("Sequoiadb driver TestQuery7086 checkQuery error:" + e.getMessage());
         }
