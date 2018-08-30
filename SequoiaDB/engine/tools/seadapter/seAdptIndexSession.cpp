@@ -481,7 +481,7 @@ namespace seadapter
       INT32 bufSize = 0 ;
       UINT64 requestID = 0 ;
 
-      rc = msgBuildDisconnectMsg( (CHAR **)&msg, &bufSize, requestID ) ;
+      rc = msgBuildDisconnectMsg( (CHAR **)&msg, &bufSize, requestID, _pEDUCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Build disconnect message failed[ %d ]",
                    rc ) ;
       msg->TID = SEADPT_TID( _sessionID ) ;
@@ -490,6 +490,10 @@ namespace seadapter
                    "failed[ %d ]", rc ) ;
 
    done:
+      if ( msg )
+      {
+         msgReleaseBuffer( (CHAR *)msg, _pEDUCB ) ;
+      }
       return ;
    error:
       goto done ;
@@ -528,6 +532,10 @@ namespace seadapter
       PD_LOG( PDDEBUG, "Send getmore request to data node successfully" ) ;
 
    done:
+      if ( msgBuf )
+      {
+         msgReleaseBuffer( (CHAR *)msgBuf, _pEDUCB ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -554,6 +562,10 @@ namespace seadapter
               "successfully", _meta.getOrigCLName().c_str() ) ;
 
    done:
+      if ( msg )
+      {
+         msgReleaseBuffer( (CHAR *)msg, _pEDUCB ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -589,6 +601,10 @@ namespace seadapter
       }
 
    done:
+      if ( msg )
+      {
+         msgReleaseBuffer( (CHAR *)msg, _pEDUCB ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -629,6 +645,10 @@ namespace seadapter
               "data node successfully", _meta.getCappedCLName().c_str() ) ;
 
    done:
+      if ( msg )
+      {
+         msgReleaseBuffer( (CHAR *)msg, _pEDUCB ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -655,6 +675,10 @@ namespace seadapter
       PD_LOG( PDDEBUG, "Send query on capped collection[ %s ] to data node "
               "successfully", _meta.getCappedCLName().c_str() ) ;
    done:
+      if ( msg )
+      {
+         msgReleaseBuffer( (CHAR *)msg, _pEDUCB ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -699,6 +723,10 @@ namespace seadapter
               query.toString().c_str() ) ;
 
    done:
+      if ( msg )
+      {
+         msgReleaseBuffer( (CHAR *)msg, _pEDUCB ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -1462,7 +1490,7 @@ namespace seadapter
       }
 
       rc = msgBuildKillContextsMsg( (CHAR **)&msg, &bufSize, requestID,
-                                    1, &_queryCtxID ) ;
+                                    1, &_queryCtxID, _pEDUCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Build kill context message failed[ %d ]",
                    rc ) ;
       msg->TID = SEADPT_TID( _sessionID ) ;
@@ -1472,6 +1500,10 @@ namespace seadapter
       _queryCtxID = -1 ;
 
    done:
+      if ( msg )
+      {
+         msgReleaseBuffer( (CHAR *)msg, _pEDUCB ) ;
+      }
       return rc ;
    error:
       goto done ;

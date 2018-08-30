@@ -324,6 +324,10 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to check sub context, rc: %d", rc ) ;
 
    done:
+      if ( msg )
+      {
+         msgReleaseBuffer( (CHAR *)msg, eduCB ) ;
+      }
       PD_TRACE_EXITRC( SDB__RTNCONTEXTTS__PREPARENEXTSUBCONTEXT, rc ) ;
       return rc ;
    error:
@@ -407,6 +411,10 @@ namespace engine
                    rc ) ;
 
    done:
+      if ( queryMsg )
+      {
+         msgReleaseBuffer( (CHAR *)queryMsg, cb ) ;
+      }
       PD_TRACE_EXITRC( SDB__RTNCONTEXTTS__QUERYREMOTE, rc ) ;
       return rc ;
    error:
