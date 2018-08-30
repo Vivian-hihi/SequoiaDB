@@ -821,7 +821,7 @@ function(needSleep, checkfun, cl, condition)
                         "checkfun is not function");
    }
 
-   var totalSleepDuration = 10000;       
+   var totalSleepDuration = 120000;       
    var sleepInteval = 2;
    
    var sleepDuration = 0;
