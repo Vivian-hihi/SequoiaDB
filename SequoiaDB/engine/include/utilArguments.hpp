@@ -72,7 +72,6 @@ namespace engine
    #define UTIL_DOMAIN_AUTOSPLIT_FIELD       ( 0x00000004 )
    #define UTIL_DOMAIN_AUTOREBALANCE_FIELD   ( 0x00000008 )
 
-   #define UTIL_MAX_CL_SIZE_ALIGN_SIZE       ( 32 * 1024 * 1024 )
 }
 
 #endif // UTIL_ARGUMENTS_HPP_

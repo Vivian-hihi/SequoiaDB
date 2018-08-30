@@ -1362,8 +1362,6 @@ namespace engine
          BOOLEAN isMainCL = FALSE ;
          BOOLEAN isCapped = FALSE ;
          BOOLEAN isCompressed = FALSE ;
-         BOOLEAN autoSplit = FALSE ;
-         BOOLEAN autoIndexId = FALSE ;
 
          rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_COLLECTION_NAME,
                                       pArgs->_targetName ) ;
@@ -1383,7 +1381,6 @@ namespace engine
             goto error ;
          }
 
-         // There are some restrictions for capped collections. Do the check.
          rc = rtnGetBooleanElement( pArgs->_boQuery, FIELD_NAME_CAPPED,
                                     isCapped ) ;
          if ( SDB_FIELD_NOT_EXIST == rc )
@@ -1429,59 +1426,12 @@ namespace engine
             goto error ;
          }
 
-         rc = rtnGetBooleanElement( pArgs->_boQuery,
-                                    FIELD_NAME_DOMAIN_AUTO_SPLIT, autoSplit ) ;
-         if ( SDB_FIELD_NOT_EXIST == rc )
-         {
-            autoSplit = FALSE ;
-            rc = SDB_OK ;
-         }
-         else if ( rc )
-         {
-            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
-                    FIELD_NAME_DOMAIN_AUTO_SPLIT, getName(), rc ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         rc = rtnGetBooleanElement( pArgs->_boQuery,
-                                    FIELD_NAME_AUTO_INDEX_ID, autoIndexId ) ;
-         if ( SDB_FIELD_NOT_EXIST == rc )
-         {
-            autoIndexId = FALSE ;
-            rc = SDB_OK ;
-         }
-         else if ( rc )
-         {
-            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
-                    FIELD_NAME_AUTO_INDEX_ID, getName(), rc ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         if ( isCapped &&
-              ( isMainCL || isCompressed || autoSplit || autoIndexId ) )
-         {
-            PD_LOG( PDERROR, "Sharding/Compress/Index is not support on capped "
-                    "collection" ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
          if ( isMainCL )
          {
             // Check sharding keys
             BSONObj boShardingKey ;
             // Check sharding type
             string shardingType ;
-
-            if ( isCapped )
-            {
-               PD_LOG( PDERROR,
-                       "Sharding is not allowed on capped collection" ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
 
             rc = rtnGetObjElement( pArgs->_boQuery, FIELD_NAME_SHARDINGKEY,
                                    boShardingKey ) ;

@@ -639,7 +639,7 @@ namespace engine
                    "Failed to get field [%s]", FIELD_NAME_SIZE ) ;
          // Round up to 32MB
          _maxSize = (UINT64)ossRoundUpToMultipleX( argElement.numberLong() << 20,
-                                                   UTIL_MAX_CL_SIZE_ALIGN_SIZE ) ;
+                                                   DMS_MAX_CL_SIZE_ALIGN_SIZE ) ;
          parsedArgumentMask( UTIL_CL_MAXSIZE_FIELD ) ;
       }
 

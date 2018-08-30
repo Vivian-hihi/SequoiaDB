@@ -60,9 +60,6 @@
 using namespace bson ;
 using namespace std ;
 
-// Unit is MB. This is the upper limit. It should be smaller than the maximum
-// size of the storage unit.
-#define MAX_CAP_CL_SIZE                   ( OSS_SINT64_MAX >> 20 )
 // Default size of capped collection for text index. The unit is MB. So its 30G.
 #define TEXT_INDEX_DATA_BUFF_DEFAULT_SIZE  ( 30 * 1024 )
 
@@ -660,7 +657,9 @@ namespace engine
          BOOLEAN overwrite = FALSE ;
          BSONObjBuilder builder ;
 
-         if ( isCompressed || autoIndexId )
+         if ( ( !_shardingKey.isEmpty() && enSureIndex ) ||
+              isCompressed ||
+              autoIndexId )
          {
             PD_LOG( PDERROR, "Option Sharding/Compress/Index is not compatible "
                     "with Capped" ) ;
@@ -686,7 +685,7 @@ namespace engine
             }
             goto error ;
          }
-         if ( maxSize <= 0 || maxSize > MAX_CAP_CL_SIZE )
+         if ( maxSize <= 0 || maxSize > DMS_CAP_CL_SIZE )
          {
             PD_LOG( PDERROR, "Invalid Size[ %lld ] when creating capped "
                     "collection", maxSize ) ;
@@ -694,7 +693,7 @@ namespace engine
             goto error ;
          }
          maxSize = ossRoundUpToMultipleX( maxSize << 20,
-                                          UTIL_MAX_CL_SIZE_ALIGN_SIZE ) ;
+                                          DMS_MAX_CL_SIZE_ALIGN_SIZE ) ;
          builder.append( FIELD_NAME_SIZE, maxSize ) ;
 
          // Max/OverWrite is optional.

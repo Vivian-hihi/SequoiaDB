@@ -3895,6 +3895,10 @@ namespace engine
                       SDB_INVALIDARG, error, PDWARNING,
                       "Field [%s] type [%d] error",
                       CAT_CL_MAX_RECNUM, eleTmp.type() ) ;
+            PD_CHECK( eleTmp.numberLong() >= 0,
+                      SDB_INVALIDARG, error, PDWARNING,
+                      "Invalid Max[ %lld ] when creating capped collection",
+                      eleTmp.numberLong() ) ;
             clInfo._maxRecNum = eleTmp.numberLong() ;
             fieldMask |= UTIL_CL_MAXREC_FIELD ;
          }
@@ -3906,9 +3910,14 @@ namespace engine
                       SDB_INVALIDARG, error, PDWARNING,
                       "Field [%s] type [%d] error",
                       CAT_CL_MAX_SIZE, eleTmp.type() ) ;
+            PD_CHECK( eleTmp.numberLong() > 0 &&
+                      eleTmp.numberLong() <= DMS_CAP_CL_SIZE,
+                      SDB_INVALIDARG, error, PDWARNING,
+                      "Invalid Size[ %lld ] when creating capped collection",
+                      eleTmp.numberLong() ) ;
             // Always align the size upper to 32MB.
             clInfo._maxSize = ossRoundUpToMultipleX( eleTmp.numberLong() << 20,
-                                                     UTIL_MAX_CL_SIZE_ALIGN_SIZE ) ;
+                                                     DMS_MAX_CL_SIZE_ALIGN_SIZE ) ;
             fieldMask |= UTIL_CL_MAXSIZE_FIELD ;
          }
          else if ( 0 == ossStrcmp( eleTmp.fieldName(), CAT_CL_OVERWRITE ) )
@@ -3956,6 +3965,7 @@ namespace engine
                           eleTmp.toString().c_str() ) ;
          }
       }
+
       if ( clInfo._isMainCL )
       {
          PD_CHECK ( clInfo._isSharding,
@@ -4027,6 +4037,29 @@ namespace engine
       {
          clInfo._capped = TRUE ;
          fieldMask |= UTIL_CL_CAPPED_FIELD ;
+      }
+
+      if ( clInfo._capped )
+      {
+         if ( ( clInfo._isSharding && clInfo._enSureShardIndex ) ||
+              clInfo._isCompressed ||
+              clInfo._autoIndexId )
+         {
+            PD_LOG( PDWARNING,
+                    "Option Sharding/Compress/Index is not compatible "
+                    "with Capped" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         if ( 0 == clInfo._maxSize )
+         {
+            PD_LOG( PDWARNING,
+                    "Field[%s] must always be used when Capped is true",
+                    CAT_CL_MAX_SIZE ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
 
    done :
