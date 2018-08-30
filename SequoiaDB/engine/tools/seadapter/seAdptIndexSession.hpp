@@ -112,7 +112,6 @@ namespace seadapter
       INT32 _updateProgress( INT64 logicalID ) ;
 
       // Check if the mark of normal collection end has been written in ES.
-      INT32 _chkDoneMark( BOOLEAN &found ) ;
       INT32 _validate( const BSONObj &obj, BOOLEAN &valid ) ;
       INT32 _consult() ;
       INT32 _onSDBEOC() ;
@@ -125,8 +124,6 @@ namespace seadapter
       INT32 _processBigItem( const utilESBulkActionBase &actionItem ) ;
       INT32 _createIndex( BOOLEAN force = FALSE ) ;
       INT32 _dropIndex() ;
-
-      OSS_INLINE INT32 _findRecWithLID( INT64 logicalID, BOOLEAN &found ) ;
 
    private:
       INT32                   _origCLVersion ;
@@ -150,24 +147,6 @@ namespace seadapter
       utilESBulkBuilder       _bulkBuilder ;
    } ;
    typedef _seAdptIndexSession seAdptIndexSession ;
-
-   OSS_INLINE INT32 _seAdptIndexSession::_findRecWithLID( INT64 logicalID,
-                                                          BOOLEAN &found )
-   {
-      INT32 rc = SDB_OK ;
-      std::ostringstream lidStr ;
-      lidStr << logicalID ;
-
-      rc = _esClt->documentExist( _meta.getEsIdxName().c_str(),
-                                  _meta.getEsTypeName().c_str(),
-                                  SDB_SEADPT_FIELD_NAME_ID,
-                                  lidStr.str().c_str(), found ) ;
-      PD_RC_CHECK( rc, PDERROR, "Document existence check failed[ %d ]", rc ) ;
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
 }
 
 #endif /* SEADPT_INDEX_SESSION_HPP_ */

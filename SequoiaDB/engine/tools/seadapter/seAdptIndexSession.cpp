@@ -1293,33 +1293,6 @@ namespace seadapter
       return _markProgress( lidObj ) ;
    }
 
-   INT32 _seAdptIndexSession::_chkDoneMark( BOOLEAN &found )
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( !_esClt )
-      {
-         rc = sdbGetSeAdapterCB()->getSeCltFactory()->create( &_esClt ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to get search engine client, rc: %d",
-                    rc ) ;
-            goto error ;
-         }
-      }
-
-      rc = _esClt->documentExist( _meta.getEsIdxName().c_str(),
-                                  _meta.getEsTypeName().c_str(),
-                                  SDB_SEADPT_COMMIT_ID,
-                                  found ) ;
-      PD_RC_CHECK( rc, PDERROR, "Check document existense failed[ %d ]", rc ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 _seAdptIndexSession::_validate( const BSONObj &obj, BOOLEAN &valid )
    {
       INT32 rc = SDB_OK ;
