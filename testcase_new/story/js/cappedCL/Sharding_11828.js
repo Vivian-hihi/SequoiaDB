@@ -56,9 +56,9 @@ function createCappedCL( csName, clName, options )
    }
    catch( e )
    {
-      if( e !== -32 )
+      if( e !== -6 )
       {
-         throw buildException("createCappedCL()",e,"create cappedCL", "-32", e );
+         throw buildException("createCappedCL()",e,"create cappedCL", "-6", e );
       }
    }
 }
