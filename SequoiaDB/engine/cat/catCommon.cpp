@@ -4039,15 +4039,35 @@ namespace engine
          fieldMask |= UTIL_CL_CAPPED_FIELD ;
       }
 
+      if ( clInfo._capped &&
+           !( fieldMask & UTIL_CL_ENSURESHDIDX_FIELD ) )
+      {
+         clInfo._enSureShardIndex = FALSE ;
+      }
+
+      if ( clInfo._capped &&
+           !( fieldMask & UTIL_CL_AUTOIDXID_FIELD ) )
+      {
+         clInfo._autoIndexId = FALSE ;
+         fieldMask |= UTIL_CL_AUTOIDXID_FIELD ;
+      }
+
       if ( clInfo._capped )
       {
+         if ( clInfo._isCompressed )
+         {
+            PD_LOG( PDWARNING,
+                    "Compression is not allowed on capped collection." ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
          if ( ( clInfo._isSharding && clInfo._enSureShardIndex ) ||
-              clInfo._isCompressed ||
               clInfo._autoIndexId )
          {
             PD_LOG( PDWARNING,
-                    "Option Sharding/Compress/Index is not compatible "
-                    "with Capped" ) ;
+                    "Index is not allowed to be created on capped collection, "
+                    "including $id index and $shard index.") ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }

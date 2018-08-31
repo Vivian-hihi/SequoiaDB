@@ -530,7 +530,7 @@ namespace engine
                                      const CHAR * pHintBuff)
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN enSureIndex = TRUE ;
+      BOOLEAN enSureShardIdx = TRUE ;
       BOOLEAN isCompressed = FALSE ;
       BOOLEAN strictDataMode = FALSE ;
       BOOLEAN autoIndexId = TRUE ;
@@ -548,18 +548,36 @@ namespace engine
                   "creation, rc = %d", FIELD_NAME_NAME, rc ) ;
          goto error ;
       }
-      // ensure sharding key
-      rc = rtnGetBooleanElement( matcher, FIELD_NAME_ENSURE_SHDINDEX,
-                                 enSureIndex ) ;
+
+      // capped, should be extracted before EnsureShardingKey and AutoIndexId
+      rc = rtnGetBooleanElement( matcher, FIELD_NAME_CAPPED, capped ) ;
       if ( SDB_FIELD_NOT_EXIST == rc )
       {
          rc = SDB_OK ;
-         enSureIndex = TRUE ;
+         capped = FALSE ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Field[%s] value error in obj[%s]",
+                   FIELD_NAME_CAPPED, matcher.toString().c_str() ) ;
+
+      // ensure sharding key
+      rc = rtnGetBooleanElement( matcher, FIELD_NAME_ENSURE_SHDINDEX,
+                                 enSureShardIdx ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         rc = SDB_OK ;
+         if ( capped )
+         {
+            enSureShardIdx = FALSE ;
+         }
+         else
+         {
+            enSureShardIdx = TRUE ;
+         }
       }
       PD_RC_CHECK( rc, PDERROR, "Field[%s] value is error in obj[%s]",
                    FIELD_NAME_ENSURE_SHDINDEX, matcher.toString().c_str() ) ;
       // if we want to create sharding key index, let's do it
-      if ( enSureIndex )
+      if ( enSureShardIdx )
       {
          rc = rtnGetObjElement ( matcher, FIELD_NAME_SHARDINGKEY,
                                  _shardingKey ) ;
@@ -640,15 +658,11 @@ namespace engine
       {
          _attributes |= DMS_MB_ATTR_NOIDINDEX ;
       }
-
-      rc = rtnGetBooleanElement( matcher, FIELD_NAME_CAPPED, capped ) ;
-      if ( SDB_FIELD_NOT_EXIST == rc )
+      if ( SDB_FIELD_NOT_EXIST == rc && capped )
       {
-         rc = SDB_OK ;
-         capped = FALSE ;
+         autoIndexId = FALSE ;
+         _attributes |= DMS_MB_ATTR_NOIDINDEX ;
       }
-      PD_RC_CHECK( rc, PDERROR, "Field[%s] value error in obj[%s]",
-                   FIELD_NAME_CAPPED, matcher.toString().c_str() ) ;
 
       if ( capped )
       {
@@ -657,12 +671,20 @@ namespace engine
          BOOLEAN overwrite = FALSE ;
          BSONObjBuilder builder ;
 
-         if ( ( !_shardingKey.isEmpty() && enSureIndex ) ||
-              isCompressed ||
+         if ( isCompressed )
+         {
+            PD_LOG( PDWARNING,
+                    "Compression is not allowed on capped collection." ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         if ( ( !_shardingKey.isEmpty() && enSureShardIdx ) ||
               autoIndexId )
          {
-            PD_LOG( PDERROR, "Option Sharding/Compress/Index is not compatible "
-                    "with Capped" ) ;
+            PD_LOG( PDWARNING,
+                    "Index is not allowed to be created on capped collection, "
+                    "including $id index and $shard index.") ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
