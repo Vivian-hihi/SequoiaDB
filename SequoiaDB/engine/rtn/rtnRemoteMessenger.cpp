@@ -238,10 +238,7 @@ namespace engine
          goto error ;
       }
 
-      if ( MSG_INVALID_ROUTEID == _routeAgent.localID().value )
-      {
-         _routeAgent.setLocalID( id ) ;
-      }
+      _routeAgent.setLocalID( id ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNREMOTEMESSENGER_SETLOCALID, rc ) ;
