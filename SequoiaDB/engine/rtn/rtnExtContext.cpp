@@ -211,7 +211,7 @@ namespace engine
       {
          _lockType = EXCLUSIVE ;
          _appendProcessor( processor ) ;
-         rc = processor->doRebuild( cb, NULL ) ;
+         rc = processor->doRebuild( cb, dpscb ) ;
          PD_RC_CHECK( rc, PDERROR, "Rebuild of index failed[ %d ]", rc ) ;
       }
 
@@ -772,10 +772,12 @@ namespace engine
       for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
             itr != _processors.end(); ++itr )
       {
-         rc = (*itr)->doDropP2( cb, NULL ) ;
+         rc = (*itr)->doDropP2( cb, dpscb ) ;
          PD_RC_CHECK( rc, PDERROR, "Drop phase 2 failed[ %d ]", rc ) ;
          rc = (*itr)->doRebuild( cb, dpscb ) ;
          PD_RC_CHECK( rc, PDERROR, "External data rebuild failed[ %d ]", rc ) ;
+         rc = (*itr)->active() ;
+         PD_RC_CHECK( rc, PDERROR, "Active processor failed[ %d ]", rc ) ;
       }
 
    done:

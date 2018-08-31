@@ -119,7 +119,7 @@ namespace engine
 
       rtnExtProcessorStat stat() const ;
 
-      void active() ;
+      INT32 active() ;
 
       INT32 setTargetNames( const CHAR *extName ) ;
 
@@ -176,9 +176,7 @@ namespace engine
 
    private:
       rtnExtProcessorStat  _stat ;
-      // MB context of the capped collection. Used to update LSN information.
-      dmsStorageUnit       *_su ;
-      dmsMBContext         *_mbContext ;
+      dmsStorageUnit      *_su ;
       INT32                _id ;
       rtnExtProcessorMeta  _meta ;
       CHAR                 _cappedCSName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;

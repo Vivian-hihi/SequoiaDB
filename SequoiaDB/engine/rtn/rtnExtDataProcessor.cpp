@@ -56,7 +56,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR__RTNEXTDATAPROCESSOR ) ;
       _stat = RTN_EXT_PROCESSOR_INVALID ;
       _su = NULL ;
-      _mbContext = NULL ;
       _id = RTN_EXT_PROCESSOR_INVALID_ID ;
       ossMemset( _cappedCSName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
       ossMemset( _cappedCLName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
@@ -68,10 +67,6 @@ namespace engine
 
    _rtnExtDataProcessor::~_rtnExtDataProcessor()
    {
-      if ( _su && _mbContext )
-      {
-         _su->data()->releaseMBContext( _mbContext ) ;
-      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_INIT, "_rtnExtDataProcessor::init" )
@@ -117,7 +112,6 @@ namespace engine
       BSONObj emptyObj ;
       _stat = RTN_EXT_PROCESSOR_INVALID ;
       _su = NULL ;
-      _mbContext = NULL ;
       _id = RTN_EXT_PROCESSOR_INVALID_ID ;
       _meta.reset() ;
       ossMemset( _cappedCSName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
@@ -140,9 +134,34 @@ namespace engine
       return _stat ;
    }
 
-   void _rtnExtDataProcessor::active()
+   INT32 _rtnExtDataProcessor::active()
    {
+      INT32 rc = SDB_OK ;
+      dmsStorageUnitID suID = DMS_INVALID_CS ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+
+      _su = NULL ;
+
+      // During startup, the target cs may have not been loaded, so not exist
+      // error will be returned. In that case, the _su will be gotten when it
+      // is used.
+      rc = dmsCB->nameToSUAndLock( _cappedCSName, suID, &_su ) ;
+      if ( SDB_OK != rc && SDB_DMS_CS_NOTEXIST != rc )
+      {
+         PD_LOG( PDERROR, "Get capped collection space[ %d ] failed[ %d ]",
+                 _cappedCSName, rc ) ;
+         goto error ;
+      }
       _stat = RTN_EXT_PROCESSOR_NORMAL ;
+
+   done:
+      if ( DMS_INVALID_CS != suID )
+      {
+         dmsCB->suUnlock( suID, SHARED ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_SETTARGETNAMES, "_rtnExtDataProcessor::setTargetNames" )
@@ -424,16 +443,11 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_DODROPP2 ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
-      if ( _su && _mbContext )
-      {
-         _su->data()->releaseMBContext( _mbContext ) ;
-      }
-
+      _su = NULL ;
       rc = rtnDropCollectionSpaceP2( _cappedCSName, cb, dmsCB,
                                      dpsCB, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Phase 1 of dropping collection space[ %s ] "
                    "failed[ %d ]", _cappedCSName, rc ) ;
-      _su = NULL ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_DODROPP2, rc ) ;
@@ -490,8 +504,6 @@ namespace engine
       // again.
       if ( SDB_DB_REBUILDING == dbStatus )
       {
-         SDB_ASSERT( _su, "Storage Unit pointer is NULL" ) ;
-         _su->data()->releaseMBContext( _mbContext ) ;
          rc = rtnDropCollectionSpaceCommand( _cappedCSName, cb,
                                              dmsCB, dpsCB, TRUE ) ;
          if ( SDB_DMS_CS_NOTEXIST == rc )
@@ -504,7 +516,6 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Drop collectionspace[ %s ] failed[ %d ]",
                          _cappedCSName, rc);
          }
-         _su = NULL ;
       }
       else if ( SDB_DB_FULLSYNC == dbStatus )
       {
@@ -530,16 +541,34 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_DONE, "_rtnExtDataProcessor::done" )
    INT32 _rtnExtDataProcessor::done( pmdEDUCB *cb )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_DONE ) ;
+      dmsMBContext *context = NULL ;
+
       if ( _needUpdateLSN )
       {
-         SDB_ASSERT( _mbContext, "mbContext should not be NULL" ) ;
-         _mbContext->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
+         SDB_ASSERT( _su, "Storage unit is NULL") ;
+         rc = _su->data()->getMBContext( &context, _getExtCLShortName(), -1 ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get mbcontext for collection[ %s ] "
+                                   "failed[ %d ]", _cappedCLName, rc ) ;
+
+         SDB_ASSERT( context, "mbContext should not be NULL" ) ;
+
+         context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
       }
       _keySet.clear() ;
       _keySetNew.clear() ;
-      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_DONE ) ;
-      return SDB_OK ;
+
+   done:
+      if ( context )
+      {
+         _su->data()->releaseMBContext( context ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_DONE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_ABORT, "_rtnExtDataProcessor::abort" )
@@ -932,22 +961,23 @@ namespace engine
       const dmsMBStatInfo *mbStat = NULL ;
       UINT64 remainSize = 0 ;
       UINT32 remainExtentNum = 0 ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      dmsStorageUnitID suID = DMS_INVALID_CS ;
+      dmsMBContext *context = NULL ;
 
       if ( !_su )
       {
+         SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+         dmsStorageUnitID suID = DMS_INVALID_CS ;
+         // Delay set in open text index case.
          rc = dmsCB->nameToSUAndLock( _cappedCSName, suID, &_su ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get capped collection space[ %d ] "
-                                   "failed[ %d ]", _cappedCSName, rc ) ;
-         SDB_ASSERT( !_mbContext, "mbContext is not NULL") ;
-         rc = _su->data()->getMBContext( &_mbContext, _getExtCLShortName(),
-                                         -1 ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get mbcontext for collection[ %s ] "
-                                   "failed[ %d ]", _cappedCLName, rc ) ;
+         PD_RC_CHECK( rc, PDERROR, "Lock collection space[ %s ] failed[ %d ]",
+                      _cappedCSName, rc ) ;
+         dmsCB->suUnlock( suID, SHARED ) ;
       }
+      rc = _su->data()->getMBContext( &context, _getExtCLShortName(), -1 ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get mbcontext for collection[ %s ] "
+                                "failed[ %d ]", _cappedCLName, rc ) ;
 
-      mbStat = _mbContext->mbStat() ;
+      mbStat = context->mbStat() ;
 
       remainSize = RTN_CAPPED_CL_MAXSIZE -
             ( mbStat->_totalDataPages << _su->data()->pageSize() ) ;
@@ -958,9 +988,9 @@ namespace engine
       freeSpace = mbStat->_totalDataFreeSpace + remainSize ;
 
    done:
-      if ( DMS_INVALID_CS != suID )
+      if ( context )
       {
-         dmsCB->suUnlock( suID ) ;
+         _su->data()->releaseMBContext( context ) ;
       }
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR__UPDATESPACEINFO, rc ) ;
       return rc ;
@@ -1051,7 +1081,8 @@ namespace engine
 
       if ( RTN_EXT_PROCESSOR_NORMAL != _pendingProcessor->stat() )
       {
-         _pendingProcessor->active() ;
+         rc = _pendingProcessor->active() ;
+         PD_RC_CHECK( rc, PDERROR, "Active processor failed[ %d ]", rc ) ;
          _pendingProcessor = NULL ;
       }
 
