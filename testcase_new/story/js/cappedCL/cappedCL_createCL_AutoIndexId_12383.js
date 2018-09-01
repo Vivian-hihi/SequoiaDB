@@ -19,12 +19,13 @@ function main()
    
    //Not Exist Parameter AutoIndexId
    var option1 = {Capped:true, Size:1024};
-   checkCreateCLOptions(csName,clName,option1);
-   
+   checkCreateCLOptions(csName,clName,option1, true);
+	db.getCS(csName).dropCL(clName);
+	
    // AutoIndexId true
    var option2 = {Capped:true, Size:1024, AutoIndexId:true};
    checkCreateCLOptions(csName,clName,option2);
-   
+	
    // AutoIndexId is int
    var option3 = {Capped:true, Size:1024, AutoIndexId:123};
    checkCreateCLOptions(csName,clName,option3);
@@ -50,9 +51,12 @@ function checkCreateCLOptions( csName, clName, options, isValid)
 {
     try
     {
-       var dbcl = commCreateCLByOption( db, csName, clName, options, true, true );
-	   if ( isValid == undefined ) { throw "NEED_CREATE_FAIL_ERROR"; } 
-	   println("Create CL with option: " + JSON.stringify(options) + " success!");
+		 db.getCS(csName).createCL(clName,options);
+	    if ( isValid == undefined ) 
+		 { 
+	       throw "NEED_CREATE_FAIL_ERROR";
+	    } 
+	    println("Create CL with option: " + JSON.stringify(options) + " success!");
     }
    catch(e)
    {
@@ -62,7 +66,7 @@ function checkCreateCLOptions( csName, clName, options, isValid)
       }
       else
       {
-         println("check result success!");
+          println("check result success!");
       }
    }
 }
