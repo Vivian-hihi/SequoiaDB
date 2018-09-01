@@ -21,16 +21,18 @@ function main()
    var clName3 = CHANGEDPREFIX + "_11828_CL3";
    
    //clean and createCS CL before test
-   println( "---begin test---" );
-   initCappedCS( csName );
+   commDropCS( db, csName, true, "drop CS in the beginning" );
+
+   var csOption = {Capped:true};
+   commCreateCS( db, csName, false, "", csOption );
    
    //check cappedCL sharding
    println( "---check sharding---" )
    var hashOptions = { Capped:true, Size:1024, Max:10000000, AutoIndexId:false, ShardingKey:{ "age":1 },ShardingType:"hash", Partition: 1024 };
-   createCappedCL( csName, clName1, hashOptions );
+   checkCreateCLOptions( csName, clName1, hashOptions, true);
 	
    var rangeOptions = { Capped:true, Size:1024, Max:10000000, AutoIndexId:false, ShardingKey:{ "age":1 },ShardingType:"hash", Partition: 1024 };
-   createCappedCL( csName, clName2, rangeOptions );
+   checkCreateCLOptions( csName, clName2, rangeOptions, true );
    
    //check cappedCL alter
    println( "---check cappedCL alter---" )
@@ -47,18 +49,26 @@ function main()
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 
-function createCappedCL( csName, clName, options )
+function checkCreateCLOptions( csName, clName, options, isValid)
 {
-   try
+    try
+    {
+		 db.getCS(csName).createCL(clName,options);
+	    if ( isValid == undefined ) 
+		 { 
+	       throw "NEED_CREATE_FAIL_ERROR";
+	    } 
+	    println("Create CL with option: " + JSON.stringify(options) + " success!");
+    }
+   catch(e)
    {
-      db.getCS( csName ).createCL( clName, options );
-      throw "ERR_CREATE_CAPPEDCL";
-   }
-   catch( e )
-   {
-      if( e !== -6 )
+      if( e !== -6)
       {
-         throw buildException("createCappedCL()",e,"create cappedCL", "-6", e );
+          throw buildException("Invalid parameter is not -6,error msg is: " + e);
+      }
+      else
+      {
+          println("check result success!");
       }
    }
 }
