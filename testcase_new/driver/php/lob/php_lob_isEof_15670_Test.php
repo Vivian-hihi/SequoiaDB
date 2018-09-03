@@ -1,14 +1,14 @@
 /****************************************************
-@description:      random write lob
-@testlink cases:   seqDB-14796
+@description:      test lob interface isEof
+@testlink cases:   seqDB-15670
 @modify list:
-        2018-3-13  linsuqiang init
+        2018-9-3   linsuqiang init
 ****************************************************/
 <?php
 define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/../commlib/LobUtils.php';
 include_once Cur_Path.'/../global.php';
-class LobTest14796 extends PHPUnit_Framework_TestCase
+class LobTest15670 extends PHPUnit_Framework_TestCase
 {
    private static $db;
    private static $csName = "cs15670";
