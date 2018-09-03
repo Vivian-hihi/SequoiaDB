@@ -146,11 +146,15 @@ namespace engine
       // error will be returned. In that case, the _su will be gotten when it
       // is used.
       rc = dmsCB->nameToSUAndLock( _cappedCSName, suID, &_su ) ;
-      if ( SDB_OK != rc && SDB_DMS_CS_NOTEXIST != rc )
+      if ( rc )
       {
-         PD_LOG( PDERROR, "Get capped collection space[ %d ] failed[ %d ]",
-                 _cappedCSName, rc ) ;
-         goto error ;
+         if ( SDB_DMS_CS_NOTEXIST != rc )
+         {
+            PD_LOG( PDERROR, "Get capped collection space[ %d ] failed[ %d ]",
+                    _cappedCSName, rc ) ;
+            goto error ;
+         }
+         rc = SDB_OK ;
       }
       _stat = RTN_EXT_PROCESSOR_NORMAL ;
 
