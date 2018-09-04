@@ -136,36 +136,9 @@ namespace engine
 
    INT32 _rtnExtDataProcessor::active()
    {
-      INT32 rc = SDB_OK ;
-      dmsStorageUnitID suID = DMS_INVALID_CS ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-
-      _su = NULL ;
-
-      // During startup, the target cs may have not been loaded, so not exist
-      // error will be returned. In that case, the _su will be gotten when it
-      // is used.
-      rc = dmsCB->nameToSUAndLock( _cappedCSName, suID, &_su ) ;
-      if ( rc )
-      {
-         if ( SDB_DMS_CS_NOTEXIST != rc )
-         {
-            PD_LOG( PDERROR, "Get capped collection space[ %d ] failed[ %d ]",
-                    _cappedCSName, rc ) ;
-            goto error ;
-         }
-         rc = SDB_OK ;
-      }
       _stat = RTN_EXT_PROCESSOR_NORMAL ;
 
-   done:
-      if ( DMS_INVALID_CS != suID )
-      {
-         dmsCB->suUnlock( suID, SHARED ) ;
-      }
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_SETTARGETNAMES, "_rtnExtDataProcessor::setTargetNames" )
