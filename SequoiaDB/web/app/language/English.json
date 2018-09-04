@@ -3,6 +3,7 @@
    "\"创建数据表\"": "'Create Table'",
    "（不包含子集合）": "(Does not include partitions)",
    "。您可以使用特殊规则来": ". You can use special rules to ",
+   "?业务已跟?进行关联，继续进行该操作将解除旧的关联并创建新的关联和重启MySQL服务。": "? business has been related with ?, and continuing to do so will undo the old relationship and create a new relationship and restart the MySQL service.",
    "? ? 插入记录成功": "? ? insert success",
    "? ? 插入记录失败，错误码: ?，?. ?": "? ? insert failed, error code: ?, ?. ?",
    "? ? 更新成功": "? ? update success",

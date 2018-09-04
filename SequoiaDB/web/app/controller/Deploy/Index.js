@@ -2454,25 +2454,33 @@
       }
 
       //解除关联
-      var removeRelation = function( name ){
+      var removeRelation = function( name, createInfo ){
          var data = {
             'cmd' : 'remove relationship',
             'Name'  : name
          }
          SdbRest.OmOperation( data, {
             'success': function(){
-               $scope.Components.Confirm.type = 4 ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '解除关联成功：?' ), name ) ;
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.noClose = true ;
-               $scope.Components.Confirm.normalOK = true ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
-                  $scope.Components.Confirm.noClose = false ;
-                  $scope.Components.Confirm.normalOK = false ;
-                  SdbSwap.getRelationship() ;
+               if( typeof( createInfo ) != 'undefined' )
+               {
+                  createRelation( createInfo ) ;
                }
+               else
+               {
+                  $scope.Components.Confirm.type = 4 ;
+                  $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '解除关联成功：?' ), name ) ;
+                  $scope.Components.Confirm.isShow = true ;
+                  $scope.Components.Confirm.noClose = true ;
+                  $scope.Components.Confirm.normalOK = true ;
+                  $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+                  $scope.Components.Confirm.ok = function(){
+                     $scope.Components.Confirm.isShow = false ;
+                     $scope.Components.Confirm.noClose = false ;
+                     $scope.Components.Confirm.normalOK = false ;
+                     SdbSwap.getRelationship() ;
+                  }
+               }
+               
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -2907,13 +2915,31 @@
                formVal['To'] = $scope.ModuleList[formVal['To']]['BusinessName'] ;
                if( formVal['Type'] == 1 )
                {
-                  $scope.Components.Confirm.type = 1 ;
-                  $scope.Components.Confirm.context = $scope.autoLanguage( '创建关联将重启MySQL服务，是否继续？' ) ;
-                  $scope.Components.Confirm.isShow = true ;
-                  $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
-                  $scope.Components.Confirm.ok = function(){
-                     $scope.Components.Confirm.isShow = false ;
-                     createRelation( formVal ) ;               
+                  var isDropRelation = false ;
+                  $.each( SdbSwap.relationshipList, function( index, relationInfo ){
+                     if( relationInfo['From'] == formVal['From'] )
+                     {
+                        isDropRelation = true ;
+                        $scope.Components.Confirm.type = 1 ;
+                        $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '?业务已跟?进行关联，继续进行该操作将解除旧的关联并创建新的关联和重启MySQL服务。' ), relationInfo['From'], relationInfo['To']  ) ;
+                        $scope.Components.Confirm.isShow = true ;
+                        $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+                        $scope.Components.Confirm.ok = function(){
+                           $scope.Components.Confirm.isShow = false ;
+                           removeRelation( relationInfo['Name'], formVal ) ;               
+                        }
+                     }
+                  } ) ;
+                  if( isDropRelation === false )
+                  {
+                     $scope.Components.Confirm.type = 1 ;
+                     $scope.Components.Confirm.context = $scope.autoLanguage( '创建关联将重启MySQL服务，是否继续？' ) ;
+                     $scope.Components.Confirm.isShow = true ;
+                     $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+                     $scope.Components.Confirm.ok = function(){
+                        $scope.Components.Confirm.isShow = false ;
+                        createRelation( formVal ) ;               
+                     }
                   }
                }
                else
