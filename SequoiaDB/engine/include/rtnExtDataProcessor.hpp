@@ -113,7 +113,7 @@ namespace engine
       INT32 init( INT32 id, const CHAR *csName, const CHAR *clName,
                   const CHAR *idxName, const CHAR *targetName,
                   const BSONObj &idxKeyDef ) ;
-      void  reset() ;
+      void  reset( BOOLEAN resetMeta = TRUE ) ;
 
       INT32 getID() ;
 

@@ -426,7 +426,7 @@ namespace engine
          goto done ;
       }
 
-      rc = processorMgr->getProcessorsByCS( csName, SHARED, processors ) ;
+      rc = processorMgr->getProcessorsByCS( csName, EXCLUSIVE, processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Prepare processors failed[ %d ]", rc ) ;
 
       // May be there is no text indices in this cs any more.
@@ -434,7 +434,7 @@ namespace engine
       {
          goto done ;
       }
-      _lockType = SHARED ;
+      _lockType = EXCLUSIVE ;
       _removeFiles = removeFiles ;
       _eduCB = cb ;
       _dpsCB = dpscb ;

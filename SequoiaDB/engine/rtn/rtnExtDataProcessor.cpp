@@ -106,21 +106,24 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_RESET, "_rtnExtDataProcessor::reset" )
-   void _rtnExtDataProcessor::reset()
+   void _rtnExtDataProcessor::reset( BOOLEAN resetMeta )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_RESET ) ;
-      BSONObj emptyObj ;
       _stat = RTN_EXT_PROCESSOR_INVALID ;
       _su = NULL ;
-      _id = RTN_EXT_PROCESSOR_INVALID_ID ;
-      _meta.reset() ;
-      ossMemset( _cappedCSName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
-      ossMemset( _cappedCLName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
       _needUpdateLSN = FALSE ;
       _keySet.clear() ;
       _keySetNew.clear() ;
       _needOprRec = FALSE ;
       _freeSpace = 0 ;
+
+      if ( resetMeta )
+      {
+         _id = RTN_EXT_PROCESSOR_INVALID_ID ;
+         _meta.reset() ;
+         ossMemset( _cappedCSName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
+         ossMemset( _cappedCLName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
+      }
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_RESET ) ;
    }
 
@@ -420,7 +423,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_DODROPP2 ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
-      _su = NULL ;
+      reset( FALSE ) ;
+
       rc = rtnDropCollectionSpaceP2( _cappedCSName, cb, dmsCB,
                                      dpsCB, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Phase 1 of dropping collection space[ %s ] "
