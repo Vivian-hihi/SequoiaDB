@@ -325,6 +325,7 @@ namespace engine
          BOOLEAN                _delayLogin ;
          string                 _username ;
          string                 _passwd ;
+         BSONObj                _objDelayInfo ;
 
          UINT32                 _inPacketLevel ;
          INT64                  _pendingContextID ;

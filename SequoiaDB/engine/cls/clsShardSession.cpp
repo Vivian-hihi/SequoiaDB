@@ -115,8 +115,6 @@ namespace engine
       _pendingContextID = -1 ;
       _pendingStartFrom = 0 ;
 
-      _info._info.setNice( SCHED_NICE_MIN ) ;
-
       PD_TRACE_EXIT ( SDB__CLSSDSESS__CLSSHDSESS ) ;
    }
 
@@ -243,8 +241,7 @@ namespace engine
 
       if ( !info._objSchedInfo.isEmpty() )
       {
-         _updateVCS( CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO,
-                     info._objSchedInfo ) ;
+         _objDelayInfo = info._objSchedInfo.getOwned() ;
       }
    }
 
@@ -1800,6 +1797,13 @@ namespace engine
       if ( !_username.empty() )
       {
          _client.authenticate( _username.c_str(), _passwd.c_str() ) ;
+      }
+
+      if ( !_objDelayInfo.isEmpty() )
+      {
+         _updateVCS( CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO,
+                     _objDelayInfo ) ;
+         _objDelayInfo = BSONObj() ;
       }
 
       ossUnpack32From64( identifyID(), ip, port ) ;
