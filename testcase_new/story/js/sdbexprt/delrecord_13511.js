@@ -41,7 +41,10 @@ function testExprtImprtJson()
 {
    var jsonfile = workDir + "sdbexprt13511.json" ;
    cmd.run( "rm -rf " + jsonfile ) ;
-   var asc = "0x" + getRandomInt( 0, 128 ) ;
+   var randNum = getRandomInt( 0, 128 ) ;
+   // avoid '"' and ','
+   if( randNum == 34 || randNum == 44 ) randNum++ ;
+   var asc = "\\" + randNum ;
    println( "ascii for delrecord is: " + asc ) ;
    var command = installPath + "bin/sdbexprt" +
                  " -s " + COORDHOSTNAME +
@@ -73,7 +76,7 @@ function testExprtImprtCsv()
 {
    var csvfile = workDir + "sdbexprt13512.csv" ;
    cmd.run( "rm -rf " + csvfile ) ;
-   var asc = "0xab";
+   var asc = "0x0c";
    println( "ascii for delrecord is: " + asc ) ;
    var command = installPath + "bin/sdbexprt" +
                  " -s " + COORDHOSTNAME +
@@ -94,7 +97,7 @@ function testExprtImprtCsv()
              " -l " + clname1 +
              " --file " + csvfile +
              " --type csv " +
-             " -r " + "'\\10b'" +
+             " -r " + "'\\12'" +
              " --headerline true" +
              " --fields='a string'" ;
    testRunCommand( command ) ;
