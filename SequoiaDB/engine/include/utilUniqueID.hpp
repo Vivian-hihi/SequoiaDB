@@ -50,6 +50,8 @@ namespace engine
 
    typedef std::pair<std::string, utilCLUniqueID> PAIR_CLNAME_ID ;
 
+   std::string utilClNameId2Str( std::vector< PAIR_CLNAME_ID > clInfoList ) ;
+
    OSS_INLINE utilCSUniqueID utilGetCSUniqueID( utilCLUniqueID clUniqueID )
    {
       return clUniqueID >> 32 ;

@@ -761,9 +761,9 @@ namespace engine
       if ( SDB_OK == rc )
       {
          PD_LOG( PDEVENT,
-                 "Set unique id, cs name: %d, cs id: %u, cl info: %s",
+                 "Set unique id, cs name: %s, cs id: %u, cl info: %s",
                  csName.c_str(), csUniqueID,
-                 boCollections.toString( TRUE ).c_str() ) ;
+                 utilClNameId2Str( clInfoList ).c_str() ) ;
       }
       PD_TRACE_EXITRC( SDB_CATALOGMGR__SETUID, rc ) ;
       return rc ;

@@ -40,6 +40,32 @@ using namespace bson ;
 
 namespace engine
 {
+   // output:
+   // [
+   //    < "bar1", 2667174690817 >, < "bar2", 2667174690818 >
+   // ]
+   std::string utilClNameId2Str( std::vector< PAIR_CLNAME_ID > clInfoList )
+   {
+      std::vector< PAIR_CLNAME_ID >::iterator it ;
+      std::ostringstream ss ;
+      ss << "[ " ;
+      for ( it = clInfoList.begin() ; it != clInfoList.end() ; it++ )
+      {
+         if ( it != clInfoList.begin() )
+         {
+            ss << ", " ;
+         }
+         ss << "< "
+            << "\"" << it->first << "\""
+            << ", "
+            << it->second
+            << " >" ;
+      }
+      ss << " ]" ;
+
+      return ss.str() ;
+   }
+
    // input: clInfoObj
    // [
    //    { "Name": "bar1", "UniqueID": 2667174690817 } ,
