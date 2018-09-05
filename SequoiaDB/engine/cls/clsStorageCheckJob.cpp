@@ -140,7 +140,7 @@ namespace engine
             }
 
             // Lock space first
-            if ( csUniqueID != UTIL_INVALID_UNIQUEID )
+            if ( csUniqueID == UTIL_INVALID_UNIQUEID )
             {
                rc = pDmsCB->nameToSUAndLock( cs._name, suID, &su, SHARED ) ;
             }
