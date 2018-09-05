@@ -76,7 +76,7 @@ function testExprtImprtCsv()
 {
    var csvfile = workDir + "sdbexprt13512.csv" ;
    cmd.run( "rm -rf " + csvfile ) ;
-   var asc = "0x0c";
+   var asc = "0xab";
    println( "ascii for delrecord is: " + asc ) ;
    var command = installPath + "bin/sdbexprt" +
                  " -s " + COORDHOSTNAME +
@@ -97,7 +97,7 @@ function testExprtImprtCsv()
              " -l " + clname1 +
              " --file " + csvfile +
              " --type csv " +
-             " -r " + "'\\12'" +
+             " -r " + "'\\10b'" +
              " --headerline true" +
              " --fields='a string'" ;
    testRunCommand( command ) ;
