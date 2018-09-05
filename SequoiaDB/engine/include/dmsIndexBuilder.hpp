@@ -59,6 +59,7 @@ namespace engine
    protected:
       virtual INT32 _build() = 0 ;
       virtual INT32 _onInit() ;
+      virtual void _onFinish() {}
 
       // make sure the mbContext is locked before call _beforeExtent()/_afterExtent()
       #define _DMS_SKIP_EXTENT 1

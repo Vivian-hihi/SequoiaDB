@@ -805,11 +805,6 @@ namespace engine
                                                  idxItem, cb, dpscb ) ;
       }
 
-      // After everything is done, increase the text index number.
-      if ( isTextIndex )
-      {
-         context->mbStat()->_textIdxNum++ ;
-      }
       /// creating index may cost long time. we mark file dirty again here.
    done :
       if ( 0 != logRecSize )

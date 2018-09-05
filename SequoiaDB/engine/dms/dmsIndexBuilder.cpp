@@ -185,6 +185,7 @@ namespace engine
       {
          _indexCB->setFlag ( IXM_INDEX_FLAG_NORMAL ) ;
          _indexCB->scanExtLID ( DMS_INVALID_EXTENT ) ;
+         _onFinish() ;
          _mbContext->mbUnlock() ;
       }
 

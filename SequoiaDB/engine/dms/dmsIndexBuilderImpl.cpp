@@ -518,5 +518,11 @@ namespace engine
       }
       goto done ;
    }
+
+   void _dmsIndexExtBuilder::_onFinish()
+   {
+      SDB_ASSERT( _mbContext->isMBLock(), "caller should hold mb lock" ) ;
+      _mbContext->mbStat()->_textIdxNum++ ;
+   }
 }
 

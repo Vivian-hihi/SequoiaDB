@@ -99,8 +99,9 @@ namespace engine
       ~_dmsIndexExtBuilder() ;
 
    private:
-      virtual INT32 _onInit() ;
+      INT32 _onInit() ;
       INT32 _build() ;
+      void _onFinish() ;
 
    private:
       IDmsExtDataHandler *_extHandler ;
