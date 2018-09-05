@@ -1346,6 +1346,7 @@ namespace engine
             continue ;
          }
          _processors[id].reset() ;
+         --_number ;
          if ( SHARED == lockType )
          {
             _processorLocks[id].release_r() ;
