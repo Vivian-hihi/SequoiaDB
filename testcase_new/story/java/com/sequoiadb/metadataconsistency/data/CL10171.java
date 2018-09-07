@@ -102,7 +102,7 @@ public class CL10171 extends SdbTestBase {
 				
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
-				if( eCode != -23 && eCode != -22 && eCode != -147){   
+				if( eCode != -22 && eCode != -147){   
 					throw e;
 				}
 			}finally{
