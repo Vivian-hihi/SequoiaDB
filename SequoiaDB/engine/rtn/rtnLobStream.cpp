@@ -827,7 +827,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_TRUNCATE, ""_rtnLobStream::truncate" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_TRUNCATE, "_rtnLobStream::truncate" )
    INT32 _rtnLobStream::truncate( INT64 len,
                                   _pmdEDUCB *cb )
    {

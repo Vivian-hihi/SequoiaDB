@@ -1158,7 +1158,7 @@ namespace engine
       return rtnGetStringElement ( arg, FIELD_NAME_NAME, &_collectionName ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDROPCL_DOIT, "" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDROPCL_DOIT, "_rtnDropCollection::doit" )
    INT32 _rtnDropCollection::doit ( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                                     SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                                     INT16 w , INT64 *pContextID )
@@ -3719,7 +3719,7 @@ error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNTRUNCATE_DOIT, ""_rtnTruncate::doit" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNTRUNCATE_DOIT, "_rtnTruncate::doit" )
    INT32 _rtnTruncate::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                              INT16 w, INT64 *pContextID )
@@ -3820,7 +3820,7 @@ error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNPOP_DOIT, ""_rtnPop::doit" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNPOP_DOIT, "_rtnPop::doit" )
    INT32 _rtnPop::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                          _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                          INT16 w, INT64 *pContextID )
