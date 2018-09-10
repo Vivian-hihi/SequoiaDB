@@ -88,7 +88,10 @@ namespace engine
       virtual BOOLEAN isUserObj( UINT32 pos,
                                  const _sptObjDesc &objDesc ) const = 0 ;
       virtual BOOLEAN isArray( UINT32 pos ) const = 0 ;
-      virtual string getUserObjClassName( UINT32 pos ) const = 0 ;
+      virtual string  getUserObjClassName( UINT32 pos ) const = 0 ;
+
+      virtual string  getErrMsg() const = 0 ;
+      virtual BOOLEAN hasErrMsg() const = 0 ;
    } ;
    typedef class _sptArguments sptArguments ;
 }

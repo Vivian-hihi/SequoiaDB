@@ -68,10 +68,8 @@ namespace engine
       INT32 _toDouble( const jsval &val, FLOAT64 &fV ) ;
       INT32 _toBoolean( const jsval &val, BOOLEAN &bL ) ;
       static INT32 toString( JSContext *cx, const jsval &val, std::string &str ) ;
-      string getErrMsg()
-      {
-         return _errMsg ;
-      }
+      string getErrMsg() const ;
+
    private:
       INT32 _traverse( JSObject *obj , bson::BSONObjBuilder &builder ) ;
       INT32 _appendToBson( const std::string &name,

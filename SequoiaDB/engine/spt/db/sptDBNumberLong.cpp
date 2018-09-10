@@ -157,7 +157,8 @@ namespace engine
             }
             catch ( std::bad_cast &e )
             {
-               errMsg = "Failed to conversion NumberLong" ;
+               errMsg = "Failed to conversion NumberLong: " ;
+               errMsg += e.what() ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }

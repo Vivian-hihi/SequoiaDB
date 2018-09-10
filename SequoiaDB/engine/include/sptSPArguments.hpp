@@ -78,14 +78,19 @@ namespace engine
       virtual BOOLEAN isUserObj( UINT32 pos,
                                  const _sptObjDesc &objDesc ) const ;
       virtual BOOLEAN isArray( UINT32 pos ) const ;
-      virtual string getUserObjClassName( UINT32 pos ) const ;
+      virtual string  getUserObjClassName( UINT32 pos ) const ;
+
+      virtual string  getErrMsg() const ;
+      virtual BOOLEAN hasErrMsg() const ;
+
    private:
       jsval *_getValAtPos( UINT32 pos ) const ;
 
    private:
-      JSContext *_context ;
-      uintN _argc ;
-      jsval *_vp ;
+      JSContext         *_context ;
+      uintN             _argc ;
+      jsval             *_vp ;
+      mutable string    _errMsg ;
    } ;
 }
 

@@ -64,6 +64,8 @@ namespace engine
       CHAR *str = NULL ;
       jsval *val = NULL ;
 
+      _errMsg.clear() ;
+
       if ( _argc <= pos )
       {
          rc = SDB_OUT_OF_BOUND ;
@@ -135,6 +137,8 @@ namespace engine
       jsval *val = NULL ;
       sptConvertor convertor( _context, strict ) ;
 
+      _errMsg.clear() ;
+
       if ( _argc <= pos )
       {
          rc = SDB_OUT_OF_BOUND ;
@@ -174,9 +178,11 @@ namespace engine
       rc = convertor.toBson( jsObj, value ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, convertor.getErrMsg().c_str() ) ;
+         _errMsg = convertor.getErrMsg() ;
+         PD_LOG( PDERROR, _errMsg.c_str() ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error:
@@ -191,6 +197,8 @@ namespace engine
       JSObject *jsObj = NULL ;
       jsval *val = NULL ;
       sptConvertor convertor( _context, mode ) ;
+
+      _errMsg.clear() ;
 
       if ( _argc <= pos )
       {
@@ -239,6 +247,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       JSObject *jsObj = NULL ;
       jsval *val = NULL ;
+
+      _errMsg.clear() ;
 
       if ( _argc <= pos )
       {
@@ -429,6 +439,16 @@ namespace engine
          return sptGetObjFactory()->getClassName( _context, jsObj ) ;
       }
       return "" ;
+   }
+
+   string _sptSPArguments::getErrMsg() const
+   {
+      return _errMsg ;
+   }
+
+   BOOLEAN _sptSPArguments::hasErrMsg() const
+   {
+      return _errMsg.empty() ? FALSE : TRUE ;
    }
 
    #define NATIVE_VALUE_EQ( pData, type, value ) \

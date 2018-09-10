@@ -449,4 +449,11 @@ namespace engine
       _hasSetErrMsg = TRUE ;
       _errMsg = msg ;
    }
+
+   string sptConvertor::getErrMsg() const
+   {
+      return _errMsg ;
+   }
+
 }
+
