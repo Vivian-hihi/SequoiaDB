@@ -1079,6 +1079,7 @@ namespace seadapter
 
       try
       {
+         BOOLEAN firstBatch = FALSE ;
          if ( docObjs.size() > 0 )
          {
             // Check if the first record is the one we expected. If not, start
@@ -1108,6 +1109,7 @@ namespace seadapter
                                "Send get more request failed[ %d ]", rc ) ;
                   goto done ;
                }
+               firstBatch = TRUE ;
             }
             BSONObj lastObj = docObjs.back() ;
             BSONElement lidEle = lastObj.getField( SDB_SEADPT_FIELD_NAME_ID ) ;
@@ -1127,7 +1129,7 @@ namespace seadapter
 
          // We always get one more record, if the _expectLID is not -1. So the
          // first one should be filtered out.
-         if ( SEADPT_INVALID_LID != _expectLID )
+         if ( SEADPT_INVALID_LID != _expectLID && firstBatch )
          {
             itr++ ;
          }
