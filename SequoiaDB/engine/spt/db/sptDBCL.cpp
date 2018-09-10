@@ -334,7 +334,14 @@ namespace engine
       }
       else if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "Doc must be obj" ) ;
+         if ( arg.hasErrMsg() )
+         {
+            detail = BSON( SPT_ERR << arg.getErrMsg().c_str() ) ;
+         }
+         else
+         {
+            detail = BSON( SPT_ERR << "Doc must be obj" ) ;
+         }
          goto error ;
       }
       rc = arg.getNative( 1, &needReturnOid, SPT_NATIVE_INT32 ) ;
