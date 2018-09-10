@@ -968,7 +968,7 @@ namespace seadapter
       BSONObj idxDef ;
       BSONObj key ;
       BSONElement lidEle ;
-      utilCLUniqueID clUniqID = UTIL_INVALID_UNIQUEID ;
+      utilCLUniqueID clUniqID = UTIL_UNIQUEID_NULL ;
       UINT32 clLogicalID = 0 ;
       UINT32 idxLogicalID = 0 ;
 

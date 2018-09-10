@@ -448,7 +448,7 @@ namespace engine
          case LOG_TYPE_CS_CRT :
          {
             const CHAR *cs = NULL ;
-            utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+            utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
             INT32 pageSize = 0 ;
             INT32 lobPageSize = 0 ;
             INT32 type = 0 ;
@@ -468,7 +468,7 @@ namespace engine
 
             rc = rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB, _dpsCB,
                                                   csUniqueID,
-                                                   pageSize, lobPageSize,
+                                                  pageSize, lobPageSize,
                                                   (DMS_STORAGE_TYPE)type ) ;
             if ( SDB_DMS_CS_EXIST == rc )
             {
@@ -509,7 +509,7 @@ namespace engine
          case LOG_TYPE_CL_CRT :
          {
             const CHAR *cl = NULL ;
-            utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
+            utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
             UINT32 attribute = 0 ;
             UINT8 compType = UTIL_COMPRESSOR_INVALID ;
             BSONObj extOptions ;
@@ -860,7 +860,7 @@ namespace engine
          case LOG_TYPE_ADDUNIQUEID :
          {
             const CHAR * csname = NULL ;
-            utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+            utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
             BSONObj clInfoObj ;
 
             rc = dpsRecord2AddUniqueID( (CHAR *)recordHeader, &csname,
@@ -1026,7 +1026,7 @@ namespace engine
          case LOG_TYPE_CS_CRT :
          {
             const CHAR *cs = NULL ;
-            utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+            utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
             INT32 pageSize = 0 ;
             INT32 lobPageSize = 0 ;
             INT32 type = 0 ;
@@ -1055,7 +1055,7 @@ namespace engine
          case LOG_TYPE_CL_CRT :
          {
             const CHAR *fullname = NULL ;
-            utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
+            utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
             UINT32 attribute = 0 ;
             UINT8 compType = UTIL_COMPRESSOR_INVALID ;
             BSONObj extOptions ;
@@ -1173,7 +1173,7 @@ namespace engine
          case LOG_TYPE_ADDUNIQUEID :
          {
             const CHAR * csname = NULL ;
-            utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+            utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
             BSONObj clInfoObj, emptyObj ;
 
             rc = dpsRecord2AddUniqueID( (CHAR *)recordHeader, &csname,
@@ -1185,7 +1185,7 @@ namespace engine
 
             while ( TRUE )
             {
-               rc = rtnChangeUniqueID( csname, UTIL_INVALID_UNIQUEID,
+               rc = rtnChangeUniqueID( csname, UTIL_UNIQUEID_NULL,
                                        utilUnsetUniqueID( clInfoObj ),
                                        eduCB, _dmsCB, _dpsCB, FALSE ) ;
                if ( SDB_LOCK_FAILED == rc )
@@ -1359,7 +1359,26 @@ namespace engine
                                     _pmdEDUCB *eduCB )
    {
       SDB_ASSERT( NULL != cs, "cs should not be NULL" ) ;
-      INT32 rc = rtnTestCollectionSpaceCommand( cs, _dmsCB ) ;
+      INT32 rc = SDB_OK ;
+
+      rc = rtnTestCollectionSpaceCommand( cs, _dmsCB, &csUniqueID ) ;
+
+      if ( SDB_DMS_CS_REMAIN == rc )
+      {
+         rc = rtnDropCollectionSpaceCommand( cs, eduCB,
+                                             _dmsCB, _dpsCB ) ;
+         if ( SDB_OK == rc )
+         {
+            rc = SDB_DMS_CS_NOTEXIST ;
+         }
+         if ( SDB_DMS_CS_NOTEXIST != rc )
+         {
+            PD_LOG( PDERROR,
+                    "Drop cs[%s] before create cs failed, rc: %d",
+                    cs, rc ) ;
+         }
+      }
+
       if ( SDB_DMS_CS_NOTEXIST == rc )
       {
          rc = rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB,
@@ -1377,13 +1396,16 @@ namespace engine
                                             const BSONObj *extOptions )
    {
       SDB_ASSERT( NULL != collection, "collection should not be NULL" ) ;
-      INT32 rc = rtnTestCollectionCommand( collection, _dmsCB ) ;
+      INT32 rc = SDB_OK ;
+
+      rc = rtnTestCollectionCommand( collection, _dmsCB, &clUniqueID ) ;
       if ( SDB_DMS_NOTEXIST == rc )
       {
          rc = rtnCreateCollectionCommand( collection, attributes, eduCB,
                                           _dmsCB, _dpsCB, clUniqueID, compType,
                                           0, TRUE, extOptions ) ;
       }
+
       return rc ;
    }
 

@@ -497,7 +497,7 @@ namespace engine
    _rtnCreateCollection::_rtnCreateCollection ()
    :_collectionName ( NULL ),
     _attributes( 0 ),
-    _clUniqueID( UTIL_INVALID_UNIQUEID ),
+    _clUniqueID( UTIL_CLUNIQUEID_LOCAL ),
     _compressorType( UTIL_COMPRESSOR_INVALID )
    {
    }
@@ -837,7 +837,7 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollectionspace)
    _rtnCreateCollectionspace::_rtnCreateCollectionspace ()
    :_spaceName( NULL ),
-    _csUniqueID( UTIL_INVALID_UNIQUEID ),
+    _csUniqueID( UTIL_CSUNIQUEID_LOCAL ),
     _pageSize( 0 ),
     _lobPageSize( 0 ),
     _storageType( DMS_STORAGE_NORMAL )
@@ -3950,7 +3950,7 @@ error:
    _rtnLoadCollectionSpace::_rtnLoadCollectionSpace()
    : _csName( NULL ),
      _needChangeID( FALSE ),
-     _csUniqueID( UTIL_INVALID_UNIQUEID )
+     _csUniqueID( UTIL_CSUNIQUEID_LOADCS )
    {
    }
    _rtnLoadCollectionSpace::~_rtnLoadCollectionSpace()
@@ -4002,6 +4002,13 @@ error:
    {
       INT32 rc = SDB_OK ;
 
+      if ( SDB_ROLE_DATA == pmdGetDBRole() &&
+           CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      {
+         rc = SDB_RTN_COORD_ONLY ;
+         goto error ;
+      }
+
       if ( _needChangeID )
       {
          rc = rtnLoadCollectionSpace( _csName,
@@ -4022,7 +4029,10 @@ error:
                                       cb, dmsCB, FALSE ) ;
       }
 
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
    void _rtnLoadCollectionSpace::setCSUniqueID( utilCSUniqueID csUniqueID )
@@ -4049,7 +4059,21 @@ error:
                                           _dpsLogWrapper * dpsCB,
                                           INT16 w, INT64 * pContextID )
    {
-      return rtnUnloadCollectionSpace( _csName, cb, dmsCB ) ;
+      INT32 rc = SDB_OK ;
+
+      if ( SDB_ROLE_DATA == pmdGetDBRole() &&
+           CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      {
+         rc = SDB_RTN_COORD_ONLY ;
+         goto error ;
+      }
+
+      rc = rtnUnloadCollectionSpace( _csName, cb, dmsCB ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*

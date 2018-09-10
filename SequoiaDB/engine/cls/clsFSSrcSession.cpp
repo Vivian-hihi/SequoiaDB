@@ -1101,7 +1101,7 @@ namespace engine
       _dmsStorageUnit *su = NULL ;
       dmsMBContext *mbContext = NULL ;
       UINT64 curCollection = ~0 ;
-      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
+      utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
 
       MsgClsFSMetaRes res ;
       res.header.header.TID = header->TID ;

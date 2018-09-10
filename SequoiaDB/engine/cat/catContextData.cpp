@@ -1221,7 +1221,7 @@ namespace engine
    {
       _executeAfterLock = TRUE ;
       _needRollback = TRUE ;
-      _clUniqueID = UTIL_INVALID_UNIQUEID ;
+      _clUniqueID = UTIL_UNIQUEID_NULL ;
    }
 
    _catCtxCreateCL::~_catCtxCreateCL ()
@@ -1397,6 +1397,15 @@ namespace engine
 
          clInfo._clUniqueID = (INT64)ele.numberLong() + 1 ;
          _clUniqueID = clInfo._clUniqueID ;
+
+         if ( utilGetCLInnerID(_clUniqueID) > (utilCLInnerID)UTIL_CLINNERID_MAX )
+         {
+            rc = SDB_CAT_CL_UNIQUEID_EXCEEDED ;
+            PD_LOG( PDERROR,
+                    "CL inner id can't exceed %u, cl unique id: %llu, rc: %d",
+                    UTIL_CLINNERID_MAX, _clUniqueID, rc ) ;
+            goto error ;
+         }
       }
 
       /// choose a group to create cl

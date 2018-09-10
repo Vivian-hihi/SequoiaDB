@@ -291,7 +291,7 @@ namespace engine
       CHAR           _pad [ 276 ] ;
 
       void reset ( const CHAR *clName = NULL,
-                   utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID,
+                   utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL,
                    UINT16 mbID = DMS_INVALID_MBID,
                    UINT32 clLID = DMS_INVALID_CLID,
                    UINT32 attr = 0,
@@ -900,7 +900,7 @@ namespace engine
          // create a new collection for given name, returns collectionID
          INT32 addCollection ( const CHAR *pName,
                                UINT16 *collectionID,
-                               utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID,
+                               utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL,
                                UINT32 attributes = 0,
                                _pmdEDUCB * cb = NULL,
                                SDB_DPSCB *dpscb = NULL,
@@ -927,15 +927,17 @@ namespace engine
          INT32 truncateCollectionLoads( const CHAR *pName,
                                         dmsMBContext *context = NULL ) ;
 
-         INT32 chgCLUniqueID( const vector<PAIR_CLNAME_ID>& clList,
-                              BOOLEAN setOnlyIfInvalid = TRUE ) ;
+         INT32 chgCLUniqueID( const std::map<std::string, utilCLUniqueID>& clInfo,
+                              BOOLEAN setOnlyIfNull = TRUE,
+                              BOOLEAN resetOtherCl = FALSE ) ;
 
          INT32 renameCollection ( const CHAR *oldName, const CHAR *newName,
                                   _pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                   BOOLEAN sysCollection = FALSE ) ;
 
          INT32 findCollection ( const CHAR *pName,
-                                UINT16 &collectionID  ) ;
+                                UINT16 &collectionID,
+                                utilCLUniqueID *pClUniqueID = NULL ) ;
 
          INT32 insertRecord ( dmsMBContext *context,
                               const BSONObj &record,
@@ -1137,13 +1139,13 @@ namespace engine
 
          OSS_INLINE void _collectionInsert( const CHAR *pName,
                                             UINT16 mbID,
-                                            utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
+                                            utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ) ;
 
          OSS_INLINE UINT16 _collectionNameLookup( const CHAR *pName ) ;
          OSS_INLINE UINT16 _collectionIdLookup( utilCLUniqueID clUniqueID ) ;
 
          OSS_INLINE void _collectionRemove( const CHAR *pName,
-                                            utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
+                                            utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ) ;
          OSS_INLINE void _collectionMapCleanup () ;
 
          INT32          _logDPS( SDB_DPSCB *dpsCB, dpsMergeInfo &info,
@@ -1207,7 +1209,7 @@ namespace engine
    {
       _collectionNameMap[ ossStrdup( pName ) ] = mbID ;
 
-      if ( clUniqueID != UTIL_INVALID_UNIQUEID )
+      if ( UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
       {
          _collectionIDMap[ clUniqueID ] = mbID ;
       }
@@ -1228,7 +1230,7 @@ namespace engine
    OSS_INLINE UINT16 _dmsStorageDataCommon::_collectionIdLookup( utilCLUniqueID clUniqueID )
    {
       UINT16 mbID = DMS_INVALID_MBID ;
-      if ( UTIL_INVALID_UNIQUEID != clUniqueID )
+      if ( UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
       {
          COLID_MAP_CIT it = _collectionIDMap.find( clUniqueID ) ;
          if ( it != _collectionIDMap.end() )
@@ -1249,7 +1251,7 @@ namespace engine
          SDB_OSS_FREE( const_cast<CHAR *>(tp) ) ;
       }
 
-      if ( clUniqueID != UTIL_INVALID_UNIQUEID )
+      if ( UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
       {
          _collectionIDMap.erase( clUniqueID ) ;
       }

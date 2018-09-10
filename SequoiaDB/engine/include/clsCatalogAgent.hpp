@@ -176,7 +176,7 @@ namespace engine
       public:
          _clsCatalogSet ( const CHAR * name,
                           BOOLEAN saveName = TRUE,
-                          UINT64 clUniqueID = UTIL_INVALID_UNIQUEID ) ;
+                          UINT64 clUniqueID = UTIL_UNIQUEID_NULL ) ;
          ~_clsCatalogSet () ;
 
          void setSKSite( _clsShardingKeySite *pSite ) { _pSite = pSite ; }
@@ -357,7 +357,7 @@ namespace engine
          void    getAllNames( std::vector<string> &names ) ;
 
          clsCatalogSet* collectionSet ( const CHAR* name,
-                                        utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ) ;
+                                        utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ) ;
 
          INT32   updateCatalog ( INT32 version, UINT32 groupID,
                                  const CHAR* objdata, UINT32 length,
@@ -379,7 +379,7 @@ namespace engine
       protected:
          _clsCatalogSet* _addCollectionSet ( const CHAR * name,
                                              utilCLUniqueID clUniqueID =
-                                                   UTIL_INVALID_UNIQUEID ) ;
+                                                   UTIL_UNIQUEID_NULL ) ;
 
       private:
          CAT_MAP                       _mapCatalog ;

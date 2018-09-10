@@ -101,7 +101,7 @@ namespace engine
                if ( pEventTimeSpan && timeSpan > maxEventTime )
                {
                   PD_LOG( PDWARNING, "[%s] Process event[type:%d] over %d "
-                          "millsecs", pObj->name(), eventData._eventType,
+                          "us", pObj->name(), eventData._eventType,
                           timeSpan ) ;
                }
             }

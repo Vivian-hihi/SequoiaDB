@@ -683,7 +683,7 @@ namespace engine
          ++index ;
       }
 
-      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+      utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
       UINT32 pageSize = DMS_PAGE_SIZE_DFT ;
       UINT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
       DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ;
@@ -730,7 +730,7 @@ namespace engine
       UINT32 groupCount       = 0 ;
       BSONObj shardingKey ;
       vector< string > subCLList ;
-      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
+      utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
       UTIL_COMPRESSOR_TYPE compType = UTIL_COMPRESSOR_INVALID ;
       BSONObj extOptions ;
       BSONObjBuilder builder ;
@@ -1247,7 +1247,7 @@ namespace engine
       INT16 replSize = 0 ;
       INT16 w = 1 ;
       _rtnCommand *pCommand = NULL ;
-      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
+      utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
       CHAR mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
 
       rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
@@ -1489,7 +1489,7 @@ namespace engine
          else if ( CMD_LOAD_COLLECTIONSPACE == pCommand->type() )
          {
             _rtnLoadCollectionSpace *pLoadcs = (_rtnLoadCollectionSpace*)pCommand ;
-            utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+            utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
             BSONObj clInfoObj ;
 
             rc = _pShdMgr->rGetCSInfo( pLoadcs->csName(), csUniqueID,
@@ -1527,9 +1527,13 @@ namespace engine
          {
             if ( CMD_CREATE_COLLECTION == pCommand->type() )
             {
-               rc = rtnTestCollectionCommand( pCommand->collectionFullName(),
-                                              _pDmsCB ) ;
-               if( SDB_DMS_CS_NOTEXIST == rc )
+               rc = _testCollectionBeforeCreate( pCommand->collectionFullName(),
+                                                 clUniqueID ) ;
+               if ( SDB_DMS_CS_NOTEXIST == rc ||
+                    SDB_DMS_CS_UNIQUEID_CONFLICT == rc ||
+                    SDB_DMS_UNIQUEID_CONFLICT == rc ||
+                    SDB_DMS_CS_REMAIN == rc ||
+                    SDB_DMS_REMAIN == rc )
                {
                   goto error ;
                }
@@ -4526,6 +4530,33 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _clsShdSession::_testCollectionBeforeCreate( const CHAR* clName,
+                                                      utilCLUniqueID clUniqueID )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = rtnTestCollectionCommand( clName, _pDmsCB, &clUniqueID ) ;
+      if ( SDB_DMS_CS_REMAIN == rc )
+      {
+         string cs ;
+         cs = dmsGetCSNameFromFullName( clName ) ;
+         rc = rtnDropCollectionSpaceCommand( cs.c_str(), _pEDUCB,
+                                             _pDmsCB, _pDpsCB ) ;
+         if ( SDB_OK == rc )
+         {
+            rc = SDB_DMS_CS_NOTEXIST ;
+         }
+         if ( rc != SDB_DMS_CS_NOTEXIST )
+         {
+            PD_LOG( PDERROR,
+                    "Drop cs[%s] before create cl failed, rc: %d.",
+                    cs.c_str(), rc ) ;
+         }
+      }
+
+      return rc ;
    }
 }
 

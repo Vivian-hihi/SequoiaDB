@@ -301,7 +301,7 @@ namespace engine
          pCommand = CMD_NAME_DROP_INDEX ;
          BSONObj obj = BSON( FIELD_NAME_COLLECTION << _fullName.toString() <<
                              FIELD_NAME_INDEX <<
-                                 BSON( IXM_FIELD_NAME_NAME << _indexName.toString() << 
+                                 BSON( IXM_FIELD_NAME_NAME << _indexName.toString() <<
                                        IXM_FIELD_NAME_KEY << "" )
                             ) ;
          rc = msgBuildQueryMsg( &msg, &bufSize,
@@ -482,7 +482,8 @@ namespace engine
       if ( SQL_GRAMMAR::CRTCS == _commandType )
       {
          rc = rtnCreateCollectionSpaceCommand( _fullName.toString().c_str(),
-                                               eduCB, dmsCB, dpsCB ) ;
+                                               eduCB, dmsCB, dpsCB,
+                                               UTIL_CSUNIQUEID_LOCAL ) ;
       }
       else if ( SQL_GRAMMAR::DROPCS == _commandType )
       {
@@ -496,13 +497,15 @@ namespace engine
             // pass 0 for attributes, which indicates no-compression for the
             // moment
             rc = rtnCreateCollectionCommand( _fullName.toString().c_str(),
-                                             0, eduCB, dmsCB, dpsCB ) ;
+                                             0, eduCB, dmsCB, dpsCB,
+                                             UTIL_CLUNIQUEID_LOCAL ) ;
          }
          else
          {
             rc = rtnCreateCollectionCommand( _fullName.toString().c_str(),
                                              _partition, 0,
-                                             eduCB, dmsCB, dpsCB ) ;
+                                             eduCB, dmsCB, dpsCB,
+                                             UTIL_CLUNIQUEID_LOCAL ) ;
          }
       }
       else if ( SQL_GRAMMAR::DROPCL == _commandType )

@@ -40,6 +40,7 @@ using namespace bson ;
 
 namespace engine
 {
+
    // output:
    // [
    //    < "bar1", 2667174690817 >, < "bar2", 2667174690818 >
@@ -72,14 +73,14 @@ namespace engine
    //    { "Name": "bar2", "UniqueID": 2667174690818 }
    // ]
    //
-   // output: vector<pair>
+   // output: map<string, utilCLUniqueID>
    // [
    //    < "bar1", 2667174690817 > ,
    //    < "bar2", 2667174690818 >
    // ]
-   vector<PAIR_CLNAME_ID> utilBson2ClPair( const BSONObj& clInfoObj )
+   MAP_CLNAME_ID utilBson2ClNameId( const BSONObj& clInfoObj )
    {
-      vector< PAIR_CLNAME_ID > clList ;
+      map< string, utilCLUniqueID > clMap ;
 
       BSONObjIterator it( clInfoObj ) ;
       while ( it.more() )
@@ -94,12 +95,11 @@ namespace engine
             {
                continue ;
             }
-            PAIR_CLNAME_ID cl( nameE.String(), (UINT64)idE.numberLong() );
-            clList.push_back( cl ) ;
+            clMap[ nameE.String() ] = (utilCLUniqueID)idE.numberLong() ;
          }
       }
 
-      return clList ;
+      return clMap ;
    }
 
    // input: clInfoObj
@@ -131,7 +131,7 @@ namespace engine
                continue ;
             }
             arrBuilder << BSON( FIELD_NAME_NAME << nameE.String()
-                             << FIELD_NAME_UNIQUEID << UTIL_INVALID_UNIQUEID ) ;
+                             << FIELD_NAME_UNIQUEID << UTIL_UNIQUEID_NULL ) ;
          }
       }
 

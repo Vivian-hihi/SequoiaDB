@@ -117,7 +117,7 @@ namespace engine
          _type = DMS_STORAGE_NORMAL ;
          _extDataHandler = NULL ;
 
-         _csUniqueID     = UTIL_INVALID_UNIQUEID ;
+         _csUniqueID     = UTIL_UNIQUEID_NULL ;
       }
    };
    typedef _dmsStorageInfo dmsStorageInfo ;

@@ -116,7 +116,7 @@ namespace engine
       SDB_ASSERT( idxName, "Index name is NULL") ;
       SDB_ASSERT( extName, "Buffer is empty" ) ;
 
-      if ( UTIL_INVALID_UNIQUEID == clUniqID )
+      if ( ! UTIL_IS_VALID_CLUNIQUEID( clUniqID ) )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Collection unique id is invalid" ) ;

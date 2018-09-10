@@ -110,7 +110,7 @@ namespace engine
    public:
       _CoordCataInfo( INT32 version,
                       const char *pCollectionName,
-                      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID )
+                      utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL )
       :_catlogSet ( pCollectionName, FALSE, clUniqueID )
       {
          _catlogSet.setSKSite( clsGetShardingKeySite() ) ;

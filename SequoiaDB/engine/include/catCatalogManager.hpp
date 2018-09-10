@@ -96,7 +96,7 @@ namespace engine
       void reset()
       {
          _pCLName             = NULL ;
-         _clUniqueID          = UTIL_INVALID_UNIQUEID ;
+         _clUniqueID          = UTIL_UNIQUEID_NULL ;
          _replSize            = 1 ;
          _enSureShardIndex    = TRUE ;
          _pShardingType       = CAT_SHARDING_TYPE_HASH ;
@@ -140,8 +140,8 @@ namespace engine
       void reset()
       {
          _pCSName = NULL ;
-         _csUniqueID = UTIL_INVALID_UNIQUEID ;
-         _clUniqueHWM = UTIL_INVALID_UNIQUEID ;
+         _csUniqueID = UTIL_UNIQUEID_NULL ;
+         _clUniqueHWM = UTIL_UNIQUEID_NULL ;
          _pageSize = DMS_PAGE_SIZE_DFT ;
          _domainName = NULL ;
          _lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;

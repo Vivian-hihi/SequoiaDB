@@ -80,7 +80,7 @@ namespace engine
       :pageSize( 0 ),
        lobPageSize( 0 ),
        type( DMS_STORAGE_NORMAL ),
-       csUniqueID( UTIL_INVALID_UNIQUEID )
+       csUniqueID( UTIL_UNIQUEID_NULL )
       {
       }
    } ;

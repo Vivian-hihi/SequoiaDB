@@ -2032,7 +2032,7 @@ namespace engine
       }
       if ( DMS_INVALID_MBID != _collectionIdLookup ( clUniqueID ) )
       {
-         rc = SDB_DMS_EXIST ;
+         rc = SDB_DMS_UNIQUEID_CONFLICT ;
          goto error ;
       }
 
@@ -2067,7 +2067,7 @@ namespace engine
                  attributes, compressionType ) ;
       _mbStatInfo[ newCollectionID ].reset() ;
       _mbStatInfo[ newCollectionID ]._startLID = logicalID ;
-	  _compressorEntry[ newCollectionID ].reset() ;
+      _compressorEntry[ newCollectionID ].reset() ;
 
       _dmsHeader->_numMB++ ;
       _collectionInsert( pName, newCollectionID, clUniqueID ) ;
@@ -2224,7 +2224,7 @@ namespace engine
       BOOLEAN isTransLocked   = FALSE ;
       BOOLEAN getContext      = FALSE ;
       BOOLEAN metalocked      = FALSE ;
-      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
+      utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
 
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
 
@@ -2642,50 +2642,66 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_CHGUID, "_dmsStorageDataCommon::chgCLUniqueID" )
-   INT32 _dmsStorageDataCommon::chgCLUniqueID( const vector<PAIR_CLNAME_ID>& clList,
-                                               BOOLEAN setOnlyIfInvalid )
+   INT32 _dmsStorageDataCommon::chgCLUniqueID( const MAP_CLNAME_ID& modifyCl,
+                                               BOOLEAN setOnlyIfNull,
+                                               BOOLEAN resetOtherCl )
    {
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON_CHGUID ) ;
 
       ossScopedLock lock( &_metadataLatch, EXCLUSIVE ) ;
 
-      vector< PAIR_CLNAME_ID >::const_iterator it = clList.begin() ;
-      for ( ; it != clList.end() ; it++ )
+      COLNAME_MAP_IT it = _collectionNameMap.begin() ;
+      while ( it != _collectionNameMap.end() )
       {
-         const CHAR* clName = it->first.c_str() ;
-         utilCLUniqueID newID = it->second ;
-         utilCLUniqueID orgID = UTIL_INVALID_UNIQUEID ;
-         UINT16 mbID = DMS_INVALID_MBID ;
+         string clName ( it->first ) ;
+         UINT16 mbID = it->second ;
+         it++ ;
+
+         utilCLUniqueID orgClUniqueID = UTIL_UNIQUEID_NULL ;
+         utilCLUniqueID newClUniqueID = UTIL_UNIQUEID_NULL ;
 
          // get current unique id
-         mbID = _collectionNameLookup( clName ) ;
-         if ( DMS_INVALID_MBID == mbID )
-         {
-            continue ;
-         }
-         orgID = _dmsMME->_mbList[mbID]._clUniqueID ;
+         orgClUniqueID = _dmsMME->_mbList[mbID]._clUniqueID ;
 
-         // set new unique id only if current id is invalid
-         if ( setOnlyIfInvalid && UTIL_INVALID_UNIQUEID != orgID )
+         // get new unique id
+         MAP_CLNAME_ID::const_iterator modifyIt = modifyCl.find( clName ) ;
+         if ( modifyIt != modifyCl.end() )
          {
-            continue ;
+            newClUniqueID = modifyIt->second ;
+         }
+         else
+         {
+            if ( resetOtherCl )
+            {
+               newClUniqueID = UTIL_CLUNIQUEID_LOADCS ;
+            }
+            else
+            {
+               continue ;
+            }
          }
 
-         // skip this cl when orginal id is the same as new id
-         if ( orgID == newID )
+         if ( setOnlyIfNull )
+         {
+            // set new unique id only if current id is 0
+            if ( UTIL_UNIQUEID_NULL != orgClUniqueID )
+            {
+               continue ;
+            }
+         }
+
+         // skip when old id equals to new id
+         if ( orgClUniqueID == newClUniqueID )
          {
             continue ;
          }
 
          // set new unique id
-         _dmsMME->_mbList[mbID]._clUniqueID = newID ;
+         _dmsMME->_mbList[mbID]._clUniqueID = newClUniqueID ;
 
-         _collectionRemove ( clName, orgID ) ;
-         _collectionInsert ( clName, mbID, newID ) ;
+         _collectionRemove ( clName.c_str(), orgClUniqueID ) ;
+         _collectionInsert ( clName.c_str(), mbID, newClUniqueID ) ;
 
-         PD_LOG ( PDDEBUG,
-                  "Change cl[%s] unique id, org: %llu, new: %llu",
-                  clName, orgID, newID ) ;
       }
 
       flushMME( isSyncDeep() ) ;
@@ -2801,20 +2817,31 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_FINDCOLLECTION, "_dmsStorageDataCommon::findCollection" )
    INT32 _dmsStorageDataCommon::findCollection( const CHAR * pName,
-                                                UINT16 & collectionID )
+                                                UINT16 & collectionID,
+                                                utilCLUniqueID *pClUniqueID )
    {
       INT32 rc            = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_FINDCOLLECTION ) ;
       PD_TRACE1 ( SDB__DMSSTORAGEDATACOMMON_FINDCOLLECTION,
                   PD_PACK_STRING ( pName ) ) ;
+
       ossLatch ( &_metadataLatch, SHARED ) ;
       collectionID = _collectionNameLookup ( pName ) ;
+
       PD_TRACE1 ( SDB__DMSSTORAGEDATACOMMON_FINDCOLLECTION,
                   PD_PACK_USHORT ( collectionID ) ) ;
+
       if ( DMS_INVALID_MBID == collectionID )
       {
          rc = SDB_DMS_NOTEXIST ;
          goto error ;
+      }
+      else
+      {
+         if ( pClUniqueID )
+         {
+            *pClUniqueID = _dmsMME->_mbList[ collectionID ]._clUniqueID ;
+         }
       }
 
    done :

@@ -583,7 +583,7 @@ namespace engine
                      if ( !checkOnly )
                      {
                         storageUnit = SDB_OSS_NEW dmsStorageUnit( csName,
-                                                                  UTIL_INVALID_UNIQUEID,
+                                                                  UTIL_UNIQUEID_NULL,
                                                                   sequence,
                                                                   pmdGetBuffPool(),
                                                                   DMS_PAGE_SIZE_DFT,
@@ -651,7 +651,8 @@ namespace engine
                            rc = dmsCB->changeUniqueID( csName,
                                                        *csUniqueIDInCata,
                                                        clInfoInCata,
-                                                       cb, NULL, FALSE ) ;
+                                                       cb, NULL,
+                                                       FALSE, TRUE ) ;
                            PD_RC_CHECK( rc, PDERROR,
                                         "Failed to change unique id, rc: %d",
                                         rc ) ;
@@ -745,7 +746,7 @@ namespace engine
                                                          sequence ) )
                   {
                      storageUnit = SDB_OSS_NEW dmsStorageUnit ( csName,
-                                                                UTIL_INVALID_UNIQUEID,
+                                                                UTIL_UNIQUEID_NULL,
                                                                 sequence,
                                                                 pmdGetBuffPool(),
                                                                 DMS_PAGE_SIZE_DFT,
@@ -1696,7 +1697,7 @@ namespace engine
       if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc )
       {
          rc = rtnCreateCollectionCommand( pCLFullName, 0, cb, dmsCB, dpsCB,
-                                          UTIL_INVALID_UNIQUEID,
+                                          UTIL_UNIQUEID_NULL,
                                           UTIL_COMPRESSOR_INVALID,
                                           FLG_CREATE_WHEN_NOT_EXIST, sys ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create collection[%s], rc: %d",

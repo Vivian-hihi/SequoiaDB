@@ -113,7 +113,7 @@ namespace engine
          // create new SYSSTAT collection space
          rc = rtnCreateCollectionSpaceCommand ( DMS_STAT_SPACE_NAME, NULL,
                                                 _dmsCB, NULL,
-                                                UTIL_INVALID_UNIQUEID,
+                                                UTIL_UNIQUEID_NULL,
                                                 DMS_PAGE_SIZE_MAX,
                                                 DMS_DO_NOT_CREATE_LOB,
                                                 DMS_STORAGE_NORMAL, TRUE ) ;

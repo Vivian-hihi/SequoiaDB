@@ -233,7 +233,7 @@ namespace engine
             _csname[ 0 ] = 0 ;
             _blockID = 0 ;
             _logicalID = 0 ;
-            _clUniqueID = UTIL_INVALID_UNIQUEID ;
+            _clUniqueID = UTIL_UNIQUEID_NULL ;
          }
 
          BOOLEAN operator< (const _monCLSimple &r) const
@@ -288,7 +288,7 @@ namespace engine
       _monCollection()
       {
          _name[ 0 ]  = 0 ;
-         _clUniqueID = UTIL_INVALID_UNIQUEID ;
+         _clUniqueID = UTIL_UNIQUEID_NULL ;
       }
       OSS_INLINE BOOLEAN operator<(const _monCollection &r) const
       {
@@ -353,7 +353,7 @@ namespace engine
             _name[ 0 ] = 0 ;
             _suID = DMS_INVALID_SUID ;
             _logicalID = DMS_INVALID_LOGICCSID ;
-            _csUniqueID = UTIL_INVALID_UNIQUEID ;
+            _csUniqueID = UTIL_UNIQUEID_NULL ;
          }
 
          BOOLEAN operator< ( const _monCSSimple &r ) const
@@ -436,7 +436,7 @@ namespace engine
       _monCollectionSpace ()
       {
          ossMemset ( _name, 0, sizeof(_name)) ;
-         _csUniqueID = UTIL_INVALID_UNIQUEID ;
+         _csUniqueID = UTIL_UNIQUEID_NULL ;
          _pageSize = 0 ;
          _clNum    = 0 ;
          _totalRecordNum = 0 ;
@@ -565,7 +565,7 @@ namespace engine
       _monStorageUnit()
       {
          _name[ 0 ] = 0 ;
-         _csUniqueID = UTIL_INVALID_UNIQUEID ;
+         _csUniqueID = UTIL_UNIQUEID_NULL ;
          _CSID = -1 ;
          _logicalCSID = 0 ;
          _pageSize = 0 ;

@@ -299,6 +299,9 @@ namespace engine
 
          void  _login() ;
 
+         INT32 _testCollectionBeforeCreate( const CHAR* clName,
+                                            utilCLUniqueID clUniqueID ) ;
+
       protected:
          _clsReplicateSet       *_pReplSet ;
          _clsShardMgr           *_pShdMgr ;

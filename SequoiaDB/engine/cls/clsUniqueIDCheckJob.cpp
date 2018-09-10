@@ -83,7 +83,7 @@ namespace engine
 
       while ( !PMD_IS_DB_DOWN() &&
               pmdIsPrimary() &&
-              pDmsCB->invalidCSUniqueIDCnt() > pDmsCB->localCSCnt() )
+              pDmsCB->nullCSUniqueIDCnt() > pDmsCB->localCSCnt() )
       {
          /*
           * Before any one is found in the queue, the status of this thread is
@@ -109,7 +109,7 @@ namespace engine
             }
 
             clsDCBaseInfo* pDcInfo = pDcMgr->getDCBaseInfo() ;
-            if ( UTIL_INVALID_UNIQUEID == pDcInfo->getCSUniqueHWM() )
+            if ( UTIL_UNIQUEID_NULL == pDcInfo->getCSUniqueHWM() )
             {
                continue ;
             }
@@ -126,7 +126,7 @@ namespace engine
          for ( iterCS = csList.begin() ; iterCS != csList.end(); ++iterCS )
          {
             const _monCollectionSpace &cs = *iterCS ;
-            utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+            utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
             BSONObj clInfoObj ;
 
             PD_LOG( PDDEBUG,
@@ -138,8 +138,8 @@ namespace engine
                break ;
             }
 
-            // we only need to operate cs with invalid unique id
-            if ( UTIL_INVALID_UNIQUEID != cs._csUniqueID )
+            // we only need to operate cs which unique id = 0
+            if ( cs._csUniqueID != UTIL_UNIQUEID_NULL )
             {
                continue ;
             }

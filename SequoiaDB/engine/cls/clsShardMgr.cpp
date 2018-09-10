@@ -962,7 +962,7 @@ namespace engine
    INT32 _clsShardMgr::syncUpdateCatalog ( const CHAR *pCollectionName,
                                            const INT64 millsec )
    {
-      return syncUpdateCatalog( UTIL_INVALID_UNIQUEID, pCollectionName,
+      return syncUpdateCatalog( UTIL_UNIQUEID_NULL, pCollectionName,
                                 millsec ) ;
    }
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SYNCUPDCAT, "_clsShardMgr::syncUpdateCatalog" )
@@ -977,7 +977,6 @@ namespace engine
       UINT32 retryTimes = 0 ;
       BOOLEAN needRetry = FALSE ;
       BOOLEAN hasUpCataGrp = FALSE ;
-      BOOLEAN hasUniqueID = UTIL_INVALID_UNIQUEID == clUniqueID ? FALSE : TRUE ;
 
       if ( !pCollectionName )
       {
@@ -1084,7 +1083,7 @@ namespace engine
             //release the event info
             SDB_OSS_DEL pEventInfo ;
             pEventInfo = NULL ;
-            if ( hasUniqueID )
+            if ( UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
             {
                _mapSyncCLIDEvent.erase ( clUniqueID ) ;
             }
@@ -1412,7 +1411,7 @@ namespace engine
       // build BSON object
       try
       {
-         if ( UTIL_INVALID_UNIQUEID == clUniqueID )
+         if ( ! UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
          {
             query = BSON ( CAT_COLLECTION_NAME << pCollectionName ) ;
          }
@@ -1468,7 +1467,7 @@ namespace engine
       // build query
       try
       {
-         if ( UTIL_INVALID_UNIQUEID == csUniqueID )
+         if ( ! UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
          {
             query = BSON ( CAT_COLLECTION_SPACE_NAME << pCSName ) ;
          }
@@ -1848,7 +1847,7 @@ namespace engine
          INT32 version = 0 ;
          UINT32 groupCount = 0 ;
          const CHAR *pCLType = "normal" ;
-         utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
+         utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
          string collectionName ;
 
          rc = msgExtractReply ( (CHAR *)msg, &flag, &contextID, &startFrom,
@@ -1907,7 +1906,7 @@ namespace engine
             goto done ;
          }
 
-         if ( UTIL_INVALID_UNIQUEID == clUniqueID )
+         if ( ! UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
          {
             // we have already looked up by name, so just goto done.
             goto done ;
@@ -1933,13 +1932,12 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR__FNDCATSYNCEV );
       SDB_ASSERT ( pCollectionName , "Collection name can't be NULL" ) ;
 
-      BOOLEAN hasUniqueID = UTIL_INVALID_UNIQUEID == clUniqueID ? FALSE : TRUE ;
       clsEventItem *pEventInfo = NULL ;
       MAP_CLID_EVENT_IT it1 ;
       MAP_CAT_EVENT_IT it2 ;
 
       /// search from id-map, if find out nothing, then search from name-map
-      if ( hasUniqueID )
+      if ( UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
       {
          it1 = _mapSyncCLIDEvent.find ( clUniqueID ) ;
          if ( it1 != _mapSyncCLIDEvent.end() )
@@ -1963,7 +1961,7 @@ namespace engine
          pEventInfo = SDB_OSS_NEW _clsEventItem ;
          pEventInfo->name = pCollectionName ;
          pEventInfo->clUniqueID = clUniqueID ;
-         if ( hasUniqueID )
+         if ( UTIL_IS_VALID_CLUNIQUEID( clUniqueID) )
          {
             _mapSyncCLIDEvent[ clUniqueID ] = pEventInfo ;
          }
@@ -2311,7 +2309,7 @@ namespace engine
       PD_RC_CHECK( rc, PDWARNING, "Get collection space[%s] info failed, "
                    "rc: %d", csName, rc ) ;
 
-      if ( UTIL_INVALID_UNIQUEID == csUniqueID )
+      if ( UTIL_UNIQUEID_NULL == csUniqueID )
       {
          csUniqueID = item->csUniqueID ;
       }
@@ -2579,7 +2577,7 @@ namespace engine
          if ( ele.eoo() )
          {
             // it is ok, catalog hasn't been upgraded to new version.
-            csItem->csUniqueID = UTIL_INVALID_UNIQUEID ;
+            csItem->csUniqueID = UTIL_UNIQUEID_NULL ;
          }
          else if ( ele.isNumber() )
          {
@@ -2587,7 +2585,7 @@ namespace engine
          }
          else
          {
-            csItem->csUniqueID = UTIL_INVALID_UNIQUEID ;
+            csItem->csUniqueID = UTIL_UNIQUEID_NULL ;
          }
 
          // eg:

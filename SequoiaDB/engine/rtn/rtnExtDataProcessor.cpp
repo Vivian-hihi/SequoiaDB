@@ -665,7 +665,7 @@ namespace engine
       BSONObj extOptions ;
 
       rc = rtnCreateCollectionSpaceCommand( csName, cb, dmsCB, dpsCB,
-                                            UTIL_INVALID_UNIQUEID,
+                                            UTIL_UNIQUEID_NULL,
                                             DMS_PAGE_SIZE_DFT,
                                             DMS_DO_NOT_CREATE_LOB,
                                             DMS_STORAGE_CAPPED, TRUE ) ;
@@ -691,7 +691,7 @@ namespace engine
 
       rc = rtnCreateCollectionCommand( clName,
                                        DMS_MB_ATTR_NOIDINDEX | DMS_MB_ATTR_CAPPED,
-                                       cb, dmsCB, dpsCB, UTIL_INVALID_UNIQUEID,
+                                       cb, dmsCB, dpsCB, UTIL_UNIQUEID_NULL,
                                        UTIL_COMPRESSOR_INVALID, 0,
                                        TRUE, &extOptions ) ;
       PD_RC_CHECK( rc, PDERROR, "Create capped collection[ %s ] failed[ %d ]",

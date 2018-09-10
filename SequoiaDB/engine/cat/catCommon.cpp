@@ -1135,7 +1135,7 @@ namespace engine
          {
             BSONElement ele = iter.next() ;
             string collection ;
-            utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
+            utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
             rc = rtnGetSTDStringElement( ele.embeddedObject(),
                                          CAT_COLLECTION_NAME,
                                          collection ) ;
@@ -1254,7 +1254,7 @@ namespace engine
    INT32 catCheckSpaceExist( const char *pSpaceName, BOOLEAN &isExist,
                              BSONObj &obj, pmdEDUCB *cb )
    {
-      return catCheckSpaceExist( pSpaceName, UTIL_INVALID_UNIQUEID,
+      return catCheckSpaceExist( pSpaceName, UTIL_UNIQUEID_NULL,
                                  isExist, obj, cb ) ;
    }
 
@@ -1268,7 +1268,7 @@ namespace engine
       isExist            = FALSE ;
       BSONObj matcher, dummyObj ;
 
-      if ( UTIL_INVALID_UNIQUEID == csUniqueID )
+      if ( ! UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
       {
          matcher = BSON( CAT_COLLECTION_SPACE_NAME << pSpaceName ) ;
       }
@@ -2316,23 +2316,18 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUPCSUID, "catUpdateCSUniqueID" )
-   INT32 catUpdateCSUniqueID( pmdEDUCB *cb, INT16 w, UINT32& CSID )
+   INT32 catUpdateCSUniqueID( pmdEDUCB *cb, INT16 w,
+                              utilCSUniqueID& csUniqueID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_CATUPCSUID ) ;
 
       BSONObj dummy, result ;
       BSONObj matcher = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
-      BSONObj updator = BSON( "$inc" << BSON( FIELD_NAME_CSUNIQUEHWM << 1 ) );
+      BSONObj updator ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
-
-      rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
-                      dummy, 0, cb, dmsCB, dpsCB, w ) ;
-      PD_RC_CHECK( rc, PDERROR, "Fail to update obj[%s] to collection[%s], "
-                   "rc: %d", updator.toString().c_str(),
-                   CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
 
       rc = catGetOneObj( CAT_SYSDCBASE_COLLECTION_NAME, dummy, matcher,
                          dummy, cb, result ) ;
@@ -2343,10 +2338,17 @@ namespace engine
       try
       {
          BSONElement ele = result.getField( FIELD_NAME_CSUNIQUEHWM ) ;
-         PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
-                   "Failed to get field[%s], type: %d", FIELD_NAME_CSUNIQUEHWM,
-                   ele.type() );
-         CSID = (INT32)ele.numberInt() ;
+         PD_CHECK( ele.isNumber() || ele.eoo(), SDB_INVALIDARG, error, PDERROR,
+                   "Failed to get field[%s], type: %d",
+                   FIELD_NAME_CSUNIQUEHWM, ele.type() );
+         if ( ele.eoo() )
+         {
+            csUniqueID = 1 ;
+         }
+         else
+         {
+            csUniqueID = ( utilCSUniqueID )ele.numberInt() + 1 ;
+         }
       }
       catch ( std::exception &e )
       {
@@ -2354,6 +2356,22 @@ namespace engine
          PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
          goto error ;
       }
+
+      if ( csUniqueID > ( utilCSUniqueID )UTIL_CSUNIQUEID_MAX )
+      {
+         rc = SDB_CAT_CS_UNIQUEID_EXCEEDED ;
+         PD_LOG( PDERROR,
+                 "CS unique id[%u] can't exceed %u, rc: %d",
+                 csUniqueID, UTIL_CSUNIQUEID_MAX, rc ) ;
+         goto error ;
+      }
+
+      updator = BSON( "$set" << BSON( FIELD_NAME_CSUNIQUEHWM << csUniqueID ) ) ;
+      rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
+                      dummy, 0, cb, dmsCB, dpsCB, w ) ;
+      PD_RC_CHECK( rc, PDERROR, "Fail to update obj[%s] to collection[%s], "
+                   "rc: %d", updator.toString().c_str(),
+                   CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
 
    done :
       PD_TRACE_EXITRC( SDB_CATUPCSUID, rc ) ;

@@ -75,7 +75,7 @@ namespace engine
          requestID = 0 ;
          groupID = 0 ;
          netHandle = NET_INVALID_HANDLE ;
-         clUniqueID = UTIL_INVALID_UNIQUEID ;
+         clUniqueID = UTIL_UNIQUEID_NULL ;
       }
    } ;
    typedef class _clsEventItem clsEventItem ;
@@ -101,7 +101,7 @@ namespace engine
             lobPageSize = 0 ;
             type = DMS_STORAGE_NORMAL ;
             netHandle = NET_INVALID_HANDLE ;
-            csUniqueID = UTIL_INVALID_UNIQUEID ;
+            csUniqueID = UTIL_UNIQUEID_NULL ;
          }
    } ;
    typedef _clsCSEventItem clsCSEventItem ;
@@ -247,7 +247,7 @@ namespace engine
                                   INT64 millsec = 0 ) ;
 
          INT32 _sendCatalogReq ( const CHAR *pCollectionName,
-                                 utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID,
+                                 utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL,
                                  UINT64 requestID = 0,
                                  NET_HANDLE *pHandle = NULL,
                                  INT64 millsec = 0
@@ -264,7 +264,7 @@ namespace engine
                                 INT64 millsec = 0 ) ;
 
          clsEventItem *_findCatSyncEvent ( const CHAR *pCollectionName,
-                                           utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID,
+                                           utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL,
                                            BOOLEAN bCreate = FALSE ) ;
          clsEventItem *_findCatSyncEvent ( UINT64 requestID ) ;
 

@@ -93,7 +93,7 @@ namespace engine
 
       // create new systemp collection space
       rc = rtnCreateCollectionSpaceCommand ( SDB_DMSTEMP_NAME, NULL, _dmsCB,
-                                             NULL, UTIL_INVALID_UNIQUEID,
+                                             NULL, UTIL_UNIQUEID_NULL,
                                              DMS_PAGE_SIZE_MAX,
                                              DMS_DO_NOT_CREATE_LOB,
                                              DMS_STORAGE_NORMAL, TRUE ) ;
@@ -120,7 +120,7 @@ namespace engine
          ossSnprintf ( tempName, sizeof(tempName), DMS_TEMP_NAME_PATTERN,
                        SDB_DMSTEMP_NAME, i ) ;
          rc = _su->data()->addCollection ( tempName, &collectionID,
-                                           UTIL_INVALID_UNIQUEID,
+                                           UTIL_UNIQUEID_NULL,
                                            DMS_MB_ATTR_NOIDINDEX, NULL,
                                            NULL, 0, TRUE ) ;
          if ( rc )

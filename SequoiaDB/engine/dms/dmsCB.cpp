@@ -87,7 +87,7 @@ namespace engine
    :_writeCounter(0),
     _dmsCBState(DMS_STATE_NORMAL),
     _logicalSUID(0),
-    _invalidCSUniqueIDCnt( 0 ),
+    _nullCSUniqueIDCnt( 0 ),
     _localCSCnt( 0 ),
     _tempSUMgr( this ),
     _statSUMgr( this ),
@@ -277,7 +277,7 @@ namespace engine
       _freeList.pop_back() ;
       _cscbNameMap[cscb->_name] = suID ;
       _cscbVec[suID] = cscb ;
-      if ( csUniqueID != UTIL_INVALID_UNIQUEID )
+      if ( UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
       {
          _cscbIDMap[csUniqueID] = suID ;
       }
@@ -293,7 +293,7 @@ namespace engine
                                        dmsStorageUnitID *pSuID,
                                        BOOLEAN exceptDeleting )
    {
-      return _CSCBLookup( pName, UTIL_INVALID_UNIQUEID,
+      return _CSCBLookup( pName, UTIL_UNIQUEID_NULL,
                               cscb, pSuID, exceptDeleting ) ;
    }
 
@@ -320,7 +320,7 @@ namespace engine
 
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
 
-      if ( UTIL_INVALID_UNIQUEID != csUniqueID )
+      if ( UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
       {
          CSCB_ID_MAP_CONST_ITER it = _cscbIDMap.find( csUniqueID ) ;
          if ( it != _cscbIDMap.end() )
@@ -482,7 +482,7 @@ namespace engine
       UINT32 logRecSize = 0 ;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
-      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+      utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
 
       _mutex.get_shared () ;
       rc = _CSCBNameLookup( pName, &pCSCB, &suID, TRUE ) ;
@@ -572,7 +572,7 @@ namespace engine
 
       _cscbVec[ suID ] = NULL ;
       _cscbNameMap.erase( pName ) ;
-      if ( csUniqueID != UTIL_INVALID_UNIQUEID )
+      if ( UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
       {
          _cscbIDMap.erase( csUniqueID ) ;
       }
@@ -904,7 +904,7 @@ namespace engine
       UINT32 logRecSize = 0 ;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
-      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+      utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
 
       if ( NULL != dpsCB )
       {
@@ -961,7 +961,7 @@ namespace engine
 
       _delCscbVec[ suID ] = NULL ;
       _cscbNameMap.erase( pName ) ;
-      if ( csUniqueID != UTIL_INVALID_UNIQUEID )
+      if ( UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
       {
          _cscbIDMap.erase( csUniqueID ) ;
       }
@@ -1357,7 +1357,7 @@ namespace engine
       SDB_DMS_CSCB *cscb = NULL ;
 
       SDB_ASSERT( su, "su can't be null!" ) ;
-      if ( UTIL_INVALID_UNIQUEID == csUniqueID )
+      if ( ! UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
       {
          return SDB_INVALIDARG ;
       }
@@ -1464,7 +1464,7 @@ namespace engine
                                        utilCSUniqueID csUniqueID,
                                        pmdEDUCB* cb,
                                        SDB_DPSCB* dpsCB,
-                                       BOOLEAN setOnlyIfInvalid )
+                                       BOOLEAN setOnlyIfNull )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__SDB_DMSCB_CHGCSUID ) ;
@@ -1475,7 +1475,7 @@ namespace engine
       const CHAR* csname = su->CSName() ;
       utilCSUniqueID orgUniqueID = su->CSUniqueID() ;
 
-      if ( setOnlyIfInvalid && orgUniqueID != UTIL_INVALID_UNIQUEID )
+      if ( setOnlyIfNull && orgUniqueID != UTIL_UNIQUEID_NULL )
       {
          goto done ;
       }
@@ -1507,24 +1507,24 @@ namespace engine
       }
 
       // change map
-      if ( orgUniqueID != UTIL_INVALID_UNIQUEID )
+      if ( UTIL_IS_VALID_CSUNIQUEID( orgUniqueID ) )
       {
          _cscbIDMap.erase( orgUniqueID ) ;
       }
-      if ( csUniqueID != UTIL_INVALID_UNIQUEID )
+      if ( UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
       {
          _cscbIDMap[ csUniqueID ] = suID ;
       }
 
-      if ( orgUniqueID != UTIL_INVALID_UNIQUEID &&
-           csUniqueID  == UTIL_INVALID_UNIQUEID )
+      if ( orgUniqueID != UTIL_UNIQUEID_NULL &&
+           csUniqueID  == UTIL_UNIQUEID_NULL )
       {
-         _invalidCSUniqueIDCntInc() ;
+         _nullCSUniqueIDCntInc() ;
       }
-      if ( orgUniqueID == UTIL_INVALID_UNIQUEID &&
-           csUniqueID  != UTIL_INVALID_UNIQUEID )
+      if ( orgUniqueID == UTIL_UNIQUEID_NULL &&
+           csUniqueID  != UTIL_UNIQUEID_NULL )
       {
-         _invalidCSUniqueIDCntDec() ;
+         _nullCSUniqueIDCntDec() ;
       }
 
    done:
@@ -1540,7 +1540,8 @@ namespace engine
                                      const BSONObj& clInfoObj,
                                      pmdEDUCB* cb,
                                      SDB_DPSCB* dpsCB,
-                                     BOOLEAN setOnlyIfInvalid )
+                                     BOOLEAN setOnlyIfNull,
+                                     BOOLEAN resetOtherCl )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__SDB_DMSCB_CHGUID ) ;
@@ -1600,8 +1601,9 @@ namespace engine
             goto error ;
          }
 
-         su->data()->chgCLUniqueID( utilBson2ClPair( clInfoObj ),
-                                    setOnlyIfInvalid ) ;
+         su->data()->chgCLUniqueID( utilBson2ClNameId( clInfoObj ),
+                                    setOnlyIfNull,
+                                    resetOtherCl ) ;
 
          suUnlock ( suID ) ;
       }
@@ -1642,7 +1644,7 @@ namespace engine
       }
 
       // change cs unique id
-      changeCSUniqueID( su, csUniqueID, cb, dpsCB, setOnlyIfInvalid ) ;
+      changeCSUniqueID( su, csUniqueID, cb, dpsCB, setOnlyIfNull ) ;
 
       // write dps
       if ( SDB_OK == rc && dpsCB )
@@ -1746,23 +1748,23 @@ namespace engine
       rc = _CSCBNameLookup( pName, &cscb ) ;
       if ( SDB_OK == rc )
       {
-         rc = SDB_DMS_CS_EXIST;
-         goto error;
+         rc = SDB_DMS_CS_EXIST ;
+         goto error ;
       }
       else if ( rc != SDB_DMS_CS_NOTEXIST )
       {
-         goto error;
+         goto error ;
       }
 
       rc = _CSCBIdLookup( csUniqueID, &cscb ) ;
       if ( SDB_OK == rc )
       {
-         rc = SDB_DMS_CS_EXIST;
-         goto error;
+         rc = SDB_DMS_CS_UNIQUEID_CONFLICT ;
+         goto error ;
       }
       else if ( rc != SDB_DMS_CS_NOTEXIST )
       {
-         goto error;
+         goto error ;
       }
 
       rc = _CSCBNameInsert ( pName, topSequence, su, suID ) ;
@@ -1802,9 +1804,9 @@ namespace engine
    done :
       if ( SDB_OK == rc &&
            !dmsIsSysCSName( pName ) &&
-           UTIL_INVALID_UNIQUEID == csUniqueID )
+           csUniqueID == UTIL_UNIQUEID_NULL )
       {
-         _invalidCSUniqueIDCntInc() ;
+         _nullCSUniqueIDCntInc() ;
       }
       if ( isLocked )
       {
@@ -1829,7 +1831,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
       IDmsExtDataHandler *extHandler = NULL ;
-      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+      utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
 
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DELCS ) ;
 
@@ -1894,9 +1896,9 @@ namespace engine
    done :
       if ( SDB_OK == rc &&
            !dmsIsSysCSName( pName ) &&
-           UTIL_INVALID_UNIQUEID == csUniqueID )
+           csUniqueID == UTIL_UNIQUEID_NULL )
       {
-         _invalidCSUniqueIDCntDec() ;
+         _nullCSUniqueIDCntDec() ;
       }
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DELCS, rc );
       return rc ;
@@ -2379,19 +2381,19 @@ namespace engine
       }
    }
 
-   UINT32 _SDB_DMSCB::invalidCSUniqueIDCnt() const
+   UINT32 _SDB_DMSCB::nullCSUniqueIDCnt() const
    {
-      return _invalidCSUniqueIDCnt ;
+      return _nullCSUniqueIDCnt ;
    }
 
-   void _SDB_DMSCB::_invalidCSUniqueIDCntInc()
+   void _SDB_DMSCB::_nullCSUniqueIDCntInc()
    {
-      _invalidCSUniqueIDCnt++ ;
+      _nullCSUniqueIDCnt++ ;
    }
 
-   void _SDB_DMSCB::_invalidCSUniqueIDCntDec()
+   void _SDB_DMSCB::_nullCSUniqueIDCntDec()
    {
-      _invalidCSUniqueIDCnt-- ;
+      _nullCSUniqueIDCnt-- ;
    }
 
    UINT32 _SDB_DMSCB::localCSCnt() const

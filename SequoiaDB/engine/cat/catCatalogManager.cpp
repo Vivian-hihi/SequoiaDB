@@ -227,7 +227,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_QUERYSPACEINFO ) ;
       const CHAR *csName = NULL ;
-      utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+      utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
       BSONObj boSpace ;
       BOOLEAN isExist = FALSE ;
       vector< UINT32 > groups ;
@@ -781,6 +781,7 @@ namespace engine
       SDB_RTNCB *rtnCB        = pmdGetKRCB()->getRTNCB() ;
       UINT32 csUniqueHWM      = 0 ;
       INT32 curCSHWM          = 0 ;
+      INT64 count             = 0 ;
       UINT32 iRec             = 0 ;
       BSONObj matcher = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
       BSONObj orderby = BSON( CAT_CS_UNIQUEID << -1 ) ;
@@ -803,6 +804,21 @@ namespace engine
       }
       if ( rc && rc != SDB_FIELD_NOT_EXIST )
       {
+         goto error ;
+      }
+
+      // check cs count
+      rc = catGetObjectCount( CAT_COLLECTION_SPACE_COLLECTION, dummyObj,
+                              dummyObj, dummyObj, _pEduCB, count ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get count of collection[%s], rc: %d",
+                   CAT_COLLECTION_SPACE_COLLECTION, rc ) ;
+      if ( count > ( utilCSUniqueID )UTIL_CSUNIQUEID_MAX )
+      {
+         rc = SDB_CAT_CS_UNIQUEID_EXCEEDED ;
+         PD_LOG( PDERROR,
+                 "CS unique id can't exceed %u, cs count: %lld, rc: %d",
+                 UTIL_CSUNIQUEID_MAX, count, rc ) ;
          goto error ;
       }
 
@@ -831,7 +847,7 @@ namespace engine
          }
 
          const CHAR *csName = NULL ;
-         utilCSUniqueID maxUniqueID = UTIL_INVALID_UNIQUEID ;
+         utilCSUniqueID maxUniqueID = UTIL_UNIQUEID_NULL ;
          BSONObj boCollections ;
          BSONObj boSpace( buffObj.data() ) ;
          INT32 result = SDB_OK ;
@@ -1131,7 +1147,7 @@ namespace engine
       rc = catUpdateCSUniqueID( _pEduCB, _majoritySize(), csInfo._csUniqueID ) ;
       PD_RC_CHECK( rc, PDERROR, "Fail to get cs unique id, rc: %d.", rc ) ;
 
-      csInfo._clUniqueHWM = ossPack32To64( csInfo._csUniqueID, 0 ) ;
+      csInfo._clUniqueHWM = utilBuildCLUniqueID( csInfo._csUniqueID, 0 ) ;
 
       // insert new Collection Space record
       {

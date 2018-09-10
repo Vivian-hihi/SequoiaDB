@@ -79,7 +79,7 @@ int main ( int argc, char **argv )
       printf("Failed to open collection, rc = %d\n", rc ) ;
       return 0 ;
    }
-   rc = myUnit.data()->addCollection( "test", NULL, UTIL_INVALID_UNIQUEID,
+   rc = myUnit.data()->addCollection( "test", NULL, UTIL_UNIQUEID_NULL,
                                       0, NULL, NULL, 1 ) ;
    if ( rc )
    {

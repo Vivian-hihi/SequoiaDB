@@ -231,7 +231,7 @@ namespace engine
    INT32 rtnCreateCollectionSpaceCommand ( const CHAR *pCollectionSpace,
                                            pmdEDUCB *cb,
                                            SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
-                                           utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID,
+                                           utilCSUniqueID csUniqueID,
                                            INT32 pageSize = DMS_PAGE_SIZE_DFT,
                                            INT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ,
                                            DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL,
@@ -242,7 +242,7 @@ namespace engine
                                       pmdEDUCB *cb,
                                       SDB_DMSCB *dmsCB,
                                       SDB_DPSCB *dpsCB,
-                                      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID,
+                                      utilCLUniqueID clUniqueID,
                                       UTIL_COMPRESSOR_TYPE compressorType =
                                           UTIL_COMPRESSOR_INVALID,
                                       INT32 flags = 0,
@@ -255,7 +255,7 @@ namespace engine
                                       _pmdEDUCB * cb,
                                       SDB_DMSCB *dmsCB,
                                       SDB_DPSCB *dpsCB,
-                                      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID,
+                                      utilCLUniqueID clUniqueID,
                                       UTIL_COMPRESSOR_TYPE compressorType =
                                           UTIL_COMPRESSOR_INVALID,
                                       INT32 flags = 0,
@@ -461,10 +461,12 @@ namespace engine
                           _rtnContextDump *context ) ;
 
    INT32 rtnTestCollectionCommand ( const CHAR *pCollection,
-                                    SDB_DMSCB *dmsCB ) ;
+                                    SDB_DMSCB *dmsCB,
+                                    utilCLUniqueID *pClUniqueID = NULL ) ;
 
    INT32 rtnTestCollectionSpaceCommand ( const CHAR *pCollectionSpace,
-                                         SDB_DMSCB *dmsCB ) ;
+                                         SDB_DMSCB *dmsCB,
+                                         utilCSUniqueID *pCsUniqueID = NULL ) ;
 
    INT32 rtnPopCommand( const CHAR *pCollectionName, INT64 logicalID,
                         pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
@@ -473,7 +475,7 @@ namespace engine
    INT32 rtnChangeUniqueID( const CHAR* csName, utilCSUniqueID csUniqueID,
                             const BSONObj& clInfoObj, pmdEDUCB* cb,
                             SDB_DMSCB* dmsCB, SDB_DPSCB* dpsCB,
-                            BOOLEAN setOnlyIfInvalid = TRUE ) ;
+                            BOOLEAN setOnlyIfNull = TRUE ) ;
 
    INT32 rtnTestIndex( const CHAR *pCollection,
                        const CHAR *pIndexName,

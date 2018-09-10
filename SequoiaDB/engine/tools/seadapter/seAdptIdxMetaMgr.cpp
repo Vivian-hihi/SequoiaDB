@@ -44,7 +44,7 @@ namespace seadapter
    _seIndexMeta::_seIndexMeta()
    {
       _version = -1 ;
-      _clUniqID = UTIL_INVALID_UNIQUEID ;
+      _clUniqID = UTIL_UNIQUEID_NULL ;
       _clLogicalID = 0 ;
       _idxLogicalID = 0 ;
    }

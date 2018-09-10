@@ -139,15 +139,14 @@ namespace engine
                break ;
             }
 
+            // only check cs which has valid unique id
+            if ( ! UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
+            {
+               continue ;
+            }
+
             // Lock space first
-            if ( csUniqueID == UTIL_INVALID_UNIQUEID )
-            {
-               rc = pDmsCB->nameToSUAndLock( cs._name, suID, &su, SHARED ) ;
-            }
-            else
-            {
-               rc = pDmsCB->idToSUAndLock( csUniqueID, suID, &su, SHARED ) ;
-            }
+            rc = pDmsCB->idToSUAndLock( csUniqueID, suID, &su, SHARED ) ;
 
             if ( SDB_OK != rc )
             {

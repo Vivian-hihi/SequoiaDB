@@ -1816,7 +1816,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTESTCSCOMMAND, "rtnTestCollectionSpaceCommand" )
    INT32 rtnTestCollectionSpaceCommand ( const CHAR *pCollectionSpace,
-                                         SDB_DMSCB *dmsCB )
+                                         SDB_DMSCB *dmsCB,
+                                         utilCSUniqueID *pCsUniqueID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNTESTCSCOMMAND ) ;
@@ -1836,6 +1837,27 @@ namespace engine
          rc = SDB_DMS_CS_NOTEXIST ;
          goto error ;
       }
+
+      if ( pCsUniqueID )
+      {
+         utilCSUniqueID curCsUniqueID = su->CSUniqueID() ;
+         if ( curCsUniqueID != *pCsUniqueID )
+         {
+            if ( UTIL_IS_VALID_CSUNIQUEID( curCsUniqueID ) )
+            {
+               rc = SDB_DMS_CS_REMAIN ;
+            }
+            else
+            {
+               rc = SDB_DMS_CS_UNIQUEID_CONFLICT ;
+            }
+            PD_LOG ( PDERROR,
+                     "CS[%u] unique id error, expect: %u, rc: %d",
+                     curCsUniqueID, *pCsUniqueID, rc ) ;
+            goto error ;
+         }
+      }
+
    done :
       if ( DMS_INVALID_CS != suID )
       {
@@ -1911,7 +1933,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTESTCLCOMMAND, "rtnTestCollectionCommand" )
    INT32 rtnTestCollectionCommand ( const CHAR *pCollection,
-                                    SDB_DMSCB *dmsCB )
+                                    SDB_DMSCB *dmsCB,
+                                    utilCLUniqueID *pClUniqueID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNTESTCLCOMMAND ) ;
@@ -1921,6 +1944,8 @@ namespace engine
       dmsStorageUnit *su = NULL ;
       const CHAR *pCollectionShortName = NULL ;
       UINT16 cID ;
+      dmsMBContext* mbContext = NULL ;
+      utilCLUniqueID curClUniqueID = UTIL_UNIQUEID_NULL ;
 
       if ( 0 == ossStrcmp( pCollection, CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO ) )
       {
@@ -1933,12 +1958,59 @@ namespace engine
       {
          goto error ;
       }
-      rc = su->data()->findCollection ( pCollectionShortName, cID ) ;
+
+      if ( pClUniqueID )
+      {
+         utilCSUniqueID expCsUniqueID = utilGetCSUniqueID( *pClUniqueID ) ;
+         utilCSUniqueID curCsUniqueID = su->CSUniqueID() ;
+         if ( curCsUniqueID != expCsUniqueID )
+         {
+            if ( UTIL_IS_VALID_CSUNIQUEID( curCsUniqueID ) )
+            {
+               rc = SDB_DMS_CS_REMAIN ;
+            }
+            else
+            {
+               rc = SDB_DMS_CS_UNIQUEID_CONFLICT ;
+            }
+            PD_LOG ( PDERROR,
+                     "CS[%u] unique id error, expect: %u, rc: %d",
+                     curCsUniqueID, expCsUniqueID, rc ) ;
+            goto error ;
+         }
+      }
+
+      rc = su->data()->findCollection ( pCollectionShortName, cID,
+                                        &curClUniqueID ) ;
       if ( rc )
       {
          goto error ;
       }
+
+      if ( pClUniqueID )
+      {
+         if ( curClUniqueID != *pClUniqueID )
+         {
+            if ( UTIL_IS_VALID_CLUNIQUEID( curClUniqueID ) )
+            {
+               rc = SDB_DMS_REMAIN ;
+            }
+            else
+            {
+               rc = SDB_DMS_UNIQUEID_CONFLICT ;
+            }
+            PD_LOG ( PDERROR,
+                     "CL[%llu] unique id error, expect: %llu, rc: %d",
+                     curClUniqueID, *pClUniqueID, rc ) ;
+            goto error ;
+         }
+      }
+
    done :
+      if ( su && mbContext )
+      {
+         su->data()->releaseMBContext( mbContext ) ;
+      }
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;
@@ -2036,7 +2108,7 @@ namespace engine
                             const BSONObj& clInfoObj,
                             pmdEDUCB* cb,
                             SDB_DMSCB* dmsCB, SDB_DPSCB* dpsCB,
-                            BOOLEAN setOnlyIfInvalid )
+                            BOOLEAN setOnlyIfNull )
    {
       PD_TRACE_ENTRY( SDB_RTNCHGUID ) ;
       INT32 rc = SDB_OK ;
@@ -2047,7 +2119,7 @@ namespace engine
       writable = TRUE ;
 
       rc = dmsCB->changeUniqueID( csName, csUniqueID, clInfoObj,
-                                  cb, dpsCB, setOnlyIfInvalid ) ;
+                                  cb, dpsCB, setOnlyIfNull ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to change unique id, rc: %d", rc ) ;
 
    done :

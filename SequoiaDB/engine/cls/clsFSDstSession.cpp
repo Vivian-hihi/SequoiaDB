@@ -677,8 +677,8 @@ namespace engine
          INT32 rc = SDB_OK ;
          string cs ;
          string collection ;
-         utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
-         utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+         utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
+         utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
          UINT32 pageSize = 0 ;
          UINT32 attributes = 0 ;
          UTIL_COMPRESSOR_TYPE compType = UTIL_COMPRESSOR_INVALID ;
@@ -1789,7 +1789,7 @@ namespace engine
                INT32 pageSz = 0 ;
                INT32 lobPageSz = DMS_DEFAULT_LOB_PAGE_SZ ;
                DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ;
-               utilCSUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+               utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
 
                if ( String != eleName.type() ||
                     NumberInt != elePageSZ.type() )

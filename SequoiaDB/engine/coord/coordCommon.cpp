@@ -236,7 +236,7 @@ namespace engine
       try
       {
          BSONElement eName, eID, eVersion ;
-         utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
+         utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
 
          // Check types of name, id, version elements
          eName = obj.getField( CAT_CATALOGNAME_NAME ) ;

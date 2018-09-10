@@ -197,9 +197,9 @@ namespace engine
       UINT8                   _dmsCBState;
       UINT32                  _logicalSUID ;
 
-      // how many cs with invalid unique id, except system cs
-      UINT32                  _invalidCSUniqueIDCnt ;
-      // how many cs don't exist on catalog, except system cs
+      // how many cs which unique id = 0, except system cs
+      UINT32                  _nullCSUniqueIDCnt ;
+      // how many cs which unique id = 0 and don't exist on catalog, except system cs
       UINT32                  _localCSCnt ;
 
       dmsTempSUMgr            _tempSUMgr ;
@@ -272,9 +272,9 @@ namespace engine
 
       void _getCSList( vector<std::string> &csNameVec ) ;
 
-      void _invalidCSUniqueIDCntInc() ;
+      void _nullCSUniqueIDCntInc() ;
 
-      void _invalidCSUniqueIDCntDec() ;
+      void _nullCSUniqueIDCntDec() ;
 
    public:
       _SDB_DMSCB() ;
@@ -313,14 +313,15 @@ namespace engine
                               utilCSUniqueID csUniqueID,
                               pmdEDUCB* cb,
                               SDB_DPSCB* dpsCB,
-                              BOOLEAN setOnlyIfInvalid = TRUE ) ;
+                              BOOLEAN setOnlyIfNull = TRUE ) ;
 
       INT32 changeUniqueID( const CHAR* csname,
                             utilCSUniqueID csUniqueID,
                             const BSONObj& clInfoObj,
                             pmdEDUCB* cb,
                             SDB_DPSCB* dpsCB,
-                            BOOLEAN setOnlyIfInvalid = TRUE ) ;
+                            BOOLEAN setOnlyIfNull = TRUE,
+                            BOOLEAN resetOtherCl = FALSE ) ;
 
       INT32 addCollectionSpace ( const CHAR *pName, UINT32 topSequence,
                                  _dmsStorageUnit *su, _pmdEDUCB *cb,
@@ -354,7 +355,7 @@ namespace engine
 
       void dumpPageMapCSInfo( MON_CSNAME_VEC &vecCS ) ;
 
-      UINT32 invalidCSUniqueIDCnt() const ;
+      UINT32 nullCSUniqueIDCnt() const ;
 
       UINT32 localCSCnt() const ;
 

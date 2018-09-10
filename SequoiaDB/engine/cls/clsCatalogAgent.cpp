@@ -2448,7 +2448,7 @@ namespace engine
       _clsCatalogSet *set = NULL ;
 
       // first find by id, if findout nothing, then find by name
-      if ( UTIL_INVALID_UNIQUEID != clUniqueID )
+      if ( UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
       {
          ID_CAT_MAP_IT it = _mapIDCatalog.find ( clUniqueID ) ;
          if ( it != _mapIDCatalog.end() )
@@ -2512,7 +2512,7 @@ namespace engine
          rootSet->next ( catSet ) ;
       }
 
-      if ( UTIL_INVALID_UNIQUEID != clUniqueID )
+      if ( UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
       {
          _mapIDCatalog[ clUniqueID ] = catSet ;
       }
@@ -2540,7 +2540,7 @@ namespace engine
       {
          BSONObj catalog ( objdata ) ;
          string clName ;
-         UINT64 clUniqueID = UTIL_INVALID_UNIQUEID ;
+         UINT64 clUniqueID = UTIL_UNIQUEID_NULL ;
 
          /// get cl name and cl id
          BSONElement ele = catalog.getField ( CAT_COLLECTION_NAME ) ;
@@ -2623,7 +2623,7 @@ namespace engine
       _clsCatalogSet *preSet = NULL ;
       _clsCatalogSet *curSet = NULL ;
       UINT32 hashCode = ossHash ( name ) ;
-      utilCLUniqueID clUniqueID = UTIL_INVALID_UNIQUEID ;
+      utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
 
       CAT_MAP_IT it = _mapCatalog.find ( hashCode ) ;
       if ( it != _mapCatalog.end() )
@@ -2667,7 +2667,7 @@ namespace engine
          }
       }
 
-      if ( UTIL_INVALID_UNIQUEID != clUniqueID )
+      if ( UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
       {
          ID_CAT_MAP_IT it = _mapIDCatalog.find ( clUniqueID ) ;
          if ( it != _mapIDCatalog.end() )
@@ -2694,7 +2694,7 @@ namespace engine
       _utilSet< string > mainCLList ;
       _utilSet< string >::iterator iterMain ;
       CAT_MAP_IT it = _mapCatalog.begin() ;
-      utilCLUniqueID csUniqueID = UTIL_INVALID_UNIQUEID ;
+      utilCLUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
 
       if ( NULL == pMainCLs )
       {
@@ -2774,7 +2774,7 @@ namespace engine
          ++iterMain ;
       }
 
-      if ( csUniqueID != UTIL_INVALID_UNIQUEID )
+      if ( UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
       {
          ID_CAT_MAP_IT it = _mapIDCatalog.begin() ;
          while ( it != _mapIDCatalog.end() )

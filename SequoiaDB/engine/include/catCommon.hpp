@@ -248,7 +248,8 @@ namespace engine
 
    INT32 catSetCSUniqueHWM( pmdEDUCB *cb, INT16 w, UINT32 csUniqueHWM ) ;
 
-   INT32 catUpdateCSUniqueID( pmdEDUCB *cb, INT16 w, UINT32& CSID ) ;
+   INT32 catUpdateCSUniqueID( pmdEDUCB *cb, INT16 w,
+                              utilCSUniqueID& csUniqueID ) ;
 
    /* Other Tools */
    INT32 catPraseFunc( const BSONObj &func, BSONObj &parsed ) ;
@@ -442,7 +443,7 @@ namespace engine
    /* AutoIncrement */
    INT32 catCheckAutoIncrementValid( const vector<BSONObj> &options ) ;
    INT32 catCreateAutoIncSequence( const BSONObj &boCollection,
-                                   const vector<BSONObj> &optionArr, 
+                                   const vector<BSONObj> &optionArr,
                                    _pmdEDUCB *cb, INT16 w ) ;
    INT32 catDropAutoIncSequence( const BSONObj &boCollection, _pmdEDUCB *cb, INT16 w ) ;
    BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt ) ;
