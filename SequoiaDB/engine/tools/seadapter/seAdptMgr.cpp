@@ -1551,7 +1551,8 @@ namespace seadapter
                    "Index information query request failed[ %d ]", rc ) ;
 
       // All text indices information should be replied in one object.
-      if ( expectReplySz != numReturned || expectReplySz != objVec.size() )
+      if ( ( expectReplySz != numReturned ) ||
+           ( expectReplySz != (INT32)objVec.size() ) )
       {
          PD_LOG( PDERROR, "Reply of index information is not as expected" ) ;
          rc = SDB_SYS ;
