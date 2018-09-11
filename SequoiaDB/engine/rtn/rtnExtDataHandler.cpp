@@ -514,6 +514,7 @@ namespace engine
                                        const BSONObj &orignalObj,
                                        const BSONObj &newObj,
                                        pmdEDUCB* cb,
+                                       BOOLEAN isRollback,
                                        SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
@@ -524,7 +525,13 @@ namespace engine
       context = _contextMgr.findContext( cb->getTID() ) ;
       if ( !context )
       {
-         if ( SDB_DB_FULLSYNC == dbStatus || SDB_DB_REBUILDING == dbStatus )
+         // During full sync or rebuilding, the capped collection will be
+         // processed seperately from the original collection. So nothing will
+         // be done in callback functions.
+         // When rolling back, the original update may have failed. The context
+         // would have been freed in that case. So we also do nothing.
+         if ( SDB_DB_FULLSYNC == dbStatus || SDB_DB_REBUILDING == dbStatus
+              || isRollback )
          {
             goto done ;
          }

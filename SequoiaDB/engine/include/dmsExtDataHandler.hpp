@@ -106,6 +106,7 @@ namespace engine
 
       virtual INT32 onUpdate( const CHAR *extName, const BSONObj &orignalObj,
                               const BSONObj &newObj, _pmdEDUCB* cb,
+                              BOOLEAN isRollback = FALSE,
                               SDB_DPSCB *dpscb = NULL ) = 0 ;
 
       virtual INT32 onTruncateCL( const CHAR *csName, const CHAR *clName,
