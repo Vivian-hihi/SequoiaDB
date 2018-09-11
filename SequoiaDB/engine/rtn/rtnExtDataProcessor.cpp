@@ -927,6 +927,8 @@ namespace engine
          }
       }
 
+      _freeSpace -= ossRoundUpToMultipleX( size, 4 ) ;
+
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR__SPACECHECK, rc ) ;
       return rc ;
