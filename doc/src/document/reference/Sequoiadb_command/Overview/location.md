@@ -21,6 +21,6 @@
 >
 > * 当设置了GroupID, GroupName, NodeID, HostName 或 ServiceName时，Global取值被忽略，在指定的分区组或节点上执行。
 > * GroupID、GroupName：指定分区组过滤条件，缺省指所有分区组；GroupID和GroupName为或的关系，如：{GroupID:1001, GroupName:"db1"}，那么分区组1001和db1都是执行的分区组。
-> * NodeID、HostName、ServiceName：指定分区组中节点过滤条件，对于查询命令，缺省值为该组所有节点，对于操作命令，缺省值为该组主节点。上述字段为与的关系，如 {NodeID:1001, ServiceName:'11810'}，如果节点1001的svcname不为11810，则节点为空。
+> * NodeID、HostName、ServiceName：指定分区组中节点过滤条件，对于查询命令，缺省值为该组所有节点，对于操作命令，缺省值为该组主节点。上述字段为与的关系，如 {NodeID:1001, ServiceName:'11810'}，如果节点1001的ServiceName不为11810，则节点为空。
 > * Groups: 为了兼容之前的命令而保留，与GroupName作用相同，不推荐使用。
 
