@@ -57,10 +57,10 @@ namespace seadapter
    #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
    const CHAR *_statDescription[] =
    {
+      "Consult",
       "Begin",
       "Update collection version",
-      "Consult",
-      "Query last logical id in capped collection",
+      "Clean capped collection",
       "Compare last logical id",
       "Query normal collection",
       "Query capped collection",
