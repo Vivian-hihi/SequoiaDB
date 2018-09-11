@@ -1377,6 +1377,9 @@ namespace seadapter
                  "running in READONLY mode" ) ;
       }
 
+      // New register means new connections. Refresh the index information
+      // forcefully.
+      _localIdxVer = SEADPT_INIT_TEXT_INDEX_VERSION ;
       // When connect to any node, start the index update timer.
       rc = _indexNetRtAgent.addTimer( SEADPT_IDX_UPDATE_INTERVAL,
                                       &_indexTimerHandler,
