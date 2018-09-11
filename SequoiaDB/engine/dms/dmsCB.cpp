@@ -1601,9 +1601,9 @@ namespace engine
             goto error ;
          }
 
-         su->data()->chgCLUniqueID( utilBson2ClNameId( clInfoObj ),
-                                    setOnlyIfNull,
-                                    resetOtherCl ) ;
+         su->data()->changeCLUniqueID( utilBson2ClNameId( clInfoObj ),
+                                       setOnlyIfNull,
+                                       resetOtherCl ) ;
 
          suUnlock ( suID ) ;
       }

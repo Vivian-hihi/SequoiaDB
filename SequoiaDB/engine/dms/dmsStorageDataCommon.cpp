@@ -2641,10 +2641,10 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_CHGUID, "_dmsStorageDataCommon::chgCLUniqueID" )
-   INT32 _dmsStorageDataCommon::chgCLUniqueID( const MAP_CLNAME_ID& modifyCl,
-                                               BOOLEAN setOnlyIfNull,
-                                               BOOLEAN resetOtherCl )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_CHGUID, "_dmsStorageDataCommon::changeCLUniqueID" )
+   INT32 _dmsStorageDataCommon::changeCLUniqueID( const MAP_CLNAME_ID& modifyCl,
+                                                  BOOLEAN setOnlyIfNull,
+                                                  BOOLEAN resetOtherCl )
    {
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON_CHGUID ) ;
 
@@ -2701,6 +2701,10 @@ namespace engine
 
          _collectionRemove ( clName.c_str(), orgClUniqueID ) ;
          _collectionInsert ( clName.c_str(), mbID, newClUniqueID ) ;
+
+         PD_LOG( PDDEBUG,
+                 "Change cl[%s] unique id, org: %llu, new: %llu",
+                 clName.c_str(), orgClUniqueID, newClUniqueID ) ;
 
       }
 

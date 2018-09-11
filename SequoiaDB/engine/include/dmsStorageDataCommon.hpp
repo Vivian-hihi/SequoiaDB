@@ -927,9 +927,9 @@ namespace engine
          INT32 truncateCollectionLoads( const CHAR *pName,
                                         dmsMBContext *context = NULL ) ;
 
-         INT32 chgCLUniqueID( const std::map<std::string, utilCLUniqueID>& clInfo,
-                              BOOLEAN setOnlyIfNull = TRUE,
-                              BOOLEAN resetOtherCl = FALSE ) ;
+         INT32 changeCLUniqueID( const std::map<std::string, utilCLUniqueID>& clInfo,
+                                 BOOLEAN setOnlyIfNull = TRUE,
+                                 BOOLEAN resetOtherCl = FALSE ) ;
 
          INT32 renameCollection ( const CHAR *oldName, const CHAR *newName,
                                   _pmdEDUCB *cb, SDB_DPSCB *dpscb,
