@@ -3135,6 +3135,10 @@ namespace engine
    error:
       ( void )_onInsertFail( context, hasInsert, foundRID,
                              dropDps, (ossValuePtr)insertObj.objdata(), cb ) ;
+      if ( handler )
+      {
+         handler->abortOperation( DMS_EXTOPR_TYPE_INSERT, cb ) ;
+      }
       goto done ;
    }
 
@@ -3396,6 +3400,10 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATACOMMON_DELETERECORD, rc ) ;
       return rc ;
    error :
+      if ( handler )
+      {
+         handler->abortOperation( DMS_EXTOPR_TYPE_DELETE, cb ) ;
+      }
       goto done ;
    }
 
@@ -3635,6 +3643,10 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATACOMMON_UPDATERECORD, rc ) ;
       return rc ;
    error :
+      if ( handler )
+      {
+         handler->abortOperation( DMS_EXTOPR_TYPE_UPDATE, cb ) ;
+      }
       goto done ;
    }
 

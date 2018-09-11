@@ -1441,6 +1441,7 @@ namespace engine
       INT32 indexID                = 0 ;
       BOOLEAN unique               = FALSE ;
       BOOLEAN dropDups             = FALSE ;
+      vector<ixmIndexCB> textIdxCBs ;
 
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
@@ -1481,25 +1482,32 @@ namespace engine
                                    IXM_EXTENT_TYPE_TEXT )
               && IXM_INDEX_FLAG_NORMAL == indexCB.getFlag() )
          {
-            IDmsExtDataHandler *handler = _pDataSu->getExtDataHandler() ;
-            if ( !handler )
-            {
-               rc = SDB_SYS ;
-               PD_LOG( PDERROR,
-                       "External operation handler of index[%s] is invalid",
-                       indexCB.getName() ) ;
-               goto error ;
-            }
-
-            rc = handler->onInsert( indexCB.getExtDataName(), inputObj, cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "Insert on text index failed[ %d ]",
-                         rc ) ;
+            textIdxCBs.push_back( indexCB ) ;
          }
          else
          {
             rc = _indexInsert ( context, &indexCB, inputObj, rid, cb, !unique,
                                 dropDups ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to insert index, rc: %d", rc ) ;
+         }
+      }
+
+      if ( textIdxCBs.size() > 0 )
+      {
+         IDmsExtDataHandler *handler = _pDataSu->getExtDataHandler() ;
+         if ( !handler )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "External operation handler is invalid" ) ;
+            goto error ;
+         }
+
+         // Insert into text index at last.
+         for ( vector<ixmIndexCB>::iterator itr = textIdxCBs.begin();
+               itr != textIdxCBs.end(); ++itr )
+         {
+            rc = handler->onInsert( itr->getExtDataName(), inputObj, cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Insert on text index failed[ %d ]", rc ) ;
          }
       }
 
@@ -1698,6 +1706,7 @@ namespace engine
    {
       INT32 rc                     = SDB_OK ;
       INT32 indexID                = 0 ;
+      vector<ixmIndexCB> textIdxCBs ;
 
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
@@ -1735,26 +1744,34 @@ namespace engine
                                    IXM_EXTENT_TYPE_TEXT )
               && IXM_INDEX_FLAG_NORMAL == indexCB.getFlag() )
          {
-            IDmsExtDataHandler *handler = _pDataSu->getExtDataHandler() ;
-            if ( !handler )
-            {
-               rc = SDB_SYS ;
-               PD_LOG( PDERROR,
-                       "External operation handler of index[%s] is invalid",
-                       indexCB.getName() ) ;
-               goto error ;
-            }
-
-            rc = handler->onUpdate( indexCB.getExtDataName(), originalObj,
-                                    newObj, cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "Update on text index failed[ %d ]",
-                         rc ) ;
+            textIdxCBs.push_back( indexCB ) ;
          }
          else
          {
             rc = _indexUpdate ( context, &indexCB, originalObj, newObj, rid, cb,
                                 isRollback ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to update index, rc: %d", rc ) ;
+         }
+      }
+
+      if ( textIdxCBs.size() > 0 )
+      {
+         IDmsExtDataHandler *handler = _pDataSu->getExtDataHandler() ;
+         if ( !handler )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "External operation handler is invalid" ) ;
+            goto error ;
+         }
+
+         // Insert into text index at last.
+         for ( vector<ixmIndexCB>::iterator itr = textIdxCBs.begin();
+               itr != textIdxCBs.end(); ++itr )
+         {
+            rc = handler->onUpdate( itr->getExtDataName(), originalObj,
+                                    newObj, cb, isRollback ) ;
+            PD_RC_CHECK( rc, PDERROR, "Update on text index failed[ %d ]",
+                         rc ) ;
          }
       }
 
@@ -1829,6 +1846,7 @@ namespace engine
    {
       INT32 rc                     = SDB_OK ;
       INT32 indexID                = 0 ;
+      vector<ixmIndexCB> textIdxCBs ;
 
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
@@ -1869,19 +1887,7 @@ namespace engine
                                    IXM_EXTENT_TYPE_TEXT )
               && IXM_INDEX_FLAG_NORMAL == indexCB.getFlag() )
          {
-            IDmsExtDataHandler *handler = _pDataSu->getExtDataHandler() ;
-            if ( !handler )
-            {
-               rc = SDB_SYS ;
-               PD_LOG( PDERROR,
-                       "External operation handler of index[%s] is invalid",
-                       indexCB.getName() ) ;
-               goto error ;
-            }
-
-            rc = handler->onDelete( indexCB.getExtDataName(), inputObj, cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "Delete on text index failed[ %d ]",
-                         rc ) ;
+            textIdxCBs.push_back( indexCB ) ;
          }
          else
          {
@@ -1891,6 +1897,26 @@ namespace engine
                PD_LOG ( PDERROR, "Failed to delete index, rc: %d", rc ) ;
                goto error ;
             }
+         }
+      }
+
+      if ( textIdxCBs.size() > 0 )
+      {
+         IDmsExtDataHandler *handler = _pDataSu->getExtDataHandler() ;
+         if ( !handler )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "External operation handler is invalid" );
+            goto error ;
+         }
+
+         // Insert into text index at last.
+         for ( vector<ixmIndexCB>::iterator itr = textIdxCBs.begin();
+               itr != textIdxCBs.end(); ++itr )
+         {
+            rc = handler->onDelete( itr->getExtDataName(), inputObj, cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Delete on text index failed[ %d ]",
+                         rc ) ;
          }
       }
 

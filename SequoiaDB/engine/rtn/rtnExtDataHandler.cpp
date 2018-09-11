@@ -541,6 +541,11 @@ namespace engine
          goto error ;
       }
 
+      if ( isRollback )
+      {
+         context->setStat( EXT_CTX_STAT_ABORTING ) ;
+      }
+
       if ( EXT_CTX_STAT_ABORTING == context->getStat() )
       {
          goto done ;
