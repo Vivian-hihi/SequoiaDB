@@ -30,7 +30,6 @@
          <en>Print help information</en>
          <cn>打印帮助信息</cn>
       </detail>
-      <hidden>true</hidden>
       <typeofweb>--</typeofweb>
    </opt>
 
@@ -42,7 +41,11 @@
          <en>Database version</en>
          <cn>数据库版本</cn>
       </description>
-      <hidden>true</hidden>
+      <detail>
+         <en>Print version information</en>
+         <cn>打印版本信息</cn>
+      </detail>
+      <typeofweb>--</typeofweb>
    </opt>
 
    <opt>
