@@ -153,14 +153,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_PREPARE ) ;
+      rtnExtContextBase *context = NULL ;
 
-      rc = _check( type, csName, clName, idxName, object, objNew ) ;
-      PD_RC_CHECK( rc, PDERROR, "External data process checking failed[ %d ]",
-                   rc ) ;
-
-      rc = _prepareCtx( type, cb ) ;
+      rc = _getContext( type, context, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Prepare external operation context "
                                 "failed[ %d ]", rc ) ;
+
+      // If the context is not in normal state, just ignore.
+      if ( EXT_CTX_STAT_NORMAL == context->getStat() )
+      {
+         rc = _check( type, csName, clName, idxName, object, objNew ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "External data process checking failed[ %d ]", rc ) ;
+      }
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_PREPARE, rc ) ;
@@ -449,11 +454,7 @@ namespace engine
    error:
       if ( context )
       {
-         INT32 rcTmp = _contextMgr.delContext( context->getID(), cb ) ;
-         if ( rcTmp )
-         {
-            PD_LOG( PDERROR, "Delete context failed[ %d ]", rcTmp ) ;
-         }
+         context->setStat( EXT_CTX_STAT_ABORTING ) ;
       }
       goto done ;
    }
@@ -500,11 +501,7 @@ namespace engine
    error:
       if ( context )
       {
-         INT32 rcTmp = _contextMgr.delContext( context->getID(), cb ) ;
-         if ( rcTmp )
-         {
-            PD_LOG( PDERROR, "Delete context failed[ %d ]", rcTmp ) ;
-         }
+         context->setStat( EXT_CTX_STAT_ABORTING ) ;
       }
       goto done ;
    }
@@ -565,11 +562,7 @@ namespace engine
    error:
       if ( context )
       {
-         INT32 rcTmp = _contextMgr.delContext( context->getID(), cb ) ;
-         if ( rcTmp )
-         {
-            PD_LOG( PDERROR, "Delete context failed[ %d ]", rcTmp ) ;
-         }
+         context->setStat( EXT_CTX_STAT_ABORTING ) ;
       }
       goto done ;
    }
@@ -801,7 +794,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__PREPARECTX, "_rtnExtDataHandler::_prepareCtx" )
-   INT32 _rtnExtDataHandler::_prepareCtx( DMS_EXTOPR_TYPE type, pmdEDUCB *cb )
+   INT32 _rtnExtDataHandler::_getContext( DMS_EXTOPR_TYPE type,
+                                          rtnExtContextBase *&ctx,
+                                          pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__PREPARECTX ) ;
@@ -826,11 +821,13 @@ namespace engine
                       rc ) ;
          hasHold = TRUE ;
       }
-      else if ( type != context->getType() )
+      else if ( type != context->getType() &&
+                ( EXT_CTX_STAT_ABORTING != context->getStat() ) )
       {
          context->setStat( EXT_CTX_STAT_ABORTING ) ;
-         goto done ;
       }
+
+      ctx = context ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER__PREPARECTX, rc ) ;
