@@ -70,7 +70,14 @@ TEST_F( dbFuncParamTest, connect12694 )
    EXPECT_EQ( SDB_INVALIDARG, rc ) ;
 
    // pUsrName NULL
-   //rc = db.connect( ARGS->hostName(), ARGS->port() , NULL, ARGS->passwd() ) ;
+   rc = db.connect( ARGS->hostName(), ARGS->port() , NULL, ARGS->passwd() ) ;
+   EXPECT_EQ( 0, rc );
+   // pPasswd NULL
+   rc = db.connect( ARGS->hostName(), ARGS->port() , ARGS->user(), NULL ) ;
+   EXPECT_EQ( 0, rc );
+   // pUsrName && pPasswd NULL
+   rc = db.connect( ARGS->hostName(), ARGS->port() , NULL, NULL ) ;
+   EXPECT_EQ( 0, rc );
    //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
    //rc = db.connect( ARGS->hostName(), ARGS->svcName(), NULL, ARGS->passwd() ) ;
    //EXPECT_EQ( SDB_INVALIDARG, rc ) ;
