@@ -230,7 +230,7 @@ namespace engine
    {
       bool operator()( const CHAR *lhs, const CHAR *rhs ) const
       {
-         return ossStrcmp( lhs, rhs ) < 0 ;
+         return ossStrcasecmp( lhs, rhs ) < 0 ;
       }
    } ;
 
