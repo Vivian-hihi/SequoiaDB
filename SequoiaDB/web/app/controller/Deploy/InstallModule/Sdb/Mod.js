@@ -727,6 +727,7 @@
          {
             return;
          }
+         $scope.RemoveNodeWindow['config']['inputList'][0]['valid'] = [] ;
          var isFirst = true ;
          $.each( $scope.NodeList, function( index2, nodeInfo ){
             if( $scope.GroupList[index]['role'] == 'data' && nodeInfo['datagroupname'] == $scope.GroupList[index]['groupName'] )
