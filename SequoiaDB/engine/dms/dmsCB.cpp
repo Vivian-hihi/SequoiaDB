@@ -1534,6 +1534,11 @@ namespace engine
       goto done ;
    }
 
+   // input: clInfoObj
+   // [
+   //    { "Name": "bar1", "UniqueID": 2667174690817 } ,
+   //    { "Name": "bar2", "UniqueID": 2667174690818 }
+   // ]
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CHGUID, "_SDB_DMSCB::changeUniqueID" )
    INT32 _SDB_DMSCB::changeUniqueID( const CHAR* csname,
                                      utilCSUniqueID csUniqueID,
@@ -1644,7 +1649,10 @@ namespace engine
       }
 
       // change cs unique id
-      changeCSUniqueID( su, csUniqueID, cb, dpsCB, setOnlyIfNull ) ;
+      rc = changeCSUniqueID( su, csUniqueID, cb, dpsCB, setOnlyIfNull ) ;
+      PD_RC_CHECK ( rc, PDERROR,
+                    "Failed to change cs unique id, rc: %d",
+                    rc ) ;
 
       // write dps
       if ( SDB_OK == rc && dpsCB )
@@ -1652,7 +1660,7 @@ namespace engine
          info.setInfoEx( cscb->_su->LogicalCSID(), ~0, DMS_INVALID_EXTENT, cb );
          rc = dpsCB->prepare ( info ) ;
          PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to insert cscrt into log, rc = %d",
+                       "Failed to insert cscrt into log, rc: %d",
                        rc ) ;
 
          _mutex.release() ;

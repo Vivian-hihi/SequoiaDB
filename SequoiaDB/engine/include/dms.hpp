@@ -263,6 +263,8 @@ namespace engine
 
    std::string dmsGetCSNameFromFullName( const std::string &fullName ) ;
 
+   std::string dmsGetCLShortNameFromFullName( const std::string &fullName ) ;
+
 }
 
 #endif /* DMS_HPP_ */

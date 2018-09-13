@@ -474,7 +474,14 @@ namespace engine
             {
                PD_LOG( PDWARNING, "Collection space[%s] already exist when "
                        "create", cs ) ;
-               rc = SDB_OK ;
+
+               rc = _dmsCB->changeUniqueID( cs, csUniqueID, BSONObj(),
+                                            eduCB, _dpsCB, FALSE, FALSE ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR,
+                          "Fail to change cs[%s] unique id, rc: %d", cs, rc ) ;
+               }
             }
             break ;
          }
@@ -513,6 +520,9 @@ namespace engine
             UINT32 attribute = 0 ;
             UINT8 compType = UTIL_COMPRESSOR_INVALID ;
             BSONObj extOptions ;
+            string cs ;
+            utilCSUniqueID csUniqID = UTIL_UNIQUEID_NULL ;
+
             rc = dpsRecord2CLCrt( (CHAR *)recordHeader, &cl, clUniqueID,
                                   attribute, compType, extOptions ) ;
             if ( SDB_OK != rc )
@@ -520,17 +530,52 @@ namespace engine
                goto error ;
             }
 
+            cs = dmsGetCSNameFromFullName( cl ) ;
+            csUniqID = utilGetCSUniqueID( clUniqueID ) ;
+
             rc = rtnCreateCollectionCommand( cl, attribute, eduCB, _dmsCB,
                                              _dpsCB, clUniqueID,
                                              (UTIL_COMPRESSOR_TYPE)compType,
                                              0, TRUE,
                                              ( extOptions.isEmpty() ?
                                                NULL : &extOptions ) ) ;
+            if ( SDB_DMS_CS_REMAIN == rc ||
+                 SDB_DMS_CS_UNIQUEID_CONFLICT == rc )
+            {
+               rc = _dmsCB->changeUniqueID( cs.c_str(), csUniqID, BSONObj(),
+                                            eduCB, _dpsCB, FALSE, FALSE ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Fail to change cs[%s] unique id, rc: %d",
+                          cs.c_str(), rc ) ;
+                  goto error ;
+               }
+               rc = rtnCreateCollectionCommand( cl, attribute, eduCB, _dmsCB,
+                                                _dpsCB, clUniqueID,
+                                                (UTIL_COMPRESSOR_TYPE)compType,
+                                                0, TRUE,
+                                                ( extOptions.isEmpty() ?
+                                                NULL : &extOptions ) ) ;
+            }
             if ( SDB_DMS_EXIST == rc )
             {
                PD_LOG( PDWARNING, "Collection [%s] already exist when "
                        "create", cl ) ;
-               rc = SDB_OK ;
+
+               BSONArrayBuilder clArr ;
+               clArr << BSON( FIELD_NAME_NAME <<
+                              dmsGetCLShortNameFromFullName( cl ).c_str() <<
+                              FIELD_NAME_UNIQUEID <<
+                              (INT64)clUniqueID ) ;
+               rc = _dmsCB->changeUniqueID( cs.c_str(), csUniqID, clArr.arr(),
+                                            eduCB, _dpsCB, FALSE, FALSE ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Fail to change cl[%s] unique id, rc: %d",
+                          cl, rc ) ;
+                  goto error ;
+               }
+
             }
             break ;
          }
@@ -1399,6 +1444,22 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       rc = rtnTestCollectionCommand( collection, _dmsCB, &clUniqueID ) ;
+
+      if ( SDB_DMS_REMAIN == rc )
+      {
+         rc = rtnDropCollectionCommand( collection, eduCB, _dmsCB, _dpsCB ) ;
+         if ( SDB_OK == rc )
+         {
+            rc = SDB_DMS_NOTEXIST ;
+         }
+         if ( SDB_DMS_NOTEXIST != rc )
+         {
+            PD_LOG( PDERROR,
+                    "Drop cl[%s] before create cl failed, rc: %d",
+                    collection, rc ) ;
+         }
+      }
+
       if ( SDB_DMS_NOTEXIST == rc )
       {
          rc = rtnCreateCollectionCommand( collection, attributes, eduCB,

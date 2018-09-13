@@ -1298,6 +1298,23 @@ namespace engine
          goto error ;
       }
 
+      if ( su->CSUniqueID() != csUniqueID )
+      {
+         if ( UTIL_IS_VALID_CSUNIQUEID( su->CSUniqueID() ) &&
+              UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
+         {
+            rc = SDB_DMS_CS_REMAIN ;
+         }
+         else
+         {
+            rc = SDB_DMS_CS_UNIQUEID_CONFLICT ;
+         }
+         PD_LOG ( PDERROR,
+                  "CS unique id[%u] conflict, expect: %u, cl name: %s,  rc: %d",
+                  su->CSUniqueID(), csUniqueID, pCollection, rc ) ;
+         goto error ;
+      }
+
       if ( DMS_STORAGE_CAPPED != su->type() &&
            OSS_BIT_TEST( attributes, DMS_MB_ATTR_CAPPED ) )
       {
@@ -1843,7 +1860,8 @@ namespace engine
          utilCSUniqueID curCsUniqueID = su->CSUniqueID() ;
          if ( curCsUniqueID != *pCsUniqueID )
          {
-            if ( UTIL_IS_VALID_CSUNIQUEID( curCsUniqueID ) )
+            if ( UTIL_IS_VALID_CSUNIQUEID( curCsUniqueID ) &&
+                 UTIL_IS_VALID_CSUNIQUEID( *pCsUniqueID ) )
             {
                rc = SDB_DMS_CS_REMAIN ;
             }
@@ -1965,7 +1983,8 @@ namespace engine
          utilCSUniqueID curCsUniqueID = su->CSUniqueID() ;
          if ( curCsUniqueID != expCsUniqueID )
          {
-            if ( UTIL_IS_VALID_CSUNIQUEID( curCsUniqueID ) )
+            if ( UTIL_IS_VALID_CSUNIQUEID( curCsUniqueID ) &&
+                 UTIL_IS_VALID_CSUNIQUEID( expCsUniqueID ) )
             {
                rc = SDB_DMS_CS_REMAIN ;
             }
@@ -1991,7 +2010,8 @@ namespace engine
       {
          if ( curClUniqueID != *pClUniqueID )
          {
-            if ( UTIL_IS_VALID_CLUNIQUEID( curClUniqueID ) )
+            if ( UTIL_IS_VALID_CLUNIQUEID( curClUniqueID ) &&
+                 UTIL_IS_VALID_CLUNIQUEID( *pClUniqueID ) )
             {
                rc = SDB_DMS_REMAIN ;
             }

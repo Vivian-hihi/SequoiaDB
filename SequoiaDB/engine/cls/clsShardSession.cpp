@@ -4538,6 +4538,7 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       rc = rtnTestCollectionCommand( clName, _pDmsCB, &clUniqueID ) ;
+
       if ( SDB_DMS_CS_REMAIN == rc )
       {
          string cs ;
@@ -4553,6 +4554,21 @@ namespace engine
             PD_LOG( PDERROR,
                     "Drop cs[%s] before create cl failed, rc: %d.",
                     cs.c_str(), rc ) ;
+         }
+      }
+
+      if ( SDB_DMS_REMAIN == rc )
+      {
+         rc = rtnDropCollectionCommand( clName, _pEDUCB, _pDmsCB, _pDpsCB ) ;
+         if ( SDB_OK == rc )
+         {
+            rc = SDB_DMS_NOTEXIST ;
+         }
+         if ( rc != SDB_DMS_NOTEXIST )
+         {
+            PD_LOG( PDERROR,
+                    "Drop cl[%s] before create cl failed, rc: %d.",
+                    clName, rc ) ;
          }
       }
 

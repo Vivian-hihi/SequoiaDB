@@ -272,5 +272,10 @@ namespace engine
       return fullName.substr( 0, fullName.find( '.' ) ) ;
    }
 
+   std::string dmsGetCLShortNameFromFullName( const std::string &fullName )
+   {
+      return fullName.substr( fullName.find( '.' ) + 1 ) ;
+   }
+
 }
 
