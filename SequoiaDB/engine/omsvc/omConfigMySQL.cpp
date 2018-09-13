@@ -468,13 +468,12 @@ namespace engine
       goto done ;
    }
 
-   #define OM_DBPATH_POSTGRESQL "postgresql"
-
+   #define OM_DBPATH_MYSQL "mysql"
    INT32 OmMySQLConfigBuilder::_getDBPath( OmHost& host,
-                                              const string& diskPath,
-                                              const string& businessType,
-                                              const string& serviceName,
-                                              string& dbPath )
+                                           const string& diskPath,
+                                           const string& businessType,
+                                           const string& serviceName,
+                                           string& dbPath )
    {
       INT32 rc = SDB_OK ;
       INT32 i  = 0 ;
@@ -494,25 +493,29 @@ namespace engine
          if ( isRootPath && deployPath.length() > 0 )
          {
             ss << deployPath ;
+
+            if ( OSS_FILE_SEP_CHAR != deployPath.at( deployPath.length() -1 ) )
+            {
+               ss << OSS_FILE_SEP ;
+            }
          }
          else
          {
             ss << diskPath ;
-         }
 
-         if ( OSS_FILE_SEP_CHAR != diskPath.at( diskPath.length() -1 ) )
-         {
-            ss << OSS_FILE_SEP ;
+            if ( OSS_FILE_SEP_CHAR != diskPath.at( diskPath.length() -1 ) )
+            {
+               ss << OSS_FILE_SEP ;
+            }
          }
 
          if ( FALSE == isRootPath )
          {
-            ss << OM_BUSINESS_SEQUOIASQL << OSS_FILE_SEP <<
-                  OM_DBPATH_POSTGRESQL   << OSS_FILE_SEP ;
+            ss << OM_BUSINESS_SEQUOIASQL << OSS_FILE_SEP
+               << OM_DBPATH_MYSQL << OSS_FILE_SEP ;
          }
 
-         ss << OM_DBPATH_PREFIX_DATABASE << OSS_FILE_SEP <<
-               serviceName ;
+         ss << OM_DBPATH_PREFIX_DATABASE << OSS_FILE_SEP << serviceName ;
          if ( 0 != i )
          {
             ss << "_" << i ;
