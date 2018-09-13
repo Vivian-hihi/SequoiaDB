@@ -640,9 +640,20 @@ namespace engine
          goto done ;
       }
 
-      rc = context->done( cb, dpscb ) ;
+      // In some cases, done will be called in aborting process. For example,
+      // when deleting records, even deleting index fails, the records will be
+      // deleted anyway. So this done will be called, as the error code of ixm
+      // will be ignored.
+      if ( EXT_CTX_STAT_ABORTING == context->getStat() )
+      {
+         rc = context->abort( cb, dpscb ) ;
+      }
+      else
+      {
+         rc = context->done( cb, dpscb ) ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Final step of current operation failed[ %d ]",
-                      rc) ;
+                   rc ) ;
 
    done:
       if ( context && ownContext )
