@@ -163,11 +163,44 @@ UNIT_TEST.test( 'scan host 2', function(){
 }, true ) ;
 
 UNIT_TEST.test( 'check host 2', function(){
-   OM_CTRL.check_host( HOST_INFO ) ;
+   HOST_CONF = OM_CTRL.check_host( HOST_INFO ) ;
+   for( var i in HOST_CONF )
+   {
+      var diskList = HOST_CONF[i]['Disk'] ;
+      HOST_CONF[i]['Disk'] = [] ;
+
+      for( var k in diskList )
+      {
+         if( diskList[k]['CanUse'] == true && diskList[k]['IsLocal'] == true )
+         {
+            HOST_CONF[i]['Disk'].push( {
+               'Name':     diskList[k]['Name'],
+               'Mount':    diskList[k]['Mount'],
+               'Size':     diskList[k]['Size'],
+               'Free':     diskList[k]['Free'],
+               'IsLocal':  diskList[k]['IsLocal']
+            } ) ;
+         }
+      }
+   }
 }, true ) ;
 
 UNIT_TEST.test( 'add host 2', function(){
-
+   for( var i in HOST_CONF )
+   {
+      for( var k in HOST_INFO['HostInfo'] )
+      {
+         if( HOST_CONF[i]['IP'] == HOST_INFO['HostInfo'][k]['IP'] )
+         {
+            HOST_CONF[i]['HostName'] = HOST_INFO['HostInfo'][k]['HostName'] ;
+            HOST_CONF[i]['User']     = HOST_INFO['HostInfo'][k]['User'] ;
+            HOST_CONF[i]['Passwd']   = HOST_INFO['HostInfo'][k]['Passwd'] ;
+            HOST_CONF[i]['SshPort']  = HOST_INFO['HostInfo'][k]['SshPort'] ;
+            HOST_CONF[i]['AgentService'] = HOST_INFO['HostInfo'][k]['AgentService'] ;
+            break ;
+         }
+      }
+   }
    var hostConf = {
       'ClusterName': CLUSTER_NAME,
       'HostInfo': HOST_CONF,
@@ -199,7 +232,7 @@ UNIT_TEST.test( 'check add host task 2', function(){
 
 UNIT_TEST.test( 'deploy postgresql package', function(){
    var packageName = "sequoiasql-postgresql" ;
-   var installPath = "/opt/sequoiasql/postgresql" ;
+   var installPath = "/opt/sequoiasql/postgresql/" ;
    var hostList = [] ;
    for( var i in HOST_INFO['HostInfo'] )
    {
@@ -221,11 +254,15 @@ UNIT_TEST.test( 'check deploy postgresql task', function(){
    TASK_INFO = OM_CTRL.query_task3( TASK_ID, IS_DEBUG ) ;
    UNIT_TEST.assert( 1, TASK_INFO.length, "deploy postgresql package failed: no task info" ) ;
    UNIT_TEST.assert( 0, TASK_INFO[0]['errno'], "deploy postgresql package failed: taskid=" + TASK_ID ) ;
+   for( var i in TASK_INFO[0]['ResultInfo'] )
+   {
+      UNIT_TEST.assert( 0, TASK_INFO[0]['ResultInfo'][i]['errno'], "deploy postgresql failed: detail:" + JSON.stringify( TASK_INFO[0]['ResultInfo'][i] ), true ) ;
+   }
 }, true ) ;
 
 UNIT_TEST.test( 'deploy mysql package', function(){
    var packageName = "sequoiasql-mysql" ;
-   var installPath = "/opt/sequoiasql/mysql" ;
+   var installPath = "/opt/sequoiasql/mysql/" ;
    var hostList = [] ;
    for( var i in HOST_INFO['HostInfo'] )
    {
@@ -247,6 +284,10 @@ UNIT_TEST.test( 'check deploy mysql task', function(){
    TASK_INFO = OM_CTRL.query_task3( TASK_ID, IS_DEBUG ) ;
    UNIT_TEST.assert( 1, TASK_INFO.length, "deploy mysql package failed: no task info" ) ;
    UNIT_TEST.assert( 0, TASK_INFO[0]['errno'], "deploy mysql package failed: taskid=" + TASK_ID ) ;
+   for( var i in TASK_INFO[0]['ResultInfo'] )
+   {
+      UNIT_TEST.assert( 0, TASK_INFO[0]['ResultInfo'][i]['errno'], "deploy mysql failed: detail:" + JSON.stringify( TASK_INFO[0]['ResultInfo'][i] ), true ) ;
+   }
 }, true ) ;
 
 /* ========== 创建sequoiadb集群业务 ========== */
@@ -300,6 +341,10 @@ UNIT_TEST.test( 'check add sequoiadb distribution business task', function(){
    TASK_INFO = OM_CTRL.query_task3( TASK_ID, IS_DEBUG ) ;
    UNIT_TEST.assert( 1, TASK_INFO.length, "add sequoiadb distribution business failed: no task info" ) ;
    UNIT_TEST.assert( 0, TASK_INFO[0]['errno'], "add sequoiadb distribution business failed: taskid=" + TASK_ID ) ;
+   for( var i in TASK_INFO[0]['ResultInfo'] )
+   {
+      UNIT_TEST.assert( 0, TASK_INFO[0]['ResultInfo'][i]['errno'], "add sequoiadb failed: detail:" + JSON.stringify( TASK_INFO[0]['ResultInfo'][i] ), true ) ;
+   }
 }, true ) ;
 
 /* ========== 创建sequoiadb单机业务 ========== */
@@ -359,6 +404,10 @@ UNIT_TEST.test( 'check add sequoiadb standlone business task', function(){
    TASK_INFO = OM_CTRL.query_task3( TASK_ID, IS_DEBUG ) ;
    UNIT_TEST.assert( 1, TASK_INFO.length, "add sequoiadb standlone business failed: no task info" ) ;
    UNIT_TEST.assert( 0, TASK_INFO[0]['errno'], "add sequoiadb standlone business failed: taskid=" + TASK_ID ) ;
+   for( var i in TASK_INFO[0]['ResultInfo'] )
+   {
+      UNIT_TEST.assert( 0, TASK_INFO[0]['ResultInfo'][i]['errno'], "add sequoiadb failed: detail:" + JSON.stringify( TASK_INFO[0]['ResultInfo'][i] ), true ) ;
+   }
 }, true ) ;
 
 /* ========== 创建sequoiasql-postgresql业务 ========== */
@@ -416,8 +465,75 @@ UNIT_TEST.test( 'check add postgresql business task', function(){
    TASK_INFO = OM_CTRL.query_task3( TASK_ID, IS_DEBUG ) ;
    UNIT_TEST.assert( 1, TASK_INFO.length, "add postgresql business failed: no task info" ) ;
    UNIT_TEST.assert( 0, TASK_INFO[0]['errno'], "add postgresql business failed: taskid=" + TASK_ID ) ;
+   for( var i in TASK_INFO[0]['ResultInfo'] )
+   {
+      UNIT_TEST.assert( 0, TASK_INFO[0]['ResultInfo'][i]['errno'], "add postgresql failed: detail:" + JSON.stringify( TASK_INFO[0]['ResultInfo'][i] ), true ) ;
+   }
 }, true ) ;
 
+/* ========== 创建sequoiasql-mysql业务 ========== */
+/* 等mysql的sdb_mysql_ctrl修复再开启测试
+UNIT_TEST.test( 'get mysql config', function(){
+   var templateInfo = {
+      "ClusterName": CLUSTER_NAME,
+      "BusinessName": "test_mysql",
+      "DeployMod": "",
+      "BusinessType": "sequoiasql-mysql",
+      "Property": [],
+      "HostInfo": []
+   } ;
+   for( var i in HOST_INFO['HostInfo'] )
+   {
+      templateInfo['HostInfo'].push( {
+         "HostName": HOST_INFO['HostInfo'][i]['HostName']
+      } ) ;
+   }
+   BUZ_CONFIG = OM_CTRL.get_business_config( templateInfo ) ;
+   UNIT_TEST.assert( 1, BUZ_CONFIG.length, "get mysql config failed" ) ;
+
+   BUZ_CONFIG = BUZ_CONFIG[0] ;
+
+   delete BUZ_CONFIG['Property'] ;
+
+   var configList = BUZ_CONFIG['Config'] ;
+   BUZ_CONFIG['Config'] = [] ;
+   for( var i in configList )
+   {
+      var newConfig = {} ;
+      var configInfo = configList[i] ;
+      for( var key in configInfo )
+      {
+         if( configInfo[key].length > 0 )
+         {
+            newConfig[key] = configInfo[key] ;
+         }
+      }
+      BUZ_CONFIG['Config'].push( newConfig ) ;
+   }
+}, true ) ;
+
+UNIT_TEST.test( 'add mysql business', function(){
+
+   UNIT_TEST.assert( 1, 0, JSON.stringify( BUZ_CONFIG ) ) ;
+
+   var taskInfo = OM_CTRL.add_business( BUZ_CONFIG ) ;
+
+   UNIT_TEST.assert( 1, taskInfo.length, "add mysql business failed: no task id" ) ;
+
+   TASK_ID = taskInfo[0]['TaskID'] ;
+
+}, true ) ;
+
+UNIT_TEST.test( 'check add mysql business task', function(){
+   TASK_INFO = OM_CTRL.query_task3( TASK_ID, IS_DEBUG ) ;
+   UNIT_TEST.assert( 1, TASK_INFO.length, "add mysql business failed: no task info" ) ;
+   UNIT_TEST.assert( 0, TASK_INFO[0]['errno'], "add mysql business failed: taskid=" + TASK_ID ) ;
+   for( var i in TASK_INFO[0]['ResultInfo'] )
+   {
+      UNIT_TEST.assert( 0, TASK_INFO[0]['ResultInfo'][i]['errno'], "add mysql failed: detail:" + JSON.stringify( TASK_INFO[0]['ResultInfo'][i] ), true ) ;
+   }
+}, true ) ;
+*/
 UNIT_TEST.start( IS_DEBUG ) ;
 
 
