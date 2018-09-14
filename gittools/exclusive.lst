@@ -6,3 +6,4 @@ thirdparty/zlib/lib/linux32
 thirdparty/zlib/lib/ppclinux64
 thirdparty/zlib/lib/win32
 thirdparty/zlib/lib/win64
+thirdparty/mdocml/lib/win64
