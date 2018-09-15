@@ -243,6 +243,7 @@ namespace engine
    INT32 _dmsExtScanner::_firstInit( pmdEDUCB *cb )
    {
       INT32 rc          = SDB_OK ;
+      _pTransCB         = pmdGetKRCB()->getTransCB() ;
       SDB_BPSCB *pBPSCB = pmdGetKRCB()->getBPSCB () ;
       BOOLEAN   bPreLoadEnabled = pBPSCB->isPreLoadEnabled() ;
 
@@ -565,6 +566,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BOOLEAN inRange = FALSE ;
+      _pTransCB = pmdGetKRCB()->getTransCB() ;
 
       _extRW = _pSu->extent2RW( _curRID._extent, _context->mbID() ) ;
       _extRW.setNothrow( TRUE ) ;
@@ -1161,7 +1163,7 @@ namespace engine
    INT32 _dmsIXSecScanner::_firstInit( pmdEDUCB * cb )
    {
       INT32 rc          = SDB_OK ;
-
+      _pTransCB         = pmdGetKRCB()->getTransCB() ;
       /// no trans or read(not for update) in trans need to unlock
       if ( -1 != _recordLock )
       {
