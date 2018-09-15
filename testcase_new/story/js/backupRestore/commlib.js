@@ -740,11 +740,30 @@ function()
      }
   }
   db.getRG( this.group[0].GroupName).start() ;
+  var totalTimeLen = 60 ;
+  var alreadySleepTime = 0 ;
   while (true)
   {
-     if ( commCheckBusiness(this.groups, true).length == 0 )
+     var errGroups = commCheckBusiness(this.groups, true) ;
+     if ( errGroups.length == 0)
      {
          break ;
+     }
+     
+     // 检查所有组是否都是空组
+     var i = 0;
+     for (  ;i < errGroups.length ; ++i)
+     {
+        if ( errGroups[i].length != 1 ){
+            sleep(1000) ;
+            alreadySleepTime += 1;
+            break ;
+        }
+     }
+     
+     if ( i == errGroups.length || alreadySleepTime >= totalTimeLen )
+     {
+        break ;
      }
   }
 }
