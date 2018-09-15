@@ -17,6 +17,7 @@ function main( db )
    var groupID = commGetGroups( db ) ;
    for( var i = 0 ; i < groupID.length ; ++i )
    {
+      if ( groupID.length == 1 ) continue ;
       var bakName = CHANGEDPREFIX + "_bak_" + i ;
       var backup = {"GroupID":[]} ;
       backup["GroupID"].push(groupID[i][0].GroupID);
