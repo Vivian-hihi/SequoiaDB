@@ -42,7 +42,6 @@ function testExprtImprt()
                  " --type csv" +
                  " -a " + asc + 
                  " --fields c,d" ;
-   println(command);
    testRunCommand( command ) ;
    
    command = installPath + "bin/sdbimprt" +
@@ -56,6 +55,5 @@ function testExprtImprt()
              " --headerline true " +
              " --fields='c int,d string'" ; 
    testRunCommand( command ) ;
-   println(command);
    cmd.run( "rm -rf " + csvfile ) ;
 }
