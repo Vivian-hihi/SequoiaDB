@@ -107,7 +107,8 @@
       <copy todir="${MYSQL_SRCCODE}/storage/sequoiadb">
          <fileset dir="${srccode_dir}/driver/mysql" includes="**/**" />
       </copy>
-      <svnversion dir="${srccode_dir}/driver/mysql" version="fdw_svn" />
+      <svnversion dir="${WORKSPACE}" version="fdw_svn" />
+      <echo message="git hub version : ${fdw_svn}"/>
       <if>
          <and>
             <equals arg1="${USE_ARCHIVE}" arg2="true"/>
@@ -130,14 +131,8 @@
             <var name="cmd" value=". -DWITH_BOOST=${MYSQL_BOOST_DIR}/boost_1_59_0/ -DCMAKE_INSTALL_PREFIX=${mysqltarget} -DMYSQL_DATADIR=${mysqltarget}/data -DCMAKE_BUILD_TYPE=Debug -DSDB_VER=${tmp_sdb_version}_${fdw_svn}"/>
          </then>
          <else>
-            <var name="cmd" value=". -DWITH_BOOST=${MYSQL_BOOST_DIR}/boost_1_59_0/ -DCMAKE_INSTALL_PREFIX=${mysqltarget} -DMYSQL_DATADIR=${mysqltarget}/data -DCMAKE_BUILD_TYPE=Release -DSDB_VER=${tmp_sdb_version}_${fdw_svn}"/>
+            <var name="cmd" value=". -DWITH_BOOST=${MYSQL_BOOST_DIR}/boost_1_59_0/  -DCMAKE_INSTALL_PREFIX=${mysqltarget} -DMYSQL_DATADIR=${mysqltarget}/data -DCMAKE_BUILD_TYPE=Release -DSDB_VER=${tmp_sdb_version}_${fdw_svn}"/>
          </else>
-      </if>
-      <if>
-         <equals arg1="${IS_ENTERPRISE}" arg2="true" />
-         <then>  
-            <var name="cmd" value="${cmd} -DSDB_ENTERPRISE=enterprise"/>
-         </then>
       </if>
       <echo>cmake ${cmd} in dir ${MYSQL_SRCCODE}</echo>
       <exec executable="cmake" dir="${MYSQL_SRCCODE}" failonerror="true" logError="true">
@@ -152,10 +147,11 @@
       <exec executable="make" dir="${MYSQL_SRCCODE}" failonerror="true" logError="true">
          <arg line=" install " />
       </exec>
-      
+     
       <copy todir="${mysqltarget}">
-         <fileset dir="${srccode_dir}/misc/ci/mysqlrelease" includes="license/*" />
-      </copy>
+        <fileset dir="${srccode_dir}/misc/ci/mysqlrelease" includes="license/*"/>
+      </copy> 
+      
    </target>
    
    <target name="build_run_package">
@@ -200,9 +196,8 @@
       <attribute name="version"/>
       <sequential>
          <var name="@{verison}" unset="true"/>
-         <exec executable="bash" dir="@{dir}" outputproperty="@{version}" failonerror="true" logError="true" >
-            <arg value="-c" />
-            <arg line="&quot;svn info | grep Revision | awk '{print $2}'&quot;" />
+         <exec executable="git" dir="@{dir}" outputproperty="@{version}" failonerror="true" logError="true" >
+            <arg line="rev-parse HEAD" />
          </exec>
       </sequential>
    </macrodef>
