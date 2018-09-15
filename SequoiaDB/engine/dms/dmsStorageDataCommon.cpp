@@ -485,6 +485,7 @@ namespace engine
       _mmeSegID         = 0 ;
       _pEventHolder     = pEventHolder ;
       _pExtDataHandler  = NULL ;
+      _collectionXLock  = FALSE ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATACOMMON ) ;
    }
 
@@ -2221,7 +2222,6 @@ namespace engine
       dpsLogRecord &record    = info.getMergeBlock().record() ;
       UINT32 logRecSize       = 0;
       dpsTransCB *pTransCB    = pmdGetKRCB()->getTransCB() ;
-      BOOLEAN isTransLocked   = FALSE ;
       BOOLEAN getContext      = FALSE ;
       BOOLEAN metalocked      = FALSE ;
       utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
@@ -2292,7 +2292,7 @@ namespace engine
          rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to lock the collection, rc: %d",
                       rc ) ;
-         isTransLocked = TRUE ;
+         _collectionXLock = TRUE ;
       }
 
       // drop all index
@@ -2376,9 +2376,10 @@ namespace engine
          ossUnlatch( &_metadataLatch, EXCLUSIVE ) ;
          metalocked = FALSE ;
       }
-      if ( isTransLocked )
+      if ( _collectionXLock )
       {
-         pTransCB->transLockRelease( cb, _logicalCSID, context->mbID() );
+         pTransCB->transLockRelease( cb, _logicalCSID, context->mbID() ) ;
+         _collectionXLock = FALSE ;
       }
       if ( context && getContext )
       {
@@ -2420,7 +2421,6 @@ namespace engine
       dpsLogRecord &record    = info.getMergeBlock().record() ;
       UINT32 logRecSize       = 0;
       dpsTransCB *pTransCB    = pmdGetKRCB()->getTransCB() ;
-      BOOLEAN isTransLocked   = FALSE ;
       IDmsExtDataHandler* handler = NULL ;
 
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
@@ -2480,7 +2480,7 @@ namespace engine
          rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to lock the collection, rc: %d",
                       rc ) ;
-         isTransLocked = TRUE ;
+         _collectionXLock = TRUE ;
       }
 
       // pause mb lock and change metadata
@@ -2494,13 +2494,6 @@ namespace engine
          rc = context->resume() ;
          PD_RC_CHECK( rc, PDERROR, "dms mb context resume falied, rc: %d",
                       rc ) ;
-      }
-
-      /// release x lock
-      if ( isTransLocked )
-      {
-         pTransCB->transLockRelease( cb, _logicalCSID, context->mbID() ) ;
-         isTransLocked = FALSE ;
       }
 
       oldRecords = context->mbStat()->_totalRecords ;
@@ -2587,9 +2580,10 @@ namespace engine
       }
 
    done:
-      if ( isTransLocked )
+      if ( _collectionXLock )
       {
          pTransCB->transLockRelease( cb, _logicalCSID, context->mbID() ) ;
+         _collectionXLock = FALSE ;
       }
       if ( context && getContext )
       {

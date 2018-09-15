@@ -502,6 +502,17 @@ namespace engine
                      rc = SDB_OK ;
                      goto done ;
                   }
+                  else if ( _collectionXLock )
+                  {
+                     context->pause() ;
+                     ossSleep( 10 ) ;
+                     rc = context->resume() ;
+                     if ( rc )
+                     {
+                        goto error ;
+                     }
+                     goto retry ;
+                  }
                   else
                   {
                      // can't increase i counter

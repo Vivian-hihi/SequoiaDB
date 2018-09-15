@@ -1197,6 +1197,8 @@ namespace engine
          _IDmsEventHolder                    *_pEventHolder ;
          _IDmsExtDataHandler                 *_pExtDataHandler ;
 
+         BOOLEAN                             _collectionXLock ;
+
    };
    typedef _dmsStorageDataCommon dmsStorageDataCommon ;
 
