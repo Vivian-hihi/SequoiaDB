@@ -558,6 +558,8 @@ typedef struct _MsgOpInsert MsgOpInsert ;
 #define FLG_QUERY_PREPARE_MORE               0x00004000
 // The sharding key in update rule is not filtered, when executing findAndUpdate.
 #define FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE 0x00008000
+// query for update
+#define FLG_QUERY_FOR_UPDATE                 0x00010000
 
 // For query takes 4 document
 // Query + returnFieldSelector + orderBy + hint

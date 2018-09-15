@@ -46,6 +46,8 @@
 #include "rtnTrace.hpp"
 #include "pmdController.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    /*
@@ -625,7 +627,8 @@ namespace engine
 
       extScanner = extFactory->create( _su->data(), _mbContext, matchRuntime,
                                        _extentID, accessType,
-                                       _numToReturn, _numToSkip ) ;
+                                       _numToReturn, _numToSkip,
+                                       _returnOptions.getFlag() ) ;
       if ( !extScanner )
       {
          rc = SDB_OOM ;
@@ -649,7 +652,7 @@ namespace engine
          }
 
          while ( SDB_OK == ( rc = extScanner->advance( recordID, generator,
-                                                      cb, &mthContext ) ) )
+                                                       cb, &mthContext ) ) )
          {
             try
             {
@@ -814,7 +817,8 @@ namespace engine
 
          dmsIXSecScanner secScanner( _su->data(), _mbContext, matchRuntime,
                                      scanner, accessType, _numToReturn,
-                                     _numToSkip ) ;
+                                     _numToSkip,
+                                     _returnOptions.getFlag() ) ;
          if ( _indexBlockScan )
          {
             secScanner.enableIndexBlockScan( _indexBlocks[0],

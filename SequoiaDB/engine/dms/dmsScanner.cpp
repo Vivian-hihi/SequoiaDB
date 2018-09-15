@@ -63,6 +63,14 @@ namespace engine
       _context = context ;
       _matchRuntime = matchRuntime ;
       _accessType = accessType ;
+      _mbLockType = SHARED ;
+
+      if ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
+           DMS_ACCESS_TYPE_DELETE == _accessType ||
+           DMS_ACCESS_TYPE_INSERT == _accessType )
+      {
+         _mbLockType = EXCLUSIVE ;
+      }
    }
 
    _dmsScanner::~_dmsScanner()
@@ -79,7 +87,9 @@ namespace engine
                                            mthMatchRuntime *matchRuntime,
                                            dmsExtentID curExtentID,
                                            DMS_ACCESS_TYPE accessType,
-                                           INT64 maxRecords, INT64 skipNum )
+                                           INT64 maxRecords,
+                                           INT64 skipNum,
+                                           INT32 flag )
    :_dmsScanner( su, context, matchRuntime, accessType ),
     _curRecordPtr( NULL )
    {
@@ -92,7 +102,13 @@ namespace engine
       _curRID._extent      = curExtentID ;
       _recordLock          = -1 ;
       _needUnLock          = FALSE ;
+      _selectForUpdate     = FALSE ;
       _cb                  = NULL ;
+
+      if ( OSS_BIT_TEST( flag, FLG_QUERY_FOR_UPDATE ) )
+      {
+         _selectForUpdate = TRUE ;
+      }
 
       if ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
            DMS_ACCESS_TYPE_DELETE == _accessType ||
@@ -100,11 +116,11 @@ namespace engine
       {
          _recordLock = EXCLUSIVE ;
       }
-      else if ( pmdGetOptionCB()->transIsolation() != TRANS_ISOLATION_RU
-                && ( DMS_ACCESS_TYPE_QUERY == _accessType
-                     || DMS_ACCESS_TYPE_FETCH == _accessType ) )
+      else if ( ( DMS_ACCESS_TYPE_QUERY == _accessType ||
+                  DMS_ACCESS_TYPE_FETCH == _accessType ) &&
+                 TRANS_ISOLATION_RU != pmdGetOptionCB()->transIsolation() )
       {
-         _recordLock = SHARED ;
+         _recordLock = _selectForUpdate ? EXCLUSIVE : SHARED ;
       }
    }
 
@@ -212,9 +228,11 @@ namespace engine
                                    mthMatchRuntime *matchRuntime,
                                    dmsExtentID curExtentID,
                                    DMS_ACCESS_TYPE accessType,
-                                   INT64 maxRecords, INT64 skipNum )
+                                   INT64 maxRecords,
+                                   INT64 skipNum,
+                                   INT32 flag )
    : _dmsExtScannerBase( su, context, matchRuntime, curExtentID, accessType,
-                         maxRecords, skipNum )
+                         maxRecords, skipNum, flag )
    {
    }
 
@@ -225,14 +243,22 @@ namespace engine
    INT32 _dmsExtScanner::_firstInit( pmdEDUCB *cb )
    {
       INT32 rc          = SDB_OK ;
-      _pTransCB         = pmdGetKRCB()->getTransCB() ;
       SDB_BPSCB *pBPSCB = pmdGetKRCB()->getBPSCB () ;
       BOOLEAN   bPreLoadEnabled = pBPSCB->isPreLoadEnabled() ;
-      INT32 lockType    = _recordLock == EXCLUSIVE ? EXCLUSIVE : SHARED ;
 
-      if ( _recordLock != -1 && DPS_INVALID_TRANS_ID == cb->getTransID() )
+      /// no trans or read(not for update) in trans need to unlock
+      if ( -1 != _recordLock )
       {
-         _needUnLock = TRUE ;
+         if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
+         {
+            _needUnLock = TRUE ;
+         }
+         else if ( ( DMS_ACCESS_TYPE_QUERY == _accessType ||
+                     DMS_ACCESS_TYPE_FETCH == _accessType ) &&
+                   !_selectForUpdate )
+         {
+            _needUnLock = TRUE ;
+         }
       }
 
       _extRW = _pSu->extent2RW( _curRID._extent, _context->mbID() ) ;
@@ -248,9 +274,9 @@ namespace engine
          rc = SDB_APP_INTERRUPT ;
          goto error ;
       }
-      if ( !_context->isMBLock( lockType ) )
+      if ( !_context->isMBLock( _mbLockType ) )
       {
-         rc = _context->mbLock( lockType ) ;
+         rc = _context->mbLock( _mbLockType ) ;
          PD_RC_CHECK( rc, PDERROR, "dms mb lock failed, rc: %d", rc ) ;
       }
       if ( !dmsAccessAndFlagCompatiblity ( _context->mb()->_flag,
@@ -362,7 +388,7 @@ namespace engine
 
          if ( _curRecordPtr->isDeleting() )
          {
-            if ( _recordLock != -1 )
+            if ( _recordLock == EXCLUSIVE )
             {
                INT32 rc1 = _pSu->deleteRecord( _context, _curRID,
                                                0, cb, NULL ) ;
@@ -510,9 +536,10 @@ namespace engine
                                                dmsExtentID curExtentID,
                                                DMS_ACCESS_TYPE accessType,
                                                INT64 maxRecords,
-                                               INT64 skipNum )
+                                               INT64 skipNum,
+                                               INT32 flag )
    : _dmsExtScannerBase( su, context, matchRuntime, curExtentID, accessType,
-                         maxRecords, skipNum )
+                         maxRecords, skipNum, flag )
    {
       _maxRecords = maxRecords ;
       _skipNum = skipNum ;
@@ -525,6 +552,9 @@ namespace engine
       _workExtInfo = NULL ;
       _rangeInit = FALSE ;
       _fastScanByID = FALSE ;
+
+      /// not support transaction
+      _recordLock = -1 ;
    }
 
    _dmsCappedExtScanner::~_dmsCappedExtScanner()
@@ -534,14 +564,7 @@ namespace engine
    INT32 _dmsCappedExtScanner::_firstInit( pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      _pTransCB = pmdGetKRCB()->getTransCB() ;
-      INT32 lockType = EXCLUSIVE == _recordLock ? EXCLUSIVE : SHARED ;
       BOOLEAN inRange = FALSE ;
-
-      if ( _recordLock != -1 && DPS_INVALID_TRANS_ID == cb->getTransID() )
-      {
-         _needUnLock = TRUE ;
-      }
 
       _extRW = _pSu->extent2RW( _curRID._extent, _context->mbID() ) ;
       _extRW.setNothrow( TRUE ) ;
@@ -562,9 +585,9 @@ namespace engine
          goto error ;
       }
 
-      if ( !_context->isMBLock( lockType ) )
+      if ( !_context->isMBLock( _mbLockType ) )
       {
-         rc = _context->mbLock( lockType ) ;
+         rc = _context->mbLock( _mbLockType ) ;
          PD_RC_CHECK( rc, PDERROR, "dms mb lock failed, rc: %d", rc ) ;
       }
 
@@ -872,7 +895,9 @@ namespace engine
                                  dmsMBContext *context,
                                  mthMatchRuntime *matchRuntime,
                                  DMS_ACCESS_TYPE accessType,
-                                 INT64 maxRecords, INT64 skipNum )
+                                 INT64 maxRecords,
+                                 INT64 skipNum,
+                                 INT32 flag )
    :_dmsScanner( su, context, matchRuntime, accessType )
    {
       _extScanner    = NULL ;
@@ -880,6 +905,7 @@ namespace engine
       _firstRun      = TRUE ;
       _maxRecords    = maxRecords ;
       _skipNum       = skipNum ;
+      _flag          = flag ;
    }
 
    _dmsTBScanner::~_dmsTBScanner()
@@ -894,16 +920,13 @@ namespace engine
    INT32 _dmsTBScanner::_firstInit()
    {
       INT32 rc = SDB_OK ;
-      INT32 lockType = SHARED ;
 
       rc = _getExtScanner() ;
       PD_RC_CHECK( rc, PDERROR, "Get extent scanner failed, rc: %d", rc ) ;
 
-      lockType = EXCLUSIVE == _extScanner->_recordLock ? EXCLUSIVE : SHARED ;
-
-      if ( !_context->isMBLock( lockType ) )
+      if ( !_context->isMBLock( _extScanner->_mbLockType ) )
       {
-         rc = _context->mbLock( lockType ) ;
+         rc = _context->mbLock( _extScanner->_mbLockType ) ;
          PD_RC_CHECK( rc, PDERROR, "dms mb lock failed, rc: %d", rc ) ;
       }
       _curExtentID = _context->mb()->_firstExtentID ;
@@ -930,7 +953,8 @@ namespace engine
                                                     _curExtentID,
                                                     _accessType,
                                                     _maxRecords,
-                                                    _skipNum ) ;
+                                                    _skipNum,
+                                                    _flag ) ;
       if ( !_extScanner )
       {
          PD_LOG( PDERROR, "Create extent scanner failed" ) ;
@@ -1008,7 +1032,8 @@ namespace engine
                                        rtnIXScanner *scanner,
                                        DMS_ACCESS_TYPE accessType,
                                        INT64 maxRecords,
-                                       INT64 skipNum )
+                                       INT64 skipNum,
+                                       INT32 flag )
    :_dmsScanner( su, context, matchRuntime, accessType ),
     _curRecordPtr( NULL )
    {
@@ -1018,6 +1043,7 @@ namespace engine
       _pTransCB            = NULL ;
       _recordLock          = -1 ;
       _needUnLock          = FALSE ;
+      _selectForUpdate     = FALSE ;
       _cb                  = NULL ;
       _scanner             = scanner ;
       _onceRestNum         = 0 ;
@@ -1029,17 +1055,22 @@ namespace engine
       _blockScanDir        = 1 ;
       _countOnly           = FALSE ;
 
+      if ( OSS_BIT_TEST( flag, FLG_QUERY_FOR_UPDATE ) )
+      {
+         _selectForUpdate = TRUE ;
+      }
+
       if ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
            DMS_ACCESS_TYPE_DELETE == _accessType ||
            DMS_ACCESS_TYPE_INSERT == _accessType )
       {
          _recordLock = EXCLUSIVE ;
       }
-      else if ( pmdGetOptionCB()->transIsolation() != TRANS_ISOLATION_RU
-                && ( DMS_ACCESS_TYPE_FETCH == _accessType
-                     || DMS_ACCESS_TYPE_QUERY == _accessType ) )
+      else if ( ( DMS_ACCESS_TYPE_QUERY == _accessType ||
+                  DMS_ACCESS_TYPE_FETCH == _accessType ) &&
+                 TRANS_ISOLATION_RU != pmdGetOptionCB()->transIsolation() )
       {
-         _recordLock = SHARED ;
+         _recordLock = _selectForUpdate ? EXCLUSIVE : SHARED ;
       }
    }
 
@@ -1130,21 +1161,22 @@ namespace engine
    INT32 _dmsIXSecScanner::_firstInit( pmdEDUCB * cb )
    {
       INT32 rc          = SDB_OK ;
-      _pTransCB         = pmdGetKRCB()->getTransCB() ;
-      INT32 lockType    = SHARED ;
 
-      if ( _countOnly )
+      /// no trans or read(not for update) in trans need to unlock
+      if ( -1 != _recordLock )
       {
-         _recordLock = SHARED ;
+         if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
+         {
+            _needUnLock = TRUE ;
+         }
+         else if ( ( DMS_ACCESS_TYPE_QUERY == _accessType ||
+                     DMS_ACCESS_TYPE_FETCH == _accessType ) &&
+                   !_selectForUpdate )
+         {
+            _needUnLock = TRUE ;
+         }
       }
-      if ( EXCLUSIVE == _recordLock )
-      {
-         lockType = EXCLUSIVE ;
-      }
-      if ( _recordLock != -1 && DPS_INVALID_TRANS_ID == cb->getTransID() )
-      {
-         _needUnLock = TRUE ;
-      }
+
       if ( NULL == _scanner )
       {
          rc = SDB_INVALIDARG ;
@@ -1155,9 +1187,9 @@ namespace engine
          rc = SDB_APP_INTERRUPT ;
          goto error ;
       }
-      if ( !_context->isMBLock( lockType ) )
+      if ( !_context->isMBLock( _mbLockType ) )
       {
-         rc = _context->mbLock( lockType ) ;
+         rc = _context->mbLock( _mbLockType ) ;
          PD_RC_CHECK( rc, PDERROR, "dms mb lock failed, rc: %d", rc ) ;
       }
       if ( !dmsAccessAndFlagCompatiblity ( _context->mb()->_flag,
@@ -1169,7 +1201,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _scanner->resumeScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
+      rc = _scanner->resumeScan( isReadOnly() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to resum ixscan, rc: %d", rc ) ;
 
       _cb   = cb ;
@@ -1246,8 +1278,7 @@ namespace engine
 
       while ( _onceRestNum-- > 0 && 0 != _maxRecords )
       {
-         rc = _scanner->advance( _curRID,
-                                 EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
+         rc = _scanner->advance( _curRID, isReadOnly() ) ;
          if ( SDB_IXM_EOC == rc )
          {
             _eof = TRUE ;
@@ -1342,7 +1373,7 @@ namespace engine
                          "rc: %d", rc ) ;
                // now haved append to lock-wait-queue, release latch and then
                // wait the lock
-               rc = _scanner->pauseScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
+               rc = _scanner->pauseScan( isReadOnly() ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to pause ixscan, rc: %d", rc ) ;
 
                _context->pause() ;
@@ -1371,7 +1402,7 @@ namespace engine
                   rc = SDB_DMS_INCOMPATIBLE_MODE ;
                   goto error ;
                }
-               rc = _scanner->resumeScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
+               rc = _scanner->resumeScan( isReadOnly() ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Failed to resume ixscan, rc: %d", rc ) ;
@@ -1384,7 +1415,7 @@ namespace engine
          {
             if ( _recordLock != -1 )
             {
-               rc = _scanner->pauseScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
+               rc = _scanner->pauseScan( isReadOnly() ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to pause ixscan, rc: %d", rc ) ;
 
                rc = _pSu->deleteRecord( _context, _curRID, 0, cb, NULL ) ;
@@ -1394,7 +1425,7 @@ namespace engine
                           "rc: %d", rc ) ;
                }
 
-               rc = _scanner->resumeScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
+               rc = _scanner->resumeScan( isReadOnly() ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to resume ixscan, rc: %d", rc ) ;
 
                _pTransCB->transLockRelease( cb, _pSu->logicalID(),
@@ -1505,7 +1536,7 @@ namespace engine
 
       rc = SDB_DMS_EOC ;
       {
-         INT32 rcTmp = _scanner->pauseScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
+         INT32 rcTmp = _scanner->pauseScan( isReadOnly() ) ;
          if ( rcTmp )
          {
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rcTmp ) ;
@@ -1517,7 +1548,7 @@ namespace engine
    done:
       if ( SDB_OK == rc && ( _onceRestNum <= 0 || 0 == _maxRecords ) )
       {
-         rc = _scanner->pauseScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
+         rc = _scanner->pauseScan( isReadOnly() ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rc ) ;
@@ -1548,7 +1579,7 @@ namespace engine
       }
       if ( DMS_INVALID_OFFSET != _curRID._offset )
       {
-         INT32 rc = _scanner->pauseScan( EXCLUSIVE == _recordLock ? FALSE : TRUE ) ;
+         INT32 rc = _scanner->pauseScan( isReadOnly() ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rc ) ;
@@ -1567,10 +1598,11 @@ namespace engine
                                  BOOLEAN ownedScanner,
                                  DMS_ACCESS_TYPE accessType,
                                  INT64 maxRecords,
-                                 INT64 skipNum )
+                                 INT64 skipNum,
+                                 INT32 flag )
    :_dmsScanner( su, context, matchRuntime, accessType ),
     _secScanner( su, context, matchRuntime, scanner, accessType, maxRecords,
-                 skipNum )
+                 skipNum, flag )
    {
       _scanner       = scanner ;
       _eof           = FALSE ;
@@ -1802,7 +1834,8 @@ namespace engine
                                                      dmsExtentID curExtentID,
                                                      DMS_ACCESS_TYPE accessType,
                                                      INT64 maxRecords,
-                                                     INT64 skipNum )
+                                                     INT64 skipNum,
+                                                     INT32 flag )
    {
       dmsExtScannerBase* scanner = NULL ;
 
@@ -1813,7 +1846,8 @@ namespace engine
                                                     curExtentID,
                                                     accessType,
                                                     maxRecords,
-                                                    skipNum ) ;
+                                                    skipNum,
+                                                    flag ) ;
       }
       else
       {
@@ -1822,7 +1856,8 @@ namespace engine
                                               curExtentID,
                                               accessType,
                                               maxRecords,
-                                              skipNum ) ;
+                                              skipNum,
+                                              flag ) ;
       }
 
       if ( !scanner )

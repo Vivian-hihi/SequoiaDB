@@ -79,6 +79,11 @@ namespace engine
                        DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH ) ;
          virtual ~_dmsScanner () ;
 
+         BOOLEAN  isReadOnly() const
+         {
+            return SHARED == _mbLockType ? TRUE : FALSE ;
+         }
+
       public:
          virtual INT32 advance ( dmsRecordID &recordID,
                                  _mthRecordGenerator &generator,
@@ -91,6 +96,7 @@ namespace engine
          _dmsMBContext          *_context ;
          mthMatchRuntime        *_matchRuntime ;
          DMS_ACCESS_TYPE         _accessType ;
+         INT32                   _mbLockType ;
 
    } ;
    typedef _dmsScanner dmsScanner ;
@@ -107,7 +113,9 @@ namespace engine
                               mthMatchRuntime *matchRuntime,
                               dmsExtentID curExtentID,
                               DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
-                              INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
+                              INT64 maxRecords = -1,
+                              INT64 skipNum = 0,
+                              INT32 flag = 0 ) ;
          virtual ~_dmsExtScannerBase () ;
 
          const dmsExtent* curExtent () const { return _extent ; }
@@ -142,8 +150,9 @@ namespace engine
          dmsOffset            _next ;
          BOOLEAN              _firstRun ;
          dpsTransCB           *_pTransCB ;
-         INT8                 _recordLock ;
+         INT32                _recordLock ;
          BOOLEAN              _needUnLock ;
+         BOOLEAN              _selectForUpdate ;
          _pmdEDUCB            *_cb ;
    };
    typedef _dmsExtScannerBase dmsExtScannerBase ;
@@ -155,7 +164,9 @@ namespace engine
                          mthMatchRuntime *matchRuntime,
                          dmsExtentID curExtentID,
                          DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
-                         INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
+                         INT64 maxRecords = -1,
+                         INT64 skipNum = 0,
+                         INT32 flag = 0 ) ;
          virtual ~_dmsExtScanner() ;
 
       private:
@@ -179,7 +190,9 @@ namespace engine
                                 mthMatchRuntime *matchRuntime,
                                 dmsExtentID curExtentID,
                                 DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
-                                INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
+                                INT64 maxRecords = -1,
+                                INT64 skipNum = 0,
+                                INT32 flag = 0 ) ;
          virtual ~_dmsCappedExtScanner() ;
          INT64 getMaxRecords() const { return _maxRecords ; }
          INT64 getSkipNum () const { return _skipNum ; }
@@ -219,7 +232,9 @@ namespace engine
          _dmsTBScanner ( _dmsStorageDataCommon *su, _dmsMBContext *context,
                          mthMatchRuntime *matchRuntime,
                          DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
-                         INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
+                         INT64 maxRecords = -1,
+                         INT64 skipNum = 0,
+                         INT32 flag = 0 ) ;
          ~_dmsTBScanner () ;
 
       public:
@@ -243,6 +258,7 @@ namespace engine
          BOOLEAN                    _firstRun ;
          INT64                      _maxRecords ;
          INT64                      _skipNum ;
+         INT32                      _flag ;
    };
    typedef _dmsTBScanner dmsTBScanner ;
 
@@ -259,7 +275,9 @@ namespace engine
                             mthMatchRuntime *matchRuntime,
                             _rtnIXScanner *scanner,
                             DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
-                            INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
+                            INT64 maxRecords = -1,
+                            INT64 skipNum = 0,
+                            INT32 flag = 0 ) ;
          virtual ~_dmsIXSecScanner () ;
 
          void  enableIndexBlockScan( const BSONObj &startKey,
@@ -300,6 +318,7 @@ namespace engine
          dpsTransCB           *_pTransCB ;
          INT8                 _recordLock ;
          BOOLEAN              _needUnLock ;
+         BOOLEAN              _selectForUpdate ;
          _pmdEDUCB            *_cb ;
          _rtnIXScanner        *_scanner ;
          INT64                _onceRestNum ;
@@ -331,7 +350,9 @@ namespace engine
                          _rtnIXScanner *scanner,
                          BOOLEAN ownedScanner = FALSE,
                          DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
-                         INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
+                         INT64 maxRecords = -1,
+                         INT64 skipNum = 0,
+                         INT32 flag = 0 ) ;
          ~_dmsIXScanner () ;
 
          _rtnIXScanner* getScanner () { return _scanner ; }
@@ -399,7 +420,8 @@ namespace engine
                                     dmsExtentID curExtentID,
                                     DMS_ACCESS_TYPE accessType,
                                     INT64 maxRecords,
-                                    INT64 skipNum ) ;
+                                    INT64 skipNum,
+                                    INT32 flag ) ;
    } ;
    typedef _dmsExtScannerFactory dmsExtScannerFactory ;
 
