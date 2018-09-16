@@ -81,6 +81,11 @@ namespace engine
       }
       getMatchTree()->clear() ;
       deleteMatchRuntime() ;
+
+      /// must clear _scanPath in ~_optAccessPlan
+      /// because _scanPath used the _planAllocator, but _planAllocator
+      /// will destoryed out of the ~_optAccessPlan
+      _scanPath.clearPath() ;
    }
 
    void _optAccessPlan::release ()
