@@ -1177,8 +1177,7 @@ namespace engine
    _rtnContextCoordExplain::_rtnContextCoordExplain ( INT64 contextID, UINT64 eduID,
                                                       BOOLEAN preRead )
    : _rtnContextCoord( contextID, eduID, preRead ),
-     _rtnExplainMainBase( &_explainCoordPath ),
-     _explainCoordPath( &_planAllocator )
+     _explainCoordPath( getPlanAllocator() )
    {
    }
 

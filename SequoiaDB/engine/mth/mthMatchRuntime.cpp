@@ -125,7 +125,7 @@ namespace engine
    {
       if ( getOwned )
       {
-         _query = query.copy() ;
+         _query = query.getOwned() ;
       }
       else
       {

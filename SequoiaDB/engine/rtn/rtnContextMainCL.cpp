@@ -773,8 +773,7 @@ namespace engine
    _rtnContextMainCLExplain::_rtnContextMainCLExplain ( INT64 contextID,
                                                         UINT64 eduID )
    : _rtnContextBase( contextID, eduID ),
-     _rtnExplainMainBase( &_explainMergePath ),
-     _explainMergePath( &_planAllocator )
+     _explainMergePath( getPlanAllocator() )
    {
    }
 

@@ -219,6 +219,11 @@ namespace engine
          INT32 _buildSimpleExplain ( rtnContext * explainContext,
                                      BOOLEAN & hasMore ) ;
 
+         virtual optExplainMergePathBase* getExplainMergePath()
+         {
+            return &_explainMergePath ;
+         }
+
       protected :
          std::vector< std::string > _subCollections ;
          std::set< std::string >    _subCollectionFilter ;

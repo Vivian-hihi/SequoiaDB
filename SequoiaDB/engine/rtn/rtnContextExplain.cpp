@@ -50,7 +50,7 @@ namespace engine
    /*
       _rtnExplainBase implement
     */
-   _rtnExplainBase::_rtnExplainBase ( optExplainPath * explainPath )
+   _rtnExplainBase::_rtnExplainBase ()
    : _rtnSubContextHolder(),
      _explainMask( OPT_NODE_EXPLAIN_MASK_NONE ),
      _needDetail( FALSE ),
@@ -63,10 +63,8 @@ namespace engine
      _explainStarted( FALSE ),
      _explainRunned( FALSE ),
      _explainPrepared( FALSE ),
-     _explained( FALSE ),
-     _explainPath( explainPath )
+     _explained( FALSE )
    {
-      SDB_ASSERT( NULL != explainPath, "explain path is invalid" ) ;
    }
 
    _rtnExplainBase::~_rtnExplainBase ()
@@ -168,7 +166,7 @@ namespace engine
 
       if ( !_explainStarted )
       {
-         rc = _explainPath->setExplainStart( queryCB ) ;
+         rc = getExplainPath()->setExplainStart( queryCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to set explain start, "
                       "rc: %d", rc ) ;
          _explainStarted = TRUE ;
@@ -212,7 +210,7 @@ namespace engine
       if ( !_explainPrepared )
       {
          // Set the end of explain
-         rc = _explainPath->setExplainEnd( queryContext, queryCB ) ;
+         rc = getExplainPath()->setExplainEnd( queryContext, queryCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to set explain end, rc: %d", rc ) ;
 
          // Finish the query context
@@ -701,6 +699,11 @@ namespace engine
       return rc ;
    }
 
+   optPlanAllocator* _rtnExplainBase::getPlanAllocator()
+   {
+      return &_planAllocator ;
+   }
+
    /*
       _rtnContextExplain implement
     */
@@ -709,8 +712,7 @@ namespace engine
    _rtnContextExplain::_rtnContextExplain ( INT64 contextID,
                                             UINT64 eduID )
    : _rtnContextBase( contextID, eduID ),
-     _rtnExplainBase( &_explainScanPath ),
-     _explainScanPath( &_planAllocator )
+     _explainScanPath( getPlanAllocator() )
    {
    }
 
@@ -925,14 +927,11 @@ namespace engine
    /*
       _rtnExplainMainBase implement
     */
-   _rtnExplainMainBase::_rtnExplainMainBase ( optExplainMergePathBase * explainMergePath )
-   : _rtnExplainBase( explainMergePath ),
-     _IRtnCtxDataProcessor(),
+   _rtnExplainMainBase::_rtnExplainMainBase ()
+   : _IRtnCtxDataProcessor(),
      _tempTimestamp(),
-     _mainExplainOutputted( FALSE ),
-     _explainMergeBasePath( explainMergePath )
+     _mainExplainOutputted( FALSE )
    {
-      SDB_ASSERT( NULL != explainMergePath, "explain merge path is invalid" ) ;
    }
 
    _rtnExplainMainBase::~_rtnExplainMainBase ()
@@ -1018,10 +1017,10 @@ namespace engine
                   waitTime = endTimestamp - startTimestamp ;
                }
 
-               PD_CHECK( NULL != _explainMergeBasePath, SDB_SYS, error, PDERROR,
-                         "Failed to get merge explain path" ) ;
+               PD_CHECK( NULL != getExplainMergePath(), SDB_SYS, error,
+                         PDERROR, "Failed to get merge explain path" ) ;
 
-               rc = _explainMergeBasePath->addChildExplain(
+               rc = getExplainMergePath()->addChildExplain(
                         explainResult, queryTime, waitTime, needParse,
                         needExplain, _explainMask ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to add child explain, "
@@ -1033,7 +1032,7 @@ namespace engine
             {
                needParse = FALSE ;
 
-               rc = _explainMergeBasePath->addChildExplain(
+               rc = getExplainMergePath()->addChildExplain(
                         explainResult, queryTime, waitTime, needParse,
                         needExplain, _explainMask ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to add child explain, "
@@ -1203,7 +1202,7 @@ namespace engine
 
       SDB_ASSERT( explainContext, "explain context is invalid" ) ;
 
-      PD_CHECK( NULL != _explainMergeBasePath, SDB_SYS, error, PDERROR,
+      PD_CHECK( NULL != getExplainMergePath(), SDB_SYS, error, PDERROR,
                 "Failed to get merge explain path" ) ;
 
       hasMore = FALSE ;
@@ -1252,7 +1251,7 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_RTNEXPLAINMAINBASE__BLDMAINEXP ) ;
 
-      if ( NULL != _explainMergeBasePath )
+      if ( NULL != getExplainMergePath() )
       {
          BSONObjBuilder builder ;
 
@@ -1264,12 +1263,12 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for query options, "
                       "rc: %d", rc ) ;
 
-         rc = _explainMergeBasePath->toBSONExplainInfo( builder,
+         rc = getExplainMergePath()->toBSONExplainInfo( builder,
                                                         _getExplainInfoMask() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build BSON for run information, "
                       "rc: %d", rc ) ;
 
-         rc = _explainMergeBasePath->toBSON( builder, _needExpand,
+         rc = getExplainMergePath()->toBSON( builder, _needExpand,
                                              _needFlatten, _explainMask ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to output BSON from explain path, "
                       "rc: %d", rc ) ;
@@ -1282,8 +1281,9 @@ namespace engine
       }
       else
       {
-         PD_CHECK( NULL != _explainMergeBasePath, SDB_SYS, error, PDERROR,
-                   "Failed to get merge explain path" ) ;
+         PD_LOG( PDERROR, "Failed to get merge explain path" ) ;
+         rc = SDB_SYS ;
+         goto error ;
       }
 
    done :
@@ -1303,19 +1303,19 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_RTNEXPLAINMAINBASE__BLDSIMPEXP ) ;
 
-      PD_CHECK( NULL != _explainMergeBasePath, SDB_SYS, error, PDERROR,
+      PD_CHECK( NULL != getExplainMergePath(), SDB_SYS, error, PDERROR,
                 "Failed to get merge explain path" ) ;
 
       if ( needSort )
       {
-         rc = _explainMergeBasePath->sortChildExplains() ;
+         rc = getExplainMergePath()->sortChildExplains() ;
          PD_RC_CHECK( rc, PDERROR, "Failed to sort child explains, "
                       "rc: %d", rc ) ;
       }
 
       {
          optExplainResultList & childExplainList =
-                                 _explainMergeBasePath->getChildExplains() ;
+                                 getExplainMergePath()->getChildExplains() ;
 
          while ( !childExplainList.empty() &&
                  explainContext->buffEndOffset() < RTN_MAX_EXPLAIN_BUFFER_SIZE &&

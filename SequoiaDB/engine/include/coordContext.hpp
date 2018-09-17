@@ -264,6 +264,11 @@ namespace engine
                      OPT_EXPINFO_MASK_SYSCPU ) ;
          }
 
+         virtual optExplainMergePathBase* getExplainMergePath()
+         {
+            return &_explainCoordPath ;
+         }
+
       protected :
          SET_ROUTEID             _locationFilter ;
          optExplainCoordPath     _explainCoordPath ;

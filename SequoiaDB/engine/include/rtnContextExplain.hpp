@@ -60,7 +60,7 @@ namespace engine
    class _rtnExplainBase : public _rtnSubContextHolder
    {
       public :
-         _rtnExplainBase ( optExplainPath * explainPath ) ;
+         _rtnExplainBase () ;
 
          virtual ~_rtnExplainBase () ;
 
@@ -139,6 +139,10 @@ namespace engine
          INT32 _buildBSONQueryOptions ( BSONObjBuilder & builder,
                                         BOOLEAN needDetail ) const ;
 
+         optPlanAllocator*          getPlanAllocator() ;
+
+         virtual optExplainPath*    getExplainPath() = 0 ;
+
       protected :
          /// Query options
          rtnQueryOptions _queryOptions ;
@@ -159,9 +163,9 @@ namespace engine
          BOOLEAN _explainPrepared ;
          BOOLEAN _explained ;
 
+      private:
          /// Explain path
          optPlanAllocator     _planAllocator ;
-         optExplainPath *     _explainPath ;
    } ;
 
    /*
@@ -227,6 +231,11 @@ namespace engine
       INT32 _buildExplain ( rtnContext * explainContext,
                             BOOLEAN & hasMore ) ;
 
+      virtual optExplainPath*    getExplainPath()
+      {
+         return &_explainScanPath ;
+      }
+
    protected :
       BOOLEAN              _fromLocal ;
       optExplainScanPath   _explainScanPath ;
@@ -241,7 +250,7 @@ namespace engine
                                public _IRtnCtxDataProcessor
    {
       public :
-         _rtnExplainMainBase ( optExplainMergePathBase * explainMergePath ) ;
+         _rtnExplainMainBase () ;
 
          virtual ~_rtnExplainMainBase () ;
 
@@ -300,6 +309,13 @@ namespace engine
             return OPT_EXPINFO_MASK_ALL ;
          }
 
+         virtual optExplainPath*    getExplainPath()
+         {
+            return getExplainMergePath() ;
+         }
+
+         virtual optExplainMergePathBase* getExplainMergePath() = 0 ;
+
       protected :
          typedef _utilMap< INT64, ossTick > rtnExplainTimestampList ;
          typedef _utilSet< INT64 > rtnExplainIDList ;
@@ -311,7 +327,6 @@ namespace engine
          rtnExplainTimestampList    _endTimestampList ;
          rtnExplainIDList           _explainIDSet ;
          BOOLEAN                    _mainExplainOutputted ;
-         optExplainMergePathBase *  _explainMergeBasePath ;
    } ;
 
 }
