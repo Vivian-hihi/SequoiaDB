@@ -919,8 +919,8 @@ namespace SequoiaDB
         }
 
         /** \fn DBCursor GetSnapshot(int snapType, BsonDocument matcher, BsonDocument selector,
-                                    BsonDocument orderBy, BsonDocument hint = null,
-                                    long skipRows = 0, long returnRows = -1)
+                                     BsonDocument orderBy, BsonDocument hint,
+                                     long skipRows, long returnRows)
          *  \brief Get the snapshots of specified type
          *  \param snapType The specified type as below:
          *  
