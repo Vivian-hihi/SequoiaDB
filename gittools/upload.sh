@@ -1,66 +1,63 @@
-# this tool should be copied outside trunk directory
-# usage: ./upload.sh <svn version>
-#!/bin/sh
+#/bin/bash
 #BASERELEASE="trunk"
-BASERELEASE="engine_1.12"
+BASERELEASE="trunk"
+USERNAME=`whoami`
+EMAIL="$USERNAME@outlook.com"
 if [[ $# == 1 ]];then
    if [[ $1 == "init" ]];then
       #initialize local config
-      git config--globaluser.name "Tao Wang"
-      git config--globaluser.email "taoewang@sequoiadb.com"
+
+      git config --global user.name $USERNAME
+
+      git config --global user.email $EMAIL
 
       #initialize local repository
+      rm -rf ~/trunk
+     # mkdir ~/trunk
+      svn checkout http://192.168.20.11/sequoiadb/trunk
       rm -rf ~/github
       mkdir ~/github
       cd ~/github
-      git clone git@github.com:SequoiaDB/SequoiaDB.git
-      rm -rf ~/csdn
-      mkdir ~/csdn
-      cd ~/csdn
-      git clone git@code.csdn.net:SequoiaDB/sequoiadb.git
-      rm -rf ~/osc
-      mkdir ~/osc
-      cd ~/osc
-      git clone git@git.oschina.net:wangzhonnew/SequoiaDB.git
-      rm -rf ~/gitcafe
-      mkdir ~/gitcafe
-      cd ~/gitcafe
-      git clone git@gitcafe.com:SequoiaDB/SequoiaDB.git
+      git clone git@github.com:$USERNAME/SequoiaDB.git
       exit
    fi
 fi
 # svn code checkout
 cd ~/$BASERELEASE
-#if [[ $# == 1 ]];then
- #  svn update -r $1
-#else
- #  svn update
-#fi
-gittools/clone.sh /home/taoewang/github/SequoiaDB
-gittools/clone.sh /home/taoewang/csdn/sequoiadb
-gittools/clone.sh /home/taoewang/osc/SequoiaDB
-gittools/clone.sh /home/taoewang/gitcafe/SequoiaDB
+if [[ $# == 1 ]];then
+   svn update -r $1
+fi
+echo "checkout"
+cd ~/github/SequoiaDB
+git checkout master
+echo "Current branch is..."
+git branch
 
-# git commit
+echo "ready to clone, you have 10 seconds to cancel"
+sleep 10
+
+cd ~/$BASERELEASE
+rm -rf gittools
+cp -r /home/gittools .
+gittools/clone.sh ~/github/SequoiaDB
+
+
 cd ~/$BASERELEASE
 svn_version=`svn info | grep Revision`
+echo "Current version is $svn_version"
 cd ~/github/SequoiaDB
-git pull
-git add .
+git pull origin master
+"Wait for adding changes into git"
+sleep 10
+
+echo "Add removed/modified/added files into git"
+git add -A
+git status
+echo "Wait before commit into git"
+sleep 10
+
+echo "Commit $svn_version into git"
 git commit -m "$svn_version"
-git push
-cd ~/csdn/sequoiadb
-git pull
-git add .
-git commit -m "$svn_version"
-git push
-cd ~/osc/SequoiaDB
-git pull
-git add .
-git commit -m "$svn_version"
-git push
-cd ~/gitcafe/SequoiaDB
-git pull
-git add .
-git commit -m "$svn_version"
-git push
+git push origin master
+
+echo "Done"
