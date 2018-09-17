@@ -155,6 +155,13 @@ namespace engine
       }
    }
 
+   void _optPlanNode::operator delete ( void *p,
+                                        optPlanAllocator *allocator,
+                                        std::nothrow_t )
+   {
+      _optPlanNode::operator delete( p ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTPLANNODE_ADDCHILDNODE, "_optPlanNode::addChildNode" )
    void _optPlanNode::addChildNode ( _optPlanNode *pChildNode )
    {
@@ -1468,7 +1475,7 @@ namespace engine
 
          _indexExtID = indexCB.getExtentID() ;
          _indexLID = indexCB.getLogicalID() ;
-         _keyPattern = indexCB.keyPattern().copy() ;
+         _keyPattern = indexCB.keyPattern().getOwned() ;
       }
    }
 
@@ -1500,7 +1507,7 @@ namespace engine
          _pIndexName[ IXM_INDEX_NAME_SIZE ] = '\0' ;
          _indexExtID = node._indexExtID ;
          _indexLID = node._indexLID ;
-         _keyPattern = node._keyPattern.copy() ;
+         _keyPattern = node._keyPattern.getOwned() ;
       }
 
       if ( NULL != context )
@@ -2900,7 +2907,7 @@ namespace engine
       try
       {
          // Make sure result is owned
-         BSONObj explainResult = childExplain.copy() ;
+         BSONObj explainResult = childExplain.getOwned() ;
 
          if ( needChildExplain )
          {

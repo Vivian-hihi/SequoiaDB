@@ -497,6 +497,7 @@ namespace engine
          void* operator new ( size_t size, _mthNodeAllocator *allocator ) ;
 
          void operator delete ( void *p ) ;
+         void operator delete ( void *p, _mthNodeAllocator *allocator ) ;
 
       public:
          virtual INT32 init( const CHAR *fieldName,

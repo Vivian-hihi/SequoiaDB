@@ -598,6 +598,11 @@ namespace engine
       }
    }
 
+   void _mthMatchNode::operator delete( void *p, _mthNodeAllocator *allocator )
+   {
+      _mthMatchNode::operator delete( p ) ;
+   }
+
    string _mthMatchNode::toString()
    {
       BSONObj obj = toBson() ;

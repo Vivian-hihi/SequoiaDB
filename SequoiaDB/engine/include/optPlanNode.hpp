@@ -155,6 +155,8 @@ namespace engine
                                std::nothrow_t ) ;
 
          void operator delete ( void *p ) ;
+         void operator delete ( void *p, optPlanAllocator *allocator,
+                                std::nothrow_t ) ;
 
          OSS_INLINE optPlanNodeList & getChildNodes ()
          {
