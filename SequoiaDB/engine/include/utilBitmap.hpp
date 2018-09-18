@@ -213,7 +213,7 @@ namespace engine
          }
 
       protected :
-         OSS_INLINE virtual void _allocateBitmap ( UINT32 size )
+         OSS_INLINE void _allocateBitmap ( UINT32 size )
          {
             if ( size > 0 )
             {
@@ -230,7 +230,7 @@ namespace engine
             resetBitmap() ;
          }
 
-         OSS_INLINE virtual void _freeBitmap ()
+         OSS_INLINE void _freeBitmap ()
          {
             SAFE_OSS_FREE( _bitmap ) ;
             _size = 0 ;
