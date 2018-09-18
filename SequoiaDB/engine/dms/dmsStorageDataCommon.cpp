@@ -2381,6 +2381,7 @@ namespace engine
       if ( isTransLocked )
       {
          pTransCB->transLockRelease( cb, _logicalCSID, context->mbID() ) ;
+         isTransLocked = FALSE ;
          --_collectionXLockCnt ;
       }
       if ( context && getContext )
@@ -2587,6 +2588,7 @@ namespace engine
       if ( isTransLocked )
       {
          pTransCB->transLockRelease( cb, _logicalCSID, context->mbID() ) ;
+         isTransLocked = FALSE ;
          --_collectionXLockCnt ;
       }
       if ( context && getContext )
