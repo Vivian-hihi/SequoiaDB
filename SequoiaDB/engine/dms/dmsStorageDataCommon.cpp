@@ -485,7 +485,7 @@ namespace engine
       _mmeSegID         = 0 ;
       _pEventHolder     = pEventHolder ;
       _pExtDataHandler  = NULL ;
-      _collectionXLock  = FALSE ;
+      _collectionXLockCnt = 0 ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATACOMMON ) ;
    }
 
@@ -2225,6 +2225,7 @@ namespace engine
       BOOLEAN getContext      = FALSE ;
       BOOLEAN metalocked      = FALSE ;
       utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
+      BOOLEAN isTransLocked   = FALSE ;
 
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
 
@@ -2292,7 +2293,8 @@ namespace engine
          rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to lock the collection, rc: %d",
                       rc ) ;
-         _collectionXLock = TRUE ;
+         isTransLocked = TRUE ;
+         ++_collectionXLockCnt ;
       }
 
       // drop all index
@@ -2376,10 +2378,10 @@ namespace engine
          ossUnlatch( &_metadataLatch, EXCLUSIVE ) ;
          metalocked = FALSE ;
       }
-      if ( _collectionXLock )
+      if ( isTransLocked )
       {
          pTransCB->transLockRelease( cb, _logicalCSID, context->mbID() ) ;
-         _collectionXLock = FALSE ;
+         --_collectionXLockCnt ;
       }
       if ( context && getContext )
       {
@@ -2422,6 +2424,7 @@ namespace engine
       UINT32 logRecSize       = 0;
       dpsTransCB *pTransCB    = pmdGetKRCB()->getTransCB() ;
       IDmsExtDataHandler* handler = NULL ;
+      BOOLEAN isTransLocked   = FALSE ;
 
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
 
@@ -2480,7 +2483,8 @@ namespace engine
          rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to lock the collection, rc: %d",
                       rc ) ;
-         _collectionXLock = TRUE ;
+         isTransLocked = TRUE ;
+         ++_collectionXLockCnt ;
       }
 
       // pause mb lock and change metadata
@@ -2580,10 +2584,10 @@ namespace engine
       }
 
    done:
-      if ( _collectionXLock )
+      if ( isTransLocked )
       {
          pTransCB->transLockRelease( cb, _logicalCSID, context->mbID() ) ;
-         _collectionXLock = FALSE ;
+         --_collectionXLockCnt ;
       }
       if ( context && getContext )
       {

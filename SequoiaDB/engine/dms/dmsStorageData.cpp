@@ -502,7 +502,7 @@ namespace engine
                      rc = SDB_OK ;
                      goto done ;
                   }
-                  else if ( _collectionXLock )
+                  else if ( _collectionXLockCnt > 0 )
                   {
                      context->pause() ;
                      ossSleep( 10 ) ;
