@@ -243,16 +243,17 @@ namespace engine
    /*
       _utilStackBitmap define and implement
     */
-   template < UINT32 BITMAPSIZE >
+   template < UINT32 SIZE >
    class _utilStackBitmap : public _utilBitmapBase
    {
       public :
          _utilStackBitmap ()
          : _utilBitmapBase()
          {
-            _size = BITMAPSIZE * UTIL_BITMAP_UNIT_SIZE ;
-            _bitmapSize = BITMAPSIZE ;
-            if ( BITMAPSIZE > 0 )
+            _size = SIZE ;
+            _bitmapSize = ( SIZE + UTIL_BITMAP_UNIT_MODULO ) /
+                          UTIL_BITMAP_UNIT_SIZE ;
+            if ( _bitmapSize > 0 )
             {
                _bitmap = &( _bitmapBuf[0] ) ;
             }
@@ -266,7 +267,8 @@ namespace engine
          }
 
       protected :
-         UINT8 _bitmapBuf[ BITMAPSIZE ] ;
+         UINT8 _bitmapBuf[ ( SIZE + UTIL_BITMAP_UNIT_MODULO ) /
+                           UTIL_BITMAP_UNIT_SIZE ] ;
    } ;
 
 }
