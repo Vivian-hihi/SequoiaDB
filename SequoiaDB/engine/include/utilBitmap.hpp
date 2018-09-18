@@ -57,14 +57,14 @@ namespace engine
    // Search table for each bit in a bitmap unit
    static UINT8 _utilBitmapIndex[ UTIL_BITMAP_UNIT_SIZE ] =
    {
-       0x01,
-       0x02,
-       0x04,
-       0x08,
-       0x10,
-       0x20,
-       0x40,
-       0x80
+       0x80,   /// 10000000
+       0x40,   /// 01000000
+       0x20,   /// 00100000
+       0x10,   /// 00010000
+       0x08,   /// 00001000
+       0x04,   /// 00000100
+       0x02,   /// 00000010
+       0x01    /// 00000001
    } ;
 
    /*
