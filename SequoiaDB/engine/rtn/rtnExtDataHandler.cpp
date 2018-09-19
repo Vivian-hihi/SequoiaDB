@@ -153,7 +153,15 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_PREPARE ) ;
+      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
       rtnExtContextBase *context = NULL ;
+
+      // During rebuilding or full sync, the original collection and the capped
+      // collection are processed seperately.
+      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
 
       rc = _getContext( type, context, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Prepare external operation context "
@@ -811,15 +819,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__PREPARECTX ) ;
-      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
       rtnExtContextBase *context = NULL ;
       BOOLEAN newContext = FALSE ;
       BOOLEAN hasHold = FALSE ;
-
-      if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
-      {
-         goto done ;
-      }
 
       context = _contextMgr.findContext( cb->getTID() ) ;
       if ( !context )

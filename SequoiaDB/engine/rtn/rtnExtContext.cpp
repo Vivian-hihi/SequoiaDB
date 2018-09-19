@@ -415,17 +415,7 @@ namespace engine
 
       vector<rtnExtDataProcessor *> processors ;
 
-      // When we reach here, other sessions are not able to see THIS cs any
-      // more. And it's still not able to create original cs with the same name.
-      // So it's safe to do operations by these processors without lock.
-      // But operations on other cs are not affected. So concurrency should be
-      // considered when finally removing the processors.
       _processorMgr = processorMgr ;
-      if ( SDB_DB_FULLSYNC == dbStatus )
-      {
-         goto done ;
-      }
-
       rc = processorMgr->getProcessorsByCS( csName, EXCLUSIVE, processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Prepare processors failed[ %d ]", rc ) ;
 
@@ -439,20 +429,23 @@ namespace engine
       _eduCB = cb ;
       _dpsCB = dpscb ;
 
-      for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
-            itr != processors.end(); ++itr )
+      if ( SDB_DB_FULLSYNC != dbStatus )
       {
-         if ( _removeFiles )
+         for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
+               itr != processors.end(); ++itr )
          {
-            rc = (*itr)->doDropP1( cb, dpscb ) ;
+            if ( _removeFiles )
+            {
+               rc = (*itr)->doDropP1( cb, dpscb ) ;
+            }
+            else
+            {
+               rc = (*itr)->doUnload( cb ) ;
+            }
+            PD_RC_CHECK( rc, PDERROR, "Processor drop operation failed[ %d ]",
+                         rc ) ;
+            _processorP1.push_back( *itr ) ;
          }
-         else
-         {
-            rc = (*itr)->doUnload( cb ) ;
-         }
-         PD_RC_CHECK( rc, PDERROR, "Processor drop operation failed[ %d ]",
-                      rc ) ;
-         _processorP1.push_back( *itr ) ;
       }
 
    done:
@@ -488,8 +481,8 @@ namespace engine
       }
 
       // Take the meta lock and delete the processors.
-      _processorMgr->destroyProcessors( _processorP1, EXCLUSIVE ) ;
-      // _processors and _processorP! are the same.
+      _processorMgr->destroyProcessors( _processors, EXCLUSIVE ) ;
+      // _processors and _processorP1 are the same.
       _processorP1.clear() ;
       _processors.clear() ;
       _lockType = -1 ;
@@ -536,11 +529,6 @@ namespace engine
       vector<rtnExtDataProcessor *> processors ;
 
       _processorMgr = processorMgr ;
-      if ( SDB_DB_FULLSYNC == dbStatus )
-      {
-         goto done ;
-      }
-
       rc = processorMgr->getProcessorsByCL( csName, clName,
                                             EXCLUSIVE, processors ) ;
       PD_RC_CHECK( rc, PDERROR, "Get processors failed[ %d ]", rc ) ;
@@ -553,13 +541,16 @@ namespace engine
       _eduCB = cb ;
       _dpsCB = dpscb ;
 
-      for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
-            itr != processors.end(); ++itr )
+      if ( SDB_DB_FULLSYNC != dbStatus )
       {
-         rc = (*itr)->doDropP1( cb, NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "Processor drop operation failed[ %d ]",
-                      rc ) ;
-         _processorP1.push_back( *itr ) ;
+         for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
+               itr != processors.end(); ++itr )
+         {
+            rc = (*itr)->doDropP1( cb, NULL ) ;
+            PD_RC_CHECK( rc, PDERROR, "Processor drop operation failed[ %d ]",
+                         rc ) ;
+            _processorP1.push_back( *itr ) ;
+         }
       }
 
    done:
@@ -580,7 +571,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDROPCLCTX__ONDONE ) ;
 
       // For drop operation, the processors need to be removed.
-      for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end();
+      for ( EDP_VEC_ITR itr = _processorP1.begin(); itr != _processorP1.end();
             ++itr )
       {
          rc = (*itr)->doDropP2( cb, dpscb ) ;
@@ -588,9 +579,9 @@ namespace engine
          {
             PD_LOG( PDERROR, "Do drop phase 2 failed[ %d ]", rc ) ;
          }
-         // Unlock and delete all processors.
       }
       _processorMgr->destroyProcessors( _processors, EXCLUSIVE ) ;
+      _processorP1.clear() ;
       _processors.clear() ;
       _lockType = -1 ;
 
@@ -602,7 +593,7 @@ namespace engine
    INT32 _rtnExtDropCLCtx::_onAbort( pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDROPCLCTX__ONABORT ) ;
-      for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end(); )
+      for ( EDP_VEC_ITR itr = _processorP1.begin(); itr != _processorP1.end(); )
       {
          (*itr)->doDropP1Cancel( cb, dpscb ) ;
          _processors.erase( itr ) ;
