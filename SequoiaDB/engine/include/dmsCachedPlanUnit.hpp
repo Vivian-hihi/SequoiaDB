@@ -108,7 +108,6 @@ namespace engine
       protected :
          UINT8    _paramInvalidCount ;
          UINT8    _mainCLInvalidCount ;
-         CHAR     _mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
    } ;
 
    typedef class _dmsCLCachedPlanUnit dmsCLCachedPlanUnit ;

@@ -51,7 +51,7 @@ namespace engine
    #define DMS_CACHE_TYPE_PLAN ( 1 )
    #define DMS_CACHE_TYPE_NUM  ( 2 )
 
-   typedef class _utilSUCache<UTIL_SU_CACHE_DFT_SIZE> dmsSUCache ;
+   typedef class _utilSUCache<DMS_MME_SLOTS>          dmsSUCache ;
    typedef class _IUtilSUCacheHolder<DMS_MME_SLOTS>   IDmsSUCacheHolder ;
    typedef class _utilStackBitmap<DMS_MME_SLOTS>      dmsSUCacheBitmap ;
 
