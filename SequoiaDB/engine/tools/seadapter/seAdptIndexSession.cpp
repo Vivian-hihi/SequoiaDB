@@ -51,6 +51,7 @@
 #define SEADPT_OPERATOR_STR_INCLUDE  "$include"
 #define SEADPT_TID(sessionID)        ((UINT32)(sessionID & 0xFFFFFFFF))
 #define SEADPT_INVALID_LID           -1
+#define SEADPT_ID_MAX_SZ             512
 
 namespace seadapter
 {
@@ -975,6 +976,15 @@ namespace seadapter
                goto error ;
             }
 
+            if ( finalID.size() > SEADPT_ID_MAX_SZ )
+            {
+               PD_LOG( PDDEBUG, "Ignore document as actual id length[%d] "
+                                "exceeds limit[%d]. id value: %s",
+                                finalID.size(), SEADPT_ID_MAX_SZ,
+                                finalID.c_str() ) ;
+               continue ;
+            }
+
             {
                utilESActionIndex item( _meta.getEsIdxName().c_str(), _meta.getEsTypeName().c_str() ) ;
                rc = item.setID( finalID ) ;
@@ -1166,6 +1176,15 @@ namespace seadapter
                   // removed. So we directly change it into delete.
                   oprType = RTN_EXT_DELETE ;
                }
+            }
+
+            if ( finalID.size() > SEADPT_ID_MAX_SZ )
+            {
+               PD_LOG( PDDEBUG, "Ignore document as actual id length[%d] "
+                                "exceeds limit[%d]. id value: %s",
+                       finalID.size(), SEADPT_ID_MAX_SZ,
+                       finalID.c_str() ) ;
+               continue ;
             }
 
             switch ( oprType )
