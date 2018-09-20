@@ -121,7 +121,7 @@ namespace engine
       {
          return SDB_OOM ;
       }
-      _pValues[ _size ] = boValue.copy() ;
+      _pValues[ _size ] = boValue.getOwned() ;
       _size ++ ;
       return SDB_OK ;
    }
@@ -131,7 +131,7 @@ namespace engine
    {
       isEqual = FALSE ;
 
-      INT32 low = 0, high = _size - 1, mid ;
+      INT32 low = 0, high = _size - 1, mid = 0 ;
       INT32 index = -1 ;
       BSONObj boEmpty ;
 
@@ -487,7 +487,7 @@ namespace engine
       {
          // start idx is equal to stop idx, which means the start key and stop
          // key are equal to the same MCV item
-         if ( stopIncluded && startEqual && stopIncluded && stopEqual &&
+         if ( startIncluded && startEqual && stopIncluded && stopEqual &&
               startIdx < (INT32)getSize() )
          {
             // The stop key is equal to the selected MCV item, which should

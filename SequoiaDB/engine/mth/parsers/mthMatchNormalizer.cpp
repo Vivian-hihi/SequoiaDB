@@ -720,8 +720,8 @@ namespace engine
                if ( _invalidMatcher )
                {
                   PD_LOG( PDERROR, "Failed to parse element [%s], rc: %d",
-                         arrayElement.toString( FALSE, TRUE ).c_str(),
-                         rc ) ;
+                          arrayElement.toString( FALSE, TRUE ).c_str(),
+                          rc ) ;
                }
                goto error ;
             }
@@ -741,7 +741,7 @@ namespace engine
    }
 
    INT32 _mthMatchNormalizer::_parseInnerObject ( const CHAR *fieldName,
-                                                      const BSONElement &element )
+                                                  const BSONElement &element )
    {
       INT32 rc = SDB_OK ;
 

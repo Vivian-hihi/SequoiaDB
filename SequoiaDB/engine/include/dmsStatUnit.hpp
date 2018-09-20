@@ -180,7 +180,7 @@ namespace engine
          {
             if ( idx < _size )
             {
-               _pValues[ idx ] = boValue.copy() ;
+               _pValues[ idx ] = boValue.getOwned() ;
             }
          }
 
