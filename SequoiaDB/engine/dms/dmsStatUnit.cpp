@@ -41,6 +41,8 @@
 #include "dmsTrace.hpp"
 #include "msgDef.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -71,6 +73,7 @@ namespace engine
    #define DMS_STAT_IDX_TYPE_SET_FRAC         DMS_STAT_FIELD_FRAC_NAME
 
    #define DMS_STAT_CHECKHOLE_THRESHOLD       ( 10 )
+
 
    /*
       _dmsStatValues implement
@@ -703,8 +706,8 @@ namespace engine
                                   UINT16 mbID, UINT32 clLID,
                                   UINT64 createTime )
    : _dmsStatUnit( suLID, mbID, clLID, createTime ),
-     _pCSName( pCSName ),
-     _pCLName( pCLName ),
+     _pCSName( NULL ),
+     _pCLName( NULL ),
      _indexLogicalID( DMS_INVALID_EXTENT ),
      _pFirstField( NULL ),
      _numKeys( 0 ),
@@ -1067,7 +1070,7 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_DMSIDXSTAT__INITKEYPTN ) ;
 
-      _keyPattern = boKeyPattern.copy() ;
+      _keyPattern = boKeyPattern.getOwned() ;
       _numKeys = _keyPattern.nFields() ;
 
       PD_CHECK( _numKeys > 0, SDB_INVALIDARG, error, PDWARNING,
@@ -1169,8 +1172,8 @@ namespace engine
      _totalDataSize( DMS_STAT_DEF_DATA_SIZE * DMS_STAT_DEF_TOTAL_RECORDS ),
      _avgNumFields( DMS_STAT_DEF_AVG_NUM_FIELDS )
    {
-      setCSName( NULL ) ;
-      setCLName( NULL ) ;
+      ossMemset( _pCSName, 0, sizeof( _pCSName ) ) ;
+      ossMemset( _pCLName, 0, sizeof( _pCLName ) ) ;
    }
 
    _dmsCollectionStat::_dmsCollectionStat ( const CHAR *pCSName,
@@ -1184,8 +1187,8 @@ namespace engine
      _totalDataSize( DMS_STAT_DEF_DATA_SIZE * DMS_STAT_DEF_TOTAL_RECORDS ),
      _avgNumFields( DMS_STAT_DEF_AVG_NUM_FIELDS )
    {
-      setCSName( pCSName ) ;
-      setCLName( pCLName ) ;
+      ossMemset( _pCSName, 0, sizeof( _pCSName ) ) ;
+      ossMemset( _pCLName, 0, sizeof( _pCLName ) ) ;
    }
 
    _dmsCollectionStat::~_dmsCollectionStat ()
@@ -1235,8 +1238,8 @@ namespace engine
          if ( added )
          {
             // The name pointer should be fixed
-            pIndexStat->setCSName( _pCSName ) ;
-            pIndexStat->setCLName( _pCLName ) ;
+            pIndexStat->_pCSName = _pCSName ;
+            pIndexStat->_pCLName = _pCLName ;
             _addFieldStat( pIndexStat, ignoreCrtTime ) ;
          }
       }
@@ -1326,8 +1329,11 @@ namespace engine
                   _removeFieldStat( pDeletingStat ) ;
                }
             }
-            // Erase item only, no need to delete statistics
-            _fieldStats.erase( iter ) ;
+            else
+            {
+               // Erase item only, no need to delete statistics
+               _fieldStats.erase( iter ) ;
+            }
             deleted = TRUE ;
          }
       }
@@ -1443,12 +1449,14 @@ namespace engine
 
             if ( pIndexStat->getNumKeys() < pTempStat->getNumKeys() )
             {
+               _fieldStats.erase( iter ) ;
                _fieldStats.insert( fieldStatValue ) ;
             }
             else if ( pTempStat->getNumKeys() == pIndexStat->getNumKeys() &&
                       ( ignoreCrtTime ||
                         pTempStat->getCreateTime() < pIndexStat->getCreateTime() ) )
             {
+               _fieldStats.erase( iter ) ;
                _fieldStats.insert( fieldStatValue ) ;
             }
          }
@@ -1505,7 +1513,7 @@ namespace engine
                   pNewFieldStat = pTempFieldStat ;
                }
                else if ( pTempFieldStat->getNumKeys() == pNewFieldStat->getNumKeys() &&
-                         pTempFieldStat->getCreateTime() < pNewFieldStat->getCreateTime() )
+                         pTempFieldStat->getCreateTime() > pNewFieldStat->getCreateTime() )
                {
                   pNewFieldStat = pTempFieldStat ;
                }

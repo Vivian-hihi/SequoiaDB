@@ -46,6 +46,7 @@
 #include "utilMap.hpp"
 #include "utilList.hpp"
 #include "utilSUCache.hpp"
+#include "utilString.hpp"
 #include "../bson/bson.h"
 #include <cmath>
 
@@ -383,6 +384,9 @@ namespace engine
     */
    class _dmsIndexStat : public _dmsStatUnit
    {
+      friend class _dmsCollectionStat ;
+      typedef _utilString<128>   idxNameString ;
+
       public :
          _dmsIndexStat () ;
 
@@ -397,19 +401,9 @@ namespace engine
             return _pCSName ;
          }
 
-         OSS_INLINE virtual void setCSName ( const CHAR *pCSName )
-         {
-            _pCSName = pCSName ;
-         }
-
          OSS_INLINE virtual const CHAR *getCLName () const
          {
             return _pCLName ;
-         }
-
-         OSS_INLINE virtual void setCLName ( const CHAR *pCLName )
-         {
-            _pCLName = pCLName ;
          }
 
          OSS_INLINE virtual UINT8 getUnitType () const
@@ -427,19 +421,18 @@ namespace engine
 
          OSS_INLINE const CHAR *getIndexName () const
          {
-            return _pIndexName ;
+            return _pIndexName.str() ;
          }
 
          OSS_INLINE void setIndexName ( const CHAR *pIndexName )
          {
             if ( pIndexName )
             {
-               ossStrncpy( _pIndexName, pIndexName, IXM_INDEX_NAME_SIZE ) ;
-               _pIndexName[ IXM_INDEX_NAME_SIZE ] = '\0' ;
+               _pIndexName.append( pIndexName ) ;
             }
             else
             {
-               _pIndexName[ 0 ] = '\0' ;
+               _pIndexName.clear() ;
             }
          }
 
@@ -570,11 +563,23 @@ namespace engine
          INT32 _evalOperator ( dmsStatKey *pStartKey, dmsStatKey *pStopKey,
                                double &predSelectivity, double &scanSelectivity ) const ;
 
-      protected :
-         const CHAR *      _pCSName ;
-         const CHAR *      _pCLName ;
+      private:
 
-         CHAR              _pIndexName [ IXM_INDEX_NAME_SIZE + 1 ] ;
+         OSS_INLINE virtual void setCSName ( const CHAR *pCSName )
+         {
+            /// do nothing
+         }
+
+         OSS_INLINE virtual void setCLName ( const CHAR *pCLName )
+         {
+            /// do nothing
+         }
+
+      protected :
+         const CHAR        *_pCSName ;
+         const CHAR        *_pCLName ;
+
+         idxNameString     _pIndexName ;
 
          dmsExtentID       _indexLogicalID ;
 
@@ -633,10 +638,9 @@ namespace engine
 
          OSS_INLINE virtual void setCSName ( const CHAR *pCSName )
          {
-            if ( pCSName )
+            if ( pCSName && *pCSName )
             {
                ossStrncpy( _pCSName, pCSName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
-               _pCSName[ DMS_COLLECTION_SPACE_NAME_SZ ] = '\0' ;
             }
             else
             {
@@ -651,10 +655,9 @@ namespace engine
 
          OSS_INLINE virtual void setCLName ( const CHAR *pCLName )
          {
-            if ( pCLName )
+            if ( pCLName && *pCLName )
             {
                ossStrncpy( _pCLName, pCLName, DMS_COLLECTION_NAME_SZ ) ;
-               _pCLName[ DMS_COLLECTION_NAME_SZ ] = '\0' ;
             }
             else
             {
