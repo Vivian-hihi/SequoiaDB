@@ -567,12 +567,12 @@ namespace engine
 
          OSS_INLINE virtual void setCSName ( const CHAR *pCSName )
          {
-            /// do nothing
+            _pCSName = pCSName ;
          }
 
          OSS_INLINE virtual void setCLName ( const CHAR *pCLName )
          {
-            /// do nothing
+            _pCLName = pCLName ;
          }
 
       protected :

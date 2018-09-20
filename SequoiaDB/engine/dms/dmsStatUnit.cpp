@@ -706,8 +706,8 @@ namespace engine
                                   UINT16 mbID, UINT32 clLID,
                                   UINT64 createTime )
    : _dmsStatUnit( suLID, mbID, clLID, createTime ),
-     _pCSName( NULL ),
-     _pCLName( NULL ),
+     _pCSName( pCSName ),
+     _pCLName( pCLName ),
      _indexLogicalID( DMS_INVALID_EXTENT ),
      _pFirstField( NULL ),
      _numKeys( 0 ),
