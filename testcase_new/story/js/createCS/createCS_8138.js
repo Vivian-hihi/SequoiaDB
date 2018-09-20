@@ -13,6 +13,7 @@ catch ( e )
 try
 {
   db.createCS(TESTCSNAMGE);
+  println("success to create cs =" + TESTCSNAMGE + "first time");
 }
 catch ( e )
 {
