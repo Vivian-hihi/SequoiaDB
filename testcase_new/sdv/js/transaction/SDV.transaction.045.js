@@ -4,7 +4,7 @@
 *@Author:  		TingYU  2015/11/25
                wuyan 2017/1/6(修改重复执行回滚不报错) 
 ************************************************************************/
-/*main();
+main();
 
 function main()
 {
@@ -94,4 +94,4 @@ function readyCL( csName, mainclName, subclName )
    maincl.attachCL( csName+"."+subclName, attaOpt );
    
    return maincl;
-}*/
+}
