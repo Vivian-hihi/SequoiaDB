@@ -46,6 +46,8 @@
 #include "ixmExtent.hpp"
 #include "optCommon.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 

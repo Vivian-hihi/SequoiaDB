@@ -1189,6 +1189,9 @@ namespace engine
    {
       ossMemset( _pCSName, 0, sizeof( _pCSName ) ) ;
       ossMemset( _pCLName, 0, sizeof( _pCLName ) ) ;
+
+      setCSName( pCSName ) ;
+      setCLName( pCLName ) ;
    }
 
    _dmsCollectionStat::~_dmsCollectionStat ()
