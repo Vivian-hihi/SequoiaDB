@@ -539,24 +539,6 @@ namespace engine
                                              0, TRUE,
                                              ( extOptions.isEmpty() ?
                                                NULL : &extOptions ) ) ;
-            if ( SDB_DMS_CS_REMAIN == rc ||
-                 SDB_DMS_CS_UNIQUEID_CONFLICT == rc )
-            {
-               rc = _dmsCB->changeUniqueID( cs.c_str(), csUniqID, BSONObj(),
-                                            eduCB, _dpsCB, FALSE, FALSE ) ;
-               if ( rc )
-               {
-                  PD_LOG( PDERROR, "Fail to change cs[%s] unique id, rc: %d",
-                          cs.c_str(), rc ) ;
-                  goto error ;
-               }
-               rc = rtnCreateCollectionCommand( cl, attribute, eduCB, _dmsCB,
-                                                _dpsCB, clUniqueID,
-                                                (UTIL_COMPRESSOR_TYPE)compType,
-                                                0, TRUE,
-                                                ( extOptions.isEmpty() ?
-                                                NULL : &extOptions ) ) ;
-            }
             if ( SDB_DMS_EXIST == rc )
             {
                PD_LOG( PDWARNING, "Collection [%s] already exist when "
