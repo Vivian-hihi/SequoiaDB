@@ -45,6 +45,13 @@ class SequoiaCL
    define( "SDB_FLG_QUERY_PREPARE_MORE",                 0x00004000 ) ;
    /** The sharding key in update rule is not filtered, when executing findAndUpdate */
    define( "SDB_FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE",   0x00008000 ) ;
+   /** 
+     * When the transaction is turned on and the transaction isolation level is "RC", the transaction lock will be
+     * released after the record is read by default. However, when setting this flag, the transaction lock will not
+     * released until the transaction is committed or rollback. When the transaction is turned off or
+     * the transaction isolation level is "RU", the flag does not work.
+     */
+   define( "SDB_FLG_QUERY_FOR_UPDATE",                   0x00010000 ) ;
 
    /** The sharding key in update rule is not filtered, when executing update or upsert. */
    /** SDB_FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE is equal to SDB_FLG_UPDATE_KEEP_SHARDINGKEY, to prevent confusion.*/
@@ -638,6 +645,11 @@ class SequoiaCL
     *                                                                                 when add this flag, return data in query response, it will be more high-performance
     *                                   SDB_FLG_QUERY_PREPARE_MORE(0x00004000)      : Enable prepare more data when query
     *                                   SDB_FLG_UPDATE_KEEP_SHARDINGKEY(0x00008000) : The sharding key in update rule is not filtered, when updating records.
+    *                                   SDB_FLG_QUERY_FOR_UPDATE(0x00010000 )       : When the transaction is turned on and the transaction isolation level is "RC", the transaction lock will be
+    *                                                                                 released after the record is read by default. However, when setting this flag, the transaction lock will not 
+    *                                                                                 released until the transaction is committed or rollback. When the transaction is turned off or
+    *                                                                                 the transaction isolation level is "RU", the flag does not work
+    *
     *                                   @endcode
     *
     * @return Returns a new SequoiaCursor object.
@@ -683,6 +695,10 @@ class SequoiaCL
     *                                   SDB_FLG_QUERY_WITH_RETURNDATA(0x00000200)            : In general, query will not return data until cursor get from database,
     *                                                                                          when add this flag, return data in query response, it will be more high-performance
     *                                   SDB_FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE(0x00008000) : The sharding key in update rule is not filtered.
+    *                                   SDB_FLG_QUERY_FOR_UPDATE(0x00010000 )                : When the transaction is turned on and the transaction isolation level is "RC", the transaction lock will be
+    *                                                                                          released after the record is read by default. However, when setting this flag, the transaction lock will not 
+    *                                                                                          released until the transaction is committed or rollback. When the transaction is turned off or
+    *                                                                                          the transaction isolation level is "RU", the flag does not work
     *
     *                                   @endcode
     *
@@ -727,7 +743,12 @@ class SequoiaCL
     *                                   SDB_FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
     *                                   SDB_FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
     *                                   SDB_FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query will not return data until cursor get from database,
-    *                                                                           when add this flag, return data in query response, it will be more high-performance
+    *                                                                               when add this flag, return data in query response, it will be more high-performance
+    *                                   SDB_FLG_QUERY_FOR_UPDATE(0x00010000 )     : When the transaction is turned on and the transaction isolation level is "RC", the transaction lock will be
+    *                                                                               released after the record is read by default. However, when setting this flag, the transaction lock will not 
+    *                                                                               released until the transaction is committed or rollback. When the transaction is turned off or
+    *                                                                               the transaction isolation level is "RU", the flag does not work
+    *
     *                                   @endcode
     *
     * @return Returns a new SequoiaCursor object.
