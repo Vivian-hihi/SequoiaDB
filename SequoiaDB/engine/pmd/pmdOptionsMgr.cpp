@@ -2094,10 +2094,6 @@ namespace engine
       // --transisolation
       rdxUInt( pEX, PMD_OPTION_TRANS_ISOLATION, _transIsolation, FALSE,
                PMD_CFG_CHANGE_REBOOT, 0, TRUE ) ;
-      if ( _transIsolation != TRANS_ISOLATION_RC )
-      {
-         _transIsolation = TRANS_ISOLATION_RU ;
-      }
       // --sharingBreak
       rdxUInt( pEX, PMD_OPTION_SHARINGBRK, _sharingBreakTime, FALSE, PMD_CFG_CHANGE_RUN,
                PMD_OPTION_BRK_TIME_DEFAULT, TRUE ) ;
@@ -2301,6 +2297,12 @@ namespace engine
          std::cerr << "db role: " << _krcbRole << " error" << std::endl ;
          rc = SDB_INVALIDARG ;
          goto error ;
+      }
+
+      // transisolation check
+      if ( _transIsolation != TRANS_ISOLATION_RC )
+      {
+         _transIsolation = TRANS_ISOLATION_RU ;
       }
 
       // replbucketsize check
