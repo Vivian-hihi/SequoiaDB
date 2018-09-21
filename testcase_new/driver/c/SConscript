@@ -123,7 +123,8 @@ testFiles = [
    [ "./sessionAttr/instanceid14158.cpp" ], # sync
    [ "./alter/alterdomain_15171.cpp" ],
    [ "./alter/altercs_15173.cpp" ],
-   [ "./alter/altercl_15174.cpp" ]
+   [ "./alter/altercl_15174.cpp" ],
+   [ "./datatype/timestamptest_15861.cpp"]
 ]
 
 def getFileName( filePath ):
