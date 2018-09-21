@@ -959,8 +959,17 @@ namespace engine
                                   pInnerSep ) ) ;
          if ( pair.size() != 2 )
          {
-            continue ;
+            std::cerr << "invalid address format" << endl ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
          }
+         if ( pair.at(0).size() == 0 || pair.at(1).size() == 0 )
+         {
+            std::cerr << "addr pair cannot be empty" << endl ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
          UINT32 cpLen = pair.at(0).size() < OSS_MAX_HOSTNAME ?
                         pair.at(0).size() : OSS_MAX_HOSTNAME ;
          ossMemcpy( addrItem._host, pair.at(0).c_str(), cpLen ) ;
