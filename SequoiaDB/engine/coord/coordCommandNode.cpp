@@ -670,6 +670,8 @@ namespace engine
       pmdOptionsCB *optCB = pmdGetKRCB()->getOptionCB() ;
       const CHAR *roleStr  = NULL ;
       SDB_ROLE role        = SDB_ROLE_DATA ;
+      pmdOptionsCB tmpOptionsCB ;
+      BSONObj newCfgObj ;
 
       if ( !pResource || !pQuery )
       {
@@ -796,7 +798,24 @@ namespace engine
          {
             goto error ;
          }
-         nodeConf = bobNodeConf.obj() ;
+
+         // check config value validity
+         newCfgObj = bobNodeConf.obj() ;
+         rc = tmpOptionsCB.restore( newCfgObj, NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Error while checking update configuration[%s], rc: %d",
+                    newCfgObj.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         rc = tmpOptionsCB.toBSON( nodeConf, PMD_CFG_MASK_SKIP_UNFIELD ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Convert config to bson failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
       } /// end try
       catch ( std::exception &e )
       {
