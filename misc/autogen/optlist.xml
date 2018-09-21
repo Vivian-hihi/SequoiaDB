@@ -168,7 +168,7 @@
       <type>int</type>
       <description>
          <en>The max number of diagnostic log files, default:20, -1:unlimited</en>
-         <cn>诊断日志文件最大数量,默认值:20, -1表示不限制, 取值范围[-1, 2^32 - 1]</cn>
+         <cn>诊断日志文件最大数量,默认值:20, -1表示不限制, 取值范围[-1, 2^31 - 1]</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
@@ -182,7 +182,7 @@
          <en>1. It specifies the number of diagnostic log file. <fig></fig>
              2. If it is not specified, the default 20; -1 means unlimited.</en>
          <cn>1.指定诊断日志文件最大数量。<fig></fig>
-             2.如果不指定，则默认为：20，-1表示不限制，取值范围[-1, 2^32 - 1]。</cn>
+             2.如果不指定，则默认为：20，-1表示不限制，取值范围[-1, 2^31 - 1]。</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
@@ -193,7 +193,7 @@
       <type>int</type>
       <description>
          <en>The max number of audit log files, default:20, -1:unlimited</en>
-         <cn>审计日志文件最大数量,默认值:20, -1表示不限制, 取值范围[-1, 2^32 - 1]</cn>
+         <cn>审计日志文件最大数量,默认值:20, -1表示不限制, 取值范围[-1, 2^31 - 1]</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
@@ -207,7 +207,7 @@
          <en>1. It specifies the number of audit log file. <fig></fig>
              2. If it is not specified, the default 20; -1 means unlimited.</en>
          <cn>1.指定审计日志文件最大数量。<fig></fig>
-             2.如果不指定，则默认为：20，-1表示不限制，取值范围[-1, 2^32 - 1]。</cn>
+             2.如果不指定，则默认为：20，-1表示不限制，取值范围[-1, 2^31 - 1]。</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
@@ -677,8 +677,8 @@
       <name>PMD_OPTION_SORTBUF_SIZE</name>
       <long>sortbuf</long>
       <description>
-         <en>Size of the sorting buf(MB), default:256, min value:128, value range[128, 2^32 - 1]</en>
-         <cn>排序缓存大小(MB),默认值256,最小值128,取值范围[128, 2^32 - 1]</cn>
+         <en>Size of the sorting buf(MB), default:256, min value:128, value range[128, 2^31 - 1]</en>
+         <cn>排序缓存大小(MB),默认值256,最小值128,取值范围[128, 2^31 - 1]</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
@@ -690,8 +690,8 @@
       </reloadstrategy>
       <type>int</type>
       <detail>
-         <en>Size of the sorting buf(MB), default:256, min value:128, value range[128, 2^32 - 1]</en>
-         <cn>排序缓存大小(MB),默认值256,最小值128,取值范围[128, 2^32 - 1]</cn>
+         <en>Size of the sorting buf(MB), default:256, min value:128, value range[128, 2^31 - 1]</en>
+         <cn>排序缓存大小(MB),默认值256,最小值128,取值范围[128, 2^31 - 1]</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
@@ -700,8 +700,8 @@
       <name>PMD_OPTION_HJ_BUFSZ</name>
       <long>hjbuf</long>
       <description>
-         <en>Size of the hash join buf(MB), default:128, min value:64, value range[64, 2^32 - 1]</en>
-         <cn>哈希连接缓存大小(MB),默认值128,最小值64,取值范围[64, 2^32 - 1]</cn>
+         <en>Size of the hash join buf(MB), default:128, min value:64, value range[64, 2^31 - 1]</en>
+         <cn>哈希连接缓存大小(MB),默认值128,最小值64,取值范围[64, 2^31 - 1]</cn>
       </description>
       <type>int</type>
       <reloadable>
@@ -713,8 +713,8 @@
          <cn>下次查询生效</cn>
       </reloadstrategy>
       <detail>
-         <en>Size of the hash join buf(MB), default:128, min value:64, value range[64, 2^32 - 1]</en>
-         <cn>哈希连接缓存大小(MB),默认值128,最小值64,取值范围[64, 2^32 - 1]</cn>
+         <en>Size of the hash join buf(MB), default:128, min value:64, value range[64, 2^31 - 1]</en>
+         <cn>哈希连接缓存大小(MB),默认值128,最小值64,取值范围[64, 2^31 - 1]</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
@@ -1203,16 +1203,16 @@
       <name>PMD_OPTION_OPERATOR_TIMEOUT</name>
       <long>optimeout</long>
       <description>
-         <en>The timeout period for heartbeat in each operation ( in ms ), default:300000, 0 for no-timeout, value range[0, 2^32 - 1] </en>
-         <cn>判定操作中断的时间(ms),默认值:300000, 0表示不超时，取值范围[0, 2^32 - 1]</cn>
+         <en>The timeout period for heartbeat in each operation ( in ms ), default:300000, 0 for no-timeout, value range[0, 2^31 - 1] </en>
+         <cn>判定操作中断的时间(ms),默认值:300000, 0表示不超时，取值范围[0, 2^31 - 1]</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>The timeout period for heartbeat in each operation ( in ms ), default:300000, 0 for no-timeout, value range[0, 2^32 - 1]</en>
-         <cn>判定操作中断的时间(ms),默认值:300000, 0表示不超时，取值范围[0, 2^32 - 1]</cn>
+         <en>The timeout period for heartbeat in each operation ( in ms ), default:300000, 0 for no-timeout, value range[0, 2^31 - 1]</en>
+         <cn>判定操作中断的时间(ms),默认值:300000, 0表示不超时，取值范围[0, 2^31 - 1]</cn>
       </detail>
       <type>int</type>
       <default>300000</default>
@@ -1264,8 +1264,8 @@
       <name>PMD_OPTION_SIGNAL_INTERVAL</name>
       <long>signalinterval</long>
       <description>
-         <en>Signal test interval(second), default:0, 0 or less value means disable signal test, value range[0, 2^32 - 1]</en>
-         <cn>信号测试周期(秒),默认值0.小于等于0表示关闭信号测试功能,取值范围[0, 2^32 - 1]</cn>
+         <en>Signal test interval(second), default:0, 0 or less value means disable signal test, value range[0, 2^31 - 1]</en>
+         <cn>信号测试周期(秒),默认值0.小于等于0表示关闭信号测试功能,取值范围[0, 2^31 - 1]</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
@@ -1293,16 +1293,16 @@
       <name>PMD_OPTION_MAX_CACHE_SIZE</name>
       <long>maxcachesize</long>
       <description>
-         <en>The node's max cache size, default:0, unit:MB, value range[0, 2^32 - 1](currently only applicable for Lob feature)</en>
-         <cn>节点缓存最大值，默认为0，单位为MB，取值范围[0, 2^32 - 1]（注意：该配置目前仅对Lob功能生效）</cn>
+         <en>The node's max cache size, default:0, unit:MB, value range[0, 2^31 - 1](currently only applicable for Lob feature)</en>
+         <cn>节点缓存最大值，默认为0，单位为MB，取值范围[0, 2^31 - 1]（注意：该配置目前仅对Lob功能生效）</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>The node's max cache size, unit is MB, default is 0, value range[0, 2^32 - 1](currently only applicable for Lob feature)</en>
-         <cn>节点缓存最大值，单位为MB，默认值为0，取值范围[0, 2^32 - 1]（注意：该配置目前仅对Lob功能生效）</cn>
+         <en>The node's max cache size, unit is MB, default is 0, value range[0, 2^31 - 1](currently only applicable for Lob feature)</en>
+         <cn>节点缓存最大值，单位为MB，默认值为0，取值范围[0, 2^31 - 1]（注意：该配置目前仅对Lob功能生效）</cn>
       </detail>
       <type>int</type>
       <default>0</default>
@@ -1404,16 +1404,16 @@
       <name>PMD_OPTION_SYNC_INTERVAL</name>
       <long>syncinterval</long>
       <description>
-         <en>The interval time(unit:ms) of data-sync, default:10000, 0 means disable data-sync by time, value range[0, 2^32 - 1]</en>
-         <cn>后台数据同步周期，单位毫秒，默认值为10000，0表示不按周期触发数据同步，取值范围[0, 2^32 - 1]</cn>
+         <en>The interval time(unit:ms) of data-sync, default:10000, 0 means disable data-sync by time, value range[0, 2^31 - 1]</en>
+         <cn>后台数据同步周期，单位毫秒，默认值为10000，0表示不按周期触发数据同步，取值范围[0, 2^31 - 1]</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>The interval times(unit:ms) of data-sync, default:10000, 0 means disable data-sync by time, value range[0, 2^32 - 1]</en>
-         <cn>后台数据同步周期，单位毫秒，默认值为10000，0表示不按周期触发数据同步，取值范围[0, 2^32 - 1]</cn>
+         <en>The interval times(unit:ms) of data-sync, default:10000, 0 means disable data-sync by time, value range[0, 2^31 - 1]</en>
+         <cn>后台数据同步周期，单位毫秒，默认值为10000，0表示不按周期触发数据同步，取值范围[0, 2^31 - 1]</cn>
       </detail>
       <type>int</type>
       <default>10000</default>
@@ -1424,16 +1424,16 @@
       <name>PMD_OPTION_SYNC_RECORDNUM</name>
       <long>syncrecordnum</long>
       <description>
-         <en>The trigger condition of record number of data-sync, default:0, 0 means disable data-sync by record, value range[0, 2^32 - 1]</en>
-         <cn>后台数据同步触发记录数，默认值为0，0表示不按记录数触发数据同步，取值范围[0, 2^32 - 1]</cn>
+         <en>The trigger condition of record number of data-sync, default:0, 0 means disable data-sync by record, value range[0, 2^31 - 1]</en>
+         <cn>后台数据同步触发记录数，默认值为0，0表示不按记录数触发数据同步，取值范围[0, 2^31 - 1]</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>The trigger condition of record number of data-sync, default:0, 0 means disable data-sync by record, value range[0, 2^32 - 1]</en>
-         <cn>后台数据同步触发记录数，默认值为0，0表示不按记录数触发数据同步，取值范围[0, 2^32 - 1]</cn>
+         <en>The trigger condition of record number of data-sync, default:0, 0 means disable data-sync by record, value range[0, 2^31 - 1]</en>
+         <cn>后台数据同步触发记录数，默认值为0，0表示不按记录数触发数据同步，取值范围[0, 2^31 - 1]</cn>
       </detail>
       <type>int</type>
       <default>0</default>
@@ -1523,16 +1523,16 @@
       <name>PMD_OPTION_ARCHIVE_TIMEOUT</name>
       <long>archivetimeout</long>
       <description>
-         <en>The timeout interval for archiving( in seconds ), default:600, 0 for no-timeout, value range[0, 2^32 - 1]</en>
-         <cn>判定未归档的超时时间(秒)，默认值：600，0表示不超时, 取值范围[0, 2^32 - 1]。</cn>
+         <en>The timeout interval for archiving( in seconds ), default:600, 0 for no-timeout, value range[0, 2^31 - 1]</en>
+         <cn>判定未归档的超时时间(秒)，默认值：600，0表示不超时, 取值范围[0, 2^31 - 1]。</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>The timeout interval for archiving( in seconds ), default:600, 0 for no-timeout, value range[0, 2^32 - 1]</en>
-         <cn>判定未归档的超时时间(秒)，默认值：600，0表示不超时, 取值范围[0, 2^32 - 1]。</cn>
+         <en>The timeout interval for archiving( in seconds ), default:600, 0 for no-timeout, value range[0, 2^31 - 1]</en>
+         <cn>判定未归档的超时时间(秒)，默认值：600，0表示不超时, 取值范围[0, 2^31 - 1]。</cn>
       </detail>
       <type>int</type>
       <default>600</default>
@@ -1563,16 +1563,16 @@
       <name>PMD_OPTION_ARCHIVE_QUOTA</name>
       <long>archivequota</long>
       <description>
-         <en>The disk quota for archive log directory ( in GB ), default:10, 0 for no limit, value range[0, 2^32 - 1].</en>
-         <cn>归档日志目录的磁盘配额(GB)，默认值：10，0表示没有限制，取值范围[0, 2^32 - 1]。</cn>
+         <en>The disk quota for archive log directory ( in GB ), default:10, 0 for no limit, value range[0, 2^31 - 1].</en>
+         <cn>归档日志目录的磁盘配额(GB)，默认值：10，0表示没有限制，取值范围[0, 2^31 - 1]。</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>The disk quota for archive log directory ( in GB ), default:10, 0 for no limit, value range[0, 2^32 - 1].</en>
-         <cn>归档日志目录的磁盘配额(GB)，默认值：10，0表示没有限制，取值范围[0, 2^32 - 1]。</cn>
+         <en>The disk quota for archive log directory ( in GB ), default:10, 0 for no limit, value range[0, 2^31 - 1].</en>
+         <cn>归档日志目录的磁盘配额(GB)，默认值：10，0表示没有限制，取值范围[0, 2^31 - 1]。</cn>
       </detail>
       <type>int</type>
       <default>10</default>
@@ -1635,8 +1635,8 @@
       <name>PMD_OPTION_OPT_COST_THRESHOLD</name>
       <long>optcostthreshold</long>
       <description>
-         <en>The optimizer estimates a number of data pages are in memory, and ignore their IO cost when estimating access plans, default: 20, 0 means to estimate IO cost always, -1 means never to estimate cost, value range[-1, 2^32 - 1].</en>
-         <cn>查询优化器忽略IO影响的最小的页数，数据页数大于阈值时，估算查询计划代价时需要计算IO的代价，默认值：20，0表示一直需要计算IO代价，-1表示从不计算代价，取值范围[-1, 2^32 - 1]</cn>
+         <en>The optimizer estimates a number of data pages are in memory, and ignore their IO cost when estimating access plans, default: 20, 0 means to estimate IO cost always, -1 means never to estimate cost, value range[-1, 2^31 - 1].</en>
+         <cn>查询优化器忽略IO影响的最小的页数，数据页数大于阈值时，估算查询计划代价时需要计算IO的代价，默认值：20，0表示一直需要计算IO代价，-1表示从不计算代价，取值范围[-1, 2^31 - 1]</cn>
       </description>
       <type>int</type>
       <reloadable>
@@ -1762,18 +1762,18 @@
       <name>PMD_OPTION_SVC_MAX_CONCURRENCY</name>
       <long>svcmaxconcurrency</long>
       <description>
-         <en>Specify the maximun concurrency number in scheduler. 0 for unlimited. default is 100, value range[0, 2^32 - 1]. </en>
-         <cn>指定任务执行的最大并发数，0表示不限制。默认值为500，取值范围[0, 2^32 - 1]。</cn>
+         <en>Specify the maximun concurrency number in scheduler. 0 for unlimited. default is 100, value range[0, 2^31 - 1]. </en>
+         <cn>指定任务执行的最大并发数，0表示不限制。默认值为500，取值范围[0, 2^31 - 1]。</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>1.Specify the maximun concurrency number in scheduler. 0 for unlimited. default is 100, value range[0, 2^32 - 1].<fig></fig>
+         <en>1.Specify the maximun concurrency number in scheduler. 0 for unlimited. default is 100, value range[0, 2^31 - 1].<fig></fig>
              2.It does not take effect when 'svcscheduler' is 0.
          </en>
-         <cn>1、指定任务执行的最大并发数，0表示不限制。默认值为100，取值范围[0, 2^32 - 1]。<fig></fig>
+         <cn>1、指定任务执行的最大并发数，0表示不限制。默认值为100，取值范围[0, 2^31 - 1]。<fig></fig>
              2、当'svcscheduler'取值为0时，该参数不生效。
          </cn>
       </detail>
