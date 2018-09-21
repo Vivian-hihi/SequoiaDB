@@ -162,7 +162,7 @@ namespace engine
 
       if ( TRUE == JSVAL_IS_NULL( *val ) && TRUE == allowNull )
       {
-         jsObj = JS_NewObject( _context, NULL, NULL, NULL ) ;
+         goto done ;
       }
       else
       {
