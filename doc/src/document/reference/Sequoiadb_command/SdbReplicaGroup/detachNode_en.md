@@ -30,7 +30,7 @@ Detach a node in the current partition group, but its configuration information 
 
     1. `KeepData` ( *Bool* ): Whether to keep the original data of the current node, default to be false.
 
-    1. `enforced` ( *Bool* ): Whether to detach the node forcibly , default to be false.
+    1. `Enforced` ( *Bool* ): Whether to detach the node forcibly , default to be false.
 
 **Note:**
 
@@ -52,7 +52,7 @@ the exceptions of `attachNode()` are as below:
 | ------ | --- | ------------ | ----------- |
 | -15 | SDB_NETWORK | Network error. | 1. Check the state of sdbcm. 2. Check whether hostname or service name is ok or not. |
 | -155 | SDB_CLS_NODE_NOT_EXIST | Node does not exist. | Check whether the note exists in current group or not. |
-| -204 | SDB_CATA_RM_NODE_FORBIDDEN | Unable to remove the last node or primary in a group. | 1. Check if the node is master. 2. Check if the node is the last node of current group no not. |
+| -204 | SDB_CATA_RM_NODE_FORBIDDEN | Unable to remove the last node or primary in a group. | 1. Check if the node is master. 2. Check if the node is the last node of current group no not. 3. You can use { Enforced: true } |
 
 When error happen, use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)
 to get the error message or use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md)

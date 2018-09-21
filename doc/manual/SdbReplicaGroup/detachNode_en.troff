@@ -41,7 +41,7 @@ Can be the following options:
 \f[C]KeepData\f[] ( \f[I]Bool\f[] ): Whether to keep the original data of the
 current node, default to be false.
 .IP "2." 3
-\f[C]enforced\f[] ( \f[I]Bool\f[] ): Whether to detach the node forcibly ,
+\f[C]Enforced\f[] ( \f[I]Bool\f[] ): Whether to detach the node forcibly ,
 default to be false.
 .RE
 .PP
@@ -179,7 +179,14 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-no not.
+no not. 3. You can use 
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+T}@T{
+{ Enforced: true }
 T}
 .TE
 .PP

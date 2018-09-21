@@ -24,18 +24,13 @@ Delete the specified node in the replica group.
 .br
        Node's port number.
 .sp 2
-\fBconfig (json)\fR
+\fBoptions (json)\fR
 .br
-       Node's configuration information.
+       Can be the following options:
+.IP "1." 3
+\f[C]Enforced\f[] ( \f[I]Bool\f[] ): Whether to detach the node forcibly ,
+default to be false.
 .sp 2
-       \fBFormat\fR
-.br
-              Definition Format rg.removeNode() method has three
-              parameters: host, service, config, as shown above,
-              in the following format:
-.br
-              ("<hostname>","<port
-              number>"[,{<configParam>:value,...}])
 .SH "Examples"
 
 .sp 2
