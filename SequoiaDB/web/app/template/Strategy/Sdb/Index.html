@@ -2,10 +2,10 @@
    <div class="underlineTab" style="" ng-container="{height:50,offsetX:-10}">
       <ul class="left">
          <li class="active">
-            <a>Task</a>
+            <a>{{autoLanguage("任务")}}</a>
          </li>
          <li>
-            <a ng-click="GotoStrategy()">Strategy</a>
+            <a ng-click="GotoStrategy()">{{autoLanguage("策略")}}</a>
          </li>
       </ul>
    </div>
@@ -24,7 +24,7 @@
          <div class="title">{{autoLanguage("当前业务没有任务。")}}</div>
          <div class="tips">
             {{autoLanguage("使用")}}
-            <span class="linkButton" ng-click="ShowCreateTask()">{{autoLanguage("添加Task")}}</span>
+            <span class="linkButton" ng-click="ShowCreateTask()">{{autoLanguage("添加任务")}}</span>
             {{autoLanguage("操作。")}}
          </div>
       </div>

@@ -50,10 +50,10 @@
          var date = new Date( timestamp * 1000 ) ;
          Y = date.getFullYear() + '-' ;
          M = ( date.getMonth() + 1 < 10 ? '0' + ( date.getMonth() + 1 ) : date.getMonth() + 1 ) + '-' ;
-         D = date.getDate() + ' ' ;
-         h = date.getHours() + ':' ;
-         m = date.getMinutes() + ':' ;
-         s = date.getSeconds() ;
+         D = ( date.getDate() < 10 ? '0' + date.getDate() : date.getDate() ) + ' ' ;
+         h = ( date.getHours() < 10 ? '0' + date.getHours() : date.getHours() ) + ':' ;
+         m = ( date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes() ) + ':' ;
+         s = ( date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds() ) ;
          return Y+M+D+h+m+s;
       }
 
@@ -236,7 +236,7 @@
 
             }
          } ) ;
-         $scope.CreateTaskWindow['callback']['SetTitle']( $scope.autoLanguage( '添加Task' ) ) ;
+         $scope.CreateTaskWindow['callback']['SetTitle']( $scope.autoLanguage( '添加任务' ) ) ;
          $scope.CreateTaskWindow['callback']['SetIcon']( '' ) ;
          $scope.CreateTaskWindow['callback']['Open']() ;
       }
