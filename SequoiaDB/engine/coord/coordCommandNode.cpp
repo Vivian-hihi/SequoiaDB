@@ -1608,7 +1608,7 @@ namespace engine
          pArgs->_targetName = groupName ;
 
          /// get enforce
-         rc = rtnGetBooleanElement( pArgs->_boQuery, CMD_NAME_ENFORCED,
+         rc = rtnGetBooleanElement( pArgs->_boQuery, FIELD_NAME_ENFORCED1,
                                     _enforce ) ;
          if ( SDB_FIELD_NOT_EXIST == rc )
          {
@@ -1617,7 +1617,7 @@ namespace engine
          else if ( rc )
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
-                    "rc: %d", CMD_NAME_ENFORCED, getName(), rc ) ;
+                    "rc: %d", FIELD_NAME_ENFORCED1, getName(), rc ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -2258,8 +2258,9 @@ namespace engine
             ++validCount ;
          }
 
-         /// get enforce
-         rc = rtnGetBooleanElement( pArgs->_boQuery, CMD_NAME_ENFORCED,
+         /// get enforced and Enforced
+         /// if there are both Enforced and enforced, just use Enforced.
+         rc = rtnGetBooleanElement( pArgs->_boQuery, FIELD_NAME_ENFORCED,
                                     _enforce ) ;
          if ( SDB_FIELD_NOT_EXIST == rc )
          {
@@ -2268,7 +2269,25 @@ namespace engine
          else if ( rc )
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
-                    "rc: %d", CMD_NAME_ENFORCED, getName(), rc ) ;
+                    "rc: %d", FIELD_NAME_ENFORCED, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         else
+         {
+            ++validCount ;
+         }
+
+         rc = rtnGetBooleanElement( pArgs->_boQuery, FIELD_NAME_ENFORCED1,
+                                    _enforce ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
+                    "rc: %d", FIELD_NAME_ENFORCED1, getName(), rc ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
