@@ -685,8 +685,6 @@ namespace engine
     */
    _dmsIndexStat::_dmsIndexStat ()
    : _dmsStatUnit (),
-     _pCSName( NULL ),
-     _pCLName( NULL ),
      _indexLogicalID( DMS_INVALID_EXTENT ),
      _pFirstField( NULL ),
      _numKeys( 0 ),
@@ -698,6 +696,9 @@ namespace engine
      _undefFrac( 0 ),
      _mcvSet()
    {
+      ossMemset( _pCSName, 0, sizeof( _pCSName ) ) ;
+      ossMemset( _pCLName, 0, sizeof( _pCLName ) ) ;
+
       setIndexName( NULL ) ;
    }
 
@@ -706,8 +707,6 @@ namespace engine
                                   UINT16 mbID, UINT32 clLID,
                                   UINT64 createTime )
    : _dmsStatUnit( suLID, mbID, clLID, createTime ),
-     _pCSName( pCSName ),
-     _pCLName( pCLName ),
      _indexLogicalID( DMS_INVALID_EXTENT ),
      _pFirstField( NULL ),
      _numKeys( 0 ),
@@ -719,6 +718,11 @@ namespace engine
      _undefFrac( 0 ),
      _mcvSet()
    {
+      ossMemset( _pCSName, 0, sizeof( _pCSName ) ) ;
+      ossMemset( _pCLName, 0, sizeof( _pCLName ) ) ;
+
+      setCSName( pCSName ) ;
+      setCLName( pCLName ) ;
       setIndexName( pIndexName ) ;
    }
 
@@ -1241,8 +1245,8 @@ namespace engine
          if ( added )
          {
             // The name pointer should be fixed
-            pIndexStat->_pCSName = _pCSName ;
-            pIndexStat->_pCLName = _pCLName ;
+            pIndexStat->setCSName( _pCSName ) ;
+            pIndexStat->setCLName( _pCLName ) ;
             _addFieldStat( pIndexStat, ignoreCrtTime ) ;
          }
       }

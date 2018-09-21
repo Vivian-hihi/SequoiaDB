@@ -384,7 +384,6 @@ namespace engine
     */
    class _dmsIndexStat : public _dmsStatUnit
    {
-      friend class _dmsCollectionStat ;
       typedef _utilString<128>   idxNameString ;
 
       public :
@@ -396,9 +395,33 @@ namespace engine
 
          virtual ~_dmsIndexStat () ;
 
+         OSS_INLINE virtual void setCSName ( const CHAR *pCSName )
+         {
+            if ( pCSName && *pCSName )
+            {
+               ossStrncpy( _pCSName, pCSName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
+            }
+            else
+            {
+               _pCSName[ 0 ] = '\0' ;
+            }
+         }
+
          OSS_INLINE virtual const CHAR *getCSName () const
          {
             return _pCSName ;
+         }
+
+         OSS_INLINE virtual void setCLName ( const CHAR *pCLName )
+         {
+            if ( pCLName && *pCLName )
+            {
+               ossStrncpy( _pCLName, pCLName, DMS_COLLECTION_NAME_SZ ) ;
+            }
+            else
+            {
+               _pCLName[ 0 ] = '\0' ;
+            }
          }
 
          OSS_INLINE virtual const CHAR *getCLName () const
@@ -563,21 +586,12 @@ namespace engine
          INT32 _evalOperator ( dmsStatKey *pStartKey, dmsStatKey *pStopKey,
                                double &predSelectivity, double &scanSelectivity ) const ;
 
-      private:
-
-         OSS_INLINE virtual void setCSName ( const CHAR *pCSName )
-         {
-            _pCSName = pCSName ;
-         }
-
-         OSS_INLINE virtual void setCLName ( const CHAR *pCLName )
-         {
-            _pCLName = pCLName ;
-         }
-
       protected :
-         const CHAR        *_pCSName ;
-         const CHAR        *_pCLName ;
+         // Name of collection space
+         CHAR     _pCSName [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
+
+         // Name of collection ( short name )
+         CHAR     _pCLName [ DMS_COLLECTION_NAME_SZ + 1 ] ;
 
          idxNameString     _pIndexName ;
 
