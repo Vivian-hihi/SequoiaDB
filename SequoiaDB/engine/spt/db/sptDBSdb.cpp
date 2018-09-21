@@ -2509,7 +2509,7 @@ namespace engine
                                           options ) ;
       if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "Failed tp rename collection space" ) ;
+         detail = BSON( SPT_ERR << "Failed to rename collection space" ) ;
          goto error ;
       }
    done:
