@@ -659,7 +659,7 @@ public class DBCollection {
      *                    using index "ageIndex" to scan data(index scan);
      *                    {"":null} means table scan. when hint is null,
      *                    database automatically match the optimal index to scan data.
-     * @param setOnInsert The setOnInsert assigns the specified values to the fileds when insert
+     * @param setOnInsert The setOnInsert assigns the specified values to the fieds when insert
      * @throws BaseException If error happens.
      */
     public void upsert(BSONObject matcher, BSONObject modifier, BSONObject hint,
@@ -678,7 +678,7 @@ public class DBCollection {
      *                    using index "ageIndex" to scan data(index scan);
      *                    {"":null} means table scan. when hint is null,
      *                    database automatically match the optimal index to scan data.
-     * @param setOnInsert The setOnInsert assigns the specified values to the fileds when insert
+     * @param setOnInsert The setOnInsert assigns the specified values to the fields when insert
      * @param flag        the upsert flag, default to be 0. Please see the definition
      *                    of follow flags for more detail.
      *                    <ul>
@@ -814,6 +814,7 @@ public class DBCollection {
      *                 <li>DBQuery.FLG_QUERY_FORCE_HINT
      *                 <li>DBQuery.FLG_QUERY_PARALLED
      *                 <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
+     *                 <li>DBQuery.FLG_QUERY_FOR_UPDATE
      *                 </ul>
      * @return a DBCursor instance of the result or null if no any matched document
      * @throws BaseException If error happens.
@@ -859,6 +860,7 @@ public class DBCollection {
      *                 <li>DBQuery.FLG_QUERY_FORCE_HINT
      *                 <li>DBQuery.FLG_QUERY_PARALLED
      *                 <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
+     *                 <li>DBQuery.FLG_QUERY_FOR_UPDATE
      *                 </ul>
      * @return a DBCursor instance of the result or null if no any matched document
      * @throws BaseException If error happens.
@@ -966,6 +968,7 @@ public class DBCollection {
      *                   <li>DBQuery.FLG_QUERY_FORCE_HINT
      *                   <li>DBQuery.FLG_QUERY_PARALLED
      *                   <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
+     *                   <li>DBQuery.FLG_QUERY_FOR_UPDATE
      *                   </ul>
      * @return a DBCursor instance of the result or null if no any matched document
      * @throws BaseException If error happens.
@@ -1037,6 +1040,7 @@ public class DBCollection {
      *                 <li>DBQuery.FLG_QUERY_FORCE_HINT
      *                 <li>DBQuery.FLG_QUERY_PARALLED
      *                 <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
+     *                 <li>DBQuery.FLG_QUERY_FOR_UPDATE
      *                 </ul>
      * @return the matched document or null if no such document
      * @throws BaseException If error happens.
@@ -1145,6 +1149,7 @@ public class DBCollection {
      *                   <li>DBQuery.FLG_QUERY_PARALLED
      *                   <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
      *                   <li>DBQuery.FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE
+     *                   <li>DBQuery.FLG_QUERY_FOR_UPDATE
      *                   </ul>
      * @param returnNew  When true, returns the updated document rather than the original
      * @return a DBCursor instance of the result or null if no any matched document
@@ -1182,6 +1187,7 @@ public class DBCollection {
      *                   <li>DBQuery.FLG_QUERY_FORCE_HINT
      *                   <li>DBQuery.FLG_QUERY_PARALLED
      *                   <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
+     *                   <li>DBQuery.FLG_QUERY_FOR_UPDATE
      *                   </ul>
      * @return a DBCursor instance of the result or null if no any matched document
      * @throws BaseException If error happens.
