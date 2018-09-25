@@ -93,14 +93,10 @@ namespace engine
       // If the plan is cached, decrease the reference count
       // If the plan is not cached, delete it when reference count is 1,
       // means it is the last reference
-      if ( decRefCount() == 1 )
+      if ( decRefCount() == 1 && !isCached() )
       {
          SDB_ASSERT( getRefCount() == 0, "Invalid ref count" ) ;
-
-         if ( !isCached() )
-         {
-            SDB_OSS_DEL this ;
-         }
+         SDB_OSS_DEL this ;
       }
    }
 
