@@ -131,6 +131,7 @@ if guess_os == "linux":
         env.Append( LINKFLAGS=" -static " )
     env.Append ( LIBS="boost_filesystem" )
     env.Append ( LIBS="boost_system" )
+    env.Append ( LIBS="boost_program_options" )
     env.Append ( LIBS="pthread" )
     env.Append ( CPPFLAGS=" -ggdb " )
 elif guess_os == "aix":
@@ -148,6 +149,7 @@ elif guess_os == "aix":
     env.Append( LINKFLAGS=" -maix64 " )
     env.Append ( LIBS="boost_filesystem" )
     env.Append ( LIBS="boost_system" )
+    env.Append ( LIBS="boost_program_options" )
     env.Append ( LIBS="pthread" )
     env.Append ( CPPFLAGS=" -ggdb -maix64 " )
     env.Append ( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
@@ -210,7 +212,7 @@ elif "win32" == guess_os:
         winLibString += " odbc32.lib odbccp32.lib uuid.lib dbghelp.lib "
 
     env.Append( LIBS=Split(winLibString) )
-    env.Append( CPPFLAGS=" /RTC1 /MDd /Z7 /TP /errorReport:none " )
+    env.Append( CPPFLAGS=" /RTC1 /MDd /Z7 /TP /errorReport:none /D_CRT_SECURE_NO_DEPRECATE " )
     env.Append( LINKFLAGS=" /debug " )
     env.Append( CPPFLAGS=" /Od " )
 
@@ -224,31 +226,37 @@ language = get_option("language")
 if language is None:
    language = "en"
 
-copyFiles = [ "../../../SequoiaDB/engine/oss/ossUtil.c",
-              "../../../SequoiaDB/engine/oss/ossMem.c",
-              "../../../SequoiaDB/engine/oss/ossMem.cpp",
-              "../../../SequoiaDB/engine/oss/oss.c",
-              "../../../SequoiaDB/engine/oss/oss.cpp",
-              "../../../SequoiaDB/engine/pd/pdComponents.cpp" ]
-for file in copyFiles:
-   env.Execute(Copy('../', file))
-
-srcFiles = [ "ossUtil.c",
-             "ossMem.cpp",
-             "oss.cpp",
-             "pdComponents.cpp",
-             "main.cpp",
-             "rcgen.cpp",
-             "filenamegen.cpp",
-             "optgen.cpp",
-             "buildgen.cpp",
-             "tracegen.cpp",
-             "dbConfForWeb.cpp",
-             "vergen.cpp",
+srcFiles = [
+   "main.cpp",
+   "options.cpp",
+   "util.cpp",
+   "generateInterface.cpp",
+   "fileStream.cpp",
+   "rc/rcGeneratorBase.cpp",
+   "rc/rcGenForC.cpp",
+   "rc/rcGenForCPP.cpp",
+   "rc/rcGenForJS.cpp",
+   "rc/rcGenForCS.cpp",
+   "rc/rcGenForJAVA.cpp",
+   "rc/rcGenForPython.cpp",
+   "rc/rcGenForDoc.cpp",
+   "rc/rcGenForWEB.cpp",
+   "spidermonkey/codeGenerator.cpp",
+   "options/optGeneratorBase.cpp",
+   "options/optGenForC.cpp",
+   "options/optGenForCPP.cpp",
+   "options/optGenForSample.cpp",
+   "options/optGenForDoc.cpp",
+   "fileList/fileListGenerator.cpp",
+   "trace/traceGenerator.cpp",
+   "version/versionGeneratorBase.cpp",
+   "version/versionGenForDoc.cpp",
+   "version/versionGenForPython.cpp",
+   "version/versionGenForBuild.cpp",
 ]
 
 autogen = env.Program( "autogen", srcFiles )
 cmd = "bin" + os.sep + "autogen "
-run = env.Command ( target = language, source = autogen, action = cmd + language )
+run = env.Command ( target = language, source = autogen, action = cmd + "-l " + language )
 env.Depends ( run, autogen )
 env.AlwaysBuild( run )
