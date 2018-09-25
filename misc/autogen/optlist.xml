@@ -63,7 +63,7 @@
       <detail>
          <en>1. It specifies the path of data file.<fig></fig>
              2. If it is not specified, the default path is current path.</en>
-         <cn>1.指定数据文件存放路径。<fig></fig>2.如果不指定，则默认为当前路径。</cn>
+         <cn>1. 指定数据文件存放路径。<fig></fig>2. 如果不指定，则默认为当前路径。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -79,7 +79,7 @@
       <detail>
          <en>1. It specifies the path of index file<fig></fig>
              2. If it is not specified, the default path is the same with 'dbpath'.</en>
-         <cn>1.指定索引文件存放路径。<fig></fig>2.如果不指定，则默认与'dbpath'相同。</cn>
+         <cn>1. 指定索引文件存放路径。<fig></fig>2. 如果不指定，则默认与'dbpath'相同。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -97,10 +97,10 @@
              2. <i>sdb.conf</i>contains necessary configuration items. The format of a configuration item is "parameter name=value" like "svcname=11810" and "diaglevel=3".<fig></fig>
              3. If this parameter is not specified, system will automatically search for sdb.conf in current path.<fig></fig>
              4. There may not be sdb.conf.</en>
-         <cn>1.指定配置文件路径（不包含文件名），系统会在confpath下寻找sdb.conf。<fig></fig>
-             2.sdb.conf中填入需要的配置项，配制方法为：参数名 = 参数值。如 svcname=11810；diaglevel=3<fig></fig>
-             3.如果不指定此参数，系统默认在当前路径寻找sdb.conf。<fig></fig>
-             4.sdb.conf可以不存在。</cn>
+         <cn>1. 指定配置文件路径（不包含文件名），系统会在confpath下寻找sdb.conf。<fig></fig>
+             2. sdb.conf中填入需要的配置项，配制方法为：参数名 = 参数值。如 svcname=11810；diaglevel=3<fig></fig>
+             3. 如果不指定此参数，系统默认在当前路径寻找sdb.conf。<fig></fig>
+             4. sdb.conf可以不存在。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -116,8 +116,8 @@
       <detail>
          <en>1. Synchronous log files will be created when replication node does full sync. This parameter is used to specified the path of  synchronous log file.<fig></fig>
              2. If it is not specified, the default path is "Data file path/replicalog".</en>
-         <cn>1.副本节点在进行数据同步时会生成同步日志。此参数用来指定同步日志的路径。<fig></fig>
-             2.如果不指定，则默认路径为：数据文件路径/replicalog</cn>
+         <cn>1. 副本节点在进行数据同步时会生成同步日志。此参数用来指定同步日志的路径。<fig></fig>
+             2. 如果不指定，则默认路径为：数据文件路径/replicalog</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -136,8 +136,8 @@
       <detail>
          <en>1. It specifies the catalog of diagnostic log. <fig></fig>
              2. If it is not specified, the default path is "Data file path/diaglog".</en>
-         <cn>1.指定诊断日志存放目录。<fig></fig>
-             2.如果不指定，则默认为：数据文件路径/diaglog</cn>
+         <cn>1. 指定诊断日志存放目录。<fig></fig>
+             2. 如果不指定，则默认为：数据文件路径/diaglog</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -156,8 +156,8 @@
       <detail>
          <en>1. It specifies the catalog of audit log. <fig></fig>
              2. If it is not specified, the default path is "Data file path/diaglog".</en>
-         <cn>1.指定审计日志存放目录。<fig></fig>
-             2.如果不指定，则默认为：数据文件路径/diaglog</cn>
+         <cn>1. 指定审计日志存放目录。<fig></fig>
+             2. 如果不指定，则默认为：数据文件路径/diaglog</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -181,8 +181,8 @@
       <detail>
          <en>1. It specifies the number of diagnostic log file. <fig></fig>
              2. If it is not specified, the default 20; -1 means unlimited.</en>
-         <cn>1.指定诊断日志文件最大数量。<fig></fig>
-             2.如果不指定，则默认为：20，-1表示不限制，取值范围[-1, 2^31 - 1]。</cn>
+         <cn>1. 指定诊断日志文件最大数量。<fig></fig>
+             2. 如果不指定，则默认为：20，-1表示不限制，取值范围[-1, 2^31 - 1]。</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
@@ -206,8 +206,8 @@
       <detail>
          <en>1. It specifies the number of audit log file. <fig></fig>
              2. If it is not specified, the default 20; -1 means unlimited.</en>
-         <cn>1.指定审计日志文件最大数量。<fig></fig>
-             2.如果不指定，则默认为：20，-1表示不限制，取值范围[-1, 2^31 - 1]。</cn>
+         <cn>1. 指定审计日志文件最大数量。<fig></fig>
+             2. 如果不指定，则默认为：20，-1表示不限制，取值范围[-1, 2^31 - 1]。</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
@@ -222,8 +222,8 @@
       <detail>
           <en>1. It specifies the catalog of backup file.<fig></fig>
               2. If it is not specified, the default path is "Data file path/bakfile".</en>
-          <cn>1.指定备份文件生成目录。<fig></fig>
-              2.如果不指定，则默认为：数据文件路径/bakfile</cn>
+          <cn>1. 指定备份文件生成目录。<fig></fig>
+              2. 如果不指定，则默认为：数据文件路径/bakfile</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -239,9 +239,9 @@
           <en>1. It specifies the root catalog of web service.<fig></fig>
               2. If it is not specified, the default path is "Data file path/www".<fig></fig>
 			  3. Only for om.</en>
-          <cn>1.指定WEB服务根目录。<fig></fig>
-              2.如果不指定，则默认为：数据文件路径/www。<fig></fig>
-			  3.仅对OM生效。</cn>
+          <cn>1. 指定WEB服务根目录。<fig></fig>
+              2. 如果不指定，则默认为：数据文件路径/www。<fig></fig>
+			  3. 仅对OM生效。</cn>
       </detail>
       <typeofweb>str</typeofweb>
       <hidden>true</hidden>
@@ -262,8 +262,8 @@
       <detail>
          <en>1. It specifies the amount of thread in thread pool.<fig></fig>
              2. If it is not specified, the default value is 50, value range is [0,10000].</en>
-         <cn>1.指定线程池内线程数量。<fig></fig>
-             2.如果不指定，则默认为50，取值范围是[0,10000]。</cn>
+         <cn>1. 指定线程池内线程数量。<fig></fig>
+             2. 如果不指定，则默认为50，取值范围是[0,10000]。</cn>
       </detail>
       <default>50</default>
       <typeofweb>num</typeofweb>
@@ -284,8 +284,8 @@
       <detail>
          <en>1. It specifies local service port.<fig></fig>
              2. If it is not specified, the default value are 11810 for coord, 11800 for catalog, 11820 for datanode.</en>
-         <cn>1.指定本地服务端口。<fig></fig>
-             2.如果不指定则默认为11810端口用于编目节点，11800用于协调节点，11820用于数据节点。</cn>
+         <cn>1. 指定本地服务端口。<fig></fig>
+             2. 如果不指定则默认为11810端口用于编目节点，11800用于协调节点，11820用于数据节点。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -305,8 +305,8 @@
       <detail>
          <en>1. It specifies data synch port.<fig></fig>
              2. If it is not specified, the default value is "svcname+1".</en>
-         <cn>1.指定数据同步平面端口。<fig></fig>
-             2.如果不指定则默认为svcname+1。</cn>
+         <cn>1. 指定数据同步平面端口。<fig></fig>
+             2. 如果不指定则默认为svcname+1。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -326,8 +326,8 @@
       <detail>
          <en>1. It specifies shard port.<fig></fig>
              2. If it is not specified, the default value is "svcname+2".</en>
-         <cn>1.指定shard平面端口。<fig></fig>
-             2.如果不指定则默认为svcname+2。</cn>
+         <cn>1. 指定shard平面端口。<fig></fig>
+             2. 如果不指定则默认为svcname+2。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -347,8 +347,8 @@
       <detail>
          <en>1. It specifies catalog port.<fig></fig>
              2. If it is not specified, the default value is "svcname+3".</en>
-         <cn>1.指定catalog平面端口。<fig></fig>
-             2.如果不指定则默认为svcname+3。</cn>
+         <cn>1. 指定catalog平面端口。<fig></fig>
+             2. 如果不指定则默认为svcname+3。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -368,8 +368,8 @@
       <detail>
          <en>1. It specifies http port.<fig></fig>
              2. If it is not specified, the default value is "svcname+4".</en>
-         <cn>1.指定http端口。<fig></fig>
-             2.如果不指定则默认为svcname+4。</cn>
+         <cn>1. 指定http端口。<fig></fig>
+             2. 如果不指定则默认为svcname+4。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -384,8 +384,8 @@
       <detail>
          <en>1. It specifies om port.<fig></fig>
              2. If it is not specified, the default value is "svcname+5".</en>
-         <cn>1.指定OM端口。<fig></fig>
-             2.如果不指定则默认为svcname+5。</cn>
+         <cn>1. 指定OM端口。<fig></fig>
+             2. 如果不指定则默认为svcname+5。</cn>
       </detail>
       <typeofweb>str</typeofweb>
 	  <hidden>true</hidden>
@@ -408,8 +408,8 @@
       <detail>
          <en>1. It specifies the print level of diagnostic log. Diagnostic log in sequoiaDB, 0-5 respectively represent: SEVERE, ERROR, EVENT,WARNING, INFO, DEBUG.<fig></fig>
              2. If it is not specified, the default value is "WARNING".</en>
-         <cn>1.指定诊断日志打印级别。SequoiaDB中诊断日志从0-5分别代表：SEVERE, ERROR, EVENT, WARNING, INFO, DEBUG。<fig></fig>
-             2.如果不指定，则默认为WARNING。</cn>
+         <cn>1. 指定诊断日志打印级别。SequoiaDB中诊断日志从0-5分别代表：SEVERE, ERROR, EVENT, WARNING, INFO, DEBUG。<fig></fig>
+             2. 如果不指定，则默认为WARNING。</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
@@ -432,8 +432,8 @@
       <detail>
          <en>1. It specifies the mask of audit log. Audit type in sequoiaDB as follow: ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,INSERT,DELETE,UPDATE,OTHER.<fig></fig>
              2. If it is not specified, the default value is "SYSTEM|DDL|DCL". ALL enable all mask, NONE disable all mask</en>
-         <cn>1.指定审计日志打印掩码。SequoiaDB中审计日志类型有：ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,INSERT,DELETE,UPDATE,OTHER。<fig></fig>
-             2.如果不指定，则默认为"SYSTEM|DDL|DCL", ALL取值表示开启所有,NONE关闭全部。</cn>
+         <cn>1. 指定审计日志打印掩码。SequoiaDB中审计日志类型有：ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,INSERT,DELETE,UPDATE,OTHER。<fig></fig>
+             2. 如果不指定，则默认为"SYSTEM|DDL|DCL", ALL取值表示开启所有,NONE关闭全部。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -454,8 +454,8 @@
       <detail>
          <en>1. It specifies serving role. In sequoiaDB, "data/coord/catalog/standalone" represents "data node/coord node/catalog node/stand-alone machine".<fig></fig>
              2. If it is not specified, the default value is "standalone".</en>
-         <cn>1.指定服务角色。SequoiaDB分别以data/coord/catalog/standalone代表：数据节点/协调节点/编目节点/单机。<fig></fig>
-             2.如果不指定则默认为单机。</cn>
+         <cn>1. 指定服务角色。SequoiaDB分别以data/coord/catalog/standalone代表：数据节点/协调节点/编目节点/单机。<fig></fig>
+             2. 如果不指定则默认为单机。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -474,8 +474,8 @@
       <detail>
          <en>1. It specifies the address of catalog node. The format is "hostname1:catalogname1,hostname2:catalogname2,...".<fig></fig>
              2. It should specify address of at least one catalog.</en>
-         <cn>1.指定编目节点的地址。配置形式为"hostname1:catalogname1,hostname2:catalogname2,..."。<fig></fig>
-             2.需要至少指定一个编目节点的地址。</cn>
+         <cn>1. 指定编目节点的地址。配置形式为"hostname1:catalogname1,hostname2:catalogname2,..."。<fig></fig>
+             2. 需要至少指定一个编目节点的地址。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -493,8 +493,8 @@
       <detail>
          <en>1. It specifies the size of sync log file. It is between 64(MB) and 2048(MB).<fig></fig>
              2. If it is not specified, the default value is 64 (MB).</en>
-         <cn>1.指定同步日志文件的大小。合法输入为64（MB）- 2048（MB）。<fig></fig>
-             2.如果不指定，则默认为64（MB）。</cn>
+         <cn>1. 指定同步日志文件的大小。合法输入为64（MB）- 2048（MB）。<fig></fig>
+             2. 如果不指定，则默认为64（MB）。</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
@@ -512,8 +512,8 @@
       <detail>
           <en>1. It specifies the amount of synchronous log file.<fig></fig>
               2. If it is not specified, the default value is 20.</en>
-          <cn>1.指定同步日志文件的数量。<fig></fig>
-              2.如果不指定，则默认为20。</cn>
+          <cn>1. 指定同步日志文件的数量。<fig></fig>
+              2. 如果不指定，则默认为20。</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
@@ -534,7 +534,7 @@
       <detail>
          <en>1. It specifies whether transaction turns on or not.<fig></fig>
              2. If it is not specifed, the default value is false.</en>
-         <cn>1.指定是否打开事务。<fig></fig>2.如果不指定，则默认为false。</cn>
+         <cn>1. 指定是否打开事务。<fig></fig>2. 如果不指定，则默认为false。</cn>
       </detail>
       <typeofweb>boolean</typeofweb>
    </opt>
@@ -554,7 +554,7 @@
       <default>60</default>
       <detail>
          <en>Timeout of waiting the transaction-lock(in second), default:60, value range:[0,3600]</en>
-         <cn>1.事务锁等待超时时间（单位：秒）,默认为:60,取值范围[0,3600]</cn>
+         <cn>1. 事务锁等待超时时间（单位：秒）,默认为:60,取值范围[0,3600]</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
@@ -733,18 +733,18 @@
       <detail>
          <en>1. The control strategy of data sync in repl group.<fig></fig>
          	   2. value enumeration:<fig></fig>
-         	   none--no sync strategy. if the processing ability is much higher in master node than syncing ability in slave node, then slave node is susceptible to full sync under write-heavy workload.<fig></fig>
-         	   keepnormal--actively lower the master node's processing speed relative to normal nodes's to avoid full sync(might affect performance).<fig></fig>
-         	   keepall--actively lower the master node's processing speed relative to all nodes's to avoid full sync(might affect performance).<fig></fig>
+         	   > none--no sync strategy. if the processing ability is much higher in master node than syncing ability in slave node, then slave node is susceptible to full sync under write-heavy workload.<fig></fig>
+         	   > keepnormal--actively lower the master node's processing speed relative to normal nodes's to avoid full sync(might affect performance).<fig></fig>
+         	   > keepall--actively lower the master node's processing speed relative to all nodes's to avoid full sync(might affect performance).<fig></fig>
          	   3. the difference between keepnormal and keepall is that, the existence of abnormal nodes will lower master node's processing speed in keepall while will not in keepnormal.<fig></fig>
          	   4. if not specified, default value is keepnormal.</en> 
          <cn>1. 副本组之间数据同步控制策略。<fig></fig>
              2. 取值列表：<fig></fig>
-             none--不开启同步控制策略。若主节点处理数据的能力远超备节点同步数据的能力，则在写操作繁忙的场景下易导致备节点发生全量同步。<fig></fig>
-         	   keepnormal--主动降低主节点相对于正常节点的处理速度（可能会造成性能影响），以避免全量同步的发生。<fig></fig>
-         	   keepall--主动降低主节点相对于所有节点的处理速度（可能会造成性能影响），以避免全量同步的发生。<fig></fig>
-         	   3. keepnormal和keepall的区别在于，当有节点异常时keepall会降低主节点的处理速度，而keepnormal不受异常节点的影响。<fig></fig>
-         	   4. 如果不指定，默认为keepnormal。</cn>
+             > none: 不开启同步控制策略。若主节点处理数据的能力远超备节点同步数据的能力，则在写操作繁忙的场景下易导致备节点发生全量同步。<fig></fig>
+         	 > keepnormal: 主动降低主节点相对于正常节点的处理速度（可能会造成性能影响），以避免全量同步的发生。<fig></fig>
+         	 > keepall: 主动降低主节点相对于所有节点的处理速度（可能会造成性能影响），以避免全量同步的发生。<fig></fig>
+         	 3. keepnormal和keepall的区别在于，当有节点异常时keepall会降低主节点的处理速度，而keepnormal不受异常节点的影响。<fig></fig>
+         	 4. 如果不指定，默认为keepnormal。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -910,20 +910,20 @@
          <en>1. It specifies the instance on which to query.<fig></fig>
              2. If it is not specifed, the default value is "M", i.e. read and write instance.<fig></fig>
              3. value enum:<fig></fig>
-             3.1 "M", "m": read and write instance( master instance ). If multiple numeric instances are given with "M", matched master instance will be chosen in higher priority. If multiple numeric instances are given with "M" or "m", master instance will be chosen if no numeric instance is matched.<fig></fig>
-             3.2 "S", "s": read only instance( slave instance ). If multiple numeric instances are given with "S", matched slave instances will be chosen in higher priority. If multiple numeric instances are given with "S" or "s", slave instance will be chosen if no numeric instance is matched.<fig></fig>
-             3.3 "A", "a": any instance.<fig></fig>
-             3.4 1-255: the instance with specified instance ID.<fig></fig>
-             3.5 If multiple alphabet instances are given, only first one will be used.<fig></fig>
+             > "M", "m": read and write instance( master instance ). If multiple numeric instances are given with "M", matched master instance will be chosen in higher priority. If multiple numeric instances are given with "M" or "m", master instance will be chosen if no numeric instance is matched.<fig></fig>
+             > "S", "s": read only instance( slave instance ). If multiple numeric instances are given with "S", matched slave instances will be chosen in higher priority. If multiple numeric instances are given with "S" or "s", slave instance will be chosen if no numeric instance is matched.<fig></fig>
+             > "A", "a": any instance.<fig></fig>
+             > 1-255: the instance with specified instance ID.<fig></fig>
+             > If multiple alphabet instances are given, only first one will be used.<fig></fig>
              4. If matched instance is not found, will choose instance by random.</en>
          <cn>1. 指定执行读请求时优先选择的实例<fig></fig>
              2. 如果不指定，则默认值为M，即选择可读写实例。<fig></fig>
              3. 取值列表：<fig></fig>
-             3.1 "M", "m": 可读写实例（主实例）；如果多个 1-255 的实例和 "M" 一起指定，则满足指定实例中的主实例会优先选择；如果多个 1-255 的实例和 "M" 或 "m" 一起指定，则当没有满足指定的实例时选择主实例。<fig></fig>
-             3.2 "S", "s": 只读实例（备实例）；如果多个 1-255 的实例和 "S" 一起指定，则满足指定实例中的备实例会被优先选择；如果多个 1-255 的实例和 "S" 或 "s" 一起指定，则当没有满足指定的实例时选择备实例。<fig></fig>
-             3.3 "A", "a": 任意实例。<fig></fig>
-             3.4 1-255: 通过 --instanceid 指定实例 ID 的实例。<fig></fig>
-             3.5 如果指定多个 "M", "m", "S", "s", "A", "a" 实例，则只有第一个生效。<fig></fig>
+             > "M", "m": 可读写实例（主实例）；如果多个 1-255 的实例和 "M" 一起指定，则满足指定实例中的主实例会优先选择；如果多个 1-255 的实例和 "M" 或 "m" 一起指定，则当没有满足指定的实例时选择主实例。<fig></fig>
+             > "S", "s": 只读实例（备实例）；如果多个 1-255 的实例和 "S" 一起指定，则满足指定实例中的备实例会被优先选择；如果多个 1-255 的实例和 "S" 或 "s" 一起指定，则当没有满足指定的实例时选择备实例。<fig></fig>
+             > "A", "a": 任意实例。<fig></fig>
+             > 1-255: 通过 --instanceid 指定实例 ID 的实例。<fig></fig>
+             > 如果指定多个 "M", "m", "S", "s", "A", "a" 实例，则只有第一个生效。<fig></fig>
              4. 如果没有匹配的实例，将随机选择。</cn>
       </detail>
       <typeofweb>str</typeofweb>
@@ -947,11 +947,13 @@
       </reloadstrategy>
       <detail>
          <en>1. The mode to choose query instance when multiple prefered instances are found.<fig></fig>
-             2. "random": choose the instance from matched instances by random.<fig></fig>
-             3. "ordered": choose the instance from matched instances by the order of --preferedinstance .</en>
+		     2. value enumeration:<fig></fig>
+                > "random": choose the instance from matched instances by random.<fig></fig>
+                > "ordered": choose the instance from matched instances by the order of --preferedinstance .</en>
          <cn>1. 指定当多个实例符合 --preferedinstance 的条件时的选择模式。<fig></fig>
-             2. "random": 从候选的实例中随机选择。<fig></fig>
-             3. "ordered": 从候选的实例中按照 --perferedinstance 的顺序进行选择。</cn>
+		     2. 取值列表：<fig></fig>
+                > "random": 从候选的实例中随机选择。<fig></fig>
+                > "ordered": 从候选的实例中按照 --perferedinstance 的顺序进行选择。</cn>
       </detail>
       <typeofweb>str</typeofweb>
       <default>random</default>
@@ -987,8 +989,8 @@
       <detail>
          <en>1. It specifies the path of lob. <fig></fig>
              2. If it is not specified, the default path is "Data file path".</en>
-         <cn>1.指定大对象存放路径。<fig></fig>
-             2.如果不指定，则默认为：数据文件路径</cn>
+         <cn>1. 指定大对象存放路径。<fig></fig>
+             2. 如果不指定，则默认为：数据文件路径</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -1003,8 +1005,8 @@
       <detail>
          <en>1. It specifies the path of lob. <fig></fig>
              2. If it is not specified, the default path is the same with 'lobpath'.</en>
-         <cn>1.指定大对象元数据存放路径。<fig></fig>
-             2.如果不指定，则默认与'lobpath'保持一致</cn>
+         <cn>1. 指定大对象元数据存放路径。<fig></fig>
+             2. 如果不指定，则默认与'lobpath'保持一致</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -1284,7 +1286,7 @@
       </description>
       <detail>
          <en>1. It specifies the address of om node. The format is "hostname:omservicename".</en>
-         <cn>1.指定om节点的地址。配置形式为"hostname:omservicename"。</cn>
+         <cn>1. 指定om节点的地址。配置形式为"hostname:omservicename"。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -1321,14 +1323,14 @@
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>1.The maximum number of cache threads, default:10, value range:[2, 200].<fig></fig>
-             2.Cache threads will synchronize the dirty pages to file, and drop the invalid pages.<fig></fig>
-             3.Cache threads auto start and exit according to the cache workload.<fig></fig>
-             4.currently only applicable for Lob feature.</en>
-         <cn>1.后台缓存任务线程的最大数量，默认值为10，取值范围为[2, 200]。<fig></fig>
-             2.后台缓存任务线程主要执行同步脏页至文件，回收和释放空闲内存页。<fig></fig>
-             3.后台缓存任务线程根据缓存的负载情况自动启动和退出。<fig></fig>
-             4.该配置目前仅对Lob功能生效。</cn>
+         <en>1. The maximum number of cache threads, default:10, value range:[2, 200].<fig></fig>
+             2. Cache threads will synchronize the dirty pages to file, and drop the invalid pages.<fig></fig>
+             3. Cache threads auto start and exit according to the cache workload.<fig></fig>
+             4. Currently only applicable for Lob feature.</en>
+         <cn>1. 后台缓存任务线程的最大数量，默认值为10，取值范围为[2, 200]。<fig></fig>
+             2. 后台缓存任务线程主要执行同步脏页至文件，回收和释放空闲内存页。<fig></fig>
+             3. 后台缓存任务线程根据缓存的负载情况自动启动和退出。<fig></fig>
+             4. 该配置目前仅对Lob功能生效。</cn>
       </detail>
       <type>int</type>
       <default>10</default>
@@ -1388,12 +1390,12 @@
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>1.The maximum number of data-sync threads, default:10, value range:[2, 200].<fig></fig>
-             2.Data-sync threads will synchronize the dirty data to file.<fig></fig>
-             3.Data-sync threads auto start and exit according to the workload.</en>
-         <cn>1.后台数据同步任务线程的最大数量，默认值为10，取值范围为[2, 200]。<fig></fig>
-             2.后台数据同步任务线程主要执行同步脏数据和日志至文件。<fig></fig>
-             3.后台数据同步任务线程根据负载情况自动启动和退出。</cn>
+         <en>1. The maximum number of data-sync threads, default:10, value range:[2, 200].<fig></fig>
+             2. Data-sync threads will synchronize the dirty data to file.<fig></fig>
+             3. Data-sync threads auto start and exit according to the workload.</en>
+         <cn>1. 后台数据同步任务线程的最大数量，默认值为10，取值范围为[2, 200]。<fig></fig>
+             2. 后台数据同步任务线程主要执行同步脏数据和日志至文件。<fig></fig>
+             3. 后台数据同步任务线程根据负载情况自动启动和退出。</cn>
       </detail>
       <type>int</type>
       <default>10</default>
@@ -1513,8 +1515,8 @@
       <detail>
          <en>1. This parameter is used to specified the path of archive log file.<fig></fig>
              2. If it is not specified, the default path is "Data file path/archivelog".</en>
-         <cn>1.此参数用来指定归档日志的路径。<fig></fig>
-             2.如果不指定，则默认路径为：数据文件路径/archivelog。</cn>
+         <cn>1. 此参数用来指定归档日志的路径。<fig></fig>
+             2. 如果不指定，则默认路径为：数据文件路径/archivelog。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -1592,13 +1594,15 @@
       </reloadable>
       <detail>
          <en>1. The node's operation when its data lost. Value is 0/1/2. Default is 1.<fig></fig>
-             2. 0: do nothing, run with error.<fig></fig>
-             3. 1: auto sync full data from other nodes. <fig></fig>
-             4. 2: shutdown the node.</en>
-         <cn>1、节点在发生数据丢失错误时的处理操作，取值为 0/1/2。 缺省为1。<fig></fig>
-             2、0: 不作任何处理，保持节点运行。<fig></fig>
-             3、1: 自动从该数据组的其它节点进行全量同步。<fig></fig>
-             4、2: 该节点停止运行。</cn>
+		     2. Value enumeration:<fig></fig>
+             > 0: do nothing, run with error.<fig></fig>
+             > 1: auto sync full data from other nodes. <fig></fig>
+             > 2: shutdown the node.</en>
+         <cn>1. 节点在发生数据丢失错误时的处理操作，取值为 0/1/2。 缺省为1。<fig></fig>
+		     2. 取值列表：<fig></fig>
+             > 0: 不作任何处理，保持节点运行。<fig></fig>
+             > 1: 自动从该数据组的其它节点进行全量同步。<fig></fig>
+             > 2: 该节点停止运行。</cn>
       </detail>
       <type>int</type>
       <default>1</default>
@@ -1707,18 +1711,20 @@
       </reloadstrategy>
       <detail>
          <en>1. Specify the cache level of query plans. Value is 0/1/2/3/4. Default is 3.<fig></fig>
-             2. 0: No cache.<fig></fig>
-             3. 1: Caching plan with original query.<fig></fig>
-             4. 2: Caching plan with normalized query.<fig></fig>
-             5. 3: Caching plan with parameterized query.<fig></fig>
-             6. 4: Caching plan with parameterized query and fuzzy-matched operators.
+		     2. Value enumeration:<fig></fig>
+             > 0: No cache.<fig></fig>
+             > 1: Caching plan with original query.<fig></fig>
+             > 2: Caching plan with normalized query.<fig></fig>
+             > 3: Caching plan with parameterized query.<fig></fig>
+             > 4: Caching plan with parameterized query and fuzzy-matched operators.
          </en>
-         <cn>1、指定查询计划的缓存级别，默认是3。<fig></fig>
-             2、0: 不缓存查询计划。<fig></fig>
-             3、1: 缓存原查询计划。<fig></fig>
-             4、2: 缓存泛化后的查询计划。<fig></fig>
-             5、3: 缓存参数化的查询计划。<fig></fig>
-             6、4: 缓存参数化并带操作符模糊匹配的查询计划。
+         <cn>1. 指定查询计划的缓存级别，默认是3。<fig></fig>
+		     2. 取值列表：<fig></fig>
+             > 0: 不缓存查询计划。<fig></fig>
+             > 1: 缓存原查询计划。<fig></fig>
+             > 2: 缓存泛化后的查询计划。<fig></fig>
+             > 3: 缓存参数化的查询计划。<fig></fig>
+             > 4: 缓存参数化并带操作符模糊匹配的查询计划。
          </cn>
       </detail>
       <type>int</type>
@@ -1740,16 +1746,18 @@
       </reloadable>
       <detail>
          <en>1. Specify the task scheduler type. Value is 0/1/2/3. Default is 0.<fig></fig>
-             2. 0: None.<fig></fig>
-             3. 1: First in first out.<fig></fig>
-             4. 2: Based Priority.<fig></fig>
-             5. 3: Based Container.
+		     2. Value enumeration:<fig></fig>
+             > 0: None.<fig></fig>
+             > 1: First in first out.<fig></fig>
+             > 2: Based Priority.<fig></fig>
+             > 3: Based Container.
          </en>
-         <cn>1、指定任务调度器类型，默认是0。<fig></fig>
-             2、0: 不开启。<fig></fig>
-             3、1: 先入先出。<fig></fig>
-             4、2: 基于优先级调度。<fig></fig>
-             5、3: 基于容器调度。
+         <cn>1. 指定任务调度器类型，默认是0。<fig></fig>
+		     2. 取值列表：<fig></fig>
+             > 0: 不开启。<fig></fig>
+             > 1: 先入先出。<fig></fig>
+             > 2: 基于优先级调度。<fig></fig>
+             > 3: 基于容器调度。
          </cn>
       </detail>
       <type>int</type>
@@ -1773,8 +1781,8 @@
          <en>1.Specify the maximun concurrency number in scheduler. 0 for unlimited. default is 100, value range[0, 2^31 - 1].<fig></fig>
              2.It does not take effect when 'svcscheduler' is 0.
          </en>
-         <cn>1、指定任务执行的最大并发数，0表示不限制。默认值为100，取值范围[0, 2^31 - 1]。<fig></fig>
-             2、当'svcscheduler'取值为0时，该参数不生效。
+         <cn>1. 指定任务执行的最大并发数，0表示不限制。默认值为100，取值范围[0, 2^31 - 1]。<fig></fig>
+             2. 当'svcscheduler'取值为0时，该参数不生效。
          </cn>
       </detail>
       <type>int</type>
@@ -1791,12 +1799,14 @@
       </description>
       <detail>
          <en>1. Specify the isolation level of transaction. Value is 0/1. Default is 0.<fig></fig>
-             2. 0: RU, read uncommited<fig></fig>
-             3. 1: RC, read commited.<fig></fig>
+		     2. Value enumeration:<fig></fig>
+             > 0: RU, read uncommited<fig></fig>
+             > 1: RC, read commited.<fig></fig>
          </en>
-         <cn>1、指定事务隔离级别，默认是0。<fig></fig>
-             2、0: RU，读未提交。<fig></fig>
-             3、1: RC, 读已提交。<fig></fig>
+         <cn>1. 指定事务隔离级别，默认是0。<fig></fig>
+		     2. 取值列表：<fig></fig>
+             > 0: RU，读未提交。<fig></fig>
+             > 1: RC, 读已提交。<fig></fig>
          </cn>
       </detail>
       <type>int</type>
