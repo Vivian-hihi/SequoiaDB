@@ -32,17 +32,20 @@ else
 
 var cataConf  = { diaglevel:diagLevel,
                   sharingbreak:30000,
-                  diagnum:30,
+                  diagnum:40,
+                  logfilenum:40,
                   fap:fapValue,
                   transactionon:true
                 };
 var coordConf = { diaglevel:diagLevel,
-                  diagnum:30,
+                  diagnum:40,
+                  logfilenum:40,
                   fap:fapValue 
                 };
 var dataConf  = { diaglevel:diagLevel,
                   sharingbreak:30000,
-                  diagnum:30,
+                  diagnum:40,
+                  logfilenum:40,
                   dmschkinterval:1,
                   fap:fapValue
                 };
