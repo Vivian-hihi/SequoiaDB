@@ -33,7 +33,7 @@ var Configs = ( function() {
    Configs.prototype.init = function()
    {   
       // register run configs
-      this.runConfigs.push( new ConfDesp( "diagnum", "int", 20, 10, "abc" ) ) ;
+      this.runConfigs.push( new ConfDesp( "diagnum", "int", 20, 10, "abc" ) ) ; 
       this.runConfigs.push( new ConfDesp( "auditnum", "int", 20, 10, "abc" ) ) ;
       this.runConfigs.push( new ConfDesp( "maxpool", "int", 50, 100, "123" ) ) ;
       this.runConfigs.push( new ConfDesp( "diaglevel", "short", 3, 5, "abc" ) ) ;
@@ -110,12 +110,12 @@ var Configs = ( function() {
       this.forbidConfigs.push( new ConfDesp( "httpname", "string", "", "54000", null ) ) ;
       this.forbidConfigs.push( new ConfDesp( "omname", "string", "", "55000", null ) ) ;
       this.forbidConfigs.push( new ConfDesp( "role", "string", "standalone", "data", "person" ) ) ;
-      this.forbidConfigs.push( new ConfDesp( "catalogaddr", "string", "", "57000", null ) ) ;
+      this.forbidConfigs.push( new ConfDesp( "catalogaddr", "string", "", "hdgfdkj:57000", null ) ) ;
       this.forbidConfigs.push( new ConfDesp( "logfilesz", "int", 64, 128, "10" ) ) ;
       this.forbidConfigs.push( new ConfDesp( "logfilenum", "int", 20, 10, "128" ) ) ;
       this.forbidConfigs.push( new ConfDesp( "lobpath", "path", "", "helloworld", null ) ) ;
       this.forbidConfigs.push( new ConfDesp( "lobmetapath", "path", "", "helloworld", null ) ) ;
-      this.forbidConfigs.push( new ConfDesp( "omaddr", "string", "", "helloworld", null ) ) ;
+      this.forbidConfigs.push( new ConfDesp( "omaddr", "string", "", "helloworld:54345", null ) ) ;
       this.forbidConfigs.push( new ConfDesp( "archivepath", "path", "", "helloworld", null ) ) ;
 
       // register unknown configs
