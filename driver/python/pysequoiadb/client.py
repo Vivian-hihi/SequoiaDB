@@ -1726,10 +1726,16 @@ class client(object):
 
         Parameters:
             Name         Type     Info:
-            options      dict     The control options:
-                Global(Bool): execute this command in global or not. While 'options' is null, it's equals to {Global: true}.
-                GroupID(INT32 or INT32 Array): specified one or several groups by their group IDs. e.g. {GroupID:[1001, 1002]}.
-                GroupName(String or String Array): specified one or several groups by their group names. e.g. {GroupID:"group1"}.
+            options      dict     The control options:(Only take effect in coordinate nodes).
+                                    About the parameter 'options', please reference to the official
+                                    website(www.sequoiadb.com) and then search "命令位置参数"
+                                    for more details. Some of its optional parameters are as bellow:
+                                  
+                                    Global(Bool): execute this command in global or not. While 'options' is null, it's equals to {Global: true}.
+                                    GroupID(INT32 or INT32 Array): specified one or several groups by their group IDs. e.g. {GroupID:[1001, 1002]}.
+                                    GroupName(String or String Array): specified one or several groups by their group names. e.g. {GroupID:"group1"}.
+                                    ...
+                
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
