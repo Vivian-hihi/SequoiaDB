@@ -383,7 +383,6 @@ namespace engine
      _extHandler( NULL )
    {
       ossMemset( _collectionName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
-      ossMemset( _idxName, 0, IXM_INDEX_NAME_SIZE + 1 ) ;
       ossMemset( _extDataName, 0, DMS_MAX_EXT_NAME_SIZE + 1 ) ;
    }
 
@@ -407,7 +406,7 @@ namespace engine
 
       ossStrncpy( _collectionName, _mbContext->mb()->_collectionName,
                   DMS_COLLECTION_NAME_SZ + 1 ) ;
-      ossStrncpy( _idxName, _indexCB->getName(), IXM_INDEX_NAME_SIZE + 1 ) ;
+      _idxName.append( _indexCB->getName() ) ;
       ossStrncpy( _extDataName, _indexCB->getExtDataName(),
                   DMS_MAX_EXT_NAME_SIZE + 1 ) ;
       _keyDef = _indexCB->keyPattern() ;
@@ -444,7 +443,7 @@ namespace engine
       }
 
       rc = _extHandler->onRebuildTextIdx( _suIndex->getSuName(),
-                                          _collectionName, _idxName,
+                                          _collectionName, _idxName.str(),
                                           _extDataName, _keyDef,
                                           _eduCB, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "External handle on text index rebuild "

@@ -1442,7 +1442,6 @@ namespace engine
      _ixFromStat( FALSE ),
      _ixStatTime( 0 )
    {
-      _pIndexName[0] = '\0' ;
    }
 
    _optIxScanNode::_optIxScanNode ( const CHAR * pCollection,
@@ -1465,14 +1464,9 @@ namespace engine
      _ixFromStat( FALSE ),
      _ixStatTime( 0 )
    {
-      _pIndexName[ 0 ] = '\0' ;
-
       if ( indexCB.isInitialized() )
       {
-         const CHAR *pIndexName = indexCB.getName() ;
-         ossStrncpy( _pIndexName, pIndexName, IXM_INDEX_NAME_SIZE ) ;
-         _pIndexName[ IXM_INDEX_NAME_SIZE ] = '\0' ;
-
+         _pIndexName.append( indexCB.getName() ) ;
          _indexExtID = indexCB.getExtentID() ;
          _indexLID = indexCB.getLogicalID() ;
          _keyPattern = indexCB.keyPattern().getOwned() ;
@@ -1499,12 +1493,9 @@ namespace engine
      _ixStatTime( node._ixStatTime ),
      _runtimeIXBound( node._runtimeIXBound )
    {
-      _pIndexName[ 0 ] = '\0' ;
-
-      if ( '\0' != node._pIndexName[ 0 ] )
+      if ( node._pIndexName.len() > 0 )
       {
-         ossStrncpy( _pIndexName, node._pIndexName, IXM_INDEX_NAME_SIZE ) ;
-         _pIndexName[ IXM_INDEX_NAME_SIZE ] = '\0' ;
+         _pIndexName.append( node._pIndexName.str() ) ;
          _indexExtID = node._indexExtID ;
          _indexLID = node._indexLID ;
          _keyPattern = node._keyPattern.getOwned() ;
@@ -2108,7 +2099,7 @@ namespace engine
       builder.append( OPT_FIELD_OPERATOR, getName() ) ;
       builder.append( OPT_FIELD_COLLECTION,
                       NULL == _pCollection ? "" : _pCollection ) ;
-      builder.append( OPT_FIELD_INDEX, _pIndexName ) ;
+      builder.append( OPT_FIELD_INDEX, _pIndexName.str() ) ;
       if ( _runtimeIXBound.isEmpty() )
       {
          builder.appendNull( OPT_FIELD_IX_BOUND ) ;
@@ -2164,8 +2155,8 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
                       OPT_FIELD_INDEX, rc ) ;
 
-         ossStrncpy( _pIndexName, indexName, IXM_INDEX_NAME_SIZE ) ;
-         _pIndexName[ IXM_INDEX_NAME_SIZE ] = '\0' ;
+         _pIndexName.clear() ;
+         _pIndexName.append( indexName ) ;
 
          if ( object.getField( OPT_FIELD_IX_BOUND ).isNull() )
          {

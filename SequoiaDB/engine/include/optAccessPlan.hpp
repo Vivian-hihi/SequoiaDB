@@ -84,7 +84,7 @@ namespace engine
 
          virtual ~_optAccessPlan () ;
 
-         OSS_INLINE virtual BOOLEAN isInitialized () const
+         OSS_INLINE BOOLEAN isInitialized () const
          {
             return _isInitialized ;
          }
@@ -103,28 +103,28 @@ namespace engine
          }
 
          // Information of collection space
-         OSS_INLINE virtual dmsStorageUnitID getSUID () const
+         OSS_INLINE dmsStorageUnitID getSUID () const
          {
             return _key.getSUID() ;
          }
 
-         OSS_INLINE virtual UINT32 getSULID () const
+         OSS_INLINE UINT32 getSULID () const
          {
             return _key.getSULID() ;
          }
 
          // Information of collection
-         OSS_INLINE virtual const CHAR *getCLFullName () const
+         OSS_INLINE const CHAR *getCLFullName () const
          {
             return _key.getCLFullName() ;
          }
 
-         OSS_INLINE virtual UINT16 getCLMBID () const
+         OSS_INLINE UINT16 getCLMBID () const
          {
             return _key.getCLMBID() ;
          }
 
-         OSS_INLINE virtual UINT32 getCLLID () const
+         OSS_INLINE UINT32 getCLLID () const
          {
             return _key.getCLLID() ;
          }
@@ -134,17 +134,17 @@ namespace engine
          virtual INT32 toBSON ( BSONObjBuilder &builder ) const ;
 
          /// Plan cache related
-         OSS_INLINE virtual const optAccessPlanKey &getKey () const
+         OSS_INLINE const optAccessPlanKey &getKey () const
          {
             return _key ;
          }
 
-         OSS_INLINE virtual optAccessPlanKey &getKey ()
+         OSS_INLINE optAccessPlanKey &getKey ()
          {
             return _key ;
          }
 
-         OSS_INLINE virtual INT32 getKeyOwned ()
+         OSS_INLINE INT32 getKeyOwned ()
          {
             return _key.getOwned() ;
          }
@@ -154,12 +154,12 @@ namespace engine
             return _key.isEqual( key ) ;
          }
 
-         OSS_INLINE virtual BOOLEAN isEqual ( const _optAccessPlan &item ) const
+         OSS_INLINE BOOLEAN isEqual ( const _optAccessPlan &item ) const
          {
             return _key.isEqual( item._key ) ;
          }
 
-         OSS_INLINE virtual UINT32 getKeyCode () const
+         OSS_INLINE UINT32 getKeyCode () const
          {
             return _key.getKeyCode () ;
          }

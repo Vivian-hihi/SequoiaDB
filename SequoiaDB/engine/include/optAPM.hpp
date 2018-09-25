@@ -80,7 +80,7 @@ namespace engine
 
          BOOLEAN addPlan ( optAccessPlan *pPlan ) ;
 
-         void removeCachedPlan ( optAccessPlan *pPlan ) ;
+         void removeCachedPlan ( optAccessPlan *pPlan, INT32 lockType = -1 ) ;
 
          void invalidateSUPlans ( dmsCachedPlanMgr *pCachedPlanMgr,
                                   UINT32 suLID ) ;

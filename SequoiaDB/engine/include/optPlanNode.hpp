@@ -48,6 +48,7 @@
 #include "monCB.hpp"
 #include "rtnQueryOptions.hpp"
 #include "utilAllocator.hpp"
+#include "utilString.hpp"
 
 using namespace std ;
 using namespace bson ;
@@ -706,6 +707,8 @@ namespace engine
 
    class _optIxScanNode : public _optScanNode
    {
+      typedef _utilString<128>   idxNameString ;
+
       public :
          _optIxScanNode () ;
 
@@ -730,7 +733,7 @@ namespace engine
 
          OSS_INLINE virtual const CHAR * getIndexName () const
          {
-            return _pIndexName ;
+            return _pIndexName.str() ;
          }
 
          OSS_INLINE virtual INT32 getDirection () const
@@ -841,7 +844,7 @@ namespace engine
          INT32 _toBSONOutputRecordsEval ( BSONObjBuilder & builder ) const ;
 
       protected :
-         CHAR              _pIndexName [ IXM_INDEX_NAME_SIZE + 1 ] ;
+         idxNameString     _pIndexName ;
 
          // Scan direction of index
          INT32             _direction ;

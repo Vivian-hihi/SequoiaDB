@@ -93,14 +93,14 @@ namespace engine
       // If the plan is cached, decrease the reference count
       // If the plan is not cached, delete it when reference count is 1,
       // means it is the last reference
-      if ( isCached() )
-      {
-         decRefCount() ;
-      }
-      else if ( decRefCount() == 1 )
+      if ( decRefCount() == 1 )
       {
          SDB_ASSERT( getRefCount() == 0, "Invalid ref count" ) ;
-         SDB_OSS_DEL this ;
+
+         if ( !isCached() )
+         {
+            SDB_OSS_DEL this ;
+         }
       }
    }
 
@@ -1325,7 +1325,7 @@ namespace engine
       if ( paramIndex < OPT_PARAM_VALID_PLAN_NUM )
       {
          // Save the specified plan for validation
-         _records[ paramIndex ]._parameters = parameters.copy() ;
+         _records[ paramIndex ]._parameters = parameters.getOwned() ;
          _records[ paramIndex ]._score = score ;
 
          if ( paramIndex == OPT_PARAM_VALID_PLAN_NUM - 1 )

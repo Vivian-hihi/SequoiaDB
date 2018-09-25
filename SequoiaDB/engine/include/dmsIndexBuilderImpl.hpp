@@ -34,6 +34,7 @@
 
 #include "dmsIndexBuilder.hpp"
 #include "dmsExtDataHandler.hpp"
+#include "utilString.hpp"
 #include "../bson/ordering.h"
 #include "../bson/bsonobj.h"
 
@@ -90,6 +91,7 @@ namespace engine
    // collection, the operation records can be inserted into it.
    class _dmsIndexExtBuilder : public _dmsIndexBuilder
    {
+      typedef _utilString<128>   idxNameString ;
    public:
       _dmsIndexExtBuilder( _dmsStorageIndex* indexSU,
                            _dmsStorageData* dataSU,
@@ -104,11 +106,11 @@ namespace engine
       void _onFinish() ;
 
    private:
-      IDmsExtDataHandler *_extHandler ;
-      CHAR _collectionName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
-      CHAR _idxName[ IXM_INDEX_NAME_SIZE + 1 ] ;
-      CHAR _extDataName[ DMS_MAX_EXT_NAME_SIZE + 1 ] ;
-      BSONObj _keyDef ;
+      IDmsExtDataHandler   *_extHandler ;
+      CHAR                 _collectionName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
+      idxNameString        _idxName ;
+      CHAR                 _extDataName[ DMS_MAX_EXT_NAME_SIZE + 1 ] ;
+      BSONObj              _keyDef ;
    } ;
    typedef _dmsIndexExtBuilder dmsIndexExtBuilder ;
 }

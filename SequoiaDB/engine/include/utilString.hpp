@@ -68,6 +68,7 @@ namespace engine
       void  clear()
       {
          _buf[0] = '\0' ;
+         _len = 0 ;
       }
 
       INT32 append( const CHAR *str )

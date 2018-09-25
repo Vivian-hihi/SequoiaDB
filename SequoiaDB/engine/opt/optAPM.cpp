@@ -119,9 +119,19 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPCACHES_RMPLAN, "_optAccessPlanCache::removeCachedPlan" )
-   void _optAccessPlanCache::removeCachedPlan ( optAccessPlan *pPlan )
+   void _optAccessPlanCache::removeCachedPlan ( optAccessPlan *pPlan,
+                                                INT32 lockType )
    {
       PD_TRACE_ENTRY( SDB_OPTAPCACHES_RMPLAN ) ;
+
+      if ( SHARED == lockType )
+      {
+         _pMonitor->getClearLock()->lock_r() ;
+      }
+      else if ( EXCLUSIVE == lockType )
+      {
+         _pMonitor->getClearLock()->lock_w() ;
+      }
 
       // Increase the reference count before we delete it
       pPlan->incRefCount() ;
@@ -132,6 +142,15 @@ namespace engine
          _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
       }
       pPlan->release() ;
+
+      if ( SHARED == lockType )
+      {
+         _pMonitor->getClearLock()->release_r() ;
+      }
+      else if ( EXCLUSIVE == lockType )
+      {
+         _pMonitor->getClearLock()->release_w() ;
+      }
 
       PD_TRACE_EXIT( SDB_OPTAPCACHES_RMPLAN ) ;
    }
@@ -1696,7 +1715,7 @@ namespace engine
       {
          rc = _getCachedAccessPlan( planKey, &pTmpPlan ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get access plan, rc: %d", rc ) ;
-         if ( NULL != pTmpPlan )
+         if ( pTmpPlan )
          {
             pPlan = dynamic_cast<_optGeneralAccessPlan *>( pTmpPlan ) ;
             if ( NULL == pPlan )
@@ -1823,7 +1842,6 @@ namespace engine
 
             // Use the sub-collection plan for the this time
             mainPlan->release() ;
-            pPlan = NULL ;
          }
          else
          {
@@ -2124,7 +2142,7 @@ namespace engine
          PD_LOG( PDDEBUG, "Invalid parameterized plan [%s]",
                  plan->toString().c_str() ) ;
          plan->markParamInvalid( mbContext ) ;
-         _planCache.removeCachedPlan( plan ) ;
+         _planCache.removeCachedPlan( plan, SHARED ) ;
       }
 
    done :
@@ -2281,7 +2299,7 @@ namespace engine
          PD_LOG( PDDEBUG, "Invalid main-collection plan [%s]",
                  mainPlan->toString().c_str() ) ;
          mainPlan->markMainCLInvalid( pCachedPlanMgr, mbContext, FALSE ) ;
-         _planCache.removeCachedPlan( mainPlan ) ;
+         _planCache.removeCachedPlan( mainPlan, SHARED ) ;
       }
 
    done :
