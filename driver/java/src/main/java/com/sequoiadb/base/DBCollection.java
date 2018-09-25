@@ -659,7 +659,8 @@ public class DBCollection {
      *                    using index "ageIndex" to scan data(index scan);
      *                    {"":null} means table scan. when hint is null,
      *                    database automatically match the optimal index to scan data.
-     * @param setOnInsert The setOnInsert assigns the specified values to the fieds when insert
+     * @param setOnInsert When "setOnInsert" is not a null or an empty object,
+     *                     it assigns the specified values to the fields when insert.
      * @throws BaseException If error happens.
      */
     public void upsert(BSONObject matcher, BSONObject modifier, BSONObject hint,
@@ -678,7 +679,8 @@ public class DBCollection {
      *                    using index "ageIndex" to scan data(index scan);
      *                    {"":null} means table scan. when hint is null,
      *                    database automatically match the optimal index to scan data.
-     * @param setOnInsert The setOnInsert assigns the specified values to the fields when insert
+     * @param setOnInsert When "setOnInsert" is not a null or an empty object,
+     *                     it assigns the specified values to the fields when insert.
      * @param flag        the upsert flag, default to be 0. Please see the definition
      *                    of follow flags for more detail.
      *                    <ul>
