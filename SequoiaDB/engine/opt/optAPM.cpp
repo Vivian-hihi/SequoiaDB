@@ -1718,10 +1718,10 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get access plan, rc: %d", rc ) ;
          if ( pTmpPlan )
          {
-            if ( pTmpPlan->isInvalid() ||
-                 NULL == ( pPlan = dynamic_cast<_optGeneralAccessPlan *>(
-                                   pTmpPlan ) ) )
+            pPlan = dynamic_cast<_optGeneralAccessPlan *>( pTmpPlan ) ;
+            if ( NULL == pPlan )
             {
+               // Cast failed, release the temp plan
                pTmpPlan->release() ;
             }
          }
@@ -1845,18 +1845,6 @@ namespace engine
 
             // Use the sub-collection plan for the this time
             mainPlan->release() ;
-         }
-         // When is invalid, get the sub-collection's plans directly
-         else if ( pPlan->isInvalid() )
-         {
-            pPlan->release() ;
-            pPlan = NULL ;
-
-            rc = _getCLAccessPlan( options, FALSE, su, mbContext,
-                                   planRuntime ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to get collection access plan "
-                         "for query [ %s ], rc: %d",
-                         options.toString().c_str(), rc ) ;
          }
          else
          {
@@ -2158,9 +2146,7 @@ namespace engine
          PD_LOG( PDDEBUG, "Invalid parameterized plan [%s]",
                  plan->toString().c_str() ) ;
          plan->markParamInvalid( mbContext ) ;
-
-         plan->markInvalid() ;
-         _monitor.signalPlanClearJob() ;
+         _planCache.removeCachedPlan( plan, SHARED ) ;
       }
 
    done :
@@ -2317,9 +2303,7 @@ namespace engine
          PD_LOG( PDDEBUG, "Invalid main-collection plan [%s]",
                  mainPlan->toString().c_str() ) ;
          mainPlan->markMainCLInvalid( pCachedPlanMgr, mbContext, FALSE ) ;
-
-         mainPlan->markInvalid() ;
-         _monitor.signalPlanClearJob() ;
+         _planCache.removeCachedPlan( mainPlan, SHARED ) ;
       }
 
    done :
