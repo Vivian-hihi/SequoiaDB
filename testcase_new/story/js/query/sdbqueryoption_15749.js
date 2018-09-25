@@ -24,7 +24,7 @@ function main()
 function test15749( varCL )
 {
    //相同查询条件，匹配查询记录有更新，再次查询 
-   var cur = varCL.find(new SdbQueryOption().sort( { a: 1 } ).cond({$and:[{a:{$gte:45}}, {b:{$lte:54}}]}).update({$inc:{c:1}}));
+   var cur = varCL.find(new SdbQueryOption().sort( { _id: 1 } ).cond({$and:[{a:{$gte:45}}, {b:{$lte:54}}]}).update({$inc:{c:1}}, true, { KeepShardingKey: true }));
    while(cur.next())
    {
       cur.current();
@@ -42,7 +42,7 @@ function test15749( varCL )
                       ];
    var cur = varCL.find(new SdbQueryOption().sort( { a: 1 } ).cond({$and:[{a:{$gte:45}}, {b:{$lte:54}}]}));
    checkRec(cur, expFindResult);
-   //指定不同查询条件，多次查询
+
    var cur = varCL.find(new SdbQueryOption().sort( { _id: 1 } ).cond({$and:[{a:{$gt:90}}, {b:{$lte:100}}]}));
    var expFindResult =[{"_id": 91,"a": 91,"b": 91,"c": -91},
                        {"_id": 92,"a": 92,"b": 92,"c": -92},
@@ -56,7 +56,8 @@ function test15749( varCL )
                        {"_id": 100,"a": 100,"b": 100,"c": -100}
                       ];
    checkRec(cur, expFindResult);
-   var cur = varCL.find(new SdbQueryOption().sort( { _id: 1 } ).cond({b:{$lt:5});
+
+   var cur = varCL.find(new SdbQueryOption().sort( { b: 1 } ).cond({b:{$lt:5}}));
    var expFindResult =[{"_id": 0,"a": 0,"b": 0,"c": 0},
                        {"_id": 1,"a": 1,"b": 1,"c": -1},
                        {"_id": 2,"a": 2,"b": 2,"c": -2},
