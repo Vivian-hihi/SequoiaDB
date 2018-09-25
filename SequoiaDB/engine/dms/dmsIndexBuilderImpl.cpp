@@ -406,6 +406,7 @@ namespace engine
 
       ossStrncpy( _collectionName, _mbContext->mb()->_collectionName,
                   DMS_COLLECTION_NAME_SZ + 1 ) ;
+      _idxName.clear() ;
       _idxName.append( _indexCB->getName() ) ;
       ossStrncpy( _extDataName, _indexCB->getExtDataName(),
                   DMS_MAX_EXT_NAME_SIZE + 1 ) ;
