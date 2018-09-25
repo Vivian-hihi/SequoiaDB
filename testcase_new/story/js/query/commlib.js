@@ -531,3 +531,16 @@ function cleanCL( clName )
    commDropCL( db, COMMCSNAME, clName, false, false,
                "Failed to drop CL in the end-condition" );
 }
+
+function attachCL( dbcl, subCLName, range )
+{
+   try
+   {
+      dbcl.attachCL( subCLName, range ) ;
+      println( "--attach cl success" ) ;
+   }
+   catch(e)
+   {
+      throw buildException("attachCL()", e, "attach cl", "attach cl success","attach cl fail");
+   }
+}
