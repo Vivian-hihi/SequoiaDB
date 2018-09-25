@@ -86,6 +86,13 @@ do                                     \
 #define QUERY_PREPARE_MORE                0x00004000
 /** The sharding key in update rule is not filtered, when executing queryAndUpdate. */
 #define QUERY_KEEP_SHARDINGKEY_IN_UPDATE  0x00008000
+/** When the transaction is turned on and the transaction isolation level is "RC", 
+    the transaction lock will be released after the record is read by default.
+    However, when setting this flag, the transaction lock will not released until 
+    the transaction is committed or rollback. When the transaction is turned off or
+    the transaction isolation level is "RU", the flag does not work. */
+#define QUERY_FOR_UPDATE                  0x00010000
+
 
 /** The sharding key in update rule is not filtered, when executing update or upsert. */
 #define UPDATE_KEEP_SHARDINGKEY           QUERY_KEEP_SHARDINGKEY_IN_UPDATE
@@ -837,6 +844,7 @@ namespace sdbclient
         QUERY_FORCE_HINT
         QUERY_PARALLED
         QUERY_WITH_RETURNDATA
+        QUERY_FOR_UPDATE
     \endcode
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
@@ -882,6 +890,7 @@ namespace sdbclient
         QUERY_FORCE_HINT
         QUERY_PARALLED
         QUERY_WITH_RETURNDATA
+        QUERY_FOR_UPDATE
     \endcode
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
@@ -928,6 +937,7 @@ namespace sdbclient
         QUERY_FORCE_HINT
         QUERY_PARALLED
         QUERY_WITH_RETURNDATA
+        QUERY_FOR_UPDATE
     \endcode
     \param [out] obj The first matching object
     \retval SDB_OK Operation Success
@@ -975,6 +985,7 @@ namespace sdbclient
         QUERY_PARALLED
         QUERY_WITH_RETURNDATA
         QUERY_KEEP_SHARDINGKEY_IN_UPDATE
+        QUERY_FOR_UPDATE
     \endcode
     \param [in] returnNew When TRUE, returns the updated document rather than the original
     \param [out] cursor The cursor of current query
@@ -1027,6 +1038,7 @@ namespace sdbclient
         QUERY_FORCE_HINT
         QUERY_PARALLED
         QUERY_WITH_RETURNDATA
+        QUERY_FOR_UPDATE
     \endcode
     \param [out] cursor The cursor of current query
     \retval SDB_OK Operation Success
