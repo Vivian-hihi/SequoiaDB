@@ -46,6 +46,7 @@ namespace engine
       RTN_EXT_INSERT = 1,
       RTN_EXT_DELETE,
       RTN_EXT_UPDATE,
+      RTN_EXT_UPDATE_WITH_ID
    } ;
 }
 

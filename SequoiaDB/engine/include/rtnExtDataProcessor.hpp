@@ -165,7 +165,8 @@ namespace engine
       INT32 _prepareRecord( _rtnExtOprType oprType,
                             const BSONElement &idEle,
                             const BSONObj *dataObj,
-                            BSONObj &recordObj ) ;
+                            BSONObj &recordObj,
+                            const BSONElement *newIdEle = NULL ) ;
 
       const CHAR* _getExtCLShortName() const ;
 

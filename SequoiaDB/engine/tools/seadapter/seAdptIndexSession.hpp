@@ -101,7 +101,7 @@ namespace seadapter
       INT32 _cleanData( INT64 recLID ) ;
       INT32 _parseSrcData( const BSONObj &origObj, _rtnExtOprType &oprType,
                            string& finalID, INT64 &logicalID,
-                           BSONObj &sourceObj ) ;
+                           BSONObj &sourceObj, string *newFinalID = NULL ) ;
       INT32 _formatNormalRec( const BSONObj &origRecord, string &finalID,
                               BSONObj &finalRecord ) ;
       INT32 _processNormalCLRecords( NET_HANDLE handle, MsgHeader *msg ) ;
@@ -124,6 +124,10 @@ namespace seadapter
       INT32 _processBigItem( const utilESBulkActionBase &actionItem ) ;
       INT32 _createIndex( BOOLEAN force = FALSE ) ;
       INT32 _dropIndex() ;
+      INT32 _index( const string &id, const BSONObj &document ) ;
+      INT32 _delete( const string &id ) ;
+      INT32 _replace( const string &id, const string &newId,
+                      const BSONObj &document ) ;
 
    private:
       INT32                   _origCLVersion ;

@@ -54,6 +54,7 @@ namespace seadapter
    #define SDB_SEADPT_COMMIT_ID        "SDBCOMMIT"
    #define SDB_SEADPT_FIELD_NAME_ID    "_id"
    #define SDB_SEADPT_FIELD_NAME_RID   "_rid"
+   #define SDB_SEADPT_FIELD_NAME_RID_NEW   "_ridNew"
 
    #define SDB_SEADPT_EXE_FILE_NAME    "sdbseadapter"
    #define SDB_SEADPT_CFG_FILE_NAME    SDB_SEADPT_EXE_FILE_NAME".conf"

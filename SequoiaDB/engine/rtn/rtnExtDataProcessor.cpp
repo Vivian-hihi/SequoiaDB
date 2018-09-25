@@ -46,6 +46,7 @@
 #define RTN_CAPPED_CL_MAXSIZE       ( 30 * 1024 * 1024 * 1024LL )
 #define RTN_CAPPED_CL_MAXRECNUM     0
 #define RTN_FIELD_NAME_RID          "_rid"
+#define RTN_FIELD_NAME_RID_NEW      "_ridNew"
 #define RTN_FIELD_NAME_SOURCE       "_source"
 
 namespace engine
@@ -187,6 +188,7 @@ namespace engine
       _keySetNew.clear() ;
       _needOprRec = FALSE ;
 
+      try
       {
          // Get the key set
          BSONElement arrayEle ;
@@ -236,7 +238,8 @@ namespace engine
                   ++newItr ;
                }
 
-               if ( ( origItr == _keySet.end() ) && ( newItr == _keySetNew.end() ) )
+               if ( ( origItr == _keySet.end() ) &&
+                    ( newItr == _keySetNew.end() )  )
                {
                   _needOprRec = FALSE ;
                }
@@ -253,6 +256,12 @@ namespace engine
                _keySetNew.clear() ;
             }
          }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR ,"Unexpected exception occurred: %s", e.what() ) ;
+         goto error ;
       }
 
    done:
@@ -602,7 +611,8 @@ namespace engine
    INT32 _rtnExtDataProcessor::_prepareRecord( _rtnExtOprType oprType,
                                                const BSONElement &idEle,
                                                const BSONObj *dataObj,
-                                               BSONObj &recordObj )
+                                               BSONObj &recordObj,
+                                               const BSONElement *newIdEle )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR__PREPARERECORD ) ;
@@ -621,8 +631,20 @@ namespace engine
          objBuilder.append( FIELD_NAME_TYPE, oprType ) ;
          // 2. Append the _id as _rid.
          objBuilder.appendAs( idEle, RTN_FIELD_NAME_RID ) ;
-         // 3. Append data if necessarry.
-         if ( RTN_EXT_INSERT == oprType || RTN_EXT_UPDATE == oprType )
+         // 3. Insert new _id if the _id field has been modified.
+         if ( RTN_EXT_UPDATE_WITH_ID == oprType )
+         {
+            if ( !newIdEle )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "New _id is invalid" ) ;
+               goto error ;
+            }
+            objBuilder.appendAs( *newIdEle, RTN_FIELD_NAME_RID_NEW ) ;
+         }
+         // 4. Append data if necessarry.
+         if ( RTN_EXT_INSERT == oprType || RTN_EXT_UPDATE == oprType ||
+              RTN_EXT_UPDATE_WITH_ID == oprType )
          {
             if ( !dataObj )
             {
@@ -824,36 +846,51 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PREPAREUPDATE ) ;
 
-      if ( !_needOprRec )
-      {
-         goto done ;
-      }
-
       try
       {
-         BSONElement ele ;
+         BOOLEAN idModified = FALSE ;
+         BSONElement idEle = originalObj.getField( DMS_ID_KEY_NAME ) ;
+         BSONElement idEleNew = newObj.getField( DMS_ID_KEY_NAME ) ;
+         if ( idEle.eoo() || idEleNew.eoo() )
+         {
+            PD_LOG( PDERROR, "Text index can not be used if record has no "
+                             "_id field" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         if ( !idEle.valuesEqual( idEleNew ) )
+         {
+            idModified = TRUE ;
+            _needOprRec = TRUE ;
+         }
+
+         if ( !_needOprRec )
+         {
+            goto done ;
+         }
+
          if ( 0 == _keySetNew.size() )
          {
             rc = _prepareDelete( originalObj, recordObj ) ;
             PD_RC_CHECK( rc, PDERROR, "Prepare for delete failed[ %d ]", rc ) ;
             goto done ;
          }
-
-         ele = newObj.getField( DMS_ID_KEY_NAME ) ;
-         if ( EOO == ele.type() )
-         {
-            PD_LOG( PDERROR, "Text index can not be used if record has no _id "
-                  "field" ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
          SDB_ASSERT( 1 == _keySetNew.size(), "Key set size should be 1" ) ;
 
          {
-            BSONObjSet::iterator it = _keySetNew.begin();
+            BSONObjSet::iterator it = _keySetNew.begin() ;
             BSONObj object( *it ) ;
-            rc = _prepareRecord( RTN_EXT_UPDATE, ele, &object, recordObj ) ;
+            if ( idModified )
+            {
+               rc = _prepareRecord( RTN_EXT_UPDATE_WITH_ID, idEle,
+                                    &object, recordObj, &idEleNew ) ;
+            }
+            else
+            {
+               rc = _prepareRecord( RTN_EXT_UPDATE, idEleNew,
+                                    &object, recordObj ) ;
+            }
             PD_RC_CHECK( rc, PDERROR, "Add operation record failed[ %d ]",
                          rc ) ;
          }

@@ -738,7 +738,8 @@ namespace seadapter
                                              _rtnExtOprType &oprType,
                                              string& finalID,
                                              INT64 &logicalID,
-                                             BSONObj &sourceObj )
+                                             BSONObj &sourceObj,
+                                             string *newFinalID )
    {
       INT32 rc = SDB_OK ;
       INT32 type = 0 ;
@@ -778,6 +779,22 @@ namespace seadapter
 
          oprType = ( _rtnExtOprType )type ;
          logicalID = lidField.Long() ;
+
+         // If _id is modified, need to encode the new _id too.
+         if ( RTN_EXT_UPDATE_WITH_ID == oprType )
+         {
+            BSONElement newIdEle =
+               origObj.getField( SDB_SEADPT_FIELD_NAME_RID_NEW ) ;
+            if ( newIdEle.eoo() )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Get new _id from object failed[ %d ]", rc ) ;
+               goto error ;
+            }
+            rc = encodeID( newIdEle, *newFinalID ) ;
+            PD_RC_CHECK( rc, PDERROR, "Encode id[ %s ] failed[ %d ]",
+                         newIdEle.toString().c_str(), rc ) ;
+         }
 
          {
             BSONObjBuilder builder ;
@@ -1150,8 +1167,10 @@ namespace seadapter
             BSONObj sourceObj ;
             _rtnExtOprType oprType = RTN_EXT_INVALID ;
             string finalID ;
+            string finalIdNew ;
 
-            rc = _parseSrcData( *itr, oprType, finalID, logicalID, sourceObj ) ;
+            rc = _parseSrcData( *itr, oprType, finalID, logicalID,
+                                sourceObj, &finalIdNew ) ;
             if ( rc )
             {
                if ( SDB_INVALIDARG == rc )
@@ -1194,33 +1213,25 @@ namespace seadapter
                case RTN_EXT_INSERT:
                case RTN_EXT_UPDATE:
                   {
-                     utilESActionIndex item( _meta.getEsIdxName().c_str(),
-                                             _meta.getEsTypeName().c_str() ) ;
-                     rc = item.setID( finalID ) ;
-                     PD_RC_CHECK( rc, PDERROR, "Set _id for action "
-                                  "failed[ %d ]", rc ) ;
-                     rc = item.setSourceData( sourceObj.toString(false, true).c_str(),
-                                              sourceObj.toString(false, true).length(),
-                                              TRUE ) ;
-                     PD_RC_CHECK( rc, PDERROR, "Set source data failed[ %d ]",
+                     rc = _index( finalID, sourceObj ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Index document failed[ %d ]",
                                   rc ) ;
-                     rc = _bulkProcess( item ) ;
-                     PD_RC_CHECK( rc, PDERROR, "Bulk processing item "
-                                  "failed[ %d ]", rc ) ;
+                     break ;
                   }
-                  break ;
                case RTN_EXT_DELETE:
                   {
-                     utilESActionDelete item( _meta.getEsIdxName().c_str(),
-                                              _meta.getEsTypeName().c_str() ) ;
-                     rc = item.setID( finalID ) ;
-                     PD_RC_CHECK( rc, PDERROR, "Set _id for action "
-                                  "failed[ %d ]", rc ) ;
-                     rc = _bulkProcess( item ) ;
-                     PD_RC_CHECK( rc, PDERROR, "Bulk processing item "
-                                  "failed[ %d ]", rc ) ;
+                     rc = _delete( finalID ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Delete document failed[ %d ]",
+                                  rc ) ;
+                     break ;
                   }
-                  break ;
+               case RTN_EXT_UPDATE_WITH_ID:
+                  {
+                     rc = _replace( finalID, finalIdNew, sourceObj ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Update record failed[ %d ]",
+                                  rc ) ;
+                     break ;
+                  }
                default:
                   PD_LOG( PDERROR, "Invalid operation type[ %d ] in source data",
                           oprType ) ;
@@ -1733,6 +1744,69 @@ namespace seadapter
                          "failed[ %d ]", esIdxName, rc ) ;
          PD_LOG( PDEVENT, "Index[ %s ] dropped successfully", esIdxName ) ;
       }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_index( const string &id,
+                                      const BSONObj &document )
+   {
+      INT32 rc = SDB_OK ;
+
+      utilESActionIndex item( _meta.getEsIdxName().c_str(),
+                              _meta.getEsTypeName().c_str() ) ;
+      rc = item.setID( id ) ;
+      PD_RC_CHECK( rc, PDERROR, "Set _id for action "
+                                "failed[ %d ]", rc ) ;
+      rc = item.setSourceData( document.toString(false, true).c_str(),
+                               document.toString(false, true).length(),
+                               TRUE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Set source data failed[ %d ]",
+                   rc ) ;
+      rc = _bulkProcess( item ) ;
+      PD_RC_CHECK( rc, PDERROR, "Bulk processing item "
+                                "failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+       goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_delete( const string &id )
+   {
+      INT32 rc = SDB_OK ;
+
+      utilESActionDelete item( _meta.getEsIdxName().c_str(),
+                               _meta.getEsTypeName().c_str() ) ;
+      rc = item.setID( id ) ;
+      PD_RC_CHECK( rc, PDERROR, "Set _id for action "
+                                "failed[ %d ]", rc ) ;
+      rc = _bulkProcess( item ) ;
+      PD_RC_CHECK( rc, PDERROR, "Bulk processing item "
+                                "failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_replace( const string &id, const string &newId,
+                                        const BSONObj &document )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _delete( id ) ;
+      PD_RC_CHECK( rc, PDERROR, "delete document of _id[ %d ] failed",
+                   id.c_str() ) ;
+
+      rc = _index( newId, document ) ;
+      PD_RC_CHECK( rc, PDERROR, "Index document[ %s ] with _id[ %d ] failed",
+                   document.toString(false, true).c_str(), newId.c_str() ) ;
 
    done:
       return rc ;
