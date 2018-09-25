@@ -39,6 +39,7 @@ QUERY_FLG_PARALLED = 0x00000100
 QUERY_FLG_FORCE_HINT = 0x00000200
 QUERY_PREPARE_MORE = 0x00004000
 QUERY_FLG_KEEP_SHARDINGKEY_IN_UPDATE = 0x00008000
+QUERY_FLG_FOR_UPDATE = 0x00010000
 
 UPDATE_FLG_KEEP_SHARDINGKEY = QUERY_FLG_KEEP_SHARDINGKEY_IN_UPDATE
 
@@ -507,6 +508,8 @@ class collection(object):
            QUERY_FLG_PARALLED        : Enable parallel sub query, each sub query will finish scanning different part of the data
            QUERY_FLG_FORCE_HINT      : In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance
            QUERY_PREPARE_MORE        : Enable prepare more data when query
+           QUERY_FLG_FOR_UPDATE      : When the transaction is turned on and the transaction isolation level is "RC", the transaction lock will not
+                                       be released until the transaction commit or rollback.
         """
 
         bson_condition = None
@@ -604,6 +607,8 @@ class collection(object):
                                                         it will be more high-performance
            QUERY_FLG_KEEP_SHARDINGKEY_IN_UPDATE : The sharding key in update rule is not filtered, when executing
                                                         queryAndUpdate.
+           QUERY_FLG_FOR_UPDATE                 : When the transaction is turned on and the transaction isolation level is "RC", the transaction lock will not
+                                                  be released until the transaction commit or rollback.
         """
 
         bson_condition = None
@@ -713,6 +718,8 @@ class collection(object):
            QUERY_FLG_WITH_RETURNDATA : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
            QUERY_FLG_PARALLED        : Enable parallel sub query, each sub query will finish scanning different part of the data
            QUERY_FLG_FORCE_HINT      : In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance
+           QUERY_FLG_FOR_UPDATE      : When the transaction is turned on and the transaction isolation level is "RC", the transaction lock will not
+                                       be released until the transaction commit or rollback.
         """
 
         bson_condition = None
@@ -760,7 +767,8 @@ class collection(object):
         if kwargs.get('flags') != None:
             if kwargs.get('flags') not in (0, QUERY_FLG_WITH_RETURNDATA,
                                            QUERY_FLG_PARALLED,
-                                           QUERY_FLG_FORCE_HINT):
+                                           QUERY_FLG_FORCE_HINT,
+                                           QUERY_FLG_FOR_UPDATE):
                 raise SDBTypeError("invalid flags value")
 
         try:
@@ -1216,6 +1224,8 @@ class collection(object):
            QUERY_FLG_PARALLED        : Enable parallel sub query, each sub query will finish scanning different part of the data
            QUERY_FLG_FORCE_HINT      : In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance
            QUERY_PREPARE_MORE        : Enable prepare more data when query
+           QUERY_FLG_FOR_UPDATE      : When the transaction is turned on and the transaction isolation level is "RC", the transaction lock will not
+                                       be released until the transaction commit or rollback.
         """
         bson_condition = None
         bson_selector = None
