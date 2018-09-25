@@ -47,6 +47,7 @@
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"
 #include "pmdStartup.hpp"
+#include "pmdStartupHistoryLogger.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "rtnExtDataHandler.hpp"
@@ -370,6 +371,10 @@ namespace engine
       if ( 0 == ossStrcmp( pFileName, PMD_STARTUP_FILE_NAME ) )
       {
          fileType = SDB_FILE_STARTUP ;
+      }
+      else if ( 0 == ossStrcmp( pFileName, PMD_STARTUPHST_FILE_NAME ) )
+      {
+         fileType = SDB_FILE_STARTUP_HST ;
       }
       else
       {

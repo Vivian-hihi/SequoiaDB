@@ -524,6 +524,7 @@ namespace engine
       SDB_FILE_LOBD        = 3,
 
       SDB_FILE_STARTUP     = 10,
+      SDB_FILE_STARTUP_HST = 11,
       SDB_FILE_UNKNOW      = 255
    } ;
 
