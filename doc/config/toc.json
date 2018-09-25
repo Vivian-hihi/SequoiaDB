@@ -2327,6 +2327,12 @@
                            "file": "next",
                            "cn": "next()",
                            "en": "next()"
+                        },
+                        {
+                           "id": 1537862211,
+                           "file": "arrayAccess",
+                           "cn": "arrayAccess()",
+                           "en": "arrayAccess()"
                         }
                      ]
                   },
@@ -2401,6 +2407,18 @@
                            "file": "update",
                            "cn": "update()",
                            "en": "update()"
+                        },
+                        {
+                           "id": 1537862277,
+                           "file": "getQueryMeta",
+                           "cn": "getQueryMeta()",
+                           "en": "getQueryMeta()"
+                        },
+                        {
+                           "id": 1537862272,
+                           "file": "arrayAccess",
+                           "cn": "arrayAccess()",
+                           "en": "arrayAccess()"
                         }
                      ]
                   },
@@ -2569,6 +2587,12 @@
                            "file": "setGroups",
                            "cn": "setGroups()",
                            "en": "setGroups()"
+                        },
+                        {
+                           "id": 1537862352,
+                           "file": "listGroups",
+                           "cn": "listGroups()",
+                           "en": "listGroups()"
                         }
                      ]
                   },
