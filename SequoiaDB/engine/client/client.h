@@ -2454,15 +2454,26 @@ SDB_EXPORT INT32 sdbListGroupsInDomain( sdbDomainHandle cHandle,
                                         sdbCursorHandle *cursor ) ;
 
 /** \fn INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
-                                  bson *condition )
+                                  bson *options )
     \brief invalidate cache on specified nodes.
     \param [in] cHandle The connection handle
-    \param [in] condition The destination we want to invalidate.
+    \param [in] options The control options:(Only take effect in coordinate nodes).
+                        About the parameter 'options', please reference to the official
+                        website(www.sequoiadb.com) and then search "位置命令参数"
+                        for more details. Some of its optional parameters are as bellow:
+                        
+                        <ul>
+                           <li>Global(Bool)                      : execute this command in global or not. While 'options' is null, it's equals to {Glocal: true}.
+                           <li>GroupID(INT32 or INT32 Array)     : specified one or several groups by their group IDs. e.g. {GroupID:[1001, 1002]}.
+                           <li>GroupName(String or String Array) : specified one or several groups by their group names. e.g. {GroupID:"group1"}.
+                           <li>...
+                        </ul>
+    
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
-                                     bson *condition ) ;
+                                     bson *options ) ;
 
 /** \fn INT32 sdbForceSession( sdbConnectionHandle cHandle,
                                SINT64 sessionID,

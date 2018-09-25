@@ -5508,14 +5508,20 @@ namespace sdbclient
       }
 
       /** \fn INT32 invalidateCache(const bson::BSONObj &options)
-          \brief Clear the cache of the nodes (data/coord node).
-          \param [in] options The control options:(Only take effect in coordinate nodes)
-                GroupID:INT32,
-                GroupName:String,
-                NodeID:INT32,
-                HostName:String,
-                svcname:String,
-                ...
+          \brief invalidate cache on specified nodes.
+          \param [in] cHandle The connection handle
+          \param [in] options The control options:(Only take effect in coordinate nodes).
+                              About the parameter 'options', please reference to the official
+                              website(www.sequoiadb.com) and then search "位置命令参数"
+                              for more details. Some of its optional parameters are as bellow:
+                              
+                              <ul>
+                                 <li>Global(Bool)                      : execute this command in global or not. While 'options' is null, it's equals to {Glocal: true}.
+                                 <li>GroupID(INT32 or INT32 Array)     : specified one or several groups by their group IDs. e.g. {GroupID:[1001, 1002]}.
+                                 <li>GroupName(String or String Array) : specified one or several groups by their group names. e.g. {GroupID:"group1"}.
+                                 <li>...
+                              </ul>
+          
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
