@@ -41,6 +41,7 @@ public class TCPConnection implements IConnection {
     private Socket socket;
     private InputStream input;
     private OutputStream output;
+    private String remoteAddressInfo;
 
     public TCPConnection(InetSocketAddress address, ConfigOptions options) {
         if (address == null) {
@@ -51,6 +52,7 @@ public class TCPConnection implements IConnection {
         }
         this.address = address;
         this.options = options;
+        this.remoteAddressInfo = "remote address[" + address.toString() + "]";
     }
 
     private static class SSLContextHelper {
@@ -175,7 +177,7 @@ public class TCPConnection implements IConnection {
     @Override
     public void receive(byte[] buf, int off, int length) throws BaseException {
         if (this.isClosed()) {
-            throw new BaseException(SDBError.SDB_NOT_CONNECTED);
+            throw new BaseException(SDBError.SDB_NOT_CONNECTED, remoteAddressInfo);
         }
         int size = 0;
         try {
@@ -188,24 +190,25 @@ public class TCPConnection implements IConnection {
             }
         } catch (IOException e) {
             close();
-            throw new BaseException(SDBError.SDB_NETWORK, e);
+            throw new BaseException(SDBError.SDB_NETWORK, remoteAddressInfo, e);
         }
         if (size != length) {
             close();
             throw new BaseException(SDBError.SDB_NETWORK,
-                    String.format("Required %d bytes, but only read %s bytes", length, size));
+                    String.format("%s, required %d bytes, but only read %s bytes",
+                            remoteAddressInfo, length, size));
         }
     }
 
     @Override
     public void send(ByteBuffer buffer) throws BaseException {
         if (buffer == null) {
-            throw new BaseException(SDBError.SDB_SYS, "ByteBuffer is null");
+            throw new BaseException(SDBError.SDB_SYS, remoteAddressInfo + ", byteBuffer is null");
         }
         if (buffer.hasArray()) {
             send(buffer.array());
         } else {
-            throw new BaseException(SDBError.SDB_SYS, "ByteBuffer has no array");
+            throw new BaseException(SDBError.SDB_SYS, remoteAddressInfo + ", byteBuffer has no array");
         }
     }
 
@@ -217,13 +220,13 @@ public class TCPConnection implements IConnection {
     @Override
     public void send(byte[] msg, int off, int length) throws BaseException {
         if (this.isClosed()) {
-            throw new BaseException(SDBError.SDB_NOT_CONNECTED);
+            throw new BaseException(SDBError.SDB_NOT_CONNECTED, remoteAddressInfo);
         }
         try {
             output.write(msg, off, length);
         } catch (IOException e) {
             close();
-            throw new BaseException(SDBError.SDB_NETWORK, e);
+            throw new BaseException(SDBError.SDB_NETWORK, remoteAddressInfo, e);
         }
     }
 }

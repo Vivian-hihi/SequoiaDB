@@ -115,5 +115,17 @@ public class ExceptionTest {
 
     }
 
+    @Test
+    public void testExceptionInfo() {
+
+        try {
+            BSONObject obj = new BasicBSONObject();
+            obj.put("_id", 1);
+            cl.insert(obj);
+            cl.insert(obj);
+        } catch (BaseException e) {
+            e.printStackTrace();
+        }
+    }
 
 }
