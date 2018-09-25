@@ -1053,11 +1053,11 @@ Export("cov")
 if not os.path.isfile ( "gitbuild" ):
    if guess_os == "win32":
       # In windows platform, we take advantage of SubWCRev
-      os.system ("SubWCRev . misc/autogen/ossVer.tmp SequoiaDB/engine/include/ossVer_Autogen.h")
+      os.system ("SubWCRev . misc/autogen/ver_conf.h.in misc/autogen/ver_conf.h")
    else:
       # In NIX platform, we use svn and sed to send to ossVer_Autogen.h
-      os.system("sed \"s/WCREV/$(svn info | grep Revision | awk '{print $2}')/g\" misc/autogen/ossVer.tmp > oss.tmp")
-      os.system("sed 's/\$//g' oss.tmp > SequoiaDB/engine/include/ossVer_Autogen.h")
+      svnVer = os.popen( "svn info | grep Revision | awk '{print $2}'" ).read().replace("\n","")
+      os.system( "sed 's/\$WCREV\$/" + svnVer + "/g' misc/autogen/ver_conf.h.in > misc/autogen/ver_conf.h" )
 
 if not has_option("noautogen"):
    language = get_option ( "language" )
@@ -1091,12 +1091,6 @@ if hasDoxygen:
 
 if hasEngine:
    env.SConscript( 'SequoiaDB/SConscript', variant_dir=variantDir, duplicate=False )
-
-# Convert javascript files to a cpp file
-print 'Convert js files to cpp'
-sys.path.append(join(root_dir, 'misc'))
-import jsToCpp
-jsToCpp.jsToCpp(engine_dir)
 
 if hasClient:
    if not xlc: # xlc doesn't support #pragma once, so there are compiling errors
