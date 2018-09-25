@@ -62,6 +62,7 @@ namespace engine
      _mthMatchRuntimeHolder(),
      _key( planKey ),
      _isInitialized( FALSE ),
+     _isInvalid( FALSE ),
      _hintFailed( FALSE ),
      _isAutoPlan( FALSE ),
      _activityID( OPT_INVALID_ACT_ID ),
@@ -86,6 +87,11 @@ namespace engine
       /// because _scanPath used the _planAllocator, but _planAllocator
       /// will destoryed out of the ~_optAccessPlan
       _scanPath.clearPath() ;
+   }
+
+   void _optAccessPlan::markInvalid()
+   {
+      _isInvalid = TRUE ;
    }
 
    void _optAccessPlan::release ()

@@ -89,6 +89,13 @@ namespace engine
             return _isInitialized ;
          }
 
+         OSS_INLINE BOOLEAN isInvalid() const
+         {
+            return _isInvalid ;
+         }
+
+         void markInvalid() ;
+
          virtual OPT_PLAN_TYPE getPlanType () const = 0 ;
 
          /// Information for plan execution and explanation
@@ -292,6 +299,7 @@ namespace engine
          optAccessPlanKey  _key ;
 
          BOOLEAN _isInitialized ;
+         BOOLEAN _isInvalid ;
 
          // Hint related
          BOOLEAN _hintFailed ;

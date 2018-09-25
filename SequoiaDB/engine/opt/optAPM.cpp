@@ -906,8 +906,9 @@ namespace engine
             curClearScore = (double)accessCount /
                             (double)( currentTimestamp - accessTime ) ;
 
-            if ( curClearScore > -OSS_EPSILON &&
-                 curClearScore < avgClearScore )
+            if ( activity.getPlan()->isInvalid() ||
+                 ( curClearScore > -OSS_EPSILON &&
+                   curClearScore < avgClearScore ) )
             {
                // The score is smaller than average score, clear the plan
                // NOTE: the score < 0.0, means access time is larger than
@@ -1717,10 +1718,10 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get access plan, rc: %d", rc ) ;
          if ( pTmpPlan )
          {
-            pPlan = dynamic_cast<_optGeneralAccessPlan *>( pTmpPlan ) ;
-            if ( NULL == pPlan )
+            if ( pTmpPlan->isInvalid() ||
+                 NULL == ( pPlan = dynamic_cast<_optGeneralAccessPlan *>(
+                                   pTmpPlan ) ) )
             {
-               // Cast failed, release the temp plan
                pTmpPlan->release() ;
             }
          }
@@ -1735,6 +1736,7 @@ namespace engine
                       rc ) ;
 
          planRuntime.setPlan( pPlan, this, TRUE ) ;
+         pPlan = NULL ;
       }
       else
       {
@@ -1759,6 +1761,7 @@ namespace engine
          if ( planRuntime.hasPlan() )
          {
             pPlan->release() ;
+            pPlan = NULL ;
          }
          else
          {
@@ -1843,6 +1846,18 @@ namespace engine
             // Use the sub-collection plan for the this time
             mainPlan->release() ;
          }
+         // When is invalid, get the sub-collection's plans directly
+         else if ( pPlan->isInvalid() )
+         {
+            pPlan->release() ;
+            pPlan = NULL ;
+
+            rc = _getCLAccessPlan( options, FALSE, su, mbContext,
+                                   planRuntime ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get collection access plan "
+                         "for query [ %s ], rc: %d",
+                         options.toString().c_str(), rc ) ;
+         }
          else
          {
             mainPlan = dynamic_cast<optMainCLAccessPlan *>( pPlan ) ;
@@ -1870,6 +1885,7 @@ namespace engine
             {
                // Already got one plan, release this one
                pPlan->release() ;
+               pPlan = NULL ;
             }
             else
             {
@@ -2142,7 +2158,9 @@ namespace engine
          PD_LOG( PDDEBUG, "Invalid parameterized plan [%s]",
                  plan->toString().c_str() ) ;
          plan->markParamInvalid( mbContext ) ;
-         _planCache.removeCachedPlan( plan, SHARED ) ;
+
+         plan->markInvalid() ;
+         _monitor.signalPlanClearJob() ;
       }
 
    done :
@@ -2299,7 +2317,9 @@ namespace engine
          PD_LOG( PDDEBUG, "Invalid main-collection plan [%s]",
                  mainPlan->toString().c_str() ) ;
          mainPlan->markMainCLInvalid( pCachedPlanMgr, mbContext, FALSE ) ;
-         _planCache.removeCachedPlan( mainPlan, SHARED ) ;
+
+         mainPlan->markInvalid() ;
+         _monitor.signalPlanClearJob() ;
       }
 
    done :
