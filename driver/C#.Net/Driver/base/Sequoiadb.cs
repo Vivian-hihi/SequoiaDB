@@ -1590,7 +1590,7 @@ namespace SequoiaDB
         /** \fn bool IsDomainExist(string dmName)
          *  \brief Verify the existence of domain in current database
          *  \param dmName The domain name
-         *  \return True if collection existed or False if not existed
+         *  \return True if existed or False if not existed
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -1611,6 +1611,46 @@ namespace SequoiaDB
             {
                 return false;
             }
+        }
+
+        /** \fn bool IsReplicaGroupExist(string groupName)
+         *  \brief Verify the group in current database or not.
+         *  \param groupName The name of the group
+         *  \return True if existed or False if not existed
+         */
+        public bool IsReplicaGroupExist(string groupName)
+        {
+            if (null == groupName || groupName.Equals(""))
+            {
+                return false;
+            }
+            try
+            {
+                GetReplicaGroup(groupName);
+            }
+            catch (BaseException e)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        /** \fn bool IsReplicaGroupExist(int groupId)
+         *  \brief Verify the group in current database or not.
+         *  \param groupId The id of the group
+         *  \return True if existed or False if not existed
+         */
+        public bool IsReplicaGroupExist(int groupId)
+        {
+            try
+            {
+                GetReplicaGroup(groupId);
+            }
+            catch (BaseException e)
+            {
+                return false;
+            }
+            return true;
         }
 
         /** \fn Domain CreateDomain(string domainName, BsonDocument options)

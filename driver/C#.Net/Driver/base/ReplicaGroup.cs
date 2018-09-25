@@ -561,6 +561,43 @@ namespace SequoiaDB
             }
         }
 
+        /** \fn bool IsNodeExist(string nodeName)
+         *  \brief Whether the specified node exists in current group or not.
+         *  \param nodeName The name of the node. e.g. "192.168.20.165:20000"
+         *  \return true or false.
+         */
+        public bool IsNodeExist(string nodeName)
+        {
+            try
+            {
+                GetNode(nodeName);
+            }
+            catch (BaseException e)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        /** \fn bool IsNodeExist(string hostName, int port)
+         *  \brief Whether the specified node exists in current group or not.
+         *  \param hostName The hostname of the node.
+         *  \param port The port of the node.
+         *  \return true or false.
+         */
+        public bool IsNodeExist(string hostName, int port)
+        {
+            try
+            {
+                GetNode(hostName, port);
+            }
+            catch (BaseException e)
+            {
+                return false;
+            }
+            return true;
+        }
+
         /** \fn Node GetNode(string nodeName)
          *  \brief Get the node by node name
          *  \param nodeName The node name

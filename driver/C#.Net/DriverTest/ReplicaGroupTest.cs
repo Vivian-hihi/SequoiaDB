@@ -373,6 +373,56 @@ namespace DriverTest
         }
 
         [TestMethod()]
+        public void IsGroupAndNodeExistTest()
+        {
+            if (!isCluster)
+            {
+                return;
+            }
+            // case 1:
+            string groupName = "SYSCatalogGroup";
+            ReplicaGroup group = sdb.GetReplicaGroup(groupName);
+            int groupId = group.GroupID;
+            bool isGroupExist = false;
+            isGroupExist = sdb.IsReplicaGroupExist(groupName);
+            Assert.AreEqual(true, isGroupExist);
+            isGroupExist = false;
+            isGroupExist = sdb.IsReplicaGroupExist(groupName);
+            Assert.AreEqual(true, isGroupExist);
+            SequoiaDB.Node master = group.GetMaster();
+            String hostName = master.HostName;
+            int port = master.Port;
+            bool isNodeExist = false;
+            isNodeExist = group.IsNodeExist(hostName, port);
+            Assert.AreEqual(true, isNodeExist);
+            isNodeExist = true;
+            isNodeExist = group.IsNodeExist(hostName, 5555);
+            Assert.AreEqual(false, isNodeExist);
+
+            // case 2:
+            groupName = "abc";
+            groupId = 123456;
+            try
+            {
+                sdb.GetReplicaGroup(groupName);
+            }
+            catch (BaseException e)
+            {
+                Assert.AreEqual(new BaseException("SDB_CLS_GRP_NOT_EXIST").ErrorCode, e.ErrorCode);
+            }
+
+            isGroupExist = true;
+            isGroupExist = sdb.IsReplicaGroupExist(groupName);
+            Assert.AreEqual(false, isGroupExist);
+            isGroupExist = true;
+            isGroupExist = sdb.IsReplicaGroupExist(groupName);
+            Assert.AreEqual(false, isGroupExist);
+            
+
+        }
+
+
+        [TestMethod()]
         [Ignore]
         public void RGTest()
         {
