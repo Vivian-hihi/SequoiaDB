@@ -107,6 +107,8 @@ namespace engine
 
          virtual void _afterGetItem ( UINT32 bucketID, optAccessPlan *pPlan ) ;
 
+         virtual void _afterRemoveItem ( UINT32 bucketID, optAccessPlan *pPlan ) ;
+
       protected :
          optCachedPlanMonitor *_pMonitor ;
    } ;

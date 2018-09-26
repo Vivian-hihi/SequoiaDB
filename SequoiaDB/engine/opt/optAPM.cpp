@@ -555,6 +555,7 @@ namespace engine
    {
       SDB_ASSERT( pPlan, "pPlan is invalid" ) ;
       pPlan->setCachedBitmap() ;
+      pPlan->incRefCount() ;
    }
 
    void _optAccessPlanCache::_afterGetItem ( UINT32 bucketID,
@@ -564,6 +565,13 @@ namespace engine
 
       pPlan->incRefCount() ;
       _pMonitor->setCachedPlanActivity( pPlan ) ;
+   }
+
+   void _optAccessPlanCache::_afterRemoveItem( UINT32 bucketID,
+                                               optAccessPlan *pPlan )
+   {
+      SDB_ASSERT( pPlan, "pPlan is invalid" ) ;
+      pPlan->decRefCount() ;
    }
 
    /*
