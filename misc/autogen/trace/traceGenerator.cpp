@@ -544,6 +544,28 @@ int traceGenerator::_parseTraceFunc( const string &path,
                                 << ", function = " << funcInfo.func << endl ;
       }
 
+      if ( funcInfo.func.find( " " ) != string::npos )
+      {
+         printLog( PD_WARNING ) << "Warning: invalid trace function"
+                                << ", path = " << path
+                                << ", name = " << funcInfo.alias
+                                << ", function = " << funcInfo.func << endl ;
+      }
+      else if ( funcInfo.func.find( ")" ) != string::npos )
+      {
+         printLog( PD_WARNING ) << "Warning: invalid trace function"
+                                << ", path = " << path
+                                << ", name = " << funcInfo.alias
+                                << ", function = " << funcInfo.func << endl ;
+      }
+      else if ( funcInfo.func.find( "(" ) != string::npos )
+      {
+         printLog( PD_WARNING ) << "Warning: invalid trace function"
+                                << ", path = " << path
+                                << ", name = " << funcInfo.alias
+                                << ", function = " << funcInfo.func << endl ;
+      }
+
       //check trace function exist or not
       rc = _checkTraceFunctionExist( content, p - start, path, funcInfo ) ;
       if ( rc )
