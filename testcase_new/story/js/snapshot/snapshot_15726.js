@@ -236,4 +236,4 @@ function main()
    }
 }
 
-main(db) ;
+//main(db) ;
