@@ -284,22 +284,47 @@ function checkRecords(clRecords, esRecords)
 ******************************************************************/
 function isIndexFromESExist(elasticSearchIndexName)
 {
-   var isExist = true;
    // get curl command
    var str="curl -H " + HEADER + " -XGET " + HTTP + "/" + elasticSearchIndexName + "' 2>/dev/null";
+ 
+	//the longest waiting time is 60S
+	var isExist = true;
+   var timeout = 60;
+   var doTimes = 0;
    
-   try
+   while(true)
    {
-      var info = cmd.run(str);
-      //get json
-      var json = eval("(" + info + ")");
-      var error = json["error"];
-      if(error !== undefined)  { isExist = false };
-   }
-   catch(e)
-   {
-      println("Fail to run curl: " + str);
-      throw e;
+      try
+      {
+         var info = cmd.run(str);
+         //get json
+         var json = eval("(" + info + ")");
+         var error = json["error"];
+         if(error !== undefined)  { isExist = false };
+      }
+      catch(e)
+      {
+         println("Fail to run curl: " + str);
+         throw e;
+      }
+      
+      if(!isExist)
+      {
+         if(doTimes < timeout)
+         {
+            doTimes+=5;
+            // interval 5s each time
+            sleep(5000);
+         }
+         else
+         {
+            throw "check ES Index synchronization time out";
+         }
+      }
+      else
+      {
+         break;
+      }
    }
  
    return isExist;
