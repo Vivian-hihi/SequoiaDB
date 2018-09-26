@@ -477,6 +477,7 @@ int traceGenerator::_parseTraceFunc( const string &path,
 
    while( true )
    {
+      bool skipCheck = false ;
       size_t entryPos = -1 ;
       size_t exitPos = -1 ;
       const char *p        = NULL ;
@@ -535,6 +536,12 @@ int traceGenerator::_parseTraceFunc( const string &path,
 
       funcInfo.func = string( pFunc, p - pFunc ) ;
 
+      if ( funcInfo.func.at( 0 ) == '$' )
+      {
+         skipCheck = true ;
+         funcInfo.func = string( pFunc + 1, p - pFunc - 1 ) ;
+      }
+
       //check trace empty or not
       if ( funcInfo.alias.length() == 0 || funcInfo.func.length() == 0 )
       {
@@ -544,33 +551,36 @@ int traceGenerator::_parseTraceFunc( const string &path,
                                 << ", function = " << funcInfo.func << endl ;
       }
 
-      if ( funcInfo.func.find( " " ) != string::npos )
+      if ( false == skipCheck )
       {
-         printLog( PD_WARNING ) << "Warning: invalid trace function"
-                                << ", path = " << path
-                                << ", name = " << funcInfo.alias
-                                << ", function = " << funcInfo.func << endl ;
-      }
-      else if ( funcInfo.func.find( ")" ) != string::npos )
-      {
-         printLog( PD_WARNING ) << "Warning: invalid trace function"
-                                << ", path = " << path
-                                << ", name = " << funcInfo.alias
-                                << ", function = " << funcInfo.func << endl ;
-      }
-      else if ( funcInfo.func.find( "(" ) != string::npos )
-      {
-         printLog( PD_WARNING ) << "Warning: invalid trace function"
-                                << ", path = " << path
-                                << ", name = " << funcInfo.alias
-                                << ", function = " << funcInfo.func << endl ;
-      }
+         if ( funcInfo.func.find( " " ) != string::npos )
+         {
+            printLog( PD_WARNING ) << "Warning: invalid trace function"
+                                   << ", path = " << path
+                                   << ", name = " << funcInfo.alias
+                                   << ", function = " << funcInfo.func << endl ;
+         }
+         else if ( funcInfo.func.find( ")" ) != string::npos )
+         {
+            printLog( PD_WARNING ) << "Warning: invalid trace function"
+                                   << ", path = " << path
+                                   << ", name = " << funcInfo.alias
+                                   << ", function = " << funcInfo.func << endl ;
+         }
+         else if ( funcInfo.func.find( "(" ) != string::npos )
+         {
+            printLog( PD_WARNING ) << "Warning: invalid trace function"
+                                   << ", path = " << path
+                                   << ", name = " << funcInfo.alias
+                                   << ", function = " << funcInfo.func << endl ;
+         }
 
-      //check trace function exist or not
-      rc = _checkTraceFunctionExist( content, p - start, path, funcInfo ) ;
-      if ( rc )
-      {
-         goto error ;
+         //check trace function exist or not
+         rc = _checkTraceFunctionExist( content, p - start, path, funcInfo ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
       }
 
       //check trace entry and exist function exist or not
