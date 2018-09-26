@@ -295,7 +295,7 @@ namespace engine
       return _rollbackEvent.wait( millicSec ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_SVTRANSINFO, "dpsTransCB::saveTransInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_SVTRANSINFO, "dpsTransCB::updateTransInfo" )
    void dpsTransCB::updateTransInfo( DPS_TRANS_ID transID,
                                      DPS_LSN_OFFSET lsnOffset )
    {

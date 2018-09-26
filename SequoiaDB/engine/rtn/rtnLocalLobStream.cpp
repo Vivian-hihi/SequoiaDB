@@ -840,7 +840,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__ROLLBACK, "_rtnLocalLobStream::_rooback" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__ROLLBACK, "_rtnLocalLobStream::_rollback" )
    INT32 _rtnLocalLobStream::_rollback( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;

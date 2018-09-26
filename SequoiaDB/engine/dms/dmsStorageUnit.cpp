@@ -676,7 +676,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONCHGSUCACHES, "_dmsEventHolder::onChangeSUCacheConfigs" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONCHGSUCACHES, "_dmsEventHolder::onChangeSUCaches" )
    INT32 _dmsEventHolder::onChangeSUCaches ( UINT32 mask )
    {
       INT32 rc = SDB_OK ;
@@ -958,7 +958,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSCACHEHOLDER_CHKIDXSTAT, "_dmsCacheHolder::_checkCollectionStat" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSCACHEHOLDER_CHKIDXSTAT, "_dmsCacheHolder::_checkIndexStat" )
    INT32 _dmsCacheHolder::_checkIndexStat ( dmsIndexStat *pIndexStat,
                                             dmsMBContext *mbContext )
    {
@@ -2189,7 +2189,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SETCLSTRICTDATAMODE, "_dmsStorageUnit::setCollectoinStrictDataMode" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_SETCLSTRICTDATAMODE, "_dmsStorageUnit::setCollectionStrictDataMode" )
    INT32 _dmsStorageUnit::setCollectionStrictDataMode ( const CHAR * pName,
                                                         BOOLEAN strictDataMode,
                                                         dmsMBContext * context )

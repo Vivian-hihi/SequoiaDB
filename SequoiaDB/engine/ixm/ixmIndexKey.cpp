@@ -126,7 +126,7 @@ namespace engine
       }
       // input: BSONObj obj
       // output: BSONObjSet &keys
-      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN_GETKEYS, "_ixmKeyGenerator::getKeys" )
+      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN_GETKEYS, "$_ixmKeyGenerator::getKeys" )
       INT32 getKeys ( const BSONObj &obj, BOOLEAN isKeepKeyName,
                       BSONObjSet &keys,
                       BSONElement *pArrEle,
@@ -173,7 +173,7 @@ namespace engine
          goto done ;
       }
    protected:
-      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GETKEYS, "_ixmKeyGenerator::_getKeys" )
+      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GETKEYS, "$_ixmKeyGenerator::_getKeys" )
       INT32 _getKeys( vector<const CHAR *> &fieldNames,
                       const BSONObj &obj,
                       BOOLEAN isKeepKeyName,
@@ -297,7 +297,7 @@ namespace engine
          goto done ;
       }
 
-      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GENKEYSWITHARRELE, "_ixmKeyGenerator::_genKeyWithArrayEle" )
+      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GENKEYSWITHARRELE, "$_ixmKeyGenerator::_genKeyWithArrayEle" )
       INT32 _genKeyWithArrayEle( BSONElement *keyEles,
                                  vector<const CHAR *> &fieldNames,
                                  const BSONElement *arrElement,
@@ -393,7 +393,7 @@ namespace engine
          goto done ;
       }
 
-      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GENKEYSWITHNORMALELE, "_ixmKeyGenerator::_genKeyWithNormalEle" )
+      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GENKEYSWITHNORMALELE, "$_ixmKeyGenerator::_genKeyWithNormalEle" )
       INT32 _genKeyWithNormalEle( BSONElement *keyELes,
                                   vector<const CHAR *> &fieldNames,
                                   BOOLEAN isKeepKeyName,

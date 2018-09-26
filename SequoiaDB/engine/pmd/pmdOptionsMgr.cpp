@@ -3025,7 +3025,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDOPTMGR_REFLUSH2FILE, "_pmdOptionsMgr::reflush2file" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDOPTMGR_REFLUSH2FILE, "_pmdOptionsMgr::reflush2File" )
    INT32 _pmdOptionsMgr::reflush2File( UINT32 mask )
    {
       INT32 rc = SDB_OK ;

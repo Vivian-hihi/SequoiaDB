@@ -984,7 +984,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__REPLAYLOB, "_clsDataDstBaseSession::_repalyLob" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__REPLAYLOB, "_clsDataDstBaseSession::_replayLob" )
    INT32 _clsDataDstBaseSession::_replayLob( const MsgClsFSNotifyRes *msg )
    {
       INT32 rc = SDB_OK ;

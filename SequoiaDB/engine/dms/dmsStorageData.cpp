@@ -1089,7 +1089,7 @@ namespace engine
       return DMS_DATASU_EYECATCHER ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_POSTEXTLOAD, "_dmsStorageData::postExtLoad" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_POSTEXTLOAD, "_dmsStorageData::postLoadExt" )
    void _dmsStorageData::postLoadExt( dmsMBContext *context,
                                       dmsExtent *extAddr,
                                       SINT32 extentID )

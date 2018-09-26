@@ -147,7 +147,7 @@ namespace engine
       goto done;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_WAITLOCKX, "dpsLockBucket::waitLockX" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_WAITLOCKX, "dpsLockBucket::waitLock" )
    INT32 dpsLockBucket::waitLock( _pmdEDUCB *eduCB,
                                   const dpsTransLockId &lockId,
                                   DPS_TRANSLOCK_TYPE lockType )
@@ -277,7 +277,7 @@ namespace engine
       goto done;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_LOCKID, "dpsLockBucket::lockId" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_LOCKID, "dpsLockBucket::release" )
    void dpsLockBucket::release( _pmdEDUCB *eduCB,
                                 const dpsTransLockId &lockId )
    {

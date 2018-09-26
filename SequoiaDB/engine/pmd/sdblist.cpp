@@ -416,7 +416,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLIST_MAIN, "mainEtnry" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLIST_MAIN, "mainEntry" )
    INT32 mainEntry ( INT32 argc, CHAR **argv )
    {
       INT32 rc = SDB_OK ;

@@ -1437,7 +1437,7 @@ namespace engine
       PD_TRACE_EXIT( SDB_DMSCLSTAT__TOBSON ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT__ADDFLDSTAT, "_dmsCollectionStat::addFieldStat" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT__ADDFLDSTAT, "_dmsCollectionStat::_addFieldStat" )
    void _dmsCollectionStat::_addFieldStat ( dmsIndexStat *pIndexStat,
                                             BOOLEAN ignoreCrtTime )
    {
@@ -1476,7 +1476,7 @@ namespace engine
       PD_TRACE_EXIT( SDB_DMSCLSTAT__ADDFLDSTAT ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT__RMFLDSTAT, "_dmsCollectionStat::removeFieldStat" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT__RMFLDSTAT, "_dmsCollectionStat::_removeFieldStat" )
    void _dmsCollectionStat::_removeFieldStat ( dmsIndexStat *pDeletingStat )
    {
       PD_TRACE_ENTRY( SDB_DMSCLSTAT__RMFLDSTAT ) ;

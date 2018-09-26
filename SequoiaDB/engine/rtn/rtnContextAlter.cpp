@@ -260,7 +260,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERCSCTX__CLOSEINT, "_rtnContextAlterCS::_closeInternal" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERCSCTX__CLOSEINT, "rtnContextAlterCS::_closeInternal" )
    INT32 rtnContextAlterCS::_closeInternal ( pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
@@ -656,7 +656,7 @@ namespace engine
       ss << ",Step:" << _phase ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERCLCTX__LOCKTRANS, "_rtnContextAlterCS::_lockTransaction" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERCLCTX__LOCKTRANS, "_rtnContextAlterCL::_lockTransaction" )
    INT32 _rtnContextAlterCL::_lockTransaction ( _pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;

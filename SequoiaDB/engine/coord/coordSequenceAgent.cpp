@@ -678,7 +678,7 @@ namespace engine
       return removed ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_INVALIDATE_CACHE, "coordInvalidateSequenceCache" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_INVALIDATE_CACHE, "coordSequenceInvalidateCache" )
    INT32 coordSequenceInvalidateCache( const std::string& sequenceName, _pmdEDUCB* eduCB )
    {
       INT32 rc = SDB_OK ;

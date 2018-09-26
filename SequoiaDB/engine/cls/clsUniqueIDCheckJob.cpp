@@ -204,7 +204,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_STOPUIDCHKJOB, "startUniqueIDCheckJob" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_STOPUIDCHKJOB, "stopUniqueIDCheckJob" )
    INT32 stopUniqueIDCheckJob ( EDUID& EDUID )
    {
       PD_TRACE_ENTRY( SDB_STOPUIDCHKJOB ) ;

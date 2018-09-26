@@ -415,7 +415,7 @@ namespace engine
       return codeSize ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__ADDADDITIONALINFO, "_utilLZWDictionary::_addAdditionalInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTIONARY__ADDADDITIONALINFO, "_utilLZWDictionary::_formatAdditionalInfo" )
    void _utilLZWDictionary::_formatAdditionalInfo( BSONObj &obj )
    {
       PD_TRACE_ENTRY( SDB__UTILLZWDICTIONARY__ADDADDITIONALINFO ) ;
@@ -639,7 +639,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTCREATOR_PREPARE, "_utilLZWDictionary::prepare" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTCREATOR_PREPARE, "_utilLZWDictCreator::prepare" )
    INT32 _utilLZWDictCreator::prepare()
    {
       INT32 rc = SDB_OK ;
@@ -656,7 +656,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTCREATOR_RESET, "_utilLZWDictionary::reset" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTCREATOR_RESET, "_utilLZWDictCreator::reset" )
    void _utilLZWDictCreator::reset()
    {
       PD_TRACE_ENTRY( SDB__UTILLZWDICTCREATOR_RESET ) ;
@@ -666,7 +666,7 @@ namespace engine
       PD_TRACE_EXIT( SDB__UTILLZWDICTCREATOR_RESET ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTCREATOR_BUILD, "_utilLZWDictionary::build" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTCREATOR_BUILD, "_utilLZWDictCreator::build" )
    void _utilLZWDictCreator::build( const CHAR *source, UINT32 sourceLen,
                                     BOOLEAN &full )
    {
@@ -732,7 +732,7 @@ namespace engine
       PD_TRACE_EXIT( SDB__UTILLZWDICTCREATOR_BUILD ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTCREATOR_FINALIZE, "_utilLZWDictionary::finalize" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILLZWDICTCREATOR_FINALIZE, "_utilLZWDictCreator::finalize" )
    INT32 _utilLZWDictCreator::finalize( CHAR *buff, UINT32 &size )
    {
       INT32 rc = SDB_OK ;

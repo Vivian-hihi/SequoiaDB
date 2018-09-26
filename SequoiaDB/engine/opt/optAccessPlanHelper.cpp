@@ -100,7 +100,7 @@ namespace engine
       _predicateSet.clear() ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTAPHELP_SETMTH, "_optAccessPlanHelper::setMatcher" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTAPHELP_SETMTH, "_optAccessPlanHelper::setMatchTree" )
    void _optAccessPlanHelper::setMatchTree ( _mthMatchTree *matchTree )
    {
       PD_TRACE_ENTRY( SDB__OPTAPHELP_SETMTH ) ;
@@ -165,7 +165,7 @@ namespace engine
       PD_TRACE_EXIT( SDB__OPTAPHELP__EVALEST ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTAPHELP_GENSIMMTH, "_optAccessPlanHelper::generateSimpleMatcher" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTAPHELP_GENSIMMTH, "_optAccessPlanHelper::normalizeQuery" )
    INT32 _optAccessPlanHelper::normalizeQuery ( const BSONObj &query,
                                                 BSONObjBuilder &normalBuilder,
                                                 rtnParamList &parameters,

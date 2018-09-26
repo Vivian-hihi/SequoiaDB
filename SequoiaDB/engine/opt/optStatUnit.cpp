@@ -492,7 +492,7 @@ namespace engine
       _keyPattern = _keyPattern.getOwned() ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTIDXSTAT_EVALPREDLIST, "_optStatUnit::evalPredicateList" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTIDXSTAT_EVALPREDLIST, "_optIndexStat::evalPredicateList" )
    double _optIndexStat::evalPredicateList ( const CHAR *pFirstFieldName,
                                              rtnStatPredList &predList,
                                              BOOLEAN mixCmp,
@@ -540,7 +540,7 @@ namespace engine
       return predSelectivity ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTIDXSTAT_EVALKEYPAIR, "_optStatUnit::evalKeyPair" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTIDXSTAT_EVALKEYPAIR, "_optIndexStat::evalKeyPair" )
    double _optIndexStat::evalKeyPair ( const CHAR *pFieldName,
                                        dmsStatKey &startKey,
                                        dmsStatKey &stopKey,

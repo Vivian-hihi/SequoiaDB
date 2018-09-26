@@ -2721,7 +2721,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_RENAMECOLLECTION, "_dmsStorageDataCommon::renameCollecion" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_RENAMECOLLECTION, "_dmsStorageDataCommon::renameCollection" )
    INT32 _dmsStorageDataCommon::renameCollection( const CHAR * oldName,
                                                   const CHAR * newName,
                                                   pmdEDUCB * cb,

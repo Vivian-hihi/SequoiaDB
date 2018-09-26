@@ -737,7 +737,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PREPAREINSERT, "_rtnExtDataProcessor::prepareInsert" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PREPAREINSERT, "_rtnExtDataProcessor::_prepareInsert" )
    INT32 _rtnExtDataProcessor::_prepareInsert( const BSONObj &inputObj,
                                                BSONObj &recordObj )
    {
@@ -790,7 +790,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PREPAREDELETE, "_rtnExtDataProcessor::prepareDelete" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PREPAREDELETE, "_rtnExtDataProcessor::_prepareDelete" )
    INT32 _rtnExtDataProcessor::_prepareDelete( const BSONObj &inputObj,
                                                BSONObj &recordObj )
    {
@@ -838,7 +838,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PREPAREUPDATE, "_rtnExtDataProcessor::prepareUpdate" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PREPAREUPDATE, "_rtnExtDataProcessor::_prepareUpdate" )
    INT32 _rtnExtDataProcessor::_prepareUpdate( const BSONObj &originalObj,
                                                const BSONObj &newObj,
                                                BSONObj &recordObj )

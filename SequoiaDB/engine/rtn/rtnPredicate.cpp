@@ -1363,7 +1363,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB_RTNPRED_REVERSE ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_TOSTRING, "rtnPredicate::toString()" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_TOSTRING, "rtnPredicate::toString" )
    string rtnPredicate::toString() const
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_TOSTRING ) ;
@@ -1427,7 +1427,7 @@ namespace engine
       return res ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITIN, "_rtnPredicateSet::_initIN" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITIN, "rtnPredicate::_initIN" )
    INT32 rtnPredicate::_initIN ( const BSONElement &e, BOOLEAN isNot,
                                  BOOLEAN mixCmp, BOOLEAN expandRegex )
    {
@@ -1506,7 +1506,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITREGEX, "_rtnPredicateSet::_initRegEx" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITREGEX, "rtnPredicate::_initRegEx" )
    INT32 rtnPredicate::_initRegEx ( const BSONElement &e, BOOLEAN isNot )
    {
       INT32 rc = SDB_OK ;
@@ -1553,7 +1553,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITET, "_rtnPredicateSet::_initET" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITET, "rtnPredicate::_initET" )
    INT32 rtnPredicate::_initET ( const BSONElement &e, BOOLEAN isNot )
    {
       INT32 rc = SDB_OK ;
@@ -1588,7 +1588,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITNE, "_rtnPredicateSet::_initNE" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITNE, "rtnPredicate::_initNE" )
    INT32 rtnPredicate::_initNE ( const BSONElement &e, BOOLEAN isNot )
    {
       INT32 rc = SDB_OK ;
@@ -1618,7 +1618,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITLT, "_rtnPredicateSet::_initLT" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITLT, "rtnPredicate::_initLT" )
    INT32 rtnPredicate::_initLT ( const BSONElement &e, BOOLEAN isNot,
                                  BOOLEAN inclusive, BOOLEAN mixCmp )
    {
@@ -1693,7 +1693,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITGT, "_rtnPredicateSet::_initGT" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITGT, "rtnPredicate::_initGT" )
    INT32 rtnPredicate::_initGT ( const BSONElement &e, BOOLEAN isNot,
                                  BOOLEAN inclusive, BOOLEAN mixCmp )
    {
@@ -1766,7 +1766,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITALL, "_rtnPredicateSet::_initALL" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITALL, "rtnPredicate::_initALL" )
    INT32 rtnPredicate::_initALL ( const BSONElement &e, BOOLEAN isNot )
    {
       INT32 rc = SDB_OK ;
@@ -1800,7 +1800,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITMOD, "_rtnPredicateSet::_initMOD" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITMOD, "rtnPredicate::_initMOD" )
    INT32 rtnPredicate::_initMOD ( const BSONElement &e, BOOLEAN isNot )
    {
       INT32 rc = SDB_OK ;
@@ -1818,7 +1818,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITEXISTS, "_rtnPredicateSet::_initEXISTS" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITEXISTS, "rtnPredicate::_initEXISTS" )
    INT32 rtnPredicate::_initEXISTS ( const BSONElement &e, BOOLEAN isNot )
    {
       INT32 rc = SDB_OK ;
@@ -1844,7 +1844,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITISNULL, "_rtnPredicateSet::_initISNULL" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITISNULL, "rtnPredicate::_initISNULL" )
    INT32 rtnPredicate::_initISNULL ( const BSONElement &e, BOOLEAN isNot )
    {
       INT32 rc = SDB_OK ;
@@ -1874,7 +1874,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITFULLRANGE, "_rtnPredicateSet::_initFullRange" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITFULLRANGE, "rtnPredicate::_initFullRange" )
    INT32 rtnPredicate::_initFullRange ()
    {
       INT32 rc = SDB_OK ;
@@ -1895,7 +1895,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITTYPERANGE, "_rtnPredicateSet::_initTypeRange" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITTYPERANGE, "rtnPredicate::_initTypeRange" )
    INT32 rtnPredicate::_initTypeRange ( BSONType type, BOOLEAN forCmp )
    {
       INT32 rc = SDB_OK ;
@@ -1928,7 +1928,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITMINRANGE, "_rtnPredicateSet::_initMinRange" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITMINRANGE, "rtnPredicate::_initMinRange" )
    INT32 rtnPredicate::_initMinRange ( BOOLEAN startIncluded )
    {
       INT32 rc = SDB_OK ;
@@ -2318,7 +2318,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_INIT_PARAMLIST, "_rtnPredicateList::_rtnPredicateList" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_INIT_PARAMLIST, "_rtnPredicateList::initialize" )
    INT32 _rtnPredicateList::initialize ( const RTN_PARAM_PREDICATE_LIST &paramPredList,
                                          const BSONObj &keyPattern,
                                          INT32 direction,

@@ -274,7 +274,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSCOLUMNMATRIX__LOADDEFAULTVALUE, "_mthSColumnMatrix::_loadDefautValue" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSCOLUMNMATRIX__LOADDEFAULTVALUE, "_mthSColumnMatrix::_loadDefaultValue" )
    INT32 _mthSColumnMatrix::_loadDefaultValue( const BSONElement &e )
    {
       INT32 rc = SDB_OK ;

@@ -449,7 +449,7 @@ namespace engine
       return ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMREPLACEATTRRELE2, "replaceAttrRele2" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMREPLACEATTRRELE2, "replaceAttrRele" )
    void replaceAttrRele( qgmDbAttrVec &attrs,  const qgmField &newRele )
    {
       PD_TRACE_ENTRY( SDB__QGMREPLACEATTRRELE2 ) ;
@@ -465,7 +465,7 @@ namespace engine
       return ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMREPLACEATTRRELE3, "replaceAggrRele3" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMREPLACEATTRRELE3, "replaceAggrRele" )
    void replaceAggrRele( qgmAggrSelectorVec & aggrs, const qgmField & newRele )
    {
       PD_TRACE_ENTRY( SDB__QGMREPLACEATTRRELE3 ) ;
@@ -849,7 +849,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMUPATTRSBYFIELDALIAS2, "upAttrsByFieldAlias2" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMUPATTRSBYFIELDALIAS2, "upAttrsByFieldAlias" )
    INT32 upAttrsByFieldAlias( qgmDbAttrVec & attrs,
                               const qgmOPFieldPtrVec & fieldAlias )
    {
@@ -922,7 +922,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMUPATTRSBYFIELDALIAS3, "upAggrsByFieldAlias3" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMUPATTRSBYFIELDALIAS3, "upAggrsByFieldAlias" )
    INT32 upAggrsByFieldAlias( qgmAggrSelectorVec & aggrs,
                               const qgmOPFieldPtrVec & fieldAlias )
    {

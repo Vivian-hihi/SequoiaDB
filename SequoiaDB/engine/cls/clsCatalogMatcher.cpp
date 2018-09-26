@@ -406,7 +406,7 @@ namespace engine
       goto done;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_ISEXISTUNRECONIGZEDOP, "clsCatalogMatcher::isExistUnreconigzeOp" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_ISEXISTUNRECONIGZEDOP, "clsCatalogMatcher::_isExistUnreconigzeOp" )
    BOOLEAN clsCatalogMatcher::_isExistUnreconigzeOp( const bson::BSONObj obj )
    {
       BOOLEAN result = FALSE;

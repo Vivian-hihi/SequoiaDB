@@ -2674,7 +2674,7 @@ error:
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTREREADRESULT, "msgExtraceReadResult" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTREREADRESULT, "msgExtractReadResult" )
 INT32 msgExtractReadResult( const MsgOpReply *header,
                             const MsgLobTuple **begin,
                             UINT32 *tupleSz )

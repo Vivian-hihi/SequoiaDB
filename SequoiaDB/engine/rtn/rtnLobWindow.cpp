@@ -380,7 +380,7 @@ const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 512 ;      /// 64MB
       return hasNext ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBWINDOW_PREPARE4READ, "_rtnLobWindow::_rtnLobWindow::prepare4Read" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBWINDOW_PREPARE4READ, "_rtnLobWindow::prepare4Read" )
    INT32 _rtnLobWindow::prepare4Read( INT64 lobLen,
                                       INT64 offset,
                                       UINT32 len,

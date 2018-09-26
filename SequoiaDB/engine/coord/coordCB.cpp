@@ -530,7 +530,7 @@ retry :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__COORDCB__ONCATREGRES, "_clsMgr::_onCatRegisterRes" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__COORDCB__ONCATREGRES, "_CoordCB::_onCatRegisterRes" )
    INT32 _CoordCB::_onCatRegisterRes ( const NET_HANDLE &handle,
                                        MsgHeader *pMsg )
    {

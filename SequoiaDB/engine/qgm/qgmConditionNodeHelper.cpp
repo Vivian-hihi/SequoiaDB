@@ -177,7 +177,7 @@ namespace engine
    }
 
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMCONDITIONNODEHELPER_SEPARATE2, "_qgmConditionNodeHelper::_separate2" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMCONDITIONNODEHELPER_SEPARATE2, "_qgmConditionNodeHelper::_separate" )
    void _qgmConditionNodeHelper::_separate( _qgmConditionNode *predicate,
                                             qgmConditionNodePtrVec &nodes )
    {

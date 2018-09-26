@@ -862,7 +862,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSEND3, "INT32 _netFrame::syncSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSEND3, "_netFrame::syncSend" )
    INT32 _netFrame::syncSend( const NET_HANDLE &handle,
                               MsgHeader *header,
                               const void *body,

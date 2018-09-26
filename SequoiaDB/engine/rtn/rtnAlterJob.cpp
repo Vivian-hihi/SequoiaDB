@@ -411,7 +411,7 @@ namespace engine
       PD_TRACE_EXIT( SDB__RTNALTERJOB__EXTRACTOPTIONS ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERJOB__GETOBJTYPE, "_rtnAlterJob::_getObjType" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERJOB__GETOBJTYPE, "_rtnAlterJob::_getObjectType" )
    RTN_ALTER_OBJECT_TYPE _rtnAlterJob::_getObjectType ( const CHAR * name )
    {
       PD_TRACE_ENTRY( SDB__RTNALTERJOB__GETOBJTYPE ) ;

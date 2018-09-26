@@ -175,7 +175,7 @@ namespace engine
       PD_TRACE_EXIT( SDB_GTS_MSG_HANDLER_JOB_EXIT ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_MSG_HANDLER_HANDLE_MSG, "_catGTSMsgHandler::handleMsg" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_MSG_HANDLER_HANDLE_MSG, "_catGTSMsgHandler::postMsg" )
    INT32 _catGTSMsgHandler::postMsg( const NET_HANDLE& handle, const MsgHeader* msg )
    {
       INT32 rc = SDB_OK ;

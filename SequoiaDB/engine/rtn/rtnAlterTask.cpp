@@ -228,7 +228,7 @@ namespace engine
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERTASKRUNNER_TOCMDMSG, "_rtnAlterTaskRunner::toCMDMessage" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERTASKRUNNER_TOCMDMSG, "_rtnAlterTask::toCMDMessage" )
    INT32 _rtnAlterTask::toCMDMessage ( CHAR ** ppBuffer,
                                        INT32 * bufferSize,
                                        const CHAR * objectName,
@@ -623,7 +623,7 @@ namespace engine
       return ( *this ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCLCAPARG_PARSEARG, "_rtnCLCappedArgument::parseArgument" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCLCAPARG_PARSEARG, "_rtnCLExtOptionArgument::parseArgument" )
    INT32 _rtnCLExtOptionArgument::parseArgument ()
    {
       INT32 rc = SDB_OK ;
@@ -672,7 +672,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCLCAPARG_TOBSON, "_rtnCLCappedArgument::toBSON" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCLCAPARG_TOBSON, "_rtnCLExtOptionArgument::toBSON" )
    INT32 _rtnCLExtOptionArgument::toBSON ( const BSONObj & curExtOptions,
                                         BSONObj & extOptions ) const
    {
@@ -814,7 +814,7 @@ namespace engine
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCLENABLESHARDINGTASK_PARSEARG, "_rtnEnableShardingTask::parseArgument" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCLENABLESHARDINGTASK_PARSEARG, "_rtnCLEnableShardingTask::parseArgument" )
    INT32 _rtnCLEnableShardingTask::parseArgument ()
    {
       INT32 rc = SDB_OK ;

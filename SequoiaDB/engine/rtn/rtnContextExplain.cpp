@@ -1294,7 +1294,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNEXPLAINMAINBASE__BLDSIMPEXP, "_rtnExplainMainBase::_buildSimpleExplain" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNEXPLAINMAINBASE__BLDSIMPEXP, "_rtnExplainMainBase::_buildSubExplains" )
    INT32 _rtnExplainMainBase::_buildSubExplains ( rtnContext * explainContext,
                                                   BOOLEAN needSort,
                                                   BOOLEAN & hasMore )

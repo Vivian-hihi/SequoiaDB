@@ -1594,7 +1594,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT__FNDCHLDEXT, "_ixmExtent::_findChildExtent " )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT__FNDCHLDEXT, "_ixmExtent::_findChildExtent" )
    INT32 _ixmExtent::_findChildExtent ( dmsExtentID childExtent,
                                         UINT16 &pos ) const
    {

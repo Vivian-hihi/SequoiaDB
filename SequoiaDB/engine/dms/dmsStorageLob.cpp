@@ -2176,7 +2176,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_READPAGE, "_dmsStorageLob::_readPage" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_READPAGE, "_dmsStorageLob::readPage" )
    INT32 _dmsStorageLob::readPage( DMS_LOB_PAGEID &pos,
                                    BOOLEAN onlyMetaPage,
                                    _pmdEDUCB *cb,

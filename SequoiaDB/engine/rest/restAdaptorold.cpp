@@ -66,7 +66,7 @@ namespace engine
    // receiveBufferSize for the size of buffer,
    // needFetch for wether the request need to fetch data ( like query, snapshot
    // etc )
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP_GETREQ, "_restAdaptor::getRequest" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP_GETREQ, "_restAdaptoro::getRequest" )
    INT32 _restAdaptoro::getRequest ( ossSocket &sock, CHAR **ppReceiveBuffer,
                                     INT32 *receiveBufferSize,
                                     BOOLEAN &needFetch )
@@ -122,7 +122,7 @@ namespace engine
    // pExtraBuffer for the actual result, usually it's one or more bson objects
    // extraSize for the buffer size
    // sock is the socket
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP_SNDREP, "_restAdaptor::sendReply" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP_SNDREP, "_restAdaptoro::sendReply" )
    INT32 _restAdaptoro::sendReply ( MsgOpReply &replyHeader,
                                    const CHAR *pExtraBuffer,
                                    INT32 extraSize,
@@ -276,7 +276,7 @@ Connection: close%s", CRLF, CRLF, CRLF, CRLF2 ) ;
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__RECV, "_restAdaptor::_receive" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__RECV, "_restAdaptoro::_receive" )
    INT32 _restAdaptoro::_receive ( ossSocket &sock, CHAR *buffer,
                                   INT32 &len, INT32 timeout )
    {
@@ -324,7 +324,7 @@ Connection: close%s", CRLF, CRLF, CRLF, CRLF2 ) ;
    }
 
    // http convert message
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__HTTPCVMSG, "_restAdaptor::_httpConvertMsg" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__HTTPCVMSG, "_restAdaptoro::_httpConvertMsg" )
    INT32 _restAdaptoro::_httpConvertMsg ( ossSocket &sock,
                                          CHAR *pBuffer,
                                          CHAR **ppReceiveBuffer,
@@ -738,7 +738,7 @@ Connection: close%s", CRLF, CRLF, CRLF, CRLF2 ) ;
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__STRET, "_restAdaptor::_strEndTag" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__STRET, "_restAdaptoro::_strEndTag" )
    CHAR *_restAdaptoro::_strEndTag ( CHAR *in )
    {
       PD_TRACE_ENTRY ( SDB__RESTADP__STRET );
@@ -773,7 +773,7 @@ Connection: close%s", CRLF, CRLF, CRLF, CRLF2 ) ;
       return in ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__SKIP2PM, "_restAdaptor::_skipToParameter" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__SKIP2PM, "_restAdaptoro::_skipToParameter" )
    INT32 _restAdaptoro::_skipToParameter( ossSocket &sock,
                                          CHAR *buffer,
                                          CHAR **temp,
@@ -834,7 +834,7 @@ error :
    goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__GETPSTBODY, "_restAdaptor::_getPostBody" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__GETPSTBODY, "_restAdaptoro::_getPostBody" )
    INT32 _restAdaptoro::_getPostBody( ossSocket &sock,
                                      CHAR **buffer,
                                      CHAR **temp,
@@ -937,7 +937,7 @@ error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__GETPM ,"_restAdaptor::_getParameter" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__GETPM ,"_restAdaptoro::_getParameter" )
    INT32 _restAdaptoro::_getParameter( CHAR **temp,
                                       CHAR **parameter,
                                       INT32 operators )
@@ -1002,7 +1002,7 @@ error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__RUNCMD, "_restAdaptor::_runCommand" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__RUNCMD, "_restAdaptoro::_runCommand" )
    INT32 _restAdaptoro::_runCommand ( CHAR **ppReceiveBuffer,
                                      INT32 *receiveBufferSize,
                                      CHAR *pSring,
@@ -1124,7 +1124,7 @@ error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__SNAPCMD, "_restAdaptor::_snapshotCommand" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__SNAPCMD, "_restAdaptoro::_snapshotCommand" )
    INT32 _restAdaptoro::_snapshotCommand ( CHAR **ppReceiveBuffer,
                                           INT32 *receiveBufferSize )
    {
@@ -1146,7 +1146,7 @@ error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__CRTCMD, "_restAdaptor::_createCommand" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__CRTCMD, "_restAdaptoro::_createCommand" )
    INT32 _restAdaptoro::_createCommand ( ossSocket &sock,
                                         CHAR **ppReceiveBuffer,
                                         INT32 *receiveBufferSize,
@@ -1350,7 +1350,7 @@ index:{key:%s,name:\"%s\",unique:false}}",
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__DROPCMD, "_restAdaptor::_dropCommand" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__DROPCMD, "_restAdaptoro::_dropCommand" )
    INT32 _restAdaptoro::_dropCommand ( ossSocket &sock,
                                       CHAR **ppReceiveBuffer,
                                       INT32 *receiveBufferSize,
@@ -1510,7 +1510,7 @@ index:{\"\":\"%s\"}}",
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__SNCMD, "_restAdaptor::_sessionCommand" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__SNCMD, "_restAdaptoro::_sessionCommand" )
    INT32 _restAdaptoro::_sessionCommand ( CHAR **ppReceiveBuffer,
                                          INT32 *receiveBufferSize,
                                          CHAR *pParameterBuf )
@@ -1588,7 +1588,7 @@ index:{\"\":\"%s\"}}",
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__CONTXCMD, "_restAdaptor::_contextCommand" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__CONTXCMD, "_restAdaptoro::_contextCommand" )
    INT32 _restAdaptoro::_contextCommand ( CHAR **ppReceiveBuffer,
                                          INT32 *receiveBufferSize,
                                          CHAR *pParameterBuf )
@@ -1666,7 +1666,7 @@ index:{\"\":\"%s\"}}",
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__QCMD, "_restAdaptor::_queryCommand" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__QCMD, "_restAdaptoro::_queryCommand" )
    INT32 _restAdaptoro::_queryCommand ( ossSocket &sock,
                                        CHAR **ppReceiveBuffer,
                                        INT32 *receiveBufferSize,
@@ -1921,7 +1921,7 @@ index:{\"\":\"%s\"}}",
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__UPCMD, "_restAdaptor::_updateCommand" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__UPCMD, "_restAdaptoro::_updateCommand" )
    INT32 _restAdaptoro::_updateCommand ( ossSocket &sock,
                                         CHAR **ppReceiveBuffer,
                                         INT32 *receiveBufferSize,
@@ -2111,7 +2111,7 @@ index:{\"\":\"%s\"}}",
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__INSCMD, "_restAdaptor::_insertCommand" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__INSCMD, "_restAdaptoro::_insertCommand" )
    INT32 _restAdaptoro::_insertCommand ( ossSocket &sock,
                                         CHAR **ppReceiveBuffer,
                                         INT32 *receiveBufferSize,
@@ -2234,7 +2234,7 @@ index:{\"\":\"%s\"}}",
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__DELCMD, "_restAdaptor::_deleteCommand" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__DELCMD, "_restAdaptoro::_deleteCommand" )
    INT32 _restAdaptoro::_deleteCommand ( ossSocket &sock,
                                         CHAR **ppReceiveBuffer,
                                         INT32 *receiveBufferSize,
@@ -2385,7 +2385,7 @@ index:{\"\":\"%s\"}}",
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__CNTCMD, "_restAdaptor::_countCommand" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__CNTCMD, "_restAdaptoro::_countCommand" )
    INT32 _restAdaptoro::_countCommand ( ossSocket &sock,
                                        CHAR **ppReceiveBuffer,
                                        INT32 *receiveBufferSize,
@@ -2480,7 +2480,7 @@ index:{\"\":\"%s\"}}",
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__DFCMD, "_restAdaptor::_defaultCommand" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__DFCMD, "_restAdaptoro::_defaultCommand" )
    INT32 _restAdaptoro::_defaultCommand ( CHAR **ppReceiveBuffer,
                                          INT32 *receiveBufferSize,
                                          CHAR *csFullName,
@@ -2601,7 +2601,7 @@ index:{\"\":\"%s\"}}",
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__STRRLC, "_restAdaptor::_strReplace" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTADP__STRRLC, "_restAdaptoro::_strReplace" )
    INT32 _restAdaptoro::_strReplace ( CHAR *pStr )
    {
       PD_TRACE_ENTRY ( SDB__RESTADP__STRRLC );

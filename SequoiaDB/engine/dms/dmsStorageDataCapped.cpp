@@ -1060,7 +1060,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__RECYCLEEXTENT, "_dmsStorageDataCapped::_recycleExtent" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__RECYCLEEXTENT, "_dmsStorageDataCapped::_recycleOneExtent" )
    INT32 _dmsStorageDataCapped::_recycleOneExtent( dmsMBContext *context )
    {
       // Extent will be recycled when the size or record number threshold is hit

@@ -980,7 +980,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH__SETSCANNODE, "_optExplainPath::_setScanNode" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTEXPSCANPATH__SETSCANNODE, "_optExplainScanPath::_setScanNode" )
    INT32 _optExplainScanPath::_setScanNode ( optPlanNode * pNode )
    {
       INT32 rc = SDB_OK ;

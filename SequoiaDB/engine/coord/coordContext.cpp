@@ -1491,7 +1491,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CTXCOORDEXP__PARSELOCFILTER, "_rtnContextCoordExplain::_parseLocationFilter" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CTXCOORDEXP__PARSELOCFILTER, "_rtnContextCoordExplain::_parseLocationOption" )
    INT32 _rtnContextCoordExplain::_parseLocationOption ( const BSONObj & explainOptions,
                                                          BOOLEAN & hasOption )
    {

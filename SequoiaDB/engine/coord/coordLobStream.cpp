@@ -121,7 +121,7 @@ namespace engine
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_UPDATECATAINFO, "_coordLobStream::_openSubStreams" )
+   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_UPDATECATAINFO, "_coordLobStream::_updateCataInfo" )
    INT32 _coordLobStream::_updateCataInfo( BOOLEAN refresh,
                                            _pmdEDUCB *cb )
    {
@@ -1530,7 +1530,7 @@ namespace engine
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_CLOSESUBSTREAMWITHEXCEP, "_coordLobStream::__closeSubStreamsWithException" )
+   //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_CLOSESUBSTREAMWITHEXCEP, "_coordLobStream::_closeSubStreamsWithException" )
    INT32 _coordLobStream::_closeSubStreamsWithException( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;

@@ -386,7 +386,7 @@ namespace engine
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( COORD_CMDOPONGROUP_OPON1NODE, "_coordCMDOpOnGroup::_opOnNodes" )
+   // PD_TRACE_DECLARE_FUNCTION( COORD_CMDOPONGROUP_OPON1NODE, "_coordCMDOpOnGroup::_opOnOneNode" )
    INT32 _coordCMDOpOnGroup::_opOnOneNode ( const vector<INT32> &opList,
                                             string hostName,
                                             string svcName,

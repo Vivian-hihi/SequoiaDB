@@ -972,7 +972,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CTXMAINCLEXP__PARSELOCFILTER, "_rtnContextMainCLExplain::_parseLocationFilter" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CTXMAINCLEXP__PARSELOCFILTER, "_rtnContextMainCLExplain::_parseLocationOption" )
    INT32 _rtnContextMainCLExplain::_parseLocationOption ( const BSONObj & explainOptions,
                                                           BOOLEAN & hasOption )
    {

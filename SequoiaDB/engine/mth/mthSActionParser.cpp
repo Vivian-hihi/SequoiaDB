@@ -90,7 +90,7 @@ namespace engine
       return &PARSER ;
    }
 
-   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSACTIONPARSER_GETACTION, "_mthSActionParser::getAction" )
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSACTIONPARSER_GETACTION, "_mthSActionParser::parse" )
    INT32 _mthSActionParser::parse( const bson::BSONElement &e,
                                    _mthSAction &action ) const
    {

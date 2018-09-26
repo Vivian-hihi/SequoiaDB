@@ -1598,7 +1598,7 @@ namespace engine
       return res ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN_MARKINVALID, "_optParamAccessPlan::markMainCLInvalid" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTMAINCLACPLAN_MARKINVALID, "_optMainCLAccessPlan::markMainCLInvalid" )
    INT32 _optMainCLAccessPlan::markMainCLInvalid ( dmsCachedPlanMgr *pCachedPlanMgr,
                                                    dmsMBContext *mbContext,
                                                    BOOLEAN markInvalid )

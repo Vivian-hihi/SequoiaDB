@@ -208,7 +208,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER_BUILD2, "_qgmBuilder::build2" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER_BUILD2, "_qgmBuilder::build" )
    INT32 _qgmBuilder::build( _qgmOptiTreeNode *logicalTree,
                              _qgmPlan *&physicalTree )
    {

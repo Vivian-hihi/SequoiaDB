@@ -846,7 +846,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDELCSCTX, "_rtnDelContextForCollectionSpace" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDELCSCTX, "rtnDelContextForCollectionSpace" )
    void rtnDelContextForCollectionSpace ( const CHAR *pCollectionSpace,
                                           _pmdEDUCB *cb )
    {

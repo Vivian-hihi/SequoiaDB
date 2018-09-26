@@ -95,7 +95,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPARAMTABLE_ADDCONST2, "_qgmParamTable::addConst2" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPARAMTABLE_ADDCONST2, "_qgmParamTable::addConst" )
    INT32 _qgmParamTable::addConst( const BSONObj &obj,
                                    const BSONElement *&out )
    {

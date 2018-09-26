@@ -119,7 +119,7 @@ namespace engine
       _processors.push_back( processor ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTBASE_APPENDPROCESSORS, "_rtnExtContextBase::appendProcessors" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTBASE_APPENDPROCESSORS, "_rtnExtContextBase::_appendProcessors" )
    void _rtnExtContextBase::_appendProcessors( const vector< rtnExtDataProcessor * >& processorVec )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTCONTEXTBASE_APPENDPROCESSORS ) ;
@@ -238,7 +238,7 @@ namespace engine
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAOPRCTX_DONE, "_rtnExtDataOprCtx::done" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAOPRCTX_DONE, "_rtnExtDataOprCtx::_onDone" )
    INT32 _rtnExtDataOprCtx::_onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
@@ -315,7 +315,7 @@ namespace engine
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDELETECTX_OPEN, "_rtnExtInsertCtx::open" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDELETECTX_OPEN, "_rtnExtDeleteCtx::open" )
    INT32 _rtnExtDeleteCtx::open( rtnExtDataProcessorMgr *processorMgr,
                                  const CHAR *extName, const BSONObj &object,
                                  pmdEDUCB *cb, SDB_DPSCB *dpscb )
@@ -518,7 +518,7 @@ namespace engine
       }
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDROPCLCTX_OPEN, "_rtnExtDropCLCtx::OPEN")
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDROPCLCTX_OPEN, "_rtnExtDropCLCtx::open")
    INT32 _rtnExtDropCLCtx::open( rtnExtDataProcessorMgr *processorMgr,
                                  const CHAR *csName, const CHAR *clName,
                                  pmdEDUCB *cb, SDB_DPSCB *dpscb )
@@ -754,7 +754,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTTRUNCATECTX_DONE, "_rtnExtTruncateCtx::done" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTTRUNCATECTX_DONE, "_rtnExtTruncateCtx::_onDone" )
    INT32 _rtnExtTruncateCtx::_onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
@@ -784,7 +784,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTTRUNCATECTX_ABORT, "_rtnExtTruncateCtx::abort" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTTRUNCATECTX_ABORT, "_rtnExtTruncateCtx::_onAbort" )
    INT32 _rtnExtTruncateCtx::_onAbort( pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTTRUNCATECTX_ABORT ) ;

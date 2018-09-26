@@ -755,7 +755,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_CHECK, "_rtnExtDataHandler::check" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_CHECK, "_rtnExtDataHandler::_check" )
    INT32 _rtnExtDataHandler::_check( DMS_EXTOPR_TYPE type,
                                      const CHAR *csName,
                                      const CHAR *clName,
@@ -812,7 +812,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__PREPARECTX, "_rtnExtDataHandler::_prepareCtx" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__PREPARECTX, "_rtnExtDataHandler::_getContext" )
    INT32 _rtnExtDataHandler::_getContext( DMS_EXTOPR_TYPE type,
                                           rtnExtContextBase *&ctx,
                                           pmdEDUCB *cb )

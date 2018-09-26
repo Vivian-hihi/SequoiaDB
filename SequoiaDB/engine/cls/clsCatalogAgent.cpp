@@ -853,7 +853,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_FINDGPID2, "_clsCatalogSet::findGroupID2" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_FINDGPID2, "_clsCatalogSet::findGroupID" )
    INT32 _clsCatalogSet::findGroupID( const bson::OID &oid,
                                       UINT32 sequence,
                                       UINT32 &groupID )

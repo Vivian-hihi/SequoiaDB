@@ -775,7 +775,7 @@ namespace engine
    }
 
    // The caller must make sure id has the correct serviceID
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_UPDATEROUTEID, "sdbCatalogueCB::updateRouteID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_UPDATEROUTEID, "sdbCatalogueCB::onRegistered" )
    void sdbCatalogueCB::onRegistered ( const MsgRouteID &nodeID )
    {
       INT32 rc = SDB_OK ;

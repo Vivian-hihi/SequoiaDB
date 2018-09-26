@@ -148,7 +148,7 @@ namespace engine
       return obj ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREGASSIT_EXTRACTRES, "_clsRegAssit::extractRegRes" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREGASSIT_EXTRACTRES, "_clsRegAssit::extractResponseMsg" )
    INT32 _clsRegAssit::extractResponseMsg ( MsgHeader *pMsg )
    {
       PD_TRACE_ENTRY ( SDB__CLSREGASSIT_EXTRACTRES );

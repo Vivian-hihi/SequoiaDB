@@ -611,7 +611,7 @@ namespace engine
       PD_TRACE_EXIT ( PMD_SESSMGR ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_DESC, " _pmdAsycSessionMgr::~_pmdAsycSessionMgr" )
+   // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_DESC, "_pmdAsycSessionMgr::~_pmdAsycSessionMgr" )
    _pmdAsycSessionMgr::~_pmdAsycSessionMgr()
    {
       PD_TRACE_ENTRY ( PMD_SESSMGR_DESC ) ;
