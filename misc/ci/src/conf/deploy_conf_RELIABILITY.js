@@ -23,19 +23,19 @@ if( typeof( diagLevel ) === "undefined" )
 
 var cataConf  = { diaglevel:diagLevel,
                   sharingbreak:30000,
-                  diagnum:40,
+                  diagnum:30,
                   logfilenum:40,
                   diagpath:'/opt/sequoiadb/database/cata/[svcname]/diaglog',
                   transactionon:true
                 };
 var coordConf = { diaglevel:diagLevel,
-                  diagnum:40,
+                  diagnum:30,
                   logfilenum:40,
                   diagpath:'/opt/sequoiadb/database/coord/[svcname]/diaglog'
                 };
 var dataConf  = { diaglevel:diagLevel,
                   sharingbreak:30000,
-                  diagnum:40,
+                  diagnum:30,
                   logfilenum:40,
                   diagpath:'/opt/sequoiadb/database/data/[svcname]/diaglog'
                 };
