@@ -4,35 +4,37 @@
                      2018-09-18 csq  Init
 ***************************************************************************** */
 
-try{
-   var db = new Sdb(COORDHOSTNAME, COORDSVCNAME) ;
-}catch(e)
+function main()
 {
-   println("can't connect to db");
-   throw e;
-}
-
-if (commGetGroupsNum(db)>=2)
-{
+   try{
+      var db = new Sdb(COORDHOSTNAME, COORDSVCNAME) ;
+   }catch(e)
+   {
+      throw buildException("connect db fail", e, "connect", "success", e);
+   }
+   if (commIsStandalone(db))
+   {
+      println("skip standalone environment");
+      return ;
+   }
+                                               	
+   if (2 > commGetGroupsNum(db))
+   {
+      println("group less than 2");
+      return ;
+   }
+   
    try{
       commDropCL( db, COMMCSNAME+"15084", COMMCLNAME+"15084", true, true,
                   "drop cl in the beginning" ) ;
    }catch( e ){}
 
    //create CL
-   try{
-      var groups = commGetGroups(db);
-      var srcGroupName = groups[0][0].GroupName;
-      var destGroupName = groups[1][0].GroupName;
-      var varCS = commCreateCS( db, COMMCSNAME+"15084", true, "create CS" );
-      var varCL = varCS.createCL(COMMCLNAME+"15084",{ShardingKey:{a:1},ShardingType:"hash",Group:srcGroupName});
-      println("create CL finished");
-   }catch(e)
-   {
-      println("can't create CL:" + COMMCLNAME+"15084" + " rc="+e);
-      throw e;
-
-   }
+   var groups = commGetGroups(db);
+   var srcGroupName = groups[0][0].GroupName;
+   var destGroupName = groups[1][0].GroupName;
+   var varCS = commCreateCS( db, COMMCSNAME+"15084", true, "create CS" );
+   var varCL = varCS.createCL(COMMCLNAME+"15084",{ShardingKey:{a:1},ShardingType:"hash",Group:srcGroupName});
 
    //insert data
    try{
@@ -41,24 +43,23 @@ if (commGetGroupsNum(db)>=2)
       varCL.insert({a:1,b:0,c:0});
    }catch(e)
    {
-      println("insert data fail! rc="+e);
-      throw e;
+      throw buildException("insert datas fail", e, "insert", "success", e);
    }
-   println("insert data finished");
 
    //no index
    //select * from ... where a=1 or b=10;
    try{
       var rc = varCL.find({"$or":[{"a":1},{"b":1}]}).toArray();
-      if (rc.length !== 2)
-      {
-         throw "find result not ok";
-      }
+      var expFindResult = [{a:0, b:1, c:0},{a:1,b:0,c:0}];
+      heckRec(cur, expFindResult);
    }catch(e)
    {
-      throw e;
+      throw buildException("find datas fail", e, "find", "success", e);
    }
 }
+
+main();
+
 
 
 
