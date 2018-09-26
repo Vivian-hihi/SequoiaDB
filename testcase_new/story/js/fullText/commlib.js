@@ -288,7 +288,7 @@ function isIndexFromESExist(elasticSearchIndexName)
    var str="curl -H " + HEADER + " -XGET " + HTTP + "/" + elasticSearchIndexName + "' 2>/dev/null";
  
 	//the longest waiting time is 60S
-	var isExist = true;
+	var isExist = false;
    var timeout = 60;
    var doTimes = 0;
    
@@ -300,7 +300,7 @@ function isIndexFromESExist(elasticSearchIndexName)
          //get json
          var json = eval("(" + info + ")");
          var error = json["error"];
-         if(error !== undefined)  { isExist = false };
+         if(typeof(error) == "undefined")  { isExist = true; }	//without error	
       }
       catch(e)
       {
