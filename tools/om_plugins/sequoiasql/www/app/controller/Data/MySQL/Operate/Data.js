@@ -1301,7 +1301,7 @@
    //sql语句输入框
    sacApp.controllerProvider.register( 'Data.MySQL.Data.InputBox.Ctrl', function( $scope, SdbSwap, SdbSignal ){
       
-      $scope.SqlCommand = sprintf( 'SELECT * FROM ? LIMIT 30', SdbSwap.tbName ) ;
+      $scope.SqlCommand = sprintf( 'SELECT * FROM ?', SdbSwap.tbName ) ;
       
       $scope.ExecQuery = function(){
          if( SdbSignal.commit( 'getTableLength' )[0] == 0 )
