@@ -124,7 +124,8 @@ testFiles = [
    [ "./alter/alterdomain_15171.cpp" ],
    [ "./alter/altercs_15173.cpp" ],
    [ "./alter/altercl_15174.cpp" ],
-   [ "./datatype/timestamptest_15861.cpp"]
+   [ "./datatype/timestamptest_15861.cpp"],
+   [ "./paraVerify/snapshotTest15759.cpp"]
 ]
 
 def getFileName( filePath ):
