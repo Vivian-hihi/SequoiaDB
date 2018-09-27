@@ -1209,6 +1209,7 @@ public class DBCollection {
      *             is null
      * @return DBCursor of indexes
      * @throws BaseException If error happens.
+     * @deprecated use "getIndexInfo" or "getIndexes" API instead.
      */
     public DBCursor getIndex(String name) throws BaseException {
         if (name == null) {
@@ -1235,6 +1236,68 @@ public class DBCollection {
         }
         sequoiadb.upsertCache(collectionFullName);
         return new DBCursor(response, sequoiadb);
+    }
+
+    /**
+     * Get the information of specified index in current collection.
+     *
+     * @param name The index name.
+     * @return The information of the specified index.
+     * @throws BaseException If error happens or the specified index does not exist.
+     */
+    public BSONObject getIndexInfo(String name) throws BaseException {
+        BSONObject retObj ;
+        if (name == null || name.isEmpty()) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "index name can not be null or empty");
+        }
+
+        BSONObject condition = new BasicBSONObject();
+        condition.put(SdbConstants.IXM_INDEXDEF + "." + SdbConstants.IXM_NAME, name);
+
+        BSONObject obj = new BasicBSONObject();
+        obj.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
+
+        AdminRequest request = new AdminRequest(AdminCommand.GET_INDEXES, condition, obj);
+        SdbReply response = sequoiadb.requestAndResponse(request);
+        if (response.getFlag() != 0) {
+            sequoiadb.throwIfError(response);
+        }
+        sequoiadb.upsertCache(collectionFullName);
+        DBCursor cursor = new DBCursor(response, sequoiadb);
+        try {
+            if (cursor.hasNext()) {
+                retObj = cursor.getNext();
+                return retObj;
+            } else {
+                throw new BaseException(SDBError.SDB_IXM_NOTEXIST,
+                        "the specified index[" + name + "] does not exist");
+            }
+        } finally {
+            cursor.close();
+        }
+    }
+
+    /**
+     * Test the specified index exist or not.
+     *
+     * @param name The index name.
+     * @return True for exist while false for not exist..
+     */
+    public boolean isIndexExist(String name) {
+        if (name == null || name.isEmpty()) {
+            return false;
+        }
+        BSONObject indexObj;
+        try {
+            indexObj = getIndexInfo(name);
+        } catch (Exception e) {
+            return false;
+        }
+        if (indexObj != null)
+        {
+            return true;
+        }
+        return false;
     }
 
     /**
