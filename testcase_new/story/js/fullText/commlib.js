@@ -409,6 +409,8 @@ function checkConsistency(csName, clName, checkTimes)
                                           e, e);  
    }   
    
+}
+   
 /******************************************************************************
 *@Description : get UniqueID
 @input:         clFullName
@@ -422,5 +424,4 @@ function getUniqueID( clFullName )
 	    UniqueID = cursor.current().toObj()["UniqueID"];
 	}
 	return UniqueID;
-}
 }
