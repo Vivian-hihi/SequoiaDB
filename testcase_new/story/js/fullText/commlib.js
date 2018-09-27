@@ -5,7 +5,7 @@
                      
 ****************************************************/
 //var ELASTICSEARCH_HOSTNAME = COORDHOSTNAME;
-var ELASTICSEARCH_HOSTNAME = "192.168.31.42";
+var ELASTICSEARCH_HOSTNAME = "192.168.31.57";
 var ELASTICSEARCH_SVCNAME = 9200;
 var cmd = new Cmd();     
 var HEADER = "'Content-Type: application/json'";
@@ -43,6 +43,7 @@ function findRecordsFromES(elasticSearchIndexName, queryCond){
          var obj = array[i]["_source"];
          records.push(obj);
       }
+	  println("findRecordsFromES:"+JSON.stringify(records));
    }
    catch(e)
    {
@@ -161,7 +162,7 @@ function checkAllRecordsSyncToESByCount(elasticSearchIndexName, expectCount)
    {
       var actCount = getTotalCountFromES(elasticSearchIndexName);
       // if expect count < act count, exit
-      if(actCount > expectCount) 
+      if( actCount > expectCount ) 
       {
          println("check sync to ES fail: actCount: " + actCount + ", expectCount: " + expectCount);
          break;
@@ -407,4 +408,19 @@ function checkConsistency(csName, clName, checkTimes)
       throw buildException("checkConsistency", "check consistency fail", "fail",
                                           e, e);  
    }   
+   
+/******************************************************************************
+*@Description : get UniqueID
+@input:         clFullName
+******************************************************************************/  
+function getUniqueID( clFullName )
+{
+	var cursor = db.snapshot( 8, { Name:clFullName } );
+	var UniqueID = 0;
+	while( cursor.next() )
+	{
+	    UniqueID = cursor.current().toObj()["UniqueID"];
+	}
+	return UniqueID;
+}
 }
