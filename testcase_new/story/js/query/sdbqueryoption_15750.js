@@ -19,7 +19,6 @@ function main()
    
    try{
       commDropCS( db, COMMCSNAME+"15750", true, "drop CS "+COMMCSNAME+"15750" );
-      db.removeProcedure("test15750");
    }
    catch( e )
    {
@@ -40,6 +39,11 @@ function test15750( varCL )
 
 function test15751( varCL )
 {
+   if (commIsStandalone(db))
+   {
+      println("skip standalone environment");
+      return ;
+   }
    db.createProcedure(function test15750(){ return new SdbQueryOption().cond({b:{$lt:5}}).sel({_id:{$include:0}}).sort({b:-1}).limit(7).skip(2).update({$inc:{c:1}},true,{ KeepShardingKey: true } ); })
    var a = db.eval( 'test15750()' );
    var cur = varCL.find( a );
@@ -48,6 +52,13 @@ function test15751( varCL )
                        {"a": 0,"b": 0,"c": 1}
                        ];
    checkRec(cur, expFindResult);
+   try{
+      db.removeProcedure("test15750");
+   }
+   catch( e )
+   {
+      throw buildException("teardown test15751 fail", e, "clear", "success", e);
+   }
 }
 
 function insertRecord( varCL )
