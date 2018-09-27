@@ -49,9 +49,9 @@ function main()
    //no index
    //select * from ... where a=1 or b=10;
    try{
-      var rc = varCL.find({"$or":[{"a":1},{"b":1}]}).toArray();
+      var cur = varCL.find({"$or":[{"a":1},{"b":1}]});
       var expFindResult = [{a:0, b:1, c:0},{a:1,b:0,c:0}];
-      heckRec(cur, expFindResult);
+      checkRec(cur, expFindResult);
    }catch(e)
    {
       throw buildException("find datas fail", e, "find", "success", e);
