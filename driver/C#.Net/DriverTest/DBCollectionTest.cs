@@ -1762,6 +1762,37 @@ namespace DriverTest
         }
 
         [TestMethod]
+        public void GetEmptyIndexTest()
+        {
+            String emptyIndexName = "aaaaaaaaa";
+            BsonDocument record;
+            // case 1:
+            DBCursor cursor;
+            cursor = coll.GetIndex(emptyIndexName);
+            while((record = cursor.Next())!= null)
+            {
+                Console.Out.WriteLine("index is: " + record);
+            }
+
+            // case 2:
+            Assert.IsFalse(coll.IsIndexExist(emptyIndexName));
+            try {
+                coll.GetIndexInfo(emptyIndexName);
+                Assert.Fail();
+            } catch (BaseException e) {
+                Assert.AreEqual("SDB_IXM_NOTEXIST", e.ErrorType);
+            }
+
+            // case 3:
+            String idIdxName = "$id";
+            Assert.IsTrue(coll.IsIndexExist(idIdxName));
+            BsonDocument indexObj = coll.GetIndexInfo(idIdxName);
+            Assert. IsNotNull(indexObj);
+            
+            Console.Out.WriteLine("id index is: " + indexObj.ToString());
+        }
+
+        [TestMethod]
         public void BsonTimestampIncTest()
         {
             BsonTimestamp ts1 = new BsonTimestamp(10000, 1000000);

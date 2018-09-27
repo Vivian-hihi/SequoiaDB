@@ -969,6 +969,7 @@ namespace SequoiaDB
          *  \return A index, if not exist then return null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
+         *  \deprecated Use "GetIndexes" and "GetIndexInfo" instead.
          */
         public DBCursor GetIndex(string name)
         {
@@ -995,6 +996,84 @@ namespace SequoiaDB
             // upsert cache
             sdb.UpsertCache(collectionFullName);
             return new DBCursor(rtn, this);
+        }
+
+        /** \fn BsonDocument GetIndexInfo(string name)
+         *  \brief Get the information of index in current collection.
+         *  \param name The index name.
+         *  \return The index information.
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public BsonDocument GetIndexInfo(string name)
+        {
+            if (name == null || name == "")
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.GET_INXES;
+            BsonDocument dummyObj = new BsonDocument();
+            BsonDocument obj = new BsonDocument();
+            BsonDocument conndition = new BsonDocument();
+            obj.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+            conndition.Add(SequoiadbConstants.IXM_INDEXDEF + "." + SequoiadbConstants.IXM_NAME,
+                    name);
+
+            SDBMessage rtn = AdminCommand(commandString, conndition, dummyObj, dummyObj, obj, -1, -1, 0);
+
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags, rtn.ErrorObject);
+            }
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
+            BsonDocument indexObj;
+            DBCursor cursor = new DBCursor(rtn, this);
+            try
+            {
+                indexObj = cursor.Next();
+                if (indexObj != null)
+                {
+                    return indexObj;
+                }
+                else
+                {
+                    throw new BaseException("SDB_IXM_NOTEXIST");
+                }
+            }
+            finally 
+            {
+                cursor.Close();
+            }
+        }
+
+        /** \fn bool IsIndexExist(string name)
+         *  \brief Test the specified index exist or not.
+         *  \param name The index name.
+         *  \return True for exist while false for not.
+         */
+        public bool IsIndexExist(string name)
+        {
+            if (name == null || name == "")
+                return false;
+            BsonDocument indexObj;
+            try
+            {
+                indexObj = GetIndexInfo(name);
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+            if (indexObj == null)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
 
         /** \fn void CreateIndex(string name, BsonDocument key, bool isUnique, bool isEnforced)
