@@ -425,3 +425,24 @@ function getUniqueID( clFullName )
 	}
 	return UniqueID;
 }
+
+/******************************************************************************
+*@Description : get textFullSearch index name in ES 
+@input:         clFullName, dbIndexName
+@Date : 2018-09-28
+@Author: zhaoyu
+******************************************************************************/  
+function getESTextIndexName( clFullName, dbIndexName)
+{
+   var ESIndexNames = new Array();
+   var csName = clFullName.split(".")[0];
+   var clName = clFullName.split(".")[1];
+   
+   var groupNames = commGetCLGroups( db, clName );
+   for(var i=0; i<groupNames.length(); i++)
+   {
+      var ESIndexName = db.getCS(csName).getCL(clName).getIndex(dbIndexName).toObj().ExtDataName.toLowerCase() + "_" + groupNames[i];
+      ESIndexNames.push(ESIndexName);
+   }
+   return ESIndexNames;
+}
