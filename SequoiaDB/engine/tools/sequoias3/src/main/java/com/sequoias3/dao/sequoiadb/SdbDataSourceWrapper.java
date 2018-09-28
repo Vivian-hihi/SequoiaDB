@@ -85,7 +85,7 @@ public class SdbDataSourceWrapper {
     public static void createCS(Sequoiadb sdb, String csName, BSONObject options)
             throws S3ServerException  {
         try {
-            logger.info("creating cs:csName=" + csName + ",options=" + options.toString());
+            logger.info("creating cs:csName=" + csName);
             sdb.createCollectionSpace(csName, options);
         }
         catch (BaseException e) {
