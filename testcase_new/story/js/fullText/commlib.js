@@ -11,20 +11,18 @@ var HTTP = "'http://" + ESHOSTNAME + ":" + ESSVCNAME;
 /******************************************************************************
 *@Description : do some operations related to ES, such as:
                 do queries by rest
-					 check index sync to ES
+                check index sync to ES
+@usage:         var es = new ESOperator();
+                var esRecords = es.findFromES( "esIndexName", querycond );
+                es.checkFullSyncToES("esIndexName", expectCount, cappedCL)
 ******************************************************************************/
-function commElasticSearch()
+function ESOperator()
 {
    /*****************************************************************
    * run CURL command, to get return records from elasticsearch by rest
    *****************************************************************/
    this.findFromES = function (esIndexName, queryCond)
    {
-      if(!isExistIndexInES(esIndexName)) 
-      {
-         throw buildException("isExistIndexInES()",e," index name exsit", "exsit","not exsit");
-      }
-
       var records = new Array();
       // get curl command
       var str = "curl -H " + HEADER + " -XGET " + HTTP + "/" + esIndexName 
@@ -56,7 +54,7 @@ function commElasticSearch()
    /*****************************************************************
    * run CURL command, to get count from elasticsearch by rest
    *****************************************************************/
-   this.getTotalCountFromES = function (esIndexName)
+   this.countFromES = function (esIndexName)
    {
       var count = 0;
       // get curl command
@@ -74,7 +72,7 @@ function commElasticSearch()
       }
       catch(e)
       {
-         throw buildException("getTotalCountFromES()", e, str, "success","fail");
+         throw buildException("countFromES()", e, str, "success","fail");
       }
 
       return count;
@@ -83,9 +81,9 @@ function commElasticSearch()
    /*****************************************************************
    * run CURL command, to get SDBCOMMITID from elasticsearch by rest  
    *****************************************************************/
-   this.getSdbCommitIDFromES = function getSdbCommitIDFromES(esIndexName)
+   this.getCommitIDFromES = function getCommitIDFromES(esIndexName)
    { 
-      var sdbCommitID = -1;
+      var commitID = -1;
 	
       var querySdbCommitID = "{\"query\" : {\"match\" : {\"_id\": \"SDBCOMMIT\"}}}";
       // get curl command
@@ -101,15 +99,15 @@ function commElasticSearch()
          var array = json["hits"]["hits"];
          if(array.length == 1)
          {  
-            sdbCommitID = array[0]["_source"]["_lid"];
+            commitID = array[0]["_source"]["_lid"];
          }
       }
       catch(e)
       {
-         throw buildException("getSdbCommitIDFromES()", e, str, "success","fail");
+         throw buildException("getCommitIDFromES()", e, str, "success","fail");
       }
 
-      return sdbCommitID; 
+      return commitID; 
    }
 
    /*****************************************************************
@@ -135,10 +133,11 @@ function commElasticSearch()
       var isSync = false;
       var timeout = 600;
       var doTimes = 0;
+      var interval = 1; //interval 1s
    
       while(true)
       {
-         var actCount = this.getTotalCountFromES(esIndexName);
+         var actCount = this.countFromES(esIndexName);
          // if expect count < act count, exit
          if(actCount > expectCount) 
          {
@@ -153,10 +152,10 @@ function commElasticSearch()
          //if expect count > act count, wait to expect count = act count
          if(!isSync)
          {
-            if(doTimes < timeout)
+            if(doTimes * interval < timeout)
             {
                doTimes+=1;
-               // interval 3s each time
+               // interval 1s each time
                sleep(1000);
             }
             else
@@ -181,23 +180,24 @@ function commElasticSearch()
       var isSync = false;
       var timeout = 600;
       var doTimes = 0;
+      var interval = 1; //interval 1s
    
-      var md = new commGetMetaData();
-      var lastLogicalID = md.getLastLogicalID(cappedCL);
+      var md = new DBOperator();
+      var lastLogicalID = md.getLastLID(cappedCL);
       while(true)
       {
-         var sdbCommitID = this.getSdbCommitIDFromES(esIndexName); 
-         if(sdbCommitID == lastLogicalID)
+         var commitID = this.getCommitIDFromES(esIndexName); 
+         if(commitID == lastLogicalID)
          {
             isSync = true;
          }
       
          if(!isSync)
          {
-            if(doTimes < timeout)
+            if(doTimes * interval < timeout)
             {
                doTimes+=1;
-               // interval 3s each time
+               // interval 1s each time
                sleep(1000);
             }
             else
@@ -225,6 +225,7 @@ function commElasticSearch()
       var isExist = false;
       var timeout = 300;
       var doTimes = 0;
+      var interval = 1; //interval 1s
    
       while(true)
       {
@@ -243,10 +244,10 @@ function commElasticSearch()
       
          if(!isExist)
          {
-            if(doTimes < timeout)
+            if(doTimes * interval < timeout)
             {
                doTimes+=1;
-               // interval 3s each time
+               // interval 1s each time
                sleep(1000);
             }
             else
@@ -265,11 +266,13 @@ function commElasticSearch()
 }
 
 /******************************************************************************
-*@Description : get some metadata, such as:
+*@Description : get db datas, such as:
                 get clname
-					 get query results
+                get query results
+@usage:         var db = new DBOperator();
+                var cappedCLName = db.getCappedCLName( dbcl, "textIndexName" );
 ******************************************************************************/
-function commGetMetaData()
+function DBOperator()
 {
    /*****************************************************************
    * get cappedcl name 
@@ -285,19 +288,17 @@ function commGetMetaData()
    /*****************************************************************
    * get es index name, rule: 
    * cappedCLName: SYS_uniqueId_textIndexName  
-   *esIndexName:  sys_uniqueId_textIndexName_clGroupName							  
+   * esIndexName:  sys_uniqueId_textIndexName_clGroupName							  
    *****************************************************************/
-   this.getESIndexName = function (db, clFullName, textIndexName)
+   this.getESIndexName = function (db, csName, clName, textIndexName)
    {
       // check cappedcl name is valid
-      var commCSName = clFullName.split(".")[0];
-      var commCLName = clFullName.split(".")[1];
-      var dbcl = db.getCS(commCSName).getCL(commCLName);
+      var dbcl = db.getCS(csName).getCL(clName);
       var cappedCLName = this.getCappedCLName(dbcl, textIndexName);
 	
       // get es index names
       var esIndexNames = new Array();
-      var clGroupNames = commGetCLGroups(db, clFullName);
+      var clGroupNames = commGetCLGroups(db, csName + "." + clName);
       for(var i in clGroupNames)
       {
          esIndexNames.push(cappedCLName.toLowerCase() + "_" + clGroupNames[i]);	
@@ -314,7 +315,7 @@ function commGetMetaData()
    * get last _id from cappedCL, in order to compare with ES's SDBCOMMITID 
    * and ensure that records are all sync to ES
    *****************************************************************/
-   this.getLastLogicalID = function (cappedCL)
+   this.getLastLID = function (cappedCL)
    {
       var lastLogicalID = -1;
       var sortConf = {"_id" : 1};
@@ -352,119 +353,118 @@ function commGetMetaData()
    }
 }
 
-/******************************************************************************
-*@Description : check results, such as:
-                check records
-					 check consistency
-******************************************************************************/
-function commCheckResult()
+/*****************************************************************
+@description:   check records if equals between cl and es       
+@input:         clRecords
+                esRecords 
+******************************************************************/
+function checkRecords(clRecords, esRecords)
 {
-   /*****************************************************************
-   * check records if equals between cl and es  
-   *****************************************************************/
-   this.checkRecords = function (clRecords, esRecords)
+   if(clRecords.length !== esRecords.length)
    {
-      if(clRecords.length !== esRecords.length)
-      {
-          throw buildException("checkRecords()", e, "check records length", clRecords.length, esRecords.length);
-      }
+      throw buildException("checkRecords()", e, "check records length", clRecords.length, esRecords.length);
+   }
+
+   // match nothing, check success
+   if(clRecords.length == 0)
+   {
+      println("check recoreds success!");
+      return;
+   }
 	
-      // match nothing, check success
-      if(clRecords.length == 0)
-      {
-          println("check recoreds success!");
-          return;
-       }
+   // if match something, get all keys in one object
+   var keys = new Array();
+   for(var key in clRecords[0])
+   {
+      keys.push(key);
+   }
 	
-      // if match something, get all keys in one object
-      var keys = new Array();
-      for(var key in clRecords[0])
-      {
-         keys.push(key);
-      }
+   // sort all keys of obj in clRecords and esRecords
+   for(var key in keys)
+   {
+      clRecords.sort(sortObjectInArray(key));
+      esRecords.sort(sortObjectInArray(key));
+   }
 	
-      // sort all keys between objs in clRecords and esRecords
+   // compare array  
+   for(var i = 0; i < clRecords.length; i++)
+   {
       for(var key in keys)
       {
-         clRecords.sort(sortObjectInArray(key));
-         esRecords.sort(sortObjectInArray(key));
-      }
-	
-      // compare array  
-      for(var i = 0; i < clRecords.length; i++)
-      {
-         for(var key in keys)
+         if(clRecords[i][key] != esRecords[i][key])
          {
-            if(clRecords[i][key] != esRecords[i][key])
-            {
-               throw buildException("checkRecords", "check record fail", "fail",
-                                       JSON.stringify(clRecords[i]), JSON.stringify(esRecords[i]));
-            }		
-         }
-      }
-	
-      println("check recoreds success!");
-   }
-	
-   /*****************************************************************
-   * sort object in array
-   * x: object1, y: object2
-   *****************************************************************/
-   function sortObjectInArray(key)
-   {
-      return function (x, y)
-      {
-         if(x && y && typeof x === 'object' && typeof x === 'object')
-         {
-            if(x[key] === y[key])  {  return 0;  }	
-            // value type equals
-            if(typeof x[key] === typeof y[key])  {  return x[key] - y[key]; }
-            // value type not equals
-            return typeof a - typeof b;   
-          }    
-         else
-         {
-            throw buildException("sortObjectInArray()", e, "sortObj", "success", "fail key");                                       
-         }	
-     
+            throw buildException("checkRecords", "check record fail", "fail",
+                        JSON.stringify(clRecords[i]), JSON.stringify(esRecords[i]));
+         }		
       }
    }
 	
-   /*****************************************************************
-   * check consistency of all nodes
-   *****************************************************************/
-   this.checkConsistency = function (csName, clName, checkTimes)
-   {
-      if ( typeof(checkTimes) == "undefined" )  {  checkTimes = 5;  }
+   println("check recoreds success!");
+}
 
-      var inspectBinFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin" ;
-      var inspectReportFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin.report" ;
-      var installPath = commGetInstallPath();    
-      var inspectCommand = installPath + "/bin/sdbinspect" + " -d " + COORDHOSTNAME + ":" + COORDSVCNAME + " -c " + csName + " -l " + clName + " -o " + inspectBinFile + " -t " + checkTimes; 
-      try 
-      {   
-         // exec sdbinspect 
-         cmd.run(inspectCommand) ;
-         var info = cmd.run("tail -n 1 " + inspectReportFile);
-         var actResult = info.split("\n")[0].split("\:")[1].trim();
-         var expectRusult = "exit with no records different";
-         // compare result
-         if(actResult == expectRusult)
-         {
-            println("check consistency success!") ;
-         }
-         else
-         {
-            println("check consistency fail, cl name: " + csName + "." + clName); 
-         }
-         // remove report files
-         cmd.run("rm -f " + inspectBinFile);
-         cmd.run("rm -f " + inspectReportFile);
-      }   
-      catch(e) 
-      { 
-         throw buildException("checkConsistency", "check consistency fail", "fail",
-                                          e, e);  
-      }   
+/*****************************************************************
+@description:   sort object in array       
+@input:         key
+                x: object1's key
+                y: object2's key					 
+******************************************************************/
+function sortObjectInArray(key)
+{
+   return function (x, y)
+   {
+      if(x && y && typeof x === 'object' && typeof x === 'object')
+      {
+         if(x[key] === y[key])  {  return 0;  }	
+         // value type equals
+         if(typeof x[key] === typeof y[key])  {  return x[key] - y[key]; }
+         // value type not equals
+         return typeof a - typeof b;   
+      }    
+      else
+      {
+         throw buildException("sortObjectInArray()", e, "sortObj", "success", "fail key");                                       
+      }	
+      
    }
+}
+
+/******************************************************************************
+*@Description : check consistency of all nodes
+@input:         csName
+                clName
+                checkTimes
+******************************************************************************/
+function checkConsistency(csName, clName, checkTimes)
+{
+   if ( typeof(checkTimes) == "undefined" )  {  checkTimes = 5;  }
+
+   var inspectBinFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin" ;
+   var inspectReportFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin.report" ;
+   var installPath = commGetInstallPath();    
+   var inspectCommand = installPath + "/bin/sdbinspect" + " -d " + COORDHOSTNAME + ":" + COORDSVCNAME + " -c " + csName + " -l " + clName + " -o " + inspectBinFile + " -t " + checkTimes; 
+   try 
+   {  
+      // exec sdbinspect 
+      cmd.run(inspectCommand) ;
+      var info = cmd.run("tail -n 1 " + inspectReportFile);
+      var actResult = info.split("\n")[0].split("\:")[1].trim();
+      var expectRusult = "exit with no records different";
+      // compare result
+      if(actResult == expectRusult)
+      {
+         println("check consistency success!") ;
+      }
+      else
+      {
+         println("check consistency fail, cl name: " + csName + "." + clName); 
+      }
+      // remove report files
+      cmd.run("rm -f " + inspectBinFile);
+      cmd.run("rm -f " + inspectReportFile);
+   }   
+   catch(e) 
+   { 
+      throw buildException("checkConsistency", "check consistency fail", "fail",
+                                          e, e);  
+   }   
 }
