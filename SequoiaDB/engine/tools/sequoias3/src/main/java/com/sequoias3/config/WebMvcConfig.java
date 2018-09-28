@@ -45,12 +45,12 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter {
         ObjectMapper mapper = converter.getObjectMapper();
         SimpleModule module = new SimpleModule();
         //module.addSerializer(Error.class, new ErrorSerializer());
-        module.addSerializer(Error.class, new ErrorSerializer());
+        //module.addSerializer(Error.class, new ErrorSerializer());
         mapper.registerModule(module);
 
         XmlMapper mapperXml = new XmlMapper();
         SimpleModule moduleXml = new SimpleModule();
-        moduleXml.addSerializer(Error.class, new ErrorSerializer());
+        //moduleXml.addSerializer(Error.class, new ErrorSerializer());
         mapperXml.registerModule(moduleXml);
 
         MappingJackson2XmlHttpMessageConverter converterXml = new MappingJackson2XmlHttpMessageConverter(mapperXml);

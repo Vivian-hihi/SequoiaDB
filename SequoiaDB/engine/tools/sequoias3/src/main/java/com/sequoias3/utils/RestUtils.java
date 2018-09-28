@@ -1,6 +1,7 @@
 package com.sequoias3.utils;
 
 import com.sequoias3.common.RestParamDefine;
+import com.sequoias3.core.Range;
 import com.sequoias3.core.User;
 import com.sequoias3.dao.UserDao;
 import com.sequoias3.exception.S3Error;
@@ -19,10 +20,10 @@ public class RestUtils {
 
     public User getOperatorByAuthorization(String authorization) throws S3ServerException {
         //       1.get access key id
-        String accessKeyId = "";
+        String accessKeyId = null;
         int beginIndex = authorization.indexOf(RestParamDefine.REST_CREDENTIAL);
-        if (beginIndex == -1) {
-            throw new S3ServerException(S3Error.INVALID_ACCESSKEYID, "Invalid accessKeyId. authorization = " + authorization);
+        if (-1 == beginIndex) {
+            throw new S3ServerException(S3Error.NO_CREDENTIALS, "no credentials. authorization = " + authorization);
         }
 
         int endIndex = authorization.indexOf(RestParamDefine.REST_DELIMITER, beginIndex);
@@ -35,11 +36,30 @@ public class RestUtils {
         //       2.check access key
         User user = userDao.getUserByAccessKeyID(accessKeyId);
         if (null == user) {
-            throw new S3ServerException(S3Error.INVALID_ACCESSKEYID, "Invalid accessKeyId. accessKeyId = " + accessKeyId);
+            throw new S3ServerException(S3Error.INVALID_ACCESSKEYID,
+                    "Invalid accessKeyId. accessKeyId = " + accessKeyId);
         }
 
         //       3.check signature
 
         return user;
     }
+
+    public String getObjectNameByURI(String url) throws S3ServerException {
+        int beginIndex = url.indexOf(RestParamDefine.REST_DELIMITER, 1);
+        if (beginIndex == -1) {
+            throw new S3ServerException(S3Error.OBJECT_INVALID_KEY, "Invalid key. url = " + url);
+        }
+
+        return url.substring(beginIndex+1);
+    }
+
+    public Range getRange(String rangeHeader){
+        try {
+            return new Range(rangeHeader);
+        }catch (S3ServerException e){
+            return null;
+        }
+    }
+
 }

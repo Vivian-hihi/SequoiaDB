@@ -8,6 +8,7 @@ import com.sequoias3.dao.UserDao;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.service.BucketService;
+import com.sequoias3.service.ObjectService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ import java.util.List;
 
 @Service
 public class BucketServiceImpl implements BucketService {
-    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(BucketServiceImpl.class);
 
     @Autowired
     BucketDao bucketDao;
@@ -27,6 +28,9 @@ public class BucketServiceImpl implements BucketService {
 
     @Autowired
     BucketConfig bucketConfig;
+
+    @Autowired
+    ObjectService objectService;
 
     @Override
     public void createBucket(int ownerID, String bucketName) throws S3ServerException {
@@ -68,12 +72,12 @@ public class BucketServiceImpl implements BucketService {
                 bucket.setBucketName(newBucketName);
                 bucket.setOwnerId(ownerID);
                 bucket.setTimeMillis(System.currentTimeMillis());
-                bucket.setVersioningStatus(DBParamDefine.DB_AUTO_VERSIONING_STATUS);
+                bucket.setVersioningStatus(DBParamDefine.DB_VERSIONING_STATUS_NULL);
                 bucket.setDelimiter(DBParamDefine.DB_AUTO_DELIMITER);
                 bucketDao.insertBucket(bucket);
                 return;
             }catch (S3ServerException e) {
-                logger.warn("Create user failed. bucketname="+bucketName, e);
+                logger.warn("Create bucket failed. bucketname="+bucketName, e);
                 if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex() && tryTime > 0) {
                     continue;
                 } else {
@@ -91,19 +95,11 @@ public class BucketServiceImpl implements BucketService {
         try {
             String deleteName = bucketName.toLowerCase();
 
-            //check bucket
-            Bucket result = bucketDao.getBucketByName(deleteName);
-            if (result == null){
-                throw new S3ServerException(S3Error.BUCKET_NOT_EXIST,
-                        "The specified bucket does not exist. bucket name="+bucketName);
-            }
-            if (result.getOwnerId() != ownerID){
-                throw new S3ServerException(S3Error.ACCESS_DENIED,
-                        "You are not owned the specified bucket. bucket="+bucketName+"ownerID+"+ownerID);
-            }
+            //get and check bucket
+            Bucket bucket = getBucket(ownerID, bucketName);
 
             //is bucket empty
-            if (!isBucketEmpty(result.getBucketId())){
+            if (!isBucketEmpty(bucket)){
                 throw new S3ServerException(S3Error.BUCKET_NOT_EMPTY,
                         "The bucket you tried to delete is not empty. bucket name="+bucketName);
             }
@@ -114,7 +110,7 @@ public class BucketServiceImpl implements BucketService {
             throw e;
         }catch (Exception e){
             throw new S3ServerException(S3Error.BUCKET_DELETE_FAILED,
-                    "delete bucket error bucket name = "+bucketName);
+                    "delete bucket error. bucket name = "+bucketName);
         }
     }
 
@@ -140,6 +136,22 @@ public class BucketServiceImpl implements BucketService {
         }
     }
 
+    @Override
+    public Bucket getBucket(int ownerID, String bucketName)
+            throws S3ServerException{
+        Bucket bucket = bucketDao.getBucketByName(bucketName.toLowerCase());
+        if (bucket == null){
+            throw new S3ServerException(S3Error.BUCKET_NOT_EXIST,
+                    "The specified bucket does not exist. bucket name="+bucketName);
+        }
+        if (bucket.getOwnerId() != ownerID){
+            throw new S3ServerException(S3Error.ACCESS_DENIED,
+                    "You are not owned the specified bucket. bucket="+bucketName+"ownerID+"+ownerID);
+        }
+
+        return bucket;
+    }
+
     private Boolean isValidBucketName(String bucketName){
         if (bucketName.length() < 3 || bucketName.length() > 63){
             return false;
@@ -147,8 +159,10 @@ public class BucketServiceImpl implements BucketService {
         return true;
     }
 
-    public Boolean isBucketEmpty(long bucketId)throws S3ServerException {
+    public Boolean isBucketEmpty(Bucket bucket)throws S3ServerException {
+        if (objectService.getObjectNumberByBucketId(bucket) > 0){
+            return false;
+        }
         return true;
     }
-
 }

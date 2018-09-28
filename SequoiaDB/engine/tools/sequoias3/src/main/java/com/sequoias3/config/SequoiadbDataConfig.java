@@ -2,7 +2,8 @@ package com.sequoias3.config;
 
 public class SequoiadbDataConfig {
     String csName;
-    String archiverate;
+    String csRate;
+    String clRate;
 
     public String getCsName() {
         return csName;
@@ -12,11 +13,19 @@ public class SequoiadbDataConfig {
         this.csName = csName;
     }
 
-    public String getArchiverate() {
-        return archiverate;
+    public String getCsRate() {
+        return csRate;
     }
 
-    public void setArchiverate(String archiverate) {
-        this.archiverate = archiverate;
+    public void setCsRate(String csRate) {
+        this.csRate = csRate;
+    }
+
+    public void setClRate(String clRate) {
+        this.clRate = clRate;
+    }
+
+    public String getClRate() {
+        return clRate;
     }
 }

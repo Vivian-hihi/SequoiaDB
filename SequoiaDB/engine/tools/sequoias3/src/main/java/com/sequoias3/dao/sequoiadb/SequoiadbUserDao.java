@@ -5,7 +5,9 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
+import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.config.SequoiadbConfig;
+import com.sequoias3.core.Owner;
 import com.sequoias3.core.User;
 import com.sequoias3.dao.DaoCollectionDefine;
 import com.sequoias3.dao.UserDao;
@@ -43,10 +45,10 @@ public class SequoiadbUserDao implements UserDao {
             newUser.put(User.JSON_KEY_SECRET_ACCESS_KEY, user.getSecretAccessKey());
 
             cl.insert(newUser);
-        }catch (BaseException e){
+        }catch (BaseException e) {
             if (e.getErrorType() == SDBError.SDB_IXM_DUP_KEY.name()) {
                 throw new S3ServerException(S3Error.DAO_DUPLICATE_KEY, "Duplicate key.");
-            } else {
+            }else{
                 throw e;
             }
         } catch (Exception e) {
@@ -92,7 +94,7 @@ public class SequoiadbUserDao implements UserDao {
             modifier.put(User.JSON_KEY_ACCESS_KEY_ID, accessKeyId);
             modifier.put(User.JSON_KEY_SECRET_ACCESS_KEY, secretAccessKey);
             BSONObject setModifier = new BasicBSONObject();
-            setModifier.put(DaoCollectionDefine.MODIFY_SET, modifier);
+            setModifier.put(DBParamDefine.MODIFY_SET, modifier);
 
             cl.update(matcher, setModifier, null);
         } catch (Exception e) {
@@ -152,6 +154,30 @@ public class SequoiadbUserDao implements UserDao {
     }
 
     @Override
+    public Owner getOwnerByUserID(int userId) throws S3ServerException{
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            DBCollection cl = cs.getCollection(DaoCollectionDefine.USER_LIST_COLLECTION);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(User.JSON_KEY_USERID, userId);
+            BSONObject queryResult = cl.queryOne(matcher, null, null, null, 0);
+            if (null == queryResult) {
+                return null;
+            }
+
+            return convertBsonToOwner(queryResult);
+        } catch (BaseException e) {
+            logger.error("getUserByAccessKeyID failed. errorMessage = " + e.getMessage(), e);
+            throw e;
+        } finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
+    @Override
     public int getMaxID() throws S3ServerException {
         Sequoiadb sdb = null;
         try {
@@ -178,25 +204,6 @@ public class SequoiadbUserDao implements UserDao {
         }
     }
 
-    @Override
-    public long getCountByRole(String role) throws S3ServerException {
-        Sequoiadb sdb = null;
-        try {
-            sdb = sdbDatasourceWrapper.getSequoiadb();
-            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
-            DBCollection cl = cs.getCollection(DaoCollectionDefine.USER_LIST_COLLECTION);
-
-            BSONObject matcher = new BasicBSONObject();
-            matcher.put(User.JSON_KEY_ROLE, role);
-            return cl.getCount(matcher);
-        } catch (BaseException e) {
-            logger.error("getCountByRole failed. errorMessage = " + e.getMessage(), e);
-            throw e;
-        } finally {
-            sdbDatasourceWrapper.releaseSequoiadb(sdb);
-        }
-    }
-
     private User convertBsonToUser(BSONObject bsonObject) {
         User user = new User();
         if (bsonObject.containsField(User.JSON_KEY_USERNAME)) {
@@ -215,5 +222,17 @@ public class SequoiadbUserDao implements UserDao {
             user.setSecretAccessKey(bsonObject.get(User.JSON_KEY_SECRET_ACCESS_KEY).toString());
         }
         return user;
+    }
+
+    private Owner convertBsonToOwner(BSONObject bsonObject) {
+        Owner owner = new Owner();
+        if (bsonObject.containsField(User.JSON_KEY_USERNAME)) {
+            owner.setUserName(bsonObject.get(User.JSON_KEY_USERNAME).toString());
+        }
+        if (bsonObject.containsField(User.JSON_KEY_USERID)) {
+            owner.setUserId((int) (bsonObject.get(User.JSON_KEY_USERID)));
+        }
+
+        return owner;
     }
 }

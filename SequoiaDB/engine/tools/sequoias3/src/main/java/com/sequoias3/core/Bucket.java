@@ -12,6 +12,7 @@ public class Bucket {
     public static final String BUCKET_CREATETIME       = "CreationDate";
     public static final String BUCKET_VERSIONINGSTATUS = "VersioningStatus";
     public static final String BUCKET_DELIMITER        = "Delimiter";
+    public static final String BUCKET_REGION           = "Region";
 
     @JsonIgnore
     private long    bucketId;
@@ -33,6 +34,9 @@ public class Bucket {
 
     @JsonIgnore
     private String delimiter;
+
+    @JsonIgnore
+    private String region;
 
     public void setBucketId(long bucketId){
         this.bucketId = bucketId;
@@ -88,5 +92,13 @@ public class Bucket {
 
     public String getDelimiter(){
         return this.delimiter;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
+
+    public String getRegion() {
+        return region;
     }
 }

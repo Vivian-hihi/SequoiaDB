@@ -7,6 +7,11 @@ public enum S3Error {
     // dao error
     DAO_GETCONN_ERROR(-401, "GetDBConnectFail", "Get connection failed."),
     DAO_DUPLICATE_KEY(-402, "DuplicateKey", "Duplicate key."),
+    DAO_CS_NOT_EXIST(-403, "CSNotExist", "Collection space does not exist."),
+    DAO_CL_NOT_EXIST(-404, "CLNotExist", "Collection does not exist."),
+    DAO_INSERT_LOB_FAILED(-405, "InsertLobFailed", "Insert Lob Failed."),
+    DAO_DB_ERROR(-406, "DBError", "DB error."),
+    DAO_LOB_FNE(407, "LobIsNotFound", "Lob is not found."),
 
     //bucket error
     BUCKET_CREATE_FAILED(-500, "CreateBucketFailed", "Create bucket failed."),
@@ -21,13 +26,33 @@ public enum S3Error {
     BUCKET_TOO_MANY_BUCKETS(-515, "TooManyBuckets", "You have attempted to create more buckets than allowed."),
 
     //object
-    OBJECT_INVALID_KEY(-601, "InvalidKey","Invalid Key."),
+    OBJECT_PUT_fAILED(-601, "PutObjectFailed", "Put object failed."),
+    OBJECT_GET_FAILED(-602, "GetObjectFailed", "Get object failed"),
+    OBJECT_DELETE_FAILED(-603, "DeleteObjectFailed", "Delete object failed."),
+    OBJECT_LIST_FAILED(-604, "ListObjectsFailed", "List objects failed."),
+
+    OBJECT_INVALID_KEY(-611, "InvalidKey", "Invalid Key."),
+    OBJECT_KEY_TOO_LONG(-612, "KeyTooLongError", "Your key is too long."),
+    OBJECT_METADATA_TOO_LARGE(-613, "MetadataTooLarge", "Your metadata headers exceed the maximum allowed metadata size."),
+    OBJECT_NO_SUCH_KEY(-614, "NoSuchKey", "The specified key does not exist."),
+    OBJECT_BAD_DIGEST(-615, "BadDigest", "The Content-MD5 you speciﬁed did not match what we received."),
+    OBJECT_INVALID_ENCODING_TYPE(-616, "InvalidArgument", "Invalid Encoding Method specified in Request"),
+    OBJECT_INVALID_TOKEN(-617, "InvalidArgument", "The continuation token provided is incorrect."),
+    OBJECT_IS_IN_USE(-618, "ObjectIsInUse", "The object is in use."),
+    OBJECT_RANGE_INVALID(-619, "RangeNotSatisfiable", "Requested range not satisfiable."),
+
+    OBJECT_IF_MODIFIED_SINCE_FAILED(-621, "NotModiﬁed", "If-Modified-Since not match"),
+    OBJECT_IF_UNMODIFIED_SINCE_FAILED(-621, "PreconditionFailed ", "If-Unmodified-Since not match"),
+    OBJECT_IF_MATCH_FAILED(-621, "PreconditionFailed", "If-Match not match"),
+    OBJECT_IF_NONE_MATCH_FAILED(-621, "NotModiﬁed", "If-None-Match not match"),
+    OBJECT_INVALID_TIME(-622, "InvalidArgument", "Time is invalid"),
 
     //authorization
     INVALID_ADMINISTRATOR(-701, "AccessDenied", "Not admin user."),
     INVALID_ACCESSKEYID(-702, "InvalidAccessKeyId", "Invalid accessKeyId."),
     SIGNATURE_NOT_MATCH(-703, "SignatureDoesNotMatch", "Signature does not match."),
     ACCESS_DENIED(-704, "AccessDenied", "Access Denied."),
+    NO_CREDENTIALS(-705, "CredentialsNotSupported", "This request does not support credentials."),
 
     // User
     USER_CREATE_FAILED(-801, "AddUserFailed", "Create user failed."),
@@ -40,7 +65,6 @@ public enum S3Error {
     USER_CREATE_EXIST(-804, "UserAlreadyExists", "The username is exist."),
 
     USER_DELETE_INIT_ADMIN(-811, "InitAdminCannotDelete", "Init admin user cannot be delete."),
-
 
     // 400
     INVALID_ARGUMENT(-900, "InvalidArgument", "Invalid argument.");

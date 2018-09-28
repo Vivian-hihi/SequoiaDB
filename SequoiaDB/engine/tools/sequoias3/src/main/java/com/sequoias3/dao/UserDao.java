@@ -1,5 +1,6 @@
 package com.sequoias3.dao;
 
+import com.sequoias3.core.Owner;
 import com.sequoias3.core.User;
 import com.sequoias3.exception.S3ServerException;
 
@@ -15,7 +16,7 @@ public interface UserDao {
 
     User getUserByAccessKeyID(String accessKeyID) throws S3ServerException;
 
-    int getMaxID() throws S3ServerException;
+    Owner getOwnerByUserID(int userId) throws S3ServerException;
 
-    long getCountByRole(String role) throws S3ServerException;
+    int getMaxID() throws S3ServerException;
 }

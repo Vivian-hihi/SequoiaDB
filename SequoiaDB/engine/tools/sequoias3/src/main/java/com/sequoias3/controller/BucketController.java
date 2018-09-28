@@ -12,6 +12,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.util.Enumeration;
 
 @RestController
 public class BucketController {
@@ -41,7 +45,7 @@ public class BucketController {
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        logger.info("get bucket:owner="+operator.getUserName());
+        logger.info("list buckets:owner="+operator.getUserName());
         return ResponseEntity.ok()
                 .body(bucketService.getService(operator));
     }

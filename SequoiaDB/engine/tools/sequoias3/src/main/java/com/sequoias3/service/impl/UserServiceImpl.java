@@ -10,7 +10,6 @@ import com.sequoias3.dao.BucketDao;
 import com.sequoias3.dao.UserDao;
 import com.sequoias3.exception.*;
 import com.sequoias3.service.UserService;
-import com.sequoias3.utils.IDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static com.sequoias3.utils.IDUtils.getAccessKeyID;
+import static com.sequoias3.utils.IDUtils.getSecretKey;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -50,8 +52,8 @@ public class UserServiceImpl implements UserService {
                 }
 
                 //       3.generate accesskey etc.
-                String accessKeyID = IDUtils.getAccessKeyID();
-                String secretAccessKey = IDUtils.getSecretKey();
+                String accessKeyID = getAccessKeyID();
+                String secretAccessKey = getSecretKey();
 
                 //       4.set user attribute
                 User u = new User();
@@ -87,11 +89,11 @@ public class UserServiceImpl implements UserService {
             }
 
             //       2.generate new keys
-            String accessKeyID = IDUtils.getAccessKeyID();
+            String accessKeyID = getAccessKeyID();
             if (null != userDao.getUserByAccessKeyID(accessKeyID)){
-                accessKeyID = IDUtils.getAccessKeyID();
+                accessKeyID = getAccessKeyID();
             }
-            String secretAccessKey = IDUtils.getSecretKey();
+            String secretAccessKey = getSecretKey();
 
             userDao.updateUserKeys(userName, accessKeyID, secretAccessKey);
 

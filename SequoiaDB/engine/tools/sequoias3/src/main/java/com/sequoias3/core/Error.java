@@ -1,5 +1,6 @@
 package com.sequoias3.core;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sequoias3.exception.S3ServerException;
 
 public class Error {
@@ -8,8 +9,11 @@ public class Error {
     public final static String JSON_RESOURCE = "Resource";
     //public final static String JSON_REQUESTID = "RequestId";
 
+    @JsonProperty(JSON_CODE)
     private String code;
+    @JsonProperty(JSON_MESSAGE)
     private String message;
+    @JsonProperty(JSON_RESOURCE)
     private String resource;
     //private Long requestId;
 

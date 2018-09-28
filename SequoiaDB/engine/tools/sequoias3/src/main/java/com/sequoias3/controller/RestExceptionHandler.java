@@ -28,11 +28,21 @@ public class RestExceptionHandler {
 
         HttpStatus status;
         switch (e.getError()) {
+            case OBJECT_IF_NONE_MATCH_FAILED:
+            case OBJECT_IF_MODIFIED_SINCE_FAILED:
+                status = HttpStatus.NOT_MODIFIED;
+                break;
             case INVALID_ARGUMENT:
             case USER_CREATE_NAME_INVALID:
             case USER_CREATE_ROLE_INVALID:
+            case NO_CREDENTIALS:
             case BUCKET_INVALID_BUCKETNAME:
             case BUCKET_TOO_MANY_BUCKETS:
+            case OBJECT_KEY_TOO_LONG:
+            case OBJECT_METADATA_TOO_LARGE:
+            case OBJECT_INVALID_TOKEN:
+            case OBJECT_BAD_DIGEST:
+            case OBJECT_INVALID_KEY:
                 status = HttpStatus.BAD_REQUEST;
                 break;
             case INVALID_ACCESSKEYID:
@@ -44,13 +54,19 @@ public class RestExceptionHandler {
                 break;
             case USER_NOT_EXIST:
             case BUCKET_NOT_EXIST:
+            case OBJECT_NO_SUCH_KEY:
                 status = HttpStatus.NOT_FOUND;
                 break;
             case USER_CREATE_EXIST:
             case BUCKET_ALREADY_EXIST:
             case BUCKET_ALREADY_OWNEDYOU:
             case BUCKET_NOT_EMPTY:
+            case OBJECT_IS_IN_USE:
                 status = HttpStatus.CONFLICT;
+                break;
+            case OBJECT_IF_MATCH_FAILED:
+            case OBJECT_IF_UNMODIFIED_SINCE_FAILED:
+                status = HttpStatus.PRECONDITION_FAILED;
                 break;
             default:
                 status = HttpStatus.INTERNAL_SERVER_ERROR;

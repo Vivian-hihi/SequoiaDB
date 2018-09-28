@@ -13,14 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class BucketDelimiterController {
     private static final Logger logger = LoggerFactory.getLogger(BucketController.class);
 
-    @PutMapping(value = "/{bucketname:.+}", params = RestParamDefine.DELIMITER)
+    @PutMapping(value = "/{bucketname:.+}", params = RestParamDefine.REST_DELIMITER)
     public String putBucketDelimiter(@PathVariable("bucketname") String bucketName)
             throws S3ServerException {
         logger.info("bucket=" + bucketName + "@delimiter");
         return bucketName + "@delimiter";
     }
 
-    @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.DELIMITER)
+    @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.REST_DELIMITER)
     public String getBucketDelimiter(@PathVariable("bucketname") String bucketName) {
         return bucketName + "&versioning";
     }

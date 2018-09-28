@@ -130,6 +130,7 @@ public class SequoiadbBucketDao implements BucketDao {
                 Bucket bucket = convertBsonToBucket(record);
                 bucketList.add(bucket);
             }
+            cursor.close();
             return bucketList;
         }catch (Exception e) {
             logger.error("deleteBucket failed. errorMessage = " + e.getMessage(), e);

@@ -26,8 +26,12 @@ public class SequoiadbConfig {
         return data.getCsName();
     }
 
-    public String getDataArchiverate() {
-        return data.getArchiverate();
+    public String getCsRate() {
+        return data.getCsRate();
+    }
+
+    public String getClRate() {
+        return data.getClRate();
     }
 
     public String getUrl() {
