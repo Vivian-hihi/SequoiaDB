@@ -1430,41 +1430,6 @@ namespace sdbclient
                                     numToSkip, numToReturn, flag, options ) ;
     }
 
-/** \fn INT32 explain ( _sdbCursor **cursor,
-                    const bson::BSONObj &condition = _sdbStaticObject,
-                    const bson::BSONObj &select = _sdbStaticObject,
-                    const bson::BSONObj &orderBy = _sdbStaticObject,
-                    const bson::BSONObj &hint = _sdbStaticObject,
-                    INT64 numToSkip = 0,
-                    INT64 numToReturn = -1,
-                    INT32 flag = 0,
-                    const bson::BSONObj &options = _sdbStaticObject )
-    \brief Get access plan of query.
-    \param [in] condition The matching rule, return all the documents if null
-    \param [in] select The selective rule, return the whole document if null
-    \param [in] orderBy The ordered rule, never sort if null
-    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means
-                    using index "ageIndex" to scan data(index scan);
-                    {"":null} means table scan. when hint is not provided,
-                    database automatically match the optimal index to scan data
-    \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
-    \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
-    \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
-    \code
-        QUERY_FORCE_HINT
-        QUERY_PARALLED
-        QUERY_WITH_RETURNDATA
-    \endcode
-    \param [in] options the rules of explain, the options are as below:
-
-        Run     : Whether execute query explain or not, true for excuting query explain then get
-                  the data and time information; false for not excuting query explain but get the
-                  query explain information only. e.g. {Run:true}
-
-    \param [out] cursor The cursor of current query
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
     INT32 explain ( _sdbCursor **cursor,
                     const bson::BSONObj &condition = _sdbStaticObject,
                     const bson::BSONObj &select    = _sdbStaticObject,
@@ -1556,12 +1521,6 @@ namespace sdbclient
        return pCollection->listLobs( cursor ) ;
     }
 
-/** \fn INT32 listLobs( _sdbCursor **cursor )
-    \brief List all the lobs' meta data in current collection.
-    \param [out] cursor The curosr reference of the result
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
     INT32 listLobs( _sdbCursor **cursor )
     {
        if ( !pCollection )
@@ -1706,12 +1665,6 @@ namespace sdbclient
          return pCollection->pop( option ) ;
       }
 
-/** \fn INT32 listLobPieces( _sdbCursor **cursor )
-    \brief List all the lob pieces' meta data in current collection.
-    \param [out] cursor The cursor of current query
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
       INT32 listLobPieces( _sdbCursor **cursor )
       {
          if( !pCollection )
@@ -4460,19 +4413,6 @@ namespace sdbclient
                                               iPageSize, cs ) ;
       }
 
-/** \fn INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
-                                      const bson::BSONObj &options,
-                                      _sdbCollectionSpace **cs
-                                     )
-    \brief Create collection space with specified pagesize.
-    \param [in] pCollectionSpaceName The name of collection space.
-    \param [in] options The options specified by user, e.g. {"PageSize": 4096, "Domain": "mydomain"}.
-        PageSize   : Assign the pagesize of the collection space
-        Domain     : Assign which domain does current collection space belong to
-    \param [out] cs The return collection space object of creation.
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
       INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
                                     const bson::BSONObj &options,
                                     _sdbCollectionSpace **cs
@@ -4923,20 +4863,6 @@ namespace sdbclient
          return pSDB->listProcedures( cursor, condition ) ;
       }
 
-/**INT32 evalJS( const CHAR *code,
-                 SDB_SPD_RES_TYPE &type,
-                 _sdbCursor **cursor,
-                 bson::BSONObj &errmsg )
- * brief eval a func.
- * \     type is declared in spd.h. see SDB_FMP_RES_TYPE.
- * \param [in] code The code to eval
- * \param [out] type The type of value
- * \param [out] cursor The cursor handle of current eval
- * \param [out] errmsg The errmsg from eval
- * \retval SDB_OK Operation Success
- * \retval Others  Operation Fail
- *   */
-
      INT32 evalJS( const CHAR *code,
                    SDB_SPD_RES_TYPE &type,
                    _sdbCursor **cursor,
@@ -4947,6 +4873,18 @@ namespace sdbclient
          return pSDB->evalJS( code, type, cursor, errmsg ) ;
      }
 
+     /**INT32 evalJS( const CHAR *code,
+                      SDB_SPD_RES_TYPE &type,
+                      sdbCursor &cursor,
+                      bson::BSONObj &errmsg )
+      * \brief Eval a js function.
+      * \param [in] code The js code to eval.
+      * \param [out] type The type of value. type is declared in spd.h.
+      * \param [out] cursor The cursor handle of current eval.
+      * \param [out] errmsg The errmsg from eval.
+      * \retval SDB_OK Operation Success
+      * \retval Others  Operation Fail
+      */
      INT32 evalJS( const CHAR *code, SDB_SPD_RES_TYPE &type,
                    sdbCursor &cursor,
                    bson::BSONObj &errmsg )
@@ -5248,24 +5186,6 @@ namespace sdbclient
          return pSDB->createDomain ( pDomainName, options, domain ) ;
       }
 
-/** \fn INT32 createDomain ( const CHAR *pDomainName,
-                             const bson::BSONObj &options,
-                             _sdbDomain **domain ) ;
-    \brief Create a domain.
-    \param [in] pDomainName The name of the domain
-    \param [in] options The options for the domain. The options are as below:
-
-        Groups:    The list of replica groups' names which the domain is going to contain.
-                   eg: { "Groups": [ "group1", "group2", "group3" ] }
-                   If this argument is not included, the domain will contain all replica groups in the cluster.
-        AutoSplit: If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
-                   the data of this collection will be split(hash split) into all the groups in this domain automatically.
-                   However, it won't automatically split data into those groups which were add into this domain later.
-                   eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
-    \param [out] domain The created sdbDomain object
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
       INT32 createDomain ( const CHAR *pDomainName,
                            const bson::BSONObj &options,
                            _sdbDomain **domain )
@@ -5287,14 +5207,6 @@ namespace sdbclient
          return pSDB->dropDomain ( pDomainName ) ;
       }
 
-/** \fn INT32 getDomain ( const CHAR *pDomainName,
-                          _sdbDomain **domain ) ;
-    \brief Get a domain.
-    \param [in] pDomainName The name of the domain
-    \param [out] domain The sdbDomain object to get
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
       INT32 getDomain ( const CHAR *pDomainName,
                         _sdbDomain **domain )
       {
@@ -5322,23 +5234,6 @@ namespace sdbclient
          return pSDB->getDomain ( pDomainName, domain ) ;
       }
 
-/** \fn INT32 listDomains ( _sdbCursor **cursor,
-                          const bson::BSONObj &condition = _sdbStaticObject,
-                          const bson::BSONObj &selector = _sdbStaticObject,
-                          const bson::BSONObj &orderBy = _sdbStaticObject,
-                          const bson::BSONObj &hint = _sdbStaticObject ) ;
-    \brief List the domains.
-    \param [in] condition The matching rule, return all the documents if null
-    \param [in] selector The selective rule, return the whole document if null
-    \param [in] orderBy The ordered rule, never sort if null
-    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means
-                    using index "ageIndex" to scan data(index scan);
-                    {"":null} means table scan. when hint is not provided,
-                    database automatically match the optimal index to scan data
-    \param [out] cursor The sdbCursor object of result
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
       INT32 listDomains ( _sdbCursor **cursor,
                           const bson::BSONObj &condition = _sdbStaticObject,
                           const bson::BSONObj &selector = _sdbStaticObject,
@@ -5755,12 +5650,6 @@ namespace sdbclient
          return pSDB->traceStatus( cursor ) ;
       }
 
-      /** \fn INT32 traceStatus(_sdbCursor** cursor)
-          \brief Show the current status of the program trace.
-          \param [out] cursor The return cursor handle of query.
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
-      */
       INT32 traceStatus( _sdbCursor** cursor )
       {
          if( !pSDB )
