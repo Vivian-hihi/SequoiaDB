@@ -14,7 +14,7 @@
 
 | 属性名 | 描述      | 格式      |
 | ------ | --------- | --------- |
-| PreferedInstance | 会话读操作优先选择的实例，取值列表："M"、"m"、"S"、"s"、"A"、"a"、1-255。可以使用数组指定多个取值。<br>"M", "m"：可读写实例（主实例）<br>"S", "s"：只读实例（备实例）<br>"A", "a"：任意实例<br>1-255：通过 --instanceid 指定实例 ID 的实例 | ```PreferedInstance : "M"```<br>```PreferedInstance : [ 1, 10 ]``` |
+| PreferedInstance | 会话读操作优先选择的实例，取值列表："M"、"m"、"S"、"s"、"A"、"a"、1-255。可以使用数组指定多个取值。<br>"M", "m"：可读写实例（主实例）<br>"S", "s"：只读实例（备实例）<br>"A", "a"：任意实例<br>1-255：通过 --instanceid 指定实例 ID 的实例。 | ```PreferedInstance : "M"```<br>```PreferedInstance : [ 1, 10 ]``` |
 | PreferedInstanceMode | 指定会话当多个实例符合 PreferedInstance 的条件时的选择模式。<br>"random"：从候选的实例中随机选择。<br>"ordered"：从候选的实例中按照 PerferedInstance 的顺序进行选择。 | ```PreferedInstaceMode : "random"``` |
 | Timeout | 指定会话执行操作的超时时间（单位：毫秒），-1 表示不进行超时检测。 | ```Timeout : 10000``` |
 
@@ -28,6 +28,7 @@
 >       *   如果多个 1-255 的实例和 "S" 一起指定，则满足指定实例中的备实例会被优先选择；如果多个 1-255 的实例和 "S" 或 "s" 一起指定，则当没有满足指定的实例时选择备实例。如 [ 1, 2, "S" ] 表示优先从实例 1 和实例 2 中的备实例读取；如果不存在实例 1 和实例 2，则从任意一个备实例读取。
 >       *   如果指定多个 "M"、"m"、"S"、"s"、"A"、"a" 实例，则只有第一个生效。
 >       *   如果没有符合 PreferedInstance 的实例，会话将随机选择使用上一次写操作的实例，即可读写（主）实例进行查询（如无写操作，则随机选取实例）。
+>       *   在节点配置了instanceid的情况下，按照instanceid进行获取。在节点没有配置instanceid的情况下，按照节点的nodeid在组内的排序序列（从1开始）作为instanceid来进行选取，如果指定的1-255的实例ID大于数据组内的节点总数，则实例ID对节点总数取模后在组内按照nodeid的排序顺序选取。
 >   *   Timeout 的默认值是 -1，即不进行超时检测。
 >   *   获取会话属性请参考 [Sdb.getSessionAttr()](reference/Sequoiadb_command/Sdb/getSessionAttr.md) 。
 
