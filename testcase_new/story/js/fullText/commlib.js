@@ -4,445 +4,467 @@
 @Author: liuxiaoxuan
                      
 ****************************************************/
-//var ELASTICSEARCH_HOSTNAME = COORDHOSTNAME;
-var ELASTICSEARCH_HOSTNAME = "192.168.31.57";
-var ELASTICSEARCH_SVCNAME = 9200;
 var cmd = new Cmd();     
 var HEADER = "'Content-Type: application/json'";
-var HTTP = "'http://" + ELASTICSEARCH_HOSTNAME + ":" + ELASTICSEARCH_SVCNAME;
-var COND_QUERY_SDBCOMMITID = "{\"query\" : {\"match\" : {\"_id\": \"SDBCOMMIT\"}}}";
+var HTTP = "'http://" + ESHOSTNAME + ":" + ESSVCNAME;
 
-/*****************************************************************
-@description:	run CURL command, to get return records from elasticsearch by rest	
-@input:		elsticSearchIndexName 
-            queryCond 
-
-******************************************************************/
-function findRecordsFromES(elasticSearchIndexName, queryCond){
-   if(!isIndexFromESExist(elasticSearchIndexName)) 
-   {
-      var msg = elasticSearchIndexName + " is not exists in ES!";
-      throw msg;
-   }
-
-   var records = new Array();
-   // get curl command
-   var str = "curl -H " + HEADER + " -XGET " + HTTP + "/" + elasticSearchIndexName + "/_search' -d '" + queryCond + "' 2>/dev/null";
-
-   // to get info
-   try
-   {
-      var info = cmd.run(str); 
-      //get json
-      var json = eval("(" + info + ")");
-      var array = json["hits"]["hits"];
-      for(var i = 0; i < array.length; i++)
-      {
-         var _id = array[i]["_id"];
-         if (_id == "SDBCOMMIT")  continue;
-         var obj = array[i]["_source"];
-         records.push(obj);
-      }
-	  println("findRecordsFromES:"+JSON.stringify(records));
-   }
-   catch(e)
-   {
-      println("Fail to run curl: " + str);
-      throw e;
-   }
-
-   return records; 
-}
-
-/*****************************************************************
-@description:   run CURL command, to get count from elasticsearch by rest      
-@input:         elasticSearchIndexName 
-                            run("curl -H "Content-Type: application/json" -XGET '192.168.31.42:9200/_count' -d '{ "query" : {"term" : {"_index" : "elasticsearch_index"}}}'"  2>/dev/null")
-
-******************************************************************/
-function getTotalCountFromES(elasticSearchIndexName)
+/******************************************************************************
+*@Description : do some operations related to ES, such as:
+                do queries by rest
+					 check index sync to ES
+******************************************************************************/
+function commElasticSearch()
 {
-   var count = 0;
-   // get curl command
-   var cond_query_count= "{\"query\" : {\"term\" : {\"_index\": \"" + elasticSearchIndexName  + "\"}}}";
-   var str="curl -H " + HEADER + " -XGET " + HTTP + "/_count' -d '" + cond_query_count + "' 2>/dev/null";
-
-   // get info
-   try
+   /*****************************************************************
+   * run CURL command, to get return records from elasticsearch by rest
+   *****************************************************************/
+   this.findFromES = function (esIndexName, queryCond)
    {
-      var info = cmd.run(str);
-      //get json
-      var json = eval("(" + info + ")");
-      count = json["count"];
-   }
-   catch(e)
-   {
-      println("Fail to run curl: " + str);
-      throw e;
-   }
-
-   return count;
-}
-
-/*****************************************************************
-@description:   run CURL command, to get SDBCOMMIT from elasticsearch by rest      
-@input:         elasticSearchIndexName  
-
-******************************************************************/
-function getSdbCommitIDFromES(elasticSearchIndexName)
-{ 
-  if(!isIndexFromESExist(elasticSearchIndexName))
-   {
-       var msg = elasticSearchIndexName + " is not exists in ES!";
-       throw msg;
-   }
-
-   var sdbCommitID = -1;
-   // get curl command
-   var str="curl -H " + HEADER + " -XGET " + HTTP + "/" + elasticSearchIndexName + "/_search' -d '" + COND_QUERY_SDBCOMMITID + "' 2>/dev/null";
-
-   // to get info
-   try
-   {
-      var info = cmd.run(str);
-      //get json
-      var json = eval("(" + info + ")");
-      var array = json["hits"]["hits"];
-      if(array.length == 1)
-      { 
-         sdbCommitID = array[0]["_source"]["_lid"];
-      }
-   }
-   catch(e)
-   {
-      println("Fail to run curl: " + str);
-      throw e;
-   }
-
-   return sdbCommitID; 
-}
-
-/*****************************************************************
-@description:   get last lid       
-@input:         dbcl
-
-******************************************************************/
-function getLastLogicalID(dbcl)
-{
-   var lastLogicalID = -1;
-   var sortConf = {"_id" : -1};
-   var records = findByOptions(dbcl, null, sortConf, null);
-   if(records.length > 0)
-   { 
-      lastLogicalID = records[0]["_id"];
-   } 
-
-   return lastLogicalID;
-}
-
-/*****************************************************************
-@description:   check all records is sync to elasticsearch       
-@input:         elsticSearchIndexName 
-                expectCount
-******************************************************************/
-function checkAllRecordsSyncToESByCount(elasticSearchIndexName, expectCount)
-{
-   if(!isIndexFromESExist(elasticSearchIndexName))
-   {
-       var msg = elasticSearchIndexName + " is not exists in ES!";
-       throw msg;
-   }
-  
-   //the longest waiting time is 600S
-   var isSync = false;
-   var timeout = 600;
-   var doTimes = 0;
-   
-   while(true)
-   {
-      var actCount = getTotalCountFromES(elasticSearchIndexName);
-      // if expect count < act count, exit
-      if( actCount > expectCount ) 
+      if(!isExistIndexInES(esIndexName)) 
       {
-         println("check sync to ES fail: actCount: " + actCount + ", expectCount: " + expectCount);
-         break;
+         throw buildException("isExistIndexInES()",e," index name exsit", "exsit","not exsit");
       }
-      else if(actCount == expectCount)
-      { 
-         isSync = true;
-      }
-      
-      //if expect count > act count, wait to expect count = act count
-      if(!isSync)
+
+      var records = new Array();
+      // get curl command
+      var str = "curl -H " + HEADER + " -XGET " + HTTP + "/" + esIndexName 
+                      + "/_search' -d '" + queryCond + "' 2>/dev/null";
+
+      // to get records from ES
+      try
       {
-         if(doTimes < timeout)
+         var info = cmd.run(str); 
+         //get json
+         var json = eval("(" + info + ")");
+         var array = json["hits"]["hits"];
+         for(var i = 0; i < array.length; i++)
          {
-            doTimes+=10;
-            // interval 10s each time
-            sleep(10000);
-         }
-         else
-         {
-            throw "check ES synchronization time out";
-         }     
-      }
-      else 
-      {
-         println("check all sync to ES success!");
-         break;
-      }
-   } 
-
-}
-
-/*****************************************************************
-@description:   check all records is sync to elasticsearch       
-@input:         dbcl
-                elsticSearchIndexName 
-******************************************************************/
-
-function checkAllRecordsSyncToESByLid(dbcl, elasticSearchIndexName)
-{
-   if(!isIndexFromESExist(elasticSearchIndexName))
-   {
-       var msg = elasticSearchIndexName + " is not exists in ES!";
-       throw msg;
-   }
-
-   //the longest waiting time is 600S
-   var isSync = false;
-   var timeout = 600;
-   var doTimes = 0;
-   
-   var lastLogicalID = getLastLogicalID(dbcl);
-   while(true)
-   {
-      var sdbCommitID = getSdbCommitIDFromES(elasticSearchIndexName); 
-      if(sdbCommitID == lastLogicalID)
-      {
-         isSync = true;
-      }
-      
-      if(!isSync)
-      {
-         if(doTimes < timeout)
-         {
-            doTimes+=10;
-            // interval 10s each time
-            sleep(10000);
-         }
-         else
-         {
-            throw "check ES synchronization time out";
+            var _id = array[i]["_id"];
+            if (_id == "SDBCOMMIT")  continue;
+            var obj = array[i]["_source"];
+            records.push(obj);
          }
       }
-      else
+      catch(e)
       {
-         println("check all sync to ES success!");
-         break;
+          throw buildException("findFromES()", e, str, "success","fail");
       }
+
+      return records; 
    }
-   
-}
-
-/*****************************************************************
-@description:   check records if equals between cl and es       
-@input:         clRecords
-                esRecords 
-******************************************************************/
-function checkRecords(clRecords, esRecords)
-{
-   if(clRecords.length !== esRecords.length)
+	
+   /*****************************************************************
+   * run CURL command, to get count from elasticsearch by rest
+   *****************************************************************/
+   this.getTotalCountFromES = function (esIndexName)
    {
-      println("clRecords length: " + clRecords.length + ", esRecords length: " + esRecords.length);
-      throw "check length failed!";
-   }
+      var count = 0;
+      // get curl command
+      var queryCount = "{\"query\" : {\"term\" : {\"_index\": \"" + esIndexName  + "\"}}}";         	            
+      var str = "curl -H " + HEADER + " -XGET " + HTTP + "/_count' -d '" + queryCount 
+	                  + "' 2>/dev/null";
 
-   for(var i = 0; i < clRecords.length; i++)
-   {
-      if(JSON.stringify(esRecords).indexOf(JSON.stringify(clRecords[i])) == -1)
-      {
-         throw buildException("checkRecords", "check record fail", "fail",
-                                          JSON.stringify(clRecords[i]), JSON.stringify(esRecords));
-      }
-   }
-
-   for(var j = 0; j < esRecords.length; j++)
-   {
-      if(JSON.stringify(clRecords).indexOf(JSON.stringify(esRecords[j])) == -1)
-      {
-         throw buildException("checkRecords", "check record fail", "fail",
-                                          JSON.stringify(esRecords[j]), JSON.stringify(clRecords));
-      }
-   }
-
-   println("check recoreds success!");
-}
-
-/*****************************************************************
-@description:   check if index is exist in elasticsearch       
-@input:         elasticSearchIndexName 
-******************************************************************/
-function isIndexFromESExist(elasticSearchIndexName)
-{
-   // get curl command
-   var str="curl -H " + HEADER + " -XGET " + HTTP + "/" + elasticSearchIndexName + "' 2>/dev/null";
- 
-	//the longest waiting time is 60S
-	var isExist = false;
-   var timeout = 60;
-   var doTimes = 0;
-   
-   while(true)
-   {
+      // get count from ES
       try
       {
          var info = cmd.run(str);
          //get json
          var json = eval("(" + info + ")");
-         var error = json["error"];
-         if(typeof(error) == "undefined")  { isExist = true; }	//without error	
+         count = json["count"];
       }
       catch(e)
       {
-         println("Fail to run curl: " + str);
-         throw e;
+         throw buildException("getTotalCountFromES()", e, str, "success","fail");
       }
-      
-      if(!isExist)
+
+      return count;
+   }
+
+   /*****************************************************************
+   * run CURL command, to get SDBCOMMITID from elasticsearch by rest  
+   *****************************************************************/
+   this.getSdbCommitIDFromES = function getSdbCommitIDFromES(esIndexName)
+   { 
+      var sdbCommitID = -1;
+	
+      var querySdbCommitID = "{\"query\" : {\"match\" : {\"_id\": \"SDBCOMMIT\"}}}";
+      // get curl command
+      var str="curl -H " + HEADER + " -XGET " + HTTP + "/" + esIndexName 
+                      + "/_search' -d '" + querySdbCommitID + "' 2>/dev/null";
+
+      // to get SDBCOMMITID from ES
+      try
       {
-         if(doTimes < timeout)
+         var info = cmd.run(str);
+         //get json
+         var json = eval("(" + info + ")");
+         var array = json["hits"]["hits"];
+         if(array.length == 1)
+         {  
+            sdbCommitID = array[0]["_source"]["_lid"];
+         }
+      }
+      catch(e)
+      {
+         throw buildException("getSdbCommitIDFromES()", e, str, "success","fail");
+      }
+
+      return sdbCommitID; 
+   }
+
+   /*****************************************************************
+        * check records all sync to elasticsearch by comparing count and lid
+        *****************************************************************/
+   this.checkFullSyncToES = function (esIndexName, expectCount, cappedCL)
+   {
+      if(!isExistIndexInES(esIndexName))
+      {
+         throw buildException("isExistIndexInES()",e," index name exsit", "exsit","not exsit");
+      }
+
+      this.checkCountInES(esIndexName, expectCount);
+      this.checkLidInES(cappedCL, esIndexName);
+   }
+	
+   /*****************************************************************
+   * check records is full sync to elasticsearch by comparing count  
+   *****************************************************************/
+   this.checkCountInES = function (esIndexName, expectCount)
+   {
+      //the longest waiting time is 600S
+      var isSync = false;
+      var timeout = 600;
+      var doTimes = 0;
+   
+      while(true)
+      {
+         var actCount = this.getTotalCountFromES(esIndexName);
+         // if expect count < act count, exit
+         if(actCount > expectCount) 
          {
-            doTimes+=5;
-            // interval 5s each time
-            sleep(5000);
+            println("check sync to ES fail: actCount: " + actCount + ", expectCount: " + expectCount);
+            break;
+         }
+         else if(actCount == expectCount)
+         { 
+            isSync = true;
+         }
+      
+         //if expect count > act count, wait to expect count = act count
+         if(!isSync)
+         {
+            if(doTimes < timeout)
+            {
+               doTimes+=1;
+               // interval 3s each time
+               sleep(1000);
+            }
+            else
+            {
+               throw buildException("checkFullSyncToES()", e, "check ES reords synchronization", "success","time out");
+            }     
+         }
+         else 
+         {
+            println("check all counts sync to ES success!");
+            break;
+         }
+      } 
+   }
+	
+   /*****************************************************************
+   * check records is sync to elasticsearch by comparing lastLogicalID and SDBCOMMITID  
+   *****************************************************************/
+   this.checkLidInES = function (cappedCL, esIndexName)
+   {
+      //the longest waiting time is 600S
+      var isSync = false;
+      var timeout = 600;
+      var doTimes = 0;
+   
+      var md = new commGetMetaData();
+      var lastLogicalID = md.getLastLogicalID(cappedCL);
+      while(true)
+      {
+         var sdbCommitID = this.getSdbCommitIDFromES(esIndexName); 
+         if(sdbCommitID == lastLogicalID)
+         {
+            isSync = true;
+         }
+      
+         if(!isSync)
+         {
+            if(doTimes < timeout)
+            {
+               doTimes+=1;
+               // interval 3s each time
+               sleep(1000);
+            }
+            else
+            {
+               throw buildException("checkFullSyncToES()", e, "check ES records synchronization", "success","time out");
+            }
          }
          else
          {
-            throw "check ES Index synchronization time out";
+            println("check lid sync to ES success!");
+            break;
          }
       }
-      else
-      {
-         break;
-      }
    }
+	
+   /*****************************************************************
+   * check if index is exist in elasticsearch      
+   *****************************************************************/
+   function isExistIndexInES(esIndexName)
+   {
+      // get curl command
+      var str = "curl -H " + HEADER + " -XGET " + HTTP + "/" + esIndexName + "' 2>/dev/null";
  
-   return isExist;
-}
-
-/*****************************************************************
-@description:   find records by options
-@input:         dbcl
-                findConf
-                sortConf 
-                hintConf
-                filterFields: ["a","b"]
-******************************************************************/
-function findByOptions(dbcl, findConf, sortConf, hintConf, filterFields)
-{
-   if ( typeof(findConf) == "undefined" ) { findConf = null; }
-   if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
-   if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
-   if ( typeof(filterFields) == "undefined" ) { filterFields = new Array(); }
-  
-   //find({"":{"$Text":{"query":{"match":{"a" : "test"}}}}}) 
-   var rc = dbcl.find(findConf).sort(sortConf).hint(hintConf).toArray();
-  
-   //filter and delete keys
-   var records = new Array(); 
-   for(var i = 0; i < rc.length; i++) 
-   {
-      var record = eval("(" + rc[i] + ")");
-      // delete filtered keys
-      for(var key in record)
+      //the longest waiting time is 300s
+      var isExist = false;
+      var timeout = 300;
+      var doTimes = 0;
+   
+      while(true)
       {
-         if(filterFields.length <= 0) { break; }
-         if(filterFields.indexOf(key) == -1)
+         try
          {
-            delete record[key];
+            var info = cmd.run(str);
+            //get json
+            var json = eval("(" + info + ")");
+            var error = json["error"];
+            if(typeof(error) == "undefined")  { isExist = true; }	//without error	
+         }
+         catch(e)
+         {
+            throw buildException("isExistIndexInES()", e, str, "success","fail");
+         }
+      
+         if(!isExist)
+         {
+            if(doTimes < timeout)
+            {
+               doTimes+=1;
+               // interval 3s each time
+               sleep(1000);
+            }
+            else
+            {
+               throw "check ES Index name synchronization time out";
+            }
+         }
+         else
+         {
+            break;
          }
       }
-      
-      records.push(record);
+ 
+      return isExist;
    }
-   return records;
 }
 
 /******************************************************************************
-*@Description : check consistency of all nodes
-@input:         csName
-                clName
-                checkTimes
+*@Description : get some metadata, such as:
+                get clname
+					 get query results
 ******************************************************************************/
-function checkConsistency(csName, clName, checkTimes)
+function commGetMetaData()
 {
-   if ( typeof(checkTimes) == "undefined" )  {  checkTimes = 5;  }
-
-   var inspectBinFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin" ;
-   var inspectReportFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin.report" ;
-   var installPath = commGetInstallPath();    
-   var inspectCommand = installPath + "/bin/sdbinspect" + " -d " + COORDHOSTNAME + ":" + COORDSVCNAME + " -c " + csName + " -l " + clName + " -o " + inspectBinFile + " -t " + checkTimes; 
-   try 
-   {  
-      // exec sdbinspect 
-      cmd.run(inspectCommand) ;
-      var info = cmd.run("tail -n 1 " + inspectReportFile);
-      var actResult = info.split("\n")[0].split("\:")[1].trim();
-      var expectRusult = "exit with no records different";
-      // compare result
-      if(actResult == expectRusult)
-      {
-         println("check consistency success!") ;
-      }
-      else
-      {
-         println("check consistency fail, cl name: " + csName + "." + clName); 
-      }
-      // remove report files
-      cmd.run("rm -f " + inspectBinFile);
-      cmd.run("rm -f " + inspectReportFile);
-   }   
-   catch(e) 
-   { 
-      throw buildException("checkConsistency", "check consistency fail", "fail",
-                                          e, e);  
-   }   
-   
-}
-   
-/******************************************************************************
-*@Description : get UniqueID
-@input:         clFullName
-******************************************************************************/  
-function getUniqueID( clFullName )
-{
-	var cursor = db.snapshot( 8, { Name:clFullName } );
-	var UniqueID = 0;
-	while( cursor.next() )
-	{
-	    UniqueID = cursor.current().toObj()["UniqueID"];
-	}
-	return UniqueID;
-}
-
-/******************************************************************************
-*@Description : get textFullSearch index name in ES 
-@input:         clFullName, dbIndexName
-@Date : 2018-09-28
-@Author: zhaoyu
-******************************************************************************/  
-function getESTextIndexName( clFullName, dbIndexName)
-{
-   var ESIndexNames = new Array();
-   var csName = clFullName.split(".")[0];
-   var clName = clFullName.split(".")[1];
-   
-   var groupNames = commGetCLGroups( db, clName );
-   for(var i=0; i<groupNames.length(); i++)
+   /*****************************************************************
+   * get cappedcl name 
+   *****************************************************************/
+   this.getCappedCLName = function (dbcl, textIndexName)
    {
-      var ESIndexName = db.getCS(csName).getCL(clName).getIndex(dbIndexName).toObj().ExtDataName.toLowerCase() + "_" + groupNames[i];
-      ESIndexNames.push(ESIndexName);
+      var cappedCLName = "";
+      var idx = dbcl.getIndex(textIndexName);
+      cappedCLName = idx.toObj().ExtDataName;
+      return cappedCLName;
    }
-   return ESIndexNames;
+	
+   /*****************************************************************
+   * get es index name, rule: 
+   * cappedCLName: SYS_uniqueId_textIndexName  
+   *esIndexName:  sys_uniqueId_textIndexName_clGroupName							  
+   *****************************************************************/
+   this.getESIndexName = function (db, clFullName, textIndexName)
+   {
+      // check cappedcl name is valid
+      var commCSName = clFullName.split(".")[0];
+      var commCLName = clFullName.split(".")[1];
+      var dbcl = db.getCS(commCSName).getCL(commCLName);
+      var cappedCLName = this.getCappedCLName(dbcl, textIndexName);
+	
+      // get es index names
+      var esIndexNames = new Array();
+      var clGroupNames = commGetCLGroups(db, clFullName);
+      for(var i in clGroupNames)
+      {
+         esIndexNames.push(cappedCLName.toLowerCase() + "_" + clGroupNames[i]);	
+      }
+	
+      // if common cl, return one index
+      if(esIndexNames.length == 1) { return esIndexNames[0]; }
+
+      // if sharding cl, return all indices
+      return esIndexNames;
+   }
+	
+   /*****************************************************************
+   * get last _id from cappedCL, in order to compare with ES's SDBCOMMITID 
+   * and ensure that records are all sync to ES
+   *****************************************************************/
+   this.getLastLogicalID = function (cappedCL)
+   {
+      var lastLogicalID = -1;
+      var sortConf = {"_id" : 1};
+      var records = this.findFromCL(cappedCL, null, null, sortConf, null);
+      if(records.length > 0)
+      { 
+         lastLogicalID = records[records.length-1]["_id"];
+      } 
+
+      return lastLogicalID;
+   }
+	
+   /*****************************************************************
+   * find records by options
+   *****************************************************************/
+   this.findFromCL = function (dbcl, findConf, selectorConf, sortConf, hintConf)
+   {
+      if ( typeof(selectorConf) == "undefined" ) { selectorConf = null; }
+      if ( typeof(findConf) == "undefined" ) { findConf = null; }
+      if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
+      if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
+  
+      //find({"":{"$Text":{"query":{"match":{"a" : "test"}}}}}) 
+      var rc = dbcl.find(findConf, selectorConf).sort(sortConf).hint(hintConf);
+  
+      var records = new Array();
+      //get all records
+      while(rc.next())
+      {
+         var record = rc.current().toObj();
+         records.push(record);		
+      }
+
+      return records;
+   }
+}
+
+/******************************************************************************
+*@Description : check results, such as:
+                check records
+					 check consistency
+******************************************************************************/
+function commCheckResult()
+{
+   /*****************************************************************
+   * check records if equals between cl and es  
+   *****************************************************************/
+   this.checkRecords = function (clRecords, esRecords)
+   {
+      if(clRecords.length !== esRecords.length)
+      {
+          throw buildException("checkRecords()", e, "check records length", clRecords.length, esRecords.length);
+      }
+	
+      // match nothing, check success
+      if(clRecords.length == 0)
+      {
+          println("check recoreds success!");
+          return;
+       }
+	
+      // if match something, get all keys in one object
+      var keys = new Array();
+      for(var key in clRecords[0])
+      {
+         keys.push(key);
+      }
+	
+      // sort all keys between objs in clRecords and esRecords
+      for(var key in keys)
+      {
+         clRecords.sort(sortObjectInArray(key));
+         esRecords.sort(sortObjectInArray(key));
+      }
+	
+      // compare array  
+      for(var i = 0; i < clRecords.length; i++)
+      {
+         for(var key in keys)
+         {
+            if(clRecords[i][key] != esRecords[i][key])
+            {
+               throw buildException("checkRecords", "check record fail", "fail",
+                                       JSON.stringify(clRecords[i]), JSON.stringify(esRecords[i]));
+            }		
+         }
+      }
+	
+      println("check recoreds success!");
+   }
+	
+   /*****************************************************************
+   * sort object in array
+   * x: object1, y: object2
+   *****************************************************************/
+   function sortObjectInArray(key)
+   {
+      return function (x, y)
+      {
+         if(x && y && typeof x === 'object' && typeof x === 'object')
+         {
+            if(x[key] === y[key])  {  return 0;  }	
+            // value type equals
+            if(typeof x[key] === typeof y[key])  {  return x[key] - y[key]; }
+            // value type not equals
+            return typeof a - typeof b;   
+          }    
+         else
+         {
+            throw buildException("sortObjectInArray()", e, "sortObj", "success", "fail key");                                       
+         }	
+     
+      }
+   }
+	
+   /*****************************************************************
+   * check consistency of all nodes
+   *****************************************************************/
+   this.checkConsistency = function (csName, clName, checkTimes)
+   {
+      if ( typeof(checkTimes) == "undefined" )  {  checkTimes = 5;  }
+
+      var inspectBinFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin" ;
+      var inspectReportFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin.report" ;
+      var installPath = commGetInstallPath();    
+      var inspectCommand = installPath + "/bin/sdbinspect" + " -d " + COORDHOSTNAME + ":" + COORDSVCNAME + " -c " + csName + " -l " + clName + " -o " + inspectBinFile + " -t " + checkTimes; 
+      try 
+      {   
+         // exec sdbinspect 
+         cmd.run(inspectCommand) ;
+         var info = cmd.run("tail -n 1 " + inspectReportFile);
+         var actResult = info.split("\n")[0].split("\:")[1].trim();
+         var expectRusult = "exit with no records different";
+         // compare result
+         if(actResult == expectRusult)
+         {
+            println("check consistency success!") ;
+         }
+         else
+         {
+            println("check consistency fail, cl name: " + csName + "." + clName); 
+         }
+         // remove report files
+         cmd.run("rm -f " + inspectBinFile);
+         cmd.run("rm -f " + inspectReportFile);
+      }   
+      catch(e) 
+      { 
+         throw buildException("checkConsistency", "check consistency fail", "fail",
+                                          e, e);  
+      }   
+   }
 }
