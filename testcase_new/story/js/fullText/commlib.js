@@ -45,7 +45,7 @@ function ESOperator()
       }
       catch(e)
       {
-          throw buildException("findFromES()", e, str, "success","fail");
+          throw buildException("findFromES()", "find from es", str, "success","fail");
       }
 
       return records; 
@@ -72,7 +72,7 @@ function ESOperator()
       }
       catch(e)
       {
-         throw buildException("countFromES()", e, str, "success","fail");
+         throw buildException("countFromES()", "count from es", str, "success","fail");
       }
 
       return count;
@@ -104,7 +104,7 @@ function ESOperator()
       }
       catch(e)
       {
-         throw buildException("getCommitIDFromES()", e, str, "success","fail");
+         throw buildException("getCommitIDFromES()", "get commitid from es", str, "success","fail");
       }
 
       return commitID; 
@@ -117,7 +117,7 @@ function ESOperator()
    {
       if(!isExistIndexInES(esIndexName))
       {
-         throw buildException("isExistIndexInES()",e," index name exsit", "exsit","not exsit");
+         throw buildException("isExistIndexInES()","index name isExist"," index name exsit", "exsit","not exsit");
       }
 
       this.checkCountInES(esIndexName, expectCount);
@@ -160,7 +160,7 @@ function ESOperator()
             }
             else
             {
-               throw buildException("checkFullSyncToES()", e, "check ES reords synchronization", "success","time out");
+               throw buildException("checkCountInES()", "count sync to es", "check ES reords synchronization", "success","time out");
             }     
          }
          else 
@@ -202,7 +202,7 @@ function ESOperator()
             }
             else
             {
-               throw buildException("checkFullSyncToES()", e, "check ES records synchronization", "success","time out");
+               throw buildException("checkLidInES()", "lid sync to es", "check ES records synchronization", "success","time out");
             }
          }
          else
@@ -239,7 +239,7 @@ function ESOperator()
          }
          catch(e)
          {
-            throw buildException("isExistIndexInES()", e, str, "success","fail");
+            throw buildException("isExistIndexInES()", "index name isExist", str, "success","fail");
          }
       
          if(!isExist)
@@ -362,7 +362,7 @@ function checkRecords(clRecords, esRecords)
 {
    if(clRecords.length !== esRecords.length)
    {
-      throw buildException("checkRecords()", e, "check records length", clRecords.length, esRecords.length);
+      throw buildException("checkRecords()", "check records", "check records length", clRecords.length, esRecords.length);
    }
 
    // match nothing, check success
@@ -422,7 +422,7 @@ function sortObjectInArray(key)
       }    
       else
       {
-         throw buildException("sortObjectInArray()", e, "sortObj", "success", "fail key");                                       
+         throw buildException("sortObjectInArray()", "sort object", "sortObj", "success", "fail key");                                       
       }	
       
    }
