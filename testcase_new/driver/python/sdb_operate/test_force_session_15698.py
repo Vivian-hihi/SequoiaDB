@@ -38,22 +38,22 @@ class TestForceSession15698(testlib.SdbTestBase):
       session_ids = self.get_session_snapshot(condition = {"NodeName" : node_name})
       session_id = session_ids[0];
      		
-      # force session
+      # force session without options
       node = data_rg.get_master().connect()
       node.force_session(session_id)		
       		
 		# check session has been killed, timeout 60s
-      i = 0
-      while i < 60:
-         session_ids = self.get_session_snapshot(condition = {"NodeName" : node_name})
-         if session_id in session_ids: 
-            i = i + 1
-            time.sleep(1)
-         else:
-            break
-      self.assertNotIn(session_id, session_ids, "force current session failed")
+      self.checkSession(session_id, condition = {"NodeName" : node_name});
+		
+		# force session with options
+      node = data_rg.get_master().connect()
+      session_id = session_ids[1];
+      node.force_session(session_id, {"HostName" : data_hostname, "svcname" : service_name})		
 	
-	 	# drop data group
+    	# check session has been killed, timeout 60s
+      self.checkSession(session_id, condition = {"NodeName" : node_name});
+	
+      # drop data group
       self.db.remove_replica_group(data_rg_name)
       self.db.disconnect()
 	
@@ -71,4 +71,15 @@ class TestForceSession15698(testlib.SdbTestBase):
          except SDBEndOfCursor:
             break
       cursor.close()
-      return session_ids	
+      return session_ids
+   
+   def checkSession(self, session_id, **kwargs):
+      i = 0
+      while i < 60:
+         session_ids = self.get_session_snapshot(**kwargs)
+         if session_id in session_ids: 
+            i = i + 1
+            time.sleep(1)
+         else:
+            break
+      self.assertNotIn(session_id, session_ids, "force current session failed")	
