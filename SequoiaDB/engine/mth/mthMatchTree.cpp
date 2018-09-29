@@ -1718,7 +1718,7 @@ namespace engine
       INT32 rc      = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHMATCHTREE__PRELOADPATTERN ) ;
 
-      _matchPattern = copyQuery ? matcher.copy() : matcher ;
+      _matchPattern = copyQuery ? matcher.getOwned() : matcher ;
       _isMatchesAll = TRUE ;
 
       setMthEnableMixCmp( enableMixCmp ) ;
@@ -1830,12 +1830,11 @@ namespace engine
       SDB_ASSERT ( !_isInitialized, "mthMatcher can't be initialized "
                    "multiple times" ) ;
 
-      // No need to copy the query, which is already stored in match runtime
       rc = _preLoadPattern( matcher,
                             normalizer.mthEnabledMixCmp(),
                             normalizer.mthEnabledParameterized(),
                             normalizer.mthEnabledFuzzyOptr(),
-                            FALSE ) ;
+                            TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to process before loading pattern, "
                    "rc: %d", rc ) ;
 
