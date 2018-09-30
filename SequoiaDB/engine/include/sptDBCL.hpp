@@ -160,6 +160,14 @@ namespace engine
                          _sptReturnVal &rval,
                          bson::BSONObj &detail ) ;
 
+      INT32 createAutoIncrement( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  bson::BSONObj &detail ) ;
+
+      INT32 dropAutoIncrement( const _sptArguments &arg,
+                              _sptReturnVal &rval,
+                              bson::BSONObj &detail ) ;
+
       INT32 getQueryMeta( const _sptArguments &arg,
                           _sptReturnVal &rval,
                           bson::BSONObj &detail ) ;

@@ -74,6 +74,8 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, truncate )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, createIdIndex )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, dropIdIndex )
+   JS_MEMBER_FUNC_DEFINE( _sptDBCL, createAutoIncrement )
+   JS_MEMBER_FUNC_DEFINE( _sptDBCL, dropAutoIncrement )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, getQueryMeta )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, enableSharding )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, disableSharding )
@@ -110,6 +112,8 @@ namespace engine
       JS_ADD_MEMBER_FUNC( "truncate", truncate )
       JS_ADD_MEMBER_FUNC( "createIdIndex", createIdIndex )
       JS_ADD_MEMBER_FUNC( "dropIdIndex", dropIdIndex )
+      JS_ADD_MEMBER_FUNC( "createAutoIncrement", createAutoIncrement )
+      JS_ADD_MEMBER_FUNC( "dropAutoIncrement", dropAutoIncrement )
       JS_ADD_MEMBER_FUNC( "getQueryMeta", getQueryMeta )
       JS_ADD_MEMBER_FUNC( "enableSharding", enableSharding )
       JS_ADD_MEMBER_FUNC( "disableSharding", disableSharding )
@@ -1657,6 +1661,65 @@ namespace engine
    error:
       goto done ;
    }
+
+   INT32 _sptDBCL::createAutoIncrement( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj options ;
+
+      if( !arg.isNull( 0 ) )
+      {
+         rc = arg.getBsonobj( 0, options ) ;
+         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         {
+            detail = BSON( SPT_ERR << "Options must be obj" ) ;
+            goto error ;
+         }
+      }
+      rc = _cl.createAutoIncrement( options ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to create autoincrement field" ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+   INT32 _sptDBCL::dropAutoIncrement( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj options ;
+   
+      if( !arg.isNull( 0 ) )
+      {
+         rc = arg.getBsonobj( 0, options ) ;
+         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         {
+            detail = BSON( SPT_ERR << "Options must be obj" ) ;
+            goto error ;
+         }
+      }
+
+      rc = _cl.dropAutoIncrement( options ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to drop autoincrement field" ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 
    INT32 _sptDBCL::getQueryMeta( const _sptArguments &arg,
                                  _sptReturnVal &rval,

@@ -65,6 +65,7 @@ namespace engine
 
       _needUpdate = FALSE ;
       _hasUpdated = FALSE ;
+      _needClearAfterDone = FALSE ;
       _version = -1 ;
    }
 
@@ -225,6 +226,7 @@ namespace engine
 
       if ( _status == CAT_CONTEXT_DATA_DONE )
       {
+         _clear( cb ) ;
          // End of execution
          rc = SDB_DMS_EOC ;
          _isOpened = FALSE ;
@@ -494,6 +496,41 @@ namespace engine
       return rc ;
    error :
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXBASE_CLEAR, "_catContextBase::_clear" )
+   INT32 _catContextBase::_clear ( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXBASE_CLEAR ) ;
+
+      INT16 w = _pCatCB->majoritySize() ;
+
+      try
+      {
+         if ( _needClearAfterDone )
+         {
+            rc = _clearInternal( cb, w ) ;
+         }
+       }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG;
+         goto error ;
+      }
+   
+      PD_LOG( PDDEBUG,
+              "catContext [%lld]: finished clear",
+              contextID() ) ;
+   
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXBASE_CLEAR, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXBASE_ONCTXDEL, "_catContextBase::_onCtxDelete" )

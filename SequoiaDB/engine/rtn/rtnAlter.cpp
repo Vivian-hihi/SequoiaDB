@@ -100,6 +100,12 @@ namespace engine
             rc = rtnAlterCSSetAttributes( name, task, options, cb, dpsCB ) ;
             break ;
          }
+         case RTN_ALTER_CL_CREATE_AUTOINC_FLD:
+         case RTN_ALTER_CL_DROP_AUTOINC_FLD:
+         {
+            //TODO: data group should do nothing
+            break ;
+         }
          default :
          {
             rc = SDB_INVALIDARG ;
@@ -1041,6 +1047,13 @@ namespace engine
                                           cb, mbContext, su, dmsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to set capped options on "
                       "collection [%s], rc: %d", collection, rc ) ;
+      }
+
+      // Autoincrement options
+      // do nothing
+      if ( localTask->containAutoincArgument() )
+      {
+         rc = SDB_OK ;
       }
 
       // Strict data mode

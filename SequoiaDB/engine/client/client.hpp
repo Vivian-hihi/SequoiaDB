@@ -483,6 +483,10 @@ namespace sdbclient
 
       virtual INT32 dropIdIndex() = 0 ;
 
+      virtual INT32 createAutoIncrement( const bson::BSONObj &options ) = 0;
+
+      virtual INT32 dropAutoIncrement( const bson::BSONObj &options ) = 0;
+
       virtual INT32 pop ( const bson::BSONObj &option = _sdbStaticObject ) = 0 ;
 
       virtual INT32 enableSharding ( const bson::BSONObj & options ) = 0 ;
@@ -1567,6 +1571,20 @@ namespace sdbclient
        if ( !pCollection )
           return SDB_NOT_CONNECTED ;
         return pCollection->dropIdIndex() ;
+    }
+
+    INT32 createAutoIncrement( const bson::BSONObj &options )
+    {
+       if ( !pCollection )
+          return SDB_NOT_CONNECTED ;
+        return pCollection->createAutoIncrement( options ) ;
+    }
+
+    INT32 dropAutoIncrement( const bson::BSONObj &options )
+    {
+       if ( !pCollection )
+          return SDB_NOT_CONNECTED ;
+        return pCollection->dropAutoIncrement( options ) ;
     }
 
     /** \fn INT32 enableSharding ( const bson::BSONObj &options )

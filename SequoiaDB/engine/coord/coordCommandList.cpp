@@ -44,6 +44,7 @@
 #include "coordQueryOperator.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "catGTSDef.hpp"
 
 using namespace bson ;
 
@@ -353,6 +354,46 @@ namespace engine
    {
       clName = CAT_COLLECTION_INFO_COLLECTION ;
       return SDB_OK ;
+   }
+
+   /*
+      _coordCMDListSequences implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDListSequences,
+                                      CMD_NAME_LIST_SEQUENCES,
+                                      TRUE ) ;
+   _coordCMDListSequences::_coordCMDListSequences()
+   {
+   }
+
+   _coordCMDListSequences::~_coordCMDListSequences()
+   {
+   }
+
+   INT32 _coordCMDListSequences::_preProcess( rtnQueryOptions &queryOpt,
+                                               string & clName,
+                                               BSONObj &outSelector )
+   {
+      BSONObjBuilder builder ;
+      clName = GTS_SEQUENCE_COLLECTION_NAME ;
+      builder.appendNull( CAT_SEQUENCE_NAME ) ;
+      outSelector = queryOpt.getSelector() ;
+      queryOpt.setSelector( builder.obj() ) ;
+      return SDB_OK ;
+   }
+
+   /*
+      _coordCMDListSequencesIntr implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDListSequencesIntr,
+                                      CMD_NAME_LIST_SEQUENCES_INTR,
+                                      TRUE ) ;
+   _coordCMDListSequencesIntr::_coordCMDListSequencesIntr()
+   {
+   }
+
+   _coordCMDListSequencesIntr::~_coordCMDListSequencesIntr()
+   {
    }
 
    /*
@@ -726,7 +767,7 @@ namespace engine
       queryOptions.setCLFullName( CAT_COLLECTION_SPACE_COLLECTION ) ;
 
       rc = queryOnCataAndPushToVec( queryOptions, cb, replyFromCata,
-                                    buf ) ; 
+                                    buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to execute query on catalog:%d", rc ) ;
@@ -754,7 +795,7 @@ namespace engine
 
    INT32 _coordCMDListCLInDomain::_rebuildListResult(
                                     const vector<BSONObj> &infoFromCata,
-                                    pmdEDUCB *cb,                       
+                                    pmdEDUCB *cb,
                                     SINT64 &contextID )
    {
       INT32 rc = SDB_OK ;

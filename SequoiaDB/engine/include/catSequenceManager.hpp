@@ -83,6 +83,10 @@ namespace engine
       INT32 acquireSequence( const std::string& name, const bson::OID oid, _catSequenceAcquirer& acquirer,
                              _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 resetSequence( const std::string& name, _pmdEDUCB* eduCB, INT16 w ) ;
+      OSS_INLINE INT32 getSequence( const std::string& name, bson::BSONObj& sequence, _pmdEDUCB* eduCB )
+      {
+         return _findSequence( name, sequence, eduCB ) ;
+      }
 
    private:
       INT32 _insertSequence( bson::BSONObj& sequence, _pmdEDUCB* eduCB, INT16 w ) ;

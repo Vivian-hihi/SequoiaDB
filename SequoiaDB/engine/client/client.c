@@ -1597,6 +1597,9 @@ static INT32 _sdbGetList ( sdbConnectionHandle cHandle,
    case SDB_LIST_CL_IN_DOMAIN :
       p = CMD_ADMIN_PREFIX CMD_NAME_LIST_CL_IN_DOMAIN ;
       break ;
+   case SDB_LIST_SEQUENCES :
+      p = CMD_ADMIN_PREFIX CMD_NAME_LIST_SEQUENCES ;
+	  break ;
    default :
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -2502,6 +2505,9 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
    case SDB_SNAP_SVCTASKS :
       p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SVCTASKS ;
       break ;
+   case SDB_SNAP_SEQUENCES :
+      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SEQUENCES ;
+      break ;
    default :
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -2632,6 +2638,9 @@ SDB_EXPORT INT32 sdbGetSnapshot1 ( sdbConnectionHandle cHandle,
    case SDB_SNAP_SVCTASKS :
       p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SVCTASKS ;
       break ;
+   case SDB_SNAP_SEQUENCES :
+	  p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SEQUENCES ;
+	  break ;
    default :
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -4302,6 +4311,13 @@ SDB_EXPORT INT32 sdbListCollections ( sdbConnectionHandle cHandle,
                                       sdbCursorHandle *handle )
 {
    return sdbGetList ( cHandle, SDB_LIST_COLLECTIONS, NULL, NULL, NULL,
+                       handle ) ;
+}
+
+SDB_EXPORT INT32 sdbListSequences ( sdbConnectionHandle cHandle,
+                                      sdbCursorHandle *handle )
+{
+   return sdbGetList ( cHandle, SDB_LIST_SEQUENCES, NULL, NULL, NULL,
                        handle ) ;
 }
 
@@ -11335,6 +11351,18 @@ SDB_EXPORT INT32 sdbCreateIdIndex ( sdbCollectionHandle cHandle,
 SDB_EXPORT INT32 sdbDropIdIndex( sdbCollectionHandle cHandle )
 {
    return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_DROP_ID_INDEX, NULL, TRUE ) ;
+}
+
+SDB_EXPORT INT32 sdbCreateAutoincrement ( sdbCollectionHandle cHandle,
+                                    const bson * args )
+{
+   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_CRT_AUTOINC_FLD, args, FALSE ) ;
+}
+
+SDB_EXPORT INT32 sdbDropAutoincrement ( sdbCollectionHandle cHandle,
+                                    const bson * args )
+{
+   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_DROP_AUTOINC_FLD, args, TRUE ) ;
 }
 
 SDB_EXPORT INT32 sdbEnableSharding ( sdbCollectionHandle cHandle,

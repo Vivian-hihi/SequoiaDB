@@ -264,6 +264,8 @@ namespace engine
          INT64 getMaxSize() const { return _maxSize ; }
          INT64 getMaxRecNum() const { return _maxRecNum ; }
          BOOLEAN getOverWrite() const { return _overwrite ; }
+         const std::vector<BSONObj> & getAutoIncFields() const { return _autoIncFields ; }
+         INT32 addAutoIncField( BSONObj & autoIncField ) ;
       protected:
          _clsCatalogSet    *next () ;
          INT32             next ( _clsCatalogSet * next ) ;
@@ -322,6 +324,7 @@ namespace engine
          BOOLEAN           _saveName ;
          UINT32            _attribute ;
          std::multimap<UINT32, std::string> _subCLList ;
+         std::vector<BSONObj> _autoIncFields ;
          BOOLEAN           _isMainCL ;
          std::string       _mainCLName ;
          UINT32            _internalV ;

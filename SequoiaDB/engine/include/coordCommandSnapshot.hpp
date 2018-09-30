@@ -512,5 +512,21 @@ namespace engine
    } ;
    typedef _coordCMDSnapshotSvcTasksIntr coordCMDSnapshotSvcTasksIntr ;
 
+    /*
+       _coordCMDSnapshotSequences define
+    */
+    class _coordCMDSnapshotSequences : public _coordCMDQueryBase
+    {
+       COORD_DECLARE_CMD_AUTO_REGISTER() ;
+       public:
+          _coordCMDSnapshotSequences() ;
+          virtual ~_coordCMDSnapshotSequences() ;
+       protected:
+          virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+                                     string &clName,
+                                     BSONObj &outSelector ) ;
+    } ;
+    typedef _coordCMDSnapshotSequences coordCMDSnapshotSequences ;
+
 }
 #endif // COORD_COMMAND_SNAPSHOT_HPP__

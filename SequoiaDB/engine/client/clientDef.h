@@ -55,6 +55,8 @@
 #define SDB_SNAP_CONFIGS          13
 /** snapshot of service tasks */
 #define SDB_SNAP_SVCTASKS         14
+/** snapshot of sequences */
+#define SDB_SNAP_SEQUENCES        15
 
 /** snapshot of all the contexts of all the sessions */
 #define SDB_LIST_CONTEXTS         0
@@ -84,6 +86,8 @@
 #define SDB_LIST_TRANSACTIONS_CURRENT 12
 /** snapshot of service tasks */
 #define SDB_LIST_SVCTASKS         14
+/** snapshot of sequences **/
+#define SDB_LIST_SEQUENCES        15
 // reserved
 #define SDB_LIST_CL_IN_DOMAIN     129
 // reserved

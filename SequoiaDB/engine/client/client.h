@@ -938,6 +938,18 @@ SDB_EXPORT INT32 sdbListCollectionSpaces ( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbListCollections ( sdbConnectionHandle cHandle,
                                       sdbCursorHandle *handle ) ;
 
+/** \fn INT32 sdbListSequences ( sdbConnectionHandle cHandle,
+                                 sdbCursorHandle *handle )
+    \brief List all sequences of current database
+    \param [in] cHandle The database connection handle
+    \param [out] handle The cursor handle of all sequences names
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+
+SDB_EXPORT INT32 sdbListSequences ( sdbConnectionHandle cHandle,
+                                      sdbCursorHandle *handle ) ;
+
 /** \fn INT32 sdbListReplicaGroups ( sdbConnectionHandle cHandle,
                                      sdbCursorHandle *handle )
     \brief List all the replica groups of current database

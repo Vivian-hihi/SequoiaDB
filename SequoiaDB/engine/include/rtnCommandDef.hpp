@@ -146,7 +146,8 @@ namespace engine
 #define NAME_SNAPSHOT_CATA                   CMD_NAME_SNAPSHOT_CATA
 #define NAME_WAITTASK                        CMD_NAME_WAITTASK
 #define NAME_GET_DCINFO                      CMD_NAME_GET_DCINFO
-
+#define NAME_LIST_SEQUENCES                  CMD_NAME_LIST_SEQUENCES
+#define NAME_SNAP_SEQUENCES                  CMD_NAME_SNAPSHOT_SEQUENCES
    /*
       Command Type Define
    */
@@ -196,6 +197,7 @@ namespace engine
 
       CMD_RENAME_COLLECTION                  = 60,
       CMD_RENAME_COLLECTIONSPACE             = 61,
+      CMD_LIST_SEQUENCES                     = 62,
 
       CMD_REORG_OFFLINE                      = 70,
       CMD_REORG_ONLINE                       = 71,
@@ -221,6 +223,7 @@ namespace engine
       CMD_SNAPSHOT_CONFIGS                   = 104,
       CMD_SNAPSHOT_VCL_SESSIONINFO           = 105,
       CMD_SNAPSHOT_SVCTASKS                  = 106,
+      CMD_SNAPSHOT_SEQUENCES                 = 107,
 
       CMD_TEST_COLLECTION                    = 110,
       CMD_TEST_COLLECTIONSPACE               = 111,

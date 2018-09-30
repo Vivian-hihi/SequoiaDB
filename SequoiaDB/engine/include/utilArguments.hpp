@@ -61,6 +61,19 @@ namespace engine
    #define UTIL_CL_STRICTDATAMODE_FIELD      ( 0x00010000 )
    #define UTIL_CL_AUTOINC_FIELD             ( 0x00020000 )
 
+   // mask for autoincrement option.
+   #define UTIL_CL_AUTOINCREMENT_FIELD       ( 0x00040000 )
+
+   // mask for one field of autoincrement filed attr.
+   #define UTIL_CL_AUTOINC_INCREMENT_FIELD   ( 0x00000001 )
+   #define UTIL_CL_AUTOINC_STARTVALUE_FIELD  ( 0x00000002 )
+   #define UTIL_CL_AUTOINC_MINVALUE_FIELD    ( 0x00000004 )
+   #define UTIL_CL_AUTOINC_MAXVALUE_FIELD    ( 0x00000008 )
+   #define UTIL_CL_AUTOINC_CACHESIZE_FIELD   ( 0x00000010 )
+   #define UTIL_CL_AUTOINC_ACQUIRESIZE_FIELD ( 0x00000020 )
+   #define UTIL_CL_AUTOINC_CYCLED_FIELD      ( 0x00000040 )
+   #define UTIL_CL_AUTOINC_GENERATED_FIELD   ( 0x00000080 )
+
    #define UTIL_CS_NAME_FIELD                ( 0x00000001 )
    #define UTIL_CS_DOMAIN_FIELD              ( 0x00000002 )
    #define UTIL_CS_PAGESIZE_FIELD            ( 0x00000004 )

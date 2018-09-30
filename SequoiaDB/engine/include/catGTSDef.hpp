@@ -34,24 +34,26 @@
 #ifndef CAT_GTS_DEF_HPP_
 #define CAT_GTS_DEF_HPP_
 
+#include "msgDef.h"
+
 #define GTS_SYS_COLLECTION_SPACE_NAME        "SYSGTS"
 
 // SEQUENCE
 
-#define CAT_SEQUENCE_NAME              "Name"
+#define CAT_SEQUENCE_NAME              FIELD_NAME_SEQUENCE_NAME
 #define CAT_SEQUENCE_OID               "_id"
-#define CAT_SEQUENCE_VERSION           "Version"
-#define CAT_SEQUENCE_CURRENT_VALUE     "CurrentValue"
-#define CAT_SEQUENCE_INCREMENT         "Increment"
-#define CAT_SEQUENCE_START_VALUE       "StartValue"
-#define CAT_SEQUENCE_MIN_VALUE         "MinValue"
-#define CAT_SEQUENCE_MAX_VALUE         "MaxValue"
-#define CAT_SEQUENCE_CACHE_SIZE        "CacheSize"
-#define CAT_SEQUENCE_ACQUIRE_SIZE      "AcquireSize"
-#define CAT_SEQUENCE_CYCLED            "Cycled"
-#define CAT_SEQUENCE_INTERNAL          "Internal"
-#define CAT_SEQUENCE_INITIAL           "Initial"
-#define CAT_SEQUENCE_NEXT_VALUE        "NextValue"
+#define CAT_SEQUENCE_VERSION           FIELD_NAME_VERSION
+#define CAT_SEQUENCE_CURRENT_VALUE     FIELD_NAME_CURRENT_VALUE
+#define CAT_SEQUENCE_INCREMENT         FIELD_NAME_INCREMENT
+#define CAT_SEQUENCE_START_VALUE       FIELD_NAME_START_VALUE
+#define CAT_SEQUENCE_MIN_VALUE         FIELD_NAME_MIN_VALUE
+#define CAT_SEQUENCE_MAX_VALUE         FIELD_NAME_MAX_VALUE
+#define CAT_SEQUENCE_CACHE_SIZE        FIELD_NAME_CACHE_SIZE
+#define CAT_SEQUENCE_ACQUIRE_SIZE      FIELD_NAME_ACQUIRE_SIZE
+#define CAT_SEQUENCE_CYCLED            FIELD_NAME_CYCLED
+#define CAT_SEQUENCE_INTERNAL          FIELD_NAME_INTERNAL
+#define CAT_SEQUENCE_INITIAL           FIELD_NAME_INITIAL
+#define CAT_SEQUENCE_NEXT_VALUE        FIELD_NAME_NEXT_VALUE
 
 #define GTS_SEQUENCE_COLLECTION_NAME         GTS_SYS_COLLECTION_SPACE_NAME".SEQUENCES"
 #define GTS_SEQUENCE_NAME_INDEX              "{name:\"name_index\",key: {\""CAT_SEQUENCE_NAME"\": 1}, unique: true, enforced: true}"

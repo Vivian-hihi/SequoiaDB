@@ -60,6 +60,8 @@ namespace engine
 
       virtual INT32 _rollbackInternal ( _pmdEDUCB *cb, INT16 w )
       { return SDB_OK ; }
+      virtual INT32 _clearInternal(  _pmdEDUCB *cb, INT16 w  )
+      { return SDB_OK ; }
 
    protected :
       std::vector<UINT32> _groupList ;
@@ -82,9 +84,9 @@ namespace engine
 
       virtual INT32 _rollbackInternal ( _pmdEDUCB *cb, INT16 w ) ;
 
-      void _addTask ( _catCtxDataTask *pCtx, BOOLEAN pushExec ) ;
+      void _addTask ( _catCtxTaskBase *pCtx, BOOLEAN pushExec ) ;
 
-      INT32 _pushExecTask ( _catCtxDataTask *pCtx ) ;
+      INT32 _pushExecTask ( _catCtxTaskBase *pCtx ) ;
 
    protected :
       _catSubTasks _subTasks ;
@@ -374,21 +376,37 @@ namespace engine
       virtual INT32 _checkInternal ( _pmdEDUCB *cb ) ;
 
       virtual INT32 _executeInternal ( _pmdEDUCB *cb, INT16 w ) ;
+      virtual INT32 _clearInternal(_pmdEDUCB * cb,INT16 w) ;      
 
    protected :
       INT32 _checkAlterTask ( const rtnAlterTask * task, _pmdEDUCB * cb ) ;
       INT32 _executeAlterTask ( const rtnAlterTask * task, _pmdEDUCB * cb, INT16 w ) ;
-
-      INT32 _addAlterTask ( const std::string & collection,
-                            const rtnAlterTask * task,
-                            catCtxAlterCLTask ** catTask,
-                            BOOLEAN pushExec ) ;
-
-      INT32 _addAlterSubTask ( catCtxAlterCLTask * catTask,
+      INT32 _clearAlterTask ( const rtnAlterTask * task, _pmdEDUCB * cb, INT16 w ) ;
+      INT32 _addAlterTask ( const string & collection,
+                          const rtnAlterTask * task,
+                          catCtxAlterCLTask ** catTask,
+                          BOOLEAN pushExec ) ;
+      INT32 _addAlterSubCLTask ( catCtxAlterCLTask * catTask,
                                pmdEDUCB * cb,
                                catCtxLockMgr & lockMgr,
                                std::set< std::string > & collectionSet,
                                std::vector< UINT32 > & groupList ) ;
+      INT32 _addSequenceTask( const string & collection,
+                          const rtnAlterTask * task,
+                          catCtxTaskBase ** catAutoIncTask,
+                          BOOLEAN pushExec ) ;
+      INT32 _addCreateSeqenceTask( const string & collection,
+                                      const rtnAlterTask * task,
+                                      catCtxTaskBase ** catAutoIncTask,
+                                      BOOLEAN pushExec ) ;
+      INT32 _addDropSeqenceTask( const string & collection,
+                                      const rtnAlterTask * task,
+                                      catCtxTaskBase ** catAutoIncTask,
+                                      BOOLEAN pushExec ) ;
+      INT32 _addAlterSeqenceTask( const string & collection,
+                                   const rtnAlterTask * task,
+                                   catCtxTaskBase ** catAutoIncTask,
+                                   BOOLEAN pushExec ) ;
 
       virtual INT32 _makeReply ( rtnContextBuf &buffObj ) ;
 

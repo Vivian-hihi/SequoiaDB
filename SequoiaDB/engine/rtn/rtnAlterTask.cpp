@@ -799,6 +799,318 @@ namespace engine
    }
 
    /*
+      _rtnCLAutoincrementFieldArgument implement
+    */
+
+   _rtnCLAutoincFieldArgument::_rtnCLAutoincFieldArgument(const BSONObj & argument )
+   : _increment(1),
+     _startValue(1),
+     _minValue(1),
+     _maxValue(OSS_SINT64_MAX),
+     _cacheSize(1000),
+     _acquireSize(100),
+     _cycled(FALSE),
+     _generated("default"),
+     _argumentMask(0),
+     _argumentCount(0),
+     _argument(argument)
+   {
+   }
+
+   _rtnCLAutoincFieldArgument::~_rtnCLAutoincFieldArgument()
+   {
+   }
+
+   rtnCLAutoincFieldArgument & _rtnCLAutoincFieldArgument::operator = ( const rtnCLAutoincFieldArgument & argument )
+   {
+      _fieldName = argument._fieldName;
+      _increment = argument._increment;
+      _startValue = argument._startValue;
+      _minValue = argument._minValue;
+      _maxValue = argument._maxValue;
+      _cacheSize = argument._cacheSize;
+      _acquireSize = argument._acquireSize;
+      _cycled = argument._cycled;
+      _generated = argument._generated;
+      _argumentMask = argument._argumentMask;
+      _argumentCount = argument._argumentCount;
+      return ( *this ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCLAUTOINCFIELDARG_PARSEARG, "_rtnCLAutoincFieldArgument::parseArgument" )
+   INT32 _rtnCLAutoincFieldArgument::parseArgument ()
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNCLAUTOINCFIELDARG_PARSEARG ) ;
+
+      BSONElement argElement ;
+      std::string fieldName ;
+
+      PD_CHECK( _argument.hasField( FIELD_NAME_AUTOINC_FIELD ), SDB_INVALIDARG, error, PDERROR,
+               "Failed to get field [%s]", FIELD_NAME_AUTOINC_FIELD ) ;
+
+      argElement = _argument.getField( FIELD_NAME_AUTOINC_FIELD ) ;
+      PD_CHECK( String == argElement.type(), SDB_INVALIDARG, error, PDERROR,
+               "Failed to get field [%s]", FIELD_NAME_AUTOINC_FIELD ) ;
+
+      setFieldName( argElement.String() );
+
+      if( _argument.hasField( FIELD_NAME_INCREMENT ) )
+      {
+         argElement = _argument.getField( FIELD_NAME_INCREMENT ) ;
+         PD_CHECK( NumberInt== argElement.type(), SDB_INVALIDARG, error, PDERROR,
+                  "Failed to get field [%s]", FIELD_NAME_INCREMENT ) ;
+         setIncrement( argElement.Int() );
+         parsedArgumentMask( UTIL_CL_AUTOINC_INCREMENT_FIELD ) ;
+      }
+
+      if( _argument.hasField( FIELD_NAME_START_VALUE ) )
+      {
+         argElement = _argument.getField( FIELD_NAME_START_VALUE ) ;
+         PD_CHECK( argElement.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                   "Failed to get field [%s]", FIELD_NAME_START_VALUE ) ;
+         setStartValue( argElement.numberLong() );
+         parsedArgumentMask( UTIL_CL_AUTOINC_STARTVALUE_FIELD ) ;
+      }
+
+      if( _argument.hasField( FIELD_NAME_MIN_VALUE ) )
+      {
+         argElement = _argument.getField( FIELD_NAME_MIN_VALUE ) ;
+         PD_CHECK( argElement.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                  "Failed to get field [%s]", FIELD_NAME_MIN_VALUE ) ;
+         setMinValue( argElement.numberLong() );
+         parsedArgumentMask( UTIL_CL_AUTOINC_MINVALUE_FIELD ) ;
+      }
+
+      if( _argument.hasField( FIELD_NAME_MAX_VALUE ) )
+      {
+         argElement = _argument.getField( FIELD_NAME_MAX_VALUE ) ;
+         PD_CHECK( argElement.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                  "Failed to get field [%s]", FIELD_NAME_MAX_VALUE ) ;
+         setMaxValue( argElement.numberLong() );
+         parsedArgumentMask( UTIL_CL_AUTOINC_MAXVALUE_FIELD ) ;
+      }
+
+      if( _argument.hasField( FIELD_NAME_CACHE_SIZE ) )
+      {
+         argElement = _argument.getField( FIELD_NAME_CACHE_SIZE ) ;
+         PD_CHECK( NumberInt == argElement.type(), SDB_INVALIDARG, error, PDERROR,
+                  "Failed to get field [%s]", FIELD_NAME_CACHE_SIZE ) ;
+         setCacheSize( argElement.Int() );
+         parsedArgumentMask( UTIL_CL_AUTOINC_CACHESIZE_FIELD ) ;
+      }
+
+      if( _argument.hasField( FIELD_NAME_ACQUIRE_SIZE ) )
+      {
+         argElement = _argument.getField( FIELD_NAME_ACQUIRE_SIZE ) ;
+         PD_CHECK( NumberInt == argElement.type(), SDB_INVALIDARG, error, PDERROR,
+                  "Failed to get field [%s]", FIELD_NAME_ACQUIRE_SIZE ) ;
+         setAcquireSize( argElement.Int() );
+         parsedArgumentMask( UTIL_CL_AUTOINC_ACQUIRESIZE_FIELD ) ;
+      }
+
+      if( _argument.hasField( FIELD_NAME_CYCLED ) )
+      {
+         argElement = _argument.getField( FIELD_NAME_CYCLED ) ;
+         PD_CHECK( Bool == argElement.type(), SDB_INVALIDARG, error, PDERROR,
+                  "Failed to get field [%s]", FIELD_NAME_CYCLED ) ;
+         setCycled( argElement.Bool() );
+         parsedArgumentMask( UTIL_CL_AUTOINC_CYCLED_FIELD ) ;
+      }
+
+      if( _argument.hasField( FIELD_NAME_GENERATED ) )
+      {
+         argElement = _argument.getField( FIELD_NAME_GENERATED ) ;
+         PD_CHECK( String == argElement.type(), SDB_INVALIDARG, error, PDERROR,
+                  "Failed to get field [%s]", FIELD_NAME_GENERATED ) ;
+         setGenerated( argElement.String() );
+         parsedArgumentMask( UTIL_CL_AUTOINC_GENERATED_FIELD ) ;
+      }
+
+      parsedArgumentMask( UTIL_CL_AUTOINCREMENT_FIELD ) ;
+
+      PD_CHECK( getArgumentCount() == (UINT32)_argument.nFields(),
+                SDB_INVALIDARG, error, PDERROR,
+                "Failed to parse argument: contain unknown fields" ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNCLAUTOINCFIELDARG_PARSEARG, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   /*
+      _rtnCLCreateAutoincFieldTask implement
+    */
+   _rtnCLCreateAutoincFieldTask::_rtnCLCreateAutoincFieldTask ( const rtnAlterTaskSchema & schema,
+                                                                const BSONObj & argument )
+   : _rtnAlterCLTask( schema, argument )
+   {
+   }
+
+   _rtnCLCreateAutoincFieldTask::~_rtnCLCreateAutoincFieldTask ()
+   {
+      for( UINT32 i = 0 ; i < _autoIncFieldList.size() ; i++)
+      {
+         SDB_OSS_DEL _autoIncFieldList[ i ] ;
+         _autoIncFieldList[ i ] = NULL ;
+      }
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCLCREATEAUTOINCFIELDTASK_PARSEARG, "_rtnCLCreateAutoincFieldTask::parseArgument" )
+   INT32 _rtnCLCreateAutoincFieldTask::parseArgument ()
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNCLCREATEAUTOINCFIELDTASK_PARSEARG ) ;
+
+      BSONElement argElement ;
+      std::string fieldName ;
+      BSONObj argObject ;
+      BSONObj autoArgObject ;
+      BSONObjIterator iterArgument( _argument ) ;
+
+      try
+      {
+         const char* name = _argument.firstElementFieldName() ;
+         if( *name == '0' )
+         {
+            while( iterArgument.more() )
+            {
+               const BSONElement autoIncArg = iterArgument.next() ;
+               rtnCLAutoincFieldArgument *autoIncField = NULL ;
+               autoArgObject = autoIncArg.Obj() ;
+               PD_CHECK( autoArgObject.hasField( FIELD_NAME_AUTOINC_FIELD ), SDB_INVALIDARG, error,
+                  PDERROR, "Failed to get field[%s]", FIELD_NAME_AUTOINC_FIELD ) ;
+
+               autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( autoIncArg.Obj() ) ;
+               PD_CHECK( NULL != autoIncField, SDB_OOM, error, PDERROR,
+                         "Failed to allocate autoincrement field argument" ) ;
+
+               rc = autoIncField->parseArgument() ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
+
+               _autoIncFieldList.push_back( autoIncField ) ;
+            }
+         }
+         else
+         {
+            rtnCLAutoincFieldArgument *autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( _argument ) ;
+            rc = autoIncField->parseArgument() ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
+
+            _autoIncFieldList.push_back( autoIncField ) ;
+         }
+      }
+      catch( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to parse arguments for create autoincfieldtask[%s], exception=%s",
+                 _argument.toString( false, false ).c_str(), e.what() ) ;
+         goto error ;
+      }
+
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNCLCREATEAUTOINCFIELDTASK_PARSEARG, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   /*
+      _rtnCLDropAutoincFieldTask implement
+    */
+   _rtnCLDropAutoincFieldTask::_rtnCLDropAutoincFieldTask ( const rtnAlterTaskSchema & schema,
+                                                                     const bson::BSONObj & argument )
+   : _rtnAlterCLTask( schema, argument )
+   {
+   }
+
+   _rtnCLDropAutoincFieldTask::~_rtnCLDropAutoincFieldTask ()
+   {
+      for( UINT32 i = 0 ; i < _autoIncFieldList.size() ; i++)
+      {
+         SDB_OSS_DEL _autoIncFieldList[ i ] ;
+         _autoIncFieldList[ i ] = NULL ;
+      }
+
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDROPAUTOINCFIELDTASK_PARSEARG, "_rtnCLDropAutoincFieldTask::parseArgument" )
+   INT32 _rtnCLDropAutoincFieldTask::parseArgument()
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNCLCREATEAUTOINCFIELDTASK_PARSEARG ) ;
+
+      std::string fieldName ;
+      BSONElement autoIncEle ;
+      BSONObj autoIncObject ;
+      vector<BSONElement> eleArray ;
+      rtnCLAutoincFieldArgument *autoIncField = NULL ;
+
+      try
+      {
+         PD_CHECK( _argument.hasField( FIELD_NAME_AUTOINC_FIELD ), SDB_INVALIDARG,
+                    error, PDERROR, "Failed to get field [%s]", FIELD_NAME_AUTOINC_FIELD ) ;
+         autoIncEle = _argument.getField( FIELD_NAME_AUTOINC_FIELD ) ;
+         PD_CHECK( autoIncEle.type() == bson::String ||
+                   autoIncEle.type() == bson::Array, SDB_INVALIDARG,
+                   error, PDERROR, "Failed to get field [%s]", FIELD_NAME_AUTOINC_FIELD ) ;
+         if ( autoIncEle.type() == bson::String )
+         {
+            autoIncObject = _argument ;
+            autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( autoIncObject ) ;
+            PD_CHECK( NULL != autoIncField, SDB_OOM, error, PDERROR,
+                      "Failed to allocate autoincrement field argument" ) ;
+
+            rc = autoIncField->parseArgument() ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
+
+            _autoIncFieldList.push_back( autoIncField ) ;
+         }
+         else if( autoIncEle.type() == bson::Array )
+         {
+            eleArray = autoIncEle.Array() ;
+            for ( UINT32 i = 0 ; i < eleArray.size() ; i++ )
+            {
+               BSONObjBuilder argbuilder ;
+               PD_CHECK( eleArray[i].type() == bson::String, SDB_INVALIDARG,
+                 error, PDERROR, "Failed to get field [%s]", FIELD_NAME_AUTOINCREMENT ) ;
+               argbuilder.append( FIELD_NAME_AUTOINC_FIELD , eleArray[i].String() ) ;
+               autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( argbuilder.obj() ) ;
+               PD_CHECK( NULL != autoIncField, SDB_OOM, error, PDERROR,
+                         "Failed to allocate autoincrement field argument" ) ;
+               rc = autoIncField->parseArgument() ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
+
+               _autoIncFieldList.push_back( autoIncField ) ;
+            }
+         }
+      }
+      catch( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to parse arguments for drop autoincfieldtask[%s], exception=%s",
+                 _argument.toString( false, false ).c_str(), e.what() ) ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNCLCREATEAUTOINCFIELDTASK_PARSEARG, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+
+   }
+
+   /*
       _rtnCLEnableShardingTask implement
     */
    _rtnCLEnableShardingTask::_rtnCLEnableShardingTask ( const rtnAlterTaskSchema & schema,
@@ -950,6 +1262,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNALTERCLSETATTRTASK_PARSEARG ) ;
 
       BSONElement argElement ;
+      rtnCLAutoincFieldArgument *autoIncField ;
+      vector<BSONElement> eleArray ;
 
       rc = _shardingArgument.parseArgument() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to parse sharding argument, rc: %d", rc ) ;
@@ -990,6 +1304,41 @@ namespace engine
 
       parsedArgumentMask( _extOptionArgument.getArgumentMask(),
                           _extOptionArgument.getArgumentCount() ) ;
+
+      if ( _argument.hasField( FIELD_NAME_AUTOINCREMENT ) )
+      {
+         argElement = _argument.getField( FIELD_NAME_AUTOINCREMENT ) ;
+         PD_CHECK( bson::Object == argElement.type() || bson::Array == argElement.type(),
+            SDB_INVALIDARG, error, PDERROR, "Failed to get field [%s]", FIELD_NAME_AUTOINCREMENT ) ;
+         if( bson::Object == argElement.type() )
+         {
+             PD_CHECK( argElement.Obj().hasField( FIELD_NAME_AUTOINC_FIELD ), SDB_INVALIDARG,
+               error, PDERROR, "Failed to get field [%s]", FIELD_NAME_AUTOINCREMENT ) ;
+            autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( argElement.Obj() ) ;
+            rc = autoIncField->parseArgument() ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
+            _autoIncFieldList.push_back( autoIncField ) ;
+         }
+         if(bson::Array == argElement.type() )
+         {
+            eleArray = argElement.Array() ;
+            for ( UINT32 i = 0 ; i < eleArray.size() ; i++ )
+            {
+               PD_CHECK( eleArray[i].Obj().hasField( FIELD_NAME_AUTOINC_FIELD ), SDB_INVALIDARG,
+                 error, PDERROR, "Failed to get field [%s]", FIELD_NAME_AUTOINCREMENT ) ;
+               autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( eleArray[i].Obj() ) ;
+               PD_CHECK( NULL != autoIncField, SDB_OOM, error, PDERROR,
+                         "Failed to allocate autoincrement field argument" ) ;
+               rc = autoIncField->parseArgument() ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
+
+               _autoIncFieldList.push_back( autoIncField ) ;
+            }
+         }
+         _argumentCount++ ;
+         setFlags( RTN_ALTER_TASK_FLAG_CONTEXTLOCK |
+                   RTN_ALTER_TASK_FLAG_SEQUENCE ) ;
+      }
 
       if ( _argument.hasField( FIELD_NAME_DOMAIN_AUTO_REBALANCE ) )
       {

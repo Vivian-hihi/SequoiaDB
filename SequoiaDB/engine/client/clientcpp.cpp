@@ -3758,6 +3758,16 @@ error:
       return _alterInternal( SDB_ALTER_CL_DROP_ID_INDEX, NULL, TRUE ) ;
    }
 
+   INT32 _sdbCollectionImpl::createAutoIncrement( const bson::BSONObj &options )
+   {
+      return _alterInternal( SDB_ALTER_CL_CRT_AUTOINC_FLD, &options, FALSE ) ;
+   }
+
+   INT32 _sdbCollectionImpl::dropAutoIncrement( const bson::BSONObj &options )
+   {
+      return _alterInternal( SDB_ALTER_CL_DROP_AUTOINC_FLD, &options, FALSE ) ;
+   }   
+
    INT32 _sdbCollectionImpl::enableSharding ( const bson::BSONObj & options )
    {
       return _alterInternal( SDB_ALTER_CL_ENABLE_SHARDING, &options, FALSE ) ;
@@ -7348,6 +7358,9 @@ error :
       case SDB_SNAP_SVCTASKS :
          p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SVCTASKS ;
          break ;
+      case SDB_SNAP_SEQUENCES :
+         p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SEQUENCES ;
+         break ;
       default :
          rc = SDB_INVALIDARG ;
          goto exit ;
@@ -7487,6 +7500,9 @@ error :
          break ;
       case SDB_LIST_CS_IN_DOMAIN :
          p = CMD_ADMIN_PREFIX CMD_NAME_LIST_CS_IN_DOMAIN ;
+         break ;
+      case SDB_LIST_SEQUENCES :
+         p = CMD_ADMIN_PREFIX CMD_NAME_LIST_SEQUENCES ;
          break ;
       default :
          rc = SDB_INVALIDARG ;
@@ -8209,6 +8225,11 @@ error :
    INT32 _sdbImpl::listCollections ( _sdbCursor **result )
    {
       return getList ( result, SDB_LIST_COLLECTIONS ) ;
+   }
+
+   INT32 _sdbImpl::listSequences ( _sdbCursor **result )
+   {
+      return getList ( result, SDB_LIST_SEQUENCES ) ;
    }
 
    INT32 _sdbImpl::listReplicaGroups ( _sdbCursor **result )

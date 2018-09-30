@@ -124,6 +124,8 @@ namespace engine
                                  MsgHeader *pMsg,
                                  const CHAR *pQuery,
                                  _pmdEDUCB *cb ) ;
+      virtual INT32 _clear ( _pmdEDUCB *cb ) ;
+      virtual INT32 _clearInternal(  _pmdEDUCB *cb, INT16 w  ) = 0 ;
 
       // Must be called in destruction function
       virtual INT32 _onCtxDelete () ;
@@ -151,6 +153,7 @@ namespace engine
       BOOLEAN _needRollback ;
       BOOLEAN _needUpdate ;
       BOOLEAN _hasUpdated ;
+      BOOLEAN _needClearAfterDone ;
 
       std::string _targetName ;
       BSONObj _boTarget ;

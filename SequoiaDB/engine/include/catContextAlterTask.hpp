@@ -80,6 +80,7 @@ namespace engine
                                 SDB_DMSCB * pDmsCB,
                                 SDB_DPSCB * pDpsCB,
                                 INT16 w ) ;
+         INT32 clearPostTasks ( _pmdEDUCB * cb, INT16 w ) ;
 
          OSS_INLINE const _utilList< UINT64 > & getPostTasks () const
          {
@@ -169,6 +170,21 @@ namespace engine
                                           UINT32 & attribute,
                                           bson::BSONObjBuilder & setBuilder,
                                           bson::BSONObjBuilder & unsetBuilder ) ;
+         INT32 _buildSetAutoincFields ( clsCatalogSet & cataSet,
+                                        autoIncFieldsList &fieldList,
+                                        BSONObjBuilder & setBuilder,
+                                        BSONObjBuilder & unsetBuilder,
+                                        BOOLEAN addRbk ) ;
+
+         INT32 _buildCreateAutoincFields ( clsCatalogSet & cataSet,
+                                           autoIncFieldsList & fieldList,
+                                           BSONObjBuilder & setBuilder,
+                                           BSONObjBuilder & unsetBuilder ) ;
+         INT32 _buildDropAutoincFields ( clsCatalogSet & cataSet,
+                                         autoIncFieldsList & fieldList,
+                                         BSONObjBuilder & setBuilder,
+                                         BSONObjBuilder & unsetBuilder,
+                                         BOOLEAN addRbk ) ;
 
          INT32 _fillShardingArgument ( clsCatalogSet & cataSet,
                                        rtnCLShardingArgument & argument ) ;
@@ -184,13 +200,146 @@ namespace engine
                                      SDB_DMSCB * pDmsCB,
                                      SDB_DPSCB * pDpsCB,
                                      INT16 w ) ;
+         INT32 _buildSequenceNames ( clsCatalogSet & cataSet,
+                                    autoIncFieldsList &fldList,
+                                    _pmdEDUCB * cb,
+                                    INT16 w ) ;
 
       protected :
          _utilList< UINT64 >     _postTasks ;
          rtnCLShardingArgument   _rollbackShardArgument ;
+         autoIncFieldsList       _rollbackAutoIncFields ;
    } ;
 
    typedef class _catCtxAlterCLTask catCtxAlterCLTask ;
+
+   class _catCtxSequenceTask : public _catCtxTaskBase
+   {
+   public :
+      _catCtxSequenceTask ( const std::string & collection,
+                                 const rtnAlterTask * task )
+      : _collection( collection ) ,
+        _seqTask( task )
+      {}
+      virtual ~_catCtxSequenceTask () {} ;
+
+      OSS_INLINE const rtnAlterTask * getSeqTask () const
+      {
+         return _seqTask ;
+      }
+      OSS_INLINE vector<BSONObj>  getRollbackObj () const
+      {
+         return _rollbackObj ;
+      }
+      virtual INT32 _executeInternal ( _pmdEDUCB * cb,
+                                       SDB_DMSCB * pDmsCB,
+                                       SDB_DPSCB * pDpsCB,
+                                       INT16 w ) = 0 ;
+      INT32 getCLUniqueID(_pmdEDUCB *cb, utilCLUniqueID *clUniqueID) ;
+   protected :
+      std::string _collection ;
+      const rtnAlterTask * _seqTask ;
+      std::vector<BSONObj> _rollbackObj ;
+   };
+   typedef class _catCtxSequenceTask catCtxSequenceTask ;
+
+   class _catCtxAlterSequenceTask : public _catCtxAlterTask
+   {
+   public :
+      _catCtxAlterSequenceTask ( const std::string & dataName,
+                                       const rtnAlterTask * task )
+      : _catCtxAlterTask( dataName, task )
+      {}
+      ~_catCtxAlterSequenceTask () {} ;
+      virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr )
+      {
+         return SDB_OK;
+      }
+
+      virtual INT32 _executeInternal ( _pmdEDUCB *cb,
+                                       SDB_DMSCB *pDmsCB,
+                                       SDB_DPSCB *pDpsCB,
+                                       INT16 w ) ;
+      virtual INT32 _rollbackInternal ( _pmdEDUCB *cb,
+                                        SDB_DMSCB *pDmsCB,
+                                        SDB_DPSCB *pDpsCB,
+                                        INT16 w ) ;
+      OSS_INLINE vector<BSONObj>  getRollbackObj () const
+      {
+         return _rollbackObj ;
+      }
+
+      INT32 getCLUniqueID(_pmdEDUCB *cb, utilCLUniqueID *clUniqueID) ;
+
+   protected:
+      std::vector<BSONObj> _rollbackObj ;
+
+   };
+   typedef class _catCtxAlterSequenceTask catCtxAlterSequenceTask ;
+
+   class _catCtxCreateSequenceTask : public _catCtxSequenceTask
+   {
+   public :
+      _catCtxCreateSequenceTask ( const string & collection,
+                                          const rtnAlterTask * task )
+      : _catCtxSequenceTask( collection, task )
+      {}
+      virtual ~_catCtxCreateSequenceTask () {} ;
+      virtual INT32 _preExecuteInternal ( _pmdEDUCB *cb,
+                                          SDB_DMSCB *pDmsCB,
+                                          SDB_DPSCB *pDpsCB,
+                                          INT16 w )
+      {
+         return SDB_OK;
+      }
+      virtual INT32 _executeInternal ( _pmdEDUCB * cb,
+                                       SDB_DMSCB * pDmsCB,
+                                       SDB_DPSCB * pDpsCB,
+                                       INT16 w ) ;
+      virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr )
+      {
+         return SDB_OK;
+      }
+
+      virtual INT32 _rollbackInternal ( _pmdEDUCB *cb,
+                                        SDB_DMSCB *pDmsCB,
+                                        SDB_DPSCB *pDpsCB,
+                                        INT16 w ) ;
+
+   };
+   typedef class _catCtxCreateSequenceTask catCtxCreateSequenceTask ;
+
+   class _catCtxDropSequenceTask : public _catCtxSequenceTask
+   {
+   public :
+      _catCtxDropSequenceTask ( const string & collection,
+                                       const rtnAlterTask * task )
+      : _catCtxSequenceTask( collection, task )
+      {}
+      virtual ~_catCtxDropSequenceTask () {} ;
+      virtual INT32 _preExecuteInternal ( _pmdEDUCB *cb,
+                                          SDB_DMSCB *pDmsCB,
+                                          SDB_DPSCB *pDpsCB,
+                                          INT16 w )
+      {
+         return SDB_OK ;
+      }
+      virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr )
+      {
+         return SDB_OK ;
+      }
+
+      virtual INT32 _executeInternal ( _pmdEDUCB *cb,
+                                       SDB_DMSCB *pDmsCB,
+                                       SDB_DPSCB *pDpsCB,
+                                       INT16 w ) ;
+      virtual INT32 _rollbackInternal ( _pmdEDUCB *cb,
+                                        SDB_DMSCB *pDmsCB,
+                                        SDB_DPSCB *pDpsCB,
+                                        INT16 w ) ;
+
+   };
+   typedef class _catCtxDropSequenceTask catCtxDropSequenceTask ;
 
    /*
       _catCtxAlterCSTask define

@@ -45,6 +45,7 @@
 #include "catCommon.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "coordSequenceAgent.hpp"
 
 using namespace bson;
 
@@ -585,6 +586,7 @@ namespace engine
                                          coordCMDArguments * pArgs )
    {
       INT32 rc = SDB_OK ;
+      CLS_TASK_TYPE type = CLS_TASK_UNKNOW ;
 
       PD_TRACE_ENTRY( COORD_DATAALTER__DOCOMMIT ) ;
 
@@ -595,7 +597,7 @@ namespace engine
       {
          // Execute post tasks
          rc = _executePostTasks( _arguments._targetName.c_str(),
-                                 _arguments.getPostTasks(), cb ) ;
+                                 _arguments.getPostTasks(), cb, &type ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to execute post tasks, rc: %d", rc ) ;
       }
 
@@ -669,7 +671,8 @@ namespace engine
 
    INT32 _coordDataCMDAlter::_executePostTasks ( const CHAR * name,
                                                  const _utilList< UINT64 > & postTasks,
-                                                 pmdEDUCB * cb )
+                                                 pmdEDUCB * cb,
+                                                 CLS_TASK_TYPE *type )
    {
       return SDB_OK ;
    }
@@ -680,7 +683,7 @@ namespace engine
    {
       return SDB_OK ;
    }
-
+   
    /*
       _coordCMDTestCollectionSpace implement
    */
@@ -1874,7 +1877,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCL__EXECPOSTTASKS, "_coordCMDAlterCollection::_executePostTasks" )
    INT32 _coordCMDAlterCollection::_executePostTasks ( const CHAR * name,
                                                        const _utilList< UINT64 > & postTasks,
-                                                       pmdEDUCB * cb )
+                                                       pmdEDUCB * cb,
+                                                       CLS_TASK_TYPE *type )
    {
       INT32 rc = SDB_OK ;
 
@@ -1883,6 +1887,7 @@ namespace engine
       CHAR * msgBuff = NULL ;
       INT32 msgSize = 0 ;
       MsgHeader * msgHeader = NULL ;
+      CLS_TASK_TYPE taskType ;
 
       vector<BSONObj> reply ;
       BSONObj taskDesc ;
@@ -1908,28 +1913,64 @@ namespace engine
             iterTask != reply.end() ;
             iterTask ++ )
       {
+         BSONElement ele ;
+         BSONObj delTask ;
+         string seqName ;
          BSONElement group ;
          CoordGroupList groupList ;
 
-         group = iterTask->getField( FIELD_NAME_TARGETID ) ;
-         PD_CHECK( NumberInt == group.type(), SDB_SYS, error, PDERROR,
-                   "Failed to parse task info [%s]: target id is not a integer",
+         PD_CHECK( iterTask->hasField( FIELD_NAME_TASKTYPE ), SDB_SYS, error, PDERROR, 
+                   "Faield to get task field[%s]", FIELD_NAME_TASKTYPE);
+         ele = iterTask->getField( FIELD_NAME_TASKTYPE ) ;
+         PD_CHECK( NumberInt == ele.type(), SDB_SYS, error, PDERROR,
+                   "Failed to parse task info [%s]: task type is not a integer",
                    iterTask->toString().c_str() ) ;
+         taskType = (CLS_TASK_TYPE)ele.Int() ;
+         switch( taskType )
+         {
+            case CLS_TASK_SPLIT :
+            {
+               group = iterTask->getField( FIELD_NAME_TARGETID ) ;
+               PD_CHECK( NumberInt == group.type(), SDB_SYS, error, PDERROR,
+                         "Failed to parse task info [%s]: target id is not a integer",
+                         iterTask->toString().c_str() ) ;
 
-         groupList[ group.Int() ] = group.Int() ;
+               groupList[ group.Int() ] = group.Int() ;
 
-         rc = msgBuildQueryMsg( &msgBuff, &msgSize, CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
-                                0, 0, 0, -1, &(*iterTask), NULL, NULL, NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to build split message, rc: %d", rc ) ;
+               rc = msgBuildQueryMsg( &msgBuff, &msgSize, CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
+                                      0, 0, 0, -1, &(*iterTask), NULL, NULL, NULL ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to build split message, rc: %d", rc ) ;
 
-         msgHeader = (MsgHeader *)msgBuff ;
-         rc = executeOnCL( msgHeader, cb, name, FALSE, &groupList, NULL, NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to notify group [%d] to split "
-                      "collection [%s], rc: %d", group.Int(), name, rc ) ;
+               msgHeader = (MsgHeader *)msgBuff ;
+               rc = executeOnCL( msgHeader, cb, name, FALSE, &groupList, NULL, NULL ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to notify group [%d] to split "
+                            "collection [%s], rc: %d", group.Int(), name, rc ) ;               
+               break ;
+            }
+            case CLS_TASK_SEQUENCE :
+            {
+               ele = iterTask->getField( FIELD_NAME_AUTOINC_SEQ ) ;
+               PD_CHECK( String == ele.type(), SDB_SYS, error, PDERROR,
+                         "Failed to parse task info [%s]: task sequence is not a string",
+                         iterTask->toString().c_str() ) ;
+               seqName = ele.String() ;
+               rc = coordSequenceInvalidateCache( seqName, cb );           
+               break ;
+            }
+            default :
+            {
+               break ;
+            }
+         }
       }
 
-      rc = _waitPostTasks( taskDesc, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to wait post tasks, rc: %d", rc ) ;
+      if( CLS_TASK_SPLIT == taskType )
+      {
+         rc = _waitPostTasks( taskDesc, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to wait post tasks, rc: %d", rc ) ;
+      }
+
+      *type = taskType ;
 
    done :
       if ( NULL != msgBuff )

@@ -111,7 +111,7 @@ namespace engine
       BOOLEAN _hasUpdated ;
       std::set<INT32> _ignoreRC ;
    } ;
-
+   typedef class _catCtxTaskBase catCtxTaskBase ;
    /*
     * _catCtxDataTask define
     */
@@ -144,6 +144,7 @@ namespace engine
       BSONObj _boData ;
    } ;
 
+   typedef _catCtxDataTask catCtxDataTask ;
    /*
     * _catCtxDropCSTask define
     */

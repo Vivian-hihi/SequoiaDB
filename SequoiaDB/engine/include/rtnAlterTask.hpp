@@ -58,7 +58,8 @@ namespace engine
    #define RTN_ALTER_TASK_FLAG_CONTEXTLOCK   ( 0x00000010 )
    // The alter command needs sharding locks in CATALOG to prevent splits
    #define RTN_ALTER_TASK_FLAG_SHARDLOCK     ( 0x00000020 )
-
+   // The alter command needs alter sequences
+   #define RTN_ALTER_TASK_FLAG_SEQUENCE      ( 0x00000040 )
    enum RTN_ALTER_OBJECT_TYPE
    {
       RTN_ALTER_INVALID_OBJECT = 0,
@@ -89,6 +90,8 @@ namespace engine
       RTN_ALTER_DOMAIN_SET_GROUPS,
       RTN_ALTER_DOMAIN_REMOVE_GROUPS,
       RTN_ALTER_DOMAIN_SET_ATTRIBUTES,
+      RTN_ALTER_CL_CREATE_AUTOINC_FLD,
+      RTN_ALTER_CL_DROP_AUTOINC_FLD,
       RTN_ALTER_MAX_ACTION
    } ;
 
@@ -457,6 +460,140 @@ namespace engine
    } ;
 
    /*
+      _rtnCLAutoincFieldArgument define
+    */
+   class _rtnCLAutoincFieldArgument;
+   typedef class _rtnCLAutoincFieldArgument rtnCLAutoincFieldArgument;
+   typedef std::vector<rtnCLAutoincFieldArgument*> autoIncFieldsList ;
+   class _rtnCLAutoincFieldArgument : public SDBObject
+   {
+      public:
+         _rtnCLAutoincFieldArgument(const bson::BSONObj & _argument );
+         ~_rtnCLAutoincFieldArgument();
+         rtnCLAutoincFieldArgument & operator = ( const rtnCLAutoincFieldArgument & argument ) ;
+         INT32 parseArgument () ;
+
+         OSS_INLINE std::string getFieldName () const
+         {
+            return _fieldName;
+         }
+         OSS_INLINE INT32 getIncrement () const
+         {
+            return _increment ;
+         }
+         OSS_INLINE INT64 getStartValue () const
+         {
+            return _startValue ;
+         }
+         OSS_INLINE INT64 getMinValue () const
+         {
+            return _minValue ;
+         }
+         OSS_INLINE INT64 getMaxValue () const
+         {
+            return _maxValue ;
+         }
+         OSS_INLINE INT32 getCacheSize () const
+         {
+            return _cacheSize ;
+         }
+         OSS_INLINE INT32 getAcquireSize () const
+         {
+            return _acquireSize ;
+         }
+         OSS_INLINE BOOLEAN isCycled () const
+         {
+            return _cycled ;
+         }
+         OSS_INLINE std::string getGenerated () const
+         {
+            return _generated ;
+         }
+
+         OSS_INLINE void setFieldName ( std::string name )
+         {
+            _fieldName = name ;
+         }
+
+         OSS_INLINE void setIncrement ( INT32 increment )
+         {
+            _increment = increment ;
+         }
+         OSS_INLINE void setStartValue ( INT64 startValue )
+         {
+            _startValue = startValue ;
+         }
+         OSS_INLINE void setMinValue ( INT64 minValue )
+         {
+            _minValue = minValue ;
+         }
+         OSS_INLINE void setMaxValue ( INT64 maxValue )
+         {
+            _maxValue = maxValue ;
+         }
+         OSS_INLINE void setCacheSize ( INT32 cacheSize )
+         {
+            _cacheSize = cacheSize ;
+         }
+         OSS_INLINE void setAcquireSize( INT32 acquireSize )
+         {
+            _acquireSize = acquireSize ;
+         }
+         OSS_INLINE void setCycled ( BOOLEAN cycled )
+         {
+            _cycled = cycled ;
+         }
+         OSS_INLINE void setGenerated ( std::string generated )
+         {
+            _generated = generated ;
+         }
+
+         OSS_INLINE UINT32 getArgumentMask () const
+         {
+            return _argumentMask ;
+         }
+
+         OSS_INLINE BOOLEAN testArgumentMask ( UINT32 fields ) const
+         {
+            return OSS_BIT_TEST( _argumentMask, fields ) ? TRUE : FALSE ;
+         }
+
+         OSS_INLINE void setArgumentMask ( UINT32 fields )
+         {
+            OSS_BIT_SET( _argumentMask, fields ) ;
+         }
+
+         OSS_INLINE void parsedArgumentMask ( UINT32 fields, UINT32 count = 1 )
+         {
+            setArgumentMask( fields ) ;
+            _argumentCount += count ;
+         }
+
+         OSS_INLINE UINT32 getArgumentCount () const
+         {
+            return _argumentCount ;
+         }
+         OSS_INLINE const bson::BSONObj getArgument () const
+         {
+            return _argument ;
+         }
+
+      protected:
+         std::string    _fieldName ;      // field name
+         INT32          _increment ;      // increament value
+         INT64          _startValue ;     // start value
+         INT64          _minValue ;       // minimum value
+         INT64          _maxValue ;       // maxinum value
+         INT32          _cacheSize ;      // cache size in Catalog
+         INT32          _acquireSize ;    // acquire size in Coordinator
+         BOOLEAN        _cycled ;         // true if cycle is allowed
+         std::string    _generated ;
+         UINT32         _argumentMask ;
+         UINT32         _argumentCount ;
+         const bson::BSONObj  _argument ;
+   };
+
+   /*
       _rtnAlterCLTask define
     */
    class _rtnAlterCLTask : public _rtnAlterTask
@@ -502,6 +639,58 @@ namespace engine
    } ;
 
    typedef class _rtnCLDropIDIndexTask rtnCLDropIDIndexTask ;
+
+   /*
+      _rtnCLCreateAutoincrementTask define
+    */
+   class _rtnCLCreateAutoincFieldTask : public _rtnAlterCLTask
+   {
+      public :
+         _rtnCLCreateAutoincFieldTask ( const rtnAlterTaskSchema & schema,
+                                   const bson::BSONObj & argument ) ;
+         virtual ~_rtnCLCreateAutoincFieldTask () ;
+         virtual INT32 parseArgument () ;
+         OSS_INLINE BOOLEAN containAutoincArgument () const
+         {
+            return !_autoIncFieldList.empty() ;
+         }
+
+         OSS_INLINE const autoIncFieldsList & getAutoincrementArgument () const
+         {
+            return _autoIncFieldList ;
+         }
+
+      protected:
+          autoIncFieldsList _autoIncFieldList ;
+   } ;
+
+   typedef class _rtnCLCreateAutoincFieldTask rtnCLCreateAutoincFieldTask ;
+
+   /*
+      _rtnCLDropAutoincTask define
+    */
+   class _rtnCLDropAutoincFieldTask : public _rtnAlterCLTask
+   {
+      public :
+         _rtnCLDropAutoincFieldTask ( const rtnAlterTaskSchema & schema,
+                                 const bson::BSONObj & argument ) ;
+         virtual ~_rtnCLDropAutoincFieldTask () ;
+         virtual INT32 parseArgument () ;
+         OSS_INLINE BOOLEAN containAutoincArgument () const
+         {
+            return !_autoIncFieldList.empty() ;
+         }
+
+         OSS_INLINE const autoIncFieldsList & getAutoincrementArgument () const
+         {
+            return _autoIncFieldList ;
+         }
+
+      protected:
+          autoIncFieldsList _autoIncFieldList ;
+   } ;
+
+   typedef class _rtnCLDropAutoincFieldTask rtnCLDropAutoincFieldTask ;
 
    /*
       _rtnCLEnableShardingTask define
@@ -617,6 +806,16 @@ namespace engine
             return _extOptionArgument ;
          }
 
+         OSS_INLINE BOOLEAN containAutoincArgument () const
+         {
+            return !_autoIncFieldList.empty() ;
+         }
+
+         OSS_INLINE const autoIncFieldsList & getAutoincFieldArgument () const
+         {
+            return _autoIncFieldList ;
+         }
+
          OSS_INLINE BOOLEAN isAutoRebalance () const
          {
             return _autoRebalance ;
@@ -643,6 +842,7 @@ namespace engine
          rtnCLShardingArgument      _shardingArgument ;
          rtnCLCompressArgument      _compressArgument ;
          rtnCLExtOptionArgument     _extOptionArgument ;
+         autoIncFieldsList          _autoIncFieldList ;
 
          BOOLEAN        _autoRebalance ;
          BOOLEAN        _autoIndexID ;

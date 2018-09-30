@@ -121,6 +121,17 @@
 #define FIELD_NAME_GENERATED                 "Generated"
 #define VALUE_NAME_ALWAYS                    "always"
 #define VALUE_NAME_DEFAULT                   "default"
+#define FIELD_NAME_CURRENT_VALUE             "CurrentValue"
+#define FIELD_NAME_INCREMENT                 "Increment"
+#define FIELD_NAME_START_VALUE               "StartValue"
+#define FIELD_NAME_MIN_VALUE                 "MinValue"
+#define FIELD_NAME_MAX_VALUE                 "MaxValue"
+#define FIELD_NAME_CACHE_SIZE                "CacheSize"
+#define FIELD_NAME_ACQUIRE_SIZE              "AcquireSize"
+#define FIELD_NAME_CYCLED                    "Cycled"
+#define FIELD_NAME_INTERNAL                  "Internal"
+#define FIELD_NAME_INITIAL                   "Initial"
+#define FIELD_NAME_NEXT_VALUE                "NextValue"
 #define FIELD_NAME_MAJOR                     "Major"
 #define FIELD_NAME_MINOR                     "Minor"
 #define FIELD_NAME_FIX                       "Fix"
@@ -485,6 +496,7 @@
 #define CMD_NAME_BACKUP_OFFLINE              "backup offline"
 #define CMD_NAME_CREATE_COLLECTION           "create collection"
 #define CMD_NAME_CREATE_COLLECTIONSPACE      "create collectionspace"
+#define CMD_NAME_CREATE_SEQUENCE			 "create sequence"
 #define CMD_NAME_CREATE_INDEX                "create index"
 #define CMD_NAME_CANCEL_TASK                 "cancel task"
 #define CMD_NAME_DROP_COLLECTION             "drop collection"
@@ -514,6 +526,7 @@
 #define CMD_NAME_LIST_TRANSACTIONS           "list transactions"
 #define CMD_NAME_LIST_TRANSACTIONS_CUR       "list transactions current"
 #define CMD_NAME_LIST_SVCTASKS               "list service tasks"
+#define CMD_NAME_LIST_SEQUENCES			     "list sequences"
 #define CMD_NAME_RENAME_COLLECTION           "rename collection"
 #define CMD_NAME_RENAME_COLLECTIONSPACE      "rename collectionspace"
 #define CMD_NAME_REORG_OFFLINE               "reorg offline"
@@ -536,6 +549,7 @@
 #define CMD_NAME_SNAPSHOT_HEALTH             "snapshot health"
 #define CMD_NAME_SNAPSHOT_CONFIGS            "snapshot configs"
 #define CMD_NAME_SNAPSHOT_SVCTASKS           "snapshot service tasks"
+#define CMD_NAME_SNAPSHOT_SEQUENCES			 "snapshot sequences"
 #define CMD_NAME_TEST_COLLECTION             "test collection"
 #define CMD_NAME_TEST_COLLECTIONSPACE        "test collectionspace"
 #define CMD_NAME_CREATE_GROUP                "create group"
@@ -601,6 +615,7 @@
 #define CMD_NAME_SNAPSHOT_HEALTH_INTR        "SNAPSHOT_HEALTH"
 #define CMD_NAME_SNAPSHOT_CONFIGS_INTR       "SNAPSHOT_CONFIGS"
 #define CMD_NAME_SNAPSHOT_SVCTASKS_INTR      "SNAPSHOT_SVCTASKS"
+#define CMD_NAME_SNAPSHOT_SEQUENCES_INTR     "SNAPSHOT_SEQUENCES"
 
 #define CMD_NAME_LIST_COLLECTION_INTR        "LIST_CL"
 #define CMD_NAME_LIST_SPACE_INTR             "LIST_CS"
@@ -617,6 +632,7 @@
 #define CMD_NAME_LIST_TASK_INTR              "LIST_TASK"
 #define CMD_NAME_LIST_DOMAIN_INTR            "LIST_DOMAIN"
 #define CMD_NAME_LIST_SVCTASKS_INTR          "LIST_SVCTASKS"
+#define CMD_NAME_LIST_SEQUENCES_INTR         "LIST_SEQUENCES"
 
 #define SYS_VIRTUAL_CS                       "SYS_VCS"
 #define SYS_VIRTUAL_CS_LEN                   sizeof( SYS_VIRTUAL_CS )
@@ -729,9 +745,10 @@ enum SDB_LOB_MODE
 #define SDB_CATALOG_NODE      "node"
 #define SDB_CATALOG_UNKNOWN   "unknown"
 
-#define SDB_CATALOG_CL_ID_INDEX  "id index"
-#define SDB_CATALOG_CL_SHARDING  "sharding"
-#define SDB_CATALOG_CL_COMPRESS  "compression"
+#define SDB_CATALOG_CL_ID_INDEX     "id index"
+#define SDB_CATALOG_CL_SHARDING     "sharding"
+#define SDB_CATALOG_CL_COMPRESS     "compression"
+#define SDB_CATALOG_CL_AUTOINC_FLD 	"autoincrement"
 
 #define SDB_CATALOG_CS_DOMAIN    SDB_CATALOG_DOMAIN
 #define SDB_CATALOG_CS_CAPPED    "capped"
@@ -761,6 +778,16 @@ enum SDB_LOB_MODE
 #define SDB_ALTER_CL_DROP_ID_INDEX     SDB_ALTER_ACTION_DROP \
                                        SDB_ALTER_DELIMITER \
                                        SDB_CATALOG_CL_ID_INDEX
+
+/// create autoincrement field
+#define SDB_ALTER_CL_CRT_AUTOINC_FLD   SDB_ALTER_ACTION_CREATE \
+                                       SDB_ALTER_DELIMITER \
+                                       SDB_CATALOG_CL_AUTOINC_FLD
+
+/// drop autoincrement field
+#define SDB_ALTER_CL_DROP_AUTOINC_FLD  SDB_ALTER_ACTION_DROP \
+                                       SDB_ALTER_DELIMITER \
+                                       SDB_CATALOG_CL_AUTOINC_FLD
 
 /// enable sharding
 #define SDB_ALTER_CL_ENABLE_SHARDING   SDB_ALTER_ACTION_ENABLE \

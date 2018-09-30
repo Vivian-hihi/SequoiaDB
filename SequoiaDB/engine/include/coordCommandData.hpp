@@ -40,6 +40,7 @@
 
 #include "coordCommand2Phase.hpp"
 #include "rtnAlterJob.hpp"
+#include "clsTask.hpp"
 
 using namespace bson ;
 
@@ -255,7 +256,8 @@ namespace engine
 
          virtual INT32 _executePostTasks ( const CHAR * name,
                                            const _utilList< UINT64 > & postTasks,
-                                           pmdEDUCB * cb ) ;
+                                           pmdEDUCB * cb,
+                                           CLS_TASK_TYPE *type ) ;
 
          virtual INT32 _cancelPostTasks ( const CHAR * name,
                                           const _utilList< UINT64 > & postTasks,
@@ -568,7 +570,8 @@ namespace engine
 
          virtual INT32 _executePostTasks ( const CHAR * name,
                                            const _utilList< UINT64 > & postTasks,
-                                           pmdEDUCB * cb ) ;
+                                           pmdEDUCB * cb,
+                                           CLS_TASK_TYPE *type ) ;
 
          virtual INT32 _cancelPostTasks ( const CHAR * name,
                                           const _utilList< UINT64 > & postTasks,
@@ -579,7 +582,6 @@ namespace engine
 
          INT32 _waitPostTasks ( const bson::BSONObj & taskDesc,
                                 pmdEDUCB * cb ) ;
-
          INT32 _cancelPostTask ( UINT64 taskID, pmdEDUCB * cb ) ;
    } ;
 

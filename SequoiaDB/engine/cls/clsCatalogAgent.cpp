@@ -1597,6 +1597,8 @@ namespace engine
    INT32 _clsCatalogSet::updateCatSet( const BSONObj & catSet, UINT32 groupID )
    {
       INT32 rc = SDB_OK ;
+      std::vector<BSONElement> eleArray ;
+      BSONObj autoIncField ;
       PD_TRACE_ENTRY ( SDB__CLSCT_UDCATSET ) ;
 
       PD_LOG ( PDDEBUG, "Update cataSet: %s", catSet.toString().c_str() ) ;
@@ -1626,6 +1628,41 @@ namespace engine
       else
       {
          _w = (INT32)ele.Int() ;
+      }
+
+      // update unique id
+      ele = catSet.getField( CAT_CL_UNIQUEID ) ;
+      if ( ele.eoo() )
+      {
+         _clUniqueID = 0;
+      }
+      else if ( ele.type() != NumberLong )
+      {
+         // if type is not Number, something wrong
+         PD_RC_CHECK ( SDB_CAT_CORRUPTION, PDSEVERE,
+                       "Catalog [%s] type error", CAT_CL_UNIQUEID ) ;
+      }
+      else
+      {
+         _clUniqueID = (UINT64)ele.Long();
+      }
+
+      // autoincrement fields
+      if( catSet.hasField( CAT_AUTOINCREMENT ) )
+      { 
+         eleArray = catSet.getField( CAT_AUTOINCREMENT ).Array();
+         for( UINT32 i = 0 ; i < eleArray.size() ; ++i )
+         {
+            autoIncField = eleArray[i].Obj() ;
+            if( !autoIncField.hasField( FIELD_NAME_AUTOINC_SEQ ) ||
+                !autoIncField.hasField( CAT_AUTOINC_FIELD ) ||
+                !autoIncField.hasField( CAT_AUTOINC_GENERATED ))
+            {
+               PD_RC_CHECK ( SDB_CAT_CORRUPTION, PDSEVERE,
+                 "Catalog [%s] type error", CAT_CL_UNIQUEID ) ;
+            }
+            addAutoIncField( autoIncField ) ;
+         }
       }
 
       // isMainCl
@@ -2243,6 +2280,12 @@ namespace engine
          }
       }
       return SDB_CAT_NO_MATCH_CATALOG ;
+   }
+
+   INT32 _clsCatalogSet::addAutoIncField ( BSONObj & autoIncField )
+   {
+      _autoIncFields.push_back( autoIncField );
+      return SDB_OK ;
    }
 
    INT32 _clsCatalogSet::findSubCLName ( const BSONObj &obj,

@@ -193,7 +193,7 @@ namespace engine
       return rc ;
    }
 
-   void _catCtxDataMultiTaskBase::_addTask ( _catCtxDataTask *pCtx,
+   void _catCtxDataMultiTaskBase::_addTask ( _catCtxTaskBase *pCtx,
                                              BOOLEAN pushExec )
    {
       _subTasks.push_back( pCtx ) ;
@@ -203,7 +203,7 @@ namespace engine
       }
    }
 
-   INT32 _catCtxDataMultiTaskBase::_pushExecTask ( _catCtxDataTask *pCtx )
+   INT32 _catCtxDataMultiTaskBase::_pushExecTask ( _catCtxTaskBase *pCtx )
    {
       _execTasks.push_back( pCtx ) ;
       return SDB_OK ;
@@ -2235,6 +2235,11 @@ namespace engine
          {
             _executeAfterLock = TRUE ;
          }
+
+         if( task->testFlags( RTN_ALTER_TASK_FLAG_SEQUENCE ) )
+         {
+            _needClearAfterDone = TRUE ;
+         }
       }
 
    done :
@@ -2279,6 +2284,40 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_CLEAR_INT, "_catCtxAlterCL::_clearInternal" )
+   INT32 _catCtxAlterCL::_clearInternal(  _pmdEDUCB *cb, INT16 w  )
+   {
+      INT32 rc = SDB_OK ;
+   
+      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_CLEAR_INT ) ;
+   
+      if ( _alterJob.isEmpty() )
+      {
+         goto done ;
+      }
+      else
+      {
+         const rtnAlterTask * task = NULL ;
+   
+         PD_CHECK( 1 == _alterJob.getAlterTasks().size(), SDB_SYS, error, PDERROR,
+                   "Failed to check alter job: should have only one task" ) ;
+   
+         task = _alterJob.getAlterTasks().front() ;
+         rc = _clearAlterTask( task, cb, w ) ;
+      }
+   
+      PD_RC_CHECK( rc, PDWARNING, "Failed to clear alter collection command,"
+                "rc: %d", rc ) ;
+   
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXALTERCL_CLEAR_INT, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+
+   }
+
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_CHECK_ALTERTASK, "_catCtxAlterCL::_checkAlterTask" )
    INT32 _catCtxAlterCL::_checkAlterTask ( const rtnAlterTask * task,
                                            _pmdEDUCB * cb )
@@ -2290,6 +2329,7 @@ namespace engine
       set<string> collectionSet ;
       catCtxLockMgr localLockMgr ;
       catCtxAlterCLTask * catTask = NULL ;
+      catCtxTaskBase * catAutoIncTask = NULL ;
       catCtxLockMgr * lockMgr = NULL ;
 
       if ( task->testFlags( RTN_ALTER_TASK_FLAG_CONTEXTLOCK ) )
@@ -2303,11 +2343,23 @@ namespace engine
 
       SDB_ASSERT( NULL != lockMgr, "lock manager is invalid" ) ;
 
+      rc = _addSequenceTask( _targetName, task, &catAutoIncTask, FALSE);
+      PD_RC_CHECK( rc, PDERROR, "Failed to add sequence task [%s] on "
+                   "collection [%s], rc: %d", task->getActionName(),
+                   _targetName.c_str(), rc ) ;
+
       rc = _addAlterTask( _targetName, task, &catTask, FALSE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to add alter task [%s] on "
                    "collection [%s], rc: %d", task->getActionName(),
                    _targetName.c_str(), rc ) ;
 
+      if( catAutoIncTask )
+      {
+         rc = catAutoIncTask->checkTask( cb, *lockMgr ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to check alter task [%s] on "
+                      "collection [%s], rc: %d", task->getActionName(),
+                      _targetName.c_str(), rc ) ;
+      }
       // It will add into collectionSet with other cl.
       // So we can lock cl and lock sharding after.
       catTask->disableLocks() ;
@@ -2317,11 +2369,18 @@ namespace engine
                    "collection [%s], rc: %d", task->getActionName(),
                    _targetName.c_str(), rc ) ;
 
-      rc = _addAlterSubTask( catTask, cb, *lockMgr, collectionSet,
+      rc = _addAlterSubCLTask( catTask, cb, *lockMgr, collectionSet,
                              _groupList ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to add alter sub tasks [%s] on "
                    "collection [%s], rc: %d", task->getActionName(),
                    _targetName.c_str(), rc ) ;
+
+      if( catAutoIncTask )
+      {
+         rc = _pushExecTask( catAutoIncTask ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to push collection task, "
+                      "rc: %d", rc ) ;
+      }
 
       rc = _pushExecTask( catTask ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to push collection task, "
@@ -2374,11 +2433,15 @@ namespace engine
                    "Failed to execute alter collection [%s] job, rc: %d",
                    _targetName.c_str(), rc ) ;
 
-      if ( 1 == _execTasks.size() )
+      for( UINT32 i = 0 ; i < _execTasks.size() ; i++ )
       {
-         catCtxAlterCLTask * task = dynamic_cast<catCtxAlterCLTask *>( _execTasks.front() ) ;
-         rc = task->startPostTasks( cb, _pDmsCB, _pDpsCB, w ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to start post tasks, rc: %d", rc ) ;
+         catCtxAlterCLTask * task = dynamic_cast<catCtxAlterCLTask *>( _execTasks[i] ) ;
+         if( task )
+         {
+            rc = task->startPostTasks( cb, _pDmsCB, _pDpsCB, w ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to start post tasks, rc: %d", rc ) ;
+         }
+
       }
 
    done :
@@ -2388,6 +2451,33 @@ namespace engine
    error :
       goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_CLEAR_ALTERTASK, "_catCtxAlterCL::_clearAlterTask" )
+   INT32 _catCtxAlterCL::_clearAlterTask ( const rtnAlterTask * task,
+                                             _pmdEDUCB * cb,
+                                             INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_CLEAR_ALTERTASK ) ;
+
+      for( UINT32 i = 0 ; i < _execTasks.size() ; i++ )
+      {
+         catCtxAlterCLTask * task = dynamic_cast<catCtxAlterCLTask *>( _execTasks[i] ) ;
+         if( task )
+         {
+            rc = task->clearPostTasks( cb, w ) ;
+            PD_RC_CHECK( rc, PDWARNING, "Failed to remove post tasks, rc: %d", rc ) ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXALTERCL_CLEAR_ALTERTASK, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }   
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL__ADDALTERTASK, "_catCtxAlterCL::_addAlterTask" )
    INT32 _catCtxAlterCL::_addAlterTask ( const string & collection,
@@ -2401,8 +2491,9 @@ namespace engine
 
       SDB_ASSERT( NULL != task, "task is invalid" ) ;
       SDB_ASSERT( NULL != catTask, "alter task is invalid" ) ;
+      catCtxAlterCLTask * tempTask = NULL ;
 
-      catCtxAlterCLTask * tempTask = SDB_OSS_NEW catCtxAlterCLTask( collection, task ) ;
+      tempTask = SDB_OSS_NEW catCtxAlterCLTask( collection, task ) ;
       PD_CHECK( tempTask, SDB_OOM, error, PDERROR,
                 "Failed to create alter task [%s] on collection [%s]",
                 task->getActionName(), collection.c_str() ) ;
@@ -2422,8 +2513,8 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL__ADDALTERSUBTASK, "_catCtxAlterCL::_addAlterSubTask" )
-   INT32 _catCtxAlterCL::_addAlterSubTask ( catCtxAlterCLTask * catTask,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL__ADDALTERSUBCLTASK, "_catCtxAlterCL::_addAlterSubCLTask" )
+   INT32 _catCtxAlterCL::_addAlterSubCLTask ( catCtxAlterCLTask * catTask,
                                             pmdEDUCB * cb,
                                             catCtxLockMgr & lockMgr,
                                             set< string > & collectionSet,
@@ -2431,7 +2522,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_CATCTXALTERCL__ADDALTERSUBTASK ) ;
+      PD_TRACE_ENTRY( SDB_CATCTXALTERCL__ADDALTERSUBCLTASK ) ;
 
       try
       {
@@ -2463,11 +2554,24 @@ namespace engine
             {
                const string & subCLName = (*iterSubCL) ;
                catCtxAlterCLTask * subCLTask = NULL ;
+               catCtxTaskBase * subCLAutoIncTask = NULL ;
+               rc = _addSequenceTask( _targetName, alterTask, &subCLAutoIncTask, TRUE);
+               PD_RC_CHECK( rc, PDERROR, "Failed to add sequence task [%s] on "
+                            "collection [%s], rc: %d", alterTask->getActionName(),
+                            _targetName.c_str(), rc ) ;
 
                rc = _addAlterTask( subCLName, alterTask, &subCLTask, TRUE ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to add alter task [%s] on "
                             "collection [%s], rc: %d", alterTask->getActionName(),
                             subCLName.c_str(), rc ) ;
+
+               if( subCLAutoIncTask )
+               {
+                  rc = subCLAutoIncTask->checkTask( cb, lockMgr ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to check alter task [%s] on "
+                               "collection [%s], rc: %d", alterTask->getActionName(),
+                               subCLName.c_str(), rc ) ;
+               }
 
                rc = subCLTask->checkTask( cb, lockMgr ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to check alter task [%s] on "
@@ -2501,12 +2605,169 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC( SDB_CATCTXALTERCL__ADDALTERSUBTASK, rc ) ;
+      PD_TRACE_EXITRC( SDB_CATCTXALTERCL__ADDALTERSUBCLTASK, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL__ADDSEQUENCETASK, "_catCtxAlterCL::_addSequenceTask" )
+   INT32 _catCtxAlterCL::_addSequenceTask( const string & collection,
+                                         const rtnAlterTask * task,
+                                         catCtxTaskBase ** catAutoIncTask,
+                                         BOOLEAN pushExec )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL__ADDSEQUENCETASK ) ;
+
+      SDB_ASSERT( NULL != task, "task is invalid" ) ;
+      catCtxAlterCLTask * tempTask = NULL ;
+
+      switch( task->getActionType() )
+      {
+         case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
+         {
+            rc = _addCreateSeqenceTask( collection, task, catAutoIncTask, pushExec) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to add sequence task [%s] on "
+                   "collection [%s], rc: %d", task->getActionName(),
+                   _targetName.c_str(), rc ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_DROP_AUTOINC_FLD :
+         {
+            rc = _addDropSeqenceTask( collection, task, catAutoIncTask, pushExec) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to add sequence task [%s] on "
+                   "collection [%s], rc: %d", task->getActionName(),
+                   _targetName.c_str(), rc ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_SET_ATTRIBUTES :
+         {
+            const rtnCLSetAttributeTask *setTask = dynamic_cast< const rtnCLSetAttributeTask * >( task ) ;
+            if( setTask->containAutoincArgument() )
+            {
+               rc = _addAlterSeqenceTask( collection, task, catAutoIncTask, pushExec) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to add sequence task [%s] on "
+                      "collection [%s], rc: %d", task->getActionName(),
+                      _targetName.c_str(), rc ) ;
+            }
+            break ;
+         }
+         default :
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXALTERCL__ADDSEQUENCETASK, rc ) ;
+      return rc ;
+
+   error :
+      SAFE_OSS_DELETE( tempTask ) ;
+      goto done ;
+
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_ADDCRTSEQ_TASK, "_catCtxAlterCL::_addCreateSeqenceTask" )
+   INT32 _catCtxAlterCL::_addCreateSeqenceTask( const string & collection,
+                                               const rtnAlterTask * task,
+                                               catCtxTaskBase ** catAutoIncTask,
+                                               BOOLEAN pushExec )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_ADDCRTSEQ_TASK ) ;
+
+      SDB_ASSERT( NULL != task, "task is invalid" ) ;
+      SDB_ASSERT( NULL != catAutoIncTask, "autoinc task is invalid" ) ;
+
+      catCtxTaskBase * tempSeqTask = NULL ;
+
+      tempSeqTask = SDB_OSS_NEW catCtxCreateSequenceTask( collection, task );
+      PD_CHECK( tempSeqTask, SDB_OOM, error, PDERROR,
+          "Failed to get create sequence task [%s] on collection [%s]",
+          task->getActionName(), collection.c_str() ) ;
+      _addTask( tempSeqTask, pushExec ) ;
+
+      *catAutoIncTask = tempSeqTask ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXALTERCL_ADDCRTSEQ_TASK, rc ) ;
+      return rc ;
+
+   error :
+      SAFE_OSS_DELETE( tempSeqTask ) ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_ADDDROPSEQ_TASK, "_catCtxAlterCL::_addDropSeqenceTask" )
+   INT32 _catCtxAlterCL::_addDropSeqenceTask( const string & collection,
+                                               const rtnAlterTask * task,
+                                               catCtxTaskBase ** catAutoIncTask,
+                                               BOOLEAN pushExec )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_ADDDROPSEQ_TASK ) ;
+
+      SDB_ASSERT( NULL != task, "task is invalid" ) ;
+      SDB_ASSERT( NULL != catAutoIncTask, "autoinc task is invalid" ) ;
+
+      catCtxTaskBase * tempSeqTask = NULL ;
+
+      tempSeqTask = SDB_OSS_NEW catCtxDropSequenceTask( collection, task );
+      PD_CHECK( tempSeqTask, SDB_OOM, error, PDERROR,
+          "Failed to get drop sequence task [%s] on collection [%s]",
+          task->getActionName(), collection.c_str() ) ;
+      _addTask( tempSeqTask, pushExec ) ;
+
+      *catAutoIncTask = tempSeqTask ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXALTERCL_ADDDROPSEQ_TASK, rc ) ;
+      return rc ;
+
+   error :
+      SAFE_OSS_DELETE( tempSeqTask ) ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_ADDALTERSEQ_TASK, "_catCtxAlterCL::_addAlterSeqenceTask" )
+   INT32 _catCtxAlterCL::_addAlterSeqenceTask( const string & collection,
+                                               const rtnAlterTask * task,
+                                               catCtxTaskBase ** catAutoIncTask,
+                                               BOOLEAN pushExec )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_ADDALTERSEQ_TASK ) ;
+
+      SDB_ASSERT( NULL != task, "task is invalid" ) ;
+      SDB_ASSERT( NULL != catAutoIncTask, "autoinc task is invalid" ) ;
+
+      catCtxTaskBase * tempSeqTask = NULL ;
+
+      tempSeqTask = SDB_OSS_NEW catCtxAlterSequenceTask( collection, task );
+      PD_CHECK( tempSeqTask, SDB_OOM, error, PDERROR,
+          "Failed to get alter sequence task [%s] on collection [%s]",
+          task->getActionName(), collection.c_str() ) ;
+      _addTask( tempSeqTask, pushExec ) ;
+
+      *catAutoIncTask = tempSeqTask ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXALTERCL_ADDALTERSEQ_TASK, rc ) ;
+      return rc ;
+
+   error :
+      SAFE_OSS_DELETE( tempSeqTask ) ;
+      goto done ;
+   }
+
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL__MAKEREPLY, "_catCtxAlterCL::_makeReply" )
    INT32 _catCtxAlterCL::_makeReply ( rtnContextBuf & buffObj )
@@ -2517,31 +2778,33 @@ namespace engine
 
       BOOLEAN containTasks = FALSE ;
 
-      if ( 1 == _execTasks.size() )
+     // TODO: ywx modify the condition
+      for( UINT32 i = 0 ; i < _execTasks.size() ; i++ )
       {
-         catCtxAlterCLTask * task = dynamic_cast<catCtxAlterCLTask *>( _execTasks.front() ) ;
-         PD_CHECK( NULL != task, SDB_SYS, error, PDERROR, "Failed to get alter collection task" ) ;
-
-         if ( !task->getPostTasks().empty() &&
-              !_groupList.empty() )
+         catCtxAlterCLTask * task = dynamic_cast<catCtxAlterCLTask *>( _execTasks[i] ) ;
+         if( task )
          {
-            // Generate task list
-            BSONObjBuilder replyBuilder ;
-            BSONArrayBuilder taskBuilder( replyBuilder.subarrayStart( CAT_TASKID_NAME ) ) ;
-            const _utilList< UINT64 > & postTasks = task->getPostTasks() ;
-            for ( _utilList<UINT64>::const_iterator iterTask = postTasks.begin() ;
-                  iterTask != postTasks.end() ;
-                  iterTask ++ )
+            if ( !task->getPostTasks().empty() &&
+                 !_groupList.empty() )
             {
-               taskBuilder.append( (INT64)( *iterTask ) ) ;
+               // Generate task list
+               BSONObjBuilder replyBuilder ;
+               BSONArrayBuilder taskBuilder( replyBuilder.subarrayStart( CAT_TASKID_NAME ) ) ;
+               const _utilList< UINT64 > & postTasks = task->getPostTasks() ;
+               for ( _utilList<UINT64>::const_iterator iterTask = postTasks.begin() ;
+                     iterTask != postTasks.end() ;
+                     iterTask ++ )
+               {
+                  taskBuilder.append( (INT64)( *iterTask ) ) ;
+               }
+               taskBuilder.done() ;
+
+               // Generate group list
+               _pCatCB->makeGroupsObj( replyBuilder, _groupList, TRUE ) ;
+
+               buffObj = rtnContextBuf( replyBuilder.obj() ) ;
+               containTasks = TRUE ;
             }
-            taskBuilder.done() ;
-
-            // Generate group list
-            _pCatCB->makeGroupsObj( replyBuilder, _groupList, TRUE ) ;
-
-            buffObj = rtnContextBuf( replyBuilder.obj() ) ;
-            containTasks = TRUE ;
          }
       }
 
@@ -2550,12 +2813,9 @@ namespace engine
          rc = _catCtxIndexMultiTask::_makeReply( buffObj ) ;
       }
 
-   done :
       PD_TRACE_EXITRC( SDB_CATCTXALTERCL__MAKEREPLY, rc ) ;
-      return rc ;
 
-   error :
-      goto done ;
+      return rc ;
    }
 
    /*

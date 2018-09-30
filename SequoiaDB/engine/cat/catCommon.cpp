@@ -4444,6 +4444,13 @@ namespace engine
       goto done ;
    }
 
+   string catGetSeqName4AutoIncFld( const utilCLUniqueID id, const string fldName )
+   {
+      stringstream   seqNameStream ;
+      seqNameStream.str("") ;
+      seqNameStream << "SYS_" << id << "_" << fldName << "_SEQ" ;
+      return seqNameStream.str() ;
+   }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCREATENODESTEP, "catCreateNodeStep" )
    INT32 catCreateNodeStep ( const string &groupName, const string &hostName,

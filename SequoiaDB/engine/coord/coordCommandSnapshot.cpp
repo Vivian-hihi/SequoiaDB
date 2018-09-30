@@ -39,6 +39,7 @@
 #include "catDef.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "catGTSDef.hpp"
 
 using namespace bson ;
 
@@ -723,6 +724,31 @@ namespace engine
    _coordCMDSnapshotSvcTasksIntr::~_coordCMDSnapshotSvcTasksIntr()
    {
    }
+
+   /*
+      _coordCMDSnapshotSequencess implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotSequences,
+                                      CMD_NAME_SNAPSHOT_SEQUENCES,
+                                      TRUE ) ;
+
+   _coordCMDSnapshotSequences::_coordCMDSnapshotSequences()
+   {
+   }
+
+   _coordCMDSnapshotSequences::~_coordCMDSnapshotSequences()
+   {
+   }
+
+   INT32 _coordCMDSnapshotSequences::_preProcess( rtnQueryOptions &queryOpt,
+                                            string & clName,
+                                            BSONObj &outSelector )
+   {
+      BSONObjBuilder builder ;
+      clName = GTS_SEQUENCE_COLLECTION_NAME ;
+      return SDB_OK ;
+   }
+
 
 }
 

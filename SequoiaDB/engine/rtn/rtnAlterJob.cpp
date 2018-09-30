@@ -88,11 +88,25 @@ namespace engine
                      RTN_ALTER_CL_CREATE_ID_INDEX,
                      RTN_ALTER_TASK_FLAG_MAINCLALLOW ) ;
 
+      // Create AutoIncrement Field
+      _registerTask( SDB_ALTER_CL_CRT_AUTOINC_FLD,
+                     RTN_ALTER_COLLECTION,
+                     RTN_ALTER_CL_CREATE_AUTOINC_FLD,
+                     ( RTN_ALTER_TASK_FLAG_CONTEXTLOCK |
+                       RTN_ALTER_TASK_FLAG_SEQUENCE ) ) ;
+
       /// Drop ID Index
       _registerTask( SDB_ALTER_CL_DROP_ID_INDEX,
                      RTN_ALTER_COLLECTION,
                      RTN_ALTER_CL_DROP_ID_INDEX,
                      RTN_ALTER_TASK_FLAG_MAINCLALLOW ) ;
+
+      /// Drop AutoIncrement Field
+      _registerTask( SDB_ALTER_CL_DROP_AUTOINC_FLD,
+                     RTN_ALTER_COLLECTION,
+                     RTN_ALTER_CL_DROP_AUTOINC_FLD,
+                     ( RTN_ALTER_TASK_FLAG_CONTEXTLOCK |
+                       RTN_ALTER_TASK_FLAG_SEQUENCE ) ) ;
 
       _registerTask( SDB_ALTER_CL_ENABLE_SHARDING,
                      RTN_ALTER_COLLECTION,
@@ -295,6 +309,9 @@ namespace engine
          if ( jobElement.eoo() )
          {
             BSONObj options ;
+            BSONObj autoIncOptions ;
+            BSONObjBuilder autoIncBuilder ;
+            BSONArrayBuilder autoIncArr ;
 
             _objectType = objectType ;
 
@@ -563,6 +580,16 @@ namespace engine
          case RTN_ALTER_DOMAIN_SET_ATTRIBUTES :
          {
             task = SDB_OSS_NEW rtnDomainSetAttributeTask( taskSchema, arguments ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
+         {
+            task = SDB_OSS_NEW rtnCLCreateAutoincFieldTask( taskSchema, arguments ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_DROP_AUTOINC_FLD :
+         {
+            task = SDB_OSS_NEW rtnCLDropAutoincFieldTask( taskSchema, arguments ) ;
             break ;
          }
          default :

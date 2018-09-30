@@ -59,6 +59,8 @@ namespace engine
 
       virtual INT32 _rollbackInternal ( _pmdEDUCB *cb, INT16 w )
       { return SDB_OK ; }
+      virtual INT32 _clearInternal(  _pmdEDUCB *cb, INT16 w  )
+      { return SDB_OK ; }
 
       virtual INT32 _initQuery ( const NET_HANDLE &handle,
                                  MsgHeader *pMsg,

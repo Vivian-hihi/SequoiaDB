@@ -386,6 +386,9 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnListTask)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnListUsers)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetDCInfo)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotSequences)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotSequencesIntr)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListSequences)
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnBackup)
    _rtnBackup::_rtnBackup ()
@@ -4422,6 +4425,12 @@ error:
          {
             rc = rtnAlterCLSetAttributes( collection, task, options, cb, dpsCB ) ;
             break ;
+         }
+         case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
+         case RTN_ALTER_CL_DROP_AUTOINC_FLD :
+         {
+            // do nothing
+            goto done;
          }
          default :
          {

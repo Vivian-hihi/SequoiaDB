@@ -365,6 +365,34 @@ namespace engine
    typedef _coordCmdListSessionCurIntr coordCmdListSessionCurIntr ;
 
    /*
+      _coordCMDListSequences define
+   */
+   class _coordCMDListSequences : public _coordCMDQueryBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDListSequences() ;
+         virtual ~_coordCMDListSequences() ;
+      protected:
+         virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+                                    string &clName,
+                                    BSONObj &outSelector ) ;
+   } ;
+   typedef _coordCMDListSequences coordCMDListSequences ;
+
+   /*
+      _coordCMDListSequencesIntr define
+   */
+   class _coordCMDListSequencesIntr : public _coordCMDListIntrBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDListSequencesIntr() ;
+         virtual ~_coordCMDListSequencesIntr() ;
+   } ;
+   typedef _coordCMDListSequencesIntr coordCMDListSequencesIntr ;
+
+   /*
       _coordCMDListUser define
    */
    class _coordCMDListUser : public _coordCMDQueryBase

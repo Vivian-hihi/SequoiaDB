@@ -469,6 +469,10 @@ namespace sdbclient
 
       INT32 dropIdIndex() ;
 
+      INT32 createAutoIncrement( const bson::BSONObj &options );
+      
+      INT32 dropAutoIncrement( const bson::BSONObj &options ) ;
+
       INT32 enableSharding ( const bson::BSONObj & options ) ;
 
       INT32 disableSharding () ;
@@ -1262,6 +1266,14 @@ namespace sdbclient
       {
          RELEASE_INNER_HANDLE( result.pCursor ) ;
          return listCollections ( &result.pCursor ) ;
+      }
+
+      INT32 listSequences ( _sdbCursor **result ) ;
+
+      INT32 listSequences ( sdbCursor &result )
+      {
+         RELEASE_INNER_HANDLE( result.pCursor ) ;
+         return listSequences( &result.pCursor ) ;
       }
 
       INT32 listReplicaGroups ( _sdbCursor **result ) ;

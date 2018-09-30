@@ -447,6 +447,7 @@ namespace engine
                                    _pmdEDUCB *cb, INT16 w ) ;
    INT32 catDropAutoIncSequence( const BSONObj &boCollection, _pmdEDUCB *cb, INT16 w ) ;
    BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt ) ;
+   string catGetSeqName4AutoIncFld( const utilCLUniqueID id, const string fldName ) ;
 }
 
 #endif //CAT_COMMON_HPP__
