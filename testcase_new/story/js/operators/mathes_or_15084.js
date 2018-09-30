@@ -17,18 +17,18 @@ function main()
       println("group less than 2");
       return ;
    }
-   
-   commDropCL( db, COMMCSNAME, CHANGEDPREFIX+"macthe15084", true, true,
+   var clName = CHANGEDPREFIX+"macthe15084";
+   commDropCL( db, COMMCSNAME, clName, true, true,
                   "drop cl in the beginning" ) ;
 
    //create CL
    var groups = commGetGroups(db);
    var srcGroupName = groups[0][0].GroupName;
    var destGroupName = groups[1][0].GroupName;
-   var varCL = commCreateCLByOption( db, COMMCSNAME, CHANGEDPREFIX+"macthe15084", {ShardingKey:{a:1},ShardingType:"hash",Group:srcGroupName}, true, false, "create cl in the beginning" )
+   var varCL = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingKey:{a:1},ShardingType:"hash",Group:srcGroupName}, true, false, "create cl in the beginning" )
    insertData( varCL, srcGroupName, destGroupName );
    checkResult( varCL )
-   commDropCL( db, COMMCSNAME, CHANGEDPREFIX+"macthe15084", true, true,
+   commDropCL( db, COMMCSNAME, clName, true, true,
                   "drop cl in the end" ) ;
 }
 
