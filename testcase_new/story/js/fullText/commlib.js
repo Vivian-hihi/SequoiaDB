@@ -81,7 +81,7 @@ function ESOperator()
    /*****************************************************************
    * run CURL command, to get SDBCOMMITID from elasticsearch by rest  
    *****************************************************************/
-   this.getCommitIDFromES = function getCommitIDFromES(esIndexName)
+   this.getCommitIDFromES = function (esIndexName)
    { 
       var commitID = -1;
 	
@@ -139,12 +139,7 @@ function ESOperator()
       {
          var actCount = this.countFromES(esIndexName);
          // if expect count < act count, exit
-         if(actCount > expectCount) 
-         {
-            println("check sync to ES fail: actCount: " + actCount + ", expectCount: " + expectCount);
-            break;
-         }
-         else if(actCount == expectCount)
+         if(actCount == expectCount)
          { 
             isSync = true;
          }
@@ -380,22 +375,23 @@ function checkRecords(clRecords, esRecords)
    }
 	
    // sort all keys of obj in clRecords and esRecords
-   for(var key in keys)
+   for(var i in keys)
    {
-      clRecords.sort(sortObjectInArray(key));
-      esRecords.sort(sortObjectInArray(key));
+      clRecords.sort(sortObjectInArray(keys[i]));
+      esRecords.sort(sortObjectInArray(keys[i]));
    }
-	
+
    // compare array  
    for(var i = 0; i < clRecords.length; i++)
    {
-      for(var key in keys)
+      for(var j in keys)
       {
+         var key = keys[j];
          if(clRecords[i][key] != esRecords[i][key])
          {
             throw buildException("checkRecords", "check record fail", "fail",
                         JSON.stringify(clRecords[i]), JSON.stringify(esRecords[i]));
-         }		
+         }	
       }
    }
 	
@@ -412,13 +408,13 @@ function sortObjectInArray(key)
 {
    return function (x, y)
    {
-      if(x && y && typeof x === 'object' && typeof x === 'object')
+      if(x && y && typeof x === 'object' && typeof y === 'object')
       {
          if(x[key] === y[key])  {  return 0;  }	
          // value type equals
-         if(typeof x[key] === typeof y[key])  {  return x[key] - y[key]; }
+         if(typeof x[key] === typeof y[key])  {  return x[key] < y[key] ? -1: 1; }
          // value type not equals
-         return typeof a - typeof b;   
+         return typeof x[key] < typeof y[key]? -1: 1;   
       }    
       else
       {
