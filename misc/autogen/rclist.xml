@@ -2645,7 +2645,7 @@
       <code>
          <name>SDB_CAT_CS_UNIQUEID_EXCEEDED</name>
          <description>
-            <en>CS uniqueID exceeds the maximum.</en>
+            <en>CS uniqueID exceeds the maximum</en>
             <cn>集合空间的UniqueID达到上限</cn>
          </description>
       </code>
@@ -2653,11 +2653,26 @@
       <code>
          <name>SDB_CAT_CL_UNIQUEID_EXCEEDED</name>
          <description>
-            <en>CL uniqueID exceeds the maximum.</en>
+            <en>CL uniqueID exceeds the maximum</en>
             <cn>集合的UniqueID达到上限</cn>
          </description>
       </code>
-      
+
+      <code>
+         <name>SDB_AUTOINCREMENT_FIELD_EXIST</name>
+         <description>
+            <en>Autoincrement field exists on collection</en>
+            <cn>集合上的该字段已经是自增字段</cn>
+         </description>
+      </code>
+
+      <code>
+         <name>SDB_AUTOINCREMENT_FIELD_NOT_EXIST</name>
+         <description>
+            <en>Autoincrement field dose not exists on collection</en>
+            <cn>集合上不存在该自增字段</cn>
+         </description>
+      </code>
 
    </codelist>
 </rclist>
