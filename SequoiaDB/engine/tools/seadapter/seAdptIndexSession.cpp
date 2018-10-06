@@ -734,12 +734,12 @@ namespace seadapter
    }
 
    // Parse the original object and get the items we want.
-   INT32 _seAdptIndexSession::_parseSrcData( const BSONObj &origObj,
-                                             _rtnExtOprType &oprType,
-                                             string& finalID,
-                                             INT64 &logicalID,
-                                             BSONObj &sourceObj,
-                                             string *newFinalID )
+   INT32 _seAdptIndexSession::_parseCappedRecord( const BSONObj &origObj,
+                                                  _rtnExtOprType &oprType,
+                                                  string &finalID,
+                                                  INT64 &logicalID,
+                                                  BSONObj &sourceObj,
+                                                  string *newFinalID )
    {
       INT32 rc = SDB_OK ;
       INT32 type = 0 ;
@@ -758,42 +758,54 @@ namespace seadapter
             goto error ;
          }
 
-         if ( RTN_EXT_INVALID == type )
+         if ( !_typeSupport( type ) )
          {
-            PD_LOG( PDERROR, "Operation type[ %d ] is invalid in "
+            PD_LOG( PDERROR, "Operation type[ %d ] is not supported in "
                     "source record: %s", type, origObj.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         rc = encodeID( ridEle, finalID ) ;
-         if ( rc )
-         {
-            if ( SDB_INVALIDARG != rc )
-            {
-               PD_LOG( PDERROR, "Encode id[ %s ] failed[ %d ]",
-                       ridEle.toString().c_str(), rc ) ;
-            }
             goto error ;
          }
 
          oprType = ( _rtnExtOprType )type ;
          logicalID = lidField.Long() ;
 
-         // If _id is modified, need to encode the new _id too.
+         encodeID( ridEle, finalID ) ;
+
+         // When updating the _id field, it's a little complicated, as some data
+         // types are not supported now, $minKey, for example. It may be updated
+         // from unsupported type to one that we  support, or reverse scenario.
+         // In these cases, the encode of the old or new _id will fail.
+         // Need careful checking to handle all these cases.
          if ( RTN_EXT_UPDATE_WITH_ID == oprType )
          {
             BSONElement newIdEle =
-               origObj.getField( SDB_SEADPT_FIELD_NAME_RID_NEW ) ;
+                  origObj.getField( SDB_SEADPT_FIELD_NAME_RID_NEW ) ;
             if ( newIdEle.eoo() )
             {
                rc = SDB_SYS ;
                PD_LOG( PDERROR, "Get new _id from object failed[ %d ]", rc ) ;
                goto error ;
             }
-            rc = encodeID( newIdEle, *newFinalID ) ;
-            PD_RC_CHECK( rc, PDERROR, "Encode id[ %s ] failed[ %d ]",
-                         newIdEle.toString().c_str(), rc ) ;
+            encodeID( newIdEle, *newFinalID ) ;
+            // Change from unsupported type to another unsupported type, nothing
+            // should be done.
+            if ( finalID.empty() && newFinalID->empty() )
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+         else
+         {
+            // For any other cases(_id not changed), if the encoding fails,
+            // return error.
+            if ( finalID.empty() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDWARNING, "Encode _id[ %s ] failed[ %d ]",
+                       ridEle.toString( false, true ).c_str(), rc ) ;
+               goto error ;
+            }
          }
 
          {
@@ -837,9 +849,9 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptIndexSession::_formatNormalRec( const BSONObj &origRecord,
-                                                string &finalID,
-                                                BSONObj &finalRecord )
+   INT32 _seAdptIndexSession::_parseNormalRecord( const BSONObj &origRecord,
+                                                  string &finalID,
+                                                  BSONObj &finalRecord )
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
@@ -896,14 +908,12 @@ namespace seadapter
          // field. Otherwise, the final object should be empty.
          if ( hasStrField )
          {
-            rc = encodeID( idEle, finalID ) ;
-            if ( rc )
+            encodeID( idEle, finalID ) ;
+            if ( finalID.empty() )
             {
-               if ( SDB_INVALIDARG != rc )
-               {
-                  PD_LOG( PDERROR, "Encode id[ %s ] failed[ %d ]",
-                          idEle.toString().c_str(), rc ) ;
-               }
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDWARNING, "Encode id[ %s ] failed[ %d ]",
+                       idEle.toString( false, true ).c_str(), rc ) ;
                goto error ;
             }
          }
@@ -981,7 +991,7 @@ namespace seadapter
          {
             BSONObj finalRec ;
             string finalID ;
-            rc = _formatNormalRec( *itr, finalID, finalRec ) ;
+            rc = _parseNormalRecord( *itr, finalID, finalRec ) ;
             if ( SDB_INVALIDARG == rc || finalRec.isEmpty() )
             {
                continue ;
@@ -1169,8 +1179,8 @@ namespace seadapter
             string finalID ;
             string finalIdNew ;
 
-            rc = _parseSrcData( *itr, oprType, finalID, logicalID,
-                                sourceObj, &finalIdNew ) ;
+            rc = _parseCappedRecord( *itr, oprType, finalID, logicalID,
+                                     sourceObj, &finalIdNew ) ;
             if ( rc )
             {
                if ( SDB_INVALIDARG == rc )
@@ -1795,23 +1805,37 @@ namespace seadapter
       goto done ;
    }
 
+   // Replace is delete + index.
    INT32 _seAdptIndexSession::_replace( const string &id, const string &newId,
                                         const BSONObj &document )
    {
       INT32 rc = SDB_OK ;
 
-      rc = _delete( id ) ;
-      PD_RC_CHECK( rc, PDERROR, "delete document of _id[ %d ] failed",
-                   id.c_str() ) ;
+      if ( !id.empty() )
+      {
+         rc = _delete( id ) ;
+         PD_RC_CHECK( rc, PDERROR, "delete document of _id[ %d ] failed[ %d ]",
+                      id.c_str(), rc ) ;
+      }
 
-      rc = _index( newId, document ) ;
-      PD_RC_CHECK( rc, PDERROR, "Index document[ %s ] with _id[ %d ] failed",
-                   document.toString(false, true).c_str(), newId.c_str() ) ;
+      if ( !newId.empty() )
+      {
+         rc = _index( newId, document ) ;
+         PD_RC_CHECK( rc, PDERROR, "Index document[ %s ] with _id[ %d ] "
+                                   "failed[ %d ]",
+                      document.toString(false, true).c_str(), newId.c_str(),
+                      rc ) ;
+      }
 
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   BOOLEAN _seAdptIndexSession::_typeSupport( INT32 type )
+   {
+      return ( type > RTN_EXT_INVALID && type < RTN_EXT_DUMMY ) ;
    }
 }
 

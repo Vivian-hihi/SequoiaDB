@@ -167,12 +167,14 @@ namespace seadapter
    //        x<type code><value code>
    // 'x' specifies this is an encoded id. The next char is its bson type.
    // After that, it's the raw data of the id value.
-   INT32 encodeID( const BSONElement &idEle, string &id )
+   // In case of any error or unsupported type, the id will be an empty string.
+   // The caller need to check it.
+   void encodeID( const BSONElement &idEle, string &id )
    {
-      INT32 rc = SDB_OK ;
       const CHAR *value = NULL ;
       INT32 valSize = 0 ;
       BOOLEAN idReady = FALSE ;
+      BOOLEAN unsupport = FALSE ;
 
       try
       {
@@ -200,19 +202,20 @@ namespace seadapter
                idReady = TRUE ;
                break ;
             default:
-               // Return -6 in case of unsupported type.
-               rc = SDB_INVALIDARG ;
-               goto error ;
+               // Return empty string in case of unsupported type.
+               id = "" ;
+               unsupport = TRUE ;
+               PD_LOG( PDWARNING, "Unsupported type[ %d ]", idEle.type() ) ;
+               break ;
          }
       }
       catch ( std::exception &e )
       {
-         rc = SDB_SYS ;
          PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
          goto error ;
       }
 
-      if ( !idReady )
+      if ( !idReady && !unsupport )
       {
          CHAR bType = (CHAR)( idEle.type() ) ;
          id = UTIL_ESID_ENCODE_PREFIX +
@@ -221,7 +224,7 @@ namespace seadapter
       }
 
    done:
-      return rc ;
+      return ;
    error:
       goto done ;
    }

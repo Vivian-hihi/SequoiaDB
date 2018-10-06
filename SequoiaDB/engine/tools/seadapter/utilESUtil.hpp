@@ -104,7 +104,7 @@ namespace seadapter
    } ;
    typedef _utilESMapping utilESMapping ;
 
-   INT32 encodeID( const BSONElement &idEle, string &id ) ;
+   void encodeID( const BSONElement &idEle, string &id ) ;
    INT32 decodeID( const CHAR *id, CHAR *raw, UINT32 &len, BSONType &type ) ;
 }
 

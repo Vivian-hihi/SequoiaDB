@@ -99,11 +99,12 @@ namespace seadapter
       INT32 _truncateSrcCappedData() ;
       INT32 _queryCappedCollection( BSONObj &condition ) ;
       INT32 _cleanData( INT64 recLID ) ;
-      INT32 _parseSrcData( const BSONObj &origObj, _rtnExtOprType &oprType,
-                           string& finalID, INT64 &logicalID,
-                           BSONObj &sourceObj, string *newFinalID = NULL ) ;
-      INT32 _formatNormalRec( const BSONObj &origRecord, string &finalID,
-                              BSONObj &finalRecord ) ;
+      INT32 _parseCappedRecord( const BSONObj &origObj, _rtnExtOprType &oprType,
+                                string &finalID, INT64 &logicalID,
+                                BSONObj &sourceObj,
+                                string *newFinalID = NULL ) ;
+      INT32 _parseNormalRecord( const BSONObj &origRecord, string &finalID,
+                                BSONObj &finalRecord ) ;
       INT32 _processNormalCLRecords( NET_HANDLE handle, MsgHeader *msg ) ;
 
       INT32 _processCappedCLRecords( NET_HANDLE handle, MsgHeader *msg ) ;
@@ -128,6 +129,8 @@ namespace seadapter
       INT32 _delete( const string &id ) ;
       INT32 _replace( const string &id, const string &newId,
                       const BSONObj &document ) ;
+
+      BOOLEAN _typeSupport( INT32 type ) ;
 
    private:
       INT32                   _origCLVersion ;
