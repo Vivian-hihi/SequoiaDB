@@ -2662,7 +2662,7 @@
          <name>SDB_AUTOINCREMENT_FIELD_EXIST</name>
          <description>
             <en>Autoincrement field exists on collection</en>
-            <cn>集合上的该字段已经是自增字段</cn>
+            <cn>自增字段已存在</cn>
          </description>
       </code>
 
@@ -2670,7 +2670,7 @@
          <name>SDB_AUTOINCREMENT_FIELD_NOT_EXIST</name>
          <description>
             <en>Autoincrement field dose not exists on collection</en>
-            <cn>集合上不存在该自增字段</cn>
+            <cn>自增字段不存在</cn>
          </description>
       </code>
 
