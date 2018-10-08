@@ -51,6 +51,7 @@
 #include "utilSet.hpp"
 #include "dms.hpp"
 #include "utilUniqueID.hpp"
+#include "coordAutoIncItem.hpp"
 
 using namespace bson ;
 
@@ -264,8 +265,10 @@ namespace engine
          INT64 getMaxSize() const { return _maxSize ; }
          INT64 getMaxRecNum() const { return _maxRecNum ; }
          BOOLEAN getOverWrite() const { return _overwrite ; }
+         const AUTOINC_ITEM_MAP& getAutoIncMap() const { return _autoIncMap ; }
          const std::vector<BSONObj> & getAutoIncFields() const { return _autoIncFields ; }
          INT32 addAutoIncField( BSONObj & autoIncField ) ;
+
       protected:
          _clsCatalogSet    *next () ;
          INT32             next ( _clsCatalogSet * next ) ;
@@ -299,6 +302,11 @@ namespace engine
          INT32             _removeItem( clsCatalogItem *item ) ;
          INT32             _addItem( clsCatalogItem *item ) ;
          void              _remakeGroupIDs() ;
+
+         INT32             _updateAutoIncMap( const BSONObj &autoIncArr ) ;
+         INT32             _mergeAutoIncItem( coordAutoIncItem &from,
+                                              coordAutoIncItem &to ) ;
+         void              _clearAutoIncMap() ;
 
       private:
          INT32             _version ;
@@ -336,6 +344,7 @@ namespace engine
          INT64             _maxSize ;
          INT64             _maxRecNum ;
          BOOLEAN           _overwrite ;
+         AUTOINC_ITEM_MAP  _autoIncMap ;
    };
    typedef class _clsCatalogSet clsCatalogSet ;
 
