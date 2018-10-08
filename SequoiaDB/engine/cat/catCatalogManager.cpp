@@ -1213,7 +1213,6 @@ namespace engine
       case MSG_CAT_ALTER_DOMAIN_REQ :
       case MSG_CAT_CREATE_IDX_REQ :
       case MSG_CAT_DROP_IDX_REQ :
-      case MSG_CAT_TRUNCATE_REQ :
          {
             // up commands is run in cluster acitve status
             _pCatCB->getCatDCMgr()->setWritedCommand( TRUE ) ;
@@ -1391,9 +1390,6 @@ namespace engine
             break ;
          case MSG_CAT_ALTER_DOMAIN_REQ :
             rc = processCmdAlterDomain ( pQuery ) ;
-            break ;
-         case MSG_CAT_TRUNCATE_REQ :
-            rc = processCmdTruncate ( pQuery ) ;
             break ;
          default :
             rc = SDB_INVALIDARG ;
@@ -1773,85 +1769,6 @@ namespace engine
       PD_TRACE_EXITRC( SDB_CATALOGMGR_ALTERDOMAIN, rc ) ;
       return rc ;
 
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_TRUNCATE, "catCatalogueManager::processCmdTruncate" )
-   INT32 catCatalogueManager::processCmdTruncate ( const CHAR *pQuery )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_CATALOGMGR_TRUNCATE ) ;
-
-      try
-      {
-         BSONObj              boQuery( pQuery ) ;
-         string               clName ;
-         BSONObj              boCollection ;
-         BSONElement          beAutoInc ;
-         BSONObj              boAutoInc ;
-         string               seqName ;
-         catSequenceManager   *pSeqMgr = NULL ;
-         BSONElement          ele ;
-         BSONObj              tmpObj ;
-
-         rc = rtnGetSTDStringElement( boQuery, FIELD_NAME_COLLECTION,
-                                      clName ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to get cl name, rc: %d", rc ) ;
-         rc = catGetCollection( clName, boCollection, _pEduCB ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to get cl info, rc: %d", rc ) ;
-
-         beAutoInc = boCollection.getField( CAT_AUTOINCREMENT ) ;
-         if ( EOO == beAutoInc.type() )
-         {
-            goto done ;
-         }
-         if ( Array != beAutoInc.type() )
-         {
-            PD_RC_CHECK( SDB_CAT_CORRUPTION, PDERROR,
-                         "Wrong type[%d] of auto-increment info, rc: %d",
-                         beAutoInc.type(), SDB_CAT_CORRUPTION ) ;
-         }
-
-         pSeqMgr = _pCatCB->getCatGTSMgr()->getSequenceMgr() ;
-         boAutoInc = beAutoInc.embeddedObject() ;
-
-         BSONObjIterator it( boAutoInc ) ;
-         while ( it.more() )
-         {
-            ele = it.next() ;
-            if ( Object != ele.type() )
-            {
-               PD_RC_CHECK( SDB_CAT_CORRUPTION, PDERROR,
-                            "Wrong type[%d] of auto-increment, rc: %d",
-                            ele.type(), SDB_CAT_CORRUPTION) ;
-            }
-
-            tmpObj = ele.embeddedObject() ;
-            rc = rtnGetSTDStringElement( tmpObj, CAT_AUTOINC_SEQ,
-                                         seqName ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to get sequence name, "
-                         "rc: %d", rc ) ;
-
-            rc = pSeqMgr->resetSequence( seqName, _pEduCB,
-                                         _majoritySize() ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to reset sequence[%s], "
-                         "rc: %d", seqName.c_str(), rc ) ;
-         }
-
-         PD_LOG( PDDEBUG, "truncated cl[%s]", clName.c_str() ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG ( PDERROR, "Occur exception: %s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-   done :
-      PD_TRACE_EXITRC ( SDB_CATALOGMGR_TRUNCATE, rc ) ;
-      return rc ;
    error :
       goto done ;
    }

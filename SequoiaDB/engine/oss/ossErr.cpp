@@ -359,8 +359,10 @@ const CHAR* getErrDesp ( INT32 errCode )
       "CL uniqueID conflict",
       "CS uniqueID conflict with remain cs",
       "CL uniqueID conflict with remain cl",
-      "CS uniqueID exceeds the maximum.",
-      "CL uniqueID exceeds the maximum."
+      "CS uniqueID exceeds the maximum",
+      "CL uniqueID exceeds the maximum",
+      "Autoincrement field exists on collection",
+      "Autoincrement field dose not exists on collection"
    } ;
 
    if ( code < 0 || (UINT32)code >= ( sizeof ( errDesp ) / sizeof ( CHAR* ) ) )

@@ -207,7 +207,6 @@ namespace engine
       INT32 processCmdCreateDomain ( const CHAR *pQuery ) ;
       INT32 processCmdDropDomain ( const CHAR *pQuery ) ;
       INT32 processCmdAlterDomain ( const CHAR *pQuery ) ;
-      INT32 processCmdTruncate ( const CHAR *pQuery ) ;
 
    // tool functions
    protected:

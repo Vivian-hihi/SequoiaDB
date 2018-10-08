@@ -39,7 +39,7 @@
 #include "msgMessage.hpp"
 #include "msgMessageFormat.hpp"
 #include "coordCommon.hpp"
-#include "coordKeyKicker.hpp"
+#include "coordShardKicker.hpp"
 #include "coordUtil.hpp"
 #include "coordFactory.hpp"
 #include "rtnCB.hpp"
@@ -502,7 +502,7 @@ namespace engine
                                                 BOOLEAN keepShardingKey )
    {
       INT32 rc = SDB_OK ;
-      coordKeyKicker kicker ;
+      coordShardKicker kicker ;
 
       BSONObj modifier ;
       BSONObj updator ;
@@ -536,8 +536,9 @@ namespace engine
       /// Init kicker
       kicker.bind( _pResource, cataInfo ) ;
 
-      rc = kicker.kickKey( updator, newUpdator, isChanged, cb, matcher,
-                           keepShardingKey ) ;
+      rc = kicker.kickShardingKey( updator, newUpdator,
+                                   isChanged, cb, matcher,
+                                   keepShardingKey ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Kick shardingkey for updator failed, rc: %d", rc ) ;
@@ -859,8 +860,7 @@ namespace engine
          pQueryMsg = ( MsgOpQuery* )pLastMsg ;
          inMsg._pMsg = ( MsgHeader* )pLastMsg ;
 
-         if ( isUpdate && ( cataSel.getCataPtr()->isSharded() ||
-                            cataSel.getCataPtr()->hasAutoIncrement() ) )
+         if ( isUpdate && cataSel.getCataPtr()->isSharded() )
          {
             //kick shardingKey
             BOOLEAN isChanged = FALSE ;

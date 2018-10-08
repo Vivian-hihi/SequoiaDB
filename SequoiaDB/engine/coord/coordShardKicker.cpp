@@ -35,7 +35,7 @@
 
 *******************************************************************************/
 
-#include "coordKeyKicker.hpp"
+#include "coordShardKicker.hpp"
 #include "pmdEDU.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
@@ -46,25 +46,25 @@ namespace engine
 {
 
    /*
-      _coordKeyKicker implement
+      _coordShardKicker implement
    */
-   _coordKeyKicker::_coordKeyKicker()
+   _coordShardKicker::_coordShardKicker()
    {
       _pResource = NULL ;
    }
 
-   _coordKeyKicker::~_coordKeyKicker()
+   _coordShardKicker::~_coordShardKicker()
    {
    }
 
-   void _coordKeyKicker::bind( coordResource *pResource,
+   void _coordShardKicker::bind( coordResource *pResource,
                                  const CoordCataInfoPtr &cataPtr )
    {
       _pResource = pResource ;
       _cataPtr = cataPtr ;
    }
 
-   BOOLEAN _coordKeyKicker::_isUpdateReplace( const BSONObj &updator )
+   BOOLEAN _coordShardKicker::_isUpdateReplace( const BSONObj &updator )
    {
       //INT32 rc = SDB_OK ;
       BSONObjIterator iter( updator ) ;
@@ -81,7 +81,7 @@ namespace engine
       return FALSE ;
    }
 
-   UINT32 _coordKeyKicker::_addKeys( const BSONObj &objKey )
+   UINT32 _coordShardKicker::_addKeys( const BSONObj &objKey )
    {
       UINT32 count = 0 ;
       BSONObjIterator itr( objKey ) ;
@@ -98,16 +98,13 @@ namespace engine
       return count ;
    }
 
-   /// kick sharding key and auto-increment key of a cl
-   INT32 _coordKeyKicker::_kickKey( const CoordCataInfoPtr &cataInfo,
-                                    const BSONObj &updator,
-                                    BSONObj &newUpdator,
-                                    BOOLEAN &hasShardingKey,
-                                    BOOLEAN &isChanged,
-                                    BOOLEAN ignoreAutoInc )
+   /// kick sharding key of a cl
+   INT32 _coordShardKicker::_kickShardingKey( const CoordCataInfoPtr &cataInfo,
+                                              const BSONObj &updator,
+                                              BSONObj &newUpdator,
+                                              BOOLEAN &hasShardingKey )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN replaceAutoInc = FALSE ;
       UINT32 skSiteID = cataInfo->getShardingKeySiteID() ;
 
       if ( skSiteID > 0 )
@@ -126,7 +123,6 @@ namespace engine
       {
          BSONObjBuilder bobNewUpdator( updator.objsize() ) ;
          BSONObj boShardingKey ;
-         BSONObj boAutoIncKey ;
          BSONObj subObj ;
 
          BOOLEAN isReplace = _isUpdateReplace( updator ) ;
@@ -207,16 +203,6 @@ namespace engine
                hasShardingKey = TRUE ;
             }
 
-            if ( cataInfo->hasAutoIncrement() && !ignoreAutoInc )
-            {
-               boAutoIncKey = _getAutoIncKeyObj( cataInfo->getAutoIncMap() ) ;
-               count = _addKeys( boAutoIncKey ) ;
-               if ( count > 0 )
-               {
-                  replaceAutoInc = TRUE ;
-               }
-            }
-
             if ( !_setKeys.empty() )
             {
                BSONObjBuilder keepBuilder( bobNewUpdator.subobjStart(
@@ -231,18 +217,6 @@ namespace engine
             }
          } // if ( isReplace )
          newUpdator = bobNewUpdator.obj() ;
-
-         if ( hasShardingKey || replaceAutoInc )
-         {
-            isChanged = TRUE ;
-         }
-
-         if ( skSiteID > 0 )
-         {
-            _skSiteIDs.insert(
-                       pair< UINT32, BOOLEAN >( skSiteID, hasShardingKey ) ) ;
-         }
-
       }
       catch ( std::exception &e )
       {
@@ -253,25 +227,30 @@ namespace engine
          goto error;
       }
 
+      if ( skSiteID > 0 )
+      {
+         _skSiteIDs.insert(
+                    pair< UINT32, BOOLEAN >( skSiteID, hasShardingKey ) ) ;
+      }
+
    done:
       return rc;
    error:
       goto done;
    }
 
-   /// kick sharding key and auto-increment key of cl
-   INT32 _coordKeyKicker::kickKey( const BSONObj &updator,
-                                   BSONObj &newUpdator,
-                                   BOOLEAN &isChanged,
-                                   pmdEDUCB *cb,
-                                   const BSONObj &matcher,
-                                   BOOLEAN keepShardingKey )
+   /// kick sharding key of all cl
+   INT32 _coordShardKicker::kickShardingKey( const BSONObj &updator,
+                                             BSONObj &newUpdator,
+                                             BOOLEAN &isChanged,
+                                             pmdEDUCB *cb,
+                                             const BSONObj &matcher,
+                                             BOOLEAN keepShardingKey )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN hasShardingKey = FALSE ;
 
-      if ( !_cataPtr.get() || (!_cataPtr->isSharded() &&
-                               !_cataPtr->hasAutoIncrement()) )
+      if ( !_cataPtr.get() || !_cataPtr->isSharded() )
       {
          newUpdator = updator ;
          goto done ;
@@ -281,20 +260,31 @@ namespace engine
       _skSiteIDs.clear() ;
       _setKeys.clear() ;
 
-      rc = _kickKey( _cataPtr, updator, newUpdator, hasShardingKey, isChanged ) ;
+      rc = _kickShardingKey( _cataPtr, updator, newUpdator, hasShardingKey ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Kick sharding key failed, rc: %d", rc ) ;
          goto error ;
       }
-      if ( keepShardingKey && hasShardingKey )
+      if ( keepShardingKey )
       {
-         rc = SDB_UPDATE_SHARD_KEY ;
-         PD_LOG( PDERROR, "Sharding key cannot be updated, rc: %d", rc ) ;
-         goto error ;
+         if ( hasShardingKey )
+         {
+            rc = SDB_UPDATE_SHARD_KEY ;
+            PD_LOG( PDERROR, "Sharding key cannot be updated, rc: %d", rc ) ;
+            goto error ;
+         }
          // can't set isChanged to FALSE, in case it is TRUE
          // when passing to this function.
       }
+      else
+      {
+         if ( hasShardingKey )
+         {
+            isChanged = TRUE ;
+         }
+      }
+
 
       /// When is main collection, need to kick all sub-collection's
       /// sharding key
@@ -339,7 +329,7 @@ namespace engine
    }
 
    /// kick sharding key of subcl
-   INT32 _coordKeyKicker::_kickShardingKey( const string &collectionName,
+   INT32 _coordShardKicker::_kickShardingKey( const string &collectionName,
                                               const BSONObj &updator,
                                               BSONObj &newUpdator,
                                               BOOLEAN &isChanged,
@@ -372,8 +362,8 @@ namespace engine
          goto done ;
       }
 
-      rc = _kickKey( cataPtr, updator, newUpdator,
-                     hasShardingKey, isChanged, TRUE ) ;
+      rc = _kickShardingKey( cataPtr, updator, newUpdator,
+                             hasShardingKey ) ;
       if ( rc )
       {
          goto error ;
@@ -392,6 +382,13 @@ namespace engine
          // can't set isChanged to FALSE, in case it is TRUE
          // when passing to this function.
       }
+      else
+      {
+         if ( hasShardingKey )
+         {
+            isChanged = TRUE ;
+         }
+      }
 
    done:
       return rc ;
@@ -399,7 +396,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _coordKeyKicker::checkShardingKey( const BSONObj &updator,
+   INT32 _coordShardKicker::checkShardingKey( const BSONObj &updator,
                                               BOOLEAN &hasInclude,
                                               _pmdEDUCB *cb,
                                               const BSONObj &matcher )
@@ -469,7 +466,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _coordKeyKicker::_checkShardingKey( const CoordCataInfoPtr &cataInfo,
+   INT32 _coordShardKicker::_checkShardingKey( const CoordCataInfoPtr &cataInfo,
                                                const BSONObj &updator,
                                                BOOLEAN &hasInclude )
    {
@@ -574,7 +571,7 @@ namespace engine
       goto done;
    }
 
-   INT32 _coordKeyKicker::_checkShardingKey( const string &collectionName,
+   INT32 _coordShardKicker::_checkShardingKey( const string &collectionName,
                                                const BSONObj &updator,
                                                BOOLEAN &hasInclude,
                                                _pmdEDUCB *cb )
@@ -613,45 +610,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }
-
-   BSONObj _coordKeyKicker::_getAutoIncKeyObj( const AUTOINC_ITEM_MAP &autoIncMap )
-   {
-      BSONObjBuilder builder ;
-      AUTOINC_ITEM_MAP_CONST_IT it ;
-
-      for ( it = autoIncMap.begin() ; it != autoIncMap.end() ; ++it )
-      {
-         if ( !it->second->hasSubField() )
-         {
-            builder.append( it->first, (INT32)1 ) ;
-         }
-         else
-         {
-            _appendSubField( builder, it->first, *(it->second->subFieldMap()) ) ;
-         }
-      }
-
-      return builder.obj() ;
-   }
-
-   void _coordKeyKicker::_appendSubField( BSONObjBuilder &builder,
-                                          string mainField,
-                                          const AUTOINC_ITEM_MAP &subMap )
-   {
-      AUTOINC_ITEM_MAP_CONST_IT it ;
-
-      for ( it = subMap.begin() ; it != subMap.end() ; ++it )
-      {
-         if( !it->second->hasSubField() )
-         {
-            builder.append( mainField + "." + it->first, (INT32)1 ) ;
-         }
-         else
-         {
-            _appendSubField( builder, mainField + "." + it->first, *(it->second->subFieldMap()) ) ;
-         }
-      }
    }
 
 }

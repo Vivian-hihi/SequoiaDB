@@ -39,7 +39,6 @@
 
 #include "clsCatalogAgent.hpp"
 #include "utilMap.hpp"
-#include "coordAutoIncItem.hpp"
 #include "../bson/bson.h"
 #include <vector>
 #include <queue>
@@ -285,16 +284,6 @@ namespace engine
                            UINT32 &groupID )
       {
          return _catlogSet.findGroupID( oid, sequence, groupID ) ;
-      }
-
-      BOOLEAN hasAutoIncrement() const
-      {
-         return !_catlogSet.getAutoIncMap().empty() ;
-      }
-
-      const AUTOINC_ITEM_MAP& getAutoIncMap() const
-      {
-         return _catlogSet.getAutoIncMap() ;
       }
 
    private:

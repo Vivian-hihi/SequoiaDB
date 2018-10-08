@@ -41,7 +41,7 @@
 #include "rtnCommandDef.hpp"
 #include "coordUtil.hpp"
 #include "mthModifier.hpp"
-#include "coordKeyKicker.hpp"
+#include "coordShardKicker.hpp"
 #include "coordInsertOperator.hpp"
 #include "mthMatchTree.hpp"
 #include "mthModifier.hpp"
@@ -195,14 +195,15 @@ namespace engine
          BOOLEAN keepShardingKey = OSS_BIT_TEST( flag,
                                                  FLG_UPDATE_KEEP_SHARDINGKEY ) ;
 
-         if ( cataSel.getCataPtr()->isSharded() ||
-              cataSel.getCataPtr()->hasAutoIncrement() )
+         if ( cataSel.getCataPtr()->isSharded() )
          {
-            coordKeyKicker kicker ;
-            kicker.bind( _pResource, cataSel.getCataPtr() ) ;
+            coordShardKicker shardKicker ;
+            shardKicker.bind( _pResource, cataSel.getCataPtr() ) ;
 
-            rc = kicker.kickKey( boUpdator, tmpNewObj, isChanged, cb,
-                                 boSelector, keepShardingKey ) ;
+            rc = shardKicker.kickShardingKey( boUpdator, tmpNewObj,
+                                              isChanged, cb,
+                                              boSelector,
+                                              keepShardingKey ) ;
             if ( SDB_UPDATE_SHARD_KEY == rc && !cataSel.hasUpdated() )
             {
                rc = cataSel.updateCataInfo( pCollectionName, cb ) ;
@@ -226,6 +227,7 @@ namespace engine
 
          if ( !isChanged )
          {
+            // no sharding key
             pNewUpdate = pUpdate ;
          }
          else if ( !pMsgBuff || !tmpNewObj.equal( newUpdator ) )

@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-   Source File Name = coordKeyKicker.hpp
+   Source File Name = coordShardKicker.hpp
 
    Descriptive Name =
 
@@ -34,8 +34,8 @@
 
 *******************************************************************************/
 
-#ifndef COORD_KEY_KICKER_HPP__
-#define COORD_KEY_KICKER_HPP__
+#ifndef COORD_SHARD_KICKER_HPP__
+#define COORD_SHARD_KICKER_HPP__
 
 #include "coordResource.hpp"
 #include "../bson/bson.h"
@@ -46,9 +46,9 @@ namespace engine
 {
 
    /*
-      _coordKeyKicker define
+      _coordShardKicker define
    */
-   class _coordKeyKicker : public SDBObject
+   class _coordShardKicker : public SDBObject
    {
       struct strContainner
       {
@@ -78,19 +78,19 @@ namespace engine
       typedef set< strContainner >              SET_SHARDINGKEY ;
 
    public:
-      _coordKeyKicker() ;
-      ~_coordKeyKicker() ;
+      _coordShardKicker() ;
+      ~_coordShardKicker() ;
 
       void     bind( coordResource *pResource,
                      const CoordCataInfoPtr &cataPtr ) ;
 
    public:
-      INT32    kickKey( const BSONObj &updator,
-                        BSONObj &newUpdator,
-                        BOOLEAN &isChanged,
-                        _pmdEDUCB *cb,
-                        const BSONObj &matcher = BSONObj(),
-                        BOOLEAN keepShardingKey = FALSE ) ;
+      INT32    kickShardingKey( const BSONObj &updator,
+                                BSONObj &newUpdator,
+                                BOOLEAN &isChange,
+                                _pmdEDUCB *cb,
+                                const BSONObj &matcher = BSONObj(),
+                                BOOLEAN keepShardingKey = FALSE ) ;
 
       INT32    checkShardingKey( const BSONObj &updator,
                                  BOOLEAN &hasInclude,
@@ -101,17 +101,15 @@ namespace engine
       BOOLEAN     _isUpdateReplace( const BSONObj &updator ) ;
       UINT32      _addKeys( const BSONObj &objKey ) ;
 
-      INT32       _kickKey( const CoordCataInfoPtr &cataInfo,
-                            const BSONObj &updator,
-                            BSONObj &newUpdator,
-                            BOOLEAN &hasShardingKey,
-                            BOOLEAN &isChanged,
-                            BOOLEAN ignoreAutoInc = FALSE ) ;
+      INT32       _kickShardingKey( const CoordCataInfoPtr &cataInfo,
+                                    const BSONObj &updator,
+                                    BSONObj &newUpdator,
+                                    BOOLEAN &hasShardingKey ) ;
 
       INT32       _kickShardingKey( const string &collectionName,
                                     const BSONObj &updator,
                                     BSONObj &newUpdator,
-                                    BOOLEAN &isChanged,
+                                    BOOLEAN &isChange,
                                     _pmdEDUCB *cb,
                                     BOOLEAN keepShardingKey ) ;
 
@@ -124,12 +122,6 @@ namespace engine
                                      BOOLEAN &hasInclude,
                                      _pmdEDUCB *cb ) ;
 
-      BSONObj     _getAutoIncKeyObj( const AUTOINC_ITEM_MAP &autoIncMap ) ;
-
-      void        _appendSubField( BSONObjBuilder &builder,
-                                   string mainField,
-                                   const AUTOINC_ITEM_MAP &subMap ) ;
-
    private:
       map< UINT32, BOOLEAN >     _skSiteIDs ;
       SET_SHARDINGKEY            _setKeys ;
@@ -138,9 +130,9 @@ namespace engine
       CoordCataInfoPtr           _cataPtr ;
 
    } ;
-   typedef _coordKeyKicker coordKeyKicker ;
+   typedef _coordShardKicker coordShardKicker ;
 
 }
 
-#endif //COORD_KEY_KICKER_HPP__
+#endif //COORD_SHARD_KICKER_HPP__
 

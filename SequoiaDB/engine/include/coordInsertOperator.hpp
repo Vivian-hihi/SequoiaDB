@@ -105,20 +105,6 @@ namespace engine
                                vector< BSONObj > &subClInfoLst,
                                GROUP_2_IOVEC &datas ) ;
 
-         /// AutoIncrement relation
-         INT32 _addAutoIncToData( const AUTOINC_ITEM_MAP &autoIncMap,
-                                  CHAR *pInsertor,
-                                  INT32 count,
-                                  pmdEDUCB *cb,
-                                  CHAR **ppBuff,
-                                  INT32 &buffSize,
-                                  INT32 &buffLen ) ;
-
-         INT32 _addAutoIncToObj( const BSONObj &objIn,
-                                 const AUTOINC_ITEM_MAP &autoIncMap,
-                                 pmdEDUCB *cb,
-                                 BufBuilder &bufBuilder ) ;
-
       protected:
 
          virtual INT32              _prepareCLOp( coordCataSel &cataSel,
@@ -162,15 +148,6 @@ namespace engine
          */
          VEC_OBJECT     _vecObject ;
          GroupSubCLMap  _grpSubCLDatas ;
-
-         /*
-            For autoIncrement
-         */
-         CHAR*          _pBoBuff ;
-         INT32          _boBuffSize ;
-         INT32          _boBuffLen ;
-         CHAR*          _pOrgInsertor ;
-         INT32          _boCount ;
 
    } ;
    typedef _coordInsertOperator coordInsertOperator ;

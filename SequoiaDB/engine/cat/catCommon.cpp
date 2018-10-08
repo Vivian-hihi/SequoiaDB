@@ -4704,16 +4704,12 @@ namespace engine
       INT32          rc = SDB_OK ;
       BSONElement    fieldEle ;
       string         fieldStr ;
-      string         shortStr ;
-      string         longStr ;
       BSONElement    generatedEle ;
       string         generatedStr ;
-      vector<string> fieldStrArr ;
-      vector<string>::iterator it ;
-      size_t         i = 0 ;
+      set<string>    fieldStrSet ;
+      size_t         i ;
       BSONObj        obj ;
       BSONObj        seqOpt ;
-      BOOLEAN        isParentChild = FALSE ;
 
       for ( i = 0 ; i < options.size() ; ++i )
       {
@@ -4739,34 +4735,11 @@ namespace engine
                             fieldStr.c_str() ) ;
             }
 
-            for ( it = fieldStrArr.begin() ; it != fieldStrArr.end() ; ++it )
+            if ( fieldStrSet.find( fieldStr ) != fieldStrSet.end() )
             {
-               // same field conflicts
-               if ( fieldStr == *it )
-               {
-                  PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
-                               "AutoIncrement fields[%s, %s] can't be the same.",
-                               fieldStr.c_str(), it->c_str() ) ;
-               }
-
-               // 'a' conflicts with 'a.b'
-               if ( fieldStr.length() > it->length() )
-               {
-                  longStr = fieldStr ;
-                  shortStr = *it ;
-               }
-               else
-               {
-                  longStr = *it ;
-                  shortStr = fieldStr ;
-               }
-               isParentChild = utilStrStartsWith( longStr, shortStr ) &&
-                               '.' == longStr.at(shortStr.length()) ;
-               PD_CHECK( !isParentChild, SDB_INVALIDARG, error, PDWARNING,
-                         "AutoIncrement fields[%s, %s] can't be parent child relation",
-                         longStr.c_str(), shortStr.c_str() ) ;
+               PD_RC_CHECK( SDB_INVALIDARG, PDWARNING, "AutoIncrement field conflicted" ) ;
             }
-            fieldStrArr.push_back( fieldStr ) ;
+            fieldStrSet.insert( fieldStr ) ;
          }
          else
          {
@@ -4786,7 +4759,6 @@ namespace engine
             generatedStr = generatedEle.String() ;
 
             if ( generatedStr != CAT_GENERATED_ALWAYS &&
-                 generatedStr != CAT_GENERATED_STRICT &&
                  generatedStr != CAT_GENERATED_DEFAULT )
             {
                PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
@@ -4825,17 +4797,17 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_CATCREATEAUTOINCSEQUENCE ) ;
 
-      size_t               i = 0 ;
-      size_t               j = 0 ;
+      size_t               i ;
+      size_t               j ;
       vector<BSONElement>  autoIncMetaArr ;
       BSONObj              autoIncMeta ;
       BSONObj              autoIncOpt ;
       BSONObj              seqOpt ;
-      catSequenceManager   *pSeqMgr = NULL ;
+      catSequenceManager   *pSeqMgr ;
       string               fieldName ;
       string               seqName ;
-      INT32                tmpRC = SDB_OK ;
-      BOOLEAN              found = FALSE ;
+      INT32                tmpRC ;
+      BOOLEAN              found ;
 
       pSeqMgr = sdbGetCatalogueCB()->getCatGTSMgr()->getSequenceMgr() ;
 

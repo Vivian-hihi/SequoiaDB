@@ -42,8 +42,6 @@
 #include "rtnCommandDef.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
-#include "coordSequenceAgent.hpp"
-#include <list>
 
 using namespace bson ;
 
@@ -60,11 +58,6 @@ namespace engine
 
       const static string s_insertStr("Insert" ) ;
       setName( s_insertStr ) ;
-      _pBoBuff = NULL ;
-      _boBuffLen = 0 ;
-      _boBuffSize = 0 ;
-      _pOrgInsertor = NULL ;
-      _boCount = 0 ;
    }
 
    _coordInsertOperator::~_coordInsertOperator()
@@ -155,8 +148,6 @@ namespace engine
                  "failed, rc: %d", pCollectionName, rc ) ;
          goto error ;
       }
-      _pOrgInsertor = pInsertor ;
-      _boCount = count ;
 
    retry:
       /// Do on collection
@@ -196,7 +187,6 @@ namespace engine
          /// InsertedNum(Hi) + IgnoredNum(Lo)
          contextID = ossPack32To64( _insertedNum, _ignoredNum ) ;
       }
-      msgReleaseBuffer( _pBoBuff, cb ) ;
       PD_TRACE_EXITRC ( COORD_INSERTOPR_EXE, rc ) ;
       return rc ;
    error:
@@ -220,21 +210,6 @@ namespace engine
                     ossRoundUpToMultipleX ( offsetof(MsgOpInsert, name) +
                                             pInsertMsg->nameLength + 1, 4 ) -
                     sizeof( MsgHeader ) ) ;
-
-      if ( cataSel.getCataPtr()->hasAutoIncrement() )
-      {
-         rc = _addAutoIncToData( cataSel.getCataPtr()->getAutoIncMap(),
-                                 _pOrgInsertor, _boCount, cb,
-                                 &_pBoBuff, _boBuffSize, _boBuffLen ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to add autoIncrement fields to msg, rc: %d", rc ) ;
-
-         inMsg._datas.clear() ;
-         netIOVec &iovec = inMsg._datas[ cataSel.getCataPtr()->
-                                         getGroupLst().begin()->first ] ;
-         iovec.push_back( fixed ) ;
-         iovec.push_back( netIOV( _pBoBuff, _boBuffLen ) ) ;
-      }
 
       // clear send groups
       options._groupLst.clear() ;
@@ -520,33 +495,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       GROUP_2_IOVEC::iterator it ;
-      INT32 offset = 0 ;
-      INT32 roundSize = 0 ;
 
       MsgOpInsert *pInsertMsg = ( MsgOpInsert* )inMsg.msg() ;
       netIOV fixed( ( CHAR*)inMsg.msg() + sizeof( MsgHeader ),
                     ossRoundUpToMultipleX ( offsetof(MsgOpInsert, name) +
                                             pInsertMsg->nameLength + 1, 4 ) -
                     sizeof( MsgHeader ) ) ;
-
-      if ( cataSel.getCataPtr()->hasAutoIncrement() )
-      {
-         rc = _addAutoIncToData( cataSel.getCataPtr()->getAutoIncMap(),
-                                 _pOrgInsertor, _boCount, cb,
-                                 &_pBoBuff, _boBuffSize, _boBuffLen ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to add autoIncrement fields to msg, rc: %d", rc ) ;
-
-         _grpSubCLDatas.clear() ;
-         netIOVec &ioVec = (_grpSubCLDatas[ CAT_INVALID_GROUPID ])[ "SYS_TMP" ] ;
-         while ( offset < _boBuffLen )
-         {
-            BSONObj obj( _pBoBuff + offset ) ;
-            roundSize = ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
-            ioVec.push_back( netIOV( obj.objdata(), roundSize ) ) ;
-            offset += roundSize ;
-         }
-      }
 
       if ( _grpSubCLDatas.size() == 0 )
       {
@@ -575,7 +529,7 @@ namespace engine
       inMsg._datas.clear() ;
 
       rc = buildInsertMsg( fixed, _grpSubCLDatas, _vecObject, inMsg._datas ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build insert msg failed, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build insert msg failed, rc: %d" ) ;
 
       // clear send groups
       options._groupLst.clear() ;
@@ -815,203 +769,6 @@ namespace engine
       }
 
       return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__ADD_AUTOINC_TO_DATA, "_coordInsertOperator::_addAutoIncToData" )
-   INT32 _coordInsertOperator::_addAutoIncToData( const AUTOINC_ITEM_MAP &autoIncMap,
-                                                  CHAR *pInsertor,
-                                                  INT32 count,
-                                                  pmdEDUCB *cb,
-                                                  CHAR **ppBuff,
-                                                  INT32 &buffSize,
-                                                  INT32 &buffLen )
-   {
-      PD_TRACE_ENTRY( SDB__ADD_AUTOINC_TO_DATA ) ;
-
-      INT32       rc = SDB_OK ;
-      INT32       i = 0 ;
-      INT32       newBuffLen = 0 ;
-      BufBuilder  bufBuilder ;
-
-      buffLen = 0 ;
-
-      for ( i = 0 ; i < count ; ++i )
-      {
-         // add field to obj
-         const BSONObj objIn( (const CHAR*)pInsertor ) ;
-         rc = _addAutoIncToObj( objIn, autoIncMap, cb, bufBuilder ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to add autoIncrement field to obj[%s], rc: %d",
-                      objIn.toString().c_str(), rc ) ;
-
-         // append obj to buff
-         newBuffLen = buffLen + ossRoundUpToMultipleX( bufBuilder.len(), 4 ) ;
-         rc = msgCheckBuffer( ppBuff, &buffSize, newBuffLen, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to malloc buffer, rc: %d", rc ) ;
-         ossMemcpy( *ppBuff + buffLen, bufBuilder.buf(), bufBuilder.len() ) ;
-         buffLen = newBuffLen ;
-
-         pInsertor += ossRoundUpToMultipleX( objIn.objsize(), 4 ) ;
-      }
-
-   done:
-      PD_TRACE_EXIT( SDB__ADD_AUTOINC_TO_DATA ) ;
-      return rc ;
-   error:
-      buffLen = 0 ;
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__ADD_AUTOINC_TO_OBJ, "_coordInsertOperator::_addAutoIncToObj" )
-   INT32 _coordInsertOperator::_addAutoIncToObj( const BSONObj &objIn,
-                                                 const AUTOINC_ITEM_MAP &autoIncMap,
-                                                 pmdEDUCB *cb,
-                                                 BufBuilder &bufBuilder )
-   {
-      PD_TRACE_ENTRY( SDB__ADD_AUTOINC_TO_OBJ ) ;
-
-      INT32                      rc = SDB_OK ;
-      BSONElement                ele ;
-      const CHAR*                eleField = NULL;
-      BSONObj                    subObjIn ;
-      BufBuilder                 subBuilder ;
-
-      AUTOINC_ITEM_MAP_CONST_IT  autoIncIt ;
-      const coordAutoIncItem*    pItem = NULL ;
-      _utilArray<const CHAR*>    doneArray ;
-      BOOLEAN                    isDone = FALSE ;
-      const CHAR*                doneField = NULL ;
-
-      coordSequenceAgent*        pSequenceAgent = NULL ;
-      INT64                      nextValue = 0 ;
-
-      try
-      {
-         bufBuilder.reset() ;
-         bufBuilder.appendNum( (UINT32) 0 ) ;// bson length
-         bufBuilder.reserveBytes(1); // reserve for EOO
-
-         // 1. Handle autoIncrement fields inputted by user.
-
-         BSONObjIterator boIt( objIn ) ;
-
-         while( boIt.more() )
-         {
-            ele = boIt.next() ;
-            eleField = ele.fieldName() ;
-            autoIncIt = autoIncMap.find( eleField ) ;
-            if ( autoIncIt == autoIncMap.end() )
-            {
-               bufBuilder.appendBuf( (void*)ele.rawdata(), ele.size() ) ;
-               continue ;
-            }
-
-            if ( !autoIncIt->second->hasSubField() )
-            {
-               switch( autoIncIt->second->generatedType() )
-               {
-               case AUTOINC_GEN_ALWAYS:
-                  break ;
-               case AUTOINC_GEN_STRICT:
-                  PD_CHECK( NumberInt == ele.type() || NumberLong == ele.type(),
-                            SDB_INVALIDARG, error, PDERROR,
-                            "Wrong type[%d] of autoIncrement field[%s]",
-                            ele.type(), eleField ) ;
-               case AUTOINC_GEN_DEFAULT:
-                  bufBuilder.appendBuf( (void*)ele.rawdata(), ele.size() ) ;
-                  doneArray.append( autoIncIt->first ) ;
-                  break ;
-               }
-            }
-            else
-            {
-               if ( Object == ele.type() )
-               {
-                  subObjIn = ele.Obj() ;
-                  rc = _addAutoIncToObj( subObjIn, *(autoIncIt->second->subFieldMap()),
-                                         cb, subBuilder ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement field[%s], rc: %d",
-                               eleField, rc ) ;
-
-                  bufBuilder.appendNum( (CHAR) Object ) ;
-                  bufBuilder.appendStr( eleField ) ;
-                  bufBuilder.appendBuf( subBuilder.buf(), subBuilder.len() ) ;
-
-                  doneArray.append( autoIncIt->first ) ;
-               }
-               else
-               {
-                  // autoIncrement field is "a.b", and user just input field "a".
-                  PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                               "Field[%s] conflicted with autoIncrement field",
-                               eleField ) ;
-               }
-            }
-         }
-
-         // 2. Complete the rest of autoIncrement fields.
-
-         pSequenceAgent = _pResource->getSequenceAgent() ;
-
-         for ( autoIncIt = autoIncMap.begin() ;
-               autoIncIt != autoIncMap.end() ;
-               ++autoIncIt )
-         {
-            _utilArray<const CHAR*>::iterator doneIt( doneArray ) ;
-            isDone = FALSE ;
-            while ( doneIt.next( doneField ) )
-            {
-               if ( 0 == ossStrcmp( doneField, autoIncIt->first ) )
-               {
-                  isDone = TRUE ;
-                  break ;
-               }
-            }
-            if ( isDone ) continue ;
-
-            pItem = autoIncIt->second ;
-            if ( !pItem->hasSubField() )
-            {
-               rc = pSequenceAgent->getNextValue( pItem->sequenceName(), nextValue, cb ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to get sequence[%s] next value, rc: %d",
-                            pItem->sequenceName(), rc ) ;
-
-               bufBuilder.appendNum( (CHAR) NumberLong ) ;
-               bufBuilder.appendStr( pItem->fieldName() ) ;
-               bufBuilder.appendNum( nextValue ) ;
-            }
-            else
-            {
-               subObjIn = BSONObjBuilder().obj() ;
-               rc = _addAutoIncToObj( subObjIn, *(pItem->subFieldMap()),
-                                      cb, subBuilder ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement field[%s], rc: %d",
-                            pItem->fieldName(), rc ) ;
-
-               bufBuilder.appendNum( (CHAR) Object ) ;
-               bufBuilder.appendStr( pItem->fieldName() ) ;
-               bufBuilder.appendBuf( subBuilder.buf(), subBuilder.len() ) ;
-            }
-
-            doneArray.append( autoIncIt->first ) ;
-         }
-
-         bufBuilder.claimReservedBytes(1) ;  // Prevents adding EOO from failing.
-         bufBuilder.appendNum( (CHAR) EOO ) ;
-         *((INT32*)bufBuilder.buf()) = bufBuilder.len() ; // set bson length
-
-      }
-      catch ( std::exception &e )
-      {
-         PD_RC_CHECK( SDB_SYS, PDERROR, "Unexpected exception happened[%s]", e.what() ) ;
-      }
-
-   done:
-      PD_TRACE_EXIT( SDB__ADD_AUTOINC_TO_OBJ ) ;
-      return rc ;
-   error:
-      goto done ;
    }
 
 }
