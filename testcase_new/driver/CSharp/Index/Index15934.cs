@@ -42,12 +42,12 @@ namespace CSharp.Index
             cl.CreateIndex(indexName, new BsonDocument{{"a",1}}, true, false);
             BsonDocument indexInfo = cl.GetIndexInfo(indexName);
             BsonElement element = indexInfo.GetElement("IndexDef");
-            BsonDocument indexDefInfo = element.ToBsonDocument();
+            BsonDocument indexDefInfo = element.Value.ToBsonDocument();
             //check index info
             Assert.AreEqual(indexDefInfo.GetElement("name").Value.ToString(), indexName);
             Assert.AreEqual(indexDefInfo.GetElement("key").Value.ToString(), "{ \"a\" : 1 }");
-            Assert.AreEqual(indexDefInfo.GetElement("unique").Value.ToString(), true);
-            Assert.AreEqual(indexDefInfo.GetElement("enforced").Value.ToString(), false);
+            Assert.AreEqual(indexDefInfo.GetElement("unique").Value, true);
+            Assert.AreEqual(indexDefInfo.GetElement("enforced").Value, false);
             //不存在的索引
             try
             {
@@ -73,7 +73,7 @@ namespace CSharp.Index
             {
                 BsonDocument next = cur.Current();
                 element = indexInfo.GetElement("IndexDef");
-                indexDefInfo = element.ToBsonDocument();
+                indexDefInfo = element.Value.ToBsonDocument();
                 expected.Add(indexDefInfo.GetElement("name").Value.ToString());
             }
             Assert.IsTrue(actual.Contains("$shard"));
@@ -86,12 +86,12 @@ namespace CSharp.Index
             {
                 BsonDocument next = cur.Current();
                 element = indexInfo.GetElement("IndexDef");
-                indexDefInfo = element.ToBsonDocument();
+                indexDefInfo = element.Value.ToBsonDocument(); 
                 //check index info
                 Assert.AreEqual(indexDefInfo.GetElement("name").Value.ToString(), indexName);
                 Assert.AreEqual(indexDefInfo.GetElement("key").Value.ToString(), "{ \"a\" : 1 }");
-                Assert.AreEqual(indexDefInfo.GetElement("unique").Value.ToString(), true);
-                Assert.AreEqual(indexDefInfo.GetElement("enforced").Value.ToString(), false);
+                Assert.AreEqual(indexDefInfo.GetElement("unique").Value, true);
+                Assert.AreEqual(indexDefInfo.GetElement("enforced").Value, false);
             }
             cur.Close();
 
