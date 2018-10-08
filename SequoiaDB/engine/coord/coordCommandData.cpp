@@ -683,7 +683,7 @@ namespace engine
    {
       return SDB_OK ;
    }
-   
+
    /*
       _coordCMDTestCollectionSpace implement
    */
@@ -1092,6 +1092,12 @@ namespace engine
       CHAR *option = NULL;
       BSONObj boQuery ;
       const CHAR *fullName = NULL ;
+      CoordGroupList cataGrpLst ;
+      CoordCataInfoPtr cataPtr ;
+      AUTOINC_ITEM_MAP autoIncMap ;
+      AUTOINC_ITEM_MAP_CONST_IT iter ;
+      coordSequenceAgent *pSeqAgent = NULL ;
+
       rc = msgExtractQuery( ( CHAR * )pMsg, NULL, NULL,
                             NULL, NULL, &option, NULL,
                             NULL, NULL );
@@ -1121,14 +1127,46 @@ namespace engine
          goto error;
       }
 
+      // remove all data
       rc = executeOnCL( pMsg, cb, fullName, FALSE, NULL, NULL,
                         NULL, NULL, buf ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to truncate cl:%s, rc:%d",
+         PD_LOG( PDERROR, "failed to truncate cl:%s on data group, rc:%d",
                  fullName, rc ) ;
          goto error ;
       }
+
+      // reset cl related sequences
+      cataGrpLst[ CATALOG_GROUPID ] = CATALOG_GROUPID ;
+      pMsg->opCode = MSG_CAT_TRUNCATE_REQ ;
+      rc = _executeOnGroups( pMsg, cb, cataGrpLst, MSG_ROUTE_CAT_SERVICE,
+                             TRUE, NULL, NULL, NULL, buf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to truncate cl:%s on cata group, rc:%d",
+                 fullName, rc ) ;
+         goto error ;
+      }
+
+      // remove cache of related sequences.
+      rc = _pResource->getCataInfo( fullName, cataPtr ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get cl[%s] catalog info, "
+                   "rc: %d", fullName, rc ) ;
+
+      if ( cataPtr->hasAutoIncrement() )
+      {
+         autoIncMap = cataPtr->getAutoIncMap() ;
+         pSeqAgent = _pResource->getSequenceAgent() ;
+
+         for ( iter = autoIncMap.begin() ;
+               iter != autoIncMap.end() ;
+               ++iter )
+         {
+            pSeqAgent->removeCache( iter->second->sequenceName() ) ;
+         }
+      }
+
    done:
       if ( fullName )
       {
@@ -1919,7 +1957,7 @@ namespace engine
          BSONElement group ;
          CoordGroupList groupList ;
 
-         PD_CHECK( iterTask->hasField( FIELD_NAME_TASKTYPE ), SDB_SYS, error, PDERROR, 
+         PD_CHECK( iterTask->hasField( FIELD_NAME_TASKTYPE ), SDB_SYS, error, PDERROR,
                    "Faield to get task field[%s]", FIELD_NAME_TASKTYPE);
          ele = iterTask->getField( FIELD_NAME_TASKTYPE ) ;
          PD_CHECK( NumberInt == ele.type(), SDB_SYS, error, PDERROR,
@@ -1944,7 +1982,7 @@ namespace engine
                msgHeader = (MsgHeader *)msgBuff ;
                rc = executeOnCL( msgHeader, cb, name, FALSE, &groupList, NULL, NULL ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to notify group [%d] to split "
-                            "collection [%s], rc: %d", group.Int(), name, rc ) ;               
+                            "collection [%s], rc: %d", group.Int(), name, rc ) ;
                break ;
             }
             case CLS_TASK_SEQUENCE :
@@ -1954,7 +1992,7 @@ namespace engine
                          "Failed to parse task info [%s]: task sequence is not a string",
                          iterTask->toString().c_str() ) ;
                seqName = ele.String() ;
-               rc = coordSequenceInvalidateCache( seqName, cb );           
+               rc = coordSequenceInvalidateCache( seqName, cb );
                break ;
             }
             default :

@@ -522,7 +522,7 @@ coordFiles = [
       "coord/coordGroupHandle.cpp",
       "coord/coordOperator.cpp",
       "coord/coordTransOperator.cpp",
-      "coord/coordShardKicker.cpp",
+      "coord/coordKeyKicker.cpp",
       "coord/coordInsertOperator.cpp",
       "coord/coordDeleteOperator.cpp",
       "coord/coordUpdateOperator.cpp",
