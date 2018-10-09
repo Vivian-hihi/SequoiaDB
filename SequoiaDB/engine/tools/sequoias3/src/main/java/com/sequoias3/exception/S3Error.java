@@ -40,6 +40,7 @@ public enum S3Error {
     OBJECT_INVALID_TOKEN(-617, "InvalidArgument", "The continuation token provided is incorrect."),
     OBJECT_IS_IN_USE(-618, "ObjectIsInUse", "The object is in use."),
     OBJECT_RANGE_INVALID(-619, "RangeNotSatisfiable", "Requested range not satisfiable."),
+    OBJECT_INVALID_DIGEST(-620, "InvalidDigest", " The Content-MD5 you speciﬁed is not valid."),
 
     OBJECT_IF_MODIFIED_SINCE_FAILED(-621, "NotModiﬁed", "If-Modified-Since not match"),
     OBJECT_IF_UNMODIFIED_SINCE_FAILED(-621, "PreconditionFailed ", "If-Unmodified-Since not match"),
@@ -63,11 +64,10 @@ public enum S3Error {
     USER_CREATE_NAME_INVALID(-802, "InvalidUserName", "The username is invalid."),
     USER_CREATE_ROLE_INVALID(-803, "InvalidRole", "The role is invalid."),
     USER_CREATE_EXIST(-804, "UserAlreadyExists", "The username is exist."),
-
     USER_DELETE_INIT_ADMIN(-811, "InitAdminCannotDelete", "Init admin user cannot be delete."),
 
-    // 400
-    INVALID_ARGUMENT(-900, "InvalidArgument", "Invalid argument.");
+    INVALID_ARGUMENT(-900, "InvalidArgument", "Invalid argument."),
+    METHOD_NOT_ALLOWED(-901, "MethodNotAllowed", "The speciﬁed method is not allowed against this resource.");
 
     private int errIndex;
     private String code;
