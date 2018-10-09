@@ -279,6 +279,21 @@ function DBOperator()
       cappedCLName = idx.toObj().ExtDataName;
       return cappedCLName;
    }
+   
+   
+   /*****************************************************************
+   * get cappedcl  
+   *****************************************************************/
+   this.getCappedCL = function ( db, csName, clName, textIndexName )
+   {
+	var clFullName = csName + "." + clName;
+	var dbcl = db.getCS( csName ).getCL( clName );
+	var cappedCLName = this.getCappedCLName( dbcl, textIndexName ); 
+	var clGroups = commGetCLGroups( db, clFullName );
+	var cappedCL = db.getRG( clGroups[0] ).getMaster().connect().getCS( cappedCLName ).getCL( cappedCLName );
+    return cappedCL;
+   }
+	
 	
    /*****************************************************************
    * get es index name, rule: 
@@ -326,15 +341,16 @@ function DBOperator()
    /*****************************************************************
    * find records by options
    *****************************************************************/
-   this.findFromCL = function (dbcl, findConf, selectorConf, sortConf, hintConf)
+   this.findFromCL = function (dbcl, findConf, selectorConf, sortConf, hintConf, limitConf)
    {
       if ( typeof(selectorConf) == "undefined" ) { selectorConf = null; }
       if ( typeof(findConf) == "undefined" ) { findConf = null; }
       if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
       if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
+	  if ( typeof(limitConf) == "undefined" ) { limitConf = null; }
   
       //find({"":{"$Text":{"query":{"match":{"a" : "test"}}}}}) 
-      var rc = dbcl.find(findConf, selectorConf).sort(sortConf).hint(hintConf);
+      var rc = dbcl.find(findConf, selectorConf).sort(sortConf).hint(hintConf).limit(limitConf);
   
       var records = new Array();
       //get all records
