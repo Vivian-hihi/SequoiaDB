@@ -2,6 +2,7 @@ package com.sequoias3.controller;
 
 import com.sequoias3.common.RestParamDefine;
 import com.sequoias3.core.User;
+import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.service.BucketService;
 import com.sequoias3.utils.RestUtils;
@@ -11,11 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.util.Enumeration;
 
 @RestController
 public class BucketController {
@@ -40,7 +36,7 @@ public class BucketController {
                 .build();
     }
 
-    @GetMapping(produces = MediaType.APPLICATION_XML_VALUE)
+    @GetMapping(value="", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity listBuckets( @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
@@ -59,5 +55,12 @@ public class BucketController {
         logger.info("delete bucket:bucket=" + bucketName+"operator="+operator.getUserName());
         bucketService.deleteBucket(operator.getUserId(), bucketName);
         return ResponseEntity.noContent().build();
+    }
+
+    @RequestMapping(method = RequestMethod.HEAD)
+    public ResponseEntity head()
+            throws S3ServerException {
+        throw new S3ServerException(S3Error.METHOD_NOT_ALLOWED,
+                "The HEAD method is not allowed");
     }
 }
