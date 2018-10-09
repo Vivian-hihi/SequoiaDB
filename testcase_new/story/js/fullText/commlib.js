@@ -286,12 +286,12 @@ function DBOperator()
    *****************************************************************/
    this.getCappedCL = function ( db, csName, clName, textIndexName )
    {
-	var clFullName = csName + "." + clName;
-	var dbcl = db.getCS( csName ).getCL( clName );
-	var cappedCLName = this.getCappedCLName( dbcl, textIndexName ); 
-	var clGroups = commGetCLGroups( db, clFullName );
-	var cappedCL = db.getRG( clGroups[0] ).getMaster().connect().getCS( cappedCLName ).getCL( cappedCLName );
-    return cappedCL;
+	  var clFullName = csName + "." + clName;
+	  var dbcl = db.getCS( csName ).getCL( clName );
+	  var cappedCLName = this.getCappedCLName( dbcl, textIndexName ); 
+	  var clGroups = commGetCLGroups( db, clFullName );
+	  var cappedCL = db.getRG( clGroups[0] ).getMaster().connect().getCS( cappedCLName ).getCL( cappedCLName );
+      return cappedCL;
    }
 	
 	
