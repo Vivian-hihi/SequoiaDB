@@ -156,6 +156,9 @@ public class BucketServiceImpl implements BucketService {
         if (bucketName.length() < 3 || bucketName.length() > 63){
             return false;
         }
+        if (bucketName.equalsIgnoreCase("users")){
+            return false;
+        }
         return true;
     }
 
