@@ -128,13 +128,13 @@ public class SequoiadbMetaDao implements MetaDao {
                 //no cs or cl ,return null
                 return null;
             } else {
-                logger.error("query metalist failed. error:",e);
+                logger.error("query metalist by bucket failed. error:",e);
                 throw e;
             }
         } catch (Exception e){
             sdbDatasourceWrapper.releaseDBCursor(dbCursor);
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
-            logger.error("query metalist failed.");
+            logger.error("query metalist by bucket failed.");
             throw e;
         }
     }
@@ -169,11 +169,11 @@ public class SequoiadbMetaDao implements MetaDao {
                 //no cs or cl ,return null
                 return null;
             } else {
-                logger.error("queryandupdate meta failed. error:",e);
+                logger.error("query meta by name failed. error:",e);
                 throw e;
             }
         } catch (Exception e){
-            logger.error("query metalist failed.");
+            logger.error("query meta by name failed.");
             throw e;
         }finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -243,11 +243,11 @@ public class SequoiadbMetaDao implements MetaDao {
                 //no cs or cl ,return null
                 return null;
             } else {
-                logger.error("queryandupdate meta failed. error:",e);
+                logger.error("queryandremove meta failed. error:",e);
                 throw e;
             }
         }catch (Exception e){
-            logger.error("query metalist failed.");
+            logger.error("query meta and remove failed.");
             throw e;
         }finally {
             sdbDatasourceWrapper.releaseDBCursor(queryResult);
@@ -275,11 +275,11 @@ public class SequoiadbMetaDao implements MetaDao {
                 //no cs or cl ,return null
                 return 0;
             } else {
-                logger.error("query metalist failed. error:",e);
+                logger.error("query object number failed. error:",e);
                 throw e;
             }
         } catch (Exception e){
-            logger.error("query metalist failed.");
+            logger.error("query object number failed.");
             throw e;
         }finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -312,7 +312,7 @@ public class SequoiadbMetaDao implements MetaDao {
 
     @Override
     public String getMetaHistoryCLName(){
-        return DaoCollectionDefine.OBJECT_META_LIST;
+        return DaoCollectionDefine.OBJECT_META_LIST_HISTORY;
     }
 
     private ObjectMeta convertBsonToMeta(BSONObject bsonObject){
@@ -347,7 +347,7 @@ public class SequoiadbMetaDao implements MetaDao {
         if (bsonObject.get(ObjectMeta.META_CONTENT_LANGUAGE) != null) {
             object.setContentLanguage(bsonObject.get(ObjectMeta.META_CONTENT_LANGUAGE).toString());
         }
-        object.setDeleteMarker((boolean)bsonObject.get(ObjectMeta.META_DELETE_MARKER));
+        object.setDeleteMarker((Boolean)bsonObject.get(ObjectMeta.META_DELETE_MARKER));
         if (bsonObject.get(ObjectMeta.META_LIST) != null){
             BSONObject xMeta = (BSONObject)bsonObject.get(ObjectMeta.META_LIST);
             object.setMetaList(xMeta.toMap());
