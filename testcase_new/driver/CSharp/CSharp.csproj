@@ -148,6 +148,7 @@
     <Compile Include="Sdb\Sdb15682.cs" />
     <Compile Include="Sdb\TestGetSnapshot15759.cs" />
     <Compile Include="Index\Index15934.cs" />
+    <Compile Include="Cluster\TestReplicaGroup15935.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
