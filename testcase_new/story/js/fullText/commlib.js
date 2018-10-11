@@ -109,109 +109,11 @@ function ESOperator()
 
       return commitID; 
    }
-
-   /*****************************************************************
-        * check records all sync to elasticsearch by comparing count and lid
-        *****************************************************************/
-   this.checkFullSyncToES = function (esIndexName, expectCount, cappedCL)
-   {
-      if(!isExistIndexInES(esIndexName))
-      {
-         throw buildException("isExistIndexInES()","index name isExist"," index name exsit", "exsit","not exsit");
-      }
-
-      this.checkCountInES(esIndexName, expectCount);
-      this.checkLidInES(cappedCL, esIndexName);
-   }
-	
-   /*****************************************************************
-   * check records is full sync to elasticsearch by comparing count  
-   *****************************************************************/
-   this.checkCountInES = function (esIndexName, expectCount)
-   {
-      //the longest waiting time is 600S
-      var isSync = false;
-      var timeout = 600;
-      var doTimes = 0;
-      var interval = 1; //interval 1s
-   
-      while(true)
-      {
-         var actCount = this.countFromES(esIndexName);
-         // if expect count < act count, exit
-         if(actCount == expectCount)
-         { 
-            isSync = true;
-         }
-      
-         //if expect count > act count, wait to expect count = act count
-         if(!isSync)
-         {
-            if(doTimes * interval < timeout)
-            {
-               doTimes+=1;
-               // interval 1s each time
-               sleep(1000);
-            }
-            else
-            {
-               throw buildException("checkCountInES()", "count sync to es", "check ES reords synchronization", "success","time out");
-            }     
-         }
-         else 
-         {
-            println("check all counts sync to ES success!");
-            break;
-         }
-      } 
-   }
-	
-   /*****************************************************************
-   * check records is sync to elasticsearch by comparing lastLogicalID and SDBCOMMITID  
-   *****************************************************************/
-   this.checkLidInES = function (cappedCL, esIndexName)
-   {
-      //the longest waiting time is 600S
-      var isSync = false;
-      var timeout = 600;
-      var doTimes = 0;
-      var interval = 1; //interval 1s
-   
-      var md = new DBOperator();
-      var lastLogicalID = md.getLastLID(cappedCL);
-      while(true)
-      {
-         var commitID = this.getCommitIDFromES(esIndexName); 
-         if(commitID == lastLogicalID)
-         {
-            isSync = true;
-         }
-      
-         if(!isSync)
-         {
-            if(doTimes * interval < timeout)
-            {
-               doTimes+=1;
-               // interval 1s each time
-               sleep(1000);
-            }
-            else
-            {
-               throw buildException("checkLidInES()", "lid sync to es", "check ES records synchronization", "success","time out");
-            }
-         }
-         else
-         {
-            println("check lid sync to ES success!");
-            break;
-         }
-      }
-   }
 	
    /*****************************************************************
    * check if index is exist in elasticsearch      
    *****************************************************************/
-   function isExistIndexInES(esIndexName)
+   this.isExistIndexInES = function (esIndexName)
    {
       // get curl command
       var str = "curl -H " + HEADER + " -XGET " + HTTP + "/" + esIndexName + "' 2>/dev/null";
@@ -284,14 +186,32 @@ function DBOperator()
    /*****************************************************************
    * get cappedcl  
    *****************************************************************/
-   this.getCappedCL = function ( db, csName, clName, textIndexName )
+   this.getCappedCL = function ( csName, clName, textIndexName )
    {
-	  var clFullName = csName + "." + clName;
-	  var dbcl = db.getCS( csName ).getCL( clName );
-	  var cappedCLName = this.getCappedCLName( dbcl, textIndexName ); 
-	  var clGroups = commGetCLGroups( db, clFullName );
-	  var cappedCL = db.getRG( clGroups[0] ).getMaster().connect().getCS( cappedCLName ).getCL( cappedCLName );
+      var clFullName = csName + "." + clName;
+      var dbcl = db.getCS( csName ).getCL( clName );
+      var cappedCLName = this.getCappedCLName( dbcl, textIndexName ); 
+      var clGroups = commGetCLGroups( db, clFullName );
+      var cappedCL = db.getRG( clGroups[0] ).getMaster().connect().getCS( cappedCLName ).getCL( cappedCLName );
       return cappedCL;
+   }
+   
+   /*****************************************************************
+   * get text index name from cl, one cl related to one text index				
+   *****************************************************************/
+   this.getTextIndexName = function (csName, clName)
+   {
+      var textIndexName = "";
+      var dbcl = db.getCS(csName).getCL(clName);
+      var rec = dbcl.listIndexes();
+      while(rec.next())
+      {
+         if("Text" == rec.current().toObj().Type)  
+         {  
+            textIndexName = rec.current().toObj().IndexDef.name 
+         } 
+      }
+      return textIndexName;
    }
 	
 	
@@ -300,7 +220,7 @@ function DBOperator()
    * cappedCLName: SYS_uniqueId_textIndexName  
    * esIndexName:  sys_uniqueId_textIndexName_clGroupName							  
    *****************************************************************/
-   this.getESIndexName = function (db, csName, clName, textIndexName)
+   this.getESIndexName = function (csName, clName, textIndexName)
    {
       // check cappedcl name is valid
       var dbcl = db.getCS(csName).getCL(clName);
@@ -365,6 +285,123 @@ function DBOperator()
 }
 
 /*****************************************************************
+@description:   check records all sync to elasticsearch by comparing count and lid       
+@input:         csName
+                clName
+                expectCount
+******************************************************************/
+function checkFullSyncToES(csName, clName, expectCount)
+{
+   var dbOpr = new DBOperator();
+   var textIndexName = dbOpr.getTextIndexName(csName, clName);
+   var esIndexName = dbOpr.getESIndexName(csName, clName, textIndexName);
+   if(!new ESOperator().isExistIndexInES(esIndexName))
+   {
+      throw buildException("isExistIndexInES()","index name isExist"," index name exsit", "exsit","not exsit");
+   }
+
+   checkCountInES(csName, clName, expectCount);
+   checkLidInES(csName, clName);
+}
+	
+/*****************************************************************
+@description:   check records is full sync to elasticsearch by comparing count         
+@input:         csName
+                clName
+                expectCount    
+******************************************************************/
+function checkCountInES(csName, clName, expectCount)
+{
+   //the longest waiting time is 600S
+   var isSync = false;
+   var timeout = 600;
+   var doTimes = 0;
+   var interval = 1; //interval 1s
+   
+   var dbOpr = new DBOperator();
+   var textIndexName = dbOpr.getTextIndexName(csName, clName);
+   var esIndexName = dbOpr.getESIndexName(csName, clName, textIndexName);
+   while(true)
+   {
+      var esOpr = new ESOperator();
+      var actCount = esOpr.countFromES(esIndexName);
+      // if expect count < act count, exit
+      if(actCount == expectCount)
+      { 
+         isSync = true;
+      }
+      
+      //if expect count > act count, wait to expect count = act count
+      if(!isSync)
+      {
+         if(doTimes * interval < timeout)
+         {
+            doTimes+=1;
+            // interval 1s each time
+            sleep(1000);
+         }
+         else
+         {
+            throw buildException("checkCountInES()", "count sync to es", "check ES reords synchronization", "success","time out");
+         }     
+      }
+      else 
+      {
+         println("check all counts sync to ES success!");
+         break;
+      }
+   } 
+}
+	
+/*****************************************************************
+@description:   check records is sync to elasticsearch by comparing lastLogicalID and SDBCOMMITID          
+@input:         csName
+                clName 
+******************************************************************/   
+function checkLidInES(csName, clName)
+{
+   //the longest waiting time is 600S
+   var isSync = false;
+   var timeout = 600;
+   var doTimes = 0;
+   var interval = 1; //interval 1s
+   
+   var dbOpr = new DBOperator();
+   var textIndexName = dbOpr.getTextIndexName(csName, clName);
+   var esIndexName = dbOpr.getESIndexName(csName, clName, textIndexName);
+   var cappedCL = dbOpr.getCappedCL(csName, clName, textIndexName);
+   var lastLogicalID = dbOpr.getLastLID(cappedCL);
+   while(true)
+   {
+      var esOpr = new ESOperator();
+      var commitID = esOpr.getCommitIDFromES(esIndexName); 
+      if(commitID == lastLogicalID)
+      {
+         isSync = true;
+      }
+      
+      if(!isSync)
+      {
+         if(doTimes * interval < timeout)
+         {
+            doTimes+=1;
+            // interval 1s each time
+            sleep(1000);
+         }
+         else
+         {
+            throw buildException("checkLidInES()", "lid sync to es", "check ES records synchronization", "success","time out");
+         }
+      }
+      else
+      {
+         println("check lid sync to ES success!");
+         break;
+      }
+   }
+}
+
+/*****************************************************************
 @description:   check records if equals between cl and es       
 @input:         clRecords
                 esRecords 
@@ -403,7 +440,7 @@ function checkRecords(clRecords, esRecords)
       for(var j in keys)
       {
          var key = keys[j];
-         if(clRecords[i][key] != esRecords[i][key])
+         if(clRecords[i][key].toString() != esRecords[i][key].toString())
          {
             throw buildException("checkRecords", "check record fail", "fail",
                         JSON.stringify(clRecords[i]), JSON.stringify(esRecords[i]));
