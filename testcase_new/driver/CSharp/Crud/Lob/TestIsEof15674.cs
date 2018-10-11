@@ -45,23 +45,22 @@ namespace CSharp.Crud.Lob
             readLob();
         }
 
-	public void readLob(){	  
+   public void readLob(){     
         Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl);
         db2.Connect();
-	    try
+       try
         {  
-	    	DBCollection cl2 = db2.GetCollecitonSpace(SdbTestBase.csName).GetCollection(clName);
-	    	DBLob rLob = null;
-			rLob = cl2.OpenLob(oid);			
-			byte[] rbuff = new byte[1024];
-			int readLen =0;		    
+          DBCollection cl2 = db2.GetCollecitonSpace(SdbTestBase.csName).GetCollection(clName);
+          DBLob rLob = null;
+         rLob = cl2.OpenLob(oid);         
+         byte[] rbuff = new byte[1024];
+         int readLen =0;          
 
             byte[] bytebuff = new byte[0];
-			
-			//flag is true when read operation not completed
-			bool flag = false;
-            int offset = 0 ;
-			while ((readLen = rLob.Read(rbuff)) != -1){
+         
+         //flag is true when read operation not completed
+         int offset = 0 ;
+         while ((readLen = rLob.Read(rbuff)) != -1){
                 bytebuff = LobUtils.AppendBuff(bytebuff, rbuff, offset);
                 offset = offset + readLen;
                 int cnt = testLobBuff.Length - offset;
@@ -70,29 +69,23 @@ namespace CSharp.Crud.Lob
                     rbuff = new byte[cnt];
                 }
                 
-				if(!rLob.IsEof()){
-					flag = true;
-				}
-			}
-			rLob.Close();
-			if(rLob.IsEof()){
+         }
+         rLob.Close();
+         if(rLob.IsEof()){
                 Console.WriteLine(bytebuff.Length);
                 Console.WriteLine(testLobBuff.Length);
                 LobUtils.AssertByteArrayEqual(bytebuff, testLobBuff);
-			}else{
-				Assert.Fail("implement isEof() failed when already finish read");
-			}
-			if(!flag){
-                Assert.Fail("implement isEof() failed when read operation not completed");
-			}
-	    }
+         }else{
+            Assert.Fail("implement isEof() failed when already finish read");
+         }
+       }
         catch(BaseException e){
             if (-4 != e.ErrorCode && -317 != e.ErrorCode && -268 != e.ErrorCode && -269 != e.ErrorCode)
             {
                 Assert.Fail("removeLob fail:" + e.Message + e.ErrorCode);
-			}	
-	    }		
-	}
+         }   
+       }      
+   }
 
         private void putLob()
         {
