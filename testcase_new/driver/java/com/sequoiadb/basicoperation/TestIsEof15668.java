@@ -31,124 +31,117 @@ import com.sequoiadb.testcommon.SdbTestBase;
 * @version 1.00
 */
 public class TestIsEof15668 extends SdbTestBase {
-	
-	private String clName = "cl_lob15668";	
-	private static Sequoiadb sdb = null;
-	private CollectionSpace cs = null;
-	private DBCollection cl = null;
-	private static ObjectId oid = null;	
-	private String prevMd5 = ""; 
-	private Random random = new Random();	
-    	
-	@BeforeClass
-	public void setUp(){
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
-		}
-		createCL();
-	}		
-		
-	@Test
-	public void testSplitAndWrite(){	
-		putLob();
-		readLob();
-	}
-	
-	
-	public void readLob(){	   
-	    try(Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "")){  
-	    	DBCollection cl2 = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-	    	String curMd5 ="";
-	    	DBLob rLob = null;
-			rLob = cl2.openLob(oid);			
-			byte[] rbuff = new byte[1024];
-			int readLen =0;		    
-			ByteBuffer bytebuff = ByteBuffer.allocate((int)rLob.getSize());
-			
-			//flag is true when read operation not completed
-			boolean flag = false;
-			
-			while ((readLen = rLob.read(rbuff)) != -1){
-				bytebuff.put(rbuff, 0, readLen);
-				if(!rLob.isEof()){
-					flag = true;
-				}
-			}
-			bytebuff.rewind();	
-			rLob.close();
-			if(rLob.isEof()){
-				curMd5 = getMd5(bytebuff);
-				Assert.assertEquals(curMd5, prevMd5,"the lobs md5 different");
-			}else{
-				Assert.assertTrue(false,"implement isEof() failed when already finish read");
-			}
-			if(!flag){
-				Assert.assertTrue(false,"implement isEof() failed when read operation not completed");
-			}
-	    }catch(BaseException e){
-	    	if(-4 != e.getErrorCode() && -317 != e.getErrorCode() && -268 != e.getErrorCode()&& -269 != e.getErrorCode()){    		
-				Assert.assertTrue(false,"removeLob fail:"+e.getMessage()+e.getErrorCode());
-			}	
-	    }		
-	}
+    
+    private String clName = "cl_lob15668";    
+    private static Sequoiadb sdb = null;
+    private CollectionSpace cs = null;
+    private DBCollection cl = null;
+    private static ObjectId oid = null;    
+    private String prevMd5 = ""; 
+    private Random random = new Random();    
+        
+    @BeforeClass
+    public void setUp(){
+        try{
+            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        }catch(BaseException e){            
+            Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
+        }
+        createCL();
+    }        
+        
+    @Test
+    public void testSplitAndWrite(){    
+        putLob();
+        readLob();
+    }
+    
+    
+    public void readLob(){       
+        try(Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "")){  
+            DBCollection cl2 = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+            String curMd5 ="";
+            DBLob rLob = null;
+            rLob = cl2.openLob(oid);            
+            byte[] rbuff = new byte[1024];
+            int readLen =0;            
+            ByteBuffer bytebuff = ByteBuffer.allocate((int)rLob.getSize());
+            
+            //flag is true when read operation not completed
+            
+            while ((readLen = rLob.read(rbuff)) != -1){
+                bytebuff.put(rbuff, 0, readLen);
+            }
+            bytebuff.rewind();    
+            rLob.close();
+            if(rLob.isEof()){
+                curMd5 = getMd5(bytebuff);
+                Assert.assertEquals(curMd5, prevMd5,"the lobs md5 different");
+            }else{
+                Assert.assertTrue(false,"implement isEof() failed when already finish read");
+            }
+        }catch(BaseException e){
+            if(-4 != e.getErrorCode() && -317 != e.getErrorCode() && -268 != e.getErrorCode()&& -269 != e.getErrorCode()){            
+                Assert.assertTrue(false,"removeLob fail:"+e.getMessage()+e.getErrorCode());
+            }    
+        }        
+    }
 
-	@AfterClass
-	public void tearDown(){		
-		try{		
-			cs.dropCollection(clName);
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
-		}finally{
-			if ( sdb != null ){
-				sdb.close();
-			}
-		}
-	}	
-	
+    @AfterClass
+    public void tearDown(){        
+        try{        
+            cs.dropCollection(clName);
+        }catch(BaseException e){            
+            Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+        }finally{
+            if ( sdb != null ){
+                sdb.close();
+            }
+        }
+    }    
+    
 
-	private void putLob(){
-		int lobsize = random.nextInt(1048576);		
-		String lobSb = getRandomString(lobsize);		
-		DBLob lob = null;
-		try{
-			lob = cl.createLob();
-			lob.write(lobSb.getBytes());
-			oid = lob.getID();
-			prevMd5 = getMd5(lobSb);
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"write lob fail"+e.getMessage());
-		}finally{
-			if (lob != null){
-				lob.close();
-			}
-		}				
-	}
-	
-	
-	public void createCL(){
-		try{
-			if (!sdb.isCollectionSpaceExist(SdbTestBase.csName)){
-				sdb.createCollectionSpace(SdbTestBase.csName);	
-			}
-		}catch(BaseException e){
-			//-33 CS exist,ignore exceptions
-			Assert.assertEquals(-33,e.getErrorCode(),e.getMessage());
-	    }					
-	    try
-	    {
-	    	String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-				+ "ReplSize:0,Compressed:true}";
-	    	BSONObject options =(BSONObject) JSON.parse(clOptions);
-	    	
-		    cs = sdb.getCollectionSpace(SdbTestBase.csName);			
-		    cl = cs.createCollection(clName,options);			
-	    }catch(BaseException e){
-		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-	    }
-	 }
-	public String getMd5(Object inbuff){
+    private void putLob(){
+        int lobsize = random.nextInt(1048576);        
+        String lobSb = getRandomString(lobsize);        
+        DBLob lob = null;
+        try{
+            lob = cl.createLob();
+            lob.write(lobSb.getBytes());
+            oid = lob.getID();
+            prevMd5 = getMd5(lobSb);
+        }catch(BaseException e){            
+            Assert.assertTrue(false,"write lob fail"+e.getMessage());
+        }finally{
+            if (lob != null){
+                lob.close();
+            }
+        }                
+    }
+    
+    
+    public void createCL(){
+        try{
+            if (!sdb.isCollectionSpaceExist(SdbTestBase.csName)){
+                sdb.createCollectionSpace(SdbTestBase.csName);    
+            }
+        }catch(BaseException e){
+            //-33 CS exist,ignore exceptions
+            Assert.assertEquals(-33,e.getErrorCode(),e.getMessage());
+        }                    
+        try
+        {
+            String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
+                + "ReplSize:0,Compressed:true}";
+            BSONObject options =(BSONObject) JSON.parse(clOptions);
+            
+            cs = sdb.getCollectionSpace(SdbTestBase.csName);            
+            cl = cs.createCollection(clName,options);            
+        }catch(BaseException e){
+            Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
+        }
+     }
+    public String getMd5(Object inbuff){
         MessageDigest md5 = null;
         String value = "";
         
@@ -159,9 +152,9 @@ public class TestIsEof15668 extends SdbTestBase {
             }else if(inbuff instanceof String){
                 md5.update(((String)inbuff).getBytes());
             }else if(inbuff instanceof byte[]){
-            	md5.update((byte[]) inbuff);
+                md5.update((byte[]) inbuff);
             }else{
-            	Assert.fail("invalid parameter!");
+                Assert.fail("invalid parameter!");
             }
             BigInteger bi = new BigInteger(1, md5.digest());
             value = bi.toString(16);
@@ -171,34 +164,34 @@ public class TestIsEof15668 extends SdbTestBase {
         }
         return value;
     }
-	public  String getRandomString(int length){
-		String base = "abcdefahijklmnopqrstuvwxyz0123456789";
-		Random random = new Random();
-		
-		int times = length / 1024;
-		if (times < 1)
-		{
-			times = 1;
-		}
-		
-		int len = length >= 1024 ? 1024 : 0;
-		int mulByteNum = length % 1024;
-		
-		
-		StringBuffer sb = new StringBuffer(); 
-		for (int i = 0; i < times; ++i){
-			if (i == times - 1){
-				len += mulByteNum;
-			}
+    public  String getRandomString(int length){
+        String base = "abcdefahijklmnopqrstuvwxyz0123456789";
+        Random random = new Random();
+        
+        int times = length / 1024;
+        if (times < 1)
+        {
+            times = 1;
+        }
+        
+        int len = length >= 1024 ? 1024 : 0;
+        int mulByteNum = length % 1024;
+        
+        
+        StringBuffer sb = new StringBuffer(); 
+        for (int i = 0; i < times; ++i){
+            if (i == times - 1){
+                len += mulByteNum;
+            }
 
-			char ch = base.charAt(random.nextInt(base.length()));
-			for (int k = 0; k < len; ++k){
-				sb.append(ch);
-			}
+            char ch = base.charAt(random.nextInt(base.length()));
+            for (int k = 0; k < len; ++k){
+                sb.append(ch);
+            }
 
-		}	
-		return sb.toString();
-	}
+        }    
+        return sb.toString();
+    }
 }
 
  
