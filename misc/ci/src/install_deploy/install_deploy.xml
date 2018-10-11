@@ -35,6 +35,8 @@
       </if>  
       <antcall target="change_limits"/>
       <antcall target="deploy"/> 
+      <antcall target="create_es_nodeconf"/>
+
    </target>
    
    <target name="clear_cluster">
@@ -214,6 +216,70 @@
                   throwBuildException="1"/>
          </sequential>         
       </for>
+   </target>
+   
+   <target name="create_es_nodeconf">
+      <staf location="local" service="FS"
+                  request="DELETE ENTRY ${INSTALL_DIR}/conf/sdbseadpter RECURSE CONFIRM"
+                  throwBuildException=""/>
+      <staf location="local" service="FS"
+                  request="CREATE DIRECTORY ${INSTALL_DIR}/conf/sdbseadpter FULLPATH"
+                  throwBuildException="1"/>
+      <staf location="local" service="PROCESS"
+            request="START SHELL COMMAND chown jenkins:jenkins ${INSTALL_DIR}/conf/sdbseadpter -R WAIT 10m RETURNSTDERR"
+            throwBuildException="1"/>
+      <if>
+         <or>
+            <equals arg1="${DEPLOY_MODE}" arg2="G1D3"/>
+            <equals arg1="${DEPLOY_MODE}" arg2="G3D3"/>
+         </or>
+         <then>
+            <for param="dirtype">
+               <path>
+                  <dirset dir="${INSTALL_DIR}/database/data" includes="*" />
+               </path>
+               <sequential>
+                  <var name="svcname" unset="true"/>
+                  <basename property="svcname" file="@{dirtype}"/>
+                  <mkdir dir="${INSTALL_DIR}/conf/sdbseadpter/${svcname}"/>
+                  <copy file="${INSTALL_DIR}/conf/samples/sdbseadapter.conf" todir="${INSTALL_DIR}/conf/sdbseadpter/${svcname}"/>
+                  
+                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="datanodehost=" value="datanodehost=localhost"/>
+                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="datasvcname=" value="datasvcname=${svcname}"/>
+                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchenginehost=" value="searchenginehost=${ES_IP}"/>
+                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchengineport=" value="searchengineport=${ES_PORT}"/>
+                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="diaglevel=3" value="diaglevel=5"/>
+               </sequential>
+            </for>
+            <!--copy to other host -->
+            <hostinfo prefix="host" />
+            <for list="${testhost_list}" param="testhost" parallel="true">
+               <sequential>
+                  <if>
+                     <equals arg1="@{testhost}" arg2="${host.NAME}" />
+                     <else>
+                        <staf location="local" service="FS"
+                              request="COPY DIRECTORY ${INSTALL_DIR}/conf/sdbseadpter TODIRECTORY ${INSTALL_DIR}/conf/sdbseadpter TOMACHINE @{testhost} RECURSE"
+                              throwBuildException="1"/>
+                     </else>
+                  </if>
+                  <staf location="@{testhost}" service="PROCESS"
+                        request="START SHELL COMMAND chown sdbadmin:sdbadmin_group ${INSTALL_DIR}/conf/sdbseadpter -R WAIT 10m RETURNSTDERR"
+                        throwBuildException="1"/>
+                  <staf location="@{testhost}" service="PROCESS"
+                        request="START SHELL COMMAND chmod 755 ${INSTALL_DIR}/conf/sdbseadpter -R WAIT 10m RETURNSTDERR"
+                        throwBuildException="1"/>
+                  <staf location="@{testhost}" service="PROCESS"
+                        request="START SHELL COMMAND ${INSTALL_DIR}/bin/sdbstop -t all WAIT 20m RETURNSTDERR"
+                        throwBuildException="1"/>
+                  <staf location="@{testhost}" service="PROCESS"
+                        request="START SHELL COMMAND ${INSTALL_DIR}/bin/sdbstart -t all WAIT 30m RETURNSTDERR"
+                        throwBuildException="1"/>
+               </sequential>
+            </for>
+
+         </then>
+      </if>
    </target>
    
    <target name="deploy" depends="">
