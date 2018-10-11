@@ -383,7 +383,7 @@ function checkLidInES(esIndexName, cappedCL)
 @input:         expectResult
                 actResult
 ******************************************************************/
-function checkResult(expectResult, actResult)
+function checkResult(expectResult, actResult, sortOption)
 {
    if(expectResult.length !== actResult.length)
    {
@@ -426,6 +426,31 @@ function checkResult(expectResult, actResult)
    }
 	
    println("check results success!");
+}
+
+/*****************************************************************
+@description:   sort object in array       
+@input:         key
+                x: object1's key
+                y: object2's key					 
+******************************************************************/
+function compare(name, minor) {
+   return function (o, p) {
+	   var a, b;
+		if (o && p && typeof o === 'object' && typeof p === 'object') {
+		   a = o[name];
+         b = p[name];
+         if (a === b) {
+         return typeof minor === 'function' ? minor(o, p) : 0;
+         }
+         if (typeof a === typeof b) {
+            return a < b ? -1 : 1;
+         }
+         return typeof a < typeof b ? -1 : 1;
+      } else {
+		   throw("error");
+      }
+   }
 }
 
 /*****************************************************************
