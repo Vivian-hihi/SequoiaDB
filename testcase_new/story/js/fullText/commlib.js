@@ -383,45 +383,41 @@ function checkLidInES(esIndexName, cappedCL)
 @input:         expectResult
                 actResult
 ******************************************************************/
-function checkResult(expectResult, actResult, sortOption)
+function checkResult(expectResult, actResult)
 {
    if(expectResult.length !== actResult.length)
    {
       throw buildException("checkResult()", "check records", "check records length", expectResult.length, actResult.length);
    }
 
-   // match nothing, check success
-   if(expectResult.length == 0)
-   {
-      println("check result success!");
-      return;
-   }
-	
-   // if match something, get all keys in one object
-   var keys = new Array();
-   for(var key in expectResult[0])
-   {
-      keys.push(key);
-   }
-	
-   // sort all keys of obj in expectResult and actResult
-   for(var i in keys)
-   {
-      expectResult.sort(sortObjectInArray(keys[i]));
-      actResult.sort(sortObjectInArray(keys[i]));
-   }
-
    // compare array  
-   for(var i = 0; i < expectResult.length; i++)
+   for( var i in expectResult )
    {
-      for(var j in keys)
+      var actRec = actResult[i];
+      var expRec = expectResult[i];
+   	
+      for ( var f in expRec )
       {
-         var key = keys[j];
-         if(expectResult[i][key].toString() != actResult[i][key].toString())
+         if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) ) 
          {
-            throw buildException("checkResult", "check record fail", "fail",
-                        JSON.stringify(expectResult[i]), JSON.stringify(actResult[i]));
-         }	
+            throw buildException("checkResult()", "check record fail", "fail",
+                    JSON.stringify(JSON.stringify(actRec)), JSON.stringify(expRec));
+         }
+      }
+   }
+   
+   for( var j in actResult )
+   {
+      var actRec = actResult[j];
+      var expRec = expectResult[j];
+   	
+      for ( var f in actRec )
+      {
+         if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
+         {
+            throw buildException("checkResult()", "check record fail", "fail",
+                    JSON.stringify(JSON.stringify(actRec)), JSON.stringify(expRec));
+         }
       }
    }
 	
@@ -429,53 +425,28 @@ function checkResult(expectResult, actResult, sortOption)
 }
 
 /*****************************************************************
-@description:   sort object in array       
+@description:   sort object in array, rg:
+                array.sort(compare("key1", compare("key2", compare("key3"))));       
 @input:         key
-                x: object1's key
-                y: object2's key					 
+                o: object1's key
+                p: object2's key					 
 ******************************************************************/
 function compare(name, minor) {
    return function (o, p) {
-	   var a, b;
-		if (o && p && typeof o === 'object' && typeof p === 'object') {
-		   a = o[name];
+      var a, b;
+      if (o && p && typeof o === 'object' && typeof p === 'object') {
+         a = o[name];
          b = p[name];
          if (a === b) {
-         return typeof minor === 'function' ? minor(o, p) : 0;
+            return typeof minor === 'function' ? minor(o, p) : 0;
          }
          if (typeof a === typeof b) {
             return a < b ? -1 : 1;
          }
          return typeof a < typeof b ? -1 : 1;
       } else {
-		   throw("error");
+         throw("error");
       }
-   }
-}
-
-/*****************************************************************
-@description:   sort object in array       
-@input:         key
-                x: object1's key
-                y: object2's key					 
-******************************************************************/
-function sortObjectInArray(key)
-{
-   return function (x, y)
-   {
-      if(x && y && typeof x === 'object' && typeof y === 'object')
-      {
-         if(x[key] === y[key])  {  return 0;  }	
-         // value type equals
-         if(typeof x[key] === typeof y[key])  {  return x[key] < y[key] ? -1: 1; }
-         // value type not equals
-         return typeof x[key] < typeof y[key]? -1: 1;   
-      }    
-      else
-      {
-         throw buildException("sortObjectInArray()", "sort object", "sortObj", "success", "fail key");                                       
-      }	
-      
    }
 }
 
