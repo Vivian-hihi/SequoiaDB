@@ -7,13 +7,14 @@
 var cmd = new Cmd();     
 var HEADER = "'Content-Type: application/json'";
 var HTTP = "'http://" + ESHOSTNAME + ":" + ESSVCNAME;
-
+var esOpr = new ESOperator();
+var dbOpr = new DBOperator();
 /******************************************************************************
 *@Description : do some operations related to ES, such as:
                 do queries by rest
                 check index sync to ES
 @usage:         var es = new ESOperator();
-                var esRecords = es.findFromES( "esIndexName", querycond );
+                var esRecofindFromES( "esIndexName", querycond );
                 es.checkFullSyncToES("esIndexName", expectCount, cappedCL)
 ******************************************************************************/
 function ESOperator()
@@ -115,6 +116,7 @@ function ESOperator()
    *****************************************************************/
    this.isExistIndexInES = function (esIndexName)
    {
+      println("begin to check index name exists in ES");
       // get curl command
       var str = "curl -H " + HEADER + " -XGET " + HTTP + "/" + esIndexName + "' 2>/dev/null";
  
@@ -154,6 +156,7 @@ function ESOperator()
          }
          else
          {
+            println("check index name sync to ES success!");
             break;
          }
       }
@@ -195,26 +198,7 @@ function DBOperator()
       var cappedCL = db.getRG( clGroups[0] ).getMaster().connect().getCS( cappedCLName ).getCL( cappedCLName );
       return cappedCL;
    }
-   
-   /*****************************************************************
-   * get text index name from cl, one cl related to one text index				
-   *****************************************************************/
-   this.getTextIndexName = function (csName, clName)
-   {
-      var textIndexName = "";
-      var dbcl = db.getCS(csName).getCL(clName);
-      var rec = dbcl.listIndexes();
-      while(rec.next())
-      {
-         if("Text" == rec.current().toObj().Type)  
-         {  
-            textIndexName = rec.current().toObj().IndexDef.name 
-         } 
-      }
-      return textIndexName;
-   }
-	
-	
+
    /*****************************************************************
    * get es index name, rule: 
    * cappedCLName: SYS_uniqueId_textIndexName  
@@ -248,8 +232,8 @@ function DBOperator()
    this.getLastLID = function (cappedCL)
    {
       var lastLogicalID = -1;
-      var sortConf = {"_id" : 1};
-      var records = this.findFromCL(cappedCL, null, null, sortConf, null);
+      var sortCond = {"_id" : 1};
+      var records = this.findFromCL(cappedCL, null, null, sortCond, null);
       if(records.length > 0)
       { 
          lastLogicalID = records[records.length-1]["_id"];
@@ -261,16 +245,16 @@ function DBOperator()
    /*****************************************************************
    * find records by options
    *****************************************************************/
-   this.findFromCL = function (dbcl, findConf, selectorConf, sortConf, hintConf, limitConf)
+   this.findFromCL = function (dbcl, findCond, selectorCond, sortCond, hintCond, limitCond)
    {
-      if ( typeof(selectorConf) == "undefined" ) { selectorConf = null; }
-      if ( typeof(findConf) == "undefined" ) { findConf = null; }
-      if ( typeof(sortConf) == "undefined" ) { sortConf = null; }
-      if ( typeof(hintConf) == "undefined" ) { hintConf = null; }
-	  if ( typeof(limitConf) == "undefined" ) { limitConf = null; }
+      if ( typeof(selectorCond) == "undefined" ) { selectorCond = null; }
+      if ( typeof(findCond) == "undefined" ) { findCond = null; }
+      if ( typeof(sortCond) == "undefined" ) { sortCond = null; }
+      if ( typeof(hintCond) == "undefined" ) { hintCond = null; }
+      if ( typeof(limitCond) == "undefined" ) { limitCond = null; }
   
       //find({"":{"$Text":{"query":{"match":{"a" : "test"}}}}}) 
-      var rc = dbcl.find(findConf, selectorConf).sort(sortConf).hint(hintConf).limit(limitConf);
+      var rc = dbcl.find(findCond, selectorCond).sort(sortCond).hint(hintCond).limit(limitCond);
   
       var records = new Array();
       //get all records
@@ -290,18 +274,17 @@ function DBOperator()
                 clName
                 expectCount
 ******************************************************************/
-function checkFullSyncToES(csName, clName, expectCount)
+function checkFullSyncToES(csName, clName, textIndexName, expectCount)
 {
-   var dbOpr = new DBOperator();
-   var textIndexName = dbOpr.getTextIndexName(csName, clName);
    var esIndexName = dbOpr.getESIndexName(csName, clName, textIndexName);
-   if(!new ESOperator().isExistIndexInES(esIndexName))
+   var cappedCL = dbOpr.getCappedCL(csName, clName, textIndexName);
+   if(!esOpr.isExistIndexInES(esIndexName))
    {
       throw buildException("isExistIndexInES()","index name isExist"," index name exsit", "exsit","not exsit");
    }
 
-   checkCountInES(csName, clName, expectCount);
-   checkLidInES(csName, clName);
+   checkCountInES(esIndexName, expectCount);
+   checkLidInES(esIndexName, cappedCL);
 }
 	
 /*****************************************************************
@@ -310,21 +293,19 @@ function checkFullSyncToES(csName, clName, expectCount)
                 clName
                 expectCount    
 ******************************************************************/
-function checkCountInES(csName, clName, expectCount)
+function checkCountInES(esIndexName, expectCount)
 {
+   println("begin to check count in ES");
    //the longest waiting time is 600S
    var isSync = false;
    var timeout = 600;
    var doTimes = 0;
    var interval = 1; //interval 1s
    
-   var dbOpr = new DBOperator();
-   var textIndexName = dbOpr.getTextIndexName(csName, clName);
-   var esIndexName = dbOpr.getESIndexName(csName, clName, textIndexName);
    while(true)
    {
-      var esOpr = new ESOperator();
-      var actCount = esOpr.countFromES(esIndexName);
+      // remove the count of SDBCOMMITID
+      var actCount = esOpr.countFromES(esIndexName) - 1;
       // if expect count < act count, exit
       if(actCount == expectCount)
       { 
@@ -358,22 +339,18 @@ function checkCountInES(csName, clName, expectCount)
 @input:         csName
                 clName 
 ******************************************************************/   
-function checkLidInES(csName, clName)
+function checkLidInES(esIndexName, cappedCL)
 {
+   println("begin to check commitID in ES");
    //the longest waiting time is 600S
    var isSync = false;
    var timeout = 600;
    var doTimes = 0;
    var interval = 1; //interval 1s
    
-   var dbOpr = new DBOperator();
-   var textIndexName = dbOpr.getTextIndexName(csName, clName);
-   var esIndexName = dbOpr.getESIndexName(csName, clName, textIndexName);
-   var cappedCL = dbOpr.getCappedCL(csName, clName, textIndexName);
    var lastLogicalID = dbOpr.getLastLID(cappedCL);
    while(true)
    {
-      var esOpr = new ESOperator();
       var commitID = esOpr.getCommitIDFromES(esIndexName); 
       if(commitID == lastLogicalID)
       {
@@ -402,53 +379,53 @@ function checkLidInES(csName, clName)
 }
 
 /*****************************************************************
-@description:   check records if equals between cl and es       
-@input:         clRecords
-                esRecords 
+@description:   check result        
+@input:         expectResult
+                actResult
 ******************************************************************/
-function checkRecords(clRecords, esRecords)
+function checkResult(expectResult, actResult)
 {
-   if(clRecords.length !== esRecords.length)
+   if(expectResult.length !== actResult.length)
    {
-      throw buildException("checkRecords()", "check records", "check records length", clRecords.length, esRecords.length);
+      throw buildException("checkResult()", "check records", "check records length", expectResult.length, actResult.length);
    }
 
    // match nothing, check success
-   if(clRecords.length == 0)
+   if(expectResult.length == 0)
    {
-      println("check recoreds success!");
+      println("check result success!");
       return;
    }
 	
    // if match something, get all keys in one object
    var keys = new Array();
-   for(var key in clRecords[0])
+   for(var key in expectResult[0])
    {
       keys.push(key);
    }
 	
-   // sort all keys of obj in clRecords and esRecords
+   // sort all keys of obj in expectResult and actResult
    for(var i in keys)
    {
-      clRecords.sort(sortObjectInArray(keys[i]));
-      esRecords.sort(sortObjectInArray(keys[i]));
+      expectResult.sort(sortObjectInArray(keys[i]));
+      actResult.sort(sortObjectInArray(keys[i]));
    }
 
    // compare array  
-   for(var i = 0; i < clRecords.length; i++)
+   for(var i = 0; i < expectResult.length; i++)
    {
       for(var j in keys)
       {
          var key = keys[j];
-         if(clRecords[i][key].toString() != esRecords[i][key].toString())
+         if(expectResult[i][key].toString() != actResult[i][key].toString())
          {
-            throw buildException("checkRecords", "check record fail", "fail",
-                        JSON.stringify(clRecords[i]), JSON.stringify(esRecords[i]));
+            throw buildException("checkResult", "check record fail", "fail",
+                        JSON.stringify(expectResult[i]), JSON.stringify(actResult[i]));
          }	
       }
    }
 	
-   println("check recoreds success!");
+   println("check results success!");
 }
 
 /*****************************************************************
