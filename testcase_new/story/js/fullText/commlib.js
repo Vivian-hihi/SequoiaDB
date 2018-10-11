@@ -401,7 +401,7 @@ function checkResult(expectResult, actResult)
          if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) ) 
          {
             throw buildException("checkResult()", "check record fail", "fail",
-                    JSON.stringify(JSON.stringify(actRec)), JSON.stringify(expRec));
+                    JSON.stringify(JSON.stringify(expRec)), JSON.stringify(actRec));
          }
       }
    }
@@ -416,7 +416,7 @@ function checkResult(expectResult, actResult)
          if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
          {
             throw buildException("checkResult()", "check record fail", "fail",
-                    JSON.stringify(JSON.stringify(actRec)), JSON.stringify(expRec));
+                    JSON.stringify(JSON.stringify(expRec)), JSON.stringify(actRec));
          }
       }
    }
