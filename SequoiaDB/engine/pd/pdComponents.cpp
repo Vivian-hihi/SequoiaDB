@@ -77,9 +77,14 @@ const CHAR *_pdTraceComponentDir[] = {
    "qgm"     // PD_TRACE_COMPONENT_QGM
 } ;
 
+UINT32 pdGetTraceComponentSize()
+{
+   return sizeof( _pdTraceComponentDir ) / sizeof( const CHAR* ) ;
+}
+
 const CHAR *pdGetTraceComponent ( UINT32 id )
 {
-   if ( (INT32)id >= _pdTraceComponentNum )
+   if ( (INT32)id >= pdGetTraceComponentSize() )
    {
       return NULL ;
    }

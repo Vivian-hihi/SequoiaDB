@@ -112,7 +112,6 @@
 /*
    Max component number
 */
-const INT32 _pdTraceComponentNum = 28 ;
 
 // component masks
 // authentication
@@ -806,6 +805,7 @@ extern BOOLEAN g_isTraceStarted ;
 
 const CHAR *pdGetTraceFunction ( UINT64 id ) ;
 const CHAR *pdGetTraceComponent ( UINT32 id ) ;
+UINT32      pdGetTraceComponentSize() ;
 void pdTraceFunc ( UINT64 funcCode, INT32 type,
                    const CHAR* file, UINT32 line,
                    pdTraceArgTuple *tuple ) ;
