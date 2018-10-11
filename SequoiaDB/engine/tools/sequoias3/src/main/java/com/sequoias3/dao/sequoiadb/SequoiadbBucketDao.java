@@ -25,7 +25,7 @@ import java.util.List;
 
 @Repository("BucketDao")
 public class SequoiadbBucketDao implements BucketDao {
-    private static final Logger logger = LoggerFactory.getLogger(SequoiadbUserDao.class);
+    private static final Logger logger = LoggerFactory.getLogger(SequoiadbBucketDao.class);
 
     @Autowired
     SdbDataSourceWrapper sdbDatasourceWrapper;
