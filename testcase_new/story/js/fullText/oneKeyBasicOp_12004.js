@@ -1,0 +1,72 @@
+/************************************
+*@Description: create fullText index only one key£¬insert/update/delete
+*@author:      zhaoyu
+*@createdate:  2018.9.28
+**************************************/
+function main()
+{
+   var clName = COMMCLNAME + "_ES_12004";
+   var clFullName = COMMCSNAME + "." + clName
+   var indexName = "a";
+   var doc = [{a:"string1"},
+              {a:"string2",b:1},
+              {b:2}];
+   
+   commDropCL( db, COMMCSNAME, clName);
+   var dbcl = commCreateCL( db, COMMCSNAME, clName);
+   commCreateIndex( dbcl, indexName, {a:"text"});
+   dbcl.insert(doc);
+   
+   //all of record sync to ES
+   var esOperator = new ESOperator();
+   var dbOperator = new DBOperator();
+   var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, indexName);
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 2);
+   
+   var expectRecords = dbOperator.findFromCL(dbcl, {a:{$type:2,$et:"string"}}, null, {_id:1});
+   var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, null, {_id:1});
+   checkResult(expectRecords, actRecords);
+   println("---check insert success---");
+   
+   //string update to string,sync ES
+   dbcl.update({$set:{a:"update"}},{a:"string1"});
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 2);
+   var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match:{a:"update"}}}}}, null, {_id:1});
+   var expectRecords = dbOperator.findFromCL(dbcl, {a:"update"}, null, {_id:1});
+   checkResult(expectRecords, actRecords);
+   println("---check update string to string success---");
+   
+   //string update to int,not sync ES
+   dbcl.update({$set:{a:1}},{a:"update"});
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 1);
+   var expectRecords = dbOperator.findFromCL(dbcl, {a:{$type:2,$et:"string"}}, null, {_id:1});
+   var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, null, {_id:1});
+   checkResult(expectRecords, actRecords);
+   println("---check update string to int success---");
+   
+   //int update to int,not sync ES
+   dbcl.update({$set:{a:100}},{a:1});
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 1);
+   var expectRecords = dbOperator.findFromCL(dbcl, {a:{$type:2,$et:"string"}}, null, {_id:1});
+   var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, null, {_id:1});
+   checkResult(expectRecords, actRecords);
+   println("---check update int to int success---");
+   
+   //int update to string,sync ES
+   dbcl.update({$set:{a:"update"}},{a:100});
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 2);
+   var expectRecords = dbOperator.findFromCL(dbcl, {a:"update"}, null, {_id:1});
+   var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match:{a:"update"}}}}}, null, {_id:1});
+   checkResult(expectRecords, actRecords);
+   println("---check update int to string success---");
+   
+   dbcl.remove();
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 0);
+   var expectRecords = dbOperator.findFromCL(dbcl);
+   var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}});
+   checkResult(expectRecords, actRecords);
+   println("---check remove success---");
+   
+   commDropCL( db, COMMCSNAME, clName);
+}
+main()
