@@ -245,16 +245,17 @@ function DBOperator()
    /*****************************************************************
    * find records by options
    *****************************************************************/
-   this.findFromCL = function (dbcl, findCond, selectorCond, sortCond, hintCond, limitCond)
+   this.findFromCL = function (dbcl, findCond, selectorCond, sortCond, hintCond, limitCond, skipCond)
    {
       if ( typeof(selectorCond) == "undefined" ) { selectorCond = null; }
       if ( typeof(findCond) == "undefined" ) { findCond = null; }
       if ( typeof(sortCond) == "undefined" ) { sortCond = null; }
       if ( typeof(hintCond) == "undefined" ) { hintCond = null; }
       if ( typeof(limitCond) == "undefined" ) { limitCond = null; }
+      if ( typeof(skipCond) == "undefined" ) { skipCond = null; }
   
       //find({"":{"$Text":{"query":{"match":{"a" : "test"}}}}}) 
-      var rc = dbcl.find(findCond, selectorCond).sort(sortCond).hint(hintCond).limit(limitCond);
+      var rc = dbcl.find(findCond, selectorCond).sort(sortCond).hint(hintCond).limit(limitCond).skip(skipCond);
   
       var records = new Array();
       //get all records
@@ -489,4 +490,24 @@ function checkConsistency(csName, clName, checkTimes)
       throw buildException("checkConsistency", "check consistency fail", "fail",
                                           e, e);  
    }   
+}
+
+/******************************************************************************
+*@Description : insert data£¬skip the error -321
+@input:         csName
+                clName
+                checkTimes
+******************************************************************************/
+function insertRecords(dbcl, doc)
+{
+   try
+   {
+      dbcl.insert(doc);
+   }catch(e)
+   {
+      if(e !== -321)
+      {
+         throw buildException("insertRecords", "insert records fail", "fail", e, e);  
+      }
+   }
 }
