@@ -2619,7 +2619,7 @@ error:
             if ( !it.more () )
             {
                // if there's no element, that means we need mask everything
-               for( INT32 i = 0; i < pdGetTraceComponentSize() ; ++i )
+               for( UINT32 i = 0; i < pdGetTraceComponentSize() ; ++i )
                {
                   _mask |= ( one << i ) ;
                }
@@ -2631,7 +2631,7 @@ error:
                   BSONElement ele = it.next() ;
                   if ( ele.type() == String )
                   {
-                     for ( INT32 i = 0; i < pdGetTraceComponentSize() ; ++i)
+                     for ( UINT32 i = 0; i < pdGetTraceComponentSize() ; ++i )
                      {
                         if ( 0 == ossStrcmp ( pdGetTraceComponent(i),
                                               ele.valuestr() ) )
