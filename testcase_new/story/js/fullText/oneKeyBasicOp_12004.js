@@ -20,6 +20,8 @@ function main()
    
    commDropCL( db, COMMCSNAME, clName);
    var dbcl = commCreateCL( db, COMMCSNAME, clName);
+   
+   dbcl.insert(doc);
    commCreateIndex( dbcl, indexName, {a:"text"});
    dbcl.insert(doc);
    
@@ -27,7 +29,7 @@ function main()
    var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
    var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, indexName);
-   checkFullSyncToES(COMMCSNAME, clName, indexName, 2);
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 4);
    
    var expectRecords = dbOperator.findFromCL(dbcl, {a:{$type:2,$et:"string"}}, null, {_id:1});
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, null, {_id:1});
@@ -36,7 +38,7 @@ function main()
    
    //string update to string,sync ES
    dbcl.update({$set:{a:"update"}},{a:"string1"});
-   checkFullSyncToES(COMMCSNAME, clName, indexName, 2);
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 4);
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match:{a:"update"}}}}}, null, {_id:1});
    var expectRecords = dbOperator.findFromCL(dbcl, {a:"update"}, null, {_id:1});
    checkResult(expectRecords, actRecords);
@@ -44,7 +46,7 @@ function main()
    
    //string update to int,not sync ES
    dbcl.update({$set:{a:1}},{a:"update"});
-   checkFullSyncToES(COMMCSNAME, clName, indexName, 1);
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 2);
    var expectRecords = dbOperator.findFromCL(dbcl, {a:{$type:2,$et:"string"}}, null, {_id:1});
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, null, {_id:1});
    checkResult(expectRecords, actRecords);
@@ -52,7 +54,7 @@ function main()
    
    //int update to int,not sync ES
    dbcl.update({$set:{a:100}},{a:1});
-   checkFullSyncToES(COMMCSNAME, clName, indexName, 1);
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 2);
    var expectRecords = dbOperator.findFromCL(dbcl, {a:{$type:2,$et:"string"}}, null, {_id:1});
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, null, {_id:1});
    checkResult(expectRecords, actRecords);
@@ -60,7 +62,7 @@ function main()
    
    //int update to string,sync ES
    dbcl.update({$set:{a:"update"}},{a:100});
-   checkFullSyncToES(COMMCSNAME, clName, indexName, 2);
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 4);
    var expectRecords = dbOperator.findFromCL(dbcl, {a:"update"}, null, {_id:1});
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match:{a:"update"}}}}}, null, {_id:1});
    checkResult(expectRecords, actRecords);

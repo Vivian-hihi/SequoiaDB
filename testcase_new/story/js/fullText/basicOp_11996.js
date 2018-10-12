@@ -17,6 +17,8 @@ function main()
    
    commDropCL( db, COMMCSNAME, clName);
    var dbcl = commCreateCL( db, COMMCSNAME, clName);
+   
+   dbcl.insert({b:"text"});
    commCreateIndex( dbcl, indexName, {a:"text"});
    dbcl.insert({b:"text"});
    

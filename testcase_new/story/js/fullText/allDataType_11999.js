@@ -17,7 +17,6 @@ function main()
    
    commDropCL( db, COMMCSNAME, clName);
    var dbcl = commCreateCL( db, COMMCSNAME, clName);
-   commCreateIndex( dbcl, indexName, {a:"text"});
    
    var doc = [{No:1,a:123},
               {No:2,a:{$numberLong:"9223372036854775807"}},
@@ -37,12 +36,14 @@ function main()
               {No:16,a:{$minKey:1}},
               {No:17,a:"中文"}];
    dbcl.insert(doc);
+   commCreateIndex( dbcl, indexName, {a:"text"});
+   dbcl.insert(doc);
    
    //all of record sync to ES
    var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
    var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, indexName);
-   checkFullSyncToES(COMMCSNAME, clName, indexName, 2);
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 4);
    
    var expectRecords = dbOperator.findFromCL(dbcl, {a:{$type:2,$et:"string"}}, null, {_id:1});
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, null, {_id:1});
@@ -59,7 +60,7 @@ function main()
    
    //int update to string,sync ES
    dbcl.update({$set:{a:"update"}});
-   checkFullSyncToES(COMMCSNAME, clName, indexName, 17);
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 34);
    var expectRecords = dbOperator.findFromCL(dbcl);
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}});
    checkResult(expectRecords, actRecords);

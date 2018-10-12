@@ -495,9 +495,9 @@ function checkConsistency(csName, clName, checkTimes)
 /******************************************************************************
 *@Description : insert data,skip the error -321
 @input:         dbcl
-                doc
+					 records
 ******************************************************************************/
-function insertRecords(dbcl, doc)
+function insertRecords(dbcl, records)
 {
    try
    {

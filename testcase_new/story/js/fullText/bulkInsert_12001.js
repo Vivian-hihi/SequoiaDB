@@ -17,6 +17,16 @@ function main()
    
    commDropCL( db, COMMCSNAME, clName);
    var dbcl = commCreateCL( db, COMMCSNAME, clName);
+   
+   for(var j=0;j<2;j++)
+   {
+      var doc = [];
+      for(var i=0;i<10000;i++)
+      {
+         doc.push({a:j*10000 + i + "text"});
+      }
+      insertRecords(dbcl, doc);
+   }
    commCreateIndex( dbcl, indexName, {a:"text"});
    
    for(var j=0;j<2;j++)
@@ -26,13 +36,20 @@ function main()
       {
          doc.push({a:j*10000 + i + "text"});
       }
-      dbcl.insert(doc);
+      insertRecords(dbcl, doc);
+   }
+   
+   var recordNum = parseInt(dbcl.count());
+   if(recordNum !== 40000)
+   {
+      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
+      return;
    }
    
    var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
    var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, indexName);
-   checkFullSyncToES(COMMCSNAME, clName, indexName, 20000);
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 40000);
    
    var expectRecords = dbOperator.findFromCL(dbcl, null, null, {_id:1});
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, null, {_id:1});
@@ -40,7 +57,7 @@ function main()
    println("---check insert success---");
    
    dbcl.update({$set:{a:"update"}});
-   checkFullSyncToES(COMMCSNAME, clName, indexName, 20000);
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 40000);
    var expectRecords = dbOperator.findFromCL(dbcl, {a:"update"}, null, {_id:1});
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match:{a:"update"}}}}}, null, {_id:1});
    checkResult(expectRecords, actRecords);

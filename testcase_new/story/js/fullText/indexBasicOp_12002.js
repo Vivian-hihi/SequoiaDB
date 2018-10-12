@@ -18,14 +18,16 @@ function main()
    
    commDropCL( db, COMMCSNAME, clName);
    var dbcl = commCreateCL( db, COMMCSNAME, clName);
-   commCreateIndex( dbcl, textIndexName, {a:"text"});
+   
    commCreateIndex( dbcl, commIndexName, {a:1});
+   dbcl.insert({a:"text"});
+   commCreateIndex( dbcl, textIndexName, {a:"text"});
    dbcl.insert({a:"text"});
    
    var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
    var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, textIndexName);
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 1);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 2);
    
    var expectRecords = dbOperator.findFromCL(dbcl, {a:"text"}, null, null, {"":"commIndex"});
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}});
@@ -33,7 +35,7 @@ function main()
    println("---check insert success---");
    
    dbcl.update({$set:{a:"update"}},{a:"text"});
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 1);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 2);
    var expectRecords = dbOperator.findFromCL(dbcl, {a:"update"}, null, null, {"":"commIndex"});
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match:{a:"update"}}}}});
    checkResult(expectRecords, actRecords);

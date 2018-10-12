@@ -1,7 +1,7 @@
 /************************************
-*@Description: no id index£¬insert record with the same id value 
+*@Description: full text sort
 *@author:      zhaoyu
-*@createdate:  2018.10.11
+*@createdate:  2018.10.12
 **************************************/
 function main()
 {
@@ -11,27 +11,34 @@ function main()
       return;
    }
    
-   var clName = COMMCLNAME + "_ES_12006";
+   var clName = COMMCLNAME + "_ES_14767";
    var clFullName = COMMCSNAME + "." + clName
    var indexName = "a";
    
    commDropCL( db, COMMCSNAME, clName);
-   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {AutoIndexId:false});
+   var dbcl = commCreateCL( db, COMMCSNAME, clName);
    commCreateIndex( dbcl, indexName, {a:"text"});
-   dbcl.insert({_id:1,a:"text1"});
-   dbcl.insert({_id:1,a:"text2"});
+   dbcl.insert({a:"text"});
    
-   //_id is the same, ES sync the last one, but can return all records by fullText query even if the same _id value
    var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
    var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, indexName);
    checkFullSyncToES(COMMCSNAME, clName, indexName, 1);
    
-   var expectRecords = dbOperator.findFromCL(dbcl, null, null, {a:1});
-   var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, null, {a:1});
-   checkResult(expectRecords, actRecords);
-   println("---check insert success---");
+   //not support full text sort
+   try
+   {
+      var cursor = dbcl.find({"":{$Text:{query:{match_all:{}},sort:[{a:{order:"desc"}}]}}});
+      while(cursor.next()){}
+      throw "NEED_SORT_ERR";
+   }catch(e)
+   {
+      if(e !== -6)
+      {
+         throw e;
+      }
+   }
    
    commDropCL( db, COMMCSNAME, clName);
 }
-main();
+main()
