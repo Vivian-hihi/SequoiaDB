@@ -631,6 +631,7 @@ namespace engine
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
       SDB_DMS_CSCB *pCSCB = NULL ;
+      IDmsExtDataHandler *extHandler = NULL ;
 
       if ( NULL != dpsCB )
       {
@@ -698,6 +699,14 @@ namespace engine
          PD_LOG( PDERROR, "Rename collection space[%s] to [%s] failed, "
                  "rc: %d", pName, pNewName, rc ) ;
          goto error ;
+      }
+
+      extHandler = pCSCB->_su->data()->getExtDataHandler() ;
+      if ( extHandler )
+      {
+         rc = extHandler->onRenameCS( pName, pNewName, cb, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "External operation on rename cs failed, "
+                                   "rc: %d", rc ) ;
       }
 
       /// 1.make sure erase must before reset the name,

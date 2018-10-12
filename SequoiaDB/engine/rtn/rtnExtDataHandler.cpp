@@ -665,21 +665,58 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONRENAMECS, "_rtnExtDataHandler::onRenameCS" )
    INT32 _rtnExtDataHandler::onRenameCS( const CHAR *oldCSName,
                                          const CHAR *newCSName,
                                          pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
-      // TODO: YSD
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONRENAMECS ) ;
+
+      SDB_ASSERT( oldCSName, "Old CS name is null" ) ;
+      SDB_ASSERT( newCSName, "New CS name is null" ) ;
+
+      if ( 0 == ossStrcmp( oldCSName, newCSName ) )
+      {
+         goto done ;
+      }
+
+      rc = _edpMgr->renameCS( oldCSName, newCSName ) ;
+      PD_RC_CHECK( rc, PDERROR, "External data processor manager rename cs "
+                                "failed[ %d ]", rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONRENAMECS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONRENAMECL, "_rtnExtDataHandler::onRenameCL" )
    INT32 _rtnExtDataHandler::onRenameCL( const CHAR *csName,
                                          const CHAR *oldCLName,
                                          const CHAR *newCLName,
                                          pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
-      // TODO: YSD
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONRENAMECL ) ;
+
+      SDB_ASSERT( csName, "CS name is null" ) ;
+      SDB_ASSERT( oldCLName, "Old CL name is null" ) ;
+      SDB_ASSERT( newCLName, "New CL name is null" ) ;
+
+      if ( 0 == ossStrcmp( oldCLName, newCLName ) )
+      {
+         goto done ;
+      }
+
+      rc = _edpMgr->renameCL( csName, oldCLName, newCLName ) ;
+      PD_RC_CHECK( rc, PDERROR, "External data processor manager rename cl "
+                                "failed[ %d ]", rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONRENAMECL, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_DONE, "_rtnExtDataHandler::done" )

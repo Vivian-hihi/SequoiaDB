@@ -150,6 +150,29 @@ namespace engine
       return ( RTN_EXT_PROCESSOR_NORMAL == _stat ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_UPDATEMETA, "_rtnExtDataProcessor::updateMeta" )
+   void _rtnExtDataProcessor::updateMeta( const CHAR *csName,
+                                          const CHAR *clName,
+                                          const CHAR *idxName )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_UPDATEMETA ) ;
+      if ( csName && ( ossStrcmp( csName, _meta._csName.c_str() ) != 0 ) )
+      {
+         _meta._csName = csName ;
+      }
+
+      if ( clName && ( ossStrcmp( clName, _meta._clName.c_str() ) != 0 ) )
+      {
+         _meta._clName = clName ;
+      }
+
+      if ( idxName && ( ossStrcmp( idxName, _meta._idxName.c_str() ) != 0 ) )
+      {
+         _meta._idxName = idxName ;
+      }
+      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_UPDATEMETA ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_SETTARGETNAMES, "_rtnExtDataProcessor::setTargetNames" )
    INT32 _rtnExtDataProcessor::setTargetNames( const CHAR *extName )
    {
@@ -1425,6 +1448,45 @@ namespace engine
          }
       }
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSORS ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_RENAMECS, "_rtnExtDataProcessorMgr::renameCS" )
+   INT32 _rtnExtDataProcessorMgr::renameCS( const CHAR *name,
+                                            const CHAR *newName )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_RENAMECS ) ;
+      ossScopedLock _lock( &_mutex, EXCLUSIVE ) ;
+
+      for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
+      {
+         if ( _processors[i].isOwnedBy( name ) )
+         {
+            _processors[i].updateMeta( newName ) ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_RENAMECS ) ;
+      return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_RENAMECL, "_rtnExtDataProcessorMgr::renameCL" )
+   INT32 _rtnExtDataProcessorMgr::renameCL( const CHAR *csName,
+                                            const CHAR *clName,
+                                            const CHAR *newCLName )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_RENAMECL ) ;
+      ossScopedLock _lock( &_mutex, EXCLUSIVE ) ;
+
+      for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
+      {
+         if ( _processors[i].isOwnedBy( csName, clName ) )
+         {
+            _processors[i].updateMeta( csName, newCLName ) ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_RENAMECL ) ;
+      return SDB_OK ;
    }
 
    rtnExtDataProcessorMgr* rtnGetExtDataProcessorMgr()

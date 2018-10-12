@@ -123,6 +123,9 @@ namespace engine
 
       BOOLEAN isActive() const ;
 
+      void updateMeta( const CHAR *csName, const CHAR *clName = NULL,
+                       const CHAR *idxName = NULL ) ;
+
       INT32 setTargetNames( const CHAR *extName ) ;
 
       INT32 check( DMS_EXTOPR_TYPE type, const BSONObj *object,
@@ -228,6 +231,11 @@ namespace engine
 
       void unlockProcessors( std::vector<rtnExtDataProcessor *> &processors,
                              INT32 lockType ) ;
+
+      INT32 renameCS( const CHAR *name, const CHAR *newName ) ;
+
+      INT32 renameCL( const CHAR *csName, const CHAR *clName,
+                      const CHAR *newCLName ) ;
 
    private:
       // Mutex to protect meta data change.

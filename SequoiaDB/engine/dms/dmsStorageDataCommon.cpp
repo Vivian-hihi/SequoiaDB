@@ -2793,6 +2793,14 @@ namespace engine
          isTransLocked = TRUE ;
       }
 
+      if ( _pExtDataHandler )
+      {
+         rc = _pExtDataHandler->onRenameCL( getSuName(), oldName, newName,
+                                            cb, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "External operation on rename cl failed, "
+                                   "rc: %d", rc ) ;
+      }
+
       _collectionRemove ( oldName ) ;
       _collectionInsert ( newName, mbID ) ;
       ossMemset ( _dmsMME->_mbList[mbID]._collectionName, 0,
