@@ -1,0 +1,318 @@
+/************************************
+*@Description: insert data
+*@author:      wuyan
+*@createDate:  2018.1.22
+**************************************/
+function insertData( dbcl, number)
+{
+   if( undefined == this.number ){ this.number = 1000 ; }
+   try
+   {
+      println("---begin to insert data " );   
+      var docs = [];
+      for( var i = 0; i < number; ++i )
+      {      
+         var no = i;
+         var a = i;
+         var user = "test"+i;
+         var phone = 13700000000+i;
+         var time = new Date().getTime(); 
+         var doc = {no:no, a:a,customerName:user, phone:phone, openDate:time};      
+         //data example: {"no":5, customerName:"test5", "phone":13700000005, "openDate":1402990912105
+         
+         docs.push( doc );
+      }	
+      dbcl.insert( docs );       
+   }
+   catch(e)
+   {
+      throw buildException("insertData()",e,"insert", "insert success","insert fail");
+   }
+}
+
+/************************************
+*@Description: create file by lob
+*@author:      wuyan
+*@createDate:  2018.10.12
+**************************************/
+function createFile( fileName, fileSize )
+{
+   if( undefined == fileSize ){ fileSize = "100K" ; }  
+   var cmd = new Cmd();
+   var str = "dd if=/dev/zero of="+fileName+" bs="+fileSize+" count=1";   
+   cmd.run( str );
+   
+   var md5 = cmd.run( "md5sum " + fileName ).split(" ")[0];
+   return md5;
+}
+
+/************************************
+*@Description: put lobs
+*@author:      wuyan
+*@createDate:  2018.10.12
+**************************************/
+function putLobs( cl, fileName, lobNum )
+{
+   if( undefined == lobNum ){ lobNum = 1 ; }
+   
+   println("---begin to put lob " );   
+   var lobIdArr = [];   
+   for( var i = 0; i < lobNum; i++)
+   {
+      var lobId = cl.putLob( fileName );
+      lobIdArr.push( lobId );
+   }
+   return lobIdArr;
+}
+
+/************************************
+*@Description: delete the lob
+*@author:      wuyan
+*@createDate:  2018.10.12
+**************************************/
+function deleteLobs( cl, lobIdArr )
+{
+   println("\n---begin to deleteLobs " );
+   
+   for( var i in lobIdArr)
+   {
+      cl.deleteLob( lobIdArr[i] );
+   }
+}
+
+
+/************************************
+*@Description: check the lob
+*@author:      wuyan
+*@createDate:  2018.10.12
+**************************************/
+function checkLob( cl, expLobArr, srcMd5 )
+{
+   println("---begin to checkLob " );
+   
+   var rc = cl.listLobs();
+   
+   //check Available
+   var lobArr = [];
+   while(rc.next())
+   {
+      var lobInfo = rc.current().toObj();
+      var lobId    = lobInfo["Oid"]["$oid"];
+      var isNormal = lobInfo["Available"];
+      lobArr.push(lobId);
+      
+      if( isNormal !== true )
+      {
+         println("lobId="+lobId);
+         throw buildException("check Available", null, "cl.listLobs()",
+                              '"Available":true', '"Available":'+isNormal );
+      }
+   }
+   
+   //check lob number 
+   if( lobArr.length !== expLobArr.length )
+   {
+      throw buildException("check lob number", null, "cl.listLobs()",
+                           'lob number:'+expLobArr.length, 
+                           'lob number:'+lobArr.length );
+   }
+   
+   //check lob Id
+   for( var i in expLobArr )
+   {
+      if( lobArr[i] !== expLobArr[i] )
+      {
+         throw buildException("check lob Id", null, "cl.listLobs()",
+                              'lob Id:'+expLobArr[i], 
+                              'lob Id:'+lobArr[i] );
+      }
+   }
+   
+   //get lob and check md5sum
+   var fileName = CHANGEDPREFIX + "_lobtest_getlob.file";
+   for( var i in lobArr )
+   {
+      var lobId = lobArr[i];
+      cl.getLob( lobId, fileName, true );
+      
+      var cmd = new Cmd();
+      var desMd5 = cmd.run( "md5sum " + fileName ).split(" ")[0];
+      if( desMd5 !== srcMd5 )
+      {
+         throw buildException("get lob and check md5sum", null, "md5sum " + fileName,
+                              srcMd5, desMd5 );
+      }
+      
+      cmd.run( "rm -rf " + fileName );
+   }
+}
+
+
+/************************************
+*@Description: check the new cl name 
+*@author:      wuyan
+*@createDate:  2018.10.12
+**************************************/
+function checkRenameCLResult( csName, oldCLName, newCLName )
+{   
+   try
+   {
+      var clFullName = csName + "." + newCLName; 
+      var getNewCLName = db.snapshot(SDB_SNAP_COLLECTIONS ,{"Name": clFullName }).current().toObj().Name;     
+      if( getNewCLName !== clFullName  )
+      {
+         throw buildException("check cl name", null, "check the new cl name",
+									clFullName, getNewCLName);
+      }   
+      
+      //check the old cl is not exist
+      try
+	   {
+		   db.getCS(csName).getCL( oldCLName );
+		   throw "need throw error";
+	   }
+	   catch ( e )
+	   { 
+		   if ( e !== -23  )
+		   {		      
+			   throw buildException("check old clName:",e);
+		   }		
+	   }
+   }
+   catch(e)
+   {      
+      throw buildException("checkRenameCLResult", e)
+   }   
+}
+
+/************************************
+*@Description: get group name and service name .
+*@author:      wuyan
+*@createDate:  2018/10/12
+**************************************/
+function getGroupName(db, mustBePrimary)
+{
+   var RGname = null ;
+   try
+   {
+      RGname = db.listReplicaGroups().toArray();
+   }
+   catch (e)
+   {
+      throw e;
+   }
+   var j = 0;
+   var arrGroupName = Array();
+   for (var i=1 ; i != RGname.length ; ++i )
+   {
+      var eRGname = eval('('+RGname[i]+')') ;
+      if( 1000 <= eRGname["GroupID"] )
+      {
+         arrGroupName[j] = Array();
+         var primaryNodeID = eRGname["PrimaryNode"] ;
+         var groups = eRGname["Group"] ;
+         for ( var m = 0; m < groups.length; m++ )
+         {
+            if ( true == mustBePrimary )
+            {
+               var nodeID = groups[m]["NodeID"] ;
+               if ( primaryNodeID != nodeID )
+                  continue ;
+            }
+            arrGroupName[j].push(eRGname["GroupName"]) ;
+            arrGroupName[j].push(groups[m]["HostName"]) ;
+            arrGroupName[j].push(groups[m]["Service"][0]["Name"]) ;
+            break ;
+         }
+         ++j;
+      }
+   }
+   return arrGroupName;
+}
+
+/************************************
+*@Description: get SrcGroup name,update getPG to getSrcGroup
+*@author£ºwuyan 2018/10/12
+**************************************/
+function getSrcGroup( csName, clName )
+{
+   try
+   {
+      var clFullName = csName + "." + clName;
+      var clInfo = db.snapshot( 8, {Name: clFullName} );
+      while( clInfo.next() )
+      {
+         var clInfoObj = clInfo.current().toObj();
+         var srcGroupName = clInfoObj.CataInfo[0].GroupName;
+      }
+      return srcGroupName;
+   }
+   catch( e )
+   {
+      println( "failed to get source group, cl name: " + clFullName ) ;
+      throw e ;
+   }
+}
+
+/************************************
+*@Description: get SrcGroup and TargetGroup info,the groups information
+               include GroupName,HostName and svcname
+*@author£ºwuyan 2018/10/12
+*@return array[][] ex:
+        [0]
+           {"GroupName":"XXXX"}
+           {"HostName":"XXXX"}
+           {"svcname":"XXXX"}
+        [N]
+           ...
+**************************************/
+function getSplitGroups(csName,clName,targetGrMaxNums)
+{
+   var allGroupInfo =  getGroupName(db, true);
+   var srcGroupName = getSrcGroup(csName, clName );
+   var splitGroups = new Array();
+   if( targetGrMaxNums >= allGroupInfo.length-1 )
+   {
+      targetGrMaxNums = allGroupInfo.length-1;
+   }
+   var index =1;
+
+   for( var i = 0 ; i != allGroupInfo.length ; ++i )
+   {
+      if( srcGroupName == allGroupInfo[i][0] )
+      {
+         splitGroups[0] = new Object();
+			splitGroups[0].GroupName = allGroupInfo[i][0];
+			splitGroups[0].HostName = allGroupInfo[i][1];
+			splitGroups[0].svcname = allGroupInfo[i][2];
+      }
+      else
+      {
+         if (index > targetGrMaxNums)
+         {
+            continue;
+         }
+         splitGroups[index] = new Object();
+			splitGroups[index].GroupName = allGroupInfo[i][0];
+			splitGroups[index].HostName = allGroupInfo[i][1];
+			splitGroups[index].svcname = allGroupInfo[i][2];
+         index++;
+      }
+   }
+   return splitGroups;
+
+}
+
+function splitCL(dbcl, srcGroupName, dstGroupName)
+{
+   try
+   {
+      var percent = 50;
+      dbcl.split( srcGroupName, dstGroupName, percent );
+   }
+   catch(e)
+   {
+      throw buildException("splitcl", null, "split fail!",
+									srcGroupName, dstGroupName+"  e:"+e);
+   } 
+}
