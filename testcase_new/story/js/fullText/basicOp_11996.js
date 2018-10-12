@@ -5,6 +5,12 @@
 **************************************/
 function main()
 {
+   if( commIsStandalone( db ) )
+   {
+      println( "Deploy mode is standalone!" );
+      return;
+   }
+   
    var clName = COMMCLNAME + "_ES_11996";
    var clFullName = COMMCSNAME + "." + clName
    var indexName = "a";
