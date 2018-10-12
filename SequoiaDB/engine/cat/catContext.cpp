@@ -207,6 +207,7 @@ namespace engine
                       "Failed in catContext [%lld]: "
                       "failed to commit catalog changes, rc: %d",
                       contextID(), rc ) ;
+         _clear( cb ) ;
          break ;
       }
       default :
@@ -226,7 +227,6 @@ namespace engine
 
       if ( _status == CAT_CONTEXT_DATA_DONE )
       {
-         _clear( cb ) ;
          // End of execution
          rc = SDB_DMS_EOC ;
          _isOpened = FALSE ;
@@ -520,11 +520,11 @@ namespace engine
          rc = SDB_INVALIDARG;
          goto error ;
       }
-   
+
       PD_LOG( PDDEBUG,
               "catContext [%lld]: finished clear",
               contextID() ) ;
-   
+
    done :
       PD_TRACE_EXITRC ( SDB_CATCTXBASE_CLEAR, rc ) ;
       return rc ;

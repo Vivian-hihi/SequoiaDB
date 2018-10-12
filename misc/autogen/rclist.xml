@@ -2659,17 +2659,17 @@
       </code>
 
       <code>
-         <name>SDB_AUTOINCREMENT_FIELD_EXIST</name>
+         <name>SDB_AUTOINCREMENT_FIELD_EXIST_OR_NESTED</name>
          <description>
-            <en>Autoincrement field exists on collection</en>
-            <cn>自增字段已存在</cn>
+            <en>Autoincrement field exists or nested on collection</en>
+            <cn>自增字段已存在或者存在嵌套</cn>
          </description>
       </code>
 
       <code>
          <name>SDB_AUTOINCREMENT_FIELD_NOT_EXIST</name>
          <description>
-            <en>Autoincrement field dose not exists on collection</en>
+            <en>Autoincrement field dose not exist on collection</en>
             <cn>自增字段不存在</cn>
          </description>
       </code>

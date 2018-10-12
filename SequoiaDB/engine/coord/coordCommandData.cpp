@@ -464,6 +464,8 @@ namespace engine
          {
             rc = _extractPostTasks( (*iterReply) ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to extract post tasks, rc: %d" ) ;
+            rc = _getPostTasksObj( cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get post tasks obj, rc: %d" ) ;
          }
       }
 
@@ -503,6 +505,8 @@ namespace engine
                          rc ) ;
             rc = _extractPostTasks( reply ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to extract post tasks, rc: %d" ) ;
+            rc = _getPostTasksObj( cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get post tasks obj, rc: %d" ) ;
          }
       }
       else
@@ -669,6 +673,82 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION( COORD_DATAALTER__GETPOSTTASKS, "_coordDataCMDAlter::_getPostTasks" )
+   INT32 _coordDataCMDAlter::_getPostTasksObj( pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR * msgBuff = NULL ;
+      INT32 msgSize = 0 ;
+      MsgHeader * msgHeader = NULL ;
+      CLS_TASK_TYPE taskType ;
+
+      vector<BSONObj> reply ;
+      BSONObj taskDesc ;
+
+      PD_TRACE_ENTRY( COORD_DATAALTER__GETPOSTTASKS ) ;
+
+      if( _arguments.getPostTasks().size() <= 0 )
+      {
+         goto done;
+      }
+
+      rc = _buildPostTasks( _arguments.getPostTasks(), taskDesc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build post task condition, rc: %d", rc ) ;
+
+      rc = msgBuildQueryMsg( &msgBuff, &msgSize, CAT_TASK_INFO_COLLECTION,
+                             0, 0, 0, -1, &taskDesc, NULL, NULL, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build query message, rc: %d", rc ) ;
+
+
+      msgHeader = (MsgHeader *)msgBuff ;
+      msgHeader->opCode = MSG_CAT_QUERY_TASK_REQ ;
+
+      /// get task info from catalog.
+      rc = executeOnCataGroup( msgHeader, cb, NULL, &reply ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get task info from catalog, rc: %d",
+                   rc ) ;
+
+      for ( vector<BSONObj>::const_iterator iterTask = reply.begin() ;
+            iterTask != reply.end() ;
+            iterTask ++ )
+      {
+         _arguments.addPostTaskObj( *iterTask ) ;
+      }
+   done :
+      PD_TRACE_EXITRC( COORD_DATAALTER__GETPOSTTASKS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_DATAALTER__BLDPOSTTASKS, "_coordDataCMDAlter::_buildPostTasks" )
+   INT32 _coordDataCMDAlter::_buildPostTasks ( const _utilList< UINT64 > & postTasks,
+                                                     BSONObj & taskDesc )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_DATAALTER__BLDPOSTTASKS ) ;
+
+      BSONObjBuilder builder ;
+      BSONObjBuilder taskBuilder( builder.subobjStart( FIELD_NAME_TASKID ) ) ;
+      BSONArrayBuilder arrBuilder( taskBuilder.subarrayStart( "$in" ) ) ;
+      for ( _utilList<UINT64>::const_iterator iter = postTasks.begin() ;
+            iter != postTasks.end() ;
+            iter ++ )
+      {
+         arrBuilder.append( (INT64)( *iter ) ) ;
+      }
+      arrBuilder.done() ;
+      taskBuilder.done() ;
+      taskDesc = builder.obj() ;
+
+      PD_TRACE_EXITRC( COORD_DATAALTER__BLDPOSTTASKS, rc ) ;
+
+      return rc ;
+   }
+
    INT32 _coordDataCMDAlter::_executePostTasks ( const CHAR * name,
                                                  const _utilList< UINT64 > & postTasks,
                                                  pmdEDUCB * cb,
@@ -683,7 +763,7 @@ namespace engine
    {
       return SDB_OK ;
    }
-   
+
    /*
       _coordCMDTestCollectionSpace implement
    */
@@ -1884,33 +1964,23 @@ namespace engine
 
       PD_TRACE_ENTRY( COORD_ALTERCL__EXECPOSTTASKS ) ;
 
+      BOOLEAN needWait = FALSE ;
+      UINT64 taskId = 0 ;
       CHAR * msgBuff = NULL ;
       INT32 msgSize = 0 ;
       MsgHeader * msgHeader = NULL ;
       CLS_TASK_TYPE taskType ;
-
-      vector<BSONObj> reply ;
+      vector<BSONObj> taskObj ;
       BSONObj taskDesc ;
+      BSONObjBuilder builder ;
+      BSONObjBuilder taskBuilder( builder.subobjStart( FIELD_NAME_TASKID ) ) ;
+      BSONArrayBuilder arrBuilder( taskBuilder.subarrayStart( "$in" ) ) ;
 
-      rc = _buildPostTasks( postTasks, taskDesc ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build post task condition, rc: %d", rc ) ;
-
-      rc = msgBuildQueryMsg( &msgBuff, &msgSize, CAT_TASK_INFO_COLLECTION,
-                             0, 0, 0, -1, &taskDesc, NULL, NULL, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build query message, rc: %d", rc ) ;
-
-
-      msgHeader = (MsgHeader *)msgBuff ;
-      msgHeader->opCode = MSG_CAT_QUERY_TASK_REQ ;
-
-      /// get task info from catalog.
-      rc = executeOnCataGroup( msgHeader, cb, NULL, &reply ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get task info from catalog, rc: %d",
-                   rc ) ;
+      taskObj = _arguments.getPostTasksObj() ;
 
       /// notify all groups to start task.
-      for ( vector<BSONObj>::const_iterator iterTask = reply.begin() ;
-            iterTask != reply.end() ;
+      for ( vector<BSONObj>::const_iterator iterTask = taskObj.begin() ;
+            iterTask != taskObj.end() ;
             iterTask ++ )
       {
          BSONElement ele ;
@@ -1919,7 +1989,7 @@ namespace engine
          BSONElement group ;
          CoordGroupList groupList ;
 
-         PD_CHECK( iterTask->hasField( FIELD_NAME_TASKTYPE ), SDB_SYS, error, PDERROR, 
+         PD_CHECK( iterTask->hasField( FIELD_NAME_TASKTYPE ), SDB_SYS, error, PDERROR,
                    "Faield to get task field[%s]", FIELD_NAME_TASKTYPE);
          ele = iterTask->getField( FIELD_NAME_TASKTYPE ) ;
          PD_CHECK( NumberInt == ele.type(), SDB_SYS, error, PDERROR,
@@ -1944,7 +2014,14 @@ namespace engine
                msgHeader = (MsgHeader *)msgBuff ;
                rc = executeOnCL( msgHeader, cb, name, FALSE, &groupList, NULL, NULL ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to notify group [%d] to split "
-                            "collection [%s], rc: %d", group.Int(), name, rc ) ;               
+                            "collection [%s], rc: %d", group.Int(), name, rc ) ;
+               ele = iterTask->getField( FIELD_NAME_TASKID ) ;
+               PD_CHECK( ele.isNumber(), SDB_SYS, error, PDERROR,
+                         "Failed to parse task info [%s]: task id is not a integer",
+                         iterTask->toString().c_str() ) ;
+               taskId = ele.Long() ;
+               arrBuilder.append( (INT64)( taskId ) ) ;
+               needWait = TRUE ;
                break ;
             }
             case CLS_TASK_SEQUENCE :
@@ -1954,17 +2031,22 @@ namespace engine
                          "Failed to parse task info [%s]: task sequence is not a string",
                          iterTask->toString().c_str() ) ;
                seqName = ele.String() ;
-               rc = coordSequenceInvalidateCache( seqName, cb );           
+               rc = coordSequenceInvalidateCache( seqName, cb );
                break ;
             }
             default :
             {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Unkown post task type[%s]", iterTask->toString().c_str() ) ;
                break ;
             }
          }
       }
+      arrBuilder.done() ;
+      taskBuilder.done() ;
+      taskDesc = builder.obj() ;
 
-      if( CLS_TASK_SPLIT == taskType )
+      if( needWait )
       {
          rc = _waitPostTasks( taskDesc, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to wait post tasks, rc: %d", rc ) ;
@@ -2002,32 +2084,6 @@ namespace engine
       }
 
       PD_TRACE_EXITRC( COORD_ALTERCL__CANCELPOSTTASKS, rc ) ;
-
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCL__BLDPOSTTASKS, "_coordCMDAlterCollection::_buildPostTasks" )
-   INT32 _coordCMDAlterCollection::_buildPostTasks ( const _utilList< UINT64 > & postTasks,
-                                                     BSONObj & taskDesc )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( COORD_ALTERCL__BLDPOSTTASKS ) ;
-
-      BSONObjBuilder builder ;
-      BSONObjBuilder taskBuilder( builder.subobjStart( FIELD_NAME_TASKID ) ) ;
-      BSONArrayBuilder arrBuilder( taskBuilder.subarrayStart( "$in" ) ) ;
-      for ( _utilList<UINT64>::const_iterator iter = postTasks.begin() ;
-            iter != postTasks.end() ;
-            iter ++ )
-      {
-         arrBuilder.append( (INT64)( *iter ) ) ;
-      }
-      arrBuilder.done() ;
-      taskBuilder.done() ;
-      taskDesc = builder.obj() ;
-
-      PD_TRACE_EXITRC( COORD_ALTERCL__BLDPOSTTASKS, rc ) ;
 
       return rc ;
    }

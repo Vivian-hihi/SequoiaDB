@@ -137,6 +137,12 @@ namespace engine
          INT32 _checkSetAttributes ( const clsCatalogSet & cataSet,
                                      _pmdEDUCB * cb,
                                      catCtxLockMgr & lockMgr ) ;
+         INT32 _checkCreateAutoincField ( const clsCatalogSet & cataSet,
+                                          _pmdEDUCB * cb,
+                                          catCtxLockMgr & lockMgr ) ;
+         INT32 _checkDropAutoincField ( const clsCatalogSet & cataSet,
+                                       _pmdEDUCB * cb,
+                                       catCtxLockMgr & lockMgr ) ;
 
          INT32 _buildEnableShardFields ( clsCatalogSet & cataSet,
                                          const rtnCLShardingArgument & argument,
@@ -251,10 +257,7 @@ namespace engine
       : _catCtxAlterTask( dataName, task )
       {}
       ~_catCtxAlterSequenceTask () {} ;
-      virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr )
-      {
-         return SDB_OK;
-      }
+      virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr ) ;
 
       virtual INT32 _executeInternal ( _pmdEDUCB *cb,
                                        SDB_DMSCB *pDmsCB,
@@ -296,10 +299,7 @@ namespace engine
                                        SDB_DMSCB * pDmsCB,
                                        SDB_DPSCB * pDpsCB,
                                        INT16 w ) ;
-      virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr )
-      {
-         return SDB_OK;
-      }
+      virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr ) ;
 
       virtual INT32 _rollbackInternal ( _pmdEDUCB *cb,
                                         SDB_DMSCB *pDmsCB,
@@ -324,10 +324,7 @@ namespace engine
       {
          return SDB_OK ;
       }
-      virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr )
-      {
-         return SDB_OK ;
-      }
+      virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr ) ;
 
       virtual INT32 _executeInternal ( _pmdEDUCB *cb,
                                        SDB_DMSCB *pDmsCB,

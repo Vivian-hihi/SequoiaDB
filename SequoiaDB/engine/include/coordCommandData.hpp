@@ -180,11 +180,22 @@ namespace engine
             return _postTasks ;
          }
 
+         OSS_INLINE void addPostTaskObj ( BSONObj taskObj )
+         {
+            _postTasksObj.push_back( taskObj ) ;
+         }
+
+         OSS_INLINE const vector<BSONObj> & getPostTasksObj () const
+         {
+            return _postTasksObj ;
+         }
+
          void clear () ;
 
       protected :
          const rtnAlterTask * _task ;
          _utilList<UINT64>    _postTasks ;
+         vector<BSONObj>      _postTasksObj ;
    } ;
 
    typedef class _coordAlterCMDArguments coordAlterCMDArguments ;
@@ -253,6 +264,10 @@ namespace engine
          virtual MSG_TYPE _getCatalogMessageType () const = 0 ;
 
          virtual INT32 _extractPostTasks ( const bson::BSONObj & reply ) ;
+         INT32 _getPostTasksObj ( pmdEDUCB * cb ) ;
+
+         virtual INT32 _buildPostTasks ( const _utilList< UINT64 > & postTasks,
+                                         bson::BSONObj & taskDesc ) ;
 
          virtual INT32 _executePostTasks ( const CHAR * name,
                                            const _utilList< UINT64 > & postTasks,
@@ -576,9 +591,6 @@ namespace engine
          virtual INT32 _cancelPostTasks ( const CHAR * name,
                                           const _utilList< UINT64 > & postTasks,
                                           pmdEDUCB * cb ) ;
-
-         INT32 _buildPostTasks ( const _utilList< UINT64 > & postTasks,
-                                 bson::BSONObj & taskDesc ) ;
 
          INT32 _waitPostTasks ( const bson::BSONObj & taskDesc,
                                 pmdEDUCB * cb ) ;

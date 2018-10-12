@@ -2288,9 +2288,9 @@ namespace engine
    INT32 _catCtxAlterCL::_clearInternal(  _pmdEDUCB *cb, INT16 w  )
    {
       INT32 rc = SDB_OK ;
-   
+
       PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_CLEAR_INT ) ;
-   
+
       if ( _alterJob.isEmpty() )
       {
          goto done ;
@@ -2298,17 +2298,17 @@ namespace engine
       else
       {
          const rtnAlterTask * task = NULL ;
-   
+
          PD_CHECK( 1 == _alterJob.getAlterTasks().size(), SDB_SYS, error, PDERROR,
                    "Failed to check alter job: should have only one task" ) ;
-   
+
          task = _alterJob.getAlterTasks().front() ;
          rc = _clearAlterTask( task, cb, w ) ;
       }
-   
+
       PD_RC_CHECK( rc, PDWARNING, "Failed to clear alter collection command,"
                 "rc: %d", rc ) ;
-   
+
    done :
       PD_TRACE_EXITRC ( SDB_CATCTXALTERCL_CLEAR_INT, rc ) ;
       return rc ;
@@ -2477,7 +2477,7 @@ namespace engine
 
    error :
       goto done ;
-   }   
+   }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL__ADDALTERTASK, "_catCtxAlterCL::_addAlterTask" )
    INT32 _catCtxAlterCL::_addAlterTask ( const string & collection,
@@ -2778,7 +2778,6 @@ namespace engine
 
       BOOLEAN containTasks = FALSE ;
 
-     // TODO: ywx modify the condition
       for( UINT32 i = 0 ; i < _execTasks.size() ; i++ )
       {
          catCtxAlterCLTask * task = dynamic_cast<catCtxAlterCLTask *>( _execTasks[i] ) ;

@@ -376,7 +376,7 @@ namespace engine
       virtual INT32 _checkInternal ( _pmdEDUCB *cb ) ;
 
       virtual INT32 _executeInternal ( _pmdEDUCB *cb, INT16 w ) ;
-      virtual INT32 _clearInternal(_pmdEDUCB * cb,INT16 w) ;      
+      virtual INT32 _clearInternal(_pmdEDUCB * cb,INT16 w) ;
 
    protected :
       INT32 _checkAlterTask ( const rtnAlterTask * task, _pmdEDUCB * cb ) ;
