@@ -19,7 +19,7 @@ if ( typeof(RSRVPORTBEGIN) == "undefined" ) { RSRVPORTBEGIN = '26000'; }
 if ( typeof(RSRVPORTEND)   == "undefined" ) { RSRVPORTEND   = '27000'; }
 if ( typeof(RSRVNODEDIR)   == "undefined" ) { RSRVNODEDIR   = "/opt/sequoiadb/database/"; }
 if ( typeof(WORKDIR)   == "undefined" ) { WORKDIR   = "/tmp/jstest"; }
-if ( typeof(ESHOSTNAME) == "undefined" ) { ESHOSTNAME = '192.168.28.143'; }
+if ( typeof(ESHOSTNAME) == "undefined" ) { ESHOSTNAME = 'localhost'; }
 if ( typeof(ESSVCNAME) == "undefined" ) { ESSVCNAME = '9200'; }
 
 var COMMCSNAME = CHANGEDPREFIX + "_cs" ;
