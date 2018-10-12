@@ -192,10 +192,29 @@ namespace engine
       {
          // Get the key set
          BSONElement arrayEle ;
+         BOOLEAN canContinue = TRUE ;
          ixmIndexKeyGen keygen( _meta._idxKeyDef, GEN_OBJ_KEEP_FIELD_NAME ) ;
          rc = keygen.getKeys( *object, _keySet, &arrayEle, TRUE, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Generate key from object[ % ] failed[ %d ]",
-                      object->toString().c_str(), rc ) ;
+         // Records may contain multiple arrays.
+         // If it's the old record, it should not have been indexed on ES. In
+         // that case, if keys can be gotten from new record, the new record
+         // should be indexed.
+         // If it's the new record, it should not be indexed. We ignore the
+         // multiple array of the old record, error will be returned when
+         // parsing the new record below.
+         if ( rc )
+         {
+            canContinue = ( SDB_IXM_MULTIPLE_ARRAY == rc &&
+                            ( DMS_EXTOPR_TYPE_UPDATE == type ||
+                              DMS_EXTOPR_TYPE_DELETE == type ) ) ;
+         }
+
+         if ( !canContinue )
+         {
+            PD_LOG( PDERROR, "Generate key from object[%] failed[%d]",
+                    object->toString().c_str(), rc ) ;
+            goto error ;
+         }
 
          // Record with array in its index key will never be indexed on
          // Elasticsearch, and no record for it will be inserted into capped
