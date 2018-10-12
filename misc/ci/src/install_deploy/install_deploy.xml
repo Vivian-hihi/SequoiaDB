@@ -269,12 +269,22 @@
                   <staf location="@{testhost}" service="PROCESS"
                         request="START SHELL COMMAND chmod 755 ${INSTALL_DIR}/conf/sdbseadpter -R WAIT 10m RETURNSTDERR"
                         throwBuildException="1"/>
-                  <staf location="@{testhost}" service="PROCESS"
-                        request="START SHELL COMMAND ${INSTALL_DIR}/bin/sdbstop -t all WAIT 20m RETURNSTDERR"
-                        throwBuildException="1"/>
-                  <staf location="@{testhost}" service="PROCESS"
-                        request="START SHELL COMMAND ${INSTALL_DIR}/bin/sdbstart -t all WAIT 30m RETURNSTDERR"
-                        throwBuildException="1"/>
+                  
+                  <for param="dirtype">
+                     <path>
+                        <dirset dir="${INSTALL_DIR}/database/data" includes="*" />
+                     </path>
+                     <sequential>
+                        <var name="svcname" unset="true"/>
+                        <basename property="svcname" file="@{dirtype}"/>
+                        <mkdir dir="${INSTALL_DIR}/conf/sdbseadpter/${svcname}"/>
+                        <copy file="${INSTALL_DIR}/conf/samples/sdbseadapter.conf" todir="${INSTALL_DIR}/conf/sdbseadpter/${svcname}"/>
+                        
+                        <staf location="@{testhost}" service="PROCESS"
+                              request="START SHELL COMMAND ${INSTALL_DIR}/bin/sdbseadapter -c ${INSTALL_DIR}/conf/sdbseadpter/${svcname} & WAIT 10m RETURNSTDERR"
+                              throwBuildException="1"/>
+                     </sequential>
+                  </for>
                </sequential>
             </for>
 
