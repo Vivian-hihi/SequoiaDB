@@ -1078,7 +1078,7 @@ namespace engine
             builder.append( "PadSize", (INT64)traceCB->getPadSize() ) ;
 #endif // _DEBUG
             BSONArrayBuilder arr( builder.subarrayStart( FIELD_NAME_MASK ) ) ;
-            for ( INT32 i = 0; i < pdGetTraceComponentSize() ; ++i )
+            for ( UINT32 i = 0; i < pdGetTraceComponentSize() ; ++i )
             {
                UINT32 mask = ((UINT32)1)<<i ;
                if ( mask & traceCB->getMask() )
