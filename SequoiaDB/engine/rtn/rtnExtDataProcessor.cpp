@@ -216,6 +216,8 @@ namespace engine
             goto error ;
          }
 
+         rc = SDB_OK ;
+
          // Record with array in its index key will never be indexed on
          // Elasticsearch, and no record for it will be inserted into capped
          // collection.
