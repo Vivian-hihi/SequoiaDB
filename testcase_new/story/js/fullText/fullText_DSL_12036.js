@@ -1,0 +1,107 @@
+/***************************************************************************
+@Description :seqDB-12036 :使用DSL的方式进行结构化搜索和全文搜索 
+@Modify list :
+              2018-9-29  YinZhen  Create
+****************************************************************************/
+function main(){
+   
+   if(commIsStandalone( db )){
+      println("Deploy is standalone");
+	  return;
+   };
+   
+   var clName = COMMCLNAME + "12036ES";
+   var fullIndex = "fullindex12036es";
+   var dbOperator = new DBOperator();
+   var esOperator = new ESOperator();
+   var findConf = {"" : {$Text : {"query" : {"match" : {"content" : "college"}}}}};
+   var findConfNot = {"" : {$Text : {"query" : {"match" : {"content" : "not"}}}}}
+   
+   commDropCL(db, COMMCSNAME, clName, true, true);
+   
+   //创建全文索引，并插入包含全文索引字段的记录 
+   var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
+   commCreateIndex(dbcl, fullIndex, {content : "text", about : "text"});
+   var records = insertData(dbcl);
+   
+   var esIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndex);
+   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 8);
+   
+   //使用DSL的方式进行全文检索,在es中执行查询，查询结果正确
+   var queryCond = '{"query" : {"term" : {"content" : "college"}}}';
+   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var clRecords = dbOperator.findFromCL(dbcl, findConf, null, null, null);
+   checkRecords( esRecords, clRecords );
+   
+   var queryCond = '{"query" : {"match" : {"about" : "这是我的"}}}';
+   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var clRecords = dbOperator.findFromCL(dbcl, findConf, null, null, null);
+   checkRecords( esRecords, clRecords );
+   
+   var queryCond = '{"query" : {"match_phrase" : {"content" : "not got"}}}';
+   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var clRecords = dbOperator.findFromCL(dbcl, findConfNot, null, null, null);
+   checkRecords( esRecords, clRecords );
+   
+   var queryCond = '{"query" : {"multi_match" : {"query" : "you", "fields" : ["content", "about"]}}}';
+   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var clRecords = dbOperator.findFromCL(dbcl, findConfNot, null, null, null);
+   checkRecords( esRecords, clRecords );
+   
+   var queryCond = '{"query" : {"bool" : {"must" : [{"match" : {"content" : "not"}}, {"match" : {"about" : "you"}}]}}}';
+   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var clRecords = dbOperator.findFromCL(dbcl, findConfNot, null, null, null);
+   checkRecords( esRecords, clRecords );
+   
+   var queryCond = '{"query" : {"bool" : {"must_not" : {"match" : {"about" : "you"}}}}}';
+   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var clRecords = dbOperator.findFromCL(dbcl, findConf, null, null, null);
+   checkRecords( esRecords, clRecords );
+   
+   var queryCond = '{"query" : {"bool" : {"should" : [{"match" : {"content" : "college"}}, {"match" : {"about" : "you"}}]}}}';
+   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var clRecords = records;
+   checkRecords( esRecords, clRecords );
+      
+   commDropCL(db, COMMCSNAME, clName, true, true);
+}
+
+function insertData(dbcl){
+   var records = new Array();
+   for(var i = 0; i < 3; i++){
+      var obj = {content : "i have not,got " + i, about : "do you have " + i};
+      records.push(obj);
+   }
+   for (var i = 0; i < 5; i++){
+      var obj = {content : "this is my college, i have " + i, about : "这是我的"};
+      records.push(obj);
+   }
+   dbcl.insert(records);
+   return records;
+}
+
+function checkRecords( expRecords, actRecords )
+{
+   var fields = new Array();
+   if(expRecords.length > 0){
+	   for(var i in expRecords[0]){
+		   fields.push(i);
+	   }
+   }
+   var actRec = new Array();
+   for(var i in actRecords){
+	   var obj = new Object();
+	   for(var j in fields){
+		   obj[fields[j]] = actRecords[i][fields[j]];
+	   }
+	   actRec.push(obj);
+   }
+   if(fields.length > 0){
+	  var sortField = fields[0];
+	  expRecords.sort(compare(sortField));
+	  actRec.sort(compare(sortField));
+   }
+   checkResult(expRecords, actRec)
+}
+
+main();
