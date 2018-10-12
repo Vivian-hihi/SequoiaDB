@@ -855,6 +855,9 @@ namespace engine
          OSS_INLINE INT32  getMBContext( dmsMBContext **pContext,
                                          const CHAR* pName,
                                          INT32 lockType = -1 ) ;
+         OSS_INLINE INT32  getMBContextByID( dmsMBContext **pContext,
+                                             utilCLUniqueID clUniqueID,
+                                             INT32 lockType = -1 ) ;
 
          OSS_INLINE INT32  checkMBContext( const CHAR *pName, UINT16 mbID ) ;
          OSS_INLINE void   releaseMBContext( dmsMBContext *&pContext ) ;
@@ -1403,6 +1406,32 @@ namespace engine
       }
       return getMBContext( pContext, mbID, clLID, startLID, lockType ) ;
    }
+
+   OSS_INLINE INT32 _dmsStorageDataCommon::getMBContextByID( dmsMBContext **pContext,
+                                                             utilCLUniqueID clUniqueID,
+                                                             INT32 lockType )
+   {
+      UINT16 mbID = DMS_INVALID_MBID ;
+      UINT32 clLID = DMS_INVALID_CLID ;
+      UINT32 startLID = DMS_INVALID_CLID ;
+
+      // metadata shared lock
+      _metadataLatch.get_shared() ;
+      mbID = _collectionIdLookup( clUniqueID ) ;
+      if ( DMS_INVALID_MBID != mbID )
+      {
+         clLID = _dmsMME->_mbList[mbID]._logicalID ;
+         startLID = _mbStatInfo[mbID]._startLID ;
+      }
+      _metadataLatch.release_shared() ;
+
+      if ( DMS_INVALID_MBID == mbID )
+      {
+         return SDB_DMS_NOTEXIST ;
+      }
+      return getMBContext( pContext, mbID, clLID, startLID, lockType ) ;
+   }
+
    OSS_INLINE void _dmsStorageDataCommon::releaseMBContext( dmsMBContext *&pContext )
    {
       if ( !pContext )

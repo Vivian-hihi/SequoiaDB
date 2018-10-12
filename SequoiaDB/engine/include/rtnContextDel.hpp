@@ -183,6 +183,97 @@ namespace engine
 
    };
    typedef class _rtnContextDelMainCL rtnContextDelMainCL;
+
+   /*
+      _rtnContextRenameCS define
+   */
+   class _rtnContextRenameCS : public _rtnContextBase
+   {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
+   public:
+      _rtnContextRenameCS( SINT64 contextID, UINT64 eduID ) ;
+      ~_rtnContextRenameCS();
+      virtual std::string      name() const ;
+      virtual RTN_CONTEXT_TYPE getType () const;
+      virtual _dmsStorageUnit* getSU () { return NULL ; }
+      virtual BOOLEAN          isWrite() const { return TRUE ; }
+
+      INT32 open( const CHAR *pCSName, const CHAR *pNewCSName,
+                  _pmdEDUCB *cb );
+
+      virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
+                             _pmdEDUCB *cb );
+
+   protected:
+      virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+      virtual void  _toString( stringstream &ss ) ;
+
+   private:
+      INT32 _tryLock( const CHAR *pCSName,
+                     _pmdEDUCB *cb );
+
+      INT32 _releaseLock( _pmdEDUCB *cb );
+
+      void _clean( _pmdEDUCB *cb );
+
+   private:
+      _SDB_DMSCB            *_pDmsCB;
+      dpsTransCB           *_pTransCB;
+      _clsCatalogAgent     *_pCatAgent;
+      CHAR                 _oldName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
+      CHAR                 _newName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
+      BOOLEAN              _gotDmsCBWrite ;
+      UINT32               _logicCSID;
+   };
+   typedef class _rtnContextRenameCS rtnContextRenameCS;
+
+   /*
+      _rtnContextRenameCL define
+   */
+   class _rtnContextRenameCL : public _rtnContextBase
+   {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
+   public:
+      _rtnContextRenameCL( SINT64 contextID, UINT64 eduID ) ;
+      ~_rtnContextRenameCL();
+      virtual std::string      name() const ;
+      virtual RTN_CONTEXT_TYPE getType () const;
+      virtual _dmsStorageUnit* getSU () { return NULL ; }
+      virtual BOOLEAN          isWrite() const { return TRUE ; }
+
+      INT32 open( const CHAR *csName, const CHAR *clShortName,
+                  const CHAR *newCLShortName,
+                  _pmdEDUCB *cb, INT16 w = 1 ) ;
+
+      virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
+                             _pmdEDUCB *cb );
+
+   protected:
+      virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+      virtual void  _toString( stringstream &ss ) ;
+
+   private:
+      INT32 _tryLock( const CHAR *pCSName,
+                     _pmdEDUCB *cb );
+
+      INT32 _releaseLock( _pmdEDUCB *cb );
+
+      void _clean( _pmdEDUCB *cb );
+
+   private:
+      _SDB_DMSCB           *_pDmsCB;
+      _clsCatalogAgent     *_pCatAgent;
+      dpsTransCB           *_pTransCB;
+
+      string               _clFullName ;
+      CHAR                 _clShortName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
+      CHAR                 _newCLShortName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
+
+      BOOLEAN              _gotDmsCBWrite ;
+      UINT16               _mbID ;
+      _dmsStorageUnit      *_su ;
+   };
+   typedef class _rtnContextRenameCL rtnContextRenameCL;
 }
 
 #endif /* RTN_CONTEXT_DEL_HPP_ */

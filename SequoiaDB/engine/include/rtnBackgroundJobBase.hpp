@@ -75,6 +75,8 @@ namespace engine
 
       RTN_JOB_CLS_UNIQUEID_CHECK = 25,
 
+      RTN_JOB_CLS_NAME_CHECK_BY_UNIQUEID = 25,
+
       RTN_JOB_MAX
    } ;
 

@@ -1441,6 +1441,99 @@ namespace engine
    }
 
    /*
+      _coordCMDRenameCollectionSpace implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDRenameCollectionSpace,
+                                      CMD_NAME_RENAME_COLLECTIONSPACE,
+                                      FALSE ) ;
+   _coordCMDRenameCollectionSpace::_coordCMDRenameCollectionSpace()
+   {
+   }
+
+   _coordCMDRenameCollectionSpace::~_coordCMDRenameCollectionSpace()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_RENAMECS_PARSEMSG, "_coordCMDRenameCollectionSpace::_parseMsg" )
+   INT32 _coordCMDRenameCollectionSpace::_parseMsg ( MsgHeader *pMsg,
+                                                     coordCMDArguments *pArgs )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_RENAMECS_PARSEMSG ) ;
+
+      try
+      {
+         rc = rtnGetSTDStringElement( pArgs->_boQuery,
+                                      FIELD_NAME_OLDNAME,
+                                      pArgs->_targetName ) ;
+         PD_CHECK( SDB_OK == rc, SDB_INVALIDARG, error, PDERROR,
+                   "Get field[%s] failed on command[%s], rc: %d",
+                   FIELD_NAME_OLDNAME, getName(), rc );
+
+         if ( dmsCheckCSName( pArgs->_targetName.c_str() ) )
+         {
+            PD_LOG( PDERROR, "Collection name is invalid[%s]",
+                    pArgs->_targetName.c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( COORD_RENAMECS_PARSEMSG, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _coordCMDRenameCollectionSpace::_generateCataMsg ( MsgHeader *pMsg,
+                                                            pmdEDUCB *cb,
+                                                            coordCMDArguments *pArgs,
+                                                            CHAR **ppMsgBuf,
+                                                            INT32 *pBufSize )
+   {
+      pMsg->opCode = MSG_CAT_RENAME_CS_REQ ;
+      *ppMsgBuf = (CHAR*)pMsg ;
+      *pBufSize = pMsg->messageLength ;
+
+      return SDB_OK ;
+   }
+
+   void _coordCMDRenameCollectionSpace::_releaseCataMsg( CHAR *pMsgBuf,
+                                                       INT32 bufSize,
+                                                       pmdEDUCB *cb )
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_RENAMECS_DOCOMPLETE, "_coordCMDRenameCollectionSpace::_doComplete" )
+   INT32 _coordCMDRenameCollectionSpace::_doComplete ( MsgHeader *pMsg,
+                                                       pmdEDUCB * cb,
+                                                       coordCMDArguments *pArgs )
+   {
+      PD_TRACE_ENTRY ( COORD_RENAMECS_DOCOMPLETE ) ;
+
+      vector< string > subCLSet ;
+      _pResource->removeCataInfoByCS( pArgs->_targetName.c_str(), &subCLSet ) ;
+
+      /// clear relate sub collection's catalog info
+      vector< string >::iterator it = subCLSet.begin() ;
+      while( it != subCLSet.end() )
+      {
+         _pResource->removeCataInfo( (*it).c_str() ) ;
+         ++it ;
+      }
+
+      PD_TRACE_EXIT ( COORD_RENAMECS_DOCOMPLETE ) ;
+      return SDB_OK ;
+   }
+
+   /*
       _coordCMDDropCollectionSpace implement
     */
    COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDAlterCollectionSpace,
@@ -1884,6 +1977,108 @@ namespace engine
       _pResource->removeCataInfoWithMain( pArgs->_targetName.c_str() ) ;
 
       PD_TRACE_EXIT ( COORD_DROPCL_DOCOMPLETE ) ;
+      return SDB_OK ;
+   }
+
+   /*
+      _coordCMDRenameCollection implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDRenameCollection,
+                                      CMD_NAME_RENAME_COLLECTION,
+                                      FALSE ) ;
+   _coordCMDRenameCollection::_coordCMDRenameCollection()
+   {
+   }
+
+   _coordCMDRenameCollection::~_coordCMDRenameCollection()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_RENAMECL_PARSEMSG, "_coordCMDRenameCollection::_parseMsg" )
+   INT32 _coordCMDRenameCollection::_parseMsg ( MsgHeader *pMsg,
+                                              coordCMDArguments *pArgs )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_RENAMECL_PARSEMSG ) ;
+
+      try
+      {
+         string csName, clShortName ;
+         rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_COLLECTIONSPACE,
+                                      csName ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
+                    CAT_COLLECTIONSPACE, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_COLLECTION_OLDNAME,
+                                      clShortName ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
+                    CAT_COLLECTION_OLDNAME, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         pArgs->_targetName = csName ;
+         pArgs->_targetName += "." ;
+         pArgs->_targetName += clShortName ;
+
+         if ( dmsCheckFullCLName( pArgs->_targetName.c_str() ) )
+         {
+            PD_LOG( PDERROR, "Collection name is invalid[%s]",
+                    pArgs->_targetName.c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( COORD_RENAMECL_PARSEMSG, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _coordCMDRenameCollection::_generateCataMsg ( MsgHeader *pMsg,
+                                                     pmdEDUCB *cb,
+                                                     coordCMDArguments *pArgs,
+                                                     CHAR **ppMsgBuf,
+                                                     INT32 *pBufSize )
+   {
+      pMsg->opCode = MSG_CAT_RENAME_CL_REQ ;
+      *ppMsgBuf = (CHAR*)pMsg ;
+      *pBufSize = pMsg->messageLength ;
+
+      return SDB_OK ;
+   }
+
+   void _coordCMDRenameCollection::_releaseCataMsg( CHAR *pMsgBuf,
+                                                    INT32 bufSize,
+                                                    pmdEDUCB *cb )
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_RENAMECL_DOCOMPLETE, "_coordCMDRenameCollection::_doComplete" )
+   INT32 _coordCMDRenameCollection::_doComplete ( MsgHeader *pMsg,
+                                                pmdEDUCB *cb,
+                                                coordCMDArguments *pArgs )
+   {
+      PD_TRACE_ENTRY ( COORD_RENAMECL_DOCOMPLETE ) ;
+
+      _pResource->removeCataInfoWithMain( pArgs->_targetName.c_str() ) ;
+
+      PD_TRACE_EXIT ( COORD_RENAMECL_DOCOMPLETE ) ;
       return SDB_OK ;
    }
 

@@ -780,7 +780,6 @@ namespace engine
       public:
          _rtnRenameCollection () ;
          virtual ~_rtnRenameCollection () ;
-         virtual INT32 spaceService () { return CMD_SPACE_SERVICE_LOCAL ; }
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -796,8 +795,8 @@ namespace engine
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
       protected:
-         const CHAR           *_oldCollectionName ;
-         const CHAR           *_newCollectionName ;
+         const CHAR           *_clShortName ;
+         const CHAR           *_newCLShortName ;
          const CHAR           *_csName ;
          std::string          _fullCollectionName ;
    } ;
@@ -809,7 +808,6 @@ namespace engine
       public:
          _rtnRenameCollectionSpace () ;
          virtual ~_rtnRenameCollectionSpace () ;
-         virtual INT32 spaceService () { return CMD_SPACE_SERVICE_LOCAL ; }
 
          virtual const CHAR * name () { return NAME_RENAME_COLLECTIONSPACE ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_RENAME_COLLECTIONSPACE ; }

@@ -40,6 +40,7 @@
 #include "rtn.hpp"
 #include "dpsOp2Record.hpp"
 #include "clsMgr.hpp"
+#include "rtnTrace.hpp"
 
 namespace engine
 {
@@ -750,6 +751,506 @@ namespace engine
    {
       ss << ",Name:" << _name
          << ",Version:" << _version ;
+   }
+
+   RTN_CTX_AUTO_REGISTER(_rtnContextRenameCS, RTN_CONTEXT_RENAMECS, "RENAMECS")
+
+   _rtnContextRenameCS::_rtnContextRenameCS( SINT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID )
+   {
+      _pDmsCB = pmdGetKRCB()->getDMSCB() ;
+      _pDpsCB = pmdGetKRCB()->getDPSCB() ;
+      _pCatAgent = pmdGetKRCB()->getClsCB ()->getCatAgent () ;
+      _pTransCB = pmdGetKRCB()->getTransCB();
+      _gotDmsCBWrite = FALSE ;
+      _logicCSID = DMS_INVALID_LOGICCSID;
+      ossMemset( _oldName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 );
+      ossMemset( _newName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 );
+   }
+
+   _rtnContextRenameCS::~_rtnContextRenameCS()
+   {
+      pmdEDUMgr *eduMgr    = pmdGetKRCB()->getEDUMgr() ;
+      pmdEDUCB *cb         = eduMgr->getEDUByID( eduID() ) ;
+      _clean( cb ) ;
+   }
+
+   std::string _rtnContextRenameCS::name() const
+   {
+      return "RENAMECS" ;
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextRenameCS::getType () const
+   {
+      return RTN_CONTEXT_RENAMECS ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECS_OPEN, "_rtnContextRenameCS::open" )
+   INT32 _rtnContextRenameCS::open( const CHAR *pCSName,
+                                    const CHAR *pNewCSName,
+                                    _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNCTXRENAMECS_OPEN ) ;
+
+      /// check cs name
+      SDB_ASSERT( pCSName, "cs name can't be null!" );
+      PD_CHECK( pCSName, SDB_INVALIDARG, error, PDERROR,
+                "cs name is null!" );
+
+      SDB_ASSERT( pNewCSName, "new cs name can't be null!" );
+      PD_CHECK( pNewCSName, SDB_INVALIDARG, error, PDERROR,
+                "new cs name is null!" );
+
+      rc = dmsCheckCSName( pCSName );
+      PD_RC_CHECK( rc, PDERROR, "Invalid cs name[%s]", pCSName );
+
+      rc = dmsCheckCSName( pNewCSName );
+      PD_RC_CHECK( rc, PDERROR, "Invalid cs name[%s]", pNewCSName );
+
+      ossStrncpy( _oldName, pCSName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
+      ossStrncpy( _newName, pNewCSName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
+
+      /// test collection space exist
+      rc = rtnTestCollectionSpaceCommand( pCSName, _pDmsCB ) ;
+      if ( SDB_DMS_CS_NOTEXIST == rc )
+      {
+         PD_LOG( PDERROR,
+                 "Collection space[%s] does not exists, rc: %d",
+                 pCSName, rc ) ;
+         goto done ;
+      }
+
+      rc = rtnTestCollectionSpaceCommand( pNewCSName, _pDmsCB ) ;
+      if ( SDB_OK == rc )
+      {
+         rc = SDB_DMS_CS_EXIST ;
+         PD_LOG( PDERROR,
+                 "Collection space[%s] already exists, rc: %d",
+                 pNewCSName, rc ) ;
+         goto done ;
+      }
+
+      /// lock
+      rc = _pDmsCB->writable ( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "dms is not writable, rc: %d", rc ) ;
+      _gotDmsCBWrite = TRUE;
+
+      rc = _tryLock( pCSName, cb );
+      PD_RC_CHECK( rc, PDERROR, "Failed to lock, rc: %d", rc ) ;
+
+      _isOpened = TRUE ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNCTXRENAMECS_OPEN, rc ) ;
+      return rc;
+   error:
+      _clean( cb );
+      goto done;
+   }
+
+   void _rtnContextRenameCS::_toString( stringstream &ss )
+   {
+      ss << ",Name:" << _oldName
+         << ",NewName:" << _newName
+         << ",GotDMSWrite:" << _gotDmsCBWrite
+         << ",LogicalID:" << _logicCSID ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECS_GETMORE, "_rtnContextRenameCS::getMore" )
+   INT32 _rtnContextRenameCS::getMore( INT32 maxNumToReturn,
+                                    rtnContextBuf &buffObj,
+                                    _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNCTXRENAMECS_GETMORE ) ;
+
+      SDB_RTNCB *pRtnCB = sdbGetRTNCB() ;
+      clsCB *pClsCB = sdbGetClsCB() ;
+      shardCB *pShdMgr = pClsCB->getShardCB() ;
+      vector< string > subCLs ;
+      vector< string >::iterator it ;
+      _utilSet< string > mainCLs ;
+      _utilSet< string >::iterator mainIter ;
+
+      if ( !isOpened() )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE;
+         goto error ;
+      }
+
+      _pCatAgent->lock_w() ;
+      _pCatAgent->clearBySpaceName( _oldName, &subCLs, &mainCLs ) ;
+      _pCatAgent->release_w() ;
+
+      it = subCLs.begin() ;
+      while( it != subCLs.end() )
+      {
+         if ( SDB_OK != pShdMgr->syncUpdateCatalog( (*it).c_str() ) )
+         {
+            _pCatAgent->lock_w() ;
+            _pCatAgent->clear( (*it).c_str() ) ;
+            _pCatAgent->release_w() ;
+         }
+         pClsCB->invalidateCata( (*it).c_str() ) ;
+         ++it ;
+      }
+      pClsCB->invalidateCata( _oldName ) ;
+
+      // Clear main collection plans
+      mainIter = mainCLs.begin() ;
+      while ( mainIter != mainCLs.end() )
+      {
+         const CHAR * mainCLName = ( *mainIter ).c_str() ;
+         // Clear plan cache in self
+         pRtnCB->getAPM()->invalidateCLPlans( mainCLName ) ;
+         // Clear plan cache in secondary nodes
+         pClsCB->invalidatePlan( mainCLName ) ;
+         ++ mainIter ;
+      }
+
+      rc = _pDmsCB->renameCollectionSpace( _oldName, _newName, cb, _pDpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to rename collectionspace from [%s] to [%s], rc: %d",
+                   _oldName, _newName, rc ) ;
+
+      /// close context
+      _clean( cb ) ;
+      _isOpened = FALSE ;
+      rc = SDB_DMS_EOC ;
+
+      cb->writingDB( FALSE ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNCTXRENAMECS_GETMORE, rc ) ;
+      return rc;
+   error:
+      goto done;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECS__TRYLOCK, "_rtnContextRenameCS::_tryLock" )
+   INT32 _rtnContextRenameCS::_tryLock( const CHAR *pCSName, _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY( SDB__RTNCTXRENAMECS__TRYLOCK ) ;
+
+      if ( getDPSCB() )
+      {
+         dmsStorageUnitID suID = DMS_INVALID_CS;
+         UINT32 logicCSID = DMS_INVALID_LOGICCSID;
+         dmsStorageUnit *su = NULL;
+
+         _releaseLock( cb );
+
+         rc = _pDmsCB->nameToSUAndLock( pCSName, suID, &su );
+         PD_RC_CHECK(rc, PDERROR, "lock collection space(%s) failed(rc=%d)",
+                     pCSName, rc );
+         logicCSID = su->LogicalCSID();
+         _pDmsCB->suUnlock ( suID ) ;
+
+         rc = _pTransCB->transLockTryX( cb, logicCSID ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Get transaction-lock of CS(%s) failed(rc=%d)",
+                      pCSName, rc ) ;
+         _logicCSID = logicCSID ;
+
+         // TODO: YUTING in windows, we need to lock su exclusive,
+         // because windows file need to close
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__RTNCTXRENAMECS__TRYLOCK, rc ) ;
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _rtnContextRenameCS::_releaseLock( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      if ( cb && getDPSCB() && ( _logicCSID != DMS_INVALID_LOGICCSID ) )
+      {
+         _pTransCB->transLockRelease( cb, _logicCSID );
+         _logicCSID = DMS_INVALID_LOGICCSID;
+      }
+      return rc;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECS__CLEAN, "_rtnContextRenameCS::_clean" )
+   void _rtnContextRenameCS::_clean( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNCTXRENAMECS__CLEAN ) ;
+
+      rc = _releaseLock( cb );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "releas lock failed, rc: %d", rc );
+      }
+      if ( _gotDmsCBWrite )
+      {
+         _pDmsCB->writeDown ( cb ) ;
+         _gotDmsCBWrite = FALSE;
+      }
+
+      PD_TRACE_EXITRC( SDB__RTNCTXRENAMECS__CLEAN, rc ) ;
+   }
+
+   RTN_CTX_AUTO_REGISTER(_rtnContextRenameCL, RTN_CONTEXT_RENAMECL, "RENAMECL")
+
+   _rtnContextRenameCL::_rtnContextRenameCL( SINT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID )
+   {
+      _pDmsCB        = pmdGetKRCB()->getDMSCB() ;
+      _pDpsCB        = pmdGetKRCB()->getDPSCB() ;
+      _pCatAgent     = pmdGetKRCB()->getClsCB()->getCatAgent () ;
+      _pTransCB      = pmdGetKRCB()->getTransCB();
+      _gotDmsCBWrite = FALSE ;
+      _mbID          = DMS_INVALID_MBID ;
+      _su            = NULL ;
+      ossMemset( _clShortName, 0, sizeof( _clShortName ) ) ;
+      ossMemset( _newCLShortName, 0, sizeof( _newCLShortName ) ) ;
+   }
+
+   _rtnContextRenameCL::~_rtnContextRenameCL()
+   {
+      pmdEDUMgr *eduMgr    = pmdGetKRCB()->getEDUMgr() ;
+      pmdEDUCB *cb         = eduMgr->getEDUByID( eduID() ) ;
+      _clean( cb ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECL__TRYLOCK, "_rtnContextRenameCL::_tryLock" )
+   INT32 _rtnContextRenameCL::_tryLock( const CHAR *csName,
+                                     _pmdEDUCB *cb )
+   {
+      INT32 rc                = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNCTXRENAMECL__TRYLOCK ) ;
+
+      dmsStorageUnitID suID   = DMS_INVALID_CS ;
+      dmsMBContext* mbContext = NULL ;
+      UINT16 mbID             = DMS_INVALID_MBID ;
+
+      rc = rtnCollectionSpaceLock ( csName, _pDmsCB,
+                                    FALSE, &_su, suID, SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to lock cs[%s], rc: %d", csName, rc ) ;
+
+      // lock collection
+      if ( getDPSCB() && _pTransCB->isTransOn() )
+      {
+         rc = _su->data()->getMBContext( &mbContext, _clShortName, SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
+                      "rc: %d", _clShortName, rc ) ;
+
+         mbID = mbContext->mbID() ;
+         _su->data()->releaseMBContext( mbContext ) ;
+
+         rc = _pTransCB->transLockTryX( cb, _su->LogicalCSID(), mbID ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Get transaction-lock of collection(%s) failed(rc=%d)",
+                      _clFullName.c_str(), rc ) ;
+         _mbID = mbID ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNCTXRENAMECL__TRYLOCK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextRenameCL::_releaseLock( _pmdEDUCB *cb )
+   {
+      if ( cb && _mbID != DMS_INVALID_MBID )
+      {
+         _pTransCB->transLockRelease( cb, _su->LogicalCSID(),
+                                      _mbID ) ;
+         _mbID = DMS_INVALID_MBID ;
+      }
+
+      if ( _pDmsCB && _su )
+      {
+         _pDmsCB->suUnlock ( _su->CSID() ) ;
+         _su = NULL ;
+      }
+
+      return SDB_OK ;
+   }
+
+   std::string _rtnContextRenameCL::name() const
+   {
+      return "RENAMECL" ;
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextRenameCL::getType () const
+   {
+      return RTN_CONTEXT_RENAMECL ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECL_OPEN, "_rtnContextRenameCL::open" )
+   INT32 _rtnContextRenameCL::open( const CHAR *csName, const CHAR *clShortName,
+                                    const CHAR *newCLShortName,
+                                    _pmdEDUCB *cb, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNCTXRENAMECL_OPEN ) ;
+
+      string newCLFullName ;
+
+      /// set w info
+      _w = w ;
+
+      /// check cs name
+      SDB_ASSERT( csName, "cs name can't be null!" );
+      PD_CHECK( csName, SDB_INVALIDARG, error, PDERROR,
+                "cs name is null!" );
+
+      rc = dmsCheckCSName( csName );
+      PD_RC_CHECK( rc, PDERROR, "Invalid cs name[%s]", csName ) ;
+
+      /// check cl name
+      SDB_ASSERT( clShortName, "collection name can't be null!" );
+      PD_CHECK( clShortName, SDB_INVALIDARG, error, PDERROR,
+                "collection name is null!" );
+
+      SDB_ASSERT( newCLShortName, "new collection name can't be null!" );
+      PD_CHECK( newCLShortName, SDB_INVALIDARG, error, PDERROR,
+                "new collection name is null!" );
+
+      rc = dmsCheckCLName( clShortName );
+      PD_RC_CHECK( rc, PDERROR, "Invalid collection name[%s]", clShortName ) ;
+
+      rc = dmsCheckCLName( newCLShortName );
+      PD_RC_CHECK( rc, PDERROR, "Invalid collection name[%s]", newCLShortName );
+
+      ossStrncpy( _clShortName, clShortName, DMS_COLLECTION_NAME_SZ ) ;
+      ossStrncpy( _newCLShortName, newCLShortName, DMS_COLLECTION_NAME_SZ ) ;
+
+      _clFullName = csName ;
+      _clFullName += "." ;
+      _clFullName += clShortName ;
+
+      newCLFullName = csName ;
+      newCLFullName += "." ;
+      newCLFullName += newCLShortName ;
+
+      /// test collection space exist
+      rc = rtnTestCollectionCommand( _clFullName.c_str(), _pDmsCB ) ;
+      if ( SDB_DMS_NOTEXIST == rc )
+      {
+         PD_LOG( PDERROR,
+                 "Collection[%s] does not exists, rc: %d",
+                 _clFullName.c_str(), rc ) ;
+         goto done ;
+      }
+
+      rc = rtnTestCollectionSpaceCommand( newCLFullName.c_str(), _pDmsCB ) ;
+      if ( SDB_OK == rc )
+      {
+         rc = SDB_DMS_EXIST ;
+         PD_LOG( PDERROR,
+                 "Collection[%s] already exists, rc: %d",
+                 newCLFullName.c_str(), rc ) ;
+         goto done ;
+      }
+
+      /// lock
+      rc = _pDmsCB->writable ( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      _gotDmsCBWrite = TRUE ;
+
+      rc = _tryLock( csName, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to lock, rc: %d", rc ) ;
+
+      _isOpened = TRUE ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNCTXRENAMECL_OPEN, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECL_GETMORE, "_rtnContextRenameCL::getMore" )
+   INT32 _rtnContextRenameCL::getMore( INT32 maxNumToReturn,
+                                    rtnContextBuf &buffObj,
+                                    _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNCTXRENAMECL_GETMORE ) ;
+
+      SDB_RTNCB * pRtnCB = pmdGetKRCB()->getRTNCB() ;
+      clsCB * pClsCB = pmdGetKRCB()->getClsCB() ;
+      CHAR mainCL[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { '\0' } ;
+
+      if ( !isOpened() )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE;
+         goto error ;
+      }
+
+      _pCatAgent->lock_w () ;
+      _pCatAgent->clear( _clFullName.c_str(), mainCL ) ;
+      _pCatAgent->release_w () ;
+      pClsCB->invalidateCata( _clFullName.c_str() ) ;
+
+      // Clear catalog info and cached plans of main-collection if needed
+      if ( '\0' != mainCL[ 0 ] )
+      {
+         _pCatAgent->lock_w() ;
+         _pCatAgent->clear( mainCL ) ;
+         _pCatAgent->release_w() ;
+         pRtnCB->getAPM()->invalidateCLPlans( mainCL ) ;
+         pClsCB->invalidateCache( mainCL, DPS_LOG_INVALIDCATA_TYPE_CATA |
+                                          DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
+      }
+
+      // drop collection
+      rc = _su->data()->renameCollection ( _clShortName, _newCLShortName,
+                                           cb, _pDpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to rename collection from [%s] to [%s], rc: %d",
+                   _clShortName, _newCLShortName, rc ) ;
+
+      _clean( cb ) ;
+      _isOpened = FALSE ;
+      rc = SDB_DMS_EOC ;
+
+      cb->writingDB( FALSE ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNCTXRENAMECL_GETMORE, rc ) ;
+      return rc;
+   error:
+      goto done;
+   }
+
+   void _rtnContextRenameCL::_toString( stringstream &ss )
+   {
+      ss << ",Name:" << _clFullName.c_str()
+         << ",newCLName:" << _newCLShortName
+         << ",GotDMSWrite:" << _gotDmsCBWrite
+         << ",MBID:" << _mbID ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECL__CLEAN, "_rtnContextRenameCL::_clean" )
+   void _rtnContextRenameCL::_clean( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY( SDB__RTNCTXRENAMECL__CLEAN ) ;
+
+      rc = _releaseLock( cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "release lock failed, rc: %d", rc ) ;
+      }
+
+      if ( _gotDmsCBWrite )
+      {
+         _pDmsCB->writeDown( cb ) ;
+         _gotDmsCBWrite = FALSE ;
+      }
+
+      PD_TRACE_EXITRC( SDB__RTNCTXRENAMECL__CLEAN, rc ) ;
    }
 }
 

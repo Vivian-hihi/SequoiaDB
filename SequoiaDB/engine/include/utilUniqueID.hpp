@@ -55,9 +55,10 @@ namespace engine
    #define UTIL_CLINNERID_MAX        0xFFFFFF00
 
    /// Before version 3.0.1, cs/cl has not its unique id. After the upgrade
-   /// to version 3.0.1, unique id will be set. But if the cs/cl only exists
-   /// on data, doesn't exists in catalog, the unique id will be 0.
-   /// In addition, system cs/cl unique id also is 0.
+   /// to version 3.0.1, unique id will be set. But if the cs only exists
+   /// on data, doesn't exists on catalog, the unique id will be 0xFFFFFFFF.
+   /// While if cl only exists on data, doesn't exists on catalog, the unique
+   /// id will be 0. In addition, system cs/cl unique id also is 0.
    #define UTIL_UNIQUEID_NULL        0
 
    /// Directly connect data node, then create cs/cl
@@ -101,9 +102,14 @@ namespace engine
 
    typedef std::map<std::string, utilCLUniqueID> MAP_CLNAME_ID ;
 
+   typedef std::map<utilCLUniqueID, std::string> MAP_CLID_NAME ;
+
    MAP_CLNAME_ID utilBson2ClNameId( const BSONObj& clInfoObj ) ;
 
-   BSONObj utilUnsetUniqueID( const BSONObj& clInfoObj ) ;
+   MAP_CLID_NAME utilBson2ClIdName( const BSONObj& clInfoObj ) ;
+
+   BSONObj utilSetUniqueID( const BSONObj& clInfoObj,
+                            utilCLUniqueID setValue = UTIL_UNIQUEID_NULL ) ;
 }
 
 #endif //UTIL_UNIQUEID_HPP_

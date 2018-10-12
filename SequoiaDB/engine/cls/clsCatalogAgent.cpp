@@ -390,6 +390,11 @@ namespace engine
       return BSONObj () ;
    }
 
+   void _clsCatalogItem::renameSubClName( const string& subCLName )
+   {
+      _subCLName = subCLName ;
+   }
+
    /*
    note: _clsCataOrder implement
    */
@@ -475,6 +480,11 @@ namespace engine
    const CHAR *_clsCatalogSet::name () const
    {
       return _name.c_str() ;
+   }
+
+   const string& _clsCatalogSet::nameStr() const
+   {
+      return _name ;
    }
 
    utilCLUniqueID _clsCatalogSet::clUniqueID() const
@@ -2263,6 +2273,26 @@ namespace engine
             clsCatalogItem *item = it->second ;
             _mapItems.erase( it++ ) ;
             SAFE_OSS_DELETE( item ) ;
+         }
+         else
+         {
+            ++it ;
+         }
+      }
+      return SDB_OK ;
+   }
+
+   INT32 _clsCatalogSet::renameSubCL ( const CHAR *subCLName,
+                                       const CHAR* newSubCLName )
+   {
+      MAP_CAT_ITEM_IT it = _mapItems.begin() ;
+      while ( it != _mapItems.end() )
+      {
+         string strSubClName = it->second->getSubClName();
+         if ( 0 == strSubClName.compare( subCLName ) )
+         {
+            clsCatalogItem *item = it->second ;
+            item->renameSubClName( newSubCLName ) ;
          }
          else
          {

@@ -1214,6 +1214,8 @@ namespace engine
       case MSG_CAT_CREATE_IDX_REQ :
       case MSG_CAT_DROP_IDX_REQ :
       case MSG_CAT_TRUNCATE_REQ :
+      case MSG_CAT_RENAME_CS_REQ :
+      case MSG_CAT_RENAME_CL_REQ :
          {
             // up commands is run in cluster acitve status
             _pCatCB->getCatDCMgr()->setWritedCommand( TRUE ) ;
@@ -1359,6 +1361,8 @@ namespace engine
          case MSG_CAT_UNLINK_CL_REQ :
          case MSG_CAT_CREATE_IDX_REQ :
          case MSG_CAT_DROP_IDX_REQ :
+         case MSG_CAT_RENAME_CS_REQ :
+         case MSG_CAT_RENAME_CL_REQ :
          {
             SINT64 contextID = -1;
             catContext *pCatCtx = NULL ;

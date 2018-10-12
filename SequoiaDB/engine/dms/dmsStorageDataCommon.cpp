@@ -2735,6 +2735,7 @@ namespace engine
       dpsMergeInfo info ;
       dpsLogRecord &record    = info.getMergeBlock().record() ;
       BOOLEAN metalocked      = FALSE ;
+      BOOLEAN isTransLocked   = FALSE ;
       UINT16  mbID            = DMS_INVALID_MBID ;
       UINT32  clLID           = DMS_INVALID_CLID ;
 
@@ -2784,6 +2785,14 @@ namespace engine
          goto error ;
       }
 
+      if ( cb && dpscb )
+      {
+         rc = pTransCB->transLockTryX( cb, _logicalCSID, mbID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to lock the collection, rc: %d",
+                      rc ) ;
+         isTransLocked = TRUE ;
+      }
+
       _collectionRemove ( oldName ) ;
       _collectionInsert ( newName, mbID ) ;
       ossMemset ( _dmsMME->_mbList[mbID]._collectionName, 0,
@@ -2806,11 +2815,18 @@ namespace engine
          _pEventHolder->onRenameCL( DMS_EVENT_MASK_ALL, clItem, newName, cb, dpscb ) ;
       }
 
+      PD_LOG( PDEVENT, "Rename collection[%s] to [%s] succeed",
+              oldName, newName ) ;
    done :
       if ( metalocked )
       {
          ossUnlatch ( &_metadataLatch, EXCLUSIVE ) ;
          metalocked = FALSE ;
+      }
+      if ( isTransLocked )
+      {
+         pTransCB->transLockRelease( cb, _logicalCSID, mbID ) ;
+         isTransLocked = FALSE ;
       }
       if ( 0 != logRecSize )
       {

@@ -52,6 +52,7 @@
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "rtnExtDataHandler.hpp"
+#include "rtnContextDel.hpp"
 
 using namespace bson ;
 
@@ -1552,6 +1553,42 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRENAMECSCOMMAND, "rtnRenameCollectionSpaceCommand" )
+   INT32 rtnRenameCollectionSpaceCommand ( const CHAR *csName,
+                                           const CHAR *newCSName,
+                                           _pmdEDUCB *cb,
+                                           SDB_DMSCB *dmsCB,
+                                           SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNRENAMECSCOMMAND ) ;
+      BOOLEAN dmsLock = FALSE ;
+
+      rc = dmsCB->writable ( cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      dmsLock = TRUE ;
+
+      rc = dmsCB->renameCollectionSpace( csName, newCSName, cb, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to rename collectionspace from %s to %s, rc: %d",
+                   csName, newCSName, rc ) ;
+
+      PD_LOG( PDEVENT, "Rename cs[%s] to [%s] succeed", csName, newCSName ) ;
+
+   done:
+      if ( dmsLock )
+      {
+         dmsCB->writeDown( cb ) ;
+      }
+      PD_TRACE_EXITRC ( SDB_RTNRENAMECSCOMMAND, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDROPCSCOMMAND, "rtnDropCollectionSpaceCommand" )
    INT32 rtnDropCollectionSpaceCommand ( const CHAR *pCollectionSpace,
                                          _pmdEDUCB *cb,
@@ -1733,6 +1770,57 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNDROPCLCOMMAND, rc ) ;
       return rc ;
    error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRENAMECLCOMMAND, "rtnRenameCollectionCommand" )
+   INT32 rtnRenameCollectionCommand ( const CHAR *csName,
+                                      const CHAR *clShortName,
+                                      const CHAR *newCLShortName,
+                                      _pmdEDUCB *cb,
+                                      SDB_DMSCB *dmsCB,
+                                      SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNRENAMECLCOMMAND ) ;
+      dmsStorageUnitID suID   = DMS_INVALID_CS ;
+      dmsStorageUnit *su      = NULL ;
+      BOOLEAN dmsLock         = FALSE ;
+
+      rc = dmsCB->writable ( cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      dmsLock = TRUE ;
+
+      rc = rtnCollectionSpaceLock ( csName, dmsCB, FALSE,
+                                    &su, suID, SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Fail to lock collection space name[%s]",
+                   csName ) ;
+
+      rc = su->data()->renameCollection ( clShortName, newCLShortName,
+                                          cb, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to rename collection from %s to %s, rc: %d",
+                   clShortName, newCLShortName, rc ) ;
+
+      PD_LOG( PDEVENT, "Rename cs[%s] collection[%s] to [%s] succeed",
+              csName, clShortName, newCLShortName ) ;
+
+   done:
+      if ( DMS_INVALID_CS != suID )
+      {
+         dmsCB->suUnlock ( suID ) ;
+      }
+      if ( dmsLock )
+      {
+         dmsCB->writeDown( cb ) ;
+      }
+      PD_TRACE_EXITRC ( SDB_RTNRENAMECLCOMMAND, rc ) ;
+      return rc ;
+   error:
       goto done ;
    }
 

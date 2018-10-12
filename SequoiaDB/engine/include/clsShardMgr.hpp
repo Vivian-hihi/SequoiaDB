@@ -132,10 +132,17 @@ namespace engine
       private :
          void _registerCLInternal ( const CHAR * pName, UINT64 opID ) ;
          void _unregisterCLInternal ( const CHAR * pName, UINT64 opID ) ;
+         void _regWholeInternal( UINT64 opID ) ;
+         void _unregWholeInternal( UINT64 opID ) ;
+
+         void _blockCheck( const OP_SET &setID, UINT64 testOPID,
+                           BOOLEAN &result,
+                           BOOLEAN &forceEnd ) ;
 
       private:
          UINT32            _clCount ;
          MAP_WINDOW        _mapWindow ;
+         OP_SET            _setWholeID ;
          ossSpinXLatch     _latch ;
          ossEvent          _event ;
 
@@ -209,6 +216,7 @@ namespace engine
                            UINT32 *lobPageSize = NULL,
                            DMS_STORAGE_TYPE *type = NULL,
                            BSONObj *clInfo = NULL,
+                           string *newCSName = NULL,
                            INT64 waitMillSec = CLS_SHARD_TIMEOUT ) ;
 
          INT32 updateDCBaseInfo() ;

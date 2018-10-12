@@ -201,6 +201,42 @@ namespace engine
    typedef class _catCtxDropCS catCtxDropCS ;
 
    /*
+      _catCtxRenameCS define
+    */
+   class _catCtxRenameCS : public _catCtxDataBase
+   {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
+
+      public :
+         _catCtxRenameCS ( INT64 contextID, UINT64 eduID ) ;
+
+         virtual ~_catCtxRenameCS () ;
+
+         virtual std::string name () const
+         {
+            return "CAT_RENAME_CS" ;
+         }
+
+         virtual RTN_CONTEXT_TYPE getType () const
+         {
+            return RTN_CONTEXT_CAT_RENAME_CS ;
+         }
+
+      protected :
+         virtual INT32 _parseQuery ( _pmdEDUCB *cb ) ;
+
+         virtual INT32 _checkInternal ( _pmdEDUCB *cb ) ;
+
+         virtual INT32 _executeInternal ( _pmdEDUCB *cb, INT16 w ) ;
+
+      protected :
+         std::string _newCSName ;
+         BSONObj _boCollectionspace ;
+   } ;
+
+   typedef class _catCtxRenameCS catCtxRenameCS ;
+
+   /*
       _catCtxAlterCS define
     */
    class _catCtxAlterCS : public _catCtxDataMultiTaskBase
@@ -348,6 +384,41 @@ namespace engine
    } ;
 
    typedef class _catCtxDropCL catCtxDropCL ;
+
+   /*
+      _catCtxRenameCL define
+    */
+   class _catCtxRenameCL : public _catCtxDataBase
+   {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
+
+      public :
+         _catCtxRenameCL ( INT64 contextID, UINT64 eduID ) ;
+
+         virtual ~_catCtxRenameCL () ;
+
+         virtual std::string name () const
+         {
+            return "CAT_RENAME_CL" ;
+         }
+
+         virtual RTN_CONTEXT_TYPE getType () const
+         {
+            return RTN_CONTEXT_CAT_RENAME_CL ;
+         }
+
+      protected :
+         virtual INT32 _parseQuery ( _pmdEDUCB *cb ) ;
+
+         virtual INT32 _checkInternal ( _pmdEDUCB *cb ) ;
+
+         virtual INT32 _executeInternal ( _pmdEDUCB *cb, INT16 w ) ;
+
+      protected :
+         std::string _newCLFullName ;
+   } ;
+
+   typedef class _catCtxRenameCL catCtxRenameCL ;
 
    /*
     * _catCtxAlterCL define

@@ -1023,6 +1023,196 @@ namespace engine
    }
 
    /*
+      _catCtxRenameCS implement
+    */
+   RTN_CTX_AUTO_REGISTER( _catCtxRenameCS, RTN_CONTEXT_CAT_RENAME_CS,
+                          "CAT_RENAME_CS" )
+
+   _catCtxRenameCS::_catCtxRenameCS ( INT64 contextID, UINT64 eduID )
+   : _catCtxDataBase( contextID, eduID )
+   {
+      _executeAfterLock = FALSE ;
+      _commitAfterExecute = FALSE ;
+      _needRollback = FALSE ;
+   }
+
+   _catCtxRenameCS::~_catCtxRenameCS ()
+   {
+      _onCtxDelete () ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXRENAMECS_PARSEQUERY, "_catCtxRenameCS::_parseQuery" )
+   INT32 _catCtxRenameCS::_parseQuery ( _pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATCTXRENAMECS_PARSEQUERY ) ;
+
+      SDB_ASSERT( MSG_CAT_RENAME_CS_REQ == _cmdType, "Wrong command type" ) ;
+
+      try
+      {
+         rc = rtnGetSTDStringElement( _boQuery, CAT_COLLECTION_SPACE_OLDNAME,
+                                      _targetName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
+                      CAT_COLLECTION_SPACE_NAME, rc ) ;
+
+         rc = rtnGetSTDStringElement( _boQuery, CAT_COLLECTION_SPACE_NEWNAME,
+                                      _newCSName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
+                      CAT_COLLECTION_SPACE_NEWNAME, rc ) ;
+      }
+      catch ( exception & e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXRENAMECS_PARSEQUERY, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXRENAMECS_CHECK_INT, "_catCtxRenameCS::_checkInternal" )
+   INT32 _catCtxRenameCS::_checkInternal ( _pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATCTXRENAMECS_CHECK_INT ) ;
+
+      BOOLEAN newCSExist = FALSE ;
+      BSONObj boCollectionspace ;
+      _utilSet< UINT32 > occupiedGroups ;
+      INT64 taskCount = 0 ;
+
+      try
+      {
+         // lock old cs
+         rc = catGetAndLockCollectionSpace( _targetName, _boCollectionspace,
+                                            cb, &_lockMgr, EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to lock the collection space[%s], rc: %d",
+                      _targetName.c_str(), rc ) ;
+
+         // check task count of old cs
+         rc = catGetTaskCountByCS( _targetName.c_str(), cb, taskCount ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get task count of cs[%s], rc: %d",
+                      _targetName.c_str(), rc ) ;
+
+         PD_CHECK( 0 == taskCount, SDB_OPERATION_CONFLICT, error, PDERROR,
+                   "Failed to rename cs[%s]: should have no split tasks",
+                   _targetName.c_str() ) ;
+
+         // check new cs exists or not
+         rc = catCheckSpaceExist( _newCSName.c_str(), newCSExist,
+                                  boCollectionspace, cb ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check collection space[%s] exists, rc: %d",
+                      _newCSName.c_str(), rc ) ;
+         PD_CHECK( FALSE == newCSExist, SDB_DMS_CS_EXIST, error, PDERROR,
+                   "Collection space [%s] already exist!",
+                   _newCSName.c_str() ) ;
+
+         // lock new cs
+         if ( !_lockMgr.tryLockCollectionSpace( _newCSName, EXCLUSIVE ) )
+         {
+            rc = SDB_LOCK_FAILED ;
+            goto error ;
+         }
+
+         // we need reply groups list to coord, so that coord can send msg to
+         // corresponding data by groups list
+         rc = catGetCSGroups( _targetName.c_str(), cb, occupiedGroups, FALSE ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get group list of cs[%s], rc: %d",
+                      _targetName.c_str(), rc ) ;
+
+         for ( _utilSet< UINT32 >::iterator iterGroup = occupiedGroups.begin() ;
+               iterGroup != occupiedGroups.end() ;
+               iterGroup ++ )
+         {
+            UINT32 groupID = ( *iterGroup ) ;
+            _groupList.push_back( groupID ) ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXRENAMECS_CHECK_INT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXRENAMECS_EXECUTE_INT, "_catCtxRenameCS::_executeInternal" )
+   INT32 _catCtxRenameCS::_executeInternal ( _pmdEDUCB *cb, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_CATCTXRENAMECS_EXECUTE_INT ) ;
+      BSONElement ele ;
+
+      rc = catRenameCSStep( _targetName, _newCSName, cb, _pDmsCB, _pDpsCB, w ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to rename collection space[%s], rc: %d",
+                   _targetName.c_str(), rc ) ;
+
+      ele = _boCollectionspace.getField( CAT_COLLECTION ) ;
+      if ( Array == ele.type() )
+      {
+         BSONObjIterator i ( ele.embeddedObject() ) ;
+         while ( i.more() )
+         {
+            string clFullName, newCLFullName ;
+            BSONObj boTmp ;
+            const CHAR *pCLName = NULL ;
+
+            BSONElement beTmp = i.next() ;
+            PD_CHECK( Object == beTmp.type(),
+                      SDB_CAT_CORRUPTION, error, PDERROR,
+                      "Invalid field type: %d", beTmp.type() ) ;
+
+            boTmp = beTmp.embeddedObject() ;
+            rc = rtnGetStringElement( boTmp, CAT_COLLECTION_NAME, &pCLName ) ;
+            PD_CHECK( SDB_OK == rc, SDB_CAT_CORRUPTION, error, PDERROR,
+                      "Get field [%s] failed, rc: %d",
+                      CAT_COLLECTION_NAME, rc ) ;
+
+            clFullName = _targetName ;
+            clFullName += "." ;
+            clFullName += pCLName ;
+            newCLFullName = _newCSName ;
+            newCLFullName += "." ;
+            newCLFullName += pCLName ;
+
+            rc = catRenameCLStep( clFullName, newCLFullName,
+                                  cb, _pDmsCB, _pDpsCB, w ) ;
+            PD_RC_CHECK ( rc, PDERROR,
+                          "Fail to rename cl from[%s] to [%s], rc: %d",
+                          clFullName.c_str(), newCLFullName.c_str(), rc ) ;
+
+         }
+      }
+
+      PD_LOG( PDDEBUG, "Rename collection space[%s] to [%s] succeed.",
+              _targetName.c_str(), _newCSName.c_str() ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXRENAMECS_EXECUTE_INT, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   /*
       _catCtxAlterCS implement
     */
    RTN_CTX_AUTO_REGISTER( _catCtxAlterCS, RTN_CONTEXT_CAT_ALTER_CS,
@@ -2139,6 +2329,174 @@ namespace engine
       return rc ;
    error :
       SAFE_OSS_DELETE( pCtx ) ;
+      goto done ;
+   }
+
+   /*
+      _catCtxRenameCL implement
+    */
+   RTN_CTX_AUTO_REGISTER( _catCtxRenameCL, RTN_CONTEXT_CAT_RENAME_CL,
+                          "CAT_RENAME_CL" )
+
+   _catCtxRenameCL::_catCtxRenameCL ( INT64 contextID, UINT64 eduID )
+   : _catCtxDataBase( contextID, eduID )
+   {
+      _executeAfterLock = FALSE ;
+      _commitAfterExecute = FALSE ;
+      _needRollback = FALSE ;
+   }
+
+   _catCtxRenameCL::~_catCtxRenameCL ()
+   {
+      _onCtxDelete () ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXRENAMECL_PARSEQUERY, "_catCtxRenameCL::_parseQuery" )
+   INT32 _catCtxRenameCL::_parseQuery ( _pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATCTXRENAMECL_PARSEQUERY ) ;
+
+      SDB_ASSERT( MSG_CAT_RENAME_CL_REQ == _cmdType, "Wrong command type" ) ;
+
+      string csName, oldCLName, newCLName ;
+
+      try
+      {
+         rc = rtnGetSTDStringElement ( _boQuery, CAT_COLLECTIONSPACE, csName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+                      CAT_COLLECTIONSPACE, rc ) ;
+
+         rc = rtnGetSTDStringElement( _boQuery, CAT_COLLECTION_OLDNAME,
+                                      oldCLName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+                      CAT_COLLECTION_NAME, rc ) ;
+
+         rc = rtnGetSTDStringElement( _boQuery, CAT_COLLECTION_NEWNAME,
+                                      newCLName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+                      CAT_COLLECTION_NEWNAME, rc ) ;
+
+         _targetName = csName ;
+         _targetName += "." ;
+         _targetName += oldCLName ;
+
+         _newCLFullName = csName ;
+         _newCLFullName += "." ;
+         _newCLFullName += newCLName ;
+      }
+      catch ( exception & e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXRENAMECL_PARSEQUERY, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXRENAMECL_CHECK_INT, "_catCtxRenameCL::_checkInternal" )
+   INT32 _catCtxRenameCL::_checkInternal ( _pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATCTXRENAMECL_CHECK_INT ) ;
+
+      BOOLEAN newCLExist = FALSE ;
+      BSONObj boOldCL, boNewCL ;
+      INT64 taskCount = 0 ;
+      clsCatalogSet cataSet( _targetName.c_str() );
+
+      try
+      {
+         // lock old cl
+         rc = catGetAndLockCollection( _targetName, boOldCL,
+                                       cb, &_lockMgr, EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to lock the collection[%s], rc: %d",
+                      _targetName.c_str(), rc ) ;
+
+         // check task count of old cl
+         rc = catGetTaskCount( _targetName.c_str(), cb, taskCount ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get task count of cl[%s], rc: %d",
+                      _targetName.c_str(), rc ) ;
+
+         PD_CHECK( 0 == taskCount, SDB_OPERATION_CONFLICT, error, PDERROR,
+                   "Failed to rename cl[%s]: should have no split tasks",
+                   _targetName.c_str() ) ;
+
+         // check new cl exists or not
+         rc = catCheckCollectionExist( _newCLFullName.c_str(), newCLExist,
+                                       boNewCL, cb ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check collection[%s] exists, rc: %d",
+                      _newCLFullName.c_str(), rc ) ;
+         PD_CHECK( FALSE == newCLExist, SDB_DMS_EXIST, error, PDERROR,
+                   "Collection[%s] already exist!",
+                   _newCLFullName.c_str() ) ;
+
+         // lock new cl
+         if ( !_lockMgr.tryLockCollection( _newCLFullName, EXCLUSIVE ) )
+         {
+            rc = SDB_LOCK_FAILED ;
+            goto error ;
+         }
+
+         // we need reply groups list to coord, so that coord can send msg to
+         // corresponding data by groups list
+         rc = cataSet.updateCatSet( boOldCL ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to parse catalog info[%s], rc: %d",
+                      _targetName.c_str(), rc ) ;
+
+         if ( !cataSet.isMainCL() )
+         {
+            rc = catGetCollectionGroupSet( boOldCL, _groupList ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to get group list of cl[%s], rc: %d",
+                         _targetName.c_str(), rc ) ;
+         }
+
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXRENAMECL_CHECK_INT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXRENAMECL_EXECUTE_INT, "_catCtxRenameCL::_executeInternal" )
+   INT32 _catCtxRenameCL::_executeInternal ( _pmdEDUCB *cb, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_CATCTXRENAMECL_EXECUTE_INT ) ;
+
+      rc = catRenameCLStep( _targetName, _newCLFullName,
+                            cb, _pDmsCB, _pDpsCB, w ) ;
+      PD_RC_CHECK ( rc, PDERROR,
+                    "Fail to rename cl from[%s] to [%s], rc: %d",
+                    _targetName.c_str(), _newCLFullName.c_str(), rc ) ;
+
+      PD_LOG( PDDEBUG, "Rename collection[%s] to [%s] succeed.",
+              _targetName.c_str(), _newCLFullName.c_str() ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXRENAMECL_EXECUTE_INT, rc ) ;
+      return rc ;
+   error :
       goto done ;
    }
 

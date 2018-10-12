@@ -593,28 +593,18 @@ namespace engine
             const CHAR *cs = NULL ;
             const CHAR *oldCl = NULL ;
             const CHAR *newCl = NULL ;
-            dmsStorageUnitID suID = DMS_INVALID_CS ;
-            dmsStorageUnit *su = NULL ;
             rc = dpsRecord2CLRename( (CHAR *)recordHeader,
                                       &cs, &oldCl, &newCl ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
             }
-            rc = rtnCollectionSpaceLock ( cs, _dmsCB, FALSE, &su, suID ) ;
+            rc = rtnRenameCollectionCommand( cs, oldCl, newCl,
+                                             eduCB, _dmsCB, _dpsCB ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to get collection space %s, rc: %d",
-                       cs, rc ) ;
-               goto error ;
-            }
-            rc = su->data()->renameCollection ( oldCl, newCl,
-                                                eduCB, _dpsCB ) ;
-            _dmsCB->suUnlock ( suID ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to rename %s to %s, rc: %d",
-                       oldCl, newCl, rc ) ;
+               PD_LOG( PDERROR, "failed to rename cs[%s] cl %s to %s, rc: %d",
+                       cs, oldCl, newCl, rc ) ;
                goto error ;
             }
             break ;
@@ -630,17 +620,8 @@ namespace engine
             {
                goto error ;
             }
-            while( TRUE )
-            {
-               rc = _dmsCB->renameCollectionSpace( oldName, newName,
-                                                   eduCB, _dpsCB ) ;
-               if ( SDB_LOCK_FAILED == rc )
-               {
-                  ossSleep ( 100 ) ;
-                  continue ;
-               }
-               break ;
-            }
+            rc = rtnRenameCollectionSpaceCommand( oldName, newName,
+                                                  eduCB, _dmsCB, _dpsCB ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to rename %s to %s, rc: %d",
@@ -1122,35 +1103,21 @@ namespace engine
          }
          case LOG_TYPE_CL_RENAME :
          {
-            dmsStorageUnitID suID = DMS_INVALID_CS ;
-            dmsStorageUnit *su = NULL ;
             const CHAR *cs = NULL ;
-            const CHAR *oldName = NULL ;
-            const CHAR *newName = NULL ;
-            rc = dpsRecord2CLRename( (const CHAR *)recordHeader,
-                                     &cs,
-                                     &oldName,
-                                     &newName ) ;
+            const CHAR *oldCl = NULL ;
+            const CHAR *newCl = NULL ;
+            rc = dpsRecord2CLRename( (CHAR *)recordHeader,
+                                      &cs, &oldCl, &newCl ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
             }
-            rc = rtnCollectionSpaceLock ( cs, _dmsCB, FALSE, &su, suID ) ;
+            rc = rtnRenameCollectionCommand( cs, newCl, oldCl,
+                                             eduCB, _dmsCB, _dpsCB ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to get collection space %s, rc: %d",
-                       cs, rc ) ;
-               goto error ;
-            }
-            rc = su->data()->renameCollection ( newName,
-                                                oldName,
-                                                eduCB,
-                                                _dpsCB ) ;
-            _dmsCB->suUnlock ( suID ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to rename %s to %s, rc: %d",
-                       newName, oldName, rc ) ;
+               PD_LOG( PDERROR, "failed to rename cs[%s] cl %s to %s, rc: %d",
+                       cs, oldCl, newCl, rc ) ;
                goto error ;
             }
             break ;
@@ -1166,21 +1133,12 @@ namespace engine
             {
                goto error ;
             }
-            while( TRUE )
-            {
-               rc = _dmsCB->renameCollectionSpace( newName, oldName,
-                                                   eduCB, _dpsCB ) ;
-               if ( SDB_LOCK_FAILED == rc )
-               {
-                  ossSleep ( 100 ) ;
-                  continue ;
-               }
-               break ;
-            }
+            rc = rtnRenameCollectionSpaceCommand( newName, oldName,
+                                                  eduCB, _dmsCB, _dpsCB ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to rename %s to %s, rc: %d",
-                       newName, oldName, rc ) ;
+                       oldName, newName, rc ) ;
                goto error ;
             }
             break ;
@@ -1213,7 +1171,7 @@ namespace engine
             while ( TRUE )
             {
                rc = rtnChangeUniqueID( csname, UTIL_UNIQUEID_NULL,
-                                       utilUnsetUniqueID( clInfoObj ),
+                                       utilSetUniqueID( clInfoObj ),
                                        eduCB, _dmsCB, _dpsCB, FALSE ) ;
                if ( SDB_LOCK_FAILED == rc )
                {

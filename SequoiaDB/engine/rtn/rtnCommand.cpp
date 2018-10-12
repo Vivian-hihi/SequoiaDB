@@ -1580,7 +1580,7 @@ namespace engine
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnRenameCollection)
    _rtnRenameCollection::_rtnRenameCollection ()
-      :_oldCollectionName ( NULL ), _newCollectionName ( NULL ), _csName( NULL )
+      :_clShortName ( NULL ), _newCLShortName ( NULL ), _csName( NULL )
    {
    }
 
@@ -1630,14 +1630,14 @@ namespace engine
             goto error ;
          }
          rc = rtnGetStringElement ( arg, FIELD_NAME_OLDNAME,
-                                    &_oldCollectionName ) ;
+                                    &_clShortName ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "Failed to get string[oldname]" ) ;
             goto error ;
          }
          rc = rtnGetStringElement ( arg, FIELD_NAME_NEWNAME,
-                                    &_newCollectionName ) ;
+                                    &_newCLShortName ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "Failed to get string[newname]" ) ;
@@ -1646,7 +1646,7 @@ namespace engine
 
          _fullCollectionName = _csName ;
          _fullCollectionName += "." ;
-         _fullCollectionName += _oldCollectionName ;
+         _fullCollectionName += _clShortName ;
       }
       catch( std::exception &e )
       {
@@ -1669,55 +1669,62 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNRENAMECL_DOIT ) ;
-      dmsStorageUnit *su = NULL ;
-      dmsStorageUnitID suID = DMS_INVALID_CS ;
-      BOOLEAN dmsLock = FALSE ;
 
-      rc = dmsCB->writable ( cb ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      dmsLock = TRUE ;
+      SDB_ASSERT( cb, "cb can't be null!");
+      SDB_ASSERT( rtnCB, "rtnCB can't be null!");
+      SDB_ASSERT( pContextID, "pContextID can't be null!");
+      *pContextID = -1;
 
-      rc = rtnCollectionSpaceLock ( _csName, dmsCB, FALSE, &su, suID ) ;
-      if ( SDB_OK != rc )
+      // only allowed to rename cl by coord or standalone
+      if ( SDB_ROLE_DATA == pmdGetDBRole() &&
+           CMD_SPACE_SERVICE_LOCAL == getFromService() )
       {
-         PD_LOG ( PDERROR, "Failed to get collection space:%s", _csName ) ;
+         rc = SDB_RTN_COORD_ONLY ;
          goto error ;
       }
 
-      rc = su->data()->renameCollection ( _oldCollectionName,
-                                          _newCollectionName,
-                                          cb, dpsCB ) ;
-      if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      if ( CMD_SPACE_SERVICE_SHARD == getFromService() )
       {
-         /// AUDIT
+         rtnContextRenameCL *renameContext = NULL;
+         rc = rtnCB->contextNew( RTN_CONTEXT_RENAMECL,
+                                 (rtnContext **)&renameContext,
+                                 *pContextID, cb );
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to create context, rename cl failed, rc: %d",
+                      rc );
+
+         rc = renameContext->open( _csName, _clShortName, _newCLShortName,
+                                   cb, w );
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to open context, rename cl failed, rc: %d)",
+                      rc );
+      }
+      else
+      {
+         rc = rtnRenameCollectionCommand( _csName, _clShortName,
+                                          _newCLShortName, cb,
+                                          dmsCB, dpsCB ) ;
+         string clFullName, newCLFullName ;
+         clFullName = _csName ;
+         clFullName += "." ;
+         clFullName += _clShortName ;
+         newCLFullName = _csName ;
+         newCLFullName += "." ;
+         newCLFullName += _newCLShortName ;
          PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CL,
-                           _oldCollectionName, rc,
-                           "NewCollectionName:%s",
-                           _newCollectionName ) ;
-      }
-
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "Failed to rename collection from %s to %s",
-            _oldCollectionName, _newCollectionName ) ;
-         goto error ;
+                           clFullName.c_str(), rc,
+                           "NewName:%s", newCLFullName.c_str() ) ;
       }
 
    done:
-      if ( suID != DMS_INVALID_CS )
-      {
-         dmsCB->suUnlock ( suID ) ;
-      }
-      if ( dmsLock )
-      {
-         dmsCB->writeDown ( cb ) ;
-      }
       PD_TRACE_EXITRC ( SDB__RTNRENAMECL_DOIT, rc ) ;
       return rc ;
    error:
+      if ( -1 != *pContextID )
+      {
+         rtnCB->contextDelete( *pContextID, cb );
+         *pContextID = -1;
+      }
       goto done ;
    }
 
@@ -1789,47 +1796,52 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNRENAMECS_DOIT ) ;
-      BOOLEAN dmsLock = FALSE ;
 
-      rc = dmsCB->writable ( cb ) ;
-      if ( rc )
+      // only allowed to rename cs by coord or standalone
+      if ( SDB_ROLE_DATA == pmdGetDBRole() &&
+           CMD_SPACE_SERVICE_LOCAL == getFromService() )
       {
+         rc = SDB_RTN_COORD_ONLY ;
          goto error ;
       }
-      dmsLock = TRUE ;
 
-      // let's find out whether the collection space is held by this
-      // EDU. If so we have to get rid of those contexts
-      if ( NULL != cb )
-      {
-         rtnDelContextForCollectionSpace( _oldName, cb ) ;
-      }
+      SDB_ASSERT( cb, "cb can't be null!");
+      SDB_ASSERT( rtnCB, "rtnCB can't be null!");
+      SDB_ASSERT( pContextID, "pContextID can't be null!");
+      *pContextID = -1;
 
-      rc = dmsCB->renameCollectionSpace( _oldName, _newName, cb, dpsCB ) ;
-      if ( rc )
+      if ( CMD_SPACE_SERVICE_SHARD == getFromService() )
       {
-         PD_LOG ( PDERROR, "Failed to rename collectionspace from %s to %s",
-                  _oldName, _newName ) ;
-         goto error ;
+         rtnContextRenameCS *renameContext = NULL;
+         rc = rtnCB->contextNew( RTN_CONTEXT_RENAMECS,
+                                 (rtnContext **)&renameContext,
+                                 *pContextID, cb );
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to create context, rename cs failed, rc: %d",
+                      rc );
+
+         rc = renameContext->open( _oldName, _newName, cb );
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to open context, rename cs failed, rc: %d)",
+                      rc );
       }
-      if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      else
       {
-         /// AUDIT
+         rc = rtnRenameCollectionSpaceCommand( _oldName, _newName, cb,
+                                               dmsCB, dpsCB ) ;
          PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CS,
-                           _oldName, rc,
-                           "NewCollectionSpaceName:%s",
-                           _newName ) ;
+                           _oldName, rc, "NewName:%s", _newName ) ;
       }
-
-   done:
-      if ( dmsLock )
-      {
-         dmsCB->writeDown( cb ) ;
-      }
+   done :
       PD_TRACE_EXITRC ( SDB__RTNRENAMECS_DOIT, rc ) ;
       return rc ;
-   error:
-      goto done ;
+   error :
+      if ( -1 != *pContextID )
+      {
+         rtnCB->contextDelete( *pContextID, cb );
+         *pContextID = -1;
+      }
+      goto done;
    }
 
    _rtnReorg::_rtnReorg ()

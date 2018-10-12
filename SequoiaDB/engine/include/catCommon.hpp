@@ -153,6 +153,13 @@ namespace engine
                          pmdEDUCB *cb, _SDB_DMSCB * dmsCB,
                          _dpsLogWrapper * dpsCB,
                          INT16 w ) ;
+
+   INT32 catRenameCLFromCS( const string &csName,
+                            const string &clShortName,
+                            const string &newCLShortName,
+                            pmdEDUCB * cb, SDB_DMSCB * dmsCB,
+                            SDB_DPSCB * dpsCB, INT16 w ) ;
+
    INT32 catDelCLsFromCS( const string &csName,
                           const vector<string> &deleteCLLst,
                           pmdEDUCB * cb, SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB,
@@ -189,7 +196,8 @@ namespace engine
                                   pmdEDUCB *cb ) ;
 
    INT32 catUpdateCatalog ( const CHAR * clFullName, const BSONObj & setInfo,
-                            const BSONObj & unsetInfo, pmdEDUCB * cb, INT16 w ) ;
+                            const BSONObj & unsetInfo, pmdEDUCB * cb, INT16 w,
+                            BOOLEAN incVersion = TRUE ) ;
 
    INT32 catUpdateCatalogByPush ( const CHAR * clFullName,
                                   const CHAR *field, const BSONObj &boObj,
@@ -209,7 +217,8 @@ namespace engine
    /* Collection[CAT_TASK_INFO_COLLECTION] functions: */
    INT32 catAddTask( BSONObj & taskObj, pmdEDUCB *cb, INT16 w ) ;
    INT32 catGetTask( UINT64 taskID, BSONObj &obj, pmdEDUCB *cb ) ;
-   INT32 catGetTaskCount ( const CHAR * collection, pmdEDUCB * cb, INT64 & count ) ;
+   INT32 catGetTaskCount ( const CHAR *collection, pmdEDUCB *cb, INT64 &count );
+   INT32 catGetTaskCountByCS( const CHAR *csName, pmdEDUCB *cb, INT64 &count ) ;
    INT32 catGetTaskCountByType( const CHAR * collection, pmdEDUCB * cb,
                                 CLS_TASK_TYPE type, INT64 & count ) ;
    INT32 catGetTaskStatus( UINT64 taskID, INT32 &status, pmdEDUCB *cb ) ;
@@ -330,10 +339,29 @@ namespace engine
 
    INT32 catCheckGroupsByName ( std::vector<std::string> &groupNameList ) ;
 
+   INT32 catMainCLRename( const string &mainCLName, const string &newMainCLName,
+                          clsCatalogSet &mainclCata,
+                          _pmdEDUCB *cb, INT16 w ) ;
+
+   INT32 catSubCLRename( const string &subCLName, const string &newSubCLName,
+                         clsCatalogSet &subclCata,
+                         _pmdEDUCB *cb, INT16 w ) ;
+
+
    /* Drop Collection Space */
    INT32 catDropCSStep ( const string &csName,
                          _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
                          INT16 w ) ;
+
+   /* Rename Collection Space */
+   INT32 catRenameCSStep ( const string &oldCSName, const string &newCSName,
+                           _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
+                           INT16 w ) ;
+
+   /* Rename Collection */
+   INT32 catRenameCLStep ( const string &oldCLName, const string &newCLName,
+                           _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
+                           INT16 w ) ;
 
    /* Create Collection */
    INT32 catCreateCLStep ( const string &clName, utilCLUniqueID clUniqueID,

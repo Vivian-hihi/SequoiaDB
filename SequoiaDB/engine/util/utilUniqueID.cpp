@@ -80,7 +80,7 @@ namespace engine
    // ]
    MAP_CLNAME_ID utilBson2ClNameId( const BSONObj& clInfoObj )
    {
-      map< string, utilCLUniqueID > clMap ;
+      MAP_CLNAME_ID clMap ;
 
       BSONObjIterator it( clInfoObj ) ;
       while ( it.more() )
@@ -108,12 +108,47 @@ namespace engine
    //    { "Name": "bar2", "UniqueID": 2667174690818 }
    // ]
    //
+   // output: map<utilCLUniqueID, string>
+   // [
+   //    < 2667174690817, "bar1" > ,
+   //    < 2667174690818, "bar2" >
+   // ]
+   MAP_CLID_NAME utilBson2ClIdName( const BSONObj& clInfoObj )
+   {
+      MAP_CLID_NAME clMap ;
+
+      BSONObjIterator it( clInfoObj ) ;
+      while ( it.more() )
+      {
+         BSONElement subEle = it.next() ;
+         if ( Object == subEle.type() )
+         {
+            BSONObj clObj = subEle.embeddedObject() ;
+            BSONElement nameE = clObj.getField( FIELD_NAME_NAME ) ;
+            BSONElement idE = clObj.getField( FIELD_NAME_UNIQUEID ) ;
+            if ( String != nameE.type() || !idE.isNumber())
+            {
+               continue ;
+            }
+            clMap[ (utilCLUniqueID)idE.numberLong() ] = nameE.String() ;
+         }
+      }
+
+      return clMap ;
+   }
+
+   // input: clInfoObj
+   // [
+   //    { "Name": "bar1", "UniqueID": 2667174690817 } ,
+   //    { "Name": "bar2", "UniqueID": 2667174690818 }
+   // ]
+   //
    // outpu: BSONObj
    // [
    //    { "Name": "bar1", "UniqueID": 0 } ,
    //    { "Name": "bar2", "UniqueID": 0 }
    // ]
-   BSONObj utilUnsetUniqueID( const BSONObj& clInfoObj )
+   BSONObj utilSetUniqueID( const BSONObj& clInfoObj, utilCLUniqueID setValue )
    {
       BSONArrayBuilder arrBuilder ;
 
@@ -131,7 +166,7 @@ namespace engine
                continue ;
             }
             arrBuilder << BSON( FIELD_NAME_NAME << nameE.String()
-                             << FIELD_NAME_UNIQUEID << UTIL_UNIQUEID_NULL ) ;
+                             << FIELD_NAME_UNIQUEID << (INT64)setValue ) ;
          }
       }
 

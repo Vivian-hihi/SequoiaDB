@@ -121,6 +121,7 @@ namespace engine
 
          const string&  getGroupName() const { return _groupName ; }
          const string&  getSubClName() const { return _subCLName ; }
+         void renameSubClName( const string& subCLName ) ;
 
       private:
          BSONObj           _lowBound ;
@@ -189,6 +190,7 @@ namespace engine
          UINT32            getPartitionBit() const { return _square ; }
          bool              ensureShardingIndex() const { return _ensureShardingIndex ; }
          const CHAR        *name () const ;
+         const string&     nameStr() const ;
          utilCLUniqueID    clUniqueID () const ;
          VEC_GROUP_ID      *getAllGroupID () ;
          UINT32            getAllGroupID ( VEC_GROUP_ID &vecGroup ) const ;
@@ -253,6 +255,8 @@ namespace engine
                                       clsCatalogItem **ppItem ) ;
 
          INT32 delSubCL ( const CHAR *subCLName ) ;
+
+         INT32 renameSubCL ( const CHAR *subCLName, const CHAR* newSubCLName ) ;
 
          INT32 getSubCLBounds ( const string &subCLName,
                                 BSONObj &lowBound,

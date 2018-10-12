@@ -88,7 +88,6 @@ namespace engine
     _dmsCBState(DMS_STATE_NORMAL),
     _logicalSUID(0),
     _nullCSUniqueIDCnt( 0 ),
-    _localCSCnt( 0 ),
     _tempSUMgr( this ),
     _statSUMgr( this ),
     _ixmKeySorterCreator( NULL )
@@ -294,7 +293,7 @@ namespace engine
                                        BOOLEAN exceptDeleting )
    {
       return _CSCBLookup( pName, UTIL_UNIQUEID_NULL,
-                              cscb, pSuID, exceptDeleting ) ;
+                          cscb, pSuID, exceptDeleting ) ;
    }
 
    INT32 _SDB_DMSCB::_CSCBIdLookup ( utilCSUniqueID csUniqueID,
@@ -626,20 +625,12 @@ namespace engine
       UINT32 csLID = ~0 ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
       BOOLEAN isReserved = FALSE;
-      BOOLEAN isLocked = FALSE, isLatchLocked = FALSE ;
+      BOOLEAN isLocked = FALSE ;
+      BOOLEAN isTransLocked = FALSE ;
       UINT32 logRecSize = 0;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
       SDB_DMS_CSCB *pCSCB = NULL ;
-
-      _mutex.get_shared () ;
-      rc = _CSCBNameLookup( pName, &pCSCB, &suID, TRUE ) ;
-      _mutex.release_shared () ;
-
-      if ( rc )
-      {
-         goto error ;
-      }
 
       if ( NULL != dpsCB )
       {
@@ -661,59 +652,45 @@ namespace engine
          isReserved = TRUE ;
       }
 
-   retry :
-      // now let's lock the collectionspace, if we can't lock it, let's return
-      // false. we shouldn't wait forever
-      if ( SDB_OK != _latchVec[suID]->lock_w( OSS_ONE_SEC ) )
-      {
-         rc = SDB_LOCK_FAILED ;
-         goto error ;
-      }
-      isLatchLocked = TRUE ;
-      if ( !_mutex.try_get() )
-      {
-         _latchVec[suID]->release_w () ;
-         isLatchLocked = FALSE ;
-         ossSleep( 50 ) ;
-         goto retry ;
-      }
+      _mutex.get() ;
       isLocked = TRUE ;
 
-      // there is a small timing hole before getting the latch, so we have
-      // to get current suID again to verify
+      rc = _CSCBNameLookup( pName, &pCSCB, &suID, TRUE ) ;
+      if ( rc )
       {
-         dmsStorageUnitID suTmpID = DMS_INVALID_SUID ;
-         SDB_DMS_CSCB *tmpCSCB = NULL ;
-         rc = _CSCBNameLookup( pName, &tmpCSCB, &suTmpID, TRUE ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-         else if ( suTmpID != suID )
-         {
-            rc = SDB_DMS_CS_NOTEXIST ;
-            goto error ;
-         }
+         goto error ;
+      }
 
-         /// check the new collectionspace
-         rc = _CSCBNameLookup( pNewName, &tmpCSCB, NULL, TRUE ) ;
-         if ( SDB_DMS_CS_NOTEXIST == rc )
-         {
-            rc = SDB_OK ;
-         }
-         else if ( SDB_OK == rc )
-         {
-            rc = SDB_DMS_CS_EXIST ;
-            goto error ;
-         }
-         else
-         {
-            goto error ;
-         }
+      /// check the new collectionspace
+      rc = _CSCBNameLookup( pNewName, &pCSCB, NULL, TRUE ) ;
+      if ( SDB_DMS_CS_NOTEXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      else if ( SDB_OK == rc )
+      {
+         rc = SDB_DMS_CS_EXIST ;
+         goto error ;
+      }
+      else
+      {
+         goto error ;
       }
 
       SDB_ASSERT ( pCSCB->_su, "su can't be null" ) ;
       csLID = pCSCB->_su->LogicalCSID() ;
+
+      if ( cb && dpsCB )
+      {
+         rc = pTransCB->transLockTryX( cb, csLID ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to lock collection-space, rc:%d",
+                     rc ) ;
+            goto error ;
+         }
+         isTransLocked = TRUE ;
+      }
 
       rc = pCSCB->_su->renameCS( pNewName ) ;
       if ( rc )
@@ -762,9 +739,9 @@ namespace engine
       {
          _mutex.release () ;
       }
-      if ( isLatchLocked )
+      if ( isTransLocked )
       {
-         _latchVec[suID]->release_w() ;
+         pTransCB->transLockRelease( cb, csLID );
       }
       if ( isReserved )
       {
@@ -1985,6 +1962,8 @@ namespace engine
          goto error ;
       }
 
+      PD_LOG( PDEVENT, "Rename collection space[%s] to [%s] succeed",
+              pName, pNewName ) ;
    done:
       if ( aquired )
       {
@@ -2402,16 +2381,6 @@ namespace engine
    void _SDB_DMSCB::_nullCSUniqueIDCntDec()
    {
       _nullCSUniqueIDCnt-- ;
-   }
-
-   UINT32 _SDB_DMSCB::localCSCnt() const
-   {
-      return _localCSCnt ;
-   }
-
-   void _SDB_DMSCB::setLocalCSCnt( UINT32 cnt )
-   {
-      _localCSCnt = cnt ;
    }
 
    dmsTempSUMgr *_SDB_DMSCB::getTempSUMgr ()

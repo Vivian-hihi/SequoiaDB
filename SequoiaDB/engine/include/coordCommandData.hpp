@@ -423,6 +423,39 @@ namespace engine
    typedef _coordCMDDropCollectionSpace coordCMDDropCollectionSpace ;
 
    /*
+      _coordCMDRenameCollectionSpace define
+   */
+   class _coordCMDRenameCollectionSpace : public _coordDataCMD3Phase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDRenameCollectionSpace() ;
+         virtual ~_coordCMDRenameCollectionSpace() ;
+      protected :
+         virtual INT32 _parseMsg( MsgHeader *pMsg,
+                                  coordCMDArguments *pArgs ) ;
+
+         virtual INT32 _generateCataMsg( MsgHeader *pMsg,
+                                         pmdEDUCB *cb,
+                                         coordCMDArguments *pArgs,
+                                         CHAR **ppMsgBuf,
+                                         INT32 *pBufSize ) ;
+
+         virtual void  _releaseCataMsg( CHAR *pMsgBuf,
+                                        INT32 bufSize,
+                                        pmdEDUCB *cb ) ;
+
+         virtual INT32 _doComplete( MsgHeader *pMsg,
+                                    pmdEDUCB * cb,
+                                    coordCMDArguments *pArgs ) ;
+
+         // Not a collection command
+         virtual BOOLEAN _flagDoOnCollection () { return FALSE ; }
+
+   } ;
+   typedef _coordCMDRenameCollectionSpace coordCMDRenameCollectionSpace ;
+
+   /*
       _coordCMDAlterCollectionSpace define
     */
    class _coordCMDAlterCollectionSpace : public _coordDataCMDAlter
@@ -541,6 +574,41 @@ namespace engine
 
    } ;
    typedef _coordCMDDropCollection coordCMDDropCollection ;
+
+   /*
+      _coordCMDRenameCollection define
+   */
+   class _coordCMDRenameCollection : public _coordDataCMD3Phase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDRenameCollection() ;
+         virtual ~_coordCMDRenameCollection() ;
+      protected :
+         virtual INT32 _parseMsg ( MsgHeader *pMsg,
+                                   coordCMDArguments *pArgs ) ;
+
+         virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          coordCMDArguments *pArgs,
+                                          CHAR **ppMsgBuf,
+                                          INT32 *pBufSize ) ;
+
+         virtual void  _releaseCataMsg( CHAR *pMsgBuf,
+                                        INT32 bufSize,
+                                        pmdEDUCB *cb ) ;
+
+         virtual INT32 _doComplete ( MsgHeader *pMsg,
+                                     pmdEDUCB * cb,
+                                     coordCMDArguments *pArgs ) ;
+
+         /*
+            update catalog info before send command to Data Groups
+         */
+         virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
+
+   } ;
+   typedef _coordCMDRenameCollection coordCMDRenameCollection ;
 
    /*
       _coordCMDAlterCollection define

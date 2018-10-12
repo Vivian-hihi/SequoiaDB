@@ -230,7 +230,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get task count of collection [%s], "
                       "rc: %d", _dataName.c_str(), rc ) ;
 
-         PD_CHECK( 0 == taskCount, SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+         PD_CHECK( 0 == taskCount, SDB_OPERATION_CONFLICT, error, PDERROR,
                    "Failed to [%s]: should have no split tasks",
                    _task->getActionName() ) ;
       }
@@ -381,7 +381,7 @@ namespace engine
                    "collection [%s]", _dataName.c_str() ) ;
       if ( splitTaskNum > 0 )
       {
-         rc = SDB_OPTION_NOT_SUPPORT ;
+         rc = SDB_OPERATION_CONFLICT ;
          PD_LOG( PDERROR, "Can not change AutoIndexId to false when collection "
                  "[%s] is being splitted", _dataName.c_str() ) ;
          goto error ;
@@ -617,7 +617,7 @@ namespace engine
                          "collection [%s]", _dataName.c_str() ) ;
             if ( splitTaskNum > 0 )
             {
-               rc = SDB_OPTION_NOT_SUPPORT ;
+               rc = SDB_OPERATION_CONFLICT ;
                PD_LOG( PDERROR, "Can not change AutoIndexId to false when "
                        "collection [%s] is being splitted",
                        _dataName.c_str() ) ;

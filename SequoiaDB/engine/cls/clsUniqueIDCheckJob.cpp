@@ -33,8 +33,6 @@
 *******************************************************************************/
 #include "clsUniqueIDCheckJob.hpp"
 #include "pmd.hpp"
-#include "clsMgr.hpp"
-#include "monDMS.hpp"
 #include "dmsStorageUnit.hpp"
 #include "rtn.hpp"
 #include "clsTrace.hpp"
@@ -75,15 +73,15 @@ namespace engine
       SDB_DPSCB *pDpsCB = pKrcb->getDPSCB() ;
       shardCB* pShdMgr = sdbGetShardCB() ;
       clsDCMgr* pDcMgr = pShdMgr->getDCMgr() ;
-      pmdEDUMgr* pEduMgr = pKrcb->getEDUMgr() ;
       UINT64 loopCnt = 0 ;
       BOOLEAN isCataReady = FALSE ;
 
-      PD_LOG( PDDEBUG, "clsUniqueIDCheckJob: start job" ) ;
+      PD_LOG( PDDEBUG,
+              "Start job[UniqueIDCheck]: check cs/cl unique id by cs/cl name" ) ;
 
       while ( !PMD_IS_DB_DOWN() &&
               pmdIsPrimary() &&
-              pDmsCB->nullCSUniqueIDCnt() > pDmsCB->localCSCnt() )
+              pDmsCB->nullCSUniqueIDCnt() > 0 )
       {
          /*
           * Before any one is found in the queue, the status of this thread is
@@ -91,10 +89,8 @@ namespace engine
           */
          if ( loopCnt++ != 0 )
          {
-            pEduMgr->waitEDU( cb ) ;
             pmdEDUEvent event ;
-            cb->waitEvent( event, CLS_UNIQUEID_CHECK_INTERVAL ) ;
-            pEduMgr->activateEDU( cb ) ;
+            cb->waitEvent( event, CLS_UNIQUEID_CHECK_INTERVAL, TRUE ) ;
          }
 
          // 1. check if the cs/cl unique id on catalog have been generated.
@@ -103,7 +99,7 @@ namespace engine
             rc = pShdMgr->updateDCBaseInfo() ;
             if ( rc )
             {
-               PD_LOG( PDERROR,
+               PD_LOG( PDERROR, "Job[UniqueIDCheck]: "
                        "Update data center base info failed, rc: %d", rc ) ;
                continue ;
             }
@@ -119,7 +115,6 @@ namespace engine
          // 2. loop each cs
          MON_CS_LIST csList ;
          std::set<_monCollectionSpace>::const_iterator iterCS ;
-         UINT32 localCSCnt = 0 ;
 
          pDmsCB->dumpInfo( csList, FALSE ) ;
 
@@ -130,7 +125,7 @@ namespace engine
             BSONObj clInfoObj ;
 
             PD_LOG( PDDEBUG,
-                    "clsUniqueIDCheckJob: checking collection space [%s]",
+                    "Job[UniqueIDCheck]: Check collection space[%s]",
                     cs._name ) ;
 
             if ( PMD_IS_DB_DOWN() || !pmdIsPrimary() )
@@ -147,34 +142,40 @@ namespace engine
             // update catalog info
             rc = pShdMgr->rGetCSInfo( cs._name, csUniqueID,
                                       NULL, NULL, NULL, &clInfoObj ) ;
-
-            if ( SDB_DMS_CS_NOTEXIST == rc )
-            {
-               localCSCnt++ ;
-            }
             if ( rc )
             {
                PD_LOG( PDWARNING,
-                       "Fail to update cs [%s] catalog info, rc: %d",
-                       cs._name, rc ) ;
+                       "Job[NameCheck]: Update cs[%s] catalog info, rc: %d. "
+                       "CS doesn't exist in catalog", cs._name, rc ) ;
                continue ;
             }
 
-            rc = rtnChangeUniqueID( cs._name, csUniqueID, clInfoObj,
-                                    cb, pDmsCB, pDpsCB ) ;
+            if ( SDB_DMS_CS_NOTEXIST == rc )
+            {
+               rc = rtnChangeUniqueID( cs._name, UTIL_CSUNIQUEID_LOCAL,
+                                       utilSetUniqueID( clInfoObj, UTIL_CLUNIQUEID_LOCAL ),
+                                       cb, pDmsCB, pDpsCB ) ;
+            }
+            else
+            {
+               rc = rtnChangeUniqueID( cs._name, csUniqueID,
+                                       clInfoObj,
+                                       cb, pDmsCB, pDpsCB ) ;
+            }
+
             if ( rc )
             {
                PD_LOG( PDWARNING,
-                       "Fail to add unique id, cs: %s, rc: %d",
+                       "Job[NameCheck]: Change cs[%s] unique id failed, rc: %d",
                        cs._name, rc ) ;
                continue ;
             }
 
          }// end for
 
-         pDmsCB->setLocalCSCnt( localCSCnt ) ;
-
       }// end while
+
+      PD_LOG( PDDEBUG, "Stop job[UniqueIDCheck]" ) ;
 
       PD_TRACE_EXITRC( SDB__CLSUIDCHKJOB_DOIT, rc ) ;
       return rc ;
@@ -224,4 +225,407 @@ namespace engine
       PD_TRACE_EXIT( SDB_STOPUIDCHKJOB ) ;
       return SDB_OK ;
    }
+
+   #define CLS_NAME_CHECK_INTERVAL ( OSS_ONE_SEC * 1 )
+
+   /*
+    *  _clsNameCheckJob implement
+    */
+   _clsNameCheckJob::_clsNameCheckJob( UINT64 opID )
+   : _opID( opID )
+   {
+      _pShdMgr = sdbGetShardCB() ;
+      _pFreezeWindow = _pShdMgr->getFreezingWindow() ;
+   }
+
+   _clsNameCheckJob::~_clsNameCheckJob()
+   {
+   }
+
+   BOOLEAN _clsNameCheckJob::muteXOn( const _rtnBaseJob *pOther )
+   {
+      if ( type() == pOther->type() )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNAMECHKJOB_DOIT, "_clsNameCheckJob::doit" )
+   INT32 _clsNameCheckJob::doit()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSNAMECHKJOB_DOIT ) ;
+
+      pmdEDUCB *cb = eduCB() ;
+      pmdKRCB* pKrcb = pmdGetKRCB() ;
+      SDB_DMSCB *pDmsCB = pKrcb->getDMSCB() ;
+      clsDCMgr* pDcMgr = _pShdMgr->getDCMgr() ;
+      BOOLEAN hasBlockGlobal = TRUE ;
+      UINT64 loopCnt = 0 ;
+      UINT64 traverseTime = 0 ;
+      MON_CS_SIM_LIST csSet ;
+      vector<monCSSimple> csList ;
+
+      PD_LOG( PDDEBUG, "Start job[NameCheck]: check cs/cl name by unique id" ) ;
+
+      // wait _clsVSPrimary::active() set primary
+      while ( !PMD_IS_DB_DOWN() )
+      {
+         if ( loopCnt++ != 0 )
+         {
+            pmdEDUEvent event ;
+            cb->waitEvent( event, CLS_NAME_CHECK_INTERVAL, TRUE ) ;
+         }
+
+         if ( pmdIsPrimary() )
+         {
+            break ;
+         }
+      }
+
+      /// 1. check if the cs/cl unique id on catalog have been generated.
+      loopCnt = 0 ;
+      while ( !PMD_IS_DB_DOWN() && pmdIsPrimary() )
+      {
+         if ( loopCnt++ != 0 )
+         {
+            pmdEDUEvent event ;
+            cb->waitEvent( event, CLS_NAME_CHECK_INTERVAL, TRUE ) ;
+         }
+
+         rc = _pShdMgr->updateDCBaseInfo() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Job[NameCheck]: "
+                    "Update data center base info failed, rc: %d", rc ) ;
+            continue ;
+         }
+
+         clsDCBaseInfo* pDcInfo = pDcMgr->getDCBaseInfo() ;
+         if ( UTIL_UNIQUEID_NULL != pDcInfo->getCSUniqueHWM() )
+         {
+            break ;
+         }
+      }
+
+      if ( !pmdIsPrimary() )
+      {
+         goto done ;
+      }
+
+      /// 2. get all cs
+      pDmsCB->dumpInfo( csSet, FALSE, TRUE ) ;
+      for ( MON_CS_SIM_LIST::iterator it = csSet.begin() ;
+            it!= csSet.end() ;
+            it++ )
+      {
+         csList.push_back( *it ) ;
+      }
+
+      /// 3. loop all cs, util all cs done
+      traverseTime = 0 ;
+      while ( !PMD_IS_DB_DOWN() && pmdIsPrimary() && !csList.empty() )
+      {
+         traverseTime++ ;
+
+         // traverse all cs
+         BOOLEAN unBlockCLIfSuc = ( 1 == traverseTime ) ? FALSE : TRUE ;
+         _renameCSCL( csList, unBlockCLIfSuc ) ;
+
+         // after first traversal, block all failed cl,
+         // instead of blocking the global
+         if ( 1 == traverseTime )
+         {
+            _registerCLs( csList ) ;
+            _pFreezeWindow->unregisterCL( NULL, NULL, _opID ) ;
+            hasBlockGlobal = FALSE ;
+         }
+
+         // wait for a litter time
+         if ( 1 != traverseTime )
+         {
+            pmdEDUEvent event ;
+            cb->waitEvent( event, CLS_NAME_CHECK_INTERVAL, TRUE ) ;
+         }
+      }
+
+   done:
+      if ( hasBlockGlobal )
+      {
+         _pFreezeWindow->unregisterCL( NULL, NULL, _opID ) ;
+      }
+      PD_LOG( PDDEBUG, "Stop job[NameCheck]" ) ;
+      PD_TRACE_EXITRC( SDB__CLSNAMECHKJOB_DOIT, rc ) ;
+      return rc ;
+   }
+
+   // csList is both input parameter and output parameter
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNAMECHKJOB__RENAMECSCL, "_clsNameCheckJob::_renameCSCL" )
+   INT32 _clsNameCheckJob::_renameCSCL( vector<monCSSimple>& csList,
+                                        BOOLEAN unregCL )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSNAMECHKJOB__RENAMECSCL ) ;
+
+      pmdKRCB* pKrcb = pmdGetKRCB() ;
+      SDB_DMSCB *pDmsCB = pKrcb->getDMSCB() ;
+      SDB_DPSCB *pDpsCB = pKrcb->getDPSCB() ;
+      pmdEDUCB *cb = eduCB() ;
+
+      vector<monCSSimple>::iterator iterCS = csList.begin() ;
+      while ( iterCS != csList.end() )
+      {
+         monCSSimple &cs = *iterCS ;
+         utilCSUniqueID csUniqueID = cs._csUniqueID ;
+         BSONObj clInfoObj ;
+         string newCSName ;
+         MAP_CLID_NAME clInfoInCata ;
+
+         PD_LOG( PDDEBUG,
+                 "Job[NameCheck]: Check cs[name: %s, id: %u]",
+                 cs._name, csUniqueID ) ;
+
+         if ( PMD_IS_DB_DOWN() || !pmdIsPrimary() )
+         {
+            break ;
+         }
+
+         /// we only need to operate cs which has valid unique id
+         if ( ! UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
+         {
+            iterCS = csList.erase( iterCS ) ;
+            continue ;
+         }
+
+         /// update catalog info
+         rc = _pShdMgr->rGetCSInfo( cs._name, csUniqueID, NULL, NULL,
+                                   NULL, &clInfoObj, &newCSName ) ;
+         if ( SDB_DMS_CS_NOTEXIST == rc )
+         {
+            PD_LOG( PDWARNING,
+                    "Job[NameCheck]: update cs[name: %s, id: %u] catalog info, "
+                    "rc: %d. CS doesn't exist in catalog",
+                    cs._name, csUniqueID, rc ) ;
+            iterCS = csList.erase( iterCS ) ;
+            continue ;
+         }
+         else if ( rc )
+         {
+            iterCS++ ;
+            PD_LOG( PDWARNING,
+                    "Job[NameCheck]: update cs[name: %s, id: %u] catalog info, "
+                    "rc: %d", cs._name, csUniqueID, rc ) ;
+            continue ;
+         }
+
+         /// rename collections
+         clInfoInCata = utilBson2ClIdName( clInfoObj ) ;
+
+         MON_CL_SIM_VEC::iterator itrCL = cs._clList.begin() ;
+         while ( itrCL!= cs._clList.end() )
+         {
+            utilCLUniqueID clUniqueID = itrCL->_clUniqueID ;
+            string clShortName = itrCL->_clname ;
+            string clFullName = itrCL->_name ;
+
+            PD_LOG( PDDEBUG,
+                    "Job[NameCheck]: Check cl[name: %s, id: %llu]",
+                    clFullName.c_str(), clUniqueID ) ;
+
+            if ( ! UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
+            {
+               itrCL = cs._clList.erase( itrCL ) ;
+               if ( unregCL )
+               {
+                  _unregisterCL( clFullName.c_str() ) ;
+               }
+               continue ;
+            }
+
+            MAP_CLID_NAME::iterator it = clInfoInCata.find( clUniqueID ) ;
+            if ( it == clInfoInCata.end() )
+            {
+               // the cl is not exist in catalog
+               itrCL = cs._clList.erase( itrCL ) ;
+               if ( unregCL )
+               {
+                  _unregisterCL( clFullName.c_str() ) ;
+               }
+               continue ;
+            }
+
+            // find out the cl in catalog
+            string clShortNameInCata = it->second ;
+            if ( clShortNameInCata == clShortName )
+            {
+               // data clname is the same with cata clname
+               itrCL = cs._clList.erase( itrCL ) ;
+               if ( unregCL )
+               {
+                  _unregisterCL( clFullName.c_str() ) ;
+               }
+               continue ;
+            }
+
+            // need to rename
+            rc = rtnRenameCollectionCommand( newCSName.c_str(),
+                                             clShortName.c_str(),
+                                             clShortNameInCata.c_str(),
+                                             cb, pDmsCB, pDpsCB ) ;
+            if ( SDB_OK == rc )
+            {
+               // rename succeed
+               itrCL = cs._clList.erase( itrCL ) ;
+               if ( unregCL )
+               {
+                  _unregisterCL( clFullName.c_str() ) ;
+               }
+               continue ;
+            }
+            else
+            {
+               // ignore error, continue next cl
+               itrCL++ ;
+               PD_LOG( PDWARNING,"Job[NameCheck]: Rename cl"
+                       "[name: %s, id: %llu] failed, rc: %d",
+                       clShortName.c_str(), clUniqueID, rc ) ;
+               continue ;
+            }
+         }// end for all cl
+
+         /// rename collection space
+         if ( !cs._clList.empty() )
+         {
+            iterCS++ ;
+            continue ;
+         }
+
+         // rename all collections succeed, then begin to rename cs
+         if ( 0 == ossStrcmp( cs._name, newCSName.c_str() ) )
+         {
+            // data csname is the same with cata csname
+            iterCS = csList.erase( iterCS ) ;
+            continue ;
+         }
+
+         // need to rename cs
+         rc = rtnRenameCollectionSpaceCommand( cs._name,
+                                               newCSName.c_str(),
+                                               cb, pDmsCB, pDpsCB ) ;
+         if ( SDB_OK == rc )
+         {
+            iterCS = csList.erase( iterCS ) ;
+            continue ;
+         }
+         else
+         {
+            // ignore error, continue next cs
+            PD_LOG( PDWARNING,
+                    "Job[NameCheck]: Rename cs[name: %s, id: %u] failed, "
+                    "rc: %d", cs._name, csUniqueID, rc ) ;
+            iterCS++ ;
+            continue ;
+         }
+
+      }
+
+      PD_TRACE_EXITRC( SDB__CLSNAMECHKJOB__RENAMECSCL, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNAMECHKJOB__REGCLS, "_clsNameCheckJob::_registerCLs" )
+   void _clsNameCheckJob::_registerCLs( const vector<monCSSimple>& csList )
+   {
+      PD_TRACE_ENTRY( SDB__CLSNAMECHKJOB__REGCLS ) ;
+
+      catAgent* pCatAgent = _pShdMgr->getCataAgent() ;
+
+      vector<monCSSimple>::const_iterator itCS = csList.begin() ;
+      for ( ; itCS != csList.end() ; itCS++ )
+      {
+         MON_CL_SIM_VEC::const_iterator itCL = itCS->_clList.begin() ;
+         for ( ; itCL != itCS->_clList.end() ; itCL++ )
+         {
+            string clName = itCL->_name ;
+            string mainCLName ;
+
+            // get maincl name
+            pCatAgent->lock_r() ;
+            clsCatalogSet *pSet = pCatAgent->collectionSet( clName.c_str() ) ;
+            if ( pSet )
+            {
+               mainCLName = pSet->getMainCLName() ;
+            }
+            pCatAgent->release_r() ;
+
+            // Block collection and main-collection ( if have ) together
+            _pFreezeWindow->registerCL( clName.c_str(),
+                                        mainCLName.c_str(),
+                                        _opID ) ;
+            _mapRegisterCL[ clName ] = mainCLName ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__CLSNAMECHKJOB__REGCLS ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNAMECHKJOB__UNREGCL, "_clsNameCheckJob::_unregisterCL" )
+   void _clsNameCheckJob::_unregisterCL( const string& clName )
+   {
+      PD_TRACE_ENTRY( SDB__CLSNAMECHKJOB__UNREGCL ) ;
+
+      string mainCLName ;
+      map<string, string>::iterator it ;
+
+      it = _mapRegisterCL.find( clName ) ;
+      if( it != _mapRegisterCL.end() )
+      {
+         mainCLName = it->second ;
+      }
+
+      _pFreezeWindow->unregisterCL( clName.c_str(),
+                                    mainCLName.c_str(),
+                                    _opID ) ;
+
+      _mapRegisterCL.erase( clName ) ;
+
+      PD_TRACE_EXIT( SDB__CLSNAMECHKJOB__UNREGCL ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_STARTNAMECHKJOB, "startNameCheckJob" )
+   INT32 startNameCheckJob ( EDUID* pEDUID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_STARTNAMECHKJOB ) ;
+
+      clsNameCheckJob *pJob = NULL ;
+      shardCB* pShdMgr = sdbGetShardCB() ;
+      clsFreezingWindow* pFreezeWindow = pShdMgr->getFreezingWindow() ;
+      UINT64 opID = 0 ;
+
+      pFreezeWindow->registerCL( NULL, NULL, opID ) ;
+
+      pJob = SDB_OSS_NEW clsNameCheckJob( opID ) ;
+      if ( !pJob )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Allocate failed" ) ;
+         goto error ;
+      }
+
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_STARTNAMECHKJOB, rc ) ;
+      return rc ;
+   error:
+      pFreezeWindow->unregisterCL( NULL, NULL, opID ) ;
+      goto done ;
+   }
+
 }

@@ -36,6 +36,9 @@
 #define CLS_UNIQUEID_CHECK_JOB_HPP__
 
 #include "rtnBackgroundJobBase.hpp"
+#include "monDMS.hpp"
+#include "clsMgr.hpp"
+using namespace std ;
 
 namespace engine
 {
@@ -63,7 +66,45 @@ namespace engine
    INT32 startUniqueIDCheckJob ( EDUID* pEDUID ) ;
    INT32 stopUniqueIDCheckJob ( EDUID& EDUID ) ;
 
+   /*
+    *  _clsNameCheckJob define
+    */
+   class _clsNameCheckJob : public _rtnBaseJob
+   {
+   public:
+      _clsNameCheckJob ( UINT64 opID ) ;
+      virtual ~_clsNameCheckJob () ;
+
+   public:
+      virtual RTN_JOB_TYPE type () const
+      {
+         return RTN_JOB_CLS_NAME_CHECK_BY_UNIQUEID ;
+      }
+
+      virtual const CHAR* name () const { return "Name-Check-By-UniqueID" ; }
+
+      virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) ;
+
+      virtual INT32 doit () ;
+
+      INT32 _renameCSCL( vector<monCSSimple>& csList, BOOLEAN unregCL ) ;
+
+      void _registerCLs( const vector<monCSSimple>& csList ) ;
+
+      void _unregisterCL( const string& clName ) ;
+
+   private:
+      UINT64 _opID ;
+      map<string, string> _mapRegisterCL ; // <failed cl name, its maincl name>
+      clsFreezingWindow* _pFreezeWindow ;
+      shardCB* _pShdMgr ;
+   } ;
+
+   typedef _clsNameCheckJob clsNameCheckJob ;
+
+   INT32 startNameCheckJob ( EDUID* pEDUID = NULL ) ;
+
 }
 
-#endif //CLS_STORAGE_CHECK_JOB_HPP__
+#endif
 

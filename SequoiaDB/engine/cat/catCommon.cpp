@@ -1102,6 +1102,76 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATRENAMECLFROMCS, "catRenameCLFromCS" )
+   INT32 catRenameCLFromCS( const string &csName,
+                            const string &clShortName,
+                            const string &newCLShortName,
+                            pmdEDUCB * cb, SDB_DMSCB * dmsCB,
+                            SDB_DPSCB * dpsCB, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATRENAMECLFROMCS ) ;
+
+      BSONObj boSpace, boCollections ;
+      vector< PAIR_CLNAME_ID > remainCLs ;
+      BOOLEAN isExist = FALSE ;
+
+      rc = catCheckSpaceExist( csName.c_str(), isExist, boSpace, cb ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to get info of collection space [%s], rc: %d",
+                   csName.c_str(), rc ) ;
+      PD_CHECK( isExist, SDB_DMS_CS_NOTEXIST, error, PDWARNING,
+                "Collection space [%s] does not exist!",
+                csName.c_str() ) ;
+
+      rc = rtnGetArrayElement( boSpace, CAT_COLLECTION, boCollections ) ;
+      PD_CHECK( SDB_OK == rc, SDB_CAT_CORRUPTION, error, PDWARNING,
+                "Failed to get the field [%s] from [%s], rc: %d",
+                CAT_COLLECTION, boSpace.toString().c_str(), rc ) ;
+
+      {
+         BSONObjIterator iter( boCollections ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            string clName ;
+            utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
+
+            rc = rtnGetSTDStringElement( ele.embeddedObject(),
+                                         CAT_COLLECTION_NAME,
+                                         clName ) ;
+            PD_CHECK( SDB_OK == rc, SDB_CAT_CORRUPTION, error, PDWARNING,
+                      "Failed to get the field [%s], rc: %d",
+                      CAT_COLLECTION_NAME, ele.toString().c_str(), rc ) ;
+
+            rc = rtnGetNumberLongElement( ele.embeddedObject(),
+                                          CAT_CL_UNIQUEID,
+                                          (INT64&)clUniqueID ) ;
+            PD_CHECK( SDB_OK == rc, SDB_CAT_CORRUPTION, error, PDWARNING,
+                      "Failed to get the field [%s], rc: %d",
+                      CAT_CL_UNIQUEID, ele.toString().c_str(), rc ) ;
+
+            if ( clName == clShortName )
+            {
+               clName = newCLShortName ;
+            }
+            PAIR_CLNAME_ID clPair( clName, clUniqueID ) ;
+            remainCLs.push_back( clPair ) ;
+         }
+      }
+
+      rc = catUpdateCSCLs( csName, remainCLs, cb, dmsCB, dpsCB, w ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to update collections from collection space [%s], "
+                   "rc: %d", csName.c_str(), rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATRENAMECLFROMCS, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDELCLSFROMCS, "catDelCLsFromCS" )
    INT32 catDelCLsFromCS( const string &csName,
                           const vector<string> &deleteCLLst,
@@ -1430,7 +1500,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUPDATECATALOG, "catUpdateCatalog" )
    INT32 catUpdateCatalog ( const CHAR * clFullName, const BSONObj & setInfo,
-                            const BSONObj & unsetInfo, pmdEDUCB * cb, INT16 w  )
+                            const BSONObj & unsetInfo, pmdEDUCB * cb, INT16 w,
+                            BOOLEAN incVersion )
    {
       INT32 rc = SDB_OK ;
       pmdKRCB *krcb = pmdGetKRCB() ;
@@ -1442,7 +1513,10 @@ namespace engine
       BSONObj match = BSON( CAT_CATALOGNAME_NAME << clFullName ) ;
       BSONObjBuilder updateBuilder ;
 
-      updateBuilder.append( "$inc", BSON( CAT_VERSION_NAME << 1 ) ) ;
+      if ( incVersion )
+      {
+         updateBuilder.append( "$inc", BSON( CAT_VERSION_NAME << 1 ) ) ;
+      }
       if ( !setInfo.isEmpty() )
       {
          updateBuilder.append( "$set", setInfo ) ;
@@ -1717,7 +1791,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETTASKCOUNT, "catGetTaskCount" )
-   INT32 catGetTaskCount ( const CHAR * collection, pmdEDUCB * cb,  INT64 & count )
+   INT32 catGetTaskCount ( const CHAR * collection, pmdEDUCB * cb, INT64 & count )
    {
       INT32 rc = SDB_OK ;
 
@@ -1735,6 +1809,35 @@ namespace engine
 
    done :
       PD_TRACE_EXITRC( SDB_CATGETTASKCOUNT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETTASKCOUNTBYCS, "catGetTaskCountByCS" )
+   INT32 catGetTaskCountByCS( const CHAR *csName, pmdEDUCB *cb, INT64 &count )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATGETTASKCOUNTBYCS ) ;
+
+      SDB_ASSERT( NULL != csName, "cs is invalid" ) ;
+
+      BSONObj dummyObj, matcher ;
+      stringstream ss ;
+      BSONObjBuilder builder ;
+
+      ss << "^" << csName << "\\." ;
+      builder.appendRegex( CAT_COLLECTION_NAME, ss.str() ) ;
+      matcher = builder.obj() ;
+
+      rc = catGetObjectCount( CAT_TASK_INFO_COLLECTION, dummyObj, matcher,
+                              dummyObj, cb, count ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get task count of cs[%s], "
+                   "rc: %d", csName, rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATGETTASKCOUNTBYCS, rc ) ;
       return rc ;
 
    error :
@@ -2501,6 +2604,12 @@ namespace engine
       case MSG_CAT_ALTER_CS_REQ :
          contextType = RTN_CONTEXT_CAT_ALTER_CS ;
          break ;
+      case MSG_CAT_RENAME_CS_REQ :
+         contextType = RTN_CONTEXT_CAT_RENAME_CS ;
+         break ;
+      case MSG_CAT_RENAME_CL_REQ :
+         contextType = RTN_CONTEXT_CAT_RENAME_CL ;
+         break ;
       case MSG_CAT_ALTER_COLLECTION_REQ :
          contextType = RTN_CONTEXT_CAT_ALTER_CL ;
          break ;
@@ -3194,6 +3303,89 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMIANCLRENAME, "catMainCLRename" )
+   INT32 catMainCLRename( const string &mainCLName, const string &newMainCLName,
+                          clsCatalogSet &mainclCata,
+                          _pmdEDUCB *cb, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_CATMIANCLRENAME ) ;
+
+      std::vector< std::string > subCLLst;
+      std::vector< std::string >::iterator iterSubCL;
+
+      rc = mainclCata.getSubCLList( subCLLst );
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get subcl list of collection[%s], rc: %d",
+                   mainCLName.c_str(), rc ) ;
+
+      iterSubCL = subCLLst.begin() ;
+      while( iterSubCL != subCLLst.end() )
+      {
+         std::string subCLName = (*iterSubCL) ;
+
+         BSONObj setObj = BSON( CAT_MAINCL_NAME << newMainCLName ) ;
+         rc = catUpdateCatalog( subCLName.c_str(), setObj, BSONObj(), cb, w ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to update collection space[%s], rc: %d",
+                      subCLName.c_str(), rc ) ;
+
+         iterSubCL++ ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATMIANCLRENAME, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATSUBCLRENAME, "catSubCLRename" )
+   INT32 catSubCLRename( const string &subCLName, const string &newSubCLName,
+                         clsCatalogSet &subclCata,
+                         _pmdEDUCB *cb, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_CATSUBCLRENAME ) ;
+
+      std::string mainCLName = subclCata.getMainCLName() ;
+      SDB_ASSERT( !mainCLName.empty(), "main-collection must be not empty!" ) ;
+
+      clsCatalogSet mainclCata( mainCLName.c_str() );
+
+      BSONObj mainclInfo ;
+      rc = catGetCollection( mainCLName, mainclInfo, cb ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to get catalog-info of collection[%s], rc: %d",
+                   mainCLName.c_str(), rc ) ;
+
+      rc = mainclCata.updateCatSet( mainclInfo ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to parse catalog info[%s], rc: %d",
+                   mainCLName.c_str(), rc ) ;
+
+      rc = mainclCata.renameSubCL( subCLName.c_str(), newSubCLName.c_str() ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to rename the subcl[%s] from maincl [%s], rc: %d",
+                   subCLName.c_str(), mainCLName.c_str(), rc ) ;
+
+      {
+         // Update the catalog
+         BSONObj subListObj = mainclCata.toCataInfoBson() ;
+         rc = catUpdateCatalog( mainCLName.c_str(), subListObj,
+                                BSONObj(), cb, w ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to update the catalog of maincl [%s], rc: %d",
+                      mainCLName.c_str(), rc ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATSUBCLRENAME, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDROPCSSTEP, "catDropCSStep" )
    INT32 catDropCSStep ( const string &csName,
                          _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
@@ -3216,6 +3408,122 @@ namespace engine
 
    done :
       PD_TRACE_EXITRC ( SDB_CATDROPCSSTEP, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATRENAMECSSTEP, "catRenameCSStep" )
+   INT32 catRenameCSStep ( const string &oldCSName, const string &newCSName,
+                           _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
+                           INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_CATRENAMECSSTEP ) ;
+
+      BSONObj setObj = BSON( CAT_COLLECTION_SPACE_NAME << newCSName ) ;
+
+      rc = catUpdateCS( oldCSName.c_str(), setObj, BSONObj(), cb,
+                        pDmsCB, pDpsCB, w ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to update collection space[%s], rc: %d",
+                   oldCSName.c_str(), rc ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATRENAMECSSTEP, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATRENAMECLSTEP, "catRenameCLStep" )
+   INT32 catRenameCLStep ( const string &oldCLName, const string &newCLName,
+                           _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
+                           INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_CATRENAMECLSTEP ) ;
+
+      clsCatalogSet cataSet( oldCLName.c_str() );
+      BSONObj setObj, boCollection ;
+      INT32 curVersion = 0 ;
+      INT32 newCLVersion = 0 ;
+      string csName, newCSName, clShortName, newCLShortName ;
+
+      /// get cl info
+      rc = catGetCollection( oldCLName, boCollection, cb ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to get catalog-info of collection[%s], rc: %d",
+                   oldCLName.c_str(), rc ) ;
+
+      rc = rtnGetIntElement( boCollection, CAT_VERSION_NAME, curVersion ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to get version of collection[%s], rc: %d",
+                   oldCLName.c_str(), rc ) ;
+
+      rc = cataSet.updateCatSet( boCollection ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to parse catalog info[%s], rc: %d",
+                   oldCLName.c_str(), rc ) ;
+
+      /// process this cl name
+      newCLVersion = catGetBucketVersion( newCLName.c_str(), cb ) ;
+      if ( ( curVersion + 1 ) > newCLVersion )
+      {
+         newCLVersion = curVersion + 1 ;
+      }
+      setObj = BSON( CAT_COLLECTION_NAME << newCLName <<
+                     CAT_VERSION_NAME << newCLVersion ) ;
+      rc = catUpdateCatalog( oldCLName.c_str(), setObj, BSONObj(),
+                             cb, w, FALSE ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to update collection space[%s], rc: %d",
+                   oldCLName.c_str(), rc ) ;
+
+      rc = catSaveBucketVersion( oldCLName.c_str(), curVersion, cb, w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING,
+                 "Failed to save history version of collection [%s], rc: %d",
+                 oldCLName.c_str(), rc ) ;
+      }
+
+      /// process cs
+      csName         = dmsGetCSNameFromFullName( oldCLName ) ;
+      newCSName      = dmsGetCSNameFromFullName( newCLName ) ;
+      clShortName    = dmsGetCLShortNameFromFullName( oldCLName ) ;
+      newCLShortName = dmsGetCLShortNameFromFullName( newCLName ) ;
+      if ( csName == newCSName && clShortName != newCLShortName )
+      {
+         rc = catRenameCLFromCS( csName, clShortName, newCLShortName,
+                                 cb, pDmsCB, pDpsCB, w ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to rename collection[%s] from cs[%s], rc: %d",
+                      clShortName.c_str(), csName.c_str(), rc ) ;
+      }
+
+      /// process its subcl or maincl
+      if ( cataSet.isMainCL() )
+      {
+         rc = catMainCLRename( oldCLName, newCLName, cataSet, cb, w ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to rename maincl[%s], rc: %d",
+                      oldCLName.c_str(), rc ) ;
+      }
+      else
+      {
+         std::string mainCLName = cataSet.getMainCLName() ;
+         if ( !mainCLName.empty() )
+         {
+            rc = catSubCLRename( oldCLName, newCLName, cataSet, cb, w ) ;
+            PD_RC_CHECK( rc, PDWARNING,
+                         "Failed to rename subcl[%s], rc: %d",
+                         oldCLName.c_str(), rc ) ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATRENAMECLSTEP, rc ) ;
       return rc ;
    error :
       goto done ;

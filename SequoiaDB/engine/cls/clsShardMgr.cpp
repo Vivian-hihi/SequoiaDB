@@ -173,19 +173,34 @@ namespace engine
          opID = pmdAcquireGlobalID() ;
       }
 
-      if ( NULL != pName && '\0' != pName[0] )
+      if ( !pName || !*pName )
+      {
+         _regWholeInternal( opID ) ;
+      }
+      else
       {
          _registerCLInternal( pName, opID ) ;
-      }
-      if ( NULL != pMainCLName && '\0' != pMainCLName[0] )
-      {
-         _registerCLInternal( pMainCLName, opID ) ;
+
+         if ( NULL != pMainCLName && '\0' != pMainCLName[0] )
+         {
+            _registerCLInternal( pMainCLName, opID ) ;
+         }
       }
 
       /// last decrease _clCount
       --_clCount ;
 
       _latch.release() ;
+
+   }
+
+   void _clsFreezingWindow::_regWholeInternal( UINT64 opID )
+   {
+      if ( _setWholeID.empty() )
+      {
+         ++_clCount ;
+      }
+      _setWholeID.insert( opID ) ;
    }
 
    void _clsFreezingWindow::_registerCLInternal ( const CHAR * pName,
@@ -214,7 +229,11 @@ namespace engine
    {
       _latch.get() ;
 
-      if ( NULL != pName && '\0' != pName[0] )
+      if ( !pName || !*pName )
+      {
+         _unregWholeInternal( opID ) ;
+      }
+      else
       {
          _unregisterCLInternal( pName, opID ) ;
       }
@@ -225,6 +244,15 @@ namespace engine
 
       _latch.release() ;
       _event.signalAll() ;
+   }
+
+   void _clsFreezingWindow::_unregWholeInternal( UINT64 opID )
+   {
+      _setWholeID.erase( opID ) ;
+      if ( _setWholeID.empty() )
+      {
+         --_clCount ;
+      }
    }
 
    void _clsFreezingWindow::_unregisterCLInternal ( const CHAR * pName,
@@ -244,36 +272,53 @@ namespace engine
       }
    }
 
+   void _clsFreezingWindow::_blockCheck( const _clsFreezingWindow::OP_SET &setID,
+                                         UINT64 testOPID,
+                                         BOOLEAN &result,
+                                         BOOLEAN &forceEnd )
+   {
+      OP_SET::const_iterator cit = setID.begin() ;
+
+      while ( cit != setID.end () )
+      {
+         if ( *cit == testOPID )
+         {
+            // Self
+            result = FALSE ;
+            forceEnd = TRUE ;
+            break ;
+         }
+         else if ( *cit < testOPID )
+         {
+            // Should not break, we need to test if testOpID matches
+            // the remaining blocking op IDs which may be the blocking op
+            // itself
+            result = TRUE ;
+         }
+         ++cit ;
+      }
+   }
+
    BOOLEAN _clsFreezingWindow::needBlockOpr( const CHAR *pName,
                                              UINT64 testOpID )
    {
       MAP_WINDOW::iterator it ;
       BOOLEAN needBlock = FALSE ;
+      BOOLEAN forceEnd = FALSE ;
 
       _latch.get() ;
 
-      if ( !_mapWindow.empty() &&
+      /// whole block check
+      if ( !_setWholeID.empty() )
+      {
+         _blockCheck( _setWholeID, testOpID, needBlock, forceEnd ) ;
+      }
+
+      if ( !forceEnd &&
+           !_mapWindow.empty() &&
            _mapWindow.end() != ( it = _mapWindow.find( pName ) ) )
       {
-         OP_SET::iterator opIt = it->second.begin() ;
-
-         while ( opIt != it->second.end () )
-         {
-            if ( *opIt == testOpID )
-            {
-               // Self
-               needBlock = FALSE ;
-               break ;
-            }
-            else if ( *opIt < testOpID )
-            {
-               // Should not break, we need to test if testOpID matches
-               // the remaining blocking op IDs which may be the blocking op
-               // itself
-               needBlock = TRUE ;
-            }
-            opIt ++ ;
-         }
+         _blockCheck( it->second, testOpID, needBlock, forceEnd ) ;
       }
 
       _latch.release() ;
@@ -1868,7 +1913,7 @@ namespace engine
          {
             version = catSet->getVersion() ;
             groupCount = catSet->groupCount() ;
-            collectionName = catSet->name() ;
+            collectionName = catSet->nameStr() ;
             clUniqueID = catSet->clUniqueID() ;
             if ( catSet->isMainCL() )
             {
@@ -2222,6 +2267,7 @@ namespace engine
                                    UINT32 *lobPageSize,
                                    DMS_STORAGE_TYPE *type,
                                    BSONObj *clInfo,
+                                   string *newCSName,
                                    INT64 waitMillSec )
    {
       INT32 rc = SDB_OK ;
@@ -2308,7 +2354,10 @@ namespace engine
       // sanity chekc for result
       PD_RC_CHECK( rc, PDWARNING, "Get collection space[%s] info failed, "
                    "rc: %d", csName, rc ) ;
-
+      if ( newCSName )
+      {
+         *newCSName = item->csName ;
+      }
       if ( UTIL_UNIQUEID_NULL == csUniqueID )
       {
          csUniqueID = item->csUniqueID ;
@@ -2571,6 +2620,12 @@ namespace engine
          else
          {
             csItem->type = DMS_STORAGE_NORMAL ;
+         }
+
+         ele = objList[0].getField( CAT_COLLECTION_SPACE_NAME ) ;
+         if ( ele.type() == String )
+         {
+            csItem->csName = ele.str() ;
          }
 
          ele = objList[0].getField( CAT_CS_UNIQUEID ) ;

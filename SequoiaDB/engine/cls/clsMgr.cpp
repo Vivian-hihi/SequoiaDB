@@ -1029,6 +1029,7 @@ namespace engine
                                    SDB_EVENT_OCCUR_TYPE type )
    {
       PD_TRACE_ENTRY ( SDB__CLSMGR__ONPRMCHG );
+      SDB_DMSCB* pDmsCB = pmdGetKRCB()->getDMSCB() ;
 
       if ( SDB_EVT_OCCUR_AFTER == type )
       {
@@ -1050,6 +1051,12 @@ namespace engine
       {
          // inc dps log version
          sdbGetDPSCB()->incVersion() ;
+
+         if ( SDB_ROLE_DATA == pmdGetDBRole() &&
+              0 == pDmsCB->nullCSUniqueIDCnt() )
+         {
+            startNameCheckJob() ;
+         }
       }
       // if we are switching to slave, let's interrupt all EDUs that doing write
       else if ( !primary && SDB_EVT_OCCUR_BEFORE == type )
@@ -1068,9 +1075,8 @@ namespace engine
       {
          if ( primary )
          {
-            // start unqiue id check
-            SDB_DMSCB* pDmsCB = pmdGetKRCB()->getDMSCB() ;
-            if ( pDmsCB->nullCSUniqueIDCnt() > pDmsCB->localCSCnt() )
+            if ( SDB_ROLE_DATA == pmdGetDBRole() &&
+                 pDmsCB->nullCSUniqueIDCnt() > 0 )
             {
                startUniqueIDCheckJob( &_uniqueCheckJobEduID ) ;
             }
@@ -1087,7 +1093,6 @@ namespace engine
             {
                stopUniqueIDCheckJob( _uniqueCheckJobEduID ) ;
             }
-
             // clean up all query task
             ossScopedLock lock ( &_clsLatch, EXCLUSIVE ) ;
             _mapTaskQuery.clear () ;

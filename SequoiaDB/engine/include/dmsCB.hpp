@@ -199,8 +199,6 @@ namespace engine
 
       // how many cs which unique id = 0, except system cs
       UINT32                  _nullCSUniqueIDCnt ;
-      // how many cs which unique id = 0 and don't exist on catalog, except system cs
-      UINT32                  _localCSCnt ;
 
       dmsTempSUMgr            _tempSUMgr ;
       dmsStatSUMgr            _statSUMgr ;
@@ -356,10 +354,6 @@ namespace engine
       void dumpPageMapCSInfo( MON_CSNAME_VEC &vecCS ) ;
 
       UINT32 nullCSUniqueIDCnt() const ;
-
-      UINT32 localCSCnt() const ;
-
-      void setLocalCSCnt( UINT32 cnt ) ;
 
       dmsTempSUMgr *getTempSUMgr () ;
 
