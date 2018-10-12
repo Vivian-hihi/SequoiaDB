@@ -501,7 +501,7 @@ function insertRecords(dbcl, records)
 {
    try
    {
-      dbcl.insert(doc);
+      dbcl.insert(records);
    }catch(e)
    {
       if(e !== -321)
