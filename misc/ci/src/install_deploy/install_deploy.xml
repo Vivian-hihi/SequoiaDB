@@ -131,6 +131,10 @@
                   </then>
                </elseif>
             </if>
+
+            <staf location="@{testhost}" service="PROCESS"
+                  request="START SHELL COMMAND ps -ef |grep sdbseadapter |grep -v grep | awk '{print $2}' |  xargs kill -9  WAIT 10m RETURNSTDOUT RETURNSTDERR"
+                  throwBuildException="1"/>
          </sequential>
       </for>
    </target>
