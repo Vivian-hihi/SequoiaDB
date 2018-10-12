@@ -190,7 +190,7 @@ namespace engine
          UINT32            getPartitionBit() const { return _square ; }
          bool              ensureShardingIndex() const { return _ensureShardingIndex ; }
          const CHAR        *name () const ;
-         const string&     nameStr() const ;
+         string            nameStr() const ;
          utilCLUniqueID    clUniqueID () const ;
          VEC_GROUP_ID      *getAllGroupID () ;
          UINT32            getAllGroupID ( VEC_GROUP_ID &vecGroup ) const ;

@@ -482,7 +482,7 @@ namespace engine
       return _name.c_str() ;
    }
 
-   const string& _clsCatalogSet::nameStr() const
+   string _clsCatalogSet::nameStr() const
    {
       return _name ;
    }
