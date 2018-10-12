@@ -39,6 +39,27 @@
 
 namespace engine
 {
+
+   // outpu: BSONObj
+   // [
+   //    { "Name": "bar1", "UniqueID": 0 } ,
+   //    { "Name": "bar2", "UniqueID": 0 }
+   // ]
+   static BSONObj clsSetUniqueID( const MON_CL_SIM_VEC& clVector, utilCLUniqueID setValue )
+   {
+      BSONArrayBuilder arrBuilder ;
+
+      for ( MON_CL_SIM_VEC::const_iterator iter = clVector.begin() ;
+            iter != clVector.end() ;
+            ++ iter )
+      {
+         arrBuilder << BSON( FIELD_NAME_NAME << iter->_clname
+                    << FIELD_NAME_UNIQUEID << (INT64)setValue ) ;
+      }
+
+      return arrBuilder.arr() ;
+   }
+
    #define CLS_UNIQUEID_CHECK_INTERVAL ( OSS_ONE_SEC * 3 )
 
    /*
@@ -77,7 +98,7 @@ namespace engine
       BOOLEAN isCataReady = FALSE ;
 
       PD_LOG( PDDEBUG,
-              "Start job[UniqueIDCheck]: check cs/cl unique id by cs/cl name" ) ;
+              "Start job[%s]: check cs/cl unique id by cs/cl name", name() ) ;
 
       while ( !PMD_IS_DB_DOWN() &&
               pmdIsPrimary() &&
@@ -143,19 +164,23 @@ namespace engine
             // update catalog info
             rc = pShdMgr->rGetCSInfo( cs._name, csUniqueID,
                                       NULL, NULL, NULL, &clInfoObj ) ;
-            if ( rc )
+            if ( rc != SDB_OK )
             {
                PD_LOG( PDWARNING,
                        "Job[%s]: Update cs[%s] catalog info, rc: %d. "
                        "CS doesn't exist in catalog",
                        name(), cs._name, rc ) ;
-               continue ;
+               if ( rc != SDB_DMS_CS_NOTEXIST )
+               {
+                  continue ;
+               }
             }
 
             if ( SDB_DMS_CS_NOTEXIST == rc )
             {
                rc = rtnChangeUniqueID( cs._name, UTIL_CSUNIQUEID_LOCAL,
-                                       utilSetUniqueID( clInfoObj, UTIL_CLUNIQUEID_LOCAL ),
+                                       clsSetUniqueID( cs._collections,
+                                                       UTIL_CLUNIQUEID_LOCAL ),
                                        cb, pDmsCB, pDpsCB ) ;
             }
             else
@@ -177,7 +202,7 @@ namespace engine
 
       }// end while
 
-      PD_LOG( PDDEBUG, "Stop job[UniqueIDCheck]" ) ;
+      PD_LOG( PDDEBUG, "Stop job[%s]", name() ) ;
 
       PD_TRACE_EXITRC( SDB__CLSUIDCHKJOB_DOIT, rc ) ;
       return rc ;
