@@ -1777,6 +1777,7 @@ namespace engine
       if ( 1 < dstGroups.size() )
       {
          UINT32 avgBound = totalBound / dstGroups.size() ;
+         UINT32 modBound = totalBound % dstGroups.size() ;
          UINT32 endBound = totalBound ;
          UINT32 beginBound = totalBound - avgBound ;
 
@@ -1795,12 +1796,19 @@ namespace engine
                continue ;
             }
 
+            if ( modBound > 0 )
+            {
+               --modBound ;
+               --beginBound ;
+            }
+
             taskID = catCB->getCatlogueMgr()->assignTaskID() ;
             rc = catBuildHashSplitTask( collection, srcGroup, dstGroup,
                                         beginBound, endBound, splitInfo ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build split info, rc: %d", rc ) ;
 
-            rc = catSplitReady( splitInfo, taskID, FALSE, cb, w, dstGroupID, version ) ;
+            rc = catSplitReady( splitInfo, taskID, FALSE, cb, w,
+                                dstGroupID, version ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to split collection [%s], rc: %d",
                          collection, rc ) ;
 
