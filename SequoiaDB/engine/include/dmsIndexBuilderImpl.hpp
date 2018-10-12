@@ -103,7 +103,6 @@ namespace engine
    private:
       INT32 _onInit() ;
       INT32 _build() ;
-      void _onFinish() ;
 
    private:
       IDmsExtDataHandler   *_extHandler ;

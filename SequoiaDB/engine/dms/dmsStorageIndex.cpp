@@ -420,14 +420,14 @@ namespace engine
       }
    }
 
+   // Find a free slot in mb index extent array for the new index. Duplication
+   // of index name and definition will be checked.
    INT32 _dmsStorageIndex::_allocateIdxID( dmsMBContext *context,
+                                           const CHAR *indexName,
                                            const BSONObj &index,
                                            INT32 &indexID )
    {
       INT32 rc = SDB_OK ;
-      const CHAR *indexName = NULL ;
-
-      indexName = index.getStringField( IXM_FIELD_NAME_NAME ) ;
 
       for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; indexID++ )
       {
@@ -560,24 +560,10 @@ namespace engine
                                         INT32 sortBufferSize )
    {
       INT32 rc                     = SDB_OK ;
-      dmsExtentID extentID         = DMS_INVALID_EXTENT ;
+      dmsExtentID metaExtentID     = DMS_INVALID_EXTENT ;
       dmsExtentID rootExtentID     = DMS_INVALID_EXTENT ;
-      INT32  indexID               = 0 ;
-      dmsExtentID indexLID         = DMS_INVALID_EXTENT ;
-
-      BSONObj indexDef ;
-      CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
-      dpsMergeInfo info ;
-      dpsLogRecord &record = info.getMergeBlock().record() ;
-      dpsTransCB *pTransCB         = pmdGetKRCB()->getTransCB();
-      UINT32 logRecSize            = 0;
-      SDB_DPSCB *dropDps           = NULL ;
-      INT32 rc1                    = 0 ;
-      const CHAR *indexName        = NULL ;
+      BOOLEAN ready                = FALSE ;
       UINT16 indexType             = 0 ;
-      BOOLEAN isTextIndex          = FALSE ;
-      BSONObj finalIndex ;
-      BSONObj extraFieldsObj ;
 
       if ( !ixmIndexCB::validateKey ( index, isSys ) )
       {
@@ -586,7 +572,8 @@ namespace engine
          goto error ;
       }
 
-      // Generate the index type out side of the mb lock.
+      // Generate the index type out side of the mb lock. Depending on the type,
+      // different actions will be taken.
       if ( !ixmIndexCB::generateIndexType( index, indexType ) )
       {
          PD_LOG_MSG( PDERROR, "Generate index type failed" ) ;
@@ -595,7 +582,7 @@ namespace engine
       }
 
       // let's first reserve extent
-      rc = reserveExtent ( context->mbID(), extentID, context ) ;
+      rc = reserveExtent ( context->mbID(), metaExtentID, context ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to reserve extent for collection[%u], "
                    "rc: %d", context->mbID(), rc ) ;
 
@@ -616,221 +603,36 @@ namespace engine
          goto error ;
       }
 
-      indexName = index.getStringField( IXM_FIELD_NAME_NAME ) ;
+      // Once we are ready, the internal function should release the extents by
+      // themselves in case of any error.
+      ready = TRUE ;
 
-      for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; indexID++ )
+      if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, indexType ) )
       {
-         if ( DMS_INVALID_EXTENT == context->mb()->_indexExtent[indexID] )
-         {
-            break ;
-         }
-         ixmIndexCB curIdxCB( context->mb()->_indexExtent[indexID], this,
-                              context ) ;
-         BOOLEAN sameName = (0 == ossStrncmp ( indexName,
-                                              curIdxCB.getName(),
-                                              IXM_INDEX_NAME_SIZE)) ;
-         if ( sameName &&
-              curIdxCB.isSameDef( index, TRUE ) )
-         {
-            PD_LOG( PDERROR, "Same index defined already:[%s:%s]",
-                    curIdxCB.getName(),
-                    index.getStringField( IXM_FIELD_NAME_NAME ) ) ;
-            rc = SDB_IXM_REDEF ;
-            goto error ;
-         }
-         else if ( sameName )
-         {
-            PD_LOG ( PDINFO, "Duplicate index name: %s",
-                     index.getStringField( IXM_FIELD_NAME_NAME ) );
-            rc = SDB_IXM_EXIST;
-            goto error ;
-         }
-         else if ( curIdxCB.isSameDef( index ) )
-         {
-            PD_LOG ( PDERROR, "Duplicate index define: %s",
-                     index.getStringField( IXM_FIELD_NAME_NAME ) );
-            rc = SDB_IXM_EXIST_COVERD_ONE ;
-            goto error ;
-         }
-         else
-         {
-            continue ;
-         }
-      }
-      if ( DMS_COLLECTION_MAX_INDEX == indexID )
-      {
-         rc = SDB_DMS_MAX_INDEX ;
-         goto error ;
-      }
-
-      isTextIndex = IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, indexType ) ;
-      if ( isTextIndex )
-      {
-         rc = _createTextIdx( context, index, cb, finalIndex ) ;
+         rc = _createTextIdx( context, index, metaExtentID,
+                              rootExtentID, cb, dpscb ) ;
          PD_RC_CHECK( rc, PDERROR, "Create text index failed, rc: %d", rc ) ;
-         // In replication log, we don't want the external name. Otherwise the
-         // key validation on slave will fail. So we do some filter here.
-         // extraObject contains fields added by _createTextIdx. They will be
-         // removed before writing the log blow.
-         extraFieldsObj = finalIndex.filterFieldsUndotted( index, false ) ;
       }
       else
       {
-         finalIndex = index ;
+         rc = _createIndex( context, index, metaExtentID, rootExtentID, indexType,
+                            cb, dpscb, isSys, sortBufferSize ) ;
+         PD_RC_CHECK (rc, PDERROR, "Create index failed, rc: %d", rc ) ;
       }
 
-      {
-         // initialize index control block, set flag to invalid
-         ixmIndexCB indexCB ( extentID, finalIndex, context->mbID(), this,
-                              context ) ;
-         // verify the index control block is initialized
-         if ( !indexCB.isInitialized() )
-         {
-            // if we can't initialize control block, we shouldn't call dropIndex
-            // at the moment. So let's just reset _indexExtent to invalid and
-            // free the extents
-            PD_LOG ( PDERROR, "Failed to initialize index" ) ;
-            rc = SDB_DMS_INIT_INDEX ;
-            goto error ;
-         }
-         //set logical id
-         indexLID = context->mb()->_indexHWCount ;
-         indexCB.setLogicalID( indexLID ) ;
-         // Get the index definition from indexCB instead of using index
-         // directly, because extra fields may have been added to the
-         // definition. For example, _id is added on primary node.
-         indexDef = indexCB.getDef().getOwned() ;
-
-         if ( isTextIndex )
-         {
-            // Remove extra fields added by callback functions.
-            indexDef = indexDef.filterFieldsUndotted( extraFieldsObj, false ) ;
-         }
-
-         // calc the reserve size
-         if ( dpscb )
-         {
-            _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
-                                   sizeof(fullName) ) ;
-
-            rc = dpsIXCrt2Record( fullName, indexDef, record ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to build record:%d", rc ) ;
-
-            rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d",
-                         rc ) ;
-
-            logRecSize = record.alignedLen() ;
-            rc = pTransCB->reservedLogSpace( logRecSize, cb );
-            if ( rc )
-            {
-               PD_LOG( PDERROR, "Failed to reserved log space(length=%u)",
-                       logRecSize ) ;
-               logRecSize = 0 ;
-               goto error ;
-            }
-         }
-
-         // initialize the root extent
-         {
-            // once the control block is allocated, let's do root extent
-            ixmExtent idx( rootExtentID, context->mbID(), this ) ;
-         }
-         indexCB.setRoot ( rootExtentID ) ;
-
-         if ( indexCB.unique() )
-         {
-            context->mbStat()->_uniqueIdxNum++ ;
-         }
-      }
-
-      // change mb metadata
-      context->mb()->_indexExtent[indexID] = extentID ;
-      context->mb()->_numIndexes ++ ;
-      context->mb()->_indexHWCount++ ;
-
-      // log it
-      if ( dpscb )
-      {
-         rc = _pDataSu->_logDPS( dpscb, info, cb, context,
-                                 DMS_INVALID_EXTENT, TRUE,
-                                 DMS_FILE_IDX ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to insert ixcrt into log, rc = %d", rc ) ;
-            goto error_after_create ;
-         }
-      }
-      else if ( cb->getLsnCount() > 0 )
-      {
-         context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
-                                                   DMS_FILE_IDX,
-                                                   cb->isDoRollback() ) ;
-      }
-      dropDps = dpscb ;
-
-      /// flush some page
-      flushPages( extentID, 1, isSyncDeep() ) ;
-      flushPages( rootExtentID, 1, isSyncDeep() ) ;
-
-      // now we finished allocation part, let's get into build part
-      rc = _rebuildIndex( context, extentID, cb, sortBufferSize, indexType ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to build index[%s], rc = %d",
-                 indexDef.toString().c_str(), rc ) ;
-         goto error_after_create ;
-      }
-
-      rc = context->mbLock( EXCLUSIVE ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to lock mb:%d", rc ) ;
-         goto error_after_create ;
-      }
-      // if it is $oid, set DMS_MB_ATTR_NOIDINDEX with false
-      if ( isSys && 0 == ossStrcmp( indexName, IXM_ID_KEY_NAME ) )
-      {
-         OSS_BIT_CLEAR( context->mb()->_attributes,
-                        DMS_MB_ATTR_NOIDINDEX ) ;
-      }
-
-      if ( _pDataSu->_pEventHolder )
-      {
-         dmsEventCLItem clItem( context->mb()->_collectionName,
-                                context->mbID(),
-                                context->clLID() ) ;
-         dmsEventIdxItem idxItem ( indexName, indexLID, finalIndex ) ;
-         _pDataSu->_pEventHolder->onCreateIndex( DMS_EVENT_MASK_ALL, clItem,
-                                                 idxItem, cb, dpscb ) ;
-      }
-
-      /// creating index may cost long time. we mark file dirty again here.
    done :
-      if ( 0 != logRecSize )
-      {
-         pTransCB->releaseLogSpace( logRecSize, cb );
-      }
       return rc ;
    error :
-      if ( DMS_INVALID_EXTENT != extentID )
+      if ( !ready )
       {
-         releaseExtent ( extentID, TRUE ) ;
-      }
-      if ( DMS_INVALID_EXTENT != rootExtentID )
-      {
-         releaseExtent ( rootExtentID ) ;
-      }
-      if ( SDB_OK == rc )
-      {
-         _pDataSu->flushMME( isSyncDeep() ) ;
-      }
-      goto done ;
-   error_after_create :
-      rc1 = dropIndex ( context, indexName, cb, dropDps, isSys ) ;
-      if ( rc1 )
-      {
-         PD_LOG ( PDERROR, "Failed to clean up invalid index, rc = %d", rc1 ) ;
+         if ( DMS_INVALID_EXTENT != metaExtentID )
+         {
+            releaseExtent ( metaExtentID, TRUE ) ;
+         }
+         if ( DMS_INVALID_EXTENT != rootExtentID )
+         {
+            releaseExtent ( rootExtentID ) ;
+         }
       }
       goto done ;
    }
@@ -1142,16 +944,6 @@ namespace engine
             context->mbStat()->_uniqueIdxNum-- ;
          }
 
-         // Maybe we are deleting the index because of error when creating it.
-         // In that case, the _textIdxNum may have not increase. So we only need
-         // to decrease it when it's greater than 0.
-         if ( extDataHandler && ( context->mbStat()->_textIdxNum > 0 ) )
-         {
-            SDB_ASSERT( 1 == context->mbStat()->_textIdxNum,
-                        "Only support 1 text index now" ) ;
-            context->mbStat()->_textIdxNum-- ;
-         }
-
          // release index control block extent
          rc = releaseExtent ( context->mb()->_indexExtent[indexID], TRUE ) ;
          if ( rc )
@@ -1177,8 +969,19 @@ namespace engine
                // needed.
                PD_LOG( PDERROR, "External operation failed, rc: %d", rc ) ;
             }
+
+            // Maybe we are deleting the index because of error when creating it.
+            // In that case, the _textIdxNum may have not increase. So we only need
+            // to decrease it when it's greater than 0.
+            if ( context->mbStat()->_textIdxNum > 0 )
+            {
+               SDB_ASSERT( 1 == context->mbStat()->_textIdxNum,
+                           "Only support 1 text index now" ) ;
+               context->mbStat()->_textIdxNum-- ;
+            }
          }
       }
+
       context->mb()->_numIndexes -- ;
 
       // log it
@@ -1211,18 +1014,217 @@ namespace engine
       goto done ;
    }
 
-   // finalIndex: For text index, the definition may be changed in callback
-   //             function. Currently 'ExtDataName' is added. The updated
-   //             definition will be copied into the meta page.
-   INT32 _dmsStorageIndex::_createTextIdx( dmsMBContext *context,
-                                           const BSONObj &index,
-                                           pmdEDUCB *cb,
-                                           BSONObj &finalIndex )
+   INT32 _dmsStorageIndex::_createIndex( dmsMBContext *context,
+                                         const BSONObj &index,
+                                         dmsExtentID metaExtentID,
+                                         dmsExtentID rootExtentID,
+                                         UINT16 indexType,
+                                         pmdEDUCB *cb,
+                                         SDB_DPSCB *dpscb,
+                                         BOOLEAN isSys,
+                                         INT32 sortBufferSize )
    {
       INT32 rc = SDB_OK ;
-      IDmsExtDataHandler *handler = _pStorageInfo->_extDataHandler ;
-      SDB_ASSERT( handler, "External handler is NULL" ) ;
+      INT32 indexID = 0 ;
+      const CHAR *indexName = NULL ;
+      BSONObj indexDef ;
+      dmsExtentID indexLID = DMS_INVALID_EXTENT ;
+      CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
+      UINT32 logRecSize = 0 ;
+      dpsMergeInfo info ;
+      dpsLogRecord &record = info.getMergeBlock().record() ;
+      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
+      SDB_DPSCB *dropDps = NULL ;
 
+      SDB_ASSERT( context->isMBLock(), "Caller should hold mb lock" ) ;
+      SDB_ASSERT( DMS_INVALID_EXTENT != metaExtentID,
+                  "meta extent id is invalid" )  ;
+      SDB_ASSERT( DMS_INVALID_EXTENT != metaExtentID,
+                  "root extent id is invalid" )  ;
+
+      indexName = index.getStringField( IXM_FIELD_NAME_NAME ) ;
+
+      rc = _allocateIdxID( context, indexName, index, indexID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Allocate index id failed: %d", rc ) ;
+
+      {
+         // initialize index control block, set flag to invalid
+         ixmIndexCB indexCB ( metaExtentID, index, context->mbID(),
+                              this, context ) ;
+         // verify the index control block is initialized
+         if ( !indexCB.isInitialized() )
+         {
+            // if we can't initialize control block, we shouldn't call dropIndex
+            // at the moment. So let's just reset _indexExtent to invalid and
+            // free the extents
+            PD_LOG ( PDERROR, "Failed to initialize index" ) ;
+            rc = SDB_DMS_INIT_INDEX ;
+            goto error ;
+         }
+         //set logical id
+         indexLID = context->mb()->_indexHWCount ;
+         indexCB.setLogicalID( indexLID ) ;
+         // Get the index definition from indexCB instead of using index
+         // directly, because extra fields may have been added to the
+         // definition. For example, _id is added on primary node.
+         indexDef = indexCB.getDef().getOwned() ;
+
+         // calc the reserve size
+         if ( dpscb )
+         {
+            _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
+                                   sizeof(fullName) ) ;
+
+            rc = dpsIXCrt2Record( fullName, indexDef, record ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to build record:%d", rc ) ;
+
+            rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d",
+                         rc ) ;
+
+            logRecSize = record.alignedLen() ;
+            rc = pTransCB->reservedLogSpace( logRecSize, cb );
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to reserved log space(length=%u)",
+                       logRecSize ) ;
+               logRecSize = 0 ;
+               goto error ;
+            }
+         }
+
+         // initialize the root extent
+         {
+            // once the control block is allocated, let's do root extent
+            ixmExtent idx( rootExtentID, context->mbID(), this ) ;
+         }
+         indexCB.setRoot ( rootExtentID ) ;
+
+         if ( indexCB.unique() )
+         {
+            context->mbStat()->_uniqueIdxNum++ ;
+         }
+      }
+
+      // change mb metadata
+      context->mb()->_indexExtent[indexID] = metaExtentID ;
+      context->mb()->_numIndexes ++ ;
+      context->mb()->_indexHWCount++ ;
+
+      // log it
+      if ( dpscb )
+      {
+         rc = _pDataSu->_logDPS( dpscb, info, cb, context, DMS_INVALID_EXTENT,
+                                 TRUE, DMS_FILE_IDX ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to insert ixcrt into log, rc = %d", rc ) ;
+            goto error_after_create ;
+         }
+      }
+      else if ( cb->getLsnCount() > 0 )
+      {
+         context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
+                                                   DMS_FILE_IDX,
+                                                   cb->isDoRollback() ) ;
+      }
+      dropDps = dpscb ;
+
+      /// flush some page
+      flushPages( metaExtentID, 1, isSyncDeep() ) ;
+      flushPages( rootExtentID, 1, isSyncDeep() ) ;
+
+      // now we finished allocation part, let's get into build part
+      rc = _rebuildIndex( context, metaExtentID, cb, sortBufferSize, indexType ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to build index[%s], rc = %d",
+                 indexDef.toString().c_str(), rc ) ;
+         goto error_after_create ;
+      }
+
+      rc = context->mbLock( EXCLUSIVE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to lock mb:%d", rc ) ;
+         goto error_after_create ;
+      }
+      // if it is $oid, set DMS_MB_ATTR_NOIDINDEX with false
+      if ( isSys && 0 == ossStrcmp( indexName, IXM_ID_KEY_NAME ) )
+      {
+         OSS_BIT_CLEAR( context->mb()->_attributes,
+                        DMS_MB_ATTR_NOIDINDEX ) ;
+      }
+
+      if ( _pDataSu->_pEventHolder )
+      {
+         dmsEventCLItem clItem( context->mb()->_collectionName,
+                                context->mbID(),
+                                context->clLID() ) ;
+         dmsEventIdxItem idxItem ( indexName, indexLID, index ) ;
+         _pDataSu->_pEventHolder->onCreateIndex( DMS_EVENT_MASK_ALL, clItem,
+                                                 idxItem, cb, dpscb ) ;
+      }
+
+      /// creating index may cost long time. we mark file dirty again here.
+   done :
+      if ( 0 != logRecSize )
+      {
+         pTransCB->releaseLogSpace( logRecSize, cb );
+      }
+      if ( SDB_OK == rc )
+      {
+         _pDataSu->flushMME( isSyncDeep() ) ;
+      }
+      return rc ;
+   error :
+      releaseExtent ( metaExtentID, TRUE ) ;
+      releaseExtent ( rootExtentID ) ;
+      goto done ;
+   error_after_create :
+      INT32 rc1 = SDB_OK ;
+      rc1 = dropIndex ( context, indexName, cb, dropDps, isSys ) ;
+      if ( rc1 )
+      {
+         PD_LOG ( PDERROR, "Failed to clean up invalid index, rc = %d", rc1 ) ;
+      }
+      goto done ;
+   }
+
+   INT32 _dmsStorageIndex::_createTextIdx( dmsMBContext *context,
+                                           const BSONObj &index,
+                                           dmsExtentID metaExtentID,
+                                           dmsExtentID rootExtentID,
+                                           pmdEDUCB *cb,
+                                           SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 indexID = 0 ;
+      const CHAR *indexName = NULL ;
+      BSONObj indexDef ;
+      dmsExtentID indexLID = DMS_INVALID_EXTENT ;
+      CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
+      UINT32 logRecSize = 0 ;
+      dpsMergeInfo info ;
+      dpsLogRecord &record = info.getMergeBlock().record() ;
+      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
+      SDB_DPSCB *dropDps = NULL ;
+      BSONObj keyPattern ;
+      BSONObj finalIndex ;    // Callback function will add extra fields into
+                              // the index definition.
+      BSONObj extraFieldsObj ;
+      BOOLEAN start = FALSE ;
+      IDmsExtDataHandler *handler  = _pStorageInfo->_extDataHandler ;
+
+      SDB_ASSERT( handler, "External handler is NULL" ) ;
+      SDB_ASSERT( context && context->isMBLock(),
+                  "Caller should hold mb lock" ) ;
+      SDB_ASSERT( DMS_INVALID_EXTENT != metaExtentID,
+                  "meta extent id is invalid" )  ;
+      SDB_ASSERT( DMS_INVALID_EXTENT != metaExtentID,
+                  "root extent id is invalid" )  ;
+
+      // Number of text index on colleection is limited.
       if ( context->mbStat()->_textIdxNum >= DMS_MAX_TEXT_IDX_NUM )
       {
          rc = SDB_DMS_MAX_INDEX ;
@@ -1231,19 +1233,231 @@ namespace engine
          goto error ;
       }
 
+      indexName = index.getStringField( IXM_FIELD_NAME_NAME ) ;
+
+      rc = _allocateIdxID( context, indexName, index, indexID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Allocate index id failed: %d", rc ) ;
+
       if ( NULL == _pDataSu->getExtDataHandler() )
       {
          _pDataSu->regExtDataHandler( handler ) ;
       }
 
-      rc = handler->onCrtTextIdx( context->mb()->_clUniqueID,
-                                  index, finalIndex, cb, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR, "External operation on create text index "
-                   "failed, rc: %d", rc ) ;
+      // Extral field 'ExtDataName' will be added into the index definition.
+      // The finalIndex will hold that complete definition. This definition will
+      // be stored in indexCB.
+      rc = handler->onBeginCrtTextIdx( getSuName(),
+                                       context->mb()->_collectionName,
+                                       context->mb()->_clUniqueID,
+                                       index, finalIndex, cb, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Prepare creating index failed: %d", rc ) ;
+      start = TRUE ;
 
-   done:
+      // extraFieldsObj will hold the extra field(s) added above.
+      // In replication log, we don't want the external name. Otherwise the
+      // key validation on slave will fail. So we do some filter here.
+      // extraObject contains fields added by _createTextIdx. They will be
+      // removed before writing the log blow.
+      extraFieldsObj = finalIndex.filterFieldsUndotted( index, false ) ;
+
+      {
+         // initialize index control block, set flag to invalid
+         ixmIndexCB indexCB ( metaExtentID, finalIndex, context->mbID(), this,
+                              context ) ;
+         // verify the index control block is initialized
+         if ( !indexCB.isInitialized() )
+         {
+            // if we can't initialize control block, we shouldn't call dropIndex
+            // at the moment. So let's just reset _indexExtent to invalid and
+            // free the extents
+            PD_LOG ( PDERROR, "Failed to initialize index" ) ;
+            rc = SDB_DMS_INIT_INDEX ;
+            goto error ;
+         }
+         //set logical id
+         indexLID = context->mb()->_indexHWCount ;
+         indexCB.setLogicalID( indexLID ) ;
+         // Get the index definition from indexCB instead of using index
+         // directly, because extra fields may have been added to the
+         // definition. For example, _id is added on primary node.
+         // Remove the extra fields added by callback function above.
+         indexDef = indexCB.getDef().
+               filterFieldsUndotted( extraFieldsObj, false ).getOwned() ;
+         keyPattern = indexCB.keyPattern().getOwned() ;
+
+         // calc the reserve size
+         if ( dpscb )
+         {
+            _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
+                                   sizeof(fullName) ) ;
+
+            rc = dpsIXCrt2Record( fullName, indexDef, record ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to build record:%d", rc ) ;
+
+            rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d",
+                         rc ) ;
+
+            logRecSize = record.alignedLen() ;
+            rc = pTransCB->reservedLogSpace( logRecSize, cb );
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to reserved log space(length=%u)",
+                       logRecSize ) ;
+               logRecSize = 0 ;
+               goto error ;
+            }
+         }
+
+         // For text index, the root extent is not used. But to be unified,
+         // initialize it too.
+         {
+            // once the control block is allocated, let's do root extent
+            ixmExtent idx( rootExtentID, context->mbID(), this ) ;
+         }
+         indexCB.setRoot ( rootExtentID ) ;
+         indexCB.setFlag( IXM_INDEX_FLAG_CREATING ) ;
+      }
+
+      // change mb metadata
+      context->mb()->_indexExtent[indexID] = metaExtentID ;
+      context->mb()->_numIndexes++ ;
+      context->mb()->_indexHWCount++ ;
+      context->mbStat()->_textIdxNum++ ;
+
+      {
+         ixmIndexCB finalIdxCB( metaExtentID, this, context ) ;
+         OID idxID ;
+         dmsExtentID idxLID = DMS_INVALID_EXTENT ;
+
+         rc = finalIdxCB.getIndexID( idxID ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get index id failed, rc: %d", rc ) ;
+            goto error_after_create ;
+         }
+         idxLID = finalIdxCB.getLogicalID() ;
+
+         // Now ready to create external data. It's time-consuming, so do it out of
+         // the lock.
+         context->pause() ;
+
+         rc = handler->onCrtTextIdx( keyPattern, cb, NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR,
+                    "External operation on creating text index failed, "
+                    "rc: %d", rc ) ;
+            goto error_after_create ;
+         }
+
+         // Resume may fail, as some dropping may have been done after the lock is
+         // released.
+         rc = context->resume() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Resume mb context lock failed, rc: %d", rc ) ;
+            goto error_after_create ;
+         }
+
+         // Check if the indexCB is still valid. Maybe it has been dropped by
+         // someone else.
+         if ( !finalIdxCB.isStillValid( idxID )
+              || idxLID != finalIdxCB.getLogicalID() )
+         {
+            rc = SDB_DMS_INVALID_INDEXCB ;
+            goto error_after_create ;
+         }
+
+         rc = handler->done( DMS_EXTOPR_TYPE_CRTIDX, cb );
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "External done operation on creating text index "
+                             "failed, rc: %d", rc );
+            goto error_after_create;
+         }
+
+         // All has been done. Set index status as normal.
+         {
+            ixmIndexCB indexCB( metaExtentID, this, context );
+            indexCB.setFlag( IXM_INDEX_FLAG_NORMAL );
+         }
+      }
+
+      // log it
+      if ( dpscb )
+      {
+         rc = _pDataSu->_logDPS( dpscb, info, cb, context,
+                                 DMS_INVALID_EXTENT, TRUE,
+                                 DMS_FILE_IDX ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to insert ixcrt into log, rc: %d", rc ) ;
+            goto error_after_create ;
+         }
+      }
+      else if ( cb->getLsnCount() > 0 )
+      {
+         context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
+                                                   DMS_FILE_IDX,
+                                                   cb->isDoRollback() ) ;
+      }
+      dropDps = dpscb ;
+
+      /// flush some page
+      flushPages( metaExtentID, 1, isSyncDeep() ) ;
+      flushPages( rootExtentID, 1, isSyncDeep() ) ;
+
+      rc = context->mbLock( EXCLUSIVE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to lock mb:%d", rc ) ;
+         goto error_after_create ;
+      }
+
+      if ( _pDataSu->_pEventHolder )
+      {
+         dmsEventCLItem clItem( context->mb()->_collectionName,
+                                context->mbID(),
+                                context->clLID() ) ;
+         dmsEventIdxItem idxItem ( indexName, indexLID, finalIndex ) ;
+         _pDataSu->_pEventHolder->onCreateIndex( DMS_EVENT_MASK_ALL, clItem,
+                                                 idxItem, cb, dpscb ) ;
+      }
+
+   done :
+      if ( 0 != logRecSize )
+      {
+         pTransCB->releaseLogSpace( logRecSize, cb );
+      }
+      if ( SDB_OK == rc )
+      {
+         _pDataSu->flushMME( isSyncDeep() ) ;
+      }
       return rc ;
-   error:
+   error :
+      SDB_ASSERT( SDB_DMS_INVALID_INDEXCB != rc, "Index cb is invalid" ) ;
+      releaseExtent ( metaExtentID, TRUE ) ;
+      releaseExtent ( rootExtentID ) ;
+      if ( start )
+      {
+         handler->abortOperation( DMS_EXTOPR_TYPE_CRTIDX, cb ) ;
+      }
+      goto done ;
+   error_after_create :
+      if ( start )
+      {
+         handler->abortOperation( DMS_EXTOPR_TYPE_CRTIDX, cb ) ;
+      }
+      // Whether replication log will be written depends on the value of
+      // dropDps. Only when the creation has been logged that it has valid
+      // value.
+      INT32 rc1 = SDB_OK ;
+      rc1 = dropIndex ( context, indexName, cb, dropDps, FALSE ) ;
+      if ( rc1 )
+      {
+         PD_LOG ( PDERROR, "Failed to clean up invalid index, rc = %d", rc1 ) ;
+      }
       goto done ;
    }
 

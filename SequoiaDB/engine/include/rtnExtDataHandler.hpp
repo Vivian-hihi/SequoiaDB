@@ -81,9 +81,15 @@ namespace engine
       virtual INT32 onDelCL( const CHAR *csName, const CHAR *clName,
                              pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
 
-      virtual INT32 onCrtTextIdx( utilCLUniqueID clUniqID,
-                                  const BSONObj &index, BSONObj &newIndex,
-                                  _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+      virtual INT32 onBeginCrtTextIdx( const CHAR *csName,
+                                       const CHAR *clName,
+                                       utilCLUniqueID clUniqID,
+                                       const BSONObj &index,
+                                       BSONObj &newIndex, _pmdEDUCB *cb,
+                                       SDB_DPSCB *dpscb = NULL ) ;
+
+      virtual INT32 onCrtTextIdx( const BSONObj &index, _pmdEDUCB *cb,
+                                  SDB_DPSCB *dpscb = NULL ) ;
 
       virtual INT32 onDropTextIdx( const CHAR *extName, _pmdEDUCB *cb,
                                    SDB_DPSCB *dpscb = NULL ) ;

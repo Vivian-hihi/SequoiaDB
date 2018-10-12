@@ -145,6 +145,11 @@ namespace engine
       return SDB_OK ;
    }
 
+   BOOLEAN _rtnExtDataProcessor::isActive() const
+   {
+      return ( RTN_EXT_PROCESSOR_NORMAL == _stat ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_SETTARGETNAMES, "_rtnExtDataProcessor::setTargetNames" )
    INT32 _rtnExtDataProcessor::setTargetNames( const CHAR *extName )
    {
@@ -1166,7 +1171,7 @@ namespace engine
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
          processor = &_processors[i] ;
-         if ( processor->isOwnedBy( csName ) )
+         if ( processor->isOwnedBy( csName ) && processor->isActive() )
          {
             ossRWMutex *mutex = &_processorLocks[i] ;
             if ( SHARED == lockType )
@@ -1239,7 +1244,8 @@ namespace engine
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
          processor = &_processors[i] ;
-         if ( processor->isOwnedBy( csName, clName ) )
+         if ( processor->isOwnedBy( csName, clName )
+              && processor->isActive() )
          {
             ossRWMutex *mutex = &_processorLocks[i] ;
             if ( SHARED == lockType )
@@ -1307,7 +1313,8 @@ namespace engine
 
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
-         if ( _processors[i].isOwnedBy( csName, clName, idxName ) )
+         if ( _processors[i].isOwnedBy( csName, clName, idxName )
+              && _processors[i].isActive() )
          {
             ossRWMutex *mutex = &_processorLocks[i] ;
             if ( SHARED == lockType )
@@ -1340,7 +1347,8 @@ namespace engine
 
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
-         if ( _processors[i].isOwnedByExt( extName ) )
+         if ( _processors[i].isOwnedByExt( extName )
+              && _processors[i].isActive() )
          {
             ossRWMutex *mutex = &_processorLocks[i] ;
             if ( SHARED == lockType )

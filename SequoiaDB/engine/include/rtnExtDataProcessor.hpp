@@ -121,6 +121,8 @@ namespace engine
 
       INT32 active() ;
 
+      BOOLEAN isActive() const ;
+
       INT32 setTargetNames( const CHAR *extName ) ;
 
       INT32 check( DMS_EXTOPR_TYPE type, const BSONObj *object,

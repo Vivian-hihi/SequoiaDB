@@ -52,6 +52,7 @@ namespace engine
       DMS_EXTOPR_TYPE_INSERT = 0,
       DMS_EXTOPR_TYPE_DELETE,
       DMS_EXTOPR_TYPE_UPDATE,
+      DMS_EXTOPR_TYPE_CRTIDX,
       DMS_EXTOPR_TYPE_TRUNCATE,
       DMS_EXTOPR_TYPE_DROPCS,
       DMS_EXTOPR_TYPE_DROPCL,
@@ -86,9 +87,15 @@ namespace engine
       virtual INT32 onDelCL( const CHAR *csName, const CHAR *clName,
                              _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) = 0;
 
-      virtual INT32 onCrtTextIdx( utilCLUniqueID clUniqID,
-                                  const BSONObj &index, BSONObj &newIndex,
-                                  _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) = 0 ;
+      virtual INT32 onBeginCrtTextIdx( const CHAR *csName,
+                                       const CHAR *clName,
+                                       utilCLUniqueID clUniqID,
+                                       const BSONObj &index,
+                                       BSONObj &newIndex, _pmdEDUCB *cb,
+                                       SDB_DPSCB *dpscb = NULL ) = 0 ;
+
+      virtual INT32 onCrtTextIdx( const BSONObj &index, _pmdEDUCB *cb,
+                                  SDB_DPSCB *dpscb = NULL ) = 0 ;
 
       virtual INT32 onDropTextIdx( const CHAR *extName, _pmdEDUCB *cb,
                                    SDB_DPSCB *dpscb = NULL ) = 0 ;

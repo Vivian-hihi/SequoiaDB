@@ -128,8 +128,103 @@ namespace engine
       PD_TRACE_EXIT( SDB__RTNEXTCONTEXTBASE_APPENDPROCESSORS ) ;
    }
 
+   _rtnExtCrtIdxCtx::_rtnExtCrtIdxCtx()
+   : _rtnExtContextBase( DMS_EXTOPR_TYPE_CRTIDX ),
+     _rebuildDone( FALSE )
+   {
+   }
+
+   _rtnExtCrtIdxCtx::~_rtnExtCrtIdxCtx()
+   {
+   }
+
+   void _rtnExtCrtIdxCtx::setNames( const CHAR *csName, const CHAR *clName,
+                                    const CHAR *indexName, const CHAR *extName )
+   {
+      _csName = string( csName ) ;
+      _clName = string( clName ) ;
+      _idxName = string( indexName ) ;
+      _extName = string( extName ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCRTIDXCTX_OPEN, "_rtnExtCrtIdxCtx::open" )
+   INT32 _rtnExtCrtIdxCtx::open( rtnExtDataProcessorMgr *processorMgr,
+                                 const BSONObj &idxKeyDef,
+                                 pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTCRTIDXCTX_OPEN ) ;
+      rtnExtDataProcessor *processor = NULL ;
+
+      _processorMgr = processorMgr ;
+
+      // Do not activate the processor here. Do that in done.
+      rc = _processorMgr->createProcessor( _csName.c_str(), _clName.c_str(),
+                                           _idxName.c_str(), _extName.c_str(),
+                                           idxKeyDef, processor, FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Create external processor failed[ %d ]",
+                   rc ) ;
+      _appendProcessor( processor ) ;
+
+      rc = processor->doRebuild( cb, dpscb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Rebuild of index failed[ %d ]", rc ) ;
+      _rebuildDone = TRUE ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTCRTIDXCTX_OPEN, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCRTIDXCTX__ONDONE, "_rtnExtCrtIdxCtx::_onDone" )
+   INT32 _rtnExtCrtIdxCtx::_onDone( _pmdEDUCB * cb, SDB_DPSCB * dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTCRTIDXCTX__ONDONE ) ;
+
+      rc = _processorMgr->activateProcessor( _processors.front()->getID(),
+                                             FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Activate processor failed[ %d ]", rc ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTCRTIDXCTX__ONDONE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCRTIDXCTX__ONABORT, "_rtnExtCrtIdxCtx::_onAbort" )
+   INT32 _rtnExtCrtIdxCtx::_onAbort( _pmdEDUCB * cb, SDB_DPSCB * dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTCRTIDXCTX__ONABORT ) ;
+
+      if ( _rebuildDone )
+      {
+         SDB_ASSERT( 1 == _processors.size(), "Processor is NULL" ) ;
+         rc = _processors.front()->doDropP1( cb, dpscb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Processor drop operation phase 1 "
+                                   "failed[ %d ]", rc ) ;
+         rc = _processors.front()->doDropP2( cb, dpscb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Processor drop operation phase 2 "
+                                   "failed[ %d ]", rc ) ;
+      }
+
+      if ( _processors.size() > 0 )
+      {
+         _processorMgr->destroyProcessors( _processors, -1 ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTCRTIDXCTX__ONABORT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    _rtnExtRebuildIdxCtx::_rtnExtRebuildIdxCtx()
-         : _rtnExtContextBase( DMS_EXTOPR_TYPE_REBUILDIDX )
+   : _rtnExtContextBase( DMS_EXTOPR_TYPE_REBUILDIDX )
    {
    }
 
@@ -230,7 +325,7 @@ namespace engine
    }
 
    _rtnExtDataOprCtx::_rtnExtDataOprCtx( DMS_EXTOPR_TYPE type )
-         : _rtnExtContextBase( type )
+   : _rtnExtContextBase( type )
    {
    }
 
@@ -856,6 +951,9 @@ namespace engine
             break ;
          case DMS_EXTOPR_TYPE_REBUILDIDX:
             newCtx = SDB_OSS_NEW rtnExtRebuildIdxCtx ;
+            break ;
+         case DMS_EXTOPR_TYPE_CRTIDX:
+            newCtx = SDB_OSS_NEW rtnExtCrtIdxCtx ;
             break ;
          default:
             SDB_ASSERT( FALSE, "Invalid context type" ) ;

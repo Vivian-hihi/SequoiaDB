@@ -138,10 +138,24 @@ namespace engine
          void     decStatFreeSpace ( UINT16 mbID, UINT16 size ) ;
 
       private:
+         INT32    _createIndex( _dmsMBContext *context,
+                                const BSONObj &index,
+                                dmsExtentID metaExtentID,
+                                dmsExtentID rootExtentID,
+                                UINT16 indexType,
+                                _pmdEDUCB *cb,
+                                SDB_DPSCB *dpscb,
+                                BOOLEAN isSys,
+                                INT32 sortBufferSize ) ;
+
+
          // newIndex - 'ExtDataName' will be added into index.
          INT32    _createTextIdx( _dmsMBContext *context,
                                   const BSONObj &index,
-                                  _pmdEDUCB *cb, BSONObj &finalIndex ) ;
+                                  dmsExtentID metaExtentID,
+                                  dmsExtentID rootExtentID,
+                                  _pmdEDUCB *cb,
+                                  SDB_DPSCB *dpscb ) ;
 
          // if indexLID == DMS_INALID_EXTENT, it will get from index cb
          INT32    _rebuildIndex ( _dmsMBContext *context,
@@ -193,6 +207,7 @@ namespace engine
          virtual void   _onRestore() ;
 
          INT32 _allocateIdxID( _dmsMBContext *context,
+                               const CHAR *indexName,
                                const BSONObj &index,
                                INT32 &indexID ) ;
 

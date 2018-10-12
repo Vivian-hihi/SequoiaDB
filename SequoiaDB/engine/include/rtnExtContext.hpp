@@ -131,6 +131,32 @@ namespace engine
    } ;
    typedef _rtnExtContextBase rtnExtContextBase ;
 
+   class _rtnExtCrtIdxCtx : public _rtnExtContextBase
+   {
+   public:
+      _rtnExtCrtIdxCtx() ;
+      ~_rtnExtCrtIdxCtx() ;
+
+      void setNames( const CHAR *csName, const CHAR *clName,
+                     const CHAR *idxName, const CHAR *extName ) ;
+
+      INT32 open( rtnExtDataProcessorMgr *processorMgr,
+                  const BSONObj &idxKeyDef,
+                  pmdEDUCB *cb, SDB_DPSCB *dpscb ) ;
+
+   private:
+      INT32 _onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+      INT32 _onAbort( pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+
+   private:
+      string _csName ;
+      string _clName ;
+      string _idxName ;
+      string _extName ;
+      BOOLEAN _rebuildDone ;
+   } ;
+   typedef _rtnExtCrtIdxCtx rtnExtCrtIdxCtx ;
+
    class _rtnExtRebuildIdxCtx : public _rtnExtContextBase
    {
    public:
