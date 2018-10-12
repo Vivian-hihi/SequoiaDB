@@ -120,6 +120,7 @@
 #define FIELD_NAME_AUTOINC_SEQ               "Sequence"
 #define FIELD_NAME_GENERATED                 "Generated"
 #define VALUE_NAME_ALWAYS                    "always"
+#define VALUE_NAME_STRICT                    "strict"
 #define VALUE_NAME_DEFAULT                   "default"
 #define FIELD_NAME_CURRENT_VALUE             "CurrentValue"
 #define FIELD_NAME_INCREMENT                 "Increment"

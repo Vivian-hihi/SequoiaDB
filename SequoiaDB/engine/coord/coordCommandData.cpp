@@ -1172,6 +1172,11 @@ namespace engine
       CHAR *option = NULL;
       BSONObj boQuery ;
       const CHAR *fullName = NULL ;
+      CoordGroupList cataGrpLst ;
+      CoordCataInfoPtr cataPtr ;
+      AUTOINC_ITEM_MAP autoIncMap ;
+      AUTOINC_ITEM_MAP_CONST_IT iter ;
+
       rc = msgExtractQuery( ( CHAR * )pMsg, NULL, NULL,
                             NULL, NULL, &option, NULL,
                             NULL, NULL );
@@ -1201,14 +1206,47 @@ namespace engine
          goto error;
       }
 
+      // remove all data
       rc = executeOnCL( pMsg, cb, fullName, FALSE, NULL, NULL,
                         NULL, NULL, buf ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to truncate cl:%s, rc:%d",
+         PD_LOG( PDERROR, "failed to truncate cl:%s on data group, rc:%d",
                  fullName, rc ) ;
          goto error ;
       }
+
+      // reset cl related sequences
+      cataGrpLst[ CATALOG_GROUPID ] = CATALOG_GROUPID ;
+      pMsg->opCode = MSG_CAT_TRUNCATE_REQ ;
+      rc = _executeOnGroups( pMsg, cb, cataGrpLst, MSG_ROUTE_CAT_SERVICE,
+                             TRUE, NULL, NULL, NULL, buf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to truncate cl:%s on cata group, rc:%d",
+                 fullName, rc ) ;
+         goto error ;
+      }
+
+      // remove cache of related sequences.
+      rc = _pResource->getCataInfo( fullName, cataPtr ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get cl[%s] catalog info, "
+                   "rc: %d", fullName, rc ) ;
+
+      if ( cataPtr->hasAutoIncrement() )
+      {
+         autoIncMap = cataPtr->getAutoIncMap() ;
+
+         for ( iter = autoIncMap.begin() ;
+               iter != autoIncMap.end() ;
+               ++iter )
+         {
+            rc = coordSequenceInvalidateCache( iter->second->sequenceName(), cb ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to invalidate coord cache, rc: %d", rc ) ;
+         }
+      }
+
    done:
       if ( fullName )
       {

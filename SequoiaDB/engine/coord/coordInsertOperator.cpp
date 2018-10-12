@@ -42,11 +42,101 @@
 #include "rtnCommandDef.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "coordSequenceAgent.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
+   /*
+      this is a simplized bson builder, it can build bson on exist
+      buffer, but never check the exist buffer size. please check
+      the buffer size before use it.
+   */
+   class _coordInsertOperator::_SimpleBSONBuilder
+   {
+      /*
+         BSONObj struct:
+         |length(UINT32)   |BSONElements(...)   |EOO(CHAR)  |
+
+         BSONElement struct:
+         |type(CHAR) |fieldName(CHAR*) |value(...) |
+         value length is decided by type. if NumberLong, it's INT64.
+      */
+      public:
+         _SimpleBSONBuilder()
+         {
+            _pBuf = NULL ;
+            _pCur = NULL ;
+         }
+
+         _SimpleBSONBuilder( CHAR *pBuf )
+         {
+            _pBuf = pBuf ;
+            _pCur = _pBuf ;
+         }
+
+         OSS_INLINE void setBuf( CHAR* pBuf ) { _pBuf = pBuf ; }
+
+         OSS_INLINE CHAR* getBuf() { return _pBuf ; }
+
+         OSS_INLINE UINT32 getLen() { return _pCur - _pBuf ; }
+
+         void init()
+         {
+            *((UINT32*)_pBuf) = 0 ;
+            _pCur = _pBuf + 4 ;
+         }
+
+         void done()
+         {
+            *_pCur = (CHAR) EOO ;
+            ++_pCur ;
+            *((UINT32*)_pBuf) = _pCur - _pBuf ;
+         }
+
+         _SimpleBSONBuilder* appendElement( BSONElement &ele )
+         {
+            ossMemcpy( _pCur, ele.rawdata(), ele.size() ) ;
+            _pCur += ele.size() ;
+            return this ;
+         }
+
+         _SimpleBSONBuilder* append( const CHAR *fieldName, INT64 value )
+         {
+            *_pCur = (CHAR) NumberLong ;
+            _pCur += 1 ;
+
+            const INT32 fieldLen = ossStrlen( fieldName ) + 1 ;
+            ossMemcpy( _pCur, fieldName, fieldLen ) ;
+            _pCur += fieldLen ;
+
+            *((INT64*)_pCur) = value ;
+            _pCur += 8 ;
+            return this ;
+         }
+
+         CHAR* subobjStart( const CHAR *fieldName )
+         {
+            *_pCur = (CHAR) Object ;
+            _pCur += 1 ;
+
+            const INT32 fieldLen = ossStrlen( fieldName ) + 1 ;
+            ossMemcpy( _pCur, fieldName, fieldLen ) ;
+            _pCur += fieldLen ;
+
+            return _pCur ;
+         }
+
+         void subobjEnd( _SimpleBSONBuilder &subBuilder )
+         {
+            _pCur += subBuilder.getLen() ;
+         }
+
+      private:
+         CHAR* _pBuf ;
+         CHAR* _pCur ;
+   };
 
    /*
       _coordInsertOperator implement
@@ -58,6 +148,15 @@ namespace engine
 
       const static string s_insertStr("Insert" ) ;
       setName( s_insertStr ) ;
+
+      _pNewMsg = NULL ;
+      _newMsgLen = 0 ;
+      _newMsgSize = 0 ;
+
+      _pOrgMsg = NULL ;
+      _orgMsgLen = 0 ;
+
+      _lastVersion = -1 ;
    }
 
    _coordInsertOperator::~_coordInsertOperator()
@@ -148,6 +247,8 @@ namespace engine
                  "failed, rc: %d", pCollectionName, rc ) ;
          goto error ;
       }
+      _pOrgMsg = (CHAR*) pMsg ;
+      _orgMsgLen = pMsg->messageLength ;
 
    retry:
       /// Do on collection
@@ -187,6 +288,7 @@ namespace engine
          /// InsertedNum(Hi) + IgnoredNum(Lo)
          contextID = ossPack32To64( _insertedNum, _ignoredNum ) ;
       }
+      msgReleaseBuffer( _pNewMsg, cb ) ;
       PD_TRACE_EXITRC ( COORD_INSERTOPR_EXE, rc ) ;
       return rc ;
    error:
@@ -210,6 +312,23 @@ namespace engine
                     ossRoundUpToMultipleX ( offsetof(MsgOpInsert, name) +
                                             pInsertMsg->nameLength + 1, 4 ) -
                     sizeof( MsgHeader ) ) ;
+
+      if ( cataSel.getCataPtr()->hasAutoIncrement() )
+      {
+         if ( 0 == result._sucGroupLst.size() &&
+              cataSel.getCataPtr()->getVersion() != _lastVersion )
+         {
+            inMsg.data()->clear() ;
+
+            rc = _addAutoIncToMsg( cataSel.getCataPtr()->getAutoIncMap(),
+                                   _pOrgMsg, _orgMsgLen, cb,
+                                   &_pNewMsg, _newMsgSize, _newMsgLen ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to add autoIncrement fields to msg, rc: %d", rc ) ;
+            inMsg._pMsg = (MsgHeader*)_pNewMsg ;
+            _lastVersion = cataSel.getCataPtr()->getVersion() ;
+         }
+      }
 
       // clear send groups
       options._groupLst.clear() ;
@@ -502,6 +621,23 @@ namespace engine
                                             pInsertMsg->nameLength + 1, 4 ) -
                     sizeof( MsgHeader ) ) ;
 
+      if ( cataSel.getCataPtr()->hasAutoIncrement() )
+      {
+         if ( 0 == result._sucGroupLst.size() &&
+              cataSel.getCataPtr()->getVersion() != _lastVersion )
+         {
+            _grpSubCLDatas.clear() ;
+
+            rc = _addAutoIncToMsg( cataSel.getCataPtr()->getAutoIncMap(),
+                                   _pOrgMsg, _orgMsgLen, cb,
+                                   &_pNewMsg, _newMsgSize, _newMsgLen ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to add autoIncrement fields to msg, rc: %d", rc ) ;
+            inMsg._pMsg = (MsgHeader*)_pNewMsg ;
+            _lastVersion = cataSel.getCataPtr()->getVersion() ;
+         }
+      }
+
       if ( _grpSubCLDatas.size() == 0 )
       {
          INT32 flag = 0 ;
@@ -529,7 +665,7 @@ namespace engine
       inMsg._datas.clear() ;
 
       rc = buildInsertMsg( fixed, _grpSubCLDatas, _vecObject, inMsg._datas ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build insert msg failed, rc: %d" ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build insert msg failed, rc: %d", rc ) ;
 
       // clear send groups
       options._groupLst.clear() ;
@@ -769,6 +905,253 @@ namespace engine
       }
 
       return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__ADD_AUTOINC_TO_MSG, "_coordInsertOperator::_addAutoIncToMsg" )
+   INT32 _coordInsertOperator::_addAutoIncToMsg( const AUTOINC_ITEM_MAP &autoIncMap,
+                                                 CHAR *pOrgMsg,
+                                                 INT32 orgMsgLen,
+                                                 pmdEDUCB *cb,
+                                                 CHAR **ppNewMsg,
+                                                 INT32 &newMsgSize,
+                                                 INT32 &newMsgLen )
+   {
+      PD_TRACE_ENTRY( SDB__ADD_AUTOINC_TO_MSG ) ;
+
+      INT32 rc = SDB_OK ;
+      INT32 i = 0 ;
+      CHAR* pCurPos = NULL ;
+      _SimpleBSONBuilder builder ;
+      INT32 estimatedSize = 0 ;
+      INT32 autoIncSize = 0 ;
+      MsgOpInsert *pInsertMsg = (MsgOpInsert *)pOrgMsg ;
+      INT32 headerSize = 0 ;
+
+      INT32 flag = 0 ;
+      CHAR *pCollectionName = NULL ;
+      CHAR *pInsertor = NULL ;
+      INT32 count = 0 ;
+
+      ((MsgHeader*)pOrgMsg)->messageLength = orgMsgLen ;
+      rc = msgExtractInsert( pOrgMsg, &flag, &pCollectionName,
+                             &pInsertor, count ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extrace insert msg failed, rc: %d",
+                   rc ) ;
+
+      // 1.malloc a msg buffer which is big enough
+      autoIncSize = calcAutoIncEleSize( autoIncMap ) ;
+      estimatedSize = orgMsgLen + count * ( autoIncSize + 4 ) ;
+
+      newMsgLen = 0 ;
+      rc = msgCheckBuffer( ppNewMsg, &newMsgSize, estimatedSize, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to malloc buffer, rc: %d", rc ) ;
+
+      // 2.copy the header of original msg
+      headerSize = ossRoundUpToMultipleX( offsetof(MsgOpInsert, name) +
+                                          pInsertMsg->nameLength + 1,
+                                          4 ) ;
+      ossMemcpy( *ppNewMsg, pOrgMsg, headerSize ) ;
+      pCurPos = *ppNewMsg + headerSize ;
+
+      // 3.build new bson objs with auto-increment field
+      for ( i = 0 ; i < count ; ++i )
+      {
+         const BSONObj objIn( (const CHAR*)pInsertor ) ;
+         builder.setBuf( pCurPos ) ;
+         rc = _addAutoIncToObj( objIn, autoIncMap, cb, builder ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to add autoIncrement field to obj[%s], rc: %d",
+                      objIn.toString().c_str(), rc ) ;
+
+         pCurPos += ossRoundUpToMultipleX( builder.getLen(), 4 ) ;
+         pInsertor += ossRoundUpToMultipleX( objIn.objsize(), 4 ) ;
+      }
+
+      newMsgLen = pCurPos - (*ppNewMsg) ;
+      SDB_ASSERT( newMsgLen < newMsgSize, "message is over boundary" ) ;
+      ((MsgHeader*)(*ppNewMsg))->messageLength = newMsgLen ;
+
+   done:
+      PD_TRACE_EXIT( SDB__ADD_AUTOINC_TO_MSG ) ;
+      return rc ;
+   error:
+      newMsgLen = 0 ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__ADD_AUTOINC_TO_OBJ, "_coordInsertOperator::_addAutoIncToObj" )
+   INT32 _coordInsertOperator::_addAutoIncToObj( const BSONObj &objIn,
+                                                 const AUTOINC_ITEM_MAP &autoIncMap,
+                                                 pmdEDUCB *cb,
+                                                 _SimpleBSONBuilder &builder )
+   {
+      PD_TRACE_ENTRY( SDB__ADD_AUTOINC_TO_OBJ ) ;
+
+      INT32                      rc = SDB_OK ;
+      BSONElement                ele ;
+      const CHAR*                eleField = NULL;
+      BSONObj                    subObjIn ;
+
+      AUTOINC_ITEM_MAP_CONST_IT  autoIncIt ;
+      const coordAutoIncItem     *pItem = NULL ;
+      _utilArray<const CHAR*>    doneArray ;
+      BOOLEAN                    isDone = FALSE ;
+      const CHAR*                doneField = NULL ;
+
+      coordSequenceAgent         *pSequenceAgent = NULL ;
+      INT64                      nextValue = 0 ;
+
+      try
+      {
+         // 1. Handle autoIncrement fields inputted by user.
+
+         builder.init() ;
+         BSONObjIterator boIt( objIn ) ;
+
+         while( boIt.more() )
+         {
+            ele = boIt.next() ;
+            eleField = ele.fieldName() ;
+            autoIncIt = autoIncMap.find( eleField ) ;
+            if ( autoIncIt == autoIncMap.end() )
+            {
+               builder.appendElement( ele ) ;
+               continue ;
+            }
+
+            if ( !autoIncIt->second->hasSubField() )
+            {
+               switch( autoIncIt->second->generatedType() )
+               {
+               case AUTOINC_GEN_ALWAYS:
+                  break ;
+               case AUTOINC_GEN_STRICT:
+                  PD_CHECK( NumberInt == ele.type() || NumberLong == ele.type(),
+                            SDB_INVALIDARG, error, PDERROR,
+                            "Wrong type[%d] of autoIncrement field[%s]",
+                            ele.type(), eleField ) ;
+               case AUTOINC_GEN_DEFAULT:
+                  builder.appendElement( ele ) ;
+                  doneArray.append( autoIncIt->first ) ;
+                  break ;
+               }
+            }
+            else
+            {
+               if ( Object == ele.type() )
+               {
+                  subObjIn = ele.Obj() ;
+                  _SimpleBSONBuilder subBuilder( builder.subobjStart( eleField ) ) ;
+                  rc = _addAutoIncToObj( subObjIn, *(autoIncIt->second->subFieldMap()),
+                                         cb, subBuilder ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement field[%s], rc: %d",
+                               eleField, rc ) ;
+                  builder.subobjEnd( subBuilder ) ;
+
+                  doneArray.append( autoIncIt->first ) ;
+               }
+               else
+               {
+                  // autoIncrement field is "a.b", and user just input field "a".
+                  PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
+                               "Field[%s] conflicted with autoIncrement field",
+                               eleField ) ;
+               }
+            }
+
+            if ( doneArray.size() == autoIncMap.size() )
+            {
+               break ;
+            }
+         }
+
+         while( boIt.more() )
+         {
+            ele = boIt.next() ;
+            builder.appendElement( ele ) ;
+         }
+
+         // 2. Complete the rest of autoIncrement fields.
+
+         pSequenceAgent = _pResource->getSequenceAgent() ;
+
+         for ( autoIncIt = autoIncMap.begin() ;
+               autoIncIt != autoIncMap.end() ;
+               ++autoIncIt )
+         {
+            _utilArray<const CHAR*>::iterator doneIt( doneArray ) ;
+            isDone = FALSE ;
+            while ( doneIt.next( doneField ) )
+            {
+               if ( 0 == ossStrcmp( doneField, autoIncIt->first ) )
+               {
+                  isDone = TRUE ;
+                  break ;
+               }
+            }
+            if ( isDone ) continue ;
+
+            pItem = autoIncIt->second ;
+            if ( !pItem->hasSubField() )
+            {
+               rc = pSequenceAgent->getNextValue( pItem->sequenceName(), nextValue, cb ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to get sequence[%s] next value, rc: %d",
+                            pItem->sequenceName(), rc ) ;
+
+               builder.append( pItem->fieldName(), nextValue ) ;
+            }
+            else
+            {
+               subObjIn = BSONObjBuilder().obj() ;
+               _SimpleBSONBuilder subBuilder( builder.subobjStart( pItem->fieldName() ) ) ;
+               rc = _addAutoIncToObj( subObjIn, *(pItem->subFieldMap()),
+                                      cb, subBuilder ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement field[%s], rc: %d",
+                            pItem->fieldName(), rc ) ;
+               builder.subobjEnd( subBuilder ) ;
+            }
+
+            doneArray.append( autoIncIt->first ) ;
+         }
+
+         builder.done() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Unexpected exception happened[%s]", e.what() ) ;
+      }
+
+   done:
+      PD_TRACE_EXIT( SDB__ADD_AUTOINC_TO_OBJ ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordInsertOperator::calcAutoIncEleSize( const AUTOINC_ITEM_MAP &autoIncMap )
+   {
+      INT32 autoIncSize = 0 ;
+      AUTOINC_ITEM_MAP_CONST_IT it ;
+      INT32 fieldLen = 0 ;
+
+      for ( it = autoIncMap.begin() ; it != autoIncMap.end() ; ++it )
+      {
+         fieldLen = ossStrlen( it->first ) + 1 ;
+         if ( !it->second->hasSubField() )
+         {
+            // |type(CHAR) |field(CHAR*)  |sequenceValue(INT64) |
+            autoIncSize += 1 + fieldLen + 8 ;
+         }
+         else
+         {
+            // |type(CHAR) |field(CHAR*)  |subObj(BSONObj) |
+            // BSONObj: |length(UINT32)  |elements(...)  |EOO(CHAR) |
+            autoIncSize += 1 + fieldLen + 4 +
+                           calcAutoIncEleSize( *(it->second->subFieldMap()) ) + 1 ;
+         }
+      }
+      return autoIncSize ;
    }
 
 }

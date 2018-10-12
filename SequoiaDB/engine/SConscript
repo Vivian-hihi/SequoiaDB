@@ -522,7 +522,7 @@ coordFiles = [
       "coord/coordGroupHandle.cpp",
       "coord/coordOperator.cpp",
       "coord/coordTransOperator.cpp",
-      "coord/coordShardKicker.cpp",
+      "coord/coordKeyKicker.cpp",
       "coord/coordInsertOperator.cpp",
       "coord/coordDeleteOperator.cpp",
       "coord/coordUpdateOperator.cpp",
@@ -560,7 +560,8 @@ coordFiles = [
       "coord/coordOmCache.cpp",
       "coord/coordOmStrategyJob.cpp",
       "coord/coordSequenceAgent.cpp",
-      "coord/coordCommandSequence.cpp"
+      "coord/coordCommandSequence.cpp",
+      "coord/coordAutoIncItem.cpp"
       ]
 
 aggrFiles = [
