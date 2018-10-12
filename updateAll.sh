@@ -151,7 +151,7 @@ function installSdb()
 
    # install coord db1 and db2
    if [ $needInstall -ne 0 ] ; then
-      NODECONFIG="{diaglevel:3, clustername:'xxx', businessname:'yyy'}"
+      NODECONFIG="{diaglevel:3, plancachelevel:3, clustername:'xxx', businessname:'yyy'}"
       #NODECONFIG="{logfilesz:1,transactionon:'TRUE'}"
       # create coord and start coord
       bin/sdb -s " var oma = new Oma() ; oma.createCoord('17643', '${homePath}/17643', $NODECONFIG) ; oma.startNode('17643') ; "
