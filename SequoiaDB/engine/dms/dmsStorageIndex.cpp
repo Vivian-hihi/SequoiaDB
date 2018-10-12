@@ -1365,6 +1365,12 @@ namespace engine
       // insert (root split)
       ixmExtent rootidx ( indexCB->getRoot(), this ) ;
 
+      /// TODO: temp for trans rollback
+      if ( !dupAllowed && ( cb->getTransID() & DPS_TRANSID_ROLLBACKTAG_BIT ) )
+      {
+         dupAllowed = TRUE ;
+      }
+
       rc = rootidx.insert ( key, rid, order, dupAllowed, indexCB ) ;
       if ( rc )
       {
