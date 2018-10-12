@@ -285,7 +285,7 @@
                         <copy file="${INSTALL_DIR}/conf/samples/sdbseadapter.conf" todir="${INSTALL_DIR}/conf/sdbseadpter/${svcname}"/>
                         
                         <staf location="@{testhost}" service="PROCESS"
-                              request="START SHELL COMMAND ${INSTALL_DIR}/bin/sdbseadapter -c ${INSTALL_DIR}/conf/sdbseadpter/${svcname} & WAIT 10m RETURNSTDERR"
+                              request="START SHELL COMMAND ${INSTALL_DIR}/bin/sdbseadapter -c ${INSTALL_DIR}/conf/sdbseadpter/${svcname} &amp; WAIT 10m RETURNSTDERR"
                               throwBuildException="1"/>
                      </sequential>
                   </for>
