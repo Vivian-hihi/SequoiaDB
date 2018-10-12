@@ -1,0 +1,100 @@
+/************************************
+*@Description: 使用query.count()执行记录数统计，query中包含全文检索 
+*@author:      liuxiaoxuan
+*@createdate:  2018.10.10
+*@testlinkCase: seqDB-12044
+**************************************/
+function main()
+{
+   if(commIsStandalone(db))  {   return ;   }
+
+   var csName = COMMCSNAME + "12044";
+   commDropCS( db, csName, true, "drop CS in the beginning" );
+                                                             	
+   commCreateCS( db, csName, false, "" );
+                                                              	
+   //create CL
+   var clName = COMMCLNAME + "12044";
+   var dbcl = commCreateCL( db, csName, clName );
+
+   var textIndexName = "textIndex";
+   var commonIndexName = "commonIndex"
+   dbcl.createIndex(textIndexName, {"a" : "text"});
+   dbcl.createIndex(commonIndexName, {"b" : 1});
+ 
+   // insert
+   var objs = new Array();
+   for(var i = 0; i < 20000; i++)
+   {
+      objs.push({a: "test_12044 " + i, b : "testb_" + i });
+   }
+   insertRecords(dbcl, objs);
+
+   // if insert fail, exit
+   if(20000 != dbcl.count())
+   {
+      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
+      return ;
+   }
+  
+   checkFullSyncToES(csName, clName, textIndexName, 20000);
+  
+   // $and
+   var findNoneCond = {"$and": [{"b": {"$et" : "testb_0"}}, {"":{"$Text":{"query":{"match_phrase":{"a" : "test_12044 1"}}}}}]};
+   var actCount = dbcl.find(findNoneCond).count();
+   var expectCount = 0;
+   checkCount(expectCount, actCount);
+
+   var findSomeCond = {"$and": [{"b": {"$gte" : "testb_1"}}, {"":{"$Text":{"query":{"match":{"a" : "test_12044"}}}}}]};
+   var actCount = dbcl.find(findSomeCond).count();
+   var expectCount = 19999;
+   checkCount(expectCount, actCount);
+
+   var findAllCond = {"$and": [{"b": {"$gte" : "testb_0"}}, {"":{"$Text":{"query":{"match":{"a" : "test_12044"}}}}}]};
+   var actCount = dbcl.find(findAllCond).count();
+   var expectCount = 20000;
+   checkCount(expectCount, actCount);
+
+   // $or
+   var findNoneCond = {"$or": [{"b": {"$et" : "testb"}}, {"":{"$Text":{"query":{"match":{"a" : "testa"}}}}}]};
+   var actCount = dbcl.find(findNoneCond).count();
+   var expectCount = 0;
+   checkCount(expectCount, actCount);
+
+   var findSomeCond = {"$or": [{"b": {"$gt" : "testb_10000"}}, {"":{"$Text":{"query":{"match_phrase":{"a" : "test_12044 1"}}}}}]};
+   var actCount = dbcl.find(findSomeCond).count();
+   var expectCount = 19995;
+   checkCount(expectCount, actCount);
+
+   var findAllCond = {"$or": [{"b": {"$gte" : "testb_0"}}, {"":{"$Text":{"query":{"match_phrase":{"a" : "test_12044 1"}}}}}]};
+   var actCount = dbcl.find(findAllCond).count();
+   var expectCount = 20000;
+   checkCount(expectCount, actCount);
+    
+   // $not
+   var findNoneCond = {"$not": [{"b": {"$gte" : "testb_0"}}, {"":{"$Text":{"query":{"match":{"a" : "test_12044"}}}}}]};
+   var actCount = dbcl.find(findNoneCond).count();
+   var expectCount = 0;
+   checkCount(expectCount, actCount);
+
+   var findSomeCond = {"$not": [{"b": {"$gte" : "testb_9"}}, {"":{"$Text":{"query":{"match":{"a" : "test_12044"}}}}}]};
+   var actCount = dbcl.find(findSomeCond).count();
+   var expectCount = 18889;
+   checkCount(expectCount, actCount);
+
+   var findAllCond = {"$not": [{"b": {"$et" : "testb_0"}}, {"":{"$Text":{"query":{"match_phrase":{"a" : "test_12044 2"}}}}}]};
+   var actCount = dbcl.find(findAllCond).count();
+   var expectCount = 20000;
+   checkCount(expectCount, actCount);
+ 
+   commDropCS( db, csName, true, "drop CS in the end" );
+}
+function checkCount( expectCount, actCount )
+{
+   if(expectCount != actCount)
+   {
+      throw buildException("checkCount()", "check count", "check count", expectCount, actCount);
+   }
+   println("check result success!");
+}
+main();
