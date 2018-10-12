@@ -233,11 +233,11 @@ enum MSG_TYPE
    MSG_CAT_TRUNCATE_RSP               = MAKE_REPLY_TYPE( MSG_CAT_TRUNCATE_REQ ),
 
    // rename collection space
-   MSG_CAT_RENAME_CS_REQ              = 3143
+   MSG_CAT_RENAME_CS_REQ              = 3143,
    MSG_CAT_RENAME_CS_RSP              = MAKE_REPLY_TYPE( MSG_CAT_RENAME_CS_REQ ),
 
    // rename collection
-   MSG_CAT_RENAME_CL_REQ              = 3144
+   MSG_CAT_RENAME_CL_REQ              = 3144,
    MSG_CAT_RENAME_CL_RSP              = MAKE_REPLY_TYPE( MSG_CAT_RENAME_CL_REQ ),
 
    // all messages for CATALOGUE must be smaller than MSG_CAT_CATALOGUE_END
