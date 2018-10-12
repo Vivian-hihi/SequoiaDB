@@ -54,7 +54,7 @@ namespace engine
    public:
       virtual RTN_JOB_TYPE type () const { return RTN_JOB_CLS_UNIQUEID_CHECK ; }
 
-      virtual const CHAR* name () const { return "UniqueID-Check" ; }
+      virtual const CHAR* name () const { return "UniqueID-Check-By-Name" ; }
 
       virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) ;
 
@@ -64,7 +64,6 @@ namespace engine
    typedef _clsUniqueIDCheckJob clsUniqueIDCheckJob ;
 
    INT32 startUniqueIDCheckJob ( EDUID* pEDUID ) ;
-   INT32 stopUniqueIDCheckJob ( EDUID& EDUID ) ;
 
    /*
     *  _clsNameCheckJob define
@@ -87,17 +86,22 @@ namespace engine
 
       virtual INT32 doit () ;
 
+   protected:
       INT32 _renameCSCL( vector<monCSSimple>& csList, BOOLEAN unregCL ) ;
 
       void _registerCLs( const vector<monCSSimple>& csList ) ;
 
       void _unregisterCL( const string& clName ) ;
 
+      virtual void _onAttach() ;
+      virtual void _onDetach() ;
+
    private:
       UINT64 _opID ;
       map<string, string> _mapRegisterCL ; // <failed cl name, its maincl name>
       clsFreezingWindow* _pFreezeWindow ;
       shardCB* _pShdMgr ;
+      BOOLEAN  _hasBlockGlobal ;
    } ;
 
    typedef _clsNameCheckJob clsNameCheckJob ;

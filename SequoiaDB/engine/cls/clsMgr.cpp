@@ -536,8 +536,7 @@ namespace engine
     _replServiceID ( MSG_ROUTE_REPL_SERVICE ),
     _taskMgr( 0x7FFFFFFF ),
     _taskID ( 0 ),
-    _uniqueCheckJobEduID( PMD_INVALID_EDUID ),
-    _regTimerID ( CLS_INVALID_TIMERID ),
+     _regTimerID ( CLS_INVALID_TIMERID ),
     _regFailedTimes( 0 ),
     _oneSecTimerID ( CLS_INVALID_TIMERID )
    {
@@ -1078,7 +1077,7 @@ namespace engine
             if ( SDB_ROLE_DATA == pmdGetDBRole() &&
                  pDmsCB->nullCSUniqueIDCnt() > 0 )
             {
-               startUniqueIDCheckJob( &_uniqueCheckJobEduID ) ;
+               startUniqueIDCheckJob( NULL ) ;
             }
 
             // start query task
@@ -1088,11 +1087,6 @@ namespace engine
          }
          else
          {
-            // stop unqiue id check
-            if ( _uniqueCheckJobEduID != PMD_INVALID_EDUID )
-            {
-               stopUniqueIDCheckJob( _uniqueCheckJobEduID ) ;
-            }
             // clean up all query task
             ossScopedLock lock ( &_clsLatch, EXCLUSIVE ) ;
             _mapTaskQuery.clear () ;

@@ -122,6 +122,7 @@ namespace engine
                            UINT64 & opID ) ;
          void unregisterCL ( const CHAR * pName, const CHAR * pMainCLName,
                              UINT64 opID ) ;
+         void unregisterAll() ;
 
          BOOLEAN needBlockOpr( const CHAR *pName, UINT64 testOpID ) ;
 

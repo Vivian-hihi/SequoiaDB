@@ -154,7 +154,7 @@ namespace engine
                                          const CHAR * pMainCLName,
                                          UINT64 & opID )
    {
-      _latch.get() ;
+      ossScopedLock lock( &_latch ) ;
 
       /// first increase _clCount. Because waitForOpr will use _clCount without
       /// latch. If don't increase first, the case will occur:
@@ -189,8 +189,6 @@ namespace engine
 
       /// last decrease _clCount
       --_clCount ;
-
-      _latch.release() ;
 
    }
 
@@ -227,7 +225,7 @@ namespace engine
                                            const CHAR * pMainCLName,
                                            UINT64 opID )
    {
-      _latch.get() ;
+      ossScopedLock lock( &_latch ) ;
 
       if ( !pName || !*pName )
       {
@@ -242,8 +240,16 @@ namespace engine
          _unregisterCLInternal( pMainCLName, opID ) ;
       }
 
-      _latch.release() ;
       _event.signalAll() ;
+   }
+
+   void _clsFreezingWindow::unregisterAll()
+   {
+      ossScopedLock lock( &_latch ) ;
+
+      _setWholeID.clear() ;
+      _mapWindow.clear() ;
+      _clCount = 0 ;
    }
 
    void _clsFreezingWindow::_unregWholeInternal( UINT64 opID )

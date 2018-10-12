@@ -859,8 +859,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECS_GETMORE, "_rtnContextRenameCS::getMore" )
    INT32 _rtnContextRenameCS::getMore( INT32 maxNumToReturn,
-                                    rtnContextBuf &buffObj,
-                                    _pmdEDUCB *cb )
+                                       rtnContextBuf &buffObj,
+                                       _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCTXRENAMECS_GETMORE ) ;
@@ -1020,7 +1020,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECL__TRYLOCK, "_rtnContextRenameCL::_tryLock" )
    INT32 _rtnContextRenameCL::_tryLock( const CHAR *csName,
-                                     _pmdEDUCB *cb )
+                                        _pmdEDUCB *cb )
    {
       INT32 rc                = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCTXRENAMECL__TRYLOCK ) ;
@@ -1172,8 +1172,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECL_GETMORE, "_rtnContextRenameCL::getMore" )
    INT32 _rtnContextRenameCL::getMore( INT32 maxNumToReturn,
-                                    rtnContextBuf &buffObj,
-                                    _pmdEDUCB *cb )
+                                       rtnContextBuf &buffObj,
+                                       _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCTXRENAMECL_GETMORE ) ;
