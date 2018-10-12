@@ -1901,7 +1901,7 @@ namespace engine
       _perfStat = FALSE ;
       _optCostThreshold = PMD_DFT_OPT_COST_THRESHOLD ;
       _enableMixCmp = PMD_DFT_ENABLE_MIX_CMP ;
-      _planCacheLevel = OPT_PLAN_PARAMETERIZED ;
+      _planCacheLevel = OPT_PLAN_NORMALIZED ;
       _instanceID = PMD_DFT_INSTANCE_ID ;
       _maxconn = PMD_DFT_MAX_CONN ;
 
@@ -2244,7 +2244,7 @@ namespace engine
 
       // --optcachelevel
       rdxUInt( pEX, PMD_OPTION_PLAN_CACHE_LEVEL, _planCacheLevel, FALSE,
-               PMD_CFG_CHANGE_RUN, OPT_PLAN_PARAMETERIZED, FALSE ) ;
+               PMD_CFG_CHANGE_RUN, OPT_PLAN_NORMALIZED, FALSE ) ;
       rdvMinMax( pEX, _planCacheLevel, OPT_PLAN_NOCACHE, OPT_PLAN_FUZZYOPTR,
                  TRUE ) ;
 
