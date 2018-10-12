@@ -8,13 +8,13 @@ function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   var csName = COMMCSNAME + "15778";
+   var csName = COMMCSNAME + "_ES_15778";
    commDropCS( db, csName, true, "drop CS in the beginning" );
                                                              	
    commCreateCS( db, csName, false, "" );
                                                               	
    // create CL
-   var clName = COMMCLNAME + "15778";
+   var clName = COMMCLNAME + "_ES_15778";
    var dbcl = commCreateCL( db, csName, clName );
 
    // insert before create text index
