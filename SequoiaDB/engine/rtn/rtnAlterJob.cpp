@@ -93,7 +93,8 @@ namespace engine
                      RTN_ALTER_COLLECTION,
                      RTN_ALTER_CL_CREATE_AUTOINC_FLD,
                      ( RTN_ALTER_TASK_FLAG_CONTEXTLOCK |
-                       RTN_ALTER_TASK_FLAG_SEQUENCE ) ) ;
+                       RTN_ALTER_TASK_FLAG_SEQUENCE |
+                       RTN_ALTER_TASK_FLAG_MAINCLALLOW ) ) ;
 
       /// Drop ID Index
       _registerTask( SDB_ALTER_CL_DROP_ID_INDEX,
@@ -106,7 +107,8 @@ namespace engine
                      RTN_ALTER_COLLECTION,
                      RTN_ALTER_CL_DROP_AUTOINC_FLD,
                      ( RTN_ALTER_TASK_FLAG_CONTEXTLOCK |
-                       RTN_ALTER_TASK_FLAG_SEQUENCE ) ) ;
+                       RTN_ALTER_TASK_FLAG_SEQUENCE |
+                       RTN_ALTER_TASK_FLAG_MAINCLALLOW ) ) ;
 
       _registerTask( SDB_ALTER_CL_ENABLE_SHARDING,
                      RTN_ALTER_COLLECTION,

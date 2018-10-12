@@ -393,20 +393,16 @@ namespace engine
                                std::vector< UINT32 > & groupList ) ;
       INT32 _addSequenceTask( const string & collection,
                           const rtnAlterTask * task,
-                          catCtxTaskBase ** catAutoIncTask,
-                          BOOLEAN pushExec ) ;
+                          catCtxTaskBase ** catAutoIncTask ) ;
       INT32 _addCreateSeqenceTask( const string & collection,
-                                      const rtnAlterTask * task,
-                                      catCtxTaskBase ** catAutoIncTask,
-                                      BOOLEAN pushExec ) ;
-      INT32 _addDropSeqenceTask( const string & collection,
-                                      const rtnAlterTask * task,
-                                      catCtxTaskBase ** catAutoIncTask,
-                                      BOOLEAN pushExec ) ;
-      INT32 _addAlterSeqenceTask( const string & collection,
                                    const rtnAlterTask * task,
-                                   catCtxTaskBase ** catAutoIncTask,
-                                   BOOLEAN pushExec ) ;
+                                   catCtxTaskBase ** catAutoIncTask ) ;
+      INT32 _addDropSeqenceTask( const string & collection,
+                                 const rtnAlterTask * task,
+                                 catCtxTaskBase ** catAutoIncTask ) ;
+      INT32 _addAlterSeqenceTask( const string & collection,
+                                  const rtnAlterTask * task,
+                                  catCtxTaskBase ** catAutoIncTask ) ;
 
       virtual INT32 _makeReply ( rtnContextBuf &buffObj ) ;
 

@@ -2323,6 +2323,7 @@ namespace engine
                                            _pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
+      INT32 actionType = RTN_ALTER_INVALID_ACTION ;
 
       PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_CHECK_ALTERTASK ) ;
 
@@ -2343,7 +2344,7 @@ namespace engine
 
       SDB_ASSERT( NULL != lockMgr, "lock manager is invalid" ) ;
 
-      rc = _addSequenceTask( _targetName, task, &catAutoIncTask, FALSE);
+      rc = _addSequenceTask( _targetName, task, &catAutoIncTask );
       PD_RC_CHECK( rc, PDERROR, "Failed to add sequence task [%s] on "
                    "collection [%s], rc: %d", task->getActionName(),
                    _targetName.c_str(), rc ) ;
@@ -2369,11 +2370,17 @@ namespace engine
                    "collection [%s], rc: %d", task->getActionName(),
                    _targetName.c_str(), rc ) ;
 
-      rc = _addAlterSubCLTask( catTask, cb, *lockMgr, collectionSet,
-                             _groupList ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to add alter sub tasks [%s] on "
-                   "collection [%s], rc: %d", task->getActionName(),
-                   _targetName.c_str(), rc ) ;
+      actionType = task->getActionType() ;
+
+      if( actionType != RTN_ALTER_CL_CREATE_AUTOINC_FLD &&
+          actionType != RTN_ALTER_CL_DROP_AUTOINC_FLD )
+      {
+         rc = _addAlterSubCLTask( catTask, cb, *lockMgr, collectionSet,
+                                _groupList ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to add alter sub tasks [%s] on "
+                      "collection [%s], rc: %d", task->getActionName(),
+                      _targetName.c_str(), rc ) ;
+      }
 
       if( catAutoIncTask )
       {
@@ -2486,6 +2493,7 @@ namespace engine
                                          BOOLEAN pushExec )
    {
       INT32 rc = SDB_OK ;
+      INT32 actionType = RTN_ALTER_INVALID_ACTION ;
 
       PD_TRACE_ENTRY ( SDB_CATCTXALTERCL__ADDALTERTASK ) ;
 
@@ -2493,10 +2501,21 @@ namespace engine
       SDB_ASSERT( NULL != catTask, "alter task is invalid" ) ;
       catCtxAlterCLTask * tempTask = NULL ;
 
+      actionType = task->getActionType() ;
+
       tempTask = SDB_OSS_NEW catCtxAlterCLTask( collection, task ) ;
       PD_CHECK( tempTask, SDB_OOM, error, PDERROR,
                 "Failed to create alter task [%s] on collection [%s]",
                 task->getActionName(), collection.c_str() ) ;
+
+      if( pushExec && actionType == RTN_ALTER_CL_SET_ATTRIBUTES )
+      {
+         const rtnCLSetAttributeTask *setTask = dynamic_cast< const rtnCLSetAttributeTask * >( task ) ;
+         if( setTask->containAutoincArgument() )
+         {
+            tempTask->setSubCLFlag() ;
+         }
+      }
 
       _addTask( tempTask, pushExec ) ;
       if ( catTask )
@@ -2555,10 +2574,6 @@ namespace engine
                const string & subCLName = (*iterSubCL) ;
                catCtxAlterCLTask * subCLTask = NULL ;
                catCtxTaskBase * subCLAutoIncTask = NULL ;
-               rc = _addSequenceTask( _targetName, alterTask, &subCLAutoIncTask, TRUE);
-               PD_RC_CHECK( rc, PDERROR, "Failed to add sequence task [%s] on "
-                            "collection [%s], rc: %d", alterTask->getActionName(),
-                            _targetName.c_str(), rc ) ;
 
                rc = _addAlterTask( subCLName, alterTask, &subCLTask, TRUE ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to add alter task [%s] on "
@@ -2615,8 +2630,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL__ADDSEQUENCETASK, "_catCtxAlterCL::_addSequenceTask" )
    INT32 _catCtxAlterCL::_addSequenceTask( const string & collection,
                                          const rtnAlterTask * task,
-                                         catCtxTaskBase ** catAutoIncTask,
-                                         BOOLEAN pushExec )
+                                         catCtxTaskBase ** catAutoIncTask )
    {
       INT32 rc = SDB_OK ;
 
@@ -2629,7 +2643,7 @@ namespace engine
       {
          case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
          {
-            rc = _addCreateSeqenceTask( collection, task, catAutoIncTask, pushExec) ;
+            rc = _addCreateSeqenceTask( collection, task, catAutoIncTask ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to add sequence task [%s] on "
                    "collection [%s], rc: %d", task->getActionName(),
                    _targetName.c_str(), rc ) ;
@@ -2637,7 +2651,7 @@ namespace engine
          }
          case RTN_ALTER_CL_DROP_AUTOINC_FLD :
          {
-            rc = _addDropSeqenceTask( collection, task, catAutoIncTask, pushExec) ;
+            rc = _addDropSeqenceTask( collection, task, catAutoIncTask ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to add sequence task [%s] on "
                    "collection [%s], rc: %d", task->getActionName(),
                    _targetName.c_str(), rc ) ;
@@ -2648,7 +2662,7 @@ namespace engine
             const rtnCLSetAttributeTask *setTask = dynamic_cast< const rtnCLSetAttributeTask * >( task ) ;
             if( setTask->containAutoincArgument() )
             {
-               rc = _addAlterSeqenceTask( collection, task, catAutoIncTask, pushExec) ;
+               rc = _addAlterSeqenceTask( collection, task, catAutoIncTask ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to add sequence task [%s] on "
                       "collection [%s], rc: %d", task->getActionName(),
                       _targetName.c_str(), rc ) ;
@@ -2675,8 +2689,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_ADDCRTSEQ_TASK, "_catCtxAlterCL::_addCreateSeqenceTask" )
    INT32 _catCtxAlterCL::_addCreateSeqenceTask( const string & collection,
                                                const rtnAlterTask * task,
-                                               catCtxTaskBase ** catAutoIncTask,
-                                               BOOLEAN pushExec )
+                                               catCtxTaskBase ** catAutoIncTask )
    {
       INT32 rc = SDB_OK ;
 
@@ -2691,7 +2704,7 @@ namespace engine
       PD_CHECK( tempSeqTask, SDB_OOM, error, PDERROR,
           "Failed to get create sequence task [%s] on collection [%s]",
           task->getActionName(), collection.c_str() ) ;
-      _addTask( tempSeqTask, pushExec ) ;
+      _addTask( tempSeqTask, false ) ;
 
       *catAutoIncTask = tempSeqTask ;
 
@@ -2707,8 +2720,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_ADDDROPSEQ_TASK, "_catCtxAlterCL::_addDropSeqenceTask" )
    INT32 _catCtxAlterCL::_addDropSeqenceTask( const string & collection,
                                                const rtnAlterTask * task,
-                                               catCtxTaskBase ** catAutoIncTask,
-                                               BOOLEAN pushExec )
+                                               catCtxTaskBase ** catAutoIncTask )
    {
       INT32 rc = SDB_OK ;
 
@@ -2723,7 +2735,7 @@ namespace engine
       PD_CHECK( tempSeqTask, SDB_OOM, error, PDERROR,
           "Failed to get drop sequence task [%s] on collection [%s]",
           task->getActionName(), collection.c_str() ) ;
-      _addTask( tempSeqTask, pushExec ) ;
+      _addTask( tempSeqTask, false ) ;
 
       *catAutoIncTask = tempSeqTask ;
 
@@ -2739,8 +2751,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_ADDALTERSEQ_TASK, "_catCtxAlterCL::_addAlterSeqenceTask" )
    INT32 _catCtxAlterCL::_addAlterSeqenceTask( const string & collection,
                                                const rtnAlterTask * task,
-                                               catCtxTaskBase ** catAutoIncTask,
-                                               BOOLEAN pushExec )
+                                               catCtxTaskBase ** catAutoIncTask )
    {
       INT32 rc = SDB_OK ;
 
@@ -2755,7 +2766,7 @@ namespace engine
       PD_CHECK( tempSeqTask, SDB_OOM, error, PDERROR,
           "Failed to get alter sequence task [%s] on collection [%s]",
           task->getActionName(), collection.c_str() ) ;
-      _addTask( tempSeqTask, pushExec ) ;
+      _addTask( tempSeqTask, false ) ;
 
       *catAutoIncTask = tempSeqTask ;
 

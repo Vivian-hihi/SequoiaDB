@@ -86,6 +86,10 @@ namespace engine
          {
             return _postTasks ;
          }
+         OSS_INLINE void setSubCLFlag ()
+         {
+            _subCLOFMainCL = true ;
+         }
 
       protected :
          virtual INT32 _checkInternal ( _pmdEDUCB * cb,
@@ -213,6 +217,7 @@ namespace engine
 
       protected :
          _utilList< UINT64 >     _postTasks ;
+         BOOLEAN                 _subCLOFMainCL ;
          rtnCLShardingArgument   _rollbackShardArgument ;
          autoIncFieldsList       _rollbackAutoIncFields ;
    } ;

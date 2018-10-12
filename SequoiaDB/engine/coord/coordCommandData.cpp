@@ -680,7 +680,6 @@ namespace engine
       CHAR * msgBuff = NULL ;
       INT32 msgSize = 0 ;
       MsgHeader * msgHeader = NULL ;
-      CLS_TASK_TYPE taskType ;
 
       vector<BSONObj> reply ;
       BSONObj taskDesc ;

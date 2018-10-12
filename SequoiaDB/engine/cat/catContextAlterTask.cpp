@@ -64,7 +64,8 @@ namespace engine
     */
    _catCtxAlterCLTask::_catCtxAlterCLTask ( const string & collection,
                                             const rtnAlterTask * task )
-   : _catCtxAlterTask( collection, task )
+   : _catCtxAlterTask( collection, task ),
+     _subCLOFMainCL(false)
    {
    }
 
@@ -625,7 +626,7 @@ namespace engine
          }
       }
 
-      if ( localTask->containAutoincArgument() )
+      if ( localTask->containAutoincArgument() && !_subCLOFMainCL )
       {
          BOOLEAN exist = FALSE ;
          string fldName ;
@@ -1346,12 +1347,13 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to build capped fields, rc: %d", rc ) ;
       }
 
-      if ( localTask->containAutoincArgument() )
+      if ( localTask->containAutoincArgument() && !_subCLOFMainCL )
       {
          autoIncFieldsList fieldList ;
          fieldList = localTask->getAutoincFieldArgument() ;
          rc = _buildSetAutoincFields( cataSet, fieldList, setBuilder, unsetBuilder, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build set autoinc fields, rc: %d", rc ) ;
+         _rollbackAutoIncFields = fieldList ;
       }
 
       if ( localTask->testArgumentMask( UTIL_CL_REPLSIZE_FIELD ) )
@@ -2019,26 +2021,20 @@ namespace engine
       string seqName ;
       BSONObj seqOpt ;
       bson::BSONElement ele ;
-      utilCLUniqueID clUniqueID ;
       catSequenceManager *pSeqMgr ;
       vector<BSONObj> obj = getRollbackObj() ;
 
       pSeqMgr = sdbGetCatalogueCB()->getCatGTSMgr()->getSequenceMgr() ;
       PD_CHECK( NULL != pSeqMgr, SDB_SYS, error, PDERROR, "Failed to get sequence manager" ) ;
 
-      rc = getCLUniqueID( cb, &clUniqueID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get cl uniqueid, rc: %d", rc ) ;
-
       for( UINT32 i = 0 ; i < obj.size() ; i++ )
       {
-         PD_CHECK( obj[i].hasField( FIELD_NAME_AUTOINC_FIELD ), SDB_SYS, error,
+         PD_CHECK( obj[i].hasField( FIELD_NAME_SEQUENCE_NAME ), SDB_SYS, error,
                      PDERROR, "Failed to get field[%s]", obj[i].toString( false, false ).c_str() ) ;
-         ele = obj[i].getField( FIELD_NAME_AUTOINC_FIELD ) ;
+         ele = obj[i].getField( FIELD_NAME_SEQUENCE_NAME ) ;
          PD_CHECK( String == ele.type(), SDB_SYS, error, PDERROR,
-                  "Failed to get field [%s]", FIELD_NAME_AUTOINC_FIELD ) ;
-         fldName = ele.String() ;
-         PD_CHECK( !fldName.empty(), SDB_SYS, error, PDERROR, "Failed to get field name" ) ;
-         seqName = catGetSeqName4AutoIncFld( clUniqueID, fldName ) ;
+                  "Failed to get field [%s]", FIELD_NAME_SEQUENCE_NAME ) ;
+         seqName = ele.String() ;
          seqOpt = catGetSequenceOptions( obj[i] ) ;
          rc = pSeqMgr->alterSequence( seqName, seqOpt, cb, w ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to alter sequence[%s] when rollback, rc: %d", seqName.c_str(), rc ) ;
@@ -2158,7 +2154,7 @@ namespace engine
          fldName = fldList[i]->getFieldName() ;
          PD_CHECK( !fldName.empty(), SDB_SYS, error, PDERROR, "Failed to get field name[%s]", fldName.c_str() ) ;
          seqName = catGetSeqName4AutoIncFld( clUniqueID, fldName ) ;
-         bld.append( FIELD_NAME_AUTOINC_FIELD, fldName ) ;
+         bld.append( FIELD_NAME_SEQUENCE_NAME, seqName ) ;
          seqOpt = catGetSequenceOptions( fldList[i]->getArgument() ) ;
          rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create sequence[%s], rc: %d", seqName.c_str(), rc ) ;
@@ -2188,26 +2184,22 @@ namespace engine
       string seqName ;
       BSONObj seqOpt ;
       bson::BSONElement ele ;
-      utilCLUniqueID clUniqueID ;
       catSequenceManager *pSeqMgr ;
       vector<BSONObj> obj = getRollbackObj() ;
 
       pSeqMgr = sdbGetCatalogueCB()->getCatGTSMgr()->getSequenceMgr() ;
       PD_CHECK( NULL != pSeqMgr, SDB_SYS, error, PDERROR, "Failed to get sequence manager" ) ;
 
-      rc = getCLUniqueID( cb, &clUniqueID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get cl uniqueid, rc: %d", rc ) ;
 
       for( UINT32 i = 0 ; i < obj.size() ; i++ )
       {
-         PD_CHECK( obj[i].hasField( FIELD_NAME_AUTOINC_FIELD ), SDB_SYS, error,
+         PD_CHECK( obj[i].hasField( FIELD_NAME_SEQUENCE_NAME ), SDB_SYS, error,
                      PDERROR, "Failed to get field[%s]", obj[i].toString( false, false ).c_str() ) ;
-         ele = obj[i].getField( FIELD_NAME_AUTOINC_FIELD ) ;
+         ele = obj[i].getField( FIELD_NAME_SEQUENCE_NAME ) ;
          PD_CHECK( String == ele.type(), SDB_SYS, error, PDERROR,
-                  "Failed to get field [%s]", FIELD_NAME_AUTOINC_FIELD ) ;
-         fldName = ele.String() ;
-         PD_CHECK( !fldName.empty(), SDB_SYS, error, PDERROR, "Failed to get field name[%s]", fldName.c_str() ) ;
-         seqName = catGetSeqName4AutoIncFld( clUniqueID, fldName ) ;
+                  "Failed to get field [%s]", FIELD_NAME_SEQUENCE_NAME ) ;
+         seqName = ele.String() ;
          rc = pSeqMgr->dropSequence( seqName, cb, w ) ;
          if ( SDB_SEQUENCE_NOT_EXIST == rc )
          {
@@ -2337,26 +2329,20 @@ namespace engine
       string seqName ;
       BSONObj seqOpt ;
       bson::BSONElement ele ;
-      utilCLUniqueID clUniqueID ;
       catSequenceManager *pSeqMgr ;
       vector<BSONObj> obj = getRollbackObj() ;
 
       pSeqMgr = sdbGetCatalogueCB()->getCatGTSMgr()->getSequenceMgr() ;
       PD_CHECK( NULL != pSeqMgr, SDB_SYS, error, PDERROR, "Failed to get sequence manager" ) ;
 
-      rc = getCLUniqueID( cb, &clUniqueID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get cl uniqueid, rc: %d", rc ) ;
-
       for( UINT32 i = 0 ; i < obj.size() ; i++ )
       {
-         PD_CHECK( obj[i].hasField( FIELD_NAME_AUTOINC_FIELD ), SDB_SYS, error,
+         PD_CHECK( obj[i].hasField( FIELD_NAME_SEQUENCE_NAME ), SDB_SYS, error,
                      PDERROR, "Failed to get field[%s]", obj[i].toString( false, false ).c_str() ) ;
-         ele = obj[i].getField( FIELD_NAME_AUTOINC_FIELD ) ;
+         ele = obj[i].getField( FIELD_NAME_SEQUENCE_NAME ) ;
          PD_CHECK( String == ele.type(), SDB_SYS, error, PDERROR,
-                  "Failed to get field [%s]", FIELD_NAME_AUTOINC_FIELD ) ;
-         fldName = ele.String() ;
-         PD_CHECK( !fldName.empty(), SDB_SYS, error, PDERROR, "Failed to get field name[%s]", fldName.c_str() ) ;
-         seqName = catGetSeqName4AutoIncFld( clUniqueID, fldName ) ;
+                  "Failed to get field [%s]", FIELD_NAME_SEQUENCE_NAME ) ;
+         seqName = ele.String() ;
          seqOpt = catGetSequenceOptions( obj[i] ) ;
          rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create sequence[%s] when rollback, rc: %d", seqName.c_str(), rc ) ;

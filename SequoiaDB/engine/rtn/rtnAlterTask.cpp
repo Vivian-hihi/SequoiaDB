@@ -1337,7 +1337,8 @@ namespace engine
          }
          _argumentCount++ ;
          setFlags( RTN_ALTER_TASK_FLAG_CONTEXTLOCK |
-                   RTN_ALTER_TASK_FLAG_SEQUENCE ) ;
+                   RTN_ALTER_TASK_FLAG_SEQUENCE |
+                   RTN_ALTER_TASK_FLAG_MAINCLALLOW ) ;
       }
 
       if ( _argument.hasField( FIELD_NAME_DOMAIN_AUTO_REBALANCE ) )
