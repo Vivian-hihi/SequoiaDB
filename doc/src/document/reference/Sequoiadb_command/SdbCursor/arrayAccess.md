@@ -14,7 +14,7 @@
 
 ##返回值##
 
-返回当前游标指向的下一条记录，出错抛异常，并输出错误信息，可以通过
+返回指定下标的记录，出错抛异常，并输出错误信息，可以通过
 [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误码。
 关于错误处理可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)。
 
@@ -23,7 +23,7 @@
 * 返回数组中下标为 0 的记录
 
  ```lang-javascript
-> db.foo.bar.find(new SdbQueryOption()).arrayAccess(0)
+> db.foo.bar.find().arrayAccess(0)
 {
       "_id": {
       "$oid": "581192bd6db4da2a23000009"
