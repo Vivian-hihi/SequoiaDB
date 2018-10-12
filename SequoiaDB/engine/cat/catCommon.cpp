@@ -4607,7 +4607,7 @@ namespace engine
             const std::string &grpName = iterGrp->first ;
             BSONObj lowBound, upBound ;
 
-            if ( itemID >= modMark )
+            if ( (UINT32)itemID >= modMark )
             {
                ++endBound ;
             }
