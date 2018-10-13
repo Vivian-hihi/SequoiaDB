@@ -380,3 +380,53 @@ function createCL( csName, clName, shardingKey, shardingType)
                                      true, "Failed to create cl." );
    return dbcl ;
 }
+
+
+/************************************
+*@Description: check the new cs name 
+*@author:      luweikang
+*@createDate:  2018.10.13
+**************************************/
+function checkRenameCSResult( oldCSName, newCSName )
+{   
+   try
+   {
+      var newCSObj = db.snapshot(SDB_SNAP_COLLECTIONSPACES ,{"Name": newCSName }).current().toObj();     
+      var getNewCSName = newCSObj.Name;
+      if( getNewCSName !== newCSName  )
+      {
+         throw buildException("check cs name", null, "check the new cs name",
+									newCSName, getNewCSName);
+      }
+      
+      var clArray = newCSObj.Collection;
+      
+      for( i = 0; i< clArray.length; i++)
+      {
+         var csname = clArray[i].Name.split(".")[0];
+         if( csname !== newCSName  )
+         {
+            throw buildException("check cs.cl name", null, "check the new cs name",
+                              newCSName, csname);
+         }
+      }
+      
+      //check the old cl is not exist
+      try
+	   {
+		   db.getCS(oldCSName);
+		   throw "CS_IS_EXIT";
+	   }
+	   catch ( e )
+	   { 
+		   if ( e !== -34  )
+		   {		      
+			   throw buildException("check old csName:",e);
+		   }		
+	   }
+   }
+   catch(e)
+   {      
+      throw buildException("checkRenameCSResult", e)
+   }   
+}
