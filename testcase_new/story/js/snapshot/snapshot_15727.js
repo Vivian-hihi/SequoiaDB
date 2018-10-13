@@ -12,8 +12,9 @@ function main()
    }
    var groups = commGetGroups(db);
    var groupname = groups[0][0].GroupName;
+   var groupnodenum = groups[0].length - 1 ;
    //cond+skip+limit
-   cur = db.snapshot(SDB_SNAP_CONFIGS,new SdbSnapshotOption().cond({$and:[{GroupName:groupname}, {role:"data"}]}).sel({"archiveon":{$include:1},"role":{$include:1},"NOO":{$include:1}}).skip(commGetGroupsNum(db)-1).limit(commGetGroupsNum(db)).sort({role:1}));
+   cur = db.snapshot(SDB_SNAP_CONFIGS,new SdbSnapshotOption().cond({$and:[{GroupName:groupname}, {role:"data"}]}).sel({"archiveon":{$include:1},"role":{$include:1},"NOO":{$include:1}}).skip(groupnodenum-1).limit(groupnodenum).sort({role:1}));
    var size=0;
    while( cur.next() )
    {
@@ -22,7 +23,7 @@ function main()
    }
    if( size !== 1 )
    {
-      throw buildException("check count", "", "snapshot(SDB_SNAP_CONFIGS,new SdbSnapshotOption().cond({$and:[{GroupName:groupname}, {role:\"data\"}]}).sel({\"archiveon\":{$include:1},\"role\":{$include:1},\"NOO\":{$include:1}}).skip(commGetGroupsNum(db)-1).limit(commGetGroupsNum(db)).sort({NOO:1}))", 1, size);
+      throw buildException("check count", "", "snapshot(SDB_SNAP_CONFIGS,new SdbSnapshotOption().cond({$and:[{GroupName:groupname}, {role:\"data\"}]}).sel({\"archiveon\":{$include:1},\"role\":{$include:1},\"NOO\":{$include:1}}).skip(commGetGroupsNum(db)-1).limit(commGetGroupsNum(db)).sort({role:1}))", 1, size);
    }
    
    //所有参数组合
