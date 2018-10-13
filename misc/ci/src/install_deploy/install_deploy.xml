@@ -281,8 +281,6 @@
                      <sequential>
                         <var name="svcname" unset="true"/>
                         <basename property="svcname" file="@{dirtype}"/>
-                        <mkdir dir="${INSTALL_DIR}/conf/sdbseadpter/${svcname}"/>
-                        <copy file="${INSTALL_DIR}/conf/samples/sdbseadapter.conf" todir="${INSTALL_DIR}/conf/sdbseadpter/${svcname}"/>
                         
                         <staf location="@{testhost}" service="PROCESS"
                               request="START SHELL COMMAND ${INSTALL_DIR}/bin/sdbseadapter -c ${INSTALL_DIR}/conf/sdbseadpter/${svcname} &amp; WAIT 10m RETURNSTDERR"
