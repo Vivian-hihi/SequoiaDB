@@ -1,5 +1,5 @@
 /************************************
-*@Description: fullText index and common index on the same key£¬insert/update/delete/query
+*@Description: bulk insert
 *@author:      zhaoyu
 *@createdate:  2018.9.28
 **************************************/
