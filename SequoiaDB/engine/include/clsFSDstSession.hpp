@@ -155,7 +155,7 @@ namespace engine
 
          UINT32         _addCollection ( const CHAR *pCollectionName ) ;
          UINT32         _removeCollection ( const CHAR *pCollectionName ) ;
-         UINT32         _removeCS ( const CHAR *pCSName ) ;
+         vector<string> _removeCS ( const CHAR *pCSName ) ;
          UINT32         _removeValidCLs( const vector<string> &validCLs ) ;
 
       private:

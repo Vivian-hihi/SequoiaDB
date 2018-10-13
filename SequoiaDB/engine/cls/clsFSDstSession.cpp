@@ -400,7 +400,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__RMCS, "_clsDataDstBaseSession::_removeCS" )
-   UINT32 _clsDataDstBaseSession::_removeCS ( const CHAR * pCSName )
+   vector<string> _clsDataDstBaseSession::_removeCS ( const CHAR * pCSName )
    {
       PD_TRACE_ENTRY ( SDB__CLSDATADBS__RMCS );
 
@@ -408,6 +408,7 @@ namespace engine
       vector<string>::iterator it = _fullNames.begin() ;
       UINT32 index = 0 ;
       UINT32 nameLen = ossStrlen( pCSName ) ;
+      vector<string> delCLList ;
 
       if ( _current >= _fullNames.size() )
       {
@@ -422,6 +423,7 @@ namespace engine
          {
             it = _fullNames.erase ( it ) ;
             nDelNum++ ;
+            delCLList.push_back( *it ) ;
             continue ;
          }
 
@@ -432,7 +434,7 @@ namespace engine
    done:
       PD_TRACE1 ( SDB__CLSDATADBS__RMCS, PD_PACK_UINT(nDelNum) );
       PD_TRACE_EXIT ( SDB__CLSDATADBS__RMCS );
-      return nDelNum ;
+      return delCLList ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__EXTMETA, "_clsDataDstBaseSession::_extractMeta" )
@@ -1236,6 +1238,52 @@ namespace engine
                newFullName += "." ;
                newFullName += newname.value() ;
                _addCollection ( newFullName.c_str() ) ;
+            }
+         }
+         else if ( LOG_TYPE_CS_RENAME == header->_type )
+         {
+            dpsLogRecord record ;
+            dpsLogRecord::iterator csIt, newcsIt ;
+            std::string csName ;
+            std::string newCSName ;
+            std::vector<std::string> oldCLList ;
+            std::vector<std::string>::iterator it ;
+
+            rc = record.load( itr ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            csIt = record.find( DPS_LOG_CSRENAME_CSNAME ) ;
+            if ( !csIt.valid() )
+            {
+               PD_LOG( PDERROR, "Session[%s]: Failed to find tag cs",
+                       sessionName() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            newcsIt = record.find( DPS_LOG_CSRENAME_NEWNAME ) ;
+            if ( !newcsIt.valid() )
+            {
+               PD_LOG( PDERROR, "Session[%s]: Failed to find tag oldname",
+                       sessionName() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            csName = csIt.value() ;
+            newCSName = newcsIt.value() ;
+
+            oldCLList = _removeCS( csName.c_str() ) ;
+            for( it = oldCLList.begin(); it != oldCLList.end(); it++ )
+            {
+               string shortName = dmsGetCLShortNameFromFullName( *it ) ;
+               string newCLName = newCSName ;
+               newCLName += "." ;
+               newCLName += shortName ;
+               _addCollection ( newCLName.c_str() ) ;
             }
          }
       }
