@@ -21,7 +21,7 @@ function insertData( dbcl, number)
          //data example: {"no":5, customerName:"test5", "phone":13700000005, "openDate":1402990912105
          
          docs.push( doc );
-      }   
+      }	
       dbcl.insert( docs );       
    }
    catch(e)
@@ -147,54 +147,6 @@ function checkLob( cl, expLobArr, srcMd5 )
    }
 }
 
-/************************************
-*@Description: check the new cs name 
-*@author:      luweikang
-*@createDate:  2018.10.13
-**************************************/
-function checkRenameCSResult( oldCSName, newCSName )
-{   
-   try
-   {
-      var newCSObj = db.snapshot(SDB_SNAP_COLLECTIONSPACES ,{"Name": newCSName }).current().toObj();     
-      var getNewCSName = newCSObj.Name;
-      if( getNewCSName !== newCSName  )
-      {
-         throw buildException("check cs name", null, "check the new cs name",
-									newCSName, getNewCSName);
-      }
-      
-      var clArray = newCSObj.Collection;
-      
-      for( i = 0; i< clArray.length; i++)
-      {
-         var csname = clArray[i].Name.split(".")[0];
-         if( csname !== newCSName  )
-         {
-            throw buildException("check cs.cl name", null, "check the new cs name",
-                              newCSName, csname);
-         }
-      }
-      
-      //check the old cl is not exist
-      try
-	   {
-		   db.getCS(oldCSName);
-		   throw "CS_IS_EXIT";
-	   }
-	   catch ( e )
-	   { 
-		   if ( e !== -34  )
-		   {		      
-			   throw buildException("check old csName:",e);
-		   }		
-	   }
-   }
-   catch(e)
-   {      
-      throw buildException("checkRenameCSResult", e)
-   }   
-}
 
 /************************************
 *@Description: check the new cl name 
@@ -210,26 +162,64 @@ function checkRenameCLResult( csName, oldCLName, newCLName )
       if( getNewCLName !== clFullName  )
       {
          throw buildException("check cl name", null, "check the new cl name",
-                           clFullName, getNewCLName);
+									clFullName, getNewCLName);
       }   
       
       //check the old cl is not exist
       try
-      {
-         db.getCS(csName).getCL( oldCLName );
-         throw "need throw error";
-      }
-      catch ( e )
-      { 
-         if ( e !== -23  )
-         {            
-            throw buildException("check old clName:",e);
-         }      
-      }
+	   {
+		   db.getCS(csName).getCL( oldCLName );
+		   throw "need throw error";
+	   }
+	   catch ( e )
+	   { 
+		   if ( e !== -23  )
+		   {		      
+			   throw buildException("check old clName:",e);
+		   }		
+	   }
    }
    catch(e)
    {      
       throw buildException("checkRenameCLResult", e)
+   }   
+}
+
+/************************************
+*@Description: check the new maincl name 
+*@author:      wuyan
+*@createDate:  2018.10.12
+**************************************/
+function checkRenameMainCLResult( maincs, subcs, newMainCLName, oldMainCLName, subclName )
+{   
+   try
+   {      
+      var subclFullName = subcs + "." + subclName;
+      var newMainCLFullName  = maincs + "." + newMainCLName;
+      var getMainCLName = db.snapshot(8 ,{"Name": subclFullName }).current().toObj().MainCLName;  
+      if( getMainCLName !== newMainCLFullName  )
+      {
+         throw buildException("check mainclName", null, "check the new maincl name",
+									newMainCLFullName, getMainCLName);
+      }      
+      
+      //check the old maincl is not exist
+      try
+	   {
+		   db.getCS(maincs).getCL( oldMainCLName );
+		   throw "need throw error";
+	   }
+	   catch ( e )
+	   { 
+		   if ( e !== -23  )
+		   {		      
+			   throw buildException("check old mianclName:",e);
+		   }		
+	   }
+   }
+   catch(e)
+   {      
+      throw buildException("checkRenameMainCLResult", e)
    }   
 }
 
@@ -330,9 +320,9 @@ function getSplitGroups(csName,clName,targetGrMaxNums)
       if( srcGroupName == allGroupInfo[i][0] )
       {
          splitGroups[0] = new Object();
-         splitGroups[0].GroupName = allGroupInfo[i][0];
-         splitGroups[0].HostName = allGroupInfo[i][1];
-         splitGroups[0].svcname = allGroupInfo[i][2];
+			splitGroups[0].GroupName = allGroupInfo[i][0];
+			splitGroups[0].HostName = allGroupInfo[i][1];
+			splitGroups[0].svcname = allGroupInfo[i][2];
       }
       else
       {
@@ -341,9 +331,9 @@ function getSplitGroups(csName,clName,targetGrMaxNums)
             continue;
          }
          splitGroups[index] = new Object();
-         splitGroups[index].GroupName = allGroupInfo[i][0];
-         splitGroups[index].HostName = allGroupInfo[i][1];
-         splitGroups[index].svcname = allGroupInfo[i][2];
+			splitGroups[index].GroupName = allGroupInfo[i][0];
+			splitGroups[index].HostName = allGroupInfo[i][1];
+			splitGroups[index].svcname = allGroupInfo[i][2];
          index++;
       }
    }
@@ -361,6 +351,32 @@ function splitCL(dbcl, srcGroupName, dstGroupName)
    catch(e)
    {
       throw buildException("splitcl", null, "split fail!",
-                           srcGroupName, dstGroupName+"  e:"+e);
+									srcGroupName, dstGroupName+"  e:"+e);
    } 
+}
+
+/************************************
+*@Description: create maincl .
+*@author:      wuyan
+*@createDate:  2018/10/12
+**************************************/
+function createMainCL( csName, mainCLName, shardingKey )
+{
+   println("---Begin to create MainCL.");
+
+   var options = { ShardingKey: shardingKey, IsMainCL:true, ReplSize:0 } ;
+   var mainCL = commCreateCLByOption( db, csName, mainCLName, options, false,
+                                      true, "Failed to create mainCL." );
+   return mainCL ;
+}
+
+function createCL( csName, clName, shardingKey, shardingType)
+{
+   if ( typeof( shardingType ) == "undefined" ) { shardingType = "hash"; }
+   println("---Begin to create cl:"+ csName + "." + clName);
+
+   var options  = { ShardingKey: shardingKey, ShardingType: shardingType,ReplSize:0, Compressed:true } ;
+   var dbcl = commCreateCLByOption( db, csName, clName, options, true,
+                                     true, "Failed to create cl." );
+   return dbcl ;
 }
