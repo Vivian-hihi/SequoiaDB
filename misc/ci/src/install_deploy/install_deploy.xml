@@ -35,8 +35,12 @@
       </if>  
       <antcall target="change_limits"/>
       <antcall target="deploy"/> 
-      <antcall target="create_es_nodeconf"/>
-
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
+         <else>
+            <antcall target="create_es_nodeconf"/>
+         </else>
+      </if>
    </target>
    
    <target name="clear_cluster">
