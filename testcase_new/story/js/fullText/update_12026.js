@@ -1,0 +1,59 @@
+/******************************************************************************
+@Description :   seqDB-12026:AutoIndexId为false时更新全文索引字段值
+@Modify list :   2018-10-10  xiaoni Zhao  Init
+******************************************************************************/
+function main()
+{
+   if( commIsStandalone( db ) )
+   {
+      println( "Run mode is standalone" ) ;
+      return ;
+   }
+    
+   var dbOperator = new DBOperator();
+   var clName = COMMCLNAME + "_ES_12026";
+   var findCond = {"":{"$Text":{"query":{"match_all":{}}}}};
+   var selectorCond = { a : "", b : "" };
+   var textIndexName = "a";
+   
+   commDropCL( db, COMMCSNAME, clName, true, true );
+   
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIndexId : false } );
+   
+   commCreateIndex( dbcl, textIndexName, { a : "text", b : "text" } );
+   
+   dbcl.insert( { a : "text1", b : "text1" } );
+   
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 1 );
+   
+   var expectResult = dbOperator.findFromCL( dbcl, null, selectorCond );
+   var actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond );
+   checkResult( expectResult, actResult );
+   
+   update( dbcl );
+   
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 1 );
+   
+   expectResult = dbOperator.findFromCL( dbcl, null, selectorCond );
+   actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond );
+   checkResult( expectResult, actResult );
+   
+   commDropCL( db, COMMCSNAME, clName, true, true );
+}
+
+function update( dbcl )
+{
+   try
+   {
+      dbcl.update( { $set : { a : "text2", b : "text2" } } );
+   }
+   catch( e )
+   {
+      if( e !== -279 )
+        {
+         throw e;
+      }        
+   }
+}
+
+main();
