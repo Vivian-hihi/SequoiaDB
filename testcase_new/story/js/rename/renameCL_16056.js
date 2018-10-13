@@ -5,10 +5,10 @@
 
 main(db);
 function main(db)
-{	  
-	try
-	{   
-	   var clName = CHANGEDPREFIX + "_renamecl16056";  
+{     
+   try
+   {   
+      var clName = CHANGEDPREFIX + "_renamecl16056";  
       var newCLName = CHANGEDPREFIX + "_newcl16056";       
       commDropCL( db, COMMCSNAME, clName, true, true, "clear collection in the beginning" ) ; 
       commDropCL( db, COMMCSNAME, newCLName, true, true, "clear collection in the beginning" ) ; 
@@ -44,7 +44,7 @@ function checkFindResult( csName, newCLName, expIndexName, expRecordNums )
       if( count != expRecordNums  )
       {
          throw buildException("check record count", null, "check the new cl record nums",
-									expRecordNums, count);
+                           expRecordNums, count);
       }   
       
       //check index
@@ -52,7 +52,7 @@ function checkFindResult( csName, newCLName, expIndexName, expRecordNums )
       if( indexName !== expIndexName  )
       {        
          throw buildException("check find by index", null, "check find by index",
-									indexName, expIndexName);
+                           indexName, expIndexName);
       }  
 
    }

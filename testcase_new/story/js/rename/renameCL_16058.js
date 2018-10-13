@@ -5,11 +5,11 @@
 
 main(db);
 function main(db)
-{	  
-	try
-	{   
-	   //@ clean before
-	   if( true == commIsStandalone( db ) )
+{     
+   try
+   {   
+      //@ clean before
+      if( true == commIsStandalone( db ) )
       {
          println( "run mode is standalone" );
          return;
@@ -22,7 +22,7 @@ function main(db)
          return ;
       }   
       
-	   var clName = CHANGEDPREFIX + "_renamecl16058";  
+      var clName = CHANGEDPREFIX + "_renamecl16058";  
       var newCLName = CHANGEDPREFIX + "_newcl16058";       
       commDropCL( db, COMMCSNAME, clName, true, true, "clear collection in the beginning" ) ; 
       commDropCL( db, COMMCSNAME, newCLName, true, true, "clear collection in the beginning" ) ; 
@@ -67,7 +67,7 @@ function checkDatas( csName, newCLName, expRecordNums,groupsInfo )
       if( count != expRecordNums  )
       {
          throw buildException("check datas", null, "check the new cl record nums",
-									expRecordNums, count);
+                           expRecordNums, count);
       }   
       
       //test record nums of split groups
@@ -78,11 +78,11 @@ function checkDatas( csName, newCLName, expRecordNums,groupsInfo )
             var sdb = new Sdb(groupsInfo[i].HostName,groupsInfo[i].svcname);
             var cl = sdb.getCS( csName ).getCL( newCLName );
             var num = cl.count();         
-      	
-            if( Number(num) !== expRecordNums/2 )			
-	         {  
+         
+            if( Number(num) !== expRecordNums/2 )         
+            {  
                throw buildException("checkClSplitRecordNums", "count wrong", "count()",expRecordNums/2, num)
-	         }	      
+            }         
          }
          catch(e)
          {
@@ -91,11 +91,11 @@ function checkDatas( csName, newCLName, expRecordNums,groupsInfo )
          finally
          {
             if (sdb !== undefined)
-      	   {
+            {
                sdb.close();
-      	      sdb == undefined;
-      	   } 
-         }	           
+               sdb == undefined;
+            } 
+         }              
       }      
    }
    catch(e)

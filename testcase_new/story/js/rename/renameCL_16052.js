@@ -5,10 +5,10 @@
 
 main(db);
 function main(db)
-{	  
-	try
-	{   
-	   var clName = CHANGEDPREFIX + "_renamecl16052";  
+{     
+   try
+   {   
+      var clName = CHANGEDPREFIX + "_renamecl16052";  
       var newCLName = CHANGEDPREFIX + "_newcl16052";  
       var fileName = CHANGEDPREFIX + "_lobtest16052.file";
       commDropCL( db, COMMCSNAME, clName, true, true, "clear collection in the beginning" ) ; 
@@ -37,8 +37,8 @@ function main(db)
    }
    finally
    {      
-	   var cmd = new Cmd();
-	   cmd.run( "rm -rf *" + fileName );
+      var cmd = new Cmd();
+      cmd.run( "rm -rf *" + fileName );
    }
 }
 
@@ -52,7 +52,7 @@ function checkDatas( csName, newCLName, expRecordNums, srcMd5,expLobArr )
       if( count != expRecordNums  )
       {
          throw buildException("check datas", null, "check the new cl record nums",
-									expRecordNums, count);
+                           expRecordNums, count);
       }   
       
       //check the lob
