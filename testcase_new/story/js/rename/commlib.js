@@ -21,7 +21,7 @@ function insertData( dbcl, number)
          //data example: {"no":5, customerName:"test5", "phone":13700000005, "openDate":1402990912105
          
          docs.push( doc );
-      }	
+      }   
       dbcl.insert( docs );       
    }
    catch(e)
@@ -162,22 +162,22 @@ function checkRenameCLResult( csName, oldCLName, newCLName )
       if( getNewCLName !== clFullName  )
       {
          throw buildException("check cl name", null, "check the new cl name",
-									clFullName, getNewCLName);
+                           clFullName, getNewCLName);
       }   
       
       //check the old cl is not exist
       try
-	   {
-		   db.getCS(csName).getCL( oldCLName );
-		   throw "need throw error";
-	   }
-	   catch ( e )
-	   { 
-		   if ( e !== -23  )
-		   {		      
-			   throw buildException("check old clName:",e);
-		   }		
-	   }
+      {
+         db.getCS(csName).getCL( oldCLName );
+         throw "need throw error";
+      }
+      catch ( e )
+      { 
+         if ( e !== -23  )
+         {            
+            throw buildException("check old clName:",e);
+         }      
+      }
    }
    catch(e)
    {      
@@ -282,9 +282,9 @@ function getSplitGroups(csName,clName,targetGrMaxNums)
       if( srcGroupName == allGroupInfo[i][0] )
       {
          splitGroups[0] = new Object();
-			splitGroups[0].GroupName = allGroupInfo[i][0];
-			splitGroups[0].HostName = allGroupInfo[i][1];
-			splitGroups[0].svcname = allGroupInfo[i][2];
+         splitGroups[0].GroupName = allGroupInfo[i][0];
+         splitGroups[0].HostName = allGroupInfo[i][1];
+         splitGroups[0].svcname = allGroupInfo[i][2];
       }
       else
       {
@@ -293,9 +293,9 @@ function getSplitGroups(csName,clName,targetGrMaxNums)
             continue;
          }
          splitGroups[index] = new Object();
-			splitGroups[index].GroupName = allGroupInfo[i][0];
-			splitGroups[index].HostName = allGroupInfo[i][1];
-			splitGroups[index].svcname = allGroupInfo[i][2];
+         splitGroups[index].GroupName = allGroupInfo[i][0];
+         splitGroups[index].HostName = allGroupInfo[i][1];
+         splitGroups[index].svcname = allGroupInfo[i][2];
          index++;
       }
    }
@@ -313,6 +313,6 @@ function splitCL(dbcl, srcGroupName, dstGroupName)
    catch(e)
    {
       throw buildException("splitcl", null, "split fail!",
-									srcGroupName, dstGroupName+"  e:"+e);
+                           srcGroupName, dstGroupName+"  e:"+e);
    } 
 }
