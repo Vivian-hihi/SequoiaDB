@@ -37,6 +37,7 @@ var dataConf  = { diaglevel:diagLevel,
                   sharingbreak:30000,
                   diagnum:30,
                   logfilenum:40,
+                  plancachelevel:3,
                   diagpath:'/opt/sequoiadb/database/data/[svcname]/diaglog'
                 };
                 
