@@ -33,9 +33,8 @@ function main(){
    //使用全文索引字段进行查询并使用sort,返回的记录数超过1万条，检查结果
    var findConf = {"" : {$Text : {"query" : {"match_all" : {}}}}};
    var sortConf = {about : 1, content : 1, _id : 1};
-   var hintConf = {"" : fullIndex};
    var dbOperator = new DBOperator();
-   var actRecords = dbOperator.findFromCL(dbcl, findConf, null, sortConf, hintConf);
+   var actRecords = dbOperator.findFromCL(dbcl, findConf, null, sortConf, null);
    var expRecords = dbOperator.findFromCL(dbcl, null, null, sortConf, null);
    
    checkResult(actRecords, expRecords);   

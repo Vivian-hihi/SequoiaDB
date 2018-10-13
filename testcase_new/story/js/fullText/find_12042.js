@@ -32,9 +32,8 @@ function main(){
    
    //指定索引字段进行全文检索，返回记录数覆盖与ES需要多次交互(超过1w条)，检查结果
    var findConf = {"" : {$Text : {"query" : {"match_all" : {}}}}};
-   var hintConf = {"" : fullIndex};
    var dbOperator = new DBOperator();
-   var actRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, hintConf);
+   var actRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, null);
    var expRecords = records;
    
    checkRecords( expRecords,  actRecords);

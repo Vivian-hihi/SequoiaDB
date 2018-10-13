@@ -24,15 +24,18 @@ function main(){
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 30);
    
    //指定索引字段进行全文检索，指定查询覆盖：走主节点、走备节点，检查结果 
-   db.setSessionAttr({PreferedInstance : "M"});
+   var masterDB = new Sdb( COORDHOSTNAME, COORDSVCNAME );
+   masterDB.setSessionAttr({PreferedInstance : "M"});
    var dbOperator = new DBOperator();
    var masActRecords = getActRecords(fullIndex, dbOperator, dbcl);
    var expRecords = records;
+   masterDB.close();
    checkRecords( expRecords, masActRecords );
    
    var slaveDB = new Sdb( COORDHOSTNAME, COORDSVCNAME );
    slaveDB.setSessionAttr({PreferedInstance : "S"});
    var slaActRecords = getActRecords(fullIndex, dbOperator, dbcl);
+   slaveDB.close();
    checkRecords( expRecords, slaActRecords );
       
    commDropCL(db, COMMCSNAME, clName, true, true);
@@ -40,8 +43,7 @@ function main(){
 
 function getActRecords(fullIndex, dbOperator, dbcl){
    var findConf = {"" : {$Text : {"query" : {"match_all" : {}}}}};
-   var hintConf = {"" : fullIndex};
-   var actRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, hintConf);
+   var actRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, null);
    return actRecords;
 }
 
