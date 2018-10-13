@@ -3032,8 +3032,8 @@ namespace engine
             utilCSUniqueID curCSID = utilGetCSUniqueID( it->first ) ;
             if ( curCSID == csUniqueID )
             {
-               _mapIDCatalog.erase(it) ;
-               break ;
+               _mapIDCatalog.erase(it++) ;
+               continue ;
             }
             it++ ;
          }
