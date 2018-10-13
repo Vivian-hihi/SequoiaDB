@@ -34,7 +34,7 @@ function main(){
    var findConf = {"" : {$Text : {"query" : {"match_all" : {}}}}};
    var hintConf = {"" : fullIndex};
    var dbOperator = new DBOperator();
-   var actRecords = dbOperator.findFromCL(dbcl, findConf, null, null, hintConf);
+   var actRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, hintConf);
    var expRecords = records;
    
    checkRecords( expRecords,  actRecords);
@@ -44,23 +44,9 @@ function main(){
 
 function checkRecords( expRecords, actRecords )
 {
-   var fields = new Array();
-   if(expRecords.length > 0){
-	   for(var i in expRecords[0]){
-		   fields.push(i);
-	   }
-   }
-   var actRec = new Array();
-   for(var i in actRecords){
-	   var obj = new Object();
-	   for(var j in fields){
-		   obj[fields[j]] = actRecords[i][fields[j]];
-	   }
-	   actRec.push(obj);
-   }
    expRecords.sort(compare("about", compare("content")));
-   actRec.sort(compare("about", compare("content")));
-   checkResult(expRecords, actRec)
+   actRecords.sort(compare("about", compare("content")));
+   checkResult(expRecords, actRecords)
 }
 
 main();

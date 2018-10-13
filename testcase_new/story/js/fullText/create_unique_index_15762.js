@@ -32,7 +32,7 @@ function main(){
    var queryCond = '{"query" : {"exists" : {"field" : "content"}}}'; 
    var findConf = {"" : {$Text : {"query" : {"exists" : {"field" : "content"}}}}};
    var actESRecords = esOperator.findFromES(esIndexName, queryCond);
-   var actCLRecords = dbOperator.findFromCL(dbcl, findConf, null, null, null);
+   var actCLRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, null);
    
    var expESRecords = new Array();
    expESRecords.push({about : "about for you", content : "this is my college"});
@@ -47,7 +47,7 @@ function main(){
    createUniqueIndex(dbcl);
    
    var actESRecords = esOperator.findFromES(esIndexName, queryCond);
-   var actCLRecords = dbOperator.findFromCL(dbcl, findConf, null, null, null);
+   var actCLRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, null);
    
    //唯一索引创建失败，报错-38，检查集合索引、原始集合、固定集合记录无变化使用inspect工具检测主备节点数据一致，ES上记录无变化 
    checkRecords( expESRecords,  actESRecords);
@@ -70,26 +70,9 @@ function createUniqueIndex(dbcl){
 
 function checkRecords( expRecords, actRecords )
 {
-   var fields = new Array();
-   if(expRecords.length > 0){
-	   for(var i in expRecords[0]){
-		   fields.push(i);
-	   }
-   }
-   var actRec = new Array();
-   for(var i in actRecords){
-	   var obj = new Object();
-	   for(var j in fields){
-		   obj[fields[j]] = actRecords[i][fields[j]];
-	   }
-	   actRec.push(obj);
-   }
-   if(fields.length > 0){
-	  var sortField = fields[0];
-	  expRecords.sort(compare(sortField));
-	  actRec.sort(compare(sortField));
-   }
-   checkResult(expRecords, actRec)
+   expRecords.sort(compare("about"));
+   actRecords.sort(compare("about"));
+   checkResult(expRecords, actRecords)
 }
 
 main();

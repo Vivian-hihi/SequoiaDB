@@ -27,17 +27,17 @@ function main(){
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 5);
    
    //在findOne中使用全文检索条件，覆盖：只带全文检索条件、混合查询，检查结果 
-   var rec = dbcl.findOne({"" : {$Text : {"query" : {"match_all" : {}}}}});
+   var rec = dbcl.findOne({"" : {$Text : {"query" : {"match_all" : {}}}}},{about : ""});
    var actOnlyFullRecords = new Array();
    while(rec.next()){
       actOnlyFullRecords.push(rec.current().toObj());
    }
-   var rec = dbcl.findOne({"" : {$Text : {"query" : {"match_all" : {}}}}}, {about : ""}).sort({about : 1});
+   
+   var rec = dbcl.findOne({$and : [{"" : {$Text : {"query" : {"match_all" : {}}}}}, {about : {$exists : 1}}]}, {about : ""});
    var actMixRecords = new Array();
    while(rec.next()){
       actMixRecords.push(rec.current().toObj());
    }
-   return actMixRecords;
    
    var expRecords = new Array();
    expRecords.push(records[0]);
@@ -50,26 +50,9 @@ function main(){
 
 function checkRecords( expRecords, actRecords )
 {
-   var fields = new Array();
-   if(expRecords.length > 0){
-	   for(var i in expRecords[0]){
-		   fields.push(i);
-	   }
-   }
-   var actRec = new Array();
-   for(var i in actRecords){
-	   var obj = new Object();
-	   for(var j in fields){
-		   obj[fields[j]] = actRecords[i][fields[j]];
-	   }
-	   actRec.push(obj);
-   }
-   if(fields.length > 0){
-	  var sortField = fields[0];
-	  expRecords.sort(compare(sortField));
-	  actRec.sort(compare(sortField));
-   }
-   checkResult(expRecords, actRec)
+   expRecords.sort(compare("about"));
+   actRecords.sort(compare("about"));
+   checkResult(expRecords, actRecords)
 }
 
 main();

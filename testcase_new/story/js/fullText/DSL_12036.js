@@ -29,33 +29,33 @@ function main(){
    var findConf = {"" : {$Text : {"query" : {"match" : {"content" : "college"}}}}};
    var queryCond = '{"query" : {"term" : {"content" : "college"}}}';
    var esRecords = esOperator.findFromES(esIndexName, queryCond);
-   var clRecords = dbOperator.findFromCL(dbcl, findConf, null, null, null);
+   var clRecords = dbOperator.findFromCL(dbcl, findConf, {content : "", about : ""}, null, null);
    checkRecords( esRecords, clRecords );
    
    var queryCond = '{"query" : {"match" : {"about" : "这是我的"}}}';
    var esRecords = esOperator.findFromES(esIndexName, queryCond);
-   var clRecords = dbOperator.findFromCL(dbcl, findConf, null, null, null);
+   var clRecords = dbOperator.findFromCL(dbcl, findConf, {content : "", about : ""}, null, null);
    checkRecords( esRecords, clRecords );
    
    var queryCond = '{"query" : {"match_phrase" : {"content" : "not got"}}}';
    var esRecords = esOperator.findFromES(esIndexName, queryCond);
    var findConfNot = {"" : {$Text : {"query" : {"match" : {"content" : "not"}}}}};
-   var clRecords = dbOperator.findFromCL(dbcl, findConfNot, null, null, null);
+   var clRecords = dbOperator.findFromCL(dbcl, findConfNot, {content : "", about : ""}, null, null);
    checkRecords( esRecords, clRecords );
    
    var queryCond = '{"query" : {"multi_match" : {"query" : "you", "fields" : ["content", "about"]}}}';
    var esRecords = esOperator.findFromES(esIndexName, queryCond);
-   var clRecords = dbOperator.findFromCL(dbcl, findConfNot, null, null, null);
+   var clRecords = dbOperator.findFromCL(dbcl, findConfNot, {content : "", about : ""}, null, null);
    checkRecords( esRecords, clRecords );
    
    var queryCond = '{"query" : {"bool" : {"must" : [{"match" : {"content" : "not"}}, {"match" : {"about" : "you"}}]}}}';
    var esRecords = esOperator.findFromES(esIndexName, queryCond);
-   var clRecords = dbOperator.findFromCL(dbcl, findConfNot, null, null, null);
+   var clRecords = dbOperator.findFromCL(dbcl, findConfNot, {content : "", about : ""}, null, null);
    checkRecords( esRecords, clRecords );
    
    var queryCond = '{"query" : {"bool" : {"must_not" : {"match" : {"about" : "you"}}}}}';
    var esRecords = esOperator.findFromES(esIndexName, queryCond);
-   var clRecords = dbOperator.findFromCL(dbcl, findConf, null, null, null);
+   var clRecords = dbOperator.findFromCL(dbcl, findConf, {content : "", about : ""}, null, null);
    checkRecords( esRecords, clRecords );
    
    var queryCond = '{"query" : {"bool" : {"should" : [{"match" : {"content" : "college"}}, {"match" : {"about" : "you"}}]}}}';
@@ -82,26 +82,9 @@ function insertData(dbcl){
 
 function checkRecords( expRecords, actRecords )
 {
-   var fields = new Array();
-   if(expRecords.length > 0){
-	   for(var i in expRecords[0]){
-		   fields.push(i);
-	   }
-   }
-   var actRec = new Array();
-   for(var i in actRecords){
-	   var obj = new Object();
-	   for(var j in fields){
-		   obj[fields[j]] = actRecords[i][fields[j]];
-	   }
-	   actRec.push(obj);
-   }
-   if(fields.length > 0){
-	  var sortField = fields[0];
-	  expRecords.sort(compare(sortField));
-	  actRec.sort(compare(sortField));
-   }
-   checkResult(expRecords, actRec)
+   expRecords.sort(compare("content"));
+   actRecords.sort(compare("content"));
+   checkResult(expRecords, actRecords)
 }
 
 main();

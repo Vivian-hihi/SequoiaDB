@@ -40,7 +40,7 @@ function main(){
    var esOperator = new ESOperator();
    var count = cappedCL.find({Type : 2}).count();
    var findConf = {"" : {$Text : {"query" : {"match_all" : {}}}}};
-   var actCLRecords = dbOperator.findFromCL(dbcl, findConf, null, null, null);
+   var actCLRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, null);
    var queryCond = '{"query" : {"exists" : {"field" : "about"}}, "size" : 20}';
    var actESRecords = esOperator.findFromES(esIndexName, queryCond);
    
@@ -55,26 +55,9 @@ function main(){
 
 function checkRecords( expRecords, actRecords )
 {
-   var fields = new Array();
-   if(expRecords.length > 0){
-	   for(var i in expRecords[0]){
-		   fields.push(i);
-	   }
-   }
-   var actRec = new Array();
-   for(var i in actRecords){
-	   var obj = new Object();
-	   for(var j in fields){
-		   obj[fields[j]] = actRecords[i][fields[j]];
-	   }
-	   actRec.push(obj);
-   }
-   if(fields.length > 0){
-	  var sortField = fields[0];
-	  expRecords.sort(compare(sortField));
-	  actRec.sort(compare(sortField));
-   }
-   checkResult(expRecords, actRec)
+   expRecords.sort(compare("about"));
+   actRecords.sort(compare("about"));
+   checkResult(expRecords, actRecords)
 }
 
 main();

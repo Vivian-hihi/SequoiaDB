@@ -10,12 +10,12 @@ function main(){
 	  return;
    };
    
-   var clName = COMMCLNAME + "_ES_12395";   
+   var clName = COMMCLNAME + "_ES_14395";   
    commDropCL(db, COMMCSNAME, clName, true, true);
    
    //创建全文索引，并插入包含索引字段的记录，记录总数大于1万条 
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
-   var fullIndex = "fullIndex_ES_12395";
+   var fullIndex = "fullIndex_ES_14395";
    commCreateIndex(dbcl, fullIndex, {about : "text", content : "text"});
    
    var dataGenerator = new commDataGenerator();
@@ -31,15 +31,15 @@ function main(){
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 30000);
    
    //在count命令字中使用全文检索执行查询，覆盖：无记录匹配、部分记录匹配(大于1w条)、记录全匹配(大于1w条)，检查结果
-   var actCount = dbcl.find({"" : {$Text : {"query" : {"match" : {"content" : "movie"}}}}}).count();
+   var actCount = dbcl.count({"" : {$Text : {"query" : {"match" : {"content" : "movie"}}}}});
    checkAllResult(actCount, 0);
    
    var dbOperator = new DBOperator();
-   var actCount = dbcl.find({"" : {$Text : {"query" : {"match_all" : {}}}}, content : {$gt : "c"}}).count();
+   var actCount = dbcl.count({"" : {$Text : {"query" : {"match_all" : {}}}}, content : {$gt : "c"}});
    var expCount = dbOperator.findFromCL(dbcl, {"content" : {$gt : "c"}}, null, null, null).length;
    checkAllResult(actCount, expCount);
    
-   var actCount = dbcl.find({"" : {$Text : {"query" : {"match_all" : {}}}}}).count();
+   var actCount = dbcl.count({"" : {$Text : {"query" : {"match_all" : {}}}}});
    checkAllResult(actCount, 30000);
          
    commDropCL(db, COMMCSNAME, clName, true, true);

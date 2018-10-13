@@ -29,8 +29,8 @@ function main(){
    //在索引字段上执行查询，覆盖:普通查询、全文检索，检查结果 
    var dbOperator = new DBOperator();
    var findConf = {"" : {$Text : {"query" : {"match_all" : {}}}}};
-   var actRecordsFullSearch = dbOperator.findFromCL(dbcl, findConf, null, null, {"" : fullIndex});
-   var actRecordsCommSearch = dbOperator.findFromCL(dbcl, null, null, null, {"" : "commonIndex"});
+   var actRecordsFullSearch = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, {"" : fullIndex});
+   var actRecordsCommSearch = dbOperator.findFromCL(dbcl, null, {about : "", content : ""}, null, {"" : "commonIndex"});
    
    var expRecords = records;
    
@@ -42,26 +42,9 @@ function main(){
 
 function checkRecords( expRecords, actRecords )
 {
-   var fields = new Array();
-   if(expRecords.length > 0){
-	   for(var i in expRecords[0]){
-		   fields.push(i);
-	   }
-   }
-   var actRec = new Array();
-   for(var i in actRecords){
-	   var obj = new Object();
-	   for(var j in fields){
-		   obj[fields[j]] = actRecords[i][fields[j]];
-	   }
-	   actRec.push(obj);
-   }
-   if(fields.length > 0){
-	  var sortField = fields[0];
-	  expRecords.sort(compare(sortField));
-	  actRec.sort(compare(sortField));
-   }
-   checkResult(expRecords, actRec)
+   expRecords.sort(compare("content"));
+   actRecords.sort(compare("content"));
+   checkResult(expRecords, actRecords)
 }
 
 main();

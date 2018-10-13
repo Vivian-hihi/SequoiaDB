@@ -32,7 +32,7 @@ function main(){
    var hintConf = {"" : fullIndex};
    var actRecords = dbOperator.findFromCL(dbcl, findConf, selectorConf, null, hintConf);
    
-   var expRecords = records;
+   var expRecords = dbOperator.findFromCL(dbcl, null, null, null, null);
    checkRecords( expRecords, actRecords );
    
    var selectorConf = {about : {$include : 1}, information : {$default : "this is information "}};
@@ -58,23 +58,9 @@ function getExpRecords(records){
 
 function checkRecords( expRecords, actRecords )
 {
-   var fields = new Array();
-   if(expRecords.length > 0){
-	   for(var i in expRecords[0]){
-		   fields.push(i);
-	   }
-   }
-   var actRec = new Array();
-   for(var i in actRecords){
-	   var obj = new Object();
-	   for(var j in fields){
-		   obj[fields[j]] = actRecords[i][fields[j]];
-	   }
-	   actRec.push(obj);
-   }
    expRecords.sort(compare("about", compare("information")));
-   actRec.sort(compare("about", compare("information")));
-   checkResult(expRecords, actRec)
+   actRecords.sort(compare("about", compare("information")));
+   checkResult(expRecords, actRecords)
 }
 
 main();

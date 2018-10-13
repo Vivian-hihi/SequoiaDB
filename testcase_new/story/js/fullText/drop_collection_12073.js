@@ -23,7 +23,9 @@ function main(){
    var dataGenerator = new commDataGenerator();
    var records = dataGenerator.getRecords(10, "string", ["content"]);
    dbcl.insert(records);
-   dbcl.putLob("/opt/sequoiadb/uninstall.dat");
+   var testFile = CHANGEDPREFIX + "_lobTest.file" ;
+   lobGenerateFile( testFile ) ;
+   dbcl.putLob(testFile);
    
    var dbOperator = new DBOperator();
    var esIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndex);
@@ -39,6 +41,60 @@ function main(){
    checkAllResult(dbcl, esOperator, cappedCL, esIndexName);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
+}
+
+function lobGenerateFile( fileName, fileLine)
+{
+   if( undefined == fileLine )
+   { 
+      fileLine = 1000 ; 
+   }
+   
+   try
+   {
+      var cnt = 0 ;
+      while( true == lobFileIsExist( fileName ))
+      {
+         File.remove( fileName ) ;
+         if ( cnt > 10) break ;
+         cnt++ ;
+         sleep(10) ;
+      }
+      
+      if( 10 <= cnt )
+         throw "failed to remove file: " + fileName ;
+      var file = new File( fileName ) ;
+      for( var i = 0 ; i < fileLine ; ++i )
+      {
+         var record = '{ no:'+i+', score:'+i+', interest:["movie", "photo"],' +
+                      '  major:"计算机软件与理论", dep:"计算机学院",' +
+                      '  info:{name:"Holiday", age:22, sex:"男"} }' ;
+         file.write( record ) ;
+      }
+      if( false == lobFileIsExist( fileName ) )
+         throw "NoFile: " + fileName ;
+   }
+   catch( e )
+   {
+      println( "faile to auto generate file, rc = " + e ) ;
+      throw e ;
+   }
+}
+
+function lobFileIsExist( fileName )
+{
+   var isExist = false ;
+   try
+   {
+      var cmd = new Cmd() ;
+      cmd.run( "ls " + fileName ) ;
+      isExist = true ;
+   }
+   catch( e )
+   {
+      if( 2 == e ){ isExist = false; }
+   }
+   return isExist ;
 }
 
 function checkAllResult(dbcl, esOperator, cappedCL){
@@ -72,6 +128,7 @@ function checkAllResult(dbcl, esOperator, cappedCL){
          throw buildException("findFromES()", e, "check if it exists", "success", "fail");
       }
    }
+   println("check result success!")
 }
 
 main();
