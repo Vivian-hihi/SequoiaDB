@@ -183,9 +183,6 @@ namespace engine
                   optAccessPlan *pNextPlan = (optAccessPlan *)pPlan->getNext() ;
                   if ( pPlan->getSULID() == suLID )
                   {
-                     // Increase the reference count before we delete it
-                     pPlan->incRefCount() ;
-
                      // Locked bucket already, safe to remove from bucket
                      if ( pBucket->removeItem( pPlan ) )
                      {
@@ -239,9 +236,6 @@ namespace engine
                   optAccessPlan *pNextPlan = (optAccessPlan *)pPlan->getNext() ;
                   if ( pPlan->getSULID() == suLID && pPlan->getCLLID() == clLID )
                   {
-                     // Increase the reference count before we delete it
-                     pPlan->incRefCount() ;
-
                      // Locked bucket already, safe to remove from bucket
                      if ( pBucket->removeItem( pPlan ) )
                      {
@@ -304,8 +298,6 @@ namespace engine
             while ( pPlan )
             {
                optAccessPlan *pNextPlan = (optAccessPlan *)pPlan->getNext() ;
-               // Increase the reference count before we delete it
-               pPlan->incRefCount() ;
 
                // Locked bucket already, safe to remove from bucket
                if ( pBucket->removeItem( pPlan ) )
@@ -353,9 +345,6 @@ namespace engine
                if ( 0 == ossStrncmp( pCLFullName, pPlan->getCLFullName(),
                                      DMS_COLLECTION_FULL_NAME_SZ ) )
                {
-                  // Increase the reference count before we delete it
-                  pPlan->incRefCount() ;
-
                   // Locked bucket already, safe to remove from bucket
                   if ( pBucket->removeItem( pPlan ) )
                   {
@@ -417,9 +406,6 @@ namespace engine
                     0 == ossStrncmp( pCSName, csName,
                                      DMS_COLLECTION_SPACE_NAME_SZ ) )
                {
-                  // Increase the reference count before we delete it
-                  pPlan->incRefCount() ;
-
                   // Locked bucket already, safe to remove from bucket
                   if ( pBucket->removeItem( pPlan ) )
                   {
