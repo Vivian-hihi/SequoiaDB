@@ -82,7 +82,7 @@ public class IdIndexSplit15549 extends SdbTestBase {
 						cl.alterCollection((BSONObject)JSON.parse("{AutoIndexId:false}"));
 						Assert.fail("alert_success_ERROR");
 					}catch(BaseException e){
-						if(e.getErrorCode()!=-32){
+						if(e.getErrorCode()!=-334){
 							throw e;
 						}
 					}

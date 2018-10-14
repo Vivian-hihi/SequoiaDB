@@ -96,7 +96,7 @@ public class Split10536 extends SdbTestBase {
 						cl.dropIdIndex();
 						Assert.fail("dropIdIndex_succeed_ERROR");
 					}catch(BaseException e){
-						if(e.getErrorCode()!=-32){
+						if(e.getErrorCode()!=-334){
 							throw e;
 						}
 					}
