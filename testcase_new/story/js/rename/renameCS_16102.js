@@ -1,0 +1,55 @@
+/************************************
+*@Description: 修改cs名后，执行数据增删改查操作
+*@author:      luweikang
+*@createdate:  2018.10.12
+*@testlinkCase:seqDB-16102
+**************************************/
+
+main();
+
+function main()
+{
+   println("---begin rename cs test---");
+   var oldcsName = COMMCSNAME+"_16102_old";
+   var newcsName = COMMCSNAME+"_16102_new";
+   var clName = CHANGEDPREFIX + "_16102_cl";
+   
+   var cs = commCreateCS( db, oldcsName, false, "create cs in begine", "");
+   var cl = commCreateCLByOption( db, oldcsName, clName, {}, false, false, "create CL in the begin");
+   
+   cl.createIndex("aIndex", { a: 1 }, true);
+   cl.createIndex("noIndex", { no: 1 }, false);
+   
+   //insert 1000 data
+   insertData(cl, 1000);
+   
+   db.renameCS(oldcsName, newcsName);
+   
+   checkRenameCSResult(oldcsName, newcsName, 1);
+   
+   cl = db.getCS(newcsName).getCL(clName);
+   
+   cl.dropIndex("aIndex");
+   cl.dropIndex("noIndex");
+   
+   cl.createIndex("aIndex", { a: 1 }, true);
+   cl.createIndex("noIndex", { no: 1 }, false);
+   
+   var indexArr = ['$id', 'aIndex', 'noIndex'];
+   
+   var cur = cl.listIndexes();
+   while(cur.next())
+   {
+      var index = cur.current().toObj();
+      var name = index.IndexDef.name;
+      if(indexArr.indexOf(name)===-1)
+      {
+         throw buildException("checkIndex",e,"index", indexArr.toString, name);
+      }
+   }
+   
+   checkRenameCSResult(oldcsName, newcsName, 1);
+   
+   commDropCS( db, newcsName, true, false, "clean cs---" );
+   println("---end the test---");
+}

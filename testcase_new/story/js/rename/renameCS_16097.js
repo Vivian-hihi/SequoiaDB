@@ -9,10 +9,24 @@ main();
 
 function main()
 {
+   //@ clean before
+   if( true == commIsStandalone( db ) )
+   {
+      println( "run mode is standalone" );
+      return;
+   }     
+    //less two groups no split
+   var allGroupName = getGroupName(db,true);         
+   if( 1 === allGroupName.length )
+   {
+      println("--least two groups");
+      return ;
+   }
+   
    println("---begin rename cs test---");
    var oldcsName = COMMCSNAME+"_16097_old";
    var newcsName = COMMCSNAME+"_16097_new";
-   var clName = CHANGEDPREFIX + "_16097_cl";
+   var clName = CHANGEDPREFIX + "_16097_maincl";
    var subclName1 = COMMCSNAME+"_16097_sub1";
    var subclName2 = COMMCSNAME+"_16097_sub2";
    
@@ -37,7 +51,7 @@ function main()
    }
    
    db.renameCS(oldcsName, newcsName);
-   checkRenameCSResult(oldcsName, newcsName);
+   checkRenameCSResult(oldcsName, newcsName, 2);
    
    commDropCS( db, newcsName, true, false, "clean cs---" );
    println("---end the test---");

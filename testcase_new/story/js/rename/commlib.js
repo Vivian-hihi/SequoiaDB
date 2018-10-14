@@ -153,7 +153,7 @@ function checkLob( cl, expLobArr, srcMd5 )
 *@author:      wuyan
 *@createDate:  2018.10.12
 **************************************/
-function checkRenameCLResult( csName, oldCLName, newCLName )
+function checkRenameCLResult( csName, oldCLName, newCLName, clNum)
 {   
    try
    {
@@ -164,6 +164,11 @@ function checkRenameCLResult( csName, oldCLName, newCLName )
          throw buildException("check cl name", null, "check the new cl name",
 									clFullName, getNewCLName);
       }   
+      
+      if(clNum != clArray.length){
+         throw buildException("check cl num", null, "check the cs.cl num",
+                              clNum, clArray.length);
+      }
       
       //check the old cl is not exist
       try

@@ -29,7 +29,7 @@ function main()
    println("---test rename cs---");
    db.renameCS(oldcsName, newcsName);
    
-   checkRenameCSResult(oldcsName, newcsName);
+   checkRenameCSResult(oldcsName, newcsName, 1);
    
    cl = db.getCS(newcsName).getCL(clName);
    checkLob(cl, lobArray, cmd5);
