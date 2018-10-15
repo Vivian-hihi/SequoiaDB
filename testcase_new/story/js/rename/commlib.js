@@ -435,3 +435,45 @@ function checkRenameCSResult( oldCSName, newCSName, clNum)
       throw buildException("checkRenameCSResult", e)
    }   
 }
+
+function checkRenameSubCLResult( maincs, mainCLName, subcs, oldSubCLName, newSubCLName )
+{   
+   try
+   {     
+      println("---Begin to check the rename Subcl name"); 
+      var newSubCLFullName = subcs + "." + newSubCLName;
+      var mainCLFullName  = maincs + "." + mainCLName;
+      var subCLInfo = db.snapshot(8 ,{"Name": newSubCLFullName }).current().toObj();  
+      var getMainCLName = subCLInfo.MainCLName;  
+      if( getMainCLName !== mainCLFullName  )
+      {
+         throw buildException("check maincl Name", null, "check the new maincl name",
+									mainCLFullName, getMainCLName);
+      }      
+   
+      var getSubCLName = subCLInfo.Name;  
+      if( getSubCLName !== newSubCLFullName  )
+      {
+         throw buildException("check new subclName", null, "check the new subcl name",
+									newSubCLFullName, getSubCLName);
+      }        
+      
+      //check the old subcl is not exist
+      try
+	   {
+		   db.getCS(subcs).getCL( oldSubCLName );
+		   throw "need throw error";
+	   }
+	   catch ( e )
+	   { 
+		   if ( e !== -23  )
+		   {		      
+			   throw buildException("check old subclName:",e);
+		   }		
+	   }
+   }
+   catch(e)
+   {      
+      throw buildException("checkRenameSubCLResult", e)
+   }   
+}
