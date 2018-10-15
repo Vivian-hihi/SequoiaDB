@@ -153,7 +153,7 @@ function checkLob( cl, expLobArr, srcMd5 )
 *@author:      wuyan
 *@createDate:  2018.10.12
 **************************************/
-function checkRenameCLResult( csName, oldCLName, newCLName, clNum)
+function checkRenameCLResult( csName, oldCLName, newCLName)
 {   
    try
    {
@@ -164,11 +164,6 @@ function checkRenameCLResult( csName, oldCLName, newCLName, clNum)
          throw buildException("check cl name", null, "check the new cl name",
 									clFullName, getNewCLName);
       }   
-      
-      if(clNum != clArray.length){
-         throw buildException("check cl num", null, "check the cs.cl num",
-                              clNum, clArray.length);
-      }
       
       //check the old cl is not exist
       try
@@ -392,7 +387,7 @@ function createCL( csName, clName, shardingKey, shardingType)
 *@author:      luweikang
 *@createDate:  2018.10.13
 **************************************/
-function checkRenameCSResult( oldCSName, newCSName )
+function checkRenameCSResult( oldCSName, newCSName, clNum)
 {   
    try
    {
@@ -405,6 +400,11 @@ function checkRenameCSResult( oldCSName, newCSName )
       }
       
       var clArray = newCSObj.Collection;
+      
+      if(clNum != clArray.length){
+         throw buildException("check cl num", null, "check the cs.cl num",
+                              clNum, clArray.length);
+      }
       
       for( i = 0; i< clArray.length; i++)
       {
