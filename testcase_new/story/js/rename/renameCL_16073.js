@@ -1,0 +1,54 @@
+/* *****************************************************************************
+@discretion: rename cl
+             seqDB-16073
+@author£º2018-10-15 chensiqin  Init
+***************************************************************************** */
+main(db);
+function main(db)
+{
+   var csName = CHANGEDPREFIX+"_cs16073";
+   var fileName = CHANGEDPREFIX + "_lobtest16073.file";
+   try{
+      commDropCS( db, csName, true, "drop CS "+csName );
+   }catch( e ){}
+   var cs = commCreateCS( db, csName, true, "create CS1" );
+   var clName = CHANGEDPREFIX+"_cl16073_5";
+   var varCL = commCreateCLByOption( db, csName, clName , {}, true, false, "create cl in the beginning" );
+   var recordNums = 100;
+   insertData(varCL, recordNums);
+   var srcMd5 = createFile( fileName);
+   var lobIdArr = putLobs( varCL, fileName );
+   
+   for( var i = 1; i <= 10; i++ )
+   {
+      cs.renameCL(clName, CHANGEDPREFIX+"_newcl16073_"+i);
+      checkRenameCLResult( csName, clName, CHANGEDPREFIX+"_newcl16073_"+i)
+      clName = CHANGEDPREFIX+"_newcl16073_"+i;
+   }
+   checkDatas( csName, clName, recordNums, srcMd5, lobIdArr );
+   commDropCS( db, csName, true, "ignoreNotExist is true" );
+   var cmd = new Cmd();
+   cmd.run( "rm -rf *" + fileName );
+}
+
+function checkDatas( csName, newCLName, expRecordNums, srcMd5,expLobArr )
+{   
+   try
+   {
+      //check the record nums      
+      var dbcl = db.getCS( csName ).getCL( newCLName );
+      var count = dbcl.count();      
+      if( count != expRecordNums  )
+      {
+         throw buildException("check datas", null, "check the new cl record nums",
+                           expRecordNums, count);
+      }   
+      
+      //check the lob
+      checkLob( dbcl, expLobArr, srcMd5 );
+   }
+   catch(e)
+   {
+      throw buildException("checkDatas", e)
+   }  
+}
