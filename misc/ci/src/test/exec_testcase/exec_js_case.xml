@@ -253,7 +253,7 @@
          </if>
          
          <var name="cmd1" value="-f &quot;${func_option}${commlib_option}@{jsfile}&quot;" />
-         <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='${prefix}';var COORDSVCNAME='${SVCNAME}';var COORDHOSTNAME='localhost';var TESTCASEDIR='${jsdir}';&quot;" />
+         <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='${prefix}';var COORDSVCNAME='${SVCNAME}';var ESHOSTNAME='${ES_IP}';var COORDHOSTNAME='localhost';var TESTCASEDIR='${jsdir}';&quot;" />
          <echo message="exec cmd: ${INSTALL_DIR}/bin/sdb ${cmd1} ${cmd2}"/>      
          
          <var name="screen_output" unset="true"/>
