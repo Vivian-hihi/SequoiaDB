@@ -945,7 +945,8 @@ namespace engine
             goto error ;
          }
 
-         rc = _cl.splitAsync( sourceName.c_str(), targetName.c_str(), percent, taskID ) ;
+         rc = _cl.splitAsync( sourceName.c_str(), targetName.c_str(),
+                              percent, taskID ) ;
          if( SDB_OK != rc )
          {
             detail = BSON( SPT_ERR << "Failed to split collection asynchronously" ) ;
@@ -974,7 +975,7 @@ namespace engine
             goto error ;
          }
          rc = _cl.splitAsync( taskID, sourceName.c_str(), targetName.c_str(),
-                               cond, endCond ) ;
+                              cond, endCond ) ;
          if( SDB_OK != rc )
          {
             detail = BSON( SPT_ERR << "Failed to split collection asynchronously" ) ;
@@ -987,6 +988,10 @@ namespace engine
          detail = BSON( SPT_ERR << "3st param must be double or obj" ) ;
          goto error ;
       }
+
+      /// return taskid
+      rval.getReturnVal().setValue( taskID ) ;
+
    done:
       return rc ;
    error:
