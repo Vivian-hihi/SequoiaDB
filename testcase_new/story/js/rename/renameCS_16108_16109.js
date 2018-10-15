@@ -42,7 +42,7 @@ function testRenameCS16108( db, csName1, csName2 )
    var oldName = csName1;
    var newName = csName2;
    db.renameCS( oldName, newName );
-   checkRenameCSResult(oldName, newName);
+   checkRenameCSResult(oldName, newName, 1);
 }
 /*
   修改cs名，查看domain.listCollectionSpaces() 3、将cs移除域 4、检查结果 

@@ -10,10 +10,10 @@ main(db);
 
 function main(db)
 {
-   var csName1 = CHANGEDPREFIX+"_rename16111_1";
-   var csName2 = CHANGEDPREFIX+"_rename16111_2";
-   var clName1 = CHANGEDPREFIX+"renamecl16111_1";
-   var clName2 = CHANGEDPREFIX+"renamecl16111_2";
+   var csName1 = CHANGEDPREFIX+"_rename16113_1";
+   var csName2 = CHANGEDPREFIX+"_rename16113_2";
+   var clName1 = CHANGEDPREFIX+"renamecl16113_1";
+   var clName2 = CHANGEDPREFIX+"renamecl16113_2";
    //´´½¨cs cl
    commDropCS( db, csName1, true, "ignoreNotExist is true" );
    commDropCS( db, csName2, true, "ignoreNotExist is true" );
@@ -29,9 +29,12 @@ function main(db)
    }
    var oldName = csName1;
    var newName = csName2;
-   checkRenameCSResult(oldName, newName);
+   checkRenameCSResult(oldName, newName, 1);
    var cs = db.getCS(csName2);
-   commCreateCLByOption( db, csName1, clName2, {}, true, false, "create cl in the beginning" )
+   commCreateCLByOption( db, csName2, clName2, {}, true, false, "create cl in the beginning" )
+   checkRenameCSResult(oldName, newName, 2);
+   commDropCL( db, csName2, clName1, true, true, "ignoreNotExist is true" );
+   checkRenameCSResult(oldName, newName, 1);
    commDropCS( db, csName1, true, "ignoreNotExist is true" );
    commDropCS( db, csName2, true, "ignoreNotExist is true" );
 }

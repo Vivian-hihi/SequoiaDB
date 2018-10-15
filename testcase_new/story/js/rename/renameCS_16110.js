@@ -38,7 +38,7 @@ function testRenameCS16110( db, domainName, domain, csName1, csName2, clName )
    var newName = csName2;
    db.renameCS( oldName, newName );
    //check
-   checkRenameCSResult(oldName, newName);
+   checkRenameCSResult(oldName, newName, 1);
    var cs = db.getCS(csName2)
    cs.setDomain( { Domain : domainName } )
    var csList = domain.listCollectionSpaces().toArray();

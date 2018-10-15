@@ -34,7 +34,7 @@ function main(db)
    {
       throw buildException("renameCS( csName1, csName1 ) fail", e, "rename", "success", e); 
    }
-   checkRenameCSResult(csName1, csName2);
+   checkRenameCSResult(csName1, csName2, 1);
    var cs = db.getCS(csName2);
    var varCL = cs.getCL(clName1);
    var srcMd5 = createFile( fileName);
