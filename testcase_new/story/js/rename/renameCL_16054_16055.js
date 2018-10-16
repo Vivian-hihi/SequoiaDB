@@ -49,7 +49,7 @@ function main(db)
          }      
       }    
       
-      commDropCL( db, COMMCSNAME, newCLName, true, true, "clear collection in the beginning" ) ;          
+      commDropCL( db, COMMCSNAME, newCLName, true, true, "clear collection in the ending" ) ;          
    }
    catch( e )
    {

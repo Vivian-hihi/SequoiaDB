@@ -29,7 +29,7 @@ function main(db)
       checkRenameCLResult( COMMCSNAME, clName, newCLName );   
       checkDatas( COMMCSNAME, newCLName, recordNums, srcMd5,lobIdArr );
       
-      commDropCL( db, COMMCSNAME, newCLName, true, true, "clear collection in the beginning" ) ;      
+      commDropCL( db, COMMCSNAME, newCLName, true, true, "clear collection in the ending" ) ;      
    }
    catch( e )
    {

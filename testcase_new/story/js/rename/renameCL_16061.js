@@ -70,7 +70,7 @@ function createCLAndSplitCL( maincsName, mainCLName, subcsName, subCLName1, subC
    var clOptions1  = { ShardingKey:  {no:1}, ShardingType: "range", ReplSize:0, Group: groupName1} ;
    commCreateCLByOption( db, maincsName, subCLName1, clOptions1, false, true, "Failed to create cl." );
    var clOptions2  = { ShardingKey:  {no:1}, ShardingType: "hash", ReplSize:0, Group: groupName2} ;
-   commCreateCLByOption( db, subcsName, subCLName2, clOptions1, false, true, "Failed to create cl." );
+   commCreateCLByOption( db, subcsName, subCLName2, clOptions2, false, true, "Failed to create cl." );
    var clOptions3  = { ShardingKey:  {no:1}, ShardingType: "hash", ReplSize:0, Group: groupName1} ;
    var dbcl = commCreateCLByOption( db, maincsName, subCLName3, clOptions3, true, true, "Failed to create cl." );
     
@@ -81,9 +81,8 @@ function createCLAndSplitCL( maincsName, mainCLName, subcsName, subCLName1, subC
    dbmaincl.attachCL(  subcsName + "." + subCLName2, options2 );  
    
    var options3 = { LowBound: {"a":2000 }, UpBound: {"a": 3000 }} ; 
-   dbmaincl.attachCL(  maincsName + "." + subCLName3, options3 );
-   
-   println();
+   dbmaincl.attachCL(  maincsName + "." + subCLName3, options3 );   
+  
    dbcl.split( groupName1, groupName2, 50 );    
 }
 

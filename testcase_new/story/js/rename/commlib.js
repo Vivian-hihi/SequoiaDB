@@ -362,7 +362,7 @@ function splitCL(dbcl, srcGroupName, dstGroupName)
 **************************************/
 function createMainCL( csName, mainCLName, shardingKey )
 {
-   println("---Begin to create MainCL.");
+   println("---begin to create MainCL.");
 
    var options = { ShardingKey: shardingKey, IsMainCL:true, ReplSize:0 } ;
    var mainCL = commCreateCLByOption( db, csName, mainCLName, options, false,
@@ -373,7 +373,7 @@ function createMainCL( csName, mainCLName, shardingKey )
 function createCL( csName, clName, shardingKey, shardingType)
 {
    if ( typeof( shardingType ) == "undefined" ) { shardingType = "hash"; }
-   println("---Begin to create cl:"+ csName + "." + clName);
+   println("---begin to create cl:"+ csName + "." + clName);
 
    var options  = { ShardingKey: shardingKey, ShardingType: shardingType,ReplSize:0, Compressed:true } ;
    var dbcl = commCreateCLByOption( db, csName, clName, options, true,
@@ -440,7 +440,7 @@ function checkRenameSubCLResult( maincs, mainCLName, subcs, oldSubCLName, newSub
 {   
    try
    {     
-      println("---Begin to check the rename Subcl name"); 
+      println("---begin to check the rename Subcl name"); 
       var newSubCLFullName = subcs + "." + newSubCLName;
       var mainCLFullName  = maincs + "." + mainCLName;
       var subCLInfo = db.snapshot(8 ,{"Name": newSubCLFullName }).current().toObj();  
