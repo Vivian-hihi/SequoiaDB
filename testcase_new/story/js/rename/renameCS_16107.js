@@ -9,6 +9,13 @@ main();
 
 function main()
 {
+   //@ clean before
+   if( true == commIsStandalone( db ) )
+   {
+      println( "run mode is standalone" );
+      return;
+   }   
+   
    println("---begin rename cs test---");
    var oldcsName = COMMCSNAME+"_16107_old";
    var newcsName = COMMCSNAME+"_16107_new";
