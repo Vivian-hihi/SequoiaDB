@@ -2223,7 +2223,6 @@ namespace engine
       startExtent = extRW.readPtr<dmsExtent>() ;
       if ( dpscb )
       {
-         info.enableTrans() ;
          rc = _logDPS( dpscb, info, cb, context, startExtent->_logicID, FALSE,
                        DMS_FILE_DATA ) ;
          PD_RC_CHECK( rc, PDERROR,
