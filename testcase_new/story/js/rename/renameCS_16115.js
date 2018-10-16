@@ -11,6 +11,10 @@
 main(db);
 function main(db)
 {
+   if (commGetGroupsNum(db) < 2)
+   {
+      return ;
+   }
    var csName1 = CHANGEDPREFIX+"_rename16115_1";
    var csName2 = CHANGEDPREFIX+"_rename16115_2";
    var clName1 = CHANGEDPREFIX+"renamecl16115_1";
