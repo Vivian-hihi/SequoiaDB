@@ -689,8 +689,11 @@ namespace engine
 
             if ( OSS_BIT_TEST( type, DPS_LOG_INVALIDCATA_TYPE_CATA ) )
             {
-               catAgent *pCatAgent = sdbGetShardCB()->getCataAgent() ;
-               if ( pCatAgent )
+               catAgent *pCatAgent = NULL ;
+
+               /// when sdbrestore, the shardCB is NULL
+               if ( sdbGetShardCB() &&
+                    NULL != ( pCatAgent = sdbGetShardCB()->getCataAgent() ) )
                {
                   pCatAgent->lock_w() ;
                   if ( NULL != clFullName )
