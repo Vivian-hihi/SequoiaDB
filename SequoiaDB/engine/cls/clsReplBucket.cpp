@@ -1140,34 +1140,40 @@ namespace engine
          _pBucket->endUnit( eduCB(), unitID ) ;
       }
 
-      _pBucket->decIdelAgent() ;
-      _pBucket->decCurAgent() ;
+      PD_TRACE_EXIT( SDB__CLSBUCKETSYNCJOB_DOIT ) ;
+      return SDB_OK ;
+   }
 
-      if ( _pBucket->curAgentNum() == 0 )
+   void _clsBucketSyncJob::_onDetach()
+   {
+      if ( _pBucket )
       {
-         if ( _pBucket->idleUnitCount() > 0 && PMD_IS_DB_UP() )
-         {
-            rc = startReplSyncJob( NULL, _pBucket, 60*OSS_ONE_SEC ) ;
-            if ( SDB_OK == rc )
-            {
-               _pBucket->incCurAgent() ;
-               _pBucket->incIdleAgent() ;
-            }
-         }
-         else
-         {
-            if ( 0 != _pBucket->size() )
-            {
-               PD_LOG( PDERROR, "Repl bucket info has error: %s",
-                       _pBucket->toBson().toString().c_str() ) ;
+         _pBucket->decIdelAgent() ;
+         _pBucket->decCurAgent() ;
 
-               _pBucket->forceCompleteAll() ;
+         if ( _pBucket->curAgentNum() == 0 )
+         {
+            if ( _pBucket->idleUnitCount() > 0 && PMD_IS_DB_UP() )
+            {
+               if ( SDB_OK == startReplSyncJob( NULL, _pBucket,
+                                                60*OSS_ONE_SEC ) )
+               {
+                  _pBucket->incCurAgent() ;
+                  _pBucket->incIdleAgent() ;
+               }
+            }
+            else
+            {
+               if ( 0 != _pBucket->size() )
+               {
+                  PD_LOG( PDERROR, "Repl bucket info has error: %s",
+                          _pBucket->toBson().toString().c_str() ) ;
+
+                  _pBucket->forceCompleteAll() ;
+               }
             }
          }
       }
-
-      PD_TRACE_EXIT( SDB__CLSBUCKETSYNCJOB_DOIT ) ;
-      return SDB_OK ;
    }
 
    /*

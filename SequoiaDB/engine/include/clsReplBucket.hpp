@@ -265,6 +265,9 @@ namespace engine
 
          virtual BOOLEAN reuseEDU() const { return TRUE ; }
 
+      protected:
+         virtual void _onDetach() ;
+
       private:
          clsBucket               *_pBucket ;
          INT32                   _timeout ;

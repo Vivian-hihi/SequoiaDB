@@ -51,6 +51,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BOOLEAN reuseEDU = job->reuseEDU() ;
       BOOLEAN isSystem = job->isSystem() ;
+      BOOLEAN hasExcp = FALSE ;
       string expStr ;
 
       PD_LOG( PDINFO, "Start a background job[%s]", job->name() ) ;
@@ -81,6 +82,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
          rc = SDB_SYS ;
+         hasExcp = TRUE ;
          expStr = e.what() ;
       }
 
@@ -107,7 +109,7 @@ namespace engine
       }
 
       /// throw
-      if ( !expStr.empty() )
+      if ( hasExcp )
       {
          throw pdGeneralException( rc, expStr ) ;
       }
