@@ -530,10 +530,11 @@ namespace engine
       SDB_ASSERT( NULL != value, "value must not be null" ) ;
       INT32 rc = SDB_OK ;
       if( string( objDesc.getJSClassName() ) !=
-            sptGetObjFactory()->getClassName( _cx, _obj ) )
+          sptGetObjFactory()->getClassName( _cx, _obj ) )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "JsObj className must be: %s", objDesc.getJSClassName() ) ;
+         PD_LOG( PDERROR, "JsObj className must be: %s",
+                 objDesc.getJSClassName() ) ;
          goto error ;
       }
 
