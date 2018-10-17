@@ -422,14 +422,13 @@ public class Sequoiadb implements Closeable {
             options = new ConfigOptions();
         }
 
-        InetSocketAddress socketAddress = new InetSocketAddress(host, port);
+        socketAddress = new InetSocketAddress(host, port);
         connection = new TCPConnection(socketAddress, options);
         connection.connect();
 
         byteOrder = getSysInfo();
         authenticate(username, password);
 
-        this.socketAddress = socketAddress;
         this.userName = username;
         this.password = password;
     }
