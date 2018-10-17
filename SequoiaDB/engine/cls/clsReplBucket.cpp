@@ -245,13 +245,15 @@ namespace engine
       builder.append( "ExpectLSN", (INT64)_expectLSN.offset ) ;
       builder.append( "MaxSubmitOffset", (INT64)_maxSubmitOffset ) ;
 
-      _bucketLatch.get() ;
-      completeMapSize = (INT32)_completeMap.size() ;
-      if ( completeMapSize > 0 )
+      // scoped lock to avoid exception
       {
-         firstLSNOffset = _completeMap.begin()->first ;
+         ossScopedLock lock( &_bucketLatch ) ;
+         completeMapSize = (INT32)_completeMap.size() ;
+         if ( completeMapSize > 0 )
+         {
+            firstLSNOffset = _completeMap.begin()->first ;
+         }
       }
-      _bucketLatch.release() ;
 
       builder.append( "CompleteMapSize", completeMapSize ) ;
       builder.append( "CompleteFirstLSN", (INT64)firstLSNOffset ) ;
@@ -467,69 +469,71 @@ namespace engine
          newLen   = len ;
       }
 
-      // lock
-      _latchBucket[ index ]->get() ;
-
-      _idleUnitCount.inc() ;
-
-      // start replsync job
-      if ( 0 == curAgentNum() || ( !_dataBucket[ index ]->isAttached() &&
-           idleAgentNum() < idleUnitCount() &&
-           curAgentNum() < maxReplSync() ) )
+      // scoped lock to avoid exception
       {
-         /*PD_LOG( PDEVENT, "CurAgentNum: %u, IdleAgentNum: %u, "
-                 "TotalCount: %u, AllCount: %u, IdleUnitCount: %u, "
-                 "index: %u, nty que size: %u, index size: %u", curAgentNum(),
-                 idleAgentNum(), _totalCount.fetch(), size(), idleUnitCount(),
-                 index, _ntyQueue.size(), _dataBucket[ index ]->size() ) ;*/
-         INT32 rcTmp = startReplSyncJob( NULL, this, 120*OSS_ONE_SEC ) ;
-         if ( SDB_OK == rcTmp )
+         ossScopedLock bucketLock( _latchBucket[ index ] ) ;
+
+         _idleUnitCount.inc() ;
+
+         // start replsync job
+         if ( 0 == curAgentNum() || ( !_dataBucket[ index ]->isAttached() &&
+              idleAgentNum() < idleUnitCount() &&
+              curAgentNum() < maxReplSync() ) )
          {
-            incCurAgent() ;
-            incIdleAgent() ;
+            /*PD_LOG( PDEVENT, "CurAgentNum: %u, IdleAgentNum: %u, "
+                    "TotalCount: %u, AllCount: %u, IdleUnitCount: %u, "
+                    "index: %u, nty que size: %u, index size: %u",
+                    curAgentNum(), idleAgentNum(), _totalCount.fetch(),
+                    size(), idleUnitCount(), index, _ntyQueue.size(),
+                    _dataBucket[ index ]->size() ) ;*/
+            INT32 rcTmp = startReplSyncJob( NULL, this, 120*OSS_ONE_SEC ) ;
+            if ( SDB_OK == rcTmp )
+            {
+               incCurAgent() ;
+               incIdleAgent() ;
+            }
+            else if ( SDB_QUIESCED == rcTmp )
+            {
+               /// DB Shutdown
+               rc = rcTmp ;
+               goto error ;
+            }
+            else if ( _curAgentNum.compare( 0 ) )
+            {
+               rc = rcTmp ;
+               PD_LOG( PDSEVERE, "Start repl-sync session failed, rc: %d."
+                       "The node can't to sync data from other node, need to "
+                       "restart", rc ) ;
+               PMD_RESTART_DB( rc ) ;
+               goto error ;
+            }
          }
-         else if ( SDB_QUIESCED == rcTmp )
+
+         _dataBucket[ index ]->push( pNewData, newLen ) ;
+
          {
-            /// DB Shutdown
-            rc = rcTmp ;
-            goto error ;
+            ossScopedRWLock counterLock( &_counterLock, EXCLUSIVE ) ;
+            _totalCount.inc() ;
+            _emptyEvent.reset() ;
+            if ( incAllCount )
+            {
+               _allCount.inc() ;
+               _allEmptyEvent.reset() ;
+            }
          }
-         else if ( _curAgentNum.compare( 0 ) )
+
+         // no cb attach in and no push to que, need to push to nty quque
+         if ( !_dataBucket[ index ]->isAttached() &&
+              !_dataBucket[ index ]->isInQue() )
          {
-            rc = rcTmp ;
-            PD_LOG( PDSEVERE, "Start repl-sync session failed, rc: %d."
-                    "The node can't to sync data from other node, need to "
-                    "restart", rc ) ;
-            PMD_RESTART_DB( rc ) ;
-            goto error ;
+            _ntyQueue.push( index ) ;
+            _dataBucket[ index ]->pushToQue() ;
+         }
+         else
+         {
+            _idleUnitCount.dec() ;
          }
       }
-
-      _dataBucket[ index ]->push( pNewData, newLen ) ;
-      _counterLock.lock_w() ;
-      _totalCount.inc() ;
-      _emptyEvent.reset() ;
-      if ( incAllCount )
-      {
-         _allCount.inc() ;
-         _allEmptyEvent.reset() ;
-      }
-
-      _counterLock.release_w() ;
-
-      // no cb attach in and no push to que, need to push to nty quque
-      if ( !_dataBucket[ index ]->isAttached() &&
-           !_dataBucket[ index ]->isInQue() )
-      {
-         _ntyQueue.push( index ) ;
-         _dataBucket[ index ]->pushToQue() ;
-      }
-      else
-      {
-         _idleUnitCount.dec() ;
-      }
-
-      _latchBucket[ index ]->release() ;
 
    done:
       PD_TRACE_EXITRC( SDB__CLSBUCKET__PUSHDATA, rc ) ;
@@ -554,30 +558,30 @@ namespace engine
          goto error ;
       }
 
-      // lock
-      _latchBucket[ index ]->get() ;
-
-      // must attach in first
-      SDB_ASSERT ( _dataBucket[ index ]->isAttached(),
-                   "Must attach in first" ) ;
-
-      while ( TRUE )
+      // scoped lock to avoid exception
       {
-         ret = _dataBucket[ index ]->pop( ppData, len ) ;
-         if ( ret )
-         {
-            if ( CLS_BUCKET_WAIT_ROLLBACK == _status )
-            {
-               _totalCount.dec () ;
-               _allCount.dec() ;
-               _memPool.release( *ppData, len ) ;
-               continue ;
-            }
-         }
-         break ;
-      }
+         ossScopedLock bucketLock( _latchBucket[ index ] ) ;
 
-      _latchBucket[ index ]->release() ;
+         // must attach in first
+         SDB_ASSERT ( _dataBucket[ index ]->isAttached(),
+                      "Must attach in first" ) ;
+
+         while ( TRUE )
+         {
+            ret = _dataBucket[ index ]->pop( ppData, len ) ;
+            if ( ret )
+            {
+               if ( CLS_BUCKET_WAIT_ROLLBACK == _status )
+               {
+                  _totalCount.dec () ;
+                  _allCount.dec() ;
+                  _memPool.release( *ppData, len ) ;
+                  continue ;
+               }
+            }
+            break ;
+         }
+      }
 
    done:
       PD_TRACE_EXIT( SDB__CLSBUCKET_POPDATA ) ;
@@ -685,37 +689,43 @@ namespace engine
       _emptyEvent.wait() ;
       // set status
       _status = CLS_BUCKET_ROLLBACKING ;
-      // push complete queue to bucket
-      _bucketLatch.get() ;
-      rit = _completeMap.rbegin() ;
-      while ( rit != _completeMap.rend() )
+
+      // scoped lock to avoid exception
       {
-         ++num ;
-         clsCompleteInfo &info = rit->second ;
+         ossScopedLock lock( &_bucketLatch ) ;
 
-         /// rollback trans info
-         if ( pTransCB && pTransCB->isTransOn() &&
-              !pTransCB->isNeedSyncTrans() )
+         // push complete queue to bucket
+         rit = _completeMap.rbegin() ;
+         while ( rit != _completeMap.rend() )
          {
-            dpsLogRecord record ;
-            record.load( info._pData ) ;
-            if ( !pTransCB->rollbackTransInfoFromLog( record ) )
+            ++num ;
+            clsCompleteInfo &info = rit->second ;
+
+            /// rollback trans info
+            if ( pTransCB && pTransCB->isTransOn() &&
+                 !pTransCB->isNeedSyncTrans() )
             {
-               pTransCB->setIsNeedSyncTrans( TRUE ) ;
+               dpsLogRecord record ;
+               record.load( info._pData ) ;
+               if ( !pTransCB->rollbackTransInfoFromLog( record ) )
+               {
+                  pTransCB->setIsNeedSyncTrans( TRUE ) ;
+               }
             }
-         }
 
-         rc = _pushData( info._unitID, info._pData, info._len, FALSE, FALSE ) ;
-         if ( rc )
-         {
-            SDB_ASSERT( SDB_OK == rc, "Push complete log to rollback failed" ) ;
-            _allCount.dec() ;
-            _memPool.release( info._pData, info._len ) ;
+            rc = _pushData( info._unitID, info._pData, info._len,
+                            FALSE, FALSE ) ;
+            if ( rc )
+            {
+               SDB_ASSERT( SDB_OK == rc, "Push complete log to "
+                           "rollback failed" ) ;
+               _allCount.dec() ;
+               _memPool.release( info._pData, info._len ) ;
+            }
+            ++rit ;
          }
-         ++rit ;
+         _completeMap.clear() ;
       }
-      _completeMap.clear() ;
-      _bucketLatch.release() ;
 
    done:
       PD_TRACE_EXITRC( SDB__CLSBUCKET__DOROLLBACK, rc ) ;
@@ -778,19 +788,21 @@ namespace engine
             continue ;
          }
 
-         _latchBucket[ unitID ]->get() ;
-         // if has some other attach in, wait next
-         if ( _dataBucket[ unitID ]->isAttached() )
+         // scoped lock to avlid exception
          {
-            _latchBucket[ unitID ]->release() ;
-            continue ;
-         }
-         _idleUnitCount.dec() ;
-         decIdelAgent() ;
-         // set attach
-         _dataBucket[ unitID ]->attach() ;
+            ossScopedLock bucketLock( _latchBucket[ unitID ] ) ;
 
-         _latchBucket[ unitID ]->release() ;
+            // if has some other attach in, wait next
+            if ( _dataBucket[ unitID ]->isAttached() )
+            {
+               _latchBucket[ unitID ]->release() ;
+               continue ;
+            }
+            _idleUnitCount.dec() ;
+            decIdelAgent() ;
+            // set attach
+            _dataBucket[ unitID ]->attach() ;
+         }
 
          break ;
       }
@@ -816,32 +828,36 @@ namespace engine
       }
 
       incIdleAgent() ;
-      // lock
-      _latchBucket[ unitID ]->get() ;
-
-      SDB_ASSERT( _dataBucket[ unitID ]->isAttached(), "Must attach in unit" ) ;
-
-      _dataBucket[ unitID ]->dettach() ;
-
-      if ( !_dataBucket[ unitID ]->isEmpty() )
+      
+      // scoped lock to avoid exception
       {
-         _ntyQueue.push( unitID ) ;
-         _dataBucket[ unitID ]->pushToQue() ;
+         ossScopedLock bucketLock( _latchBucket[ unitID ] ) ;
+         SDB_ASSERT( _dataBucket[ unitID ]->isAttached(),
+                     "Must attach in unit" ) ;
 
-         _idleUnitCount.inc() ;
-      }
-      _latchBucket[ unitID ]->release() ;
+         _dataBucket[ unitID ]->dettach() ;
 
-      _counterLock.lock_r() ;
-      if ( _totalCount.compare( 0 ) )
-      {
-         _emptyEvent.signalAll() ;
+         if ( !_dataBucket[ unitID ]->isEmpty() )
+         {
+            _ntyQueue.push( unitID ) ;
+            _dataBucket[ unitID ]->pushToQue() ;
+
+            _idleUnitCount.inc() ;
+         }
       }
-      if ( _allCount.compare( 0 ) )
+
+      // scoped lock to avoid exception
       {
-         _allEmptyEvent.signalAll() ;
+         ossScopedRWLock counterLock( &_counterLock, SHARED ) ;
+         if ( _totalCount.compare( 0 ) )
+         {
+            _emptyEvent.signalAll() ;
+         }
+         if ( _allCount.compare( 0 ) )
+         {
+            _allEmptyEvent.signalAll() ;
+         }
       }
-      _counterLock.release_r() ;
 
    done:
       PD_TRACE_EXITRC( SDB__CLSBUCKET_ENDUNIT, rc ) ;
@@ -937,7 +953,9 @@ namespace engine
       info._unitID   = unitID ;
 
       BOOLEAN releaseMem = FALSE ;
-      _bucketLatch.get() ;
+
+      // scoped lock to avoid exception
+      ossScopedLock lock( &_bucketLatch ) ;
 
       // increase repl counter
       _incCount( pData ) ;
@@ -999,7 +1017,6 @@ namespace engine
       }
 
    done:
-      _bucketLatch.release() ;
       if ( releaseMem )
       {
          _memPool.release( pData, len ) ;
@@ -1015,7 +1032,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__CLSBUCKET_FORCECOMPLETE ) ;
       map< UINT64, clsCompleteInfo >::iterator it ;
 
-      _bucketLatch.get() ;
+      ossScopedLock lock( &_bucketLatch ) ;
 
       // if has agent process, do nothing
       if ( !_curAgentNum.compare( 0 ) )
@@ -1061,7 +1078,6 @@ namespace engine
               _status, clsGetReplBucketStatusDesp( (INT32)_status ) ) ;
 
    done:
-      _bucketLatch.release() ;
       PD_TRACE_EXIT( SDB__CLSBUCKET_FORCECOMPLETE ) ;
       return SDB_OK ;
    }
@@ -1073,6 +1089,7 @@ namespace engine
    {
       _pBucket = pBucket ;
       _timeout = timeout ;
+      _hasEndUnit = TRUE ;
    }
 
    _clsBucketSyncJob::~_clsBucketSyncJob ()
@@ -1118,6 +1135,7 @@ namespace engine
          {
             break ;
          }
+         _hasEndUnit = FALSE ;
          eduMgr->activateEDU( eduCB() ) ;
 
          number = 0 ;
@@ -1138,6 +1156,7 @@ namespace engine
          }
 
          _pBucket->endUnit( eduCB(), unitID ) ;
+         _hasEndUnit = TRUE ;
       }
 
       PD_TRACE_EXIT( SDB__CLSBUCKETSYNCJOB_DOIT ) ;
@@ -1148,7 +1167,12 @@ namespace engine
    {
       if ( _pBucket )
       {
-         _pBucket->decIdelAgent() ;
+         if ( _hasEndUnit )
+         {
+            /// when doit occur exception, endUnit is not called.
+            /// In this case, do not dec idle agent
+            _pBucket->decIdelAgent() ;
+         }
          _pBucket->decCurAgent() ;
 
          if ( _pBucket->curAgentNum() == 0 )

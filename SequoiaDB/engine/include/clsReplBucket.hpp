@@ -271,6 +271,7 @@ namespace engine
       private:
          clsBucket               *_pBucket ;
          INT32                   _timeout ;
+         BOOLEAN                 _hasEndUnit ;
 
    } ;
    typedef _clsBucketSyncJob clsBucketSyncJob ;
