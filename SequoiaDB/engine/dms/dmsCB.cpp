@@ -1935,6 +1935,7 @@ namespace engine
                                             SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
+      INT32 rcSrc = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
       BOOLEAN aquired = FALSE ;
 
@@ -1949,9 +1950,16 @@ namespace engine
 
       /// check the new collection space
       _mutex.get_shared() ;
+      rcSrc = _CSCBNameLookup( pName, &pCSCB, NULL, TRUE ) ;
       rc = _CSCBNameLookup( pNewName, &pCSCB, NULL, TRUE ) ;
       _mutex.release_shared() ;
-      if ( SDB_DMS_CS_NOTEXIST == rc )
+
+      if ( rcSrc )
+      {
+         rc = rcSrc ;
+         goto error ;
+      }
+      else if ( SDB_DMS_CS_NOTEXIST == rc )
       {
          rc = SDB_OK ;
       }
