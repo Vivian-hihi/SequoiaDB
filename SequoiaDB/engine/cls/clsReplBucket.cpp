@@ -1153,6 +1153,8 @@ namespace engine
 
          if ( _pBucket->curAgentNum() == 0 )
          {
+            BOOLEAN needForce = FALSE ;
+
             if ( _pBucket->idleUnitCount() > 0 && PMD_IS_DB_UP() )
             {
                if ( SDB_OK == startReplSyncJob( NULL, _pBucket,
@@ -1161,16 +1163,22 @@ namespace engine
                   _pBucket->incCurAgent() ;
                   _pBucket->incIdleAgent() ;
                }
+               else
+               {
+                  needForce = TRUE ;
+               }
             }
             else
             {
-               if ( 0 != _pBucket->size() )
-               {
-                  PD_LOG( PDERROR, "Repl bucket info has error: %s",
-                          _pBucket->toBson().toString().c_str() ) ;
+               needForce = TRUE ;
+            }
 
-                  _pBucket->forceCompleteAll() ;
-               }
+            if ( needForce && 0 != _pBucket->size() )
+            {
+               PD_LOG( PDERROR, "Repl bucket info has error: %s",
+                       _pBucket->toBson().toString().c_str() ) ;
+
+               _pBucket->forceCompleteAll() ;
             }
          }
       }
