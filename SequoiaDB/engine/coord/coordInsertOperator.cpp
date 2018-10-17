@@ -1094,7 +1094,8 @@ namespace engine
             pItem = autoIncIt->second ;
             if ( !pItem->hasSubField() )
             {
-               rc = pSequenceAgent->getNextValue( pItem->sequenceName(), nextValue, cb ) ;
+               bson::OID oid ;
+               rc = pSequenceAgent->getNextValue( pItem->sequenceName(), oid, nextValue, cb ) ;
                PD_RC_CHECK( rc, PDERROR,
                             "Failed to get sequence[%s] next value, rc: %d",
                             pItem->sequenceName(), rc ) ;

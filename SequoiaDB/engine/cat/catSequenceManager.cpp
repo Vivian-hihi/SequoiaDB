@@ -74,6 +74,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
+      OID oid;
+      BSONElement ele ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR_CREATE_SEQ ) ;
 
       _catSequence sequence = _catSequence( name ) ;
@@ -94,7 +96,27 @@ namespace engine
          goto error ;
       }
 
-      sequence.setOID( OID::gen() ) ;
+      if( options.hasField( CAT_SEQUENCE_OID ) )
+      {
+         ele = options.getField( CAT_SEQUENCE_OID ) ;
+         if ( jstOID == ele.type() )
+         {
+            oid = ele.OID() ;
+         }
+         else if ( EOO != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Invalid type[%d] of sequence options[%s]",
+                    ele.type(), CAT_SEQUENCE_OID ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         oid = OID::gen() ;
+      }
+
+      sequence.setOID( oid ) ;
       sequence.setVersion( 0 ) ;
       sequence.setInitial( TRUE ) ;
 
@@ -412,8 +434,10 @@ namespace engine
       // check oid
       if ( oid.isSet() && oid != cache->oid() )
       {
-         PD_LOG( PDWARNING, "Mismatch oid(%s) for sequence[%s, %s]",
+         PD_LOG( PDERROR, "Mismatch oid(%s) for sequence[%s, %s]",
                  oid.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
+         rc = SDB_SEQUENCE_NOT_EXIST ;
+         goto error ;
       }
 
       rc = _acquireSequenceFromCache( *cache, acquirer, eduCB, w ) ;
@@ -506,8 +530,10 @@ namespace engine
       // check oid
       if ( oid.isSet() && oid != cache->oid() )
       {
-         PD_LOG( PDWARNING, "Mismatch oid(%s) for sequence[%s, %s]",
+         PD_LOG( PDERROR, "Mismatch oid(%s) for sequence[%s, %s]",
                  oid.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
+         rc = SDB_SEQUENCE_NOT_EXIST ;
+         goto error ;
       }
 
       rc = _acquireSequenceFromCache( *cache, acquirer, eduCB, w ) ;

@@ -188,20 +188,20 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT_GET_NEXT_VALUE, "_coordSequenceAgent::getNextValue" )
-   INT32 _coordSequenceAgent::getNextValue( const std::string& name, INT64& nextValue, _pmdEDUCB* eduCB )
+   INT32 _coordSequenceAgent::getNextValue( const std::string& name, const bson::OID &seqId, INT64& nextValue, _pmdEDUCB* eduCB )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT_GET_NEXT_VALUE ) ;
       BOOLEAN noCache = FALSE ;
       bson::OID oid ;
 
-      rc = _getNextValueBySLock( name, nextValue, noCache, oid, eduCB ) ;
+      rc = _getNextValueBySLock( name, nextValue, noCache, seqId, oid, eduCB ) ;
       if ( SDB_OK == rc )
       {
          // if no sequence cache, should get bucket by XLock
          if ( noCache )
          {
-            rc = _getNextValueByXLock( name, nextValue, eduCB ) ;
+            rc = _getNextValueByXLock( name, seqId, nextValue, eduCB ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -226,7 +226,12 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_SLOCK, "_coordSequenceAgent::_getNextValueBySLock" )
-   INT32 _coordSequenceAgent::_getNextValueBySLock( const std::string& name, INT64& nextValue, BOOLEAN& noCache, bson::OID& oid, _pmdEDUCB* eduCB )
+   INT32 _coordSequenceAgent::_getNextValueBySLock( const std::string& name,
+                                                   INT64& nextValue,
+                                                   BOOLEAN& noCache,
+                                                   const bson::OID& seqId,
+                                                   bson::OID& cachedSeqId,
+                                                   _pmdEDUCB* eduCB )
    {
       INT32 rc = SDB_OK ;
       _coordSequence* cache = NULL ;
@@ -241,6 +246,13 @@ namespace engine
       {
          cache = (*iter).second ;
          noCache = FALSE ;
+         if( seqId.isSet() && cache->oid() != seqId )
+         {
+            PD_LOG( PDWARNING, "Mismatch oid(%s) for sequence[%s, %s]",
+                    seqId.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
+            noCache = TRUE ;
+            goto done ;
+         }
       }
       else
       {
@@ -260,7 +272,7 @@ namespace engine
          // if rc==SDB_SEQUENCE_NOT_EXIST, we should delete the cache
          // here we get SLOCK, so we need to get XLOCK to delete the cache
          // check the oid consistency when delete cache
-         oid = cache->oid() ;
+         cachedSeqId = cache->oid() ;
          goto error ;
       }
 
@@ -277,7 +289,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_XLOCK, "_coordSequenceAgent::_getNextValueByXLock" )
-   INT32 _coordSequenceAgent::_getNextValueByXLock( const std::string& name, INT64& nextValue, _pmdEDUCB* eduCB )
+   INT32 _coordSequenceAgent::_getNextValueByXLock( const std::string& name, const bson::OID& seqId, INT64& nextValue, _pmdEDUCB* eduCB )
    {
       INT32 rc = SDB_OK ;
       _coordSequence* cache = NULL ;
@@ -288,13 +300,18 @@ namespace engine
       BUCKET_XLOCK( bucket ) ;
 
       COORD_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
-      if ( bucket.end() != iter )
+      // if mismatch in the cache, get from catalog and clear the old cached sequence later.
+      if ( bucket.end() != iter && ( !seqId.isSet() || ((*iter).second)->oid() == seqId ) )
       {
          cache = (*iter).second ;
       }
       else
       {
          _coordSequence seq = _coordSequence( name ) ;
+         if ( seqId.isSet() )
+         {
+            seq.setOid( seqId );
+         }
 
          rc = _acquireSequence( seq, eduCB ) ;
          if ( SDB_OK != rc )
@@ -302,6 +319,17 @@ namespace engine
             PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
                     name.c_str(), rc ) ;
             goto error ;
+         }
+         
+         // succeed to get seq from catalog, then remove old cached sequence. 
+         if( bucket.end() != iter && seqId.isSet() && ((*iter).second)->oid() != seqId )
+         {
+            cache = (*iter).second ;
+            PD_LOG( PDWARNING, "Mismatch oid(%s) for sequence[%s, %s]",
+                    seqId.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
+            bucket.erase( name ) ;
+            SDB_OSS_DEL( cache ) ;
+            cache = NULL ;
          }
 
          sequence = SDB_OSS_NEW _coordSequence( name ) ;

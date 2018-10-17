@@ -59,13 +59,18 @@ namespace engine
       void fini() ;
 
    public:
-      INT32 getNextValue( const std::string& sequenceName, INT64& nextValue, _pmdEDUCB* eduCB ) ;
+      INT32 getNextValue( const std::string& name, const bson::OID &seqId, INT64& nextValue, _pmdEDUCB* eduCB ) ;
       BOOLEAN removeCache( const std::string& sequenceName ) ;
       void clear() ;
 
    private:
-      INT32 _getNextValueByXLock( const std::string& sequenceName, INT64& nextValue, _pmdEDUCB* eduCB ) ;
-      INT32 _getNextValueBySLock( const std::string& sequenceName, INT64& nextValue, BOOLEAN& noCache, bson::OID& oid, _pmdEDUCB* eduCB ) ;
+      INT32 _getNextValueByXLock( const std::string& name, const bson::OID& seqId, INT64& nextValue, _pmdEDUCB* eduCB ) ;
+      INT32 _getNextValueBySLock( const std::string& name,
+                                 INT64& nextValue,
+                                 BOOLEAN& noCache,
+                                 const bson::OID& seqId,
+                                 bson::OID& cachedSeqId,
+                                 _pmdEDUCB* eduCB ) ;
       INT32 _getNextValueFromCache( _coordSequence& seq, INT64& nextValue, _pmdEDUCB* eduCB ) ;
       INT32 _acquireSequence( _coordSequence& seq, _pmdEDUCB* eduCB ) ;
       INT32 _processAcquireReply( MsgHeader* msg, _coordSequence& seq ) ;
