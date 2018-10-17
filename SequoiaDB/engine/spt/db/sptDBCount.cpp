@@ -95,7 +95,7 @@ namespace engine
          errMsg = "Failed to get collection js obj" ;
          goto error ;
       }
-      rc = value.getUserObj( _sptDBCL::__desc, (const void**)&pCL ) ;
+      rc = collectionObj.getUserObj( _sptDBCL::__desc, (const void**)&pCL ) ;
       if( SDB_OK != rc )
       {
          errMsg = "Failed to get SdbCL obj" ;
