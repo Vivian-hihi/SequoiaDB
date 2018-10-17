@@ -502,7 +502,11 @@ namespace engine
                      rc = SDB_OK ;
                      goto done ;
                   }
-                  else if ( _collectionXLockCnt > 0 )
+                  /// Try cl IX lock
+                  else if ( SDB_OK != pTransCB->transLockTestIX( cb,
+                                                                 _logicalCSID,
+                                                                 context->mbID(),
+                                                                 NULL ) )
                   {
                      context->pause() ;
                      ossSleep( 10 ) ;

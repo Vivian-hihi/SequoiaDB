@@ -192,12 +192,20 @@ namespace engine
                             UINT16 collectionID = DMS_INVALID_MBID,
                             const dmsRecordID *recordID = NULL );
 
+      INT32 transLockTestIS( _pmdEDUCB *eduCB, UINT32 logicCSID,
+                             UINT16 collectionID = DMS_INVALID_MBID,
+                             const dmsRecordID *recordID = NULL );
+
       // not get the lock only test if the lock can be got.
       // test record-S-lock: also test the space-S-lock and collection-IS-lock
       // test collection-S-lock: also test the space-S-lock
       INT32 transLockTestX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                             UINT16 collectionID = DMS_INVALID_MBID,
                             const dmsRecordID *recordID = NULL );
+
+      INT32 transLockTestIX( _pmdEDUCB *eduCB, UINT32 logicCSID,
+                             UINT16 collectionID = DMS_INVALID_MBID,
+                             const dmsRecordID *recordID = NULL );
 
       // try to get record-X-lock: also try to get the space-S-lock and
       // collection-IX-lock

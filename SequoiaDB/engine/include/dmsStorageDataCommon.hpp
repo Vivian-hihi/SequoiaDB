@@ -1200,8 +1200,6 @@ namespace engine
          _IDmsEventHolder                    *_pEventHolder ;
          _IDmsExtDataHandler                 *_pExtDataHandler ;
 
-         UINT32                              _collectionXLockCnt ;
-
    };
    typedef _dmsStorageDataCommon dmsStorageDataCommon ;
 
