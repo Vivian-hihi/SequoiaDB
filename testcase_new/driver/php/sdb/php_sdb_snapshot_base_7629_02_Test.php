@@ -275,6 +275,8 @@ class snapshot762902 extends PHPUnit_Framework_TestCase
       if ( empty($cursor) ) {
          $this -> assertFalse( true, "results is empty." );
       }
+      echo "SDB_SNAP_ACCESSPLANS: ";
+      var_dump( $cursor -> current() );
       $this -> assertContains( "CacheLevel", $cursor -> current() );
       $this -> assertContains( "Query", $cursor -> current() );
    }
