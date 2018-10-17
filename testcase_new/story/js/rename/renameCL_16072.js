@@ -6,9 +6,7 @@
 //main(db);
 function main(db)
 {
-   /*
-  1、创建存储过程，存储过程中指定cl执行查询操作 2、修改cl名 3、再次执行存储过程，检查操作结果 4、新建cl指定为修改cl旧名，插入数据 5、再次执行存储过程，检查操作结果 1、修改cl名后，执行存储过程失败，返回对应错误信息 2、新建cl后，执行存储过程成功，查看返回cl数据正确（可count带条件查询为新建cl数据）
-   */
+
    var csName = CHANGEDPREFIX+"_cs16072";
    try{
       commDropCS( db, csName, true, "drop CS "+csName );
@@ -39,7 +37,8 @@ function main(db)
    }
    catch( e )
    { 
-      if ( != -23)
+      if ( e != -23)
+      {
          throw buildException("renameCS( clName, newClName ) fail", e, "rename", "success", e); 
       }
    }
