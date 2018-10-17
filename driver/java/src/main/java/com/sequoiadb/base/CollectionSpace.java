@@ -23,7 +23,6 @@ import com.sequoiadb.message.response.SdbReply;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -323,4 +322,39 @@ public class CollectionSpace {
     public void setAttributes(BSONObject options) throws BaseException {
         alterInternal(SdbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
     }
+    
+    
+    
+  
+   /**
+     * @param oldName The old collection  name
+     * @param newName The new collection  name
+     * @throws BaseException If error happens.
+     * 
+     */
+    public void renameCollection(String oldName, String newName) throws BaseException {
+        if (oldName == null || oldName.length() == 0) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, oldName);
+        }
+        if (newName == null || newName.length() == 0) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, newName);
+        }
+        if (!isCollectionExist(oldName)) {
+            throw new BaseException(SDBError.SDB_DMS_NOTEXIST, oldName);
+        }
+
+        BSONObject matcher = new BasicBSONObject();
+        matcher.put(SdbConstants.FIELD_NAME_CELLECTIONSPACE, name);
+        matcher.put(SdbConstants.FIELD_NAME_OLDNAME, oldName);
+        matcher.put(SdbConstants.FIELD_NAME_NEWNAME, newName);
+       
+        AdminRequest request = new AdminRequest(AdminCommand.RENAME_CL, matcher);
+
+        SdbReply response = sequoiadb.requestAndResponse(request);
+        sequoiadb.throwIfError(response);
+        sequoiadb.removeCache(name+"."+oldName);
+        sequoiadb.upsertCache(name+"."+newName);
+    }
+   
+    
 }

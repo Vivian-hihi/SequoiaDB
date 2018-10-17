@@ -108,4 +108,6 @@ final class SdbConstants {
     final static String OID = "_id";
 
     final static int FLG_UPDATE_UPSERT = 0x00000001;
+    
+    final static String FIELD_NAME_CELLECTIONSPACE = "CollectionSpace";
 }

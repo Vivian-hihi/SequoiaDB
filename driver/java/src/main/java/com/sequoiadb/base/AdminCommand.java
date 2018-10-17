@@ -33,6 +33,8 @@ final class AdminCommand {
     final static String TEST_CL = PREFIX + "test collection";
     final static String CREATE_CL = PREFIX + "create collection";
     final static String DROP_CL = PREFIX + "drop collection";
+    final static String RENAME_CL = PREFIX + "rename collection";
+    
 
     final static String GET_INDEXES = PREFIX + "get indexes";
     final static String CREATE_INDEX = PREFIX + "create index";

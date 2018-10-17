@@ -15,6 +15,7 @@ public class Constants {
     public final static String DATAPATH4 = "/opt/sequoiadb/database/test/data4";
 
     public final static String COOR_NODE_CONN = HOST + ":" + PORT;
+    public final static String DATA_NODE_CONN = DATA_HOST + ":" + DATA_PORT;
 
     // cs
     public final static String TEST_CS_NAME_1 = "testfoo";
@@ -23,6 +24,7 @@ public class Constants {
     // cl
     public final static String TEST_CL_NAME_1 = "testbar";
     public final static String TEST_CL_NAME_2 = "testCL2";
+   
     public final static String TEST_CL_FULL_NAME1 = "testfoo.testbar";
     public final static int SDB_PAGESIZE_4K = 4 * 1024;
 
