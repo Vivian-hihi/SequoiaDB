@@ -74,6 +74,12 @@ SDB_SNAP_DATABASE
 | shardNetOut           | 长整型 | shard 平面端口发送的网络流量（单位：字节）                                      |
 | replNetIn             | 长整型 | 数据同步平面端口收到的网络流量（单位：字节）                                    |
 | replNetOut            | 长整型 | 数据同步平面端口发送的网络流量（单位：字节）                                    |
+| SchdlrType            | 整型   | 资源调度类型。0 表示没有开启资源调度，1 表示开启了FIFO资源调度，2 表示开启了优先级资源调度，3 表示开启了基于容器的优先级资源调度                                     |
+| SchdlrTypeDesp        | 字符串 | 资源调度类型描述，取值：NONE / FIFO / PRIORITY / CONTAINER                  |
+| Run                   | 整型   | 当前正在运行的任务数量                                                          |
+| Wait                  | 整型   | 当前处于等待队列的任务数量（包含未分发的任务）                                  |
+| SchdlrMgrEvtNum       | 整型   | 当前未分发的任务数量                                                            |
+| SchdlrTimes           | 长整型 | 统计时间范围内总的任务执行次数                                                  |
 
 ##协调节点字段信息##
 

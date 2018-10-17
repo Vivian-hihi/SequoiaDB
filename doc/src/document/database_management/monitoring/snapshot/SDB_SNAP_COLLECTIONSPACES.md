@@ -43,6 +43,7 @@ SDB_SNAP_COLLECTIONSPACES
 | IndexCommitted  | 布尔型     | 集合空间索引文件当前是否有效提交             |
 | LobCommitted    | 布尔型     | 集合空间大对象文件当前是否有效提交           |
 | DirtyPage       | 整型       | 集合空间大对象文件在开启缓存下脏页数量       |
+| Type            | 整型       | 集合空间类型，0 表示普通集合空间，1 表示固定（Capped）集合空间 |
 
 ##协调节点字段信息##
 

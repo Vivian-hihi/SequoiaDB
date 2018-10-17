@@ -160,6 +160,7 @@
 > var query = new SdbQueryOption().cond( { age: { $gt: 20 } } ).sel( { age: "", name: "" } ).sort( { age: 1 } )
 > db.foo.bar.find( query )
 ```
+> **Note：**
 
 > 通过 [find()](reference/Sequoiadb_command/SdbCollection/find.md) 方法，我们能任意选择我们想要返回的字段名，在上例中我们选择了返回记录的 age 和 name 字段，此时用 sort() 方法时，只能对记录的 age 或 name 字段排序。而如果我们选择返回记录的所有字段，即不设置 find 方法的 sel 参数内容时，那么 sort() 能对任意字段排序。
 
@@ -169,6 +170,7 @@
 > var query = new SdbQueryOption().cond( { age: { $gt: 20 } } ).sel( { age: "", name: "" } ).sort( { "sex": 1 } )
 > db.foo.bar.find( query )
 ```
+> **Note：**
 
 > 因为“sex”字段并不存在于 sel() 选项 {age:"",name:""} 中，所以 sort() 指定的排序字段 {"sex":1} 将被忽略。
 
@@ -201,6 +203,7 @@
 > var query = new SdbQueryOption().cond( { age: { $gt: 10 } } ).skip( 4 )
 > db.foo.bar.find( query )
 ```
+> **Note：**
 
 > 如果结果集的记录数小于5，那么无记录返回；如果结果集的记录数大于5，则从第5条开始返回。
 
@@ -226,6 +229,7 @@
   "age": 12
 }
 ```
+> **Note：**
 
 > 如果结果集的记录数小于2，按实际的记录数返回，如果结果集的记录数大于2，则只返回前2条记录。
 
@@ -237,6 +241,7 @@
 > var query = new SdbQueryOption().cond( { age: { $gt: 10 } } ).update( { $inc: { age: 1 } } )
 > db.foo.bar.find( { query )
 ```
+> **Note：**
 
 > 1. 不能与 remove()同时使用。  
 > 2. 与 sort()同时使用时，在单个节点上排序必须使用索引。  
@@ -250,6 +255,7 @@
 > var query = new SdbQueryOption().cond( { age: { $gt: 10 } } ).remove()
 > db.foo.bar.find( query )
 ```
+> **Note：**
 
 > 1. 不能与 update() 同时使用。  
 > 2. 与 sort() 同时使用时，在单个节点上排序必须使用索引。  
