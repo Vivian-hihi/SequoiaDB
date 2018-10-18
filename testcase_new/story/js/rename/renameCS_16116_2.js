@@ -12,7 +12,7 @@
 main(db);
 function main(db)
 {
-   if (commGetGroupsNum(db) < 2)
+   if (commGetGroupsNum(db) < 3)
    {
       return ;
    }
