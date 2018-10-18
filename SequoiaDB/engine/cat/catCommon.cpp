@@ -4728,10 +4728,10 @@ namespace engine
             builder.append( CAT_AUTOINC_FIELD, fieldName ) ;
             builder.append( CAT_AUTOINC_SEQ,
                             catGetSeqName4AutoIncFld( clUniqueID, fieldName ) ) ;
+            builder.append( CAT_AUTOINC_SEQ_ID, OID::gen() ) ;
             if ( autoIncObj.hasField( CAT_AUTOINC_GENERATED ) )
             {
-               builder.append( CAT_AUTOINC_GENERATED,
-                               autoIncObj.getField( CAT_AUTOINC_GENERATED ).String() ) ;
+               builder.append( autoIncObj.getField( CAT_AUTOINC_GENERATED ) ) ;
             }
             else
             {
@@ -5274,7 +5274,8 @@ namespace engine
       static string autoIncFieldArr[] = {
          CAT_AUTOINC_FIELD,
          CAT_AUTOINC_GENERATED,
-         CAT_AUTOINC_SEQ
+         CAT_AUTOINC_SEQ,
+         CAT_AUTOINC_SEQ_ID
       } ;
       static set<std::string> autoIncFieldSet( autoIncFieldArr,
          autoIncFieldArr + sizeof( autoIncFieldArr ) / sizeof( *autoIncFieldArr ) ) ;
@@ -5289,6 +5290,10 @@ namespace engine
          if ( autoIncFieldSet.find( fieldName ) == autoIncFieldSet.end() )
          {
             seqOptBuilder.append( ele ) ;
+         }
+         else if ( CAT_AUTOINC_SEQ_ID == fieldName )
+         {
+            seqOptBuilder.append( CAT_SEQUENCE_OID, ele.OID() ) ;
          }
       }
       seqOptBuilder.append( CAT_SEQUENCE_INTERNAL, true ) ;

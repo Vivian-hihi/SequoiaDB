@@ -121,7 +121,7 @@ namespace engine
                                  pmdEDUCB *cb,
                                  _SimpleBSONBuilder &builder ) ;
 
-         INT32 calcAutoIncEleSize( const AUTOINC_ITEM_MAP &autoIncMap ) ;
+         INT32 _calcAutoIncEleSize( const AUTOINC_ITEM_MAP &autoIncMap ) ;
 
       protected:
 
@@ -173,7 +173,6 @@ namespace engine
          CHAR*          _pNewMsg ;
          INT32          _newMsgSize ;
          INT32          _newMsgLen ;
-         CHAR*          _pOrgMsg ;
          INT32          _orgMsgLen ;
          INT32          _lastVersion ;
 

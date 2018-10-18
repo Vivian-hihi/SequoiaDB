@@ -289,7 +289,12 @@ namespace engine
 
       BOOLEAN hasAutoIncrement() const
       {
-         return !_catlogSet.getAutoIncMap().empty() ;
+         return !_catlogSet.getAutoIncFields().empty() ;
+      }
+
+      const std::vector<BSONObj>& getAutoIncFields() const
+      {
+         return _catlogSet.getAutoIncFields() ;
       }
 
       const AUTOINC_ITEM_MAP& getAutoIncMap() const

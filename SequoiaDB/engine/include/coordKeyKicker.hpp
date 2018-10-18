@@ -75,7 +75,7 @@ namespace engine
          }
       } ;
 
-      typedef set< strContainner >              SET_SHARDINGKEY ;
+      typedef set< strContainner >  SET_KEEPKEY ;
 
    public:
       _coordKeyKicker() ;
@@ -124,15 +124,11 @@ namespace engine
                                      BOOLEAN &hasInclude,
                                      _pmdEDUCB *cb ) ;
 
-      BSONObj     _getAutoIncKeyObj( const AUTOINC_ITEM_MAP &autoIncMap ) ;
-
-      void        _appendSubField( BSONObjBuilder &builder,
-                                   string mainField,
-                                   const AUTOINC_ITEM_MAP &subMap ) ;
+      BSONObj     _getAutoIncKeyObj( const std::vector<BSONObj> &autoIncArr ) ;
 
    private:
       map< UINT32, BOOLEAN >     _skSiteIDs ;
-      SET_SHARDINGKEY            _setKeys ;
+      SET_KEEPKEY                _setKeys ;
 
       coordResource              *_pResource ;
       CoordCataInfoPtr           _cataPtr ;

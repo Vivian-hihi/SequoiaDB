@@ -538,6 +538,9 @@ namespace engine
          _coordCMDDropCollection() ;
          virtual ~_coordCMDDropCollection() ;
       protected :
+         virtual INT32 execute( MsgHeader *pMsg, pmdEDUCB *cb,
+                                INT64 &contextID, rtnContextBuf *buf ) ;
+
          virtual INT32 _parseMsg ( MsgHeader *pMsg,
                                    coordCMDArguments *pArgs ) ;
 

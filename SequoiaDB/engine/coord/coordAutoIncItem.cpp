@@ -38,6 +38,7 @@
 #include "pd.hpp"
 #include "ossTypes.h"
 #include "ossMem.hpp"
+#include "msgCatalogDef.h"
 #include <map>
 
 namespace engine
@@ -56,23 +57,95 @@ namespace engine
 
    _coordAutoIncItem::~_coordAutoIncItem()
    {
-      SDB_OSS_FREE( _fieldName ) ;
-      SDB_OSS_FREE( _sequenceName ) ;
       if ( _pSubFieldMap )
       {
-         AUTOINC_ITEM_MAP_IT it ;
-         for ( it = _pSubFieldMap->begin() ; it != _pSubFieldMap->end() ; ++it )
-         {
-            SAFE_OSS_DELETE( it->second ) ;
-         }
          delete _pSubFieldMap ;
          _pSubFieldMap = NULL ;
       }
    }
 
-   INT32 _coordAutoIncItem::init( const CHAR *fieldName,
-                                  const CHAR *sequenceName,
-                                  const AUTOINC_GEN_TYPE generatedType )
+   _coordAutoIncItem::_coordAutoIncItem( const _coordAutoIncItem &other )
+   {
+      _fieldName = other._fieldName ;
+      _sequenceName = other._sequenceName ;
+      _generatedType = other._generatedType ;
+      _fldNameBuf = other._fldNameBuf ;
+
+      if ( other._pSubFieldMap )
+      {
+         _pSubFieldMap = new AUTOINC_ITEM_MAP ;
+         *_pSubFieldMap = *(other._pSubFieldMap) ;
+      }
+      else
+      {
+         _pSubFieldMap = NULL ;
+      }
+   }
+
+   void _coordAutoIncItem::operator=( _coordAutoIncItem &other )
+   {
+      _fieldName = other._fieldName ;
+      _sequenceName = other._sequenceName ;
+      _generatedType = other._generatedType ;
+      _fldNameBuf = other._fldNameBuf ;
+
+      if ( _pSubFieldMap )
+      {
+         delete _pSubFieldMap ;
+         _pSubFieldMap = NULL ;
+      }
+
+      if ( other._pSubFieldMap )
+      {
+         _pSubFieldMap = new AUTOINC_ITEM_MAP ;
+         *_pSubFieldMap = *(other._pSubFieldMap) ;
+      }
+   }
+
+   INT32 _coordAutoIncItem::init( const bson::BSONObj &obj )
+   {
+      INT32             rc = SDB_OK ;
+      const CHAR*       pFldName = NULL ;
+      const CHAR*       pSeqName = NULL ;
+      bson::OID         seqID ;
+      const CHAR*       pGenStr = NULL ;
+      AUTOINC_GEN_TYPE  genType ;
+
+      pFldName = obj.getField( CAT_AUTOINC_FIELD ).valuestr() ;
+      pSeqName = obj.getField( CAT_AUTOINC_SEQ ).valuestr() ;
+      seqID = obj.getField( CAT_AUTOINC_SEQ_ID ).OID() ;
+      pGenStr = obj.getField( CAT_AUTOINC_GENERATED ).valuestr() ;
+
+      if ( 0 == ossStrcmp( CAT_GENERATED_ALWAYS, pGenStr ) )
+      {
+         genType = AUTOINC_GEN_ALWAYS ;
+      }
+      else if ( 0 == ossStrcmp( CAT_GENERATED_STRICT, pGenStr ) )
+      {
+         genType = AUTOINC_GEN_STRICT ;
+      }
+      else if ( 0 == ossStrcmp( CAT_GENERATED_DEFAULT, pGenStr ) )
+      {
+         genType = AUTOINC_GEN_DEFAULT ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Unknown generated type[%s]", pGenStr ) ;
+         goto error ;
+      }
+
+      rc = init( pFldName, pSeqName, seqID, genType ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordAutoIncItem::init( const CHAR* fieldName,
+                                  const CHAR* sequenceName,
+                                  const bson::OID &sequenceID,
+                                  const AUTOINC_GEN_TYPE generated )
    {
       /*
          If fieldName is simple, result will be like
@@ -100,60 +173,43 @@ namespace engine
 
       INT32             rc = SDB_OK ;
       const CHAR*       pos = NULL ;
+      INT32             strLen = 0 ;
       const CHAR*       subField = NULL ;
-      INT32             strLength = 0 ;
+      _coordAutoIncItem subItem ;
 
-      _coordAutoIncItem *pSubItem = NULL ;
-
-      if ( NULL == ossStrchr( fieldName, '.' ) )
+      pos = ossStrchr( fieldName, '.' ) ;
+      if ( NULL == pos )
       {
-         strLength = ossStrlen( fieldName ) + 1 ;
-         _fieldName = (CHAR*)SDB_OSS_MALLOC( strLength ) ;
-         PD_CHECK( _fieldName, SDB_OOM, error, PDERROR,
-                   "Failed to malloc for field name, rc: %d", rc ) ;
-         ossStrncpy( _fieldName, fieldName, strLength ) ;
-
-         strLength = ossStrlen( sequenceName ) + 1 ;
-         _sequenceName = (CHAR*)SDB_OSS_MALLOC( strLength ) ;
-         PD_CHECK( _sequenceName, SDB_OOM, error, PDERROR,
-                   "Failed to malloc for sequence name, rc: %d", rc ) ;
-         ossStrncpy( _sequenceName, sequenceName, strLength ) ;
-
-         _generatedType = generatedType ;
+         _fieldName = fieldName ;
+         _sequenceName = sequenceName ;
+         _sequenceID = sequenceID ;
+         _generatedType = generated ;
       }
       else
       {
-         // extract main field
-         pos = ossStrchr( fieldName, '.' ) ;
-         strLength = (pos - fieldName) + 1 ;
-         _fieldName = (CHAR *)SDB_OSS_MALLOC( strLength ) ;
-         PD_CHECK( _fieldName, SDB_OOM, error, PDERROR,
+         strLen = pos - fieldName + 1 ;
+         _fldNameBuf = boost::shared_array<CHAR>( new(std::nothrow) CHAR[strLen] );
+         PD_CHECK( _fldNameBuf.get(), SDB_OOM, error, PDERROR,
                    "Failed to malloc for field name, rc: %d", rc ) ;
-         ossStrncpy( _fieldName, fieldName, strLength ) ;
-         _fieldName[ strLength - 1 ] = 0 ;
+         ossStrncpy( _fldNameBuf.get(), fieldName, strLen ) ;
+         _fldNameBuf[ strLen - 1 ] = 0 ;
 
-         // create subItem ;
+         _fieldName = _fldNameBuf.get() ;
          subField = pos + 1 ;
-         pSubItem = SDB_OSS_NEW _coordAutoIncItem() ;
-         PD_CHECK( pSubItem, SDB_OOM, error, PDERROR,
-                   "Failed to malloc for sub autoIncrement item, rc: %d", rc ) ;
-         rc = pSubItem->init( subField, sequenceName, generatedType ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to init autoIncrement sub item, rc: %d", rc ) ;
+         rc = subItem.init( subField, sequenceName, sequenceID, generated ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to init sub auto-increment item, rc: %d", rc ) ;
 
          _pSubFieldMap = new(std::nothrow) AUTOINC_ITEM_MAP ;
          PD_CHECK( _pSubFieldMap, SDB_OOM, error, PDERROR,
                    "Failed to new sub field map, rc: %d", rc ) ;
-         _pSubFieldMap->insert( AUTOINC_ITEM_MAP_VAL( pSubItem->fieldName(), pSubItem ) ) ;
-         pSubItem = NULL ;
+         _pSubFieldMap->insert( AUTOINC_ITEM_MAP_VAL( subItem.fieldName(), subItem ) ) ;
       }
 
    done:
       return rc ;
 
    error:
-      SDB_OSS_FREE( _fieldName ) ;
-      SDB_OSS_FREE( _sequenceName ) ;
-      SAFE_OSS_DELETE( pSubItem ) ;
+      _fldNameBuf.reset() ;
       if ( _pSubFieldMap )
       {
          delete _pSubFieldMap ;

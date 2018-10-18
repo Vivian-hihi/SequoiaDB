@@ -152,10 +152,7 @@ namespace engine
       _pNewMsg = NULL ;
       _newMsgLen = 0 ;
       _newMsgSize = 0 ;
-
-      _pOrgMsg = NULL ;
       _orgMsgLen = 0 ;
-
       _lastVersion = -1 ;
    }
 
@@ -247,13 +244,46 @@ namespace engine
                  "failed, rc: %d", pCollectionName, rc ) ;
          goto error ;
       }
-      _pOrgMsg = (CHAR*) pMsg ;
       _orgMsgLen = pMsg->messageLength ;
 
    retry:
-      /// Do on collection
       pInsertMsg->version = cataSel.getCataPtr()->getVersion() ;
       pInsertMsg->w = 0 ;
+
+      if ( cataSel.getCataPtr()->hasAutoIncrement() )
+      {
+         if ( 0 == result._sucGroupLst.size() &&
+              cataSel.getCataPtr()->getVersion() != _lastVersion )
+         {
+            if ( cataSel.getCataPtr()->isMainCL() )
+            {
+               _grpSubCLDatas.clear() ;
+            }
+            else
+            {
+               inMsg.data()->clear() ;
+            }
+
+            rc = _addAutoIncToMsg( cataSel.getCataPtr()->getAutoIncMap(),
+                                   (CHAR*) pMsg, _orgMsgLen, cb,
+                                   &_pNewMsg, _newMsgSize, _newMsgLen ) ;
+            if ( SDB_SEQUENCE_NOT_EXIST == rc )
+            {
+               rc = cataSel.updateCataInfo( pCollectionName, cb ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to update catalog of cl[%s], rc: %d",
+                            pCollectionName, rc ) ;
+               _groupSession.getGroupCtrl()->incRetry() ;
+               goto retry ;
+            }
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to add autoIncrement fields to msg, rc: %d", rc ) ;
+            inMsg._pMsg = (MsgHeader*)_pNewMsg ;
+            _lastVersion = cataSel.getCataPtr()->getVersion() ;
+         }
+      }
+
+      /// Do on collection
       rcTmp = doOpOnCL( cataSel, BSONObj(), inMsg, sendOpt, cb, result ) ;
       if ( SDB_OK == rcTmp && nokRC.empty() )
       {
@@ -312,23 +342,6 @@ namespace engine
                     ossRoundUpToMultipleX ( offsetof(MsgOpInsert, name) +
                                             pInsertMsg->nameLength + 1, 4 ) -
                     sizeof( MsgHeader ) ) ;
-
-      if ( cataSel.getCataPtr()->hasAutoIncrement() )
-      {
-         if ( 0 == result._sucGroupLst.size() &&
-              cataSel.getCataPtr()->getVersion() != _lastVersion )
-         {
-            inMsg.data()->clear() ;
-
-            rc = _addAutoIncToMsg( cataSel.getCataPtr()->getAutoIncMap(),
-                                   _pOrgMsg, _orgMsgLen, cb,
-                                   &_pNewMsg, _newMsgSize, _newMsgLen ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to add autoIncrement fields to msg, rc: %d", rc ) ;
-            inMsg._pMsg = (MsgHeader*)_pNewMsg ;
-            _lastVersion = cataSel.getCataPtr()->getVersion() ;
-         }
-      }
 
       // clear send groups
       options._groupLst.clear() ;
@@ -620,23 +633,6 @@ namespace engine
                     ossRoundUpToMultipleX ( offsetof(MsgOpInsert, name) +
                                             pInsertMsg->nameLength + 1, 4 ) -
                     sizeof( MsgHeader ) ) ;
-
-      if ( cataSel.getCataPtr()->hasAutoIncrement() )
-      {
-         if ( 0 == result._sucGroupLst.size() &&
-              cataSel.getCataPtr()->getVersion() != _lastVersion )
-         {
-            _grpSubCLDatas.clear() ;
-
-            rc = _addAutoIncToMsg( cataSel.getCataPtr()->getAutoIncMap(),
-                                   _pOrgMsg, _orgMsgLen, cb,
-                                   &_pNewMsg, _newMsgSize, _newMsgLen ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to add autoIncrement fields to msg, rc: %d", rc ) ;
-            inMsg._pMsg = (MsgHeader*)_pNewMsg ;
-            _lastVersion = cataSel.getCataPtr()->getVersion() ;
-         }
-      }
 
       if ( _grpSubCLDatas.size() == 0 )
       {
@@ -939,7 +935,7 @@ namespace engine
                    rc ) ;
 
       // 1.malloc a msg buffer which is big enough
-      autoIncSize = calcAutoIncEleSize( autoIncMap ) ;
+      autoIncSize = _calcAutoIncEleSize( autoIncMap ) ;
       estimatedSize = orgMsgLen + count * ( autoIncSize + 4 ) ;
 
       newMsgLen = 0 ;
@@ -1019,9 +1015,9 @@ namespace engine
                continue ;
             }
 
-            if ( !autoIncIt->second->hasSubField() )
+            if ( !autoIncIt->second.hasSubField() )
             {
-               switch( autoIncIt->second->generatedType() )
+               switch( autoIncIt->second.generatedType() )
                {
                case AUTOINC_GEN_ALWAYS:
                   break ;
@@ -1042,7 +1038,7 @@ namespace engine
                {
                   subObjIn = ele.Obj() ;
                   _SimpleBSONBuilder subBuilder( builder.subobjStart( eleField ) ) ;
-                  rc = _addAutoIncToObj( subObjIn, *(autoIncIt->second->subFieldMap()),
+                  rc = _addAutoIncToObj( subObjIn, *(autoIncIt->second.subFieldMap()),
                                          cb, subBuilder ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement field[%s], rc: %d",
                                eleField, rc ) ;
@@ -1091,11 +1087,12 @@ namespace engine
             }
             if ( isDone ) continue ;
 
-            pItem = autoIncIt->second ;
+            pItem = &(autoIncIt->second) ;
             if ( !pItem->hasSubField() )
             {
-               bson::OID oid ;
-               rc = pSequenceAgent->getNextValue( pItem->sequenceName(), oid, nextValue, cb ) ;
+               rc = pSequenceAgent->getNextValue( pItem->sequenceName(),
+                                                  pItem->sequenceID(),
+                                                  nextValue, cb ) ;
                PD_RC_CHECK( rc, PDERROR,
                             "Failed to get sequence[%s] next value, rc: %d",
                             pItem->sequenceName(), rc ) ;
@@ -1130,7 +1127,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _coordInsertOperator::calcAutoIncEleSize( const AUTOINC_ITEM_MAP &autoIncMap )
+   INT32 _coordInsertOperator::_calcAutoIncEleSize( const AUTOINC_ITEM_MAP &autoIncMap )
    {
       INT32 autoIncSize = 0 ;
       AUTOINC_ITEM_MAP_CONST_IT it ;
@@ -1139,7 +1136,7 @@ namespace engine
       for ( it = autoIncMap.begin() ; it != autoIncMap.end() ; ++it )
       {
          fieldLen = ossStrlen( it->first ) + 1 ;
-         if ( !it->second->hasSubField() )
+         if ( !it->second.hasSubField() )
          {
             // |type(CHAR) |field(CHAR*)  |sequenceValue(INT64) |
             autoIncSize += 1 + fieldLen + 8 ;
@@ -1149,7 +1146,7 @@ namespace engine
             // |type(CHAR) |field(CHAR*)  |subObj(BSONObj) |
             // BSONObj: |length(UINT32)  |elements(...)  |EOO(CHAR) |
             autoIncSize += 1 + fieldLen + 4 +
-                           calcAutoIncEleSize( *(it->second->subFieldMap()) ) + 1 ;
+                           _calcAutoIncEleSize( *(it->second.subFieldMap()) ) + 1 ;
          }
       }
       return autoIncSize ;

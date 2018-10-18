@@ -648,6 +648,8 @@ namespace engine
       _maxSize = 0 ;
       _maxRecNum = 0 ;
       _overwrite = FALSE ;
+      _autoIncFields.clear() ;
+      _autoIncMap.clear() ;
       PD_TRACE_EXIT ( SDB__CLSCTSET__CLEAR ) ;
    }
 
@@ -1666,7 +1668,8 @@ namespace engine
             autoIncField = eleArray[i].Obj() ;
             if( !autoIncField.hasField( FIELD_NAME_AUTOINC_SEQ ) ||
                 !autoIncField.hasField( CAT_AUTOINC_FIELD ) ||
-                !autoIncField.hasField( CAT_AUTOINC_GENERATED ))
+                !autoIncField.hasField( CAT_AUTOINC_GENERATED ) ||
+                !autoIncField.hasField( CAT_AUTOINC_SEQ_ID ) )
             {
                PD_RC_CHECK ( SDB_CAT_CORRUPTION, PDSEVERE,
                  "Catalog [%s] type error", CAT_CL_UNIQUEID ) ;
@@ -1674,18 +1677,13 @@ namespace engine
             addAutoIncField( autoIncField ) ;
          }
 
-         ele = catSet.getField( CAT_AUTOINCREMENT ) ;
-         if ( Array != ele.type() )
-         {
-            PD_RC_CHECK( SDB_CAT_CORRUPTION, PDERROR,
-                         "Field 'AutoIncrement' type[%d] error", ele.type() ) ;
-         }
-         rc = _updateAutoIncMap( ele.Obj() ) ;
+         rc = _updateAutoIncMap( _autoIncFields ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to initialize autoIncrement map, rc: %d", rc ) ;
       }
       else
       {
-         _clearAutoIncMap() ;
+         _autoIncFields.clear() ;
+         _autoIncMap.clear() ;
       }
 
       // isMainCl
@@ -2327,7 +2325,7 @@ namespace engine
 
    INT32 _clsCatalogSet::addAutoIncField ( BSONObj & autoIncField )
    {
-      _autoIncFields.push_back( autoIncField );
+      _autoIncFields.push_back( autoIncField.copy() );
       return SDB_OK ;
    }
 
@@ -2449,79 +2447,31 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__UPDATE_AUTOINC_MAP, "_clsCatalogSet::_updateAutoIncMap" )
-   INT32 _clsCatalogSet::_updateAutoIncMap( const BSONObj &autoIncArr )
+   INT32 _clsCatalogSet::_updateAutoIncMap( const vector<BSONObj> &autoIncFields )
    {
       PD_TRACE_ENTRY ( SDB__UPDATE_AUTOINC_MAP ) ;
 
-      INT32                rc = SDB_OK ;
-      BSONObjIterator      arrIt( autoIncArr ) ;
-      AUTOINC_ITEM_MAP_IT  mapIt ;
-      BSONObj              obj ;
-      const CHAR*          pFldName = NULL ;
-      const CHAR*          pSeqName = NULL ;
-      const CHAR*          pGenStr = NULL ;
-      AUTOINC_GEN_TYPE     genType ;
-      coordAutoIncItem*    pNewItem = NULL ;
+      INT32 rc = SDB_OK ;
+      UINT32 i = 0 ;
+      AUTOINC_ITEM_MAP_IT mapIt ;
 
-      _clearAutoIncMap() ;
+      _autoIncMap.clear() ;
 
-      while ( arrIt.more() )
+      for ( i = 0 ; i < autoIncFields.size() ; ++i )
       {
-         obj = arrIt.next().Obj() ;
-         if ( !obj.hasField( CAT_AUTOINC_FIELD ) ||
-              !obj.hasField( CAT_AUTOINC_SEQ ) ||
-              !obj.hasField( CAT_AUTOINC_GENERATED ) )
-         {
-            PD_RC_CHECK( SDB_CAT_CORRUPTION, PDERROR,
-                         "AutoIncrement catalog info[%s] is incomplete",
-                         obj.toString().c_str() ) ;
-         }
+         coordAutoIncItem newItem ;
+         rc = newItem.init( autoIncFields[i] ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to init autoIncrement item, rc: %d", rc ) ;
 
-         pFldName = obj.getField( CAT_AUTOINC_FIELD ).valuestr() ;
-         pSeqName = obj.getField( CAT_AUTOINC_SEQ ).valuestr() ;
-         pGenStr = obj.getField( CAT_AUTOINC_GENERATED ).valuestr() ;
-
-         if ( 0 == ossStrcmp( CAT_GENERATED_ALWAYS, pGenStr ) )
-         {
-            genType = AUTOINC_GEN_ALWAYS ;
-         }
-         else if ( 0 == ossStrcmp( CAT_GENERATED_STRICT, pGenStr ) )
-         {
-            genType = AUTOINC_GEN_STRICT ;
-         }
-         else if ( 0 == ossStrcmp( CAT_GENERATED_DEFAULT, pGenStr ) )
-         {
-            genType = AUTOINC_GEN_DEFAULT ;
-         }
-         else
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Unknown generated type[%s]", pGenStr ) ;
-            goto error ;
-         }
-
-         pNewItem = SDB_OSS_NEW _coordAutoIncItem() ;
-         PD_CHECK( pNewItem, SDB_OOM, error, PDERROR,
-                   "Failed to malloc new autoIncrement item, rc: %d", rc ) ;
-
-         rc = pNewItem->init( pFldName, pSeqName, genType ) ;
-         if ( rc )
-         {
-            SDB_OSS_DEL pNewItem ;
-            PD_LOG( PDERROR, "Failed to init autoIncrement item, rc: %d", rc ) ;
-            goto error ;
-         }
-
-         mapIt = _autoIncMap.find( pNewItem->fieldName() ) ;
+         mapIt = _autoIncMap.find( newItem.fieldName() ) ;
          if ( mapIt != _autoIncMap.end() )
          {
-            rc = _mergeAutoIncItem( *pNewItem, *(mapIt->second) ) ;
+            rc = _mergeAutoIncItem( newItem, mapIt->second ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to merge autoIncrement Item, rc: %d", rc ) ;
-            SDB_OSS_DEL pNewItem ;
          }
          else
          {
-            _autoIncMap.insert( AUTOINC_ITEM_MAP_VAL( pNewItem->fieldName(), pNewItem ) ) ;
+            _autoIncMap.insert( AUTOINC_ITEM_MAP_VAL( newItem.fieldName(), newItem ) ) ;
          }
       }
 
@@ -2529,18 +2479,8 @@ namespace engine
       PD_TRACE_EXIT( SDB__UPDATE_AUTOINC_MAP ) ;
       return rc ;
    error:
-      _clearAutoIncMap() ;
-      goto done ;
-   }
-
-   void _clsCatalogSet::_clearAutoIncMap()
-   {
-      AUTOINC_ITEM_MAP_IT it ;
-      for ( it = _autoIncMap.begin() ; it != _autoIncMap.end() ; ++it )
-      {
-         SAFE_OSS_DELETE( it->second ) ;
-      }
       _autoIncMap.clear() ;
+      goto done ;
    }
 
    INT32 _clsCatalogSet::_mergeAutoIncItem( coordAutoIncItem &from,
@@ -2559,8 +2499,6 @@ namespace engine
       AUTOINC_ITEM_MAP*    pFromMap = NULL ;
       AUTOINC_ITEM_MAP_IT  toIt ;
       AUTOINC_ITEM_MAP_IT  fromIt ;
-      coordAutoIncItem*    pOldItem = NULL ;
-      coordAutoIncItem*    pNewItem = NULL ;
 
       if ( from.hasSubField() && to.hasSubField() )
       {
@@ -2572,28 +2510,12 @@ namespace engine
             toIt = pToMap->find( fromIt->first ) ;
             if ( toIt == pToMap->end() )
             {
-               pOldItem = fromIt->second ;
-               pNewItem = SDB_OSS_NEW _coordAutoIncItem() ;
-               PD_CHECK( pNewItem, SDB_OOM, error, PDERROR,
-                         "Failed to malloc new autoIncrement item, rc: %d", rc ) ;
-
-               rc = pNewItem->init( pOldItem->fieldName(),
-                                    pOldItem->sequenceName(),
-                                    pOldItem->generatedType() ) ;
-               if ( rc )
-               {
-                  SDB_OSS_DEL pNewItem ;
-                  PD_LOG( PDERROR,
-                          "Failed to init new autoIncrement item, rc: %d",
-                          rc ) ;
-                  goto error ;
-
-               }
-               pToMap->insert( AUTOINC_ITEM_MAP_VAL( pNewItem->fieldName(), pNewItem ) ) ;
+               coordAutoIncItem newItem = fromIt->second ;
+               pToMap->insert( AUTOINC_ITEM_MAP_VAL( newItem.fieldName(), newItem ) ) ;
             }
             else
             {
-               rc = _mergeAutoIncItem( *(fromIt->second), *(toIt->second) ) ;
+               rc = _mergeAutoIncItem( fromIt->second, toIt->second ) ;
                PD_RC_CHECK( rc, PDERROR,
                             "Failed to merge autoIncrement item, rc: %d", rc ) ;
             }

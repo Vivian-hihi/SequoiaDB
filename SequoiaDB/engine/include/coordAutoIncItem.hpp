@@ -40,6 +40,8 @@
 #include "ossTypes.h"
 #include "oss.hpp"
 #include "ossUtil.hpp"
+#include "boost/shared_array.hpp"
+#include "../bson/bson.h"
 #include <map>
 
 namespace engine
@@ -55,7 +57,7 @@ namespace engine
       }
    } ;
    class _coordAutoIncItem ;
-   typedef std::map<const CHAR*, _coordAutoIncItem*, cmpStr>   AUTOINC_ITEM_MAP ;
+   typedef std::map< const CHAR*, _coordAutoIncItem, cmpStr > AUTOINC_ITEM_MAP ;
    typedef AUTOINC_ITEM_MAP::iterator        AUTOINC_ITEM_MAP_IT ;
    typedef AUTOINC_ITEM_MAP::const_iterator  AUTOINC_ITEM_MAP_CONST_IT ;
    typedef AUTOINC_ITEM_MAP::value_type      AUTOINC_ITEM_MAP_VAL ;
@@ -85,13 +87,22 @@ namespace engine
 
       ~_coordAutoIncItem() ;
 
+      _coordAutoIncItem( const _coordAutoIncItem &other ) ;
+
+      void operator=( _coordAutoIncItem &other ) ;
+
+      INT32             init( const bson::BSONObj &obj ) ;
+
       INT32             init( const CHAR* fieldName,
                               const CHAR* sequenceName,
+                              const bson::OID &sequenceID,
                               const AUTOINC_GEN_TYPE generated ) ;
 
       const CHAR*       fieldName() const { return _fieldName ; }
 
       const CHAR*       sequenceName() const { return _sequenceName ; }
+
+      const bson::OID&  sequenceID() const { return _sequenceID ; }
 
       AUTOINC_GEN_TYPE  generatedType() const { return _generatedType ; }
 
@@ -100,10 +111,12 @@ namespace engine
       AUTOINC_ITEM_MAP* subFieldMap() const { return _pSubFieldMap ; }
 
    private:
-      CHAR*             _fieldName ;
-      CHAR*             _sequenceName ;
+      const CHAR*       _fieldName ;
+      const CHAR*       _sequenceName ;
+      bson::OID         _sequenceID ;
       AUTOINC_GEN_TYPE  _generatedType ;
       AUTOINC_ITEM_MAP* _pSubFieldMap ;
+      boost::shared_array<CHAR> _fldNameBuf ;
 
    } ;
    typedef _coordAutoIncItem coordAutoIncItem ;

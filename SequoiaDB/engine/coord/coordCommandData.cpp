@@ -1173,30 +1173,19 @@ namespace engine
       const CHAR *fullName = NULL ;
       CoordGroupList cataGrpLst ;
       CoordCataInfoPtr cataPtr ;
-      AUTOINC_ITEM_MAP autoIncMap ;
-      AUTOINC_ITEM_MAP_CONST_IT iter ;
+      vector<BSONObj> autoIncFields ;
+      string seqName ;
 
       rc = msgExtractQuery( ( CHAR * )pMsg, NULL, NULL,
                             NULL, NULL, &option, NULL,
                             NULL, NULL );
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to extract msg:%d", rc ) ;
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "failed to extract msg:%d", rc ) ;
 
       try
       {
          boQuery = BSONObj( option );
-         BSONElement e = boQuery.getField( FIELD_NAME_COLLECTION );
-         if ( String != e.type() )
-         {
-            PD_LOG( PDERROR, "invalid truncate msg:%s",
-                    boQuery.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         fullName = e.valuestr() ;
+         rc = rtnGetStringElement( boQuery, FIELD_NAME_COLLECTION, &fullName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get cl name, rc: %d", rc ) ;
       }
       catch( std::exception &e )
       {
@@ -1228,19 +1217,21 @@ namespace engine
       }
 
       // remove cache of related sequences.
-      rc = _pResource->getCataInfo( fullName, cataPtr ) ;
+      rc = _pResource->getOrUpdateCataInfo( fullName, cataPtr, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get cl[%s] catalog info, "
                    "rc: %d", fullName, rc ) ;
 
       if ( cataPtr->hasAutoIncrement() )
       {
-         autoIncMap = cataPtr->getAutoIncMap() ;
+         autoIncFields = cataPtr->getAutoIncFields() ;
 
-         for ( iter = autoIncMap.begin() ;
-               iter != autoIncMap.end() ;
-               ++iter )
+         for ( UINT32 i = 0 ; i < autoIncFields.size() ; ++i )
          {
-            rc = coordSequenceInvalidateCache( iter->second->sequenceName(), cb ) ;
+            rc = rtnGetSTDStringElement( autoIncFields[i], CAT_AUTOINC_SEQ,
+                                         seqName ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to get sequence name, rc: %d", rc ) ;
+            rc = coordSequenceInvalidateCache( seqName, cb ) ;
             PD_RC_CHECK( rc, PDERROR,
                          "Failed to invalidate coord cache, rc: %d", rc ) ;
          }
@@ -1823,6 +1814,74 @@ namespace engine
 
    _coordCMDDropCollection::~_coordCMDDropCollection()
    {
+   }
+
+   INT32 _coordCMDDropCollection::execute( MsgHeader *pMsg,
+                                           pmdEDUCB *cb,
+                                           INT64 &contextID,
+                                           rtnContextBuf * buf )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *option = NULL;
+      BSONObj boQuery ;
+      const CHAR *fullName = NULL ;
+      CoordCataInfoPtr cataPtr ;
+      vector<BSONObj> autoIncFields ;
+      vector<string> seqNames ;
+      string seqName ;
+
+      // extract cl name
+      rc = msgExtractQuery( ( CHAR * )pMsg, NULL, NULL,
+                            NULL, NULL, &option, NULL,
+                            NULL, NULL );
+      PD_RC_CHECK( rc, PDERROR, "failed to extract msg:%d", rc ) ;
+
+      try
+      {
+         boQuery = BSONObj( option );
+         rc = rtnGetStringElement( boQuery, FIELD_NAME_NAME, &fullName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get cl name, rc: %d", rc ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error;
+      }
+
+      // invalidate cl related sequences.
+      rc = _pResource->getOrUpdateCataInfo( fullName, cataPtr, cb ) ;
+      if ( SDB_OK == rc )
+      {
+         if ( cataPtr->hasAutoIncrement() )
+         {
+            autoIncFields = cataPtr->getAutoIncFields() ;
+
+            for ( UINT32 i = 0 ; i < autoIncFields.size() ; ++i )
+            {
+               rc = rtnGetSTDStringElement( autoIncFields[i], CAT_AUTOINC_SEQ,
+                                            seqName ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to get sequence name, rc: %d", rc ) ;
+               rc = coordSequenceInvalidateCache( seqName, cb ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to invalidate coord cache, rc: %d", rc ) ;
+            }
+        }
+     }
+     else
+     {
+        PD_LOG( PDWARNING,
+                "Failed to get catalog info to invalidate cache, rc: %d", rc ) ;
+     }
+
+      rc = _coordCMD2Phase::execute( pMsg, cb, contextID, buf ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to execute drop cl command, rc: %d", rc ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( COORD_DROPCL_PARSEMSG, "_coordCMDDropCollection::_parseMsg" )

@@ -307,10 +307,9 @@ namespace engine
          INT32             _addItem( clsCatalogItem *item ) ;
          void              _remakeGroupIDs() ;
 
-         INT32             _updateAutoIncMap( const BSONObj &autoIncArr ) ;
+         INT32             _updateAutoIncMap( const std::vector<BSONObj> &autoIncArr ) ;
          INT32             _mergeAutoIncItem( coordAutoIncItem &from,
                                               coordAutoIncItem &to ) ;
-         void              _clearAutoIncMap() ;
 
       private:
          INT32             _version ;

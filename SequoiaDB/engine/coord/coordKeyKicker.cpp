@@ -58,7 +58,7 @@ namespace engine
    }
 
    void _coordKeyKicker::bind( coordResource *pResource,
-                                 const CoordCataInfoPtr &cataPtr )
+                               const CoordCataInfoPtr &cataPtr )
    {
       _pResource = pResource ;
       _cataPtr = cataPtr ;
@@ -208,7 +208,9 @@ namespace engine
 
             if ( cataInfo->hasAutoIncrement() && !ignoreAutoInc )
             {
-               boAutoIncKey = _getAutoIncKeyObj( cataInfo->getAutoIncMap() ) ;
+               boAutoIncKey = _getAutoIncKeyObj( cataInfo->getAutoIncFields() ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to get auto-increment field, rc: %d", rc ) ;
                count = _addKeys( boAutoIncKey ) ;
                if ( count > 0 )
                {
@@ -220,7 +222,7 @@ namespace engine
             {
                BSONObjBuilder keepBuilder( bobNewUpdator.subobjStart(
                                            CMD_ADMIN_PREFIX FIELD_OP_VALUE_KEEP ) ) ;
-               SET_SHARDINGKEY::iterator itKey = _setKeys.begin() ;
+               SET_KEEPKEY::iterator itKey = _setKeys.begin() ;
                while( itKey != _setKeys.end() )
                {
                   keepBuilder.append( itKey->_pStr, (INT32)1 ) ;
@@ -417,9 +419,9 @@ namespace engine
    }
 
    INT32 _coordKeyKicker::checkShardingKey( const BSONObj &updator,
-                                              BOOLEAN &hasInclude,
-                                              _pmdEDUCB *cb,
-                                              const BSONObj &matcher )
+                                            BOOLEAN &hasInclude,
+                                            _pmdEDUCB *cb,
+                                            const BSONObj &matcher )
    {
       INT32 rc = SDB_OK ;
 
@@ -487,8 +489,8 @@ namespace engine
    }
 
    INT32 _coordKeyKicker::_checkShardingKey( const CoordCataInfoPtr &cataInfo,
-                                               const BSONObj &updator,
-                                               BOOLEAN &hasInclude )
+                                             const BSONObj &updator,
+                                             BOOLEAN &hasInclude )
    {
       INT32 rc = SDB_OK ;
       UINT32 skSiteID = cataInfo->getShardingKeySiteID() ;
@@ -592,9 +594,9 @@ namespace engine
    }
 
    INT32 _coordKeyKicker::_checkShardingKey( const string &collectionName,
-                                               const BSONObj &updator,
-                                               BOOLEAN &hasInclude,
-                                               _pmdEDUCB *cb )
+                                             const BSONObj &updator,
+                                             BOOLEAN &hasInclude,
+                                             _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       CoordCataInfoPtr cataPtr ;
@@ -632,43 +634,17 @@ namespace engine
       goto done ;
    }
 
-   BSONObj _coordKeyKicker::_getAutoIncKeyObj( const AUTOINC_ITEM_MAP &autoIncMap )
+   BSONObj _coordKeyKicker::_getAutoIncKeyObj( const vector<BSONObj> &autoIncArr )
    {
       BSONObjBuilder builder ;
-      AUTOINC_ITEM_MAP_CONST_IT it ;
 
-      for ( it = autoIncMap.begin() ; it != autoIncMap.end() ; ++it )
+      for ( UINT32 i = 0 ; i < autoIncArr.size() ; ++i )
       {
-         if ( !it->second->hasSubField() )
-         {
-            builder.append( it->first, (INT32)1 ) ;
-         }
-         else
-         {
-            _appendSubField( builder, it->first, *(it->second->subFieldMap()) ) ;
-         }
+         builder.append( autoIncArr[i].getField( CAT_AUTOINC_FIELD ).String(),
+                         (INT32)1 ) ;
       }
 
       return builder.obj() ;
-   }
-
-   void _coordKeyKicker::_appendSubField( BSONObjBuilder &builder,
-                                          string mainField,
-                                          const AUTOINC_ITEM_MAP &subMap )
-   {
-      AUTOINC_ITEM_MAP_CONST_IT it ;
-
-      for ( it = subMap.begin() ; it != subMap.end() ; ++it )
-      {
-         if( !it->second->hasSubField() )
-         {
-            builder.append( mainField + "." + it->first, (INT32)1 ) ;
-         }
-         else
-         {
-            _appendSubField( builder, mainField + "." + it->first, *(it->second->subFieldMap()) ) ;
-         }
-      }
    }
 
 }
