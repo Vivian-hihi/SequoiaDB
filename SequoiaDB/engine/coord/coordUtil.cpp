@@ -505,7 +505,7 @@ namespace engine
                {
                   if ( coordMatchNodeName( vecSvcName[ index ],
                                            itrn->_host,
-                                           itrn->_service[MSG_ROUTE_LOCAL_SERVICE].c_str() )
+                                           itrn->_service[MSG_ROUTE_LOCAL_SERVICE].c_str() ) )
                   {
                      findNode = TRUE ;
                      break ;
