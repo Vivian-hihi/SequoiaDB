@@ -185,6 +185,7 @@ namespace engine
                                  vector< INT32 > &vecNodeID,
                                  vector< const CHAR* > &vecHostName,
                                  vector< const CHAR* > &vecSvcName,
+                                 vector< const CHAR* > &vecNodeName,
                                  BSONObj *pNewObj = NULL,
                                  BOOLEAN strictCheck = FALSE ) ;
 
@@ -194,6 +195,16 @@ namespace engine
    void     coordFilterNodesByRole( SET_ROUTEID &nodes,
                                     INT32 *pRoleFilter ) ;
 
+   INT32    coordCheckNodeName( const CHAR *pNodeName ) ;
+   INT32    coordCheckNodeName( const vector< const CHAR* > &vecNodeName ) ;
+
+   BOOLEAN  coordMatchNodeName( const CHAR *pNodeName,
+                                const CHAR *pHostName,
+                                const CHAR *pSvcName ) ;
+
+   BOOLEAN  coordMatchNodeName( const vector< const CHAR* > &vecNodeName,
+                                const CHAR *pHostName,
+                                const CHAR *pSvcName ) ;
 }
 
 #endif // COORD_COMMON_HPP__

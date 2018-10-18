@@ -746,6 +746,7 @@ namespace engine
                               vector< INT32 > &vecNodeID,
                               vector< const CHAR* > &vecHostName,
                               vector< const CHAR* > &vecSvcName,
+                              vector< const CHAR* > &vecNodeName,
                               BSONObj *pNewObj,
                               BOOLEAN strictCheck )
    {
@@ -780,6 +781,7 @@ namespace engine
                   BSONObj tmpObj = tmpE.embeddedObject() ;
                   rc = coordParseNodesInfo( tmpObj, vecNodeID,
                                             vecHostName, vecSvcName,
+                                            vecNodeName,
                                             pNewObj ? &tmpNew : NULL,
                                             strictCheck ) ;
                   PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] nodes failed ",
@@ -845,6 +847,30 @@ namespace engine
          {
             rc = coordParseString( ele, vecSvcName,
                                    COORD_PARSE_MASK_ALL ) ;
+            if ( SDB_OK == rc )
+            {
+               isModify = TRUE ;
+            }
+            else if ( strictCheck )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_OK ;
+            }
+         }
+         else if ( 0 == ossStrcasecmp( ele.fieldName(),
+                                       FIELD_NAME_NODE_NAME ) )
+         {
+            rc = coordParseString( ele, vecNodeName,
+                                   COORD_PARSE_MASK_ALL ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = coordCheckNodeName( vecNodeName ) ;
+            }
+
+            /// check result
             if ( SDB_OK == rc )
             {
                isModify = TRUE ;
@@ -928,6 +954,103 @@ namespace engine
             ++it ;
          }
       }
+   }
+
+   INT32 coordCheckNodeName( const CHAR *pNodeName )
+   {
+      /*
+         Valid format : HostName:svcname[:svcname2[:svcname3]...]
+      */
+      INT32 rc = SDB_INVALIDARG ;
+
+      if ( pNodeName )
+      {
+         const CHAR *pCh = ossStrchr( pNodeName, ':' ) ;
+         if ( pCh && pCh[1] && ':' != pCh[1] )
+         {
+            rc = SDB_OK ;
+         }
+      }
+
+      return rc ;
+   }
+
+   INT32 coordCheckNodeName( const vector <const CHAR*> &vecNodeName )
+   {
+      INT32 rc = SDB_OK ;
+
+      for ( UINT32 i = 0 ; i < vecNodeName.size() ; ++i )
+      {
+         rc = coordCheckNodeName( vecNodeName[i] ) ;
+         if ( rc )
+         {
+            break ;
+         }
+      }
+
+      return rc ;
+   }
+
+   BOOLEAN coordMatchNodeName( const CHAR *pNodeName,
+                               const CHAR *pHostName,
+                               const CHAR *pSvcName )
+   {
+      /*
+         Valid format : HostName:svcname[:svcname2[:svcname3]...]
+      */
+      BOOLEAN hasMatch = FALSE ;
+
+      const CHAR *p = NULL ;
+      const CHAR *pn = NULL ;
+
+      /// HostName match
+      p = ossStrchr( pNodeName, ':' ) ;
+      if ( !p || 0 != ossStrncmp( pHostName, pNodeName, p - pNodeName ) )
+      {
+         goto done ;
+      }
+
+      /// Service name match
+      ++p ;
+      pn = ossStrchr( p, ':' ) ;
+      while( pn )
+      {
+         if ( 0 == ossStrncmp( pSvcName, p, pn - p ) )
+         {
+            hasMatch = TRUE ;
+            goto done ;
+         }
+         p = pn + 1 ;
+         pn = ossStrchr( p, ':' ) ;
+      }
+
+      /// The last service name
+      if ( *p && 0 == ossStrcmp( pSvcName, p ) )
+      {
+         hasMatch = TRUE ;
+         goto done ;
+      }
+
+   done:
+      return hasMatch ;
+   }
+
+   BOOLEAN coordMatchNodeName( const vector<const CHAR*> &vecNodeName,
+                               const CHAR *pHostName,
+                               const CHAR *pSvcName )
+   {
+      BOOLEAN hasMatch = FALSE ;
+
+      for ( UINT32 i = 0 ; i < vecNodeName.size() ; ++i )
+      {
+         hasMatch = coordMatchNodeName( vecNodeName[i], pHostName, pSvcName ) ;
+         if ( hasMatch )
+         {
+            break ;
+         }
+      }
+
+      return hasMatch ;
    }
 
 }
