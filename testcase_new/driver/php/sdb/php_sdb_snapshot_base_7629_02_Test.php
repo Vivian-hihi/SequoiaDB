@@ -39,13 +39,13 @@ class snapshot762902 extends PHPUnit_Framework_TestCase
          echo "Failed to connect database, error code: ".$err['errno'] ;
          self::$skipTestCase = true ;
          return;
-      } 
+      }
       
       if (self::$groupMgr -> getDataGroupNum() < 1)
       {
          self::$skipTestCase = true ;
          return;
-      } 
+      }
       
       // create cs
       $csDB = self::$db -> selectCS( self::$csName, null );
@@ -79,69 +79,73 @@ class snapshot762902 extends PHPUnit_Framework_TestCase
    }
 
    public function test_snapshotContexts()
-   {  
+   {
       $type = SDB_SNAP_CONTEXTS;
-      echo "\n---Begin to exec snapshot[SDB_SNAP_CONTEXTS, ".$type."].\n"; 
+      echo "\n---Begin to exec snapshot[SDB_SNAP_CONTEXTS, ".$type."].\n";
       $this -> assertEquals( 0, $type );
       
       $cursor = self::$db -> snapshot( $type );
-      $this -> assertEquals( 0, self::$db -> getError()['errno'] ); 
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       if ( empty($cursor) ) {
          $this -> assertFalse( true, "results is empty." );
-      }  
-      
-      $this -> assertNotEmpty( $cursor -> current()["SessionID"] -> __toString() );
-      $this -> assertNotEmpty( $cursor -> current()["Contexts"][0]["ContextID"] -> __toString() );
+      }
+
+      $record = $cursor -> current();
+      $this -> assertNotEmpty( $record["SessionID"] -> __toString() );
+      $this -> assertNotEmpty( $record["Contexts"][0]["ContextID"] -> __toString() );
    }
 
    public function test_snapshotContextsCurrent()
-   {  
+   {
       $type = SDB_SNAP_CONTEXTS_CURRENT;
-      echo "\n---Begin to exec snapshot[SDB_SNAP_CONTEXTS_CURRENT, ".$type."].\n"; 
+      echo "\n---Begin to exec snapshot[SDB_SNAP_CONTEXTS_CURRENT, ".$type."].\n";
       $this -> assertEquals( 1, $type );
       
       $cursor = self::$db -> snapshot( $type );
-      $this -> assertEquals( 0, self::$db -> getError()['errno'] ); 
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       if ( empty($cursor) ) {
          $this -> assertFalse( true, "results is empty." );
       }
-      $this -> assertEquals( "DUMP", $cursor -> current()["Contexts"][0]["Type"] );
+      $record = $cursor -> current();
+      $this -> assertEquals( "DUMP", $record["Contexts"][0]["Type"] );
    }
 
    public function test_snapshotSessions()
-   {  
+   {
       $type = SDB_SNAP_SESSIONS;
-      echo "\n---Begin to exec snapshot[SDB_SNAP_SESSIONS, ".$type."].\n"; 
+      echo "\n---Begin to exec snapshot[SDB_SNAP_SESSIONS, ".$type."].\n";
       $this -> assertEquals( 2, $type );
       
       $cursor = self::$db -> snapshot( $type );
-      $this -> assertEquals( 0, self::$db -> getError()['errno'] ); 
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       if ( empty($cursor) ) {
          $this -> assertFalse( true, "results is empty." );
       }
-      $this -> assertContains( "SessionID", $cursor -> current() );
-      $this -> assertContains( "TID", $cursor -> current() );
+      $record = $cursor -> current() ;
+      $this -> assertTrue( isset( $record["SessionID"] ) );
+      $this -> assertTrue( isset( $record["TID"] ) );
    }
 
    public function test_snapshotSessionsCurrent()
-   {  
+   {
       $type = SDB_SNAP_SESSIONS_CURRENT;
-      echo "\n---Begin to exec snapshot[SDB_SNAP_SESSIONS_CURRENT, ".$type."].\n"; 
+      echo "\n---Begin to exec snapshot[SDB_SNAP_SESSIONS_CURRENT, ".$type."].\n";
       $this -> assertEquals( 3, $type );
       
       $cursor = self::$db -> snapshot( $type );
-      $this -> assertEquals( 0, self::$db -> getError()['errno'] ); 
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       if ( empty($cursor) ) {
          $this -> assertFalse( true, "results is empty." );
       }
-      $this -> assertContains( "SessionID", $cursor -> current() );
-      $this -> assertContains( "TID", $cursor -> current() );
+      $record = $cursor -> current();
+      $this -> assertTrue( isset( $record["SessionID"] ) );
+      $this -> assertTrue( isset( $record["TID"] ) );
    }
 
    public function test_snapshotCullections()
-   {  
+   {
       $type = SDB_SNAP_COLLECTIONS;
-      echo "\n---Begin to exec snapshot[SDB_SNAP_COLLECTIONS, ".$type."].\n"; 
+      echo "\n---Begin to exec snapshot[SDB_SNAP_COLLECTIONS, ".$type."].\n";
       $this -> assertEquals( 4, $type );
       
       $type = SDB_SNAP_COLLECTION;
@@ -150,7 +154,7 @@ class snapshot762902 extends PHPUnit_Framework_TestCase
       $type = SDB_SNAP_COLLECTIONS;
       $cond = array( 'Name' => self::$csName.'.'.self::$clName );
       $cursor = self::$db -> snapshot( $type, $cond );
-      $this -> assertEquals( 0, self::$db -> getError()['errno'] ); 
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       if ( empty($cursor) ) {
          $this -> assertFalse( true, "results is empty." );
       }
@@ -159,59 +163,62 @@ class snapshot762902 extends PHPUnit_Framework_TestCase
    }
 
    public function test_snapshotCullectionsSpaces()
-   {  
+   {
       $type = SDB_SNAP_COLLECTIONSPACES;
-      echo "\n---Begin to exec snapshot[SDB_SNAP_COLLECTIONSPACES, ".$type."].\n"; 
+      echo "\n---Begin to exec snapshot[SDB_SNAP_COLLECTIONSPACES, ".$type."].\n";
       $this -> assertEquals( 5, $type );
       
       $type = SDB_SNAP_COLLECTIONSPACE;
       $this -> assertEquals( 5, $type );
       
-      $type = SDB_SNAP_COLLECTIONSPACES;  
-      $cond = array( 'Name' => self::$csName );    
+      $type = SDB_SNAP_COLLECTIONSPACES;
+      $cond = array( 'Name' => self::$csName );
       $cursor = self::$db -> snapshot( $type, $cond );
-      $this -> assertEquals( 0, self::$db -> getError()['errno'] ); 
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       if ( empty($cursor) ) {
          $this -> assertFalse( true, "results is empty." );
       }
-      $this -> assertEquals( self::$csName, $cursor -> current()["Name"] );
-      $this -> assertContains( "PageSize", $cursor -> current() );
+      $record = $cursor -> current();
+      $this -> assertEquals( self::$csName, $record["Name"] );
+      $this -> assertTrue( isset( $record["PageSize"] ) );
    }
 
    public function test_snapshotDatabase()
-   {  
+   {
       $type = SDB_SNAP_DATABASE;
-      echo "\n---Begin to exec snapshot[SDB_SNAP_DATABASE, ".$type."].\n"; 
+      echo "\n---Begin to exec snapshot[SDB_SNAP_DATABASE, ".$type."].\n";
       $this -> assertEquals( 6, $type );
       
       $cursor = self::$db -> snapshot( $type );
-      $this -> assertEquals( 0, self::$db -> getError()['errno'] ); 
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       if ( empty($cursor) ) {
          $this -> assertFalse( true, "results is empty." );
       }
-      $this -> assertContains( "TotalNumConnects", $cursor -> current() );
-      $this -> assertContains( "TotalDataRead", $cursor -> current() );
+      $record = $cursor -> current();
+      $this -> assertTrue( isset( $record["TotalNumConnects"] ) );
+      $this -> assertTrue( isset( $record["TotalDataRead"] ) );
    }
 
    public function test_snapshotSystem()
-   {  
+   {
       $type = SDB_SNAP_SYSTEM;
-      echo "\n---Begin to exec snapshot[SDB_SNAP_SYSTEM, ".$type."].\n"; 
+      echo "\n---Begin to exec snapshot[SDB_SNAP_SYSTEM, ".$type."].\n";
       $this -> assertEquals( 7, $type );
       
       $cursor = self::$db -> snapshot( $type );
-      $this -> assertEquals( 0, self::$db -> getError()['errno'] ); 
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       if ( empty($cursor) ) {
          $this -> assertFalse( true, "results is empty." );
       }
-      $this -> assertGreaterThan( 0, $cursor -> current()["CPU"]["User"] );
-      $this -> assertGreaterThan( 0, $cursor -> current()["Memory"]["TotalRAM"] );
+      $record = $cursor -> current();
+      $this -> assertGreaterThan( 0, $record["CPU"]["User"] );
+      $this -> assertGreaterThan( 0, $record["Memory"]["TotalRAM"] );
    }
 
    public function test_snapshotCatalog()
-   {  
+   {
       $type = SDB_SNAP_CATALOG;
-      echo "\n---Begin to exec snapshot[SDB_SNAP_CATALOG, ".$type."].\n"; 
+      echo "\n---Begin to exec snapshot[SDB_SNAP_CATALOG, ".$type."].\n";
       $this -> assertEquals( 8, $type );
       
       $type = SDB_SNAP_CATA;
@@ -220,19 +227,20 @@ class snapshot762902 extends PHPUnit_Framework_TestCase
       $type = SDB_SNAP_CATALOG;
       $cond = array( 'Name' => self::$csName.'.'.self::$clName );
       $cursor = self::$db -> snapshot( $type, $cond );
-      $this -> assertEquals( 0, self::$db -> getError()['errno'] ); 
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       if ( empty($cursor) ) {
          $this -> assertFalse( true, "results is empty." );
-      }   
+      }
       $this -> assertEquals( self::$csName.'.'.self::$clName, $cursor -> current()["Name"] );
-      $this -> assertContains( "CataInfo", $cursor -> current() );
+      $record = $cursor -> current();
+      $this -> assertTrue( isset( $record["CataInfo"] ) );
       //var_dump( $cursor -> next() );
    }
 
    public function test_snapshotTransactions()
-   {  
+   {
       $type = SDB_SNAP_TRANSACTIONS;
-      echo "\n---Begin to exec snapshot[SDB_SNAP_TRANSACTIONS, ".$type."].\n"; 
+      echo "\n---Begin to exec snapshot[SDB_SNAP_TRANSACTIONS, ".$type."].\n";
       $this -> assertEquals( 9, $type );
       
       $type = SDB_SNAP_TRANSACTION;
@@ -240,17 +248,17 @@ class snapshot762902 extends PHPUnit_Framework_TestCase
       
       $type = SDB_SNAP_TRANSACTIONS;
       $cursor = self::$db -> snapshot( $type );
-      $this -> assertEquals( 0, self::$db -> getError()['errno'] ); 
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       if ( empty($cursor) ) {
          $this -> assertFalse( true, "results is empty." );
-      }      
+      }
       //var_dump( $cursor -> next() );
    }
 
    public function test_snapshotTransactionsCurrent()
    {  
       $type = SDB_SNAP_TRANSACTIONS_CURRENT;
-      echo "\n---Begin to exec snapshot[SDB_SNAP_TRANSACTIONS_CURRENT, ".$type."].\n"; 
+      echo "\n---Begin to exec snapshot[SDB_SNAP_TRANSACTIONS_CURRENT, ".$type."].\n";
       $this -> assertEquals( 10, $type );
       
       $type = SDB_SNAP_TRANSACTION_CURRENT;
@@ -258,52 +266,52 @@ class snapshot762902 extends PHPUnit_Framework_TestCase
       
       $type = SDB_SNAP_TRANSACTIONS_CURRENT;
       $cursor = self::$db -> snapshot( $type );
-      $this -> assertEquals( 0, self::$db -> getError()['errno'] ); 
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       if ( empty($cursor) ) {
          $this -> assertFalse( true, "results is empty." );
       }
    }
 
    public function test_snapshotAccessplans()
-   {  
+   {
       $type = SDB_SNAP_ACCESSPLANS;
-      echo "\n---Begin to exec snapshot[SDB_SNAP_ACCESSPLANS, ".$type."].\n"; 
+      echo "\n---Begin to exec snapshot[SDB_SNAP_ACCESSPLANS, ".$type."].\n";
       $this -> assertEquals( 11, $type );
       
       $cursor = self::$db -> snapshot( $type );
-      $this -> assertEquals( 0, self::$db -> getError()['errno'] ); 
-      if ( empty($cursor) ) {
-         $this -> assertFalse( true, "results is empty." );
-      }
-      echo "SDB_SNAP_ACCESSPLANS: ";
-      var_dump( $cursor -> current() );
-      $this -> assertContains( "CacheLevel", $cursor -> current() );
-      $this -> assertContains( "Query", $cursor -> current() );
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
+      
+      $this -> assertFalse( empty($cursor), "results is empty." );
+      
+      $record = $cursor -> current();
+      $this -> assertTrue( isset( $record["CacheLevel"] ) );
+      $this -> assertTrue( isset( $record["Query"] ) );
    }
 
    public function test_snapshotHealth()
-   {  
+   {
       $type = SDB_SNAP_HEALTH;
-      echo "\n---Begin to exec snapshot[SDB_SNAP_HEALTH, ".$type."].\n"; 
+      echo "\n---Begin to exec snapshot[SDB_SNAP_HEALTH, ".$type."].\n";
       $this -> assertEquals( 12, $type );
       
       $cursor = self::$db -> snapshot( $type );
-      $this -> assertEquals( 0, self::$db -> getError()['errno'] ); 
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       if ( empty($cursor) ) {
          $this -> assertFalse( true, "results is empty." );
       }
-      $this -> assertContains( "IsPrimary", $cursor -> current() );
-      $this -> assertContains( "ServiceStatus", $cursor -> current() );
-      $this -> assertContains( "Status", $cursor -> current() );
-      $this -> assertContains( "BeginLSN", $cursor -> current() );
+      $record = $cursor -> current();
+      $this -> assertTrue( isset( $record["IsPrimary"] ) );
+      $this -> assertTrue( isset( $record["ServiceStatus"] ) );
+      $this -> assertTrue( isset( $record["Status"] ) );
+      $this -> assertTrue( isset( $record["BeginLSN"] ) );
    }
    
    public static function tearDownAfterClass()
    {
       if ( self::$skipTestCase == false )
-      {         
-         echo "\n---Begin to dropCS in the end.\n"; 
-         $err = self::$db -> dropCS( self::$csName ); 
+      {
+         echo "\n---Begin to dropCS in the end.\n";
+         $err = self::$db -> dropCS( self::$csName );
          if ( $err['errno'] != 0 )
          {
             throw new Exception("failed to drop cs, errno=".$err['errno']);
