@@ -5,6 +5,7 @@ buildStr=""
 autoTest=0
 isRelease=0
 needInstall=0
+needInstallES=0
 needCompile=1
 startSdb=0
 hostName=`hostname`
@@ -16,13 +17,14 @@ runAll=0
 function display()
 {
    echo "$0 --help | -h"
-   echo "$0 [-noup] [-nocompile] [-c arg] [-release] [-install] [-start] [-dbpath path] [-test] [-full]"
+   echo "$0 [-noup] [-nocompile] [-c arg] [-release] [-install] [-installES] [-start] [-dbpath path] [-test] [-full]"
    echo ""
    echo " -noup        : 不更新svn，不加表示更新svn"
    echo " -nocompile   : 不执行编译，不加表示重新编译"
    echo ' -c arg       : arg指定编译参数，如"--engine --dd --enterprise"'
    echo " -release     : 编译release版本"
    echo " -install     : 执行安装部署"
+   echo " -installES   : 执行安装部署ES"
    echo " -start       : 启动集群"  
    echo " -dbpath path : 指定节点路径"
    echo " -test        : 调用runtest.sh执行测试"
@@ -51,6 +53,11 @@ function svnUp()
       exit 1
    fi
    echo "====================End to update all files==============================="
+}
+
+function installES()
+{
+   `./installES.sh -adapter true -installES true`
 }
 
 function compile()
@@ -273,6 +280,8 @@ while [ "$1" != "" ]; do
                           ;;
       -install )          needInstall=1
                           ;;
+      -installES )        needInstallES=1
+                          ;;
       -nocompile )        needCompile=0
                           ;;
       -start )            startSdb=1
@@ -337,6 +346,10 @@ fi
 
 if [ $startSdb -ne 0 -o $needInstall -ne 0 ] ; then
    installSdb
+fi
+
+if [ $needInstallES -ne 0 ];then
+   installES
 fi
 
 if [ $autoTest -ne 0 ] ; then

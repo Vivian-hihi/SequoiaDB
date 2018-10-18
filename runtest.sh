@@ -13,8 +13,10 @@ uuid=$$
 uuname="s$$test"
 
 coordsvcname="50000"
+essvcname="9200"
 catasvcname="30000"
 coordhostname="localhost"
+eshostname="localhost"
 
 rsrvportbegin="26000"
 rsrvportend="27000"
@@ -63,20 +65,23 @@ function showHelpInfo()
 {
    echo "run testcase 1.0.0 2014/2/25"
    echo "$0 --help"
-   echo "$0 [-p path]|[-f file] [-t type] [-s stopFlag] [-n svcname] [-h hostname] [-s1] [-s2] [-sp] [-addpid] [-print]"
+   echo "$0 [-p path]|[-f file] [-t type] [-s stopFlag] [-n svcname] [-h hostname] [-ex exclude] [-eh eshost] [-en essvcname] [-s1] [-s2] [-sp] [-addpid] [-print]"
    echo ""
-   echo " -p path     : 运行指定路径下的JS用例。为相对目录，默认根目录为用例目录"
-   echo " -f file     : 运行指定的JS用例。为相对目录，默认根目录为用例目录"
-   echo " -t type     : 运行指定类型的用例，可取story|sdv|all。当不指定-t-p-f时，默认跑基本用例；当不指定-t指定了-f|-p默认跑story"
-   echo " -s stopFlag : 发生用例错误是否停止，0表示继续，1表示停止，默认为1"
-   echo " -n svcname  : 指定测试的COORD节点服务名，默认为50000"
-   echo " -h hostname : 指定测试的COORD节点HostName或IP"
-   echo " -c cataport : 指定测试的CATALOG节点服务名，默认为30000"
-   echo " -s1         : 指定预留的RSRVPORTBEGIN端口号，默认为26000"
-   echo " -s2         : 指定预留的RSRVPORTEND端口号，默认为27000"
-   echo " -sp         : 指定用预留端口创建节点的路径RSRVNODEDIR，默认为/opt/sequoiadb/database/"
-   echo " -addpid     : 是否在CHANGEDPREFIX上加上当前进行PID"
-   echo " -print      : 是否在屏幕上打印用例的输出"
+   echo " -p path        : 运行指定路径下的JS用例。为相对目录，默认根目录为用例目录"
+   echo " -f file        : 运行指定的JS用例。为相对目录，默认根目录为用例目录"
+   echo " -t type        : 运行指定类型的用例，可取story|sdv|all。当不指定-t-p-f时，默认跑基本用例；当不指定-t指定了-f|-p默认跑story"
+   echo " -s stopFlag    : 发生用例错误是否停止，0表示继续，1表示停止，默认为1"
+   echo " -n svcname     : 指定测试的COORD节点服务名，默认为50000"
+   echo " -h hostname    : 指定测试的COORD节点HostName或IP"
+   echo " -c cataport    : 指定测试的CATALOG节点服务名，默认为30000"
+   echo " -ex exclude    : 指定排除的测试用例目录，如fullText"
+   echo " -eh eshost     : 指定es环境主机名或ip"
+   echo " -en essvcname  : 指定es环境节点服务名，默认为50000"
+   echo " -s1            : 指定预留的RSRVPORTBEGIN端口号，默认为26000"
+   echo " -s2            : 指定预留的RSRVPORTEND端口号，默认为27000"
+   echo " -sp            : 指定用预留端口创建节点的路径RSRVNODEDIR，默认为/opt/sequoiadb/database/"
+   echo " -addpid        : 是否在CHANGEDPREFIX上加上当前进行PID"
+   echo " -print         : 是否在屏幕上打印用例的输出"
    echo ""
    exit $1
 }
@@ -123,7 +128,7 @@ function runJSFile()
    local file=$1
    
    result=0
-   lastCmdStr="$sdbRoot/sdb -e \"var CHANGEDPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}';var RSRVPORTBEGIN='${rsrvportbegin}';var RSRVPORTEND='${rsrvportend}'; var CATASVCNAME='$catasvcname'; var RSRVNODEDIR='$rsrvnodedir'; var UUID=$uuid; var UUNAME='${uuname}'; var RUNRESULT=$runresult; \" -f \"${libRoot}/func.js,$file\""
+   lastCmdStr="$sdbRoot/sdb -e \"var CHANGEDPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}';var ESSVCNAME='${essvcname}'; var ESHOSTNAME='${eshostname}';var RSRVPORTBEGIN='${rsrvportbegin}';var RSRVPORTEND='${rsrvportend}'; var CATASVCNAME='$catasvcname'; var RSRVNODEDIR='$rsrvnodedir'; var UUID=$uuid; var UUNAME='${uuname}'; var RUNRESULT=$runresult; \" -f \"${libRoot}/func.js,$file\""
 #   runresult=0
    if [ $printOut -eq 1 -o $# -gt 1 ] ; then
       echo "CMD: $lastCmdStr"
@@ -322,7 +327,16 @@ function analyPara()
                          ;;
          -t )            shift   
                          testType="$1"              
-                         ;;                      
+                         ;;
+         -ex )           shift
+                         excludePath="$1"
+                         ;;
+         -eh )           shift
+                         eshostname="$1"
+                         ;;
+         -en )           shift
+                         essvcname="$1"
+                         ;;
          -print )        printOut=1
                          ;;
          -addpid )       csprefix="local_para_$$"
@@ -361,7 +375,7 @@ function analyTestType()
 function filterTestcase()
 {  
    local testRoot=$1
-   
+   local excludePath=$2
    pathLists=(`sed -n '2,6p' $testRoot/testcase.conf |awk -F '=' '{print $2}'`)
    for pathList in ${pathLists[@]} 
    do
@@ -370,6 +384,14 @@ function filterTestcase()
       do
          ignoredPaths+=($path)
       done
+   done
+   OLD_IFS="$IFS"
+   IFS=","
+   arr=($excludePath)
+   IFS="$OLD_IFS"
+   for path in ${arr[@]}
+   do
+      ignoredPaths+=($path)
    done
 }
    
@@ -531,6 +553,8 @@ echo "UUID          : $uuid"
 echo "UUNAME        : $uuname"
 echo "COORDSVCNAME  : $coordsvcname"
 echo "COORDHOSTNAME : $coordhostname"
+echo "ESSVCNAME     : $essvcname"
+echo "ESHOSTNAME    : $eshostname"
 echo "RSRVPORTBEGIN : $rsrvportbegin"
 echo "RSRVPORTEND   : $rsrvportend"
 echo "RSRVNODEDIR   : $rsrvnodedir"
@@ -540,7 +564,7 @@ declare -a findCmds                         #define findCmds as array
 for testRoot in ${testRoots[@]}
 do 
    unset ignoredPaths
-   filterTestcase $testRoot
+   filterTestcase $testRoot $excludePath
    generateFindCmd $testRoot
    findCmds[${#findCmds[@]}]="$findCmdStr"  #add element in tail of array    
 done
