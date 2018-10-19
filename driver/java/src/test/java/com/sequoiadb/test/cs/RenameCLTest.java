@@ -28,7 +28,7 @@ public class RenameCLTest {
 
     @Before
     public void setUp() throws Exception {
-        sdb = new Sequoiadb(Constants.DATA_NODE_CONN, "", "");
+        sdb = new Sequoiadb(Constants.COOR_NODE_CONN, "", "");
         if (!sdb.isCollectionSpaceExist(Constants.TEST_CS_NAME_1))
             cs=sdb.createCollectionSpace(Constants.TEST_CS_NAME_1);
         else
@@ -44,10 +44,12 @@ public class RenameCLTest {
     public void tearDown() throws Exception {
         /*Create OLDCL and delete NEWCL */
         try {
-            if(!cs.isCollectionExist(TEST_CL_OLDNAME))
-                cs.createCollection(TEST_CL_OLDNAME);
+            if(sdb.isCollectionSpaceExist(Constants.TEST_CS_NAME_1))
+                sdb.dropCollectionSpace(Constants.TEST_CS_NAME_1);
             if(cs.isCollectionExist(TEST_CL_NEWNAME))
                 cs.dropCollection(TEST_CL_NEWNAME);
+            if(cs.isCollectionExist(TEST_CL_OLDNAME))
+                cs.dropCollection(TEST_CL_OLDNAME);
         }finally {
             sdb.close();
         }
