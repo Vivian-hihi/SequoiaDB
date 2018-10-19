@@ -503,7 +503,7 @@ namespace engine
                /// check node name
                for ( index = 0 ; index < vecNodeName.size() ; ++index )
                {
-                  if ( coordMatchNodeName( vecSvcName[ index ],
+                  if ( coordMatchNodeName( vecNodeName[ index ],
                                            itrn->_host,
                                            itrn->_service[MSG_ROUTE_LOCAL_SERVICE].c_str() ) )
                   {
