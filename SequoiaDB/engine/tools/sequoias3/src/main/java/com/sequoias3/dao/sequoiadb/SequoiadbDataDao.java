@@ -139,7 +139,7 @@ public class SequoiadbDataDao implements DataDao {
                 if (range.getStart() >= contentLength){
                     throw new S3ServerException(S3Error.OBJECT_RANGE_INVALID,
                             "start > contentlength. start:" + range.getStart() +
-                                    ", contentlength：" + contentLength);
+                                    ", contentlength:" + contentLength);
                 }
 
                 //final bytes
