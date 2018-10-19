@@ -12,7 +12,7 @@
 main(db);
 function main(db)
 {
-   if (commGetGroupsNum(db) < 3)
+   if (commGetGroupsNum(db) < 2)
    {
       return ;
    }
@@ -27,7 +27,6 @@ function main(db)
    var groups = commGetGroups(db);
    var groupName1 = groups[0][0].GroupName;
    var groupName2 = groups[1][0].GroupName;
-   var groupName3 = groups[2][0].GroupName;
    try{
       commDropCS( db, csName1, true, "drop CS "+csName1 );
       commDropCS( db, csName2, true, "drop CS "+csName2 );

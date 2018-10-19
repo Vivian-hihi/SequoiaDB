@@ -12,7 +12,7 @@ function main(db)
    {
       return ;
    }
-   if (commGetGroupsNum(db) < 3)
+   if (commGetGroupsNum(db) < 2)
    {
       return ;
    }
@@ -74,10 +74,9 @@ function createDomain( db, domainName)
    var groups = commGetGroups(db);
    var groupName1 = groups[0][0].GroupName;
    var groupName2 = groups[1][0].GroupName;
-   var groupName3 = groups[2][0].GroupName;
    try 
    {
-      var mydomain = db.createDomain( domainName, [ groupName1, groupName2, groupName3 ], { AutoSplit: true } );
+      var mydomain = db.createDomain( domainName, [ groupName1, groupName2 ], { AutoSplit: true } );
       return mydomain;
    }
    catch( e )
