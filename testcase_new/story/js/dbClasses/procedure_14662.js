@@ -218,14 +218,10 @@ function evalCLCount( db )
       var cnt = db.eval( "getCLCount( \"" + COORDHOSTNAME + "\", " + 
                          "\"" + COORDSVCNAME + "\", \"" + COMMCSNAME + 
                          "\", \"" + clName + "\" )" ) ;
-      throw 0 ;
    }
    catch( e )
    {
-      if( e !== -6 )
-      {
-         throw buildException( "evalCLCount", e, "get CLCount", -6, e ) ;
-      }
+      throw buildException( "evalCLCount", e, "get CLCount", "success", e ) ;
    }
    db.removeProcedure( "getCLCount" ) ;
 }
