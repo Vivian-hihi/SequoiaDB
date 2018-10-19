@@ -512,7 +512,8 @@ namespace engine
                       0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_NODEID ) ||
                       0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_HOST ) ||
                       0 == ossStrcasecmp( ele.fieldName(), PMD_OPTION_SVCNAME ) ||
-                      0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_SERVICE_NAME )
+                      0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_SERVICE_NAME ) ||
+                      0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_NODE_NAME )
                      ) )
             {
                nodesCondBuilder.append( ele ) ;
