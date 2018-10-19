@@ -3,7 +3,7 @@
              seqDB-16072
 @author：2018-10-15 chensiqin  Init
 ***************************************************************************** */
-//main(db);
+main(db);
 function main(db)
 {
 
@@ -42,7 +42,7 @@ function main(db)
          throw buildException("renameCS( clName, newClName ) fail", e, "rename", "success", e); 
       }
    }
-   //新建cl指定为修改cl旧名，插入数据 5、再次执行存储过程，检查操作结果
+
    commCreateCLByOption( db, csName, clName , {}, true, false, "create cl in the beginning" );
    insertData(varCL, 50);
    ret = db.eval( 'test16072("'+csName+'", "'+clName+'")' );
@@ -54,6 +54,7 @@ function main(db)
    }
    
    db.removeProcedure("test16072");
+   commDropCS( db, csName, true, "ignoreNotExist is true" );
 }
 
 function checkDatas( csName, newCLName, expRecordNums)
