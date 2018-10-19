@@ -37,7 +37,7 @@ public class CommLib {
 	 * @param sdb
 	 * @return true/false, true is only on group, false is multiple group
 	 */
-	public boolean OneGroupMode(Sequoiadb sdb){
+	public static boolean OneGroupMode(Sequoiadb sdb){
 		if(getDataGroupNames(sdb).size() < 2){
 			System.out.printf("Only one group.");
 			return true;
@@ -50,7 +50,7 @@ public class CommLib {
 	 * @param sdb
 	 * @return dataGroupNames
 	 */
-	public ArrayList<String> getDataGroupNames(Sequoiadb sdb){
+	public static ArrayList<String> getDataGroupNames(Sequoiadb sdb){
 		ArrayList<String> dataGroupNames = new ArrayList<>();
 		try{
 			dataGroupNames = sdb.getReplicaGroupNames();
@@ -68,7 +68,7 @@ public class CommLib {
 	 * @param rgName
 	 * @return nodeAddrs, eg.[host1:11840, host2:11850]
 	 */
-	public List<String> getNodeAddress(Sequoiadb sdb, 
+	public static List<String> getNodeAddress(Sequoiadb sdb, 
 									   String rgName){
 		List<String> nodeAddrs = new ArrayList<>();
 		try{
@@ -96,7 +96,7 @@ public class CommLib {
 	 * @param sdb
 	 * @return csInfoOfCata
 	 */
-	public ArrayList<BSONObject> getCSInfoOfCatalog(Sequoiadb sdb){
+	public static ArrayList<BSONObject> getCSInfoOfCatalog(Sequoiadb sdb){
 		ArrayList<BSONObject> csInfoOfCata = new ArrayList<>();
 		Sequoiadb cataDB = null;
 		try
@@ -200,9 +200,7 @@ public class CommLib {
 	 * @param csName
 	 * @param clName
 	 */
-	public void checkCLOfDataRG(Sequoiadb sdb, 
-								String csName, 
-								String clName){
+	public void checkCLOfDataRG(Sequoiadb sdb, String csName, String clName){
 		try{
 			BSONObject matcher = new BasicBSONObject();
 			BSONObject subObj = new BasicBSONObject();
@@ -210,7 +208,6 @@ public class CommLib {
 			matcher.put("Name", subObj);
 			
 			//get all dataGroupNames
-			CommLib CommLib = new CommLib();
 			ArrayList<String> dataGroupNames =  CommLib.getDataGroupNames(sdb);
 			for(int i = 0; i < dataGroupNames.size(); i++){
 				List<String> nodeAddrs = CommLib.getNodeAddress(sdb, dataGroupNames.get(i));
@@ -234,7 +231,7 @@ public class CommLib {
 							}
 						}
 						cursor.close();
-						dataDB.disconnect();
+						dataDB.close();
 						//all node data within the group
 						allNodeData.add(j, oneNodeData.toString());
 						
@@ -313,7 +310,6 @@ public class CommLib {
 					BasicBSONObject groupInfo = (BasicBSONObject) cataInfo.get(i);
 					String groupName = groupInfo.getString("GroupName");
 					//get node address within the group
-					CommLib CommLib = new CommLib();
 					List<String> nodeAddrs = CommLib.getNodeAddress(sdb, groupName);
 					//direct node and compare node's data
 					int failCnt = 0;
@@ -333,7 +329,7 @@ public class CommLib {
 								oneNodeData.add(idxList);
 							}
 							cur.close();
-							dataDB.disconnect();
+							dataDB.close();
 							//all node data within the group
 							allNodeData.add(j, oneNodeData.toString());
 							
@@ -375,12 +371,9 @@ public class CommLib {
 	 * @param csName
 	 * @param clName
 	 */
-	public boolean compareDataAndCata(Sequoiadb sdb, 
-									  String csName, 
-									  String clName){
+	public boolean compareDataAndCata(Sequoiadb sdb, String csName, String clName){
 		try{
 			//get all dataGroupNames
-			CommLib CommLib = new CommLib();
 			ArrayList<String> dataGroupNames =  CommLib.getDataGroupNames(sdb);
 			for(int i = 0; i < dataGroupNames.size(); i++){
 				//direct connect data master node, listCollections
@@ -400,11 +393,16 @@ public class CommLib {
 						while(cur.hasNext()){
 							String name = (String) cur.getNext().get("Name");
 							if( name.isEmpty() ){
+								cur.close();
+								cataDB.close();
 								return false;
 							}
 						}
+						cur.close();
+						cataDB.close();
 					}
 				}
+				dataDB.close();
 			}
 		}catch(BaseException e){
 			Assert.fail("Failed to check cl for dataRG. ErrorMsg:\n" + e.getMessage());
@@ -434,9 +432,12 @@ public class CommLib {
 						String dataMAddr = sdb.getReplicaGroup(dataGroupNames).getMaster().getNodeName();
 						Sequoiadb dataDB = new Sequoiadb(dataMAddr, "", "");
 						dataDB.getCollectionSpace(csName).getCollection(tmpCLName);
+						dataDB.close();
 					}
 				}
 			}
+			cursor.close();
+			cataDB.close();
 		}catch(BaseException e){
 			if(e.getErrorCode() == -23){  //-23:Collection does not exist
 				Assert.fail("Failed to check cl for dataRG. ErrorMsg:\n" + e.getMessage());
@@ -460,7 +461,6 @@ public class CommLib {
 		Sequoiadb dataDB  = null;
 		try{
 			//get node address within the group
-			CommLib CommLib = new CommLib();
 			List<String> nodeAdrrs = CommLib.getNodeAddress(sdb, rgName);
 			
 			//direct node and compare node's data
@@ -482,7 +482,7 @@ public class CommLib {
 						oneNodeData.add(csInfo);
 					}
 					cursor.close();
-					dataDB.disconnect();
+					dataDB.close();
 					//all node data within the group
 					allNodeData.add(i, oneNodeData.toString());
 					
@@ -558,7 +558,7 @@ public class CommLib {
 	 * @param sdb
 	 * @param csName
 	 */
-	public void clearCS(Sequoiadb sdb, 
+	public static void clearCS(Sequoiadb sdb, 
 						String csName){
 		try{
 			DBCursor cursor = sdb.listCollectionSpaces();
@@ -583,7 +583,7 @@ public class CommLib {
 	 * @param sdb
 	 * @param clName
 	 */
-	public void clearCL(Sequoiadb sdb, 
+	public static void clearCL(Sequoiadb sdb, 
 						String csName, 
 						String clName){
 		try{
@@ -615,7 +615,7 @@ public class CommLib {
 	public void clearGroup(Sequoiadb sdb, 
 						   String rgName){
 		try{
-			ArrayList<String> groupNames= CommLib.this.getDataGroupNames(sdb);
+			ArrayList<String> groupNames= CommLib.getDataGroupNames(sdb);
 			for(int i = 0; i < groupNames.size(); i++){
 				String tmpName = groupNames.get(i);
 				if(tmpName.indexOf(rgName) >= 0){
