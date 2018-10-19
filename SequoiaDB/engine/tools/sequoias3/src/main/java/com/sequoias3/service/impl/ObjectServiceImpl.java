@@ -448,8 +448,7 @@ public class ObjectServiceImpl implements ObjectService {
                 return false;
             }
         }catch (Exception e){
-            //返回false，交给外面处理，当做不匹配处理
-            throw new S3ServerException(S3Error.UNKNOWN_ERROR,
+            throw new S3ServerException(S3Error.OBJECT_INVALID_DIGEST,
                     "decode md5 failed, contentMd5:"+contentMd5);
         }
     }
@@ -464,7 +463,7 @@ public class ObjectServiceImpl implements ObjectService {
         if (null != matchEtag){
             if (!matchEtag.toString().equals(eTag)){
                 throw new S3ServerException(S3Error.OBJECT_IF_MATCH_FAILED,
-                        "if match isNotMatch: matchetag：" + matchEtag.toString() + ", etag:" + eTag);
+                        "if match isNotMatch: match eTag:" + matchEtag.toString() + ", etag:" + eTag);
             }else{
                 isMatch = true;
             }
@@ -474,7 +473,7 @@ public class ObjectServiceImpl implements ObjectService {
         if (null != noneMatchEtag){
             if (noneMatchEtag.toString().equals(eTag)){
                 throw new S3ServerException(S3Error.OBJECT_IF_NONE_MATCH_FAILED,
-                        "if none match isNotMatch: matchetag：" + matchEtag.toString() + ", etag:" + eTag);
+                        "if none match isNotMatch: match eTag:" + matchEtag.toString() + ", etag:" + eTag);
             }else{
                 isNoneMatch = true;
             }
@@ -486,7 +485,7 @@ public class ObjectServiceImpl implements ObjectService {
             if (date.getTime() < lastModifiedTime) {
                 if (!isMatch) {
                     throw new S3ServerException(S3Error.OBJECT_IF_UNMODIFIED_SINCE_FAILED,
-                            "if modified since date: last：" + date.getTime() +
+                            "if modified since date: last:" + date.getTime() +
                                     ", lastModifiedTime:" + lastModifiedTime);
                 }
             }
@@ -498,7 +497,7 @@ public class ObjectServiceImpl implements ObjectService {
             if (date.getTime() >= lastModifiedTime) {
                 if (!isNoneMatch) {
                     throw new S3ServerException(S3Error.OBJECT_IF_MODIFIED_SINCE_FAILED,
-                            "if modified since date: last：" + date.getTime() +
+                            "if modified since date: last:" + date.getTime() +
                                     ", lastModifiedTime:" + lastModifiedTime);
                 }
             }
