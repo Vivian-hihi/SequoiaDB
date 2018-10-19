@@ -17,19 +17,23 @@ public enum S3Error {
     BUCKET_CREATE_FAILED(-500, "CreateBucketFailed", "Create bucket failed."),
     BUCKET_DELETE_FAILED(-501, "DeleteBucketFailed", "Delete bucket failed."),
     BUCKET_GET_SERVICE_FAILED(-502, "GetServiceFailed", "Get service failed."),
+    BUCKET_VERSIONING_SET_FAILED(-503, "PutBucketVersioningFailed", "Put bucket versioning failed."),
+    BUCKET_VERSIONING_GET_FAILED(-504, "GetBucketVersioningFailed", "Get bucket versioning failed."),
 
     BUCKET_NOT_EXIST(-510, "NoSuchBucket", "The speciﬁed bucket does not exist."),
     BUCKET_INVALID_BUCKETNAME(-511, "InvalidBucketName", "The speciﬁed bucket Name is not valid."),
-    BUCKET_ALREADY_EXIST(-512, "BucketAlreadyExists", "The requested bucket name is not available. The bucket namespace is shared by all users of the system. Please select a diﬀerent name and try again."),
-    BUCKET_ALREADY_OWNEDYOU(-513, "BucketAlreadyOwnedByYou", "Your previous request to create the named bucket succeeded and you already own it."),
+    BUCKET_ALREADY_EXIST(-512, "BucketAlreadyExists", "The requested bucket name is not available. The bucket namespace is shared by all users of the system. Please select a different name and try again."),
+    BUCKET_ALREADY_OWNED_BY_YOU(-513, "BucketAlreadyOwnedByYou", "Your previous request to create the named bucket succeeded and you already own it."),
     BUCKET_NOT_EMPTY(-514, "BucketNotEmpty", "The bucket you tried to delete is not empty."),
     BUCKET_TOO_MANY_BUCKETS(-515, "TooManyBuckets", "You have attempted to create more buckets than allowed."),
+    BUCKET_INVALID_VERSIONING_STATUS(-516, "InvalidVersioningStatus", "The versioning status is invalid."),
 
     //object
     OBJECT_PUT_fAILED(-601, "PutObjectFailed", "Put object failed."),
     OBJECT_GET_FAILED(-602, "GetObjectFailed", "Get object failed"),
     OBJECT_DELETE_FAILED(-603, "DeleteObjectFailed", "Delete object failed."),
     OBJECT_LIST_FAILED(-604, "ListObjectsFailed", "List objects failed."),
+    OBJECT_LIST_VERSIONS_FAILED(-605, "ListVersionsFailed", "List versions failed."),
 
     OBJECT_INVALID_KEY(-611, "InvalidKey", "Invalid Key."),
     OBJECT_KEY_TOO_LONG(-612, "KeyTooLongError", "Your key is too long."),
@@ -41,6 +45,7 @@ public enum S3Error {
     OBJECT_IS_IN_USE(-618, "ObjectIsInUse", "The object is in use."),
     OBJECT_RANGE_INVALID(-619, "RangeNotSatisfiable", "Requested range not satisfiable."),
     OBJECT_INVALID_DIGEST(-620, "InvalidDigest", " The Content-MD5 you speciﬁed is not valid."),
+    OBJECT_NO_SUCH_VERSION(-621, "NoSuchVersion", "The specified version does not exist."),
 
     OBJECT_IF_MODIFIED_SINCE_FAILED(-621, "NotModiﬁed", "If-Modified-Since not match"),
     OBJECT_IF_UNMODIFIED_SINCE_FAILED(-621, "PreconditionFailed ", "If-Unmodified-Since not match"),
