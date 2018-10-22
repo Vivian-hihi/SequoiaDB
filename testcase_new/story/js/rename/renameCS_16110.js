@@ -21,12 +21,15 @@ function main(db)
    var csName2 = CHANGEDPREFIX+"_rename16110_2";
    var clName = CHANGEDPREFIX+"renamecl16110";
    //创建domain
-   var domain = createDomain( db, domainName );
+   var groups = commGetGroups(db);
+   var groupName1 = groups[0][0].GroupName;
+   var groupName2 = groups[1][0].GroupName;
+   var domain = createDomain( db, domainName, groupName1, groupName2 );
    //创建cs cl
    commDropCS( db, csName1, true, "ignoreNotExist is true" );
    commDropCS( db, csName2, true, "ignoreNotExist is true" );
    var varCS = commCreateCS( db, csName1, true, "create CS");
-   var varCL = commCreateCLByOption( db, csName1, clName, {}, true, false, "create cl in the beginning" )
+   var varCL = commCreateCLByOption( db, csName1, clName, {Group:groupName1}, true, false, "create cl in the beginning" )
    insertData(varCL, 100);
    testRenameCS16110( db, domainName, domain, csName1, csName2, clName );
    afterClear( db, domainName, csName2 )
@@ -69,11 +72,8 @@ function checkDatas( csName2, clName)
    }  
 }
 
-function createDomain( db, domainName)
+function createDomain( db, domainName, groupName1, groupName2 )
 {
-   var groups = commGetGroups(db);
-   var groupName1 = groups[0][0].GroupName;
-   var groupName2 = groups[1][0].GroupName;
    try 
    {
       var mydomain = db.createDomain( domainName, [ groupName1, groupName2 ], { AutoSplit: true } );
