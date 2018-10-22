@@ -6,7 +6,11 @@
 main(db);
 function main(db)
 {
-
+   if( true == commIsStandalone( db ) )
+   {
+      println( "run mode is standalone" );
+      return;
+   }  
    var csName = CHANGEDPREFIX+"_cs16072";
    try{
       commDropCS( db, csName, true, "drop CS "+csName );
