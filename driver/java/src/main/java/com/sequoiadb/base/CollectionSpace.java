@@ -324,17 +324,17 @@ public class CollectionSpace {
     }
 
    /**
-     * @param oldName The old collection  name
-     * @param newName The new collection  name
+     * @param oldName The old collection name
+     * @param newName The new collection name
      * @throws BaseException If error happens.
      * 
      */
     public void renameCollection(String oldName, String newName) throws BaseException {
         if (oldName == null || oldName.length() == 0) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, "Collection name is null or empty");
+            throw new BaseException(SDBError.SDB_INVALIDARG, "The old name of collection is null or empty");
         }
         if (newName == null || newName.length() == 0) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, "Collection name is null or empty");
+            throw new BaseException(SDBError.SDB_INVALIDARG, "The new name of collection is null or empty");
         }
 
         BSONObject matcher = new BasicBSONObject();

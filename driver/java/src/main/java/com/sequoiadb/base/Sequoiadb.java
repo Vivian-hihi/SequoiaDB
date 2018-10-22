@@ -739,10 +739,10 @@ public class Sequoiadb implements Closeable {
      */
     public void renameCollectionSpace(String oldName, String newName) throws BaseException {
         if (oldName == null || oldName.length() == 0) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, "The name of collection space is null or empty");
+            throw new BaseException(SDBError.SDB_INVALIDARG, "The old name of collection space is null or empty");
         }
         if (newName == null || newName.length() == 0) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, "The name of collection space is null or empty");
+            throw new BaseException(SDBError.SDB_INVALIDARG, "The new name of collection space is null or empty");
         }
 
         BSONObject matcher = new BasicBSONObject();
