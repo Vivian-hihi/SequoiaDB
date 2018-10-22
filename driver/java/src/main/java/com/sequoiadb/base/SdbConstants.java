@@ -45,6 +45,7 @@ final class SdbConstants {
     final static String FIELD_NAME_TASKID = "TaskID";
     final static String FIELD_NAME_OPTIONS = "Options";
     final static String FIELD_NAME_DOMAIN = "Domain";
+    final static String FIELD_NAME_CELLECTIONSPACE = "CollectionSpace";
 
     final static String FIELD_NAME_ARGS = "Args";
     final static String FIELD_NAME_ALTER = "Alter";
@@ -108,6 +109,5 @@ final class SdbConstants {
     final static String OID = "_id";
 
     final static int FLG_UPDATE_UPSERT = 0x00000001;
-    
-    final static String FIELD_NAME_CELLECTIONSPACE = "CollectionSpace";
+
 }
