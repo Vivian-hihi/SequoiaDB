@@ -38,33 +38,39 @@ public class RenameUtil extends SdbTestBase {
 			}
 		}
 		
-		DBCursor cur = null;
-		try{
-			cur = db.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONSPACES, "{'Name':'"+newCSName+"'}", "", "");
-			if(!cur.hasNext()){
-				Assert.fail("cs it's not exist, csName: " + newCSName);
-			}
-			if(clNum!=0){
+		if (clNum != 0) {
+			DBCursor cur = null;
+			try {
+				cur = db.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONSPACES, "{'Name':'" + newCSName + "'}", "", "");
+				if (!cur.hasNext()) {
+					Assert.fail("cs it's not exist, csName: " + newCSName);
+				}
+
 				BSONObject obj = cur.getNext();
 				BasicBSONList cls = (BasicBSONList) obj.get("Collection");
-				if(cls.size()!=clNum){
-					Assert.fail("cl count error, exp: "+ clNum +",act :" + cls.size());
+				if (cls.size() != clNum) {
+					Assert.fail("cl count error, exp: " + clNum + ",act :" + cls.size());
 				}
 				for (int i = 0; i < cls.size(); i++) {
 					BSONObject ele = (BSONObject) cls.get(i);
 					String name = (String) ele.get("Name");
 					String csName = name.split("\\.")[0];
-					if(!csName.equals(newCSName)){
+					if (!csName.equals(newCSName)) {
 						Assert.fail("cs name contrast error");
 					}
 				}
+			} finally {
+				if (cur != null) {
+					cur.close();
+				}
 			}
-		}finally{
-			if(cur != null){
-				cur.close();
+		}else{
+			try {
+				db.getCollectionSpace(newCSName);
+			} catch (BaseException e) {
+				Assert.fail("afresh get cs failure, error:"+e);
 			}
 		}
-		
 	}
 	
 	public static List<ObjectId> putLob(DBCollection cl, byte[] data, int lobNum){
