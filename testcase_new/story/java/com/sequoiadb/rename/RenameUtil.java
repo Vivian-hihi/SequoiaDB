@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 import org.testng.Assert;
@@ -100,4 +101,20 @@ public class RenameUtil extends SdbTestBase {
         }
         return value;
     }
+	
+	public static void insertData(DBCollection cl, int recordNum){
+		
+		List<BSONObject> data = new ArrayList<BSONObject>();
+		for (int i = 0; i < recordNum/1000; i++) {
+			for (int j = 0; j < 1000; j++) {
+				BSONObject record = new BasicBSONObject();
+				record.put("a", i*1000+j);
+				record.put("no", "No."+i*1000+j);
+				record.put("phone", 13700000000L + i*1000+j);
+				record.put("text", "Test ReName, This is the test statement used to populate the data");
+				data.add(record);
+			}
+			cl.insert(data);
+		}
+	}
 }
