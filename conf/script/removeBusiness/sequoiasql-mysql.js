@@ -304,6 +304,12 @@ function RemoveBusiness( PD_LOGGER )
       return resultInfo ;
    }
 
+   //set LD_LIBRARY_PATH
+   //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiasql-postgresql/lib
+   var libraryCmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:' ;
+   libraryCmd += installPath + '/lib ;' ;
+   exec = libraryCmd + exec ;
+
    PD_LOGGER.logTask( PDEVENT, sprintf( "Begin to delete instance [?]",
                                         hostName ) ) ;
    resultInfo[FIELD_FLOW].push( sprintf( "Begin to delete instance [?]",

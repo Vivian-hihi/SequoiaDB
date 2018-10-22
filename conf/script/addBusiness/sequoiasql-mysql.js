@@ -325,6 +325,12 @@ function CreateInst( PD_LOGGER )
       return resultInfo ;
    }
 
+   //set LD_LIBRARY_PATH
+   //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiasql-postgresql/lib
+   var libraryCmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:' ;
+   libraryCmd += installPath + '/lib ;' ;
+   exec = libraryCmd + exec ;
+
    PD_LOGGER.logTask( PDEVENT, sprintf( "Begin to add instance [?]",
                                         hostName ) ) ;
    resultInfo[FIELD_FLOW].push( sprintf( "Begin to add instance [?]",
@@ -477,6 +483,12 @@ function Rollback( PD_LOGGER )
                                            hostName ) ) ;
       nodeResult[FIELD_FLOW].push( sprintf( "Begin to rollback instance [?]",
                                             hostName ) ) ;
+
+      //set LD_LIBRARY_PATH
+      //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiasql-postgresql/lib
+      var libraryCmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:' ;
+      libraryCmd += installPath + '/lib ;' ;
+      exec = libraryCmd + exec ;
 
       try
       {
