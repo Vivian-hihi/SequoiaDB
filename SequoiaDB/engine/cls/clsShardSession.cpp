@@ -347,6 +347,7 @@ namespace engine
       BOOLEAN loop = TRUE ;
       INT32 loopTime = 0 ;
       INT32 rc = SDB_OK ;
+      INT32 opCode = msg->opCode;
 
       SINT64 contextID = -1 ;
       INT32 startFrom = 0 ;
@@ -366,7 +367,7 @@ namespace engine
 
       while ( loop )
       {
-         if ( MSG_PACKET == msg->opCode )
+         if ( MSG_PACKET == opCode )
          {
             rc = _onPacketMsg( handle, msg, contextID, buffObj, startFrom ) ;
             break ;
@@ -379,9 +380,9 @@ namespace engine
          }
 
          MON_START_OP( _pEDUCB->getMonAppCB() ) ;
-         _pEDUCB->getMonAppCB()->setLastOpType( msg->opCode ) ;
+         _pEDUCB->getMonAppCB()->setLastOpType( opCode ) ;
 
-         switch ( msg->opCode )
+         switch ( opCode )
          {
             case MSG_BS_UPDATE_REQ :
                isNeedRollback = TRUE ;
@@ -405,13 +406,17 @@ namespace engine
                rc = _onDeleteReqMsg ( handle, msg, contextID ) ;
                break ;
             case MSG_BS_QUERY_REQ :
+               // There is no need to rollback any query. Simply fail it. 
+               // If we decide to change this logic some day, we need to keep
+               // the same logic in coord. 
+               // See related code in _pmdLocalSession::_onMsgBegin and
+               // _coordQueryOperator::needRollback
                rc = _onQueryReqMsg ( handle, msg, buffObj, startFrom,
                                      contextID ) ;
-               isNeedRollback = (SDB_DMS_EOC == rc || SDB_OK == rc) ? FALSE : TRUE ;
                break ;
             case MSG_BS_GETMORE_REQ :
+               // Same isNeedRollback logic as query
                rc = _onGetMoreReqMsg ( msg, buffObj, startFrom, contextID ) ;
-               isNeedRollback = (SDB_DMS_EOC == rc || SDB_OK == rc) ? FALSE : TRUE ;
                break ;
             case MSG_BS_TRANS_UPDATE_REQ :
                isNeedRollback = TRUE ;
@@ -436,20 +441,19 @@ namespace engine
                rc = _onTransDeleteReqMsg ( handle, msg, contextID ) ;
                break ;
             case MSG_BS_TRANS_QUERY_REQ :
+               // See isNeedRollback logic in query above
                rc = _checkPrimaryStatus() ;
                if ( SDB_OK != rc )
                {
-                  isNeedRollback = TRUE ;
                   PD_LOG( PDINFO, "failed to check primary status:%d", rc ) ;
                   break ;
                }
                rc = _onTransQueryReqMsg( handle, msg, buffObj, startFrom,
                                          contextID ) ;
-               isNeedRollback = (SDB_DMS_EOC == rc || SDB_OK == rc) ? FALSE : TRUE ;
                break ;
             case MSG_BS_TRANS_GETMORE_REQ :
+               // See isNeedRollback logic in query above
                rc = _onTransGetMoreReqMsg ( msg, buffObj, startFrom, contextID ) ;
-               isNeedRollback = (SDB_DMS_EOC == rc || SDB_OK == rc) ? FALSE : TRUE ;
                break ;
             case MSG_BS_KILL_CONTEXT_REQ :
                rc = _onKillContextsReqMsg ( handle, msg ) ;
@@ -577,7 +581,7 @@ namespace engine
          loop = FALSE ;
       }
 
-      if ( MSG_BS_INTERRUPTE == msg->opCode )
+      if ( MSG_BS_INTERRUPTE == opCode )
       {
          //not to reply
          goto done ;
@@ -586,12 +590,12 @@ namespace engine
       if ( rc < -SDB_MAX_ERROR || rc > SDB_MAX_WARNING )
       {
          PD_LOG ( PDERROR, "Session[%s] OP[type:%u] return code error[rc:%d]",
-                  sessionName(), msg->opCode, rc ) ;
+                  sessionName(), opCode, rc ) ;
          rc = SDB_SYS ;
       }
 
       //Build reply message
-      _replyHeader.header.opCode = MAKE_REPLY_TYPE( msg->opCode ) ;
+      _replyHeader.header.opCode = MAKE_REPLY_TYPE( opCode ) ;
       _replyHeader.header.messageLength = sizeof ( MsgOpReply ) ;
       _replyHeader.header.requestID = msg->requestID ;
       _replyHeader.header.TID = msg->TID ;
@@ -603,6 +607,8 @@ namespace engine
          if ( SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
               isNeedRollback && _pReplSet->primaryIsMe () )
          {
+            PD_LOG ( PDDEBUG, "Rolling back operation(op=%d, rc=%d) on data",
+                     opCode, rc ) ;
             INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB ) ;
             if ( rcTmp )
             {
@@ -622,7 +628,7 @@ namespace engine
          if ( rc != SDB_DMS_EOC )
          {
             PD_LOG ( PDERROR, "Session[%s] process OP[type:%u] failed[rc:%d]",
-                     sessionName(), msg->opCode, rc ) ;
+                     sessionName(), opCode, rc ) ;
          }
 
          if ( SDB_CLS_NOT_PRIMARY == rc )

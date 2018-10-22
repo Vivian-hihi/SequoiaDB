@@ -72,6 +72,11 @@ namespace engine
       SDB_ASSERT( 0 == _vecBlock.size(), "Block must be empty" ) ;
    }
 
+   BOOLEAN _coordQueryOperator::needRollback() const
+   {
+      return FALSE;
+   }
+
    INT32 _coordQueryOperator::_checkQueryModify( coordSendMsgIn &inMsg,
                                                  coordSendOptions &options,
                                                  CoordGroupSubCLMap *grpSubCl )

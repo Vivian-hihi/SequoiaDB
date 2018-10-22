@@ -55,6 +55,10 @@
 #include "coordInterruptOperator.hpp"
 #include "pmdController.hpp"
 #include "schedDef.hpp"
+#include "pd.hpp"
+#include "pdTrace.hpp"
+#include "pmdTrace.hpp"
+
 
 using namespace bson ;
 
@@ -71,29 +75,34 @@ namespace engine
    {
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDDATAPROC_PROMSG, "_pmdDataProcessor::processMsg" )
    INT32 _pmdDataProcessor::processMsg( MsgHeader *msg,
                                         rtnContextBuf &contextBuff,
                                         INT64 &contextID,
                                         BOOLEAN &needReply )
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc     = SDB_OK ;
+      INT32 opCode = msg->opCode ;
       UINT64 bTime = ossGetCurrentMicroseconds() ;
+
+      PD_TRACE_ENTRY ( SDB_PMDDATAPROC_PROMSG );
+      PD_TRACE1 ( SDB_PMDDATAPROC_PROMSG, PD_PACK_INT ( opCode ) );
 
       SDB_ASSERT( getSession(), "Must attach session at first" ) ;
 
-      if ( MSG_AUTH_VERIFY_REQ == msg->opCode )
+      if ( MSG_AUTH_VERIFY_REQ == opCode )
       {
          rc = getClient()->authenticate( msg ) ;
       }
-      else if ( MSG_BS_INTERRUPTE == msg->opCode )
+      else if ( MSG_BS_INTERRUPTE == opCode )
       {
          rc = _onInterruptMsg( msg, getDPSCB() ) ;
       }
-      else if ( MSG_BS_INTERRUPTE_SELF == msg->opCode )
+      else if ( MSG_BS_INTERRUPTE_SELF == opCode )
       {
          rc = _onInterruptSelfMsg() ;
       }
-      else if ( MSG_BS_DISCONNECT == msg->opCode )
+      else if ( MSG_BS_DISCONNECT == opCode )
       {
          rc = _onDisconnectMsg() ;
       }
@@ -108,7 +117,7 @@ namespace engine
             }
          }
 
-         switch( msg->opCode )
+         switch( opCode )
          {
             case MSG_BS_MSG_REQ :
                rc = _onMsgReqMsg( msg ) ;
@@ -174,8 +183,8 @@ namespace engine
             default :
                PD_LOG( PDWARNING, "Session[%s] recv unknow msg[type:[%d]%d, "
                        "len: %d, tid: %d, routeID: %d.%d.%d, reqID: %lld]",
-                       getSession()->sessionName(), IS_REPLY_TYPE(msg->opCode),
-                       GET_REQUEST_TYPE(msg->opCode), msg->messageLength,
+                       getSession()->sessionName(), IS_REPLY_TYPE(opCode),
+                       GET_REQUEST_TYPE(opCode), msg->messageLength,
                        msg->TID, msg->routeID.columns.groupID,
                        msg->routeID.columns.nodeID,
                        msg->routeID.columns.serviceID, msg->requestID ) ;
@@ -196,6 +205,7 @@ namespace engine
                                         eTime - bTime ) ;
          }
       }
+      PD_TRACE_EXITRC ( SDB_PMDDATAPROC_PROMSG, rc );
       return rc ;
    }
 
@@ -1318,6 +1328,7 @@ namespace engine
       }
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDCOORDPROC_PROCOORDMSG, "_pmdCoordProcessor::_processCoordMsg" )
    INT32 _pmdCoordProcessor::_processCoordMsg( MsgHeader *msg, 
                                                INT64 &contextID,
                                                rtnContextBuf &contextBuff )
@@ -1326,17 +1337,22 @@ namespace engine
       BOOLEAN needRollback = FALSE ;
       UINT64 bTime = ossGetCurrentMicroseconds() ;
       UINT64 eTime = 0 ;
+      INT32 opCode = msg->opCode ;
       CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
       coordResource *pResource = pCoordCB->getResource() ;
 
-      if ( MSG_AUTH_VERIFY_REQ == msg->opCode )
+      PD_TRACE_ENTRY ( SDB_PMDCOORDPROC_PROCOORDMSG );
+
+      PD_TRACE1 ( SDB_PMDCOORDPROC_PROCOORDMSG, PD_PACK_INT ( opCode ) );  
+
+      if ( MSG_AUTH_VERIFY_REQ == opCode )
       {
          rc = SDB_COORD_UNKNOWN_OP_REQ ;
          goto done ;
       }
-      else if ( MSG_BS_INTERRUPTE == msg->opCode ||
-                MSG_BS_INTERRUPTE_SELF == msg->opCode ||
-                MSG_BS_DISCONNECT == msg->opCode )
+      else if ( MSG_BS_INTERRUPTE == opCode ||
+                MSG_BS_INTERRUPTE_SELF == opCode ||
+                MSG_BS_DISCONNECT == opCode )
       {
          // don't need auth
       }
@@ -1349,7 +1365,7 @@ namespace engine
          }
       }
 
-      switch ( msg->opCode )
+      switch ( opCode )
       {
          case MSG_BS_INTERRUPTE :
          {
@@ -1555,6 +1571,8 @@ namespace engine
          }
       }
 
+      PD_TRACE1 ( SDB_PMDCOORDPROC_PROCOORDMSG, PD_PACK_INT ( needRollback ) );  
+
       if ( rc && contextBuff.size() == 0 )
       {
          BSONObj obj = utilGetErrorBson( rc, eduCB()->getInfo(
@@ -1564,9 +1582,13 @@ namespace engine
 
       if ( needRollback && rc )
       {
+         PD_LOG ( PDDEBUG, "Rolling back operation(op=%d, rc=%d) on coord",
+                  opCode, rc ) ;
+
          coordTransRollback rollbackOpr ;
          INT32 rcTmp = rollbackOpr.init( pResource, eduCB() ) ;
-         PD_RC_CHECK( rcTmp, PDERROR, "Init operator[%s] failed, rc: %d",
+         PD_RC_CHECK( rcTmp, PDERROR, 
+                      "Rollback init operator[%s] failed, rc: %d",
                       rollbackOpr.getName(), rcTmp ) ;
 
          rollbackOpr.rollback( eduCB() ) ;
@@ -1584,6 +1606,7 @@ namespace engine
                                         eTime - bTime ) ;
          }
       }
+      PD_TRACE_EXITRC ( SDB_PMDCOORDPROC_PROCOORDMSG, rc );
       return rc ;
    error:
       goto done ;
@@ -1715,12 +1738,14 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDCOORDPROC_PROMSG, "_pmdCoordProcessor::processMsg" )
    INT32 _pmdCoordProcessor::processMsg( MsgHeader *msg,
                                          rtnContextBuf &contextBuff,
                                          INT64 &contextID,
                                          BOOLEAN &needReply )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_PMDCOORDPROC_PROMSG );
 
       rc = _processCoordMsg( msg, contextID, contextBuff ) ;
       if ( SDB_COORD_UNKNOWN_OP_REQ == rc )
@@ -1742,6 +1767,7 @@ namespace engine
          }
       }
 
+      PD_TRACE_EXITRC ( SDB_PMDCOORDPROC_PROMSG, rc );
       return rc ;
    }
 

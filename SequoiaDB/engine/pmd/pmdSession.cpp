@@ -366,6 +366,8 @@ namespace engine
       INT32 opCode      = msg->opCode ;
 
       PD_TRACE_ENTRY( SDB_PMDLOCALSN_PROMSG );
+      PD_TRACE1 ( SDB_PMDLOCALSN_PROMSG, PD_PACK_INT ( opCode ) );
+
       // prepare
       rc = _onMsgBegin( msg ) ;
       if ( SDB_OK == rc )
@@ -381,6 +383,9 @@ namespace engine
          {
             if ( _needRollback )
             {
+               PD_LOG( PDDEBUG, "Session[%s] rolling back operation "
+                       "(opCode=%d, rc=%d)", sessionName(), msg->opCode, rc ) ;
+
                INT32 rcTmp = rtnTransRollback( eduCB(), getDPSCB() ) ;
                if ( rcTmp )
                {
