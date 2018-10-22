@@ -273,8 +273,60 @@ PHP_METHOD( SequoiaCS, dropCL )
    {
       goto error ;
    }
-   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+
 done:
+   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
+PHP_METHOD( SequoiaCS, renameCL )
+{
+   INT32 rc = SDB_OK ;
+   PHP_LONG clOldNameLen = 0 ;
+   PHP_LONG clNewNameLen = 0 ;
+   zval *pThisObj = getThis() ;
+   CHAR *pOldName = NULL ;
+   CHAR *pNewName = NULL ;
+   zval *pOptions = NULL ;
+   sdbCSHandle cs = SDB_INVALID_HANDLE ;
+   bson options ;
+
+   bson_init( &options ) ;
+
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+
+   if ( PHP_GET_PARAMETERS( "ss|z", &pOldName, &clOldNameLen,
+                                    &pNewName, &clNewNameLen,
+                                    &pOptions ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+   PHP_READ_HANDLE( pThisObj,
+                    cs,
+                    sdbCSHandle,
+                    SDB_CS_HANDLE_NAME,
+                    csDesc ) ;
+
+   rc = sdbRenameCollection( cs, pOldName, pNewName, &options ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+done:
+   bson_destroy( &options ) ;
+   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
    return ;
 error:
    PHP_SET_ERROR( FALSE, pThisObj, rc ) ;

@@ -98,6 +98,26 @@ class cs_cl_Test extends PHPUnit_Framework_TestCase
     * @depends test_Connect
     * @depends test_select_cs
     */
+   public function test_renameCL( $db, $cs )
+   {
+      $cl = $cs -> selectCL( 'tmp_rename_bar', array( 'ReplSize' => -1 ) ) ;
+      $err = $db -> getError() ;
+      $this -> assertEquals( 0, $err['errno'], '创建cl错误' ) ;
+      $this -> assertNotEmpty( $cl, '创建cl错误' ) ;
+
+      $err = $cs -> renameCL( 'tmp_rename_bar', 'tmp_rename_bar_test' ) ;
+      $this -> assertEquals( 0, $err['errno'], '改名cl错误' ) ;
+
+      $cl = $cs -> getCL( 'tmp_rename_bar_test' ) ;
+      $err = $db -> getError() ;
+      $this -> assertEquals( 0, $err['errno'], '改名cl错误' ) ;
+      $this -> assertNotEmpty( $cl, '改名cl错误' ) ;
+   }
+
+   /**
+    * @depends test_Connect
+    * @depends test_select_cs
+    */
    public function test_dropCL( $db, $cs )
    {
       $cl = $cs -> selectCL( 'bar', array( 'ReplSize' => -1 ) ) ;

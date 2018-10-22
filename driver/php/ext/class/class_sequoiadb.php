@@ -891,6 +891,37 @@ class SequoiaDB
    public function dropCS( string $name ){}
 
    /**
+    * Rename collectionSpace
+    *
+    * @param $oldName   The old collection space name
+    *
+    * @param $newName   The new collection space name
+    *
+    * @param $options   Reserved
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $err = $db -> renameCS( 'foo', 'new_foo' ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to rename collection space, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function renameCS( string $oldName, string $newName, array|string $options = null ){}
+
+   /**
     * List all collection of current database(not include temporary collection of temporary collection space)
     *
     * @param $condition	an array or the string argument. This parameter is reserved and must be null.

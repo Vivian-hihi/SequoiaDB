@@ -143,6 +143,25 @@ class SequoiaDB_CS_Test extends PHPUnit_Framework_TestCase
    /**
     * @depends test_connect
     */
+   public function test_rename_cs( $db )
+   {
+      $cs = $db -> selectCS( 'tmp_rename_foo' ) ;
+      $err = $db -> getError() ;
+      $this -> assertEquals( 0, $err['errno'], '创建cs错误' ) ;
+      $this -> assertNotEmpty( $cs, '创建cs错误' ) ;
+
+      $err = $db -> renameCS( 'tmp_rename_foo', 'tmp_rename_foo_test' ) ;
+      $this -> assertEquals( 0, $err['errno'], '改名cs错误' ) ;
+
+      $cs2 = $db -> getCS( 'tmp_rename_foo_test' ) ;
+      $err = $db -> getError() ;
+      $this -> assertEquals( 0, $err['errno'], '改名cs错误' ) ;
+      $this -> assertNotEmpty( $cs2, '改名cs错误' ) ;
+   }
+
+   /**
+    * @depends test_connect
+    */
    public function test_drop_cs( $db )
    {
       $cs = $db -> selectCS( 'foo' ) ;
@@ -157,6 +176,16 @@ class SequoiaDB_CS_Test extends PHPUnit_Framework_TestCase
       $err = $db -> getError() ;
       $this -> assertEquals( -34, $err['errno'], '删除cs错误' ) ;
       $this -> assertEmpty( $cs2, '删除cs错误' ) ;
+   }
+
+   /**
+    * @depends test_connect
+    */
+   public function test_clear( $db )
+   {
+      $db -> dropCS( 'foo' ) ;
+      $db -> dropCS( 'tmp_rename_foo' ) ;
+      $db -> dropCS( 'tmp_rename_foo_test' ) ;
    }
 }
 ?>

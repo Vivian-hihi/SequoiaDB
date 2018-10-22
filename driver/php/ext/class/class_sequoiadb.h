@@ -46,6 +46,7 @@ PHP_METHOD( SequoiaDB, createCS ) ;
 PHP_METHOD( SequoiaDB, getCS ) ;
 //e.g. Rename dropCollectionSpace
 PHP_METHOD( SequoiaDB, dropCS ) ;
+PHP_METHOD( SequoiaDB, renameCS ) ;
 
 //cl
 //e.g. Rename listCollections

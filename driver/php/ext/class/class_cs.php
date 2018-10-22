@@ -181,6 +181,31 @@ class SequoiaCS
    public function dropCL( string $name ){}
 
    /**
+    * Rename collection name
+    *
+    * @param $oldName   The old collection name
+    *
+    * @param $newName   The new collection name
+    *
+    * @param $options   Reserved
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $err = $cs -> renameCL( 'bar', 'new_bar' ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to rename collection, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function renameCL( string $oldName, string $newName, array|string $options = null ){}
+
+   /**
     * Alter the specified collection space.
     *
     * @param $options   the array or string argument. The options to alter.

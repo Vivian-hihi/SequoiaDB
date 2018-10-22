@@ -97,6 +97,7 @@ const zend_function_entry sdbFun[] = {
    PHP_ME( SequoiaDB, createCS,              NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, getCS,                 NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, dropCS,                NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDB, renameCS,              NULL, ZEND_ACC_PUBLIC )
    //cl
    PHP_ME( SequoiaDB, listCL,                NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, getCL,                 NULL, ZEND_ACC_PUBLIC )
@@ -180,6 +181,7 @@ const zend_function_entry csFun[] = {
    PHP_ME( SequoiaCS, createCL,        NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCS, getCL,           NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCS, dropCL,          NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCS, renameCL,        NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCS, alter,           NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCS, setDomain,       NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCS, removeDomain,    NULL, ZEND_ACC_PUBLIC )
