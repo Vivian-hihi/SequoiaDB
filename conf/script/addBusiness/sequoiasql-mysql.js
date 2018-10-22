@@ -236,7 +236,7 @@ function _execSql( PD_LOGGER, port, user, passwd, cmd, installPath, sql, databas
 
 function _updateRoot( PD_LOGGER, port, cmd, installPath )
 {
-   var str = 'update mysql.user set host = "%" where user = "root";\nflush privileges;' ;
+   var str = 'flush privileges;update mysql.user set host = "%" where user = "root";flush privileges;' ;
    var error = null ;
 
    try
@@ -261,7 +261,7 @@ function _createUser( PD_LOGGER, port, cmd, installPath, user, passwd )
 {
    user = _string_encode_by_create_user( user ) ;
    passwd = _string_encode_by_create_user( passwd ) ;
-   var str = sprintf( 'grant all privileges on *.* to ?@"%" identified by ?;\nflush privileges;', user, passwd ) ;
+   var str = sprintf( 'flush privileges;grant all privileges on *.* to ?@"%" identified by ?;flush privileges;', user, passwd ) ;
    var error = null ;
 
    try
