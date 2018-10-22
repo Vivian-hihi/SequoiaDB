@@ -365,6 +365,16 @@ public class GroupMgr {
      */
     // TODO:可被替代，屏蔽
     private boolean checkBusinessWithLSN(boolean printAndThrowAllException) throws ReliabilityException {
+        boolean ret = false ;
+        // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
+        if (createTestCollection(printAndThrowAllException)) {
+            // 因为catalog的同步策略不受ReplSize影响，所以删除cl后要等待catalog同步，以免影响外部
+            ret = dropTestCollection(printAndThrowAllException) && waitCatalogSync(printAndThrowAllException);
+        } else {
+            return false;
+        }
+        if ( !ret ) return ret ;
+        
         List<GroupCheckResult> results = checkGroup(printAndThrowAllException);
 
         for (GroupCheckResult result : results) {
@@ -375,14 +385,7 @@ public class GroupMgr {
                 return false;
             }
         }
-        
-        // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
-        if (createTestCollection(printAndThrowAllException)) {
-            // 因为catalog的同步策略不受ReplSize影响，所以删除cl后要等待catalog同步，以免影响外部
-            return dropTestCollection(printAndThrowAllException) && waitCatalogSync(printAndThrowAllException);
-        } else {
-            return false;
-        }
+        return true ;
     }
 
     /**
@@ -431,7 +434,16 @@ public class GroupMgr {
     // TODO:可被替代，屏蔽
     private boolean checkBusinessWithLSNAndDisk(boolean printAndThrowAllException)
             throws ReliabilityException {
-
+        boolean ret = false ;
+        // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
+        if (createTestCollection(printAndThrowAllException)) {
+            // 因为catalog的同步策略不受ReplSize影响，所以删除cl后要等待catalog同步，以免影响外部
+            ret =  dropTestCollection(printAndThrowAllException) && waitCatalogSync(printAndThrowAllException);
+        } else {
+            return false;
+        }
+        
+        if ( !ret ) return ret ;
         List<GroupCheckResult> results = checkGroup(printAndThrowAllException);
         for (GroupCheckResult result : results) {
             if (!result.checkWithLSNAndDiskThreshold()) {
@@ -442,13 +454,7 @@ public class GroupMgr {
             }
         }
         
-        // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
-        if (createTestCollection(printAndThrowAllException)) {
-            // 因为catalog的同步策略不受ReplSize影响，所以删除cl后要等待catalog同步，以免影响外部
-            return dropTestCollection(printAndThrowAllException) && waitCatalogSync(printAndThrowAllException);
-        } else {
-            return false;
-        }
+        return true ;
     }
 
     /**
