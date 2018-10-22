@@ -318,7 +318,7 @@ namespace engine
                    boCollection.toString().c_str(), rc ) ;
 
       rc = _buildRollbackFields( cataSet, setObject, unsetObject ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build set fields for alter "
+      PD_RC_CHECK( rc, PDERROR, "Failed to build fields for alter "
                    "task [%s] on collection [%s], rc: %d",
                    _task->getActionName(), _dataName.c_str(), rc ) ;
 
@@ -753,11 +753,9 @@ namespace engine
                   exist = TRUE ;
                }
             }
-            if( !exist )
-            {
-               PD_LOG( PDWARNING, "Autoincrement field[%s] not existon collection[%s]",
-                       fldName.c_str(), cataSet.name() ) ;
-            }
+            PD_CHECK( exist, SDB_AUTOINCREMENT_FIELD_NOT_EXIST, error, PDERROR, "Autoincrement field [%s] does not exist on collection[%s]",
+               fldName.c_str(), cataSet.name() ) ;
+
             exist = FALSE ;
          }
       }
@@ -872,7 +870,6 @@ namespace engine
             fieldList = localTask->getAutoincrementArgument() ;
             rc = _buildDropAutoincFields( cataSet, fieldList, setBuilder, unsetBuilder, TRUE ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build fields, rc: %d", rc ) ;
-            _rollbackAutoIncFields = fieldList ;
             break ;
          }
          default :
@@ -1407,10 +1404,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string fldName ;
+      bson::OID seqId ;
       utilCLUniqueID clUniqueID ;
       string seqName ;
       BOOLEAN exist = FALSE ;
       bson::BSONArrayBuilder bldArr ;
+      bson::BSONElement ele ;
       std::vector<BSONObj> autoIncFields ;
 
       PD_TRACE_ENTRY( SDB_CATCTXALTERCLTASK__BLDSETAUTOINCFIELDS ) ;
@@ -1430,16 +1429,25 @@ namespace engine
                {
                   BSONObjBuilder newFieldBld ;
                   exist =  TRUE ;
-                  newFieldBld.append( FIELD_NAME_SEQUENCE, seqName ) ;
+                  newFieldBld.append( FIELD_NAME_AUTOINC_SEQ, seqName ) ;
                   newFieldBld.append( FIELD_NAME_AUTOINC_FIELD, fldName ) ;
                   newFieldBld.append( CAT_AUTOINC_GENERATED, ((fieldList[i]->testArgumentMask( UTIL_CL_AUTOINC_GENERATED_FIELD )) &&
                      (autoIncFields[j].getField( CAT_AUTOINC_GENERATED ).String() != fieldList[i]->getGenerated()) ) ?
                      fieldList[i]->getGenerated() : autoIncFields[j].getField( CAT_AUTOINC_GENERATED ).String() ) ;
+                  PD_CHECK( autoIncFields[j].hasField( FIELD_NAME_AUTOINC_SEQ_ID ), SDB_SYS, error, PDERROR,
+                           "Catalog is invalid, failed to get field[%s]", FIELD_NAME_AUTOINC_SEQ_ID ) ;
+                  ele = autoIncFields[j].getField( FIELD_NAME_AUTOINC_SEQ_ID ) ;
+                  PD_CHECK( ele.type() == bson::jstOID, SDB_SYS, error, PDERROR,
+                           "Sequence catalog is invalid, failed to get field[%s]", FIELD_NAME_AUTOINC_SEQ_ID ) ;
+                  seqId = ele.OID() ;
+                  newFieldBld.append( FIELD_NAME_AUTOINC_SEQ_ID, seqId ) ;
+
                   if ( addRbk )
                   {
                      PD_CHECK( autoIncFields[j].hasField( CAT_AUTOINC_GENERATED ), SDB_SYS, error, PDERROR,
                               "Catalog is invalid, failed to get field[%s]", CAT_AUTOINC_GENERATED ) ;
-                     fieldList[i]->setGenerated( autoIncFields[j].getField( CAT_AUTOINC_GENERATED ).String() ) ;
+                     fieldList[i]->setGenerated( autoIncFields[j].getField( CAT_AUTOINC_GENERATED ).String() ) ;                     
+                     fieldList[i]->setSeqId( seqId ) ;
                   }
                   bldArr.append( newFieldBld.obj() ) ;
                   autoIncFields.erase( autoIncFields.begin() + j ) ;
@@ -1478,6 +1486,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string fldName ;
+      bson::OID seqId ;
       string cataFldName ;
       utilCLUniqueID clUniqueID ;
       string seqName ;
@@ -1495,11 +1504,15 @@ namespace engine
             BSONObjBuilder newFieldBld ;
             fldName = fieldList[i]->getFieldName() ;
             PD_CHECK( !fldName.empty(), SDB_SYS, error, PDERROR, "Failed to get field name[%s]", fldName.c_str() ) ;
+            seqId = bson::OID::gen() ;
             seqName = catGetSeqName4AutoIncFld( clUniqueID, fldName ) ;
-            newFieldBld.append( FIELD_NAME_SEQUENCE, seqName ) ;
+            newFieldBld.append( FIELD_NAME_AUTOINC_SEQ, seqName ) ;
             newFieldBld.append( FIELD_NAME_AUTOINC_FIELD, fldName ) ;
             newFieldBld.append( CAT_AUTOINC_GENERATED, fieldList[i]->testArgumentMask( UTIL_CL_AUTOINC_GENERATED_FIELD ) ?
                                 fieldList[i]->getGenerated() : CAT_GENERATED_DEFAULT ) ;
+            seqId = fieldList[i]->getSeqId() ;
+            PD_CHECK( seqId.isSet(), SDB_SYS, error, PDERROR, "Failed to get field[%s]", FIELD_NAME_AUTOINC_SEQ_ID ) ;
+            newFieldBld.append( FIELD_NAME_AUTOINC_SEQ_ID, seqId ) ;
             bldArr.append( newFieldBld.obj() ) ;
          }
          for ( UINT32 j = 0 ; j < autoIncFields.size() ; ++j )
@@ -1533,6 +1546,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string fldName ;
+      bson::OID seqId ;
+      bson::BSONElement ele ;
       BOOLEAN exist = FALSE ;
       utilCLUniqueID clUniqueID ;
       string seqName ;
@@ -1560,18 +1575,27 @@ namespace engine
                      PD_CHECK( autoIncFields[j].hasField( CAT_AUTOINC_GENERATED ), SDB_SYS, error, PDERROR,
                               "Catalog is invalid, failed to get field[%s]", CAT_AUTOINC_GENERATED ) ;
                      fieldList[i]->setGenerated( autoIncFields[j].getField( CAT_AUTOINC_GENERATED ).String() ) ;
+                     PD_CHECK( autoIncFields[j].hasField( FIELD_NAME_AUTOINC_SEQ_ID ), SDB_SYS, error, PDERROR,
+                              "Catalog is invalid, failed to get field[%s]", FIELD_NAME_AUTOINC_SEQ_ID ) ;
+                     ele = autoIncFields[j].getField( FIELD_NAME_AUTOINC_SEQ_ID ) ;
+                     PD_CHECK( ele.type() == bson::jstOID, SDB_SYS, error, PDERROR,
+                              "Sequence catalog is invalid, failed to get field[%s]", FIELD_NAME_AUTOINC_SEQ_ID ) ;
+                     seqId = ele.OID() ;
+                     fieldList[i]->setSeqId( seqId ) ;
+                     _rollbackAutoIncFields.push_back( fieldList[i] ) ;
                   }
                   autoIncFields.erase( autoIncFields.begin() + j ) ;
                }
             }
+
+            PD_CHECK( exist, SDB_AUTOINCREMENT_FIELD_NOT_EXIST, error, PDERROR, "Autoincrement field [%s] does not exist on collection[%s]",
+               fldName.c_str(), cataSet.name() ) ;
+            exist = FALSE ;
          }
          for( UINT32 j = 0 ; j < autoIncFields.size() ; ++j )
          {
             bldArr.append( autoIncFields[j] ) ;
          }
-
-         PD_CHECK( exist, SDB_OK, error, PDWARNING, "Autoincrement field [%s] does not exist on collection[%s]",
-            fldName.c_str(), cataSet.name() ) ;
 
          setBuilder.append( CAT_AUTOINCREMENT, bldArr.arr() ) ;
       }
@@ -1871,6 +1895,9 @@ namespace engine
          bld.append( CAT_TASKID_NAME, (INT64)taskID ) ;
          bld.append( CAT_TASKTYPE_NAME, CLS_TASK_SEQUENCE ) ;
          bld.append( FIELD_NAME_AUTOINC_SEQ, seqName ) ;
+         PD_CHECK( fldList[i]->getSeqId().isSet(), SDB_INVALIDARG, error, PDERROR,
+                "Invalid sequence ID when build sequence names" ) ;
+         bld.append( CAT_AUTOINC_SEQ_ID , fldList[i]->getSeqId() ) ;
          seqInfo = bld.obj() ;
          rc = catAddTask( seqInfo, cb, w ) ;
          PD_RC_CHECK( rc, PDERROR, "Add sequence task failed, rc: %d", rc ) ;
@@ -2140,6 +2167,7 @@ namespace engine
       string fldName ;
       string seqName ;
       BSONObj seqOpt ;
+      bson::OID seqId ;
       utilCLUniqueID clUniqueID ;
       autoIncFieldsList fldList ;
       catSequenceManager *pSeqMgr ;
@@ -2163,7 +2191,9 @@ namespace engine
          PD_CHECK( !fldName.empty(), SDB_SYS, error, PDERROR, "Failed to get field name[%s]", fldName.c_str() ) ;
          seqName = catGetSeqName4AutoIncFld( clUniqueID, fldName ) ;
          bld.append( FIELD_NAME_SEQUENCE_NAME, seqName ) ;
-         seqOpt = catGetSequenceOptions( fldList[i]->getArgument() ) ;
+         seqId = fldList[i]->getSeqId() ;
+         PD_CHECK( seqId.isSet(), SDB_SYS, error, PDERROR, "Faild to get sequence id[%s]", FIELD_NAME_AUTOINC_SEQ_ID ) ;
+         seqOpt = catGetSequenceOptions( fldList[i]->getArgument(), &seqId ) ;
          rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create sequence[%s], rc: %d", seqName.c_str(), rc ) ;
          _rollbackObj.push_back( bld.obj() );

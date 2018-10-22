@@ -2275,6 +2275,7 @@ namespace engine
             iterTask ++ )
       {
          BSONElement ele ;
+         bson::OID seqId ;
          BSONObj delTask ;
          string seqName ;
          BSONElement group ;
@@ -2319,10 +2320,18 @@ namespace engine
             {
                ele = iterTask->getField( FIELD_NAME_AUTOINC_SEQ ) ;
                PD_CHECK( String == ele.type(), SDB_SYS, error, PDERROR,
-                         "Failed to parse task info [%s]: task sequence is not a string",
+                         "Failed to parse task[%s]: type of task sequence name is not a string",
                          iterTask->toString().c_str() ) ;
                seqName = ele.String() ;
-               rc = coordSequenceInvalidateCache( seqName, cb );
+               PD_CHECK( iterTask->hasField( FIELD_NAME_AUTOINC_SEQ_ID ), SDB_SYS, error, PDERROR,
+                         "Failed to get field[%s] on task[%s]",
+                         iterTask->toString().c_str() ) ;
+               ele = iterTask->getField( FIELD_NAME_AUTOINC_SEQ_ID ) ;
+               PD_CHECK( ele.type() == jstOID, SDB_SYS, error, PDERROR,
+                         "Failed to parse task[%s]: type of sequence id is not a oid",
+                         iterTask->toString().c_str() ) ;
+               seqId = ele.OID() ;
+               rc = coordSequenceInvalidateCache( seqName, cb, &seqId );
                break ;
             }
             default :

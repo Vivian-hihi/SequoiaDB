@@ -1970,28 +1970,14 @@ INT32 msgBuildSequenceAlterMsg( CHAR **ppBuffer, INT32 *bufferSize,
 }
 
 INT32 msgBuildSequenceInvalidateCacheMsg( CHAR **ppBuffer, INT32 *bufferSize,
-                                          const CHAR *sequenceName, UINT64 reqID,
+                                          const BSONObj &boQuery, UINT64 reqID,
                                           engine::IExecutor *cb )
 {
    static const BSONObj emptyObj ;
    INT32 rc = SDB_OK ;
-   BSONObj boQuery;
 
-   SDB_ASSERT ( ppBuffer && bufferSize && sequenceName,
+   SDB_ASSERT ( ppBuffer && bufferSize,
                 "Invalid input" ) ;
-
-   try
-   {
-      boQuery = BSON( FIELD_NAME_SEQUENCE_NAME << sequenceName ) ;
-   }
-   catch ( exception &e )
-   {
-      rc = SDB_SYS ;
-      PD_LOG ( PDERROR,
-               "Failed to build invalidate sequence cache message, unexpected exception: %s",
-               e.what() );
-      goto error;
-   }
 
    rc = msgBuildQueryCMDMsg( ppBuffer, bufferSize,
                              CMD_ADMIN_PREFIX CMD_NAME_INVALIDATE_SEQUENCE_CACHE,

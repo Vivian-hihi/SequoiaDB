@@ -140,7 +140,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT_REMOVE_CACHE, "_coordSequenceAgent::removeCache" )
-   BOOLEAN _coordSequenceAgent::removeCache( const std::string& name )
+   BOOLEAN _coordSequenceAgent::removeCache( const std::string& name, const bson::OID &seqId )
    {
       BOOLEAN removed = FALSE ;
       PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT_REMOVE_CACHE ) ;
@@ -152,11 +152,17 @@ namespace engine
       if ( bucket.end() != iter )
       {
          _coordSequence* cache = (*iter).second ;
+         if( seqId.isSet() && seqId != cache->oid() )
+         {
+            PD_LOG( PDWARNING, "Mismatch oid(%s) for sequence[%s, %s]",
+                    seqId.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
+            goto done ;
+         }
          bucket.erase( name ) ;
          SDB_OSS_DEL( cache ) ;
          removed = TRUE ;
       }
-
+   done:
       PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT_REMOVE_CACHE, removed ) ;
       return removed ;
    }
@@ -707,13 +713,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_INVALIDATE_CACHE, "coordSequenceInvalidateCache" )
-   INT32 coordSequenceInvalidateCache( const std::string& sequenceName, _pmdEDUCB* eduCB )
+   INT32 coordSequenceInvalidateCache( const std::string& sequenceName, _pmdEDUCB* eduCB, const bson::OID *seqId )
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
       CHAR* buf = NULL ;
       INT32 bufSize = 0 ;
       INT64 contextID = -1 ;
+      BSONObjBuilder builder ;
       PD_TRACE_ENTRY ( SDB_COORD_SEQ_INVALIDATE_CACHE ) ;
 
       _coordCMDInvalidateSequenceCache invalidator ;
@@ -722,7 +729,12 @@ namespace engine
 
       try
       {
-         obj = BSON( FIELD_NAME_SEQUENCE_NAME << sequenceName ) ;
+         builder.append( FIELD_NAME_SEQUENCE_NAME, sequenceName ) ;
+         if( seqId !=NULL && seqId->isSet() )
+         {
+            builder.append( FIELD_NAME_SEQUNCE_OID , *seqId ) ;
+         }
+         obj = builder.obj() ;
       }
       catch( std::exception& e )
       {
@@ -731,7 +743,7 @@ namespace engine
          goto error ;
       }
 
-      rc = msgBuildSequenceInvalidateCacheMsg( &buf, &bufSize, sequenceName.c_str(), 0, eduCB ) ;
+      rc = msgBuildSequenceInvalidateCacheMsg( &buf, &bufSize, obj, 0, eduCB ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to build sequence invalidate cache msg, rc=%d", rc ) ;

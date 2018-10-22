@@ -1662,17 +1662,34 @@ namespace engine
       // autoincrement fields
       if( catSet.hasField( CAT_AUTOINCREMENT ) )
       {
-         eleArray = catSet.getField( CAT_AUTOINCREMENT ).Array();
-         for( UINT32 i = 0 ; i < eleArray.size() ; ++i )
+         ele = catSet.getField( CAT_AUTOINCREMENT ) ;
+         if( ele.type() == Array )
          {
-            autoIncField = eleArray[i].Obj() ;
+            eleArray = ele.Array() ;
+            for( UINT32 i = 0 ; i < eleArray.size() ; ++i )
+            {
+               autoIncField = eleArray[i].Obj() ;
+               if( !autoIncField.hasField( FIELD_NAME_AUTOINC_SEQ ) ||
+                   !autoIncField.hasField( CAT_AUTOINC_FIELD ) ||
+                   !autoIncField.hasField( CAT_AUTOINC_GENERATED ) ||
+                   !autoIncField.hasField( CAT_AUTOINC_SEQ_ID ))
+               {
+                  PD_RC_CHECK ( SDB_CAT_CORRUPTION, PDSEVERE,
+                    "Catalog [%s] type error", CAT_AUTOINCREMENT ) ;
+               }
+               addAutoIncField( autoIncField ) ;
+            }
+         }
+         else if( ele.type() == Object )
+         {
+            autoIncField = ele.Obj() ;
             if( !autoIncField.hasField( FIELD_NAME_AUTOINC_SEQ ) ||
                 !autoIncField.hasField( CAT_AUTOINC_FIELD ) ||
                 !autoIncField.hasField( CAT_AUTOINC_GENERATED ) ||
                 !autoIncField.hasField( CAT_AUTOINC_SEQ_ID ) )
             {
                PD_RC_CHECK ( SDB_CAT_CORRUPTION, PDSEVERE,
-                 "Catalog [%s] type error", CAT_CL_UNIQUEID ) ;
+                 "Catalog [%s] type error", CAT_AUTOINCREMENT ) ;
             }
             addAutoIncField( autoIncField ) ;
          }

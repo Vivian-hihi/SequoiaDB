@@ -452,7 +452,7 @@
 #define FIELD_NAME_TEXT                      "$Text"
 #define FIELD_NAME_CONFIGS                   "Configs"
 #define FIELD_NAME_SEQUENCE_NAME             "Name"
-
+#define FIELD_NAME_SEQUNCE_OID               "_id"
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"
 #define FIELD_NAME_TASK_NAME                 "TaskName"

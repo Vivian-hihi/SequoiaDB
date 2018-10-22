@@ -510,6 +510,11 @@ namespace engine
             return _generated ;
          }
 
+         OSS_INLINE bson::OID getSeqId () const
+         {
+            return _id ;
+         }
+
          OSS_INLINE void setFieldName ( std::string name )
          {
             _fieldName = name ;
@@ -548,6 +553,11 @@ namespace engine
             _generated = generated ;
          }
 
+         OSS_INLINE void setSeqId ( bson::OID seqId )
+         {
+            _id = seqId ;
+         }
+
          OSS_INLINE UINT32 getArgumentMask () const
          {
             return _argumentMask ;
@@ -580,6 +590,7 @@ namespace engine
 
       protected:
          std::string    _fieldName ;      // field name
+         bson::OID      _id ;
          INT32          _increment ;      // increament value
          INT64          _startValue ;     // start value
          INT64          _minValue ;       // minimum value

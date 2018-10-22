@@ -5269,7 +5269,7 @@ namespace engine
       goto done ;
    }
 
-   BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt )
+   BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt, bson::OID *seqId )
    {
       static string autoIncFieldArr[] = {
          CAT_AUTOINC_FIELD,
@@ -5297,7 +5297,10 @@ namespace engine
          }
       }
       seqOptBuilder.append( CAT_SEQUENCE_INTERNAL, true ) ;
-
+      if( seqId && seqId->isSet() )
+      {
+         seqOptBuilder.append( CAT_SEQUENCE_OID, *seqId ) ;
+      }
       return seqOptBuilder.obj() ;
    }
 }

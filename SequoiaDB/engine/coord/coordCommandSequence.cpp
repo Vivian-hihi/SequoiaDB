@@ -110,16 +110,23 @@ namespace engine
          else if ( !e.eoo() )
          {
             PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
-                    FIELD_NAME_SEQUENCE_NAME, obj.toString().c_str() ) ;
+                    FIELD_NAME_SEQUENCE_NAME, obj.toString( false, false).c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
          else
          {
             PD_LOG( PDERROR, "Missing field[%s] in obj[%s]",
-                    FIELD_NAME_SEQUENCE_NAME, obj.toString().c_str() ) ;
+                    FIELD_NAME_SEQUENCE_NAME, obj.toString( false, false ).c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
+         }
+         if( obj.hasField( FIELD_NAME_SEQUNCE_OID ) )
+         {
+            e = obj.getField( FIELD_NAME_SEQUNCE_OID ) ;
+            PD_CHECK( e.type() == jstOID, SDB_INVALIDARG, error, PDERROR, "Field[%s] is invalid in obj[%s]",
+                     FIELD_NAME_SEQUNCE_OID, obj.toString( false, false ).c_str() ) ;
+            _sequenceID = e.OID() ;
          }
       }
       catch( std::exception &e )
@@ -144,7 +151,7 @@ namespace engine
    {
       coordSequenceAgent* sequenceAgent =
          sdbGetCoordCB()->getResource()->getSequenceAgent() ;
-      sequenceAgent->removeCache( _sequenceName ) ;
+      sequenceAgent->removeCache( _sequenceName, _sequenceID ) ;
       return  SDB_OK ;
    }
 }

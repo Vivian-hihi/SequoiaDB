@@ -3152,8 +3152,7 @@ namespace engine
          catCtxAlterCLTask * task = dynamic_cast<catCtxAlterCLTask *>( _execTasks[i] ) ;
          if( task )
          {
-            if ( !task->getPostTasks().empty() &&
-                 !_groupList.empty() )
+            if ( !task->getPostTasks().empty() )
             {
                // Generate task list
                BSONObjBuilder replyBuilder ;

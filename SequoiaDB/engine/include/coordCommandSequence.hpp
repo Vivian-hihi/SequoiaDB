@@ -78,6 +78,7 @@ namespace engine
 
    private:
       std::string    _sequenceName ;
+      bson::OID      _sequenceID ;
    } ;
 }
 

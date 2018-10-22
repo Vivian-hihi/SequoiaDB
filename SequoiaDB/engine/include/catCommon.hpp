@@ -474,7 +474,7 @@ namespace engine
                                    const vector<BSONObj> &optionArr,
                                    _pmdEDUCB *cb, INT16 w ) ;
    INT32 catDropAutoIncSequence( const BSONObj &boCollection, _pmdEDUCB *cb, INT16 w ) ;
-   BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt ) ;
+   BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt, bson::OID *seqId = NULL ) ;
    string catGetSeqName4AutoIncFld( const utilCLUniqueID id, const string fldName ) ;
 }
 

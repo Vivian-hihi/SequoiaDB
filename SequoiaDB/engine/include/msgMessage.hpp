@@ -320,7 +320,7 @@ INT32 msgBuildSequenceAlterMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                 engine::IExecutor *cb = NULL ) ;
 
 INT32 msgBuildSequenceInvalidateCacheMsg( CHAR **ppBuffer, INT32 *bufferSize,
-                                          const CHAR *sequenceName, UINT64 reqID,
+                                          const BSONObj &boQuery, UINT64 reqID,
                                           engine::IExecutor *cb = NULL ) ;
 
 INT32 msgExtractSequenceRequestMsg( CHAR *pBuffer, BSONObj& options ) ;

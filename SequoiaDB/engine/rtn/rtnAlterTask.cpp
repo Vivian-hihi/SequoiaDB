@@ -980,6 +980,7 @@ namespace engine
          {
             while( iterArgument.more() )
             {
+               bson::OID seqId ;
                const BSONElement autoIncArg = iterArgument.next() ;
                rtnCLAutoincFieldArgument *autoIncField = NULL ;
                autoArgObject = autoIncArg.Obj() ;
@@ -992,16 +993,19 @@ namespace engine
 
                rc = autoIncField->parseArgument() ;
                PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
-
+               seqId = bson::OID::gen() ;
+               autoIncField->setSeqId( seqId ) ;
                _autoIncFieldList.push_back( autoIncField ) ;
             }
          }
          else
          {
+            bson::OID seqId ;
             rtnCLAutoincFieldArgument *autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( _argument ) ;
             rc = autoIncField->parseArgument() ;
             PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
-
+            seqId = bson::OID::gen() ;
+            autoIncField->setSeqId( seqId ) ;
             _autoIncFieldList.push_back( autoIncField ) ;
          }
       }
@@ -1319,9 +1323,11 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
             _autoIncFieldList.push_back( autoIncField ) ;
          }
-         if(bson::Array == argElement.type() )
+         else if(bson::Array == argElement.type() )
          {
             eleArray = argElement.Array() ;
+            PD_CHECK( eleArray.size(), SDB_INVALIDARG, error, PDERROR,
+                      "Invalid field argument[%s]", _argument.toString( false, false ).c_str() ) ;
             for ( UINT32 i = 0 ; i < eleArray.size() ; i++ )
             {
                PD_CHECK( eleArray[i].Obj().hasField( FIELD_NAME_AUTOINC_FIELD ), SDB_INVALIDARG,
@@ -1334,6 +1340,12 @@ namespace engine
 
                _autoIncFieldList.push_back( autoIncField ) ;
             }
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_RC_CHECK( rc, PDERROR, "Invalid field argument[%s], rc: %d", 
+                        _argument.toString( false, false ).c_str(), rc ) ;
          }
          _argumentCount++ ;
          setFlags( RTN_ALTER_TASK_FLAG_CONTEXTLOCK |

@@ -60,7 +60,7 @@ namespace engine
 
    public:
       INT32 getNextValue( const std::string& name, const bson::OID &seqId, INT64& nextValue, _pmdEDUCB* eduCB ) ;
-      BOOLEAN removeCache( const std::string& sequenceName ) ;
+      BOOLEAN removeCache( const std::string& sequenceName,  const bson::OID &seqId ) ;
       void clear() ;
 
    private:
@@ -82,7 +82,7 @@ namespace engine
    } ;
    typedef _coordSequenceAgent coordSequenceAgent ;
 
-   INT32 coordSequenceInvalidateCache( const std::string& sequenceName, _pmdEDUCB* eduCB ) ;
+   INT32 coordSequenceInvalidateCache( const std::string& sequenceName, _pmdEDUCB* eduCB, const bson::OID *seqId = NULL ) ;
 }
 
 #endif /* COORD_SEQUENCE_AGENT_HPP_ */
