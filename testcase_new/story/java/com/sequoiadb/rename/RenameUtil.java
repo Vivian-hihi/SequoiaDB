@@ -41,17 +41,22 @@ public class RenameUtil extends SdbTestBase {
 		DBCursor cur = null;
 		try{
 			cur = db.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONSPACES, "{'Name':'"+newCSName+"'}", "", "");
-			BSONObject obj = cur.getNext();
-			BasicBSONList cls = (BasicBSONList) obj.get("Collection");
-			if(cls.size()!=clNum){
-				Assert.fail("cl count error, exp: "+ clNum +",act :" + cls.size());
+			if(!cur.hasNext()){
+				Assert.fail("cs it's not exist, csName: " + newCSName);
 			}
-			for (int i = 0; i < cls.size(); i++) {
-				BSONObject ele = (BSONObject) cls.get(i);
-				String name = (String) ele.get("Name");
-				String csName = name.split("\\.")[0];
-				if(!csName.equals(newCSName)){
-					Assert.fail("cs name contrast error");
+			if(clNum!=0){
+				BSONObject obj = cur.getNext();
+				BasicBSONList cls = (BasicBSONList) obj.get("Collection");
+				if(cls.size()!=clNum){
+					Assert.fail("cl count error, exp: "+ clNum +",act :" + cls.size());
+				}
+				for (int i = 0; i < cls.size(); i++) {
+					BSONObject ele = (BSONObject) cls.get(i);
+					String name = (String) ele.get("Name");
+					String csName = name.split("\\.")[0];
+					if(!csName.equals(newCSName)){
+						Assert.fail("cs name contrast error");
+					}
 				}
 			}
 		}finally{
