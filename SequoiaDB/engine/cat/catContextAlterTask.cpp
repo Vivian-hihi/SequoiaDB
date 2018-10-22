@@ -672,6 +672,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string fldName ;
       string cataFldName ;
+      BOOLEAN exist = FALSE ;
       bson::BSONArrayBuilder bldArr ;
       std::vector<BSONObj> autoIncFields ;
 
@@ -694,9 +695,24 @@ namespace engine
             for( UINT32 j = 0 ; j < autoIncFields.size() ; ++j )
             {
                cataFldName = autoIncFields[j].getField( CAT_AUTOINC_FIELD ).String() ;
-               PD_CHECK( ( cataFldName.find( fldName ) == string::npos && fldName.find( cataFldName ) == string::npos ),
-               SDB_AUTOINCREMENT_FIELD_EXIST_OR_NESTED, error, PDERROR, "Autoincrement field[%s] exists or nested on collection[%s]",
-               fldName.c_str(), cataSet.name() ) ;
+               if( cataFldName.find( "." ) != string::npos || fldName.find( "." ) != string::npos )
+               {
+                  if( cataFldName.find( fldName ) == 0 || fldName.find( cataFldName ) == 0 )
+                  {
+                     exist = TRUE ;
+                  }
+               }
+               else
+               {
+                  if( cataFldName == fldName )
+                  {
+                     exist = TRUE ;
+                  }
+               }
+               PD_CHECK( exist == FALSE, SDB_AUTOINCREMENT_FIELD_EXIST_OR_NESTED, error, 
+                         PDERROR, "Autoincrement field[%s] exists or nested on collection[%s]",
+                         fldName.c_str(), cataSet.name() ) ;
+               exist = FALSE ;
             }
          }
       }
