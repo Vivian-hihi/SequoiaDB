@@ -44,8 +44,8 @@ function main(){
 
 function checkRecords( expRecords, actRecords )
 {
-   expRecords.sort(compare("about"));
-   actRecords.sort(compare("about"));
+   expRecords.sort(compare("about", compare("content")));
+   actRecords.sort(compare("about", compare("content")));
    checkResult(expRecords, actRecords)
 }
 
