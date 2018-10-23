@@ -604,6 +604,10 @@ namespace engine
    {
       if ( !isEmpty() )
       {
+         /// The function is called by con-current, so need to mutex
+         /// each other
+         ossScopedLock lock( &_latch, EXCLUSIVE ) ;
+
          _totalQueryTimeTick += queryActivity.getQueryTime() ;
          if ( queryActivity.getQueryTime() < _minQueryActivity.getQueryTime() ||
               !_minQueryActivity.isValid() )
@@ -639,17 +643,23 @@ namespace engine
       builder.append( OPT_FIELD_TOTAL_QUERY_TIME, totalQueryTime ) ;
       builder.append( OPT_FIELD_AVG_QUERY_TIME, avgQueryTime ) ;
 
-      if ( _maxQueryActivity.isValid() )
       {
-         BSONObjBuilder maxBuilder( builder.subobjStart( OPT_FIELD_MAX_QUERY ) ) ;
-         _maxQueryActivity.toBSON( maxBuilder ) ;
-         maxBuilder.done() ;
-      }
-      if ( _minQueryActivity.isValid() )
-      {
-         BSONObjBuilder minBuilder( builder.subobjStart( OPT_FIELD_MIN_QUERY ) ) ;
-         _minQueryActivity.toBSON( minBuilder ) ;
-         minBuilder.done() ;
+         /// When toBSON, the setQueryActivity will be called con-currency.
+         /// So, need to mutex
+         ossScopedLock lock( &_latch, SHARED ) ;
+
+         if ( _maxQueryActivity.isValid() )
+         {
+            BSONObjBuilder maxBuilder( builder.subobjStart( OPT_FIELD_MAX_QUERY ) ) ;
+            _maxQueryActivity.toBSON( maxBuilder ) ;
+            maxBuilder.done() ;
+         }
+         if ( _minQueryActivity.isValid() )
+         {
+            BSONObjBuilder minBuilder( builder.subobjStart( OPT_FIELD_MIN_QUERY ) ) ;
+            _minQueryActivity.toBSON( minBuilder ) ;
+            minBuilder.done() ;
+         }
       }
    }
 

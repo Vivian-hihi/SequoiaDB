@@ -193,6 +193,8 @@ namespace engine
          ossTickDelta      _totalQueryTimeTick ;
          optQueryActivity  _maxQueryActivity ;
          optQueryActivity  _minQueryActivity ;
+
+         ossSpinSLatch     _latch ;
    } ;
 
    typedef class _optCachedPlanActivity optCachedPlanActivity ;
