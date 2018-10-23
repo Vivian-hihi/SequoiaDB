@@ -45,8 +45,10 @@ namespace engine
                                                    _dmsStorageData* dataSU,
                                                    _dmsMBContext* mbContext,
                                                    _pmdEDUCB* eduCB,
-                                                   dmsExtentID indexExtentID )
-   : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexExtentID )
+                                                   dmsExtentID indexExtentID,
+                                                   dmsExtentID indexLogicID )
+   : _dmsIndexBuilder( indexSU, dataSU, mbContext,
+                       eduCB, indexExtentID, indexLogicID )
    {
    }
 
@@ -129,8 +131,10 @@ namespace engine
                                                      _dmsMBContext* mbContext,
                                                      _pmdEDUCB* eduCB,
                                                      dmsExtentID indexExtentID,
+                                                     dmsExtentID indexLogicID,
                                                      INT32 sortBufferSize )
-   : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexExtentID )
+   : _dmsIndexBuilder( indexSU, dataSU, mbContext,
+                       eduCB, indexExtentID, indexLogicID )
    {
       _sorter = NULL ;
       _eoc = FALSE ;
@@ -378,8 +382,10 @@ namespace engine
                                              dmsStorageData* dataSU,
                                              dmsMBContext* mbContext,
                                              pmdEDUCB* eduCB,
-                                             dmsExtentID indexExtentID)
-   : _dmsIndexBuilder( indexSU, dataSU, mbContext, eduCB, indexExtentID ),
+                                             dmsExtentID indexExtentID,
+                                             dmsExtentID indexLogicID )
+   : _dmsIndexBuilder( indexSU, dataSU, mbContext,
+                       eduCB, indexExtentID, indexLogicID ),
      _extHandler( NULL )
    {
       ossMemset( _collectionName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;

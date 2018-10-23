@@ -79,8 +79,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_INIT ) ;
-      dmsStorageUnitID suID = DMS_INVALID_SUID ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
       SDB_ASSERT( csName && clName && idxName && targetName,
                   "Names should not be NULL") ;
@@ -94,11 +92,6 @@ namespace engine
       _stat = RTN_EXT_PROCESSOR_CREATING ;
 
    done:
-      if ( DMS_INVALID_SUID != suID )
-      {
-         dmsCB->suUnlock( suID, SHARED ) ;
-      }
-
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_INIT, rc ) ;
       return rc ;
    error:
@@ -1090,20 +1083,31 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_CREATEPROCESSOR ) ;
       rtnExtDataProcessor *processorLocal = NULL ;
-      INT32 id = RTN_EXT_PROCESSOR_INVALID_ID ;
+      INT32 foundID = RTN_EXT_PROCESSOR_INVALID_ID ;
 
       ossScopedLock lock( &_mutex, EXCLUSIVE ) ;
-      // Loop and find a free processor.
-      for ( id = 0 ; id < RTN_EXT_PROCESSOR_MAX_NUM; ++id )
+
+      // Loop and find a free processor. Check for the same external data at the
+      // same time.
+      for ( INT32 id = 0 ; id < RTN_EXT_PROCESSOR_MAX_NUM; ++id )
       {
-         if ( RTN_EXT_PROCESSOR_INVALID == _processors[id].stat() )
+         if ( _processors[id].isOwnedByExt( extName ) )
          {
-            processorLocal = &_processors[id] ;
-            break ;
+            rc = SDB_IXM_EXIST ;
+            PD_LOG( PDERROR, "External data with the same name exists. Maybe "
+                             "same text index has been created" ) ;
+            goto error ;
+         }
+
+         if ( !processorLocal &&
+              ( RTN_EXT_PROCESSOR_INVALID == _processors[id].stat() ) )
+         {
+            foundID = id ;
+            processorLocal = &_processors[foundID] ;
          }
       }
 
-      rc = processorLocal->init( id, csName, clName,
+      rc = processorLocal->init( foundID, csName, clName,
                                  idxName, extName, idxKeyDef ) ;
       PD_RC_CHECK( rc, PDERROR, "Init external data processor failed[ %d ]",
                    rc ) ;

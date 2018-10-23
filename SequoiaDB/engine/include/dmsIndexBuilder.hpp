@@ -52,7 +52,8 @@ namespace engine
                         _dmsStorageData* dataSU,
                         _dmsMBContext* mbContext,
                         _pmdEDUCB* eduCB,
-                        dmsExtentID indexExtentID ) ;
+                        dmsExtentID indexExtentID,
+                        dmsExtentID indexLogicID ) ;
       virtual ~_dmsIndexBuilder() ;
       INT32 build() ;
 
@@ -96,8 +97,10 @@ namespace engine
                                                _dmsMBContext* mbContext,
                                                _pmdEDUCB* eduCB,
                                                dmsExtentID indexExtentID,
+                                               dmsExtentID indexLogicID,
                                                INT32 sortBufferSize,
                                                UINT16 indexType ) ;
+
       static void releaseInstance( _dmsIndexBuilder* builder ) ;
    } ;
    typedef class _dmsIndexBuilder dmsIndexBuilder ;

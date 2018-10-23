@@ -41,12 +41,14 @@ namespace engine
                                        _dmsStorageData* dataSU,
                                        _dmsMBContext* mbContext,
                                        _pmdEDUCB* eduCB,
-                                       dmsExtentID indexExtentID )
+                                       dmsExtentID indexExtentID,
+                                       dmsExtentID indexLogicID )
    : _suIndex ( indexSU ),
      _suData ( dataSU ),
      _mbContext ( mbContext ),
      _eduCB ( eduCB ),
-     _indexExtentID ( indexExtentID )
+     _indexExtentID ( indexExtentID ),
+     _indexLID( indexLogicID )
    {
       _indexCB = NULL ;
       _scanExtLID = DMS_INVALID_EXTENT ;
@@ -99,7 +101,15 @@ namespace engine
       PD_CHECK ( _indexCB->isInitialized(), SDB_DMS_INIT_INDEX,
                  error, PDERROR, "Failed to initialize index" ) ;
 
-      _indexLID = _indexCB->getLogicalID() ;
+      // Someone else may have dropped the index before we take the mb lock.
+      // Check for that.
+      if ( _indexLID != _indexCB->getLogicalID() )
+      {
+         rc = SDB_DMS_INVALID_INDEXCB ;
+         PD_LOG( PDERROR, "Index logical id in indexCB is not as expected. "
+                          "The index may have been recreated") ;
+         goto error ;
+      }
 
       rc = _indexCB->getIndexID ( _indexOID ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to get indexID, rc = %d", rc ) ;
@@ -395,6 +405,7 @@ namespace engine
                                                        _dmsMBContext* mbContext,
                                                        _pmdEDUCB* eduCB,
                                                        dmsExtentID indexExtentID,
+                                                       dmsExtentID indexLogicID,
                                                        INT32 sortBufferSize,
                                                        UINT16 indexType )
    {
@@ -407,11 +418,9 @@ namespace engine
 
       if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_TEXT, indexType ) )
       {
-         builder = SDB_OSS_NEW _dmsIndexExtBuilder( indexSU,
-                                                    dataSU,
-                                                    mbContext,
-                                                    eduCB,
-                                                    indexExtentID ) ;
+         builder = SDB_OSS_NEW _dmsIndexExtBuilder( indexSU, dataSU, mbContext,
+                                                    eduCB, indexExtentID,
+                                                    indexLogicID ) ;
          if ( NULL == builder)
          {
             PD_LOG ( PDERROR, "failed to allocate _dmsIndexExtBuilder" ) ;
@@ -427,11 +436,10 @@ namespace engine
          }
          else if ( 0 == sortBufferSize )
          {
-            builder = SDB_OSS_NEW _dmsIndexOnlineBuilder( indexSU,
-                                                          dataSU,
-                                                          mbContext,
-                                                          eduCB,
-                                                          indexExtentID ) ;
+            builder = SDB_OSS_NEW _dmsIndexOnlineBuilder( indexSU, dataSU,
+                                                          mbContext, eduCB,
+                                                          indexExtentID,
+                                                          indexLogicID ) ;
             if ( NULL == builder)
             {
                PD_LOG ( PDERROR, "failed to allocate _dmsIndexOnlineBuilder" ) ;
@@ -439,11 +447,10 @@ namespace engine
          }
          else
          {
-            builder = SDB_OSS_NEW _dmsIndexSortingBuilder( indexSU,
-                                                           dataSU,
-                                                           mbContext,
-                                                           eduCB,
+            builder = SDB_OSS_NEW _dmsIndexSortingBuilder( indexSU, dataSU,
+                                                           mbContext, eduCB,
                                                            indexExtentID,
+                                                           indexLogicID,
                                                            sortBufferSize ) ;
             if ( NULL == builder)
             {

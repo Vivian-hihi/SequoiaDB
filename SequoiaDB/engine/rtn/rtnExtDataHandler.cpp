@@ -283,112 +283,75 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONBEGINCRTTEXTIDX, "_rtnExtDataHandler::onBeginCrtTextIdx" )
-   INT32 _rtnExtDataHandler::onBeginCrtTextIdx( const CHAR *csName,
-                                                const CHAR *clName,
-                                                utilCLUniqueID clUniqID,
-                                                const BSONObj &index,
-                                                BSONObj &newIndex,
-                                                pmdEDUCB *cb, SDB_DPSCB *dpscb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONCRTTEXTIDX, "_rtnExtDataHandler::onCrtTextIdx" )
+   INT32 _rtnExtDataHandler::onCrtTextIdx( dmsMBContext *context,
+                                           const CHAR *csName,
+                                           ixmIndexCB &indexCB,
+                                           pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONBEGINCRTTEXTIDX ) ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONCRTTEXTIDX ) ;
+      utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
+      rtnExtCrtIdxCtx *crtContext = NULL ;
+      CHAR extName[ DMS_MAX_EXT_NAME_SIZE + 1 ] = { 0 };
 
-      rtnExtCrtIdxCtx *context = NULL ;
-
-      SDB_ASSERT( csName, "cs name is NULL" ) ;
-      SDB_ASSERT( clName, "cl name is NULL" ) ;
-
-      // We need the unique id to generate the capped collection name. Not able
-      // to do that if the id is invalid.
-      if ( UTIL_UNIQUEID_NULL == clUniqID )
+      if ( !context->isMBLock( EXCLUSIVE ) )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Cannot create text index on collection[%s.%s] as "
-                          "its unique id is invalid", csName, clName ) ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Caller should hold mb exclusive lock" ) ;
          goto error ;
       }
 
+      if ( _edpMgr->number() >= RTN_EXT_PROCESSOR_MAX_NUM )
+      {
+         rc = SDB_OSS_UP_TO_LIMIT ;
+         PD_LOG( PDERROR, "Max number of text indices[%d] has been created",
+                 RTN_EXT_PROCESSOR_MAX_NUM ) ;
+         goto error ;
+      }
+
+      clUniqueID = context->mb()->_clUniqueID ;
+      if ( UTIL_UNIQUEID_NULL == clUniqueID )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Can not create text index on collection whose "
+                          "unique id is invalid" ) ;
+         goto error ;
+      }
+
+      rc = getExtDataName( clUniqueID, indexCB.getName(), extName,
+                           DMS_MAX_EXT_NAME_SIZE + 1 ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get external data name failed[%d]", rc ) ;
+
       try
       {
-         BSONObj keys = index.getObjectField( IXM_KEY_FIELD ) ;
-         const CHAR *idxName = index.getStringField( IXM_NAME_FIELD ) ;
-
-         SDB_ASSERT( idxName, "index name is null") ;
-
-         if ( _edpMgr->number() >= RTN_EXT_PROCESSOR_MAX_NUM )
-         {
-            rc = SDB_OSS_UP_TO_LIMIT ;
-            PD_LOG( PDERROR, "Max number of text indices[%d] has been created",
-                    RTN_EXT_PROCESSOR_MAX_NUM ) ;
-            goto error ;
-         }
-
-         if ( keys.hasField( "_id" ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Text index can't include _id field" ) ;
-            goto error ;
-         }
-
-         // Append the external data name into the index definition.
-         // Example: "ExtDataName" : "SYS_123456789_idx"
-         {
-            BSONObjBuilder builder ;
-            CHAR extName[ DMS_MAX_EXT_NAME_SIZE + 1 ] = { 0 };
-
-            rc = getExtDataName( clUniqID, idxName, extName,
-                                 DMS_MAX_EXT_NAME_SIZE + 1 ) ;
-            PD_RC_CHECK( rc, PDERROR, "Get external data name failed[ %d ]",
-                         rc ) ;
-
-            builder.appendElements( index ) ;
-            builder.append( FIELD_NAME_EXT_DATA_NAME, extName,
-                            DMS_MAX_EXT_NAME_SIZE + 1 ) ;
-            newIndex = builder.obj() ;
-
-            rc = _contextMgr.createContext( DMS_EXTOPR_TYPE_CRTIDX, cb,
-                                            (rtnExtContextBase **)&context ) ;
-            PD_RC_CHECK( rc, PDERROR, "Create new context failed[ %d ]", rc ) ;
-
-            context->setNames( csName, clName, idxName, extName ) ;
-         }
+         // Extend the index definition in indexCB, adding the ExtDataName.
+         BSONObj indexExtObj = BSON( FIELD_NAME_EXT_DATA_NAME << extName );
+         indexCB.extendDef( indexExtObj.firstElement() );
       }
       catch ( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         PD_LOG( PDERROR, "Unexpected exception ocurred: %s", e.what() ) ;
          goto error ;
       }
 
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONBEGINCRTTEXTIDX, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
+      rc = _contextMgr.createContext( DMS_EXTOPR_TYPE_CRTIDX, cb,
+                                      (rtnExtContextBase **)&crtContext ) ;
+      PD_RC_CHECK( rc, PDERROR, "Create new context failed[%d]", rc ) ;
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ONCRTTEXTIDX, "_rtnExtDataHandler::onCrtTextIdx" )
-   INT32 _rtnExtDataHandler::onCrtTextIdx( const BSONObj &index, pmdEDUCB *cb,
-                                           SDB_DPSCB *dpscb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONCRTTEXTIDX ) ;
-      rtnExtContextBase *context = NULL ;
-
-      context = _contextMgr.findContext( cb->getTID() ) ;
-      PD_CHECK( context, SDB_SYS, error, PDERROR,
-                "Find create index context failed[ %d ]", rc ) ;
-
-      rc = static_cast<rtnExtCrtIdxCtx *>(context)->open( _edpMgr, index,
-                                                          cb, dpscb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Open context for creating index failed[ %d ]",
+      rc = crtContext->open( _edpMgr, context, csName, indexCB, cb, dpscb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Open context for creating index failed[%d]",
                    rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONCRTTEXTIDX, rc ) ;
       return rc ;
    error:
+      if ( crtContext )
+      {
+         _contextMgr.delContext( crtContext->getID(), cb ) ;
+      }
       goto done ;
    }
 

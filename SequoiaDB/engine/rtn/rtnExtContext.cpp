@@ -138,57 +138,50 @@ namespace engine
    {
    }
 
-   void _rtnExtCrtIdxCtx::setNames( const CHAR *csName, const CHAR *clName,
-                                    const CHAR *indexName, const CHAR *extName )
-   {
-      _csName = string( csName ) ;
-      _clName = string( clName ) ;
-      _idxName = string( indexName ) ;
-      _extName = string( extName ) ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCRTIDXCTX_OPEN, "_rtnExtCrtIdxCtx::open" )
    INT32 _rtnExtCrtIdxCtx::open( rtnExtDataProcessorMgr *processorMgr,
-                                 const BSONObj &idxKeyDef,
+                                 dmsMBContext *mbContext,
+                                 const CHAR *csName,
+                                 ixmIndexCB &indexCB,
                                  pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTCRTIDXCTX_OPEN ) ;
       rtnExtDataProcessor *processor = NULL ;
 
+      SDB_ASSERT( mbContext, "mb context is NULL" ) ;
+
       _processorMgr = processorMgr ;
 
-      // Do not activate the processor here. Do that in done.
-      rc = _processorMgr->createProcessor( _csName.c_str(), _clName.c_str(),
-                                           _idxName.c_str(), _extName.c_str(),
-                                           idxKeyDef, processor, FALSE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Create external processor failed[ %d ]",
-                   rc ) ;
-      _appendProcessor( processor ) ;
+      if ( !mbContext->isMBLock( EXCLUSIVE ) )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Caller should hold mb exclusive lock" ) ;
+         goto error ;
+      }
 
-      rc = processor->doRebuild( cb, dpscb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Rebuild of index failed[ %d ]", rc ) ;
-      _rebuildDone = TRUE ;
+      {
+         indexCB.setFlag( IXM_INDEX_FLAG_CREATING );
+         // Do not activate the processor here. Do that in done.
+         rc = _processorMgr->createProcessor( csName,
+                                              mbContext->mb()->_collectionName,
+                                              indexCB.getName(),
+                                              indexCB.getExtDataName(),
+                                              indexCB.keyPattern(),
+                                              processor, TRUE );
+         PD_RC_CHECK( rc, PDERROR, "Create external processor failed[%d]",
+                      rc ) ;
+         _appendProcessor( processor );
+
+         rc = processor->doRebuild( cb, dpscb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Rebuild of index failed[%d]", rc ) ;
+         _rebuildDone = TRUE ;
+
+         indexCB.setFlag( IXM_INDEX_FLAG_NORMAL ) ;
+      }
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTCRTIDXCTX_OPEN, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCRTIDXCTX__ONDONE, "_rtnExtCrtIdxCtx::_onDone" )
-   INT32 _rtnExtCrtIdxCtx::_onDone( _pmdEDUCB * cb, SDB_DPSCB * dpscb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTCRTIDXCTX__ONDONE ) ;
-
-      rc = _processorMgr->activateProcessor( _processors.front()->getID(),
-                                             FALSE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Activate processor failed[ %d ]", rc ) ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTCRTIDXCTX__ONDONE, rc ) ;
       return rc ;
    error:
       goto done ;

@@ -148,6 +148,8 @@ namespace engine
                                 BOOLEAN isSys,
                                 INT32 sortBufferSize ) ;
 
+         INT32 _checkForCrtTextIdx( _dmsMBContext *context,
+                                    const BSONObj &index ) ;
 
          // newIndex - 'ExtDataName' will be added into index.
          INT32    _createTextIdx( _dmsMBContext *context,
@@ -158,11 +160,10 @@ namespace engine
                                   SDB_DPSCB *dpscb ) ;
 
          // if indexLID == DMS_INALID_EXTENT, it will get from index cb
-         INT32    _rebuildIndex ( _dmsMBContext *context,
-                                  dmsExtentID indexExtentID,
-                                  _pmdEDUCB * cb,
-                                  INT32 sortBufferSize,
-                                  UINT16 indexType ) ;
+         INT32    _rebuildIndex( _dmsMBContext *context,
+                                 dmsExtentID indexExtentID,
+                                 dmsExtentID indexLID, _pmdEDUCB *cb,
+                                 INT32 sortBufferSize, UINT16 indexType ) ;
 
          INT32    _indexInsert( _ixmIndexCB *indexCB,
                                  const _ixmKey &key, const dmsRecordID &rid,
