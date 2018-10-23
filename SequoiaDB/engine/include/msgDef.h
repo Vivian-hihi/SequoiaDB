@@ -551,7 +551,7 @@
 #define CMD_NAME_SNAPSHOT_HEALTH             "snapshot health"
 #define CMD_NAME_SNAPSHOT_CONFIGS            "snapshot configs"
 #define CMD_NAME_SNAPSHOT_SVCTASKS           "snapshot service tasks"
-#define CMD_NAME_SNAPSHOT_SEQUENCES			 "snapshot sequences"
+#define CMD_NAME_SNAPSHOT_SEQUENCES          "snapshot sequences"
 #define CMD_NAME_TEST_COLLECTION             "test collection"
 #define CMD_NAME_TEST_COLLECTIONSPACE        "test collectionspace"
 #define CMD_NAME_CREATE_GROUP                "create group"
