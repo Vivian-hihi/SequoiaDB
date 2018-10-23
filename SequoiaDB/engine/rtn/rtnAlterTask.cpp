@@ -967,21 +967,24 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__RTNCLCREATEAUTOINCFIELDTASK_PARSEARG ) ;
 
-      BSONElement argElement ;
-      std::string fieldName ;
-      BSONObj argObject ;
+      BSONElement ele ;
+      vector<BSONElement> eleArray ;
       BSONObj autoArgObject ;
-      BSONObjIterator iterArgument( _argument ) ;
 
       try
       {
-         const char* name = _argument.firstElementFieldName() ;
-         if( *name == '0' )
+         PD_CHECK( _argument.hasField( FIELD_NAME_AUTOINCREMENT ), SDB_INVALIDARG, error,
+            PDERROR, "Failed to get field[%s]", FIELD_NAME_AUTOINC_FIELD ) ;
+         ele = _argument.getField( FIELD_NAME_AUTOINCREMENT ) ;
+         if( ele.type() == Array )
          {
-            while( iterArgument.more() )
+            eleArray = ele.Array() ;
+            PD_CHECK( eleArray.size(), SDB_INVALIDARG, error,
+               PDERROR, "Invalid argument[%s], rc:%d", _argument.toString(false,false).c_str(), rc ) ;
+            for( UINT32 i = 0; i < eleArray.size(); i++ )
             {
                bson::OID seqId ;
-               const BSONElement autoIncArg = iterArgument.next() ;
+               const BSONElement autoIncArg = eleArray[i] ;
                rtnCLAutoincFieldArgument *autoIncField = NULL ;
                autoArgObject = autoIncArg.Obj() ;
                PD_CHECK( autoArgObject.hasField( FIELD_NAME_AUTOINC_FIELD ), SDB_INVALIDARG, error,
@@ -998,15 +1001,20 @@ namespace engine
                _autoIncFieldList.push_back( autoIncField ) ;
             }
          }
-         else
+         else if( ele.type() == Object )
          {
             bson::OID seqId ;
-            rtnCLAutoincFieldArgument *autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( _argument ) ;
+            rtnCLAutoincFieldArgument *autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( ele.Obj() ) ;
             rc = autoIncField->parseArgument() ;
             PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
             seqId = bson::OID::gen() ;
             autoIncField->setSeqId( seqId ) ;
             _autoIncFieldList.push_back( autoIncField ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Invalid argument[%s], rc:%d", _argument.toString(false,false).c_str(), rc ) ;
          }
       }
       catch( std::exception& e )
@@ -1095,6 +1103,11 @@ namespace engine
 
                _autoIncFieldList.push_back( autoIncField ) ;
             }
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Invalid argument[%s], rc:%d", _argument.toString(false,false).c_str(), rc ) ;
          }
       }
       catch( std::exception& e )

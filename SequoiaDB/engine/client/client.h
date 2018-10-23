@@ -2827,6 +2827,38 @@ SDB_EXPORT INT32 sdbEnableCompression ( sdbCollectionHandle cHandle,
 */
 SDB_EXPORT INT32 sdbDisableCompression ( sdbCollectionHandle cHandle ) ;
 
+/** \fn INT32 sdbCreateAutoIncrement( sdbCollectionHandle cHandle, const bson * fields )
+    \brief Create autoincrement field on collection
+    \param [in] cHandle The collection handle.
+    \param [in] args The arguments of fields. e.g. { Field: "a", MaxValue:2000 }
+
+         Field          : The name of autoincrement field
+         StartValue     : The start value of autoincrement field
+         MinValue       : The minimum value of autoincrement field
+         MaxValue       : The maxmun value of autoincrement field
+         Increment      : The increment value of autoincrement field
+         CacheSize      : The cache size of autoincrement field
+         AcquireSize    : The acquire size of autoincrement field
+         Cycled         : The cycled flag of autoincrement field
+         Generated      : The generated mode of autoincrement field
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbCreateAutoIncrement( sdbCollectionHandle cHandle,
+                                         const bson * fields ) ;
+
+/** \fn INT32 sdbDropAutoIncrement( sdbCollectionHandle cHandle, const bson * fields )
+    \brief Drop autoincrement field on collection
+    \param [in] cHandle The collection handle.
+    \param [in] args The arguments of fields. e.g. { Field: "a" }
+
+         Field          : The name of autoincrement field
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbDropAutoIncrement( sdbCollectionHandle cHandle,
+                                       const bson * fields ) ;
+
 /** \fn INT32 sdbCLSetAttributes ( sdbCollectionHandle cHandle,
                                    const bson *options  )
     \brief Alter the specified collection

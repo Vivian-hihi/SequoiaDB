@@ -3760,12 +3760,145 @@ error:
 
    INT32 _sdbCollectionImpl::createAutoIncrement( const bson::BSONObj &options )
    {
-      return _alterInternal( SDB_ALTER_CL_CRT_AUTOINC_FLD, &options, FALSE ) ;
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      BSONObjBuilder builder ;
+      BSONElement ele ;
+      if( options.nFields() <= 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if( options.nFields() == 1 )
+      {
+         obj = BSON( FIELD_NAME_AUTOINCREMENT << options );
+      }
+      else
+      {
+         BSONArrayBuilder autoincBuilder( builder.subarrayStart( FIELD_NAME_AUTOINCREMENT ) ) ;
+         BSONObj::iterator ite( options ) ;
+         while( ite.more() )
+         {
+            ele = ite.next() ;
+            if( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            autoincBuilder.append( ele.embeddedObject() );
+         }
+         autoincBuilder.done() ;
+         builder.done() ;
+         obj = builder.obj() ;
+      }
+      rc = _alterInternal( SDB_ALTER_CL_CRT_AUTOINC_FLD, &obj, FALSE ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sdbCollectionImpl::createAutoIncrement( const std::vector<bson::BSONObj> &options )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      BSONObjBuilder builder ;      
+      BSONArrayBuilder autoincBuilder( builder.subarrayStart( FIELD_NAME_AUTOINCREMENT )) ;
+
+      if( !options.size() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto done ;
+      }
+
+      try
+      {
+         for( UINT32 i = 0; i < options.size(); i++ )
+         {
+            autoincBuilder.append( options[i] ) ;
+         }
+         autoincBuilder.done() ;
+         builder.done() ;
+         obj = builder.obj() ;
+         rc = _alterInternal( SDB_ALTER_CL_CRT_AUTOINC_FLD, &obj, FALSE ) ;
+      }
+      catch( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to build fields, exception=%s", e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sdbCollectionImpl::dropAutoIncrement( const bson::BSONObj &options )
    {
       return _alterInternal( SDB_ALTER_CL_DROP_AUTOINC_FLD, &options, FALSE ) ;
+   }
+
+   INT32 _sdbCollectionImpl::dropAutoIncrement( const CHAR* fieldName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;      
+      BSONObjBuilder builder ;
+
+      if( !fieldName )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      builder.append( FIELD_NAME_AUTOINC_FIELD, fieldName );
+      builder.done() ;
+      obj = builder.obj() ;
+
+      rc = _alterInternal( SDB_ALTER_CL_DROP_AUTOINC_FLD, &obj, FALSE ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sdbCollectionImpl::dropAutoIncrement( const std::vector<CHAR*> &fieldNames )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      BSONObjBuilder builder ;
+      BSONArrayBuilder autoincBuilder( builder.subarrayStart( FIELD_NAME_AUTOINC_FIELD )) ;
+
+      if( !fieldNames.size() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      try
+      {
+         for( UINT32 i = 0; i < fieldNames.size(); i++ )
+         {
+            autoincBuilder.append( fieldNames[i] ) ;
+         }
+         autoincBuilder.done() ;
+         builder.done() ;
+         obj = builder.obj() ;
+         rc = _alterInternal( SDB_ALTER_CL_DROP_AUTOINC_FLD, &obj, FALSE ) ;
+      }
+      catch( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to build fields, exception=%s", e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+
    }   
 
    INT32 _sdbCollectionImpl::enableSharding ( const bson::BSONObj & options )

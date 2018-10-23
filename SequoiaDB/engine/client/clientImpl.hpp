@@ -469,9 +469,15 @@ namespace sdbclient
 
       INT32 dropIdIndex() ;
 
-      INT32 createAutoIncrement( const bson::BSONObj &options );
+      INT32 createAutoIncrement( const bson::BSONObj &options ) ;
+
+      INT32 createAutoIncrement( const std::vector<bson::BSONObj> &options ) ;
       
       INT32 dropAutoIncrement( const bson::BSONObj &options ) ;
+
+      INT32 dropAutoIncrement( const CHAR* fieldName );
+
+      INT32 dropAutoIncrement( const std::vector<CHAR*> &fieldNames ) ;
 
       INT32 enableSharding ( const bson::BSONObj & options ) ;
 
