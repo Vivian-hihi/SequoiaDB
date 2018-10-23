@@ -207,7 +207,8 @@ namespace engine
                                 const CHAR *pHostName,
                                 const CHAR *pSvcName ) ;
 
-   INT32 coordInvalidateSequenceCache( CoordCataInfoPtr &cataPtr, _pmdEDUCB *cb ) ;
+   INT32 coordInvalidateSequenceCache( CoordCataInfoPtr cataPtr,
+                                       _pmdEDUCB *cb ) ;
 
 }
 

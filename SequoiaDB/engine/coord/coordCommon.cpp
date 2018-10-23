@@ -1054,7 +1054,7 @@ namespace engine
       return hasMatch ;
    }
 
-   INT32 coordInvalidateSequenceCache( CoordCataInfoPtr &cataPtr, _pmdEDUCB *cb )
+   INT32 coordInvalidateSequenceCache( CoordCataInfoPtr cataPtr, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       vector<BSONObj> autoIncFields ;
