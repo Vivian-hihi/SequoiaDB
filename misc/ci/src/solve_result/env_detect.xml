@@ -296,6 +296,9 @@
       
       <if>
         <equals arg1="${str_count}" arg2="0"/>
+        <then>
+           <var name="node_start_error_msg" value=""/>
+        </then>
         <else>
            <var name="exception_flag" value="true"/>
            <var name="node_start_error_msg" value="node start detail:&#10;"/>
