@@ -227,7 +227,7 @@ function _relationWithSequoiaDB( PD_LOGGER )
    error = _runRemoteCmd( cmd, exec, args, timeout ) ;
    if ( error !== null )
    {
-      PD_LOGGER.logTask( PDERROR, error ) ;
+      PD_LOGGER.log( PDERROR, error ) ;
       throw error ;
    }
 
