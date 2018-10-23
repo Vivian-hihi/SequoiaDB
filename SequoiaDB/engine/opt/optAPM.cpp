@@ -606,7 +606,7 @@ namespace engine
       {
          /// The function is called by con-current, so need to mutex
          /// each other
-         ossScopedLock lock( &_latch, EXCLUSIVE ) ;
+         ossScopedLock lock( &_latch ) ;
 
          _totalQueryTimeTick += queryActivity.getQueryTime() ;
          if ( queryActivity.getQueryTime() < _minQueryActivity.getQueryTime() ||
@@ -646,7 +646,7 @@ namespace engine
       {
          /// When toBSON, the setQueryActivity will be called con-currency.
          /// So, need to mutex
-         ossScopedLock lock( &_latch, SHARED ) ;
+         ossScopedLock lock( &_latch ) ;
 
          if ( _maxQueryActivity.isValid() )
          {

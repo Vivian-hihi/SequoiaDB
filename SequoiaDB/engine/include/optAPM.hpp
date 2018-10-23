@@ -194,7 +194,7 @@ namespace engine
          optQueryActivity  _maxQueryActivity ;
          optQueryActivity  _minQueryActivity ;
 
-         ossSpinSLatch     _latch ;
+         ossSpinXLatch     _latch ;
    } ;
 
    typedef class _optCachedPlanActivity optCachedPlanActivity ;
