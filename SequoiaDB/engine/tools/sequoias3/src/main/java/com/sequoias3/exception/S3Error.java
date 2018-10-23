@@ -23,7 +23,7 @@ public enum S3Error {
     BUCKET_NOT_EXIST(-510, "NoSuchBucket", "The speciﬁed bucket does not exist."),
     BUCKET_INVALID_BUCKETNAME(-511, "InvalidBucketName", "The speciﬁed bucket Name is not valid."),
     BUCKET_ALREADY_EXIST(-512, "BucketAlreadyExists", "The requested bucket name is not available. The bucket namespace is shared by all users of the system. Please select a different name and try again."),
-    BUCKET_ALREADY_OWNED_BY_YOU(-513, "BucketAlreadyOwnedByYou", "Your previous request to create the named bucket succeeded and you already own it."),
+    BUCKET_ALREADY_OWNEDYOU(-513, "BucketAlreadyOwnedByYou", "Your previous request to create the named bucket succeeded and you already own it."),
     BUCKET_NOT_EMPTY(-514, "BucketNotEmpty", "The bucket you tried to delete is not empty."),
     BUCKET_TOO_MANY_BUCKETS(-515, "TooManyBuckets", "You have attempted to create more buckets than allowed."),
     BUCKET_INVALID_VERSIONING_STATUS(-516, "InvalidVersioningStatus", "The versioning status is invalid."),
