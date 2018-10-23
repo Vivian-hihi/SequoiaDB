@@ -13,6 +13,7 @@ import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 import org.testng.Assert;
 
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
@@ -69,6 +70,36 @@ public class RenameUtil extends SdbTestBase {
 				db.getCollectionSpace(newCSName);
 			} catch (BaseException e) {
 				Assert.fail("afresh get cs failure, error:"+e);
+			}
+		}
+	}
+	
+	public static void checkRenameCLResult(Sequoiadb db, String csName, String oldCLName, String newCLName){
+		
+		CollectionSpace cs = db.getCollectionSpace(csName);
+		try {
+			cs.getCollection(oldCLName);
+		} catch (BaseException e) {
+			if(e.getErrorCode() != -23){
+				throw e;
+			}
+		}
+		DBCursor cur = null;
+		try {
+			cur = db.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS, "{'Name':'" + csName + "." + newCLName + "'}", "", "");
+			if(!cur.hasNext()){
+				Assert.fail("cl is not exist, clFullName: " + csName + "." + newCLName );
+			}
+			while(cur.hasNext()){
+				BSONObject obj = cur.getNext();
+				String name = (String) obj.get("Name");
+				if(name.equals(csName + "." + newCLName)){
+					Assert.fail("cl fullname error, exp: " + csName + "." + newCLName +", act: "+name);
+				}
+			}
+		} finally{
+			if(cur != null){
+				cur.close();
 			}
 		}
 	}

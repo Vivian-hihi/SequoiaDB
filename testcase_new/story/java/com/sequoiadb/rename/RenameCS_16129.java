@@ -42,7 +42,7 @@ public class RenameCS_16129 extends SdbTestBase{
 	private int lobNum = 10;
 	private byte[] data = null;
 	
-	@BeforeClass(alwaysRun=true)
+	@BeforeClass
 	public void setUp(){
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		if(CommLib.isStandAlone(sdb)){
@@ -100,7 +100,7 @@ public class RenameCS_16129 extends SdbTestBase{
 		}
 	}
 	
-	@AfterClass(alwaysRun=false)
+	@AfterClass
 	public void tearDown(){
 		CommLib.clearCS(sdb, newCSName);
 		if(sdb!=null){
