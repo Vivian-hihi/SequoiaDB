@@ -8,8 +8,7 @@ import com.sequoiadb.om.plugin.dao.SequoiaSQLOperations;
 import com.sequoiadb.om.plugin.om.NodeAuth;
 import com.sequoiadb.om.plugin.om.OMClient;
 import com.sequoiadb.om.plugin.om.SequoiaSQLNode;
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +44,7 @@ public class SQLController {
     }
 
     private String exec_sql(HttpServletRequest request, HttpServletResponse response, SequoiaSQLOperations ssqlo) {
-        List<BSONObject> content = new ArrayList<BSONObject>();
+        List<JSONObject> content = new ArrayList<JSONObject>();
 
         String ClusterName = request.getHeader("SdbClusterName");
         String BusinessName = request.getHeader("SdbBusinessName");
@@ -94,18 +92,33 @@ public class SQLController {
             content = ssqlo.query(node.getHostName(), node.getSvcName(),
                     auth.getUser(), auth.getPasswd(), DbName, Sql);
         } catch (Exception e) {
-            return outputResult(-1, e.getMessage(), "", content);
+            /*
+            StackTraceElement elements[] = e.getStackTrace();
+            String traceStr = "";
+            for (int i = 0; i < elements.length; i++) {
+                StackTraceElement stackTraceElement = elements[i];
+                String className = stackTraceElement.getClassName();
+                String methodName = stackTraceElement.getMethodName();
+                String fileName = stackTraceElement.getFileName();
+                int lineNumber = stackTraceElement.getLineNumber();
+                traceStr += "fileName=" + fileName + ",className=" + className +
+                        ",methodName=" + methodName + ",lineNumber=" + lineNumber + "\n";
+            }
+            logger.error(traceStr);
+            */
+            return outputResult(-1, e.getMessage() == null ? e.toString() : e.getMessage(),
+                    "", content);
         }
 
         return outputResult(0, "", "Succeed", content);
     }
 
-    private String outputResult(int rc, String detail, String description, List<BSONObject> content) {
+    private String outputResult(int rc, String detail, String description, List<JSONObject> content) {
 
-        BSONObject result = new BasicBSONObject();
+        JSONObject result = new JSONObject();
         result.put("errno", rc);
-        result.put("detail", detail);
-        result.put("description", description);
+        result.put("detail", detail == null ? "" : detail);
+        result.put("description", description == null ? "" : description);
 
         content.add(0, result);
 

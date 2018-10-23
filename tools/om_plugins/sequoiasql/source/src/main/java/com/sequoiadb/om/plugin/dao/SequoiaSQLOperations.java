@@ -1,11 +1,11 @@
 package com.sequoiadb.om.plugin.dao;
 
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,13 +17,13 @@ public abstract class SequoiaSQLOperations {
     protected String defaultDBName = "";
     protected String defaultUser = "";
 
-    public List<BSONObject> query(String hostName, String svcname,
+    public List<JSONObject> query(String hostName, String svcname,
                                   String user, String pwd,
                                   String dbName, String sql) throws Exception {
         Connection c = null;
         Statement stmt = null;
         ResultSet rs = null;
-        List<BSONObject> content = new ArrayList<BSONObject>();
+        List<JSONObject> content = new ArrayList<JSONObject>();
 
         Class.forName(className);
 
@@ -39,7 +39,7 @@ public abstract class SequoiaSQLOperations {
             if (sql.toLowerCase().indexOf("select") == 0) {
                 rs = stmt.executeQuery(sql);
                 for (int i = 0; i < 100 && rs.next(); ++i) {
-                    content.add(resultSet2Bson(rs));
+                    content.add(resultSet2Json(rs));
                 }
             } else {
                 stmt.executeUpdate(sql);
@@ -54,7 +54,7 @@ public abstract class SequoiaSQLOperations {
         return content;
     }
 
-    public String getDefaultUser(){
+    public String getDefaultUser() {
         return defaultUser;
     }
 
@@ -88,17 +88,66 @@ public abstract class SequoiaSQLOperations {
         }
     }
 
-    protected BSONObject resultSet2Bson(ResultSet rs) throws SQLException {
-        BSONObject bson = new BasicBSONObject();
+    protected JSONObject resultSet2Json(ResultSet rs) throws SQLException {
+        JSONObject json = new JSONObject();
         ResultSetMetaData metaData = rs.getMetaData();
         int columnCount = metaData.getColumnCount();
 
         for (int i = 1; i <= columnCount; i++) {
             String columnName = metaData.getColumnLabel(i);
-            String value = rs.getString(i);
-            bson.put(columnName, value);
+
+            switch (metaData.getColumnType(i)) {
+                case Types.ARRAY:
+                    json.put(columnName, rs.getArray(i));
+                    break;
+                case Types.BIGINT:
+                    json.put(columnName, rs.getLong(i));
+                    break;
+                case Types.INTEGER:
+                    json.put(columnName, rs.getInt(i));
+                    break;
+                case Types.TINYINT:
+                    json.put(columnName, rs.getByte(i));
+                    break;
+                case Types.SMALLINT:
+                    json.put(columnName, rs.getShort(i));
+                    break;
+                case Types.BIT:
+                case Types.BOOLEAN:
+                    json.put(columnName, rs.getBoolean(i));
+                    break;
+                case Types.REAL:
+                    json.put(columnName, rs.getFloat(i));
+                    break;
+                case Types.FLOAT:
+                case Types.DOUBLE:
+                    json.put(columnName, rs.getDouble(i));
+                    break;
+                case Types.TIME:
+                    json.put(columnName, rs.getTime(i));
+                    break;
+                case Types.DATE:
+                    json.put(columnName, rs.getDate(i));
+                    break;
+                case Types.TIMESTAMP:
+                    Timestamp times = rs.getTimestamp(i);
+                    if (times != null) {
+                        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        json.put(columnName, df.format(times));
+                    } else {
+                        json.put(columnName, rs.getString(i));
+                    }
+                    break;
+                case Types.DECIMAL:
+                    json.put(columnName, rs.getBigDecimal(i));
+                    break;
+                default:
+                    json.put(columnName, rs.getString(i));
+                    break;
+
+            }
         }
 
-        return bson;
+        return json;
     }
 }
