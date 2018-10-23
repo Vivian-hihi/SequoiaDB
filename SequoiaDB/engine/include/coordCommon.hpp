@@ -40,6 +40,7 @@
 #include "coordDef.hpp"
 #include "rtnQueryOptions.hpp"
 #include "../bson/bson.h"
+#include "pmdEDU.hpp"
 
 using namespace bson ;
 
@@ -205,6 +206,9 @@ namespace engine
    BOOLEAN  coordMatchNodeName( const vector< const CHAR* > &vecNodeName,
                                 const CHAR *pHostName,
                                 const CHAR *pSvcName ) ;
+
+   INT32 coordInvalidateSequenceCache( CoordCataInfoPtr &cataPtr, _pmdEDUCB *cb ) ;
+
 }
 
 #endif // COORD_COMMON_HPP__

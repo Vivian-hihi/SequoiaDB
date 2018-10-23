@@ -64,30 +64,19 @@ namespace engine
       }
    }
 
-   _coordAutoIncItem::_coordAutoIncItem( const _coordAutoIncItem &other )
+   _coordAutoIncItem::_coordAutoIncItem( const _coordAutoIncItem &that )
    {
-      _fieldName = other._fieldName ;
-      _sequenceName = other._sequenceName ;
-      _generatedType = other._generatedType ;
-      _fldNameBuf = other._fldNameBuf ;
-
-      if ( other._pSubFieldMap )
-      {
-         _pSubFieldMap = new AUTOINC_ITEM_MAP ;
-         *_pSubFieldMap = *(other._pSubFieldMap) ;
-      }
-      else
-      {
-         _pSubFieldMap = NULL ;
-      }
+      _pSubFieldMap = NULL ;
+      *this = that ;
    }
 
-   void _coordAutoIncItem::operator=( _coordAutoIncItem &other )
+   _coordAutoIncItem& _coordAutoIncItem::operator=( const _coordAutoIncItem &that )
    {
-      _fieldName = other._fieldName ;
-      _sequenceName = other._sequenceName ;
-      _generatedType = other._generatedType ;
-      _fldNameBuf = other._fldNameBuf ;
+      _fieldName     = that._fieldName ;
+      _sequenceName  = that._sequenceName ;
+      _sequenceID    = that._sequenceID ;
+      _generatedType = that._generatedType ;
+      _fldNameBuf    = that._fldNameBuf ;
 
       if ( _pSubFieldMap )
       {
@@ -95,11 +84,13 @@ namespace engine
          _pSubFieldMap = NULL ;
       }
 
-      if ( other._pSubFieldMap )
+      if ( that._pSubFieldMap )
       {
          _pSubFieldMap = new AUTOINC_ITEM_MAP ;
-         *_pSubFieldMap = *(other._pSubFieldMap) ;
+         *_pSubFieldMap = *(that._pSubFieldMap) ;
       }
+
+      return *this ;
    }
 
    INT32 _coordAutoIncItem::init( const bson::BSONObj &obj )
@@ -209,7 +200,6 @@ namespace engine
       return rc ;
 
    error:
-      _fldNameBuf.reset() ;
       if ( _pSubFieldMap )
       {
          delete _pSubFieldMap ;

@@ -2342,7 +2342,7 @@ namespace engine
 
    INT32 _clsCatalogSet::addAutoIncField ( BSONObj & autoIncField )
    {
-      _autoIncFields.push_back( autoIncField.copy() );
+      _autoIncFields.push_back( autoIncField.getOwned() );
       return SDB_OK ;
    }
 

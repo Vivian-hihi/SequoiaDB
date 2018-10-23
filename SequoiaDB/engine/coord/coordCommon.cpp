@@ -40,6 +40,7 @@
 #include "pmdOptions.h"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "coordSequenceAgent.hpp"
 
 using namespace bson ;
 
@@ -1051,6 +1052,56 @@ namespace engine
       }
 
       return hasMatch ;
+   }
+
+   INT32 coordInvalidateSequenceCache( CoordCataInfoPtr &cataPtr, _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      vector<BSONObj> autoIncFields ;
+      BSONElement ele ;
+      const CHAR *seqName ;
+      OID seqID ;
+
+      if ( cataPtr->hasAutoIncrement() )
+      {
+         autoIncFields = cataPtr->getAutoIncFields() ;
+
+         for ( UINT32 i = 0 ; i < autoIncFields.size() ; ++i )
+         {
+            ele = autoIncFields[i].getField( CAT_AUTOINC_SEQ ) ;
+            if ( String != ele.type() )
+            {
+               PD_LOG( PDERROR, "Wrong type[%d] of sequence name", ele.type() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            seqName = ele.valuestr() ;
+
+            ele = autoIncFields[i].getField( CAT_AUTOINC_SEQ_ID ) ;
+            if ( jstOID != ele.type() )
+            {
+               PD_LOG( PDERROR, "Wrong type[%d] of sequence ID", ele.type() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            seqID = ele.OID() ;
+
+            rc = coordSequenceInvalidateCache( seqName, cb, &seqID ) ;
+            if ( SDB_SEQUENCE_NOT_EXIST == rc )
+            {
+               PD_LOG( PDWARNING, "Sequence not found, name[%s], id[%s]",
+                       seqName, seqID.str().c_str() ) ;
+               rc = SDB_OK ;
+            }
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to invalidate cache of sequence[%s], rc: %d",
+                         seqName, rc ) ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
 }

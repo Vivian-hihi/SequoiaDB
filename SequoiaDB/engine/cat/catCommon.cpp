@@ -5170,6 +5170,7 @@ namespace engine
       catSequenceManager   *pSeqMgr = NULL ;
       string               fieldName ;
       string               seqName ;
+      OID                  seqID ;
       INT32                tmpRC = SDB_OK ;
       BOOLEAN              found = FALSE ;
 
@@ -5185,6 +5186,7 @@ namespace engine
 
             autoIncMeta = autoIncMetaArr[i].Obj() ;
             seqName = autoIncMeta.getField( CAT_AUTOINC_SEQ ).String() ;
+            seqID = autoIncMeta.getField( CAT_AUTOINC_SEQ_ID ).OID() ;
             fieldName = autoIncMeta.getField( CAT_AUTOINC_FIELD ).String() ;
 
             found = FALSE ;
@@ -5201,7 +5203,7 @@ namespace engine
                       "AutoIncrement meta data[%s] has no match options",
                       autoIncMeta.toString().c_str() ) ;
 
-            seqOpt = catGetSequenceOptions( autoIncOpt ) ;
+            seqOpt = catGetSequenceOptions( autoIncOpt, &seqID ) ;
             rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
             if ( SDB_SEQUENCE_EXIST == rc )
             {
@@ -5274,8 +5276,7 @@ namespace engine
       static string autoIncFieldArr[] = {
          CAT_AUTOINC_FIELD,
          CAT_AUTOINC_GENERATED,
-         CAT_AUTOINC_SEQ,
-         CAT_AUTOINC_SEQ_ID
+         CAT_AUTOINC_SEQ
       } ;
       static set<std::string> autoIncFieldSet( autoIncFieldArr,
          autoIncFieldArr + sizeof( autoIncFieldArr ) / sizeof( *autoIncFieldArr ) ) ;
@@ -5290,10 +5291,6 @@ namespace engine
          if ( autoIncFieldSet.find( fieldName ) == autoIncFieldSet.end() )
          {
             seqOptBuilder.append( ele ) ;
-         }
-         else if ( CAT_AUTOINC_SEQ_ID == fieldName )
-         {
-            seqOptBuilder.append( CAT_SEQUENCE_OID, ele.OID() ) ;
          }
       }
       seqOptBuilder.append( CAT_SEQUENCE_INTERNAL, true ) ;

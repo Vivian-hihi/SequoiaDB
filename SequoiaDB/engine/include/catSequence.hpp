@@ -50,7 +50,7 @@ namespace engine
 
    public:
       OSS_INLINE const std::string& name() const { return _name ; }
-      OSS_INLINE const bson::OID oid() const { return _oid ; }
+      OSS_INLINE const bson::OID& oid() const { return _oid ; }
       OSS_INLINE BOOLEAN internal() const { return _internal ; }
       OSS_INLINE INT64 version() const { return _version ; }
       OSS_INLINE INT64 cachedValue() const { return _cachedValue ; }
@@ -75,7 +75,7 @@ namespace engine
          _latch.release() ;
       }
 
-      void setOID( const bson::OID oid ) ;
+      void setOID( const bson::OID& oid ) ;
       void setInternal( BOOLEAN internal ) ;
       void setCachedValue( INT64 cachedValue ) ;
       void setVersion( INT64 version ) ;

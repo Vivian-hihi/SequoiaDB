@@ -267,15 +267,6 @@ namespace engine
             rc = _addAutoIncToMsg( cataSel.getCataPtr()->getAutoIncMap(),
                                    (CHAR*) pMsg, _orgMsgLen, cb,
                                    &_pNewMsg, _newMsgSize, _newMsgLen ) ;
-            if ( SDB_SEQUENCE_NOT_EXIST == rc )
-            {
-               rc = cataSel.updateCataInfo( pCollectionName, cb ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to update catalog of cl[%s], rc: %d",
-                            pCollectionName, rc ) ;
-               _groupSession.getGroupCtrl()->incRetry() ;
-               goto retry ;
-            }
             PD_RC_CHECK( rc, PDERROR,
                          "Failed to add autoIncrement fields to msg, rc: %d", rc ) ;
             inMsg._pMsg = (MsgHeader*)_pNewMsg ;
@@ -982,6 +973,7 @@ namespace engine
                                                  _SimpleBSONBuilder &builder )
    {
       PD_TRACE_ENTRY( SDB__ADD_AUTOINC_TO_OBJ ) ;
+      typedef _utilArray<_utilMapStringKey, 1> StringKeyArray ;
 
       INT32                      rc = SDB_OK ;
       BSONElement                ele ;
@@ -990,9 +982,9 @@ namespace engine
 
       AUTOINC_ITEM_MAP_CONST_IT  autoIncIt ;
       const coordAutoIncItem     *pItem = NULL ;
-      _utilArray<const CHAR*>    doneArray ;
+      StringKeyArray             doneArray ;
       BOOLEAN                    isDone = FALSE ;
-      const CHAR*                doneField = NULL ;
+      _utilMapStringKey          doneField = NULL ;
 
       coordSequenceAgent         *pSequenceAgent = NULL ;
       INT64                      nextValue = 0 ;
@@ -1075,11 +1067,11 @@ namespace engine
                autoIncIt != autoIncMap.end() ;
                ++autoIncIt )
          {
-            _utilArray<const CHAR*>::iterator doneIt( doneArray ) ;
+            StringKeyArray::iterator doneIt( doneArray ) ;
             isDone = FALSE ;
             while ( doneIt.next( doneField ) )
             {
-               if ( 0 == ossStrcmp( doneField, autoIncIt->first ) )
+               if ( doneField == autoIncIt->first )
                {
                   isDone = TRUE ;
                   break ;
@@ -1093,9 +1085,18 @@ namespace engine
                rc = pSequenceAgent->getNextValue( pItem->sequenceName(),
                                                   pItem->sequenceID(),
                                                   nextValue, cb ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to get sequence[%s] next value, rc: %d",
-                            pItem->sequenceName(), rc ) ;
+               if ( SDB_SEQUENCE_NOT_EXIST == rc )
+               {
+                  doneArray.append( autoIncIt->first ) ;
+                  rc = SDB_OK ;
+                  continue ;
+               }
+               else if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to get sequence[%s] next value, rc: %d",
+                          pItem->sequenceName(), rc ) ;
+                  goto error ;
+               }
 
                builder.append( pItem->fieldName(), nextValue ) ;
             }
@@ -1135,7 +1136,7 @@ namespace engine
 
       for ( it = autoIncMap.begin() ; it != autoIncMap.end() ; ++it )
       {
-         fieldLen = ossStrlen( it->first ) + 1 ;
+         fieldLen = ossStrlen( it->first._pString ) + 1 ;
          if ( !it->second.hasSubField() )
          {
             // |type(CHAR) |field(CHAR*)  |sequenceValue(INT64) |

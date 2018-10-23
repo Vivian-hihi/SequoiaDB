@@ -42,28 +42,10 @@
 #include "ossUtil.hpp"
 #include "boost/shared_array.hpp"
 #include "../bson/bson.h"
-#include <map>
+#include "utilMap.hpp"
 
 namespace engine
 {
-   /*
-      define container of coordAutoIncItem
-   */
-   struct cmpStr
-   {
-      BOOLEAN operator()( CHAR const *a, CHAR const *b ) const
-      {
-         return ossStrcmp( a, b ) < 0 ;
-      }
-   } ;
-   class _coordAutoIncItem ;
-   typedef std::map< const CHAR*, _coordAutoIncItem, cmpStr > AUTOINC_ITEM_MAP ;
-   typedef AUTOINC_ITEM_MAP::iterator        AUTOINC_ITEM_MAP_IT ;
-   typedef AUTOINC_ITEM_MAP::const_iterator  AUTOINC_ITEM_MAP_CONST_IT ;
-   typedef AUTOINC_ITEM_MAP::value_type      AUTOINC_ITEM_MAP_VAL ;
-
-
-
    /*
       define generated type enum
    */
@@ -83,13 +65,16 @@ namespace engine
    class _coordAutoIncItem : public SDBObject
    {
    public:
+      typedef _utilStringMap<_coordAutoIncItem, 1> AUTOINC_ITEM_MAP ;
+
+   public:
       _coordAutoIncItem() ;
 
       ~_coordAutoIncItem() ;
 
-      _coordAutoIncItem( const _coordAutoIncItem &other ) ;
+      _coordAutoIncItem( const _coordAutoIncItem &that ) ;
 
-      void operator=( _coordAutoIncItem &other ) ;
+      _coordAutoIncItem& operator=( const _coordAutoIncItem &that ) ;
 
       INT32             init( const bson::BSONObj &obj ) ;
 
@@ -120,6 +105,16 @@ namespace engine
 
    } ;
    typedef _coordAutoIncItem coordAutoIncItem ;
+
+
+
+   /*
+      define container of coordAutoIncItem
+   */
+   typedef coordAutoIncItem::AUTOINC_ITEM_MAP AUTOINC_ITEM_MAP ;
+   typedef AUTOINC_ITEM_MAP::iterator        AUTOINC_ITEM_MAP_IT ;
+   typedef AUTOINC_ITEM_MAP::const_iterator  AUTOINC_ITEM_MAP_CONST_IT ;
+   typedef AUTOINC_ITEM_MAP::value_type      AUTOINC_ITEM_MAP_VAL ;
 
 }
 

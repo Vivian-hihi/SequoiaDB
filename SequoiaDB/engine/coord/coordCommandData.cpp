@@ -1172,9 +1172,7 @@ namespace engine
       BSONObj boQuery ;
       const CHAR *fullName = NULL ;
       CoordGroupList cataGrpLst ;
-      CoordCataInfoPtr cataPtr ;
-      vector<BSONObj> autoIncFields ;
-      string seqName ;
+      coordCataSel cataSel ;
 
       rc = msgExtractQuery( ( CHAR * )pMsg, NULL, NULL,
                             NULL, NULL, &option, NULL,
@@ -1217,25 +1215,12 @@ namespace engine
       }
 
       // remove cache of related sequences.
-      rc = _pResource->getOrUpdateCataInfo( fullName, cataPtr, cb ) ;
+      rc = cataSel.bind( _pResource, fullName, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get cl[%s] catalog info, "
                    "rc: %d", fullName, rc ) ;
-
-      if ( cataPtr->hasAutoIncrement() )
-      {
-         autoIncFields = cataPtr->getAutoIncFields() ;
-
-         for ( UINT32 i = 0 ; i < autoIncFields.size() ; ++i )
-         {
-            rc = rtnGetSTDStringElement( autoIncFields[i], CAT_AUTOINC_SEQ,
-                                         seqName ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to get sequence name, rc: %d", rc ) ;
-            rc = coordSequenceInvalidateCache( seqName, cb ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to invalidate coord cache, rc: %d", rc ) ;
-         }
-      }
+      rc = coordInvalidateSequenceCache( cataSel.getCataPtr(), cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to invalidate sequence cache of "
+                   "cl[%s], rc: %d", fullName, rc ) ;
 
    done:
       if ( fullName )
@@ -1816,74 +1801,6 @@ namespace engine
    {
    }
 
-   INT32 _coordCMDDropCollection::execute( MsgHeader *pMsg,
-                                           pmdEDUCB *cb,
-                                           INT64 &contextID,
-                                           rtnContextBuf * buf )
-   {
-      INT32 rc = SDB_OK ;
-      CHAR *option = NULL;
-      BSONObj boQuery ;
-      const CHAR *fullName = NULL ;
-      CoordCataInfoPtr cataPtr ;
-      vector<BSONObj> autoIncFields ;
-      vector<string> seqNames ;
-      string seqName ;
-
-      // extract cl name
-      rc = msgExtractQuery( ( CHAR * )pMsg, NULL, NULL,
-                            NULL, NULL, &option, NULL,
-                            NULL, NULL );
-      PD_RC_CHECK( rc, PDERROR, "failed to extract msg:%d", rc ) ;
-
-      try
-      {
-         boQuery = BSONObj( option );
-         rc = rtnGetStringElement( boQuery, FIELD_NAME_NAME, &fullName ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get cl name, rc: %d", rc ) ;
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error;
-      }
-
-      // invalidate cl related sequences.
-      rc = _pResource->getOrUpdateCataInfo( fullName, cataPtr, cb ) ;
-      if ( SDB_OK == rc )
-      {
-         if ( cataPtr->hasAutoIncrement() )
-         {
-            autoIncFields = cataPtr->getAutoIncFields() ;
-
-            for ( UINT32 i = 0 ; i < autoIncFields.size() ; ++i )
-            {
-               rc = rtnGetSTDStringElement( autoIncFields[i], CAT_AUTOINC_SEQ,
-                                            seqName ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to get sequence name, rc: %d", rc ) ;
-               rc = coordSequenceInvalidateCache( seqName, cb ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to invalidate coord cache, rc: %d", rc ) ;
-            }
-        }
-     }
-     else
-     {
-        PD_LOG( PDWARNING,
-                "Failed to get catalog info to invalidate cache, rc: %d", rc ) ;
-     }
-
-      rc = _coordCMD2Phase::execute( pMsg, cb, contextID, buf ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to execute drop cl command, rc: %d", rc ) ;
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION( COORD_DROPCL_PARSEMSG, "_coordCMDDropCollection::_parseMsg" )
    INT32 _coordCMDDropCollection::_parseMsg ( MsgHeader *pMsg,
                                               coordCMDArguments *pArgs )
@@ -2031,12 +1948,31 @@ namespace engine
                                                 pmdEDUCB *cb,
                                                 coordCMDArguments *pArgs )
    {
-      PD_TRACE_ENTRY ( COORD_DROPCL_DOCOMPLETE) ;
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_DROPCL_DOCOMPLETE ) ;
+
+      coordCataSel cataSel ;
+
+      rc = cataSel.bind( _pResource, pArgs->_targetName.c_str(), cb ) ;
+      if ( SDB_OK == rc )
+      {
+         rc = coordInvalidateSequenceCache( cataSel.getCataPtr(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to invalidate sequence cache, rc: %d", rc ) ;
+      }
+      else
+      {
+         PD_LOG( PDWARNING, "Failed to get catalog info, rc: %d", rc ) ;
+         rc = SDB_OK ;
+      }
 
       _pResource->removeCataInfoWithMain( pArgs->_targetName.c_str() ) ;
 
+   done:
       PD_TRACE_EXIT ( COORD_DROPCL_DOCOMPLETE ) ;
-      return SDB_OK ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*

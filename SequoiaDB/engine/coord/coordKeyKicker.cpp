@@ -209,8 +209,6 @@ namespace engine
             if ( cataInfo->hasAutoIncrement() && !ignoreAutoInc )
             {
                boAutoIncKey = _getAutoIncKeyObj( cataInfo->getAutoIncFields() ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to get auto-increment field, rc: %d", rc ) ;
                count = _addKeys( boAutoIncKey ) ;
                if ( count > 0 )
                {

@@ -63,12 +63,12 @@ namespace engine
 
    public:
       OSS_INLINE const std::string& name() const { return _name ; }
-      OSS_INLINE bson::OID oid() const { return _oid ; }
+      OSS_INLINE const bson::OID& oid() const { return _oid ; }
       OSS_INLINE INT64 nextValue() const { return _nextValue ; }
       OSS_INLINE INT32 acquireSize() const { return _acquireSize ; }
       OSS_INLINE INT32 increment() const { return _increment ; }
 
-      OSS_INLINE void setOid( OID oid )
+      OSS_INLINE void setOid( const OID &oid )
       {
          _oid = oid ;
       }
@@ -326,8 +326,8 @@ namespace engine
                     name.c_str(), rc ) ;
             goto error ;
          }
-         
-         // succeed to get seq from catalog, then remove old cached sequence. 
+
+         // succeed to get seq from catalog, then remove old cached sequence.
          if( bucket.end() != iter && seqId.isSet() && ((*iter).second)->oid() != seqId )
          {
             cache = (*iter).second ;

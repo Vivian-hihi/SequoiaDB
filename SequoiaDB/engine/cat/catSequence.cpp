@@ -67,7 +67,7 @@ namespace engine
    {
    }
 
-   void _catSequence::setOID( const bson::OID oid )
+   void _catSequence::setOID( const bson::OID& oid )
    {
       _oid = oid ;
    }
