@@ -405,5 +405,49 @@ namespace SequoiaDB
        {
            _AlterInternal(SequoiadbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
        }
+
+       /** \fn void RenameCollection(String oldName, String newName)
+        *  \brief Rename the collection.
+        *  \param oldName The original name of current collection.
+        *  \param newName The new name of current collection.
+        *  \return void
+        *  \exception SequoiaDB.BaseException
+        *  \exception System.Exception
+        */
+       public void RenameCollection(String oldName, String newName)
+       {
+           RenameCollection(oldName, newName, null);
+       }
+
+       private void RenameCollection(String oldName, String newName, BsonDocument options)
+       {
+           if (oldName == null || oldName.Length == 0)
+           {
+               throw new BaseException("SDB_INVALIDARG");
+           }
+           if (newName == null || newName.Length == 0)
+           {
+               throw new BaseException("SDB_INVALIDARG");
+           }
+
+           // build cmd
+           string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_NAME_RENAME_COLLECTION;
+
+           // build object
+           BsonDocument obj = new BsonDocument();
+           obj.Merge(options);
+           obj.Add(SequoiadbConstants.FIELD_NAME_CELLECTIONSPACE, name);
+           obj.Add(SequoiadbConstants.FIELD_NAME_OLDNAME, oldName);
+           obj.Add(SequoiadbConstants.FIELD_NAME_NEWNAME, newName);
+
+           SDBMessage rtn = AdminCommand(command, obj, null, null, null);
+           int flags = rtn.Flags;
+           if (flags != 0)
+           {
+               throw new BaseException(flags, rtn.ErrorObject);
+           }
+           string fullName = this.Name + "." + oldName;
+           sdb.RemoveCache(fullName);
+       }
    }
 }

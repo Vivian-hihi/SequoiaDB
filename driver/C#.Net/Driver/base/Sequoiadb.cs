@@ -2211,6 +2211,48 @@ namespace SequoiaDB
             }
         }
 
+        /** \fn void RenameCollectionSpace(String oldName, String newName)
+         *  \brief Rename the collection space.
+         *  \param oldName The original name of current collection space.
+         *  \param newName The new name of current collection space.
+         *  \return void
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void RenameCollectionSpace(String oldName, String newName)
+        {
+            RenameCollectionSpace(oldName, newName, null);
+        }
+
+        private void RenameCollectionSpace(String oldName, String newName, BsonDocument options)
+        {
+            if (oldName == null || oldName.Length == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            if (newName == null || newName.Length == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+
+            // build cmd
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_NAME_RENAME_COLLECTIONSPACE;
+
+            // build object
+            BsonDocument obj = new BsonDocument();
+            obj.Merge(options);
+            obj.Add(SequoiadbConstants.FIELD_NAME_OLDNAME, oldName);
+            obj.Add(SequoiadbConstants.FIELD_NAME_NEWNAME, newName);
+
+            SDBMessage rtn = AdminCommand(command, obj, null, null, null);
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags, rtn.ErrorObject);
+            }
+            RemoveCache(oldName);
+        }
+
         private SDBMessage CreateCS(string csName, BsonDocument options)
         {
             if (csName == null || csName.Length == 0)

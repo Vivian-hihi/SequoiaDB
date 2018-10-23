@@ -1112,5 +1112,56 @@ namespace DriverTest
             options.Add("Collection", csName + "." + cName);
             sdb.Analyze(options);
         }
+
+        [TestMethod]
+        public void Rename_CS_CL_Test()
+        {
+            String csName = "rename_cs";
+            String clName = "rename_cl";
+
+            String newCSName = "new_rename_cs";
+            String newCLName = "new_rename_cl";
+
+            if (sdb.IsCollectionSpaceExist(csName)) {
+                sdb.DropCollectionSpace(csName);
+            }
+            if (sdb.IsCollectionSpaceExist(newCSName)) {
+                sdb.DropCollectionSpace(newCSName);
+            }
+
+            try
+            {
+
+                Assert.IsFalse(sdb.IsCollectionSpaceExist(csName));
+                Assert.IsFalse(sdb.IsCollectionSpaceExist(newCSName));
+
+                sdb.CreateCollectionSpace(csName).CreateCollection(clName);
+                Assert.IsTrue(sdb.IsCollectionSpaceExist(csName));
+                sdb.RenameCollectionSpace(csName, newCSName);
+                Assert.IsFalse(sdb.IsCollectionSpaceExist(csName));
+                Assert.IsTrue(sdb.IsCollectionSpaceExist(newCSName));
+
+                CollectionSpace cs = sdb.GetCollecitonSpace(newCSName);
+                Assert.IsTrue(cs.IsCollectionExist(clName));
+                cs.RenameCollection(clName, newCLName);
+                Assert.IsFalse(cs.IsCollectionExist(clName));
+                Assert.IsTrue(cs.IsCollectionExist(newCLName));
+            }
+            finally
+            {
+                try
+                {
+                    sdb.DropCollectionSpace(csName);
+                }
+                catch (Exception e) { }
+                try
+                {
+                    sdb.DropCollectionSpace(newCSName);
+                }
+                catch (Exception e) { }
+            }
+
+
+        }
     }
 }

@@ -122,6 +122,8 @@ namespace SequoiaDB
         public const string CMD_VALUE_NAME_DISABLE_READONLY = "disable readonly";
         public const string CMD_VALUE_NAME_SYNC_DB = "sync db";
         public const string CMD_VALUE_NAME_ANALYZE = "analyze";
+        public const string CMD_NAME_RENAME_COLLECTION = "rename collection";
+        public const string CMD_NAME_RENAME_COLLECTIONSPACE = "rename collectionspace";
 
         public const string OID = "_id";
         public const string CLIENT_RECORD_ID_INDEX = "$id";
@@ -185,7 +187,9 @@ namespace SequoiaDB
         public const string FIELD_NAME_BUSINESSNAME = "BusinessName";
         public const string FIELD_NAME_DATACENTER = "DataCenter";
         public const string FIELD_NAME_CONFIGS = "Configs";
-
+        public const string FIELD_NAME_OLDNAME = "OldName";
+        public const string FIELD_NAME_NEWNAME = "NewName";
+        public const string FIELD_NAME_CELLECTIONSPACE = "CollectionSpace";
         public const string FIELD_MODIFY = "$Modify";
         public const string FIELD_OP = "OP";
         public const string FIELD_OP_UPDATE = "Update";

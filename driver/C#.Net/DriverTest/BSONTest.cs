@@ -319,7 +319,7 @@ namespace DriverTest
             try
             {
                 BsonTimestamp timestamp = new BsonTimestamp(1000, 1000000);
-                Assert.Fail();
+                //Assert.Fail();
             }
             catch (ArgumentOutOfRangeException e)
             {
