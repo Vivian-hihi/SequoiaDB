@@ -93,7 +93,7 @@ public class RenameUtil extends SdbTestBase {
 			while(cur.hasNext()){
 				BSONObject obj = cur.getNext();
 				String name = (String) obj.get("Name");
-				if(name.equals(csName + "." + newCLName)){
+				if(!name.equals(csName + "." + newCLName)){
 					Assert.fail("cl fullname error, exp: " + csName + "." + newCLName +", act: "+name);
 				}
 			}
@@ -146,8 +146,13 @@ public class RenameUtil extends SdbTestBase {
 	
 	public static void insertData(DBCollection cl, int recordNum){
 		
+		if(recordNum < 1){
+			recordNum = 1;
+		}
+		
 		List<BSONObject> data = new ArrayList<BSONObject>();
-		for (int i = 0; i < recordNum/1000; i++) {
+		int times = recordNum/1000;
+		for (int i = 0; i < times; i++) {
 			for (int j = 0; j < 1000; j++) {
 				BSONObject record = new BasicBSONObject();
 				record.put("a", i*1000+j);
@@ -157,6 +162,19 @@ public class RenameUtil extends SdbTestBase {
 				data.add(record);
 			}
 			cl.insert(data);
+		}
+		
+		List<BSONObject> dataA = new ArrayList<BSONObject>();
+		for(int k = 0; k < recordNum%1000; k++){
+			BSONObject record = new BasicBSONObject();
+			record.put("a", times*1000+k);
+			record.put("no", "No."+times*1000+k);
+			record.put("phone", 13700000000L + times*1000+k);
+			record.put("text", "Test ReName, This is the test statement used to populate the data");
+			dataA.add(record);
+		}
+		if(dataA.size()!=0){
+			cl.insert(dataA);
 		}
 	}
 }
