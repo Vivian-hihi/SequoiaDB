@@ -183,7 +183,7 @@ namespace engine
 
          void setQueryActivity ( const optQueryActivity &queryActivity ) ;
 
-         void toBSON ( BSONObjBuilder &builder ) const ;
+         void toBSON ( BSONObjBuilder &builder ) ;
 
       protected :
          optAccessPlan *   _pPlan ;

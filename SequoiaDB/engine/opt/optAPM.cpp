@@ -482,7 +482,7 @@ namespace engine
 
                if ( NULL != _pMonitor )
                {
-                  const optCachedPlanActivity *activity =
+                  optCachedPlanActivity *activity =
                               _pMonitor->getActivity( pPlan->getActivityID() ) ;
                   if ( NULL != activity )
                   {
@@ -623,7 +623,7 @@ namespace engine
       }
    }
 
-   void _optCachedPlanActivity::toBSON ( BSONObjBuilder &builder ) const
+   void _optCachedPlanActivity::toBSON ( BSONObjBuilder &builder )
    {
       ossTickConversionFactor factor ;
       UINT32 seconds = 0, microseconds = 0 ;
