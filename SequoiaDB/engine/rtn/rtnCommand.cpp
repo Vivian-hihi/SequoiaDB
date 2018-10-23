@@ -2418,11 +2418,13 @@ error:
             }
             else if ( Bool == ele.type() )
             {
-               newObjBuilder.append( ele.fieldName(), ele.Bool() ? "TRUE" : "FALSE" ) ;
+               newObjBuilder.append( ele.fieldName(), ele.Bool() ?
+                                     "TRUE" : "FALSE" ) ;
             }
             else
             {
-               PD_LOG( PDERROR, "Field[%s] type[%d] is not number/boolean/string", ele.fieldName(),
+               PD_LOG( PDERROR, "Field[%s] type[%d] is not "
+                       "number/boolean/string", ele.fieldName(),
                        ele.type() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
@@ -2457,8 +2459,8 @@ error:
       rc = tmpOptionsCB.restore( _newCfgObj, NULL ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Error while checking update configuration[%s], rc: %d",
-                 _newCfgObj.toString().c_str(), rc ) ;
+         PD_LOG( PDERROR, "Error while checking update configuration[%s], "
+                 "rc: %d", _newCfgObj.toString().c_str(), rc ) ;
          goto error ;
       }
 
@@ -2477,7 +2479,8 @@ error:
          goto error ;
       }
 
-      rc = optCB->reflush2File( PMD_CFG_MASK_SKIP_UNFIELD | PMD_CFG_MASK_MODE_LOCAL ) ;
+      rc = optCB->reflush2File( PMD_CFG_MASK_SKIP_UNFIELD |
+                                PMD_CFG_MASK_MODE_LOCAL ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Reflush update config[%s] to file failed, rc: %d",
@@ -2572,7 +2575,8 @@ error:
          goto error ;
       }
 
-      rc = optCB->reflush2File( PMD_CFG_MASK_SKIP_UNFIELD | PMD_CFG_MASK_MODE_LOCAL ) ;
+      rc = optCB->reflush2File( PMD_CFG_MASK_SKIP_UNFIELD |
+                                PMD_CFG_MASK_MODE_LOCAL ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Reflush update config[%s] to file failed, rc: %d",

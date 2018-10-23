@@ -125,6 +125,7 @@ namespace engine
                     pArgs->_targetName.c_str(), getName(), rc ) ;
             goto error ;
          }
+         _cataPtr = cataSel.getCataPtr() ;
       }
 
    retry:
@@ -1172,7 +1173,6 @@ namespace engine
       BSONObj boQuery ;
       const CHAR *fullName = NULL ;
       CoordGroupList cataGrpLst ;
-      coordCataSel cataSel ;
 
       rc = msgExtractQuery( ( CHAR * )pMsg, NULL, NULL,
                             NULL, NULL, &option, NULL,
@@ -1215,12 +1215,12 @@ namespace engine
       }
 
       // remove cache of related sequences.
-      rc = cataSel.bind( _pResource, fullName, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get cl[%s] catalog info, "
-                   "rc: %d", fullName, rc ) ;
-      rc = coordInvalidateSequenceCache( cataSel.getCataPtr(), cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to invalidate sequence cache of "
-                   "cl[%s], rc: %d", fullName, rc ) ;
+      if ( getCataPtr().get() )
+      {
+         rc = coordInvalidateSequenceCache( getCataPtr(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to invalidate sequence cache of "
+                      "cl[%s], rc: %d", fullName, rc ) ;
+      }
 
    done:
       if ( fullName )
@@ -1951,19 +1951,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( COORD_DROPCL_DOCOMPLETE ) ;
 
-      coordCataSel cataSel ;
-
-      rc = cataSel.bind( _pResource, pArgs->_targetName.c_str(), cb ) ;
-      if ( SDB_OK == rc )
+      if ( getCataPtr().get() )
       {
-         rc = coordInvalidateSequenceCache( cataSel.getCataPtr(), cb ) ;
+         rc = coordInvalidateSequenceCache( getCataPtr(), cb ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to invalidate sequence cache, rc: %d", rc ) ;
-      }
-      else
-      {
-         PD_LOG( PDWARNING, "Failed to get catalog info, rc: %d", rc ) ;
-         rc = SDB_OK ;
       }
 
       _pResource->removeCataInfoWithMain( pArgs->_targetName.c_str() ) ;

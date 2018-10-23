@@ -443,6 +443,7 @@ namespace engine
                  "rc: %d", pCLName, rc ) ;
          goto error ;
       }
+      _cataPtr = cataSel.getCataPtr() ;
 
    retry:
       pMsg->version = cataSel.getCataPtr()->getVersion() ;
@@ -516,6 +517,7 @@ namespace engine
                                       sendOpt, *pSucGrpLst, &queryConf,
                                       buf ) ;
       }
+      _cataPtr = queryOpr.getCataPtr() ;
       if ( rc )
       {
          goto error ;
@@ -561,6 +563,7 @@ namespace engine
 
       rc = queryOpr.queryOrDoOnCL( pMsg, cb, ppContext,
                                    sendOpt, &queryConf, buf ) ;
+      _cataPtr = queryOpr.getCataPtr() ;
       if ( rc )
       {
          goto error ;

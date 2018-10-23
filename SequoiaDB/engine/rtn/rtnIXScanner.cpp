@@ -395,8 +395,7 @@ namespace engine
             // otherwise let's attempt to get dms rid
             else
             {
-               _savedRID =
-                     indexExtent.getRID ( _curIndexRID._slot ) ;
+               _savedRID = indexExtent.getRID ( _curIndexRID._slot ) ;
                // make sure the RID we read is not psuedo-deleted
                if ( _savedRID.isNull() ||
                     _dupBuffer.end() != _dupBuffer.find ( _savedRID ) )
@@ -455,7 +454,7 @@ namespace engine
    // we have to call resumeScan after getting X latch again just in case
    // other sessions changed tree structure
    // this is used for query scan only
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_PAUSESCAN, "_rtnIXScanner::pauseScan" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_PAUSESCAN, "_rtnIXScanner::pauseScan" )
    INT32 _rtnIXScanner::pauseScan( BOOLEAN isReadOnly )
    {
       INT32 rc = SDB_OK ;

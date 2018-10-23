@@ -265,6 +265,8 @@ namespace engine
 
          INT64                getTimeout() const ;
 
+         CoordCataInfoPtr     getCataPtr() { return _cataPtr ; }
+
       public:
          virtual BOOLEAN      isReadOnly() const ;
          virtual const CHAR*  getName() const ;
@@ -358,6 +360,7 @@ namespace engine
          coordGroupSession          _groupSession ;
          coordGroupHandler          _groupHandler ;
          coordRemoteHandler         _remoteHandler ;
+         CoordCataInfoPtr           _cataPtr ;
 
    } ;
    typedef _coordOperator coordOperator ;

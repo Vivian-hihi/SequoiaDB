@@ -368,6 +368,7 @@ namespace engine
       {
          _doneCLOp( cataSel, inMsg, options, cb, result ) ;
       }
+      _cataPtr = cataSel.getCataPtr() ;
 
       PD_RC_CHECK( rc, PDERROR, "Do command[%d] on groups failed, rc: %d",
                    inMsg.opCode(), rc ) ;
