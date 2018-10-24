@@ -71,22 +71,32 @@ TEST(sdb,disconnect)
    const CHAR *pUsr                         = USER ;
    const CHAR *pPasswd                      = PASSWD ;
    INT32 rc                                 = SDB_OK ;
+   BOOLEAN result                           = TRUE ;
    // initialize the work environment
    rc = initEnv() ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( FALSE, connection.isValid() ) ;
+   ASSERT_EQ( TRUE, connection.isClosed() ) ;
+   
    // connect to database
    rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( TRUE, connection.isValid() ) ;
+   ASSERT_EQ( FALSE, connection.isClosed() ) ;
    // get cs , just test whether we connet to db or not
    rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    // disconnect the connection
    connection.disconnect() ;
+   ASSERT_EQ( FALSE, connection.isValid() ) ;
+   ASSERT_EQ( TRUE, connection.isClosed() ) ;
+   connection.disconnect() ;
+   ASSERT_EQ( FALSE, connection.isValid() ) ;
+   ASSERT_EQ( TRUE, connection.isClosed() ) ;
    // get cs , just test whether we connet to db or not
    rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs ) ;
    ASSERT_EQ( SDB_NOT_CONNECTED, rc ) ;
 }
-
 
 TEST(sdb,createUsr)
 {
