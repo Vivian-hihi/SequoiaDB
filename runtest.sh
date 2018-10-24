@@ -65,7 +65,7 @@ function showHelpInfo()
 {
    echo "run testcase 1.0.0 2014/2/25"
    echo "$0 --help"
-   echo "$0 [-p path]|[-f file] [-t type] [-s stopFlag] [-n svcname] [-h hostname] [-ex exclude] [-eh eshost] [-en essvcname] [-s1] [-s2] [-sp] [-addpid] [-print]"
+   echo "$0 [-p path]|[-f file] [-t type] [-s stopFlag] [-n svcname] [-h hostname] [-eh eshost] [-en essvcname] [-s1] [-s2] [-sp] [-addpid] [-print]"
    echo ""
    echo " -p path        : 运行指定路径下的JS用例。为相对目录，默认根目录为用例目录"
    echo " -f file        : 运行指定的JS用例。为相对目录，默认根目录为用例目录"
@@ -74,7 +74,6 @@ function showHelpInfo()
    echo " -n svcname     : 指定测试的COORD节点服务名，默认为50000"
    echo " -h hostname    : 指定测试的COORD节点HostName或IP"
    echo " -c cataport    : 指定测试的CATALOG节点服务名，默认为30000"
-   echo " -ex exclude    : 指定排除的测试用例目录，如fullText"
    echo " -eh eshost     : 指定es环境主机名或ip"
    echo " -en essvcname  : 指定es环境节点服务名，默认为50000"
    echo " -s1            : 指定预留的RSRVPORTBEGIN端口号，默认为26000"
@@ -328,9 +327,6 @@ function analyPara()
          -t )            shift   
                          testType="$1"              
                          ;;
-         -ex )           shift
-                         excludePath="$1"
-                         ;;
          -eh )           shift
                          eshostname="$1"
                          ;;
@@ -375,8 +371,7 @@ function analyTestType()
 function filterTestcase()
 {  
    local testRoot=$1
-   local excludePath=$2
-   pathLists=(`sed -n '2,6p' $testRoot/testcase.conf |awk -F '=' '{print $2}'`)
+   pathLists=(`sed -n '2,7p' $testRoot/testcase.conf |awk -F '=' '{print $2}'`)
    for pathList in ${pathLists[@]} 
    do
       path2Space=${pathList//,/ }
@@ -384,14 +379,6 @@ function filterTestcase()
       do
          ignoredPaths+=($path)
       done
-   done
-   OLD_IFS="$IFS"
-   IFS=","
-   arr=($excludePath)
-   IFS="$OLD_IFS"
-   for path in ${arr[@]}
-   do
-      ignoredPaths+=($path)
    done
 }
    
@@ -564,7 +551,7 @@ declare -a findCmds                         #define findCmds as array
 for testRoot in ${testRoots[@]}
 do 
    unset ignoredPaths
-   filterTestcase $testRoot $excludePath
+   filterTestcase $testRoot
    generateFindCmd $testRoot
    findCmds[${#findCmds[@]}]="$findCmdStr"  #add element in tail of array    
 done
