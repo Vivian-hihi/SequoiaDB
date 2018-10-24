@@ -763,7 +763,6 @@
                            break ;
                         case 'IN':
                         case 'NOT IN':
-                           alert(filterInfo['logic'])
                            var tmp = trim( filterInfo['value'] ) ;
                            if( tmp.charAt(0) == '(' && tmp.charAt(tmp.length - 1) == ')' )
                            {
@@ -772,7 +771,7 @@
                            else
                            {
                               var paramArr = filterInfo['value'].split( ',' ) ;
-                              if( paramArr.length > 1 )
+                              if( paramArr.length > 0 )
                               {
                                  sql += field + ' ' + filterInfo['logic'] + ' (' ;
                                  $.each( paramArr, function( index, subPara ){

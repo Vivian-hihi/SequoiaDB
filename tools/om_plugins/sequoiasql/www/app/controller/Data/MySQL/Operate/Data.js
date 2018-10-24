@@ -683,8 +683,10 @@
                   } ) ;
                   var isFirst = true ;
                   $.each( formValue['filter']['condition'], function( index, filterInfo ){
-                     var field = filterInfo['field'] ;
-                     if( filterInfo['field'].length > 0 && ( filterInfo['value'].length > 0 || filterInfo['logic'] == 'IS NULL' || filterInfo['logic'] == 'IS NOT NULL' ) )
+                     var field   = filterInfo['field'] ;
+                     var operate = filterInfo['logic'] ;
+                     var param   = filterInfo['value'] ;
+                     if( field.length > 0 && ( param.length > 0 || operate == 'IS NULL' || operate == 'IS NOT NULL' ) )
                      {
                         if( isFirst )
                         {
@@ -696,7 +698,7 @@
                            sql += sprintf( ' ? ', formValue['filter']['model'] ) ;
                         }
 
-                        switch( filterInfo['logic'] )
+                        switch( operate )
                         {
                         case '=':
                         case '>':
@@ -706,12 +708,12 @@
                         case '<>':
                         case 'LIKE':
                         case 'NOT LIKE':
-                           sql += field + ' ' + filterInfo['logic'] + ' ' + sqlEscape( filterInfo['value'] ) ;
+                           sql += field + ' ' + operate + ' ' + sqlEscape( param ) ;
                            break ;
                         case 'BETWEEN':
                         case 'NOT BETWEEN':
-                           var paramArr = filterInfo['value'].split( ',', 2 ) ;
-                           sql += field + ' ' + filterInfo['logic'] + ' ' + sqlEscape( paramArr[0] ) ;
+                           var paramArr = param.split( ',', 2 ) ;
+                           sql += field + ' ' + operate + ' ' + sqlEscape( paramArr[0] ) ;
                            if( paramArr.length > 1 )
                            {
                               sql += ' AND ' + sqlEscape( paramArr[1] ) ;
@@ -719,21 +721,21 @@
                            break ;
                         case 'IS NULL':
                         case 'IS NOT NULL':
-                           sql += field + ' ' + filterInfo['logic'] ;
+                           sql += field + ' ' + operate ;
                            break ;
                         case 'IN':
                         case 'NOT IN':
-                           var tmp = trim( filterInfo['value'] ) ;
+                           var tmp = trim( param ) ;
                            if( tmp.charAt(0) == '(' && tmp.charAt(tmp.length - 1) == ')' )
                            {
-                              sql += field + ' ' + filterInfo['logic'] + ' ' + tmp ;
+                              sql += field + ' ' + operate + ' ' + tmp ;
                            }
                            else
                            {
-                              var paramArr = filterInfo['value'].split( ',' ) ;
-                              if( paramArr.length > 1 )
+                              var paramArr = param.split( ',' ) ;
+                              if( paramArr.length > 0 )
                               {
-                                 sql += field + ' ' + filterInfo['logic'] + ' (' ;
+                                 sql += field + ' ' + operate + ' (' ;
                                  $.each( paramArr, function( index, subPara ){
                                     if( index > 0 )
                                     {
