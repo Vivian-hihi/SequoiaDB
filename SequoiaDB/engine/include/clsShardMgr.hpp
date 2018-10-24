@@ -141,7 +141,7 @@ namespace engine
                            BOOLEAN &forceEnd ) ;
 
       private:
-         UINT32            _clCount ;
+         volatile UINT32   _clCount ;
          MAP_WINDOW        _mapWindow ;
          OP_SET            _setWholeID ;
          ossSpinXLatch     _latch ;
