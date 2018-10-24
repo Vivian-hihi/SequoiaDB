@@ -18,16 +18,18 @@ function installES()
       clearES
       exec_cmd "cp /mnt/soft/elasticsearch-6.2.2.tar.gz $runtest_path"
       exec_cmd "tar -zxf $runtest_path/elasticsearch-6.2.2.tar.gz -C $runtest_path"
-      exec_cmd "ulimit -Hn 131072"
-      exec_cmd "ulimit -Sn 65536"
-      exec_cmd "ulimit -v 655360"
       local cur_user=`whoami`
       local cur_group=`groups`
-      if [ "$cur_user" != "root" ];then 
+      
+      if [ "$cur_user" != "root" ];then
          exec_cmd "chown $cur_user:$cur_group $runtest_path/elasticsearch-6.2.2 -R"
+         `ulimit -n 131072`
+         `ulimit -v 655360`
          exec_cmd "$runtest_path/elasticsearch-6.2.2/bin/elasticsearch -d"
       else
          exec_cmd "chown sdbadmin:sdbadmin_group $runtest_path/elasticsearch-6.2.2 -R"
+         exec_cmd "su sdbadmin -c 'ulimit -n 131072'"
+         exec_cmd "su sdbadmin -c 'ulimit -v 655360'"
          exec_cmd "su sdbadmin -c '$runtest_path/elasticsearch-6.2.2/bin/elasticsearch -d'"
       fi
    else
@@ -62,19 +64,20 @@ function installESAdapter()
       do
          exec_cmd "$sdbRoot/sdbseadapter -c $runtest_path/conf/sdbseadapter/$arg &"
       done
+      sleep 20
    fi
 }
 
 function clearAdpter()
 {
-   exec_cmd "ps -ef | grep sdbseadapter |grep -v grep | awk '{print $2}' |  xargs kill -9"
+   `ps -ef | grep sdbseadapter |grep -v grep | awk '{print $2}' |  xargs kill -9`
    exec_cmd "rm -rf $runtest_path/conf/sdbseadapter"
    exec_cmd "rm -rf $runtest_path/conf/log"
 }
 
 function clearES()
 {
-   exec_cmd "ps -ef | grep elasticsearch |grep -v grep | awk '{print $2}' |  xargs kill -9"
+   `ps -ef | grep elasticsearch |grep -v grep | awk '{print $2}' |  xargs kill -9`
    exec_cmd "rm -rf $runtest_path/elasticsearch-6.2.2"
 }
 
@@ -123,6 +126,9 @@ analyPara $*
 
 if [ "$installES" == "" ]; then
    installES="true"
+fi
+if [ "$adapter" == "" ]; then
+   adapter="true"
 fi
 
 installES $installES
