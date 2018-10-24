@@ -1,0 +1,107 @@
+/***************************************************************************
+@Description :seqDB-15954 :Generated设置为strict，插入记录
+@Modify list :
+              2018-10-19  zhaoyu  Create
+****************************************************************************/
+function main()
+{
+   if(commIsStandalone( db ))
+   {
+      println("Deploy is standalone");
+	  return;
+   }
+   
+   var clName = COMMCLNAME + "_15954";   
+   commDropCL(db, COMMCSNAME, clName, true, true);
+   
+   var cacheSize = 10;
+   var acquireSize = 1;
+   var fieldName = "id";
+   var generated = "strict";
+   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, {AutoIncrement:{Field:fieldName, CacheSize:cacheSize, AcquireSize:acquireSize, Generated:generated}});
+   
+   var clID = getCLID(COMMCSNAME, clName);
+   var mainclSequenceName = "SYS_" + clID + "_" + fieldName + "_SEQ";
+   var expIncrementArr = [{Field:fieldName, SequenceName:mainclSequenceName, Generated:generated}];
+   checkAutoIncrementonCL(COMMCSNAME, clName, expIncrementArr);
+   
+   var expR = [];
+   var j=1;
+   for(var i=0; i<100; i++)
+   {
+      if(i%2===1)
+      {
+         var doc = {a:i,id:i};
+         dbcl.insert(doc);
+         expR.push({a:i,id:i});
+      }else
+      {
+         dbcl.insert({a:i});
+         expR.push({a:i,id:j});
+         j++;
+      }
+   }
+   
+   var actR = dbcl.find().sort({_id:1});
+   checkRec(actR, expR);
+   println("---check set increment field insert record success");
+   
+   var doc = {id:{$numberLong:"9223372036854775807"},a:"numberLong"};
+   expR.push({id:{$numberLong:"9223372036854775807"},a:"numberLong"});
+   dbcl.insert(doc);
+   
+   var actR = dbcl.find().sort({_id:1});
+   checkRec(actR, expR);
+   println("---check increment field set numberLong success");
+   
+   dbcl.insert({"id.1":100});
+   expR.push({"id.1":100,id:j});
+   j++
+   
+   dbcl.insert({"id.a":101});
+   expR.push({"id.a":101,id:j});
+   var actR = dbcl.find().sort({_id:1});
+   checkRec(actR, expR);
+   println("---check set \"id.xxx\" insert record success");
+   
+   var arr = [{id:1.25,a:"float"},
+              {id:{$decimal:"123"},a:"decimal"},
+              {id:"string",a:"string"},
+              {id:{a:1},a:"obj"},
+              {id:{$date:"2012-01-01"},a:"date"},
+              {id:{$timestamp:"2012-01-01-13.14.26.124233"},a:"timestamp"},
+              {id:{$binary:"aGVsbG8gd29ybGQ=",$type:"1"},a:"binary"},
+              {id:{$regex:"a",$options:"i"},a:"regex"},
+              {id:{$oid:"123abcd00ef12358902300ef"},a:"oid"},
+              {id:[1,2,3],a:"arr"},
+              {id:null,a:"null"},
+              {id:{$maxKey:1},a:"maxKey"},
+              {id:{$minKey:1},a:"minkey"}];
+   insertOtherTypeDatas(dbcl, arr);
+   println("---check increment field set other dataType success");
+   
+   commDropCL(db, COMMCSNAME, clName, true, true); 
+}
+main()
+
+function insertOtherTypeDatas(dbcl, arr)
+{
+   for(var i=0; i<arr.length; i++ )
+   {
+      try
+      {
+         dbcl.insert(arr[i]);
+         throw "NEED_INSERT_ERR";
+      }catch(e)
+      {
+         if(e !== -6)
+         {
+            println("err occor the " + i + "th record, record is :" + JSON.stringify(arr[i]));
+            throw e;
+         }
+      }
+      
+   }
+   
+   
+}

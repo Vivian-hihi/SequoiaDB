@@ -1,0 +1,61 @@
+﻿/***************************************************************************
+@Description :seqDB-15937 :不同coord不指定自增字段插入记录，趋势递增
+@Modify list :
+              2018-10-15  zhaoyu  Create
+****************************************************************************/
+function main()
+{
+   if(commIsStandalone( db ))
+   {
+      println("Deploy is standalone");
+	  return;
+   };
+   
+   var clName = COMMCLNAME + "_15937_2";   
+   commDropCL(db, COMMCSNAME, clName, true, true);
+   
+   var acquireSize = 10;
+   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, {AutoIncrement:{Field:"id",AcquireSize:acquireSize}});
+   commCreateIndex(dbcl, "id", {id:1}, true, true);
+   
+   var coordNodes = getCoordNodeNames();
+   var coordNum = coordNodes.length;
+   var expR = [];
+   var getCacheNum = 0;
+   for(var j=1; j<30; j++)
+   {
+      if(j>1 && j%2 ===1)
+      {
+         getCacheNum++;
+      }
+      
+      for(var k=0; k<coordNum; k++ )
+      {
+         var coord = new Sdb(coordNodes[k]);
+         //coord.invalidateCache();
+         var cl = coord.getCS(COMMCSNAME).getCL(clName);
+         var doc = [];
+         for(var i=1; i<6; i++)
+         {
+            doc.push({a:i, b:i, c:i + "test"});
+            if(j%2 !==0)
+            {
+               expR.push({a:i, b:i, c:i + "test", id:getCacheNum * coordNum *acquireSize + k*acquireSize + i});
+            }else
+            {
+               expR.push({a:i, b:i, c:i + "test", id:getCacheNum * coordNum *acquireSize + k*acquireSize + 5 + i});
+            }
+         }
+         cl.insert(doc);
+         coord.close();
+      }
+      
+   }
+   
+   var actR = dbcl.find().sort({_id:1});
+   checkRec(actR, expR);
+   println("---check insert success");
+   
+   commDropCL(db, COMMCSNAME, clName, true, true); 
+}
+main()
