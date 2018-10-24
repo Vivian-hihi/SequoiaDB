@@ -130,6 +130,7 @@ namespace engine
 
          BOOLEAN isReplace = _isUpdateReplace( updator ) ;
          cataInfo->getShardingKey( boShardingKey ) ;
+         boAutoIncKey = _getAutoIncKeyObj( cataInfo->getAutoIncFields() ) ;
 
          BSONObjIterator iter( updator ) ;
          while ( iter.more() )
@@ -159,34 +160,16 @@ namespace engine
             while( iterField.more() )
             {
                BSONElement beField = iterField.next() ;
-               BSONObjIterator iterKey( boShardingKey ) ;
-               BOOLEAN isKey = FALSE ;
-               while( iterKey.more() )
-               {
-                  BSONElement beKey = iterKey.next();
-                  const CHAR *pKey = beKey.fieldName();
-                  const CHAR *pField = beField.fieldName();
-                  while( *pKey == *pField && *pKey != '\0' )
-                  {
-                     ++pKey ;
-                     ++pField ;
-                  }
+               const CHAR *pField = beField.fieldName() ;
 
-                  // shardingkey_fieldName == updator_fieldName
-                  /// key: { a:1 }  field : { a:1 } or { "a.b":1 }
-                  /// key: { "a.b":1 } field: { a:1 } or { "a.b":1 } or
-                  ///                         { "a.b.c":1 }
-                  if ( *pKey == *pField ||
-                       ( '\0' == *pKey && '.' == *pField ) ||
-                       ( '.' == *pKey && '\0' == *pField ) )
-                  {
-                     isKey = TRUE ;
-                     break ;
-                  }
-               }
-               if ( isKey )
+               if ( _isKey( pField, boShardingKey ) )
                {
                   hasShardingKey = TRUE;
+               }
+               else if ( isReplace && !ignoreAutoInc &&
+                         _isKey( pField, boAutoIncKey ) )
+               {
+                  hasReplaceAutoInc = TRUE ;
                }
                else
                {
@@ -206,9 +189,8 @@ namespace engine
                hasShardingKey = TRUE ;
             }
 
-            if ( cataInfo->hasAutoIncrement() && !ignoreAutoInc )
+            if ( !ignoreAutoInc )
             {
-               boAutoIncKey = _getAutoIncKeyObj( cataInfo->getAutoIncFields() ) ;
                count = _addKeys( boAutoIncKey ) ;
                if ( count > 0 )
                {
@@ -643,6 +625,37 @@ namespace engine
       }
 
       return builder.obj() ;
+   }
+
+   BOOLEAN _coordKeyKicker::_isKey( const CHAR *pField, BSONObj &boKey )
+   {
+      BSONObjIterator iterKey( boKey ) ;
+      BOOLEAN isKey = FALSE ;
+
+      while( iterKey.more() )
+      {
+         BSONElement beKey = iterKey.next();
+         const CHAR *pKey = beKey.fieldName();
+
+         while( *pKey == *pField && *pKey != '\0' )
+         {
+            ++pKey ;
+            ++pField ;
+         }
+
+         // shardingkey_fieldName == updator_fieldName
+         /// key: { a:1 }  field : { a:1 } or { "a.b":1 }
+         /// key: { "a.b":1 } field: { a:1 } or { "a.b":1 } or
+         ///                         { "a.b.c":1 }
+         if ( *pKey == *pField ||
+              ( '\0' == *pKey && '.' == *pField ) ||
+              ( '.' == *pKey && '\0' == *pField ) )
+         {
+            isKey = TRUE ;
+            break ;
+         }
+      }
+      return isKey ;
    }
 
 }

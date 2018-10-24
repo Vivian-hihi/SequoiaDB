@@ -126,6 +126,8 @@ namespace engine
 
       BSONObj     _getAutoIncKeyObj( const std::vector<BSONObj> &autoIncArr ) ;
 
+      BOOLEAN     _isKey( const CHAR *pField, BSONObj &boKey ) ;
+
    private:
       map< UINT32, BOOLEAN >     _skSiteIDs ;
       SET_KEEPKEY                _setKeys ;
