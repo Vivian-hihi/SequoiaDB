@@ -135,7 +135,7 @@
                            "name": "length",
                            "webName": $scope.pAutoLanguage( "长度" ),
                            "placeholder": $scope.pAutoLanguage( "长度" ),
-                           "type": "int",
+                           "type": "double",
                            "value": "",
                            "valid": {
                               "min": 0,

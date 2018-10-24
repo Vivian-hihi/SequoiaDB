@@ -827,13 +827,12 @@
                               { "key": 'varchar', "value": "varchar" },
                               { "key": 'text', "value": "text" },
                               { "key": 'binary', "value": "binary" },
-                              { "key": 'blob', "value": "blob" },
-                              { "key": 'null', "value": "null" }
+                              { "key": 'blob', "value": "blob" }
                            ]
                         },
                         {
                            "name": "length",
-                           "type": "int",
+                           "type": "double",
                            "webName": $scope.pAutoLanguage( '长度' ),
                            "placeholder": $scope.pAutoLanguage( "长度" ),
                            "value": "",
