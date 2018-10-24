@@ -282,7 +282,7 @@
 
       var modalValue2Create = function( valueJson ){
          var rv = { 'table_options': {} } ;
-         if( valueJson['type'] == '' )
+         if( valueJson['type'] == 'normal' )
          {
             rv['table_options']['Compressed'] = valueJson['Compressed'] == 0 ? false : true ;
             if( rv['table_options']['Compressed'] == true )
@@ -381,15 +381,15 @@
                   "name": "type",
                   "webName": $scope.autoLanguage( '集合类型' ),
                   "type": "select",
-                  "value": "",
+                  "value": "normal",
                   "valid": [
-                     { "key": $scope.autoLanguage( '普通' ), "value": "" },
+                     { "key": $scope.autoLanguage( '普通' ), "value": "normal" },
                      { "key": $scope.autoLanguage( '水平范围分区' ), "value": "range" },
                      { "key": $scope.autoLanguage( '水平散列分区' ), "value": "hash" },
                      { "key": $scope.autoLanguage( '垂直分区' ), "value": "main" }         
                   ],
                   "onChange": function( name, key, value ){
-                     if( value == '' )
+                     if( value == 'normal' )
                      {
                         $scope.CreateTableWindow['config']['Form2'] = form2 ;
                      }
@@ -405,6 +405,7 @@
                      {
                         $scope.CreateTableWindow['config']['Form2'] = form5 ;
                      }
+                     $scope.CreateTableWindow['config']['Form2']['inputList'][0]['value'] = value ;
                   }
                },
                {
@@ -441,13 +442,13 @@
                   "type": "select",
                   "value": "range",
                   "valid": [
-                     { "key": $scope.autoLanguage( '普通' ), "value": "" },
+                     { "key": $scope.autoLanguage( '普通' ), "value": "normal" },
                      { "key": $scope.autoLanguage( '水平范围分区' ), "value": "range" },
                      { "key": $scope.autoLanguage( '水平散列分区' ), "value": "hash" },
                      { "key": $scope.autoLanguage( '垂直分区' ), "value": "main" }         
                   ],
                   "onChange": function( name, key, value ){
-                     if( value == '' )
+                     if( value == 'normal' )
                      {
                         $scope.CreateTableWindow['config']['Form2'] = form2 ;
                      }
@@ -463,6 +464,7 @@
                      {
                         $scope.CreateTableWindow['config']['Form2'] = form5 ;
                      }
+                     $scope.CreateTableWindow['config']['Form2']['inputList'][0]['value'] = value ;
                   }
                },
                {
@@ -545,13 +547,13 @@
                   "type": "select",
                   "value": "hash",
                   "valid": [
-                     { "key": $scope.autoLanguage( '普通' ), "value": "" },
+                     { "key": $scope.autoLanguage( '普通' ), "value": "normal" },
                      { "key": $scope.autoLanguage( '水平范围分区' ), "value": "range" },
                      { "key": $scope.autoLanguage( '水平散列分区' ), "value": "hash" },
                      { "key": $scope.autoLanguage( '垂直分区' ), "value": "main" }         
                   ],
                   "onChange": function( name, key, value ){
-                     if( value == '' )
+                     if( value == 'normal' )
                      {
                         $scope.CreateTableWindow['config']['Form2'] = form2 ;
                      }
@@ -567,6 +569,7 @@
                      {
                         $scope.CreateTableWindow['config']['Form2'] = form5 ;
                      }
+                     $scope.CreateTableWindow['config']['Form2']['inputList'][0]['value'] = value ;
                   }
                },
                {
@@ -671,13 +674,13 @@
                   "type": "select",
                   "value": "main",
                   "valid": [
-                     { "key": $scope.autoLanguage( '普通' ), "value": "" },
+                     { "key": $scope.autoLanguage( '普通' ), "value": "normal" },
                      { "key": $scope.autoLanguage( '水平范围分区' ), "value": "range" },
                      { "key": $scope.autoLanguage( '水平散列分区' ), "value": "hash" },
                      { "key": $scope.autoLanguage( '垂直分区' ), "value": "main" }         
                   ],
                   "onChange": function( name, key, value ){
-                     if( value == '' )
+                     if( value == 'normal' )
                      {
                         $scope.CreateTableWindow['config']['Form2'] = form2 ;
                      }
@@ -693,6 +696,7 @@
                      {
                         $scope.CreateTableWindow['config']['Form2'] = form5 ;
                      }
+                     $scope.CreateTableWindow['config']['Form2']['inputList'][0]['value'] = value ;
                   }
                },
                {
