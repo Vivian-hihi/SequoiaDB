@@ -7357,29 +7357,35 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbIsValid( sdbConnectionHandle cHandle, BOOLEAN *result )
+SDB_EXPORT BOOLEAN sdbIsClosed( sdbConnectionHandle cHandle )
 {
-   INT32 rc    = SDB_OK ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct *)cHandle ;
+   if ( NULL == connection || 
+        SDB_HANDLE_TYPE_CONNECTION != connection->_handleType )
+   {
+      return TRUE ;
+   }
+   
+   return NULL == connection->_sock ? TRUE : FALSE ;
+}
+
+SDB_EXPORT BOOLEAN sdbIsValid( sdbConnectionHandle cHandle )
+{
    INT32 ret   = SDB_OK ;
    SOCKET sock = 0 ;
    fd_set fds ;
-   struct timeval maxSelectTime = { 0, 1000 };
+   struct timeval maxSelectTime = { 0, 1000 }; // 1ms
    sdbConnectionStruct *connection = (sdbConnectionStruct *)cHandle ;
 
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-   // check argument
-   if ( !result )
+   if ( sdbIsClosed( cHandle ) )
    {
-      rc = SDB_INVALIDARG ;
-      goto error ;
+      return FALSE ;
    }
-
    sock = clientGetRawSocket ( connection->_sock ) ;
    // invalid sock
    if ( sock < 0 )
    {
-      *result = FALSE ;
-      goto done ;
+      return FALSE ;
    }
    while ( TRUE )
    {
@@ -7389,8 +7395,7 @@ SDB_EXPORT INT32 sdbIsValid( sdbConnectionHandle cHandle, BOOLEAN *result )
       // if = 0, time out, means connection is not closed
       if ( !ret )
       {
-         *result = TRUE ;
-         goto done ;
+         return TRUE ;
       }
       // if < 0, means something wrong
       else if ( ret < 0 )
@@ -7406,30 +7411,16 @@ SDB_EXPORT INT32 sdbIsValid( sdbConnectionHandle cHandle, BOOLEAN *result )
          {
             continue ;
          }
-         // else, we failed to select from socket
-         rc = SDB_NETWORK ;
-         goto error ;
-      }
-      // if > 0, it means we get a  disconnect packet from server
-      // check wether the return socket num is the one we interested
-      if ( FD_ISSET ( sock, &fds ) )
-      {
-
-         *result = FALSE ;
-         goto done ;
+         else // else, we failed to select from socket
+         {
+            return FALSE ;
+         }
       }
       else
       {
-          // it won't happen, because we noly have one socket in fds
-          rc = SDB_NETWORK ;
-          goto error ;
+         return TRUE ;
       }
-      break ;
-   }
-done :
-   return rc ;
-error :
-   goto done ;
+   } // while
 }
 
 SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,

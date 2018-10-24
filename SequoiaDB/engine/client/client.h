@@ -2266,13 +2266,19 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbGetSessionAttr ( sdbConnectionHandle cHandle,
                                      bson * result ) ;
 
-/** \fn INT32 sdbIsValid( sdbConnectionHandle cHandle, BOOLEAN *result )
-    \brief Judge whether the connection is valid.
-    \param [out] result the output result
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
+/** \fn BOOLEAN sdbIsClosed( sdbConnectionHandle cHandle )
+    \brief Judge whether the connection is closed or not.
+    \param [in] cHandle the connection handle.
+    \retval TRUE for connection is closed while FALSE for not.
 */
-SDB_EXPORT INT32 sdbIsValid( sdbConnectionHandle cHandle, BOOLEAN *result ) ;
+SDB_EXPORT BOOLEAN sdbIsClosed( sdbConnectionHandle cHandle ) ;
+
+/** \fn BOOLEAN sdbIsValid( sdbConnectionHandle cHandle )
+    \brief Judge whether the connection is valid.
+    \param [in] cHandle the connection handle.
+    \retval TRUE for connection is valid while FALSE for not.
+*/
+SDB_EXPORT BOOLEAN sdbIsValid( sdbConnectionHandle cHandle ) ;
 
 SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle, const CHAR *msg ) ;
 

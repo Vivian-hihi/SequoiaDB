@@ -9746,6 +9746,12 @@ error :
       return flag ;
    }
 
+   BOOLEAN _sdbImpl::isClosed()
+   {
+      return _sock == NULL ? TRUE : FALSE ;
+   }
+
+
    INT32 _sdbImpl::createDomain ( const CHAR *pDomainName,
                                   const bson::BSONObj &options,
                                   _sdbDomain **domain )

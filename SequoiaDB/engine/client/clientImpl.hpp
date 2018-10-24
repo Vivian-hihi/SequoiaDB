@@ -1417,6 +1417,7 @@ namespace sdbclient
       // connection is closed
       INT32 isValid( BOOLEAN *result ) ;
       BOOLEAN isValid() ;
+      BOOLEAN isClosed() ;
 
       // domain
       INT32 createDomain ( const CHAR *pDomainName,
