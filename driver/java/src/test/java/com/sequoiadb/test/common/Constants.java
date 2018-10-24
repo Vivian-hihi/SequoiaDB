@@ -7,8 +7,9 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
 public class Constants {
-    public final static int PORT = Integer.valueOf(TestConfig.getSinglePort());
     public final static String HOST = TestConfig.getSingleHost();
+    public final static int PORT = Integer.valueOf(TestConfig.getSinglePort());
+    //public final static String HOST = TestConfig.getSingleHost();
     public final static String DATA_HOST = TestConfig.getDataHost();
     public final static int DATA_PORT = TestConfig.getDataPort();
     public final static String BACKUPPATH = "/opt/sequoiadb/database/test/backup";

@@ -290,6 +290,7 @@ public class testCollectionSaveAndAs {
             }
 
         } catch (Exception e) {
+            e.printStackTrace();
             fail();
         }
     }

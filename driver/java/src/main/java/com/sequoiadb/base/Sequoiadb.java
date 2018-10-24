@@ -626,9 +626,6 @@ public class Sequoiadb implements Closeable {
         if (csName == null || csName.length() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, csName);
         }
-        if (isCollectionSpaceExist(csName)) {
-            throw new BaseException(SDBError.SDB_DMS_CS_EXIST, csName);
-        }
 
         BSONObject obj = new BasicBSONObject();
         obj.put(SdbConstants.FIELD_NAME_NAME, csName);
@@ -650,8 +647,8 @@ public class Sequoiadb implements Closeable {
      * @throws BaseException If error happens.
      */
     public void dropCollectionSpace(String csName) throws BaseException {
-        if (!isCollectionSpaceExist(csName)) {
-            throw new BaseException(SDBError.SDB_DMS_CS_NOTEXIST, csName);
+        if (csName == null || csName.isEmpty()) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "cs name can not be null or empty");
         }
 
         BSONObject options = new BasicBSONObject();
@@ -680,9 +677,6 @@ public class Sequoiadb implements Closeable {
     public void loadCollectionSpace(String csName, BSONObject options) throws BaseException {
         if (csName == null || csName.length() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, csName);
-        }
-        if (isCollectionSpaceExist(csName)) {
-            throw new BaseException(SDBError.SDB_DMS_CS_EXIST, csName);
         }
 
         BSONObject newOptions = new BasicBSONObject();
@@ -714,9 +708,6 @@ public class Sequoiadb implements Closeable {
     public void unloadCollectionSpace(String csName, BSONObject options) throws BaseException {
         if (csName == null || csName.length() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, csName);
-        }
-        if (!isCollectionSpaceExist(csName)) {
-            throw new BaseException(SDBError.SDB_DMS_CS_NOTEXIST, csName);
         }
 
         BSONObject newOptions = new BasicBSONObject();
@@ -864,20 +855,23 @@ public class Sequoiadb implements Closeable {
      * @return the object of the specified collection space, or an exception when the collection space does not exist.
      * @throws BaseException If error happens.
      */
-    public CollectionSpace getCollectionSpace(String csName)
-            throws BaseException {
+    public CollectionSpace getCollectionSpace(String csName) throws BaseException {
+        if (csName == null || csName.isEmpty()) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "cs name can not be null or empty");
+        }
         // get cs object from cache
         if (fetchCache(csName)) {
             return new CollectionSpace(this, csName);
         }
-        // get cs object from database
-        // we don't need to update or remove cache here,
-        // for "isCollectionSpaceExist" has do that
-        if (isCollectionSpaceExist(csName)) {
-            return new CollectionSpace(this, csName);
-        } else {
-            throw new BaseException(SDBError.SDB_DMS_CS_NOTEXIST, csName);
-        }
+
+        BSONObject options = new BasicBSONObject();
+        options.put(SdbConstants.FIELD_NAME_NAME, csName);
+
+        AdminRequest request = new AdminRequest(AdminCommand.TEST_CS, options);
+        SdbReply response = requestAndResponse(request);
+        throwIfError(response, csName);
+        upsertCache(csName);
+        return new CollectionSpace(this, csName);
     }
 
     /**
@@ -888,6 +882,10 @@ public class Sequoiadb implements Closeable {
      * @throws BaseException If error happens.
      */
     public boolean isCollectionSpaceExist(String csName) throws BaseException {
+        if (csName == null || csName.isEmpty()) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "cs name can not be null or empty");
+        }
+
         BSONObject options = new BasicBSONObject();
         options.put(SdbConstants.FIELD_NAME_NAME, csName);
 
@@ -1833,11 +1831,9 @@ public class Sequoiadb implements Closeable {
      * @throws BaseException If error happens.
      */
     public Domain createDomain(String domainName, BSONObject options) throws BaseException {
-        if (null == domainName || domainName.equals("")) {
+        if (domainName == null || domainName.equals("")) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "domain name is empty or null");
         }
-        if (isDomainExist(domainName))
-            throw new BaseException(SDBError.SDB_CAT_DOMAIN_EXIST, domainName);
 
         BSONObject newObj = new BasicBSONObject();
         newObj.put(SdbConstants.FIELD_NAME_NAME, domainName);

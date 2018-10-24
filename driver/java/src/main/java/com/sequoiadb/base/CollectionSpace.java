@@ -67,21 +67,20 @@ public class CollectionSpace {
      * @return the object of the specified collection, or an exception when the collection does not exist.
      * @throws BaseException If error happens.
      */
-    public DBCollection getCollection(String collectionName)
-            throws BaseException {
+    public DBCollection getCollection(String collectionName) throws BaseException {
         // get cl from cache
         String collectionFullName = name + "." + collectionName;
         if (sequoiadb.fetchCache(collectionFullName)) {
             return new DBCollection(sequoiadb, this, collectionName);
         }
-
-        // no need to upsert/remove cache here,
-        // for "isCollectionExist" has do that
-        if (isCollectionExist(collectionName)) {
-            return new DBCollection(sequoiadb, this, collectionName);
-        } else {
-            throw new BaseException(SDBError.SDB_DMS_NOTEXIST, collectionName);
-        }
+        // create cl and then update cache
+        BSONObject obj = new BasicBSONObject();
+        obj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
+        AdminRequest request = new AdminRequest(AdminCommand.TEST_CL, obj);
+        SdbReply response = sequoiadb.requestAndResponse(request);
+        sequoiadb.throwIfError(response);
+        sequoiadb.upsertCache(collectionFullName);
+        return new DBCollection(sequoiadb, this, collectionName);
     }
 
     /**
@@ -154,14 +153,8 @@ public class CollectionSpace {
      * @return the newly created object of collection
      * @throws BaseException Tf error happens.
      */
-    public DBCollection createCollection(String collectionName,
-                                         BSONObject options) {
-        if (isCollectionExist(collectionName)) {
-            throw new BaseException(SDBError.SDB_DMS_EXIST, collectionName);
-        }
-
+    public DBCollection createCollection(String collectionName, BSONObject options) {
         String collectionFullName = name + "." + collectionName;
-
         BSONObject obj = new BasicBSONObject();
         obj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
         if (options != null) {
@@ -194,12 +187,7 @@ public class CollectionSpace {
      * @throws BaseException If error happens.
      */
     public void dropCollection(String collectionName) throws BaseException {
-        if (!isCollectionExist(collectionName)) {
-            throw new BaseException(SDBError.SDB_DMS_NOTEXIST, collectionName);
-        }
-
         String collectionFullName = name + "." + collectionName;
-
         BSONObject obj = new BasicBSONObject();
         obj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
 
