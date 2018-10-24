@@ -109,6 +109,19 @@ function _relationWithSequoiaDB( PD_LOGGER )
    installPath = fromBuzConfig[FIELD_INSTALL_PATH] ;
    exec        = installPath + '/bin/sdb_mysql_ctl' ;
 
+   //set PATH
+   //export PATH=$LD_LIBRARY_PATH:/opt/sequoiasql/mysql/bin
+   var libraryCmd = 'export PATH=$PATH:' ;
+   libraryCmd += installPath + '/bin ;' ;
+   exec = libraryCmd + exec ;
+
+
+   //set LD_LIBRARY_PATH
+   //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiasql/mysql/lib
+   var libraryCmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:' ;
+   libraryCmd += installPath + '/lib ;' ;
+   exec = libraryCmd + exec ;
+
    //get coord or standalone address
    address = [] ;
    for( var index in toBuzConfig )
