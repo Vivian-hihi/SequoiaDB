@@ -835,6 +835,9 @@ TEST(sdb, sdbCloseAllCursors_cursor_close_first)
    rc = sdbCloseAllCursors( connection );
    CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbCloseAllCursors( connection );
+   CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    // check
    bson_init ( &obj ) ;
    rc = sdbCurrent( cursor, &obj ) ; // getCurrent in cursor, expect -31
@@ -875,7 +878,7 @@ TEST(sdb, sdbCloseAllCursors_cursor_close_first)
    sdbReleaseConnection ( connection ) ;
 }
 
-TEST(sdb, sdbIsClose)
+TEST(sdb, sdbIsClosed)
 {
    sdbConnectionHandle connection  = 0 ;
    sdbConnectionHandle connection1 = 0 ;
@@ -892,10 +895,13 @@ TEST(sdb, sdbIsClose)
    bson record ;
    rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( TRUE, sdbIsClosed( connection ) ) ;
    // connect to database
    rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
    rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection1 ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( FALSE, sdbIsClosed( connection ) ) ;
+   ASSERT_EQ( TRUE, sdbIsValid( connection ) ) ;
    // get cs
    rc = getCollectionSpace ( connection,
                              COLLECTION_SPACE_NAME,
@@ -905,29 +911,28 @@ TEST(sdb, sdbIsClose)
    // scene 1
    // test when we get nornal business packet back from server,
    // wether sdbIsValid() return false. if so, it means error
-   rc = sdbIsValid( connection, &result );
-   CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
-   ASSERT_EQ ( SDB_OK, rc ) ;
+   result = sdbIsValid( connection );
    std::cout << "before close connection, result is " << result << std::endl ;
    ASSERT_EQ( TRUE, result ) ;
 
    // scene 2
    // test close connection manually
    result = FALSE ;
-   rc = sdbIsValid( connection, &result );
-   CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
-   ASSERT_EQ ( SDB_OK, rc ) ;
+   result = sdbIsValid( connection );
    std::cout << "after close connection manually, result is " << result << std::endl ;
    ASSERT_EQ( TRUE, result ) ;
 
    // scene 3
    // test close after disconnect
    sdbDisconnect ( connection ) ;
-   rc = sdbIsValid( connection, &result );
-   CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
-   ASSERT_EQ ( SDB_OK, rc ) ;
+   result = TRUE ;
+   result = sdbIsValid( connection );
    std::cout << "after close connection, result is " << result << std::endl ;
    ASSERT_EQ ( FALSE, result ) ;
+   result = FALSE ;
+   result = sdbIsClosed( connection ) ;
+   ASSERT_EQ ( TRUE, result ) ;
+   
    sdbDisconnect( connection ) ;
    sdbReleaseCS ( cs ) ;
    sdbReleaseConnection ( connection ) ;

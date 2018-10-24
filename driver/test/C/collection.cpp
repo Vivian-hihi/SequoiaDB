@@ -1616,13 +1616,13 @@ TEST(collection, sdbIsClose)
                              &cs ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    // TO DO:
-   rc = sdbIsValid( connection, &result );
+   result = sdbIsValid( connection );
    CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
    ASSERT_EQ ( SDB_OK, rc ) ;
    std::cout << "before close connection, result is " << result << std::endl ;
    ASSERT_EQ ( TRUE, result ) ;
    sdbDisconnect ( connection ) ;
-   rc = sdbIsValid( connection, &result );
+   result = sdbIsValid( connection );
    CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
    ASSERT_EQ ( SDB_OK, rc ) ;
    std::cout << "after close connection, result is " << result << std::endl ;
