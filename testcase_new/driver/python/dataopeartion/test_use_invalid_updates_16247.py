@@ -11,8 +11,7 @@ class TestUseInvalidUpdates16247(testlib.SdbTestBase):
    def setUp(self):
       testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
       self.cs = self.db.create_collection_space(self.cs_name)
-      
-		 
+      	 
    def test_use_invalid_updates_16247(self):
       data_rg_name = "data16247"
 	
