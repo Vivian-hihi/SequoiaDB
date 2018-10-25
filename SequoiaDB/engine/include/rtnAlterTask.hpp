@@ -493,6 +493,10 @@ namespace engine
          {
             return _maxValue ;
          }
+         OSS_INLINE INT64 getCurrentValue () const
+         {
+            return _currentValue ;
+         }
          OSS_INLINE INT32 getCacheSize () const
          {
             return _cacheSize ;
@@ -535,6 +539,10 @@ namespace engine
          OSS_INLINE void setMaxValue ( INT64 maxValue )
          {
             _maxValue = maxValue ;
+         }
+         OSS_INLINE void setCurrentValue ( INT64 currentValue )
+         {
+            _currentValue = currentValue ;
          }
          OSS_INLINE void setCacheSize ( INT32 cacheSize )
          {
@@ -593,6 +601,7 @@ namespace engine
          bson::OID      _id ;
          INT32          _increment ;      // increament value
          INT64          _startValue ;     // start value
+         INT64          _currentValue ;   // current value
          INT64          _minValue ;       // minimum value
          INT64          _maxValue ;       // maxinum value
          INT32          _cacheSize ;      // cache size in Catalog

@@ -805,6 +805,7 @@ namespace engine
    _rtnCLAutoincFieldArgument::_rtnCLAutoincFieldArgument(const BSONObj & argument )
    : _increment(1),
      _startValue(1),
+     _currentValue(1),
      _minValue(1),
      _maxValue(OSS_SINT64_MAX),
      _cacheSize(1000),
@@ -826,6 +827,7 @@ namespace engine
       _fieldName = argument._fieldName;
       _increment = argument._increment;
       _startValue = argument._startValue;
+      _currentValue = argument._currentValue;
       _minValue = argument._minValue;
       _maxValue = argument._maxValue;
       _cacheSize = argument._cacheSize;
@@ -845,7 +847,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNCLAUTOINCFIELDARG_PARSEARG ) ;
 
       BSONElement argElement ;
-      std::string fieldName ;
 
       PD_CHECK( _argument.hasField( FIELD_NAME_AUTOINC_FIELD ), SDB_INVALIDARG, error, PDERROR,
                "Failed to get field [%s]", FIELD_NAME_AUTOINC_FIELD ) ;
@@ -890,6 +891,15 @@ namespace engine
                   "Failed to get field [%s]", FIELD_NAME_MAX_VALUE ) ;
          setMaxValue( argElement.numberLong() );
          parsedArgumentMask( UTIL_CL_AUTOINC_MAXVALUE_FIELD ) ;
+      }
+
+      if( _argument.hasField( FIELD_NAME_CURRENT_VALUE ) )
+      {
+         argElement = _argument.getField( FIELD_NAME_CURRENT_VALUE ) ;
+         PD_CHECK( argElement.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                  "Failed to get field [%s]", FIELD_NAME_CURRENT_VALUE ) ;
+         setCurrentValue( argElement.numberLong() );
+         parsedArgumentMask( UTIL_CL_AUTOINC_CURVALUE_FIELD ) ;
       }
 
       if( _argument.hasField( FIELD_NAME_CACHE_SIZE ) )
@@ -1038,7 +1048,7 @@ namespace engine
       _rtnCLDropAutoincFieldTask implement
     */
    _rtnCLDropAutoincFieldTask::_rtnCLDropAutoincFieldTask ( const rtnAlterTaskSchema & schema,
-                                                                     const bson::BSONObj & argument )
+                                                            const bson::BSONObj & argument )
    : _rtnAlterCLTask( schema, argument )
    {
    }
@@ -1060,7 +1070,6 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__RTNCLCREATEAUTOINCFIELDTASK_PARSEARG ) ;
 
-      std::string fieldName ;
       BSONElement autoIncEle ;
       BSONObj autoIncObject ;
       vector<BSONElement> eleArray ;
@@ -1083,7 +1092,9 @@ namespace engine
 
             rc = autoIncField->parseArgument() ;
             PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
-
+            PD_CHECK( autoIncField->getArgumentCount() == 1, SDB_INVALIDARG, error,
+                  PDERROR, "Failed to parse argument: contain unknown fields[%s]",
+                  _argument.toString( false, false ).c_str() ) ;
             _autoIncFieldList.push_back( autoIncField ) ;
          }
          else if( autoIncEle.type() == bson::Array )
@@ -1100,7 +1111,9 @@ namespace engine
                          "Failed to allocate autoincrement field argument" ) ;
                rc = autoIncField->parseArgument() ;
                PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
-
+               PD_CHECK( autoIncField->getArgumentCount() == 1, SDB_INVALIDARG, error,
+                     PDERROR, "Failed to parse argument: contain unknown fields[%s]",
+                     _argument.toString( false, false ).c_str() ) ;
                _autoIncFieldList.push_back( autoIncField ) ;
             }
          }
