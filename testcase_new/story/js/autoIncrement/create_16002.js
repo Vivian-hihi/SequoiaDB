@@ -1,0 +1,71 @@
+/***************************************************************************
+@Description :seqDB-16002 :创建集合时，指定catalog一次缓存序列数创建自增字段 
+@Modify list :
+              2018-10-24  zhaoyu  Create
+****************************************************************************/
+function main()
+{
+   if(commIsStandalone( db ))
+   {
+      println("Deploy is standalone");
+	  return;
+   }
+   
+   var clName = COMMCLNAME + "_16002";   
+   commDropCL(db, COMMCSNAME, clName, true, true);
+  
+   var increment = -2;
+   var cacheSize = 2147483647;
+   var acquireSize = 1;
+   var fieldName = "id";
+   var minValue = -2147483647;
+   var maxValue = 2147483647;
+   var startValue = 0;
+   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, {AutoIncrement:{Field:fieldName,Increment:increment, CacheSize:cacheSize, AcquireSize:acquireSize, MinValue:minValue, MaxValue:maxValue, StartValue: startValue}});
+   
+   var clID = getCLID(COMMCSNAME, clName);
+   var clSequenceName = "SYS_" + clID + "_" + fieldName + "_SEQ";
+   var expArr = [{Field:fieldName, SequenceName:clSequenceName}];
+   checkAutoIncrementonCL(COMMCSNAME, clName, expArr);
+   println("---check autoIncrement success");
+   
+   var expObj = {Increment:increment, CacheSize:cacheSize, AcquireSize:acquireSize, CurrentValue:startValue, MinValue:minValue, MaxValue:maxValue, StartValue: startValue};
+   checkSequence(clSequenceName, expObj);
+   println("---check sequence success");
+   
+   var doc = [];
+   var expR = [];
+   for(var i=0; i<2000; i++)
+   {
+      doc.push({a:i});
+      expR.push({a:i, id:startValue + increment *i});
+   }
+   dbcl.insert(doc);
+   
+   var actR = dbcl.find().sort({_id:1});
+   checkRec(actR, expR);
+   println("---check insert when set cacheSize success");
+   
+   dbcl.dropAutoIncrement({Field: fieldName});
+   var increment = -3;
+   var cacheSize = 2147483647;
+   var acquireSize = 1;
+   var fieldName = "id";
+   var minValue = -2147483647;
+   var maxValue = 2147483647;
+   var startValue = 0;
+   try
+   {
+      dbcl.createAutoIncrement({Field: fieldName, Increment:increment, CacheSize:cacheSize, AcquireSize:acquireSize, MinValue:minValue, MaxValue:maxValue, StartValue: startValue});
+      throw "NEED_CREATE_ERR";
+   }catch(e)
+   {
+      if(-6 !== e)
+      {
+         throw e;
+      }
+   }
+   
+   commDropCL(db, COMMCSNAME, clName, true, true);
+}
+main()

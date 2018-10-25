@@ -71,5 +71,7 @@ function main()
    checkRec(actR, expR);
    println("---check insert when set increment = -2147483647 success");
    
+   commDropCL(db, COMMCSNAME, clName, true, true);
+   
 }
 main()

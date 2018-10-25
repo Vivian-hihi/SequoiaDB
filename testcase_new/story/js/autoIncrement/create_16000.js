@@ -104,5 +104,6 @@ function main()
    checkRec(actR, expR);
    println("---check insert when set startValue = 0 success");
    
+   commDropCL(db, COMMCSNAME, clName, true, true);
 }
 main()

@@ -1,0 +1,84 @@
+﻿/***************************************************************************
+@Description :seqDB-16005 :创建集合时，创建自增字段允许循环
+@Modify list :
+              2018-10-25  zhaoyu  Create
+****************************************************************************/
+function main()
+{
+   var coordNodes = getCoordNodeNames();
+   var coordNum = coordNodes.length;
+   if(commIsStandalone( db ) || coordNum !==3)
+   {
+      println("Deploy is standalone or coord num !=3");
+	  return;
+   };
+   
+   var clName = COMMCLNAME + "_16005";   
+   commDropCL(db, COMMCSNAME, clName, true, true);
+   
+   var increment = 13;
+   var acquireSize = 11;
+   var cacheSize = 33;
+   var minValue = -1333;
+   var maxValue = 13001;
+   var cycled = true;
+   var fieldName = "id";
+   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, {AutoIncrement:{Field:fieldName, CacheSize:cacheSize, AcquireSize:acquireSize, Increment:increment, MinValue:minValue, MaxValue:maxValue, Cycled:cycled}});
+   
+   var expR = [];
+   for(var i=0; i<1001; i++)
+   {
+      dbcl.insert({a:i});
+      expR.push({a:i, id:1 + increment *i});
+   }
+   
+   var actR = dbcl.find().sort({_id:1});
+   checkRec(actR, expR);
+   println("---check insert when set Increment>0 success");
+   
+   for(var k=0; k<coordNum; k++ )
+   {
+      var coord = new Sdb(coordNodes[k]);
+      println("coord:" + coord);
+      var cl = coord.getCS(COMMCSNAME).getCL(clName);
+      cl.insert({a:"insert"});
+      expR.push({a:"insert", id:minValue + k*acquireSize*increment});
+      coord.close();
+   }
+   var actR = dbcl.find().sort({_id:1});
+   checkRec(actR, expR);
+   println("---check insert when Sequence is exceeded success");
+   
+   dbcl.dropAutoIncrement({Field:fieldName});
+   var increment = -13;
+   var acquireSize = 11;
+   var cacheSize = 33;
+   var minValue = -13001;
+   var maxValue = 0;
+   dbcl.createAutoIncrement({Field: fieldName, CacheSize:cacheSize, AcquireSize:acquireSize, Increment:increment, MinValue:minValue, MaxValue:maxValue, Cycled:cycled});
+   for(var i=0; i<1001; i++)
+   {
+      dbcl.insert({a:i});
+      expR.push({a:i, id:-1 + increment *i});
+   }
+   
+   var actR = dbcl.find().sort({_id:1});
+   checkRec(actR, expR);
+   println("---check insert when set Increment<0 success");
+   
+   for(var k=0; k<coordNum; k++ )
+   {
+      var coord = new Sdb(coordNodes[k]);
+      println("coord:" + coord);
+      var cl = coord.getCS(COMMCSNAME).getCL(clName);
+      cl.insert({a:"insert"});
+      expR.push({a:"insert", id:maxValue + k*acquireSize*increment});
+      coord.close();
+   }
+   var actR = dbcl.find().sort({_id:1});
+   checkRec(actR, expR);
+   println("---check insert when Sequence is exceeded success");
+   
+   commDropCL(db, COMMCSNAME, clName, true, true);
+}
+main()

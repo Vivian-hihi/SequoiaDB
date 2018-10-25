@@ -145,9 +145,18 @@ function checkRec( rc, expRecs )
 *******************************************************************************/
 function getCoordNodeNames()
 {
-   var rg = db.getCoordRG();
-   var details = rg.getDetail();
    var nodeNames = new Array();
+   try{
+      var rg = db.getCoordRG();
+   }catch(e)
+   {
+      if ( e == -159 )
+      {
+         return nodeNames ;
+      }
+   }
+   
+   var details = rg.getDetail();
    while(details.next())
    {
       var groups = details.current().toObj().Group;

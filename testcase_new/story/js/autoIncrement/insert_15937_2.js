@@ -32,7 +32,6 @@ function main()
       for(var k=0; k<coordNum; k++ )
       {
          var coord = new Sdb(coordNodes[k]);
-         //coord.invalidateCache();
          var cl = coord.getCS(COMMCSNAME).getCL(clName);
          var doc = [];
          for(var i=1; i<6; i++)
