@@ -1848,6 +1848,26 @@ namespace DriverTest
 
         }
 
+        [TestMethod]
+        public void InsertRecordWithFlagTest()
+        {
+            BsonDocument record = new BsonDocument();
+            record.Add("_id",1);
+            record.Add("a",1);
+
+            coll.Insert(record, SDBConst.FLG_INSERT_CONTONDUP);
+            coll.Insert(record, SDBConst.FLG_INSERT_CONTONDUP);
+            try
+            {
+                coll.Insert(record, 0);
+            }
+            catch (BaseException e)
+            {
+                Assert.AreEqual("SDB_IXM_DUP_KEY", e.ErrorType);
+            }
+
+        }
+
 
     }
 }

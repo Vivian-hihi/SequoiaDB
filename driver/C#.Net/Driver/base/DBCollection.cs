@@ -305,14 +305,25 @@ namespace SequoiaDB
 
         /** \fn BsonValue Insert(BsonDocument record)
          *  \brief Insert a document into current collection
-         *  \param insertor The Bson document of insertor, can't be null
+         *  \param insertor The Bson document of insertor, can't be null.
+         *  \param flag The flag to control the behavior of inserting. The
+         *              value of flags default to be 0, and it can choose
+         *              the follow values:
+         *
+         *              0:                    while 0 is set(default to be 0), database 
+         *                                    will stop inserting when the record hit 
+         *                                    index key duplicate error.
+         *              SDBConst.FLG_INSERT_CONTONDUP: if the record hit index key duplicate
+         *                                    error, database will skip them and go on 
+         *                                    inserting.
+         *
          *  \return Return the value of field "_id" in "insertor". If "insertor" has no field "_id",
          *          API will add one and return the value which type is ObjectId, so we can get the 
          *          return value by BsonValue::AsObjectId property.
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public BsonValue Insert(BsonDocument record) 
+        public BsonValue Insert(BsonDocument record, int flag) 
         {
             if (record == null)
             {
@@ -338,8 +349,22 @@ namespace SequoiaDB
             }
             List<BsonDocument> list = new List<BsonDocument>(1);
             list.Add(record);
-            BulkInsert(list, 0);
+            BulkInsert(list, flag);
             return retVal;
+        }
+
+        /** \fn BsonValue Insert(BsonDocument record)
+         *  \brief Insert a document into current collection
+         *  \param insertor The Bson document of insertor, can't be null.
+         *  \return Return the value of field "_id" in "insertor". If "insertor" has no field "_id",
+         *          API will add one and return the value which type is ObjectId, so we can get the 
+         *          return value by BsonValue::AsObjectId property.
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public BsonValue Insert(BsonDocument record)
+        {
+            return Insert(record, 0);
         }
 
         /** \fn void BulkInsert(List<BsonDocument> records, int flag)
