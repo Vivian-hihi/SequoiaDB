@@ -74,6 +74,7 @@ function main()
    
    //检查主备同步
    checkConsistency(db, csName, clName);
+   checkIndexExistsInAllNodes(csName, clName, "$id");
    
    checkStat( db, csName, clName, "$id", true, false );
    checkStat( db, csName, clName, "a", true, false );
@@ -111,6 +112,7 @@ function main()
    
    //检查主备同步
    checkConsistency(db, csName, clName);
+   checkIndexExistsInAllNodes(csName, clName, "a");
    
    checkStat( db, csName, clName, "$id", true, false );
    checkStat( db, csName, clName, "a", true, false );
@@ -256,4 +258,3 @@ function dropIdIndex( dbcl )
    }
 }
 main();
-

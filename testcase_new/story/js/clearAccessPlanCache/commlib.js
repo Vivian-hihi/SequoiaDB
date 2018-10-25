@@ -989,3 +989,54 @@ function split( csName, clName, srcGroupName, desGroupName, startCondition, endC
       throw e;
    }
 }
+
+/************************************
+*@Description: check index in all nodes 
+*@author:      liuxiaoxuan
+*@createdate:  2018.10.25
+**************************************/
+function checkIndexExistsInAllNodes(csName, clName, indexName)
+{
+   //the longest waiting time is 300s
+   var timeout = 300;
+   var doTimes = 0;
+   var interval = 1; //interval 1s
+  
+   var groups = commGetCLGroups( db, csName + "." + clName );
+   var datas = getNodesInGroups(db, groups);
+   while(true)
+   {
+      for(var i in datas)
+      {
+         var nodesInGroup = datas[i];
+         for(var j in nodesInGroup)
+         {
+            try
+            {
+               var dbcl = nodesInGroup[j].getCS(csName).getCL(clName);
+               var rec = dbcl.getIndex(indexName);  
+               if(indexName == rec.toObj().IndexDef.name)            
+               {
+                  continue; 
+               } 
+            }
+            catch(e)
+            {
+               if(doTimes * interval < timeout)
+               {
+                  doTimes+=1;
+                  // interval 1s each time
+                  sleep(1000);
+                  println('check index times: ' + doTimes);
+               }
+               else
+               {
+                  throw "check Index name synchronization time out";
+               }
+            }	       
+         }      
+      } 
+      println('check index name synchronization success'); 
+      break; 
+   }
+}
