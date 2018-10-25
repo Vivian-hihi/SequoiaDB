@@ -221,26 +221,24 @@ PHP_METHOD( SequoiaDB, close )
 
 PHP_METHOD( SequoiaDB, isValid )
 {
-   INT32 rc = SDB_OK ;
    BOOLEAN result = FALSE ;
    zval *pThisObj = getThis() ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
+
    PHP_SET_ERRNO_OK( TRUE, pThisObj ) ;
+
    PHP_READ_HANDLE( pThisObj,
                     connection,
                     sdbConnectionHandle,
                     SDB_HANDLE_NAME,
                     connectionDesc ) ;
-   rc = sdbIsValid( connection, &result ) ;
-   if( rc )
-   {
-      goto error ;
-   }
+
+   result = sdbIsValid( connection ) ;
+
 done:
    RETVAL_BOOL( result ) ;
    return ;
 error:
-   PHP_SET_ERROR( TRUE, pThisObj, rc ) ;
    goto done ;
 }
 
