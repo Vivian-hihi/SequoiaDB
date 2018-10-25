@@ -67,15 +67,25 @@ namespace SequoiaDB
          */
         public DBCollection GetCollection(string collectionName)
         {
-            // get cl from cache
+            if (collectionName == null || collectionName.Length == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.TEST_CMD + " "
+                             + SequoiadbConstants.COLLECTION;
+            BsonDocument condition = new BsonDocument();
+            BsonDocument dummyObj = new BsonDocument();
             string fullName = this.Name + "." + collectionName;
-            if (sdb.FetchCache(fullName))
-                return new DBCollection(this, collectionName);
-            // get cl from database
-            if (IsCollectionExist(collectionName))
-                return new DBCollection(this, collectionName);
-            else
-                throw new BaseException("SDB_DMS_NOTEXIST");
+            condition.Add(SequoiadbConstants.FIELD_NAME, fullName);
+            SDBMessage rtn = AdminCommand(command, condition, dummyObj, dummyObj, dummyObj);
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags, rtn.ErrorObject);
+            }
+
+            sdb.UpsertCache(fullName);
+            return new DBCollection(this, collectionName);
         }
 
         /** \fn bool IsCollectionExist(string colName)
@@ -87,6 +97,10 @@ namespace SequoiaDB
          */
         public bool IsCollectionExist(string colName)
         {
+            if (colName == null || colName.Length == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
             string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.TEST_CMD + " "
                              + SequoiadbConstants.COLLECTION;
             BsonDocument condition = new BsonDocument();

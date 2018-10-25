@@ -1163,5 +1163,31 @@ namespace DriverTest
 
 
         }
+
+        [TestMethod]
+        public void Exception_Test()
+        {
+            string csName = "exception_test";
+            try
+            {
+                CollectionSpace cs = sdb.GetCollecitonSpace(csName);
+            }
+            catch (BaseException e)
+            {
+                BsonDocument errobj = e.ErrorObject;
+                Console.WriteLine("error obj is: {0}", errobj.ToString());
+            }
+
+            string clName = "exception_test";
+            try
+            {
+                DBCollection cl = cs.GetCollection(clName);
+            }
+            catch (BaseException e)
+            {
+                BsonDocument errobj = e.ErrorObject;
+                Console.WriteLine("error obj is: {0}", errobj.ToString());
+            }
+        }
     }
 }

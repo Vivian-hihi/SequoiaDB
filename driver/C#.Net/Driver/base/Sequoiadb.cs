@@ -639,14 +639,23 @@ namespace SequoiaDB
             }
             // create cs from cache
             if (FetchCache(csName))
+            {
                 return new CollectionSpace(this, csName);
-            // create cs from database
-            // we don't need to update or remove cache here,
-            // for "isCollectionSpaceExist" has do that
-            if (IsCollectionSpaceExist(csName))
-                return new CollectionSpace(this, csName);
-            else
-                throw new BaseException("SDB_DMS_CS_NOTEXIST") ;
+            }
+            // get cs
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.TEST_CMD + " "
+                             + SequoiadbConstants.COLSPACE;
+            BsonDocument condition = new BsonDocument();
+            BsonDocument dummyObj = new BsonDocument();
+            condition.Add(SequoiadbConstants.FIELD_NAME, csName);
+            SDBMessage rtn = AdminCommand(command, condition, dummyObj, dummyObj, dummyObj);
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags, rtn.ErrorObject);
+            }
+            UpsertCache(csName);
+            return new CollectionSpace(this, csName);
         }
 
         /** \fn bool IsCollectionSpaceExist(string csName)
