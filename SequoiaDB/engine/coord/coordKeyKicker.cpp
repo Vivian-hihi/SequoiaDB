@@ -99,6 +99,7 @@ namespace engine
    }
 
    /// kick sharding key and auto-increment key of a cl
+   /// we always kick sharding key, but kick auto-increment key only when $replace
    INT32 _coordKeyKicker::_kickKey( const CoordCataInfoPtr &cataInfo,
                                     const BSONObj &updator,
                                     BSONObj &newUpdator,
@@ -113,10 +114,11 @@ namespace engine
       {
          /// if is the same sharding key
          map< UINT32, BOOLEAN >::iterator it = _skSiteIDs.find( skSiteID );
-         if ( it != _skSiteIDs.end() )
+         if ( it != _skSiteIDs.end() && ignoreAutoInc )
          {
             newUpdator = updator ;
             hasShardingKey = it->second ;
+            hasReplaceAutoInc = FALSE ;
             goto done ;
          }
       }
@@ -130,7 +132,10 @@ namespace engine
 
          BOOLEAN isReplace = _isUpdateReplace( updator ) ;
          cataInfo->getShardingKey( boShardingKey ) ;
-         boAutoIncKey = _getAutoIncKeyObj( cataInfo->getAutoIncFields() ) ;
+         if ( !ignoreAutoInc )
+            boAutoIncKey = _getAutoIncKeyObj( cataInfo->getAutoIncFields() ) ;
+         else
+            boAutoIncKey = BSONObj() ;
 
          BSONObjIterator iter( updator ) ;
          while ( iter.more() )
@@ -161,17 +166,19 @@ namespace engine
             {
                BSONElement beField = iterField.next() ;
                const CHAR *pField = beField.fieldName() ;
+               BOOLEAN skip = FALSE ;
 
                if ( _isKey( pField, boShardingKey ) )
                {
                   hasShardingKey = TRUE;
+                  skip = TRUE ;
                }
-               else if ( isReplace && !ignoreAutoInc &&
-                         _isKey( pField, boAutoIncKey ) )
+               if ( isReplace && _isKey( pField, boAutoIncKey ) )
                {
                   hasReplaceAutoInc = TRUE ;
+                  skip = TRUE ;
                }
-               else
+               if ( !skip )
                {
                   subBuilder.append( beField ) ;
                }
@@ -189,13 +196,10 @@ namespace engine
                hasShardingKey = TRUE ;
             }
 
-            if ( !ignoreAutoInc )
+            count = _addKeys( boAutoIncKey ) ;
+            if ( count > 0 )
             {
-               count = _addKeys( boAutoIncKey ) ;
-               if ( count > 0 )
-               {
-                  hasReplaceAutoInc = TRUE ;
-               }
+               hasReplaceAutoInc = TRUE ;
             }
 
             if ( !_setKeys.empty() )
@@ -520,32 +524,8 @@ namespace engine
             while( iterField.more() )
             {
                BSONElement beField = iterField.next() ;
-               BSONObjIterator iterKey( boShardingKey ) ;
-               BOOLEAN isKey = FALSE ;
-               while( iterKey.more() )
-               {
-                  BSONElement beKey = iterKey.next() ;
-                  const CHAR *pKey = beKey.fieldName() ;
-                  const CHAR *pField = beField.fieldName() ;
-                  while( *pKey == *pField && *pKey != '\0' )
-                  {
-                     ++pKey ;
-                     ++pField ;
-                  }
-
-                  // shardingkey_fieldName == updator_fieldName
-                  /// key: { a:1 }  field : { a:1 } or { "a.b":1 }
-                  /// key: { "a.b":1 } field: { a:1 } or { "a.b":1 } or
-                  ///                         { "a.b.c":1 }
-                  if ( *pKey == *pField ||
-                       ( '\0' == *pKey && '.' == *pField ) ||
-                       ( '.' == *pKey && '\0' == *pField ) )
-                  {
-                     isKey = TRUE ;
-                     break ;
-                  }
-               }
-               if ( isKey )
+               const CHAR *pField = beField.fieldName() ;
+               if ( _isKey( pField, boShardingKey ) )
                {
                   hasInclude = TRUE ;
                   goto done ;

@@ -4713,7 +4713,7 @@ namespace engine
          vector<BSONObj>      autoIncArr ;
          BSONObj              autoIncObj ;
          vector<BSONObj>      newAutoIncArr ;
-         string               fieldName ;
+         const CHAR           *fieldName ;
 
          clUniqueID = clInfo._clUniqueID ;
          autoIncArr = clInfo._autoIncrement ;
@@ -4723,7 +4723,7 @@ namespace engine
             BSONObjBuilder builder ;
 
             autoIncObj = autoIncArr[i] ;
-            fieldName = autoIncObj.getField( CAT_AUTOINC_FIELD ).String() ;
+            fieldName = autoIncObj.getField( CAT_AUTOINC_FIELD ).valuestr() ;
 
             builder.append( CAT_AUTOINC_FIELD, fieldName ) ;
             builder.append( CAT_AUTOINC_SEQ,
@@ -4754,7 +4754,7 @@ namespace engine
 
    string catGetSeqName4AutoIncFld( const utilCLUniqueID id, const string fldName )
    {
-      stringstream   seqNameStream ;
+      stringstream seqNameStream ;
       seqNameStream.str("") ;
       seqNameStream << "SYS_" << id << "_" << fldName << "_SEQ" ;
       return seqNameStream.str() ;
@@ -5011,20 +5011,24 @@ namespace engine
 
       INT32          rc = SDB_OK ;
       BSONElement    fieldEle ;
-      string         fieldStr ;
-      string         shortStr ;
-      string         longStr ;
+      const CHAR     *pField = NULL ;
+      const CHAR     *pLast = NULL ;
+      const CHAR     *pShort = NULL ;
+      const CHAR     *pLong = NULL ;
       BSONElement    generatedEle ;
-      string         generatedStr ;
-      vector<string> fieldStrArr ;
-      vector<string>::iterator it ;
+      const CHAR     *pGenStr = NULL ;
+      vector<const CHAR*> fieldArr ;
+      vector<const CHAR*>::iterator it ;
       UINT64         i = 0 ;
       BSONObj        obj ;
       BSONObj        seqOpt ;
-      UINT64         start = 0 ;
-      UINT64         end = 0 ;
-      string         tmpStr ;
+      const CHAR     *pChr = NULL ;
+      const CHAR     *pStart = NULL ;
+      const CHAR     *pEnd = NULL ;
+      INT32          shortLen = 0 ;
       BOOLEAN        isParentChild = FALSE ;
+      CHAR           *pSeqName = NULL ;
+      UINT32         seqNameLen = 0 ;
 
       for ( i = 0 ; i < options.size() ; ++i )
       {
@@ -5040,69 +5044,67 @@ namespace engine
                             "AutoIncrement field 'Field' type[%d] is not string",
                             fieldEle.type() ) ;
             }
-            fieldStr = fieldEle.String() ;
-            if ( 0 == fieldStr.size() )
-            {
-               PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
-                            "AutoIncrement field cannot be empty." ) ;
-            }
-            start = 0 ;
+            pField = fieldEle.valuestr() ;
+            pLast = pField + ossStrlen( pField ) ;
+            pStart = pField ;
             do
             {
-               end = fieldStr.find( '.', start ) ;
-               if ( string::npos == end )
-                  end = fieldStr.size() ;
-               tmpStr = fieldStr.substr( start, end - start ) ;
-               start = end + 1 ;
+               pEnd = ossStrchr( pStart, '.' ) ;
+               if ( NULL == pEnd )
+               {
+                  pEnd = pLast ;
+               }
 
-               if ( 0 == tmpStr.size() ||
-                    utilStrStartsWith( tmpStr, "$" ) ||
-                    utilStrStartsWith( tmpStr, " " ) ||
-                    utilStrIsDigit( tmpStr ) )
+               if ( 0 == pEnd - pStart || '$' == *pStart || ' ' == *pStart )
                {
                   PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
                                "AutoIncrement field 'Field'[%s] is invalid",
-                               fieldStr.c_str() ) ;
+                               pField ) ;
                }
-            } while ( start < fieldStr.size() ) ;
+               for ( pChr = pStart ; pChr < pEnd ; ++pChr )
+               {
+                  if ( !isdigit( *pChr ) )
+                     break ;
+               }
+               if ( pChr == pEnd )
+               {
+                  PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
+                               "AutoIncrement field 'Field'[%s] cannot be digit",
+                               pField ) ;
+               }
 
-            if ( 0 == fieldStr.size() ||
-                 utilStrStartsWith( fieldStr, "$" ) ||
-                 utilStrStartsWith( fieldStr, " " ) )
-            {
-               PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
-                            "AutoIncrement field 'Field'[%s] is invalid",
-                            fieldStr.c_str() ) ;
-            }
+               pStart = pEnd + 1 ;
+            } while ( pStart < pLast ) ;
 
-            for ( it = fieldStrArr.begin() ; it != fieldStrArr.end() ; ++it )
+            for ( it = fieldArr.begin() ; it != fieldArr.end() ; ++it )
             {
                // same field conflicts
-               if ( fieldStr == *it )
+               if ( 0 == ossStrcmp( pField, *it ) )
                {
                   PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
                                "AutoIncrement fields[%s, %s] can't be the same.",
-                               fieldStr.c_str(), it->c_str() ) ;
+                               pField, *it ) ;
                }
 
                // 'a' conflicts with 'a.b'
-               if ( fieldStr.length() > it->length() )
+               if ( ossStrlen( pField ) > ossStrlen( *it ) )
                {
-                  longStr = fieldStr ;
-                  shortStr = *it ;
+                  pLong = pField ;
+                  pShort = *it ;
                }
                else
                {
-                  longStr = *it ;
-                  shortStr = fieldStr ;
+                  pLong = *it ;
+                  pShort = pField ;
                }
-               isParentChild = utilStrStartsWith( longStr, shortStr ) &&
-                               '.' == longStr.at(shortStr.length()) ;
+               shortLen = ossStrlen( pShort ) ;
+               isParentChild = 0 == ossStrncmp( pLong, pShort, shortLen ) &&
+                               '.' == pLong[ shortLen ] ;
                PD_CHECK( !isParentChild, SDB_INVALIDARG, error, PDWARNING,
                          "AutoIncrement fields[%s, %s] can't be parent child relation",
-                         longStr.c_str(), shortStr.c_str() ) ;
+                         pLong, pShort ) ;
             }
-            fieldStrArr.push_back( fieldStr ) ;
+            fieldArr.push_back( pField ) ;
          }
          else
          {
@@ -5119,20 +5121,26 @@ namespace engine
                             "AutoIncrement field 'Generated' type[%d] is not string",
                             generatedEle.type() ) ;
             }
-            generatedStr = generatedEle.String() ;
+            pGenStr = generatedEle.valuestr() ;
 
-            if ( generatedStr != CAT_GENERATED_ALWAYS &&
-                 generatedStr != CAT_GENERATED_STRICT &&
-                 generatedStr != CAT_GENERATED_DEFAULT )
+            if ( 0 != ossStrcmp( pGenStr, CAT_GENERATED_ALWAYS ) &&
+                 0 != ossStrcmp( pGenStr, CAT_GENERATED_STRICT ) &&
+                 0 != ossStrcmp( pGenStr, CAT_GENERATED_DEFAULT ) )
             {
                PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
                             "AutoIncrement field 'Generated'[%s] is invalid",
-                            generatedStr.c_str() ) ;
+                            pGenStr ) ;
             }
          }
 
          // Check sequence options valid.
-         catSequence sequence( "SYS_UNKNOW_" + fieldStr + "_SEQ" ) ;
+         seqNameLen = 12 + ossStrlen( pField ) + 5 ; // "SYS_UNKNOWN_" + field + "_SEQ\0"
+         pSeqName = (CHAR*) SDB_OSS_MALLOC( seqNameLen ) ;
+         PD_CHECK( pSeqName, SDB_OOM, error, PDWARNING,
+                   "Failed to malloc for sequence name" ) ;
+         ossSnprintf( pSeqName, seqNameLen, "SYS_UNKNOWN_%s_SEQ", pField ) ;
+
+         catSequence sequence( pSeqName ) ;
          seqOpt = catGetSequenceOptions( obj ) ;
          rc = catSequence::validateFieldNames( seqOpt ) ;
          PD_RC_CHECK( rc, PDWARNING,
@@ -5146,6 +5154,7 @@ namespace engine
       }
 
    done:
+      SDB_OSS_FREE( pSeqName ) ;
       PD_TRACE_EXITRC( SDB_CATCHECKAUTOINCREMENTVALID, rc ) ;
       return rc ;
    error:
@@ -5168,8 +5177,8 @@ namespace engine
       BSONObj              autoIncOpt ;
       BSONObj              seqOpt ;
       catSequenceManager   *pSeqMgr = NULL ;
-      string               fieldName ;
-      string               seqName ;
+      const CHAR           *fieldName = NULL ;
+      const CHAR           *seqName = NULL ;
       OID                  seqID ;
       INT32                tmpRC = SDB_OK ;
       BOOLEAN              found = FALSE ;
@@ -5185,14 +5194,15 @@ namespace engine
             BSONObjBuilder seqOptBuilder ;
 
             autoIncMeta = autoIncMetaArr[i].Obj() ;
-            seqName = autoIncMeta.getField( CAT_AUTOINC_SEQ ).String() ;
+            seqName = autoIncMeta.getField( CAT_AUTOINC_SEQ ).valuestr() ;
             seqID = autoIncMeta.getField( CAT_AUTOINC_SEQ_ID ).OID() ;
-            fieldName = autoIncMeta.getField( CAT_AUTOINC_FIELD ).String() ;
+            fieldName = autoIncMeta.getField( CAT_AUTOINC_FIELD ).valuestr() ;
 
             found = FALSE ;
             for ( j = 0 ; j < autoIncOptArr.size() ; ++j )
             {
-               if ( autoIncOptArr[j].getField( CAT_AUTOINC_FIELD ).String() == fieldName )
+               if ( 0 == ossStrcmp( fieldName,
+                     autoIncOptArr[j].getField( CAT_AUTOINC_FIELD ).valuestr() ) )
                {
                   autoIncOpt = autoIncOptArr[j] ;
                   found = TRUE ;
@@ -5212,7 +5222,7 @@ namespace engine
             }
             PD_RC_CHECK ( rc, PDWARNING,
                           "Failed to create sequence on field [%s] with options [%s], rc: %d",
-                          fieldName.c_str(), autoIncMeta.toString().c_str() ) ;
+                          fieldName, autoIncMeta.toString().c_str() ) ;
          }
       }
 
@@ -5223,12 +5233,12 @@ namespace engine
    error :
       for ( i = 0 ; i < autoIncMetaArr.size() ; ++i )
       {
-         seqName = autoIncMeta.getField( CAT_AUTOINC_SEQ ).String() ;
+         seqName = autoIncMeta.getField( CAT_AUTOINC_SEQ ).valuestr() ;
          tmpRC = pSeqMgr->dropSequence( seqName, cb, w ) ;
          if ( tmpRC != SDB_OK && tmpRC != SDB_SEQUENCE_NOT_EXIST )
          {
             PD_LOG( PDWARNING, "Failed to rollback creating sequence [%s], rc: %d",
-                    seqName.c_str(), tmpRC ) ;
+                    seqName, tmpRC ) ;
          }
       }
       goto done ;
@@ -5242,7 +5252,7 @@ namespace engine
       INT32                rc = SDB_OK ;
       UINT64               i = 0 ;
       vector<BSONElement>  autoIncArr ;
-      string               seqName ;
+      const CHAR           *seqName = NULL ;
       catSequenceManager   *pSeqMgr = NULL ;
 
       pSeqMgr = sdbGetCatalogueCB()->getCatGTSMgr()->getSequenceMgr() ;
@@ -5253,14 +5263,14 @@ namespace engine
 
          for ( i = 0 ; i < autoIncArr.size() ; ++i )
          {
-            seqName = autoIncArr[i].Obj().getField( FIELD_NAME_AUTOINC_SEQ ).String() ;
+            seqName = autoIncArr[i].Obj().getField( FIELD_NAME_AUTOINC_SEQ ).valuestr() ;
             rc = pSeqMgr->dropSequence( seqName, cb, w ) ;
             if ( SDB_SEQUENCE_NOT_EXIST == rc )
             {
                rc = SDB_OK ;
             }
             PD_RC_CHECK( rc, PDWARNING, "Failed to remove sequence [%s], rc: %d",
-                         seqName.c_str(), rc ) ;
+                         seqName, rc ) ;
          }
       }
 
@@ -5273,12 +5283,12 @@ namespace engine
 
    BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt, bson::OID *seqId )
    {
-      static string autoIncFieldArr[] = {
+      static const CHAR* autoIncFieldArr[] = {
          CAT_AUTOINC_FIELD,
          CAT_AUTOINC_GENERATED,
          CAT_AUTOINC_SEQ
       } ;
-      static set<std::string> autoIncFieldSet( autoIncFieldArr,
+      static set<const CHAR*, cmp_str> autoIncFieldSet( autoIncFieldArr,
          autoIncFieldArr + sizeof( autoIncFieldArr ) / sizeof( *autoIncFieldArr ) ) ;
 
       BSONObjBuilder seqOptBuilder ;
@@ -5287,7 +5297,7 @@ namespace engine
       while ( iter.more() )
       {
          BSONElement ele = iter.next() ;
-         string fieldName = ele.fieldName() ;
+         const CHAR *fieldName = ele.fieldName() ;
          if ( autoIncFieldSet.find( fieldName ) == autoIncFieldSet.end() )
          {
             seqOptBuilder.append( ele ) ;

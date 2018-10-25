@@ -51,6 +51,13 @@ namespace engine
 
    class _SDB_DMSCB ;
    class _dpsLogWrapper ;
+   struct cmp_str
+   {
+      BOOLEAN operator() ( const CHAR *a, const CHAR *b )
+      {
+         return ossStrcmp( a, b ) < 0 ;
+      }
+   } ;
 
    /* Check group name is valid */
    INT32 catGroupNameValidate ( const CHAR *pName, BOOLEAN isSys = FALSE ) ;
