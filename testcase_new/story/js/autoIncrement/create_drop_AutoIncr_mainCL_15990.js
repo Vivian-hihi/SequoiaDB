@@ -46,7 +46,7 @@ function main()
    subcl3 = commCreateCLByOption( db, subcsName, subclName3, subclOption3);
    
    subcl1.split( dataGroupNames[0], dataGroupNames[1], {a0:1000}, {a0:2000} );
-   subcl2.split( dataGroupNames[0], dataGroupNames[2], 50 );
+   subcl2.split( dataGroupNames[0], dataGroupNames[1], 50 );
    
    maincl.attachCL( subclFullName1, {LowBound: {a:1}, UpBound:{a:2001}} );
    maincl.attachCL( subclFullName2, {LowBound: {a:2001}, UpBound:{a:4001}} );
