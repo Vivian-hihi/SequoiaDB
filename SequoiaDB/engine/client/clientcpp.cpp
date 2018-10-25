@@ -3762,6 +3762,7 @@ error:
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
+      CHAR * firstName = NULL ;
       BSONObjBuilder builder ;
       BSONElement ele ;
       if( options.nFields() <= 0 )
@@ -3770,11 +3771,8 @@ error:
          goto error ;
       }
 
-      if( options.nFields() == 1 )
-      {
-         obj = BSON( FIELD_NAME_AUTOINCREMENT << options );
-      }
-      else
+      firstName = (CHAR*)options.firstElementFieldName() ;
+      if( firstName && '0' == *firstName )
       {
          BSONArrayBuilder autoincBuilder( builder.subarrayStart( FIELD_NAME_AUTOINCREMENT ) ) ;
          BSONObj::iterator ite( options ) ;
@@ -3791,6 +3789,10 @@ error:
          autoincBuilder.done() ;
          builder.done() ;
          obj = builder.obj() ;
+      }
+      else
+      {
+         obj = BSON( FIELD_NAME_AUTOINCREMENT << options );
       }
       rc = _alterInternal( SDB_ALTER_CL_CRT_AUTOINC_FLD, &obj, FALSE ) ;
    done:
