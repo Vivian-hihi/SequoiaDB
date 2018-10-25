@@ -974,7 +974,7 @@ namespace engine
       try
       {
          PD_CHECK( _argument.hasField( FIELD_NAME_AUTOINCREMENT ), SDB_INVALIDARG, error,
-            PDERROR, "Failed to get field[%s]", FIELD_NAME_AUTOINC_FIELD ) ;
+            PDERROR, "Failed to get field[%s]", FIELD_NAME_AUTOINCREMENT ) ;
          ele = _argument.getField( FIELD_NAME_AUTOINCREMENT ) ;
          if( ele.type() == Array )
          {

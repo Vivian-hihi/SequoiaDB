@@ -670,8 +670,8 @@ namespace engine
                                                       catCtxLockMgr & lockMgr )
    {
       INT32 rc = SDB_OK ;
-      string fldName ;
-      string cataFldName ;
+      CHAR *fldName ;
+      CHAR *cataFldName ;
       BOOLEAN exist = FALSE ;
       bson::BSONArrayBuilder bldArr ;
       std::vector<BSONObj> autoIncFields ;
@@ -690,28 +690,31 @@ namespace engine
          for( UINT32 i = 0 ; i < fieldList.size() ; i++ )
          {
             BSONObjBuilder newFieldBld ;
-            fldName = fieldList[i]->getFieldName() ;
-            PD_CHECK( !fldName.empty(), SDB_SYS, error, PDERROR, "Failed to get field name[%s]", fldName.c_str() ) ;
+            fldName = (CHAR *)fieldList[i]->getFieldName().c_str() ;
+            PD_CHECK( ossStrcmp( fldName, "") != 0, SDB_SYS, error, PDERROR, "Failed to get field name[%s]", fldName ) ;
             for( UINT32 j = 0 ; j < autoIncFields.size() ; ++j )
             {
-               cataFldName = autoIncFields[j].getField( CAT_AUTOINC_FIELD ).String() ;
-               if( cataFldName.find( "." ) != string::npos || fldName.find( "." ) != string::npos )
+               cataFldName = (CHAR *)autoIncFields[j].getField( CAT_AUTOINC_FIELD ).valuestrsafe() ;
+               PD_CHECK( NULL != cataFldName, SDB_SYS, error, PDERROR, "Failed to get field name in field[%s]",
+                         autoIncFields[j].toString( false, false ).c_str() ) ;
+               if( ossStrchr( cataFldName, '.' ) != NULL || ossStrchr( fldName, '.' ) != NULL )
                {
-                  if( cataFldName.find( fldName ) == 0 || fldName.find( cataFldName ) == 0 )
+                  if( ossStrstr( cataFldName, fldName ) == cataFldName ||
+                      ossStrstr( fldName, cataFldName ) == fldName)
                   {
                      exist = TRUE ;
                   }
                }
                else
                {
-                  if( cataFldName == fldName )
+                  if( ossStrcmp( cataFldName, fldName) == 0 )
                   {
                      exist = TRUE ;
                   }
                }
                PD_CHECK( exist == FALSE, SDB_AUTOINCREMENT_FIELD_EXIST_OR_NESTED, error, 
                          PDERROR, "Autoincrement field[%s] exists or nested on collection[%s]",
-                         fldName.c_str(), cataSet.name() ) ;
+                         fldName, cataSet.name() ) ;
                exist = FALSE ;
             }
          }
@@ -721,7 +724,7 @@ namespace engine
       {
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "Failed to check autoinc fields for create[%s] on collection[%s], exception=%s",
-                 fldName.c_str(), cataSet.name(), e.what() ) ;
+                 fldName, cataSet.name(), e.what() ) ;
          goto error ;
       }
 
