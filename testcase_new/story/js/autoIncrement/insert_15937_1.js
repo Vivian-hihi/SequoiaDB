@@ -18,10 +18,11 @@ function main()
    commCreateIndex(dbcl, "id", {id:1}, true, true);
    
    var coordNodes = getCoordNodeNames();
+   var coordNum = coordNodes.length;
    var expR = [];
    for(var j=0; j<2; j++)
    {
-      for(var k=0; k<coordNodes.length; k++ )
+      for(var k=0; k<coordNum; k++ )
       {
          var coord = new Sdb(coordNodes[k]);
          //coord.invalidateCache();
@@ -30,7 +31,7 @@ function main()
          for(var i=1;i<101;i++)
          {
             doc.push({a:i, b:i, c:i + "test"});
-            expR.push({a:i, b:i, c:i + "test", id:j*300+100*k+i});
+            expR.push({a:i, b:i, c:i + "test", id:j*coordNum*100+100*k+i});
          }
          cl.insert(doc);
          coord.close();

@@ -76,7 +76,7 @@ function main()
          for(var i=1; i<11; i++)
          {
             doc.push({a0:i});
-            expR.push({a0:i,a:j*30 + 10*k + i});
+            expR.push({a0:i,a:j*coordNum*10 + 10*k + i});
          }
          cl.insert(doc);
          coord.close();
