@@ -1011,7 +1011,7 @@ sdbConnectionHandle sdbGetConnectionHandle( const char **serverList,
       {
          // return pool->connList[count].hConnection ;
          BOOLEAN result = FALSE ;
-         sdbIsValid( tmpConnection->hConnection, &result ) ;
+         result = sdbIsValid( tmpConnection->hConnection ) ;
          if ( !result )
          {
             sdbReleaseConnectionFromPool( count ) ;
