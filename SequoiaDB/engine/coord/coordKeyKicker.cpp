@@ -99,16 +99,18 @@ namespace engine
    }
 
    /// kick sharding key and auto-increment key of a cl
-   /// we always kick sharding key, but kick auto-increment key only when $replace
+   /// we kick sharding key anyway, and when doing replace,
+   /// if new obj has no auto-increment key, we keep the old key.
    INT32 _coordKeyKicker::_kickKey( const CoordCataInfoPtr &cataInfo,
                                     const BSONObj &updator,
                                     BSONObj &newUpdator,
                                     BOOLEAN &hasShardingKey,
-                                    BOOLEAN &hasReplaceAutoInc,
+                                    BOOLEAN &hasKeepAutoInc,
                                     BOOLEAN ignoreAutoInc )
    {
       INT32 rc = SDB_OK ;
       UINT32 skSiteID = cataInfo->getShardingKeySiteID() ;
+      _utilSet< strContainner, 1 > autoIncDoneSet ;
 
       if ( skSiteID > 0 )
       {
@@ -118,7 +120,7 @@ namespace engine
          {
             newUpdator = updator ;
             hasShardingKey = it->second ;
-            hasReplaceAutoInc = FALSE ;
+            hasKeepAutoInc = FALSE ;
             goto done ;
          }
       }
@@ -166,21 +168,19 @@ namespace engine
             {
                BSONElement beField = iterField.next() ;
                const CHAR *pField = beField.fieldName() ;
-               BOOLEAN skip = FALSE ;
 
                if ( _isKey( pField, boShardingKey ) )
                {
-                  hasShardingKey = TRUE;
-                  skip = TRUE ;
+                  hasShardingKey = TRUE ;
                }
-               if ( isReplace && _isKey( pField, boAutoIncKey ) )
-               {
-                  hasReplaceAutoInc = TRUE ;
-                  skip = TRUE ;
-               }
-               if ( !skip )
+               else
                {
                   subBuilder.append( beField ) ;
+               }
+
+               if ( isReplace && _isKey( pField, boAutoIncKey ) )
+               {
+                  autoIncDoneSet.insert( pField ) ;
                }
             } // while( iterField.more() )
 
@@ -196,10 +196,16 @@ namespace engine
                hasShardingKey = TRUE ;
             }
 
-            count = _addKeys( boAutoIncKey ) ;
-            if ( count > 0 )
+            BSONObjIterator iterKey( boAutoIncKey ) ;
+            while( iterKey.more() )
             {
-               hasReplaceAutoInc = TRUE ;
+               BSONElement e = iterKey.next() ;
+               const CHAR *pKey = e.fieldName() ;
+               if ( autoIncDoneSet.count( pKey ) == 0 )
+               {
+                  _setKeys.insert( pKey ) ;
+                  hasKeepAutoInc = TRUE ;
+               }
             }
 
             if ( !_setKeys.empty() )
@@ -249,7 +255,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BOOLEAN hasShardingKey = FALSE ;
-      BOOLEAN hasReplaceAutoInc = FALSE ;
+      BOOLEAN hasKeepAutoInc = FALSE ;
 
       if ( !_cataPtr.get() || (!_cataPtr->isSharded() &&
                                !_cataPtr->hasAutoIncrement()) )
@@ -262,7 +268,7 @@ namespace engine
       _skSiteIDs.clear() ;
       _setKeys.clear() ;
 
-      rc = _kickKey( _cataPtr, updator, newUpdator, hasShardingKey, hasReplaceAutoInc ) ;
+      rc = _kickKey( _cataPtr, updator, newUpdator, hasShardingKey, hasKeepAutoInc ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Kick sharding key failed, rc: %d", rc ) ;
@@ -286,7 +292,7 @@ namespace engine
             isChanged = TRUE ;
          }
       }
-      if ( hasReplaceAutoInc )
+      if ( hasKeepAutoInc )
       {
          isChanged = TRUE ;
       }
@@ -344,7 +350,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       CoordCataInfoPtr cataPtr ;
       BOOLEAN hasShardingKey = FALSE ;
-      BOOLEAN hasReplaceAutoInc = FALSE ;
+      BOOLEAN hasKeepAutoInc = FALSE ;
 
       rc = _pResource->getOrUpdateCataInfo( collectionName.c_str(),
                                             cataPtr,
@@ -369,7 +375,7 @@ namespace engine
       }
 
       rc = _kickKey( cataPtr, updator, newUpdator,
-                     hasShardingKey, hasReplaceAutoInc, TRUE ) ;
+                     hasShardingKey, hasKeepAutoInc, TRUE ) ;
       if ( rc )
       {
          goto error ;
