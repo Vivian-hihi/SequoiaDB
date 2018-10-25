@@ -50,8 +50,10 @@ public class InsertRequest extends SdbRequest {
         length += Helper.alignedSize(collectionName.length() + 1);
     }
 
-    public InsertRequest(String collectionName, BSONObject doc) {
+    public InsertRequest(String collectionName, BSONObject doc, int flag) {
         this(collectionName);
+
+        this.flag = flag;
 
         if (doc == null) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "doc is null");

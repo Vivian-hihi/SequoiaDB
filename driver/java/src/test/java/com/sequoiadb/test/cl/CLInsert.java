@@ -1,9 +1,8 @@
 package com.sequoiadb.test.cl;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.base.*;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.test.common.Constants;
 import com.sequoiadb.testdata.SDBTestHelper;
 import org.bson.BSONObject;
@@ -11,6 +10,7 @@ import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.junit.*;
 
+import static com.sequoiadb.base.DBCollection.FLG_INSERT_CONTONDUP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -147,6 +147,20 @@ public class CLInsert {
             BSONObject record = cursor.getNext();
             // check
             assertTrue(record.toString().indexOf(result) >= 0);
+        }
+    }
+
+    @Test
+    public void insertWithFlag() {
+        BSONObject obj1 = new BasicBSONObject().append("_id", 1).append("a",1);
+        BSONObject obj2 = new BasicBSONObject().append("_id", 1).append("a",1);
+        cl.insert(obj1, FLG_INSERT_CONTONDUP);
+        cl.insert(obj2, FLG_INSERT_CONTONDUP);
+        try {
+            cl.insert(obj2, 0);
+            Assert.fail();
+        } catch (BaseException e) {
+            Assert.assertEquals(SDBError.SDB_IXM_DUP_KEY.getErrorCode(), e.getErrorCode());
         }
     }
 }

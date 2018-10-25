@@ -142,10 +142,14 @@ public class DBCollection {
      * does not contain field "_id", it will be added.
      *
      * @param insertor The Bson object of insertor, can't be null
+     * @param flag    Available value is FLG_INSERT_CONTONDUP or 0.
+     *                 if flag = FLG_INSERT_CONTONDUP, insert will continue when Duplicate
+     *                 key exist.(the duplicate record will be ignored);
+     *                 if flag = 0, insert will interrupt when Duplicate key exist.
      * @return the value of the filed "_id"
      * @throws BaseException If error happens.
      */
-    public Object insert(BSONObject insertor) throws BaseException {
+    public Object insert(BSONObject insertor, int flag) throws BaseException {
         if (insertor == null) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
@@ -157,11 +161,23 @@ public class DBCollection {
             retObj = objId;
         }
 
-        InsertRequest request = new InsertRequest(collectionFullName, insertor);
+        InsertRequest request = new InsertRequest(collectionFullName, insertor, flag);
         SdbReply response = sequoiadb.requestAndResponse(request);
         sequoiadb.throwIfError(response, insertor);
         sequoiadb.upsertCache(collectionFullName);
         return retObj;
+    }
+
+    /**
+     * Insert a document into current collection, if the document
+     * does not contain field "_id", it will be added.
+     *
+     * @param insertor The insertor.
+     * @return the value of the filed "_id"
+     * @throws BaseException If error happens.
+     */
+    public Object insert(BSONObject insertor) throws BaseException {
+        return insert(insertor, 0);
     }
 
     /**
