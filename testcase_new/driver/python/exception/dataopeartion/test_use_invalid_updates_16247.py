@@ -13,10 +13,10 @@ class TestUseInvalidUpdates16247(testlib.SdbTestBase):
       self.cs = self.db.create_collection_space(self.cs_name)
       	 
    def test_use_invalid_updates_16247(self):
-      data_rg_name = "data16247"
+      self.data_rg_name = "data16247"
 	
       # create data rg
-      data_rg = self.db.create_replica_group(data_rg_name)
+      data_rg = self.db.create_replica_group(self.data_rg_name)
       
       # create and start node 
       data_hostname = self.db.get_replica_group_by_name("SYSCatalogGroup").get_master().get_hostname()
@@ -26,7 +26,7 @@ class TestUseInvalidUpdates16247(testlib.SdbTestBase):
       data_rg.start()
       
       #create collection and insert records	 
-      self.cl = self.cs.create_collection(self.cl_name, options = {"Group":data_rg_name})	  
+      self.cl = self.cs.create_collection(self.cl_name, options = {"Group":self.data_rg_name})	  
       self.cl.insert({"name":"zsan"})
 	  
       # updating records with invalid updates
@@ -36,15 +36,12 @@ class TestUseInvalidUpdates16247(testlib.SdbTestBase):
          actResult = e.error_object	  
             
       # check result
-      expResult = {"errno": -6, "description": "Invalid Argument", "detail": "Failed to update", "ErrNodes": [{"NodeName": data_hostname + ":" + service_name,"GroupName": data_rg_name,"Flag": -6,"ErrInfo": {"errno": -6,"description": "Invalid Argument","detail": "Updator operator[$est2] error"}}]}
+      expResult = {"errno": -6, "description": "Invalid Argument", "detail": "Failed to update", "ErrNodes": [{"NodeName": data_hostname + ":" + service_name,"GroupName": self.data_rg_name,"Flag": -6,"ErrInfo": {"errno": -6,"description": "Invalid Argument","detail": "Updator operator[$est2] error"}}]}
       msg = str(expResult) + "expect is not equal to actResult " + str(actResult)
       self.assertDictEqual(expResult, actResult, msg)
 	  
-      # drop data group 
+   def tearDown(self):
       if self.should_clean_env():
          self.db.drop_collection_space(self.cs_name)	  
-      self.db.remove_replica_group(data_rg_name)
-      self.db.disconnect()
-	
-   def tearDown(self):
-      pass   
+         self.db.remove_replica_group(self.data_rg_name)
+         self.db.disconnect()
