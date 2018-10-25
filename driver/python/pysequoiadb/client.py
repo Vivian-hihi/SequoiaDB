@@ -1,3 +1,4 @@
+# coding=utf-8
 #   Copyright (C) 2012-2014 SequoiaDB Ltd.
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -281,8 +282,8 @@ class client(object):
         if "local_first" == policy:
             for ip in hosts:
                 if ("localhost" in ip.values() or
-                            local in ip.values() or
-                            ip['host'] in local_ip):
+                        local in ip.values() or
+                        ip['host'] in local_ip):
 
                     host = ip['host']
                     svc = ip['service']
@@ -762,6 +763,33 @@ class client(object):
 
         rc = sdb.sdb_drop_collection_space(self._client, cs_name)
         raise_if_error(rc, "Failed to drop collection space: %s" % cs_name)
+
+    def rename_collection_space(self, old_name, new_name, options=None):
+        """Rename the specified collection space.
+
+        Parameters:
+           Name         Type     Info:
+           old_name     str      The original name of collection space.
+           new_name     str      The new name of collection space.
+           options      dict     Options for renaming.
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        if not isinstance(old_name, str_type):
+            raise SDBTypeError("old name of collection space must be\
+                         an instance of str_type")
+        if not isinstance(new_name, str_type):
+            raise SDBTypeError("new name of collection space must be\
+                         an instance of str_type")
+        bson_options = None
+        if options is not None:
+            if not isinstance(options, dict):
+                raise SDBTypeError("options must be an instance of dict")
+            bson_options = bson.BSON.encode(options)
+
+        rc = sdb.sdb_rename_collection_space(self._client, old_name, new_name, bson_options)
+        raise_if_error(rc, "Failed to rename collection space [%s] to [%s]"
+                       % (old_name, new_name))
 
     def list_collection_spaces(self):
         """List all collection space of current database, include temporary

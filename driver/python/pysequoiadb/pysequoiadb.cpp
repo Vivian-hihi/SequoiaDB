@@ -423,6 +423,35 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
+__METHOD_IMP(sdb_rename_collection_space)
+{
+   INT32 rc            = 0 ;
+   PYOBJECT *obj       = NULL ;
+   const CHAR *old_name = NULL ;
+   const CHAR *new_name = NULL ;
+   sdb *client         = NULL ;
+   PYOBJECT *bson_option = NULL ;
+   const bson::BSONObj *option = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OssO", &obj, &old_name, &new_name, &bson_option ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
+
+   rc = client->renameCollectionSpace( old_name, new_name, *option ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 __METHOD_IMP(sdb_list_collection_spaces)
 {
    INT32 rc             = 0 ;
@@ -1765,6 +1794,35 @@ __METHOD_IMP(cs_drop_collection)
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
 
    rc = cs->dropCollection( cl_name ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+__METHOD_IMP(cs_rename_collection)
+{
+   INT32 rc               = 0 ;
+   PYOBJECT *obj          = NULL ;
+   const CHAR *old_name    = NULL ;
+   const CHAR *new_name    = NULL ;
+   sdbCollectionSpace *cs = NULL ;
+   PYOBJECT *bson_option  = NULL ;
+   const bson::BSONObj *option = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OssO", &obj, &old_name, &new_name, &bson_option ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
+
+   rc = cs->renameCollection( old_name, new_name, *option ) ;
    if ( rc )
    {
       goto done ;
@@ -4861,6 +4919,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"sdb_get_collection",              sdb_get_collection,              METH_VARARGS},
    {"sdb_create_collection_space",     sdb_create_collection_space,     METH_VARARGS},
    {"sdb_drop_collection_space",       sdb_drop_collection_space,       METH_VARARGS},
+   {"sdb_rename_collection_space",     sdb_rename_collection_space,     METH_VARARGS},
    {"sdb_list_collection_spaces",      sdb_list_collection_spaces,      METH_VARARGS},
    {"sdb_list_collections",            sdb_list_collections,            METH_VARARGS},
    {"sdb_list_replica_groups",         sdb_list_replica_groups,         METH_VARARGS},
@@ -4914,6 +4973,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cs_create_collection",            cs_create_collection,            METH_VARARGS},
    {"cs_create_collection_use_opt",    cs_create_collection_use_opt,    METH_VARARGS},
    {"cs_drop_collection",              cs_drop_collection,              METH_VARARGS},
+   {"cs_rename_collection",            cs_rename_collection,            METH_VARARGS},
    {"cs_get_collection_space_name",    cs_get_collection_space_name,    METH_VARARGS},
    {"cs_alter",                        cs_alter,                        METH_VARARGS},
    {"cs_set_domain",                   cs_set_domain,                   METH_VARARGS},

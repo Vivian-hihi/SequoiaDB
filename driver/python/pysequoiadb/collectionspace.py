@@ -21,13 +21,10 @@ except:
     raise Exception("Cannot find extension: sdb")
 
 import bson
-import pysequoiadb
-from bson.py3compat import (PY3, str_type)
+from bson.py3compat import (str_type)
 from pysequoiadb.collection import collection
-from pysequoiadb.cursor import cursor
-from pysequoiadb import error
-from pysequoiadb.error import (SDBBaseError, SDBSystemError, SDBTypeError, raise_if_error)
 from pysequoiadb.errcode import SDB_OOM
+from pysequoiadb.error import (SDBBaseError, SDBSystemError, SDBTypeError, raise_if_error)
 
 
 class collectionspace(object):
@@ -204,6 +201,31 @@ class collectionspace(object):
         rc = sdb.cs_drop_collection(self._cs, cl_name)
         raise_if_error(rc, "Failed to drop collection")
 
+    def rename_collection(self, old_name, new_name, options=None):
+        """Rename the specified collection in current collection space.
+
+        Parameters:
+           Name      Type     Info:
+           old_name  str      The original name of collection.
+           new_name  str      The new name of collection.
+           options   dict     Options for renaming.
+        Exceptions:
+           pysequoiadb.error.SDBTypeError
+           pysequoiadb.error.SDBBaseError
+        """
+        if not isinstance(old_name, str_type):
+            raise SDBTypeError("old name must be an instance of str_type")
+        if not isinstance(new_name, str_type):
+            raise SDBTypeError("new name must be an instance of str_type")
+        bson_options = None
+        if options is not None:
+            if not isinstance(options, dict):
+                raise SDBTypeError("options must be an instance of dict")
+            bson_options = bson.BSON.encode(options)
+
+        rc = sdb.cs_rename_collection(self._cs, old_name, new_name, bson_options)
+        raise_if_error(rc, "Failed to rename collection")
+
     def get_collection_space_name(self):
         """Get the current collection space name.
 
@@ -228,7 +250,7 @@ class collectionspace(object):
                                    LobPageSize : LOB page size of collection space
         """
         if not isinstance(options, dict):
-           raise SDBTypeError("options must be an instance of dict")
+            raise SDBTypeError("options must be an instance of dict")
         bson_options = bson.BSON.encode(options)
 
         rc = sdb.cs_alter(self._cs, bson_options)
@@ -243,7 +265,7 @@ class collectionspace(object):
                                  Domain      : domain of collection space
         """
         if not isinstance(options, dict):
-           raise SDBTypeError("options must be an instance of dict")
+            raise SDBTypeError("options must be an instance of dict")
         bson_options = bson.BSON.encode(options)
 
         rc = sdb.cs_set_domain(self._cs, bson_options)
@@ -278,9 +300,8 @@ class collectionspace(object):
                                    LobPageSize : LOB page size of collection space
         """
         if not isinstance(options, dict):
-           raise SDBTypeError("options must be an instance of dict")
+            raise SDBTypeError("options must be an instance of dict")
         bson_options = bson.BSON.encode(options)
 
         rc = sdb.cs_set_attributes(self._cs, bson_options)
         raise_if_error(rc, "Failed to alter collection space")
-

@@ -17,6 +17,7 @@ __METHOD_DECLARE(sdb_get_collection_space) ;
 __METHOD_DECLARE(sdb_get_collection) ;
 __METHOD_DECLARE(sdb_create_collection_space) ;
 __METHOD_DECLARE(sdb_drop_collection_space) ;
+__METHOD_DECLARE(sdb_rename_collection_space);
 __METHOD_DECLARE(sdb_list_collection_spaces) ;
 __METHOD_DECLARE(sdb_list_collections) ;
 __METHOD_DECLARE(sdb_list_replica_groups) ;
@@ -70,6 +71,7 @@ __METHOD_DECLARE(cs_get_collection) ;
 __METHOD_DECLARE(cs_create_collection) ;
 __METHOD_DECLARE(cs_create_collection_use_opt) ;
 __METHOD_DECLARE(cs_drop_collection) ;
+__METHOD_DECLARE(cs_rename_collection);
 __METHOD_DECLARE(cs_get_collection_space_name) ;
 
 ///< collection
