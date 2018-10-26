@@ -241,6 +241,58 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptSPArguments::getChrArray( UINT32 pos, vector< CHAR* > &value,
+                                    SPT_CONVERT_MODE mode )
+                                    const
+   {
+      INT32 rc = SDB_OK ;
+      JSObject *jsObj = NULL ;
+      jsval *val = NULL ;
+      sptConvertor convertor( _context, mode ) ;
+
+      _errMsg.clear() ;
+
+      if ( _argc <= pos )
+      {
+         rc = SDB_OUT_OF_BOUND ;
+         goto error ;
+      }
+
+      val = _getValAtPos( pos ) ;
+      if ( NULL == val )
+      {
+         PD_LOG( PDERROR, "failed to get val at pos" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( !JSVAL_IS_OBJECT( *val ) )
+      {
+         PD_LOG( PDERROR, "jsval is not a object" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      jsObj = JSVAL_TO_OBJECT( *val ) ;
+      if ( NULL == jsObj )
+      {
+         PD_LOG( PDERROR, "failed to convert jsval to object" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = convertor.toChrArray( jsObj, value ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, convertor.getErrMsg().c_str() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptSPArguments::getUserObj( UINT32 pos, const _sptObjDesc &objDesc,
                                       const void** value ) const
    {

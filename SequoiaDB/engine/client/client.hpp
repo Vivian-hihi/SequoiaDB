@@ -487,8 +487,6 @@ namespace sdbclient
 
       virtual INT32 createAutoIncrement( const std::vector<bson::BSONObj> &options ) = 0;
 
-      virtual INT32 dropAutoIncrement( const bson::BSONObj &options ) = 0;
-
       virtual INT32 dropAutoIncrement( const CHAR* fieldName ) = 0;
 
       virtual INT32 dropAutoIncrement( const std::vector<CHAR*> &fieldNames ) = 0;
@@ -1591,13 +1589,6 @@ namespace sdbclient
        if ( !pCollection )
           return SDB_NOT_CONNECTED ;
         return pCollection->createAutoIncrement( options ) ;
-    }
-
-    INT32 dropAutoIncrement( const bson::BSONObj &options )
-    {
-       if ( !pCollection )
-          return SDB_NOT_CONNECTED ;
-        return pCollection->dropAutoIncrement( options ) ;
     }
 
     INT32 dropAutoIncrement( const CHAR * fieldName )

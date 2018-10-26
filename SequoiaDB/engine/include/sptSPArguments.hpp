@@ -57,6 +57,9 @@ namespace engine
       virtual INT32 getArray( UINT32 pos, vector< bson::BSONObj > &value,
                               SPT_CONVERT_MODE mode = SPT_CONVERT_NORMAL )
                               const ;
+      virtual INT32 getChrArray( UINT32 pos, vector< CHAR* > &value,
+                                 SPT_CONVERT_MODE mode = SPT_CONVERT_NORMAL )
+                                 const ;
       virtual INT32 getUserObj( UINT32 pos, const _sptObjDesc &objDesc,
                                 const void** value ) const ;
 

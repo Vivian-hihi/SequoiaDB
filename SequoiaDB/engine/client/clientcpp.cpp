@@ -3762,39 +3762,16 @@ error:
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
-      CHAR * firstName = NULL ;
-      BSONObjBuilder builder ;
-      BSONElement ele ;
+
       if( options.nFields() <= 0 )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
-      firstName = (CHAR*)options.firstElementFieldName() ;
-      if( firstName && '0' == *firstName )
-      {
-         BSONArrayBuilder autoincBuilder( builder.subarrayStart( FIELD_NAME_AUTOINCREMENT ) ) ;
-         BSONObj::iterator ite( options ) ;
-         while( ite.more() )
-         {
-            ele = ite.next() ;
-            if( ele.type() != Object )
-            {
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-            autoincBuilder.append( ele.embeddedObject() );
-         }
-         autoincBuilder.done() ;
-         builder.done() ;
-         obj = builder.obj() ;
-      }
-      else
-      {
-         obj = BSON( FIELD_NAME_AUTOINCREMENT << options );
-      }
+      obj = BSON( FIELD_NAME_AUTOINCREMENT << options );
       rc = _alterInternal( SDB_ALTER_CL_CRT_AUTOINC_FLD, &obj, FALSE ) ;
+
    done:
       return rc ;
    error:
@@ -3811,7 +3788,7 @@ error:
       if( !options.size() )
       {
          rc = SDB_INVALIDARG ;
-         goto done ;
+         goto error ;
       }
 
       try
@@ -3835,11 +3812,6 @@ error:
       return rc ;
    error:
       goto done ;
-   }
-
-   INT32 _sdbCollectionImpl::dropAutoIncrement( const bson::BSONObj &options )
-   {
-      return _alterInternal( SDB_ALTER_CL_DROP_AUTOINC_FLD, &options, FALSE ) ;
    }
 
    INT32 _sdbCollectionImpl::dropAutoIncrement( const CHAR* fieldName )
@@ -3883,6 +3855,12 @@ error:
       {
          for( UINT32 i = 0; i < fieldNames.size(); i++ )
          {
+            if( !fieldNames[i] )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "The field[%d] name is null", i ) ;
+               goto error ;
+            }
             autoincBuilder.append( fieldNames[i] ) ;
          }
          autoincBuilder.done() ;

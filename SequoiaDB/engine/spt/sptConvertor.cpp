@@ -127,6 +127,64 @@ namespace engine
       goto done ;
    }
 
+   INT32 sptConvertor::toChrArray( JSObject *obj, vector< CHAR* > &bsArray )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 length = 0 ;
+      vector< CHAR * > tmpVec ;
+      if ( NULL == obj )
+      {
+         goto done ;
+      }
+      if( !JS_IsArrayObject( _cx, obj ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _setErrMsg( "Object is not an array obj", FALSE ) ;
+         goto error ;
+      }
+      if( !JS_GetArrayLength( _cx, obj, &length ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _setErrMsg( "Failed to get array length", FALSE ) ;
+         goto error ;
+      }
+
+      for ( UINT32 i = 0; i < length; i++ )
+      {
+         BSONObj tmpObj ;
+         std::string str ;
+         CHAR * chr ;
+         jsval val ;
+         if( !JS_GetElement( _cx, obj, i, &val ) )
+         {
+            rc = SDB_INVALIDARG ;
+            _setErrMsg( "Failed to get array element", FALSE ) ;
+            goto error ;
+         }
+         if( JSTYPE_STRING != JS_TypeOfValue( _cx, val ) )
+         {
+            rc = SDB_INVALIDARG ;
+            _setErrMsg( "Invalid element type", FALSE ) ;
+            goto error ;
+         }
+         rc = _toString( val, str ) ;
+         if ( SDB_OK != rc )
+         {
+            _setErrMsg( "Failed to conversion string", FALSE ) ;
+            goto error ;
+         }
+         chr = new CHAR[ str.length() + 1 ] ;
+         ossStrcpy( chr, str.c_str() ) ;
+         tmpVec.push_back( chr ) ;
+      }
+      bsArray.swap( tmpVec ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
    INT32 sptConvertor::_traverse( JSObject *obj , BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;

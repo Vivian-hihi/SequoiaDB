@@ -1672,18 +1672,51 @@ namespace engine
                                   bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      BSONObj options ;
+
+      if( arg.argc() > 1 )
+      {
+         detail = BSON( SPT_ERR << "Contain unknow parameters" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
       if( !arg.isNull( 0 ) )
       {
-         rc = arg.getBsonobj( 0, options ) ;
-         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         if( arg.isArray( 0 ) )
          {
-            detail = BSON( SPT_ERR << "Options must be obj" ) ;
+            vector<bson::BSONObj> objArr ;
+            rc = arg.getArray( 0, objArr ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "Options must be obj" ) ;
+               goto error ;
+            }
+            rc = _cl.createAutoIncrement( objArr ) ;
+         }
+         else if( arg.isObject( 0 ) )
+         {
+            BSONObj obj ;
+            rc = arg.getBsonobj( 0, obj ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "Options must be obj" ) ;
+               goto error ;
+            }
+            rc = _cl.createAutoIncrement( obj ) ;
+         }
+         else
+         {
+            detail = BSON( SPT_ERR << "Fields must be obj or array of obj" ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
       }
-      rc = _cl.createAutoIncrement( options ) ;
+      else
+      {
+         detail = BSON( SPT_ERR << "Invalid parameters" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to create autoincrement field" ) ;
@@ -1701,24 +1734,71 @@ namespace engine
                                 bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
+      string fieldName ;
       BSONObj options ;
    
+      if( arg.argc() > 1 )
+      {
+         detail = BSON( SPT_ERR << "Contain unknow parameters" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       if( !arg.isNull( 0 ) )
       {
-         rc = arg.getBsonobj( 0, options ) ;
-         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         if( arg.isString( 0 ) )
          {
-            detail = BSON( SPT_ERR << "Options must be obj" ) ;
+            rc = arg.getString( 0, fieldName ) ;
+            if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+            {
+               detail = BSON( SPT_ERR << "Component must be string" ) ;
+               goto error ;
+            }
+            rc = _cl.dropAutoIncrement( fieldName.c_str() ) ;
+            if( SDB_OK != rc )
+            {
+               detail = BSON( SPT_ERR << "Failed to drop autoincrement field" ) ;
+               goto error ;
+            }
+         }
+         else if( arg.isArray( 0 ) )
+         {
+            vector<CHAR *> fieldNames ;
+            rc = arg.getChrArray( 0, fieldNames ) ;
+            if( SDB_OUT_OF_BOUND == rc )
+            {
+               detail = BSON( SPT_ERR << "Docs array must be config" ) ;
+               goto error ;
+            }
+            rc = _cl.dropAutoIncrement( fieldNames ) ;
+            if( SDB_OK != rc )
+            {
+               detail = BSON( SPT_ERR << "Failed to drop autoincrement field" ) ;
+               goto error ;
+            }
+            for( UINT32 i = 0 ; i < fieldNames.size(); i++ )
+            {
+               if( fieldNames[i] )
+               {
+                  delete fieldNames[i] ;
+                  fieldNames[i] = NULL ;
+               }
+            }
+         }
+         else
+         {
+            detail = BSON( SPT_ERR << "Fields must be string or array of string" ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
       }
-
-      rc = _cl.dropAutoIncrement( options ) ;
-      if( SDB_OK != rc )
+      else
       {
-         detail = BSON( SPT_ERR << "Failed to drop autoincrement field" ) ;
+         detail = BSON( SPT_ERR << "Invalid parameters" ) ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
+
    done:
       return rc ;
    error:
