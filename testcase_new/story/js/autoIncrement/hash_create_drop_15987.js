@@ -16,11 +16,11 @@ function main()
    
    commDropCL( db, COMMCSNAME, clName );
    
-   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { Group : "group1", ShardingKey : { a : 1 }, ShardingType : "hash" } );
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { Group:dataGroupNames[0], ShardingKey : { a : 1 }, ShardingType : "hash" } );
    
    dbcl.insert( { a : 1 } );
    
-   dbcl.split( "group1", "group2", 50 );
+   dbcl.split( dataGroupNames[0], dataGroupNames[1], 50 );
    
    dbcl.createAutoIncrement( { Field : field } );
    

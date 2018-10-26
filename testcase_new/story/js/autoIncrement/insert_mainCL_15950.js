@@ -70,7 +70,6 @@ function main()
       for(var k=0; k<coordNum; k++ )
       {
          var coord = new Sdb(coordNodes[k]);
-         //coord.invalidateCache();
          var cl = coord.getCS(maincsName).getCL(mainclName);
          var doc = [];
          for(var i=1; i<11; i++)

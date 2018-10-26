@@ -46,7 +46,7 @@ function main()
    checkRec(actR, expR);
    println("---check insert when set cacheSize success");
    
-   dbcl.dropAutoIncrement({Field: fieldName});
+   dbcl.dropAutoIncrement(fieldName);
    var increment = -3;
    var cacheSize = 2147483647;
    var acquireSize = 1;

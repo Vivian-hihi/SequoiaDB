@@ -46,7 +46,7 @@ function main()
    checkRec(actR, expR);
    println("---check insert when set startValue = 1000 success");
    
-   dbcl.dropAutoIncrement({Field: fieldName});
+   dbcl.dropAutoIncrement(fieldName);
    var increment = -1;
    var minValue = -10000;
    var maxValue = -10;
@@ -75,7 +75,7 @@ function main()
    checkRec(actR, expR);
    println("---check insert when set startValue = -1000 success");
    
-   dbcl.dropAutoIncrement({Field: fieldName});
+   dbcl.dropAutoIncrement(fieldName);
    var increment = -1;
    var minValue = -5000;
    var maxValue = 1000;

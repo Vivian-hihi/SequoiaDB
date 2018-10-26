@@ -16,6 +16,7 @@ function main()
    var clName = COMMCLNAME + "_15947";
    var field = "id";
    var domainName = "domain_15947";
+   commDropCS( db, csName);
    try
    {
       db.dropDomain(domainName); 
@@ -26,7 +27,6 @@ function main()
          throw e;
       }
    } 
-   commDropCS( db, csName);
    
    db.createDomain(domainName,[dataGroupNames[0], dataGroupNames[1]], {AutoSplit: true});
    commCreateCS( db, csName, null, null, {Domain:domainName} );

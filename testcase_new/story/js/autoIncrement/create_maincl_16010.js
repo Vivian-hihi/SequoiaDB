@@ -58,7 +58,7 @@ function main()
    var subclOption3 = {AutoIncrement:{Field:subclFieldName3}};
    subcl3 = commCreateCLByOption( db, subcsName, subclName3, subclOption3);
    
-   subcl1.split( dataGroupNames[0], dataGroupNames[1], {a0:1000}, {a0:2000} );
+   subcl1.split( dataGroupNames[0], dataGroupNames[1], {a0:10}, {a0:20} );
    subcl2.split( dataGroupNames[0], dataGroupNames[1], 50 );
    
    maincl.attachCL( subclFullName1, {LowBound: {a:0}, UpBound:{a:20}} );

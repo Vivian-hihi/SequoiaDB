@@ -29,14 +29,18 @@ function main()
    var expSequenceObj = {AcquireSize:acquireSize, CacheSize:cacheSize};
    checkSequence(sequenceName, expSequenceObj);
    
-   dbcl.split(dataGroupNames[0], dataGroupNames[1], {id:150});
+   dbcl.split(dataGroupNames[0], dataGroupNames[1], {id:50});
+   
+   //split操作会更新cl版本号，导致自增字段出现空洞，使用一次find规避,SEQUOIADBMAINSTREAM-3895
+   var cursor = dbcl.find();
+   while(cursor.next()){}
    
    var doc = [];
    var expR = [];
    for(var i=0; i<100; i++)
    {
       doc.push({a:i,b:i});
-      expR.push({a:i,b:i,id:101 + i});
+      expR.push({a:i,b:i,id:1 + i});
    }
    dbcl.insert(doc);
    

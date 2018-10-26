@@ -43,7 +43,7 @@ function main()
    checkRec(actR, expR);
    println("---check insert when set cacheSize%acquireSize==0 success");
    
-   dbcl.dropAutoIncrement({Field: fieldName});
+   dbcl.dropAutoIncrement(fieldName);
    var increment = 10;
    var cacheSize = 1000;
    var acquireSize = 11;
@@ -68,7 +68,7 @@ function main()
    checkRec(actR, expR);
    println("---check insert when set cacheSize%acquireSize!=0 success");
    
-   dbcl.dropAutoIncrement({Field: fieldName});
+   dbcl.dropAutoIncrement(fieldName);
    var increment = 10;
    var cacheSize = 111;
    var acquireSize = 111;
@@ -93,7 +93,7 @@ function main()
    checkRec(actR, expR);
    println("---check insert when set cacheSize=acquireSize success");
    
-   dbcl.dropAutoIncrement({Field: fieldName});
+   dbcl.dropAutoIncrement(fieldName);
    var increment = 10;
    var cacheSize = 111;
    var acquireSize = 112;

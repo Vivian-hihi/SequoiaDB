@@ -58,12 +58,12 @@ function main()
    var subclOption3 = {AutoIncrement:{Field:subclFieldName3}};
    subcl3 = commCreateCLByOption( db, subcsName, subclName3, subclOption3);
    
-   subcl1.split( dataGroupNames[0], dataGroupNames[1], {a0:1000}, {a0:2000} );
+   subcl1.split( dataGroupNames[0], dataGroupNames[1], {a0:10}, {a0:20} );
    subcl2.split( dataGroupNames[0], dataGroupNames[1], 50 );
    
-   maincl.attachCL( subclFullName1, {LowBound: {a:0}, UpBound:{a:2000}} );
-   maincl.attachCL( subclFullName2, {LowBound: {a:2000}, UpBound:{a:4000}} );
-   maincl.attachCL( subclFullName3, {LowBound: {a:4000}, UpBound:{a:6000}} );
+   maincl.attachCL( subclFullName1, {LowBound: {a:0}, UpBound:{a:20}} );
+   maincl.attachCL( subclFullName2, {LowBound: {a:20}, UpBound:{a:40}} );
+   maincl.attachCL( subclFullName3, {LowBound: {a:40}, UpBound:{a:6000}} );
   
    var mainclID = getCLID(maincsName, mainclName);
    var mainclSequenceName = "SYS_" + mainclID + "_" + mainclFieldName + "_SEQ";

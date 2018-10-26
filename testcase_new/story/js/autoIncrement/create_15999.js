@@ -43,7 +43,7 @@ function main()
    checkRec(actR, expR);
    println("---check insert when set increment = 1 success");
    
-   dbcl.dropAutoIncrement({Field: fieldName});
+   dbcl.dropAutoIncrement(fieldName);
    var increment = 2147483647;
    dbcl.createAutoIncrement({Field: fieldName, Increment:increment, CacheSize:cacheSize, AcquireSize:acquireSize});
    

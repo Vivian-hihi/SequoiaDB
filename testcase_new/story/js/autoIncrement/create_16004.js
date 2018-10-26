@@ -57,7 +57,7 @@ function main()
    checkRec(actR, expR);
    println("---check insert when Sequence is exceeded success");
    
-   dbcl.dropAutoIncrement({Field:fieldName});
+   dbcl.dropAutoIncrement(fieldName);
    var increment = -13;
    var acquireSize = 11;
    var cacheSize = 33;

@@ -65,7 +65,7 @@ function main()
    subcl3 = commCreateCLByOption( db, subcsName, subclName3, subclOption3);
    cl2 = commCreateCLByOption( db, maincsName, clName2, subclOption3);
    
-   subcl1.split( dataGroupNames[0], dataGroupNames[1], {a0:1000}, {a0:2000} );
+   subcl1.split( dataGroupNames[0], dataGroupNames[1], {a0:10}, {a0:20} );
    subcl2.split( dataGroupNames[0], dataGroupNames[1], 50 );
    cl1.split( dataGroupNames[0], dataGroupNames[1], 50 );
    
