@@ -7770,11 +7770,19 @@ error :
       INT32 rc = SDB_OK ;
       INT32 length = 0 ;
       INT32 realLen = 0 ;
+      BOOLEAN isDeelDiscWithErr = FALSE ;
+
       if ( !isConnected () )
       {
          rc = SDB_NOT_CONNECTED ;
          goto error ;
       }
+
+      /*
+         When has send succed, then recv failed my cause recv buff error.
+         So, need disconnect socket
+      */
+      isDeelDiscWithErr = TRUE ;
       // first let's get message length
       rc = clientSocketRecv ( _sock,
                               (CHAR*)&length,
@@ -7806,7 +7814,9 @@ error :
    done :
       return rc ;
    error :
-      if ( SDB_NETWORK_CLOSE == rc )
+      if ( SDB_NETWORK_CLOSE == rc ||
+           SDB_NETWORK == rc ||
+           isDeelDiscWithErr )
       {
          delete (_sock) ;
          _sock = NULL ;
