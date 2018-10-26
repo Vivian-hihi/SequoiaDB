@@ -17,56 +17,60 @@ function main()
    
    //索引名长度为1时，全文索引创建成功
    var indexName = "a"
-   commCreateIndex( dbcl, indexName, {content:"text"});
+   dbcl.createIndex(indexName, {content : "text"});
    commCheckIndex( dbcl, indexName, true );
    commDropIndex( dbcl, indexName, true );
    
    //固定集合名长度小于127时，全文索引创建成功
    var indexName = "";
-   for (var i = 0; i < 51; i++){
+   for (var i = 0; i < 20; i++){
       indexName = indexName + "a";	  
    }
-   commCreateIndex( dbcl, indexName, {content:"text"});
+   dbcl.createIndex(indexName, {content : "text"});
    commCheckIndex( dbcl, indexName, true );
    commDropIndex( dbcl, indexName, true );
    
    //固定集合名长度等于127时，全文索引创建成功
+   var cursor = db.snapshot(8, {Name : COMMCSNAME + "." + clName});
+   var cursor = cursor.next().toObj();
+   var cappedCLLength = String(cursor["UniqueID"]).length + 5;
+   
    var indexName = "";
-   for (var i = 0; i < 111; i++){
+   for (var i = 0; i < 127 - cappedCLLength; i++){
       indexName = indexName + "a";	  
    }
-   commCreateIndex( dbcl, indexName, {content:"text"});
+   dbcl.createIndex(indexName, {content : "text"});
    commCheckIndex( dbcl, indexName, true );
    commDropIndex( dbcl, indexName, true );
    
    //固定集合名长度大于127时，全文索引创建失败
    var indexName = "";
-   for (var i = 0; i < 112; i++){
+   for (var i = 0; i < 127 -cappedCLLength + 10; i++){
       indexName = indexName + "a";  
    }
    try{
-      commCreateIndex( dbcl, indexName, {content:"text"});	   
+      dbcl.createIndex(indexName, {content : "text"}); 
+	  throw e ;
    }
    catch( e ){
 	  if( e != -6){
-	     println(e);
-         throw buildException("commCreateIndex()", "commCreateIndex", "create index fail ,the index length : 112 ", "success", "fail");
+         throw buildException("createIndex()", "createIndex", "create index fail  ", "success", "fail");
 	  }
    }
    commCheckIndex( dbcl, indexName, false );
    
    //固定集合名长度大于127时，全文索引创建失败
    var indexName = "";
-   for (var i = 0; i < 129; i++){
+   for (var i = 0; i < 127 -cappedCLLength + 100; i++){
       indexName = indexName + "a";	  
    }
    try{
-      commCreateIndex( dbcl, indexName, {content:"text"});	   
+      dbcl.createIndex(indexName, {content : "text"});	   
+	  throw e ;
    }
    catch( e ){
       if( e != -6){
-	     println(e);
-	     throw buildException("commCreateIndex()", "commCreateIndex", "create index fail ,the index length : 120 ", "success", "fail");
+	     throw buildException("createIndex()", "createIndex", "create index fail ", "success", "fail");
 	  }
    }
    commCheckIndex( dbcl, indexName, false );
