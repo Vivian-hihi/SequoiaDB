@@ -137,8 +137,8 @@ TEST( invalidHandle, connectionHandle )
    rc = sdbSetSessionAttr( db, NULL ) ;        
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
    BOOLEAN res ; 
-   rc = sdbIsValid( db, &res ) ; 
-   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   res = sdbIsValid( db ) ; 
+   ASSERT_EQ( FALSE, res ) ;
    rc = _sdbMsg( db, "hello,who is that?" ) ;  
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
    rc = sdbInvalidateCache( db, NULL ) ;		
