@@ -128,7 +128,13 @@ public class SdbSnapshotList {
         while(cursor.hasNext()){
             System.out.println(cursor.getNext());
         }     
-
+        
+        // 15
+        cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_SEQUENCES, "", "", "");
+        System.out.println("result of SDB_SNAP_SEQUENCES is: ");
+        while(cursor.hasNext()){
+            System.out.println(cursor.getNext());
+        }     
     }
 
     @Test

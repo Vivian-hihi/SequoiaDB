@@ -11,6 +11,7 @@ import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BSONTimestamp;
+import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
 import org.bson.util.JSON;
 import org.junit.*;
@@ -707,6 +708,57 @@ public class DBCollectionTest {
         cl.insert(object);
         BSONObject result = cl.queryOne();
         System.out.println("result is: " + result);
+    }
+    
+    @Test
+    public void testCreateDropAutoIncrement() {
+        if (!Constants.isCluster()) {
+            return;
+        }
+        
+        final String autoIncName1 = "ID1";
+        final String autoIncName2 = "ID2";
+        final String autoIncName3 = "ID3";
+
+        cl.createAutoIncrement(new BasicBSONObject("Field", autoIncName1));
+
+        List<BSONObject> options = new ArrayList<BSONObject>();
+        BSONObject autoInc1 = new BasicBSONObject();
+        autoInc1.put("Field", autoIncName2);
+        autoInc1.put("StartValue", 100);
+        options.add(autoInc1);
+
+        BSONObject autoInc2 = new BasicBSONObject();
+        autoInc2.put("Field", autoIncName3);
+        autoInc2.put("StartValue", 200);
+        options.add(autoInc2);
+
+        cl.createAutoIncrement(options);
+
+        String clFullName = Constants.TEST_CS_NAME_1 + "." + Constants.TEST_CL_NAME_1;
+        BSONObject matcher = new BasicBSONObject("Name", clFullName);
+        DBCursor cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, matcher, null, null);
+        while (cursor.hasNext()) {
+            BSONObject obj = cursor.getNext();
+            BasicBSONList autoIncList = (BasicBSONList)obj.get("AutoIncrement");
+            assertEquals(3, autoIncList.size());
+            // System.out.println(autoIncList);
+        }
+        cursor.close();
+
+        cl.dropAutoIncrement(autoIncName1);
+        List<String> names = new ArrayList<String>();
+        names.add(autoIncName2);
+        names.add(autoIncName3);
+        cl.dropAutoIncrement(names);
+
+        cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, matcher, null, null);
+        while (cursor.hasNext()) {
+            BSONObject obj = cursor.getNext();
+            BasicBSONList autoIncList = (BasicBSONList)obj.get("AutoIncrement");
+            assertEquals(0, autoIncList.size());
+        }
+        cursor.close();
     }
 
 }
