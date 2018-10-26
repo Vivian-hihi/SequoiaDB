@@ -663,14 +663,12 @@ TEST_F( sdbParaVerify, isValid )
    INT32 rc = SDB_OK ;
    // test sdbIsValid
    BOOLEAN result ;
-   rc = sdbIsValid( NULL, &result ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
-   rc = sdbIsValid( SDB_INVALID_HANDLE, &result ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
-   rc = sdbIsValid( cs, &result ) ;
-   ASSERT_EQ( SDB_CLT_INVALID_HANDLE, rc ) ;
-   rc = sdbIsValid( db, NULL ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   result = sdbIsValid( NULL ) ;
+   ASSERT_EQ( FALSE, result ) ;
+   result = sdbIsValid( SDB_INVALID_HANDLE ) ;
+   ASSERT_EQ( FALSE, result ) ;
+   result = sdbIsValid( cs ) ;
+   ASSERT_EQ( FALSE, result) ;
 }
 
 TEST_F( sdbParaVerify, msg )
