@@ -906,27 +906,21 @@ TEST(sdb, sdbIsClose)
    // scene 1
    // test when we get nornal business packet back from server,
    // wether sdbIsValid() return false. if so, it means error
-   rc = sdbIsValid( connection, &result );
-   CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
-   ASSERT_EQ ( SDB_OK, rc ) ;
+   result = sdbIsValid( connection );
    std::cout << "before close connection, result is " << result << std::endl ;
    ASSERT_EQ( TRUE, result ) ;
 
    // scene 2
    // test close connection manually
    result = FALSE ;
-   rc = sdbIsValid( connection, &result );
-   CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
-   ASSERT_EQ ( SDB_OK, rc ) ;
+   result = sdbIsValid( connection );
    std::cout << "after close connection manually, result is " << result << std::endl ;
    ASSERT_EQ( TRUE, result ) ;
 
    // scene 3
    // test close after disconnect
    sdbDisconnect ( connection ) ;
-   rc = sdbIsValid( connection, &result );
-   CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
-   ASSERT_EQ ( SDB_OK, rc ) ;
+   result = sdbIsValid( connection );
    std::cout << "after close connection, result is " << result << std::endl ;
    ASSERT_EQ ( FALSE, result ) ;
    sdbDisconnect( connection ) ;
