@@ -116,6 +116,7 @@ public class Sequoiadb implements Closeable {
     public final static int SDB_SNAP_ACCESSPLANS = 11;
     public final static int SDB_SNAP_HEALTH = 12;
     public final static int SDB_SNAP_CONFIGS = 13;
+    public final static int SDB_SNAP_SEQUENCES = 15;
 
     public final static int FMP_FUNC_TYPE_INVALID = -1;
     public final static int FMP_FUNC_TYPE_JS = 0;
@@ -1358,6 +1359,8 @@ public class Sequoiadb implements Closeable {
                 return AdminCommand.SNAP_HEALTH;
             case SDB_SNAP_CONFIGS:
                 return AdminCommand.SNAP_CONFIGS;
+            case SDB_SNAP_SEQUENCES:
+                return AdminCommand.SNAP_SEQUENCES;
             default:
                 throw new BaseException(SDBError.SDB_INVALIDARG, String.format("Invalid snapshot type: %d", snapType));
         }

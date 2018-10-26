@@ -1919,6 +1919,78 @@ public class DBCollection {
         sequoiadb.throwIfError(response, options);
         sequoiadb.upsertCache(collectionFullName);
     }
+    
+    /**
+     * Create auto-increment for current collection.
+     *
+     * @param options The options for creating auto-increment are as below:
+     *                <ul>
+     *                <li>Field : Auto-increment field name
+     *                <li>Increment : The interval between consecutive values
+     *                <li>StartValue : The first value for auto-increment
+     *                <li>MinValue : The minimum value
+     *                <li>MaxValue : The maximum value
+     *                <li>CacheSize : The number of values that are cached in catalog node
+     *                <li>AcquireSize : The number of values that are acquired by coord node
+     *                <li>Cycled : Whether generate the next value after reaching the maximum or minimum
+     *                <li>Generated : Whether generate value if the field has already exist. It can be "default", "always" or "strict". 
+     *                     <li>default : Generate the value by default if field is not exist. It is default value either.
+     *                     <li>always : Always Generate the value, ignore the existent field.
+     *                     <li>strict : Like 'default' behavior, but additionally check the type of field. If not number, return error.
+     *                e.g. {Field:"ID", StartValue:100, Generated:"always"}
+     *                </ul>
+     * @throws BaseException If error happens.
+     */
+    public void createAutoIncrement(BSONObject option) {
+        if (null == option || option.isEmpty()) {
+            throw new BaseException(SDBError.SDB_INVALIDARG);
+        }
+        List<BSONObject> options = new ArrayList<BSONObject>();
+        options.add(option);
+        createAutoIncrement(options);
+    }
+
+    /**
+     * Create one or more auto-increment for current collection.
+     *
+     * @param options The options of the auto-increment(s)
+     * @throws BaseException If error happens.
+     */
+    public void createAutoIncrement(List<BSONObject> options) {
+        if (null == options || options.size() == 0) {
+            throw new BaseException(SDBError.SDB_INVALIDARG);
+        }
+        BSONObject obj = new BasicBSONObject(SdbConstants.FIELD_NAME_AUTOINCREMENT, options);
+        alterInternal(SdbConstants.SDB_ALTER_CL_CRT_AUTOINC_FLD, obj, false);
+    }
+
+    /**
+     * Drop auto-increment of current collection.
+     *
+     * @param fieldName The auto-increment field name
+     * @throws BaseException If error happens.
+     */
+    public void dropAutoIncrement(String fieldName) {
+        if (null == fieldName || fieldName.length() == 0) {
+            throw new BaseException(SDBError.SDB_INVALIDARG);
+        }
+        BSONObject obj = new BasicBSONObject(SdbConstants.FIELD_NAME_AUTOINC_FIELD, fieldName);
+        alterInternal(SdbConstants.SDB_ALTER_CL_DROP_AUTOINC_FLD, obj, false);
+    }
+
+    /**
+     * Drop one of more auto-increment of current collection.
+     *
+     * @param fieldNames The auto-increment field name(s)
+     * @throws BaseException If error happens.
+     */
+    public void dropAutoIncrement(List<String> fieldNames) {
+        if (null == fieldNames || fieldNames.size() == 0) {
+            throw new BaseException(SDBError.SDB_INVALIDARG);
+        }
+        BSONObject obj = new BasicBSONObject(SdbConstants.FIELD_NAME_AUTOINC_FIELD, fieldNames);
+        alterInternal(SdbConstants.SDB_ALTER_CL_DROP_AUTOINC_FLD, obj, false);
+    }
 
     /**
      * Create the id index.

@@ -46,6 +46,8 @@ final class SdbConstants {
     final static String FIELD_NAME_OPTIONS = "Options";
     final static String FIELD_NAME_DOMAIN = "Domain";
     final static String FIELD_NAME_CELLECTIONSPACE = "CollectionSpace";
+    final static String FIELD_NAME_AUTOINCREMENT = "AutoIncrement";
+    final static String FIELD_NAME_AUTOINC_FIELD = "Field";
 
     final static String FIELD_NAME_ARGS = "Args";
     final static String FIELD_NAME_ALTER = "Alter";
@@ -70,6 +72,8 @@ final class SdbConstants {
     final static String SDB_ALTER_ADD_GROUPS = "add groups";
     final static String SDB_ALTER_SET_GROUPS = "set groups";
     final static String SDB_ALTER_REMOVE_GROUPS = "remove groups";
+    final static String SDB_ALTER_CL_CRT_AUTOINC_FLD = "create autoincrement";
+    final static String SDB_ALTER_CL_DROP_AUTOINC_FLD = "drop autoincrement";
 
     final static String FIELD_NAME_MODIFY = "$Modify";
     final static String FIELD_NAME_OP = "OP";

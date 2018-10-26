@@ -90,6 +90,7 @@ final class AdminCommand {
     final static String SNAP_ACCESSPLANS = PREFIX + "snapshot accessplans";
     final static String SNAP_HEALTH = PREFIX + "snapshot health";
     final static String SNAP_CONFIGS = PREFIX + "snapshot configs";
+    final static String SNAP_SEQUENCES = PREFIX + "snapshot sequences";
 
     final static String RESET_SNAPSHOT = PREFIX + "snapshot reset";
 
