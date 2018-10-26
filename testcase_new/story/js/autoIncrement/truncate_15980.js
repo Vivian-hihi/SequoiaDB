@@ -1,0 +1,69 @@
+/******************************************************************************
+@Description :   seqDB-15980:  truncate集合  
+@Modify list :   2018-10-15  xiaoni Zhao  Init
+******************************************************************************/
+function main()
+{
+   if(commIsStandalone( db ))
+   {
+      println("Deploy is standalone");
+      return;
+   } 
+    
+   var clName = COMMCLNAME + "_15980";
+   var fields = ["id1", "a.a"];
+   
+   commDropCL( db, COMMCSNAME, clName );
+   
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : [ { Field : fields[0] }, { Field : fields[1] } ] } );
+   
+   var coordNodes = getCoordNodeNames();
+   var expRecs = [];
+   for( var i = 0; i < coordNodes.length; i++ )
+   {
+      var coord = new Sdb( coordNodes[ i ] );
+      var cl = coord.getCS( COMMCSNAME ).getCL( clName );
+      cl.insert( { "b" : i, "c" : i } );
+      expRecs.push({ "b" : i, "c" : i, "id1" : 1 + i*1000, "a" : { "a" : 1 + i*1000 }});
+      coord.close();
+   }
+    
+   var rc = dbcl.find().sort( { "id1" : 1 } );
+   checkRec( rc, expRecs );
+   
+   dbcl.truncate();
+   
+   checkCurrentValue( db, COMMCSNAME, clName, fields );
+   
+   var expRecs = [];
+   for(var i = 0; i < coordNodes.length; i++ )
+   {
+      var coord = new Sdb( coordNodes[ i ] );
+      var cl = coord.getCS( COMMCSNAME ).getCL( clName );
+      cl.insert( { "b" : i, "c" : i } );
+      expRecs.push({ "b" : i, "c" : i, "id1" : 1 + i*1000, "a" : { "a" : 1 + i*1000 }});
+      coord.close();
+   }
+     
+   var rc = dbcl.find().sort( { "id1" : 1 } );
+   checkRec( rc, expRecs );
+ 
+   commDropCL( db, COMMCSNAME, clName );
+}
+
+function checkCurrentValue( db, csName, clName, fields )
+{
+   var clID = getCLID( csName, clName );
+   for( var i in fields )
+   {
+      var sequenceName = "SYS_" + clID + "_" + fields[i] + "_SEQ";
+      var cursor = db.snapshot( SDB_SNAP_SEQUENCES, { Name : sequenceName } );
+      if( cursor.current().toObj().CurrentValue !== cursor.current().toObj().StartValue )
+      {
+         throw "currentValue is not equals to StartValue!";
+      }
+   }
+   
+}
+
+main();

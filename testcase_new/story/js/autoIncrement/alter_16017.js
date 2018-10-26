@@ -1,0 +1,61 @@
+/******************************************************************************
+@Description :   seqDB-16017:  修改catalog一次生成序列值数量  
+@Modify list :   2018-10-22    xiaoni Zhao  Init
+******************************************************************************/
+function main()
+{
+   if(commIsStandalone( db ))
+   {
+      println("Deploy is standalone");
+      return;
+   } 
+    
+   var clName = COMMCLNAME + "_16017";
+   
+   commDropCL( db, COMMCSNAME, clName );
+   
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1" } } );
+   
+   dbcl.insert({ a:1 });
+   
+   //alter attributes and check
+   dbcl.setAttributes({ AutoIncrement : { Field : "id1", CacheSize : 3000 } });
+   
+   var clID = getCLID(COMMCSNAME, clName);
+   var sequenceName = "SYS_" + clID + "_id1_SEQ";
+   var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
+   if( cursor.current().toObj().CacheSize !== 3000)
+   {
+      throw "alter failed!";
+   }
+   
+   //insert records and check 
+   var coordNodes = getCoordNodeNames();
+   var expRecs = [{ "a" : 1, "id1" : 1 }];
+   for( var i = 0; i < coordNodes.length; i++ )
+   {
+      var coord = new Sdb( coordNodes[ i ] );
+      var cl = coord.getCS( COMMCSNAME ).getCL( clName );
+      try
+      { 
+         for(var j = 0; j < 2; j++)
+         {
+            cl.insert( { "a" : j, "b" : j } );
+            expRecs.push({ "a" : j, "b" : j, "id1" : 1001 + i*1000 + j });
+         }
+      }catch(e)
+      {
+         if(e !== -325)
+         {
+            throw e;
+         }
+      }
+      coord.close();
+   }
+    
+   var rc = dbcl.find().sort( { "id1" : 1 } );
+   checkRec( rc, expRecs );
+   
+   commDropCL( db, COMMCSNAME, clName );
+}
+main();

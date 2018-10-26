@@ -1,0 +1,51 @@
+/******************************************************************************
+@Description :   seqDB-15982:  集合中存在记录，创建自增字段 
+@Modify list :   2018-10-15    xiaoni Zhao  Init
+******************************************************************************/
+function main()
+{
+   if(commIsStandalone( db ))
+   {
+      println("Deploy is standalone");
+      return;
+   } 
+    
+   var clName = COMMCLNAME + "_15982";
+   var field = "id1";
+   
+   commDropCL( db, COMMCSNAME, clName );
+   
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName );
+   
+   dbcl.insert( { a : 1 } );
+
+   dbcl.createAutoIncrement( { Field : field } );
+  
+   var rc = dbcl.find();
+   var expRecs = [ { "a" : 1 } ];
+   checkRec( rc, expRecs ); 
+   
+   dbcl.insert( { id1 : 5, a : 7 } );
+   
+   var rc = dbcl.find().sort( { field : 1 } );
+   var expRecs = [ { "a" : 1 }, { "id1" : 5, "a" : 7 } ];
+   checkRec( rc, expRecs ); 
+   
+   dbcl.update( { $set :{ a : 77 } }, { id1 : 5 } );
+
+   rc = dbcl.find().sort( { field :1 }  );
+   expRecs = [ { "a" : 1 }, { "id1" : 5, "a" : 77 } ];
+   checkRec( rc, expRecs );
+   
+   dbcl.update( { $set :{ a : 777 } }, { a : 1 } );
+   
+   rc = dbcl.find().sort( { field : 1 } );
+   expRecs = [ { "a" : 777 }, { "id1" : 5, "a" : 77 } ];
+   checkRec( rc, expRecs );
+   
+   dbcl.remove();
+   
+   commDropCL( db, COMMCSNAME, clName );
+}
+
+main();

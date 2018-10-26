@@ -1,0 +1,69 @@
+/******************************************************************************
+@Description :   seqDB-16038:  MinValue字段参数校验 
+@Modify list :   2018-10-23    xiaoni Zhao  Init
+******************************************************************************/
+function main()
+{
+   if(commIsStandalone( db ))
+   {
+      println("Deploy is standalone");
+      return;
+   } 
+   
+   var clName = COMMCLNAME + "_16038";
+   
+   commDropCL( db, COMMCSNAME, clName );
+   
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName );
+   
+   dbcl.createAutoIncrement([{ Field : "a1", MinValue : { "$numberLong" : "-9223372036854775809" } },
+                             { Field : "a2", MinValue : 5, StartValue : 10 },
+                             { Field : "a3", MinValue : { "$numberLong" : "-9223372036854775808" } }]);
+   
+   createAutoIncrement(dbcl, "a4", { "$numberLong" : "9223372036854775809" });
+   
+   createAutoIncrement(dbcl, "a5", { "$numberLong" : "9223372036854775807" });
+   
+   createAutoIncrement(dbcl, "a6", 123.4);
+   
+   createAutoIncrement(dbcl, "a7", { $decimal:"123.456" });
+   
+   //check Sequence
+   var clID = getCLID( COMMCSNAME, clName );
+   var sequenceNames = ["SYS_" + clID + "_a1_SEQ",
+                        "SYS_" + clID + "_a2_SEQ",
+                        "SYS_" + clID + "_a3_SEQ"]; 
+   var expSequences =  [{ MinValue : { "$numberLong" : "-9223372036854775808" } },
+                        { MinValue : 5, CurrentValue : 10, StartValue : 10 },
+                        { MinValue : { "$numberLong":"-9223372036854775808" } }];
+   for(var i in sequenceNames)
+   {
+       checkSequence(sequenceNames[i], expSequences[i]);
+   }
+   
+   dbcl.insert( { "a" : 1 } );
+  
+   var rc = dbcl.find();
+   var expRecs = [ { "a" : 1, "a1" : 1, "a2" : 10, "a3" : 1 } ];
+   checkRec( rc, expRecs );
+   
+   commDropCL( db, COMMCSNAME, clName );
+}
+
+function createAutoIncrement(dbcl, field, minValue)
+{
+   try
+   {
+      dbcl.createAutoIncrement({ Field : field, MinValue : minValue, StartValue : { "$numberLong" : "9223372036854775807" } });
+      throw "create error!";
+   }catch(e)
+   {
+      if(e !== -6)
+      {
+         throw e;
+      }
+   }
+   
+}
+
+main();

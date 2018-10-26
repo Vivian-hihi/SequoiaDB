@@ -1,0 +1,49 @@
+/******************************************************************************
+@Description :   seqDB-16008:  hash分区集合中存在自增字段，删除集合  
+@Modify list :   2018-10-18    xiaoni Zhao  Init
+******************************************************************************/
+function main()
+{
+   var dataGroupNames = getDataGroupNames();
+   if(commIsStandalone( db ) || dataGroupNames.length < 2)
+   {
+      println("Deploy is standalone or only one group");
+          return;
+   }
+ 
+   var clName = COMMCLNAME + "_16008";
+   var field = "id1";
+   
+   commDropCL(db, COMMCSNAME, clName);
+  
+   db.createDomain("domain1", ["group1"]);
+   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, { Group : "group1", ShardingKey : { a : 1 }, 
+                                   ShardingType : "range", AutoIncrement : { Field : field, Increment : 2,
+                                   StartValue : 2, MinValue : 2, MaxValue : 998, CacheSize : 10, 
+                                   AcquireSize : 2, Cycled : true, Generated : "strict" } });
+   dbcl.insert({ a : 1, b : 1 });
+   
+   dbcl.split("group1", "group2", 50);
+   
+   var rc = dbcl.find();
+   var expRecs = [ { "id1" : 2, "a" : 1, "b" : 1 } ];
+   checkRec( rc, expRecs ); 
+   
+   //drop CL and check
+   commDropCL( db, COMMCSNAME, clName );
+   
+   var cursor = db.snapshot( 8, { Name : COMMCSNAME + "." + clName } );
+   while(cursor.next())
+   {
+      if(cursor.current().toObj().AutoIncrement.length !== 0)
+      {
+         throw "drop failed!";
+      }
+   }
+   
+   commDropCL( db, COMMCSNAME, clName );
+   
+   db.dropDomain("domain1");
+}
+ 
+main();
