@@ -49,14 +49,15 @@ function main()
    }
    catch( e ){
 	  if( e != -6){
-         throw buildException("commCreateIndex()", e, "create index fali ,the index length : 112 ", "success", "fail");
+	     println(e);
+         throw buildException("commCreateIndex()", "commCreateIndex", "create index fail ,the index length : 112 ", "success", "fail");
 	  }
    }
    commCheckIndex( dbcl, indexName, false );
    
    //固定集合名长度大于127时，全文索引创建失败
    var indexName = "";
-   for (var i = 0; i < 120; i++){
+   for (var i = 0; i < 129; i++){
       indexName = indexName + "a";	  
    }
    try{
@@ -64,7 +65,8 @@ function main()
    }
    catch( e ){
       if( e != -6){
-	     throw buildException("commCreateIndex()", e, "create index fali ,the index length : 120 ", "success", "fail");
+	     println(e);
+	     throw buildException("commCreateIndex()", "commCreateIndex", "create index fail ,the index length : 120 ", "success", "fail");
 	  }
    }
    commCheckIndex( dbcl, indexName, false );
