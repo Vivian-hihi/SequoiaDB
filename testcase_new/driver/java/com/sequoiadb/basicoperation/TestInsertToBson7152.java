@@ -79,7 +79,7 @@ public class TestInsertToBson7152 extends SdbTestBase{
 			BSONObject subObj = new BasicBSONObject();
 			BSONObject arr = new BasicBSONList();			
 			ObjectId id = new ObjectId("53bb5667c5d061d6f579d0bb");
-			Pattern regex = Pattern.compile("^2001",Pattern.CASE_INSENSITIVE);
+			Pattern regex = Pattern.compile("dh.*fj",Pattern.CASE_INSENSITIVE);
 			BSONObject regex1 = new BasicBSONObject();
 			BSONObject numberlong = new BasicBSONObject();
 			/*String str = "hello world";
@@ -154,8 +154,8 @@ public class TestInsertToBson7152 extends SdbTestBase{
 	            System.out.println("*** new " + buff1.toString() + "***");*/
 	        }
 	        tmpCursor.close();
-	        Assert.assertEquals(actRecs,obj,"check datas are unequal\n"
-	        					+"actDatas: "+actRecs);
+	        Assert.assertEquals(actRecs.toString(),obj.toString(),"check datas are unequal\n"
+	        					+"actDatas: "+actRecs+"\nexpected: "+obj+" \n"+obj.get("binary").getClass().getName()+" \n"+actRecs.get("binary").getClass().getName());
 	        System.out.println("---insert BsonTypeDatas is ok");
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"insert BsonDatas fail "+e.getMessage());
