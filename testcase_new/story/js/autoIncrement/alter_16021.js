@@ -16,7 +16,7 @@ function main()
    
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1" } } );
    
-   dbcl.insert({ a:1 });
+   dbcl.insert({ a : 1 });
    
    //alter attributes and check
    dbcl.setAttributes({ AutoIncrement : { Field : "id1", CurrentValue : 500 } });
@@ -31,29 +31,45 @@ function main()
    
    //insert records and check
    var coordNodes = getCoordNodeNames();
-   var expRecs = [];
+   var expRecs = [{ "a" : 1, "id1" : 1 }];
    for( var i = 0; i < coordNodes.length; i++ )
    {
       var coord = new Sdb( coordNodes[ i ] );
       var cl = coord.getCS( COMMCSNAME ).getCL( clName );
-      try
-      { 
-         cl.insert( { "a" : i, "b" : i } );
-         expRecs.push({ "a" : i, "b" : i,  });
-      }catch(e)
-      {
-         if(e !== -325)
-         {
-            throw e;
-         }
-      }
+      cl.insert( { "a" : i, "b" : i } );
+      expRecs.push({ "a" : i, "b" : i, "id1" : i*1000 + 501 });
       coord.close();
    }
     
    var rc = dbcl.find().sort( { "id1" : 1 } );
-   var expRecs = [ { "a" : 1, "id1" : 1 },
-                   { "a" : 1, "id1" : 501 },
-                   ];
+   checkRec( rc, expRecs );
+   
+   //alter attributes and check
+   dbcl.setAttributes({ AutoIncrement : { Field : "id1", CurrentValue : 4000 } });
+   
+   var clID = getCLID(COMMCSNAME, clName);
+   var sequenceName = "SYS_" + clID + "_id1_SEQ";
+   var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
+   if( cursor.current().toObj().CurrentValue !== 4000)
+   {
+      throw "alter failed!";
+   }
+   
+   //insert records and check
+   var coordNodes = getCoordNodeNames();
+   for( var i = 0; i < coordNodes.length; i++ )
+   {
+      var coord = new Sdb( coordNodes[ i ] );
+      var cl = coord.getCS( COMMCSNAME ).getCL( clName );
+      var rc = cl.find();
+      while(rc.next())
+      {}
+      cl.insert( { "a" : i, "b" : i } );
+      expRecs.push({ "a" : i, "b" : i, "id1" : i*1000 + 4001 });
+      coord.close();
+   }
+    
+   var rc = dbcl.find().sort( { "id1" : 1 } );
    checkRec( rc, expRecs );
    
    commDropCL( db, COMMCSNAME, clName );

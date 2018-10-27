@@ -16,14 +16,14 @@ function main()
    
    commDropCL(db, COMMCSNAME, clName);
   
-   db.createDomain("domain1", ["group1"]);
-   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, { Group : "group1", ShardingKey : { a : 1 }, 
+   db.createDomain("domain1", [dataGroupNames[0]]);
+   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, { Group : dataGroupNames[0], ShardingKey : { a : 1 }, 
                                    ShardingType : "range", AutoIncrement : { Field : field, Increment : 2,
                                    StartValue : 2, MinValue : 2, MaxValue : 998, CacheSize : 10, 
                                    AcquireSize : 2, Cycled : true, Generated : "strict" } });
    dbcl.insert({ a : 1, b : 1 });
    
-   dbcl.split("group1", "group2", 50);
+   dbcl.split(dataGroupNames[0], dataGroupNames[1], 50);
    
    var rc = dbcl.find();
    var expRecs = [ { "id1" : 2, "a" : 1, "b" : 1 } ];

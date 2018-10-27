@@ -16,11 +16,11 @@ function main()
    
    commDropCL(db, COMMCSNAME, clName);
    
-   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, { Group : "group1", ShardingKey : { a : 1 }, ShardingType : "range" });
+   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, { Group : dataGroupNames[0], ShardingKey : { a : 1 }, ShardingType : "range" });
    
    dbcl.insert({ a : 1 });
    
-   dbcl.split("group1", "group2", 50);
+   dbcl.split(dataGroupNames[0], dataGroupNames[1], 50);
    
    dbcl.createAutoIncrement({ Field : field });
    
@@ -37,13 +37,13 @@ function main()
    var expRecs = [{ "a" : 1 }, { "id1" : 1, "a" : 2 }];
    checkRec(rc, expRecs);
    
-   dbcl.dropAutoIncrement(field); 
+   /*dbcl.dropAutoIncrement(field); 
    
    var cursor = db.snapshot( 8, { Name : COMMCSNAME + "." + clName } );
    if( cursor.current().toObj().AutoIncrement.length !== 0 )
    {
       throw "drop autoIncrement failed!";
-   }
+   }*/
    
    commDropCL(db, COMMCSNAME, clName);
 }
