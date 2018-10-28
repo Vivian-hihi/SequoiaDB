@@ -7,7 +7,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.config.SequoiadbConfig;
-import com.sequoias3.core.Owner;
+import com.sequoias3.model.Owner;
 import com.sequoias3.core.User;
 import com.sequoias3.dao.DaoCollectionDefine;
 import com.sequoias3.dao.UserDao;

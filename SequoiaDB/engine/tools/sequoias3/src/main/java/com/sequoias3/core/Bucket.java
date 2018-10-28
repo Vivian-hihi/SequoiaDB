@@ -3,8 +3,6 @@ package com.sequoias3.core;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Date;
-
 public class Bucket {
     public static final String BUCKET_ID               = "ID";
     public static final String BUCKET_NAME             = "Name";

@@ -1,6 +1,6 @@
 package com.sequoias3.service;
 
-import com.sequoias3.core.AccessKeys;
+import com.sequoias3.model.AccessKeys;
 import com.sequoias3.exception.S3ServerException;
 
 public interface UserService {
@@ -11,5 +11,5 @@ public interface UserService {
 
     AccessKeys getUser(String userName) throws S3ServerException;
 
-    void deleteUser(String username) throws S3ServerException;
+    void deleteUser(String username, Boolean forceDelete) throws S3ServerException;
 }

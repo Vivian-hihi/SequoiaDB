@@ -1,21 +1,26 @@
 package com.sequoias3.common;
 
 public class RestParamDefine {
-    public static final String USER_NAME               = "username";
-    public static final String ROLE                    = "role";
     public static final String AUTHORIZATION           = "authorization";
 
     public static final String VERSIONS                = "versions";
-    public static final String VERSIONID               = "versionId";
+    public static final String VERSION_ID              = "versionId";
+    public static final String VERSIONING              = "versioning";
 
     public static final int    MAX_KEYS_DEFAULT        = 1000;
+
+    public static class UserPara{
+        public static final String USER_NAME               = "username";
+        public static final String ROLE                    = "role";
+        public static final String FORCE                   = "force";
+    }
 
     public static class ListObjectsPara{
         public static final String LIST_TYPE2              = "list-type=2";
         public static final String PREFIX                  = "prefix";
         public static final String DELIMITER               = "delimiter";
         public static final String CONTINUATIONTOKEN       = "continuation-token";
-        public static final String STRAT_AFTER             = "start-after";
+        public static final String START_AFTER             = "start-after";
         public static final String MAX_KEYS                = "max-keys";
         public static final String ENCODING_TYPE           = "encoding-type";
         public static final String FETCH_OWNER             = "fetch-owner";
@@ -24,12 +29,11 @@ public class RestParamDefine {
     public static class ListObjectVersionsPara{
         public static final String PREFIX                  = "prefix";
         public static final String DELIMITER               = "delimiter";
-        public static final String CONTINUATIONTOKEN       = "continuationtoken";
-        public static final String STRAT_AFTER             = "start-after";
+        public static final String KEY_MARKER              = "key-marker";
+        public static final String VERSION_ID_MARKER       = "version-id-marker";
         public static final String MAX_KEYS                = "max-keys";
         public static final String ENCODING_TYPE           = "encoding-type";
     }
-
 
     public static class PutObjectHeader {
         public static final String CONTENT_LENGTH       = "content-length";
@@ -80,9 +84,10 @@ public class RestParamDefine {
         public static final String CONTENT_RANGE           = "Content-Range";
     }
 
-    public static final String VERSIONING                  = "versioning";
-    public static final String VERSIONING_STATUS_ENABLED   = "Enabled";
-    public static final String VERSIONING_STATUS_SUSPENDED = "Suspended";
+    public static class DeleteObjectResultHeader {
+        public static final String  VERSION_ID    = "VersionId";
+        public static final String  DELETE_MARKER = "DeleteMarker";
+    }
 
     public static final int KEY_LENGTH              = 900;
     public static final int X_AMZ_META_LENGTH       = 2*1024;
@@ -94,7 +99,7 @@ public class RestParamDefine {
     public static final String REST_DELIMITER       = "/";
 
     public static final String REST_RANGE_START     = "bytes=";
-    public static final String REST_HYPHEN    = "-";
+    public static final String REST_HYPHEN          = "-";
 
-    public static final String ENCODING_TYPE_URL     = "url";
+    public static final String ENCODING_TYPE_URL    = "url";
 }

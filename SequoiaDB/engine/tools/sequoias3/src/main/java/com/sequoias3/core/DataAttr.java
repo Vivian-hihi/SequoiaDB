@@ -2,7 +2,7 @@ package com.sequoias3.core;
 
 import org.bson.types.ObjectId;
 
-public class InsertResult {
+public class DataAttr {
     private ObjectId lobId;
     private String   eTag;
     private long     size;

@@ -1,4 +1,4 @@
-package com.sequoias3.core;
+package com.sequoias3.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sequoias3.exception.S3Error;
@@ -10,8 +10,6 @@ import java.net.URLEncoder;
 public class CommonPrefix {
     @JsonProperty("Prefix")
     private String prefix;
-    @JsonProperty("Owner")
-    private Owner owner;
 
     public CommonPrefix(String prefix, String encodingType) throws S3ServerException{
         try {
@@ -31,14 +29,6 @@ public class CommonPrefix {
 
     public String getPrefix() {
         return prefix;
-    }
-
-    public void setOwner(Owner owner) {
-        this.owner = owner;
-    }
-
-    public Owner getOwner() {
-        return owner;
     }
 
     @Override

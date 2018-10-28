@@ -3,12 +3,13 @@ package com.sequoias3.service.impl;
 import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.common.InitAdminUserDefine;
 import com.sequoias3.common.UserParamDefine;
-import com.sequoias3.core.AccessKeys;
+import com.sequoias3.model.AccessKeys;
 import com.sequoias3.core.Bucket;
 import com.sequoias3.core.User;
 import com.sequoias3.dao.BucketDao;
 import com.sequoias3.dao.UserDao;
 import com.sequoias3.exception.*;
+import com.sequoias3.service.BucketService;
 import com.sequoias3.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private BucketDao bucketDao;
+
+    @Autowired
+    private BucketService bucketService;
 
     @Override
     public AccessKeys createUser(String newUserName,
@@ -124,7 +128,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deleteUser(String deleteUserName)
+    public void deleteUser(String deleteUserName, Boolean forceDelete)
             throws S3ServerException {
         try {
             //       1.check username
@@ -140,15 +144,26 @@ public class UserServiceImpl implements UserService {
                 throw new S3ServerException(S3Error.USER_DELETE_INIT_ADMIN, "Last admin user cannot be delete.");
             }
 
-            //       2.check bucket
-            //       3.delete objects
-            //       4.delete buckets
+            //       2.delete buckets
             List<Bucket> bucketList = bucketDao.getBucketListByOwnerID(user.getUserId());
-            for (int i = 0; i < bucketList.size(); i++) {
-                bucketDao.deleteBucket(bucketList.get(i).getBucketName());
+            if (forceDelete) {
+                for (int i = 0; i < bucketList.size(); i++) {
+                    try {
+                        bucketService.deleteBucketForce(bucketList.get(i));
+                    } catch (S3ServerException e) {
+                        throw new S3ServerException(e.getError(),
+                                "clean bucket failed, bucket=" + bucketList.get(i).getBucketName());
+                    } catch (Exception e) {
+                        throw new S3ServerException(S3Error.USER_DELETE_CLEAN_FAILED,
+                                "clean bucket failed, bucket=" + bucketList.get(i).getBucketName());
+                    }
+                }
+            }else if(bucketList.size() > 0 ){
+                throw new S3ServerException(S3Error.USER_DELETE_RELEASE_RESOURCE,
+                        "Please delete your bucket before delete user, or delete user force.");
             }
 
-            //       4.delete user
+            //       3.delete user
             userDao.deleteUser(userName);
         } catch (S3ServerException e) {
             throw e;

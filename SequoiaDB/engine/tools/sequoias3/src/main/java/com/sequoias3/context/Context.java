@@ -1,10 +1,6 @@
 package com.sequoias3.context;
 
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoias3.core.QueryDbCursor;
-
-import java.util.Date;
+import com.sequoias3.dao.QueryDbCursor;
 
 import static com.sequoias3.utils.DataFormatUtils.formatDate;
 

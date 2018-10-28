@@ -1,12 +1,17 @@
 package com.sequoias3.service.impl;
 
-import com.sequoiadb.base.DBCursor;
+import com.fasterxml.jackson.databind.util.ArrayBuilders;
 import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.common.RestParamDefine;
-import com.sequoias3.config.SequoiadbConfig;
+import com.sequoias3.common.VersioningStatusType;
 import com.sequoias3.context.Context;
 import com.sequoias3.context.ContextManager;
 import com.sequoias3.core.*;
+import com.sequoias3.model.*;
+import com.sequoias3.model.Content;
+import com.sequoias3.model.ListObjectsResult;
+import com.sequoias3.model.Owner;
+import com.sequoias3.model.PutDeleteResult;
 import com.sequoias3.dao.*;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
@@ -14,7 +19,7 @@ import com.sequoias3.service.BucketService;
 import com.sequoias3.service.ObjectService;
 import org.apache.commons.codec.binary.Hex;
 import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,15 +55,18 @@ public class ObjectServiceImpl implements ObjectService {
     MetaDao metaDao;
 
     @Autowired
-    SequoiadbConfig config;
+    ContextManager contextManager;
 
     @Autowired
-    ContextManager contextManager;
+    DaoMgr daoMgr;
+
+    @Autowired
+    Transaction transaction;
 
     @Override
     public PutDeleteResult putObject(int ownerID, String bucketName, String objectName,
-                                String contentMD5, Map<String, String> headers,
-                                Map<String, String> xMeta, InputStream inputStream)
+                                     String contentMD5, Map<String, String> headers,
+                                     Map<String, String> xMeta, InputStream inputStream)
             throws S3ServerException {
         //check key length
         if (objectName.length() > RestParamDefine.KEY_LENGTH){
@@ -72,121 +80,137 @@ public class ObjectServiceImpl implements ObjectService {
                     "metadata headers exceed the maximum. xMeta:"+xMeta.toString());
         }
 
-        try {
-            //get and check bucket
-            Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+        //get and check bucket
+        Bucket bucket = bucketService.getBucket(ownerID, bucketName);
 
-            //get cs and cl
-            Date createDate = new Date();
-            String dataCsName = dataDao.getDataCSName(bucket.getRegion(), createDate);
-            String dataClName = dataDao.getDataClName();
-            String metaCsName = metaDao.getMetaCSName(bucket.getRegion());
-            String metaClName = metaDao.getMetaCurCLName();
+        //get cs and cl
+        Date createDate      = new Date();
+        String dataCsName    = dataDao.getDataCSName(bucket.getRegion(), createDate);
+        String dataClName    = dataDao.getDataClName();
+        String metaCsName    = metaDao.getMetaCSName(bucket.getRegion());
+        String metaClName    = metaDao.getMetaCurCLName();
+
+        DataAttr insertResult;
+        try {//insert lob
+            insertResult = dataDao.insertObjectData(dataCsName, dataClName, inputStream);
+        }catch (S3ServerException e){
+            throw e;
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.OBJECT_PUT_fAILED, "put object failed.", e);
+        }
+
+        try {
+            //check md5
+            if (null != contentMD5) {
+                if (!isMd5EqualWithETag(contentMD5, insertResult.geteTag())) {
+                    throw new S3ServerException(S3Error.OBJECT_BAD_DIGEST,
+                            "The Content-MD5 you specified does not match what we received.");
+                }
+            }
+
+            VersioningStatusType versioningStatusType = VersioningStatusType.getVersioningStatus(bucket.getVersioningStatus());
 
             //build meta
             ObjectMeta objectMeta = buildObjectMeta(objectName, bucket.getBucketId(),
-                    headers, xMeta, dataCsName, dataClName);
-
-            //insert lob
-            InsertResult insertResult =dataDao.insertObjectData(dataCsName, dataClName, inputStream);
-            String eTag = insertResult.geteTag();
+                    headers, xMeta, dataCsName, dataClName, false,
+                    generateNoVersionFlag(versioningStatusType));
             objectMeta.seteTag(insertResult.geteTag());
             objectMeta.setSize(insertResult.getSize());
             objectMeta.setLobId(insertResult.getLobId());
 
-            //check md5
-            if (null != contentMD5) {
-                if (!isMd5EqualWithETag(contentMD5, eTag)) {
-                    dataDao.deleteObjectDataByLobId(dataCsName,
-                            dataClName, objectMeta.getLobId());
-                    throw new S3ServerException(S3Error.OBJECT_BAD_DIGEST,
-                            "The Content-MD5 you speciﬁed did not match what we received.");
-                }
-            }
+            writeObjectMeta(metaCsName, metaClName, objectMeta,
+                    objectName, bucket.getBucketId(), versioningStatusType);
 
             //build response
-            PutDeleteResult result = new PutDeleteResult();
-            result.seteTag(eTag);
-
-            if (bucket.getVersioningStatus().equals(DBParamDefine.DB_VERSIONING_STATUS_NULL)) {
-                //no versioning
-                objectMeta.setVersionId(ObjectMeta.NULL_VERSION_ID);
-
-                int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
-                while (tryTime > 0) {
-                    tryTime--;
-                    try {
-                        ObjectMeta queryMeta = metaDao.queryAndUpdateMeta(metaCsName, metaClName,
-                                bucket.getBucketId(), objectMeta, objectName);
-                        if (null == queryMeta) {
-                            metaDao.insertMeta(metaCsName, metaClName,
-                                    objectMeta, objectName);
-                        } else {
-                            dataDao.deleteObjectDataByLobId(queryMeta.getCsName(),
-                                    queryMeta.getClName(), queryMeta.getLobId());
-                        }
-                        return result;
-                    } catch (S3ServerException e) {
-                        logger.warn("Create user failed. bucketname=" + bucketName, e);
-                        if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex() && tryTime > 0) {
-                            continue;
-                        }else if(e.getError().getErrIndex() == S3Error.OBJECT_IS_IN_USE.getErrIndex()){
-                            logger.error("lob is in user. remove failed. error:{}", e.toString());
-                            return result;
-                        }
-                        else {
-                            throw e;
-                        }
-                    }
-                }
+            PutDeleteResult response = new PutDeleteResult();
+            response.seteTag(insertResult.geteTag());
+            if (VersioningStatusType.ENABLED == versioningStatusType){
+                response.setVersionId(objectMeta.getVersionId());
+            }
+            return response;
+        }catch (S3ServerException e){
+            dataDao.deleteObjectDataByLobId(null, dataCsName,
+                    dataClName, insertResult.getLobId());
+            if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex()) {
                 throw new S3ServerException(S3Error.OBJECT_PUT_fAILED,
                         "bucket+key duplicate too times. bucket:"+bucketName+" key:"+objectName);
+            } else {
+                throw e;
             }
-            return null;
-        }catch (S3ServerException e){
-            throw e;
         }catch (Exception e){
+            dataDao.deleteObjectDataByLobId(null, dataCsName,
+                    dataClName, insertResult.getLobId());
             throw new S3ServerException(S3Error.OBJECT_PUT_fAILED, "put object failed.", e);
         }
     }
 
     @Override
     public ObjectMeta getObject(int ownerID, String bucketName, String objectName,
-                                String versionId, Map headers, Range range, OutputStream outputStream)
+                                Long versionId, Boolean isNoVersion, Map headers, Range range, OutputStream outputStream)
             throws S3ServerException {
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
-            String metaCsName = metaDao.getMetaCSName(bucket.getRegion());
 
-            //if (null == versionId)
-            {
-                String metaClName = metaDao.getMetaCurCLName();
+            String metaCsName    = metaDao.getMetaCSName(bucket.getRegion());
+            String metaClName    = metaDao.getMetaCurCLName();
+            String metaHisClName = metaDao.getMetaHistoryCLName();
 
-                int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
-                while (tryTime > 0) {
-                    tryTime--;
-                    try {
-                        ObjectMeta objectMeta = metaDao.queryMetaByObjectName(metaCsName, metaClName,
-                                bucket.getBucketId(), objectName);
-                        if (null == objectMeta) {
-                            throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object");
+            int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
+            while (tryTime > 0) {
+                tryTime--;
+                try {
+                    ObjectMeta versionIdMeta;
+                    ObjectMeta objectMeta = metaDao.queryMetaByObjectName(metaCsName, metaClName,
+                            bucket.getBucketId(), objectName, null, null);
+                    if (null == objectMeta) {
+                        throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:"+objectName);
+                    }
+
+                    if (versionId != null) {
+                        if (versionId == objectMeta.getVersionId()){
+                            versionIdMeta = objectMeta;
+                        }else {
+                            ObjectMeta objectMetaHis = metaDao.queryMetaByObjectName(metaCsName,
+                                    metaHisClName, bucket.getBucketId(), objectName, versionId, false);
+                            if (null == objectMetaHis) {
+                                throw new S3ServerException(S3Error.OBJECT_NO_SUCH_VERSION,
+                                        "no such version. object:" + objectName + ",version:" + versionId);
+                            }
+                            versionIdMeta = objectMetaHis;
                         }
-
-                        checkMatchModify(headers, objectMeta);
-                        dataDao.getObjectDataByLobId(objectMeta.getCsName(), objectMeta.getClName(),
-                                objectMeta.getLobId(), range, outputStream);
-                        return objectMeta;
-                    }catch (S3ServerException e){
-                        if (e.getError() == S3Error.DAO_LOB_FNE){
-                            continue;
-                        }else{
-                            throw e;
+                    }else if(isNoVersion) {
+                        if (objectMeta.getNoVersionFlag()) {
+                            versionIdMeta = objectMeta;
+                        } else {
+                            ObjectMeta objectMetaHis = metaDao.queryMetaByObjectName(metaCsName,
+                                    metaHisClName, bucket.getBucketId(), objectName, null, true);
+                            if (null == objectMetaHis) {
+                                throw new S3ServerException(S3Error.OBJECT_NO_SUCH_VERSION,
+                                        "no such version. object:" + objectName + ",version:" + versionId);
+                            }
+                            versionIdMeta = objectMetaHis;
                         }
+                    }else{
+                        if (objectMeta.getDeleteMarker()){
+                            throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:"+objectName);
+                        }
+                        versionIdMeta = objectMeta;
+                    }
+
+                    checkMatchModify(headers, versionIdMeta);
+                    dataDao.getObjectDataByLobId(versionIdMeta.getCsName(), versionIdMeta.getClName(),
+                            versionIdMeta.getLobId(), range, outputStream);
+                    return versionIdMeta;
+                }catch (S3ServerException e){
+                    if (e.getError() == S3Error.DAO_LOB_FNE){
+                        continue;
+                    }else{
+                        throw e;
                     }
                 }
-                throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY,
-                        "Lob is not find");
             }
+            throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY,
+                    "Lob is not find");
         }catch (S3ServerException e) {
             throw e;
         } catch (Exception e) {
@@ -196,48 +220,136 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public PutDeleteResult deleteObject(int ownerID, String bucketName, String objectName, String versionId)
+    public PutDeleteResult deleteObject(int ownerID, String bucketName, String objectName)
             throws S3ServerException {
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
 
-            String metaCsName = metaDao.getMetaCSName(bucket.getRegion());
-            String metaClName = metaDao.getMetaCurCLName();
+            String metaCsName    = metaDao.getMetaCSName(bucket.getRegion());
+            String metaClName    = metaDao.getMetaCurCLName();
 
-            //versioning is null ,return null
-            //if (bucket.getVersioningStatus().equals(DBParamDefine.DB_VERSIONING_STATUS_NULL))
-            {
-                ObjectMeta objectMeta = metaDao.queryAndRemoveMeta(metaCsName, metaClName,
-                        bucket.getBucketId(), objectName);
-                if (null != objectMeta) {
-                    int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
-                    while (tryTime > 0) {
-                        tryTime--;
-                        try {
-                            dataDao.deleteObjectDataByLobId(objectMeta.getCsName(), objectMeta.getClName(),
-                                    objectMeta.getLobId());
-                            break;
-                        }catch (S3ServerException e){
-                            if (e.getError() == S3Error.OBJECT_IS_IN_USE && tryTime > 0){
-                                if (tryTime  == DBParamDefine.DB_DUPLICATE_MAX_TIME-1){
-                                    logger.error("delete object, lob is in use.lob id:{}",objectMeta.getLobId());
-                                }
-                                continue;
+            VersioningStatusType versioningStatusType = VersioningStatusType.getVersioningStatus(bucket.getVersioningStatus());
+            Boolean noVersionFlag = generateNoVersionFlag(versioningStatusType);
+
+            PutDeleteResult response = null;
+            switch (versioningStatusType) {
+                case NONE:
+                    ObjectMeta objectMeta = metaDao.queryAndRemoveMeta(metaCsName, metaClName,
+                            bucket.getBucketId(), objectName);
+                    deleteObjectLob(objectMeta);
+                    return null;
+                case SUSPENDED:
+                case ENABLED:
+                    ObjectMeta deleteMarker = buildObjectMeta(objectName,
+                            bucket.getBucketId(), null, null,
+                            null, null, true,
+                            noVersionFlag);
+                    writeObjectMeta(metaCsName, metaClName, deleteMarker,
+                                    objectName, bucket.getBucketId(), versioningStatusType);
+
+                    response = new PutDeleteResult();
+                    response.setVersionId(deleteMarker.getVersionId());
+                    response.setDeleteMarker(true);
+                    break;
+                default:
+                    break;
+            }
+            return response;
+        }catch (S3ServerException e) {
+            if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex()) {
+                throw new S3ServerException(S3Error.OBJECT_DELETE_FAILED,
+                        "bucket+key duplicate too times. bucket:"+bucketName+" key:"+objectName);
+            } else {
+                throw e;
+            }
+        } catch (Exception e) {
+            throw new S3ServerException(S3Error.OBJECT_DELETE_FAILED,
+                    "delete object failed. bucket:" + bucketName + ", object=" + objectName, e);
+        }
+    }
+
+    @Override
+    public PutDeleteResult deleteObject(int ownerID, String bucketName, String objectName,
+                                        Long versionId, Boolean isNoVersion)
+            throws S3ServerException {
+        try {
+            Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+
+            String metaCsName    = metaDao.getMetaCSName(bucket.getRegion());
+            String metaClName    = metaDao.getMetaCurCLName();
+            String metaHisClName = metaDao.getMetaHistoryCLName();
+
+            VersioningStatusType versioningStatusType = VersioningStatusType.getVersioningStatus(bucket.getVersioningStatus());
+            ObjectMeta deleteObject = null;
+            switch (versioningStatusType){
+                case NONE:
+                    if (isNoVersion) {
+                        ObjectMeta objectMeta = metaDao.queryAndRemoveMeta(metaCsName, metaClName,
+                                bucket.getBucketId(), objectName);
+                        deleteObject = objectMeta;
+                    }
+                    break;
+                case SUSPENDED:
+                case ENABLED:
+                    ConnectionDao connection = daoMgr.getConnectionDao();
+                    transaction.begin(connection);
+                    try{
+                        ObjectMeta objectMeta;
+                        if (isNoVersion != null){
+                            objectMeta = metaDao.queryForUpdate(connection, metaCsName,
+                                    metaClName, bucket.getBucketId(), objectName, null, true);
+                        }else {
+                            objectMeta = metaDao.queryForUpdate(connection, metaCsName,
+                                    metaClName, bucket.getBucketId(), objectName, versionId, null);
+                        }
+                        if (objectMeta != null){
+                            deleteObject = objectMeta;
+                            ObjectMeta objectMeta1 = metaDao.queryForUpdate(connection, metaCsName,
+                                    metaHisClName, bucket.getBucketId(), objectName, null, null);
+                            if (objectMeta1 != null){
+                                metaDao.updateMeta(connection, metaCsName, metaClName, bucket.getBucketId(),
+                                        objectName, versionId, objectMeta1);
+                                metaDao.removeMeta(connection, metaCsName, metaHisClName, bucket.getBucketId(),
+                                        objectName, objectMeta1.getVersionId(), null);
                             }else {
-                                throw e;
+                                metaDao.removeMeta(connection, metaCsName, metaClName, bucket.getBucketId(),
+                                        objectName, versionId, null);
+                            }
+                        }else{
+                            ObjectMeta objectMeta2;
+                            if (isNoVersion != null){
+                                objectMeta2 = metaDao.queryForUpdate(connection, metaCsName,
+                                        metaHisClName, bucket.getBucketId(), objectName, null, true);
+                            }else {
+                                objectMeta2 = metaDao.queryForUpdate(connection, metaCsName,
+                                        metaHisClName, bucket.getBucketId(), objectName, versionId, null);
+                            }
+
+                            if (objectMeta2 != null){
+                                deleteObject = objectMeta2;
+                                metaDao.removeMeta(connection, metaCsName, metaHisClName, bucket.getBucketId(),
+                                        objectName, versionId, null);
                             }
                         }
+                        transaction.commit(connection);
+                    }catch(Exception e){
+                        transaction.rollback(connection);
+                        throw e;
+                    } finally {
+                        daoMgr.releaseConnectionDao(connection);
                     }
-
-                }
-                return null;
+                    break;
+                default:
+                    break;
             }
-            //versioning is enabled, return versionId, delete marker
+
+            deleteObjectLob(deleteObject);
+            return null;
         }catch (S3ServerException e) {
             throw e;
         } catch (Exception e) {
-            throw new S3ServerException(S3Error.OBJECT_GET_FAILED,
-                    "get object failed. bucket:" + bucketName + ", object=" + objectName, e);
+            throw new S3ServerException(S3Error.OBJECT_DELETE_FAILED,
+                    "delete object failed. bucket:" + bucketName + ", object=" + objectName, e);
         }
     }
 
@@ -272,10 +384,11 @@ public class ObjectServiceImpl implements ObjectService {
                 String metaClName = metaDao.getMetaCurCLName();
                 //get cursor
                 dbCursor = metaDao.queryMetaByBucket(metaCsName, metaClName,
-                        bucket.getBucketId(), prefix, startAfter);
+                        bucket.getBucketId(), prefix, startAfter,
+                        false, false);
             }
 
-            if (null == dbCursor || null == dbCursor.getCursor()) {
+            if (null == dbCursor) {
                 return listObjectsResult;
             }
 
@@ -284,41 +397,46 @@ public class ObjectServiceImpl implements ObjectService {
                 owner = userDao.getOwnerByUserID(ownerID);
             }
 
-            DBCursor cursor = dbCursor.getCursor();
+            //DBCursor cursor = dbCursor.getCursor();
             int count = 0;
             int maxNumber = Math.min(maxKeys, RestParamDefine.MAX_KEYS_DEFAULT);
             int prefixLen = 0;
             if (null != prefix){
                 prefixLen = prefix.length();
             }
+            int delimiterLen = 0;
+            if (null != delimiter) {
+                delimiterLen = delimiter.length();
+            }
             //no delimiter
             if (null == delimiter) {
-                LinkedHashSet<Content> contentList = listObjectsResult.getContentList();;
-                while (cursor.hasNext() && count < maxNumber) {
-                    BSONObject record = cursor.getNext();
+                LinkedHashSet<Content> contentList = listObjectsResult.getContentList();
+                while (dbCursor.hasNext() && count < maxNumber) {
+                    BSONObject record = dbCursor.getNext();
                     Content content = convertBsonToContent(record, encodingType);
                     content.setOwner(owner);
                     contentList.add(content);
                     count++;
                 }
             }else{
-            //else if(!delimiter.equals(bucket.getDelimiter())){
                 LinkedHashSet<Content> contentList = listObjectsResult.getContentList();
                 LinkedHashSet<CommonPrefix> commonPrefixesList = listObjectsResult.getCommonPrefixList();
                 if (queryContext != null && queryContext.getLastCommonPrefix() != null) {
                     count = skipLastCommonPrefix(queryContext.getLastCommonPrefix(),
-                            cursor, delimiter, prefixLen, encodingType, listObjectsResult, owner);
+                            dbCursor, delimiter, prefixLen, encodingType, listObjectsResult, count, owner);
                     queryContext.setLastCommonPrefix(null);
+                } else if (startAfter != null){
+                    count = skipLastCommonPrefix(startAfter,
+                            dbCursor, delimiter, prefixLen, encodingType, listObjectsResult, count, owner);
                 }
-                while (cursor.hasNext() && count < maxNumber) {
-                    BSONObject record = cursor.getNext();
+                while (dbCursor.hasNext() && count < maxNumber) {
+                    BSONObject record = dbCursor.getNext();
                     String key = record.get(ObjectMeta.META_KEY_NAME).toString();
                     int delimiterIndex = key.indexOf(delimiter, prefixLen);
                     if (-1 != delimiterIndex){
                         //commonprefix
-                        CommonPrefix commonPrefix = new CommonPrefix(key.substring(0, delimiterIndex+1), encodingType);
+                        CommonPrefix commonPrefix = new CommonPrefix(key.substring(0, delimiterIndex+delimiterLen), encodingType);
                         if (!commonPrefixesList.contains(commonPrefix)){
-                            commonPrefix.setOwner(owner);
                             commonPrefixesList.add(commonPrefix);
                             count++;
                         }
@@ -333,7 +451,7 @@ public class ObjectServiceImpl implements ObjectService {
             }
             listObjectsResult.setKeyCount(count);
 
-            if (cursor.hasNext()) {
+            if (dbCursor.hasNext()) {
                 if (null == queryContext){
                     queryContext = contextManager.create(bucket.getBucketId());
                     queryContext.setPrefix(prefix);
@@ -344,28 +462,161 @@ public class ObjectServiceImpl implements ObjectService {
 
                 //record context
                 if (null != delimiter) {
-                    BSONObject record = cursor.getCurrent();
+                    BSONObject record = dbCursor.getCurrent();
                     String key = record.get(ObjectMeta.META_KEY_NAME).toString();
                     int delimiterIndex = key.indexOf(delimiter, prefixLen);
                     if (-1 != delimiterIndex) {
-                        queryContext.setLastCommonPrefix(key.substring(0, delimiterIndex+1));
+                        queryContext.setLastCommonPrefix(key.substring(0, delimiterIndex+delimiterLen));
                     }
                 }
                 listObjectsResult.setIsTruncated(true);
                 listObjectsResult.setNextContinueToken(queryContext.getToken());
             } else {
-                metaDao.releaseDBAndCursor(dbCursor);
+                metaDao.releaseQueryDbCursor(dbCursor);
                 contextManager.release(queryContext);
             }
             return listObjectsResult;
         } catch (S3ServerException e){
-            metaDao.releaseDBAndCursor(dbCursor);
+            metaDao.releaseQueryDbCursor(dbCursor);
             contextManager.release(queryContext);
             throw e;
         } catch (Exception e){
-            metaDao.releaseDBAndCursor(dbCursor);
+            metaDao.releaseQueryDbCursor(dbCursor);
             contextManager.release(queryContext);
             throw new S3ServerException(S3Error.OBJECT_LIST_FAILED, "error message:"+e.getMessage());
+        }
+    }
+
+    @Override
+    public ListVersionsResult listVersions(int ownerID, String bucketName, String prefix,
+                                           String delimiter, String keyMarker, String versionIdMarker,
+                                           Integer maxKeys, String encodingType)
+            throws S3ServerException {
+        QueryDbCursor queryDbCursorCur = null;
+        QueryDbCursor queryDbCursorHis = null;
+        try {
+            Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+            ListVersionsResult listVersionsResult = new ListVersionsResult(bucketName, maxKeys,
+                    encodingType, prefix, delimiter, keyMarker, versionIdMarker);
+
+            String metaCsName    = metaDao.getMetaCSName(bucket.getRegion());
+            String metaClName    = metaDao.getMetaCurCLName();
+            String metaHisClName = metaDao.getMetaHistoryCLName();
+            //get sdb and cursor
+            Boolean isSpecifiedVId = false;
+            Boolean isExistKeyVersion = false;
+            if (versionIdMarker != null){
+                isSpecifiedVId = true;
+                isExistKeyVersion = isExistKeyVersion(metaCsName, metaClName, metaHisClName,
+                        keyMarker, versionIdMarker,bucket);
+            }
+            queryDbCursorCur = metaDao.queryMetaByBucket(metaCsName, metaClName,
+                    bucket.getBucketId(), prefix, keyMarker, isSpecifiedVId, true);
+            if (queryDbCursorCur == null){
+                return listVersionsResult;
+            }
+
+            queryDbCursorHis = metaDao.queryMetaByBucket(metaCsName, metaHisClName,
+                    bucket.getBucketId(), prefix, keyMarker, isSpecifiedVId, true);
+            if (queryDbCursorHis != null){
+                if (queryDbCursorHis.hasNext()){
+                    queryDbCursorHis.getNext();
+                }else {
+                    metaDao.releaseQueryDbCursor(queryDbCursorHis);
+                    queryDbCursorHis = null;
+                }
+            }
+
+            int count = 0;
+            int maxNumber = Math.min(maxKeys, RestParamDefine.MAX_KEYS_DEFAULT);
+            Owner owner = userDao.getOwnerByUserID(ownerID);
+            int prefixLen = 0;
+            if (null != prefix){
+                prefixLen = prefix.length();
+            }
+            int delimiterLen = 0;
+            if (null != delimiter){
+                delimiterLen = delimiter.length();
+            }
+
+            if (keyMarker != null){
+                count = skipKeyMarker(queryDbCursorCur, queryDbCursorHis, keyMarker, versionIdMarker, listVersionsResult,
+                        delimiter, maxNumber, encodingType, owner, prefixLen, isExistKeyVersion);
+                if (count >= maxNumber){
+                    return listVersionsResult;
+                }
+            }
+
+            LinkedHashSet<CommonPrefix> commonPrefixesList = listVersionsResult.getCommonPrefixList();
+
+            Cur2:
+            while(queryDbCursorCur.hasNext()){
+                Boolean isCommonPrefix = false;
+                BSONObject recordA = queryDbCursorCur.getNext();
+                String keyA = recordA.get(ObjectMeta.META_KEY_NAME).toString();
+                int delimiterIndex = -1;
+                if (null != delimiter){
+                    delimiterIndex = keyA.indexOf(delimiter, prefixLen);
+                }
+                if (-1 != delimiterIndex){
+                    isCommonPrefix = true;
+                    CommonPrefix commonPrefix = new CommonPrefix(keyA.substring(0, delimiterIndex+delimiterLen), encodingType);
+                    if (!commonPrefixesList.contains(commonPrefix)){
+                        commonPrefixesList.add(commonPrefix);
+                        count++;
+                    }
+                }else{
+                    recordVersionDeleteMarker(recordA, listVersionsResult,
+                            encodingType, owner, true);
+                    count++;
+                }
+
+                if (count >= maxNumber) {
+                    if (isCommonPrefix && queryDbCursorCur.hasNext()){
+                        recordVersionsTruncated(listVersionsResult, encodingType, keyA.substring(0, delimiterIndex+delimiterLen), null);
+                    }else if (!isCommonPrefix && (queryDbCursorCur.hasNext() || queryDbCursorHis != null)){
+                        recordVersionsTruncated(listVersionsResult, encodingType, keyA, recordA.get(ObjectMeta.META_VERSION_ID).toString());
+                    }
+                    break;
+                }
+
+                while(queryDbCursorHis != null){
+                    BSONObject recordB = queryDbCursorHis.getCurrent();
+                    String keyB = recordB.get(ObjectMeta.META_KEY_NAME).toString();
+                    int result = keyB.compareTo(keyA);
+                    if (0 == result) {
+                        if (!isCommonPrefix) {
+                            recordVersionDeleteMarker(recordB, listVersionsResult,
+                                    encodingType, owner, false);
+                            count++;
+                        }
+                    }else if (result > 0){
+                        break;
+                    }
+
+                    if (count >= maxNumber) {
+                        if (queryDbCursorCur.hasNext() || queryDbCursorHis.hasNext()) {
+                            recordVersionsTruncated(listVersionsResult, encodingType, keyB, recordB.get(ObjectMeta.META_VERSION_ID).toString());
+                        }
+                        break Cur2;
+                    }
+                    if (queryDbCursorHis.hasNext()){
+                        queryDbCursorHis.getNext();
+                    }else {
+                        metaDao.releaseQueryDbCursor(queryDbCursorHis);
+                        queryDbCursorHis = null;
+                    }
+                }
+            }
+            return listVersionsResult;
+        }catch (S3ServerException e){
+            throw e;
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.OBJECT_LIST_VERSIONS_FAILED,
+                    "List versions failed. bucket:"+bucketName);
+        }finally {
+            metaDao.releaseQueryDbCursor(queryDbCursorCur);
+            metaDao.releaseQueryDbCursor(queryDbCursorHis);
         }
     }
 
@@ -374,47 +625,119 @@ public class ObjectServiceImpl implements ObjectService {
         try {
             String metaCsName = metaDao.getMetaCSName(bucket.getRegion());
             String metaClName = metaDao.getMetaCurCLName();
+            String metaHisClName = metaDao.getMetaHistoryCLName();
 
-            return metaDao.getObjectNumber(metaCsName, metaClName, bucket.getBucketId());
+            long curCount = metaDao.getObjectNumber(metaCsName, metaClName, bucket.getBucketId());
+            long hisCount = metaDao.getObjectNumber(metaCsName, metaHisClName, bucket.getBucketId());
+            return curCount+hisCount;
         }catch (S3ServerException e){
             throw e;
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.DAO_DB_ERROR, "unknown error", e);
         }
     }
 
+    @Override
+    public void deleteObjectByBucket(Bucket bucket) throws S3ServerException {
+        try {
+            String metaCsName    = metaDao.getMetaCSName(bucket.getRegion());
+            String metaCurClName = metaDao.getMetaCurCLName();
+            String metaHisClName = metaDao.getMetaHistoryCLName();
+            long bucketId = bucket.getBucketId();
+
+            deleteObjectByClBucket(metaCsName, metaHisClName, bucketId);
+            deleteObjectByClBucket(metaCsName, metaCurClName, bucketId);
+        }catch (S3ServerException e){
+            throw e;
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.DAO_DB_ERROR, "unknown error", e);
+        }
+    }
+
+    private void deleteObjectByClBucket(String metaCsName, String metaClName, long bucketId)
+            throws S3ServerException{
+        QueryDbCursor queryDbCursorHis = metaDao.queryMetaByBucket(metaCsName, metaClName,
+                bucketId, null, null, false, true);
+        ConnectionDao connection = daoMgr.getConnectionDao();
+        try {
+            while (queryDbCursorHis.hasNext()) {
+                BSONObject record = queryDbCursorHis.getNext();
+                String key = record.get(ObjectMeta.META_KEY_NAME).toString();
+                Long versionId = (Long)record.get(ObjectMeta.META_VERSION_ID);
+                metaDao.removeMeta(connection, metaCsName, metaClName, bucketId,
+                        key, versionId, null);
+                if (record.get(ObjectMeta.META_CS_NAME) != null
+                        && record.get(ObjectMeta.META_CL_NAME) != null
+                        && record.get(ObjectMeta.META_LOB_ID) != null) {
+                    String dataCsName = record.get(ObjectMeta.META_CS_NAME).toString();
+                    String dataClName = record.get(ObjectMeta.META_CL_NAME).toString();
+                    ObjectId lobId = (ObjectId)record.get(ObjectMeta.META_LOB_ID);
+                    dataDao.deleteObjectDataByLobId(connection, dataCsName, dataClName, lobId);
+                }
+            }
+        } catch (Exception e) {
+            throw e;
+        }finally {
+            daoMgr.releaseConnectionDao(connection);
+        }
+    }
+
+    private void recordVersionsTruncated(ListVersionsResult listVersionsResult,
+                                         String encodingType, String nextKey, String nextVersionId)
+            throws S3ServerException{
+        listVersionsResult.setTruncated(true);
+        try {
+            if (null != encodingType) {
+                listVersionsResult.setNextKeyMarker(URLEncoder.encode(nextKey, "UTF-8"));
+            } else {
+                listVersionsResult.setNextKeyMarker(nextKey);
+            }
+        }catch (UnsupportedEncodingException e){
+            logger.error("Encode object name failed. e", e);
+            throw new S3ServerException(S3Error.UNKNOWN_ERROR,
+                    "encode object name failed."+e.getMessage());
+        }
+        listVersionsResult.setNextVersionIdMarker(nextVersionId);
+    }
+
     private ObjectMeta buildObjectMeta(String objectName, long bucketId, Map headers,
-                                       Map xMeta, String dataCsName, String dataClName) {
+                                       Map xMeta, String dataCsName, String dataClName,
+                                       Boolean isDeleteMarker, Boolean noVersionFlag) {
         ObjectMeta objectMeta = new ObjectMeta();
         objectMeta.setKey(objectName);
         objectMeta.setBucketId(bucketId);
         objectMeta.setCsName(dataCsName);
         objectMeta.setClName(dataClName);
         objectMeta.setLastModified(System.currentTimeMillis());
-
-        if (headers.containsKey(RestParamDefine.PutObjectHeader.CACHE_CONTROL)){
-            objectMeta.setCacheControl(headers.get(RestParamDefine.PutObjectHeader.CACHE_CONTROL).toString());
-        }
-
-        if (headers.containsKey(RestParamDefine.PutObjectHeader.CONTENT_DISPOSITION)){
-            objectMeta.setContentDisposition(headers.get(RestParamDefine.PutObjectHeader.CONTENT_DISPOSITION).toString());
-        }
-
-        if (headers.containsKey(RestParamDefine.PutObjectHeader.CONTENT_ENCODING)){
-            objectMeta.setContentEncoding(headers.get(RestParamDefine.PutObjectHeader.CONTENT_ENCODING).toString());
-        }
-
-        if (headers.containsKey(RestParamDefine.PutObjectHeader.CONTENT_TYPE)){
-            objectMeta.setContentType(headers.get(RestParamDefine.PutObjectHeader.CONTENT_TYPE).toString());
-        }
-
-        if (headers.containsKey(RestParamDefine.PutObjectHeader.EXPIRES)){
-            objectMeta.setExpires(headers.get(RestParamDefine.PutObjectHeader.EXPIRES).toString());
-        }
-
-        if (headers.containsKey(RestParamDefine.PutObjectHeader.CONTENT_LANGUAGE)){
-            objectMeta.setContentLanguage(headers.get(RestParamDefine.PutObjectHeader.CONTENT_LANGUAGE).toString());
-        }
-
         objectMeta.setMetaList(xMeta);
+        objectMeta.setDeleteMarker(isDeleteMarker);
+        objectMeta.setNoVersionFlag(noVersionFlag);
+
+        if (headers != null) {
+            if (headers.containsKey(RestParamDefine.PutObjectHeader.CACHE_CONTROL)) {
+                objectMeta.setCacheControl(headers.get(RestParamDefine.PutObjectHeader.CACHE_CONTROL).toString());
+            }
+
+            if (headers.containsKey(RestParamDefine.PutObjectHeader.CONTENT_DISPOSITION)) {
+                objectMeta.setContentDisposition(headers.get(RestParamDefine.PutObjectHeader.CONTENT_DISPOSITION).toString());
+            }
+
+            if (headers.containsKey(RestParamDefine.PutObjectHeader.CONTENT_ENCODING)) {
+                objectMeta.setContentEncoding(headers.get(RestParamDefine.PutObjectHeader.CONTENT_ENCODING).toString());
+            }
+
+            if (headers.containsKey(RestParamDefine.PutObjectHeader.CONTENT_TYPE)) {
+                objectMeta.setContentType(headers.get(RestParamDefine.PutObjectHeader.CONTENT_TYPE).toString());
+            }
+
+            if (headers.containsKey(RestParamDefine.PutObjectHeader.EXPIRES)) {
+                objectMeta.setExpires(headers.get(RestParamDefine.PutObjectHeader.EXPIRES).toString());
+            }
+
+            if (headers.containsKey(RestParamDefine.PutObjectHeader.CONTENT_LANGUAGE)) {
+                objectMeta.setContentLanguage(headers.get(RestParamDefine.PutObjectHeader.CONTENT_LANGUAGE).toString());
+            }
+        }
 
         return objectMeta;
     }
@@ -431,6 +754,54 @@ public class ObjectServiceImpl implements ObjectService {
             content.seteTag(bsonObject.get(ObjectMeta.META_ETAG).toString());
             content.setSize((long) bsonObject.get(ObjectMeta.META_SIZE));
             return content;
+        }catch (UnsupportedEncodingException e){
+            logger.error("Encode object name failed. e", e);
+            throw new S3ServerException(S3Error.UNKNOWN_ERROR,
+                    "encode object name failed."+e.getMessage());
+        }
+    }
+
+    private void recordVersionDeleteMarker(BSONObject bsonObject, ListVersionsResult result,
+                                           String encodingType, Owner owner, Boolean isLatest)
+            throws S3ServerException{
+        Version version = convertBsonToVersion(bsonObject, encodingType);
+        if ((Boolean)bsonObject.get(ObjectMeta.META_DELETE_MARKER)) {
+            RawVersion deleteMarker = new RawVersion();
+            deleteMarker.setKey(version.getKey());
+            deleteMarker.setLastModified(version.getLastModified());
+            deleteMarker.setVersionId(version.getVersionId());
+            deleteMarker.setLatest(isLatest);
+            deleteMarker.setOwner(owner);
+            result.getDeleteMarkerList().add(deleteMarker);
+        }else {
+            version.setLatest(isLatest);
+            version.setOwner(owner);
+            result.getVersionList().add(version);
+        }
+    }
+
+    private Version convertBsonToVersion(BSONObject bsonObject, String encodingType)throws S3ServerException{
+        try{
+            Version version = new Version();
+            if (null != encodingType) {
+                version.setKey(URLEncoder.encode(bsonObject.get(ObjectMeta.META_KEY_NAME).toString(), "UTF-8"));
+            } else {
+                version.setKey(bsonObject.get(ObjectMeta.META_KEY_NAME).toString());
+            }
+            version.setLastModified(formatDate((long) bsonObject.get(ObjectMeta.META_LAST_MODIFIED)));
+            if ((Boolean)bsonObject.get(ObjectMeta.META_NO_VERSION_FLAG)) {
+                version.setVersionId(ObjectMeta.NULL_VERSION_ID);
+            }else{
+                version.setVersionId(bsonObject.get(ObjectMeta.META_VERSION_ID).toString());
+            }
+
+            if (bsonObject.get(ObjectMeta.META_ETAG) != null) {
+                version.seteTag(bsonObject.get(ObjectMeta.META_ETAG).toString());
+            }
+            if (bsonObject.get(ObjectMeta.META_SIZE) != null) {
+                version.setSize((long) bsonObject.get(ObjectMeta.META_SIZE));
+            }
+            return version;
         }catch (UnsupportedEncodingException e){
             logger.error("Encode object name failed. e", e);
             throw new S3ServerException(S3Error.UNKNOWN_ERROR,
@@ -507,7 +878,7 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     private Boolean IsContextMatch(Context queryContext, String prefix, String startAfter,
-                                 String delimiter) throws S3ServerException{
+                                 String delimiter){
         if(queryContext.getDelimiter() != null){
             if (!(queryContext.getDelimiter().equals(delimiter))) {
                 return false;
@@ -535,25 +906,28 @@ public class ObjectServiceImpl implements ObjectService {
         return true;
     }
 
-    private int skipLastCommonPrefix(String lastCommonPrefix, DBCursor cursor,
+    private int skipLastCommonPrefix(String lastCommonPrefix, QueryDbCursor dbCursor,
                                       String delimiter, int prefixLen, String encodingType,
-                                      ListObjectsResult listObjectsResult, Owner owner)
+                                      ListObjectsResult listObjectsResult, int count, Owner owner)
             throws S3ServerException{
-        int count = 0;
+        int delimiterLen = 0;
+        if (null != delimiter){
+            delimiterLen = delimiter.length();
+        }
         LinkedHashSet<Content> contentList = listObjectsResult.getContentList();
         LinkedHashSet<CommonPrefix> commonPrefixesList = listObjectsResult.getCommonPrefixList();
-        while (cursor.hasNext()) {
-            BSONObject record = cursor.getNext();
+        while (dbCursor.hasNext()) {
+            BSONObject record = dbCursor.getNext();
             String key = record.get(ObjectMeta.META_KEY_NAME).toString();
             int delimiterIndex = key.indexOf(delimiter, prefixLen);
             if (-1 != delimiterIndex) {
-                String keyCommonPrefix = key.substring(0, delimiterIndex + 1);
-                if (keyCommonPrefix.equals(lastCommonPrefix)) {
+                String keyCommonPrefix = key.substring(0, delimiterIndex + delimiterLen);
+                int comResult = keyCommonPrefix.compareTo(lastCommonPrefix);
+                if (comResult <= 0) {
                     continue;
                 }
                 CommonPrefix commonPrefix = new CommonPrefix(keyCommonPrefix, encodingType);
                 if (!commonPrefixesList.contains(commonPrefix)) {
-                    commonPrefix.setOwner(owner);
                     commonPrefixesList.add(commonPrefix);
                     count++;
                 }
@@ -570,7 +944,219 @@ public class ObjectServiceImpl implements ObjectService {
         return count;
     }
 
+    private int skipKeyMarker(QueryDbCursor cursorCur, QueryDbCursor cursorHis, String keyMarker, String versionIdMarker,
+                              ListVersionsResult listVersionsResult, String delimiter, int maxNumber,
+                              String encodingType, Owner owner, int prefixLen, Boolean isExist)
+            throws S3ServerException{
+        try {
+            int count = 0;
+            Boolean isFindNext = false;
+            LinkedHashSet<CommonPrefix> commonPrefixesList = listVersionsResult.getCommonPrefixList();
 
+            int delimiterLen = 0;
+            if (null != delimiter){
+                delimiterLen = delimiter.length();
+            }
 
+            Loop:
+            while(cursorCur.hasNext() && !isFindNext){
+                Boolean isCommonPrefix = false;
+                String curPrefix = null;
+                BSONObject recordA = cursorCur.getNext();
+                String keyA = recordA.get(ObjectMeta.META_KEY_NAME).toString();
+                String versionA = recordA.get(ObjectMeta.META_VERSION_ID).toString();
+                int delimiterIndex = -1;
+                if (null != delimiter){
+                    delimiterIndex = keyA.indexOf(delimiter, prefixLen);
+                }
+                if (-1 != delimiterIndex){
+                    isCommonPrefix = true;
+                    curPrefix = keyA.substring(0, delimiterIndex+delimiterLen);
+                    int comResult = curPrefix.compareTo(keyMarker);
+                    if (comResult > 0) {
+                        isFindNext = true;
+                        CommonPrefix commonPrefix = new CommonPrefix(curPrefix, encodingType);
+                        if (!commonPrefixesList.contains(commonPrefix)) {
+                            commonPrefixesList.add(commonPrefix);
+                            count++;
+                        }
+                    }
+                }else {
+                    if (!isExist) {
+                        isFindNext = true;
+                    }
+                    if (isFindNext){
+                        recordVersionDeleteMarker(recordA, listVersionsResult,
+                                encodingType, owner, true);
+                        count++;
+                    }else if (keyA.equals(keyMarker) && versionA.equals(versionIdMarker)) {
+                        isFindNext = true;
+                    }
+                }
+                if (count >= maxNumber && (cursorCur.hasNext() || cursorHis != null)) {
+                    if (isCommonPrefix){
+                        recordVersionsTruncated(listVersionsResult, encodingType, curPrefix, null);
+                    }else {
+                        recordVersionsTruncated(listVersionsResult, encodingType, keyA, recordA.get(ObjectMeta.META_VERSION_ID).toString());
+                    }
+                    break ;
+                }
 
+                while (cursorHis != null){
+                    BSONObject recordB = cursorHis.getCurrent();
+                    String keyB = recordB.get(ObjectMeta.META_KEY_NAME).toString();
+                    String versionB = recordB.get(ObjectMeta.META_VERSION_ID).toString();
+                    int result = keyB.compareTo(keyA);
+                    if (0 == result) {
+                        if (!isCommonPrefix) {
+                            if (isFindNext){
+                                recordVersionDeleteMarker(recordB, listVersionsResult,
+                                        encodingType, owner, false);
+                                count++;
+                            }else if (keyB.equals(keyMarker) && versionB.equals(versionIdMarker)) {
+                                isFindNext = true;
+                            }
+                        }
+                    }else if (result > 0){
+                        break;
+                    }
+
+                    if (count >= maxNumber && (cursorCur.hasNext() || cursorHis.hasNext())) {
+                        recordVersionsTruncated(listVersionsResult, encodingType, keyB, recordB.get(ObjectMeta.META_VERSION_ID).toString());
+                        break Loop;
+                    }
+                    if (cursorHis.hasNext()){
+                        cursorHis.getNext();
+                    }else {
+                        metaDao.releaseQueryDbCursor(cursorHis);
+                        cursorHis = null;
+                    }
+                }
+            }
+            return count;
+        }catch (S3ServerException e){
+            throw e;
+        }
+    }
+
+    private Boolean generateNoVersionFlag(VersioningStatusType status){
+        if (null == status){
+            return false;
+        }
+        switch(status){
+            case ENABLED:
+                return false;
+            default:
+                return true;
+        }
+    }
+
+    private void deleteObjectLob(ObjectMeta deleteObject) throws S3ServerException{
+        if (deleteObject != null && !deleteObject.getDeleteMarker()) {
+            int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
+            while (tryTime > 0) {
+                tryTime--;
+                try {
+                    dataDao.deleteObjectDataByLobId(null, deleteObject.getCsName(),
+                            deleteObject.getClName(), deleteObject.getLobId());
+                    break;
+                }catch (S3ServerException e){
+                    if (e.getError() == S3Error.OBJECT_IS_IN_USE && tryTime > 0){
+                        if (tryTime  == DBParamDefine.DB_DUPLICATE_MAX_TIME-1){
+                            logger.error("lob is in use.lob is:{}",deleteObject);
+                        }
+                        continue;
+                    }else {
+                        throw e;
+                    }
+                }
+            }
+        }
+    }
+
+    private void writeObjectMeta(String metaCsName, String metaClName,
+                                 ObjectMeta objectMeta, String objectName, long bucketId,
+                                 VersioningStatusType versioningStatusType)
+            throws S3ServerException{
+        String metaHisClName = metaDao.getMetaHistoryCLName();
+
+        int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
+        while (tryTime > 0) {
+            tryTime--;
+            ConnectionDao connection = daoMgr.getConnectionDao();
+            transaction.begin(connection);
+            try {
+                ObjectMeta metaResult = metaDao.queryForUpdate(connection, metaCsName, metaClName,
+                        bucketId, objectName, null, null);
+                if (null == metaResult) {
+                    objectMeta.setVersionId(0);
+                    metaDao.insertMeta(connection, metaCsName, metaClName, objectMeta,
+                            0, false);
+                    transaction.commit(connection);
+                } else {
+                    objectMeta.setVersionId(metaResult.getVersionId() + 1);
+                    if (VersioningStatusType.NONE == versioningStatusType
+                            || (VersioningStatusType.SUSPENDED == versioningStatusType
+                            && metaResult.getNoVersionFlag())) {
+                        metaDao.updateMeta(connection, metaCsName, metaClName, bucketId,
+                                objectName, null, objectMeta);
+                        transaction.commit(connection);
+                        deleteObjectLob(metaResult);
+                    } else {
+                        metaDao.insertMeta(connection, metaCsName, metaHisClName,
+                                metaResult, 1, true);
+                        metaDao.updateMeta(connection, metaCsName, metaClName, bucketId,
+                                objectName, null, objectMeta);
+                        if (VersioningStatusType.SUSPENDED == versioningStatusType) {
+                            metaDao.removeMeta(connection, metaCsName, metaHisClName, bucketId,
+                                    objectName, null, true);
+                        }
+                        transaction.commit(connection);
+                    }
+                }
+                return;
+            } catch (S3ServerException e) {
+                transaction.rollback(connection);
+                if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex() && tryTime > 0) {
+                    continue;
+                } else {
+                    throw e;
+                }
+            } catch (Exception e) {
+                transaction.rollback(connection);
+                throw e;
+            } finally {
+                daoMgr.releaseConnectionDao(connection);
+            }
+        }
+        throw new S3ServerException(S3Error.DAO_DUPLICATE_KEY,
+                "bucket+key duplicate too times. bucketId:"+bucketId+", key:"+objectName);
+    }
+
+    private Boolean isExistKeyVersion(String metaCsName, String metaClName, String metaHisClName,
+                                            String keyMarker, String versionIdMarker, Bucket bucket){
+        Boolean isExistKeyVersion = false;
+        try {
+            if (versionIdMarker.equals(ObjectMeta.NULL_VERSION_ID)) {
+                if (metaDao.queryMetaByObjectName(metaCsName, metaClName, bucket.getBucketId(), keyMarker, null, true) != null
+                        || metaDao.queryMetaByObjectName(metaCsName, metaHisClName, bucket.getBucketId(), keyMarker, null, true) != null) {
+                    isExistKeyVersion = true;
+                }
+            } else {
+                Long specifiedVersionId = Long.parseLong(versionIdMarker);
+                if (metaDao.queryMetaByObjectName(metaCsName, metaClName, bucket.getBucketId(), keyMarker, specifiedVersionId, null) != null
+                        || metaDao.queryMetaByObjectName(metaCsName, metaHisClName, bucket.getBucketId(), keyMarker, specifiedVersionId, null) != null) {
+                    isExistKeyVersion = true;
+                }
+            }
+        }catch (NumberFormatException e){
+            logger.error("Parse versionIdMarker failed, versionIdMarker:{}",
+                    versionIdMarker);
+        }catch (Exception e){
+            logger.error("isExistSpecifiedVersion failed, versionIdMarker:{}",
+                    versionIdMarker);
+        }finally {
+            return isExistKeyVersion;
+        }
+    }
 }

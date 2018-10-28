@@ -1,31 +1,38 @@
 package com.sequoias3.dao;
 
-import com.sequoias3.context.Context;
 import com.sequoias3.core.ObjectMeta;
-import com.sequoias3.core.QueryDbCursor;
 import com.sequoias3.exception.S3ServerException;
+import org.bson.BSONObject;
 
 public interface MetaDao {
-    String insertMeta(String metaCsName, String metaClName,
-                            ObjectMeta object, String objectName)
+    void insertMeta(ConnectionDao connectionDao, String metaCsName, String metaClName,
+                    ObjectMeta object, int isIgnoreDup, Boolean isHistory)
             throws S3ServerException;
 
     QueryDbCursor queryMetaByBucket(String metaCsName, String metaClName, long bucketId,
-                                    String prefix, String startAfter)
+                                    String prefix, String startAfter, Boolean specifiedVId,
+                                    Boolean isIncludeDeleteMarker)
             throws S3ServerException;
-
-    void releaseDBAndCursor(QueryDbCursor dbCursor);
 
     ObjectMeta queryMetaByObjectName(String metaCsName, String metaClName,
-                                     long bucketId, String objectName)
-            throws S3ServerException;
-
-    ObjectMeta queryAndUpdateMeta(String metaCsName, String metaClName,
-                                  long bucketId, ObjectMeta object, String objectName)
+                                     long bucketId, String objectName, Long versionId,
+                                     Boolean noVersionFlag)
             throws S3ServerException;
 
     ObjectMeta queryAndRemoveMeta(String metaCsName, String metaClName, long bucketId,
                                   String objectName)
+            throws S3ServerException;
+
+    ObjectMeta queryForUpdate(ConnectionDao connectionDao, String metaCsName, String metaClName,
+                              long bucketId, String objectName, Long versionId, Boolean noVersionFlag)
+            throws S3ServerException;
+
+    void updateMeta(ConnectionDao connectionDao, String metaCsName, String metaClName, long bucketId,
+                    String objectName, Long versionId, ObjectMeta object)
+            throws S3ServerException;
+
+    void removeMeta(ConnectionDao connectionDao, String metaCsName, String metaClName, long bucketId,
+                    String objectName, Long versionId, Boolean noVersionFlag)
             throws S3ServerException;
 
     long getObjectNumber(String metaCsName, String metaClName, long bucketId)
@@ -33,9 +40,9 @@ public interface MetaDao {
 
     String getMetaCSName( String region);
 
-    String getMetaCLName();
-
     String getMetaCurCLName();
 
     String getMetaHistoryCLName();
+
+    void releaseQueryDbCursor(QueryDbCursor queryDbCursor);
 }

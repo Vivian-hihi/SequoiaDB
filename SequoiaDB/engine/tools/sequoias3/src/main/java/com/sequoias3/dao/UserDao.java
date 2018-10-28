@@ -1,6 +1,6 @@
 package com.sequoias3.dao;
 
-import com.sequoias3.core.Owner;
+import com.sequoias3.model.Owner;
 import com.sequoias3.core.User;
 import com.sequoias3.exception.S3ServerException;
 

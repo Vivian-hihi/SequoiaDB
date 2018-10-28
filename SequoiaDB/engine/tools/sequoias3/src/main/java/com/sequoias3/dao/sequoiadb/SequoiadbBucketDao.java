@@ -6,6 +6,7 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
+import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.config.SequoiadbConfig;
 import com.sequoias3.core.Bucket;
 import com.sequoias3.dao.BucketDao;
@@ -49,6 +50,7 @@ public class SequoiadbBucketDao implements BucketDao {
             newBucket.put(Bucket.BUCKET_CREATETIME, bucket.getTimeMillis());
             newBucket.put(Bucket.BUCKET_VERSIONINGSTATUS, bucket.getVersioningStatus());
             newBucket.put(Bucket.BUCKET_DELIMITER, bucket.getDelimiter());
+            newBucket.put(Bucket.BUCKET_REGION, bucket.getRegion());
 
             cl.insert(newBucket);
         }catch (BaseException e){
@@ -133,7 +135,7 @@ public class SequoiadbBucketDao implements BucketDao {
             cursor.close();
             return bucketList;
         }catch (Exception e) {
-            logger.error("deleteBucket failed. errorMessage = " + e.getMessage(), e);
+            logger.error("getBucketListByOwnerID failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -188,6 +190,37 @@ public class SequoiadbBucketDao implements BucketDao {
         }
     }
 
+    @Override
+    public void updateBucket(String bucketName, String status, String delimiter) throws S3ServerException {
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            DBCollection cl = cs.getCollection(DaoCollectionDefine.BUCKET_LIST_COLLECTION);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(Bucket.BUCKET_NAME, bucketName);
+
+            BSONObject modifier = new BasicBSONObject();
+            if (status != null){
+                modifier.put(Bucket.BUCKET_VERSIONINGSTATUS, status);
+            }
+            if (delimiter != null){
+                modifier.put(Bucket.BUCKET_DELIMITER, delimiter);
+            }
+            BSONObject setModifier = new BasicBSONObject();
+            setModifier.put(DBParamDefine.MODIFY_SET, modifier);
+
+            cl.update(matcher, setModifier, null);
+            return;
+        }catch (Exception e) {
+            logger.error("updateBucket failed. errorMessage = " + e.getMessage(), e);
+            throw e;
+        }  finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
     private Bucket convertBsonToBucket(BSONObject bsonObject) {
         Bucket bucket = new Bucket();
         bucket.setBucketId((long)bsonObject.get(Bucket.BUCKET_ID));
@@ -197,6 +230,9 @@ public class SequoiadbBucketDao implements BucketDao {
         bucket.setFormatDate(DataFormatUtils.formatDate((long)bsonObject.get(Bucket.BUCKET_CREATETIME)));
         bucket.setVersioningStatus(bsonObject.get(Bucket.BUCKET_VERSIONINGSTATUS).toString());
         bucket.setDelimiter(bsonObject.get(Bucket.BUCKET_DELIMITER).toString());
+        if (bsonObject.get(Bucket.BUCKET_REGION) != null){
+            bucket.setRegion(bsonObject.get(Bucket.BUCKET_REGION).toString());
+        }
         return bucket;
     }
 }

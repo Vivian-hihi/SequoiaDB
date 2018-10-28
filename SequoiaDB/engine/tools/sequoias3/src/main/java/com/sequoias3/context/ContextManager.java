@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import sun.misc.BASE64Decoder;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -33,51 +32,84 @@ public class ContextManager {
     private Map<String, Context> contextMap = new HashMap<>();
 
     public Context create(long bucketId){
-        lock.lock();
         long newIndex = this.index.getAndIncrement();
-        String indexString = "B"+bucketId+"P"+serviceInfo.getPort()+"H"+serviceInfo.getHost()+"I"+newIndex+"E";
+        StringBuilder buildIndex = new StringBuilder();
+        buildIndex.append("B");
+        buildIndex.append(bucketId);
+        buildIndex.append("P");
+        buildIndex.append(serviceInfo.getPort());
+        buildIndex.append("H");
+        buildIndex.append(serviceInfo.getHost());
+        buildIndex.append("I");
+        buildIndex.append(newIndex);
+        buildIndex.append("E");
+        String indexString = buildIndex.toString();
         String token = new String(Hex.encodeHex(indexString.getBytes()));
-        Context context = new Context(token, bucketId);
-        context.setLastModified(System.currentTimeMillis());
-        contextMap.put(token, context);
-        lock.unlock();
-        return context;
+        lock.lock();
+        try {
+            Context context = new Context(token, bucketId);
+            context.setLastModified(System.currentTimeMillis());
+            contextMap.put(token, context);
+            return context;
+        }finally {
+            lock.unlock();
+        }
     }
 
     public void release(Context context){
         lock.lock();
-        if (null != context) {
-            metaDao.releaseDBAndCursor(context.getDbCursor());
-            contextMap.remove(context.getToken());
+        try {
+            if (null != context) {
+                contextMap.remove(context.getToken());
+            }
+        }finally {
+            lock.unlock();
+            if (null != context && null != context.getDbCursor()) {
+                metaDao.releaseQueryDbCursor(context.getDbCursor());
+            }
         }
-        lock.unlock();
     }
 
     public Context get(String continueToken){
         lock.lock();
-        Context context = contextMap.get(continueToken);
-        context.setLastModified(System.currentTimeMillis());
-        lock.unlock();
-        return context;
+        try {
+            Context context = contextMap.get(continueToken);
+            context.setLastModified(System.currentTimeMillis());
+            return context;
+        }finally {
+            lock.unlock();
+        }
     }
 
     public void cleanExpiredContext(){
         logger.debug("before scan. contextMap size:"+contextMap.size());
         long contextMaxLife = contextConfig.getLifecycle() * 60 * 1000;
 
+        List<Context> contextList = new ArrayList<>();
+
         lock.lock();
-        long nowTime = System.currentTimeMillis();
-        Iterator<Map.Entry<String, Context>> it = contextMap.entrySet().iterator();
-        while(it.hasNext()){
-            Map.Entry<String, Context> entry = it.next();
-            long diff = nowTime - entry.getValue().getLastModified();
-            if (diff > contextMaxLife){
-                logger.info("release context. context{}", entry.getValue().toString());
-                metaDao.releaseDBAndCursor(entry.getValue().getDbCursor());
-                it.remove();
+        try {
+            long nowTime = System.currentTimeMillis();
+            Iterator<Map.Entry<String, Context>> it = contextMap.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<String, Context> entry = it.next();
+                long diff = nowTime - entry.getValue().getLastModified();
+                if (diff > contextMaxLife) {
+                    contextList.add(entry.getValue());
+                    it.remove();
+                }
+            }
+        }finally {
+            lock.unlock();
+        }
+
+        for (int i=0; i < contextList.size(); i++){
+            Context context = contextList.get(i);
+            logger.info("release context. context{}", context);
+            if (null != context.getDbCursor()) {
+                metaDao.releaseQueryDbCursor(context.getDbCursor());
             }
         }
-        lock.unlock();
 
         logger.debug("after scan. contextMap size:"+contextMap.size());
     }

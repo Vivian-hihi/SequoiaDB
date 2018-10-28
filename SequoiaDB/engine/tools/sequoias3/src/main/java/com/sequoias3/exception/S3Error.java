@@ -12,6 +12,7 @@ public enum S3Error {
     DAO_INSERT_LOB_FAILED(-405, "InsertLobFailed", "Insert Lob Failed."),
     DAO_DB_ERROR(-406, "DBError", "DB error."),
     DAO_LOB_FNE(407, "LobIsNotFound", "Lob is not found."),
+    DAO_TRANSACTION_BEGIN_ERROR(-408, "BeginTransactionFailed", "Begin transaction failed."),
 
     //bucket error
     BUCKET_CREATE_FAILED(-500, "CreateBucketFailed", "Create bucket failed."),
@@ -23,12 +24,13 @@ public enum S3Error {
     BUCKET_NOT_EXIST(-510, "NoSuchBucket", "The speciﬁed bucket does not exist."),
     BUCKET_INVALID_BUCKETNAME(-511, "InvalidBucketName", "The speciﬁed bucket Name is not valid."),
     BUCKET_ALREADY_EXIST(-512, "BucketAlreadyExists", "The requested bucket name is not available. The bucket namespace is shared by all users of the system. Please select a different name and try again."),
-    BUCKET_ALREADY_OWNEDYOU(-513, "BucketAlreadyOwnedByYou", "Your previous request to create the named bucket succeeded and you already own it."),
+    BUCKET_ALREADY_OWNED_BY_YOU(-513, "BucketAlreadyOwnedByYou", "Your previous request to create the named bucket succeeded and you already own it."),
     BUCKET_NOT_EMPTY(-514, "BucketNotEmpty", "The bucket you tried to delete is not empty."),
     BUCKET_TOO_MANY_BUCKETS(-515, "TooManyBuckets", "You have attempted to create more buckets than allowed."),
     BUCKET_INVALID_VERSIONING_STATUS(-516, "InvalidVersioningStatus", "The versioning status is invalid."),
 
     //object
+    OBJECT_WRITE_fAILED(-600, "WriteObjectFailed", "Put object failed."),
     OBJECT_PUT_fAILED(-601, "PutObjectFailed", "Put object failed."),
     OBJECT_GET_FAILED(-602, "GetObjectFailed", "Get object failed"),
     OBJECT_DELETE_FAILED(-603, "DeleteObjectFailed", "Delete object failed."),
@@ -61,15 +63,17 @@ public enum S3Error {
     NO_CREDENTIALS(-705, "CredentialsNotSupported", "This request does not support credentials."),
 
     // User
-    USER_CREATE_FAILED(-801, "AddUserFailed", "Create user failed."),
-    USER_DELETE_FAILED(-810, "DelUserFailed", "Delete user failed."),
-    USER_UPDATE_FAILED(-820, "UpdateUserFailed", "Update user failed."),
-    USER_GET_FAILED(-830, "GetUserFailed", "Get user failed."),
     USER_NOT_EXIST(-800, "NoSuchUser", "User not exist."),
+    USER_CREATE_FAILED(-801, "AddUserFailed", "Create user failed."),
     USER_CREATE_NAME_INVALID(-802, "InvalidUserName", "The username is invalid."),
     USER_CREATE_ROLE_INVALID(-803, "InvalidRole", "The role is invalid."),
     USER_CREATE_EXIST(-804, "UserAlreadyExists", "The username is exist."),
+    USER_DELETE_FAILED(-810, "DelUserFailed", "Delete user failed."),
     USER_DELETE_INIT_ADMIN(-811, "InitAdminCannotDelete", "Init admin user cannot be delete."),
+    USER_DELETE_CLEAN_FAILED(-812, "CleanResourceFailed", "Clean resource failed, please try again."),
+    USER_DELETE_RELEASE_RESOURCE(-813, "BucketMustRelease", "Please delete your bucket before delete user, or delete user force."),
+    USER_UPDATE_FAILED(-820, "UpdateUserFailed", "Update user failed."),
+    USER_GET_FAILED(-830, "GetUserFailed", "Get user failed."),
 
     INVALID_ARGUMENT(-900, "InvalidArgument", "Invalid argument."),
     METHOD_NOT_ALLOWED(-901, "MethodNotAllowed", "The speciﬁed method is not allowed against this resource.");

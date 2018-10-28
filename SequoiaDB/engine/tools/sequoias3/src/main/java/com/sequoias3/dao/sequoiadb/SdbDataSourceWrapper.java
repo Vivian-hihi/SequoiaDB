@@ -1,11 +1,13 @@
 package com.sequoias3.dao.sequoiadb;
 
 import com.sequoiadb.base.*;
+import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.datasource.ConnectStrategy;
 import com.sequoiadb.datasource.DatasourceOptions;
+import com.sequoiadb.datasource.SequoiadbDatasource;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-import com.sequoiadb.net.ConfigOptions;
+import com.sequoiadb.base.ConfigOptions;
 import com.sequoias3.config.SequoiadbConfig;
 import com.sequoias3.exception.S3DaoGetConnException;
 import com.sequoias3.exception.S3Error;
@@ -63,7 +65,7 @@ public class SdbDataSourceWrapper {
         } catch (Exception e) {
             logger.warn("release connection failed:sdb={}" + sdb, e);
             try {
-                sdb.disconnect();
+                sdb.close();
             } catch (Exception e1) {
                 logger.warn("disconnect sequoiadb failed", e1);
             }
@@ -85,7 +87,7 @@ public class SdbDataSourceWrapper {
     public static void createCS(Sequoiadb sdb, String csName, BSONObject options)
             throws S3ServerException  {
         try {
-            logger.info("creating cs:csName=" + csName);
+            logger.info("creating cs:csName={}", csName);
             sdb.createCollectionSpace(csName, options);
         }
         catch (BaseException e) {
@@ -105,7 +107,7 @@ public class SdbDataSourceWrapper {
     public static void createCL(Sequoiadb sdb, String csName, String clName, BSONObject options)
             throws S3ServerException {
         try {
-            logger.info("creating cl:clName=" + csName + "." + clName);
+            logger.info("creating cl:clName={}.{}",csName, clName);
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             cs.createCollection(clName, options);
         }
@@ -127,7 +129,7 @@ public class SdbDataSourceWrapper {
                                    String indexName, BSONObject key, boolean isUnique,
                                    boolean enforced)throws S3ServerException {
         try {
-            logger.info("creating cl:clName=" + csName + "." + clName);
+            logger.info("creating cl index :clName= {}.{}, indexname={}", csName, clName, indexName);
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             DBCollection cl = cs.getCollection(clName);
             cl.createIndex(indexName, key, isUnique, enforced);

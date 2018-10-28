@@ -1,4 +1,4 @@
-package com.sequoias3.core;
+package com.sequoias3.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

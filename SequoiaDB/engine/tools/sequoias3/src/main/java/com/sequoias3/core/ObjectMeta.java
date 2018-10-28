@@ -1,7 +1,5 @@
 package com.sequoias3.core;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 
 import java.util.Map;
@@ -13,6 +11,7 @@ public class ObjectMeta {
     public static final String META_CL_NAME             = "ClName";
     public static final String META_LOB_ID              = "LobId";
     public static final String META_VERSION_ID          = "VersionId";
+    public static final String META_NO_VERSION_FLAG     = "NoVersionFlag";
     public static final String META_LAST_MODIFIED       = "LastModified";
     public static final String META_SIZE                = "Size";
     public static final String META_ETAG                = "Etag";
@@ -32,11 +31,12 @@ public class ObjectMeta {
     private String csName;
     private String clName;
     private ObjectId lobId;
-    private String versionId;
+    private long versionId;
+    private Boolean noVersionFlag;
     private long lastModified;
     private long size;
     private String eTag;
-    private boolean deleteMarker;
+    private Boolean deleteMarker = false;
     private String contentEncoding;
     private String contentType;
     private String cacheControl;
@@ -85,12 +85,20 @@ public class ObjectMeta {
         this.lobId = lobId;
     }
 
-    public String getVersionId() {
+    public long getVersionId() {
         return versionId;
     }
 
-    public void setVersionId(String versionId) {
+    public void setVersionId(long versionId) {
         this.versionId = versionId;
+    }
+
+    public Boolean getNoVersionFlag() {
+        return noVersionFlag;
+    }
+
+    public void setNoVersionFlag(Boolean noVersionFlag) {
+        this.noVersionFlag = noVersionFlag;
     }
 
     public void setLastModified(long lastModifiedTime) {
@@ -117,11 +125,11 @@ public class ObjectMeta {
         return eTag;
     }
 
-    public void setDeleteMarker(boolean deleteMarker) {
+    public void setDeleteMarker(Boolean deleteMarker) {
         this.deleteMarker = deleteMarker;
     }
 
-    public boolean getDeleteMarker(){
+    public Boolean getDeleteMarker(){
         return deleteMarker;
     }
 
@@ -180,4 +188,5 @@ public class ObjectMeta {
     public Map<String, String> getMetaList() {
         return metaList;
     }
+
 }

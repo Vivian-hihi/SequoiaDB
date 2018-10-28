@@ -43,6 +43,8 @@ public class RestExceptionHandler {
             case OBJECT_INVALID_TOKEN:
             case OBJECT_BAD_DIGEST:
             case OBJECT_INVALID_KEY:
+            case BUCKET_INVALID_VERSIONING_STATUS:
+            case OBJECT_INVALID_DIGEST:
                 status = HttpStatus.BAD_REQUEST;
                 break;
             case INVALID_ACCESSKEYID:
@@ -55,11 +57,15 @@ public class RestExceptionHandler {
             case USER_NOT_EXIST:
             case BUCKET_NOT_EXIST:
             case OBJECT_NO_SUCH_KEY:
+            case OBJECT_NO_SUCH_VERSION:
                 status = HttpStatus.NOT_FOUND;
+                break;
+            case METHOD_NOT_ALLOWED:
+                status = HttpStatus.METHOD_NOT_ALLOWED;
                 break;
             case USER_CREATE_EXIST:
             case BUCKET_ALREADY_EXIST:
-            case BUCKET_ALREADY_OWNEDYOU:
+            case BUCKET_ALREADY_OWNED_BY_YOU:
             case BUCKET_NOT_EMPTY:
             case OBJECT_IS_IN_USE:
                 status = HttpStatus.CONFLICT;

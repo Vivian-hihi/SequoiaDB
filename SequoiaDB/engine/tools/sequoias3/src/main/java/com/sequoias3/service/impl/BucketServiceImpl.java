@@ -1,12 +1,14 @@
 package com.sequoias3.service.impl;
 
 import com.sequoias3.common.DBParamDefine;
+import com.sequoias3.common.VersioningStatusType;
 import com.sequoias3.config.BucketConfig;
 import com.sequoias3.core.*;
 import com.sequoias3.dao.BucketDao;
 import com.sequoias3.dao.UserDao;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
+import com.sequoias3.model.GetServiceResult;
 import com.sequoias3.service.BucketService;
 import com.sequoias3.service.ObjectService;
 import org.slf4j.Logger;
@@ -33,7 +35,7 @@ public class BucketServiceImpl implements BucketService {
     ObjectService objectService;
 
     @Override
-    public void createBucket(int ownerID, String bucketName) throws S3ServerException {
+    public void createBucket(int ownerID, String bucketName, String region) throws S3ServerException {
         int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
 
         //check bucketname
@@ -49,8 +51,8 @@ public class BucketServiceImpl implements BucketService {
                 Bucket result = bucketDao.getBucketByName(newBucketName);
                 if (null != result){
                     if (result.getOwnerId() == ownerID){
-                        throw new S3ServerException(S3Error.BUCKET_ALREADY_OWNEDYOU,
-                                "bucket already owned you. bucketname="+bucketName);
+                        throw new S3ServerException(S3Error.BUCKET_ALREADY_OWNED_BY_YOU,
+                                "Bucket already owned you. bucketname="+bucketName);
                     }else {
                         throw new S3ServerException(S3Error.BUCKET_ALREADY_EXIST,
                                 "Bucket already exist. bucketname="+bucketName);
@@ -63,7 +65,7 @@ public class BucketServiceImpl implements BucketService {
                 if (bucketCount >= bucketLimit){
                     throw new S3ServerException(S3Error.BUCKET_TOO_MANY_BUCKETS,
                             "You have attempted to create more buckets than allowed. bucket count="
-                                    +bucketCount+",bucket limit="+bucketLimit);
+                                    +bucketCount+", bucket limit="+bucketLimit);
                 }
 
                 //insert bucket
@@ -72,12 +74,13 @@ public class BucketServiceImpl implements BucketService {
                 bucket.setBucketName(newBucketName);
                 bucket.setOwnerId(ownerID);
                 bucket.setTimeMillis(System.currentTimeMillis());
-                bucket.setVersioningStatus(DBParamDefine.DB_VERSIONING_STATUS_NULL);
+                bucket.setVersioningStatus(VersioningStatusType.NONE.getName());
                 bucket.setDelimiter(DBParamDefine.DB_AUTO_DELIMITER);
+                bucket.setRegion(region);
                 bucketDao.insertBucket(bucket);
                 return;
             }catch (S3ServerException e) {
-                logger.warn("Create bucket failed. bucketname="+bucketName, e);
+                logger.warn("Create bucket failed. bucketname={}", bucketName, e);
                 if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex() && tryTime > 0) {
                     continue;
                 } else {
@@ -150,6 +153,24 @@ public class BucketServiceImpl implements BucketService {
         }
 
         return bucket;
+    }
+
+    @Override
+    public void deleteBucketForce(Bucket bucket) throws S3ServerException {
+        try {
+            while (!isBucketEmpty(bucket)) {
+                //delete objects in the bucket
+                objectService.deleteObjectByBucket(bucket);
+            }
+
+            //delete bucket
+            bucketDao.deleteBucket(bucket.getBucketName());
+        }catch (S3ServerException e) {
+            throw e;
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.BUCKET_DELETE_FAILED,
+                    "delete bucket error. bucket name = "+bucket.getBucketName());
+        }
     }
 
     private Boolean isValidBucketName(String bucketName){

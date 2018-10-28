@@ -8,9 +8,9 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.config.SequoiadbConfig;
-import com.sequoias3.core.InsertResult;
-import com.sequoias3.core.ObjectMeta;
+import com.sequoias3.core.DataAttr;
 import com.sequoias3.core.Range;
+import com.sequoias3.dao.ConnectionDao;
 import com.sequoias3.dao.DaoCollectionDefine;
 import com.sequoias3.dao.DataDao;
 import com.sequoias3.exception.S3Error;
@@ -40,7 +40,7 @@ public class SequoiadbDataDao implements DataDao {
     SequoiadbConfig config;
 
     @Override
-    public InsertResult insertObjectData(String csName, String clName, InputStream data)
+    public DataAttr insertObjectData(String csName, String clName, InputStream data)
             throws S3ServerException {
         Sequoiadb sdb = null;
         try {
@@ -63,7 +63,7 @@ public class SequoiadbDataDao implements DataDao {
             }
 
             //record md5 lobId size
-            InsertResult result = new InsertResult();
+            DataAttr result = new DataAttr();
             result.seteTag(new String(Hex.encodeHex(MD5.digest())));
             result.setSize(dbLob.getSize());
             result.setLobId(dbLob.getID());
@@ -212,11 +212,15 @@ public class SequoiadbDataDao implements DataDao {
     }
 
     @Override
-    public void deleteObjectDataByLobId(String csName, String clName, ObjectId lobId)
+    public void deleteObjectDataByLobId(ConnectionDao connection, String csName, String clName, ObjectId lobId)
             throws S3ServerException {
         Sequoiadb sdb = null;
         try {
-            sdb = sdbDatasourceWrapper.getSequoiadb();
+            if (connection != null){
+                sdb = ((SdbConnectionDao)connection).getConnection();
+            }else {
+                sdb = sdbDatasourceWrapper.getSequoiadb();
+            }
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             DBCollection cl = cs.getCollection(clName);
 
@@ -238,7 +242,9 @@ public class SequoiadbDataDao implements DataDao {
             logger.error("delete lob failed.",e);
             throw e;
         } finally {
-            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            if (null == connection) {
+                sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            }
         }
     }
 

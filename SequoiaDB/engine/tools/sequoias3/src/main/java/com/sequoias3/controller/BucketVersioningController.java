@@ -1,47 +1,102 @@
 package com.sequoias3.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.sequoias3.common.RestParamDefine;
+import com.sequoias3.common.VersioningStatusType;
+import com.sequoias3.core.User;
+import com.sequoias3.model.*;
+import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
+import com.sequoias3.service.BucketVersioningService;
+import com.sequoias3.utils.RestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 @RestController
 public class BucketVersioningController {
-    private static final Logger logger = LoggerFactory.getLogger(BucketController.class);
+    private static final Logger logger = LoggerFactory.getLogger(BucketVersioningController.class);
 
-    @PutMapping(value = "/{bucketname:.+}", params = RestParamDefine.VERSIONING)
-    public String putBucketVerisoning(@PathVariable("bucketname") String bucketName)
+    @Autowired
+    RestUtils restUtils;
+
+    @Autowired
+    BucketVersioningService versioningService;
+
+    @PutMapping(value = "/{bucketname:.+}", params = RestParamDefine.VERSIONING,
+            produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity putBucketVersioning(@PathVariable("bucketname") String bucketName,
+                                      @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                      HttpServletRequest httpServletRequest)
             throws S3ServerException {
-        logger.info("bucket=" + bucketName + "@versioning");
-        return bucketName + "@versioning";
+        User operator = restUtils.getOperatorByAuthorization(authorization);
+
+        String status = getVersioningStatus(httpServletRequest);
+
+        logger.info("bucket={}@versioning", bucketName);
+
+        versioningService.putBucketVersioning(operator.getUserId(), bucketName, status);
+        return ResponseEntity.ok()
+                .build();
     }
 
-    @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.VERSIONING)
-    public String getBucketVersioning(@PathVariable("bucketname") String bucketName) {
-        return bucketName + "&versioning";
+    @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.VERSIONING,
+            produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity getBucketVersioning(@PathVariable("bucketname") String bucketName,
+                                              @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+            throws S3ServerException{
+        User operator = restUtils.getOperatorByAuthorization(authorization);
+
+        return ResponseEntity.ok()
+                .body(versioningService.getBucketVersioning(operator.getUserId(),bucketName));
     }
 
-    @GetMapping(value = "/{bucketname:.+}/*/**", params = RestParamDefine.VERSIONID)
-    public String getObjectByVersionId(@PathVariable("bucketname") String bucketName) {
-        logger.info("get object by versionId");
-        return "get object by versionId";
-    }
+    private String getVersioningStatus(HttpServletRequest httpServletRequest)
+            throws S3ServerException{
+        int ONCE_READ_BYTES  = 1024;
+        try {
+            ServletInputStream inputStream = httpServletRequest.getInputStream();
+            byte[] b = new byte[ONCE_READ_BYTES];
+            StringBuilder stringBuilder = new StringBuilder();
+            int len = inputStream.read(b , 0, ONCE_READ_BYTES);
+            while(len > 0){
+                stringBuilder.append(new String(b,0, len));
+                len = inputStream.read(b , 0, ONCE_READ_BYTES);
+            }
 
-    @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.VERSIONS, produces = MediaType.APPLICATION_XML_VALUE)
-    public String listObjectsVersions(@PathVariable("bucketname") String bucketName,
-                                      @RequestParam(RestParamDefine.ListObjectVersionsPara.PREFIX) String prefix,
-                                      @RequestParam(RestParamDefine.ListObjectVersionsPara.DELIMITER) String delimiter,
-                                      @RequestParam(RestParamDefine.ListObjectVersionsPara.STRAT_AFTER) String startAfter,
-                                      @RequestParam(RestParamDefine.ListObjectVersionsPara.MAX_KEYS) String maxKeys) {
-        logger.info("listobjectversions. bucket="+bucketName);
-        return bucketName + "&versions";
-    }
+            String content = stringBuilder.toString();
+            if (0 == content.length()){
+                throw new S3ServerException(S3Error.BUCKET_INVALID_VERSIONING_STATUS,
+                        "no body");
+            }
 
-    @DeleteMapping(value = "/{bucketname:.+}/*/**", params = RestParamDefine.VERSIONID, produces = MediaType.APPLICATION_XML_VALUE)
-    public String deletObjectByVersionId(@PathVariable("bucketname") String bucketName) {
-        logger.info("delete object by versionId");
-        return "delete object by versionId";
+            ObjectMapper objectMapper = new XmlMapper();
+            VersioningConfiguration versioningCfg = objectMapper.readValue(content, VersioningConfiguration.class);
+
+            String status = versioningCfg.getStatus();
+            if (status.equals(VersioningStatusType.ENABLED.getName())
+                    || status.equals(VersioningStatusType.SUSPENDED.getName())){
+                return status;
+            }else {
+                throw new S3ServerException(S3Error.BUCKET_INVALID_VERSIONING_STATUS,
+                        "invalid status="+status);
+            }
+        }catch (S3ServerException e){
+            throw e;
+        } catch (IOException e){
+            throw new S3ServerException(S3Error.BUCKET_INVALID_VERSIONING_STATUS,
+                    "parse versioning status failed", e);
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.UNKNOWN_ERROR,
+                    "get versioning status failed", e);
+        }
     }
 }

@@ -4,7 +4,6 @@ import com.sequoias3.core.Bucket;
 import com.sequoias3.exception.S3ServerException;
 
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.List;
 
 public interface BucketDao {
@@ -19,4 +18,7 @@ public interface BucketDao {
     long getMaxID() throws S3ServerException;
 
     long getBucketNumber(int ownerID) throws S3ServerException;
+
+    void updateBucket(String bucketName, String status, String delimiter)
+            throws S3ServerException;
 }

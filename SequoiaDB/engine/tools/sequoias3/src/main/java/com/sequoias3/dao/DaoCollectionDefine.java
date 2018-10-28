@@ -7,6 +7,4 @@ public class DaoCollectionDefine {
     public static final String OBJECT_META_LIST_HISTORY  = "ObjectMetaListHistory";
     public static final String OBJECT_DATA_LIST          = "ObjectDataList";
 
-
-
 }
