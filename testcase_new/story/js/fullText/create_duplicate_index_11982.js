@@ -16,14 +16,15 @@ function main()
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
    
    //在已存在全文索引定义的集合中，再次创建全文索引
-   commCreateIndex( dbcl, "a", {content:"text"});
+   dbcl.createIndex( "a", {content:"text"});
    commCheckIndex( dbcl, "a", true );
    try{
-      commCreateIndex( dbcl, "b", {about:"text"});
+      dbcl.createIndex( "b", {about:"text"});
+	  throw e;
    }
    catch( e ){
 	  if( e != -42){
-	     throw buildException("commCreateIndex()", e, "create full index twice ", "success", "fail");
+	     throw buildException("dbcl.createIndex()", e, "create full index twice ", "success", "fail");
 	  }
    }
    

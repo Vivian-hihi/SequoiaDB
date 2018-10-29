@@ -18,22 +18,24 @@ function main()
    //创建索引类型非法的全文索引
    var indexName = "a";
    try{
-      commCreateIndex( dbcl, indexName, {content:"int"});
+	  dbcl.createIndex(indexName, {content:"int"});
+	  throw e;
    }
    catch( e ){
 	  if( e != -6){
-	     throw buildException("commCreateIndex()", e, "create full index type by int ", "success", "fail");
+	     throw buildException("createIndex()", e, "create full index type by int ", "success", "fail");
 	  }
    }
    commCheckIndex( dbcl, indexName, false );
    
    //创建非法的复合索引
    try{
-      commCreateIndex( dbcl, indexName, {content:"text", about : 1});
+	  dbcl.createIndex(indexName, {content:"text", about : 1});
+	  throw e;
    }
    catch( e ){
 	  if( e != -6){
-	     throw buildException("commCreateIndex()", e, "create composite full index ", "success", "fail");
+	     throw buildException("createIndex()", e, "create composite full index ", "success", "fail");
 	  }
    }
    commCheckIndex( dbcl, indexName, false );

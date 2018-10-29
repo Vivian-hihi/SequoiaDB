@@ -17,26 +17,28 @@ function main()
    
    //创建索引名已存在的全文索引
    var indexName = "a";
-   commCreateIndex( dbcl, indexName, {content : 1});
+   dbcl.createIndex( indexName, {content : 1});
    commCheckIndex( dbcl, indexName, true );
    try{
-      commCreateIndex( dbcl, indexName, {content:"text"});
+      dbcl.createIndex( indexName, {content:"text"});
+	  throw e;
    }
    catch( e ){
       if( e != -46){
-         throw buildException("commCreateIndex()", e, "create duplicate index ", "success", "fail");
+         throw buildException("createIndex()", e, "create duplicate index ", "success", "fail");
 	  }
    }
    
    //在已存在全文索引定义的集合中，再次创建全文索引
-   commCreateIndex( dbcl, "b", {content:"text"});
+   dbcl.createIndex( "b", {content:"text"});
    commCheckIndex( dbcl, "b", true );
    try{
-      commCreateIndex( dbcl, "c", {about:"text"});
+      dbcl.createIndex( "c", {about:"text"});
+	  throw e ;
    }
    catch( e ){
       if( e != -42){
-         throw buildException("commCreateIndex()", e, "create full index twice ", "success", "fail");
+         throw buildException("createIndex()", e, "create full index twice ", "success", "fail");
 	  }
    }
    

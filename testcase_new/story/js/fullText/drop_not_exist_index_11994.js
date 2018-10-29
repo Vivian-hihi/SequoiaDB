@@ -19,12 +19,13 @@ function main()
    var indexName = "a";
    commCreateIndex( dbcl, indexName, {content:"text"});
    commCheckIndex( dbcl, indexName, true );
-   commDropIndex( dbcl, indexName );
+   dbcl.dropIndex( indexName ); 
    
    //删除不存在的全文索引，删除失败
    commCheckIndex( dbcl, indexName, false );
    try{
-      commDropIndex( dbcl, indexName ); 
+      dbcl.dropIndex( indexName ); 
+	  throw e;
    }
    catch( e ){
 	  if( e != -47){

@@ -34,18 +34,25 @@ function main()
    var cursor = db.snapshot(8, {Name : COMMCSNAME + "." + clName});
    var cursor = cursor.next().toObj();
    var cappedCLLength = String(cursor["UniqueID"]).length + 5;
+   println("cappedCLLength : " + cappedCLLength);
    
    var indexName = "";
    for (var i = 0; i < 127 - cappedCLLength; i++){
       indexName = indexName + "a";	  
    }
    dbcl.createIndex(indexName, {content : "text"});
+      
+   var dbOperater = new DBOperator();
+   var cappedCLName = dbOperater.getCappedCLName( dbcl, indexName );
+   
    commCheckIndex( dbcl, indexName, true );
    commDropIndex( dbcl, indexName, true );
    
-   //固定集合名长度大于127时，全文索引创建失败
+   //SEQUOIADBMAINSTREAM-3896
+   //固定集合名长度等于128时，全文索引创建失败
+   /*
    var indexName = "";
-   for (var i = 0; i < 127 -cappedCLLength + 10; i++){
+   for (var i = 0; i < 127 -cappedCLLength + 1; i++){
       indexName = indexName + "a";  
    }
    try{
@@ -58,6 +65,7 @@ function main()
 	  }
    }
    commCheckIndex( dbcl, indexName, false );
+   */
    
    //固定集合名长度大于127时，全文索引创建失败
    var indexName = "";

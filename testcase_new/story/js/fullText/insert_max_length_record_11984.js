@@ -17,7 +17,7 @@ function main()
    
    var a = new Array(1024*1024*16 - 5*1024).join("a");
    dbcl.insert({a : a});
-   commCreateIndex( dbcl, "a", {a : "text"});
+   dbcl.createIndex( "a", {a : "text"});
    
    checkFullSyncToES(COMMCSNAME, clName, "a", 1);
    
