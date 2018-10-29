@@ -46,12 +46,11 @@ function main()
    checkRec(actR, expR);
    println("---check insert after set autoIncrement field success");
    
-   //SEQUOIADBMAINSTREAM-3876
-   /*dbcl.update({$replace:{a:100}});
+   dbcl.update({$replace:{a:100}});
    var actR = dbcl.find().sort({_id:1});
    var expR = [{a:1, id:1000},{id:1000},{a:2, id:1000},{id:1000}, {a:1, id:3}];
    checkRec(actR, expR);
-   println("---check replace shardingKey field success");*/
+   println("---check replace shardingKey field success");
    
    dbcl.update({$replace:{id:100}});
    var actR = dbcl.find().sort({_id:1});

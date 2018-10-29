@@ -49,12 +49,11 @@ function main()
    checkRec(actR, expR);
    println("---check unset autoIncrement field success");
    
-   //SEQUOIADBMAINSTREAM-3876
-   /*dbcl.update({$replace:{id:100}});
+   dbcl.update({$replace:{id:100}});
    var actR = dbcl.find().sort({_id:1});
    var expR = [{},{id:1},{id:2}];
    checkRec(actR, expR);
-   println("---check replace autoIncrement field success");*/
+   println("---check replace autoIncrement field success");
   
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
