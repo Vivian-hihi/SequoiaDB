@@ -112,15 +112,18 @@ public class ObjectController {
             requestParas.put(name, httpServletRequest.getParameter(name));
         }
 
-        Boolean isNoVersion = null;
+        Boolean nullVersionFlag = null;
         Long cvtVersionId = null;
         if (versionId != null) {
-            convertVersionId(versionId, isNoVersion, cvtVersionId);
+            cvtVersionId = convertVersionId(versionId);
+            if (null == cvtVersionId){
+                nullVersionFlag = true;
+            }
         }
 
         ServletOutputStream outputStream = response.getOutputStream();
         ObjectMeta result = objectService.getObject(operator.getUserId(), bucketName,
-                objectName, cvtVersionId, isNoVersion, requestHeaders, range, outputStream);
+                objectName, cvtVersionId, nullVersionFlag, requestHeaders, range, outputStream);
 
         HttpHeaders headers = new HttpHeaders();
         HttpStatus  httpStatus = buildHeadersForGetObject(result, requestParas, range, headers);
@@ -167,11 +170,13 @@ public class ObjectController {
         logger.debug("delete object with version id. bucket={}, objectname={}, versionId={}",
                 bucketName, objectName, versionId);
 
-        Boolean isNoVersion = null;
-        Long cvtVersionId = null;
-        convertVersionId(versionId, isNoVersion, cvtVersionId);
+        Boolean nullVersionFlag = null;
+        Long cvtVersionId = convertVersionId(versionId);
+        if (null == cvtVersionId){
+            nullVersionFlag = true;
+        }
 
-        objectService.deleteObject(operator.getUserId(), bucketName, objectName, cvtVersionId, isNoVersion);
+        objectService.deleteObject(operator.getUserId(), bucketName, objectName, cvtVersionId, nullVersionFlag);
         HttpHeaders headers = new HttpHeaders();
         headers.add(RestParamDefine.DeleteObjectResultHeader.VERSION_ID, versionId);
         return ResponseEntity.noContent()
@@ -318,13 +323,13 @@ public class ObjectController {
         return status;
     }
 
-    private void convertVersionId(String versionId, Boolean isNoVersion, Long cvtVersionId)
+    private Long convertVersionId(String versionId)
             throws S3ServerException{
         try {
             if (versionId.equals(ObjectMeta.NULL_VERSION_ID)) {
-                isNoVersion = true;
+                return null;
             } else {
-                cvtVersionId = Long.parseLong(versionId);
+                return Long.parseLong(versionId);
             }
         }catch (NumberFormatException e) {
             throw new S3ServerException(S3Error.INVALID_ARGUMENT,

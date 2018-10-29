@@ -294,13 +294,13 @@ public class ObjectServiceImpl implements ObjectService {
                     ConnectionDao connection = daoMgr.getConnectionDao();
                     transaction.begin(connection);
                     try{
-                        ObjectMeta objectMeta;
+                        ObjectMeta objectMeta = null;
                         if (isNoVersion != null){
                             objectMeta = metaDao.queryForUpdate(connection, metaCsName,
                                     metaClName, bucket.getBucketId(), objectName, null, true);
-                        }else {
+                        }else if (versionId != null){
                             objectMeta = metaDao.queryForUpdate(connection, metaCsName,
-                                    metaClName, bucket.getBucketId(), objectName, versionId, null);
+                                    metaClName, bucket.getBucketId(), objectName, versionId, false);
                         }
                         if (objectMeta != null){
                             deleteObject = objectMeta;
@@ -316,13 +316,13 @@ public class ObjectServiceImpl implements ObjectService {
                                         objectName, versionId, null);
                             }
                         }else{
-                            ObjectMeta objectMeta2;
+                            ObjectMeta objectMeta2 = null;
                             if (isNoVersion != null){
                                 objectMeta2 = metaDao.queryForUpdate(connection, metaCsName,
                                         metaHisClName, bucket.getBucketId(), objectName, null, true);
-                            }else {
+                            }else if (versionId != null){
                                 objectMeta2 = metaDao.queryForUpdate(connection, metaCsName,
-                                        metaHisClName, bucket.getBucketId(), objectName, versionId, null);
+                                        metaHisClName, bucket.getBucketId(), objectName, versionId, false);
                             }
 
                             if (objectMeta2 != null){
