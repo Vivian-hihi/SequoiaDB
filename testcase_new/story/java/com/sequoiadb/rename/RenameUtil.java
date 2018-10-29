@@ -41,29 +41,42 @@ public class RenameUtil extends SdbTestBase {
 		
 		if (clNum != 0) {
 			DBCursor cur = null;
-			try {
-				cur = db.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONSPACES, "{'Name':'" + newCSName + "'}", "", "");
-				if (!cur.hasNext()) {
-					Assert.fail("cs it's not exist, csName: " + newCSName);
-				}
-
-				BSONObject obj = cur.getNext();
-				BasicBSONList cls = (BasicBSONList) obj.get("Collection");
-				if (cls.size() != clNum) {
-					Assert.fail("cl count error, exp: " + clNum + ",act :" + cls.size());
-				}
-				for (int i = 0; i < cls.size(); i++) {
-					BSONObject ele = (BSONObject) cls.get(i);
-					String name = (String) ele.get("Name");
-					String csName = name.split("\\.")[0];
-					if (!csName.equals(newCSName)) {
-						Assert.fail("cs name contrast error");
+			int times = 0;
+			for (int k = 0; k < 50; k++) {
+				try {
+					cur = db.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONSPACES, "{'Name':'" + newCSName + "'}", "", "");
+					if (!cur.hasNext()) {
+						Assert.fail("cs it's not exist, csName: " + newCSName);
+					}
+	
+					BSONObject obj = cur.getNext();
+					BasicBSONList cls = (BasicBSONList) obj.get("Collection");
+					if (cls.size() != clNum) {
+						times++;
+						if(times == 50){
+							Assert.fail("cl count error, exp: " + clNum + ",act :" + cls.size());
+						}
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							Assert.fail(e.getMessage());
+						}
+						continue;
+					}
+					for (int i = 0; i < cls.size(); i++) {
+						BSONObject ele = (BSONObject) cls.get(i);
+						String name = (String) ele.get("Name");
+						String csName = name.split("\\.")[0];
+						if (!csName.equals(newCSName)) {
+							Assert.fail("cs name contrast error");
+						}
+					}
+				} finally {
+					if (cur != null) {
+						cur.close();
 					}
 				}
-			} finally {
-				if (cur != null) {
-					cur.close();
-				}
+				break;
 			}
 		}else{
 			try {
@@ -150,9 +163,9 @@ public class RenameUtil extends SdbTestBase {
 			recordNum = 1;
 		}
 		
-		List<BSONObject> data = new ArrayList<BSONObject>();
 		int times = recordNum/1000;
 		for (int i = 0; i < times; i++) {
+			List<BSONObject> data = new ArrayList<BSONObject>();
 			for (int j = 0; j < 1000; j++) {
 				BSONObject record = new BasicBSONObject();
 				record.put("a", i*1000+j);
@@ -177,4 +190,79 @@ public class RenameUtil extends SdbTestBase {
 			cl.insert(dataA);
 		}
 	}
+	
+//	public static void checkRecord(DBCollection cl, int begineNum, int endNum){
+//		List<BSONObject> expList = new ArrayList<BSONObject>();
+//		List<BSONObject> actList = new ArrayList<BSONObject>();
+//		for (int i = begineNum; i < endNum; i++) {
+//			BSONObject record = new BasicBSONObject();
+//			record.put("a", i);
+//			record.put("no", "No." + i);
+//			record.put("phone", 13700000000L + i);
+//			record.put("text", "Test ReName, This is the test statement used to populate the data");
+//			expList.add(record);
+//		}
+//		DBCursor cur = cl.query(null, null, new BasicBSONObject("a", 1), null);
+//		while(cur.hasNext()){
+//			actList.add(cur.getNext());
+//		}
+//		cur.close();
+//		Assert.assertEquals(actList, expList);
+//	}
+	
+	public static void checkCLExit(Sequoiadb db, String csName, String clName, boolean clIsExist){
+		DBCursor cur = null;
+		try {
+			cur = db.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS, "{'Name':'" + csName + "." + clName + "'}", "", "");
+			
+			if(clIsExist){
+				if(!cur.hasNext()){
+					Assert.fail("cl is not exist, clFullName: " + csName + "." + clName );
+				}
+				while(cur.hasNext()){
+					BSONObject obj = cur.getNext();
+					String name = (String) obj.get("Name");
+					if(!name.equals(csName + "." + clName)){
+						Assert.fail("cl fullname error, exp: " + csName + "." + clName +", act: "+name);
+					}
+				}
+			}else{
+				if(cur.hasNext()){
+					Assert.fail("cl is exist, clFullName: " + csName + "." + clName );
+				}
+				try {
+					db.getCollectionSpace(csName).getCollection(clName);
+				} catch (BaseException e) {
+					if(e.getErrorCode() != -23){
+						throw e;
+					}
+				}
+			}
+		} finally{
+			if(cur != null){
+				cur.close();
+			}
+		}
+	} 
+	
+	public static void checkSplitResult(Sequoiadb db, String csName, String clName, List<String> groups){
+		
+		DBCursor cur = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, new BasicBSONObject("Name", csName+"."+clName), null, null);
+		if(!cur.hasNext()){
+			Assert.fail("cl is not exist, " + csName + "." + clName);
+		}
+		BSONObject obj = cur.getNext();
+		BasicBSONList cataInfo = (BasicBSONList) obj.get("CataInfo");
+		if(cataInfo.size() != groups.size()){
+			Assert.fail("cataInfo error: exp: " +groups.toString() +" act: " + cataInfo.toString());
+		}
+		for (int i = 0; i < cataInfo.size(); i++) {
+			BSONObject info = (BSONObject) cataInfo.get(i);
+			String groupName = (String) info.get("GroupName");
+			if(!groups.contains(groupName)){
+				Assert.fail("groupName error: exp: " +groups.toString() +" act: " + cataInfo.toString());
+			}
+		}
+	}
+	
 }
