@@ -167,7 +167,7 @@ public class ObjectServiceImpl implements ObjectService {
                     }
 
                     if (versionId != null) {
-                        if (versionId == objectMeta.getVersionId()){
+                        if (versionId == objectMeta.getVersionId() && !objectMeta.getNoVersionFlag()){
                             versionIdMeta = objectMeta;
                         }else {
                             ObjectMeta objectMetaHis = metaDao.queryMetaByObjectName(metaCsName,
@@ -178,7 +178,7 @@ public class ObjectServiceImpl implements ObjectService {
                             }
                             versionIdMeta = objectMetaHis;
                         }
-                    }else if(isNoVersion) {
+                    }else if(isNoVersion != null) {
                         if (objectMeta.getNoVersionFlag()) {
                             versionIdMeta = objectMeta;
                         } else {
@@ -197,6 +197,9 @@ public class ObjectServiceImpl implements ObjectService {
                         versionIdMeta = objectMeta;
                     }
 
+                    if (versionIdMeta.getDeleteMarker()){
+                        throw new S3ServerException(S3Error.METHOD_NOT_ALLOWED, "no object. object:"+objectName);
+                    }
                     checkMatchModify(headers, versionIdMeta);
                     dataDao.getObjectDataByLobId(versionIdMeta.getCsName(), versionIdMeta.getClName(),
                             versionIdMeta.getLobId(), range, outputStream);
