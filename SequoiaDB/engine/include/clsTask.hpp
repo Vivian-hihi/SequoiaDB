@@ -53,7 +53,7 @@ namespace engine
    enum CLS_TASK_TYPE
    {
       CLS_TASK_SPLIT          = 0,  //split task
-      CLS_TASK_SEQUENCE  = 1,  //clear sequence cache on coords task
+      CLS_TASK_SEQUENCE       = 1,  //clear sequence cache on coords task
 
       CLS_TASK_UNKNOW         = 255
    } ;
