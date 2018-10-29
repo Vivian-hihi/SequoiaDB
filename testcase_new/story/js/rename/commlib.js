@@ -391,29 +391,39 @@ function checkRenameCSResult( oldCSName, newCSName, clNum)
 {   
    try
    {
-      var newCSObj = db.snapshot(SDB_SNAP_COLLECTIONSPACES ,{"Name": newCSName }).current().toObj();     
-      var getNewCSName = newCSObj.Name;
-      if( getNewCSName !== newCSName  )
+      var times = 0;
+      for(var i=0; i<50; i++)
       {
-         throw buildException("check cs name", null, "check the new cs name",
-									newCSName, getNewCSName);
-      }
-      
-      var clArray = newCSObj.Collection;
-      
-      if(clNum != clArray.length){
-         throw buildException("check cl num", null, "check the cs.cl num",
-                              clNum, clArray.length);
-      }
-      
-      for( i = 0; i< clArray.length; i++)
-      {
-         var csname = clArray[i].Name.split(".")[0];
-         if( csname !== newCSName  )
+         var newCSObj = db.snapshot(SDB_SNAP_COLLECTIONSPACES ,{"Name": newCSName }).current().toObj();
+         var getNewCSName = newCSObj.Name;
+         if( getNewCSName !== newCSName  )
          {
-            throw buildException("check cs.cl name", null, "check the new cs name",
-                              newCSName, csname);
+            throw buildException("check cs name", null, "check the new cs name",
+                              newCSName, getNewCSName);
          }
+         
+         var clArray = newCSObj.Collection;
+         
+         if(clNum != clArray.length){
+            times++;
+            if(times === 50){
+               throw buildException("check cl num", null, JSON.stringify(newCSObj),
+                                 clNum, clArray.length);
+            }
+            sleep(100);
+            continue;
+         }
+         
+         for( i = 0; i< clArray.length; i++)
+         {
+            var csname = clArray[i].Name.split(".")[0];
+            if( csname !== newCSName  )
+            {
+               throw buildException("check cs.cl name", null, JSON.stringify(newCSObj),
+                                 newCSName, csname);
+            }
+         }
+         break;
       }
       
       //check the old cl is not exist
