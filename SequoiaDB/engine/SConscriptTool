@@ -50,12 +50,9 @@ exportFiles = [
       "tools/export/expOutput.cpp"
       ]
 
-coordFiles = [
-      "coord/coordAutoIncItem.cpp"
-      ]
-
 clsFiles = [
       "cls/clsCatalogAgent.cpp",
+      "cls/clsAutoIncItem.cpp",
       "cls/clsCatalogMatcher.cpp",
       "cls/clsCatalogPredicate.cpp",
       "cls/clsCataHashMatcher.cpp"
@@ -603,8 +600,6 @@ sequoiaFSFiles = [
       "tools/sequoiafs/sequoiaFSOptionMgr.cpp",
     ]	  
 
-#coord
-toolEnv.StaticLibrary('coord', coordFiles)
 #cls
 toolEnv.StaticLibrary('cls', clsFiles)
 #ixm
@@ -649,7 +644,7 @@ toolEnv.StaticLibrary('ssh2', ssh2Files)
 
 #Export Executable
 sdbimprt = toolEnv.Program("sdbimprt", importFiles,
-         LIBDEPS=["bson", "oss", "pd", "util", "client", "cls", "ixm", "rtn", "msg", "coord"],
+         LIBDEPS=["bson", "oss", "pd", "util", "client", "cls", "ixm", "rtn", "msg"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbexprt = toolEnv.Program("sdbexprt", exportFiles,
