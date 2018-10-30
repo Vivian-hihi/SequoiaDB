@@ -35,10 +35,10 @@ public class RenameUtil extends SdbTestBase {
 			Assert.fail("cs it's been renamed, It shouldn't exist");
 		}catch(BaseException e){
 			if(e.getErrorCode() != -34){
-				throw e;
+				throw e;//TODO:建议出错给些提示信息吧，比较容易看出时哪个操作出错
 			}
 		}
-		
+		//TODO:这段代码逻辑写的太复杂了，阅读起来也比较费力，建议拆分下，有些方法可以提取出来，另外要加上注释信息
 		if (clNum != 0) {
 			DBCursor cur = null;
 			int times = 0;
@@ -94,11 +94,12 @@ public class RenameUtil extends SdbTestBase {
 			cs.getCollection(oldCLName);
 		} catch (BaseException e) {
 			if(e.getErrorCode() != -23){
-				throw e;
+				throw e;//TODO:建议出错给些提示信息吧，比较容易看出时哪个操作出错
 			}
 		}
+		//TODO:游标名建议给个有含义的变量名，不要直接写cur
 		DBCursor cur = null;
-		try {
+		try {//TODO:多处用到csName+newCLName，建议定义一个fullName名
 			cur = db.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS, "{'Name':'" + csName + "." + newCLName + "'}", "", "");
 			if(!cur.hasNext()){
 				Assert.fail("cl is not exist, clFullName: " + csName + "." + newCLName );
@@ -124,7 +125,7 @@ public class RenameUtil extends SdbTestBase {
 			DBLob lob = null;
 			try {
 				lob = cl.createLob();
-				lob.write(data);
+				lob.write(data);//TODO:lobId可以直接取返回值，不需要再get一次
 				idList.add(lob.getID());
 			} finally {
 				lob.close();
@@ -158,11 +159,11 @@ public class RenameUtil extends SdbTestBase {
     }
 	
 	public static void insertData(DBCollection cl, int recordNum){
-		
+		//TODO：这个小于1的判断没有必要吧，建议给个取默认值的接口
 		if(recordNum < 1){
 			recordNum = 1;
 		}
-		
+		//TODO:插入数据的代码建议简化下，这里分了两步操作，应该加下描述信息
 		int times = recordNum/1000;
 		for (int i = 0; i < times; i++) {
 			List<BSONObject> data = new ArrayList<BSONObject>();
@@ -210,6 +211,7 @@ public class RenameUtil extends SdbTestBase {
 //		Assert.assertEquals(actList, expList);
 //	}
 	
+	//TODO:方法名描述有误，应该是Exist，判断cl是否存在，直接有接口可以使用，不需要再另外实现吧
 	public static void checkCLExit(Sequoiadb db, String csName, String clName, boolean clIsExist){
 		DBCursor cur = null;
 		try {
@@ -245,6 +247,7 @@ public class RenameUtil extends SdbTestBase {
 		}
 	} 
 	
+	//TODO:这种检查切分的方法不严谨，如果要查看编目信息检查结果，需要判断组名还有切分范围
 	public static void checkSplitResult(Sequoiadb db, String csName, String clName, List<String> groups){
 		
 		DBCursor cur = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, new BasicBSONObject("Name", csName+"."+clName), null, null);
