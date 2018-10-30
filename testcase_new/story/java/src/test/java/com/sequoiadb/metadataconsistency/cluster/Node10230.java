@@ -1,0 +1,117 @@
+package com.sequoiadb.metadataconsistency.cluster;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
+
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
+import org.testng.Assert;
+import org.testng.SkipException;
+
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.metadataconsistency.data.MetaDataUtils;
+import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
+
+/**
+* TestLink: seqDB-10230:concurrency[createNode, dropRG]
+* @author xiaoni huang init
+* @Date   2016.10.24
+*/
+
+public class Node10230 extends SdbTestBase {
+	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
+	private static Sequoiadb sdb = null;
+	private String rgName = "rg10230";
+	private Random random = new Random();
+	private int msec = 1000;
+	
+	@BeforeClass
+	public void setUp(){
+		//start time
+		try{
+			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			//judge the mode and group number
+			if(MetaDataUtils.isStandAlone(sdb) || MetaDataUtils.OneGroupMode(sdb)){
+				throw new SkipException("The mode is standlone, or only one group, skip the testCase.");
+			}
+			MetaDataUtils.clearGroup(sdb, rgName);
+			sdb.createReplicaGroup(rgName);
+		}catch(BaseException e){
+			sdb.disconnect();
+			Assert.fail(e.getMessage());
+		}
+		
+	}
+	
+	@AfterClass
+	public void tearDown(){
+		try{
+			MetaDataUtils.clearGroup(sdb, rgName);
+		}catch(BaseException e){
+			Assert.fail(e.getMessage());
+		}finally{
+			sdb.disconnect();
+		}
+	}
+	
+	@Test
+	public void test(){
+		
+		CreateNode createNode = new CreateNode();
+		createNode.start();
+
+		RemoveRG removeRG = new RemoveRG();
+		MetaDataUtils.sleep(random.nextInt(msec));
+		removeRG.start();
+		
+		if( !( createNode.isSuccess() && removeRG.isSuccess() ) ){
+			Assert.fail(createNode.getErrorMsg() + removeRG.getErrorMsg());
+		}
+		
+		//check results
+		MetaDataUtils.checkRGOfCatalog(rgName);
+	}
+
+	private class CreateNode extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db = null;
+			try
+			{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+	
+				MetaDataUtils.createNode(db, 
+								   rgName, 
+								   SdbTestBase.reservedPortBegin, 
+								   SdbTestBase.reservedPortEnd, 
+								   SdbTestBase.reservedDir);
+				
+			}catch(BaseException e){
+				throw e;
+			}finally{
+				db.disconnect();
+			}
+		}
+	}
+
+	private class RemoveRG extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db  = null;
+			try
+			{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				db.removeReplicaGroup(rgName);
+			}catch(BaseException e){
+				throw e;
+			}finally{
+				db.disconnect();
+			}
+		}
+	}
+	
+}
