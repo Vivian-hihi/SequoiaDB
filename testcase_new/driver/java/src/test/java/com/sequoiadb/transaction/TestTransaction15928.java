@@ -28,7 +28,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @Date 2018-10-29
  * @version 1.00
  */
-public class TestTransaction15928 extends SdbTestBase{
+public class TestTransaction15928 extends SdbConfTestBase{
     private Sequoiadb sdb;
     private Sequoiadb sdb2;
     private CollectionSpace cs;
@@ -38,12 +38,12 @@ public class TestTransaction15928 extends SdbTestBase{
     private ArrayList<BSONObject> insertRecods;
     List<BSONObject> actualList = new ArrayList<BSONObject>();
     
-   /* @Override
+    @Override
     protected void setNodeConf(){
         dataConf.put("transactionon", true);
         dataConf.put("transisolation", 1);
         stdalnConf.put("transactionon", true);
-    }*/
+    }
     
     @BeforeTest
     public void setUp() {
