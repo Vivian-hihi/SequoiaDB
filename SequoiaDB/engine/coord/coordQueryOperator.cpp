@@ -46,6 +46,7 @@
 #include "rtn.hpp"
 #include "pmd.hpp"
 #include "pdTrace.hpp"
+#include "coordTrace.hpp"
 #include "rtnTrace.hpp"
 #include "ossUtil.hpp"
 
@@ -77,12 +78,14 @@ namespace engine
       return FALSE;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__CHECKQUERYMDY, "_coordQueryOperator::_checkQueryModify" )
    INT32 _coordQueryOperator::_checkQueryModify( coordSendMsgIn &inMsg,
                                                  coordSendOptions &options,
                                                  CoordGroupSubCLMap *grpSubCl )
    {
       MsgOpQuery *queryMsg = ( MsgOpQuery* )inMsg.msg() ;
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_QUERYOPERATOR__CHECKQUERYMDY ) ;
 
       if ( queryMsg->flags & FLG_QUERY_MODIFY )
       {
@@ -105,21 +108,26 @@ namespace engine
          options._primary = TRUE ;
       }
 
+      PD_TRACE_EXITRC ( COORD_QUERYOPERATOR__CHECKQUERYMDY, rc ) ;
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__OPTIMIZE, "_coordQueryOperator::_optimize" )
    void _coordQueryOperator::_optimize( coordSendMsgIn &inMsg,
                                         coordSendOptions &options,
                                         coordProcessResult &result )
    {
+      PD_TRACE_ENTRY ( COORD_QUERYOPERATOR__OPTIMIZE ) ;
       if ( _pContext && 0 == result._sucGroupLst.size() )
       {
          MsgOpQuery *pQueryMsg = ( MsgOpQuery* )inMsg.msg() ;
          _pContext->optimizeReturnOptions( pQueryMsg,
                                            options._groupLst.size() ) ;
       }
+      PD_TRACE_EXIT ( COORD_QUERYOPERATOR__OPTIMIZE ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__PREPARECLOP, "_coordQueryOperator::_prepareCLOp" )
    INT32 _coordQueryOperator::_prepareCLOp( coordCataSel &cataSel,
                                             coordSendMsgIn &inMsg,
                                             coordSendOptions &options,
@@ -127,6 +135,7 @@ namespace engine
                                             coordProcessResult &result )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_QUERYOPERATOR__PREPARECLOP ) ;
 
       _optimize( inMsg, options, result ) ;
 
@@ -137,11 +146,13 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( COORD_QUERYOPERATOR__PREPARECLOP, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__DONECLOP, "_coordQueryOperator::_doneCLOp" )
    void _coordQueryOperator::_doneCLOp( coordCataSel &cataSel,
                                         coordSendMsgIn &inMsg,
                                         coordSendOptions &options,
@@ -149,6 +160,7 @@ namespace engine
                                         coordProcessResult &result )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_QUERYOPERATOR__DONECLOP ) ;
 
       ROUTE_REPLY_MAP *pOkReply = result._pOkReply ;
       SDB_ASSERT( pOkReply, "Ok reply invalid" ) ;
@@ -190,6 +202,8 @@ namespace engine
          ++it ;
       }
       pOkReply->clear() ;
+
+      PD_TRACE_EXIT ( COORD_QUERYOPERATOR__DONECLOP ) ;
    }
 
    void _coordQueryOperator::_clearBlock( pmdEDUCB *cb )
@@ -201,6 +215,7 @@ namespace engine
       _vecBlock.clear() ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__PREPAREMAINCLOP, "_coordQueryOperator::_prepareMainCLOp" )
    INT32 _coordQueryOperator::_prepareMainCLOp( coordCataSel &cataSel,
                                                 coordSendMsgIn &inMsg,
                                                 coordSendOptions &options,
@@ -208,6 +223,7 @@ namespace engine
                                                 coordProcessResult &result )
    {
       INT32 rc                = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_QUERYOPERATOR__PREPAREMAINCLOP ) ;
       MsgOpQuery *pQueryMsg   = ( MsgOpQuery* )inMsg.msg() ;
 
       INT32 flags             = 0 ;
@@ -312,27 +328,34 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( COORD_QUERYOPERATOR__PREPAREMAINCLOP, rc ) ;
       return rc ;
    error:
       _clearBlock( cb ) ;
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__DONEMAINCLOP, "_coordQueryOperator::_doneMainCLOp" )
    void _coordQueryOperator::_doneMainCLOp( coordCataSel &cataSel,
                                             coordSendMsgIn &inMsg,
                                             coordSendOptions &options,
                                             pmdEDUCB *cb,
                                             coordProcessResult &result )
    {
+      PD_TRACE_ENTRY ( COORD_QUERYOPERATOR__DONEMAINCLOP ) ;
       _clearBlock( cb ) ;
       inMsg._datas.clear() ;
 
       _doneCLOp( cataSel, inMsg, options, cb, result ) ;
+      PD_TRACE_EXIT ( COORD_QUERYOPERATOR__DONEMAINCLOP ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__BUILDNEWQUERY, "_coordQueryOperator::_buildNewQuery" )
    BSONObj _coordQueryOperator::_buildNewQuery( const BSONObj &query,
                                                 const CoordSubCLlist &subCLList )
    {
+      PD_TRACE_ENTRY ( COORD_QUERYOPERATOR__BUILDNEWQUERY ) ;
+      BSONObj retObj ;
       BSONObjBuilder builder( query.objsize() +
                               subCLList.size() * COORD_SUBCL_NAME_DFT_LEN) ;
       builder.appendElements( query ) ;
@@ -349,15 +372,21 @@ namespace engine
       }
       babSubCL.done() ;
 
-      return builder.obj() ;
+      retObj = builder.obj() ;
+
+      PD_TRACE_EXIT ( COORD_QUERYOPERATOR__BUILDNEWQUERY ) ;
+
+      return retObj ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR_EXE, "_coordQueryOperator::execute" )
    INT32 _coordQueryOperator::execute( MsgHeader *pMsg,
                                        pmdEDUCB *cb,
                                        INT64 &contextID,
                                        rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_QUERYOPERATOR_EXE ) ;
       rtnContextCoord *pContext        = NULL ;
       coordCommandFactory *pFactory    = NULL ;
       coordOperator *pOperator         = NULL ;
@@ -461,6 +490,7 @@ namespace engine
       {
          pFactory->release( pOperator ) ;
       }
+      PD_TRACE_EXITRC ( COORD_QUERYOPERATOR_EXE, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -497,6 +527,7 @@ namespace engine
       return FALSE ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__GENNEWHINT, "_coordQueryOperator::_generateNewHint" )
    INT32 _coordQueryOperator::_generateNewHint( const CoordCataInfoPtr &cataInfo,
                                                 const BSONObj &matcher,
                                                 const BSONObj &hint,
@@ -507,6 +538,7 @@ namespace engine
                                                 BOOLEAN keepShardingKey )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_QUERYOPERATOR__GENNEWHINT ) ;
       coordKeyKicker kicker ;
 
       BSONObj modifier ;
@@ -599,6 +631,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( COORD_QUERYOPERATOR__GENNEWHINT, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -632,6 +665,7 @@ namespace engine
       pMsg->opCode = MSG_BS_TRANS_QUERY_REQ ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__QUERYORDOONCL, "_coordQueryOperator::_queryOrDoOnCL" )
    INT32 _coordQueryOperator::_queryOrDoOnCL( MsgHeader *pMsg,
                                               pmdEDUCB *cb,
                                               rtnContextCoord **pContext,
@@ -641,6 +675,7 @@ namespace engine
                                               rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_QUERYOPERATOR__QUERYORDOONCL ) ;
       INT32 rcTmp = SDB_OK ;
       INT64 contextID = -1 ;
 
@@ -976,6 +1011,7 @@ namespace engine
       /// reset info
       _pContext = NULL ;
       _processRet = SDB_OK ;
+      PD_TRACE_EXITRC ( COORD_QUERYOPERATOR__QUERYORDOONCL, rc ) ;
       return rc ;
    error:
       if ( SDB_CAT_NO_MATCH_CATALOG == rc )
@@ -997,6 +1033,7 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__BUILDNEWMSG, "_coordQueryOperator::_buildNewMsg" )
    INT32 _coordQueryOperator::_buildNewMsg( const CHAR *msg,
                                             const BSONObj *newSelector,
                                             const BSONObj *newHint,
@@ -1005,6 +1042,7 @@ namespace engine
                                             IExecutor *cb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_QUERYOPERATOR__BUILDNEWMSG ) ;
       INT32 flag = 0 ;
       CHAR *pCollectionName = NULL ;
       SINT64 numToSkip = 0 ;
@@ -1065,6 +1103,7 @@ namespace engine
 
    done:
       return rc ;
+      PD_TRACE_EXITRC ( COORD_QUERYOPERATOR__BUILDNEWMSG, rc ) ;
    error:
       msgReleaseBuffer( newMsg, cb ) ;
       newMsg = NULL ;
