@@ -1,0 +1,68 @@
+﻿<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+
+   <groupId>com.sequoiadb</groupId>
+   <artifactId>sequoiadb-testcase-base</artifactId>
+   <version>3.0.2</version>
+   <packaging>pom</packaging>
+
+   <properties>
+      <sdbdriver.version>${sdbdriver}</sdbdriver.version>
+      <sdbdriver.dir>${sdbdriverDir}</sdbdriver.dir>
+
+      <!-- jars properties -->
+      <testng.version>6.13.1</testng.version>
+      <jcommander.version>1.72</jcommander.version>
+      <compiler-plugin.version>3.6.0</compiler-plugin.version>
+
+      <!-- compiler settings properties -->
+      <java_source_version>1.7</java_source_version>
+      <java_target_version>1.7</java_target_version>
+      <file_encoding>UTF-8</file_encoding>
+
+      <!-- surefire properties -->
+      <surefire-plugin.version>2.20.1</surefire-plugin.version>
+      
+   </properties>
+
+   <dependencies>
+
+      <dependency>
+         <groupId>com.sequoiadb</groupId>
+         <artifactId>sequoiadb-driver</artifactId>
+         <version>${sdbdriver.version}</version>
+         <scope>system</scope>
+         <systemPath>${sdbdriver.dir}/sequoiadb-driver-${sdbdriver.version}.jar</systemPath>
+      </dependency>
+      
+      <!-- tools dependency-->
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <version>${testng.version}</version>
+      </dependency>
+      <!--dependency>
+         <groupId>com.beust</groupId>
+         <artifactId>jcommander</artifactId>
+         <version>${jcommander.version}</version>
+      </dependency-->
+      
+   </dependencies>
+   
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>${compiler-plugin.version}</version>
+            <configuration>
+               <source>${java_source_version}</source>
+               <target>${java_target_version}</target>
+               <encoding>${file_encoding}</encoding>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
+
+</project>
