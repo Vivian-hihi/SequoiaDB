@@ -11,7 +11,7 @@ function main()
 	  return;
    }
    
-   var clName = COMMCLNAME + "_16282_1";   
+   var clName = COMMCLNAME + "_16282_2";   
    commDropCL(db, COMMCSNAME, clName, true, true);
   
    var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, {ShardingKey:{a:1}});
