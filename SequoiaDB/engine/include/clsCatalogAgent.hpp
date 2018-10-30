@@ -51,7 +51,7 @@
 #include "utilSet.hpp"
 #include "dms.hpp"
 #include "utilUniqueID.hpp"
-#include "coordAutoIncItem.hpp"
+#include "clsAutoIncItem.hpp"
 
 using namespace bson ;
 
@@ -190,7 +190,7 @@ namespace engine
          UINT32            getPartitionBit() const { return _square ; }
          bool              ensureShardingIndex() const { return _ensureShardingIndex ; }
          const CHAR        *name () const ;
-         string            nameStr() const ;
+         const string&     nameStr() const ;
          utilCLUniqueID    clUniqueID () const ;
          VEC_GROUP_ID      *getAllGroupID () ;
          UINT32            getAllGroupID ( VEC_GROUP_ID &vecGroup ) const ;
@@ -266,12 +266,12 @@ namespace engine
          UINT32 getShardingKeySiteID() const { return _skSiteID ; }
 
          UTIL_COMPRESSOR_TYPE getCompressType() const { return _compressType ; }
-         INT64 getMaxSize() const { return _maxSize ; }
-         INT64 getMaxRecNum() const { return _maxRecNum ; }
-         BOOLEAN getOverWrite() const { return _overwrite ; }
-         const AUTOINC_ITEM_MAP& getAutoIncMap() const { return _autoIncMap ; }
-         const std::vector<BSONObj> & getAutoIncFields() const { return _autoIncFields ; }
-         INT32 addAutoIncField( BSONObj & autoIncField ) ;
+
+         INT64    getMaxSize() const { return _maxSize ; }
+         INT64    getMaxRecNum() const { return _maxRecNum ; }
+         BOOLEAN  getOverWrite() const { return _overwrite ; }
+
+         const clsAutoIncSet*    getAutoIncSet() const ;
 
       protected:
          _clsCatalogSet    *next () ;
@@ -307,10 +307,6 @@ namespace engine
          INT32             _addItem( clsCatalogItem *item ) ;
          void              _remakeGroupIDs() ;
 
-         INT32             _updateAutoIncMap( const std::vector<BSONObj> &autoIncArr ) ;
-         INT32             _mergeAutoIncItem( coordAutoIncItem &from,
-                                              coordAutoIncItem &to ) ;
-
       private:
          INT32             _version ;
          UINT32            _w ;
@@ -335,7 +331,9 @@ namespace engine
          BOOLEAN           _saveName ;
          UINT32            _attribute ;
          std::multimap<UINT32, std::string> _subCLList ;
-         std::vector<BSONObj> _autoIncFields ;
+
+         clsAutoIncSet     _autoIncSet ;
+
          BOOLEAN           _isMainCL ;
          std::string       _mainCLName ;
          UINT32            _internalV ;
@@ -347,7 +345,7 @@ namespace engine
          INT64             _maxSize ;
          INT64             _maxRecNum ;
          BOOLEAN           _overwrite ;
-         AUTOINC_ITEM_MAP  _autoIncMap ;
+
    };
    typedef class _clsCatalogSet clsCatalogSet ;
 

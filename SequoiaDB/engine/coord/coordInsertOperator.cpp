@@ -981,7 +981,7 @@ namespace engine
       BSONObj                    subObjIn ;
 
       AUTOINC_ITEM_MAP_CONST_IT  autoIncIt ;
-      const coordAutoIncItem     *pItem = NULL ;
+      const clsAutoIncItem       *pItem = NULL ;
       StringKeyArray             doneArray ;
       BOOLEAN                    isDone = FALSE ;
       _utilMapStringKey          doneField = NULL ;
@@ -1007,9 +1007,9 @@ namespace engine
                continue ;
             }
 
-            if ( !autoIncIt->second.hasSubField() )
+            if ( !autoIncIt->second->hasSubField() )
             {
-               switch( autoIncIt->second.generatedType() )
+               switch( autoIncIt->second->generatedType() )
                {
                case AUTOINC_GEN_ALWAYS:
                   break ;
@@ -1030,7 +1030,7 @@ namespace engine
                {
                   subObjIn = ele.Obj() ;
                   _SimpleBSONBuilder subBuilder( builder.subobjStart( eleField ) ) ;
-                  rc = _addAutoIncToObj( subObjIn, *(autoIncIt->second.subFieldMap()),
+                  rc = _addAutoIncToObj( subObjIn, *(autoIncIt->second->subFieldMap()),
                                          cb, subBuilder ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement field[%s], rc: %d",
                                eleField, rc ) ;
@@ -1079,7 +1079,7 @@ namespace engine
             }
             if ( isDone ) continue ;
 
-            pItem = &(autoIncIt->second) ;
+            pItem = autoIncIt->second ;
             if ( !pItem->hasSubField() )
             {
                rc = pSequenceAgent->getNextValue( pItem->sequenceName(),
@@ -1137,17 +1137,18 @@ namespace engine
       for ( it = autoIncMap.begin() ; it != autoIncMap.end() ; ++it )
       {
          fieldLen = ossStrlen( it->first._pString ) + 1 ;
-         if ( !it->second.hasSubField() )
+         if ( !it->second->hasSubField() )
          {
             // |type(CHAR) |field(CHAR*)  |sequenceValue(INT64) |
-            autoIncSize += 1 + fieldLen + 8 ;
+            autoIncSize += ( 1 + fieldLen + 8 ) ;
          }
          else
          {
+            const AUTOINC_ITEM_MAP *pSubMap = it->second->subFieldMap() ;
             // |type(CHAR) |field(CHAR*)  |subObj(BSONObj) |
             // BSONObj: |length(UINT32)  |elements(...)  |EOO(CHAR) |
-            autoIncSize += 1 + fieldLen + 4 +
-                           _calcAutoIncEleSize( *(it->second.subFieldMap()) ) + 1 ;
+            autoIncSize += ( 1 + fieldLen + 4 +
+                             _calcAutoIncEleSize( *pSubMap ) + 1 ) ;
          }
       }
       return autoIncSize ;

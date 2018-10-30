@@ -135,9 +135,13 @@ namespace engine
          BOOLEAN isReplace = _isUpdateReplace( updator ) ;
          cataInfo->getShardingKey( boShardingKey ) ;
          if ( !ignoreAutoInc )
+         {
             boAutoIncKey = _getAutoIncKeyObj( cataInfo->getAutoIncFields() ) ;
+         }
          else
+         {
             boAutoIncKey = BSONObj() ;
+         }
 
          BSONObjIterator iter( updator ) ;
          while ( iter.more() )
@@ -268,7 +272,8 @@ namespace engine
       _skSiteIDs.clear() ;
       _setKeys.clear() ;
 
-      rc = _kickKey( _cataPtr, updator, newUpdator, hasShardingKey, hasKeepAutoInc ) ;
+      rc = _kickKey( _cataPtr, updator, newUpdator,
+                     hasShardingKey, hasKeepAutoInc ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Kick sharding key failed, rc: %d", rc ) ;

@@ -428,7 +428,8 @@ clsFiles = [
       "cls/clsLocalValidation.cpp",
       "cls/clsStorageCheckJob.cpp",
       "cls/clsRegAssit.cpp",
-      "cls/clsUniqueIDCheckJob.cpp"
+      "cls/clsUniqueIDCheckJob.cpp",
+      "cls/clsAutoIncItem.cpp"
       ]
 
 dpsFiles = [
@@ -560,8 +561,7 @@ coordFiles = [
       "coord/coordOmCache.cpp",
       "coord/coordOmStrategyJob.cpp",
       "coord/coordSequenceAgent.cpp",
-      "coord/coordCommandSequence.cpp",
-      "coord/coordAutoIncItem.cpp"
+      "coord/coordCommandSequence.cpp"
       ]
 
 aggrFiles = [

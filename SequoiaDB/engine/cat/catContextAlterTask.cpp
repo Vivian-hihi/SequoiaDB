@@ -635,7 +635,7 @@ namespace engine
          std::vector<BSONObj> autoIncFields ;
          autoIncFieldsList fldList ;
          fldList = localTask->getAutoincFieldArgument() ;
-         autoIncFields = cataSet.getAutoIncFields() ;
+         autoIncFields = cataSet.getAutoIncSet()->getFields() ;
          for( UINT32 i = 0 ; i < fldList.size() ; i++ )
          {
             fldName = fldList[i]->getFieldName() ;
@@ -686,7 +686,7 @@ namespace engine
       fieldList = localTask->getAutoincrementArgument() ;
       try
       {
-         autoIncFields = cataSet.getAutoIncFields() ;
+         autoIncFields = cataSet.getAutoIncSet()->getFields() ;
          for( UINT32 i = 0 ; i < fieldList.size() ; i++ )
          {
             BSONObjBuilder newFieldBld ;
@@ -758,7 +758,7 @@ namespace engine
       fieldList = localTask->getAutoincrementArgument() ;
       try
       {
-         autoIncFields = cataSet.getAutoIncFields() ;
+         autoIncFields = cataSet.getAutoIncSet()->getFields() ;
          for( UINT32 i = 0 ; i < fieldList.size() ; i++ )
          {
             BSONObjBuilder newFieldBld ;
@@ -1436,7 +1436,7 @@ namespace engine
       try
       {
          clUniqueID = cataSet.clUniqueID() ;
-         autoIncFields = cataSet.getAutoIncFields() ;
+         autoIncFields = cataSet.getAutoIncSet()->getFields() ;
          for( UINT32 i = 0 ; i < fieldList.size() ; i++ )
          {
             fldName = fieldList[i]->getFieldName() ;
@@ -1517,7 +1517,7 @@ namespace engine
       try
       {
          clUniqueID = cataSet.clUniqueID() ;
-         autoIncFields = cataSet.getAutoIncFields() ;
+         autoIncFields = cataSet.getAutoIncSet()->getFields() ;
          for( UINT32 i = 0 ; i < fieldList.size() ; i++ )
          {
             BSONObjBuilder newFieldBld ;
@@ -1578,7 +1578,7 @@ namespace engine
       try
       {
          clUniqueID = cataSet.clUniqueID() ;
-         autoIncFields = cataSet.getAutoIncFields() ;
+         autoIncFields = cataSet.getAutoIncSet()->getFields() ;
          for( UINT32 i = 0 ; i < fieldList.size() ; i++ )
          {
             fldName = fieldList[i]->getFieldName() ;

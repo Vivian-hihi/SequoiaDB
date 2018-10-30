@@ -39,7 +39,6 @@
 
 #include "clsCatalogAgent.hpp"
 #include "utilMap.hpp"
-#include "coordAutoIncItem.hpp"
 #include "../bson/bson.h"
 #include <vector>
 #include <queue>
@@ -289,17 +288,17 @@ namespace engine
 
       BOOLEAN hasAutoIncrement() const
       {
-         return !_catlogSet.getAutoIncFields().empty() ;
+         return _catlogSet.getAutoIncSet()->totalCount() > 0 ? TRUE : FALSE ;
       }
 
-      const std::vector<BSONObj>& getAutoIncFields() const
+      const vector<BSONObj>& getAutoIncFields() const
       {
-         return _catlogSet.getAutoIncFields() ;
+         return _catlogSet.getAutoIncSet()->getFields() ;
       }
 
       const AUTOINC_ITEM_MAP& getAutoIncMap() const
       {
-         return _catlogSet.getAutoIncMap() ;
+         return _catlogSet.getAutoIncSet()->getMap() ;
       }
 
    private:

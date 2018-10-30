@@ -482,7 +482,7 @@ namespace engine
       return _name.c_str() ;
    }
 
-   string _clsCatalogSet::nameStr() const
+   const string& _clsCatalogSet::nameStr() const
    {
       return _name ;
    }
@@ -648,8 +648,9 @@ namespace engine
       _maxSize = 0 ;
       _maxRecNum = 0 ;
       _overwrite = FALSE ;
-      _autoIncFields.clear() ;
-      _autoIncMap.clear() ;
+
+      _autoIncSet.clear() ;
+
       PD_TRACE_EXIT ( SDB__CLSCTSET__CLEAR ) ;
    }
 
@@ -1609,8 +1610,6 @@ namespace engine
    INT32 _clsCatalogSet::updateCatSet( const BSONObj & catSet, UINT32 groupID )
    {
       INT32 rc = SDB_OK ;
-      std::vector<BSONElement> eleArray ;
-      BSONObj autoIncField ;
       PD_TRACE_ENTRY ( SDB__CLSCT_UDCATSET ) ;
 
       PD_LOG ( PDDEBUG, "Update cataSet: %s", catSet.toString().c_str() ) ;
@@ -1659,50 +1658,6 @@ namespace engine
          _clUniqueID = (UINT64)ele.Long();
       }
 
-      // autoincrement fields
-      if( catSet.hasField( CAT_AUTOINCREMENT ) )
-      {
-         ele = catSet.getField( CAT_AUTOINCREMENT ) ;
-         if( ele.type() == Array )
-         {
-            eleArray = ele.Array() ;
-            for( UINT32 i = 0 ; i < eleArray.size() ; ++i )
-            {
-               autoIncField = eleArray[i].Obj() ;
-               if( !autoIncField.hasField( FIELD_NAME_AUTOINC_SEQ ) ||
-                   !autoIncField.hasField( CAT_AUTOINC_FIELD ) ||
-                   !autoIncField.hasField( CAT_AUTOINC_GENERATED ) ||
-                   !autoIncField.hasField( CAT_AUTOINC_SEQ_ID ))
-               {
-                  PD_RC_CHECK ( SDB_CAT_CORRUPTION, PDSEVERE,
-                    "Catalog [%s] type error", CAT_AUTOINCREMENT ) ;
-               }
-               addAutoIncField( autoIncField ) ;
-            }
-         }
-         else if( ele.type() == Object )
-         {
-            autoIncField = ele.Obj() ;
-            if( !autoIncField.hasField( FIELD_NAME_AUTOINC_SEQ ) ||
-                !autoIncField.hasField( CAT_AUTOINC_FIELD ) ||
-                !autoIncField.hasField( CAT_AUTOINC_GENERATED ) ||
-                !autoIncField.hasField( CAT_AUTOINC_SEQ_ID ) )
-            {
-               PD_RC_CHECK ( SDB_CAT_CORRUPTION, PDSEVERE,
-                 "Catalog [%s] type error", CAT_AUTOINCREMENT ) ;
-            }
-            addAutoIncField( autoIncField ) ;
-         }
-
-         rc = _updateAutoIncMap( _autoIncFields ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to initialize autoIncrement map, rc: %d", rc ) ;
-      }
-      else
-      {
-         _autoIncFields.clear() ;
-         _autoIncMap.clear() ;
-      }
-
       // isMainCl
       ele = catSet.getField( CAT_IS_MAINCL );
       if ( ele.booleanSafe() )
@@ -1724,6 +1679,23 @@ namespace engine
       else
       {
          _mainCLName.clear() ;
+      }
+
+      // auto increment parse
+      ele = catSet.getField( CAT_AUTOINCREMENT ) ;
+      if ( !ele.eoo() )
+      {
+         rc = _autoIncSet.init( ele ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Init auto-increment[%s] failed, rc: %d",
+                    catSet.toString().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         _autoIncSet.clear() ;
       }
 
       /// get attribute, it is optional.
@@ -2340,10 +2312,9 @@ namespace engine
       return SDB_CAT_NO_MATCH_CATALOG ;
    }
 
-   INT32 _clsCatalogSet::addAutoIncField ( BSONObj & autoIncField )
+   const clsAutoIncSet* _clsCatalogSet::getAutoIncSet() const
    {
-      _autoIncFields.push_back( autoIncField.getOwned() );
-      return SDB_OK ;
+      return &_autoIncSet ;
    }
 
    INT32 _clsCatalogSet::findSubCLName ( const BSONObj &obj,
@@ -2458,94 +2429,6 @@ namespace engine
             ++rit ;
          }
       }
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UPDATE_AUTOINC_MAP, "_clsCatalogSet::_updateAutoIncMap" )
-   INT32 _clsCatalogSet::_updateAutoIncMap( const vector<BSONObj> &autoIncFields )
-   {
-      PD_TRACE_ENTRY ( SDB__UPDATE_AUTOINC_MAP ) ;
-
-      INT32 rc = SDB_OK ;
-      UINT32 i = 0 ;
-      AUTOINC_ITEM_MAP_IT mapIt ;
-
-      _autoIncMap.clear() ;
-
-      for ( i = 0 ; i < autoIncFields.size() ; ++i )
-      {
-         coordAutoIncItem newItem ;
-         rc = newItem.init( autoIncFields[i] ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to init autoIncrement item, rc: %d", rc ) ;
-
-         mapIt = _autoIncMap.find( newItem.fieldName() ) ;
-         if ( mapIt != _autoIncMap.end() )
-         {
-            rc = _mergeAutoIncItem( newItem, mapIt->second ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to merge autoIncrement Item, rc: %d", rc ) ;
-         }
-         else
-         {
-            _autoIncMap.insert( AUTOINC_ITEM_MAP_VAL( newItem.fieldName(), newItem ) ) ;
-         }
-      }
-
-   done:
-      PD_TRACE_EXIT( SDB__UPDATE_AUTOINC_MAP ) ;
-      return rc ;
-   error:
-      _autoIncMap.clear() ;
-      goto done ;
-   }
-
-   INT32 _clsCatalogSet::_mergeAutoIncItem( coordAutoIncItem &from,
-                                            coordAutoIncItem &to )
-   {
-      /*
-         If field exists, merge their sub fields.
-         e.g:
-         {field: "a", subFields:[{field: "b"}]} +
-         {field: "a", subFields:[{field: "c"}]} =>
-         [{field: "a", subFields:[{field: "b"}, {field: "c"}]}]
-      */
-
-      INT32                rc = SDB_OK ;
-      AUTOINC_ITEM_MAP*    pToMap = NULL ;
-      AUTOINC_ITEM_MAP*    pFromMap = NULL ;
-      AUTOINC_ITEM_MAP_IT  toIt ;
-      AUTOINC_ITEM_MAP_IT  fromIt ;
-
-      if ( from.hasSubField() && to.hasSubField() )
-      {
-         pToMap = to.subFieldMap() ;
-         pFromMap = from.subFieldMap() ;
-
-         for ( fromIt = pFromMap->begin() ; fromIt != pFromMap->end() ; ++fromIt )
-         {
-            toIt = pToMap->find( fromIt->first ) ;
-            if ( toIt == pToMap->end() )
-            {
-               coordAutoIncItem newItem = fromIt->second ;
-               pToMap->insert( AUTOINC_ITEM_MAP_VAL( newItem.fieldName(), newItem ) ) ;
-            }
-            else
-            {
-               rc = _mergeAutoIncItem( fromIt->second, toIt->second ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to merge autoIncrement item, rc: %d", rc ) ;
-            }
-         }
-      }
-      else
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "AutoIncrement fields[%s, %s] conflict.",
-                 from.fieldName(), to.fieldName() ) ;
-         goto error ;
-      }
-   done:
       return rc ;
    error:
       goto done ;
