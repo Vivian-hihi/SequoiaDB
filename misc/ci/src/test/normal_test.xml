@@ -102,16 +102,6 @@
          <var name="case_reltdir" unset="true"/>
          <propertyregex property="case_reltdir" input="@{casetype}" regexp="_" replace="/"/>
          <switch value="@{casetype}">
-         
-            <case value="story_java">
-               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}"/>
-            </case>
-            <case value="sdv_java">
-               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}"/>
-            </case>
-            <case value="driver_java">
-               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}"/>
-            </case>
             
             <case value="tdd_c">
                <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}"/>
@@ -222,7 +212,7 @@
       <for list="${testhost_list}" param="testhost" parallel="false">
          <sequential>
             <copy todir="${testcase_outdir}/testcase_@{testhost}">
-               <fileset dir="${case_basedir}" includes="tools/**/*"/>
+               <fileset dir="${case_basedir}" includes="tools/**/*,testcase-base/**/*"/>
             </copy>
          </sequential>
       </for>

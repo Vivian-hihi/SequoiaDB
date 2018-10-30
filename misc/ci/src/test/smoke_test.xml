@@ -109,16 +109,6 @@
          <var name="case_reltdir" unset="true"/>
          <propertyregex property="case_reltdir" input="@{casetype}" regexp="_" replace="/"/>
          <switch value="@{casetype}">
-         
-            <case value="story_java">
-               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}"/>
-            </case>
-            <case value="sdv_java">
-               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}"/>
-            </case>
-            <case value="driver_java">
-               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}"/>
-            </case>
             
             <case value="driver_c">
                <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}"/>
