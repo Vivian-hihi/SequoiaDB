@@ -64,35 +64,37 @@ namespace engine
          value length is decided by type. if NumberLong, it's INT64.
       */
       public:
-         _SimpleBSONBuilder()
-         {
-            _pBuf = NULL ;
-            _pCur = NULL ;
-         }
-
          _SimpleBSONBuilder( CHAR *pBuf )
          {
-            _pBuf = pBuf ;
-            _pCur = _pBuf ;
+            _pBuf    = pBuf ;
+            _pCur    = _pBuf ;
+            _ppPos   = NULL ;
+
+            init() ;
          }
 
-         OSS_INLINE void setBuf( CHAR* pBuf ) { _pBuf = pBuf ; }
-
-         OSS_INLINE CHAR* getBuf() { return _pBuf ; }
-
-         OSS_INLINE UINT32 getLen() { return _pCur - _pBuf ; }
-
-         void init()
+         _SimpleBSONBuilder( CHAR **ppPos )
          {
-            *((UINT32*)_pBuf) = 0 ;
-            _pCur = _pBuf + 4 ;
+            _pBuf    = *ppPos ;
+            _pCur    = _pBuf ;
+            _ppPos   = ppPos ;
+
+            init() ;
          }
+
+         UINT32 getLen() const { return _pCur - _pBuf ; }
 
          void done()
          {
             *_pCur = (CHAR) EOO ;
             ++_pCur ;
+            /// set size
             *((UINT32*)_pBuf) = _pCur - _pBuf ;
+            /// set pos
+            if ( _ppPos )
+            {
+               *_ppPos = _pCur ;
+            }
          }
 
          _SimpleBSONBuilder* appendElement( BSONElement &ele )
@@ -116,7 +118,7 @@ namespace engine
             return this ;
          }
 
-         CHAR* subobjStart( const CHAR *fieldName )
+         CHAR** subobjStart( const CHAR *fieldName )
          {
             *_pCur = (CHAR) Object ;
             _pCur += 1 ;
@@ -125,17 +127,20 @@ namespace engine
             ossMemcpy( _pCur, fieldName, fieldLen ) ;
             _pCur += fieldLen ;
 
-            return _pCur ;
+            return &_pCur ;
          }
 
-         void subobjEnd( _SimpleBSONBuilder &subBuilder )
+      protected:
+         void init()
          {
-            _pCur += subBuilder.getLen() ;
+            *((UINT32*)_pBuf) = 0 ;
+            _pCur = _pBuf + 4 ;
          }
 
       private:
-         CHAR* _pBuf ;
-         CHAR* _pCur ;
+         CHAR*       _pBuf ;
+         CHAR*       _pCur ;
+         CHAR**      _ppPos ;
    };
 
    /*
@@ -908,7 +913,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 i = 0 ;
       CHAR* pCurPos = NULL ;
-      _SimpleBSONBuilder builder ;
       INT32 estimatedSize = 0 ;
       INT32 autoIncSize = 0 ;
       MsgOpInsert *pInsertMsg = (MsgOpInsert *)pOrgMsg ;
@@ -944,7 +948,7 @@ namespace engine
       for ( i = 0 ; i < count ; ++i )
       {
          const BSONObj objIn( (const CHAR*)pInsertor ) ;
-         builder.setBuf( pCurPos ) ;
+         _SimpleBSONBuilder builder( pCurPos ) ;
          rc = _addAutoIncToObj( objIn, autoIncMap, cb, builder ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to add autoIncrement field to obj[%s], rc: %d",
@@ -955,7 +959,7 @@ namespace engine
       }
 
       newMsgLen = pCurPos - (*ppNewMsg) ;
-      SDB_ASSERT( newMsgLen < newMsgSize, "message is over boundary" ) ;
+      SDB_ASSERT( newMsgLen <= newMsgSize, "message is over boundary" ) ;
       ((MsgHeader*)(*ppNewMsg))->messageLength = newMsgLen ;
 
    done:
@@ -973,18 +977,15 @@ namespace engine
                                                  _SimpleBSONBuilder &builder )
    {
       PD_TRACE_ENTRY( SDB__ADD_AUTOINC_TO_OBJ ) ;
-      typedef _utilArray<_utilMapStringKey, 1> StringKeyArray ;
+      typedef _utilSet<_utilMapStringKey, 1>    StringKeySet ;
 
       INT32                      rc = SDB_OK ;
       BSONElement                ele ;
       const CHAR*                eleField = NULL;
-      BSONObj                    subObjIn ;
 
       AUTOINC_ITEM_MAP_CONST_IT  autoIncIt ;
       const clsAutoIncItem       *pItem = NULL ;
-      StringKeyArray             doneArray ;
-      BOOLEAN                    isDone = FALSE ;
-      _utilMapStringKey          doneField = NULL ;
+      StringKeySet               doneSet ;
 
       coordSequenceAgent         *pSequenceAgent = NULL ;
       INT64                      nextValue = 0 ;
@@ -993,9 +994,7 @@ namespace engine
       {
          // 1. Handle autoIncrement fields inputted by user.
 
-         builder.init() ;
          BSONObjIterator boIt( objIn ) ;
-
          while( boIt.more() )
          {
             ele = boIt.next() ;
@@ -1014,13 +1013,14 @@ namespace engine
                case AUTOINC_GEN_ALWAYS:
                   break ;
                case AUTOINC_GEN_STRICT:
-                  PD_CHECK( NumberInt == ele.type() || NumberLong == ele.type(),
+                  PD_CHECK( NumberInt == ele.type() ||
+                            NumberLong == ele.type(),
                             SDB_INVALIDARG, error, PDERROR,
                             "Wrong type[%d] of autoIncrement field[%s]",
                             ele.type(), eleField ) ;
                case AUTOINC_GEN_DEFAULT:
                   builder.appendElement( ele ) ;
-                  doneArray.append( autoIncIt->first ) ;
+                  doneSet.insert( autoIncIt->first ) ;
                   break ;
                }
             }
@@ -1028,26 +1028,30 @@ namespace engine
             {
                if ( Object == ele.type() )
                {
-                  subObjIn = ele.Obj() ;
-                  _SimpleBSONBuilder subBuilder( builder.subobjStart( eleField ) ) ;
-                  rc = _addAutoIncToObj( subObjIn, *(autoIncIt->second->subFieldMap()),
-                                         cb, subBuilder ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement field[%s], rc: %d",
-                               eleField, rc ) ;
-                  builder.subobjEnd( subBuilder ) ;
+                  _SimpleBSONBuilder subBuilder(
+                     builder.subobjStart( eleField ) ) ;
 
-                  doneArray.append( autoIncIt->first ) ;
+                  rc = _addAutoIncToObj( ele.embeddedObject(),
+                                         *(autoIncIt->second->subFieldMap()),
+                                         cb, subBuilder ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement "
+                               "field[%s], rc: %d",
+                               eleField, rc ) ;
+                  subBuilder.done() ;
+
+                  doneSet.insert( autoIncIt->first ) ;
                }
                else
                {
-                  // autoIncrement field is "a.b", and user just input field "a".
+                  // autoIncrement field is "a.b",
+                  // and user just input field "a".
                   PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
                                "Field[%s] conflicted with autoIncrement field",
                                eleField ) ;
                }
             }
 
-            if ( doneArray.size() == autoIncMap.size() )
+            if ( doneSet.size() == autoIncMap.size() )
             {
                break ;
             }
@@ -1067,17 +1071,11 @@ namespace engine
                autoIncIt != autoIncMap.end() ;
                ++autoIncIt )
          {
-            StringKeyArray::iterator doneIt( doneArray ) ;
-            isDone = FALSE ;
-            while ( doneIt.next( doneField ) )
+            /// already exist
+            if ( doneSet.find( autoIncIt->first ) != doneSet.end() )
             {
-               if ( doneField == autoIncIt->first )
-               {
-                  isDone = TRUE ;
-                  break ;
-               }
+               continue ;
             }
-            if ( isDone ) continue ;
 
             pItem = autoIncIt->second ;
             if ( !pItem->hasSubField() )
@@ -1087,14 +1085,13 @@ namespace engine
                                                   nextValue, cb ) ;
                if ( SDB_SEQUENCE_NOT_EXIST == rc )
                {
-                  doneArray.append( autoIncIt->first ) ;
                   rc = SDB_OK ;
                   continue ;
                }
                else if ( SDB_OK != rc )
                {
-                  PD_LOG( PDERROR, "Failed to get sequence[%s] next value, rc: %d",
-                          pItem->sequenceName(), rc ) ;
+                  PD_LOG( PDERROR, "Failed to get sequence[%s] next value, "
+                          "rc: %d", pItem->sequenceName(), rc ) ;
                   goto error ;
                }
 
@@ -1102,23 +1099,23 @@ namespace engine
             }
             else
             {
-               subObjIn = BSONObjBuilder().obj() ;
-               _SimpleBSONBuilder subBuilder( builder.subobjStart( pItem->fieldName() ) ) ;
-               rc = _addAutoIncToObj( subObjIn, *(pItem->subFieldMap()),
-                                      cb, subBuilder ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement field[%s], rc: %d",
-                            pItem->fieldName(), rc ) ;
-               builder.subobjEnd( subBuilder ) ;
-            }
+               _SimpleBSONBuilder subBuilder(
+                  builder.subobjStart( pItem->fieldName() ) ) ;
 
-            doneArray.append( autoIncIt->first ) ;
+               rc = _addAutoIncToObj( BSONObj(), *(pItem->subFieldMap()),
+                                      cb, subBuilder ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement "
+                            "field[%s], rc: %d", pItem->fieldName(), rc ) ;
+               subBuilder.done() ;
+            }
          }
 
          builder.done() ;
       }
       catch ( std::exception &e )
       {
-         PD_RC_CHECK( SDB_SYS, PDERROR, "Unexpected exception happened[%s]", e.what() ) ;
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Unexpected exception happened[%s]",
+                      e.what() ) ;
       }
 
    done:
