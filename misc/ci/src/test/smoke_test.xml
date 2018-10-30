@@ -213,7 +213,7 @@
       <for list="${testhost_list}" param="testhost" parallel="false">
          <sequential>
             <copy todir="${testcase_outdir}/testcase_@{testhost}">
-               <fileset dir="${case_basedir}" includes="tools/**/*"/>
+               <fileset dir="${case_basedir}" includes="tools/**/*,testcase-base/**/*"/>
             </copy>
          </sequential>
       </for>
