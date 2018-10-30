@@ -6,7 +6,7 @@
 
 var cmd = new Cmd();     
 var HEADER = "'Content-Type: application/json'";
-var HTTP = "'http://192.168.31.59:9200";
+var HTTP = "'http://" + ESHOSTNAME + ":" + ESSVCNAME;
 var esOpr = new ESOperator();
 var dbOpr = new DBOperator();
 
