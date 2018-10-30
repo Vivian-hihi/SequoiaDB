@@ -12,8 +12,8 @@
    <parameter name="SPAREPORTSTOP"  value="27000" />
    <parameter name="SPAREPATH"  value="/data/disk3/sequoiadb/database/" />
    
-   <parameter name="HOSTNAME"       value="localhost" />
-   <parameter name="SVCNAME"        value="11810" />
+   <parameter name="HOSTNAME"       value="${HOSTNAME}" />
+   <parameter name="SVCNAME"        value="${SVCNAME}" />
    <parameter name="CHANGEDPREFIX"  value="story_java_test" />
    <parameter name="RSRVPORTBEGIN"  value="26000" />
    <parameter name="RSRVPORTEND"    value="27000" />

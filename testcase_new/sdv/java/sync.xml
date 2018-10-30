@@ -3,8 +3,8 @@
 <!--sync testcase, which should be excute serially-->
 
 <suite name="sdv" verbose="1" stop-all-when-occur-failure="false"> 
-   <parameter name="HOSTNAME"       value="localhost" />
-   <parameter name="SVCNAME"        value="11810" />
+   <parameter name="HOSTNAME"       value="${HOSTNAME}" />
+   <parameter name="SVCNAME"        value="${SVCNAME}" />
    <parameter name="CHANGEDPREFIX"  value="story_java_test" />
    <parameter name="RSRVPORTBEGIN"  value="26000" />
    <parameter name="RSRVPORTEND"    value="27000" />
