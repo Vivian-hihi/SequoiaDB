@@ -953,6 +953,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to add autoIncrement field to obj[%s], rc: %d",
                       objIn.toString().c_str(), rc ) ;
+         builder.done() ;
 
          pCurPos += ossRoundUpToMultipleX( builder.getLen(), 4 ) ;
          pInsertor += ossRoundUpToMultipleX( objIn.objsize(), 4 ) ;
@@ -1109,8 +1110,6 @@ namespace engine
                subBuilder.done() ;
             }
          }
-
-         builder.done() ;
       }
       catch ( std::exception &e )
       {
