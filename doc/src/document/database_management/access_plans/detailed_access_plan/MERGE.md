@@ -19,7 +19,7 @@
 | Estimate.RunCost                 | 浮点型    | 估算的 MERGE 的运行时间（单位：秒）                                          |
 | Estimate.TotalCost               | 浮点型    | 估算的 MERGE 的结束时间（单位：秒）                                          |
 | Estimate.Output                  | BSON 对象 | 估算的 MERGE 输出结果的统计信息<br>Filter 选项包含 "Output" 时显示           |
-| Estimate.Output.Records          | 长整形    | 估算的 MERGE 输出的记录个数                                                  |
+| Estimate.Output.Records          | 长整型    | 估算的 MERGE 输出的记录个数                                                  |
 | Estimate.Output.RecordSize       | 整型      | 估算的 MERGE 输出的记录平均字节数                                            |
 | Estimate.Output.Sorted           | 布尔型    | MERGE 输出结果是否有序                                                       |
 | Run                              | BSON 对象 | 实际执行 MERGE 的代价信息<br>Run 选项为 true 时显示                          |

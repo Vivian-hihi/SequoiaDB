@@ -13,7 +13,7 @@
 | Estimate.TotalCost         | 浮点型    | 估算的 SORT 的结束时间（单位：秒）                                            |
 | Estimate.SortType          | 字符串    | SORT 估算的排序类型：<br>1. "InMemory" 为内存排序<br>2. "External" 为外存排序 |
 | Estimate.Output            | BSON 对象 | 估算的 SORT 输出的统计信息<br>Filter 选项包含 "Output" 时显示                 |
-| Estimate.Output.Records    | 长整形    | 估算的 SORT 输出的记录个数                                                    |
+| Estimate.Output.Records    | 长整型    | 估算的 SORT 输出的记录个数                                                    |
 | Estimate.Output.RecordSize | 整型      | 估算的 SORT 输出的记录平均字节数                                              |
 | Estimate.Output.Sorted     | 布尔型    | SORT 输出是否有序，对 SORT 为 true                                            |
 | Run                        | BSON 对象 | 实际查询的 SORT 代价信息<br> Run 选项为 true 时显示                           |

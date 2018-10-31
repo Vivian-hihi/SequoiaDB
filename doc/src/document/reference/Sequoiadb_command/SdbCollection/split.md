@@ -18,7 +18,7 @@
 > 
 >  1、Range 分区使用精确条件，而 Hash 分区使用 Partition（分区数）条件。结束条件不选时默认为切分源当前包含的最大数据范围。
 > 
->  2、如果指定分区键字段为降序时，如：{groupingKey:{<字段1>:&lt;-1&gt;}，condition（或 Partition）中的起始条件中的范围应该大于终止条件中的范围。Hash 分区使用的 Partition（分区数）必须为整形，不能为其他的类型。
+>  2、如果指定分区键字段为降序时，如：{groupingKey:{<字段1>:&lt;-1&gt;}，condition（或 Partition）中的起始条件中的范围应该大于终止条件中的范围。Hash 分区使用的 Partition（分区数）必须为整型，不能为其他的类型。
 
 > * 百分比切分
 

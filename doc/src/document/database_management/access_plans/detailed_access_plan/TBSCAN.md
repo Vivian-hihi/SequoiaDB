@@ -16,12 +16,12 @@
 | Estimate.CLStatTime            | 字符串    | TBSCAN 使用的集合的统计信息的生成时间                           |
 | Estimate.Input                 | BSON 对象 | 估算的 TBSCAN 输入的统计信息<br>Filter 选项包含 "Input" 时显示  |
 | Estimate.Input.Pages           | 长整型    | 估算的 TBSCAN 输入的数据页数                                    |
-| Estimate.Input.Records         | 长整形    | 估算的 TBSCAN 输入的记录个数                                    |
-| Estimate.Input.RecordSize      | 整形      | 估算的 TBSCAN 输入的记录平均字节数                              |
+| Estimate.Input.Records         | 长整型    | 估算的 TBSCAN 输入的记录个数                                    |
+| Estimate.Input.RecordSize      | 整型      | 估算的 TBSCAN 输入的记录平均字节数                              |
 | Estimate.Filter                | BSON 对象 | 估算的 TBSCAN 进行过滤的信息<br>Filter 选项包含 "Filter" 时显示 |
 | Estimate.Filter.MthSelectivity | 浮点型    | 估算的 TBSCAN 使用匹配符进行过滤的选择率                        |
 | Estimate.Output                | BSON 对象 | 估算的 TBSCAN 输出的统计信息<br>Filter 选项包含 "Output" 时显示 |
-| Estimate.Output.Records        | 长整形    | 估算的 TBSCAN 输出的记录个数                                    |
+| Estimate.Output.Records        | 长整型    | 估算的 TBSCAN 输出的记录个数                                    |
 | Estimate.Output.RecordSize     | 整型      | 估算的 TBSCAN 输出的记录平均字节数                              |
 | Estimate.Output.Sorted         | 布尔型    | TBSCAN 输出是否有序，对 TBSCAN 为 false                         |
 | Run                            | BSON 对象 | 实际执行 TBSCAN 的代价信息<br>Run 选项为 true 时显示            |
