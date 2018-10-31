@@ -13,7 +13,6 @@ namespace passwd
    using namespace engine;
    #define DEFAULT_FILE         ( "passwd" )
    #define OPTIONS_HELP         ( "help" )
-   #define OPTIONS_VERSION      ( "version" )
    #define OPTIONS_ADDUSER      ( "adduser" )
    #define OPTIONS_RMUSER       ( "removeuser" )
    #define OPTIONS_CLUSTER      ( "cluster" )
@@ -27,7 +26,6 @@ namespace passwd
 
    #define PASSWD_GENERAL_OPTIONS \
    (COMMANDS_STRING(OPTIONS_HELP, ",h"), "help") \
-   (COMMANDS_STRING(OPTIONS_VERSION,",v"), "version") \
    (COMMANDS_STRING(OPTIONS_ADDUSER,",a"), po::value<string>(), "add a user")\
    (COMMANDS_STRING(OPTIONS_RMUSER,",r"), po::value<string>(), "remove a user")\
    (COMMANDS_STRING(OPTIONS_TOKEN,",t"), po::value<string>(), "password encryption token")\
@@ -47,11 +45,6 @@ namespace passwd
       return _cmdHas( OPTIONS_HELP ) ;
    }
 
-   BOOLEAN passwdOptions::hasVersion() const
-   {
-      return _cmdHas( OPTIONS_VERSION ) ;
-   }
-
    BOOLEAN passwdOptions::hasPassword() const
    {
       return _cmdHas( OPTIONS_PASSWD ) ;
@@ -60,7 +53,6 @@ namespace passwd
    INT32 passwdOptions::printHelpInfo() const
    {
       po::options_description general( "command Options" ) ;
-      //SDB_ASSERT( _cmdParsed, "can't be used before parsing cmd" ) ;
       general.add_options()PASSWD_GENERAL_OPTIONS ;
       cout << general << endl ;
       return SDB_OK ;
@@ -82,14 +74,13 @@ namespace passwd
       }
       _cmdParsed = true ;
 
-      if ( _cmdHas( OPTIONS_HELP ) || _cmdHas( OPTIONS_HELP ) )
-      {
-         rc = SDB_PMD_HELP_ONLY ;
-         goto error ;
-      }
-
       if ( !_cmdHas( OPTIONS_ADDUSER ) && !_cmdHas( OPTIONS_RMUSER ) )
       {
+         if ( _cmdHas( OPTIONS_HELP ) )
+         {
+            rc = SDB_PMD_HELP_ONLY ;
+            goto done ;
+         }
          rc = SDB_INVALIDARG ;
          cerr << "must specify adduser/removeuser" << endl ;
          goto error ;

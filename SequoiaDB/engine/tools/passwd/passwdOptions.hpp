@@ -24,7 +24,6 @@ namespace passwd
          INT32 parseCmd(INT32 argc, CHAR* argv[]) ;
          INT32 printHelpInfo() const ;
 
-         BOOLEAN  hasVersion() const ;
          BOOLEAN  hasHelp() const ;
          BOOLEAN  hasPassword() const ;
 

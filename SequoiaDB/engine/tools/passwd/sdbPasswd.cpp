@@ -26,12 +26,12 @@ INT32 main(INT32 argc, char* argv[])
       rc = options.parseCmd( argc, argv ) ;
       if ( rc )
       {
+         options.printHelpInfo();
          if ( SDB_PMD_HELP_ONLY == rc )
          {
             rc = SDB_OK;
             goto done;
          }
-         options.printHelpInfo();
          goto error;
       }
 
