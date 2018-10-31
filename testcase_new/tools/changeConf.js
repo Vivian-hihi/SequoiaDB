@@ -48,6 +48,7 @@ function main()
       checkAllConfChange();
       checkNodeStart();
       checkPrimary();
+      checkNodeHealth();
    }
    if( mode === "after" )
    {
@@ -59,6 +60,7 @@ function main()
       checkAllConfChange();
       checkNodeStart();
       checkPrimary();
+      checkNodeHealth();
    }
    
    if( hasError === true )
@@ -230,6 +232,39 @@ function checkNodeStart()
             hasError = true;
          }
       }
+   }
+}
+
+function checkNodeHealth()
+{
+   println( '---begin to check nodes health' );
+   var db = new Sdb( hostname, svcname  );
+   var hasErrorNode = false;
+   for(var i = 0; i < 600; i++ )
+   {
+      var localNodes = db.snapshot( SDB_SNAP_HEALTH, new SdbSnapshotOption().sel({ServiceStatus:1,Status:1,NodeName:1}) ).toArray();
+      for( var j in localNodes )
+      {
+         var nodeInfoStr = localNodes[j];
+         var nodeInfoObj = JSON.parse( nodeInfoStr );
+         if( nodeInfoObj.ServiceStatus != true || nodeInfoObj.Status != "Normal" )
+         {
+            println( nodeInfoObj.NodeName + " ServiceStatus is " + nodeInfoObj.ServiceStatus + " Status is" + nodeInfoObj.Status);
+            hasErrorNode = true;
+         }
+      }
+      if( hasErrorNode === true )
+      {
+         sleep(100); 
+      }
+      else
+      {
+         break;
+      }
+   }
+   if( hasErrorNode === true )
+   {
+      hasError = true;
    }
 }
 
