@@ -34,55 +34,15 @@ public class RenameUtil extends SdbTestBase {
 			db.getCollectionSpace(oldCSName);
 			Assert.fail("cs it's been renamed, It shouldn't exist");
 		}catch(BaseException e){
-			if(e.getErrorCode() != -34){
-				throw e;//TODO:建议出错给些提示信息吧，比较容易看出时哪个操作出错
-			}
+			Assert.assertEquals(e.getErrorCode(), -34, e.getMessage());
 		}
-		//TODO:这段代码逻辑写的太复杂了，阅读起来也比较费力，建议拆分下，有些方法可以提取出来，另外要加上注释信息
+		
+		//if cs is not empty, check cl full name
 		if (clNum != 0) {
-			DBCursor cur = null;
-			int times = 0;
-			for (int k = 0; k < 50; k++) {
-				try {
-					cur = db.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONSPACES, "{'Name':'" + newCSName + "'}", "", "");
-					if (!cur.hasNext()) {
-						Assert.fail("cs it's not exist, csName: " + newCSName);
-					}
-	
-					BSONObject obj = cur.getNext();
-					BasicBSONList cls = (BasicBSONList) obj.get("Collection");
-					if (cls.size() != clNum) {
-						times++;
-						if(times == 50){
-							Assert.fail("cl count error, exp: " + clNum + ",act :" + cls.size());
-						}
-						try {
-							Thread.sleep(100);
-						} catch (InterruptedException e) {
-							Assert.fail(e.getMessage());
-						}
-						continue;
-					}
-					for (int i = 0; i < cls.size(); i++) {
-						BSONObject ele = (BSONObject) cls.get(i);
-						String name = (String) ele.get("Name");
-						String csName = name.split("\\.")[0];
-						if (!csName.equals(newCSName)) {
-							Assert.fail("cs name contrast error");
-						}
-					}
-				} finally {
-					if (cur != null) {
-						cur.close();
-					}
-				}
-				break;
-			}
+			checkCLFullName(db, newCSName, clNum);
 		}else{
-			try {
-				db.getCollectionSpace(newCSName);
-			} catch (BaseException e) {
-				Assert.fail("afresh get cs failure, error:"+e);
+			if(!db.isCollectionSpaceExist(newCSName)){
+				Assert.fail("new cs name is not exist: "+ newCSName);
 			}
 		}
 	}
@@ -90,31 +50,11 @@ public class RenameUtil extends SdbTestBase {
 	public static void checkRenameCLResult(Sequoiadb db, String csName, String oldCLName, String newCLName){
 		
 		CollectionSpace cs = db.getCollectionSpace(csName);
-		try {
-			cs.getCollection(oldCLName);
-		} catch (BaseException e) {
-			if(e.getErrorCode() != -23){
-				throw e;//TODO:建议出错给些提示信息吧，比较容易看出时哪个操作出错
-			}
+		if(cs.isCollectionExist(oldCLName)){
+			Assert.fail("cl already rename, should not exist");
 		}
-		//TODO:游标名建议给个有含义的变量名，不要直接写cur
-		DBCursor cur = null;
-		try {//TODO:多处用到csName+newCLName，建议定义一个fullName名
-			cur = db.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS, "{'Name':'" + csName + "." + newCLName + "'}", "", "");
-			if(!cur.hasNext()){
-				Assert.fail("cl is not exist, clFullName: " + csName + "." + newCLName );
-			}
-			while(cur.hasNext()){
-				BSONObject obj = cur.getNext();
-				String name = (String) obj.get("Name");
-				if(!name.equals(csName + "." + newCLName)){
-					Assert.fail("cl fullname error, exp: " + csName + "." + newCLName +", act: "+name);
-				}
-			}
-		} finally{
-			if(cur != null){
-				cur.close();
-			}
+		if(!cs.isCollectionExist(newCLName)){
+			Assert.fail("cl is been rename, should exist");
 		}
 	}
 	
@@ -125,7 +65,7 @@ public class RenameUtil extends SdbTestBase {
 			DBLob lob = null;
 			try {
 				lob = cl.createLob();
-				lob.write(data);//TODO:lobId可以直接取返回值，不需要再get一次
+				lob.write(data);
 				idList.add(lob.getID());
 			} finally {
 				lob.close();
@@ -158,12 +98,19 @@ public class RenameUtil extends SdbTestBase {
         return value;
     }
 	
+	public static void insertData(DBCollection cl){
+		insertData(cl, 1000);
+	}
+	
 	public static void insertData(DBCollection cl, int recordNum){
-		//TODO：这个小于1的判断没有必要吧，建议给个取默认值的接口
 		if(recordNum < 1){
 			recordNum = 1;
 		}
-		//TODO:插入数据的代码建议简化下，这里分了两步操作，应该加下描述信息
+		
+		/*
+		 * if recordNum > 1000, this will insert ((int)recordNum/1000)*1000 record, else don't do anything
+		 * such as will insert {a: 0} ~ {a: 999} 
+		*/
 		int times = recordNum/1000;
 		for (int i = 0; i < times; i++) {
 			List<BSONObject> data = new ArrayList<BSONObject>();
@@ -178,6 +125,10 @@ public class RenameUtil extends SdbTestBase {
 			cl.insert(data);
 		}
 		
+		/*
+		 * if recordNum%1000 > 0, this will insert the remainder record
+		 * such as will insert {a: 1000} ~ {a: 1999}
+		 */
 		List<BSONObject> dataA = new ArrayList<BSONObject>();
 		for(int k = 0; k < recordNum%1000; k++){
 			BSONObject record = new BasicBSONObject();
@@ -211,42 +162,6 @@ public class RenameUtil extends SdbTestBase {
 //		Assert.assertEquals(actList, expList);
 //	}
 	
-	//TODO:方法名描述有误，应该是Exist，判断cl是否存在，直接有接口可以使用，不需要再另外实现吧
-	public static void checkCLExit(Sequoiadb db, String csName, String clName, boolean clIsExist){
-		DBCursor cur = null;
-		try {
-			cur = db.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS, "{'Name':'" + csName + "." + clName + "'}", "", "");
-			
-			if(clIsExist){
-				if(!cur.hasNext()){
-					Assert.fail("cl is not exist, clFullName: " + csName + "." + clName );
-				}
-				while(cur.hasNext()){
-					BSONObject obj = cur.getNext();
-					String name = (String) obj.get("Name");
-					if(!name.equals(csName + "." + clName)){
-						Assert.fail("cl fullname error, exp: " + csName + "." + clName +", act: "+name);
-					}
-				}
-			}else{
-				if(cur.hasNext()){
-					Assert.fail("cl is exist, clFullName: " + csName + "." + clName );
-				}
-				try {
-					db.getCollectionSpace(csName).getCollection(clName);
-				} catch (BaseException e) {
-					if(e.getErrorCode() != -23){
-						throw e;
-					}
-				}
-			}
-		} finally{
-			if(cur != null){
-				cur.close();
-			}
-		}
-	} 
-	
 	//TODO:这种检查切分的方法不严谨，如果要查看编目信息检查结果，需要判断组名还有切分范围
 	public static void checkSplitResult(Sequoiadb db, String csName, String clName, List<String> groups){
 		
@@ -268,4 +183,44 @@ public class RenameUtil extends SdbTestBase {
 		}
 	}
 	
+	private static void checkCLFullName(Sequoiadb db, String newCSName, int clNum){
+		DBCursor csSnapshotCur = null;
+		int times = 0;
+		for (int k = 0; k < 50; k++) {
+			try {
+				csSnapshotCur = db.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONSPACES, "{'Name':'" + newCSName + "'}", "", "");
+				if (!csSnapshotCur.hasNext()) {
+					Assert.fail("cs it's not exist, csName: " + newCSName);
+				}
+
+				BSONObject obj = csSnapshotCur.getNext();
+				BasicBSONList cls = (BasicBSONList) obj.get("Collection");
+				if (cls.size() != clNum) {
+					times++;
+					if(times == 50){
+						Assert.fail("cl count error, exp: " + clNum + ",act :" + cls.size());
+					}
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						Assert.fail(e.getMessage());
+					}
+					continue;
+				}
+				for (int i = 0; i < cls.size(); i++) {
+					BSONObject ele = (BSONObject) cls.get(i);
+					String name = (String) ele.get("Name");
+					String csName = name.split("\\.")[0];
+					if (!csName.equals(newCSName)) {
+						Assert.fail("cs name contrast error, exp: " + newCSName + " act: " + csName);
+					}
+				}
+			} finally {
+				if (csSnapshotCur != null) {
+					csSnapshotCur.close();
+				}
+			}
+			break;
+		}
+	}
 }

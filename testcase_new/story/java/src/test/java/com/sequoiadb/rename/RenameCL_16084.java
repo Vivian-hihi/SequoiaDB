@@ -54,8 +54,13 @@ public class RenameCL_16084 extends SdbTestBase{
 			if(renameCL && !createCL){
 				RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
 			}else if(renameCL && createCL){
-				RenameUtil.checkCLExit(db, csName, clName, true);
-				RenameUtil.checkCLExit(db, csName, newCLName, true);
+				cs = db.getCollectionSpace(csName);
+				if(cs.isCollectionExist(clName)){
+					Assert.fail("cl is been create, should exist");
+				}
+				if(cs.isCollectionExist(newCLName)){
+					Assert.fail("cl is been rename, should exist");
+				}
 			}
 		} finally{
 			db.close();

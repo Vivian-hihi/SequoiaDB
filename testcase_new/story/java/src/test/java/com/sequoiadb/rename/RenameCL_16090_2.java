@@ -19,21 +19,21 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * @Description RenameCL_16092.java 并发事务操作和修改cl名 
+ * @Description RenameCL_16090_2.java 并发索引操作和修改cl名
  * @author luweikang
  * @date 2018年10月17日
  */
 public class RenameCL_16090_2 extends SdbTestBase{
 	
-	private String csName = "renameCS_16092_2";
-	private String clName = "rename_CL_16092_2";
-	private String newCLName= "rename_CL_16092_new_2";
+	private String csName = "renameCS_16090_2";
+	private String clName = "rename_CL_16090_2";
+	private String newCLName= "rename_CL_16090_new_2";
 	private Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
 	private DBCollection cl = null;
 	private int recordNum = 1000;
-	private String indexNameA = "index_16092A_2";
-	private String indexNameB = "index_16092B_2";
+	private String indexNameA = "index_16090A_2";
+	private String indexNameB = "index_16090B_2";
 	private int createTimes = 0;
 	
 	@BeforeClass

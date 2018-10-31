@@ -23,8 +23,8 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 public class RenameCS_16141 extends SdbTestBase{
 	
 	private String mainCSName = "maincs_16141";
-	private String newMainCSName = "maincs_16141_new";
 	private String subCSName = "subcs_16141";
+	private String newSubCSName = "subcs_16141_new";
 	private String mainCLName = "maincl_16141";
 	private String subCLName = "subcl_16141";
 	private Sequoiadb sdb = null;
@@ -51,11 +51,11 @@ public class RenameCS_16141 extends SdbTestBase{
 		Sequoiadb db = null; 
 		try{
 			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			RenameUtil.checkRenameCSResult(db, mainCSName, newMainCSName, 0);
+			RenameUtil.checkRenameCSResult(db, subCSName, newSubCSName, 0);
 			if(atttachThread.isSuccess()){
-				checkSnapshot(db, newMainCSName+"."+mainCLName, true);
+				checkSnapshot(db, newSubCSName+"." + subCLName, true);
 			}else{
-				checkSnapshot(db, "", false);
+				checkSnapshot(db, newSubCSName+"." + subCLName, false);
 			}
 		} finally{
 			db.close();
@@ -64,8 +64,8 @@ public class RenameCS_16141 extends SdbTestBase{
 	
 	@AfterClass
 	public void tearDown(){
-		CommLib.clearCS(sdb, newMainCSName);
-		CommLib.clearCS(sdb, subCSName);
+		CommLib.clearCS(sdb, mainCSName);
+		CommLib.clearCS(sdb, newSubCSName);
 		if(sdb!=null){
 			sdb.close();
 		}
@@ -77,7 +77,7 @@ public class RenameCS_16141 extends SdbTestBase{
 		public void exec() throws Exception {
 			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			try {
-				db.renameCollectionSpace(mainCSName, newMainCSName);
+				db.renameCollectionSpace(subCSName, newSubCSName);
 			}finally {
 				db.close();
 			}
@@ -112,15 +112,18 @@ public class RenameCS_16141 extends SdbTestBase{
 	}
 	
 	private void checkSnapshot(Sequoiadb db, String fullMainCLName, boolean mainCLExist){
-		DBCursor cur = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{'Name':'" + subCSName+"."+subCLName + "'}", "", "");
+		DBCursor cur = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{'Name':'" + fullMainCLName + "'}", "", "");
 		BSONObject obj = cur.getNext();
+		if(obj==null){
+			Assert.fail("snapshot do not contain " + fullMainCLName +" message");
+		}
 		if(mainCLExist){
 			String mainCLName = (String) obj.get("MainCLName");
 			if(!mainCLName.equals(fullMainCLName)){
 				Assert.fail("cl already detach, should not exist, snapshot:"+obj.toString());
 			}
 		}else{
-			if(obj.get("MainCLName") != null){
+			if(obj.containsField("MainCLName")){
 				Assert.fail("cl not detach, snapshot:"+obj.toString());
 			}
 		}
