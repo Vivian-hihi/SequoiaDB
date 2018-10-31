@@ -10,7 +10,7 @@ function main()
       return;
    } 
     
-   var clName = COMMCLNAME + "_15980";
+   /*var clName = COMMCLNAME + "_15980";
    var fields = ["id1", "a.a"];
    
    commDropCL( db, COMMCSNAME, clName );
@@ -48,7 +48,7 @@ function main()
    var rc = dbcl.find().sort( { "id1" : 1 } );
    checkRec( rc, expRecs );
  
-   commDropCL( db, COMMCSNAME, clName );
+   commDropCL( db, COMMCSNAME, clName );*/
 }
 
 function checkCurrentValue( db, csName, clName, fields )

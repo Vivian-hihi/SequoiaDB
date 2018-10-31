@@ -11,7 +11,7 @@ function main()
 	  return;
    }
    
-   var clName = COMMCLNAME + "_15955";   
+   /*var clName = COMMCLNAME + "_15955";   
    commDropCL(db, COMMCSNAME, clName, true, true);
    
    var cacheSize = 10;
@@ -73,7 +73,7 @@ function main()
    insertOtherTypeDatas(dbcl, [{id:{a:{b:1}}}])
    println("---check increment field insert failed success");
    
-   commDropCL(db, COMMCSNAME, clName, true, true); 
+   commDropCL(db, COMMCSNAME, clName, true, true); */
 }
 main()
 
