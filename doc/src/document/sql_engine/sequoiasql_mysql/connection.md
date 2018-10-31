@@ -156,25 +156,39 @@
  ```
 
 
-##数据类型对应关系##
+##数据类型映射关系##
 
-	| MySQL           | SequoiaDB         | 备注                                                              |
-	| --------------- | ----------------- | ----------------------------------------------------------------- |
-	| TINYINT         | INT               |                                                                   |
-	| SMALLINT        | INT               |                                                                   |
-	| MEDIUMINT       | INT               |                                                                   |
-	| INT             | INT               |                                                                   |
-	| BIGINT          | LONG LONG         |                                                                   |
-	| FLOAT           | DOUBLE            |                                                                   |
-	| DOUBLE          | DOUBLE            |                                                                   |
-	| DECIMAL         | DECIMAL           |                                                                   |
-	| DATE            | DATE              |                                                                   |
-	| DATETIME        | STRING            |取值范围：1000-01-01 00:00:00.000000 至 9999-12-31 23:59:59.999999 |
-	| TIMESTAMP       | TIMESTAMP         |取值范围：1902-01-01 00:00:00.000000 至 2037-12-31 23:59:59.999999 |
-	| CHAR            | STRING            |                                                                   |
-	| VARCHAR         | STRING            |                                                                   |
-	| TEXT            | STRING            |最大长度16MB                                                       |
-	| BINARY          | BINARY            |                                                                   |
-	| VARBINARY       | BINARY            |                                                                   |
-	| BLOB            | BINARY            |最大长度16MB                                                       |
-	| NULL            | UNDEFINE          |                                                                   |
+| MySQL           | SequoiaDB         | 备注                                                              |
+| --------------- | ----------------- | ----------------------------------------------------------------- |
+| BIT             | INT32/INT64       | 超出INT32范围则按INT64存储                                        |
+| BOOL            | INT32             |                                                                   |
+| TINYINT         | INT32             |                                                                   |
+| SMALLINT        | INT32             |                                                                   |
+| MEDIUMINT       | INT32             |                                                                   |
+| INT             | INT32/INT64       | 超出INT32范围则按INT64存储                                        |
+| BIGINT          | INT64/DECIMAL     | 超出INT64范围则按DECIMAL存储                                      |
+| FLOAT           | DOUBLE            |                                                                   |
+| DOUBLE          | DOUBLE            |                                                                   |
+| DECIMAL         | DECIMAL           |                                                                   |
+| YEAR            | INT32             |                                                                   |
+| DATE            | DATE              |                                                                   |
+| TIME            | DOUBLE            | 'HHMMSS[.fraction]'格式的double值                                 |
+| DATETIME        | STRING            | 'YYYY-MM-DD HH:MM:SS[.fraction]'格式的字符串                      |
+| TIMESTAMP       | TIMESTAMP         |                                                                   |
+| CHAR            | STRING            |                                                                   |
+| VARCHAR         | STRING            |                                                                   |
+| BINARY          | BINARY            |                                                                   |
+| VARBINARY       | BINARY            |                                                                   |
+| TINYBLOB        | BINARY            |                                                                   |
+| BLOB            | BINARY            |                                                                   |
+| MEDIUMBLOB      | BINARY            |                                                                   |
+| LONGBLOB        | BINARY            | 最大长度16MB                                                      |
+| TINYTEXT        | STRING            |                                                                   |
+| TEXT            | STRING            |                                                                   |
+| MEDIUMTEXT      | STRING            |                                                                   |
+| LONGTEXT        | STRING            | 最大长度16MB                                                      |
+| ENUM            | STRING            |                                                                   |
+| SET             | STRING            |                                                                   |
+| JSON            | STRING            |                                                                   |
+| GEOMETRY        | 不支持            |                                                                   |
+| NULL            | -                 | 不存储                                                            |
