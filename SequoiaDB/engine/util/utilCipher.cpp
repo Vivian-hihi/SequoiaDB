@@ -336,7 +336,7 @@ namespace engine
          ossMemcpy(inputText, passwd + i * BYTES_PER_TIME, BYTES_PER_TIME) ;
          DES_ecb_encrypt( &inputText, &outputText, &keySchedule, DES_DECRYPT ) ;  
 
-         for ( UINT32 j = 0; j < BYTES_PER_TIME; j++ )
+         for ( INT32 j = 0; j < BYTES_PER_TIME; j++ )
          {
             clearText += outputText[j] ;
          }
@@ -445,7 +445,7 @@ namespace engine
       string::size_type offset = line.find( ":" ) ;
       if ( string::npos == offset || line.length() -1 == offset || 0 == offset )
       {
-         PD_LOG ( PDERROR, "line [%s] is in wrong foramt. ", line ) ;
+         PD_LOG ( PDERROR, "line [%s] is in wrong foramt. ", line.c_str() ) ;
          goto error ;
       }
 
@@ -494,7 +494,7 @@ namespace engine
       string fileContent ;
       map<string,string>::iterator it ;
 
-      if ( cipherMgr::PASSWORD_MAX_LENGTH < passwd.size() )
+      if ( cipherMgr::PASSWORD_MAX_LENGTH < (INT32)passwd.size() )
       {
          PD_LOG ( PDERROR, "password exceeds maximum length %d",
                            cipherMgr::PASSWORD_MAX_LENGTH ) ;
