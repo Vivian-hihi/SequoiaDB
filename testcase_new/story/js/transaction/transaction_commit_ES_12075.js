@@ -35,31 +35,35 @@ function main()
    checkConsistency(csName, clName, 5);
    
    var dbOperator = new DBOperator();
-   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""}, {"content" : 1});
+   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var esOperator = new ESOperator();
    var esIndexName = dbOperator.getESIndexName(csName, clName, "fullIndex");
    var queryCond = '{"query" : {"exists" : {"field" : "content"}}}';
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
    actResult.sort(compare("content"));
+   expResult.sort(compare("content"));
    checkResult(expResult, actResult);
+   println("===full index field insert success===");
    
    db.transBegin();
    var records = new Array();
    for (var i = 0; i < 10 ; i++){
       var record = {about : "a" + i, age  : i + 10};
-	  records.push(record);
+      records.push(record);
    }
    dbcl.insert(records);
    db.transCommit();
    
    checkFullSyncToES(csName, clName, "fullIndex", 10);
    checkConsistency(csName, clName, 5);
-   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""}, {"content" : 1});
+   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
    actResult.sort(compare("content"));
+   expResult.sort(compare("content"));
    checkResult(expResult, actResult);
+   println("===common index field insert success===");
    
    //update
    db.transBegin();
@@ -68,11 +72,13 @@ function main()
    
    checkFullSyncToES(csName, clName, "fullIndex", 10);
    checkConsistency(csName, clName, 5);
-   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""}, {"content" : 1});
+   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
    actResult.sort(compare("content"));
+   expResult.sort(compare("content"));
    checkResult(expResult, actResult);
+   println("===full index field update success===");
    
    db.transBegin();
    dbcl.update({$set : {about : "how are you"}}, {about : "a3"});
@@ -80,11 +86,13 @@ function main()
    
    checkFullSyncToES(csName, clName, "fullIndex", 10);
    checkConsistency(csName, clName, 5);
-   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""}, {"content" : 1});
+   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
    actResult.sort(compare("content"));
+   expResult.sort(compare("content"));
    checkResult(expResult, actResult);
+   println("===common index field update success===");
    
    //delete
    db.transBegin();
@@ -93,11 +101,13 @@ function main()
    
    checkFullSyncToES(csName, clName, "fullIndex", 9);
    checkConsistency(csName, clName, 5);
-   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""}, {"content" : 1});
+   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
    actResult.sort(compare("content"));
+   expResult.sort(compare("content"));
    checkResult(expResult, actResult);
+   println("===full index field delete success===");
    
    db.transBegin();
    dbcl.remove({about : "a4"});
@@ -105,11 +115,13 @@ function main()
    
    checkFullSyncToES(csName, clName, "fullIndex", 9);
    checkConsistency(csName, clName, 5);
-   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""}, {"content" : 1});
+   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
    actResult.sort(compare("content"));
+   expResult.sort(compare("content"));
    checkResult(expResult, actResult);
+   println("===common index field delete success===");
    
    //truncate
    db.transBegin();
@@ -118,11 +130,13 @@ function main()
    
    checkFullSyncToES(csName, clName, "fullIndex", 0);
    checkConsistency(csName, clName, 5);
-   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""}, {"content" : 1});
+   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
    actResult.sort(compare("content"));
+   expResult.sort(compare("content"));
    checkResult(expResult, actResult);
+   println("===truncate success===");
 
    commDropCL(db, COMMCSNAME, clName, true, true);
    commDropCS( db, csName );
