@@ -69,6 +69,7 @@ namespace engine
             _pBuf    = pBuf ;
             _pCur    = _pBuf ;
             _ppPos   = NULL ;
+            _hasDone = FALSE ;
 
             init() ;
          }
@@ -78,23 +79,29 @@ namespace engine
             _pBuf    = *ppPos ;
             _pCur    = _pBuf ;
             _ppPos   = ppPos ;
+            _hasDone = FALSE ;
 
             init() ;
          }
 
          UINT32 getLen() const { return _pCur - _pBuf ; }
 
-         void done()
+         const CHAR* done()
          {
-            *_pCur = (CHAR) EOO ;
-            ++_pCur ;
-            /// set size
-            *((UINT32*)_pBuf) = _pCur - _pBuf ;
-            /// set pos
-            if ( _ppPos )
+            if ( !_hasDone )
             {
-               *_ppPos = _pCur ;
+               _hasDone = TRUE ;
+               *_pCur = (CHAR) EOO ;
+               ++_pCur ;
+               /// set size
+               *((UINT32*)_pBuf) = _pCur - _pBuf ;
+               /// set pos
+               if ( _ppPos )
+               {
+                  *_ppPos = _pCur ;
+               }
             }
+            return _pBuf ;
          }
 
          _SimpleBSONBuilder* appendElement( BSONElement &ele )
@@ -141,6 +148,7 @@ namespace engine
          CHAR*       _pBuf ;
          CHAR*       _pCur ;
          CHAR**      _ppPos ;
+         BOOLEAN     _hasDone ;
    };
 
    /*
