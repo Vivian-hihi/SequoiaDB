@@ -24,7 +24,7 @@ function main()
    }
    catch( e ){
 	  if( e != -42){
-	     throw buildException("dbcl.createIndex()", e, "create full index twice ", "success", "fail");
+	     throw buildException("main()", "create duplicate indexes", "create index", "fail to create index", "create index success");
 	  }
    }
    
@@ -36,11 +36,11 @@ function main()
    
    //listIndexes不显示创建失败的集合
    if(arrayIndexes.length != 2){
-	  throw buildException("listIndexes()", e, "indexes length is wrong ", "success", "fail");
+	  throw buildException("main()", "more than 2 indexes", "indexes.length equal to 2", 2, arrayIndexes.length);
    }
    for(var i in arrayIndexes){
       if(arrayIndexes[i]["IndexDef"]["name"] != "$id" && arrayIndexes[i]["IndexDef"]["name"] != "a"){
-		 throw buildException("listIndexes()", "listIndexes", "indexes values is wrong ", "success", "fail");
+		 throw buildException("main()", "have not exist index", "equal", "$id or a", arrayIndexes[i]["IndexDef"]["name"]);
 	  }
    }
    

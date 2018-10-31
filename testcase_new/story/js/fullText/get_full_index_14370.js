@@ -21,27 +21,31 @@ function main()
       var index = indexes.current().toObj();
       actIndexes.push(index);
    }
+   actIndexes = getActualIndexes(actIndexes);
    
    //获取预期的索引结果
    var dbOperator = new DBOperator();
    var cappedCLName = dbOperator.getCappedCLName( dbcl, "fullIndex" );
-   var expIndexes = getIndexes(cappedCLName);
+   var expIndexes = getExpectIndexes(cappedCLName);
    
-   checkIndexes(expIndexes, actIndexes);
+   expIndexes.sort(compare("Type"));
+   actIndexes.sort(compare("Type"));
+   checkResult(expIndexes, actIndexes);
    
    //get全文索引
    var index = dbcl.getIndex("fullIndex");
    var actIndexes = new Array();
    actIndexes.push(index.toObj());
-   var expIndexes = getIndexes(cappedCLName);
+   actIndexes = getActualIndexes(actIndexes);
+   var expIndexes = getExpectIndexes(cappedCLName);
    expIndexes.pop();
    
-   checkIndexes(expIndexes, actIndexes);
+   checkResult(expIndexes, actIndexes);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
 
-function getIndexes(cappedCLName){
+function getExpectIndexes(cappedCLName){
    var arrayIndexes = new Array();
    var index = { "IndexDef": { "name": "fullIndex", "key": { "content": "text" }, "v": 0, "unique": false, "dropDups": false, "enforced": false }, "IndexFlag": "Normal", "Type": "Text", "ExtDataName": cappedCLName };
    arrayIndexes.push(index);
@@ -50,39 +54,25 @@ function getIndexes(cappedCLName){
    return arrayIndexes;
 }
 
-function checkIndexes(expIndexes, actIndexes){
-   if(expIndexes.length !== actIndexes.length)
-   {
-      throw buildException("checkResult()", "check records", "check records length", expIndexes.length, actIndexes.length);
+function getActualIndexes(actIndexes){
+   var actualIndexes = new Array();
+   for (var i in actIndexes){
+      var obj = new Object();
+	  obj["IndexDef"] = new Object();
+	  obj["IndexDef"]["name"] = actIndexes[i]["IndexDef"]["name"];
+	  obj["IndexDef"]["key"] = actIndexes[i]["IndexDef"]["key"];
+	  obj["IndexDef"]["v"] = actIndexes[i]["IndexDef"]["v"];
+	  obj["IndexDef"]["unique"] = actIndexes[i]["IndexDef"]["unique"];
+	  obj["IndexDef"]["dropDups"] = actIndexes[i]["IndexDef"]["dropDups"];
+	  obj["IndexDef"]["enforced"] = actIndexes[i]["IndexDef"]["enforced"];
+	  obj["IndexFlag"] = actIndexes[i]["IndexFlag"];
+	  obj["Type"] = actIndexes[i]["Type"];
+	  if (actIndexes[i]["ExtDataName"]){
+	     obj["ExtDataName"] = actIndexes[i]["ExtDataName"];	  
+	  }
+	  actualIndexes.push(obj);
    }
-   expIndexes.sort(compare("Type"));
-   actIndexes.sort(compare("Type"));
-   
-   // compare array  
-   for( var i in expIndexes )
-   {
-      var actRec = actIndexes[i];
-      var expRec = expIndexes[i];
-   	
-      for ( var f in expRec )
-      {
-		 if(f == "IndexDef"){
-		    for (var j in expRec[f]){
-			   if(JSON.stringify(actRec[f][j]) !== JSON.stringify(expRec[f][j])){
-			      println("exp : " + JSON.stringify(expRec[f][j]) + " act : " + JSON.stringify(actRec[f][j]));
-			      throw buildException("checkResult()", "check record fail", "fail", JSON.stringify(JSON.stringify(expRec)), JSON.stringify(actRec));
-			   }
-			}
-			continue;
-		 }
-         if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) ) 
-         {
-			println("exp : " + JSON.stringify(expRec[f]) + " act : " + JSON.stringify(actRec[f]));
-            throw buildException("checkResult()", "check record fail", "fail", JSON.stringify(JSON.stringify(expRec)), JSON.stringify(actRec));
-         }
-      }
-   }
-   println("check results success!");
+   return actualIndexes;
 }
 
 main()

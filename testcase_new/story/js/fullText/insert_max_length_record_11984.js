@@ -23,11 +23,14 @@ function main()
    
    var dbOperator = new DBOperator();
    var actResult = dbOperator.findFromCL( dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {a : ""});
-   
-   if(actResult.length !=1 && actResult[0]["a"] != a){
-      throw buildException("findFromCL()", e, "fail to insert 16MB record ", "success", "fail");
+   var expResult = dbOperator.findFromCL( dbcl, null, {a : ""});
+     
+   if (expResult.length != 1){
+      throw buildException("main()", "unexpect records", "equal", 1, expResult.length);
    }
-   
+   if (expResult[0]["a"] != actResult[0]["a"]){
+      throw buildException("main()", "unexpect record value", "equal", expResult[0]["a"], actResult[0]["a"]);
+   }
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
 main()

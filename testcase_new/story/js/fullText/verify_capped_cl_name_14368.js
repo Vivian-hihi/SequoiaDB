@@ -16,65 +16,74 @@ function main()
    commDropCS( db, csName, true );
    
    var dbcl = commCreateCL(db, COMMCSNAME, clName );
-   var dbcl_1 = commCreateCL( db, csName, clName );
-   var dbcl_2 = commCreateCLByOption( db, csName, clName + "_2", {ShardingKey:{content:1}, ShardingType:"hash"} )
-   var dbcl_3 = commCreateCLByOption( db, csName, clName + "_3", {ShardingKey:{content:1}, ShardingType:"range"} )
-   var dbcl_4_1 = commCreateCL( db, csName, clName + "_4_1" );
-   var dbcl_4_2 = commCreateCL( db, csName, clName + "_4_2" );
-   var dbcl_4 = commCreateCLByOption( db, csName, clName + "_4", {ShardingKey:{content:1}, ShardingType:"range", IsMainCL:true} )
-   dbcl_4.attachCL(csName + "." + clName + "_4_1", {LowBound : {content : "a"}, UpBound : {content : "f"}});
-   dbcl_4.attachCL(csName + "." + clName + "_4_2", {LowBound : {content : "x"}, UpBound : {content : "z"}});
+   var dbcl1 = commCreateCL( db, csName, clName );
+   var dbcl2 = commCreateCLByOption( db, csName, clName + "_2", {ShardingKey:{content:1}, ShardingType:"hash"} )
+   var dbcl3 = commCreateCLByOption( db, csName, clName + "_3", {ShardingKey:{content:1}, ShardingType:"range"} )
+   var slaveCL1 = commCreateCL( db, csName, clName + "_4_1" );
+   var slaveCL2 = commCreateCL( db, csName, clName + "_4_2" );
+   var mainCL = commCreateCLByOption( db, csName, clName + "_4", {ShardingKey:{content:1}, ShardingType:"range", IsMainCL:true} )
+   mainCL.attachCL(csName + "." + clName + "_4_1", {LowBound : {content : "a"}, UpBound : {content : "f"}});
+   mainCL.attachCL(csName + "." + clName + "_4_2", {LowBound : {content : "x"}, UpBound : {content : "z"}});
    
    //在不同的集合空间，不同的集合创建全文索引
    var indexName = "a"
    commCreateIndex( dbcl, indexName, {content:"text"});
-   commCreateIndex( dbcl_1, indexName, {content:"text"});
-   commCreateIndex( dbcl_2, indexName, {content:"text"});
-   commCreateIndex( dbcl_3, indexName, {content:"text"});
-   commCreateIndex( dbcl_4, indexName, {content:"text"});
+   commCreateIndex( dbcl1, indexName, {content:"text"});
+   commCreateIndex( dbcl2, indexName, {content:"text"});
+   commCreateIndex( dbcl3, indexName, {content:"text"});
+   commCreateIndex( mainCL, indexName, {content:"text"});
    
    //获取固定集合名
    var dbOperator = new DBOperator();
    var cappedArray = new Array();
    var cappedCLName = dbOperator.getCappedCLName( dbcl, indexName );
    cappedArray.push(cappedCLName);
-   var cappedCLName_1 = dbOperator.getCappedCLName( dbcl_1, indexName );
-   cappedArray.push(cappedCLName_1);
-   var cappedCLName_2 = dbOperator.getCappedCLName( dbcl_2, indexName );
-   cappedArray.push(cappedCLName_2);
-   var cappedCLName_3 = dbOperator.getCappedCLName( dbcl_3, indexName );
-   cappedArray.push(cappedCLName_3);
-   var cappedCLName_4 = dbOperator.getCappedCLName( dbcl_4, indexName );
-   cappedArray.push(cappedCLName_4);
+   var cappedCLName1 = dbOperator.getCappedCLName( dbcl1, indexName );
+   cappedArray.push(cappedCLName1);
+   var cappedCLName2 = dbOperator.getCappedCLName( dbcl2, indexName );
+   cappedArray.push(cappedCLName2);
+   var cappedCLName3 = dbOperator.getCappedCLName( dbcl3, indexName );
+   cappedArray.push(cappedCLName3);
+   var cappedSlaveCLName1 = dbOperator.getCappedCLName( slaveCL1, indexName );
+   cappedArray.push(cappedSlaveCLName1);
+   var cappedSlaveCLName2 = dbOperator.getCappedCLName( slaveCL2, indexName );
+   cappedArray.push(cappedSlaveCLName2);
    
    //检查固定集合名均不一致
    for (var i in cappedArray){
       var cpName = cappedArray[i];
       if (cappedArray.indexOf(cpName) != cappedArray.lastIndexOf(cpName)){
-	     throw buildException("getCappedCLName()", e, "get the same name capped cl", "success", "fail");
+	     throw buildException("main()", "exists duplicate capped cl name", "equal", JSON.stringify(cappedArray), cpName);
 	  }	  
    }
    
    //检查索引属性的ExtDataName和固定集合名一致
    checkExtDataName(dbcl, indexName, cappedCLName);
-   checkExtDataName(dbcl_1, indexName, cappedCLName_1);
-   checkExtDataName(dbcl_2, indexName, cappedCLName_2);
-   checkExtDataName(dbcl_3, indexName, cappedCLName_3);
-   checkExtDataName(dbcl_4, indexName, cappedCLName_4);
+   checkExtDataName(dbcl1, indexName, cappedCLName1);
+   checkExtDataName(dbcl2, indexName, cappedCLName2);
+   checkExtDataName(dbcl3, indexName, cappedCLName3);
+   checkExtDataName(slaveCL1, indexName, cappedSlaveCLName1);
+   checkExtDataName(slaveCL2, indexName, cappedSlaveCLName2);
 
    //检查ES端的全文索引名字映射关系为固定集合名_组名
    var esOperator = new ESOperator();
-   var esIndexName = dbOperator.getESIndexName (COMMCSNAME, clName, indexName);
+   var groups = commGetCLGroups( db, COMMCSNAME + "." + clName );
+   var esIndexName = cappedCLName.toLowerCase() + "_" + groups[0];
    esOperator.isExistIndexInES(esIndexName);
-   var esIndexName = dbOperator.getESIndexName (csName, clName, indexName);
+   var groups = commGetCLGroups( db, csName + "." + clName );
+   var esIndexName = cappedCLName1.toLowerCase() + "_" + groups[0];
    esOperator.isExistIndexInES(esIndexName);
-   var esIndexName = dbOperator.getESIndexName (csName, clName + "_2", indexName);
+   var groups = commGetCLGroups( db, csName + "." + clName + "_2" );
+   var esIndexName = cappedCLName2.toLowerCase() + "_" + groups[0];
    esOperator.isExistIndexInES(esIndexName);
-   var esIndexName = dbOperator.getESIndexName (csName, clName + "_3", indexName);
+   var groups = commGetCLGroups( db, csName + "." + clName + "_3" );
+   var esIndexName = cappedCLName3.toLowerCase() + "_" + groups[0];
    esOperator.isExistIndexInES(esIndexName);
-   var esIndexName = dbOperator.getESIndexName (csName, clName + "_4_1", indexName);
+   var groups = commGetCLGroups( db, csName + "." + clName + "_4_1" );
+   var esIndexName = cappedSlaveCLName1.toLowerCase() + "_" + groups[0];
    esOperator.isExistIndexInES(esIndexName);
-   var esIndexName = dbOperator.getESIndexName (csName, clName + "_4_2", indexName);
+   var groups = commGetCLGroups( db, csName + "." + clName + "_4_2" );
+   var esIndexName = cappedSlaveCLName2.toLowerCase() + "_" + groups[0];
    esOperator.isExistIndexInES(esIndexName);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
@@ -85,7 +94,7 @@ function checkExtDataName(dbcl, indexName, cappedCLName){
    var index = dbcl.getIndex(indexName).toObj();
    var extDataName = index["ExtDataName"];
    if (cappedCLName != extDataName){
-      throw buildException("getCappedCLName()", e, "cappedCLName is not equal index extDataName ", "success", "fail");
+      throw buildException("checkExtDataName()", "index's property ExtDataName is not equal to cappedCLName", "equal", "cappedCLName : " + cappedCLName, "extDataName : " + extDataName);
    }
 }
 

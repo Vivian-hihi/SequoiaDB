@@ -29,7 +29,7 @@ function main()
    }
    catch( e ){
 	  if( e != -47){
-	     throw buildException("commDropIndex()", e, "remove not exist full index", "success", "fail");
+	     throw buildException("main()", "drop not exist index success", "drop full index", "fail to drop", "drop success");
 	  }
    }
    commCheckIndex( dbcl, indexName, false );

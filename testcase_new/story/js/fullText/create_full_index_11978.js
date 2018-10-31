@@ -12,7 +12,6 @@ function main()
 
    var clName = COMMCLNAME + "_ES_11978";
    var csName = "testCS_ES_11978";
-   commDropCL(db, COMMCSNAME, clName, true, true);
    commDropCS( db, csName );
    
    //指定集合空间的PageSize、LobPageSize指定为非默认值
@@ -31,10 +30,11 @@ function main()
    var cappedAttr = cappedDB.snapshot(4, {Name : cappedCLName + "." + cappedCLName});
    var cappedAttr = cappedAttr.next().toObj();
    if (cappedAttr["Details"][0]["PageSize"] != 65536 || cappedAttr["Details"][0]["LobPageSize"] != 262144){
-      throw buildException("snapshot()", "snapshot", "the capped cl is not default value ", "success", "fail");
+      throw buildException("main()", "capped cl's attributes is not default value", "equal to PageSize and LobPageSize", 
+	     "PageSize : 65536, LobPageSize : 262144", "PageSize : " + cappedAttr["Details"][0]["PageSize"] + " LobPageSize " + cappedAttr["Details"][0]["LobPageSize"]);
    }
    
-   commDropCL(db, COMMCSNAME, clName, true, true);
    commDropCS( db, csName );
 }
+
 main()

@@ -23,7 +23,7 @@ function main()
    }
    catch( e ){
 	  if( e != -6){
-	     throw buildException("createIndex()", e, "create full index type by int ", "success", "fail");
+	     throw buildException("main()", "create illegal index success", "create full index", "fail to create index", "create index success");
 	  }
    }
    commCheckIndex( dbcl, indexName, false );
@@ -35,7 +35,7 @@ function main()
    }
    catch( e ){
 	  if( e != -6){
-	     throw buildException("createIndex()", e, "create composite full index ", "success", "fail");
+	     throw buildException("mian()", "create illegal composite index", "create full index", "fail to create index", "create index success");
 	  }
    }
    commCheckIndex( dbcl, indexName, false );

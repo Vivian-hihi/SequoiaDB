@@ -19,6 +19,7 @@ function main()
    var indexName = "a"
    dbcl.createIndex(indexName, {content : "text"});
    commCheckIndex( dbcl, indexName, true );
+   println("===create index success===");
    commDropIndex( dbcl, indexName, true );
    
    //固定集合名长度小于127时，全文索引创建成功
@@ -28,13 +29,13 @@ function main()
    }
    dbcl.createIndex(indexName, {content : "text"});
    commCheckIndex( dbcl, indexName, true );
+   println("===create index success===");
    commDropIndex( dbcl, indexName, true );
    
    //固定集合名长度等于127时，全文索引创建成功
    var cursor = db.snapshot(8, {Name : COMMCSNAME + "." + clName});
    var cursor = cursor.next().toObj();
    var cappedCLLength = String(cursor["UniqueID"]).length + 5;
-   println("cappedCLLength : " + cappedCLLength);
    
    var indexName = "";
    for (var i = 0; i < 127 - cappedCLLength; i++){
@@ -46,6 +47,7 @@ function main()
    var cappedCLName = dbOperater.getCappedCLName( dbcl, indexName );
    
    commCheckIndex( dbcl, indexName, true );
+   println("===create index success===");
    commDropIndex( dbcl, indexName, true );
    
    //SEQUOIADBMAINSTREAM-3896
@@ -61,10 +63,11 @@ function main()
    }
    catch( e ){
 	  if( e != -6){
-         throw buildException("createIndex()", "createIndex", "create index fail  ", "success", "fail");
+         throw buildException("mian()", "create more than 127B index", "create index " + indexName, "fail to create index", "create index success");
 	  }
    }
    commCheckIndex( dbcl, indexName, false );
+   println("===create index fail===");
    */
    
    //固定集合名长度大于127时，全文索引创建失败
@@ -78,10 +81,11 @@ function main()
    }
    catch( e ){
       if( e != -6){
-	     throw buildException("createIndex()", "createIndex", "create index fail ", "success", "fail");
+	     throw buildException("main()", "create more than 127B index", "create index " + indexName, "fail to create index", "create index success");
 	  }
    }
    commCheckIndex( dbcl, indexName, false );
+   println("===create index fail===");
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }

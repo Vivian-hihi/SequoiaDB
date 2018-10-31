@@ -34,10 +34,16 @@ function main()
    var cappedDB = db.getRG(arrayGroup[0]).getMaster().connect();
    var cappedAttr = cappedDB.snapshot(4, {Name : cappedCLName + "." + cappedCLName});
    var cappedAttr = cappedAttr.next().toObj();
-   if (cappedAttr["Details"][0]["Attribute"] != "NoIDIndex | Capped" || cappedAttr["Details"][0]["CompressionType"] != "" || cappedAttr["Details"][0]["Status"] != "Normal"){
-      throw buildException("snapshot()", "snapshot", "the capped cl is not default value ", "success", "fail");
-   }
    
+   var expCappedAttr = {Attribute : "NoIDIndex | Capped", CompressionType : "", Status : "Normal", Indexes: 0};
+   var actCappedAttr = {Attribute : cappedAttr["Details"][0]["Attribute"], CompressionType : cappedAttr["Details"][0]["CompressionType"], 
+      Status : cappedAttr["Details"][0]["Status"], Indexes: cappedAttr["Details"][0]["Indexes"]};
+   
+   for (var i in expCappedAttr){
+      if (expCappedAttr[i] != actCappedAttr[i]){
+	     throw buildException("main()", "capped cl's attributes is not default value", "expCappedAttr equal to actCappedAttr", JSON.stringify(expCappedAttr), JSON.stringify(actCappedAttr));	   
+	  }
+   }
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
 main()

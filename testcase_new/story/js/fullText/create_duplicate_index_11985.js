@@ -17,7 +17,7 @@ function main()
    
    //创建索引名已存在的全文索引
    var indexName = "a";
-   dbcl.createIndex( indexName, {content : 1});
+   dbcl.createIndex( indexName, {about : 1});
    commCheckIndex( dbcl, indexName, true );
    try{
       dbcl.createIndex( indexName, {content:"text"});
@@ -25,7 +25,7 @@ function main()
    }
    catch( e ){
       if( e != -46){
-         throw buildException("createIndex()", e, "create duplicate index ", "success", "fail");
+         throw buildException("main()", "create duplicate index success", "create index", "fail to create index", "create index success");
 	  }
    }
    
@@ -33,12 +33,12 @@ function main()
    dbcl.createIndex( "b", {content:"text"});
    commCheckIndex( dbcl, "b", true );
    try{
-      dbcl.createIndex( "c", {about:"text"});
+      dbcl.createIndex( "c", {content:"text"});
 	  throw e ;
    }
    catch( e ){
       if( e != -42){
-         throw buildException("createIndex()", e, "create full index twice ", "success", "fail");
+         throw buildException("main()", "create index on same field", "create full index", "fail to create index", "create index success");
 	  }
    }
    

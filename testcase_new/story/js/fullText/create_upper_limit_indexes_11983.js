@@ -28,7 +28,7 @@ function main()
    }
    catch( e ){
 	  if( e != -42){
-	     throw buildException("dbcl.createIndex()", "create Index", "create full index in upper limit indexes collection ", "success", "fail");
+	     throw buildException("main()", "create more than 64 indexes", "create index", "fail to create index", "create index success");
 	  }
    }
    commCheckIndex( dbcl, "fullIndex", false );
@@ -43,10 +43,9 @@ function main()
    //检查listIndexes是否包含创建失败的索引名
    for(var i in arrayIndexes){
       if (arrayIndexes[i] == "fullIndex"){
-	     throw buildException("listIndexes()", "list Indexes", "create full index in upper limit indexes collection ", "success", "fail");	  
+	     throw buildException("main()", "list indexes with not exist index", "arrayIndexes[i] equal to fullIndex", arrayIndexes[i], "fullIndex");	  
 	  }
    }
-   
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
 main()
