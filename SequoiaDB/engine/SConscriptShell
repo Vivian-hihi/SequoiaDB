@@ -137,7 +137,10 @@ utilFiles = [
       "client/timestampParse.c",
       "client/timestampTm.c",
       "client/timestampValid.c",
-      "bson/md5.c"
+      "bson/md5.c",
+      "util/linenoise.cpp",
+      "util/utilCipher.cpp",
+      "client/cipher.c"
       ]
 
 util2Files = [

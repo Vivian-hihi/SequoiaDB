@@ -13,6 +13,9 @@
 #define OPTION_NAME_SERVICE          "service"
 #define OPTION_NAME_USER             "user"
 #define OPTION_NAME_PASSWORD         "password"
+#define OPTION_NAME_TOKEN            "token"
+#define OPTION_NAME_CIPHER           "cipher"
+#define OPTION_NAME_CIPHERFILE       "cipherfile"
 #define OPTION_NAME_TRANSACTION      "transaction"
 /******************************/
 
@@ -66,6 +69,9 @@ static const SdbInputOption SdbInputOptionList[] =
    { OPTION_NAME_SERVICE,                 ForeignServerRelationId },
    { OPTION_NAME_USER,                    ForeignServerRelationId },
    { OPTION_NAME_PASSWORD,                ForeignServerRelationId },
+   { OPTION_NAME_TOKEN,                   ForeignServerRelationId },
+   { OPTION_NAME_CIPHER,                  ForeignServerRelationId },
+   { OPTION_NAME_CIPHERFILE,              ForeignServerRelationId },
    { OPTION_NAME_PREFEREDINSTANCE,        ForeignServerRelationId },
    { OPTION_NAME_PREFEREDINSTANCE_MODE,   ForeignServerRelationId },
    { OPTION_NAME_SESSION_TIMEOUT,         ForeignServerRelationId },
@@ -84,6 +90,9 @@ struct SdbInputOptions
    INT32 serviceNum ;
    CHAR  *user ;
    CHAR  *password ;
+   CHAR  *token ;
+   INT32 isUseCipher ;                          /* use cipherfile */
+   CHAR  *cipherfile ;
    CHAR  *collectionspace ;
    CHAR  *collection ;
    CHAR  *preference_instance ;
@@ -171,6 +180,9 @@ struct SdbExecState
    int sdbServerNum;
    char *usr;
    char *passwd;
+   char *token;
+   int isUseCipher;
+   char *cipherfile;
    char *preferenceInstance;
    char *preferenceInstanceMode;
    int sessionTimeout;

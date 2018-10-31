@@ -75,6 +75,7 @@ namespace exprt
       inline const string &svcName()      const { return _svcName ; }
       inline const string &user()         const { return _user ; }
       inline const string &password()     const { return _password ; }
+      inline const string &cipher()       const { return _cipherfile ; }
       inline const string &delRecord()    const { return _delRecord ; }
       inline const string &typeName()     const { return _typeName ; }
       inline const string &genConf()      const { return _genConf ; }
@@ -136,6 +137,8 @@ namespace exprt
       string               _svcName ;
       string               _user ;
       string               _password ;
+      string               _token ;
+      string               _cipherfile ;
       string               _delRecord ;
       string               _typeName ;
       EXP_FILE_FORMAT      _type ;

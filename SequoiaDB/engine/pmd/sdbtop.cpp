@@ -47,6 +47,8 @@
 #include "sptCommon.hpp"
 #include "utilPath.hpp"
 #include "ossVer.hpp"
+#include "utilCipher.hpp"
+#include "utilParam.hpp"
 //#include <time.h>
 #include <sys/time.h>
 #include <string>
@@ -412,6 +414,9 @@ BOOLEAN useSSL = FALSE ;
 #define OPTION_SERVICENAME   "servicename"
 #define OPTION_USRNAME       "usrname"
 #define OPTION_PASSWORD      "password"
+#define OPTION_CIPHERFILE    "cipherfile"
+#define OPTION_CIPHER        "cipher"
+#define OPTION_TOKEN         "token"
 #define OPTION_VERSION       "version"
 #define OPTION_SSL           "ssl"
 
@@ -429,8 +434,12 @@ BOOLEAN useSSL = FALSE ;
        ( COMMANDS_STRING(OPTION_HOSTNAME, ",i"), boost::program_options::value<string>(), "host name, default: localhost" ) \
        ( COMMANDS_STRING(OPTION_SERVICENAME, ",s"), boost::program_options::value<string>(), "service name, default: 11810" ) \
        ( COMMANDS_STRING(OPTION_USRNAME, ",u"), boost::program_options::value<string>(), "username, default: \"\"" ) \
-       ( COMMANDS_STRING(OPTION_PASSWORD, ",p"),boost::program_options::value<string>(), "password, default: \"\"" )
+       ( COMMANDS_STRING(OPTION_PASSWORD, ",p"), implicit_value<string>(""), "password, default: \"\"" ) \
+       ( OPTION_CIPHERFILE,boost::program_options::value<string>(), "cipherfile location, default ./passwd" ) \
+       ( OPTION_CIPHER,boost::program_options::value<bool>(), "input password using a cipherfile" ) \
+       ( OPTION_TOKEN,boost::program_options::value<string>(), "password encryption token" )
 
+#define DEFAULT_CIPHER   "passwd"
 struct Colours
 {
    INT32 foreGroundColor ;
@@ -5964,6 +5973,8 @@ INT32 resolveArgument ( po::options_description &desc,
 {
    INT32 rc = SDB_OK ;
    INT32 pathLen = 0 ;
+   string cipherfile = DEFAULT_CIPHER;
+   string token;
    po::variables_map vm ;
    try
    {
@@ -6031,21 +6042,60 @@ INT32 resolveArgument ( po::options_description &desc,
    {
       serviceName = vm[OPTION_SERVICENAME].as<string>();
    }
+
+   if( vm.count( OPTION_CIPHERFILE) )
+   {
+      cipherfile = vm[OPTION_CIPHERFILE].as<string>();
+   }
+   if( vm.count( OPTION_TOKEN) )
+   {
+      token = vm[OPTION_TOKEN].as<string>();
+   }
    if( vm.count( OPTION_USRNAME) )
    {
+      engine::passwordTool passwdTool ;
+
       usrName = vm[OPTION_USRNAME].as<string>();
+
+      if ( vm.count( OPTION_PASSWORD ) )
+      {
+         std::string passwd = vm[OPTION_PASSWORD].as<string>() ;
+         if ( "" == passwd )
+         {
+            password = passwdTool.interactivePasswdInput() ;
+         }
+         else
+         {
+            password = passwd ;
+         }
+      }
+      else
+      {
+         if ( vm.count(OPTION_CIPHER) && vm[OPTION_CIPHER].as<bool>() )
+         {
+            rc = passwdTool.getPasswdByCipherFile( usrName, token,
+                                                   cipherfile, password ) ;
+            if ( SDB_OK != rc )
+            {
+               std::cerr << "get user password failed" << endl ;
+               goto error ;
+            }
+         }
+         else
+         {
+            if ( vm.count(OPTION_TOKEN) || vm.count(OPTION_CIPHERFILE) )
+            {
+               std::cout << "to use cipherfile, provide --cipher" << endl ;
+            }
+         }
+      }
    }
    else
    {
       usrName = NULLSTRING ;
-   }
-   if( vm.count( OPTION_PASSWORD) )
-   {
-      password= vm[OPTION_PASSWORD].as<string>();
-   }
-   else
-   {
-      password = NULLSTRING ;
+      password = ((vm.count( OPTION_PASSWORD))?
+                   vm[OPTION_PASSWORD].as<string>() :
+                   NULLSTRING);
    }
 
 #ifdef SDB_SSL

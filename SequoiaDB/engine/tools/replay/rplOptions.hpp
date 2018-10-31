@@ -61,6 +61,8 @@ namespace replay
       OSS_INLINE const string& serviceName() const { return _serviceName; }
       OSS_INLINE const string& user() const { return _user; }
       OSS_INLINE const string& password() const { return _password; }
+      OSS_INLINE const string& cipherfile() const { return _cipherfile; }
+      OSS_INLINE const string& token() const { return _token; }
       OSS_INLINE const string& status() const { return _status; }
       OSS_INLINE const string& path() const { return _path; }
       OSS_INLINE SDB_OSS_FILETYPE pathType() const { return _pathType; }
@@ -85,6 +87,8 @@ namespace replay
       string            _serviceName;
       string            _user;
       string            _password;
+      string            _cipherfile;
+      string            _token;
       string            _status;
       string            _path;
       SDB_OSS_FILETYPE  _pathType;

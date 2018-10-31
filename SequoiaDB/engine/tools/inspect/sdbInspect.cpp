@@ -41,6 +41,7 @@
 #include "utilParam.hpp"
 #include "ossVer.hpp"
 #include "client.hpp"
+#include "utilCipher.hpp"
 
 using namespace engine;
 
@@ -3128,6 +3129,8 @@ _sdbCi::_sdbCi()
 {
    ossMemset( _coordAddr, 0, CI_ADDRESS_SIZE + 1 ) ;
    ossMemset( _auth, 0, CI_AUTH_SIZE + 1 ) ;
+   ossMemset( _token, 0, CI_TOKEN_SIZE + 1 ) ;
+   ossMemset( _cipherfile, 0, CI_CIPHERFILE_SIZE + 1 ) ;
 }
 
 _sdbCi::~_sdbCi()
@@ -3768,6 +3771,15 @@ INT32 _sdbCi::doDataExchange( engine::pmdCfgExchange *pEx )
    rdxString( pEx, CONSISTENCY_INSPECT_AUTH, _auth,
                    CI_AUTH_SIZE , FALSE, PMD_CFG_CHANGE_FORBIDDEN, "\"\":\"\"", FALSE ) ;
 
+   rdxString( pEx, CONSISTENCY_INSPECT_TOKEN, _token,
+                   CI_TOKEN_SIZE , FALSE, PMD_CFG_CHANGE_FORBIDDEN, "", FALSE ) ;
+
+   rdxBooleanS( pEx, CONSISTENCY_INSPECT_CIPHER, _cipher,
+                     FALSE, PMD_CFG_CHANGE_FORBIDDEN, FALSE, FALSE ) ;
+
+   rdxString( pEx, CONSISTENCY_INSPECT_CIPHERFILE, _cipherfile,
+                   CI_CIPHERFILE_SIZE , FALSE, PMD_CFG_CHANGE_FORBIDDEN, "./passwd", FALSE ) ;
+
    rdxString( pEx, CONSISTENCY_INSPECT_ACTION, _header._action,
                    CI_ACTION_SIZE , FALSE, PMD_CFG_CHANGE_FORBIDDEN, CI_ACTION_INSPECT, FALSE ) ;
 
@@ -3867,17 +3879,41 @@ INT32 _sdbCi::splitAuth()
    }
 
    pch = ossStrrchr( _auth, ':' ) ;
-   if ( NULL == pch || end == pch + 1 )
-   {
-      std::cout << "Invalid parameters" << std::endl ;
-      std::cout << " hostname and password should be split by \":\"" << std::endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
 
-   // initialize hostname and servicename in _header
-   ossMemcpy( g_username, _auth, pch - begin ) ;
-   ossMemcpy( g_password, pch + 1, end - pch ) ;
+   // assume the user has only specified 'user' as in the case of cipherfile
+   if ( NULL == pch )
+   {
+      passwordTool passwdTool ;
+      std::string user = _auth ;
+      std::string passwd ;
+
+      if ( _cipher )
+      {
+         rc = passwdTool.getPasswdByCipherFile( user, _token,
+                                                _cipherfile, passwd ) ;
+         if ( SDB_OK != rc )
+         {
+            std::cerr << "get user password failed" << endl ;
+            goto error ;
+         }
+      }
+      else
+      {
+         if ( '\0' != _token[0] )
+         {
+            cout << "to use cipherfile, provide --cipher" << endl ;
+         }
+         passwd = passwdTool.interactivePasswdInput() ;
+      }
+      ossStrcpy( g_username, user.c_str() ) ;
+      ossStrcpy( g_password, passwd.c_str() ) ;
+   }
+   else
+   {
+      // initialize hostname and servicename in _header
+      ossMemcpy( g_username, _auth, pch - begin ) ;
+      ossMemcpy( g_password, pch + 1, end - pch ) ;
+   }
 
 done:
    return rc ;

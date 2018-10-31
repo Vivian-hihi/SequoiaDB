@@ -84,6 +84,8 @@
 #define CI_ADDRESS_SIZE      ( CI_HOSTNAME_SIZE + CI_SERVICENAME_SIZE + 1 )
 #define CI_CL_FULLNAME_SIZE  ( CI_CS_NAME_SIZE + CI_CL_NAME_SIZE + 1 )
 #define CI_AUTH_SIZE         ( CI_USERNAME_SIZE + CI_PASSWD_SIZE + 1 )
+#define CI_TOKEN_SIZE        CI_PASSWD_SIZE
+#define CI_CIPHERFILE_SIZE   OSS_MAX_PATHSIZE
 
 CHAR g_username[ CI_USERNAME_SIZE + 1 ] = { 0 } ;
 CHAR g_password[ CI_PASSWD_SIZE + 1 ] = { 0 } ;
@@ -566,18 +568,21 @@ typedef _ciState ciState ;
 
 //////////////////////////////////////////////////////////////////////////
 // sdbCi
-#define CONSISTENCY_INSPECT_HELP      "help"
-#define CONSISTENCY_INSPECT_VER       "version"
-#define CONSISTENCY_INSPECT_ACTION    "action"
-#define CONSISTENCY_INSPECT_COORD     "coord"
-#define CONSISTENCY_INSPECT_LOOP      "loop"
-#define CONSISTENCY_INSPECT_GROUP     "group"
-#define CONSISTENCY_INSPECT_CS        "collectionspace"
-#define CONSISTENCY_INSPECT_CL        "collection"
-#define CONSISTENCY_INSPECT_FILE      "file"
-#define CONSISTENCY_INSPECT_OUTPUT    "output"
-#define CONSISTENCY_INSPECT_VIEW      "view"
-#define CONSISTENCY_INSPECT_AUTH      "auth"
+#define CONSISTENCY_INSPECT_HELP         "help"
+#define CONSISTENCY_INSPECT_VER          "version"
+#define CONSISTENCY_INSPECT_ACTION       "action"
+#define CONSISTENCY_INSPECT_COORD        "coord"
+#define CONSISTENCY_INSPECT_LOOP         "loop"
+#define CONSISTENCY_INSPECT_GROUP        "group"
+#define CONSISTENCY_INSPECT_CS           "collectionspace"
+#define CONSISTENCY_INSPECT_CL           "collection"
+#define CONSISTENCY_INSPECT_FILE         "file"
+#define CONSISTENCY_INSPECT_OUTPUT       "output"
+#define CONSISTENCY_INSPECT_VIEW         "view"
+#define CONSISTENCY_INSPECT_AUTH         "auth"
+#define CONSISTENCY_INSPECT_CIPHER       "cipher"
+#define CONSISTENCY_INSPECT_TOKEN        "token"
+#define CONSISTENCY_INSPECT_CIPHERFILE   "cipherfile"
 
 #define INSPECT_ADD_OPTIONS_BEGIN( desc ) desc.add_options()
 #define INSPECT_ADD_OPTIONS_END ;
@@ -596,8 +601,10 @@ typedef _ciState ciState ;
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_CL, ",l" ), boost::program_options::value< std::string >(), "specify the collection to be inspected") \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_FILE, ",f" ), boost::program_options::value< std::string >(), "specify the file existed, when specified, other option will be ignored except options that \"-o\" and \"-f\" sepcified " ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_OUTPUT, ",o" ), boost::program_options::value< std::string >(), "specify the output file" ) \
-   ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_VIEW, ",w" ), boost::program_options::value< std::string >(), "specify the way to view the report, \"group\" or \"collection\" is avaliable, \"group\" is set default" )
-
+   ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_VIEW, ",w" ), boost::program_options::value< std::string >(), "specify the way to view the report, \"group\" or \"collection\" is avaliable, \"group\" is set default" ) \
+   ( CONSISTENCY_INSPECT_TOKEN, boost::program_options::value< std::string >(), "specify the password encryption token" ) \
+   ( CONSISTENCY_INSPECT_CIPHER, boost::program_options::value< std::string >(), "specify input password using a cipherfile" ) \
+   ( CONSISTENCY_INSPECT_CIPHERFILE, boost::program_options::value< std::string >(), "user specified cipherfile, default ./passwd" )
 
 class _sdbCi : public engine::_pmdCfgRecord
 {
@@ -633,6 +640,9 @@ private:
    ciHeader _header ;
    CHAR     _coordAddr[ CI_ADDRESS_SIZE + 1 ] ;
    CHAR     _auth[ CI_AUTH_SIZE + 1 ] ;
+   BOOLEAN  _cipher ;
+   CHAR     _token[ CI_TOKEN_SIZE + 1 ] ;
+   CHAR     _cipherfile[ CI_CIPHERFILE_SIZE + 1 ] ;
 } ;
 typedef _sdbCi sdbCi ;
 

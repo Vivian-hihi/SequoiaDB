@@ -76,12 +76,14 @@ namespace import
       BOOLEAN hasHelpfull();
 
       /* general */
+      inline const string& cipherfile()   const { return _cipherfile; }
       inline const string& hostname() const { return _hostname; }
       inline const string& svcname() const { return _svcname; }
       inline const string& hostsString() const { return _hostsString; }
       inline vector<Host>& hosts() { return _hosts; }
       inline const string& user() const { return _user; }
       inline const string& password() const { return _password; }
+      inline const string& token() const { return _token; }
       inline const string& csname() const { return _csName; }
       inline const string& clname() const { return _clName; }
       inline BOOLEAN errorStop() const { return _errorStop; }
@@ -140,6 +142,8 @@ namespace import
       string         _hostsString;
       vector<Host>   _hosts;
       string         _password;
+      string         _cipherfile;
+      string         _token;
       string         _csName;
       string         _clName;
       BOOLEAN        _errorStop;

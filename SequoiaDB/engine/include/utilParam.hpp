@@ -144,5 +144,25 @@ namespace engine
 
 }
 
+/*
+* wrapper to allow usage of progream options with implicit value
+*/
+template <typename T>
+struct greedy_implicit_value : public po::typed_value<T>
+{
+   greedy_implicit_value( const T &value ) : po::typed_value<T>( NULL )
+   {
+      po::typed_value<T>::implicit_value( value ) ;
+   }
+   bool adjacent_tokens_only() const { return false ; } ;
+   unsigned max_tokens() const { return 1 ; }
+} ;
+
+template <typename T>
+po::typed_value<T> *implicit_value( const T &value )
+{
+   return new greedy_implicit_value<T>( value ) ;
+}
+
 #endif // UTILPARAM_HPP__
 

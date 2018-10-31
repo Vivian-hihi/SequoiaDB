@@ -25,6 +25,7 @@
 #include "msgCatalogDef.h"
 #include "../bson/lib/md5.h"
 #include "fmpDef.h"
+#include "cipher.h"
 
 #if defined( _LINUX ) || defined (_AIX)
 #include <arpa/inet.h>
@@ -2125,6 +2126,26 @@ SDB_EXPORT INT32 sdbSecureConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
                                sdbConnectionHandle *handle )
 {
    return _sdbConnect1 ( pConnAddrs, arrSize, pUsrName, pPasswd, TRUE, handle) ;
+}
+
+SDB_EXPORT INT32 sdbGetPasswdByCipherFile( const CHAR *pUsrName,
+                                           const CHAR *pToken,
+                                           const CHAR *pCipherFile,
+                                           CHAR *pPasswd, UINT32 passwdLen )
+{
+   INT32 rc = SDB_OK ;
+
+   rc = decryptUserCipher( pUsrName, pToken, pCipherFile, pPasswd, passwdLen ) ;
+
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 void _sdbDisconnect_inner ( sdbConnectionHandle handle )

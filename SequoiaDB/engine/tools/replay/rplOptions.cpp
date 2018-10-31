@@ -34,6 +34,8 @@
 #include "ossUtil.hpp"
 #include "ossFile.hpp"
 #include "utilStr.hpp"
+#include "utilCipher.hpp"
+#include "utilParam.hpp"
 #include "pd.hpp"
 #include <iostream>
 
@@ -45,6 +47,9 @@ namespace replay
    #define RPL_OPTION_SVC               "svcname"
    #define RPL_OPTION_USER              "user"
    #define RPL_OPTION_PASSWD            "password"
+   #define RPL_OPTION_CIPHERFILE        "cipherfile"
+   #define RPL_OPTION_CIPHER            "cipher"
+   #define RPL_OPTION_TOKEN             "token"
    #define RPL_OPTION_SSL               "ssl"
    #define RPL_OPTION_PATH              "path"
    #define RPL_OPTION_FILTER            "filter"
@@ -67,6 +72,9 @@ namespace replay
    #define RPL_EXPLAIN_SVC              "service name"
    #define RPL_EXPLAIN_USER             "username"
    #define RPL_EXPLAIN_PASSWD           "password"
+   #define RPL_EXPLAIN_CIPHERFILE       "cipherfile location, default ./passwd"
+   #define RPL_EXPLAIN_CIPHER           "input password using a cipherfile"
+   #define RPL_EXPLAIN_TOKEN            "password encryption token"
    #define RPL_EXPLAIN_SSL              "use SSL connection (arg: [true|false], e.g. --ssl true), default: false"
    #define RPL_EXPLAIN_PATH             "archive or replica log directory or file path"
    #define RPL_EXPLAIN_FILTER           "log filtering rule, " \
@@ -94,8 +102,10 @@ namespace replay
 
    #define RPL_OPTION_TYPE_ARCHIVE      "archive"
    #define RPL_OPTION_TYPE_REPLICA      "replica"
+   #define DEFAULT_CIPHER               "passwd"
 
    #define _TYPE(T) utilOptType(T)
+   #define _IMPLICIT_TYPE(T,V) implicit_value<T>(V)
 
    Options::Options()
    {
@@ -110,6 +120,7 @@ namespace replay
       _deflate = FALSE;
       _inflate = FALSE;
       _isReplicaFile = FALSE;
+      _cipherfile = DEFAULT_CIPHER;
       _updateWithShardingKey = TRUE;
    }
 
@@ -127,7 +138,10 @@ namespace replay
          (RPL_OPTION_HOST,          _TYPE(string),    RPL_EXPLAIN_HOST)
          (RPL_OPTION_SVC,           _TYPE(string),    RPL_EXPLAIN_SVC)
          (RPL_OPTION_USER,          _TYPE(string),    RPL_EXPLAIN_USER)
-         (RPL_OPTION_PASSWD,        _TYPE(string),    RPL_EXPLAIN_PASSWD)
+         (RPL_OPTION_PASSWD, _IMPLICIT_TYPE(string, ""),  RPL_EXPLAIN_PASSWD)
+         (RPL_OPTION_CIPHERFILE,    _TYPE(string),    RPL_EXPLAIN_CIPHERFILE)
+         (RPL_OPTION_CIPHER ,       _TYPE(bool),      RPL_EXPLAIN_CIPHER)
+         (RPL_OPTION_TOKEN,         _TYPE(string),    RPL_EXPLAIN_TOKEN)
          (RPL_OPTION_SSL,           _TYPE(string),    RPL_EXPLAIN_SSL)
          (RPL_OPTION_PATH,          _TYPE(string),    RPL_EXPLAIN_PATH)
          (RPL_OPTION_FILTER,        _TYPE(string),    RPL_EXPLAIN_FILTER)
@@ -318,15 +332,50 @@ namespace replay
          PD_LOG(PDERROR, "Missing argument: %s", RPL_OPTION_SVC);
          goto error;
       }
-
+      if (has(RPL_OPTION_CIPHERFILE))
+      {
+         _cipherfile = get<string>(RPL_OPTION_CIPHERFILE);
+      }
+      if (has(RPL_OPTION_TOKEN))
+      {
+         _token = get<string>(RPL_OPTION_TOKEN);
+      }
       if (has(RPL_OPTION_USER))
       {
-         _user = get<string>(RPL_OPTION_USER);
-      }
+         _user = get<string>(RPL_OPTION_USER) ;
 
-      if (has(RPL_OPTION_PASSWD))
-      {
-         _password = get<string>(RPL_OPTION_PASSWD);
+         if ( has(RPL_OPTION_PASSWD) )
+         {
+            string passwd = get<string>(RPL_OPTION_PASSWD) ;
+            if ( "" == passwd )
+            {
+               passwd = engine::passwordTool::interactivePasswdInput() ;
+            }
+            _password = passwd ;
+         }
+         else
+         {
+            engine::passwordTool passwdTool ;
+
+            if ( has(RPL_OPTION_CIPHER) && get<bool>(RPL_OPTION_CIPHER) )
+            {
+               rc = passwdTool.getPasswdByCipherFile( _user, _token,
+                                                      _cipherfile, _password ) ;
+               if ( SDB_OK != rc )
+               {
+                  std::cerr << "get user password failed" << endl ;
+                  PD_LOG( PDERROR, "get user password failed" ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               if ( has(RPL_OPTION_TOKEN) || has(RPL_OPTION_CIPHERFILE) )
+               {
+                  std::cout << "to use cipherfile, provide --cipher" << endl ;
+               }
+            }
+         }
       }
 
       if (has(RPL_OPTION_SSL))

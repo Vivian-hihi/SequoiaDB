@@ -33,6 +33,8 @@
 #include "impUtil.hpp"
 #include "ossUtil.h"
 #include "pd.hpp"
+#include "utilCipher.hpp"
+#include "utilParam.hpp"
 #include <iostream>
 #include <sstream>
 
@@ -48,6 +50,9 @@ namespace import
    #define IMP_OPTION_HOSTS             "hosts"
    #define IMP_OPTION_USER              "user"
    #define IMP_OPTION_PASSWORD          "password"
+   #define IMP_OPTION_CIPHERFILE        "cipherfile"
+   #define IMP_OPTION_CIPHER            "cipher"
+   #define IMP_OPTION_TOKEN             "token"
    #define IMP_OPTION_COLLECTSPACE      "csname"
    #define IMP_OPTION_COLLECTION        "clname"
    #define IMP_OPTION_DELCHAR           "delchar"
@@ -90,6 +95,9 @@ namespace import
    #define IMP_EXPLAIN_HOSTS            "host addresses(hostname:svcname), separated by ',', such as 'localhost:11810,localhost:11910', default: 'localhost:11810'"
    #define IMP_EXPLAIN_USER             "username"
    #define IMP_EXPLAIN_PASSWORD         "password"
+   #define IMP_EXPLAIN_CIPHERFILE       "cipherfile location, default ./passwd"
+   #define IMP_EXPLAIN_CIPHER           "input password using a cipherfile"
+   #define IMP_EXPLAIN_TOKEN            "password encryption token"
    #define IMP_EXPLAIN_DELCHAR          "string delimiter, default: '\"' ( csv only )"
    #define IMP_EXPLAIN_DELFIELD         "field delimiter, default: ',' ( csv only )"
    #define IMP_EXPLAIN_DELRECORD        "record delimiter, default: '\\n'"
@@ -127,10 +135,12 @@ namespace import
    #define IMP_EXPLAIN_UNICODE          "whether to escape Unicode encoding, default: true"
 
    #define _TYPE(T) utilOptType(T)
+   #define _IMPLICIT_TYPE(T,V) implicit_value<T>(V)
 
    #define IMP_DEFAULT_HOSTNAME "localhost"
    #define IMP_DEFAULT_SVCNAME  "11810"
    #define IMP_DEFAULT_HOST     "localhost:11810"
+   #define IMP_DEFAULT_CIPHER   "passwd"
 
    #define IMP_STR_TRIM_NO    "no"
    #define IMP_STR_TRIM_RIGHT "right"
@@ -147,7 +157,10 @@ namespace import
       (IMP_OPTION_SVCNAME",p",         _TYPE(string),    IMP_EXPLAIN_SVCNAME) \
       (IMP_OPTION_HOSTS,               _TYPE(string),    IMP_EXPLAIN_HOSTS) \
       (IMP_OPTION_USER",u",            _TYPE(string),    IMP_EXPLAIN_USER) \
-      (IMP_OPTION_PASSWORD",w",        _TYPE(string),    IMP_EXPLAIN_PASSWORD) \
+      (IMP_OPTION_PASSWORD",w", _IMPLICIT_TYPE(string, ""), IMP_EXPLAIN_PASSWORD) \
+      (IMP_OPTION_CIPHERFILE,          _TYPE(string),    IMP_EXPLAIN_CIPHERFILE) \
+      (IMP_OPTION_CIPHER,              _TYPE(bool),      IMP_EXPLAIN_CIPHER) \
+      (IMP_OPTION_TOKEN,               _TYPE(string),    IMP_EXPLAIN_TOKEN) \
       (IMP_OPTION_COLLECTSPACE",c",    _TYPE(string),    IMP_EXPLAIN_COLLECTSPACE) \
       (IMP_OPTION_COLLECTION",l",      _TYPE(string),    IMP_EXPLAIN_COLLECTION) \
       (IMP_OPTION_ERRORSTOP,           _TYPE(string),    IMP_EXPLAIN_ERRORSTOP) \
@@ -283,6 +296,7 @@ namespace import
       _hostname = IMP_DEFAULT_HOSTNAME;
       _svcname = IMP_DEFAULT_SVCNAME;
       _hostsString = IMP_DEFAULT_HOST;
+      _cipherfile = IMP_DEFAULT_CIPHER;
       _recordDelimiter = "\n";
       _inputType = INPUT_STDIN;
       _inputFormat = FORMAT_CSV;
@@ -449,14 +463,50 @@ namespace import
       }
       Hosts::removeDuplicate(_hosts);
 
+      if (has(IMP_OPTION_CIPHERFILE))
+      {
+         _cipherfile = get<string>(IMP_OPTION_CIPHERFILE);
+      }
+      if (has(IMP_OPTION_TOKEN))
+      {
+         _token = get<string>(IMP_OPTION_TOKEN);
+      }
       if (has(IMP_OPTION_USER))
       {
-         _user = get<string>(IMP_OPTION_USER);
-      }
+         _user = get<string>(IMP_OPTION_USER) ;
 
-      if (has(IMP_OPTION_PASSWORD))
-      {
-         _password = get<string>(IMP_OPTION_PASSWORD);
+         if ( has(IMP_OPTION_PASSWORD) )
+         {
+            string passwd = get<string>(IMP_OPTION_PASSWORD) ;
+            if ( "" == passwd )
+            {
+               passwd = passwordTool::interactivePasswdInput() ;
+            }
+            _password = passwd ;
+         }
+         else
+         {
+            passwordTool passwdTool ;
+
+            if ( has(IMP_OPTION_CIPHER) && get<bool>(IMP_OPTION_CIPHER) )
+            {
+               rc = passwdTool.getPasswdByCipherFile( _user, _token,
+                                                      _cipherfile, _password ) ;
+               if ( SDB_OK != rc )
+               {
+                  cerr << "get user password failed" << endl ;
+                  PD_LOG( PDERROR, "get user password failed" ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               if ( has(IMP_OPTION_TOKEN) || has(IMP_OPTION_CIPHERFILE) )
+               {
+                  cout << "to use cipherfile, provide --cipher" << endl ;
+               }
+            }
+         }
       }
 
       if (has(IMP_OPTION_COLLECTSPACE))

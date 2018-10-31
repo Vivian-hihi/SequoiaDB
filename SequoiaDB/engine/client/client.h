@@ -130,6 +130,24 @@ typedef sdbNodeHandle             sdbReplicaNodeHandle ;
 */
 SDB_EXPORT INT32 initClient( sdbClientConf* config ) ;
 
+/** \fn INT32 sdbGetPasswdByCipherFile ( const CHAR *pUsrName,
+                                         const CHAR *pToken,
+                                         const CHAR *pCipherFile,
+                                         CHAR *pPasswd, INT32 passwdLen ) ;
+    \brief get user password by decrypting the cipherfile
+    \param [in] pUsrName The User's Name in the cipherfile
+    \param [in] pToken The Password encryption token
+    \param [in] pCipherFile The Cipherfile location, default ./passwd
+    \param [out] pPasswd The decrypted Password buffer
+    \param [in] passwdLen The decrypted Password buffer size
+    \retval SDB_OK Retrieval Success
+    \retval Others Retrieval Fail
+*/
+SDB_EXPORT INT32 sdbGetPasswdByCipherFile( const CHAR *pUsrName,
+                                           const CHAR *pToken,
+                                           const CHAR *pCipherFile,
+                                           CHAR *pPasswd, UINT32 passwdLen ) ;
+
 /** \fn INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
                            const CHAR *pUsrName, const CHAR *pPasswd ,
                            sdbConnectionHandle *handle ) ;

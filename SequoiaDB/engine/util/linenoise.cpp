@@ -152,6 +152,13 @@ static int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
 int history_len = 0;
 static char **history = NULL;
 
+/*
+* echo Char = 0, echo original content
+* echo Char != 0, echo corresponding ASCII character 
+*/
+static char echoChar = 0;
+static int echoOn = 1;
+
 /* The linenoiseState structure represents the state during line editing.
  * We pass this state to functions implementing specific editing
  * functionalities. */
@@ -341,6 +348,21 @@ error:
    goto done;
 }
 #endif
+
+void setEchoOn()
+{
+   echoOn = 1;
+}
+
+void setEchoOff()
+{
+   echoOn = 0;
+}
+
+void setEchoChar(char c)
+{
+   echoChar = c;
+}
 
 int linenoiseHistoryAdd(const char *line);
 static void refreshLine(struct linenoiseState *l);
@@ -1131,17 +1153,32 @@ static void refreshMultiLine(struct linenoiseState *l)
 
     /* Write the prompt and the current buffer content */
     abAppend(&ab,l->prompt,strlen(l->prompt));
-    if ( -1 == highlight_pos )
+
+    if ( !echoOn )
     {
-        abAppend(&ab,l->buf,l->len) ;
+      /// not append
+    }
+    else if ( echoChar != 0 )
+    {
+       for ( unsigned int i = 0 ; i < l->len ; ++i )
+       {
+          abAppend( &ab, &echoChar, 1 ) ;
+       }
     }
     else
     {
-        abAppend( &ab, l->buf, highlight_pos ) ;
-        setDisplayAttribute( true, &ab ) ;
-        abAppend( &ab, l->buf + highlight_pos, 1 ) ;
-        setDisplayAttribute( false, &ab ) ;
-        abAppend( &ab, l->buf + highlight_pos + 1, l->len - highlight_pos - 1 ) ;
+       if ( -1 == highlight_pos )
+       {
+           abAppend(&ab,l->buf,l->len ) ;
+       }
+       else
+       {
+           abAppend( &ab, l->buf, highlight_pos ) ;
+           setDisplayAttribute( true, &ab ) ;
+           abAppend( &ab, l->buf + highlight_pos, 1 ) ;
+           setDisplayAttribute( false, &ab ) ;
+           abAppend( &ab, l->buf + highlight_pos + 1, l->len - highlight_pos - 1 ) ;
+       }
     }
 
     /* If we are at the very end of the screen with our prompt, we need to
@@ -1177,7 +1214,14 @@ static void refreshMultiLine(struct linenoiseState *l)
     }
     else
     {
-        cur_column = 1+((plen+(int)l->pos) % (int)l->cols) ;
+        if ( !echoOn )
+        {
+            cur_column = 1+((plen) % (int)l->cols) ;
+        }
+        else
+        {
+            cur_column = 1+((plen+(int)l->pos) % (int)l->cols) ;
+        }
     }
     lndebug("set col %d", cur_column ) ;
     snprintf(seq,64,"\x1b[%dG", cur_column ) ;

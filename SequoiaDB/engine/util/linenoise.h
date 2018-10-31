@@ -66,6 +66,10 @@ void linenoiseSetMultiLine(int ml);
 void linenoisePrintKeyCodes(void);
 void linenoiseClearInputBuffer( void ) ;
 int linenoiseIsStdinEmpty( void ) ;
+void setEchoOn();
+void setEchoOff();
+void setEchoChar(char c);
+
 #ifdef __cplusplus
 }
 #endif

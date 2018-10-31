@@ -35,6 +35,7 @@
 #include "utilParam.hpp"
 #include "ossUtil.h"
 #include "pd.hpp"
+#include "utilCipher.hpp"
 #include <iostream>
 
 namespace exprt
@@ -61,6 +62,9 @@ namespace exprt
    #define OPTION_SSL               "ssl"
    #define OPTION_FLOATFMT          "floatfmt"
    #define OPTION_REPLACE           "replace"
+   #define OPTION_CIPHERFILE        "cipherfile"
+   #define OPTION_CIPHER            "cipher"
+   #define OPTION_TOKEN             "token"
 
    // single collection
    #define OPTION_COLLECTSPACE      "csname"
@@ -102,6 +106,9 @@ namespace exprt
    #define EXPLAIN_SVCNAME          "service name, default: 11810"
    #define EXPLAIN_USER             "username"
    #define EXPLAIN_PASSWORD         "password"
+   #define EXPLAIN_CIPHER           "input password using a cipherfile"
+   #define EXPLAIN_TOKEN            "password encryption token"
+   #define EXPLAIN_CIPHERFILE       "cipherfile location, default ./passwd"
    #define EXPLAIN_FILELIMIT        "the limit of max size for one file, in K/k/M/m/G/g, default: 16G"
    #define EXPLAIN_DELRECORD        "record delimiter, default: '\\n' "
    #define EXPLAIN_TYPE             "type of file to output, default: csv (json,csv)"
@@ -151,6 +158,7 @@ namespace exprt
    
    #define DEFAULT_HOSTNAME         "localhost"
    #define DEFAULT_SVCNAME          "11810"
+   #define DEFAULT_CIPHERFILE       "passwd"
    #define DEFAULT_DELCHAR_CHAR     "\""
    #define DEFAULT_DELFIELD_CHAR    ","
    #define DEFAULT_FILELIMIT        ( 16LL * 1024 * 1024 * 1024 ) // 16G
@@ -158,6 +166,7 @@ namespace exprt
    #define FILELIMIT_MAX            ( 16LL * 1024 * 1024 * 1024 * 1024 ) // 16T
 
    #define _TYPE(T) po::value< T >()
+   #define _IMPLICIT_TYPE(T,V) implicit_value<T>(V)
 
    #define EXP_GENERAL_OPTIONS \
       ( OPTION_HELP",h",               /* no arg */      EXPLAIN_HELP ) \
@@ -165,7 +174,10 @@ namespace exprt
       ( OPTION_HOSTNAME",s",           _TYPE(string),    EXPLAIN_HOSTNAME ) \
       ( OPTION_SVCNAME",p",            _TYPE(string),    EXPLAIN_SVCNAME ) \
       ( OPTION_USER",u",               _TYPE(string),    EXPLAIN_USER ) \
-      ( OPTION_PASSWORD",w",           _TYPE(string),    EXPLAIN_PASSWORD ) \
+      ( OPTION_PASSWORD",w", _IMPLICIT_TYPE(string, ""), EXPLAIN_PASSWORD ) \
+      ( OPTION_CIPHER,                 _TYPE(bool),      EXPLAIN_CIPHER ) \
+      ( OPTION_TOKEN,                  _TYPE(string),    EXPLAIN_TOKEN ) \
+      ( OPTION_CIPHERFILE,             _TYPE(string),    EXPLAIN_CIPHERFILE ) \
       ( OPTION_DELRECORD",r",          _TYPE(string),    EXPLAIN_DELRECORD ) \
       ( OPTION_FILELIMIT,              _TYPE(string),    EXPLAIN_FILELIMIT ) \
       ( OPTION_TYPE,                   _TYPE(string),    EXPLAIN_TYPE ) \
@@ -311,6 +323,7 @@ namespace exprt
                               _confParsed    (FALSE),
                               _hostName      (DEFAULT_HOSTNAME),
                               _svcName       (DEFAULT_SVCNAME),
+                              _cipherfile    (DEFAULT_CIPHERFILE),
                               _delRecord     ("\n"),
                               _typeName      (formatNames[FORMAT_CSV]),
                               _type          (FORMAT_CSV),
@@ -1091,13 +1104,50 @@ namespace exprt
       {
          _svcName = _get<string>(OPTION_SVCNAME) ;
       }
-      if ( _has(OPTION_USER) )      
-      { 
-         _user = _get<string>(OPTION_USER) ; 
+      if ( _has(OPTION_CIPHERFILE) )
+      {
+         _cipherfile = _get<string>(OPTION_CIPHERFILE) ;
       }
-      if ( _has(OPTION_PASSWORD) )  
-      { 
-         _password = _get<string>(OPTION_PASSWORD) ;
+      if ( _has(OPTION_TOKEN) )
+      {
+         _token = _get<string>(OPTION_TOKEN) ;
+      }
+      if ( _has(OPTION_USER) )
+      {
+         _user = _get<string>(OPTION_USER) ;
+
+         if ( _has(OPTION_PASSWORD) )
+         {
+            string passwd = _get<string>(OPTION_PASSWORD) ;
+            if ( "" == passwd )
+            {
+               passwd = passwordTool::interactivePasswdInput() ;
+            }
+            _password = passwd ;
+         }
+         else
+         {
+            passwordTool passwdTool ;
+
+            if ( _has(OPTION_CIPHER) && _get<bool>(OPTION_CIPHER) )
+            {
+               rc = passwdTool.getPasswdByCipherFile( _user, _token,
+                                                      _cipherfile, _password ) ;
+               if ( SDB_OK != rc )
+               {
+                  cerr << "get user password failed" << endl ;
+                  PD_LOG( PDERROR, "get user password failed" ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               if ( _has(OPTION_TOKEN) || _has(OPTION_CIPHERFILE) )
+               {
+                  cout << "to use cipherfile, provide --cipher" << endl ;
+               }
+            }
+         }
       }
       if ( _has(OPTION_SSL) )
       {  

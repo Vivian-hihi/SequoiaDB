@@ -215,6 +215,9 @@ utilFiles = [
       "util/utilFileStream.cpp",
       "util/utilZlibStream.cpp",
       "util/utilJsonFile.cpp",
+      "util/linenoise.cpp",
+      "util/utilCipher.cpp",
+      "client/cipher.c"
       ]
 
 dpsFiles = [
@@ -599,7 +602,10 @@ sequoiaFSFiles = [
       "tools/sequoiafs/sequoiaFSMain.cpp",
       "tools/sequoiafs/sequoiaFSOptionMgr.cpp",
     ]	  
-
+sdbPasswdFiles = [
+      "tools/passwd/passwdOptions.cpp",
+      "tools/passwd/sdbPasswd.cpp"
+    ]
 #cls
 toolEnv.StaticLibrary('cls', clsFiles)
 #ixm
@@ -690,6 +696,10 @@ sdbcmtop = toolEnv.Program("sdbcmtop", sdbcmtopMain,
 sdblobtool = toolEnv.Program("sdblobtool", sdbLobToolMain,
          LIBDEPS=["pd","oss", "bson", "util", "miglob","clientcpp"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdbpasswd = toolEnv.Program("sdbpasswd", sdbPasswdFiles,
+         LIBDEPS=["pd","oss", "bson", "util", "miglob","clientcpp"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
 if linux:
    sdbtop = toolEnv.Program("sdbtop", sdbtopMain,
             LIBDEPS=["mig","oss","pd","bson","util","client","clientcpp","ncurses"],
@@ -740,6 +750,7 @@ toolEnv.Install( '#/bin', sdbcmd )
 toolEnv.Install( '#/bin', sdbcmart )
 toolEnv.Install( '#/bin', sdbcmtop )
 toolEnv.Install( '#/bin', sdblobtool )
+toolEnv.Install( '#/bin', sdbpasswd )
 if linux:
    toolEnv.Install( '#/bin', sdbtop )
 toolEnv.Install( '#/tools', sdbload2 )

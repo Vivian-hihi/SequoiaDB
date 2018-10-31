@@ -865,15 +865,32 @@ int sdbGetIndexInfosFromDB( SdbExecState *sdbState, sdbIndexInfo *indexInfo,
    sdbbson obj ;
    INT32 count = 0 ;
 
-   sdbState->hConnection = sdbGetConnectionHandle(
-                                        (const char **)sdbState->sdbServerList,
-                                        sdbState->sdbServerNum,
-                                        sdbState->usr,
-                                        sdbState->passwd,
-                                        sdbState->preferenceInstance,
-                                        sdbState->preferenceInstanceMode,
-                                        sdbState->sessionTimeout,
-                                        sdbState->transaction ) ;
+   if ( sdbState->isUseCipher )
+   {
+      sdbState->hConnection = sdbGetConnectionHandleByCipher( 
+                                            ( const char ** )( sdbState->sdbServerList ),
+                                            sdbState->sdbServerNum,
+                                            sdbState->usr,
+                                            sdbState->token,
+                                            sdbState->cipherfile,
+                                            sdbState->preferenceInstance,
+                                            sdbState->preferenceInstanceMode,
+                                            sdbState->sessionTimeout,
+                                            sdbState->transaction ) ;
+   }
+   else
+   {
+      sdbState->hConnection = sdbGetConnectionHandle(
+                                           (const char **)sdbState->sdbServerList,
+                                           sdbState->sdbServerNum,
+                                           sdbState->usr,
+                                           sdbState->passwd,
+                                           sdbState->preferenceInstance,
+                                           sdbState->preferenceInstanceMode,
+                                           sdbState->sessionTimeout,
+                                           sdbState->transaction ) ;
+   }
+
    sdbState->hCollection = sdbGetSdbCollection(sdbState->hConnection,
                            sdbState->sdbcs, sdbState->sdbcl) ;
 
@@ -1053,6 +1070,171 @@ sdbConnectionHandle sdbGetConnectionHandle( const char **serverList,
    ereport( DEBUG1, (errcode( ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION ),
             errmsg( "connecting :list=%s,num=%d", connName->data, serverNum ) )) ;
    rc = sdbConnect1( serverList, serverNum, usr, passwd, &hConnection ) ;
+   if ( rc )
+   {
+      StringInfo tmpInfo = makeStringInfo() ;
+      i = 0 ;
+      while ( i < serverNum )
+      {
+         appendStringInfo( tmpInfo, "%s:", serverList[i] ) ;
+         i++ ;
+      }
+      ereport( ERROR, ( errcode( ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION ),
+                        errmsg( "unable to establish connection to \"%s\""
+                                ", rc = %d", tmpInfo->data, rc ),
+                        errhint( "Make sure remote service is running "
+                                 "and username/password are valid" ) ) ) ;
+      return SDB_INVALID_HANDLE ;
+   }
+
+   rc = sdbSetConnectionPreference( hConnection, (char *)preference_instance, preference_instance_mode,
+                                    session_timeout ) ;
+   if ( rc )
+   {
+      ereport( WARNING, ( errcode( ERRCODE_WITH_CHECK_OPTION_VIOLATION ),
+                          errmsg( "set connection's preference instance failed"
+                                  ":rc=%d,preference=%s", rc,
+                                  preference_instance ),
+                          errhint( "Make sure the OPTION_NAME_PREFEREDINSTANCE "
+                                   "are valid" ) ) ) ;
+   }
+
+   sdbSetConnectionInterruptFunc( hConnection, sdbIsInterrupt ) ;
+
+   /* add connection into pool */
+   if ( pool->poolSize <= pool->numConnections )
+   {
+      /* allocate new slots */
+      SdbConnection *pNewMem = pool->connList ;
+      INT32 poolSize = pool->poolSize ;
+      poolSize = poolSize << 1 ;
+      pNewMem  = ( SdbConnection* )realloc( pNewMem, sizeof( SdbConnection )* poolSize ) ;
+      if ( !pNewMem )
+      {
+         sdbDisconnect( hConnection ) ;
+         ereport( ERROR, ( errcode( ERRCODE_FDW_OUT_OF_MEMORY ),
+                           errmsg( "Unable to allocate connection pool" ),
+                           errhint( "Make sure the memory pool or ulimit is "
+                                    "properly configured" ) ) ) ;
+         return SDB_INVALID_HANDLE ;
+      }
+
+      pool->connList = pNewMem ;
+      pool->poolSize = poolSize ;
+   }
+
+   connect = &pool->connList[pool->numConnections] ;
+   connect->connName      = strdup( connName->data ) ;
+   connect->hConnection   = hConnection ;
+   connect->isTransactionOn = 0 ;
+   pool->numConnections++ ;
+
+   if ( strcmp( transaction, SDB_OPTION_ON ) == 0 )
+   {
+      elog( DEBUG1, "trans begin[%s]", connect->connName ) ;
+      rc = sdbTransactionBegin( connect->hConnection ) ;
+      if ( SDB_OK != rc )
+      {
+         ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ),
+                  errmsg( "begin transaction failed:rc=%d", rc ) ) ) ;
+         return SDB_INVALID_HANDLE ;
+      }
+
+      //open transaction
+      connect->isTransactionOn = 1 ;
+      connect->transLevel      = 1 ;
+   }
+
+   return hConnection ;
+}
+
+sdbConnectionHandle sdbGetConnectionHandleByCipher( const char **serverList,
+                                                    int serverNum,
+                                                    const char *usr,
+                                                    const char *token,
+                                                    const char *cipherfile,
+                                                    const char *preference_instance,
+                                                    const char *preference_instance_mode,
+                                                    int session_timeout,
+                                                    const char *transaction )
+{
+   sdbConnectionHandle hConnection           = SDB_INVALID_HANDLE ;
+   SdbConnectionPool *pool                   = NULL ;
+   INT32 count                               = 0 ;
+   INT32 rc                                  = SDB_OK ;
+   INT32 i                                   = 0 ;
+   SdbConnection *connect                    = NULL ;
+   CHAR password[SDB_MAX_PASSWORD_LENGTH]    = {'\0'} ;
+
+   /* connection string is address + service + user + token */
+   StringInfo connName = makeStringInfo() ;
+   i = 0 ;
+   while ( i < serverNum )
+   {
+      appendStringInfo( connName, "%s:", serverList[i] ) ;
+      i++ ;
+   }
+   appendStringInfo( connName, "%s", usr ) ;
+
+   if ( NULL != token )
+   {
+      appendStringInfo( connName, ":%s", token ) ;
+   }
+
+   /* iterate all connections in pool */
+   pool = sdbGetConnectionPool() ;
+   for ( count = 0 ; count < pool->numConnections ; ++count )
+   {
+      SdbConnection *tmpConnection = &pool->connList[count] ;
+      if ( strcmp( tmpConnection->connName, connName->data ) == 0 )
+      {
+         // return pool->connList[count].hConnection ;
+         BOOLEAN result = FALSE ;
+         result = sdbIsValid( tmpConnection->hConnection ) ;
+         if ( !result )
+         {
+            sdbReleaseConnectionFromPool( count ) ;
+            break ;
+         }
+
+         if ( 1 == tmpConnection->isTransactionOn )
+         {
+            if ( tmpConnection->transLevel <= 0 )
+            {
+               tmpConnection->transLevel = 1 ;
+               elog( DEBUG1, "trans begin[%s]", tmpConnection->connName ) ;
+               rc = sdbTransactionBegin( tmpConnection->hConnection ) ;
+               if ( SDB_OK != rc )
+               {
+                  ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ),
+                           errmsg( "begin transaction failed:rc=%d", rc ) ) ) ;
+                  return SDB_INVALID_HANDLE ;
+               }
+            }
+         }
+
+         return tmpConnection->hConnection;
+      }
+   }
+
+   /* when we get here, we don't have the connection so let's create one */
+   ereport( DEBUG1, (errcode( ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION ),
+            errmsg( "connecting :list=%s,num=%d", connName->data, serverNum ) )) ;
+
+   rc = sdbGetPasswdByCipherFile( usr, token, cipherfile,
+                                  password, SDB_MAX_PASSWORD_LENGTH ) ;
+   if ( SDB_OK != rc )
+   {
+      ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ),
+               errmsg( "decrypt password failed:rc=%d", rc ) ) ) ;
+   }
+   if ( NULL != strchr(usr, '@') )
+   {
+      usr = pnstrdup( usr, strchr(usr, '@') - usr ) ;
+   }
+
+   rc = sdbConnect1( serverList, serverNum, usr, password, &hConnection ) ;
+
    if ( rc )
    {
       StringInfo tmpInfo = makeStringInfo() ;
