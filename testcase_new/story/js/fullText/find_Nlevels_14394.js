@@ -1,0 +1,85 @@
+/************************************
+*@Description: 全文检索与普通查询的N层随机组合  
+*@author:      liuxiaoxuan
+*@createdate:  2018.10.28
+*@testlinkCase: seqDB-14394
+**************************************/
+function main()
+{
+   if(commIsStandalone(db))  {   return ;   }  
+
+   var csName = COMMCSNAME + "_ES_14394";
+   commDropCS( db, csName, true, "drop CS in the beginning" );
+                                                             	
+   commCreateCS( db, csName, false, "" );
+                                                              	
+   //create CL
+   var clName = COMMCLNAME + "_ES_14394";
+   var dbcl = commCreateCL( db, csName, clName );
+   
+   var textIndexName = "textIndex";   
+   dbcl.createIndex(textIndexName, {"a" : "text"});
+   
+   // insert
+   var objs = new Array();
+   for(var i = 0; i < 20000; i++)
+   {
+      objs.push({a: "test_14394 " + i, b :  i });
+   }
+   insertRecords(dbcl, objs);
+
+   // if insert fail, exit
+   if(20000 != dbcl.count())
+   {
+      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
+      return ;
+   }
+
+   checkFullSyncToES(csName, clName, textIndexName, 20000);
+   
+   // match 0 record
+   var findNoneConf1 = {"$and":[{"$and": [{"$and":[{"$and":[{"b" : {"$gte" : 0}},{"":{"$Text":{"query":{"match":{"a" : "test_14394"}}}}}]}]},{"a" : {"$isnull":1}}]},{"a":{"exists":1}}]}; //and-and-and-and
+   var findNoneConf2 = {"$and":[{"$not":[{"$and":[{"$not":[{"b" : {"$gte" : 0}},{"a" : {"$isnull":0}}]}]}, {"a":{"$exists":1}}]},{"a":"test_14394"}]}; //and-not-and-not
+   var findNoneConf3 = {"$and":[{"$or":[{"$and":[{"$or":[{"b" : {"$lt" : 0}},{"a" : {"$isnull":1}}]},{"":{"$Text":{"query":{"match":{"a" : "test_14394"}}}}}]}, {"a":{"$isnull":0}}]},{"a":"test_14394"}]};//and-or-and-or
+   var actResult1 = dbOpr.findFromCL(dbcl, findNoneConf1);
+   var actResult2 = dbOpr.findFromCL(dbcl, findNoneConf2);
+   var actResult3 = dbOpr.findFromCL(dbcl, findNoneConf3);
+   var expResult = [];
+   checkResult(expResult, actResult1);
+   println("---match 0 record for $and-$and-$and-$and---");
+   checkResult(expResult, actResult2);
+   println("---match 0 record for $and-$not-$and-$not---");
+   checkResult(expResult, actResult3);
+   println("---match 0 record for $and-$or-$and-$or---");
+
+   // match some records
+   var findSomeConf1 = {"$and":[{"$and": [{"$and":[{"$and":[{"b" : {"$lt" : 10000}},{"":{"$Text":{"query":{"match":{"a" : "test_14394"}}}}}]}]},{"a" : {"$isnull":0}}]},{"a":{"$exists":1}}]};//and-and-and-and
+   var findSomeConf2 = {"$not":[{"$and":[{"$not":[{"$and":[{"b" : {"$lt" : 10000}},{"a" : {"$isnull":0}}]}]}, {"a":{"$exists":1}}]},{"":{"$Text":{"query":{"match":{"a" : "test_14394"}}}}}]}; //not-and-not-and
+   var actResult1 = dbOpr.findFromCL(dbcl, findSomeConf1, {'a' : ''});
+   var actResult2 = dbOpr.findFromCL(dbcl, findSomeConf2, {'a' : ''});
+   var expResult = dbOpr.findFromCL(dbcl, {"b": {"$lt" : 10000}}, {'a' : ''});
+   actResult1.sort(compare("a"));
+   actResult2.sort(compare("a"));
+   expResult.sort(compare("a"));
+   checkResult(expResult, actResult1);
+   println("---match some record for $and-$and-$and-$and---");
+   checkResult(expResult, actResult2);
+   println("---match some record for $not-$and-$not-$and---");
+ 
+   // match all records
+   var findAllConf1 = {"$and":[{"$not":[{"$and":[{"$or":[{"b" : {"$lt" : 0}},{"a" : {"$isnull":1}}]},{"":{"$Text":{"query":{"match":{"a" : "test_14394"}}}}}]}, {"a":{"$isnull":0}}]},{"b":{"$exists":1}}]}; //and-not-and-or
+   var findAllConf2 = {"$and":[{"$and":[{"$not":[{"$not":[{"b" : {"$lt" : 20000}},{"a" : {"$isnull":0}}]},{"":{"$Text":{"query":{"match":{"a" : "test_14394"}}}}}]}, {"a":{"$isnull":0}}]},{"b":{"$exists":1}}]}; //and-and-not-not
+   var actResult1 = dbOpr.findFromCL(dbcl, findAllConf1, {'a' : ''});
+   var actResult2 = dbOpr.findFromCL(dbcl, findAllConf2, {'a' : ''});
+   var expResult = dbOpr.findFromCL(dbcl, null, {'a' : ''});
+   actResult1.sort(compare("a"));
+   actResult2.sort(compare("a"));
+   expResult.sort(compare("a"));
+   checkResult(expResult, actResult1);
+   println("---match all record for $and-$not-$and-$or---");
+   checkResult(expResult, actResult2);
+   println("---match all record for $and-$and-$not-$not---");
+ 
+   commDropCS( db, csName, true, "drop CS in the end" );
+}
+main();
