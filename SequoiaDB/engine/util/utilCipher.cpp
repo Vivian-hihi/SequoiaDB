@@ -629,7 +629,6 @@ namespace engine
       string fullName ;
       string cipherText ;
 
-
       _extractUserInfo( userInfo, userName, fullName ) ;
 
       rc = _findCipherText( userName, fullName, cipherText ) ;
@@ -641,7 +640,8 @@ namespace engine
       rc = _decrypt( cipherText, token, passwd ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "decrypt user %s passwd failed.", fullName ) ;
+         PD_LOG ( PDERROR, "decrypt user %s passwd failed.",
+                  fullName.c_str() ) ;
          rc = SDB_SYS ;
          goto error ;
       }
