@@ -3128,7 +3128,184 @@ namespace engine
       return rc ;
    }
 
-   
+   /***********************  restart business  *************************/
+   /*
+      _omaRestartBuz
+   */
+
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaRestartBusiness )
+
+   _omaRestartBusiness::_omaRestartBusiness()
+   {
+   }
+
+   _omaRestartBusiness::~_omaRestartBusiness()
+   {
+   }
+
+   INT32 _omaRestartBusiness::init ( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         stringstream ss ;
+         BSONObj bus( pInstallInfo ) ;
+
+         // build js file arguments
+         ss << "var " << JS_ARG_BUS << " = "
+            << bus.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
+         PD_LOG ( PDDEBUG, "Scan host passes argument: %s",
+                  _jsFileArgs.c_str() ) ;
+         rc = addJsFile( FILE_RESTART_BUSINESS, _jsFileArgs.c_str() ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_RESTART_BUSINESS, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
+   void _omaRestartBusiness::_aggrFlowArray( const BSONObj& array1,
+                                             const BSONObj& array2,
+                                             BSONArray& out )
+   {
+      BSONArrayBuilder arrayBuilder ;
+
+      {
+         BSONObjIterator iter( array1 ) ;
+         while( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            arrayBuilder.append( ele.String() ) ;
+         }
+      }
+
+      {
+         BSONObjIterator iter( array2 ) ;
+         while( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            arrayBuilder.append( ele.String() ) ;
+         }
+      }
+      out = arrayBuilder.arr() ;
+   }
+
+   INT32 _omaRestartBusiness::convertResult( const BSONObj& itemInfo,
+                                             BSONObj& taskInfo )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 updateProgress = 0 ;
+      INT32 progress = taskInfo.getIntField( OMA_FIELD_PROGRESS ) ;
+      BSONObj condition  = BSON( OMA_FIELD_ERRNO      << "" <<
+                                 OMA_FIELD_DETAIL     << "" <<
+                                 OMA_FIELD_PROGRESS   << "" <<
+                                 OMA_FIELD_RESULTINFO << "" ) ;
+      BSONObj oneResultCondition = BSON( OMA_FIELD_PROGRESS << 0  <<
+                                         OMA_FIELD_FLOW     << ""  ) ;
+      BSONArrayBuilder newResultInfo ;
+      string updateHostName ;
+      string updateSvcname ;
+
+      rc = omaGetStringElement( itemInfo, OMA_FIELD_HOSTNAME, updateHostName ) ;
+      if( rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+
+      rc = omaGetStringElement( itemInfo, OMA_FIELD_SVCNAME, updateSvcname ) ;
+      if( rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+
+      rc = omaGetIntElement( itemInfo, OMA_FIELD_PROGRESS, updateProgress ) ;
+      if( rc )
+      {
+         rc = SDB_OK ;
+         updateProgress = 0 ;
+      }
+
+      {
+         BSONObj resultInfo = taskInfo.getObjectField( OMA_FIELD_RESULTINFO ) ;
+         BSONObj updateFlow = itemInfo.getObjectField( OMA_FIELD_FLOW ) ;
+         BSONObj nodeResult = itemInfo.filterFieldsUndotted( oneResultCondition,
+                                                             FALSE ) ;
+         BSONObjIterator resultIter( resultInfo ) ;
+
+         while( resultIter.more() )
+         {
+            BSONElement resultEle = resultIter.next() ;
+            BSONObj oneResult = resultEle.embeddedObject() ;
+            string hostName = oneResult.getStringField( OMA_FIELD_HOSTNAME ) ;
+            string svcname = oneResult.getStringField( OMA_FIELD_SVCNAME ) ;
+
+            if( updateHostName == hostName && updateSvcname == svcname )
+            {
+               BSONObjBuilder newOneResultInfoBuilder ;
+               BSONArray newFlowArray ;
+               BSONObj flow = oneResult.getObjectField( OMA_FIELD_FLOW ) ;
+
+               if( updateProgress > 0 )
+               {
+                  progress += updateProgress ;
+               }
+
+               if( progress > 100 )
+               {
+                  progress = 100 ;
+               }
+               else if( progress < 0 )
+               {
+                  progress = 0 ;
+               }
+
+               _aggrFlowArray( flow, updateFlow, newFlowArray ) ;
+
+               newOneResultInfoBuilder.appendElements( nodeResult ) ;
+               newOneResultInfoBuilder.append( OMA_FIELD_FLOW, newFlowArray ) ;
+
+               newResultInfo.append( newOneResultInfoBuilder.obj() ) ;
+            }
+            else
+            {
+               newResultInfo.append( oneResult ) ;
+            }
+         }
+      }
+
+      {
+         BSONObjBuilder newTaskInfo ;
+         BSONObj taskInfo2 = taskInfo.filterFieldsUndotted( condition, FALSE ) ;
+
+         newTaskInfo.append( OMA_FIELD_ERRNO, SDB_OK ) ;
+         newTaskInfo.append( OMA_FIELD_DETAIL, "" ) ;
+         newTaskInfo.append( OMA_FIELD_PROGRESS, progress ) ;
+         newTaskInfo.append( OMA_FIELD_RESULTINFO, newResultInfo.arr() ) ;
+         newTaskInfo.appendElements( taskInfo2 ) ;
+
+         taskInfo = newTaskInfo.obj() ;
+      }
+
+   done:
+      return rc ;
+   }
+
    /************************** start plugins ************************/
    /*
       _omaStartPlugins

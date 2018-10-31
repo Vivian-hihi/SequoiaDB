@@ -80,6 +80,9 @@ namespace engine
       // deploy package
       OMA_TASK_DEPLOY_PACKAGE     = OM_TASK_TYPE_DEPLOY_PACKAGE,
 
+      // restart business
+      OMA_TASK_RESTART_BUSINESS   = OM_TASK_TYPE_RESTART_BUSINESS,
+
       OMA_TASK_TYPE_END,
       
       OMA_TASK_SUB_TYPE_BEGIN,

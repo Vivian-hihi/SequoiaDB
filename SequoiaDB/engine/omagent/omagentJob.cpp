@@ -187,6 +187,9 @@ namespace engine
       case OMA_TASK_DEPLOY_PACKAGE:
          command = OMA_CMD_DEOLOY_PACKAGE ;
          break ;
+      case OMA_TASK_RESTART_BUSINESS:
+         command = OMA_CMD_RESTART_BUSINESS ;
+         break ;
       default:
          command = "" ;
          break ;
@@ -256,6 +259,7 @@ namespace engine
          case OMA_TASK_REMOVE_BUS:
          case OMA_TASK_SHRINK_BUSINESS:
          case OMA_TASK_DEPLOY_PACKAGE:
+         case OMA_TASK_RESTART_BUSINESS:
             {
                string command = getCmdByType( taskType ) ;
 
