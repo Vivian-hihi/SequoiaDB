@@ -85,10 +85,16 @@ Collection
 
         格式：`StrictDataMode : true | false`
 
+    10. `AutoIncrement` ( *Object* )：自增字段
+
+        格式：`AutoIncrement : <option>`
+        
+        * 自增字段可以修改的属性有CurrentValue, Increment, StartValue, MinValue, MaxValue, CacheSize, AcquireSize, Cycled, Generated。<br>属性具体功能请参考 [自增字段介绍](data_model/auto_increment.md)。
+
 	**Note:**
 
     * 各个选项的具体使用方式见 [db.collectionspace.createCL()](reference/Sequoiadb_command/SdbCS/createCL.md)。
-	* 分区集合不能修改与分区相关的属性，如 ShardingKey、Partition 等。
+    * 分区集合不能修改与分区相关的属性，如 ShardingKey、Partition 等。
     * EnsureShardingIndex 和 AutoSplit 仅对当前该次操作生效，仅当修改分区属性，如 ShardingKey 等时有效
 
 ##返回值##

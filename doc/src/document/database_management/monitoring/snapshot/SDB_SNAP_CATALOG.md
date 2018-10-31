@@ -20,14 +20,18 @@ SDB_SNAP_CATALOG
 | ReplSize            | 整型   | 执行修改操作时需要同步的副本数<br>当执行更新、插入、删除记录等操作时，仅当指定副本数的节点都完成操作时才返回操作结果 |
 | ShardingKey         | 对象   | 数据分区类型：<br>- range：数据按分区键值的范围进行分区存储<br>- hash：数据按分区键的哈希值进行分区存储 |
 | Version             | 整型   | 集合版本号，当对集合的元数据执行修改操作时递增该版本号（例如数据切分） |
-| Attribute           | 整形   | 集合属性                     |
+| Attribute           | 整型   | 集合属性                     |
 | AttributeDesc       | 字符串 | 集合属性描述                 |
-| CompressionType     | 整形   | 压缩算法类型                 |
+| CompressionType     | 整型   | 压缩算法类型                 |
 | CompressionTypeDesc | 字符串 | 压缩算法类型描述             |
 | CataInfo.GroupID    | 整型   | 分区组 ID                    |
 | CataInfo.GroupName  | 字符串 | 分区组名                     |
 | CataInfo.LowBound   | 对象   | 数据分区区间的上限           |
 | CataInfo.UpBound    | 对象   | 数据分区区间的下限           |
+| AutoIncrement.Field | 字符串 | 自增字段名称                 |
+| AutoIncrement.Generated | 字符串 | 自增字段生成方式         |
+| AutoIncrement.SequenceName | 字符串 | 自增字段对应序列名    |
+| AutoIncrement.SequenceID | 对象ID | 自增字段对应序列ID      |
 
 ##示例##
 
@@ -42,6 +46,16 @@ SDB_SNAP_CATALOG
   "Version": 1,
   "Attribute": 0,
   "AttributeDesc": "",
+  "AutoIncrement": [
+    {
+      "SequenceName": "SYS_261993005057_studentID_SEQ",
+      "Field": "studentID",
+      "Generated": "default",
+      "SequenceID": {
+        "$oid": "5bd8fcfc8af29ca6ad2a32e8"
+      }
+    }
+  ],
   "CompressionType": 0,
   "CompressionTypeDesc": "snappy",
   "ReplSize": 1,

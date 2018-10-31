@@ -83,6 +83,12 @@ Collection
 
         格式：`StrictDataMode : true | false`
 
+    10. `AutoIncrement` ( *Object* )：自增字段
+
+        格式：`AutoIncrement : <option>`
+        
+        * 自增字段可以修改的属性有CurrentValue, Increment, StartValue, MinValue, MaxValue, CacheSize, AcquireSize, Cycled, Generated。<br>属性具体功能请参考 [自增字段介绍](data_model/auto_increment.md)。
+
 	**Note:**
 
     * 各个选项的具体使用方式见 [db.collectionspace.createCL()](reference/Sequoiadb_command/SdbCS/createCL.md)。
