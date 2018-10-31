@@ -1573,6 +1573,22 @@ namespace engine
       return _taskID ;
    }
 
+   /* restart business */
+   omRestartBusinessTask::omRestartBusinessTask( INT64 taskID )
+   {
+      _taskID   = taskID ;
+   }
+
+   omRestartBusinessTask::~omRestartBusinessTask()
+   {
+   }
+
+   INT32 omRestartBusinessTask::finish( BSONObj &resultInfo )
+   {
+      return SDB_OK ;
+   }
+
+   /* remove business */
    omRemoveBusinessTask::omRemoveBusinessTask( INT64 taskID )
    {
       _taskID   = taskID ;
@@ -1984,6 +2000,9 @@ namespace engine
          break ;
       case OM_TASK_TYPE_DEPLOY_PACKAGE:
          pTask = SDB_OSS_NEW omDeployPackageTask( taskID ) ;
+         break ;
+      case OM_TASK_TYPE_RESTART_BUSINESS:
+         pTask = SDB_OSS_NEW omRestartBusinessTask( taskID ) ;
          break ;
       default :
          PD_LOG( PDERROR, "unknown task type:taskID="OSS_LL_PRINT_FORMAT

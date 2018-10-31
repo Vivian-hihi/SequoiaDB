@@ -62,6 +62,7 @@ namespace engine
    #define OM_REST_FIELD_PASSWORD               "Passwd"
    #define OM_REST_FIELD_ENFORCED               "Enforced"
    #define OM_REST_FIELD_CONFIGINFO             "ConfigInfo"
+   #define OM_REST_FIELD_BUSINESS_TYPE          "BusinessType"
    #define OM_REST_FIELD_OPERATION_TYPE         "OperationType"
    #define OM_REST_FIELD_FROM                   "From"
    #define OM_REST_FIELD_TO                     "To"
@@ -118,6 +119,7 @@ namespace engine
    #define OM_BSON_LEASETIME2                   "leaseTime"
    #define OM_BSON_OM_ADDR                      "omaddr"
    #define OM_BSON_FORCE                        "Force"
+   #define OM_BSON_NODES                        "Nodes"
 
    /***************** XML field *****************/
    #define OM_XML_FIELD_BUSINESS_TYPE           "BusinessType"
@@ -143,6 +145,7 @@ namespace engine
    #define OM_PUBLIC_FIELD_HOSTNAME             "HostName"
    #define OM_PUBLIC_FIELD_DBNAME               "DbName"
    #define OM_PUBLIC_FIELD_GRANT_TYPE           "GrantType"
+   #define OM_PUBLIC_FIELD_SVCNAME              "svcname"
 
    /******* SYSCLUSTER *******/
    #define OM_CS_DEPLOY_CL_CLUSTER              OM_CS_DEPLOY".SYSCLUSTER"
@@ -266,7 +269,8 @@ key: {"OM_HOST_FIELD_IP":1}, unique: true, enforced: true }"
    #define OM_TASKINFO_FIELD_PACKAGENAME        "PackageName"
    #define OM_TASKINFO_FIELD_HOSTINFO           "HostInfo"
    #define OM_TASKINFO_FIELD_ENFORCED           "Enforced"
-   #define OM_TASKINFO_FIELD_HOSTNAME           "HostName"
+   #define OM_TASKINFO_FIELD_HOSTNAME           OM_PUBLIC_FIELD_HOSTNAME
+   #define OM_TASKINFO_FIELD_SVCNAME            OM_PUBLIC_FIELD_SVCNAME
    #define OM_TASKINFO_FIELD_IP                 "IP"
    #define OM_TASKINFO_FIELD_USER               OM_PUBLIC_FIELD_USER
    #define OM_TASKINFO_FIELD_PASSWD             OM_PUBLIC_FIELD_PASSWD
@@ -466,14 +470,15 @@ unique: true, enforced: true }"
 
    enum omTaskType
    {
-      OM_TASK_TYPE_ADD_HOST        = 0,
-      OM_TASK_TYPE_REMOVE_HOST     = 1,
-      OM_TASK_TYPE_ADD_BUSINESS    = 2,
-      OM_TASK_TYPE_REMOVE_BUSINESS = 3,
-      OM_TASK_TYPE_SSQL_EXEC       = 4,
-      OM_TASK_TYPE_EXTEND_BUSINESS = 5,
-      OM_TASK_TYPE_SHRINK_BUSINESS = 6,
-      OM_TASK_TYPE_DEPLOY_PACKAGE  = 7,
+      OM_TASK_TYPE_ADD_HOST         = 0,
+      OM_TASK_TYPE_REMOVE_HOST      = 1,
+      OM_TASK_TYPE_ADD_BUSINESS     = 2,
+      OM_TASK_TYPE_REMOVE_BUSINESS  = 3,
+      OM_TASK_TYPE_SSQL_EXEC        = 4,
+      OM_TASK_TYPE_EXTEND_BUSINESS  = 5,
+      OM_TASK_TYPE_SHRINK_BUSINESS  = 6,
+      OM_TASK_TYPE_DEPLOY_PACKAGE   = 7,
+      OM_TASK_TYPE_RESTART_BUSINESS = 8,
 
       OM_TASK_TYPE_END
    } ;
@@ -486,6 +491,7 @@ unique: true, enforced: true }"
    #define OM_TASK_TYPE_EXTEND_BUSINESS_STR   "EXTEND_BUSINESS"
    #define OM_TASK_TYPE_SHRINK_BUSINESS_STR   "SHRINK_BUSINESS"
    #define OM_TASK_TYPE_DEPLOY_PACKAGE_STR    "DEPLOY_PACKAGE"
+   #define OM_TASK_TYPE_RESTART_BUSINESS_STR  "RESTART_BUSINESS"
 
    const CHAR *getTaskTypeStr( INT32 taskType ) ;
 
@@ -607,6 +613,7 @@ unique: true, enforced: true }"
    #define  OM_QUERY_HOST_STATUS_REQ         "query host status"
    #define  OM_LIST_BUSINESS_TYPE_REQ        "list business type"
    #define  OM_GET_BUSINESS_TEMPLATE_REQ     "get business template"
+   #define  OM_GET_CONFIG_TEMPLATE_REQ       "get config template"
    #define  OM_CONFIG_BUSINESS_REQ           "get business config"
    #define  OM_INSTALL_BUSINESS_REQ          "add business"
    #define  OM_LIST_NODE_REQ                 "list nodes"
@@ -662,6 +669,8 @@ unique: true, enforced: true }"
 
    #define  OM_REGISTER_PLUGIN_REQ           "register plugin"
    #define  OM_LIST_PLUGIN_REQ               "list plugins"
+
+   #define  OM_RESTART_BUSINESS_REQ          "restart business"
 
    //**************************************************************************
 

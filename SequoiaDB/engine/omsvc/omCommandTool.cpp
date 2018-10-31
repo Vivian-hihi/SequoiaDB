@@ -396,8 +396,8 @@ namespace engine
       out = builder.obj() ;
    }
 
-   string omConfigTool::getBuzTemplatePath( const string &businessType,
-                                            const string &operationType )
+   string omConfigTool::getBuzDeployTemplatePath( const string &businessType,
+                                                  const string &operationType )
    {
       string templateFile ;
 
@@ -415,9 +415,9 @@ namespace engine
       return templateFile ;
    }
 
-   string omConfigTool::getBuzConfigPath( const string &businessType,
-                                          const string &deployMod,
-                                          BOOLEAN isSeparateConfig )
+   string omConfigTool::getBuzConfigTemplatePath( const string &businessType,
+                                                  const string &deployMod,
+                                                  BOOLEAN isSeparateConfig )
    {
       stringstream path ;
 
@@ -440,13 +440,14 @@ namespace engine
       return path.str() ;
    }
 
-   string omConfigTool::getBuzConfigPath( const string &businessType,
-                                          const string &deployMod,
-                                          const string &isSeparateConfig )
+   string omConfigTool::getBuzConfigTemplatePath(
+                                                const string &businessType,
+                                                const string &deployMod,
+                                                const string &isSeparateConfig )
    {
       BOOLEAN sepCfg = FALSE ;
       ossStrToBoolean( isSeparateConfig.c_str(), &sepCfg ) ;
-      return getBuzConfigPath( businessType, deployMod, sepCfg ) ;
+      return getBuzConfigTemplatePath( businessType, deployMod, sepCfg ) ;
    }
 
    INT32 omConfigTool::readBuzTypeList( list<BSONObj> &businessList )
@@ -493,16 +494,16 @@ namespace engine
       goto done ;
    }
 
-   INT32 omConfigTool::readBuzTemplate( const string &businessType,
-                                        const string &operationType,
-                                        list<BSONObj> &objList )
+   INT32 omConfigTool::readBuzDeployTemplate( const string &businessType,
+                                              const string &operationType,
+                                              list<BSONObj> &objList )
    {
       INT32 rc = SDB_OK ;
       string templateFile ;
       BSONObj templateArray ;
       BSONObj deployMods ;
 
-      templateFile = getBuzTemplatePath( businessType, operationType ) ;
+      templateFile = getBuzDeployTemplatePath( businessType, operationType ) ;
 
       rc = readXml2Bson( templateFile, templateArray ) ;
       if( rc )
@@ -535,16 +536,16 @@ namespace engine
       goto done ;
    }
 
-   INT32 omConfigTool::readBuzConfig( const string &businessType,
-                                      const string &deployMod,
-                                      BOOLEAN isSeparateConfig,
-                                      BSONObj &obj )
+   INT32 omConfigTool::readBuzConfigTemplate( const string &businessType,
+                                              const string &deployMod,
+                                              BOOLEAN isSeparateConfig,
+                                              BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
       string templateFile ;
 
-      templateFile = getBuzConfigPath( businessType,
-                                       deployMod, isSeparateConfig ) ;
+      templateFile = getBuzConfigTemplatePath( businessType,
+                                               deployMod, isSeparateConfig ) ;
 
       rc = readXml2Bson( templateFile, obj ) ;
       if( rc )
@@ -559,14 +560,14 @@ namespace engine
       goto done ;
    }
 
-   INT32 omConfigTool::readBuzConfig( const string &businessType,
-                                      const string &deployMod,
-                                      const string &isSeparateConfig,
-                                      BSONObj &obj )
+   INT32 omConfigTool::readBuzConfigTemplate( const string &businessType,
+                                              const string &deployMod,
+                                              const string &isSeparateConfig,
+                                              BSONObj &obj )
    {
       BOOLEAN sepCfg = FALSE ;
       ossStrToBoolean( isSeparateConfig.c_str(), &sepCfg ) ;
-      return readBuzConfig( businessType, deployMod, sepCfg, obj ) ;
+      return readBuzConfigTemplate( businessType, deployMod, sepCfg, obj ) ;
    }
 
    INT32 omDatabaseTool::_getOneTasktInfo( const BSONObj &matcher,
@@ -2725,7 +2726,6 @@ namespace engine
       goto done ;
    }
 
-   
    INT32 omDatabaseTool::_getOneRelationship( const BSONObj &condition,
                                               const BSONObj &selector,
                                               BSONObj &info )

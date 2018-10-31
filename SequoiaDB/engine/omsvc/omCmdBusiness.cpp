@@ -44,7 +44,104 @@ using namespace boost::property_tree;
 
 namespace engine
 {
-   
+   // ***************** Get Config Template *****************************
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omGetConfigTemplateCommand ) ;
+
+   INT32 omGetConfigTemplateCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj configTemplate ;
+      omArgOptions option( _request ) ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
+
+      _setFileLanguageSep() ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = option.parseRestArg( "s",
+                                OM_REST_FIELD_BUSINESS_TYPE, &_businessType ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
+         PD_LOG( PDERROR, "failed to parse rest arg: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _getTemplate( configTemplate ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to get config template: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      restTool.appendResponeContent( configTemplate ) ;
+      restTool.sendOkRespone() ;
+
+   done:
+      return rc ;
+   error:
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
+
+   INT32 omGetConfigTemplateCommand::_getTemplate( BSONObj &configTemplate )
+   {
+      INT32 rc = SDB_OK ;
+      omConfigTool cfgTool( _rootPath, _languageFileSep ) ;
+
+      //businessType
+      {
+         list<BSONObj> businessTypeList ;
+         list<BSONObj>::iterator iter ;
+
+         rc = cfgTool.readBuzTypeList( businessTypeList ) ;
+         if ( rc )
+         {
+            _errorMsg.setError( TRUE, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         for ( iter = businessTypeList.begin();
+                     iter != businessTypeList.end(); ++iter )
+         {
+            string businessType = iter->getStringField(
+                                                OM_XML_FIELD_BUSINESS_TYPE ) ;
+
+            if( _businessType == businessType )
+            {
+               break ;
+            }
+         }
+
+         if ( iter == businessTypeList.end() )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "invalid %s: type=%s",
+                                OM_XML_FIELD_BUSINESS_TYPE,
+                                _businessType.c_str() ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+      }
+
+      //get config template
+      rc = cfgTool.readBuzConfigTemplate( _businessType,
+                                          OM_FIELD_OPERATION_DEPLOY, FALSE,
+                                          configTemplate ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // ***************** Get Business Config *****************************
    IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omGetBusinessConfigCommand ) ;
 
@@ -182,8 +279,8 @@ namespace engine
          list<BSONObj> templateList ;
          list<BSONObj>::iterator iter ;
 
-         rc =  cfgTool.readBuzTemplate( _businessType, _operationType,
-                                        templateList ) ;
+         rc =  cfgTool.readBuzDeployTemplate( _businessType, _operationType,
+                                              templateList ) ;
          if ( rc )
          {
             _errorMsg.setError( TRUE, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
@@ -503,8 +600,8 @@ namespace engine
       }
 
       //get business template
-      rc = cfgTool.readBuzConfig( _businessType, _deployMod, FALSE,
-                                  buzTemplate ) ;
+      rc = cfgTool.readBuzConfigTemplate( _businessType, _deployMod, FALSE,
+                                          buzTemplate ) ;
       if ( rc )
       {
          _errorMsg.setError( TRUE, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
@@ -1152,5 +1249,356 @@ namespace engine
       goto done ;
    }
 
-}
+   // ***************** restart Business *****************************
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omRestartBusinessCommand ) ;
 
+   INT32 omRestartBusinessCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      INT64 taskID = 0 ;
+      BSONObj options ;
+      BSONObj taskConfig ;
+      BSONArray resultInfo ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
+      omArgOptions option( _request ) ;
+
+      _setFileLanguageSep() ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = option.parseRestArg( "ss|j",
+                                OM_REST_FIELD_CLUSTER_NAME, &_clusterName,
+                                OM_REST_FIELD_BUSINESS_NAME, &_businessName,
+                                OM_REST_FIELD_OPTIONS, &options ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = _check() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to check: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _generateRequest( options, taskConfig, resultInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to generate task request: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _createTask( taskConfig, resultInfo, taskID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to create task: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      {
+         BSONObj result = BSON( OM_BSON_TASKID << taskID ) ;
+
+         rc = restTool.appendResponeContent( result ) ;
+         if ( rc )
+         {
+            _errorMsg.setError( TRUE, "failed to append respone content: rc=%d",
+                                rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+      }
+
+      restTool.sendOkRespone() ;
+
+   done:
+      return rc ;
+   error:
+      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
+
+   INT32 omRestartBusinessCommand::_check()
+   {
+      INT32 rc = SDB_OK ;
+      INT64 taskID = -1 ;
+      BSONObj businessInfo ;
+      vector<simpleAddressInfo> addressList ;
+      omDatabaseTool dbTool( _cb ) ;
+
+      if ( FALSE == dbTool.isClusterExist( _clusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "cluster does not exist: %s",
+                             _clusterName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = dbTool.getOneBusinessInfo( _businessName, businessInfo ) ;
+      if ( SDB_DMS_RECORD_NOTEXIST == rc )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business does not exist: %s",
+                             _businessName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to get business info,rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      _businessType = businessInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+
+      taskID = dbTool.getTaskIdOfRunningBuz( _businessName ) ;
+      if( 0 <= taskID )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business[%s] is exist "
+                             "in task["OSS_LL_PRINT_FORMAT"]",
+                             _businessName.c_str(), taskID ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRestartBusinessCommand::_generateRequest( const BSONObj &options,
+                                                     BSONObj &taskConfig,
+                                                     BSONArray &resultInfo )
+   {
+      INT32 rc = SDB_OK ;
+      list<BSONObj> configList ;
+      omDatabaseTool dbTool( _cb ) ;
+
+      rc = _getBusinessConfig( options, configList ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to get business address: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _generateTaskConfig( configList, taskConfig ) ;
+
+      _generateResultInfo( configList, resultInfo ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void omRestartBusinessCommand::_generateTaskConfig(
+                                                   list<BSONObj> &configList,
+                                                   BSONObj &taskConfig )
+   {
+      BSONObjBuilder taskConfigBuilder ;
+      BSONArrayBuilder configBuilder ;
+      list<BSONObj>::iterator iter ;
+
+      taskConfigBuilder.append( OM_BSON_CLUSTER_NAME, _clusterName ) ;
+      taskConfigBuilder.append( OM_BSON_BUSINESS_TYPE, _businessType ) ;
+      taskConfigBuilder.append( OM_BSON_BUSINESS_NAME, _businessName ) ;
+
+      for ( iter = configList.begin(); iter != configList.end(); ++iter )
+      {
+         configBuilder.append( *iter ) ;
+      }
+
+      taskConfigBuilder.append( OM_TASKINFO_FIELD_CONFIG,
+                                configBuilder.arr() ) ;
+
+      taskConfig = taskConfigBuilder.obj() ;
+   }
+
+   void omRestartBusinessCommand::_generateResultInfo(
+                                             list<BSONObj> &configList,
+                                             BSONArray &resultInfo )
+   {
+      BSONArrayBuilder resultInfoBuilder ;
+      list<BSONObj>::iterator iter ;
+
+      for ( iter = configList.begin(); iter != configList.end(); ++iter )
+      {
+         BSONObjBuilder resultEleBuilder ;
+
+         resultEleBuilder.appendElements( *iter ) ;
+         resultEleBuilder.append( OM_TASKINFO_FIELD_STATUS,
+                                  OM_TASK_STATUS_INIT ) ;
+         resultEleBuilder.append( OM_TASKINFO_FIELD_STATUS_DESC,
+                                  getTaskStatusStr( OM_TASK_STATUS_INIT ) ) ;
+         resultEleBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+         resultEleBuilder.append( OM_REST_RES_DETAIL, "" ) ;
+
+         {
+            BSONArrayBuilder tmpEmptyBuilder ;
+
+            resultEleBuilder.append( OM_TASKINFO_FIELD_FLOW,
+                                     tmpEmptyBuilder.arr() ) ;
+         }
+
+         resultInfoBuilder.append( resultEleBuilder.obj() ) ;
+      }
+
+      resultInfo = resultInfoBuilder.arr() ;
+   }
+
+   BOOLEAN omRestartBusinessCommand::_isRequestNode(
+                                          list<simpleAddressInfo> &addrList,
+                                          const string &hostName,
+                                          const string &port )
+   {
+      BOOLEAN result = FALSE ;
+      list<simpleAddressInfo>::iterator iter ;
+
+      if ( addrList.empty() )
+      {
+         result = TRUE ;
+         goto done ;
+      }
+
+      for ( iter = addrList.begin(); iter != addrList.end(); ++iter )
+      {
+         if ( iter->hostName == hostName && iter->port == port )
+         {
+            result = TRUE ;
+            break ;
+         }
+      }
+
+   done:
+      return result ;
+   }
+
+   INT32 omRestartBusinessCommand::_getBusinessConfig(
+                                                   const BSONObj &options,
+                                                   list<BSONObj> &configList )
+   {
+      INT32 rc = SDB_OK ;
+      list<simpleAddressInfo> tmpAddrList ;
+      list<BSONObj> tmpConfigList ;
+      list<BSONObj>::iterator iter ;
+      omDatabaseTool dbTool( _cb ) ;
+
+      rc = dbTool.getConfigByBusiness( _businessName, tmpConfigList ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to config: business=%s, rc=%d",
+                             _businessName.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      if ( OM_BUSINESS_SEQUOIADB == _businessType )
+      {
+         BSONObj nodes = options.getObjectField( OM_BSON_NODES ) ;
+         BSONObjIterator iterBson( nodes ) ;
+
+         while ( iterBson.more() )
+         {
+            simpleAddressInfo address ;
+            BSONElement ele = iterBson.next() ;
+            BSONObj oneNode = ele.embeddedObject() ;
+
+            address.hostName = oneNode.getStringField( OM_BSON_HOSTNAME ) ;
+            address.port = oneNode.getStringField( OM_BSON_SVCNAME ) ;
+            tmpAddrList.push_back( address ) ;
+         }
+      }
+
+      for ( iter = tmpConfigList.begin(); iter != tmpConfigList.end(); ++iter )
+      {
+         string hostName = iter->getStringField(
+                                             OM_CONFIGURE_FIELD_HOSTNAME ) ;
+         BSONObj configInfo = iter->getObjectField(
+                                             OM_CONFIGURE_FIELD_CONFIG ) ;
+         BSONObjIterator configIter( configInfo ) ;
+
+         while ( configIter.more() )
+         {
+            BSONObjBuilder configInfoBuilder ;
+            BSONElement ele = configIter.next() ;
+            BSONObj nodeInfo = ele.embeddedObject() ;
+
+            if ( OM_BUSINESS_SEQUOIADB == _businessType )
+            {
+               string port = nodeInfo.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
+
+               if ( _isRequestNode( tmpAddrList, hostName, port ) )
+               {
+                  string role = nodeInfo.getStringField( OM_CONF_DETAIL_ROLE ) ;
+                  string groupName = nodeInfo.getStringField(
+                                                OM_CONF_DETAIL_DATAGROUPNAME ) ;
+
+                  configInfoBuilder.append( OM_BSON_HOSTNAME, hostName ) ;
+                  configInfoBuilder.append( OM_BSON_SVCNAME, port ) ;
+                  configInfoBuilder.append( OM_BSON_ROLE, role ) ;
+                  configInfoBuilder.append( OM_BSON_DATAGROUPNAME, groupName ) ;
+
+                  configList.push_back( configInfoBuilder.obj() ) ;
+               }
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRestartBusinessCommand::_createTask( const BSONObj &taskConfig,
+                                                const BSONArray &resultInfo,
+                                                INT64 &taskID )
+   {
+      INT32 rc = SDB_OK ;
+      string errDetail ;
+      omDatabaseTool dbTool( _cb ) ;
+      omTaskTool taskTool( _cb, _localAgentHost, _localAgentService ) ;
+
+      rc = dbTool.getMaxTaskID( taskID ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to get max task id:rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      ++taskID ;
+
+      rc = taskTool.createTask( OM_TASK_TYPE_RESTART_BUSINESS, taskID,
+                                getTaskTypeStr( OM_TASK_TYPE_RESTART_BUSINESS ),
+                                taskConfig, resultInfo ) ;
+      if( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to create task:rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = taskTool.notifyAgentTask( taskID, errDetail ) ;
+      if( rc )
+      {
+         dbTool.removeTask( taskID ) ;
+         _errorMsg.setError( TRUE, "failed to notify agent:detail:%s,rc=%d",
+                             errDetail.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+}

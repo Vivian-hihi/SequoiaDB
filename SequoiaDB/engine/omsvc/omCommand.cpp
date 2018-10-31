@@ -86,6 +86,7 @@ namespace engine
          OM_TASK_TYPE_EXTEND_BUSINESS_STR,
          OM_TASK_TYPE_SHRINK_BUSINESS_STR,
          OM_TASK_TYPE_DEPLOY_PACKAGE_STR,
+         OM_TASK_TYPE_RESTART_BUSINESS_STR,
       } ;
 
       if ( type < OM_TASK_TYPE_END )
@@ -634,13 +635,13 @@ namespace engine
       string operationType = OM_FIELD_OPERATION_EXTEND ;
       omConfigTool confTool( _rootPath, _languageFileSep ) ;
 
-      rc = confTool.readBuzTemplate( _businessType, operationType,
-                                     deployModList ) ;
+      rc = confTool.readBuzDeployTemplate( _businessType, operationType,
+                                           deployModList ) ;
       if( rc )
       {
          _errorMsg.setError( TRUE, "read template file failed:file=%s,rc=%d",
-                             confTool.getBuzTemplatePath( _businessType,
-                                                          operationType )
+                             confTool.getBuzDeployTemplatePath( _businessType,
+                                                                operationType )
                                                                 .c_str(), rc ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
@@ -669,14 +670,14 @@ namespace engine
          goto error ;
       }
 
-      rc = confTool.readBuzConfig( _businessType, _deployMod, separateConfig,
-                                   buzDetail ) ;
+      rc = confTool.readBuzConfigTemplate( _businessType, _deployMod,
+                                           separateConfig, buzDetail ) ;
       if( rc )
       {
          _errorMsg.setError( TRUE, "failed to read config file:file=%s,rc=%d",
-                             confTool.getBuzConfigPath( _businessType,
-                                                        _deployMod,
-                                                        separateConfig )
+                             confTool.getBuzConfigTemplatePath( _businessType,
+                                                                _deployMod,
+                                                                separateConfig )
                                                                 .c_str(), rc ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
@@ -4669,14 +4670,15 @@ namespace engine
          }
       }
 
-      rc = configTool.readBuzTemplate( businessType, operationType,
-                                       deployModList ) ;
+      rc = configTool.readBuzDeployTemplate( businessType, operationType,
+                                             deployModList ) ;
       if( rc )
       {
          _errorDetail = "failed to read template file" ;
          PD_LOG( PDERROR, "failed to read template:file=%s:rc=%d",
-                 configTool.getBuzTemplatePath( businessType,
-                                                operationType ).c_str(), rc ) ;
+                 configTool.getBuzDeployTemplatePath( businessType,
+                                                      operationType ).c_str(),
+                 rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -4850,8 +4852,9 @@ namespace engine
          list<BSONObj> templateList ;
          list<BSONObj>::iterator iter ;
 
-         rc =  cfgTool.readBuzTemplate( _businessType, OM_FIELD_OPERATION_DEPLOY,
-                                        templateList ) ;
+         rc =  cfgTool.readBuzDeployTemplate( _businessType,
+                                              OM_FIELD_OPERATION_DEPLOY,
+                                              templateList ) ;
          if ( rc )
          {
             _errorMsg.setError( TRUE, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
@@ -5001,8 +5004,8 @@ namespace engine
       }
 
       //get business template
-      rc = cfgTool.readBuzConfig( _businessType, _deployMod, FALSE,
-                                  buzTemplate ) ;
+      rc = cfgTool.readBuzConfigTemplate( _businessType, _deployMod, FALSE,
+                                          buzTemplate ) ;
       if ( rc )
       {
          _errorMsg.setError( TRUE, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;

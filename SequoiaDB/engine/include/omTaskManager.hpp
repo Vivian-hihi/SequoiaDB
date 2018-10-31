@@ -229,6 +229,23 @@ namespace engine
 
    } ;
 
+   class omRestartBusinessTask : public omTaskBase
+   {
+   public:
+      omRestartBusinessTask( INT64 taskID ) ;
+      virtual ~omRestartBusinessTask() ;
+   
+   public:
+      virtual INT32 finish( BSONObj &resultInfo ) ;
+   
+      virtual INT32 getType(){ return OM_TASK_TYPE_RESTART_BUSINESS ; }
+   
+      virtual INT64 getTaskID(){ return _taskID ; }
+
+   private:
+      INT64 _taskID ;
+   } ;
+
    class omRemoveBusinessTask : public omTaskBase
    {
       public:

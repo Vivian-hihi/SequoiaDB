@@ -95,27 +95,27 @@ namespace engine
       {
       }
 
-      string getBuzTemplatePath( const string &businessType,
-                                 const string &operationType ) ;
-      string getBuzConfigPath( const string &businessType,
-                               const string &deployMod,
-                               BOOLEAN isSeparateConfig ) ;
-      string getBuzConfigPath( const string &businessType,
-                               const string &deployMod,
-                               const string &isSeparateConfig ) ;
+      string getBuzDeployTemplatePath( const string &businessType,
+                                       const string &operationType ) ;
+      string getBuzConfigTemplatePath( const string &businessType,
+                                       const string &deployMod,
+                                       BOOLEAN isSeparateConfig ) ;
+      string getBuzConfigTemplatePath( const string &businessType,
+                                       const string &deployMod,
+                                       const string &isSeparateConfig ) ;
 
       INT32 readBuzTypeList( list<BSONObj> &businessList ) ;
-      INT32 readBuzTemplate( const string &businessType,
-                             const string &operationType,
-                             list<BSONObj> &objList ) ;
-      INT32 readBuzConfig( const string &businessType,
-                           const string &deployMod,
-                           BOOLEAN isSeparateConfig,
-                           BSONObj &obj ) ;
-      INT32 readBuzConfig( const string &businessType,
-                           const string &deployMod,
-                           const string &isSeparateConfig,
-                           BSONObj &obj ) ;
+      INT32 readBuzDeployTemplate( const string &businessType,
+                                   const string &operationType,
+                                   list<BSONObj> &objList ) ;
+      INT32 readBuzConfigTemplate( const string &businessType,
+                                   const string &deployMod,
+                                   BOOLEAN isSeparateConfig,
+                                   BSONObj &obj ) ;
+      INT32 readBuzConfigTemplate( const string &businessType,
+                                   const string &deployMod,
+                                   const string &isSeparateConfig,
+                                   BSONObj &obj ) ;
 
    private:
       string _rootPath ;

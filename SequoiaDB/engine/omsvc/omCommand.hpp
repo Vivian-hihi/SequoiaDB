@@ -647,6 +647,31 @@ namespace engine
 
    } ;
 
+   class omGetConfigTemplateCommand : public omAuthCommand
+   {
+   public:
+      REST_CONSTRUCTOR_PARA_INHERIT( omGetConfigTemplateCommand,
+                                     omAuthCommand )
+      {
+      }
+
+      ~omGetConfigTemplateCommand()
+      {
+      }
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_GET_CONFIG_TEMPLATE_REQ ; }
+
+      virtual INT32 doCommand() ;
+
+   private:
+      INT32 _getTemplate( BSONObj &configTemplate ) ;
+
+   private:
+      string _businessType ;
+   } ;
+
    class omGetBusinessConfigCommand : public omAuthCommand
    {
    public:
@@ -2030,6 +2055,52 @@ namespace engine
       virtual const CHAR* name() { return OM_LIST_PLUGIN_REQ ; }
 
       virtual INT32 doCommand() ;
+   } ;
+
+   class omRestartBusinessCommand : public omAuthCommand
+   {
+   public:
+      REST_CONSTRUCTOR_PARA_INHERIT( omRestartBusinessCommand, omAuthCommand )
+      {
+      }
+
+      ~omRestartBusinessCommand()
+      {
+      }
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      virtual const CHAR* name() { return OM_RESTART_BUSINESS_REQ ; }
+
+      virtual INT32 doCommand() ;
+
+   private:
+      INT32 _check() ;
+
+      INT32 _generateRequest( const BSONObj &options,
+                              BSONObj &taskConfig,
+                              BSONArray &resultInfo ) ;
+
+      void _generateTaskConfig( list<BSONObj> &configList,
+                                BSONObj &taskConfig ) ;
+
+      void _generateResultInfo( list<BSONObj> &configList,
+                                BSONArray &resultInfo ) ;
+
+      INT32 _createTask( const BSONObj &taskConfig,
+                         const BSONArray &resultInfo,
+                         INT64 &taskID ) ;
+
+      BOOLEAN _isRequestNode( list<simpleAddressInfo> &addrList,
+                              const string &hostName, const string &port ) ;
+
+      INT32 _getBusinessConfig( const BSONObj &options,
+                                list<BSONObj> &configList ) ;
+
+   private:
+      string _clusterName ;
+      string _businessName ;
+      string _businessType ;
    } ;
 }
 
