@@ -2516,7 +2516,7 @@ namespace engine
          else
          {
             globalID = ( utilGlobalID )ele.numberLong() ;
-            if ( UTIL_GLOGALID_MAX - 1 <= globalID )
+            if ( UTIL_GLOGALID_MAX - 1 < globalID )
             {
                rc = SDB_CAT_GLOBALID_EXCEEDED ;
                PD_LOG( PDERROR,
