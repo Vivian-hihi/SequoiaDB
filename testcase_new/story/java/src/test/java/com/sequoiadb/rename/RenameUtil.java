@@ -11,6 +11,7 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
+import org.bson.util.JSON;
 import org.testng.Assert;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -223,4 +224,48 @@ public class RenameUtil extends SdbTestBase {
 			break;
 		}
 	}
+	
+	public static void removeCS( Sequoiadb db, String csName ){
+		if( db.isCollectionSpaceExist(csName)){
+			db.dropCollectionSpace(csName);
+		}
+	}
+	
+	public static CollectionSpace createCS(Sequoiadb db, String csName) {
+		return createCS(db, csName, null);
+	}
+	
+	public static CollectionSpace createCS(Sequoiadb db, String csName, String option) {
+        CollectionSpace cs = null;
+        BSONObject options = (BSONObject) JSON.parse(option);
+        try {
+            if (db.isCollectionSpaceExist(csName)) {
+                db.dropCollectionSpace(csName);;
+            }
+
+            cs = db.createCollectionSpace(csName, options);
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
+        }
+        return cs;
+    }
+	
+	public static DBCollection createCL(CollectionSpace cs, String clName, String option) {
+        DBCollection cl = null;
+        BSONObject options = (BSONObject) JSON.parse(option);
+        try {
+            if (cs.isCollectionExist(clName)) {
+                cs.dropCollection(clName);
+            }
+
+            cl = cs.createCollection(clName, options);
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
+        }
+        return cl;
+    }
+	
+	public static DBCollection createCL(CollectionSpace cs, String clName) {
+		return createCL(cs, clName, null);
+    }
 }
