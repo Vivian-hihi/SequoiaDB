@@ -7,7 +7,9 @@ MD5_HEADER_PATH = $(MD5_PATH)/lib
 EXTERNAL_PATH = $(CURRENT_PATH)/external/client
 BSON_PATH = $(EXTERNAL_PATH)/sdbbson
 ENGINE_PATH = $(CURRENT_PATH)/../../SequoiaDB/engine
-OPENSSL_PATH = $(CURRENT_PATH)/../../thirdparty/crypto/openssl-1.0.1c/lib
+
+OPENSSL_PATH = $(CURRENT_PATH)/../../thirdparty/crypto/openssl-1.0.1c
+OPENSSL_LIBRARY = $(CURRENT_PATH)/../../thirdparty/crypto/openssl-1.0.1c/lib
 
 BSON_SOURCE = $(BSON_PATH)/numbers.c $(BSON_PATH)/bson.c $(BSON_PATH)/encoding.c $(BSON_PATH)/common_decimal.c
 
@@ -98,7 +100,7 @@ OPTIMIZATION?=-O3
 WARNINGS?=-Wall -Wno-unknown-pragmas -Wno-missing-prototypes -Wno-missing-format-attribute
 #DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES
 DEBUG?=-ggdb 
-INCLUDEPATH=-I$(EXTERNAL_PATH) -I$(BSON_PATH) -I$(MD5_PATH)
+INCLUDEPATH=-I$(EXTERNAL_PATH) -I$(BSON_PATH) -I$(MD5_PATH) -I$(OPENSSL_PATH)/include
 ALL_CFLAGS=$(CFLAGS) $(OPTIMIZATION) $(WARNINGS) $(DEBUG) $(INCLUDEPATH) $(ALL_DEFINES) $(DYN_FLAGS)
 
 
@@ -123,9 +125,9 @@ else
     UNAME_P := $(shell uname -p)
     ifeq ($(UNAME_S),Linux)
         ifeq ($(UNAME_P),x86_64)
-            SHLIB_LINK = -pthread -lcrypto -L$(OPENSSL_PATH)/linux64
+            SHLIB_LINK = -pthread -lcrypto -L$(OPENSSL_LIBRARY)/linux64
         else
-            SHLIB_LINK = -pthread -lcrypto -L$(OPENSSL_PATH)/linux32
+            SHLIB_LINK = -pthread -lcrypto -L$(OPENSSL_LIBRARY)/linux32
         endif
     endif
 endif
