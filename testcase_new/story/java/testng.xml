@@ -30,6 +30,7 @@
          <package name="com.sequoiadb.split.basefunc"/>
          <package name="com.sequoiadb.metadataconsistency.data"/>
          <package name="com.sequoiadb.sync"/>
+			<package name="com.sequoiadb.autoIncrement"/>
       </packages>      
    </test>
    
