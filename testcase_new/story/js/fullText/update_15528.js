@@ -28,8 +28,8 @@ function main()
    
    checkFullSyncToES( COMMCSNAME, clName, textIndexName, 4 );
    
-   var esIndexName = dbOperator.getESIndexName( COMMCSNAME, clName, textIndexName );
-   var expectResult = esOperator.findFromES( esIndexName, queryCond ).sort( compare( 'a' ) );
+   var esIndexNames = dbOperator.getESIndexNames( COMMCSNAME, clName, textIndexName );
+   var expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a' ) );
    var actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );
    checkResult( expectResult, actResult );
    
@@ -37,7 +37,7 @@ function main()
    
    checkFullSyncToES( COMMCSNAME, clName, textIndexName, 4 );
    
-   expectResult = esOperator.findFromES( esIndexName, queryCond ).sort( compare( 'a' ) );
+   expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );
    checkResult( expectResult, actResult );
    
@@ -50,7 +50,7 @@ function main()
    
    checkFullSyncToES( COMMCSNAME, clName, textIndexName, 4 );
    
-   expectResult = esOperator.findFromES( esIndexName, queryCond ).sort( compare( 'a' ) );
+   expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );
    checkResult( expectResult, actResult );
    
@@ -58,7 +58,7 @@ function main()
    
    checkFullSyncToES( COMMCSNAME, clName, textIndexName, 4 );
    
-   expectResult = esOperator.findFromES( esIndexName, queryCond ).sort( compare( 'a' ) );
+   expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );
    checkResult( expectResult, actResult );
    

@@ -32,7 +32,6 @@ function main()
    dbcl.createIndex(textIndexName, {"a" : "text"});
 
    var dbOpr = new DBOperator();
-   var esIndexName = dbOpr.getESIndexName(csName, clName, textIndexName);
    
    // check sync to es
    checkFullSyncToES(csName, clName, textIndexName, 2);

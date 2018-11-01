@@ -26,14 +26,14 @@ function main(){
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndex);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
    
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 2);
    
    var esOperator = new ESOperator();
    var queryCond = '{"query" : {"exists" : {"field" : "content"}}}'; 
    var findConf = {"" : {$Text : {"query" : {"exists" : {"field" : "content"}}}}};
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var actCLRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, null);
    
    var expESRecords = new Array();
@@ -48,7 +48,7 @@ function main(){
    //更新使记录的唯一索引字段与与集合中其它记录的唯一索引重复
    updateRecords(dbcl);
    
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var actCLRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, null);
    
    //更新失败，报错-38，检查原始集合、固定集合及主备数据节点数据无差别

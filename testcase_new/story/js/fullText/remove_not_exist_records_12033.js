@@ -23,7 +23,7 @@ function main(){
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndex);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 20);
    
    //删除不存在的记录，检查结果 
@@ -35,7 +35,7 @@ function main(){
    var esOperator = new ESOperator();
    var findConf = {"" : {$Text : {"query" : {"match_all" : {}}}}}
    var queryCond = '{"query" : {"exists" : {"field" : "about"}}, "size" : 30}';
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var expCLRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, null);
    checkRecords( expCLRecords, actESRecords );
       

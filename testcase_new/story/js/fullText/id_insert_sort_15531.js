@@ -28,7 +28,6 @@ function main()
    
    var limitCond = 10;
    var acSortCond = { a : 1 };
-   var esIndexName = dbOperator.getESIndexName( COMMCSNAME, clName, textIndexName );
    var expectResult = dbOperator.findFromCL( dbcl, null, selectorCond, acSortCond, null, limitCond );
    var actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond, acSortCond );
    checkResult( expectResult, actResult );

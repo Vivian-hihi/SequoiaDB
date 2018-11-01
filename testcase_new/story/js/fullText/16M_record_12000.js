@@ -24,9 +24,7 @@ function main()
    dbcl.insert({a:str});
    
    //check count,but not check record(out of memery)
-   var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
-   var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, indexName);
    checkFullSyncToES(COMMCSNAME, clName, indexName, 2);
    println("---check insert success---");
    

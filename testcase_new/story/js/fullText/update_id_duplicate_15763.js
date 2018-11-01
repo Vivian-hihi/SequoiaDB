@@ -25,13 +25,13 @@ function main(){
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndex);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 2);
    
    var esOperator = new ESOperator();
    var queryCond = '{"query" : {"exists" : {"field" : "content"}}}'; 
    var findConf = {"" : {$Text : {"query" : {"exists" : {"field" : "content"}}}}};
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var actCLRecords = dbOperator.findFromCL(dbcl, findConf, null, null, null);
    
    var expESRecords = new Array();
@@ -46,7 +46,7 @@ function main(){
    //更新_id字段的值与集合中其它任意一条记录的_id索引重复，检查结果
    updateFieldId(dbcl);
    
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var actCLRecords = dbOperator.findFromCL(dbcl, findConf, null, null, null);
    
    //报错-38，检查原始集合、固定集合及ES记录的_id索引未被更新，使用inspect工具查看主备数据节点数据无差别

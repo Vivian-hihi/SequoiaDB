@@ -25,12 +25,12 @@ function main(){
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndex);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 1);
    
    var esOperator = new ESOperator();
    var queryCond = '{"query" : {"exists" : {"field" : "content"}}}'; 
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    
    var expESRecords = new Array();
    expESRecords.push({about : "about for you", content : "this is my college"});
@@ -41,7 +41,7 @@ function main(){
    //再次执行步骤1，检查结果
    insertRecordsAgain(dbcl, records);
    
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    
    //记录插入失败，固定集合及ES端记录无变化
    checkRecords( expESRecords,  actESRecords);

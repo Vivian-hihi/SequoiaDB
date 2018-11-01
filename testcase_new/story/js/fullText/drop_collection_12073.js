@@ -28,8 +28,8 @@ function main(){
    dbcl.putLob(testFile);
    
    var dbOperator = new DBOperator();
-   var esIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndex);
-   var cappedCL = dbOperator.getCappedCL(COMMCSNAME, clName, fullIndex);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
+   var cappedCLs = dbOperator.getCappedCLs(COMMCSNAME, clName, fullIndex);
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 10);
    
    //删除集合，检查结果
@@ -38,7 +38,7 @@ function main(){
    
    //集合删除成功，lob文件、索引文件、固定集合文件均被删除，主备节点一致，es中最终无该集合中的记录
    var esOperator = new ESOperator();
-   checkAllResult(dbcl, esOperator, cappedCL, esIndexName);
+   checkAllResult(dbcl, esOperator, cappedCLs[0], esIndexNames[0]);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
@@ -120,10 +120,10 @@ function checkAllResult(dbcl, esOperator, cappedCL){
    sleep(1000);
    try{
       var queryCond = '{"query" : {"match_all" : {}}}';
-      esOperator.findFromES(esIndexName, queryCond);
+      esOperator.findFromES(esIndexNames[0], queryCond);
    }
    catch(e){
-      if(e != "ReferenceError: esIndexName is not defined"){
+      if(e != "ReferenceError: esIndexNames is not defined"){
          println(e);
          throw buildException("findFromES()", e, "check if it exists", "success", "fail");
       }

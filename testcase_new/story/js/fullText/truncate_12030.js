@@ -24,8 +24,8 @@ function main(){
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndex);
-   var cappedCL = dbOperator.getCappedCL(COMMCSNAME, clName, fullIndex);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
+   var cappedCLs = dbOperator.getCappedCLs(COMMCSNAME, clName, fullIndex);
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 10);
    
    //使用truncate删除记录，检查结果    
@@ -38,8 +38,8 @@ function main(){
    var findConf = {"" : {$Text : {"query" : {"match_all" : {}}}}}
    var queryCond = '{"query" : {"exists" : {"field" : "about"}}, "size" : 30}';
    var actCLRecords = dbOperator.findFromCL(dbcl, findConf, null, null, null);
-   var actCappedCLRecords = dbOperator.findFromCL(cappedCL, null, null, null, null);
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actCappedCLRecords = dbOperator.findFromCL(cappedCLs[0], null, null, null, null);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    
    var expRecords = new Array();
 

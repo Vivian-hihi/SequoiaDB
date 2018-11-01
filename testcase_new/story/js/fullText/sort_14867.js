@@ -20,9 +20,7 @@ function main()
    commCreateIndex( dbcl, indexName, {a:"text"});
    dbcl.insert({a:"text"});
    
-   var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
-   var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, indexName);
    checkFullSyncToES(COMMCSNAME, clName, indexName, 1);
    
    //not support full text sort

@@ -22,9 +22,7 @@ function main()
    commCreateIndex( dbcl, indexName, {a:"text"});
    dbcl.insert({b:"text"});
    
-   var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
-   var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, indexName);
    checkFullSyncToES(COMMCSNAME, clName, indexName, 0);
    
    var expectRecords = dbOperator.findFromCL(dbcl, {a:{$type:2,$et:"string"}});

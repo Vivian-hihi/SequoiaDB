@@ -39,13 +39,13 @@ function main()
  
    var esOpr = new ESOperator(); 
    var dbOpr = new DBOperator();
-   var esIndexName = dbOpr.getESIndexName(csName, clName, textIndexName);
+   var esIndexNames = dbOpr.getESIndexNames(csName, clName, textIndexName);
  
    // from 
    var findCond = {"":{"$Text":{"query":{"match_all":{}}, "from": 9990}}};
    var searchCond = '{"query":{"match_all":{}}, "from": 9990}'
    var actResult = dbOpr.findFromCL(dbcl, findCond, {"a" : {"$include" : 1}});
-   var expResult = esOpr.findFromES(esIndexName, searchCond);
+   var expResult = esOpr.findFromES(esIndexNames[0], searchCond);
    actResult.sort(compare("a"));
    expResult.sort(compare("a"));
    checkResult(expResult, actResult); 
@@ -54,7 +54,7 @@ function main()
    var findCond = {"":{"$Text":{"query":{"match_all":{}}, "size": 10000}}};
    var searchCond = '{"query":{"match_all":{}}, "size": 10000}'
    var actResult = dbOpr.findFromCL(dbcl, findCond, {"a" : {"$include" : 1}});
-   var expResult = esOpr.findFromES(esIndexName, searchCond);
+   var expResult = esOpr.findFromES(esIndexNames[0], searchCond);
    actResult.sort(compare("a"));
    expResult.sort(compare("a"));
    checkResult(expResult, actResult);
@@ -63,7 +63,7 @@ function main()
    var findCond = {"":{"$Text":{"query":{"match_all":{}}, "from": 1, "size": 9990}}};
    var searchCond = '{"query":{"match_all":{}}, "from": 1, "size": 9990}'
    var actResult = dbOpr.findFromCL(dbcl, findCond, {"a" : {"$include" : 1}});
-   var expResult = esOpr.findFromES(esIndexName, searchCond);
+   var expResult = esOpr.findFromES(esIndexNames[0], searchCond);
    actResult.sort(compare("a"));
    expResult.sort(compare("a"));
    checkResult(expResult, actResult);

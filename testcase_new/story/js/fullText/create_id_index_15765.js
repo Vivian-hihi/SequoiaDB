@@ -25,13 +25,13 @@ function main(){
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndex);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 1);
    
    var esOperator = new ESOperator();
    var queryCond = '{"query" : {"exists" : {"field" : "content"}}}'; 
    var findConf = {"" : {$Text : {"query" : {"exists" : {"field" : "content"}}}}};
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var actCLRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, null);
    
    var expESRecords = new Array();
@@ -47,7 +47,7 @@ function main(){
    //创建_id索引,检查结果
    createCLIdIndex(dbcl);
    
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var actCLRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, null);
    
    //id索引创建失败，报错-38，原始集合、固定集合及ES端记录不变

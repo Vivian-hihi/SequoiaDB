@@ -28,11 +28,11 @@ function main()
    checkFullSyncToES(csName, clName, textIndexName, 1);
    
    // check result
-   var esIndexName = dbOpr.getESIndexName(csName, clName, textIndexName);
+   var esIndexNames = dbOpr.getESIndexNames(csName, clName, textIndexName);
    var esOpr = new ESOperator();
    var searchCond = '{"query":{"match_all":{}}}';
    var expectResult = [{a: "arr1", b: "string1"}];
-   var actResult = esOpr.findFromES(esIndexName, searchCond);
+   var actResult = esOpr.findFromES(esIndexNames[0], searchCond);
    checkResult(expectResult, actResult);
    
    // update to all arrays after create text index, should fail
@@ -50,7 +50,7 @@ function main()
    }
 
    // check result
-   var actResult = esOpr.findFromES(esIndexName, searchCond);
+   var actResult = esOpr.findFromES(esIndexNames[0], searchCond);
    checkResult(expectResult, actResult);
 
    commDropCS( db, csName, true, "drop CS in the end" );

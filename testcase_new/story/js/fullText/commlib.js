@@ -189,14 +189,23 @@ function DBOperator()
    /*****************************************************************
    * get cappedcl  
    *****************************************************************/
-   this.getCappedCL = function ( csName, clName, textIndexName )
+   this.getCappedCLs = function ( csName, clName, textIndexName )
    {
       var clFullName = csName + "." + clName;
       var dbcl = db.getCS( csName ).getCL( clName );
       var cappedCLName = this.getCappedCLName( dbcl, textIndexName ); 
       var clGroups = commGetCLGroups( db, clFullName );
-      var cappedCL = db.getRG( clGroups[0] ).getMaster().connect().getCS( cappedCLName ).getCL( cappedCLName );
-      return cappedCL;
+      // sort groupname, in order to mapping esIndexNames <-> cappedCLs
+      clGroups.sort();
+      
+      // get each cappedCL from each group
+      var cappedCLs = new Array();
+      for (var i in clGroups)
+      {
+         var cappedCL = db.getRG(clGroups[i]).getMaster().connect().getCS(cappedCLName).getCL(cappedCLName);
+         cappedCLs.push(cappedCL);
+      }
+      return cappedCLs;
    }
 
    /*****************************************************************
@@ -204,7 +213,7 @@ function DBOperator()
    * cappedCLName: SYS_uniqueId_textIndexName  
    * esIndexName:  sys_uniqueId_textIndexName_clGroupName							  
    *****************************************************************/
-   this.getESIndexName = function (csName, clName, textIndexName)
+   this.getESIndexNames = function (csName, clName, textIndexName)
    {
       // check cappedcl name is valid
       var dbcl = db.getCS(csName).getCL(clName);
@@ -213,14 +222,13 @@ function DBOperator()
       // get es index names
       var esIndexNames = new Array();
       var clGroupNames = commGetCLGroups(db, csName + "." + clName);
+      // sort groupname, in order to mapping esIndexNames <-> cappedCLs
+      clGroupNames.sort();
       for(var i in clGroupNames)
       {
          esIndexNames.push(cappedCLName.toLowerCase() + "_" + clGroupNames[i]);	
       }
 	
-      // if common cl, return one index
-      if(esIndexNames.length == 1) { return esIndexNames[0]; }
-
       // if sharding cl, return all indices
       return esIndexNames;
    }
@@ -277,15 +285,21 @@ function DBOperator()
 ******************************************************************/
 function checkFullSyncToES(csName, clName, textIndexName, expectCount)
 {
-   var esIndexName = dbOpr.getESIndexName(csName, clName, textIndexName);
-   var cappedCL = dbOpr.getCappedCL(csName, clName, textIndexName);
-   if(!esOpr.isExistIndexInES(esIndexName))
-   {
-      throw buildException("isExistIndexInES()","index name isExist"," index name exsit", "exsit","not exsit");
-   }
+   var esIndexNames = dbOpr.getESIndexNames(csName, clName, textIndexName);
+   var cappedCLs = dbOpr.getCappedCLs(csName, clName, textIndexName);
 
-   checkCountInES(esIndexName, expectCount);
-   checkLidInES(esIndexName, cappedCL);
+   // check indexnames sync to ES
+   for(var i in esIndexNames)
+   {
+      if(!esOpr.isExistIndexInES(esIndexNames[i]))
+      {
+         throw buildException("isExistIndexInES()","index name isExist"," index name exsit", "exsit","not exsit");
+      }
+   }
+   
+   // check all indices sync to ES
+   checkCountInES(esIndexNames, expectCount);
+   checkLidInES(esIndexNames, cappedCLs);
 }
 	
 /*****************************************************************
@@ -294,7 +308,7 @@ function checkFullSyncToES(csName, clName, textIndexName, expectCount)
                 clName
                 expectCount    
 ******************************************************************/
-function checkCountInES(esIndexName, expectCount)
+function checkCountInES(esIndexNames, expectCount)
 {
    println("begin to check count in ES");
    //the longest waiting time is 600S
@@ -302,17 +316,22 @@ function checkCountInES(esIndexName, expectCount)
    var timeout = 600;
    var doTimes = 0;
    var interval = 1; //interval 1s
-   
+  
    while(true)
    {
-      // remove the count of SDBCOMMITID
-      var actCount = esOpr.countFromES(esIndexName) - 1;
+      // clear count every time
+      var actCount = 0;
+      // Add counts of all indices 
+      for(var i in esIndexNames)
+      {
+         actCount += (esOpr.countFromES(esIndexNames[i]) - 1);
+      }
       // if expect count < act count, exit
       if(actCount == expectCount)
       { 
          isSync = true;
       }
-      
+     
       //if expect count > act count, wait to expect count = act count
       if(!isSync)
       {
@@ -340,21 +359,39 @@ function checkCountInES(esIndexName, expectCount)
 @input:         csName
                 clName 
 ******************************************************************/   
-function checkLidInES(esIndexName, cappedCL)
+function checkLidInES(esIndexNames, cappedCLs)
 {
    println("begin to check commitID in ES");
+   
+   // if esIndexNames not mapping to cappedCLs, fail
+   if(esIndexNames.length !== cappedCLs.length)
+   {
+      throw buildException("checkLidInES()", "lid sync to es", "check ES records synchronization", "success","fail");
+   }
+
    //the longest waiting time is 600S
    var isSync = false;
    var timeout = 600;
    var doTimes = 0;
    var interval = 1; //interval 1s
    
-   var lastLogicalID = dbOpr.getLastLID(cappedCL);
+   // get all lids from all groups
+   var lastLogicalIDs = new Array();
+   for(var i in cappedCLs)  {   lastLogicalIDs.push(dbOpr.getLastLID(cappedCLs[i]));   }
    while(true)
    {
-      var commitID = esOpr.getCommitIDFromES(esIndexName); 
-      if(commitID == lastLogicalID)
-      {
+      // get all commitids from all esIndexNames 
+      var commitIDs = new Array();
+      for(var i in esIndexNames)  {   commitIDs.push(esOpr.getCommitIDFromES(esIndexNames[i]));  } 
+
+      // check if all indices finish sync
+      for(var i in esIndexNames)  
+      {   
+         if(commitIDs[i] !== lastLogicalIDs[i])
+         {
+            isSync = false;
+            break;
+         }
          isSync = true;
       }
       

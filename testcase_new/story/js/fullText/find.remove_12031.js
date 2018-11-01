@@ -26,8 +26,8 @@ function main(){
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndex);
-   var cappedCL = dbOperator.getCappedCL(COMMCSNAME, clName, fullIndex);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
+   var cappedCLs = dbOperator.getCappedCLs(COMMCSNAME, clName, fullIndex);
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 10);
    
    //使用find.remove接口删除记录，检查结果 
@@ -38,11 +38,11 @@ function main(){
    
    //记录更新成功，固定集合中记录正确，操作类型正确，es中记录最终与原集合一致
    var esOperator = new ESOperator();
-   var count = cappedCL.find({Type : 2}).count();
+   var count = cappedCLs[0].find({Type : 2}).count();
    var findConf = {"" : {$Text : {"query" : {"match_all" : {}}}}};
    var actCLRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, null);
    var queryCond = '{"query" : {"exists" : {"field" : "about"}}, "size" : 20}';
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    
    if (count != 8){
       throw buildException( "Count ", null, "cappedCL.find({Type : 2}).count();", "success", "fail" );

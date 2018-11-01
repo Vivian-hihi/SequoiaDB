@@ -38,9 +38,7 @@ function main()
       return;
    }
    
-   var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
-   var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndexName);
    checkFullSyncToES(COMMCSNAME, clName, fullIndexName, 30000);
    
    var actCount = dbcl.count({$and:[{a:1},{"":{$Text:{query:{match:{b:"text2"}}}}}]});

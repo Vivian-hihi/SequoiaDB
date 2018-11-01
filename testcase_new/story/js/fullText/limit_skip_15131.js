@@ -34,9 +34,7 @@ function main()
       return;
    }
    
-   var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
-   var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, indexName);
    checkFullSyncToES(COMMCSNAME, clName, indexName, 30000);
    
    var expectRecords = dbOperator.findFromCL(dbcl, null, null, {_id:1}, null, 15000, 16000);

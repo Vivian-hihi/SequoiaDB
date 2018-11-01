@@ -30,10 +30,10 @@ function main()
    
    // check result
    var dbOpr = new DBOperator();
-   var esIndexName = dbOpr.getESIndexName(csName, clName, textIndexName);
+   var esIndexNames = dbOpr.getESIndexNames(csName, clName, textIndexName);
    var searchCond = '{"query":{"match_all":{}}}';
    var expectResult = [{a: "arr1", c: "string1"}];
-   var actResult = esOpr.findFromES(esIndexName, searchCond);
+   var actResult = esOpr.findFromES(esIndexNames[0], searchCond);
    checkResult(expectResult, actResult);
    
    // insert more than one array after create text index, should fail
@@ -51,7 +51,7 @@ function main()
    }
 
    // check result after insert
-   var actResult = esOpr.findFromES(esIndexName, searchCond);
+   var actResult = esOpr.findFromES(esIndexNames[0], searchCond);
    checkResult(expectResult, actResult);
 
    commDropCS( db, csName, true, "drop CS in the end" );

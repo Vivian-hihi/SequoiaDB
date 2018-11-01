@@ -26,13 +26,13 @@ function main(){
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndex);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 2);
    
    var esOperator = new ESOperator();
    var queryCond = '{"query" : {"exists" : {"field" : "content"}}}'; 
    var findConf = {"" : {$Text : {"query" : {"exists" : {"field" : "content"}}}}};
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var actCLRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, null);
    
    var expESRecords = new Array();
@@ -47,7 +47,7 @@ function main(){
    //重复执行步骤2，检查结果
    insertRecordsAgain(dbcl, records);
    
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var actCLRecords = dbOperator.findFromCL(dbcl, findConf, {about : "", content : ""}, null, null);
    
    //重复执行后报错-38 ，检查原始集合、固定集合记录无变化，使用inspect工具检测主备节点数据一致，ES上记录无变化 

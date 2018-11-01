@@ -22,9 +22,7 @@ function main()
    dbcl.insert({_id:1,a:"text2"});
    
    //_id is the same, ES sync the last one, but can return all records by fullText query even if the same _id value
-   var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
-   var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, indexName);
    checkFullSyncToES(COMMCSNAME, clName, indexName, 1);
    
    var expectRecords = dbOperator.findFromCL(dbcl, null, null, {a:1});

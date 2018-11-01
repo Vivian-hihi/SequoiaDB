@@ -20,7 +20,7 @@ function main(){
    var records = insertData(dbcl);
    
    var dbOperator = new DBOperator();
-   var esIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndex);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 8);
    
    //使用DSL的方式进行全文检索,在es中执行查询，查询结果正确
@@ -28,38 +28,38 @@ function main(){
    var esOperator = new ESOperator();
    var findConf = {"" : {$Text : {"query" : {"match" : {"content" : "college"}}}}};
    var queryCond = '{"query" : {"term" : {"content" : "college"}}}';
-   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var esRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var clRecords = dbOperator.findFromCL(dbcl, findConf, {content : "", about : ""}, null, null);
    checkRecords( esRecords, clRecords );
    
    var queryCond = '{"query" : {"match" : {"about" : "这是我的"}}}';
-   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var esRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var clRecords = dbOperator.findFromCL(dbcl, findConf, {content : "", about : ""}, null, null);
    checkRecords( esRecords, clRecords );
    
    var queryCond = '{"query" : {"match_phrase" : {"content" : "not got"}}}';
-   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var esRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var findConfNot = {"" : {$Text : {"query" : {"match" : {"content" : "not"}}}}};
    var clRecords = dbOperator.findFromCL(dbcl, findConfNot, {content : "", about : ""}, null, null);
    checkRecords( esRecords, clRecords );
    
    var queryCond = '{"query" : {"multi_match" : {"query" : "you", "fields" : ["content", "about"]}}}';
-   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var esRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var clRecords = dbOperator.findFromCL(dbcl, findConfNot, {content : "", about : ""}, null, null);
    checkRecords( esRecords, clRecords );
    
    var queryCond = '{"query" : {"bool" : {"must" : [{"match" : {"content" : "not"}}, {"match" : {"about" : "you"}}]}}}';
-   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var esRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var clRecords = dbOperator.findFromCL(dbcl, findConfNot, {content : "", about : ""}, null, null);
    checkRecords( esRecords, clRecords );
    
    var queryCond = '{"query" : {"bool" : {"must_not" : {"match" : {"about" : "you"}}}}}';
-   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var esRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var clRecords = dbOperator.findFromCL(dbcl, findConf, {content : "", about : ""}, null, null);
    checkRecords( esRecords, clRecords );
    
    var queryCond = '{"query" : {"bool" : {"should" : [{"match" : {"content" : "college"}}, {"match" : {"about" : "you"}}]}}}';
-   var esRecords = esOperator.findFromES(esIndexName, queryCond);
+   var esRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var clRecords = records;
    checkRecords( esRecords, clRecords );
       

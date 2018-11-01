@@ -40,9 +40,7 @@ function main()
    dbcl.insert(doc);
    
    //all of record sync to ES
-   var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
-   var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, indexName);
    checkFullSyncToES(COMMCSNAME, clName, indexName, 4);
    
    var expectRecords = dbOperator.findFromCL(dbcl, {a:{$type:2,$et:"string"}}, null, {_id:1});

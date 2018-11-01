@@ -29,8 +29,8 @@ function main()
    
    checkFullSyncToES( COMMCSNAME, clName, textIndexName, 3 );
    
-   var esIndexName = dbOperator.getESIndexName( COMMCSNAME, clName, textIndexName );
-   var expectResult = esOperator.findFromES( esIndexName, queryCond ).sort( compare( 'a', compare( 'b' ) ) );
+   var esIndexNames = dbOperator.getESIndexNames( COMMCSNAME, clName, textIndexName );
+   var expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a', compare( 'b' ) ) );
    var actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a',  compare( 'b' ) ) );
    checkResult( expectResult, actResult );
    
@@ -41,7 +41,7 @@ function main()
    expectResult = new Array( { "a" : "a", "b" : "b" },
                              { "a" : "a"},
 							 { "a" : "a2", "b" : "b2" });
-   actResult = esOperator.findFromES( esIndexName, queryCond ).sort( compare( 'a', compare( 'b' ) ) );
+   actResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a', compare( 'b' ) ) );
    checkResult( expectResult, actResult );
    
    commDropCL( db, COMMCSNAME, clName, true, true );

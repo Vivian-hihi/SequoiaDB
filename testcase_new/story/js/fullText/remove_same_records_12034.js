@@ -25,8 +25,8 @@ function main(){
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, fullIndex);
-   var cappedCL = dbOperator.getCappedCL(COMMCSNAME, clName, fullIndex);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
+   var cappedCLs = dbOperator.getCappedCLs(COMMCSNAME, clName, fullIndex);
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 10);
    
    //重复删除同一条记录，检查结果
@@ -36,13 +36,13 @@ function main(){
    checkFullSyncToES(COMMCSNAME, clName, fullIndex, 9);
    
    //重复删除时，命令行执行成功，固定集合中新增一条Type:2的记录，es中最终与原集合数据一致
-   var count = cappedCL.find({Type : 2}).count();
+   var count = cappedCLs[0].find({Type : 2}).count();
    checkAllResult(count);
       
    var esOperator = new ESOperator();
    var findConf = {"" : {$Text : {"query" : {"match_all" : {}}}}}
    var queryCond = '{"query" : {"exists" : {"field" : "name"}}, "size" : 20}';
-   var actESRecords = esOperator.findFromES(esIndexName, queryCond);
+   var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    var expCLRecords = dbOperator.findFromCL(dbcl, findConf, {name : ""}, null, null);
    checkRecords( expCLRecords, actESRecords );
       

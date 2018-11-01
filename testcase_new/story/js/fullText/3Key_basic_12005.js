@@ -24,9 +24,7 @@ function main()
    dbcl.insert(doc); 
    commCreateIndex( dbcl, indexName, {a:"text",b:"text",c:"text"});
    dbcl.insert(doc);
-   var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
-   var eSIndexName = dbOperator.getESIndexName(COMMCSNAME, clName, indexName);
    checkFullSyncToES(COMMCSNAME, clName, indexName, 4);
    
    var expectRecords = dbOperator.findFromCL(dbcl, {$or:[{a:{$type:2,$et:"string"}},{b:{$type:2,$et:"string"}},{c:{$type:2,$et:"string"}}]});

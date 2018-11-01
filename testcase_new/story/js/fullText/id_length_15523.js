@@ -33,8 +33,8 @@ function main()
    
    checkFullSyncToES( COMMCSNAME, clName, textIndexName, 1 );
    
-   var esIndexName = dbOperator.getESIndexName( COMMCSNAME, clName, textIndexName );
-   var expectResult = esOperator.findFromES( esIndexName, queryCond );
+   var esIndexNames = dbOperator.getESIndexNames( COMMCSNAME, clName, textIndexName );
+   var expectResult = esOperator.findFromES( esIndexNames[0], queryCond );
    var actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond );
    checkResult( expectResult, actResult )
    
