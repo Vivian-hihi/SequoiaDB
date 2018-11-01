@@ -2087,13 +2087,13 @@ namespace engine
       // --transactionOn
       rdxBooleanS( pEX, PMD_OPTION_TRANSACTIONON, _transactionOn, FALSE,
                    PMD_CFG_CHANGE_REBOOT, FALSE ) ;
-      // --transactionTimeout
+      // --transactiontimeout
       rdxUInt( pEX, PMD_OPTION_TRANSTIMEOUT, _transTimeout, FALSE, PMD_CFG_CHANGE_RUN,
-               PMD_DFT_TRANS_TIMEOUT, TRUE ) ;
+               PMD_DFT_TRANS_TIMEOUT, FALSE ) ;
       rdvMinMax( pEX, _transTimeout, 0, 3600, TRUE ) ;
       // --transisolation
       rdxUInt( pEX, PMD_OPTION_TRANS_ISOLATION, _transIsolation, FALSE,
-               PMD_CFG_CHANGE_REBOOT, 0, TRUE ) ;
+               PMD_CFG_CHANGE_REBOOT, 0, FALSE ) ;
       // --sharingBreak
       rdxUInt( pEX, PMD_OPTION_SHARINGBRK, _sharingBreakTime, FALSE, PMD_CFG_CHANGE_RUN,
                PMD_OPTION_BRK_TIME_DEFAULT, TRUE ) ;
