@@ -266,6 +266,8 @@ namespace engine
 
    INT32 catUpdateCSUniqueID( pmdEDUCB *cb, INT16 w,
                               utilCSUniqueID& csUniqueID ) ;
+   INT32 catUpdateGlobalID( pmdEDUCB *cb, INT16 w,
+                            utilGlobalID& globalID ) ;
 
    /* Other Tools */
    INT32 catPraseFunc( const BSONObj &func, BSONObj &parsed ) ;
@@ -444,7 +446,8 @@ namespace engine
                                  BSONObj & splitTask ) ;
 
    /* Build Collection record */
-   INT32 catBuildCatalogRecord ( const catCollectionInfo &clInfo,
+   INT32 catBuildCatalogRecord ( _pmdEDUCB *cb,
+                                 const catCollectionInfo &clInfo,
                                  UINT32 mask,
                                  UINT32 attribute,
                                  const std::vector<UINT32> &grpIDLst,
@@ -481,7 +484,7 @@ namespace engine
                                    const vector<BSONObj> &optionArr,
                                    _pmdEDUCB *cb, INT16 w ) ;
    INT32 catDropAutoIncSequence( const BSONObj &boCollection, _pmdEDUCB *cb, INT16 w ) ;
-   BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt, bson::OID *seqId = NULL ) ;
+   BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt, utilSequenceID ID = UTIL_SEQUENCEID_NULL ) ;
    string catGetSeqName4AutoIncFld( const utilCLUniqueID id, const string fldName ) ;
 }
 

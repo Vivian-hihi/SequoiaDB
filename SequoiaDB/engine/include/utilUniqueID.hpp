@@ -46,10 +46,13 @@ namespace engine
    typedef UINT32 utilCSUniqueID ;
    typedef UINT64 utilCLUniqueID ;
    typedef UINT32 utilCLInnerID ;
+   typedef UINT64 utilGlobalID ;
+
+   typedef utilGlobalID utilSequenceID ;
 
    /// cs unique id, valid values range from 1 to 4294967040
    #define UTIL_CSUNIQUEID_MAX       0xFFFFFF00
-
+   #define UTIL_GLOGALID_MAX         OSS_UINT64_MAX
    /// cl unique id (64bit) = cs unqiue id (32bit) + cl inner id (32bit)
    /// cl inner id: valid values range from 1 to u4294967040
    #define UTIL_CLINNERID_MAX        0xFFFFFF00
@@ -60,6 +63,8 @@ namespace engine
    /// While if cl only exists on data, doesn't exists on catalog, the unique
    /// id will be 0. In addition, system cs/cl unique id also is 0.
    #define UTIL_UNIQUEID_NULL        0
+   #define UTIL_GLOBAL_NULL          0
+   #define UTIL_SEQUENCEID_NULL      UTIL_GLOBAL_NULL
 
    /// Directly connect data node, then create cs/cl
    #define UTIL_CSUNIQUEID_LOCAL     0xFFFFFFFF

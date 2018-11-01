@@ -1613,7 +1613,7 @@ namespace engine
       {
          // build new collection record for meta data.
          BSONObj boNewObj ;
-         rc = catBuildCatalogRecord ( clInfo, fieldMask, 0,
+         rc = catBuildCatalogRecord ( cb, clInfo, fieldMask, 0,
                                       _groupList, splitList,
                                       boNewObj ) ;
          PD_RC_CHECK( rc, PDERROR,

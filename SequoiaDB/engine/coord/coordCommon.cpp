@@ -1060,7 +1060,7 @@ namespace engine
       vector<BSONObj> autoIncFields ;
       BSONElement ele ;
       const CHAR *seqName ;
-      OID seqID ;
+      utilSequenceID seqID ;
 
       if ( cataPtr->hasAutoIncrement() )
       {
@@ -1078,19 +1078,19 @@ namespace engine
             seqName = ele.valuestr() ;
 
             ele = autoIncFields[i].getField( CAT_AUTOINC_SEQ_ID ) ;
-            if ( jstOID != ele.type() )
+            if ( !ele.isNumber() )
             {
                PD_LOG( PDERROR, "Wrong type[%d] of sequence ID", ele.type() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
-            seqID = ele.OID() ;
+            seqID = ele.Long();
 
-            rc = coordSequenceInvalidateCache( seqName, cb, &seqID ) ;
+            rc = coordSequenceInvalidateCache( seqName, cb, seqID ) ;
             if ( SDB_SEQUENCE_NOT_EXIST == rc )
             {
-               PD_LOG( PDWARNING, "Sequence not found, name[%s], id[%s]",
-                       seqName, seqID.str().c_str() ) ;
+               PD_LOG( PDWARNING, "Sequence not found, name[%s], id[%llu]",
+                       seqName, seqID ) ;
                rc = SDB_OK ;
             }
             PD_RC_CHECK( rc, PDERROR,

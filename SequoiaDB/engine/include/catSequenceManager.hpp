@@ -46,13 +46,14 @@ namespace engine
 {
    struct _catSequenceAcquirer: public SDBObject
    {
-      bson::OID oid ;
+      utilSequenceID ID ;
       INT64 nextValue ;
       INT32 acquireSize ;
       INT32 increment ;
 
       _catSequenceAcquirer()
       {
+         ID = UTIL_SEQUENCEID_NULL ;
          nextValue = 0 ;
          acquireSize = 0 ;
          increment = 0 ;
@@ -80,7 +81,7 @@ namespace engine
       INT32 dropSequence( const std::string& name, _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 alterSequence( const std::string& name, const bson::BSONObj& options,
                            _pmdEDUCB* eduCB, INT16 w ) ;
-      INT32 acquireSequence( const std::string& name, const bson::OID oid, _catSequenceAcquirer& acquirer,
+      INT32 acquireSequence( const std::string& name, const utilSequenceID ID, _catSequenceAcquirer& acquirer,
                              _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 resetSequence( const std::string& name, _pmdEDUCB* eduCB, INT16 w ) ;
       OSS_INLINE INT32 getSequence( const std::string& name, bson::BSONObj& sequence, _pmdEDUCB* eduCB )
@@ -94,16 +95,16 @@ namespace engine
       INT32 _updateSequence( const std::string& name, const bson::BSONObj& options,
                              _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 _findSequence( const std::string& name, bson::BSONObj& sequence, _pmdEDUCB* eduCB ) ;
-      INT32 _acquireSequenceBySLock( const std::string& name, const bson::OID oid,
+      INT32 _acquireSequenceBySLock( const std::string& name, const utilSequenceID ID,
                                      _catSequenceAcquirer& acquirer, BOOLEAN& noCache,
                                      _pmdEDUCB* eduCB, INT16 w ) ;
-      INT32 _acquireSequenceByXLock( const std::string& name, const bson::OID oid, _catSequenceAcquirer& acquirer,
+      INT32 _acquireSequenceByXLock( const std::string& name, const utilSequenceID ID, _catSequenceAcquirer& acquirer,
                                      _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 _acquireSequenceFromCache( _catSequence& sequence, _catSequenceAcquirer& acquirer,
                                        _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 _acquireAscendingSequence( _catSequence& sequence, _catSequenceAcquirer& acquirer, BOOLEAN& needUpdate ) ;
       INT32 _acquireDescendingSequence( _catSequence& sequence, _catSequenceAcquirer& acquirer, BOOLEAN& needUpdate ) ;
-      BOOLEAN _removeCacheByOID( const std::string& name, bson::OID oid ) ;
+      BOOLEAN _removeCacheByID( const std::string& name, utilSequenceID ID ) ;
       void  _cleanCache( BOOLEAN needFlush ) ;
 
    private:

@@ -332,6 +332,7 @@
 #define FIELD_NAME_ACTIVATED                 "Activated"
 #define FIELD_NAME_READONLY                  "Readonly"
 #define FIELD_NAME_CSUNIQUEHWM               "CSUniqueHWM"
+#define FIELD_NAME_GLOBALID                  "GlobalID"
 #define FIELD_NAME_ENABLE                    "Enable"
 #define FIELD_NAME_ACTION                    "Action"
 #define FIELD_NAME_DATA                      "Data"
@@ -452,7 +453,8 @@
 #define FIELD_NAME_TEXT                      "$Text"
 #define FIELD_NAME_CONFIGS                   "Configs"
 #define FIELD_NAME_SEQUENCE_NAME             "Name"
-#define FIELD_NAME_SEQUNCE_OID               "_id"
+#define FIELD_NAME_SEQUENCE_OID               "_id"
+#define FIELD_NAME_SEQUENCE_ID               "ID"
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"
 #define FIELD_NAME_TASK_NAME                 "TaskName"

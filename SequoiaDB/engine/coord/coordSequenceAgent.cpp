@@ -58,19 +58,20 @@ namespace engine
          _nextValue = 0 ;
          _acquireSize = 0 ;
          _increment = 0 ;
+         _ID = UTIL_SEQUENCEID_NULL ;
       }
       ~_coordSequence() {}
 
    public:
       OSS_INLINE const std::string& name() const { return _name ; }
-      OSS_INLINE const bson::OID& oid() const { return _oid ; }
+      OSS_INLINE const utilSequenceID ID() const { return _ID ; }
       OSS_INLINE INT64 nextValue() const { return _nextValue ; }
       OSS_INLINE INT32 acquireSize() const { return _acquireSize ; }
       OSS_INLINE INT32 increment() const { return _increment ; }
 
-      OSS_INLINE void setOid( const OID &oid )
+      OSS_INLINE void setID( const utilSequenceID ID )
       {
-         _oid = oid ;
+         _ID = ID ;
       }
       OSS_INLINE void setNextValue( INT64 nextValue )
       {
@@ -102,7 +103,7 @@ namespace engine
       void copyFrom( const _coordSequence& other )
       {
          // do not change name
-         _oid = other._oid ;
+         _ID = other._ID ;
          _nextValue = other._nextValue ;
          _acquireSize = other._acquireSize ;
          _increment = other._increment ;
@@ -110,7 +111,7 @@ namespace engine
 
    private:
       std::string    _name ;
-      bson::OID      _oid ;
+      utilSequenceID _ID ;
       INT64          _nextValue ;
       INT32          _acquireSize ;
       INT32          _increment ;
@@ -140,7 +141,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT_REMOVE_CACHE, "_coordSequenceAgent::removeCache" )
-   BOOLEAN _coordSequenceAgent::removeCache( const std::string& name, const bson::OID &seqId )
+   BOOLEAN _coordSequenceAgent::removeCache( const std::string& name, const utilSequenceID ID )
    {
       BOOLEAN removed = FALSE ;
       PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT_REMOVE_CACHE ) ;
@@ -152,10 +153,10 @@ namespace engine
       if ( bucket.end() != iter )
       {
          _coordSequence* cache = (*iter).second ;
-         if( seqId.isSet() && seqId != cache->oid() )
+         if( UTIL_SEQUENCEID_NULL != ID && ID != cache->ID() )
          {
-            PD_LOG( PDWARNING, "Mismatch oid(%s) for sequence[%s, %s]",
-                    seqId.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
+            PD_LOG( PDWARNING, "Mismatch ID(%llu) for sequence[%s, %llu]",
+                    ID, cache->name().c_str(), cache->ID() ) ;
             goto done ;
          }
          bucket.erase( name ) ;
@@ -194,20 +195,23 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT_GET_NEXT_VALUE, "_coordSequenceAgent::getNextValue" )
-   INT32 _coordSequenceAgent::getNextValue( const std::string& name, const bson::OID &seqId, INT64& nextValue, _pmdEDUCB* eduCB )
+   INT32 _coordSequenceAgent::getNextValue( const std::string& name,
+                                            const utilSequenceID ID,
+                                            INT64& nextValue,
+                                            _pmdEDUCB* eduCB )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT_GET_NEXT_VALUE ) ;
       BOOLEAN noCache = FALSE ;
-      bson::OID oid ;
+      utilSequenceID cachedID = UTIL_SEQUENCEID_NULL ;
 
-      rc = _getNextValueBySLock( name, nextValue, noCache, seqId, oid, eduCB ) ;
+      rc = _getNextValueBySLock( name, nextValue, noCache, ID, &cachedID, eduCB ) ;
       if ( SDB_OK == rc )
       {
          // if no sequence cache, should get bucket by XLock
          if ( noCache )
          {
-            rc = _getNextValueByXLock( name, seqId, nextValue, eduCB ) ;
+            rc = _getNextValueByXLock( name, ID, nextValue, eduCB ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -219,7 +223,7 @@ namespace engine
          if ( SDB_SEQUENCE_NOT_EXIST == rc )
          {
             // remove cache if sequence not exist
-            _removeCacheByOID( name, oid ) ;
+            _removeCacheByID( name, cachedID ) ;
          }
          goto error ;
       }
@@ -235,8 +239,8 @@ namespace engine
    INT32 _coordSequenceAgent::_getNextValueBySLock( const std::string& name,
                                                    INT64& nextValue,
                                                    BOOLEAN& noCache,
-                                                   const bson::OID& seqId,
-                                                   bson::OID& cachedSeqId,
+                                                   const utilSequenceID ID,
+                                                   utilSequenceID* cachedSeqID,
                                                    _pmdEDUCB* eduCB )
    {
       INT32 rc = SDB_OK ;
@@ -252,10 +256,10 @@ namespace engine
       {
          cache = (*iter).second ;
          noCache = FALSE ;
-         if( seqId.isSet() && cache->oid() != seqId )
+         if( ID != UTIL_SEQUENCEID_NULL && cache->ID() != ID )
          {
-            PD_LOG( PDWARNING, "Mismatch oid(%s) for sequence[%s, %s]",
-                    seqId.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
+            PD_LOG( PDWARNING, "Mismatch ID(%llu) for sequence[%s, %llu]",
+                    ID, cache->name().c_str(), cache->ID() ) ;
             noCache = TRUE ;
             goto done ;
          }
@@ -277,8 +281,8 @@ namespace engine
                  name.c_str(), rc ) ;
          // if rc==SDB_SEQUENCE_NOT_EXIST, we should delete the cache
          // here we get SLOCK, so we need to get XLOCK to delete the cache
-         // check the oid consistency when delete cache
-         cachedSeqId = cache->oid() ;
+         // check the id consistency when delete cache
+         *cachedSeqID = cache->ID() ;
          goto error ;
       }
 
@@ -295,7 +299,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_XLOCK, "_coordSequenceAgent::_getNextValueByXLock" )
-   INT32 _coordSequenceAgent::_getNextValueByXLock( const std::string& name, const bson::OID& seqId, INT64& nextValue, _pmdEDUCB* eduCB )
+   INT32 _coordSequenceAgent::_getNextValueByXLock( const std::string& name, const utilSequenceID ID, INT64& nextValue, _pmdEDUCB* eduCB )
    {
       INT32 rc = SDB_OK ;
       _coordSequence* cache = NULL ;
@@ -307,16 +311,16 @@ namespace engine
 
       COORD_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
       // if mismatch in the cache, get from catalog and clear the old cached sequence later.
-      if ( bucket.end() != iter && ( !seqId.isSet() || ((*iter).second)->oid() == seqId ) )
+      if ( bucket.end() != iter && ( UTIL_SEQUENCEID_NULL != ID || ((*iter).second)->ID() == ID ) )
       {
          cache = (*iter).second ;
       }
       else
       {
          _coordSequence seq = _coordSequence( name ) ;
-         if ( seqId.isSet() )
+         if ( UTIL_SEQUENCEID_NULL != ID )
          {
-            seq.setOid( seqId );
+            seq.setID( ID );
          }
 
          rc = _acquireSequence( seq, eduCB ) ;
@@ -328,11 +332,11 @@ namespace engine
          }
 
          // succeed to get seq from catalog, then remove old cached sequence.
-         if( bucket.end() != iter && seqId.isSet() && ((*iter).second)->oid() != seqId )
+         if( bucket.end() != iter && UTIL_SEQUENCEID_NULL != ID && ((*iter).second)->ID() != ID )
          {
             cache = (*iter).second ;
-            PD_LOG( PDWARNING, "Mismatch oid(%s) for sequence[%s, %s]",
-                    seqId.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
+            PD_LOG( PDWARNING, "Mismatch ID(%llu) for sequence[%s, %llu]",
+                    ID, cache->name().c_str(), cache->ID() ) ;
             bucket.erase( name ) ;
             SDB_OSS_DEL( cache ) ;
             cache = NULL ;
@@ -448,9 +452,9 @@ namespace engine
       {
          BSONObjBuilder builder ;
          builder.append( CAT_SEQUENCE_NAME, seq.name() ) ;
-         if ( seq.oid().isSet() )
+         if ( seq.ID() != UTIL_SEQUENCEID_NULL )
          {
-            builder.append( CAT_SEQUENCE_OID, seq.oid() ) ;
+            builder.append( CAT_SEQUENCE_ID, (INT64)seq.ID() ) ;
          }
          options = builder.obj() ;
       }
@@ -536,7 +540,7 @@ namespace engine
       MsgOpReply *reply = ( MsgOpReply* )msg ;
       BSONObj obj ;
       BSONElement ele ;
-      OID oid ;
+      utilSequenceID ID = UTIL_SEQUENCEID_NULL ;
       INT64 nextValue = 0 ;
       INT32 acquireSize = 0 ;
       INT32 increment = 0 ;
@@ -589,23 +593,23 @@ namespace engine
          goto error ;
       }
 
-      // CAT_SEQUENCE_OID
-      ele = obj.getField( CAT_SEQUENCE_OID ) ;
-      if ( jstOID == ele.type() )
+      // CAT_SEQUENCE_ID
+      ele = obj.getField( CAT_SEQUENCE_ID ) ;
+      if ( ele.isNumber() )
       {
-         oid = ele.OID() ;
+         ID = ele.Long() ;
       }
       else if ( EOO == ele.type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Missing option[%s]", CAT_SEQUENCE_OID ) ;
+         PD_LOG( PDERROR, "Missing option[%s]", CAT_SEQUENCE_ID ) ;
          goto error ;
       }
       else
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                 ele.type(), CAT_SEQUENCE_OID ) ;
+                 ele.type(), CAT_SEQUENCE_ID ) ;
          goto error ;
       }
 
@@ -669,12 +673,12 @@ namespace engine
          goto error ;
       }
 
-      if ( seq.oid().isSet() && seq.oid() != oid )
+      if ( UTIL_SEQUENCEID_NULL != ID && seq.ID() != ID )
       {
-         PD_LOG( PDWARNING, "Mismatch oid(%s) for sequence[%s, %s]",
-                 oid.str().c_str(), seq.name().c_str(), seq.oid().str().c_str() ) ;
+         PD_LOG( PDWARNING, "Mismatch ID(%llu) for sequence[%s, %llu]",
+                 ID, seq.name().c_str(), seq.ID() ) ;
       }
-      seq.setOid( oid ) ;
+      seq.setID( ID ) ;
       seq.setNextValue( nextValue ) ;
       seq.setAcquireSize( acquireSize ) ;
       seq.setIncrement( increment ) ;
@@ -686,11 +690,11 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__REMOVE_CACHE_BY_OID, "_coordSequenceAgent::_removeCacheByOID" )
-   BOOLEAN _coordSequenceAgent::_removeCacheByOID( const std::string& name, bson::OID oid )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__REMOVE_CACHE_BY_ID, "_coordSequenceAgent::_removeCacheByID" )
+   BOOLEAN _coordSequenceAgent::_removeCacheByID( const std::string& name, const utilSequenceID ID )
    {
       BOOLEAN removed = FALSE ;
-      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__REMOVE_CACHE_BY_OID ) ;
+      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__REMOVE_CACHE_BY_ID ) ;
 
       COORD_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
       BUCKET_XLOCK( bucket ) ;
@@ -699,8 +703,8 @@ namespace engine
       if ( bucket.end() != iter )
       {
          _coordSequence* cache = (*iter).second ;
-         // if oid not equal, means the cache has been changed, can't delete
-         if ( cache->oid() == oid )
+         // if id not equal, means the cache has been changed, can't delete
+         if ( cache->ID() == ID )
          {
             bucket.erase( name ) ;
             SDB_OSS_DEL( cache ) ;
@@ -708,12 +712,12 @@ namespace engine
          }
       }
 
-      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__REMOVE_CACHE_BY_OID, removed ) ;
+      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__REMOVE_CACHE_BY_ID, removed ) ;
       return removed ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_INVALIDATE_CACHE, "coordSequenceInvalidateCache" )
-   INT32 coordSequenceInvalidateCache( const std::string& sequenceName, _pmdEDUCB* eduCB, const bson::OID *seqId )
+   INT32 coordSequenceInvalidateCache( const std::string& sequenceName, _pmdEDUCB* eduCB, const utilSequenceID ID )
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
@@ -730,9 +734,9 @@ namespace engine
       try
       {
          builder.append( FIELD_NAME_SEQUENCE_NAME, sequenceName ) ;
-         if( seqId !=NULL && seqId->isSet() )
+         if( UTIL_SEQUENCEID_NULL != ID )
          {
-            builder.append( FIELD_NAME_SEQUNCE_OID , *seqId ) ;
+            builder.append( FIELD_NAME_SEQUENCE_ID , (INT64)ID ) ;
          }
          obj = builder.obj() ;
       }

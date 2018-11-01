@@ -41,6 +41,7 @@
 #include "ossUtil.hpp"
 #include "../bson/bson.h"
 #include "utilMap.hpp"
+#include "utilUniqueID.hpp"
 
 using namespace bson ;
 
@@ -71,11 +72,11 @@ namespace engine
       _clsAutoIncItem() ;
       ~_clsAutoIncItem() ;
 
-      const CHAR*       fieldName() const { return _fieldName ; }
-      const CHAR*       sequenceName() const { return _sequenceName ; }
-      const OID&        sequenceID() const { return _sequenceID ; }
-      AUTOINC_GEN_TYPE  generatedType() const { return _generatedType ; }
-      BOOLEAN           hasSubField() const { return _pSubFieldMap ? TRUE :FALSE ; }
+      const CHAR*          fieldName() const { return _fieldName ; }
+      const CHAR*          sequenceName() const { return _sequenceName ; }
+      const utilSequenceID sequenceID() const { return _sequenceID ; }
+      AUTOINC_GEN_TYPE     generatedType() const { return _generatedType ; }
+      BOOLEAN              hasSubField() const { return _pSubFieldMap ? TRUE :FALSE ; }
 
       const _clsAutoIncItem*  findSubItem( const CHAR *pName ) const ;
       const AUTOINC_ITEM_MAP* subFieldMap() const { return _pSubFieldMap ; }
@@ -90,13 +91,13 @@ namespace engine
       void              _clear() ;
       INT32             _init( const CHAR* fieldName,
                                const CHAR* sequenceName,
-                               const OID &sequenceID,
+                               const utilSequenceID sequenceID,
                                const AUTOINC_GEN_TYPE generated ) ;
 
    private:
       const CHAR*       _fieldName ;
       const CHAR*       _sequenceName ;
-      OID               _sequenceID ;
+      utilSequenceID    _sequenceID ;
       AUTOINC_GEN_TYPE  _generatedType ;
 
       AUTOINC_ITEM_MAP* _pSubFieldMap ;

@@ -41,6 +41,7 @@
 #include "utilCompression.hpp"
 #include "utilArguments.hpp"
 #include "../bson/bson.hpp"
+#include "utilUniqueID.hpp"
 
 namespace engine
 {
@@ -514,9 +515,9 @@ namespace engine
             return _generated ;
          }
 
-         OSS_INLINE bson::OID getSeqId () const
+         OSS_INLINE utilSequenceID getID () const
          {
-            return _id ;
+            return _ID ;
          }
 
          OSS_INLINE void setFieldName ( std::string name )
@@ -561,9 +562,9 @@ namespace engine
             _generated = generated ;
          }
 
-         OSS_INLINE void setSeqId ( bson::OID seqId )
+         OSS_INLINE void setID ( const utilSequenceID ID )
          {
-            _id = seqId ;
+            _ID = ID ;
          }
 
          OSS_INLINE UINT32 getArgumentMask () const
@@ -571,9 +572,9 @@ namespace engine
             return _argumentMask ;
          }
 
-         OSS_INLINE BOOLEAN testArgumentMask ( UINT32 fields ) const
+         OSS_INLINE BOOLEAN testArgumentMask ( UINT32 mask ) const
          {
-            return OSS_BIT_TEST( _argumentMask, fields ) ? TRUE : FALSE ;
+            return OSS_BIT_TEST( _argumentMask, mask ) ? TRUE : FALSE ;
          }
 
          OSS_INLINE void setArgumentMask ( UINT32 fields )
@@ -598,7 +599,7 @@ namespace engine
 
       protected:
          std::string    _fieldName ;      // field name
-         bson::OID      _id ;
+         utilSequenceID _ID ;
          INT32          _increment ;      // increament value
          INT64          _startValue ;     // start value
          INT64          _currentValue ;   // current value

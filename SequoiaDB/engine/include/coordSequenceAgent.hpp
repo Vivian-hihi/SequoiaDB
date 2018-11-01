@@ -36,6 +36,7 @@
 
 #include "oss.hpp"
 #include "ossUtil.hpp"
+#include "utilUniqueID.hpp"
 #include "msg.h"
 #include "utilConcurrentMap.hpp"
 #include "../bson/bsonobj.h"
@@ -59,22 +60,28 @@ namespace engine
       void fini() ;
 
    public:
-      INT32 getNextValue( const std::string& name, const bson::OID &seqId, INT64& nextValue, _pmdEDUCB* eduCB ) ;
-      BOOLEAN removeCache( const std::string& sequenceName,  const bson::OID &seqId ) ;
+      INT32 getNextValue( const std::string& name,
+                          const utilSequenceID ID,
+                          INT64& nextValue,
+                          _pmdEDUCB* eduCB ) ;
+      BOOLEAN removeCache( const std::string& sequenceName,  utilSequenceID ID ) ;
       void clear() ;
 
    private:
-      INT32 _getNextValueByXLock( const std::string& name, const bson::OID& seqId, INT64& nextValue, _pmdEDUCB* eduCB ) ;
+      INT32 _getNextValueByXLock( const std::string& name,
+                                  const utilSequenceID ID,
+                                  INT64& nextValue,
+                                  _pmdEDUCB* eduCB ) ;
       INT32 _getNextValueBySLock( const std::string& name,
                                  INT64& nextValue,
                                  BOOLEAN& noCache,
-                                 const bson::OID& seqId,
-                                 bson::OID& cachedSeqId,
+                                 const utilSequenceID ID,
+                                 utilSequenceID* cachedSeqID,
                                  _pmdEDUCB* eduCB ) ;
       INT32 _getNextValueFromCache( _coordSequence& seq, INT64& nextValue, _pmdEDUCB* eduCB ) ;
       INT32 _acquireSequence( _coordSequence& seq, _pmdEDUCB* eduCB ) ;
       INT32 _processAcquireReply( MsgHeader* msg, _coordSequence& seq ) ;
-      BOOLEAN _removeCacheByOID( const std::string& sequenceName, bson::OID oid ) ;
+      BOOLEAN _removeCacheByID( const std::string& sequenceName, const utilSequenceID ID ) ;
 
    private:
       _coordResource*   _resource ;
@@ -82,7 +89,9 @@ namespace engine
    } ;
    typedef _coordSequenceAgent coordSequenceAgent ;
 
-   INT32 coordSequenceInvalidateCache( const std::string& sequenceName, _pmdEDUCB* eduCB, const bson::OID *seqId = NULL ) ;
+   INT32 coordSequenceInvalidateCache( const std::string& sequenceName,
+                                       _pmdEDUCB* eduCB,
+                                       const utilSequenceID ID = UTIL_SEQUENCEID_NULL ) ;
 }
 
 #endif /* COORD_SEQUENCE_AGENT_HPP_ */

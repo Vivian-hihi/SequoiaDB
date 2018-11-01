@@ -38,6 +38,7 @@
 #include "ossUtil.hpp"
 #include "ossLatch.hpp"
 #include "../bson/bson.hpp"
+#include "utilUniqueID.hpp"
 #include <string>
 
 namespace engine
@@ -64,6 +65,7 @@ namespace engine
       OSS_INLINE BOOLEAN cycled() const { return _cycled ; }
       OSS_INLINE BOOLEAN initial() const { return _initial ; }
       OSS_INLINE BOOLEAN exceeded() const { return _exceeded ; }
+      OSS_INLINE utilSequenceID ID() const { return _ID ; }
 
       OSS_INLINE void lock()
       {
@@ -90,6 +92,7 @@ namespace engine
       void setCycled( BOOLEAN cycled ) ;
       void setInitial( BOOLEAN initial ) ;
       void setExceeded( BOOLEAN exceeded ) ;
+      void setID( utilGlobalID id ) ;
       INT32 toBSONObj( bson::BSONObj& obj, BOOLEAN forUpdate ) const ;
       void copyFrom( const _catSequence& other, BOOLEAN withInternalField = TRUE ) ;
       INT32 setOptions( const bson::BSONObj& options, BOOLEAN init, BOOLEAN withInternalField, BOOLEAN* changed = NULL ) ;
@@ -115,6 +118,7 @@ namespace engine
       BOOLEAN        _cycled ;         // true if cycle is allowed
       BOOLEAN        _initial ;        // sequence is unused
       BOOLEAN        _exceeded ;       // sequence is exceeded, only in cache
+      utilSequenceID _ID ;             // sequence id
       ossSpinXLatch  _latch ;
    } ;
    typedef _catSequence catSequence ;

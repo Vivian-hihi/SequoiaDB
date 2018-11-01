@@ -33,6 +33,7 @@
 *******************************************************************************/
 #include "catSequenceManager.hpp"
 #include "catGTSDef.hpp"
+#include "catCommon.hpp"
 #include "dmsCB.hpp"
 #include "dpsLogWrapper.hpp"
 #include "rtn.hpp"
@@ -76,6 +77,7 @@ namespace engine
       BSONObj obj ;
       OID oid;
       BSONElement ele ;
+      utilGlobalID ID = UTIL_GLOBAL_NULL ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR_CREATE_SEQ ) ;
 
       _catSequence sequence = _catSequence( name ) ;
@@ -96,27 +98,31 @@ namespace engine
          goto error ;
       }
 
-      if( options.hasField( CAT_SEQUENCE_OID ) )
+      if( options.hasField( CAT_SEQUENCE_ID ) )
       {
-         ele = options.getField( CAT_SEQUENCE_OID ) ;
-         if ( jstOID == ele.type() )
-         {
-            oid = ele.OID() ;
-         }
-         else if ( EOO != ele.type() )
+         ele = options.getField( CAT_SEQUENCE_ID ) ;
+         if ( !ele.isNumber() )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "Invalid type[%d] of sequence options[%s]",
                     ele.type(), CAT_SEQUENCE_OID ) ;
             goto error ;
          }
+         ID = ele.Long() ;
       }
       else
       {
-         oid = OID::gen() ;
+         rc = catUpdateGlobalID( eduCB, w, ID ) ;
+         if( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to get globalID when create sequence[%s], rc=%d",
+                    name.c_str(), rc ) ;
+            goto error ;
+         }
       }
 
-      sequence.setOID( oid ) ;
+      sequence.setID( ID ) ;
+      sequence.setOID( OID::gen() ) ;
       sequence.setVersion( 0 ) ;
       sequence.setInitial( TRUE ) ;
 
@@ -289,7 +295,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR_ACQUIRE_SEQ, "_catSequenceManager::acquireSequence" )
    INT32 _catSequenceManager::acquireSequence( const std::string& name,
-                                               const bson::OID oid,
+                                               const utilSequenceID ID,
                                                _catSequenceAcquirer& acquirer,
                                                _pmdEDUCB* eduCB, INT16 w )
    {
@@ -297,13 +303,13 @@ namespace engine
       BOOLEAN noCache = FALSE ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR_ACQUIRE_SEQ ) ;
 
-      rc = _acquireSequenceBySLock( name, oid, acquirer, noCache, eduCB, w ) ;
+      rc = _acquireSequenceBySLock( name, ID, acquirer, noCache, eduCB, w ) ;
       if ( SDB_OK == rc )
       {
          // if no sequence cache, should get bucket by XLock
          if ( noCache )
          {
-            rc = _acquireSequenceByXLock( name, oid, acquirer, eduCB, w ) ;
+            rc = _acquireSequenceByXLock( name, ID, acquirer, eduCB, w ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -315,7 +321,7 @@ namespace engine
          if ( SDB_SEQUENCE_NOT_EXIST == rc )
          {
             // remove cache if sequence not exist
-            _removeCacheByOID( name, acquirer.oid ) ;
+            _removeCacheByID( name, acquirer.ID ) ;
          }
          goto error ;
       }
@@ -402,7 +408,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_SLOCK, "_catSequenceManager::_acquireSequenceBySLock" )
    INT32 _catSequenceManager::_acquireSequenceBySLock( const std::string& name,
-                                                       const bson::OID oid,
+                                                       const utilSequenceID ID,
                                                        _catSequenceAcquirer& acquirer,
                                                        BOOLEAN& noCache,
                                                        _pmdEDUCB* eduCB, INT16 w )
@@ -431,11 +437,11 @@ namespace engine
       cache->lock() ;
       cacheLocked = TRUE ;
 
-      // check oid
-      if ( oid.isSet() && oid != cache->oid() )
+      // check ID
+      if ( ID != UTIL_SEQUENCEID_NULL && ID != cache->ID() )
       {
-         PD_LOG( PDERROR, "Mismatch oid(%s) for sequence[%s, %s]",
-                 oid.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
+         PD_LOG( PDERROR, "Mismatch ID(%llu) for sequence[%s, %llu]",
+                 ID, cache->name().c_str(), cache->ID() ) ;
          rc = SDB_SEQUENCE_NOT_EXIST ;
          goto error ;
       }
@@ -447,8 +453,8 @@ namespace engine
                  name.c_str(), rc ) ;
          // if rc==SDB_SEQUENCE_NOT_EXIST, we should delete the cache
          // here we get SLOCK, so we need to get XLOCK to delete the cache
-         // check the oid consistency when delete cache
-         acquirer.oid = cache->oid() ;
+         // check the ID consistency when delete cache
+         acquirer.ID = cache->ID() ;
          goto error ;
       }
 
@@ -466,7 +472,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_XLOCK, "_catSequenceManager::_acquireSequenceByXLock" )
    INT32 _catSequenceManager::_acquireSequenceByXLock( const std::string& name,
-                                                       const bson::OID oid,
+                                                       const utilSequenceID ID,
                                                        _catSequenceAcquirer& acquirer,
                                                        _pmdEDUCB* eduCB, INT16 w )
    {
@@ -527,11 +533,11 @@ namespace engine
          sequence = NULL ;
       }
 
-      // check oid
-      if ( oid.isSet() && oid != cache->oid() )
+      // check id
+      if ( ID != UTIL_SEQUENCEID_NULL && ID != cache->ID() )
       {
-         PD_LOG( PDERROR, "Mismatch oid(%s) for sequence[%s, %s]",
-                 oid.str().c_str(), cache->name().c_str(), cache->oid().str().c_str() ) ;
+         PD_LOG( PDERROR, "Mismatch ID(%llu) for sequence[%s, %llu]",
+                 ID, cache->name().c_str(), cache->ID() ) ;
          rc = SDB_SEQUENCE_NOT_EXIST ;
          goto error ;
       }
@@ -584,7 +590,7 @@ namespace engine
          goto error ;
       }
 
-      acquirer.oid = seq.oid() ;
+      acquirer.ID = seq.ID() ;
 
       if ( needUpdate )
       {
@@ -682,7 +688,7 @@ namespace engine
          }
          else
          {
-            INT64 newCurrentValue = seq.currentValue() + 
+            INT64 newCurrentValue = seq.currentValue() +
                ( seq.maxValue() - seq.currentValue() ) / seq.increment() * seq.increment() ;
             seq.setCurrentValue( newCurrentValue ) ;
             // use minus to avoid overflow
@@ -783,7 +789,7 @@ namespace engine
          }
          else
          {
-            INT64 newCurrentValue = seq.currentValue() + 
+            INT64 newCurrentValue = seq.currentValue() +
                ( seq.minValue() - seq.currentValue() ) / seq.increment() * seq.increment() ;
             seq.setCurrentValue( newCurrentValue ) ;
             // use minus to avoid overflow
@@ -1058,11 +1064,11 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__REMOVE_CACHE_BY_OID, "_catSequenceManager::_removeCacheByOID" )
-   BOOLEAN _catSequenceManager::_removeCacheByOID( const std::string& name, bson::OID oid )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__REMOVE_CACHE_BY_ID, "_catSequenceManager::_removeCacheByID" )
+   BOOLEAN _catSequenceManager::_removeCacheByID( const std::string& name, utilSequenceID ID )
    {
       BOOLEAN removed = FALSE ;
-      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__REMOVE_CACHE_BY_OID ) ;
+      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__REMOVE_CACHE_BY_ID ) ;
 
       CAT_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
       BUCKET_XLOCK( bucket ) ;
@@ -1071,8 +1077,8 @@ namespace engine
       if ( bucket.end() != iter )
       {
          _catSequence* cache = (*iter).second ;
-         // if oid not equal, means the cache has been changed, can't delete
-         if ( cache->oid() == oid )
+         // if id not equal, means the cache has been changed, can't delete
+         if ( cache->ID() == ID )
          {
             bucket.erase( name ) ;
             SDB_OSS_DEL( cache ) ;
@@ -1080,7 +1086,7 @@ namespace engine
          }
       }
 
-      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__REMOVE_CACHE_BY_OID, removed ) ;
+      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__REMOVE_CACHE_BY_ID, removed ) ;
       return removed ;
    }
 
@@ -1118,7 +1124,7 @@ namespace engine
                   if ( SDB_OK != rc )
                   {
                      PD_LOG( PDWARNING, "Failed to flush sequence[%s], rc=%d",
-                             cache->name().c_str(), rc ) ; 
+                             cache->name().c_str(), rc ) ;
                   }
                }
                catch( std::exception& e )

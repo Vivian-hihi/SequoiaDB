@@ -2188,7 +2188,7 @@ namespace engine
       CHAR * msgBuff = NULL ;
       INT32 msgSize = 0 ;
       MsgHeader * msgHeader = NULL ;
-      CLS_TASK_TYPE taskType ;
+      CLS_TASK_TYPE taskType = CLS_TASK_UNKNOW ;
       vector<BSONObj> taskObj ;
       BSONObj taskDesc ;
       BSONObjBuilder builder ;
@@ -2203,7 +2203,7 @@ namespace engine
             iterTask ++ )
       {
          BSONElement ele ;
-         bson::OID seqId ;
+         utilSequenceID seqID = UTIL_SEQUENCEID_NULL ;
          BSONObj delTask ;
          string seqName ;
          BSONElement group ;
@@ -2255,11 +2255,11 @@ namespace engine
                          "Failed to get field[%s] on task[%s]",
                          iterTask->toString().c_str() ) ;
                ele = iterTask->getField( FIELD_NAME_AUTOINC_SEQ_ID ) ;
-               PD_CHECK( ele.type() == jstOID, SDB_SYS, error, PDERROR,
+               PD_CHECK( ele.isNumber(), SDB_SYS, error, PDERROR,
                          "Failed to parse task[%s]: type of sequence id is not a oid",
                          iterTask->toString().c_str() ) ;
-               seqId = ele.OID() ;
-               rc = coordSequenceInvalidateCache( seqName, cb, &seqId );
+               seqID = ele.Long() ;
+               rc = coordSequenceInvalidateCache( seqName, cb, seqID );
                break ;
             }
             default :

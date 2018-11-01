@@ -2137,7 +2137,7 @@
             <cn>不同版本的OMAgent已运行</cn>
          </description>
       </code>
-      
+
       <code>
          <name>SDB_OM_TASK_NOT_EXIST</name>
          <description>
@@ -2145,7 +2145,7 @@
             <cn>无法找到后台任务信息</cn>
          </description>
       </code>
-      
+
       <code>
          <name>SDB_OM_TASK_ROLLBACK</name>
          <description>
@@ -2377,7 +2377,7 @@
             <cn>指定用户已存在</cn>
          </description>
       </code>
-      
+
       <code>
          <name>SDB_DMS_EMPTY_COLLECTION</name>
          <description>
@@ -2513,7 +2513,7 @@
            <cn>复制日志未归档</cn>
         </description>
       </code>
-      
+
       <code>
         <name>SDB_DS_NOT_INIT</name>
         <description>
@@ -2609,7 +2609,7 @@
             <cn>序列值超出范围</cn>
          </description>
       </code>
-      
+
       <code>
          <name>SDB_DMS_CS_UNIQUEID_CONFLICT</name>
          <description>
@@ -2617,7 +2617,7 @@
             <cn>集合空间的UniqueID冲突</cn>
          </description>
       </code>
-      
+
       <code>
          <name>SDB_DMS_UNIQUEID_CONFLICT</name>
          <description>
@@ -2625,7 +2625,7 @@
             <cn>集合的UniqueID冲突</cn>
          </description>
       </code>
-      
+
       <code>
          <name>SDB_DMS_CS_REMAIN</name>
          <description>
@@ -2633,7 +2633,7 @@
             <cn>集合空间的UniqueID与残留的集合空间冲突</cn>
          </description>
       </code>
-      
+
       <code>
          <name>SDB_DMS_REMAIN</name>
          <description>
@@ -2641,7 +2641,7 @@
             <cn>集合的UniqueID与残留的集合冲突</cn>
          </description>
       </code>
-      
+
       <code>
          <name>SDB_CAT_CS_UNIQUEID_EXCEEDED</name>
          <description>
@@ -2649,7 +2649,7 @@
             <cn>集合空间的UniqueID达到上限</cn>
          </description>
       </code>
-      
+
       <code>
          <name>SDB_CAT_CL_UNIQUEID_EXCEEDED</name>
          <description>
@@ -2669,12 +2669,12 @@
       <code>
          <name>SDB_AUTOINCREMENT_FIELD_NOT_EXIST</name>
          <description>
-            <en>Autoincrement field dose not exist on collection</en>
+            <en>Autoincrement field does not exist on collection</en>
             <cn>自增字段不存在</cn>
          </description>
       </code>
-	  
-	  <code>
+
+      <code>
          <name>SDB_OPERATION_CONFLICT</name>
          <description>
             <en>Operations conflict</en>
@@ -2682,5 +2682,12 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_CAT_GLOBALID_EXCEEDED</name>
+         <description>
+            <en>GlobalID exceeds the maximum</en>
+            <cn>GlobalID达到上限</cn>
+         </description>
+      </code>
    </codelist>
 </rclist>

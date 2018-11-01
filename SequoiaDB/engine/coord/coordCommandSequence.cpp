@@ -73,7 +73,7 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER(_coordInvalidateSequenceCache)
    _coordInvalidateSequenceCache::_coordInvalidateSequenceCache()
    {
-
+      _sequenceID = UTIL_SEQUENCEID_NULL ;
    }
 
    _coordInvalidateSequenceCache::~_coordInvalidateSequenceCache()
@@ -121,12 +121,12 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         if( obj.hasField( FIELD_NAME_SEQUNCE_OID ) )
+         if( obj.hasField( FIELD_NAME_SEQUENCE_ID ) )
          {
-            e = obj.getField( FIELD_NAME_SEQUNCE_OID ) ;
-            PD_CHECK( e.type() == jstOID, SDB_INVALIDARG, error, PDERROR, "Field[%s] is invalid in obj[%s]",
-                     FIELD_NAME_SEQUNCE_OID, obj.toString( false, false ).c_str() ) ;
-            _sequenceID = e.OID() ;
+            e = obj.getField( FIELD_NAME_SEQUENCE_ID ) ;
+            PD_CHECK( e.isNumber(), SDB_INVALIDARG, error, PDERROR, "Field[%s] is invalid in obj[%s]",
+                     FIELD_NAME_SEQUENCE_ID, obj.toString( false, false ).c_str() ) ;
+            _sequenceID = e.Long() ;
          }
       }
       catch( std::exception &e )

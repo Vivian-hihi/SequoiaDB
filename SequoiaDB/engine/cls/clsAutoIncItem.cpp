@@ -79,7 +79,7 @@ namespace engine
       INT32             rc = SDB_OK ;
       const CHAR*       pFldName = NULL ;
       const CHAR*       pSeqName = NULL ;
-      bson::OID         seqID ;
+      utilSequenceID    seqID = UTIL_SEQUENCEID_NULL ;
       const CHAR*       pGenStr = NULL ;
       AUTOINC_GEN_TYPE  genType ;
       UINT32            validNum = 0 ;
@@ -115,14 +115,14 @@ namespace engine
          }
          else if ( 0 == ossStrcmp( e.fieldName(), CAT_AUTOINC_SEQ_ID ) )
          {
-            if ( jstOID != e.type() )
+            if ( !e.isNumber() )
             {
-               PD_LOG( PDERROR, "Field[%s] in obj[%s] must be OID",
+               PD_LOG( PDERROR, "Field[%s] in obj[%s] must be number",
                        CAT_AUTOINC_SEQ_ID, obj.toString().c_str() ) ;
                rc = SDB_SYS ;
                goto error ;
             }
-            seqID = e.OID() ;
+            seqID = e.Long() ;
             ++validNum ;
          }
          else if ( 0 == ossStrcmp( e.fieldName(), CAT_AUTOINC_GENERATED ) )
@@ -175,7 +175,7 @@ namespace engine
 
    INT32 _clsAutoIncItem::_init( const CHAR* fieldName,
                                  const CHAR* sequenceName,
-                                 const OID &sequenceID,
+                                 const utilSequenceID sequenceID,
                                  const AUTOINC_GEN_TYPE generated )
    {
       /*

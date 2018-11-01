@@ -61,6 +61,7 @@ namespace engine
       _cycled = FALSE ;
       _initial = TRUE ;
       _exceeded = FALSE ;
+      _ID = UTIL_GLOBAL_NULL ;
    }
 
    _catSequence::~_catSequence()
@@ -142,6 +143,11 @@ namespace engine
       _exceeded = exceeded ;
    }
 
+   void _catSequence::setID( utilSequenceID id )
+   {
+      _ID = id ;
+   }
+
    INT32 _catSequence::toBSONObj( bson::BSONObj& obj, BOOLEAN forUpdate ) const
    {
       INT32 rc = SDB_OK ;
@@ -154,6 +160,7 @@ namespace engine
             builder.append( CAT_SEQUENCE_OID, _oid ) ;
             builder.append( CAT_SEQUENCE_NAME, _name ) ;
             builder.append( CAT_SEQUENCE_INTERNAL, (bool)_internal ) ;
+            builder.append( CAT_SEQUENCE_ID, (INT64)_ID ) ;
          }
          builder.append( CAT_SEQUENCE_VERSION, _version ) ;
          builder.append( CAT_SEQUENCE_CURRENT_VALUE, _currentValue ) ;
@@ -196,6 +203,7 @@ namespace engine
          _oid = other.oid() ;
          _version = other.version() ;
          _internal = other.internal() ;
+         _ID = other.ID() ;
       }
    }
 
@@ -208,6 +216,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONElement ele ;
       BOOLEAN _changed = FALSE ;
+      utilSequenceID ID = UTIL_SEQUENCEID_NULL ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_SET_OPTIONS ) ;
 
       // CAT_SEQUENCE_INCREMENT
@@ -457,6 +466,25 @@ namespace engine
             goto error ;
          }
 
+         // CAT_SEQUENCE_ID
+         ele = options.getField( CAT_SEQUENCE_ID ) ;
+         if ( ele.isNumber() )
+         {
+            ID = ele.Long() ;
+            if ( this->ID() != ID )
+            {
+               this->setID( ID ) ;
+               _changed = TRUE ;
+            }
+         }
+         else if ( EOO != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
+                    ele.type(), CAT_SEQUENCE_ID ) ;
+            goto error ;
+         }
+
          // CAT_SEQUENCE_VERSION
          ele = options.getField( CAT_SEQUENCE_VERSION ) ;
          if ( NumberInt == ele.type() || NumberLong == ele.type() )
@@ -657,6 +685,7 @@ namespace engine
       static std::string fieldNameArray[] = {
          CAT_SEQUENCE_NAME,
          CAT_SEQUENCE_OID,
+         CAT_SEQUENCE_ID,
          CAT_SEQUENCE_VERSION,
          CAT_SEQUENCE_CURRENT_VALUE,
          CAT_SEQUENCE_INCREMENT,

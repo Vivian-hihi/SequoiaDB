@@ -993,7 +993,6 @@ namespace engine
                PDERROR, "Invalid argument[%s], rc:%d", _argument.toString(false,false).c_str(), rc ) ;
             for( UINT32 i = 0; i < eleArray.size(); i++ )
             {
-               bson::OID seqId ;
                const BSONElement autoIncArg = eleArray[i] ;
                rtnCLAutoincFieldArgument *autoIncField = NULL ;
                autoArgObject = autoIncArg.Obj() ;
@@ -1006,19 +1005,16 @@ namespace engine
 
                rc = autoIncField->parseArgument() ;
                PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
-               seqId = bson::OID::gen() ;
-               autoIncField->setSeqId( seqId ) ;
+               PD_CHECK( !autoIncField->testArgumentMask( UTIL_CL_AUTOINC_CURVALUE_FIELD ), SDB_INVALIDARG, error,
+                         PDERROR, "Option[%s] not support when create autoincrement field", FIELD_NAME_CURRENT_VALUE ) ;
                _autoIncFieldList.push_back( autoIncField ) ;
             }
          }
          else if( ele.type() == Object )
          {
-            bson::OID seqId ;
             rtnCLAutoincFieldArgument *autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( ele.Obj() ) ;
             rc = autoIncField->parseArgument() ;
             PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, rc: %d", rc ) ;
-            seqId = bson::OID::gen() ;
-            autoIncField->setSeqId( seqId ) ;
             _autoIncFieldList.push_back( autoIncField ) ;
          }
          else

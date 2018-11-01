@@ -2483,6 +2483,71 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUPGLOBALID, "catUpdateGlobalID" )
+   INT32 catUpdateGlobalID( pmdEDUCB *cb, INT16 w,
+                            utilGlobalID& globalID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATUPGLOBALID ) ;
+
+      BSONObj dummy, result ;
+      BSONObj matcher = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
+      BSONObj updator ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
+      SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
+
+      rc = catGetOneObj( CAT_SYSDCBASE_COLLECTION_NAME, dummy, matcher,
+                         dummy, cb, result ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to match obj[%s] from collection[%s], "
+                   "rc: %d", matcher.toString().c_str(),
+                   CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+
+      try
+      {
+         BSONElement ele = result.getField( FIELD_NAME_GLOBALID ) ;
+         PD_CHECK( ele.isNumber() || ele.eoo(), SDB_INVALIDARG, error, PDERROR,
+                   "Failed to get field[%s], type: %d",
+                   FIELD_NAME_GLOBALID, ele.type() );
+         if ( ele.eoo() )
+         {
+            globalID = 1 ;
+         }
+         else
+         {
+            if ( UTIL_GLOGALID_MAX - 1 <= globalID )
+            {
+               rc = SDB_CAT_GLOBALID_EXCEEDED ;
+               PD_LOG( PDERROR,
+                       "Global id[%u] can't exceed %lu, rc: %d",
+                       globalID, UTIL_GLOGALID_MAX, rc ) ;
+               goto error ;
+            }
+            globalID = ( utilGlobalID )ele.numberLong() + 1 ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         goto error ;
+      }
+
+      updator = BSON( "$set" << BSON( FIELD_NAME_GLOBALID << (INT64)globalID ) ) ;
+      rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
+                      dummy, 0, cb, dmsCB, dpsCB, w ) ;
+      PD_RC_CHECK( rc, PDERROR, "Fail to update obj[%s] to collection[%s], "
+                   "rc: %d", updator.toString().c_str(),
+                   CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATUPGLOBALID, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATPRASEFUNC, "catPraseFunc" )
    INT32 catPraseFunc( const BSONObj &func, BSONObj &parsed )
    {
@@ -4494,7 +4559,8 @@ namespace engine
    //    CataInfo:
    //       [ { GroupID: 1000, LowBound:{ "":MinKey,"":MaxKey }, UpBound:{"":MaxKey,"":MinKey} } ] }
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATBUILDCATARECORD, "catBuildCatalogRecord" )
-   INT32 catBuildCatalogRecord( const catCollectionInfo &clInfo,
+   INT32 catBuildCatalogRecord( _pmdEDUCB *cb,
+                                const catCollectionInfo &clInfo,
                                 UINT32 mask, UINT32 attribute,
                                 const std::vector<UINT32> &grpIDLst,
                                 const std::map<std::string, UINT32> &splitLst,
@@ -4708,12 +4774,20 @@ namespace engine
 
       if ( mask & UTIL_CL_AUTOINC_FIELD )
       {
+         INT16 w = 0 ;
          utilCLUniqueID       clUniqueID ;
          UINT64               i ;
          vector<BSONObj>      autoIncArr ;
          BSONObj              autoIncObj ;
          vector<BSONObj>      newAutoIncArr ;
          const CHAR           *fieldName ;
+         utilSequenceID       seqID = UTIL_SEQUENCEID_NULL ;
+         pmdKRCB              *krcb = NULL ;
+         sdbCatalogueCB       *catCB = NULL ;
+
+         krcb = pmdGetKRCB() ;
+         catCB = krcb->getCATLOGUECB() ;
+         w = catCB->majoritySize() ;
 
          clUniqueID = clInfo._clUniqueID ;
          autoIncArr = clInfo._autoIncrement ;
@@ -4728,7 +4802,10 @@ namespace engine
             builder.append( CAT_AUTOINC_FIELD, fieldName ) ;
             builder.append( CAT_AUTOINC_SEQ,
                             catGetSeqName4AutoIncFld( clUniqueID, fieldName ) ) ;
-            builder.append( CAT_AUTOINC_SEQ_ID, OID::gen() ) ;
+            rc = catUpdateGlobalID( cb, w, seqID );
+            PD_RC_CHECK( rc, PDERROR, "Failed to get global ID for field[%s], rc: %d",
+                         fieldName, rc ) ;
+            builder.append( CAT_AUTOINC_SEQ_ID, (INT64)seqID ) ;
             if ( autoIncObj.hasField( CAT_AUTOINC_GENERATED ) )
             {
                builder.append( autoIncObj.getField( CAT_AUTOINC_GENERATED ) ) ;
@@ -5179,9 +5256,9 @@ namespace engine
       catSequenceManager   *pSeqMgr = NULL ;
       const CHAR           *fieldName = NULL ;
       const CHAR           *seqName = NULL ;
-      OID                  seqID ;
       INT32                tmpRC = SDB_OK ;
       BOOLEAN              found = FALSE ;
+      utilSequenceID       seqID = UTIL_SEQUENCEID_NULL ;
 
       pSeqMgr = sdbGetCatalogueCB()->getCatGTSMgr()->getSequenceMgr() ;
 
@@ -5195,9 +5272,8 @@ namespace engine
 
             autoIncMeta = autoIncMetaArr[i].Obj() ;
             seqName = autoIncMeta.getField( CAT_AUTOINC_SEQ ).valuestr() ;
-            seqID = autoIncMeta.getField( CAT_AUTOINC_SEQ_ID ).OID() ;
             fieldName = autoIncMeta.getField( CAT_AUTOINC_FIELD ).valuestr() ;
-
+            seqID = autoIncMeta.getField( CAT_AUTOINC_SEQ_ID ).Long() ;
             found = FALSE ;
             for ( j = 0 ; j < autoIncOptArr.size() ; ++j )
             {
@@ -5212,8 +5288,7 @@ namespace engine
             PD_CHECK( found, SDB_SYS, error, PDERROR,
                       "AutoIncrement meta data[%s] has no match options",
                       autoIncMeta.toString().c_str() ) ;
-
-            seqOpt = catGetSequenceOptions( autoIncOpt, &seqID ) ;
+            seqOpt = catGetSequenceOptions( autoIncOpt, seqID ) ;
             rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
             if ( SDB_SEQUENCE_EXIST == rc )
             {
@@ -5281,7 +5356,7 @@ namespace engine
       goto done ;
    }
 
-   BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt, bson::OID *seqId )
+   BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt, utilSequenceID ID )
    {
       static const CHAR* autoIncFieldArr[] = {
          CAT_AUTOINC_FIELD,
@@ -5304,9 +5379,9 @@ namespace engine
          }
       }
       seqOptBuilder.append( CAT_SEQUENCE_INTERNAL, true ) ;
-      if( seqId && seqId->isSet() )
+      if( ID != UTIL_SEQUENCEID_NULL )
       {
-         seqOptBuilder.append( CAT_SEQUENCE_OID, *seqId ) ;
+         seqOptBuilder.append( CAT_SEQUENCE_ID, (INT64)ID ) ;
       }
       return seqOptBuilder.obj() ;
    }
