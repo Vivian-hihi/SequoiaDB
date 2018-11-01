@@ -16,6 +16,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @Description RenameCL_16081.java 修改cs名和修改cl名并发 
  * @author luweikang
  * @date 2018年10月17日
+ * @review  wuyan 2018.10.31
  */
 public class RenameCL_16081 extends SdbTestBase{
 	
@@ -32,7 +33,7 @@ public class RenameCL_16081 extends SdbTestBase{
 	@BeforeClass
 	public void setUp(){
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		cs = sdb.createCollectionSpace(csName);
+		cs = sdb.createCollectionSpace(csName);//TODO:1.非特殊情况建议用公共CS，不需要再创建cs
 		clA = cs.createCollection(clNameA);
 		clB = cs.createCollection(clNameB);
 		RenameUtil.insertData(clA, recordNum);
@@ -50,10 +51,10 @@ public class RenameCL_16081 extends SdbTestBase{
 		boolean clARe = reCLANameThread.isSuccess();
 		boolean clBRe = reCLBNameThread.isSuccess();
 		
-		Sequoiadb db = null; 
-		try{
+		Sequoiadb db = null; //TODO:2、可以用放在try里面，使用jkd1.7新增资源释放接口，不需要写finally
+		try{//TODO:3、这里不需要再重新newdb了吧，既然sdb已作为全局变量，可以直接用sdb
 			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			if(clARe && !clBRe){
+			if(clARe && !clBRe){//TODO:4、变量名尽量不要缩写，命名建议反应所代表的意义
 				RenameUtil.checkRenameCLResult(db, csName, clNameA, newCLName);
 				RenameUtil.checkRenameCLResult(db, csName, "16081NotExistCLB", clNameB);
 			}else if(!clARe && clBRe){
@@ -63,7 +64,7 @@ public class RenameCL_16081 extends SdbTestBase{
 				Assert.fail("rename cl name to the same name, all failed");
 			}else{
 				Assert.fail("rename cl name to the same name, all success");
-			}
+			}//TODO:5、上述代码存在同样问题，如果某个线程失败，没有捕获异常并判断是否符合预期
 		} finally{
 			db.close();
 		}
@@ -72,7 +73,7 @@ public class RenameCL_16081 extends SdbTestBase{
 	@AfterClass
 	public void tearDown(){
 		CommLib.clearCS(sdb, csName);
-		if(sdb!=null){
+		if(sdb!=null){//TODO：6、sdb建议在finally里面关闭，如果上述操作步骤失败就不会执行
 			sdb.close();
 		}
 	}
@@ -82,7 +83,7 @@ public class RenameCL_16081 extends SdbTestBase{
 		@Override
 		public void exec() throws Exception {
 			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {
+			try {//TODO:7、同上，建议new db使用自动释放资源方式，放在try条件中
 				CollectionSpace cs = db.getCollectionSpace(csName);
 				cs.renameCollection(clNameA, newCLName);
 			}finally {
