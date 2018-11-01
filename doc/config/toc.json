@@ -347,6 +347,12 @@
                "file": "lob",
                "cn": "大对象",
                "en": "Large Object"
+            },
+            {
+               "id": 1541038339,
+               "file": "auto_increment",
+               "cn": "自增字段",
+               "en": "Auto-increment"
             }
          ]
       },
@@ -893,6 +899,12 @@
                            "file": "SDB_SNAP_CONFIGS",
                            "cn": "配置快照",
                            "en": "SDB_SNAP_CONFIGS"
+                        },
+                        {
+                           "id": 1541038691,
+                           "file": "SDB_SNAP_SEQUENCES",
+                           "cn": "序列快照",
+                           "en": "SDB_SNAP_SEQUENCES"
                         }
                      ]
                   },
@@ -967,6 +979,12 @@
                            "file": "SDB_LIST_TRANSACTIONS_CURRENT",
                            "cn": "当前事务列表",
                            "en": "SDB_LIST_TRANSACTIONS_CURRENT"
+                        },
+                        {
+                           "id": 1541038852,
+                           "file": "SDB_LIST_SEQUENCES",
+                           "cn": "序列列表",
+                           "en": "SDB_LIST_SEQUENCES"
                         }
                      ]
                   },
@@ -2147,6 +2165,12 @@
                            "en": "count()"
                         },
                         {
+                           "id": 1541039122,
+                           "file": "createAutoIncrement",
+                           "cn": "createAutoIncrement()",
+                           "en": "createAutoIncrement()"
+                        },
+                        {
                            "id": 1432190829,
                            "file": "createIdIndex",
                            "cn": "createIdIndex()",
@@ -2181,6 +2205,12 @@
                            "file": "disableSharding",
                            "cn": "disableSharding()",
                            "en": "disableSharding()"
+                        },
+                        {
+                           "id": 1541039200,
+                           "file": "dropAutoIncrement",
+                           "cn": "dropAutoIncrement()",
+                           "en": "dropAutoIncrement()"
                         },
                         {
                            "id": 1432190833,
