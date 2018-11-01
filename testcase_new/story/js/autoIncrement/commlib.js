@@ -279,6 +279,7 @@ function checkSequence(sequenceName, expObj)
    delete sequenceObj.Internal;
    delete sequenceObj.Name;
    delete sequenceObj.SequenceID
+   delete sequenceObj.ID
    
    var tmpActObj = sortJsonKeys(sequenceObj);
    var tmpExpObj = sortJsonKeys(expObj);
