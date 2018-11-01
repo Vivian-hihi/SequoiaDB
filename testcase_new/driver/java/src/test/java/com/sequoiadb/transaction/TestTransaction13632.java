@@ -7,7 +7,9 @@ import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.testng.Assert;
 import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -30,7 +32,7 @@ public class TestTransaction13632 extends SdbConfTestBase {
         stdalnConf.put("transactionon", true);
     }
 
-    @BeforeTest
+    @BeforeClass
     public void setUp() {
         System.out.println("the TestCase Name:" + this.getClass().getName() +
                 ". the TestCase begin at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
@@ -67,7 +69,7 @@ public class TestTransaction13632 extends SdbConfTestBase {
         return r;
     }
 
-    @AfterTest
+    @AfterClass
     public void tearDown() {
         System.out.println("the TestCase Name:" + this.getClass().getName() +
                 ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));

@@ -9,7 +9,9 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -42,7 +44,7 @@ public class TestTransaction7116 extends SdbConfTestBase{
         stdalnConf.put("transactionon", true);
     }
     
-    @BeforeTest
+    @BeforeClass
     public void setUp() {
         String coordAddr = SdbTestBase.coordUrl;
         String commCSName = SdbTestBase.csName;
@@ -149,7 +151,7 @@ public class TestTransaction7116 extends SdbConfTestBase{
         }
     }
     
-    @AfterTest
+    @AfterClass
     public void tearDown() {
         System.out.println("the TestCase Name:" + this.getClass().getName() + 
                 ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
