@@ -2515,15 +2515,16 @@ namespace engine
          }
          else
          {
+            globalID = ( utilGlobalID )ele.numberLong() ;
             if ( UTIL_GLOGALID_MAX - 1 <= globalID )
             {
                rc = SDB_CAT_GLOBALID_EXCEEDED ;
                PD_LOG( PDERROR,
-                       "Global id[%u] can't exceed %lu, rc: %d",
+                       "Global id[%llu] can't exceed %llu, rc: %d",
                        globalID, UTIL_GLOGALID_MAX, rc ) ;
                goto error ;
             }
-            globalID = ( utilGlobalID )ele.numberLong() + 1 ;
+            globalID += 1 ;
          }
       }
       catch ( std::exception &e )
