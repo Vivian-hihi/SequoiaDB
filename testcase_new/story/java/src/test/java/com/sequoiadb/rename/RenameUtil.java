@@ -30,12 +30,9 @@ import com.sequoiadb.testcommon.SdbTestBase;
 public class RenameUtil extends SdbTestBase {
 	
 	public static void checkRenameCSResult(Sequoiadb db, String oldCSName, String newCSName, int clNum){
-		
-		try{
-			db.getCollectionSpace(oldCSName);
+
+		if(db.isCollectionSpaceExist(oldCSName)){
 			Assert.fail("cs it's been renamed, It shouldn't exist");
-		}catch(BaseException e){
-			Assert.assertEquals(e.getErrorCode(), -34, e.getMessage());
 		}
 		
 		//if cs is not empty, check cl full name
