@@ -17,7 +17,7 @@ function main(db)
       return ;
    }
    var csName1 = CHANGEDPREFIX+"_maincs16116_21";
-   var csName2 = CHANGEDPREFIX+"_maincs16116_22";
+   var csName2 = CHANGEDPREFIX+"_maincs16116_22";//review 2：这个cs未使用
    var mainClName = CHANGEDPREFIX+"maincl16116_21";
    
    var csName3 = CHANGEDPREFIX+"_subcs16116_21";
@@ -33,7 +33,7 @@ function main(db)
       commDropCS( db, csName2, true, "drop CS "+csName2 );
       commDropCS( db, csName3, true, "drop CS "+csName3 );
       commDropCS( db, csName4, true, "drop CS "+csName4 );
-   }catch( e ){}
+   }catch( e ){} //review 1：这里的try-catche建议去掉，catche也没有抛异常处理
    var varCS = commCreateCS( db, csName1, true, "create CS" );
    var varCL = varCS.createCL(mainClName, { IsMainCL: true, ShardingKey: { a: 1 }, ShardingType: "range" } );
    //子表1
@@ -43,7 +43,7 @@ function main(db)
    var subcl2 = subCS.createCL(clName2, { ShardingKey: { a: 1 }, ShardingType: "hash", Partition: 1024, Group: groupName2} );
    //挂载
    attachCL(varCL, csName3+"."+clName1, { LowBound: { a: 0 }, UpBound: { a: 1000 } }  );
-   attachCL(varCL, csName3+"."+clName2, { LowBound: { a: 1000 }, UpBound: { a: 3000 } });
+   attachCL(varCL, csName3+"."+clName2, { LowBound: { a: 1000 }, UpBound: { a: 3000 } });//review 3：创建主子表和挂载子表的操作建议提取方法
    subcl2.split(groupName2, groupName3, 50);
    //修改子表cs name
    try
@@ -54,6 +54,7 @@ function main(db)
    {
       throw buildException("renameCS( csName3, csName4 ) fail", e, "rename", "success", e); 
    }
+   
    var recordNums = 2000;
    insertData( varCL, recordNums );
    varCL.createIndex( "index16116_2", { no: 1 }, false );

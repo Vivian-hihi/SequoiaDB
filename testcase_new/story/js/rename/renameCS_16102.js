@@ -1,5 +1,5 @@
 /************************************
-*@Description: 修改cs名后，执行数据增删改查操作
+*@Description: 修改cs名后，执行数据增删改查操作---//review 1:描述和实际执行步骤不相符
 *@author:      luweikang
 *@createdate:  2018.10.12
 *@testlinkCase:seqDB-16102
@@ -9,7 +9,7 @@ main();
 
 function main()
 {
-   println("---begin rename cs test---");
+   println("---begin rename cs test---");//review 2：println打印用例起始和结束意义不大，建议主要步骤增加println信息
    var oldcsName = COMMCSNAME+"_16102_old";
    var newcsName = COMMCSNAME+"_16102_new";
    var clName = CHANGEDPREFIX + "_16102_cl";
@@ -41,8 +41,8 @@ function main()
    while(cur.next())
    {
       var index = cur.current().toObj();
-      var name = index.IndexDef.name;
-      if(indexArr.indexOf(name)===-1)
+      var name = index.IndexDef.name;      
+      if(indexArr.indexOf(name)===-1)// review 3:这种校验索引的方法不严谨，如果查不到索引或者索引不足3个，那么这种方法就无法检测到
       {
          throw buildException("checkIndex",e,"index", indexArr.toString, name);
       }

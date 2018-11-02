@@ -1,5 +1,5 @@
 /* *****************************************************************************
-@discretion: rename cl
+@discretion: rename cl ---//review 1：描述信息不正确，和实际用例不符
              seqDB-16108
              seqDB-16109
 @author：2018-10-13 chensiqin  Init
@@ -22,8 +22,9 @@ function main(db)
    var csName2 = CHANGEDPREFIX+"_rename16108_2";
    var csName3 = CHANGEDPREFIX+"_rename16108_3";
    var clName = CHANGEDPREFIX+"rename16108";
-   //创建domain
+   //创建domain  --------//review 2：方法名已经很明确，不需要再增加和方法名相同的说明信息
    var domain = createDomain( db, domainName );
+   
    //创建cs cl
    commDropCS( db, csName1, true, "ignoreNotExist is true" );
    commDropCS( db, csName2, true, "ignoreNotExist is true" );
@@ -31,10 +32,11 @@ function main(db)
    var varCS = commCreateCS( db, csName1, true, "create CS", {Domain:domainName} );
    var varCL = commCreateCLByOption( db, csName1, clName, {}, true, false, "create cl in the beginning" )
    insertData(varCL, 100);
+   
    //修改cs名称，快照检查
    testRenameCS16108( db, csName1, csName2 );
    testRenameCS16109( db, domain, csName2, csName3, clName );
-   afterClear( db, domainName, csName3 )
+   afterClear( db, domainName, csName3 );
 }
 
 function testRenameCS16108( db, csName1, csName2 )

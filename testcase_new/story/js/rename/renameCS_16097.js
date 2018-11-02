@@ -6,8 +6,8 @@
 **************************************/
 
 main();
-
-function main()
+//review by wuyan：共计3处批注
+function main()//1、文本用例中描述不是主子表，不需要跳过独立模式和一组三节点模式，请确认
 {
    //@ clean before
    if( true == commIsStandalone( db ) )
@@ -47,13 +47,13 @@ function main()
       cl.update({$set:{c:"test"}});
       db.renameCS(newcsName, oldcsName);
       cl = db.getCS(oldcsName).getCL(clName);
-      cl.update({$set:{c:"test"}});
+      cl.update({$set:{c:"test"}});//2、改名后做更新操作，需要验证更新操作结果
    }
    
    db.renameCS(oldcsName, newcsName);
    checkRenameCSResult(oldcsName, newcsName, 2);
    
    commDropCS( db, newcsName, true, false, "clean cs---" );
-   println("---end the test---");
+   println("---end the test---");//3、println建议打主要操作步骤，用例开始和结束标志没有必要打印
 }
 

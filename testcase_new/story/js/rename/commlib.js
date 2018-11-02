@@ -390,9 +390,9 @@ function createCL( csName, clName, shardingKey, shardingType)
 function checkRenameCSResult( oldCSName, newCSName, clNum)
 {   
    try
-   {
+   {//review 1：这个clnum建议给个默认值，默认为1，大部分用例都是校验1个cl
       var times = 0;
-      for(var i=0; i<50; i++)
+      for(var i=0; i<50; i++)//review 2：这里为啥要给50？建议数字给个说明
       {
          var newCSObj = db.snapshot(SDB_SNAP_COLLECTIONSPACES ,{"Name": newCSName }).current().toObj();
          var getNewCSName = newCSObj.Name;
@@ -404,7 +404,7 @@ function checkRenameCSResult( oldCSName, newCSName, clNum)
          
          var clArray = newCSObj.Collection;
          
-         if(clNum != clArray.length){
+         if(clNum != clArray.length){//review 3：这个实现逻辑建议优化下，这里如果不同步可以循环获取，给个超时时间，不要每次都sleep
             times++;
             if(times === 50){
                throw buildException("check cl num", null, JSON.stringify(newCSObj),

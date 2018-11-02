@@ -44,20 +44,21 @@ function main()
    
    try
    {
-      db.eval( procedureName+"()" );
+      db.eval( procedureName+"()" );// review 1:执行失败的步骤需要增加失败检测，如果执行成功则报错
    }
    catch(e)
    {
-      if(e!==-34){
+      if( e! == -34 )
+      {
          throw buildException("check procedure after rename cs", e, "procedure", -34, e);
       }
    }
    
    println("---remove procedure---");
-   db.removeProcedure( procedureName )
+   db.removeProcedure( procedureName )；
    
    var cur = db.listProcedures({name: procedureName});
-   if(cur.next()!=null)
+   if( cur.next() != null )
    {
       throw buildException("check list procedure", "", "procedure", "listProcedures is null", cur.current());
    }

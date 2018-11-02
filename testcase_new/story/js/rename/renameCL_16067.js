@@ -7,19 +7,12 @@ main(db);
 function main(db)
 {	  
 	try
-	{	   
-	   if( true == commIsStandalone( db ) )
-      {
-         println( "run mode is standalone" );
-         return;
-      }    
-  
-      var allGroupName = getGroupName(db,true);         
-      if( 1 === allGroupName.length )
+	{	
+	   if (commGetGroupsNum(db) < 2)
       {
          println("--least two groups");
          return ;
-      }  
+      }   
 
 	   var clName = CHANGEDPREFIX + "_renamecl16067";  
       var newCLName = CHANGEDPREFIX + "_newcl16067";       
@@ -58,8 +51,7 @@ function splitCL( csName, clName )
       var targetGroupNums = 2;
       var groupsInfo = getSplitGroups( COMMCSNAME, clName, targetGroupNums );
       var srcGroupName = groupsInfo[0].GroupName;
-      var dstGroupName = groupsInfo[1].GroupName;
-      println("---srcGroupName="+groupsInfo[0].svcname);
+      var dstGroupName = groupsInfo[1].GroupName;      
       var taskId = dbcl.splitAsync(srcGroupName, dstGroupName, percent); 
       return taskId;
    } 
@@ -78,7 +70,7 @@ function renameCL( csName, oldCLName, newCLName )
       throw "need throw error";
 	}
 	catch ( e )
-	{println("---e="+e);
+	{
 		if ( e != -334 )
 		{
 			throw buildException( "rename cl16067:", e );
@@ -94,14 +86,13 @@ function checkSplitResult( csName, clName, taskId, expRecordNums, groupsInfo )
       var sleepInteval=10;
       var sleepDuration=0;
       var maxSleepDuration=10000;      
-      //println(db.listTasks({ "TaskID": taskId }).next() !== undefined)
+      
       while( (db.listTasks({ "Name": csName + "."+ clName }).next() !== undefined ) && sleepDuration < maxSleepDuration )
       {        
          sleep( sleepInteval );
          sleepDuration += sleepInteval;                       
       }
-      //check the record nums  
-      println("--listTasks="+db.listTasks({ "Name": csName + "."+ clName }).next())    
+      //check the record nums      
       var dbcl = db.getCS( csName ).getCL( clName );
       var count = dbcl.count();      
       if( count != expRecordNums  )
@@ -109,7 +100,7 @@ function checkSplitResult( csName, clName, taskId, expRecordNums, groupsInfo )
          throw buildException("check datas", null, "check the new cl record nums",
 									expRecordNums, count);
       }   
-       println("13")  
+       
       //test record nums of split groups
       for( var i = 0; i < 2; i++ )
       {         
@@ -133,8 +124,7 @@ function checkSplitResult( csName, clName, taskId, expRecordNums, groupsInfo )
          {
             if (sdb !== undefined)
       	   {
-               sdb.close();
-      	      sdb == undefined;
+               sdb.close();      	      
       	   } 
          }	           
       }      

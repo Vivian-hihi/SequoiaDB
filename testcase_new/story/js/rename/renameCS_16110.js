@@ -1,5 +1,5 @@
 /* *****************************************************************************
-@discretion: rename cl
+@discretion: rename cl  ---//review 1: 描述信息和实际用例不符
              seqDB-16110
 @author：2018-10-13 chensiqin  Init
 ***************************************************************************** */
@@ -20,24 +20,27 @@ function main(db)
    var csName1 = CHANGEDPREFIX+"_rename16110_1";
    var csName2 = CHANGEDPREFIX+"_rename16110_2";
    var clName = CHANGEDPREFIX+"renamecl16110";
+   
    //创建domain
    var groups = commGetGroups(db);
    var groupName1 = groups[0][0].GroupName;
    var groupName2 = groups[1][0].GroupName;
-   var domain = createDomain( db, domainName, groupName1, groupName2 );
+   var domain = createDomain( db, domainName, groupName1, groupName2 );//review 3：这个方法只有一行代码操作，如果提出方法，建议把groups相关代码也合进去
+   
    //创建cs cl
    commDropCS( db, csName1, true, "ignoreNotExist is true" );
    commDropCS( db, csName2, true, "ignoreNotExist is true" );
    var varCS = commCreateCS( db, csName1, true, "create CS");
    var varCL = commCreateCLByOption( db, csName1, clName, {Group:groupName1}, true, false, "create cl in the beginning" )
    insertData(varCL, 100);
+   
    testRenameCS16110( db, domainName, domain, csName1, csName2, clName );
    afterClear( db, domainName, csName2 )
 }
 
 function testRenameCS16110( db, domainName, domain, csName1, csName2, clName )
 {
-   var oldName = csName1;
+   var oldName = csName1;//review 2：建议定义变量就直接定义为oldCSName和newCSName，可以直接用，后面一会newName，一会又用csName2
    var newName = csName2;
    db.renameCS( oldName, newName );
    //check

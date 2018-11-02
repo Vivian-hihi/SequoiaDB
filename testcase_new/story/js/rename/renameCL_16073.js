@@ -10,10 +10,11 @@ function main(db)
    var fileName = CHANGEDPREFIX + "_lobtest16073.file";
    try{
       commDropCS( db, csName, true, "drop CS "+csName );
-   }catch( e ){}
+   }catch( e ){}//review 1：多余try-catch建议去掉
    var cs = commCreateCS( db, csName, true, "create CS1" );
    var clName = CHANGEDPREFIX+"_cl16073_5";
    var varCL = commCreateCLByOption( db, csName, clName , {}, true, false, "create cl in the beginning" );
+   
    var recordNums = 100;
    insertData(varCL, recordNums);
    var srcMd5 = createFile( fileName);
@@ -25,10 +26,11 @@ function main(db)
       checkRenameCLResult( csName, clName, CHANGEDPREFIX+"_newcl16073_"+i)
       clName = CHANGEDPREFIX+"_newcl16073_"+i;
    }
+   
    checkDatas( csName, clName, recordNums, srcMd5, lobIdArr );
    commDropCS( db, csName, true, "ignoreNotExist is true" );
    var cmd = new Cmd();
-   cmd.run( "rm -rf *" + fileName );
+   cmd.run( "rm -rf *" + fileName );//review 2：建议放在finally里面，如果上面出错会导致残留
 }
 
 function checkDatas( csName, newCLName, expRecordNums, srcMd5,expLobArr )

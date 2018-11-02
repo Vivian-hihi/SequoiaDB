@@ -27,7 +27,7 @@ function main()
    cl = db.getCS(newcsName).getCL(clName);
    
    //insert 1000 data, and check data
-   insertData(cl);
+   insertData(cl);//review 1:没有检查插入记录结果
    
    //update ($set: {a:10086}) 2000 data, and check data
    updateData(cl);

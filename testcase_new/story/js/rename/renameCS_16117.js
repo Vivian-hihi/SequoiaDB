@@ -25,11 +25,12 @@ function main(db)
    try{
       commDropCS( db, csName1, true, "drop CS "+csName1 );
       commDropCS( db, csName2, true, "drop CS "+csName2 );
-   }catch( e ){}
+   }catch( e ){}// review 1：这里的try-catch建议去掉
    var cs = commCreateCS( db, csName1, true, "create CS1" );
    var cl1 = commCreateCLByOption( db, csName1, clName1, {}, true, false, "create cl in the beginning" );
    var cl2 = commCreateCLByOption( db, csName1, clName2, {}, true, false, "create cl in the beginning" );
    var cl3 = commCreateCLByOption( db, csName1, clName3, {}, true, false, "create cl in the beginning" );
+   
    commCreateIndex( cl1, indexName1, {a:1}, false, false );
    commCreateIndex( cl1, indexName2, {b:1}, false, false );
    commCreateIndex( cl2, indexName1, {a:1}, false, false );
@@ -44,7 +45,9 @@ function main(db)
    {
       throw buildException("renameCS( csName1, csName2 ) fail", e, "rename", "success", e); 
    }
+   
    checkRenameCSResult(csName1, csName2, 3 );
+   
    var cs = db.getCS(csName2);
    var cl1 = cs.getCL(clName1);
    var cl2 = cs.getCL(clName2);
@@ -62,7 +65,7 @@ function main(db)
    try{
       commDropCS( db, csName1, true, "drop CS "+csName1 );
       commDropCS( db, csName2, true, "drop CS "+csName2 );
-   }catch( e ){}
+   }catch( e ){}// review 1：多余的try-catch建议去掉
 }
 
 function checkClIndex(cl, indexName1, indexName3)

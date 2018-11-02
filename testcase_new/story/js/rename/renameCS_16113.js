@@ -1,5 +1,5 @@
 /* *****************************************************************************
-@discretion: rename cl
+@discretion: rename cl  
              seqDB-16113
 @author：2018-10-13 chensiqin  Init
 ***************************************************************************** */
@@ -7,7 +7,7 @@
 1、创建cs、cl 2、修改cs名，检查结果 3、创建删除cl检查结果 1、修改cs名成功 2、创建删除cl成功
 */
 main(db);
-
+//review 1：该用例和16101重复，建议删除
 function main(db)
 {
    var csName1 = CHANGEDPREFIX+"_rename16113_1";

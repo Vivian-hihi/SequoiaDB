@@ -18,11 +18,11 @@ function main(db)
       
 	   var mainCLName    = CHANGEDPREFIX + "_rename_maincl16142";    
 	   var newMainCLName = CHANGEDPREFIX + "_newrename_maincl16142";      
-      var csName        = CHANGEDPREFIX + "_cs16061";
-      var subCLName1    = CHANGEDPREFIX + "_subcl16061a";
-      var subCLName2    = CHANGEDPREFIX + "_subcl16061b";     
-      var newSubCLName1 = CHANGEDPREFIX + "_newsubcl16061a";
-      var newSubCLName2 = CHANGEDPREFIX + "_newsubcl16061b";      
+      var csName        = CHANGEDPREFIX + "_cs16142";
+      var subCLName1    = CHANGEDPREFIX + "_subcl16142a";
+      var subCLName2    = CHANGEDPREFIX + "_subcl16142b";     
+      var newSubCLName1 = CHANGEDPREFIX + "_newsubcl16142a";
+      var newSubCLName2 = CHANGEDPREFIX + "_newsubcl16142b";      
       commDropCS( db, csName, true, "Failed to drop CS.");         
       commDropCL( db, COMMCSNAME, subCLName2, true, true, "clear collection in the beginning" ) ; 
       commDropCL( db, COMMCSNAME, newSubCLName2, true, true, "clear collection in the beginning" ) ;       

@@ -1,5 +1,5 @@
 /************************************
-*@Description: 修改cs名后，执行数据增删改查操作
+*@Description: 修改cs名后，执行数据增删改查操作--//review1:描述和实际用例步骤不符
 *@author:      luweikang
 *@createdate:  2018.10.12
 *@testlinkCase:seqDB-16101
@@ -34,7 +34,7 @@ function main()
    cl = cs.createCL(clName2);
    
    //insert 1000 data, and check data
-   insertData(cl, 1000);
+   insertData(cl, 1000);//review 2：insert没有校验结果
    
    checkRenameCSResult(oldcsName, newcsName, 1);
    
