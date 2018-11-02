@@ -141,7 +141,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT_REMOVE_CACHE, "_coordSequenceAgent::removeCache" )
-   BOOLEAN _coordSequenceAgent::removeCache( const std::string& name, const utilSequenceID ID )
+   BOOLEAN _coordSequenceAgent::removeCache( const std::string& name,
+                                             const utilSequenceID ID )
    {
       BOOLEAN removed = FALSE ;
       PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT_REMOVE_CACHE ) ;
@@ -237,11 +238,11 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_SLOCK, "_coordSequenceAgent::_getNextValueBySLock" )
    INT32 _coordSequenceAgent::_getNextValueBySLock( const std::string& name,
-                                                   INT64& nextValue,
-                                                   BOOLEAN& noCache,
-                                                   const utilSequenceID ID,
-                                                   utilSequenceID* cachedSeqID,
-                                                   _pmdEDUCB* eduCB )
+                                                    INT64& nextValue,
+                                                    BOOLEAN& noCache,
+                                                    const utilSequenceID ID,
+                                                    utilSequenceID* cachedSeqID,
+                                                    _pmdEDUCB* eduCB )
    {
       INT32 rc = SDB_OK ;
       _coordSequence* cache = NULL ;
@@ -299,7 +300,10 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_XLOCK, "_coordSequenceAgent::_getNextValueByXLock" )
-   INT32 _coordSequenceAgent::_getNextValueByXLock( const std::string& name, const utilSequenceID ID, INT64& nextValue, _pmdEDUCB* eduCB )
+   INT32 _coordSequenceAgent::_getNextValueByXLock( const std::string& name,
+                                                    const utilSequenceID ID,
+                                                    INT64& nextValue,
+                                                    _pmdEDUCB* eduCB )
    {
       INT32 rc = SDB_OK ;
       _coordSequence* cache = NULL ;
@@ -310,8 +314,10 @@ namespace engine
       BUCKET_XLOCK( bucket ) ;
 
       COORD_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
-      // if mismatch in the cache, get from catalog and clear the old cached sequence later.
-      if ( bucket.end() != iter && ( UTIL_SEQUENCEID_NULL != ID || ((*iter).second)->ID() == ID ) )
+      // if mismatch in the cache, get from catalog and clear the
+      // old cached sequence later.
+      if ( bucket.end() != iter && ( UTIL_SEQUENCEID_NULL != ID ||
+           ((*iter).second)->ID() == ID ) )
       {
          cache = (*iter).second ;
       }
@@ -332,7 +338,9 @@ namespace engine
          }
 
          // succeed to get seq from catalog, then remove old cached sequence.
-         if( bucket.end() != iter && UTIL_SEQUENCEID_NULL != ID && ((*iter).second)->ID() != ID )
+         if( bucket.end() != iter &&
+             UTIL_SEQUENCEID_NULL != ID &&
+             ((*iter).second)->ID() != ID )
          {
             cache = (*iter).second ;
             PD_LOG( PDWARNING, "Mismatch ID(%llu) for sequence[%s, %llu]",
@@ -360,7 +368,8 @@ namespace engine
          catch( std::exception& e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to insert sequence[%s] to cache", name.c_str() ) ;
+            PD_LOG( PDERROR, "Failed to insert sequence[%s] to cache",
+                    name.c_str() ) ;
             goto error ;
          }
 
@@ -395,7 +404,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_FROM_CACHE, "_coordSequenceAgent::_getNextValueFromCache" )
-   INT32 _coordSequenceAgent::_getNextValueFromCache( _coordSequence& seq, INT64& nextValue, _pmdEDUCB* eduCB )
+   INT32 _coordSequenceAgent::_getNextValueFromCache( _coordSequence& seq,
+                                                      INT64& nextValue,
+                                                      _pmdEDUCB* eduCB )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_FROM_CACHE ) ;
@@ -434,7 +445,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__ACQUIRE_SEQ, "_coordSequenceAgent::_acquireSequence" )
-   INT32 _coordSequenceAgent::_acquireSequence( _coordSequence& seq, _pmdEDUCB* eduCB )
+   INT32 _coordSequenceAgent::_acquireSequence( _coordSequence& seq,
+                                                _pmdEDUCB* eduCB )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__ACQUIRE_SEQ ) ;
@@ -461,7 +473,8 @@ namespace engine
       catch( std::exception& e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to build acquire msg options for sequence[%s], exception: %s, rc=%d",
+         PD_LOG( PDERROR, "Failed to build acquire msg options for "
+                 "sequence[%s], exception: %s, rc=%d",
                  seq.name().c_str(), e.what(), rc ) ;
          goto error ;
       }
@@ -475,7 +488,8 @@ namespace engine
       session.getGroupSel()->setPrimary( TRUE ) ;
       session.getGroupSel()->setServiceType( MSG_ROUTE_CAT_SERVICE ) ;
 
-      rc = msgBuildSequenceAcquireMsg( &pBuffer, &bufferSize, 0, options, eduCB ) ;
+      rc = msgBuildSequenceAcquireMsg( &pBuffer, &bufferSize, 0,
+                                       options, eduCB ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Failed to build acquire sequence request, rc=%d",
@@ -497,7 +511,8 @@ namespace engine
       rc = session.getSession()->waitReply1( TRUE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to wait acquire sequence reply from catalog group, rc=%d",
+         PD_LOG( PDERROR, "Failed to wait acquire sequence reply from "
+                 "catalog group, rc=%d",
                  rc ) ;
          goto error ;
       }
@@ -534,7 +549,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__PROCESS_ACQUIRE_REPLY, "_coordSequenceAgent::_processAcquireReply" )
-   INT32 _coordSequenceAgent::_processAcquireReply( MsgHeader* msg, _coordSequence& seq )
+   INT32 _coordSequenceAgent::_processAcquireReply( MsgHeader* msg,
+                                                    _coordSequence& seq )
    {
       INT32 rc = SDB_OK ;
       MsgOpReply *reply = ( MsgOpReply* )msg ;
@@ -691,7 +707,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__REMOVE_CACHE_BY_ID, "_coordSequenceAgent::_removeCacheByID" )
-   BOOLEAN _coordSequenceAgent::_removeCacheByID( const std::string& name, const utilSequenceID ID )
+   BOOLEAN _coordSequenceAgent::_removeCacheByID( const std::string& name,
+                                                  const utilSequenceID ID )
    {
       BOOLEAN removed = FALSE ;
       PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__REMOVE_CACHE_BY_ID ) ;
@@ -717,7 +734,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_INVALIDATE_CACHE, "coordSequenceInvalidateCache" )
-   INT32 coordSequenceInvalidateCache( const std::string& sequenceName, _pmdEDUCB* eduCB, const utilSequenceID ID )
+   INT32 coordSequenceInvalidateCache( const std::string& sequenceName,
+                                       _pmdEDUCB* eduCB,
+                                       const utilSequenceID ID )
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
@@ -750,21 +769,24 @@ namespace engine
       rc = msgBuildSequenceInvalidateCacheMsg( &buf, &bufSize, obj, 0, eduCB ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to build sequence invalidate cache msg, rc=%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to build sequence invalidate cache "
+                 "msg, rc=%d", rc ) ;
          goto error ;
       }
 
       rc = invalidator.init( sdbGetCoordCB()->getResource(), eduCB ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to init sequence invalidate cache command, rc=%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to init sequence invalidate cache "
+                 "command, rc=%d", rc ) ;
          goto error ;
       }
 
       rc = invalidator.execute( (MsgHeader*)buf, eduCB, contextID, NULL ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to execute sequence invalidate cache command, rc=%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to execute sequence invalidate "
+                 "cache command, rc=%d", rc ) ;
          goto error ;
       }
 
