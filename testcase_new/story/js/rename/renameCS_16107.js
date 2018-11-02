@@ -55,7 +55,7 @@ function main()
    }
    
    println("---remove procedure---");
-   db.removeProcedure( procedureName )；
+   db.removeProcedure( procedureName );
    
    var cur = db.listProcedures({name: procedureName});
    if( cur.next() != null )
