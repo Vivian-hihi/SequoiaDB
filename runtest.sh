@@ -75,7 +75,7 @@ function showHelpInfo()
    echo " -h hostname    : 指定测试的COORD节点HostName或IP"
    echo " -c cataport    : 指定测试的CATALOG节点服务名，默认为30000"
    echo " -eh eshost     : 指定es环境主机名或ip"
-   echo " -en essvcname  : 指定es环境节点服务名，默认为50000"
+   echo " -en essvcname  : 指定es环境节点服务名，默认为9200"
    echo " -s1            : 指定预留的RSRVPORTBEGIN端口号，默认为26000"
    echo " -s2            : 指定预留的RSRVPORTEND端口号，默认为27000"
    echo " -sp            : 指定用预留端口创建节点的路径RSRVNODEDIR，默认为/opt/sequoiadb/database/"
