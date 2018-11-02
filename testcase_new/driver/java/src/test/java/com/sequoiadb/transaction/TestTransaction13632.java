@@ -45,11 +45,6 @@ public class TestTransaction13632 extends SdbConfTestBase {
     	commCSName = SdbTestBase.csName;
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         
-        CommLib commlib = new CommLib();
-		if (commlib.isStandAlone(sdb)) {
-			throw new SkipException("skip StandAlone");
-		}
-		
         if (!sdb.isCollectionSpaceExist(commCSName)) {
             try{
                 cs = sdb.createCollectionSpace(commCSName); 
