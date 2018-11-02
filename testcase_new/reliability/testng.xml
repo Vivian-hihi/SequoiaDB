@@ -2,7 +2,7 @@
 <!--This xml is for ci. -->
 <!--Testcases for reliability test, except disk-full testcases. -->
 
-<suite name="reliability" verbose="1" stop-all-when-occur-failure="true" preserve-order="true">
+<suite name="reliability" verbose="1" preserve-order="true">
 	<parameter name="HOSTNAME"       value="localhost" />
 	<parameter name="SVCNAME"        value="11810" />
 	<parameter name="CHANGEDPREFIX"  value="reliability_test" />

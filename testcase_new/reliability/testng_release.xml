@@ -3,7 +3,7 @@
 <!--These testcases can be excuted only in sequoiadb release version, eg: 
 	disk-full testcase. -->
 
-<suite name="reliability" verbose="1" stop-all-when-occur-failure="true">
+<suite name="reliability" verbose="1" >
 	<parameter name="HOSTNAME" value="localhost" />
 	<parameter name="SVCNAME" value="11810" />
 	<parameter name="CHANGEDPREFIX" value="reliability_test" />
