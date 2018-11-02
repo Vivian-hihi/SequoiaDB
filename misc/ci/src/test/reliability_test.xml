@@ -34,8 +34,6 @@
             
             <antcall target="ready_jdk"/>
             
-            <antcall target="compile_testcase" />
-            
             <antcall target="prepare_before_testcase"/>
          </then>
       </if>
@@ -93,13 +91,6 @@
       <staf location="local" service="PROCESS"
             request="START SHELL COMMAND ${remote_chmod_exec} WAIT 1m"
             throwBuildException="1"/>      
-   </target>
-   
-   
-   <target name="compile_testcase">      
-      <echo>******begin to compile reliability testcase******</echo>
-
-      <compilecase type="java"   srcdir="${case_basedir}/reliability" />
    </target>
    
    <target name="prepare_before_testcase">
