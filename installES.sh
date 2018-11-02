@@ -19,7 +19,7 @@ function installES()
       exec_cmd "cp /mnt/soft/elasticsearch-6.2.2.tar.gz $runtest_path"
       exec_cmd "tar -zxf $runtest_path/elasticsearch-6.2.2.tar.gz -C $runtest_path"
       local cur_user=`whoami`
-      local cur_group=`groups`
+      local cur_group=`groups | awk '{print $1}'`
       
       if [ "$cur_user" != "root" ];then
          exec_cmd "chown $cur_user:$cur_group $runtest_path/elasticsearch-6.2.2 -R"
