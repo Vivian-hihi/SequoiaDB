@@ -48,7 +48,7 @@ function main()
    }
    catch(e)
    {
-      if( e! == -34 )
+      if( e !== -34 )
       {
          throw buildException("check procedure after rename cs", e, "procedure", -34, e);
       }

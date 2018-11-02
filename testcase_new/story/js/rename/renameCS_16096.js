@@ -22,9 +22,9 @@ function main()
 
    insertData(cl);//3，同问题2，修改cs前的操作，修改cs后建议做结果检测，这个文本用例也需要补充测试点
    
-   var cmd5 = createFile(lobName)；
+   var cmd5 = createFile(lobName);
    
-   var lobArray = putLobs(cl, lobName)；
+   var lobArray = putLobs(cl, lobName);
    
    println("---test rename cs---");
    db.renameCS(oldcsName, newcsName);
