@@ -15,6 +15,7 @@ SDB_SNAP_SEQUENCES
 | 字段名              | 类型   | 描述                         |
 | ------------------- | ------ | ---------------------------- |
 | Name                | 字符串 | 序列名称                     |
+| ID                  | 整型   | 序列ID                       |
 | Increment           | 整型   | 序列增加的间隔               |
 | StartValue          | 长整型 | 序列起始值                   |
 | CurrentValue        | 长整型 | 序列当前值                   |
@@ -27,6 +28,10 @@ SDB_SNAP_SEQUENCES
 | Initial             | 布尔   | 该序列是否未使用，true表示未使用 |
 | Internal            | 布尔   | 该序列是否是系统内部序列     |
 
+> **Note:**
+>
+> 特殊地，CurrentValue在序列未使用时为StartValue，而不是 StartValue - Increment。
+
 ##示例##
 
 ```lang-javascript
@@ -36,6 +41,7 @@ SDB_SNAP_SEQUENCES
   "CacheSize": 1000,
   "CurrentValue": 5000,
   "Cycled": false,
+  "ID": 4,
   "Increment": 10,
   "Initial": true,
   "Internal": true,

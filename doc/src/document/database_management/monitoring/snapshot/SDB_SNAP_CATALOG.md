@@ -31,7 +31,7 @@ SDB_SNAP_CATALOG
 | AutoIncrement.Field | 字符串 | 自增字段名称                 |
 | AutoIncrement.Generated | 字符串 | 自增字段生成方式         |
 | AutoIncrement.SequenceName | 字符串 | 自增字段对应序列名    |
-| AutoIncrement.SequenceID | 对象ID | 自增字段对应序列ID      |
+| AutoIncrement.SequenceID | 整型 | 自增字段对应序列ID        |
 
 ##示例##
 
@@ -51,9 +51,7 @@ SDB_SNAP_CATALOG
       "SequenceName": "SYS_261993005057_studentID_SEQ",
       "Field": "studentID",
       "Generated": "default",
-      "SequenceID": {
-        "$oid": "5bd8fcfc8af29ca6ad2a32e8"
-      }
+      "SequenceID": 4
     }
   ],
   "CompressionType": 0,

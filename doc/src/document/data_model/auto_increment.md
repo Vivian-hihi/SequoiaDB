@@ -84,9 +84,7 @@
           "SequenceName": "SYS_21333102559237_studentID_SEQ",
           "Field": "studentID",
           "Generated": "default",
-          "SequenceID": {
-            "$oid": "5bd8fcfc8af29ca6ad2a32e8"
-          }
+          "SequenceID": 4
         }
       ]
     }
@@ -99,6 +97,7 @@
       "CacheSize": 1000,
       "CurrentValue": 5000,
       "Cycled": false,
+      "ID": 4,
       "Increment": 10,
       "Initial": true,
       "Internal": true,
