@@ -1,5 +1,13 @@
 package com.sequoiadb.autoIncrement;
-
+/**
+ * @FileName:seqDB-15965：自增字段同时时shardKey，不指定自增字段插入与切分并发
+ * 预置条件:集合已存在，ShardingKey同时是自增字段
+ * 测试步骤：不指定自增字段插入的同时，执行切分
+ * 预期结果：记录插入成功，切分执行成功，自增字段值正确，记录落在正确的数据组上
+ * @Author zhaoyu
+ * @Date 2018-11-01
+ * @Version 1.00
+ */
 import java.util.ArrayList;
 import java.util.List;
 

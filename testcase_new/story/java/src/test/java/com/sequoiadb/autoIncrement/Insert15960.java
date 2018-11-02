@@ -1,5 +1,13 @@
 package com.sequoiadb.autoIncrement;
-
+/**
+ * @FileName:seqDB-15960：AcquireSize为1，不同coord不指定自增字段并发插入
+ * 预置条件:集合已存在，且已存在自增字段，属性AcquireSize设置为1，自增字段上创建唯一索引
+ * 测试步骤：连接不同coord节点，不指定自增字段并发插入记录 
+ * 预期结果：记录插入成功，自增字段值唯一且递增，值正确
+ * @Author zhaoyu
+ * @Date 2018-11-01
+ * @Version 1.00
+ */
 import java.util.List;
 
 import org.bson.BSONObject;
