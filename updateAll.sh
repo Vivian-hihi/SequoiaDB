@@ -57,7 +57,7 @@ function svnUp()
 
 function installES()
 {
-   `./installES.sh -adapter true -installES true`
+   ./installES.sh -adapter true -installES true
 }
 
 function compile()
