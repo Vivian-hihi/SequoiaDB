@@ -9,6 +9,10 @@ var HEADER = "'Content-Type: application/json'";
 var HTTP = "'http://" + ESHOSTNAME + ":" + ESSVCNAME;
 var esOpr = new ESOperator();
 var dbOpr = new DBOperator();
+
+// create WORKDIR in local host
+commMakeDir( "localhost", WORKDIR ) ;
+
 /******************************************************************************
 *@Description : do some operations related to ES, such as:
                 do queries by rest
