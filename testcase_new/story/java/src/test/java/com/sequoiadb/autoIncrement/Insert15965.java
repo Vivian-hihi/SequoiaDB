@@ -134,7 +134,7 @@ public class Insert15965 extends SdbTestBase{
 	
 	public void insertData(DBCollection cl, int insertNum){
 		ArrayList<BSONObject> arrList = new ArrayList<BSONObject>();
-		for(int i=0; i< initDataNum; i++){
+		for(int i=0; i< insertNum; i++){
 			BSONObject obj = (BSONObject) JSON.parse("{a:" + i + "}");
 			arrList.add(obj);
 		}
