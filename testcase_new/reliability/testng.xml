@@ -3,8 +3,8 @@
 <!--Testcases for reliability test, except disk-full testcases. -->
 
 <suite name="reliability" verbose="1" preserve-order="true">
-	<parameter name="HOSTNAME"       value="localhost" />
-	<parameter name="SVCNAME"        value="11810" />
+	<parameter name="HOSTNAME"       value="${HOSTNAME}" />
+	<parameter name="SVCNAME"        value="${SVCNAME}" />
 	<parameter name="CHANGEDPREFIX"  value="reliability_test" />
 	<parameter name="RSRVPORTBEGIN"  value="26000" />
 	<parameter name="RSRVPORTEND"    value="27000" />
@@ -13,7 +13,7 @@
 	<parameter name="ROOTPASSWD"     value="jenkins" />
 	<parameter name="REMOTEUSER"     value="sdbadmin" />
 	<parameter name="REMOTEPASSWD"   value="sdbadmin" />
-   <parameter name="SCRIPTDIR"       value="/trunk/testcase_new/reliability/script" />
+   <parameter name="SCRIPTDIR"       value="${SCRIPTDIR}" />
 
 	<listeners>
 		<listener class-name="com.sequoiadb.commlib.ReliabilityInvokeMethodListener"/>

@@ -11,6 +11,15 @@
     
    <artifactId>sequoiadb-testcases-reliability-java</artifactId>
    <packaging>jar</packaging>
+   <dependencies>
+      <dependency>
+         <groupId>com.sequoiadb</groupId>
+         <artifactId>reliability</artifactId>
+         <version>0.1.54</version>
+         <scope>system</scope>
+         <systemPath>${basedir}/lib/jsch-0.1.54.jar</systemPath>
+      </dependency>
+  </dependencies>
 
    <build>
       <plugins>
