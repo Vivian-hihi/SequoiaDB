@@ -1,4 +1,4 @@
-package com.sequoiadb.cappedCL;
+package com.sequoiadb.cappedcl;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

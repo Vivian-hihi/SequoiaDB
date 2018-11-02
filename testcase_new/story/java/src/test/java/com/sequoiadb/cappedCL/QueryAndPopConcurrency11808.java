@@ -1,4 +1,4 @@
-package com.sequoiadb.cappedCL;
+package com.sequoiadb.cappedcl;
 
 import java.util.List;
 import java.util.Random;
@@ -18,7 +18,6 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.cappedCL.CappedCLUtils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
