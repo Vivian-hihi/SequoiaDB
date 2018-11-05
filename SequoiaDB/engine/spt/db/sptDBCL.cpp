@@ -1283,6 +1283,12 @@ namespace engine
       }
       else
       {
+         if ( !utilIsValidOID( oidStr.c_str() ) )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "Oid string invalid" ) ;
+            goto error ;
+         }
          oid = OID( oidStr ) ;
       }
 
