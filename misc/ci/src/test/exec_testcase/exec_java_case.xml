@@ -49,6 +49,8 @@
                <property name="sdbdriverDir" value="${INSTALL_DIR}/java" />
                <property name="hostname" value="${firsthost}"/>
                <property name="svcname" value="${SVCNAME}"/>
+               <property name="eshostname" value="${ES_IP}"/>
+               <property name="essvcname" value="${ES_PORT}"/>
             </ant>
          </then>
          <else>
@@ -70,6 +72,8 @@
                <property name="sdbdriverDir" value="${INSTALL_DIR}/java" />
                <property name="hostname" value="localhost"/>
                <property name="svcname" value="${SVCNAME}"/>
+               <property name="eshostname" value="${ES_IP}"/>
+               <property name="essvcname" value="${ES_PORT}"/>
             </ant>
          </else>
       </if>
