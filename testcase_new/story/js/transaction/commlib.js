@@ -561,6 +561,9 @@ function checkResult(expectResult, actResult)
    {
       throw buildException("checkResult()", "check records", "check records length", expectResult.length, actResult.length);
    }
+   
+   println("expResult : " + JSON.stringify(expectResult));
+   println("actResult : " + JSON.stringify(actResult));
 
    // compare array  
    for( var i in expectResult )

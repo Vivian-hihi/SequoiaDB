@@ -12,7 +12,6 @@ function main()
 
    var clName = COMMCLNAME + "_ES_12076";
    var csName = "testCS_ES_12076";
-   commDropCL(db, COMMCSNAME, clName, true, true);
    commDropCS( db, csName );
    
    //创建全文索引及普通索引，索引字段相同
@@ -42,6 +41,8 @@ function main()
    
    actResult.sort(compare("content"));
    expResult.sort(compare("content"));
+   println("expResult : " + JSON.stringify(expResult));
+   println("actResult : " + JSON.stringify(actResult));
    checkResult(expResult, actResult);
    println("===insert success===");
    
@@ -90,7 +91,6 @@ function main()
    checkResult(expResult, actResult);
    println("===truncate success===");
 
-   commDropCL(db, COMMCSNAME, clName, true, true);
    commDropCS( db, csName );
 }
 
