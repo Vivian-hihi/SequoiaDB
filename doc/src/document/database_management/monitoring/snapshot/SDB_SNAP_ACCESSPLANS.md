@@ -39,10 +39,10 @@ SDB_SNAP_ACCESSPLANS
 | AccessCount          | 长整型    | 该访问计划使用次数累计                         |
 | TotalQueryTime       | 浮点型    | 该访问计划的累计执行时间（单位：秒）           |
 | AvgQueryTime         | 浮点型    | 该访问计划的平均执行时间（单位：秒）           |
-| maxTimeSpentQuery    | BSON 对象 | 该访问计划执行时间最慢的一次查询信息           |
-| minTimeSpentQuery    | BSON 对象 | 该访问计划执行时间最快的一次查询信息           |
+| MaxTimeSpentQuery    | BSON 对象 | 该访问计划执行时间最慢的一次查询信息           |
+| MinTimeSpentQuery    | BSON 对象 | 该访问计划执行时间最快的一次查询信息           |
 
-### maxTimeSpentQuery 和 minTimeSpentQuery 对象的信息 ###
+### MaxTimeSpentQuery 和 MinTimeSpentQuery 对象的信息 ###
 
 | 字段名               | 类型      | 描述                                           |
 | -------------------- | --------- | ---------------------------------------------- |
@@ -64,7 +64,7 @@ SDB_SNAP_ACCESSPLANS
 
 >   **Note:**
 >
->   *   最慢和最快的查询 maxTimeSpentQuery 和 minTimeSpentQuery 只计算查询的 QueryTimeSpent，不计算查询的 ExecuteTimeSpent。
+>   *   最慢和最快的查询 MaxTimeSpentQuery 和 MinTimeSpentQuery 只计算查询的 QueryTimeSpent，不计算查询的 ExecuteTimeSpent。
 >   *   SdbQuery.explain() 的 Run 模式不计算在 QueryTimeSpent 、maxTimeSpentQuery 和 minTimeSpentQuery 中。
 
 ##示例##
