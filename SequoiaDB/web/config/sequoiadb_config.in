@@ -1,0 +1,366 @@
+<Property>
+   <FILLER>
+      <Name>dbpath</Name>
+      <WebName>
+         <en>Data Path</en>
+         <cn>数据路径</cn>
+      </WebName>
+      <Desc>
+         <en>Data storing path</en>
+         <cn>数据存储路径</cn>
+      </Desc>
+      <Type>path</Type>
+      <Default>/opt/sequoiadb/database/standalone</Default>
+      <Valid></Valid>
+      <Display>text box</Display>
+      <Level>0</Level>
+   </FILLER>
+   <FILLER>
+      <Name>svcname</Name>
+      <WebName>
+         <en>service name</en>
+         <cn>服务名</cn>
+      </WebName>
+      <Type>string</Type>
+      <Default>11810</Default>
+      <Valid></Valid>
+      <Display>edit box</Display>
+      <Level>0</Level>
+   </FILLER>
+   <FILLER>
+      <Name>diaglevel</Name>
+      <WebName>
+         <en>Print level of diagnose log</en>
+         <cn>诊断日志打印级别</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>3</Default>
+      <Valid>0,1,2,3,4,5</Valid>
+      <Display>select box</Display>
+      <Level>0</Level>
+   </FILLER>
+   <FILLER>
+      <Name>role</Name>
+      <WebName>
+         <en>role</en>
+         <cn>节点角色</cn>
+      </WebName>
+      <Type>string</Type>
+      <Default>standalone</Default>
+      <Valid>standalone,catalog,coord,data</Valid>
+      <Display>hidden</Display>
+      <Level>0</Level>
+   </FILLER>
+   <FILLER>
+      <Name>logfilesz</Name>
+      <WebName>
+         <en>Log file size</en>
+         <cn>日志文件大小</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>64</Default>
+      <Valid>64-2048</Valid>
+      <Display>edit box</Display>
+      <Level>0</Level>
+   </FILLER>
+   <FILLER>
+      <Name>logfilenum</Name>
+      <WebName>
+         <en>Sync log file number.</en>
+         <cn>同步日志文件数量</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>20</Default>
+      <Valid>1-11800</Valid>
+      <Display>edit box</Display>
+      <Level>0</Level>
+   </FILLER>
+   <FILLER>
+      <Name>transactionon</Name>
+      <WebName>
+         <en>Transaction</en>
+         <cn>事务</cn>
+      </WebName>
+      <Type>bool</Type>
+      <Default>false</Default>
+      <Valid>true,false</Valid>
+      <Display>select box</Display>
+      <Level>0</Level>
+   </FILLER>
+   <FILLER>
+      <Name>preferedinstance</Name>
+      <WebName>
+         <en>Instance Mode</en>
+         <cn>实例模式</cn>
+      </WebName>
+      <Type>string</Type>
+      <Default>M</Default>
+      <Valid>M,S,A,1,2,3,4,5,6,7</Valid>
+      <Display>select box</Display>
+      <Level>0</Level>
+   </FILLER>
+   <FILLER>
+      <Name>numpreload</Name>
+      <WebName>
+         <en>Page preload proxy data</en>
+         <cn>页面预加载代理数据</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>0</Default>
+      <Valid>0-100</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>maxprefpool</Name>
+      <WebName>
+         <en>Max number of data preloading proxy pool</en>
+         <cn>数据预取代理池最大数量</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>200</Default>
+      <Valid>0-1000</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>maxreplsync</Name>
+      <WebName>
+         <en>Max concurrency of log syncronizing</en>
+         <cn>日志同步最大并发数量</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>10</Default>
+      <Valid>0-200</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>logbuffsize</Name>
+      <WebName>
+         <en>Replicate Log Buffer Page Number.</en>
+         <cn>复制日志内存页面数</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>1024</Default>
+      <Valid>512-1024000</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>sortbuf</Name>
+      <WebName>
+         <en>Sorting buffer size</en>
+         <cn>排序缓存大小</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>256</Default>
+      <Valid>128-</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>hjbuf</Name>
+      <WebName>
+         <en>Hash continuous buffer size</en>
+         <cn>哈希连接缓存大小</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>128</Default>
+      <Valid>64-</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>syncstrategy</Name>
+      <WebName>
+         <en>Data syncronizing strategy between replica groups</en>
+         <cn>副本组之间数据同步控制策略</cn>
+      </WebName>
+      <Type>string</Type>
+      <Default>keepnormal</Default>
+      <Valid>none,keepnormal,keepall</Valid>
+      <Display>select box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>weight</Name>
+      <WebName>
+         <en>weight of election</en>
+         <cn>选举权重</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>10</Default>
+      <Valid>1-100</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>maxsyncjob</Name>
+      <WebName>
+         <en>data-sync's maxinum task count</en>
+         <cn>数据同步最大任务数</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>10</Default>
+      <Valid>2-200</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>syncinterval</Name>
+      <WebName>
+         <en>the interval time of data-sync</en>
+         <cn>数据同步周期</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>10000</Default>
+      <Valid>0-</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>syncrecordnum</Name>
+      <WebName>
+         <en>the trigger condition of record number of data-sync</en>
+         <cn>数据同步触发记录数</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>0</Default>
+      <Valid>0-</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>syncdeep</Name>
+      <WebName>
+         <en>turn on deep mode in data-sync</en>
+         <cn>数据同步是否深度刷盘</cn>
+      </WebName>
+      <Type>bool</Type>
+      <Default>false</Default>
+      <Valid>true,false</Valid>
+      <Display>select box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>archiveon</Name>
+      <WebName>
+         <en>turn on replica log archive</en>
+         <cn>开启复制日志归档</cn>
+      </WebName>
+      <Type>bool</Type>
+      <Default>false</Default>
+      <Valid>true,false</Valid>
+      <Display>select box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>archivecompresson</Name>
+      <WebName>
+         <en>turn on replica log archive compression</en>
+         <cn>开启复制日志归档压缩</cn>
+      </WebName>
+      <Type>bool</Type>
+      <Default>true</Default>
+      <Valid>true,false</Valid>
+      <Display>select box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>archivepath</Name>
+      <WebName>
+         <en>archive log file path</en>
+         <cn>归档日志文件路径</cn>
+      </WebName>
+      <Type>string</Type>
+      <Default></Default>
+      <Valid></Valid>
+      <Display>text box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>archivetimeout</Name>
+      <WebName>
+         <en>timeout interval for archiving</en>
+         <cn>未归档超时时间</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>600</Default>
+      <Valid>0-</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>archiveexpired</Name>
+      <WebName>
+         <en>expired time for archive log file</en>
+         <cn>归档日志文件的过期时间</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>240</Default>
+      <Valid>0-</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>archivequota</Name>
+      <WebName>
+         <en>disk quota for archive log directory</en>
+         <cn>归档日志目录磁盘配额</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>10</Default>
+      <Valid>0-</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>indexpath</Name>
+      <WebName>
+         <en>Index Path</en>
+         <cn>索引路径</cn>
+      </WebName>
+      <Type>string</Type>
+      <Default></Default>
+      <Valid></Valid>
+      <Display>text box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>bkuppath</Name>
+      <WebName>
+         <en>Backup Path</en>
+         <cn>备份路径</cn>
+      </WebName>
+      <Type>string</Type>
+      <Default></Default>
+      <Valid></Valid>
+      <Display>text box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>lobpath</Name>
+      <WebName>
+         <en>Lob Data Path</en>
+         <cn>大对象数据路径</cn>
+      </WebName>
+      <Type>string</Type>
+      <Default></Default>
+      <Valid></Valid>
+      <Display>text box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>lobmetapath</Name>
+      <WebName>
+         <en>Lob Meta Path</en>
+         <cn>大对象元数据路径</cn>
+      </WebName>
+      <Type>string</Type>
+      <Default></Default>
+      <Valid></Valid>
+      <Display>text box</Display>
+      <Level>1</Level>
+   </FILLER>
+</Property>

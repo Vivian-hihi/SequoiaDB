@@ -247,6 +247,7 @@ srcFiles = [
    "options/optGenForCPP.cpp",
    "options/optGenForSample.cpp",
    "options/optGenForDoc.cpp",
+   "options/optGenForSAC.cpp",
    "fileList/fileListGenerator.cpp",
    "trace/traceGenerator.cpp",
    "version/versionGeneratorBase.cpp",
