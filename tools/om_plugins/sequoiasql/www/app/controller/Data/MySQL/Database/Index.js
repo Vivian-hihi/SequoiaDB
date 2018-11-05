@@ -842,6 +842,7 @@
                            "value": "",
                            "valid": {
                               "min": 0,
+                              "max": 4294967295,
                               "empty": true
                            }
                         },
