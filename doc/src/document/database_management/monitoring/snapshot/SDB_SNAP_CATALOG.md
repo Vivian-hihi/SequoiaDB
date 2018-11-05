@@ -31,7 +31,7 @@ SDB_SNAP_CATALOG
 | AutoIncrement.Field | 字符串 | 自增字段名称                 |
 | AutoIncrement.Generated | 字符串 | 自增字段生成方式         |
 | AutoIncrement.SequenceName | 字符串 | 自增字段对应序列名    |
-| AutoIncrement.SequenceID | 整型 | 自增字段对应序列ID        |
+| AutoIncrement.SequenceID | 长整型 | 自增字段对应序列ID      |
 
 ##示例##
 

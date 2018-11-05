@@ -21,9 +21,9 @@
 >   **Note:**
 >
 >   * 自增字段可以是嵌套字段。
->	* Increment为正整数时，StartValue默认为1，MinValue默认为1，MaxValue默认为2^63 -1。<br>Increment为负整数时，StartValue默认为-1，MinValue默认为-2^63 ，MaxValue默认为-1。
+>   * Increment为正整数时，StartValue默认为1，MinValue默认为1，MaxValue默认为2^63 -1。<br>Increment为负整数时，StartValue默认为-1，MinValue默认为-2^63 ，MaxValue默认为-1。
 >   * StartValue必须位于[MinValue,MaxValue]区间。
->   * 当设置CacheSize为1，AcquireSize为1时，可以实现序列值严格递增。CacheSize和AcquireSize是性能相关的参数，建议谨慎修改。
+>   * 当设置AcquireSize为1时，可以实现序列值严格递增。CacheSize和AcquireSize是性能相关的参数，建议谨慎修改。
 >   * 使用主子表时，仅主表自增字段会生效，子表自增字段无效。
 >   * 自增字段值只在生成时保证唯一，如客户端设置或修改过自增字段的值，将可能不唯一。如需保证修改后字段值唯一，建议使用唯一索引。
 >   * 独立节点不支持自增字段。
