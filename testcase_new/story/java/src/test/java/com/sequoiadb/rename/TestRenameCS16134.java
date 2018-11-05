@@ -14,7 +14,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 /**
  *  @FileName:TestRenameCS16134
- *  并发修改两个cs名为同一个cs名 
+ *  @content 并发修改两个cs名为同一个cs名 
  *  @author chensiqin
  *  @Date 2018-10-22
  *  @version 1.00
@@ -51,8 +51,8 @@ public class TestRenameCS16134 extends SdbTestBase{
     
     @Test
     public void test16134() {
-        RenameCS1Thread renameCS1Thread = new RenameCS1Thread();
-        RenameCS2Thread renameCS2Thread = new RenameCS2Thread();
+        RenameCSThread renameCS1Thread = new RenameCSThread(csName1, newCSName);
+        RenameCSThread renameCS2Thread = new RenameCSThread(csName2, newCSName);
         renameCS1Thread.start();
         renameCS2Thread.start();
         
@@ -78,43 +78,44 @@ public class TestRenameCS16134 extends SdbTestBase{
     
     @AfterClass
     public void tearDown() {
-        if(sdb.isCollectionSpaceExist(csName1)){
-            sdb.dropCollectionSpace(csName1);
-        }
-        if(sdb.isCollectionSpaceExist(csName2)){
-            sdb.dropCollectionSpace(csName2);
-        }
-        if(sdb.isCollectionSpaceExist(newCSName)){
-            sdb.dropCollectionSpace(newCSName);
-        }
-        if(this.sdb != null){
-            this.sdb.close();
+        try {
+            if(sdb.isCollectionSpaceExist(csName1)){
+                sdb.dropCollectionSpace(csName1);
+            }
+            if(sdb.isCollectionSpaceExist(csName2)){
+                sdb.dropCollectionSpace(csName2);
+            }
+            if(sdb.isCollectionSpaceExist(newCSName)){
+                sdb.dropCollectionSpace(newCSName);
+            }
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
+        } finally {
+            if(this.sdb != null){
+                this.sdb.close();
+            }
         }
     }
     
-    private class RenameCS1Thread extends SdbThreadBase{
+    private class RenameCSThread extends SdbThreadBase{
+        private String oldName;
+        private String newName;
+        
+        public RenameCSThread(String oldName, String newName) {
+            super();
+            this.oldName = oldName;
+            this.newName = newName;
+        }
 
         @Override
         public void exec() throws BaseException {
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             try {
-                db.renameCollectionSpace(csName1, newCSName);
+                db.renameCollectionSpace(this.oldName, this.newName);
             }finally {
                 db.close();
             }
         }
     }
     
-    private class RenameCS2Thread extends SdbThreadBase{
-
-        @Override
-        public void exec() throws BaseException {
-            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            try {
-                db.renameCollectionSpace(csName2, newCSName);
-            }finally {
-                db.close();
-            }
-        }
-    }
 }

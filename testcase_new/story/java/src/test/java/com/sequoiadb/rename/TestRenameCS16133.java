@@ -15,7 +15,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
  *  @FileName:TestRenameCS16133
- *  修改cs名和创建/删除cl并发 
+ *  @content 修改cs名和创建/删除cl并发 
  *  @author chensiqin
  *  @Date 2018-10-19
  *  @version 1.00
@@ -57,7 +57,11 @@ public class TestRenameCS16133 extends SdbTestBase{
             BaseException e = (BaseException)createClThread.getExceptions().get(0);
             Assert.assertEquals(-34, e.getErrorCode(),"clThread failed : "+e.getMessage());
         } else if (!renameCSThread.isSuccess() && createClThread.isSuccess()){
-            Assert.assertTrue(cs.isCollectionExist(clName));
+            if (clExist) {
+                Assert.assertTrue(cs.isCollectionExist(clName));
+            } else {
+                Assert.assertFalse(cs.isCollectionExist(clName));
+            }
             BaseException e = (BaseException)renameCSThread.getExceptions().get(0);
             Assert.assertEquals(-147, e.getErrorCode(),"renameCS failed : "+e.getMessage());
         } else if (!renameCSThread.isSuccess() && !createClThread.isSuccess()){
@@ -75,14 +79,19 @@ public class TestRenameCS16133 extends SdbTestBase{
     
     @AfterClass
     public void tearDown() {
-        if(sdb.isCollectionSpaceExist(csName)){
-            sdb.dropCollectionSpace(csName);
-        }
-        if(sdb.isCollectionSpaceExist(newCSName)){
-            sdb.dropCollectionSpace(newCSName);
-        }
-        if(this.sdb != null){
-            this.sdb.close();
+        try {
+            if(sdb.isCollectionSpaceExist(csName)){
+                sdb.dropCollectionSpace(csName);
+            }
+            if(sdb.isCollectionSpaceExist(newCSName)){
+                sdb.dropCollectionSpace(newCSName);
+            }
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
+        } finally {
+            if(this.sdb != null){
+                this.sdb.close();
+            }
         }
     }
     
@@ -105,11 +114,11 @@ public class TestRenameCS16133 extends SdbTestBase{
         public void exec() throws BaseException {
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             try{
-                cs = db.getCollectionSpace(csName);
+                CollectionSpace localcs = db.getCollectionSpace(csName);
                 for(int i = 0; i <= 100; i++) {
-                    cs.createCollection(clName);
+                    localcs.createCollection(clName);
                     clExist = true;
-                    cs.dropCollection(clName);
+                    localcs.dropCollection(clName);
                     clExist = false;
                 }
             }finally{

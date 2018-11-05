@@ -19,7 +19,7 @@ import com.sequoiadb.testcommon.CommLib;
 
 /**
  *  @FileName:TestRenameCL16088
- *  并发修改主表名和子表名  
+ *  @content 并发修改主表名和子表名  
  *  @author chensiqin
  *  @Date 2018-10-23
  *  @version 1.00
@@ -91,20 +91,25 @@ public class TestRenameCL16088 extends SdbTestBase {
     
     @AfterClass
     public void tearDown() {
-        if(cs.isCollectionExist(subCLName)){
-            cs.dropCollection(subCLName);
-        }
-        if(cs.isCollectionExist(newSubCLName)){
-            cs.dropCollection(newSubCLName);
-        }
-        if(cs.isCollectionExist(mainCLName)){
-            cs.dropCollection(mainCLName);
-        }
-        if(cs.isCollectionExist(newMainCLName)){
-            cs.dropCollection(newMainCLName);
-        }
-        if(this.sdb != null){
-            this.sdb.close();
+        try {
+            if(cs.isCollectionExist(subCLName)){
+                cs.dropCollection(subCLName);
+            }
+            if(cs.isCollectionExist(newSubCLName)){
+                cs.dropCollection(newSubCLName);
+            }
+            if(cs.isCollectionExist(mainCLName)){
+                cs.dropCollection(mainCLName);
+            }
+            if(cs.isCollectionExist(newMainCLName)){
+                cs.dropCollection(newMainCLName);
+            }
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
+        } finally {
+            if(this.sdb != null){
+                this.sdb.close();
+            }
         }
     }
     

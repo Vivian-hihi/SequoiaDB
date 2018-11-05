@@ -17,7 +17,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
  *  @FileName:TestRenameCS16137
- *  修改cs名和删除索引并发
+ *  @content 修改cs名和删除索引并发
  *  @author chensiqin
  *  @Date 2018-10-20
  *  @version 1.00
@@ -73,14 +73,19 @@ public class TestRenameCS16137_2 extends SdbTestBase{
     
     @AfterClass
     public void tearDown() {
-        if(sdb.isCollectionSpaceExist(csName)){
-            sdb.dropCollectionSpace(csName);
-        }
-        if(sdb.isCollectionSpaceExist(newCSName)){
-            sdb.dropCollectionSpace(newCSName);
-        }
-        if(this.sdb != null){
-            this.sdb.close();
+        try {
+            if(sdb.isCollectionSpaceExist(csName)){
+                sdb.dropCollectionSpace(csName);
+            }
+            if(sdb.isCollectionSpaceExist(newCSName)){
+                sdb.dropCollectionSpace(newCSName);
+            }
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
+        } finally {
+            if(this.sdb != null){
+                this.sdb.close();
+            }
         }
     }
 
