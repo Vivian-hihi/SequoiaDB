@@ -5,7 +5,7 @@
 **************************************/
 function insertData( dbcl, number)
 {
-   if( undefined == this.number ){ this.number = 1000 ; }
+   if( undefined == number ){ number = 1000 ; }
    try
    {
       println("---begin to insert data " );   
@@ -389,12 +389,60 @@ function createCL( csName, clName, shardingKey, shardingType)
 **************************************/
 function checkRenameCSResult( oldCSName, newCSName, clNum)
 {   
-   try
-   {//review 1：这个clnum建议给个默认值，默认为1，大部分用例都是校验1个cl
-      var times = 0;
-      for(var i=0; i<50; i++)//review 2：这里为啥要给50？建议数字给个说明
+   println("begin to check cs: " + newCSName);
+   if( undefined == clNum ){ clNum = 1 ; }
+   //max cycle
+   var maxTime = 5000;
+   //current cycle
+   var currentTime = 0;
+   //sleep time，100 millisecond
+   var intervalTime = 100;
+   
+   //because some dataNode none complete sync，so add retry for 5 seconds
+   do
+   {
+      var clArray = getCSSnapshotCLArray( newCSName );
+   }
+   while(clArray.length !== clNum && currentTime < maxTime)
+   {
+      sleep(100);
+      currentTime += intervalTime;
+   }
+   if( currentTime === maxTime )
+   {
+      throw buildException("check cl num time out, it took five seconds ", null, JSON.stringify(newCSObj),
+                              clNum, clArray.length);
+   }
+   
+   //when the cl num expected results are met，check the cl name
+   for( i = 0; i< clArray.length; i++)
+   {
+      var csname = clArray[i].Name.split(".")[0];
+      if( csname !== newCSName  )
       {
-         var newCSObj = db.snapshot(SDB_SNAP_COLLECTIONSPACES ,{"Name": newCSName }).current().toObj();
+         throw buildException("check cs.cl name", null, JSON.stringify(newCSObj),
+                           newCSName, csname);
+      }
+   }
+   
+   //check the old cl is not exist
+   try
+   {
+      db.getCS(oldCSName);
+      throw "CS_IS_EXIT";
+   }
+   catch ( e )
+   { 
+      if ( e !== -34  )
+      {		      
+         throw buildException("check old csName:",e);
+      }		
+   } 
+}
+
+function getCSSnapshotCLArray( newCSName )
+{
+   var newCSObj = db.snapshot(SDB_SNAP_COLLECTIONSPACES ,{"Name": newCSName }).current().toObj();
          var getNewCSName = newCSObj.Name;
          if( getNewCSName !== newCSName  )
          {
@@ -403,47 +451,7 @@ function checkRenameCSResult( oldCSName, newCSName, clNum)
          }
          
          var clArray = newCSObj.Collection;
-         
-         if(clNum != clArray.length){//review 3：这个实现逻辑建议优化下，这里如果不同步可以循环获取，给个超时时间，不要每次都sleep
-            times++;
-            if(times === 50){
-               throw buildException("check cl num", null, JSON.stringify(newCSObj),
-                                 clNum, clArray.length);
-            }
-            sleep(100);
-            continue;
-         }
-         
-         for( i = 0; i< clArray.length; i++)
-         {
-            var csname = clArray[i].Name.split(".")[0];
-            if( csname !== newCSName  )
-            {
-               throw buildException("check cs.cl name", null, JSON.stringify(newCSObj),
-                                 newCSName, csname);
-            }
-         }
-         break;
-      }
-      
-      //check the old cl is not exist
-      try
-	   {
-		   db.getCS(oldCSName);
-		   throw "CS_IS_EXIT";
-	   }
-	   catch ( e )
-	   { 
-		   if ( e !== -34  )
-		   {		      
-			   throw buildException("check old csName:",e);
-		   }		
-	   }
-   }
-   catch(e)
-   {      
-      throw buildException("checkRenameCSResult", e)
-   }   
+         return clArray;
 }
 
 function checkRenameSubCLResult( maincs, mainCLName, subcs, oldSubCLName, newSubCLName )
