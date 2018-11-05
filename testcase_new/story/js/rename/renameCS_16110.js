@@ -1,6 +1,6 @@
 /* *****************************************************************************
-@discretion: rename cl  ---//review 1: 描述信息和实际用例不符
-             seqDB-16110
+@discretion: rename cs
+             seqDB-16110 cs不在domain中，修改cs名后setDomain
 @author：2018-10-13 chensiqin  Init
 ***************************************************************************** */
 
@@ -25,7 +25,7 @@ function main(db)
    var groups = commGetGroups(db);
    var groupName1 = groups[0][0].GroupName;
    var groupName2 = groups[1][0].GroupName;
-   var domain = createDomain( db, domainName, groupName1, groupName2 );//review 3：这个方法只有一行代码操作，如果提出方法，建议把groups相关代码也合进去
+   var domain = createDomain( db, domainName, groupName1, groupName2 );
    
    //创建cs cl
    commDropCS( db, csName1, true, "ignoreNotExist is true" );
@@ -38,21 +38,19 @@ function main(db)
    afterClear( db, domainName, csName2 )
 }
 
-function testRenameCS16110( db, domainName, domain, csName1, csName2, clName )
+function testRenameCS16110( db, domainName, domain, oldName, newName, clName )
 {
-   var oldName = csName1;//review 2：建议定义变量就直接定义为oldCSName和newCSName，可以直接用，后面一会newName，一会又用csName2
-   var newName = csName2;
    db.renameCS( oldName, newName );
    //check
    checkRenameCSResult(oldName, newName, 1);
-   var cs = db.getCS(csName2)
+   var cs = db.getCS(newName)
    cs.setDomain( { Domain : domainName } )
    var csList = domain.listCollectionSpaces().toArray();
    var cs = eval('('+csList[0]+')') ;
-   if (cs["Name"] !== csName2) {
+   if (cs["Name"] !== newName) {
       throw buildException("check domain.listCollectionSpaces() fail", "fail", "check", "success", "fail"); 
    }
-   checkDatas( csName2, clName);
+   checkDatas( newName, clName);
 }
 
 function checkDatas( csName2, clName)

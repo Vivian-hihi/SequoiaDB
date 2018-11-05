@@ -17,9 +17,7 @@ function main(db)
    var csName = CHANGEDPREFIX+"_cs16074";
    var oldClPerfix = CHANGEDPREFIX+"_cl16074_";
    var newClPerfix = CHANGEDPREFIX+"_newcl16074_";
-   try{
-      commDropCS( db, csName, true, "drop CS "+csName );
-   }catch( e ){}//review 1：多余try-catch建议去掉
+   commDropCS( db, csName, true, "drop CS "+csName );
    var cs = commCreateCS( db, csName, true, "create CS1" );
    for( var i = 1; i <= 4096; i++ )
    {
@@ -43,9 +41,7 @@ function main(db)
 
    checkRenameAllCL( csName , newClPerfix);
    
-   try{
-      commDropCS( db, csName, true, "drop CS "+csName );
-   }catch( e ){}//review 2：建议去掉try-catch
+   commDropCS( db, csName, true, "drop CS "+csName );
 }
 
 function checkRenameAllCL( csName, newClPerfix )

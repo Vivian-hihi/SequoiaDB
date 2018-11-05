@@ -11,9 +11,7 @@ function main(db)
       return ;
    }
    var csName = CHANGEDPREFIX+"_cs16143";
-   try{
-      commDropCS( db, csName, true, "drop CS "+csName );
-   }catch( e ){}//review 1：多余的try-catch要去掉
+   commDropCS( db, csName, true, "drop CS "+csName );
    var cs = commCreateCS( db, csName, true, "create CS1" );
    
    var clName = CHANGEDPREFIX+"_cl16143";
@@ -46,9 +44,7 @@ function main(db)
    varCL.remove({no:{$et:2}});
    checkDatas( csName, newClName, 0, {no:{$et:2}} );
    
-   try{
-      commDropCS( db, csName, true, "drop CS "+csName );
-   }catch( e ){}//review 2：多余的try-catch建议去掉
+   commDropCS( db, csName, true, "drop CS "+csName );
 }
 
 function checkDatas( csName, newClName, expRecordNums, cond)

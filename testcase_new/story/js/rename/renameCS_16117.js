@@ -22,10 +22,8 @@ function main(db)
    var indexName1 = "index16117_1";
    var indexName2 = "index16117_2";
    var indexName3 = "index16117_3";
-   try{
-      commDropCS( db, csName1, true, "drop CS "+csName1 );
-      commDropCS( db, csName2, true, "drop CS "+csName2 );
-   }catch( e ){}// review 1：这里的try-catch建议去掉
+   commDropCS( db, csName1, true, "drop CS "+csName1 );
+   commDropCS( db, csName2, true, "drop CS "+csName2 );
    var cs = commCreateCS( db, csName1, true, "create CS1" );
    var cl1 = commCreateCLByOption( db, csName1, clName1, {}, true, false, "create cl in the beginning" );
    var cl2 = commCreateCLByOption( db, csName1, clName2, {}, true, false, "create cl in the beginning" );
@@ -62,10 +60,8 @@ function main(db)
    checkClIndex(cl2, indexName1, indexName3);
    checkClIndex(cl3, indexName1, indexName3);
 
-   try{
-      commDropCS( db, csName1, true, "drop CS "+csName1 );
-      commDropCS( db, csName2, true, "drop CS "+csName2 );
-   }catch( e ){}// review 1：多余的try-catch建议去掉
+   commDropCS( db, csName1, true, "drop CS "+csName1 );
+   commDropCS( db, csName2, true, "drop CS "+csName2 );
 }
 
 function checkClIndex(cl, indexName1, indexName3)

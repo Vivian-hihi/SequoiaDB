@@ -1,13 +1,13 @@
 /* *****************************************************************************
-@discretion: rename cl
-             seqDB-16116
+@discretion: rename cs
+             seqDB-16116 主子表在多个数据组上，修改cs名 
 @author：2018-10-13 chensiqin  Init
 ***************************************************************************** */
 /*
  1、创建主子表在多个cs上，分别考虑两种场景：
        a.多个子表cl分布在不同组上
-2、修改cs名，执行数据操作（如：插入）、LOB操作、索引操作等 
-3、检查cs、cl快照，数据文件、索引文件、LOB文件、LOB元数据文件
+ 2、修改cs名，执行数据操作（如：插入）、LOB操作、索引操作等 
+ 3、检查cs、cl快照，数据文件、索引文件、LOB文件、LOB元数据文件
 */
 main(db);
 function main(db)
@@ -17,7 +17,6 @@ function main(db)
       return ;
    }
    var csName1 = CHANGEDPREFIX+"_maincs16116_1";
-   var csName2 = CHANGEDPREFIX+"_maincs16116_2";//review 2：这个cs未使用
    var mainClName = CHANGEDPREFIX+"maincl16116_1";
    
    var csName3 = CHANGEDPREFIX+"_subcs16116_1";
@@ -27,22 +26,24 @@ function main(db)
    var groups = commGetGroups(db);
    var groupName1 = groups[0][0].GroupName;
    var groupName2 = groups[1][0].GroupName;
-   try{
-      commDropCS( db, csName1, true, "drop CS "+csName1 );
-      commDropCS( db, csName2, true, "drop CS "+csName2 );
-      commDropCS( db, csName3, true, "drop CS "+csName3 );
-      commDropCS( db, csName4, true, "drop CS "+csName4 );
-   }catch( e ){}  //review 1：这里的try-catche建议去掉，catche也没有抛异常处理
+   
+   commDropCS( db, csName1, true, "drop CS "+csName1 );
+   commDropCS( db, csName3, true, "drop CS "+csName3 );
+   commDropCS( db, csName4, true, "drop CS "+csName4 );
+   
    var varCS = commCreateCS( db, csName1, true, "create CS" );
-   var varCL = varCS.createCL(mainClName, { IsMainCL: true, ShardingKey: { a: 1 }, ShardingType: "range" } );
+   var varCL = commCreateCLByOption( db, csName1, mainClName, { IsMainCL: true, ShardingKey: { a: 1 }, ShardingType: "range" }, true, false, "create main cl in the beginning" );
+
    //子表1
    var subCS = commCreateCS( db, csName3, true, "create CS1" );
-   var subcl1 = subCS.createCL(clName1, { ShardingKey: { a: 1 }, ShardingType: "hash", Partition: 1024, Group: groupName1} );
+   var subcl1 = commCreateCLByOption( db, csName3, clName1, { ShardingKey: { a: 1 }, ShardingType: "hash", Partition: 1024, Group: groupName1}, true, false, "create sub cl1 in the beginning" );
+
    //子表2
-   var subcl2 = subCS.createCL(clName2, { ShardingKey: { a: 1 }, ShardingType: "hash", Partition: 1024, Group: groupName2} );
+   var subcl2 = commCreateCLByOption( db, csName3, clName2, { ShardingKey: { a: 1 }, ShardingType: "hash", Partition: 1024, Group: groupName2}, true, false, "create sub cl2 in the beginning" );
+
    //挂载
    attachCL(varCL, csName3+"."+clName1, { LowBound: { a: 0 }, UpBound: { a: 1000 } }  );
-   attachCL(varCL, csName3+"."+clName2, { LowBound: { a: 1000 }, UpBound: { a: 3000 } });//review 3：创建主子表和挂载子表的操作建议提取方法
+   attachCL(varCL, csName3+"."+clName2, { LowBound: { a: 1000 }, UpBound: { a: 3000 } });
 
    //修改子表cs name
    try
@@ -63,12 +64,9 @@ function main(db)
    var varCL = cs.getCL(mainClName);
    checkDatas( csName1, mainClName, recordNums);
    
-   try{
-      commDropCS( db, csName1, true, "drop CS "+csName1 );
-      commDropCS( db, csName2, true, "drop CS "+csName2 );
-      commDropCS( db, csName3, true, "drop CS "+csName3 );
-      commDropCS( db, csName4, true, "drop CS "+csName4 );
-   }catch( e ){}
+   commDropCS( db, csName1, true, "drop CS "+csName1 );
+   commDropCS( db, csName3, true, "drop CS "+csName3 );
+   commDropCS( db, csName4, true, "drop CS "+csName4 );
    
 }
 

@@ -1,7 +1,7 @@
 /* *****************************************************************************
-@discretion: rename cl ---//review 1：描述信息不正确，和实际用例不符
-             seqDB-16108
-             seqDB-16109
+@discretion: rename cs
+             seqDB-16108 cs在domain中并切分到多个组，修改cs名
+             seqDB-16109 cs在domian中，修改cs后执行域操作
 @author：2018-10-13 chensiqin  Init
 ***************************************************************************** */
 
@@ -22,7 +22,7 @@ function main(db)
    var csName2 = CHANGEDPREFIX+"_rename16108_2";
    var csName3 = CHANGEDPREFIX+"_rename16108_3";
    var clName = CHANGEDPREFIX+"rename16108";
-   //创建domain  --------//review 2：方法名已经很明确，不需要再增加和方法名相同的说明信息
+   
    var domain = createDomain( db, domainName );
    
    //创建cs cl
