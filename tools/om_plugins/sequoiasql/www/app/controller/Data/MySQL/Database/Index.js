@@ -858,6 +858,12 @@
                            "value": true
                         },
                         {
+                           "name": "unsigned",
+                           "webName": $scope.pAutoLanguage( "无符号" ),
+                           "type": "checkbox",
+                           "value": false
+                        },
+                        {
                            "name": "primary",
                            "webName": $scope.pAutoLanguage( "主键" ),
                            "type": "checkbox",
@@ -915,6 +921,25 @@
                   else
                   {
                      subSql += ' ' ;
+                  }
+                  if( fieldInfo['unsigned'] == true )
+                  {
+                     switch( fieldInfo['type'] )
+                     {
+                     case 'tinyint':
+                     case 'smallint':
+                     case 'mediumint':
+                     case 'int':
+                     case 'double':
+                     case 'bigint':
+                     case 'decimal':
+                     case 'float':
+                        subSql += 'unsigned ' ;
+                        break ;
+                     default:
+                        subSql += ' ' ;
+                        break ;
+                     }
                   }
                   if( fieldInfo['primary'] == true )
                   {

@@ -20,7 +20,7 @@
 
       //获取字段信息
       $scope.QueryTableStruct = function(){
-         var sql = sprintf( "SELECT TABLE_NAME,COLUMN_NAME,COLUMN_DEFAULT,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '?' AND TABLE_SCHEMA = '?' ORDER BY ORDINAL_POSITION", SdbSwap.tbName, SdbSwap.dbName ) ;
+         var sql = sprintf( "SELECT TABLE_NAME,COLUMN_NAME,COLUMN_DEFAULT,DATA_TYPE,COLUMN_TYPE,CHARACTER_MAXIMUM_LENGTH,IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '?' AND TABLE_SCHEMA = '?' ORDER BY ORDINAL_POSITION", SdbSwap.tbName, SdbSwap.dbName ) ;
 
          var data = { 'Sql': sql, 'DbName': SdbSwap.dbName, 'Type': 'mysql' } ;
          SdbRest.DataOperationV2( '/sql', data, {
@@ -127,8 +127,7 @@
                               { "key": 'varchar', "value": "varchar" },
                               { "key": 'text', "value": "text" },
                               { "key": 'binary', "value": "binary" },
-                              { "key": 'blob', "value": "blob" },
-                              { "key": 'null', "value": "null" }
+                              { "key": 'blob', "value": "blob" }
                            ]
                         },
                         {
@@ -154,7 +153,13 @@
                            "webName": $scope.pAutoLanguage( "空" ),
                            "type": "checkbox",
                            "value": true
-                        }
+                        },
+                        {
+                           "name": "unsigned",
+                           "webName": $scope.pAutoLanguage( "无符号" ),
+                           "type": "checkbox",
+                           "value": false
+                        },
                      ]
                   ]
                }
@@ -192,6 +197,25 @@
                   else
                   {
                      subSql += ' ' ;
+                  }
+                  if( fieldInfo['unsigned'] == true )
+                  {
+                     switch( fieldInfo['type'] )
+                     {
+                     case 'tinyint':
+                     case 'smallint':
+                     case 'mediumint':
+                     case 'int':
+                     case 'double':
+                     case 'bigint':
+                     case 'decimal':
+                     case 'float':
+                        subSql += 'unsigned ' ;
+                        break ;
+                     default:
+                        subSql += ' ' ;
+                        break ;
+                     }
                   }
                   if( fieldInfo['null'] == true )
                   {
@@ -603,8 +627,17 @@
                      { "key": 'varchar', "value": "varchar" },
                      { "key": 'text', "value": "text" },
                      { "key": 'binary', "value": "binary" },
-                     { "key": 'blob', "value": "blob" },
-                     { "key": 'null', "value": "null" }
+                     { "key": 'blob', "value": "blob" }
+                  ]
+               },
+               {
+                  "name": "unsigned",
+                  "webName": $scope.pAutoLanguage( '无符号类型' ),
+                  "type": "select",
+                  "value": false,
+                  "valid": [
+                     { "key": false, "value": false },
+                     { "key": true, "value": true }
                   ]
                },
                {
@@ -631,6 +664,23 @@
                {
                   sql += sprintf( '(?)', formVal['length'] ) ;
                }
+               if( formVal['unsigned'] )
+               {
+                  switch( formVal['newType'] )
+                  {
+                  case 'tinyint':
+                  case 'smallint':
+                  case 'mediumint':
+                  case 'int':
+                  case 'double':
+                  case 'bigint':
+                  case 'decimal':
+                  case 'float':
+                     sql += ' unsigned' ;
+                     break ;
+                  }
+               }
+               
                execSql( sql ) ;
                $scope.EditFieldWindow['callback']['Close']() ;
             }
