@@ -17,7 +17,7 @@
       <listener class-name="com.sequoiadb.testcommon.TimePrinterListener"/>
    </listeners>
 
-   <test name="parralclass">
+   <test name="parralclass" parallel="classes" thread-count="5">
       <packages>
          <package name="com.sequoiadb.decimal" />
          <package name="com.sequoiadb.attachtest" />
@@ -36,13 +36,13 @@
       </packages>      
    </test>
    
-   <test name="parralmethod">
+   <test name="parralmethod" parallel="classes" thread-count="5">
       <packages>
          <package name="com.sequoiadb.subcl"/>
       </packages>    
    </test>
    
-   <test name="mixed">
+   <test name="mixed" parallel="classes" thread-count="5">
       <packages>
 		   <package name="com.sequoiadb.split"/>
       </packages>    
