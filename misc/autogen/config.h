@@ -2,7 +2,6 @@
 #define CONFIG_H
 
 /* =============== Compilation options and priority =============== */
-/*
 #define GENERAL_RC_C_FILE           10
 #define GENERAL_RC_CPP_FILE         10
 #define GENERAL_RC_JS_FILE          10
@@ -15,9 +14,9 @@
 #define GENERAL_OPT_C_FILE          10
 #define GENERAL_OPT_CPP_FILE        10
 #define GENERAL_OPT_SAMPLE_FILE     10
-*/
+
 #define GENERAL_OPT_SAC_FILE        10
-/*
+
 #define GENERAL_OPT_DOC_FILE        10
 
 #define GENERAL_FILE_LIST_FILE      10
@@ -28,7 +27,7 @@
 #define GENERAL_VER_PYTHON_FILE     10
 #define GENERAL_VER_BUILD_FILE      10
 
-#define GENERAL_JS_CODE_FILE        20*/
+#define GENERAL_JS_CODE_FILE        20
 
 /* =============== License =============== */
 #define GLOBAL_LICENSE "\
