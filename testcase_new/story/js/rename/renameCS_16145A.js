@@ -9,6 +9,14 @@ main();
 
 function main()
 {
+   if (commIsStandalone( db ))
+   {
+      return ;
+   }
+   if (commGetGroupsNum(db) < 2)
+   {
+      return ;
+   }
    println("---begin rename cs test---");
    var oldcsName = COMMCSNAME+"_16145A_old";
    var newcsName = COMMCSNAME+"_16145A_new";
