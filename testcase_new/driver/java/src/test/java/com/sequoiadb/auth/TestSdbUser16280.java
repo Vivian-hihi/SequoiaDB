@@ -1,11 +1,13 @@
 package com.sequoiadb.auth;
 
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -18,41 +20,31 @@ import com.sequoiadb.testcommon.SdbTestBase;
 public class TestSdbUser16280 extends SdbTestBase{
     private Sequoiadb sdb;
     private String coordAddr;
+    private String userName = "admin16280";
     
     @BeforeClass
     public void setUp() {
         this.coordAddr = SdbTestBase.coordUrl;
         sdb = new Sequoiadb(this.coordAddr, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("run mode is standalone,test case skip");
+        }
     }
     
     @Test
     public void test() {
-        testSdbUser();
-    }
-    
-    @AfterClass
-    public void tearDown() {
-        try {
-            try {
-                sdb.removeUser("admin", "admin");
-            }catch (BaseException e) {
-                if (-300 !=e.getErrorCode()) {
-                    Assert.assertTrue(false, "drop user, errMsg: " + e.getMessage());
-                }
-            }
-            sdb.close();
-        } catch (BaseException e) {
-            Assert.fail(e.getMessage());
-        }
-    } 
-    
-    public void testSdbUser() {
-        try {
-            sdb.createUser("admin", "admin");
-            Sequoiadb sdb = new Sequoiadb(coordAddr, "admin", "");
+    	try {
+            sdb.createUser(userName, "admin");
+            Sequoiadb sdb = new Sequoiadb(coordAddr, userName, "");
         }catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -179);
         }
     }
+    
+    @AfterClass
+    public void tearDown() {
+    	sdb.removeUser(userName, "admin");
+        sdb.close();
+    } 
 }
  
