@@ -63,8 +63,15 @@ do                                     \
 /** 0 means using database's default pagesize, it 64k now */
 #define SDB_PAGESIZE_DEFAULT      0
 
+
 /** The flags represent whether bulk insert continue when hitting index key duplicate error */
 #define FLG_INSERT_CONTONDUP  0x00000001
+
+/** The flag represent whether insert continue(no errors were reported) when hitting index key duplicate error */
+#define INSERT_IGNORE_DUPLICATE_KEY       0x00000001
+/** The flag represent whether insert return the "_id" field of the record for user */
+#define INSERT_RETURN_OID                 0x00000002
+
 
 // client socket timeout value
 // since client and server may not sit in the same network, we need
@@ -255,7 +262,13 @@ namespace sdbclient
       // object ( required )
       // returns id as the pointer pointing to _id bson element
       virtual INT32 insert ( const bson::BSONObj &obj, bson::OID *id = NULL ) = 0 ;
-
+      virtual INT32 insert ( const bson::BSONObj &obj, 
+                             INT32 flags,
+                             bson::BSONObj *pResult = NULL ) = 0 ;
+      virtual INT32 insert ( const bson::BSONObj objs[],
+                             INT32 size,
+                             INT32 flags = 0,
+                             bson::BSONObj *pResult = NULL ) = 0 ;
       virtual INT32 bulkInsert ( SINT32 flags,
                                  std::vector<bson::BSONObj> &obj
                                ) = 0 ;
@@ -705,40 +718,110 @@ namespace sdbclient
          return pCollection->alterCollection ( options ) ;
       }
 
-/** \fn  INT32 bulkInsert ( SINT32 flags,
-                         std::vector<bson::BSONObj> &obj
-                       )
-    \brief Insert a bulk of bson objects into current collection
-    \param [in] flags FLG_INSERT_CONTONDUP or 0. While FLG_INSERT_CONTONDUP
-                is set, if some records hit index key duplicate error,
-                database will skip them and go on inserting. However, while 0
-                is set, database will stop inserting in that case, and return
-                errno code.
-    \param [in] obj The array of inserted bson objects
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
-      INT32 bulkInsert ( SINT32 flags,
-                         std::vector<bson::BSONObj> &obj
-                       )
-      {
-         if ( !pCollection )
-            return SDB_NOT_CONNECTED ;
-         return pCollection->bulkInsert ( flags, obj ) ;
-      }
-
-/** \fn INT32 insert ( bson::BSONObj &obj, BSONElement *id = NULL )
-    \brief Insert a bson object into current collection
-    \param [in] obj The inserted bson object
-    \param [out] id The object id of inserted bson object in current collection, the memory of id will be invalidated when next insert/bulkInsert is performed or the obj is destroyed
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
+      /** \fn INT32 insert ( bson::BSONObj &obj, bson::OID *id = NULL )
+          \brief Insert a bson object into current collection
+          \param [in] obj The inserted bson object
+          \param [out] id The object id of inserted bson object in current collection, the memory of id will be invalidated when next insert/bulkInsert is performed or the obj is destroyed
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
       INT32 insert ( const bson::BSONObj &obj, bson::OID *id = NULL )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
          return pCollection->insert ( obj, id ) ;
+      }
+
+      /** \fn INT32 insert ( const bson::BSONObj &obj, 
+                             INT32 flags,
+                             bson::BSONObj *pResult = NULL )
+          \brief Insert a bson object into current collection.
+          \param [in] obj The inserted bson object.
+          \param [in] flags The flag to control the behavior of inserting. The
+                            value of flag default to be 0, and it can choose
+                            the follow values:
+
+               0:                    while 0 is set(default to be 0), database 
+                                     will stop inserting when some records hit 
+                                     index key duplicate error.
+               INSERT_IGNORE_DUPLICATE_KEY: 
+                                     if some records hit index key duplicate
+                                     error, database will skip them and go on 
+                                     inserting.
+               INSERT_RETURN_OID:    return the value of "_id" field in the record.
+
+          \param [out] id The object id of inserted bson object in current collection, the memory of id will be invalidated when next insert/bulkInsert is performed or the obj is destroyed
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 insert ( const bson::BSONObj &obj,
+                     INT32 flags,
+                     bson::BSONObj *pResult = NULL )
+      {
+         if ( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->insert ( obj, flags, pResult ) ;
+
+      }
+
+      /** \fn INT32 insert ( bson::BSONObj objs[], INT32 size,
+                             INT32 flags = 0,
+                             bson::BSONObj *pResult = NULL )
+          \brief Insert bson objects into current collection.
+          \param [in] objs The array of inserted bson object.
+          \param [in] size The size of the array.
+          \param [in] flags The flag to control the behavior of inserting. The
+                            value of flag default to be 0, and it can choose
+                            the follow values:
+
+               0:                    while 0 is set(default to be 0), database 
+                                     will stop inserting when some records hit 
+                                     index key duplicate error.
+               INSERT_IGNORE_DUPLICATE_KEY: 
+                                     if some records hit index key duplicate
+                                     error, database will skip them and go on 
+                                     inserting.
+               INSERT_RETURN_OID:    return the value of "_id" field in the records.
+
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 insert ( const bson::BSONObj objs[], 
+                     INT32 size, 
+                     INT32 flags = 0,
+                     bson::BSONObj *pResult = NULL )
+      {
+         if ( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->insert ( objs, size, flags, pResult ) ;
+      }
+
+      /** \fn  INT32 bulkInsert ( SINT32 flags,
+                                  std::vector<bson::BSONObj> &obj )
+          \brief Insert a bulk of bson objects into current collection
+          \param [in] flags The flag to control the behavior of inserting. The
+                            value of flag default to be 0, and it can choose
+                            the follow values:
+          
+               0:                    while 0 is set(default to be 0), database 
+                                     will stop inserting when some records hit 
+                                     index key duplicate error.
+               INSERT_IGNORE_DUPLICATE_KEY: 
+                                     if some records hit index key duplicate
+                                     error, database will skip them and go on 
+                                     inserting.
+               FLG_INSERT_CONTONDUP: deprecated, use INSERT_IGNORE_DUPLICATE_KEY instead.
+
+          \param [in] obj The array of inserted bson objects
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 bulkInsert ( SINT32 flags,
+                         std::vector<bson::BSONObj> &obj )
+      {
+         if ( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->bulkInsert ( flags, obj ) ;
       }
 
 /** \fn  INT32 update ( const bson::BSONObj &rule,
@@ -3790,10 +3873,12 @@ namespace sdbclient
       // close all cursor
       virtual INT32 closeAllCursors () = 0 ;
 
-      // connection is closed
+      // connection is valid
       virtual INT32 isValid( BOOLEAN *result ) = 0 ;
       virtual BOOLEAN isValid() = 0 ;
 
+      virtual BOOLEAN isClosed() = 0 ;
+   
       // domain
       virtual INT32 createDomain ( const CHAR *pDomainName,
                                    const bson::BSONObj &options,
@@ -5181,7 +5266,7 @@ namespace sdbclient
       }
 
 
-/** \fn BOOLEAN isValid () ;
+/** \fn BOOLEAN isValid ()
     \brief Judge whether the connection is valid.
     \retval TRUE for the connection is valid while FALSE for not
 */
@@ -5190,6 +5275,17 @@ namespace sdbclient
          if ( !pSDB )
             return FALSE ;
          return pSDB->isValid () ;
+      }
+
+      /** \fn BOOLEAN isClosed()
+          \brief Judge whether the connection has been closed.
+          \retval TRUE or FALSE
+      */
+      BOOLEAN isClosed()
+      {
+         if (!pSDB)
+            return TRUE ;
+         return pSDB->isClosed() ;
       }
 
 /** \fn INT32 createDomain ( const CHAR *pDomainName,

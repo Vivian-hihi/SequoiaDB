@@ -1163,50 +1163,288 @@ do                                                            \
    error :
       goto done ;
    }
+   
+   INT32 _sdbCollectionImpl::_insert ( const BSONObj &obj, 
+                                       INT32 flags,
+                                       BSONObj &newObj )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID = 0 ;
+      BOOLEAN locked = FALSE ;
+      BOOLEAN result ;
+      // make sure the object is initialized
+      if ( _collectionFullName [0] == '\0' || !_connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      rc = _appendOID ( obj, newObj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = clientBuildInsertMsgCpp ( &_pSendBuffer, &_sendBufferSize,
+                                     _collectionFullName, flags, 0, newObj.objdata(),
+                                     _connection->_endianConvert ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      _connection->lock () ;
+      locked = TRUE ;
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID, result ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      
+   done :
+      if ( locked )
+      {
+         _connection->unlock () ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _sdbCollectionImpl::insert ( const BSONObj &obj, OID *id )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj newObj ;
+
+      if ( NULL == id )
+      {
+         rc = _insert( obj, 0, newObj ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = _insert( obj, INSERT_RETURN_OID, newObj ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         if ( jstOID == newObj.getField( CLIENT_RECORD_ID_FIELD ).type() )
+         {
+            *id = newObj.getField ( CLIENT_RECORD_ID_FIELD ).__oid();   
+         }
+         else
+         {
+            id->clear() ;
+         }
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sdbCollectionImpl::insert ( const bson::BSONObj &obj, 
+                                      INT32 flags, 
+                                      bson::BSONObj *pResult )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj newObj ;
+
+      rc = _insert( obj, flags, newObj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      if ( pResult && ( flags & INSERT_RETURN_OID ) )
+      {
+         BSONObjBuilder bob ;
+         bob.append( newObj.getField ( CLIENT_RECORD_ID_FIELD ) ) ;
+         *pResult = bob.obj() ;
+      }
+      else if ( pResult )
+      {
+         BSONObjBuilder bob ;
+         *pResult = bob.obj() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sdbCollectionImpl::insert ( const bson::BSONObj objs[],
+                                      INT32 size,
+                                      INT32 flags,
+                                      bson::BSONObj *pResult )
+   {
+      INT32 rc         = SDB_OK ;
+      SINT64 contextID = 0 ;
+      SINT32 count     = 0 ;
+      BOOLEAN locked   = FALSE ;
+      BOOLEAN result ;
+      BSONArrayBuilder bab ;
+
+      if ( _collectionFullName[0] == '\0' || !_connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      if ( size < 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      if ( 0 == size )
+      {
+         goto error ;
+      }
+      for ( count = 0; count < size; ++count )
+      {
+         BSONObj newObj ;
+         rc = _appendOID ( objs[count], newObj ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         if ( pResult && ( flags & INSERT_RETURN_OID ) )
+         {
+            try
+            {
+               bab.append( newObj.getField ( CLIENT_RECORD_ID_FIELD ) ) ;     
+            }
+            catch ( std::exception &e )
+            {
+               rc = SDB_DRIVER_BSON_ERROR ;
+               goto error ;
+            }
+         }
+         if ( 0 == count )
+            rc = clientBuildInsertMsgCpp ( &_pSendBuffer, &_sendBufferSize,
+                                           _collectionFullName, flags, 0,
+                                           newObj.objdata(),
+                                           _connection->_endianConvert ) ;
+         else
+            rc = clientAppendInsertMsgCpp ( &_pSendBuffer, &_sendBufferSize,
+                                            newObj.objdata(),
+                                            _connection->_endianConvert ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+      _connection->lock () ;
+      locked = TRUE ;
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _connection->_recvExtract ( &_pReceiveBuffer,
+                                       &_receiveBufferSize,
+                                       contextID,
+                                       result ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+   
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // return output object
+      if ( pResult )
+      {
+         BSONObjBuilder bob ;
+         try
+         {
+            if ( flags & INSERT_RETURN_OID )
+            {
+               bob.append( CLIENT_RECORD_ID_FIELD, bab.arr() ) ;
+            }
+            *pResult = bob.obj() ;
+         }
+         catch ( std::exception &e )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+      }
+
+   done :
+      if ( locked )
+      {
+         _connection->unlock () ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
 
    INT32 _sdbCollectionImpl::bulkInsert ( SINT32 flags,
-                                          vector<BSONObj> &obj
-                                        )
+                                          vector<BSONObj> &obj )
    {
       INT32 rc = SDB_OK ;
       SINT64 contextID = 0 ;
       BOOLEAN result ;
+      BOOLEAN hasLock = FALSE ;
       SINT32 count = 0 ;
       SINT32 num = obj.size() ;
 
       if ( _collectionFullName[0] == '\0' || !_connection )
       {
          rc = SDB_INVALIDARG ;
-         goto exit ;
+         goto error ;
       }
       if ( num <= 0 )
       {
          // in this case, prevent use '_pSendBuffer' to send anything to engine
-         goto exit ;
+         goto done ;
       }
       for ( count = 0; count < num; ++count )
       {
-         BSONObj temp ;
-         rc = _appendOID ( obj[count], temp ) ;
+         BSONObj newObj ;
+         rc = _appendOID ( obj[count], newObj ) ;
          if ( rc )
          {
-            goto exit ;
+            goto error ;
          }
          if ( 0 == count )
             rc = clientBuildInsertMsgCpp ( &_pSendBuffer, &_sendBufferSize,
                                            _collectionFullName, flags, 0,
-                                           temp.objdata(),
+                                           newObj.objdata(),
                                            _connection->_endianConvert ) ;
          else
             rc = clientAppendInsertMsgCpp ( &_pSendBuffer, &_sendBufferSize,
-                                            temp.objdata(),
+                                            newObj.objdata(),
                                             _connection->_endianConvert ) ;
          if ( rc )
          {
-            goto exit ;
+            goto error ;
          }
       }
       _connection->lock () ;
+      hasLock = true ;
       rc = _connection->_send ( _pSendBuffer ) ;
       if ( rc )
       {
@@ -1229,70 +1467,13 @@ do                                                            \
       {
          goto error ;
       }
-   exit:
-      return rc ;
+      
    done :
-      _connection->unlock () ;
-      goto exit ;
-   error :
-      goto done ;
-   }
-
-   INT32 _sdbCollectionImpl::insert ( const BSONObj &obj, OID *id )
-   {
-      INT32 rc = SDB_OK ;
-      SINT64 contextID = 0 ;
-      BOOLEAN result ;
-      BSONObj temp ;
-      // make sure the object is initialized
-      if ( _collectionFullName [0] == '\0' || !_connection )
+      if ( hasLock )
       {
-         rc = SDB_INVALIDARG ;
-         goto exit ;
+         _connection->unlock () ;
       }
-      rc = _appendOID ( obj, temp ) ;
-      if ( rc )
-      {
-         goto exit ;
-      }
-      rc = clientBuildInsertMsgCpp ( &_pSendBuffer, &_sendBufferSize,
-                                     _collectionFullName, 0, 0, temp.objdata(),
-                                     _connection->_endianConvert ) ;
-      if ( rc )
-      {
-         goto exit ;
-      }
-      _connection->lock () ;
-      rc = _connection->_send ( _pSendBuffer ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
-                                       contextID, result ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      // check return msg header
-      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
-      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
-                               _collectionFullName ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-
-      if ( id )
-      {
-         *id = temp.getField ( CLIENT_RECORD_ID_FIELD ).__oid();
-      }
-
-   exit :
       return rc ;
-   done :
-      _connection->unlock () ;
-      goto exit ;
    error :
       goto done ;
    }

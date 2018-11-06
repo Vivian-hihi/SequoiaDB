@@ -172,10 +172,16 @@ namespace sdbclient
       // insert a bson object into current collection
       // given:
       // object ( required )
-      INT32 bulkInsert ( SINT32 flags,
-                         vector<BSONObj> &obj
-                       ) ;
       INT32 insert ( const BSONObj &obj, OID *id ) ;
+      INT32 insert ( const bson::BSONObj &obj,
+                     INT32 flags,
+                     bson::BSONObj *pResult = NULL ) ;
+      INT32 insert ( const bson::BSONObj objs[],
+                     INT32 size,
+                     INT32 flags = 0,
+                     bson::BSONObj *pResult = NULL ) ;
+      INT32 bulkInsert ( SINT32 flags,
+                         vector<BSONObj> &obj ) ;
       // update bson object from current collection
       // given:
       // update rule ( required )
@@ -497,6 +503,7 @@ namespace sdbclient
       INT32 _alterInternal ( const CHAR * taskName,
                              const bson::BSONObj * argument,
                              BOOLEAN allowNullArgs ) ;
+      INT32 _insert ( const BSONObj &obj, INT32 flags, BSONObj &newObj ) ;
    } ;
 
    typedef class _sdbCollectionImpl sdbCollectionImpl ;

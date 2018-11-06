@@ -119,6 +119,15 @@ typedef sdbNodeHandle             sdbReplicaNodeHandle ;
 #define QUERY_FOR_UPDATE                  0x00010000
 
 
+/** The flags represent whether bulk insert continue when hitting index key duplicate error */
+#define FLG_INSERT_CONTONDUP              0x00000001
+
+/** The flag represent whether insert continue(no errors were reported) when hitting index key duplicate error */
+#define INSERT_IGNORE_DUPLICATE_KEY       0x00000001
+/** The flag represent whether insert return the "_id" field of the record for user */
+#define INSERT_RETURN_OID                 0x00000002
+
+
 /** The sharding key in update rule is not filtered, when executing update or upsert. */
 #define UPDATE_KEEP_SHARDINGKEY           QUERY_KEEP_SHARDINGKEY_IN_UPDATE
 
@@ -1487,18 +1496,50 @@ SDB_EXPORT INT32 sdbInsert ( sdbCollectionHandle cHandle,
 SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
                               bson *obj, bson_iterator *id ) ;
 
-/** The flags represent whether bulk insert continue when hitting index key duplicate error */
-#define FLG_INSERT_CONTONDUP  0x00000001
+
+/** \fn INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
+                           bson *obj, INT32 flags, 
+                           bson *pResullt )
+    \brief Insert a bson object into current collection
+    \param [in] cHandle The collection handle
+    \param [in] obj The inserted bson object, cannot be null
+    \param [in] flags The flag to control the behavior of inserting. The
+                      value of flags default to be 0, and it can choose
+                      the follow values:
+    
+         0:                    while 0 is set(default to be 0), database 
+                               will stop inserting when the record hit 
+                               index key duplicate error.
+         INSERT_IGNORE_DUPLICATE_KEY: 
+                               if the record hit index key duplicate
+                               error, database will skip them and go on 
+                               inserting.
+         INSERT_RETURN_OID:    return the value of "_id" field in the record.                     
+
+    \param [out] pResult The insert result.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
+                              bson *obj, INT32 flags, bson *pResult ) ;
 
 /** \fn INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                               SINT32 flags, bson **obj, SINT32 num )
     \brief Insert a bulk of bson objects into current collection
     \param [in] cHandle The collection handle
-    \param [in] flags FLG_INSERT_CONTONDUP or 0. While FLG_INSERT_CONTONDUP
-                is set, if some records hit index key duplicate error,
-                database will skip them and go on inserting. However, while 0
-                is set, database will stop inserting in that case, and return
-                errno code.
+    \param [in] flags The flag to control the behavior of inserting. The
+                      value of flags default to be 0, and it can choose
+                      the follow values:
+    
+         0:                    while 0 is set(default to be 0), database 
+                               will stop inserting when the record hit 
+                               index key duplicate error.
+         INSERT_IGNORE_DUPLICATE_KEY: 
+                               if the record hit index key duplicate
+                               error, database will skip them and go on 
+                               inserting.
+         FLG_INSERT_CONTONDUP: deprecated, use INSERT_IGNORE_DUPLICATE_KEY instead.
+
     \param [in] obj The array of inserted bson objects, cannot be null
     \param [in] num The number of inserted bson objects
     \retval SDB_OK Operation Success
@@ -1533,6 +1574,37 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
 */
 SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                                  SINT32 flags, bson **obj, SINT32 num ) ;
+
+/** \fn INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
+                                  SINT32 flags, bson **objs, 
+                                  SINT32 num,
+                                  bson *pResult )
+    \brief Insert a bulk of bson objects into current collection
+    \param [in] cHandle The collection handle
+    \param [in] flags The flag to control the behavior of inserting. The
+                      value of flags default to be 0, and it can choose
+                      the follow values:
+    
+         0:                    while 0 is set(default to be 0), database 
+                               will stop inserting when the record hit 
+                               index key duplicate error.
+         INSERT_IGNORE_DUPLICATE_KEY: 
+                               if the record hit index key duplicate
+                               error, database will skip them and go on 
+                               inserting.
+         INSERT_RETURN_OID:    return the value of "_id" field in the records.                     
+
+    \param [in] objs The array of inserted bson objects, cannot be null
+    \param [in] num The number of inserted bson objects
+    \param [out] pResult The insert result
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+
+SDB_EXPORT INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
+                                  SINT32 flags, bson **objs, 
+                                  SINT32 num,
+                                  bson *pResult ) ;
 
 /** \fn INT32 sdbUpdate ( sdbCollectionHandle cHandle,
                           bson *rule,

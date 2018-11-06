@@ -6182,7 +6182,36 @@ SDB_EXPORT INT32 sdbInsert ( sdbCollectionHandle cHandle,
 SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
                               bson *obj, bson_iterator *id )
 {
-   bson_iterator tempid ;
+   INT32 rc = SDB_OK ;
+   // insert
+   rc = sdbInsert2( cHandle, obj, 0, NULL ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   // return oid
+   if ( id != NULL )
+   {
+      bson_type type = BSON_EOO ;
+      type = bson_find ( id, obj, CLIENT_RECORD_ID_FIELD ) ;
+      if ( BSON_EOO == type )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   }
+   
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
+                              bson *obj, INT32 flags, 
+                              bson *pResult )
+{
+   bson_iterator oid_itr ;
    INT32 rc                        = SDB_OK ;
    SINT64 contextID                = 0 ;
    sdbConnectionStruct *connection = NULL ;
@@ -6196,13 +6225,14 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   rc = clientAppendOID ( obj, &tempid ) ;
+   rc = clientAppendOID ( obj, &oid_itr ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
    rc = clientBuildInsertMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
-                               cs->_collectionFullName, 0, 0, obj, cs->_endianConvert ) ;
+                               cs->_collectionFullName, flags, 0, obj, 
+                               cs->_endianConvert ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -6235,12 +6265,18 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   if ( pResult )
+   {
+      bson_destroy( pResult ) ;
+      bson_init( pResult ) ;
+      if ( flags & INSERT_RETURN_OID )
+      {
+         bson_append_element( pResult, CLIENT_RECORD_ID_FIELD, &oid_itr ) ;
+      }
+      bson_finish( pResult ) ;
+   }
 
 done :
-   if ( id )
-   {
-      ossMemcpy ( id, &tempid, sizeof(bson_iterator) ) ;
-   }
    return rc ;
 error :
    goto done ;
@@ -6249,9 +6285,18 @@ error :
 SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                                  SINT32 flags, bson **obj, SINT32 num )
 {
+   return sdbBulkInsert2( cHandle, flags, obj, num, NULL ) ;
+}
+
+SDB_EXPORT INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
+                                  SINT32 flags, bson **obj, SINT32 num,
+                                  bson *pResult )
+{
    INT32 rc                        = SDB_OK ;
    SINT64 contextID                = 0 ;
    SINT32 count                    = 0 ;
+   bson_iterator oid_itr ;
+   BOOLEAN hasInit                 = FALSE ;
    sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
@@ -6262,7 +6307,7 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   if ( num < 0)
+   if ( num < 0 )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -6272,15 +6317,39 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
       // in this case, prevent use the cs->_pSendBuffer to send thing to engine
       goto done ;
    }
+   if ( pResult )
+   {
+      bson_destroy( pResult ) ;
+      bson_init( pResult ) ;
+      hasInit = TRUE ;
+      if ( flags & INSERT_RETURN_OID )
+      {
+         bson_append_start_array( pResult, CLIENT_RECORD_ID_FIELD ) ;
+      }
+   }
 
    for ( count = 0; count < num; ++count )
    {
       if ( !obj[count] )
-         break ;
-      rc = clientAppendOID ( obj[count], NULL ) ;
-      if ( SDB_OK != rc )
       {
-         goto error ;
+         break ;
+      }
+      if ( pResult && ( flags & INSERT_RETURN_OID ) )
+      {
+         rc = clientAppendOID ( obj[count], &oid_itr ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         bson_append_element( pResult, NULL, &oid_itr ) ;
+      }
+      else
+      {
+         rc = clientAppendOID ( obj[count], NULL ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
       }
       if ( 0 == count )
          rc = clientBuildInsertMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
@@ -6291,6 +6360,18 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                                       obj[count], cs->_endianConvert ) ;
       if ( SDB_OK != rc )
       {
+         goto error ;
+      }
+   }
+   if ( pResult )
+   {
+      if ( flags & INSERT_RETURN_OID )
+      {
+         bson_append_finish_array( pResult ) ;
+      }
+      if ( bson_finish( pResult ) )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
    }
@@ -6324,12 +6405,19 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
-
+   
 done :
    return rc ;
 error :
+   if ( pResult && hasInit )
+   {
+      bson_destroy( pResult ) ;
+      bson_init( pResult ) ;
+      bson_finish( pResult ) ;
+   }
    goto done ;
 }
+
 /*
 static INT32 _sdbUpdate ( SOCKET sock, CHAR *pCollectionFullName,
                           CHAR **ppSendBuffer, INT32 *sendBufferSize,
