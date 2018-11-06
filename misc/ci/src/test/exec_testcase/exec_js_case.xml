@@ -119,7 +119,6 @@
                </and>
             </or>
          </condition>
-         
          <if>
             <equals arg1="${is_continue_exec}" arg2="true"/>
             <then>

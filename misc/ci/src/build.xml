@@ -104,12 +104,13 @@
             </if>
          </then>
       </if>
-     
+
       <ant antfile="largedata_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" >
          <property name="TEST_TYPE" value="${TEST_TYPE}"/>
          <property name="plat_form" value="${plat_form}"/>
          <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
          <property name="BUILD_NUMBER" value="${BUILD_NUMBER}"/>
+         <property name="BREAK_ON_FAILURE" value="${BREAK_ON_FAILURE}"/>
       </ant>
       
       <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">
@@ -177,6 +178,7 @@
          <property name="plat_form" value="${plat_form}"/>
          <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
          <property name="BUILD_NUMBER" value="${BUILD_NUMBER}"/>
+         <property name="BREAK_ON_FAILURE" value="${BREAK_ON_FAILURE}"/>
       </ant>
       
       <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">

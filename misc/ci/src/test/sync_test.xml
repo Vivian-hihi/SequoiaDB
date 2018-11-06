@@ -277,7 +277,7 @@
                                  <property name="plat_form" value="${plat_form}"/>
                                  <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
                                  <property name="BUILD_NUMBER" value="${BUILD_NUMBER}"/>
-                                 
+                                 <property name="DBREAK_ON_FAILURE" value="${DBREAK_ON_FAILURE}"/>
                               </ant>
                       
                               <available property="is_exist" file="${report_basedir}/${testcase_type}/.TESTCASE_FAIL" type="file"/>

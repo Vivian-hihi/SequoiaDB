@@ -273,7 +273,7 @@
       </for>
       
       <!--execute testcase in remote host-->
-      <var name="test_remote_cmd" value="ant -f ${testscript_dir}/largedata_test.xml exec_remote_testcase -DTEST_TYPE=${TEST_TYPE} -Dplat_form=${plat_form} -DDEPLOY_MODE=${DEPLOY_MODE} -DBUILD_NUMBER=${BUILD_NUMBER}" />
+      <var name="test_remote_cmd" value="ant -f ${testscript_dir}/largedata_test.xml exec_remote_testcase -DTEST_TYPE=${TEST_TYPE} -Dplat_form=${plat_form} -DDEPLOY_MODE=${DEPLOY_MODE} -DBUILD_NUMBER=${BUILD_NUMBER} -DBREAK_ON_FAILURE=${BREAK_ON_FAILURE}" />
       <for list="${testhost_list}" param="testhost" parallel="true">
          <sequential>
             <staf location="@{testhost}" service="PROCESS"                  
@@ -399,6 +399,7 @@
                      <property name="plat_form" value="${plat_form}"/>
                      <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
                      <property name="BUILD_NUMBER" value="${BUILD_NUMBER}"/>
+                     <property name="BREAK_ON_FAILURE" value="${BREAK_ON_FAILURE}"/>
                   </ant>
                </sequential>
             </for>           
