@@ -13,11 +13,9 @@
    <packaging>jar</packaging>
    <dependencies>
       <dependency>
-         <groupId>com.sequoiadb</groupId>
-         <artifactId>reliability</artifactId>
+         <groupId>com.jcraft</groupId>
+         <artifactId>jsch</artifactId>
          <version>0.1.54</version>
-         <scope>system</scope>
-         <systemPath>${basedir}/lib/jsch-0.1.54.jar</systemPath>
       </dependency>
   </dependencies>
 
