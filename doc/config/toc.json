@@ -1968,6 +1968,12 @@
                            "cn": "removeRG()",
                            "en": "removeRG()"
                         },
+						{
+                           "id": 1541488257,
+                           "file": "renameCS",
+                           "cn": "renameCS()",
+                           "en": "renameCS()"
+                        },
                         {
                            "id": 1432190807,
                            "file": "resetSnapshot",
@@ -2119,6 +2125,12 @@
                            "file": "removeDomain",
                            "cn": "removeDomain()",
                            "en": "removeDomain()"
+                        },
+						{
+                           "id": 1541488258,
+                           "file": "renameCL",
+                           "cn": "renameCL()",
+                           "en": "renameCL()"
                         },
                         {
                            "id": 1524019772,
