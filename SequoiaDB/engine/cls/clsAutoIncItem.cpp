@@ -65,6 +65,14 @@ namespace engine
    {
       if ( _pSubFieldMap )
       {
+         AUTOINC_ITEM_MAP_IT it = _pSubFieldMap->begin() ;
+         while( it != _pSubFieldMap->end() )
+         {
+            SDB_OSS_DEL it->second ;
+            ++it ;
+         }
+         _pSubFieldMap->clear() ;
+
          SDB_OSS_DEL _pSubFieldMap ;
          _pSubFieldMap = NULL ;
       }
@@ -204,8 +212,7 @@ namespace engine
 
       INT32             rc = SDB_OK ;
       const CHAR*       subField = NULL ;
-
-      _clsAutoIncItem    *pSubItem = NULL ;
+      _clsAutoIncItem   *pSubItem = NULL ;
 
       subField = ossStrchr( fieldName, '.' ) ;
       if ( NULL == subField )
@@ -217,7 +224,7 @@ namespace engine
       }
       else
       {
-         UINT32 strLen = subField - fieldName + 1 ;
+         UINT32 strLen = subField - fieldName ;
          _fieldStr.assign( fieldName, strLen ) ;
          _fieldName = _fieldStr.c_str() ;
 

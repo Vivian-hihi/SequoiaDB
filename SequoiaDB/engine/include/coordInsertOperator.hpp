@@ -53,6 +53,27 @@ namespace engine
       typedef map< UINT32, SubCLObjsMap >    GroupSubCLMap ;
       typedef vector< BSONObj >              VEC_OBJECT ;
 
+      struct _AutoIncMark
+      {
+         utilSequenceID seqID ;
+         AUTOINC_GEN_TYPE genType ;
+
+         BOOLEAN operator< ( const _AutoIncMark &r ) const
+         {
+            return seqID < r.seqID ;
+         }
+         BOOLEAN operator== ( const _AutoIncMark &r ) const
+         {
+            return (seqID == r.seqID && genType == r.genType) ;
+         }
+         BOOLEAN operator!= ( const _AutoIncMark &r ) const
+         {
+            return this->operator==( r ) ? FALSE : TRUE ;
+         }
+      } ;
+      typedef struct _AutoIncMark AutoIncMark ;
+      typedef _utilSet< AutoIncMark, 1 >     AutoIncMarkSet ;
+
       class _SimpleBSONBuilder ;
 
       public:
@@ -109,7 +130,9 @@ namespace engine
 
          /// AutoIncrement relation
          INT32 _addAutoIncToMsg( const AUTOINC_ITEM_MAP &autoIncMap,
-                                 CHAR *pOrgMsg,
+                                 MsgOpInsert *pInsertMsg,
+                                 CHAR const *pInsertor,
+                                 const INT32 count,
                                  INT32 orgMsgLen,
                                  pmdEDUCB *cb,
                                  CHAR **ppNewMsg,
@@ -122,6 +145,9 @@ namespace engine
                                  _SimpleBSONBuilder &builder ) ;
 
          INT32 _calcAutoIncEleSize( const AUTOINC_ITEM_MAP &autoIncMap ) ;
+
+         void  _extractAutoIncMark( const AUTOINC_ITEM_MAP& map,
+                                    AutoIncMarkSet& set ) ;
 
       protected:
 
@@ -174,7 +200,7 @@ namespace engine
          INT32          _newMsgSize ;
          INT32          _newMsgLen ;
          INT32          _orgMsgLen ;
-         INT32          _lastVersion ;
+         AutoIncMarkSet _lastMarks ;
 
    } ;
    typedef _coordInsertOperator coordInsertOperator ;

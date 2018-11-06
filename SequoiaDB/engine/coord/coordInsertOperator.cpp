@@ -166,7 +166,6 @@ namespace engine
       _newMsgLen = 0 ;
       _newMsgSize = 0 ;
       _orgMsgLen = 0 ;
-      _lastVersion = -1 ;
    }
 
    _coordInsertOperator::~_coordInsertOperator()
@@ -216,6 +215,9 @@ namespace engine
       coordCataSel cataSel ;
       MsgRouteID errNodeID ;
 
+      MsgOpInsert *pTmpInsertMsg = NULL ;
+      AutoIncMarkSet curMarks ;
+
       // fill default-reply(insert success)
       MsgOpInsert *pInsertMsg          = (MsgOpInsert *)pMsg ;
       INT32 oldFlag                    = pInsertMsg->flags ;
@@ -260,14 +262,17 @@ namespace engine
       _orgMsgLen = pMsg->messageLength ;
 
    retry:
-      pInsertMsg->version = cataSel.getCataPtr()->getVersion() ;
-      pInsertMsg->w = 0 ;
-
       if ( cataSel.getCataPtr()->hasAutoIncrement() )
       {
+         const AUTOINC_ITEM_MAP& autoIncMap =
+               cataSel.getCataPtr()->getAutoIncMap() ;
+         curMarks.clear() ;
+         _extractAutoIncMark( autoIncMap, curMarks ) ;
+
          if ( 0 == result._sucGroupLst.size() &&
-              cataSel.getCataPtr()->getVersion() != _lastVersion )
+              curMarks != _lastMarks )
          {
+            // in case of retry, clear the shard result.
             if ( cataSel.getCataPtr()->isMainCL() )
             {
                _grpSubCLDatas.clear() ;
@@ -277,15 +282,19 @@ namespace engine
                inMsg.data()->clear() ;
             }
 
-            rc = _addAutoIncToMsg( cataSel.getCataPtr()->getAutoIncMap(),
-                                   (CHAR*) pMsg, _orgMsgLen, cb,
+            rc = _addAutoIncToMsg( autoIncMap, pInsertMsg, pInsertor,
+                                   count, _orgMsgLen, cb,
                                    &_pNewMsg, _newMsgSize, _newMsgLen ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to add autoIncrement fields to msg, rc: %d", rc ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement fields to "
+                         "msg, rc: %d", rc ) ;
             inMsg._pMsg = (MsgHeader*)_pNewMsg ;
-            _lastVersion = cataSel.getCataPtr()->getVersion() ;
+            _lastMarks = curMarks ;
          }
       }
+
+      pTmpInsertMsg = (MsgOpInsert*) inMsg._pMsg ;
+      pTmpInsertMsg->version = cataSel.getCataPtr()->getVersion() ;
+      pTmpInsertMsg->w = 0 ;
 
       /// Do on collection
       rcTmp = doOpOnCL( cataSel, BSONObj(), inMsg, sendOpt, cb, result ) ;
@@ -909,7 +918,9 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__ADD_AUTOINC_TO_MSG, "_coordInsertOperator::_addAutoIncToMsg" )
    INT32 _coordInsertOperator::_addAutoIncToMsg( const AUTOINC_ITEM_MAP &autoIncMap,
-                                                 CHAR *pOrgMsg,
+                                                 MsgOpInsert *pInsertMsg,
+                                                 CHAR const *pInsertor,
+                                                 const INT32 count,
                                                  INT32 orgMsgLen,
                                                  pmdEDUCB *cb,
                                                  CHAR **ppNewMsg,
@@ -923,19 +934,7 @@ namespace engine
       CHAR* pCurPos = NULL ;
       INT32 estimatedSize = 0 ;
       INT32 autoIncSize = 0 ;
-      MsgOpInsert *pInsertMsg = (MsgOpInsert *)pOrgMsg ;
       INT32 headerSize = 0 ;
-
-      INT32 flag = 0 ;
-      CHAR *pCollectionName = NULL ;
-      CHAR *pInsertor = NULL ;
-      INT32 count = 0 ;
-
-      ((MsgHeader*)pOrgMsg)->messageLength = orgMsgLen ;
-      rc = msgExtractInsert( pOrgMsg, &flag, &pCollectionName,
-                             &pInsertor, count ) ;
-      PD_RC_CHECK( rc, PDERROR, "Extrace insert msg failed, rc: %d",
-                   rc ) ;
 
       // 1.malloc a msg buffer which is big enough
       autoIncSize = _calcAutoIncEleSize( autoIncMap ) ;
@@ -949,7 +948,7 @@ namespace engine
       headerSize = ossRoundUpToMultipleX( offsetof(MsgOpInsert, name) +
                                           pInsertMsg->nameLength + 1,
                                           4 ) ;
-      ossMemcpy( *ppNewMsg, pOrgMsg, headerSize ) ;
+      ossMemcpy( *ppNewMsg, (CHAR*) pInsertMsg, headerSize ) ;
       pCurPos = *ppNewMsg + headerSize ;
 
       // 3.build new bson objs with auto-increment field
@@ -1156,6 +1155,28 @@ namespace engine
          }
       }
       return autoIncSize ;
+   }
+
+   void _coordInsertOperator::_extractAutoIncMark( const AUTOINC_ITEM_MAP& map,
+                                                   AutoIncMarkSet& set )
+   {
+      AUTOINC_ITEM_MAP_CONST_IT it = map.begin() ;
+      while ( it != map.end() )
+      {
+         if ( !it->second->hasSubField() )
+         {
+            AutoIncMark mark ;
+            mark.seqID = it->second->sequenceID() ;
+            mark.genType = it->second->generatedType() ;
+            set.insert( mark ) ;
+         }
+         else
+         {
+            const AUTOINC_ITEM_MAP *pSubMap = it->second->subFieldMap() ;
+            _extractAutoIncMark( *pSubMap, set ) ;
+         }
+         ++it ;
+      }
    }
 
 }
