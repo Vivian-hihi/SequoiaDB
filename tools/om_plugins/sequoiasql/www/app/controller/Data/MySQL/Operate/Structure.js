@@ -345,6 +345,13 @@
                            "value": $scope.FieldsSelect[0]['key'],
                            "default": $scope.FieldsSelect[0]['key'],
                            "valid": $scope.FieldsSelect
+                        },
+                        {
+                           "name": "length",
+                           "webName": $scope.pAutoLanguage( '长度' ),
+                           "placeholder": $scope.pAutoLanguage( "长度" ),
+                           "type": "int",
+                           "value": ''
                         }
                      ]
                   ]
@@ -392,6 +399,10 @@
                      sql += ',' ;
                   }
                   sql += field['field'] ;
+                  if( field['length'] > 0 )
+                  {
+                     sql += '(' + field['length'] + ')' ;
+                  }
                }
             } ) ;
             sql += ')' ;
@@ -648,7 +659,7 @@
                   "value": length,
                   "valid": {
                      "min": 0,
-                              "max": 4294967295,
+                     "max": 4294967295,
                      "empty": true
                   }
                }
