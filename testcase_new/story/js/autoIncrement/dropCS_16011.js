@@ -136,13 +136,12 @@ function main()
    checkRec(actR, expR);
    println("---check insert into maincl success");
    
-   //split操作在coord会重试，会导致自增字段值从批插的记录数开始增加，此处预期结果为101,SEQUOIADBMAINSTREAM-3895
    var doc = [];
    var expR = [];
    for(var i=0; i<100; i++)
    {
       doc.push({a:i,b:"cl1"});
-      expR.push({a:i,b:"cl1",id3:101 + i});
+      expR.push({a:i,b:"cl1",id3:1 + i});
    }
    cl1.insert(doc);
    var actR = cl1.find().sort({_id:1});
