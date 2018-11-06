@@ -368,9 +368,14 @@ namespace engine
       }
 
       // find for a given key + rid
-      INT32 find ( const ixmIndexCB *indexCB, const ixmKey &key,
-                   const dmsRecordID &rid, const Ordering &order, UINT16 &pos,
-                   BOOLEAN dupAllowed, BOOLEAN &found ) const ;
+      INT32 find ( const ixmIndexCB *indexCB,
+                   const ixmKey &key,
+                   const dmsRecordID &rid,
+                   const Ordering &order,
+                   UINT16 &pos,
+                   BOOLEAN &keyFound,
+                   BOOLEAN &sameFound ) const ;
+
       INT32 locate ( const BSONObj &key, const dmsRecordID &rid,
                      const Ordering &order, ixmRecordID &indexrid,
                      BOOLEAN &found, INT32 direction,

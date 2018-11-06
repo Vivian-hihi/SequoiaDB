@@ -46,6 +46,8 @@
 #include "pdTrace.hpp"
 #include "ixmTrace.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -135,22 +137,26 @@ namespace engine
    //    ixmKey  : index key tries to match
    //    rid     : record ID for the record in collection
    //    order   : order for the index key def
-   //    dupAllowed : whether duplicate keys are allowed in search
    // Output:
    //    pos     : key position if found, or the expected key position if the
    //              given key is not in the index
-   //    found   : whether the key + rid exist in the page.
-   //              if dupAllowed == TRUE, it will returns SDB_IXM_DUP_KEY if two
-   //              keys are the same. Otherwise found will be set to TRUE if
-   //              both key and rid matches
+   //    keyFound  : whether the key exist in the page
+   //    sameFound : whether the key + rid exist in the page.
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT_FIND, "_ixmExtent::find" )
-   INT32 _ixmExtent::find ( const ixmIndexCB *indexCB, const ixmKey &key,
-                            const dmsRecordID &rid, const Ordering &order,
-                            UINT16 &pos, BOOLEAN dupAllowed, BOOLEAN &found ) const
+   INT32 _ixmExtent::find ( const ixmIndexCB *indexCB,
+                            const ixmKey &key,
+                            const dmsRecordID &rid,
+                            const Ordering &order,
+                            UINT16 &pos,
+                            BOOLEAN &keyFound,
+                            BOOLEAN &sameFound ) const
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__IXMEXT_FIND );
-      found = FALSE ;
+      PD_TRACE_ENTRY ( SDB__IXMEXT_FIND ) ;
+
+      keyFound = FALSE ;
+      sameFound = FALSE ;
+
       // use binary search, start from 0 and totalKeyNodeNum-1
       INT32 low = 0 ;
       INT32 high = _extentHead->_totalKeyNodeNum-1 ;
@@ -174,38 +180,16 @@ namespace engine
             goto error ;
          }
          // create ixmKey object and let it compare with the input
-         ixmKey keyDisk(keyData) ;
+         ixmKey keyDisk( keyData ) ;
          INT32 result = key.woCompare ( keyDisk, order ) ;
          PD_TRACE1 ( SDB__IXMEXT_FIND, PD_PACK_INT ( result ) ) ;
          // if the result are the same, let's check whether we allows key
          // duplicate first
          if ( 0 == result )
          {
-            const ixmKeyNode *M = getKeyNode(middle) ;
-            // if we don't allow duplicate
-            if ( !dupAllowed )
-            {
-               // if duplicate is not allowed, let's see if the key is
-               // psudo-deleted
-               if ( M->isUsed() )
-               {
-                  // if the key is not psudodeleted, we mark index dup
-                  rc = SDB_IXM_DUP_KEY ;
-                  if ( 0 == rid.compare(M->_rid) )
-                  {
-                     pos = middle ;
-                     found = TRUE ;
-                     // if we find the exact rid, we should not continue but
-                     // mark found=TRUE
-                     goto done ;
-                  }
-                  // we should keep going through the loop until find the
-                  // accurate location to insert the key, because we are
-                  // allowing two completely undefined keys even if in unique
-                  // index
-               }
-            }
-            // if duplicate is allowed, let's continue compare the RID
+            keyFound = TRUE ;
+            const ixmKeyNode *M = getKeyNode( middle ) ;
+            // let's continue compare the RID
             result = rid.compare( M->_rid ) ;
          }
          // if the compare result shows disk value is smaller, let's set high =
@@ -228,7 +212,7 @@ namespace engine
             // aligned, that means when result = 0, it always means we found
             // duplicate key + rid for used record
             pos = middle ;
-            found = TRUE ;
+            sameFound = TRUE ;
             goto done ;
          }
          // continue with a new middle
@@ -331,7 +315,7 @@ namespace engine
          ixmKeyNode *kn = writeKeyNode( pos ) ;
          // if the node is at end of the page, it means the new value is greater
          // than
-         if ( pos+1 == getNumKeyNode ())
+         if ( pos+1 == getNumKeyNode() )
          {
             // if we are inserting at the last position, that means we don't
             // have _right for the page (otherwise it will go to _right), and
@@ -532,7 +516,7 @@ namespace engine
          // initialize the header for the new extent
          _ixmExtent newExtent( newExtentID, _extentHead->_mbID, _pIndexSu ) ;
          // copy all keys from the split pos to new extent
-         for ( UINT16 i = splitPos + 1 ; i< getNumKeyNode() ; i++ )
+         for ( UINT16 i = splitPos + 1 ; i < getNumKeyNode() ; i++ )
          {
             const ixmKeyNode *kn = getKeyNode(i) ;
             rc = newExtent._pushBack ( kn->_rid,
@@ -727,10 +711,10 @@ namespace engine
       }
       // calculate starting from right to left, and calculate the size of each
       // key
-      for ( INT32 i = _extentHead->_totalKeyNodeNum-1; i>=0; --i )
+      for ( INT32 i = _extentHead->_totalKeyNodeNum-1 ; i >= 0 ; --i )
       {
          rightSize += ixmKey(getKeyData(i)).dataSize() ;
-         if ( rightSize > maxRightSize)
+         if ( rightSize > maxRightSize )
          {
             splitPos = i ;
             break ;
@@ -747,6 +731,7 @@ namespace engine
    error :
       goto done ;
    }
+
    // fix parent pointers for all child pages
    // loop through all keynodes, if the child exist, it will go to child and set
    // the parent extent to the current extent id
@@ -1166,10 +1151,14 @@ namespace engine
                                ixmIndexCB *indexCB )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__IXMEXT__INSERT );
-      BOOLEAN found = FALSE ;
+      PD_TRACE_ENTRY ( SDB__IXMEXT__INSERT ) ;
+
+      BOOLEAN keyFound = FALSE ;
+      BOOLEAN sameFound = FALSE ;
       UINT16 pos = 0 ;
       dmsExtentID ch = DMS_INVALID_EXTENT ;
+      const ixmKeyNode *kn = NULL ;
+
       // sanity check
       if ( key.dataSize() >= IXM_KEY_MAX_SIZE )
       {
@@ -1183,54 +1172,19 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
    retry :
       // try to locate where the insert should happen
-      rc = find ( indexCB, key, rid, order, pos, dupAllowed, found ) ;
+      rc = find ( indexCB, key, rid, order, pos, keyFound, sameFound ) ;
       if ( rc )
       {
-         if ( SDB_IXM_DUP_KEY == rc )
-         {
-            // if we receive dup key error, let's check if found is TRUE. If
-            // found == TRUE, that means we have both key and rid the same, then
-            // let's set rc = SDB_IXM_IDENTICAL_KEY
-            if ( TRUE == found )
-            {
-               rc = SDB_IXM_IDENTICAL_KEY ;
-               PD_LOG ( PDERROR, "two keys are pointing to same record" ) ;
-               goto error ;
-            }
-            // if we find duplicate, let's check whether the key includes all
-            // Undefined. If this is the case, it's a special case that user
-            // doesn't define those keys, so we should allow it proceed ( which
-            // may violate unique definition ). If we restricted this behavior,
-            // user cannot insert records that does not contains the keys twice,
-            // which is very violating "schemaless"
-            if ( indexCB->enforced() || !key.isUndefined () )
-            {
-               // this error only returned when dupAllowed == FALSE
-               // this error represent duplicate key is not allowed and
-               // duplicate key is detected
-               PD_LOG ( PDINFO, "Duplicate key is detected" ) ;
-               goto error ;
-            }
-            else
-            {
-               // if the insert request key is completely undefined, let's
-               // overwrite rc to SDB_OK and continue ;
-               rc = SDB_OK ;
-            }
-         }
-         if ( rc )
-         {
-            // otherwise we log error
-            PD_LOG ( PDERROR, "Error happened during find, rc = %d", rc ) ;
-            goto error ;
-         }
+         PD_LOG ( PDERROR, "Error happened during find, rc = %d", rc ) ;
+         goto error ;
       }
-      // if we find duplicates, let's see if it's psuedo-delete
-      if ( found )
+      kn = getKeyNode( pos ) ;
+
+      if ( sameFound )
       {
-         const ixmKeyNode *kn = getKeyNode( pos ) ;
          if ( kn->isUnused() )
          {
             rc = SDB_SYS ;
@@ -1239,11 +1193,30 @@ namespace engine
             dumpIndexExtentIntoLog() ;
             goto error ;
          }
-         // otherwise we should have same key/rid point to same record
-         PD_LOG ( PDERROR, "same key + rid is already in index" ) ;
+         PD_LOG ( PDINFO, "same key + rid is already in index" ) ;
+         // have same key/rid point to same record
          rc = SDB_IXM_IDENTICAL_KEY ;
          goto error ;
       }
+      else if ( !dupAllowed && keyFound && kn->isUsed() )
+      {
+         // if we find duplicate, let's check whether the key includes all
+         // Undefined. If this is the case, it's a special case that user
+         // doesn't define those keys, so we should allow it proceed ( which
+         // may violate unique definition ). If we restricted this behavior,
+         // user cannot insert records that does not contains the keys twice,
+         // which is very violating "schemaless"
+         if ( indexCB->enforced() || !key.isUndefined () )
+         {
+            // this error only returned when dupAllowed == FALSE
+            // this error represent duplicate key is not allowed and
+            // duplicate key is detected
+            PD_LOG ( PDINFO, "Duplicate key is detected" ) ;
+            rc = SDB_IXM_DUP_KEY ;
+            goto error ;
+         }
+      }
+
       ch = getChildExtentID( pos ) ;
       // if there's no child, of course we will insert into the current page
       // and if there is child, but rchild is specified, this means the function
@@ -1277,8 +1250,9 @@ namespace engine
             goto error ;
          }
       }
+
    done :
-      PD_TRACE_EXITRC ( SDB__IXMEXT__INSERT, rc );
+      PD_TRACE_EXITRC ( SDB__IXMEXT__INSERT, rc ) ;
       return rc ;
    error :
       goto done ;
@@ -1871,9 +1845,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__LOCATE );
       SDB_ASSERT ( 1 == direction || -1 == direction, "Invalid direction" ) ;
-      UINT16 pos ;
-      dmsExtentID childExtent ;
-      rc = find ( indexCB, key, rid, order, pos, TRUE, found ) ;
+      UINT16 pos = 0 ;
+      dmsExtentID childExtent = DMS_INVALID_EXTENT ;
+      BOOLEAN keyFound = FALSE ;
+
+      rc = find ( indexCB, key, rid, order, pos, keyFound, found ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to find in locate" ) ;
@@ -2010,9 +1986,11 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT_FNDSNG );
-      BOOLEAN found ;
+
+      BOOLEAN found = FALSE ;
       dmsRecordID dummyID ;
       ixmRecordID indexrid ;
+
       rc = _locate ( key, dummyID, order, indexrid, found, 1, indexCB ) ;
       if ( rc )
       {
@@ -2149,21 +2127,28 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB_IXMEXT_COUNT );
       UINT64 totalCount = 0 ;
-      dmsExtentID childExtentID ;
-      for ( INT32 i = (INT32)getNumKeyNode()-1; i>=0; i-- )
+      const ixmKeyNode *kn = NULL ;
+
+      for ( INT32 i = (INT32)getNumKeyNode() - 1 ; i >= 0 ; i-- )
       {
-         const ixmKeyNode *kn = getKeyNode(i) ;
+         kn = getKeyNode(i) ;
          if ( kn->isUsed() )
          {
-            totalCount ++ ;
+            ++totalCount;
          }
-         childExtentID = getChildExtentID ((UINT16)i ) ;
-         if ( childExtentID != DMS_INVALID_EXTENT )
-            totalCount += ixmExtent(childExtentID, _pIndexSu).count() ;
+
+         if ( kn->_left != DMS_INVALID_EXTENT )
+         {
+            totalCount += ixmExtent( kn->_left, _pIndexSu ).count() ;
+         }
       }
+
       if ( DMS_INVALID_EXTENT != _extentHead->_right )
+      {
          totalCount += ixmExtent(_extentHead->_right, _pIndexSu).count() ;
-      PD_TRACE_EXIT ( SDB_IXMEXT_COUNT );
+      }
+
+      PD_TRACE_EXIT ( SDB_IXMEXT_COUNT ) ;
       return totalCount ;
    }
 
