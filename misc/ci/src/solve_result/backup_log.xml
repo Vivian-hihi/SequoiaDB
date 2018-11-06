@@ -155,6 +155,10 @@
             </copy>
          </then>
       </if>
+      <!--backup sdbsadpter log-->
+      <copy todir="${backup_basedir}/${backup_reltdir}">
+         <fileset dir="${INSTALL_DIR}/conf/log" includes="sdbseadapterlog/**/*"/>
+      </copy>
       <!--backup conf-->
       <copy todir="${backup_basedir}/${backup_reltdir}">
          <fileset dir="${INSTALL_DIR}/conf" includes="local/**/*"/>
