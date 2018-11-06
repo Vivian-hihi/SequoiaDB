@@ -86,7 +86,8 @@ Collection
     10. `AutoIncrement` ( *Object* )：自增字段
 
         格式：`AutoIncrement : <option>`
-        
+
+        * option中须加上 Field 属性，以标记要修改的字段。
         * 自增字段可以修改的属性有CurrentValue, Increment, StartValue, MinValue, MaxValue, CacheSize, AcquireSize, Cycled, Generated。<br>属性具体功能请参考 [自增字段介绍](data_model/auto_increment.md)。
 
 	**Note:**
@@ -131,4 +132,11 @@ v2.10及以上版本。
     ```lang-javascript
     > db.foo.createCL('bar')
     > db.foo.bar.setAttributes( { CompressionType:'lzw' } )
+    ```
+
+2. 创建一个有自增字段的集合，修改其自增起始值
+
+    ```lang-javascript
+    > db.foo.createCL( 'bar', { AutoIncrement: { Field: "studentID" } } )
+    > db.foo.bar.setAttributes( { AutoIncrement: { Field: "studentID", StartValue: 2017140000 } } )
     ```

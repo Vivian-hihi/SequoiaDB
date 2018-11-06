@@ -16,6 +16,7 @@
 | [SDB_SNAP_ACCESSPLANS](database_management/monitoring/snapshot/SDB_SNAP_ACCESSPLANS.md) | 访问计划缓存快照 | 访问计划缓存快照列出数据库中缓存的访问计划的信息 |
 | [SDB_SNAP_HEALTH](database_management/monitoring/snapshot/SDB_SNAP_HEALTH.md) | 节点健康检测快照 | 节点健康检测快照列出数据库中所有节点的健康信息 |
 | [SDB_SNAP_CONFIGS](database_management/monitoring/snapshot/SDB_SNAP_CONFIGS.md) | 配置快照 | 配置快照列出数据库中指定节点的配置信息 |
+| [SDB_SNAP_SEQUENCES](database_management/monitoring/snapshot/SDB_SNAP_SEQUENCES.md) | 序列快照 | 序列快照列出当前数据库的全部序列信息 |
 
 
 >   **Note:**

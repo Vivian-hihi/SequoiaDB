@@ -89,7 +89,9 @@ Collection Space
 
         格式：`AutoIncrement:{Field: <字段>, ...}` 或 `AutoIncrement:[ {Field: <字段1>, ...}, {Field: <字段2>, ...}, ... ]`
 
-        * option必填参数为**Field**，具体所有参数请参考[自增字段介绍](data_model/auto_increment.md)
+        例子：`AutoIncrement: { Field: "userID", Generated: "always" }`
+
+        * 参数详情请参考[自增字段介绍](data_model/auto_increment.md)
 
     **注意：**
 
