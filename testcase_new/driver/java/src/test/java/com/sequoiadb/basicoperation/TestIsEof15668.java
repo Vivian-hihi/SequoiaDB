@@ -31,7 +31,6 @@ import com.sequoiadb.testcommon.SdbTestBase;
 * @version 1.00
 */
 public class TestIsEof15668 extends SdbTestBase {
-    
     private String clName = "cl_lob15668";    
     private static Sequoiadb sdb = null;
     private CollectionSpace cs = null;
@@ -56,8 +55,20 @@ public class TestIsEof15668 extends SdbTestBase {
         readLob();
     }
     
+    @AfterClass
+    public void tearDown(){        
+        try{        
+            cs.dropCollection(clName);
+        }catch(BaseException e){            
+            Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+        }finally{
+            if ( sdb != null ){
+                sdb.close();
+            }
+        }
+    }  
     
-    public void readLob(){       
+    private void readLob(){       
         try(Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "")){  
             DBCollection cl2 = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
             String curMd5 ="";
@@ -68,7 +79,6 @@ public class TestIsEof15668 extends SdbTestBase {
             ByteBuffer bytebuff = ByteBuffer.allocate((int)rLob.getSize());
             
             //flag is true when read operation not completed
-            
             while ((readLen = rLob.read(rbuff)) != -1){
                 bytebuff.put(rbuff, 0, readLen);
             }
@@ -87,23 +97,9 @@ public class TestIsEof15668 extends SdbTestBase {
         }        
     }
 
-    @AfterClass
-    public void tearDown(){        
-        try{        
-            cs.dropCollection(clName);
-        }catch(BaseException e){            
-            Assert.assertTrue(false,"clean up failed:"+e.getMessage());
-        }finally{
-            if ( sdb != null ){
-                sdb.close();
-            }
-        }
-    }    
-    
-
     private void putLob(){
         int lobsize = random.nextInt(1048576);        
-        String lobSb = getRandomString(lobsize);        
+        String lobSb = Commlib.getRandomString(lobsize);        
         DBLob lob = null;
         try{
             lob = cl.createLob();
@@ -119,16 +115,7 @@ public class TestIsEof15668 extends SdbTestBase {
         }                
     }
     
-    
-    public void createCL(){
-        try{
-            if (!sdb.isCollectionSpaceExist(SdbTestBase.csName)){
-                sdb.createCollectionSpace(SdbTestBase.csName);    
-            }
-        }catch(BaseException e){
-            //-33 CS exist,ignore exceptions
-            Assert.assertEquals(-33,e.getErrorCode(),e.getMessage());
-        }                    
+    private void createCL(){
         try
         {
             String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
@@ -141,7 +128,8 @@ public class TestIsEof15668 extends SdbTestBase {
             Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
         }
      }
-    public String getMd5(Object inbuff){
+    
+    private String getMd5(Object inbuff){
         MessageDigest md5 = null;
         String value = "";
         
@@ -163,34 +151,6 @@ public class TestIsEof15668 extends SdbTestBase {
             Assert.fail("fail to get md5!"+e.getMessage());
         }
         return value;
-    }
-    public  String getRandomString(int length){
-        String base = "abcdefahijklmnopqrstuvwxyz0123456789";
-        Random random = new Random();
-        
-        int times = length / 1024;
-        if (times < 1)
-        {
-            times = 1;
-        }
-        
-        int len = length >= 1024 ? 1024 : 0;
-        int mulByteNum = length % 1024;
-        
-        
-        StringBuffer sb = new StringBuffer(); 
-        for (int i = 0; i < times; ++i){
-            if (i == times - 1){
-                len += mulByteNum;
-            }
-
-            char ch = base.charAt(random.nextInt(base.length()));
-            for (int k = 0; k < len; ++k){
-                sb.append(ch);
-            }
-
-        }    
-        return sb.toString();
     }
 }
 
