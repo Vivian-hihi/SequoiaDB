@@ -1,28 +1,23 @@
 package com.sequoiadb.auth;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Node;
-import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
- * @FileName:TestSdbUser7119,7120
- * beginTransaction ()；commit ()
+ * @FileName:Testlink  seqDB-7119  seqDB-7120
  * @author chensiqin
  * @Date 2016-09-19
  * @version 1.00
@@ -41,9 +36,10 @@ public class TestSdbUser extends SdbTestBase{
         try {
             this.coordAddr = SdbTestBase.coordUrl;
             this.commCSName = SdbTestBase.csName;
-            System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                    ". the TestCase begin at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             this.sdb = new Sequoiadb(this.coordAddr, "", "");
+            if (!Util.isCluster(this.sdb)) {
+                throw new SkipException("skip StandAlone");
+            }
             this.cs = this.sdb.getCollectionSpace(this.commCSName);
             createCL();
             
@@ -66,9 +62,6 @@ public class TestSdbUser extends SdbTestBase{
     }
     
     public void testSdbUser() {
-        if (!Util.isCluster(this.sdb)) {
-            return ;
-        }
         try {
             BSONObject bson = new BasicBSONObject();
             bson.put("name", "xiaoming");
@@ -137,8 +130,6 @@ public class TestSdbUser extends SdbTestBase{
             }
             
             this.sdb.disconnect();
-            System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                    ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
         }
