@@ -217,7 +217,7 @@
                      <equals arg1="${error_num}" arg2="0"/>
                   </and>
                   <then>
-                     <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlname} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DSCRIPTDIR=${CI_WORK_DIR}/testcase/reliability/script"/>
+                     <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlname} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DSCRIPTDIR=${CI_WORK_DIR}/testcase/reliability/java/script"/>
                      <echo message="cmd : ${cmd} in dir ${casedir}"/>
                      <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" outputproperty="screen_output">
                         <arg line="${cmd}" />
