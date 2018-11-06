@@ -64,7 +64,7 @@ do                                     \
 #define SDB_PAGESIZE_DEFAULT      0
 
 
-/** The flags represent whether bulk insert continue when hitting index key duplicate error */
+/** (deplicated, use INSERT_IGNORE_DUPLICATE_KEY instead)The flags represent whether bulk insert continue when hitting index key duplicate error */
 #define FLG_INSERT_CONTONDUP  0x00000001
 
 /** The flag represent whether insert continue(no errors were reported) when hitting index key duplicate error */
