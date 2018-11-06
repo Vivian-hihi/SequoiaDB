@@ -1121,7 +1121,7 @@ namespace engine
                   SDB_ASSERT( PMD_EDU_IDLE != cb->getStatus(),
                               "Status can't be idle" ) ;
                   cb->setStatus( PMD_EDU_IDLE ) ;
-                  cb->setType( PMD_EDU_UNKNOW ) ;
+                  cb->setType( EDU_TYPE_UNKNOWN ) ;
                }
                catch( std::exception &e )
                {
@@ -1225,7 +1225,7 @@ namespace engine
          _monitorEvent.signal() ;
       }
 
-      return cb ;      
+      return cb ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_STARTEDU, "_pmdEDUMgr::startEDU" )
@@ -1939,6 +1939,8 @@ namespace engine
 
          if ( restTimeout <= 0 )
          {
+            /// dump abnormal edus
+            dumpAbnormalEDU() ;
             /// panic the process
             PD_LOG( PDSEVERE, "The programme is dead over %d secs, "
                     "panic itself", timeout / OSS_ONE_SEC ) ;
@@ -1962,7 +1964,7 @@ namespace engine
       HANDLE      tHdl = NULL ;
       BOOLEAN     isHdlCreated = FALSE ;
       if ( DuplicateHandle( GetCurrentProcess(), GetCurrentThread(),
-                            GetCurrentProcess(), &tHdl, 0, false, 
+                            GetCurrentProcess(), &tHdl, 0, false,
                             DUPLICATE_SAME_ACCESS ) )
       {
          isHdlCreated = TRUE ;
