@@ -160,7 +160,7 @@
       <ant antfile="${exec_file}" inheritAll="false">
          <property name="TEST_TYPE" value="${TEST_TYPE}"/>
          <property name="testcase_type" value="reliability"/>
-         <property name="testcase_dir" value="${CI_WORK_DIR}/testcase/reliability"/>
+         <property name="testcase_dir" value="${CI_WORK_DIR}/testcase/reliability/java"/>
          <property name="report_dir" value="${report_basedir}/reliability" />
          <property name="serial_number" value="${serial_number}"/>
          <property name="testhost_list" value="${testhost_list}"/>
