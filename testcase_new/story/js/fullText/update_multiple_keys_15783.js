@@ -1,20 +1,20 @@
 /************************************
-*@Description: 多键全文索引，部分字段为数组更新为全部字段为数组   
+*@Description: 多键全文索引，部分字段为数组更新为部分字段为数组   
 *@author:      liuxiaoxuan
-*@createdate:  2018.10.10
-*@testlinkCase: seqDB-15780
+*@createdate:  2018.11.6
+*@testlinkCase: seqDB-15783
 **************************************/
 function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   var csName = COMMCSNAME + "_ES_15780";
+   var csName = COMMCSNAME + "_ES_15783";
    commDropCS( db, csName, true, "drop CS in the beginning" );
                                                              	
    commCreateCS( db, csName, false, "" );
                                                               	
    // create CL
-   var clName = COMMCLNAME + "_ES_15780";
+   var clName = COMMCLNAME + "_ES_15783";
    var dbcl = commCreateCL( db, csName, clName );
 
    // insert before create text index
@@ -35,11 +35,11 @@ function main()
    var actResult = esOpr.findFromES(esIndexNames[0], searchCond);
    checkResult(expectResult, actResult);
    
-   // update to all arrays after create text index, should fail
+   // update keys to arrays after create text index, should fail
    try
    {
-      dbcl.update({$set:{a:['updatea1', 'updatea2'],b:['updateb1', 'updateb2'],c:['updatec1', 'updatec2'],d:['updated1', 'updated2']}});
-      throw buildException("update()", "update", "update to all arrays of keys", "fail","success");
+      dbcl.update({$set:{a: 1, b: ["string1", "string2"], c: "string_c", d: ["string_d"]}});
+      throw buildException("update()", "update", "update keys to arrays", "fail","success");
    }
    catch(e)
    {
@@ -48,7 +48,9 @@ function main()
          throw buildException("update()", "update", "update other exception", e, e);
       }
    }
-
+ 
+   checkFullSyncToES(csName, clName, textIndexName, 1);
+ 
    // check result
    var actResult = esOpr.findFromES(esIndexNames[0], searchCond);
    checkResult(expectResult, actResult);
