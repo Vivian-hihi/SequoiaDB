@@ -7,7 +7,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 
 public class AutoIncrementUtils {
-	public static void checkResult(DBCollection cl, int expectNum, int expectCurrentValue){
+	public static void checkResult(DBCollection cl, int expectNum, long expectCurrentValue){
 		//校验记录数
 		int count = (int) cl.getCount();
 		Assert.assertEquals(count, expectNum);
@@ -16,7 +16,7 @@ public class AutoIncrementUtils {
 		DBCursor cursor = cl.query("", "", "{id:1}", "");
 		while(cursor.hasNext()){
 			BSONObject record = cursor.getNext();
-			Assert.assertEquals(record.get("id").toString(), "" + expectCurrentValue++);
+			Assert.assertEquals(record.get("id"), expectCurrentValue++);
 		}
 		
 	}

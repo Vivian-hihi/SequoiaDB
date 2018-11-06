@@ -34,7 +34,7 @@ public class Insert15960 extends SdbTestBase{
     private String indexName = "idIndex";
     private int threadNum = 5;
     private int threadInsertNum = 10000;
-    private int currentValue = 1;
+    private long currentValue = 1;
     private List<String> coordNodes = null;
     
 	@BeforeClass

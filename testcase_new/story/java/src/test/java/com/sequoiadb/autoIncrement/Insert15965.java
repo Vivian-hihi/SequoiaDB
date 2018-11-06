@@ -36,7 +36,7 @@ public class Insert15965 extends SdbTestBase{
     private String indexName = "idIndex";
     private int initDataNum = 50000;
     private int threadNum = 5;
-    private int threadInsertNum = 10000;
+    private long threadInsertNum = 10000;
     private int splitStartValue = 50000;
     private List<String> coordNodes = null;
     private List<String> groupNames = null;
@@ -118,16 +118,16 @@ public class Insert15965 extends SdbTestBase{
 		}
 	}
 
-	public void checkResult(DBCollection cl, int expectNum){
+	public void checkResult(DBCollection cl, long expectNum){
 		//校验记录数
-		int count = (int) cl.getCount();
+		long count = (long) cl.getCount();
 		Assert.assertEquals(count, expectNum);
 		
 		//按照切分条件查询各数据组上的记录之和等于记录总数
 		Sequoiadb srcDataMaster = sdb.getReplicaGroup(groupNames.get(0)).getMaster().connect();
-		int srcDataNum = (int) srcDataMaster.getCollectionSpace(csName).getCollection(clName).getCount("{id:{$lt:" + splitStartValue + "}}");
+		long srcDataNum = (long) srcDataMaster.getCollectionSpace(csName).getCollection(clName).getCount("{id:{$lt:" + splitStartValue + "}}");
 		Sequoiadb desDataMaster = sdb.getReplicaGroup(groupNames.get(1)).getMaster().connect();
-		int desDataNum = (int) desDataMaster.getCollectionSpace(csName).getCollection(clName).getCount("{id:{$gte:" + splitStartValue + "}}");
+		long desDataNum = (long) desDataMaster.getCollectionSpace(csName).getCollection(clName).getCount("{id:{$gte:" + splitStartValue + "}}");
 		
 		Assert.assertEquals(srcDataNum + desDataNum, expectNum);
 	}
