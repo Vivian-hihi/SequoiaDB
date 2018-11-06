@@ -331,16 +331,31 @@ public class GroupMgr {
      */
     public boolean checkBusinessWithLSN(int timeOutSecond) throws ReliabilityException {
         long timestamp = System.currentTimeMillis();
-        while (!checkBusinessWithLSN(false)) {
-            if (System.currentTimeMillis() - timestamp > timeOutSecond * 1000) {
-                return checkBusinessWithLSN(true);
+        boolean ret = true ;
+        do{
+            boolean printAndThrowAllException = false ;
+            if (System.currentTimeMillis() - timestamp > timeOutSecond * 1000){
+                printAndThrowAllException = true ;
             }
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                // ignore
+            try{
+                ret = checkBusinessWithLSN(printAndThrowAllException) ;
+            }catch(ReliabilityException e){
+                if ( printAndThrowAllException ){
+                    throw e ;
+                }else{
+                    e.printStackTrace() ;
+                    ret = false ;
+                }
             }
-        }
+            
+            if ( !ret ){
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+            }
+        }while(!ret) ;
         return true;
     }
 
