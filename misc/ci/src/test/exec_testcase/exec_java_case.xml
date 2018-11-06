@@ -41,7 +41,7 @@
          <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
          <then>
             <propertyregex property="firsthost" input="${testhost_list}" regexp=",(.*)" replace="" defaultValue="${testhost_list}"/>
-            <ant antfile="${testcase_dir}/../../testcase/tools/runtest_java.xml" target="exec_testcase">
+            <ant antfile="${testcase_dir}/../../../testcase/tools/runtest_java.xml" target="exec_testcase">
                <property name="casedir" value="${testcase_dir}"/>
                <property name="reportdir" value="${report_dir}"/>
                <property name="serial_number" value="${serial_number}"/>
