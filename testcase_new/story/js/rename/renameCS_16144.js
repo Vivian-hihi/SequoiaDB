@@ -1,0 +1,90 @@
+/************************************
+*@Description: 切分表修改名后，执行数据操作
+*@author:      luweikang
+*@createdate:  2018.10.12
+*@testlinkCase:seqDB-16144
+**************************************/
+
+main();
+
+function main()
+{
+   if (commIsStandalone( db ))
+   {
+      return ;
+   }
+   if (commGetGroupsNum(db) < 2)
+   {
+      return ;
+   }
+   println("---begin rename cs test---");
+   var oldcsName = COMMCSNAME+"_16144_old";
+   var newcsName = COMMCSNAME+"_16144_new";
+   var clName = CHANGEDPREFIX + "_16144_CL";
+   
+   var groupNames = getGroupName(db, true);
+   var sourceGroup = groupNames[0][0];
+   var targetGroup = groupNames[1][0];
+   
+   var cs = commCreateCS( db, oldcsName, false, "create cs in begine", "");
+   var options = {ShardingType:"hash", ShardingKey:{a:1}, Group:sourceGroup}
+   var cl = commCreateCLByOption( db, oldcsName, clName, options, false, false, "create cl in the begin");
+   
+   //insert 1000 data, split 50 to target group
+   insertData( cl, 1000 );
+   cl.split(sourceGroup, targetGroup, 50);
+     
+   db.renameCS(oldcsName, newcsName);
+   
+   checkRenameCSResult(oldcsName, newcsName, 1);
+   
+   cl = db.getCS(newcsName).getCL(clName);
+   
+   //insert 1000 data, and check data
+   insertData( cl, 1000 );
+   //update ($set: {no:10086}) 2000 data, and check data
+   updateData( cl );
+   //delete no < 500 data, and check data
+   deleteData( cl );
+   
+   //create index and drop index，check results
+   cl.createIndex("noIndex", { no: 1 }, false);
+   cl.createIndex("phoneIndex", { phone: 1 }, false);
+   cl.dropIndex("noIndex");
+   var indexArr = ['$id', "$shard", 'phoneIndex'];
+   var cur = cl.listIndexes();
+   while(cur.next())
+   {
+      var index = cur.current().toObj();
+      var name = index.IndexDef.name;
+      if(indexArr.indexOf(name)===-1)
+      {
+         throw buildException("checkIndex", "", "index", indexArr, name);
+      }
+   }
+
+   commDropCS( db, newcsName, true, false, "clean cs---" );
+   println("---end the test---");
+}
+
+function updateData(cl)
+{
+   cl.update({$set: {no: 10086}});
+   var recordNum = cl.count({no: 10086});
+   if(recordNum!=2000){
+      throw buildException("updateData()","","update", "update 2000 record","update fail, only: "+recordNum);
+   }
+}
+
+function deleteData(cl)
+{
+   cl.remove({ a: { $lt: 500 }});
+   var recordNum = cl.count();
+   if(recordNum!=1000){
+      throw buildException("deleteData()","","delete", "delete 1000 record","delete fail, have: "+recordNum);
+   }
+}
+
+
+
+

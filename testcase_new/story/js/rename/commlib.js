@@ -47,6 +47,17 @@ function createFile( fileName, fileSize )
 }
 
 /************************************
+*@Description: delete file
+*@author:      luweikang
+*@createDate:  2018.11.06
+**************************************/
+function deleteFile( fileName )
+{
+   var cmd = new Cmd();
+   cmd.run( "rm -rf " + fileName );
+}
+
+/************************************
 *@Description: put lobs
 *@author:      wuyan
 *@createDate:  2018.10.12
@@ -117,6 +128,8 @@ function checkLob( cl, expLobArr, srcMd5 )
                            'lob number:'+lobArr.length );
    }
    
+   lobArr.sort();
+   expLobArr.sort();
    //check lob Id
    for( var i in expLobArr )
    {
@@ -142,7 +155,7 @@ function checkLob( cl, expLobArr, srcMd5 )
          throw buildException("get lob and check md5sum", null, "md5sum " + fileName,
                               srcMd5, desMd5 );
       }
-      
+   
       cmd.run( "rm -rf " + fileName );
    }
 }
@@ -389,7 +402,7 @@ function createCL( csName, clName, shardingKey, shardingType)
 **************************************/
 function checkRenameCSResult( oldCSName, newCSName, clNum)
 {   
-   println("begin to check cs: " + newCSName);
+   println("---begin to check cs: " + newCSName);
    if( undefined == clNum ){ clNum = 1 ; }
    //max cycle
    var maxTime = 5000;
@@ -399,18 +412,16 @@ function checkRenameCSResult( oldCSName, newCSName, clNum)
    var intervalTime = 100;
    
    //because some dataNode none complete sync£¬so add retry for 5 seconds
-   do
-   {
-      var clArray = getCSSnapshotCLArray( newCSName );
-   }
+   var clArray = getCSSnapshotCLArray( newCSName );
    while(clArray.length !== clNum && currentTime < maxTime)
    {
       sleep(100);
       currentTime += intervalTime;
+      clArray = getCSSnapshotCLArray( newCSName );
    }
    if( currentTime === maxTime )
    {
-      throw buildException("check cl num time out, it took five seconds ", null, JSON.stringify(newCSObj),
+      throw buildException("check cl num time out, it took five seconds ", null, JSON.stringify(clArray),
                               clNum, clArray.length);
    }
    
