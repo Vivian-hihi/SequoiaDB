@@ -9,7 +9,6 @@ main();
 
 function main()
 {
-   println("---begin rename cs test---");//1、这个println和下面一个println是重复的，建议保留下面的，或者描述实现的执行步骤
    var oldcsName = COMMCSNAME+"_16096_old";
    var newcsName = COMMCSNAME+"_16096_new";
    var clName = CHANGEDPREFIX + "_16096_cl";
@@ -18,12 +17,15 @@ function main()
    var cs = commCreateCS( db, oldcsName, false, "create cs in begine", "");
    var cl = commCreateCLByOption( db, oldcsName, clName, {}, false, false, "create CL in the begin");
    
-   cl.createIndex( "index16096", {age: 1}, false );//2、这步操作后面没有做检查
+   println("---create index---");
+   cl.createIndex( "index16096", {age: 1}, false );
 
-   insertData(cl);//3，同问题2，修改cs前的操作，修改cs后建议做结果检测，这个文本用例也需要补充测试点
+   println("---insert record---");
+   insertData(cl, 1000);
    
    var cmd5 = createFile(lobName);
    
+   println("---put lob---");
    var lobArray = putLobs(cl, lobName);
    
    println("---test rename cs---");
@@ -32,9 +34,32 @@ function main()
    checkRenameCSResult(oldcsName, newcsName, 1);
    
    cl = db.getCS(newcsName).getCL(clName);
+   checkRecord(cl, 1000);
    checkLob(cl, lobArray, cmd5);
    
+   var indexArr = ['$id', 'index16096'];
+   var cur = cl.listIndexes();
+   while(cur.next())
+   {
+      var index = cur.current().toObj();
+      var name = index.IndexDef.name;
+      if(indexArr.indexOf(name)===-1)
+      {
+         throw buildException("checkIndex", "", "index", indexArr, name);
+      }
+   }
+   
+   deleteFile(lobName);
    commDropCS( db, newcsName, true, false, "clean cs---" );
-   println("---end the test---");//2、用例起始和结束这种可以不需要打印处理，println建议打印主要的用例执行步骤
+}
+
+function checkRecord(dbcl, recordNum)
+{
+   var actNum = dbcl.count();
+   if(actNum != recordNum)
+   {
+      throw buildException("checkRecord()", null, "check the new cl record nums",
+                           recordNum, actNum);
+   }
 }
 

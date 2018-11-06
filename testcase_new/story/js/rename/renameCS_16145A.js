@@ -18,8 +18,8 @@ function main()
       return ;
    }
    println("---begin rename cs test---");
-   var oldcsName = COMMCSNAME+"_16145A_old";
-   var newcsName = COMMCSNAME+"_16145A_new";
+   var oldcsName = CHANGEDPREFIX+"_16145A_oldcs";
+   var newcsName = CHANGEDPREFIX+"_16145A_newcs";
    var mainCLName = CHANGEDPREFIX + "_16145A_mainCL";
    var subCLName1 = CHANGEDPREFIX + "_16145A_subCL1";
    var subCLName2 = CHANGEDPREFIX + "_16145A_subCL2";

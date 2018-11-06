@@ -16,9 +16,8 @@ function main()
       return;
    }   
    
-   println("---begin rename cs test---");
-   var oldcsName = COMMCSNAME+"_16107_old";
-   var newcsName = COMMCSNAME+"_16107_new";
+   var oldcsName = CHANGEDPREFIX+"_16107_oldcs";
+   var newcsName = CHANGEDPREFIX+"_16107_newcs";
    var clName = CHANGEDPREFIX + "_16107_cl1";
    var procedureName = CHANGEDPREFIX+"_pro_16107";
    
@@ -44,7 +43,8 @@ function main()
    
    try
    {
-      db.eval( procedureName+"()" );// review 1:执行失败的步骤需要增加失败检测，如果执行成功则报错
+      db.eval( procedureName+"()" );
+      throw "PROCEDURE_SHOULD_ERR";
    }
    catch(e)
    {
@@ -64,5 +64,4 @@ function main()
    }
    
    commDropCS( db, newcsName, true, false, "clean cs---" );
-   println("---end the test---");
 }

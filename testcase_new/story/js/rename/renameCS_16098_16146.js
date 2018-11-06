@@ -10,8 +10,8 @@ main();
 function main()
 {
    println("---begin rename cs test---");
-   var csname1 = COMMCSNAME+"_old_16098_16146";//2、变量命名不规范，如果自己定义cs名，不需要带COMMCSNAME，建议加上前缀或者去掉
-   var csname2 = COMMCSNAME+"_new_16098_16146";
+   var csname1 = CHANGEDPREFIX+"_oldcs_16098_16146";
+   var csname2 = CHANGEDPREFIX+"_newcs_16098_16146";
    var notExitName = "notExitName_cs";
    var clName = CHANGEDPREFIX + "_cl_16098_16146";
    

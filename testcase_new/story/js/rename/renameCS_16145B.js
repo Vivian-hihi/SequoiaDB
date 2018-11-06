@@ -18,10 +18,10 @@ function main()
       return ;
    }
    println("---begin rename cs test---");
-   var oldcsName = COMMCSNAME+"_16145B_old";
-   var newcsName = COMMCSNAME+"_16145B_new";
-   var subCSName = COMMCSNAME+"_16145B_sub";
-   var subCSNameNew = COMMCSNAME+"_16145B_sub_new";
+   var oldcsName = CHANGEDPREFIX+"_16145B_oldcs";
+   var newcsName = CHANGEDPREFIX+"_16145B_newcs";
+   var subCSName = CHANGEDPREFIX+"_16145B_subcs";
+   var subCSNameNew = CHANGEDPREFIX+"_16145B_sub_newcs";
    var mainCLName = CHANGEDPREFIX + "_16145B_mainCL";
    var subCLName1 = CHANGEDPREFIX + "_16145B_subCL1";
    var subCLName2 = CHANGEDPREFIX + "_16145B_subCL2";

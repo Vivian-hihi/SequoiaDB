@@ -18,8 +18,8 @@ function main()
       return ;
    }
    println("---begin rename cs test---");
-   var oldcsName = COMMCSNAME+"_16144B_old";
-   var newcsName = COMMCSNAME+"_16144B_new";
+   var oldcsName = CHANGEDPREFIX+"_16144B_oldcs";
+   var newcsName = CHANGEDPREFIX+"_16144B_newcs";
    var clName = CHANGEDPREFIX + "_16144B_CL";
    var fileName = CHANGEDPREFIX+"_16144Blob";
    var lobNum = 10;

@@ -9,44 +9,47 @@ main();
 
 function main()
 {
-   println("---begin rename cs test---");
-   var oldcsName = COMMCSNAME+"_16099_old";
-   var newcsName = COMMCSNAME+"_16099_new";
+   var oldcsName = CHANGEDPREFIX+"_16099_oldcs";
+   var newcsName = CHANGEDPREFIX+"_16099_newcs";
    var clName = CHANGEDPREFIX + "_16099_cl";
    
    var cs = commCreateCS( db, oldcsName, false, "create cs in begine", "");
    var cl = commCreateCLByOption( db, oldcsName, clName, {}, false, false, "create CL in the begin");
    
+   println("---insert 1000 record---");
    //insert 1000 data
-   insertData(cl);
+   insertData(cl, 1000, 1000);
    
+   println("---rename cs---");
    db.renameCS(oldcsName, newcsName);
    
    checkRenameCSResult(oldcsName, newcsName, 1);
    
    cl = db.getCS(newcsName).getCL(clName);
    
+   println("---insert 1000 record---");
    //insert 1000 data, and check data
-   insertData(cl);//review 1:没有检查插入记录结果
+   insertData(cl, 1000, 2000);
    
+   println("---update record---");
    //update ($set: {a:10086}) 2000 data, and check data
    updateData(cl);
    
+   println("---delete 1000 record---");
    //delete no < 500 data, and check data
    deleteData(cl);
    
    commDropCS( db, newcsName, true, false, "clean cs---" );
-   println("---end the test---");
 }
 
-function insertData(cl)
+function insertData(cl, insertNum, expNum)
 {
    try
    {
       
       println("---begin to insert data " );   
       var docs = [];
-      for( var i = 0; i < 1000; ++i )
+      for( var i = 0; i < insertNum; ++i )
       {      
          var no = i;
          var a = i;
@@ -58,7 +61,12 @@ function insertData(cl)
          
          docs.push( doc );
       }   
-      cl.insert( docs );       
+      cl.insert( docs );     
+
+      var recordNum = cl.count();
+      if(recordNum != expNum){
+         throw buildException("insertData()","","check insert record num", "exp record num: " + expNum, "act num: " + recordNum);
+      }
    }
    catch(e)
    {

@@ -18,8 +18,8 @@ function main()
       return ;
    }
    println("---begin rename cs test---");
-   var oldcsName = COMMCSNAME+"_16144_old";
-   var newcsName = COMMCSNAME+"_16144_new";
+   var oldcsName = CHANGEDPREFIX+"_16144_oldcs";
+   var newcsName = CHANGEDPREFIX+"_16144_newcs";
    var clName = CHANGEDPREFIX + "_16144_CL";
    
    var groupNames = getGroupName(db, true);

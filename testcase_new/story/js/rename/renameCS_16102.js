@@ -9,9 +9,8 @@ main();
 
 function main()
 {
-   println("---begin rename cs test---");//review 2：println打印用例起始和结束意义不大，建议主要步骤增加println信息
-   var oldcsName = COMMCSNAME+"_16102_old";
-   var newcsName = COMMCSNAME+"_16102_new";
+   var oldcsName = CHANGEDPREFIX+"_16102_oldcs";
+   var newcsName = CHANGEDPREFIX+"_16102_newcs";
    var clName = CHANGEDPREFIX + "_16102_cl";
    
    var cs = commCreateCS( db, oldcsName, false, "create cs in begine", "");
@@ -23,6 +22,7 @@ function main()
    //insert 1000 data
    insertData(cl, 1000);
    
+   println("---rename cs---");
    db.renameCS(oldcsName, newcsName);
    
    checkRenameCSResult(oldcsName, newcsName, 1);
@@ -51,5 +51,4 @@ function main()
    checkRenameCSResult(oldcsName, newcsName, 1);
    
    commDropCS( db, newcsName, true, false, "clean cs---" );
-   println("---end the test---");
 }
