@@ -949,14 +949,8 @@ namespace engine
                                            const dmsRecordData &recordData )
    {
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA__FINALRECORDSIZE ) ;
-      if ( _pStorageInfo && _pStorageInfo->_overflowRatio > 0 )
-      {
-         size += ( size * _pStorageInfo->_overflowRatio + 50 ) / 100 ;
-      }
-      else if ( !_pStorageInfo )
-      {
-         size = size * DMS_RECORD_OVERFLOW_RATIO ;
-      }
+
+      _overflowSize( size ) ;
 
       size += DMS_RECORD_METADATA_SZ ;
       // record is ALWAYS 4 bytes aligned
