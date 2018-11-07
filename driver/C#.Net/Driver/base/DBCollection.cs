@@ -303,7 +303,7 @@ namespace SequoiaDB
             return taskid;
         }
 
-        /** \fn BsonValue Insert(BsonDocument record)
+        /** \fn BsonValue Insert(BsonDocument record, int flag)
          *  \brief Insert a document into current collection
          *  \param insertor The Bson document of insertor, can't be null.
          *  \param flag The flag to control the behavior of inserting. The
@@ -1806,6 +1806,92 @@ namespace SequoiaDB
         public void SetAttributes(BsonDocument options)
         {
             _AlterInternal(SequoiadbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
+        }
+
+        /** \fn void CreateAutoIncrement(BsonDocument options)
+         * \brief Create autoincrement field on collection.
+         * \param options Options for creating autoincrement, can not be null or empty.
+         *         e.g.: { Field: "a", MaxValue:2000 }
+         *          <ul>
+         *          Field          : The name of autoincrement field
+         *          StartValue     : The start value of autoincrement field
+         *          MinValue       : The minimum value of autoincrement field
+         *          MaxValue       : The maxmun value of autoincrement field
+         *          Increment      : The increment value of autoincrement field
+         *          CacheSize      : The cache size of autoincrement field
+         *          AcquireSize    : The acquire size of autoincrement field
+         *          Cycled         : The cycled flag of autoincrement field
+         *          Generated      : The generated mode of autoincrement field
+         *          </ul>
+         * \return void
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void CreateAutoIncrement(BsonDocument options)
+        {
+            if (options == null || options.ElementCount == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            List<BsonDocument> list = new List<BsonDocument>();
+            list.Add(options);
+            CreateAutoIncrement(list);
+        }
+
+        /** \fn void CreateAutoIncrement(List<BsonDocument> optionsList)
+         * \brief Create autoincrement field on collection.
+         * \param optionsList Options for creating autoincrement, can not be null or empty.
+         * \return void
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void CreateAutoIncrement(List<BsonDocument> optionsList)
+        {
+            if (optionsList == null || optionsList.Count == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            BsonDocument obj = new BsonDocument();
+            BsonArray arr = new BsonArray(optionsList);
+            obj.Add(SequoiadbConstants.FIELD_NAME_AUTOINCREMENT, arr);
+            _AlterInternal(SequoiadbConstants.SDB_ALTER_CL_CRT_AUTOINC_FLD, obj, false);
+        }
+
+        /** \fn void DropAutoIncrement(String fieldName)
+         * \brief Drop autoincrement field on collection.
+         * \param fieldName the field of autoincrement to be drop, can not be null or empty.
+         * \return void
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void DropAutoIncrement(String fieldName)
+        {
+            if (fieldName == null || fieldName.Length == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            BsonDocument obj = new BsonDocument();
+            obj.Add(SequoiadbConstants.FIELD_NAME_AUTOINC_FIELD, fieldName);
+            _AlterInternal(SequoiadbConstants.SDB_ALTER_CL_DROP_AUTOINC_FLD, obj, false);
+        }
+
+        /** \fn void DropAutoIncrement(List<string> fieldNames)
+         * \brief Drop autoincrement fields on collection.
+         * \param fieldNames the fields of autoincrement to be drop, can not be null or empty.
+         * \return void
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void DropAutoIncrement(List<string> fieldNames)
+        {
+            if (fieldNames == null || fieldNames.Count == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            BsonDocument obj = new BsonDocument();
+            BsonArray arr = new BsonArray(fieldNames);
+            obj.Add(SequoiadbConstants.FIELD_NAME_AUTOINC_FIELD, arr);
+            _AlterInternal(SequoiadbConstants.SDB_ALTER_CL_DROP_AUTOINC_FLD, obj, false);
         }
 
         private BsonDocument _TryGenOID(BsonDocument obj, bool ensureOID)

@@ -1868,6 +1868,79 @@ namespace DriverTest
 
         }
 
+        [TestMethod()]
+        public void IncrementFieldTest()
+        {
+            String field1 = "id1";
+            String field2 = "id2";
+            String field3 = "id3";
+            BsonDocument options = new BsonDocument();
+            options.Add("Field", "id1");
+            // CreateAutoIncrement
+            coll.CreateAutoIncrement(options);
+            // check
+            BsonDocument matcher = new BsonDocument();
+            matcher.Add("Name", cs.Name + "." + coll.Name);
+            DBCursor cursor = sdb.GetSnapshot(SDBConst.SDB_SNAP_CATALOG, matcher, null, null);
+            BsonDocument result;
+            try
+            {
+                result = cursor.Next();
+            }
+            finally
+            {
+                cursor.Close();
+            }
+            Assert.IsNotNull(result);
+            BsonValue value = result.GetValue("AutoIncrement");
+            BsonArray array = value.AsBsonArray;
+            Assert.AreEqual(1, array.Count);
+
+            BsonDocument options2 = new BsonDocument();
+            options2.Add("Field", field2);
+            BsonDocument options3 = new BsonDocument();
+            options3.Add("Field", field3);
+            List<BsonDocument> list = new List<BsonDocument>();
+            list.Add(options2);
+            list.Add(options3);
+            coll.CreateAutoIncrement(list);
+            // check
+            cursor = sdb.GetSnapshot(SDBConst.SDB_SNAP_CATALOG, matcher, null, null);
+            try
+            {
+                result = cursor.Next();
+            }
+            finally
+            {
+                cursor.Close();
+            }
+            Assert.IsNotNull(result);
+            value = result.GetValue("AutoIncrement");
+            array = value.AsBsonArray;
+            Assert.AreEqual(3, array.Count);
+
+            // DropAutoIncrement
+            coll.DropAutoIncrement(field1);
+            cursor = sdb.GetSnapshot(SDBConst.SDB_SNAP_CATALOG, matcher, null, null);
+            try
+            {
+                result = cursor.Next();
+            }
+            finally
+            {
+                cursor.Close();
+            }
+            Assert.IsNotNull(result);
+            value = result.GetValue("AutoIncrement");
+            array = value.AsBsonArray;
+            Assert.AreEqual(2, array.Count);
+
+            List<String> list2 = new List<string>();
+            list2.Add(field2);
+            list2.Add(field3);
+            coll.DropAutoIncrement(list2);
+        }
+
 
     }
 }

@@ -104,6 +104,8 @@ namespace SequoiaDB
         public const string ALTER_COLLECTION = "alter collection";
         public const string LIST_LOBS_CMD = "list lobs";
         public const string TRUNCATE = "truncate";
+        public const string SDB_ALTER_CL_CRT_AUTOINC_FLD = "create autoincrement";
+        public const string SDB_ALTER_CL_DROP_AUTOINC_FLD = "drop autoincrement";
 
         public const string CMD_NAME_ALTER_DC = "alter dc";
         public const string CMD_NAME_GET_DCINFO = "get dcinfo";
@@ -190,6 +192,8 @@ namespace SequoiaDB
         public const string FIELD_NAME_OLDNAME = "OldName";
         public const string FIELD_NAME_NEWNAME = "NewName";
         public const string FIELD_NAME_CELLECTIONSPACE = "CollectionSpace";
+	    public const string FIELD_NAME_AUTOINCREMENT = "AutoIncrement";
+        public const string FIELD_NAME_AUTOINC_FIELD = "Field";
         public const string FIELD_MODIFY = "$Modify";
         public const string FIELD_OP = "OP";
         public const string FIELD_OP_UPDATE = "Update";
