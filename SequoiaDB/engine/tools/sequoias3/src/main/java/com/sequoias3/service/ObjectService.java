@@ -1,11 +1,14 @@
 package com.sequoias3.service;
 
 import com.sequoias3.core.*;
+import com.sequoias3.dao.DataLob;
 import com.sequoias3.exception.S3ServerException;
+import com.sequoias3.model.GetResult;
 import com.sequoias3.model.ListObjectsResult;
 import com.sequoias3.model.ListVersionsResult;
 import com.sequoias3.model.PutDeleteResult;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.util.Map;
@@ -16,9 +19,14 @@ public interface ObjectService {
                               Map<String, String> xMeta, InputStream inputStream)
             throws S3ServerException;
 
-    ObjectMeta getObject(int ownerID, String bucketName, String objectName,
-                         Long versionId, Boolean isNoVersion, Map matchers,
-                         Map requestParas, Range range, HttpServletResponse response)
+    GetResult getObject(int ownerID, String bucketName, String objectName,
+                        Long versionId, Boolean isNoVersion, Map matchers,
+                        Range range)
+            throws S3ServerException;
+
+    void releaseGetResult(GetResult result) throws S3ServerException;
+
+    void readObjectData(DataLob data, ServletOutputStream outputStream, Range range)
             throws S3ServerException;
 
     PutDeleteResult deleteObject(int ownerID, String bucketName, String objectName)

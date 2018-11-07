@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import sun.misc.BASE64Decoder;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -147,9 +148,9 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public ObjectMeta getObject(int ownerID, String bucketName, String objectName,
+    public GetResult getObject(int ownerID, String bucketName, String objectName,
                                 Long versionId, Boolean isNoVersion, Map headers,
-                                Map requestParas, Range range, HttpServletResponse response)
+                                Range range)
             throws S3ServerException {
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
@@ -202,19 +203,13 @@ public class ObjectServiceImpl implements ObjectService {
                         versionIdMeta = objectMeta;
                     }
 
+                    DataLob dataLob = null;
                     if (!versionIdMeta.getDeleteMarker()){
                         checkMatchModify(headers, versionIdMeta);
-                        DataLob dataLob = dataDao.getDataLobForRead(versionIdMeta.getCsName(), versionIdMeta.getClName(),
+                        dataLob = dataDao.getDataLobForRead(versionIdMeta.getCsName(), versionIdMeta.getClName(),
                                 versionIdMeta.getLobId());
-                        try {
-                            analyseRangeWithLob(range, dataLob);
-                            buildHeadersForGetObject(versionIdMeta, requestParas, range, response);
-                            dataLob.read(response.getOutputStream(), range);
-                        }finally {
-                            dataDao.releaseDataLob(dataLob);
-                        }
                     }
-                    return versionIdMeta;
+                    return new GetResult(versionIdMeta, dataLob);
                 }catch (S3ServerException e){
                     if (e.getError() == S3Error.DAO_LOB_FNE){
                         continue;
@@ -231,6 +226,28 @@ public class ObjectServiceImpl implements ObjectService {
             throw new S3ServerException(S3Error.OBJECT_GET_FAILED,
                     "get object failed. bucket:" + bucketName + ", object=" + objectName, e);
         }
+    }
+
+    @Override
+    public void readObjectData(DataLob data, ServletOutputStream outputStream, Range range)
+            throws S3ServerException{
+        if (data == null || outputStream == null){
+            throw new S3ServerException(S3Error.OBJECT_GET_FAILED,
+                    "get object data failed. ");
+        }
+        try{
+            data.read(outputStream, range);
+        }catch (S3ServerException e){
+            throw e;
+        } catch (Exception e) {
+            throw new S3ServerException(S3Error.OBJECT_GET_FAILED,
+                    "get object data failed. ");
+        }
+    }
+
+    @Override
+    public void releaseGetResult(GetResult result) throws S3ServerException{
+        dataDao.releaseDataLob(result.getData());
     }
 
     @Override
@@ -1237,90 +1254,6 @@ public class ObjectServiceImpl implements ObjectService {
                     versionIdMarker);
         }finally {
             return isExistKeyVersion;
-        }
-    }
-
-    private void buildHeadersForGetObject(ObjectMeta objectMeta, Map<String, String> requestParas,
-                                          Range range, HttpServletResponse response){
-        response.addHeader(RestParamDefine.GetObjectResHeader.ETAG, objectMeta.geteTag());
-        response.addDateHeader(RestParamDefine.GetObjectResHeader.LAST_MODIFIED, objectMeta.getLastModified());
-        if (!objectMeta.getNoVersionFlag()) {
-            response.addHeader(RestParamDefine.GetObjectResHeader.VERSION_ID, String.valueOf(objectMeta.getVersionId()));
-        }
-        response.addHeader(RestParamDefine.GetObjectResHeader.ACCEPT_RANGES, "bytes");
-
-        if (null != objectMeta.getMetaList()){
-            Map metaList = objectMeta.getMetaList();
-            Iterator it = metaList.entrySet().iterator();
-            while (it.hasNext()){
-                Map.Entry entry = (Map.Entry)it.next();
-                response.addHeader(entry.getKey().toString(), entry.getValue().toString());
-            }
-        }
-
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL)){
-            response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL));
-        }else {
-            if (objectMeta.getCacheControl() != null){
-                response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL, objectMeta.getCacheControl());
-            }
-        }
-
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION)){
-            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION));
-        }else {
-            if (objectMeta.getContentDisposition() != null){
-                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION, objectMeta.getContentDisposition());
-            }
-        }
-
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING)){
-            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING));
-        }else {
-            if (objectMeta.getContentEncoding() != null){
-                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING, objectMeta.getContentEncoding());
-            }
-        }
-
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE)){
-            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE));
-        }else {
-            if (objectMeta.getContentLanguage() != null){
-                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE, objectMeta.getContentLanguage());
-            }
-        }
-
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE)){
-            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE));
-        }else {
-            if (objectMeta.getContentType() != null){
-                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE, objectMeta.getContentType());
-            }
-        }
-
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_EXPIRES)){
-            response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_EXPIRES));
-        }else {
-            if (objectMeta.getExpires() != null){
-                response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES, objectMeta.getExpires());
-            }
-        }
-
-        if (null == range){
-            response.setContentLengthLong(objectMeta.getSize());
-        }else if (range.getContentLength() >= objectMeta.getSize()){
-            response.setContentLengthLong(objectMeta.getSize());
-        }else {
-            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_RANGE,
-                    "bytes " + range.getStart() + "-" + range.getEnd() + "/" + objectMeta.getSize());
-            response.setContentLengthLong(range.getContentLength());
-            response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
         }
     }
 

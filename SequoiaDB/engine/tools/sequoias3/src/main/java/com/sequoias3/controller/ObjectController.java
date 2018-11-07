@@ -2,8 +2,10 @@ package com.sequoias3.controller;
 
 import com.sequoias3.common.RestParamDefine;
 import com.sequoias3.core.*;
+import com.sequoias3.dao.DataLob;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
+import com.sequoias3.model.GetResult;
 import com.sequoias3.model.ListObjectsResult;
 import com.sequoias3.model.ListVersionsResult;
 import com.sequoias3.model.PutDeleteResult;
@@ -119,15 +121,23 @@ public class ObjectController {
             }
         }
 
-        ObjectMeta result = objectService.getObject(operator.getUserId(), bucketName,
-                objectName, cvtVersionId, nullVersionFlag, requestHeaders, requestParas, range, response);
+        GetResult result = objectService.getObject(operator.getUserId(), bucketName,
+                objectName, cvtVersionId, nullVersionFlag, requestHeaders, range);
 
-        if (result.getDeleteMarker()) {
-            buildDeleteMarkerResponseHeader(result, response, versionId);
+        if (result.getMeta().getDeleteMarker()) {
+            buildDeleteMarkerResponseHeader(result.getMeta(), response, versionId);
             if (null == versionId) {
                 throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:" + objectName);
             }else {
                 throw new S3ServerException(S3Error.METHOD_NOT_ALLOWED, "no object. object:" + objectName);
+            }
+        }else {
+            try {
+                analyseRangeWithLob(range, result.getData());
+                buildHeadersForGetObject(result.getMeta(), requestParas, range, response);
+                objectService.readObjectData(result.getData(), response.getOutputStream(), range);
+            }finally {
+                objectService.releaseGetResult(result);
             }
         }
     }
@@ -262,5 +272,127 @@ public class ObjectController {
         }else {
             response.addHeader(RestParamDefine.GetObjectResHeader.VERSION_ID, String.valueOf(objectMeta.getVersionId()));
         }
+    }
+
+    private void buildHeadersForGetObject(ObjectMeta objectMeta, Map<String, String> requestParas,
+                                          Range range, HttpServletResponse response){
+        response.addHeader(RestParamDefine.GetObjectResHeader.ETAG, objectMeta.geteTag());
+        response.addDateHeader(RestParamDefine.GetObjectResHeader.LAST_MODIFIED, objectMeta.getLastModified());
+        if (!objectMeta.getNoVersionFlag()) {
+            response.addHeader(RestParamDefine.GetObjectResHeader.VERSION_ID, String.valueOf(objectMeta.getVersionId()));
+        }
+        response.addHeader(RestParamDefine.GetObjectResHeader.ACCEPT_RANGES, "bytes");
+
+        if (null != objectMeta.getMetaList()){
+            Map metaList = objectMeta.getMetaList();
+            Iterator it = metaList.entrySet().iterator();
+            while (it.hasNext()){
+                Map.Entry entry = (Map.Entry)it.next();
+                response.addHeader(entry.getKey().toString(), entry.getValue().toString());
+            }
+        }
+
+        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL)){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL,
+                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL));
+        }else {
+            if (objectMeta.getCacheControl() != null){
+                response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL, objectMeta.getCacheControl());
+            }
+        }
+
+        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION)){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION,
+                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION));
+        }else {
+            if (objectMeta.getContentDisposition() != null){
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION, objectMeta.getContentDisposition());
+            }
+        }
+
+        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING)){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING,
+                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING));
+        }else {
+            if (objectMeta.getContentEncoding() != null){
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING, objectMeta.getContentEncoding());
+            }
+        }
+
+        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE)){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE,
+                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE));
+        }else {
+            if (objectMeta.getContentLanguage() != null){
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE, objectMeta.getContentLanguage());
+            }
+        }
+
+        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE)){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE,
+                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE));
+        }else {
+            if (objectMeta.getContentType() != null){
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE, objectMeta.getContentType());
+            }
+        }
+
+        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_EXPIRES)){
+            response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES,
+                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_EXPIRES));
+        }else {
+            if (objectMeta.getExpires() != null){
+                response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES, objectMeta.getExpires());
+            }
+        }
+
+        if (null == range){
+            response.setContentLengthLong(objectMeta.getSize());
+        }else if (range.getContentLength() >= objectMeta.getSize()){
+            response.setContentLengthLong(objectMeta.getSize());
+        }else {
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_RANGE,
+                    "bytes " + range.getStart() + "-" + range.getEnd() + "/" + objectMeta.getSize());
+            response.setContentLengthLong(range.getContentLength());
+            response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+        }
+    }
+
+    private void analyseRangeWithLob(Range range, DataLob dataLob) throws S3ServerException{
+        if (null == range){
+            return;
+        }
+
+        long contentLength = dataLob.getSize();
+        if (range.getStart() >= contentLength){
+            throw new S3ServerException(S3Error.OBJECT_RANGE_INVALID,
+                    "start > contentlength. start:" + range.getStart() +
+                            ", contentlength:" + contentLength);
+        }
+
+        //final bytes
+        if (range.getStart() == -1){
+            if(range.getEnd() < contentLength) {
+                range.setStart(contentLength - range.getEnd());
+                range.setEnd(contentLength-1);
+            }else {
+                range.setStart(0);
+                range.setEnd(contentLength-1);
+            }
+        }
+
+        //from start to the final of Lob
+        if (range.getEnd() == -1 || range.getEnd() >= contentLength){
+            range.setEnd(contentLength - 1);
+        }
+
+        //from 0 - final of Lob
+        if (range.getStart() == 0 && range.getEnd() == contentLength - 1){
+            range.setContentLength(contentLength);
+            return;
+        }
+
+        long readLength  = range.getEnd() - range.getStart() + 1;
+        range.setContentLength(readLength);
     }
 }
