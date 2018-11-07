@@ -1,0 +1,37 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<!--this xml is for ci, please don't modify it -->
+<!--testcase for function test, which can be excuted concurrently -->
+<suite name="driver" verbose="1" parallel="classes" thread-count="5"> 
+  <parameter name="HOSTNAME" value="192.168.31.1" />  
+   <parameter name="SVCNAME" value="11810" />
+   <parameter name="S3HOSTNAME" value="192.168.31.1" />
+   <parameter name="S3PORT" value="8090" />
+   <parameter name="CHANGEDPREFIX" value="newstory_java_test" />
+   <parameter name="RSRVPORTBEGIN" value="26000" />
+   <parameter name="RSRVPORTEND" value="27000" />
+   <parameter name="RSRVNODEDIR" value="/opt/sequoiadb/database/" />
+   <parameter name="WORKDIR" value="E:\tools\lob" />
+   <parameter name="S3USERNAME" value="administrator" />
+   
+   <listeners> 
+          <listener class-name = "com.sequoias3.testcommon.TimePrinterListener"/>
+   </listeners>
+   
+   
+   
+   <test name="javadriver" parallel="classes" thread-count="5">  
+      <classes>    
+     <!--  <class name="com.sequoias3.CreateBucketVersion" />       -->
+        <class name="com.sequoias3.bucket.CreateBucket15901" />  
+        <class name="com.sequoias3.bucket.CreateBucket15902" />    
+         <class name="com.sequoias3.bucket.CreateBucket15903" />   
+         <class name="com.sequoias3.bucket.CreateBucket15904" /> 
+         <class name="com.sequoias3.bucket.CreateBucket15905" />  
+         <class name="com.sequoias3.bucket.DeleteBucket15917" /> 
+          <class name="com.sequoias3.bucket.DeleteAndGetBucket15921" /> 
+           <class name="com.sequoias3.bucket.CreateBucket15907" /> 
+           <class name="com.sequoias3.bucket.CreateBucket15922" /> 
+           <!-- <class name="com.sequoias3.object.CreateObject16335" />   -->
+      </classes>
+   </test>   
+</suite>
