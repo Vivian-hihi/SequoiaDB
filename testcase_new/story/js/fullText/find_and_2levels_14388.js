@@ -8,10 +8,10 @@ function main()
 {
    if(commIsStandalone(db))  {   return ;   }  
 
-   commDropCL(db, COMMCSNAME, clName, true, true);
-                                                              	
    //create CL
    var clName = COMMCLNAME + "_ES_14388";
+   commDropCL(db, COMMCSNAME, clName, true, true);
+
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
    
    var textIndexName = "textIndex";   

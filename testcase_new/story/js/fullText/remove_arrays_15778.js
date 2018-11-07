@@ -8,10 +8,10 @@ function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   commDropCL(db, COMMCSNAME, clName, true, true);
-                                                              	
    // create CL
    var clName = COMMCLNAME + "_ES_15778";
+   commDropCL(db, COMMCSNAME, clName, true, true);
+
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
    // insert before create text index
