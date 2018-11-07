@@ -74,6 +74,9 @@ public class RestExceptionHandler {
             case OBJECT_IF_UNMODIFIED_SINCE_FAILED:
                 status = HttpStatus.PRECONDITION_FAILED;
                 break;
+            case OBJECT_RANGE_INVALID:
+                status = HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE;
+                break;
             default:
                 status = HttpStatus.INTERNAL_SERVER_ERROR;
         }

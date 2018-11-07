@@ -35,13 +35,13 @@ public class SdbDataSourceWrapper {
         nwOpt.setConnectTimeout(500);
         nwOpt.setMaxAutoConnectRetryTime(0);
 
-        dsOpt.setMaxCount(500);
-        dsOpt.setDeltaIncCount(20);
-        dsOpt.setMaxIdleCount(20);
-        dsOpt.setKeepAliveTimeout(0);
-        dsOpt.setCheckInterval(60 * 1000);
+        dsOpt.setMaxCount(config.getMaxConnectionNum());
+        dsOpt.setDeltaIncCount(config.getDeltaIncCount());
+        dsOpt.setMaxIdleCount(config.getMaxIdleNum());
+        dsOpt.setKeepAliveTimeout(config.getKeepAliveTime());
+        dsOpt.setCheckInterval(config.getCheckInterval());
         dsOpt.setSyncCoordInterval(0);
-        dsOpt.setValidateConnection(false);
+        dsOpt.setValidateConnection(config.getValidateConnection());
         dsOpt.setConnectStrategy(ConnectStrategy.BALANCE);
 
         sdbDatasource = new SequoiadbDatasource(addrs, null, null, nwOpt, dsOpt);

@@ -29,6 +29,14 @@ public class SdbQueryDbCursor implements QueryDbCursor {
         return cursor;
     }
 
+    public void setSdb(Sequoiadb sdb) {
+        this.sdb = sdb;
+    }
+
+    public void setCursor(DBCursor cursor) {
+        this.cursor = cursor;
+    }
+
     @Override
     public boolean hasNext() throws S3ServerException {
         if (null == cursor) {

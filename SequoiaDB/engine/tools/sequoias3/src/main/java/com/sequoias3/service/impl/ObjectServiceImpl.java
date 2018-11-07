@@ -1,6 +1,5 @@
 package com.sequoias3.service.impl;
 
-import com.fasterxml.jackson.databind.util.ArrayBuilders;
 import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.common.RestParamDefine;
 import com.sequoias3.common.VersioningStatusType;
@@ -26,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import sun.misc.BASE64Decoder;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -125,7 +125,9 @@ public class ObjectServiceImpl implements ObjectService {
             PutDeleteResult response = new PutDeleteResult();
             response.seteTag(insertResult.geteTag());
             if (VersioningStatusType.ENABLED == versioningStatusType){
-                response.setVersionId(objectMeta.getVersionId());
+                response.setVersionId(String.valueOf(objectMeta.getVersionId()));
+            }else if(VersioningStatusType.SUSPENDED == versioningStatusType){
+                response.setVersionId(ObjectMeta.NULL_VERSION_ID);
             }
             return response;
         }catch (S3ServerException e){
@@ -146,7 +148,8 @@ public class ObjectServiceImpl implements ObjectService {
 
     @Override
     public ObjectMeta getObject(int ownerID, String bucketName, String objectName,
-                                Long versionId, Boolean isNoVersion, Map headers, Range range, OutputStream outputStream)
+                                Long versionId, Boolean isNoVersion, Map headers,
+                                Map requestParas, Range range, HttpServletResponse response)
             throws S3ServerException {
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
@@ -163,7 +166,12 @@ public class ObjectServiceImpl implements ObjectService {
                     ObjectMeta objectMeta = metaDao.queryMetaByObjectName(metaCsName, metaClName,
                             bucket.getBucketId(), objectName, null, null);
                     if (null == objectMeta) {
-                        throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:"+objectName);
+                        if (versionId != null || isNoVersion != null){
+                            throw new S3ServerException(S3Error.OBJECT_NO_SUCH_VERSION,
+                                    "no such version. object:" + objectName + ",version:" + versionId);
+                        }else {
+                            throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:" + objectName);
+                        }
                     }
 
                     if (versionId != null) {
@@ -191,18 +199,21 @@ public class ObjectServiceImpl implements ObjectService {
                             versionIdMeta = objectMetaHis;
                         }
                     }else{
-                        if (objectMeta.getDeleteMarker()){
-                            throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:"+objectName);
-                        }
                         versionIdMeta = objectMeta;
                     }
 
-                    if (versionIdMeta.getDeleteMarker()){
-                        throw new S3ServerException(S3Error.METHOD_NOT_ALLOWED, "no object. object:"+objectName);
+                    if (!versionIdMeta.getDeleteMarker()){
+                        checkMatchModify(headers, versionIdMeta);
+                        DataLob dataLob = dataDao.getDataLobForRead(versionIdMeta.getCsName(), versionIdMeta.getClName(),
+                                versionIdMeta.getLobId());
+                        try {
+                            analyseRangeWithLob(range, dataLob);
+                            buildHeadersForGetObject(versionIdMeta, requestParas, range, response);
+                            dataLob.read(response.getOutputStream(), range);
+                        }finally {
+                            dataDao.releaseDataLob(dataLob);
+                        }
                     }
-                    checkMatchModify(headers, versionIdMeta);
-                    dataDao.getObjectDataByLobId(versionIdMeta.getCsName(), versionIdMeta.getClName(),
-                            versionIdMeta.getLobId(), range, outputStream);
                     return versionIdMeta;
                 }catch (S3ServerException e){
                     if (e.getError() == S3Error.DAO_LOB_FNE){
@@ -251,7 +262,11 @@ public class ObjectServiceImpl implements ObjectService {
                                     objectName, bucket.getBucketId(), versioningStatusType);
 
                     response = new PutDeleteResult();
-                    response.setVersionId(deleteMarker.getVersionId());
+                    if (deleteMarker.getNoVersionFlag()){
+                        response.setVersionId(ObjectMeta.NULL_VERSION_ID);
+                    }else {
+                        response.setVersionId(String.valueOf(deleteMarker.getVersionId()));
+                    }
                     response.setDeleteMarker(true);
                     break;
                 default:
@@ -537,10 +552,6 @@ public class ObjectServiceImpl implements ObjectService {
             if (null != prefix){
                 prefixLen = prefix.length();
             }
-            int delimiterLen = 0;
-            if (null != delimiter){
-                delimiterLen = delimiter.length();
-            }
 
             if (keyMarker != null){
                 count = skipKeyMarker(queryDbCursorCur, queryDbCursorHis, keyMarker, versionIdMarker, listVersionsResult,
@@ -550,67 +561,15 @@ public class ObjectServiceImpl implements ObjectService {
                 }
             }
 
-            LinkedHashSet<CommonPrefix> commonPrefixesList = listVersionsResult.getCommonPrefixList();
-
-            Cur2:
-            while(queryDbCursorCur.hasNext()){
-                Boolean isCommonPrefix = false;
-                BSONObject recordA = queryDbCursorCur.getNext();
-                String keyA = recordA.get(ObjectMeta.META_KEY_NAME).toString();
-                int delimiterIndex = -1;
-                if (null != delimiter){
-                    delimiterIndex = keyA.indexOf(delimiter, prefixLen);
-                }
-                if (-1 != delimiterIndex){
-                    isCommonPrefix = true;
-                    CommonPrefix commonPrefix = new CommonPrefix(keyA.substring(0, delimiterIndex+delimiterLen), encodingType);
-                    if (!commonPrefixesList.contains(commonPrefix)){
-                        commonPrefixesList.add(commonPrefix);
-                        count++;
-                    }
-                }else{
-                    recordVersionDeleteMarker(recordA, listVersionsResult,
-                            encodingType, owner, true);
-                    count++;
-                }
-
-                if (count >= maxNumber) {
-                    if (isCommonPrefix && queryDbCursorCur.hasNext()){
-                        recordVersionsTruncated(listVersionsResult, encodingType, keyA.substring(0, delimiterIndex+delimiterLen), null);
-                    }else if (!isCommonPrefix && (queryDbCursorCur.hasNext() || queryDbCursorHis != null)){
-                        recordVersionsTruncated(listVersionsResult, encodingType, keyA, recordA.get(ObjectMeta.META_VERSION_ID).toString());
-                    }
-                    break;
-                }
-
-                while(queryDbCursorHis != null){
-                    BSONObject recordB = queryDbCursorHis.getCurrent();
-                    String keyB = recordB.get(ObjectMeta.META_KEY_NAME).toString();
-                    int result = keyB.compareTo(keyA);
-                    if (0 == result) {
-                        if (!isCommonPrefix) {
-                            recordVersionDeleteMarker(recordB, listVersionsResult,
-                                    encodingType, owner, false);
-                            count++;
-                        }
-                    }else if (result > 0){
-                        break;
-                    }
-
-                    if (count >= maxNumber) {
-                        if (queryDbCursorCur.hasNext() || queryDbCursorHis.hasNext()) {
-                            recordVersionsTruncated(listVersionsResult, encodingType, keyB, recordB.get(ObjectMeta.META_VERSION_ID).toString());
-                        }
-                        break Cur2;
-                    }
-                    if (queryDbCursorHis.hasNext()){
-                        queryDbCursorHis.getNext();
-                    }else {
-                        metaDao.releaseQueryDbCursor(queryDbCursorHis);
-                        queryDbCursorHis = null;
-                    }
-                }
+            if (delimiter == null){
+                recordVersionsWithNoDelimiter(queryDbCursorCur, queryDbCursorHis,
+                        listVersionsResult, count, maxNumber, encodingType, owner);
+            }else {
+                recordVersionsWithDelimiter(queryDbCursorCur, queryDbCursorHis,
+                        listVersionsResult, delimiter, count, maxNumber, prefixLen,
+                        encodingType, owner);
             }
+
             return listVersionsResult;
         }catch (S3ServerException e){
             throw e;
@@ -686,21 +645,10 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     private void recordVersionsTruncated(ListVersionsResult listVersionsResult,
-                                         String encodingType, String nextKey, String nextVersionId)
-            throws S3ServerException{
+                                         String nextKey, String nextVersionId) {
         listVersionsResult.setTruncated(true);
-        try {
-            if (null != encodingType) {
-                listVersionsResult.setNextKeyMarker(URLEncoder.encode(nextKey, "UTF-8"));
-            } else {
-                listVersionsResult.setNextKeyMarker(nextKey);
-            }
-        }catch (UnsupportedEncodingException e){
-            logger.error("Encode object name failed. e", e);
-            throw new S3ServerException(S3Error.UNKNOWN_ERROR,
-                    "encode object name failed."+e.getMessage());
-        }
         listVersionsResult.setNextVersionIdMarker(nextVersionId);
+        listVersionsResult.setNextKeyMarker(nextKey);
     }
 
     private ObjectMeta buildObjectMeta(String objectName, long bucketId, Map headers,
@@ -761,6 +709,124 @@ public class ObjectServiceImpl implements ObjectService {
             logger.error("Encode object name failed. e", e);
             throw new S3ServerException(S3Error.UNKNOWN_ERROR,
                     "encode object name failed."+e.getMessage());
+        }
+    }
+
+    private void recordVersionsWithDelimiter(QueryDbCursor queryDbCursorCur, QueryDbCursor queryDbCursorHis,
+                                            ListVersionsResult listVersionsResult, String delimiter, int count,
+                                            int maxNumber, int prefixLen, String encodingType, Owner owner)
+            throws S3ServerException{
+        int delimiterLen = delimiter.length();
+        LinkedHashSet<CommonPrefix> commonPrefixesList = listVersionsResult.getCommonPrefixList();
+
+        Cur:
+        while(queryDbCursorCur.hasNext()){
+            Boolean isCommonPrefix = false;
+            CommonPrefix commonPrefix = null;
+            BSONObject recordA = queryDbCursorCur.getNext();
+            String keyA = recordA.get(ObjectMeta.META_KEY_NAME).toString();
+            int delimiterIndex = keyA.indexOf(delimiter, prefixLen);
+            if (-1 != delimiterIndex){
+                isCommonPrefix = true;
+                commonPrefix = new CommonPrefix(keyA.substring(0, delimiterIndex+delimiterLen), encodingType);
+                if (!commonPrefixesList.contains(commonPrefix)){
+                    commonPrefixesList.add(commonPrefix);
+                    count++;
+                }
+            }else{
+                recordVersionDeleteMarker(recordA, listVersionsResult,
+                        encodingType, owner, true);
+                count++;
+            }
+
+            if (count >= maxNumber) {
+                if (isCommonPrefix && queryDbCursorCur.hasNext()){
+                    recordVersionsTruncated(listVersionsResult, commonPrefix.getPrefix(), null);
+                }else if (!isCommonPrefix && (queryDbCursorCur.hasNext() || queryDbCursorHis != null)){
+                    Version version = convertBsonToVersion(recordA, encodingType);
+                    recordVersionsTruncated(listVersionsResult, version.getKey(), version.getVersionId());
+                }
+                break;
+            }
+
+            while(queryDbCursorHis != null){
+                BSONObject recordB = queryDbCursorHis.getCurrent();
+                String keyB = recordB.get(ObjectMeta.META_KEY_NAME).toString();
+                int result = keyB.compareTo(keyA);
+                if (0 == result) {
+                    if (!isCommonPrefix) {
+                        recordVersionDeleteMarker(recordB, listVersionsResult,
+                                encodingType, owner, false);
+                        count++;
+                    }
+                }else if (result > 0){
+                    break;
+                }
+
+                if (count >= maxNumber) {
+                    if (queryDbCursorCur.hasNext() || queryDbCursorHis.hasNext()) {
+                        Version version = convertBsonToVersion(recordB, encodingType);
+                        recordVersionsTruncated(listVersionsResult, version.getKey(), version.getVersionId());
+                    }
+                    break Cur;
+                }
+                if (queryDbCursorHis.hasNext()){
+                    queryDbCursorHis.getNext();
+                }else {
+                    metaDao.releaseQueryDbCursor(queryDbCursorHis);
+                    queryDbCursorHis = null;
+                }
+            }
+        }
+    }
+
+    private void recordVersionsWithNoDelimiter(QueryDbCursor queryDbCursorCur, QueryDbCursor queryDbCursorHis,
+                                            ListVersionsResult listVersionsResult, int count, int maxNumber,
+                                              String encodingType, Owner owner)
+            throws S3ServerException{
+
+        Cur:
+        while(queryDbCursorCur.hasNext()){
+            BSONObject recordA = queryDbCursorCur.getNext();
+            String keyA = recordA.get(ObjectMeta.META_KEY_NAME).toString();
+            recordVersionDeleteMarker(recordA, listVersionsResult,
+                    encodingType, owner, true);
+            count++;
+
+            if (count >= maxNumber) {
+                if (queryDbCursorCur.hasNext() || queryDbCursorHis != null){
+                    Version version = convertBsonToVersion(recordA, encodingType);
+                    recordVersionsTruncated(listVersionsResult, version.getKey(), version.getVersionId());
+                }
+                break;
+            }
+
+            while(queryDbCursorHis != null){
+                BSONObject recordB = queryDbCursorHis.getCurrent();
+                String keyB = recordB.get(ObjectMeta.META_KEY_NAME).toString();
+                int result = keyB.compareTo(keyA);
+                if (0 == result) {
+                    recordVersionDeleteMarker(recordB, listVersionsResult,
+                            encodingType, owner, false);
+                    count++;
+                }else if (result > 0){
+                    break;
+                }
+
+                if (count >= maxNumber) {
+                    if (queryDbCursorCur.hasNext() || queryDbCursorHis.hasNext()) {
+                        Version version = convertBsonToVersion(recordB, encodingType);
+                        recordVersionsTruncated(listVersionsResult, version.getKey(), version.getVersionId());
+                    }
+                    break Cur;
+                }
+                if (queryDbCursorHis.hasNext()){
+                    queryDbCursorHis.getNext();
+                }else {
+                    metaDao.releaseQueryDbCursor(queryDbCursorHis);
+                    queryDbCursorHis = null;
+                }
+            }
         }
     }
 
@@ -957,80 +1023,91 @@ public class ObjectServiceImpl implements ObjectService {
             LinkedHashSet<CommonPrefix> commonPrefixesList = listVersionsResult.getCommonPrefixList();
 
             int delimiterLen = 0;
-            if (null != delimiter){
+            if (null != delimiter) {
                 delimiterLen = delimiter.length();
             }
 
             Loop:
-            while(cursorCur.hasNext() && !isFindNext){
+            while (cursorCur.hasNext() && !isFindNext) {
                 Boolean isCommonPrefix = false;
+                CommonPrefix commonPrefix = null;
                 String curPrefix = null;
                 BSONObject recordA = cursorCur.getNext();
                 String keyA = recordA.get(ObjectMeta.META_KEY_NAME).toString();
-                String versionA = recordA.get(ObjectMeta.META_VERSION_ID).toString();
                 int delimiterIndex = -1;
-                if (null != delimiter){
+                if (null != delimiter) {
                     delimiterIndex = keyA.indexOf(delimiter, prefixLen);
                 }
-                if (-1 != delimiterIndex){
+                if (-1 != delimiterIndex) {
                     isCommonPrefix = true;
-                    curPrefix = keyA.substring(0, delimiterIndex+delimiterLen);
+                    curPrefix = keyA.substring(0, delimiterIndex + delimiterLen);
                     int comResult = curPrefix.compareTo(keyMarker);
                     if (comResult > 0) {
                         isFindNext = true;
-                        CommonPrefix commonPrefix = new CommonPrefix(curPrefix, encodingType);
+                        commonPrefix = new CommonPrefix(curPrefix, encodingType);
                         if (!commonPrefixesList.contains(commonPrefix)) {
                             commonPrefixesList.add(commonPrefix);
                             count++;
                         }
                     }
-                }else {
+                } else {
                     if (!isExist) {
                         isFindNext = true;
                     }
-                    if (isFindNext){
+                    if (isFindNext) {
                         recordVersionDeleteMarker(recordA, listVersionsResult,
                                 encodingType, owner, true);
                         count++;
-                    }else if (keyA.equals(keyMarker) && versionA.equals(versionIdMarker)) {
-                        isFindNext = true;
+                    } else {
+                        Version cvtVersion = convertBsonToVersion(recordA, encodingType);
+                        if (keyA.equals(keyMarker) && cvtVersion.getVersionId().equals(versionIdMarker)) {
+                            isFindNext = true;
+                        }
                     }
                 }
-                if (count >= maxNumber && (cursorCur.hasNext() || cursorHis != null)) {
-                    if (isCommonPrefix){
-                        recordVersionsTruncated(listVersionsResult, encodingType, curPrefix, null);
-                    }else {
-                        recordVersionsTruncated(listVersionsResult, encodingType, keyA, recordA.get(ObjectMeta.META_VERSION_ID).toString());
+                if (count >= maxNumber) {
+                    if (isCommonPrefix && (cursorCur.hasNext() || cursorHis != null)) {
+                        if (commonPrefix != null) {
+                            recordVersionsTruncated(listVersionsResult, commonPrefix.getPrefix(), null);
+                        }
+                    } else if (!isCommonPrefix && (cursorCur.hasNext() || cursorHis != null)) {
+                        Version version = convertBsonToVersion(recordA, encodingType);
+                        recordVersionsTruncated(listVersionsResult, version.getKey(), version.getVersionId());
                     }
-                    break ;
+                    break;
                 }
 
-                while (cursorHis != null){
+                while (cursorHis != null) {
                     BSONObject recordB = cursorHis.getCurrent();
                     String keyB = recordB.get(ObjectMeta.META_KEY_NAME).toString();
-                    String versionB = recordB.get(ObjectMeta.META_VERSION_ID).toString();
                     int result = keyB.compareTo(keyA);
                     if (0 == result) {
                         if (!isCommonPrefix) {
-                            if (isFindNext){
+                            if (isFindNext) {
                                 recordVersionDeleteMarker(recordB, listVersionsResult,
                                         encodingType, owner, false);
                                 count++;
-                            }else if (keyB.equals(keyMarker) && versionB.equals(versionIdMarker)) {
-                                isFindNext = true;
+                            } else {
+                                Version cvtVersion = convertBsonToVersion(recordB, encodingType);
+                                if (keyB.equals(keyMarker) && cvtVersion.getVersionId().equals(versionIdMarker)) {
+                                    isFindNext = true;
+                                }
                             }
                         }
-                    }else if (result > 0){
+                    } else if (result > 0) {
                         break;
                     }
 
-                    if (count >= maxNumber && (cursorCur.hasNext() || cursorHis.hasNext())) {
-                        recordVersionsTruncated(listVersionsResult, encodingType, keyB, recordB.get(ObjectMeta.META_VERSION_ID).toString());
+                    if (count >= maxNumber) {
+                        if (cursorCur.hasNext() || cursorHis.hasNext()) {
+                            Version version = convertBsonToVersion(recordB, encodingType);
+                            recordVersionsTruncated(listVersionsResult, version.getKey(), version.getVersionId());
+                        }
                         break Loop;
                     }
-                    if (cursorHis.hasNext()){
+                    if (cursorHis.hasNext()) {
                         cursorHis.getNext();
-                    }else {
+                    } else {
                         metaDao.releaseQueryDbCursor(cursorHis);
                         cursorHis = null;
                     }
@@ -1147,8 +1224,8 @@ public class ObjectServiceImpl implements ObjectService {
                 }
             } else {
                 Long specifiedVersionId = Long.parseLong(versionIdMarker);
-                if (metaDao.queryMetaByObjectName(metaCsName, metaClName, bucket.getBucketId(), keyMarker, specifiedVersionId, null) != null
-                        || metaDao.queryMetaByObjectName(metaCsName, metaHisClName, bucket.getBucketId(), keyMarker, specifiedVersionId, null) != null) {
+                if (metaDao.queryMetaByObjectName(metaCsName, metaClName, bucket.getBucketId(), keyMarker, specifiedVersionId, false) != null
+                        || metaDao.queryMetaByObjectName(metaCsName, metaHisClName, bucket.getBucketId(), keyMarker, specifiedVersionId, false) != null) {
                     isExistKeyVersion = true;
                 }
             }
@@ -1162,4 +1239,127 @@ public class ObjectServiceImpl implements ObjectService {
             return isExistKeyVersion;
         }
     }
+
+    private void buildHeadersForGetObject(ObjectMeta objectMeta, Map<String, String> requestParas,
+                                          Range range, HttpServletResponse response){
+        response.addHeader(RestParamDefine.GetObjectResHeader.ETAG, objectMeta.geteTag());
+        response.addDateHeader(RestParamDefine.GetObjectResHeader.LAST_MODIFIED, objectMeta.getLastModified());
+        if (!objectMeta.getNoVersionFlag()) {
+            response.addHeader(RestParamDefine.GetObjectResHeader.VERSION_ID, String.valueOf(objectMeta.getVersionId()));
+        }
+        response.addHeader(RestParamDefine.GetObjectResHeader.ACCEPT_RANGES, "bytes");
+
+        if (null != objectMeta.getMetaList()){
+            Map metaList = objectMeta.getMetaList();
+            Iterator it = metaList.entrySet().iterator();
+            while (it.hasNext()){
+                Map.Entry entry = (Map.Entry)it.next();
+                response.addHeader(entry.getKey().toString(), entry.getValue().toString());
+            }
+        }
+
+        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL)){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL,
+                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL));
+        }else {
+            if (objectMeta.getCacheControl() != null){
+                response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL, objectMeta.getCacheControl());
+            }
+        }
+
+        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION)){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION,
+                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION));
+        }else {
+            if (objectMeta.getContentDisposition() != null){
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION, objectMeta.getContentDisposition());
+            }
+        }
+
+        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING)){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING,
+                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING));
+        }else {
+            if (objectMeta.getContentEncoding() != null){
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING, objectMeta.getContentEncoding());
+            }
+        }
+
+        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE)){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE,
+                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE));
+        }else {
+            if (objectMeta.getContentLanguage() != null){
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE, objectMeta.getContentLanguage());
+            }
+        }
+
+        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE)){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE,
+                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE));
+        }else {
+            if (objectMeta.getContentType() != null){
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE, objectMeta.getContentType());
+            }
+        }
+
+        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_EXPIRES)){
+            response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES,
+                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_EXPIRES));
+        }else {
+            if (objectMeta.getExpires() != null){
+                response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES, objectMeta.getExpires());
+            }
+        }
+
+        if (null == range){
+            response.setContentLengthLong(objectMeta.getSize());
+        }else if (range.getContentLength() >= objectMeta.getSize()){
+            response.setContentLengthLong(objectMeta.getSize());
+        }else {
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_RANGE,
+                    "bytes " + range.getStart() + "-" + range.getEnd() + "/" + objectMeta.getSize());
+            response.setContentLengthLong(range.getContentLength());
+            response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+        }
+    }
+
+    private void analyseRangeWithLob(Range range, DataLob dataLob) throws S3ServerException{
+        if (null == range){
+            return;
+        }
+
+        long contentLength = dataLob.getSize();
+        if (range.getStart() >= contentLength){
+            throw new S3ServerException(S3Error.OBJECT_RANGE_INVALID,
+                    "start > contentlength. start:" + range.getStart() +
+                            ", contentlength:" + contentLength);
+        }
+
+        //final bytes
+        if (range.getStart() == -1){
+            if(range.getEnd() < contentLength) {
+                range.setStart(contentLength - range.getEnd());
+                range.setEnd(contentLength-1);
+            }else {
+                range.setStart(0);
+                range.setEnd(contentLength-1);
+            }
+        }
+
+        //from start to the final of Lob
+        if (range.getEnd() == -1 || range.getEnd() >= contentLength){
+            range.setEnd(contentLength - 1);
+        }
+
+        //from 0 - final of Lob
+        if (range.getStart() == 0 && range.getEnd() == contentLength - 1){
+            range.setContentLength(contentLength);
+            return;
+        }
+
+        long readLength  = range.getEnd() - range.getStart() + 1;
+        range.setContentLength(readLength);
+    }
+
 }

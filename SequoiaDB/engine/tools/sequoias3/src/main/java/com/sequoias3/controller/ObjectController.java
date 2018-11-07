@@ -8,7 +8,6 @@ import com.sequoias3.model.ListObjectsResult;
 import com.sequoias3.model.ListVersionsResult;
 import com.sequoias3.model.PutDeleteResult;
 import com.sequoias3.service.ObjectService;
-import com.sequoias3.utils.DataFormatUtils;
 import com.sequoias3.utils.RestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.ServletInputStream;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -75,7 +73,7 @@ public class ObjectController {
         }
         if (result.getVersionId() != null){
             headers.add(RestParamDefine.PutObjectResultHeader.VERSION_ID,
-                    result.getVersionId().toString());
+                    result.getVersionId());
         }
         return ResponseEntity.ok()
                 .headers(headers)
@@ -83,7 +81,7 @@ public class ObjectController {
     }
 
     @GetMapping(value="/{bucketname:.+}/*/**", produces = MediaType.APPLICATION_XML_VALUE )
-    public ResponseEntity getObject(@PathVariable("bucketname") String bucketName,
+    public void getObject(@PathVariable("bucketname") String bucketName,
                                     @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
                                     @RequestParam(value = RestParamDefine.VERSION_ID, required = false) String versionId,
                                     HttpServletRequest httpServletRequest,
@@ -121,16 +119,17 @@ public class ObjectController {
             }
         }
 
-        ServletOutputStream outputStream = response.getOutputStream();
         ObjectMeta result = objectService.getObject(operator.getUserId(), bucketName,
-                objectName, cvtVersionId, nullVersionFlag, requestHeaders, range, outputStream);
+                objectName, cvtVersionId, nullVersionFlag, requestHeaders, requestParas, range, response);
 
-        HttpHeaders headers = new HttpHeaders();
-        HttpStatus  httpStatus = buildHeadersForGetObject(result, requestParas, range, headers);
-
-        return ResponseEntity.status(httpStatus)
-                .headers(headers)
-                .body(outputStream);
+        if (result.getDeleteMarker()) {
+            buildDeleteMarkerResponseHeader(result, response, versionId);
+            if (null == versionId) {
+                throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:" + objectName);
+            }else {
+                throw new S3ServerException(S3Error.METHOD_NOT_ALLOWED, "no object. object:" + objectName);
+            }
+        }
     }
 
     @DeleteMapping(value = "/{bucketname:.+}/*/**", produces = MediaType.APPLICATION_XML_VALUE)
@@ -151,7 +150,7 @@ public class ObjectController {
             }
             if (result.getVersionId() != null) {
                 headers.add(RestParamDefine.DeleteObjectResultHeader.VERSION_ID,
-                        result.getVersionId().toString());
+                        result.getVersionId());
             }
         }
         return ResponseEntity.noContent()
@@ -239,90 +238,6 @@ public class ObjectController {
                 .body(result);
     }
 
-    private HttpStatus buildHeadersForGetObject(ObjectMeta result, Map<String, String> requestParas,
-                                                 Range range, HttpHeaders headers){
-
-        HttpStatus status = HttpStatus.OK;
-
-        headers.add(RestParamDefine.GetObjectResHeader.ETAG, result.geteTag());
-        headers.add(RestParamDefine.GetObjectResHeader.LAST_MODIFIED, DataFormatUtils.formateDate2(result.getLastModified()));
-        if (null == range){
-            headers.add(RestParamDefine.GetObjectResHeader.CONTENT_LENGTH, String.valueOf(result.getSize()));
-        }else {
-            headers.add(RestParamDefine.GetObjectResHeader.CONTENT_LENGTH, String.valueOf(range.getContentLength()));
-            if (range.getContentLength() < result.getSize()){
-                headers.add(RestParamDefine.GetObjectResHeader.CONTENT_RANGE,
-                        "bytes " + range.getStart() + "-" + range.getEnd() + "/" + result.getSize());
-                status = HttpStatus.PARTIAL_CONTENT;
-            }
-        }
-
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL)){
-            headers.add(RestParamDefine.GetObjectResHeader.CACHE_CONTROL,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL).toString());
-        }else {
-            if (result.getCacheControl() != null){
-                headers.add(RestParamDefine.GetObjectResHeader.CACHE_CONTROL, result.getCacheControl());
-            }
-        }
-
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION)){
-            headers.add(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION).toString());
-        }else {
-            if (result.getContentDisposition() != null){
-                headers.add(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION, result.getContentDisposition());
-            }
-        }
-
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING)){
-            headers.add(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING).toString());
-        }else {
-            if (result.getContentEncoding() != null){
-                headers.add(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING, result.getContentEncoding());
-            }
-        }
-
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE)){
-            headers.add(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE).toString());
-        }else {
-            if (result.getContentLanguage() != null){
-                headers.add(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE, result.getContentLanguage());
-            }
-        }
-
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE)){
-            headers.add(RestParamDefine.GetObjectResHeader.CONTENT_TYPE,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE).toString());
-        }else {
-            if (result.getContentType() != null){
-                headers.add(RestParamDefine.GetObjectResHeader.CONTENT_TYPE, result.getContentType());
-            }
-        }
-
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_EXPIRES)){
-            headers.add(RestParamDefine.GetObjectResHeader.EXPIRES,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_EXPIRES).toString());
-        }else {
-            if (result.getExpires() != null){
-                headers.add(RestParamDefine.GetObjectResHeader.EXPIRES, result.getExpires());
-            }
-        }
-
-        if (null != result.getMetaList()){
-            Map metaList = result.getMetaList();
-            Iterator it = metaList.entrySet().iterator();
-            while (it.hasNext()){
-                Map.Entry entry = (Map.Entry)it.next();
-                headers.add(entry.getKey().toString(), entry.getValue().toString());
-            }
-        }
-
-        return status;
-    }
-
     private Long convertVersionId(String versionId)
             throws S3ServerException{
         try {
@@ -336,6 +251,16 @@ public class ObjectController {
                     "version id is invalid。 version id=" + versionId);
         }catch (Exception e){
             throw new S3ServerException(S3Error.INVALID_ARGUMENT, "versionId is invalid. versionId="+versionId);
+        }
+    }
+
+    private void buildDeleteMarkerResponseHeader(ObjectMeta objectMeta, HttpServletResponse response,
+                                                 String versionId) throws S3ServerException{
+        response.addHeader(RestParamDefine.GetObjectResHeader.DELETE_MARKER, objectMeta.getDeleteMarker().toString());
+        if (objectMeta.getNoVersionFlag()){
+            response.addHeader(RestParamDefine.GetObjectResHeader.VERSION_ID, ObjectMeta.NULL_VERSION_ID);
+        }else {
+            response.addHeader(RestParamDefine.GetObjectResHeader.VERSION_ID, String.valueOf(objectMeta.getVersionId()));
         }
     }
 }

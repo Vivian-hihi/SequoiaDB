@@ -82,11 +82,14 @@ public class RestParamDefine {
         public static final String CONTENT_LENGTH          = "Content-Length";
         public static final String ETAG                    = "ETag";
         public static final String CONTENT_RANGE           = "Content-Range";
+        public static final String VERSION_ID              = "x-amz-version-id";
+        public static final String DELETE_MARKER           = "x-amz-delete-marker";
+        public static final String ACCEPT_RANGES           = "Accept-Ranges";
     }
 
     public static class DeleteObjectResultHeader {
-        public static final String  VERSION_ID    = "VersionId";
-        public static final String  DELETE_MARKER = "DeleteMarker";
+        public static final String  VERSION_ID    = "x-amz-version-id";
+        public static final String  DELETE_MARKER = "x-amz-delete-marker";
     }
 
     public static final int KEY_LENGTH              = 900;

@@ -6,8 +6,8 @@ import com.sequoias3.model.ListObjectsResult;
 import com.sequoias3.model.ListVersionsResult;
 import com.sequoias3.model.PutDeleteResult;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Map;
 
 public interface ObjectService {
@@ -17,14 +17,15 @@ public interface ObjectService {
             throws S3ServerException;
 
     ObjectMeta getObject(int ownerID, String bucketName, String objectName,
-                         Long versionId, Boolean isNoVersion, Map matchers, Range range, OutputStream outputStream)
+                         Long versionId, Boolean isNoVersion, Map matchers,
+                         Map requestParas, Range range, HttpServletResponse response)
             throws S3ServerException;
 
     PutDeleteResult deleteObject(int ownerID, String bucketName, String objectName)
             throws S3ServerException;
 
     PutDeleteResult deleteObject(int ownerID, String bucketName,
-                                              String objectName, Long versionId, Boolean isNoVersion)
+                                 String objectName, Long versionId, Boolean isNoVersion)
             throws S3ServerException;
 
     ListObjectsResult listObjects(int ownerID, String bucketName, String prefix,

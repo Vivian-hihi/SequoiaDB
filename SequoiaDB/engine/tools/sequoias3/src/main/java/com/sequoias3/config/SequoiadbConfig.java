@@ -14,6 +14,13 @@ public class SequoiadbConfig {
     SequoiadbMetaConfig meta;
     SequoiadbDataConfig data;
 
+    int     maxConnectionNum   = 500;
+    int     deltaIncCount      = 20;
+    int     maxIdleNum         = 20;
+    int     keepAliveTime      = 0;
+    int     CheckInterval      = 60000;
+    Boolean validateConnection = true;
+
     public String getMetaCsName() {
         return meta.getCsName();
     }
@@ -67,5 +74,53 @@ public class SequoiadbConfig {
 
     public void setData(SequoiadbDataConfig data) {
         this.data = data;
+    }
+
+    public void setCheckInterval(int checkInterval) {
+        CheckInterval = checkInterval;
+    }
+
+    public int getCheckInterval() {
+        return CheckInterval;
+    }
+
+    public void setDeltaIncCount(int deltaIncCount) {
+        this.deltaIncCount = deltaIncCount;
+    }
+
+    public int getDeltaIncCount() {
+        return deltaIncCount;
+    }
+
+    public void setKeepAliveTime(int keepAliveTime) {
+        this.keepAliveTime = keepAliveTime;
+    }
+
+    public int getKeepAliveTime() {
+        return keepAliveTime;
+    }
+
+    public void setMaxConnectionNum(int maxConnectionNum) {
+        this.maxConnectionNum = maxConnectionNum;
+    }
+
+    public int getMaxConnectionNum() {
+        return maxConnectionNum;
+    }
+
+    public void setMaxIdleNum(int maxIdleNum) {
+        this.maxIdleNum = maxIdleNum;
+    }
+
+    public int getMaxIdleNum() {
+        return maxIdleNum;
+    }
+
+    public void setValidateConnection(Boolean validateConnection) {
+        this.validateConnection = validateConnection;
+    }
+
+    public Boolean getValidateConnection() {
+        return validateConnection;
     }
 }

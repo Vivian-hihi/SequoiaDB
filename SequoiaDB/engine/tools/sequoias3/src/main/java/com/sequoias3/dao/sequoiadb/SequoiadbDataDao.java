@@ -9,10 +9,10 @@ import com.sequoiadb.exception.SDBError;
 import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.config.SequoiadbConfig;
 import com.sequoias3.core.DataAttr;
-import com.sequoias3.core.Range;
 import com.sequoias3.dao.ConnectionDao;
 import com.sequoias3.dao.DaoCollectionDefine;
 import com.sequoias3.dao.DataDao;
+import com.sequoias3.dao.DataLob;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import org.apache.commons.codec.binary.Hex;
@@ -37,7 +37,7 @@ public class SequoiadbDataDao implements DataDao {
     SdbDataSourceWrapper sdbDatasourceWrapper;
 
     @Autowired
-    SequoiadbConfig config;
+    SequoiadbConfig sdbConfig;
 
     @Override
     public DataAttr insertObjectData(String csName, String clName, InputStream data)
@@ -119,8 +119,7 @@ public class SequoiadbDataDao implements DataDao {
     }
 
     @Override
-    public void getObjectDataByLobId(String csName, String clName, ObjectId lobId, Range range,
-                                     OutputStream outputStream) throws S3ServerException {
+    public DataLob getDataLobForRead(String csName, String clName, ObjectId lobId)throws S3ServerException {
         Sequoiadb sdb = null;
         DBLob dbLob = null;
         try {
@@ -128,86 +127,40 @@ public class SequoiadbDataDao implements DataDao {
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             DBCollection cl = cs.getCollection(clName);
 
-            try {
-                dbLob = cl.openLob(lobId);
-                long contentLength = dbLob.getSize();
-                if (null == range){
-                    dbLob.read(outputStream);
-                    return;
-                }
-
-                if (range.getStart() >= contentLength){
-                    throw new S3ServerException(S3Error.OBJECT_RANGE_INVALID,
-                            "start > contentlength. start:" + range.getStart() +
-                                    ", contentlength:" + contentLength);
-                }
-
-                //final bytes
-                if (range.getStart() == -1){
-                    if(range.getEnd() < contentLength) {
-                        range.setStart(contentLength - range.getEnd());
-                        range.setEnd(contentLength-1);
-                    }else {
-                        range.setStart(0);
-                        range.setEnd(contentLength-1);
-                    }
-                }
-
-                //from start to the final of Lob
-                if (range.getEnd() == -1 || range.getEnd() >= contentLength){
-                    range.setEnd(contentLength - 1);
-                }
-
-                //from 0 - final of Lob
-                if (range.getStart() == 0 && range.getEnd() == contentLength - 1){
-                    dbLob.read(outputStream);
-                    range.setStart(contentLength);
-                    return;
-                }
-                byte[] buffer    = new byte[ONCE_WRITE_BYTES];
-                long readOffset  = range.getStart();
-                long readLength  = range.getEnd() - range.getStart() + 1;
-                range.setContentLength(readLength);
-                int writeOffset = 0;
-
-                dbLob.seek(readOffset, DBLob.SDB_LOB_SEEK_SET);
-                int size = dbLob.read(buffer, 0,
-                        readLength > ONCE_WRITE_BYTES ? ONCE_WRITE_BYTES: (int)readLength);
-                while (size > 0) {
-                    outputStream.write(buffer, writeOffset, size);
-                    writeOffset  += size;
-                    readOffset   += size;
-
-                    readLength -= size;
-                    size = dbLob.read(buffer, 0,
-                            readLength > ONCE_WRITE_BYTES ? ONCE_WRITE_BYTES : (int)readLength);
-                }
-                return;
-            }finally {
-                closeLob(dbLob);
-            }
-        }catch (BaseException e){
+            dbLob = cl.openLob(lobId);
+            return new SdbDataLob(sdb, dbLob);
+        } catch (BaseException e) {
+            closeLob(dbLob);
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
             if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode()
                     || e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
                 //no cs or no cl
                 throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY,
-                        "cs:" + csName + ", cl:" + clName + ", error message:"+e.toString());
-            } else if(e.getErrorCode() == SDBError.SDB_FNE.getErrorCode()){
+                        "cs:" + csName + ", cl:" + clName + ", error message:" + e.toString());
+            } else if (e.getErrorCode() == SDBError.SDB_FNE.getErrorCode()) {
                 //no lob
                 throw new S3ServerException(S3Error.DAO_LOB_FNE,
-                        "cs:" + csName + ", cl:" + clName + ", error message:"+e.toString());
-            } else{
+                        "cs:" + csName + ", cl:" + clName + ", error message:" + e.toString());
+            } else {
                 logger.error("get lob failed. error:");
                 throw e;
             }
-        } catch (IOException e){
-            logger.error("get lob failed.");
-            throw new S3ServerException(S3Error.UNKNOWN_ERROR, "IOException. error:"+e.getMessage(), e);
-        } catch (Exception e){
+        } catch (Exception e) {
+            closeLob(dbLob);
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
             logger.error("get lob failed.");
             throw e;
-        } finally {
-            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
+    @Override
+    public void releaseDataLob(DataLob dataLob){
+        if (null != dataLob){
+            SdbDataLob sdbDataLob = (SdbDataLob)dataLob;
+            closeLob(sdbDataLob.getDbLob());
+            sdbDatasourceWrapper.releaseSequoiadb(sdbDataLob.getSdb());
+            sdbDataLob.setDbLob(null);
+            sdbDataLob.setSdb(null);
         }
     }
 
@@ -267,7 +220,7 @@ public class SequoiadbDataDao implements DataDao {
             csName.append(region);
             csName.append(DBParamDefine.CS_DATA);
         }else {
-            csName.append(config.getDataCsName());
+            csName.append(sdbConfig.getDataCsName());
         }
 
         return csName.toString();

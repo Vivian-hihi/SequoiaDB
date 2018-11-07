@@ -478,7 +478,8 @@ public class SequoiadbMetaDao implements MetaDao {
             SdbQueryDbCursor sdbQueryDbCursor = (SdbQueryDbCursor)queryDbCursor;
             sdbDatasourceWrapper.releaseDBCursor(sdbQueryDbCursor.getCursor());
             sdbDatasourceWrapper.releaseSequoiadb(sdbQueryDbCursor.getSdb());
-            queryDbCursor = null;
+            sdbQueryDbCursor.setCursor(null);
+            sdbQueryDbCursor.setSdb(null);
         }
     }
 }

@@ -2,7 +2,7 @@ package com.sequoias3.model;
 
 public class PutDeleteResult {
     private String  eTag;
-    private Long  versionId;
+    private String  versionId;
     private Boolean deleteMarker;
 
     public void seteTag(String eTag) {
@@ -13,11 +13,11 @@ public class PutDeleteResult {
         return eTag;
     }
 
-    public void setVersionId(Long versionId) {
+    public void setVersionId(String versionId) {
         this.versionId = versionId;
     }
 
-    public Long getVersionId() {
+    public String getVersionId() {
         return versionId;
     }
 
