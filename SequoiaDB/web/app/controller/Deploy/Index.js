@@ -23,6 +23,8 @@
       $scope.ModuleList = [] ;
       //业务集群模式数量
       SdbSwap.distributionNum = 0 ;
+      //SDB业务数量
+      SdbSwap.sdbModuleNum = 0 ;
       //业务类型列表
       SdbSwap.moduleType = [] ;
 
@@ -579,6 +581,7 @@
             var clusterName = $scope.ClusterList[ index ]['ClusterName'] ;
             $scope.ModuleNum = 0 ;
             SdbSwap.distributionNum = 0 ;
+            SdbSwap.sdbModuleNum = 0 ;
             autoQueryModuleIndex = [] ;
             $.each( $scope.ModuleList, function( index2, moduleInfo ){
                if( moduleInfo['ClusterName'] == clusterName )
@@ -591,6 +594,7 @@
                      {
                         ++ SdbSwap.distributionNum ;
                      }
+                     ++ SdbSwap.sdbModuleNum ;
                      getNodesList( index2 ) ;
                      getCollectionInfo( index2, index ) ;
                      getErrNodes( index2, index ) ;
@@ -1361,7 +1365,7 @@
 
       //打开 同步业务 弹窗
       var showSyncWindow = function(){
-         if( $scope.ClusterList.length > 0 && $scope.ModuleNum != 0 )
+         if( SdbSwap.sdbModuleNum != 0 )
          {
             $scope.SyncWindow['config'] = {
                inputList: [
@@ -2394,13 +2398,18 @@
          {
             $scope.EditModuleDropdown['config'] = [] ;
             var disabled = false ;
+            var syncDisabled = false ;
             if( SdbSwap.distributionNum == 0 )
             {
                disabled = true ;
             }
+            if( SdbSwap.sdbModuleNum == 0 )
+            {
+               syncDisabled = true ;
+            }
             $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '业务扩容' ), 'disabled': disabled } ) ;
             $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '业务减容' ), 'disabled': disabled } ) ;
-            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '同步业务' ) } ) ;
+            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '同步业务' ), 'disabled': syncDisabled } ) ;
             $scope.EditModuleDropdown['callback']['Open']( event.currentTarget ) ;
          }
       }

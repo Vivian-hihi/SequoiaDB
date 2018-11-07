@@ -1,4 +1,5 @@
 ﻿(function(){
+   window.SdbSacName = 'Login' ;
    window.SdbSacManagerConf.nowRoute = [
       { path: '/',
         options: {

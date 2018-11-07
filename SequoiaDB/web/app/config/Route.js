@@ -7,27 +7,6 @@
            resolve: resolveFun( [ './app/controller/Transfer.js' ] )
         }
       },
-      //·ÏÆú
-      /*
-      { path: '/Index/Index/Index',
-        options: {
-           templateUrl: './app/template/Index/Index/Index.html',
-           resolve: resolveFun( [ './app/controller/Index/Index/Index.js' ] )
-        }
-      },
-      { path: '/Data/SDB-Overview/Index',
-        options: {
-           templateUrl: './app/template/Data/Sdb/Overview/Index.html',
-           resolve: resolveFun( [ './app/other/function/Data/Sdb/Overview/Index.js', './app/controller/Data/Sdb/Overview/Index.js' ] )
-        }
-      },
-      { path: '/Data/SDB-Operate/Index',
-        options: {
-           templateUrl: './app/template/Data/Sdb/Operate/Index.html',
-           resolve: resolveFun( [ './app/other/function/Data/Sdb/Operate/Index.js', './app/controller/Data/Sdb/Operate/Index.js' ] )
-        }
-      },
-      */
       { path: '/Data/SDB-Operate/Record',
         options: {
            templateUrl: './app/template/Data/Sdb/Operate/Record.html',
@@ -44,30 +23,6 @@
         options: {
            templateUrl: './app/template/Data/Sdb/Database/Index.html',
            resolve: resolveFun( [ './app/other/function/Data/Sdb/Database/Index.js', './app/controller/Data/Sdb/Database/Index.js' ] )
-        }
-      },
-      { path: '/Data/SQL-Overview/Index',
-        options: {
-           templateUrl: './app/template/Data/Sql/Overview/Index.html',
-           resolve: resolveFun( [ './app/controller/Data/Sql/Overview/Index.js' ] )
-        }
-      },
-      { path: '/Data/SQL-Metadata/Index',
-        options: {
-           templateUrl: './app/template/Data/Sql/Metadata/Index.html',
-           resolve: resolveFun( [ './app/controller/Data/Sql/Metadata/Index.js' ] )
-        }
-      },
-      { path: '/Data/SQL-Operate/Data',
-        options: {
-           templateUrl: './app/template/Data/Sql/Operate/Data.html',
-           resolve: resolveFun( [ './app/controller/Data/Sql/Operate/Data.js' ] )
-        }
-      },
-      { path: '/Data/SQL-Operate/Structure',
-        options: {
-           templateUrl: './app/template/Data/Sql/Operate/Structure.html',
-           resolve: resolveFun( [ './app/controller/Data/Sql/Operate/Structure.js' ] )
         }
       },
       { path: '/Data/HDFS-web/Index',
@@ -285,25 +240,6 @@
         options: {
            templateUrl: './app/template/Monitor/Sdb/Host/Info/Charts.html',
            resolve: resolveFun( [ './app/controller/Monitor/Sdb/Host/Info/Charts.js' ] )
-         }
-      },
-      //SQL¼à¿ØÒ³
-      { path: '/Monitor/SQL-Module/Index',
-        options: {
-           templateUrl: './app/template/Monitor/SqlModule/Preview/Index.html',
-           resolve: resolveFun( [ './app/controller/Monitor/SqlModule/Preview/Index.js' ] )
-         }
-      },
-      { path: '/Monitor/SQL-Module/Performance',
-        options: {
-           templateUrl: './app/template/Monitor/SqlModule/Performance/Index.html',
-           resolve: resolveFun( [ './app/controller/Monitor/SqlModule/Performance/Index.js' ] )
-         }
-      },
-      { path: '/Monitor/SQL-Module/Analyze',
-        options: {
-           templateUrl: './app/template/Monitor/SqlModule/Analyze/Index.html',
-           resolve: resolveFun( [ './app/controller/Monitor/SqlModule/Analyze/Index.js' ] )
          }
       },
       //¼à¿Ø-ÉçÇø°æÌáÊ¾Ò³Ãæ

@@ -18,7 +18,7 @@
             <div style="height:30px;font-size:110%;font-weight:bold;">{{autoLanguage("主机列表")}}</div>
             <div ng-container="{offsetY:-30}" ng-table="HostListTable['options']" table-title="HostListTable['title']" table-content="hostInfo in HostListTable['body']" table-callback="HostListTable['callback']">
                <div class="Ellipsis" table-key="Checked">
-                  <i class="fa fa-times" style="color:#D9534F;font-size:22px;" ng-attr="{'data-desc': 'Package is exist, The host is not installed.'}" ng-if="hostInfo['Checked'] != true"></i>
+                  <i class="fa fa-times" style="color:#D9534F;font-size:22px;" ng-attr="{'data-desc': 'Package is exist.The host is already installed.'}" ng-if="hostInfo['Checked'] != true"></i>
                   <i class="fa fa-check" style="color:#00CC66;font-size:22px;" ng-if="hostInfo['Checked'] == true"></i>
                </div>
                <div class="Ellipsis" ng-class="{'linkButton':hostInfo['Checked'],'grayColor':!hostInfo['Checked']}" table-key="HostName" style="word-break:break-all;" ng-click="ShowChangeHostInfo($index)">
