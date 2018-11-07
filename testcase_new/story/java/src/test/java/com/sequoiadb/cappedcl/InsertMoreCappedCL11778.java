@@ -28,23 +28,22 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 */
 public class InsertMoreCappedCL11778 extends SdbTestBase{
 
-	private Sequoiadb sdb = null;
-	private List<DBCollection> cappedCLs = new ArrayList<DBCollection>();
-	private String cappedCSName_11778 = "story_java_cappedCS_11778";
-	private String cappedCLName_11778 = "cappedCL_11778";
-	private int csNum = 2; //2 CSs
-	private int clNum = 2; //each CS has 2 CLs
-	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+        private Sequoiadb sdb = null;
+        private String cappedCSName = "story_java_cappedCS_11778";
+        private String cappedCLName = "cappedCL_11778";
+        private int csNum = 2; //2 CSs
+        private int clNum = 2; //each CS has 2 CLs
+        private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 	
 	@BeforeClass
 	public void setUp() {
-		System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
-	   sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
-	   cappedCLs = CappedCLUtils.createMoreCappedCL(sdb, cappedCSName_11778, cappedCLName_11778 ,csNum,clNum);
+           System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
+           sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
+           CappedCLUtils.createMoreCappedCL(sdb, cappedCSName, cappedCLName ,csNum,clNum);
 	}
 	
 	@Test
-   public void testGreatConcurrencyInsert() {
+        public void testGreatConcurrencyInsert() {
 		StringBuffer strBuffer = new StringBuffer();
 		
 		InsertThread insertThread = new InsertThread(strBuffer);
@@ -57,7 +56,7 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
 		sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
 		for(int csNo = 1; csNo <= csNum; csNo++) {
          for(int clNo = 1; clNo <= clNum; clNo++) {  
-         	DBCollection primaryCL = sdb.getCollectionSpace(cappedCSName_11778 + csNo).getCollection(cappedCLName_11778 + clNo);
+         	DBCollection primaryCL = sdb.getCollectionSpace(cappedCSName + csNo).getCollection(cappedCLName + clNo);
 			   Assert.assertTrue(CappedCLUtils.checkLogicalID(primaryCL, strBuffer.length(),this.getClass().getName()));
          }
       }
@@ -66,7 +65,7 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
 		sdb.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'S'}"));
 		for(int csNo = 1; csNo <= csNum; csNo++) {
          for(int clNo = 1; clNo <= clNum; clNo++) {  
-			   DBCollection slaveCL = sdb.getCollectionSpace(cappedCSName_11778 + csNo).getCollection(cappedCLName_11778 + clNo);
+			   DBCollection slaveCL = sdb.getCollectionSpace(cappedCSName + csNo).getCollection(cappedCLName + clNo);
 			   Assert.assertTrue(CappedCLUtils.checkLogicalID(slaveCL, strBuffer.length(),this.getClass().getName()));
          }
       }
@@ -77,9 +76,9 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
 	public void tearDown() {
 		try {
 			for(int csNo = 1; csNo <= csNum; csNo++) {
-				CollectionSpace cs = sdb.getCollectionSpace(cappedCSName_11778 + csNo);
+				CollectionSpace cs = sdb.getCollectionSpace(cappedCSName + csNo);
 				if(cs != null) {
-					sdb.dropCollectionSpace(cappedCSName_11778 + csNo);
+					sdb.dropCollectionSpace(cappedCSName + csNo);
 				}
 			}
 		}catch (BaseException e) {
@@ -116,9 +115,9 @@ public class InsertMoreCappedCL11778 extends SdbTestBase{
                 
                 //insert records in all CLs
                 for(int csNo = 1; csNo <= csNum; csNo++) {
-                	cs = db.getCollectionSpace(cappedCSName_11778 + csNo);
+                	cs = db.getCollectionSpace(cappedCSName + csNo);
                 	for(int clNo = 1; clNo <= clNum; clNo++) {  
-         	            cl = cs.getCollection(cappedCLName_11778 + clNo);
+         	            cl = cs.getCollection(cappedCLName + clNo);
          	            CappedCLUtils.insertRecords(cl,obj); 
                 	}
                 }

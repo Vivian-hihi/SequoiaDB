@@ -26,11 +26,11 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 public class InsertAndQueryConcurrentcy11807 extends SdbTestBase{
 
    private Sequoiadb sdb = null;
-   private DBCollection cappedCL_11807 = null;
-   private String cappedCSName_11807 = "story_java_cappedCS_11807";
-   private String cappedCLName_11807 = "cappedCL_11807";
+   private DBCollection cappedCL = null;
+   private String cappedCSName = "story_java_cappedCS_11807";
+   private String cappedCLName = "cappedCL_11807";
    private int stringLength = 0;
-   private final int INIT_RECORDNUMS_5000 = 5000;
+   private final int INITRECORDNUMS = 5000;
    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 	
    @BeforeClass
@@ -38,9 +38,9 @@ public class InsertAndQueryConcurrentcy11807 extends SdbTestBase{
       System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
       boolean isCapped = true;
       sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
-      cappedCL_11807 = CappedCLUtils.createCL(sdb, cappedCSName_11807, cappedCLName_11807, isCapped);
+      cappedCL = CappedCLUtils.createCL(sdb, cappedCSName, cappedCLName, isCapped);
       stringLength = CappedCLUtils.getRandomStringLength();
-      CappedCLUtils.insertRecords(cappedCL_11807,stringLength,INIT_RECORDNUMS_5000);//init insert 5000 records 
+      CappedCLUtils.insertRecords(cappedCL,stringLength,INITRECORDNUMS);//init insert 5000 records 
    }
 	
    @Test
@@ -58,9 +58,9 @@ public class InsertAndQueryConcurrentcy11807 extends SdbTestBase{
    @AfterClass
    public void tearDown() {
       try {
-         CollectionSpace cs = sdb.getCollectionSpace(cappedCSName_11807);
-         if(cs != null && cs.isCollectionExist(cappedCLName_11807)) {
-            sdb.dropCollectionSpace(cappedCSName_11807);
+         CollectionSpace cs = sdb.getCollectionSpace(cappedCSName);
+         if(cs != null && cs.isCollectionExist(cappedCLName)) {
+            sdb.dropCollectionSpace(cappedCSName);
          }
       }catch (BaseException e) {
          e.printStackTrace();
@@ -78,7 +78,7 @@ public class InsertAndQueryConcurrentcy11807 extends SdbTestBase{
          try{
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             // check records from primary and slave node
-            cl = db.getCollectionSpace(cappedCSName_11807).getCollection(cappedCLName_11807);		 
+            cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);		 
             CappedCLUtils.checkLogicalID(cl, stringLength, Thread.currentThread().getName());  
          }catch(BaseException e){
             if(e.getErrorCode() != -23 || e.getErrorCode() != -34){
@@ -98,7 +98,7 @@ public class InsertAndQueryConcurrentcy11807 extends SdbTestBase{
          DBCollection cl = null;
          try{
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl = db.getCollectionSpace(cappedCSName_11807).getCollection(cappedCLName_11807);
+            cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);
             // insert records in cappedCL	              
             int insert_new_recordNum = 10;
             CappedCLUtils.insertRecords(cl,stringLength,insert_new_recordNum);

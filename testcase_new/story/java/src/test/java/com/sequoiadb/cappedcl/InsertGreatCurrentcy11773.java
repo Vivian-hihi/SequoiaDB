@@ -27,7 +27,6 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 public class InsertGreatCurrentcy11773 extends SdbTestBase{
 
    private Sequoiadb sdb = null;
-   private DBCollection cappedCL_11773 = null;
    private String cappedCSName = "story_java_cappedCS_11773";
    private String cappedCLName = "cappedCL_11773";
    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
@@ -38,7 +37,7 @@ public class InsertGreatCurrentcy11773 extends SdbTestBase{
       boolean isCapped = true;
       sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
       //create cl
-      cappedCL_11773 = CappedCLUtils.createCL(sdb, cappedCSName, cappedCLName, isCapped);
+      CappedCLUtils.createCL(sdb, cappedCSName, cappedCLName, isCapped);
    }
 	
    @Test

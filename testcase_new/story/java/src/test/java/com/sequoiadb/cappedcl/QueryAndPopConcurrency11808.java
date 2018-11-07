@@ -31,9 +31,9 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 public class QueryAndPopConcurrency11808 extends SdbTestBase{
 	
    private Sequoiadb sdb = null;
-   private DBCollection cappedCL_11808 = null;
-   private String cappedCSName_11808 = "story_java_cappedCS_11808";
-   private String cappedCLName_11808 = "cappedCL_11808";
+   private DBCollection cappedCL = null;
+   private String cappedCSName = "story_java_cappedCS_11808";
+   private String cappedCLName = "cappedCL_11808";
    private List<Long> lids = new ArrayList<>();
    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 	
@@ -42,7 +42,7 @@ public class QueryAndPopConcurrency11808 extends SdbTestBase{
       System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
       boolean isCapped = true;
       sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
-      cappedCL_11808 = CappedCLUtils.createCL(sdb, cappedCSName_11808, cappedCLName_11808, isCapped);
+      cappedCL = CappedCLUtils.createCL(sdb, cappedCSName, cappedCLName, isCapped);
       int recordNums = 10000;
       insertRecords(recordNums);
    }
@@ -62,9 +62,9 @@ public class QueryAndPopConcurrency11808 extends SdbTestBase{
    @AfterClass
    public void tearDown() {
       try {
-         CollectionSpace cs = sdb.getCollectionSpace(cappedCSName_11808);
-         if(cs != null && cs.isCollectionExist(cappedCLName_11808)) {
-            sdb.dropCollectionSpace(cappedCSName_11808);
+         CollectionSpace cs = sdb.getCollectionSpace(cappedCSName);
+         if(cs != null && cs.isCollectionExist(cappedCLName)) {
+            sdb.dropCollectionSpace(cappedCSName);
          }
       }catch (BaseException e) {
          e.printStackTrace();
@@ -76,13 +76,13 @@ public class QueryAndPopConcurrency11808 extends SdbTestBase{
    public void insertRecords(int recordNums) {
       for(int i = 0; i < recordNums; i++) { 
          BSONObject obj = (BSONObject)JSON.parse("{ a :" + i + "}"); 
-         cappedCL_11808.insert(obj);
+         cappedCL.insert(obj);
       }
 		 
       //save logincalIds
       BSONObject orderBy = new BasicBSONObject();
       orderBy.put("_id", 1);
-      DBCursor cursor = cappedCL_11808.query(null,null,orderBy,null);
+      DBCursor cursor = cappedCL.query(null,null,orderBy,null);
         
       while(cursor.hasNext()) {
          long _id = (long)cursor.getNext().get("_id");
@@ -101,9 +101,9 @@ public class QueryAndPopConcurrency11808 extends SdbTestBase{
                 
             //check primary and slave datas
             db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
-            DBCollection primaryCL = db.getCollectionSpace(cappedCSName_11808).getCollection(cappedCLName_11808);
+            DBCollection primaryCL = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);
             db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'S'}"));
-            DBCollection slaveCL = db.getCollectionSpace(cappedCSName_11808).getCollection(cappedCLName_11808);
+            DBCollection slaveCL = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);
 					 
             int stringLength = 1;
             CappedCLUtils.checkLogicalID(primaryCL, stringLength, Thread.currentThread().getName());
@@ -129,7 +129,7 @@ public class QueryAndPopConcurrency11808 extends SdbTestBase{
          DBCollection cl = null;
          try{
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl = db.getCollectionSpace(cappedCSName_11808).getCollection(cappedCLName_11808);
+            cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);
 	                 
             //start from middle , find a random logicalID
             int min = lids.size() / 2;

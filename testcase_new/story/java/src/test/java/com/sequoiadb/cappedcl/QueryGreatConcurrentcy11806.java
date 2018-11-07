@@ -26,9 +26,9 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 public class QueryGreatConcurrentcy11806 extends SdbTestBase{
 	
    private Sequoiadb sdb = null;
-   private DBCollection cappedCL_11806 = null;
-   private String cappedCSName_11806 = "story_java_cappedCS_11806";
-   private String cappedCLName_11806 = "cappedCL_11806";
+   private DBCollection cappedCL = null;
+   private String cappedCSName = "story_java_cappedCS_11806";
+   private String cappedCLName = "cappedCL_11806";
    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
    private int stringLength = 0;
 	
@@ -37,9 +37,9 @@ public class QueryGreatConcurrentcy11806 extends SdbTestBase{
       System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
       boolean isCapped = true;
       sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
-      cappedCL_11806 = CappedCLUtils.createCL(sdb, cappedCSName_11806, cappedCLName_11806, isCapped);
+      cappedCL = CappedCLUtils.createCL(sdb, cappedCSName, cappedCLName, isCapped);
       stringLength = CappedCLUtils.getRandomStringLength();
-      CappedCLUtils.insertRecords(cappedCL_11806, stringLength, 2000);//init insert 10000 records
+      CappedCLUtils.insertRecords(cappedCL, stringLength, 2000);//init insert 10000 records
    }
 	
    @Test
@@ -54,9 +54,9 @@ public class QueryGreatConcurrentcy11806 extends SdbTestBase{
    @AfterClass
    public void tearDown() {
       try {
-         CollectionSpace cs = sdb.getCollectionSpace(cappedCSName_11806);
-         if(cs != null && cs.isCollectionExist(cappedCLName_11806)) {
-            sdb.dropCollectionSpace(cappedCSName_11806);
+         CollectionSpace cs = sdb.getCollectionSpace(cappedCSName);
+         if(cs != null && cs.isCollectionExist(cappedCLName)) {
+            sdb.dropCollectionSpace(cappedCSName);
          }
       }catch (BaseException e) {
          e.printStackTrace();
@@ -74,7 +74,7 @@ public class QueryGreatConcurrentcy11806 extends SdbTestBase{
                DBCollection cl = null;
                try{
                   db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                  cl = db.getCollectionSpace(cappedCSName_11806).getCollection(cappedCLName_11806);  	                
+                  cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);  	                
                   CappedCLUtils.checkLogicalID(cl,stringLength,Thread.currentThread().getName());
                }catch(BaseException e){
                   if(e.getErrorCode() != -23 || e.getErrorCode() != -34){
