@@ -101,7 +101,13 @@
       
       //创建分区组 弹窗
       $scope.CreateGroupWindow = {
-         'config': {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 创建分区组 弹窗
+      $scope.ShowCreateGroup = function(){
+         $scope.CreateGroupWindow['config'] = {
             'inputList': [
                {
                   "name": "groupName",
@@ -116,12 +122,7 @@
                   }
                }
             ]
-         },
-         'callback': {}
-      } ;
-
-      //打开 创建分区组 弹窗
-      $scope.ShowCreateGroup = function(){
+         } ;
          $scope.CreateGroupWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
             var isAllClear = $scope.CreateGroupWindow['config'].check( function( thisValue ){
                var isFind = false ;
@@ -519,14 +520,6 @@
                   formVal['dbpath'] = dbpathEscape( formVal['dbpath'], formVal['HostName'], formVal['svcname'], formVal['role'], formVal['datagroupname'] ) ;
                   formVal['i'] = $scope.NodeList.length ;
                   $scope.NodeList.push( formVal ) ;
-                  if( $scope.GroupList[groupIndex]['role'] != 'coord' && $scope.GroupList[groupIndex]['nodeNum'] >= 7 )
-                  {
-                     $scope.GroupList[groupIndex]['DropdownMenu'][0]['disabled'] = true ;
-                  }
-                  if( $scope.GroupList[groupIndex]['nodeNum'] > 0 )
-                  {
-                     $scope.GroupList[groupIndex]['DropdownMenu'][1]['disabled'] = false ;
-                  }
                }
                else if( type == 3 )
                {
@@ -759,15 +752,6 @@
                   $scope.NodeList[index]['i'] = index ;
                } ) ;
                --$scope.GroupList[index]['nodeNum'] ;
-               //没有节点了，禁用删除节点的按钮
-               if( $scope.GroupList[index]['nodeNum'] < 7 )
-               {
-                  $scope.GroupList[index]['DropdownMenu'][0]['disabled'] = false ;
-               }
-               if( $scope.GroupList[index]['nodeNum'] == 0 )
-               {
-                  $scope.GroupList[index]['DropdownMenu'][1]['disabled'] = true ;
-               }
             }
             return isAllClear ;
          } ) ;
@@ -1192,11 +1176,6 @@
             if( ( role == 'data' && groupInfo['groupName'] == groupName ) || ( role != 'data' && groupInfo['role'] == role ) )
             {
                ++$scope.GroupList[index]['nodeNum'] ;
-               $scope.GroupList[index]['DropdownMenu'][1]['disabled'] = false ;
-               if( role != 'coord' && $scope.GroupList[index]['nodeNum'] >= 7 )
-               {
-                  $scope.GroupList[index]['DropdownMenu'][0]['disabled'] = true ;
-               }
                isFind = true ;
                return false ;
             }
@@ -1204,23 +1183,7 @@
          if( isFind == false )
          {
             var groupIndex = $scope.GroupList.length ;
-            if( role == 'data' )
-            {
-               $scope.GroupList.push( { 'role': role, 'groupName': groupName, 'nodeNum': defaultNum, 'DropdownMenu': [
-                  { 'html': $compile( '<div style="padding:5px 10px" ng-click="CreateAddNodeModel(' + groupIndex + ')">{{autoLanguage("添加节点")}}</div>' )( $scope ), 'disabled': false },
-                  { 'html': $compile( '<div style="padding:5px 10px" ng-click="ShowRemoveNode(' + groupIndex + ')">{{autoLanguage("删除节点")}}</div>' )( $scope ), 'disabled': true },
-                  {},
-                  { 'html': $compile( '<div style="padding:5px 10px" ng-click="ShowRenameGroup(' + groupIndex + ')">{{autoLanguage("修改分区组名")}}</div>' )( $scope ) },
-                  { 'html': $compile( '<div style="padding:5px 10px" ng-click="CreateRemoveGroupModel(' + groupIndex + ')">{{autoLanguage("删除分区组")}}</div>' )( $scope ) }
-               ] } ) ;
-            }
-            else
-            {
-               $scope.GroupList.push( { 'role': role, 'groupName': groupName, 'nodeNum': defaultNum, 'DropdownMenu': [
-                  { 'html': $compile( '<div style="padding:5px 10px" ng-click="CreateAddNodeModel(' + groupIndex + ')">{{autoLanguage("添加节点")}}</div>' )( $scope ), 'disabled': false },
-                  { 'html': $compile( '<div style="padding:5px 10px" ng-click="ShowRemoveNode(' + groupIndex + ')">{{autoLanguage("删除节点")}}</div>' )( $scope ), 'disabled': true }
-               ] } ) ;
-            }
+            $scope.GroupList.push( { 'role': role, 'groupName': groupName, 'nodeNum': defaultNum } ) ;
             if( role == 'data' )
             {
                selectGroup.push( { 'key': groupName, 'value': groupName } ) ;
@@ -1228,6 +1191,85 @@
          }
       }
 
+      $scope.GroupOperateDropdown = {
+         'config': [],
+         'callback': {}
+      }
+
+      $scope.OpenDropdown = function( event, role, groupIndex ){
+         $scope.GroupOperateDropdown['config'] = [] ;
+         if( role == 'data' )
+         {
+            $scope.GroupOperateDropdown['config'] = [
+               { 'key': $scope.autoLanguage( '添加节点' ) },
+               { 'key': $scope.autoLanguage( '删除节点' ) },
+               { 'key': $scope.autoLanguage( '修改分区组名' ) },
+               { 'key': $scope.autoLanguage( '删除分区组' ) }
+            ] ;
+
+            if( $scope.GroupList[groupIndex]['nodeNum'] == 0 )
+            {
+               $scope.GroupOperateDropdown['config'][1]['disabled'] = true ;
+            }
+            else if( $scope.GroupList[groupIndex]['nodeNum'] < 7 )
+            {
+               $scope.GroupOperateDropdown['config'][1]['disabled'] = false ;
+               $scope.GroupOperateDropdown['config'][0]['disabled'] = false ;
+            }
+            else if( $scope.GroupList[groupIndex]['nodeNum'] == 7 )
+            {
+               $scope.GroupOperateDropdown['config'][0]['disabled'] = true ;
+            }
+
+            $scope.GroupOperateDropdown['OnClick'] = function( index ){
+               if( index == 0 )
+               {
+                  $scope.CreateAddNodeModel( groupIndex ) ;
+               }
+               else if( index == 1 )
+               {
+                  $scope.ShowRemoveNode( groupIndex ) ;
+               }
+               else if( index == 2 )
+               {
+                  $scope.ShowRenameGroup( groupIndex ) ;
+               }
+               else
+               {
+                  $scope.CreateRemoveGroupModel( groupIndex ) ;
+               }
+               $scope.GroupOperateDropdown['callback']['Close']() ;
+            }
+         }
+         else
+         {
+            $scope.GroupOperateDropdown['config'] = [
+               { 'key': $scope.autoLanguage( '添加节点' ) },
+               { 'key': $scope.autoLanguage( '删除节点' ) }
+            ] ;
+            if( $scope.GroupList[groupIndex]['nodeNum'] == 0 )
+            {
+               $scope.GroupOperateDropdown['config'][1]['disabled'] = true ;
+            }
+            if( role == 'catalog' && $scope.GroupList[groupIndex]['nodeNum'] == 7 )
+            {
+               $scope.GroupOperateDropdown['config'][0]['disabled'] = true ;
+            }
+            $scope.GroupOperateDropdown['OnClick'] = function( index ){
+               if( index == 0 )
+               {
+                  $scope.CreateAddNodeModel( groupIndex ) ;
+               }
+               else
+               {
+                  $scope.ShowRemoveNode( groupIndex ) ;
+               }
+               $scope.GroupOperateDropdown['callback']['Close']() ;
+            }
+         }
+         $scope.GroupOperateDropdown['callback']['Open']( event.currentTarget ) ;
+      }
+      
       //获取业务配置
       var getModuleConfig = function(){
          var data = { 'cmd': 'get business config', 'TemplateInfo': JSON.stringify( $scope.Configure ) } ;
@@ -1505,7 +1547,9 @@
             configure['Config'].push( nodeConfig ) ;
          } ) ;
          if( configure )
+         {
             installSdb( configure ) ;
+         }
       }
 
    } ) ;
