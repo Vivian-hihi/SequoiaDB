@@ -7,8 +7,8 @@ function main()
 {
    if(commIsStandalone( db )){
       println("Deploy is standalone");
-	  return;
-   };
+      return;
+   }
 
    var clName = COMMCLNAME + "_ES_11979";
    commDropCL(db, COMMCSNAME, clName, true, true);
@@ -41,9 +41,9 @@ function main()
    
    for (var i in expCappedAttr){
       if (expCappedAttr[i] != actCappedAttr[i]){
-	     throw buildException("main()", "capped cl's attributes is not default value", "expCappedAttr equal to actCappedAttr", JSON.stringify(expCappedAttr), JSON.stringify(actCappedAttr));	   
-	  }
-   }
+         throw buildException("main()", "capped cl's attributes is not default value", "expCappedAttr equal to actCappedAttr", JSON.stringify(expCappedAttr), JSON.stringify(actCappedAttr));	   
+      }
+   }  
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
 main()

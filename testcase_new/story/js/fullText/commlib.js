@@ -9,10 +9,6 @@ var HEADER = "'Content-Type: application/json'";
 var HTTP = "'http://" + ESHOSTNAME + ":" + ESSVCNAME;
 var esOpr = new ESOperator();
 var dbOpr = new DBOperator();
-
-// create WORKDIR in local host
-commMakeDir( "localhost", WORKDIR ) ;
-
 /******************************************************************************
 *@Description : do some operations related to ES, such as:
                 do queries by rest
@@ -200,8 +196,8 @@ function DBOperator()
       var cappedCLName = this.getCappedCLName( dbcl, textIndexName ); 
       var clGroups = commGetCLGroups( db, clFullName );
       // sort groupname, in order to mapping esIndexNames <-> cappedCLs
+	   clGroups = removeDuplicateItems(clGroups);
       clGroups.sort();
-      
       // get each cappedCL from each group
       var cappedCLs = new Array();
       for (var i in clGroups)
@@ -226,6 +222,7 @@ function DBOperator()
       // get es index names
       var esIndexNames = new Array();
       var clGroupNames = commGetCLGroups(db, csName + "." + clName);
+      clGroupNames = removeDuplicateItems(clGroupNames);
       // sort groupname, in order to mapping esIndexNames <-> cappedCLs
       clGroupNames.sort();
       for(var i in clGroupNames)
@@ -550,4 +547,19 @@ function insertRecords(dbcl, records)
          throw buildException("insertRecords", "insert records fail", "fail", e, e);  
       }
    }
+}
+
+/******************************************************************************
+*@Description : remove duplicate items in array
+@input:         array
+******************************************************************************/
+function removeDuplicateItems(array)
+{
+   var uniqueArray = new Array();
+   for (var i in array){
+      if (uniqueArray.indexOf(array[i]) == -1){
+         uniqueArray.push(array[i]);
+      }
+   }
+   return uniqueArray;
 }

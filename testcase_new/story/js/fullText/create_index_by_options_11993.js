@@ -7,8 +7,8 @@ function main()
 {
    if(commIsStandalone( db )){
       println("Deploy is standalone");
-	  return;
-   };
+      return;
+   }
 
    var clName = COMMCLNAME + "_ES_11993";
    commDropCL(db, COMMCSNAME, clName, true, true);
@@ -18,25 +18,25 @@ function main()
    //创建索引类型非法的全文索引
    var indexName = "a";
    try{
-	  dbcl.createIndex(indexName, {content:"int"});
-	  throw e;
+      dbcl.createIndex(indexName, {content:"int"});
+      throw e;
    }
    catch( e ){
-	  if( e != -6){
-	     throw buildException("main()", "create illegal index success", "create full index", "fail to create index", "create index success");
-	  }
+      if( e != -6){
+         throw buildException("main()", "create illegal index success", "create full index", "fail to create index", "create index success");
+      }
    }
    commCheckIndex( dbcl, indexName, false );
    
    //创建非法的复合索引
    try{
-	  dbcl.createIndex(indexName, {content:"text", about : 1});
-	  throw e;
+      dbcl.createIndex(indexName, {content:"text", about : 1});
+      throw e;
    }
    catch( e ){
-	  if( e != -6){
-	     throw buildException("mian()", "create illegal composite index", "create full index", "fail to create index", "create index success");
-	  }
+      if( e != -6){
+         throw buildException("mian()", "create illegal composite index", "create full index", "fail to create index", "create index success");
+      }
    }
    commCheckIndex( dbcl, indexName, false );
    

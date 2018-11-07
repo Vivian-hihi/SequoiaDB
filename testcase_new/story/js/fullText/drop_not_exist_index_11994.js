@@ -7,8 +7,8 @@ function main()
 {
    if(commIsStandalone( db )){
       println("Deploy is standalone");
-	  return;
-   };
+      return;
+   }
 
    var clName = COMMCLNAME + "_ES_11994";
    commDropCL(db, COMMCSNAME, clName, true, true);
@@ -25,12 +25,12 @@ function main()
    commCheckIndex( dbcl, indexName, false );
    try{
       dbcl.dropIndex( indexName ); 
-	  throw e;
+      throw e;
    }
    catch( e ){
-	  if( e != -47){
-	     throw buildException("main()", "drop not exist index success", "drop full index", "fail to drop", "drop success");
-	  }
+      if( e != -47){
+         throw buildException("main()", "drop not exist index success", "drop full index", "fail to drop", "drop success");
+      }
    }
    commCheckIndex( dbcl, indexName, false );
    

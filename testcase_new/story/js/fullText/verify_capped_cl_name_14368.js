@@ -7,8 +7,8 @@ function main()
 {
    if(commIsStandalone( db )){
       println("Deploy is standalone");
-	  return;
-   };
+      return;
+   }
 
    var clName = COMMCLNAME + "_ES_14368";
    var csName = "testCS_ES_14368";
@@ -53,8 +53,8 @@ function main()
    for (var i in cappedArray){
       var cpName = cappedArray[i];
       if (cappedArray.indexOf(cpName) != cappedArray.lastIndexOf(cpName)){
-	     throw buildException("main()", "exists duplicate capped cl name", "equal", JSON.stringify(cappedArray), cpName);
-	  }	  
+         throw buildException("main()", "exists duplicate capped cl name", "equal", JSON.stringify(cappedArray), cpName);
+      }	  
    }
    
    //检查索引属性的ExtDataName和固定集合名一致

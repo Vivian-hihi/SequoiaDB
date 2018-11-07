@@ -7,8 +7,8 @@ function main()
 {
    if(commIsStandalone( db )){
       println("Deploy is standalone");
-	  return;
-   };
+      return;
+   }
 
    var clName = COMMCLNAME + "_ES_11985";
    commDropCL(db, COMMCSNAME, clName, true, true);
@@ -21,12 +21,12 @@ function main()
    commCheckIndex( dbcl, indexName, true );
    try{
       dbcl.createIndex( indexName, {content:"text"});
-	  throw e;
+      throw e;
    }
    catch( e ){
       if( e != -46){
          throw buildException("main()", "create duplicate index success", "create index", "fail to create index", "create index success");
-	  }
+      }
    }
    
    //在已存在全文索引定义的集合中，再次创建全文索引
@@ -34,12 +34,12 @@ function main()
    commCheckIndex( dbcl, "b", true );
    try{
       dbcl.createIndex( "c", {content:"text"});
-	  throw e ;
+      throw e ;
    }
    catch( e ){
       if( e != -42){
          throw buildException("main()", "create index on same field", "create full index", "fail to create index", "create index success");
-	  }
+      }
    }
    
    commDropCL(db, COMMCSNAME, clName, true, true);

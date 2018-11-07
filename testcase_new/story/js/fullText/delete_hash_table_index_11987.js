@@ -1,0 +1,216 @@
+/***************************************************************************
+@Description :seqDB-11987 :hash切分表中创建/删除全文索引 
+@Modify list :
+              2018-11-01  YinZhen  Create
+****************************************************************************/
+function main()
+{
+   if(commIsStandalone( db )){
+      println("Deploy is standalone");
+      return;
+   }
+
+   var clName = COMMCLNAME + "_ES_11987";
+   commDropCL(db, COMMCSNAME, clName, true, true);
+   
+   var groups = commGetGroups( db );
+   if(groups.length < 2 ){
+      throw buildException(commGetGroups, "Only one group", "dbcl get groups' name", "two or more groups", "less than two groups");
+   }
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingType : "hash", ShardingKey : {a : 1}, Group : groups[0][0]["GroupName"]} );
+   
+   //插入数据，数据分布覆盖：1个组、多个组上
+   var records = new Array();
+   for (var i = 0; i < 60 ; i++){
+      var record = {a : "a" + i, b : "b" + i};
+      records.push(record);
+   }
+   for (var i = 0; i < 40 ; i++){
+      var record = {a : "f" + i, b : "g" + i};
+      records.push(record);
+   }
+   insertRecords(dbcl, records);
+   
+   if(100 != dbcl.count())
+   {
+      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
+      return ;
+   }
+   
+   //数据分布覆盖：1个组，索引字段覆盖：非分区键
+   commCreateIndex( dbcl, "fullIndex", {b : "text"});
+   commCheckIndex( dbcl, "fullIndex", true );
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 100);
+   
+   var dbOperator = new DBOperator();
+   var cappedCL = dbOperator.getCappedCLs( COMMCSNAME, clName, "fullIndex" );
+   var cappedCL = cappedCL[0];
+   var count = cappedCL.count();
+   if (count != 0){
+      throw buildException("main()", "cappedCL is not empty", "equal", 0, count);
+   }
+   
+   var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
+   var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
+   checkResult(expResult, actResult);
+   checkConsistency(COMMCSNAME, clName, 5);
+   
+   commDropIndex( dbcl, "fullIndex" );
+   commCheckIndex( dbcl, "fullIndex", false );
+   
+   try{
+      cappedCL.insert({a:"a"});	   
+      throw e;
+   }
+   catch (e){
+      if (e != -34){
+         throw buildException("main()", "cappedCL is not removed", "equal", -34, e);
+      }
+   } 
+   
+   try{
+      checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 0);
+      throw e;
+   }
+   catch( e ){
+      if (e != -47){
+         throw buildException("main()", "es index do not delete", "equal", "delete", "not delete");
+      }
+   }
+   checkConsistency(COMMCSNAME, clName, 5);
+   println("================================One Group Not on ShardingKey================================");
+   
+   //数据分布覆盖：1个组，索引字段覆盖：分区键
+   commCreateIndex( dbcl, "fullIndex", {a : "text"});
+   commCheckIndex( dbcl, "fullIndex", true );
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 100);
+   
+   var cappedCL = dbOperator.getCappedCLs( COMMCSNAME, clName, "fullIndex" );
+   var cappedCL = cappedCL[0];
+   var count = cappedCL.count();
+   if (count != 0){
+      throw buildException("main()", "cappedCL is not empty", "equal", 0, count);
+   }
+   
+   var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
+   var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
+   checkResult(expResult, actResult);
+   checkConsistency(COMMCSNAME, clName, 5);
+   
+   commDropIndex( dbcl, "fullIndex" );
+   commCheckIndex( dbcl, "fullIndex", false );
+   
+   try{
+      cappedCL.insert({a:"a"});	   
+      throw e;
+   }
+   catch (e){
+      if (e != -34){
+         throw buildException("main()", "cappedCL is not removed", "equal", -34, e);
+      }
+   } 
+   
+   try{
+      checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 0);
+	   throw e;
+   }         
+   catch( e ){
+      if (e != -47){
+         throw buildException("main()", "es index do not delete", "equal", "delete", "not delete");
+      }
+   }
+   checkConsistency(COMMCSNAME, clName, 5);
+   println("================================One Group on ShardingKey================================");
+   
+   dbcl.split(groups[0][0]["GroupName"], groups[1][0]["GroupName"], 50);  
+   
+   //数据分布覆盖：多个组，索引字段覆盖：非分区键
+   commCreateIndex( dbcl, "fullIndex", {b : "text"});
+   commCheckIndex( dbcl, "fullIndex", true );
+   
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 100);
+   
+   var cappedCL = dbOperator.getCappedCLs( COMMCSNAME, clName, "fullIndex" );
+   var cappedCL = cappedCL[0];
+   var count = cappedCL.count();
+   if (count != 0){
+      throw buildException("main()", "cappedCL is not empty", "equal", 0, count);
+   }
+   
+   var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
+   var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
+   checkResult(expResult, actResult);
+   checkConsistency(COMMCSNAME, clName, 5);
+   
+   commDropIndex( dbcl, "fullIndex" );
+   commCheckIndex( dbcl, "fullIndex", false );
+   
+   try{
+      cappedCL.insert({a:"a"});	   
+      throw e;
+   }
+   catch (e){
+      if (e != -34){
+         throw buildException("main()", "cappedCL is not removed", "equal", -34, e);
+      }
+   } 
+   
+   try{
+      checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 0);
+      throw e;
+   }
+   catch( e ){
+      if (e != -47){
+         throw buildException("main()", "es index do not delete", "equal", "delete", "not delete");
+      }
+   }
+   checkConsistency(COMMCSNAME, clName, 5);
+   println("================================Many Group Not on ShardingKey================================");
+   
+   //数据分布覆盖：多个组，索引字段覆盖：分区键
+   commCreateIndex( dbcl, "fullIndex", {a : "text"});
+   commCheckIndex( dbcl, "fullIndex", true );
+   
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 100);
+   
+   var cappedCL = dbOperator.getCappedCLs( COMMCSNAME, clName, "fullIndex" );
+   var cappedCL = cappedCL[0];
+   var count = cappedCL.count();
+   if (count != 0){
+      throw buildException("main()", "cappedCL is not empty", "equal", 0, count);
+   }
+   
+   var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
+   var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
+   checkResult(expResult, actResult);
+   checkConsistency(COMMCSNAME, clName, 5);
+   
+   commDropIndex( dbcl, "fullIndex" );
+   commCheckIndex( dbcl, "fullIndex", false );
+   
+   try{
+      cappedCL.insert({a:"a"});	   
+      throw e;
+   }
+   catch (e){
+      if (e != -34){
+         throw buildException("main()", "cappedCL is not removed", "equal", -34, e);
+      }
+   } 
+   
+   try{
+      checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 0);
+      throw e;
+   }
+   catch( e ){
+      if (e != -47){
+         throw buildException("main()", "es index do not delete", "equal", "delete", "not delete");
+      }
+   }
+   checkConsistency(COMMCSNAME, clName, 5);
+   println("================================Many Group on ShardingKey================================");
+   
+   commDropCL(db, COMMCSNAME, clName, true, true);
+}
+
+main()

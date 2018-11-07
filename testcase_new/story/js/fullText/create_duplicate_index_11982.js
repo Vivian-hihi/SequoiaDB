@@ -7,8 +7,8 @@ function main()
 {
    if(commIsStandalone( db )){
       println("Deploy is standalone");
-	  return;
-   };
+      return;
+   }
 
    var clName = COMMCLNAME + "_ES_11985";
    commDropCL(db, COMMCSNAME, clName, true, true);
@@ -20,28 +20,28 @@ function main()
    commCheckIndex( dbcl, "a", true );
    try{
       dbcl.createIndex( "b", {about:"text"});
-	  throw e;
+      throw e;
    }
    catch( e ){
-	  if( e != -42){
-	     throw buildException("main()", "create duplicate indexes", "create index", "fail to create index", "create index success");
-	  }
+      if( e != -42){
+         throw buildException("main()", "create duplicate indexes", "create index", "fail to create index", "create index success");
+      }
    }
    
    var indexes = dbcl.listIndexes();
    var arrayIndexes = new Array();
    while (indexes.next()){
-	  arrayIndexes.push(indexes.current().toObj());
+      arrayIndexes.push(indexes.current().toObj());
    }
    
    //listIndexes不显示创建失败的集合
    if(arrayIndexes.length != 2){
-	  throw buildException("main()", "more than 2 indexes", "indexes.length equal to 2", 2, arrayIndexes.length);
+      throw buildException("main()", "more than 2 indexes", "indexes.length equal to 2", 2, arrayIndexes.length);
    }
    for(var i in arrayIndexes){
       if(arrayIndexes[i]["IndexDef"]["name"] != "$id" && arrayIndexes[i]["IndexDef"]["name"] != "a"){
-		 throw buildException("main()", "have not exist index", "equal", "$id or a", arrayIndexes[i]["IndexDef"]["name"]);
-	  }
+         throw buildException("main()", "have not exist index", "equal", "$id or a", arrayIndexes[i]["IndexDef"]["name"]);
+      }
    }
    
    commDropCL(db, COMMCSNAME, clName, true, true);

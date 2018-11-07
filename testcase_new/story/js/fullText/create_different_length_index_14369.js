@@ -7,8 +7,8 @@ function main()
 {
    if(commIsStandalone( db )){
       println("Deploy is standalone");
-	  return;
-   };
+      return;
+   }
 
    var clName = COMMCLNAME + "_ES_14369";
    commDropCL(db, COMMCSNAME, clName, true, true);
@@ -59,12 +59,12 @@ function main()
    }
    try{
       dbcl.createIndex(indexName, {content : "text"}); 
-	  throw e ;
+      throw e ;
    }
    catch( e ){
 	  if( e != -6){
          throw buildException("mian()", "create more than 127B index", "create index " + indexName, "fail to create index", "create index success");
-	  }
+      }
    }
    commCheckIndex( dbcl, indexName, false );
    println("===create index fail===");
@@ -77,12 +77,12 @@ function main()
    }
    try{
       dbcl.createIndex(indexName, {content : "text"});	   
-	  throw e ;
+      throw e ;
    }
    catch( e ){
       if( e != -6){
-	     throw buildException("main()", "create more than 127B index", "create index " + indexName, "fail to create index", "create index success");
-	  }
+         throw buildException("main()", "create more than 127B index", "create index " + indexName, "fail to create index", "create index success");
+      }
    }
    commCheckIndex( dbcl, indexName, false );
    println("===create index fail===");

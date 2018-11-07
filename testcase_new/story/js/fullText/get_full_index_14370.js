@@ -8,7 +8,7 @@ function main()
    if(commIsStandalone( db )){
       println("Deploy is standalone");
 	  return;
-   };
+   }
 
    var clName = COMMCLNAME + "_ES_14370";
    commDropCL(db, COMMCSNAME, clName, true, true);
@@ -58,19 +58,19 @@ function getActualIndexes(actIndexes){
    var actualIndexes = new Array();
    for (var i in actIndexes){
       var obj = new Object();
-	  obj["IndexDef"] = new Object();
-	  obj["IndexDef"]["name"] = actIndexes[i]["IndexDef"]["name"];
-	  obj["IndexDef"]["key"] = actIndexes[i]["IndexDef"]["key"];
-	  obj["IndexDef"]["v"] = actIndexes[i]["IndexDef"]["v"];
-	  obj["IndexDef"]["unique"] = actIndexes[i]["IndexDef"]["unique"];
-	  obj["IndexDef"]["dropDups"] = actIndexes[i]["IndexDef"]["dropDups"];
-	  obj["IndexDef"]["enforced"] = actIndexes[i]["IndexDef"]["enforced"];
-	  obj["IndexFlag"] = actIndexes[i]["IndexFlag"];
-	  obj["Type"] = actIndexes[i]["Type"];
-	  if (actIndexes[i]["ExtDataName"]){
-	     obj["ExtDataName"] = actIndexes[i]["ExtDataName"];	  
-	  }
-	  actualIndexes.push(obj);
+      obj["IndexDef"] = new Object();
+      obj["IndexDef"]["name"] = actIndexes[i]["IndexDef"]["name"];
+      obj["IndexDef"]["key"] = actIndexes[i]["IndexDef"]["key"];
+      obj["IndexDef"]["v"] = actIndexes[i]["IndexDef"]["v"];
+      obj["IndexDef"]["unique"] = actIndexes[i]["IndexDef"]["unique"];
+      obj["IndexDef"]["dropDups"] = actIndexes[i]["IndexDef"]["dropDups"];
+      obj["IndexDef"]["enforced"] = actIndexes[i]["IndexDef"]["enforced"];
+      obj["IndexFlag"] = actIndexes[i]["IndexFlag"];
+      obj["Type"] = actIndexes[i]["Type"];
+      if (actIndexes[i]["ExtDataName"]){
+         obj["ExtDataName"] = actIndexes[i]["ExtDataName"];	  
+      }
+      actualIndexes.push(obj);
    }
    return actualIndexes;
 }

@@ -7,8 +7,8 @@ function main()
 {
    if(commIsStandalone( db )){
       println("Deploy is standalone");
-	  return;
-   };
+      return;
+   }
 
    var clName = COMMCLNAME + "_ES_11983";
    commDropCL(db, COMMCSNAME, clName, true, true);
@@ -24,12 +24,12 @@ function main()
    //在已创建64个索引的情况下，创建全文索引
    try{
       dbcl.createIndex( "fullIndex", {content : "text"});
-	  throw e ;
+      throw e ;
    }
    catch( e ){
-	  if( e != -42){
-	     throw buildException("main()", "create more than 64 indexes", "create index", "fail to create index", "create index success");
-	  }
+      if( e != -42){
+         throw buildException("main()", "create more than 64 indexes", "create index", "fail to create index", "create index success");
+      }
    }
    commCheckIndex( dbcl, "fullIndex", false );
    
@@ -43,8 +43,8 @@ function main()
    //检查listIndexes是否包含创建失败的索引名
    for(var i in arrayIndexes){
       if (arrayIndexes[i] == "fullIndex"){
-	     throw buildException("main()", "list indexes with not exist index", "arrayIndexes[i] equal to fullIndex", arrayIndexes[i], "fullIndex");	  
-	  }
+         throw buildException("main()", "list indexes with not exist index", "arrayIndexes[i] equal to fullIndex", arrayIndexes[i], "fullIndex");	  
+      }
    }
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
