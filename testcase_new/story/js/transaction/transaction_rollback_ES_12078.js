@@ -1,7 +1,7 @@
 /***************************************************************************
-@Description :seqDB-12075 :集合中存在全文索引进行事务提交 
+@Description :seqDB-12078 :集合中的全文索引字段与普通索引字段相同，对该字段进行事务回滚  
 @Modify list :
-              2018-10-29  YinZhen  Create
+              2018-11-06  YinZhen  Create
 ****************************************************************************/
 function main()
 {
@@ -10,27 +10,26 @@ function main()
       return;
    }
 
-   var clName = COMMCLNAME + "_ES_12075";
-   var csName = "testCS_ES_12075";
+   var clName = COMMCLNAME + "_ES_12078";
+   var csName = "testCS_ES_12078";
    commDropCS( db, csName );
    
-   //创建全文索引及普通索引
+   //创建全文索引及普通索引，索引字段相同
    var dbcl = commCreateCL( db, csName, clName );
    commCreateIndex( dbcl, "fullIndex", {content : "text"});
-   commCreateIndex( dbcl, "commIndex", {about : 1});
+   commCreateIndex( dbcl, "commIndex", {content : 1});
    
-   //操作字段覆盖：上面：全文索引字段、下面：普通索引字段
    //insert
    db.transBegin();
    var records = new Array();
    for (var i = 0; i < 10 ; i++){
-      var record = {content : "a" + i, age  : i + 10};
+      var record = {content : "a" + i, age : i + 10};
       records.push(record);
    }
    dbcl.insert(records);
-   db.transCommit();
+   db.transRollback();
    
-   checkFullSyncToES(csName, clName, "fullIndex", 10);
+   checkFullSyncToES(csName, clName, "fullIndex", 0);
    checkConsistency(csName, clName, 5);
    
    var dbOperator = new DBOperator();
@@ -45,33 +44,14 @@ function main()
    println("expResult : " + JSON.stringify(expResult));
    println("actResult : " + JSON.stringify(actResult));
    checkResult(expResult, actResult);
-   println("===full index field insert success===");
-   
-   db.transBegin();
-   var records = new Array();
-   for (var i = 0; i < 10 ; i++){
-      var record = {about : "a" + i, age  : i + 10};
-      records.push(record);
-   }
-   dbcl.insert(records);
-   db.transCommit();
-   
-   checkFullSyncToES(csName, clName, "fullIndex", 10);
-   checkConsistency(csName, clName, 5);
-   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
-   var actResult = esOperator.findFromES(esIndexName, queryCond);
-   
-   actResult.sort(compare("content"));
-   expResult.sort(compare("content"));
-   checkResult(expResult, actResult);
-   println("===common index field insert success===");
+   println("===insert success===");
    
    //update
    db.transBegin();
    dbcl.update({$set : {content : "i can not do it"}}, {content : "a2"});
-   db.transCommit();
+   db.transRollback();
    
-   checkFullSyncToES(csName, clName, "fullIndex", 10);
+   checkFullSyncToES(csName, clName, "fullIndex", 0);
    checkConsistency(csName, clName, 5);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
@@ -79,28 +59,14 @@ function main()
    actResult.sort(compare("content"));
    expResult.sort(compare("content"));
    checkResult(expResult, actResult);
-   println("===full index field update success===");
-   
-   db.transBegin();
-   dbcl.update({$set : {about : "how are you"}}, {about : "a3"});
-   db.transCommit();
-   
-   checkFullSyncToES(csName, clName, "fullIndex", 10);
-   checkConsistency(csName, clName, 5);
-   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
-   var actResult = esOperator.findFromES(esIndexName, queryCond);
-   
-   actResult.sort(compare("content"));
-   expResult.sort(compare("content"));
-   checkResult(expResult, actResult);
-   println("===common index field update success===");
+   println("===update success===");
    
    //delete
    db.transBegin();
    dbcl.remove({content : "a3"});
-   db.transCommit();
+   db.transRollback();
    
-   checkFullSyncToES(csName, clName, "fullIndex", 9);
+   checkFullSyncToES(csName, clName, "fullIndex", 0);
    checkConsistency(csName, clName, 5);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
@@ -108,26 +74,12 @@ function main()
    actResult.sort(compare("content"));
    expResult.sort(compare("content"));
    checkResult(expResult, actResult);
-   println("===full index field delete success===");
-   
-   db.transBegin();
-   dbcl.remove({about : "a4"});
-   db.transCommit();
-   
-   checkFullSyncToES(csName, clName, "fullIndex", 9);
-   checkConsistency(csName, clName, 5);
-   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
-   var actResult = esOperator.findFromES(esIndexName, queryCond);
-   
-   actResult.sort(compare("content"));
-   expResult.sort(compare("content"));
-   checkResult(expResult, actResult);
-   println("===common index field delete success===");
+   println("===delete success===");
    
    //truncate
    db.transBegin();
    dbcl.truncate();
-   db.transCommit();
+   db.transRollback();
    
    checkFullSyncToES(csName, clName, "fullIndex", 0);
    checkConsistency(csName, clName, 5);

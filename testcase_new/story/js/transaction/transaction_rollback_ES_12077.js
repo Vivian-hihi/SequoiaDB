@@ -1,7 +1,7 @@
 /***************************************************************************
-@Description :seqDB-12075 :集合中存在全文索引进行事务提交 
+@Description :seqDB-12077 :集合中存在全文索引进行事务回滚  
 @Modify list :
-              2018-10-29  YinZhen  Create
+              2018-11-06  YinZhen  Create
 ****************************************************************************/
 function main()
 {
@@ -10,8 +10,8 @@ function main()
       return;
    }
 
-   var clName = COMMCLNAME + "_ES_12075";
-   var csName = "testCS_ES_12075";
+   var clName = COMMCLNAME + "_ES_12077";
+   var csName = "testCS_ES_12077";
    commDropCS( db, csName );
    
    //创建全文索引及普通索引
@@ -28,9 +28,9 @@ function main()
       records.push(record);
    }
    dbcl.insert(records);
-   db.transCommit();
+   db.transRollback();
    
-   checkFullSyncToES(csName, clName, "fullIndex", 10);
+   checkFullSyncToES(csName, clName, "fullIndex", 0);
    checkConsistency(csName, clName, 5);
    
    var dbOperator = new DBOperator();
@@ -54,9 +54,9 @@ function main()
       records.push(record);
    }
    dbcl.insert(records);
-   db.transCommit();
+   db.transRollback();
    
-   checkFullSyncToES(csName, clName, "fullIndex", 10);
+   checkFullSyncToES(csName, clName, "fullIndex", 0);
    checkConsistency(csName, clName, 5);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
@@ -69,9 +69,9 @@ function main()
    //update
    db.transBegin();
    dbcl.update({$set : {content : "i can not do it"}}, {content : "a2"});
-   db.transCommit();
+   db.transRollback();
    
-   checkFullSyncToES(csName, clName, "fullIndex", 10);
+   checkFullSyncToES(csName, clName, "fullIndex", 0);
    checkConsistency(csName, clName, 5);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
@@ -83,9 +83,9 @@ function main()
    
    db.transBegin();
    dbcl.update({$set : {about : "how are you"}}, {about : "a3"});
-   db.transCommit();
+   db.transRollback();
    
-   checkFullSyncToES(csName, clName, "fullIndex", 10);
+   checkFullSyncToES(csName, clName, "fullIndex", 0);
    checkConsistency(csName, clName, 5);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
@@ -98,9 +98,9 @@ function main()
    //delete
    db.transBegin();
    dbcl.remove({content : "a3"});
-   db.transCommit();
+   db.transRollback();
    
-   checkFullSyncToES(csName, clName, "fullIndex", 9);
+   checkFullSyncToES(csName, clName, "fullIndex", 0);
    checkConsistency(csName, clName, 5);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
@@ -112,9 +112,9 @@ function main()
    
    db.transBegin();
    dbcl.remove({about : "a4"});
-   db.transCommit();
+   db.transRollback();
    
-   checkFullSyncToES(csName, clName, "fullIndex", 9);
+   checkFullSyncToES(csName, clName, "fullIndex", 0);
    checkConsistency(csName, clName, 5);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
@@ -127,7 +127,7 @@ function main()
    //truncate
    db.transBegin();
    dbcl.truncate();
-   db.transCommit();
+   db.transRollback();
    
    checkFullSyncToES(csName, clName, "fullIndex", 0);
    checkConsistency(csName, clName, 5);
