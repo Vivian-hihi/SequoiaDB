@@ -8,14 +8,11 @@ function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   var csName = COMMCSNAME + "_ES_12045";
-   commDropCS( db, csName, true, "drop CS in the beginning" );
+   commDropCL(db, COMMCSNAME, clName, true, true);
                                                              	
-   commCreateCS( db, csName, false, "" );
-                                                              	
    //create CL
    var clName = COMMCLNAME + "_ES_12045";
-   var dbcl = commCreateCL( db, csName, clName );
+   var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
    var textIndexName = "textIndex";
    dbcl.createIndex(textIndexName, {"a" : "text"});
@@ -35,11 +32,11 @@ function main()
       return ;
    }   
   
-   checkFullSyncToES(csName, clName, textIndexName, 10001);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10001);
  
    var esOpr = new ESOperator(); 
    var dbOpr = new DBOperator();
-   var esIndexNames = dbOpr.getESIndexNames(csName, clName, textIndexName);
+   var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);
  
    // from 
    var findCond = {"":{"$Text":{"query":{"match_all":{}}, "from": 9990}}};
@@ -82,7 +79,7 @@ function main()
          throw buildException("find()", "find", "find other exception", e, e);
       }
    }
- 
-   commDropCS( db, csName, true, "drop CS in the end" );
+
+   commDropCL(db, COMMCSNAME, clName, true, true); 
 }
 main();

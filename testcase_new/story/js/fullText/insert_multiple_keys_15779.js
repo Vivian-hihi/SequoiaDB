@@ -8,14 +8,11 @@ function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   var csName = COMMCSNAME + "_ES_15779";
-   commDropCS( db, csName, true, "drop CS in the beginning" );
-                                                             	
-   commCreateCS( db, csName, false, "" );
+   commDropCL(db, COMMCSNAME, clName, true, true);
                                                               	
    // create CL
    var clName = COMMCLNAME + "_ES_15779";
-   var dbcl = commCreateCL( db, csName, clName );
+   var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
    // insert before create text index
    dbcl.insert({a: ["arr1", "arr2"], b: ["b1", "b2"], c: ["c1", "c2"]});
@@ -24,7 +21,7 @@ function main()
    dbcl.createIndex(textIndexName, {"a" : "text", "b" : "text", "c" : "text"});
 
    // check sync to es
-   checkFullSyncToES(csName, clName, textIndexName, 0);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 0);
    
    // check result
    var dbOpr = new DBOperator();
@@ -50,6 +47,6 @@ function main()
    var actResult = dbOpr.findFromCL(dbcl, findCond);
    checkResult([], actResult);
 
-   commDropCS( db, csName, true, "drop CS in the end" );
+   commDropCL(db, COMMCSNAME, clName, true, true);
 }
 main();

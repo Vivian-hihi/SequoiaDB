@@ -37,6 +37,8 @@ function main()
    expectResult = dbOperator.findFromCL( dbcl, null, selectorCond ).sort( compare( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );
    checkResult( expectResult, actResult );
+   
+   commDropCL( db, COMMCSNAME, clName, true, true );
 }
 
 function insertData( dbcl )

@@ -8,14 +8,11 @@ function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   var csName = COMMCSNAME + "_ES_14812";
-   commDropCS( db, csName, true, "drop CS in the beginning" );
-                                                             	
-   commCreateCS( db, csName, false, "" );
+   commDropCL(db, COMMCSNAME, clName, true, true);
                                                               	
    //create CL
    var clName = COMMCLNAME + "_ES_14812";
-   var dbcl = commCreateCL( db, csName, clName );
+   var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
    var textIndexName = "textIndex";
    dbcl.createIndex(textIndexName, {"a" : "text"});
@@ -35,7 +32,7 @@ function main()
       return ;
    }
 
-   checkFullSyncToES(csName, clName, textIndexName, 10010);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10010);
    
    // match all records
    var dbOpr = new DBOperator();
@@ -55,7 +52,7 @@ function main()
    expResult.sort(compare("a"));
    checkResult(expResult, actResult);
 
-   commDropCS( db, csName, true, "drop CS in the end" );
+   commDropCL(db, COMMCSNAME, clName, true, true);
 }
 function getStringsByLength( strLen )
 {

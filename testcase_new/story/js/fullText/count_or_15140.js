@@ -8,14 +8,11 @@ function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   var csName = COMMCSNAME + "_ES_15140";
-   commDropCS( db, csName, true, "drop CS in the beginning" );
-                                                             	
-   commCreateCS( db, csName, false, "" );
+   commDropCL(db, COMMCSNAME, clName, true, true);
                                                               	
    //create CL
    var clName = COMMCLNAME + "_ES_15140";
-   var dbcl = commCreateCL( db, csName, clName );
+   var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
    var textIndexName = "textIndex";
    var commIndexName = "commonIndex";
@@ -37,7 +34,7 @@ function main()
       return ;
    }   
    
-   checkFullSyncToES(csName, clName, textIndexName, 20000);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 20000);
    
    // match 0 record
    var findNoneConf = {"$or": [{"b": {"$et" : "testb"}}, {"":{"$Text":{"query":{"match":{"a" : "testa"}}}}}]};
@@ -57,7 +54,7 @@ function main()
    var expectCount = 20000;
    checkCount(expectCount, actCount);
 
-   commDropCS( db, csName, true, "drop CS in the end" );
+   commDropCL(db, COMMCSNAME, clName, true, true);
 }
 function checkCount( expectCount, actCount )
 {

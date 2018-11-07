@@ -8,14 +8,11 @@ function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   var csName = COMMCSNAME + "_ES_12044";
-   commDropCS( db, csName, true, "drop CS in the beginning" );
-                                                             	
-   commCreateCS( db, csName, false, "" );
+   commDropCL(db, COMMCSNAME, clName, true, true);
                                                               	
    //create CL
    var clName = COMMCLNAME + "_ES_12044";
-   var dbcl = commCreateCL( db, csName, clName );
+   var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
    var textIndexName = "textIndex";
    var commonIndexName = "commonIndex"
@@ -37,7 +34,7 @@ function main()
       return ;
    }
   
-   checkFullSyncToES(csName, clName, textIndexName, 20000);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 20000);
   
    // $and
    var findNoneCond = {"$and": [{"b": {"$et" : "testb_0"}}, {"":{"$Text":{"query":{"match_phrase":{"a" : "test_12044 1"}}}}}]};
@@ -86,8 +83,8 @@ function main()
    var actCount = dbcl.find(findAllCond).count();
    var expectCount = 20000;
    checkCount(expectCount, actCount);
- 
-   commDropCS( db, csName, true, "drop CS in the end" );
+
+   commDropCL(db, COMMCSNAME, clName, true, true); 
 }
 function checkCount( expectCount, actCount )
 {

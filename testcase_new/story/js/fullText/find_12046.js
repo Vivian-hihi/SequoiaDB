@@ -8,21 +8,18 @@ function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   var csName = COMMCSNAME + "_ES_12046";
-   commDropCS( db, csName, true, "drop CS in the beginning" );
+   commDropCL(db, COMMCSNAME, clName, true, true);
                                                              	
-   commCreateCS( db, csName, false, "" );
-                                                              	
    //create CL
    var clName = COMMCLNAME + "_ES_12046";
-   var dbcl = commCreateCL( db, csName, clName );
+   var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
    var textIndexName = "textIndex";
    dbcl.createIndex(textIndexName, {"a" : "text"});
 
    dbcl.insert({"a" : "testa"}); 
 
-   checkFullSyncToES(csName, clName, textIndexName, 1);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 1);
 
    // check result
    var dbOpr = new DBOperator();
@@ -46,6 +43,7 @@ function main()
       }
 
    }
-   commDropCS( db, csName, true, "drop CS in the end" );
+
+   commDropCL(db, COMMCSNAME, clName, true, true);
 }
 main();

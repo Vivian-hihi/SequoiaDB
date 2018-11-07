@@ -8,14 +8,11 @@ function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   var csName = COMMCSNAME + "_ES_14380";
-   commDropCS( db, csName, true, "drop CS in the beginning" );
-                                                             	
-   commCreateCS( db, csName, false, "" );
-                                                              	
+   commDropCL(db, COMMCSNAME, clName, true, true);   
+                                                           	
    //create CL
    var clName = COMMCLNAME + "_ES_14380";
-   var dbcl = commCreateCL( db, csName, clName );
+   var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
    var textIndexName = "textIndex";
    var commonIndexName = "commonIndex"
@@ -37,12 +34,12 @@ function main()
       return ;
    }
 
-   checkFullSyncToES(csName, clName, textIndexName, 10000);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10000);
    
    // update textIndex
    dbcl.update({"$set" : {"a" : "update text index 0"}}, {"a" : {"$gt" : "test_14380_1000"}});
    dbcl.update({"$set" : {"a" : "update text index 1"}}, {"b" : {"$et" : "testb_0"}});
-   checkFullSyncToES(csName, clName, textIndexName, 10000);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10000);
 
    // check result
    var dbOpr = new DBOperator();
@@ -56,7 +53,7 @@ function main()
    // update commonIndex
    dbcl.update({"$set" : {"b" : "update common index 0"}}, {"a" : {"$gt" : "test_14380_1000"}});
    dbcl.update({"$set" : {"b" : "update common index 1"}}, {"b" : {"$et" : "testb_0"}});
-   checkFullSyncToES(csName, clName, textIndexName, 10000);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10000);
 
    // check result
    var actResult = dbOpr.findFromCL(dbcl, findCond, {"a" : {"$include" : 1}});
@@ -64,7 +61,7 @@ function main()
    actResult.sort(compare("a", compare("b")));
    expResult.sort(compare("a", compare("b")));
    checkResult(expResult, actResult);
- 
-   commDropCS( db, csName, true, "drop CS in the end" );
+
+   commDropCL(db, COMMCSNAME, clName, true, true); 
 }
 main();

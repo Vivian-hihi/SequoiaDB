@@ -6,16 +6,13 @@
 **************************************/
 function main()
 {
-   if(commIsStandalone(db))  {   return ;   }  
+   if(commIsStandalone(db))  {   return ;   } 
 
-   var csName = COMMCSNAME + "_ES_14390";
-   commDropCS( db, csName, true, "drop CS in the beginning" );
+   commDropCL(db, COMMCSNAME, clName, true, true); 
                                                              	
-   commCreateCS( db, csName, false, "" );
-                                                              	
    //create CL
    var clName = COMMCLNAME + "_ES_14390";
-   var dbcl = commCreateCL( db, csName, clName );
+   var dbcl = commCreateCL( db, COMMCSNAME, clName );
    
    var textIndexName = "textIndex";   
    dbcl.createIndex(textIndexName, {"a" : "text"});
@@ -35,7 +32,7 @@ function main()
       return ;
    }
 
-   checkFullSyncToES(csName, clName, textIndexName, 20000);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 20000);
    
    // match 0 record
    var findNoneConf1 = {"$not":[{"$and":[{"b" : {"$gte" : 0}},{"":{"$Text":{"query":{"match":{"a" : "test_14390"}}}}}]}]}; // not-and, fulltext search under "$and"
@@ -103,6 +100,7 @@ function main()
    println("---match all records for $not-$or---");
    checkResult(expResult, actResult4);
    println("---match all records for $not-$not---"); 
-   commDropCS( db, csName, true, "drop CS in the end" );
+
+   commDropCL(db, COMMCSNAME, clName, true, true);
 }
 main();

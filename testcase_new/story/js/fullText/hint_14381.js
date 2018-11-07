@@ -7,15 +7,12 @@
 function main()
 {
    if(commIsStandalone(db))  {   return ;   }
-  
-   var csName = COMMCSNAME + "_ES_14381";
-   commDropCS( db, csName, true, "drop CS in the beginning" );
-                                                             	
-   commCreateCS( db, csName, false, "" );
+ 
+   commDropCL(db, COMMCSNAME, clName, true, true); 
                                                               	
    //create CL
    var clName = COMMCLNAME + "_ES_14381";
-   var dbcl = commCreateCL( db, csName, clName );
+   var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
    var textIndexName = "textIndex";
    var commonIndexName = "commonIndex"
@@ -37,11 +34,11 @@ function main()
       return ;
    }
 
-   checkFullSyncToES(csName, clName, textIndexName, 10000);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10000);
    
    // update with hint textIndex
    dbcl.update({"$set" : {"a" : "update text index 0"}}, {"a" : "test_14381_0"}, {"" : textIndexName});
-   checkFullSyncToES(csName, clName, textIndexName, 10000);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10000);
 
    // check result
    var dbOpr = new DBOperator();
@@ -54,7 +51,7 @@ function main()
 
    // update with hint commonIndex
    dbcl.update({"$set" : {"a" : "update text index many"}}, {"a" : {"$gt" : "test_14381_1000"}}, {"" : commonIndexName});
-   checkFullSyncToES(csName, clName, textIndexName, 10000);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10000);
 
    // check result
    var actResult = dbOpr.findFromCL(dbcl, findCond);
@@ -62,7 +59,7 @@ function main()
    actResult.sort(compare("a", compare("b")));
    expResult.sort(compare("a", compare("b")));
    checkResult(expResult, actResult);
-   
-   commDropCS( db, csName, true, "drop CS in the end" );
+
+   commDropCL(db, COMMCSNAME, clName, true, true);   
 }
 main();

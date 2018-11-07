@@ -8,14 +8,11 @@ function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   var csName = COMMCSNAME + "_ES_15778";
-   commDropCS( db, csName, true, "drop CS in the beginning" );
-                                                             	
-   commCreateCS( db, csName, false, "" );
+   commDropCL(db, COMMCSNAME, clName, true, true);
                                                               	
    // create CL
    var clName = COMMCLNAME + "_ES_15778";
-   var dbcl = commCreateCL( db, csName, clName );
+   var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
    // insert before create text index
    var objs = new Array({a: ["arr1"]}, {a: ["arr1", "arr2"]}, {a: ["arr1", 1]});
@@ -25,7 +22,7 @@ function main()
    dbcl.createIndex(textIndexName, {"a" : "text"});
 
    // check sync to es
-   checkFullSyncToES(csName, clName, textIndexName, 1);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 1);
   
    // check result
    var dbOpr = new DBOperator();
@@ -35,13 +32,13 @@ function main()
 
    // delete
    dbcl.remove();
-   checkFullSyncToES(csName, clName, textIndexName, 0);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 0);
    
    // check result
    var expectResult = dbOpr.findFromCL(dbcl, null);
    var actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{"query":{"match_all":{}}}}}, {"a" : {"$include" : 1}});
    checkResult(expectResult, actResult);
 
-   commDropCS( db, csName, true, "drop CS in the end" );
+   commDropCL(db, COMMCSNAME, clName, true, true);
 }
 main();
