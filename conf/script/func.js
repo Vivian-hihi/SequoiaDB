@@ -1780,58 +1780,58 @@ usage:
     Ssh.chown(path, user, group, recursive);    // throw SdbError if failed
 ******************************************************************************/
 Ssh.prototype._exist = function Ssh_exist(cmd) {
-	
-	if (SYS_TYPE != SYS_LINUX) {
+    
+    if (SYS_TYPE != SYS_LINUX) {
         throw new SdbError(SDB_SYS, "unsupported system");
     }
-	
-	var ret = "" ;
-	try {
-		ret = this.exec( cmd ) ;
-	} catch( e ) {
-		throw new SdbError( e, "execute command[" + cmd + "] failed in host " + this.getPeerIP() ) ;
-	}
-	if ( typeof(ret) == "string" && ret.indexOf("true") != -1 )
-	{
-		return true ;
-	}
-	else if ( typeof(ret) == "string" && ret.indexOf("false") != -1 )
-	{
-		return false ;
-	}
-	else
-	{
-		var msg = "execute command[" + cmd + "] in host " + this.getPeerIP() + 
-			      " and return unexpected result[" + ret + "]" ;
-		throw new SdbError(SDB_SYS, msg);
-	}
+    
+    var ret = "" ;
+    try {
+        ret = this.exec( cmd ) ;
+    } catch( e ) {
+        throw new SdbError( e, "execute command[" + cmd + "] failed in host " + this.getPeerIP() ) ;
+    }
+    if ( typeof(ret) == "string" && ret.indexOf("true") != -1 )
+    {
+        return true ;
+    }
+    else if ( typeof(ret) == "string" && ret.indexOf("false") != -1 )
+    {
+        return false ;
+    }
+    else
+    {
+        var msg = "execute command[" + cmd + "] in host " + this.getPeerIP() + 
+                  " and return unexpected result[" + ret + "]" ;
+        throw new SdbError(SDB_SYS, msg);
+    }
 }
 
 Ssh.prototype.isPathExist = function Ssh_isPathExist(path) {
-	var cmd = "if [ -e " + path + " ]; then echo true; else echo false; fi;" ;
-	return this._exist( cmd ) ;
+    var cmd = "if [ -e " + path + " ]; then echo true; else echo false; fi;" ;
+    return this._exist( cmd ) ;
 };
 
 Ssh.prototype.isFile = function Ssh_isFile(path) {
-	var cmd = "if [ -f " + path + " ]; then echo \"true\"; else echo \"false\"; fi;" ;
-	return this._exist( cmd ) ;
+    var cmd = "if [ -f " + path + " ]; then echo \"true\"; else echo \"false\"; fi;" ;
+    return this._exist( cmd ) ;
 };
 
 Ssh.prototype.isDirectory = function Ssh_isDirectory(path) {
-	var cmd = "if [ -d " + path + " ]; then echo \"true\"; else echo \"false\"; fi;" ;
-	return this._exist( cmd ) ;
+    var cmd = "if [ -d " + path + " ]; then echo \"true\"; else echo \"false\"; fi;" ;
+    return this._exist( cmd ) ;
 };
 
 Ssh.prototype.isEmptyDirectory = function Ssh_isEmptyDirectory(path) {	
     if (SYS_TYPE != SYS_LINUX) {
         throw new SdbError(SDB_SYS, "unsupported system");
     }
-	// we must judge the given path is a directory or not
+    // we must judge the given path is a directory or not
     if (!this.isDirectory(path)) {
         return false;
     }
-	var cmd = "if [ \"$(ls -A " + path + ")\" ]; then echo \"false\"; else echo \"true\"; fi;" ;
-	return this._exist( cmd ) ;
+    var cmd = "if [ \"$(ls -A " + path + ")\" ]; then echo \"false\"; else echo \"true\"; fi;" ;
+    return this._exist( cmd ) ;
 };
 
 Ssh.prototype.mkdir = function Ssh_mkdir(path) {
