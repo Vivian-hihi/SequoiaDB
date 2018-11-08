@@ -1,4 +1,4 @@
-<!-- ============================================================================
+﻿<!-- ============================================================================
 @description:  ci entry
 @parameter:    DEPLOY_MODE: G1D3|G3D3|STANDALONE, from jenkins configure page
                NEED_INSTALL_DEPLOY: true|false, from jenkins build page
@@ -516,6 +516,10 @@
    
    <target name="compile_doc_build">
       <ant antfile="compile_doc.xml" dir="src/compile" inheritAll="true" useNativeBaseDir="true" />
+   </target>
+
+   <target name="compile_csharp_build">
+      <ant antfile="compile_csharp.xml" dir="src/compile" inheritAll="true" useNativeBaseDir="true" />
    </target>
    
    <target name="check_parameter">  
