@@ -129,7 +129,7 @@ namespace engine
                                GROUP_2_IOVEC &datas ) ;
 
          /// AutoIncrement relation
-         INT32 _addAutoIncToMsg( const AUTOINC_ITEM_MAP &autoIncMap,
+         INT32 _addAutoIncToMsg( const clsAutoIncSet &autoIncSet,
                                  MsgOpInsert *pInsertMsg,
                                  CHAR const *pInsertor,
                                  const INT32 count,
@@ -140,14 +140,14 @@ namespace engine
                                  INT32 &newMsgLen ) ;
 
          INT32 _addAutoIncToObj( const BSONObj &objIn,
-                                 const AUTOINC_ITEM_MAP &autoIncMap,
+                                 const clsAutoIncSet &autoIncSet,
                                  pmdEDUCB *cb,
                                  _SimpleBSONBuilder &builder ) ;
 
-         INT32 _calcAutoIncEleSize( const AUTOINC_ITEM_MAP &autoIncMap ) ;
+         INT32 _calcAutoIncEleSize( const clsAutoIncSet &set ) ;
 
-         void  _extractAutoIncMark( const AUTOINC_ITEM_MAP& map,
-                                    AutoIncMarkSet& set ) ;
+         void  _extractAutoIncMark( const clsAutoIncSet &setItem,
+                                    AutoIncMarkSet &setMark ) ;
 
       protected:
 

@@ -43,8 +43,81 @@
 using namespace bson ;
 
 namespace engine
-
 {
+   /*
+      implement _clsAutoIncIterator
+   */
+   _clsAutoIncIterator::_clsAutoIncIterator( const _clsAutoIncSet &set,
+                                             const MODE mode )
+   {
+      _pMap = set.getMap() ;
+      _mode = mode ;
+      if ( _pMap )
+         _it = _pMap->begin() ;
+   }
+
+   _clsAutoIncIterator::_clsAutoIncIterator( const _clsAutoIncItem &item,
+                                             const MODE mode )
+   {
+      _pMap = item.subFieldMap() ;
+      _mode = mode ;
+      if ( _pMap )
+         _it = _pMap->begin() ;
+   }
+
+   BOOLEAN _clsAutoIncIterator::more()
+   {
+      if ( _pMap && _it == _pMap->end() )
+         return TRUE ;
+      else
+         return FALSE ;
+   }
+
+   const clsAutoIncItem* _clsAutoIncIterator::next()
+   {
+      const clsAutoIncItem* pItem = NULL ;
+
+      if ( !_pMap || _it == _pMap.end() )
+      {
+         return NULL ;
+      }
+
+      if ( nonRecur == _mode )
+      {
+         pItem = _it->second ;
+         ++_it ;
+      }
+      else if ( recursive == _mode )
+      {
+         // if not end, go until end.
+         pItem = _it->second ;
+         while ( NULL != pItem->subFieldMap() )
+         {
+            _mapTrace.push_back( _pMap ) ;
+            _itTrace.push_back( _it ) ;
+
+            _pMap = pItem->subFieldMap() ;
+            _it = _pMap->begin() ;
+            pItem = _it->second ;
+         }
+         ++_it ;
+
+         // if go to end, back to last forky node.
+         while ( _it == _pMap.end() && !_mapTrace.empty() && !_itTrace.empty() )
+         {
+            _pMap = _mapTrace.back() ;
+            _mapTrace.pop_back() ;
+            _it = _itTrace.back() ;
+            _itTrace.pop_back() ;
+
+            ++_it ;
+         }
+
+      }
+
+      return pItem ;
+   }
+
    /*
       implement _clsAutoIncItem
    */
