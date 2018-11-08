@@ -131,7 +131,9 @@
       //触发自定义的onResize
       $rootScope.bindResize = function(){
          var random = 0 ;
-         while( random == $rootScope.onResize ) random = Math.random() ;
+         do{
+            random = Math.random() ;
+         } while( random == $rootScope.onResize ) ;
          $rootScope.onResize = random ;
       } ;
       //Package包名缩写

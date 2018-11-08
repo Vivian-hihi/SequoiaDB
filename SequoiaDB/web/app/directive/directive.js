@@ -1,499 +1,6 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
 
-   //创建网格的指令(免html构造)(准备废弃)
-   sacApp.directive( 'createGrid', function( $filter, $compile, $window, $rootScope, SdbFunction ){
-      var dire = {
-         restrict: 'A',
-         scope: {
-            data: '=createGrid'
-         },
-         templateUrl: './app/template/Component/Grid.html',
-         replace: false,
-         controller: function( $scope, $element ){
-            $scope.isFirst_firefox = 0 ;
-            $scope.Setting = {
-               titleWidth: [],
-               bodyWidth: [],
-               grid:{
-                  borderBottom: '',
-                  height: '0px',
-                  maxHeight: 'none',
-                  tdHeight: []
-               }
-            } ;
-            $scope.Grid = { 'orderName': '0.text', 'reverse': false } ;
-         },
-         compile: function( element, attributes ){
-            //设置列宽
-            function setColumnWidth( scope, parentEle, isFirefox )
-            {
-               var gridEle = $( '> .Grid:first', parentEle ) ;
-               var bodyEle = $( '> .GridBody:first', gridEle ) ;
-               var tdBorderEle = $( '> .GridHeader:first > .GridTr:first > .GridTd:first', gridEle ) ;
-               var tdBorderWidth = numberCarry( tdBorderEle.outerWidth() - tdBorderEle.width() ) ;
-               var titleNum = scope.data.title.length ;
-               var width = parseInt( gridEle.outerWidth() - numberCarry( gridEle.outerWidth() - gridEle.width() ) - titleNum * tdBorderWidth ) ;
-               var bodyWidth = parseInt( $( bodyEle ).outerWidth() - titleNum * tdBorderWidth ) ;//width - 18 ;
-               if( isFirefox == true  && scope.isFirst_firefox < 2 )
-               {
-                  ++scope.isFirst_firefox ;
-                  bodyWidth -= 17 ;
-               }
-               var scrollWidth = width - bodyWidth ;
-               var titleWidth = scope.data.options.grid.titleWidth ;
-               var sumWidth = 0 ;
-               var sumBodyWidth = 0 ;
-               scope.Setting.titleWidth = [] ;
-               scope.Setting.bodyWidth = [] ;
-               if( typeof( titleWidth ) == 'undefined' || titleWidth == 'auto' )
-               {
-                  var aveWidth = parseInt( width / titleNum ) ;
-                  for( var i = 0; i < titleNum; ++i )
-                  {
-                     //标题
-                     var tmpTdWidth = aveWidth ;
-                     if( i + 1 == titleNum )
-                     {
-                        tmpTdWidth = width - sumWidth - scrollWidth ;
-                     }
-                     scope.Setting.titleWidth.push( tmpTdWidth + 'px' ) ;
-                     sumWidth += tmpTdWidth ;
-                     //内容
-                     tmpTdWidth = aveWidth ;
-                     if( i + 1 == titleNum )
-                     {
-                        tmpTdWidth = bodyWidth - sumBodyWidth ;
-                     }
-                     scope.Setting.bodyWidth.push( tmpTdWidth + 'px' ) ;
-                     sumBodyWidth += tmpTdWidth ;
-                  }
-               }
-               else
-               {
-                  $.each( titleWidth, function( index ){
-                     scope.Setting.titleWidth.push( 0 ) ;
-                     scope.Setting.bodyWidth.push( 0 ) ;
-                  } ) ;
-                  var lastIndex = 0 ;
-                  $.each( titleWidth, function( index ){
-                     if( typeof( titleWidth[index] ) == 'string' )
-                     {
-                        //标题
-                        var tmpTdWidth = parseInt( titleWidth[index] ) ;
-                        var bodyTdWidth = tmpTdWidth ;
-                        /*
-                        if( index + 1 == titleNum )
-                        {
-                           tmpTdWidth += scrollWidth ;
-                        }
-                        */
-                        scope.Setting.titleWidth[index] = ( tmpTdWidth + 'px' ) ;
-                        sumWidth += tmpTdWidth ;
-                        //内容
-                        tmpTdWidth = bodyTdWidth ;
-                        sumBodyWidth += tmpTdWidth ;
-                        scope.Setting.bodyWidth[index] = ( tmpTdWidth + 'px' ) ;
-                     }
-                     else if( typeof( titleWidth[index] ) == 'number' )
-                     {
-                        lastIndex = index ;
-                     }
-                  } ) ;
-                  var lastSumWidth = bodyWidth - sumWidth ;
-                  $.each( titleWidth, function( index ){
-                     if( typeof( titleWidth[index] ) == 'number' )
-                     {
-                        //标题
-                        var tmpTdWidth = 0 ;
-                        tmpTdWidth = parseInt( titleWidth[index] * lastSumWidth * 0.01 ) ;
-                        var bodyTdWidth = tmpTdWidth ;
-                        if( index == lastIndex )
-                        {
-                           tmpTdWidth = bodyWidth - sumWidth ;
-                        }
-                        if( tmpTdWidth < 0 ) tmpTdWidth = 0 ;
-                        scope.Setting.titleWidth[index] = ( tmpTdWidth + 'px' ) ;
-                        sumWidth += tmpTdWidth ;
-                        //内容
-                        tmpTdWidth = bodyTdWidth ;
-                        if( index == lastIndex )
-                        {
-                           tmpTdWidth = bodyWidth - sumBodyWidth ;
-                        }
-                        if( tmpTdWidth < 0 ) tmpTdWidth = 0 ;
-                        scope.Setting.bodyWidth[index] = ( tmpTdWidth + 'px' ) ;
-                        sumBodyWidth += tmpTdWidth ;
-                     }
-                  } ) ;
-               }
-            }
-            //设置行高
-            function setRowHeight( scope, parentEle )
-            {
-               var model = scope.data.options.grid.tdModel ;
-               if( typeof( model ) == 'undefined' ) model = 'auto' ;
-               scope.Setting.grid.tdHeight = [] ;
-               if( model == 'dynamic' )
-               {
-                  $.each( scope.data['body'], function( index, row ){
-                     scope.Setting.grid.tdHeight.push( 'auto' ) ;
-                  } ) ;
-               }
-               else if( model == 'fixed' && typeof( scope.data.options.grid.tdHeight ) != 'undefined' )
-               {
-                  if( typeof( scope.data.options.grid.tdHeight ) == 'string' )
-                  {
-                     $.each( scope.data['body'], function( index, row ){
-                        scope.Setting.grid.tdHeight.push( scope.data.options.grid.tdHeight ) ;
-                     } ) ;
-                  }
-                  else if( typeof( scope.data.options.grid.tdHeight ) == 'number' )
-                  {
-                     $.each( scope.data['body'], function( index, row ){
-                        scope.Setting.grid.tdHeight.push( scope.data.options.grid.tdHeight + 'px' ) ;
-                     } ) ;
-                  }
-               }
-               else if( model == 'auto' )
-               {
-                  scope.$apply() ;
-                  var columnNum = 0 ;
-                  if( scope.data['body'].length > 0 )
-                  {
-                     columnNum = scope.data['body'][0].length ;
-                  }
-                  var tdEle = $( '> .Grid:first > .GridBody:first > .GridTr > .GridTd', parentEle ) ;
-                  $.each( scope.data['body'], function( index, row ){
-                     var maxHeight = 0 ;
-                     $.each( row, function( index2, column ){
-                        var tdHeight = $( tdEle[ index * columnNum + index2 ] ).height() ;
-                        if( tdHeight > maxHeight )
-                        {
-                           maxHeight = tdHeight ;
-                        }
-                     } ) ;
-                     scope.Setting.grid.tdHeight.push( maxHeight + 'px' ) ;
-                  } ) ;
-               }
-            }
-            //设置网格高度
-            function setGridHeight( scope, parentEle )
-            {
-               scope.$apply( function(){
-                  var height = $( parentEle ).outerHeight() ;
-                  var gridModel = scope.data.options.grid.gridModel ;
-                  if( typeof( gridModel ) == 'undefined' ) gridModel = 'auto' ;
-                  if( typeof( scope.data['tool'] ) == 'object' )
-                  {
-                     if( typeof( scope.data.tool['position'] ) == 'string' )
-                     {
-                        if( scope.data.tool.position == 'top' || scope.data.tool.position == 'bottom' )
-                        {
-                           height -= 30 ;
-                        }
-                        else
-                        {
-                           scope.Setting.grid.borderBottom = '1px solid #E3E7E8' ;
-                        }
-                     }
-                  }
-                  else
-                  {
-                     scope.Setting.grid.borderBottom = '1px solid #E3E7E8' ;
-                  }
-                  if( gridModel == 'auto' )
-                  {
-                     scope.Setting.grid.height = 'auto' ;
-                     scope.Setting.grid.maxHeight = height + 'px' ;
-                  }
-                  else if( gridModel == 'maxHeight' )
-                  {
-                     scope.Setting.grid.height = 'auto' ;
-                     scope.Setting.grid.maxHeight = scope.data.options.grid.maxHeight + 'px' ;
-                  }
-                  else
-                  {
-                     //gridModel = fixed
-                     scope.Setting.grid.height = height + 'px' ;
-                     scope.Setting.grid.maxHeight = 'none' ;
-                  }
-               } ) ;
-            }
-            //网格副标题追加html代码和事件
-            function setGridSubTitle( scope, parentEle )
-            {
-               if( typeof( scope.data['subtitle'] ) == 'object' )
-               {
-                  var rowNum = scope.data['subtitle'].length ;
-                  var tdEle = $( '> .Grid:first > .GridHeader:first > .GridTr:last > .GridTd', parentEle ) ;
-                  for( var index = 0; index < rowNum; ++index )
-                  {
-                     if( typeof( scope.data['subtitle'][index]['html'] ) == 'string' )
-                     {
-                        var newEle = $compile( scope.data['subtitle'][index]['html'] )( scope ) ;
-                        $( tdEle[ index ] ).append( newEle ) ;
-                     }
-                     else if( typeof( scope.data['subtitle'][index]['html'] ) == 'object' )
-                     {
-                        $( tdEle[ index ] ).append( scope.data['subtitle'][index]['html'] ) ;
-                     }
-                     else
-                     {
-                        $( tdEle[ index ] ).text( scope.data['subtitle'][index]['text'] ) ;
-                     }
-                  }
-               }
-            }
-            //网格内容追加html代码和事件
-            function setGridBody( scope, parentEle )
-            {
-               if( typeof( scope.data['subtitle'] ) == 'object' )
-               {
-                  var marTop = $( '> .Grid:first > .GridHeader:first', parentEle ).height() ;
-                  $( '> .Grid:first > .GridBody:first', parentEle ).css( 'marginTop', marTop ) ;
-               }
-               var rowNum = scope.data['body'].length ;
-               var columnNum = 0 ;
-               var tdEle = $( '> .Grid:first > .GridBody:first > .GridTr > .GridTd', parentEle ) ;
-               for( var index = 0; index < rowNum; ++index )
-               {
-                  if( index == 0 ) columnNum = scope.data['body'][index].length ;
-                  for( var index2 = 0; index2 < columnNum; ++index2 )
-                  {
-                     if( typeof( scope.data['body'][index][index2]['html'] ) == 'string' )
-                     {
-                        var newEle = $compile( scope.data['body'][index][index2]['html'] )( scope ) ;
-                        $( tdEle[ index * columnNum + index2 ] ).append( newEle ) ;
-                        scope.data['body'][index][index2]['string'] = $( newEle ).text() ;
-                     }
-                     else if( typeof( scope.data['body'][index][index2]['html'] ) == 'object' )
-                     {
-                        $( tdEle[ index * columnNum + index2 ] ).append( scope.data['body'][index][index2]['html'] ) ;
-                        scope.data['body'][index][index2]['string'] = $( scope.data['body'][index][index2]['html'] ).text() ;
-                     }
-                     else
-                     {
-                        $( tdEle[ index * columnNum + index2 ] ).text( scope.data['body'][index][index2]['text'] ) ;
-                        scope.data['body'][index][index2]['string'] = scope.data['body'][index][index2]['text'] ;
-                     }
-                  }
-               }
-            }
-            //网格工具栏追加html代码和事件
-            function setGridTool( scope, parentEle )
-            {
-               if( typeof( scope.data['tool'] ) != 'undefined' )
-               {
-                  if( typeof( scope.data['tool']['left'] ) != 'undefined' )
-                  {
-                     $.each( scope.data['tool']['left'], function( index, left ){
-                        if( typeof( left['html'] ) == 'string' )
-                        {
-                           var ele = $( '> .GridTool > .ToolLeft > span:eq(' + index + ')', parentEle ) ;
-                           var newEle = $compile( left['html'] )( scope ) ;
-                           angular.element( ele.get(0) ).empty() ;
-                           angular.element( ele.get(0) ).append( newEle ) ;
-                        }
-                        else if( typeof( left['html'] ) == 'object' )
-                        {
-                           var ele = $( '> .GridTool > .ToolLeft > span:eq(' + index + ')', parentEle ) ;
-                           var newEle = left['html'] ;
-                           $( ele ).empty() ;
-                           $( ele ).append( newEle ) ;
-                        }
-                     } ) ;
-                  }
-                  if( typeof( scope.data['tool']['right'] ) != 'undefined' )
-                  {
-                     $.each( scope.data['tool']['right'], function( index, right ){
-                        if( typeof( right['html'] ) == 'string' )
-                        {
-                           var ele = $( '> .GridTool > .ToolRight > span:eq(' + index + ')', parentEle ) ;
-                           var newEle = $compile( right['html'] )( scope ) ;
-                           angular.element( ele.get(0) ).empty() ;
-                           angular.element( ele.get(0) ).append( newEle ) ;
-                        }
-                        else if( typeof( right['html'] ) == 'object' )
-                        {
-                           var ele = $( '> .GridTool > .ToolRight > span:eq(' + index + ')', parentEle ) ;
-                           var newEle = right['html'] ;
-                           $( ele ).empty() ;
-                           $( ele ).append( newEle ) ;
-                        }
-                     } ) ;
-                  }
-               }
-            }
-            //清除网格内容
-            function clearup( scope, parentEle )
-            {
-               $( '> .Grid:first > .GridBody:first > .GridTr > .GridTd', parentEle ).empty() ;
-            }
-            //执行Resize事件
-            function onResize( scope, widthArr, heightArr )
-            {
-               if( scope.data['options']['event'] && typeof( scope.data['options']['event']['onResize'] ) == 'function' )
-               {
-                  var column = scope.data['title'].length ;
-                  $.each( scope.data['body'], function( y, columnInfo ){
-                     $.each( columnInfo, function( x ){
-                        scope.data['options']['event']['onResize']( x, y, scope.Setting.bodyWidth[x], scope.Setting.grid.tdHeight[y] ) ;
-                     } ) ;
-                  } ) ;
-               }
-            }
-            return {
-               pre: function preLink( scope, element, attributes ){
-                  $( element ).css( 'position', 'relative' ) ;
-                  var gridOnResize = function () {
-                     if( !scope.data )
-                     {
-                        return;
-                     }
-                     //设置列宽
-                     setColumnWidth( scope, element ) ;
-                     //设置行高
-                     setRowHeight( scope, element ) ;
-                     //设置总高度
-                     setGridHeight( scope, element ) ;
-                     //响应事件
-                     onResize( scope ) ;
-                  } ;
-                  if( scope.data )
-                  {
-                     scope.data.onResize = gridOnResize ;
-                  }
-                  angular.element( $window ).bind( 'resize', gridOnResize ) ;
-                  var listener1 = $rootScope.$watch( 'onResize', function(){
-                     setTimeout( gridOnResize ) ;
-                  } ) ;
-                  var browserInfo = SdbFunction.getBrowserInfo() ;
-                  var listener2 = scope.$watch( 'data', function(){
-                     //清除网格内容
-                     if( typeof( scope.data ) == 'object' )
-                     {
-                        scope.data.onResize = gridOnResize ;
-                        clearup( scope, element ) ;
-                        $( '> .Grid:first', element ).css( 'visibility', 'hidden' ) ;
-                        $( '> .GridTool:first', element ).css( 'visibility', 'hidden' ) ;
-                        setTimeout( function(){
-                           //网格副标题追加html代码和事件
-                           setGridSubTitle( scope, element ) ;
-                           //网格内容追加html代码和事件
-                           setGridBody( scope, element ) ;
-                           //网格工具栏追加html代码和事件
-                           setGridTool( scope, element ) ;
-                           //设置列宽
-                           setColumnWidth( scope, element, ( browserInfo[0] == 'firefox' ) ) ;
-                           //设置行高
-                           setRowHeight( scope, element ) ;
-                           //设置总高度
-                           setGridHeight( scope, element ) ;
-                           //响应事件
-                           onResize( scope ) ;
-                           $( '> .Grid:first', element ).css( 'visibility', 'visible' ) ;
-                           $( '> .GridTool:first', element ).css( 'visibility', 'visible' ) ;
-                        } ) ;
-                     }
-                  } ) ;
-                  var listener3 = scope.$watch( 'data.body', function(){
-                     //清除网格内容
-                     if( typeof( scope.data ) == 'object' )
-                     {
-                        scope.data.onResize = gridOnResize ;
-                        clearup( scope, element ) ;
-                        $( '> .Grid:first', element ).css( 'visibility', 'hidden' ) ;
-                        $( '> .GridTool:first', element ).css( 'visibility', 'hidden' ) ;
-                        setTimeout( function(){
-                           //网格内容追加html代码和事件
-                           setGridBody( scope, element ) ;
-                           //网格工具栏追加html代码和事件
-                           setGridTool( scope, element ) ;
-                           //设置列宽
-                           setColumnWidth( scope, element, ( browserInfo[0] == 'firefox' ) ) ;
-                           //设置行高
-                           setRowHeight( scope, element ) ;
-                           //设置总高度
-                           setGridHeight( scope, element ) ;
-                           //响应事件
-                           onResize( scope ) ;
-                           $( '> .Grid:first', element ).css( 'visibility', 'visible' ) ;
-                           $( '> .GridTool:first', element ).css( 'visibility', 'visible' ) ;
-                        } ) ;
-                     }
-                  } ) ;
-                  scope.$on( '$destroy', function(){
-                     angular.element( $window ).unbind( 'resize', gridOnResize ) ;
-                     listener1() ;
-                     listener2() ;
-                     listener3() ;
-                  } ) ;
-               },
-               post: function postLink( scope, element, attributes ){
-                  //添加排序事件
-                  var removeWatch = scope.$watch( 'data', function(){
-                     if( typeof( scope.data ) == 'object' )
-                     {
-                        setTimeout( function(){
-                           if( typeof( scope.data['options'] ) == 'object' &&
-                               typeof( scope.data['options']['order'] ) != 'undefined' &&
-                               scope.data['options']['order']['active'] == true )
-                           {
-                              var GridHeaderTd = [] ;
-                              $.each( scope.data['title'], function( index ){
-                                 var tdEle = $( '> .Grid > .GridHeader > .GridTr:eq(0) > .GridTd:eq(' + index + ')', element ).css( 'cursor', 'pointer' ) ;
-                                 GridHeaderTd.push( tdEle ) ;
-                                 var lastColumn = -1 ;
-                                 $( tdEle ).bind( 'click', function(){
-                                    (function( ele, column ){
-                                       if( lastColumn != column )
-                                       {
-                                          scope.Grid.reverse = true ;
-                                       }
-                                       else
-                                       {
-                                          scope.Grid.reverse = !scope.Grid.reverse ;
-                                       }
-                                       lastColumn = column ;
-                                       var orderBy = $filter( 'orderObjectBy' ) ;
-                                       scope.data['body'] = orderBy( scope.data['body'], column + '.string', scope.Grid.reverse ) ;
-                                       var g = ele ;
-                                       var caret = $( ' > .fa', g ) ;
-                                       var isDown = true ;
-                                       if( caret.length > 0 )
-                                       {
-                                          isDown = caret.hasClass( 'fa-caret-up' ) ;
-                                       }
-                                       $.each( GridHeaderTd, function( index, ele ){
-                                          $( ' > .fa ', ele ).remove() ;
-                                       } ) ;
-                                       if( isDown )
-                                       {
-                                          $( g ).prepend( '<i class="fa fa-lg fa-caret-down"></i>' ) ;
-                                       }
-                                       else
-                                       {
-                                          $( g ).prepend( '<i class="fa fa-lg fa-caret-up"></i>' ) ;
-                                       }
-                                    }( this, index )) ;
-                                    setGridBody( scope, element ) ;
-                                 } ) ;
-                              } ) ;
-                           }
-                        } ) ;
-                     }
-                  } ) ;
-                  scope.$on( '$destroy', function(){
-                     removeWatch() ;
-                  } ) ;
-               }
-            } ;
-         }
-      } ;
-      return dire ;
-   });
-  
    //创建网格的指令(需要html构造)(准备废弃)
    sacApp.directive( 'ngGrid', function( $filter, $compile, $window, $rootScope, SdbFunction ){
       var browserInfo = SdbFunction.getBrowserInfo() ;
@@ -826,184 +333,6 @@
       } ;
       return dire ;
    });
-
-   /*
-   <div class="Grid2" ng-grid2="xxx" ng-container="{}">
-      <div class="Grid2Header">
-         <table>
-            <colgroup>
-               <col />
-            </colgroup>
-            <tbody>
-               <tr>
-                  <td>
-                     <div class="Ellipsis">xxxxx</div>
-                  </td>
-               </tr>
-            </tbody>
-         </table>
-      </div>
-      <div class="Grid2Body">
-         <table>
-            <colgroup>
-               <col />
-            </colgroup>
-            <tbody>
-               <tr>
-                  <td>
-                     <div class="Ellipsis">
-                        xxxx
-                     </div>
-                  </td>
-               </tr>
-            </tbody>
-         </table>
-      </div>
-   </div>
-   <div class="GridTool">
-      <div class="ToolLeft">xxxxx</div>
-   </div>
-   */
-   //创建网格的指令(需要html构造)(准备废弃)
-   sacApp.directive( 'ngGrid2', function( $window, $rootScope, SdbFunction ){
-      var browserInfo = SdbFunction.getBrowserInfo() ;
-      var dire = {
-         restrict: 'A',
-         scope: {
-            data: '=ngGrid2'
-         },
-         replace: false,
-         // 专用控制器
-         controller: function( $scope, $element ){
-         },
-         // 编译
-         compile: function( element, attributes ){
-            //设置表格列宽
-            function setColumn( scope, gridEle, isFirefox )
-            {
-               var bodyDiv        = $( '> .Grid2Body', gridEle ) ;
-               var headerTable    = $( '> .Grid2Header > table', gridEle ).css( 'width', 'auto' ) ;
-               var headerTd       = $( '> tbody:first > tr:first > td:first', headerTable ) ;
-               var bodyTable      = $( '> table', bodyDiv ).hide() ;
-               var headerTableCol = $( '> colgroup > col', headerTable ) ;
-               var bodyTableCol   = $( '> colgroup > col', bodyTable ) ;
-               var width          = bodyDiv.width() ;
-               var titleWidth     = scope.data ? scope.data.titleWidth : undefined ;
-               var titleNum       = headerTableCol.length ;
-               var tdBorder       = numberCarry( $( headerTd ).outerWidth() - $( headerTd ).width() ) ;
-               var borderWidth    = parseInt( $( bodyDiv ).outerWidth() - titleNum * tdBorder ) ;
-               //设置header表格的宽度
-               headerTable.width( width ) ;
-               //设置body表格的宽度
-               bodyTable.width( width ).show() ;
-               width = borderWidth ;
-               if( typeof( titleWidth ) == 'undefined' || titleWidth == 'auto' )
-               {
-                  var aveWidth = parseInt( width / titleNum ) ;
-                  $( headerTableCol ).width( aveWidth ) ;
-                  $( bodyTableCol ).width( aveWidth ) ;
-               }
-               else
-               {
-                  var sumWidth = 0 ;
-                  var cursorTitleWidth = [] ;
-                  for( var index = 0; index < titleNum; ++index )
-                  {
-                     cursorTitleWidth.push( 0 ) ;
-                  }
-                  var lastIndex = 0 ;
-                  for( var index = 0; index < titleNum; ++index )
-                  {
-                     if( typeof( titleWidth[index] ) == 'string' )
-                     {
-                        //标题
-                        var tmpTdWidth = parseInt( titleWidth[index] ) ;
-                        var bodyTdWidth = tmpTdWidth ;
-                        cursorTitleWidth[index] = ( tmpTdWidth + 'px' ) ;
-                        sumWidth += tmpTdWidth ;
-                     }
-                     else if( typeof( titleWidth[index] ) == 'number' )
-                     {
-                        lastIndex = index ;
-                     }
-                  }
-                  var lastSumWidth = width - sumWidth ;
-                  for( var index = 0; index < titleNum; ++index )
-                  {
-                     if( typeof( titleWidth[index] ) == 'number' )
-                     {
-                        //标题
-                        var tmpTdWidth = 0 ;
-                        tmpTdWidth = parseInt( titleWidth[index] * lastSumWidth * 0.01 ) ;
-                        var bodyTdWidth = tmpTdWidth ;
-                        if( index == lastIndex )
-                        {
-                           tmpTdWidth = width - sumWidth ;
-                        }
-                        if( tmpTdWidth < 0 ) tmpTdWidth = 0 ;
-                        cursorTitleWidth[index] = ( tmpTdWidth + 'px' ) ;
-                        sumWidth += tmpTdWidth ;
-                     }
-                  }
-                  for( var c = 0; c < titleNum; ++c )
-                  {
-                     $( headerTableCol[c] ).outerWidth( cursorTitleWidth[c] ) ;
-                     $( bodyTableCol[c] ).outerWidth( cursorTitleWidth[c] ) ;
-                  }
-               }
-            }
-            return {
-               pre: function preLink( scope, element, attributes ){
-                  $( element ).parent().css( 'position', 'relative' ) ;
-               },
-               post: function postLink( scope, element, attributes ){
-                  //绑定事件等
-                  var gridOnResize = function ( width, height ) {
-                     if( typeof( height ) == 'number' )
-                     {
-                        $( element ).css( 'height', height ) ;
-                     }
-                     setColumn( scope, element, ( browserInfo[0] == 'firefox' ) ) ;
-                  } ;
-                  if( scope.data )
-                  {
-                     scope.data.onResize = gridOnResize ;
-                  }
-                  setColumn( scope, element ) ;
-                  angular.element( $window ).bind( 'resize', gridOnResize ) ;
-                  var listener1 = $rootScope.$watch( 'onResize', function(){
-                     setTimeout( gridOnResize ) ;
-                  } ) ;
-                  var listener2 = scope.$watch( 'data', function(){
-                     //清除网格内容
-                     if( typeof( scope.data ) == 'object' )
-                     {
-                        setTimeout( function(){
-                           setColumn( scope, element ) ;
-                        } ) ;
-                     }
-                  } ) ;
-                  var listener3 = scope.$watch( 'data.titleWidth', function(){
-                     //清除网格内容
-                     if( typeof( scope.data ) == 'object' )
-                     {
-                        setTimeout( function(){
-                           setColumn( scope, element ) ;
-                        } ) ;
-                     }
-                  } ) ;
-                  scope.$on( '$destroy', function(){
-                     angular.element( $window ).unbind( 'resize', gridOnResize ) ;
-                     listener1() ;
-                     listener2() ;
-                     listener3() ;
-                  } ) ;
-               }
-            } ;
-         }
-      } ;
-      return dire ;
-   } ) ;
 
    //弹窗(准备废弃)
    sacApp.directive( 'createModal', function( $compile, $window, $rootScope, Tip ){
@@ -1875,6 +1204,13 @@
                      scope.Setting.Temp.height = height ;
                      scope.Setting.Windows = { 'left': left, 'top': top, 'width': width, 'height': height } ;
                      scope.$digest() ;
+                     if( typeof( scope.Setting.Event.onResize ) == 'function' )
+                     {
+                        scope.Setting.Event.onResize( scope.Setting.Windows['left'],
+                                                      scope.Setting.Windows['top'],
+                                                      scope.Setting.Windows['width'],
+                                                      scope.Setting.Windows['height'] ) ;
+                     }
                   }
 
                   //结束调整窗口大小
@@ -2654,8 +1990,8 @@
                   $scope.browserInfo = SdbFunction.getBrowserInfo() ;
                   $scope.Setting = {
                      Type: $scope.data.type,
-                     GridTitle: $scope.data.gridTitle,
                      Grid: $scope.data.grid,
+                     Table: $scope.data.table,
                      KeyWidth: $scope.data.keyWidth ? $scope.data.keyWidth : '130px',
                      Text: {
                         'string': {
@@ -3083,6 +2419,23 @@
                         return returnValue ;
                      }
                   } ;
+                  if( typeof( $scope.Setting['Grid'] ) == 'object' )
+                  {
+                     if( typeof( $scope.Setting['Grid']['options'] ) !== 'object' )
+                     {
+                        $scope.Setting['Grid']['options'] = {} ;
+                     }
+                     $scope.Setting['Grid']['options']['height'] = 'auto' ;
+                  }
+                  if( typeof( $scope.Setting['Table'] ) == 'object' )
+                  {
+                     if( typeof( $scope.Setting['Table']['options'] ) !== 'object' )
+                     {
+                        $scope.Setting['Table']['options'] = {} ;
+                     }
+                     $scope.Setting['Table']['options']['tools'] = false ;
+                     $scope.Setting['Table']['options']['height'] = 'auto' ;
+                  }
                   $scope.data.check = function( customCheckFun ){
                      return $scope.Setting.checkInput( $scope.Setting.inputList, customCheckFun ) ;
                   }
@@ -3098,23 +2451,23 @@
                   }
                }
             }
-            var listener = $scope.$watch( 'data', function(){
+
+            $scope.$watch( 'data', function(){
                //清除网格内容
                if( typeof( $scope.data ) == 'object' )
                {
                   init() ;
                }
             } ) ;
-            var listener = $scope.$watchCollection( 'data.inputList', function(){
+
+            $scope.$watchCollection( 'data.inputList', function(){
                //清除网格内容
                if( typeof( $scope.data ) == 'object' )
                {
                   init() ;
                }
             } ) ;
-            $scope.$on( '$destroy', function(){
-               listener() ;
-            } ) ;
+
             init() ;
          },
          compile: function( element, attributes ){
@@ -3725,9 +3078,13 @@
             width += offsetX ;
             ele.outerWidth( width ).css( { marginLeft: marginLeft, marginRight: marginRight } ) ;
          }
+         else if( width === 'auto' )
+         {
+            ele.css( { marginLeft: marginLeft, marginRight: marginRight, width: 'auto' } ) ;
+         }
          else
          {
-             ele.css( { marginLeft: marginLeft, marginRight: marginRight } ) ;
+            ele.css( { marginLeft: marginLeft, marginRight: marginRight } ) ;
          }
       }
       function _renderHeight( scope, ele, height )
@@ -5285,25 +4642,30 @@
    表格
    支持命令： ng-table       必填 {}    表格的配置项
                   {
-                     'width': [],      //控制表格宽度, 支持 '10px' 和 '10%', 'auto' 3种写法, 也可以混合写，默认就是auto
-                     'tools': true,    //是否开启工具栏, 如果false, 就不能开启换页功能，默认 true
-                     'max': 100        //一页最大显示多少行， 默认 100
-                     'trim': true,     //是否允许调整表格宽度, 默认开启
-                     'mode': 'normal', //模式， normal: 一次性加载全部数据，由内置方法控制表格换页； dynamic: 由外部提供方法控制换页，每一页都是通过外部获取。
-                     'sort': [],       //是否开启排序，数组仅支持bool类型的元素，排序数组和标题数组一一对应
-                     'autoSort': {}    //自动排序，当第一次数据写入到表格、表格数据改变时，将会自动排序
-                                         格式:
-                                          { 'key': '排序的字段', 'asc': true }  asc为true就是正序，从小到大
-                     'filter': {}      //是否开启过滤功能，支持4种模式, key对应title的key
-                                         1. 'indexof': 模糊匹配，只要在内容找到字符串子串就匹配成功。 输入框
-                                         2. 任意字符串: 正则匹配，按照正则规则来匹配。 输入框
-                                         3. 函数:      自定义函数来匹配，函数返回true或false, true就是匹配成功，参数由2个，第一个是表格的值，第二个是过滤的值。 输入框
-                                         4. 数组:      根据数组的值匹配表格，建议数组第一个是空字符串，这样可以默认不匹配。 下拉菜单
-                                         5. 'number':  根据数值匹配，有匹配符。下拉菜单 + 输入框
-                     'default': {},    //如果开启过滤，是否要设置默认值，如果不填，默认是''
+                     'width': [],         //控制表格宽度, 支持 '10px' 和 '10%', 'auto' 3种写法, 也可以混合写，默认就是auto
+                     'height': 'scroll',  //表格高度，默认scroll,
+                                             'scroll': 自动高度，依据父元素高度自动调整，带滚动条;
+                                             'auto': 自动高度，依据内容控制高度，不带滚动条
+                     'tools': true,       //是否开启工具栏, 如果false, 就不能开启换页功能，默认 true
+                     'max': 100           //一页最大显示多少行， 默认 100
+                     'trim': true,        //是否允许调整表格宽度, 默认开启
+                     'mode': 'normal',    //模式， normal: 一次性加载全部数据，由内置方法控制表格换页； dynamic: 由外部提供方法控制换页，
+                                            每一页都是通过外部获取。
+                     'sort': [],          //是否开启排序，数组仅支持bool类型的元素，排序数组和标题数组一一对应
+                     'autoSort': {}       //自动排序，当第一次数据写入到表格、表格数据改变时，将会自动排序
+                                             格式:
+                                                { 'key': '排序的字段', 'asc': true }  asc为true就是正序，从小到大
+                     'filter': {}         //是否开启过滤功能，支持4种模式, key对应title的key
+                                             1. 'indexof': 模糊匹配，只要在内容找到字符串子串就匹配成功。 输入框
+                                             2. 任意字符串: 正则匹配，按照正则规则来匹配。 输入框
+                                             3. 函数:      自定义函数来匹配，函数返回true或false, true就是匹配成功，
+                                                参数由2个，第一个是表格的值，第二个是过滤的值。 输入框
+                                             4. 数组:      根据数组的值匹配表格，建议数组第一个是空字符串，这样可以默认不匹配。 下拉菜单
+                                             5. 'number':  根据数值匹配，有匹配符。下拉菜单 + 输入框
+                     'default': {},       //如果开启过滤，是否要设置默认值，如果不填，默认是''
                      'text': {
-                        'default': 'xxx' 默认显示在状态栏的文本，第一个?是当前表格行数，第二个?是总行数
-                        'filterDefault': 'xxx' 设置过滤后显示在状态栏的文本，第一个?是当前表格行数，第二个?是总行数
+                        'default': 'xxx'  //默认显示在状态栏的文本，第一个?是当前表格行数，第二个?是总行数
+                        'filterDefault': 'xxx' //设置过滤后显示在状态栏的文本，第一个?是当前表格行数，第二个?是总行数
                      }
                   }
              table-title    必填 {}    表格的标题， key是要对应该列的字段名，用于排序和过滤， 如果value是false，那么该列不显示
@@ -5334,7 +4696,7 @@
                                                 'jump'   跳转到指定页
                                        Jump( 指定页数 ) 跳转到指定页
    */
-   sacApp.directive( 'ngTable', function( $animate, $timeout, $compile, $filter, SdbFunction ){
+   sacApp.directive( 'ngTable', function( $rootScope, $animate, $timeout, $compile, $filter, SdbFunction ){
       var brower = SdbFunction.getBrowserInfo() ;
       var setOptionsFun = function( src, defaultVal ){
          if( !src )
@@ -5404,22 +4766,31 @@
                'title': {},
                'body': [],
                'options': {
-                  'width': {},      //控制表格宽度, 支持 '10px' 和 '10%' 两种写法, 也可以混合写(这里是作为缓存使用)
-                  'tools': true,    //是否开启工具栏, 如果false, 就不能开启换页功能
-                  'max': 100,       //一页最大显示多少行
-                  'trim': true,     //是否允许调整表格宽度
-                  'mode': 'normal', //模式， normal: 一次性加载全部数据，由内置方法控制表格换页； dynamic: 由外部提供方法控制换页，每一页都是通过外部获取。
-                  'sort': [],       //是否开启排序，数组仅支持bool类型的元素，排序数组和标题数组一一对应
-                  'autoSort': '',   //自动排序，当第一次数据写入到表格、表格数据改变时，将会自动排序
-                  'filter': {},     //是否开启过滤功能
-                  'default': {},    //如果开启过滤，是否要设置默认值，如果不填，默认是''
+                  'width': {},         //控制表格宽度, 支持 '10px' 和 '10%' 两种写法, 也可以混合写(这里是作为缓存使用)
+                  'height': 'scroll',  //表格高度，默认scroll
+                  'tools': true,       //是否开启工具栏, 如果false, 就不能开启换页功能
+                  'max': 100,          //一页最大显示多少行
+                  'trim': true,        //是否允许调整表格宽度
+                  'mode': 'normal',    //模式, normal: 一次性加载全部数据，由内置方法控制表格换页；
+                                       //      dynamic: 由外部提供方法控制换页，每一页都是通过外部获取。
+                                       //      adaption: 由外部提供方法控制换页，每一页都是通过外部获取。
+                                       //                跟dynamic的区别, dynamic要求设置总记录数, 而adaption是支持未知总记录数。
+                  'model': 'page',     //模型， page: 分页的表格(自动控制高度)；list: 不分页的表格()；
+                  'sort': [],          //是否开启排序，数组仅支持bool类型的元素，排序数组和标题数组一一对应
+                  'autoSort': '',      //自动排序，当第一次数据写入到表格、表格数据改变时，将会自动排序
+                  'filter': {},        //是否开启过滤功能
+                  'default': {},       //如果开启过滤，是否要设置默认值，如果不填，默认是''
                   'isRenderHide': true,   //是否渲染隐藏(ng-if和ng-show)的元素
                   'text': {
-                     'default': $scope.autoLanguage( '显示 ? 条记录，一共 ? 条' ),
-                     'filterDefault': $scope.autoLanguage( '显示 ? 条记录，符合条件的一共 ? 条' )
+                     'default': $rootScope.autoLanguage( '显示 ? 条记录，一共 ? 条' ),
+                     'default2': $rootScope.autoLanguage( '显示 ? 条记录' ),
+                     'filterDefault': $rootScope.autoLanguage( '显示 ? 条记录，符合条件的一共 ? 条' ),
+                     'filterDefault2': $rootScope.autoLanguage( '显示 ? 条记录' )
                   }
                }
             } ;
+            $scope.ngTableContainer = {} ;
+            $scope.ngTableBoxContainer = { 'offsetY': 0 } ;
             $scope.customEvent = {
                'first': null,
                'last': null,
@@ -5823,7 +5194,7 @@
                   //渲染表格内容
                   var createTableContents = function( page, isRecoveryWidth ){
 
-                     if( scope.table.options['mode'] == 'dynamic' )
+                     if( scope.table.options['mode'] == 'dynamic' || scope.table.options['mode'] == 'adaption' )
                      {
                         page = 1 ;
                      }
@@ -5856,32 +5227,55 @@
 
                      //计算显示的记录范围
                      var start, end ;
-                     if( scope.table.options['mode'] == 'normal' )
-                     {
-                        start = ( page - 1 ) * scope.table['options']['max'] ;
-                        end   = start + scope.table['options']['max'] ;
-                     }
-                     else if( scope.table.options['mode'] == 'dynamic' )
+
+                     if( scope.table.options['mode'] == 'adaption' )
                      {
                         start = ( scope.loadStatus['page'] - 1 ) * scope.table['options']['max'] ;
-                        end   = start + scope.table['options']['max'] ;
+                        end   = start + scope.table['body'].length ;
                      }
-                     end = end > scope.loadStatus['length'] ? scope.loadStatus['length'] : end ;
+                     else
+                     {
+                        if( scope.table.options['mode'] == 'normal' )
+                        {
+                           start = ( page - 1 ) * scope.table['options']['max'] ;
+                           end   = start + scope.table['options']['max'] ;
+                        }
+                        else if( scope.table.options['mode'] == 'dynamic' )
+                        {
+                           start = ( scope.loadStatus['page'] - 1 ) * scope.table['options']['max'] ;
+                           end   = start + scope.table['options']['max'] ;
+                        }
+                        end = end > scope.loadStatus['length'] ? scope.loadStatus['length'] : end ;
+                     }
 
                      var widthList = scope.loadStatus['width'] ;
                      
                      //计算总页数
-                     scope.tools['page'] = numberCarry( scope.loadStatus['length'] / scope.table['options']['max'] ) ;
+                     if( scope.table.options['mode'] == 'adaption' )
+                     {
+                        scope.tools['page'] = '...' ;
+                     }
+                     else
+                     {
+                        scope.tools['page'] = numberCarry( scope.loadStatus['length'] / scope.table['options']['max'] ) ;
+                     }
 
                      scope.loadStatus['showNum'] = end - start ;
                      if( scope.tools['isCustom'] == false )
                      {
-                        scope.tools['text'] = sprintf( scope.loadStatus['onFilter']['status'] ? scope.table['options']['text']['filterDefault'] : scope.table['options']['text']['default'],
-                                                       scope.loadStatus['showNum'],
-                                                       scope.loadStatus['length'] ) ;
+                        if ( scope.table.options['mode'] == 'adaption' )
+                        {
+                           scope.tools['text'] = sprintf( scope.loadStatus['onFilter']['status'] ? scope.table['options']['text']['filterDefault2'] : scope.table['options']['text']['default2'], scope.loadStatus['showNum'] )
+                        }
+                        else
+                        {
+                           scope.tools['text'] = sprintf( scope.loadStatus['onFilter']['status'] ? scope.table['options']['text']['filterDefault'] : scope.table['options']['text']['default'],
+                                                          scope.loadStatus['showNum'],
+                                                          scope.loadStatus['length'] ) ;
+                        }
                      }
 
-                     if( scope.table.options['mode'] == 'dynamic' )
+                     if( scope.table.options['mode'] == 'dynamic' || scope.table.options['mode'] == 'adaption' )
                      {
                         start = 0 ;
                         end   = scope.loadStatus['showNum'] ;
@@ -5979,6 +5373,7 @@
                                        newAutoHtml = newAutoHtml.replace( /\$autoValue/g, item + '.' + tableKey ) ;
                                        newAutoHtml = newAutoHtml.replace( /\$auto/g, tableKey ) ;
                                        newAutoHtml = newAutoHtml.replace( /table-if/g, 'ng-if' ) ;
+                                       newAutoHtml = newAutoHtml.replace( /table-switch/g, 'ng-switch' ) ;
                                        col = $compile( newAutoHtml )( childScope ) ;
                                     }
                                     var td = angular.element( '<td></td>' ).attr( 'table-key', tableKey ) ; ;
@@ -6105,6 +5500,15 @@
                         {
                            scope.tools['height'] = -1 * $( toolEle ).outerHeight() ;
                         }
+
+                        scope.ngTableBoxContainer = { 'offsetY': scope.tools['height'] } ;
+
+                        if( scope.table['options']['height'] == 'auto')
+                        {
+                           scope.ngTableBoxContainer['width'] = 'auto' ;
+                           scope.ngTableBoxContainer['height'] = 'auto' ;
+                        }
+
                      }, 0, false ) ;
                   }
 
@@ -6131,6 +5535,17 @@
                            if( typeof( options[key] ) != 'undefined' )
                            {
                               scope.table['options'][key] = options[key] ;
+                              if( key == 'height' )
+                              {
+                                 if( options[key] == 'scroll')
+                                 {
+                                    scope.ngTableContainer = {} ;
+                                 }
+                                 else if( options[key] == 'auto')
+                                 {
+                                    scope.ngTableContainer = { 'width': 'auto', 'height': 'auto' } ;
+                                 }
+                              }
                            }
                         } ) ;
                         //复制列宽配置
@@ -6358,6 +5773,7 @@
                         callbackGetter['SetTotalNum']       = setTotalRecords ;
                         callbackGetter['SetToolPageButton'] = setToolPageBtn ;
                         callbackGetter['Jump']              = jumpPage ;
+                        callbackGetter['Resize']            = resizeFun ;
                      }
                   } ) ;
 
@@ -6409,14 +5825,29 @@
                   scope.next = function(){
                      if( typeof( scope.customEvent['next'] ) === 'function' )
                      {
-                        ++scope.loadStatus['page'] ;
-                        if( scope.loadStatus['page'] > scope.tools['page'] )
+                        if( scope.table.options['mode'] == 'adaption' )
                         {
-                           scope.loadStatus['page'] = scope.tools['page'] ;
+                           if ( scope.loadStatus['showNum'] == scope.table['options']['max'] )
+                           {
+                              ++scope.loadStatus['page'] ;
+                              scope.customEvent['next']() ;
+                           }
                         }
-                        else
+                        else 
                         {
-                           scope.customEvent['next']() ;
+                           ++scope.loadStatus['page'] ;
+                           if( scope.loadStatus['page'] > scope.tools['page'] )
+                           {
+                              scope.loadStatus['page'] = scope.tools['page'] ;
+                              if ( scope.loadStatus['page'] < 1 )
+                              {
+                                 scope.loadStatus['page'] = 1 ;
+                              }
+                           }
+                           else
+                           {
+                              scope.customEvent['next']() ;
+                           }
                         }
                      }
                      else
@@ -6460,7 +5891,7 @@
                         if( scope.loadStatus['page'] <= 0 )
                            scope.loadStatus['page'] = 1 ;
                      }
-                     else if( scope.loadStatus['page'] > scope.tools['page'] )
+                     else if( scope.table.options['mode'] != 'adaption' && scope.loadStatus['page'] > scope.tools['page'] )
                      {
                         scope.loadStatus['page'] = scope.tools['page'] ;
                      }
