@@ -264,10 +264,10 @@ namespace engine
    retry:
       if ( cataSel.getCataPtr()->hasAutoIncrement() )
       {
-         const clsAutoIncSet& autoIncSet =
+         const AUTOINC_ITEM_MAP& autoIncMap =
                cataSel.getCataPtr()->getAutoIncMap() ;
          curMarks.clear() ;
-         _extractAutoIncMark( autoIncSet, curMarks ) ;
+         _extractAutoIncMark( autoIncMap, curMarks ) ;
 
          if ( 0 == result._sucGroupLst.size() &&
               curMarks != _lastMarks )
@@ -282,7 +282,7 @@ namespace engine
                inMsg.data()->clear() ;
             }
 
-            rc = _addAutoIncToMsg( autoIncSet, pInsertMsg, pInsertor,
+            rc = _addAutoIncToMsg( autoIncMap, pInsertMsg, pInsertor,
                                    count, _orgMsgLen, cb,
                                    &_pNewMsg, _newMsgSize, _newMsgLen ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement fields to "
@@ -917,7 +917,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__ADD_AUTOINC_TO_MSG, "_coordInsertOperator::_addAutoIncToMsg" )
-   INT32 _coordInsertOperator::_addAutoIncToMsg( const clsAutoIncSet &autoIncSet,
+   INT32 _coordInsertOperator::_addAutoIncToMsg( const AUTOINC_ITEM_MAP &autoIncMap,
                                                  MsgOpInsert *pInsertMsg,
                                                  CHAR const *pInsertor,
                                                  const INT32 count,
@@ -937,7 +937,7 @@ namespace engine
       INT32 headerSize = 0 ;
 
       // 1.malloc a msg buffer which is big enough
-      autoIncSize = _calcAutoIncEleSize( autoIncSet ) ;
+      autoIncSize = _calcAutoIncEleSize( autoIncMap ) ;
       estimatedSize = orgMsgLen + count * ( autoIncSize + 4 ) ;
 
       newMsgLen = 0 ;
@@ -956,7 +956,7 @@ namespace engine
       {
          const BSONObj objIn( (const CHAR*)pInsertor ) ;
          _SimpleBSONBuilder builder( pCurPos ) ;
-         rc = _addAutoIncToObj( objIn, autoIncSet, cb, builder ) ;
+         rc = _addAutoIncToObj( objIn, autoIncMap, cb, builder ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to add autoIncrement field to obj[%s], rc: %d",
                       objIn.toString().c_str(), rc ) ;
@@ -980,7 +980,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__ADD_AUTOINC_TO_OBJ, "_coordInsertOperator::_addAutoIncToObj" )
    INT32 _coordInsertOperator::_addAutoIncToObj( const BSONObj &objIn,
-                                                 const clsAutoIncSet &autoIncSet,
+                                                 const AUTOINC_ITEM_MAP &autoIncMap,
                                                  pmdEDUCB *cb,
                                                  _SimpleBSONBuilder &builder )
    {
@@ -991,7 +991,7 @@ namespace engine
       BSONElement                ele ;
       const CHAR*                eleField = NULL;
 
-      clsAutoIncSet::const_iterator autoIncIt ;
+      AUTOINC_ITEM_MAP_CONST_IT  autoIncIt ;
       const clsAutoIncItem       *pItem = NULL ;
       StringKeySet               doneSet ;
 
@@ -1007,16 +1007,16 @@ namespace engine
          {
             ele = boIt.next() ;
             eleField = ele.fieldName() ;
-            pItem = autoIncSet.findItem( eleField ) ;
-            if ( NULL == pItem )
+            autoIncIt = autoIncMap.find( eleField ) ;
+            if ( autoIncIt == autoIncMap.end() )
             {
                builder.appendElement( ele ) ;
                continue ;
             }
 
-            if ( !pItem->hasSubField() )
+            if ( !autoIncIt->second->hasSubField() )
             {
-               switch( pItem->generatedType() )
+               switch( autoIncIt->second->generatedType() )
                {
                case AUTOINC_GEN_ALWAYS:
                   break ;
@@ -1028,7 +1028,7 @@ namespace engine
                             ele.type(), eleField ) ;
                case AUTOINC_GEN_DEFAULT:
                   builder.appendElement( ele ) ;
-                  doneSet.insert( pItem->fieldName() ) ;
+                  doneSet.insert( autoIncIt->first ) ;
                   break ;
                }
             }
@@ -1037,17 +1037,17 @@ namespace engine
                if ( Object == ele.type() )
                {
                   _SimpleBSONBuilder subBuilder(
-                        builder.subobjStart( eleField ) ) ;
+                     builder.subobjStart( eleField ) ) ;
 
                   rc = _addAutoIncToObj( ele.embeddedObject(),
-                                         *(pItem->subFieldSet()),
+                                         *(autoIncIt->second->subFieldMap()),
                                          cb, subBuilder ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement "
                                "field[%s], rc: %d",
                                eleField, rc ) ;
                   subBuilder.done() ;
 
-                  doneSet.insert( pItem->fieldName() ) ;
+                  doneSet.insert( autoIncIt->first ) ;
                }
                else
                {
@@ -1059,7 +1059,7 @@ namespace engine
                }
             }
 
-            if ( doneSet.size() == autoIncSet.size() )
+            if ( doneSet.size() == autoIncMap.size() )
             {
                break ;
             }
@@ -1075,8 +1075,8 @@ namespace engine
 
          pSequenceAgent = _pResource->getSequenceAgent() ;
 
-         for ( autoIncIt = autoIncSet.begin() ;
-               autoIncIt != autoIncSet.end() ;
+         for ( autoIncIt = autoIncMap.begin() ;
+               autoIncIt != autoIncMap.end() ;
                ++autoIncIt )
          {
             /// already exist
@@ -1108,9 +1108,9 @@ namespace engine
             else
             {
                _SimpleBSONBuilder subBuilder(
-                     builder.subobjStart( pItem->fieldName() ) ) ;
+                  builder.subobjStart( pItem->fieldName() ) ) ;
 
-               rc = _addAutoIncToObj( BSONObj(), *( pItem->subFieldSet()),
+               rc = _addAutoIncToObj( BSONObj(), *(pItem->subFieldMap()),
                                       cb, subBuilder ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement "
                             "field[%s], rc: %d", pItem->fieldName(), rc ) ;
@@ -1131,13 +1131,13 @@ namespace engine
       goto done ;
    }
 
-   INT32 _coordInsertOperator::_calcAutoIncEleSize( const clsAutoIncSet &set )
+   INT32 _coordInsertOperator::_calcAutoIncEleSize( const AUTOINC_ITEM_MAP &autoIncMap )
    {
       INT32 autoIncSize = 0 ;
-      clsAutoIncSet::const_iterator it ;
+      AUTOINC_ITEM_MAP_CONST_IT it ;
       INT32 fieldLen = 0 ;
 
-      for ( it = set.begin() ; it != set.end() ; ++it )
+      for ( it = autoIncMap.begin() ; it != autoIncMap.end() ; ++it )
       {
          fieldLen = ossStrlen( it->first._pString ) + 1 ;
          if ( !it->second->hasSubField() )
@@ -1147,33 +1147,33 @@ namespace engine
          }
          else
          {
-            const clsAutoIncSet *pSubSet = it->second->subFieldSet() ;
+            const AUTOINC_ITEM_MAP *pSubMap = it->second->subFieldMap() ;
             // |type(CHAR) |field(CHAR*)  |subObj(BSONObj) |
             // BSONObj: |length(UINT32)  |elements(...)  |EOO(CHAR) |
             autoIncSize += ( 1 + fieldLen + 4 +
-                             _calcAutoIncEleSize( *pSubSet ) + 1 ) ;
+                             _calcAutoIncEleSize( *pSubMap ) + 1 ) ;
          }
       }
       return autoIncSize ;
    }
 
-   void _coordInsertOperator::_extractAutoIncMark( const clsAutoIncSet& setItem,
-                                                   AutoIncMarkSet& setMark )
+   void _coordInsertOperator::_extractAutoIncMark( const AUTOINC_ITEM_MAP& map,
+                                                   AutoIncMarkSet& set )
    {
-      clsAutoIncSet::const_iterator it = setItem.begin() ;
-      while ( it != setItem.end() )
+      AUTOINC_ITEM_MAP_CONST_IT it = map.begin() ;
+      while ( it != map.end() )
       {
          if ( !it->second->hasSubField() )
          {
             AutoIncMark mark ;
             mark.seqID = it->second->sequenceID() ;
             mark.genType = it->second->generatedType() ;
-            setMark.insert( mark ) ;
+            set.insert( mark ) ;
          }
          else
          {
-            const clsAutoIncSet *pSubSet = it->second->subFieldSet() ;
-            _extractAutoIncMark( *pSubSet, setMark ) ;
+            const AUTOINC_ITEM_MAP *pSubMap = it->second->subFieldMap() ;
+            _extractAutoIncMark( *pSubMap, set ) ;
          }
          ++it ;
       }

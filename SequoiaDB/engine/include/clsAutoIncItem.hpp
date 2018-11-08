@@ -41,7 +41,6 @@
 #include "ossUtil.hpp"
 #include "../bson/bson.h"
 #include "utilMap.hpp"
-#include "utilList.hpp"
 #include "utilUniqueID.hpp"
 
 using namespace bson ;
@@ -80,8 +79,7 @@ namespace engine
       BOOLEAN              hasSubField() const { return _pSubFieldMap ? TRUE :FALSE ; }
 
       const _clsAutoIncItem*  findSubItem( const CHAR *pName ) const ;
-
-      const _clsAutoIncSet* subFieldSet() const { return _pSubFieldSet ; }
+      const AUTOINC_ITEM_MAP* subFieldMap() const { return _pSubFieldMap ; }
 
    protected:
 
@@ -102,7 +100,7 @@ namespace engine
       utilSequenceID    _sequenceID ;
       AUTOINC_GEN_TYPE  _generatedType ;
 
-      _clsAutoIncSet*   _pSubFieldSet ;
+      AUTOINC_ITEM_MAP* _pSubFieldMap ;
       string            _fieldStr ;
 
    } ;
@@ -128,17 +126,15 @@ namespace engine
       public:
          INT32    init( const BSONElement &ele ) ;
          void     clear() ;
-
          UINT32   totalCount() const { return _totalCount ; }
-         UINT32   size() const { return _mapItem.size() ; }
 
          const clsAutoIncItem*      findItem( const CHAR *pName ) const ;
 
+         const AUTOINC_ITEM_MAP&    getMap() const { return _mapItem ; }
          const vector<BSONObj>&     getFields() const { return _vecFields ; }
 
       protected:
 
-         const AUTOINC_ITEM_MAP&    getMap() const { return _mapItem ; }
          INT32    _initAItem( const BSONObj &obj ) ;
          void     _clear() ;
 
@@ -151,33 +147,6 @@ namespace engine
 
    } ;
    typedef _clsAutoIncSet clsAutoIncSet ;
-
-   /*
-      define iterator of clsAutoIncItem
-   */
-   class _clsAutoIncIterator : public SDBObject
-   {
-      friend class _clsAutoIncSet ;
-      friend class _clsAutoIncItem ;
-   public:
-      enum _MODE
-      {
-         nonRecur = 0,
-         recursive
-      };
-      typedef enum _MODE MODE ;
-      _clsAutoIncIterator( const _clsAutoIncSet &set, MODE mode = nonRecur ) ;
-      BOOLEAN more() ;
-      const _clsAutoIncItem* next() ;
-
-   private:
-      MODE _mode ;
-      const AUTOINC_ITEM_MAP*    _pMap ;
-      AUTOINC_ITEM_MAP_CONST_IT  _it ;
-      _utilList< const AUTOINC_ITEM_MAP*, 1 >   _mapTrace ;
-      _utilList< AUTOINC_ITEM_MAP_CONST_IT, 1 > _itTrace ;
-   } ;
-   typedef _clsAutoIncIterator clsAutoIncIterator ;
 
 }
 
