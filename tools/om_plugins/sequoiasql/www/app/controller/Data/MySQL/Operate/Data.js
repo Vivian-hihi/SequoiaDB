@@ -27,51 +27,6 @@
       //数据库 + 表名
       $scope.FullName = SdbSwap.dbName + '.' + SdbSwap.tbName ;
 
-      //查询记录数量
-      var queryCountData = function( isUser ){
-         var sql = sprintf( 'select count(*) from (?) as t1', SdbSwap.lastQuerySql ) ;
-
-         var data = { 'Sql': sql, 'DbName': SdbSwap.dbName, 'Type': 'mysql' } ;
-         SdbRest.DataOperationV2( '/sql', data, {
-            'success': function( result ){
-               var count = 0 ;
-               if( result.length > 0 )
-               {
-                  count = parseInt( result[0]['count(*)'] ) ;
-               }
-
-               SdbSignal.commit( 'setTableTotal', count ) ;
-
-               if( isUser )
-               {
-                  var start = 0 ;
-                  var end   = 0 ;
-
-                  if( count > 0 )
-                  {
-                     start = SdbSwap.offset + 1 ;
-                     end   = SdbSwap.offset + SdbSignal.commit( 'getTableLength' )[0] ;
-                  }
-                  //执行结果
-                  var str = sprintf( $scope.pAutoLanguage( '? ? 执行查询成功，显示 ? - ?，总计 ? 条记录' ),
-                                     timeFormat( new Date(), 'hh:mm:ss' ),
-                                     $scope.FullName,
-                                     start, end,
-                                     count ) ;
-                  SdbSignal.commit( 'update_result', { 'rc': true, 'result': str } ) ;
-               }
-
-            },
-            'failed': function( errorInfo ){
-               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  queryCountData( isUser ) ;
-                  return true ;
-               } ) ;
-            }
-         } ) ;
-
-      }
-
       //执行sql 
       //noEditSql 为true时不修改sql输入框
       SdbSignal.on( 'exec_sql', function( data ){
@@ -107,6 +62,7 @@
             'success': function( result ){
                if( isQuery )
                {
+                  var count = result.length ;
                   SdbSwap.dataList = result ;
                   SdbSwap.dataLengthList = [] ;
                   var displayData = [] ;
@@ -136,8 +92,23 @@
                   //更新表格标题
                   SdbSignal.commit( 'setTableTitle', displayData ) ;
 
-                  //查询记录数
-                  queryCountData( isUser ) ;
+                  if( isUser )
+                  {
+                     var start = 0 ;
+                     var end   = 0 ;
+
+                     if( count > 0 )
+                     {
+                        start = SdbSwap.offset + 1 ;
+                        end   = SdbSwap.offset + SdbSignal.commit( 'getTableLength' )[0] ;
+                     }
+                     //执行结果
+                     var str = sprintf( $scope.pAutoLanguage( '? ? 执行查询成功，显示 ? - ? 记录' ),
+                                        timeFormat( new Date(), 'hh:mm:ss' ),
+                                        $scope.FullName,
+                                        start, end ) ;
+                     SdbSignal.commit( 'update_result', { 'rc': true, 'result': str } ) ;
+                  }
 
                }
                else
@@ -228,13 +199,13 @@
             'success': function( result ){
                fieldList = result ;
                $.each( fieldList, function( index, fieldInfo ){
-                  disabled = fieldInfo['IS_NULLABLE'] == 'YES' ? false : true ;
-                  var insertLine = [
-                     { 'type': 'textual', 'value': fieldInfo['COLUMN_NAME'] },
-                     { 'type': 'textual', 'value': fieldInfo['DATA_TYPE'] },
-                     { 'type': 'checkbox', 'value': false, 'disabled': disabled },
-                     { 'type': 'string', 'value': fieldInfo['COLUMN_DEFAULT'] }
-                  ] ;
+                  var disabled = fieldInfo['IS_NULLABLE'] == 'YES' ? false : true ;
+                  var insertLine = {
+                     'Column' : { 'type': 'textual', 'value': fieldInfo['COLUMN_NAME'] },
+                     'Type'   : { 'type': 'textual', 'value': fieldInfo['DATA_TYPE'] },
+                     'NULL'   : { 'type': 'checkbox', 'value': false, 'disabled': disabled },
+                     'Value'  : { 'type': 'string', 'value': fieldInfo['COLUMN_DEFAULT'] }
+                  } ;
                   insertGridData.push( insertLine ) ;
                } ) ;
             },
@@ -771,7 +742,26 @@
       
       //插入弹窗
       $scope.InsertWindow = {
-         'config': {},
+         'config': {
+            'type': 'table',
+            'table': {
+               'title': {
+                  'Column' : 'Column',
+                  'Type'   : 'Type',
+                  'NULL'   : 'NULL',
+                  'Value'  : 'Value'
+               },
+               'options': {
+                  'width': {
+                     'Column' : '30%',
+                     'Type'   : '20%',
+                     'NULL'   : '100px',
+                     'Value'  : '50%'
+                  }
+               },
+               'callback': {}
+            }
+         },
          'callback': {}
       } ;
 
@@ -785,19 +775,7 @@
          }
          else
          {
-            $scope.InsertWindow['config']['inputList'] = [] ;
-            $scope.InsertWindow['config'] = {
-               type: 'table',
-               gridTitle: [
-                  { 'text': 'Column' },
-                  { 'text': 'Type' },
-                  { 'text': 'NULL' },
-                  { 'text': 'Value' }
-               ],
-               grid: { 'tdModel': 'auto', 'gridModel': 'fixed', titleWidth: [ 30, 20, '100px', 50 ] },
-               inputList: $.extend( true, {}, insertGridData )
-            } ;
-
+            $scope.InsertWindow['config']['inputList'] = $.extend( true, [], insertGridData ) ;
             $scope.InsertWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定'), function(){
                $scope.ErrorTip = '' ;
                var value = $scope.InsertWindow['config'].getValue() ;
@@ -848,6 +826,10 @@
             $scope.InsertWindow['callback']['SetIcon']( '' ) ;
             $scope.InsertWindow['callback']['SetTitle']( $scope.pAutoLanguage( '插入' ) ) ;
             $scope.InsertWindow['callback']['Open']() ;
+
+            $scope.InsertWindow['callback']['SetResize']( function(){
+               $scope.InsertWindow['config']['table']['callback']['Resize']() ;
+            } ) ;
          }
       }
 
@@ -1078,7 +1060,24 @@
 
       //编辑单条记录弹窗
       $scope.EditWindow = {
-         'config': {},
+         'config': {
+            'type': 'table',
+            'table': {
+               'title': {
+                  'Column' : 'Column',
+                  'Type'   : 'Type',
+                  'Value'  : 'Value'
+               },
+               'options': {
+                  'width': {
+                     'Column' : '30%',
+                     'Type'   : '20%',
+                     'Value'  : '50%'
+                  }
+               },
+               'callback': {}
+            }
+         },
          'callback': {}
       } ;
 
@@ -1089,23 +1088,13 @@
             var data = SdbSwap.dataList[index] ;
             $scope.ErrorTip = '' ;
             $scope.EditWindow['config']['inputList'] = [] ;
-            $scope.EditWindow['config'] = {
-               type: 'table',
-               gridTitle: [
-                  { 'text': 'Column' },
-                  { 'text': 'Type' },
-                  { 'text': 'Value' }
-               ],
-               grid: { 'tdModel': 'auto', 'gridModel': 'fixed', titleWidth: [ 30, 20, 50 ] },
-               inputList: []
-            } ;
          
             $.each( fieldList, function( index, fieldInfo ){
-               var insertLine = [
-                  { 'type': 'textual', 'value': fieldInfo['COLUMN_NAME'] },
-                  { 'type': 'textual', 'value': fieldInfo['DATA_TYPE'] },
-                  { 'type': 'string', 'value': data[fieldInfo['COLUMN_NAME']] }
-               ] ;
+               var insertLine = {
+                  'Column': { 'type': 'textual', 'value': fieldInfo['COLUMN_NAME'] },
+                  'Type': { 'type': 'textual', 'value': fieldInfo['DATA_TYPE'] },
+                  'Value': { 'type': 'string', 'value': data[fieldInfo['COLUMN_NAME']] }
+               } ;
                $scope.EditWindow['config']['inputList'].push( insertLine ) ;
             } ) ;
 
@@ -1303,7 +1292,7 @@
    //sql语句输入框
    sacApp.controllerProvider.register( 'Data.MySQL.Data.InputBox.Ctrl', function( $scope, SdbSwap, SdbSignal ){
       
-      $scope.SqlCommand = sprintf( 'SELECT * FROM ? LIMIT 30', SdbSwap.tbName ) ;
+      $scope.SqlCommand = sprintf( 'SELECT * FROM ?', SdbSwap.tbName ) ;
       
       $scope.ExecQuery = function(){
          if( SdbSignal.commit( 'getTableLength' )[0] == 0 )
@@ -1354,7 +1343,7 @@
             'max': 30,
             'filter': {
             },
-            'mode': 'dynamic'
+            'mode': 'adaption'
          },
          'callback': {}
       } ;
@@ -1520,10 +1509,6 @@
 
       SdbSignal.on( 'getTableLength', function(){
          return $scope.GridTable['body'].length ;
-      } ) ;
-
-      SdbSignal.on( 'setTableTotal', function( count ){
-         $scope.GridTable['callback']['SetTotalNum']( count ) ;
       } ) ;
 
       $scope.ShowEditWindow = function( index ){

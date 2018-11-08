@@ -79,6 +79,7 @@
    "? ? 执行?成功": "? ? ? success",
    "? ? 执行成功": "? ? execute success",
    "? ? 执行查询成功，显示 ? - ?，总计 ? 条记录": "? ? query success, display ? - ?, total ? records",
+   "? ? 执行查询成功，显示 ? - ? 记录": "? ? query success, display ? - ? records",
    "数据库": "Database",
    "普通表": "Normal table",
    "外部表": "Foreign table",
