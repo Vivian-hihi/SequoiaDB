@@ -25,8 +25,12 @@ public class CommLib {
 	 * @return s3Client
 	 */
 	public static AmazonS3 buildS3Client(){
+		return buildS3Client(AWS_ACCESS_KEY,AWS_SECRET_KEY);
+	}
+	
+	public static AmazonS3 buildS3Client(String ACCESS_KEY,String SECRET_KEY){
 		AmazonS3 s3Client = null;
-		AWSCredentials credentials = new BasicAWSCredentials(AWS_ACCESS_KEY,AWS_SECRET_KEY);
+		AWSCredentials credentials = new BasicAWSCredentials(ACCESS_KEY,SECRET_KEY);
 		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
 				S3TestBase.s3ClientUrl, clientRegion);
 		ClientConfiguration config = new ClientConfiguration();
