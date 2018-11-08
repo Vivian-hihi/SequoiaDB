@@ -2,9 +2,9 @@ package com.sequoias3.user;
 
 import java.util.List;
 
-import org.apache.http.HttpStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -33,7 +33,7 @@ public class UpdateAdminUser16254 extends S3TestBase {
 		try {
 			UserUtils.deleteUser(Username, UserUtils.accessKeyId, true);
 		}catch (HttpClientErrorException e) {
-			if(e.getStatusCode().value() != HttpStatus.SC_NOT_FOUND){
+			if(e.getStatusCode()!= HttpStatus.NOT_FOUND){
 				e.printStackTrace();
 				Assert.fail(e.getMessage());
 			}
