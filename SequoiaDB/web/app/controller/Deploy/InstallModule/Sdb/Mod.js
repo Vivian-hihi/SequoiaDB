@@ -1088,6 +1088,17 @@
             //定时循环转换，防止浏览器卡死
             var timer = $interval( function(){
                var nodeInfo = config['Config'][index] ;
+              
+               var tmpNodeInfo = {} ;
+               $.each( nodeInfo, function( key, value ){
+                  if( ( value.length > 0 && isFilterDefaultItem( key, value ) == false ) || key == 'datagroupname' )
+                  {
+                     tmpNodeInfo[key] = value ;
+                  }
+               } ) ;
+
+               nodeInfo = tmpNodeInfo ;
+
                if( nodeInfo['role'] == 'coord' )
                {
                   newConfig['Deploy']['Coord']['Node'].push( deleteJson( nodeInfo, [ 'datagroupname', 'role' ] ) ) ;
@@ -1525,6 +1536,23 @@
          return configure ;
       }
 
+      var isFilterDefaultItem = function( key, value ) {
+         var result = false ;
+         var unSkipList = [ 'HostName', 'dbpath', 'role', 'svcname', 'datagroupname' ] ;
+         if ( unSkipList.indexOf( key ) >= 0 )
+         {
+            return false ;
+         }
+         $.each( $scope.Template, function( index, item ){
+            if ( item['Name'] == key )
+            {
+               result = ( item['Default'] == value ) ;
+               return false ;
+            }
+         } ) ;
+         return result ;
+      }
+
       $scope.GotoInstall = function(){
          var oldConfigure = convertConfig() ;
          if( typeof( oldConfigure ) == 'undefined' )
@@ -1539,13 +1567,14 @@
          $.each( oldConfigure['Config'], function( nodeIndex, nodeInfo ){
             var nodeConfig = {} ;
             $.each( nodeInfo, function( key, value ){
-               if( value.length > 0 || key == 'datagroupname' )
+               if( ( value.length > 0 && isFilterDefaultItem( key, value ) == false ) || key == 'datagroupname' )
                {
                    nodeConfig[key] = value ;
                }
             } ) ;
             configure['Config'].push( nodeConfig ) ;
          } ) ;
+         
          if( configure )
          {
             installSdb( configure ) ;
