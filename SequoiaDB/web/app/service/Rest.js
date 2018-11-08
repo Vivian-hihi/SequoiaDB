@@ -854,7 +854,7 @@
                {
                   return ;
                }
-               if( XMLHttpRequest.status == 404 )
+               if( XMLHttpRequest.status != 0 ) //网络错误是0
                {
                   g._eventError( type, url, data, event, options, XMLHttpRequest, textStatus, errorThrown ) ;
                   return ;
