@@ -10,13 +10,15 @@ function main()
       return;
    }
 
+   var groups = commGetGroups( db );
+   if(groups.length < 2 ){
+      println("Deploy one group");
+      return;
+   }
+   
    var clName = COMMCLNAME + "_ES_11989";
    commDropCL(db, COMMCSNAME, clName, true, true);
    
-   var groups = commGetGroups( db );
-   if(groups.length < 2 ){
-      throw buildException(commGetGroups, "Only one group", "dbcl get groups' name", "two or more groups", "less than two groups");
-   }
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingType : "range", ShardingKey : {a : 1}, Group : groups[0][0]["GroupName"]} );
    //插入数据，数据分布覆盖：1个组、多个组上
    dbcl.split(groups[0][0]["GroupName"], groups[1][0]["GroupName"], {a : "c"}, {a : "g"});  
@@ -24,7 +26,7 @@ function main()
    var records = new Array();
    for (var i = 0; i < 60 ; i++){
       var record = {a : "a" + i, b : "b" + i};
-	  records.push(record);
+      records.push(record);
    }
    
    insertRecords(dbcl, records);

@@ -9,14 +9,16 @@ function main()
       println("Deploy is standalone");
       return;
    }
+   
+   var groups = commGetGroups( db );
+   if(groups.length < 2 ){
+      println("Deploy one group");
+      return;
+   }
 
    var clName = COMMCLNAME + "_ES_11987";
    commDropCL(db, COMMCSNAME, clName, true, true);
    
-   var groups = commGetGroups( db );
-   if(groups.length < 2 ){
-      throw buildException(commGetGroups, "Only one group", "dbcl get groups' name", "two or more groups", "less than two groups");
-   }
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingType : "hash", ShardingKey : {a : 1}, Group : groups[0][0]["GroupName"]} );
    
    //插入数据，数据分布覆盖：1个组、多个组上

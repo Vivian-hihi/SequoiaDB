@@ -9,15 +9,17 @@ function main()
       println("Deploy is standalone");
       return;
    }
+   
+   var groups = commGetGroups( db );
+   if(groups.length < 2 ){
+      println("Deploy one group");
+      return;
+   }
 
    var clName = COMMCLNAME + "_ES_14518";
    commDropCL(db, COMMCSNAME, clName, true, true);
    
    //创建range分区表，并创建全文索引
-   var groups = commGetGroups( db );
-   if(groups.length < 2 ){
-      throw buildException(commGetGroups, "Only one group", "dbcl get groups' name", "two or more groups", "less than two groups");
-   }
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingType : "range", ShardingKey : {a : 1}, Group : groups[0][0]["GroupName"]} );
    commCreateIndex( dbcl, "fullIndex", {a : "text"});
    

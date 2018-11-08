@@ -9,6 +9,12 @@ function main()
       println("Deploy is standalone");
       return;
    }
+   
+   var groups = commGetGroups( db );
+   if(groups.length < 2 ){
+      println("Deploy one group");
+      return;
+   }
 
    var clName = COMMCLNAME + "_ES_11988";
    commDropCL(db, COMMCSNAME, clName, true, true);

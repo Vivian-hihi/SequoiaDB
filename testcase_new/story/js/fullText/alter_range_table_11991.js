@@ -9,14 +9,16 @@ function main()
       println("Deploy is standalone");
       return;
    }
+   
+   var groups = commGetGroups( db );
+   if(groups.length < 2 ){
+      println("Deploy one group");
+      return;
+   }
 
    var clName = COMMCLNAME + "_ES_11991";
    commDropCL(db, COMMCSNAME, clName, true, true);
    
-   var groups = commGetGroups( db );
-   if(groups.length < 2 ){
-      throw buildException(commGetGroups, "Only one group", "dbcl get groups' name", "two or more groups", "less than two groups");
-   }
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {Group : groups[0][0]["GroupName"]} );
    commCreateIndex( dbcl, "fullIndex", {b : "text"});
    
