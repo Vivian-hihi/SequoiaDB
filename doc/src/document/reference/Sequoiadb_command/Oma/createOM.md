@@ -34,6 +34,11 @@ Oma
 
 	节点配置信息，如配置日志大小等，具体可参考[数据库配置](database_management/runtime_configuration.md)。
 
+   | 常用配置 | 描述 | 默认值 |
+   | -------- | ---- | ------ |
+   | httpname | 设置sdbom的网页端口 | svcname + 4 |
+   | wwwpath  | 设置sdbom的网页路径 | sequoiadb安装路径的web目录 |
+
 ##返回值##
 
 成功：返回 Oma 对象。
@@ -63,7 +68,7 @@ v2.0及以上版本。
 
 	```lang-javascript
 	> var oma = new Oma("localhost", 11790)
-	> oma.createOM( 11780, "/opt/sequoiadb/database/sms/11780", 
-					{ httpname: 8000, wwwpath:"/opt/sequoiadb/web" } )
+	> oma.createOM( "11780", "/opt/sequoiadb/database/sms/11780",
+                             { "httpname": 8000, "wwwpath": "/opt/sequoiadb/web" } )
 	> oma.startNode( 11780 )
  	```
