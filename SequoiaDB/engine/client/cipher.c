@@ -2,38 +2,38 @@
 #include "ossUtil.h"
 #include "openssl/des.h"
 #include "openssl/sha.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 
 
 #define BYTES_PER_TIME               8
 #define KEY_BYTE_LENGTH              8
 
-#define PASSWD_MAX_LENGTH            256
 #define RANDOM_ARRAY_MAX_LENGTH      16
-#define PASSWD_ENCRYPTED_MAX_LENGTH  PASSWD_MAX_LENGTH + RANDOM_ARRAY_MAX_LENGTH
 #define ARRAY_CONTENT_LENGTH         RANDOM_ARRAY_MAX_LENGTH
-#define CIPHERTEXT_MAX_LENGTH        512
-#define USERNAME_MAX_LENGTH          256
+#define USERNAME_MAX_LENGTH          1000
 
-#define CIPHER_STRING_MAX_LENGTH     256
-#define CIPHERFILE_LINE_MAX_LENGTH   256
-
-
+#define TOKEN_MAX_LENGTH             256
+#define CIPHER_STRING_MAX_LENGTH     TOKEN_MAX_LENGTH + RANDOM_ARRAY_MAX_LENGTH
 
 static INT16 _hexChar2dec( CHAR c )
 {
-   if( '0' <= c && c <= '9' )
+   INT16 i = 0 ;
+   if ( c >= '0' && c <= '9' )
    {
-	  return (INT16)( c - '0' ) ;
+      i = c - '0' ;
    }
-   else if ( 'a' <= c && c <= 'f' )
+   else if ( c >= 'a' && c <= 'f' )
    {
-	  return (INT16)( ( c - 'a' ) + 10 ) ;
+      i = 10 + c - 'a' ;
    }
-   else if( 'A' <= c && c <= 'F' )
+   else
    {
-	  return (INT16)( ( c - 'A' ) + 10 ) ;
+      i = 10 + c - 'A' ;
    }
-   return -1 ;
+   return i ;
 }
 
 static void _hexToByte( const CHAR *hex, CHAR *bytes, UINT32 *byteLength )
@@ -114,7 +114,7 @@ static INT32 _extractRandomArray( CHAR *cipherText, UINT32 *cipherTextSize,
    }
 
    // calculate random array position in cipherText, then extract
-   cipherLowPos = cipherText[0] ;
+   cipherLowPos = (UINT8)cipherText[0] ;
    if ( *cipherTextSize <= cipherLowPos )
    {
       goto error ;
@@ -125,7 +125,7 @@ static INT32 _extractRandomArray( CHAR *cipherText, UINT32 *cipherTextSize,
    ossMemcpy( arrayLowContent, cipherText + cipherLowPos, arrayLowLen + 2 ) ;
    arrayLowContentSize = arrayLowLen + 2 ;
 
-   cipherMidPos = arrayLowContent[arrayLowContentSize - 1] ;
+   cipherMidPos = (UINT8)arrayLowContent[arrayLowContentSize - 1] ;
    if ( *cipherTextSize <= cipherMidPos )
    {
       goto error ;
@@ -134,7 +134,7 @@ static INT32 _extractRandomArray( CHAR *cipherText, UINT32 *cipherTextSize,
    ossMemcpy( arrayMidContent, cipherText + cipherMidPos, arrayMidLen + 2 ) ;
    arrayMidContentSize = arrayMidLen + 2 ;
 
-   cipherHighPos = arrayMidContent[arrayMidContentSize - 1] ;
+   cipherHighPos = (UINT8)arrayMidContent[arrayMidContentSize - 1] ;
    if ( *cipherTextSize <= cipherHighPos )
    {
       goto error ;
@@ -177,14 +177,14 @@ static void _hashToKey( CHAR *cipherString, UINT32 cipherStringSize,
                                desiredLength : SHA256_DIGEST_LENGTH ) ;
 }
 
-static INT32 _decrypt( const CHAR *cipherText, const CHAR *token,
+static INT32 _decrypt( CHAR *cipherText, const CHAR *token,
                        CHAR *clearText, UINT32 clearTextLen )
 {
    INT32                 rc = SDB_OK ;
 
    CHAR                  randArray[RANDOM_ARRAY_MAX_LENGTH] = {'\0'} ;
    UINT32                randArraySize = 0 ;
-   CHAR                  passwdEncrypted[PASSWD_ENCRYPTED_MAX_LENGTH] = {'\0'} ;
+   CHAR *                passwdEncrypted = NULL ;
    UINT32                passwdEncryptedSize = 0 ;
    UINT32                passwdLen = 0 ;
    CHAR*                 passwd = NULL ;
@@ -199,9 +199,17 @@ static INT32 _decrypt( const CHAR *cipherText, const CHAR *token,
    UINT32                i = 0 ;
    UINT32                j = 0 ;
 
-   if ( NULL == cipherText ||
-        2 * PASSWD_ENCRYPTED_MAX_LENGTH < strlen( cipherText ) )
+   if ( NULL == cipherText )
    {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   passwdEncrypted = ( CHAR * )malloc( strlen( cipherText ) / 2 ) ;
+
+   if ( NULL == passwdEncrypted )
+   {
+      rc = SDB_OOM ;
       goto error ;
    }
 
@@ -259,6 +267,11 @@ static INT32 _decrypt( const CHAR *cipherText, const CHAR *token,
    }
 
 done:
+   if ( NULL != passwdEncrypted )
+   {
+      free( passwdEncrypted ) ;
+   }
+
    return rc ;
 error:
    rc = SDB_SYS ;
@@ -280,66 +293,181 @@ void _extractUserInfo( const CHAR *userInfo, CHAR *userName,
    }
 
    ossStrncpy( fullName, userInfo, strlen( userInfo ) ) ;
-   //ossStrncpy( userInfo, userName, strlen( userName ) ) ;
 }
 
-INT32 _findCipherText( const CHAR *userName, const CHAR *fullName,
-                       const CHAR *path, CHAR *cipherText )
+INT32 _readn( INT32 fd, void *vptr, size_t n )
+{
+   size_t  nleft ;
+   INT32   nread ;
+   char    *ptr ;
+
+   ptr = vptr ;
+   nleft = n ;
+   while ( nleft > 0 )
+   {
+#if defined (_LINUX)
+      if ( ( nread = read( fd, ptr, nleft ) ) < 0 )
+#elif defined (_WINDOWS)
+      if ( ( nread = _read( fd, ptr, nleft ) ) < 0 )
+#endif
+      {
+         if ( errno == EINTR )
+            nread = 0 ;      /* and call read() again */
+         else
+            return -1 ;
+      }
+      else if ( nread == 0 )
+         break ;              /* EOF */
+
+      nleft -= nread ;
+      ptr += nread ;
+   }
+   return ( n - nleft ) ;         /* return >= 0 */
+}
+
+INT32 _findAndDecrypt( const CHAR *userName, const CHAR *fullName,
+                       const CHAR *token, const CHAR *path, CHAR **clearText )
 {
    INT32 rc = SDB_OK ;
 
    INT32 foundFullNameCount = 0 ;
    INT32 foundHalfNameCount = 0 ;
-   FILE  *fp = NULL ;
-   CHAR  line[CIPHERFILE_LINE_MAX_LENGTH] = { '\0' } ;
-   CHAR  matchedUserInfo[CIPHERFILE_LINE_MAX_LENGTH] = { '\0' } ;
    CHAR  *atPos = NULL ;
    CHAR  *colonPos = NULL ;
+   CHAR  *fileContent = NULL ;
+   off_t fileSize = 0 ;
+   INT32 fd ;
+   UINT32 nleft = fileSize ;
+   CHAR   *foundNewline = NULL ;
+   CHAR   *startPosition = fileContent ;
+   CHAR   *matchedPosition = NULL ;
+   UINT32 matchedLength = 0 ;
+   UINT32 fileFullNameLen = 0 ;
+   UINT32 fileUserNameLen = 0 ;
+   UINT32 fullNameLen = strlen( fullName ) ;
+   UINT32 userNameLen = strlen( userName ) ;
+#if defined (_LINUX)
+   struct stat stat  ;
+#elif defined (_WINDOWS)
+   struct _stat stat ;
+#endif
 
    if ( NULL == userName || NULL == path ||
-        NULL == fullName || NULL == cipherText )
+        NULL == fullName  )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
 
-   fp = fopen( path, "r" ) ;
-   if ( NULL == fp )
+#if defined (_LINUX)
+
+   fd = open( path, O_RDONLY ) ;
+   if ( -1 == fd )
    {
       rc = SDB_FNE ;
       goto error ;
    }
 
-   while ( NULL != fgets( line, CIPHERFILE_LINE_MAX_LENGTH, fp ) )
+   if ( -1 == fstat( fd, &stat ) )
    {
-      colonPos = ossStrchr( line, ':' ) ;
-      atPos = ossStrchr( line, '@' ) ;
-      if ( NULL == colonPos )
-      {
-         rc = SDB_SYS ;
-         goto error ;
-      }
+      rc = errno ;
+      goto error ;
+   }
 
-      if ( 0 == ossStrncmp( line, fullName, colonPos - line ) )
+#elif defined (_WINDOWS)
+
+   fd = _open( path, O_RDONLY ) ;
+   if ( -1 == fd )
+   {
+      rc = SDB_FNE ;
+      goto error ;
+   }
+
+   if ( -1 == _fstat( fd, &stat ) )
+   {
+      rc = errno ;
+      goto error ;
+   }
+#endif
+
+   fileSize = stat.st_size ;
+   fileContent = ( CHAR * )malloc( fileSize ) ;
+   if ( NULL == fileContent )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+
+   nleft = _readn( fd, ( void * )fileContent, fileSize ) ;
+   if ( 0 > nleft )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   startPosition = fileContent ;
+   while ( nleft > 0 )
+   {
+      foundNewline = memchr( startPosition + 1, '\n', nleft ) ;
+      if ( NULL != foundNewline )
       {
-         foundFullNameCount++ ;
-         ossMemset( matchedUserInfo, 0, CIPHERFILE_LINE_MAX_LENGTH ) ;
-         ossStrncpy( matchedUserInfo, line, CIPHERFILE_LINE_MAX_LENGTH ) ;
+
+         colonPos = memchr( startPosition, ':', 
+                            foundNewline - startPosition ) ;
+         atPos = memchr( startPosition, '@', 
+                         foundNewline - startPosition ) ;
+         if ( NULL == colonPos )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         fileFullNameLen = colonPos - startPosition ;
+         if ( NULL != atPos )
+         {
+            fileUserNameLen = atPos - startPosition ;
+         }
+
+         if ( 0 == memcmp( startPosition, fullName,
+                           fileFullNameLen > fullNameLen ?
+                           fileFullNameLen : fullNameLen ) )
+         {
+            foundFullNameCount++ ;
+            matchedPosition = colonPos + 1 ;
+            matchedLength = foundNewline - matchedPosition ;
+            break ;
+         }
+         else if ( NULL != atPos &&
+                   0 == memcmp( startPosition, userName, 
+                                fileUserNameLen > userNameLen ?
+                                fileUserNameLen : userNameLen ) )
+         {
+            foundHalfNameCount++ ;
+            matchedPosition = colonPos + 1 ;
+            matchedLength = foundNewline - matchedPosition ;
+         }
+      }
+      else
+      {
          break ;
       }
-      else if ( NULL != atPos &&
-                0 == ossStrncmp( line, userName, atPos - line ) )
-      {
-         foundHalfNameCount++ ;
-         ossMemset( matchedUserInfo, 0, CIPHERFILE_LINE_MAX_LENGTH ) ;
-         ossStrncpy( matchedUserInfo, line, CIPHERFILE_LINE_MAX_LENGTH ) ;
-      }
+      
+      nleft -= ( foundNewline + 1 ) - startPosition ;
+      startPosition = foundNewline + 1 ;      
    }
 
    if ( 1 == foundFullNameCount || 1 == foundHalfNameCount )
    {
-      ossStrncpy( cipherText, ossStrstr( matchedUserInfo, ":" ) + 1,
-                  CIPHERTEXT_MAX_LENGTH ) ;
+      matchedPosition[matchedLength] = '\0' ;
+
+      *clearText = ( CHAR * )malloc( matchedLength ) ;
+      if ( NULL == *clearText )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      _decrypt( matchedPosition, token, *clearText, matchedLength ) ;
    }
    else if ( 1 < foundHalfNameCount )
    {
@@ -355,9 +483,10 @@ INT32 _findCipherText( const CHAR *userName, const CHAR *fullName,
    }
 
 done:
-   if ( NULL != fp )
+
+   if ( NULL != fileContent )
    {
-      fclose( fp ) ;
+      free( fileContent ) ;
    }
 
    return rc ;
@@ -366,23 +495,17 @@ error:
 }
 
 INT32 decryptUserCipher( const CHAR* pUsername, const CHAR *pToken,
-                         const CHAR *pPath, CHAR *pPasswd, UINT32 passwdLen )
+                         const CHAR *pPath, CHAR **pPasswd )
 {
    INT32   rc = SDB_OK ;
 
    CHAR    userName[USERNAME_MAX_LENGTH] = {'\0'} ;
    CHAR    fullName[USERNAME_MAX_LENGTH] = {'\0'} ;
-   CHAR    cipherText[CIPHERTEXT_MAX_LENGTH] = {'\0'} ;
 
    _extractUserInfo( pUsername, userName, fullName ) ;
 
-   rc = _findCipherText( userName, fullName, pPath, cipherText ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-   rc = _decrypt( cipherText, pToken, pPasswd, passwdLen ) ;
+   rc = _findAndDecrypt( userName, fullName, pToken,
+                         pPath, pPasswd ) ;
    if ( SDB_OK != rc )
    {
       printf( "decrypt user %s passwd failed.", fullName ) ;

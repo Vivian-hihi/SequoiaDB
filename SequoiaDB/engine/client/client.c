@@ -2131,16 +2131,39 @@ SDB_EXPORT INT32 sdbSecureConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
 SDB_EXPORT INT32 sdbGetPasswdByCipherFile( const CHAR *pUsrName,
                                            const CHAR *pToken,
                                            const CHAR *pCipherFile,
-                                           CHAR *pPasswd, UINT32 passwdLen )
+                                           CHAR **pUser, CHAR **pPasswd )
 {
    INT32 rc = SDB_OK ;
 
-   rc = decryptUserCipher( pUsrName, pToken, pCipherFile, pPasswd, passwdLen ) ;
+   CHAR *atPos = 0 ;
+   UINT32 userLength = 0 ;
 
+   rc = decryptUserCipher( pUsrName, pToken, pCipherFile, pPasswd ) ;
    if ( SDB_OK != rc )
    {
+      rc = SDB_SYS ;
       goto error ;
    }
+
+   atPos = ossStrchr( pUsrName, '@' ) ;
+   if ( NULL != atPos )
+   {
+      userLength = ( atPos - pUsrName ) + 1 ;
+   }
+   else
+   {
+      userLength = strlen( pUsrName ) + 1 ;
+   }
+
+   *pUser = ( CHAR * )malloc( userLength ) ;
+   if ( NULL == *pUser )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+
+   ossStrncpy( *pUser, pUsrName, userLength - 1 ) ;
+   ( *pUser )[userLength - 1] = '\0' ;
 
 done:
    return rc ;

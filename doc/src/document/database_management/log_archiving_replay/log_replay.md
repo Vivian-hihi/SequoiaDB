@@ -39,7 +39,10 @@
 |hostname|-|SequoiaDB所在的主机名|string|-|dump和dumpheader为false时必填|
 |svcname|-|SequoiaDB的服务名（端口号）|string|-|dump和dumpheader为false时必填|
 |user|-|用户名|string|-|
-|password|-|密码|string|-|
+|password|-|密码|string|-|指定值则使用明文输入，不指定值则命令行提示输入
+|cipher|-|使用加密文件输入密码|bool|false|
+|token|-|加密口令|string|-|
+|cipherfile|-|加密文件|string|./passwd|
 |ssl|-|使用SSL连接|bool|false|
 |path|-|归档目录|string|-|必填，可以是文件或目录|
 |filter|-|过滤条件|string(json)|-|

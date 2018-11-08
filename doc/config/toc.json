@@ -703,6 +703,12 @@
                      "file": "sdblob",
                      "cn": "大对象工具",
                      "en": "Large Object Tools"
+                  },
+                  {
+                     "id": 1541583490,
+                     "file": "sdbpasswd",
+                     "cn": "数据库密码工具",
+                     "en": "Database Password Tool"
                   }
                ]
             },

@@ -6,7 +6,7 @@
 SDB_EXTERN_C_START
 
 INT32 decryptUserCipher( const CHAR* pUsername, const CHAR *pToken,
-                         const CHAR *pPath, CHAR *pPasswd, UINT32 passwdLen ) ;
+                         const CHAR *pPath, CHAR **pPasswd ) ;
 SDB_EXTERN_C_END
 
 #endif /* CIPHER_H_ */

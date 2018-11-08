@@ -147,15 +147,17 @@ SDB_EXPORT INT32 initClient( sdbClientConf* config ) ;
     \param [in] pUsrName The User's Name in the cipherfile
     \param [in] pToken The Password encryption token
     \param [in] pCipherFile The Cipherfile location, default ./passwd
-    \param [out] pPasswd The decrypted Password buffer
-    \param [in] passwdLen The decrypted Password buffer size
+    \param [out] pUser a buffer holds usrName without @ and follow,
+                 user is responsible for freeing this buffer when finished    
+    \param [out] pPasswd a buffer holds decrypted Password,
+                 user is responsible for freeing this buffer when finished
     \retval SDB_OK Retrieval Success
     \retval Others Retrieval Fail
 */
 SDB_EXPORT INT32 sdbGetPasswdByCipherFile( const CHAR *pUsrName,
                                            const CHAR *pToken,
                                            const CHAR *pCipherFile,
-                                           CHAR *pPasswd, UINT32 passwdLen ) ;
+                                           CHAR **pUser, CHAR **pPasswd ) ;
 
 /** \fn INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
                            const CHAR *pUsrName, const CHAR *pPasswd ,

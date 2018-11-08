@@ -23,7 +23,10 @@ sdbinspect 需要与数据库协调节点（Coord 节点）连接。
 | --file            | -f   | 指定从已存在的（上一次检查的）结果文件开始检查，当指定此选择时，其它选项（除  -o 外）均失效，生效的为文件中保存的 command 选项 |
 | --output          | -o   | 指定输出的文件名，默认是 inspect.bin，报告文件为 inspect.bin.report |
 | --view            | -w   | 指定生成 report 文件的内容按组（group）查看和按集合（collection）查看，默认为 group |
-| --auth            | -u   | 指定数据库鉴权需要的用户名和密码，格式：username:password，默认值为 "":"" |
+| --auth            | -u   | 指定数据库鉴权需要的用户名和密码，格式：username:password，默认值为 "":""。只提供用户名而不提供密码时，使用命令行提示输入密码，格式: username |
+| --cipher          |      | 是否使用加密文件输入密码，默认值为 false |
+| --token           |      | 加密口令 |
+| --cipherfile      |      | 加密文件，默认值为 ./passwd |
 
 ##用法##
 

@@ -987,29 +987,17 @@ INT32 sdbGetShardingKeyInfo( const SdbInputOptions *options,
          SDB_MAX_KEY_COLUMN_LENGTH - 1 ) ;
 
    /* get the cs.cl's shardingkey */
-   if ( options->isUseCipher )
-   {
-      connection = sdbGetConnectionHandleByCipher( ( const char ** )( options->serviceList ),
-                                                     options->serviceNum,
-                                                     options->user,
-                                                     options->token,
-                                                     options->cipherfile,
-                                                     options->preference_instance,
-                                                     options->preference_instance_mode,
-                                                     options->sessionTimeout,
-                                                     options->transaction ) ;
-   }
-   else
-   {
-      connection = sdbGetConnectionHandle( ( const char ** )( options->serviceList ),
-                                           options->serviceNum,
-                                           options->user,
-                                           options->password,
-                                           options->preference_instance,
-                                           options->preference_instance_mode,
-                                           options->sessionTimeout,
-                                           options->transaction ) ;
-   }
+   connection = sdbGetConnectionHandle( ( const char ** )( options->serviceList ),
+                                        options->serviceNum,
+                                        options->user,
+                                        options->password,
+                                        options->isUseCipher,
+                                        options->token,
+                                        options->cipherfile,
+                                        options->preference_instance,
+                                        options->preference_instance_mode,
+                                        options->sessionTimeout,
+                                        options->transaction ) ;
 
    sdbbson_append_string( &condition, "Name", fullCollectionName->data ) ;
    rc = sdbbson_finish( &condition ) ;
@@ -3494,27 +3482,16 @@ static INT32 sdbRowsCountFromSdb( Oid foreignTableId, SINT64 *count )
 
    sdbGetOptions( foreignTableId, &options ) ;
    /* attempt to connect to remote database */
-   if ( options.isUseCipher )
-   {
-      hConnection = sdbGetConnectionHandleByCipher( (const char **)options.serviceList,
-                                                     options.serviceNum, options.user,
-                                                     options.token,
-                                                     options.cipherfile,
-                                                     options.preference_instance,
-                                                     options.preference_instance_mode,
-                                                     options.sessionTimeout,
-                                                     options.transaction ) ;
-   }
-   else
-   {
-      hConnection = sdbGetConnectionHandle( (const char **)options.serviceList,
-                                            options.serviceNum, options.user,
-                                            options.password,
-                                            options.preference_instance,
-                                            options.preference_instance_mode,
-                                            options.sessionTimeout,
-                                            options.transaction ) ;
-   }
+   hConnection = sdbGetConnectionHandle( (const char **)options.serviceList,
+                                         options.serviceNum, options.user,
+                                         options.password,
+                                         options.isUseCipher,
+                                         options.token,
+                                         options.cipherfile,
+                                         options.preference_instance,
+                                         options.preference_instance_mode,
+                                         options.sessionTimeout,
+                                         options.transaction ) ;
    if ( SDB_INVALID_HANDLE == hConnection )
    {
       goto error ;
@@ -3942,31 +3919,18 @@ static void SdbBeginForeignScan( ForeignScanState *scanState,
    fdw_state->columnMappingHash = columnMappingHash ;
 
    /* retreive target information */
-   if ( fdw_state->isUseCipher )
-   {
-      fdw_state->hConnection = sdbGetConnectionHandleByCipher( 
-                                            ( const char ** )( fdw_state->sdbServerList ),
-                                            fdw_state->sdbServerNum,
-                                            fdw_state->usr,
-                                            fdw_state->token,
-                                            fdw_state->cipherfile,
-                                            fdw_state->preferenceInstance,
-                                            fdw_state->preferenceInstanceMode,
-                                            fdw_state->sessionTimeout,
-                                            fdw_state->transaction ) ;
-   }
-   else
-   {
-      fdw_state->hConnection = sdbGetConnectionHandle(
-                                           (const char **)fdw_state->sdbServerList,
-                                           fdw_state->sdbServerNum,
-                                           fdw_state->usr,
-                                           fdw_state->passwd,
-                                           fdw_state->preferenceInstance,
-                                           fdw_state->preferenceInstanceMode,
-                                           fdw_state->sessionTimeout,
-                                           fdw_state->transaction ) ;
-   }
+   fdw_state->hConnection = sdbGetConnectionHandle(
+                                        (const char **)fdw_state->sdbServerList,
+                                        fdw_state->sdbServerNum,
+                                        fdw_state->usr,
+                                        fdw_state->passwd,
+                                        fdw_state->isUseCipher,
+                                        fdw_state->token,
+                                        fdw_state->cipherfile,
+                                        fdw_state->preferenceInstance,
+                                        fdw_state->preferenceInstanceMode,
+                                        fdw_state->sessionTimeout,
+                                        fdw_state->transaction ) ;
 
    fdw_state->hCollection = clStat->clHandle ;
 
@@ -4514,32 +4478,18 @@ void SdbBeginForeignModify( ModifyTableState *mtstate,
    //store the pointer of fdw_state for the insert/update/delete
    rinfo->ri_FdwState = fdw_state ;
 
-   if ( fdw_state->isUseCipher )
-   {
-      fdw_state->hConnection = sdbGetConnectionHandleByCipher( 
-                                            ( const char ** )( fdw_state->sdbServerList ),
-                                            fdw_state->sdbServerNum,
-                                            fdw_state->usr,
-                                            fdw_state->token,
-                                            fdw_state->cipherfile,
-                                            fdw_state->preferenceInstance,
-                                            fdw_state->preferenceInstanceMode,
-                                            fdw_state->sessionTimeout,
-                                            fdw_state->transaction ) ;
-   }
-   else
-   {
-      fdw_state->hConnection = sdbGetConnectionHandle(
-                                          (const char **)fdw_state->sdbServerList,
-                                          fdw_state->sdbServerNum,
-                                          fdw_state->usr,
-                                          fdw_state->passwd,
-                                          fdw_state->preferenceInstance,
-                                          fdw_state->preferenceInstanceMode,
-                                          fdw_state->sessionTimeout,
-                                          fdw_state->transaction ) ;
-   }
-
+   fdw_state->hConnection = sdbGetConnectionHandle(
+                                       (const char **)fdw_state->sdbServerList,
+                                       fdw_state->sdbServerNum,
+                                       fdw_state->usr,
+                                       fdw_state->passwd,
+                                       fdw_state->isUseCipher,
+                                       fdw_state->token,
+                                       fdw_state->cipherfile,
+                                       fdw_state->preferenceInstance,
+                                       fdw_state->preferenceInstanceMode,
+                                       fdw_state->sessionTimeout,
+                                       fdw_state->transaction ) ;
    fdw_state->hCollection = sdbGetSdbCollection( fdw_state->hConnection,
       fdw_state->sdbcs, fdw_state->sdbcl ) ;
 
@@ -5095,28 +5045,16 @@ static INT32 SdbInitCLStatistics( SdbCLStatistics *clStat )
       rc = SDB_OK ;
    }
 
-   if ( options.isUseCipher )
-   {
-      conn = sdbGetConnectionHandleByCipher( (const char **)options.serviceList,
-                                              options.serviceNum, options.user,
-                                              options.token,
-                                              options.cipherfile,
-                                              options.preference_instance,
-                                              options.preference_instance_mode,
-                                              options.sessionTimeout,
-                                              options.transaction ) ;
-   }
-   else
-   {
-      conn = sdbGetConnectionHandle( (const char **)options.serviceList,
-                                      options.serviceNum, options.user,
-                                      options.password,
-                                      options.preference_instance,
-                                      options.preference_instance_mode,
-                                      options.sessionTimeout,
-                                      options.transaction ) ;
-   }
-
+   conn = sdbGetConnectionHandle( (const char **)options.serviceList,
+                                   options.serviceNum, options.user,
+                                   options.password,
+                                   options.isUseCipher,
+                                   options.token,
+                                   options.cipherfile,
+                                   options.preference_instance,
+                                   options.preference_instance_mode,
+                                   options.sessionTimeout,
+                                   options.transaction ) ;
    if ( SDB_INVALID_HANDLE == conn )
    {
       rc = SDB_NETWORK ;

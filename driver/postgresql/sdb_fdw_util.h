@@ -13,7 +13,6 @@
 #define SDB_FIELD_SEMICOLON          ":"
 #define SDB_FIELD_SEMICOLON_CHR      ':'
 
-#define SDB_MAX_PASSWORD_LENGTH      256
 
 typedef enum
 {
@@ -63,20 +62,13 @@ sdbConnectionHandle sdbGetConnectionHandle( const char **serverList,
                                             int serverNum,
                                             const char *usr,
                                             const char *passwd,
+                                            int useCipher,
+                                            const char *token,
+                                            const char *cipherfile,
                                             const char *preference_instance,
                                             const char *preference_instance_mode,
                                             int session_timeout,
                                             const char *transaction ) ;
-
-sdbConnectionHandle sdbGetConnectionHandleByCipher( const char **serverList,
-                                                    int serverNum,
-                                                    const char *usr,
-                                                    const char *token,
-                                                    const char *cipherfile,
-                                                    const char *preference_instance,
-                                                    const char *preference_instance_mode,
-                                                    int session_timeout,
-                                                    const char *transaction ) ;
 
 sdbCollectionHandle sdbGetSdbCollection( sdbConnectionHandle connectionHandle,
       const char *sdbcs, const char *sdbcl ) ;

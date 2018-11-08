@@ -19,7 +19,10 @@ sdblobtool 是一款用于管理 SequoiaDB 集合大对象的工具。
 | --hostname   | 协调节点（Coord） 地址   | localhost | 否       |
 | --svcname    | 协调节点（Coord） 服务名 | 11810     | 否       |
 | --usrname    | 用户名                   |           | 否       |
-| --passwd     | 密码                     |           | 否       |
+| --passwd     | 密码，指定值则使用明文输入，不指定值则命令行提示输入                   |              | 否       |
+| --cipher     | 使用加密文件输入密码 |   false   | 否       |
+| --token      | 加密口令                 |           | 否       |
+| --cipherfile | 加密文件                 | ./passwd  | 否       |
 | --operation  | 操作类型                 |           | 是，设置为 export |
 | --file       | 本地文件全路径           |           | 是       |
 | --collection | 需要导出的集合全名       |           | 是       |
@@ -37,7 +40,10 @@ sdblobtool 是一款用于管理 SequoiaDB 集合大对象的工具。
 | --hostname   | 协调节点（Coord） 地址   | localhost | 否       |
 | --svcname    | 协调节点（Coord） 服务名 | 11810     | 否       |
 | --usrname    | 用户名                   |           | 否       |
-| --passwd     | 密码                     |           | 否       |
+| --passwd     | 密码，指定值则使用明文输入，不指定值则命令行提示输入                      |           | 否       |
+| --cipher     | 使用加密文件输入密码     |   false   | 否       |
+| --token      | 加密口令                 |           | 否       |
+| --cipherfile | 加密文件                 | ./passwd  | 否       |
 | --operation  | 操作类型                 |           | 是，设置为 import |
 | --file       | 本地文件全路径           |           | 是       |
 | --collection | 需要导入的集合全名       |           | 是       |
@@ -56,7 +62,10 @@ sdblobtool 是一款用于管理 SequoiaDB 集合大对象的工具。
 | --hostname      | 协调节点（Coord） 地址       | localhost | 否       |
 | --svcname       | 协调节点（Coord） 服务名     | 11810     | 否       |
 | --usrname       | 用户名                       |           | 否       |
-| --passwd        | 密码                         |           | 否       |
+| --passwd        | 密码，指定值则使用明文输入，不指定值则命令行提示输入                      |           | 否       |
+| --cipher        | 使用加密文件输入密码     |   false   | 否       |
+| --token         | 加密口令                 |           | 否       |
+| --cipherfile    | 加密文件                 | ./passwd  | 否       |
 | --operation     | 操作类型                     |           | 是，设置为 migration |
 | --file          | 本地文件全路径               |           | 是       |
 | --collection    | 需要导出的集合全名           |           | 是       |
