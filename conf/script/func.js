@@ -1826,32 +1826,12 @@ Ssh.prototype.isEmptyDirectory = function Ssh_isEmptyDirectory(path) {
     if (SYS_TYPE != SYS_LINUX) {
         throw new SdbError(SDB_SYS, "unsupported system");
     }
-
+	// we must judge the given path is a directory or not
     if (!this.isDirectory(path)) {
         return false;
     }
-
-    var shell = "ls " + path + "/*";
-    try { this.exec(shell); } catch(e) {}
-
-    if (this.getLastRet() == 0) {
-        return false;
-    } else {
-        var msg = this.getLastOut();
-        if ( msg.indexOf("No such file or directory") != -1 ||
-             msg.indexOf("没有那个文件或目录") != -1 )
-        {
-            setLastError(SDB_OK);
-            setLastErrMsg("");
-            return true;
-        }
-
-        var cr = msg.lastIndexOf("\n");
-        if (cr != -1) {
-            msg = msg.substring(0, cr);
-        }
-        throw new SdbError(SDB_SYS, msg);
-    }
+	var cmd = "if [ \"$(ls -A " + path + ")\" ]; then echo \"false\"; else echo \"true\"; fi;" ;
+	return this._exist( cmd ) ;
 };
 
 Ssh.prototype.mkdir = function Ssh_mkdir(path) {
