@@ -335,7 +335,7 @@ namespace engine
    /*
       _dmsContext define
    */
-   class _dmsContext : public SDBObject
+   class _dmsContext : public _IContext
    {
       public:
          _dmsContext () {}
@@ -343,9 +343,6 @@ namespace engine
 
       public:
          virtual string toString () const = 0 ;
-         virtual INT32  pause () = 0 ;
-         virtual INT32  resume () = 0 ;
-
          virtual UINT16 mbID() const = 0 ;
 
    };
