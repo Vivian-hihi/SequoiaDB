@@ -21,8 +21,8 @@ public enum S3Error {
     BUCKET_VERSIONING_SET_FAILED(-503, "PutBucketVersioningFailed", "Put bucket versioning failed."),
     BUCKET_VERSIONING_GET_FAILED(-504, "GetBucketVersioningFailed", "Get bucket versioning failed."),
 
-    BUCKET_NOT_EXIST(-510, "NoSuchBucket", "The speciﬁed bucket does not exist."),
-    BUCKET_INVALID_BUCKETNAME(-511, "InvalidBucketName", "The speciﬁed bucket Name is not valid."),
+    BUCKET_NOT_EXIST(-510, "NoSuchBucket", "The specified bucket does not exist."),
+    BUCKET_INVALID_BUCKETNAME(-511, "InvalidBucketName", "The specified bucket Name is not valid."),
     BUCKET_ALREADY_EXIST(-512, "BucketAlreadyExists", "The requested bucket name is not available. The bucket namespace is shared by all users of the system. Please select a different name and try again."),
     BUCKET_ALREADY_OWNED_BY_YOU(-513, "BucketAlreadyOwnedByYou", "Your previous request to create the named bucket succeeded and you already own it."),
     BUCKET_NOT_EMPTY(-514, "BucketNotEmpty", "The bucket you tried to delete is not empty."),
@@ -41,18 +41,18 @@ public enum S3Error {
     OBJECT_KEY_TOO_LONG(-612, "KeyTooLongError", "Your key is too long."),
     OBJECT_METADATA_TOO_LARGE(-613, "MetadataTooLarge", "Your metadata headers exceed the maximum allowed metadata size."),
     OBJECT_NO_SUCH_KEY(-614, "NoSuchKey", "The specified key does not exist."),
-    OBJECT_BAD_DIGEST(-615, "BadDigest", "The Content-MD5 you speciﬁed did not match what we received."),
+    OBJECT_BAD_DIGEST(-615, "BadDigest", "The Content-MD5 you specified did not match what we received."),
     OBJECT_INVALID_ENCODING_TYPE(-616, "InvalidArgument", "Invalid Encoding Method specified in Request"),
     OBJECT_INVALID_TOKEN(-617, "InvalidArgument", "The continuation token provided is incorrect."),
     OBJECT_IS_IN_USE(-618, "ObjectIsInUse", "The object is in use."),
     OBJECT_RANGE_INVALID(-619, "RangeNotSatisfiable", "Requested range not satisfiable."),
-    OBJECT_INVALID_DIGEST(-620, "InvalidDigest", " The Content-MD5 you speciﬁed is not valid."),
+    OBJECT_INVALID_DIGEST(-620, "InvalidDigest", " The Content-MD5 you specified is not valid."),
     OBJECT_NO_SUCH_VERSION(-621, "NoSuchVersion", "The specified version does not exist."),
 
-    OBJECT_IF_MODIFIED_SINCE_FAILED(-621, "NotModiﬁed", "If-Modified-Since not match"),
+    OBJECT_IF_MODIFIED_SINCE_FAILED(-621, "NotModified", "If-Modified-Since not match"),
     OBJECT_IF_UNMODIFIED_SINCE_FAILED(-621, "PreconditionFailed ", "If-Unmodified-Since not match"),
     OBJECT_IF_MATCH_FAILED(-621, "PreconditionFailed", "If-Match not match"),
-    OBJECT_IF_NONE_MATCH_FAILED(-621, "NotModiﬁed", "If-None-Match not match"),
+    OBJECT_IF_NONE_MATCH_FAILED(-621, "NotModified", "If-None-Match not match"),
     OBJECT_INVALID_TIME(-622, "InvalidArgument", "Time is invalid"),
 
     //authorization
@@ -76,7 +76,7 @@ public enum S3Error {
     USER_GET_FAILED(-830, "GetUserFailed", "Get user failed."),
 
     INVALID_ARGUMENT(-900, "InvalidArgument", "Invalid argument."),
-    METHOD_NOT_ALLOWED(-901, "MethodNotAllowed", "The speciﬁed method is not allowed against this resource.");
+    METHOD_NOT_ALLOWED(-901, "MethodNotAllowed", "The specified method is not allowed against this resource.");
 
     private int errIndex;
     private String code;
