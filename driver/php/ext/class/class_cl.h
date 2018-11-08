@@ -37,6 +37,8 @@ PHP_METHOD( SequoiaCL, getCSName ) ;
 PHP_METHOD( SequoiaCL, getName ) ;
 PHP_METHOD( SequoiaCL, attachCL ) ;
 PHP_METHOD( SequoiaCL, detachCL ) ;
+PHP_METHOD( SequoiaCL, createAutoIncrement ) ;
+PHP_METHOD( SequoiaCL, dropAutoIncrement ) ;
 
 //record
 PHP_METHOD( SequoiaCL, insert ) ;

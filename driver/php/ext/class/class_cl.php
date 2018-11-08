@@ -422,9 +422,65 @@ class SequoiaCL
    public function detachCL( string $subClFullName ){}
 
    /**
+    * Create autoincrement field on collection
+    *
+    * @param $field  an array or the string argument. The arguments of field. e.g. array( 'Field' => 'a', 'MaxValue' => 2000 )
+    *                                              @code
+    *                                              Field          : The name of autoincrement field
+    *                                              StartValue     : The start value of autoincrement field
+    *                                              MinValue       : The minimum value of autoincrement field
+    *                                              MaxValue       : The maxmun value of autoincrement field
+    *                                              Increment      : The increment value of autoincrement field
+    *                                              CacheSize      : The cache size of autoincrement field
+    *                                              AcquireSize    : The acquire size of autoincrement field
+    *                                              Cycled         : The cycled flag of autoincrement field
+    *                                              Generated      : The generated mode of autoincrement field
+    *                                              @endcode
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $err = $cl -> createAutoIncrement( array( 'Field' => 'a', 'MaxValue' => 2000 ) ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to create auto increment, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function createAutoIncrement( array|string $field ){}
+
+   /**
+    * Drop autoincrement field on collection
+    *
+    * @param $field  an array or the string argument. The arguments of field. e.g. array( 'Field' => 'a' )
+    *                                              @code
+    *                                              Field          : The name of autoincrement field
+    *                                              @endcode
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $err = $cl -> dropAutoIncrement( array( 'Field' => 'a' ) ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to drop auto increment, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function dropAutoIncrement( array|string $field ){}
+
+   /**
     * Insert a record into current collection.
     *
-    * @param $record	an array or the string argument. The inserted record, cannot be empty.
+    * @param $record an array or the string argument. The inserted record, cannot be empty.
     *
     * @return Returns the result, default return array.
     *

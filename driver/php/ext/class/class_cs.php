@@ -81,6 +81,7 @@ class SequoiaCS
     *                                                  Group               : To create a replication group.
     *                                                  AutoIndexId         : Collection is automatically created using the _id field is called '$id' a unique index, default true.
     *                                                  EnsureShardingIndex : Collection is automatically created using the ShardingKey contains the field names for the '$shard' index, default true.
+    *                                                  AutoIncrement       : Auto increment.
     *                                                  @endcode
     *
     * @return Returns a new SequoiaCL object.
@@ -96,13 +97,22 @@ class SequoiaCS
     *    return ;
     * }
     * @endcode
+    *
+    * Example: create auto increment collection
+    * @code
+    * $err = $cs -> selectCL( 'bar', array( 'AutoIncrement' => array( 'Field' => 'a', 'MaxValue' => 20000 ) ) ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to call selectCL, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
    */
    public function selectCL( string $name, array|string $options = null ){}
 
    /**
     * Create the specified collection.
     *
-    * @param $name	the string argument. The collection name.
+    * @param $name   the string argument. The collection name.
     *
     * @param $options an array or the string argument. The options specified by use.
     *                                                  e.g. @code
@@ -120,6 +130,7 @@ class SequoiaCS
     *                                                  Group               : To create a replication group.
     *                                                  AutoIndexId         : Collection is automatically created using the _id field is called '$id' a unique index, default true.
     *                                                  EnsureShardingIndex : Collection is automatically created using the ShardingKey contains the field names for the '$shard' index, default true.
+    *                                                  AutoIncrement       : Auto increment.
     *                                                  @endcode
     *
     * @return Returns the result, default return array.
@@ -130,6 +141,15 @@ class SequoiaCS
     * Example:
     * @code
     * $err = $cs -> createCL( 'bar', array( 'Compressed' => true ) ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to create collection, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+    *
+    * Example: create auto increment collection
+    * @code
+    * $err = $cs -> createCL( 'bar', array( 'AutoIncrement' => array( 'Field' => 'a', 'MaxValue' => 20000 ) ) ) ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to create collection, error code: ".$err['errno'] ;
     *    return ;
