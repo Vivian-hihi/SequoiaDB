@@ -38,12 +38,12 @@ function main()
    }
    
    //数据分布覆盖：1个组，索引字段覆盖：非分区键
-   commCreateIndex( dbcl, "fullIndex", {b : "text"});
-   commCheckIndex( dbcl, "fullIndex", true );
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 60);
+   commCreateIndex( dbcl, "fullIndex1", {b : "text"});
+   commCheckIndex( dbcl, "fullIndex1", true );
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex1", 60);
    
    var dbOperator = new DBOperator();
-   var cappedCL = dbOperator.getCappedCLs( COMMCSNAME, clName, "fullIndex" );
+   var cappedCL = dbOperator.getCappedCLs( COMMCSNAME, clName, "fullIndex1" );
    var cappedCL = cappedCL[0];
    var count = cappedCL.count();
    if (count != 0){
@@ -55,8 +55,8 @@ function main()
    checkResult(expResult, actResult);
    checkConsistency(COMMCSNAME, clName, 5);
    
-   commDropIndex( dbcl, "fullIndex" );
-   commCheckIndex( dbcl, "fullIndex", false );
+   commDropIndex( dbcl, "fullIndex1" );
+   commCheckIndex( dbcl, "fullIndex1", false );
    
    try{
       cappedCL.insert({a:"a"});	   
@@ -69,7 +69,7 @@ function main()
    } 
    
    try{
-      checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 0);
+      checkFullSyncToES(COMMCSNAME, clName, "fullIndex1", 0);
       throw e;
    }
    catch( e ){
@@ -81,11 +81,11 @@ function main()
    println("================================One Group Not on ShardingKey================================");
    
    //数据分布覆盖：1个组，索引字段覆盖：分区键
-   commCreateIndex( dbcl, "fullIndex", {a : "text"});
-   commCheckIndex( dbcl, "fullIndex", true );
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 60);
+   commCreateIndex( dbcl, "fullIndex2", {a : "text"});
+   commCheckIndex( dbcl, "fullIndex2", true );
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex2", 60);
    
-   var cappedCL = dbOperator.getCappedCLs( COMMCSNAME, clName, "fullIndex" );
+   var cappedCL = dbOperator.getCappedCLs( COMMCSNAME, clName, "fullIndex2" );
    var cappedCL = cappedCL[0];
    var count = cappedCL.count();
    if (count != 0){
@@ -97,8 +97,8 @@ function main()
    checkResult(expResult, actResult);
    checkConsistency(COMMCSNAME, clName, 5);
    
-   commDropIndex( dbcl, "fullIndex" );
-   commCheckIndex( dbcl, "fullIndex", false );
+   commDropIndex( dbcl, "fullIndex2" );
+   commCheckIndex( dbcl, "fullIndex2", false );
    
    try{
       cappedCL.insert({a:"a"});	   
@@ -111,7 +111,7 @@ function main()
    } 
    
    try{
-      checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 0);
+      checkFullSyncToES(COMMCSNAME, clName, "fullIndex2", 0);
       throw e;
    }
    catch( e ){
@@ -130,12 +130,12 @@ function main()
    dbcl.insert(records);
    
    //数据分布覆盖：多个组，索引字段覆盖：非分区键
-   commCreateIndex( dbcl, "fullIndex", {b : "text"});
-   commCheckIndex( dbcl, "fullIndex", true );
+   commCreateIndex( dbcl, "fullIndex3", {b : "text"});
+   commCheckIndex( dbcl, "fullIndex3", true );
    
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 100);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex3", 100);
    
-   var cappedCL = dbOperator.getCappedCLs( COMMCSNAME, clName, "fullIndex" );
+   var cappedCL = dbOperator.getCappedCLs( COMMCSNAME, clName, "fullIndex3" );
    var cappedCL = cappedCL[0];
    var count = cappedCL.count();
    if (count != 0){
@@ -147,8 +147,8 @@ function main()
    checkResult(expResult, actResult);
    checkConsistency(COMMCSNAME, clName, 5);
    
-   commDropIndex( dbcl, "fullIndex" );
-   commCheckIndex( dbcl, "fullIndex", false );
+   commDropIndex( dbcl, "fullIndex3" );
+   commCheckIndex( dbcl, "fullIndex3", false );
    
    try{
       cappedCL.insert({a:"a"});	   
@@ -161,7 +161,7 @@ function main()
    } 
    
    try{
-      checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 0);
+      checkFullSyncToES(COMMCSNAME, clName, "fullIndex3", 0);
       throw e;
    }
    catch( e ){
@@ -173,12 +173,12 @@ function main()
    println("================================Many Group Not on ShardingKey================================");
    
    //数据分布覆盖：多个组，索引字段覆盖：分区键
-   commCreateIndex( dbcl, "fullIndex", {a : "text"});
-   commCheckIndex( dbcl, "fullIndex", true );
+   commCreateIndex( dbcl, "fullIndex4", {a : "text"});
+   commCheckIndex( dbcl, "fullIndex4", true );
    
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 100);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex4", 100);
    
-   var cappedCL = dbOperator.getCappedCLs( COMMCSNAME, clName, "fullIndex" );
+   var cappedCL = dbOperator.getCappedCLs( COMMCSNAME, clName, "fullIndex4" );
    var cappedCL = cappedCL[0];
    var count = cappedCL.count();
    if (count != 0){
@@ -190,8 +190,8 @@ function main()
    checkResult(expResult, actResult);
    checkConsistency(COMMCSNAME, clName, 5);
    
-   commDropIndex( dbcl, "fullIndex" );
-   commCheckIndex( dbcl, "fullIndex", false );
+   commDropIndex( dbcl, "fullIndex4" );
+   commCheckIndex( dbcl, "fullIndex4", false );
    
    try{
       cappedCL.insert({a:"a"});	   
@@ -204,7 +204,7 @@ function main()
    } 
    
    try{
-      checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 0);
+      checkFullSyncToES(COMMCSNAME, clName, "fullIndex4", 0);
       throw e;
    }
    catch( e ){
