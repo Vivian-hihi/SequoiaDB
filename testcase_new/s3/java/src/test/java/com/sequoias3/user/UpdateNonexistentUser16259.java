@@ -1,7 +1,7 @@
 package com.sequoias3.user;
 
 
-import org.apache.log4j.Logger;
+import org.apache.http.HttpStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
@@ -21,7 +21,6 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class UpdateNonexistentUser16259 extends S3TestBase {
-	private static final Logger logger = Logger.getLogger(UpdateNonexistentUser16259.class);
 	private String Username = "UpdateNonexistentUser16259";
 	private String updateUsername = "NonexistentUser16259";
 	private boolean runSuccess = false;
@@ -31,12 +30,18 @@ public class UpdateNonexistentUser16259 extends S3TestBase {
 		try {
 			UserUtils.deleteUser(Username, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
-			logger.info(e.getResponseBodyAsString());
+			if(e.getStatusCode().value() != HttpStatus.SC_NOT_FOUND){
+				e.printStackTrace();
+				Assert.fail(e.getMessage());
+			}
 		}
 		try {
 			UserUtils.deleteUser(updateUsername, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
-			logger.info(e.getResponseBodyAsString());
+			if(e.getStatusCode().value() != HttpStatus.SC_NOT_FOUND){
+				e.printStackTrace();
+				Assert.fail(e.getMessage());
+			}
 		}
 	}
 
@@ -74,11 +79,7 @@ public class UpdateNonexistentUser16259 extends S3TestBase {
 	@AfterClass
 	private void tearDown() {
 		if (runSuccess) {
-			try {
-				UserUtils.deleteUser(Username, UserUtils.accessKeyId, true);
-			} catch (Exception e) {
-				logger.info(e.getMessage());
-			}
+			UserUtils.deleteUser(Username, UserUtils.accessKeyId, true);
 		}
 	}
 

@@ -3,7 +3,7 @@ package com.sequoias3.user.concurrent;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.http.HttpStatus;
 import org.json.JSONObject;
 import org.springframework.web.client.HttpClientErrorException;
 import org.testng.Assert;
@@ -27,7 +27,6 @@ import com.sequoias3.user.UserUtils;
  */
 
 public class UpdateUser16271 extends S3TestBase {
-	private static Logger log = Logger.getLogger(UpdateUser16271.class);
 	private String username = "UpdateUser16271";
 	private String bucketName = "bucket16271";
 	private int num = 100;
@@ -38,10 +37,13 @@ public class UpdateUser16271 extends S3TestBase {
 		try {
 			UserUtils.deleteUser(username, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
-			log.info(e.getResponseBodyAsString());
+			if(e.getStatusCode().value() != HttpStatus.SC_NOT_FOUND){
+				e.printStackTrace();
+				Assert.fail(e.getMessage());
+			}
 		}
 		// create an normal user
-		JSONObject actUser = UserUtils.createUser(username, UserCommDefind.normal, UserUtils.accessKeyId);
+		UserUtils.createUser(username, UserCommDefind.normal, UserUtils.accessKeyId);
 	}
 
 	@Test
@@ -64,11 +66,7 @@ public class UpdateUser16271 extends S3TestBase {
 	@AfterClass
 	private void tearDown() throws Exception {
 		if (runSuccess) {
-			try {
-				UserUtils.deleteUser(username, UserUtils.accessKeyId, true);
-			} catch (HttpClientErrorException e) {
-				log.info(e.getResponseBodyAsString());
-			}
+			UserUtils.deleteUser(username, UserUtils.accessKeyId, true);
 		}
 	}
 
@@ -105,10 +103,7 @@ public class UpdateUser16271 extends S3TestBase {
 			String actBucketName = expbucket.getName();
 			Assert.assertEquals(actBucketName, bucketName.toLowerCase());
 			Assert.assertEquals(actOwner, username.toLowerCase());
-		} catch (Exception e) {
-			e.printStackTrace();
-			Assert.fail(e.getMessage());
-		} finally {
+		}finally {
 			if (s3Client != null) {
 				s3Client.shutdown();
 			}

@@ -1,7 +1,7 @@
 package com.sequoias3.user;
 
 
-import org.apache.log4j.Logger;
+import org.apache.http.HttpStatus;
 import org.json.JSONObject;
 import org.json.XML;
 import org.springframework.web.client.HttpClientErrorException;
@@ -20,7 +20,6 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class DeleteAdminUser16260 extends S3TestBase {
-	private static Logger log = Logger.getLogger(DeleteAdminUser16260.class);
 	private String adminName = "DeleteAdminUser16260";
 	private String deleteAdminName = "ToBeDeleteAdminUser16260";
 	private boolean runSuccess = false;
@@ -30,13 +29,18 @@ public class DeleteAdminUser16260 extends S3TestBase {
 		try {
 			UserUtils.deleteUser(adminName, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
-			log.info(e.getResponseBodyAsString());
+			if (e.getStatusCode().value() != HttpStatus.SC_NOT_FOUND) {
+				e.printStackTrace();
+				Assert.fail(e.getMessage());
+			}
 		}
-
 		try {
 			UserUtils.deleteUser(deleteAdminName, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
-			log.info(e.getResponseBodyAsString());
+			if (e.getStatusCode().value() != HttpStatus.SC_NOT_FOUND) {
+				e.printStackTrace();
+				Assert.fail(e.getMessage());
+			}
 		}
 	}
 
@@ -53,12 +57,7 @@ public class DeleteAdminUser16260 extends S3TestBase {
 		UserUtils.createUser(deleteAdminName, UserCommDefind.admin, accessKeyIDAdmin);
 
 		// delete admin user
-		try {
-			UserUtils.deleteUser(deleteAdminName, accessKeyIDAdmin);
-		} catch (HttpClientErrorException e) {
-			e.printStackTrace();
-			Assert.fail(e.getResponseBodyAsString());
-		}
+		UserUtils.deleteUser(deleteAdminName, accessKeyIDAdmin);
 
 		// check: admin user does not exist;
 		checkDeletedAdminUser(deleteAdminName, accessKeyIDAdmin);

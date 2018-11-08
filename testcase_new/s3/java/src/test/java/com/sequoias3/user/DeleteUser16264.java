@@ -1,6 +1,6 @@
 package com.sequoias3.user;
 
-import org.apache.log4j.Logger;
+import org.apache.http.HttpStatus;
 import org.json.JSONObject;
 import org.json.XML;
 import org.springframework.web.client.HttpClientErrorException;
@@ -19,7 +19,6 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class DeleteUser16264 extends S3TestBase {
-	private static Logger logger = Logger.getLogger(DeleteUser16264.class);
 	private String name = "DeleteUser16264";
 	private String deleteUserName = "ToDelete16264";
 	private boolean runSuccess = false;
@@ -29,12 +28,18 @@ public class DeleteUser16264 extends S3TestBase {
 		try {
 			UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
-			logger.info(e.getResponseBodyAsString());
+			if(e.getStatusCode().value() != HttpStatus.SC_NOT_FOUND){
+				e.printStackTrace();
+				Assert.fail(e.getMessage());
+			}
 		}
 		try {
 			UserUtils.deleteUser(deleteUserName, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
-			logger.info(e.getResponseBodyAsString());
+			if(e.getStatusCode().value() != HttpStatus.SC_NOT_FOUND){
+				e.printStackTrace();
+				Assert.fail(e.getMessage());
+			}
 		}
 	}
 
@@ -68,12 +73,8 @@ public class DeleteUser16264 extends S3TestBase {
 	@AfterClass
 	private void tearDown() {
 		if (runSuccess) {
-			try {
-				UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
-				UserUtils.deleteUser(deleteUserName, UserUtils.accessKeyId, true);
-			} catch (Exception e) {
-				logger.info(e.getMessage());
-			}
+			UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+			UserUtils.deleteUser(deleteUserName, UserUtils.accessKeyId, true);
 		}
 	}
 }

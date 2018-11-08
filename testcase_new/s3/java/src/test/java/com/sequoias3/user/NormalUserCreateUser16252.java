@@ -1,7 +1,7 @@
 package com.sequoias3.user;
 
 
-import org.apache.log4j.Logger;
+import org.apache.http.HttpStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
@@ -21,7 +21,6 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class NormalUserCreateUser16252 extends S3TestBase {
-	private static final Logger logger = Logger.getLogger(NormalUserCreateUser16252.class);
 	private String userName = "CreateAdminUser16252";
 	private String normalUserName = "normalUser16252";
 	private String adminUserName = "adminUser16252";
@@ -33,8 +32,11 @@ public class NormalUserCreateUser16252 extends S3TestBase {
 	private void setUp() {
 		try {
 			UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
-		} catch (HttpClientErrorException e) {
-			logger.info(e.getResponseBodyAsString());
+		}catch (HttpClientErrorException e) {
+			if(e.getStatusCode().value() != HttpStatus.SC_NOT_FOUND){
+				e.printStackTrace();
+				Assert.fail(e.getMessage());
+			}
 		}
 	}
 
@@ -52,11 +54,7 @@ public class NormalUserCreateUser16252 extends S3TestBase {
 	@AfterClass
 	private void tearDown() {
 		if (runSuccess) {
-			try {
-				UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
-			} catch (Exception e) {
-				logger.info(e.getMessage());
-			}
+			UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
 		}
 	}
 

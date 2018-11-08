@@ -3,8 +3,7 @@ package com.sequoias3.user.concurrent;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-import org.json.JSONObject;
+import org.apache.http.HttpStatus;
 import org.json.XML;
 import org.springframework.web.client.HttpClientErrorException;
 import org.testng.Assert;
@@ -25,7 +24,6 @@ import com.sequoias3.user.UserUtils;
  */
 
 public class DeleteUser16272 extends S3TestBase {
-	private static Logger log = Logger.getLogger(DeleteUser16272.class);
 	private static int successCount = 0;
 	private String username = "DeleteUser16272";
 	private int num = 100;
@@ -36,10 +34,13 @@ public class DeleteUser16272 extends S3TestBase {
 		try {
 			UserUtils.deleteUser(username, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
-			log.info(e.getResponseBodyAsString());
+			if(e.getStatusCode().value() != HttpStatus.SC_NOT_FOUND){
+				e.printStackTrace();
+				Assert.fail(e.getMessage());
+			}
 		}
 		// create an normal user
-		JSONObject actUser = UserUtils.createUser(username, UserCommDefind.normal, UserUtils.accessKeyId);
+		UserUtils.createUser(username, UserCommDefind.normal, UserUtils.accessKeyId);
 	}
 
 	@Test
@@ -65,15 +66,7 @@ public class DeleteUser16272 extends S3TestBase {
 	}
 
 	@AfterClass
-	private void tearDown() throws Exception {
-		if (runSuccess) {
-			try {
-				UserUtils.deleteUser(username, UserUtils.accessKeyId, true);
-			} catch (HttpClientErrorException e) {
-				log.info(e.getResponseBodyAsString());
-			}
-		}
-	}
+	private void tearDown() throws Exception {}
 
 	private class DeleteUser extends S3ThreadBase {
 		@Override

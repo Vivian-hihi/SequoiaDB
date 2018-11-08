@@ -2,7 +2,7 @@ package com.sequoias3.user;
 
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.http.HttpStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.web.client.HttpClientErrorException;
@@ -24,7 +24,6 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class UpdateAdminUser16254 extends S3TestBase {
-	private static final Logger logger = Logger.getLogger(UpdateAdminUser16254.class);
 	private String Username = "UpdateAdminUser16254";
 	private String bucketName = "UpdateAdminUser16254Bucket";
 	private boolean runSuccess = false;
@@ -33,8 +32,11 @@ public class UpdateAdminUser16254 extends S3TestBase {
 	private void setUp() {
 		try {
 			UserUtils.deleteUser(Username, UserUtils.accessKeyId, true);
-		} catch (HttpClientErrorException e) {
-			logger.info(e.getResponseBodyAsString());
+		}catch (HttpClientErrorException e) {
+			if(e.getStatusCode().value() != HttpStatus.SC_NOT_FOUND){
+				e.printStackTrace();
+				Assert.fail(e.getMessage());
+			}
 		}
 	}
 
@@ -55,11 +57,7 @@ public class UpdateAdminUser16254 extends S3TestBase {
 	@AfterClass
 	private void tearDown() {
 		if (runSuccess) {
-			try {
-				UserUtils.deleteUser(Username, UserUtils.accessKeyId, true);
-			} catch (Exception e) {
-				logger.info(e.getMessage());
-			}
+			UserUtils.deleteUser(Username, UserUtils.accessKeyId, true);
 		}
 	}
 
@@ -91,9 +89,6 @@ public class UpdateAdminUser16254 extends S3TestBase {
 			String actBucketName = expbucket.getName();
 			Assert.assertEquals(actBucketName, bucketName.toLowerCase());
 			Assert.assertEquals(actOwner, Username.toLowerCase());
-		} catch (Exception e) {
-			e.printStackTrace();
-			Assert.fail(e.getMessage());
 		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();
