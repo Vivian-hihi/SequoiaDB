@@ -96,30 +96,15 @@ namespace engine
       return begin + ( ossRand() % ( end - begin + 1 ) ) ;
    }
 
-   void cipherMgr::_generateInsertPosition( UINT32 totalLen, std::vector<UINT32> &insertPos )
-   {
-      UINT32       cipherLowPos = 0 ;
-      UINT32       cipherMidPos  = 0 ;
-      UINT32       cipherHighPos = 0 ;
-      INT32        cipherEndIndex = totalLen - 1 ;
-
-      // calculate insertion position in cipherText, leave space(s) for mid and high.
-      cipherLowPos = _randBetween( 0, cipherEndIndex - 2 ) ;
-      cipherMidPos = _randBetween( cipherLowPos + 1, cipherEndIndex - 1 ) ;
-      cipherHighPos = _randBetween( cipherMidPos + 1, cipherEndIndex ) ;
-
-      insertPos.push_back( cipherLowPos ) ;
-      insertPos.push_back( cipherMidPos ) ;
-      insertPos.push_back( cipherHighPos ) ;
-   }
-
-   void cipherMgr::_generateArraySplits( CHAR *array, INT32 arrayLen,
-                                         std::vector<UINT32> &insertPos,
-                                         std::vector<string> &arraySplits )
+   void cipherMgr::_generateRandArraySplits( UINT32 cipherTextLen,
+                                             CHAR *array, INT32 arrayLen,
+                                             std::vector<UINT32> &insertPositions,
+                                             std::vector<string> &arraySplits )
    {  
       UINT32       cipherLowPos = 0 ;
       UINT32       cipherMidPos  = 0 ;
       UINT32       cipherHighPos = 0 ;
+      INT32        cipherEndIndex = cipherTextLen - 1 ;
       UINT32       arrayLowPos = 0 ;
       UINT32       arrayMidPos  = 0 ;
       UINT32       arrayHighPos = 0 ;
@@ -133,9 +118,10 @@ namespace engine
       INT32        splitPos1 = 0 ; 
       INT32        splitPos2 = 0 ;
 
-      cipherLowPos  = insertPos[0] ;
-      cipherMidPos  = insertPos[1] ;
-      cipherHighPos = insertPos[2] ;
+      // calculate insertion position in cipherText, leave space(s) for mid and high.
+      cipherLowPos  = _randBetween( 0, cipherEndIndex - 2 ) ;
+      cipherMidPos  = _randBetween( cipherLowPos + 1, cipherEndIndex - 1 ) ;
+      cipherHighPos = _randBetween( cipherMidPos + 1, cipherEndIndex ) ;
 
       // divide random array into 3 pieces(low, mid, high) for insertion.
       splitPos1  = _randBetween( 0, arrayEndIndex - 2 ) ;
@@ -162,11 +148,9 @@ namespace engine
       arrayHighContent.push_back( ( CHAR )arrayHighLen ) ;
       arrayHighContent.append( array, arrayHighPos, arrayHighLen ) ;
 
-      // update moved position after insertion
-      insertPos.clear() ;
-      insertPos.push_back( cipherLowPos ) ;
-      insertPos.push_back( cipherMidPos ) ;
-      insertPos.push_back( cipherHighPos ) ;
+      insertPositions.push_back( cipherLowPos ) ;
+      insertPositions.push_back( cipherMidPos ) ;
+      insertPositions.push_back( cipherHighPos ) ;
 
       arraySplits.push_back( arrayLowContent ) ;
       arraySplits.push_back( arrayMidContent ) ;
@@ -175,26 +159,33 @@ namespace engine
 
    void cipherMgr::_insertRandomArray( string &cipherText, CHAR *array, INT32 arrayLen )
    {
-      std::vector<UINT32> insertPos ;
+      std::vector<UINT32> insertPositions ;
       std::vector<string> arraySplits ;
+      UINT32              totalLen = cipherText.size() > INSERTABLE_MAX_LENGTH ?
+                                     INSERTABLE_MAX_LENGTH : cipherText.size() ;
+      try
+      {
+         _generateRandArraySplits( totalLen, array, arrayLen, 
+                                   insertPositions, arraySplits ) ;
 
-      _generateInsertPosition( cipherText.size(), insertPos ) ;
-
-      _generateArraySplits( array, arrayLen, insertPos, arraySplits ) ;
-
-      cipherText.insert( insertPos[0], arraySplits[0] ) ;
-      cipherText.insert( insertPos[1], arraySplits[1] ) ;
-      cipherText.insert( insertPos[2], arraySplits[2] ) ;
-      cipherText.insert( 0, 1, ( CHAR )insertPos[0] ) ;
+         cipherText.insert( insertPositions[0], arraySplits[0] ) ;
+         cipherText.insert( insertPositions[1], arraySplits[1] ) ;
+         cipherText.insert( insertPositions[2], arraySplits[2] ) ;
+         cipherText.insert( 0, 1, ( CHAR )insertPositions[0] ) ;
+      }
+      catch ( exception &e )
+      {
+         std::cerr << "exception while insert random array: " << e.what() << std::endl ;
+      }
    }
 
    INT32 cipherMgr::_extractRandomArray( string &cipherText, string &array )
    {
-      INT32 rc = SDB_OK ;
+      INT32     rc = SDB_OK ;
 
-      UINT8    cipherLowPos = 0 ;
-      UINT8    cipherMidPos  = 0 ;
-      UINT8    cipherHighPos = 0 ;
+      UINT8     cipherLowPos = 0 ;
+      UINT8     cipherMidPos  = 0 ;
+      UINT8     cipherHighPos = 0 ;
       string    arrayLowContent ;
       string    arrayMidContent ;
       string    arrayHighContent ;
@@ -206,6 +197,7 @@ namespace engine
       cipherLowPos = (UINT8)cipherText[0] ;
       if ( cipherText.size() <= cipherLowPos )
       {
+         std::cerr << "random array exceeds maximum length." << std::endl ;
          goto error ;
       }
       cipherText.erase( 0, 1 ) ;
@@ -215,6 +207,7 @@ namespace engine
       cipherMidPos = (UINT8)arrayLowContent[arrayLowContent.size() - 1] ;
       if ( cipherText.size() <= cipherMidPos )
       {
+         std::cerr << "random array exceeds maximum length." << std::endl ;
          goto error ;
       }
       arrayMidLen = cipherText[cipherMidPos] ;
@@ -223,6 +216,7 @@ namespace engine
       cipherHighPos = (UINT8)arrayMidContent[arrayMidContent.size() - 1] ;
       if ( cipherText.size() <= cipherHighPos )
       {
+         std::cerr << "random array exceeds maximum length." << std::endl ;
          goto error ;
       }
       arrayHighLen = cipherText[cipherHighPos] ;
@@ -359,6 +353,129 @@ namespace engine
       goto done ;
    }
 
+   INT32 cipherMgr::_parseLine( string line, string& usr, string& cipherText )
+   {
+      INT32 rc = SDB_OK ;
+
+      string::size_type offset = line.find( ":" ) ;
+      if ( string::npos == offset || line.length() -1 == offset || 0 == offset )
+      {
+         PD_LOG ( PDERROR, "line [%s] is in wrong foramt. ", line.c_str() ) ;
+         goto error ;
+      }
+
+      usr = line.substr( 0, offset ) ;
+      cipherText = line.substr( offset + 1, line.length() - offset - 1 ) ;
+
+   done:
+      return rc ;
+   error:
+      rc = SDB_INVALIDARG ;
+      goto done ;
+   }
+
+   INT32 cipherMgr::_write( const string &fContent )
+   {
+      INT64 wCnt = 0 ;
+      UINT64 len = fContent.length() ;
+      INT32 rc = _file.seek( 0 ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "cipher file option [seek] err [%d] ", ossGetLastError() ) ;
+         goto error ;
+      }
+
+      rc = _file.truncate( 0 ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "cipher file option [truncate] err [%d] ", ossGetLastError() ) ;
+         goto error ;
+      }
+
+      rc = _file.write( fContent.c_str(), len, wCnt ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void cipherMgr::_extractUserInfo( string &userInfo, string &userName,
+                                     string &fullName )
+   {
+      string::size_type atPos = userInfo.find( "@" ) ;
+
+      if ( string::npos != atPos )
+      {
+         userName = userInfo.substr( 0, atPos ) ;
+      }
+      else
+      {
+         userName = userInfo ;
+      }
+      fullName = userInfo ;
+
+      userInfo = userName ;
+   }
+
+   INT32 cipherMgr::_findCipherText( const string &userName, const string &fullName,
+                                     string &cipherText )
+   {
+      INT32                           rc = SDB_OK ;
+      
+      INT32                           foundFullNameCount = 0 ;
+      INT32                           foundHalfNameCount = 0 ;
+      map<string, string>::iterator   itor ;
+      map<string, string>::iterator   found ;
+
+      for ( itor = _usersCipher.begin(); itor != _usersCipher.end(); itor++ )
+      {
+         string lineUserName = itor->first ;
+         string::size_type atPos = lineUserName.find( '@' ) ;
+      
+         if ( string::npos != atPos )
+         {
+            lineUserName = lineUserName.substr( 0, atPos ) ;
+         }
+      
+         if ( itor->first == fullName )
+         {
+            foundFullNameCount++ ;
+            found = itor ;
+            break ;
+         }
+         else if ( lineUserName == userName )
+         {
+            foundHalfNameCount++ ;
+            found = itor ;
+         }
+      }
+      
+      if ( 1 == foundFullNameCount || 1 == foundHalfNameCount )
+      {
+         cipherText = found->second ;
+      }
+      else if ( 1 < foundHalfNameCount )
+      {
+         PD_LOG ( PDERROR, "ambiguous user name, try providing cluster name." ) ;
+         std::cerr << "ambiguous user name, try providing cluster name." << std::endl ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         PD_LOG ( PDWARNING, "no corresponding user information." ) ;
+         std::cerr << "no corresponding user information." << std::endl ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 cipherMgr::initialize( const string &fileName, cipherRole role )
    {
       string usr, cipherText ;
@@ -438,53 +555,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 cipherMgr::_parseLine( string line, string& usr, string& cipherText )
-   {
-      INT32 rc = SDB_OK ;
-
-      string::size_type offset = line.find( ":" ) ;
-      if ( string::npos == offset || line.length() -1 == offset || 0 == offset )
-      {
-         PD_LOG ( PDERROR, "line [%s] is in wrong foramt. ", line.c_str() ) ;
-         goto error ;
-      }
-
-      usr = line.substr( 0, offset ) ;
-      cipherText = line.substr( offset + 1, line.length() - offset - 1 ) ;
-
-   done:
-      return rc ;
-   error:
-      rc = SDB_INVALIDARG ;
-      goto done ;
-   }
-
-   INT32 cipherMgr::_write( const string &fContent )
-   {
-      INT64 wCnt = 0 ;
-      UINT64 len = fContent.length() ;
-      INT32 rc = _file.seek( 0 ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "cipher file option [seek] err [%d] ", ossGetLastError() ) ;
-         goto error ;
-      }
-
-      rc = _file.truncate( 0 ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "cipher file option [truncate] err [%d] ", ossGetLastError() ) ;
-         goto error ;
-      }
-
-      rc = _file.write( fContent.c_str(), len, wCnt ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 cipherMgr::addUser( const string &user, const string &token,
                              const string &passwd )
    {
@@ -493,16 +563,6 @@ namespace engine
       string cipherText ;
       string fileContent ;
       map<string,string>::iterator it ;
-
-      if ( cipherMgr::PASSWORD_MAX_LENGTH < (INT32)passwd.size() )
-      {
-         PD_LOG ( PDERROR, "password exceeds maximum length %d",
-                           cipherMgr::PASSWORD_MAX_LENGTH ) ;
-         std::cerr << "password exceeds maximum length " <<
-                      cipherMgr::PASSWORD_MAX_LENGTH << std::endl ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
 
       _encrypt( passwd, token, cipherText ) ;
 
@@ -516,10 +576,7 @@ namespace engine
       }
       rc = _write( fileContent ) ;
 
-   done:
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 cipherMgr::removeUser( const string &user )
@@ -544,81 +601,7 @@ namespace engine
       return rc ;
    }
 
-   void cipherMgr::_extractUserInfo( string &userInfo, string &userName,
-                                     string &fullName )
-   {
-      string::size_type atPos = userInfo.find( "@" ) ;
 
-      if ( string::npos != atPos )
-      {
-         userName = userInfo.substr( 0, atPos ) ;
-      }
-      else
-      {
-         userName = userInfo ;
-      }
-      fullName = userInfo ;
-
-      userInfo = userName ;
-   }
-
-   INT32 cipherMgr::_findCipherText( const string &userName, const string &fullName,
-                                     string &cipherText )
-   {
-      INT32                           rc = SDB_OK ;
-      
-      INT32                           foundFullNameCount = 0 ;
-      INT32                           foundHalfNameCount = 0 ;
-      map<string, string>::iterator   itor ;
-      map<string, string>::iterator   found ;
-
-      for ( itor = _usersCipher.begin(); itor != _usersCipher.end(); itor++ )
-      {
-         string lineUserName = itor->first ;
-         string::size_type atPos = lineUserName.find( '@' ) ;
-      
-         if ( string::npos != atPos )
-         {
-            lineUserName = lineUserName.substr( 0, atPos ) ;
-         }
-      
-         if ( itor->first == fullName )
-         {
-            foundFullNameCount++ ;
-            found = itor ;
-            break ;
-         }
-         else if ( lineUserName == userName )
-         {
-            foundHalfNameCount++ ;
-            found = itor ;
-         }
-      }
-      
-      if ( 1 == foundFullNameCount || 1 == foundHalfNameCount )
-      {
-         cipherText = found->second ;
-      }
-      else if ( 1 < foundHalfNameCount )
-      {
-         PD_LOG ( PDERROR, "ambiguous user name, try providing cluster name." ) ;
-         std::cerr << "ambiguous user name, try providing cluster name." << std::endl ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      else
-      {
-         PD_LOG ( PDWARNING, "no corresponding user information." ) ;
-         std::cerr << "no corresponding user information." << std::endl ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
 
    INT32 cipherMgr::getPasswd( string &userInfo, const string &token,
                                string &passwd )
