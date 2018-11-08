@@ -897,6 +897,7 @@ TEST(sdb, sdbIsClose)
    rc = sdbConnect ( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd(), &connection ) ;
    rc = sdbConnect ( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd(), &connection1 ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+
    // get cs
    rc = getCollectionSpace ( connection,
                              COLLECTION_SPACE_NAME,
@@ -917,12 +918,17 @@ TEST(sdb, sdbIsClose)
    std::cout << "after close connection manually, result is " << result << std::endl ;
    ASSERT_EQ( TRUE, result ) ;
 
+   result = sdbIsClosed( connection );
+   ASSERT_EQ( FALSE, result ) ;
+
    // scene 3
    // test close after disconnect
    sdbDisconnect ( connection ) ;
    result = sdbIsValid( connection );
    std::cout << "after close connection, result is " << result << std::endl ;
    ASSERT_EQ ( FALSE, result ) ;
+   result = sdbIsClosed( connection );
+   ASSERT_EQ( TRUE , result ) ;
    sdbDisconnect( connection ) ;
    sdbReleaseCS ( cs ) ;
    sdbReleaseConnection ( connection ) ;
