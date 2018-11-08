@@ -28,14 +28,19 @@ TEST_F( testConnectRepeatly12509, test )
 {
    INT32 rc = SDB_OK ;
    BOOLEAN isValid = FALSE ;
+   BOOLEAN isClosed = FALSE ;
 
    rc = db.connect( ARGS->hostName(), ARGS->port() ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    rc = db.isValid( &isValid ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    ASSERT_EQ( TRUE, isValid ) ;
-   db.disconnect() ;
 
+   isClosed = db.isClosed() ;
+   ASSERT_EQ( FALSE, isClosed ) ;
+   db.disconnect() ;
+   isClosed = db.isClosed() ;
+   ASSERT_EQ( TRUE, isClosed ) ;
    rc = db.connect( ARGS->hostName(), ARGS->port(), ARGS->user(), ARGS->passwd() ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    rc = db.isValid( &isValid ) ;
