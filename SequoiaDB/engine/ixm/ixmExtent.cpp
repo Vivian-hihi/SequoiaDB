@@ -1040,7 +1040,7 @@ namespace engine
       pHeader = _extRW.writePtr<ixmExtentHead>( 0, _pageSize ) ;
 
       // loop through all keys in the page
-      for ( UINT16 i = 0 ; i < pHeader->_totalKeyNodeNum; i++ )
+      for ( UINT16 i = 0 ; i < pHeader->_totalKeyNodeNum ; i++ )
       {
          ixmKeyNode *kn = writeKeyNode(i) ;
          INT32 keyDataSize = 0 ;
@@ -1054,7 +1054,13 @@ namespace engine
          // will not be copied and count, so it's actually deleted)
          if ( kn->isUnused() && DMS_INVALID_EXTENT == kn->_left )
          {
-            continue ;
+            /// When all node is unused, should keep the one node.
+            /// Otherwise the page will has no key node
+            if ( totalKeyNodeNum > 0 ||
+                 i < pHeader->_totalKeyNodeNum - 1 )
+            {
+               continue ;
+            }
          }
          totalFreeSize -= sizeof(ixmKeyNode) ;
          // copy the key
@@ -1535,32 +1541,32 @@ namespace engine
       UINT16 pos = 0 ;
       UINT16 mbID = 0 ;
       UINT16 freeSize = 0 ;
+
       // if we are root, we simply return
-      if ( DMS_INVALID_EXTENT == getParent() )
+      if ( DMS_INVALID_EXTENT != getParent() )
       {
-         return rc ;
+         // get the parent extent
+         ixmExtent parent( getParent(), _pIndexSu ) ;
+         // find the key pointing to this extent
+         rc = parent._findChildExtent ( _me, pos ) ;
+         // if we can't find the key, something really bad happened
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Unable to find the extent in it's parent" ) ;
+            goto error ;
+         }
+         parent.setChildExtentID ( pos, DMS_INVALID_EXTENT ) ;
+         mbID = _extentHead->_mbID ;
+         freeSize = _extentHead->_totalFreeSize ;
+         rc = indexCB->freeExtent ( _me ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Unable to free extent" ) ;
+            goto error ;
+         }
+         _pIndexSu->decStatFreeSpace( mbID, freeSize ) ;
+         _pPageMap->rmItem( _me ) ;
       }
-      // get the parent extent
-      ixmExtent parent( getParent(), _pIndexSu ) ;
-      // find the key pointing to this extent
-      rc = parent._findChildExtent ( _me, pos ) ;
-      // if we can't find the key, something really bad happened
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Unable to find the extent in it's parent" ) ;
-         goto error ;
-      }
-      parent.setChildExtentID ( pos, DMS_INVALID_EXTENT ) ;
-      mbID = _extentHead->_mbID ;
-      freeSize = _extentHead->_totalFreeSize ;
-      rc = indexCB->freeExtent ( _me ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Unable to free extent" ) ;
-         goto error ;
-      }
-      _pIndexSu->decStatFreeSpace( mbID, freeSize ) ;
-      _pPageMap->rmItem( _me ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB__IXMEXT__DELEXT, rc );
@@ -2056,7 +2062,7 @@ namespace engine
       {
          valid = FALSE ;
          PD_LOG( PDERROR, "Invalid index extent[%d], rc: %d", _me, rc ) ;
-         return ;
+         goto done ;
       }
       else
       {
@@ -2118,6 +2124,7 @@ namespace engine
       }
       _pIndexSu->addStatFreeSpace( _extentHead->_mbID, totalFreeSize ) ;
 
+   done:
       PD_TRACE_EXIT ( SDB__IXMEXT_TRUNC );
    }
 
