@@ -347,6 +347,8 @@
 #define FIELD_NAME_SLICE                     "Slice"
 #define FIELD_NAME_REMOTE_IP                 "RemoteIP"
 #define FIELD_NAME_REMOTE_PORT               "RemotePort"
+#define FIELD_NAME_MODE                      "Mode"
+#define VALUE_NAME_LOCAL                     "local"
 
 #define FIELD_NAME_MODIFY                    "$Modify"
 #define FIELD_NAME_OP                        "OP"

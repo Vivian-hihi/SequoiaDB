@@ -61,6 +61,7 @@
 #include "pmdEnv.hpp"
 #include "utilEnvCheck.hpp"
 #include "pmdStartupHistoryLogger.hpp"
+#include "msgDef.h"
 
 using namespace bson ;
 
@@ -3816,14 +3817,15 @@ namespace engine
          while ( itor.more() )
          {
             elem = itor.next() ;
-            if ( 0 == ossStrcasecmp( elem.fieldName(), "mode" ) )
+            // ignore case for backward compatibility
+            if ( 0 == ossStrcasecmp( elem.fieldName(), FIELD_NAME_MODE ) )
             {
-               if ( elem.String() == "local" )
+               if ( elem.String() == VALUE_NAME_LOCAL )
                {
                   _isLocalMode = TRUE ;
                }
             }
-            if ( 0 == ossStrcasecmp( elem.fieldName(), "expand" ) )
+            if ( 0 == ossStrcasecmp( elem.fieldName(), FIELD_NAME_EXPAND ) )
             {
                if ( elem.type() == bson::Bool )
                {

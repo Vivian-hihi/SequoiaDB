@@ -16,8 +16,8 @@ SDB_SNAP_CONFIGS
 
 | 参数名 | 参数类型 | 描述 | 是否必填 |
 | ------ | -------- | ---- | -------- |
-| mode   |	String  | 指定返回配置的模式。在 Run 模式下，显示当前运行时配置信息，在 Local 模式下，显示配置文件中配置信息。如 { "mode": "local" }。默认为 Run。 | 否 |
-| expand |	Bool/String  | 指定返回配置的详细程度。为 false 时仅显示配置文件中对应配置的情况，为 true 时显示所有配置。如 { "expand": false }。默认为 true。| 否 |
+| Mode   |	String  | 指定返回配置的模式。在 run 模式下，显示当前运行时配置信息，在 local 模式下，显示配置文件中配置信息。如 { "Mode": "local" }。默认为 run。 | 否 |
+| Expand |	Bool/String  | 指定返回配置的详细程度。为 false 时仅显示配置文件中对应配置的情况，为 true 时显示所有配置。如 { "Expand": false }。默认为 true。| 否 |
 
 > **Note:**
 
@@ -117,7 +117,7 @@ Return 1 row(s).
 查看数据组 db1 中数据节点 20000 上配置文件中的配置信息
 
 ```lang-javascript
-> var option = new SdbSnapshotOption().cond( { GroupName:'db1', SvcName:'20000' } ).options( { "mode": "local", "expand": false } )
+> var option = new SdbSnapshotOption().cond( { GroupName:'db1', SvcName:'20000' } ).options( { "Mode": "local", "Expand": false } )
 > db.snapshot( SDB_SNAP_CONFIGS, option )
 {
   "NodeName": "ubuntu-zwb:20000",
