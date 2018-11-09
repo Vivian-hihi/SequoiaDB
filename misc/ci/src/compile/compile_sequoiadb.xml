@@ -541,7 +541,7 @@
       <mkdir dir="${release_db_dir}/plugins" />
       <mkdir dir="${release_db_dir}/plugins/SequoiaSQL" />
       
-      <copy file="${srccode_dir}/driver/C#.Net/build/release/sequoiadb.dll" 
+      <copy file="${WORKSPACE}/archive/sequoiadb.dll" 
             tofile="${release_db_dir}/CSharp/sequoiadb.dll" />
               
       <copy todir="${release_db_dir}/bin" >
