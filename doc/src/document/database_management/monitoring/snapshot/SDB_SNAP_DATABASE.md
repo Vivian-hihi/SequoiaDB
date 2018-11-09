@@ -36,7 +36,8 @@ SDB_SNAP_DATABASE
 | Editon                | 字符串 | “Enterprise”表示企业版（备注：社区版中无该字段）                                |
 | CurrentActiveSessions | 整型   | 当前活动会话                                                                |
 | CurrentIdleSessions   | 整型   | 当前非活动会话，一般来说非活动会话意味着 EDU 存在线程池中等待分配               |
-| CurrentSystemSessions | 整型   | 当前系统会话，为当前活动用户 EDU 数量                                           |
+| CurrentSystemSessions | 整型   | 当前系统会话，为当前活动用户 EDU 数量      
+| CurrentTaskSessions   | 整型   | 后台任务会话数量                                                                |
 | CurrentContexts       | 整型   | 当前上下文数量                                                                  |
 | ReceivedEvents        | 整型   | 当前分区接收到的事件请求总数                                                    |
 | Role                  | 字符串 | 当前节点角色                                                                    |
@@ -75,7 +76,7 @@ SDB_SNAP_DATABASE
 | replNetIn             | 长整型 | 数据同步平面端口收到的网络流量（单位：字节）                                    |
 | replNetOut            | 长整型 | 数据同步平面端口发送的网络流量（单位：字节）                                    |
 | SchdlrType            | 整型   | 资源调度类型。0 表示没有开启资源调度，1 表示开启了FIFO资源调度，2 表示开启了优先级资源调度，3 表示开启了基于容器的优先级资源调度                                     |
-| SchdlrTypeDesp        | 字符串 | 资源调度类型描述，取值：NONE / FIFO / PRIORITY / CONTAINER                  |
+| SchdlrTypeDesp        | 字符串 | 资源调度类型描述，取值：NONE、FIFO、PRIORITY、CONTAINER                  |
 | Run                   | 整型   | 当前正在运行的任务数量                                                          |
 | Wait                  | 整型   | 当前处于等待队列的任务数量（包含未分发的任务）                                  |
 | SchdlrMgrEvtNum       | 整型   | 当前未分发的任务数量                                                            |
