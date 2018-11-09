@@ -6375,7 +6375,7 @@ SDB_EXPORT INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
    {
       bson_destroy( pResult ) ;
       bson_init( pResult ) ;
-      if ( flags & INSERT_RETURN_OID )
+      if ( flags & FLG_INSERT_RETURN_OID )
       {
          bson_append_element( pResult, CLIENT_RECORD_ID_FIELD, &oid_itr ) ;
       }
@@ -6428,7 +6428,7 @@ SDB_EXPORT INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
       bson_destroy( pResult ) ;
       bson_init( pResult ) ;
       hasInit = TRUE ;
-      if ( flags & INSERT_RETURN_OID )
+      if ( flags & FLG_INSERT_RETURN_OID )
       {
          bson_append_start_array( pResult, CLIENT_RECORD_ID_FIELD ) ;
       }
@@ -6440,7 +6440,7 @@ SDB_EXPORT INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
       {
          break ;
       }
-      if ( pResult && ( flags & INSERT_RETURN_OID ) )
+      if ( pResult && ( flags & FLG_INSERT_RETURN_OID ) )
       {
          rc = clientAppendOID ( obj[count], &oid_itr ) ;
          if ( rc )
@@ -6471,7 +6471,7 @@ SDB_EXPORT INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
    }
    if ( pResult )
    {
-      if ( flags & INSERT_RETURN_OID )
+      if ( flags & FLG_INSERT_RETURN_OID )
       {
          bson_append_finish_array( pResult ) ;
       }

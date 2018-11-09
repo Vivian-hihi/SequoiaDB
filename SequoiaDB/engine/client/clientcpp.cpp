@@ -1237,7 +1237,7 @@ do                                                            \
       }
       else
       {
-         rc = _insert( obj, INSERT_RETURN_OID, newObj ) ;
+         rc = _insert( obj, FLG_INSERT_RETURN_OID, newObj ) ;
          if ( rc )
          {
             goto error ;
@@ -1270,7 +1270,7 @@ do                                                            \
       {
          goto error ;
       }
-      if ( pResult && ( flags & INSERT_RETURN_OID ) )
+      if ( pResult && ( flags & FLG_INSERT_RETURN_OID ) )
       {
          BSONObjBuilder bob ;
          bob.append( newObj.getField ( CLIENT_RECORD_ID_FIELD ) ) ;
@@ -1322,7 +1322,7 @@ do                                                            \
          {
             goto error ;
          }
-         if ( pResult && ( flags & INSERT_RETURN_OID ) )
+         if ( pResult && ( flags & FLG_INSERT_RETURN_OID ) )
          {
             try
             {
@@ -1378,7 +1378,7 @@ do                                                            \
          BSONObjBuilder bob ;
          try
          {
-            if ( flags & INSERT_RETURN_OID )
+            if ( flags & FLG_INSERT_RETURN_OID )
             {
                bob.append( CLIENT_RECORD_ID_FIELD, bab.arr() ) ;
             }

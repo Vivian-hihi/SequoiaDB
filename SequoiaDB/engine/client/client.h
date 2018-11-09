@@ -119,13 +119,10 @@ typedef sdbNodeHandle             sdbReplicaNodeHandle ;
 #define QUERY_FOR_UPDATE                  0x00010000
 
 
-/** (deprecated, use INSERT_IGNORE_DUPLICATE_KEY instead)The flags represent whether bulk insert continue when hitting index key duplicate error */
-#define FLG_INSERT_CONTONDUP              0x00000001
-
 /** The flag represent whether insert continue(no errors were reported) when hitting index key duplicate error */
-#define INSERT_IGNORE_DUPLICATE_KEY       0x00000001
+#define FLG_INSERT_CONTONDUP              0x00000001
 /** The flag represent whether insert return the "_id" field of the record for user */
-#define INSERT_RETURN_OID                 0x00000002
+#define FLG_INSERT_RETURN_OID             0x00000002
 
 
 /** The sharding key in update rule is not filtered, when executing update or upsert. */
@@ -1540,11 +1537,11 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
          0:                    while 0 is set(default to be 0), database 
                                will stop inserting when the record hit 
                                index key duplicate error.
-         INSERT_IGNORE_DUPLICATE_KEY: 
+         FLG_INSERT_CONTONDUP: 
                                if the record hit index key duplicate
                                error, database will skip them and go on 
                                inserting.
-         INSERT_RETURN_OID:    return the value of "_id" field in the record.                     
+         FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.                     
 
     \param [out] pResult The insert result.
     \retval SDB_OK Operation Success
@@ -1564,11 +1561,10 @@ SDB_EXPORT INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
          0:                    while 0 is set(default to be 0), database 
                                will stop inserting when the record hit 
                                index key duplicate error.
-         INSERT_IGNORE_DUPLICATE_KEY: 
+         FLG_INSERT_CONTONDUP: 
                                if the record hit index key duplicate
                                error, database will skip them and go on 
                                inserting.
-         FLG_INSERT_CONTONDUP: deprecated, use INSERT_IGNORE_DUPLICATE_KEY instead.
 
     \param [in] obj The array of inserted bson objects, cannot be null
     \param [in] num The number of inserted bson objects
@@ -1618,11 +1614,11 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
          0:                    while 0 is set(default to be 0), database 
                                will stop inserting when the record hit 
                                index key duplicate error.
-         INSERT_IGNORE_DUPLICATE_KEY: 
+         FLG_INSERT_CONTONDUP: 
                                if the record hit index key duplicate
                                error, database will skip them and go on 
                                inserting.
-         INSERT_RETURN_OID:    return the value of "_id" field in the records.                     
+         FLG_INSERT_RETURN_OID: return the value of "_id" field in the records.                     
 
     \param [in] objs The array of inserted bson objects, cannot be null
     \param [in] num The number of inserted bson objects
