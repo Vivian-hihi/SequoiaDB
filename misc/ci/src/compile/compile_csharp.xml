@@ -26,7 +26,8 @@
          <arg value="/c" />
          <arg value='compile_csharp_errors.bat' />
       </exec>
-
+      
+      <delete file="${srccode_dir}/driver/C#.Net/build/release/sequoiadb.dll" failonerror="false" />
       <delete dir="${srccode_dir}/driver/C#.Net/compile_csharp.bat" failonerror="false" />
       <echo file="${srccode_dir}/driver/C#.Net/compile_csharp.bat" 
             message='"cmd /E:ON /V:ON /T:0E /K C:\SetEnv.cmd &amp;&amp; scons"' />
