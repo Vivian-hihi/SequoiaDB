@@ -20,7 +20,7 @@ function main()
    commCheckIndex( dbcl, "a", true );
    try{
       dbcl.createIndex( "b", {about:"text"});
-      throw e;
+      throw "CREATEINDEXERR";
    }
    catch( e ){
       if( e != -42){

@@ -25,7 +25,7 @@ function main()
    commCheckIndex( dbcl, indexName, false );
    try{
       dbcl.dropIndex( indexName ); 
-      throw e;
+      throw "DROPINDEXERR";
    }
    catch( e ){
       if( e != -47){

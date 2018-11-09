@@ -31,12 +31,6 @@ function main()
       records.push(record);
    }
    insertRecords(dbcl, records);
-   
-   if(100 != dbcl.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
    var testFile = CHANGEDPREFIX + "_lobTest.file" ;
    lobGenerateFile( testFile ) ;
    dbcl.putLob(testFile);
@@ -49,7 +43,7 @@ function main()
 
    try{
       dbcl.insert({name:"zsan"});
-      throw e ;
+      throw "INSERTERR" ;
    }
    catch(e){
       if(e != -23){
@@ -57,62 +51,6 @@ function main()
       }
    }
    println("====dbcl.insert() check success===");
-   
-   try{
-      dbcl.listIndexes();
-      throw e ;
-   }
-   catch(e){
-      if(e != -23){
-         throw buildException("mian()", "collection do not drop", "equal", -23, e);
-      }
-   }
-   println("====dbcl.listIndexes() check success===");
-   
-   try{
-      dbcl.listLobs();
-      throw e ;
-   }
-   catch(e){
-      if(e != -23){
-         throw buildException("mian()", "collection do not drop", "equal", -23, e);
-      }
-   }
-   println("====dbcl.listLobs() check success===");
-   
-   try{
-      var dbOperator = new DBOperator();
-      var cappedCL = dbOperator.getCappedCLs(COMMCSNAME, clName, "fullIndex");
-      throw e ;
-   }  
-   catch(e){
-      if(e != -23){
-         throw buildException("main()", "cappedCL do not drop", "equal", -23, e);
-      }
-   }
-   println("====cappedCL.find() check success===");
-   
-   try{
-      checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 0);
-      throw e ;
-   }  
-   catch(e){
-      if(e != -23){
-         throw buildException("main()", "es index do not removed", "equal", -23, e);
-      }
-   }
-   println("====checkFullSyncToES() check success===");
-   
-   try{
-      checkConsistency(COMMCSNAME, clName, 5);
-      throw e ;
-   }
-   catch(e){
-      if(e.indexOf("checkConsistency") == -1){
-         throw buildException("main()", "es index do not removed", "equal", -23, e);
-      }
-   }
-   println("====checkConsistency() check success===");
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }

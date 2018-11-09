@@ -21,7 +21,7 @@ function main()
    commCheckIndex( dbcl, indexName, true );
    try{
       dbcl.createIndex( indexName, {content:"text"});
-      throw e;
+      throw "CREATEINDEXERR";
    }
    catch( e ){
       if( e != -46){
@@ -34,7 +34,7 @@ function main()
    commCheckIndex( dbcl, "b", true );
    try{
       dbcl.createIndex( "c", {content:"text"});
-      throw e ;
+      throw "CREATEINDEXERR" ;
    }
    catch( e ){
       if( e != -42){

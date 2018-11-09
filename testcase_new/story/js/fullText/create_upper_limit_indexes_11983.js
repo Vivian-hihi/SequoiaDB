@@ -24,7 +24,7 @@ function main()
    //在已创建64个索引的情况下，创建全文索引
    try{
       dbcl.createIndex( "fullIndex", {content : "text"});
-      throw e ;
+      throw "CREATEINDEXERR" ;
    }
    catch( e ){
       if( e != -42){

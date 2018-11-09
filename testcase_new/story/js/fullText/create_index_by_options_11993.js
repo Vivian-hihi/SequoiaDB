@@ -19,7 +19,7 @@ function main()
    var indexName = "a";
    try{
       dbcl.createIndex(indexName, {content:"int"});
-      throw e;
+      throw "CREATEINDEXERR";
    }
    catch( e ){
       if( e != -6){
@@ -31,7 +31,7 @@ function main()
    //创建非法的复合索引
    try{
       dbcl.createIndex(indexName, {content:"text", about : 1});
-      throw e;
+      throw "CREATEINDEXERR";
    }
    catch( e ){
       if( e != -6){

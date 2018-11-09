@@ -59,7 +59,7 @@ function main()
    }
    try{
       dbcl.createIndex(indexName, {content : "text"}); 
-      throw e ;
+      throw "CREATEINDEXERR" ;
    }
    catch( e ){
 	  if( e != -6){
@@ -77,7 +77,7 @@ function main()
    }
    try{
       dbcl.createIndex(indexName, {content : "text"});	   
-      throw e ;
+      throw "CREATEINDEXERR" ;
    }
    catch( e ){
       if( e != -6){
