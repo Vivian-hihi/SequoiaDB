@@ -38,7 +38,6 @@ public class SequoiadbMetaDao implements MetaDao {
         try {
             sdb = ((SdbConnectionDao)connection).getConnection();
             insert(sdb, csMetaName, clMetaName, objectMeta, isIgnoreDup);
-            return;
         }catch (BaseException e){
             if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode()) {
                 sdbDatasourceWrapper.createCS(sdb, csMetaName, null);
@@ -53,7 +52,6 @@ public class SequoiadbMetaDao implements MetaDao {
                         ObjectMeta.META_BUCKET_ID+"+"+ObjectMeta.META_KEY_NAME+"+"+ObjectMeta.META_VERSION_ID,
                         indexKey, true,true);
                 insert(sdb, csMetaName, clMetaName, objectMeta, isIgnoreDup);
-                return;
             } else if (e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
                 sdbDatasourceWrapper.createCL(sdb, csMetaName, clMetaName, null);
                 BSONObject indexKey = new BasicBSONObject();
@@ -66,7 +64,6 @@ public class SequoiadbMetaDao implements MetaDao {
                         ObjectMeta.META_BUCKET_ID+"+"+ObjectMeta.META_KEY_NAME+"+"+ObjectMeta.META_VERSION_ID,
                         indexKey, true,true);
                 insert(sdb, csMetaName, clMetaName, objectMeta, isIgnoreDup);
-                return;
             } else if (e.getErrorCode() == SDBError.SDB_IXM_DUP_KEY.getErrorCode()) {
                 throw new S3ServerException(S3Error.DAO_DUPLICATE_KEY,
                         "Duplicate key. csname:"+csMetaName+", clname:"+clMetaName);
@@ -77,7 +74,7 @@ public class SequoiadbMetaDao implements MetaDao {
         }
     }
 
-    public void insert(Sequoiadb sdb, String csMetaName, String clMetaName,
+    private void insert(Sequoiadb sdb, String csMetaName, String clMetaName,
                        ObjectMeta objectMeta, int isIgnoreDup) {
         try {
             CollectionSpace cs = sdb.getCollectionSpace(csMetaName);
@@ -87,7 +84,6 @@ public class SequoiadbMetaDao implements MetaDao {
             List<BSONObject> insertList = new ArrayList<>();
             insertList.add(insertData);
             cl.insert(insertList, isIgnoreDup);
-            return;
         }catch (Exception e){
             logger.error("Insert object meta failed");
             throw e;
@@ -300,10 +296,7 @@ public class SequoiadbMetaDao implements MetaDao {
             setUpdate.put(DBParamDefine.MODIFY_SET, updateData);
 
             cl.update(matcher, setUpdate, null);
-        }catch (BaseException e){
-            logger.error("update meta failed. error:",e);
-            throw new S3ServerException(S3Error.DAO_DB_ERROR, "db error . e" + e);
-        }catch (Exception e){
+        } catch (Exception e){
             logger.error("update meta failed. error:",e);
             throw new S3ServerException(S3Error.DAO_DB_ERROR, "db error . e" + e);
         }
@@ -329,10 +322,7 @@ public class SequoiadbMetaDao implements MetaDao {
             }
 
             cl.delete(matcher);
-        }catch (BaseException e){
-            logger.error("remove meta failed. error:",e);
-            throw new S3ServerException(S3Error.DAO_DB_ERROR, "db error . e" + e);
-        }catch (Exception e){
+        } catch (Exception e){
             logger.error("remove meta failed. error:",e);
             throw new S3ServerException(S3Error.DAO_DB_ERROR, "db error . e" + e);
         }
