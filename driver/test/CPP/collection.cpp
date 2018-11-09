@@ -1752,6 +1752,8 @@ TEST( collection, alter_collection )
    rc = cl.alterCollection( option ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
 
+   sleep( 1 ) ;
+
    // check
    rc = db.getSnapshot( cursor, SDB_SNAP_CATALOG, matcher ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
@@ -1761,7 +1763,8 @@ TEST( collection, alter_collection )
 
    ele = record.getField( "Name" ) ;
    ASSERT_EQ( String, ele.type() ) << "bson element is not a string type" ;
-   pValue = ele.String().c_str() ;
+//   pValue = ele.String().c_str() ;
+   pValue = ele.valuestr() ;
    ASSERT_EQ( 0, strcmp( pValue, pCLFullName ) ) << "after alter cl, the cl's name is not what we want" ;
 
    ele = record.getField( "ReplSize" ) ;
