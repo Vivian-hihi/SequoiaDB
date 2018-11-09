@@ -2041,7 +2041,7 @@ do                                                            \
    }*/
 
    INT32 _sdbCollectionImpl::_createIndex ( const BSONObj &indexDef,
-                                            const CHAR *pName,
+                                            const CHAR *pIndexName,
                                             BOOLEAN isUnique,
                                             BOOLEAN isEnforced,
                                             INT32 sortBufferSize )
@@ -2054,7 +2054,7 @@ do                                                            \
       BSONObj hintObj ;
       BOOLEAN locked = FALSE ;
       if ( _collectionFullName [0] == '\0' || !_connection ||
-           !pName )
+           !pIndexName )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -2067,7 +2067,7 @@ do                                                            \
       }
 
       indexObj = BSON ( IXM_FIELD_NAME_KEY << indexDef <<
-                        IXM_FIELD_NAME_NAME << pName <<
+                        IXM_FIELD_NAME_NAME << pIndexName <<
                         IXM_FIELD_NAME_UNIQUE << (isUnique ? true : false) <<
                         IXM_FIELD_NAME_ENFORCED << (isEnforced ? true : false) ) ;
 
@@ -2118,25 +2118,25 @@ do                                                            \
    }
 
    INT32 _sdbCollectionImpl::createIndex ( const BSONObj &indexDef,
-                                           const CHAR *pName,
+                                           const CHAR *pIndexName,
                                            BOOLEAN isUnique,
                                            BOOLEAN isEnforced )
    {
-      return _createIndex ( indexDef, pName, isUnique, isEnforced,
+      return _createIndex ( indexDef, pIndexName, isUnique, isEnforced,
                             SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE) ;
    }
 
    INT32 _sdbCollectionImpl::createIndex ( const BSONObj &indexDef,
-                                           const CHAR *pName,
+                                           const CHAR *pIndexName,
                                            BOOLEAN isUnique,
                                            BOOLEAN isEnforced,
                                            INT32 sortBufferSize )
    {
-      return _createIndex ( indexDef, pName, isUnique, isEnforced, sortBufferSize ) ;
+      return _createIndex ( indexDef, pIndexName, isUnique, isEnforced, sortBufferSize ) ;
    }
 
    INT32 _sdbCollectionImpl::getIndexes ( _sdbCursor **cursor,
-                                          const CHAR *pName )
+                                          const CHAR *pIndexName )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN result ;
@@ -2149,17 +2149,17 @@ do                                                            \
          return rc ;
       }
       /* build query condition */
-      if ( pName )
+      if ( pIndexName )
       {
          queryCond = BSON ( IXM_FIELD_NAME_INDEX_DEF "." IXM_FIELD_NAME_NAME <<
-                            pName ) ;
+                            pIndexName ) ;
       }
       /* build collection name */
       newObj = BSON ( FIELD_NAME_COLLECTION << _collectionFullName ) ;
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
                                     CMD_ADMIN_PREFIX CMD_NAME_GET_INDEXES,
                                     0, 0, -1,
-                                    -1, pName?queryCond.objdata():NULL,
+                                    -1, pIndexName?queryCond.objdata():NULL,
                                     NULL, NULL,
                                     newObj.objdata(),
                                     _connection->_endianConvert ) ;
@@ -2219,7 +2219,68 @@ do                                                            \
 
    }
 
-   INT32 _sdbCollectionImpl::dropIndex ( const CHAR *pName )
+   INT32 _sdbCollectionImpl::getIndexes ( std::vector<bson::BSONObj> &infos )
+   {
+      INT32 rc = SDB_OK ;
+      sdbCursor cursor ;
+      BSONObj obj ;
+
+      rc = getIndexes( cursor, NULL ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      infos.clear() ;
+      while( SDB_DMS_EOC != ( rc = cursor.next( obj ) ) )
+      {
+         infos.push_back( obj ) ;
+      }
+      rc = SDB_OK ;
+      
+   done:
+      cursor.close() ;
+      return rc ;
+   error:
+      goto done ;
+   }
+   
+   INT32 _sdbCollectionImpl::getIndex ( const CHAR *pIndexName, bson::BSONObj &info )
+   {
+      INT32 rc = SDB_OK ;
+      sdbCursor cursor ;
+
+      if ( !pIndexName || !*pIndexName )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = getIndexes( cursor, pIndexName ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      rc = cursor.next( info ) ;
+      if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_IXM_NOTEXIST ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         goto error ;
+      }
+      
+   done:
+      cursor.close() ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sdbCollectionImpl::dropIndex ( const CHAR *pIndexName )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN result ;
@@ -2228,13 +2289,13 @@ do                                                            \
       BSONObj newObj ;
       BOOLEAN locked = FALSE ;
       if ( _collectionFullName [0] == '\0' || !_connection ||
-           !pName )
+           !pIndexName )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
-      indexObj = BSON ( "" << pName ) ;
+      indexObj = BSON ( "" << pIndexName ) ;
       newObj = BSON ( FIELD_NAME_COLLECTION << _collectionFullName <<
                       FIELD_NAME_INDEX << indexObj ) ;
 

@@ -5919,9 +5919,9 @@ SDB_EXPORT INT32 sdbCreateIndex1 ( sdbCollectionHandle cHandle,
    return _sdbCreateIndex( cHandle, indexDef, pIndexName, isUnique, isEnforced, sortBufferSize ) ;
 }
 
-SDB_EXPORT INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,
-                                 const CHAR *pIndexName,
-                                 sdbCursorHandle *handle )
+static INT32 _sdbGetIndexes ( sdbCollectionHandle cHandle,
+                              const CHAR *pIndexName,
+                              sdbCursorHandle *handle )
 {
    INT32 rc                        = SDB_OK ;
    SINT64 contextID                = 0 ;
@@ -6019,6 +6019,89 @@ error :
       SDB_OSS_FREE ( cursor ) ;
    }
    SET_INVALID_HANDLE( handle ) ;
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,
+                                 const CHAR *pIndexName,
+                                 sdbCursorHandle *handle )
+{
+   return _sdbGetIndexes( cHandle, pIndexName, handle ) ;
+}
+
+SDB_EXPORT INT32 sdbGetIndex ( sdbCollectionHandle cHandle,
+                               const CHAR *pIndexName,
+                               bson *info )
+{
+   INT32 rc               = SDB_OK ;
+   BOOLEAN hasInit        = FALSE ;
+   sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
+   bson obj ;
+   
+   if ( !pIndexName || !*pIndexName || !info )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   bson_init( &obj ) ;
+   hasInit = TRUE ;
+
+   rc = _sdbGetIndexes( cHandle, pIndexName, &cursor ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   rc = sdbNext( cursor, &obj ) ;
+   if ( SDB_DMS_EOC == rc )
+   {
+      rc = SDB_IXM_NOTEXIST ;
+      goto error ;
+   }
+   else if ( rc )
+   {
+      goto error ;
+   }
+   rc = bson_copy( info, &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto done ;
+   }
+
+done:
+   if ( hasInit )
+   {
+      bson_destroy( &obj ) ;
+   }
+   if ( SDB_INVALID_HANDLE != cursor )
+   {
+      sdbCloseCursor( cursor ) ;
+      sdbReleaseCursor( cursor ) ;
+   }
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbGetIndexInfo ( sdbCollectionHandle cHandle,
+                                   sdbCursorHandle *handle )
+{
+   INT32 rc = SDB_OK ;
+
+   if ( !handle )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   rc = _sdbGetIndexes( cHandle, NULL, handle ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
    goto done ;
 }
 

@@ -402,8 +402,10 @@ namespace sdbclient
       virtual INT32 getIndexes ( _sdbCursor **cursor,
                                  const CHAR *pName ) = 0 ;
       virtual INT32 getIndexes ( sdbCursor &cursor,
-                                 const CHAR *pName ) = 0 ;
-      virtual INT32 dropIndex ( const CHAR *pName ) = 0 ;
+                                 const CHAR *pIndexName ) = 0 ;
+      virtual INT32 getIndexes ( std::vector<bson::BSONObj> &infos ) = 0 ;
+      virtual INT32 getIndex ( const CHAR *pIndexName, bson::BSONObj &info ) = 0 ;
+      virtual INT32 dropIndex ( const CHAR *pIndexName ) = 0 ;
       virtual INT32 create () = 0 ;
       virtual INT32 drop () = 0 ;
       virtual const CHAR *getCollectionName () = 0 ;
@@ -1222,14 +1224,14 @@ namespace sdbclient
                                            isEnforced, sortBufferSize ) ;
       }
 
-/* \fn INT32 getIndexes ( _sdbCursor **cursor,
-                         const CHAR *pIndexName )
-    \brief Get all of or one of the indexes in current collection
-    \param [in] pIndexName  The index name, returns all of the indexes if this parameter is null
-    \param [out] cursor The cursor of all the result for current query
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
+      /* \fn INT32 getIndexes ( _sdbCursor **cursor,
+                               const CHAR *pIndexName )
+          \brief Get all of or one of the indexes in current collection
+          \param [in] pIndexName  The index name, returns all of the indexes if this parameter is null
+          \param [out] cursor The cursor of all the result for current query
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
       INT32 getIndexes ( _sdbCursor **cursor,
                          const CHAR *pIndexName )
       {
@@ -1238,14 +1240,15 @@ namespace sdbclient
          return pCollection->getIndexes ( cursor, pIndexName ) ;
       }
 
-/** \fn INT32 getIndexes ( sdbCursor &cursor,
-                         const CHAR *pIndexName )
-    \brief Get all of or one of the indexes in current collection
-    \param [in] pIndexName  The index name, returns all of the indexes if this parameter is null
-    \param [out] cursor The cursor of all the result for current query
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
+      /** \fn INT32 getIndexes ( sdbCursor &cursor,
+                                 const CHAR *pIndexName )
+          \brief Get all of or one of the indexes in current collection
+          \param [in] pIndexName  The index name, returns all of the indexes if this parameter is null
+          \param [out] cursor The cursor of all the result for current query.
+          \deprecated Use the other overloaded versions instead.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
       INT32 getIndexes ( sdbCursor &cursor,
                          const CHAR *pIndexName )
       {
@@ -1255,6 +1258,37 @@ namespace sdbclient
          }
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pCollection->getIndexes ( cursor, pIndexName ) ;
+      }
+
+      /** \fn INT32 getIndexes ( std::vector<bson::BSONObj> &infos )
+          \brief Get all of the indexes in current collection.
+          \param [out] infos Vector for the information of all the index.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 getIndexes ( std::vector<bson::BSONObj> &infos )
+      {
+         if ( !pCollection )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pCollection->getIndexes ( infos ) ;
+      }
+
+      /** \fn INT32 getIndex ( const CHAR *pIndexName, bson::BSONObj &info )
+          \brief Get the specified index in current collection.
+          \param [in] pIndexName  The index name, returns all of the indexes if this parameter is null
+          \param [out] info The information of the index.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 getIndex ( const CHAR *pIndexName, bson::BSONObj &info )
+      {
+         if ( !pCollection )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pCollection->getIndex ( pIndexName, info ) ;
       }
 
 /** \fn INT32 dropIndex ( const CHAR *pIndexName )

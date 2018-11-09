@@ -1424,10 +1424,38 @@ SDB_EXPORT INT32 sdbCreateIndex1 ( sdbCollectionHandle cHandle,
     \param [out] handle The cursor handle of returns
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \deprecated use sdbGetIndex and sdbGetIndexInfo instead.
 */
 SDB_EXPORT INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,
                                  const CHAR *pIndexName,
                                  sdbCursorHandle *handle ) ;
+
+/** \fn INT32 sdbGetIndex ( sdbCollectionHandle cHandle,
+                            const CHAR *pIndexName,
+                            bson *info )
+    \brief Get the information of the specified index in current collection.
+    \param [in] cHandle The collection handle.
+    \param [in] pIndexName The index name, returns all of the indexes if this parameter is null
+    \param [out] info The information of index.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbGetIndex ( sdbCollectionHandle cHandle,
+                               const CHAR *pIndexName,
+                               bson *info ) ;
+
+
+/** \fn INT32 sdbGetIndexInfo ( sdbCollectionHandle cHandle,
+                                sdbCursorHandle *handle )
+    \brief Get the information of all the indexes in current collection.
+    \param [in] cHandle The collection handle.
+    \param [out] handle The cursor of the information of indexes.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbGetIndexInfo ( sdbCollectionHandle cHandle,
+                                   sdbCursorHandle *handle ) ;
+
 
 /** \fn INT32 sdbDropIndex ( sdbCollectionHandle cHandle,
                              const CHAR *pIndexName )

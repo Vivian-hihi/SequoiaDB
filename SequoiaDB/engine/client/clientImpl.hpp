@@ -334,6 +334,8 @@ namespace sdbclient
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return getIndexes ( &cursor.pCursor, pName ) ;
       }
+      INT32 getIndexes ( std::vector<bson::BSONObj> &infos ) ;
+      INT32 getIndex ( const CHAR *pName, bson::BSONObj &info ) ;
       INT32 dropIndex ( const CHAR *pName ) ;
       INT32 create () ;
       INT32 drop () ;
