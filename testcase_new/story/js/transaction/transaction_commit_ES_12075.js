@@ -31,7 +31,7 @@ function main()
    db.transCommit();
    
    checkFullSyncToES(csName, clName, "fullIndex", 10);
-   checkConsistency(csName, clName, 5);
+   checkConsistency(csName, clName);
    
    var dbOperator = new DBOperator();
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
@@ -42,8 +42,6 @@ function main()
    
    actResult.sort(compare("content"));
    expResult.sort(compare("content"));
-   println("expResult : " + JSON.stringify(expResult));
-   println("actResult : " + JSON.stringify(actResult));
    checkResult(expResult, actResult);
    println("===full index field insert success===");
    
@@ -57,7 +55,7 @@ function main()
    db.transCommit();
    
    checkFullSyncToES(csName, clName, "fullIndex", 10);
-   checkConsistency(csName, clName, 5);
+   checkConsistency(csName, clName);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
@@ -72,7 +70,7 @@ function main()
    db.transCommit();
    
    checkFullSyncToES(csName, clName, "fullIndex", 10);
-   checkConsistency(csName, clName, 5);
+   checkConsistency(csName, clName);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
@@ -86,7 +84,7 @@ function main()
    db.transCommit();
    
    checkFullSyncToES(csName, clName, "fullIndex", 10);
-   checkConsistency(csName, clName, 5);
+   checkConsistency(csName, clName);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
@@ -101,7 +99,7 @@ function main()
    db.transCommit();
    
    checkFullSyncToES(csName, clName, "fullIndex", 9);
-   checkConsistency(csName, clName, 5);
+   checkConsistency(csName, clName);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
@@ -115,7 +113,7 @@ function main()
    db.transCommit();
    
    checkFullSyncToES(csName, clName, "fullIndex", 9);
-   checkConsistency(csName, clName, 5);
+   checkConsistency(csName, clName);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
@@ -130,7 +128,7 @@ function main()
    db.transCommit();
    
    checkFullSyncToES(csName, clName, "fullIndex", 0);
-   checkConsistency(csName, clName, 5);
+   checkConsistency(csName, clName);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    

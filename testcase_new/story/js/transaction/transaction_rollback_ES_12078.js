@@ -18,6 +18,12 @@ function main()
    var dbcl = commCreateCL( db, csName, clName );
    commCreateIndex( dbcl, "fullIndex", {content : "text"});
    commCreateIndex( dbcl, "commIndex", {content : 1});
+   var records = new Array();
+   for (var i = 0; i < 10 ; i++){
+      var record = {content : "a" + i, age : i + 10};
+      records.push(record);
+   }
+   dbcl.insert(records);
    
    //insert
    db.transBegin();
@@ -29,8 +35,8 @@ function main()
    dbcl.insert(records);
    db.transRollback();
    
-   checkFullSyncToES(csName, clName, "fullIndex", 0);
-   checkConsistency(csName, clName, 5);
+   checkFullSyncToES(csName, clName, "fullIndex", 10);
+   checkConsistency(csName, clName);
    
    var dbOperator = new DBOperator();
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
@@ -41,8 +47,6 @@ function main()
    
    actResult.sort(compare("content"));
    expResult.sort(compare("content"));
-   println("expResult : " + JSON.stringify(expResult));
-   println("actResult : " + JSON.stringify(actResult));
    checkResult(expResult, actResult);
    println("===insert success===");
    
@@ -51,8 +55,8 @@ function main()
    dbcl.update({$set : {content : "i can not do it"}}, {content : "a2"});
    db.transRollback();
    
-   checkFullSyncToES(csName, clName, "fullIndex", 0);
-   checkConsistency(csName, clName, 5);
+   checkFullSyncToES(csName, clName, "fullIndex", 10);
+   checkConsistency(csName, clName);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
@@ -66,8 +70,8 @@ function main()
    dbcl.remove({content : "a3"});
    db.transRollback();
    
-   checkFullSyncToES(csName, clName, "fullIndex", 0);
-   checkConsistency(csName, clName, 5);
+   checkFullSyncToES(csName, clName, "fullIndex", 10);
+   checkConsistency(csName, clName);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
@@ -82,7 +86,7 @@ function main()
    db.transRollback();
    
    checkFullSyncToES(csName, clName, "fullIndex", 0);
-   checkConsistency(csName, clName, 5);
+   checkConsistency(csName, clName);
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    

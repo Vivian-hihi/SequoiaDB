@@ -561,9 +561,6 @@ function checkResult(expectResult, actResult)
    {
       throw buildException("checkResult()", "check records", "check records length", expectResult.length, actResult.length);
    }
-   
-   println("expResult : " + JSON.stringify(expectResult));
-   println("actResult : " + JSON.stringify(actResult));
 
    // compare array  
    for( var i in expectResult )
@@ -575,6 +572,8 @@ function checkResult(expectResult, actResult)
       {
          if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) ) 
          {
+            println("expResult : " + JSON.stringify(expectResult));
+            println("actResult : " + JSON.stringify(actResult));
             throw buildException("checkResult()", "check record fail", "fail",
                     JSON.stringify(JSON.stringify(expRec)), JSON.stringify(actRec));
          }
@@ -590,6 +589,8 @@ function checkResult(expectResult, actResult)
       {
          if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
          {
+            println("expResult : " + JSON.stringify(expectResult));
+            println("actResult : " + JSON.stringify(actResult));
             throw buildException("checkResult()", "check record fail", "fail",
                     JSON.stringify(JSON.stringify(expRec)), JSON.stringify(actRec));
          }
