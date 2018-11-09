@@ -390,7 +390,9 @@ TEST(collection,sdbInsert1_check_id)
    const char *key                = "" ;
    int value                      = 0 ;
    bson obj ;
+   bson result ;
    bson_iterator it ;
+   bson_init( &result ) ;
    const char *ret = NULL;
    rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
@@ -423,7 +425,13 @@ TEST(collection,sdbInsert1_check_id)
    key = bson_iterator_key( &it ) ;
    value = bson_iterator_int( &it ) ;
    printf("The insert record is {%s:%d}\n", key, value ) ;
+   rc = sdbInsert2 ( collection, &obj, FLG_INSERT_CONTONDUP, &result ) ;
+   CHECK_MSG( "%s%d\n", "rc = ", rc );
+   printf("Result is: \n") ;
+   bson_print( &result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    bson_destroy ( &obj ) ;
+   bson_destroy ( &result ) ;
 
    sdbDisconnect ( connection ) ;
    sdbReleaseCollection ( collection ) ;
@@ -1960,7 +1968,8 @@ TEST( collection, sdbQueryAndUpdate )
 
    rc = sdbQueryAndUpdate( cl, &condition, &selector, &orderBy, NULL,
                            &update, 0, -1, 0, TRUE, &cursor ) ;
-   ASSERT_EQ( SDB_RTN_QUERYMODIFY_SORT_NO_IDX, rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   //ASSERT_EQ( SDB_RTN_QUERYMODIFY_SORT_NO_IDX, rc ) ;
 
    /// in case: use selector orderBy with hint
    bson_init( &hint ) ;
@@ -2590,5 +2599,415 @@ TEST( collection, create_and_remove_id_index )
    sdbReleaseCollection ( cl ) ;
    sdbReleaseCS ( cs ) ;
    sdbReleaseConnection ( db ) ;
+}
+
+void _bulkInsert2Test( sdbCollectionHandle cHandle )
+{
+   INT32 rc = 0 ;
+   INT32 i = 0 ;
+   const INT32 num = 10 ;
+   bson_iterator it ;
+   bson returnObj ;
+   bson* obj[num] ;
+   bson* obj2[num] ;
+   bson* obj3[num] ;
+   printf( "in _bulkInsertTest2\n" ) ;
+
+   bson_init( &returnObj ) ;
+
+   // create bson poiter array
+   for ( i = 0; i < num; i++ )
+   {
+      obj[i] = bson_create();
+      obj2[i] = bson_create();
+      obj3[i] = bson_create();
+      rc = bson_append_int( obj[i], "num", i ) ;
+      rc = bson_append_int( obj2[i], "num", i + 100 ) ;
+      rc = bson_append_int( obj3[i], "_id", i + 1000 ) ;
+      rc = bson_append_string( obj[i], "op", "bulkInsert2" ) ;
+      rc = bson_append_string( obj2[i], "op", "bulkInsert2" ) ;
+      rc = bson_append_string( obj3[i], "op", "bulkInsert2" ) ;
+      if ( rc != 0 )
+         printf ( "something wrong.\n" ) ;
+      rc = bson_finish ( obj[i] ) ;
+      rc = bson_finish ( obj2[i] ) ;
+      rc = bson_finish ( obj3[i] ) ;
+      if ( rc != 0 )
+         printf ( "something wrong.\n" ) ;
+   }
+   // bulk insert
+   rc = sdbBulkInsert2 ( cHandle, 0, obj, num, &returnObj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( BSON_EOO, bson_find( &it, &returnObj, "_id" ) ) ;
+   rc = sdbBulkInsert2 ( cHandle, FLG_INSERT_RETURN_OID, obj2, num, &returnObj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( BSON_ARRAY, bson_find( &it, &returnObj, "_id" ) ) ;
+   printf( "after bulk insert2, return object is: \n" ) ;
+   bson_print( &returnObj ) ;
+//   for ( i = 0; i < num; ++i )
+//   {
+//      bson_printf( obj2[i] ) ;
+//   }
+   bson_destroy( &returnObj ) ;
+   bson_init( &returnObj ) ;
+   rc = sdbBulkInsert2 ( cHandle, FLG_INSERT_RETURN_OID, obj, num, &returnObj ) ;
+   ASSERT_EQ( SDB_IXM_DUP_KEY, rc ) ;
+   ASSERT_EQ( BSON_EOO, bson_find( &it, &returnObj, "_id" ) ) ;
+   rc = sdbBulkInsert2 ( cHandle, FLG_INSERT_CONTONDUP | FLG_INSERT_RETURN_OID, obj, num, &returnObj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( BSON_ARRAY, bson_find( &it, &returnObj, "_id" ) ) ;
+   printf( "after bulk insert2 with the duplicate key, return object is: \n" ) ;
+   bson_print( &returnObj ) ;
+
+   rc = sdbBulkInsert2 ( cHandle, FLG_INSERT_RETURN_OID, obj3, num, &returnObj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( BSON_ARRAY, bson_find( &it, &returnObj, "_id" ) ) ;
+   printf( "after bulk insert2 with the record which has _id, return object is: \n" ) ;
+   bson_print( &returnObj ) ;
+
+   // free memory
+   for ( i = 0; i < num; i++ )
+   {
+      printf ( "after insert2, record is: \n" ) ;
+      bson_print( obj[i] ) ;
+      bson_print( obj2[i] ) ;
+      bson_print( obj3[i] ) ;
+      bson_dispose ( obj[i] ) ;
+      bson_dispose ( obj2[i] ) ;
+      bson_dispose ( obj3[i] ) ;
+   }
+   bson_destroy( &returnObj ) ;
+   printf( "\n" ) ;
+}
+
+void _bulkInsertTest( sdbCollectionHandle cHandle )
+{
+   INT32 rc = 0 ;
+   INT32 i = 0 ;
+   const INT32 num = 10 ;
+   bson* obj[num] ;
+   printf( "in _bulkInsertTest\n" ) ;
+
+   // create bson poiter array
+   for ( i = 0; i < num; i++ )
+   {
+      obj[i] = bson_create();
+      rc = bson_append_int( obj[i], "num", i ) ;
+      rc = bson_append_string( obj[i], "op", "bulkInsert" ) ;
+      if ( rc != 0 )
+         printf ( "something wrong.\n" ) ;
+      rc = bson_finish ( obj[i] ) ;
+      if ( rc != 0 )
+         printf ( "something wrong.\n" ) ;
+   }
+   // bulk insert
+   rc = sdbBulkInsert ( cHandle, 0, obj, num ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbBulkInsert ( cHandle, FLG_INSERT_CONTONDUP, obj, num ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbBulkInsert ( cHandle, FLG_INSERT_CONTONDUP | FLG_INSERT_RETURN_OID, obj, num ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // free memory
+   for ( i = 0; i < num; i++ )
+   {
+      printf ( "after insert, record is: \n" ) ;
+      bson_print( obj[i] ) ;
+      bson_dispose ( obj[i] ) ;
+   }
+   printf( "\n" ) ;
+}
+
+void _insert2Test( sdbCollectionHandle cHandle )
+{
+   INT32 rc = SDB_OK ;
+   bson obj ;
+   bson obj2 ;
+   bson obj3 ;
+   bson obj4 ;
+   bson resultObj ;
+   bson_iterator it ;
+   bson *obj5 = bson_create() ;
+   bson *resultObj3 = bson_create() ;
+
+   printf( "in _insert2Test\n" ) ;
+
+   bson_init( &resultObj ) ;
+
+   bson_init( &obj ) ;
+   bson_append_int( &obj, "insert2", 1 ) ;
+   bson_finish( &obj ) ;
+
+   bson_init( &obj2 ) ;
+   bson_append_int( &obj2, "insert2", 2 ) ;
+   bson_finish( &obj2 ) ;
+
+   bson_init( &obj3 ) ;
+   bson_append_string( &obj3, "_id", "aaaaaa" ) ;
+   bson_append_int( &obj3, "insert2", 3 ) ;
+   bson_finish( &obj3 ) ;
+
+   bson_init( &obj4 ) ;
+   bson_append_string( &obj4, "_id", "bbbbbb" ) ;
+   bson_append_int( &obj4, "insert2", 4 ) ;
+   bson_finish( &obj4 ) ;
+
+   bson_append_int( obj5, "insert2", 5 ) ;
+   bson_finish( obj5 ) ;
+
+   // case 1:
+   rc = sdbInsert2( cHandle, &obj, 0, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbInsert2( cHandle, &obj, FLG_INSERT_RETURN_OID | FLG_INSERT_CONTONDUP, &resultObj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( BSON_OID, bson_find( &it, &resultObj, "_id" ) ) ;
+   printf( "after double insert, return obj is: \n" ) ;
+   bson_print( &resultObj ) ;
+
+   // case 2:
+   bson_destroy( &resultObj ) ;
+   bson_init( &resultObj ) ;
+   bson_finish( &resultObj ) ;
+   rc = sdbInsert2( cHandle, &obj2, 0, &resultObj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( BSON_EOO, bson_find( &it, &resultObj, "_id" ) ) ;
+   rc = sdbInsert2( cHandle, &obj2, FLG_INSERT_RETURN_OID, &resultObj ) ;
+   ASSERT_EQ( SDB_IXM_DUP_KEY, rc ) ;
+   bson_destroy( &resultObj ) ;
+   bson_init( &resultObj ) ;
+   rc = sdbInsert2( cHandle, &obj2, FLG_INSERT_CONTONDUP, &resultObj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( BSON_EOO, bson_find( &it, &resultObj, "_id" ) ) ;
+   rc = sdbInsert2( cHandle, &obj2, FLG_INSERT_CONTONDUP | FLG_INSERT_RETURN_OID, &resultObj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( BSON_OID, bson_find( &it, &resultObj, "_id" ) ) ;
+
+   // case 3:
+   bson_destroy( &resultObj ) ;
+   bson_init( &resultObj ) ;
+//   bson_finish( &resultObj ) ;
+   rc = sdbInsert2( cHandle, &obj3, 0, &resultObj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( BSON_EOO, bson_find( &it, &resultObj, "_id" ) ) ;
+   rc = sdbInsert2( cHandle, &obj4, FLG_INSERT_RETURN_OID, &resultObj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( BSON_STRING, bson_find( &it, &resultObj, "_id" ) ) ;
+   printf( "insert3, bson return oid is: \n" ) ;
+   bson_print( &resultObj ) ;
+   bson_destroy( &resultObj ) ;
+   bson_init( &resultObj ) ;
+   rc = sdbInsert2( cHandle, &obj4, FLG_INSERT_CONTONDUP, &resultObj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( BSON_EOO, bson_find( &it, &resultObj, "_id" ) ) ;
+
+   // case 5:
+   rc = sdbInsert2( cHandle, obj5, FLG_INSERT_CONTONDUP, resultObj3 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "insert3, bson return oid is: \n" ) ;
+   bson_print( resultObj3 ) ;
+
+   bson_destroy( &obj ) ;
+   bson_destroy( &obj2 ) ;
+   bson_destroy( &obj3 ) ;
+   bson_destroy( &obj4 ) ;
+   bson_destroy( &resultObj ) ;
+   bson_dispose( obj5 ) ;
+   bson_dispose( resultObj3 ) ;
+
+   printf( "\n" ) ;
+}
+
+void _insert1Test( sdbCollectionHandle cHandle )
+{
+   INT32 rc = SDB_OK ;
+   bson_iterator it ;
+   bson_iterator it2 ;
+   bson obj ;
+   bson obj2 ;
+   bson obj3 ;
+   bson obj4 ;
+
+   printf( "in _insert1Test\n" ) ;
+
+   bson_init( &obj ) ;
+   bson_append_int( &obj, "insert1", 1 ) ;
+   bson_finish( &obj ) ;
+
+   bson_init( &obj2 ) ;
+   bson_append_string( &obj2, "_id", "aaa" ) ;
+   bson_append_int( &obj2, "insert1", 2 ) ;
+   bson_finish( &obj2 ) ;
+
+   rc = sdbInsert1( cHandle, &obj, &it ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( BSON_OID, bson_iterator_type(&it) ) ;
+   rc = sdbInsert1( cHandle, &obj2, &it2 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( BSON_STRING, bson_iterator_type(&it2) ) ;
+
+   printf( "API(insert1): \n" ) ;
+   bson_print( &obj ) ;
+   bson_print( &obj2 ) ;
+
+   bson_init( &obj3 ) ;
+   bson_append_element( &obj3, NULL, &it ) ;
+   bson_finish( &obj3 ) ;
+   bson_init( &obj4 ) ;
+   bson_append_element( &obj4, NULL, &it2 ) ;
+   bson_finish( &obj4 ) ;
+
+   printf( "return _id is: \n" ) ;
+   bson_print( &obj3 ) ;
+   bson_print( &obj4 ) ;
+
+   bson_destroy( &obj ) ;
+   bson_destroy( &obj2 ) ;
+   bson_destroy( &obj3 ) ;
+   bson_destroy( &obj4 ) ;
+   printf( "\n" ) ;
+}
+
+void _insertTest( sdbCollectionHandle cHandle )
+{
+   INT32 rc = SDB_OK ;
+   bson obj ;
+   bson obj2 ;
+
+   printf( "in _insertTest\n" ) ;
+
+   bson_init( &obj ) ;
+   bson_append_int( &obj, "insert", 1 ) ;
+   bson_finish( &obj ) ;
+
+   bson_init( &obj2 ) ;
+   bson_append_int( &obj2, "_id", 1 ) ;
+   bson_append_int( &obj2, "insert", 2 ) ;
+   bson_finish( &obj2 ) ;
+
+   rc = sdbInsert( cHandle, &obj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbInsert( cHandle, &obj2 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   printf( "API(insert): \n" ) ;
+   bson_print( &obj ) ;
+   bson_print( &obj2 ) ;
+   printf( "\n" ) ;
+   bson_destroy( &obj ) ;
+   bson_destroy( &obj2 ) ;
+
+}
+TEST(debug, insertTest)
+{
+   sdbConnectionHandle connection = 0 ;
+   sdbCollectionHandle collection = 0 ;
+   INT32 rc                       = SDB_OK ;
+   const char *key                = "" ;
+   int value                      = 0 ;
+   bson obj ;
+   bson result ;
+   bson_iterator it ;
+   const char *ret = NULL;
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection ( connection,
+                        COLLECTION_FULL_NAME ,
+                        &collection ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   _insertTest( collection ) ;
+   _insert1Test( collection ) ;
+   _insert2Test( collection ) ;
+   _bulkInsertTest( collection ) ;
+   _bulkInsert2Test( collection ) ;
+
+   sdbDisconnect ( connection ) ;
+   sdbReleaseCollection ( collection ) ;
+   sdbReleaseConnection ( connection ) ;
+}
+
+TEST(debug, sdbGetIndexTest)
+{
+   sdbConnectionHandle connection = 0 ;
+   sdbCSHandle collectionspace    = 0 ;
+   sdbCollectionHandle collection = 0 ;
+   sdbCursorHandle cursor         = 0 ;
+   INT32 rc                       = SDB_OK ;
+   const CHAR *pIndexName         = "aIndex" ;
+   bson indexDef ;
+   bson_init( &indexDef ) ;
+   bson_append_int( &indexDef, "a", 1 ) ;
+   bson_finish( &indexDef ) ;
+
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   rc = getCollectionSpace ( connection,
+                             COLLECTION_SPACE_NAME,
+                             &collectionspace ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection ( connection,
+                        COLLECTION_FULL_NAME,
+                        &collection ) ;
+   sleep( 1 ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbCreateIndex( collection, &indexDef, pIndexName, FALSE, FALSE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // case 1:
+   rc = sdbGetIndexes( collection, "$id", &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "case 1: \n" ) ;
+   displayRecord( &cursor ) ;
+   sdbReleaseCursor ( cursor ) ;
+
+   // case 2:
+   rc = sdbGetIndexes( collection, NULL, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "case 2: \n" ) ;
+   displayRecord( &cursor ) ;
+   sdbReleaseCursor ( cursor ) ;
+
+   // case 3:
+   bson_destroy( &indexDef ) ;
+   bson_init( &indexDef ) ;
+   rc = sdbGetIndex( collection, pIndexName, &indexDef ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "case 3: \n" ) ;
+   bson_print( &indexDef ) ;
+   bson_destroy( &indexDef ) ;
+
+   // case 4:
+   rc = sdbGetIndexInfo( collection, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "case 4: \n" ) ;
+   displayRecord( &cursor ) ;
+   sdbReleaseCursor ( cursor ) ;
+
+   // case 5:
+   bson_init( &indexDef ) ;
+   rc = sdbGetIndex( collection, "", &indexDef ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = sdbGetIndex( collection, NULL, &indexDef ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = sdbGetIndex( collection, pIndexName, NULL ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = sdbGetIndex( collection, "aaaaaIndex", &indexDef ) ;
+   ASSERT_EQ( SDB_IXM_NOTEXIST, rc ) ;
+   bson_destroy( &indexDef ) ;
+
+   sdbDisconnect ( connection ) ;
+   sdbReleaseCollection ( collection ) ;
+   sdbReleaseCS ( collectionspace ) ;
+   sdbReleaseConnection ( connection ) ;
 }
 
