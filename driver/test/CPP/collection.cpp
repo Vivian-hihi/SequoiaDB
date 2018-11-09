@@ -198,6 +198,53 @@ TEST(collection,bulkInsert_empty)
    connection.disconnect() ;
 }
 
+TEST(collection, insert)
+{
+   sdb connection ;
+   sdbCollectionSpace cs ;
+   sdbCollection cl ;
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   INT32 rc                                 = SDB_OK ;
+   bson::OID oid ;
+   bson::OID oid2 ;
+   BSONObj record = BSON( "_id" << 1 << "a" << 1 ) ;
+   BSONObj rec_arr[3] ;
+   rec_arr[0] = BSON( "_id" << 2 << "a" << 2 ) ;
+   rec_arr[1] = BSON( "_id" << 3 << "a" << 3 ) ;
+   rec_arr[2] = BSON( "_id" << 3 << "a" << 4 ) ;
+   // initialize the work environment
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection( cs, COLLECTION_NAME, cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // insert
+   rc = cl.insert( record, FLG_INSERT_CONTONDUP, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   cout << "oid is: " << oid.toString().c_str() << endl ;
+   rc = cl.insert( record, FLG_INSERT_CONTONDUP, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   cout << "insert again oid is: " << oid2.toString().c_str() << endl ;
+
+   // bulk insert
+   rc = cl.insert( rec_arr, 3, FLG_INSERT_CONTONDUP ) ;
+   CHECK_MSG("%s%d\n", "rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // disconnect the connection
+   connection.disconnect() ;
+}
+
 TEST(collection,insert_without_iterator)
 {
    sdb connection ;
@@ -1912,6 +1959,193 @@ TEST( collection, bson_timestamp_test )
    cout<<"The current record is:"<<endl;
    cout<< obj.toString() <<endl ;
    ASSERT_EQ( 0, strncmp( expect, obj.toString().c_str(), strlen(expect) ) ) ;
+   // disconnect the connection
+   connection.disconnect() ;
+}
+
+void insertWithResultTest( sdbCollection &cl )
+{
+   INT32 rc = SDB_OK ;
+
+   BSONObj record1 = BSON( "_id" << 110 << "a" << 1 ) ;
+   BSONObj record2 = BSON( "a" << 2 ) ;
+   BSONObj record3 = BSON( "a" << 2 ) ;
+   BSONObj rec_arr1[3] ;
+   BSONObj rec_arr2[3] ;
+   BSONObj rec_arr3[3] ;
+   rec_arr1[0] = BSON( "_id" << 52 << "a" << 3 ) ;
+   rec_arr1[1] = BSON( "_id" << 53 << "a" << 4 ) ;
+   rec_arr1[2] = BSON( "_id" << 54 << "a" << 5 ) ;
+
+   rec_arr2[0] = BSON( "a" << 13 ) ;
+   rec_arr2[1] = BSON( "a" << 14 ) ;
+   rec_arr2[2] = BSON( "a" << 15 ) ;
+
+   rec_arr3[0] = BSON( "_id" << 22 << "a" << 3 ) ;
+   rec_arr3[1] = BSON( "_id" << 23 << "a" << 4 ) ;
+   rec_arr3[2] = BSON( "_id" << 24 << "a" << 5 ) ;
+   BSONObj result ;
+   const CHAR *pStr = NULL ;
+
+   printf( "in insert with flags\n" ) ;
+   // initialize the work environment
+   // insert
+   rc = cl.insert( record1, FLG_INSERT_RETURN_OID, &result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   cout << "result is: " << result.toString().c_str() << endl ;
+   pStr = "{ \"_id\": 110 }" ;
+   ASSERT_EQ( 0, strncmp( pStr, result.toString().c_str(), strlen( pStr ) ) ) ;
+
+   rc = cl.insert( record2, FLG_INSERT_CONTONDUP, &result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   cout << "result is: " << result.toString().c_str() << endl ;
+   pStr = "{}" ;
+   ASSERT_EQ( 0, strncmp( pStr, result.toString().c_str(), strlen( pStr ) ) ) ;
+
+   rc = cl.insert( record3, FLG_INSERT_CONTONDUP | FLG_INSERT_RETURN_OID, &result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   cout << "insert again result is: " << result.toString().c_str() << endl ;
+
+   rc = cl.insert( record3, FLG_INSERT_CONTONDUP | FLG_INSERT_RETURN_OID, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   result = BSON( "aa" << 0 ) ;
+   rc = cl.insert( record3, 0, &result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // bulk insert
+   rc = cl.insert( rec_arr1, 3, FLG_INSERT_RETURN_OID | FLG_INSERT_CONTONDUP, &result ) ;
+   CHECK_MSG("%s%d\n", "rc = ", rc) ;
+   cout << "result is: " << result.toString().c_str() << endl ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = cl.insert( rec_arr2, 3, FLG_INSERT_CONTONDUP, &result ) ;
+   CHECK_MSG("%s%d\n", "rc = ", rc) ;
+   cout << "result is: " << result.toString().c_str() << endl ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = cl.insert( rec_arr3, 3  ) ;
+   CHECK_MSG("%s%d\n", "rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = cl.insert( rec_arr3, 3, FLG_INSERT_RETURN_OID | FLG_INSERT_CONTONDUP ) ;
+   CHECK_MSG("%s%d\n", "rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+
+   rc = cl.insert( rec_arr3, 3, FLG_INSERT_RETURN_OID | FLG_INSERT_CONTONDUP, &result ) ;
+   CHECK_MSG("%s%d\n", "rc = ", rc) ;
+   cout << "result is: " << result.toString().c_str() << endl ;
+   pStr = "{ \"_id\": [ 22, 23, 24 ] }" ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+}
+
+void insertTest( sdbCollection &cl )
+{
+   INT32 rc = SDB_OK ;
+
+   const CHAR *pOid = "123456789012345678901234" ;
+   bson::OID oid( pOid ) ;
+   bson::OID oid0 ;
+   bson::OID oid1 ;
+   bson::OID oid2 ;
+   BSONObj record = BSON( "_id" << oid << "a" << 0 ) ;
+   BSONObj record0 = BSON( "_id" << 100 << "a" << 0 ) ;
+   BSONObj record1 = BSON( "_id" << 1 << "a" << 1 ) ;
+   vector<BSONObj> vec ;
+   vec.push_back( BSON( "_id" << 10 << "a" << 3 ) ) ;
+   vec.push_back( BSON( "_id" << 11 << "a" << 4 ) ) ;
+   vec.push_back( BSON( "_id" << 11 << "a" << 5 ) ) ;
+   const CHAR *pStr = NULL ;
+
+   // initialize the work environment
+   // insert
+   printf( "in insert and bulk insert\n" ) ;
+   rc = cl.insert( record, &oid0 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   cout << "oid is: " << oid0.toString().c_str() << endl ;
+   ASSERT_EQ( 0, strncmp( pOid, oid0.toString().c_str(), strlen( pOid ) ) ) ;
+
+   rc = cl.insert( record0, &oid0 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   cout << "oid is: " << oid0.toString().c_str() << endl ;
+   pStr = "000000000000000000000000" ;
+   ASSERT_EQ( 0, strncmp( pStr, oid0.toString().c_str(), strlen( pStr ) ) ) ;
+
+   rc = cl.insert( record1 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = cl.bulkInsert( FLG_INSERT_CONTONDUP, vec ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+}
+
+TEST(debug, getIndexes)
+{
+   sdb connection ;
+   sdbCollectionSpace cs ;
+   sdbCollection cl ;
+   sdbCursor cursor ;
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   INT32 rc                                 = SDB_OK ;
+   const CHAR *pIndexName                   = "aIndex" ;
+   BSONObj obj ;
+   vector<BSONObj> vec ;
+
+   // initialize the work environment
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs );
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection( cs, COLLECTION_NAME, cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = cl.createIndex( BSON( "a" << 1 ), pIndexName, TRUE, TRUE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // case 1:
+   rc = cl.getIndexes( cursor, "$id" ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "case 1: \n" ) ;
+   displayRecord( cursor ) ;
+
+   // case 2:
+   rc = cl.getIndexes( cursor, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "case 2: \n" ) ;
+   displayRecord( cursor ) ;
+
+   // case 3:
+   rc = cl.getIndex( pIndexName, obj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "case 3: \n" ) ;
+   cout << obj.toString() << endl ;
+
+   // case 4:
+   rc = cl.getIndexes( vec ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "case 4: \n" ) ;
+   for (vector<BSONObj>::iterator it = vec.begin();
+        it != vec.end(); ++it )
+   {
+      cout << it->toString() << endl ;
+   }
+
+   // case 5:
+   rc = cl.getIndex( NULL, obj ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = cl.getIndex( "", obj ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   rc = cl.getIndex( "abc", obj ) ;
+   ASSERT_EQ( SDB_IXM_NOTEXIST, rc ) ;
    // disconnect the connection
    connection.disconnect() ;
 }
