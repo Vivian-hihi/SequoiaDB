@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @RestController
@@ -38,9 +39,8 @@ public class BucketController {
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
         String location = getLocation(httpServletRequest);
-        logger.info("location:"+location);
-
-        logger.info("Create bucket bucketName ={}, operator={} ", bucketName, operator.getUserName());
+        logger.debug("Create bucket bucketName ={}, operator={}, location ",
+                bucketName, operator.getUserName(), location);
         bucketService.createBucket(operator.getUserId(),bucketName, location);
         return ResponseEntity.ok()
                 .header(RestParamDefine.LOCATION, RestParamDefine.REST_DELIMITER+bucketName)
@@ -52,7 +52,7 @@ public class BucketController {
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        logger.info("list buckets:owner={}", operator.getUserName());
+        logger.debug("list buckets:owner={}", operator.getUserName());
         return ResponseEntity.ok()
                 .body(bucketService.getService(operator));
     }
@@ -63,16 +63,19 @@ public class BucketController {
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        logger.info("delete bucket:bucket={}, operator={}", bucketName, operator.getUserName());
+        logger.debug("delete bucket:bucket={}, operator={}", bucketName, operator.getUserName());
         bucketService.deleteBucket(operator.getUserId(), bucketName);
         return ResponseEntity.noContent().build();
     }
 
-    @RequestMapping(method = RequestMethod.HEAD)
-    public ResponseEntity head()
+    @RequestMapping(method = RequestMethod.HEAD, value = "/{bucketName:.+}")
+    public ResponseEntity headBucket(@PathVariable("bucketName") String bucketName,
+                               @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
             throws S3ServerException {
-        throw new S3ServerException(S3Error.METHOD_NOT_ALLOWED,
-                "The HEAD method is not allowed");
+        User operator = restUtils.getOperatorByAuthorization(authorization);
+        logger.debug("head bucket:bucket={}, operator={}", bucketName, operator.getUserName());
+        bucketService.getBucket(operator.getUserId(), bucketName);
+        return ResponseEntity.ok().build();
     }
 
     private String getLocation(HttpServletRequest httpServletRequest)

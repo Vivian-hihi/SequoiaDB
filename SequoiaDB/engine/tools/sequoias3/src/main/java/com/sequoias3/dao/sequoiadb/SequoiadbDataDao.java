@@ -77,7 +77,10 @@ public class SequoiadbDataDao implements DataDao {
             throw new S3ServerException(S3Error.UNKNOWN_ERROR, "IOException", e);
         } catch (NoSuchAlgorithmException e){
             throw new S3ServerException(S3Error.UNKNOWN_ERROR, "NoSuchAlgorithmException", e);
-        } catch (Exception e) {
+        } catch (BaseException e){
+            throw e;
+        }catch (Exception e) {
+            logger.error("create lob failed");
             throw e;
         } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);

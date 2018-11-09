@@ -24,7 +24,7 @@ public interface ObjectService {
                         Range range)
             throws S3ServerException;
 
-    void releaseGetResult(GetResult result) throws S3ServerException;
+    void releaseGetResult(GetResult result);
 
     void readObjectData(DataLob data, ServletOutputStream outputStream, Range range)
             throws S3ServerException;

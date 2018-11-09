@@ -125,7 +125,7 @@ public class ObjectController {
                 objectName, cvtVersionId, nullVersionFlag, requestHeaders, range);
 
         if (result.getMeta().getDeleteMarker()) {
-            buildDeleteMarkerResponseHeader(result.getMeta(), response, versionId);
+            buildDeleteMarkerResponseHeader(result.getMeta(), response);
             if (null == versionId) {
                 throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:" + objectName);
             }else {
@@ -248,6 +248,55 @@ public class ObjectController {
                 .body(result);
     }
 
+    @RequestMapping(method = RequestMethod.HEAD, value="/{bucketname:.+}/*/**")
+    public ResponseEntity headObject(@PathVariable("bucketname") String bucketName,
+                                     @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                     @RequestParam(value = RestParamDefine.VERSION_ID, required = false) String versionId,
+                                     HttpServletRequest httpServletRequest,
+                                     HttpServletResponse response)
+            throws S3ServerException{
+        User operator = restUtils.getOperatorByAuthorization(authorization);
+        String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
+        logger.debug("get object. bucketname={}, objectname={}", bucketName, objectName);
+
+        Map<String,String> requestHeaders = new HashMap<>();
+        Enumeration headerNames = httpServletRequest.getHeaderNames();
+        while (headerNames.hasMoreElements()){
+            String name = headerNames.nextElement().toString();
+            requestHeaders.put(name,httpServletRequest.getHeader(name));
+        }
+
+        Range range = null;
+        if (requestHeaders.containsKey(RestParamDefine.GetObjectReqHeader.REQ_RANGE)){
+            range = restUtils.getRange(requestHeaders.get(RestParamDefine.GetObjectReqHeader.REQ_RANGE));
+        }
+
+        Boolean nullVersionFlag = null;
+        Long cvtVersionId = null;
+        if (versionId != null) {
+            cvtVersionId = convertVersionId(versionId);
+            if (null == cvtVersionId){
+                nullVersionFlag = true;
+            }
+        }
+
+        GetResult result = objectService.getObject(operator.getUserId(), bucketName,
+                objectName, cvtVersionId, nullVersionFlag, requestHeaders, range);
+
+        if (result.getMeta().getDeleteMarker()) {
+            throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:" + objectName);
+        }else {
+            try {
+                analyseRangeWithLob(range, result.getData());
+                buildHeadersForGetObject(result.getMeta(), null, range, response);
+            }finally {
+                objectService.releaseGetResult(result);
+            }
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
     private Long convertVersionId(String versionId)
             throws S3ServerException{
         try {
@@ -264,8 +313,7 @@ public class ObjectController {
         }
     }
 
-    private void buildDeleteMarkerResponseHeader(ObjectMeta objectMeta, HttpServletResponse response,
-                                                 String versionId) throws S3ServerException{
+    private void buildDeleteMarkerResponseHeader(ObjectMeta objectMeta, HttpServletResponse response) {
         response.addHeader(RestParamDefine.GetObjectResHeader.DELETE_MARKER, objectMeta.getDeleteMarker().toString());
         if (objectMeta.getNoVersionFlag()){
             response.addHeader(RestParamDefine.GetObjectResHeader.VERSION_ID, ObjectMeta.NULL_VERSION_ID);
@@ -292,57 +340,59 @@ public class ObjectController {
             }
         }
 
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL)){
-            response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL));
-        }else {
-            if (objectMeta.getCacheControl() != null){
-                response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL, objectMeta.getCacheControl());
+        if (requestParas != null) {
+            if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL)) {
+                response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL,
+                        requestParas.get(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL));
+            } else {
+                if (objectMeta.getCacheControl() != null) {
+                    response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL, objectMeta.getCacheControl());
+                }
             }
-        }
 
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION)){
-            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION));
-        }else {
-            if (objectMeta.getContentDisposition() != null){
-                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION, objectMeta.getContentDisposition());
+            if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION)) {
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION,
+                        requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION));
+            } else {
+                if (objectMeta.getContentDisposition() != null) {
+                    response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION, objectMeta.getContentDisposition());
+                }
             }
-        }
 
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING)){
-            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING));
-        }else {
-            if (objectMeta.getContentEncoding() != null){
-                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING, objectMeta.getContentEncoding());
+            if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING)) {
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING,
+                        requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING));
+            } else {
+                if (objectMeta.getContentEncoding() != null) {
+                    response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING, objectMeta.getContentEncoding());
+                }
             }
-        }
 
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE)){
-            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE));
-        }else {
-            if (objectMeta.getContentLanguage() != null){
-                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE, objectMeta.getContentLanguage());
+            if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE)) {
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE,
+                        requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE));
+            } else {
+                if (objectMeta.getContentLanguage() != null) {
+                    response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE, objectMeta.getContentLanguage());
+                }
             }
-        }
 
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE)){
-            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE));
-        }else {
-            if (objectMeta.getContentType() != null){
-                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE, objectMeta.getContentType());
+            if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE)) {
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE,
+                        requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE));
+            } else {
+                if (objectMeta.getContentType() != null) {
+                    response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE, objectMeta.getContentType());
+                }
             }
-        }
 
-        if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_EXPIRES)){
-            response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES,
-                    requestParas.get(RestParamDefine.GetObjectReqPara.RES_EXPIRES));
-        }else {
-            if (objectMeta.getExpires() != null){
-                response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES, objectMeta.getExpires());
+            if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_EXPIRES)) {
+                response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES,
+                        requestParas.get(RestParamDefine.GetObjectReqPara.RES_EXPIRES));
+            } else {
+                if (objectMeta.getExpires() != null) {
+                    response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES, objectMeta.getExpires());
+                }
             }
         }
 

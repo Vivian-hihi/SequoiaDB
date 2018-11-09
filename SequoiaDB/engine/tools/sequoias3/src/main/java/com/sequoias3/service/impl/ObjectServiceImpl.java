@@ -244,7 +244,7 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public void releaseGetResult(GetResult result) throws S3ServerException{
+    public void releaseGetResult(GetResult result){
         dataDao.releaseDataLob(result.getData());
     }
 
@@ -1254,5 +1254,5 @@ public class ObjectServiceImpl implements ObjectService {
             return isExistKeyVersion;
         }
     }
-    
+
 }
