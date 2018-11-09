@@ -53,7 +53,7 @@ function main(){
    //重复执行后报错-38 ，检查原始集合、固定集合记录无变化，使用inspect工具检测主备节点数据一致，ES上记录无变化 
    checkRecords( expESRecords,  actESRecords);
    checkRecords( expCLRecords,  actCLRecords);
-   checkConsistency(COMMCSNAME, clName, 5);
+   checkConsistency(COMMCSNAME, clName);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }

@@ -52,7 +52,7 @@ function main(){
    //报错-38，检查原始集合、固定集合及ES记录的_id索引未被更新，使用inspect工具查看主备数据节点数据无差别
    checkRecords( expESRecords,  actESRecords);
    checkRecords( expCLRecords,  actCLRecords);
-   checkConsistency(COMMCSNAME, clName, 5);
+   checkConsistency(COMMCSNAME, clName);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }

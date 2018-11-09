@@ -55,7 +55,7 @@ function main(){
    //重复插入报错-38，检查原始集合及各数据节点固定集合记录，无记录被删除，固定集合中未新增操作记录，ES 上记录未被删除 。
    checkRecords( expESRecords,  actESRecords);
    checkRecords( expCLRecords,  actCLRecords);
-   checkConsistency(COMMCSNAME, clName, 5);
+   checkConsistency(COMMCSNAME, clName);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }

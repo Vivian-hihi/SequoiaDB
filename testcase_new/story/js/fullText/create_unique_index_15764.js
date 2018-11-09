@@ -54,7 +54,7 @@ function main(){
    //唯一索引创建失败，报错-38，检查集合索引、原始集合、固定集合及ES的记录无变化，使用inspect工具检测主备数据节点数据无差别
    checkRecords( expESRecords,  actESRecords);
    checkRecords( expCLRecords,  actCLRecords);
-   checkConsistency(COMMCSNAME, clName, 5);
+   checkConsistency(COMMCSNAME, clName);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
