@@ -1941,13 +1941,13 @@ public class DBCollection {
      *                </ul>
      * @throws BaseException If error happens.
      */
-    public void createAutoIncrement(BSONObject option) {
-        if (null == option || option.isEmpty()) {
+    public void createAutoIncrement(BSONObject options) {
+        if (options == null || options.isEmpty()) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
-        List<BSONObject> options = new ArrayList<BSONObject>();
-        options.add(option);
-        createAutoIncrement(options);
+        List<BSONObject> optionsList = new ArrayList<BSONObject>();
+        optionsList.add(options);
+        createAutoIncrement(optionsList);
     }
 
     /**
@@ -1957,7 +1957,7 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void createAutoIncrement(List<BSONObject> options) {
-        if (null == options || options.size() == 0) {
+        if (options == null || options.size() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
         BSONObject obj = new BasicBSONObject(SdbConstants.FIELD_NAME_AUTOINCREMENT, options);
@@ -1971,7 +1971,7 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void dropAutoIncrement(String fieldName) {
-        if (null == fieldName || fieldName.length() == 0) {
+        if (fieldName == null || fieldName.length() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
         BSONObject obj = new BasicBSONObject(SdbConstants.FIELD_NAME_AUTOINC_FIELD, fieldName);
@@ -1985,7 +1985,7 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public void dropAutoIncrement(List<String> fieldNames) {
-        if (null == fieldNames || fieldNames.size() == 0) {
+        if (fieldNames == null || fieldNames.size() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
         BSONObject obj = new BasicBSONObject(SdbConstants.FIELD_NAME_AUTOINC_FIELD, fieldNames);
