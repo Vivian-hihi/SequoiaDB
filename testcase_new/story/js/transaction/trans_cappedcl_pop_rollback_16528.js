@@ -1,5 +1,5 @@
 /************************************
-*@Description: 开启事务，执行pop操作并提交事务 
+*@Description: 开启事务，执行pop操作并回滚事务 
 *@author:      liuxiaoxuan
 *@createdate:  2018.11.08
 *@testlinkCase: seqDB-16528
