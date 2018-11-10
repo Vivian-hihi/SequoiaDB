@@ -692,6 +692,47 @@ function getNodesInGroups(groups)
 }
 
 /******************************************************************************
+*@Description : check inpect result
+@input:         csName
+                clName
+                checkTimes
+******************************************************************************/
+function checkInspectResult(csName, clName, checkTimes)
+{
+   if ( typeof(checkTimes) == "undefined" )  {  checkTimes = 5;  }
+
+   var inspectBinFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin" ;
+   var inspectReportFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin.report" ;
+   var installPath = commGetInstallPath();    
+   var inspectCommand = installPath + "/bin/sdbinspect" + " -d " + COORDHOSTNAME + ":" + COORDSVCNAME + " -c " + csName + " -l " + clName + " -o " + inspectBinFile + " -t " + checkTimes; 
+   try 
+   {  
+      // exec sdbinspect 
+      cmd.run(inspectCommand) ;
+      var info = cmd.run("tail -n 1 " + inspectReportFile);
+      var actResult = info.split("\n")[0].split("\:")[1].trim();
+      var expectRusult = "exit with no records different";
+      // compare result
+      if(actResult == expectRusult)
+      {
+         println("check consistency success!") ;
+      }
+      else
+      {
+         println("check consistency fail, cl name: " + csName + "." + clName); 
+      }
+      // remove report files
+      cmd.run("rm -f " + inspectBinFile);
+      cmd.run("rm -f " + inspectReportFile);
+   }   
+   catch(e) 
+   { 
+      throw buildException("checkConsistency", "check consistency fail", "fail",
+                                          e, e);  
+   }   
+}
+
+/******************************************************************************
 *@Description : insert data,skip the error -321
 @input:         dbcl
                 records
