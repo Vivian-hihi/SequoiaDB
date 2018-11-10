@@ -42,7 +42,8 @@ function main()
    var dbOperator = new DBOperator();
    var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {content : ""});
    var esOperator = new ESOperator();
-   var esIndexName = dbOperator.getESIndexName(csName, clName, "fullIndex");
+   var esIndexNames = dbOperator.getESIndexNames(csName, clName, "fullIndex");
+   var esIndexName = esIndexNames[0];
    var queryCond = '{"query" : {"exists" : {"field" : "content"}}}';
    var actResult = esOperator.findFromES(esIndexName, queryCond);
    
