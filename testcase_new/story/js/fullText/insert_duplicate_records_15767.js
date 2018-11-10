@@ -56,6 +56,7 @@ function main(){
    checkRecords( expESRecords,  actESRecords);
    checkRecords( expCLRecords,  actCLRecords);
    checkConsistency(COMMCSNAME, clName);
+   checkInspectResult(COMMCSNAME, clName, 5);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }

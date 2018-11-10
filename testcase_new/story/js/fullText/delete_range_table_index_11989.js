@@ -48,12 +48,14 @@ function main()
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
    checkResult(expResult, actResult);
    checkConsistency(COMMCSNAME, clName);
+   checkInspectResult(COMMCSNAME, clName, 5);
    
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex1");
    commDropIndex( dbcl, "fullIndex1" );
    commCheckIndex( dbcl, "fullIndex1", false );
    checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
    checkConsistency(COMMCSNAME, clName);
+   checkInspectResult(COMMCSNAME, clName, 5);
    println("================================One Group Not on ShardingKey================================");
    
    //数据分布覆盖：1个组，索引字段覆盖：分区键
@@ -72,12 +74,14 @@ function main()
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
    checkResult(expResult, actResult);
    checkConsistency(COMMCSNAME, clName);
+   checkInspectResult(COMMCSNAME, clName, 5);
    
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex2");
    commDropIndex( dbcl, "fullIndex2" );
    commCheckIndex( dbcl, "fullIndex2", false );
    checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
    checkConsistency(COMMCSNAME, clName);
+   checkInspectResult(COMMCSNAME, clName, 5);
    println("================================One Group on ShardingKey================================");
    
    var records = new Array();
@@ -103,12 +107,14 @@ function main()
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
    checkResult(expResult, actResult);
    checkConsistency(COMMCSNAME, clName);
+   checkInspectResult(COMMCSNAME, clName, 5);
    
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex3");
    commDropIndex( dbcl, "fullIndex3" );
    commCheckIndex( dbcl, "fullIndex3", false );
    checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
    checkConsistency(COMMCSNAME, clName);
+   checkInspectResult(COMMCSNAME, clName, 5);
    println("================================Many Group Not on ShardingKey================================");
    
    //数据分布覆盖：多个组，索引字段覆盖：分区键
@@ -128,12 +134,14 @@ function main()
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
    checkResult(expResult, actResult);
    checkConsistency(COMMCSNAME, clName);
+   checkInspectResult(COMMCSNAME, clName, 5);
    
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex4");
    commDropIndex( dbcl, "fullIndex4" );
    commCheckIndex( dbcl, "fullIndex4", false );
    checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
    checkConsistency(COMMCSNAME, clName);
+   checkInspectResult(COMMCSNAME, clName, 5);
    println("================================Many Group on ShardingKey================================");
    
    commDropCL(db, COMMCSNAME, clName, true, true);
