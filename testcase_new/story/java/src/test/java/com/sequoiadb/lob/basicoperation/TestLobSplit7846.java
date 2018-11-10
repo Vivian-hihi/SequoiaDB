@@ -5,6 +5,7 @@ import org.testng.annotations.Test;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
@@ -12,12 +13,14 @@ import org.testng.annotations.BeforeClass;
 import org.testng.SkipException;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.exception.BaseException;
@@ -46,6 +49,7 @@ public class TestLobSplit7846 extends SdbTestBase {
 	private ArrayList<String> splitRGList = new ArrayList<String>(2);
 	private String sourceRGName = "";
 	private String targetRGName = "";
+	private int lobNums = 100;
 	
 	@BeforeClass
 	public void setUp(){
@@ -63,8 +67,7 @@ public class TestLobSplit7846 extends SdbTestBase {
 		}
 		
 		sdb.setSessionAttr((BSONObject)JSON.parse("{ PreferedInstance: 'M' }"));
-		createCL();
-		int lobNums = 100;
+		createCL();		
 		writeLobAndGetMd5(lobNums);
 	}
 			
@@ -80,9 +83,9 @@ public class TestLobSplit7846 extends SdbTestBase {
 			
 			//test b:split by percent,eg:split from targetRG to srcRG
 			splitCLByPercent();
-			//compare the total lobnums ,expect error value is 0.9
-			double expErrorValue1 = 0.95;		
-			LobOprUtils.checkSplitResult(sdb, csName, clName, splitRGList, expErrorValue1);
+			//compare the total lobnums ,check the split range by cataInfo
+			checkLobNums( lobNums);	
+			checkSplitResultByCataInfo();			
 			
 			//testpoint a and b is contain the testpoint c ,check the lobdata after split
 			int lobNums = 100;
@@ -94,6 +97,21 @@ public class TestLobSplit7846 extends SdbTestBase {
 		}
 	}
 	
+	@AfterClass
+	public void tearDown(){		
+		try{			
+			if(cs.isCollectionExist(clName)){
+				cs.dropCollection(clName);
+			}
+			sdb.close();
+		}catch(BaseException e){			
+			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+		}finally{
+			if( null != sdb){
+				sdb.close();
+			}
+		}
+	}	
 	
 		
 	private void splitCLByCond(){	
@@ -119,26 +137,7 @@ public class TestLobSplit7846 extends SdbTestBase {
 			Assert.assertTrue(false,"split fail:"+e.getMessage()+"srcRGName:"+sourceRGName
 					+"\n tarRGName:"+targetRGName);
 		}		
-	}	
-	
-	
-
-	@AfterClass
-	public void tearDown(){		
-		try{			
-			if(cs.isCollectionExist(clName)){
-				cs.dropCollection(clName);
-			}
-			sdb.close();
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
-		}finally{
-			if( null != sdb){
-				sdb.close();
-			}
-		}
-	}	
-	
+	}		
 	
 	
 	//create cs ,then create hashcl
@@ -168,6 +167,17 @@ public class TestLobSplit7846 extends SdbTestBase {
 		}		
 	}	
 	
+	private void checkLobNums( int expLobNums){		
+		DBCursor listCursor = cl.listLobs();
+		int count = 0;
+		while ( listCursor.hasNext() ) {			
+			count++;
+			listCursor.getNext();		
+		}		
+		listCursor.close();	
+		Assert.assertEquals(count, expLobNums);
+	}
+	
 	private void readLobAndCheckMd5(int lobNums) throws InterruptedException{
 		for( int i = 0 ; i < lobNums; i++){
 			ObjectId oid = oidQueue.take();	 
@@ -179,8 +189,82 @@ public class TestLobSplit7846 extends SdbTestBase {
 				Assert.assertEquals(curMd5, prevMd5);
 				id2md5.remove(oid);        			
 			}     
-		}
-		  		
-	}	
+		}		  		
+	}
 	
+	
+	/**
+	* construct expected result values
+	* @return expected result values,rg:["group1","{"":0}","{"":500}"]
+	*/
+	private List<CataInfoItem> buildExpectResult(){
+		List<CataInfoItem> cataInfo = new ArrayList<CataInfoItem>();
+		CataInfoItem item  = new CataInfoItem();
+		item.groupName = sourceRGName;
+		item.lowBound = 0;
+		item.upBound = 2048;
+		
+		cataInfo.add(item);
+		item  = new CataInfoItem();
+		item.groupName = targetRGName;
+		item.lowBound = 2048;
+		item.upBound = 2458;
+		cataInfo.add(item);	
+		item  = new CataInfoItem();
+		item.groupName = sourceRGName;
+		item.lowBound = 2458;
+		item.upBound = 4096;
+		cataInfo.add(item);	
+		return cataInfo;
+	}
+	
+	public void checkSplitResultByCataInfo(){
+		String cond = String.format("{Name:\"%s.%s\"}", SdbTestBase.csName, clName);	
+		DBCursor collections = sdb.getSnapshot(8, cond, null, null);
+		List<CataInfoItem> cataInfo = buildExpectResult();
+		while(collections.hasNext()){
+			BasicBSONObject doc = (BasicBSONObject)collections.getNext();				 
+			doc.getString("Name");
+			BasicBSONList subdoc = (BasicBSONList)doc.get("CataInfo");
+			for (int i = 0; i < cataInfo.size(); ++i){
+				BasicBSONObject elem = (BasicBSONObject)subdoc.get(i);
+				String groupName = elem.getString("GroupName");
+				BasicBSONObject obj = (BasicBSONObject)elem.get("LowBound");
+				int lowBound;
+				if (obj.containsField("")){
+					lowBound = obj.getInt("");
+				}else{
+					lowBound = obj.getInt("partition");
+				}
+				
+				int upBound;				
+				obj = (BasicBSONObject)elem.get("UpBound");
+				if (obj.containsField("")){
+					upBound = obj.getInt("");
+				}else{
+					upBound = obj.getInt("partition");
+				}			
+				
+				boolean compareResult = cataInfo.get(i).Compare(groupName, lowBound, upBound);				
+				Assert.assertTrue(compareResult, cataInfo.get(i).toString()+"actResult:"
+						+"groupName:"+groupName+" LowBound:"+lowBound+" UpBound:"+upBound);				
+			}		
+		}
+	}
+	
+	public class CataInfoItem {
+		public String groupName;
+		public int lowBound;
+		public int upBound;
+		
+		public boolean Compare(String name, int low, int up){
+			return name.equals(groupName) && low == lowBound && 
+				   up == upBound;
+		}
+		
+		public String toString(){
+			return "groupName : " + groupName + " lowBound: {'':" + lowBound + "}"
+					+ " upBound:{'':" + upBound + "}";
+		}
+	}
 }
