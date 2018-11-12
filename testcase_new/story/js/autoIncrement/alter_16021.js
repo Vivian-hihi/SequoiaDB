@@ -16,7 +16,20 @@ function main()
    
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1" } } );
    
-   dbcl.insert({ a : 1 });
+   //insert records and check
+   var coordNodes = getCoordNodeNames();
+   var expRecs = [];
+   for( var i = 0; i < coordNodes.length; i++ )
+   {
+      var coord = new Sdb( coordNodes[ i ] );
+      var cl = coord.getCS( COMMCSNAME ).getCL( clName );
+      cl.insert( { "a" : i, "b" : i } );
+      expRecs.push({ "a" : i, "b" : i, "id1" : 1 + i*1000});
+      coord.close();
+   }
+    
+   var rc = dbcl.find().sort( { "id1" : 1 } );
+   checkRec( rc, expRecs.sort(compare("id1")) );
    
    //alter attributes and check
    dbcl.setAttributes({ AutoIncrement : { Field : "id1", CurrentValue : 500 } });
@@ -30,8 +43,6 @@ function main()
    }
    
    //insert records and check
-   var coordNodes = getCoordNodeNames();
-   var expRecs = [{ "a" : 1, "id1" : 1 }];
    for( var i = 0; i < coordNodes.length; i++ )
    {
       var coord = new Sdb( coordNodes[ i ] );
@@ -42,7 +53,7 @@ function main()
    }
     
    var rc = dbcl.find().sort( { "id1" : 1 } );
-   checkRec( rc, expRecs );
+   checkRec( rc, expRecs.sort(compare("id1")) );
    
    //alter attributes and check
    dbcl.setAttributes({ AutoIncrement : { Field : "id1", CurrentValue : 4000 } });
@@ -70,7 +81,7 @@ function main()
    }
     
    var rc = dbcl.find().sort( { "id1" : 1 } );
-   checkRec( rc, expRecs );
+   checkRec( rc, expRecs.sort(compare("id1")) );
    
    commDropCL( db, COMMCSNAME, clName );
 }

@@ -23,9 +23,9 @@ function main()
                              { Field : "a4", StartValue : 5 },
                              { Field : "a5", StartValue : { "$numberLong" : "-9223372036854775808" }, Increment : -1 }]);
    
-   createAutoIncrement(dbcl, "id5", 123.4);
+   create(dbcl, "id5", 123.4);
    
-   createAutoIncrement(dbcl, "id6", { $decimal:"123.456" });
+   create(dbcl, "id6", { $decimal:"123.456" });
    
    //check Sequence
    var clID = getCLID( COMMCSNAME, clName );
@@ -74,11 +74,12 @@ function main()
    commDropCL( db, COMMCSNAME, clName );
 }
 
-function createAutoIncrement(dbcl, field, startValue)
+function create(dbcl, field, startValue)
 {
    try
    {
       dbcl.createAutoIncrement({ Field : field, StartValue : startValue });
+      throw "create autoIncrement error!";
    }catch(e)
    {
       if(e !== -6)

@@ -17,6 +17,7 @@ function main()
    try
    {
       var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : [ { Field : "id1" }, { Field : "id1" } ] } );    
+      throw "create autoIncrement error!";
    }catch( e )
    {
       if( e !== -6 )

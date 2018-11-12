@@ -19,7 +19,8 @@ function main()
    //create same autoIncrement field name
    try
    {
-      dbcl.createAutoIncrement( { Field : "id1" } );      
+      dbcl.createAutoIncrement( { Field : "id1" } );
+      throw "create autoIncrement error";      
    }catch( e )
    {
       if( e !== -332 )

@@ -20,6 +20,11 @@ function main()
    
    dbcl.remove();
    
+   while(dbcl.find().next())
+   {
+      throw "remove error";
+   }
+   
    commDropCL( db, COMMCSNAME, clName );
 }
 

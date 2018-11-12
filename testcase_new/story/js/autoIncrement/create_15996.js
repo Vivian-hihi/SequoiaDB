@@ -15,22 +15,32 @@ function main()
    commDropCL( db, COMMCSNAME, clName );
    
    //create higher layer field
-   createAutoIncrement( clName, "a" );
+   createCL( clName, "a" );
    
    //create lower layer field
-   createAutoIncrement( clName, "a.aa.aaa" );
+   createCL( clName, "a.aa.aaa" );
    
    //create same layer field
-   createAutoIncrement( clName, "a.aa" );
+   commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : [ { Field : "a.aa" }, { Field : "a.bb" } ] } );
+   
+   var clID = getCLID( COMMCSNAME, clName );
+   var sequenceNames = ["SYS_" + clID + "_a.aa_SEQ", "SYS_" + clID + "_a.bb_SEQ"];
+   var expArr = [{ Field : "a.aa", SequenceName : sequenceNames[0] }, { Field : "a.bb", SequenceName : sequenceNames[1] }];
+   checkAutoIncrementonCL( COMMCSNAME, clName, expArr );
+   for(var i in sequenceNames)
+   {
+      checkSequence( sequenceNames[i], {} );
+   }
    
    commDropCL( db, COMMCSNAME, clName );
 }
 
-function createAutoIncrement( clName, field )
+function createCL( clName, field )
 {
    try
    {
       commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : [ { Field : "a.aa" }, { Field : field } ] } );     
+      throw "create autoIncrement error!";
    }catch( e )
    {
       if( e !== -6 )

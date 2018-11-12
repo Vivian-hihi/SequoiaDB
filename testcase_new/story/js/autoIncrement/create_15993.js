@@ -28,6 +28,19 @@ function main()
       checkSequence(sequenceNames[i], {}); 
    }
    
+   //insert records
+   var rc = dbcl.find().sort({ "id1" : 1 });
+   var expRecs = new Array();
+   for(var i = 0; i < 100; i++)
+   {
+      dbcl.insert({ "a" : i });
+      expRecs.push({ "a" : i, "id0" : 1 + i, "id1" : 1 + i, "id2" : 1 + i, "id3" : 1 + i, "id4" : 1 + i,
+                              "id5" : 1 + i, "id6" : 1 + i, "id7" : 1 + i, "id8" : 1 + i, "id9" : 1 + i,
+                              "id10" : 1 + i, "id11" : 1 + i, "id12" : 1 + i, "id13" : 1 + i,
+                              "id14" : 1 + i, "id15" : 1 + i});
+   }
+   checkRec( rc, expRecs );
+   
    commDropCL(db, COMMCSNAME, clName);
 }
 

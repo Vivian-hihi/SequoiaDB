@@ -17,21 +17,21 @@ function main()
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName );
    
    //illegal Increment value
-   createAutoIncrement(dbcl, "id1", -2147483648);
+   create(dbcl, "id1", -2147483648);
    
-   createAutoIncrement(dbcl, "id2", 2147483648);
+   create(dbcl, "id2", 2147483648);
    
-   createAutoIncrement(dbcl, "id3", 0);
+   create(dbcl, "id3", 0);
    
-   createAutoIncrement(dbcl, "id4", { "$numberLong" : "-4223372036" });
+   create(dbcl, "id4", { "$numberLong" : "-4223372036" });
    
-   createAutoIncrement(dbcl, "id5", 123.456);
+   create(dbcl, "id5", 123.456);
    
-   createAutoIncrement(dbcl, "id6", { $decimal:"123.456" });
+   create(dbcl, "id6", { $decimal:"123.456" });
    
-   createAutoIncrement(dbcl, "id7", null);
+   create(dbcl, "id7", null);
    
-   createAutoIncrement(dbcl, "id8", true);
+   create(dbcl, "id8", true);
    
    //legal Increment value
    dbcl.createAutoIncrement([{ Field : "a1", Increment : -2147483647 },
@@ -64,11 +64,12 @@ function main()
    commDropCL( db, COMMCSNAME, clName );
 }
 
-function createAutoIncrement(dbcl, field, increment)
+function create(dbcl, field, increment)
 {
    try
    {
       dbcl.createAutoIncrement({ Field : field, Increment : increment });
+      throw "create autoIncrement error!";
    }catch(e)
    {
       if(e !== -6)

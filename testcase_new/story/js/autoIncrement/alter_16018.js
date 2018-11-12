@@ -17,7 +17,20 @@ function main()
    
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1" } } );
    
-   dbcl.insert({ a:1 });
+   //insert records and check
+   var coordNodes = getCoordNodeNames();
+   var expRecs = [];
+   for( var i = 0; i < coordNodes.length; i++ )
+   {
+      var coord = new Sdb( coordNodes[ i ] );
+      var cl = coord.getCS( COMMCSNAME ).getCL( clName );
+      cl.insert( { "a" : i, "b" : i } );
+      expRecs.push({ "a" : i, "b" : i, "id1" : 1 + i*1000});
+      coord.close();
+   }
+    
+   var rc = dbcl.find().sort( { "id1" : 1 } );
+   checkRec( rc, expRecs );
    
    //alter attributes and check
    dbcl.setAttributes({ AutoIncrement : { Field : "id1", AcquireSize : acquireSize } });
@@ -25,14 +38,13 @@ function main()
    var clID = getCLID(COMMCSNAME, clName);
    var sequenceName = "SYS_" + clID + "_id1_SEQ";
    var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
+   var currentValue = cursor.current().toObj().CurrentValue;
    if( cursor.current().toObj().AcquireSize !== acquireSize)
    {
       throw "alter failed!";
    }
    
    //insert records and check 
-   var coordNodes = getCoordNodeNames();
-   var expRecs = [{ "a" : 1, "id1" : 1 }];
    for( var i = 0; i < coordNodes.length; i++ )
    {
       var coord = new Sdb( coordNodes[ i ] );
@@ -42,7 +54,7 @@ function main()
          for(var j = 0; j < 2; j++)
          {
             cl.insert( { "a" : j, "b" : j } );
-            expRecs.push({ "a" : j, "b" : j, "id1" : 1001 + i*acquireSize + j });
+            expRecs.push({ "a" : j, "b" : j, "id1" : currentValue + i*acquireSize + j });
          }
       }catch(e)
       {

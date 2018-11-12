@@ -21,13 +21,12 @@ function main()
    var sequenceName = "SYS_" + clID + "_" + field + "_SEQ";
    var expArr = [ { Field : field, SequenceName : sequenceName } ];
    checkAutoIncrementonCL( COMMCSNAME, clName, expArr );
-   
    checkSequence( sequenceName, {} );
    
-   dbcl.insert( { id1 : 5, id2 : 6, a : 7 } );
+   dbcl.insert( { a : 1 } );
 
    var rc = dbcl.find();
-   var expRecs = [ { "id1" : 5, "id2" : 6, "a" : 7 } ];
+   var expRecs = [ { "id1" : 1, "a" : 1 } ];
    checkRec( rc, expRecs ); 
    
    commDropCL(db, COMMCSNAME, clName);

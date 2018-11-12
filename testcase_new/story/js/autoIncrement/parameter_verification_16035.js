@@ -17,13 +17,13 @@ function main()
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1" } } );
    
    //illegal Field value
-   createAutoIncrement(dbcl);
+   create(dbcl);
    
-   createAutoIncrement(dbcl, "$id2");
+   create(dbcl, "$id2");
    
-   createAutoIncrement(dbcl, " id3");
+   create(dbcl, " id3");
    
-   createAutoIncrement(dbcl, "5");
+   create(dbcl, "5");
    
    //legal Field value
    dbcl.createAutoIncrement({ Field : "id6" });
@@ -61,16 +61,18 @@ function main()
    commDropCL( db, COMMCSNAME, clName );
 }
 
-function createAutoIncrement(dbcl, field)
+function create(dbcl, field)
 {
    try
    {
       if(field == undefined)
       {
          dbcl.createAutoIncrement({ StartValue : 3 });   
+         throw "create autoIncrement error!";
       }else
       {
          dbcl.createAutoIncrement({ Field : field, StartValue : 3 });
+         throw "create autoIncrement error!";
       }
    }catch(e)
    {

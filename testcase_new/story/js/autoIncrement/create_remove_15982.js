@@ -18,29 +18,29 @@ function main()
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName );
    
    dbcl.insert( { a : 1 } );
-
-   dbcl.createAutoIncrement( { Field : field } );
-  
+   
    var rc = dbcl.find();
    var expRecs = [ { "a" : 1 } ];
    checkRec( rc, expRecs ); 
-   
-   dbcl.insert( { id1 : 5, a : 7 } );
+
+   dbcl.createAutoIncrement( { Field : field } );
+  
+   dbcl.insert( { a : 7 } );
    
    var rc = dbcl.find().sort( { field : 1 } );
-   var expRecs = [ { "a" : 1 }, { "id1" : 5, "a" : 7 } ];
+   var expRecs = [ { "a" : 1 }, { "id1" : 1, "a" : 7 } ];
    checkRec( rc, expRecs ); 
    
-   dbcl.update( { $set :{ a : 77 } }, { id1 : 5 } );
+   dbcl.update( { $set :{ a : 77 } }, { id1 : 1 } );
 
    rc = dbcl.find().sort( { field :1 }  );
-   expRecs = [ { "a" : 1 }, { "id1" : 5, "a" : 77 } ];
+   expRecs = [ { "a" : 1 }, { "id1" : 1, "a" : 77 } ];
    checkRec( rc, expRecs );
    
    dbcl.update( { $set :{ a : 777 } }, { a : 1 } );
    
    rc = dbcl.find().sort( { field : 1 } );
-   expRecs = [ { "a" : 777 }, { "id1" : 5, "a" : 77 } ];
+   expRecs = [ { "a" : 777 }, { "id1" : 1, "a" : 77 } ];
    checkRec( rc, expRecs );
    
    dbcl.remove();

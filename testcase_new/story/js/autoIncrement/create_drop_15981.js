@@ -19,7 +19,7 @@ function main()
    
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName );
    
-   dbcl.createAutoIncrement( { Field : field, CacheSize : 10, AcquireSize : 1 } );
+   dbcl.createAutoIncrement( { Field : field, CacheSize : cacheSize, AcquireSize : acquireSize } );
    
    //check sequence
    var clID = getCLID( COMMCSNAME, clName );
@@ -27,16 +27,16 @@ function main()
    var expSequenceObj = { CacheSize : cacheSize, AcquireSize : acquireSize };
    checkSequence( sequenceName, expSequenceObj  );
 
-   dbcl.insert( { id1 : 5, a : 7 } );
+   dbcl.insert( { a : 7 } );
 
    var rc = dbcl.find();
-   var expRecs = [ { id1 : 5, a : 7 } ];
+   var expRecs = [ { id1 : 1, a : 7 } ];
    checkRec( rc, expRecs ); 
 
-   dbcl.update( { $set :{ a : 77 } }, { id1 : 5 } );
+   dbcl.update( { $set :{ a : 77 } }, { id1 : 1 } );
 
    rc = dbcl.find();
-   expRecs = [ { id1 : 5, a : 77 } ];
+   expRecs = [ { id1 : 1, a : 77 } ];
    checkRec( rc, expRecs );
 
    dbcl.dropAutoIncrement( field );
@@ -46,6 +46,28 @@ function main()
    {
       throw "drop autoIncrement failed!";
    }       
+   
+   dbcl.insert({ a : 777 });
+   
+   rc = dbcl.find().sort({ id1 : 1 });
+   expRecs = [ { a : 777 }, { id1 : 1, a : 77 } ];
+   checkRec( rc, expRecs ); 
+   
+   dbcl.createAutoIncrement( { Field : field, CacheSize : cacheSize, AcquireSize : acquireSize } );
+   
+   //insert records and check
+   var coordNodes = getCoordNodeNames();
+   for( var i = 0; i < coordNodes.length; i++ )
+   {
+      var coord = new Sdb( coordNodes[ i ] );
+      var cl = coord.getCS( COMMCSNAME ).getCL( clName );
+      cl.insert( { "a" : 2, "b" : 2 } );
+      expRecs.push({ "a" : 2, "b" : 2, "id1" : 1 + i});
+      coord.close();
+   }
+    
+   var rc = dbcl.find().sort( { "id1" : 1 } );
+   checkRec( rc, expRecs );
    
    commDropCL( db, COMMCSNAME, clName );
 }

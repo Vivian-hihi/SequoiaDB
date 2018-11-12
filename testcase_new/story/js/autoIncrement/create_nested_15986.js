@@ -25,6 +25,7 @@ function main()
    try
    {
       dbcl.createAutoIncrement( { Field : "c.1" } );
+      throw "create autoIncrement error!";
    }catch( e )
    {
       if( e !== -6 )

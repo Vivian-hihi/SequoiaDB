@@ -38,6 +38,18 @@ function main()
       checkSequence(sequenceNames[i], expSequences[i] );
    }
    
+   //insert records
+   var rc = dbcl.find();
+   var expRecs = new Array();
+   for(var i = 0; i < 100; i++)
+   {
+      dbcl.insert({ "a" : i });
+      expRecs.push({ "a" : i, "id1" : 1 + autoIncrementArray[0].Increment*i, 
+                              "id2" : 1 + autoIncrementArray[1].Increment*i,
+                              "id3" : 1 + autoIncrementArray[2].Increment*i});
+   }
+   checkRec( rc, expRecs );
+   
    commDropCL( db, COMMCSNAME, clName );
 }
 

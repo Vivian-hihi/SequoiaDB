@@ -27,6 +27,7 @@ function main()
    try
    {
       dbcl.createAutoIncrement({ Field : "id3", Generated : "a" });
+      throw "create error!"
    }catch(e)
    {
       if(e !== -6)
