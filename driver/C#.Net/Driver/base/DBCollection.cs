@@ -303,9 +303,9 @@ namespace SequoiaDB
             return taskid;
         }
 
-        /** \fn BsonValue Insert(BsonDocument record, int flag)
-         *  \brief Insert a document into current collection
-         *  \param insertor The Bson document of insertor, can't be null.
+        /** \fn void BulkInsert(List<BsonDocument> records, int flags)
+         *  \brief Insert a bulk of bson objects into current collection
+         *  \param records The Bson document of insertor list, can't be null
          *  \param flag The flag to control the behavior of inserting. The
          *              value of flags default to be 0, and it can choose
          *              the follow values:
@@ -317,18 +317,116 @@ namespace SequoiaDB
          *                                    error, database will skip them and go on 
          *                                    inserting.
          *
-         *  \return Return the value of field "_id" in "insertor". If "insertor" has no field "_id",
-         *          API will add one and return the value which type is ObjectId, so we can get the 
-         *          return value by BsonValue::AsObjectId property.
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public BsonValue Insert(BsonDocument record, int flag) 
+        public void BulkInsert(List<BsonDocument> records, int flags)
+        {
+            flags = DBQuery.eraseSingleFlag(flags, SDBConst.FLG_INSERT_RETURN_OID);
+            Insert(records, flags);
+        }
+
+        /** \fn BsonDocument Insert(List<BsonDocument> recordList, int flags)
+         *  \brief Insert documents into current collection.
+         *  \param record The Bson document of insertor, can't be null.
+         *  \param flags The flag to control the behavior of inserting. The
+         *               value of flags default to be 0, and it can choose
+         *               the follow values:
+         *
+         *               0:     while 0 is set(default to be 0), database 
+         *                      will stop inserting when the record hit 
+         *                      index key duplicate error.
+         *               SDBConst.FLG_INSERT_CONTONDUP: 
+         *                      if the record hit index key duplicate
+         *                      error, database will skip them and go on 
+         *                      inserting.
+         *               SDBConst.FLG_INSERT_RETURN_OID:
+         *                      return the value of "_id" field in the record.
+         * 
+         *  \return Return the result of inserting or null.
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public BsonDocument Insert(List<BsonDocument> recordList, int flags)
+        {
+            if (recordList == null || recordList.Count == 0)
+            {
+                throw new BaseException((int)Errors.errors.SDB_INVALIDARG);
+            }
+            BsonDocument result = null;
+            SDBMessage sdbMessage = new SDBMessage();
+            sdbMessage.OperationCode = Operation.OP_INSERT;
+            sdbMessage.Version = SequoiadbConstants.DEFAULT_VERSION;
+            sdbMessage.W = SequoiadbConstants.DEFAULT_W;
+            sdbMessage.Padding = 0;
+            sdbMessage.CollectionFullName = collectionFullName;
+            sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
+            sdbMessage.RequestID = 0;
+
+            if ((flags & SDBConst.FLG_INSERT_RETURN_OID) != 0)
+            {
+                if (!EnsureOID)
+                {
+                    EnsureOID = true;
+                }
+            }
+
+            sdbMessage.Flags = flags;
+            byte[] request = SDBMessageHelper.BuildBulkInsertRequest(sdbMessage, recordList, EnsureOID, isBigEndian);
+            connection.SendMessage(request);
+            SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+            rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
+            int errorCode = rtnSDBMessage.Flags;
+            if (errorCode != 0)
+            {
+                throw new BaseException(errorCode, rtnSDBMessage.ErrorObject);
+            }
+            // upsert cache
+            sdb.UpsertCache(collectionFullName);
+
+            // build the result for return
+            if ((flags & SDBConst.FLG_INSERT_RETURN_OID) != 0)
+            {
+                result = new BsonDocument();
+                BsonArray array = new BsonArray();
+                foreach(BsonDocument doc in recordList)
+                {
+                    array.Add(doc.GetValue(SequoiadbConstants.OID));
+                }
+                result.Add(SequoiadbConstants.OID, array);
+            }
+            return result;
+        }
+
+        /** \fn BsonDocument Insert(BsonDocument record, int flags)
+         *  \brief Insert a document into current collection.
+         *  \param record The Bson document of insertor, can't be null.
+         *  \param flags The flag to control the behavior of inserting. The
+         *               value of flags default to be 0, and it can choose
+         *               the follow values:
+         *
+         *               0:     while 0 is set(default to be 0), database 
+         *                      will stop inserting when the record hit 
+         *                      index key duplicate error.
+         *               SDBConst.FLG_INSERT_CONTONDUP: 
+         *                      if the record hit index key duplicate
+         *                      error, database will skip them and go on 
+         *                      inserting.
+         *               SDBConst.FLG_INSERT_RETURN_OID:
+         *                      return the value of "_id" field in the record.
+         *                      When set this flag, "EnsureOID" will be set to true.
+         * 
+         *  \return Return the result of inserting or null.
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public BsonDocument Insert(BsonDocument record, int flags)
         {
             if (record == null)
             {
                 throw new BaseException("SDB_INVALIDARG");
             }
+            BsonDocument result = null;
             SDBMessage sdbMessage = new SDBMessage();
             sdbMessage.OperationCode = Operation.OP_INSERT;
             sdbMessage.Version = SequoiadbConstants.DEFAULT_VERSION;
@@ -349,13 +447,19 @@ namespace SequoiaDB
             }
             List<BsonDocument> list = new List<BsonDocument>(1);
             list.Add(record);
-            BulkInsert(list, flag);
-            return retVal;
+            BulkInsert(list, flags);
+            // try to return result
+            if ((flags & SDBConst.FLG_INSERT_RETURN_OID) != 0)
+            {
+                result = new BsonDocument();
+                result.Add(SequoiadbConstants.OID, retVal);
+            }
+            return result;
         }
 
         /** \fn BsonValue Insert(BsonDocument record)
          *  \brief Insert a document into current collection
-         *  \param insertor The Bson document of insertor, can't be null.
+         *  \param record The Bson document of insertor, can't be null.
          *  \return Return the value of field "_id" in "insertor". If "insertor" has no field "_id",
          *          API will add one and return the value which type is ObjectId, so we can get the 
          *          return value by BsonValue::AsObjectId property.
@@ -364,47 +468,8 @@ namespace SequoiaDB
          */
         public BsonValue Insert(BsonDocument record)
         {
-            return Insert(record, 0);
-        }
-
-        /** \fn void BulkInsert(List<BsonDocument> records, int flag)
-         *  \brief Insert a bulk of bson objects into current collection
-         *  \param records The Bson document of insertor list, can't be null
-         *  \param flag SDBConst.FLG_INSERT_CONTONDUP or 0
-         *  \exception SequoiaDB.BaseException
-         *  \exception System.Exception
-         */
-        public void BulkInsert(List<BsonDocument> records, int flag)
-        {
-            if (records == null || records.Count == 0)
-            {
-                throw new BaseException((int)Errors.errors.SDB_INVALIDARG);
-            }
-            SDBMessage sdbMessage = new SDBMessage();
-            sdbMessage.OperationCode = Operation.OP_INSERT;
-            sdbMessage.Version = SequoiadbConstants.DEFAULT_VERSION;
-            sdbMessage.W = SequoiadbConstants.DEFAULT_W;
-            sdbMessage.Padding = 0;
-            sdbMessage.CollectionFullName = collectionFullName;
-            sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
-            sdbMessage.RequestID = 0;
-            if (flag != 0 && flag != SDBConst.FLG_INSERT_CONTONDUP)
-            {
-                throw new BaseException((int)Errors.errors.SDB_INVALIDARG, "invalid input flag");
-            }
-            sdbMessage.Flags = flag;
-
-            byte[] request = SDBMessageHelper.BuildBulkInsertRequest(sdbMessage, records, EnsureOID, isBigEndian);
-            connection.SendMessage(request);
-            SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
-            rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
-            int errorCode = rtnSDBMessage.Flags;
-            if (errorCode != 0)
-            {
-                throw new BaseException(errorCode, rtnSDBMessage.ErrorObject);
-            }
-            // upsert cache
-            sdb.UpsertCache(collectionFullName);
+            BsonDocument result = Insert(record, SDBConst.FLG_INSERT_RETURN_OID);
+            return result.GetValue(SequoiadbConstants.OID);
         }
 
         /** \fn void Delete(BsonDocument matcher)

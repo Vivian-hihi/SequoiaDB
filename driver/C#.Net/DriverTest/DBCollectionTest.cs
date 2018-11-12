@@ -1941,6 +1941,128 @@ namespace DriverTest
             coll.DropAutoIncrement(list2);
         }
 
+        [TestMethod()]
+        public void InsertAPITest()
+        {
+            long recordCount = 0;
+            // case 1:
+            BsonDocument doc1 = new BsonDocument();
+            doc1.Add("a", 1);
+            recordCount += 1;
+
+            BsonValue oid1 = coll.Insert(doc1);
+            Assert.IsTrue(oid1.IsObjectId);
+            Console.WriteLine("doc1 is: {0}", doc1.ToString());
+
+            // case 2:
+            BsonDocument doc2 = new BsonDocument();
+            doc2.Add("a", 2);
+            doc2.Add("_id", 1);
+            recordCount += 1;
+
+            BsonValue oid2 = coll.Insert(doc2);
+            Assert.IsTrue(oid2.IsInt32);
+            Console.WriteLine("doc2 is: {0}", doc2.ToString());
+
+            // case 3:
+            BsonDocument doc3 = new BsonDocument();
+            doc3.Add("a", 3);
+            doc3.Add("_id", 3);
+            recordCount += 1;
+
+            BsonDocument result3 = coll.Insert(doc3, SDBConst.FLG_INSERT_RETURN_OID);
+            Assert.IsNotNull(result3);
+            Assert.IsTrue(result3.Contains("_id"));
+            Console.WriteLine("result3 is: {0}", result3.ToString());
+
+            // case 4:
+            BsonDocument doc4 = new BsonDocument();
+            doc4.Add("a", 4);
+            doc4.Add("_id", 4);
+            recordCount += 1;
+
+            BsonDocument result4 = coll.Insert(doc4, 0);
+            Assert.IsNull(result4);
+            BsonDocument result5 = coll.Insert(doc4, SDBConst.FLG_INSERT_CONTONDUP);
+            Assert.IsNull(result5);
+            BsonDocument result6 = coll.Insert(doc4, SDBConst.FLG_INSERT_CONTONDUP | SDBConst.FLG_INSERT_RETURN_OID);
+            Assert.IsNotNull(result6);
+            Assert.IsTrue(result6.Contains("_id"));
+            Console.WriteLine("result6 is: {0}", result6.ToString());
+
+            Assert.AreEqual(recordCount, coll.GetCount(null, null));
+        }
+
+        [TestMethod()]
+        public void BulkInsertAPITest()
+        {
+            int recordCount = 0;
+            List<BsonDocument> recordList1 = new List<BsonDocument>();
+            recordList1.Add(new BsonDocument { { "a", 1 } });
+            recordList1.Add(new BsonDocument { { "a", 2 } });
+            recordCount += 2;
+
+            List<BsonDocument> recordList2 = new List<BsonDocument>();
+            recordList2.Add(new BsonDocument { { "a", 3 } });
+            recordList2.Add(new BsonDocument { { "a", 4 } });
+            recordCount += 2;
+
+            List<BsonDocument> recordList3 = new List<BsonDocument>();
+            recordList3.Add(new BsonDocument { { "a", 1 }, { "_id", 1 } });
+            recordList3.Add(new BsonDocument { { "a", 2 }, { "_id", 2 } });
+            recordCount += 2;
+
+            List<BsonDocument> recordList4 = new List<BsonDocument>();
+            recordList4.Add(new BsonDocument { { "a", 3 }, { "_id", 3 } });
+            recordList4.Add(new BsonDocument { { "a", 4 }, { "_id", 4 } });
+            recordList4.Add(new BsonDocument { { "a", 5 }, { "_id", 4 } });
+            recordCount += 2;
+
+            List<BsonDocument> recordList5 = new List<BsonDocument>();
+            recordList5.Add(new BsonDocument { { "a", 3 }, { "_id", 5 } });
+            recordList5.Add(new BsonDocument { { "a", 4 }, { "_id", 6 } });
+            recordList5.Add(new BsonDocument { { "a", 5 }, { "_id", 7 } });
+            recordCount += 3;
+
+            // case 1:
+            BsonDocument result1 = coll.Insert(recordList1, SDBConst.FLG_INSERT_RETURN_OID);
+            Assert.IsNotNull(result1);
+            Console.WriteLine("result1 is: {0}", result1.ToString());
+
+            // case 2:
+            coll.EnsureOID = false;
+            BsonDocument result2 = coll.Insert(recordList2, SDBConst.FLG_INSERT_RETURN_OID);
+            Assert.IsNotNull(result2);
+            Console.WriteLine("result2 is: {0}", result2.ToString());
+
+            // case 3:
+            BsonDocument result3 = coll.Insert(recordList3, SDBConst.FLG_INSERT_RETURN_OID);
+            Assert.IsNotNull(result3);
+            Console.WriteLine("result3 is: {0}", result3.ToString());
+
+            // case 4:
+            BsonDocument result4 = coll.Insert(recordList4, SDBConst.FLG_INSERT_RETURN_OID|SDBConst.FLG_INSERT_CONTONDUP);
+            Assert.IsNotNull(result4);
+            Console.WriteLine("result4 is: {0}", result4.ToString());
+
+            // case 5:
+            BsonDocument result5 = coll.Insert(recordList5, 0);
+            Assert.IsNull(result5);
+
+            // case 6:
+            try
+            {
+                coll.Insert(new List<BsonDocument>(), 0);
+            }
+            catch (BaseException e) {
+                Assert.AreEqual("SDB_INVALIDARG", e.ErrorType);
+            }
+
+            coll.BulkInsert(recordList5, SDBConst.FLG_INSERT_RETURN_OID | SDBConst.FLG_INSERT_CONTONDUP);
+
+            Assert.AreEqual(recordCount, coll.GetCount(null, null));
+        }
+
 
     }
 }

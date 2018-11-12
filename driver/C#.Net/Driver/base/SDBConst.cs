@@ -19,9 +19,14 @@ namespace SequoiaDB
 	public class SDBConst
 	{
         /** \memberof FLG_INSERT_CONTONDUP 0x00000001
-         *   \brief The flags represent whether bulk insert continue when hitting index key duplicate error
+         *   \brief The flag represent whether insert continue(no errors were reported) when hitting index key duplicate error.
          */
         public const int FLG_INSERT_CONTONDUP = 0x00000001;
+
+        /** \memberof FLG_INSERT_RETURN_OID 0x00000002
+         *   \brief The flag represent whether insert return the "_id" field of the record for user.
+         */
+        public const int FLG_INSERT_RETURN_OID = 0x00000002;
 
         /** \memberof FLG_UPDATE_KEEP_SHARDINGKEY 0x00008000
          *   \brief The sharding key in update rule is not filtered,
