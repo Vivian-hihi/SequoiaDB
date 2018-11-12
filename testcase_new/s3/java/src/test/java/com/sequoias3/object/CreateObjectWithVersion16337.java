@@ -9,43 +9,51 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.PutObjectResult;
+import com.amazonaws.services.s3.model.SetBucketVersioningConfigurationRequest;
+import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 
 /**
- * test content: create object 
- * testlink-case: seqDB-16335 
+ * test content: suspended bucket versioning , create object on the bucket
+ * testlink-case: seqDB-16337 
  * @author wuyan
  * @Date 2018.11.6
  * @version 1.00
  */
-public class CreateObject16335 extends S3TestBase{
-	private boolean runSuccess = false;			
-	private String keyName = "aa/bb/object16335";	
+public class CreateObjectWithVersion16337 extends S3TestBase{
+	private boolean runSuccess = false;	
+	private String bucketName = "bucket16337";	
+	private String keyName = "object16337";	
 	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 10;	
+	private int fileSize = 1024 * 4;	
 	private File localPath = null;
 	private String filePath = null;	
 
 	@BeforeClass
-	private void setUp() throws IOException {	
+	private void setUp() throws IOException {		
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
 		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
-
 		TestTools.LocalFile.removeFile(localPath);
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
-		s3Client = CommLib.buildS3Client();			
+		s3Client = CommLib.buildS3Client();	
+			
+		CommLib.deleteAllObjectVersions(s3Client, bucketName);
+		s3Client.deleteBucket(bucketName);
+		s3Client.createBucket(bucketName);
+		CommLib.setBucketVersioning(s3Client, bucketName, "Suspended");		
 	}
 
 	@Test
-	public void testCreateObject() throws Exception {
-		PutObjectResult result= s3Client.putObject(S3TestBase.bucketName, keyName, new File(filePath));		
-		
+	public void testCreateObject() throws Exception {				
+		PutObjectResult result= s3Client.putObject(bucketName, 
+				keyName, new File(filePath));
 		checkObjectAttributeInfo( result );		
-		checkPutObjectResult( S3TestBase.bucketName );
+		checkPutObjectResult( bucketName );
 		runSuccess = true;
 	}
 
@@ -53,13 +61,15 @@ public class CreateObject16335 extends S3TestBase{
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				s3Client.deleteObject(S3TestBase.bucketName, keyName);			
+								
 			}
-		} finally {
-		    s3Client.shutdown();
+		} catch (BaseException e) {
+			Assert.fail("clean up failed:" + e.getMessage());
 		}
 	}
 
+		
+	
 	private void checkPutObjectResult(String bucketName) throws Exception {		
 		//down file
 		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath,
@@ -73,5 +83,9 @@ public class CreateObject16335 extends S3TestBase{
 		String isModify = null;
 		Assert.assertEquals(objAttrInfo.getExpirationTimeRuleId(), isModify );
 		
-	}
+		//check the versionId,enable versiong the versionId is 0
+		Assert.assertEquals(objAttrInfo.getVersionId(),"null");		
+	}	
 }
+	
+	
