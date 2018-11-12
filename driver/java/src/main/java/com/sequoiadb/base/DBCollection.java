@@ -40,11 +40,13 @@ public class DBCollection {
     private Set<String> mainKeys;
     private boolean ensureOID;
 
-    /**
-     * This flags represent that bulkInsert will continue when
-     * duplicate key exist(the duplicate record will be ignored).
+    /** The flag represent whether insert continue(no errors were reported)
+     * when hitting index key duplicate error
      */
     public static final int FLG_INSERT_CONTONDUP = 0x00000001;
+
+    /** The flag represent whether insert return the "_id" field of the record for user */
+    public static final int FLG_INSERT_RETURN_OID = 0x00000002;
 
     /**
      * The sharding key in update rule is not filtered,
@@ -138,34 +140,41 @@ public class DBCollection {
     }
 
     /**
-     * Insert a document into current collection, if the document
-     * does not contain field "_id", it will be added.
+     * Insert a document into current collection.
      *
      * @param insertor The Bson object of insertor, can't be null
-     * @param flag    Available value is FLG_INSERT_CONTONDUP or 0.
-     *                 if flag = FLG_INSERT_CONTONDUP, insert will continue when Duplicate
-     *                 key exist.(the duplicate record will be ignored);
-     *                 if flag = 0, insert will interrupt when Duplicate key exist.
-     * @return the value of the filed "_id"
+     * @param flags The flag to control the behavior of inserting. The
+     *              value of flags default to be 0, and it can choose
+     *              the follow values:
+     *              <ul>
+     *                  <li>0: default value</li>
+     *                  <li>FLG_INSERT_CONTONDUP: if the record hit index key duplicate error,
+     *                                            database will skip them and go on inserting.</li>
+     *                  <li>FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.</li>
+     *              </ul>
+     * @return The result of insert or null for no result.
      * @throws BaseException If error happens.
      */
-    public Object insert(BSONObject insertor, int flag) throws BaseException {
+    public BSONObject insert(BSONObject insertor, int flags) throws BaseException {
+        BSONObject result = null;
         if (insertor == null) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
-
-        Object retObj = insertor.get(SdbConstants.OID);
-        if (retObj == null) {
-            ObjectId objId = ObjectId.get();
-            insertor.put(SdbConstants.OID, objId);
-            retObj = objId;
-        }
-
-        InsertRequest request = new InsertRequest(collectionFullName, insertor, flag);
+        // send to engine
+        InsertRequest request = new InsertRequest(collectionFullName, insertor, flags);
         SdbReply response = sequoiadb.requestAndResponse(request);
         sequoiadb.throwIfError(response, insertor);
         sequoiadb.upsertCache(collectionFullName);
-        return retObj;
+        // return result
+        if ((flags & FLG_INSERT_RETURN_OID) != 0)
+        {
+            Object oid = request.getOIDValue();
+            if (oid != null) {
+                result = new BasicBSONObject();
+                result.put(SdbConstants.OID, oid);
+            }
+        }
+        return result;
     }
 
     /**
@@ -177,7 +186,8 @@ public class DBCollection {
      * @throws BaseException If error happens.
      */
     public Object insert(BSONObject insertor) throws BaseException {
-        return insert(insertor, 0);
+        BSONObject result = insert(insertor, FLG_INSERT_RETURN_OID);
+        return result.get(SdbConstants.OID);
     }
 
     /**
@@ -200,25 +210,67 @@ public class DBCollection {
      * Insert a bulk of bson objects into current collection.
      *
      * @param insertor The Bson object of insertor list, can't be null
-     * @param flag     available value is FLG_INSERT_CONTONDUP or 0.
-     *                 if flag = FLG_INSERT_CONTONDUP, bulkInsert will continue when Duplicate
-     *                 key exist.(the duplicate record will be ignored);
-     *                 if flag = 0, bulkInsert will interrupt when Duplicate key exist.
+     * @param flags The flag to control the behavior of inserting. The
+     *              value of flags default to be 0, and it can choose
+     *              the follow values:
+     *              <ul>
+     *                  <li>0: default value</li>
+     *                  <li>FLG_INSERT_CONTONDUP: if the record hit index key duplicate error,
+     *                                            database will skip them and go on inserting.</li>
+     *                  <li>FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.
+     *                                             When set this flag, ensureOID() will be set to true.</li>
+     *              </ul>
      * @throws BaseException If error happens.
-     * @since 2.9
+     * @since 3.0.2
      */
-    public void insert(List<BSONObject> insertor, int flag) throws BaseException {
-        if (flag != 0 && flag != FLG_INSERT_CONTONDUP) {
-            throw new BaseException(SDBError.SDB_INVALIDARG);
-        }
+    public BSONObject insertRecords(List<BSONObject> insertor, int flags) throws BaseException {
+        BSONObject result = null;
         if (insertor == null || insertor.size() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
-
-        InsertRequest request = new InsertRequest(collectionFullName, insertor, flag, ensureOID);
+        // try to ensure oid
+        if ((flags & FLG_INSERT_RETURN_OID) != 0) {
+            if (!isOIDEnsured()) {
+                ensureOID(true);
+            }
+        }
+        // build and send message
+        InsertRequest request = new InsertRequest(collectionFullName, insertor, flags, ensureOID);
         SdbReply response = sequoiadb.requestAndResponse(request);
         sequoiadb.throwIfError(response);
         sequoiadb.upsertCache(collectionFullName);
+        // return result
+        if ((flags & FLG_INSERT_RETURN_OID) != 0)
+        {
+            Object oid = request.getOIDValue();
+            if (oid != null) {
+                result = new BasicBSONObject();
+                result.put(SdbConstants.OID, oid);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Insert a bulk of bson objects into current collection.
+     *
+     * @param insertor The Bson object of insertor list, can't be null
+     * @param flags The flag to control the behavior of inserting. The
+     *              value of flags default to be 0, and it can choose
+     *              the follow values:
+     *              <ul>
+     *                  <li>0: default value</li>
+     *                  <li>FLG_INSERT_CONTONDUP: if the record hit index key duplicate error,
+     *                                            database will skip them and go on inserting.</li>
+     *              </ul>
+     * @throws BaseException If error happens.
+     * @since 3.0.2
+     */
+    public void insert(List<BSONObject> insertor, int flags) throws BaseException {
+        if (flags != 0) {
+            flags = DBQuery.eraseSingleFlag(flags, FLG_INSERT_RETURN_OID);
+        }
+        insertRecords(insertor, flags);
     }
 
     /**
