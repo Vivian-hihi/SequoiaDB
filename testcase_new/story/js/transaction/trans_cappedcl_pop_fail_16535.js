@@ -36,10 +36,11 @@ function main()
          throw buildException("pop", "pop", "pop", -6, e);
       }
    }
+   cappedcl.insert({a : 2})
    db.transCommit();
    
    // check result 
-   var expectResult = [{a : 0}, {a : 1}];
+   var expectResult = [{a : 0}, {a : 1}, {a : 2}];
    var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
    checkResult(expectResult, actResult);
 
@@ -57,9 +58,12 @@ function main()
          throw buildException("pop", "pop", "pop", -6, e);
       }
    }
+   cappedcl.insert({a : 3});
    db.transCommit();
 
    // check result
+   var expectResult = [{a : 0}, {a : 1}, {a : 2}, {a : 3}];
+   var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
    checkResult(expectResult, actResult);
 
    cappedcl.truncate();
@@ -79,9 +83,12 @@ function main()
          throw buildException("pop", "pop", "pop", -6, e);
       }
    }
+   cappedcl.insert({a : 2});
    db.transRollback();
 
    // check result
+   var expectResult = [{a : 0}, {a : 1}];
+   var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
    checkResult(expectResult, actResult);  
 
     // pop fail with not exist record, rollback
@@ -98,9 +105,11 @@ function main()
          throw buildException("pop", "pop", "pop", -6, e); 
       }   
    }   
+   cappedcl.insert({a : 3});
    db.transRollback();
 
    // check result
+   var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
    checkResult(expectResult, actResult);
 
    commDropCS(db, csName, true, "drop cs in ending");
