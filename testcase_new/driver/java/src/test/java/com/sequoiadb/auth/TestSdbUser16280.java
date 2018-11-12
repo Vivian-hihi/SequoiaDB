@@ -36,6 +36,7 @@ public class TestSdbUser16280 extends SdbTestBase{
     	try {
             sdb.createUser(userName, "admin");
             Sequoiadb sdb = new Sequoiadb(coordAddr, userName, "");
+            Assert.fail("exp fail but act success");
         }catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -179);
         }
