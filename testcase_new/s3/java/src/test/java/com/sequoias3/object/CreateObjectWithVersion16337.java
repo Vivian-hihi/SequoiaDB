@@ -61,7 +61,8 @@ public class CreateObjectWithVersion16337 extends S3TestBase{
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-								
+				CommLib.deleteAllObjectVersions(s3Client, bucketName);
+				s3Client.deleteBucket(bucketName);				
 			}
 		} catch (BaseException e) {
 			Assert.fail("clean up failed:" + e.getMessage());
