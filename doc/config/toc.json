@@ -1974,7 +1974,7 @@
                            "cn": "removeRG()",
                            "en": "removeRG()"
                         },
-						{
+                        {
                            "id": 1541488257,
                            "file": "renameCS",
                            "cn": "renameCS()",
@@ -2132,7 +2132,7 @@
                            "cn": "removeDomain()",
                            "en": "removeDomain()"
                         },
-						{
+                        {
                            "id": 1541488258,
                            "file": "renameCL",
                            "cn": "renameCL()",
