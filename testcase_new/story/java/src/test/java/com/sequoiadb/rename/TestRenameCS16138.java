@@ -59,6 +59,7 @@ public class TestRenameCS16138 extends SdbTestBase{
         alterCSThread.start();
         
         if (renameCSThread.isSuccess() && !alterCSThread.isSuccess()){
+        	//TODO:1、建议直接用setup中的sdb，不需要再重新new
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             RenameUtil.checkRenameCSResult(sdb, csName, newCSName, 1);
             BaseException e = (BaseException)alterCSThread.getExceptions().get(0);
@@ -74,6 +75,7 @@ public class TestRenameCS16138 extends SdbTestBase{
         } else if (!renameCSThread.isSuccess() && !alterCSThread.isSuccess()){
             Assert.fail("renameCSThread and alterCSThread all failed: "+renameCSThread.getErrorMsg()+alterCSThread.getErrorMsg());
         } else{
+        	//TODO:2、请补充下这种场景的说明，是否为非并发时的校验结果？
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             RenameUtil.checkRenameCSResult(sdb, csName, newCSName, 1);
             checkCSCataInfo(newCSName);
@@ -135,6 +137,7 @@ public class TestRenameCS16138 extends SdbTestBase{
         public void exec() throws BaseException {
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             try{
+            	//TODO:3、cs建议重现申明，不要用全局定义变量，如果外部引用会出错
                 cs = db.getCollectionSpace(csName);
                 BSONObject alterList = new BasicBSONList();
                 BSONObject alterBson = new BasicBSONObject();

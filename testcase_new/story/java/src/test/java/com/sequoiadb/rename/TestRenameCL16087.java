@@ -66,6 +66,7 @@ public class TestRenameCL16087 extends SdbTestBase {
                 maincl.detachCollection(SdbTestBase.csName+"."+newSubCLName);
                 Assert.fail("cl attachCollection ok, expected attachCollection fail!");
             }catch (BaseException e) {
+            	//TODO:1、建议去掉try-catch，这里没有没有报错，只是打印栈信息，testng框架可以捕获异常栈
                 e.printStackTrace();
             }
             BaseException e = (BaseException)attachCLThread.getExceptions().get(0);
@@ -73,10 +74,11 @@ public class TestRenameCL16087 extends SdbTestBase {
                 Assert.fail("errcode not expected : " + e.getMessage());
             }
         } else if ( attachCLThread.isSuccess() && !renameSubCL.isSuccess() ) {
+        	//TODO:2、没有验证attachCL成功的结果
             BaseException e = (BaseException)renameSubCL.getExceptions().get(0);
             if ( e.getErrorCode() != -147 ) {
                 Assert.fail("errcode not expected : " + e.getMessage());
-            }
+            }            
         } else {
             Assert.fail("attachCLThread : "+attachCLThread.getErrorMsg()+"\n subCLThread : "+renameSubCL.getErrorMsg());
         }

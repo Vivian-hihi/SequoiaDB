@@ -31,6 +31,7 @@ public class TestRenameCL16083 extends SdbTestBase{
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        //TODO:1、不需要屏蔽独立模式
         if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("skip StandAlone");
         }
@@ -47,7 +48,7 @@ public class TestRenameCL16083 extends SdbTestBase{
         dropCLThread.start();
         
         if(renameCLThread.isSuccess() && !dropCLThread.isSuccess()) {
-            RenameUtil.checkRenameCLResult(sdb, SdbTestBase.csName, clName, newclName);
+            RenameUtil.checkRenameCLResult(sdb, SdbTestBase.csName, clName, newclName);           
             Assert.assertEquals(cs.isCollectionExist(clName), false);
             BaseException e = (BaseException)dropCLThread.getExceptions().get(0);
             if ( e.getErrorCode() != -23 ) {
