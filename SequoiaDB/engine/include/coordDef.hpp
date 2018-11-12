@@ -288,7 +288,7 @@ namespace engine
 
       BOOLEAN hasAutoIncrement() const
       {
-         return _catlogSet.getAutoIncSet()->totalCount() > 0 ? TRUE : FALSE ;
+         return _catlogSet.getAutoIncSet()->fieldCount() > 0 ? TRUE : FALSE ;
       }
 
       const vector<BSONObj>& getAutoIncFields() const
@@ -296,9 +296,9 @@ namespace engine
          return _catlogSet.getAutoIncSet()->getFields() ;
       }
 
-      const AUTOINC_ITEM_MAP& getAutoIncMap() const
+      const clsAutoIncSet& getAutoIncSet() const
       {
-         return _catlogSet.getAutoIncSet()->getMap() ;
+         return *( _catlogSet.getAutoIncSet() ) ;
       }
 
    private:

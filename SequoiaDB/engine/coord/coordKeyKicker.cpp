@@ -110,12 +110,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       UINT32 skSiteID = cataInfo->getShardingKeySiteID() ;
-      _utilSet< strContainner, 1 > autoIncDoneSet ;
+      _utilSet< strContainner, 1 > doneFields ;
 
       if ( skSiteID > 0 )
       {
          /// if is the same sharding key
-         map< UINT32, BOOLEAN >::iterator it = _skSiteIDs.find( skSiteID );
+         SiteIDSet::iterator it = _skSiteIDs.find( skSiteID );
          if ( it != _skSiteIDs.end() && ignoreAutoInc )
          {
             newUpdator = updator ;
@@ -129,19 +129,11 @@ namespace engine
       {
          BSONObjBuilder bobNewUpdator( updator.objsize() ) ;
          BSONObj boShardingKey ;
-         BSONObj boAutoIncKey ;
+         const clsAutoIncSet &autoIncSet = cataInfo->getAutoIncSet() ;
          BSONObj subObj ;
 
          BOOLEAN isReplace = _isUpdateReplace( updator ) ;
          cataInfo->getShardingKey( boShardingKey ) ;
-         if ( !ignoreAutoInc )
-         {
-            boAutoIncKey = _getAutoIncKeyObj( cataInfo->getAutoIncFields() ) ;
-         }
-         else
-         {
-            boAutoIncKey = BSONObj() ;
-         }
 
          BSONObjIterator iter( updator ) ;
          while ( iter.more() )
@@ -182,9 +174,10 @@ namespace engine
                   subBuilder.append( beField ) ;
                }
 
-               if ( isReplace && _isKey( pField, boAutoIncKey ) )
+               if ( !ignoreAutoInc && isReplace &&
+                    NULL != autoIncSet.findItem( pField ) )
                {
-                  autoIncDoneSet.insert( pField ) ;
+                  doneFields.insert( pField ) ;
                }
             } // while( iterField.more() )
 
@@ -200,15 +193,17 @@ namespace engine
                hasShardingKey = TRUE ;
             }
 
-            BSONObjIterator iterKey( boAutoIncKey ) ;
-            while( iterKey.more() )
+            if ( !ignoreAutoInc )
             {
-               BSONElement e = iterKey.next() ;
-               const CHAR *pKey = e.fieldName() ;
-               if ( autoIncDoneSet.count( pKey ) == 0 )
+               clsAutoIncIterator autoIncIt( autoIncSet );
+               while ( autoIncIt.more() )
                {
-                  _setKeys.insert( pKey ) ;
-                  hasKeepAutoInc = TRUE ;
+                  const clsAutoIncItem *pItem = autoIncIt.next();
+                  if ( doneFields.count( pItem->fieldName() ) == 0 )
+                  {
+                     _setKeys.insert( pItem->fieldName() );
+                     hasKeepAutoInc = TRUE;
+                  }
                }
             }
 
@@ -219,7 +214,7 @@ namespace engine
                SET_KEEPKEY::iterator itKey = _setKeys.begin() ;
                while( itKey != _setKeys.end() )
                {
-                  keepBuilder.append( itKey->_pStr, (INT32)1 ) ;
+                  keepBuilder.append( (*itKey)._pStr, (INT32)1 ) ;
                   ++itKey ;
                }
                keepBuilder.done() ;
@@ -603,19 +598,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }
-
-   BSONObj _coordKeyKicker::_getAutoIncKeyObj( const vector<BSONObj> &autoIncArr )
-   {
-      BSONObjBuilder builder ;
-
-      for ( UINT32 i = 0 ; i < autoIncArr.size() ; ++i )
-      {
-         builder.append( autoIncArr[i].getField( CAT_AUTOINC_FIELD ).String(),
-                         (INT32)1 ) ;
-      }
-
-      return builder.obj() ;
    }
 
    BOOLEAN _coordKeyKicker::_isKey( const CHAR *pField, BSONObj &boKey )

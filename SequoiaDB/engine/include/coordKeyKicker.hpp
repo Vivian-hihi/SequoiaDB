@@ -61,21 +61,21 @@ namespace engine
          {
             _pStr = NULL ;
          }
-         bool operator<( const strContainner &right ) const
+         BOOLEAN operator<( const strContainner &right ) const
          {
             if ( !right._pStr )
             {
-               return false ;
+               return FALSE ;
             }
             else if ( !_pStr )
             {
-               return true ;
+               return TRUE ;
             }
-            return ossStrcmp( _pStr, right._pStr ) < 0 ? true : false ;
+            return ossStrcmp( _pStr, right._pStr ) < 0 ? TRUE : FALSE ;
          }
       } ;
 
-      typedef set< strContainner >  SET_KEEPKEY ;
+      typedef _utilSet< strContainner >  SET_KEEPKEY ;
 
    public:
       _coordKeyKicker() ;
@@ -124,12 +124,11 @@ namespace engine
                                      BOOLEAN &hasInclude,
                                      _pmdEDUCB *cb ) ;
 
-      BSONObj     _getAutoIncKeyObj( const std::vector<BSONObj> &autoIncArr ) ;
-
       BOOLEAN     _isKey( const CHAR *pField, BSONObj &boKey ) ;
 
    private:
-      map< UINT32, BOOLEAN >     _skSiteIDs ;
+      typedef _utilMap< UINT32, BOOLEAN > SiteIDSet ;
+      SiteIDSet                  _skSiteIDs ;
       SET_KEEPKEY                _setKeys ;
 
       coordResource              *_pResource ;

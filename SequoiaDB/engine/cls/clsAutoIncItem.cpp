@@ -34,6 +34,7 @@
 
 *******************************************************************************/
 
+#include <utilStr.hpp>
 #include "clsAutoIncItem.hpp"
 #include "msgCatalogDef.h"
 #include "pd.hpp"
@@ -43,17 +44,77 @@
 using namespace bson ;
 
 namespace engine
-
 {
+   /*
+      implement _clsAutoIncIterator
+   */
+   _clsAutoIncIterator::_clsAutoIncIterator( const _clsAutoIncSet &set,
+                                             const MODE mode )
+   {
+      _pMap = &set._mapItem ;
+      _mode = mode ;
+      _it = _pMap->begin() ;
+   }
+
+   BOOLEAN _clsAutoIncIterator::more()
+   {
+      return _it != _pMap->end() ? TRUE : FALSE ;
+   }
+
+   const clsAutoIncItem* _clsAutoIncIterator::next()
+   {
+      const clsAutoIncItem* pItem = NULL ;
+
+      if ( _it == _pMap->end() )
+      {
+         return NULL ;
+      }
+
+      if ( NON_RECURS == _mode )
+      {
+         pItem = _it->second ;
+         ++_it ;
+      }
+      else if ( RECURS == _mode )
+      {
+         // if not end, go until end.
+         pItem = _it->second ;
+         while ( NULL != pItem->subFieldSet() )
+         {
+            _mapTrace.push_back( _pMap ) ;
+            _itTrace.push_back( _it ) ;
+
+            _pMap = &( pItem->subFieldSet()->_mapItem ) ;
+            _it = _pMap->begin() ;
+            pItem = _it->second ;
+         }
+         ++_it ;
+
+         // if go to end, back to last forky node.
+         while ( _it == _pMap->end() && !_mapTrace.empty() && !_itTrace.empty() )
+         {
+            _pMap = _mapTrace.back() ;
+            _mapTrace.pop_back() ;
+            _it = _itTrace.back() ;
+            _itTrace.pop_back() ;
+
+            ++_it ;
+         }
+      }
+
+      return pItem ;
+   }
+
    /*
       implement _clsAutoIncItem
    */
    _clsAutoIncItem::_clsAutoIncItem()
    {
       _fieldName     = NULL ;
+      _fullName      = NULL ;
       _sequenceName  = NULL ;
       _generatedType = AUTOINC_GEN_DEFAULT ;
-      _pSubFieldMap  = NULL ;
+      _pSubFieldSet  = NULL ;
    }
 
    _clsAutoIncItem::~_clsAutoIncItem()
@@ -63,18 +124,11 @@ namespace engine
 
    void _clsAutoIncItem::_clear()
    {
-      if ( _pSubFieldMap )
+      if ( _pSubFieldSet )
       {
-         AUTOINC_ITEM_MAP_IT it = _pSubFieldMap->begin() ;
-         while( it != _pSubFieldMap->end() )
-         {
-            SDB_OSS_DEL it->second ;
-            ++it ;
-         }
-         _pSubFieldMap->clear() ;
-
-         SDB_OSS_DEL _pSubFieldMap ;
-         _pSubFieldMap = NULL ;
+         _pSubFieldSet->clear() ;
+         SDB_OSS_DEL _pSubFieldSet ;
+         _pSubFieldSet = NULL ;
       }
 
       _fieldName     = NULL ;
@@ -103,7 +157,7 @@ namespace engine
             {
                PD_LOG( PDERROR, "Field[%s] in obj[%s] must be string",
                        CAT_AUTOINC_FIELD, obj.toString().c_str() ) ;
-               rc = SDB_SYS ;
+               rc = SDB_INVALIDARG ;
                goto error ;
             }
             pFldName = e.valuestr() ;
@@ -115,7 +169,7 @@ namespace engine
             {
                PD_LOG( PDERROR, "Field[%s] in obj[%s] must be string",
                        CAT_AUTOINC_SEQ, obj.toString().c_str() ) ;
-               rc = SDB_SYS ;
+               rc = SDB_INVALIDARG ;
                goto error ;
             }
             pSeqName = e.valuestr() ;
@@ -127,7 +181,7 @@ namespace engine
             {
                PD_LOG( PDERROR, "Field[%s] in obj[%s] must be number",
                        CAT_AUTOINC_SEQ_ID, obj.toString().c_str() ) ;
-               rc = SDB_SYS ;
+               rc = SDB_INVALIDARG ;
                goto error ;
             }
             seqID = e.Long() ;
@@ -139,7 +193,7 @@ namespace engine
             {
                PD_LOG( PDERROR, "Field[%s] in obj[%s] must be OID",
                        CAT_AUTOINC_GENERATED, obj.toString().c_str() ) ;
-               rc = SDB_SYS ;
+               rc = SDB_INVALIDARG ;
                goto error ;
             }
             pGenStr = e.valuestr() ;
@@ -151,7 +205,7 @@ namespace engine
       if ( validNum < 4 )
       {
          PD_LOG( PDERROR, "Object[%s] is not valid", obj.toString().c_str() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
@@ -184,7 +238,8 @@ namespace engine
    INT32 _clsAutoIncItem::_init( const CHAR* fieldName,
                                  const CHAR* sequenceName,
                                  const utilSequenceID sequenceID,
-                                 const AUTOINC_GEN_TYPE generated )
+                                 const AUTOINC_GEN_TYPE generated,
+                                 const CHAR* fullName )
    {
       /*
          If fieldName is simple, result will be like
@@ -214,6 +269,7 @@ namespace engine
       const CHAR*       subField = NULL ;
       _clsAutoIncItem   *pSubItem = NULL ;
 
+      _fullName = fullName ? fullName : fieldName ;
       subField = ossStrchr( fieldName, '.' ) ;
       if ( NULL == subField )
       {
@@ -238,24 +294,24 @@ namespace engine
             goto error ;
          }
 
-         rc = pSubItem->_init( subField, sequenceName,
-                               sequenceID, generated ) ;
+         rc = pSubItem->_init( subField, sequenceName, sequenceID,
+                               generated, _fullName ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Init sub item failed, rc: %d", rc ) ;
             goto error ;
          }
 
-         _pSubFieldMap = SDB_OSS_NEW AUTOINC_ITEM_MAP() ;
-         if ( !_pSubFieldMap )
+         _pSubFieldSet = SDB_OSS_NEW _clsAutoIncSet() ;
+         if ( !_pSubFieldSet )
          {
             rc = SDB_OOM ;
             PD_LOG( PDERROR, "Alloc sub field map failed" ) ;
             goto error ;
          }
          /// add to map
-         _pSubFieldMap->insert( AUTOINC_ITEM_MAP_VAL( pSubItem->fieldName(),
-                                                      pSubItem ) ) ;
+         _pSubFieldSet->_mapItem.insert(
+               AUTOINC_ITEM_MAP_VAL( pSubItem->fieldName(), pSubItem ) ) ;
          pSubItem = NULL ;
       }
 
@@ -281,29 +337,31 @@ namespace engine
 
       INT32 rc = SDB_OK ;
 
-      if ( _pSubFieldMap && pItem->_pSubFieldMap )
+      if ( _pSubFieldSet && pItem->_pSubFieldSet )
       {
          _clsAutoIncItem *pItemSub = NULL ;
          _clsAutoIncItem *pSelfSub = NULL ;
-         AUTOINC_ITEM_MAP_IT itSelfSub ;
-         AUTOINC_ITEM_MAP_IT itItemSub = pItem->_pSubFieldMap->begin() ;
-         while( itItemSub != pItem->_pSubFieldMap->end() )
-         {
-            pItemSub = itItemSub->second ;
-            itSelfSub = _pSubFieldMap->find( pItemSub->fieldName() ) ;
+         AUTOINC_ITEM_MAP &itemMap = pItem->_pSubFieldSet->_mapItem;
+         AUTOINC_ITEM_MAP &selfMap = _pSubFieldSet->_mapItem;
+         AUTOINC_ITEM_MAP_IT itemIt = itemMap.begin() ;
+         AUTOINC_ITEM_MAP_IT selfIt ;
 
-            if ( itSelfSub == _pSubFieldMap->end() )
+         while( itemIt != itemMap.end() )
+         {
+            pItemSub = itemIt->second ;
+            selfIt = selfMap.find( pItemSub->fieldName() ) ;
+
+            if ( selfIt == selfMap.end() )
             {
                /// Insert
-               _pSubFieldMap->insert( AUTOINC_ITEM_MAP_VAL( pItemSub->fieldName(),
-                                                            pItemSub ) ) ;
+               selfMap.insert( AUTOINC_ITEM_MAP_VAL( pItemSub->fieldName(),
+                                                     pItemSub ) ) ;
                /// remove from pItem's sub item
-               itItemSub = pItem->_pSubFieldMap->erase( itItemSub ) ;
+               itemIt = itemMap.erase( itemIt ) ;
             }
             else
             {
-               pSelfSub = itSelfSub->second ;
-
+               pSelfSub = selfIt->second ;
                rc = pSelfSub->merge( pItemSub ) ;
                if ( rc )
                {
@@ -313,7 +371,7 @@ namespace engine
                   goto error ;
                }
 
-               ++itItemSub ;
+               ++itemIt ;
             }
          }
       }
@@ -333,15 +391,19 @@ namespace engine
 
    const _clsAutoIncItem* _clsAutoIncItem::findSubItem( const CHAR *pName ) const
    {
-      if ( _pSubFieldMap )
+      if ( _pSubFieldSet )
       {
-         AUTOINC_ITEM_MAP_CONST_IT cit = _pSubFieldMap->find( pName ) ;
-         if ( cit != _pSubFieldMap->end() )
-         {
-            return cit->second ;
-         }
+         return _pSubFieldSet->findItem( pName ) ;
       }
       return NULL ;
+   }
+
+   const clsAIID _clsAutoIncItem::AIID() const
+   {
+      clsAIID aiid ;
+      aiid.seqID = _sequenceID ;
+      aiid.genType = _generatedType ;
+      return aiid ;
    }
 
    /*
@@ -349,7 +411,7 @@ namespace engine
    */
    _clsAutoIncSet::_clsAutoIncSet()
    {
-      _totalCount = 0 ;
+      _fieldCount = 0 ;
    }
 
    _clsAutoIncSet::~_clsAutoIncSet()
@@ -368,9 +430,37 @@ namespace engine
       _mapItem.clear() ;
 
       _objInfo = BSONObj() ;
-      _totalCount = 0 ;
+      _fieldCount = 0 ;
 
       _vecFields.clear() ;
+   }
+
+   UINT32 _clsAutoIncSet::_calcEleSize( const _clsAutoIncSet &set )
+   {
+      UINT32 eleSize= 0 ;
+      INT32 fieldLen = 0 ;
+      const clsAutoIncItem *pItem = NULL ;
+
+      clsAutoIncIterator it( set ) ;
+      while ( it.more() )
+      {
+         pItem = it.next() ;
+         fieldLen = ossStrlen( pItem->fieldName() ) + 1 ;
+         if ( !pItem->hasSubField() )
+         {
+            // |type(CHAR) |field(CHAR*)  |sequenceValue(INT64) |
+            eleSize += ( 1 + fieldLen + 8 ) ;
+         }
+         else
+         {
+            const clsAutoIncSet *pSubSet = pItem->subFieldSet() ;
+            // |type(CHAR) |field(CHAR*)  |subObj(BSONObj) |
+            // BSONObj: |length(UINT32)  |elements(...)  |EOO(CHAR) |
+            eleSize += ( 1 + fieldLen + 4 +
+                             _calcEleSize( *pSubSet ) + 1 ) ;
+         }
+      }
+      return eleSize ;
    }
 
    void _clsAutoIncSet::clear()
@@ -429,17 +519,29 @@ namespace engine
          goto error ;
       }
 
+      _eleSize = _calcEleSize( *this ) ;
+
    done:
       return rc ;
    error:
       goto done ;
    }
 
+   INT32 _clsAutoIncSet::insert( const BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+      rc = _initAItem( obj ) ;
+      _eleSize = _calcEleSize( *this ) ;
+      return rc ;
+   }
+
    INT32 _clsAutoIncSet::_initAItem( const BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
       clsAutoIncItem *pItem = NULL ;
+      clsAutoIncItem *pFirstItem = NULL ;
       AUTOINC_ITEM_MAP_IT it ;
+      clsAIID aiid ;
 
       pItem = SDB_OSS_NEW clsAutoIncItem() ;
       if ( !pItem )
@@ -452,8 +554,18 @@ namespace engine
       rc = pItem->init( obj ) ;
       if ( rc )
       {
+         PD_LOG( PDERROR, "Failed to init item, rc: %d", rc ) ;
          goto error ;
       }
+
+      // get AIID
+      pFirstItem = pItem ;
+      while ( pItem->hasSubField() )
+      {
+         pItem = pItem->subFieldSet()->_mapItem.begin()->second ;
+      }
+      aiid = pItem->AIID() ;
+      pItem = pFirstItem ;
 
       /// Find first
       it = _mapItem.find( pItem->fieldName() ) ;
@@ -465,17 +577,20 @@ namespace engine
          rc = pTmpItem->merge( pItem ) ;
          if ( rc )
          {
+            PD_LOG( PDERROR, "Failed to merge item, rc: %d", rc ) ;
             goto error ;
          }
       }
       else
       {
-         _mapItem.insert( AUTOINC_ITEM_MAP_VAL( pItem->fieldName(), pItem ) ) ;
+         _mapItem.insert( AUTOINC_ITEM_MAP_VAL( pItem->fieldName(), 
+                                                pItem ) ) ;
          pItem = NULL ;
       }
 
-      ++_totalCount ;
-      _vecFields.push_back( obj ) ;
+      ++_fieldCount ;
+      _aiidSet.insert( aiid ) ;
+      _vecFields.push_back( obj.getOwned() ) ;
 
    done:
       if ( pItem )

@@ -1057,34 +1057,20 @@ namespace engine
    INT32 coordInvalidateSequenceCache( CoordCataInfoPtr cataPtr, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      vector<BSONObj> autoIncFields ;
-      BSONElement ele ;
-      const CHAR *seqName ;
+      const clsAutoIncItem* pItem = NULL ;
+      const CHAR *seqName = NULL ;
       utilSequenceID seqID ;
 
       if ( cataPtr->hasAutoIncrement() )
       {
-         autoIncFields = cataPtr->getAutoIncFields() ;
+         const clsAutoIncSet &set = cataPtr->getAutoIncSet() ;
+         clsAutoIncIterator it( set, clsAutoIncIterator::RECURS ) ;
 
-         for ( UINT32 i = 0 ; i < autoIncFields.size() ; ++i )
+         while ( it.more() )
          {
-            ele = autoIncFields[i].getField( CAT_AUTOINC_SEQ ) ;
-            if ( String != ele.type() )
-            {
-               PD_LOG( PDERROR, "Wrong type[%d] of sequence name", ele.type() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-            seqName = ele.valuestr() ;
-
-            ele = autoIncFields[i].getField( CAT_AUTOINC_SEQ_ID ) ;
-            if ( !ele.isNumber() )
-            {
-               PD_LOG( PDERROR, "Wrong type[%d] of sequence ID", ele.type() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-            seqID = ele.Long();
+            pItem = it.next() ;
+            seqName = pItem->sequenceName() ;
+            seqID = pItem->sequenceID() ;
 
             rc = coordSequenceInvalidateCache( seqName, cb, seqID ) ;
             if ( SDB_SEQUENCE_NOT_EXIST == rc )

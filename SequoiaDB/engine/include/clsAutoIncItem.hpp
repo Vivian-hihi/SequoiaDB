@@ -41,7 +41,9 @@
 #include "ossUtil.hpp"
 #include "../bson/bson.h"
 #include "utilMap.hpp"
+#include "utilList.hpp"
 #include "utilUniqueID.hpp"
+#include "utilSet.hpp"
 
 using namespace bson ;
 
@@ -59,32 +61,59 @@ namespace engine
    typedef enum _AUTOINC_GEN_TYPE AUTOINC_GEN_TYPE ;
 
    /*
+      define Auto-Increment Identification
+   */
+   struct _clsAIID
+   {
+      utilSequenceID seqID ;
+      AUTOINC_GEN_TYPE genType ;
+
+      BOOLEAN operator< ( const _clsAIID &r ) const
+      {
+         return seqID < r.seqID ? TRUE : FALSE ;
+      }
+      BOOLEAN operator== ( const _clsAIID &r ) const
+      {
+         return (seqID == r.seqID && genType == r.genType) ? TRUE : FALSE ;
+      }
+      BOOLEAN operator!= ( const _clsAIID &r ) const
+      {
+         return this->operator==( r ) ? FALSE : TRUE ;
+      }
+   } ;
+   typedef struct _clsAIID clsAIID ;
+   typedef _utilSet< clsAIID, 1 > clsAIIDSet ;
+
+   /*
       define _clsAutoIncItem
    */
+   class _clsAutoIncSet ;
    class _clsAutoIncItem : public SDBObject
    {
    friend class _clsAutoIncSet ;
-
-   public:
-      typedef _utilStringMap<_clsAutoIncItem*, 1>        AUTOINC_ITEM_MAP ;
+   typedef _utilStringMap<_clsAutoIncItem*, 1>  AUTOINC_ITEM_MAP ;
+   typedef AUTOINC_ITEM_MAP::iterator           AUTOINC_ITEM_MAP_IT ;
+   typedef AUTOINC_ITEM_MAP::value_type         AUTOINC_ITEM_MAP_VAL ;
+   typedef AUTOINC_ITEM_MAP::const_iterator     AUTOINC_ITEM_MAP_CONST_IT ;
 
    public:
       _clsAutoIncItem() ;
       ~_clsAutoIncItem() ;
 
       const CHAR*          fieldName() const { return _fieldName ; }
+      const CHAR*          fullName() const { return _fullName ; }
       const CHAR*          sequenceName() const { return _sequenceName ; }
       const utilSequenceID sequenceID() const { return _sequenceID ; }
       AUTOINC_GEN_TYPE     generatedType() const { return _generatedType ; }
-      BOOLEAN              hasSubField() const { return _pSubFieldMap ? TRUE :FALSE ; }
+      const clsAIID        AIID() const ;
 
+      BOOLEAN              hasSubField() const { return _pSubFieldSet ? TRUE :FALSE ; }
+      const _clsAutoIncSet*   subFieldSet() const { return _pSubFieldSet ; }
       const _clsAutoIncItem*  findSubItem( const CHAR *pName ) const ;
-      const AUTOINC_ITEM_MAP* subFieldMap() const { return _pSubFieldMap ; }
 
    protected:
 
       INT32             init( const BSONObj &obj ) ;
-
       INT32             merge( _clsAutoIncItem *pItem ) ;
 
    protected:
@@ -92,61 +121,97 @@ namespace engine
       INT32             _init( const CHAR* fieldName,
                                const CHAR* sequenceName,
                                const utilSequenceID sequenceID,
-                               const AUTOINC_GEN_TYPE generated ) ;
+                               const AUTOINC_GEN_TYPE generated,
+                               const CHAR* fullName = NULL ) ;
 
    private:
       const CHAR*       _fieldName ;
+      const CHAR*       _fullName ;
       const CHAR*       _sequenceName ;
       utilSequenceID    _sequenceID ;
       AUTOINC_GEN_TYPE  _generatedType ;
 
-      AUTOINC_ITEM_MAP* _pSubFieldMap ;
+      _clsAutoIncSet*   _pSubFieldSet ;
       string            _fieldStr ;
 
    } ;
    typedef _clsAutoIncItem clsAutoIncItem ;
 
    /*
-      define container of clsAutoIncItem
-   */
-   typedef clsAutoIncItem::AUTOINC_ITEM_MAP     AUTOINC_ITEM_MAP ;
-   typedef AUTOINC_ITEM_MAP::iterator           AUTOINC_ITEM_MAP_IT ;
-   typedef AUTOINC_ITEM_MAP::const_iterator     AUTOINC_ITEM_MAP_CONST_IT ;
-   typedef AUTOINC_ITEM_MAP::value_type         AUTOINC_ITEM_MAP_VAL ;
-
-   /*
       _clsAutoIncSet define
    */
    class _clsAutoIncSet : public SDBObject
    {
-      public:
-         _clsAutoIncSet() ;
-         ~_clsAutoIncSet() ;
+   friend class _clsAutoIncItem ;
+   friend class _clsAutoIncIterator ;
+   typedef clsAutoIncItem::AUTOINC_ITEM_MAP           AUTOINC_ITEM_MAP ;
+   typedef clsAutoIncItem::AUTOINC_ITEM_MAP_IT        AUTOINC_ITEM_MAP_IT ;
+   typedef clsAutoIncItem::AUTOINC_ITEM_MAP_VAL       AUTOINC_ITEM_MAP_VAL ;
+   typedef clsAutoIncItem::AUTOINC_ITEM_MAP_CONST_IT  AUTOINC_ITEM_MAP_CONST_IT ;
 
-      public:
-         INT32    init( const BSONElement &ele ) ;
-         void     clear() ;
-         UINT32   totalCount() const { return _totalCount ; }
+   public:
+      _clsAutoIncSet() ;
+      ~_clsAutoIncSet() ;
 
-         const clsAutoIncItem*      findItem( const CHAR *pName ) const ;
+   public:
+      INT32    init( const BSONElement &ele ) ;
+      void     clear() ;
 
-         const AUTOINC_ITEM_MAP&    getMap() const { return _mapItem ; }
-         const vector<BSONObj>&     getFields() const { return _vecFields ; }
+      INT32    insert( const BSONObj &obj ) ;
+      UINT32   fieldCount() const { return _fieldCount ; }
+      UINT32   itemCount() const { return _mapItem.size() ; }
+      UINT32   getEleSize() const { return _eleSize ; }
 
-      protected:
+      const clsAIIDSet&          getAIIDs() const { return _aiidSet ; }
+      const clsAutoIncItem*      findItem( const CHAR *pName ) const ;
 
-         INT32    _initAItem( const BSONObj &obj ) ;
-         void     _clear() ;
+      const vector<BSONObj>&     getFields() const { return _vecFields ; }
 
-      private:
-         BSONObj              _objInfo ;
-         AUTOINC_ITEM_MAP     _mapItem ;
-         UINT32               _totalCount ;
+   protected:
 
-         vector<BSONObj>      _vecFields ;
+      INT32    _initAItem( const BSONObj &obj ) ;
+      void     _clear() ;
+      UINT32   _calcEleSize( const _clsAutoIncSet &set ) ;
+
+   private:
+      BSONObj              _objInfo ;
+      AUTOINC_ITEM_MAP     _mapItem ;
+      UINT32               _fieldCount ;
+
+      vector<BSONObj>      _vecFields ;
+      clsAIIDSet           _aiidSet ;
+      UINT32               _eleSize ;
 
    } ;
    typedef _clsAutoIncSet clsAutoIncSet ;
+
+   /*
+      define iterator of clsAutoIncItem
+   */
+   class _clsAutoIncIterator : public SDBObject
+   {
+   typedef clsAutoIncSet::AUTOINC_ITEM_MAP           AUTOINC_ITEM_MAP ;
+   typedef clsAutoIncSet::AUTOINC_ITEM_MAP_CONST_IT  AUTOINC_ITEM_MAP_CONST_IT ;
+
+   public:
+      enum _MODE
+      {
+         NON_RECURS = 0,   // find first level item
+         RECURS            // find only leaf item
+      };
+      typedef enum _MODE MODE ;
+      _clsAutoIncIterator( const _clsAutoIncSet &set, MODE mode = NON_RECURS ) ;
+      BOOLEAN more() ;
+      const _clsAutoIncItem* next() ;
+
+   private:
+      MODE _mode ;
+      const AUTOINC_ITEM_MAP*    _pMap ;
+      AUTOINC_ITEM_MAP_CONST_IT  _it ;
+      _utilList< const AUTOINC_ITEM_MAP*, 1 >   _mapTrace ;
+      _utilList< AUTOINC_ITEM_MAP_CONST_IT, 1 > _itTrace ;
+   } ;
+   typedef _clsAutoIncIterator clsAutoIncIterator ;
 
 }
 

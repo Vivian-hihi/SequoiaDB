@@ -53,27 +53,6 @@ namespace engine
       typedef map< UINT32, SubCLObjsMap >    GroupSubCLMap ;
       typedef vector< BSONObj >              VEC_OBJECT ;
 
-      struct _AutoIncMark
-      {
-         utilSequenceID seqID ;
-         AUTOINC_GEN_TYPE genType ;
-
-         BOOLEAN operator< ( const _AutoIncMark &r ) const
-         {
-            return seqID < r.seqID ;
-         }
-         BOOLEAN operator== ( const _AutoIncMark &r ) const
-         {
-            return (seqID == r.seqID && genType == r.genType) ;
-         }
-         BOOLEAN operator!= ( const _AutoIncMark &r ) const
-         {
-            return this->operator==( r ) ? FALSE : TRUE ;
-         }
-      } ;
-      typedef struct _AutoIncMark AutoIncMark ;
-      typedef _utilSet< AutoIncMark, 1 >     AutoIncMarkSet ;
-
       class _SimpleBSONBuilder ;
 
       public:
@@ -129,7 +108,7 @@ namespace engine
                                GROUP_2_IOVEC &datas ) ;
 
          /// AutoIncrement relation
-         INT32 _addAutoIncToMsg( const AUTOINC_ITEM_MAP &autoIncMap,
+         INT32 _addAutoIncToMsg( const clsAutoIncSet &autoIncSet,
                                  MsgOpInsert *pInsertMsg,
                                  CHAR const *pInsertor,
                                  const INT32 count,
@@ -140,14 +119,9 @@ namespace engine
                                  INT32 &newMsgLen ) ;
 
          INT32 _addAutoIncToObj( const BSONObj &objIn,
-                                 const AUTOINC_ITEM_MAP &autoIncMap,
+                                 const clsAutoIncSet &autoIncSet,
                                  pmdEDUCB *cb,
                                  _SimpleBSONBuilder &builder ) ;
-
-         INT32 _calcAutoIncEleSize( const AUTOINC_ITEM_MAP &autoIncMap ) ;
-
-         void  _extractAutoIncMark( const AUTOINC_ITEM_MAP& map,
-                                    AutoIncMarkSet& set ) ;
 
       protected:
 
@@ -200,7 +174,7 @@ namespace engine
          INT32          _newMsgSize ;
          INT32          _newMsgLen ;
          INT32          _orgMsgLen ;
-         AutoIncMarkSet _lastMarks ;
+         clsAIIDSet     _lastAIIDs ;
 
    } ;
    typedef _coordInsertOperator coordInsertOperator ;
