@@ -12,9 +12,6 @@ var dbOpr = new DBOperator();
 var CREATEINDEXSYNCOPERATION = 0;
 var DELETEINDEXSYNCOPERATION = 1;
 
-// create WORKDIR in local host
-commMakeDir( "localhost", WORKDIR );
-
 /******************************************************************************
 *@Description : do some operations related to ES, such as:
                 do queries by rest
@@ -701,9 +698,9 @@ function checkInspectResult(csName, clName, checkTimes)
 {
    if ( typeof(checkTimes) == "undefined" )  {  checkTimes = 5;  }
 
-   var inspectBinFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin" ;
-   var inspectReportFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin.report" ;
-   var installPath = commGetInstallPath();    
+   var installPath = commGetInstallPath();   
+   var inspectBinFile = installPath + "/" + "inspect_" + csName + "_" + clName + ".bin" ;
+   var inspectReportFile = installPath + "/" + "inspect_" + csName + "_" + clName + ".bin.report" ; 
    var inspectCommand = installPath + "/bin/sdbinspect" + " -d " + COORDHOSTNAME + ":" + COORDSVCNAME + " -c " + csName + " -l " + clName + " -o " + inspectBinFile + " -t " + checkTimes; 
    try 
    {  

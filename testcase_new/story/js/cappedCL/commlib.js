@@ -147,6 +147,8 @@ function(option)
 function checkData( csName, clName )
 {
    var installPath = commGetInstallPath();
+   var inspectBinFile = installPath + "/" + "inspect_" + csName + "_" + clName + ".bin" ;
+   var inspectReportFile = installPath + "/" + "inspect_" + csName + "_" + clName + ".bin.report" ;
    var cmd = new command(installPath + "/bin/sdbinspect");
    var rc  = db.snapshot( SDB_SNAP_COLLECTIONS, {'Name':csName+"."+clName});
    var groupName = rc.next().toObj().Details[0].GroupName;
@@ -154,10 +156,16 @@ function checkData( csName, clName )
    cmd.addOption("-d " + this.db.toString());
    cmd.addOption("-c " + csName);
    cmd.addOption("-l " + clName);
+   cmd.addOption("-o " + inspectBinFile);
    rc.close();
    
    var result = cmd.exec();
-   
+  
+   // remove report files
+   var cmd = new Cmd();
+   cmd.run("rm -f " + inspectBinFile);
+   cmd.run("rm -f " + inspectReportFile);
+ 
    if (result.lastIndexOf("inspect done") === 0 &&
        result.lastIndexOf("exit with no records different") !== -1)
    {
