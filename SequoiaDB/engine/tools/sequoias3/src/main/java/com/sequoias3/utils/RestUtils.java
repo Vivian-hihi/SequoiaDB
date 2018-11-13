@@ -11,6 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+
 @Component
 public class RestUtils {
     private static final Logger logger = LoggerFactory.getLogger(RestUtils.class);
@@ -46,12 +49,19 @@ public class RestUtils {
     }
 
     public String getObjectNameByURI(String url) throws S3ServerException {
-        int beginIndex = url.indexOf(RestParamDefine.REST_DELIMITER, 1);
+        String decodeUrl;
+        try {
+            decodeUrl = URLDecoder.decode(url, "UTF-8");
+        }catch (UnsupportedEncodingException e){
+            throw new S3ServerException(S3Error.OBJECT_INVALID_KEY, "Invalid key. url = " + url);
+        }
+
+        int beginIndex = decodeUrl.indexOf(RestParamDefine.REST_DELIMITER, 1);
         if (beginIndex == -1) {
             throw new S3ServerException(S3Error.OBJECT_INVALID_KEY, "Invalid key. url = " + url);
         }
 
-        return url.substring(beginIndex+1);
+        return decodeUrl.substring(beginIndex+1);
     }
 
     public Range getRange(String rangeHeader){
