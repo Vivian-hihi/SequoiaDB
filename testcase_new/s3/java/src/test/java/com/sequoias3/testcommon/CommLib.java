@@ -108,24 +108,18 @@ public class CommLib {
 	* @param bucketName	
 	*/
 	public static void deleteAllObjects( AmazonS3 s3Client,String bucketName ){
-		ObjectListing objectListing = s3Client.listObjects(bucketName);
-		while(true){
-			System.out.println("---name1="+bucketName);
-	    	Iterator<S3ObjectSummary> objIter = objectListing.getObjectSummaries().iterator();
-	    	System.out.println("---name2="+objIter.toString());
-	    	while( objIter.hasNext()){
-	    		S3ObjectSummary vs = objIter.next();
-	    		System.out.println("---key="+vs.getKey());
-	    		s3Client.deleteObject(bucketName,vs.getKey());
-	    	}
-	    		
-	    	if( objectListing.isTruncated()){
-	    		objectListing = s3Client.listNextBatchOfObjects(objectListing);
-	    	} else {
-	    		break;
-	    	}
-	    }
+		ListObjectsV2Result objectListing;
+		do{
+			objectListing = s3Client.listObjectsV2(bucketName);
+			Iterator<S3ObjectSummary> objIter = objectListing.getObjectSummaries().iterator();		    
+		    while( objIter.hasNext()){
+		    	S3ObjectSummary vs = objIter.next();
+		    	System.out.println("----key="+vs.getKey());
+		    	s3Client.deleteObject(bucketName,vs.getKey());		    	
+		    }
+		}while( objectListing.isTruncated() );
 	}
+
 	    
 	/**
 	* delete all object versions(required for versioned buckets)
