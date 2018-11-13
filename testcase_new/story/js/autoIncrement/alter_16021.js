@@ -11,10 +11,11 @@ function main()
    }  
    
    var clName = COMMCLNAME + "_16021";
+   var acquireSize = 10;
    
    commDropCL( db, COMMCSNAME, clName );
    
-   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1" } } );
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1", AcquireSize : acquireSize } } );
    
    //insert records and check
    var coordNodes = getCoordNodeNames();
@@ -24,7 +25,7 @@ function main()
       var coord = new Sdb( coordNodes[ i ] );
       var cl = coord.getCS( COMMCSNAME ).getCL( clName );
       cl.insert( { "a" : i, "b" : i } );
-      expRecs.push({ "a" : i, "b" : i, "id1" : 1 + i*1000});
+      expRecs.push({ "a" : i, "b" : i, "id1" : 1 + i*acquireSize});
       coord.close();
    }
     
@@ -32,12 +33,12 @@ function main()
    checkRec( rc, expRecs.sort(compare("id1")) );
    
    //alter attributes and check
-   dbcl.setAttributes({ AutoIncrement : { Field : "id1", CurrentValue : 500 } });
+   dbcl.setAttributes({ AutoIncrement : { Field : "id1", CurrentValue : 10 } });
    
    var clID = getCLID(COMMCSNAME, clName);
    var sequenceName = "SYS_" + clID + "_id1_SEQ";
    var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
-   if( cursor.current().toObj().CurrentValue !== 500)
+   if( cursor.current().toObj().CurrentValue !== 10)
    {
       throw "alter failed!";
    }
@@ -48,7 +49,7 @@ function main()
       var coord = new Sdb( coordNodes[ i ] );
       var cl = coord.getCS( COMMCSNAME ).getCL( clName );
       cl.insert( { "a" : i, "b" : i } );
-      expRecs.push({ "a" : i, "b" : i, "id1" : i*1000 + 501 });
+      expRecs.push({ "a" : i, "b" : i, "id1" : i*acquireSize + 11 });
       coord.close();
    }
     
@@ -76,7 +77,7 @@ function main()
       while(rc.next())
       {}
       cl.insert( { "a" : i, "b" : i } );
-      expRecs.push({ "a" : i, "b" : i, "id1" : i*1000 + 4001 });
+      expRecs.push({ "a" : i, "b" : i, "id1" : i*acquireSize + 4001 });
       coord.close();
    }
     

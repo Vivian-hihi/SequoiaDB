@@ -11,15 +11,35 @@ function main()
    }  
    
    var clName = COMMCLNAME + "_16019";
+   var acquireSize = 5;
+   var maxValue = 40;
+   var cacheSize = 10;
    
    commDropCL( db, COMMCSNAME, clName );
    
-   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1", } } );
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1", AcquireSize : 10 } } );
    
-   dbcl.insert({ a:1 });
+   //insert records and check
+   var coordNodes = getCoordNodeNames();
+   if(coordNodes.length !== 3)
+   {
+      return ;
+   }
+   var expRecs = [];
+   for( var i = 0; i < coordNodes.length; i++ )
+   {
+      var coord = new Sdb( coordNodes[ i ] );
+      var cl = coord.getCS( COMMCSNAME ).getCL( clName );
+      cl.insert( { "a" : i, "b" : i } );
+      expRecs.push({ "a" : i, "b" : i, "id1" : 1 + i*10});
+      coord.close();
+   }
+    
+   var rc = dbcl.find().sort( { "id1" : 1 } );
+   checkRec( rc, expRecs );
    
    //alter attributes default and check
-   dbcl.setAttributes({ AutoIncrement : { Field : "id1", MaxValue : 3, AcquireSize : 1, CacheSize : 1 } });
+   dbcl.setAttributes({ AutoIncrement : { Field : "id1", MaxValue : maxValue, AcquireSize : acquireSize, CacheSize : cacheSize } });
    
    var clID = getCLID(COMMCSNAME, clName);
    var sequenceName = "SYS_" + clID + "_id1_SEQ";
@@ -30,7 +50,6 @@ function main()
    }
  
    //insert records and check
-   var coordNodes = getCoordNodeNames();
    for( var i = 0; i < coordNodes.length; i++ )
    {
       var coord = new Sdb( coordNodes[ i ] );
@@ -38,6 +57,7 @@ function main()
       try
       {
          cl.insert( { "a" : i, "b" : i } );
+         expRecs.push({ "a" : i, "b" : i, "id1" : 1 + coordNodes.length*10 + i*acquireSize });
       }catch(e)
       {
          if(e !== -325)
@@ -49,7 +69,6 @@ function main()
    }
     
    var rc = dbcl.find();
-   var expRecs = [ { "a" : 1, "id1" : 1 }];
    checkRec( rc, expRecs );
    println("===check Cycled default succeed!===");
    
@@ -63,21 +82,16 @@ function main()
    }
    
    //insert records and check
-   var expRecs = [{ "a" : 1, "id1" : 1 }];
    for( var i = 0; i < coordNodes.length; i++ )
    {
-      if(coordNodes[i] !== System.getHostName() + "11810" )
-      {
-         var coord = new Sdb(coordNodes[i]);
-         var cl = coord.getCS(COMMCSNAME).getCL(clName);
-         var rc = cl.find();
-         while(rc.next())
-         {}
-         cl.insert( { "a" : i, "b" : i } );
-         expRecs.push({ "a" : i, "b" : i, "id1" : 1 });
-      }
+      var coord = new Sdb(coordNodes[i]);
+      var cl = coord.getCS(COMMCSNAME).getCL(clName);
+      var rc = cl.find();
+      while(rc.next())
+      {}
+      cl.insert( { "a" : i, "b" : i } );
+      expRecs.push({ "a" : i, "b" : i, "id1" : 1 + i*acquireSize });
       coord.close();
-      break;
    }
    
    var rc = dbcl.find();
@@ -85,7 +99,7 @@ function main()
    println("===check Cycled true succeed!===");
  
    //alter Cycled false
-   dbcl.setAttributes({ AutoIncrement : { Field : "id1", Cycled : false } });
+   dbcl.setAttributes({ AutoIncrement : { Field : "id1", Cycled : false, AcquireSize : 3, CacheSize : 6, MaxValue : 20} });
    
    var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
    if( cursor.current().toObj().Cycled !== false )
@@ -94,23 +108,29 @@ function main()
    }
    
    //insert records and check
-   try
-   { 
-      for(var j = 0; j < 3; j++)
-      {
-         dbcl.insert( { "a" : j, "b" : j } );
-         expRecs.push({ "a" : j, "b" : j, "id1" : 2 + j });
-      }  
-   }catch(e)
+   for( var i = 0; i < coordNodes.length; i++ )
    {
-      if(e !== -325)
+      var coord = new Sdb(coordNodes[i]);
+      var cl = coord.getCS(COMMCSNAME).getCL(clName);
+      var rc = cl.find();
+      while(rc.next())
+      {}
+      try
       {
-         throw e;
+         cl.insert( { "a" : i, "b" : i } );
+         expRecs.push({ "a" : i, "b" : i, "id1" : 1 + coordNodes.length*acquireSize + i*3 });
+      }catch(e)
+      {
+         if(e !== -325)
+         {
+            throw "insert error!";
+         }
       }
+      coord.close();
    }
       
    var rc = dbcl.find().sort({ "id1" : 1 });
-   checkRec( rc, expRecs );
+   checkRec( rc, expRecs.sort(compare("id1")) );
    println("===check Cycled false succeed!===");   
 
    commDropCL( db, COMMCSNAME, clName );

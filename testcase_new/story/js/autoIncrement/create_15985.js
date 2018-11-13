@@ -39,6 +39,23 @@ function main()
       checkSequence(sequenceNames[i], {} );
    }
    
+   try
+   {
+      dbcl.insert({a : 1});  
+   }catch(e)
+   {
+      if(e !== -6)
+      {
+         throw "insert error!";
+      }
+   }
+   
+   var doc = [{ a : { cc : 2 } }, { a : { bb : { bbb : 3 } } }];
+   dbcl.insert(doc);
+   var expRecs = [{ "a" : { "cc" : 2, "aa" : 1, "bb" : 1 } }, { "a" : { "bb" : { "bbb" : 3 }, "aa" : 2 } }];
+   var rc = dbcl.find();
+   checkRec( rc, expRecs );
+   
    commDropCL( db, COMMCSNAME, clName );
 }
 

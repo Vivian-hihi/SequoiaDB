@@ -11,17 +11,26 @@ function main()
    }
     
    var clName = COMMCLNAME + "_16012";
+   var acquireSize = 10;
    
    commDropCL( db, COMMCSNAME, clName );
    
-   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1" } } );
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1", AcquireSize : acquireSize } } );
    
    //insert records and check
+   var coordNodes = getCoordNodeNames();
    var expRecs = [];
-   dbcl.insert({ a : 1 });
-   expRecs.push({ a : 1, "id1" : 1 });
+   for( var i = 0; i < coordNodes.length; i++ )
+   {
+      var coord = new Sdb( coordNodes[ i ] );
+      var cl = coord.getCS( COMMCSNAME ).getCL( clName );
+      cl.insert( { "a" : i } );
+      expRecs.push({ "a" : i, "id1" : 1 + i*acquireSize});
+      coord.close();
+   }
+    
    var rc = dbcl.find().sort( { "id1" : 1 } );
-   checkRec( rc, expRecs );
+   checkRec( rc, expRecs.sort(compare("id1")) );
    
    try
    {
@@ -36,10 +45,17 @@ function main()
    }
    
    //insert records and check
-   dbcl.insert({ a : 2 });
-   expRecs.push({ a : 2, "id1" : 2 });
+   for( var i = 0; i < coordNodes.length; i++ )
+   {
+      var coord = new Sdb( coordNodes[ i ] );
+      var cl = coord.getCS( COMMCSNAME ).getCL( clName );
+      cl.insert( { "a" : i } );
+      expRecs.push({ "a" : i, "id1" : 2 + i*acquireSize});
+      coord.close();
+   }
+    
    var rc = dbcl.find().sort( { "id1" : 1 } );
-   checkRec( rc, expRecs );
+   checkRec( rc, expRecs.sort(compare("id1")) );
    
    commDropCL( db, COMMCSNAME, clName );
 }

@@ -11,10 +11,11 @@ function main()
    } 
     
    var clName = COMMCLNAME + "_16016";
+   var acquireSize = 10;
    
    commDropCL( db, COMMCSNAME, clName );
    
-   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1" } } );
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1", AcquireSize : acquireSize } } );
    
    //insert records and check
    var coordNodes = getCoordNodeNames();
@@ -24,7 +25,7 @@ function main()
       var coord = new Sdb( coordNodes[ i ] );
       var cl = coord.getCS( COMMCSNAME ).getCL( clName );
       cl.insert( { "a" : i, "b" : i } );
-      expRecs.push({ "a" : i, "b" : i, "id1" : 1 + i*1000});
+      expRecs.push({ "a" : i, "b" : i, "id1" : 1 + i*acquireSize});
       coord.close();
    }
     
@@ -37,7 +38,6 @@ function main()
    var clID = getCLID(COMMCSNAME, clName);
    var sequenceName = "SYS_" + clID + "_id1_SEQ";
    var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
-   var currentValue = cursor.current().toObj().CurrentValue;
    if( cursor.current().toObj().MaxValue !== 5000)
    {
       throw "alter failed!";
@@ -52,7 +52,7 @@ function main()
       try
       { 
          cl.insert( { "a" : i, "b" : i } );
-         expRecs.push({ "a" : i, "b" : i, "id1" : currentValue + i*1000 });
+         expRecs.push({ "a" : i, "b" : i, "id1" : 1 + coordNodes.length*acquireSize + i*acquireSize });
       }catch(e)
       {
          if(e !== -325)

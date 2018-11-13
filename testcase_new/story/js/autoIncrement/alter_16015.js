@@ -11,10 +11,11 @@ function main()
    } 
    
    var clName = COMMCLNAME + "_16015";
+   var acquireSize = 500;
    
    commDropCL( db, COMMCSNAME, clName );
    
-   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1", Increment : -1 } } );
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1", AcquireSize : acquireSize, Increment : -1 } } );
  
    //insert records and check
    var coordNodes = getCoordNodeNames();
@@ -24,7 +25,7 @@ function main()
       var coord = new Sdb( coordNodes[ i ] );
       var cl = coord.getCS( COMMCSNAME ).getCL( clName );
       cl.insert( { "a" : i, "b" : i } );
-      expRecs.push({ "a" : i, "b" : i, "id1" : -1 - i*1000});
+      expRecs.push({ "a" : i, "b" : i, "id1" : -1 - i*acquireSize});
       coord.close();
    }
     
@@ -32,13 +33,12 @@ function main()
    checkRec( rc, expRecs );
    
    //alter attribute and check
-   dbcl.setAttributes({ AutoIncrement : { Field : "id1", MinValue : -5000 } });
+   dbcl.setAttributes({ AutoIncrement : { Field : "id1", MinValue : -2000 } });
    
    var clID = getCLID(COMMCSNAME, clName);
    var sequenceName = "SYS_" + clID + "_id1_SEQ";
    var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
-   var currentValue = cursor.current().toObj().CurrentValue;
-   if( cursor.current().toObj().MinValue !== -5000)
+   if( cursor.current().toObj().MinValue !== -2000)
    {
       throw "alter failed!";
    }
@@ -51,7 +51,7 @@ function main()
       try
       {
          cl.insert( { "a" : i, "b" : i } );
-         expRecs.push({ "a" : i, "b" : i, "id1" : currentValue - i*1000});
+         expRecs.push({ "a" : i, "b" : i, "id1" : -1 - coordNodes.length*acquireSize - i*acquireSize});
       }catch(e)
       {
          if(e !== -325)

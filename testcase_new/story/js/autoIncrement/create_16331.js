@@ -1,0 +1,44 @@
+/******************************************************************************
+@Description :   seqDB-16331:  创建已存在的自增字段  
+@Modify list :   2018-11-12    xiaoni Zhao  Init
+******************************************************************************/
+function main()
+{
+   if(commIsStandalone( db ))
+   {
+      println("Deploy is standalone");
+      return;
+   }  
+   
+   var clName = COMMCLNAME + "_16331";
+   
+   commDropCL( db, COMMCSNAME, clName );
+   
+   try
+   {
+      var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : [{ Field : "a1", Increment : 2 }, 
+                                       {Field : "a1", Increment : 3}, {Field : "a1", Increment : 4}] } );     
+   }catch(e)
+   {
+      if(e !== -6)
+      {
+         throw "create error!";
+      }
+   }
+   
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "a1", Increment : 2 } } );     
+  
+   try
+   {
+      dbcl.createAutoIncrement({ Field : "a1" });
+   }catch(e)
+   {
+      if(e !== -332)
+      {
+         throw "drop autoIncrement error!";
+      }
+   }
+   
+   commDropCL( db, COMMCSNAME, clName );
+}
+main();

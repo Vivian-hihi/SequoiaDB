@@ -13,6 +13,7 @@ function main()
    
    var clName = COMMCLNAME + "_15987";
    var field = "id1";
+   var acquireSize = 10;
    
    commDropCL( db, COMMCSNAME, clName );
    
@@ -23,13 +24,13 @@ function main()
    
    dbcl.split( dataGroupNames[0], dataGroupNames[1], 50 );
    
-   dbcl.createAutoIncrement( { Field : field } );
+   dbcl.createAutoIncrement( { Field : field, AcquireSize : acquireSize } );
    
    var clID = getCLID( COMMCSNAME, clName );
    var sequenceName = "SYS_" + clID + "_" + field + "_SEQ";
    var expArr = [ { Field : field, SequenceName : sequenceName } ];
    checkAutoIncrementonCL( COMMCSNAME, clName, expArr );
-   checkSequence( sequenceName, {} );
+   checkSequence( sequenceName, {AcquireSize : acquireSize} );
       
    dbcl.insert( { a : 2 } );
    
@@ -51,20 +52,28 @@ function main()
    expRecs = [ { "a" : 1 }, { "a" : 3 }, { "id1" : 1, "a" : 2 } ];
    checkRec( rc, expRecs );
    
-   dbcl.createAutoIncrement( { Field : field } );
+   dbcl.createAutoIncrement( { Field : field, AcquireSize : acquireSize } );
    
    //check autoIncrement 
    var clID = getCLID( COMMCSNAME, clName );
-   var sequenceNames = ["SYS_" + clID + "_" + field + "_SEQ"]; 
-   var expIncrements = [{ Field : field, SequenceName : sequenceNames[0] }];
-   checkAutoIncrementonCL( COMMCSNAME, clName, expIncrements );
+   var sequenceName = "SYS_" + clID + "_" + field + "_SEQ"; 
+   var expIncrement = [{ Field : field, SequenceName : sequenceName }];
+   checkAutoIncrementonCL( COMMCSNAME, clName, expIncrement );
+   checkSequence(sequenceName, { AcquireSize : acquireSize });
    
-   //check sequence
-   for( var i in sequenceNames )
+   var coordNodes = getCoordNodeNames();
+   for( var i = 0; i < coordNodes.length; i++ )
    {
-      checkSequence(sequenceNames[i], {});
+      var coord = new Sdb( coordNodes[ i ] );
+      var cl = coord.getCS( COMMCSNAME ).getCL( clName );
+      cl.insert( { "b" : i } );
+      expRecs.push({ "b" : i, "id1" : 1 + i*acquireSize });
+      coord.close();
    }
-   
+    
+   var rc = dbcl.find().sort({ "b" : 1, "a" : 1 });
+   var exp = expRecs.sort(compare("a"));
+   checkRec( rc, expRecs.sort(compare("a")));
    commDropCL( db, COMMCSNAME, clName );
 }
 

@@ -10,12 +10,12 @@ function main()
       return;
    } 
     
-   /*var clName = COMMCLNAME + "_15980";
+   var clName = COMMCLNAME + "_15980";
    var fields = ["id1", "a.a"];
    
    commDropCL( db, COMMCSNAME, clName );
    
-   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : [ { Field : fields[0] }, { Field : fields[1] } ] } );
+   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, { AutoIncrement : [{ Field : fields[0] }, { Field : fields[1] }] });
    
    var coordNodes = getCoordNodeNames();
    var expRecs = [];
@@ -23,8 +23,8 @@ function main()
    {
       var coord = new Sdb( coordNodes[ i ] );
       var cl = coord.getCS( COMMCSNAME ).getCL( clName );
-      cl.insert( { "b" : i, "c" : i } );
-      expRecs.push({ "b" : i, "c" : i, "id1" : 1 + i*1000, "a" : { "a" : 1 + i*1000 }});
+      cl.insert( { "b" : i } );
+      expRecs.push({ "b" : i, "id1" : 1 + i*1000, "a" : { "a" : 1 + i*1000 }});
       coord.close();
    }
     
@@ -40,15 +40,15 @@ function main()
    {
       var coord = new Sdb( coordNodes[ i ] );
       var cl = coord.getCS( COMMCSNAME ).getCL( clName );
-      cl.insert( { "b" : i, "c" : i } );
-      expRecs.push({ "b" : i, "c" : i, "id1" : 1 + i*1000, "a" : { "a" : 1 + i*1000 }});
+      cl.insert( { "b" : i } );
+      expRecs.push({ "b" : i, "id1" : 1 + i*1000, "a" : { "a" : 1 + i*1000 }});
       coord.close();
    }
      
    var rc = dbcl.find().sort( { "id1" : 1 } );
    checkRec( rc, expRecs );
  
-   commDropCL( db, COMMCSNAME, clName );*/
+   commDropCL( db, COMMCSNAME, clName );
 }
 
 function checkCurrentValue( db, csName, clName, fields )
