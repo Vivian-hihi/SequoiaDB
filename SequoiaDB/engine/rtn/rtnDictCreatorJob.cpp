@@ -402,7 +402,6 @@ namespace engine
 
       if ( !_conditionMatch( su, job._clID ) )
       {
-         // rc = RTN_DICT_CREATE_COND_NOT_MATCH ;
          retry = TRUE ;
          goto done ;
       }
