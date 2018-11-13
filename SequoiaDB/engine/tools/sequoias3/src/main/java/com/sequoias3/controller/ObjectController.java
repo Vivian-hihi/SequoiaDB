@@ -326,7 +326,9 @@ public class ObjectController {
                                           Range range, HttpServletResponse response){
         response.addHeader(RestParamDefine.GetObjectResHeader.ETAG, objectMeta.geteTag());
         response.addDateHeader(RestParamDefine.GetObjectResHeader.LAST_MODIFIED, objectMeta.getLastModified());
-        if (!objectMeta.getNoVersionFlag()) {
+        if (objectMeta.getNoVersionFlag()) {
+            response.addHeader(RestParamDefine.GetObjectResHeader.VERSION_ID, "null");
+        }else {
             response.addHeader(RestParamDefine.GetObjectResHeader.VERSION_ID, String.valueOf(objectMeta.getVersionId()));
         }
         response.addHeader(RestParamDefine.GetObjectResHeader.ACCEPT_RANGES, "bytes");
