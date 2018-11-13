@@ -149,6 +149,8 @@
     <Compile Include="Sdb\TestGetSnapshot15759.cs" />
     <Compile Include="Index\Index15934.cs" />
     <Compile Include="Cluster\TestReplicaGroup15935.cs" />
+    <Compile Include="TestBaseException\ExceptionTest16532.cs" />
+    <Compile Include="TestBaseException\ExceptionTest16533.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
