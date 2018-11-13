@@ -109,11 +109,11 @@ namespace CSharp.Crud.Insert
             try
             {
                 cl.BulkInsert(insertor, 2);
-                Assert.Fail("bulkInsert must be fail,the flag value error!");
+                Assert.AreEqual(3, cl.GetCount(null));
             }
             catch (BaseException e)
             {
-                Assert.AreEqual(-6, e.ErrorCode);
+                Assert.Fail("the flag is 2, insert error :" + e.ErrorCode);
             }        
         }
         
