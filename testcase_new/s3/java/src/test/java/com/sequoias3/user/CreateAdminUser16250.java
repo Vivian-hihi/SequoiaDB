@@ -1,0 +1,142 @@
+package com.sequoias3.user;
+
+import java.util.List;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.XML;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.Bucket;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+
+/**
+ * @Description: seqDB-16250 :: 管理员创建管理员（admin）用户
+ * @author fanyu
+ * @Date:2018年10月29日
+ * @version:1.0
+ */
+
+public class CreateAdminUser16250 extends S3TestBase {
+    private String name = "CreateAdminUser16250";
+    private String accessKeyID = null;
+    private String secretAccessKey = null;
+    private boolean runSuccess = false;
+
+    @BeforeClass
+    private void setUp() {
+        try {
+            UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
+                e.printStackTrace();
+                Assert.fail(e.getMessage());
+            }
+        }
+    }
+
+    @Test
+    private void test() throws JSONException {
+        // create user
+        JSONObject actUser = UserUtils.createUser(name, UserCommDefind.admin, UserUtils.accessKeyId);
+        // CRUD user for check
+        checkByCRUDUser(actUser);
+        // create bucket for check
+        checkByCraeteBucket();
+        runSuccess = true;
+    }
+
+    @AfterClass
+    private void tearDown() {
+        if (runSuccess) {
+            UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+        }
+    }
+
+    private void checkByCRUDUser(JSONObject admin) {
+        // get the accessKeyID and secretAccessKey from admin
+        JSONObject adminJSON = admin.getJSONObject(UserCommDefind.accessKeys);
+        accessKeyID = adminJSON.getString(UserCommDefind.accessKeyID);
+        secretAccessKey = adminJSON.getString(UserCommDefind.secretAccessKey);
+
+        String username = name + "_16250";
+        JSONObject actJSON = createAndCheck(username, accessKeyID);
+        updateAndCheck(username, actJSON, accessKeyID);
+        deleteAndCheck(username, accessKeyID);
+    }
+
+    private void checkByCraeteBucket() {
+        // check the user is active
+        AmazonS3 s3Client = null;
+        try {
+            s3Client = CommLib.buildS3Client(accessKeyID, secretAccessKey);
+            // create bucket
+            s3Client.createBucket(name.toLowerCase());
+            // check
+            List<Bucket> buckets = s3Client.listBuckets();
+            Assert.assertEquals(buckets.size(), 1, " only one bucket");
+            Bucket expbucket = buckets.get(0);
+            String actOwner = expbucket.getOwner().getDisplayName();
+            String actBucketName = expbucket.getName();
+            Assert.assertEquals(actBucketName, name.toLowerCase());
+            Assert.assertEquals(actOwner, name.toLowerCase());
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
+
+    private JSONObject createAndCheck(String username, String accessKeyID) {
+        // craete user
+        JSONObject actUser = UserUtils.createUser(username, UserCommDefind.normal, accessKeyID);
+        JSONObject actJSON = actUser.getJSONObject(UserCommDefind.accessKeys);
+        // get user
+        JSONObject expUser = UserUtils.getUser(username, accessKeyID);
+        JSONObject expJSON = expUser.getJSONObject(UserCommDefind.accessKeys);
+        // check
+        Assert.assertEquals(actJSON.getString(UserCommDefind.accessKeyID),
+                expJSON.getString(UserCommDefind.accessKeyID),
+                "actJSON = " + actJSON.toString() + ",expJSON = " + expJSON.toString());
+        Assert.assertEquals(actJSON.getString(UserCommDefind.secretAccessKey),
+                expJSON.getString(UserCommDefind.secretAccessKey),
+                "actJSON = " + actJSON.toString() + ",expJSON = " + expJSON.toString());
+        return actJSON;
+    }
+
+    private void updateAndCheck(String username, JSONObject actJSON, String accessKeyID) {
+        // update user
+        JSONObject updateUser = UserUtils.updateUser(username, accessKeyID);
+        JSONObject upadteJSON = updateUser.getJSONObject(UserCommDefind.accessKeys);
+        // check the user was updated
+        Assert.assertNotEquals(actJSON.getString(UserCommDefind.accessKeyID),
+                upadteJSON.getString(UserCommDefind.accessKeyID));
+        Assert.assertNotEquals(actJSON.getString(UserCommDefind.secretAccessKey),
+                upadteJSON.getString(UserCommDefind.secretAccessKey));
+
+    }
+
+    private void deleteAndCheck(String username, String accessKeyID) {
+        // delete user
+        UserUtils.deleteUser(username, accessKeyID);
+        // check user was deleted
+        try {
+            UserUtils.getUser(username, UserUtils.accessKeyId);
+            Assert.fail("exp fail but act success");
+        } catch (HttpClientErrorException e) {
+            String errorMsg = e.getResponseBodyAsString();
+            JSONObject json1 = XML.toJSONObject(errorMsg);
+            if (!json1.getJSONObject(UserCommDefind.error).getString(UserCommDefind.errorCode).contains("NoSuchUser")) {
+                e.printStackTrace();
+                Assert.fail(e.getMessage());
+            }
+        }
+    }
+}
