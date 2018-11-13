@@ -1512,7 +1512,7 @@ class collection(object):
         Parameters:
            Name      Type           Info:
            options   dict           The options for create_autoincrement. e.g. { Field: "a", MaxValue:2000 }.
-                     list/tuple     It can also be a list/tuple of such dict. e.g. [ { Field: "a", MaxValue:2000 }, { Field: "b", MaxValue:5000 } ]
+           options   list/tuple     It can also be a list/tuple of such dict. e.g. [ { Field: "a", MaxValue:2000 }, { Field: "b", MaxValue:5000 } ]
                                     Available options are as below:
                                     Field          : The name of autoincrement field
                                     StartValue     : The start value of autoincrement field
@@ -1527,13 +1527,13 @@ class collection(object):
            pysequoiadb.error.SDBBaseError
         """
         if not ( isinstance(options, dict) or isinstance(options, list) or isinstance(options, tuple) ):
-            raise SDBTypeError("record must be an instance of dict, list or tuple")
+            raise SDBTypeError("options must be an instance of dict, list or tuple")
 
         if isinstance(options, list) or isinstance(options, tuple):
             container = []
             for elem in options:
                 if not isinstance(elem, dict):
-                    raise SDBTypeError("record in list/tuple must be an instance of dict")
+                    raise SDBTypeError("item in list/tuple must be an instance of dict")
                 record = bson.BSON.encode(elem)
                 container.append(record)
             rc = sdb.cl_create_autoincrement(self._cl, container)
@@ -1549,18 +1549,18 @@ class collection(object):
         Parameters:
            Name      Type           Info:
            names     str            The name(s) of autoincrement field. e.g. "a"
-                     list/tuple     It can also be a list/tuple of such str. e.g. [ "a", "b" ]
+           names     list/tuple     It can also be a list/tuple of such str. e.g. [ "a", "b" ]
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
         if not ( isinstance(names, str) or isinstance(names, list) or isinstance(names, tuple) ):
-            raise SDBTypeError("record must be an instance of str, list or tuple")
+            raise SDBTypeError("names must be an instance of str, list or tuple")
 
         if isinstance(names, list) or isinstance(names, tuple):
             container = []
             for elem in names:
                 if not isinstance(elem, str):
-                    raise SDBTypeError("record in list/tuple must be an instance of str")
+                    raise SDBTypeError("item in list/tuple must be an instance of str")
                 container.append(elem)
             rc = sdb.cl_drop_autoincrement(self._cl, container)
             raise_if_error(rc, "Drop autoincrement failed")
