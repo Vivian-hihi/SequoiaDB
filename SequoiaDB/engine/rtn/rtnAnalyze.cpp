@@ -122,7 +122,7 @@ namespace engine
 
    static INT32 _rtnAnalyzeCSStats ( const monCSSimple *pMonCS,
                                      const rtnAnalyzeParam &param,
-                                     CHAR *pSortBuf,
+                                     rtnSortArea &sortArea,
                                      pmdEDUCB *cb,
                                      _SDB_DMSCB *dmsCB,
                                      _SDB_RTNCB *rtnCB,
@@ -131,7 +131,7 @@ namespace engine
    static INT32 _rtnAnalyzeCLStats ( const monCSSimple *pMonCS,
                                      const monCLSimple *pMonCL,
                                      const rtnAnalyzeParam &param,
-                                     CHAR *pSortBuf,
+                                     rtnSortArea &sortArea,
                                      pmdEDUCB *cb,
                                      _SDB_DMSCB *dmsCB,
                                      _SDB_RTNCB *rtnCB,
@@ -151,7 +151,7 @@ namespace engine
                                        const monIndex *pMonIX,
                                        const rtnAnalyzeParam &param,
                                        BOOLEAN needUpdateCL,
-                                       CHAR *pSortBuf,
+                                       rtnSortArea &sortArea,
                                        pmdEDUCB *cb,
                                        _SDB_DMSCB *dmsCB,
                                        _SDB_RTNCB *rtnCB,
@@ -163,7 +163,7 @@ namespace engine
                                            const rtnAnalyzeParam &param,
                                            BOOLEAN needUpdateCL,
                                            BOOLEAN clearPlans,
-                                           CHAR *pSortBuf,
+                                           rtnSortArea &sortArea,
                                            pmdEDUCB *cb,
                                            _SDB_DMSCB *dmsCB,
                                            _SDB_RTNCB *rtnCB,
@@ -181,7 +181,7 @@ namespace engine
                                   UINT32 sampleRecords,
                                   UINT64 totalRecords,
                                   BOOLEAN fullScan,
-                                  CHAR *pSortBuf,
+                                  rtnSortArea &sortArea,
                                   pmdEDUCB *cb ) ;
 
    static INT32 _rtnPostAnalyzeAll ( const rtnAnalyzeParam & param,
@@ -482,8 +482,10 @@ namespace engine
       {
          dmsCB->suUnlock( suID, csLockType ) ;
          suLocked = FALSE ;
+         rtnSortArea sortArea ;
 
-         rc = _rtnAnalyzeCSStats( &monCS, param, NULL, cb, dmsCB, rtnCB, dpsCB ) ;
+         rc = _rtnAnalyzeCSStats( &monCS, param, sortArea, cb,
+                                  dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze collection space [%s], "
                       "rc: %d", pCSName, rc ) ;
 
@@ -606,8 +608,9 @@ namespace engine
          pSU = NULL ;
          suID = DMS_INVALID_SUID ;
          mbContext = NULL ;
+         rtnSortArea sortArea ;
 
-         rc = _rtnAnalyzeCLStats( &monCS, &monCL, param, NULL,
+         rc = _rtnAnalyzeCLStats( &monCS, &monCL, param, sortArea,
                                   cb, dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze statistics for "
                       "collection [%s], rc: %d", pCLFullName, rc ) ;
@@ -753,9 +756,10 @@ namespace engine
          pSU = NULL ;
          suID = DMS_INVALID_SUID ;
          mbContext = NULL ;
+         rtnSortArea sortArea ;
 
          rc = _rtnAnalyzeIndexStat( &monCS, &monCL, &monIX,
-                                    localParam, TRUE, NULL,
+                                    localParam, TRUE, sortArea,
                                     cb, dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze statistics for "
                       "index [%s %s], rc: %d", pCLFullName, pIndexName, rc ) ;
@@ -1083,13 +1087,10 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__RTNANALYZEALLSTATS ) ;
 
-      BOOLEAN allocatedBuf = FALSE ;
-      CHAR *pSortBuf = NULL ;
+      rtnSortArea sortArea ;
 
-      pSortBuf = ( CHAR * )SDB_OSS_MALLOC( RTN_ANALYZE_SORT_BUF_SIZE ) ;
-      PD_CHECK( pSortBuf, SDB_OOM, error, PDERROR,
-                "Failed to allocate sort buffer" ) ;
-      allocatedBuf = TRUE ;
+      rc = sortArea.init( RTN_ANALYZE_SORT_BUF_SIZE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Initialize sort area failed[%d]", rc ) ;
 
       for ( MON_CS_SIM_LIST::iterator iterCS = monCSList.begin() ;
             iterCS != monCSList.end() ;
@@ -1120,7 +1121,7 @@ namespace engine
          dmsCB->suUnlock( suItem._suID, SHARED ) ;
          pSU = NULL ;
 
-         rc = _rtnAnalyzeCSStats( &monCS, param, pSortBuf,
+         rc = _rtnAnalyzeCSStats( &monCS, param, sortArea,
                                   cb, dmsCB, rtnCB, dpsCB ) ;
          if ( SDB_APP_INTERRUPT == rc )
          {
@@ -1137,11 +1138,6 @@ namespace engine
       }
 
    done :
-      if ( allocatedBuf && pSortBuf )
-      {
-         SDB_OSS_FREE( pSortBuf ) ;
-         pSortBuf = NULL ;
-      }
       PD_TRACE_EXITRC( SDB__RTNANALYZEALLSTATS, rc ) ;
       return rc ;
    error :
@@ -1151,7 +1147,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNANALYZECSSTATS, "_rtnAnalyzeCSStats" )
    INT32 _rtnAnalyzeCSStats ( const monCSSimple *pMonCS,
                               const rtnAnalyzeParam &param,
-                              CHAR *pSortBuf,
+                              rtnSortArea &sortArea,
                               pmdEDUCB *cb,
                               _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB,
@@ -1163,19 +1159,15 @@ namespace engine
 
       SDB_ASSERT( pMonCS, "pMonCS is invalid" ) ;
 
-      BOOLEAN allocatedBuf = FALSE ;
-
       if ( pMonCS->_clList.empty() )
       {
          goto done ;
       }
 
-      if ( NULL == pSortBuf )
+      if ( !sortArea.hasInit() )
       {
-         pSortBuf = ( CHAR * )SDB_OSS_MALLOC( RTN_ANALYZE_SORT_BUF_SIZE ) ;
-         PD_CHECK( pSortBuf, SDB_OOM, error, PDERROR,
-                   "Failed to allocate sort buffer" ) ;
-         allocatedBuf = TRUE ;
+         rc = sortArea.init( RTN_ANALYZE_SORT_BUF_SIZE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Initialize sort area failed[%d]", rc ) ;
       }
 
       for ( MON_CL_SIM_VEC::const_iterator iterCL = pMonCS->_clList.begin() ;
@@ -1191,7 +1183,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _rtnAnalyzeCLStats( pMonCS, pMonCL, param, pSortBuf,
+         rc = _rtnAnalyzeCLStats( pMonCS, pMonCL, param, sortArea,
                                   cb, dmsCB, rtnCB, dpsCB ) ;
          if ( SDB_DMS_CS_NOTEXIST == rc ||
               SDB_APP_INTERRUPT == rc )
@@ -1209,11 +1201,6 @@ namespace engine
       }
 
    done :
-      if ( allocatedBuf && pSortBuf )
-      {
-         SDB_OSS_FREE( pSortBuf ) ;
-         pSortBuf = NULL ;
-      }
       PD_TRACE_EXITRC( SDB__RTNANALYZECSSTATS, rc ) ;
       return rc ;
    error :
@@ -1224,7 +1211,7 @@ namespace engine
    INT32 _rtnAnalyzeCLStats ( const monCSSimple *pMonCS,
                               const monCLSimple *pMonCL,
                               const rtnAnalyzeParam &param,
-                              CHAR *pSortBuf,
+                              rtnSortArea &sortArea,
                               pmdEDUCB *cb,
                               _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB,
@@ -1246,7 +1233,6 @@ namespace engine
       dmsMBContext *mbContext = NULL ;
 
       BOOLEAN writable = FALSE ;
-      BOOLEAN allocatedBuf = FALSE ;
 
       rtnAnalyzeParam localParam( param ) ;
 
@@ -1308,12 +1294,10 @@ namespace engine
          goto done ;
       }
 
-      if ( NULL == pSortBuf && localParam._sampleRecords > 0 )
+      if ( !sortArea.hasInit() && localParam._sampleRecords > 0 )
       {
-         pSortBuf = ( CHAR * )SDB_OSS_MALLOC( RTN_ANALYZE_SORT_BUF_SIZE ) ;
-         PD_CHECK( pSortBuf, SDB_OOM, error, PDERROR,
-                   "Failed to allocate sort buffer" ) ;
-         allocatedBuf = TRUE ;
+         rc = sortArea.init( RTN_ANALYZE_SORT_BUF_SIZE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Initialize sort area failed[%d]", rc ) ;
       }
 
       for ( MON_IDX_LIST::const_iterator iterIdx = monIdxList.begin() ;
@@ -1330,7 +1314,7 @@ namespace engine
          }
 
          rc = _rtnAnalyzeIndexStat( pMonCS, pMonCL, pMonIX,
-                                    localParam, FALSE, pSortBuf,
+                                    localParam, FALSE, sortArea,
                                     cb, dmsCB, rtnCB, dpsCB ) ;
          if ( SDB_DMS_CS_NOTEXIST == rc ||
               SDB_DMS_NOTEXIST == rc ||
@@ -1349,11 +1333,6 @@ namespace engine
       }
 
    done :
-      if ( allocatedBuf && pSortBuf )
-      {
-         SDB_OSS_FREE( pSortBuf ) ;
-         pSortBuf = NULL ;
-      }
       if ( pSU && mbContext )
       {
          pSU->data()->releaseMBContext( mbContext ) ;
@@ -1468,7 +1447,7 @@ namespace engine
                                 const monIndex *pMonIX,
                                 const rtnAnalyzeParam &param,
                                 BOOLEAN needUpdateCL,
-                                CHAR *pSortBuf,
+                                rtnSortArea &sortArea,
                                 pmdEDUCB *cb,
                                 _SDB_DMSCB *dmsCB,
                                 _SDB_RTNCB *rtnCB,
@@ -1493,7 +1472,6 @@ namespace engine
       dmsExtentID indexExtID = DMS_INVALID_EXTENT ;
 
       BOOLEAN writable = FALSE ;
-      BOOLEAN allocatedBuf = FALSE ;
 
       rc = dmsCB->writable( cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
@@ -1553,16 +1531,14 @@ namespace engine
                    indexCB.getLogicalID(),
                    indexCB.getDef().toString( FALSE, TRUE ).c_str() ) ;
 
-         if ( NULL == pSortBuf )
+         if ( !sortArea.hasInit() )
          {
-            pSortBuf = ( CHAR * )SDB_OSS_MALLOC( RTN_ANALYZE_SORT_BUF_SIZE ) ;
-            PD_CHECK( pSortBuf, SDB_OOM, error, PDERROR,
-                      "Failed to allocate sort buffer" ) ;
-            allocatedBuf = TRUE ;
+            rc = sortArea.init( RTN_ANALYZE_SORT_BUF_SIZE ) ;
+            PD_RC_CHECK( rc, PDERROR, "Initialize sort area failed[%d]", rc ) ;
          }
 
          rc = _rtnAnalyzeIndexInternal( pSU, mbContext, &indexCB,
-                                        param, needUpdateCL, TRUE, pSortBuf,
+                                        param, needUpdateCL, TRUE, sortArea,
                                         cb, dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze index [%s.%s %s], "
                       "rc: %d", pCSName, pCLName, pIXName, rc ) ;
@@ -1575,11 +1551,6 @@ namespace engine
       }
 
    done :
-      if ( allocatedBuf && pSortBuf )
-      {
-         SDB_OSS_FREE( pSortBuf ) ;
-         pSortBuf = NULL ;
-      }
       if ( pSU && mbContext )
       {
          pSU->data()->releaseMBContext( mbContext ) ;
@@ -1606,7 +1577,7 @@ namespace engine
                                     const rtnAnalyzeParam &param,
                                     BOOLEAN needUpdateCL,
                                     BOOLEAN clearPlans,
-                                    CHAR *pSortBuf,
+                                    rtnSortArea &sortArea,
                                     pmdEDUCB *cb,
                                     _SDB_DMSCB *dmsCB,
                                     _SDB_RTNCB *rtnCB,
@@ -1676,7 +1647,7 @@ namespace engine
                                  TRUE : FALSE ) ;
             rc = _rtnBuildMCVSet( pIndexStat, pSU, mbContext, indexCB,
                                   param._sampleRecords, totalRecords, fullScan,
-                                  pSortBuf, cb ) ;
+                                  sortArea, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build MCV set, rc: %d", rc ) ;
          }
          else
@@ -1791,7 +1762,7 @@ namespace engine
                            UINT32 sampleRecords,
                            UINT64 totalRecords,
                            BOOLEAN fullScan,
-                           CHAR *pSortBuf,
+                           rtnSortArea &sortArea,
                            pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -1801,7 +1772,6 @@ namespace engine
       SDB_ASSERT( pSU, "pSU is invalid" ) ;
       SDB_ASSERT( mbContext, "mbContext is invalid" ) ;
       SDB_ASSERT( indexCB, "indexCB is invalid" ) ;
-      SDB_ASSERT( pSortBuf, "pSortBuf is invalid" ) ;
 
       const CHAR *pCSName = pSU->CSName() ;
       const CHAR *pCLName = mbContext->mb()->_collectionName ;
@@ -1814,8 +1784,7 @@ namespace engine
       double fraction = 0.0 ;
 
       _rtnSortTuple *tuple = NULL ;
-      _rtnInternalSorting sorter( boOrder, pSortBuf,
-                                  RTN_ANALYZE_SORT_BUF_SIZE, -1 ) ;
+      _rtnInternalSorting sorter( boOrder, sortArea, -1 ) ;
 
       rc = rtnGetIndexSamples( pSU, indexCB, cb, sampleRecords, totalRecords,
                                fullScan, sorter, levels, pages ) ;

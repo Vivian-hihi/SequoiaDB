@@ -264,7 +264,8 @@ rtnFiles = [
       "rtn/rtnAlterTask.cpp",
       "rtn/rtnAlter.cpp",
       "rtn/rtnContextAlter.cpp",
-      "rtn/rtnExtContext.cpp"
+      "rtn/rtnExtContext.cpp",
+      "rtn/rtnSortArea.cpp"
       ]
 
 msgFiles = [
