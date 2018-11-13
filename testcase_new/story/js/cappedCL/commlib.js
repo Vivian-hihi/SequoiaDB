@@ -1,3 +1,6 @@
+// create WORKDIR in local host
+commMakeDir( "localhost", WORKDIR );
+
 /************************************
 *@Description: get actual result and check it 
 *@author:      zhaoyu
@@ -146,9 +149,9 @@ function(option)
 **************************************/
 function checkData( csName, clName )
 {
+   var inspectBinFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin" ;
+   var inspectReportFile = WORKDIR + "/" + "inspect_" + csName + "_" + clName + ".bin.report" ;
    var installPath = commGetInstallPath();
-   var inspectBinFile = installPath + "/" + "inspect_" + csName + "_" + clName + ".bin" ;
-   var inspectReportFile = installPath + "/" + "inspect_" + csName + "_" + clName + ".bin.report" ;
    var cmd = new command(installPath + "/bin/sdbinspect");
    var rc  = db.snapshot( SDB_SNAP_COLLECTIONS, {'Name':csName+"."+clName});
    var groupName = rc.next().toObj().Details[0].GroupName;
