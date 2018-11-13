@@ -5,9 +5,12 @@ import java.io.FileOutputStream;
 import java.util.Iterator;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.S3TestBase;
@@ -25,8 +28,23 @@ public class ObjectUtils extends S3TestBase {
 	 * @return md5
 	 */
     public static String getMd5OfObject(AmazonS3 s3Client, File localPath,String bucketName, 
-    		String keyName) throws Exception {
-    	S3Object object = s3Client.getObject(bucketName, keyName);
+    		String key) throws Exception {
+    	return getMd5OfObject(s3Client, localPath,bucketName, key, null);
+    }   
+    
+    /**
+	 * download the object with versionId,than get the object content md5
+	 * @param s3Client
+	 * @param localPath
+	 * @param bucketName
+	 * @param keyName
+	 * @param versionId
+	 * @return md5
+	 */
+    public static String getMd5OfObject(AmazonS3 s3Client, File localPath,String bucketName, 
+    		String key, String versionId) throws Exception { 
+    	GetObjectRequest request = new GetObjectRequest(bucketName, key, versionId);
+    	S3Object object = s3Client.getObject(request);
 		S3ObjectInputStream s3is = object.getObjectContent();		
 		String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
 				Thread.currentThread().getId());
@@ -42,6 +60,7 @@ public class ObjectUtils extends S3TestBase {
         String getMd5 = TestTools.getMD5(downloadPath);
         return getMd5;
     }   
+    
     
     /**
 	* delete the object of all versions(required for versioned buckets)
@@ -77,4 +96,5 @@ public class ObjectUtils extends S3TestBase {
 			}
 		}		
 	}
+	
 }
