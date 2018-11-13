@@ -138,7 +138,7 @@ namespace engine
 
       BOOLEAN _isFull() const
       {
-         return _numOfObjs - 1 >= _acquiredCounter ? TRUE : FALSE ;
+         return _numOfObjs - 1 <= _acquiredCounter ? TRUE : FALSE ;
       }
 
       BOOLEAN _isUpToLimit() const
@@ -419,7 +419,7 @@ namespace engine
       _objX *pObjX      = _getObjXByIndex( idx ) ;
       if ( pObjX )
       {
-         pObj = &pObjX._obj ;
+         pObj = ( T * )&( pObjX->_obj ) ;
       }
       return pObj ;
    }
