@@ -3062,6 +3062,97 @@ error:
    goto done ;
 }
 
+__METHOD_IMP(cl_create_autoincrement)
+{
+   INT32 rc                    = 0 ;
+   PYOBJECT *obj               = NULL ;
+   PYOBJECT *bson_object       = NULL ;
+   sdbCollection *cl           = NULL ;
+   const bson::BSONObj *object = NULL ;
+   std::vector< bson::BSONObj > vec_bson ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_object ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   if ( PyList_Check( bson_object ) )
+   {
+      MAKE_PYLIST_TO_VECTOR( bson_object, vec_bson ) ;
+      rc = cl->createAutoIncrement( vec_bson ) ;   
+   }
+   else
+   {
+      CAST_PYBSON_TO_CPPBSON( bson_object, object ) ;
+      rc = cl->createAutoIncrement( *object ) ;
+   }
+
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   DELETE_CPPOBJECT( object ) ;
+   return MAKE_RETURN_INT(rc) ;
+}
+
+__METHOD_IMP(cl_drop_autoincrement)
+{
+   INT32 rc                    = 0 ;
+   PYOBJECT *obj               = NULL ;
+   PYOBJECT *str_object        = NULL ;
+   sdbCollection *cl           = NULL ;
+   const bson::BSONObj *object = NULL ;
+   std::vector< char * > vec_str ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &str_object ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+
+   if ( PyList_Check( str_object ) )
+   {
+      Py_ssize_t list_size = PyList_Size( str_object ) ;
+      for ( int idx = 0 ; idx < list_size ; ++idx )
+      {
+         char *str = NULL ;
+         str = PyBytes_AsString( PyList_GetItem( str_object, idx) ) ;
+         if ( NULL == str )
+         {
+         rc = SDB_INVALIDARGS ;
+         goto done ;
+         }
+         vec_str.push_back( str ) ;
+      }
+      rc = cl->dropAutoIncrement( vec_str ) ;
+   }
+   else
+   {
+      const char *str = PyBytes_AsString( str_object ) ;
+      if ( NULL == str )
+      {
+         rc = SDB_INVALIDARGS ;
+         goto done ;
+      }
+      rc = cl->dropAutoIncrement( str ) ;
+   }
+
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   DELETE_CPPOBJECT( object ) ;
+   return MAKE_RETURN_INT(rc) ;
+}
+
 __METHOD_IMP(cl_enable_sharding)
 {
    INT32 rc                         = SDB_OK ;
@@ -5023,6 +5114,8 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cl_enable_compression",           cl_enable_compression,           METH_VARARGS},
    {"cl_disable_compression",          cl_disable_compression,          METH_VARARGS},
    {"cl_set_attributes",               cl_set_attributes,               METH_VARARGS},
+   {"cl_create_autoincrement",         cl_create_autoincrement,         METH_VARARGS},
+   {"cl_drop_autoincrement",           cl_drop_autoincrement,           METH_VARARGS},
 
    /** cr */
    {"create_cursor",                   create_cursor,                   METH_VARARGS},

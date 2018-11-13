@@ -108,6 +108,8 @@ __METHOD_DECLARE(cl_list_lobs) ;
 __METHOD_DECLARE(cl_truncate) ;
 __METHOD_DECLARE(cl_create_id_index) ;
 __METHOD_DECLARE(cl_drop_id_index) ;
+__METHOD_DECLARE(cl_create_autoincrement) ;
+__METHOD_DECLARE(cl_drop_autoincrement) ;
 
 ///< domain
 __METHOD_DECLARE(create_domain) ;
