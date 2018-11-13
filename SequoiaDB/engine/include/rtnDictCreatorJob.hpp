@@ -57,7 +57,7 @@ namespace engine
       virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) ;
       virtual INT32 doit () ;
    private:
-      INT32 _checkAndCreateDictForCL( dmsDictJob job );
+      INT32 _checkAndCreateDictForCL( dmsDictJob job, BOOLEAN &retry ) ;
       BOOLEAN _conditionMatch( dmsStorageUnit *su, UINT16 mbID ) ;
       INT32 _createDict( dmsStorageDataCommon *sd, dmsMBContext *context ) ;
       INT32 _transferDict( dmsStorageDataCommon *sd, dmsMBContext *context,

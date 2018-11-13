@@ -113,6 +113,7 @@ namespace engine
 
       while ( !PMD_IS_DB_DOWN() && !cb->isForced() )
       {
+         BOOLEAN retry = FALSE ;
          /*
           * Before any one is found in the queue, the status of this thread is
           * wait. Once found, it will be changed to running.
@@ -140,9 +141,8 @@ namespace engine
           * time, and try again in the next round. If everything goes fine,
           * remove it from the list, and never check it again.
           */
-         rc = _checkAndCreateDictForCL( job ) ;
-         if ( ( SDB_OK != rc ) && ( SDB_DMS_CS_NOTEXIST != rc )
-              && ( SDB_DMS_NOTEXIST != rc ) && ( SDB_SYS != rc ) )
+         rc = _checkAndCreateDictForCL( job, retry ) ;
+         if ( SDB_OK == rc && retry )
          {
             dmsCB->pushDictJob( job ) ;
          }
@@ -326,7 +326,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTN_DICTCREATORJOB__CHECKANDCREATEDICTFORCL, "_rtnDictCreatorJob::_checkAndCreateDictForCL" )
-   INT32 _rtnDictCreatorJob::_checkAndCreateDictForCL( dmsDictJob job )
+   INT32 _rtnDictCreatorJob::_checkAndCreateDictForCL( dmsDictJob job,
+                                                       BOOLEAN &retry )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTN_DICTCREATORJOB__CHECKANDCREATEDICTFORCL ) ;
@@ -341,6 +342,8 @@ namespace engine
       ossTimestamp begin ;
       ossTimestamp end ;
 
+      retry = FALSE ;
+
       // Check writable before su lock
       rc = dmsCB->writable( cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
@@ -352,24 +355,12 @@ namespace engine
       su = dmsCB->suLock( job._suID ) ;
       if ( ( NULL == su ) || ( su->LogicalCSID() != job._suLID ) )
       {
-         rc = SDB_DMS_CS_NOTEXIST ;
-         goto error ;
+         goto done ;
       }
 
       rc = su->data()->getMBContext( &mbContext, job._clID,
-                                     DMS_INVALID_CLID, DMS_INVALID_CLID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get mb[%u] context, rc: %d",
-                   job._clID, rc ) ;
-      if ( mbContext->clLID() != job._clLID )
-      {
-         /*
-          * The corresponding collection has been dropped.
-          */
-         rc = SDB_DMS_NOTEXIST ;
-         goto error ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get mb context, rc: %d, mb ID: %d",
-                   rc, job._clID ) ;
+                                     job._clLID, DMS_INVALID_CLID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get mb context failed[%d]", rc ) ;
 
       if ( DMS_INVALID_EXTENT !=  mbContext->mb()->_dictExtentID )
       {
@@ -411,8 +402,9 @@ namespace engine
 
       if ( !_conditionMatch( su, job._clID ) )
       {
-         rc = RTN_DICT_CREATE_COND_NOT_MATCH ;
-         goto error ;
+         // rc = RTN_DICT_CREATE_COND_NOT_MATCH ;
+         retry = TRUE ;
+         goto done ;
       }
 
       ossGetCurrentTime( begin ) ;
@@ -477,6 +469,12 @@ namespace engine
       PD_TRACE_EXITRC( SDB__RTN_DICTCREATORJOB__CHECKANDCREATEDICTFORCL, rc ) ;
       return rc ;
    error:
+      // For other errors, let's try again later.
+      if ( SDB_DMS_CS_NOTEXIST != rc || SDB_DMS_NOTEXIST != rc )
+      {
+         rc = SDB_OK ;
+         retry = TRUE ;
+      }
       goto done ;
    }
 }
