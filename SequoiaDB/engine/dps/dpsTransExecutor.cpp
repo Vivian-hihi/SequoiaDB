@@ -122,6 +122,11 @@ namespace engine
    BOOLEAN _dpsTransExecutor::findLock( const dpsTransLockId &lockID,
                                         UTIL_OBJIDX &lrbIdx ) const
    {
+      if ( lockID.isLeafLevel() )
+      {
+         return FALSE ;
+      }
+
       DPS_LOCKID_MAP_CIT cit = _mapLockID.find( lockID ) ;
       if ( cit != _mapLockID.end() )
       {

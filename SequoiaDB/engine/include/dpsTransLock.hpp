@@ -43,6 +43,7 @@
 #include "dms.hpp"
 #include "ossLatch.hpp"
 #include "dpsTransLockDef.hpp"
+#include "dpstransCBLockInfo.hpp"
 #include <vector>
 
 namespace engine

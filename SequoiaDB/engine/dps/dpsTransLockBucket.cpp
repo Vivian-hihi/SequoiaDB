@@ -508,11 +508,7 @@ namespace engine
    BOOLEAN dpsLockBucket::isLockCompatible( DPS_TRANSLOCK_TYPE first,
                                             DPS_TRANSLOCK_TYPE second )
    {
-      if (( first | second ) == DPS_TRANSLOCK_X )
-      {
-         return FALSE;
-      }
-      return TRUE;
+      return dpsIsLockCompatible( first, second ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_CHECKCOMPATIBLE, "dpsLockBucket::checkCompatible" )
@@ -527,19 +523,12 @@ namespace engine
 
       while( iterLst != pLockUnit->_runList.end() )
       {
-         // it is means the lock-type is compatible,
-         // if there is a same lock-type in run-queue
-         if ( iterLst->second == lockType &&
-              DPS_TRANSLOCK_X != lockType )
-         {
-            break ;
-         }
          if ( iterLst->first != eduCB->getTID() )
          {
-            isCompatible = isLockCompatible( iterLst->second, lockType );
+            isCompatible = dpsIsLockCompatible( iterLst->second, lockType );
             if ( !isCompatible )
             {
-               PD_LOG( PDERROR, "Lock[%s] conflicts[MyTID:%d, MyLockType:%d, "
+               PD_LOG( PDWARNING, "Lock[%s] conflicts[MyTID:%d, MyLockType:%d, "
                        "HoldTID:%d, HoldLockType=%d]",
                        lockID.toString().c_str(),
                        eduCB->getTID(), lockType,

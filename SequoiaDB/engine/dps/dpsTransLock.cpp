@@ -71,29 +71,14 @@ namespace engine
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId iLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
       BOOLEAN isIXLocked = FALSE;
 
       // get intention-lock at first
       // it is not need to get intention-lock while lock space
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         iLockId = lockId ;
-         if ( lockId._recordOffset != DMS_INVALID_OFFSET )
-         {
-            // lock a record,
-            // intent to get collection IX-LOCK at first
-            iLockId._recordExtentID = DMS_INVALID_EXTENT;
-            iLockId._recordOffset = DMS_INVALID_OFFSET;
-         }
-         else
-         {
-            // lock collection,
-            // intent to get space IX-LOCK at first
-            iLockId._collectionID = DMS_INVALID_MBID;
-         }
-         rc = acquireIX( eduCB, iLockId);
+         rc = acquireIX( eduCB, lockId.upOneLevel() ) ;
    
          PD_RC_CHECK( rc, PDERROR,
                      "failed to get the intention-lock, "
@@ -150,7 +135,7 @@ namespace engine
    error:
       if ( isIXLocked )
       {
-         release( eduCB, iLockId );
+         release( eduCB, lockId.upOneLevel() ) ;
       }
       goto done;
    }
@@ -163,30 +148,14 @@ namespace engine
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId iLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
       BOOLEAN isISLocked = FALSE;
 
       // get intention-lock at first
       // it is not need to get intention-lock while lock space
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         iLockId = lockId ;
-         if ( lockId._recordOffset != DMS_INVALID_OFFSET )
-         {
-            // lock a record,
-            // intent to get collection IS-LOCK at first
-            iLockId._recordExtentID = DMS_INVALID_EXTENT;
-            iLockId._recordOffset = DMS_INVALID_OFFSET;
-         }
-         else
-         {
-            // lock collection,
-            // intent to get space IS-LOCK at first
-            iLockId._collectionID = DMS_INVALID_MBID;
-         }
-         rc = acquireIS( eduCB, iLockId);
-   
+         rc = acquireIS( eduCB, lockId.upOneLevel() );
          PD_RC_CHECK( rc, PDERROR, "Failed to get the intention-lock, "
                       "get S-lock failed(rc=%d)", rc );
          isISLocked = TRUE;
@@ -240,7 +209,7 @@ namespace engine
    error:
       if ( isISLocked )
       {
-         release( eduCB, iLockId );
+         release( eduCB, lockId.upOneLevel() );
       }
       goto done;
    }
@@ -251,21 +220,18 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCK_ACQUIREIX ) ;
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
-      SDB_ASSERT( ( DMS_INVALID_OFFSET == lockId._recordOffset
-                  && DMS_INVALID_EXTENT == lockId._recordExtentID ),
+      SDB_ASSERT( !lockId.isLeafLevel(),
                   "IX-Lock only used for collection or collectionspace" ) ;
 
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId isLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
       BOOLEAN isISLocked = FALSE;
 
       // lock collection, get IS-Lock of space at first
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         isLockId._logicCSID = lockId._logicCSID;
-         rc = acquireIS( eduCB, isLockId );
+         rc = acquireIS( eduCB, lockId.upOneLevel() );
          PD_RC_CHECK( rc, PDERROR, "Failed to get the S-lock of space, "
                       "get IX-lock failed(rc=%d)", rc );
          isISLocked = TRUE;
@@ -320,7 +286,7 @@ namespace engine
    error:
       if ( isISLocked )
       {
-         release( eduCB, isLockId );
+         release( eduCB, lockId.upOneLevel() ) ;
       }
       goto done;
    }
@@ -331,21 +297,18 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCK_ACQUIREIS ) ;
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
-      SDB_ASSERT( ( DMS_INVALID_OFFSET == lockId._recordOffset
-                  && DMS_INVALID_EXTENT == lockId._recordExtentID ),
+      SDB_ASSERT( !lockId.isLeafLevel(),
                   "IX-Lock only used for collection or collectionspace" ) ;
 
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId sLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
       BOOLEAN isISLocked = FALSE;
 
       // lock collection, get IS-Lock of space at first
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         sLockId._logicCSID = lockId._logicCSID;
-         rc = acquireIS( eduCB, sLockId );
+         rc = acquireIS( eduCB, lockId.upOneLevel() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get the S-lock of space, "
                       "get IS-lock failed(rc=%d)", rc );
          isISLocked = TRUE;
@@ -386,7 +349,7 @@ namespace engine
    error:
       if ( isISLocked )
       {
-         release( eduCB, sLockId );
+         release( eduCB, lockId.upOneLevel() ) ;
       }
       goto done;
    }
@@ -399,7 +362,6 @@ namespace engine
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId iLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
       INT64 lockRef = 0;
 
@@ -430,24 +392,9 @@ namespace engine
       }
 
       // release the intention-lock
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         iLockId = lockId;
-         if ( lockId._recordOffset != DMS_INVALID_OFFSET )
-         {
-            // locked a record,
-            // release the collection's intention-lock
-            iLockId._recordExtentID = DMS_INVALID_EXTENT;
-            iLockId._recordOffset = DMS_INVALID_OFFSET;
-            release( eduCB, iLockId );
-         }
-         else
-         {
-            // locked a collection,
-            // release the space's S-LOCK
-            iLockId._collectionID = DMS_INVALID_MBID;
-            release( eduCB, iLockId );
-         }
+         release( eduCB, lockId.upOneLevel() ) ;
       }
 
    done:
@@ -520,36 +467,29 @@ namespace engine
       goto done;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCK_UPGRADECHECK, "dpsTransLock::upgradeCheck" )
    INT32 dpsTransLock::upgradeCheck( DPS_TRANSLOCK_TYPE srcType,
                                      DPS_TRANSLOCK_TYPE dstType )
    {
-      PD_TRACE_ENTRY( SDB_DPSTRANSLOCK_UPGRADECHECK ) ;
-      // valid upgrade:
-      // IS--->IX
-      //  S--->X
-      // IS--->S
-      if ( (dstType - srcType == 1 && srcType != DPS_TRANSLOCK_IX ) ||
-           (dstType - srcType == 2 && dstType != DPS_TRANSLOCK_X ) )
+      INT32 rc = dpsUpgradeCheck( srcType, dstType ) ;
+      if ( rc )
       {
-         return SDB_OK;
+         PD_LOG( PDWARNING, "Couldn't upgrade from(%d) to (%d)",
+                 srcType, dstType ) ;
       }
-      PD_LOG( PDERROR, "Couldn't upgrade from(%d) to (%d)", srcType, dstType ) ;
-      PD_TRACE_EXIT ( SDB_DPSTRANSLOCK_UPGRADECHECK );
-      return SDB_PERM;
+      return rc ;
    }
 
    UINT32 dpsTransLock::getBucketNo( const dpsTransLockId &lockId )
    {
-      if ( lockId._recordOffset != DMS_INVALID_OFFSET )
+      if ( lockId.offset() != DMS_INVALID_OFFSET )
       {
-         return lockId._recordOffset % MAX_LOCKBUCKET_NUM ;
+         return lockId.offset() % MAX_LOCKBUCKET_NUM ;
       }
-      else if ( lockId._collectionID != DMS_INVALID_MBID )
+      else if ( lockId.clID() != DMS_INVALID_MBID )
       {
-         return lockId._collectionID % MAX_LOCKBUCKET_NUM;
+         return lockId.clID() % MAX_LOCKBUCKET_NUM;
       }
-      return lockId._logicCSID % MAX_LOCKBUCKET_NUM;
+      return lockId.csID() % MAX_LOCKBUCKET_NUM ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCK_GETBUCKET, "dpsTransLock::getBucket" )
@@ -585,7 +525,6 @@ namespace engine
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId iLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
 
       // search in self-educb at first,
@@ -599,24 +538,9 @@ namespace engine
 
       // test intention-lock at first
       // it is not need to get intention-lock while lock space
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         iLockId = lockId ;
-         if ( lockId._recordOffset != DMS_INVALID_OFFSET )
-         {
-            // lock a record,
-            // intent to get collection IS-LOCK at first
-            iLockId._recordExtentID = DMS_INVALID_EXTENT;
-            iLockId._recordOffset = DMS_INVALID_OFFSET;
-         }
-         else
-         {
-            // lock collection,
-            // intent to get space IS-LOCK at first
-            iLockId._collectionID = DMS_INVALID_MBID;
-         }
-         rc = testIS( eduCB, iLockId );
-   
+         rc = testIS( eduCB, lockId.upOneLevel() ) ;
          PD_RC_CHECK( rc, PDINFO, "Failed to test the intention-lock, "
                      "test S-lock failed(rc=%d)", rc );
       }
@@ -681,12 +605,10 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCK_TESTIS ) ;
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
-      SDB_ASSERT( ( DMS_INVALID_OFFSET == lockId._recordOffset
-                  && DMS_INVALID_EXTENT == lockId._recordExtentID ),
+      SDB_ASSERT( !lockId.isLeafLevel(),
                   "IX-Lock only used for collection or collectionspace" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId sLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
 
       // search in self-educb at first,
@@ -699,10 +621,9 @@ namespace engine
       }
 
       // lock collection, test IS-Lock of space at first
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         sLockId._logicCSID = lockId._logicCSID;
-         rc = testIS( eduCB, sLockId );
+         rc = testIS( eduCB, lockId.upOneLevel() ) ;
          PD_RC_CHECK( rc, PDINFO, "Failed to test the S-lock of space, "
                       "test IS-lock failed(rc=%d)", rc );
       }
@@ -730,7 +651,6 @@ namespace engine
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId iLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
 
       // search in self-educb at first,
@@ -744,24 +664,9 @@ namespace engine
 
       // test intention-lock at first
       // it is not need to get intention-lock while lock space
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         iLockId = lockId ;
-         if ( lockId._recordOffset != DMS_INVALID_OFFSET )
-         {
-            // lock a record,
-            // intent to get collection IX-LOCK at first
-            iLockId._recordExtentID = DMS_INVALID_EXTENT;
-            iLockId._recordOffset = DMS_INVALID_OFFSET;
-         }
-         else
-         {
-            // lock collection,
-            // intent to get space S-LOCK at first
-            iLockId._collectionID = DMS_INVALID_MBID;
-         }
-         rc = testIX( eduCB, iLockId);
-   
+         rc = testIX( eduCB, lockId.upOneLevel() ) ;
          PD_RC_CHECK( rc, PDINFO, "Failed to test the intention-lock, "
                       "test IX-lock failed(rc=%d)", rc );
       }
@@ -795,12 +700,10 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCK_TESTIX ) ;
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
-      SDB_ASSERT( ( DMS_INVALID_OFFSET == lockId._recordOffset
-                  && DMS_INVALID_EXTENT == lockId._recordExtentID ),
+      SDB_ASSERT( !lockId.isLeafLevel(),
                   "IX-Lock only used for collection or collectionspace" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId sLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
 
       // search in self-educb at first,
@@ -814,10 +717,9 @@ namespace engine
       }
 
       // get IS-Lock of space at first
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         sLockId._logicCSID = lockId._logicCSID;
-         rc = testIS( eduCB, sLockId );
+         rc = testIS( eduCB, lockId.upOneLevel() ) ;
          PD_RC_CHECK( rc, PDINFO, "Failed to test the IS-lock of space, "
                       "test IX-lock failed(rc=%d)", rc );
       }
@@ -854,30 +756,14 @@ namespace engine
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId iLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
       BOOLEAN isIXLocked = FALSE;
 
       // get intention-lock at first
       // it is not need to get intention-lock while lock space
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         iLockId = lockId ;
-         if ( lockId._recordOffset != DMS_INVALID_OFFSET )
-         {
-            // lock a record,
-            // intent to get collection IX-LOCK at first
-            iLockId._recordExtentID = DMS_INVALID_EXTENT;
-            iLockId._recordOffset = DMS_INVALID_OFFSET;
-         }
-         else
-         {
-            // lock collection,
-            // intent to get space S-LOCK at first
-            iLockId._collectionID = DMS_INVALID_MBID;
-         }
-         rc = tryIX( eduCB, iLockId);
-   
+         rc = tryIX( eduCB, lockId.upOneLevel() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get the intention-lock, "
                       "get X-lock failed(rc=%d)", rc );
          isIXLocked = TRUE;
@@ -928,7 +814,7 @@ namespace engine
    error:
       if ( isIXLocked )
       {
-         release( eduCB, iLockId );
+         release( eduCB, lockId.upOneLevel() ) ;
       }
       goto done;
    }
@@ -940,30 +826,14 @@ namespace engine
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId iLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
       BOOLEAN isISLocked = FALSE;
 
       // get intention-lock at first
       // it is not need to get intention-lock while lock space
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         iLockId = lockId ;
-         if ( lockId._recordOffset != DMS_INVALID_OFFSET )
-         {
-            // lock a record,
-            // intent to get collection IS-LOCK at first
-            iLockId._recordExtentID = DMS_INVALID_EXTENT;
-            iLockId._recordOffset = DMS_INVALID_OFFSET;
-         }
-         else
-         {
-            // lock collection,
-            // intent to get space S-LOCK at first
-            iLockId._collectionID = DMS_INVALID_MBID;
-         }
-         rc = tryIS( eduCB, iLockId);
-   
+         rc = tryIS( eduCB, lockId.upOneLevel() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get the intention-lock, "
                       "get S-lock failed(rc=%d)", rc );
          isISLocked = TRUE;
@@ -1014,7 +884,7 @@ namespace engine
    error:
       if ( isISLocked )
       {
-         release( eduCB, iLockId );
+         release( eduCB, lockId.upOneLevel() ) ;
       }
       goto done;
    }
@@ -1024,20 +894,17 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCK_TRYIX ) ;
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
-      SDB_ASSERT( ( DMS_INVALID_OFFSET == lockId._recordOffset
-                  && DMS_INVALID_EXTENT == lockId._recordExtentID ),
+      SDB_ASSERT( !lockId.isLeafLevel(),
                   "IX-Lock only used for collection or collectionspace" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId sLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
       BOOLEAN isISLocked = FALSE;
 
       // get S-Lock of space at first
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         sLockId._logicCSID = lockId._logicCSID;
-         rc = tryIS( eduCB, sLockId );
+         rc = tryIS( eduCB, lockId.upOneLevel() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get the S-lock of space, "
                       "get IX-lock failed(rc=%d)", rc );
          isISLocked = TRUE;
@@ -1087,7 +954,7 @@ namespace engine
    error:
       if ( isISLocked )
       {
-         release( eduCB, sLockId );
+         release( eduCB, lockId.upOneLevel() ) ;
       }
       goto done;
    }
@@ -1097,20 +964,17 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCK_TRYIS ) ;
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
-      SDB_ASSERT( ( DMS_INVALID_OFFSET == lockId._recordOffset
-                  && DMS_INVALID_EXTENT == lockId._recordExtentID ),
+      SDB_ASSERT( !lockId.isLeafLevel(),
                   "IX-Lock only used for collection or collectionspace" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId sLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
       BOOLEAN isISLocked = FALSE;
 
       // get IS-Lock of space at first
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         sLockId._logicCSID = lockId._logicCSID;
-         rc = tryIS( eduCB, sLockId );
+         rc = tryIS( eduCB, lockId.upOneLevel() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get the S-lock of space, "
                       "get IS-lock failed(rc=%d)", rc );
          isISLocked = TRUE;
@@ -1146,7 +1010,7 @@ namespace engine
    error:
       if ( isISLocked )
       {
-         release( eduCB, sLockId );
+         release( eduCB, lockId.upOneLevel() ) ;
       }
       goto done;
    }
@@ -1250,31 +1114,24 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCK_TRYORAPPENDLOCK ) ;
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
-      SDB_ASSERT( lockId._collectionID != DMS_INVALID_MBID,
-                  "invalid collectionID" ) ;
-      SDB_ASSERT(( lockId._recordExtentID != DMS_INVALID_EXTENT &&
-                   lockId._recordOffset != DMS_INVALID_OFFSET ),
-                  "invalid recordID" ) ;
-      SDB_ASSERT( (DPS_TRANSLOCK_S == lockType || DPS_TRANSLOCK_X == lockType),
+      SDB_ASSERT( lockId.isLeafLevel(), "Must be record lock" ) ;
+      SDB_ASSERT( (DPS_TRANSLOCK_S == lockType ||
+                  DPS_TRANSLOCK_X == lockType),
                   "Only support S or X lock for record!" ) ;
 
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
-      dpsTransLockId iLockId;
       dpsTransCBLockInfo *pLockInfo = NULL;
 
       // get collection IX-LOCK at first
       // it is not need to get intention-lock while lock space
-      iLockId = lockId ;
-      iLockId._recordExtentID = DMS_INVALID_EXTENT;
-      iLockId._recordOffset = DMS_INVALID_OFFSET;
       if ( DPS_TRANSLOCK_X == lockType )
       {
-         rc = tryIX( eduCB, iLockId) ;
+         rc = tryIX( eduCB, lockId.upOneLevel() ) ;
       }
       else
       {
-         rc = tryIS( eduCB, iLockId) ;
+         rc = tryIS( eduCB, lockId.upOneLevel() ) ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get the intention-lock, "
                    "get lock failed(rc=%d, type=%d)", rc, lockType );
@@ -1327,7 +1184,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB_DPSTRANSLOCK_TRYORAPPENDLOCK );
       return rc;
    errorclear:
-      release( eduCB, iLockId );
+      release( eduCB, lockId.upOneLevel() ) ;
    error:
       goto done;
    }
@@ -1338,7 +1195,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCK_WAIT ) ;
       INT32 rc = SDB_OK;
       dpsTransCBLockInfo *pLockInfo = NULL ;
-      dpsLockBucket *pLockBucket = NULL;
+      dpsLockBucket *pLockBucket = NULL ;
       rc = getBucket( lockId, pLockBucket ) ;
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                 "Failed to get the lock-bucket, get X-lock failed(rc=%d)",
@@ -1352,22 +1209,9 @@ namespace engine
       PD_TRACE_EXIT ( SDB_DPSTRANSLOCK_WAIT );
       return rc ;
    error:
-      dpsTransLockId iLockId ;      
-      if ( lockId._collectionID != DMS_INVALID_MBID )
+      if ( !lockId.isRootLevel() )
       {
-         iLockId = lockId;
-         if ( lockId._recordOffset != DMS_INVALID_OFFSET )
-         {
-            // release the collection's intention-lock
-            iLockId._recordExtentID = DMS_INVALID_EXTENT;
-            iLockId._recordOffset = DMS_INVALID_OFFSET;
-         }
-         else
-         {
-            // release the space's S-LOCK
-            iLockId._collectionID = DMS_INVALID_MBID;
-         }
-         release( eduCB, iLockId );
+         release( eduCB, lockId.upOneLevel() ) ;
       }
       eduCB->delLockInfo( lockId ) ;
       goto done ;

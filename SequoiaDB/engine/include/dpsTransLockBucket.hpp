@@ -46,6 +46,7 @@
 
 namespace engine
 {
+   class _pmdEDUCB ;
    class dpsTransLockUnit;
    typedef std::map< dpsTransLockId, dpsTransLockUnit * > dpsTransLockUnitList;
 
@@ -82,7 +83,7 @@ namespace engine
       BOOLEAN hasWait( const dpsTransLockId &lockId );
 
       INT32 waitLock( _pmdEDUCB *eduCB, const dpsTransLockId &lockId,
-                      DPS_TRANSLOCK_TYPE lockType );
+                      DPS_TRANSLOCK_TYPE lockType ) ;
 
 
    private:

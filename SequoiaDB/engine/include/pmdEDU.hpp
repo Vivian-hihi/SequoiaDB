@@ -58,6 +58,7 @@
 #include "dpsLogDef.hpp"
 #include "dpsTransCB.hpp"
 #include "dpsTransLockDef.hpp"
+#include "dpsTransCBLockInfo.hpp"
 #endif // SDB_ENGINE
 
 #include <set>

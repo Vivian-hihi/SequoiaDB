@@ -71,9 +71,9 @@ namespace engine
          BSONObj toBson() ;
          string toString() ;
 
-         // func *p = new ( _mthNodeAllocator *allocator ) func( _mthNodeAllocator *allocator )
          void* operator new ( size_t size, _mthNodeAllocator *allocator ) ;
-         void operator delete ( void *p ) ;
+         void  operator delete ( void *p, _mthNodeAllocator *allocator ) ;
+         void  operator delete ( void *p ) ;
 
       public:
          virtual void clear() ;
