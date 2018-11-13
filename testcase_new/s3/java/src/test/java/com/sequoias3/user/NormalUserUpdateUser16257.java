@@ -20,16 +20,30 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class NormalUserUpdateUser16257 extends S3TestBase {
-	private String Username = "NormalUserUpdateUser16257";
-	private String adminUserName = "adminUser";
-	private String normalUserName = "normalUser";
+	private String userName = "NormalUserUpdateUser16257";
+	private String adminUserName = "adminUser16257";
+	private String normalUserName = "normalUser16257";
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() {
 		try {
-			UserUtils.deleteUser(Username, UserUtils.accessKeyId, true);
+			UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
+		} catch (HttpClientErrorException e) {
+			if(e.getStatusCode()!= HttpStatus.NOT_FOUND){
+				e.printStackTrace();
+				Assert.fail(e.getMessage());
+			}
+		}
+		try {
 			UserUtils.deleteUser(adminUserName, UserUtils.accessKeyId, true);
+		} catch (HttpClientErrorException e) {
+			if(e.getStatusCode()!= HttpStatus.NOT_FOUND){
+				e.printStackTrace();
+				Assert.fail(e.getMessage());
+			}
+		}
+		try {
 			UserUtils.deleteUser(normalUserName, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
 			if(e.getStatusCode()!= HttpStatus.NOT_FOUND){
@@ -42,7 +56,7 @@ public class NormalUserUpdateUser16257 extends S3TestBase {
 	@Test
 	public void test() throws JSONException {
 		// create user
-		JSONObject testUser = UserUtils.createUser(Username, UserCommDefind.normal, UserUtils.accessKeyId);
+		JSONObject testUser = UserUtils.createUser(userName, UserCommDefind.normal, UserUtils.accessKeyId);
 		JSONObject adminUser = UserUtils.createUser(adminUserName, UserCommDefind.admin, UserUtils.accessKeyId);
 		JSONObject normalUser = UserUtils.createUser(normalUserName, UserCommDefind.normal, UserUtils.accessKeyId);
 
@@ -51,7 +65,7 @@ public class NormalUserUpdateUser16257 extends S3TestBase {
 
 		// update user
 		try {
-			UserUtils.updateUser(Username, accessKeyID);
+			UserUtils.updateUser(userName, accessKeyID);
 			Assert.fail("Self updating should fail!");
 		} catch (HttpClientErrorException e) {
 			JSONObject json = XML.toJSONObject(e.getResponseBodyAsString());
@@ -61,7 +75,7 @@ public class NormalUserUpdateUser16257 extends S3TestBase {
 				Assert.fail(e.getMessage());
 			}
 		}
-		JSONObject expUser = UserUtils.getUser(Username, UserUtils.accessKeyId);
+		JSONObject expUser = UserUtils.getUser(userName, UserUtils.accessKeyId);
 		checkResult(testUser, expUser);
 		// update admin user
 		try {
@@ -99,7 +113,7 @@ public class NormalUserUpdateUser16257 extends S3TestBase {
 	@AfterClass
 	private void tearDown() {
 		if (runSuccess) {
-			UserUtils.deleteUser(Username, UserUtils.accessKeyId, true);
+			UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
 			UserUtils.deleteUser(adminUserName, UserUtils.accessKeyId, true);
 			UserUtils.deleteUser(normalUserName, UserUtils.accessKeyId, true);
 		}

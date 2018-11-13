@@ -47,7 +47,7 @@ public class NormalUserCreateUser16252 extends S3TestBase {
 		// check create user result
 		checkUser(actUser);
 		// create bucket for check
-		checkByCraeteUser();
+		checkByCreateUser();
 		runSuccess = true;
 	}
 
@@ -74,7 +74,7 @@ public class NormalUserCreateUser16252 extends S3TestBase {
 				"actJSON = " + actJSON.toString() + ",expJSON = " + expJSON.toString());
 	}
 
-	private void checkByCraeteUser() {
+	private void checkByCreateUser() {
 		// create normal user
 		try{
 			UserUtils.createUser(normalUserName, UserCommDefind.normal,accessKeyID);
@@ -88,7 +88,7 @@ public class NormalUserCreateUser16252 extends S3TestBase {
 		}
 		// create admin user
 		try{
-			UserUtils.createUser(adminUserName, UserCommDefind.normal,accessKeyID);
+			UserUtils.createUser(adminUserName, UserCommDefind.admin,accessKeyID);
 			Assert.fail("create admin user should fail!");
 		}catch(HttpClientErrorException e){
 			String errMsg = e.getResponseBodyAsString();

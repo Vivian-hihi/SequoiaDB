@@ -47,7 +47,6 @@ public class UpdateAdminUser16254 extends S3TestBase {
 
 		// update user
 		JSONObject updateUser = UserUtils.updateUser(Username, UserUtils.accessKeyId);
-		System.out.println("actUser = " + updateUser.toString());
 
 		// create bucket for check
 		checkResult(craeteUser, updateUser);

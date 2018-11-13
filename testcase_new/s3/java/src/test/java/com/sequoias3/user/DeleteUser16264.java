@@ -58,6 +58,7 @@ public class DeleteUser16264 extends S3TestBase {
 		// delete user
 		try {
 			UserUtils.deleteUser(deleteUserName, accessKeyID);
+			Assert.fail("exp fail but found success");
 		} catch (HttpClientErrorException e) {
 			String errorMsg = e.getResponseBodyAsString();
 			org.json.JSONObject json1 = XML.toJSONObject(errorMsg);
