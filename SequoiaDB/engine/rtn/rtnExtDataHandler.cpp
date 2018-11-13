@@ -102,44 +102,6 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_GETEXTDATANAME, "_rtnExtDataHandler::getExtDataName" )
-   INT32 _rtnExtDataHandler::getExtDataName( utilCLUniqueID clUniqID,
-                                             const CHAR *idxName,
-                                             CHAR *extName,
-                                             UINT32 buffSize )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_GETEXTDATANAME ) ;
-      ostringstream name ;
-
-      SDB_ASSERT( idxName, "Index name is NULL") ;
-      SDB_ASSERT( extName, "Buffer is empty" ) ;
-
-      if ( ! UTIL_IS_VALID_CLUNIQUEID( clUniqID ) )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Collection unique id is invalid" ) ;
-         goto error ;
-      }
-
-      name << SYS_PREFIX"_" << clUniqID << "_" << idxName ;
-      if ( buffSize < name.str().length() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Buffer size[ %d ] is too small, expected[ %d ]",
-                 buffSize, name.str().length() ) ;
-      }
-      if ( extName )
-      {
-         ossSnprintf( extName, buffSize, name.str().c_str() ) ;
-      }
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_GETEXTDATANAME, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_PREPARE, "_rtnExtDataHandler::prepare" )
    INT32 _rtnExtDataHandler::prepare( DMS_EXTOPR_TYPE type,
@@ -311,7 +273,7 @@ namespace engine
       }
 
       clUniqueID = context->mb()->_clUniqueID ;
-      if ( UTIL_UNIQUEID_NULL == clUniqueID )
+      if ( !UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Can not create text index on collection whose "
@@ -319,8 +281,8 @@ namespace engine
          goto error ;
       }
 
-      rc = getExtDataName( clUniqueID, indexCB.getName(), extName,
-                           DMS_MAX_EXT_NAME_SIZE + 1 ) ;
+      rc = _getExtDataName( clUniqueID, indexCB.getName(), extName,
+                            DMS_MAX_EXT_NAME_SIZE + 1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Get external data name failed[%d]", rc ) ;
 
       try
@@ -785,13 +747,15 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__EXTENDINDEXDEF ) ;
-      string extName ;
-      BSONObj extendObj ;
-      _getExtDataNameV1( csName, clName, indexCB.getName(), extName )  ;
+      CHAR extName[ DMS_MAX_EXT_NAME_SIZE + 1 ] = { 0 };
+
+      rc = _getExtDataNameV1( csName, clName, indexCB.getName(), extName,
+                              DMS_MAX_EXT_NAME_SIZE + 1 )  ;
+      PD_RC_CHECK( rc, PDERROR, "Get external data name failed[%d]", rc ) ;
 
       try
       {
-         extendObj = BSON( FIELD_NAME_EXT_DATA_NAME << extName.c_str() ) ;
+         BSONObj extendObj = BSON( FIELD_NAME_EXT_DATA_NAME << extName ) ;
          indexCB.extendDef( extendObj.firstElement() ) ;
       }
       catch ( std::exception &e )
@@ -912,20 +876,83 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__GETEXTDATANAMEV1, "_rtnExtDataHandler::_getExtDataNameV1" )
-   void _rtnExtDataHandler::_getExtDataNameV1( const CHAR *csName,
-                                               const CHAR *clName,
-                                               const CHAR *idxName,
-                                               string &extName )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__GETEXTDATANAME, "_rtnExtDataHandler::_getExtDataName" )
+   INT32 _rtnExtDataHandler::_getExtDataName( utilCLUniqueID clUniqID,
+                                              const CHAR *idxName,
+                                              CHAR *extName,
+                                              UINT32 buffSize )
    {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__GETEXTDATANAME ) ;
+      INT32 length = 0 ;
+
+      SDB_ASSERT( idxName, "Index name is NULL") ;
+      SDB_ASSERT( extName, "Buffer is empty" ) ;
+      SDB_ASSERT( buffSize >= DMS_MAX_EXT_NAME_SIZE + 1, "buffer too small" ) ;
+
+      length = ossSnprintf( extName, DMS_MAX_EXT_NAME_SIZE + 1,
+                            SYS_PREFIX"_%llu_", clUniqID ) ;
+      if ( length + ossStrlen( idxName ) > DMS_MAX_EXT_NAME_SIZE )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Index name size[%u] too long for external data",
+                 ossStrlen( idxName ) ) ;
+         goto error ;
+      }
+
+      ossSnprintf( extName + length, DMS_MAX_EXT_NAME_SIZE + 1 - length,
+                   idxName ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER__GETEXTDATANAME, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__GETEXTDATANAMEV1, "_rtnExtDataHandler::_getExtDataNameV1" )
+   INT32 _rtnExtDataHandler::_getExtDataNameV1( const CHAR *csName,
+                                                const CHAR *clName,
+                                                const CHAR *idxName,
+                                                CHAR *extName,
+                                                UINT32 buffSize )
+   {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__GETEXTDATANAMEV1 ) ;
-      string srcStr = string( csName ) + string( clName ) + string( idxName ) ;
-      UINT32 hashVal = ossHash( srcStr.c_str() ) ;
-      string md5Val = md5::md5simpledigest( srcStr.c_str() ) ;
-      ostringstream name ;
-      name << SYS_PREFIX"_" << hashVal << md5Val.substr( 0, 4 ) ;
-      extName = name.str() ;
+      UINT32 hashVal = 0 ;
+      string md5Val ;
+
+      SDB_ASSERT( csName, "cs name is NULL") ;
+      SDB_ASSERT( clName, "cl name is NULL") ;
+      SDB_ASSERT( idxName, "Index name is NULL") ;
+      SDB_ASSERT( extName, "Buffer is empty" ) ;
+      SDB_ASSERT( buffSize >= DMS_MAX_EXT_NAME_SIZE + 1, "buffer too small" ) ;
+
+      INT32 nameTotalLen = ossStrlen( csName ) + ossStrlen( clName )
+                            + ossStrlen( idxName ) ;
+      CHAR *names = (CHAR *)SDB_OSS_MALLOC( nameTotalLen + 1 ) ;
+      if ( !names )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Allocate memory failed. Size request: %d",
+                 nameTotalLen + 1 ) ;
+         goto error ;
+      }
+
+      ossSnprintf( names, nameTotalLen + 1, "%s%s%s",
+                   csName, clName, idxName ) ;
+
+      hashVal = ossHash( names ) ;
+      md5Val = md5::md5simpledigest( (void *)names, nameTotalLen ) ;
+
+      ossSnprintf( extName, buffSize, SYS_PREFIX"_%u%s", hashVal,
+                   md5Val.substr(0, 4).c_str() ) ;
+   done:
+      SAFE_OSS_FREE( names ) ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAHANDLER__GETEXTDATANAMEV1 ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    rtnExtDataHandler* rtnGetExtDataHandler()

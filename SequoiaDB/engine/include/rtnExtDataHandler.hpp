@@ -59,10 +59,6 @@ namespace engine
 
       INT32 disable( INT32 timeout ) ;
 
-      virtual INT32 getExtDataName( utilCLUniqueID clUniqID,
-                                    const CHAR *idxName,
-                                    CHAR *extName,
-                                    UINT32 buffSize ) ;
 
       virtual INT32 prepare( DMS_EXTOPR_TYPE type, const CHAR *csName,
                              const CHAR *clName, const CHAR *idxName,
@@ -138,11 +134,17 @@ namespace engine
       INT32 _getContext( DMS_EXTOPR_TYPE type, rtnExtContextBase *&ctx,
                          pmdEDUCB *cb ) ;
 
+      INT32 _getExtDataName( utilCLUniqueID clUniqID,
+                             const CHAR *idxName,
+                             CHAR *extName,
+                             UINT32 buffSize ) ;
+
       // For compatibility with version 3.0. The external name rule is
       // different. This is used during upgrading from version 3.0, to append
       // 'ExtDataName' to indexCB.
-      void _getExtDataNameV1( const CHAR *csName, const CHAR *clName,
-                              const CHAR *idxName, string &extName ) ;
+      INT32 _getExtDataNameV1( const CHAR *csName, const CHAR *clName,
+                               const CHAR *idxName, CHAR *extName,
+                               UINT32 buffSize ) ;
    private:
       BOOLEAN                 _enabled ;
       ossAtomic32             _refCount ;

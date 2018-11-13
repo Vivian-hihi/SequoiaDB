@@ -68,11 +68,6 @@ namespace engine
       virtual ~_IDmsExtDataHandler() {}
 
    public:
-      virtual INT32 getExtDataName( utilCLUniqueID clUniqID,
-                                    const CHAR *idxName,
-                                    CHAR *extName,
-                                    UINT32 buffSize ) = 0 ;
-
       virtual INT32 prepare( DMS_EXTOPR_TYPE type, const CHAR *csName,
                              const CHAR *clName, const CHAR *idxName,
                              const BSONObj *object, const BSONObj *objNew,
