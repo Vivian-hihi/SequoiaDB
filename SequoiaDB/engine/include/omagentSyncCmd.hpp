@@ -263,6 +263,23 @@ namespace engine
 
    } ;
 
+   /************************** modify business config ************************/
+   /*
+      _omaModifyBusinessConfig
+   */
+   class _omaModifyBusinessConfig : public _omaCommand
+   {
+   DECLARE_OACMD_AUTO_REGISTER()
+
+   public:
+      _omaModifyBusinessConfig() ;
+      ~_omaModifyBusinessConfig() ;
+
+      virtual const CHAR* name () { return OMA_CMD_MODIFY_BUSINESS_CONFIG ; }
+      virtual INT32 init ( const CHAR *pInfo ) ;
+
+   } ;
+
 } // namespace engine
 
 

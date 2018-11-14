@@ -363,8 +363,13 @@ var FIELD_DB_NAME                          = DbName ;
 var FIELD_OM_ADDR                          = "omaddr" ;
 var FIELD_AUTH_USER                        = AuthUser ;
 var FIELD_AUTH_PASSWD                      = AuthPasswd ;
-var FIELD_GRANT_TYPE                       = 'GrantType' ;
-var FIELD_FORCE                            = 'Force' ;
+var FIELD_GRANT_TYPE                       = "GrantType" ;
+var FIELD_FORCE                            = "Force" ;
+var FIELD_COMMAND                          = "Command" ;
+var FIELD_UPDATE_BUSINESS_CONFIG           = "update business config" ;
+var FIELD_DELETE_BUSINESS_CONFIG           = "delete business config" ;
+var FIELD_PROPERTY                         = "property" ;
+var FIELD_OPTIONS2                         = "options" ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;
