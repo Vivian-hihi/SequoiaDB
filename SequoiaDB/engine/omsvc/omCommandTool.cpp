@@ -3896,20 +3896,20 @@ namespace engine
          }
       }
 
-      sendRespone( SDB_OK, "" ) ;
+      sendResponse( SDB_OK, "" ) ;
    }
 
    void omRestTool::sendOkRespone()
    {
-      sendRespone( SDB_OK, "" ) ;
+      sendResponse( SDB_OK, "" ) ;
    }
 
-   void omRestTool::sendRespone( INT32 rc, const string &detail )
+   void omRestTool::sendResponse( INT32 rc, const string &detail )
    {
-      sendRespone( rc, detail.c_str() ) ;
+      sendResponse( rc, detail.c_str() ) ;
    }
 
-   void omRestTool::sendRespone( INT32 rc, const char *pDetail )
+   void omRestTool::sendResponse( INT32 rc, const char *pDetail )
    {
       list<BSONObj>::iterator iter ;
       BSONObj res ;
@@ -3929,7 +3929,12 @@ namespace engine
       res = resBuilder.obj() ;
       _response->setOPResult( rc, res ) ;
       _pRestAdaptor->sendRest( _socket, _response ) ;
+   }
 
+   void omRestTool::sendResponse( const BSONObj &msg )
+   {
+      _response->setOPResult( SDB_OK, msg ) ;
+      _pRestAdaptor->sendRest( _socket, _response ) ;
    }
 
    INT32 omRestTool::appendResponeContent( const BSONObj &content )

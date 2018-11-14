@@ -80,7 +80,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -188,7 +188,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -730,7 +730,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -850,7 +850,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -1316,7 +1316,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -1507,11 +1507,24 @@ namespace engine
          {
             simpleAddressInfo address ;
             BSONElement ele = iterBson.next() ;
-            BSONObj oneNode = ele.embeddedObject() ;
 
-            address.hostName = oneNode.getStringField( OM_BSON_HOSTNAME ) ;
-            address.port = oneNode.getStringField( OM_BSON_SVCNAME ) ;
-            tmpAddrList.push_back( address ) ;
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               _errorMsg.setError( TRUE, "Invalid element, %s is not Object "
+                                         "type: type=%d, rc=%d",
+                                   OM_BSON_NODES, ele.type(), rc ) ;
+               PD_LOG_MSG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+            }
+
+            {
+               BSONObj oneNode = ele.embeddedObject() ;
+
+               address.hostName = oneNode.getStringField( OM_BSON_HOSTNAME ) ;
+               address.port = oneNode.getStringField( OM_BSON_SVCNAME ) ;
+               tmpAddrList.push_back( address ) ;
+            }
          }
       }
 
@@ -1601,4 +1614,202 @@ namespace engine
       goto done ;
    }
 
+   // ***************** modify business config *****************************
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omUpdateBusinessConfigCommand ) ;
+   IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omDeleteBusinessConfigCommand ) ;
+
+   INT32 omModifyBusinessConfigCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj configInfo ;
+      BSONObj result ;
+      omRestTool restTool( _restSession->socket(), _restAdaptor, _response ) ;
+      omArgOptions option( _request ) ;
+
+      _setFileLanguageSep() ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = option.parseRestArg( "j", OM_REST_FIELD_CONFIGINFO, &configInfo ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = _check( configInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to check: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _modifyConfig( configInfo, result ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to modify business config: rc=%d", rc ) ;
+         goto error ;
+      }
+
+      restTool.sendResponse( result ) ;
+
+   done:
+      return rc ;
+   error:
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
+
+   INT32 omModifyBusinessConfigCommand::_check( BSONObj &configInfo )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 taskID = -1 ;
+      BSONObj businessInfo ;
+      omDatabaseTool dbTool( _cb ) ;
+
+      _clusterName = configInfo.getStringField( OM_BSON_CLUSTER_NAME ) ;
+      if ( 0 == _clusterName.length() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "%s is empty", OM_BSON_CLUSTER_NAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      _businessName = configInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      if ( 0 == _businessName.length() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "%s is empty", OM_BSON_BUSINESS_NAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      if ( FALSE == dbTool.isClusterExist( _clusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "cluster does not exist: name=%s",
+                             _clusterName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = dbTool.getOneBusinessInfo( _businessName, businessInfo ) ;
+      if ( SDB_DMS_RECORD_NOTEXIST == rc )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business does not exist: %s",
+                             _businessName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to get business info,rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      _businessType = businessInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+
+      taskID = dbTool.getTaskIdOfRunningBuz( _businessName ) ;
+      if( 0 <= taskID )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business[%s] is exist "
+                             "in task["OSS_LL_PRINT_FORMAT"]",
+                             _businessName.c_str(), taskID ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omModifyBusinessConfigCommand::_generateRequest( BSONObj &configInfo,
+                                                          BSONObj &request )
+   {
+      INT32 rc = SDB_OK ;
+      string authUser ;
+      string authPwd ;
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrayBuilder ;
+      vector<simpleAddressInfo> addressList ;
+      vector<simpleAddressInfo>::iterator iter ;
+      omDatabaseTool dbTool( _cb ) ;
+
+      rc = dbTool.getBusinessAddressWithConfig( _businessName, addressList ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to get business address: "
+                                   "businessName=%s, rc=%d",
+                             _businessName.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      _getBusinessAuth( _businessName, authUser, authPwd ) ;
+
+      for ( iter = addressList.begin(); iter != addressList.end(); ++iter )
+      {
+         BSONObjBuilder addressBuilder ;
+
+         addressBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME, iter->hostName ) ;
+         addressBuilder.append( OM_CONFIGURE_FIELD_SVCNAME, iter->port ) ;
+         arrayBuilder.append( addressBuilder.obj() ) ;
+      }
+
+      builder.append( OM_BSON_COMMAND, name() ) ;
+      builder.append( OM_BSON_CLUSTER_NAME, _clusterName ) ;
+      builder.append( OM_BSON_BUSINESS_NAME, _businessName ) ;
+      builder.append( OM_BSON_BUSINESS_TYPE, _businessType ) ;
+      builder.append( OM_BSON_USER, authUser ) ;
+      builder.append( OM_BSON_PASSWD, authPwd ) ;
+      builder.append( OM_BSON_ADDRESS, arrayBuilder.arr() ) ;
+      builder.append( OM_BSON_CONFIG,
+                      configInfo.getObjectField( OM_BSON_CONFIG ) ) ;
+
+      request = builder.obj() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omModifyBusinessConfigCommand::_modifyConfig( BSONObj &configInfo,
+                                                       BSONObj &result )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj request ;
+      string errDetail ;
+      omTaskTool taskTool( _cb, _localAgentHost, _localAgentService ) ;
+
+      rc = _generateRequest( configInfo, request ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to generate request, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = taskTool.notifyAgentMsg(
+                                 CMD_ADMIN_PREFIX OM_MODIFY_BUSINESS_CONFIG_REQ,
+                                 request, errDetail, result ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to notify agent: detail=%s, rc=%d",
+                             errDetail.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 }

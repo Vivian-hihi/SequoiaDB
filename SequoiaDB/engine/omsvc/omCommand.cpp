@@ -1117,7 +1117,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -1864,7 +1864,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
 
    }
@@ -4763,7 +4763,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -6072,7 +6072,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -6819,7 +6819,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -8182,7 +8182,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
    // *****************omRemoveBusinessAuthCommand*****************************
@@ -9000,7 +9000,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -9137,7 +9137,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -9640,7 +9640,7 @@ namespace engine
       return rc ;
    error:
       _response->forceWrite() ;
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -10975,7 +10975,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -11342,7 +11342,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -11400,7 +11400,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -11570,7 +11570,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 
@@ -11801,7 +11801,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 }

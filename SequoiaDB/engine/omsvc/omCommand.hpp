@@ -2102,6 +2102,69 @@ namespace engine
       string _businessName ;
       string _businessType ;
    } ;
+
+   class omModifyBusinessConfigCommand : public omAuthCommand
+   {
+   public:
+      REST_CONSTRUCTOR_PARA_INHERIT( omModifyBusinessConfigCommand,
+                                     omAuthCommand )
+      {
+      }
+
+      ~omModifyBusinessConfigCommand()
+      {
+      }
+
+      virtual const CHAR* name() { return OM_MODIFY_BUSINESS_CONFIG_REQ ; }
+
+      virtual INT32 doCommand() ;
+
+   private:
+      INT32 _check( BSONObj &configInfo ) ;
+
+      INT32 _generateRequest( BSONObj &configInfo, BSONObj &request ) ;
+
+      INT32 _modifyConfig( BSONObj &configInfo, BSONObj &result ) ;
+
+   private:
+      string _clusterName ;
+      string _businessName ;
+      string _businessType ;
+   } ;
+
+   class omUpdateBusinessConfigCommand : public omModifyBusinessConfigCommand
+   {
+   public:
+      REST_CONSTRUCTOR_PARA_INHERIT( omUpdateBusinessConfigCommand,
+                                     omModifyBusinessConfigCommand )
+      {
+      }
+
+      ~omUpdateBusinessConfigCommand()
+      {
+      }
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      const CHAR* name() { return OM_UPDATE_BUSINESS_CONFIG_REQ ; }
+   } ;
+
+   class omDeleteBusinessConfigCommand : public omModifyBusinessConfigCommand
+   {
+   public:
+      REST_CONSTRUCTOR_PARA_INHERIT( omDeleteBusinessConfigCommand,
+                                     omModifyBusinessConfigCommand )
+      {
+      }
+
+      ~omDeleteBusinessConfigCommand()
+      {
+      }
+
+      DECLARE_OMREST_CMD_AUTO_REGISTER() ;
+
+      const CHAR* name() { return OM_DELETE_BUSINESS_CONFIG_REQ ; }
+   } ;
 }
 
 #endif /* OM_GETFILECOMMAND_HPP__ */

@@ -120,6 +120,9 @@ namespace engine
    #define OM_BSON_OM_ADDR                      "omaddr"
    #define OM_BSON_FORCE                        "Force"
    #define OM_BSON_NODES                        "Nodes"
+   #define OM_BSON_USER                         "User"
+   #define OM_BSON_PASSWD                       "Passwd"
+   #define OM_BSON_COMMAND                      "Command"
 
    /***************** XML field *****************/
    #define OM_XML_FIELD_BUSINESS_TYPE           "BusinessType"
@@ -671,6 +674,10 @@ unique: true, enforced: true }"
    #define  OM_LIST_PLUGIN_REQ               "list plugins"
 
    #define  OM_RESTART_BUSINESS_REQ          "restart business"
+
+   #define  OM_MODIFY_BUSINESS_CONFIG_REQ    "modify business config"
+   #define  OM_UPDATE_BUSINESS_CONFIG_REQ    "update business config"
+   #define  OM_DELETE_BUSINESS_CONFIG_REQ    "delete business config"
 
    //**************************************************************************
 

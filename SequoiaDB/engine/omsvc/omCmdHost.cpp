@@ -117,7 +117,7 @@ namespace engine
    done:
       return rc ;
    error:
-      restTool.sendRespone( rc, _errorMsg.getError() ) ;
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
       goto done ;
    }
 

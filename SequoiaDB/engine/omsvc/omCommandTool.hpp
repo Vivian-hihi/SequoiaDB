@@ -363,8 +363,9 @@ namespace engine
 
       void sendOkRespone() ;
 
-      void sendRespone( INT32 rc, const string &detail ) ;
-      void sendRespone( INT32 rc, const char *pDetail ) ;
+      void sendResponse( INT32 rc, const string &detail ) ;
+      void sendResponse( INT32 rc, const char *pDetail ) ;
+      void sendResponse( const BSONObj &msg ) ;
 
       INT32 appendResponeContent( const BSONObj &content ) ;
 
