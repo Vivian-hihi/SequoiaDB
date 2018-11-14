@@ -48,6 +48,11 @@
 #define OCT_PRE          "0"
 #define OCT_PRE_SIZE     ( sizeof( OCT_PRE ) -1 )
 
+#define UTIL_STR2NUM_DEC   0x00000001  // decimal system
+#define UTIL_STR2NUM_OCT   0x00000010  // octal system
+#define UTIL_STR2NUM_HEX   0x00000100  // hexadecimal system
+#define UTIL_STR2NUM_ALL   0x11111111
+
 using namespace std ;
 
 namespace engine
@@ -102,7 +107,8 @@ namespace engine
    INT32 utilSplitStr( const string &input, vector<string> &listServices,
                        const string &seperators ) ;
 
-   INT32 utilStr2Num( const CHAR *str, INT32 &num ) ;
+   INT32 utilStr2Num( const CHAR *str, INT32 &num,
+                      INT32 supportSystem = UTIL_STR2NUM_ALL ) ;
    /// non-reentrant
    INT32 utilStr2TimeT( const CHAR *str,
                         time_t &tm,

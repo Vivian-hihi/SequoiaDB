@@ -329,13 +329,14 @@ namespace engine
       goto done ;
    }
 
-   INT32 utilStr2Num( const CHAR *str, INT32 &num )
+   INT32 utilStr2Num( const CHAR *str, INT32 &num, INT32 supportSystem )
    {
       INT32 rc = SDB_OK ;
       INT32 scanRc = SDB_OK ;
       INT32 tmpNum = 0 ;
 
-      if ( 0 == ossStrncmp( str, HEX_PRE, HEX_PRE_SIZE ) )
+      if ( ( supportSystem & UTIL_STR2NUM_HEX ) &&
+           0 == ossStrncmp( str, HEX_PRE, HEX_PRE_SIZE ) )
       {
          str = str + 2 ;
          if ( '\0' == *str )
@@ -355,7 +356,8 @@ namespace engine
             goto error ;
          }
       }
-      else if ( 0 == ossStrncmp( str, OCT_PRE, OCT_PRE_SIZE ) )
+      else if ( ( supportSystem & UTIL_STR2NUM_OCT ) &&
+                0 == ossStrncmp( str, OCT_PRE, OCT_PRE_SIZE ) )
       {
          if ( ! utilStrIsODigit( str ) )
          {
@@ -369,7 +371,7 @@ namespace engine
             goto error ;
          }
       }
-      else
+      else if ( supportSystem & UTIL_STR2NUM_DEC )
       {
          if ( ! utilStrIsDigit( str ) )
          {
@@ -382,6 +384,11 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
       }
 
       num = tmpNum ;
