@@ -2,6 +2,8 @@ package com.sequoias3.object;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 
 import com.amazonaws.services.s3.AmazonS3;
@@ -48,20 +50,34 @@ public class ObjectUtils extends S3TestBase {
 		S3ObjectInputStream s3is = object.getObjectContent();		
 		String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
 				Thread.currentThread().getId());
-        FileOutputStream fos = new FileOutputStream(new File(downloadPath), true);
-        byte[] read_buf = new byte[1024];
-        int read_len = 0;
-        while ((read_len = s3is.read(read_buf)) > -1) {
-            fos.write(read_buf, 0, read_len);
-        }
-        s3is.close();
-        fos.close();
-        
+		inputStream2File(s3is,downloadPath);
+		s3is.close();
         String getMd5 = TestTools.getMD5(downloadPath);
         return getMd5;
-    }   
-    
-    
+    }
+
+	/**
+	 *input stream to file
+	 * @param inputStream
+	 * @param downloadPath
+	 */
+    public static String inputStream2File(InputStream inputStream,String downloadPath) throws IOException {
+		FileOutputStream fos = null;
+		try {
+			fos = new FileOutputStream(new File(downloadPath), true);
+			byte[] read_buf = new byte[1024];
+			int read_len = 0;
+			while ((read_len = inputStream.read(read_buf)) > -1) {
+				fos.write(read_buf, 0, read_len);
+			}
+		}finally{
+			if(fos != null){
+				fos.close();
+			}
+		}
+		return downloadPath;
+	}
+
     /**
 	* delete the object of all versions(required for versioned buckets)
 	* @param s3Client
@@ -96,5 +112,4 @@ public class ObjectUtils extends S3TestBase {
 			}
 		}		
 	}
-	
 }
