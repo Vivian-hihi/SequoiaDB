@@ -59,6 +59,7 @@
 #include "dpsTransCB.hpp"
 #include "dpsTransLockDef.hpp"
 #include "dpsTransCBLockInfo.hpp"
+#include "pmdTransExecutor.hpp"
 #endif // SDB_ENGINE
 
 #include <set>
@@ -386,6 +387,8 @@ namespace engine
 
       void     dumpTransInfo( monTransInfo &transInfo ) ;
 
+      pmdTransExecutor*    getTransExecutor() ;
+
    #endif // SDB_ENGINE
 
    protected:
@@ -463,6 +466,8 @@ namespace engine
       DpsTransNodeMap         *_pTransNodeMap ;
       INT32                   _transRC ;
       dpsTransLockId          _waitLock ;
+
+      pmdTransExecutor        _transExecutor ;
    #endif // SDB_ENGINE
 
       /*

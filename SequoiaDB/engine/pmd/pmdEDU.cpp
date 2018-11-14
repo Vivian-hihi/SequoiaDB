@@ -86,6 +86,9 @@ namespace engine
       _pmdEDUCB implement
    */
    _pmdEDUCB::_pmdEDUCB( _pmdEDUMgr *mgr, INT32 type )
+#if defined ( SDB_ENGINE )
+   :_transExecutor( this )
+#endif // SDB_ENGINE
    {
       _eduMgr           = mgr ;
       _eduID            = PMD_INVALID_EDUID ;
@@ -1188,6 +1191,11 @@ namespace engine
       }
       transInfo._locksNum     = transInfo._lockList.size() ;
       transInfo._waitLock     = _waitLock ;
+   }
+
+   pmdTransExecutor* _pmdEDUCB::getTransExecutor()
+   {
+      return &_transExecutor ;
    }
 
 #endif // SDB_ENGINE

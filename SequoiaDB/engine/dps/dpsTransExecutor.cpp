@@ -146,5 +146,10 @@ namespace engine
       _mapLockID.clear() ;
    }
 
+   ossRWMutex* _dpsTransExecutor::getRWMutex()
+   {
+      return &_rwMutex ;
+   }
+
 }
 
