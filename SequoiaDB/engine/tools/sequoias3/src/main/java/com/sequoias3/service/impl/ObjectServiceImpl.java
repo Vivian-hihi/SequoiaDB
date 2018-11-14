@@ -16,14 +16,12 @@ import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.service.BucketService;
 import com.sequoias3.service.ObjectService;
-import org.apache.commons.codec.binary.Hex;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import sun.misc.BASE64Decoder;
 
 import javax.servlet.ServletOutputStream;
 import java.io.InputStream;
@@ -898,7 +896,7 @@ public class ObjectServiceImpl implements ObjectService {
                     "encode object name failed."+e.getMessage());
         }
     }
-    
+
     private Boolean checkMatchModify(Map headers, ObjectMeta objectMeta) throws S3ServerException{
         String eTag           = objectMeta.geteTag();
         long lastModifiedTime = objectMeta.getLastModified();
