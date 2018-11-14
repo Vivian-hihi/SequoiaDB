@@ -11,6 +11,7 @@ import com.sequoias3.model.ListVersionsResult;
 import com.sequoias3.model.PutDeleteResult;
 import com.sequoias3.service.ObjectService;
 import com.sequoias3.utils.RestUtils;
+import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,11 +20,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import sun.misc.BASE64Decoder;
 
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -48,6 +51,10 @@ public class ObjectController {
         String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
         logger.debug("put object. bucket name={}, object name={}", bucketName, objectName);
 
+        String validMD5 = null;
+        if (contentMD5 != null){
+            validMD5 = getMD5(contentMD5);
+        }
         Map<String, String> requestHeaders = new HashMap<>();
         Map<String, String> xMeta          = new HashMap<>();
         Enumeration names = httpServletRequest.getHeaderNames();
@@ -63,7 +70,7 @@ public class ObjectController {
         PutDeleteResult result = objectService.putObject(operator.getUserId(),
                 bucketName,
                 objectName,
-                contentMD5,
+                validMD5,
                 requestHeaders,
                 xMeta,
                 body);
@@ -408,4 +415,17 @@ public class ObjectController {
         }
     }
 
+    private String getMD5(String contentMd5) throws S3ServerException{
+        try {
+            if(contentMd5.length() % 4 != 0){
+                throw new S3ServerException(S3Error.OBJECT_INVALID_DIGEST,
+                        "decode md5 failed, contentMd5:"+contentMd5);
+            }
+            BASE64Decoder decoder = new BASE64Decoder();
+            return new String(Hex.encodeHex(decoder.decodeBuffer(contentMd5)));
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.OBJECT_INVALID_DIGEST,
+                    "decode md5 failed, contentMd5:"+contentMd5);
+        }
+    }
 }

@@ -101,7 +101,7 @@ public class ObjectServiceImpl implements ObjectService {
         try {
             //check md5
             if (null != contentMD5) {
-                if (!isMd5EqualWithETag(contentMD5, insertResult.geteTag())) {
+                if (!contentMD5.equals(insertResult.geteTag())) {
                     throw new S3ServerException(S3Error.OBJECT_BAD_DIGEST,
                             "The Content-MD5 you specified does not match what we received.");
                 }
@@ -898,22 +898,7 @@ public class ObjectServiceImpl implements ObjectService {
                     "encode object name failed."+e.getMessage());
         }
     }
-
-    private Boolean isMd5EqualWithETag(String contentMd5, String eTag) throws S3ServerException{
-        try {
-            BASE64Decoder decoder = new BASE64Decoder();
-            String textMD5 = new String(Hex.encodeHex(decoder.decodeBuffer(contentMd5)));
-            if (textMD5.equals(eTag)){
-                return true;
-            }else {
-                return false;
-            }
-        }catch (Exception e){
-            throw new S3ServerException(S3Error.OBJECT_INVALID_DIGEST,
-                    "decode md5 failed, contentMd5:"+contentMd5);
-        }
-    }
-
+    
     private Boolean checkMatchModify(Map headers, ObjectMeta objectMeta) throws S3ServerException{
         String eTag           = objectMeta.geteTag();
         long lastModifiedTime = objectMeta.getLastModified();
