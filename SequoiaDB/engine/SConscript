@@ -285,6 +285,7 @@ dmsFiles = [
       "dms/dmsStorageDataFactory.cpp",
       "dms/dmsStorageIndex.cpp",
       "dms/dmsScanner.cpp",
+      "dms/dmsTransContext.cpp",
       "dms/dmsDump.cpp",
       "dms/dmsInspect.cpp",
       "dms/dmsStorageUnit.cpp",

@@ -372,7 +372,7 @@ namespace engine
                rc = _context->resume() ;
                if ( rc )
                {
-                  PD_LOG( PDERROR, "Remove dms mb context failed, rc: %d", rc );
+                  PD_LOG( PDERROR, "Resume dms mb context failed, rc: %d", rc );
                   goto error ;
                }
                if ( !dmsAccessAndFlagCompatiblity ( _context->mb()->_flag,
