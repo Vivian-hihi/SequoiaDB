@@ -82,7 +82,11 @@ public class RestExceptionHandler {
         }
 
         Error exceptionBody = new Error(e, request.getRequestURI());
-        return ResponseEntity.status(status).body(exceptionBody);
+        if ("HEAD".equalsIgnoreCase(request.getMethod())){
+            return ResponseEntity.status(status).build();
+        } else {
+            return ResponseEntity.status(status).body(exceptionBody);
+        }
     }
 
     @ExceptionHandler(Exception.class)

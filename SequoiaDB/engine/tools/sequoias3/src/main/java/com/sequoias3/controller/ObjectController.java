@@ -124,21 +124,20 @@ public class ObjectController {
         GetResult result = objectService.getObject(operator.getUserId(), bucketName,
                 objectName, cvtVersionId, nullVersionFlag, requestHeaders, range);
 
-        if (result.getMeta().getDeleteMarker()) {
-            buildDeleteMarkerResponseHeader(result.getMeta(), response);
-            if (null == versionId) {
-                throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:" + objectName);
-            }else {
-                throw new S3ServerException(S3Error.METHOD_NOT_ALLOWED, "no object. object:" + objectName);
-            }
-        }else {
-            try {
-                analyseRangeWithLob(range, result.getData());
+        try {
+            if (result.getMeta().getDeleteMarker()) {
+                buildDeleteMarkerResponseHeader(result.getMeta(), response);
+                if (null == versionId) {
+                    throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:" + objectName);
+                } else {
+                    throw new S3ServerException(S3Error.METHOD_NOT_ALLOWED, "no object. object:" + objectName);
+                }
+            } else {
                 buildHeadersForGetObject(result.getMeta(), requestParas, range, response);
                 objectService.readObjectData(result.getData(), response.getOutputStream(), range);
-            }finally {
-                objectService.releaseGetResult(result);
             }
+        }finally {
+            objectService.releaseGetResult(result);
         }
     }
 
@@ -283,15 +282,14 @@ public class ObjectController {
         GetResult result = objectService.getObject(operator.getUserId(), bucketName,
                 objectName, cvtVersionId, nullVersionFlag, requestHeaders, range);
 
-        if (result.getMeta().getDeleteMarker()) {
-            throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:" + objectName);
-        }else {
-            try {
-                analyseRangeWithLob(range, result.getData());
+        try {
+            if (result.getMeta().getDeleteMarker()) {
+                throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:" + objectName);
+            } else {
                 buildHeadersForGetObject(result.getMeta(), null, range, response);
-            }finally {
-                objectService.releaseGetResult(result);
             }
+        }finally {
+            objectService.releaseGetResult(result);
         }
 
         return ResponseEntity.ok().build();
@@ -410,41 +408,4 @@ public class ObjectController {
         }
     }
 
-    private void analyseRangeWithLob(Range range, DataLob dataLob) throws S3ServerException{
-        if (null == range){
-            return;
-        }
-
-        long contentLength = dataLob.getSize();
-        if (range.getStart() >= contentLength){
-            throw new S3ServerException(S3Error.OBJECT_RANGE_INVALID,
-                    "start > contentlength. start:" + range.getStart() +
-                            ", contentlength:" + contentLength);
-        }
-
-        //final bytes
-        if (range.getStart() == -1){
-            if(range.getEnd() < contentLength) {
-                range.setStart(contentLength - range.getEnd());
-                range.setEnd(contentLength-1);
-            }else {
-                range.setStart(0);
-                range.setEnd(contentLength-1);
-            }
-        }
-
-        //from start to the final of Lob
-        if (range.getEnd() == -1 || range.getEnd() >= contentLength){
-            range.setEnd(contentLength - 1);
-        }
-
-        //from 0 - final of Lob
-        if (range.getStart() == 0 && range.getEnd() == contentLength - 1){
-            range.setContentLength(contentLength);
-            return;
-        }
-
-        long readLength  = range.getEnd() - range.getStart() + 1;
-        range.setContentLength(readLength);
-    }
 }

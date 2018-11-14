@@ -206,6 +206,12 @@ public class ObjectServiceImpl implements ObjectService {
                         checkMatchModify(headers, versionIdMeta);
                         dataLob = dataDao.getDataLobForRead(versionIdMeta.getCsName(), versionIdMeta.getClName(),
                                 versionIdMeta.getLobId());
+                        try {
+                            analyseRangeWithLob(range, dataLob);
+                        }catch (Exception e){
+                            dataDao.releaseDataLob(dataLob);
+                            throw e;
+                        }
                     }
                     return new GetResult(versionIdMeta, dataLob);
                 }catch (S3ServerException e){
@@ -1255,4 +1261,41 @@ public class ObjectServiceImpl implements ObjectService {
         }
     }
 
+    private void analyseRangeWithLob(Range range, DataLob dataLob) throws S3ServerException{
+        if (null == range){
+            return;
+        }
+
+        long contentLength = dataLob.getSize();
+        if (range.getStart() >= contentLength){
+            throw new S3ServerException(S3Error.OBJECT_RANGE_INVALID,
+                    "start > contentlength. start:" + range.getStart() +
+                            ", contentlength:" + contentLength);
+        }
+
+        //final bytes
+        if (range.getStart() == -1){
+            if(range.getEnd() < contentLength) {
+                range.setStart(contentLength - range.getEnd());
+                range.setEnd(contentLength-1);
+            }else {
+                range.setStart(0);
+                range.setEnd(contentLength-1);
+            }
+        }
+
+        //from start to the final of Lob
+        if (range.getEnd() == -1 || range.getEnd() >= contentLength){
+            range.setEnd(contentLength - 1);
+        }
+
+        //from 0 - final of Lob
+        if (range.getStart() == 0 && range.getEnd() == contentLength - 1){
+            range.setContentLength(contentLength);
+            return;
+        }
+
+        long readLength  = range.getEnd() - range.getStart() + 1;
+        range.setContentLength(readLength);
+    }
 }

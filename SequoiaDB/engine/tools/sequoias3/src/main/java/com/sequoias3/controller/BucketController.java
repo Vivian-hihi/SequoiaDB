@@ -3,6 +3,7 @@ package com.sequoias3.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.sequoias3.common.RestParamDefine;
+import com.sequoias3.core.Bucket;
 import com.sequoias3.model.*;
 import com.sequoias3.core.User;
 import com.sequoias3.exception.S3Error;
@@ -12,6 +13,8 @@ import com.sequoias3.utils.RestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -74,8 +77,14 @@ public class BucketController {
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
         logger.debug("head bucket:bucket={}, operator={}", bucketName, operator.getUserName());
-        bucketService.getBucket(operator.getUserId(), bucketName);
-        return ResponseEntity.ok().build();
+        Bucket bucket = bucketService.getBucket(operator.getUserId(), bucketName);
+        HttpHeaders headers = new HttpHeaders();
+        if (bucket.getRegion() != null){
+            headers.add(RestParamDefine.HeadBucketResultHeader.REGION, bucket.getRegion());
+        }
+        return ResponseEntity.ok()
+                .headers(headers)
+                .build();
     }
 
     private String getLocation(HttpServletRequest httpServletRequest)

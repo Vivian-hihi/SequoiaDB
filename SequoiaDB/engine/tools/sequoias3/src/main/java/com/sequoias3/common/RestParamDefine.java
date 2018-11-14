@@ -92,6 +92,10 @@ public class RestParamDefine {
         public static final String  DELETE_MARKER = "x-amz-delete-marker";
     }
 
+    public static class HeadBucketResultHeader {
+        public static final String REGION = "x-amz-bucket-region";
+    }
+
     public static final int KEY_LENGTH              = 900;
     public static final int X_AMZ_META_LENGTH       = 2*1024;
 
