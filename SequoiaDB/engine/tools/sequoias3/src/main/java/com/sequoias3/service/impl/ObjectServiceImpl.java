@@ -16,12 +16,14 @@ import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.service.BucketService;
 import com.sequoias3.service.ObjectService;
+import org.apache.commons.codec.binary.Hex;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import sun.misc.BASE64Decoder;
 
 import javax.servlet.ServletOutputStream;
 import java.io.InputStream;
@@ -99,7 +101,7 @@ public class ObjectServiceImpl implements ObjectService {
         try {
             //check md5
             if (null != contentMD5) {
-                if (!contentMD5.equals(insertResult.geteTag())) {
+                if (!isMd5EqualWithETag(contentMD5, insertResult.geteTag())) {
                     throw new S3ServerException(S3Error.OBJECT_BAD_DIGEST,
                             "The Content-MD5 you specified does not match what we received.");
                 }
@@ -894,6 +896,25 @@ public class ObjectServiceImpl implements ObjectService {
             logger.error("Encode object name failed. e", e);
             throw new S3ServerException(S3Error.UNKNOWN_ERROR,
                     "encode object name failed."+e.getMessage());
+        }
+    }
+
+    private Boolean isMd5EqualWithETag(String contentMd5, String eTag) throws S3ServerException{
+        try {
+            if(contentMd5.length() % 4 != 0){
+                throw new S3ServerException(S3Error.OBJECT_INVALID_DIGEST,
+                        "decode md5 failed, contentMd5:"+contentMd5);
+            }
+            BASE64Decoder decoder = new BASE64Decoder();
+            String textMD5 = new String(Hex.encodeHex(decoder.decodeBuffer(contentMd5)));
+            if (textMD5.equals(eTag)){
+                return true;
+            }else {
+                return false;
+            }
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.OBJECT_INVALID_DIGEST,
+                    "decode md5 failed, contentMd5:"+contentMd5);
         }
     }
 
