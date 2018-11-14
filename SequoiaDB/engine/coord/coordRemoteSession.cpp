@@ -619,7 +619,7 @@ namespace engine
                                               _pPropSite->getEDUCB() ) ;
             if ( rc )
             {
-               if ( _ignoredNum > 0 )
+               if ( SDB_CLS_GRP_NOT_EXIST != rc && _ignoredNum > 0 )
                {
                   PD_LOG( PDWARNING, "Update group[%u] info failed, rc: %d",
                           groupID, rc ) ;
@@ -1555,7 +1555,7 @@ namespace engine
          /// update node stat
          _groupSel.updateStat( nodeID, rc ) ;
          /// get next node
-         if ( SDB_OK != _groupSel.selNext( nodeID ) )
+         if ( SDB_OK != ( rc = _groupSel.selNext( nodeID ) ) )
          {
             goto error ;
          }
