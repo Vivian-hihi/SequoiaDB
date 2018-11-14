@@ -69,6 +69,7 @@ ossFiles = [
 pmdFiles = [
       "pmd/pmd.cpp",
       "pmd/pmdEDU.cpp",
+      "pmd/pmdTransExecutor.cpp",
       "pmd/pmdSessionBase.cpp",
       "pmd/pmdExternClient.cpp",
       "pmd/pmdInnerClient.cpp",
@@ -446,6 +447,7 @@ dpsFiles = [
       "dps/dpsTransLock.cpp",
       "dps/dpsTransLockBucket.cpp",
       "dps/dpsTransCBLockInfo.cpp",
+      "dps/dpsTransExecutor.cpp",
       "dps/dpsOp2Record.cpp",
       "dps/dpsDump.cpp",
       "dps/dpsArchiveMgr.cpp",

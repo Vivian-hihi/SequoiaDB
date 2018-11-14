@@ -110,7 +110,7 @@ namespace engine
       /// Not leaf level
       if ( !lockID.isLeafLevel() )
       {
-         if ( _mapLockID.insert( std::make_pair( lockID, lrbIdx ) )->second )
+         if ( _mapLockID.insert( std::make_pair( lockID, lrbIdx ) ).second )
          {
             hasAdd = TRUE ;
          }

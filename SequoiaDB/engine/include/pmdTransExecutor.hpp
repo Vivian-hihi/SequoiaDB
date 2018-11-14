@@ -40,8 +40,7 @@
 #ifndef PMD_TRANS_EXECUTOR_HPP__
 #define PMD_TRANS_EXECUTOR_HPP__
 
-#include "pmdTransExecutor.hpp"
-
+#include "dpsTransExecutor.hpp"
 
 namespace engine
 {
@@ -55,7 +54,7 @@ namespace engine
    {
       public:
          _pmdTransExecutor( _pmdEDUCB *cb ) ;
-         virtual _pmdTransExecutor() ;
+         virtual ~_pmdTransExecutor() ;
 
       public:
          /*
