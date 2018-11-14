@@ -45,7 +45,7 @@ public enum S3Error {
     OBJECT_INVALID_ENCODING_TYPE(-616, "InvalidArgument", "Invalid Encoding Method specified in Request"),
     OBJECT_INVALID_TOKEN(-617, "InvalidArgument", "The continuation token provided is incorrect."),
     OBJECT_IS_IN_USE(-618, "ObjectIsInUse", "The object is in use."),
-    OBJECT_RANGE_INVALID(-619, "RangeNotSatisfiable", "Requested range not satisfiable."),
+    OBJECT_RANGE_INVALID(-619, "InvalidRange", "Requested range not satisfiable."),
     OBJECT_INVALID_DIGEST(-620, "InvalidDigest", " The Content-MD5 you specified is not valid."),
     OBJECT_NO_SUCH_VERSION(-621, "NoSuchVersion", "The specified version does not exist."),
 
