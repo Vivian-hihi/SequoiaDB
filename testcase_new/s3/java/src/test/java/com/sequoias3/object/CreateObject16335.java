@@ -42,8 +42,7 @@ public class CreateObject16335 extends S3TestBase{
 
 	@Test
 	public void testCreateObject() throws Exception {
-		PutObjectResult result= s3Client.putObject(S3TestBase.bucketName, keyName, new File(filePath));		
-		
+		PutObjectResult result= s3Client.putObject(S3TestBase.bucketName, keyName, new File(filePath));	
 		checkObjectAttributeInfo( result );		
 		checkPutObjectResult( S3TestBase.bucketName );
 		runSuccess = true;
