@@ -2,7 +2,7 @@
 <!--this xml is for ci, please don't modify it-->
 <!--sync testcase, which should be excute serially-->
 
-<suite name="driver" verbose="1" stop-all-when-occur-failure="false"> 
+<suite name="driver" verbose="1"> 
    <parameter name="HOSTNAME"       value="${HOSTNAME}" />
    <parameter name="SVCNAME"        value="${SVCNAME}" />
    <parameter name="ESHOSTNAME"       value="${ESHOSTNAME}" />
@@ -17,19 +17,15 @@
       <listener class-name="com.sequoiadb.testcommon.TimePrinterListener"/>
    </listeners>
 
-   <test name="parralclass">
+   <test name="normaltest">
       <packages>
          <package name="com.sequoiadb.crud.backup" />
-		 <package name="com.sequoiadb.serial" />
-		 <package name="com.sequoiadb.cappedcl" />   
-		 <package name="com.sequoiadb.datasourceserial" />
-		 <package name="com.sequoiadb.session.accessisolation" />
-      </packages>    
-   </test>
-   <test name="consistency" >
-      <packages>
+         <package name="com.sequoiadb.serial" />
+         <package name="com.sequoiadb.cappedcl" />   
+         <package name="com.sequoiadb.datasourceserial" />
+         <package name="com.sequoiadb.session.accessisolation" />
          <package name="com.sequoiadb.metadataconsistency.cluster"/>
-      </packages>
+      </packages>    
    </test>
 </suite>
    

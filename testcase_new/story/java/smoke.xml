@@ -24,7 +24,7 @@
       <listener class-name="com.sequoiadb.testcommon.TimePrinterListener"/>
    </listeners>
 
-   <test name="javadriver" parallel="classes" thread-count="5">
+   <test name="normaltest" parallel="classes" thread-count="5">
       <classes>
          <class name="com.sequoiadb.split.Split10501"/>
          <class name="com.sequoiadb.split.Split10505"/>
