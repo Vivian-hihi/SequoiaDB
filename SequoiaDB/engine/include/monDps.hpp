@@ -163,7 +163,7 @@ namespace engine
       /// id
       BSONObjBuilder idBuilder( builder.subobjStart( FIELD_NAME_ID ) ) ;
       _id.toBson( idBuilder ) ;
-      sub.done() ;
+      idBuilder.done() ;
 
       /// holder
       BSONArrayBuilder holderBuilder(
