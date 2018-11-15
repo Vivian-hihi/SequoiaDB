@@ -254,6 +254,7 @@
                <echo message="cmd : mvn -f pom_fulltext.xml ${cmd} in dir ${casedir}"/>
                <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" outputproperty="screen_output_fulltext">
                   <arg line=" -f pom_fulltext.xml ${cmd}" />
+                  <env key="PATH" path="/opt/jdk1.8.0_152" />
                </exec>
                <echo message="${screen_output_fulltext}"/>
             </then>
@@ -284,6 +285,7 @@
                <echo message="cmd : mvn -f pom_fulltext.xml ${cmd} in dir ${casedir}"/>
                <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" outputproperty="screen_output_fulltext">
                   <arg line=" -f pom_fulltext.xml ${cmd}" />
+                  <env key="PATH" path="/opt/jdk1.8.0_152" />
                </exec>
                <echo message="${screen_output_fulltext}"/>
             </then>
