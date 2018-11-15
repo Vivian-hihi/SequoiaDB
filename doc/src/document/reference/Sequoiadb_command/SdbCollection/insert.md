@@ -1,7 +1,7 @@
 ##语法##
-***db.collectionspace.collection.insert\(\<doc|docs\>,\[flag\]\)***
+**db.collectionspace.collection.insert\(\<doc|docs\>,\[flag\]\)**
 
-***db.collectionspace.collection.insert\(\<doc|docs\>,\[options\]\)***
+**db.collectionspace.collection.insert\(\<doc|docs\>,\[options\]\)**
 
 向指定集合中插入记录。如果集合空间或集合不存在，首先需要手动创建一个集合空间，如 db.createCS("foo")，再在该集合空间下手动创建集合，如 db.foo.createCL\("bar"\)。然后在集合中插入记录。
 
@@ -54,7 +54,7 @@
 
 
  ```lang-javascript
- db.foo.bar.insert( [ { _id: 20, name: "Mike", age: 15 }, { name: "John", age: 25, phone: 123 } ] )
+ > db.foo.bar.insert( [ { _id: 20, name: "Mike", age: 15 }, { name: "John", age: 25, phone: 123 } ] )
  ```
 
 * 插入拥有重复“_id”键的多条记录，如下操作将会在集合bar中插入两条记录。
