@@ -938,7 +938,7 @@ public class ObjectServiceImpl implements ObjectService {
         if (null != noneMatchEtag){
             if (noneMatchEtag.toString().equals(eTag)){
                 throw new S3ServerException(S3Error.OBJECT_IF_NONE_MATCH_FAILED,
-                        "if none match isNotMatch: match eTag:" + matchEtag.toString() + ", etag:" + eTag);
+                        "if none match isNotMatch: match eTag:" + noneMatchEtag.toString() + ", etag:" + eTag);
             }else{
                 isNoneMatch = true;
             }
