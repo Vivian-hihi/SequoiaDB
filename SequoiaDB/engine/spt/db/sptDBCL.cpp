@@ -348,22 +348,76 @@ namespace engine
          }
          goto error ;
       }
-      rc = arg.getNative( 1, &needReturnOid, SPT_NATIVE_INT32 ) ;
-      if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      if ( arg.isBoolean( 1 ) )
       {
-         detail = BSON( SPT_ERR << "Flag must be bool" ) ;
+         rc = arg.getNative( 1, &needReturnOid, SPT_NATIVE_INT32 ) ;
+         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         {
+            detail = BSON( SPT_ERR << "Flag must be bool" ) ;
+            goto error ;
+         }
+         rc = _cl.insert( record, &oid ) ;
+         if( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to insert record" ) ;
+            goto error ;
+         }
+         if( needReturnOid )
+         {
+            rval.getReturnVal().setValue( oid.toString() ) ;
+         }
+      }
+      else if ( arg.isObject( 1 ) )
+      {
+         BSONObj options ;
+         BSONElement elem ;
+         BOOLEAN contOnDup = FALSE ;
+         BOOLEAN returnOid = FALSE ;
+         INT32 flags       = 0 ;
+         rc = arg.getBsonobj( 1, options ) ;
+         if( SDB_OUT_OF_BOUND == rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to get insert options" ) ;
+            goto error ;
+         }
+         /// ContOnDup
+         elem = options.getField( FIELD_NAME_CONTONDUP ) ;
+         contOnDup = 
+            ( elem.eoo() || Bool != elem.type() ) ? FALSE : elem.Bool() ;
+         /// ReturnOID
+         elem = options.getField( FIELD_NAME_RETURN_OID ) ;
+         returnOid = 
+            ( elem.eoo() || Bool != elem.type() ) ? FALSE : elem.Bool() ;
+         if ( contOnDup ) flags |= FLG_INSERT_CONTONDUP ;
+         if ( returnOid )
+         {
+            BSONObj result ;
+            flags |= FLG_INSERT_RETURN_OID ;
+            rc = _cl.insert( record, flags, &result ) ;
+            if ( rc )
+            {
+               detail = BSON( SPT_ERR << "Failed to insert record" ) ;
+               goto error ;
+            }
+            rval.getReturnVal().setValue( result ) ;
+         }
+         else
+         {
+            rc = _cl.insert( record, flags, NULL ) ;
+            if ( rc )
+            {
+               detail = BSON( SPT_ERR << "Failed to insert record" ) ;
+               goto error ;
+            }
+         }
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "The second argument should be insert flag or insert options" ) ;
          goto error ;
       }
-      rc = _cl.insert( record, &oid ) ;
-      if( SDB_OK != rc )
-      {
-         detail = BSON( SPT_ERR << "Failed to insert record" ) ;
-         goto error ;
-      }
-      if( needReturnOid )
-      {
-         rval.getReturnVal().setValue( oid.toString() ) ;
-      }
+      
    done:
       return rc ;
    error:
@@ -779,7 +833,6 @@ namespace engine
                                bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      SINT32 flags = 0 ;
       vector< BSONObj > objVec ;
       rc = arg.getArray( 0, objVec ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -792,18 +845,74 @@ namespace engine
          detail = BSON( SPT_ERR << "Docs array must be object Array" ) ;
          goto error ;
       }
-      rc = arg.getNative( 1, &flags, SPT_NATIVE_INT32 ) ;
-      if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+
+      if ( arg.isNumber( 1 ) )
       {
-         detail = BSON( SPT_ERR << "Flags must be number" ) ;
+         SINT32 flags = 0 ;
+         rc = arg.getNative( 1, &flags, SPT_NATIVE_INT32 ) ;
+         if( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Flags must be number" ) ;
+            goto error ;
+         }
+         rc = _cl.bulkInsert( flags, objVec ) ;
+         if( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to bulk insert record" ) ;
+            goto error ;
+         }
+      }
+      else if ( arg.isObject( 1 ) )
+      {
+         BSONObj options ;
+         BSONElement elem ;
+         BOOLEAN contOnDup = FALSE ;
+         BOOLEAN returnOid = FALSE ;
+         INT32 flags       = 0 ;
+         rc = arg.getBsonobj( 1, options ) ;
+         if( SDB_OUT_OF_BOUND == rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to get insert options" ) ;
+            goto error ;
+         }
+         /// ContOnDup
+         elem = options.getField( FIELD_NAME_CONTONDUP ) ;
+         contOnDup = 
+            ( elem.eoo() || Bool != elem.type() ) ? FALSE : elem.Bool() ;
+         /// ReturnOID
+         elem = options.getField( FIELD_NAME_RETURN_OID ) ;
+         returnOid = 
+            ( elem.eoo() || Bool != elem.type() ) ? FALSE : elem.Bool() ;
+         if ( contOnDup ) flags |= FLG_INSERT_CONTONDUP ;
+         if ( returnOid )
+         {
+            BSONObj result ;
+            flags |= FLG_INSERT_RETURN_OID ;
+            rc = _cl.insert( objVec, flags, &result ) ;
+            if ( rc )
+            {
+               detail = BSON( SPT_ERR << "Failed to bulk insert records" ) ;
+               goto error ;
+            }
+            rval.getReturnVal().setValue( result ) ;
+         }
+         else
+         {
+            rc = _cl.insert( objVec, flags, NULL ) ;
+            if ( rc )
+            {
+               detail = BSON( SPT_ERR << "Failed to bulk insert records" ) ;
+               goto error ;
+            }
+         }
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "The second argument should be insert flag or insert options" ) ;
          goto error ;
       }
-      rc = _cl.bulkInsert( flags, objVec ) ;
-      if( SDB_OK != rc )
-      {
-         detail = BSON( SPT_ERR << "Failed to bulk insert record" ) ;
-         goto error ;
-      }
+
    done:
       return rc ;
    error:

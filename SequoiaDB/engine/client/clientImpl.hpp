@@ -176,6 +176,9 @@ namespace sdbclient
       INT32 insert ( const bson::BSONObj &obj,
                      INT32 flags,
                      bson::BSONObj *pResult = NULL ) ;
+      INT32 insert ( std::vector<bson::BSONObj> &objs,
+                     INT32 flags = 0,
+                     bson::BSONObj *pResult = NULL ) ;
       INT32 insert ( const bson::BSONObj objs[],
                      INT32 size,
                      INT32 flags = 0,

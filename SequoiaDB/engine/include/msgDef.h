@@ -455,8 +455,11 @@
 #define FIELD_NAME_TEXT                      "$Text"
 #define FIELD_NAME_CONFIGS                   "Configs"
 #define FIELD_NAME_SEQUENCE_NAME             "Name"
-#define FIELD_NAME_SEQUENCE_OID               "_id"
+#define FIELD_NAME_SEQUENCE_OID              "_id"
 #define FIELD_NAME_SEQUENCE_ID               "ID"
+#define FIELD_NAME_CONTONDUP                 "ContOnDup"
+#define FIELD_NAME_RETURN_OID                "ReturnOID"
+
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"
 #define FIELD_NAME_TASK_NAME                 "TaskName"

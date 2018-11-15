@@ -2262,6 +2262,12 @@ SDB_EXPORT INT32 sdbGetLastErrorObj( bson *obj )
    bson localobj ;
    BOOLEAN bsoninit = FALSE ;
 
+   if ( !obj )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
    BSON_INIT( localobj ) ;
 
    if ( _pErrorBuf && _errorBufSize >= 5 &&
@@ -6391,6 +6397,7 @@ error :
 SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                                  SINT32 flags, bson **obj, SINT32 num )
 {
+   flags &= ~FLG_INSERT_RETURN_OID ;
    return sdbBulkInsert2( cHandle, flags, obj, num, NULL ) ;
 }
 

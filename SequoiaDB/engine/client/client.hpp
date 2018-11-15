@@ -262,6 +262,9 @@ namespace sdbclient
       virtual INT32 insert ( const bson::BSONObj &obj, 
                              INT32 flags,
                              bson::BSONObj *pResult = NULL ) = 0 ;
+      virtual INT32 insert ( std::vector<bson::BSONObj> &objs,
+                             INT32 flags = 0,
+                             bson::BSONObj *pResult = NULL ) = 0 ;
       virtual INT32 insert ( const bson::BSONObj objs[],
                              INT32 size,
                              INT32 flags = 0,
@@ -762,6 +765,38 @@ namespace sdbclient
          return pCollection->insert ( obj, flags, pResult ) ;
 
       }
+
+      /** \fn INT32 insert ( std::vector<bson::BSONObj> &objs, 
+                             INT32 flags = 0,
+                             bson::BSONObj *pResult = NULL )
+          \brief Insert a bson object into current collection.
+          \param [in] objs The inserted bson objects.
+          \param [in] flags The flag to control the behavior of inserting. The
+                            value of flag default to be 0, and it can choose
+                            the follow values:
+
+               0:                    while 0 is set(default to be 0), database 
+                                     will stop inserting when some records hit 
+                                     index key duplicate error.
+               FLG_INSERT_CONTONDUP: 
+                                     if some records hit index key duplicate
+                                     error, database will skip them and go on 
+                                     inserting.
+               FLG_INSERT_RETURN_OID:    return the value of "_id" field in the record.
+
+          \param [out] id The object id of inserted bson object in current collection, the memory of id will be invalidated when next insert/bulkInsert is performed or the obj is destroyed
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 insert ( std::vector<bson::BSONObj> &objs,
+                     INT32 flags = 0,
+                     bson::BSONObj *pResult = NULL )
+      {
+         if ( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->insert( objs, flags, pResult ) ;
+      }
+
 
       /** \fn INT32 insert ( bson::BSONObj objs[], INT32 size,
                              INT32 flags = 0,

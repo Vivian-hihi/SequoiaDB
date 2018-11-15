@@ -1288,6 +1288,116 @@ do                                                            \
       goto done ;
    }
 
+   INT32 _sdbCollectionImpl::insert ( std::vector<bson::BSONObj> &objs,
+                                      INT32 flags,
+                                      bson::BSONObj *pResult )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID = 0 ;
+      BOOLEAN result ;
+      BOOLEAN hasLock = FALSE ;
+      SINT32 count = 0 ;
+      BSONArrayBuilder bab ;
+      SINT32 num = objs.size() ;
+   
+      if ( _collectionFullName[0] == '\0' || !_connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      if ( num <= 0 )
+      {
+         // in this case, prevent use '_pSendBuffer' to send anything to engine
+         goto done ;
+      }
+      for ( count = 0; count < num; ++count )
+      {
+         BSONObj newObj ;
+         rc = _appendOID ( objs[count], newObj ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         if ( pResult && ( flags & FLG_INSERT_RETURN_OID ) )
+         {
+            try
+            {
+               bab.append( newObj.getField ( CLIENT_RECORD_ID_FIELD ) ) ;     
+            }
+            catch ( std::exception &e )
+            {
+               rc = SDB_DRIVER_BSON_ERROR ;
+               goto error ;
+            }
+         }
+         if ( 0 == count )
+            rc = clientBuildInsertMsgCpp ( &_pSendBuffer, &_sendBufferSize,
+                                           _collectionFullName, flags, 0,
+                                           newObj.objdata(),
+                                           _connection->_endianConvert ) ;
+         else
+            rc = clientAppendInsertMsgCpp ( &_pSendBuffer, &_sendBufferSize,
+                                            newObj.objdata(),
+                                            _connection->_endianConvert ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+      _connection->lock () ;
+      hasLock = TRUE ;
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _connection->_recvExtract ( &_pReceiveBuffer,
+                                       &_receiveBufferSize,
+                                       contextID,
+                                       result ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+   
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
+                               _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // return output object
+      if ( pResult )
+      {
+         BSONObjBuilder bob ;
+         try
+         {
+            if ( flags & FLG_INSERT_RETURN_OID )
+            {
+               bob.append( CLIENT_RECORD_ID_FIELD, bab.arr() ) ;
+            }
+            *pResult = bob.obj() ;
+         }
+         catch ( std::exception &e )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+      }
+      
+   done :
+      if ( hasLock )
+      {
+         _connection->unlock () ;
+      }
+      return rc ;
+   error :
+      goto done ;
+
+   }
+
    INT32 _sdbCollectionImpl::insert ( const bson::BSONObj objs[],
                                       INT32 size,
                                       INT32 flags,
@@ -1405,76 +1515,17 @@ do                                                            \
                                           vector<BSONObj> &obj )
    {
       INT32 rc = SDB_OK ;
-      SINT64 contextID = 0 ;
-      BOOLEAN result ;
-      BOOLEAN hasLock = FALSE ;
-      SINT32 count = 0 ;
-      SINT32 num = obj.size() ;
+      flags &= ~FLG_INSERT_RETURN_OID ;
 
-      if ( _collectionFullName[0] == '\0' || !_connection )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      if ( num <= 0 )
-      {
-         // in this case, prevent use '_pSendBuffer' to send anything to engine
-         goto done ;
-      }
-      for ( count = 0; count < num; ++count )
-      {
-         BSONObj newObj ;
-         rc = _appendOID ( obj[count], newObj ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-         if ( 0 == count )
-            rc = clientBuildInsertMsgCpp ( &_pSendBuffer, &_sendBufferSize,
-                                           _collectionFullName, flags, 0,
-                                           newObj.objdata(),
-                                           _connection->_endianConvert ) ;
-         else
-            rc = clientAppendInsertMsgCpp ( &_pSendBuffer, &_sendBufferSize,
-                                            newObj.objdata(),
-                                            _connection->_endianConvert ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-      }
-      _connection->lock () ;
-      hasLock = true ;
-      rc = _connection->_send ( _pSendBuffer ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = _connection->_recvExtract ( &_pReceiveBuffer,
-                                       &_receiveBufferSize,
-                                       contextID,
-                                       result ) ;
+      rc = insert( obj, flags, NULL ) ;
       if ( rc )
       {
          goto error ;
       }
 
-      // check return msg header
-      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
-      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
-                               _collectionFullName ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-      
-   done :
-      if ( hasLock )
-      {
-         _connection->unlock () ;
-      }
+   done:
       return rc ;
-   error :
+   error:
       goto done ;
    }
 
