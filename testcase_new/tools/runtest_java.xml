@@ -107,7 +107,7 @@
                   <generatexml filename="${xmlfile}"/>
                </else>
             </if>
-            <execsynctest xmlfile="${xmlfile}" hostname="${hostname}" svcname="${svcname}" sdbdriver="${sdbdriver}" sdbdriverdir="${sdbdriverDir}"/>
+            <execsynctest xmlfile="${xmlfile}" hostname="${hostname}" svcname="${svcname}" sdbdriver="${sdbdriver}" sdbdriverdir="${sdbdriverDir}" eshostname="${eshostname}" essvcname="${essvcname}"/>
          </case>
          <case value="RELIABILITYTEST">
             <delete file="${casedir}/proxyxml.xml"/>
@@ -149,7 +149,7 @@
                   </for>
                </else>
             </if>
-            <execreliabilitytest xmlfile="${xmlfile}" serialnumber="${serial_number}" hostname="${hostname}" svcname="${svcname}" sdbdriver="${sdbdriver}" sdbdriverdir="${sdbdriverDir}"/>
+            <execreliabilitytest xmlfile="${xmlfile}" serialnumber="${serial_number}" hostname="${hostname}" svcname="${svcname}" sdbdriver="${sdbdriver}" sdbdriverdir="${sdbdriverDir}" eshostname="${eshostname}" essvcname="${essvcname}"/>
          </case>
          <default>
             <delete file="${casedir}/proxyxml.xml"/>
@@ -163,7 +163,7 @@
                   <generatexml filename="${xmlfile}"/>
                </else>
             </if>
-            <execnormalandlargedatatest xmlfile="${xmlfile}" hostname="${hostname}" svcname="${svcname}" sdbdriver="${sdbdriver}" sdbdriverdir="${sdbdriverDir}"/>
+            <execnormalandlargedatatest xmlfile="${xmlfile}" hostname="${hostname}" svcname="${svcname}" sdbdriver="${sdbdriver}" sdbdriverdir="${sdbdriverDir}" eshostname="${eshostname}" essvcname="${essvcname}"/>
          </default>
       </switch>
 
@@ -181,6 +181,8 @@
       <attribute name="svcname"/>
       <attribute name="sdbdriver"/>
       <attribute name="sdbdriverdir"/>
+      <attribute name="eshostname"/>
+      <attribute name="essvcname"/>
       <sequential>
          <!--serialnumber=2: only install and deploy once release db,the testng will exec twice, the first report will not be collected to WORKSPACE, so report_detect_dir is not the same-->
          <var name="report_detect_dir" value="${WORKSPACE}/report/reliability"/>
@@ -217,7 +219,7 @@
                      <equals arg1="${error_num}" arg2="0"/>
                   </and>
                   <then>
-                     <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlname} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DSCRIPTDIR=${CI_WORK_DIR}/testcase/reliability/java/script"/>
+                     <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlname} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DSCRIPTDIR=${CI_WORK_DIR}/testcase/reliability/java/script -Deshostname=@{eshostname} -Dessvcname=@{essvcname}"/>
                      <echo message="cmd : ${cmd} in dir ${casedir}"/>
                      <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" outputproperty="screen_output">
                         <arg line="${cmd}" />
@@ -236,13 +238,27 @@
       <attribute name="svcname"/>
       <attribute name="sdbdriver"/>
       <attribute name="sdbdriverdir"/>
+      <attribute name="eshostname"/>
+      <attribute name="essvcname"/>
       <sequential>
-         <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlfile} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname}"/>
-         <echo message="cmd : ${cmd} in dir ${casedir}"/>
+         <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlfile} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -Deshostname=@{eshostname} -Dessvcname=@{essvcname} "/>
+         <echo message="cmd : mvn ${cmd} in dir ${casedir}"/>
          <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" outputproperty="screen_output">
             <arg line="${cmd}" />
          </exec>
          <echo message="${screen_output}"/>
+         
+         <if>
+            <available file="${casedir}/pom_fulltext.xml" type="file"/>
+            <then>
+               <echo message="cmd : mvn -f pom_fulltext.xml ${cmd} in dir ${casedir}"/>
+               <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" outputproperty="screen_output_fulltext">
+                  <arg line=" -f pom_fulltext.xml ${cmd}" />
+               </exec>
+               <echo message="${screen_output_fulltext}"/>
+            </then>
+         </if>
+
       </sequential>
    </macrodef>
    
@@ -252,13 +268,26 @@
       <attribute name="svcname"/>
       <attribute name="sdbdriver"/>
       <attribute name="sdbdriverdir"/>
+      <attribute name="eshostname"/>
+      <attribute name="essvcname"/>
       <sequential>
-         <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlfile} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname}"/>
+         <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlfile} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -Deshostname=@{eshostname} -Dessvcname=@{essvcname} "/>
          <echo message="cmd : ${cmd} in dir ${casedir}"/>
          <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" outputproperty="screen_output">
             <arg line="${cmd}" />
          </exec>
          <echo message="${screen_output}"/>
+         
+         <if>
+            <available file="${casedir}/pom_fulltext.xml" type="file"/>
+            <then>
+               <echo message="cmd : mvn -f pom_fulltext.xml ${cmd} in dir ${casedir}"/>
+               <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" outputproperty="screen_output_fulltext">
+                  <arg line=" -f pom_fulltext.xml ${cmd}" />
+               </exec>
+               <echo message="${screen_output_fulltext}"/>
+            </then>
+         </if>
       </sequential>
    </macrodef>
 
