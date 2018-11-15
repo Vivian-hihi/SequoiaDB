@@ -50,7 +50,7 @@
                <property name="hostname" value="${firsthost}"/>
                <property name="svcname" value="${SVCNAME}"/>
                <property name="eshostname" value="${ES_IP}"/>
-               <property name="essvcname" value="${ES_PORT}"/>
+               <property name="essvcname" value="${ES_PORT_CLIENT}"/>
             </ant>
          </then>
          <else>
@@ -73,7 +73,7 @@
                <property name="hostname" value="localhost"/>
                <property name="svcname" value="${SVCNAME}"/>
                <property name="eshostname" value="${ES_IP}"/>
-               <property name="essvcname" value="${ES_PORT}"/>
+               <property name="essvcname" value="${ES_PORT_CLIENT}"/>
             </ant>
          </else>
       </if>
