@@ -50,7 +50,8 @@ public class TestConcurrentWriteLob10423 extends SdbTestBase {
 		
 		int writeLobSize = random.nextInt(1024*1024);;
 		byte[] lobBuff = LobOprUtils.getRandomBytes(writeLobSize);	
-		WriteSameOidLobTask writeSameLobTask = new WriteSameOidLobTask( lobBuff );
+		ObjectId oid = new ObjectId("5a3b6f23c5d07c3000f73a8b");
+		WriteSameOidLobTask writeSameLobTask = new WriteSameOidLobTask( oid, lobBuff );
 		writeSameLobTask.start(5);
 		
 		Assert.assertTrue( writeDiffLobTask.isSuccess(), writeDiffLobTask.getErrorMsg());
@@ -58,7 +59,7 @@ public class TestConcurrentWriteLob10423 extends SdbTestBase {
 		//write lob of same oid only one success,than check the write success lob
 		int expSuccessNum = 1;
 		Assert.assertEquals(sameOidWriteOKCount.get(), expSuccessNum);	
-		checkWriteSameOidLobResult( cl, lobBuff);
+		checkWriteSameOidLobResult( cl, oid,lobBuff);
 	}
 
 	@AfterClass
@@ -101,13 +102,14 @@ public class TestConcurrentWriteLob10423 extends SdbTestBase {
 	
 	private class WriteSameOidLobTask extends SdbThreadBase {	
 		private byte[] lobBuff;
+		private ObjectId oid;
 		
-		public WriteSameOidLobTask( byte[] lobBuff ) {
+		public WriteSameOidLobTask( ObjectId oid,byte[] lobBuff ) {
 			this.lobBuff = lobBuff;
+			this.oid = oid;
 		}
 		@Override
 		public void exec() throws Exception {			
-			ObjectId oid = new ObjectId("5a3b6f23c5d07c3000f73a8b");
 		    try(Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")){		    	
 		    	DBCollection cl = sdb.getCollectionSpace(SdbTestBase.csName).getCollection(clName);			    	
 				try(DBLob lob = cl.createLob(oid)){
@@ -134,8 +136,7 @@ public class TestConcurrentWriteLob10423 extends SdbTestBase {
 	    }
 	 }	
 	
-	private void checkWriteSameOidLobResult(DBCollection cl,byte[] lobBuff){
-		ObjectId oid = new ObjectId("5a3b6f23c5d07c3000f73a8b");
+	private void checkWriteSameOidLobResult(DBCollection cl,ObjectId oid, byte[] lobBuff){		
 		//read and check the lob data
 		try(DBLob rLob = cl.openLob(oid)){
 			byte[] rbuff = new byte[(int) rLob.getSize()];
