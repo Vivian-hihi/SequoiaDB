@@ -43,7 +43,6 @@
 #include "dpsTransLockDef.hpp"
 #include "utilSegment.hpp"
 #include "utilMap.hpp"
-#include "ossRWMutex.hpp"
 
 using namespace bson ;
 using namespace std ;
@@ -96,7 +95,13 @@ namespace engine
          BOOLEAN              removeLock( const dpsTransLockId &lockID ) ;
          void                 clearLock() ;
 
-         ossRWMutex*          getRWMutex() ;
+         void                 incLockCount() ;
+         void                 decLockCount() ;
+         void                 clearLockCount() ;
+         UINT32               getLockCount() const ;
+
+         INT64                getTransTimeout() const ;
+         void                 setTransTimeout( INT64 timeout ) ;
 
       public:
          /*
@@ -112,8 +117,8 @@ namespace engine
          UTIL_OBJIDX             _lastLRBIdx ;
 
          DPS_LOCKID_MAP          _mapLockID ;
-
-         ossRWMutex              _rwMutex ;
+         UINT32                  _lockCount ;
+         INT64                   _transTimeout ;   /// milli-seconds
 
    } ;
    typedef _dpsTransExecutor dpsTransExecutor ;

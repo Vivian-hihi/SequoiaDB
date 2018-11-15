@@ -51,6 +51,8 @@ namespace engine
       _waiterIdx        = UTIL_INVALID_OBJ_INDEX ;
       _waiterQueType    = DPS_QUE_NULL ;
       _lastLRBIdx       = UTIL_INVALID_OBJ_INDEX ;
+      _lockCount        = 0 ;
+      _transTimeout     = 0 ;
    }
 
    _dpsTransExecutor::~_dpsTransExecutor()
@@ -62,6 +64,7 @@ namespace engine
       clearWaiterInfo() ;
       clearLastLRBIdx() ;
       clearLock() ;
+      clearLockCount() ;
    }
 
    void _dpsTransExecutor::setWaiterInfo( UTIL_OBJIDX lrbIdx,
@@ -146,9 +149,38 @@ namespace engine
       _mapLockID.clear() ;
    }
 
-   ossRWMutex* _dpsTransExecutor::getRWMutex()
+   void _dpsTransExecutor::incLockCount()
    {
-      return &_rwMutex ;
+      ++_lockCount ;
+   }
+
+   void _dpsTransExecutor::decLockCount()
+   {
+      SDB_ASSERT( _lockCount > 0, "Lock count must > 0" ) ;
+      if ( _lockCount > 0 )
+      {
+         --_lockCount ;
+      }
+   }
+
+   void _dpsTransExecutor::clearLockCount()
+   {
+      _lockCount = 0 ;
+   }
+
+   UINT32 _dpsTransExecutor::getLockCount() const
+   {
+      return _lockCount ;
+   }
+
+   void _dpsTransExecutor::setTransTimeout( INT64 timeout )
+   {
+      _transTimeout = timeout ;
+   }
+
+   UINT32 _dpsTransExecutor::getTransTimeout() const
+   {
+      return _transTimeout ;
    }
 
 }
