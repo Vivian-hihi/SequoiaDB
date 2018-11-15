@@ -219,7 +219,7 @@
                      <equals arg1="${error_num}" arg2="0"/>
                   </and>
                   <then>
-                     <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlname} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DSCRIPTDIR=${CI_WORK_DIR}/testcase/reliability/java/script -Deshostname=@{eshostname} -Dessvcname=@{essvcname}"/>
+                     <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlname} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DSCRIPTDIR=${CI_WORK_DIR}/testcase/reliability/java/script -DESHOSTNAME=@{eshostname} -DESSVCNAME=@{essvcname}"/>
                      <echo message="cmd : ${cmd} in dir ${casedir}"/>
                      <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" outputproperty="screen_output">
                         <arg line="${cmd}" />
@@ -241,7 +241,7 @@
       <attribute name="eshostname"/>
       <attribute name="essvcname"/>
       <sequential>
-         <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlfile} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -Deshostname=@{eshostname} -Dessvcname=@{essvcname} "/>
+         <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlfile} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DESHOSTNAME=@{eshostname} -DESSVCNAME=@{essvcname} "/>
          <echo message="cmd : mvn ${cmd} in dir ${casedir}"/>
          <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" outputproperty="screen_output">
             <arg line="${cmd}" />
@@ -254,7 +254,7 @@
                <echo message="cmd : mvn -f pom_fulltext.xml ${cmd} in dir ${casedir}"/>
                <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" outputproperty="screen_output_fulltext">
                   <arg line=" -f pom_fulltext.xml ${cmd}" />
-                  <env key="PATH" path="/opt/jdk1.8.0_152" />
+                  <env key="JAVA_HOME" path="/opt/jdk1.8.0_152" />
                </exec>
                <echo message="${screen_output_fulltext}"/>
             </then>
@@ -272,7 +272,7 @@
       <attribute name="eshostname"/>
       <attribute name="essvcname"/>
       <sequential>
-         <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlfile} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -Deshostname=@{eshostname} -Dessvcname=@{essvcname} "/>
+         <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlfile} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DESHOSTNAME=@{eshostname} -DESSVCNAME=@{essvcname} "/>
          <echo message="cmd : ${cmd} in dir ${casedir}"/>
          <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" outputproperty="screen_output">
             <arg line="${cmd}" />
@@ -285,7 +285,7 @@
                <echo message="cmd : mvn -f pom_fulltext.xml ${cmd} in dir ${casedir}"/>
                <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" outputproperty="screen_output_fulltext">
                   <arg line=" -f pom_fulltext.xml ${cmd}" />
-                  <env key="PATH" path="/opt/jdk1.8.0_152" />
+                  <env key="JAVA_HOME" path="/opt/jdk1.8.0_152" />
                </exec>
                <echo message="${screen_output_fulltext}"/>
             </then>
