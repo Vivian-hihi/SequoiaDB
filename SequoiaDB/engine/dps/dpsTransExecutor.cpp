@@ -52,7 +52,6 @@ namespace engine
       _waiterQueType    = DPS_QUE_NULL ;
       _lastLRBIdx       = UTIL_INVALID_OBJ_INDEX ;
       _lockCount        = 0 ;
-      _transTimeout     = 0 ;
    }
 
    _dpsTransExecutor::~_dpsTransExecutor()
@@ -171,16 +170,6 @@ namespace engine
    UINT32 _dpsTransExecutor::getLockCount() const
    {
       return _lockCount ;
-   }
-
-   void _dpsTransExecutor::setTransTimeout( INT64 timeout )
-   {
-      _transTimeout = timeout ;
-   }
-
-   INT64 _dpsTransExecutor::getTransTimeout() const
-   {
-      return _transTimeout ;
    }
 
 }

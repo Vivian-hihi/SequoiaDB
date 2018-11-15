@@ -100,9 +100,6 @@ namespace engine
          void                 clearLockCount() ;
          UINT32               getLockCount() const ;
 
-         INT64                getTransTimeout() const ;
-         void                 setTransTimeout( INT64 timeout ) ;
-
       public:
          /*
             Interface
@@ -118,7 +115,6 @@ namespace engine
 
          DPS_LOCKID_MAP          _mapLockID ;
          UINT32                  _lockCount ;
-         INT64                   _transTimeout ;   /// milli-seconds
 
    } ;
    typedef _dpsTransExecutor dpsTransExecutor ;
