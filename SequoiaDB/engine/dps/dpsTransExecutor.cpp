@@ -178,7 +178,7 @@ namespace engine
       _transTimeout = timeout ;
    }
 
-   UINT32 _dpsTransExecutor::getTransTimeout() const
+   INT64 _dpsTransExecutor::getTransTimeout() const
    {
       return _transTimeout ;
    }
