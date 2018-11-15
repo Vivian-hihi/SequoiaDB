@@ -179,8 +179,8 @@ namespace engine
    static const CHAR* _lockModeString[DPS_TRANSLOCK_MAX] =
    { "IS",
      "IX",
-     "S"
-     "U"
+     "S",
+     "U",
      "X"
    } ;
 
@@ -341,7 +341,7 @@ namespace engine
       _dpsTransLockId id( *this ) ;
 
       if ( id.isValid() )
-      {         
+      {
          if ( DMS_INVALID_MBID != id._collectionID )
          {
             if ( DMS_INVALID_OFFSET != id._recordOffset )
