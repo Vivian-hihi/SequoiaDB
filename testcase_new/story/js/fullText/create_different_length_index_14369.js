@@ -52,7 +52,6 @@ function main()
    
    //SEQUOIADBMAINSTREAM-3896
    //固定集合名长度等于128时，全文索引创建失败
-   /*
    var indexName = "";
    for (var i = 0; i < 127 -cappedCLLength + 1; i++){
       indexName = indexName + "a";  
@@ -68,7 +67,7 @@ function main()
    }
    commCheckIndex( dbcl, indexName, false );
    println("===create index fail===");
-   */
+   
    
    //固定集合名长度大于127时，全文索引创建失败
    var indexName = "";
