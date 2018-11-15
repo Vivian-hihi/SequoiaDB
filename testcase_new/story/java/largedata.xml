@@ -17,11 +17,17 @@
       <listener class-name="com.sequoiadb.testcommon.TimePrinterListener"/>
    </listeners>
 
-   <test name="parralclass">
+   <test name="normaltest">
       <packages>
-		  	<package name="com.sequoiadb.lob.biglob" />
+         <package name="com.sequoiadb.lob.biglob" />
       </packages>      
    </test>
-
+   
+   <test name="fulltext" parallel="classes" thread-count="5">
+      <packages>
+         <package name="com.sequoiadb.fulltext" />
+      </packages>    
+   </test>
+   
 </suite>
    
