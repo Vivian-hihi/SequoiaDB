@@ -1529,19 +1529,19 @@ class collection(object):
         if not ( isinstance(options, dict) or isinstance(options, list) or isinstance(options, tuple) ):
             raise SDBTypeError("options must be an instance of dict, list or tuple")
 
+        container = []
         if isinstance(options, list) or isinstance(options, tuple):
-            container = []
             for elem in options:
                 if not isinstance(elem, dict):
                     raise SDBTypeError("item in list/tuple must be an instance of dict")
-                record = bson.BSON.encode(elem)
-                container.append(record)
-            rc = sdb.cl_create_autoincrement(self._cl, container)
-            raise_if_error(rc, "Create autoincrement failed")
+                option = bson.BSON.encode(elem)
+                container.append(option)
         else:
-            bson_record = bson.BSON.encode(options)
-            rc = sdb.cl_create_autoincrement(self._cl, bson_record)
-            raise_if_error(rc, "Create autoincrement failed")
+            option = bson.BSON.encode(options)
+            container.append(option)
+
+        rc = sdb.cl_create_autoincrement(self._cl, container)
+        raise_if_error(rc, "Create autoincrement failed")
 
     def drop_autoincrement(self, names):
         """Drop autoincrement field on collection.
@@ -1556,14 +1556,14 @@ class collection(object):
         if not ( isinstance(names, str) or isinstance(names, list) or isinstance(names, tuple) ):
             raise SDBTypeError("names must be an instance of str, list or tuple")
 
+        container = []
         if isinstance(names, list) or isinstance(names, tuple):
-            container = []
             for elem in names:
                 if not isinstance(elem, str):
                     raise SDBTypeError("item in list/tuple must be an instance of str")
                 container.append(elem)
-            rc = sdb.cl_drop_autoincrement(self._cl, container)
-            raise_if_error(rc, "Drop autoincrement failed")
         else:
-            rc = sdb.cl_drop_autoincrement(self._cl, names)
-            raise_if_error(rc, "Drop autoincrement failed")
+            container.append(names)
+
+        rc = sdb.cl_drop_autoincrement(self._cl, container)
+        raise_if_error(rc, "Drop autoincrement failed")

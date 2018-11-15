@@ -208,6 +208,29 @@
       }                                                                 \
    }while( FALSE ) 
 
+#define MAKE_PYLIST_TO_CSTRING_VECTOR( py_list, vec_str )               \
+   do                                                                   \
+   {                                                                    \
+      if( !PyList_Check( py_list) )                                     \
+      {                                                                 \
+         rc = SDB_INVALIDARGS ;                                         \
+         goto done ;                                                    \
+      }                                                                 \
+                                                                        \
+      Py_ssize_t list_size = PyList_Size( py_list ) ;                   \
+      for ( int idx = 0 ; idx < list_size ; ++idx )                     \
+      {                                                                 \
+         char *str = NULL ;                                             \
+         str = PyString_AsString( PyList_GetItem( py_list, idx) ) ;     \
+         if ( NULL == str )                                             \
+         {                                                              \
+         rc = SDB_INVALIDARGS ;                                         \
+         goto done ;                                                    \
+         }                                                              \
+         vec_str.push_back( str ) ;                                     \
+      }                                                                 \
+   }while( FALSE ) 
+
 #define MAKE_PYLIST_TO_BUFFER( py_list, buffer )                        \
    do                                                                   \
    {                                                                    \

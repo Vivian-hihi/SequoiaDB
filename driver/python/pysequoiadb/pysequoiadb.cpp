@@ -3066,28 +3066,21 @@ __METHOD_IMP(cl_create_autoincrement)
 {
    INT32 rc                    = 0 ;
    PYOBJECT *obj               = NULL ;
-   PYOBJECT *bson_object       = NULL ;
+   PYOBJECT *options_list      = NULL ;
    sdbCollection *cl           = NULL ;
-   const bson::BSONObj *object = NULL ;
-   std::vector< bson::BSONObj > vec_bson ;
+   std::vector< bson::BSONObj > options_vec ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_object ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &options_list ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
-   if ( PyList_Check( bson_object ) )
-   {
-      MAKE_PYLIST_TO_VECTOR( bson_object, vec_bson ) ;
-      rc = cl->createAutoIncrement( vec_bson ) ;   
-   }
-   else
-   {
-      CAST_PYBSON_TO_CPPBSON( bson_object, object ) ;
-      rc = cl->createAutoIncrement( *object ) ;
-   }
+
+   MAKE_PYLIST_TO_VECTOR( options_list, options_vec ) ;
+
+   rc = cl->createAutoIncrement( options_vec ) ;
 
    if ( rc )
    {
@@ -3095,7 +3088,6 @@ __METHOD_IMP(cl_create_autoincrement)
    }
 
 done:
-   DELETE_CPPOBJECT( object ) ;
    return MAKE_RETURN_INT(rc) ;
 }
 
@@ -3103,12 +3095,11 @@ __METHOD_IMP(cl_drop_autoincrement)
 {
    INT32 rc                    = 0 ;
    PYOBJECT *obj               = NULL ;
-   PYOBJECT *str_object        = NULL ;
+   PYOBJECT *str_list          = NULL ;
    sdbCollection *cl           = NULL ;
-   const bson::BSONObj *object = NULL ;
-   std::vector< char * > vec_str ;
+   std::vector< char * > str_vec ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &str_object ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &str_list ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -3116,32 +3107,9 @@ __METHOD_IMP(cl_drop_autoincrement)
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
 
-   if ( PyList_Check( str_object ) )
-   {
-      Py_ssize_t list_size = PyList_Size( str_object ) ;
-      for ( int idx = 0 ; idx < list_size ; ++idx )
-      {
-         char *str = NULL ;
-         str = PyBytes_AsString( PyList_GetItem( str_object, idx) ) ;
-         if ( NULL == str )
-         {
-         rc = SDB_INVALIDARGS ;
-         goto done ;
-         }
-         vec_str.push_back( str ) ;
-      }
-      rc = cl->dropAutoIncrement( vec_str ) ;
-   }
-   else
-   {
-      const char *str = PyBytes_AsString( str_object ) ;
-      if ( NULL == str )
-      {
-         rc = SDB_INVALIDARGS ;
-         goto done ;
-      }
-      rc = cl->dropAutoIncrement( str ) ;
-   }
+   MAKE_PYLIST_TO_CSTRING_VECTOR( str_list, str_vec ) ;
+
+   rc = cl->dropAutoIncrement( str_vec ) ;
 
    if ( rc )
    {
@@ -3149,7 +3117,6 @@ __METHOD_IMP(cl_drop_autoincrement)
    }
 
 done:
-   DELETE_CPPOBJECT( object ) ;
    return MAKE_RETURN_INT(rc) ;
 }
 
