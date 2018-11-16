@@ -781,8 +781,8 @@ void createRecordList1 ( bson *objlist, INT32 listSize )
    count = 0 ;
    for ( ; count < listSize; ++count )
    {
-      if ( !jsonToBson(objlist,"{ \"姓名\" : \"李四\", \"年龄\" : 30,\
-                           \"电话\" : [ \"18390378790\",\"13801598000\" ] }" ))
+      if ( !jsonToBson(objlist,"{ \"濮撳悕\" : \"鏉庡洓\", \"骞撮緞\" : 30,\
+                           \"鐢佃瘽\" : [ \"18390378790\",\"13801598000\" ] }" ))
       {
          printf ( "Failed to convert json to bson\n" ) ;
       }
@@ -804,8 +804,8 @@ void createEnglishRecord ( bson *obj )
 /* create Chinese record */
 void createChineseRecord ( bson *obj )
 {
-   const char *r ="{ \"姓名\" : \"张三\", \"年龄\" : 25, \"id\" : 2001,\
-                           \"电话\" : [ \"1808835242\",\"1835923246\" ] }" ;
+   const char *r ="{ \"濮撳悕\" : \"寮犱笁\", \"骞撮緞\" : 25, \"id\" : 2001,\
+                           \"鐢佃瘽\" : [ \"1808835242\",\"1835923246\" ] }" ;
    bson_init ( obj ) ;
    jsonToBson ( obj, r ) ;
 }

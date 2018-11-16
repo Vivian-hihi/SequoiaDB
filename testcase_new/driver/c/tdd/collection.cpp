@@ -383,6 +383,56 @@ TEST(collection,sdbInsert1)
    sdbReleaseConnection ( connection ) ;
 }
 
+TEST(collection,sdbInsert2)
+{
+   sdbConnectionHandle connection = 0 ;
+   sdbCollectionHandle collection = 0 ;
+   INT32 rc                       = SDB_OK ;
+   const char *key                = NULL ;
+   int value                      = 0 ;
+   bson obj ;
+   bson ret ;
+   bson_iterator it ;
+   bson_init( &ret );
+   bson_type type ;
+   rc = initEnv( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd() ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = sdbConnect ( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd(), &connection ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection ( connection,
+                        COLLECTION_FULL_NAME ,
+                        &collection ) ;
+   sleep( 3 ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // build insert record
+   bson_init ( &obj ) ;
+   bson_append_int ( &obj, "a", 1 ) ;
+   bson_finish ( &obj ) ;
+   // insert record into the current collection
+   printf( "Insert a record, the record is:" OSS_NEWLINE ) ;
+   bson_print( &obj ) ;
+   rc = sdbInsert2 ( collection, &obj, FLG_INSERT_RETURN_OID, &ret ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   type = bson_find( &it, &ret, "_id") ;
+   ASSERT_EQ(type, BSON_OID) ; 
+
+   rc = sdbInsert2 ( collection, &obj, FLG_INSERT_CONTONDUP|FLG_INSERT_RETURN_OID, &ret ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   type = bson_find( &it, &ret, "_id") ;
+   ASSERT_EQ(type, BSON_OID) ;
+   bson_destroy ( &obj ) ;
+   bson_destroy( &ret );
+
+   sdbDisconnect ( connection ) ;
+   sdbReleaseCollection ( collection ) ;
+   sdbReleaseConnection ( connection ) ;
+}
+
 TEST(collection,sdbInsert1_check_id)
 {
    sdbConnectionHandle connection = 0 ;
@@ -515,6 +565,101 @@ TEST(collection,sdbBulkInsert)
    sdbReleaseConnection ( connection ) ;
 }
 
+
+TEST(collection,sdbBulkInsert2)
+{
+   sdbConnectionHandle connection = 0 ;
+   sdbCollectionHandle collection = 0 ;
+   INT32 rc                       = SDB_OK ;
+   SINT64 NUM                     = 10 ;
+   int count                      = 0 ;
+   SINT64 totalNum                = 0 ;
+   bson attr ;
+   bson obj ;
+   bson ret ;
+   bson *objList [ NUM ] ;
+   bson_init( &ret );
+   rc = initEnv( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd() ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = sdbConnect ( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd(), &connection ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // set read from master
+   bson_init( &attr ) ;
+   bson_append_string( &attr, "PreferedInstance", "m" ) ;
+   bson_finish( &attr ) ;
+   rc = sdbSetSessionAttr( connection, &attr ) ;
+   bson_destroy( &attr ) ;
+   // get cl
+   rc = getCollection ( connection, COLLECTION_FULL_NAME , &collection ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // allocate memory and add data
+   for ( count = 0; count < NUM; count++ )
+   {
+      objList[count] = bson_create() ;
+      rc = bson_append_int ( objList[count], "_id", count ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      rc = bson_append_int ( objList[count], "NUM", count ) ;
+      bson_finish ( objList[count] ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+   }
+   // TODO:
+   // bulk insert,if the argument "flags" is set FLG_INSERT_CONTONDUP,
+   // datebase will not stop bulk insert while one failed with dup key
+   rc = sdbBulkInsert2( collection, FLG_INSERT_RETURN_OID, objList, NUM, &ret ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // check
+   rc = sdbGetCount ( collection, NULL, &totalNum ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc);
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( NUM, totalNum ) ;
+
+   bson_print(&ret);
+   bson_iterator it,sit ;
+   bson sub ;
+   bson_type type, stype ;
+   bson_init( &sub );
+   type = bson_find( &it, &ret, "_id") ;
+   ASSERT_EQ( type, BSON_ARRAY) ;
+   
+   bson_iterator_subiterator(&it, &sit) ;
+   //bson_print( &sub ) ;
+   //bson_iterator_init(&sit, &sub) ;
+   count = 0 ;
+   while( BSON_EOO != ( stype = bson_iterator_next( &sit ) ) )
+   {
+      ASSERT_EQ( BSON_INT, bson_iterator_type(&sit) ) ;
+      ASSERT_EQ( count, bson_iterator_int(&sit) ) ;
+      count++ ;
+   }
+
+   bson_destroy( &sub) ;
+   bson_destroy( &ret );
+
+   bson_init( &ret );
+   rc = sdbBulkInsert2( collection, FLG_INSERT_RETURN_OID, objList, NUM, &ret ) ;
+   ASSERT_EQ( -38, rc ) ;
+   
+   bson_iterator_init(&it, &ret) ;
+   ASSERT_EQ( BSON_EOO, bson_iterator_next( &it )) ;
+
+   rc = sdbBulkInsert2( collection, FLG_INSERT_RETURN_OID|FLG_INSERT_CONTONDUP, objList, NUM, &ret ) ;
+   ASSERT_EQ( 0, rc ) ;
+   // delete all the records in collection
+   rc = sdbDelete( collection, NULL, NULL ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc);
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // free memory that allocated by bson_create()
+   for ( count = 0; count < NUM; count++ )
+   {
+      bson_dispose ( objList[count] ) ;
+   }
+   sdbDisconnect ( connection ) ;
+   sdbReleaseCollection ( collection ) ;
+   sdbReleaseConnection ( connection ) ;
+}
 
 TEST(collection,sdbBulkInsert_empty)
 {
