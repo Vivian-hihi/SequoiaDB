@@ -51,7 +51,18 @@ namespace CSharp.TestBaseException
             catch (BaseException e)
             {
                 Assert.AreEqual(-23, e.ErrorCode);
-                Assert.IsNotNull(e.ErrorObject);
+                Assert.AreEqual("{ \"errno\" : -23, \"description\" : \"Collection does not exist\", \"detail\" : \"\" }", e.ErrorObject.ToString());
+            }
+
+            //get 不存在的cs
+            try
+            {
+                sdb.GetCollecitonSpace("notexistcs");
+            }
+            catch (BaseException e)
+            {
+                Assert.AreEqual(-34, e.ErrorCode);
+                Assert.AreEqual("{ \"errno\" : -34, \"description\" : \"Collection space does not exist\", \"detail\" : \"\" }", e.ErrorObject.ToString());
             }
         }
 

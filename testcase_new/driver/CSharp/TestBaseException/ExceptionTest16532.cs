@@ -23,6 +23,7 @@ namespace CSharp.TestBaseException
         private CollectionSpace cs;
         private DBCollection cl;
         private string clName = "cl16532";
+        private List<string> dataGroupNames = new List<string>();
 
         [TestInitialize()]
         public void SetUp()
@@ -35,6 +36,11 @@ namespace CSharp.TestBaseException
         [TestMethod]
         public void Test16532()
         {
+            if (isStandalone(sdb))
+            {
+                return;
+            }
+            dataGroupNames = getDataGroupNames(sdb);
             createCL();
             DBQuery query = new DBQuery();
             BsonDocument modifier = new BsonDocument();
@@ -48,8 +54,13 @@ namespace CSharp.TestBaseException
             }
             catch (BaseException e)
             {
-                Assert.AreEqual(-6, e.ErrorCode);
-                Assert.IsNotNull(e.ErrorObject);
+                BsonDocument errorObject = e.ErrorObject;
+                Assert.AreEqual(-6, errorObject.GetElement("errno").Value);
+                Assert.AreEqual("Invalid Argument", errorObject.GetElement("description").Value);
+                ReplicaGroup rg = sdb.GetReplicaGroup(dataGroupNames[0]);
+                string expected = "[{ \"NodeName\" : \"" + rg.GetMaster().NodeName + "\", \"GroupName\" : \"" + dataGroupNames[0] + "\", \"Flag\" : -6, \"ErrInfo\" : { \"errno\" : -6, \"description\" : \"Invalid Argument\", \"detail\" : \"Updator operator[$seta] error\" } }]";
+ 
+                Assert.AreEqual(expected, errorObject.GetElement("ErrNodes").Value.ToString());
             }
             cs.DropCollection(clName);
         }
@@ -81,7 +92,9 @@ namespace CSharp.TestBaseException
             {
 
                 cs = sdb.GetCollecitonSpace(SdbTestBase.csName);
-                cl = cs.CreateCollection(clName);
+                BsonDocument option = new BsonDocument();
+                option.Add("Group", dataGroupNames[0]);
+                cl = cs.CreateCollection(clName, option);
             }
             catch (BaseException e)
             {
@@ -89,5 +102,40 @@ namespace CSharp.TestBaseException
             }
         }
 
+        public static List<string> getDataGroupNames(Sequoiadb sdb)
+        {
+            List<string> list = new List<string>();
+            BsonDocument matcher = new BsonDocument();
+            BsonDocument selector = new BsonDocument();
+            BsonDocument orderBy = new BsonDocument();
+            matcher.Add("Role", 0);
+            selector.Add("GroupName", "");
+            DBCursor cursor = sdb.GetList(7, matcher, selector, null);
+            while (cursor.Next() != null)
+            {
+                BsonDocument doc = cursor.Current();
+                BsonElement element = doc.GetElement("GroupName");
+                list.Add(element.Value.ToString());
+            }
+            cursor.Close();
+            return list;
+        }
+
+        public static bool isStandalone(Sequoiadb sdb)
+        {
+            bool flag = false;
+            try
+            {
+                sdb.ListReplicaGroups();
+            }
+            catch (BaseException e)
+            {
+                if (e.ErrorCode == -159)
+                {
+                    flag = true;
+                }
+            }
+            return flag;
+        }
     }
 }
