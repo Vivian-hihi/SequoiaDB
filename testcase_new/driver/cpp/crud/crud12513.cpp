@@ -86,6 +86,30 @@ TEST_F( crudTest12513, crud12513 )
          ASSERT_EQ( type == jstOID || type== NumberInt, TRUE) ;
       }
    }
+   
+   std::vector<BSONObj> docs2;
+   docs2.push_back(BSON( "_id" << 1 << "a" << 1 ) );
+   docs2.push_back(BSON(  "a" << 4 )) ;
+   rc = cl.insert( docs2,  FLG_INSERT_CONTONDUP|FLG_INSERT_RETURN_OID, &ret ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to insert" ;
+   std::cout << ret.toString() << std::endl;
+   BSONObjIterator iter2( ret ) ;
+   while( iter2.more() ){
+      BSONElement ele = iter2.next() ;
+      std::cout << ele.fieldName() << std::endl;
+      ASSERT_EQ(0, strncmp( ele.fieldName(), "_id", strlen("_id"))) ;
+      BSONObjIterator subItr( ele.embeddedObject() ) ;
+      while ( subItr.more() )
+      {
+         BSONElement subEle = subItr.next() ;
+         BSONType type = subEle.type() ;
+         if ( type == NumberInt ) {
+           ASSERT_EQ( 1, subEle.numberInt() );
+         }
+         ASSERT_EQ( type == jstOID || type== NumberInt, TRUE) ;
+      }
+   }
+
    // query doc with _id
    BSONObj cond = BSON( "a" << 1 ) ;
    sdbCursor cursor ;
