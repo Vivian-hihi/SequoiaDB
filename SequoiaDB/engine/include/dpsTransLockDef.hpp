@@ -438,6 +438,23 @@ namespace engine
       builder.append( DPS_LOCKID_OFFSET, (INT32)offset() ) ;
    }
 
+   /*
+      _dpsTransResult define
+   */
+   struct _dpsTransRetInfo
+   {
+      dpsTransLockId       _lockID ;
+      DPS_TRANSLOCK_TYPE   _lockType ;
+      EDUID                _eduID ;
+
+      _dpsTransRetInfo()
+      {
+         _lockType   = DPS_TRANSLOCK_IS ;
+         _eduID      = 0 ;
+      }
+   } ;
+   typedef _dpsTransRetInfo dpsTransRetInfo ;
+
 }
 
 #endif // DPS_TRANSLOCK_DEF_HPP__
