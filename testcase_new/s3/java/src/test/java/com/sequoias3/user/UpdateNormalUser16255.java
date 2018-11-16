@@ -24,13 +24,14 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class UpdateNormalUser16255 extends S3TestBase {
-	private String name = "UpdateNormalUser16255";
+	private String userName = "UpdateNormalUser16255";
+	private String bucketName = "bucket16255";
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() {
 		try {
-			UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+			UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
 			if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
 				e.printStackTrace();
@@ -42,10 +43,10 @@ public class UpdateNormalUser16255 extends S3TestBase {
 	@Test
 	private void test() throws JSONException {
 		// create user
-		JSONObject craeteUser = UserUtils.createUser(name, UserCommDefind.normal, UserUtils.accessKeyId);
+		JSONObject craeteUser = UserUtils.createUser(userName, UserCommDefind.normal, UserUtils.accessKeyId);
 
 		// update user
-		JSONObject updateUser = UserUtils.updateUser(name, UserUtils.accessKeyId);
+		JSONObject updateUser = UserUtils.updateUser(userName, UserUtils.accessKeyId);
 
 		// check
 		checkResult(craeteUser, updateUser);
@@ -55,7 +56,7 @@ public class UpdateNormalUser16255 extends S3TestBase {
 	@AfterClass
 	private void tearDown() {
 		if (runSuccess) {
-			UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+			UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
 		}
 	}
 
@@ -77,7 +78,7 @@ public class UpdateNormalUser16255 extends S3TestBase {
 		try {
 			s3Client = CommLib.buildS3Client(accessKeyID, secretAccessKey);
 			// create bucket
-			s3Client.createBucket(name.toLowerCase());
+			s3Client.createBucket(bucketName.toLowerCase());
 
 			// check
 			List<Bucket> buckets = s3Client.listBuckets();
@@ -85,8 +86,8 @@ public class UpdateNormalUser16255 extends S3TestBase {
 			Bucket expbucket = buckets.get(0);
 			String actOwner = expbucket.getOwner().getDisplayName();
 			String actBucketName = expbucket.getName();
-			Assert.assertEquals(actBucketName, name.toLowerCase());
-			Assert.assertEquals(actOwner, name.toLowerCase());
+			Assert.assertEquals(actBucketName, bucketName.toLowerCase());
+			Assert.assertEquals(actOwner, userName.toLowerCase());
 		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();

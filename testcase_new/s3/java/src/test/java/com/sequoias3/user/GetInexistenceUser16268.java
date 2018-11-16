@@ -18,12 +18,12 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class GetInexistenceUser16268 extends S3TestBase {
-    private String name = "GetInexistenceUser16268";
+    private String userName = "GetInexistenceUser16268";
 
     @BeforeClass
     private void setUp() {
         try {
-            UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
                 e.printStackTrace();
@@ -35,13 +35,12 @@ public class GetInexistenceUser16268 extends S3TestBase {
     @Test
     private void test() {
         try {
-            UserUtils.getUser(name, UserUtils.accessKeyId);
+            UserUtils.getUser(userName, UserUtils.accessKeyId);
             Assert.fail("exp fail but act success");
         } catch (HttpClientErrorException e) {
             String errorMsg = e.getResponseBodyAsString();
             org.json.JSONObject json = XML.toJSONObject(errorMsg);
             if (!json.getJSONObject(UserCommDefind.error).getString(UserCommDefind.errorCode).contains("NoSuchUser")) {
-                e.printStackTrace();
                 Assert.fail(e.getMessage());
             }
         }

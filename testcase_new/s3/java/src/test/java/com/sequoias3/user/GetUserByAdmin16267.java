@@ -18,14 +18,14 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class GetUserByAdmin16267 extends S3TestBase {
-    private String name1 = "GetUser16267_A";
-    private String name2 = "GetUser16267_B";
+    private String userName1 = "GetUser16267_A";
+    private String userName2 = "GetUser16267_B";
     private boolean runSuccess = false;
 
     @BeforeClass
     private void setUp() {
         try {
-            UserUtils.deleteUser(name1, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(userName1, UserUtils.accessKeyId, true);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
                 e.printStackTrace();
@@ -34,7 +34,7 @@ public class GetUserByAdmin16267 extends S3TestBase {
         }
 
         try {
-            UserUtils.deleteUser(name2, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(userName2, UserUtils.accessKeyId, true);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
                 e.printStackTrace();
@@ -46,12 +46,12 @@ public class GetUserByAdmin16267 extends S3TestBase {
     @Test
     private void test() {
         // create user
-        JSONObject expUser1 = UserUtils.createUser(name1, UserCommDefind.admin, UserUtils.accessKeyId);
-        JSONObject expUser2 = UserUtils.createUser(name2, UserCommDefind.normal, UserUtils.accessKeyId);
+        JSONObject expUser1 = UserUtils.createUser(userName1, UserCommDefind.admin, UserUtils.accessKeyId);
+        JSONObject expUser2 = UserUtils.createUser(userName2, UserCommDefind.normal, UserUtils.accessKeyId);
 
         // get user
-        JSONObject actUser1 = UserUtils.getUser(name1, UserUtils.accessKeyId);
-        JSONObject actUser2 = UserUtils.getUser(name2, UserUtils.accessKeyId);
+        JSONObject actUser1 = UserUtils.getUser(userName1, UserUtils.accessKeyId);
+        JSONObject actUser2 = UserUtils.getUser(userName2, UserUtils.accessKeyId);
 
         // check
         checkResult(actUser1, expUser1);
@@ -62,8 +62,8 @@ public class GetUserByAdmin16267 extends S3TestBase {
     @AfterClass
     private void tearDown() {
         if (runSuccess) {
-            UserUtils.deleteUser(name1, UserUtils.accessKeyId, true);
-            UserUtils.deleteUser(name2, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(userName1, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(userName2, UserUtils.accessKeyId, true);
         }
     }
 

@@ -24,16 +24,16 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class UpdateSelf16256 extends S3TestBase {
-	private String name = "UpdateSelf16256";
+	private String userName = "UpdateSelf16256";
+	private String bucketName = "bucket16256";
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() {
 		try {
-			UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+			UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
 			if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
-				e.printStackTrace();
 				Assert.fail(e.getMessage());
 			}
 		}
@@ -42,26 +42,26 @@ public class UpdateSelf16256 extends S3TestBase {
 	@Test
 	private void test() throws JSONException {
 		// create user
-		JSONObject craeteUser = UserUtils.createUser(name, UserCommDefind.admin, UserUtils.accessKeyId);
+		JSONObject createUser = UserUtils.createUser(userName, UserCommDefind.admin, UserUtils.accessKeyId);
 
 		// update user
-		String accessKeyId = craeteUser.getJSONObject(UserCommDefind.accessKeys).getString(UserCommDefind.accessKeyID);
-		JSONObject updateUser = UserUtils.updateUser(name, accessKeyId);
+		String accessKeyId = createUser.getJSONObject(UserCommDefind.accessKeys).getString(UserCommDefind.accessKeyID);
+		JSONObject updateUser = UserUtils.updateUser(userName, accessKeyId);
 
 		// create bucket for check
-		checkResult(craeteUser, updateUser);
+		checkResult(createUser, updateUser);
 		runSuccess = true;
 	}
 
 	@AfterClass
 	private void tearDown() {
 		if (runSuccess) {
-			UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+			UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
 		}
 	}
 
-	private void checkResult(JSONObject craeteUser, JSONObject updateUser) {
-		JSONObject createJSON = craeteUser.getJSONObject(UserCommDefind.accessKeys);
+	private void checkResult(JSONObject createUser, JSONObject updateUser) {
+		JSONObject createJSON = createUser.getJSONObject(UserCommDefind.accessKeys);
 		String accessKeyID1 = createJSON.getString(UserCommDefind.accessKeyID);
 		String secretAccessKey1 = createJSON.getString(UserCommDefind.secretAccessKey);
 
@@ -78,7 +78,7 @@ public class UpdateSelf16256 extends S3TestBase {
 		try {
 			s3Client = CommLib.buildS3Client(accessKeyID, secretAccessKey);
 			// create bucket
-			s3Client.createBucket(name.toLowerCase());
+			s3Client.createBucket(bucketName);
 
 			// check
 			List<Bucket> buckets = s3Client.listBuckets();
@@ -86,8 +86,8 @@ public class UpdateSelf16256 extends S3TestBase {
 			Bucket expbucket = buckets.get(0);
 			String actOwner = expbucket.getOwner().getDisplayName();
 			String actBucketName = expbucket.getName();
-			Assert.assertEquals(actBucketName, name.toLowerCase());
-			Assert.assertEquals(actOwner, name.toLowerCase());
+			Assert.assertEquals(actBucketName,bucketName);
+			Assert.assertEquals(actOwner, userName.toLowerCase());
 		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();

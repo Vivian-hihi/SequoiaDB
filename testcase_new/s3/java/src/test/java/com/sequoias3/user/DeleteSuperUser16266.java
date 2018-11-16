@@ -11,14 +11,14 @@ import org.testng.annotations.Test;
 import com.sequoias3.testcommon.S3TestBase;
 
 /**
- * @Description: seqDB-16265 :: 管理员删除不存在的用户
+ * @Description:  seqDB-16266 :: 管理员删除超级管理员用户
  * @author fanyu
  * @Date:2018年10月29日
  * @version:1.0
  */
 
 public class DeleteSuperUser16266 extends S3TestBase {
-    private String superusername = "administrator";
+    private String superUserName = "administrator";
 
     @BeforeClass
     private void setUp() {
@@ -28,7 +28,7 @@ public class DeleteSuperUser16266 extends S3TestBase {
     private void test() throws JSONException {
         // delete super user
         try {
-            UserUtils.deleteUser(superusername, UserUtils.accessKeyId);
+            UserUtils.deleteUser(superUserName, UserUtils.accessKeyId);
             Assert.fail("exp fail but act success");
         } catch (HttpClientErrorException e) {
             String errorMsg = e.getResponseBodyAsString();
@@ -43,6 +43,5 @@ public class DeleteSuperUser16266 extends S3TestBase {
 
     @AfterClass
     private void tearDown() {
-
     }
 }

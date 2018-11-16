@@ -18,16 +18,15 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class CreateExistUser16253 extends S3TestBase {
-    private String name = "CreateAdminUser16253";
+    private String username = "CreateAdminUser16253";
     private boolean runSuccess = false;
 
     @BeforeClass
     private void setUp() {
         try {
-            UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(username, UserUtils.accessKeyId, true);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() != HttpStatus.NOT_FOUND) {
-                e.printStackTrace();
                 Assert.fail(e.getMessage());
             }
         }
@@ -36,17 +35,16 @@ public class CreateExistUser16253 extends S3TestBase {
     @Test
     private void test() {
         // create user
-        UserUtils.createUser(name, UserCommDefind.admin, UserUtils.accessKeyId);
+        UserUtils.createUser(username, UserCommDefind.admin, UserUtils.accessKeyId);
         // create user again
         try {
-            UserUtils.createUser(name, UserCommDefind.admin, UserUtils.accessKeyId);
+            UserUtils.createUser(username, UserCommDefind.admin, UserUtils.accessKeyId);
             Assert.fail("exp fail but act success");
         } catch (HttpClientErrorException e) {
             String errorMsg = e.getResponseBodyAsString();
             org.json.JSONObject json = XML.toJSONObject(errorMsg);
             if (!json.getJSONObject(UserCommDefind.error).getString(UserCommDefind.errorCode)
                     .contains("UserAlreadyExists")) {
-                e.printStackTrace();
                 Assert.fail(e.getMessage());
             }
         }
@@ -56,7 +54,7 @@ public class CreateExistUser16253 extends S3TestBase {
     @AfterClass
     private void tearDown() {
         if (runSuccess) {
-            UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(username, UserUtils.accessKeyId, true);
         }
     }
 }

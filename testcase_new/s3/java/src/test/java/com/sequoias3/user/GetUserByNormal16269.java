@@ -19,48 +19,46 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class GetUserByNormal16269 extends S3TestBase {
-    private String name = "GetUserByNormal16269";
+    private String userName = "GetUserByNormal16269";
     private boolean runSuccess = false;
 
     @BeforeClass
     private void setUp() {
-	try {
-	    UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
-	} catch (HttpClientErrorException e) {
-	    if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
-		e.printStackTrace();
-		Assert.fail(e.getMessage());
-	    }
-	}
+        try {
+            UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
+                Assert.fail(e.getMessage());
+            }
+        }
     }
 
     @Test
     private void test() {
-	// create user
-	JSONObject userJSON = UserUtils.createUser(name, UserCommDefind.normal, UserUtils.accessKeyId);
-	String accessKeyId = userJSON.getJSONObject(UserCommDefind.accessKeys).getString(UserCommDefind.accessKeyID);
+        // create user
+        JSONObject userJSON = UserUtils.createUser(userName, UserCommDefind.normal, UserUtils.accessKeyId);
+        String accessKeyId = userJSON.getJSONObject(UserCommDefind.accessKeys).getString(UserCommDefind.accessKeyID);
 
-	try {
-	    // get user
-	    UserUtils.getUser(name, accessKeyId);
-	    Assert.fail("exp success but act success");
-	} catch (HttpClientErrorException e) {
-	    String errorMsg = e.getResponseBodyAsString();
-	    System.out.println("msg = " + errorMsg);
-	    JSONObject json1 = XML.toJSONObject(errorMsg);
-	    if (!json1.getJSONObject(UserCommDefind.error).getString(UserCommDefind.errorCode)
-		    .contains("AccessDenied")) {
-		e.printStackTrace();
-		Assert.fail(e.getMessage());
-	    }
-	}
-	runSuccess = true;
+        try {
+            // get user
+            UserUtils.getUser(userName, accessKeyId);
+            Assert.fail("exp success but act success");
+        } catch (HttpClientErrorException e) {
+            String errorMsg = e.getResponseBodyAsString();
+            System.out.println("msg = " + errorMsg);
+            JSONObject json1 = XML.toJSONObject(errorMsg);
+            if (!json1.getJSONObject(UserCommDefind.error).getString(UserCommDefind.errorCode)
+                    .contains("AccessDenied")) {
+                Assert.fail(e.getMessage());
+            }
+        }
+        runSuccess = true;
     }
 
     @AfterClass
     private void tearDown() {
-	if (runSuccess) {
-	    UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
-	}
+        if (runSuccess) {
+            UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
+        }
     }
 }

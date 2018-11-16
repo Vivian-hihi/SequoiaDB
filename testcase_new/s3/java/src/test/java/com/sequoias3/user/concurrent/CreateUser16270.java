@@ -29,7 +29,8 @@ import com.sequoias3.user.UserUtils;
 
 public class CreateUser16270 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String name = "CreateUser16720";
+	private String userName = "CreateUser16720";
+	private String bucketName = "bucket16270";
 	private int num = 50;
 	private List<JSONObject> userList = new CopyOnWriteArrayList<JSONObject>();
 
@@ -37,10 +38,9 @@ public class CreateUser16270 extends S3TestBase {
 	private void setUp() throws Exception {
 		for (int i = 0; i < num; i++) {
 			try {
-				UserUtils.deleteUser(name + "." + i, UserUtils.accessKeyId, true);
+				UserUtils.deleteUser(userName + "." + i, UserUtils.accessKeyId, true);
 			} catch (HttpClientErrorException e) {
-				if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
-					e.printStackTrace();
+				if (e.getStatusCode() != HttpStatus.NOT_FOUND) {
 					Assert.fail(e.getMessage());
 				}
 			}
@@ -51,7 +51,7 @@ public class CreateUser16270 extends S3TestBase {
 	public void testCreateBucket() throws Exception {
 		List<CreateUser> threads = new ArrayList<CreateUser>();
 		for (int i = 0; i < num; i++) {
-			threads.add(new CreateUser(name + "." + i, UserCommDefind.normal, UserUtils.accessKeyId));
+			threads.add(new CreateUser(userName + "." + i, UserCommDefind.normal, UserUtils.accessKeyId));
 		}
 
 		for (int i = 0; i < num; i++) {
@@ -73,7 +73,7 @@ public class CreateUser16270 extends S3TestBase {
 	private void tearDown() throws Exception {
 		if (runSuccess) {
 			for (int i = 0; i < num; i++) {
-				UserUtils.deleteUser(name + "." + i, UserUtils.accessKeyId, true);
+				UserUtils.deleteUser(userName + "." + i, UserUtils.accessKeyId, true);
 			}
 		}
 	}
@@ -109,7 +109,7 @@ public class CreateUser16270 extends S3TestBase {
 		try {
 			s3Client = CommLib.buildS3Client(accessKeyID, secretAccessKey);
 			// create bucket
-			s3Client.createBucket(name.toLowerCase() + "-" + UUID.randomUUID());
+			s3Client.createBucket(bucketName + "-" + UUID.randomUUID());
 		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();

@@ -27,7 +27,7 @@ public class DeleteSelf16262 extends S3TestBase {
         try {
             UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
         } catch (HttpClientErrorException e) {
-            if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
+            if (e.getStatusCode() != HttpStatus.NOT_FOUND) {
                 e.printStackTrace();
                 Assert.fail(e.getMessage());
             }
@@ -39,17 +39,12 @@ public class DeleteSelf16262 extends S3TestBase {
         // create user
         JSONObject userJSON = UserUtils.createUser(name, UserCommDefind.admin, UserUtils.accessKeyId);
 
-        // get the accessKeyID and secretAccessKey from userJSON
+        // get the accessKeyID from userJSON
         JSONObject json = userJSON.getJSONObject(UserCommDefind.accessKeys);
         accessKeyID = json.getString(UserCommDefind.accessKeyID);
 
         // delete user
-        try {
-            UserUtils.deleteUser(name, accessKeyID);
-        } catch (HttpClientErrorException e) {
-            e.printStackTrace();
-            Assert.fail(e.getResponseBodyAsString());
-        }
+        UserUtils.deleteUser(name, accessKeyID);
 
         // check
         try {

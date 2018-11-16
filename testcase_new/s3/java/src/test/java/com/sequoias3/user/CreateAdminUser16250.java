@@ -25,7 +25,8 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class CreateAdminUser16250 extends S3TestBase {
-    private String name = "CreateAdminUser16250";
+    private String userName = "CreateAdminUser16250";
+    private String bucketName = "bucket16250";
     private String accessKeyID = null;
     private String secretAccessKey = null;
     private boolean runSuccess = false;
@@ -33,10 +34,9 @@ public class CreateAdminUser16250 extends S3TestBase {
     @BeforeClass
     private void setUp() {
         try {
-            UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
-                e.printStackTrace();
                 Assert.fail(e.getMessage());
             }
         }
@@ -45,18 +45,18 @@ public class CreateAdminUser16250 extends S3TestBase {
     @Test
     private void test() throws JSONException {
         // create user
-        JSONObject actUser = UserUtils.createUser(name, UserCommDefind.admin, UserUtils.accessKeyId);
+        JSONObject actUser = UserUtils.createUser(userName, UserCommDefind.admin, UserUtils.accessKeyId);
         // CRUD user for check
         checkByCRUDUser(actUser);
         // create bucket for check
-        checkByCraeteBucket();
+        checkByCreateBucket();
         runSuccess = true;
     }
 
     @AfterClass
     private void tearDown() {
         if (runSuccess) {
-            UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
         }
     }
 
@@ -66,27 +66,27 @@ public class CreateAdminUser16250 extends S3TestBase {
         accessKeyID = adminJSON.getString(UserCommDefind.accessKeyID);
         secretAccessKey = adminJSON.getString(UserCommDefind.secretAccessKey);
 
-        String username = name + "_16250";
+        String username = userName + "_16250";
         JSONObject actJSON = createAndCheck(username, accessKeyID);
         updateAndCheck(username, actJSON, accessKeyID);
         deleteAndCheck(username, accessKeyID);
     }
 
-    private void checkByCraeteBucket() {
+    private void checkByCreateBucket() {
         // check the user is active
         AmazonS3 s3Client = null;
         try {
             s3Client = CommLib.buildS3Client(accessKeyID, secretAccessKey);
             // create bucket
-            s3Client.createBucket(name.toLowerCase());
+            s3Client.createBucket(bucketName.toLowerCase());
             // check
             List<Bucket> buckets = s3Client.listBuckets();
             Assert.assertEquals(buckets.size(), 1, " only one bucket");
             Bucket expbucket = buckets.get(0);
             String actOwner = expbucket.getOwner().getDisplayName();
             String actBucketName = expbucket.getName();
-            Assert.assertEquals(actBucketName, name.toLowerCase());
-            Assert.assertEquals(actOwner, name.toLowerCase());
+            Assert.assertEquals(actBucketName, bucketName.toLowerCase());
+            Assert.assertEquals(actOwner, userName.toLowerCase());
         } finally {
             if (s3Client != null) {
                 s3Client.shutdown();
@@ -134,7 +134,6 @@ public class CreateAdminUser16250 extends S3TestBase {
             String errorMsg = e.getResponseBodyAsString();
             JSONObject json1 = XML.toJSONObject(errorMsg);
             if (!json1.getJSONObject(UserCommDefind.error).getString(UserCommDefind.errorCode).contains("NoSuchUser")) {
-                e.printStackTrace();
                 Assert.fail(e.getMessage());
             }
         }

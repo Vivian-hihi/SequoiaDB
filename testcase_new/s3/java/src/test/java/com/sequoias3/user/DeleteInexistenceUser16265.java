@@ -27,7 +27,6 @@ public class DeleteInexistenceUser16265 extends S3TestBase {
             UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
-                e.printStackTrace();
                 Assert.fail(e.getMessage());
             }
         }
@@ -35,10 +34,6 @@ public class DeleteInexistenceUser16265 extends S3TestBase {
 
     @Test
     private void test() throws JSONException {
-        // create user
-        UserUtils.createUser(name, UserCommDefind.admin, UserUtils.accessKeyId);
-        // delete user
-        UserUtils.deleteUser(name, UserUtils.accessKeyId);
         // delete user again
         try {
             UserUtils.deleteUser(name, UserUtils.accessKeyId);
@@ -55,6 +50,5 @@ public class DeleteInexistenceUser16265 extends S3TestBase {
 
     @AfterClass
     private void tearDown() {
-
     }
 }

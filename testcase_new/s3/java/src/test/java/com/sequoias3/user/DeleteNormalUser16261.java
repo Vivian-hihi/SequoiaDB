@@ -20,33 +20,32 @@ import com.sequoias3.testcommon.S3TestBase;
 
 /**
  * @Description: seqDB-16261:管理员删除普通用户
- *  @author fanyu
+ * @author fanyu
  * @Date:2018年10月30日
  * @version:1.0
  */
 
 public class DeleteNormalUser16261 extends S3TestBase {
-    private String name1 = "DeleteNormalUser16261A";
-    private String name2 = "DeleteNormalUser16261B";
-    private int num = 10;
+    private String username1 = "DeleteNormalUser16261A";
+    private String username2 = "DeleteNormalUser16261B";
+    private String baseBucketName1 = "bucket16261A";
+    private String baseBucketName2 = "bucket16261B";
+    private int bucketNum = 10;
     private boolean runSuccess = false;
 
     @BeforeClass
     private void setUp() {
         try {
-            UserUtils.deleteUser(name1, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(username1, UserUtils.accessKeyId, true);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
-                e.printStackTrace();
                 Assert.fail(e.getResponseBodyAsString());
             }
         }
-
         try {
-            UserUtils.deleteUser(name2, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(username2, UserUtils.accessKeyId, true);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
-                e.printStackTrace();
                 Assert.fail(e.getMessage());
             }
         }
@@ -55,8 +54,8 @@ public class DeleteNormalUser16261 extends S3TestBase {
     @Test
     private void test() {
         // create user
-        JSONObject userJSON1 = UserUtils.createUser(name1, UserCommDefind.normal, UserUtils.accessKeyId);
-        JSONObject userJSON2 = UserUtils.createUser(name2, UserCommDefind.admin, UserUtils.accessKeyId);
+        JSONObject userJSON1 = UserUtils.createUser(username1, UserCommDefind.normal, UserUtils.accessKeyId);
+        JSONObject userJSON2 = UserUtils.createUser(username2, UserCommDefind.admin, UserUtils.accessKeyId);
 
         // get the accessKeyID and secretAccessKey from userJSON
         JSONObject json1 = userJSON1.getJSONObject(UserCommDefind.accessKeys);
@@ -68,28 +67,28 @@ public class DeleteNormalUser16261 extends S3TestBase {
         String secretAccessKey2 = json2.getString(UserCommDefind.secretAccessKey);
 
         // the user creates bucket
-        for (int i = 0; i < num; i++) {
-            craeteBucketAndObject(accessKeyID1, secretAccessKey1, name1 + i);
-            craeteBucketAndObject(accessKeyID2, secretAccessKey2, name2 + i);
+        for (int i = 0; i < bucketNum; i++) {
+            createBucketAndObject(accessKeyID1, secretAccessKey1, baseBucketName1 + i);
+            createBucketAndObject(accessKeyID2, secretAccessKey2, baseBucketName2 + i);
         }
 
         // delete user
-        UserUtils.deleteUser(name1, UserUtils.accessKeyId, true);
+        UserUtils.deleteUser(username1, UserUtils.accessKeyId, true);
 
         // check: user1 does not exist; user2's bucket exist
-        getUser(name1);
-        checkBucketResult(accessKeyID2, secretAccessKey2, name2, name2);
+        getUser(username1);
+        checkBucketResult(accessKeyID2, secretAccessKey2, baseBucketName2, username2);
         runSuccess = true;
     }
 
     @AfterClass
     private void tearDown() {
         if (runSuccess) {
-            UserUtils.deleteUser(name2, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(username2, UserUtils.accessKeyId, true);
         }
     }
 
-    private void craeteBucketAndObject(String accessKeyID, String secretAccessKey, String name) {
+    private void createBucketAndObject(String accessKeyID, String secretAccessKey, String name) {
         AmazonS3 s3Client = null;
         try {
             s3Client = CommLib.buildS3Client(accessKeyID, secretAccessKey);
@@ -104,9 +103,9 @@ public class DeleteNormalUser16261 extends S3TestBase {
         }
     }
 
-    private void getUser(String name) {
+    private void getUser(String username) {
         try {
-            UserUtils.getUser(name1, UserUtils.accessKeyId);
+            UserUtils.getUser(username, UserUtils.accessKeyId);
             Assert.fail("exp fail but act success");
         } catch (HttpClientErrorException e) {
             String errorMsg = e.getResponseBodyAsString();
@@ -124,8 +123,8 @@ public class DeleteNormalUser16261 extends S3TestBase {
             s3Client = CommLib.buildS3Client(accessKeyId, secretAccessKey);
             // create one bucket,check the bucket name and owner name
             List<Bucket> buckets = s3Client.listBuckets();
-            Assert.assertEquals(buckets.size(), num, "buckets = " + buckets.toString());
-            for (int i = 0; i < num; i++) {
+            Assert.assertEquals(buckets.size(), bucketNum, "buckets = " + buckets.toString());
+            for (int i = 0; i < bucketNum; i++) {
                 String actOwner = buckets.get(i).getOwner().getDisplayName();
                 String actBucketName = buckets.get(i).getName();
                 Assert.assertEquals(actBucketName, baseBucketName.toLowerCase() + i);

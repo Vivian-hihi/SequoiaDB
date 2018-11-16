@@ -24,7 +24,9 @@ import com.sequoias3.user.UserUtils;
  */
 
 public class DeleteAndUpdateUser16273 extends S3TestBase {
-	private String name = "DeleteAndUpdateUser16273";
+	private String userName = "DeleteAndUpdateUser16273";
+	private String bucketName = "bucketName";
+
 	private int num = 50;
 	private List<String> nameList = new ArrayList<String>();
 
@@ -32,11 +34,10 @@ public class DeleteAndUpdateUser16273 extends S3TestBase {
 	private void setUp() throws Exception {
 		for (int i = 0; i < num; i++) {
 			try {
-				nameList.add(name + "." + i);
-				UserUtils.deleteUser(name + "." + i, UserUtils.accessKeyId, true);
+				nameList.add(userName + "." + i);
+				UserUtils.deleteUser(userName + "." + i, UserUtils.accessKeyId, true);
 			} catch (HttpClientErrorException e) {
-				if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
-					e.printStackTrace();
+				if (e.getStatusCode() !=  HttpStatus.NOT_FOUND) {
 					Assert.fail(e.getMessage());
 				}
 			}
@@ -102,7 +103,6 @@ public class DeleteAndUpdateUser16273 extends S3TestBase {
 				org.json.JSONObject json1 = XML.toJSONObject(errorMsg);
 				if (!json1.getJSONObject(UserCommDefind.error).getString(UserCommDefind.errorCode)
 						.contains("NoSuchUser")) {
-					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
 			}
