@@ -726,36 +726,60 @@ error:
 PHP_METHOD( SequoiaCL, insert )
 {
    INT32 rc = SDB_OK ;
+   INT32 flag = FLG_INSERT_RETURN_OID ;
    zval *pRecord = NULL ;
+   zval *pFlag   = NULL ;
    zval *pThisObj = getThis() ;
    sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
    bson record ;
-   bson_iterator id ;
+   bson result ;
+   bson tmp ;
+
+   bson_init( &tmp ) ;
    bson_init( &record ) ;
+   bson_init( &result ) ;
+
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "z", &pRecord ) == FAILURE )
+
+   if ( PHP_GET_PARAMETERS( "z|z", &pRecord, &pFlag ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+
    PHP_READ_HANDLE( pThisObj,
                     cl,
                     sdbCollectionHandle,
                     SDB_CL_HANDLE_NAME,
                     clDesc ) ;
+
    rc = php_auto2Bson( pRecord, &record TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
-   rc = sdbInsert1( cl, &record, &id ) ;
+
+   rc = php_zval2Int( pFlag, &flag TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
+
+   rc = sdbInsert2( cl, &record, flag, &tmp ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+   bson_append_elements( &result, &tmp ) ;
+
 done:
-   PHP_RETURN_AUTO_ERROR_ID( FALSE, pThisObj, rc, id ) ;
+   bson_append_int( &result, "errno", rc ) ;
+   bson_finish( &result ) ;
+   PHP_RETURN_AUTO_RECORD( FALSE, pThisObj, FALSE, result ) ;
    bson_destroy( &record ) ;
+   bson_destroy( &result ) ;
+   bson_destroy( &tmp ) ;
    return ;
 error:
    PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
