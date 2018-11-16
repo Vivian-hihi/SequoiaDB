@@ -900,6 +900,10 @@ namespace engine
          SDB_ASSERT( 0 == _lockInfo[i].lockCount(),
                      "Lock count must be 0" ) ;
       }
+
+#if defined ( SDB_ENGINE )
+      _transExecutor.assertLocks() ;
+#endif //SDB_ENGINE
    }
 
    void _pmdEDUCB::resetLocks()

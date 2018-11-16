@@ -74,6 +74,7 @@ namespace engine
          virtual ~_dpsTransExecutor() ;
 
          void     clearAll() ;
+         void     assertLocks() ;
 
       public:
 

@@ -66,6 +66,16 @@ namespace engine
       clearLockCount() ;
    }
 
+   void _dpsTransExecutor::assertLocks()
+   {
+      SDB_ASSERT( _mapLockID.size() == 0, "Lock must be 0" ) ;
+      SDB_ASSERT( _lockCount == 0, "Lock must be 0" ) ;
+      SDB_ASSERT( _waiterIdx == UTIL_INVALID_OBJ_INDEX,
+                  "Waiter LRB must be invalid" ) ;
+      SDB_ASSERT( _lastLRBIdx == UTIL_INVALID_OBJ_INDEX,
+                  "Last LRB must be invalid" ) ;
+   }
+
    void _dpsTransExecutor::setWaiterInfo( UTIL_OBJIDX lrbIdx,
                                           DPS_TRANS_QUE_TYPE type )
    {
