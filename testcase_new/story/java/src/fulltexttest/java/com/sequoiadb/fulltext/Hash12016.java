@@ -83,7 +83,7 @@ public class Hash12016 extends SdbTestBase{
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
 
            // drop fulltext
-           cl.dropIndex(textIndexName);
+           FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
 
            // check fulltext deleted
            FullTextUtils.checkIndexNotExistInES(esClient, sdb, csName, clName, esIndexNames);
@@ -97,7 +97,7 @@ public class Hash12016 extends SdbTestBase{
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
 
            // drop fulltext
-           cl.dropIndex(textIndexName);
+           FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
 
            // check fulltext deleted
            FullTextUtils.checkIndexNotExistInES(esClient, sdb, csName, clName, esIndexNames);

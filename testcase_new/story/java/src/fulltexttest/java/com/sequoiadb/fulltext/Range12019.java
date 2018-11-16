@@ -81,7 +81,7 @@ public class Range12019 extends SdbTestBase{
            // check consistency
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
            // drop fulltext
-           cl.dropIndex(textIndexName);
+           FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
 
            // check fulltext deleted
            FullTextUtils.checkIndexNotExistInES(esClient, sdb, csName, clName, esIndexNames);
@@ -95,7 +95,7 @@ public class Range12019 extends SdbTestBase{
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
 
            // drop fulltext
-           cl.dropIndex(textIndexName);
+           FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
 
            // check fulltext deleted
            FullTextUtils.checkIndexNotExistInES(esClient, sdb, csName, clName, esIndexNames);

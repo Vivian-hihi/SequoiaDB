@@ -28,7 +28,7 @@ public class HashTableIndex11988 extends SdbTestBase {
 	private Sequoiadb sdb;
 	private DBCollection cl;
 	private String clName = "hashTableIndex11988";
-	private String fullIndexName = "fullIndex";
+	private String fullIndexName = "fullIndex11988";
 	private List<String> groupNames;
 	private Client esClient = null;
 	
@@ -55,15 +55,18 @@ public class HashTableIndex11988 extends SdbTestBase {
 		//创建全文索引，索引字段覆盖：分区键
 		this.cl.createIndex(fullIndexName, "{\"a\":\"text\"}", false, false);
 		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 1000000);
-		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, SdbTestBase.csName, this.clName, this.fullIndexName); 
-		this.cl.dropIndex(fullIndexName);
+		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, SdbTestBase.csName, this.clName, this.fullIndexName);
+
+      FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
+
 		FullTextUtils.checkIndexNotExistInES(esClient, sdb, SdbTestBase.csName, this.clName, esIndexNames);
 		
 		//创建全文索引，索引字段覆盖：非分区键
 		this.cl.createIndex(fullIndexName, "{\"g\":\"text\"}", false, false);
 		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 1000000);
 		esIndexNames = FullTextDBUtils.getESIndexNames(sdb, SdbTestBase.csName, this.clName, this.fullIndexName); 
-		this.cl.dropIndex(fullIndexName);
+      FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
+
 		FullTextUtils.checkIndexNotExistInES(esClient, sdb, SdbTestBase.csName, this.clName, esIndexNames);
 	}
 	

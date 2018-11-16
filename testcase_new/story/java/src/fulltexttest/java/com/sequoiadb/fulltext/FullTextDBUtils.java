@@ -13,6 +13,8 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.exception.BaseException;
+import org.testng.Assert;
 
 public class FullTextDBUtils {
 
@@ -131,6 +133,37 @@ public class FullTextDBUtils {
             }
             
             return groupNames;
+        }
+
+        /**
+        * @param cl
+        * @param textIndexName
+        */
+        public static void dropFullTextIndex(DBCollection cl, String textIndexName){
+            int doTimes = 0;
+            while(true){
+                try{
+                    cl.dropIndex(textIndexName);
+                    // drop success
+                    break;
+                }catch(BaseException e){
+                    doTimes++;
+                    if(-147 == e.getErrorCode()){
+                        try{
+                            Thread.sleep(1000);
+                        }catch(InterruptedException e2){
+                             e2.printStackTrace();
+                        }
+                        continue;
+                    }else if(-47 == e.getErrorCode()){ // index not exists
+                        System.out.println(textIndexName + " is not exist");
+                        break;
+                    }
+                   
+                    Assert.assertEquals(e, -147, "drop " + textIndexName + "failed, detail: " + e.getMessage()); 
+                }
+            }
+            System.out.println("textIndexName drop success,  drop times: " + doTimes);
         }
 
         /**

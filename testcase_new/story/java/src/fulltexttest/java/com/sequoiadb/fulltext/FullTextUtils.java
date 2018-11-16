@@ -60,9 +60,10 @@ public class FullTextUtils {
           int timeout = 600;
           int doTimes = 0;
           int interval = 1;  //interval 1s
+          int actCount = 0;
 		 
-          while(doTimes * interval < timeout) {
-              int actCount = 0;
+          while(true) {
+              actCount = 0;
               // Add counts of all indices 
               for(String esIndexName : esIndexNames) {
                   actCount += (FullTextESUtils.getCountFromES(esClient, esIndexName) - 1);
@@ -82,16 +83,14 @@ public class FullTextUtils {
                   } 
               }
 
-              if(doTimes > timeout - 1){
-                  System.out.println("doTimes: " + doTimes + ", actCount: " + actCount + ", expectCount: " + expectCount);
-              }
           }
-		 
-		 
+          // after count fininsh sync
+          System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes + ", actCount: " + actCount + ", expectCount: " + expectCount);	  
+
           // print message while not finish sync
           String msg = "";
           for(String esIndexName : esIndexNames) {  msg += esIndexName + "/";  }
-           Assert.assertTrue(isSync, "check " + msg + " count syn to es fail");
+          Assert.assertTrue(isSync, "check " + msg + " count syn to es fail");
      }
 	
      /**
@@ -109,10 +108,12 @@ public class FullTextUtils {
           for(DBCollection cappedCL:  cappedCLs) {
               lastLogicalIDs.add(FullTextDBUtils.getLastLid(cappedCL));   
           }
+
+          List<Integer> commitIDs = null;
 		 
-          while(doTimes * interval < timeout) {
+          while(true) {
               // get all commitids from all esIndexNames 
-              List<Integer> commitIDs = new ArrayList<>();
+              commitIDs = new ArrayList<>();
               for(int i = 0; i < esIndexNames.size(); i++) { 
                   commitIDs.add(FullTextESUtils.getCommitIDFromES(esClient, esIndexNames.get(i)));  
               }
@@ -140,10 +141,10 @@ public class FullTextUtils {
                   } 
               }   
 
-              if(doTimes > timeout - 1){
-                  System.out.println("doTimes: " + doTimes + ", commitIDs: " + commitIDs.toString() + ", lastLogicalIDs: " + lastLogicalIDs.toString());
-              }
           }
+
+          // after lid finish sync
+          System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes + ", commitIDs: " + commitIDs.toString() + ", lastLogicalIDs: " + lastLogicalIDs.toString());
 		 
           // print message while not finish sync
           String msg = "";
