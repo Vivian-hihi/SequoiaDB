@@ -61,8 +61,8 @@ namespace engine
    class _dpsLogFileMgr : public SDBObject
    {
    private:
-      vector<_dpsLogFile *>   _files;
-      UINT32                  _work;
+      vector<_dpsLogFile *>   _files ;
+      UINT32                  _work ;
       UINT32                  _logicalWork ;
       UINT32                  _begin ;
       BOOLEAN                 _rollFlag ;

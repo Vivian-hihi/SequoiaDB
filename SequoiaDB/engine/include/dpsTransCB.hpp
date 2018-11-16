@@ -130,8 +130,8 @@ namespace engine
       BOOLEAN isDoRollback() const { return _doRollback ; }
       INT32   waitRollback( UINT64 millicSec = -1 ) ;
 
-      void addTransInfo( DPS_TRANS_ID transID, DPS_LSN_OFFSET lsnOffset );
-      void updateTransInfo( DPS_TRANS_ID transID, DPS_LSN_OFFSET lsnOffset );
+      void addTransInfo( DPS_TRANS_ID transID, DPS_LSN_OFFSET lsnOffset ) ;
+      void updateTransInfo( DPS_TRANS_ID transID, DPS_LSN_OFFSET lsnOffset ) ;
 
       void addTransCB( DPS_TRANS_ID transID, _pmdEDUCB *eduCB ) ;
       void delTransCB( DPS_TRANS_ID transID ) ;
@@ -140,7 +140,7 @@ namespace engine
       void termAllTrans() ;
       TRANS_MAP *getTransMap() ;
 
-      void clearTransInfo();
+      void clearTransInfo() ;
 
       void saveTransInfoFromLog( const dpsLogRecord &record ) ;
       BOOLEAN rollbackTransInfoFromLog( const dpsLogRecord &record ) ;
@@ -148,38 +148,38 @@ namespace engine
       void addBeginLsn( DPS_LSN_OFFSET beginLsn, DPS_TRANS_ID transID ) ;
       void delBeginLsn( DPS_TRANS_ID transID ) ;
       DPS_LSN_OFFSET getBeginLsn( DPS_TRANS_ID transID ) ;
-      DPS_LSN_OFFSET getOldestBeginLsn();
+      DPS_LSN_OFFSET getOldestBeginLsn() ;
 
-      BOOLEAN isNeedSyncTrans();
-      void setIsNeedSyncTrans( BOOLEAN isNeed );
+      BOOLEAN isNeedSyncTrans() ;
+      void setIsNeedSyncTrans( BOOLEAN isNeed ) ;
 
-      INT32 syncTransInfoFromLocal( DPS_LSN_OFFSET beginLsn );
+      INT32 syncTransInfoFromLocal( DPS_LSN_OFFSET beginLsn ) ;
 
       // get record-X-lock: also get the space-S-lock and collection-IX-lock
       // get collection-X-lock: also get the space-S-lock
       INT32 transLockGetX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                            UINT16 collectionID = DMS_INVALID_MBID,
-                           const dmsRecordID *recordID = NULL );
+                           const dmsRecordID *recordID = NULL ) ;
 
       // get record-S-lock: also get the space-S-lock and collection-IS-lock
       // get collection-S-lock: also get the space-S-lock
       INT32 transLockGetS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                            UINT16 collectionID = DMS_INVALID_MBID,
-                           const dmsRecordID *recordID = NULL );
+                           const dmsRecordID *recordID = NULL ) ;
 
       // also get the space-S-lock
       INT32 transLockGetIX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                            UINT16 collectionID = DMS_INVALID_MBID );
+                            UINT16 collectionID = DMS_INVALID_MBID ) ;
 
       // also get the space-S-lock
       INT32 transLockGetIS( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                            UINT16 collectionID = DMS_INVALID_MBID );
+                            UINT16 collectionID = DMS_INVALID_MBID ) ;
 
       // release record-lock: also release the space-lock and collection-lock
       // release collection-lock: also release the space-lock
       void transLockRelease( _pmdEDUCB *eduCB, UINT32 logicCSID,
                              UINT16 collectionID = DMS_INVALID_MBID,
-                             const dmsRecordID *recordID = NULL );
+                             const dmsRecordID *recordID = NULL ) ;
 
       void transLockReleaseAll( _pmdEDUCB *eduCB ) ;
 
@@ -190,47 +190,47 @@ namespace engine
       // test collection-S-lock: also test the space-S-lock
       INT32 transLockTestS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                             UINT16 collectionID = DMS_INVALID_MBID,
-                            const dmsRecordID *recordID = NULL );
+                            const dmsRecordID *recordID = NULL ) ;
 
       INT32 transLockTestIS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                              UINT16 collectionID = DMS_INVALID_MBID,
-                             const dmsRecordID *recordID = NULL );
+                             const dmsRecordID *recordID = NULL ) ;
 
       // not get the lock only test if the lock can be got.
       // test record-S-lock: also test the space-S-lock and collection-IS-lock
       // test collection-S-lock: also test the space-S-lock
       INT32 transLockTestX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                             UINT16 collectionID = DMS_INVALID_MBID,
-                            const dmsRecordID *recordID = NULL );
+                            const dmsRecordID *recordID = NULL ) ;
 
       INT32 transLockTestIX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                              UINT16 collectionID = DMS_INVALID_MBID,
-                             const dmsRecordID *recordID = NULL );
+                             const dmsRecordID *recordID = NULL ) ;
 
       // try to get record-X-lock: also try to get the space-S-lock and
       // collection-IX-lock
       // try to get collection-X-lock: also try to get the space-S-lock
       INT32 transLockTryX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                            UINT16 collectionID = DMS_INVALID_MBID,
-                           const dmsRecordID *recordID = NULL );
+                           const dmsRecordID *recordID = NULL ) ;
 
       // try to get record-S-lock: also try to get the space-S-lock and
       // collection-IS-lock
       // try to get collection-S-lock: also try to get the space-S-lock
       INT32 transLockTryS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                            UINT16 collectionID = DMS_INVALID_MBID,
-                           const dmsRecordID *recordID = NULL );
+                           const dmsRecordID *recordID = NULL ) ;
 
       BOOLEAN hasWait( UINT32 logicCSID, UINT16 collectionID,
-                       const dmsRecordID *recordID);
+                       const dmsRecordID *recordID) ;
 
       INT32 reservedLogSpace( UINT32 length, _pmdEDUCB *cb ) ;
 
-      void releaseLogSpace( UINT32 length, _pmdEDUCB *cb );
+      void releaseLogSpace( UINT32 length, _pmdEDUCB *cb ) ;
 
-      UINT64 remainLogSpace();
+      UINT64 remainLogSpace() ;
 
-      UINT64 usedLogSpace();
+      UINT64 usedLogSpace() ;
 
    protected:
       // try to get record-X-lock: also try to get the space-S-lock and
@@ -239,11 +239,11 @@ namespace engine
       // call waitLock()
       // for waitting the lock
       INT32 tryOrAppendX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                          UINT16 collectionID, const dmsRecordID *recordID );
+                          UINT16 collectionID, const dmsRecordID *recordID ) ;
 
       // try to get record-S-lock, like tryOrAppendX
       INT32 tryOrAppendS( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                          UINT16 collectionID, const dmsRecordID *recordID );
+                          UINT16 collectionID, const dmsRecordID *recordID ) ;
 
       // waitting for the lock
       INT32 waitLock( _pmdEDUCB *eduCB, UINT32 logicCSID,
