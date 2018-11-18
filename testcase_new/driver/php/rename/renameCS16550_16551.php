@@ -1,0 +1,75 @@
+/****************************************************
+@description:      rename cs, old cs name not exist
+@testlink cases:   seqDB-16549
+@input:        rename cs
+@output:     success
+@modify list:
+        2018-11-13 Luweikang init
+****************************************************/
+<?php
+define('Cur_Path', dirname(__FILE__));
+include_once Cur_Path.'/../global.php';
+
+class Rename16550_16551 extends PHPUnit_Framework_TestCase
+{
+   private static $csName1 = "cs16550_1";
+   private static $csName2 = "cs16550_2";
+   private static $clName = "cl16550";
+   private static $cs;
+   private static $db;
+   
+   public static function setUpBeforeClass()
+   {
+      self::$db = new Sequoiadb();
+      self::$db -> connect(globalParameter::getHostName().':'. 
+                           globalParameter::getCoordPort()) ;
+      self::checkErrno( 0, self::$db -> getError()['errno'] );                     
+                           
+      self::$cs = self::$db -> selectCS( self::$csName1 );
+      self::$db -> selectCS( self::$csName2 );
+      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      self::$cs -> selectCL( self::$clName );
+      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      
+   }
+   
+   function test()
+   {
+      echo "\n---Begin to rename cs.\n";
+      
+      self::$db -> renameCS( "csNameNotExist", self::$csName1 );
+      self::checkErrno( -34, self::$db -> getError()['errno'] );
+      
+      self::$db -> renameCS( self::$csName1, self::$csName1 );
+      
+      self::$db -> renameCS( self::$csName1, self::$csName2 );
+      self::checkErrno( -33, self::$db -> getError()['errno'] );
+      
+   }
+   
+   public static function tearDownAfterClass()
+   {
+      $err = self::$db -> dropCS( self::$csName1 );
+      if ( $err['errno'] != 0 )
+      {
+         throw new Exception("failed to drop cs, errno=".$err['errno']);
+      }
+      $err = self::$db -> dropCS( self::$csName2 );
+      if ( $err['errno'] != 0 )
+      {
+         throw new Exception("failed to drop cs, errno=".$err['errno']);
+      }
+      
+      self::$db->close();
+   }
+   
+   private static function checkErrno( $expErrno, $actErrno, $msg = "" )
+   {
+      if( $expErrno != $actErrno ) 
+      {
+         throw new Exception( "expect [".$expErrno."] but found [".$actErrno."]. ".$msg );
+      }
+   }
+   
+}
+?>
