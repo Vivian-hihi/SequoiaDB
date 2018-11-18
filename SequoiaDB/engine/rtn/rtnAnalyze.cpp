@@ -1784,6 +1784,9 @@ namespace engine
       double fraction = 0.0 ;
 
       _rtnSortTuple *tuple = NULL ;
+
+      sortArea.reset( TRUE ) ;
+
       _rtnInternalSorting sorter( boOrder, sortArea, -1 ) ;
 
       rc = rtnGetIndexSamples( pSU, indexCB, cb, sampleRecords, totalRecords,
