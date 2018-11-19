@@ -310,13 +310,11 @@ namespace SequoiaDB
          *              value of flags default to be 0, and it can choose
          *              the follow values:
          *
-         *              0:                    while 0 is set(default to be 0), database 
-         *                                    will stop inserting when the record hit 
-         *                                    index key duplicate error.
-         *              SDBConst.FLG_INSERT_CONTONDUP: if the record hit index key duplicate
-         *                                    error, database will skip them and go on 
-         *                                    inserting.
-         *
+         *      0:                             while 0 is set(default to be 0), database 
+         *                                     will stop inserting when the record hit 
+         *                                     index key duplicate error.
+         *      SDBConst.FLG_INSERT_CONTONDUP: if the record hit index key duplicate
+         *                                     error, database will skip them and go on inserting.
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
