@@ -306,15 +306,16 @@ namespace SequoiaDB
         /** \fn void BulkInsert(List<BsonDocument> records, int flags)
          *  \brief Insert a bulk of bson objects into current collection
          *  \param records The Bson document of insertor list, can't be null
-         *  \param flag The flag to control the behavior of inserting. The
-         *              value of flags default to be 0, and it can choose
-         *              the follow values:
-         *
-         *      0:                             while 0 is set(default to be 0), database 
-         *                                     will stop inserting when the record hit 
-         *                                     index key duplicate error.
-         *      SDBConst.FLG_INSERT_CONTONDUP: if the record hit index key duplicate
-         *                                     error, database will skip them and go on inserting.
+         *  \param flags The flag to control the behavior of inserting. The
+         *               value of flags default to be 0, and it can choose
+         *               the follow values:
+         *      <ul>
+         *      <li>0                             : while 0 is set(default to be 0), database 
+         *                                          will stop inserting when the record hit 
+         *                                          index key duplicate error.
+         *      <li>SDBConst.FLG_INSERT_CONTONDUP : if the record hit index key duplicate
+         *                                          error, database will skip them and go on inserting.
+         *      </ul>
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -330,17 +331,17 @@ namespace SequoiaDB
          *  \param flags The flag to control the behavior of inserting. The
          *               value of flags default to be 0, and it can choose
          *               the follow values:
-         *
-         *               0:     while 0 is set(default to be 0), database 
+         *              <ul>
+         *               <li>0:     while 0 is set(default to be 0), database 
          *                      will stop inserting when the record hit 
          *                      index key duplicate error.
-         *               SDBConst.FLG_INSERT_CONTONDUP: 
+         *               <li>SDBConst.FLG_INSERT_CONTONDUP: 
          *                      if the record hit index key duplicate
          *                      error, database will skip them and go on 
          *                      inserting.
-         *               SDBConst.FLG_INSERT_RETURN_OID:
+         *               <li>SDBConst.FLG_INSERT_RETURN_OID:
          *                      return the value of "_id" field in the record.
-         * 
+         *               </ul>
          *  \return Return the result of inserting or null.
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
@@ -402,18 +403,18 @@ namespace SequoiaDB
          *  \param flags The flag to control the behavior of inserting. The
          *               value of flags default to be 0, and it can choose
          *               the follow values:
-         *
-         *               0:     while 0 is set(default to be 0), database 
+         *              <ul>
+         *               <li>0:     while 0 is set(default to be 0), database 
          *                      will stop inserting when the record hit 
          *                      index key duplicate error.
-         *               SDBConst.FLG_INSERT_CONTONDUP: 
+         *               <li>SDBConst.FLG_INSERT_CONTONDUP: 
          *                      if the record hit index key duplicate
          *                      error, database will skip them and go on 
          *                      inserting.
-         *               SDBConst.FLG_INSERT_RETURN_OID:
+         *               <li>SDBConst.FLG_INSERT_RETURN_OID:
          *                      return the value of "_id" field in the record.
          *                      When set this flag, "EnsureOID" will be set to true.
-         * 
+         *              </ul>
          *  \return Return the result of inserting or null.
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
