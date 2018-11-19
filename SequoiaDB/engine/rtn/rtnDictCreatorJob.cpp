@@ -469,8 +469,10 @@ namespace engine
       return rc ;
    error:
       // For other errors, let's try again later.
-      if ( SDB_DMS_CS_NOTEXIST != rc || SDB_DMS_NOTEXIST != rc )
+      if ( SDB_DMS_CS_NOTEXIST != rc && SDB_DMS_NOTEXIST != rc )
       {
+         PD_LOG( PDWARNING, "Create compression dictionary failed[%d]. "
+                            "Will try again later", rc ) ;
          rc = SDB_OK ;
          retry = TRUE ;
       }
