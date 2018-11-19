@@ -53,6 +53,9 @@ public class SequoiadbMetaDao implements MetaDao {
                         indexKey, true,true);
                 insert(sdb, csMetaName, clMetaName, objectMeta, isIgnoreDup);
             } else if (e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
+                if (!sdb.isCollectionSpaceExist(csMetaName)) {
+                    sdbDatasourceWrapper.createCS(sdb, csMetaName, null);
+                }
                 sdbDatasourceWrapper.createCL(sdb, csMetaName, clMetaName, null);
                 BSONObject indexKey = new BasicBSONObject();
                 indexKey.put(ObjectMeta.META_BUCKET_ID, 1);

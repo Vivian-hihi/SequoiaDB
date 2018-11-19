@@ -10,9 +10,13 @@ public class RestParamDefine {
     public static final int    MAX_KEYS_DEFAULT        = 1000;
 
     public static class UserPara{
-        public static final String USER_NAME               = "username";
-        public static final String ROLE                    = "role";
-        public static final String FORCE                   = "force";
+        public static final String CREATE_USER             = "Action=CreateUser";
+        public static final String CREATE_ACCESSKEY        = "Action=CreateAccessKey";
+        public static final String GET_ACCESSKEY           = "Action=GetAccessKey";
+        public static final String DELETE_USER             = "Action=DeleteUser";
+        public static final String USER_NAME               = "UserName";
+        public static final String ROLE                    = "Role";
+        public static final String FORCE                   = "Force";
     }
 
     public static class ListObjectsPara{
@@ -104,6 +108,8 @@ public class RestParamDefine {
     public static final String REST_CREDENTIAL      = "Credential=";
 
     public static final String REST_DELIMITER       = "/";
+    public static final String REST_S3              = "/s3";
+    public static final String REST_USERS           = "/users";
 
     public static final String REST_RANGE_START     = "bytes=";
     public static final String REST_HYPHEN          = "-";

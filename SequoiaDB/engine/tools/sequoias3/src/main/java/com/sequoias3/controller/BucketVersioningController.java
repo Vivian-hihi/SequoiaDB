@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
 @RestController
+@RequestMapping(RestParamDefine.REST_S3)
 public class BucketVersioningController {
     private static final Logger logger = LoggerFactory.getLogger(BucketVersioningController.class);
 

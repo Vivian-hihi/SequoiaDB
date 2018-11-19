@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.*;
 
 @RestController
+@RequestMapping(RestParamDefine.REST_S3)
 public class ObjectController {
     private final Logger logger = LoggerFactory.getLogger(ObjectController.class);
 

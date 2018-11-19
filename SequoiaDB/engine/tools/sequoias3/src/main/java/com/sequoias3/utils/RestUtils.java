@@ -56,12 +56,17 @@ public class RestUtils {
             throw new S3ServerException(S3Error.OBJECT_INVALID_KEY, "Invalid key. url = " + url);
         }
 
-        int beginIndex = decodeUrl.indexOf(RestParamDefine.REST_DELIMITER, 1);
-        if (beginIndex == -1) {
+        int beginS3 = decodeUrl.indexOf(RestParamDefine.REST_S3, 0);
+        if (beginS3 == -1) {
             throw new S3ServerException(S3Error.OBJECT_INVALID_KEY, "Invalid key. url = " + url);
         }
 
-        return decodeUrl.substring(beginIndex+1);
+        int beginObject = decodeUrl.indexOf(RestParamDefine.REST_DELIMITER, beginS3+RestParamDefine.REST_S3.length()+1);
+        if (beginObject == -1) {
+            throw new S3ServerException(S3Error.OBJECT_INVALID_KEY, "Invalid key. url = " + url);
+        }
+
+        return decodeUrl.substring(beginObject+1);
     }
 
     public Range getRange(String rangeHeader){

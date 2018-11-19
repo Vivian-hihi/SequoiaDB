@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping(RestParamDefine.REST_USERS)
 public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
@@ -24,10 +25,10 @@ public class UserController {
     @Autowired
     RestUtils restUtils;
 
-    @PostMapping(value = "/users/{username:.+}", produces = MediaType.APPLICATION_XML_VALUE)
+    @PostMapping(params = RestParamDefine.UserPara.CREATE_USER, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity createUser(@RequestParam(value = RestParamDefine.UserPara.ROLE, required = false) String role,
                                      @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
-                                     @PathVariable(RestParamDefine.UserPara.USER_NAME) String username)
+                                     @RequestParam(RestParamDefine.UserPara.USER_NAME) String username)
             throws S3ServerException {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
 
@@ -40,9 +41,9 @@ public class UserController {
                 .body(userService.createUser(username, role));
     }
 
-    @PutMapping(value = "/users/{username:.+}", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity updateUser(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
-                                     @PathVariable(RestParamDefine.UserPara.USER_NAME) String username)
+    @PostMapping(params = RestParamDefine.UserPara.CREATE_ACCESSKEY, produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity createAccessKey(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                          @RequestParam(RestParamDefine.UserPara.USER_NAME) String username)
             throws S3ServerException {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
 
@@ -55,9 +56,9 @@ public class UserController {
                 .body(userService.updateUser(username));
     }
 
-    @GetMapping(value = "/users/{username:.+}", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity getUser(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
-                                  @PathVariable(RestParamDefine.UserPara.USER_NAME) String username)
+    @PostMapping(params = RestParamDefine.UserPara.GET_ACCESSKEY, produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity getAccessKey(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                       @RequestParam(RestParamDefine.UserPara.USER_NAME) String username)
             throws S3ServerException {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
 
@@ -70,9 +71,10 @@ public class UserController {
                 .body(userService.getUser(username));
     }
 
-    @DeleteMapping(value = "/users/{username:.+}", produces = MediaType.APPLICATION_XML_VALUE)
+    @PostMapping(params = RestParamDefine.UserPara.DELETE_USER, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity deleteUser(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
-                                     @PathVariable(RestParamDefine.UserPara.USER_NAME) String username)
+                                     @RequestParam(RestParamDefine.UserPara.USER_NAME) String username,
+                                     @RequestParam(value = RestParamDefine.UserPara.FORCE, required = false) String force)
             throws S3ServerException {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
 
@@ -80,23 +82,21 @@ public class UserController {
             throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR, "not an admin user.adminUser=" + adminUser.getUserName() + ",role=" + adminUser.getRole());
         }
 
-        logger.info("delete user:admin={},user={}", adminUser.getUserName(), username);
-        userService.deleteUser(username, false);
-        return ResponseEntity.ok().build();
-    }
-
-    @DeleteMapping(value = "/users/{username:.+}", produces = MediaType.APPLICATION_XML_VALUE, params = RestParamDefine.UserPara.FORCE)
-    public ResponseEntity deleteUserForce(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
-                                     @PathVariable(RestParamDefine.UserPara.USER_NAME) String username)
-            throws S3ServerException {
-        User adminUser = restUtils.getOperatorByAuthorization(authorization);
-
-        if (!adminUser.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
-            throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR, "not an admin user.adminUser=" + adminUser.getUserName() + ",role=" + adminUser.getRole());
+        Boolean forceDelete = false;
+        if (force != null){
+            if (force.equalsIgnoreCase("true")){
+                forceDelete = true;
+            }else if (force.equalsIgnoreCase("false")){
+                forceDelete = false;
+            }else {
+                throw new S3ServerException(S3Error.INVALID_ARGUMENT, "Invalid force parameter. force:"+force);
+            }
         }
 
-        logger.info("delete user force :admin={},user={}", adminUser.getUserName(), username);
-        userService.deleteUser(username, true);
+        logger.info("delete user:admin={},user={},force={}",
+                adminUser.getUserName(), username, forceDelete);
+        userService.deleteUser(username, forceDelete);
+
         return ResponseEntity.ok().build();
     }
 }
