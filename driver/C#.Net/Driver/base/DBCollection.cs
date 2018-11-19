@@ -1875,19 +1875,17 @@ namespace SequoiaDB
 
         /** \fn void CreateAutoIncrement(BsonDocument options)
          * \brief Create autoincrement field on collection.
-         * \param options Options for creating autoincrement, can not be null or empty.
-         *         e.g.: { Field: "a", MaxValue:2000 }
+         * \param options Options for creating autoincrement, can not be null or empty. e.g.{ Field: "a", MaxValue:2000 }
          *          
-         *      Field          : The name of autoincrement field
-         *      StartValue     : The start value of autoincrement field
-         *      MinValue       : The minimum value of autoincrement field
-         *      MaxValue       : The maxmun value of autoincrement field
-         *      Increment      : The increment value of autoincrement field
-         *      CacheSize      : The cache size of autoincrement field
-         *      AcquireSize    : The acquire size of autoincrement field
-         *      Cycled         : The cycled flag of autoincrement field
-         *      Generated      : The generated mode of autoincrement field
-         *          
+         *      Field          : The name of autoincrement field.
+         *      StartValue     : The start value of autoincrement field.
+         *      MinValue       : The minimum value of autoincrement field.
+         *      MaxValue       : The maxmun value of autoincrement field.
+         *      Increment      : The increment value of autoincrement field.
+         *      CacheSize      : The cache size of autoincrement field.
+         *      AcquireSize    : The acquire size of autoincrement field.
+         *      Cycled         : The cycled flag of autoincrement field.
+         *      Generated      : The generated mode of autoincrement field.
          * \return void
          * \exception SequoiaDB.BaseException
          * \exception System.Exception
