@@ -1626,7 +1626,8 @@ namespace engine
 
       SDB_ASSERT ( pBuf, "Invalid arguments" ) ;
 
-      rc = file.open ( filename.c_str() , OSS_READONLY | OSS_SHAREREAD, OSS_DEFAULTFILE ) ;
+      rc = file.open ( filename.c_str() , OSS_READONLY | OSS_SHAREREAD,
+                       OSS_DEFAULTFILE ) ;
       if ( rc != SDB_OK )
       {
          err = "Can't open file: %s" + filename ;

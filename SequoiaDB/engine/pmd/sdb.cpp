@@ -108,64 +108,6 @@ struct ArgInfo
    string       language ; // language, can be "en" or "cn"
 } ;
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_READFILE, "readFile" )
-INT32 readFile ( const CHAR * name , CHAR ** buf , UINT32 * bufSize,
-                 UINT32 * readSize )
-{
-   PD_TRACE_ENTRY ( SDB_READFILE );
-   ossPrimitiveFileOp op ;
-   ossPrimitiveFileOp::offsetType offset ;
-   INT32 rc = SDB_OK ;
-
-   SDB_ASSERT ( name && buf && bufSize, "Invalid arguments" ) ;
-
-   rc = op.Open ( name , OSS_PRIMITIVE_FILE_OP_READ_WRITE ) ;
-   if ( rc != SDB_OK )
-   {
-      ossPrintf ( "Can't open file: %s"OSS_NEWLINE, name ) ;
-      goto error ;
-   }
-
-   rc = op.getSize ( &offset ) ;
-   if ( rc != SDB_OK )
-   {
-      goto error ;
-   }
-
-   if ( *bufSize < offset.offset + 1 )
-   {
-      if ( *buf )
-      {
-         SDB_OSS_FREE( *buf ) ;
-         *buf = NULL ;
-         *bufSize = 0 ;
-      }
-      *buf = (CHAR *) SDB_OSS_MALLOC ( offset.offset + 1 ) ;
-      if ( ! *buf )
-      {
-         rc = SDB_OOM ;
-         PD_LOG ( PDERROR , "fail to alloc memory" ) ;
-         goto error ;
-      }
-      *bufSize = offset.offset + 1 ;
-   }
-
-   rc = op.Read ( offset.offset , *buf , NULL ) ;
-   if ( rc != SDB_OK )
-   {
-      goto error ;
-   }
-   (*buf)[ offset.offset ] = 0 ;
-   if ( readSize ) *readSize = offset.offset ;
-
-done :
-   op.Close() ;
-   PD_TRACE_EXITRC ( SDB_READFILE, rc );
-   return rc ;
-error :
-   goto done ;
-}
-
 void printUsage()
 {
    ossPrintf ( "Usage:"OSS_NEWLINE ) ;

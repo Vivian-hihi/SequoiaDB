@@ -717,7 +717,6 @@ JS_MAPPING_END()
       string filename ;
       string fullPath ;
       sptScope *pScope = NULL ;
-      CHAR* buf = NULL ;
       string err ;
       string content ;
       const sptResultVal *pResultVal = NULL ;
@@ -780,6 +779,7 @@ JS_MAPPING_END()
       }
 
       {
+         CHAR* buf = NULL ;
          INT64 readLen = 0 ;
          rc = _sptUsrFileCommon::readFile( fullPath, err, &buf, readLen ) ;
          if( SDB_OK != rc )
@@ -796,8 +796,11 @@ JS_MAPPING_END()
          }
          else
          {
-            content = buf;
+            content = buf ;
          }
+         /// free buf
+         SDB_OSS_FREE( buf ) ;
+         buf = NULL ;
       }
 
       pScope->addJSFileNameToList( fullPath ) ;

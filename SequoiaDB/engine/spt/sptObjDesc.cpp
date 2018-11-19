@@ -161,6 +161,7 @@ namespace engine
          jsid id ;
          jsval fieldName ;
          std::string name ;
+         CHAR *pFieldName = NULL ;
          properties = JS_Enumerate( cx, obj ) ;
          if ( NULL == properties || 0 == properties->length )
          {
@@ -179,8 +180,15 @@ namespace engine
             goto done ;
          }
 
-         name.assign( static_cast< CHAR* >
-            ( JS_EncodeString( cx, JSVAL_TO_STRING( fieldName ) ) ) );
+         pFieldName = JS_EncodeString( cx, JSVAL_TO_STRING( fieldName ) ) ;
+         if ( !pFieldName )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         name.assign( pFieldName ) ;
+         /// free
+         SAFE_JS_FREE( cx, pFieldName ) ;
 
          if ( name.length() <= 1 || SPT_SPE_OBJSTART != name.at(0) )
          {

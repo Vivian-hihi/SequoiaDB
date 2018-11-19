@@ -131,8 +131,16 @@ namespace engine
             case SPT_JS_TYPE_STRING:
                if( mask & SPT_CVT_FLAGS_FROM_STRING )
                {
-                  string str = static_cast< CHAR* >(
-                     JS_EncodeString( _cx, JSVAL_TO_STRING( val ) ) ) ;
+                  CHAR *pStr = JS_EncodeString( _cx, JSVAL_TO_STRING( val ) ) ;
+                  if ( !pStr )
+                  {
+                     rc = SDB_SYS ;
+                     goto error ;
+                  }
+                  string str = pStr ;
+                  /// free
+                  SAFE_JS_FREE( _cx, pStr ) ;
+
                   if( str == "TRUE" || str == "true" ||
                       str == "T" || str == "t"  )
                   {
@@ -243,15 +251,16 @@ namespace engine
             case SPT_JS_TYPE_STRING:
                if( mask & SPT_CVT_FLAGS_FROM_STRING )
                {
-                  const CHAR* pStr = NULL ;
-                  pStr = static_cast< CHAR* >
-                     ( JS_EncodeString( _cx, JSVAL_TO_STRING( val ) ) ) ;
+                  CHAR* pStr = NULL ;
+                  pStr = JS_EncodeString( _cx, JSVAL_TO_STRING( val ) ) ;
                   if( NULL == pStr )
                   {
                      rc = SDB_INVALIDARG ;
                      goto error ;
                   }
                   rc = utilStr2Num( pStr, rval ) ;
+                  /// free
+                  SAFE_JS_FREE( _cx, pStr ) ;
                   if( SDB_OK != rc )
                   {
                      goto error ;
@@ -352,9 +361,8 @@ namespace engine
             case SPT_JS_TYPE_STRING:
                if( mask & SPT_CVT_FLAGS_FROM_STRING )
                {
-                  const CHAR* pStr = NULL ;
-                  pStr = static_cast< CHAR* >
-                     ( JS_EncodeString( _cx, JSVAL_TO_STRING( val ) ) ) ;
+                  CHAR* pStr = NULL ;
+                  pStr = JS_EncodeString( _cx, JSVAL_TO_STRING( val ) ) ;
                   if( NULL == pStr )
                   {
                      rc = SDB_INVALIDARG ;
@@ -362,6 +370,8 @@ namespace engine
                   }
                   {
                      stringstream strConvertor( pStr ) ;
+                     ///free
+                     SAFE_JS_FREE( _cx, pStr ) ;
                      if( !( strConvertor >> rval ) )
                      {
                         rc = SDB_INVALIDARG ;
@@ -408,7 +418,7 @@ namespace engine
    }
 
    INT32 sptSPObject::getStringField( const std::string &fieldName,
-                                       string &rval, INT32 mask ) const
+                                      string &rval, INT32 mask ) const
    {
       INT32 rc = SDB_OK ;
       jsval val ;
@@ -469,8 +479,16 @@ namespace engine
             case SPT_JS_TYPE_STRING:
                if( mask & SPT_CVT_FLAGS_FROM_STRING )
                {
-                  rval = static_cast< CHAR* >
+                  CHAR *pStr = static_cast< CHAR* >
                         ( JS_EncodeString( _cx, JSVAL_TO_STRING( val ) ) ) ;
+                  if ( !pStr )
+                  {
+                     rc = SDB_SYS ;
+                     goto error ;
+                  }
+                  rval = pStr ;
+                  /// free
+                  SAFE_JS_FREE( _cx, pStr ) ;
                }
                else
                {
@@ -500,14 +518,16 @@ namespace engine
                   }
                   else
                   {
-                     CHAR *tmpStr = NULL ;
-                     tmpStr = convertJsvalToString( _cx, val ) ;
-                     if( NULL == tmpStr )
+                     CHAR *pRetStr = NULL ;
+                     pRetStr = convertJsvalToString( _cx, val ) ;
+                     if ( !pRetStr )
                      {
                         rc = SDB_SYS ;
                         goto error ;
                      }
-                     rval = tmpStr ;
+                     rval = pRetStr ;
+                     /// free
+                     SAFE_JS_FREE( _cx, pRetStr ) ;
                   }
                }
                else
@@ -569,14 +589,14 @@ namespace engine
    INT32 sptSPObject::toString( std::string &rval ) const
    {
       INT32 rc = SDB_OK ;
-      CHAR* pStr = NULL ;
-      pStr = convertJsvalToString( _cx, OBJECT_TO_JSVAL( _obj ) ) ;
-      if( NULL == pStr )
+      CHAR *pStr = convertJsvalToString( _cx, OBJECT_TO_JSVAL( _obj ) ) ;
+      if ( !pStr )
       {
          rc = SDB_SYS ;
          goto error ;
       }
-      rval.assign( pStr ) ;
+      rval = pStr ;
+      SAFE_JS_FREE( _cx, pStr ) ;
    done:
       return rc ;
    error:

@@ -908,6 +908,9 @@ namespace engine
                errPrefix << ( errfileName ? string( errfileName ): "(nofile)" ) << ":"
                          << errLineno << " " ;
                errMsg << strException ;
+
+               /// free
+               SAFE_JS_FREE( _context, errfileName ) ;
             }
             /*
              *Branch 3: Throw other type, such as string
