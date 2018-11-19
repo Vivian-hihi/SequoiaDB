@@ -101,16 +101,16 @@ public abstract class SequoiaSQLOperations {
                     json.put(columnName, rs.getArray(i));
                     break;
                 case Types.BIGINT:
-                    json.put(columnName, rs.getLong(i));
+                    json.put(columnName, rs.getBigDecimal(i));
                     break;
                 case Types.INTEGER:
-                    json.put(columnName, rs.getInt(i));
+                    json.put(columnName, rs.getBigDecimal(i));
                     break;
                 case Types.TINYINT:
-                    json.put(columnName, rs.getByte(i));
+                    json.put(columnName, rs.getBigDecimal(i));
                     break;
                 case Types.SMALLINT:
-                    json.put(columnName, rs.getShort(i));
+                    json.put(columnName, rs.getBigDecimal(i));
                     break;
                 case Types.BIT:
                 case Types.BOOLEAN:
