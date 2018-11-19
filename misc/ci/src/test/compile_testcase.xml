@@ -4,35 +4,6 @@
          <pathelement location="${basedir}/lib/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
-   
-   <macrodef name="compilejavacase">
-      <attribute name="srcdir"/>
-      <sequential>
-         <delete dir="@{srcdir}/build" failonerror="false" />
-         <mkdir dir="@{srcdir}/build"/>
-         <copy todir="@{srcdir}/lib" overwrite="true">
-            <fileset dir="${INSTALL_DIR}/java" includes="sequoiadb*.jar"/>
-         </copy>
-         <copy file="${WORKSPACE}/sequoiadb/testcase/thirdparty/testng-master/lib/linux64/testng-6.10.1-SNAPSHOT.jar" 
-               todir="@{srcdir}/lib" overwrite="true" />
-         <javac executable="${INSTALL_DIR}/java/jdk/bin/javac" 
-                srcdir="@{srcdir}" 
-                destdir="@{srcdir}/build"
-                encoding="UTF-8"
-                debug="true" 
-                debuglevel="lines,vars,source"
-                fork="true" 
-                includeAntRuntime="false"
-                failonerror="true">
-            <classpath>
-               <fileset dir="@{srcdir}/lib" includes="**/*.jar"/>               
-            </classpath>
-         </javac>
-         <copy todir="@{srcdir}/build">
-            <fileset dir="@{srcdir}" includes="**/node.conf"/>
-         </copy>
-      </sequential>
-   </macrodef>
 
    <macrodef name="compileccase">
       <attribute name="srcdir"/>
