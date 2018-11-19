@@ -17,13 +17,13 @@ function main()
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1" } } );
    
    //illegal Field value
-   create(dbcl);
+   create(dbcl, null);
    
-   create(dbcl, "$id2");
+   create(dbcl, {Field:"$id2"});
    
-   create(dbcl, " id3");
+   create(dbcl, {Field:" id3"});
    
-   create(dbcl, "5");
+   create(dbcl, {Field:"5"});
    
    //legal Field value
    dbcl.createAutoIncrement({ Field : "id6" });
@@ -32,9 +32,14 @@ function main()
    
    dbcl.createAutoIncrement({ Field : "id 8" });
    
+   //other
+   dbcl.createAutoIncrement({ Field : "id9" });
+   dbcl.createAutoIncrement({ Field : "id" });
+   dbcl.createAutoIncrement({ Field : "id99" });
+   
    //check autoIncrement count
    var cursor = db.snapshot(8, { Name : COMMCSNAME + "." + clName });
-   if( cursor.current().toObj().AutoIncrement.length !== 4)
+   if( cursor.current().toObj().AutoIncrement.length !== 7)
    {
       throw "autoIncrement count error!";
    }
@@ -44,44 +49,42 @@ function main()
    var sequenceNames = ["SYS_" + clID + "_id1_SEQ",
                         "SYS_" + clID + "_id6_SEQ",
                         "SYS_" + clID + "_id$7_SEQ",
-                        "SYS_" + clID + "_id 8_SEQ"]; 
+                        "SYS_" + clID + "_id 8_SEQ",
+                        "SYS_" + clID + "_id9_SEQ",
+                        "SYS_" + clID + "_id_SEQ",
+                        "SYS_" + clID + "_id99_SEQ"]; 
    var expIncrements = [{ Field : "id1", SequenceName : sequenceNames[0] },
                         { Field : "id6", SequenceName : sequenceNames[1] },
                         { Field : "id$7", SequenceName : sequenceNames[2] },
-                        { Field : "id 8", SequenceName : sequenceNames[3] }];
+                        { Field : "id 8", SequenceName : sequenceNames[3] },
+                        { Field : "id9", SequenceName : sequenceNames[4] },
+                        { Field : "id", SequenceName : sequenceNames[5] },
+                        { Field : "id99", SequenceName : sequenceNames[6] }];
    checkAutoIncrementonCL( COMMCSNAME, clName, expIncrements );
     
    //insert records and check
    dbcl.insert( { "a" : 1 } );
    
    var rc = dbcl.find();
-   var expRecs = [ { "a" : 1, "id1" : 1, "id6" : 1, "id$7" : 1, "id 8" : 1 }];
+   var expRecs = [ { "a" : 1, "id1" : 1, "id6" : 1, "id$7" : 1, "id 8" : 1, "id" : 1, "id9" : 1, "id99" : 1}];
    checkRec( rc, expRecs );
    
    commDropCL( db, COMMCSNAME, clName );
 }
 
-function create(dbcl, field)
+function create(dbcl, options)
 {
    try
    {
-      if(field == undefined)
-      {
-         dbcl.createAutoIncrement({ StartValue : 3 });   
-         throw "create autoIncrement error!";
-      }else
-      {
-         dbcl.createAutoIncrement({ Field : field, StartValue : 3 });
-         throw "create autoIncrement error!";
-      }
+      dbcl.createAutoIncrement(options);
+      throw "need_error";
    }catch(e)
    {
       if(e !== -6)
       {
          throw e;
-      }
-   }
-   
+      }          
+   }   
 }
 
 main();
