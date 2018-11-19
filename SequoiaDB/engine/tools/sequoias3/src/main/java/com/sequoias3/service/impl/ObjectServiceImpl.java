@@ -641,6 +641,9 @@ public class ObjectServiceImpl implements ObjectService {
             throws S3ServerException{
         QueryDbCursor queryDbCursorHis = metaDao.queryMetaByBucket(metaCsName, metaClName,
                 bucketId, null, null, false, true);
+        if (queryDbCursorHis == null){
+            return;
+        }
         ConnectionDao connection = daoMgr.getConnectionDao();
         try {
             while (queryDbCursorHis.hasNext()) {
