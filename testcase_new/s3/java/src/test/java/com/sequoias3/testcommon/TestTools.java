@@ -253,8 +253,17 @@ public class TestTools {
 			} else {
 				throw new IllegalArgumentException("invalid type of buffer");
 			}
-			BigInteger bi = new BigInteger(1, md5.digest());
-			value = bi.toString(16);
+			byte[] md5sum = md5.digest();
+			for(int i = 0; i < md5sum.length;i++){
+				String hex = Integer.toHexString(md5sum[i]&0xFF);
+				if(hex.length() == 1){
+					hex = '0' + hex;
+				}
+				value += hex;
+			}
+			//have bug,it will get rid of the 0 in front
+			/*BigInteger bi = new BigInteger(1, md5.digest());
+			value = bi.toString(16);*/
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 			throw new RuntimeException("fail to get md5!" + e.getMessage());
@@ -264,7 +273,7 @@ public class TestTools {
 
 	/**
 	 * random generate string
-	 * 
+	 *
 	 * @param length
 	 * @return character string
 	 */
@@ -324,5 +333,4 @@ public class TestTools {
 		int index = fullClassName.lastIndexOf(".");
 		return fullClassName.substring(index + 1);
 	}
-
 }
