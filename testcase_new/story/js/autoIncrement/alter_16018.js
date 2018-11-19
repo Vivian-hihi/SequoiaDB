@@ -48,19 +48,10 @@ function main()
    {
       var coord = new Sdb( coordNodes[ i ] );
       var cl = coord.getCS( COMMCSNAME ).getCL( clName );
-      try
-      { 
-         for(var j = 0; j < 2; j++)
-         {
-            cl.insert( { "a" : j, "b" : j } );
-            expRecs.push({ "a" : j, "b" : j, "id1" : 1 + coordNodes.length*10 + i*acquireSize + j });
-         }
-      }catch(e)
+      for(var j = 0; j < 2; j++)
       {
-         if(e !== -324)
-         {
-            throw e;
-         }
+         cl.insert( { "a" : j, "b" : j } );
+         expRecs.push({ "a" : j, "b" : j, "id1" : 1 + coordNodes.length*10 + i*acquireSize + j });
       }
       coord.close();
    }
