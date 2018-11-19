@@ -78,6 +78,7 @@
     <Compile Include="Crud\Insert\BulkInsert14531.cs" />
     <Compile Include="Crud\Insert\BulkInsert14530.cs" />
     <Compile Include="Crud\Insert\Insert14532.cs" />
+    <Compile Include="Crud\Insert\Insert16622.cs" />
     <Compile Include="Crud\Lob\LockParamVerify13476.cs" />
     <Compile Include="Crud\Lob\ModificationTime13470.cs" />
     <Compile Include="Crud\Lob\LockAndSeekParamVerify13477.cs" />
