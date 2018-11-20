@@ -93,58 +93,64 @@ public abstract class SequoiaSQLOperations {
         ResultSetMetaData metaData = rs.getMetaData();
         int columnCount = metaData.getColumnCount();
 
+
         for (int i = 1; i <= columnCount; i++) {
             String columnName = metaData.getColumnLabel(i);
 
-            switch (metaData.getColumnType(i)) {
-                case Types.ARRAY:
-                    json.put(columnName, rs.getArray(i));
-                    break;
-                case Types.BIGINT:
-                    json.put(columnName, rs.getBigDecimal(i));
-                    break;
-                case Types.INTEGER:
-                    json.put(columnName, rs.getBigDecimal(i));
-                    break;
-                case Types.TINYINT:
-                    json.put(columnName, rs.getBigDecimal(i));
-                    break;
-                case Types.SMALLINT:
-                    json.put(columnName, rs.getBigDecimal(i));
-                    break;
-                case Types.BIT:
-                case Types.BOOLEAN:
-                    json.put(columnName, rs.getBoolean(i));
-                    break;
-                case Types.REAL:
-                    json.put(columnName, rs.getFloat(i));
-                    break;
-                case Types.FLOAT:
-                case Types.DOUBLE:
-                    json.put(columnName, rs.getDouble(i));
-                    break;
-                case Types.TIME:
-                    json.put(columnName, rs.getTime(i));
-                    break;
-                case Types.DATE:
-                    json.put(columnName, rs.getDate(i));
-                    break;
-                case Types.TIMESTAMP:
-                    Timestamp times = rs.getTimestamp(i);
-                    if (times != null) {
-                        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                        json.put(columnName, df.format(times));
-                    } else {
-                        json.put(columnName, rs.getString(i));
-                    }
-                    break;
-                case Types.DECIMAL:
-                    json.put(columnName, rs.getBigDecimal(i));
-                    break;
-                default:
-                    json.put(columnName, rs.getString(i));
-                    break;
+            if (null == rs.getObject(i)) {
+                json.put(columnName, JSONObject.NULL);
+            } else {
 
+                switch (metaData.getColumnType(i)) {
+                    case Types.ARRAY:
+                        json.put(columnName, rs.getArray(i));
+                        break;
+                    case Types.BIGINT:
+                        json.put(columnName, rs.getBigDecimal(i));
+                        break;
+                    case Types.INTEGER:
+                        json.put(columnName, rs.getBigDecimal(i));
+                        break;
+                    case Types.TINYINT:
+                        json.put(columnName, rs.getBigDecimal(i));
+                        break;
+                    case Types.SMALLINT:
+                        json.put(columnName, rs.getBigDecimal(i));
+                        break;
+                    case Types.BIT:
+                    case Types.BOOLEAN:
+                        json.put(columnName, rs.getBoolean(i));
+                        break;
+                    case Types.REAL:
+                        json.put(columnName, rs.getBigDecimal(i));
+                        break;
+                    case Types.FLOAT:
+                    case Types.DOUBLE:
+                        json.put(columnName, rs.getBigDecimal(i));
+                        break;
+                    case Types.TIME:
+                        json.put(columnName, rs.getTime(i));
+                        break;
+                    case Types.DATE:
+                        json.put(columnName, rs.getDate(i));
+                        break;
+                    case Types.TIMESTAMP:
+                        Timestamp times = rs.getTimestamp(i);
+                        if (times != null) {
+                            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                            json.put(columnName, df.format(times));
+                        } else {
+                            json.put(columnName, rs.getString(i));
+                        }
+                        break;
+                    case Types.DECIMAL:
+                        json.put(columnName, rs.getBigDecimal(i));
+                        break;
+                    default:
+                        json.put(columnName, rs.getString(i));
+                        break;
+
+                }
             }
         }
 
