@@ -7,7 +7,7 @@
 putLob \- Insert LOB into collection.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.collectionspace.collection.putLob(<file path>)\f[]\f[]
+\f[B]\f[I]db.collectionspace.collection.putLob(<file path>, [oid])\f[]\f[]
 .SH CATEGORY
 .PP
 Collection
@@ -19,6 +19,10 @@ Insert LOB into collection.
 \fBfile path (string)\fR
 .br
        Full path to insert the file.
+.sp 2
+\fBfile oid (string)\fR
+.br
+       Specify the oid of lob.
 .sp 2
 \fBNote: \fR
 .sp 2
@@ -37,3 +41,8 @@ db.foo.createCL('bar')
 Insert the LOB file.
 .sp 2
 db.foo.bar.putLob('/opt/mylob')
+.sp 2
+Insert the LOB file of the specified oid.
+.sp 2
+db.foo.bar.putLob('/opt/mylob', '5bf3a024ed9954d596420256')
+
