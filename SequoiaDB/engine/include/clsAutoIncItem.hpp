@@ -70,15 +70,7 @@ namespace engine
 
       BOOLEAN operator< ( const _clsAIID &r ) const
       {
-         return seqID < r.seqID ? TRUE : FALSE ;
-      }
-      BOOLEAN operator== ( const _clsAIID &r ) const
-      {
-         return (seqID == r.seqID && genType == r.genType) ? TRUE : FALSE ;
-      }
-      BOOLEAN operator!= ( const _clsAIID &r ) const
-      {
-         return this->operator==( r ) ? FALSE : TRUE ;
+         return seqID < r.seqID || genType < r.genType ? TRUE : FALSE ;
       }
    } ;
    typedef struct _clsAIID clsAIID ;
@@ -91,6 +83,7 @@ namespace engine
    class _clsAutoIncItem : public SDBObject
    {
    friend class _clsAutoIncSet ;
+   friend class _clsAutoIncIterator ;
    typedef _utilStringMap<_clsAutoIncItem*, 1>  AUTOINC_ITEM_MAP ;
    typedef AUTOINC_ITEM_MAP::iterator           AUTOINC_ITEM_MAP_IT ;
    typedef AUTOINC_ITEM_MAP::value_type         AUTOINC_ITEM_MAP_VAL ;
@@ -107,9 +100,9 @@ namespace engine
       AUTOINC_GEN_TYPE     generatedType() const { return _generatedType ; }
       const clsAIID        AIID() const ;
 
-      BOOLEAN              hasSubField() const { return _pSubFieldSet ? TRUE :FALSE ; }
-      const _clsAutoIncSet*   subFieldSet() const { return _pSubFieldSet ; }
-      const _clsAutoIncItem*  findSubItem( const CHAR *pName ) const ;
+      BOOLEAN              hasSubField() const { return _pSubFieldMap ? TRUE :FALSE ; }
+      const _clsAutoIncItem*  findItem( const CHAR *pName ) const ;
+      UINT32               itemCount() const { return _pSubFieldMap->size(); }
 
    protected:
 
@@ -131,7 +124,7 @@ namespace engine
       utilSequenceID    _sequenceID ;
       AUTOINC_GEN_TYPE  _generatedType ;
 
-      _clsAutoIncSet*   _pSubFieldSet ;
+      AUTOINC_ITEM_MAP* _pSubFieldMap ;
       string            _fieldStr ;
 
    } ;
@@ -171,7 +164,7 @@ namespace engine
 
       INT32    _initAItem( const BSONObj &obj ) ;
       void     _clear() ;
-      UINT32   _calcEleSize( const _clsAutoIncSet &set ) ;
+      UINT32   _calcEleSize( const AUTOINC_ITEM_MAP &map ) ;
 
    private:
       BSONObj              _objInfo ;
@@ -198,9 +191,10 @@ namespace engine
       {
          NON_RECURS = 0,   // find first level item
          RECURS            // find only leaf item
-      };
+      } ;
       typedef enum _MODE MODE ;
       _clsAutoIncIterator( const _clsAutoIncSet &set, MODE mode = NON_RECURS ) ;
+      _clsAutoIncIterator( const _clsAutoIncItem &item, MODE mode = NON_RECURS ) ;
       BOOLEAN more() ;
       const _clsAutoIncItem* next() ;
 

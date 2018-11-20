@@ -974,9 +974,10 @@ namespace engine
       goto done ;
    }
 
+   template <typename T>
    // PD_TRACE_DECLARE_FUNCTION ( SDB__ADD_AUTOINC_TO_OBJ, "_coordInsertOperator::_addAutoIncToObj" )
    INT32 _coordInsertOperator::_addAutoIncToObj( const BSONObj &objIn,
-                                                 const clsAutoIncSet &autoIncSet,
+                                                 const T &set,
                                                  pmdEDUCB *cb,
                                                  _SimpleBSONBuilder &builder )
    {
@@ -1001,7 +1002,7 @@ namespace engine
          {
             ele = boIt.next() ;
             eleField = ele.fieldName() ;
-            pItem = autoIncSet.findItem( eleField ) ;
+            pItem = set.findItem( eleField ) ;
             if ( NULL == pItem )
             {
                builder.appendElement( ele ) ;
@@ -1033,8 +1034,7 @@ namespace engine
                   _SimpleBSONBuilder subBuilder(
                         builder.subobjStart( eleField ) ) ;
 
-                  rc = _addAutoIncToObj( ele.embeddedObject(),
-                                         *(pItem->subFieldSet()),
+                  rc = _addAutoIncToObj( ele.embeddedObject(), *pItem,
                                          cb, subBuilder ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement "
                                "field[%s], rc: %d",
@@ -1053,7 +1053,7 @@ namespace engine
                }
             }
 
-            if ( doneSet.size() == autoIncSet.itemCount() )
+            if ( doneSet.size() == set.itemCount() )
             {
                break ;
             }
@@ -1069,7 +1069,7 @@ namespace engine
 
          pSequenceAgent = _pResource->getSequenceAgent() ;
 
-         clsAutoIncIterator autoIncIt( autoIncSet ) ;
+         clsAutoIncIterator autoIncIt( set ) ;
          while ( autoIncIt.more() )
          {
             /// already exist
@@ -1103,8 +1103,7 @@ namespace engine
                _SimpleBSONBuilder subBuilder(
                      builder.subobjStart( pItem->fieldName() ) ) ;
 
-               rc = _addAutoIncToObj( BSONObj(), *( pItem->subFieldSet()),
-                                      cb, subBuilder ) ;
+               rc = _addAutoIncToObj( BSONObj(), *pItem, cb, subBuilder ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement "
                             "field[%s], rc: %d", pItem->fieldName(), rc ) ;
                subBuilder.done() ;

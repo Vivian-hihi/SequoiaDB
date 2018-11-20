@@ -118,8 +118,9 @@ namespace engine
                                  INT32 &newMsgSize,
                                  INT32 &newMsgLen ) ;
 
+         template <typename T>
          INT32 _addAutoIncToObj( const BSONObj &objIn,
-                                 const clsAutoIncSet &autoIncSet,
+                                 const T &set,
                                  pmdEDUCB *cb,
                                  _SimpleBSONBuilder &builder ) ;
 

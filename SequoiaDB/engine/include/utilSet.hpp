@@ -616,7 +616,7 @@ namespace engine
          const_iterator itRhs = rhs.begin() ;
          while( itRhs != rhs.end() )
          {
-            if ( *itRhs != *itThis )
+            if ( *itRhs < *itThis || *itThis < *itRhs )
             {
                return FALSE ;
             }
