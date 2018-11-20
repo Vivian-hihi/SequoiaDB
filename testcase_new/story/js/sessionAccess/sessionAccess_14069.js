@@ -20,6 +20,7 @@ function main()
 	  
 	  
 	  //createNode and set instanceid
+	  println( "begin to createNode and set instanceid" ) ;
 	  var nodeHostName = db.listReplicaGroups().current().toObj().Group[0].HostName;
       for( var i = 0; i < instanceidList.length; i++)
       {         
@@ -41,18 +42,20 @@ function main()
 		 {
 			 if( -6 != e )
 			 {
-				 println( "failed to execute create node with incorrect instanceid, rc = " + e ) ;
-				 throw e ;
+				 throw buildException("check set instanceid", e, "check the createNode and set instanceid",
+                           -6, e);
 			}
 		}
 		startIndex++;
       }
 	  
-	  //start rg
+	  println( "begin to start rg and check result" ) ;
       rg.start();
+	  
 	  // check result
 	  checkResult(db, groupName, instanceidList);
 	  //remove rg
+	  println( "begin to remove rg" ) ;
 	  db.removeRG(groupName);
 	}
    catch( e )
@@ -75,10 +78,9 @@ function checkResult(db, groupName, instanceidList)
 	{
 		if(instanceidList[i] != 0 && instanceidList[i] != getDataGroupInfo.Group[i].instanceid)
 		{
-			println("instanceidList[i]: " + instanceidList[i] + ",getDataGroupInfo.Group[i].instanceid :" + getDataGroupInfo.Group[i].instanceid)
-			throw "instanceidError";
+			throw buildException("check checkResult", null, "check the instanceid set result",
+                           instanceidList[i], getDataGroupInfo.Group[i].instanceid);
 		}
 	}  
-	println( "success to execute create node with incorrect instanceid" ) ;
 }
 
