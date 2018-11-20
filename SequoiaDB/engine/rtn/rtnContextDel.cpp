@@ -1204,7 +1204,7 @@ namespace engine
                                           DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
       }
 
-      // drop collection
+      // rename collection
       rc = _su->data()->renameCollection ( _clShortName, _newCLShortName,
                                            cb, _pDpsCB ) ;
       PD_RC_CHECK( rc, PDERROR,
