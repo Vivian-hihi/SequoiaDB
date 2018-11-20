@@ -1339,12 +1339,12 @@ INT32 readCiRecord( OSSFILE &in, INT64 &offset,
 {
    INT32 rc         = SDB_OK ;
    CHAR *bsonBuffer = NULL ;
-   INT32 bufferLen  = 0 ;
+   INT64 bufferLen  = 0 ;
 
    UINT32 idx = 0 ;
    while ( idx < header._recordCount )
    {
-      INT32 recordLen = 0 ;
+      INT64 recordLen = 0 ;
       CHAR  state ;
       rc = readFromFile( in, offset, (CHAR *)&recordLen, sizeof( INT32 ) ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
