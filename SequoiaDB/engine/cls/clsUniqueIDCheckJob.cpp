@@ -97,7 +97,7 @@ namespace engine
       UINT64 loopCnt = 0 ;
       BOOLEAN isCataReady = FALSE ;
 
-      PD_LOG( PDDEBUG,
+      PD_LOG( PDEVENT,
               "Start job[%s]: check cs/cl unique id by cs/cl name", name() ) ;
 
       while ( !PMD_IS_DB_DOWN() &&
@@ -202,7 +202,7 @@ namespace engine
 
       }// end while
 
-      PD_LOG( PDDEBUG, "Stop job[%s]", name() ) ;
+      PD_LOG( PDEVENT, "Stop job[%s]", name() ) ;
 
       PD_TRACE_EXITRC( SDB__CLSUIDCHKJOB_DOIT, rc ) ;
       return rc ;
@@ -298,7 +298,7 @@ namespace engine
       MON_CS_SIM_LIST csSet ;
       vector<monCSSimple> csList ;
 
-      PD_LOG( PDDEBUG, "Start job[%s]: check cs/cl name by unique id",
+      PD_LOG( PDEVENT, "Start job[%s]: check cs/cl name by unique id",
               name() ) ;
 
       // wait _clsVSPrimary::active() set primary
@@ -380,7 +380,7 @@ namespace engine
          _pFreezeWindow->unregisterCL( NULL, NULL, _opID ) ;
          _hasBlockGlobal = FALSE ;
       }
-      PD_LOG( PDDEBUG, "Stop job[%s]", name() ) ;
+      PD_LOG( PDEVENT, "Stop job[%s]", name() ) ;
       PD_TRACE_EXITRC( SDB__CLSNAMECHKJOB_DOIT, rc ) ;
       return rc ;
    }
