@@ -710,6 +710,10 @@ namespace sdbclient
         EnsureShardingIndex : Assign to true to build sharding index
         StrictDataMode : Using strict date mode in numeric operations or not
                        e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+        AutoIncrement: Assign attributes of an autoincrement field or batch autoincrement fields.
+                       e.g. {AutoIncrement:{Field:"a",Maxvalue:2000}}, 
+                            {AutoIncrement:[{Field:"a",Maxvalue:2000},{Field:"a",Maxvalue:4000}]}
+
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -1725,28 +1729,63 @@ namespace sdbclient
         return pCollection->dropIdIndex() ;
     }
 
-    INT32 createAutoIncrement( const bson::BSONObj &options )
+    /** \fn INT32 createAutoIncrement ( const bson::BSONObj &options )
+        \brief Create an autoincrement field on collection
+        \param [in] options The options as following:
+     
+           Field          : The name of autoincrement field
+           StartValue     : The start value of autoincrement field
+           MinValue       : The minimum value of autoincrement field
+           MaxValue       : The maxmun value of autoincrement field
+           Increment      : The increment value of autoincrement field
+           CacheSize      : The cache size of autoincrement field
+           AcquireSize    : The acquire size of autoincrement field
+           Cycled         : The cycled flag of autoincrement field
+           Generated      : The generated mode of autoincrement field
+
+        \retval SDB_OK Operation Success
+        \retval Others Operation Fail
+    */
+    INT32 createAutoIncrement ( const bson::BSONObj &options )
     {
        if ( !pCollection )
           return SDB_NOT_CONNECTED ;
         return pCollection->createAutoIncrement( options ) ;
     }
 
-    INT32 createAutoIncrement( const std::vector<bson::BSONObj> &options )
+    /** \fn INT32 createAutoIncrement ( const std::vector<bson::BSONObj> &options )
+        \brief Create a bulk of autoincrement fields on collection
+        \param [in] options The option array of autoincrement fields:
+        \retval SDB_OK Operation Success
+        \retval Others Operation Fail
+    */
+    INT32 createAutoIncrement ( const std::vector<bson::BSONObj> &options )
     {
        if ( !pCollection )
           return SDB_NOT_CONNECTED ;
         return pCollection->createAutoIncrement( options ) ;
     }
-
-    INT32 dropAutoIncrement( const CHAR * fieldName )
+    
+    /** \fn INT32 dropAutoIncrement ( const CHAR * fieldName )
+        \brief Drop an autoincrement field on collection
+        \param [in] fieldName The name of autoincrement field:
+        \retval SDB_OK Operation Success
+        \retval Others Operation Fail
+    */
+    INT32 dropAutoIncrement ( const CHAR * fieldName )
     {
        if ( !pCollection )
           return SDB_NOT_CONNECTED ;
         return pCollection->dropAutoIncrement( fieldName ) ;
     }
 
-    INT32 dropAutoIncrement( const std::vector<CHAR*> &fieldNames )
+    /** \fn INT32 dropAutoIncrement ( const std::vector<CHAR*> &fieldNames )
+        \brief Drop a bulk of autoincrement fields on collection
+        \param [in] fieldNames The array of autoincrement field names:
+        \retval SDB_OK Operation Success
+        \retval Others Operation Fail
+    */
+    INT32 dropAutoIncrement ( const std::vector<CHAR*> &fieldNames )
     {
        if ( !pCollection )
           return SDB_NOT_CONNECTED ;
@@ -1824,6 +1863,9 @@ namespace sdbclient
             EnsureShardingIndex : Assign to true to build sharding index
             StrictDataMode : Using strict date mode in numeric operations or not
                            e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+            AutoIncrement: Assign attributes of an autoincrement field or batch autoincrement fields.
+                           e.g. {AutoIncrement:{Field:"a",Maxvalue:2000}}, 
+                           {AutoIncrement:[{Field:"a",Maxvalue:2000},{Field:"a",Maxvalue:4000}]}
         \note Can't alter attributes about split in partition collection; After altering a collection to
               be a partition collection, need to split this collection manually
         \retval SDB_OK Operation Success
@@ -4250,6 +4292,7 @@ namespace sdbclient
         SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
         SDB_SNAP_HEALTH           : Get snapshot of node health detection
         SDB_SNAP_CONFIGS          : Get snapshot of node configurations
+        SDB_SNAP_SEQUENCES        : Get the snapshot of sequences
 
     \param [in] numToSkip Skip the first numToSkip documents, default is 0
     \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
@@ -4304,6 +4347,7 @@ namespace sdbclient
         SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
         SDB_SNAP_HEALTH           : Get snapshot of node health detection
         SDB_SNAP_CONFIGS          : Get snapshot of node configurations
+        SDB_SNAP_SEQUENCES        : Get the snapshot of sequences
 
      \param [in] condition The matching rule, match all the documents if not provided.
      \param [in] select The selective rule, return the whole document if not provided.
@@ -4383,6 +4427,7 @@ namespace sdbclient
         SDB_LIST_TASKS            : Get all the running split tasks ( only applicable in sharding env )
         SDB_LIST_TRANSACTIONS     : Get all the transactions information.
         SDB_LIST_TRANSACTIONS_CURRENT : Get the transactions information of current session.
+        SDB_LIST_SEQUENCES        : Get all the sequences list
 
    \param [in] condition The matching rule, match all the documents if null.
    \param [in] select The selective rule, return the whole document if null.
@@ -4430,6 +4475,7 @@ namespace sdbclient
         SDB_LIST_TASKS            : Get all the running split tasks ( only applicable in sharding env )
         SDB_LIST_TRANSACTIONS     : Get all the transactions information.
         SDB_LIST_TRANSACTIONS_CURRENT : Get the transactions information of current session.
+        SDB_LIST_SEQUENCES        : Get all the sequences list
 
    \param [in] condition The matching rule, match all the documents if null.
    \param [in] select The selective rule, return the whole document if null.

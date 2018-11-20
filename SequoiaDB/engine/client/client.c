@@ -11614,25 +11614,25 @@ SDB_EXPORT INT32 sdbDisableCompression ( sdbCollectionHandle cHandle )
 }
 
 SDB_EXPORT INT32 sdbCreateAutoIncrement( sdbCollectionHandle cHandle,
-                                         const bson * fields )
+                                         const bson * options )
 {
-   bson options ;
+   bson obj ;
    INT32 rc =  SDB_OK ;
 
-   bson_init( &options ) ;
-   rc = bson_append_bson( &options, "AutoIncrement", fields ) ;
+   bson_init( &obj ) ;
+   rc = bson_append_bson( &obj, "AutoIncrement", options ) ;
    if( SDB_OK != rc )
    {
       goto error ;
    }
 
-   rc = bson_append_finish_object( &options ) ;
+   rc = bson_append_finish_object( &obj ) ;
    if( SDB_OK != rc )
    {
       goto error ;
    }
 
-   rc = _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_CRT_AUTOINC_FLD, &options, FALSE ) ;
+   rc = _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_CRT_AUTOINC_FLD, &obj, FALSE ) ;
 done:
    return rc ;
 error:
@@ -11640,9 +11640,9 @@ error:
 }
 
 SDB_EXPORT INT32 sdbDropAutoIncrement( sdbCollectionHandle cHandle,
-                                       const bson * fields )
+                                       const bson * options )
 {
-   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_DROP_AUTOINC_FLD, fields, FALSE ) ;
+   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_DROP_AUTOINC_FLD, options, FALSE ) ;
 }
 
 SDB_EXPORT INT32 sdbCLSetAttributes ( sdbCollectionHandle cHandle,

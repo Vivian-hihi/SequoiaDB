@@ -378,6 +378,7 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
         SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
         SDB_SNAP_HEALTH           : Get snapshot of node health detection
         SDB_SNAP_CONFIGS          : Get snapshot of node configurations
+        SDB_SNAP_SEQUENCES        : Get the snapshot of sequences
 
     \param [in] condition The matching rule, match all the documents if null
     \param [in] select The selective rule, return the whole document if null
@@ -420,6 +421,7 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
         SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
         SDB_SNAP_HEALTH           : Get snapshot of node health detection
         SDB_SNAP_CONFIGS          : Get snapshot of node configurations
+        SDB_SNAP_SEQUENCES        : Get the snapshot of sequences
 
     \param [in] condition The matching rule, match all the documents if null
     \param [in] select The selective rule, return the whole document if null
@@ -1137,6 +1139,9 @@ SDB_EXPORT INT32 sdbCreateCollection1 ( sdbCSHandle cHandle,
         EnsureShardingIndex : Assign to true to build sharding index
         StrictDataMode : Using strict date mode in numeric operations or not
                          e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+        AutoIncrement: Assign attributes of an autoincrement field or batch autoincrement fields.
+                       e.g. {AutoIncrement:{Field:"a",Maxvalue:2000}}, 
+                       {AutoIncrement:[{Field:"a",Maxvalue:2000},{Field:"a",Maxvalue:4000}]}
     \note Can't alter attributes about split in partition collection; After altering a collection to
           be a partition collection, need to split this collection manually
     \retval SDB_OK Operation Success
@@ -2949,10 +2954,10 @@ SDB_EXPORT INT32 sdbEnableCompression ( sdbCollectionHandle cHandle,
 */
 SDB_EXPORT INT32 sdbDisableCompression ( sdbCollectionHandle cHandle ) ;
 
-/** \fn INT32 sdbCreateAutoIncrement( sdbCollectionHandle cHandle, const bson * fields )
-    \brief Create autoincrement field on collection
+/** \fn INT32 sdbCreateAutoIncrement( sdbCollectionHandle cHandle, const bson * options )
+    \brief Create an autoincrement field on collection
     \param [in] cHandle The collection handle.
-    \param [in] args The arguments of fields. e.g. { Field: "a", MaxValue:2000 }
+    \param [in] options The arguments of autoincrement field. e.g. { Field: "a", MaxValue:2000 }
 
          Field          : The name of autoincrement field
          StartValue     : The start value of autoincrement field
@@ -2967,19 +2972,19 @@ SDB_EXPORT INT32 sdbDisableCompression ( sdbCollectionHandle cHandle ) ;
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbCreateAutoIncrement( sdbCollectionHandle cHandle,
-                                         const bson * fields ) ;
+                                         const bson * options ) ;
 
-/** \fn INT32 sdbDropAutoIncrement( sdbCollectionHandle cHandle, const bson * fields )
-    \brief Drop autoincrement field on collection
+/** \fn INT32 sdbDropAutoIncrement( sdbCollectionHandle cHandle, const bson * options )
+    \brief Drop an autoincrement field on collection
     \param [in] cHandle The collection handle.
-    \param [in] args The arguments of fields. e.g. { Field: "a" }
+    \param [in] options The name of autoincrement field. e.g. { Field: "a" }
 
          Field          : The name of autoincrement field
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbDropAutoIncrement( sdbCollectionHandle cHandle,
-                                       const bson * fields ) ;
+                                       const bson * options ) ;
 
 /** \fn INT32 sdbCLSetAttributes ( sdbCollectionHandle cHandle,
                                    const bson *options  )
@@ -2995,6 +3000,9 @@ SDB_EXPORT INT32 sdbDropAutoIncrement( sdbCollectionHandle cHandle,
         EnsureShardingIndex : Assign to true to build sharding index
         StrictDataMode : Using strict date mode in numeric operations or not
                          e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+        AutoIncrement: Assign attributes of an autoincrement field or batch autoincrement fields.
+                       e.g. {AutoIncrement:{Field:"a",Maxvalue:2000}}
+                            {AutoIncrement:[{Field:"a",Maxvalue:2000},{Field:"a",Maxvalue:4000}]}
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
