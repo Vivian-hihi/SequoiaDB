@@ -54,7 +54,7 @@ public class TimePrinterListener extends TestListenerAdapter {
     }
 
     private void printEndTime(ITestResult tr) {
-        System.out.println(getCurTimeStr() + "\tend  : " + getTestMethodName(tr));
+        System.out.println(getCurTimeStr() + "\tend: " + getTestMethodName(tr));
     }
 
     private String getTestMethodName(ITestResult tr) {
@@ -72,6 +72,6 @@ public class TimePrinterListener extends TestListenerAdapter {
     
     private void dbMsgEndTime(ITestResult tr) {
         Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb.msg(getCurTimeStr() + "\tend  : " + getTestMethodName(tr));
+        sdb.msg(getCurTimeStr() + "\tend: " + getTestMethodName(tr));
     }
 }
