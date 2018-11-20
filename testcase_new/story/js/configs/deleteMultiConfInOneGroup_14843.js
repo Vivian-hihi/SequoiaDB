@@ -161,13 +161,6 @@ function deleteReboot( db, rgName, nodes )
 // 删除多个forbid级别参数
 function deleteForbid( db, rgName, nodes )
 {
-   // pick two random forbid conf
-   var forbidConf1 = getRandomForbidConf() ;
-   do {
-      var forbidConf2 = getRandomForbidConf() ;
-   } while( forbidConf2.name === forbidConf1.name ) ;
-   println( "test forbid conf: " + forbidConf1 + " " + forbidConf2 ) ;
-   
    // before delete, get nodes conf from file and snapshot
    var snapshotInfos = [] ;
    var fileInfos = [] ;
@@ -182,29 +175,12 @@ function deleteForbid( db, rgName, nodes )
    }
    
    // delete forbid conf
-   var errConfigs = ["dbpath", "confpath", "svcname", "role",  "catalogaddr"];
-   var hasError = false;
-   var include1 = errConfigs.indexOf(forbidConf1.name);
-   var include2 = errConfigs.indexOf(forbidConf2.name);   
-   if((include1!=-1)||(include2!=-1))
-   {
-      hasError = true;
-   }
-
    var config = {} ;
-   config[ forbidConf1.name ] = 1 ;
-   config[ forbidConf2.name ] = 1 ;
+   config[ 'dbpath' ] = 1 ;
+   config[ 'indexpath' ] = 1 ;
    var option = {} ; 
    option[ "GroupName" ] = rgName ;
-   if(hasError)
-   {
-      deleteConf( db, config, option, -264 ) ;
-   }
-   else
-   {
-       deleteConf( db, config, option );
-   }
-   
+   deleteConf( db, config, option, -264 ) ;
    
    // check delete with snapshot and file
    for( var i = 0;i < nodes.length;i++ )
