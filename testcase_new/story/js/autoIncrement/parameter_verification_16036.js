@@ -34,16 +34,19 @@ function main()
    create(dbcl, "id8", true);
    
    //legal Increment value
-   dbcl.createAutoIncrement([{ Field : "a1", Increment : -2147483647 },
+   dbcl.createAutoIncrement([{ Field : "a" },
+                             { Field : "a1", Increment : -2147483647 },
                              { Field : "a2", Increment : 5 },
                              { Field : "a3", Increment : 2147483647 }]);
    
    //check Sequence
    var clID = getCLID( COMMCSNAME, clName );
-   var sequenceNames = ["SYS_" + clID + "_a1_SEQ",
+   var sequenceNames = ["SYS_" + clID + "_a_SEQ",
+                        "SYS_" + clID + "_a1_SEQ",
                         "SYS_" + clID + "_a2_SEQ",
                         "SYS_" + clID + "_a3_SEQ"]; 
-   var expSequences =  [{ Increment : -2147483647, StartValue : -1, CurrentValue : -1, 
+   var expSequences =  [{ Increment : 1 },
+                        { Increment : -2147483647, StartValue : -1, CurrentValue : -1, 
                           MinValue : { "$numberLong" : "-9223372036854775808" }, "MaxValue" : -1 },
                         { Increment : 5 },
                         { Increment : 2147483647 }];
@@ -53,12 +56,12 @@ function main()
    }
    
    //insert records and check
-   dbcl.insert( { "a" : 1 } );
-   dbcl.insert( { "a" : 2 } );
+   dbcl.insert( { "q" : 1 } );
+   dbcl.insert( { "q" : 2 } );
    
    var rc = dbcl.find();
-   var expRecs = [ { "a" : 1, "a1" : -1, "a2" : 1, "a3" : 1 },
-                   { "a" : 2, "a1" : -2147483648, "a2" : 6, "a3" : 2147483648 }];
+   var expRecs = [ { "q" : 1, "a" : 1, "a1" : -1, "a2" : 1, "a3" : 1 },
+                   { "q" : 2, "a" : 2, "a1" : -2147483648, "a2" : 6, "a3" : 2147483648 }];
    checkRec( rc, expRecs );
    
    commDropCL( db, COMMCSNAME, clName );

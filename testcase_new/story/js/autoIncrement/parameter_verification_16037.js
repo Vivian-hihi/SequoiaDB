@@ -17,7 +17,8 @@ function main()
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName );
    
    //create autoIncrement
-   dbcl.createAutoIncrement([{ Field : "a1", StartValue : { "$numberLong" : "9223372036854775809" } },
+   dbcl.createAutoIncrement([{Field : "a" },
+                             { Field : "a1", StartValue : { "$numberLong" : "9223372036854775809" } },
                              { Field : "a2", StartValue : { "$numberLong" : "-9223372036854775809" }, Increment : -1 },
                              { Field : "a3", StartValue : { "$numberLong" : "9223372036854775807" } },
                              { Field : "a4", StartValue : 5 },
@@ -29,12 +30,14 @@ function main()
    
    //check Sequence
    var clID = getCLID( COMMCSNAME, clName );
-   var sequenceNames = ["SYS_" + clID + "_a1_SEQ",
+   var sequenceNames = ["SYS_" + clID + "_a_SEQ",
+                        "SYS_" + clID + "_a1_SEQ",
                         "SYS_" + clID + "_a2_SEQ",
                         "SYS_" + clID + "_a3_SEQ",
                         "SYS_" + clID + "_a4_SEQ",
                         "SYS_" + clID + "_a5_SEQ"]; 
-   var expSequences =  [{ StartValue : { "$numberLong" : "9223372036854775807" }, 
+   var expSequences =  [{},
+                        { StartValue : { "$numberLong" : "9223372036854775807" }, 
                           CurrentValue : { "$numberLong" : "9223372036854775807" } },
                         { Increment : -1, StartValue : { "$numberLong" : "-9223372036854775808" }, 
                           CurrentValue : { "$numberLong" : "-9223372036854775808" }, MaxValue : -1,
@@ -51,10 +54,10 @@ function main()
    }
    
    //insert records
-   dbcl.insert( { "a" : 1 } );  
+   dbcl.insert( { "q" : 1 } );  
    try
    {
-      dbcl.insert( { "a" : 2 } );
+      dbcl.insert( { "q" : 2 } );
    }catch(e)
    {
       if(e !== -325 )
@@ -65,7 +68,7 @@ function main()
    
    //check records
    var rc = dbcl.find();
-   var expRecs = [ { "a" : 1, "a1" : {"$numberLong":"9223372036854775807"}, 
+   var expRecs = [ { "q" : 1, "a" : 1, "a1" : {"$numberLong":"9223372036854775807"}, 
                      "a2" : { "$numberLong" : "-9223372036854775808" }, 
                      "a3" : { "$numberLong" : "9223372036854775807" },
                      "a4" : 5, "a5" : { "$numberLong" : "-9223372036854775808" } }];

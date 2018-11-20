@@ -16,7 +16,8 @@ function main()
    
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName );
    
-   dbcl.createAutoIncrement([{ Field : "a1", MinValue : { "$numberLong" : "-9223372036854775809" } },
+   dbcl.createAutoIncrement([{Field : "a" },
+                             { Field : "a1", MinValue : { "$numberLong" : "-9223372036854775809" } },
                              { Field : "a2", MinValue : 5, StartValue : 10 },
                              { Field : "a3", MinValue : { "$numberLong" : "-9223372036854775808" } }]);
    
@@ -30,10 +31,12 @@ function main()
    
    //check Sequence
    var clID = getCLID( COMMCSNAME, clName );
-   var sequenceNames = ["SYS_" + clID + "_a1_SEQ",
+   var sequenceNames = ["SYS_" + clID + "_a_SEQ",
+                        "SYS_" + clID + "_a1_SEQ",
                         "SYS_" + clID + "_a2_SEQ",
                         "SYS_" + clID + "_a3_SEQ"]; 
-   var expSequences =  [{ MinValue : { "$numberLong" : "-9223372036854775808" } },
+   var expSequences =  [{},
+                        { MinValue : { "$numberLong" : "-9223372036854775808" } },
                         { MinValue : 5, CurrentValue : 10, StartValue : 10 },
                         { MinValue : { "$numberLong":"-9223372036854775808" } }];
    for(var i in sequenceNames)
@@ -41,10 +44,10 @@ function main()
        checkSequence(sequenceNames[i], expSequences[i]);
    }
    
-   dbcl.insert( { "a" : 1 } );
+   dbcl.insert( { "q" : 1 } );
   
    var rc = dbcl.find();
-   var expRecs = [ { "a" : 1, "a1" : 1, "a2" : 10, "a3" : 1 } ];
+   var expRecs = [ { "q" : 1, "a" : 1, "a1" : 1, "a2" : 10, "a3" : 1 } ];
    checkRec( rc, expRecs );
    
    commDropCL( db, COMMCSNAME, clName );

@@ -66,6 +66,7 @@ function main()
       try
       { 
          cl.insert( { "id1" : "a" + i } );
+         
       }catch(e)
       {
          if(e !== -6)
@@ -77,6 +78,21 @@ function main()
    }
     
    var rc = dbcl.find().sort( { "id1" : 1 } );
+   checkRec( rc, expRecs );
+   
+   //alter Generated default
+   dbcl.setAttributes({ AutoIncrement : { Field : "id1", Generated : "default" } });
+   
+   var cursor = db.snapshot(8, { Name : COMMCSNAME + "." + clName });
+   if( cursor.current().toObj().AutoIncrement[0].Generated !== "default")
+   {
+      throw "alter failed!";
+   }
+   
+   dbcl.insert({ "a" : "a", "id1" : 50 });
+   
+   var rc = dbcl.find().sort( { "id1" : 1 } );
+   expRecs.push({ "a" : "a", "id1" : 50 })
    checkRec( rc, expRecs );
    
    commDropCL( db, COMMCSNAME, clName );
