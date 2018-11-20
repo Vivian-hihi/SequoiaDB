@@ -23,7 +23,7 @@ import com.sequoias3.testcommon.TestTools;
  */
 public class CreateObject16335 extends S3TestBase{
 	private boolean runSuccess = false;			
-	private String keyName = "aa/bb/object16335";	
+	private String keyName = "//aa/%maa/bb/object16335";	
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 10;	
 	private File localPath = null;
@@ -70,7 +70,6 @@ public class CreateObject16335 extends S3TestBase{
 		String expMd5 = TestTools.getMD5(filePath);
 		Assert.assertEquals(objAttrInfo.getETag(), expMd5 );
 		String isModify = null;
-		Assert.assertEquals(objAttrInfo.getExpirationTimeRuleId(), isModify );
-		
+		Assert.assertEquals(objAttrInfo.getExpirationTimeRuleId(), isModify );		
 	}
 }

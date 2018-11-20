@@ -10,7 +10,6 @@ import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.PutObjectResult;
-import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
@@ -56,8 +55,10 @@ public class CreateObjectWithVersion16336 extends S3TestBase{
 			if (runSuccess) {
 				ObjectUtils.deleteObjectAllVersions( s3Client,S3TestBase.enableVerBucketName,keyName );				
 			}
-		} catch (BaseException e) {
-			Assert.fail("clean up failed:" + e.getMessage());
+		} finally {
+			if ( s3Client != null){
+				s3Client.shutdown();
+			}
 		}
 	}
 

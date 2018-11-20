@@ -25,7 +25,7 @@ import com.sequoias3.testcommon.TestTools;
  */
 public class CreateSameObject16338 extends S3TestBase{
 	private boolean runSuccess = false;			
-	private String keyName = "aa/bb/object16338";	
+	private String keyName = "/aa/bb/object16338";	
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 5;
 	private int updateSize = 1024 * 2;
