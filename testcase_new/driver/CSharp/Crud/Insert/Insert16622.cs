@@ -64,7 +64,7 @@ namespace CSharp.Crud.Insert
             record.Add("num", 1);
             cl.Insert(record);
             try
-            {
+            {//TODO:1这里插入的记录没有重复，不会报-38，另外如果预期报错，需要判断如果成功则要抛异常
                 cl.Insert(record, 0);
             }
             catch (BaseException e)
@@ -72,6 +72,7 @@ namespace CSharp.Crud.Insert
                 Assert.AreEqual(-38, e.ErrorCode);
             }
 
+            //TODO:2、没有校验设置为FLG_INSERT_CONTONDUP的结果，建议和其他flag分开校验
             cl.Insert(record, SDBConst.FLG_INSERT_CONTONDUP);
             record = new BsonDocument();
             record.Add("_id", 2);
@@ -105,6 +106,7 @@ namespace CSharp.Crud.Insert
                 Assert.AreEqual(e.ErrorCode, -38, e.ErrorCode + e.Message);
             }
             Assert.AreEqual(1, cl.GetCount(null));
+            //TODO:3、这里的校验请描述下为啥要验证{ "test16622", "test16622" }
             Assert.AreEqual(0, cl.GetCount(new BsonDocument { { "test16622", "test16622" } }));
             cs.DropCollection(clName2);
         }
@@ -112,6 +114,7 @@ namespace CSharp.Crud.Insert
         //set the flag is SDBConst.FLG_INSERT_CONTONDUP
         public void InsertDuplicateKey1()
         {
+         //TODO:4、这里可以直接truncate数据，没有必要再重建cl
             DBCollection cl = cs.CreateCollection(clName2);
             try
             {
