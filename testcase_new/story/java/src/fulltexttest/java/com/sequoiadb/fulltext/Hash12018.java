@@ -21,6 +21,12 @@ import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.elasticsearch.client.*;
 
+/**
+* FileName: Hash12018.java
+* test content: 插入记录并执行hash切分再创建全文索引
+* @author liuxiaoxuan
+    * @Date    2018.11.20
+*/
 public class Hash12018 extends SdbTestBase{
 
       private Sequoiadb sdb = null;
@@ -84,7 +90,7 @@ public class Hash12018 extends SdbTestBase{
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
 
            // check fulltext deleted
-           FullTextUtils.checkIndexNotExistInES(esClient, sdb, csName, clName, esIndexNames);
+           FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 
            // create fulltext, non-shardingkey
            indexObj = new BasicBSONObject();
@@ -98,7 +104,7 @@ public class Hash12018 extends SdbTestBase{
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
 
            // check fulltext deleted
-           FullTextUtils.checkIndexNotExistInES(esClient, sdb, csName, clName, esIndexNames);
+           FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
       }
 
       public boolean insertData(DBCollection cl, int insertNums) {

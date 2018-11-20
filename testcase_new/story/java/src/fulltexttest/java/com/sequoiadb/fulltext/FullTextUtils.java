@@ -38,12 +38,9 @@ public class FullTextUtils {
      }
 
      /**
-     * @param db
-     * @param csName
-     * @param clName
-     * @param textIndexName
+     * @param esIndexNames
      */ 
-     public static void checkIndexNotExistInES(Client esClient, Sequoiadb db, String csName, String clName, List<String> esIndexNames) {
+     public static void checkIndexNotExistInES(Client esClient, List<String> esIndexNames) {
         // check indexnames sync to ES
         for(String esIndexName: esIndexNames) {
                String msg = esIndexName + " is exist";

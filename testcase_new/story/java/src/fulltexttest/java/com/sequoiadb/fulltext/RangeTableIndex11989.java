@@ -58,14 +58,14 @@ public class RangeTableIndex11989 extends SdbTestBase {
 		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 1000000);
 		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, SdbTestBase.csName, this.clName, this.fullIndexName); 
       FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
-		FullTextUtils.checkIndexNotExistInES(esClient, sdb, SdbTestBase.csName, this.clName, esIndexNames);
+		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 		
 		//创建全文索引，索引字段覆盖：非分区键
 		this.cl.createIndex(fullIndexName, "{\"g\":\"text\"}", false, false);
 		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 1000000);
  		esIndexNames = FullTextDBUtils.getESIndexNames(sdb, SdbTestBase.csName, this.clName, this.fullIndexName);                
       FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
-		FullTextUtils.checkIndexNotExistInES(esClient, sdb, SdbTestBase.csName, this.clName, esIndexNames);
+		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 	}
 	
 	@AfterClass

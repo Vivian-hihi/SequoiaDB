@@ -163,7 +163,7 @@ public class FullTextDBUtils {
                     Assert.assertEquals(e, -147, "drop " + textIndexName + "failed, detail: " + e.getMessage()); 
                 }
             }
-            System.out.println("textIndexName drop success,  drop times: " + doTimes);
+            System.out.println(textIndexName + " drop success,  drop times: " + doTimes);
         }
 
         /**

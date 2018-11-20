@@ -59,7 +59,7 @@ public class HashTableIndex11988 extends SdbTestBase {
 
       FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
 
-		FullTextUtils.checkIndexNotExistInES(esClient, sdb, SdbTestBase.csName, this.clName, esIndexNames);
+		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 		
 		//创建全文索引，索引字段覆盖：非分区键
 		this.cl.createIndex(fullIndexName, "{\"g\":\"text\"}", false, false);
@@ -67,7 +67,7 @@ public class HashTableIndex11988 extends SdbTestBase {
 		esIndexNames = FullTextDBUtils.getESIndexNames(sdb, SdbTestBase.csName, this.clName, this.fullIndexName); 
       FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
 
-		FullTextUtils.checkIndexNotExistInES(esClient, sdb, SdbTestBase.csName, this.clName, esIndexNames);
+		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 	}
 	
 	@AfterClass
