@@ -256,7 +256,7 @@
                   <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="datasvcname=" value="datasvcname=${svcname}"/>
                   <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchenginehost=" value="searchenginehost=${ES_IP}"/>
                   <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchengineport=" value="searchengineport=${ES_PORT}"/>
-                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="diaglevel=3" value="diaglevel=5"/>
+                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="diaglevel=3" value="diaglevel=3"/>
                </sequential>
             </for>
             <!--copy to other host -->
