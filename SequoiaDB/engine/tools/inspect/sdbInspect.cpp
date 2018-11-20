@@ -45,6 +45,35 @@
 
 using namespace engine;
 
+
+INT32 reallocBuff( CHAR **ppBuf, INT64 &bufSize, INT64 newSize )
+{
+   INT32 rc = SDB_OK ;
+   CHAR *pNewBuf = NULL ;
+
+   if ( bufSize >= newSize )
+   {
+      goto done ;
+   }
+
+   pNewBuf = ( CHAR * )SDB_OSS_REALLOC( *ppBuf, newSize ) ;
+   if ( !pNewBuf )
+   {
+      std::cout << "Error: Failed to allocate buffer. size = "
+                << newSize << std::endl ;
+      rc = SDB_OOM ;
+      goto error ;
+   }
+
+   *ppBuf = pNewBuf ;
+   bufSize = newSize ;
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 /**
 ** get the index of min bson object
 ***/
@@ -93,13 +122,9 @@ INT32 dumpCiHeader( const ciHeader *header, CHAR *&buffer,
 retry:
    if ( bufferSize - 1 <= len )
    {
-      bufferSize += CI_BUFFER_BLOCK ;
-      buffer = ( CHAR *)SDB_OSS_REALLOC( buffer, bufferSize ) ;
-      if ( NULL == buffer )
+      rc = reallocBuff( &buffer, bufferSize, bufferSize + CI_BUFFER_BLOCK ) ;
+      if ( rc )
       {
-         std::cout << "Error: failed to allocate buffer, size = "
-                   << bufferSize << std::endl ;
-         rc = SDB_OOM ;
          goto error ;
       }
    }
@@ -186,13 +211,9 @@ INT32 dumpCiGroupHeader( const ciGroupHeader *header, CHAR *&buffer,
 retry:
    if ( bufferSize - 1 <= len )
    {
-      bufferSize += CI_BUFFER_BLOCK ;
-      buffer = ( CHAR *)SDB_OSS_REALLOC( buffer, bufferSize ) ;
-      if ( NULL == buffer )
+      rc = reallocBuff( &buffer, bufferSize, bufferSize + CI_BUFFER_BLOCK ) ;
+      if ( rc )
       {
-         std::cout << "Error: failed to allocate buffer, size = "
-                   << bufferSize << std::endl ;
-         rc = SDB_OOM ;
          goto error ;
       }
    }
@@ -233,13 +254,9 @@ INT32 dumpCiNodeSimple( ciLinkList< ciNode > &nodes, CHAR *&buffer,
 retry:
    if ( bufferSize - 1 <= len )
    {
-      bufferSize += CI_BUFFER_BLOCK ;
-      buffer = ( CHAR *)SDB_OSS_REALLOC( buffer, bufferSize ) ;
-      if ( NULL == buffer )
+      rc = reallocBuff( &buffer, bufferSize, bufferSize + CI_BUFFER_BLOCK ) ;
+      if ( rc )
       {
-         std::cout << "Error: failed to allocate buffer, size = "
-                   << bufferSize << std::endl ;
-         rc = SDB_OOM ;
          goto error ;
       }
    }
@@ -280,13 +297,9 @@ INT32 dumpCiNode( ciLinkList< ciNode > &link, CHAR *&buffer,
 retry:
    if ( bufferSize - 1 <= len )
    {
-      bufferSize += CI_BUFFER_BLOCK ;
-      buffer = ( CHAR *)SDB_OSS_REALLOC( buffer, bufferSize ) ;
-      if ( NULL == buffer )
+      rc = reallocBuff( &buffer, bufferSize, bufferSize + CI_BUFFER_BLOCK ) ;
+      if ( rc )
       {
-         std::cout << "Error: failed to allocate buffer, size = "
-                   << bufferSize << std::endl ;
-         rc = SDB_OOM ;
          goto error ;
       }
    }
@@ -339,13 +352,9 @@ INT32 dumpCiClHeader( const ciClHeader *header, CHAR *&buffer,
 retry:
    if ( bufferSize - 1 <= len )
    {
-      bufferSize += CI_BUFFER_BLOCK ;
-      buffer = ( CHAR *)SDB_OSS_REALLOC( buffer, bufferSize ) ;
-      if ( NULL == buffer )
+      rc = reallocBuff( &buffer, bufferSize, bufferSize + CI_BUFFER_BLOCK ) ;
+      if ( rc )
       {
-         std::cout << "Error: failed to allocate buffer, size = "
-                   << bufferSize << std::endl ;
-         rc = SDB_OOM ;
          goto error ;
       }
    }
@@ -398,13 +407,9 @@ INT32 dumpCiRecord( ciLinkList< ciNode > &nodes,
 retry:
    if ( bufferSize - 1 <= len )
    {
-      bufferSize += CI_BUFFER_BLOCK ;
-      buffer = ( CHAR *)SDB_OSS_REALLOC( buffer, bufferSize ) ;
-      if ( NULL == buffer )
+      rc = reallocBuff( &buffer, bufferSize, bufferSize + CI_BUFFER_BLOCK ) ;
+      if ( rc )
       {
-         std::cout << "Error: failed to allocate buffer, size = "
-                   << bufferSize << std::endl ;
-         rc = SDB_OOM ;
          goto error ;
       }
    }
@@ -495,13 +500,9 @@ INT32 dumpCiTail( ciTail &tail, CHAR *&buffer,
 retry:
    if ( bufferSize - 1 <= len )
    {
-      bufferSize += CI_BUFFER_BLOCK ;
-      buffer = ( CHAR *)SDB_OSS_REALLOC( buffer, bufferSize ) ;
-      if ( NULL == buffer )
+      rc = reallocBuff( &buffer, bufferSize, bufferSize + CI_BUFFER_BLOCK ) ;
+      if ( rc )
       {
-         std::cout << "Error: failed to allocate buffer, size = "
-                   << bufferSize << std::endl ;
-         rc = SDB_OOM ;
          goto error ;
       }
    }
@@ -797,15 +798,11 @@ INT32 ciHeaderToBuffer( const ciHeader *header, CHAR *&buffer,
    validSize = CI_HEADER_SIZE ;
    if ( validSize > bufferSize )
    {
-      buffer = ( CHAR * )SDB_OSS_REALLOC( buffer, validSize ) ;
-      if ( NULL == buffer )
+      rc = reallocBuff( &buffer, bufferSize, validSize ) ;
+      if ( rc )
       {
-         std::cout << "Error: failed to allocate buffer. size = "
-            << validSize << std::endl ;
-         rc = SDB_OOM ;
          goto error ;
       }
-      bufferSize = validSize ;
    }
 
    ossMemcpy( buffer + pos, header->_eyeCatcher, CI_EYECATCHER_SIZE ) ;
@@ -1067,15 +1064,11 @@ INT32 ciNodeToBuffer( ciLinkList< ciNode > &nodes, CHAR *&buffer,
 
    if ( validSize > bufferSize )
    {
-      buffer = ( CHAR * )SDB_OSS_REALLOC( buffer, validSize ) ;
-      if ( NULL == buffer )
+      rc = reallocBuff( &buffer, bufferSize, validSize ) ;
+      if ( rc )
       {
-         std::cout << "Error: failed to allocate buffer. size = "
-                   << validSize << std::endl ;
-         rc = SDB_OOM ;
          goto error ;
       }
-      bufferSize = validSize ;
    }
 
    nodes.resetCurrentNode() ;
@@ -1358,15 +1351,11 @@ INT32 readCiRecord( OSSFILE &in, INT64 &offset,
 
       if ( recordLen > bufferLen )
       {
-         bsonBuffer = (CHAR *)SDB_OSS_REALLOC( bsonBuffer, recordLen ) ;
-         if ( NULL == bsonBuffer )
+         rc = reallocBuff( &bsonBuffer, bufferLen, recordLen ) ;
+         if ( rc )
          {
-            std::cout << "Error: failed to allocate buffer. size = "
-                      << recordLen << std::endl ;
-            rc = SDB_OOM ;
             goto error ;
          }
-         bufferLen = recordLen ;
       }
       // read bson
       rc = readFromFile( in, offset, ( CHAR * )bsonBuffer, recordLen ) ;
@@ -1444,15 +1433,11 @@ INT32 ciRecordToBuffer( ciLinkList< ciRecord > &records, CHAR *&buffer,
 
    if ( validSize > bufferSize )
    {
-      buffer = ( CHAR * )SDB_OSS_REALLOC( buffer, validSize ) ;
-      if ( NULL == buffer )
+      rc = reallocBuff( &buffer, bufferSize, validSize ) ;
+      if ( rc )
       {
-         std::cout << "Error: failed to allocate buffer. size = "
-                   << validSize << std::endl ;
-         rc = SDB_OOM ;
          goto error ;
       }
-      bufferSize = validSize ;
    }
 
    records.resetCurrentNode() ;
@@ -1549,7 +1534,8 @@ error:
 ** copy ciClOffset data to buffer
 ***/
 INT32 ciOffsetToBuffer( ciLinkList< ciOffset > &offsets,
-                        CHAR *&buffer, INT64 &bufferSize, INT64 &validSize )
+                        CHAR *&buffer, INT64 &bufferSize,
+                        INT64 &validSize )
 {
    INT32 rc            = SDB_OK ;
    INT64 pos           = 0 ;
@@ -1561,15 +1547,11 @@ INT32 ciOffsetToBuffer( ciLinkList< ciOffset > &offsets,
 
    if ( validSize > bufferSize )
    {
-      buffer = ( CHAR * )SDB_OSS_REALLOC( buffer, validSize ) ;
-      if ( NULL == buffer )
+      rc = reallocBuff( &buffer, bufferSize, validSize ) ;
+      if ( rc )
       {
-         std::cout << "Error: failed to allocate buffer. size = "
-                   << validSize << std::endl ;
-         rc = SDB_OOM ;
          goto error ;
       }
-      bufferSize = validSize ;
    }
 
    //ossMemcpy( buffer + pos, &count, sizeof( INT32 ) ) ;
@@ -1675,15 +1657,11 @@ INT32 writeMainSubCl( OSSFILE &out, const mainCl &mainCls, CHAR *&buffer,
 
    if ( validSize > bufferSize )
    {
-      buffer = ( CHAR * )SDB_OSS_REALLOC( buffer, validSize ) ;
-      if ( NULL == buffer )
+      rc = reallocBuff( &buffer, bufferSize, validSize ) ;
+      if ( rc )
       {
-         std::cout << "Error: failed to allocate buffer. size = "
-            << validSize << std::endl ;
-         rc = SDB_OOM ;
          goto error ;
       }
-      bufferSize = validSize ;
    }
 
    it = mainCls.begin() ;

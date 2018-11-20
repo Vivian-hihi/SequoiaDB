@@ -230,7 +230,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptUsrFileCommon::readLine( std::string &err, CHAR** buf, SINT64 &readLen )
+   INT32 _sptUsrFileCommon::readLine( std::string &err,
+                                      CHAR** buf,
+                                      SINT64 &readLen )
    {
       INT32 rc = SDB_OK ;
       SINT64 size = SPT_BUFFER_INIT_SIZE ;
@@ -248,14 +250,20 @@ namespace engine
 
       *buf = ( CHAR* )SDB_OSS_MALLOC( size + 1 ) ;
       {
-         CHAR readChar ;
-         SINT64 readSize ;
+         CHAR readChar = '\0' ;
+         SINT64 readSize = 0 ;
          rc = ossReadN( &_file, 1, &readChar, readSize ) ;
          while( SDB_OK == rc && readSize )
          {
             if( size <= totalRead )
             {
-               *buf = ( CHAR* )SDB_OSS_REALLOC( *buf, size*2 + 1 ) ;
+               CHAR *pNewBuf = ( CHAR* )SDB_OSS_REALLOC( *buf, size*2 + 1 ) ;
+               if ( !pNewBuf )
+               {
+                  rc = SDB_OOM ;
+                  goto error ;
+               }
+               *buf = pNewBuf ;
                size *= 2 ;
             }
             (*buf)[ totalRead ] = readChar ;

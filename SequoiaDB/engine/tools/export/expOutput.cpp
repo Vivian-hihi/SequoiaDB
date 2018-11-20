@@ -39,14 +39,24 @@ namespace exprt
 {
    CHAR *expConvertor::_getBuf( UINT32 reqSize ) 
    {
+      CHAR *pNewBuf = NULL ;
+
       SDB_ASSERT( reqSize > 0, "" ) ;
       if ( !_buf || reqSize > _bufSize )
       {
-         _buf = (CHAR *)SDB_OSS_REALLOC( _buf, reqSize ) ;
-         _bufSize = reqSize ;
+         pNewBuf = (CHAR *)SDB_OSS_REALLOC( _buf, reqSize ) ;
+         if ( pNewBuf )
+         {
+            _buf = pNewBuf ;
+            _bufSize = reqSize ;
+         }
+      }
+      else
+      {
+         pNewBuf = _buf ;
       }
 
-      return _buf ;
+      return pNewBuf ;
    }
 
    void expConvertor::_freeBuf() 

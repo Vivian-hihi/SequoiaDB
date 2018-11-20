@@ -1764,14 +1764,15 @@ retry_head:
 
       if( header->_length > recordLength )
       {
-         pRecordBuffer = ( CHAR * )SDB_OSS_REALLOC ( pRecordBuffer,
+         CHAR *pNewBuf = ( CHAR * )SDB_OSS_REALLOC ( pRecordBuffer,
                                                      header->_length + 1 );
-         if( !pRecordBuffer )
+         if( !pNewBuf )
          {
             rc = SDB_OOM;
             LogError( "Failed to allocate %d bytes", header->_length + 1 ) ;
             goto error ;
          }
+         pRecordBuffer = pNewBuf ;
          recordLength = header->_length ;
       }
       ossMemset( pRecordBuffer, 0, recordLength ) ;

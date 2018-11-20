@@ -4932,14 +4932,16 @@ namespace engine
                // mem not enough, need to realloc, newBuffSize = 2*oldBuffSize
                if ( readByte == readLen )
                {
-                  bufLen += increaseLen ;
-                  buf = (CHAR*) SDB_OSS_REALLOC( buf, bufLen ) ;
-                  if ( NULL == buf )
+                  INT32 newBufLen = bufLen + increaseLen ;
+                  CHAR *pNewBuf = (CHAR*)SDB_OSS_REALLOC( buf, newBufLen ) ;
+                  if ( NULL == pNewBuf )
                   {
                      rc = SDB_OOM ;
                      PD_LOG( PDERROR, "Failed to realloc buff" ) ;
                      goto error ;
                   }
+                  bufLen = newBufLen ;
+                  buf = pNewBuf ;
                   readLen = increaseLen ;
                   increaseLen *= 2 ;
                }

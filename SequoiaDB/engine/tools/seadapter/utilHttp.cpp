@@ -760,15 +760,16 @@ namespace seadapter
          totalRecv = headerSize + bodyPartLen ;
          if ( (UINT32)( headerSize + bodyTotalLen ) > _recvBufSize )
          {
-            _recvBuf = (CHAR *)SDB_OSS_REALLOC( _recvBuf,
-                                                headerSize + bodyTotalLen ) ;
-            if ( !_recvBuf )
+            CHAR *pNew = (CHAR *)SDB_OSS_REALLOC( _recvBuf,
+                                                  headerSize + bodyTotalLen ) ;
+            if ( !pNew )
             {
                rc = SDB_OOM ;
                PD_LOG( PDERROR, "Reallocate memory failed, required size: %u",
                        headerSize + bodyTotalLen ) ;
                goto error ;
             }
+            _recvBuf = pNew ;
             _recvBufSize = headerSize + bodyTotalLen ;
          }
          while ( bodyRemainLen > 0 )
