@@ -336,7 +336,7 @@ namespace bson {
             digits  = decimal.getDigits() ;
             size    = decimal.getSize() ;
 
-            //define in common_decimal.h __decimal
+            //define in common_decimal.h __sdb_decimal
             _b.appendNum( (char) NumberDecimal ) ;
             _b.appendStr( fieldName ) ;
             _b.appendNum( size ) ;         // size

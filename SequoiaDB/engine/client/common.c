@@ -287,7 +287,7 @@ static BOOLEAN bson_endian_convert ( CHAR *data, off_t *off, BOOLEAN l2r )
          *(INT16*)&data[*off] = value2 ;
          *off += sizeof(INT16) ;
 
-         ndigits = ( ( l2r?size:newSize ) - DECIMAL_HEADER_SIZE ) / 
+         ndigits = ( ( l2r?size:newSize ) - SDB_DECIMAL_HEADER_SIZE ) / 
                    ( sizeof( INT16 ) ) ;
          for ( i = 0 ; i < ndigits; i++ )
          {

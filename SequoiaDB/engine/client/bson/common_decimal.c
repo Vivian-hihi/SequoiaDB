@@ -1843,7 +1843,7 @@ int64_t decimal_to_long( const bson_decimal *decimal )
    int64_t val     = 0 ;
    int64_t oldval  = 0 ;
    int neg     = 0 ;
-   bson_decimal rounded = DECIMAL_DEFAULT_VALUE ;
+   bson_decimal rounded = SDB_DECIMAL_DEFAULT_VALUE ;
 
    if ( NULL == decimal )
    {
@@ -2534,7 +2534,7 @@ int decimal_from_bsonvalue( const char *value, bson_decimal *decimal )
    int index    = 0 ;
    int rc       = 0 ;
 
-   //define in common_decimal.h __decimal
+   //define in common_decimal.h __sdb_decimal
    bson_little_endian32( &size, value ) ;
    value += 4 ;
 
@@ -2547,7 +2547,7 @@ int decimal_from_bsonvalue( const char *value, bson_decimal *decimal )
    bson_little_endian16( &weight, value ) ;
    value += 2 ;
 
-   ndig = ( size - DECIMAL_HEADER_SIZE ) / sizeof( short ) ;
+   ndig = ( size - SDB_DECIMAL_HEADER_SIZE ) / sizeof( short ) ;
    rc = _decimal_alloc( decimal, ndig ) ;
    if ( 0 != rc )
    {
@@ -3041,7 +3041,7 @@ SDB_EXPORT int decimal_ceil( const bson_decimal *decimal,
                              bson_decimal *result )
 {
    int rc = 0 ;
-   bson_decimal tmp = DECIMAL_DEFAULT_VALUE ;
+   bson_decimal tmp = SDB_DECIMAL_DEFAULT_VALUE ;
 
    if ( NULL == decimal || NULL == result )
    {
@@ -3089,7 +3089,7 @@ SDB_EXPORT int decimal_floor( const bson_decimal *decimal,
                               bson_decimal *result )
 {
    int rc = 0 ;
-   bson_decimal tmp = DECIMAL_DEFAULT_VALUE ;
+   bson_decimal tmp = SDB_DECIMAL_DEFAULT_VALUE ;
 
    if ( NULL == decimal || NULL == result )
    {
@@ -3143,7 +3143,7 @@ SDB_EXPORT int decimal_mod( const bson_decimal *left,
                             const bson_decimal *right, bson_decimal *result )
 {
    int rc = 0 ;
-   bson_decimal tmp = DECIMAL_DEFAULT_VALUE ;
+   bson_decimal tmp = SDB_DECIMAL_DEFAULT_VALUE ;
 
    if ( NULL == left || NULL == right )
    {

@@ -111,4 +111,4 @@ int decimal_is_out_of_precision( bson_decimal *decimal, int typemod ) ;
 
 SDB_EXTERN_C_END
 
-#endif
+#endif // BSON_COMMON_DECIMAL_FUN_H_

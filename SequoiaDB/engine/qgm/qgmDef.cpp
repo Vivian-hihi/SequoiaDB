@@ -645,7 +645,7 @@ namespace engine
 
       pData   = _row + sizeof( _tuple ) ;
 
-      //define in common_decimal.h __decimal
+      //define in common_decimal.h __sdb_decimal
       // size
       *( INT32 *)pData = dataLen ;
       pData += sizeof( INT32 ) ;

@@ -53,7 +53,6 @@
 #define SDB_EXTERN_C_END
 #endif
 
-SDB_EXTERN_C_START
 
 #define SDB_DECIMAL_SIGN_MASK       0xC000
 #define SDB_DECIMAL_POS             0x0000
@@ -102,7 +101,7 @@ typedef struct {
    short *digits;  /* real decimal data */
 } bson_decimal ;
 
-#define DECIMAL_DEFAULT_VALUE \
+#define SDB_DECIMAL_DEFAULT_VALUE \
    { \
       -1,               /* typemode */ \
       0,                /* ndigits */ \
@@ -115,7 +114,7 @@ typedef struct {
    }
 
 //storage detail define in bson.h  (BSON_DECIMAL)
-#define DECIMAL_HEADER_SIZE  12  /*size + typemod + dscale + weight*/
+#define SDB_DECIMAL_HEADER_SIZE     12  /*size + typemod + dscale + weight*/
 
 #pragma pack(1)
 typedef struct 
@@ -133,14 +132,12 @@ typedef struct
   short  weight;  //weight of this decimal (NBASE=10000)
 
   //short  digitis[0]; //real data
-} __decimal ;
+} __sdb_decimal ;
 
 #pragma pack()
 
-SDB_EXTERN_C_END
 
-
-#endif
+#endif // BSON_COMMON_DECIMAL_TYPE_H_
 
 
 

@@ -649,7 +649,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       }
       case BSON_DECIMAL:
       {
-         bson_decimal decimal = DECIMAL_DEFAULT_VALUE ;
+         bson_decimal decimal = SDB_DECIMAL_DEFAULT_VALUE ;
          char *temp  = NULL ;
          int tmpSize = 0 ;
          int tmpRC   = 0 ;
@@ -1269,7 +1269,7 @@ SDB_EXPORT int bson_iterator_int( const bson_iterator *i ) {
     case BSON_DECIMAL:
     {
         int result = 0 ;
-        bson_decimal decimal = DECIMAL_DEFAULT_VALUE ;
+        bson_decimal decimal = SDB_DECIMAL_DEFAULT_VALUE ;
         result = decimal_from_bsonvalue( bson_iterator_value( i ), &decimal ) ;
         if ( 0 != result )
         {
@@ -1303,7 +1303,7 @@ SDB_EXPORT double bson_iterator_double( const bson_iterator *i ) {
     case BSON_DECIMAL:
     {
         double result = 0.0 ;
-        bson_decimal decimal = DECIMAL_DEFAULT_VALUE ;
+        bson_decimal decimal = SDB_DECIMAL_DEFAULT_VALUE ;
         decimal_from_bsonvalue( bson_iterator_value( i ), &decimal ) ;
         result = decimal_to_double( &decimal ) ;
         decimal_free( &decimal ) ;
@@ -1317,7 +1317,7 @@ SDB_EXPORT double bson_iterator_double( const bson_iterator *i ) {
 SDB_EXPORT int bson_iterator_decimal_weight( const bson_iterator *i,
                                              int *weight )
 {
-   //define in common_decimal.h __decimal
+   //define in common_decimal.h __sdb_decimal
    const char *value = NULL ;
    short tmpWeight   = 0 ;
    if ( bson_iterator_type( i ) != BSON_DECIMAL )
@@ -1340,7 +1340,7 @@ SDB_EXPORT int bson_iterator_decimal_weight( const bson_iterator *i,
 SDB_EXPORT int bson_iterator_decimal_size( const bson_iterator *i,
                                            int *size )
 {
-   //define in common_decimal.h __decimal
+   //define in common_decimal.h __sdb_decimal
    const char *value = NULL ;
    if ( bson_iterator_type( i ) != BSON_DECIMAL )
    {
@@ -1356,7 +1356,7 @@ SDB_EXPORT int bson_iterator_decimal_size( const bson_iterator *i,
 SDB_EXPORT int bson_iterator_decimal_typemod( const bson_iterator *i,
                                               int *typemod )
 {
-   //define in common_decimal.h __decimal
+   //define in common_decimal.h __sdb_decimal
    const char *value = NULL ;
    if ( bson_iterator_type( i ) != BSON_DECIMAL )
    {
@@ -1375,7 +1375,7 @@ SDB_EXPORT int bson_iterator_decimal_typemod( const bson_iterator *i,
 SDB_EXPORT int bson_iterator_decimal_scale( const bson_iterator *i,
                                             int *sign, int *scale )
 {
-   //define in common_decimal.h __decimal
+   //define in common_decimal.h __sdb_decimal
    const char *value = NULL ;
    short tmpScale    = 0 ;
    if ( bson_iterator_type( i ) != BSON_DECIMAL )
@@ -1448,7 +1448,7 @@ SDB_EXPORT int64_t bson_iterator_long( const bson_iterator *i ) {
     case BSON_DECIMAL:
     {
         int64_t result = 0 ;
-        bson_decimal decimal = DECIMAL_DEFAULT_VALUE ;
+        bson_decimal decimal = SDB_DECIMAL_DEFAULT_VALUE ;
         decimal_from_bsonvalue( bson_iterator_value( i ), &decimal ) ;
         result = decimal_to_long( &decimal ) ;
         decimal_free( &decimal ) ;
@@ -1494,7 +1494,7 @@ SDB_EXPORT bson_bool_t bson_iterator_bool( const bson_iterator *i ) {
     case BSON_DECIMAL:
     {
         bson_bool_t result = 0 ;
-        bson_decimal decimal = DECIMAL_DEFAULT_VALUE ;
+        bson_decimal decimal = SDB_DECIMAL_DEFAULT_VALUE ;
         decimal_from_bsonvalue( bson_iterator_value( i ), &decimal ) ;
         result = decimal_is_zero( &decimal ) ;
         decimal_free( &decimal ) ;
@@ -1804,9 +1804,9 @@ SDB_EXPORT int bson_append_long( bson *b, const char *name, const int64_t i ) {
 SDB_EXPORT int bson_append_decimal( bson *b, const char *name,
                                     const bson_decimal *decimal )
 {
-   //define in common_decimal.h __decimal
+   //define in common_decimal.h __sdb_decimal
    int i = 0 ;
-   int size = DECIMAL_HEADER_SIZE + decimal->ndigits * sizeof( short ) ;
+   int size = SDB_DECIMAL_HEADER_SIZE + decimal->ndigits * sizeof( short ) ;
    int typemod  = decimal->typemod ;
    short dscale = ( decimal->dscale & SDB_DECIMAL_DSCALE_MASK ) | decimal->sign ;
    short weight = decimal->weight ;
@@ -1829,7 +1829,7 @@ SDB_EXPORT int bson_append_decimal3( bson *b, const char *name,
                                      const char *value )
 {
    int rc = 0 ;
-   bson_decimal decimal = DECIMAL_DEFAULT_VALUE ;
+   bson_decimal decimal = SDB_DECIMAL_DEFAULT_VALUE ;
 
    rc = decimal_from_str( value, &decimal ) ;
    if ( 0 != rc )
@@ -1849,7 +1849,7 @@ SDB_EXPORT int bson_append_decimal2( bson *b, const char *name,
                                      int scale )
 {
    int rc = 0 ;
-   bson_decimal decimal = DECIMAL_DEFAULT_VALUE ;
+   bson_decimal decimal = SDB_DECIMAL_DEFAULT_VALUE ;
    rc = decimal_init1( &decimal, precision, scale ) ;
    if ( 0 != rc )
    {

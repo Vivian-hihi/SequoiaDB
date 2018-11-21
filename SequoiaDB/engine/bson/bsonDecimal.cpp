@@ -426,7 +426,7 @@ namespace bson {
 
    INT32 bsonDecimal::getSize() const
    {
-      return ( DECIMAL_HEADER_SIZE + _decimal.ndigits * sizeof( short ) ) ;
+      return ( SDB_DECIMAL_HEADER_SIZE + _decimal.ndigits * sizeof( short ) ) ;
    }
 }
 
