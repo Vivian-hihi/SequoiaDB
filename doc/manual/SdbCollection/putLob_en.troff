@@ -20,7 +20,7 @@ Insert LOB into collection.
 .br
        Full path to insert the file.
 .sp 2
-\fBfile oid (string)\fR
+\fB oid (string)\fR
 .br
        Specify the oid of lob.
 .sp 2
