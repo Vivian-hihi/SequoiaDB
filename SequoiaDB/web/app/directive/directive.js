@@ -1944,7 +1944,48 @@
       return dire ;
    } ) ;
 
-   //表单
+   /*
+   表单
+   支持命令： form-create    不用填参数
+             para           必填 {}    表单参数
+                                       {
+                                          'Type':     'xxx',         //整个表单类型, grid, table, normal, 默认 normal
+                                          'KeyWidth': '130px',       //配置项名字的宽度(默认130px)
+                                          'inputList': [ <item>, ... ]       //参数项
+                                       }
+
+                                       item:                         //每个配置项
+                                       {
+                                          'name':        'xxx',      //配置项
+                                          'webName':     'xxx',      //配置项名字
+                                          'desc':        'xxx',      //配置项描述
+                                          'type':        'xxx',      //配置项类型, group, list, string, int, double, port, text, checkbox, password
+                                                                                  select, inline, multiple, switch, normal
+                                          'placeholder': 'xxx'，     //配置项默认描述内容, 类型是 string, int, double, port, text 有效。
+                                          'valid':       { ... }     //值的校验规则
+                                          'default':     xxx         //默认值, list 可能用到, 如果不填, 则value作为default的值
+                                          'value':       xxx         //默认值
+                                          'required':    true|false  //要不要显示必填提示, 默认false
+                                          'disabled':    true|false  //是否禁止修改, 默认false
+                                          'child':       [ <item>, ... ]     //子配置项, group, list 有效, 只能嵌套一层！
+                                       }
+
+                                       valid:                        //检验规则
+                                       {
+                                          min:           xxx,        //最小值, 字符串最小长度 | 数值最小值, string, int, double, multiple 有效
+                                          max:           xxx,        //最小值, 字符串最大长度 | 数值最大值, string, int, double, multiple 有效
+                                          regex:         'xxx',      //通过正则匹配字符串, string 有效
+                                          regexError:    'xxx',      //设置当正则匹配失败时, 输出错误的自定义内容, string 有效, 非必填
+                                          ban:           'xxx' | [ 'xxx', ... ]  //禁止某些特定值, string, int, double 有效
+                                          empty:         true|false  //允许为空, 最高优先级, 默认false
+                                          step:          xxx,        //步进, 数值的步进, 默认0, int, double 有效
+                                       }
+
+             para           必填 {}    指令会把回调函数传回来
+                                       check( customCheckFun )       //校验输入值
+                                                               customCheckFun:      自定义检查值的函数
+                                       getValue()                    //获取输入值
+   */
    sacApp.directive( 'formCreate', function( $rootScope, SdbFunction ){
       var dire = {
          restrict: 'A',
@@ -4072,6 +4113,7 @@
                         $( document.body ).append( scope.divBox ) ;
                         $( document.body ).append( scope.mask ) ;
                         ulBox.show() ;
+                        $( ulBox ).height( 'auto' ) ;
                         resizeFun() ;
                      }
                   }
@@ -4642,7 +4684,7 @@
    表格
    支持命令： ng-table       必填 {}    表格的配置项
                   {
-                     'width': [],         //控制表格宽度, 支持 '10px' 和 '10%', 'auto' 3种写法, 也可以混合写，默认就是auto
+                     'width': {},         //控制表格宽度, 支持 '10px' 和 '10%', 'auto' 3种写法, 也可以混合写，默认就是auto
                      'height': 'scroll',  //表格高度，默认scroll,
                                              'scroll': 自动高度，依据父元素高度自动调整，带滚动条;
                                              'auto': 自动高度，依据内容控制高度，不带滚动条
@@ -5815,8 +5857,14 @@
                         if( scope.table['body'].length == 0 )
                            return ;
                         --scope.loadStatus['page'] ;
-                        if( scope.loadStatus['page'] <= 0 )
+                        if( scope.loadStatus['page'] > scope.tools['page'] )
+                        {
+                           scope.loadStatus['page'] = scope.tools['page'] ;
+                        }
+                        if( scope.loadStatus['page'] < 1 )
+                        {
                            scope.loadStatus['page'] = 1 ;
+                        }
                         createTableContents( scope.loadStatus['page'], false ) ;
                      }
                   }
@@ -6039,6 +6087,9 @@
                         }
                      }
                      scope.table['body'] = null ;
+
+                     //重置页数
+                     scope.loadStatus['page'] = 1 ;
                      if( isEmpty )
                      {
                         //没用过滤条件，全部显示

@@ -312,6 +312,12 @@
            resolve: resolveFun( [ './app/controller/Deploy/ExtendModule/Sdb/Install.js' ] )
         }
       },
+      { path: '/Deploy/Restart',
+        options: {
+           templateUrl: './app/template/Deploy/RestartModule/Task.html',
+           resolve: resolveFun( [ './app/controller/Deploy/RestartModule/Task.js' ] )
+        }
+      },
       { path: '/Deploy/PostgreSQL-Mod',
         options: {
            templateUrl: './app/template/Deploy/InstallModule/PostgreSQL/Mod.html',
@@ -364,6 +370,13 @@
         options: {
            templateUrl: './app/template/Deploy/DeployPackage/Conf.html',
            resolve: resolveFun( [ './app/controller/Deploy/DeployPackage/Conf.js' ] )
+        }
+      },
+      //≈‰÷√
+      { path: '/Config/SDB/Index',
+        options: {
+           templateUrl: './app/template/Config/Sdb/Index.html',
+           resolve: resolveFun( [ './app/controller/Config/Sdb/Index.js' ] )
         }
       }
    ] ;

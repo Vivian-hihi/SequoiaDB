@@ -1407,6 +1407,65 @@
          }
       }
 
+      //重启业务 弹窗
+      $scope.RestartWindow = {
+         'config': {
+            'inputList': [
+               {
+                  "name": 'moduleName',
+                  "webName": $scope.autoLanguage( '业务名' ),
+                  "type": "select",
+                  "value": null,
+                  "valid": []
+               }
+            ]
+         },
+         'callback': {}
+      }
+
+      //打开 重启业务 弹窗
+      var showRestartWindow = function(){
+         if( SdbSwap.sdbModuleNum != 0 )
+         {
+            $scope.RestartWindow['config']['inputList']['value'] = null ;
+            $scope.RestartWindow['config']['inputList']['valid'] = [] ;
+
+            var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+            $.each( $scope.ModuleList, function( index, moduleInfo ){
+               if( clusterName == moduleInfo['ClusterName'] && moduleInfo['BusinessType'] == 'sequoiadb')
+               {
+                  if( $scope.RestartWindow['config']['inputList'][0]['value'] == null )
+                  {
+                     $scope.RestartWindow['config']['inputList'][0]['value'] = index ;
+                  }
+                  $scope.RestartWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+               }
+            } ) ;
+
+            $scope.RestartWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+               var isAllClear = $scope.RestartWindow['config'].check() ;
+               if( isAllClear )
+               {
+                  var formVal = $scope.RestartWindow['config'].getValue() ;
+
+                  var data = { 'cmd': 'restart business', 'ClusterName': $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'], 'BusinessName': $scope.ModuleList[ formVal['moduleName'] ]['BusinessName'] } ;
+                  SdbRest.OmOperation( data, {
+                     'success': function(){
+                        
+                     }, 
+                     'failed': function( errorInfo ){
+
+                     }
+                  } ) ;
+               }
+               return isAllClear ;
+            } ) ;
+            $scope.RestartWindow['callback']['SetTitle']( $scope.autoLanguage( '重启业务' ) ) ;
+            $scope.RestartWindow['callback']['SetIcon']( '' ) ;
+            $scope.RestartWindow['callback']['Open']() ;
+         }
+      }
+
       //添加业务 弹窗
       $scope.InstallModule = {
          'config': {},
@@ -2383,9 +2442,13 @@
             {
                showShrinkWindow() ;
             }
-            else
+            else if( index == 2 )
             {
                showSyncWindow() ;
+            }
+            else if( index == 3 )
+            {
+               showRestartWindow() ;
             }
             $scope.EditModuleDropdown['callback']['Close']() ;
          },
@@ -2410,6 +2473,7 @@
             $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '业务扩容' ), 'disabled': disabled } ) ;
             $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '业务减容' ), 'disabled': disabled } ) ;
             $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '同步业务' ), 'disabled': syncDisabled } ) ;
+            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '重启业务' ), 'disabled': syncDisabled } ) ;
             $scope.EditModuleDropdown['callback']['Open']( event.currentTarget ) ;
          }
       }

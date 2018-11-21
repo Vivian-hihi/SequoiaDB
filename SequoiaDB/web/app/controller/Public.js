@@ -259,6 +259,16 @@
                $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo['TaskID'] ) ;
                $location.path( '/Deploy/SDB-ExtendInstall' ).search( params ) ;
             }
+            else if( taskInfo['TaskName'] == 'ADD_BUSINESS' )
+            {
+               $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo['TaskID'] ) ;
+               $location.path( '/Deploy/InstallModule' ).search( params ) ;
+            }
+            else if( taskInfo['TaskName'] == 'RESTART_BUSINESS' )
+            {
+               $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo['TaskID'] ) ;
+               $location.path( '/Deploy/Restart' ).search( params ) ;
+            }
             else
             {
                $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo['TaskID'] ) ;
@@ -339,13 +349,43 @@
             'text': $scope.autoLanguage( '数据' ),
             'module': 'Data',
             'icon': 'fa-database',
-            'list': []
+            'list': [],
+            'target': function( moduleType ){
+               var params = { 'r': new Date().getTime() } ;
+               switch( moduleType )
+               {
+               case 'sequoiadb':
+                  $location.path( '/Data/SDB-Database/Index' ).search( params ) ; break ;
+               case 'hdfs':
+                  $location.path( '/Data/HDFS-web/Index' ).search( params ) ; break ;
+               case 'spark':
+                  $location.path( '/Data/SPARK-web/Index' ).search( params ) ; break ;
+               case 'yarn':
+                  $location.path( '/Data/YARN-web/Index' ).search( params ) ; break ;
+               case 'sequoiasql-postgresql':
+                  $location.path( '/Data/SequoiaSQL/PostgreSQL/Database/Index' ).search( params ) ; break ;
+               case 'sequoiasql-mysql':
+                  $location.path( '/Data/SequoiaSQL/MySQL/Database/Index' ).search( params ) ; break ;
+               default:
+                  break ;
+               }
+            }
          },
          {
             'text': $scope.autoLanguage( '监控' ),
             'module': 'Monitor',
             'icon': 'fa-flash',
-            'list': []
+            'list': [],
+            'target': function( moduleType ){
+               var params = { 'r': new Date().getTime() } ;
+               switch( moduleType )
+               {
+               case 'sequoiadb':
+                  $location.path( '/Monitor/SDB/Index' ).search( params ) ; break ;
+               default:
+                  break ;
+               }
+            }
          },
          {
             'text': $scope.autoLanguage( '部署' ),
@@ -357,7 +397,33 @@
             'text': $scope.autoLanguage( '策略' ),
             'module': 'Strategy',
             'icon': 'fa-tasks',
-            'list': []
+            'list': [],
+            'target': function( moduleType ){
+               var params = { 'r': new Date().getTime() } ;
+               switch( moduleType )
+               {
+               case 'sequoiadb':
+                  $location.path( '/Strategy/SDB/Index' ).search( params ) ; break ;
+               default:
+                  break ;
+               }
+            }
+         },
+         {
+            'text': $scope.autoLanguage( '配置' ),
+            'module': 'Config',
+            'icon': 'fa-cogs',
+            'list': [],
+            'target': function( moduleType ){
+               var params = { 'r': new Date().getTime() } ;
+               switch( moduleType )
+               {
+               case 'sequoiadb':
+                  $location.path( '/Config/SDB/Index' ).search( params ) ; break ;
+               default:
+                  break ;
+               }
+            }
          }
       ] ;
 
@@ -480,6 +546,16 @@
          }
       }
 
+      function addConfig( businessInfo )
+      {
+         if( businessInfo['type'] == 'sequoiadb' )
+         {
+            var title = getNavTitle( businessInfo['type'] ) ;
+            var titleInfo = addBusinessTitle( $scope.Left.navMenu[4]['list'], title ) ;
+            titleInfo['list'].push( businessInfo ) ;
+         }
+      }
+
       function addBusiness( businessInfo )
       {
          var thisModule = {
@@ -497,6 +573,7 @@
          addDataOperation( thisModule ) ;
          addMonitor( thisModule ) ;
          addStrateg( thisModule ) ;
+         addConfig( thisModule ) ;
       }
 
       function getBusiness()
@@ -505,9 +582,9 @@
          SdbRest.OmOperation( data, {
             'success': function( list ){
 
-               $scope.Left.navMenu[0]['list'] = [] ;
-               $scope.Left.navMenu[1]['list'] = [] ;
-               $scope.Left.navMenu[3]['list'] = [] ;
+               $.each( $scope.Left.navMenu, function( index ){
+                  $scope.Left.navMenu[index]['list'] = [] ;
+               } ) ;
 
                $.each( list, function( index, businessInfo ){
                   addBusiness( businessInfo ) ;
@@ -605,49 +682,14 @@
 
          var params = { 'r': new Date().getTime() } ;
 
-         if( $scope.Left.navMenu[ moduleIndex ]['module'] == 'Data' )
+         if( typeof( $scope.Left.navMenu[ moduleIndex ]['target'] ) == 'function' )
          {
-            switch( moduleType )
-            {
-            case 'sequoiadb':
-               $location.path( '/Data/SDB-Database/Index' ).search( params ) ; break ;
-            case 'hdfs':
-               $location.path( '/Data/HDFS-web/Index' ).search( params ) ; break ;
-            case 'spark':
-               $location.path( '/Data/SPARK-web/Index' ).search( params ) ; break ;
-            case 'yarn':
-               $location.path( '/Data/YARN-web/Index' ).search( params ) ; break ;
-            case 'sequoiasql-postgresql':
-               $location.path( '/Data/SequoiaSQL/PostgreSQL/Database/Index' ).search( params ) ; break ;
-            case 'sequoiasql-mysql':
-               $location.path( '/Data/SequoiaSQL/MySQL/Database/Index' ).search( params ) ; break ;
-            default:
-               break ;
-            }
+            $scope.Left.navMenu[ moduleIndex ]['target']( moduleType ) ;
+            $scope.cursorIndex[0] = moduleIndex ;
+            $scope.cursorIndex[1] = activeIndex ;
+            $scope.cursorIndex[2] = instanceIndex ;
          }
-         else if( $scope.Left.navMenu[ moduleIndex ]['module'] == 'Monitor' )
-         {
-            switch( moduleType )
-            {
-            case 'sequoiadb':
-               $location.path( '/Monitor/SDB/Index' ).search( params ) ; break ;
-            default:
-               break ;
-            }
-         }
-         else if( $scope.Left.navMenu[ moduleIndex ]['module'] == 'Strategy' )
-         {
-            switch( moduleType )
-            {
-            case 'sequoiadb':
-               $location.path( '/Strategy/SDB/Index' ).search( params ) ; break ;
-            default:
-               break ;
-            }
-         }
-         $scope.cursorIndex[0] = moduleIndex ;
-         $scope.cursorIndex[1] = activeIndex ;
-         $scope.cursorIndex[2] = instanceIndex ;
+
          flodNav() ;
       }
 

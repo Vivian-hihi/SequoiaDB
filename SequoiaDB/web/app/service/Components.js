@@ -299,8 +299,14 @@
 
    //异步消息，同步调用
    sacApp.service( 'SdbPromise', function(){
-      this['init'] = function( maxNum ){
+      this['init'] = function( maxNum, use ){
+         if ( isNaN( use ) )
+         {
+            use = -1 ;
+         }
          return {
+            '_use': 0,
+            '_useMax': use,
             '_max': maxNum,
             '_total': 0,
             '_valHandler': {},
@@ -315,6 +321,7 @@
                   this._thenFun( this._valHandler ) ;
                   this._total = 0 ;
                   this._valHandler = {} ;
+                  ++this._use ;
                }
             },
             'error': function( errFun ){
@@ -326,6 +333,11 @@
                }
             },
             'resolve': function( key, value ){
+               if ( this._useMax > 0 && this._use >= this._useMax )
+               {
+                  return ;
+               }
+
                this._valHandler[key] = value ;
                ++this._total ;
                if( this._total >= this._max && this._faile == false )
@@ -337,6 +349,7 @@
                   this._thenFun( this._valHandler ) ;
                   this._total = 0 ;
                   this._valHandler = {} ;
+                  ++this._use ;
                }
             },
             'throw': function( error ){

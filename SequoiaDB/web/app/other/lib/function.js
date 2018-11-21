@@ -1998,26 +1998,36 @@ function deleteJson( json, keys )
    return newJson ;
 }
 
+//任意值转字符串
+function convertValueString( value )
+{
+   var type = typeof( value ) ;
+
+   if( type == "string" )
+   {
+      return value ;
+   }
+   else if( type == "number" )
+   {
+      return '' + value ;
+   }
+   else if( type == "boolean" )
+   {
+      return value ? 'true' : 'false' ;
+   }
+   else if( type == "undefined" )
+   {
+      return '' ;
+   }
+
+   return value ;
+}
+
 //设置json的值都为字符串
 function convertJsonValueString( json )
 {
    $.each( json, function( key, value ){
-      if( typeof( value ) == "string" )
-      {
-         return true ;
-      }
-      else if( typeof( value ) == "number" )
-      {
-         json[key] = '' + value ;
-      }
-      else if( typeof( value ) == "boolean" )
-      {
-         json[key] = value ? 'true' : 'false' ;
-      }
-      else
-      {
-         json[key] = value ;
-      }
+      json[key] = convertValueString( value ) ;
    } ) ;
    return json ;
 }
@@ -2403,4 +2413,364 @@ function parseJson2( str, isParseJson, errJson )
 	}
 
 	return jsonArr ;
+}
+
+//配置参数模板转换
+function configConvertTemplate( templateList, level ){
+   var setLevel = 0 ;
+   if( typeof( level ) != 'undefined' )
+   {
+      setLevel = level ;
+   }
+   var newTemplateList = [] ;
+   $.each( templateList, function( index, templateInfo ){
+      if( typeof( templateInfo['Name'] ) == 'string' )
+      {
+         if( setLevel != templateInfo['Level'] )
+         {
+            return true ;
+         }
+         var newTemplateInfo = {
+            'name':     templateInfo['Name'],
+            'value':    '',
+            'webName':  templateInfo['WebName'],
+            'disabled': false,
+            'desc':     templateInfo['Desc'],
+            'type':     '',
+            'valid':    ''
+         } ;
+
+         if( templateInfo['Display'] == 'select box' )
+         {
+            newTemplateInfo['type'] = 'select' ;
+            newTemplateInfo['valid'] = [ { 'key': '', 'value': '' } ] ;
+            var validArr = templateInfo['Valid'].split( ',' ) ;
+            $.each( validArr, function( index2 ){
+               newTemplateInfo['valid'].push( { 'key': validArr[index2], 'value': validArr[index2] } ) ;
+            } ) ;
+         }
+         else if( templateInfo['Display'] == 'edit box' )
+         {
+            if( templateInfo['Type'] == 'int' )
+            {
+               newTemplateInfo['type'] = 'int' ;
+               newTemplateInfo['valid'] = {} ;
+               var pos1 = templateInfo['Valid'].indexOf( '-' ) ;
+               if( templateInfo['Valid'] !== '' && pos1 !== -1 )
+			      {
+                  var minValue ;
+                  var maxValue ;
+                  var pos2 = templateInfo['Valid'].indexOf( '-', pos1 + 1 ) ;
+                  if( pos2 == -1 )
+                  {
+                     var splitValue = templateInfo['Valid'].split( '-' ) ;
+                     minValue = splitValue[0] ;
+                     maxValue = splitValue[1] ;
+                  }
+                  else
+                  {
+                     minValue = templateInfo['Valid'].substr( 0, pos2 ) ;
+                     maxValue = templateInfo['Valid'].substr( pos2 + 1 ) ;
+                  }
+                  if( isNaN( minValue ) == false )
+                  {
+                     newTemplateInfo['valid']['min'] = parseInt( minValue ) ;
+                  }
+                  if( isNaN( maxValue ) == false )
+                  {
+                     newTemplateInfo['valid']['max'] = parseInt( maxValue ) ;
+                  }
+               }
+               newTemplateInfo['valid']['empty'] = true ;
+            }
+            else if( templateInfo['Type'] == 'double' )
+            {
+               newTemplateInfo['type'] = 'double' ;
+               newTemplateInfo['valid'] = {} ;
+               var pos1 = templateInfo['Valid'].indexOf( '-' ) ;
+               if( templateInfo['Valid'] !== '' && pos1 !== -1 )
+			      {
+                  var minValue ;
+				      var maxValue ;
+                  var pos2 = templateInfo['Valid'].indexOf( '-', pos1 + 1 ) ;
+                  if( pos2 == -1 )
+                  {
+				         var splitValue = templateInfo['Valid'].split( '-' ) ;
+				         minValue = splitValue[0] ;
+				         maxValue = splitValue[1] ;
+                  }
+                  else
+                  {
+                     minValue = templateInfo['Valid'].substr( 0, pos2 ) ;
+                     maxValue = templateInfo['Valid'].substr( pos2 + 1 ) ;
+                  }
+                  if( isNaN( minValue ) == false )
+                  {
+                     newTemplateInfo['valid']['min'] = parseFloat( minValue ) ;
+                  }
+                  if( isNaN( maxValue ) == false )
+                  {
+                     newTemplateInfo['valid']['max'] = parseFloat( maxValue ) ;
+                  }
+			      }
+               newTemplateInfo['valid']['empty'] = true ;
+            }
+            else if( templateInfo['Type'] === 'port' )
+		      {
+               newTemplateInfo['type'] = 'port' ;
+               newTemplateInfo['valid'] = {} ;
+               if( templateInfo['Valid'] !== '' && templateInfo['Valid'].indexOf('-') !== -1 )
+			      {
+				      var splitValue = templateInfo['Valid'].split( '-' ) ;
+				      var minValue = splitValue[0] ;
+				      var maxValue = splitValue[1] ;
+				      if( isNaN( minValue ) == false )
+                  {
+                     newTemplateInfo['valid']['min'] = parseInt( minValue ) ;
+                  }
+                  if( isNaN( maxValue ) == false )
+                  {
+                     newTemplateInfo['valid']['max'] = parseInt( maxValue ) ;
+                  }
+			      }
+               else
+               {
+                  newTemplateInfo['valid']['empty'] = true ;
+               }
+		      }
+            else if( templateInfo['Type'] === 'string' )
+		      {
+               newTemplateInfo['type'] = 'string' ;
+               newTemplateInfo['valid'] = {} ;
+               if( templateInfo['Valid'] !== '' && templateInfo['Valid'].indexOf('-') !== -1 )
+			      {
+				      var splitValue = templateInfo['Valid'].split( '-' ) ;
+				      var minValue = splitValue[0] ;
+				      var maxValue = splitValue[1] ;
+				      if( isNaN( minValue ) == false )
+                  {
+                     newTemplateInfo['valid']['min'] = parseInt( minValue ) ;
+                  }
+                  if( isNaN( maxValue ) == false )
+                  {
+                     newTemplateInfo['valid']['max'] = parseInt( maxValue ) ;
+                  }
+			      }
+		      }
+         }
+         else if( templateInfo['Display'] == 'text box' )
+         {
+            newTemplateInfo['type'] = 'text' ;
+            if( templateInfo['Type'] == 'path' )
+            {
+               newTemplateInfo['valid'] = {
+                  'min': 1
+               } ;
+            }
+         }
+         if( templateInfo['Display'] == 'hidden' )
+         {
+            return true ;
+         }
+         newTemplateList.push( newTemplateInfo ) ;
+      }
+      else
+      {
+         newTemplateList.push( templateInfo ) ;
+      }
+   } ) ;
+   return newTemplateList ;
+}
+
+/*
+比较2个对象是否相同
+filter 选填   过滤的字段列表。默认 []
+flags  选填   true: 表示忽略filter的字段; false: 表示只比较filter的字段。 默认 true
+*/
+function objectEqual( o1, o2, filter, flags )
+{
+   var props1 = Object.getOwnPropertyNames( o1 ) ;
+   var props2 = Object.getOwnPropertyNames( o2 ) ;
+
+   if ( !isArray( filter ) )
+   {
+      filter = [] ;
+   }
+
+   if ( props1.length != props2.length )
+   {
+      return false ;
+   }
+
+   for ( var i = 0, max = props1.length; i < max; ++i )
+   {
+      var propName = props1[i] ;
+
+      if ( filter.indexOf( propName ) >= 0 && flags !== false )
+      {
+         continue ;
+      }
+      else if ( filter.indexOf( propName ) < 0 && flags == false )
+      {
+         continue ;
+      }
+
+      if ( o1[propName] !== o2[propName] )
+      {
+         return false ;
+      }
+   }
+
+   return true ;
+}
+
+//找出2个对象不相同的字段
+function diffObject( o1, o2 )
+{
+   var list = [] ;
+   var props1 = Object.getOwnPropertyNames( o1 ) ;
+   var props2 = Object.getOwnPropertyNames( o2 ) ;
+
+   for ( var i = 0, max = props1.length; i < max; ++i )
+   {
+      var propName = props1[i] ;
+
+      if ( o1[propName] !== o2[propName] )
+      {
+         list.push( propName ) ;
+      }
+   }
+
+   for ( var i = 0, max = props2.length; i < max; ++i )
+   {
+      var propName = props2[i] ;
+
+      if ( list.indexOf( propName ) >= 0 )
+      {
+         continue ;
+      }
+
+      if ( o1[propName] !== o2[propName] )
+      {
+         list.push( propName ) ;
+      }
+   }
+
+   return list ;
+}
+
+//是不是函数
+function isFunction( obj )
+{
+   return typeof( obj ) == 'function' ;
+}
+
+//是不是对象
+function isObject( obj )
+{
+   return typeof( obj ) == 'object' && obj !== null ;
+}
+
+//清除对象
+function clearObject( obj )
+{
+   for( var key in obj )
+   {
+      delete obj[key] ;
+   }
+}
+
+//清除数组
+function clearArray( arr )
+{
+   arr.splice( 0, arr.length ) ;
+}
+
+/*
+过滤对象某些字段
+filter 选填   过滤的字段列表。默认 []
+flags  选填   true: 表示过滤掉filter的字段; false: 表示只留filter的字段。 默认 true
+canEmpty 选填 true: 值可以为空; false: 值为空则跳过。默认 true
+*/
+function filterObject( obj, filter, flags, canEmpty )
+{
+   var newObj = {} ;
+
+   for( var key in obj )
+   {
+      if ( filter.indexOf( key ) >= 0 && flags !== false )
+      {
+         continue ;
+      }
+      else if ( filter.indexOf( key ) < 0 && flags == false )
+      {
+         continue ;
+      }
+
+      var type = typeof( obj[key] ) ;
+
+      if ( canEmpty === false && ( type == 'undefined' || ( type == 'string' && obj[key].length ==0 ) || obj[key] === null ) )
+      {
+         continue ;
+      }
+
+      newObj[key] = obj[key] ;
+   }
+   return newObj ;
+}
+
+function string2csv( str )
+{
+   return str.replace( new RegExp( '"', 'g' ), '""' ) ;
+}
+
+//对象转csv
+function object2csv( obj, fields )
+{
+   var tmp = '' ;
+   var isFirst = true ;
+
+   for( var index in fields )
+   {
+      var key = fields[index] ;
+      var type = typeof( obj[key] ) ;
+
+      if ( isFirst )
+      {
+         isFirst = false ;
+      }
+      else
+      {
+         tmp += ',' ;
+      }
+
+      switch( type )
+      {
+      case 'number':
+         tmp += obj[key] + '' ;
+         break ;
+      case 'string':
+         if ( obj[key].length > 0 )
+         {
+            tmp += '"' + string2csv( obj[key] ) + '"' ;
+         }
+         break ;
+      case 'boolean':
+         tmp += ( obj[key] ? true : false ) ;
+         break ;
+      case 'object':
+         if ( obj[key] === null )
+         {
+            tmp += 'null' ;
+         }
+         break ;
+      case 'undefined':
+         break ;
+      default:
+         tmp += obj[key] ;
+         break ;
+      }
+   }
+
+   return tmp ;
 }
