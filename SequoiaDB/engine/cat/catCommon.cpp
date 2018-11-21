@@ -1113,7 +1113,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_CATRENAMECLFROMCS ) ;
 
       BSONObj boSpace, boCollections ;
-      vector< PAIR_CLNAME_ID > remainCLs ;
+      vector< PAIR_CLNAME_ID > clVec ;
       BOOLEAN isExist = FALSE ;
 
       rc = catCheckSpaceExist( csName.c_str(), isExist, boSpace, cb ) ;
@@ -1156,11 +1156,11 @@ namespace engine
                clName = newCLShortName ;
             }
             PAIR_CLNAME_ID clPair( clName, clUniqueID ) ;
-            remainCLs.push_back( clPair ) ;
+            clVec.push_back( clPair ) ;
          }
       }
 
-      rc = catUpdateCSCLs( csName, remainCLs, cb, dmsCB, dpsCB, w ) ;
+      rc = catUpdateCSCLs( csName, clVec, cb, dmsCB, dpsCB, w ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to update collections from collection space [%s], "
                    "rc: %d", csName.c_str(), rc ) ;
@@ -3377,8 +3377,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATMIANCLRENAME ) ;
 
-      std::vector< std::string > subCLLst;
-      std::vector< std::string >::iterator iterSubCL;
+      std::vector< std::string > subCLLst ;
+      std::vector< std::string >::iterator iterSubCL ;
 
       rc = mainclCata.getSubCLList( subCLLst );
       PD_RC_CHECK( rc, PDERROR,
@@ -3388,7 +3388,7 @@ namespace engine
       iterSubCL = subCLLst.begin() ;
       while( iterSubCL != subCLLst.end() )
       {
-         std::string subCLName = (*iterSubCL) ;
+         const std::string& subCLName = (*iterSubCL) ;
 
          BSONObj setObj = BSON( CAT_MAINCL_NAME << newMainCLName ) ;
          rc = catUpdateCatalog( subCLName.c_str(), setObj, BSONObj(), cb, w ) ;
@@ -3578,7 +3578,7 @@ namespace engine
       }
       else
       {
-         std::string mainCLName = cataSet.getMainCLName() ;
+         const std::string& mainCLName = cataSet.getMainCLName() ;
          if ( !mainCLName.empty() )
          {
             rc = catSubCLRename( oldCLName, newCLName, cataSet, cb, w ) ;

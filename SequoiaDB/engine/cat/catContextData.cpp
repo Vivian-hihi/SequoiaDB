@@ -1171,7 +1171,8 @@ namespace engine
          BSONObjIterator i ( ele.embeddedObject() ) ;
          while ( i.more() )
          {
-            string clFullName, newCLFullName ;
+            CHAR clFullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ]    = { 0 } ;
+            CHAR newCLFullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
             BSONObj boTmp ;
             const CHAR *pCLName = NULL ;
 
@@ -1186,18 +1187,16 @@ namespace engine
                       "Get field [%s] failed, rc: %d",
                       CAT_COLLECTION_NAME, rc ) ;
 
-            clFullName = _targetName ;
-            clFullName += "." ;
-            clFullName += pCLName ;
-            newCLFullName = _newCSName ;
-            newCLFullName += "." ;
-            newCLFullName += pCLName ;
+            ossSnprintf( clFullName, DMS_COLLECTION_FULL_NAME_SZ,
+                         "%s.%s", _targetName.c_str(), pCLName ) ;
+            ossSnprintf( newCLFullName, DMS_COLLECTION_FULL_NAME_SZ,
+                         "%s.%s", _newCSName.c_str(), pCLName ) ;
 
             rc = catRenameCLStep( clFullName, newCLFullName,
                                   cb, _pDmsCB, _pDpsCB, w ) ;
             PD_RC_CHECK ( rc, PDERROR,
                           "Fail to rename cl from[%s] to [%s], rc: %d",
-                          clFullName.c_str(), newCLFullName.c_str(), rc ) ;
+                          clFullName, newCLFullName, rc ) ;
 
          }
       }
@@ -2461,7 +2460,6 @@ namespace engine
                          "Failed to get group list of cl[%s], rc: %d",
                          _targetName.c_str(), rc ) ;
          }
-
       }
       catch( std::exception &e )
       {

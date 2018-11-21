@@ -2275,7 +2275,7 @@ namespace engine
       MAP_CAT_ITEM_IT it = _mapItems.begin() ;
       while ( it != _mapItems.end() )
       {
-         string strSubClName = it->second->getSubClName();
+         const string& strSubClName = it->second->getSubClName();
          if ( 0 == strSubClName.compare( subCLName ) )
          {
             clsCatalogItem *item = it->second ;
