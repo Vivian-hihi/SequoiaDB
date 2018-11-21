@@ -19,6 +19,6 @@
 
 #include "common_decimal_fun.h"
 
-#endif
+#endif // BSON_COMMON_DECIMAL_H_
 
 

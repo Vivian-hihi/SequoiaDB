@@ -129,7 +129,7 @@ namespace import
          else if (CSV_TYPE_DECIMAL == type ||
                   (CSV_TYPE_NUMBER == type && CSV_TYPE_DECIMAL == subType))
          {
-            decimal_free(&decimalVal);
+            sdb_decimal_free(&decimalVal);
          }
          ossMemset(this, 0, sizeof(CSVFieldValue));
       }
@@ -224,7 +224,7 @@ namespace import
          else if (CSV_TYPE_DECIMAL == type ||
                   (CSV_TYPE_NUMBER == type && CSV_TYPE_DECIMAL == subType))
          {
-            decimal_free(&(value.decimalVal));
+            sdb_decimal_free(&(value.decimalVal));
          }
 
          type = CSV_TYPE_AUTO;

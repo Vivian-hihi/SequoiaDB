@@ -1200,7 +1200,7 @@ namespace import
       end = *str;
       *str = '\0';
 
-      rc = decimal_from_str( start, &value);
+      rc = sdb_decimal_from_str( start, &value);
       if (0 != rc)
       {
          *str = end;
@@ -1550,11 +1550,11 @@ namespace import
 
    decimal:
       type = CSV_TYPE_DECIMAL;
-      decimal_init(&(value.decimalVal));
+      sdb_decimal_init(&(value.decimalVal));
       rc = _stringToRawDecimal( data, length, value.decimalVal, valueLength);
       if (SDB_OK != rc)
       {
-         goto error;
+         goto error ;
       }
 
    done:
@@ -1603,7 +1603,7 @@ namespace import
       case CSV_TYPE_DECIMAL:
          if (_cast)
          {
-            value = (INT32)decimal_to_int(&(tmpField.value.decimalVal));
+            value = (INT32)sdb_decimal_to_int(&(tmpField.value.decimalVal));
             break;
          }
          // passthrough
@@ -1654,7 +1654,7 @@ namespace import
       case CSV_TYPE_DECIMAL:
          if (_cast)
          {
-            value = (INT64)decimal_to_long(&(tmpField.value.decimalVal));
+            value = (INT64)sdb_decimal_to_long(&(tmpField.value.decimalVal));
             break;
          }
          // passthrough
@@ -1699,7 +1699,7 @@ namespace import
          value = (FLOAT64)subField.value.longVal;
          break;
       case CSV_TYPE_DECIMAL:
-         value = (FLOAT64)decimal_to_double(&(subField.value.decimalVal));
+         value = (FLOAT64)sdb_decimal_to_double(&(subField.value.decimalVal));
          break;
       default:
          rc = SDB_INVALIDARG;
@@ -2423,7 +2423,8 @@ namespace import
 
       if (opt.hasOpt)
       {
-         rc = decimal_init1(&value, opt.opt.decimalOpt.precision, opt.opt.decimalOpt.scale);
+         rc = sdb_decimal_init1( &value, opt.opt.decimalOpt.precision,
+                                 opt.opt.decimalOpt.scale ) ;
          if (0 != rc)
          {
             rc = SDB_INVALIDARG;
@@ -2432,7 +2433,7 @@ namespace import
       }
       else
       {
-         decimal_init(&value);
+         sdb_decimal_init(&value);
       }
       rc = _stringToRawDecimal(data, length, value, valueLength);
       if (SDB_OK == rc)
@@ -2473,7 +2474,8 @@ namespace import
       // find out decimal in string
       if (opt.hasOpt)
       {
-         rc = decimal_init1(&value, opt.opt.decimalOpt.precision, opt.opt.decimalOpt.scale);
+         rc = sdb_decimal_init1( &value, opt.opt.decimalOpt.precision,
+                                 opt.opt.decimalOpt.scale ) ;
          if (0 != rc)
          {
             rc = SDB_INVALIDARG;
@@ -2482,7 +2484,7 @@ namespace import
       }
       else
       {
-         decimal_init(&value);
+         sdb_decimal_init(&value);
       }
       rc = _stringToRawDecimal(str, len, value, tmpLen);
       if (SDB_OK != rc)
@@ -3861,7 +3863,7 @@ namespace import
                INT32 len = 0;
                CHAR* buf = NULL;
 
-               decimal_to_str_get_len(&(field.defaultValue.decimalVal), &len);
+               sdb_decimal_to_str_get_len(&(field.defaultValue.decimalVal), &len);
 
                buf = (CHAR*)SDB_OSS_MALLOC(len);
                if (NULL == buf)
@@ -3870,7 +3872,7 @@ namespace import
                }
                ossMemset(buf, 0, len);
 
-               decimal_to_str(&(field.defaultValue.decimalVal), buf, len);
+               sdb_decimal_to_str(&(field.defaultValue.decimalVal), buf, len);
                ss << buf;
                SDB_OSS_FREE(buf);
             }

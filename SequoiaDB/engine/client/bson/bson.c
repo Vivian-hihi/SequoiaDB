@@ -655,27 +655,28 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          int tmpRC   = 0 ;
 
          bson_iterator_decimal( i, &decimal ) ;
-         decimal_to_jsonstr_len( decimal.sign, decimal.weight, decimal.dscale,
-                                 decimal.typemod, &tmpSize ) ;
+         sdb_decimal_to_jsonstr_len( decimal.sign, decimal.weight,
+                                     decimal.dscale,
+                                     decimal.typemod, &tmpSize ) ;
 
          temp = (char *)malloc( tmpSize ) ;
          if ( !temp )
          {
-            decimal_free( &decimal ) ;
+            sdb_decimal_free( &decimal ) ;
             return 0 ;
          }
 
          memset( temp, 0, tmpSize ) ;
-         tmpRC = decimal_to_jsonstr( &decimal, temp, tmpSize ) ;
+         tmpRC = sdb_decimal_to_jsonstr( &decimal, temp, tmpSize ) ;
          if ( 0 != tmpRC )
          {
-            decimal_free( &decimal ) ;
+            sdb_decimal_free( &decimal ) ;
             free( temp ) ;
             return 0 ;
          }
 
          bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
-         decimal_free( &decimal ) ;
+         sdb_decimal_free( &decimal ) ;
          free( temp ) ;
          CHECK_LEFT ( left )
          break;
@@ -807,7 +808,7 @@ int bson_sprint_decimal_length_iterator ( const bson_iterator *i )
    bson_iterator_decimal_weight( i, &weight ) ;
    bson_iterator_decimal_typemod( i, &typemod ) ;
 
-   decimal_to_jsonstr_len( sign, weight, scale, typemod, &size ) ;
+   sdb_decimal_to_jsonstr_len( sign, weight, scale, typemod, &size ) ;
 
    return size ;
 }
@@ -1270,21 +1271,21 @@ SDB_EXPORT int bson_iterator_int( const bson_iterator *i ) {
     {
         int result = 0 ;
         bson_decimal decimal = SDB_DECIMAL_DEFAULT_VALUE ;
-        result = decimal_from_bsonvalue( bson_iterator_value( i ), &decimal ) ;
+        result = sdb_decimal_from_bsonvalue( bson_iterator_value( i ), &decimal ) ;
         if ( 0 != result )
         {
-            decimal_free( &decimal ) ;
+            sdb_decimal_free( &decimal ) ;
             return BSON_ERROR ;
         }
 
-        result = decimal_to_int( &decimal ) ;
+        result = sdb_decimal_to_int( &decimal ) ;
         if ( 0 != result )
         {
-            decimal_free( &decimal ) ;
+            sdb_decimal_free( &decimal ) ;
             return BSON_ERROR ;
         }
 
-        decimal_free( &decimal ) ;
+        sdb_decimal_free( &decimal ) ;
         return BSON_OK ;
     }
     default:
@@ -1304,9 +1305,9 @@ SDB_EXPORT double bson_iterator_double( const bson_iterator *i ) {
     {
         double result = 0.0 ;
         bson_decimal decimal = SDB_DECIMAL_DEFAULT_VALUE ;
-        decimal_from_bsonvalue( bson_iterator_value( i ), &decimal ) ;
-        result = decimal_to_double( &decimal ) ;
-        decimal_free( &decimal ) ;
+        sdb_decimal_from_bsonvalue( bson_iterator_value( i ), &decimal ) ;
+        result = sdb_decimal_to_double( &decimal ) ;
+        sdb_decimal_free( &decimal ) ;
         return result ;
     }
     default:
@@ -1401,26 +1402,26 @@ SDB_EXPORT int bson_iterator_decimal( const bson_iterator *i,
    bson_type type ;
    int rc = 0 ;
 
-   decimal_free( decimal ) ;
+   sdb_decimal_free( decimal ) ;
    type = bson_iterator_type( i ) ;
    if ( BSON_INT == type )
    {
       int tmp = bson_iterator_int_raw( i ) ;
-      rc = decimal_from_int( tmp, decimal ) ;
+      rc = sdb_decimal_from_int( tmp, decimal ) ;
    }
    else if ( BSON_LONG == type )
    {
       int64_t tmp = bson_iterator_long_raw( i ) ;
-      rc = decimal_from_long( tmp, decimal ) ;
+      rc = sdb_decimal_from_long( tmp, decimal ) ;
    }
    else if ( BSON_DOUBLE == type )
    {
       double tmp = bson_iterator_double_raw( i ) ;
-      rc = decimal_from_double( tmp , decimal ) ;
+      rc = sdb_decimal_from_double( tmp , decimal ) ;
    }
    else if ( BSON_DECIMAL == type )
    {
-      rc = decimal_from_bsonvalue( bson_iterator_value( i ), decimal ) ;
+      rc = sdb_decimal_from_bsonvalue( bson_iterator_value( i ), decimal ) ;
    }
    else
    {
@@ -1449,9 +1450,9 @@ SDB_EXPORT int64_t bson_iterator_long( const bson_iterator *i ) {
     {
         int64_t result = 0 ;
         bson_decimal decimal = SDB_DECIMAL_DEFAULT_VALUE ;
-        decimal_from_bsonvalue( bson_iterator_value( i ), &decimal ) ;
-        result = decimal_to_long( &decimal ) ;
-        decimal_free( &decimal ) ;
+        sdb_decimal_from_bsonvalue( bson_iterator_value( i ), &decimal ) ;
+        result = sdb_decimal_to_long( &decimal ) ;
+        sdb_decimal_free( &decimal ) ;
         return result ;
     }
     default:
@@ -1495,9 +1496,9 @@ SDB_EXPORT bson_bool_t bson_iterator_bool( const bson_iterator *i ) {
     {
         bson_bool_t result = 0 ;
         bson_decimal decimal = SDB_DECIMAL_DEFAULT_VALUE ;
-        decimal_from_bsonvalue( bson_iterator_value( i ), &decimal ) ;
-        result = decimal_is_zero( &decimal ) ;
-        decimal_free( &decimal ) ;
+        sdb_decimal_from_bsonvalue( bson_iterator_value( i ), &decimal ) ;
+        result = sdb_decimal_is_zero( &decimal ) ;
+        sdb_decimal_free( &decimal ) ;
         return !result ;
     }
     case BSON_EOO:
@@ -1831,14 +1832,14 @@ SDB_EXPORT int bson_append_decimal3( bson *b, const char *name,
    int rc = 0 ;
    bson_decimal decimal = SDB_DECIMAL_DEFAULT_VALUE ;
 
-   rc = decimal_from_str( value, &decimal ) ;
+   rc = sdb_decimal_from_str( value, &decimal ) ;
    if ( 0 != rc )
    {
       return BSON_ERROR ;
    }
 
    rc = bson_append_decimal( b, name, &decimal ) ;
-   decimal_free( &decimal ) ;
+   sdb_decimal_free( &decimal ) ;
 
    return rc ;
 }
@@ -1850,20 +1851,20 @@ SDB_EXPORT int bson_append_decimal2( bson *b, const char *name,
 {
    int rc = 0 ;
    bson_decimal decimal = SDB_DECIMAL_DEFAULT_VALUE ;
-   rc = decimal_init1( &decimal, precision, scale ) ;
+   rc = sdb_decimal_init1( &decimal, precision, scale ) ;
    if ( 0 != rc )
    {
       return BSON_ERROR ;
    }
 
-   rc = decimal_from_str( value, &decimal ) ;
+   rc = sdb_decimal_from_str( value, &decimal ) ;
    if ( 0 != rc )
    {
       return BSON_ERROR ;
    }
 
    rc = bson_append_decimal( b, name, &decimal ) ;
-   decimal_free( &decimal ) ;
+   sdb_decimal_free( &decimal ) ;
 
    return rc ;
 }

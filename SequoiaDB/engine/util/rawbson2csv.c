@@ -413,7 +413,7 @@ INT32 _appendValue( const CHAR *delChar, INT32 delCharSize, bson_iterator *pIt,
          UTIL_RAW2BSON_PRINTF_LOG( "Failed to call bson_iterator_decimal" ) ;
          goto error ;
       }
-      rc = decimal_to_str_get_len( &decimal, &decimalSize ) ;
+      rc = sdb_decimal_to_str_get_len( &decimal, &decimalSize ) ;
       if ( rc )
       {
          UTIL_RAW2BSON_PRINTF_LOG( "Failed to get decimal size, rc=%d", rc ) ;
@@ -429,10 +429,10 @@ INT32 _appendValue( const CHAR *delChar, INT32 delCharSize, bson_iterator *pIt,
          goto error ;
       }
       ossMemset( pDecimalStr, 0, decimalSize ) ;
-      rc = decimal_to_str( &decimal, pDecimalStr, decimalSize ) ;
+      rc = sdb_decimal_to_str( &decimal, pDecimalStr, decimalSize ) ;
       if( rc )
       {
-         UTIL_RAW2BSON_PRINTF_LOG( "Failed to call decimal_to_str, rc=%d",
+         UTIL_RAW2BSON_PRINTF_LOG( "Failed to call sdb_decimal_to_str, rc=%d",
                                    rc ) ;
          goto error ;
       }
@@ -753,7 +753,7 @@ INT32 _appendValue( const CHAR *delChar, INT32 delCharSize, bson_iterator *pIt,
       }
    }
 done:
-   decimal_free( &decimal ) ;
+   sdb_decimal_free( &decimal ) ;
    SAFE_OSS_FREE( pBase64 ) ;
    SAFE_OSS_FREE( pDecimalStr ) ;
    return rc ;
