@@ -23,6 +23,15 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
+/**  
+    * FileName:        TestSnapshot10371  seqDB-10371
+    * test interface:  getSnapshot (int snapType, String matcher, String selector, String orderBy)
+                       getSnapshot (int snapType, BSONObject matcher, BSONObject selector, BSONObject orderBy)
+                       resetSnapshot ()
+    * @author          chensiqin
+    * @Date           2018.11.21
+    * @version        1.00
+*/
 public class TestSnapshot10371 extends SdbTestBase{
     private Sequoiadb sdb;
     private CollectionSpace cs;
