@@ -84,6 +84,12 @@ namespace CSharp.Crud.Insert
             BsonDocument doc = cl1.Insert(record, SDBConst.FLG_INSERT_RETURN_OID);
             Assert.AreEqual(2, cl1.GetCount(null));
             Assert.AreEqual("{ \"_id\" : 2 }", doc.ToString());
+
+            //other flag sunch as -2
+            cl1.Truncate();
+            cl1.Insert(record, -2);
+            Assert.AreEqual("{ \"_id\" : 2 }", doc.ToString());
+
             cs.DropCollection(clName1);
         }
         // BsonDocument Insert(List<BsonDocument> recordList, int flags)
@@ -93,6 +99,7 @@ namespace CSharp.Crud.Insert
             InsertDuplicateKey0();
             InsertDuplicateKey1();
             InsertReturnOID();
+            InsertWithOtherFlag();
             cs.DropCollection(clName2);
         }
 
@@ -166,5 +173,22 @@ namespace CSharp.Crud.Insert
             insertor.Add(doc);
             return insertor;
         }
+
+        public void InsertWithOtherFlag()
+        {
+            cl2.Truncate();
+            List<BsonDocument> insertor = new List<BsonDocument>();
+            for (int i = 0; i < 2; i++)
+            {
+                BsonDocument obj = new BsonDocument();
+                obj.Add("_id", i).
+                            Add("operation", "Insert").
+                            Add("name", "zhangsan" + i);
+                insertor.Add(obj);
+            }
+            cl2.Insert(insertor, -2);
+            Assert.AreEqual(2, cl2.GetCount(null));
+        }
+    
     }
 }
