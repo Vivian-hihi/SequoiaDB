@@ -1389,8 +1389,8 @@ SDB_EXPORT int bson_iterator_decimal_scale( const bson_iterator *i,
    value += 4 ;   // typemod
    bson_little_endian16( &tmpScale, value ) ;
 
-   *sign  = tmpScale & DECIMAL_SIGN_MASK ;
-   *scale = tmpScale & DECIMAL_DSCALE_MASK ;
+   *sign  = tmpScale & SDB_DECIMAL_SIGN_MASK ;
+   *scale = tmpScale & SDB_DECIMAL_DSCALE_MASK ;
 
    return BSON_OK ;
 }
@@ -1808,7 +1808,7 @@ SDB_EXPORT int bson_append_decimal( bson *b, const char *name,
    int i = 0 ;
    int size = DECIMAL_HEADER_SIZE + decimal->ndigits * sizeof( short ) ;
    int typemod  = decimal->typemod ;
-   short dscale = ( decimal->dscale & DECIMAL_DSCALE_MASK ) | decimal->sign ;
+   short dscale = ( decimal->dscale & SDB_DECIMAL_DSCALE_MASK ) | decimal->sign ;
    short weight = decimal->weight ;
    if ( bson_append_estart( b , BSON_DECIMAL, name, size ) == BSON_ERROR )
         return BSON_ERROR;

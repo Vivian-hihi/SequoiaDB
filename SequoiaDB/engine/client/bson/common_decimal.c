@@ -57,11 +57,11 @@ static const char json_str_end[]          = " }" ;
 #define Max(x, y)          ((x) > (y) ? (x) : (y))
 #define Min(x, y)          ((x) < (y) ? (x) : (y))
 
-#define DECIMAL_MAX_DWEIGHT 131072
-#define DECIMAL_MAX_DSCALE  16383
+#define SDB_DECIMAL_MAX_DWEIGHT     131072
+#define SDB_DECIMAL_MAX_DSCALE      16383
 
-#define DECIMAL_MAX_WEIGHT  32768    //DECIMAL_MAX_DWEIGHT/DECIMAL_DEC_DIGITS
-
+/// SDB_DECIMAL_MAX_DWEIGHT/SDB_DECIMAL_DEC_DIGITS
+#define SDB_DECIMAL_MAX_WEIGHT      32768
 
 static void _decimal_free_buff( bson_decimal *decimal ) ;
 static void _decimal_strip( bson_decimal *decimal ) ;
@@ -184,7 +184,7 @@ int _decimal_apply_typmod( bson_decimal *decimal, int typmod )
    * but perhaps might not have been yet. In any case, we must recognize a
    * true zero, whose weight doesn't mean anything.
    */
-   ddigits = ( decimal->weight + 1) * DECIMAL_DEC_DIGITS ;
+   ddigits = ( decimal->weight + 1) * SDB_DECIMAL_DEC_DIGITS ;
    if ( ddigits > maxdigits )
    {
       /* Determine true weight; and check for all-zero result */
@@ -215,7 +215,7 @@ int _decimal_apply_typmod( bson_decimal *decimal, int typmod )
             break ;
          }
 
-         ddigits -= DECIMAL_DEC_DIGITS ;
+         ddigits -= SDB_DECIMAL_DEC_DIGITS ;
       }
    }
 done:
@@ -268,7 +268,7 @@ void _decimal_trunc( bson_decimal *decimal, int rscale )
    decimal->dscale = rscale ;
 
    /* decimal digits wanted */
-   di = ( decimal->weight + 1 ) * DECIMAL_DEC_DIGITS + rscale ;
+   di = ( decimal->weight + 1 ) * SDB_DECIMAL_DEC_DIGITS + rscale ;
 
    /*
     * If di <= 0, the value loses all digits.
@@ -282,14 +282,14 @@ void _decimal_trunc( bson_decimal *decimal, int rscale )
    else
    {
       /* NBASE digits wanted */
-      ndigits = (di + DECIMAL_DEC_DIGITS - 1) / DECIMAL_DEC_DIGITS ;
+      ndigits = (di + SDB_DECIMAL_DEC_DIGITS - 1) / SDB_DECIMAL_DEC_DIGITS ;
 
       if ( ndigits <= decimal->ndigits )
       {
          decimal->ndigits = ndigits;
 
          /* 0, or number of decimal digits to keep in last NBASE digit */
-         di %= DECIMAL_DEC_DIGITS ;
+         di %= SDB_DECIMAL_DEC_DIGITS ;
          if (di > 0)
          {
             /* Must truncate within last NBASE digit */
@@ -382,7 +382,7 @@ int _decimal_sub_abs( const bson_decimal *left, const bson_decimal *right,
 
       if ( borrow < 0 )
       {
-         res_digits[i] = borrow + DECIMAL_NBASE ;
+         res_digits[i] = borrow + SDB_DECIMAL_NBASE ;
          borrow = -1 ;
       }
       else
@@ -489,9 +489,9 @@ int _decimal_add_abs( const bson_decimal *left, const bson_decimal *right,
          carry += rightDigits[i2] ;
       }
 
-      if ( carry >= DECIMAL_NBASE )
+      if ( carry >= SDB_DECIMAL_NBASE )
       {
-         res_digits[i] = carry - DECIMAL_NBASE ;
+         res_digits[i] = carry - SDB_DECIMAL_NBASE ;
          carry = 1 ;
       }
       else
@@ -904,8 +904,8 @@ int _decimal_mul( const bson_decimal *left, const bson_decimal *right,
     * or both inputs have fewer digits than they really do.
     */
    res_ndigits = leftNdigits + rightNdigits + 1 ;
-   maxdigits   = res_weight + 1 + ( rscale * DECIMAL_DEC_DIGITS ) +
-                 DECIMAL_MUL_GUARD_DIGITS ;
+   maxdigits   = res_weight + 1 + ( rscale * SDB_DECIMAL_DEC_DIGITS ) +
+                 SDB_DECIMAL_MUL_GUARD_DIGITS ;
    if ( res_ndigits > maxdigits )
    {
       if ( maxdigits < 3 )
@@ -979,17 +979,17 @@ int _decimal_mul( const bson_decimal *left, const bson_decimal *right,
 
       /* Time to normalize? */
       maxdig += leftDigit ;
-      if ( maxdig > INT_MAX / ( DECIMAL_NBASE - 1 ) )
+      if ( maxdig > INT_MAX / ( SDB_DECIMAL_NBASE - 1 ) )
       {
          /* Yes, do it */
          carry = 0 ;
          for ( i = res_ndigits - 1 ; i >= 0 ; i-- )
          {
             newdig = dig[i] + carry ;
-            if ( newdig >= DECIMAL_NBASE )
+            if ( newdig >= SDB_DECIMAL_NBASE )
             {
-               carry   = newdig / DECIMAL_NBASE ;
-               newdig -= carry * DECIMAL_NBASE ;
+               carry   = newdig / SDB_DECIMAL_NBASE ;
+               newdig -= carry * SDB_DECIMAL_NBASE ;
             }
             else
             {
@@ -1033,10 +1033,10 @@ int _decimal_mul( const bson_decimal *left, const bson_decimal *right,
    for ( i = res_ndigits - 1 ; i >= 0 ; i-- )
    {
       newdig = dig[i] + carry ;
-      if ( newdig >= DECIMAL_NBASE )
+      if ( newdig >= SDB_DECIMAL_NBASE )
       {
-         carry   = newdig / DECIMAL_NBASE ;
-         newdig -= carry * DECIMAL_NBASE ;
+         carry   = newdig / SDB_DECIMAL_NBASE ;
+         newdig -= carry * SDB_DECIMAL_NBASE ;
       }
       else
       {
@@ -1133,11 +1133,11 @@ int _decimal_get_div_scale( const bson_decimal *left,
    }
 
    /* Select result scale */
-   rscale = DECIMAL_MIN_SIG_DIGITS - qweight * DECIMAL_DEC_DIGITS ;
+   rscale = SDB_DECIMAL_MIN_SIG_DIGITS - qweight * SDB_DECIMAL_DEC_DIGITS ;
    rscale = Max( rscale, left->dscale ) ;
    rscale = Max( rscale, right->dscale ) ;
-   rscale = Max( rscale, DECIMAL_MIN_DISPLAY_SCALE ) ;
-   rscale = Min( rscale, DECIMAL_MAX_DISPLAY_SCALE ) ;
+   rscale = Max( rscale, SDB_DECIMAL_MIN_DISPLAY_SCALE ) ;
+   rscale = Min( rscale, SDB_DECIMAL_MAX_DISPLAY_SCALE ) ;
 
    return rscale ;
 }
@@ -1202,7 +1202,8 @@ int _decimal_div( const bson_decimal *left, const bson_decimal *right,
    res_weight = left->weight - right->weight ;
    /* The number of accurate result digits we need to produce: */
    res_ndigits = res_weight + 1
-                 + ( rscale + DECIMAL_DEC_DIGITS - 1 ) / DECIMAL_DEC_DIGITS ;
+                 + ( rscale + SDB_DECIMAL_DEC_DIGITS - 1 ) /
+                 SDB_DECIMAL_DEC_DIGITS ;
    /* ... but always at least 1 */
    res_ndigits = Max( res_ndigits, 1 ) ;
    /* If rounding needed, figure one more digit to ensure correct result */
@@ -1266,7 +1267,7 @@ int _decimal_div( const bson_decimal *left, const bson_decimal *right,
       carry = 0 ;
       for ( i = 0 ; i < res_ndigits ; i++ )
       {
-         carry         = carry * DECIMAL_NBASE + dividend[i + 1] ;
+         carry         = carry * SDB_DECIMAL_NBASE + dividend[i + 1] ;
          res_digits[i] = carry / divisor1 ;
          carry         = carry % divisor1 ;
       }
@@ -1282,15 +1283,15 @@ int _decimal_div( const bson_decimal *left, const bson_decimal *right,
        * factor "d". (The reason for allocating dividend[0] above is to
        * leave room for possible carry here.)
        */
-      if ( divisor[1] < DECIMAL_HALF_NBASE )
+      if ( divisor[1] < SDB_DECIMAL_HALF_NBASE )
       {
-         int d = DECIMAL_NBASE / ( divisor[1] + 1 ) ;
+         int d = SDB_DECIMAL_NBASE / ( divisor[1] + 1 ) ;
          carry = 0 ;
          for ( i = rightNdigits ; i > 0 ; i-- )
          {
             carry     += divisor[i] * d ;
-            divisor[i] = carry % DECIMAL_NBASE ;
-            carry      = carry / DECIMAL_NBASE ;
+            divisor[i] = carry % SDB_DECIMAL_NBASE ;
+            carry      = carry / SDB_DECIMAL_NBASE ;
          }
 
          carry = 0 ;
@@ -1298,8 +1299,8 @@ int _decimal_div( const bson_decimal *left, const bson_decimal *right,
          for ( i = leftNdigits; i >= 0 ; i-- )
          {
             carry      += dividend[i] * d ;
-            dividend[i] = carry % DECIMAL_NBASE ;
-            carry       = carry / DECIMAL_NBASE ;
+            dividend[i] = carry % SDB_DECIMAL_NBASE ;
+            carry       = carry / SDB_DECIMAL_NBASE ;
          }
       }
       /* First 2 divisor digits are used repeatedly in main loop */
@@ -1315,7 +1316,7 @@ int _decimal_div( const bson_decimal *left, const bson_decimal *right,
       for ( j = 0 ; j < res_ndigits ; j++ )
       {
          /* Estimate quotient digit from the first two dividend digits */
-         int next2digits = dividend[j] * DECIMAL_NBASE + dividend[j + 1];
+         int next2digits = dividend[j] * SDB_DECIMAL_NBASE + dividend[j + 1];
          int qhat        = 0 ;
 
          /*
@@ -1332,7 +1333,7 @@ int _decimal_div( const bson_decimal *left, const bson_decimal *right,
 
          if ( dividend[j] == divisor1 )
          {
-            qhat = DECIMAL_NBASE - 1 ;
+            qhat = SDB_DECIMAL_NBASE - 1 ;
          }
          else
          {
@@ -1346,7 +1347,7 @@ int _decimal_div( const bson_decimal *left, const bson_decimal *right,
           * because we know the divisor length is at least 2.)
           */
          while ( divisor2 * qhat >
-                     (next2digits - qhat * divisor1) * DECIMAL_NBASE +
+                     (next2digits - qhat * divisor1) * SDB_DECIMAL_NBASE +
                      dividend[j + 2] )
          {
             qhat-- ;
@@ -1365,12 +1366,12 @@ int _decimal_div( const bson_decimal *left, const bson_decimal *right,
             for ( i = rightNdigits ; i >= 0 ; i-- )
             {
                carry  += divisor[i] * qhat ;
-               borrow -= carry % DECIMAL_NBASE ;
-               carry   = carry / DECIMAL_NBASE ;
+               borrow -= carry % SDB_DECIMAL_NBASE ;
+               carry   = carry / SDB_DECIMAL_NBASE ;
                borrow += dividend[j + i] ;
                if ( borrow < 0 )
                {
-                  dividend[j + i] = borrow + DECIMAL_NBASE ;
+                  dividend[j + i] = borrow + SDB_DECIMAL_NBASE ;
                   borrow          = -1 ;
                }
                else
@@ -1395,9 +1396,9 @@ int _decimal_div( const bson_decimal *left, const bson_decimal *right,
                for ( i = rightNdigits ; i >= 0 ; i-- )
                {
                   carry += dividend[j + i] + divisor[i] ;
-                  if ( carry >= DECIMAL_NBASE )
+                  if ( carry >= SDB_DECIMAL_NBASE )
                   {
-                     dividend[j + i] = carry - DECIMAL_NBASE ;
+                     dividend[j + i] = carry - SDB_DECIMAL_NBASE ;
                      carry           = 1 ;
                   }
                   else
@@ -1474,13 +1475,13 @@ int _decimal_sprint_len( int sign, int weight, int scale )
    * as many as DEC_DIGITS-1 excess digits at the end, and in addition we
    * need room for sign, decimal point, null terminator.
    */
-   tmpSize = ( weight + 1 ) * DECIMAL_DEC_DIGITS ;
+   tmpSize = ( weight + 1 ) * SDB_DECIMAL_DEC_DIGITS ;
    if ( tmpSize <= 0 )
    {
       tmpSize = 1 ;
    }
 
-   tmpSize += scale + DECIMAL_DEC_DIGITS + 2 ;
+   tmpSize += scale + SDB_DECIMAL_DEC_DIGITS + 2 ;
 
    return tmpSize ;
 }
@@ -1515,12 +1516,12 @@ error:
 
 int _decimal_is_out_of_bound( bson_decimal *decimal )
 {
-   if ( decimal->weight >= DECIMAL_MAX_WEIGHT )
+   if ( decimal->weight >= SDB_DECIMAL_MAX_WEIGHT )
    {
       return 1 ;
    }
 
-   if ( decimal->dscale > DECIMAL_MAX_DSCALE )
+   if ( decimal->dscale > SDB_DECIMAL_MAX_DSCALE )
    {
       return 1 ;
    }
@@ -1549,7 +1550,7 @@ int decimal_init1( bson_decimal *decimal, int precision, int scale )
       goto error ;
    }
 
-   if ( precision < 1 || precision > DECIMAL_MAX_PRECISION )
+   if ( precision < 1 || precision > SDB_DECIMAL_MAX_PRECISION )
    {
       rc = -6 ;
       goto error ;
@@ -1730,7 +1731,7 @@ int decimal_round( bson_decimal *decimal, int rscale )
    decimal->dscale = rscale;
 
    /* decimal digits wanted */
-   di = ( decimal->weight + 1 ) * DECIMAL_DEC_DIGITS + rscale ;
+   di = ( decimal->weight + 1 ) * SDB_DECIMAL_DEC_DIGITS + rscale ;
 
    /*
    * If di = 0, the value loses all digits, but could round up to 1 if its
@@ -1745,10 +1746,10 @@ int decimal_round( bson_decimal *decimal, int rscale )
    else
    {
       /* NBASE digits wanted */
-      ndigits = ( di + DECIMAL_DEC_DIGITS - 1 ) / DECIMAL_DEC_DIGITS ;
+      ndigits = ( di + SDB_DECIMAL_DEC_DIGITS - 1 ) / SDB_DECIMAL_DEC_DIGITS ;
 
       /* 0, or number of decimal digits to keep in last NBASE digit */
-      di %= DECIMAL_DEC_DIGITS ;
+      di %= SDB_DECIMAL_DEC_DIGITS ;
 
       if ( ndigits < decimal->ndigits ||
          ( ndigits == decimal->ndigits && di > 0 ) )
@@ -1757,7 +1758,7 @@ int decimal_round( bson_decimal *decimal, int rscale )
 
          if (di == 0)
          {
-            carry = ( digits[ ndigits ] >= DECIMAL_HALF_NBASE ) ? 1 : 0;
+            carry = ( digits[ ndigits ] >= SDB_DECIMAL_HALF_NBASE ) ? 1 : 0;
          }
          else
          {
@@ -1772,9 +1773,9 @@ int decimal_round( bson_decimal *decimal, int rscale )
             if ( extra >= pow10/2 )
             {
                pow10 += digits[ ndigits ] ;
-               if ( pow10 >= DECIMAL_NBASE )
+               if ( pow10 >= SDB_DECIMAL_NBASE )
                {
-                  pow10 -= DECIMAL_NBASE ;
+                  pow10 -= SDB_DECIMAL_NBASE ;
                   carry = 1;
                }
 
@@ -1786,9 +1787,9 @@ int decimal_round( bson_decimal *decimal, int rscale )
          while (carry)
          {
             carry += digits[ --ndigits ] ;
-            if ( carry >= DECIMAL_NBASE )
+            if ( carry >= SDB_DECIMAL_NBASE )
             {
-               digits[ndigits] = carry - DECIMAL_NBASE ;
+               digits[ndigits] = carry - SDB_DECIMAL_NBASE ;
                carry = 1;
             }
             else
@@ -1896,7 +1897,7 @@ int64_t decimal_to_long( const bson_decimal *decimal )
    for ( i = 1 ; i <= weight ; i++ )
    {
       oldval = val ;
-      val *= DECIMAL_NBASE ;
+      val *= SDB_DECIMAL_NBASE ;
       if ( i < ndigits )
       {
          val += digits[i] ;
@@ -1909,7 +1910,7 @@ int64_t decimal_to_long( const bson_decimal *decimal )
       * nonzero value for which -val == val (on a two's complement machine,
       * anyway).
       */
-      if ( ( val / DECIMAL_NBASE ) != oldval )  /* possible overflow? */
+      if ( ( val / SDB_DECIMAL_NBASE ) != oldval )  /* possible overflow? */
       {
          if ( !neg || ( ( -val ) != val ) || ( val == 0 ) || ( oldval < 0 ) )
          {
@@ -2116,7 +2117,7 @@ int decimal_to_str( const bson_decimal *decimal, char *value, int value_size )
    {
       *cp++ = '.' ;
       endcp = cp + dscale ;
-      for ( i = 0; i < dscale; d++, i += DECIMAL_DEC_DIGITS )
+      for ( i = 0; i < dscale; d++, i += SDB_DECIMAL_DEC_DIGITS )
       {
          dig = (d >= 0 && d < decimal->ndigits) ? decimal->digits[d] : 0 ;
          d1  = dig / 1000 ;
@@ -2175,7 +2176,7 @@ int decimal_from_long( int64_t value, bson_decimal *decimal )
    }
 
    /* int8 can require at most 19 decimal digits; add one for safety */
-   rc = _decimal_alloc( decimal, 20 / DECIMAL_DEC_DIGITS ) ;
+   rc = _decimal_alloc( decimal, 20 / SDB_DECIMAL_DEC_DIGITS ) ;
    if ( 0 != rc )
    {
       goto error ;
@@ -2206,8 +2207,8 @@ int decimal_from_long( int64_t value, bson_decimal *decimal )
    {
       ptr-- ;
       ndigits++ ;
-      newuval = uval / DECIMAL_NBASE ;
-      *ptr = uval - newuval * DECIMAL_NBASE ;
+      newuval = uval / SDB_DECIMAL_NBASE ;
+      *ptr = uval - newuval * SDB_DECIMAL_NBASE ;
       uval = newuval ;
    } while (uval) ;
 
@@ -2353,11 +2354,11 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
    }
 
    decdigits = (unsigned char *) bson_malloc( strlen(cp) +
-                                                 DECIMAL_DEC_DIGITS * 2 ) ;
+                                                 SDB_DECIMAL_DEC_DIGITS * 2 ) ;
 
    /* leading padding for digit alignment later */
-   memset( decdigits, 0, DECIMAL_DEC_DIGITS ) ;
-   i = DECIMAL_DEC_DIGITS ;
+   memset( decdigits, 0, SDB_DECIMAL_DEC_DIGITS ) ;
+   i = SDB_DECIMAL_DEC_DIGITS ;
 
    while (*cp)
    {
@@ -2367,8 +2368,8 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
          if ( !have_dp )
          {
             dweight++ ;
-            if ( dweight > DECIMAL_MAX_DWEIGHT +
-                           DECIMAL_MAX_PRECISION )
+            if ( dweight > SDB_DECIMAL_MAX_DWEIGHT +
+                           SDB_DECIMAL_MAX_PRECISION )
             {
                rc = -6 ;
                goto error ;
@@ -2377,8 +2378,8 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
          else
          {
             dscale++ ;
-            if ( dscale > DECIMAL_MAX_DSCALE +
-                          DECIMAL_MAX_PRECISION )
+            if ( dscale > SDB_DECIMAL_MAX_DSCALE +
+                          SDB_DECIMAL_MAX_PRECISION )
             {
                rc = -6 ;
                goto error ;
@@ -2402,9 +2403,9 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
       }
    }
 
-   ddigits = i - DECIMAL_DEC_DIGITS ;
+   ddigits = i - SDB_DECIMAL_DEC_DIGITS ;
    /* trailing padding for digit alignment later */
-   memset( decdigits + i, 0, DECIMAL_DEC_DIGITS - 1 ) ;
+   memset( decdigits + i, 0, SDB_DECIMAL_DEC_DIGITS - 1 ) ;
 
    /* Handle exponent, if any */
    if (*cp == 'e' || *cp == 'E' )
@@ -2426,8 +2427,8 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
       }
 
       cp = pEndPtr ;
-      if ( exponent > DECIMAL_MAX_PRECISION ||
-           exponent < -DECIMAL_MAX_PRECISION )
+      if ( exponent > SDB_DECIMAL_MAX_PRECISION ||
+           exponent < -SDB_DECIMAL_MAX_PRECISION )
       {
          //meet the limit
          rc = -6 ;
@@ -2443,8 +2444,8 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
    }
 
    // make sure the count of digits is in the bound
-   if ( dweight >= DECIMAL_MAX_DWEIGHT ||
-        dscale > DECIMAL_MAX_DSCALE )
+   if ( dweight >= SDB_DECIMAL_MAX_DWEIGHT ||
+        dscale > SDB_DECIMAL_MAX_DSCALE )
    {
       rc = -6 ;
       goto error ;
@@ -2465,15 +2466,17 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
    */
    if ( dweight >= 0 )
    {
-      weight = (dweight + 1 + DECIMAL_DEC_DIGITS - 1) / DECIMAL_DEC_DIGITS - 1 ;
+      weight = (dweight + 1 + SDB_DECIMAL_DEC_DIGITS - 1) /
+               SDB_DECIMAL_DEC_DIGITS - 1 ;
    }
    else
    {
-      weight = -( (-dweight - 1)/DECIMAL_DEC_DIGITS + 1 ) ;
+      weight = -( (-dweight - 1)/SDB_DECIMAL_DEC_DIGITS + 1 ) ;
    }
 
-   offset  = (weight + 1) * DECIMAL_DEC_DIGITS - ( dweight + 1 ) ;
-   ndigits = (ddigits + offset + DECIMAL_DEC_DIGITS - 1) / DECIMAL_DEC_DIGITS ;
+   offset  = (weight + 1) * SDB_DECIMAL_DEC_DIGITS - ( dweight + 1 ) ;
+   ndigits = (ddigits + offset + SDB_DECIMAL_DEC_DIGITS - 1) /
+             SDB_DECIMAL_DEC_DIGITS ;
 
    rc = _decimal_alloc( decimal, ndigits ) ;
    if ( 0 != rc )
@@ -2484,14 +2487,14 @@ int decimal_from_str( const char *value, bson_decimal *decimal )
    decimal->weight = weight ;
    decimal->dscale = dscale ;
 
-   i = DECIMAL_DEC_DIGITS - offset ;
+   i = SDB_DECIMAL_DEC_DIGITS - offset ;
    digits = decimal->digits ;
 
    while (ndigits-- > 0)
    {
       *digits++ = ( ( decdigits[i] * 10 + decdigits[i + 1] ) * 10 +
                   decdigits[i + 2] ) * 10 + decdigits[i + 3] ;
-      i += DECIMAL_DEC_DIGITS ;
+      i += SDB_DECIMAL_DEC_DIGITS ;
    }
 
    /* Strip any leading/trailing zeroes, and normalize weight if zero */
@@ -2553,8 +2556,8 @@ int decimal_from_bsonvalue( const char *value, bson_decimal *decimal )
 
    decimal->typemod = typemod ;
    decimal->weight  = weight ;
-   decimal->sign    = scale & DECIMAL_SIGN_MASK ;
-   decimal->dscale  = scale & DECIMAL_DSCALE_MASK ;
+   decimal->sign    = scale & SDB_DECIMAL_SIGN_MASK ;
+   decimal->dscale  = scale & SDB_DECIMAL_DSCALE_MASK ;
    for ( index = 0 ; index < ndig ; index++ )
    {
       bson_little_endian16( &dig, value ) ;
@@ -3217,7 +3220,7 @@ int decimal_is_out_of_precision( bson_decimal *decimal, int typemod )
    * but perhaps might not have been yet. In any case, we must recognize a
    * true zero, whose weight doesn't mean anything.
    */
-   ddigits = ( decimal->weight + 1) * DECIMAL_DEC_DIGITS ;
+   ddigits = ( decimal->weight + 1) * SDB_DECIMAL_DEC_DIGITS ;
    if ( ddigits > maxdigits )
    {
       /* Determine true weight; and check for all-zero result */
@@ -3248,7 +3251,7 @@ int decimal_is_out_of_precision( bson_decimal *decimal, int typemod )
             break ;
          }
 
-         ddigits -= DECIMAL_DEC_DIGITS ;
+         ddigits -= SDB_DECIMAL_DEC_DIGITS ;
       }
    }
 

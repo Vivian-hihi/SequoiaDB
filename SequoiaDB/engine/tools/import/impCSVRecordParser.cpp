@@ -452,7 +452,7 @@ namespace import
          goto error;
       }
 
-      if (precision < 1 || precision > DECIMAL_MAX_PRECISION)
+      if (precision < 1 || precision > SDB_DECIMAL_MAX_PRECISION )
       {
          rc = SDB_INVALIDARG;
          PD_LOG(PDERROR, "invalid decimal precision");

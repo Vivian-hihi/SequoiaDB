@@ -55,7 +55,7 @@
 
 SDB_EXTERN_C_START
 
-#define DECIMAL_SIGN_MASK           0xC000
+#define SDB_DECIMAL_SIGN_MASK       0xC000
 #define SDB_DECIMAL_POS             0x0000
 #define SDB_DECIMAL_NEG             0x4000
 #define SDB_DECIMAL_SPECIAL_SIGN    0xC000
@@ -64,7 +64,7 @@ SDB_EXTERN_C_START
 #define SDB_DECIMAL_SPECIAL_MIN     0x0001
 #define SDB_DECIMAL_SPECIAL_MAX     0x0002
 
-#define DECIMAL_DSCALE_MASK         0x3FFF
+#define SDB_DECIMAL_DSCALE_MASK     0x3FFF
 
 
 #define SDB_DECIMAL_DBL_DIG        ( DBL_DIG )
@@ -78,16 +78,16 @@ SDB_EXTERN_C_START
  * Hardcoded precision limit - arbitrary, but must be small enough that
  * dscale values will fit in 14 bits.
  */
-#define DECIMAL_MAX_PRECISION       1000
-#define DECIMAL_MAX_DISPLAY_SCALE   DECIMAL_MAX_PRECISION
-#define DECIMAL_MIN_DISPLAY_SCALE   0
-#define DECIMAL_MIN_SIG_DIGITS      16
+#define SDB_DECIMAL_MAX_PRECISION         1000
+#define SDB_DECIMAL_MAX_DISPLAY_SCALE     SDB_DECIMAL_MAX_PRECISION
+#define SDB_DECIMAL_MIN_DISPLAY_SCALE     0
+#define SDB_DECIMAL_MIN_SIG_DIGITS        16
 
-#define DECIMAL_NBASE               10000
-#define DECIMAL_HALF_NBASE          5000
-#define DECIMAL_DEC_DIGITS          4     /* decimal digits per NBASE digit */
-#define DECIMAL_MUL_GUARD_DIGITS    2     /* these are measured in NBASE digits */
-#define DECIMAL_DIV_GUARD_DIGITS    4
+#define SDB_DECIMAL_NBASE                 10000
+#define SDB_DECIMAL_HALF_NBASE            5000
+#define SDB_DECIMAL_DEC_DIGITS            4     /* decimal digits per NBASE digit */
+#define SDB_DECIMAL_MUL_GUARD_DIGITS      2     /* these are measured in NBASE digits */
+#define SDB_DECIMAL_DIV_GUARD_DIGITS      4
 
 typedef struct {
    int typemod;    /* precision & scale define:  
