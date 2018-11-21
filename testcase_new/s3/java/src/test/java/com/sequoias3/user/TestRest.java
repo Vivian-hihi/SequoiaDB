@@ -18,6 +18,7 @@ import com.sequoias3.testcommon.S3TestBase;
 
 public class TestRest extends S3TestBase {
     private HttpHeaders requestHeaders;
+    private String addr = "http://"+ S3TestBase.s3HostName + ":" + S3TestBase.s3Port;
     private String url = "";
     private HttpMethod requestMethod;
     private HttpEntity<?> requestEntity;
@@ -70,7 +71,7 @@ public class TestRest extends S3TestBase {
     }
 
     private String setUrl(String api) {
-        this.url = S3TestBase.s3ClientUrl + api;
+        this.url = addr + api;
         return url;
     }
 
