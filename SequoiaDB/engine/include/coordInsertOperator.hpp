@@ -168,15 +168,6 @@ namespace engine
          VEC_OBJECT     _vecObject ;
          GroupSubCLMap  _grpSubCLDatas ;
 
-         /*
-            For autoIncrement
-         */
-         CHAR*          _pNewMsg ;
-         INT32          _newMsgSize ;
-         INT32          _newMsgLen ;
-         INT32          _orgMsgLen ;
-         clsAIIDSet     _lastAIIDs ;
-
    } ;
    typedef _coordInsertOperator coordInsertOperator ;
 

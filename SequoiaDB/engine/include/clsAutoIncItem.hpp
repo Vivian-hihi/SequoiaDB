@@ -63,18 +63,22 @@ namespace engine
    /*
       define Auto-Increment Identification
    */
-   struct _clsAIID
+   union _clsAutoIncID
    {
-      utilSequenceID seqID ;
-      AUTOINC_GEN_TYPE genType ;
-
-      BOOLEAN operator< ( const _clsAIID &r ) const
+      struct
       {
-         return seqID < r.seqID || genType < r.genType ? TRUE : FALSE ;
+         utilSequenceID seqID ;
+         AUTOINC_GEN_TYPE genType ;
+      } ;
+      CHAR data[ sizeof(utilSequenceID) + sizeof(AUTOINC_GEN_TYPE) ] ;
+
+      BOOLEAN operator< ( const _clsAutoIncID &r ) const
+      {
+         return ossMemcmp( data, r.data, sizeof(data) ) < 0 ? TRUE : FALSE ;
       }
    } ;
-   typedef struct _clsAIID clsAIID ;
-   typedef _utilSet< clsAIID, 1 > clsAIIDSet ;
+   typedef union _clsAutoIncID clsAutoIncID ;
+   typedef _utilSet< clsAutoIncID, 1 > clsAutoIncIDSet ;
 
    /*
       define _clsAutoIncItem
@@ -98,7 +102,7 @@ namespace engine
       const CHAR*          sequenceName() const { return _sequenceName ; }
       const utilSequenceID sequenceID() const { return _sequenceID ; }
       AUTOINC_GEN_TYPE     generatedType() const { return _generatedType ; }
-      const clsAIID        AIID() const ;
+      const clsAutoIncID   ID() const ;
 
       BOOLEAN              hasSubField() const { return _pSubFieldMap ? TRUE :FALSE ; }
       const _clsAutoIncItem*  findItem( const CHAR *pName ) const ;
@@ -155,7 +159,7 @@ namespace engine
       UINT32   itemCount() const { return _mapItem.size() ; }
       UINT32   getEleSize() const { return _eleSize ; }
 
-      const clsAIIDSet&          getAIIDs() const { return _aiidSet ; }
+      const clsAutoIncIDSet&     getIDs() const { return _idSet ; }
       const clsAutoIncItem*      findItem( const CHAR *pName ) const ;
 
       const vector<BSONObj>&     getFields() const { return _vecFields ; }
@@ -172,7 +176,7 @@ namespace engine
       UINT32               _fieldCount ;
 
       vector<BSONObj>      _vecFields ;
-      clsAIIDSet           _aiidSet ;
+      clsAutoIncIDSet      _idSet ;
       UINT32               _eleSize ;
 
    } ;

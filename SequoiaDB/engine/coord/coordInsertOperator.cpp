@@ -161,11 +161,6 @@ namespace engine
 
       const static string s_insertStr("Insert" ) ;
       setName( s_insertStr ) ;
-
-      _pNewMsg = NULL ;
-      _newMsgLen = 0 ;
-      _newMsgSize = 0 ;
-      _orgMsgLen = 0 ;
    }
 
    _coordInsertOperator::~_coordInsertOperator()
@@ -215,9 +210,15 @@ namespace engine
       coordCataSel cataSel ;
       MsgRouteID errNodeID ;
 
-      const clsAutoIncSet *pAutoIncSet ;
+      // for autoIncrement
+      CHAR *pNewMsg = NULL ;
+      INT32 newMsgSize = 0 ;
+      INT32 newMsgLen = 0 ;
+      INT32 orgMsgLen = 0 ;
       MsgOpInsert *pTmpInsertMsg = NULL ;
-      clsAIIDSet curAIIDs ;
+      const clsAutoIncSet *pAutoIncSet = NULL ;
+      clsAutoIncIDSet curAutoIncIDs ;
+      clsAutoIncIDSet lastAutoIncIDs ;
 
       // fill default-reply(insert success)
       MsgOpInsert *pInsertMsg          = (MsgOpInsert *)pMsg ;
@@ -260,16 +261,16 @@ namespace engine
                  "failed, rc: %d", pCollectionName, rc ) ;
          goto error ;
       }
-      _orgMsgLen = pMsg->messageLength ;
+      orgMsgLen = pMsg->messageLength ;
 
    retry:
       if ( cataSel.getCataPtr()->hasAutoIncrement() )
       {
          pAutoIncSet = &cataSel.getCataPtr()->getAutoIncSet() ;
-         curAIIDs = pAutoIncSet->getAIIDs() ;
+         curAutoIncIDs = pAutoIncSet->getIDs() ;
 
          if ( 0 == result._sucGroupLst.size() &&
-              curAIIDs != _lastAIIDs )
+              curAutoIncIDs != lastAutoIncIDs )
          {
             // in case of reshard, clear the last shard result.
             if ( cataSel.getCataPtr()->isMainCL() )
@@ -282,12 +283,12 @@ namespace engine
             }
 
             rc = _addAutoIncToMsg( *pAutoIncSet, pInsertMsg, pInsertor,
-                                   count, _orgMsgLen, cb,
-                                   &_pNewMsg, _newMsgSize, _newMsgLen ) ;
+                                   count, orgMsgLen, cb,
+                                   &pNewMsg, newMsgSize, newMsgLen ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement fields to "
                          "msg, rc: %d", rc ) ;
-            inMsg._pMsg = (MsgHeader*)_pNewMsg ;
-            _lastAIIDs = curAIIDs ;
+            inMsg._pMsg = (MsgHeader*)pNewMsg ;
+            lastAutoIncIDs = curAutoIncIDs ;
          }
       }
 
@@ -330,7 +331,7 @@ namespace engine
          /// InsertedNum(Hi) + IgnoredNum(Lo)
          contextID = ossPack32To64( _insertedNum, _ignoredNum ) ;
       }
-      msgReleaseBuffer( _pNewMsg, cb ) ;
+      msgReleaseBuffer( pNewMsg, cb ) ;
       PD_TRACE_EXITRC ( COORD_INSERTOPR_EXE, rc ) ;
       return rc ;
    error:

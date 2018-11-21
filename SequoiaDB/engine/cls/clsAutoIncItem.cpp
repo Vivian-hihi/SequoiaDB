@@ -421,12 +421,12 @@ namespace engine
       return NULL ;
    }
 
-   const clsAIID _clsAutoIncItem::AIID() const
+   const clsAutoIncID _clsAutoIncItem::ID() const
    {
-      clsAIID aiid ;
-      aiid.seqID = _sequenceID ;
-      aiid.genType = _generatedType ;
-      return aiid ;
+      clsAutoIncID id ;
+      id.seqID = _sequenceID ;
+      id.genType = _generatedType ;
+      return id ;
    }
 
    /*
@@ -568,7 +568,7 @@ namespace engine
       clsAutoIncItem *pItem = NULL ;
       clsAutoIncItem *pFirstItem = NULL ;
       AUTOINC_ITEM_MAP_IT it ;
-      clsAIID aiid ;
+      clsAutoIncID id ;
 
       pItem = SDB_OSS_NEW clsAutoIncItem() ;
       if ( !pItem )
@@ -591,7 +591,7 @@ namespace engine
       {
          pItem = pItem->_pSubFieldMap->begin()->second ;
       }
-      aiid = pItem->AIID() ;
+      id = pItem->ID() ;
       pItem = pFirstItem ;
 
       /// Find first
@@ -616,7 +616,7 @@ namespace engine
       }
 
       ++_fieldCount ;
-      _aiidSet.insert( aiid ) ;
+      _idSet.insert( id ) ;
       _vecFields.push_back( obj ) ;
 
    done:
