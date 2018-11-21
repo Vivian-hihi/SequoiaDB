@@ -670,7 +670,7 @@ public class ObjectServiceImpl implements ObjectService {
 
     private void recordVersionsTruncated(ListVersionsResult listVersionsResult,
                                          String nextKey, String nextVersionId) {
-        listVersionsResult.setTruncated(true);
+        listVersionsResult.setIsTruncated(true);
         listVersionsResult.setNextVersionIdMarker(nextVersionId);
         listVersionsResult.setNextKeyMarker(nextKey);
     }
@@ -1080,6 +1080,9 @@ public class ObjectServiceImpl implements ObjectService {
                     }
                 } else {
                     if (!isExist) {
+                        isFindNext = true;
+                    }
+                    if (keyA.compareTo(keyMarker) > 0){
                         isFindNext = true;
                     }
                     if (isFindNext) {

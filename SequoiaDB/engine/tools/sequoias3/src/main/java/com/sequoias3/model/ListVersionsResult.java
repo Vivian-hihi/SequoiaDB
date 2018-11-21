@@ -109,11 +109,11 @@ public class ListVersionsResult {
         return versionList;
     }
 
-    public void setTruncated(Boolean truncated) {
-        isTruncated = truncated;
+    public void setIsTruncated(Boolean isTruncated) {
+        this.isTruncated = isTruncated;
     }
 
-    public Boolean getTruncated() {
+    public Boolean getIsTruncated() {
         return isTruncated;
     }
 
