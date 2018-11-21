@@ -12,7 +12,7 @@ class Rename16619 extends PHPUnit_Framework_TestCase
 {
    private static $csName = "cs16619";
    private static $clName = "cl16619";
-   private static $cs;
+   private static $csNum = 10;
    private static $db;
    
    public static function setUpBeforeClass()
@@ -22,43 +22,46 @@ class Rename16619 extends PHPUnit_Framework_TestCase
                            globalParameter::getCoordPort()) ;
       self::checkErrno( 0, self::$db -> getError()['errno'] );                     
                            
-      for($i = 0; $i < 3; $i++)
+      //create cs to query collectionspaces snapshot
+      for($i = 0; $i < self::$csNum; $i++)
       {
-         self::$cs = self::$db -> selectCS( self::$csName . "_" . $i);
+         $cs = self::$db -> selectCS( self::$csName . "_" . $i);
          self::checkErrno( 0, self::$db -> getError()['errno'] );
-         self::$cs -> selectCL( self::$clName );	
+         $cs -> selectCL( self::$clName );	
          self::checkErrno( 0, self::$db -> getError()['errno'] );
       }
    }
    
    function test()
    {
+      $skipNum = 5;
+      $returnNum = 1;
+      $expCSName = self::$csName . "_" . $skipNum;
       echo "\n---Begin to check snapshot.\n";
       $csSnapCur = self::$db -> snapshot( SDB_SNAP_COLLECTIONSPACES, 
-				array( "Name" => self::$csName . "_1" ),
+				array( "Name" => $expCSName ),
 				array( "Collection" => array( "$include" => 1) ),
 				array( "Name" => 1),
-				null, 0, -1 );
-      //$csSnapCur = self::$db -> snapshot( SDB_SNAP_COLLECTIONSPACES, array( "Name" => self::$csName . "_1") );
+				null, $skipNum, $returnNum );
       if( empty( $csSnapCur ) ) 
       {
-	 throw new Exception( $csName . "_1 is not exist, check snapshot error");
+	 throw new Exception( $expCSName ." is not exist, check snapshot error");
       }
+      //check snapshot cs name and returnNum
       $times = 0;
       while( $record = $csSnapCur -> next())
       {
-         var_dump( $record );
          $clArr = $record["Collection"];
          $actCSName = explode( ".", $clArr[0]["Name"] )[0];
-         if( strcmp( $actCSName, self::$csName . "_1" ) !=0 )
+         if( strcmp( $actCSName, $expCSName ) !=0 )
 	 {
-            throw new Exception( "check cl full name error, exp: " . self::$csName . "_1  act: " . $actCSName );
+            throw new Exception( "check cl full name error, exp: " . $expCSName .  "  act: " . $actCSName );
          }
          $times++;
       }
-      if( $times != 1)
+      if( $times != $returnNum)
       {
-         throw new Exception( "check snapshot record num error, exp: 1, act: " . $times );
+         throw new Exception( "check snapshot record num error, exp: ". $returnNum .", act: " . $times );
       }
    }
    
