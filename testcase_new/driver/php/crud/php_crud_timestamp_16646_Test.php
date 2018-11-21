@@ -8,7 +8,7 @@
 define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/../global.php';
 
-class TestTimestamp extends PHPUnit_Framework_TestCase
+class TestTimestamp16646 extends PHPUnit_Framework_TestCase
 {
    private static $csName = "cs16646";
    private static $clName = "cl16646";
@@ -34,21 +34,32 @@ class TestTimestamp extends PHPUnit_Framework_TestCase
 
       $maxTime = 2147483647;
       $minTime = -2147483648;
-      self::$cl -> insert( array( 'time' => new SequoiaTimestamp( $maxTime, -1 ), 'No' => 1) );
+
+      //check insert inc>999999 timestamp
+      self::$cl -> insert( array( 'time' => new SequoiaTimestamp( $maxTime, -1000000 ), 'No' => 1) );
       self::checkErrno( 0, self::$db -> getError()['errno'] );
-      self::checkIncResult( '2038-01-19-11.14.06.999999', 1);
+      self::checkIncResult( new SequoiaTimestamp( 2147483646 ), 1);
 
       self::$cl -> insert( array( 'time' => new SequoiaTimestamp( $maxTime, 1000000 ), 'No' => 2) );
       self::checkErrno( 0, self::$db -> getError()['errno'] );
-      self::checkIncResult( '1901-12-14-04.45.52.000000', 2);
+      self::checkIncResult( new SequoiaTimestamp( -2147483648 ), 2);
 
-      self::$cl -> insert( array( 'time' => new SequoiaTimestamp( $minTime, -1 ), 'No' => 3) );
+      self::$cl -> insert( array( 'time' => new SequoiaTimestamp( $minTime, -1000000 ), 'No' => 3) );
       self::checkErrno( 0, self::$db -> getError()['errno'] );
-      self::checkIncResult( '2038-01-19-11.14.07.999999', 3);
+      self::checkIncResult( new SequoiaTimestamp( 2147483647 ), 3);
 
-      self::$cl -> insert( array( 'time' => new SequoiaTimestamp( $minTime, 1000000 ), 'No' => 4) );
+      self::$cl -> insert( array( 'time' => new SequoiaTimestamp( $minTime, -1000000 ), 'No' => 4) );
       self::checkErrno( 0, self::$db -> getError()['errno'] );
-      self::checkIncResult( '1901-12-14-04.45.53.000000', 4);
+      self::checkIncResult( new SequoiaTimestamp( 2147483647 ), 4);
+      
+      //check update inc>999999 timestamp
+      self::$cl -> update( array( '$set' => array( 'time' => new SequoiaTimestamp( $maxTime, 1000000 ) ) ), array( 'No' => 1 ) );
+      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      self::checkIncResult( new SequoiaTimestamp( -2147483648 ), 1);
+
+      self::$cl -> update( array( '$set' => array( 'time' => new SequoiaTimestamp( $minTime, -1000000 ) ) ), array( 'No' => 4 ) );
+      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      self::checkIncResult( new SequoiaTimestamp( 2147483647 ), 4);
    }
    
    public static function tearDownAfterClass()
@@ -72,7 +83,7 @@ class TestTimestamp extends PHPUnit_Framework_TestCase
       while( $record = $cursor -> next() )
       {
          $actTime = $record[ 'time'];
-         if( $actTime != $times )
+         if( $actTime != $times -> __toString() )
          {
             throw new Exception( "check " . $No . " value error, exp: " . $times ." act: " . $actTime );
          }
