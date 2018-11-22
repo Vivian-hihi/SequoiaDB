@@ -89,7 +89,7 @@ public class KillNode extends Fault {
     public void init() throws FaultException {
         try {
             ssh = new Ssh(hostName, user, passwd, port);
-
+            
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
         } catch (ReliabilityException e) {

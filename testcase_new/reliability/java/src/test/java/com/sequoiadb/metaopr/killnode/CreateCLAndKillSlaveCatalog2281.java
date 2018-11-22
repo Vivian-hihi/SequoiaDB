@@ -242,7 +242,6 @@ public class CreateCLAndKillSlaveCatalog2281 extends SdbTestBase {
         for (int i = 0; i < clsList.size(); i++) {
 			String clName = (String) clsList.get(i).get("Name");
 			actCLNames.add( new BasicBSONObject("Name", clName) );
-			System.out.println(" wa sai!!!");
 		}
         
         // compare them
