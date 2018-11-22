@@ -981,8 +981,88 @@ TEST(sdb, truncate)
    sdbReleaseConnection ( connection ) ;
 }
 
+TEST(sdb, sdbGetLastErrorObjTest)
+{
+   sdbConnectionHandle connection = 0 ;
+   sdbCSHandle collectionspace    = 0 ;
+   sdbCollectionHandle collection = 0 ;
+   sdbCollectionHandle cl         = 0 ;
+   sdbCursorHandle cursor         = 0 ;
+   INT32 rc                       = SDB_OK ;
+   const CHAR *pIndexName         = "aIndex" ;
+   bson errorResult ;
+   bson indexDef ;
+   bson_init( &indexDef ) ;
+   bson_append_int( &indexDef, "a", 1 ) ;
+   bson_finish( &indexDef ) ;
 
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   rc = getCollectionSpace ( connection,
+                             COLLECTION_SPACE_NAME,
+                             &collectionspace ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection ( connection,
+                        COLLECTION_FULL_NAME,
+                        &collection ) ;
+   sleep( 1 ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_init( &errorResult ) ;
+   rc = sdbGetLastErrorObj( connection, &errorResult ) ;
+   ASSERT_EQ( SDB_DMS_EOC, rc ) ;
+   ASSERT_EQ( 0, bson_size( &errorResult ) ) ;
+   bson_destroy( &errorResult ) ;
 
+   // case 1:
+   rc = sdbGetCollection1( collectionspace, "aaaa", &cl ) ;
+   ASSERT_EQ( SDB_DMS_NOTEXIST, rc ) ;
+   bson_init( &errorResult ) ;
+   rc = sdbGetLastErrorObj( connection, &errorResult ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "get cl fail, error obj is: \n" ) ;
+   bson_print( &errorResult ) ;
+   ASSERT_TRUE( bson_size( &errorResult ) > 5 ) ;
+   bson_destroy( &errorResult ) ;
+
+   bson_init( &errorResult ) ;
+   rc = sdbGetLastErrorObj( collectionspace, &errorResult ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "get cl fail, error obj is: \n" ) ;
+   bson_print( &errorResult ) ;
+   ASSERT_TRUE( bson_size( &errorResult ) > 5 ) ;
+   bson_destroy( &errorResult ) ;
+
+   sdbCleanLastErrorObj( connection ) ;
+
+   bson_init( &errorResult ) ;
+   rc = sdbGetLastErrorObj( connection, &errorResult ) ;
+   ASSERT_EQ( SDB_DMS_EOC, rc ) ;
+   ASSERT_EQ( 0, bson_size( &errorResult ) ) ;
+   bson_destroy( &errorResult ) ;
+
+   rc = sdbGetCollection1( collectionspace, "aaaa", &cl ) ;
+   ASSERT_EQ( SDB_DMS_NOTEXIST, rc ) ;
+
+   sdbDisconnect ( connection ) ;
+   sdbReleaseCollection ( cl ) ;
+   sdbReleaseCollection ( collection ) ;
+   sdbReleaseCS ( collectionspace ) ;
+   sdbReleaseConnection ( connection ) ;
+
+   // case 2:
+   rc = sdbGetLastErrorObj( connection, &errorResult ) ;
+   ASSERT_EQ( SDB_DMS_EOC, rc ) ;
+   rc = sdbGetLastErrorObj( collectionspace, &errorResult ) ;
+   ASSERT_EQ( SDB_DMS_EOC, rc ) ;
+   sdbCleanLastErrorObj( connection ) ;
+   sdbCleanLastErrorObj( collectionspace ) ;
+}
 
 
 
