@@ -1053,11 +1053,15 @@ namespace sdbclient
       std::set<ossValuePtr>    _lobs ;
       hashTable               *_tb ;
       bson::BSONObj            _attributeCache ;
+      const CHAR*              _pErrorBuf ;
+      INT32                    _errorBufSize ;
+
 
       // last send or recive time
       ossTimestamp             _lastAliveTime;
 
       void _disconnect () ;
+      void _setErrorBuffer( const CHAR *pBuf, INT32 bufSize ) ;
       INT32 _send ( CHAR *pBuffer ) ;
       INT32 _recv ( CHAR **ppBuffer, INT32 *size ) ;
       INT32 _recvExtract ( CHAR **ppBuffer, INT32 *size, SINT64 &contextID,
@@ -1531,6 +1535,10 @@ namespace sdbclient
 
       INT32 renameCollectionSpace( const CHAR* oldName, const CHAR* newName,
                              const bson::BSONObj &options = _sdbStaticObject ) ;
+
+      INT32 getLastErrorObj( bson::BSONObj &result ) ;
+      void cleanLastErrorObj() ;
+
    } ;
    typedef class _sdbImpl sdbImpl ;
 }

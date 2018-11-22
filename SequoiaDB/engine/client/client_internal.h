@@ -54,6 +54,10 @@ struct _sdbConnectionStruct
    Node *_sockets ;
    hashTable *_tb ;
    bson *_attributeCache ;
+   // this pointer is used to point to the place of error object, no need to 
+   // malloc and free
+   const CHAR *_pErrObjBuf ;
+   INT32 _errObjBufSize ;
 
    UINT64 reserveSpace1 ;
    ossMutex _sockMutex ;

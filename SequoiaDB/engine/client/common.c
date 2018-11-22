@@ -3426,3 +3426,36 @@ error:
    goto done ;   
 }
 
+INT32 clientSnprintf( CHAR* pBuffer, INT32 bufSize, const CHAR* pFormat, ... )
+{
+   va_list ap ;
+   INT32 n = -1 ;
+   if ( !pBuffer || bufSize <= 0 )
+   {
+      return -1 ;
+   }
+   va_start( ap, pFormat ) ;
+#if defined (_WINDOWS)
+   n=_vsnprintf_s( pBuffer, bufSize, _TRUNCATE, pFormat, ap ) ;
+#else
+   n=vsnprintf( pBuffer, bufSize, pFormat, ap ) ;
+#endif
+   va_end( ap ) ;
+   // Set terminate if the length is greater than buffer size
+   if ( n <= 0 )
+   {
+      pBuffer[0] = '\0' ;
+      n = -1 ;
+   }
+   else if ( n >= bufSize )
+   {
+      n = bufSize - 1 ;
+      pBuffer[n] = '\0' ;
+   }
+   else
+   {
+      pBuffer[n] = '\0' ;
+   }
+   return n ;
+}
+

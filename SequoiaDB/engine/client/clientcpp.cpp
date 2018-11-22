@@ -56,9 +56,6 @@ using namespace bson ;
 
 namespace sdbclient
 {
-   OSS_THREAD_LOCAL const CHAR* _pErrorBuf = NULL ;
-   OSS_THREAD_LOCAL INT32       _errorBufSize = 0 ;
-
    static ERROR_ON_REPLY_FUNC _sdbErrorOnReplyCallback = NULL ;
    static BOOLEAN _sdbIsSrand = FALSE ;
 #if defined (_LINUX) || defined (_AIX)
@@ -7240,6 +7237,7 @@ error :
          _sock = NULL ;
       }
       _clearSessionAttrCache( FALSE ) ;
+      _setErrorBuffer( NULL, 0 ) ;
    }
 
    INT32 _sdbImpl::_connect ( const CHAR *pHostName,
@@ -8033,6 +8031,12 @@ error :
       return rc ;
    error :
       goto done ;
+   }
+
+   void _sdbImpl::_setErrorBuffer( const CHAR *pBuf, INT32 bufSize )
+   {
+      _pErrorBuf = pBuf ;
+      _errorBufSize = bufSize ;
    }
 
    INT32 _sdbImpl::_send ( CHAR *pBuffer )
@@ -10814,6 +10818,52 @@ error :
    error:
       goto done ;
    }
+
+   INT32 _sdbImpl::getLastErrorObj( bson::BSONObj &result )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj localObj ;
+
+      if ( _pErrorBuf && _errorBufSize >= 5 &&
+           *(INT32*)_pErrorBuf >= 5 )
+      {  
+         try
+         {
+            localObj.init( _pErrorBuf ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_CORRUPTED_RECORD ;
+            goto error ;
+         }
+         try
+         {
+            result = localObj.copy() ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+   
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+   
+   void _sdbImpl::cleanLastErrorObj()
+   {
+      _setErrorBuffer( NULL, 0 ) ;
+   }
+
+
 
 /*   INT32 _sdbImpl::modifyConfig ( INT32 nodeID,
                                   std::map<std::string,std::string> &config )

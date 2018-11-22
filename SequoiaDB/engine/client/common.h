@@ -283,5 +283,8 @@ INT32 clientBuildCloseLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
                               SINT64 contextID, UINT64 reqID,
                               BOOLEAN endianConvert ) ;
 
+INT32 clientSnprintf( CHAR* pBuffer, INT32 bufSize, const CHAR* pFormat, ... ) ;
+
+
 SDB_EXTERN_C_END
 #endif

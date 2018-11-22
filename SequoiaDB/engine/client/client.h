@@ -230,20 +230,6 @@ SDB_EXPORT INT32 sdbSecureConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
 */
 SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle handle ) ;
 
-/** \fn void sdbGetLastErrorObj ( bson *obj )
-    \brief Get the error object info for the last operation in the thread
-    \param [out] obj The return error bson object
-    \retval SDB_OK Get error object Success
-    \retval SDB_DMS_EOC There is no error object
-    \retval Others Get error object Fail
-*/
-SDB_EXPORT INT32 sdbGetLastErrorObj( bson *obj ) ;
-
-/** \fn void sdbCleanLastErrorObj ()
-    \brief Clean the last error object info in the thread
-*/
-SDB_EXPORT void sdbCleanLastErrorObj() ;
-
 /** \fn INT32 sdbCreateUsr( sdbConnectionHandle cHandle, const CHAR *pUsrName,
                             const CHAR *pPasswd ) ;
     \brief Create an account
@@ -3347,6 +3333,25 @@ SDB_EXPORT void sdbSetConnectionInterruptFunc(
 */
 SDB_EXPORT INT32 sdbAnalyze( sdbConnectionHandle cHandle,
                              bson *options ) ;
+
+/** \fn void sdbGetLastErrorObj ( sdbConnectionHandle cHandle, bson *obj )
+    \brief Get the error object(only return by engine) of the last operation.
+           The error object will not be clean up automatically until the next
+           error object cover it.
+    \param [in] cHandle The handle of current connection.
+    \param [out] obj The return error bson object.
+    \retval SDB_OK Get error object Success
+    \retval SDB_DMS_EOC There is no error object
+    \retval Others Get error object Fail
+*/
+SDB_EXPORT INT32 sdbGetLastErrorObj( sdbConnectionHandle cHandle, bson *obj ) ;
+
+/** \fn void sdbCleanLastErrorObj ( sdbConnectionHandle cHandle )
+    \brief Clean the last error object(returned by engine) of current connection.
+    \param [in] cHandle The handle of current connection.
+*/
+SDB_EXPORT void sdbCleanLastErrorObj( sdbConnectionHandle cHandle ) ;
+
 
 SDB_EXTERN_C_END
 #endif

@@ -4077,6 +4077,8 @@ namespace sdbclient
       virtual INT32 renameCollectionSpace( const CHAR* oldName,
                                            const CHAR* newName,
                         const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+      virtual INT32 getLastErrorObj( bson::BSONObj &result ) = 0 ;
+      virtual void cleanLastErrorObj() = 0 ;
    } ;
 /** \typedef class _sdb _sdb
 */
@@ -5918,6 +5920,31 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pSDB->renameCollectionSpace( oldName, newName, options ) ;
       }
+
+      /** \fn INT32 getLastErrorObj( bson::BSONObj &result )
+          \brief Get the error object(only return by engine) of the last operation.
+                 The error object will not be clean up automatically until the next
+                 error object cover it.
+          \param [out] result The return error bson object.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 getLastErrorObj( bson::BSONObj &result )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->getLastErrorObj( result ) ;
+      }
+
+      /** \fn void cleanLastErrorObj()
+          \brief Clean the last error object(returned by engine) of current connection.
+      */
+      void cleanLastErrorObj()
+      {
+         if( !pSDB ) return  ;
+         return pSDB->cleanLastErrorObj() ;
+      }
+      
    } ;
 /** \typedef class sdb sdb
       \brief Class sdb definition for sdb.
