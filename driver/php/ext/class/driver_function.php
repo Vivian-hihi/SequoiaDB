@@ -56,27 +56,3 @@
  *
 */
 function sdbInitClient( $config ){}
-
-/**
- * Get detailed information about the last error.
- *
- * @return Returns the result of the last error message
- *
- * @retval array array( 'errno' => 0, 'description' => '', 'detail' => '', ... )
- *
- * Example:
- * @code
- * $db = new SequoiaDB() ;
- * $err = $db -> connect( "192.168.1.10:11810" ) ;
- * if( $err['errno'] != 0 )
- * {
- *    echo "Failed to connect database, error code: ".$err['errno'] ;
- *    return ;
- * }
- * $cl = $db -> getCL( "foo.bar" ) ;
- * echo "Get the last error message." ;
- * $errMsg = sdbGetLastErrorMsg() ;
- * var_dump( $errMsg ) ;
- * @endcode
-*/
-public function sdbGetLastErrorMsg(){}

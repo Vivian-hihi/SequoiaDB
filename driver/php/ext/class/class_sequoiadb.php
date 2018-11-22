@@ -303,6 +303,30 @@ class SequoiaDB
    public function getError(){}
 
    /**
+    * Get the error object(only return by engine) of the last operation. The error object will not be clean up automatically until the next error object cover it.
+    *
+    * @return Returns the result of the last error message
+    *
+    * @retval array array( 'errno' => 0, 'description' => '', 'detail' => '', ... )
+    *
+    * Example:
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 )
+    * {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $cs = $db -> getCS( "not_exist_cs" ) ;
+    * echo "Get the last error message." ;
+    * $errMsg = $db -> getLastErrorMsg() ;
+    * var_dump( $errMsg ) ;
+    * @endcode
+   */
+   public function getLastErrorMsg(){}
+
+   /**
     * Connect to database.
     *
     * @param $address	an array or the string argument. The Host Name or IP Address and The Service Name or Port of Database Server.

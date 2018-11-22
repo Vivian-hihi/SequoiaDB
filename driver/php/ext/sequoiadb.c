@@ -70,13 +70,11 @@ INT32 timestampDesc ;
 INT32 decimalDesc ;
 
 PHP_FUNCTION( sdbInitClient ) ;
-PHP_FUNCTION( sdbGetLastErrorMsg ) ;
 
 //Sdb object function
 const zend_function_entry sdbFun[] = {
    //driver function
    PHP_FE( sdbInitClient, NULL )
-   PHP_FE( sdbGetLastErrorMsg, NULL )
    //driver
    PHP_ME( SequoiaDB, __construct,        NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR )
    PHP_ME( SequoiaDB, install,            NULL, ZEND_ACC_PUBLIC )
@@ -87,6 +85,7 @@ const zend_function_entry sdbFun[] = {
    PHP_ME( SequoiaDB, isValid,               NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, syncDB,                NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, invalidateCache,       NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDB, getLastErrorMsg,       NULL, ZEND_ACC_PUBLIC )
    //snapshot & list
    PHP_ME( SequoiaDB, snapshot,              NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, resetSnapshot,         NULL, ZEND_ACC_PUBLIC )
@@ -707,19 +706,3 @@ done:
 error:
    goto done ;
 }
-
-PHP_FUNCTION( sdbGetLastErrorMsg )
-{
-   INT32 rc = SDB_OK ;
-   bson record ;
-
-   bson_init( &record ) ;
-   rc = sdbGetLastErrorObj( &record ) ;
-
-   array_init( return_value ) ;
-   if( SDB_OK == rc )
-   {
-      php_bson2Array( &record, &return_value TSRMLS_CC ) ;
-   }
-}
-

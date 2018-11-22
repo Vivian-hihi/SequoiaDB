@@ -164,6 +164,28 @@ PHP_METHOD( SequoiaDB, getError )
    PHP_RETURN_AUTO_ERROR( TRUE, pThisObj, rc ) ;
 }
 
+PHP_METHOD( SequoiaDB, getLastErrorMsg )
+{
+   INT32 rc = SDB_OK ;
+   zval *pThisObj = getThis() ;
+   sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
+   bson record ;
+
+   bson_init( &record ) ;
+
+   PHP_READ_HANDLE( pThisObj,
+                    connection,
+                    sdbConnectionHandle,
+                    SDB_HANDLE_NAME,
+                    connectionDesc ) ;
+
+   rc = sdbGetLastErrorObj( connection, &record ) ;
+
+   PHP_RETURN_AUTO_RECORD( TRUE, pThisObj, (rc == SDB_OK ? FALSE : TRUE),
+                           record ) ;
+   bson_destroy( &record ) ;
+}
+
 //db
 PHP_METHOD( SequoiaDB, connect )
 {
