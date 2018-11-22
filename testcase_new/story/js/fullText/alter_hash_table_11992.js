@@ -1,0 +1,98 @@
+/***************************************************************************
+@Description :seqDB-11992 :普通表中已存在全文索引alter为hash分区表 
+@Modify list :
+              2018-11-21  YinZhen  Create
+****************************************************************************/
+function main()
+{
+   if(commIsStandalone( db )){
+      println("Deploy is standalone");
+      return;
+   }
+   
+   var groups = commGetGroups( db );
+   if(groups.length < 2 ){
+      println("Deploy one group");
+      return;
+   }
+
+   var clName = COMMCLNAME + "_ES_11992";
+   commDropCL(db, COMMCSNAME, clName, true, true);
+   
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {Group : groups[0][0]["GroupName"]} );
+   commCreateIndex( dbcl, "fullIndex_11992", {b : "text"});
+   
+   //插入大量包含全文索引字段的数据
+   var records = new Array();
+   for (var i = 0; i < 10000 ; i++){
+      var record = {a : "a" + i, b : "b" + i};
+      records.push(record);
+   }
+   insertRecords(dbcl, records);
+   
+   if(10000 != dbcl.count())
+   {
+      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
+      return ;
+   }
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_11992", 10000);
+   
+   //alter为hash切分表，切分键覆盖：非全文索引字段
+   dbcl.alter({ShardingType : "hash", ShardingKey : {a : 1}})
+   dbcl.split(groups[0][0]["GroupName"], groups[1][0]["GroupName"], 50);
+   
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_11992", 10000);
+   var esOperator = new ESOperator();
+   var dbOperator = new DBOperator();
+   var expResult = dbOperator.findFromCL (dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {b : ""});
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_11992");
+   var actResult = new Array();
+   for (var i in esIndexNames){
+      var result = esOperator.findFromES (esIndexNames[i], '{"query" : {"match_all" : {}}, "size" : 10000}');
+      actResult = actResult.concat(result);
+   }
+   expResult.sort(compare("b"));
+   actResult.sort(compare("b"));
+   checkResult(expResult, actResult);
+   
+   //alter为hash切分表，切分键覆盖：全文索引字段
+   commDropCL(db, COMMCSNAME, clName, true, true);
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {Group : groups[0][0]["GroupName"]} );
+   commCreateIndex( dbcl, "fullIndex_11992", {b : "text"});
+   
+   //插入大量包含全文索引字段的数据
+   var records = new Array();
+   for (var i = 0; i < 10000 ; i++){
+      var record = {a : "a" + i, b : "b" + i};
+      records.push(record);
+   }
+   insertRecords(dbcl, records);
+   
+   if(10000 != dbcl.count())
+   {
+      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
+      return ;
+   }
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_11992", 10000);
+   
+   dbcl.alter({ShardingType : "hash", ShardingKey : {b : 1}})
+   dbcl.split(groups[0][0]["GroupName"], groups[1][0]["GroupName"], 50);
+   
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_11992", 10000);
+   var esOperator = new ESOperator();
+   var dbOperator = new DBOperator();
+   var expResult = dbOperator.findFromCL (dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {b : ""});
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_11992");
+   var actResult = new Array();
+   for (var i in esIndexNames){
+      var result = esOperator.findFromES (esIndexNames[i], '{"query" : {"match_all" : {}}, "size" : 10000}');
+      actResult = actResult.concat(result);
+   }
+   expResult.sort(compare("b"));
+   actResult.sort(compare("b"));
+   checkResult(expResult, actResult);
+   
+   commDropCL(db, COMMCSNAME, clName, true, true);
+}
+
+main()

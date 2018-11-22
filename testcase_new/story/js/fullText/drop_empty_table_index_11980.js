@@ -1,0 +1,46 @@
+/***************************************************************************
+@Description :seqDB-11980 :在空集合中创建/删除全文索引 
+@Modify list :
+              2018-11-21  YinZhen  Create
+****************************************************************************/
+function main()
+{
+   if(commIsStandalone( db )){
+      println("Deploy is standalone");
+      return;
+   }
+   
+   var clName = COMMCLNAME + "_ES_11980";
+   commDropCL(db, COMMCSNAME, clName, true, true);
+   
+   var dbcl = commCreateCL( db, COMMCSNAME, clName );
+   
+   //集合中无数据，创建全文索引
+   commCreateIndex( dbcl, "fullIndex_11980", {b : "text"});
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_11980", 0);
+   
+   var dbOperator = new DBOperator();
+   var cappedCL = dbOperator.getCappedCLs( COMMCSNAME, clName, "fullIndex_11980" );
+   var cappedCL = cappedCL[0];
+   var count = cappedCL.count();
+   if (count != 0){
+      throw buildException("main()", "cappedCL is not empty", "equal", 0, count);
+   }
+   
+   var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
+   var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
+   checkResult(expResult, actResult);
+   checkConsistency(COMMCSNAME, clName);
+   checkInspectResult(COMMCSNAME, clName, 5);
+   
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_11980");
+   commDropIndex( dbcl, "fullIndex_11980" );
+   commCheckIndex( dbcl, "fullIndex_11980", false );
+   checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
+   checkConsistency(COMMCSNAME, clName);
+   checkInspectResult(COMMCSNAME, clName, 5);
+   
+   commDropCL(db, COMMCSNAME, clName, true, true);
+}
+
+main()
