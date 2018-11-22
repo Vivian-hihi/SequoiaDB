@@ -143,11 +143,11 @@ public class Create15967 extends SdbTestBase {
         });
     }
 	
-	/*@AfterClass
+	@AfterClass
     public void tearDown(){
 		Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		sdb.getCollectionSpace(csName).dropCollection(clName);
 		sdb.close();
-	}*/
+	}
 	
 }
