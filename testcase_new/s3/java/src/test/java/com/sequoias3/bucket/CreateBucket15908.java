@@ -13,12 +13,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.Owner;
 import com.sequoiadb.exception.BaseException;
@@ -35,27 +30,21 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 public class CreateBucket15908 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String clientRegion = "us-east-1";
-	private String bucketName[] = new String[12];
-	private String illegalBucketName[] = new String[4];
+	private String bucketName[] = new String[13];
+	private String illegalBucketName[] = new String[2];
 	private String userName = "user15908";
 	private String roleName = "normal";
 	private AmazonS3 s3Client = null;
-	private String accessKey = null;
+	private String[] accessKeys = null;
 	private static CloseableHttpClient client;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		String[] acessKeys = RestClient.createUser(userName, roleName);
-		accessKey = acessKeys[0];
-		AWSCredentials credentials = new BasicAWSCredentials(accessKey, acessKeys[1]);
-		
-		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
-				S3TestBase.s3ClientUrl, clientRegion);
-		s3Client = AmazonS3ClientBuilder.standard().withEndpointConfiguration(endpointConfiguration)
-				.withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
+		accessKeys = RestClient.createUser(userName, roleName);
+		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Test
 	private void testCreateBucket() throws Exception {
 		bucketName[0] = "testbucket";
@@ -70,6 +59,7 @@ public class CreateBucket15908 extends S3TestBase {
 		bucketName[9] = "test-bucket05";
 		bucketName[10] = "-testbucket06";
 		bucketName[11] = "testbucket07-";
+		bucketName[12] = "users";
 		for (int i = 0; i < bucketName.length; i++) {
 			try {
 				createBucket(bucketName[i]);
@@ -77,12 +67,10 @@ public class CreateBucket15908 extends S3TestBase {
 				e.printStackTrace();
 			}
 		}
-		checkBucketNameResult(12);
+		checkBucketNameResult(bucketName.length);
 
 		illegalBucketName[0] = URLEncoder.encode(getRandomString(2), "UTF-8");
 		illegalBucketName[1] = URLEncoder.encode(getRandomString(64), "UTF-8");
-		illegalBucketName[2] = "users";
-		illegalBucketName[3] = "USERS";
 
 		for (int i = 0; i < illegalBucketName.length; i++) {
 			try {
@@ -93,7 +81,7 @@ public class CreateBucket15908 extends S3TestBase {
 				String[] strs = str.split("<Code>");
 				Assert.assertEquals(strs[1], "InvalidBucketName");
 			}
-			checkIllegalBucketNameResult(i);
+			Assert.assertEquals(false, s3Client.doesBucketExist(URLEncoder.encode(illegalBucketName[i], "UTF-8").toLowerCase()));
 		}
 		runSuccess = true;
 	}
@@ -115,8 +103,8 @@ public class CreateBucket15908 extends S3TestBase {
 	}
 
 	private void createBucket(String bucketName) throws Exception {
-		HttpPut request = new HttpPut("http://192.168.10.82:8080/" + bucketName);
-		request.setHeader("Authorization", "Credential=" + accessKey);
+		HttpPut request = new HttpPut(S3TestBase.s3ClientUrl + "/s3/" + bucketName);
+		request.setHeader("Authorization", "Credential=" + accessKeys[0]);
 		client = RestClient.createHttpClient();
 		RestClient.sendRequest(client, request);
 	}
@@ -145,14 +133,6 @@ public class CreateBucket15908 extends S3TestBase {
 		Assert.assertTrue(findBucketFlag, " the bucket must be exist!");
 	}
 
-	private void checkIllegalBucketNameResult(int i) {
-		try {
-			Assert.assertEquals(false, doesBucketExist(URLEncoder.encode(illegalBucketName[i], "UTF-8").toLowerCase()));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 	private String getRandomString(int length) {
 		String str = "zxcvbnmlkjhgfdsaqwertyuiopQWERTYUIOPLKJHGFDSAZXCVBNM1234567890";
 		Random random = new Random();
@@ -162,18 +142,5 @@ public class CreateBucket15908 extends S3TestBase {
 			sbuff.append(str.charAt(number));
 		}
 		return sbuff.toString();
-	}
-
-	private boolean doesBucketExist(String bucketName) {
-		List<Bucket> buckets = s3Client.listBuckets();
-		boolean findBucketFlag = false;
-		for (int i = 0; i < buckets.size(); i++) {
-			String actBucketName = buckets.get(i).getName();
-			if (actBucketName.equals(bucketName)) {
-				findBucketFlag = true;
-				break;
-			}
-		}
-		return findBucketFlag;
 	}
 }
