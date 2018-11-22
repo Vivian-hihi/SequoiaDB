@@ -6429,6 +6429,7 @@ SDB_EXPORT INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
    INT32 rc                        = SDB_OK ;
    SINT64 contextID                = 0 ;
    SINT32 count                    = 0 ;
+   CHAR keyBuf[ CLI_INT_TO_STR_MAX_SIZE + 1 ] = { 0 } ;
    bson_iterator oid_itr ;
    BOOLEAN hasInit                 = FALSE ;
    sdbConnectionStruct *connection = NULL ;
@@ -6475,7 +6476,8 @@ SDB_EXPORT INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
          {
             goto error ;
          }
-         bson_append_element( pResult, NULL, &oid_itr ) ;
+         clientItoa( count, keyBuf, CLI_INT_TO_STR_MAX_SIZE + 1 ) ;
+         bson_append_element( pResult, keyBuf, &oid_itr ) ;
       }
       else
       {

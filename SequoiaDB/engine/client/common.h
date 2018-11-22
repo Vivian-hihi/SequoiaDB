@@ -33,6 +33,9 @@ SDB_EXTERN_C_START
 #endif
 
 #define SDB_MD5_DIGEST_LENGTH 16
+#define CLI_INT_TO_STR_MAX_SIZE 10
+
+#define clientItoa(x,y,z) if (y) { ossSnprintf(y, z, "%d", (INT32)(x) );}
 
 typedef struct _htbNode
 {
