@@ -69,8 +69,6 @@ class cs_Test extends PHPUnit_Framework_TestCase
    public function test_getName( $db, $cs )
    {      
       $name = $cs -> getName() ;
-      $err = $db -> getError() ;
-      $this -> assertEquals( 0, $err['errno'], '获取cs名字错误' ) ;
       $this -> assertEquals( 'test_cs', $name, '获取cs名字错误' ) ;
    }
 
