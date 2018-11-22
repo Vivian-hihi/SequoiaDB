@@ -72,7 +72,7 @@ public class DropCollection12066 extends SdbTestBase {
 		
 		//关闭步骤2中的游标，再次删除集合
 		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName12066, clName, fullIndexName);
-		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12066, clName, fullIndexName, 1000000);
+		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12066, clName, fullIndexName, 500000);
 		cursor.close();
 		cs.dropCollection(clName);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
@@ -95,7 +95,7 @@ public class DropCollection12066 extends SdbTestBase {
 		List<BSONObject> records = new ArrayList<BSONObject>();
 		try {
 			for(int i = 0; i < 100; i++) {
-				for(int j = 0; j < 10000; j++) {
+				for(int j = 0; j < 5000; j++) {
 					BSONObject record = (BSONObject)JSON.parse("{a:'a"+i+""+j+"',g:'g"+i+""+j+"'}");
 					records.add(record);
 				}

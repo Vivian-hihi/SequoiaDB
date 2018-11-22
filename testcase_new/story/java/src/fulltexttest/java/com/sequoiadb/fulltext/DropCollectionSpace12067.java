@@ -63,11 +63,11 @@ public class DropCollectionSpace12067 extends SdbTestBase {
 		
 		//删除集合空间
 		List<String> esIndexNames1 = FullTextDBUtils.getESIndexNames(sdb, csName12067, clName1, fullIndexName);
-		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName1, fullIndexName, 1000000);
+		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName1, fullIndexName, 500000);
 		List<String> esIndexNames2 = FullTextDBUtils.getESIndexNames(sdb, csName12067, clName2, fullIndexName);
-		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName2, fullIndexName, 1000000);
+		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName2, fullIndexName, 500000);
 		List<String> esIndexNames3 = FullTextDBUtils.getESIndexNames(sdb, csName12067, clName3, fullIndexName);
-		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName3, fullIndexName, 1000000);
+		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName3, fullIndexName, 500000);
 		this.sdb.dropCollectionSpace(csName12067);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames1);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames2);
@@ -93,7 +93,7 @@ public class DropCollectionSpace12067 extends SdbTestBase {
 		List<BSONObject> records = new ArrayList<BSONObject>();
 		try {
 			for(int i = 0; i < 100; i++) {
-				for(int j = 0; j < 10000; j++) {
+				for(int j = 0; j < 5000; j++) {
 					BSONObject record = (BSONObject)JSON.parse("{a:'a"+i+""+j+"',g:'g"+i+""+j+"'}");
 					records.add(record);
 				}

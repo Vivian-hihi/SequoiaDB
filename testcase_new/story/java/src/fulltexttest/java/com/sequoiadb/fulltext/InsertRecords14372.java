@@ -47,9 +47,9 @@ public class InsertRecords14372 extends SdbTestBase {
 	@Test
 	public void test() {
 		this.insertData();
-		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 1300000);
+		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 650000);
 		this.insertData();		
-		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 2600000);
+		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 1300000);
 	}
 	
 	@AfterClass
@@ -69,9 +69,9 @@ public class InsertRecords14372 extends SdbTestBase {
 	public void insertData() {
 		List<BSONObject> records = new ArrayList<BSONObject>();
 		try {
-			for(int i = 0; i < 130; i++) {
+			for(int i = 0; i < 65; i++) {
 				for(int j = 0; j < 10000; j++) {
-					BSONObject record = (BSONObject)JSON.parse("{a:'a"+i+""+j+"',g:'g"+i+""+j+"'}");
+					BSONObject record = (BSONObject)JSON.parse("{a:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"+i+""+j+"',g:'gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg"+i+""+j+"'}");
 					records.add(record);
 				}
 				this.cl.insert(records);

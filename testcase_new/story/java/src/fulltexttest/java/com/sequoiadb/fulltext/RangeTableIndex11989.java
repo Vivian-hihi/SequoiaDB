@@ -55,14 +55,14 @@ public class RangeTableIndex11989 extends SdbTestBase {
 		
 		//创建全文索引，索引字段覆盖：分区键
 		this.cl.createIndex(fullIndexName, "{\"a\":\"text\"}", false, false);
-		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 1000000);
+		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 500000);
 		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, SdbTestBase.csName, this.clName, this.fullIndexName); 
       FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 		
 		//创建全文索引，索引字段覆盖：非分区键
 		this.cl.createIndex(fullIndexName, "{\"g\":\"text\"}", false, false);
-		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 1000000);
+		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 500000);
  		esIndexNames = FullTextDBUtils.getESIndexNames(sdb, SdbTestBase.csName, this.clName, this.fullIndexName);                
       FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
@@ -85,7 +85,7 @@ public class RangeTableIndex11989 extends SdbTestBase {
 	public void insertData() {
 		List<BSONObject> records = new ArrayList<BSONObject>();
 		for(int i = 0; i < 100; i++) {
-			for(int j = 0; j < 10000; j++) {
+			for(int j = 0; j < 5000; j++) {
 				BSONObject record = (BSONObject)JSON.parse("{a:'a"+i+""+j+"',g:'g"+i+""+j+"'}");
 				records.add(record);
 			}
