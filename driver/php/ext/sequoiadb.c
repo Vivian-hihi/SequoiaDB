@@ -76,16 +76,16 @@ const zend_function_entry sdbFun[] = {
    //driver function
    PHP_FE( sdbInitClient, NULL )
    //driver
-   PHP_ME( SequoiaDB, __construct,        NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR )
-   PHP_ME( SequoiaDB, install,            NULL, ZEND_ACC_PUBLIC )
-   PHP_ME( SequoiaDB, getError,           NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDB, __construct,           NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR )
+   PHP_ME( SequoiaDB, install,               NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDB, getLastErrorMsg,       NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDB, cleanLastErrorMsg,     NULL, ZEND_ACC_PUBLIC )
    //db
    PHP_ME( SequoiaDB, connect,               NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, close,                 NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, isValid,               NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, syncDB,                NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, invalidateCache,       NULL, ZEND_ACC_PUBLIC )
-   PHP_ME( SequoiaDB, getLastErrorMsg,       NULL, ZEND_ACC_PUBLIC )
    //snapshot & list
    PHP_ME( SequoiaDB, snapshot,              NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, resetSnapshot,         NULL, ZEND_ACC_PUBLIC )
@@ -146,21 +146,22 @@ const zend_function_entry sdbFun[] = {
    //analyze
    PHP_ME( SequoiaDB, analyze,               NULL, ZEND_ACC_PUBLIC )
    //Rename
-   PHP_MALIAS( SequoiaDB, getSnapshot, snapshot, NULL, ZEND_ACC_PUBLIC )
-   PHP_MALIAS( SequoiaDB, getList,     list,     NULL, ZEND_ACC_PUBLIC )
-   PHP_MALIAS( SequoiaDB, listCSs,     listCS,   NULL, ZEND_ACC_PUBLIC )
+   PHP_MALIAS( SequoiaDB, getError, getLastErrorMsg, NULL, ZEND_ACC_PUBLIC )
+   PHP_MALIAS( SequoiaDB, getSnapshot, snapshot,     NULL, ZEND_ACC_PUBLIC )
+   PHP_MALIAS( SequoiaDB, getList,     list,         NULL, ZEND_ACC_PUBLIC )
+   PHP_MALIAS( SequoiaDB, listCSs,     listCS,       NULL, ZEND_ACC_PUBLIC )
    PHP_MALIAS( SequoiaDB, listCollectionSpaces,
-                                       listCS,   NULL, ZEND_ACC_PUBLIC )
+                                       listCS,       NULL, ZEND_ACC_PUBLIC )
    PHP_MALIAS( SequoiaDB, listCollections,
-                                       listCL,   NULL, ZEND_ACC_PUBLIC )
+                                       listCL,       NULL, ZEND_ACC_PUBLIC )
    PHP_MALIAS( SequoiaDB, getCollectionSpace,
-                                       getCS,    NULL, ZEND_ACC_PUBLIC )
+                                       getCS,        NULL, ZEND_ACC_PUBLIC )
    PHP_MALIAS( SequoiaDB, dropCollectionSpace,
-                                       dropCS,   NULL, ZEND_ACC_PUBLIC )
+                                       dropCS,       NULL, ZEND_ACC_PUBLIC )
    PHP_MALIAS( SequoiaDB, listDomains,
-                                   listDomain,   NULL, ZEND_ACC_PUBLIC )
+                                   listDomain,       NULL, ZEND_ACC_PUBLIC )
    PHP_MALIAS( SequoiaDB, selectGroup,
-                                     getGroup,   NULL, ZEND_ACC_PUBLIC )
+                                     getGroup,       NULL, ZEND_ACC_PUBLIC )
    PHP_FE_END
 };
 

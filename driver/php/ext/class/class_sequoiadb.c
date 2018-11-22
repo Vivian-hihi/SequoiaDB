@@ -153,23 +153,14 @@ error:
    goto done ;
 }
 
-PHP_METHOD( SequoiaDB, getError )
-{
-   INT32 rc = SDB_OK ;
-   zval *pError = NULL ;
-   zval *pThisObj = getThis() ;
-
-   PHP_READ_VAR( pThisObj, "_error", pError ) ;
-   rc = Z_LVAL_P( pError ) ;
-   PHP_RETURN_AUTO_ERROR( TRUE, pThisObj, rc ) ;
-}
-
 PHP_METHOD( SequoiaDB, getLastErrorMsg )
 {
    INT32 rc = SDB_OK ;
+   INT32 errNum = SDB_OK ;
    zval *pThisObj = getThis() ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
    bson record ;
+   bson_iterator bsonItr ;
 
    bson_init( &record ) ;
 
@@ -179,11 +170,57 @@ PHP_METHOD( SequoiaDB, getLastErrorMsg )
                     SDB_HANDLE_NAME,
                     connectionDesc ) ;
 
-   rc = sdbGetLastErrorObj( connection, &record ) ;
+   if ( SDB_INVALID_HANDLE != connection )
+   {
+      rc = sdbGetLastErrorObj( connection, &record ) ;
+      if ( SDB_OK == rc )
+      {
+         if ( bson_is_empty( &record ) )
+         {
+            rc = SDB_DMS_EOC ;
+         }
+         else
+         {
+            bson_type bType = bson_find( &bsonItr, &record, "errno" ) ;
 
-   PHP_RETURN_AUTO_RECORD( TRUE, pThisObj, (rc == SDB_OK ? FALSE : TRUE),
+            if ( BSON_INT == bType )
+            {
+               errNum = bson_iterator_int( &bsonItr ) ;
+            }
+         }
+      }
+   }
+
+   if ( SDB_OK == errNum )
+   {
+      zval *pError = NULL ;
+
+      PHP_READ_VAR( pThisObj, "_error", pError ) ;
+      errNum = Z_LVAL_P( pError ) ;
+
+      PHP_RETURN_AUTO_ERROR( TRUE, pThisObj, errNum ) ;
+      goto done ;
+   }
+
+   PHP_RETURN_AUTO_RECORD( TRUE, pThisObj, ( rc == SDB_OK ? FALSE : TRUE ),
                            record ) ;
+
+done:
    bson_destroy( &record ) ;
+}
+
+PHP_METHOD( SequoiaDB, cleanLastErrorMsg )
+{
+   zval *pThisObj = getThis() ;
+   sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
+
+   PHP_READ_HANDLE( pThisObj,
+                    connection,
+                    sdbConnectionHandle,
+                    SDB_HANDLE_NAME,
+                    connectionDesc ) ;
+
+   sdbCleanLastErrorObj( connection ) ;
 }
 
 //db

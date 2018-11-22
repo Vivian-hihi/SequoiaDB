@@ -60,7 +60,7 @@ class SequoiaLob
     * Example:
     * @code
     * $lobSize = $lobObj -> getSize() ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to get lob size, error code: ".$err['errno'] ;
     *    return ;
@@ -80,7 +80,7 @@ class SequoiaLob
     * Example:
     * @code
     * $times = $lobObj -> getCreateTime() ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to get lob create time, error code: ".$err['errno'] ;
     *    return ;
@@ -100,7 +100,7 @@ class SequoiaLob
     * Example:
     * @code
     * $times = $lobObj -> getModificationTime() ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to get lob modification time, error code: ".$err['errno'] ;
     *    return ;
@@ -143,7 +143,7 @@ class SequoiaLob
     * Example:
     * @code
     * $buffer = $lobObj -> read( 5 ) ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to read lob, error code: ".$err['errno'] ;
     *    return ;

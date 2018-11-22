@@ -153,7 +153,7 @@ class SequoiaDB
     * Example: 2. Connect to the database.
     * @code
     * $db = new SequoiaDB( "192.168.1.10:11810" ) ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to connect database, error code: ".$err['errno'] ;
     *    return ;
@@ -163,7 +163,7 @@ class SequoiaDB
     * Example: 3. Connect to the database, using the default service name. The default service name is 11810.
     * @code
     * $db = new SequoiaDB( "192.168.1.10" ) ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to connect database, error code: ".$err['errno'] ;
     *    return ;
@@ -173,7 +173,7 @@ class SequoiaDB
     * Example: 4. Connect to the running database one.
     * @code
     * $db = new SequoiaDB( [ "192.168.1.10:11810", "192.168.1.11:11810", "192.168.1.12:11810" ] ) ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to connect database, error code: ".$err['errno'] ;
     *    return ;
@@ -183,7 +183,7 @@ class SequoiaDB
     * Example: 5. Connect to the authentication database.
     * @code
     * $db = new SequoiaDB( "192.168.1.10:11810", "admin", "123456" ) ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to connect database, error code: ".$err['errno'] ;
     *    return ;
@@ -193,7 +193,7 @@ class SequoiaDB
     * Example: 6. Connect to the running authentication database one.
     * @code
     * $db = new SequoiaDB( [ "192.168.1.10:11810", "192.168.1.11:11810", "192.168.1.12:11810" ], "admin", "123456" ) ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to connect database, error code: ".$err['errno'] ;
     *    return ;
@@ -203,7 +203,7 @@ class SequoiaDB
     * Example: 7. Connect to the database with ssl.
     * @code
     * $db = new SequoiaDB( "192.168.1.10:11810", "", "", true ) ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to connect database with ssl, error code: ".$err['errno'] ;
     *    return ;
@@ -223,7 +223,7 @@ class SequoiaDB
     * Example: 9. Connect to the database with ssl.
     * @code
     * $db = new SecureSdb( "192.168.1.10:11810" ) ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to connect database with ssl, error code: ".$err['errno'] ;
     *    return ;
@@ -252,7 +252,7 @@ class SequoiaDB
     * @code
     * $db = new SequoiaDB() ;
     * $db -> install( array( 'install' => true ) ) ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * echo "The result is an array type. " ;
     * var_dump( $err ) ;
     * //output: array(1){ ["errno"] => int(0) }
@@ -262,7 +262,7 @@ class SequoiaDB
     * @code
     * $db = new SequoiaDB() ;
     * $db -> install( array( 'install' => false ) ) ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * echo "The result is the string type. " ;
     * var_dump( $err ) ;
     * //output: string(14) "{ "errno": 0 }"
@@ -276,31 +276,6 @@ class SequoiaDB
     * @endcode
    */
    public function install( array|string $options = null ){}
-
-   /**
-    * When function return value is result, the return content contains the error code. but a small part of function does not return an error code, So you can call getError() to retrieve the error code.
-    *
-    * @return Returns the result of the last operation, default return array, set the return type by using the install() function.
-    *
-    * @retval array   array( 'errno' => 0 )
-    * @retval string  { "errno": 0 }
-    *
-    * Example:
-    * @code
-    * $db = new SequoiaDB() ;
-    * $err = $db -> connect( "192.168.1.10:11810" ) ;
-    * if( $err['errno'] != 0 )
-    * {
-    *    echo "Failed to connect database, error code: ".$err['errno'] ;
-    *    return ;
-    * }
-    * $cl = $db -> getCL( "foo.bar" ) ;
-    * echo "Get the error code for the getCL function." ;
-    * $err = $db -> getError() ;
-    * var_dump( $err ) ;
-    * @endcode
-   */
-   public function getError(){}
 
    /**
     * Get the error object(only return by engine) of the last operation. The error object will not be clean up automatically until the next error object cover it.
@@ -325,6 +300,23 @@ class SequoiaDB
     * @endcode
    */
    public function getLastErrorMsg(){}
+
+   /**
+    * Clean the last error object(returned by engine) of current connection.
+    *
+    * Example:
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 )
+    * {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $db -> cleanLastErrorMsg() ;
+    * @endcode
+   */
+   public function cleanLastErrorMsg(){}
 
    /**
     * Connect to database.
@@ -614,7 +606,7 @@ class SequoiaDB
     * }
     * $cursor = $db -> snapshot( SDB_SNAP_CONTEXTS ) ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call snapshot, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -710,7 +702,7 @@ class SequoiaDB
     * }
     * $cursor = $db -> list( SDB_LIST_CONTEXTS ) ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call list, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -746,7 +738,7 @@ class SequoiaDB
     * }
     * $cursor = $db -> listCS() ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call listCS, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -786,7 +778,7 @@ class SequoiaDB
     * }
     * $cs = $db -> selectCS( 'foo', array( 'PageSize' => 4096 ) ) ;
     * if( empty( $cs ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call selectCS, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -815,7 +807,7 @@ class SequoiaDB
     * }
     * $cs = $db -> selectCS( 'foo', 4096 ) ;
     * if( empty( $cs ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call selectCS, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -879,7 +871,7 @@ class SequoiaDB
     * }
     * $cs = $db -> getCS( 'foo' ) ;
     * if( empty( $cs ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call getCS, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -970,7 +962,7 @@ class SequoiaDB
     * }
     * $cursor = $db -> listCL() ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call listCL, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1000,7 +992,7 @@ class SequoiaDB
     * }
     * $cl = $db -> getCL( 'foo.bar' ) ;
     * if( empty( $cl ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call getCL, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1060,7 +1052,7 @@ class SequoiaDB
     * }
     * $cursor = $db -> listDomain() ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call listDomains, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1128,7 +1120,7 @@ class SequoiaDB
     * }
     * $domainObj = $db -> getDomain( 'myDomain' ) ;
     * if( empty( $domainObj ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call getDomain, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1188,7 +1180,7 @@ class SequoiaDB
     * }
     * $cursor = $db -> listGroup() ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call listGroup, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1216,7 +1208,7 @@ class SequoiaDB
     * }
     * $groupObj = $db -> getGroup( 'myGroup' ) ;
     * if( empty( $groupObj ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call getGroup, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1330,7 +1322,7 @@ class SequoiaDB
     * }
     * $cursor = $db -> execSQL( 'select * from foo.bar' ) ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call execSQL, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1557,7 +1549,7 @@ class SequoiaDB
     * }
     * $cursor = $db -> listProcedure( array( 'name' => 'sum' ) ) ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call listProcedure, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1653,7 +1645,7 @@ class SequoiaDB
     *    return ;
     * }
     * $result = $db -> evalJs( 'sum( 1, 2 );' ) ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) ) {
     *    echo "Failed to call evalJs, error code: ".$err['errno'] ;
     *    if( strlen( $result ) > 0 )
@@ -1727,7 +1719,7 @@ class SequoiaDB
     * }
     * $cl = $db -> getCL( 'foo.bar' ) ;
     * if( empty( $cl ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call getCL, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1768,7 +1760,7 @@ class SequoiaDB
     * }
     * $cl = $db -> getCL( 'foo.bar' ) ;
     * if( empty( $cl ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call getCL, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1809,7 +1801,7 @@ class SequoiaDB
     * }
     * $cl = $db -> getCL( 'foo.bar' ) ;
     * if( empty( $cl ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call getCL, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1920,7 +1912,7 @@ class SequoiaDB
     * }
     * $cursor = $db -> listBackup( array( 'Name' => 'myBackup_1' ) ) ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call listBackup, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1990,7 +1982,7 @@ class SequoiaDB
     * }
     * $cursor = $db -> listTask() ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call listTask, error code: ".$err['errno'] ;
     *    return ;
     * }

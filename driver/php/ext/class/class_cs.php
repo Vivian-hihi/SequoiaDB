@@ -53,7 +53,7 @@ class SequoiaCS
     * Example:
     * @code
     * $csName = $cs -> getName() ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to get collection space name, error code: ".$err['errno'] ;
     *    return ;
@@ -92,7 +92,7 @@ class SequoiaCS
     * @code
     * $cl = $cs -> selectCL( 'bar', array( 'Compressed' => true ) ) ;
     * if( empty( $cl ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call selectCL, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -171,7 +171,7 @@ class SequoiaCS
     * @code
     * $cl = $cs -> getCL( 'bar' ) ;
     * if( empty( $cl ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call getCL, error code: ".$err['errno'] ;
     *    return ;
     * }

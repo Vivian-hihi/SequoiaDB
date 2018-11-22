@@ -198,7 +198,7 @@ class SequoiaDomain
     * @code
     * $cursor = $domainObj -> listCS() ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call listCS, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -228,7 +228,7 @@ class SequoiaDomain
     * @code
     * $cursor = $domainObj -> listCL() ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call listCL, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -258,7 +258,7 @@ class SequoiaDomain
     * @code
     * $cursor = $domainObj -> listGroup() ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call listGroup, error code: ".$err['errno'] ;
     *    return ;
     * }

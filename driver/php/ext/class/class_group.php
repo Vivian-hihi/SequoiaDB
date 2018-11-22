@@ -53,7 +53,7 @@ class SequoiaGroup
     * Example:
     * @code
     * $groupName = $groupObj -> getName() ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to get group name, error code: ".$err['errno'] ;
     *    return ;
@@ -136,7 +136,7 @@ class SequoiaGroup
     * Example:
     * @code
     * $detail = $groupObj -> getDetail() ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to call getDetail, error code: ".$err['errno'] ;
     *    return ;
@@ -157,7 +157,7 @@ class SequoiaGroup
     * @code
     * $nodeObj = $groupObj -> getMaster() ;
     * if( empty( $nodeObj ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to get the master node, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -178,7 +178,7 @@ class SequoiaGroup
     * @code
     * $nodeObj = $groupObj -> getSlave() ;
     * if( empty( $nodeObj ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to get the slave node, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -188,7 +188,7 @@ class SequoiaGroup
     * @code
     * $nodeObj = $groupObj -> getSlave( array( 1, 2, 3 ) ) ;
     * if( empty( $nodeObj ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to get the slave node, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -209,7 +209,7 @@ class SequoiaGroup
     * @code
     * $nodeObj = $groupObj -> getNode( 'host1:11910' ) ;
     * if( empty( $nodeObj ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to get the node, error code: ".$err['errno'] ;
     *    return ;
     * }

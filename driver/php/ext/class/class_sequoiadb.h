@@ -22,8 +22,8 @@
 //driver
 PHP_METHOD( SequoiaDB, __construct ) ;
 PHP_METHOD( SequoiaDB, install ) ;
-PHP_METHOD( SequoiaDB, getError ) ;
 PHP_METHOD( SequoiaDB, getLastErrorMsg ) ;
+PHP_METHOD( SequoiaDB, cleanLastErrorMsg ) ;
 
 //db
 PHP_METHOD( SequoiaDB, connect ) ;

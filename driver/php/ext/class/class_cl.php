@@ -328,7 +328,7 @@ class SequoiaCL
     * Example:
     * @code
     * $fullName = $cl -> getFullName() ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to get collection full name, error code: ".$err['errno'] ;
     *    return ;
@@ -348,7 +348,7 @@ class SequoiaCL
     * Example:
     * @code
     * $csName = $cl -> getCSName() ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to get collection space name, error code: ".$err['errno'] ;
     *    return ;
@@ -368,7 +368,7 @@ class SequoiaCL
     * Example:
     * @code
     * $clName = $cl -> getName() ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to get collection name, error code: ".$err['errno'] ;
     *    return ;
@@ -738,7 +738,7 @@ class SequoiaCL
     * @code
     * $cursor = $cl -> find( array( 'a' => array( '$lte' => 50 ) ) ) ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to find, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -790,7 +790,7 @@ class SequoiaCL
     * @code
     * $cursor = $cl -> findAndUpdate( array( '$set' => array( 'a' => 0 ) ), false, array( 'a' => array( '$gt' => 0 ) ) ) ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call findAndUpdate, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -837,7 +837,7 @@ class SequoiaCL
     * @code
     * $cursor = $cl -> findAndRemove( array( 'a' => array( '$gt' => 0 ) ) ) ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call findAndRemove, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -887,7 +887,7 @@ class SequoiaCL
     * @code
     * $cursor = $cl -> explain( array( 'Run' => true ) ) ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call explain, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -913,7 +913,7 @@ class SequoiaCL
     * @code
     * $recordNum = $cl -> count() ;
     * if( $recordNum < 0 ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call count, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -949,7 +949,7 @@ class SequoiaCL
     * @code
     * $cursor = $cl -> aggregate( array ( array ( '$project' => array ( 'field1' => 1, 'field2' => 2 ) ), array ( '$project' => array ( 'field1' => 1 ) ) ) ) ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call aggregate, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1024,7 +1024,7 @@ class SequoiaCL
     * @code
     * $cursor = $cl -> getIndex() ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to get indexes, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1098,7 +1098,7 @@ class SequoiaCL
     * @code
     * $lobObj = $cl -> openLob( "123456789012345678901234", SDB_LOB_CREATEONLY ) ;
     * if( empty( $lobObj ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to open lob, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1169,7 +1169,7 @@ class SequoiaCL
     * @code
     * $cursor = $cl -> listLob() ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call listLob, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -1199,7 +1199,7 @@ class SequoiaCL
     * @code
     * $cursor = $cl -> listLobPieces() ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call listLobPieces, error code: ".$err['errno'] ;
     *    return ;
     * }

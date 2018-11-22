@@ -72,7 +72,7 @@ class SequoiaDB
     * }
     * $cs = $db -> selectCS( 'foo', 4096 ) ;
     * if( empty( $cs ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to call selectCS, error code: ".$err['errno'] ;
     *    return ;
     * }

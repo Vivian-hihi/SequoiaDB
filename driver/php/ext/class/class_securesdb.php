@@ -36,7 +36,7 @@ class SecureSdb: public SequoiaDB
     * Example: 1. Connect to the database with ssl.
     * @code
     * $db = new SecureSdb( "192.168.1.10:11810" ) ;
-    * $err = $db -> getError() ;
+    * $err = $db -> getLastErrorMsg() ;
     * if( $err['errno'] != 0 ) {
     *    echo "Failed to connect database with ssl, error code: ".$err['errno'] ;
     *    return ;

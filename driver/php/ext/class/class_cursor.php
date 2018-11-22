@@ -36,7 +36,7 @@ class SequoiaCursor
     * @code
     * $cursor = $cl -> find( array( 'a' => array( '$lte' => 50 ) ) ) ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to find, error code: ".$err['errno'] ;
     *    return ;
     * }
@@ -59,7 +59,7 @@ class SequoiaCursor
     * @code
     * $cursor = $cl -> find( array( 'a' => array( '$lte' => 50 ) ) ) ;
     * if( empty( $cursor ) ) {
-    *    $err = $db -> getError() ;
+    *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to find, error code: ".$err['errno'] ;
     *    return ;
     * }
