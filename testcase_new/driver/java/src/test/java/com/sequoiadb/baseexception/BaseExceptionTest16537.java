@@ -24,6 +24,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
 public class BaseExceptionTest16537 extends SdbTestBase{
     private Sequoiadb sdb;
     private String csName = "notexistcs16537";
+    private String sameCsName = "cs16537";
+    private String sameDoaminName = "domain16537";
     private String coordAddr;
     
     @BeforeClass
@@ -39,7 +41,8 @@ public class BaseExceptionTest16537 extends SdbTestBase{
     public void test() {
     	//create duplicate collection space
     	try {
-    		this.sdb.createCollectionSpace(SdbTestBase.csName);
+    		this.sdb.createCollectionSpace(sameCsName);
+    		this.sdb.createCollectionSpace(sameCsName);
             Assert.fail("exp fail but act success");
         }catch (BaseException e) {
         	BSONObject errObject = e.getErrorObject();
@@ -92,8 +95,8 @@ public class BaseExceptionTest16537 extends SdbTestBase{
     	
     	//create existing domain
     	try {
-    		this.sdb.createDomain("domain16537", null);
-    		this.sdb.createDomain("domain16537", null);
+    		this.sdb.createDomain(sameDoaminName, null);
+    		this.sdb.createDomain(sameDoaminName, null);
             Assert.fail("exp fail but act success");
         }catch (BaseException e) {
         	BSONObject errObject = e.getErrorObject();
@@ -107,6 +110,8 @@ public class BaseExceptionTest16537 extends SdbTestBase{
     
     @AfterClass
     public void tearDown() {
+    	sdb.dropCollectionSpace(sameCsName);
+    	sdb.dropDomain(sameDoaminName);
         sdb.close();
     } 
 }
