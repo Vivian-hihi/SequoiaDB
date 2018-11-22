@@ -1930,6 +1930,8 @@ public class DBCollection {
      *                <li>EnsureShardingIndex : Assign to true to build sharding index
      *                <li>StrictDataMode : Using strict date mode in numeric operations or not
      *                e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+     *                <li>AutoIncrement : Assign attributes of an autoincrement field or batch autoincrement fields.
+     *                e.g. {AutoIncrement:{Field:"a",Maxvalue:2000}},{AutoIncrement:[{Field:"a",Maxvalue:2000},{Field:"a",Maxvalue:4000}]}
      *                </ul>
      * @throws BaseException If error happens.
      */
@@ -2125,6 +2127,9 @@ public class DBCollection {
      *                <li>EnsureShardingIndex : Assign to true to build sharding index
      *                <li>StrictDataMode : Using strict date mode in numeric operations or not
      *                e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+     *                <li>AutoIncrement : Assign attributes of an autoincrement field or batch autoincrement fields.
+     *                                    e.g. {AutoIncrement:{Field:"a",Maxvalue:2000}},
+     *                                    {AutoIncrement:[{Field:"a",Maxvalue:2000},{Field:"a",Maxvalue:4000}]}
      *                </ul>
      * @throws BaseException If error happens.
      */

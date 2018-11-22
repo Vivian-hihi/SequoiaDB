@@ -109,6 +109,13 @@ public class SdbSnapshotList {
             while(cursor.hasNext()){
                 System.out.println(cursor.getNext());
             }
+
+            // 15
+            cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_SEQUENCES, "", "", "");
+            System.out.println("result of SDB_SNAP_TRANSACTIONS is: ");
+            while(cursor.hasNext()){
+                System.out.println(cursor.getNext());
+            }
         } catch(BaseException e) {
             Assert.assertTrue(e.getErrorType().equals("SDB_DPS_TRANS_DIABLED"));
         }finally {
@@ -217,6 +224,13 @@ public class SdbSnapshotList {
             // 12
             cursor = sdb.getList(Sequoiadb.SDB_LIST_TRANSACTIONS, dump, dump, dump);
             System.out.println("result of SDB_LIST_TRANSACTIONS is: ");
+            while(cursor.hasNext()){
+                System.out.println(cursor.getNext());
+            }
+
+            // 15
+            cursor = sdb.getList(Sequoiadb.SDB_LIST_SEQUENCES, dump, dump, dump);
+            System.out.println("result of SDB_LIST_SEQUENCES is: ");
             while(cursor.hasNext()){
                 System.out.println(cursor.getNext());
             }

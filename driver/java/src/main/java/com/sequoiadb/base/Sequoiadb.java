@@ -99,6 +99,7 @@ public class Sequoiadb implements Closeable {
     public final static int SDB_LIST_TASKS = 10;
     public final static int SDB_LIST_TRANSACTIONS = 11;
     public final static int SDB_LIST_TRANSACTIONS_CURRENT = 12;
+    public final static int SDB_LIST_SEQUENCES = 15;
     public final static int SDB_LIST_CL_IN_DOMAIN = 129;
     public final static int SDB_LIST_CS_IN_DOMAIN = 130;
 
@@ -1060,6 +1061,7 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_LIST_TASKS                : Get all the running split tasks ( only applicable in sharding env )
      *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS         : Get all the transactions information.
      *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS_CURRENT : Get the transactions information of current session.
+     *                 <dt>Sequoiadb.SDB_List_SEQUENCES            : Get the information of sequences
      *                 </dl>
      * @param query    The matching rule, match all the documents if null.
      * @param selector The selective rule, return the whole document if null.
@@ -1198,6 +1200,7 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_SNAP_ACCESSPLANS          : Get the snapshot of cached access plans
      *                 <dt>Sequoiadb.SDB_SNAP_HEALTH               : Get the snapshot of node health detection
      *                 <dt>Sequoiadb.SDB_SNAP_CONFIGS              : Get the snapshot of node configurations
+     *                 <ds>Sequoiadb.SDB_SNAP_SEQUENCES            : Get the snapshot of the sequence
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -1242,6 +1245,7 @@ public class Sequoiadb implements Closeable {
      *                 <dt>SequoiaDB.SDB_SNAP_ACCESSPLANS          : Get the snapshot of cached access plans
      *                 <dt>Sequoiadb.SDB_SNAP_HEALTH               : Get the snapshot of node health detection
      *                 <dt>Sequoiadb.SDB_SNAP_CONFIGS              : Get the snapshot of node configurations
+     *                 <ds>Sequoiadb.SDB_SNAP_SEQUENCES            : Get the snapshot of the sequence
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -1251,24 +1255,7 @@ public class Sequoiadb implements Closeable {
      */
     public DBCursor getSnapshot(int snapType, BSONObject matcher,
                                 BSONObject selector, BSONObject orderBy) throws BaseException {
-        String command = getSnapshotCommand(snapType);
-
-        AdminRequest request = new AdminRequest(command, matcher, selector, orderBy, null);
-        SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            if (flag == SDBError.SDB_DMS_EOC.getErrorCode()) {
-                return null;
-            } else {
-                String msg = "matcher = " + matcher +
-                        ", selector = " + selector +
-                        ", orderBy = " + orderBy;
-                throwIfError(response, msg);
-            }
-        }
-
-        return new DBCursor(response, this);
+        return getSnapshot(snapType, matcher, selector, orderBy, null, 0, -1);
     }
 
     /**
@@ -1290,6 +1277,7 @@ public class Sequoiadb implements Closeable {
      *                 <dt>SequoiaDB.SDB_SNAP_ACCESSPLANS          : Get the snapshot of cached access plans
      *                 <dt>Sequoiadb.SDB_SNAP_HEALTH               : Get the snapshot of node health detection
      *                 <dt>Sequoiadb.SDB_SNAP_CONFIGS              : Get the snapshot of node configurations
+     *                 <ds>Sequoiadb.SDB_SNAP_SEQUENCES            : Get the snapshot of the sequence
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -2172,6 +2160,8 @@ public class Sequoiadb implements Closeable {
                 return AdminCommand.LIST_TRANSACTIONS;
             case SDB_LIST_TRANSACTIONS_CURRENT:
                 return AdminCommand.LIST_TRANSACTIONS_CURRENT;
+            case SDB_LIST_SEQUENCES:
+                return AdminCommand.LIST_SEQUENCES;
             case SDB_LIST_CL_IN_DOMAIN:
                 return AdminCommand.LIST_CL_IN_DOMAIN;
             case SDB_LIST_CS_IN_DOMAIN:
