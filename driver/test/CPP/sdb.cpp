@@ -1044,18 +1044,12 @@ TEST( sdb, SdbIsValid )
    ASSERT_TRUE( result == FALSE ) ;
 }
 
-
-/*************************************
-  the follow tests have some problems
-***************************************/
-/*
-// setSessionAttr need at lease 2 note, so far, it is tested manually
-TEST( sdb, setSessionAttr )
+TEST(sdb, getLastErrorObjTest)
 {
    sdb connection ;
    sdbCollectionSpace cs ;
    sdbCollection cl ;
-   sdbShard shard ;
+   sdbCollection cl2 ;
    sdbCursor cursor ;
    // initialize local variables
    const CHAR *pHostName                    = HOST ;
@@ -1063,171 +1057,53 @@ TEST( sdb, setSessionAttr )
    const CHAR *pUsr                         = USER ;
    const CHAR *pPasswd                      = PASSWD ;
    INT32 rc                                 = SDB_OK ;
-   BSONObj conf ;
-   BSONObj obj ;
-   const char* str = "{PreferedInstance:\"s\"}" ;
-   rc = fromjson( str, conf ) ;
-    ASSERT_EQ( SDB_OK, rc ) ;
+   BSONObj result ;
+
+   // initialize the work environment
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    // connect to database
    rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   // initialize the work environment
-   rc = initEnv() ;
-   CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
    // get cs
-   rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs ) ;
+   rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs );
    ASSERT_EQ( SDB_OK, rc ) ;
    // get cl
    rc = getCollection( cs, COLLECTION_NAME, cl ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   // insert record
-   rc = fromjson( "{a:1}", obj ) ;
-   rc = cl.insert( obj ) ;
-   CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
+   rc = connection.getLastErrorObj( result ) ;
+   ASSERT_EQ( SDB_DMS_EOC, rc ) ;
+
+   rc = cs.getCollection( "aaaaa", cl2 ) ;
+   ASSERT_EQ( SDB_DMS_NOTEXIST, rc ) ;
+   rc = connection.getLastErrorObj( result ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   // todo:
-   rc = connection.setSessionAttr( conf ) ;
-   CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   for ( int i = 0; i < 10; i++ )
-   {
-      rc = cl.query( cursor );
-      CHECK_MSG( "%s%d\n", "rc = ", rc ) ;
-      ASSERT_EQ( SDB_OK, rc ) ;
-   }
+   cout << "after get cl failed, result is: " << result.toString(false, true) << endl ;
+
+   connection.cleanLastErrorObj() ;
+   rc = connection.getLastErrorObj( result ) ;
+   ASSERT_EQ( SDB_DMS_EOC, rc ) ;
+
+   rc = cs.getCollection( "aaaaa", cl2 ) ;
+   ASSERT_EQ( SDB_DMS_NOTEXIST, rc ) ;
+
    // disconnect the connection
    connection.disconnect() ;
-}
-*/
 
-/*
-TEST(sdb,resetSnapshot)
-{
-   sdb connection ;
-   sdbCollectionSpace cs ;
-   sdbCursor cursor ;
-   // initialize local variables
-   const CHAR *pHostName                    = HOST ;
-   const CHAR *pPort                        = SERVER ;
-   const CHAR *pUsr                         = USER ;
-   const CHAR *pPasswd                      = PASSWD ;
-   INT32 rc                                 = SDB_OK ;
-   BSONObj condition ;
-   // initialize the work environment
-   rc = initEnv() ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   // connect to database
-   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   ASSERT_TRUE( 0==1 ) ;
-   // reset snapshot
-   rc = connection.resetSnapshot( condition ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   // display records
-//   displayRecord( cursor ) ;
-   // disconnect the connection
-   connection.disconnect() ;
+   // case 2:
+   rc = connection.getLastErrorObj( result ) ;
+   ASSERT_EQ( SDB_DMS_EOC, rc ) ;
+   connection.cleanLastErrorObj() ;
+   rc = connection.getLastErrorObj( result ) ;
+   ASSERT_EQ( SDB_DMS_EOC, rc ) ;
+
+   rc = cs.getCollection( "aaaaa", cl2 ) ;
+   ASSERT_EQ( SDB_NOT_CONNECTED, rc ) ;
+   rc = connection.getLastErrorObj( result ) ;
+   ASSERT_EQ( SDB_DMS_EOC, rc ) ;
+   connection.cleanLastErrorObj() ;
+   rc = connection.getLastErrorObj( result ) ;
+   ASSERT_EQ( SDB_DMS_EOC, rc ) ;
+
 }
 
-
-TEST(sdb,transactionBegin)
-{
-   sdb connection ;
-   // initialize local variables
-   const CHAR *pHostName                    = HOST ;
-   const CHAR *pPort                        = SERVER ;
-   const CHAR *pUsr                         = USER ;
-   const CHAR *pPasswd                      = PASSWD ;
-   INT32 rc                                 = SDB_OK ;
-
-   bson obj ;
-   rc = initEnv() ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-
-   // connect to database
-   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-
-   ASSERT_TRUE( 0==1 ) ;
-   // disconnect the connection
-   connection.disconnect() ;
-}
-
-TEST(sdb,transactionCommit)
-{
-   sdb connection ;
-   // initialize local variables
-   const CHAR *pHostName                    = HOST ;
-   const CHAR *pPort                        = SERVER ;
-   const CHAR *pUsr                         = USER ;
-   const CHAR *pPasswd                      = PASSWD ;
-   INT32 rc                                 = SDB_OK ;
-
-   bson obj ;
-   rc = initEnv() ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-
-   // connect to database
-   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-
-   ASSERT_TRUE( 0==1 ) ;
-   // disconnect the connection
-   connection.disconnect() ;
-}
-
-TEST(sdb,transactionRollback)
-{
-   sdb connection ;
-   // initialize local variables
-   const CHAR *pHostName                    = HOST ;
-   const CHAR *pPort                        = SERVER ;
-   const CHAR *pUsr                         = USER ;
-   const CHAR *pPasswd                      = PASSWD ;
-   INT32 rc                                 = SDB_OK ;
-
-   bson obj ;
-   initEnv() ;
-
-   // connect to database
-   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-
-   ASSERT_TRUE( 0==1 ) ;
-   // disconnect the connection
-   connection.disconnect() ;
-}
-*/
-
-
-// TODO:
-/*
-resetSnapshot
-createCollectionSpace // option
-listCollections
-listReplicaGroups
-getReplicaGroup // name
-getReplicaGroup // id
-createReplicaGroup
-removeReplicaGroup
-createReplicaCataGroup
-activateReplicaGroup
-transactionBegin
-transactionCommit
-transactionRollback
-flushConfigure
-crtJSProcedure
-rmProcedure
-listProcedures
-evalJS
-backupOffline
-listBackup
-removeBackup
-listTasks
-waitTasks
-cancelTask
-setSessionAttr
-listDomains
-
-*/
