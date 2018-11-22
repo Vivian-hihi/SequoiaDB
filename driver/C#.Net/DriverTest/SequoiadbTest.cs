@@ -423,7 +423,7 @@ namespace DriverTest
             catch (BaseException e)
             {
                 Console.WriteLine("The error info is: " + e.ErrorType + ", " + e.ErrorCode + ", " + e.Message);
-                Assert.IsTrue(e.ErrorType == "SDB_DPS_TRANS_DIABLED");             
+                Assert.IsTrue(e.ErrorType == "SDB_DPS_TRANS_DIABLED");
             }
             finally
             {
@@ -451,7 +451,21 @@ namespace DriverTest
                     Console.WriteLine(rec);
                 }
             }
-            
+
+            // sequences
+            {
+                cursor.Close();
+                cursor = null;
+                cursor = sdb.GetSnapshot(SDBConst.SDB_SNAP_SEQUENCES, dummy, dummy, dummy);
+                Assert.IsNotNull(cursor);
+                Console.WriteLine("the result of SDB_SNAP_SEQUENCES is: ");
+                BsonDocument rec = null;
+                while (null != (rec = cursor.Next()))
+                {
+                    Console.WriteLine(rec);
+                }
+            }
+
         }
 
         [TestMethod()]
@@ -497,10 +511,27 @@ namespace DriverTest
                     Console.WriteLine(o);
                 }
             }
+            catch (BaseException e)
+            {
+                Assert.AreEqual("SDB_DPS_TRANS_DIABLED", e.ErrorType);
+            }
             finally
             {
                 sdb.TransactionCommit();
             }
+
+            // list sequences
+            {
+                cursor = db.GetList(SDBConst.SDB_LIST_SEQUENCES, dummy, dummy, dummy);
+                Assert.IsNotNull(cursor);
+                Console.WriteLine("the result of SDB_LIST_SEQUENCES is: ");
+                BsonDocument rec = null;
+                while (null != (rec = cursor.Next()))
+                {
+                    Console.WriteLine(rec);
+                }
+            }
+
 
             // list cs
             cursor = db.GetList(SDBConst.SDB_LIST_COLLECTIONSPACES, dummy, dummy, dummy);

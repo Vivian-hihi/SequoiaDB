@@ -797,6 +797,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_SNAP_ACCESSPLANS
          *      SDBConst.SDB_SNAP_HEALTH
          *      SDBConst.SDB_SNAP_CONFIGS
+         *      SDBConst.SDB_SNAP_SEQUENCES
          *      
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
@@ -806,90 +807,9 @@ namespace SequoiaDB
          *  \exception System.Exception
          */
         public DBCursor GetSnapshot(int snapType, BsonDocument matcher, BsonDocument selector,
-                                          BsonDocument orderBy)
+                                    BsonDocument orderBy)
         {
-            string command = null;
-            switch (snapType)
-            {
-                case SDBConst.SDB_SNAP_CONTEXTS:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                           SequoiadbConstants.CONTEXTS;
-                    break;
-                case SDBConst.SDB_SNAP_CONTEXTS_CURRENT:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                           SequoiadbConstants.CONTEXTS_CUR;
-                    break;
-                case SDBConst.SDB_SNAP_SESSIONS:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                           SequoiadbConstants.SESSIONS;
-                    break;
-                case SDBConst.SDB_SNAP_SESSIONS_CURRENT:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                           SequoiadbConstants.SESSIONS_CUR;
-                    break;
-                case SDBConst.SDB_SNAP_COLLECTIONS:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                           SequoiadbConstants.COLLECTIONS;
-                    break;
-                case SDBConst.SDB_SNAP_COLLECTIONSPACES:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                           SequoiadbConstants.COLSPACES;
-                    break;
-                case SDBConst.SDB_SNAP_DATABASE:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                           SequoiadbConstants.DATABASE;
-                    break;
-                case SDBConst.SDB_SNAP_SYSTEM:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                           SequoiadbConstants.SYSTEM;
-                    break;
-                case SDBConst.SDB_SNAP_CATALOG:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                           SequoiadbConstants.CATA;
-                    break;
-                case SDBConst.SDB_SNAP_TRANSACTIONS:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                           SequoiadbConstants.TRANSACTIONS;
-                    break;
-                case SDBConst.SDB_SNAP_TRANSACTIONS_CURRENT:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                           SequoiadbConstants.TRANSACTIONS_CURRENT;
-                    break;
-                case SDBConst.SDB_SNAP_ACCESSPLANS:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                              SequoiadbConstants.ACCESSPLANS;
-                    break;
-                case SDBConst.SDB_SNAP_HEALTH:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                           SequoiadbConstants.HEALTH;
-                    break;
-                case SDBConst.SDB_SNAP_CONFIGS:
-                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
-                           SequoiadbConstants.CONFIGS;
-                    break;  
-                default:
-                    throw new BaseException("SDB_INVALIDARG");
-            }
-
-            BsonDocument dummyObj = new BsonDocument();
-            if (matcher == null)
-                matcher = dummyObj;
-            if (selector == null)
-                selector = dummyObj;
-            if (orderBy == null)
-                orderBy = dummyObj;
-            SDBMessage rtn = AdminCommand(command, matcher, selector, orderBy, dummyObj);
-
-            int flags = rtn.Flags;
-            if (flags != 0)
-                if (flags == SequoiadbConstants.SDB_DMS_EOC)
-                    return null;
-                else
-                {
-                    throw new BaseException(flags, rtn.ErrorObject);
-                }
-
-            return new DBCursor(rtn, this);
+            return GetSnapshot(snapType, matcher, selector, orderBy, null, 0, -1);
         }
 
         /** \fn DBCursor GetSnapshot(int snapType, BsonDocument matcher, BsonDocument selector,
@@ -911,6 +831,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_SNAP_ACCESSPLANS
          *      SDBConst.SDB_SNAP_HEALTH
          *      SDBConst.SDB_SNAP_CONFIGS
+         *      SDBConst.SDB_SNAP_SEQUENCES
          *      
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
@@ -947,6 +868,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_SNAP_ACCESSPLANS
          *      SDBConst.SDB_SNAP_HEALTH
          *      SDBConst.SDB_SNAP_CONFIGS
+         *      SDBConst.SDB_SNAP_SEQUENCES
          *      
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
@@ -1025,7 +947,11 @@ namespace SequoiaDB
                 case SDBConst.SDB_SNAP_CONFIGS:
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
                            SequoiadbConstants.CONFIGS;
-                    break;  
+                    break;
+                case SDBConst.SDB_SNAP_SEQUENCES:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.SEQUENCES;
+                    break;
                 default:
                     throw new BaseException("SDB_INVALIDARG");
             }
@@ -1074,6 +1000,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_LIST_TASKS
          *      SDBConst.SDB_LIST_TRANSACTIONS
          *      SDBConst.SDB_LIST_TRANSACTIONS_CURRENT
+         *      SDBConst.SDB_LIST_SEQUENCES
          *      
          *  \return A DBCursor of all the fitted objects or null
          *  \exception SequoiaDB.BaseException
@@ -1103,6 +1030,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_LIST_TASKS
          *      SDBConst.SDB_LIST_TRANSACTIONS
          *      SDBConst.SDB_LIST_TRANSACTIONS_CURRENT
+         *      SDBConst.SDB_LIST_SEQUENCES
          *      
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
@@ -1168,6 +1096,10 @@ namespace SequoiaDB
                 case SDBConst.SDB_LIST_TRANSACTIONS_CURRENT:
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
                            SequoiadbConstants.TRANSACTIONS_CURRENT;
+                    break;
+                case SDBConst.SDB_LIST_SEQUENCES:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
+                           SequoiadbConstants.SEQUENCES;
                     break;
                 case SDBConst.SDB_LIST_CL_IN_DOMAIN:
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
