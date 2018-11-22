@@ -223,7 +223,8 @@ public class CreateCLAndKillSlaveCatalog2281 extends SdbTestBase {
     }
     
     
-    private void checkListCL() {
+    @SuppressWarnings("unchecked")
+	private void checkListCL() {
         // get expect cl name list
         List<BSONObject> expCLNames = new ArrayList<BSONObject>();        
         for (int i = 0; i < CL_NUM; i++) {
@@ -233,14 +234,16 @@ public class CreateCLAndKillSlaveCatalog2281 extends SdbTestBase {
             expCLNames.add(nameBSON);
         }
         
-        // get actual cl name list
-        DBCursor cursor = sdb.listCollections();
         List<BSONObject> actCLNames = new ArrayList<BSONObject>();
-        while (cursor.hasNext()) {
-            BSONObject result = cursor.getNext();
-            actCLNames.add(result);
-        }
+        DBCursor cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONSPACES, new BasicBSONObject( "Name" , csName ), null, null);
+        BSONObject csSnap = cursor.getNext();
         cursor.close();
+        List<BSONObject> clsList = (List<BSONObject>) csSnap.get("Collection");
+        for (int i = 0; i < clsList.size(); i++) {
+			String clName = (String) clsList.get(i).get("Name");
+			actCLNames.add( new BasicBSONObject("Name", clName) );
+			System.out.println(" wa sai!!!");
+		}
         
         // compare them
         sortByName(actCLNames);
