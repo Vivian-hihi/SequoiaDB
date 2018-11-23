@@ -35,11 +35,11 @@ class GetLastErrMsg16657 extends PHPUnit_Framework_TestCase
       self::$cl -> insert( array( 'a' => 1) );
       self::checkErrno( 0, self::$db -> getError()['errno'] );
       self::$cl -> insert( array( 'a' => 1) );
-      $errMsg = sdbGetLastErrorMsg();
-      self::checkErrorMsg( $errMsg, -38, "insert the same record");
+      $errMsg1 = self::$db -> getLastErrorMsg();
+      self::checkErrorMsg( $errMsg1, -38, "insert the same record");
       self::$db -> getCL("text.text");
-      $errMsg = sdbGetLastErrorMsg();
-      self::checkErrorMsg( $errMsg, -23, "get not exist cl");
+      $errMsg2 = self::$db -> getLastErrorMsg();
+      self::checkErrorMsg( $errMsg2, -23, "get not exist cl");
    }
    
    public static function tearDownAfterClass()
