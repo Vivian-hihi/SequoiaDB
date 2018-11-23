@@ -14,7 +14,7 @@ function main()
    commDropCL(db, COMMCSNAME, clName, true, true);
    
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
-   commCreateIndex( dbcl, "fullIndex_14375", {b : "text"});
+   commCreateIndex( dbcl, "fullIndex_14375", {a : "text", b : "text", c : "text"});
    
    var records = new Array();
    for (var i = 0; i < 8000 ; i++){
@@ -35,7 +35,7 @@ function main()
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_14375");
    var esIndexName = esIndexNames[0];
    var actResult = esOperator.findFromES(esIndexName, '{"query" : {"match_all" : {}}, "size" : 10000}')
-   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, {b : ""});
+   var expResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, {a : "", b : "", c : ""});
    
    expResult.sort(compare("b"));
    actResult.sort(compare("b"));

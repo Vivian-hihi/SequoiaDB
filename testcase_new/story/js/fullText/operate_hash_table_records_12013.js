@@ -126,8 +126,6 @@ function main()
    println("================分区键删除成功================");
    println("================================full index on ShardingKey================================");
    
-   dbcs.removeDomain();
-   commDropCL(db, csName, clName, true, true);
    commDropCS( db, csName );
    db.dropDomain("testDomain");
 }
