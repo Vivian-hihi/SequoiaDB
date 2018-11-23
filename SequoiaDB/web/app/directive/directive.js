@@ -6088,8 +6088,6 @@
                      }
                      scope.table['body'] = null ;
 
-                     //重置页数
-                     scope.loadStatus['page'] = 1 ;
                      if( isEmpty )
                      {
                         //没用过滤条件，全部显示
