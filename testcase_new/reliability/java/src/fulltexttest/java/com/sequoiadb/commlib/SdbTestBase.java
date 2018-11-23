@@ -46,9 +46,9 @@ public class SdbTestBase {
         remotePwd = REMOTEPASSWD;
         scriptDir = SCRIPTDIR;
         Sequoiadb db = null;
-	esHostName = ESHOSTNAME;
+        esHostName = ESHOSTNAME;
         esServiceName = ESSVCNAME;
-	esUrl = ESHOSTNAME + ":" + ESSVCNAME;
+        esUrl = ESHOSTNAME + ":" + ESSVCNAME;
         try {
             db = new Sequoiadb(coordUrl, "", "");
             boolean ret = createCommonCS(db);
