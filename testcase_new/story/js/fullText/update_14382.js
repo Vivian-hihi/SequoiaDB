@@ -1,0 +1,60 @@
+/***************************************************************************
+@Description :seqDB-14382 :shardingKey字段为全文索引字段，更新全文索引字段
+@Modify list :2018-11-22  Zhaoxiaoni  init
+****************************************************************************/
+function main()
+{
+   if(commIsStandalone( db )){
+      println("Deploy is standalone");
+      return;
+   }
+   
+   var groups = commGetGroups( db );
+   if(groups.length < 2 ){
+      println("Deploy one group");
+      return;
+   }
+   
+   var clName = COMMCLNAME + "_ES_14382";
+   commDropCL(db, COMMCSNAME, clName, true, true);
+   
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingType : "range", ShardingKey : {a : 1}, Group : groups[0][0]["GroupName"]} );
+   commCreateIndex( dbcl, "fullIndex", {a : "text"});
+   
+   var records = [];
+   for (var i = 0; i < 10000; i++){
+      var record = {a : "a" + i, b : i};
+      records.push(record);
+   }
+   insertRecords(dbcl, records);
+   
+   if(10000 != dbcl.count())
+   {
+      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
+      return ;
+   }
+   
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 10000);
+   
+   dbcl.update({$set : {a : "a", b : "b"}});
+   try
+   {
+      dbcl.update({$set : {a : "a", b : "bb"}}, null, null, {KeepShardingKey : true}); 
+   }catch(e)
+   {
+      if(e !== -178)
+      {
+         throw "update error!";
+      }
+   }
+   
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 10000);
+   
+   var dbOperator = new DBOperator();
+   var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
+   var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
+   checkResult(expResult, actResult);
+   
+   commDropCL(db, COMMCSNAME, clName, true, true);
+}
+main();
