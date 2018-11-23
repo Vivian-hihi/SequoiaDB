@@ -1,4 +1,4 @@
-package com.sequoiadb.fulltext.killnode;
+package com.sequoiadb.fulltext.restartnode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +19,8 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.FullTextESUtils;
 import com.sequoiadb.fulltext.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.commlib.CommLib;
+import com.sequoiadb.commlib.SdbTestBase;
 
 /**
  * @Description seqDB-14405:正常启动DB主节点不影响全文索引功能 

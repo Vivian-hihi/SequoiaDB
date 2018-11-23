@@ -13,7 +13,6 @@ import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.fulltext.FullTextESUtils;
 import com.sequoiadb.fulltext.FullTextUtils;
-import com.sequoiadb.fulltext.killnode.Utils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
@@ -32,13 +31,13 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * @Description seqDB-14406:异常启动DB主节点不影响全文索引功能 
+ * @Description seqDB-14406:异常启动DB备节点不影响全文索引功能 
  * @author yinzhen
  * @date 2018/11/23
  */
 
-public class RestartMasterNode14406 extends SdbTestBase {
-    private String clName = "restartMasterNode14406";
+public class KillSlaveNode14408 extends SdbTestBase {
+	private String clName = "killSlaveNode14408";
     private CollectionSpace cs;
     private DBCollection cl;
     private GroupMgr groupMgr = null;
@@ -46,19 +45,18 @@ public class RestartMasterNode14406 extends SdbTestBase {
     private boolean clearFlag = false;
     private String groupName;
     private Client esClient = null;
-    private String fullIndexName = "fullIndex14406";
+    private String fullIndexName = "fullIndex14408";
 
     @BeforeClass()
     public void setUp() {
-        try {
-            System.out.println(
+    	try {System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             groupMgr = new GroupMgr();
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
             if (!groupMgr.checkBusiness(20)) {
-                throw new SkipException("checkBusiness return false");
+            	throw new SkipException("checkBusiness return false");
             }
             groupName = groupMgr.getAllDataGroupName().get(0);
 
@@ -74,7 +72,7 @@ public class RestartMasterNode14406 extends SdbTestBase {
                 sdb.close();
             }
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
-                    + e.getMessage() + "\r\n" + Utils.getStackString(e));
+                    + e.getMessage() + "\r\n" + this.getStackString(e));
         }
     }
 
@@ -102,7 +100,7 @@ public class RestartMasterNode14406 extends SdbTestBase {
         	this.insertData();
         	FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 500000);
             GroupWrapper subCLGroup = groupMgr.getGroupByName(groupName);
-            NodeWrapper subCLGroupMaster = subCLGroup.getMaster();
+            NodeWrapper subCLGroupMaster = subCLGroup.getSlave();
             System.out.println(
                     "Kill node:" + subCLGroupMaster.hostName() + ":" + subCLGroupMaster.svcName());
 
@@ -154,7 +152,7 @@ public class RestartMasterNode14406 extends SdbTestBase {
             }
         }
         catch (BaseException e) {
-            Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
+            Assert.fail(e.getMessage() + "\r\n" + this.getStackString(e));
         }
         finally {
             if (sdb != null) {
@@ -163,6 +161,21 @@ public class RestartMasterNode14406 extends SdbTestBase {
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+        }
+    }
+    // 获取异常的堆栈信息字串
+    public static String getStackString(Exception e) {
+        StringBuffer stackBuffer = new StringBuffer();
+        StackTraceElement[] stackElements = e.getStackTrace();
+        for (int i = 0; i < stackElements.length; i++) {
+            stackBuffer.append(stackElements[i].toString()).append("\r\n");
+        }
+        String str = stackBuffer.toString();
+        if (str.length() >= 2) {
+            return str.substring(0, str.length() - 2);
+        }
+        else {
+            return str;
         }
     }
 }

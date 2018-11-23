@@ -12,7 +12,7 @@ import org.bson.types.BasicBSONList;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.commlib.CommLib;
 
 public class FullTextDBUtils {
 
@@ -114,8 +114,9 @@ public class FullTextDBUtils {
         * @param db
         * @param clFullName
         */ 
-        public static List<String> getCLGroups(Sequoiadb db, String clFullName) {		
-            if(CommLib.isStandAlone(db)) {
+        public static List<String> getCLGroups(Sequoiadb db, String clFullName) {
+	    CommLib commlib = new CommLib();		
+            if(commlib.isStandAlone(db)) {
                 return new ArrayList<>();
             }
             List<String> groupNames = new ArrayList<>();
