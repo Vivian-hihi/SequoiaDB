@@ -18,6 +18,7 @@
 
 extern zend_class_entry *pSequoiadbInt64 ;
 
+extern INT32 connectionDesc ;
 extern INT32 lobDesc ;
 
 PHP_METHOD( SequoiaLob, __construct )

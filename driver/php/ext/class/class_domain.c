@@ -18,6 +18,7 @@
 
 extern zend_class_entry *pSequoiadbCursor ;
 
+extern INT32 connectionDesc ;
 extern INT32 cursorDesc ;
 extern INT32 domainDesc ;
 

@@ -310,6 +310,22 @@ zend_parse_parameters ( ZEND_NUM_ARGS(), format, ##__VA_ARGS__ )
 //set php class public errno is SDB_OK
 #define PHP_SET_ERRNO_OK( isSequoiaDB, thisObj )\
 {\
+   sdbConnectionHandle connection = SDB_INVALID_HANDLE ;\
+\
+   if ( isSequoiaDB )\
+   {\
+      PHP_READ_HANDLE( thisObj, connection, sdbConnectionHandle,\
+                       SDB_HANDLE_NAME, connectionDesc ) ;\
+   }\
+   else\
+   {\
+      zval *pSequoiadb = NULL ;\
+\
+      PHP_READ_VAR( thisObj, "_SequoiaDB", pSequoiadb ) ;\
+      PHP_READ_HANDLE( pSequoiadb, connection, sdbConnectionHandle,\
+                       SDB_HANDLE_NAME, connectionDesc ) ;\
+   }\
+   sdbCleanLastErrorObj( connection ) ;\
    PHP_SET_ERROR( isSequoiaDB, thisObj, SDB_OK ) ;\
 }
 

@@ -16,6 +16,7 @@
 
 #include "class_cursor.h"
 
+extern INT32 connectionDesc ;
 extern INT32 cursorDesc ;
 
 PHP_METHOD( SequoiaCursor, __construct )
