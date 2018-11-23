@@ -32,7 +32,7 @@ SDB_SNAP_CONFIGS
 {
   "NodeName": "ubuntu-zwb:20000"
   "confpath": "/home/sequoiadb/conf/local/20000/",
-  "dbpath": "/home/equoiadb/20000/",
+  "dbpath": "/home/sequoiadb/20000/",
   "indexpath": "/home/sequoiadb/20000/",
   "diagpath": "/home/sequoiadb/20000/diaglog/",
   "auditpath": "/home/sequoiadb/20000/diaglog/",
@@ -121,7 +121,7 @@ Return 1 row(s).
 > db.snapshot( SDB_SNAP_CONFIGS, option )
 {
   "NodeName": "ubuntu-zwb:20000",
-  "dbpath": "/home/equoiadb/20000/",
+  "dbpath": "/home/sequoiadb/20000/",
   "svcname": "20000",
   "diaglevel": 3,
   "role": "data",

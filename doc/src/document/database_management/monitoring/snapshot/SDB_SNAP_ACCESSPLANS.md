@@ -65,7 +65,7 @@ SDB_SNAP_ACCESSPLANS
 >   **Note:**
 >
 >   *   最慢和最快的查询 MaxTimeSpentQuery 和 MinTimeSpentQuery 只计算查询的 QueryTimeSpent，不计算查询的 ExecuteTimeSpent。
->   *   SdbQuery.explain() 的 Run 模式不计算在 QueryTimeSpent 、maxTimeSpentQuery 和 minTimeSpentQuery 中。
+>   *   SdbQuery.explain() 的 Run 模式不计算在 QueryTimeSpent 、MaxTimeSpentQuery 和 MinTimeSpentQuery 中。
 
 ##示例##
 
