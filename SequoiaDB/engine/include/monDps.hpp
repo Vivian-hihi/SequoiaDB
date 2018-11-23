@@ -40,7 +40,9 @@
 #ifndef MON_DPS_HPP__
 #define MON_DPS_HPP__
 
+#include "dpsDef.hpp"
 #include "dpsTransLockDef.hpp"
+#include "msgDef.hpp"
 #include <vector>
 
 using namespace bson ;
@@ -70,8 +72,16 @@ namespace engine
          {
          }
 
-         OSS_INLINE BSONObj   toBson() const ;
-         OSS_INLINE void      toBson( BSONObjBuilder &builder ) const ;
+         void clear()
+         {
+            _mode       = 0 ;
+            _count      = 0 ;
+            _id.reset() ;
+         }
+
+         OSS_INLINE BSONObj   toBson( BOOLEAN showCount = TRUE ) const ;
+         OSS_INLINE void      toBson( BSONObjBuilder &builder,
+                                      BOOLEAN showCount = TRUE ) const ;
 
       public:
          dpsTransLockId       _id ;
@@ -84,18 +94,22 @@ namespace engine
    /*
       _monTransLockCur implement
    */
-   OSS_INLINE void _monTransLockCur::toBson( BSONObjBuilder &builder ) const
+   OSS_INLINE void _monTransLockCur::toBson( BSONObjBuilder &builder,
+                                             BOOLEAN showCount ) const
    {
       _id.toBson( builder ) ;
 
-      builder.append( MON_TRANS_LOCK_MODE, lockModeToString( _mode ) ;
-      builder.append( MON_TRANS_LOCK_COUNT, (INT32)_count ) ;
+      builder.append( MON_TRANS_LOCK_MODE, lockModeToString( _mode ) ) ;
+      if ( showCount )
+      {
+         builder.append( MON_TRANS_LOCK_COUNT, (INT32)_count ) ;
+      }
    }
 
-   OSS_INLINE BSONObj _monTransLockCur::toBson() const
+   OSS_INLINE BSONObj _monTransLockCur::toBson( BOOLEAN showCount ) const
    {
       BSONObjBuilder builder( 128 ) ;
-      toBson( builder ) ;
+      toBson( builder, showCount ) ;
       return builder.obj() ;
    }
 
@@ -123,7 +137,7 @@ namespace engine
                {
                   builder.append( FIELD_NAME_SESSIONID, (INT64)_eduID ) ;
                   builder.append( MON_TRANS_LOCK_MODE,
-                                  lockModeToString( _mode ) ;
+                                  lockModeToString( _mode ) ) ;
                   if ( showCount )
                   {
                      builder.append( MON_TRANS_LOCK_COUNT, (INT32)_count ) ;
@@ -202,6 +216,46 @@ namespace engine
       toBson( builder ) ;
       return builder.obj() ;
    }
+
+   /*
+      _monTransInfo define
+   */
+   class _monTransInfo : public SDBObject
+   {
+      public:
+         DPS_TRANS_ID         _transID ;
+         DPS_LSN_OFFSET       _curTransLsn ;
+         UINT64               _eduID ;
+         UINT64               _relatedNID ;
+         UINT32               _relatedTID ;
+         UINT32               _locksNum ;
+         monTransLockCur      _waitLock ;
+         VEC_TRANSLOCKCUR     _lockList ;
+
+         UTIL_OBJIDX          _lastLRBIdx ;
+         UTIL_OBJIDX          _waitLRBIdx ;
+
+      public:
+         _monTransInfo()
+         {
+            clear() ;
+         }
+
+         void clear()
+         {
+            _transID = DPS_INVALID_TRANS_ID ;
+            _curTransLsn = DPS_INVALID_LSN_OFFSET ;
+            _eduID = 0 ;
+            _relatedNID = 0 ;
+            _relatedTID = 0 ;
+            _locksNum = 0 ;
+            _lockList.clear() ;
+            _waitLock.clear() ;
+            _lastLRBIdx = UTIL_INVALID_OBJ_INDEX ;
+            _waitLRBIdx = UTIL_INVALID_OBJ_INDEX ;
+         }
+   } ;
+   typedef _monTransInfo monTransInfo ;
 
 }
 

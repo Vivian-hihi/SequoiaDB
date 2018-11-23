@@ -42,6 +42,7 @@
 #include "rtnIXScanner.hpp"
 #include "bpsPrefetch.hpp"
 #include "dmsCompress.hpp"
+#include "dmsTransContext.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 
@@ -341,50 +342,25 @@ namespace engine
 
          if ( _recordLock != -1 )
          {
+            dmsTBTransContext tbTxContext( _context, _accessType ) ;
             if ( EXCLUSIVE == _recordLock )
             {
-               rc = _pTransCB->tryOrAppendX( cb, _pSu->logicalID(),
-                                             _context->mbID(), &_curRID ) ;
+               rc = _pTransCB->transLockGetX( cb, _pSu->logicalID(),
+                                              _context->mbID(), &_curRID,
+                                              & tbTxContext ) ;
             }
             else
             {
-               rc = _pTransCB->tryOrAppendS( cb, _pSu->logicalID(),
-                                             _context->mbID(), &_curRID ) ;
+               rc = _pTransCB->transLockGetS( cb, _pSu->logicalID(),
+                                              _context->mbID(), &_curRID,
+                                              & tbTxContext ) ;
             }
-            if ( rc )
-            {
-               PD_CHECK( SDB_DPS_TRANS_APPEND_TO_WAIT == rc, rc, error, PDERROR,
-                         "Failed to get record, append lock-wait-queue failed, "
-                         "rc: %d", rc ) ;
-               // now haved append to lock-wait-queue, release latch and then
-               // wait the lock
-               _context->pause() ;
-               {
-               DPS_TRANS_WAIT_LOCK _transWaitLock( cb, _pSu->logicalID(),
-                                                   _context->mbID(), &_curRID ) ;
-               rc = _pTransCB->waitLock( cb, _pSu->logicalID(),
-                                         _context->mbID(), &_curRID ) ;
-               }
-               PD_RC_CHECK( rc, PDERROR, "Failed to wait record lock, rc: %d",
-                            rc ) ;
-               // got the record-X-Lock, re-get the latch
-               lockedRecord = TRUE ;
-               rc = _context->resume() ;
-               if ( rc )
-               {
-                  PD_LOG( PDERROR, "Resume dms mb context failed, rc: %d", rc );
-                  goto error ;
-               }
-               if ( !dmsAccessAndFlagCompatiblity ( _context->mb()->_flag,
-                                                    _accessType ) )
-               {
-                  PD_LOG ( PDERROR, "Incompatible collection mode: %d",
-                           _context->mb()->_flag ) ;
-                  rc = SDB_DMS_INCOMPATIBLE_MODE ;
-                  goto error ;
-               }
-               _next = _curRecordPtr->getNextOffset() ;
-            }
+
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to get record lock, rc: %d", rc ) ;
+
+            lockedRecord = TRUE ;
+            _next = _curRecordPtr->getNextOffset() ;
          }
 
          if ( _curRecordPtr->isDeleting() )
@@ -1358,59 +1334,25 @@ namespace engine
          _curRecordPtr = _recordRW.readPtr( 0 ) ;
          if ( _recordLock != -1 )
          {
+            dmsIXTransContext ixTxContext( _context, _accessType,
+                                           _scanner, isReadOnly() ) ;
             if ( EXCLUSIVE == _recordLock )
             {
-               rc = _pTransCB->tryOrAppendX( cb, _pSu->logicalID(),
-                                             _context->mbID(), &_curRID ) ;
+               rc = _pTransCB->transLockGetX( cb, _pSu->logicalID(),
+                                              _context->mbID(), &_curRID,
+                                              &ixTxContext ) ;
             }
             else
             {
-               rc = _pTransCB->tryOrAppendS( cb, _pSu->logicalID(),
-                                             _context->mbID(), &_curRID ) ;
+               rc = _pTransCB->transLockGetS( cb, _pSu->logicalID(),
+                                              _context->mbID(), &_curRID,
+                                              &ixTxContext ) ;
             }
-            if ( rc )
-            {
-               PD_CHECK( SDB_DPS_TRANS_APPEND_TO_WAIT == rc, rc, error, PDERROR,
-                         "Failed to get record, append lock-wait-queue failed, "
-                         "rc: %d", rc ) ;
-               // now haved append to lock-wait-queue, release latch and then
-               // wait the lock
-               rc = _scanner->pauseScan( isReadOnly() ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to pause ixscan, rc: %d", rc ) ;
 
-               _context->pause() ;
-               {
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to get record lock, rc: %d", rc ) ;
 
-               DPS_TRANS_WAIT_LOCK _transWaitLock( cb, _pSu->logicalID(),
-                                                   _context->mbID(), &_curRID ) ;
-               rc = _pTransCB->waitLock( cb, _pSu->logicalID(),
-                                         _context->mbID(), &_curRID ) ;
-               }
-               PD_RC_CHECK( rc, PDERROR, "Failed to wait record lock, rc: %d",
-                            rc ) ;
-               // got the record-X-Lock, re-get the latch
-               lockedRecord = TRUE ;
-               rc = _context->resume() ;
-               if ( rc )
-               {
-                  PD_LOG( PDERROR, "Remove dms mb context failed, rc: %d", rc );
-                  goto error ;
-               }
-               if ( !dmsAccessAndFlagCompatiblity ( _context->mb()->_flag,
-                                                    _accessType ) )
-               {
-                  PD_LOG ( PDERROR, "Incompatible collection mode: %d",
-                           _context->mb()->_flag ) ;
-                  rc = SDB_DMS_INCOMPATIBLE_MODE ;
-                  goto error ;
-               }
-               rc = _scanner->resumeScan( isReadOnly() ) ;
-               if ( rc )
-               {
-                  PD_LOG( PDERROR, "Failed to resume ixscan, rc: %d", rc ) ;
-                  goto error ;
-               }
-            }
+            lockedRecord = TRUE ;
          }
 
          if ( _curRecordPtr->isDeleting() )

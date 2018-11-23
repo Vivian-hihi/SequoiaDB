@@ -36,7 +36,7 @@
 *******************************************************************************/
 
 #include "dpsTransCB.hpp"
-#include "dpsTransLock.hpp"
+#include "dpsTransLockMgr.hpp"
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
 #include "pmdEDU.hpp"
@@ -128,6 +128,16 @@ namespace engine
             _maxUsedSize = 0 ;
          }
 
+         // Initialize trans lock manager
+         //   . allocate memory and under layer structures for the LRBs,
+         //     LRB Headers, LRB Header Hash buckets 
+         rc = _transLockMgr.init() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to initialize lock manager, rc: %d", rc ) ;
+            goto error ;
+         }
+
          rc = sdbGetDPSCB()->readOldestBeginLsnOffset( startLsnOffset ) ;
          PD_RC_CHECK( rc, PDERROR, "Read oldest begin lsn offset failed:rc=%d",
                       rc ) ;
@@ -174,12 +184,13 @@ namespace engine
    {
       // unregister event handle
       pmdGetKRCB()->unregEventHandler( this ) ;
+      _transLockMgr.fini() ;
       return SDB_OK ;
    }
 
    void dpsTransCB::onConfigChange()
    {
-      dpsLockBucket::setLockTimeout( pmdGetOptionCB()->transTimeout() * 1000 ) ;
+      _transLockMgr.setLockTimeout( pmdGetOptionCB()->transTimeout() * 1000 ) ;
    }
 
    DPS_TRANS_ID dpsTransCB::allocTransID()
@@ -636,48 +647,81 @@ namespace engine
 
    INT32 dpsTransCB::transLockGetX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                                     UINT16 collectionID,
-                                    const dmsRecordID *recordID )
+                                    const dmsRecordID *recordID,
+                                    _IContext *pContext,
+                                    dpsTransRetInfo * pdpsTxResInfo )
    {
       if ( !_isOn )
       {
          return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _TransLock.acquireX( eduCB, lockId );
+      return _transLockMgr.acquire( eduCB->getTransExecutor(),
+                                    lockId, DPS_TRANSLOCK_X,
+                                    pContext, pdpsTxResInfo );
    }
+
+   INT32 dpsTransCB::transLockGetU( _pmdEDUCB *eduCB, UINT32 logicCSID,
+                                    UINT16 collectionID,
+                                    const dmsRecordID *recordID,
+                                    _IContext *pContext,
+                                    dpsTransRetInfo * pdpsTxResInfo )
+   {
+      if ( !_isOn )
+      {
+         return SDB_OK ;
+      }
+      dpsTransLockId lockId( logicCSID, collectionID, recordID );
+      return _transLockMgr.acquire( eduCB->getTransExecutor(),
+                                    lockId, DPS_TRANSLOCK_U,
+                                    pContext, pdpsTxResInfo );
+   }
+
 
    INT32 dpsTransCB::transLockGetS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                                     UINT16 collectionID,
-                                    const dmsRecordID *recordID )
+                                    const dmsRecordID *recordID,
+                                    _IContext *pContext,
+                                    dpsTransRetInfo * pdpsTxResInfo )
    {
       if ( !_isOn )
       {
          return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _TransLock.acquireS( eduCB, lockId );
+      return _transLockMgr.acquire( eduCB->getTransExecutor(),
+                                    lockId, DPS_TRANSLOCK_S,
+                                    pContext, pdpsTxResInfo );
    }
 
    INT32 dpsTransCB::transLockGetIX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                                     UINT16 collectionID )
+                                     UINT16 collectionID,
+                                     _IContext *pContext,
+                                     dpsTransRetInfo * pdpsTxResInfo )
    {
       if ( !_isOn )
       {
          return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, NULL );
-      return _TransLock.acquireIX( eduCB, lockId );
+      return _transLockMgr.acquire( eduCB->getTransExecutor(),
+                                    lockId, DPS_TRANSLOCK_IX,
+                                    pContext, pdpsTxResInfo );
    }
 
    INT32 dpsTransCB::transLockGetIS( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                                     UINT16 collectionID )
+                                     UINT16 collectionID,
+                                     _IContext *pContext,
+                                     dpsTransRetInfo * pdpsTxResInfo )
    {
       if ( !_isOn )
       {
          return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, NULL );
-      return _TransLock.acquireIS( eduCB, lockId );
+      return _transLockMgr.acquire( eduCB->getTransExecutor(),
+                                    lockId, DPS_TRANSLOCK_IS,
+                                    pContext, pdpsTxResInfo );
    }
 
    void dpsTransCB::transLockRelease( _pmdEDUCB *eduCB, UINT32 logicCSID,
@@ -689,7 +733,7 @@ namespace engine
          return ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _TransLock.release( eduCB, lockId );
+      return _transLockMgr.release( eduCB->getTransExecutor(), lockId );
    }
 
    void dpsTransCB::transLockReleaseAll( _pmdEDUCB *eduCB )
@@ -698,7 +742,7 @@ namespace engine
       {
          return ;
       }
-      return _TransLock.releaseAll( eduCB );
+      return _transLockMgr.releaseAll( eduCB->getTransExecutor() );
    }
 
    BOOLEAN dpsTransCB::isTransOn()
@@ -708,117 +752,124 @@ namespace engine
 
    INT32 dpsTransCB::transLockTestS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                                      UINT16 collectionID,
-                                     const dmsRecordID *recordID )
+                                     const dmsRecordID *recordID,
+                                     dpsTransRetInfo * pdpsTxResInfo )
    {
       if ( !_isOn )
       {
          return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _TransLock.testS( eduCB, lockId );
+      return _transLockMgr.testAcquire( eduCB->getTransExecutor(),
+                                        lockId, DPS_TRANSLOCK_S,
+                                        pdpsTxResInfo );
    }
 
    INT32 dpsTransCB::transLockTestIS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                                       UINT16 collectionID,
-                                      const dmsRecordID *recordID )
+                                      const dmsRecordID *recordID,
+                                      dpsTransRetInfo * pdpsTxResInfo )
    {
       if ( !_isOn )
       {
          return SDB_OK ;
       }
-      dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _TransLock.testIS( eduCB, lockId );
+      dpsTransLockId lockId( logicCSID, collectionID, NULL );
+      return _transLockMgr.testAcquire( eduCB->getTransExecutor(),
+                                        lockId, DPS_TRANSLOCK_IS,
+                                        pdpsTxResInfo );
    }
 
    INT32 dpsTransCB::transLockTestX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                                      UINT16 collectionID,
-                                     const dmsRecordID *recordID )
+                                     const dmsRecordID *recordID,
+                                     dpsTransRetInfo * pdpsTxResInfo )
    {
       if ( !_isOn )
       {
          return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _TransLock.testX( eduCB, lockId );
+      return _transLockMgr.testAcquire( eduCB->getTransExecutor(),
+                                        lockId, DPS_TRANSLOCK_X,
+                                        pdpsTxResInfo );
+   }
+
+   INT32 dpsTransCB::transLockTestU( _pmdEDUCB *eduCB, UINT32 logicCSID,
+                                     UINT16 collectionID,
+                                     const dmsRecordID *recordID,
+                                     dpsTransRetInfo * pdpsTxResInfo )
+   {
+      if ( !_isOn )
+      {
+         return SDB_OK ;
+      }
+      dpsTransLockId lockId( logicCSID, collectionID, recordID );
+      return _transLockMgr.testAcquire( eduCB->getTransExecutor(),
+                                        lockId, DPS_TRANSLOCK_U,
+                                        pdpsTxResInfo );
    }
 
    INT32 dpsTransCB::transLockTestIX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                                       UINT16 collectionID,
-                                      const dmsRecordID *recordID )
+                                      const dmsRecordID *recordID,
+                                      dpsTransRetInfo * pdpsTxResInfo )
    {
       if ( !_isOn )
       {
          return SDB_OK ;
       }
-      dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _TransLock.testIX( eduCB, lockId );
+      dpsTransLockId lockId( logicCSID, collectionID, NULL );
+      return _transLockMgr.testAcquire( eduCB->getTransExecutor(),
+                                        lockId, DPS_TRANSLOCK_IX,
+                                        pdpsTxResInfo );
    }
 
    INT32 dpsTransCB::transLockTryX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                                     UINT16 collectionID,
-                                    const dmsRecordID *recordID )
+                                    const dmsRecordID *recordID,
+                                    dpsTransRetInfo * pdpsTxResInfo )
    {
       if ( !_isOn )
       {
          return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _TransLock.tryX( eduCB, lockId );
+      return _transLockMgr.tryAcquire( eduCB->getTransExecutor(),
+                                       lockId, DPS_TRANSLOCK_X,
+                                       pdpsTxResInfo );
+   }
+
+   INT32 dpsTransCB::transLockTryU( _pmdEDUCB *eduCB, UINT32 logicCSID,
+                                    UINT16 collectionID,
+                                    const dmsRecordID *recordID,
+                                    dpsTransRetInfo * pdpsTxResInfo )
+   {
+      if ( !_isOn )
+      {
+         return SDB_OK ;
+      }
+      dpsTransLockId lockId( logicCSID, collectionID, recordID );
+      return _transLockMgr.tryAcquire( eduCB->getTransExecutor(),
+                                       lockId, DPS_TRANSLOCK_U,
+                                       pdpsTxResInfo );
    }
 
    INT32 dpsTransCB::transLockTryS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                                     UINT16 collectionID,
-                                    const dmsRecordID *recordID )
+                                    const dmsRecordID *recordID,
+                                    dpsTransRetInfo * pdpsTxResInfo )
    {
       if ( !_isOn )
       {
          return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _TransLock.tryS( eduCB, lockId );
+      return _transLockMgr.tryAcquire( eduCB->getTransExecutor(),
+                                       lockId, DPS_TRANSLOCK_S,
+                                       pdpsTxResInfo );
    }
 
-   INT32 dpsTransCB::tryOrAppendX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                                   UINT16 collectionID,
-                                   const dmsRecordID *recordID )
-   {
-      if ( !_isOn )
-      {
-         return SDB_OK ;
-      }
-      SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" ) ;
-      SDB_ASSERT( recordID, "recordID can't be NULL" ) ;
-      dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _TransLock.tryOrAppendX( eduCB, lockId );
-   }
-
-   INT32 dpsTransCB::tryOrAppendS( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                                   UINT16 collectionID,
-                                   const dmsRecordID *recordID )
-   {
-      if ( !_isOn )
-      {
-         return SDB_OK ;
-      }
-      SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" ) ;
-      SDB_ASSERT( recordID, "recordID can't be NULL" ) ;
-      dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _TransLock.tryOrAppendS( eduCB, lockId );
-   }
-
-   INT32 dpsTransCB::waitLock( _pmdEDUCB * eduCB, UINT32 logicCSID,
-                              UINT16 collectionID,
-                              const dmsRecordID *recordID )
-   {
-      if ( !_isOn )
-      {
-         return SDB_OK ;
-      }
-      SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" ) ;
-      SDB_ASSERT( recordID, "recordID can't be NULL" ) ;
-      dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _TransLock.wait( eduCB, lockId );
-   }
 
    BOOLEAN dpsTransCB::hasWait( UINT32 logicCSID, UINT16 collectionID,
                                 const dmsRecordID *recordID)
@@ -830,7 +881,7 @@ namespace engine
       SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" ) ;
       SDB_ASSERT( recordID, "recordID can't be NULL" ) ;
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _TransLock.hasWait( lockId );
+      return _transLockMgr.hasWait( lockId );
    }
 
    INT32 dpsTransCB::reservedLogSpace( UINT32 length, _pmdEDUCB *cb )
@@ -937,6 +988,13 @@ namespace engine
    done:
       return remainSize ;
    }
+
+
+   dpsTransLockManager * dpsTransCB::getLockMgrHandle()
+   {
+      return ( _transLockMgr.isInitialized() ? ( & _transLockMgr ) : NULL ) ; 
+   }
+
 
    /*
       get global trans cb

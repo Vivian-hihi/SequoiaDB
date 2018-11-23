@@ -1555,6 +1555,7 @@ namespace engine
       EDUID eduID = PMD_INVALID_EDUID ;
       pmdEDUMgr *pMgr = pmdGetKRCB()->getEDUMgr() ;
       dpsTransCB *pTransCB= sdbGetTransCB() ;
+      dpsTransLockManager *pLockMgr = pTransCB->getLockMgrHandle() ;
 
    retry:
       if ( _eduList.empty() )
@@ -1568,16 +1569,29 @@ namespace engine
       _eduList.pop() ;
 
       /// clear
-      _curTransInfo._lockList.clear() ;
-      _curTransInfo._transID = DPS_INVALID_TRANS_ID ;
+      _curTransInfo.clear() ;
+
+      /// lock
+      pLockMgr->acquireMonLatch() ;
 
       if ( SDB_OK != pMgr->dumpTransInfo( eduID, _curTransInfo ) ||
            DPS_INVALID_TRANS_ID == _curTransInfo._transID )
       {
          /// if the edu has exited
+         pLockMgr->releaseMonLatch() ;
          goto retry ;
       }
 
+      /// dump lock info and waiter info
+      pLockMgr->dumpLockInfo( _curTransInfo._lastLRBIdx,
+                              _curTransInfo._lockList ) ;
+      pLockMgr->dumpLockInfo( _curTransInfo._waitLRBIdx,
+                              _curTransInfo._waitLock ) ;
+
+      /// release lock
+      pLockMgr->releaseMonLatch() ;
+
+      _curTransInfo._locksNum = _curTransInfo._lockList.size() ;
       _pos = _curTransInfo._lockList.begin() ;
 
       try
@@ -1597,8 +1611,13 @@ namespace engine
                              TRUE : FALSE ) ;
          builder.append( FIELD_NAME_TRANS_LSN_CUR,
                          (INT64)_curTransInfo._curTransLsn ) ;
-         builder.append( FIELD_NAME_TRANS_WAIT_LOCK,
-                         _curTransInfo._waitLock.toBson() ) ;
+
+         /// waiter lock
+         BSONObjBuilder subWaiter( builder.subobjStart(
+                                   FIELD_NAME_TRANS_WAIT_LOCK ) ) ;
+         _curTransInfo._waitLock.toBson( subWaiter, FALSE ) ;
+         subWaiter.done() ;
+
          builder.append( FIELD_NAME_TRANS_LOCKS_NUM,
                          (INT32)_curTransInfo._locksNum ) ;
          monAppendSessionIdentify( builder, _curTransInfo._relatedNID,
@@ -1650,12 +1669,15 @@ namespace engine
             {
                break ;
             }
-            else if ( _pos->first == _curTransInfo._waitLock )
+            else if ( (*_pos)._id == _curTransInfo._waitLock._id )
             {
                ++_pos ;
                continue ;
             }
-            babLockList.append( _pos->first.toBson() ) ;
+
+            BSONObjBuilder subLock( babLockList.subobjStart() ) ;
+            (*_pos)._id.toBson( subLock ) ;
+            subLock.done() ;
             ++_pos ;
          }
          babLockList.done() ;

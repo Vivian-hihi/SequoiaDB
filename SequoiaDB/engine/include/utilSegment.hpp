@@ -92,7 +92,7 @@ namespace engine
       ( UTIL_INVALID_OBJ_INDEX != _objectIndex_ )
 
    template < class T >
-   class _utilSegmentManager
+   class _utilSegmentManager : public SDBObject
    {
    private :
       struct _objX : public SDBObject
@@ -108,16 +108,17 @@ namespace engine
          }
       } ;
 
-      UTIL_OBJIDX*   _list  ;          // a list of obj indices to a segment
-      UTIL_OBJIDX    _begin ;          // the position in _list where acquire from
-      UTIL_OBJIDX    _end ;            // the position in _list where release to
-      UTIL_OBJIDX    _numOfObjs ;      // total number of objects
-      UTIL_OBJIDX    _delta ;          // number of objects in a segment
-      UTIL_OBJIDX    _maxNumOfObjs ;   // max number of objects
-      UTIL_OBJIDX    _acquiredCounter; // acquired objects counter
+      UTIL_OBJIDX *  _list  ;         // a list of obj indices to a segment
+      UTIL_OBJIDX    _begin ;         // the position in list where acquire from
+      UTIL_OBJIDX    _end ;           // the position in list where release to
+      UTIL_OBJIDX    _numOfObjs ;     // total number of objects
+      UTIL_OBJIDX    _delta ;         // number of objects in a segment
+      UTIL_OBJIDX    _maxNumOfObjs ;  // max number of objects
+      UTIL_OBJIDX    _acquiredCounter;// acquired objects counter
+      UTIL_OBJIDX    _exponent ;      // exponent when round up to power of 2
       ossSpinXLatch  _latch ;
-      std::vector< _objX * > _segList;  // a list of segments, each segment is
-                                        // an array of object(T)
+      std::vector< _objX * > _segList;// a list of segments, each segment is
+                                      // an array of object(T)
       BOOLEAN        _isInitialized ;
 
    public :
@@ -128,6 +129,7 @@ namespace engine
                               _begin(0),
                               _end(0),
                               _isInitialized( FALSE ),
+                              _exponent(0),
                               _list(NULL) { }
 
       ~_utilSegmentManager() ;
@@ -154,10 +156,16 @@ namespace engine
          UTIL_OBJIDX i    = 0 ;
          UTIL_OBJIDX j    = 0 ;
 
+         SDB_ASSERT( ( idx < _numOfObjs ) && IS_VALID_SEG_OBJ_INDEX( idx ),
+                     "Invalid object index." ) ;
          if ( idx < _numOfObjs )
          {
-            i = idx / _delta ;
-            j = idx % _delta ;
+            // i = idx / _delta ;
+            // j = idx % _delta ;
+            // the _delta is round up to nearest power of 2,
+            // so divide and modulo can be optimized
+            i = idx >> _exponent ;
+            j = idx & ( _delta - 1 ) ;
             pSegList = ( _objX * )( _segList[i] ) ;
             if ( pSegList )
             {
@@ -166,6 +174,41 @@ namespace engine
          }
          return pObj ;
       }
+
+
+      // round up to nearest power of 2
+      // input :
+      //     n  -- number to calculate
+      // output :
+      //     exponent -- exponent when round n up to the nearest power of 2
+      // return:
+      //   round up to nearest power of 2
+      UTIL_OBJIDX _nextPowerOf2( UTIL_OBJIDX n, UTIL_OBJIDX & exponent )
+      {
+         UTIL_OBJIDX result = 0 ;
+         BOOLEAN isPowerOf2 = FALSE ;
+         exponent = 0 ;
+         if ( ( n > 0 ) && ( ! ( n & ( n - 1 ) ) ) )
+         {
+            result = n ;
+            isPowerOf2 = TRUE ;
+         }
+         while ( n != 0 )
+         {
+            n >>= 1 ;
+            exponent ++ ;
+         }
+         if ( ! isPowerOf2 )
+         {
+            result = ( 1 << exponent ) ;
+         }
+         else
+         {
+            exponent -- ;
+         }
+         return result ;
+      }
+
 
    public :
       // initialization
@@ -177,10 +220,10 @@ namespace engine
       // free all object allocated in segments
       void fini() ;
 
-      // total number of objects without latch
+      // get total number of objects without latch
       UTIL_OBJIDX getNumOfObjectsNoSync() ;
 
-      // total number of objects with latch
+      // get total number of objects with latch
       UTIL_OBJIDX getNumOfObjects() ;
 
       // get an object address by its index
@@ -208,6 +251,10 @@ namespace engine
       // release/return an object to the segments by its address
       //   pT : address / pointer of the object
       INT32 release( const T * pT ) ;
+
+   #ifdef _DEBUG
+      UTIL_OBJIDX * getListAddr() { return _list ; } 
+   #endif
    } ;
 
    template < class T >
@@ -217,17 +264,17 @@ namespace engine
 
       if ( NULL != pT )
       {
-         UINT64 segs = _segList.size() ;
+         UTIL_OBJIDX segs = _segList.size() ;
          _objX  * pSegList = NULL ;
-         for ( UINT64 i = 0; i < segs ; i++ )
+         for ( UTIL_OBJIDX i = 0; i < segs ; i++ )
          {
             pSegList = _segList[ i ] ;
             if (    pSegList
-                 && ( pT >= &( pSegList->_obj ) )
+                 && ( pT >= &( pSegList[ 0 ]._obj ) )
                  && ( pT <= &( pSegList[ _delta - 1 ]._obj ) ) )
             {
                idx = i * _delta + 
-                    ((CHAR*)pT - (CHAR*)&( pSegList->_obj )) / sizeof( _objX  );
+                     ((CHAR*)pT - (CHAR*)&(pSegList[0]._obj)) / sizeof( _objX );
                break ;
             }
          }
@@ -240,8 +287,8 @@ namespace engine
    {
       if ( _isInitialized )
       {
-         UINT64 len = _segList.size() ;
-         for ( UINT64 i = 0; i < len ; i++ )
+         UTIL_OBJIDX len = _segList.size() ;
+         for ( UTIL_OBJIDX i = 0; i < len ; i++ )
          {
             if ( _segList[i] )
             {
@@ -268,10 +315,10 @@ namespace engine
    template < class T >
    INT32 _utilSegmentManager< T >::_expandList( const UTIL_OBJIDX delta )
    {
-      INT32 rc                = SDB_OK ;
-      UTIL_OBJIDX * pListTmp  = NULL ;
-      _objX  * pSegTmp        = NULL ;
-      UTIL_OBJIDX   newSize   = _numOfObjs + delta ;
+      INT32         rc       = SDB_OK ;
+      UTIL_OBJIDX * pListTmp = NULL ;
+      _objX       * pSegTmp  = NULL ;
+      UTIL_OBJIDX   newSize  = _numOfObjs + delta ;
 
       if (    _isInitialized
            && ( UTIL_INVALID_OBJ_INDEX != newSize )
@@ -315,7 +362,6 @@ namespace engine
          else
          {
             SAFE_OSS_FREE( pListTmp ) ;
-            // SAFE_OSS_DELETE( pSegTmp ) ;
             if ( NULL != pSegTmp )
             {
                SDB_OSS_DEL [] pSegTmp ;  
@@ -347,8 +393,9 @@ namespace engine
            && ( 0 != maxNumberOfObjs )
            && ( numberOfObjs <= maxNumberOfObjs ) )
       {
-         _delta        = numberOfObjs ;
-         _numOfObjs    = numberOfObjs ;
+         // round up numberOfObjs to the nearest power of 2
+         _delta        = _nextPowerOf2( numberOfObjs, _exponent ) ;
+         _numOfObjs    = _delta ;
          _maxNumOfObjs = maxNumberOfObjs ;
       }
       else
@@ -359,8 +406,7 @@ namespace engine
 
       // allcoate memory
       pSegTmp = SDB_OSS_NEW _objX[ _numOfObjs ] ;
-      _list  = (UTIL_OBJIDX *)SDB_OSS_MALLOC( sizeof(UTIL_OBJIDX) *
-                                              _numOfObjs ) ;
+      _list = (UTIL_OBJIDX *)SDB_OSS_MALLOC( sizeof(UTIL_OBJIDX) * _numOfObjs );
       if ( ( NULL != _list ) && ( NULL != pSegTmp ) )
       {
          _begin = 0 ;

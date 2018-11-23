@@ -446,8 +446,7 @@ dpsFiles = [
       "dps/dpsMetaFile.cpp",
       "dps/dpsLogRecord.cpp",
       "dps/dpsTransCB.cpp",
-      "dps/dpsTransLock.cpp",
-      "dps/dpsTransLockBucket.cpp",
+
       "dps/dpsTransCBLockInfo.cpp",
       "dps/dpsTransExecutor.cpp",
       "dps/dpsOp2Record.cpp",
@@ -456,6 +455,7 @@ dpsFiles = [
       "dps/dpsArchiveInfo.cpp",
       "dps/dpsArchiveFile.cpp",
       "dps/dpsArchiveFileMgr.cpp",
+      "dps/dpsTransLockMgr.cpp"
       ]
 
 omsvcFiles = [

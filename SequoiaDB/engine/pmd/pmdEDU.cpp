@@ -153,7 +153,6 @@ namespace engine
          _pErrorBuff = NULL ;
       }
 #if defined ( SDB_ENGINE )
-      clearLockList() ;
       if ( _pTransNodeMap )
       {
          delete _pTransNodeMap;
@@ -990,79 +989,6 @@ namespace engine
       delTransaction() ;
    }
 
-   void _pmdEDUCB::setWaitLock( const dpsTransLockId &lockId )
-   {
-      _waitLock = lockId ;
-   }
-
-   void _pmdEDUCB::clearWaitLock()
-   {
-      _waitLock.reset() ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETTRANSLOCK, "_pmdEDUCB::getTransLock" )
-   dpsTransCBLockInfo *_pmdEDUCB::getTransLock( const dpsTransLockId &lockId )
-   {
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_GETTRANSLOCK );
-      dpsTransCBLockInfo *pLockInfo = NULL;
-      DpsTransCBLockList::iterator iterLst = _transLockLst.find( lockId );
-      if ( iterLst != _transLockLst.end() )
-      {
-         pLockInfo = iterLst->second ;
-      }
-      PD_TRACE_EXIT ( SDB__PMDEDUCB_GETTRANSLOCK );
-      return pLockInfo;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ADDLOCKINFO, "_pmdEDUCB::addLockInfo" )
-   void _pmdEDUCB::addLockInfo( const dpsTransLockId &lockId, DPS_TRANSLOCK_TYPE lockType )
-   {
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_ADDLOCKINFO );
-      dpsTransCBLockInfo *pLockInfo = NULL ;
-      pLockInfo = SDB_OSS_NEW dpsTransCBLockInfo( lockType );
-      if ( pLockInfo )
-      {
-         ossScopedLock _lock( &_transLockLstMutex ) ;
-         _transLockLst[ lockId ] = pLockInfo ;
-      }
-      PD_TRACE_EXIT ( SDB__PMDEDUCB_ADDLOCKINFO );
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_DELLOCKINFO, "_pmdEDUCB::delLockInfo" )
-   void _pmdEDUCB::delLockInfo( const dpsTransLockId &lockId )
-   {
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_DELLOCKINFO );
-      ossScopedLock _lock( &_transLockLstMutex ) ;
-      DpsTransCBLockList::iterator iter
-                        = _transLockLst.find( lockId );
-      if ( iter != _transLockLst.end() )
-      {
-         SDB_OSS_DEL iter->second;
-         _transLockLst.erase( iter );
-      }
-      PD_TRACE_EXIT ( SDB__PMDEDUCB_DELLOCKINFO );
-   }
-
-   DpsTransCBLockList *_pmdEDUCB::getLockList()
-   {
-      return &_transLockLst;
-   }
-
-   void _pmdEDUCB::clearLockList()
-   {
-      ossScopedLock _lock( &_transLockLstMutex ) ;
-      DpsTransCBLockList::iterator iterLst = _transLockLst.begin();
-      while ( iterLst != _transLockLst.end() )
-      {
-         // delete local lock-info
-         if ( iterLst->second )
-         {
-            SDB_OSS_DEL iterLst->second;
-         }
-         _transLockLst.erase( iterLst++ );
-      }
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_CREATETRANSACTION, "_pmdEDUCB::createTransaction" )
    INT32 _pmdEDUCB::createTransaction()
    {
@@ -1175,6 +1101,9 @@ namespace engine
       transInfo._transID      = _curTransID ;
       transInfo._curTransLsn  = _curTransLSN ;
 
+      transInfo._lastLRBIdx   = _transExecutor.getLastLRBIdx() ;
+      transInfo._waitLRBIdx   = _transExecutor.getWaiterLRBIdx() ;
+
       {
          ossScopedLock lock( &_mutex, SHARED ) ;
          if ( _pSession )
@@ -1188,13 +1117,6 @@ namespace engine
             transInfo._relatedNID = 0 ;
          }
       }
-
-      {
-         ossScopedLock _lock( &_transLockLstMutex ) ;
-         transInfo._lockList  = _transLockLst ;
-      }
-      transInfo._locksNum     = transInfo._lockList.size() ;
-      transInfo._waitLock     = _waitLock ;
    }
 
    pmdTransExecutor* _pmdEDUCB::getTransExecutor()

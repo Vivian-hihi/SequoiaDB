@@ -146,7 +146,7 @@ namespace engine
       private:
          TRANS_EDU_LIST             _eduList ;
          monTransInfo               _curTransInfo ;
-         DpsTransCBLockList::iterator _pos ;
+         VEC_TRANSLOCKCUR::iterator _pos ;
          BSONObj                    _curEduInfo ;
          BOOLEAN                    _dumpCurrent ;
          BOOLEAN                    _detail ;

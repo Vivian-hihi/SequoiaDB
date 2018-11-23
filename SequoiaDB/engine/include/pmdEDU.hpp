@@ -362,12 +362,6 @@ namespace engine
          _relatedTransLSN = relatedLSN ;
       }
       DPS_LSN_OFFSET getRelatedTransLSN() const { return _relatedTransLSN ; }
-      dpsTransCBLockInfo *getTransLock( const dpsTransLockId &lockId );
-      void     addLockInfo( const dpsTransLockId &lockId,
-                            DPS_TRANSLOCK_TYPE lockType ) ;
-      void     delLockInfo( const dpsTransLockId &lockId ) ;
-      DpsTransCBLockList *getLockList() ;
-      void     clearLockList() ;
       INT32    createTransaction() ;
       void     delTransaction() ;
       void     addTransNode( const MsgRouteID &routeID ) ;
@@ -382,8 +376,6 @@ namespace engine
       void     setTransRC( INT32 rc ) { _transRC = rc ; }
       INT32    getTransRC() const { return _transRC ; }
       void     clearTransInfo() ;
-      void     setWaitLock( const dpsTransLockId &lockId ) ;
-      void     clearWaitLock() ;
 
       void     dumpTransInfo( monTransInfo &transInfo ) ;
 
@@ -461,11 +453,8 @@ namespace engine
 
       // transaction related variables
       DPS_LSN_OFFSET          _relatedTransLSN ;
-      ossSpinXLatch           _transLockLstMutex ;
-      DpsTransCBLockList      _transLockLst ;
       DpsTransNodeMap         *_pTransNodeMap ;
       INT32                   _transRC ;
-      dpsTransLockId          _waitLock ;
 
       pmdTransExecutor        _transExecutor ;
    #endif // SDB_ENGINE
