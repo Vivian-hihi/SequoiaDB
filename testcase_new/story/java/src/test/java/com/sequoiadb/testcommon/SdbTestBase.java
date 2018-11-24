@@ -10,35 +10,28 @@ import com.sequoiadb.base.Sequoiadb;
 
 public class SdbTestBase {
     protected static String coordUrl;
-    protected static String esUrl;
     protected static String hostName;
     protected static String serviceName;
-    protected static String esHostName;
-    protected static String esServiceName;
     protected static String csName;
     protected static int reservedPortBegin;
     protected static int reservedPortEnd;
     protected static String reservedDir;
     protected static String workDir;
 
-    @Parameters({"HOSTNAME", "SVCNAME", "ESHOSTNAME", "ESSVCNAME", "CHANGEDPREFIX",
+    @Parameters({"HOSTNAME", "SVCNAME", "CHANGEDPREFIX",
             "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR"})
     @BeforeSuite
-    public static void initSuite(String HOSTNAME, String SVCNAME, 
-                                 String ESHOSTNAME, String ESSVCNAME, String COMMCSNAME,  
+    public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME,  
                                  int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR,
                                  String WORKDIR) {
         hostName = HOSTNAME;
         serviceName = SVCNAME;
-        esHostName = ESHOSTNAME;
-        esServiceName = ESSVCNAME;
         csName = COMMCSNAME;
         reservedPortBegin = RSRVPORTBEGIN;
         reservedPortEnd = RSRVPORTEND;
         reservedDir = RSRVNODEDIR;
         workDir = WORKDIR;
         coordUrl = HOSTNAME + ":" + SVCNAME;
-        esUrl = ESHOSTNAME + ":" + ESSVCNAME;
 
         Sequoiadb db = null;
         try {
