@@ -334,8 +334,11 @@ namespace engine
                                     std::vector<UINT32> & groupIDList ) ;
 
    private :
-      utilCLUniqueID    _clUniqueID ;
-      vector<BSONObj>   _autoIncOptArr ;
+      utilCLUniqueID                _clUniqueID ;
+      catCollectionInfo             _clInfo ;
+      std::map<std::string, UINT32> _splitList ;
+      UINT32                        _fieldMask ;
+      vector<BSONObj>               _autoIncOptArr ;
    } ;
 
    typedef class _catCtxCreateCL catCtxCreateCL ;

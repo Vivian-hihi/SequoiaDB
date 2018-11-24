@@ -141,10 +141,10 @@ namespace engine
          INT32 _checkSetAttributes ( const clsCatalogSet & cataSet,
                                      _pmdEDUCB * cb,
                                      catCtxLockMgr & lockMgr ) ;
-         INT32 _checkCreateAutoincField ( const clsCatalogSet & cataSet,
+         INT32 _checkCreateAutoIncField ( const clsCatalogSet & cataSet,
                                           _pmdEDUCB * cb,
                                           catCtxLockMgr & lockMgr ) ;
-         INT32 _checkDropAutoincField ( const clsCatalogSet & cataSet,
+         INT32 _checkDropAutoIncField ( const clsCatalogSet & cataSet,
                                        _pmdEDUCB * cb,
                                        catCtxLockMgr & lockMgr ) ;
 
@@ -238,7 +238,7 @@ namespace engine
       {
          return _seqTask ;
       }
-      OSS_INLINE vector<BSONObj>  getRollbackObj () const
+      OSS_INLINE vector<BSONObj>&  getRollbackObj ()
       {
          return _rollbackObj ;
       }
@@ -272,7 +272,7 @@ namespace engine
                                         SDB_DMSCB *pDmsCB,
                                         SDB_DPSCB *pDpsCB,
                                         INT16 w ) ;
-      OSS_INLINE vector<BSONObj>  getRollbackObj () const
+      OSS_INLINE vector<BSONObj>&  getRollbackObj ()
       {
          return _rollbackObj ;
       }

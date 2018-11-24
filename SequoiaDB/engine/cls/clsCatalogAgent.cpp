@@ -2317,6 +2317,11 @@ namespace engine
       return &_autoIncSet ;
    }
 
+   clsAutoIncSet* _clsCatalogSet::getAutoIncSet()
+   {
+      return &_autoIncSet ;
+   }
+
    INT32 _clsCatalogSet::findSubCLName ( const BSONObj &obj,
                                          string &subCLName )
    {

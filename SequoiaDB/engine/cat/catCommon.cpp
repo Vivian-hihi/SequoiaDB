@@ -4021,10 +4021,6 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCHECKANDBUILDCATARECORD ) ;
 
-      vector<BSONElement>  autoIncEleArr ;
-      vector<BSONObj>      autoIncObjArr ;
-      UINT64               i = 0 ;
-
       clInfo.reset() ;
 
       fieldMask = 0 ;
@@ -4329,25 +4325,33 @@ namespace engine
                       CAT_AUTOINCREMENT, eleTmp.type() ) ;
             if ( Object == eleTmp.type() )
             {
-               autoIncObjArr.push_back( eleTmp.Obj() ) ;
+               BSONObj options ;
+               options = eleTmp.Obj() ;
+               rc = clsAutoIncItem::validAutoIncOption( options ) ;
+               PD_RC_CHECK( rc, PDWARNING, "Invalid autoIncrement options" ) ;
+               rc = catValidSequenceOption( options ) ;
+               PD_RC_CHECK( rc, PDWARNING, "Invalid autoIncrement options" ) ;
             }
-            else
+            else if( Array == eleTmp.type() )
             {
-               autoIncEleArr = eleTmp.Array() ;
-               for ( i = 0 ; i < autoIncEleArr.size() ; ++i )
+               BSONObjIterator it( eleTmp.embeddedObject() ) ;
+               while ( it.more() )
                {
-                  PD_CHECK( Object == autoIncEleArr[i].type(),
-                            SDB_INVALIDARG, error, PDWARNING,
-                            "AutoIncrement[%s] definition is invalid",
+                  BSONElement ele ;
+                  BSONObj options ;
+                  ele = it.next() ;
+                  PD_CHECK( Object == ele.type(), SDB_INVALIDARG, error, 
+                            PDWARNING, "AutoIncrement[%s] definition is invalid",
                             eleTmp.String().c_str() ) ;
-                  autoIncObjArr.push_back( autoIncEleArr[i].Obj() ) ;
+                  options = ele.Obj() ;
+                  rc = clsAutoIncItem::validAutoIncOption( options ) ;
+                  PD_RC_CHECK( rc, PDWARNING, "Invalid autoIncrement options" ) ;
+                  rc = catValidSequenceOption( options ) ;
+                  PD_RC_CHECK( rc, PDWARNING, "Invalid autoIncrement options" ) ;
                }
             }
-
-            rc = catCheckAutoIncrementValid( autoIncObjArr ) ;
-            PD_RC_CHECK( rc, PDWARNING, "Invalid autoIncrement definition" ) ;
-
-            clInfo._autoIncrement = autoIncObjArr ;
+            clInfo._autoIncFields = BSON( CAT_AUTOINCREMENT <<
+                                          boCollection.getField( CAT_AUTOINCREMENT ) ) ;
             fieldMask |= UTIL_CL_AUTOINC_FIELD ;
          }
          else
@@ -4554,6 +4558,54 @@ namespace engine
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATBUILDCATAAUTOINCFLD, "catBuildCatalogAutoIncField" )
+   INT32 catBuildCatalogAutoIncField( _pmdEDUCB *cb,
+                                      catCollectionInfo &clInfo,
+                                      const BSONObj &obj,
+                                      utilCLUniqueID clUniqueID ,
+                                      INT16 w )
+   {
+      PD_TRACE_ENTRY ( SDB_CATBUILDCATAAUTOINCFLD ) ;
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      const CHAR *fieldName = NULL ;
+      utilSequenceID seqID = UTIL_SEQUENCEID_NULL ;
+
+      fieldName = obj.getField( CAT_AUTOINC_FIELD ).valuestr() ;
+      
+      builder.append( CAT_AUTOINC_FIELD, fieldName ) ;
+      builder.append( CAT_AUTOINC_SEQ,
+                      catGetSeqName4AutoIncFld( clUniqueID, fieldName ) ) ;
+      rc = catUpdateGlobalID( cb, w, seqID );
+      PD_RC_CHECK( rc, PDERROR, "Failed to get global ID for field[%s], "
+                   "rc: %d", fieldName, rc ) ;
+      builder.append( CAT_AUTOINC_SEQ_ID, (INT64)seqID ) ;
+      if ( obj.hasField( CAT_AUTOINC_GENERATED ) )
+      {
+         builder.append( obj.getField( CAT_AUTOINC_GENERATED ) ) ;
+      }
+      else
+      {
+         builder.append( CAT_AUTOINC_GENERATED, CAT_GENERATED_DEFAULT ) ;
+      }
+
+      rc = clInfo._autoIncSet.insert( builder.obj() ) ;
+      if(  SDB_AUTOINCREMENT_FIELD_EXIST_OR_NESTED == rc )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Failed to insert autoinc field "
+                 "options[%s], rc: %d",
+                 obj.toString(false,false).c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_CATBUILDCATAAUTOINCFLD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // build catalogue-info record:
    // {  Name: "SpaceName.CollectionName", Version: 1,
    //    ShardingKey: { Key1: 1, Key2: -1 },
@@ -4561,11 +4613,12 @@ namespace engine
    //       [ { GroupID: 1000, LowBound:{ "":MinKey,"":MaxKey }, UpBound:{"":MaxKey,"":MinKey} } ] }
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATBUILDCATARECORD, "catBuildCatalogRecord" )
    INT32 catBuildCatalogRecord( _pmdEDUCB *cb,
-                                const catCollectionInfo &clInfo,
+                                catCollectionInfo &clInfo,
                                 UINT32 mask, UINT32 attribute,
                                 const std::vector<UINT32> &grpIDLst,
                                 const std::map<std::string, UINT32> &splitLst,
-                                BSONObj &catRecord )
+                                BSONObj &catRecord,
+                                INT16 w )
    {
       INT32 rc = SDB_OK ;
 
@@ -4775,50 +4828,30 @@ namespace engine
 
       if ( mask & UTIL_CL_AUTOINC_FIELD )
       {
-         INT16 w = 0 ;
-         utilCLUniqueID       clUniqueID ;
-         UINT64               i ;
-         vector<BSONObj>      autoIncArr ;
-         BSONObj              autoIncObj ;
-         vector<BSONObj>      newAutoIncArr ;
-         const CHAR           *fieldName ;
-         utilSequenceID       seqID = UTIL_SEQUENCEID_NULL ;
-         pmdKRCB              *krcb = NULL ;
-         sdbCatalogueCB       *catCB = NULL ;
-
-         krcb = pmdGetKRCB() ;
-         catCB = krcb->getCATLOGUECB() ;
-         w = catCB->majoritySize() ;
+         BSONElement ele ;
+         utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
 
          clUniqueID = clInfo._clUniqueID ;
-         autoIncArr = clInfo._autoIncrement ;
-
-         for ( i = 0 ; i < autoIncArr.size() ; ++i )
+         ele = clInfo._autoIncFields.getField( CAT_AUTOINCREMENT ) ;
+         if ( Object == ele.type() )
          {
-            BSONObjBuilder builder ;
-
-            autoIncObj = autoIncArr[i] ;
-            fieldName = autoIncObj.getField( CAT_AUTOINC_FIELD ).valuestr() ;
-
-            builder.append( CAT_AUTOINC_FIELD, fieldName ) ;
-            builder.append( CAT_AUTOINC_SEQ,
-                            catGetSeqName4AutoIncFld( clUniqueID, fieldName ) ) ;
-            rc = catUpdateGlobalID( cb, w, seqID );
-            PD_RC_CHECK( rc, PDERROR, "Failed to get global ID for field[%s], rc: %d",
-                         fieldName, rc ) ;
-            builder.append( CAT_AUTOINC_SEQ_ID, (INT64)seqID ) ;
-            if ( autoIncObj.hasField( CAT_AUTOINC_GENERATED ) )
-            {
-               builder.append( autoIncObj.getField( CAT_AUTOINC_GENERATED ) ) ;
-            }
-            else
-            {
-               builder.append( CAT_AUTOINC_GENERATED, CAT_GENERATED_DEFAULT ) ;
-            }
-            newAutoIncArr.push_back( builder.obj() ) ;
+            rc = catBuildCatalogAutoIncField( cb, clInfo, ele.Obj(),
+                                              clUniqueID, w ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to build autoinc field, rc: %d",
+                         rc ) ;
          }
-
-         builder.append( CAT_AUTOINCREMENT, newAutoIncArr ) ;
+         else if( Array == ele.type() )
+         {
+            BSONObjIterator it( ele.embeddedObject() ) ;
+            while ( it.more() )
+            {
+               rc = catBuildCatalogAutoIncField( cb, clInfo, it.next().Obj(),
+                                                 clUniqueID, w ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to get global ID for field, "
+                            "rc: %d", rc ) ;
+            }
+         }
+         builder.appendElements( clInfo._autoIncSet.toBson() ) ;
       }
 
       catRecord = builder.obj () ;
@@ -4830,7 +4863,8 @@ namespace engine
       goto done ;
    }
 
-   string catGetSeqName4AutoIncFld( const utilCLUniqueID id, const string fldName )
+   string catGetSeqName4AutoIncFld( const utilCLUniqueID id,
+                                    const CHAR* fldName )
    {
       stringstream seqNameStream ;
       seqNameStream.str("") ;
@@ -5082,273 +5116,143 @@ namespace engine
       return _catSyncW ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCHECKAUTOINCREMENTVALID, "catCheckAutoIncrementValid" )
-   INT32 catCheckAutoIncrementValid( const vector<BSONObj> &options )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATVALIDSEQOPTION, "catValidSequenceOption" )
+   INT32 catValidSequenceOption( const BSONObj &option )
    {
-      PD_TRACE_ENTRY( SDB_CATCHECKAUTOINCREMENTVALID ) ;
+      PD_TRACE_ENTRY( SDB_CATVALIDSEQOPTION ) ;
+      INT32 rc = SDB_OK ;
+      BSONObj       seqOpt ;
+      catSequence sequence( "SYS_UNKOWN_SEQ" ) ;
 
-      INT32          rc = SDB_OK ;
-      BSONElement    fieldEle ;
-      const CHAR     *pField = NULL ;
-      const CHAR     *pLast = NULL ;
-      const CHAR     *pShort = NULL ;
-      const CHAR     *pLong = NULL ;
-      BSONElement    generatedEle ;
-      const CHAR     *pGenStr = NULL ;
-      vector<const CHAR*> fieldArr ;
-      vector<const CHAR*>::iterator it ;
-      UINT64         i = 0 ;
-      BSONObj        obj ;
-      BSONObj        seqOpt ;
-      const CHAR     *pChr = NULL ;
-      const CHAR     *pStart = NULL ;
-      const CHAR     *pEnd = NULL ;
-      INT32          shortLen = 0 ;
-      BOOLEAN        isParentChild = FALSE ;
-      CHAR           *pSeqName = NULL ;
-      UINT32         seqNameLen = 0 ;
-
-      for ( i = 0 ; i < options.size() ; ++i )
+      try
       {
-         obj = options[i] ;
-
-         // Check "Field" valid.
-         if ( obj.hasField( CAT_AUTOINC_FIELD ) )
-         {
-            fieldEle = obj.getField( CAT_AUTOINC_FIELD ) ;
-            if ( String != fieldEle.type() )
-            {
-               PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
-                            "AutoIncrement field 'Field' type[%d] is not string",
-                            fieldEle.type() ) ;
-            }
-            pField = fieldEle.valuestr() ;
-            pLast = pField + ossStrlen( pField ) ;
-            pStart = pField ;
-            do
-            {
-               pEnd = ossStrchr( pStart, '.' ) ;
-               if ( NULL == pEnd )
-               {
-                  pEnd = pLast ;
-               }
-
-               if ( 0 == pEnd - pStart || '$' == *pStart || ' ' == *pStart )
-               {
-                  PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
-                               "AutoIncrement field 'Field'[%s] is invalid",
-                               pField ) ;
-               }
-               for ( pChr = pStart ; pChr < pEnd ; ++pChr )
-               {
-                  if ( !isdigit( *pChr ) )
-                     break ;
-               }
-               if ( pChr == pEnd )
-               {
-                  PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
-                               "AutoIncrement field 'Field'[%s] cannot be digit",
-                               pField ) ;
-               }
-
-               pStart = pEnd + 1 ;
-            } while ( pStart < pLast ) ;
-
-            for ( it = fieldArr.begin() ; it != fieldArr.end() ; ++it )
-            {
-               // same field conflicts
-               if ( 0 == ossStrcmp( pField, *it ) )
-               {
-                  PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
-                               "AutoIncrement fields[%s, %s] can't be the same.",
-                               pField, *it ) ;
-               }
-
-               // 'a' conflicts with 'a.b'
-               if ( ossStrlen( pField ) > ossStrlen( *it ) )
-               {
-                  pLong = pField ;
-                  pShort = *it ;
-               }
-               else
-               {
-                  pLong = *it ;
-                  pShort = pField ;
-               }
-               shortLen = ossStrlen( pShort ) ;
-               isParentChild = 0 == ossStrncmp( pLong, pShort, shortLen ) &&
-                               '.' == pLong[ shortLen ] ;
-               PD_CHECK( !isParentChild, SDB_INVALIDARG, error, PDWARNING,
-                         "AutoIncrement fields[%s, %s] can't be parent child relation",
-                         pLong, pShort ) ;
-            }
-            fieldArr.push_back( pField ) ;
-         }
-         else
-         {
-            PD_RC_CHECK( SDB_INVALIDARG, PDWARNING, "AutoIncrement specified none field" ) ;
-         }
-
-         // Check "Generated" valid.
-         if ( obj.hasField( CAT_AUTOINC_GENERATED ) )
-         {
-            generatedEle = obj.getField( CAT_AUTOINC_GENERATED ) ;
-            if ( generatedEle.type() != String )
-            {
-               PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
-                            "AutoIncrement field 'Generated' type[%d] is not string",
-                            generatedEle.type() ) ;
-            }
-            pGenStr = generatedEle.valuestr() ;
-
-            if ( 0 != ossStrcmp( pGenStr, CAT_GENERATED_ALWAYS ) &&
-                 0 != ossStrcmp( pGenStr, CAT_GENERATED_STRICT ) &&
-                 0 != ossStrcmp( pGenStr, CAT_GENERATED_DEFAULT ) )
-            {
-               PD_RC_CHECK( SDB_INVALIDARG, PDWARNING,
-                            "AutoIncrement field 'Generated'[%s] is invalid",
-                            pGenStr ) ;
-            }
-         }
-
-         // Check sequence options valid.
-         seqNameLen = 12 + ossStrlen( pField ) + 5 ; // "SYS_UNKNOWN_" + field + "_SEQ\0"
-         pSeqName = (CHAR*) SDB_OSS_MALLOC( seqNameLen ) ;
-         PD_CHECK( pSeqName, SDB_OOM, error, PDWARNING,
-                   "Failed to malloc for sequence name" ) ;
-         ossSnprintf( pSeqName, seqNameLen, "SYS_UNKNOWN_%s_SEQ", pField ) ;
-
-         catSequence sequence( pSeqName ) ;
-         seqOpt = catGetSequenceOptions( obj ) ;
+         seqOpt = catBuildSequenceOptions( option ) ;
          rc = catSequence::validateFieldNames( seqOpt ) ;
-         PD_RC_CHECK( rc, PDWARNING,
-                      "AutoIncrement sequence options is invalid" ) ;
+         PD_RC_CHECK( rc, PDERROR, "AutoIncrement sequence options is invalid" ) ;
          rc = sequence.setOptions( seqOpt, TRUE, FALSE ) ;
-         PD_RC_CHECK( rc, PDWARNING,
-                      "AutoIncrement sequence options is invalid" ) ;
+         PD_RC_CHECK( rc, PDERROR, "AutoIncrement sequence options is invalid" ) ;
          rc = sequence.validate() ;
-         PD_RC_CHECK( rc, PDWARNING,
-                      "AutoIncrement sequence options is invalid" ) ;
+         PD_RC_CHECK( rc, PDERROR, "AutoIncrement sequence options is invalid" ) ;
+      }
+      catch( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to check autoincrement option[%s]",
+                 option.toString( false, false ).c_str()) ;
+         goto error ;
       }
 
    done:
-      SDB_OSS_FREE( pSeqName ) ;
-      PD_TRACE_EXITRC( SDB_CATCHECKAUTOINCREMENTVALID, rc ) ;
+      PD_TRACE_EXITRC( SDB_CATVALIDSEQOPTION, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCREATEAUTOINCSEQUENCE, "catCreateAutoIncSequence" )
-   INT32 catCreateAutoIncSequence( const BSONObj &boCollection,
-                                   const vector<BSONObj> &autoIncOptArr,
-                                   _pmdEDUCB *cb, INT16 w )
+   INT32 catCreateAutoIncSequence( const BSONObj &option,
+                                    const clsAutoIncSet &autoIncSet,
+                                    _pmdEDUCB *cb,
+                                    INT16 w )
    {
-      INT32 rc = SDB_OK ;
-
       PD_TRACE_ENTRY( SDB_CATCREATEAUTOINCSEQUENCE ) ;
-
-      UINT64               i = 0 ;
-      UINT64               j = 0 ;
-      vector<BSONElement>  autoIncMetaArr ;
-      BSONObj              autoIncMeta ;
-      BSONObj              autoIncOpt ;
-      BSONObj              seqOpt ;
+      INT32 rc = SDB_OK ;
+      BSONObj seqOpt ;
+      const CHAR *fieldName = NULL ;
+      const CHAR *seqName = NULL ;
+      const clsAutoIncItem *field = NULL ;
+      utilSequenceID seqID = UTIL_SEQUENCEID_NULL ;
       catSequenceManager   *pSeqMgr = NULL ;
-      const CHAR           *fieldName = NULL ;
-      const CHAR           *seqName = NULL ;
-      INT32                tmpRC = SDB_OK ;
-      BOOLEAN              found = FALSE ;
-      utilSequenceID       seqID = UTIL_SEQUENCEID_NULL ;
 
       pSeqMgr = sdbGetCatalogueCB()->getCatGTSMgr()->getSequenceMgr() ;
 
-      if ( boCollection.hasField( CAT_AUTOINCREMENT ) )
+      fieldName = option.getField( CAT_AUTOINC_FIELD ).valuestrsafe() ;
+      field = autoIncSet.find( fieldName ) ;
+      PD_CHECK( NULL != field, SDB_SYS,
+               error, PDERROR, "Field[%s] does not exist on "
+                "collection", fieldName ) ;
+      seqName = field->sequenceName() ;
+      seqID = field->sequenceID() ;
+      seqOpt = catBuildSequenceOptions( option, seqID ) ;
+      rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
+      if ( SDB_SEQUENCE_EXIST == rc )
       {
-         autoIncMetaArr = boCollection.getField( CAT_AUTOINCREMENT ).Array() ;
-
-         for ( i = 0 ; i < autoIncMetaArr.size() ; ++i )
-         {
-            BSONObjBuilder seqOptBuilder ;
-
-            autoIncMeta = autoIncMetaArr[i].Obj() ;
-            seqName = autoIncMeta.getField( CAT_AUTOINC_SEQ ).valuestr() ;
-            fieldName = autoIncMeta.getField( CAT_AUTOINC_FIELD ).valuestr() ;
-            seqID = autoIncMeta.getField( CAT_AUTOINC_SEQ_ID ).Long() ;
-            found = FALSE ;
-            for ( j = 0 ; j < autoIncOptArr.size() ; ++j )
-            {
-               if ( 0 == ossStrcmp( fieldName,
-                     autoIncOptArr[j].getField( CAT_AUTOINC_FIELD ).valuestr() ) )
-               {
-                  autoIncOpt = autoIncOptArr[j] ;
-                  found = TRUE ;
-                  break ;
-               }
-            }
-            PD_CHECK( found, SDB_SYS, error, PDERROR,
-                      "AutoIncrement meta data[%s] has no match options",
-                      autoIncMeta.toString().c_str() ) ;
-            seqOpt = catGetSequenceOptions( autoIncOpt, seqID ) ;
-            rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
-            if ( SDB_SEQUENCE_EXIST == rc )
-            {
-               pSeqMgr->dropSequence( seqName, cb, w ) ;
-               rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
-            }
-            PD_RC_CHECK ( rc, PDWARNING,
-                          "Failed to create sequence on field [%s] with options [%s], rc: %d",
-                          fieldName, autoIncMeta.toString().c_str() ) ;
-         }
+         pSeqMgr->dropSequence( seqName, cb, w ) ;
+         rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
       }
-
-   done :
+      PD_RC_CHECK ( rc, PDWARNING,
+                    "Failed to create sequence on field [%s] with ""options "
+                    "[%s], rc: %d", fieldName,
+                    option.toString().c_str(), rc ) ;
+   done:
       PD_TRACE_EXITRC( SDB_CATCREATEAUTOINCSEQUENCE, rc ) ;
       return rc ;
+   error:
+      goto done ;
+   }
 
-   error :
-      for ( i = 0 ; i < autoIncMetaArr.size() ; ++i )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCREATEAUTOINCSEQUENCES, "catCreateAutoIncSequences" )
+   INT32 catCreateAutoIncSequences( const catCollectionInfo &clInfo,
+                                    _pmdEDUCB *cb, INT16 w )
+   {
+      PD_TRACE_ENTRY( SDB_CATCREATEAUTOINCSEQUENCES ) ;
+      INT32 rc = SDB_OK ;
+      BSONElement ele ;
+      BSONObj autoIncObj = clInfo._autoIncFields ;
+      const clsAutoIncSet &autoIncSet = clInfo._autoIncSet ;
+
+      ele = autoIncObj.getField( CAT_AUTOINCREMENT ) ;
+      PD_CHECK( Object == ele.type() || Array == ele.type(),
+                SDB_INVALIDARG, error, PDWARNING,
+                "Field [%s] type [%d] error",
+                CAT_AUTOINCREMENT, ele.type() ) ;
+      if ( Object == ele.type() )
       {
-         seqName = autoIncMeta.getField( CAT_AUTOINC_SEQ ).valuestr() ;
-         tmpRC = pSeqMgr->dropSequence( seqName, cb, w ) ;
-         if ( tmpRC != SDB_OK && tmpRC != SDB_SEQUENCE_NOT_EXIST )
+         rc = catCreateAutoIncSequence( ele.Obj(), autoIncSet, cb, w ) ;
+         if( SDB_OK != rc )
          {
-            PD_LOG( PDWARNING, "Failed to rollback creating sequence [%s], rc: %d",
-                    seqName, tmpRC ) ;
+            goto error ;
          }
       }
+      else if( Array == ele.type() )
+      {
+         BSONObjIterator it( ele.embeddedObject() ) ;
+         while ( it.more() )
+         {
+            rc = catCreateAutoIncSequence( it.next().Obj(), autoIncSet, cb, w ) ;
+            if( SDB_OK != rc )
+            {
+               goto error ;
+            }
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_CATCREATEAUTOINCSEQUENCES, rc ) ;
+      return rc ;
+   error:
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDROPAUTOINCSEQUENCE, "catDropAutoIncSequence" )
-   INT32 catDropAutoIncSequence( const BSONObj &boCollection, _pmdEDUCB *cb, INT16 w )
+   INT32 catDropAutoIncSequence( const BSONObj &boAutoInc, _pmdEDUCB *cb, INT16 w )
    {
       PD_TRACE_ENTRY( SDB_CATDROPAUTOINCSEQUENCE ) ;
-
-      INT32                rc = SDB_OK ;
-      UINT64               i = 0 ;
-      vector<BSONElement>  autoIncArr ;
-      const CHAR           *seqName = NULL ;
+      INT32 rc = SDB_OK ;
+      BSONElement ele ;
+      const CHAR *seqName = NULL ;
       catSequenceManager   *pSeqMgr = NULL ;
 
       pSeqMgr = sdbGetCatalogueCB()->getCatGTSMgr()->getSequenceMgr() ;
-
-      if ( boCollection.hasField( CAT_AUTOINCREMENT ) )
+      seqName = boAutoInc.getField( FIELD_NAME_AUTOINC_SEQ ).valuestr() ;
+      rc = pSeqMgr->dropSequence( seqName, cb, w ) ;
+      if ( SDB_SEQUENCE_NOT_EXIST == rc )
       {
-         autoIncArr = boCollection.getField( CAT_AUTOINCREMENT ).Array() ;
-
-         for ( i = 0 ; i < autoIncArr.size() ; ++i )
-         {
-            seqName = autoIncArr[i].Obj().getField( FIELD_NAME_AUTOINC_SEQ ).valuestr() ;
-            rc = pSeqMgr->dropSequence( seqName, cb, w ) ;
-            if ( SDB_SEQUENCE_NOT_EXIST == rc )
-            {
-               rc = SDB_OK ;
-            }
-            PD_RC_CHECK( rc, PDWARNING, "Failed to remove sequence [%s], rc: %d",
-                         seqName, rc ) ;
-         }
+         PD_LOG( PDWARNING, "Sequence[%s] not exist, no need to drop", seqName ) ;
+         rc = SDB_OK ;
       }
+      PD_RC_CHECK( rc, PDWARNING, "Failed to remove sequence [%s], rc: %d",
+                   seqName, rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB_CATDROPAUTOINCSEQUENCE, rc ) ;
@@ -5357,7 +5261,48 @@ namespace engine
       goto done ;
    }
 
-   BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt, utilSequenceID ID )
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDROPAUTOINCSEQUENCES, "catDropAutoIncSequences" )
+   INT32 catDropAutoIncSequences( const BSONObj &boCollection, _pmdEDUCB *cb, INT16 w )
+   {
+      PD_TRACE_ENTRY( SDB_CATDROPAUTOINCSEQUENCES ) ;
+
+      INT32                rc = SDB_OK ;
+      BSONElement          ele ;
+
+      if ( boCollection.hasField( CAT_AUTOINCREMENT ) )
+      {
+         ele = boCollection.getField( CAT_AUTOINCREMENT ) ;
+         if ( Object == ele.type() )
+         {
+            rc = catDropAutoIncSequence(ele.Obj(), cb, w ) ;
+            if( SDB_OK != rc )
+            {
+               goto error ;
+            }
+         }
+         else if( Array == ele.type() )
+         {
+            BSONObjIterator it( ele.embeddedObject() ) ;
+            while ( it.more() )
+            {
+               rc = catDropAutoIncSequence( it.next().Obj(), cb, w ) ;
+               if( SDB_OK != rc )
+               {
+                  goto error ;
+               }
+            }
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_CATDROPAUTOINCSEQUENCES, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BSONObj catBuildSequenceOptions( const BSONObj &autoIncOpt, utilSequenceID ID )
    {
       static const CHAR* autoIncFieldArr[] = {
          CAT_AUTOINC_FIELD,

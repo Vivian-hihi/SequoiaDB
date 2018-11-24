@@ -638,7 +638,7 @@ namespace engine
 
       if ( seq.initial() )
       {
-         nextValue = seq.startValue() ;
+         nextValue = seq.currentValue() ;
          seq.setInitial( FALSE ) ;
          needUpdate = TRUE ;
       }

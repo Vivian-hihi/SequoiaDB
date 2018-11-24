@@ -36,7 +36,7 @@
 
 #include "oss.hpp"
 #include "ossUtil.hpp"
-#include "utilUniqueID.hpp"
+#include "utilGlobalID.hpp"
 #include "msg.h"
 #include "utilConcurrentMap.hpp"
 #include "../bson/bsonobj.h"

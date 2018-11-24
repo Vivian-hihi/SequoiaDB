@@ -316,7 +316,9 @@ namespace engine
       COORD_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
       // if mismatch in the cache, get from catalog and clear the
       // old cached sequence later.
-      if ( bucket.end() != iter && ( UTIL_SEQUENCEID_NULL != ID ||
+      // if not get by ID, read from cache when name matched;
+      // if get by ID, read from catalog when name match but ID mismatch
+      if ( bucket.end() != iter && ( UTIL_SEQUENCEID_NULL == ID ||
            ((*iter).second)->ID() == ID ) )
       {
          cache = (*iter).second ;

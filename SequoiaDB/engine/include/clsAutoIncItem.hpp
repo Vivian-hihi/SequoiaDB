@@ -40,9 +40,10 @@
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include "../bson/bson.h"
+#include "clsBase.hpp"
 #include "utilMap.hpp"
 #include "utilList.hpp"
-#include "utilUniqueID.hpp"
+#include "utilGlobalID.hpp"
 #include "utilSet.hpp"
 
 using namespace bson ;
@@ -98,9 +99,14 @@ namespace engine
       ~_clsAutoIncItem() ;
 
       const CHAR*          fieldName() const { return _fieldName ; }
-      const CHAR*          fullName() const { return _fullName ; }
+      const CHAR*          fieldFullName() const { return _fieldFullName ; }
       const CHAR*          sequenceName() const { return _sequenceName ; }
       const utilSequenceID sequenceID() const { return _sequenceID ; }
+      const CHAR*          generated() const ;
+      static INT32         validFieldName( const CHAR *pName ) ;
+      static INT32         validGenerated( const CHAR *generated ) ;
+      static INT32         validAutoIncOption( const BSONObj& option ) ;
+
       AUTOINC_GEN_TYPE     generatedType() const { return _generatedType ; }
       const clsAutoIncID   ID() const ;
 
@@ -108,6 +114,7 @@ namespace engine
       const _clsAutoIncItem*  findItem( const CHAR *pName ) const ;
       UINT32               itemCount() const { return _pSubFieldMap->size(); }
 
+      _clsAutoIncItem *    parent() { return _pParent ; } ;
    protected:
 
       INT32             init( const BSONObj &obj ) ;
@@ -123,12 +130,13 @@ namespace engine
 
    private:
       const CHAR*       _fieldName ;
-      const CHAR*       _fullName ;
+      const CHAR*       _fieldFullName ;
       const CHAR*       _sequenceName ;
       utilSequenceID    _sequenceID ;
       AUTOINC_GEN_TYPE  _generatedType ;
 
       AUTOINC_ITEM_MAP* _pSubFieldMap ;
+      _clsAutoIncItem*  _pParent ;
       string            _fieldStr ;
 
    } ;
@@ -161,8 +169,10 @@ namespace engine
 
       const clsAutoIncIDSet&     getIDs() const { return _idSet ; }
       const clsAutoIncItem*      findItem( const CHAR *pName ) const ;
-
       const vector<BSONObj>&     getFields() const { return _vecFields ; }
+      const BSONObj              toBson() const ;
+      const clsAutoIncItem*      find( const CHAR *pName ) const ;
+      void                       erase( const CHAR *pName ) ;
 
    protected:
 

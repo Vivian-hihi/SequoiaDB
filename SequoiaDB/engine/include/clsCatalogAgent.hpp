@@ -272,6 +272,7 @@ namespace engine
          BOOLEAN  getOverWrite() const { return _overwrite ; }
 
          const clsAutoIncSet*    getAutoIncSet() const ;
+         clsAutoIncSet*          getAutoIncSet() ;
 
       protected:
          _clsCatalogSet    *next () ;

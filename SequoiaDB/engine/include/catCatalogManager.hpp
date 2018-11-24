@@ -86,7 +86,8 @@ namespace engine
       INT64       _maxRecNum ;
       INT64       _maxSize ;
       BOOLEAN     _overwrite ;
-      vector<BSONObj> _autoIncrement ;
+      BSONObj     _autoIncFields ;
+      clsAutoIncSet _autoIncSet ;
 
       _catCollectionInfo()
       {
@@ -117,7 +118,7 @@ namespace engine
          _maxRecNum           = 0 ;
          _maxSize             = 0 ;
          _overwrite           = FALSE ;
-         _autoIncrement.clear() ;
+         _autoIncSet.clear() ;
       }
    };
    typedef _catCollectionInfo catCollectionInfo ;

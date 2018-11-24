@@ -1411,10 +1411,12 @@ namespace engine
       _executeAfterLock = TRUE ;
       _needRollback = TRUE ;
       _clUniqueID = UTIL_UNIQUEID_NULL ;
+      _fieldMask = UTIL_ARG_FIELD_EMPTY ;
    }
 
    _catCtxCreateCL::~_catCtxCreateCL ()
    {
+      _splitList.clear() ;
       _onCtxDelete () ;
    }
 
@@ -1460,10 +1462,6 @@ namespace engine
       CHAR szSpace[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
       CHAR szCollection[ DMS_COLLECTION_NAME_SZ + 1 ] = {0} ;
       BSONObj boSpace, boDomain, boDummy ;
-      UINT32 fieldMask = UTIL_ARG_FIELD_EMPTY ;
-      catCollectionInfo clInfo ;
-      std::map<std::string, UINT32> splitList ;
-
 
       // Just check the existence of collection, no lock is needed
       rc = catGetCollection( _targetName, boDummy, cb ) ;
@@ -1533,7 +1531,7 @@ namespace engine
       }
 
       // Build the new object
-      rc = catCheckAndBuildCataRecord( _boQuery, fieldMask, clInfo, TRUE ) ;
+      rc = catCheckAndBuildCataRecord( _boQuery, _fieldMask, _clInfo, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to check create collection obj [%s], rc: %d",
                    _boQuery.toString().c_str(), rc ) ;
@@ -1544,7 +1542,7 @@ namespace engine
          if ( NumberInt == eleType.type() )
          {
             INT32 type = eleType.numberInt() ;
-            if ( ( DMS_STORAGE_NORMAL == type ) && clInfo._capped )
+            if ( ( DMS_STORAGE_NORMAL == type ) && _clInfo._capped )
             {
                PD_LOG( PDERROR, "Capped colleciton can only be created on "
                        "Capped collection space" ) ;
@@ -1554,19 +1552,19 @@ namespace engine
 
             // If the user create a collection on a Capped CS, without specify
             // "Capped" for collection, it's also OK.
-            if ( ( DMS_STORAGE_CAPPED == type ) && !clInfo._capped )
+            if ( ( DMS_STORAGE_CAPPED == type ) && !_clInfo._capped )
             {
-               clInfo._capped = TRUE ;
-               fieldMask |= UTIL_CL_CAPPED_FIELD ;
+               _clInfo._capped = TRUE ;
+               _fieldMask |= UTIL_CL_CAPPED_FIELD ;
             }
          }
       }
 
       // Get last history version of collection name
       _version = catGetBucketVersion( _targetName.c_str(), cb ) ;
-      clInfo._version = _version ;
+      _clInfo._version = _version ;
 
-      rc = _combineOptions( boDomain, boSpace, fieldMask, clInfo ) ;
+      rc = _combineOptions( boDomain, boSpace, _fieldMask, _clInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR,
@@ -1584,8 +1582,8 @@ namespace engine
                    "Failed to get field[%s], type: %d",
                    CAT_CS_CLUNIQUEHWM, ele.type() );
 
-         clInfo._clUniqueID = (INT64)ele.numberLong() + 1 ;
-         _clUniqueID = clInfo._clUniqueID ;
+         _clInfo._clUniqueID = (INT64)ele.numberLong() + 1 ;
+         _clUniqueID = _clInfo._clUniqueID ;
 
          if ( utilGetCLInnerID(_clUniqueID) > (utilCLInnerID)UTIL_CLINNERID_MAX )
          {
@@ -1598,8 +1596,8 @@ namespace engine
       }
 
       /// choose a group to create cl
-      rc = _chooseGroupOfCl( boDomain, boSpace, clInfo, cb,
-                             _groupList, splitList ) ;
+      rc = _chooseGroupOfCl( boDomain, boSpace, _clInfo, cb,
+                             _groupList, _splitList ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to choose groups for new collection [%s], rc: %d",
                    _targetName.c_str(), rc ) ;
@@ -1608,22 +1606,6 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to lock groups, rc: %d",
                    rc ) ;
-
-      {
-         // build new collection record for meta data.
-         BSONObj boNewObj ;
-         rc = catBuildCatalogRecord ( cb, clInfo, fieldMask, 0,
-                                      _groupList, splitList,
-                                      boNewObj ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Build new collection catalog record failed, rc: %d",
-                      rc ) ;
-
-         // meta data has no sequence information. so it will be passed by private member.
-         _autoIncOptArr = clInfo._autoIncrement ;
-
-         _boTarget = boNewObj.getOwned() ;
-      }
 
    done :
       PD_TRACE_EXITRC ( SDB_CATCTXCREATECL_CHECK_INT, rc ) ;
@@ -1637,13 +1619,26 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT32 tmpRC = SDB_OK ;
+      BSONObj boNewObj ;
 
       PD_TRACE_ENTRY ( SDB_CATCTXCREATECL_EXECUTE_INT ) ;
 
-      rc = catCreateAutoIncSequence( _boTarget, _autoIncOptArr, cb, w ) ;
+      // build new collection record for meta data.
+      rc = catBuildCatalogRecord ( cb, _clInfo, _fieldMask, 0, _groupList,
+                                   _splitList, boNewObj, w ) ;
       PD_RC_CHECK( rc, PDERROR,
-                   "Failed to create system sequences of collection[%s], rc: %d",
-                   _targetName.c_str(), rc ) ;
+                   "Build new collection catalog record failed, rc: %d",
+                   rc ) ;
+
+      _boTarget = boNewObj.getOwned() ;
+
+      if( _fieldMask & UTIL_CL_AUTOINC_FIELD )
+      {
+         rc = catCreateAutoIncSequences( _clInfo, cb, w ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to create system sequences of collection[%s], "
+                      "rc: %d", _targetName.c_str(), rc ) ;
+      }
 
       rc = catCreateCLStep( _targetName, _clUniqueID, _boTarget,
                             cb, _pDmsCB, _pDpsCB, w ) ;
@@ -1657,12 +1652,6 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_CATCTXCREATECL_EXECUTE_INT, rc ) ;
       return rc ;
    error :
-      tmpRC = catDropAutoIncSequence( _boTarget, cb, w ) ;
-      if ( SDB_OK != tmpRC )
-      {
-         PD_LOG( PDWARNING, "Failed to rollback creating sequences of "
-                 "collection[%s], rc: %d", _targetName.c_str(), tmpRC ) ;
-      }
       goto done ;
    }
 
@@ -1678,7 +1667,7 @@ namespace engine
       rc = catGetCollection( _targetName, boCollection, cb ) ;
       if ( SDB_OK == rc )
       {
-         rc = catDropAutoIncSequence( boCollection, cb, w ) ;
+         rc = catDropAutoIncSequences( boCollection, cb, w ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to remove system sequences of collection [%s], rc: %d",
                       _targetName.c_str(), rc ) ;
@@ -2866,7 +2855,8 @@ namespace engine
 
       if( pushExec && actionType == RTN_ALTER_CL_SET_ATTRIBUTES )
       {
-         const rtnCLSetAttributeTask *setTask = dynamic_cast< const rtnCLSetAttributeTask * >( task ) ;
+         const rtnCLSetAttributeTask *setTask =
+                     dynamic_cast< const rtnCLSetAttributeTask * >( task ) ;
          if( setTask->containAutoincArgument() )
          {
             tempTask->setSubCLFlag() ;
@@ -3001,27 +2991,28 @@ namespace engine
          {
             rc = _addCreateSeqenceTask( collection, task, catAutoIncTask ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to add sequence task [%s] on "
-                   "collection [%s], rc: %d", task->getActionName(),
-                   _targetName.c_str(), rc ) ;
+                         "collection [%s], rc: %d", task->getActionName(),
+                         _targetName.c_str(), rc ) ;
             break ;
          }
          case RTN_ALTER_CL_DROP_AUTOINC_FLD :
          {
             rc = _addDropSeqenceTask( collection, task, catAutoIncTask ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to add sequence task [%s] on "
-                   "collection [%s], rc: %d", task->getActionName(),
-                   _targetName.c_str(), rc ) ;
+                         "collection [%s], rc: %d", task->getActionName(),
+                         _targetName.c_str(), rc ) ;
             break ;
          }
          case RTN_ALTER_CL_SET_ATTRIBUTES :
          {
-            const rtnCLSetAttributeTask *setTask = dynamic_cast< const rtnCLSetAttributeTask * >( task ) ;
+            const rtnCLSetAttributeTask *setTask = 
+                              dynamic_cast< const rtnCLSetAttributeTask * >( task ) ;
             if( setTask->containAutoincArgument() )
             {
                rc = _addAlterSeqenceTask( collection, task, catAutoIncTask ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to add sequence task [%s] on "
-                      "collection [%s], rc: %d", task->getActionName(),
-                      _targetName.c_str(), rc ) ;
+                            "collection [%s], rc: %d", task->getActionName(),
+                            _targetName.c_str(), rc ) ;
             }
             break ;
          }
@@ -3058,8 +3049,8 @@ namespace engine
 
       tempSeqTask = SDB_OSS_NEW catCtxCreateSequenceTask( collection, task );
       PD_CHECK( tempSeqTask, SDB_OOM, error, PDERROR,
-          "Failed to get create sequence task [%s] on collection [%s]",
-          task->getActionName(), collection.c_str() ) ;
+                "Failed to get create sequence task [%s] on collection [%s]",
+                task->getActionName(), collection.c_str() ) ;
       _addTask( tempSeqTask, false ) ;
 
       *catAutoIncTask = tempSeqTask ;
@@ -3089,8 +3080,8 @@ namespace engine
 
       tempSeqTask = SDB_OSS_NEW catCtxDropSequenceTask( collection, task );
       PD_CHECK( tempSeqTask, SDB_OOM, error, PDERROR,
-          "Failed to get drop sequence task [%s] on collection [%s]",
-          task->getActionName(), collection.c_str() ) ;
+                "Failed to get drop sequence task [%s] on collection [%s]",
+                task->getActionName(), collection.c_str() ) ;
       _addTask( tempSeqTask, false ) ;
 
       *catAutoIncTask = tempSeqTask ;
@@ -3120,8 +3111,8 @@ namespace engine
 
       tempSeqTask = SDB_OSS_NEW catCtxAlterSequenceTask( collection, task );
       PD_CHECK( tempSeqTask, SDB_OOM, error, PDERROR,
-          "Failed to get alter sequence task [%s] on collection [%s]",
-          task->getActionName(), collection.c_str() ) ;
+                "Failed to get alter sequence task [%s] on collection [%s]",
+                task->getActionName(), collection.c_str() ) ;
       _addTask( tempSeqTask, false ) ;
 
       *catAutoIncTask = tempSeqTask ;

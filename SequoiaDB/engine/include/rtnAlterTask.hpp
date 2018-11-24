@@ -41,7 +41,7 @@
 #include "utilCompression.hpp"
 #include "utilArguments.hpp"
 #include "../bson/bson.hpp"
-#include "utilUniqueID.hpp"
+#include "utilGlobalID.hpp"
 
 namespace engine
 {
@@ -474,121 +474,45 @@ namespace engine
          rtnCLAutoincFieldArgument & operator = ( const rtnCLAutoincFieldArgument & argument ) ;
          INT32 parseArgument () ;
 
-         OSS_INLINE std::string getFieldName () const
-         {
-            return _fieldName;
-         }
-         OSS_INLINE INT32 getIncrement () const
-         {
-            return _increment ;
-         }
-         OSS_INLINE INT64 getStartValue () const
-         {
-            return _startValue ;
-         }
-         OSS_INLINE INT64 getMinValue () const
-         {
-            return _minValue ;
-         }
-         OSS_INLINE INT64 getMaxValue () const
-         {
-            return _maxValue ;
-         }
-         OSS_INLINE INT64 getCurrentValue () const
-         {
-            return _currentValue ;
-         }
-         OSS_INLINE INT32 getCacheSize () const
-         {
-            return _cacheSize ;
-         }
-         OSS_INLINE INT32 getAcquireSize () const
-         {
-            return _acquireSize ;
-         }
-         OSS_INLINE BOOLEAN isCycled () const
-         {
-            return _cycled ;
-         }
-         OSS_INLINE std::string getGenerated () const
-         {
-            return _generated ;
-         }
-
-         OSS_INLINE utilSequenceID getID () const
-         {
-            return _ID ;
-         }
-
-         OSS_INLINE void setFieldName ( std::string name )
+         OSS_INLINE void setFieldName ( const CHAR* name )
          {
             _fieldName = name ;
          }
-
-         OSS_INLINE void setIncrement ( INT32 increment )
+         OSS_INLINE const CHAR* getFieldName () const
          {
-            _increment = increment ;
+            return _fieldName;
          }
-         OSS_INLINE void setStartValue ( INT64 startValue )
+         OSS_INLINE const CHAR* getGenerated () const
          {
-            _startValue = startValue ;
+            return _generated ;
          }
-         OSS_INLINE void setMinValue ( INT64 minValue )
+         OSS_INLINE const utilSequenceID getID () const
          {
-            _minValue = minValue ;
+            return _ID ;
          }
-         OSS_INLINE void setMaxValue ( INT64 maxValue )
-         {
-            _maxValue = maxValue ;
-         }
-         OSS_INLINE void setCurrentValue ( INT64 currentValue )
-         {
-            _currentValue = currentValue ;
-         }
-         OSS_INLINE void setCacheSize ( INT32 cacheSize )
-         {
-            _cacheSize = cacheSize ;
-         }
-         OSS_INLINE void setAcquireSize( INT32 acquireSize )
-         {
-            _acquireSize = acquireSize ;
-         }
-         OSS_INLINE void setCycled ( BOOLEAN cycled )
-         {
-            _cycled = cycled ;
-         }
-         OSS_INLINE void setGenerated ( std::string generated )
+         OSS_INLINE void setGenerated ( const CHAR* generated )
          {
             _generated = generated ;
          }
-
          OSS_INLINE void setID ( const utilSequenceID ID )
          {
             _ID = ID ;
          }
-
-         OSS_INLINE UINT32 getArgumentMask () const
-         {
-            return _argumentMask ;
-         }
-
-         OSS_INLINE BOOLEAN testArgumentMask ( UINT32 mask ) const
+         OSS_INLINE const BOOLEAN testArgumentMask ( UINT32 mask ) const
          {
             return OSS_BIT_TEST( _argumentMask, mask ) ? TRUE : FALSE ;
          }
-
          OSS_INLINE void setArgumentMask ( UINT32 fields )
          {
             OSS_BIT_SET( _argumentMask, fields ) ;
          }
-
-         OSS_INLINE void parsedArgumentMask ( UINT32 fields, UINT32 count = 1 )
+         OSS_INLINE void parsedArgumentMask ( const UINT32 fields, 
+                                              const UINT32 count = 1 ) 
          {
             setArgumentMask( fields ) ;
             _argumentCount += count ;
          }
-
-         OSS_INLINE UINT32 getArgumentCount () const
+         OSS_INLINE const UINT32 getArgumentCount () const
          {
             return _argumentCount ;
          }
@@ -598,19 +522,12 @@ namespace engine
          }
 
       protected:
-         std::string    _fieldName ;      // field name
-         utilSequenceID _ID ;
-         INT32          _increment ;      // increament value
-         INT64          _startValue ;     // start value
-         INT64          _currentValue ;   // current value
-         INT64          _minValue ;       // minimum value
-         INT64          _maxValue ;       // maxinum value
-         INT32          _cacheSize ;      // cache size in Catalog
-         INT32          _acquireSize ;    // acquire size in Coordinator
-         BOOLEAN        _cycled ;         // true if cycle is allowed
-         std::string    _generated ;
-         UINT32         _argumentMask ;
-         UINT32         _argumentCount ;
+         const CHAR*          _fieldName ;      // field name
+         const CHAR*          _seqName ;        // seq name
+         utilSequenceID       _ID ;             // ID
+         const CHAR*          _generated ;      // generated
+         UINT32               _argumentMask ;
+         UINT32               _argumentCount ;
          const bson::BSONObj  _argument ;
    };
 

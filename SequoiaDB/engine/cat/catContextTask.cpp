@@ -366,7 +366,7 @@ namespace engine
       rc = catGetCollection( _dataName, boCollection, cb ) ;
       if ( SDB_OK == rc )
       {
-         rc = catDropAutoIncSequence( boCollection, cb, w ) ;
+         rc = catDropAutoIncSequences( boCollection, cb, w ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to remove system sequences of collection [%s], rc: %d",
                       _dataName.c_str(), rc ) ;

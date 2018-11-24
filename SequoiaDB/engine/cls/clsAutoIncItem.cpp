@@ -125,10 +125,11 @@ namespace engine
    _clsAutoIncItem::_clsAutoIncItem()
    {
       _fieldName     = NULL ;
-      _fullName      = NULL ;
+      _fieldFullName      = NULL ;
       _sequenceName  = NULL ;
       _generatedType = AUTOINC_GEN_DEFAULT ;
       _pSubFieldMap  = NULL ;
+      _pParent       = NULL ;
    }
 
    _clsAutoIncItem::~_clsAutoIncItem()
@@ -164,7 +165,6 @@ namespace engine
       utilSequenceID    seqID = UTIL_SEQUENCEID_NULL ;
       const CHAR*       pGenStr = NULL ;
       AUTOINC_GEN_TYPE  genType ;
-      UINT32            validNum = 0 ;
 
       BSONObjIterator itr( obj ) ;
       while( itr.more() )
@@ -177,11 +177,14 @@ namespace engine
             {
                PD_LOG( PDERROR, "Field[%s] in obj[%s] must be string",
                        CAT_AUTOINC_FIELD, obj.toString().c_str() ) ;
-               rc = SDB_INVALIDARG ;
+               /* 
+                *init will be called by geting from catalog, so if the type is
+                *invalid, it must be sys error.
+               */
+               rc = SDB_SYS ;
                goto error ;
             }
             pFldName = e.valuestr() ;
-            ++validNum ;
          }
          else if ( 0 == ossStrcmp( e.fieldName(), CAT_AUTOINC_SEQ ) )
          {
@@ -189,11 +192,10 @@ namespace engine
             {
                PD_LOG( PDERROR, "Field[%s] in obj[%s] must be string",
                        CAT_AUTOINC_SEQ, obj.toString().c_str() ) ;
-               rc = SDB_INVALIDARG ;
+               rc = SDB_SYS ;
                goto error ;
             }
             pSeqName = e.valuestr() ;
-            ++validNum ;
          }
          else if ( 0 == ossStrcmp( e.fieldName(), CAT_AUTOINC_SEQ_ID ) )
          {
@@ -201,11 +203,10 @@ namespace engine
             {
                PD_LOG( PDERROR, "Field[%s] in obj[%s] must be number",
                        CAT_AUTOINC_SEQ_ID, obj.toString().c_str() ) ;
-               rc = SDB_INVALIDARG ;
+               rc = SDB_SYS ;
                goto error ;
             }
             seqID = e.Long() ;
-            ++validNum ;
          }
          else if ( 0 == ossStrcmp( e.fieldName(), CAT_AUTOINC_GENERATED ) )
          {
@@ -213,20 +214,11 @@ namespace engine
             {
                PD_LOG( PDERROR, "Field[%s] in obj[%s] must be OID",
                        CAT_AUTOINC_GENERATED, obj.toString().c_str() ) ;
-               rc = SDB_INVALIDARG ;
+               rc = SDB_SYS ;
                goto error ;
             }
             pGenStr = e.valuestr() ;
-            ++validNum ;
          }
-      }
-
-      /// check valid num
-      if ( validNum < 4 )
-      {
-         PD_LOG( PDERROR, "Object[%s] is not valid", obj.toString().c_str() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
       }
 
       if ( 0 == ossStrcmp( CAT_GENERATED_ALWAYS, pGenStr ) )
@@ -243,7 +235,7 @@ namespace engine
       }
       else
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_SYS ;
          PD_LOG( PDERROR, "Unknown generated type[%s]", pGenStr ) ;
          goto error ;
       }
@@ -288,8 +280,8 @@ namespace engine
       INT32             rc = SDB_OK ;
       const CHAR*       subField = NULL ;
       _clsAutoIncItem   *pSubItem = NULL ;
+      const CHAR *fieldFullName = !fullName ? fieldName : fullName ;
 
-      _fullName = fullName ? fullName : fieldName ;
       subField = ossStrchr( fieldName, '.' ) ;
       if ( NULL == subField )
       {
@@ -297,6 +289,7 @@ namespace engine
          _sequenceName  = sequenceName ;
          _sequenceID    = sequenceID ;
          _generatedType = generated ;
+         _fieldFullName = fieldFullName ;
       }
       else
       {
@@ -315,7 +308,7 @@ namespace engine
          }
 
          rc = pSubItem->_init( subField, sequenceName, sequenceID,
-                               generated, _fullName ) ;
+                               generated, fieldFullName ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Init sub item failed, rc: %d", rc ) ;
@@ -329,6 +322,7 @@ namespace engine
             PD_LOG( PDERROR, "Alloc sub field map failed" ) ;
             goto error ;
          }
+         pSubItem->_pParent = this ;
          /// add to map
          _pSubFieldMap->insert(
                AUTOINC_ITEM_MAP_VAL( pSubItem->fieldName(), pSubItem ) ) ;
@@ -338,7 +332,7 @@ namespace engine
    done:
       if ( pSubItem )
       {
-         SDB_OSS_DEL pSubItem ;
+         SAFE_DELETE( pSubItem );
       }
       return rc ;
    error:
@@ -396,7 +390,7 @@ namespace engine
       }
       else
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_AUTOINCREMENT_FIELD_EXIST_OR_NESTED ;
          PD_LOG( PDERROR, "AutoIncrement fields[%s, %s] conflict.",
                  fieldName(), pItem->fieldName() ) ;
          goto error ;
@@ -427,6 +421,143 @@ namespace engine
       id.seqID = _sequenceID ;
       id.genType = _generatedType ;
       return id ;
+   }
+
+
+   const CHAR* _clsAutoIncItem::generated() const
+   {
+      AUTOINC_GEN_TYPE genType ;
+      genType = generatedType() ;
+      if( AUTOINC_GEN_ALWAYS == genType )
+      {
+         return CAT_GENERATED_ALWAYS ;
+      }
+      if( AUTOINC_GEN_DEFAULT == genType )
+      {
+         return CAT_GENERATED_DEFAULT ;
+      }
+      if( AUTOINC_GEN_STRICT == genType )
+      {
+         return CAT_GENERATED_STRICT ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Unknown generated type[%d]", genType ) ;
+         return NULL ;
+      }
+   }
+
+   INT32 _clsAutoIncItem::validFieldName( const CHAR *pName )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 partLen = 0 ;
+      const CHAR *sep = NULL ;
+      const CHAR *p = NULL ;
+      const CHAR *partFieldName = NULL ;
+
+      partFieldName = pName ;
+      do
+      {
+         sep = ossStrchr( partFieldName, '.' ) ;
+         partLen = ( !sep ) ? ossStrlen( partFieldName ) : sep - partFieldName ;
+         if( 0 == partLen || *partFieldName == '$' || *partFieldName == ' ' )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Invalid field name[%s], rc: %d", pName, rc ) ;
+            goto error ;
+         }
+
+         for( p = partFieldName; p < partFieldName + partLen; p++ )
+         {
+            if( !isdigit( *p ) )
+               break ;
+         }
+
+         if( p == partFieldName + partLen )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Field name[%s] cannot be digit, rc: %d",
+                    pName, rc ) ;
+            goto error ;
+         }
+
+         partFieldName = sep + 1 ;
+      }while( sep ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsAutoIncItem::validGenerated( const CHAR *generated )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 0 != ossStrcmp( generated, CAT_GENERATED_ALWAYS ) &&
+           0 != ossStrcmp( generated, CAT_GENERATED_STRICT ) &&
+           0 != ossStrcmp( generated, CAT_GENERATED_DEFAULT ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "AutoIncrement field 'Generated'[%s] is invalid",
+                 generated ) ;
+      }
+
+      return rc ;
+   }
+
+   INT32 _clsAutoIncItem::validAutoIncOption( const BSONObj& option )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele ;
+      const CHAR *fieldName = NULL ;
+      const CHAR *generated = NULL ;
+
+      if( !option.hasField( CAT_AUTOINC_FIELD ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "AutoIncrement options[%s] must have field[%s]",
+                 option.toString( false, false ).c_str(), CAT_AUTOINC_FIELD ) ;
+         goto error ;
+      }
+
+      ele = option.getField( CAT_AUTOINC_FIELD ) ;
+      if( String != ele.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid type[%d] of field[%s], expected type is string",
+                 ele.type(), CAT_AUTOINC_FIELD ) ;
+         goto error ;
+      }
+
+      fieldName = ele.valuestr() ;
+      rc = validFieldName( fieldName ) ;
+      if( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      if( option.hasField( CAT_AUTOINC_GENERATED ) )
+      {      
+         ele = option.getField( CAT_AUTOINC_GENERATED ) ;
+         if( String != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Invalid type[%d] of field[%s], expected type is string",
+                    ele.type(), CAT_AUTOINC_GENERATED ) ;
+            goto error ;
+         }
+         generated = ele.valuestrsafe() ;
+         rc = validGenerated( generated ) ;
+         if( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*
@@ -549,6 +680,107 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   const clsAutoIncItem* _clsAutoIncSet::find( const CHAR * pName ) const
+   {
+      const clsAutoIncItem* pItem = NULL ;
+      const CHAR *fieldName = NULL ;
+
+      clsAutoIncIterator it( *this, clsAutoIncIterator::RECURS ) ;
+
+      while ( it.more() )
+      {
+         pItem = it.next() ;
+         fieldName = pItem->fieldFullName() ;
+         if( 0 == ossStrcmp( pName, fieldName ) )
+         {
+            return pItem ;
+         }
+      }
+
+      return NULL ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLSAUTOINCSET_ERASE, "_clsAutoIncSet::erase" )
+   void _clsAutoIncSet::erase( const CHAR *pName )
+   {
+      PD_TRACE_ENTRY( CLSAUTOINCSET_ERASE ) ;
+      clsAutoIncID id ;
+      clsAutoIncItem *pItem = NULL ;
+      clsAutoIncItem *pParent = NULL ;
+      const CHAR *lastFieldName = NULL ;
+
+      pItem = const_cast<clsAutoIncItem*>( find( pName ) ) ;
+      if( NULL == pItem )
+      {
+         return ;
+      }
+
+      id = pItem->ID() ;
+      lastFieldName = ossStrrchr( pName, '.' ) ;
+      if( NULL == lastFieldName )
+      {
+         lastFieldName = pName ;
+      }
+      else
+      {
+         lastFieldName += 1 ;
+      }
+
+      do
+      {
+         pParent = pItem->_pParent ;
+         if( !pParent )
+         {
+            _mapItem.erase( pItem->fieldName() ) ;
+            SAFE_DELETE( pItem ) ;
+         }
+         else
+         {
+            pParent->_pSubFieldMap->erase( pItem->fieldName() ) ;
+            SAFE_DELETE( pItem ) ;
+            if( !pParent->itemCount() )
+            {
+               SAFE_DELETE( pParent->_pSubFieldMap ) ;
+            }
+         }
+         pItem = pParent ;
+      }while( pItem && !pItem->_pSubFieldMap );
+
+      _idSet.erase( id ) ;
+      --_fieldCount ;
+      //recalculate _eleSize after erase one item.
+      _eleSize = _calcEleSize( _mapItem );
+      PD_TRACE_EXIT( CLSAUTOINCSET_ERASE ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLSAUTOINCSET_TOBSON, "_clsAutoIncSet::toBson" )
+   const BSONObj _clsAutoIncSet::toBson() const
+   {
+      PD_TRACE_ENTRY( CLSAUTOINCSET_TOBSON ) ;
+   
+      BSONObjBuilder fieldObj ;
+      const clsAutoIncItem* pItem = NULL ;
+      BSONArrayBuilder fieldArr( fieldObj.subarrayStart( CAT_AUTOINCREMENT ) ) ;
+
+      clsAutoIncIterator it( *this, clsAutoIncIterator::RECURS ) ;
+      while( it.more() )
+      {
+         BSONObjBuilder builder ;
+
+         pItem = it.next() ;
+         builder.append( CAT_AUTOINC_SEQ, pItem->sequenceName() ) ;
+         builder.append( CAT_AUTOINC_FIELD, pItem->fieldFullName() ) ;
+         builder.append( CAT_AUTOINC_GENERATED, pItem->generated() ) ;
+         builder.append( CAT_AUTOINC_SEQ_ID, (INT64)pItem->sequenceID() ) ;
+         fieldArr.append( builder.obj() );
+      }
+      fieldArr.done() ;
+      fieldObj.done() ;
+
+      PD_TRACE_EXIT( CLSAUTOINCSET_TOBSON ) ;
+      return fieldObj.obj() ;
    }
 
    INT32 _clsAutoIncSet::insert( const BSONObj &obj )

@@ -447,12 +447,13 @@ namespace engine
 
    /* Build Collection record */
    INT32 catBuildCatalogRecord ( _pmdEDUCB *cb,
-                                 const catCollectionInfo &clInfo,
+                                 catCollectionInfo &clInfo,
                                  UINT32 mask,
                                  UINT32 attribute,
                                  const std::vector<UINT32> &grpIDLst,
                                  const std::map<std::string, UINT32> &splitLst,
-                                 BSONObj &catRecord ) ;
+                                 BSONObj &catRecord,
+                                 INT16 w ) ;
 
    /* Create Node */
    INT32 catCreateNodeStep ( const string &groupName, const string &hostName,
@@ -475,17 +476,25 @@ namespace engine
    INT32 catTransEnd ( INT32 result, _pmdEDUCB *cb, SDB_DPSCB *pDpsCB ) ;
 
    /* Catalog group sync control */
-   void catSetSyncW ( INT16 w ) ;
+   void  catSetSyncW ( INT16 w ) ;
    INT16 catGetSyncW () ;
 
    /* AutoIncrement */
-   INT32 catCheckAutoIncrementValid( const vector<BSONObj> &options ) ;
-   INT32 catCreateAutoIncSequence( const BSONObj &boCollection,
-                                   const vector<BSONObj> &optionArr,
-                                   _pmdEDUCB *cb, INT16 w ) ;
-   INT32 catDropAutoIncSequence( const BSONObj &boCollection, _pmdEDUCB *cb, INT16 w ) ;
-   BSONObj catGetSequenceOptions( const BSONObj &autoIncOpt, utilSequenceID ID = UTIL_SEQUENCEID_NULL ) ;
-   string catGetSeqName4AutoIncFld( const utilCLUniqueID id, const string fldName ) ;
+   INT32 catValidSequenceOption( const BSONObj &option ) ;
+   INT32 catCreateAutoIncSequences( const catCollectionInfo &clInfo,
+                                    _pmdEDUCB *cb, INT16 w ) ;
+   INT32 catDropAutoIncSequences( const BSONObj &boCollection,
+                                  _pmdEDUCB *cb,
+                                  INT16 w ) ;
+   BSONObj catBuildSequenceOptions( const BSONObj &autoIncOpt,
+                                    utilSequenceID ID = UTIL_SEQUENCEID_NULL ) ;
+   INT32  catBuildCatalogAutoIncField( _pmdEDUCB *cb,
+                                       catCollectionInfo &clInfo,
+                                       const BSONObj &obj,
+                                       utilCLUniqueID clUniqueID ,
+                                       INT16 w ) ;
+   string catGetSeqName4AutoIncFld( const utilCLUniqueID id,
+                                    const CHAR* fldName ) ;
 }
 
 #endif //CAT_COMMON_HPP__
