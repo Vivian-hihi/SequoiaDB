@@ -63,16 +63,14 @@ public class DropCollectionSpace12065 extends SdbTestBase {
 				sdb.dropCollectionSpace(csName12065);
 				throw new BaseException(-999, "dropCollectionSpace error!");
 			} catch (BaseException e) {
-				if (-147 != e.getErrorCode()) {
-					e.printStackTrace();
-				}
+				Assert.assertEquals(e.getErrorCode(), -147, e.getMessage());
 			}
 		}
 		
 		//关闭步骤2中打开的游标后，再次删除集合空间
 		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName12065, clName, fullIndexName);
+      cursor.close();
 		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12065, clName, fullIndexName, 500000);
-		cursor.close();
 		sdb.dropCollectionSpace(csName12065);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 	}

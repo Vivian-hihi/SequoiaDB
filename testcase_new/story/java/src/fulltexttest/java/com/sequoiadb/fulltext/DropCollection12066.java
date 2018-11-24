@@ -64,16 +64,14 @@ public class DropCollection12066 extends SdbTestBase {
 				cs.dropCollection(clName);
 				throw new BaseException(-999, "dropCollection error!");
 			} catch (BaseException e) {
-				if (-147 != e.getErrorCode()) {
-					e.printStackTrace();
-				}
+				Assert.assertEquals(e.getErrorCode(), -147, e.getMessage());
 			}
 		}
 		
 		//关闭步骤2中的游标，再次删除集合
 		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName12066, clName, fullIndexName);
+      cursor.close();
 		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12066, clName, fullIndexName, 500000);
-		cursor.close();
 		cs.dropCollection(clName);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 	}
