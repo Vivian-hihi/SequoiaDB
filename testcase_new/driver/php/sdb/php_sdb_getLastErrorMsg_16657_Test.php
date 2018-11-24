@@ -37,9 +37,9 @@ class GetLastErrMsg16657 extends PHPUnit_Framework_TestCase
       self::$cl -> insert( array( 'a' => 1) );
       $errMsg1 = self::$db -> getLastErrorMsg();
       self::checkErrorMsg( $errMsg1, -38, "insert the same record");
-      self::$db -> getCL("text.text");
+      self::$db -> getCS("NOT_EXIST_CS16657");
       $errMsg2 = self::$db -> getLastErrorMsg();
-      self::checkErrorMsg( $errMsg2, -23, "get not exist cl");
+      self::checkErrorMsg( $errMsg2, -34, "get not exist cl");
    }
    
    public static function tearDownAfterClass()
