@@ -1,7 +1,6 @@
 package com.sequoiadb.rename;
 
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -11,7 +10,6 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 /**
@@ -33,10 +31,6 @@ public class TestRenameCS16137 extends SdbTestBase{
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        //TODO:1、不需要屏蔽独立模式
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
         if(sdb.isCollectionSpaceExist(csName)){
             sdb.dropCollectionSpace(csName);
         }
@@ -58,7 +52,6 @@ public class TestRenameCS16137 extends SdbTestBase{
         createIndexThread.start();
         
         if (renameCSThread.isSuccess() && !createIndexThread.isSuccess()){
-        	//TODO:3、在setUP中已经new sdb，这里不需要再次new sdb
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             RenameUtil.checkRenameCSResult(sdb, csName, newCSName, 1);
             checkCLIndex(sdb, newCSName, clName, 3);
@@ -66,9 +59,12 @@ public class TestRenameCS16137 extends SdbTestBase{
             if (e.getErrorCode() != -23 && e.getErrorCode() != -34) {
                 Assert.fail("errcode not expected : " + e.getMessage());
             }
+        } else if (renameCSThread.isSuccess() && createIndexThread.isSuccess()) {
+            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            RenameUtil.checkRenameCSResult(sdb, csName, newCSName, 1);
+            checkCLIndex(sdb, newCSName, clName, 5);
         } else {
-        	//TODO:6、if分支中已覆盖renameCS成功的测试点，这里是否遗漏掉其他结果？
-            Assert.assertTrue(renameCSThread.isSuccess(), renameCSThread.getErrorMsg());
+            Assert.fail("renameCSThread must success, but failed : " + renameCSThread.getErrorMsg());
         }
         
     }
@@ -91,7 +87,6 @@ public class TestRenameCS16137 extends SdbTestBase{
         }
     }
     
-    //TODO:4、这里只校验索引个数不严谨，如果出现之前索引丢失，创建索引部分成功，这种情况则无法验证
     public void checkCLIndex(Sequoiadb db, String localCSName,String localCLName, int expected) {
         CollectionSpace localCS = db.getCollectionSpace(localCSName);
         DBCollection localCL = localCS.getCollection(localCLName);
@@ -122,11 +117,11 @@ public class TestRenameCS16137 extends SdbTestBase{
         @Override
         public void exec() throws BaseException {
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            try{//TODO:2.这里的cs、cl建议不要用全局变量，db已经close，如果外面用到了容易出错
-                cs = db.getCollectionSpace(csName);
-                cl = cs.getCollection(clName);
-                cl.createIndex("index3", "{a3:1}", false, false);
-                cl.createIndex("index4", "{a4:1}", false, false);
+            try{
+                CollectionSpace localcs = db.getCollectionSpace(csName);
+                DBCollection localcl = localcs.getCollection(clName);
+                localcl.createIndex("index3", "{a3:1}", false, false);
+                localcl.createIndex("index4", "{a4:1}", false, false);
             }finally{
                 db.close();
             }

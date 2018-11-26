@@ -1,7 +1,6 @@
 package com.sequoiadb.rename;
 
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -9,7 +8,6 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -32,9 +30,6 @@ public class TestRenameCS16133 extends SdbTestBase{
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {//TODO:1.不需要屏蔽独立模式
-            throw new SkipException("skip StandAlone");
-        }
         if(sdb.isCollectionSpaceExist(csName)){
             sdb.dropCollectionSpace(csName);
         }
@@ -52,7 +47,7 @@ public class TestRenameCS16133 extends SdbTestBase{
         createClThread.start();
         
         if (renameCSThread.isSuccess() && !createClThread.isSuccess()){
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");//TODO:2.这里的sdb为啥要重新new一个？
+            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");//驱动端存在缓存  因此修改cs需要重新new  db
             RenameUtil.checkRenameCSResult(sdb, csName, newCSName, 0);
             BaseException e = (BaseException)createClThread.getExceptions().get(0);
             Assert.assertEquals(-34, e.getErrorCode(),"clThread failed : "+e.getMessage());
@@ -113,7 +108,7 @@ public class TestRenameCS16133 extends SdbTestBase{
         @Override
         public void exec() throws BaseException {
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            try{//TODO:3.这里的并发有问题，如果这里的步骤执行成功，那么clExist = false，clExist的初始值也是false，用这个判断直接结果不准确，另外请确认下用例测试点
+            try{
                 CollectionSpace localcs = db.getCollectionSpace(csName);
                 for(int i = 0; i <= 100; i++) {
                     localcs.createCollection(clName);

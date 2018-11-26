@@ -49,17 +49,6 @@ public class TestRenameCL16088 extends SdbTestBase {
         maincl.attachCollection(SdbTestBase.csName+"."+subCLName, options);
     }
     
-    //TODO:1、这个方法建议放到teardown后面
-    public void createMainCL() {
-        BSONObject options = new BasicBSONObject();
-        options.put("IsMainCL", true);
-        BSONObject opt = new BasicBSONObject();
-        opt.put("a", 1);
-        options.put("ShardingKey", opt);
-        options.put("ShardingType", "range");
-        cs.createCollection(mainCLName, options);
-    }
-    
     @Test
     public void test16088(){
         RenameMainCLThread mainCLThread = new RenameMainCLThread();
@@ -67,8 +56,6 @@ public class TestRenameCL16088 extends SdbTestBase {
         mainCLThread.start();
         subCLThread.start();
         if (subCLThread.isSuccess() && !mainCLThread.isSuccess()) {
-        	//TODO:2、建议直接用setUp中的sdb，不需要再重新new
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             RenameUtil.checkRenameCLResult(sdb, SdbTestBase.csName, subCLName, newSubCLName);
             Assert.assertEquals(cs.isCollectionExist(mainCLName), true);
             BaseException e = (BaseException)mainCLThread.getExceptions().get(0);
@@ -76,8 +63,6 @@ public class TestRenameCL16088 extends SdbTestBase {
                 Assert.fail("errcode not expected : " + e.getMessage());
             }
         } else if ( !subCLThread.isSuccess() && mainCLThread.isSuccess() ) {
-        	//TODO:3、建议直接用setUp中的sdb，不需要再重新new
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             RenameUtil.checkRenameCLResult(sdb, SdbTestBase.csName, mainCLName, newMainCLName);
             Assert.assertEquals(cs.isCollectionExist(subCLName), true);
             BaseException e = (BaseException)subCLThread.getExceptions().get(0);
@@ -85,7 +70,8 @@ public class TestRenameCL16088 extends SdbTestBase {
                 Assert.fail("errcode not expected : " + e.getMessage());
             }
         } else if (subCLThread.isSuccess() && mainCLThread.isSuccess()) {
-        	//TODO:4、这里检测点应该补充检查新名元数据信息
+            RenameUtil.checkRenameCLResult(sdb, SdbTestBase.csName, subCLName, newSubCLName);
+            RenameUtil.checkRenameCLResult(sdb, SdbTestBase.csName, mainCLName, newMainCLName);
             Assert.assertEquals(cs.isCollectionExist(subCLName), false);
             Assert.assertEquals(cs.isCollectionExist(mainCLName), false);
         } else {
@@ -115,6 +101,16 @@ public class TestRenameCL16088 extends SdbTestBase {
                 this.sdb.close();
             }
         }
+    }
+    
+    public void createMainCL() {
+        BSONObject options = new BasicBSONObject();
+        options.put("IsMainCL", true);
+        BSONObject opt = new BasicBSONObject();
+        opt.put("a", 1);
+        options.put("ShardingKey", opt);
+        options.put("ShardingType", "range");
+        cs.createCollection(mainCLName, options);
     }
     
     private class RenameMainCLThread extends SdbThreadBase{

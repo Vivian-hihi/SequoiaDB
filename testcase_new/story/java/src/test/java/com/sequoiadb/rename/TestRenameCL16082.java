@@ -1,7 +1,6 @@
 package com.sequoiadb.rename;
 
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -10,7 +9,6 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -34,10 +32,6 @@ public class TestRenameCL16082 extends SdbTestBase{
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        //TODO:1、不需要屏蔽独立模式
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         DBCollection cl1 = cs.createCollection(clName1);
         DBCollection cl2 = cs.createCollection(clName2);
@@ -52,15 +46,12 @@ public class TestRenameCL16082 extends SdbTestBase{
         rename1.start();
         rename2.start();
         if(rename1.isSuccess() && rename2.isSuccess()) {
-        	//TODO:2、不需要再重新new sdb
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             checkCLRecord(newclName, insertNum1);
             checkCLRecord(clName1, insertNum2);
-            RenameUtil.checkRenameCLResult(sdb, SdbTestBase.csName, clName1, newclName);
+            Assert.assertTrue(cs.isCollectionExist(newclName));
+            Assert.assertTrue(cs.isCollectionExist(clName1));
             Assert.assertFalse(cs.isCollectionExist(clName2));
         } else if (rename1.isSuccess() && !rename2.isSuccess()) {
-        	//TODO:3、不需要再重新new sdb
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             RenameUtil.checkRenameCLResult(sdb, SdbTestBase.csName, clName1, newclName);
             checkCLRecord(newclName, insertNum1);
             checkCLRecord(clName2, insertNum2);

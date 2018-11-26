@@ -1,7 +1,6 @@
 package com.sequoiadb.rename;
 
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -10,7 +9,6 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -32,10 +30,6 @@ public class TestRenameCL16095 extends SdbTestBase{
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        //TODO:1.不需要屏蔽独立模式
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
         if(sdb.isCollectionSpaceExist(localCSName)){
             sdb.dropCollectionSpace(localCSName);
         }
@@ -52,16 +46,12 @@ public class TestRenameCL16095 extends SdbTestBase{
         renameCLThread.start();
         
         if( renameCLThread.isSuccess() && !dropCSThread.isSuccess()) {
-        	//TODO:2.不需要再重新new Sdb
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             RenameUtil.checkRenameCLResult(sdb, localCSName, clName, newclName);
             BaseException e = (BaseException)dropCSThread.getExceptions().get(0);
             if ( e.getErrorCode() != -147 ) {
                 Assert.fail("errcode not expected : " + e.getMessage());
             }
         } else if (!renameCLThread.isSuccess() && dropCSThread.isSuccess()) {
-        	//TODO:3.不需要再重新new Sdb；另外没有renameCL失败的检查
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             Assert.assertEquals(sdb.isCollectionSpaceExist(localCSName), false);
             BaseException e = (BaseException)renameCLThread.getExceptions().get(0);
             if ( e.getErrorCode() != -23 && e.getErrorCode() != -147  && e.getErrorCode() != -34 ) {
