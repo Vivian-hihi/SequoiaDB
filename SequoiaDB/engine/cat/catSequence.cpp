@@ -253,26 +253,6 @@ namespace engine
          goto error ;
       }
 
-      // CAT_SEQUENCE_CURRENT_VALUE
-      ele = options.getField( CAT_SEQUENCE_CURRENT_VALUE ) ;
-      if ( NumberInt == ele.type() || NumberLong == ele.type() )
-      {
-         INT64 currentValue = ele.numberLong() ;
-         if ( this->currentValue() != currentValue )
-         {
-            this->setCurrentValue( currentValue ) ;
-            this->setCachedValue( currentValue ) ;
-            _changed = TRUE ;
-         }
-      }
-      else if ( EOO != ele.type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                 ele.type(), CAT_SEQUENCE_CURRENT_VALUE ) ;
-         goto error ;
-      }
-
       // CAT_SEQUENCE_START_VALUE
       ele = options.getField( CAT_SEQUENCE_START_VALUE ) ;
       if ( NumberInt == ele.type() || NumberLong == ele.type() )
@@ -332,6 +312,41 @@ namespace engine
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
                  ele.type(), CAT_SEQUENCE_MAX_VALUE ) ;
+         goto error ;
+      }
+
+      // CAT_SEQUENCE_CURRENT_VALUE
+      ele = options.getField( CAT_SEQUENCE_CURRENT_VALUE ) ;
+      if ( NumberInt == ele.type() || NumberLong == ele.type() )
+      {
+         INT64 currentValue = ele.numberLong() ;
+         if ( this->currentValue() != currentValue )
+         {
+            if( currentValue < this->minValue() ||
+                currentValue > this->maxValue() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Invalid currentValue[%lld], out of bounds for "
+                       "minValue[%lld] and maxValue[%lld]",
+                       currentValue, minValue(), maxValue() ) ;
+               goto error ;
+            }
+            /* make sure getNextValue from CurrentValue not StartValue
+               when alter CurrentValue on a non-used sequence */
+            if( this->initial() )
+            {
+               this->setInitial( FALSE ) ;
+            }
+            this->setCurrentValue( currentValue ) ;
+            this->setCachedValue( currentValue ) ;
+            _changed = TRUE ;
+         }
+      }
+      else if ( EOO != ele.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
+                 ele.type(), CAT_SEQUENCE_CURRENT_VALUE ) ;
          goto error ;
       }
 
