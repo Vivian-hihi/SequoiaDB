@@ -42,12 +42,10 @@
 
 namespace engine
 {
-   dpsTransLockManager::dpsTransLockManager()
-   : _initialized( FALSE ),
-     _pLRBMgr( NULL ),
-     _pLRBHdrMgr( NULL ),
-     _lockTimeout( 0 )
-    { }
+   dpsTransLockManager::dpsTransLockManager() : _pLRBMgr( NULL ),
+                                                _pLRBHdrMgr( NULL ),
+                                                _initialized( FALSE ),
+                                                _lockTimeout( 0 ) { }
 
 
    dpsTransLockManager::~dpsTransLockManager() 
@@ -192,6 +190,7 @@ namespace engine
      
       return pLRB ;
    }
+
 
    // 
    // Description: release/return a LRB Header to LRB Header manager
@@ -438,8 +437,11 @@ namespace engine
    {
       EDUID lrbEduid = 0 ;
       UTIL_OBJIDX idx = lrbBegin, idxPrev = UTIL_INVALID_OBJ_INDEX ;
-      dpsTransLRB *plrb = NULL, *plrbPrev = NULL ;
-      BOOLEAN foundMyself = FALSE, foundInsert = FALSE, foundLastComp = FALSE ;
+      dpsTransLRB *plrb     = NULL,
+                  *plrbPrev = NULL ;
+      BOOLEAN foundMyself   = FALSE,
+              foundInsert   = FALSE,
+              foundLastComp = FALSE ;
 
       if ( IS_VALID_SEG_OBJ_INDEX( lrbBegin ) )
       {
@@ -512,9 +514,9 @@ namespace engine
    //
    void dpsTransLockManager::_addToEDULRBListTail
    (
-      _dpsTransExecutor  * dpsTxExectr,
-      const UTIL_OBJIDX    idx,
-      dpsTransLockId     & lockId
+      _dpsTransExecutor    * dpsTxExectr,
+      const UTIL_OBJIDX      idx,
+      const dpsTransLockId & lockId
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
@@ -637,9 +639,8 @@ namespace engine
 
       UTIL_OBJIDX idx = dpsTxExectr->getWaiterLRBIdx() ;
       UTIL_OBJIDX idxNext = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
-      dpsTransLRB *pLRB = NULL, *plrb = NULL ;
-
+      dpsTransLRB *pLRB = NULL , *plrb = NULL ;
+      
       if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
       {
          pLRB = _getLRBPtrByIdx( idx ) ;
@@ -715,7 +716,7 @@ namespace engine
           && IS_VALID_SEG_OBJ_INDEX( idxDel ) )
       {
          UTIL_OBJIDX idx = idxBegin;
-         dpsTransLRBHeader *plrbHdr = NULL, *pLRBHeader = NULL ;
+         dpsTransLRBHeader *plrbHdr = NULL, *pLRBHeader = NULL;
 
          // if the first one is the one to be removed
          if ( idxDel == idxBegin )
@@ -761,9 +762,9 @@ namespace engine
    //
    void dpsTransLockManager::_removeFromEDULRBList
    (
-      _dpsTransExecutor * dpsTxExectr,
-      const UTIL_OBJIDX   idxDel,
-      dpsTransLockId    & lockId
+      _dpsTransExecutor    * dpsTxExectr,
+      const UTIL_OBJIDX      idxDel,
+      const dpsTransLockId & lockId
    )
    {
       if (   ( dpsTxExectr )
@@ -849,17 +850,11 @@ namespace engine
    //    opMode          -- try     ( DPS_TRANSLOCK_OP_MODE_TRY )
    //                       acquire ( DPS_TRANSLOCK_OP_MODE_ACQUIRE )
    //                       test    ( DPS_TRANSLOCK_OP_MODE_TEST )
-   //    bktLrbHdrIdx    -- LRB Header index in bucket
-   //    hdrIdxNew       -- a newly acquired LRB Header index
-   //    pLRBHdrNew      -- pointer/address of the new LRB Header
-   //    lrbIdxNew       -- a newly acquired LRB index
-   //    pLRBNew         -- pointer/address of the new LRB
+   //    bktIdx          -- bucket index
+   //    bktLatched      -- if bucket is already latched
    //
    // Output:
-   //    bktLrbHdrIdx    -- bucket LRB Header Index
    //    pdpsTxResInfo   -- pointer to dpsTransRetInfo
-   //    bFreeLRB        -- flag to release new LRB
-   //    bFreeLRBHeader  -- flag to release new LRB Header
    // Return:
    //     SDB_OK,
    //     SDB_PERM,
@@ -870,40 +865,72 @@ namespace engine
    INT32 dpsTransLockManager::_tryAcquireOrTest
    (
       _dpsTransExecutor                * dpsTxExectr,
-      dpsTransLockId                   & lockId,
+      const dpsTransLockId             & lockId,
       const DPS_TRANSLOCK_TYPE           requestLockMode,
       const DPS_TRANSLOCK_OP_MODE_TYPE   opMode,
-      UTIL_OBJIDX                      & bktLrbHdrIdx,
-      const UTIL_OBJIDX                  hdrIdxNew,
-      dpsTransLRBHeader                * pLRBHdrNew,
-      const UTIL_OBJIDX                  lrbIdxNew,
-      dpsTransLRB                      * pLRBNew, 
-      dpsTransRetInfo                  * pdpsTxResInfo,
-      BOOLEAN                          & bFreeLRB,
-      BOOLEAN                          & bFreeLRBHeader
+      const UTIL_OBJIDX                  bktIdx,
+      const BOOLEAN                      bktLatched,
+      dpsTransRetInfo                  * pdpsTxResInfo
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 
-      INT32 rc = SDB_OK;
-      UTIL_OBJIDX hdrIdx = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX idxToInsert = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX idxLastComp = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX idxEduId = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX idxPrevEduId = UTIL_INVALID_OBJ_INDEX ;
-      dpsTransLRB *pLRB = NULL, *pLRBIncomp = NULL, *pLRBPrevEduId = NULL ;
-      dpsTransLRBHeader  *pLRBHdr = NULL ;
+      INT32 rc = SDB_OK ;
+      UTIL_OBJIDX hdrIdxNew = UTIL_INVALID_OBJ_INDEX ,
+                  lrbIdxNew = UTIL_INVALID_OBJ_INDEX ,
+                  hdrIdx    = UTIL_INVALID_OBJ_INDEX ;
+      UTIL_OBJIDX idxToInsert  = UTIL_INVALID_OBJ_INDEX ,
+                  idxLastComp  = UTIL_INVALID_OBJ_INDEX ,
+                  idxEduId     = UTIL_INVALID_OBJ_INDEX ,
+                  idxPrevEduId = UTIL_INVALID_OBJ_INDEX ;
+      dpsTransLRB *pLRBNew       = NULL ,
+                  *pLRBIncomp    = NULL ,
+                  *pLRBPrevEduId = NULL ,
+                  *pLRB          = NULL ;
+      dpsTransLRBHeader *pLRBHdrNew = NULL ,
+                        *pLRBHdr    = NULL ;
+
+      BOOLEAN bFreeLRB       = FALSE ,
+              bFreeLRBHeader = FALSE ,
+              bLatched       = FALSE ;
+
       EDUID eduId = dpsTxExectr->getEDUID() ;
 
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
 
+      // acquire and prepare new LRB and LRB Header
+      if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
+      {
+         // no need to allocate LRB Header and LRB for test mode
+         rc = _prepareNewLRBAndHeader( dpsTxExectr, lockId, requestLockMode,
+                                       hdrIdxNew, pLRBHdrNew,
+                                       lrbIdxNew, pLRBNew ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+         SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( lrbIdxNew ) &&
+                     IS_VALID_SEG_OBJ_INDEX( hdrIdxNew ) &&
+                     pLRBNew &&
+                     pLRBHdrNew, "Invalid LRB or LRB Header." ) ;
+         bFreeLRB       = TRUE ;
+         bFreeLRBHeader = TRUE ;
+      }
+
+      // latch bucket
+      if ( ! bktLatched )
+      {
+         _acquireOpLatch( bktIdx ) ;
+      }
+      bLatched = TRUE ;
+
       // if no LRB Header
-      if ( ! IS_VALID_SEG_OBJ_INDEX( bktLrbHdrIdx ) )
+      if ( ! IS_VALID_SEG_OBJ_INDEX( _LockHdrBkt[ bktIdx ].lrbHdrIdx ) )
       {
          if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
          {
             // add new LRB header to the link
-            bktLrbHdrIdx = hdrIdxNew ;
+            _LockHdrBkt[ bktIdx ].lrbHdrIdx = hdrIdxNew ;
 
             // add new LRB to EDU LRB list
             _addToEDULRBListTail( dpsTxExectr, lrbIdxNew, lockId ) ;
@@ -920,7 +947,7 @@ namespace engine
       // LRB header exists,
       // lookup the LRB header list and find the one with same lockId
       pLRBHdr = NULL ;
-      hdrIdx  = bktLrbHdrIdx ;
+      hdrIdx  = _LockHdrBkt[ bktIdx ].lrbHdrIdx ;
       if ( ! getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) ) 
       {
          // no LRB header with same lockId is found,
@@ -945,8 +972,7 @@ namespace engine
 
       // found the LRB header with same lockId
       SDB_ASSERT( ( NULL != pLRBHdr ), "Invalid LRB Header" ) ;
-      SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
-                  "Invalid LRB Header index" );
+      SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ), "Invalid LRB Header index");
 
       // update the lrbHdrIdx of new LRB to current LRB Header index
       if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
@@ -984,17 +1010,16 @@ namespace engine
       //  . to find if the edu is in owner list
       //  . the index which the new LRB shall be inserted after
       //  . the last index of compatible and pointer of first incompatible LRB
-      idxToInsert   = UTIL_INVALID_OBJ_INDEX ;  // index to insert after
-      idxLastComp   = UTIL_INVALID_OBJ_INDEX ;  // index of last compatible LRB 
-      idxEduId      = UTIL_INVALID_OBJ_INDEX ;  // LRB index with same EDUId
-      idxPrevEduId  = UTIL_INVALID_OBJ_INDEX ;  // idx previous idxEduId
-      pLRBPrevEduId = NULL ;                    // addr of idxPrevEduId
-      pLRBIncomp    = NULL ;                    // addr of first incompatible
-
+      //
+      // idxToInsert   -- index to insert after
+      // idxLastComp   -- index of last compatible LRB
+      // idxEduId      -- LRB index with same EDUId
+      // idxPrevEduId  -- idx previous idxEduId
+      // pLRBPrevEduId -- addr of idxPrevEduId
+      // pLRBIncomp    -- addr of first incompatible
       _searchOwnerLRBList( eduId, requestLockMode, pLRBHdr->ownerLRBIdx,
                            idxToInsert, idxLastComp, pLRBIncomp,
                            idxEduId, idxPrevEduId, pLRBPrevEduId ) ;
-
       if ( IS_VALID_SEG_OBJ_INDEX( idxEduId ) )
       {
          //
@@ -1251,7 +1276,24 @@ namespace engine
          }  // if request lock mode is compatible with other owners
       }  // if in owner list
    done:
+      if ( bLatched )
+      {
+         _releaseOpLatch( bktIdx ) ;
+         bLatched = FALSE ;
+      }
+      if ( bFreeLRB )
+      {
+         _releaseLRB( lrbIdxNew ) ;
+         bFreeLRB = FALSE ;
+      }
+      if ( bFreeLRBHeader )
+      {
+         _releaseLRBHdr( hdrIdxNew ) ;
+         bFreeLRBHeader = FALSE ;
+      }
       return rc;
+   error:
+      goto done ;
    }
 
 
@@ -1362,7 +1404,7 @@ namespace engine
    INT32 dpsTransLockManager::acquire
    (
       _dpsTransExecutor        * dpsTxExectr,
-      dpsTransLockId           & lockId,
+      const dpsTransLockId     & lockId,
       const DPS_TRANSLOCK_TYPE   requestLockMode,
       IContext                 * pContext,
       dpsTransRetInfo          * pdpsTxResInfo    
@@ -1370,100 +1412,44 @@ namespace engine
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 
-      INT32 rc = SDB_OK, rc2 = SDB_OK ;
-      dpsTransLockId iLockId;
-      DPS_TRANSLOCK_TYPE intentLockMode = 0 ;
-      BOOLEAN isIntentLockAcquired = FALSE;
+      INT32 rc  = SDB_OK ,
+            rc2 = SDB_OK ;
+      dpsTransLockId     iLockId ;
+      DPS_TRANSLOCK_TYPE iLockMode = 0 ;
+      BOOLEAN isIntentLockAcquired = FALSE ;
 
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX hdrIdxNew = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX lrbIdxNew = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX hdrIdx = UTIL_INVALID_OBJ_INDEX ;
-      dpsTransLRB       *pLRBNew  = NULL ;
-      dpsTransLRBHeader *pLRBHdrNew = NULL, *pLRBHdr = NULL ;
-
-      BOOLEAN bFreeLRB = FALSE, bFreeLRBHeader = FALSE ;
       BOOLEAN bLatched = FALSE ;
 
       // get intent lock at first
       // it is not need to get intent lock while lock space
       if ( ! lockId.isRootLevel() )
       {
-         iLockId = lockId.upOneLevel() ;
-         intentLockMode = _getIntentLockMode( requestLockMode ) ;
-         rc = acquire( dpsTxExectr, iLockId, intentLockMode, pContext,
-                       pdpsTxResInfo ) ;
+         iLockId   = lockId.upOneLevel() ;
+         iLockMode = _getIntentLockMode( requestLockMode ) ;
+         rc = acquire(dpsTxExectr, iLockId, iLockMode, pContext, pdpsTxResInfo);
          if ( SDB_OK != rc )
          {
             goto error ;
          }
-         isIntentLockAcquired = TRUE;
+         isIntentLockAcquired = TRUE ;
       }
 
       // calculate the hash index by lockId 
       bktIdx = _getBucketNo( lockId ) ;
 
    acquireRetry:
-      // acquire and prepare new LRB and LRB Header
-      pLRBNew    = NULL ;
-      pLRBHdrNew = NULL ;
-      lrbIdxNew  = UTIL_INVALID_OBJ_INDEX ;
-      hdrIdxNew  = UTIL_INVALID_OBJ_INDEX ; 
-      rc = _prepareNewLRBAndHeader( dpsTxExectr, lockId, requestLockMode,
-                                    hdrIdxNew, pLRBHdrNew,
-                                    lrbIdxNew, pLRBNew ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-      SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( lrbIdxNew ) &&
-                  IS_VALID_SEG_OBJ_INDEX( hdrIdxNew ) &&
-                  pLRBNew &&
-                  pLRBHdrNew, "Invalid LRB or LRB Header." ) ;
-      bFreeLRB       = TRUE ;
-      bFreeLRBHeader = TRUE ;
-
-      // latch the LRB Header list  
-      if ( ! bLatched )
-      {
-         _acquireOpLatch( bktIdx ) ; 
-         bLatched = TRUE ;
-      }
-
       // acquire the lock
+      // _tryAcquireOrTest acquires bucket latch by default unless the input
+      // parameter, bLatched, is set to TRUE; and it always releases the latch
+      // before returns
       rc = _tryAcquireOrTest( dpsTxExectr, lockId, requestLockMode,
                               DPS_TRANSLOCK_OP_MODE_ACQUIRE,
-                              _LockHdrBkt[ bktIdx ].lrbHdrIdx,
-                              hdrIdxNew, pLRBHdrNew,
-                              lrbIdxNew, pLRBNew,
-                              pdpsTxResInfo,
-                              bFreeLRB, bFreeLRBHeader ) ; 
-
-      // free LRB Header list latch
-      if ( bLatched )
-      {
-         _releaseOpLatch( bktIdx ) ;
-         bLatched = FALSE ;
-      }
-
-   done:
-      if ( bLatched )
-      {
-         _releaseOpLatch( bktIdx ) ;
-         bLatched = FALSE ;
-      }
-      if ( bFreeLRB )
-      {
-         _releaseLRB( lrbIdxNew ) ;
-         bFreeLRB = FALSE ;
-      }
-      if ( bFreeLRBHeader )
-      {
-         _releaseLRBHdr( hdrIdxNew ) ;
-         bFreeLRBHeader = FALSE ;
-      }
-
-      // if need to wait
+                              bktIdx,
+                              bLatched,
+                              pdpsTxResInfo ) ;
+      bLatched = FALSE ;
+      // if needs to wait
       if ( SDB_DPS_TRANS_APPEND_TO_WAIT == rc )
       {
          rc2 = SDB_OK ;
@@ -1480,16 +1466,16 @@ namespace engine
             rc = _waitLock( dpsTxExectr ) ;
          }
 
-         // latch before remove it from upgrade/waiter list
+         // latch before remove it from upgrade or waiter list
          if ( ! bLatched )
          {
             _acquireOpLatch( bktIdx ) ; 
             bLatched = TRUE ;
          }
 
-         // remove from upgrade / waiter list
-         hdrIdx  = UTIL_INVALID_OBJ_INDEX ; 
-         pLRBHdr = NULL ;
+         // remove from upgrade or waiter list
+         UTIL_OBJIDX         hdrIdx  = UTIL_INVALID_OBJ_INDEX ;
+         dpsTransLRBHeader * pLRBHdr = NULL ;
          _removeFromUpgradeOrWaitList( dpsTxExectr, hdrIdx, pLRBHdr ) ;
 
          // when _waitLock fails, either timeout or interrupted 
@@ -1498,6 +1484,7 @@ namespace engine
          // is if _waitLock returns success when retry, _tryAcquireOrTest,
          // will add the LRB Header back again. 
          if (    ( SDB_OK != rc ) 
+              && bLatched
               && IS_VALID_SEG_OBJ_INDEX( hdrIdx )
               && pLRBHdr
               && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx   ) )
@@ -1519,7 +1506,7 @@ namespace engine
          }
 
          // retry acquire the lock if it is woken up
-         if ( ( SDB_OK == rc ) && ( SDB_OK == rc2 ) )
+         if ( ( SDB_OK == rc ) && ( SDB_OK == rc2 ) && bLatched )
          {
             // need to hold the latch before retry acquiring the lock
             // to avoid race condition
@@ -1550,7 +1537,12 @@ namespace engine
             }
          }
       }
-
+   done:
+      if ( bLatched )
+      {
+         _releaseOpLatch( bktIdx ) ;
+         bLatched = FALSE ;
+      }
       return rc;
 
    error:
@@ -1573,57 +1565,46 @@ namespace engine
    //           .  remove the LRB Header if it is empty ( owner, waiter,
    //              upgrade list are all empty )
    // Input:
-   //    eduId           -- edu Id
+   //    dpsTxExectr     -- dpsTransExecutor
    //    lockId          -- lock id
-   //    hdrIndexInBkt   -- LRB Header index in bucket
    //    bForceRelease   -- force release flag
-   //    hdrIndex        -- LRB Header index ( optional )
-   //    pLrbHdr         -- pointer/address of LRB Header ( optional )
    // Output :
-   //    hdrIndexInBkt   -- will be updated if the first LRB Header is removed
-   //    lrbHdrToRelase  -- LRB Header index to release if there is
-   //    lrbToRelase     -- LRB index to release if there is
+   //    none
    void dpsTransLockManager::_release
    (
       _dpsTransExecutor       * dpsTxExectr,
-      dpsTransLockId          & lockId,
-      UTIL_OBJIDX             & hdrIndexInBkt,
-      UTIL_OBJIDX             & lrbHdrToRelase,
-      UTIL_OBJIDX             & lrbToRelase,
-      const BOOLEAN             bForceRelease,
-      const UTIL_OBJIDX         hdrIndex,
-      const dpsTransLRBHeader * pLrbHdr
+      const dpsTransLockId    & lockId,
+      const BOOLEAN             bForceRelease
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 
-      UTIL_OBJIDX hdrIdx = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX ownerLrbIdx = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX prevOwnerIdx = UTIL_INVALID_OBJ_INDEX  ;
-      dpsTransLRB *pOwnerLRB = NULL ;
-      dpsTransLRB *pPrevOwnerLRB = NULL ;
-      dpsTransLRB *pWaiterLRB = NULL ;
+      UTIL_OBJIDX hdrIdx         = UTIL_INVALID_OBJ_INDEX ,
+                  ownerLrbIdx    = UTIL_INVALID_OBJ_INDEX ,
+                  prevOwnerIdx   = UTIL_INVALID_OBJ_INDEX ,
+                  lrbHdrToRelase = UTIL_INVALID_OBJ_INDEX ,
+                  lrbToRelase    = UTIL_INVALID_OBJ_INDEX ;
+      UTIL_OBJIDX bktIdx         = UTIL_INVALID_OBJ_INDEX ;
+      dpsTransLRB *pOwnerLRB     = NULL ,
+                  *pPrevOwnerLRB = NULL ,
+                  *pWaiterLRB    = NULL ;
       dpsTransLRBHeader *pLRBHdr = NULL ;
       EDUID eduId = dpsTxExectr->getEDUID() ;
+      BOOLEAN bLatched = FALSE ;
 
-      if ( IS_VALID_SEG_OBJ_INDEX( hdrIndexInBkt ) )
+      // calculate the hash index by lockId
+      bktIdx = _getBucketNo( lockId ) ;
+
+      // latch the bucket 
+      _acquireOpLatch( bktIdx ) ;
+      bLatched = TRUE ;
+
+      if ( IS_VALID_SEG_OBJ_INDEX( _LockHdrBkt[bktIdx].lrbHdrIdx ) ) 
       {
-         // if valid LRB Header is passed in,
-         // no need to search LRB Header list by lockId
-         if ( IS_VALID_SEG_OBJ_INDEX( hdrIndex ) && pLrbHdr )
-         {
-            pLRBHdr = (dpsTransLRBHeader *)pLrbHdr ;
-            hdrIdx  = hdrIndex ;
-         }
-         else
-         {
-            // lookup LRB Header list to find the LRB Header with same lockId
-            hdrIdx  = hdrIndexInBkt ;
-            pLRBHdr = NULL ;
-            getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr );
-         }
+         hdrIdx = _LockHdrBkt[bktIdx].lrbHdrIdx ;
 
-         if ( IS_VALID_SEG_OBJ_INDEX( hdrIdx ) && ( NULL != pLRBHdr ) )
+         // lookup LRB Header list to find the LRB Header with same lockId
+         if ( getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
          {
             // lookup owner list to find the LRB with same eduid
             ownerLrbIdx = pLRBHdr->ownerLRBIdx ;
@@ -1725,7 +1706,8 @@ namespace engine
                       && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
                       && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx  ) ))
                   {
-                     _removeFromLRBHeaderList( hdrIndexInBkt, hdrIdx ) ;
+                     _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdrIdx, 
+                                               hdrIdx ) ;
 
                      // save index of LRB Header to be released
                      lrbHdrToRelase = hdrIdx ;
@@ -1733,6 +1715,23 @@ namespace engine
                }
             }
          }
+      }
+
+      // release the bucket latch
+      if ( bLatched )
+      {
+         _releaseOpLatch( bktIdx ) ;
+         bLatched = FALSE ;
+      }
+      if ( IS_VALID_SEG_OBJ_INDEX( lrbToRelase ) )
+      {
+         _releaseLRB( lrbToRelase ) ;
+         lrbToRelase = UTIL_INVALID_OBJ_INDEX ;
+      }
+      if ( IS_VALID_SEG_OBJ_INDEX( lrbHdrToRelase ) )
+      {
+         _releaseLRBHdr( lrbHdrToRelase ) ;
+         lrbHdrToRelase = UTIL_INVALID_OBJ_INDEX ; 
       }
       return ;
    }
@@ -1749,68 +1748,25 @@ namespace engine
    //    lockId          -- lock id
    //    bForceRelease   -- requested lock mode
    //
-   void dpsTransLockManager:: release
+   void dpsTransLockManager::release
    (
-      _dpsTransExecutor * dpsTxExectr,
-      dpsTransLockId    & lockId,
-      const BOOLEAN       bForceRelease
+      _dpsTransExecutor    * dpsTxExectr,
+      const dpsTransLockId & lockId,
+      const BOOLEAN          bForceRelease
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 
-      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
-      dpsTransLockId iLockId;
-      UTIL_OBJIDX hdrLrbToRelease = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX lrbToRelease = UTIL_INVALID_OBJ_INDEX ;
-      BOOLEAN bLatched = FALSE;
+      dpsTransLockId iLockId ;
 
-      // calculate the hash index by lockId
-      bktIdx = _getBucketNo( lockId ) ;
+      // main logic of release by lockId
+      _release( dpsTxExectr, lockId, bForceRelease ) ;
 
-      // latch the LRB Header list
-      _acquireOpLatch( bktIdx ) ;
-      bLatched = TRUE ;
-
-      if ( IS_VALID_SEG_OBJ_INDEX( _LockHdrBkt[bktIdx].lrbHdrIdx ) )
+      // release the intent lock
+      if ( ! lockId.isRootLevel() )
       {
-         hdrLrbToRelease = UTIL_INVALID_OBJ_INDEX ;
-         lrbToRelease    = UTIL_INVALID_OBJ_INDEX ;
-
-         // main logic of release by lockId
-         _release( dpsTxExectr, lockId, _LockHdrBkt[bktIdx].lrbHdrIdx,
-                   hdrLrbToRelease, lrbToRelease, bForceRelease,
-                   UTIL_INVALID_OBJ_INDEX, NULL ) ;
-
-         // release the latch before recursively release the intent lock
-         if ( bLatched )
-         {
-            _releaseOpLatch( bktIdx ) ;
-            bLatched = FALSE ;
-         }
-
-         // release owner LRB if there is
-         if ( IS_VALID_SEG_OBJ_INDEX( lrbToRelease ) )
-         {
-            _releaseLRB( lrbToRelease ) ;           
-         }
-
-         // releaes LRB Header if there is
-         if ( IS_VALID_SEG_OBJ_INDEX( hdrLrbToRelease ) )
-         {
-            _releaseLRBHdr( hdrLrbToRelease ) ; 
-         }
-
-         // release the intent lock
-         if ( ! lockId.isRootLevel() )
-         {
-            iLockId = lockId.upOneLevel() ;
-            release( dpsTxExectr, iLockId, bForceRelease  ) ;
-         }
-      }
-      if ( bLatched )
-      {
-         _releaseOpLatch( bktIdx ) ;
-         bLatched = FALSE ;
+         iLockId = lockId.upOneLevel() ;
+         release( dpsTxExectr, iLockId, bForceRelease ) ;
       }
       return ;
    }
@@ -1831,67 +1787,22 @@ namespace engine
    //
    void dpsTransLockManager::_releaseAll
    (
-      _dpsTransExecutor * dpsTxExectr,
-      dpsTransLockId    & lockId,
-      UTIL_OBJIDX         hdrIdx,
-      dpsTransLRBHeader * pLRBHdr
+      _dpsTransExecutor    * dpsTxExectr,
+      const dpsTransLockId & lockId
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 
-      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
       dpsTransLockId iLockId;
-      UTIL_OBJIDX hdrLrbToRelease = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX lrbToRelease = UTIL_INVALID_OBJ_INDEX ;
-      BOOLEAN bLatched = FALSE;
 
-      // calculate the hash index by lockId
-      bktIdx = _getBucketNo( lockId ) ;
+      // main logic of release by lockId, force release mode
+      _release( dpsTxExectr, lockId, TRUE ) ;
 
-      // latch the LRB Header list
-      _acquireOpLatch( bktIdx ) ;
-      bLatched = TRUE ;
-
-      if ( IS_VALID_SEG_OBJ_INDEX( _LockHdrBkt[bktIdx].lrbHdrIdx ) )
+      // release the intent lock
+      if ( ! lockId.isRootLevel() )
       {
-         hdrLrbToRelease = UTIL_INVALID_OBJ_INDEX ;
-         lrbToRelease    = UTIL_INVALID_OBJ_INDEX ;
-
-         // main logic of release by lockId
-         _release( dpsTxExectr, lockId, _LockHdrBkt[bktIdx].lrbHdrIdx,
-                   hdrLrbToRelease, lrbToRelease, TRUE,
-                   hdrIdx, pLRBHdr ) ;
-
-         // release the latch before recursively release the intent lock
-         if ( bLatched )
-         {
-            _releaseOpLatch( bktIdx ) ;
-            bLatched = FALSE ;
-         }
-
-         // release owner LRB if there is
-         if ( IS_VALID_SEG_OBJ_INDEX( lrbToRelease ) )
-         {
-            _releaseLRB( lrbToRelease ) ;
-         }
-
-         // releaes LRB Header if there is
-         if ( IS_VALID_SEG_OBJ_INDEX( hdrLrbToRelease ) )
-         {
-            _releaseLRBHdr( hdrLrbToRelease ) ; 
-         }
-
-         // release the intent lock
-         if ( ! lockId.isRootLevel() )
-         {
-            iLockId = lockId.upOneLevel() ;
-            _releaseAll( dpsTxExectr, iLockId, UTIL_INVALID_OBJ_INDEX, NULL ) ;
-         }
-      }
-      if ( bLatched )
-      {
-         _releaseOpLatch( bktIdx ) ;
-         bLatched = FALSE ;
+         iLockId = lockId.upOneLevel() ;
+         _releaseAll( dpsTxExectr, iLockId ) ;
       }
       return ;
    }
@@ -1934,7 +1845,7 @@ namespace engine
                pLRBHdr = getLRBHdrPtrByIdx( hdrIdx ) ;
 
                // release the lock 
-               _releaseAll( dpsTxExectr, pLRBHdr->lockId, hdrIdx, pLRBHdr ) ;
+               _releaseAll( dpsTxExectr, pLRBHdr->lockId ) ;
             }
 
             // _releaseAll will remove LRB from EDU list
@@ -1943,7 +1854,10 @@ namespace engine
             // so we may use dpsTxExectr->getLastLRBIdx() to move to
             // previous LRB in the EDU LRB chain.
 
-            // move to next LRB to be released
+            // move to next lock to be released
+            // we can't use lrbIdx = lrbIdx->eduLrbIdxPrev to move to next
+            // LRB as _releaseAll() will remove upper level intent lock as well,
+            // which may advance several LRBs ( CL, CS ).
             lrbIdx = dpsTxExectr->getLastLRBIdx() ;
          }
       }
@@ -2034,33 +1948,26 @@ namespace engine
    INT32 dpsTransLockManager::tryAcquire
    (
       _dpsTransExecutor        * dpsTxExectr,
-      dpsTransLockId           & lockId,
+      const dpsTransLockId     & lockId,
       const DPS_TRANSLOCK_TYPE   requestLockMode,
       dpsTransRetInfo          * pdpsTxResInfo
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
       dpsTransLockId iLockId;
-      DPS_TRANSLOCK_TYPE intentLockMode = 0 ;
+      DPS_TRANSLOCK_TYPE iLockMode = 0 ;
       BOOLEAN isIntentLockAcquired = FALSE;
-
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX hdrIdxNew = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX lrbIdxNew = UTIL_INVALID_OBJ_INDEX ;
-      dpsTransLRB       *pLRBNew    = NULL ;
-      dpsTransLRBHeader *pLRBHdrNew = NULL ;
-      BOOLEAN bFreeLRB = FALSE, bFreeLRBHeader = FALSE;
-      BOOLEAN bLatched = FALSE;
 
       // get intent lock at first
       // it is not need to get intent lock while lock space
       if ( ! lockId.isRootLevel() )
       {
          iLockId = lockId.upOneLevel() ;
-         intentLockMode = _getIntentLockMode( requestLockMode ) ;
-         rc = tryAcquire( dpsTxExectr, iLockId, intentLockMode, pdpsTxResInfo );
+         iLockMode = _getIntentLockMode( requestLockMode ) ;
+         rc = tryAcquire( dpsTxExectr, iLockId, iLockMode, pdpsTxResInfo );
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -2068,61 +1975,18 @@ namespace engine
          isIntentLockAcquired = TRUE;
       }
 
-      // calculate the hash index by lockId 
+      // calculate the hash index by lockId
       bktIdx = _getBucketNo( lockId ) ;
 
-      // acquire and prepare new LRB and LRB Header
-      rc = _prepareNewLRBAndHeader( dpsTxExectr, lockId, requestLockMode,
-                                    hdrIdxNew, pLRBHdrNew,
-                                    lrbIdxNew, pLRBNew ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-      SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( lrbIdxNew ) &&
-                  IS_VALID_SEG_OBJ_INDEX( hdrIdxNew ) &&
-                  pLRBNew &&
-                  pLRBHdrNew, "Invalid LRB or LRB Header." ) ;
-      bFreeLRB = TRUE;
-      bFreeLRBHeader = TRUE ;
-
-      // latch the LRB Header list  
-      _acquireOpLatch( bktIdx ) ;
-      bLatched = TRUE ;
-
-      // try the lock
+      // try to acquire the lock
       // when tryAcquire will not add LRB to either upgrade or waiter list
       rc = _tryAcquireOrTest( dpsTxExectr, lockId, requestLockMode,
                               DPS_TRANSLOCK_OP_MODE_TRY,
-                              _LockHdrBkt[ bktIdx ].lrbHdrIdx,
-                              hdrIdxNew, pLRBHdrNew,
-                              lrbIdxNew, pLRBNew,
-                              pdpsTxResInfo,
-                              bFreeLRB, bFreeLRBHeader ) ; 
-
-      // free LRB Header list latch
-      _releaseOpLatch( bktIdx ) ;
-      bLatched = FALSE ;
-
+                              bktIdx,
+                              FALSE,
+                              pdpsTxResInfo ) ;
    done:
-      if ( bLatched )
-      {
-         _releaseOpLatch( bktIdx ) ;
-         bLatched = FALSE ;
-      }
-      if ( bFreeLRB )
-      {
-         _releaseLRB( lrbIdxNew ) ;
-         bFreeLRB = FALSE ;
-      }
-      if ( bFreeLRBHeader )
-      {
-         _releaseLRBHdr( hdrIdxNew ) ;
-         bFreeLRBHeader = FALSE ;
-      }
-
       return rc;
-
    error:
       if ( isIntentLockAcquired )
       {
@@ -2156,7 +2020,7 @@ namespace engine
    INT32 dpsTransLockManager::testAcquire
    (
       _dpsTransExecutor        * dpsTxExectr,
-      dpsTransLockId           & lockId,
+      const dpsTransLockId     & lockId,
       const DPS_TRANSLOCK_TYPE   requestLockMode,
       dpsTransRetInfo          * pdpsTxResInfo
    )
@@ -2165,23 +2029,16 @@ namespace engine
 
       INT32 rc = SDB_OK;
       dpsTransLockId iLockId;
-      DPS_TRANSLOCK_TYPE intentLockMode = 0 ;
-
+      DPS_TRANSLOCK_TYPE iLockMode = 0 ;
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX hdrIdxNew = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX lrbIdxNew = UTIL_INVALID_OBJ_INDEX ;
-      dpsTransLRB       *pLRBNew    = NULL ;
-      dpsTransLRBHeader *pLRBHdrNew = NULL ;
-      BOOLEAN bFreeLRB = FALSE, bFreeLRBHeader = FALSE;
-      BOOLEAN bLatched = FALSE;
 
       // get intent lock at first
       // it is not need to get intent lock while lock space
       if ( ! lockId.isRootLevel() )
       {
          iLockId = lockId.upOneLevel() ;
-         intentLockMode = _getIntentLockMode( requestLockMode ) ;
-         rc = testAcquire( dpsTxExectr, iLockId, intentLockMode, pdpsTxResInfo);
+         iLockMode = _getIntentLockMode( requestLockMode ) ;
+         rc = testAcquire( dpsTxExectr, iLockId, iLockMode, pdpsTxResInfo);
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -2191,33 +2048,16 @@ namespace engine
       // calculate the hash index by lockId 
       bktIdx = _getBucketNo( lockId ) ;
 
-      // latch the LRB Header list  
-      _acquireOpLatch( bktIdx ) ;
-      bLatched = TRUE ;
-
       // test if the request lock mode can be acquired
       // it will not acquire the lock, the LRB will not be added to
       // owner, upgrade or waiter list
-      _tryAcquireOrTest( dpsTxExectr, lockId, requestLockMode,
-                         DPS_TRANSLOCK_OP_MODE_TEST,
-                         _LockHdrBkt[ bktIdx ].lrbHdrIdx,
-                         hdrIdxNew, pLRBHdrNew,
-                         lrbIdxNew, pLRBNew,
-                         pdpsTxResInfo,
-                         bFreeLRB, bFreeLRBHeader ) ; 
-
-      // free LRB Header list latch
-      _releaseOpLatch( bktIdx ) ;
-      bLatched = FALSE ;
-
+      rc = _tryAcquireOrTest( dpsTxExectr, lockId, requestLockMode,
+                              DPS_TRANSLOCK_OP_MODE_TEST,
+                              bktIdx,
+                              FALSE,
+                              pdpsTxResInfo ) ;
    done:
-      if ( bLatched )
-      {
-         _releaseOpLatch( bktIdx ) ;
-         bLatched = FALSE ;
-      }
       return rc;
-
    error:
       goto done;
    }
@@ -2233,7 +2073,7 @@ namespace engine
    //    True  -- the lock has waiter(s)
    //    False -- the lock has no waiter(s)
    //
-   BOOLEAN dpsTransLockManager::hasWait( dpsTransLockId &lockId )
+   BOOLEAN dpsTransLockManager::hasWait( const dpsTransLockId &lockId )
    {
       BOOLEAN result = FALSE;
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
@@ -2304,38 +2144,38 @@ namespace engine
       const UTIL_OBJIDX idx,
       CHAR * pBuf,
       UINT32 bufSz, 
-      const CHAR * prefix
+      CHAR * prefix
    )
    {
-      CHAR * pBuff = pBuf ;
-      const CHAR *pDummy= "" ;
-      const CHAR *pStr  = ( prefix ? prefix : pDummy ) ;
+      CHAR * pBuff = pBuf;
+      CHAR * pDummy= "" ;
+      CHAR * pStr  = ( prefix ? prefix : pDummy ) ;
       if ( IS_VALID_SEG_OBJ_INDEX( idx )  )
       {
          dpsTransLRB *pLRB = _getLRBPtrByIdx( idx ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sLRB          : %u\n", pStr,
+                               "%sLRB          : %u"OSS_NEWLINE, pStr,
                                idx ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sdpsTxExectr  : %p\n", pStr,
+                               "%sdpsTxExectr  : %p"OSS_NEWLINE, pStr,
                                pLRB->dpsTxExectr ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%seduLrbIdxNext: %u\n", pStr,
+                               "%seduLrbIdxNext: %u"OSS_NEWLINE, pStr,
                                pLRB->eduLrbIdxNext ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%seduLrbIdxPrev: %u\n", pStr,
+                               "%seduLrbIdxPrev: %u"OSS_NEWLINE, pStr,
                                pLRB->eduLrbIdxPrev ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%slrbHdrIdx    : %u\n", pStr,
+                               "%slrbHdrIdx    : %u"OSS_NEWLINE, pStr,
                                pLRB->lrbHdrIdx ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%snextLRBIdx   : %u\n", pStr,
+                               "%snextLRBIdx   : %u"OSS_NEWLINE, pStr,
                                pLRB->nextLRBIdx ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%srefCounter   : %llu\n", pStr,
+                               "%srefCounter   : %llu"OSS_NEWLINE, pStr,
                                pLRB->refCounter ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%slockMode     : %s\n", pStr,
+                               "%slockMode     : %s"OSS_NEWLINE, pStr,
                                lockModeToString( pLRB->lockMode ) ) ;
       }
       return pBuf ;
@@ -2378,32 +2218,32 @@ namespace engine
       const UTIL_OBJIDX idx,
       CHAR * pBuf,
       UINT32 bufSz, 
-      const CHAR * prefix
+      CHAR * prefix
    )
    {
-      CHAR * pBuff = pBuf ;
-      const CHAR *pDummy= "" ;
-      const CHAR *pStr  = ( prefix ? prefix : pDummy ) ;
+      CHAR * pBuff = pBuf;
+      CHAR * pDummy= "" ;
+      CHAR * pStr  = ( prefix ? prefix : pDummy ) ;
       if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
       {
          dpsTransLRBHeader *pLRBHdr = getLRBHdrPtrByIdx( idx ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sLRB Header    : %u\n", pStr,
+                               "%sLRB Header    : %u"OSS_NEWLINE, pStr,
                                idx ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%snextLRBHdrIdx : %u\n", pStr,
+                               "%snextLRBHdrIdx : %u"OSS_NEWLINE, pStr,
                                pLRBHdr->nextLRBHdrIdx);
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sownerLRBIdx   : %u\n", pStr,
+                               "%sownerLRBIdx   : %u"OSS_NEWLINE, pStr,
                                pLRBHdr->ownerLRBIdx );
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%swaiterLRBIdx  : %u\n", pStr,
+                               "%swaiterLRBIdx  : %u"OSS_NEWLINE, pStr,
                                pLRBHdr->waiterLRBIdx );
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%supgradeLRBIdx : %u\n", pStr,
+                               "%supgradeLRBIdx : %u"OSS_NEWLINE, pStr,
                                pLRBHdr->upgradeLRBIdx );
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%slockId        : ( %s )\n", pStr,
+                               "%slockId        : ( %s )"OSS_NEWLINE, pStr,
                                pLRBHdr->lockId.toString().c_str() ) ;
       }
       return pBuf;
@@ -2421,12 +2261,10 @@ namespace engine
       BOOLEAN bOutputInPlainMode
    )
    {
-      UTIL_OBJIDX hdrIdx = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX lrbIdx = UTIL_INVALID_OBJ_INDEX ;
-      dpsTransLRBHeader *pLRBHdr = NULL ;
-      dpsTransLRB       *pLRB    = NULL ;
+      UTIL_OBJIDX lrbIdx = UTIL_INVALID_OBJ_INDEX;
+      dpsTransLRB *pLRB  = NULL ;
       CHAR * pStr = NULL ;
-      const CHAR *prefixStr = (CHAR*)"   " ; 
+      CHAR * prefixStr = (CHAR*)"   " ; 
       CHAR szBuffer[ DPS_STRING_LEN_MAX ] = { '\0' } ;
 
       if ( dpsTxExectr )
@@ -2435,13 +2273,9 @@ namespace engine
          while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
          {
             pLRB    = _getLRBPtrByIdx( lrbIdx ) ;
-            hdrIdx  = pLRB->lrbHdrIdx ;
 
-            SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
+            SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( pLRB->lrbHdrIdx ),
                         "Invalid LRB Header index." ) ;
-
-            pLRBHdr = getLRBHdrPtrByIdx( hdrIdx )  ;
-
 
             if ( bOutputInPlainMode )
             {
@@ -2466,18 +2300,18 @@ namespace engine
    //
    void dpsTransLockManager::dumpLockInfo
    (
-      dpsTransLockId &lockId,
+      const dpsTransLockId & lockId,
       BOOLEAN bOutputInPlainMode
    )
    {
-      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX hdrIdx = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX lrbIdx = UTIL_INVALID_OBJ_INDEX ;
+      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX,
+                  hdrIdx = UTIL_INVALID_OBJ_INDEX,
+                  lrbIdx = UTIL_INVALID_OBJ_INDEX;
       dpsTransLockId iLockId;
       dpsTransLRBHeader *pLRBHdr = NULL ;
       dpsTransLRB       *pLRB    = NULL ;
       CHAR * pStr = NULL ;
-      const CHAR *prefixStr = (CHAR*)"   " ; 
+      CHAR * prefixStr = (CHAR*)"   " ; 
       CHAR szBuffer[ DPS_STRING_LEN_MAX ] = { '\0' } ;
 
       // dump intent lock at first
@@ -2491,7 +2325,7 @@ namespace engine
       bktIdx = _getBucketNo( lockId ) ;
 
       // latch the bucket
-      _acquireOpLatch( bktIdx ) ;
+      _acquireOpLatch( bktIdx ) ; 
 
       hdrIdx  = _LockHdrBkt[bktIdx].lrbHdrIdx ;
       if ( getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
@@ -2645,6 +2479,7 @@ namespace engine
       }
    }
 
+
    void dpsTransLockManager::dumpLockInfo
    (
       UTIL_OBJIDX       lrbIdx,
@@ -2671,18 +2506,19 @@ namespace engine
       }
    }
 
+
    //
    // dump LRB Header and owner / waiter / upgrade list for a specific lock
    //
    void dpsTransLockManager::dumpLockInfo
    (
-      dpsTransLockId    & lockId,
-      monTransLockInfo  & monLockInfo
+      const dpsTransLockId & lockId,
+      monTransLockInfo     & monLockInfo
    )
    {
-      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX hdrIdx = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX lrbIdx = UTIL_INVALID_OBJ_INDEX ;
+      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ,
+                  hdrIdx = UTIL_INVALID_OBJ_INDEX ,
+                  lrbIdx = UTIL_INVALID_OBJ_INDEX ;
       dpsTransLRBHeader *pLRBHdr = NULL ;
       dpsTransLRB       *pLRB    = NULL ;
 
