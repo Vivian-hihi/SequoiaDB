@@ -85,7 +85,7 @@ namespace engine
       void fini() ;
 
       // if a lock has any waiters
-      BOOLEAN hasWait( dpsTransLockId &lockId );
+      BOOLEAN hasWait( const dpsTransLockId &lockId );
 
       // if lock manager has been initialized
       BOOLEAN isInitialized() { return _initialized ; } ; 
@@ -99,7 +99,7 @@ namespace engine
       INT32 acquire
       (
          _dpsTransExecutor        * dpsTxExectr,
-         dpsTransLockId           & lockId,
+         const dpsTransLockId     & lockId,
          const DPS_TRANSLOCK_TYPE   requestLockMode,
          _IContext                * pContext      = NULL,
          dpsTransRetInfo          * pdpsTxResInfo = NULL
@@ -111,9 +111,9 @@ namespace engine
       // waiter queue if it is necessary.
       void release
       (
-         _dpsTransExecutor * dpsTxExectr,
-         dpsTransLockId    & lockId,
-         const BOOLEAN       bForceRelease = FALSE
+         _dpsTransExecutor    * dpsTxExectr,
+         const dpsTransLockId & lockId,
+         const BOOLEAN          bForceRelease = FALSE
       ) ;
 
 
@@ -131,7 +131,7 @@ namespace engine
       INT32 tryAcquire
       (
          _dpsTransExecutor        * dpsTxExectr,
-         dpsTransLockId           & lockId,
+         const dpsTransLockId     & lockId,
          const DPS_TRANSLOCK_TYPE   requestLockMode,
          dpsTransRetInfo          * pdpsTxResInfo = NULL
       ) ;
@@ -145,7 +145,7 @@ namespace engine
       INT32 testAcquire
       (
          _dpsTransExecutor        * dpsTxExectr,
-         dpsTransLockId           & lockId,
+         const dpsTransLockId     & lockId,
          const DPS_TRANSLOCK_TYPE   requestLockMode,
          dpsTransRetInfo          * pdpsTxResInfo = NULL
       ) ;
@@ -169,8 +169,8 @@ namespace engine
       // dump specific lock info to stdout for debugging purpose
       void dumpLockInfo
       (
-         dpsTransLockId & lockId,
-         BOOLEAN          bOutputInPlainMode = FALSE
+         const dpsTransLockId & lockId,
+         BOOLEAN                bOutputInPlainMode = FALSE
       ) ;
 
 
@@ -203,8 +203,8 @@ namespace engine
       // dump a specific lock info ( waiter, owners, upgrade list etc )
       void dumpLockInfo
       (
-         dpsTransLockId    & lockId,
-         monTransLockInfo  & monLockInfo
+         const dpsTransLockId & lockId,
+         monTransLockInfo     & monLockInfo
       ) ;
 
 
@@ -323,9 +323,9 @@ namespace engine
       // which is a list of all locks acquired within a session/tx
       void _addToEDULRBListTail
       (
-         _dpsTransExecutor * dpsTxExectr,
-         const UTIL_OBJIDX   idx,
-         dpsTransLockId    & lockId
+         _dpsTransExecutor    * dpsTxExectr,
+         const UTIL_OBJIDX      idx,
+         const dpsTransLockId & lockId
       ) ;
 
 
@@ -359,9 +359,9 @@ namespace engine
       // remove a LRB from the EDU LRB list
       void _removeFromEDULRBList
       (
-         _dpsTransExecutor * dpsTxExectr,
-         const UTIL_OBJIDX   idxDel,
-         dpsTransLockId    & lockId
+         _dpsTransExecutor    * dpsTxExectr,
+         const UTIL_OBJIDX      idxDel,
+         const dpsTransLockId & lockId
       ) ;
 
 
@@ -369,17 +369,12 @@ namespace engine
       INT32 _tryAcquireOrTest
       (
          _dpsTransExecutor                * dpsTxExectr,
-         dpsTransLockId                   & lockId,
+         const dpsTransLockId             & lockId,
          const DPS_TRANSLOCK_TYPE           requestLockMode,
          const DPS_TRANSLOCK_OP_MODE_TYPE   opMode,
-         UTIL_OBJIDX                      & bktLrbHdrIdx,
-         const UTIL_OBJIDX                  hdrIdxNew,
-         dpsTransLRBHeader                * pLRBHdrNew,
-         const UTIL_OBJIDX                  lrbIdxNew,
-         dpsTransLRB                      * pLRBNew,
-         dpsTransRetInfo                  * pdpsTxResInfo ,
-         BOOLEAN                          & bFreeLRB,
-         BOOLEAN                          & bFreeLRBHeader
+         const UTIL_OBJIDX                  bktIdx,
+         const BOOLEAN                      bktLatched,
+         dpsTransRetInfo                  * pdpsTxResInfo
       ) ;
 
 
@@ -387,23 +382,16 @@ namespace engine
       void _release
       (
          _dpsTransExecutor       * dpsTxExectr,
-         dpsTransLockId          & lockId,
-         UTIL_OBJIDX             & hdrIndexInBkt,
-         UTIL_OBJIDX             & lrbHdrToRelase,
-         UTIL_OBJIDX             & lrbToRelase,
-         const BOOLEAN             bForceRelease,
-         const UTIL_OBJIDX         hdrIndex,
-         const dpsTransLRBHeader * pLrbHdr
+         const dpsTransLockId    & lockId,
+         const BOOLEAN             bForceRelease
       ) ;
 
 
       // core logic of release all locks an executor holding
       void _releaseAll
       (
-         _dpsTransExecutor * dpsTxExectr,
-         dpsTransLockId    & lockId,
-         UTIL_OBJIDX         hdrIdx,
-         dpsTransLRBHeader * pLRBHdr
+         _dpsTransExecutor    * dpsTxExectr,
+         const dpsTransLockId & lockId
       ) ;
 
 
@@ -438,7 +426,7 @@ namespace engine
          const UTIL_OBJIDX idx,
          CHAR *            pBuf,
          UINT32            bufSz,
-         const CHAR *      prefix
+         CHAR *            prefix
       ) ;
 
       // format LRB Header to string, flat one line
@@ -455,7 +443,7 @@ namespace engine
          const UTIL_OBJIDX idx,
          CHAR            * pBuf,
          UINT32            bufSz,
-         const CHAR      * prefix
+         CHAR            * prefix
       ) ;
 
    private:
