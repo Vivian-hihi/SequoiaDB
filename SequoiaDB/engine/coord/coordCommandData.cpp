@@ -148,7 +148,7 @@ namespace engine
       }
       if ( rc )
       {
-         PD_LOG( PDERROR, "Do on catalog failed on command[%s, targe:%s], "
+         PD_LOG( PDERROR, "Do on catalog failed on command[%s, target:%s], "
                  "rc: %d", getName(), pArgs->_targetName.c_str(), rc ) ;
          goto error ;
       }
