@@ -27,9 +27,9 @@
 
 ##返回值##
 
-* flag 为 SDB_INSERT_RETURN_ID 时，单条插入返回记录的 “_id” 字段的内容。
+* flag 为 SDB_INSERT_RETURN_ID 时，若记录的 "_id" 字段的内容为[ObjectId]()类型，单条插入将以字符串方式返回记录的 “_id” 字段的有效内容；若 "_id" 字段为其它类型，单条插入将返回12字节无效的字符内容（即："000000000000000000000000"）。
 * options 参数的 “ReturnOID” 选项可以控制单条插入及批量插入以 Json 对象的方式返回 “_id” 字段的内容。
-* 其它情况无返回值，出错抛异常，并输出错误信息，可以通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误信息码。
+* 其它情况无返回值，出错抛异常，并输出错误信息，可以通过[getLastErrMsg](reference/Sequoiadb_command/SpecialObjects/OID.md)(reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误信息码。
 
 ##错误##
 

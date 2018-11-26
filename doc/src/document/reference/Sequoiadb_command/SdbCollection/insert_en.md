@@ -48,7 +48,7 @@ bulk inserting records. This flag represent whether insert continue(no errors we
 
 On success, the follow result will be returned:
 
-* When insert a single record with the flag of "SDB_INSERT_RETURN_ID", return the value of "_id" field.
+* When insert a single record with the flag of "SDB_INSERT_RETURN_ID", return the value of "_id" field(Only when the value of "_id" field is type of ObjectId. For the other element type, return a 12 bytes string which is "000000000000000000000000" ).
 * When using the "ReturnOID" options to control the insert behavior, a Json object will be returned.
 * Void for the other situations.
 
