@@ -68,7 +68,7 @@ public class DropCollectionSpace12067 extends SdbTestBase {
 		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName2, fullIndexName, 500000);
 		List<String> esIndexNames3 = FullTextDBUtils.getESIndexNames(sdb, csName12067, clName3, fullIndexName);
 		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName3, fullIndexName, 500000);
-		this.sdb.dropCollectionSpace(csName12067);
+		FullTextDBUtils.dropCollectionSpace(sdb, csName12067);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames1);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames2);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames3);
