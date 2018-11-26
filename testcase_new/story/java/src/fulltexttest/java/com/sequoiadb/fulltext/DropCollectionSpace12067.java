@@ -79,9 +79,7 @@ public class DropCollectionSpace12067 extends SdbTestBase {
 		try {
 			sdb.dropCollectionSpace(csName12067);
 		} catch (BaseException e) {
-			if (-34 != e.getErrorCode()) {
-				e.printStackTrace();
-			}
+			Assert.assertEquals(e.getErrorCode(), -34, e.getMessage());
 		} finally {
 			if (sdb != null) {
 				sdb.close();
