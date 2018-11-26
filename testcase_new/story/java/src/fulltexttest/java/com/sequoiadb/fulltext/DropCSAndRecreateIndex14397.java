@@ -1,0 +1,175 @@
+package com.sequoiadb.fulltext;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.bson.util.JSON;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.SdbTestBase;
+import org.elasticsearch.client.*;
+
+/**
+* FileName: DropCSAndRecreateIndex14397.java
+* test content: 集合空间删除后重建相同的全文索引   
+* @author liuxiaoxuan
+    * @Date    2018.11.21
+*/
+public class DropCSAndRecreateIndex14397 extends SdbTestBase{
+
+      private Sequoiadb sdb = null;
+      private CollectionSpace cs = null;
+      private DBCollection cl = null;
+      private String csName = "ES_cs_14397";
+      private String clName = "ES_cl_14397";
+      private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+
+      private Client esClient = null;
+
+      @BeforeClass
+      public void setUp() {
+           esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+           sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
+           if (CommLib.isStandAlone(sdb)) {
+                throw new SkipException("skip StandAlone");
+           }
+
+           // create cl 
+           cs = sdb.createCollectionSpace(this.csName);
+           cl = cs.createCollection(clName);
+      }
+	
+      @AfterClass
+      public void tearDown() {
+           sdb.dropCollectionSpace(this.csName);
+      }
+
+      @Test
+      public void test() {
+           // create fulltext
+           String textIndexName = "fulltext14397";
+           BSONObject indexObj = new BasicBSONObject();
+           indexObj.put("a", "text");
+           cl.createIndex(textIndexName, indexObj, false, false);
+
+           List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
+           
+           // check drop cs and recreate index after index clear in ES
+           int insertNums = 500000; //50w
+           boolean isSuccess = initInsertData(cl, insertNums);
+           if(!isSuccess) {
+                throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
+           }
+
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
+
+           FullTextDBUtils.dropCollectionSpace(sdb, csName);
+
+           FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames); 
+
+           // recreate after ES index clear
+           cs = sdb.createCollectionSpace(this.csName); 
+           cl = cs.createCollection(clName);
+           cl.createIndex(textIndexName, indexObj, false, false);
+           
+           // insert new datas
+           insertNums = 510000;
+           isSuccess = newInsertData(cl, insertNums);
+           if(!isSuccess) {
+                throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
+           }
+
+           // check consistencty
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
+
+           System.out.println("----------success check drop cs after index clear in ES----------");
+
+           // check drop cs and recreate index while index processing to clear in ES
+           FullTextDBUtils.dropFullTextIndex(cl, textIndexName);// init env
+           cl.truncate();
+           FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);         
+ 
+           cl.createIndex(textIndexName, indexObj, false, false);
+
+           // init insert datas
+           insertNums = 500000;
+           isSuccess = initInsertData(cl, insertNums);
+           if(!isSuccess) {
+                throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
+           }
+
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
+
+           FullTextDBUtils.dropCollectionSpace(sdb, csName);
+
+           // recreate cs and index while index processing to clear in ES
+           cs = sdb.createCollectionSpace(this.csName);
+           cl = cs.createCollection(clName);
+           cl.createIndex(textIndexName, indexObj, false, false);
+
+           // insert new datas
+           insertNums = 510000;
+           isSuccess = newInsertData(cl, insertNums);
+           if(!isSuccess) {
+                throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
+           }
+
+           // check result after index recreate
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
+
+           System.out.println("----------success check drop cs while index processing to clear in ES----------");
+      }
+	
+      public boolean initInsertData(DBCollection cl, int insertNums) {
+           List<BSONObject> insertObjs = new ArrayList<>();
+           try {
+                for(int i = 0; i < 100; i++){
+                    for (int j = 0; j < insertNums/100; j++) {
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_14397_" + i*j + "', b: 'testb_" + i*j +"'}")); 
+                    }
+                    cl.insert(insertObjs, 0);
+                    insertObjs.clear();
+                }
+	   } catch (BaseException e) {
+                if(-321 == e.getErrorCode()) {
+                     return false;
+                }
+                throw e;
+           }
+
+           return true;
+      }
+
+      public boolean newInsertData(DBCollection cl, int insertNums) {
+           List<BSONObject> insertObjs = new ArrayList<>();
+           try {
+                for(int i = 0; i < 100; i++){
+                    for (int j = 0; j < insertNums/100; j++) {
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'newa_" + i*j + "', b: 'newb_" + i*j +"'}"));
+                    }
+                    cl.insert(insertObjs, 0);
+                    insertObjs.clear();
+                }
+           } catch (BaseException e) {
+                if(-321 == e.getErrorCode()) {
+                     return false;
+                }
+                throw e;
+           }
+
+           return true;
+      }
+
+}

@@ -12,6 +12,8 @@ import org.elasticsearch.client.*;
 
 public class FullTextUtils {
 
+     public static final int INSERT_NUMS = 200000; // insert 20w datas
+
     /**
      * @param db
      * @param csName
