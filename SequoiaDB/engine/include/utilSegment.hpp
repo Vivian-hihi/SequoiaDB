@@ -122,15 +122,16 @@ namespace engine
       BOOLEAN        _isInitialized ;
 
    public :
-      _utilSegmentManager() : _numOfObjs(0),
-                              _maxNumOfObjs(0),
-                              _acquiredCounter(0),
-                              _delta(0),
+      _utilSegmentManager() : _list(NULL),
                               _begin(0),
                               _end(0),
-                              _isInitialized( FALSE ),
+                              _numOfObjs(0),
+                              _delta(0),
+                              _maxNumOfObjs(0),
+                              _acquiredCounter(0),
                               _exponent(0),
-                              _list(NULL) { }
+                              _isInitialized( FALSE )
+                              { }
 
       ~_utilSegmentManager() ;
 
@@ -158,7 +159,7 @@ namespace engine
 
          SDB_ASSERT( ( idx < _numOfObjs ) && IS_VALID_SEG_OBJ_INDEX( idx ),
                      "Invalid object index." ) ;
-         if ( idx < _numOfObjs )
+         if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
          {
             // i = idx / _delta ;
             // j = idx % _delta ;
