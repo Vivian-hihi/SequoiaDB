@@ -38,14 +38,21 @@ function main()
    
    //check autoIncrement
    var cursor = db.snapshot(8, { Name : COMMCSNAME + "." + clName });
-   var generated = ["strict", "always", "default"];
+   var generated = new Array;
+   var obj1 = {Field : "id1", Generated : "default"};
+   var obj2 = {Field : "id2", Generated : "always"};
+   var obj3 = {Field : "id3", Generated : "strict"};
+   generated.push(obj1);
+   generated.push(obj2);
+   generated.push(obj3);
+   generated.sort(function(a, b){return a.Field > b.Field});
    for(var i in generated)
    {
       if( cursor.current().toObj().AutoIncrement.length !== 3)
       {
          throw "autoIncrement count error!";
       }
-      if( cursor.current().toObj().AutoIncrement[i].Generated !== generated[i])
+      if( cursor.current().toObj().AutoIncrement[i].Generated !== generated[i].Generated)
       {
          throw "create failed!";
       }   
