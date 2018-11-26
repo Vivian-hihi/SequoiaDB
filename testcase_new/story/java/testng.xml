@@ -33,6 +33,7 @@
          <package name="com.sequoiadb.autoIncrement"/>
          <package name="com.sequoiadb.subcl"/>
          <package name="com.sequoiadb.split"/>
+         <package name="com.sequoiadb.rename"/>
       </packages>      
    </test>
    
