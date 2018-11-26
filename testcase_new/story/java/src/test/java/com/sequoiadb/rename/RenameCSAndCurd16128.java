@@ -40,7 +40,7 @@ public class RenameCSAndCurd16128 extends SdbTestBase{
 	private String targetGroupName = null;
 	
 	
-	@BeforeClass
+	@BeforeClass(enabled=false)
 	public void setUp(){
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		RenameUtil.removeCS(sdb, csName);
@@ -67,7 +67,7 @@ public class RenameCSAndCurd16128 extends SdbTestBase{
 		insertDatas(cl);		
 	}
 	
-	@Test
+	@Test(enabled=false)
 	public void test(){ 
 		InsertDatasThread insertDatasThread = new InsertDatasThread();
 		UpdateDatasThread updateDatasThread = new UpdateDatasThread();
@@ -109,7 +109,7 @@ public class RenameCSAndCurd16128 extends SdbTestBase{
 		}
 	}
 	
-	@AfterClass
+	@AfterClass(enabled=false)
 	public void tearDown(){
 		try{					
 			RenameUtil.removeCS(sdb, newCSName);			
