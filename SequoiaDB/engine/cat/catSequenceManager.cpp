@@ -90,6 +90,14 @@ namespace engine
          goto error ;
       }
 
+      if( options.hasField( CAT_SEQUENCE_CURRENT_VALUE ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Field(%s) not allowed when create sequence",
+                 CAT_SEQUENCE_CURRENT_VALUE ) ;
+         goto error ;
+      }
+
       rc = sequence.setOptions( options, TRUE, FALSE ) ;
       if ( SDB_OK != rc )
       {
