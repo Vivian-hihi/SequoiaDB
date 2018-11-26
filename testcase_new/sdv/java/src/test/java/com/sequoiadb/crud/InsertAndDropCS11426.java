@@ -7,9 +7,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
@@ -23,14 +21,14 @@ import org.testng.annotations.Test;
 /**
 * FileName: InsertAndDropCS11426.java
 * test content:concurrent insert, when drop cs  
-* testlink case:seqDB-10426
+* testlink case:seqDB-11426
 * @author wuyan
     * @Date    2017.11.9
 * @version 1.00
 */
 public class InsertAndDropCS11426 extends SdbTestBase {
-	final String CLNAME = "cl_10426";
-	final String CSNAME = "cs_10426";
+	final String CLNAME = "cl_11426";
+	final String CSNAME = "cs_11426";
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection dbcl;
@@ -43,22 +41,41 @@ public class InsertAndDropCS11426 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws InterruptedException {
     	InsertTask insertTask = new InsertTask();
         insertTask.start(20);
        
         //sleep random value to drop cs at different stages of insert
-        try {
-        	int time = new Random().nextInt(1000);
-			Thread.sleep(time);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+        int time = new Random().nextInt(1000);
+		Thread.sleep(time);		
 
-        sdb.dropCollectionSpace(CSNAME);  
+		//drop cs fail is -147, repeat drop cs again
+        int eachSleepTime = 1000;
+        int maxSleetTime = 20000;
+   	 	int alreadySleepTime = 0;
+   	 	int errorNo = 0;
+   	 	do{
+   	 		errorNo = dropCS( sdb );
+   	 		Thread.sleep(eachSleepTime);
+   	 		alreadySleepTime += eachSleepTime;
+   	 		if( alreadySleepTime > maxSleetTime )
+   	 			Assert.fail("drop cs fail exceeds maximum waiting time:"+alreadySleepTime);
+   		 }while( errorNo == -147);
+        
         Assert.assertTrue(insertTask.isSuccess(), insertTask.getErrorMsg());
+        
+        //check the result
         Assert.assertFalse(sdb.isCollectionSpaceExist(CSNAME), "cs exist!!");
+        //insert fail after drop cs 
+        try{
+        	dbcl.insert("{a:1}");
+        	Assert.fail("insert should be fail!");
+        }catch (BaseException e) {            	
+            if( e.getErrorCode() != -34 && e.getErrorCode() != -23 ){
+            	Assert.fail("insert should be fail! e:"+e.getErrorCode());
+            }
+        } 
+       
     }
     
     @AfterClass
@@ -75,8 +92,17 @@ public class InsertAndDropCS11426 extends SdbTestBase {
         
     }   
     
-    private class InsertTask extends SdbThreadBase {
-    	@SuppressWarnings("resource")
+    private int dropCS(Sequoiadb sdb){
+    	 int errorNo = 0;
+    	 try{
+         	sdb.dropCollectionSpace(CSNAME);  
+         }catch (BaseException e) {  
+        	 errorNo = e.getErrorCode();            
+         }    	 
+    	 return errorNo;    	 
+    }
+    
+    private class InsertTask extends SdbThreadBase {    	
 		@Override
         public void exec() throws Exception {
             Sequoiadb db = null;
