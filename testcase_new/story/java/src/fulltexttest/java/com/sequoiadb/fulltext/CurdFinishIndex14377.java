@@ -65,17 +65,16 @@ public class CurdFinishIndex14377 extends SdbTestBase{
 
            List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
 
-           int insertNums = 500000; //50w
-           boolean isSuccess = insertData(cl, insertNums);
+           boolean isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS); 
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
 
            // check consistency before insert/update/delete
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
 
            // insert/update/delete 
-           insertData(cl, 50000);
+           insertData(cl, 10000);
            updateData(cl);
            removeData(cl); 
 

@@ -61,8 +61,7 @@ public class CreateDropSameIndex11995 extends SdbTestBase{
       @Test
       public void test() {
            // insert large datas
-           int insertNums = 500000; // 50w
-           boolean isSuccess = insertData(cl, insertNums);
+           boolean isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS);
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
@@ -84,7 +83,7 @@ public class CreateDropSameIndex11995 extends SdbTestBase{
 
            // create and drop fulltext while processing cappedcl data
            cl.createIndex(textIndexName, indexObj, false, false);
-           int newInsertNums = 100000;
+           int newInsertNums = 10000;
            InsertThread insertThread = new InsertThread(newInsertNums);
            DropIndexThread dropIdxThread = new DropIndexThread();
            insertThread.start();
@@ -97,7 +96,7 @@ public class CreateDropSameIndex11995 extends SdbTestBase{
            // last time create index
            cl.createIndex(textIndexName, indexObj, false, false);
            // check consistency
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums + newInsertNums); 
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS + newInsertNums); 
 
            // last time drop index
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);

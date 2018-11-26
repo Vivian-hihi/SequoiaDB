@@ -49,7 +49,7 @@ public class DropCollectionSpace12065 extends SdbTestBase {
 	public void test() {
 		//在集合上创建1个全文索引，并插入包含索引字段的数据
 		this.cl.createIndex(fullIndexName, "{\"a\":\"text\"}", false, false);
-		this.insertData();
+		this.insertData(FullTextUtils.INSERT_NUMS);
 		
 		//直连集合所在的数据节点主节点，使用游标的方式获取对应的固定集合中的一条记录
 		List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs(sdb, csName12065, clName, fullIndexName);
@@ -69,8 +69,8 @@ public class DropCollectionSpace12065 extends SdbTestBase {
 		
 		//关闭步骤2中打开的游标后，再次删除集合空间
 		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName12065, clName, fullIndexName);
-      cursor.close();
-		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12065, clName, fullIndexName, 500000);
+                cursor.close();
+		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12065, clName, fullIndexName, FullTextUtils.INSERT_NUMS);
 		FullTextDBUtils.dropCollectionSpace(sdb, csName12065);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 	}
@@ -88,21 +88,21 @@ public class DropCollectionSpace12065 extends SdbTestBase {
 		}
 	}
 	
-	public void insertData() {
-		List<BSONObject> records = new ArrayList<BSONObject>();
+	public void insertData(int insertNums) {
+                List<BSONObject> records = new ArrayList<BSONObject>();
 		try {
-			for(int i = 0; i < 100; i++) {
-				for(int j = 0; j < 5000; j++) {
-					BSONObject record = (BSONObject)JSON.parse("{a:'a"+i+""+j+"',g:'g"+i+""+j+"'}");
-					records.add(record);
-				}
-				this.cl.insert(records);
-				records.clear();
-			}
-		} catch (BaseException e) {
-			if (-321 == e.getErrorCode()) {
-				throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
-			}
-		}
-	}
+                         for(int i = 0; i < 100; i++) {
+                                for(int j = 0; j < insertNums/100; j++) {
+                                        BSONObject record = (BSONObject)JSON.parse("{a:'a"+i+""+j+"',g:'g"+i+""+j+"'}");
+                                        records.add(record);
+                                }
+                                this.cl.insert(records);
+                                records.clear();
+                         }
+                } catch (BaseException e) {
+                         if (-321 == e.getErrorCode()) {
+                                throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
+                         }
+                }
+       }
 }

@@ -67,8 +67,7 @@ public class Hash12018 extends SdbTestBase{
       @Test
       public void test() {
            // insert big datas
-           int insertNums = 500000; //50w
-           boolean isSuccess = insertData(cl, insertNums);
+           boolean isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS);
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
@@ -85,7 +84,7 @@ public class Hash12018 extends SdbTestBase{
            List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
  
            // check consistency
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
            // drop fulltext
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
 
@@ -98,7 +97,7 @@ public class Hash12018 extends SdbTestBase{
            cl.createIndex(textIndexName, indexObj, false, false);
 
            // check consistency
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
 
            // drop fulltext
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);

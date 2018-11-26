@@ -67,13 +67,12 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase{
            List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
            
            // check drop cs and recreate index after index clear in ES
-           int insertNums = 500000; //50w
-           boolean isSuccess = initInsertData(cl, insertNums);
+           boolean isSuccess = initInsertData(cl, FullTextUtils.INSERT_NUMS);
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
 
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
 
            FullTextDBUtils.dropCollectionSpace(sdb, csName);
 
@@ -85,14 +84,14 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase{
            cl.createIndex(textIndexName, indexObj, false, false);
            
            // insert new datas
-           insertNums = 510000;
-           isSuccess = newInsertData(cl, insertNums);
+           int newInsertNums = 210000;
+           isSuccess = newInsertData(cl, newInsertNums);
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
 
            // check consistencty
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, newInsertNums);
 
            System.out.println("----------success check drop cs after index clear in ES----------");
 
@@ -104,13 +103,12 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase{
            cl.createIndex(textIndexName, indexObj, false, false);
 
            // init insert datas
-           insertNums = 500000;
-           isSuccess = initInsertData(cl, insertNums);
+           isSuccess = initInsertData(cl, FullTextUtils.INSERT_NUMS);
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
 
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
 
            FullTextDBUtils.dropCollectionSpace(sdb, csName);
 
@@ -120,14 +118,13 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase{
            cl.createIndex(textIndexName, indexObj, false, false);
 
            // insert new datas
-           insertNums = 510000;
-           isSuccess = newInsertData(cl, insertNums);
+           isSuccess = newInsertData(cl, newInsertNums);
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
 
            // check result after index recreate
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, newInsertNums);
 
            System.out.println("----------success check drop cs while index processing to clear in ES----------");
       }

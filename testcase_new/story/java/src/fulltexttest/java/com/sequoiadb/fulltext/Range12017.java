@@ -72,9 +72,8 @@ public class Range12017 extends SdbTestBase{
            indexObj.put("a", "text");
            cl.createIndex(textIndexName, indexObj, false, false);
 
-           // insert big datas
-           int insertNums = 500000; //50w
-           boolean isSuccess = insertData(cl, insertNums);
+           // insert large datas
+           boolean isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS);
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
@@ -85,7 +84,7 @@ public class Range12017 extends SdbTestBase{
            List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
  
            // check consistency
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
            // drop fulltext
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
 
@@ -98,7 +97,7 @@ public class Range12017 extends SdbTestBase{
            cl.createIndex(textIndexName, indexObj, false, false);
 
            // check consistency
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums);
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
 
            // drop fulltext
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);

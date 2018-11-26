@@ -55,19 +55,19 @@ public class DropCollectionSpace12067 extends SdbTestBase {
 		
 		//在所有集合上均创建全文索引，并插入包含索引字段的数据
 		cl1.createIndex(fullIndexName, "{\"a\":\"text\"}", false, false);
-		this.insertData(cl1);
+		this.insertData(cl1, FullTextUtils.INSERT_NUMS);
 		cl2.createIndex(fullIndexName, "{\"a\":\"text\"}", false, false);
-		this.insertData(cl2);
+		this.insertData(cl2, FullTextUtils.INSERT_NUMS);
 		cl3.createIndex(fullIndexName, "{\"a\":\"text\"}", false, false);
-		this.insertData(cl3);
+		this.insertData(cl3, FullTextUtils.INSERT_NUMS);
 		
 		//删除集合空间
 		List<String> esIndexNames1 = FullTextDBUtils.getESIndexNames(sdb, csName12067, clName1, fullIndexName);
-		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName1, fullIndexName, 500000);
+		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName1, fullIndexName, FullTextUtils.INSERT_NUMS);
 		List<String> esIndexNames2 = FullTextDBUtils.getESIndexNames(sdb, csName12067, clName2, fullIndexName);
-		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName2, fullIndexName, 500000);
+		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName2, fullIndexName, FullTextUtils.INSERT_NUMS);
 		List<String> esIndexNames3 = FullTextDBUtils.getESIndexNames(sdb, csName12067, clName3, fullIndexName);
-		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName3, fullIndexName, 500000);
+		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName3, fullIndexName, FullTextUtils.INSERT_NUMS);
 		FullTextDBUtils.dropCollectionSpace(sdb, csName12067);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames1);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames2);
@@ -87,11 +87,11 @@ public class DropCollectionSpace12067 extends SdbTestBase {
 		}
 	}
 	
-	public void insertData(DBCollection cl) {
+	public void insertData(DBCollection cl, int insertNums) {
 		List<BSONObject> records = new ArrayList<BSONObject>();
 		try {
 			for(int i = 0; i < 100; i++) {
-				for(int j = 0; j < 5000; j++) {
+				for(int j = 0; j < insertNums/100; j++) {
 					BSONObject record = (BSONObject)JSON.parse("{a:'a"+i+""+j+"',g:'g"+i+""+j+"'}");
 					records.add(record);
 				}

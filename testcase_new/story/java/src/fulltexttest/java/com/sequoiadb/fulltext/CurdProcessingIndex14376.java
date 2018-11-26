@@ -67,8 +67,7 @@ public class CurdProcessingIndex14376 extends SdbTestBase{
 
            List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
 
-           int insertNums = 500000; //50w
-           boolean isSuccess = insertData(cl, insertNums);
+           boolean isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS);
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
@@ -124,7 +123,7 @@ public class CurdProcessingIndex14376 extends SdbTestBase{
               DBCollection cl = null;
               db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
               cl = db.getCollectionSpace(csName).getCollection(clName);
-              int insertNums = 50000;
+              int insertNums = 10000;
               insertData(cl, insertNums);
               db.close();
          }

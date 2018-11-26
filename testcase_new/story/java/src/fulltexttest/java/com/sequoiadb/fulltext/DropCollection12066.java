@@ -50,7 +50,7 @@ public class DropCollection12066 extends SdbTestBase {
 	public void test() {
 		//在集合上创建1个全文索引，并插入大量包含索引字段的数据
 		this.cl.createIndex(fullIndexName, "{\"a\":\"text\"}", false, false);
-		this.insertData();
+		this.insertData(FullTextUtils.INSERT_NUMS);
 		
 		//直连主数据节点使用游标的方式获取固定集合中的一条记录
 		List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs(sdb, csName12066, clName, fullIndexName);
@@ -71,7 +71,7 @@ public class DropCollection12066 extends SdbTestBase {
 		//关闭步骤2中的游标，再次删除集合
 		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName12066, clName, fullIndexName);
       cursor.close();
-		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12066, clName, fullIndexName, 500000);
+		FullTextUtils.checkFullSyncToES(esClient, sdb, csName12066, clName, fullIndexName, FullTextUtils.INSERT_NUMS);
 		FullTextDBUtils.dropCollection(this.cs, clName);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 	}
@@ -89,11 +89,11 @@ public class DropCollection12066 extends SdbTestBase {
 		}
 	}
 	
-	public void insertData() {
+	public void insertData(int insertNums) {
 		List<BSONObject> records = new ArrayList<BSONObject>();
 		try {
 			for(int i = 0; i < 100; i++) {
-				for(int j = 0; j < 5000; j++) {
+				for(int j = 0; j < insertNums/100; j++) {
 					BSONObject record = (BSONObject)JSON.parse("{a:'a"+i+""+j+"',g:'g"+i+""+j+"'}");
 					records.add(record);
 				}
