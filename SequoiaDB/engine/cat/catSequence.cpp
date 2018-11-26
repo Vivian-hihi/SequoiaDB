@@ -315,6 +315,14 @@ namespace engine
          goto error ;
       }
 
+      if( init && options.hasField( CAT_SEQUENCE_CURRENT_VALUE ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Field(%s) not allowed when create sequence",
+                 CAT_SEQUENCE_CURRENT_VALUE ) ;
+         goto error ;
+      }
+
       // CAT_SEQUENCE_CURRENT_VALUE
       ele = options.getField( CAT_SEQUENCE_CURRENT_VALUE ) ;
       if ( NumberInt == ele.type() || NumberLong == ele.type() )
