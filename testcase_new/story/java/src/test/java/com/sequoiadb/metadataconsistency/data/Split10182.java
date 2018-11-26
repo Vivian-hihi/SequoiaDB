@@ -103,8 +103,8 @@ public class Split10182 extends SdbTestBase {
 				endCond.put("a", bound + 100);
 				clDB.split(groupNames.get(0), groupNames.get(1), strCond, endCond);
 			}catch(BaseException e){
-				int eCode = e.getErrorCode();
-				if( eCode != -175 && eCode != -147){ //-175:The mutex task already exist
+				int eCode = e.getErrorCode();                         //-176:SDB_CLS_BAD_SPLIT_KEY,split bound exist
+				if( eCode != -175 && eCode != -147 && eCode != -176){ //-175:The mutex task already exist
 					throw e;
 				}
 			}finally{
