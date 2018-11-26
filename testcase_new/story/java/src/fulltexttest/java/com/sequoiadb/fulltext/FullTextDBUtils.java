@@ -9,6 +9,7 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
@@ -138,6 +139,7 @@ public class FullTextDBUtils {
         /**
         * @param cl
         * @param textIndexName
+        * bug#SEQUOIADBMAINSTAREM-3778：drop full index will cause error -147 sometimes
         */
         public static void dropFullTextIndex(DBCollection cl, String textIndexName){
             int doTimes = 0;
@@ -164,6 +166,72 @@ public class FullTextDBUtils {
                 }
             }
             System.out.println(textIndexName + " drop success,  drop times: " + doTimes);
+        }
+
+        /**
+        * @param db
+        * @param csName
+        * bug#SEQUOIADBMAINSTAREM-3778：drop cs contains full index will cause error -147 sometimes
+        */
+        public static void dropCollectionSpace(Sequoiadb db, String csName){
+            int doTimes = 0;
+            while(true){
+                try{
+                    db.dropCollectionSpace(csName);
+                    // drop success
+                    break;
+                }catch(BaseException e){
+                    doTimes++;
+                    if(-147 == e.getErrorCode()){
+                        try{
+                            Thread.sleep(1000);
+                        }catch(InterruptedException e2){
+                             e2.printStackTrace();
+                        }
+                        continue;
+                    }else if(-34 == e.getErrorCode()){ // cs not exists
+                        System.out.println(csName + " is not exist");
+                        break;
+                    }
+
+                    Assert.assertEquals(e, -147, "drop " + csName + "failed, detail: " + e.getMessage());
+                }
+            }
+            System.out.println(csName + " drop success,  drop times: " + doTimes);
+
+        }
+
+        /**
+        * @param cs
+        * @param clName
+        * bug#SEQUOIADBMAINSTAREM-3778：drop cl contains full index will cause error -147 sometimes
+        */
+        public static void dropCollection(CollectionSpace cs, String clName){
+            int doTimes = 0;
+            while(true){
+                try{
+                    cs.dropCollection(clName);
+                    // drop success
+                    break;
+                }catch(BaseException e){
+                    doTimes++;
+                    if(-147 == e.getErrorCode()){
+                        try{
+                            Thread.sleep(1000);
+                        }catch(InterruptedException e2){
+                             e2.printStackTrace();
+                        }
+                        continue;
+                    }else if(-23 == e.getErrorCode()){ // cl not exists
+                        System.out.println(clName + " is not exist");
+                        break;
+                    }
+
+                    Assert.assertEquals(e, -147, "drop " + clName + "failed, detail: " + e.getMessage());
+                }
+            }
+            System.out.println(clName + " drop success,  drop times: " + doTimes);
+
         }
 
         /**
