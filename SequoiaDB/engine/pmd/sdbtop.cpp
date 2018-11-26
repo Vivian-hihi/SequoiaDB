@@ -47,7 +47,7 @@
 #include "sptCommon.hpp"
 #include "utilPath.hpp"
 #include "ossVer.hpp"
-#include "utilCipher.hpp"
+#include "utilPasswdTool.hpp"
 #include "utilParam.hpp"
 //#include <time.h>
 #include <sys/time.h>
@@ -6073,13 +6073,18 @@ INT32 resolveArgument ( po::options_description &desc,
       {
          if ( vm.count(OPTION_CIPHER) && vm[OPTION_CIPHER].as<bool>() )
          {
+            string connectionUserName ;
+
             rc = passwdTool.getPasswdByCipherFile( usrName, token,
-                                                   cipherfile, password ) ;
+                                                   cipherfile,
+                                                   connectionUserName,
+                                                   password ) ;
             if ( SDB_OK != rc )
             {
                std::cerr << "get user password failed" << endl ;
                goto error ;
             }
+            usrName = connectionUserName ;
          }
          else
          {

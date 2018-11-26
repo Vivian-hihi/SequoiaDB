@@ -34,7 +34,7 @@
 #include "ossUtil.hpp"
 #include "ossFile.hpp"
 #include "utilStr.hpp"
-#include "utilCipher.hpp"
+#include "utilPasswdTool.hpp"
 #include "utilParam.hpp"
 #include "pd.hpp"
 #include <iostream>
@@ -359,14 +359,19 @@ namespace replay
 
             if ( has(RPL_OPTION_CIPHER) && get<bool>(RPL_OPTION_CIPHER) )
             {
+               string connectionUserName ;
+
                rc = passwdTool.getPasswdByCipherFile( _user, _token,
-                                                      _cipherfile, _password ) ;
+                                                      _cipherfile,
+                                                      connectionUserName,
+                                                      _password ) ;
                if ( SDB_OK != rc )
                {
                   std::cerr << "get user password failed" << endl ;
                   PD_LOG( PDERROR, "get user password failed" ) ;
                   goto error ;
                }
+               _user = connectionUserName ;
             }
             else
             {

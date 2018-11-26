@@ -41,7 +41,7 @@
 #include "utilParam.hpp"
 #include "ossVer.hpp"
 #include "client.hpp"
-#include "utilCipher.hpp"
+#include "utilPasswdTool.hpp"
 
 using namespace engine;
 
@@ -3863,12 +3863,15 @@ INT32 _sdbCi::splitAuth()
    {
       passwordTool passwdTool ;
       std::string user = _auth ;
+      std::string connectionUserName ;
       std::string passwd ;
 
       if ( _cipher )
       {
          rc = passwdTool.getPasswdByCipherFile( user, _token,
-                                                _cipherfile, passwd ) ;
+                                                _cipherfile,
+                                                connectionUserName,
+                                                passwd ) ;
          if ( SDB_OK != rc )
          {
             std::cerr << "get user password failed" << endl ;
@@ -3883,7 +3886,7 @@ INT32 _sdbCi::splitAuth()
          }
          passwd = passwdTool.interactivePasswdInput() ;
       }
-      ossStrcpy( g_username, user.c_str() ) ;
+      ossStrcpy( g_username, connectionUserName.c_str() ) ;
       ossStrcpy( g_password, passwd.c_str() ) ;
    }
    else

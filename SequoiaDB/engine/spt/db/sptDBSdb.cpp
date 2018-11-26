@@ -1032,6 +1032,20 @@ namespace engine
          goto error ;
       }
 
+      if ( SDB_MAX_USERNAME_LENGTH < username.size() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Exceeds username maximum length" ) ;
+         goto error ;
+      }
+
+      if ( SDB_MAX_PASSWORD_LENGTH < passwd.size() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Exceeds password maximum length" ) ;
+         goto error ;
+      }
+
       rc = _sptSdb.createUsr( username.c_str(), passwd.c_str() ) ;
       if( SDB_OK != rc )
       {

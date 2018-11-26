@@ -1,22 +1,14 @@
 #include "ossErr.h"
 #include "ossUtil.hpp"
-#include "ossIO.hpp"
-#include "utilCipher.hpp"
-#include "linenoise.h"
+#include "utilCipherMgr.hpp"
+#include "msgDef.hpp"
 #include "openssl/des.h"
 #include "openssl/sha.h"
 #include <iostream>
+#include <sstream>
 
 namespace engine
 {
-   cipherMgr::cipherMgr()
-   {
-   }
-
-   cipherMgr::~cipherMgr()
-   {
-      _file.close() ;
-   }
 
    INT16 cipherMgr::_hexChar2dec( CHAR c )
    {
@@ -54,7 +46,7 @@ namespace engine
    {
        static const char hexchars[] = "0123456789ABCDEF" ;
        string out;
-   
+
        for ( INT32 i = 0; i < len; ++i )
        {
            CHAR c = in[i] ;
@@ -64,15 +56,21 @@ namespace engine
            out += high ;
            out += low ;
        }
-   
+
        return out ;
+   }
+
+   // generate a random number betweeen begin and end(included)
+   INT32 cipherMgr::_randBetween( INT32 begin, INT32 end )
+   {
+      return begin + ( ossRand() % ( end - begin + 1 ) ) ;
    }
 
    void cipherMgr::_generateRandomArray( CHAR* array )
    {
        for ( int i = 0; i < RANDOM_ARRAY_BYTE_LENGTH; i++ )
        {
-           array[i] = ( CHAR )ossRand() ;
+           array[i] = ( CHAR )_randBetween( 1, UINT8_MAX_NUMBER ) ;
        }
    }
 
@@ -88,12 +86,6 @@ namespace engine
 
       ossMemcpy( cipherKey, hash, desiredLength < SHA256_DIGEST_LENGTH ?
                                   desiredLength : SHA256_DIGEST_LENGTH ) ;
-   }
-
-   // generate a random number betweeen begin and end(included)
-   INT32 cipherMgr::_randBetween( INT32 begin, INT32 end )
-   {
-      return begin + ( ossRand() % ( end - begin + 1 ) ) ;
    }
 
    void cipherMgr::_generateRandArraySplits( UINT32 cipherTextLen,
@@ -117,6 +109,7 @@ namespace engine
       INT32        arrayEndIndex = arrayLen - 1 ;
       INT32        splitPos1 = 0 ; 
       INT32        splitPos2 = 0 ;
+      string       arrayString( array, arrayLen );
 
       // calculate insertion position in cipherText, leave space(s) for mid and high.
       cipherLowPos  = _randBetween( 0, cipherEndIndex - 2 ) ;
@@ -124,7 +117,7 @@ namespace engine
       cipherHighPos = _randBetween( cipherMidPos + 1, cipherEndIndex ) ;
 
       // divide random array into 3 pieces(low, mid, high) for insertion.
-      splitPos1  = _randBetween( 0, arrayEndIndex - 2 ) ;
+      splitPos1  = _randBetween( 1, arrayEndIndex - 2 ) ;
       splitPos2  = _randBetween( splitPos1 + 1, arrayEndIndex - 1 ) ;
       arrayLowPos = 0 ;
       arrayMidPos  = splitPos1 ;
@@ -133,28 +126,35 @@ namespace engine
       arrayMidLen   = splitPos2 - splitPos1 ;
       arrayHighLen  = arrayEndIndex - splitPos2 + 1 ;
 
-      //construct insertion content: len + content + offset to next
-      arrayLowContent.push_back( ( CHAR )arrayLowLen ) ;
-      arrayLowContent.append( array, arrayLowPos, arrayLowLen ) ;
-      cipherMidPos += arrayLowContent.size() + 1 ;
-      cipherHighPos += arrayLowContent.size() + 1 ;
-      arrayLowContent.push_back( ( CHAR )cipherMidPos ) ;
+      try
+      {
+         //construct insertion content: len + content + offset to next
+         arrayLowContent.push_back( ( CHAR )arrayLowLen ) ;
+         arrayLowContent.append( arrayString, arrayLowPos, arrayLowLen ) ;
+         cipherMidPos += arrayLowContent.size() + 1 ;
+         cipherHighPos += arrayLowContent.size() + 1 ;
+         arrayLowContent.push_back( ( CHAR )cipherMidPos ) ;
 
-      arrayMidContent.push_back( ( CHAR )arrayMidLen ) ;
-      arrayMidContent.append( array, arrayMidPos, arrayMidLen ) ;
-      cipherHighPos += arrayMidContent.size() + 1 ;
-      arrayMidContent.push_back( ( CHAR )cipherHighPos ) ;
+         arrayMidContent.push_back( ( CHAR )arrayMidLen ) ;
+         arrayMidContent.append( arrayString, arrayMidPos, arrayMidLen ) ;
+         cipherHighPos += arrayMidContent.size() + 1 ;
+         arrayMidContent.push_back( ( CHAR )cipherHighPos ) ;
 
-      arrayHighContent.push_back( ( CHAR )arrayHighLen ) ;
-      arrayHighContent.append( array, arrayHighPos, arrayHighLen ) ;
+         arrayHighContent.push_back( ( CHAR )arrayHighLen ) ;
+         arrayHighContent.append( arrayString, arrayHighPos, arrayHighLen ) ;
 
-      insertPositions.push_back( cipherLowPos ) ;
-      insertPositions.push_back( cipherMidPos ) ;
-      insertPositions.push_back( cipherHighPos ) ;
+         insertPositions.push_back( cipherLowPos ) ;
+         insertPositions.push_back( cipherMidPos ) ;
+         insertPositions.push_back( cipherHighPos ) ;
 
-      arraySplits.push_back( arrayLowContent ) ;
-      arraySplits.push_back( arrayMidContent ) ;
-      arraySplits.push_back( arrayHighContent ) ;
+         arraySplits.push_back( arrayLowContent ) ;
+         arraySplits.push_back( arrayMidContent ) ;
+         arraySplits.push_back( arrayHighContent ) ;
+      }
+      catch ( exception &e ) 
+      {
+         std::cerr << "exception while generateRandArraySplits: " << e.what() << std::endl ;
+      }
    }
 
    void cipherMgr::_insertRandomArray( string &cipherText, CHAR *array, INT32 arrayLen )
@@ -163,11 +163,12 @@ namespace engine
       std::vector<string> arraySplits ;
       UINT32              totalLen = cipherText.size() > INSERTABLE_MAX_LENGTH ?
                                      INSERTABLE_MAX_LENGTH : cipherText.size() ;
+
+      _generateRandArraySplits( totalLen, array, arrayLen, 
+                                insertPositions, arraySplits ) ;
+
       try
       {
-         _generateRandArraySplits( totalLen, array, arrayLen, 
-                                   insertPositions, arraySplits ) ;
-
          cipherText.insert( insertPositions[0], arraySplits[0] ) ;
          cipherText.insert( insertPositions[1], arraySplits[1] ) ;
          cipherText.insert( insertPositions[2], arraySplits[2] ) ;
@@ -238,9 +239,11 @@ namespace engine
       goto done ;
    }
 
-   void cipherMgr::_encrypt( const string &clearText, const string &token,
+   INT32 cipherMgr::_encrypt( const string &clearText, const string &token,
                              string &cipherText )  
    {
+      INT32             rc = SDB_OK ;
+      
       DES_cblock        keyEncrypt ;
       DES_key_schedule  keySchedule ;
       const_DES_cblock  inputText ;
@@ -259,7 +262,12 @@ namespace engine
       _hashToKey( cipherString, ( UINT8 * )&keyEncrypt, sizeof( keyEncrypt ) ) ;
 
       DES_set_odd_parity( &keyEncrypt ) ;
-      DES_set_key_checked( &keyEncrypt, &keySchedule ) ;
+      if ( 0 > DES_set_key_checked( &keyEncrypt, &keySchedule ) )
+      {
+         PD_LOG ( PDERROR, "DES_set_key_checked while encryption failed" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
       for ( UINT32 i = 0; i < clearText.length() / BYTES_PER_TIME; i++ )  
       {  
@@ -285,6 +293,11 @@ namespace engine
 
       // serialize
       cipherText = _byteToHex( result.c_str(), result.size() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 cipherMgr::_decrypt( const string &cipherText, const string &token,
@@ -323,7 +336,12 @@ namespace engine
       passwd = passwdStr.c_str() ;
 
       DES_set_odd_parity( &keyEncrypt ) ;
-      DES_set_key_checked( &keyEncrypt, &keySchedule ) ;
+      if ( 0 > DES_set_key_checked( &keyEncrypt, &keySchedule ) )
+      {
+         PD_LOG ( PDERROR, "DES_set_key_checked while decryption failed" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
       for ( UINT32 i = 0; i < passwdLen / BYTES_PER_TIME; i++ )  
       {
@@ -374,33 +392,12 @@ namespace engine
       goto done ;
    }
 
-   INT32 cipherMgr::_write( const string &fContent )
+   INT32 cipherMgr::_write( const string &fileContent )
    {
-      INT64 wCnt = 0 ;
-      UINT64 len = fContent.length() ;
-      INT32 rc = _file.seek( 0 ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "cipher file option [seek] err [%d] ", ossGetLastError() ) ;
-         goto error ;
-      }
-
-      rc = _file.truncate( 0 ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "cipher file option [truncate] err [%d] ", ossGetLastError() ) ;
-         goto error ;
-      }
-
-      rc = _file.write( fContent.c_str(), len, wCnt ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _cipherfile->writeToFile( fileContent ) ;
    }
 
-   void cipherMgr::_extractUserInfo( string &userInfo, string &userName,
+   void cipherMgr::_extractUserInfo( const string &userInfo, string &userName,
                                      string &fullName )
    {
       string::size_type atPos = userInfo.find( "@" ) ;
@@ -414,15 +411,13 @@ namespace engine
          userName = userInfo ;
       }
       fullName = userInfo ;
-
-      userInfo = userName ;
    }
 
    INT32 cipherMgr::_findCipherText( const string &userName, const string &fullName,
                                      string &cipherText )
    {
       INT32                           rc = SDB_OK ;
-      
+
       INT32                           foundFullNameCount = 0 ;
       INT32                           foundHalfNameCount = 0 ;
       map<string, string>::iterator   itor ;
@@ -432,12 +427,12 @@ namespace engine
       {
          string lineUserName = itor->first ;
          string::size_type atPos = lineUserName.find( '@' ) ;
-      
+
          if ( string::npos != atPos )
          {
             lineUserName = lineUserName.substr( 0, atPos ) ;
          }
-      
+
          if ( itor->first == fullName )
          {
             foundFullNameCount++ ;
@@ -450,7 +445,7 @@ namespace engine
             found = itor ;
          }
       }
-      
+
       if ( 1 == foundFullNameCount || 1 == foundHalfNameCount )
       {
          cipherText = found->second ;
@@ -476,80 +471,46 @@ namespace engine
       goto done ;
    }
 
-   INT32 cipherMgr::initialize( const string &fileName, cipherRole role )
+   INT32 cipherMgr::init( cipherAbstractFile *file )
    {
-      string usr, cipherText ;
-      INT64 fileSize = 0 ;
-      INT64 contentLen = 0 ;
-      INT64 begin = 0 ;
-      INT64 lineLen = 0 ;
-      UINT32 iMode = ( ( RRole == role ) ? OSS_READONLY : ( OSS_CREATE | OSS_READWRITE ) ) ;
-      CHAR* fileContent = NULL ;
+      INT32  rc = SDB_OK ;
 
-      INT32 rc = _file.open( fileName, iMode, OSS_RU | OSS_WU ) ;
+      string user ;
+      string cipherText ;
+      INT64  contentLen = 0 ;
+      INT64  begin = 0 ;
+      INT64  lineLen = 0 ;
+      const CHAR*  fileContent = NULL ;
+
+      _cipherfile = file ;
+      rc = _cipherfile->readFromFile( &fileContent, &contentLen );
       if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "cipher file option [open] err [%d] ", ossGetLastError()) ;
-         goto error;
-      }
-
-      rc = _file.getFileSize( fileSize ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "cipher file option [getFileSize] err [%d] ", ossGetLastError()) ;
-         goto error;
-      }
-
-      if ( 0 == fileSize )
-      {
-         PD_LOG ( PDDEBUG, "cipher file is empty ") ;
-         goto done;
-      }
-
-      fileContent = ( CHAR* )SDB_OSS_MALLOC( fileSize * sizeof( CHAR ) ) ;
-      if ( NULL == fileContent )
-      {
-         PD_LOG ( PDERROR, "cipher file option [SDB_OSS_MALLOC] err [%d] ", 
-                  ossGetLastError() ) ;
-         rc = SDB_OOM ; 
-         goto error ;
-      }
-
-      rc = _file.read( fileContent, fileSize, contentLen ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "cipher file option [read] err [%d] ", ossGetLastError() ) ;
-         SDB_OSS_FREE( fileContent ) ;
          goto error ;
       }
 
       while( begin < contentLen )
       {
-         CHAR* find = ossStrstr( fileContent + begin, OSS_NEWLINE ) ;
+         const CHAR* find = ossStrstr( fileContent + begin, OSS_NEWLINE ) ;
          if ( NULL != find )
          {
             lineLen = find - ( fileContent + begin ) ;
             string line( fileContent + begin, lineLen ) ;
             begin += lineLen + ossStrlen( OSS_NEWLINE ) ;
 
-            if ( SDB_OK == _parseLine( line, usr, cipherText ) )
+            if ( SDB_OK == _parseLine( line, user, cipherText ) )
             {
-               _usersCipher[usr] = cipherText ;
+               _usersCipher[user] = cipherText ;
             }
          }
          else
          {
-            PD_LOG ( PDWARNING, "cipher file is not complete") ;
+            PD_LOG ( PDWARNING, "cipherfile bad format") ;
             break ;
          }  
       }
 
-   done:
-      if ( NULL != fileContent )
-      {
-         SDB_OSS_FREE(fileContent) ;
-      }
-      
+   done:      
       return rc ;
    error:
       goto done ;
@@ -562,9 +523,36 @@ namespace engine
 
       string cipherText ;
       string fileContent ;
+      ostringstream errorMsgBuider ;
       map<string,string>::iterator it ;
 
-      _encrypt( passwd, token, cipherText ) ;
+      if ( SDB_MAX_USERNAME_LENGTH < user.size() )
+      {
+         rc = SDB_INVALIDARG ;
+         errorMsgBuider << "user maximum length is " <<
+                           SDB_MAX_USERNAME_LENGTH ;
+         PD_LOG ( PDERROR, errorMsgBuider.str().c_str() ) ;
+         std::cerr << errorMsgBuider.str() << std::endl ;
+         goto error ;
+      }
+
+      if ( SDB_MAX_PASSWORD_LENGTH < passwd.size() )
+      {
+         rc = SDB_INVALIDARG ;
+         errorMsgBuider << "password maximum length is " <<
+                           SDB_MAX_PASSWORD_LENGTH ;
+         PD_LOG ( PDERROR, errorMsgBuider.str().c_str() ) ;
+         std::cerr << errorMsgBuider.str() << std::endl ;
+         goto error ;
+      }
+
+      rc = _encrypt( passwd, token, cipherText ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "encrypt user %s passwd failed.",
+                  user.c_str() ) ;
+         goto error ;
+      }
 
       _usersCipher[user] = cipherText ;
 
@@ -574,9 +562,13 @@ namespace engine
       {
          fileContent += ( it->first + ":" + it->second + OSS_NEWLINE ) ;
       }
+
       rc = _write( fileContent ) ;
 
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
    INT32 cipherMgr::removeUser( const string &user )
@@ -592,7 +584,7 @@ namespace engine
 
          for( it = _usersCipher.begin(); it != _usersCipher.end(); it++ )
          {
-            fileContent += ( user + ":" + it->second + OSS_NEWLINE ) ;
+            fileContent += ( it->first + ":" + it->second + OSS_NEWLINE ) ;
          }
 
          rc = _write( fileContent ) ;
@@ -601,9 +593,7 @@ namespace engine
       return rc ;
    }
 
-
-
-   INT32 cipherMgr::getPasswd( string &userInfo, const string &token,
+   INT32 cipherMgr::getPasswd( const string &userInfo, const string &token,
                                string &passwd )
    {
       INT32 rc = SDB_OK ;
@@ -625,7 +615,6 @@ namespace engine
       {
          PD_LOG ( PDERROR, "decrypt user %s passwd failed.",
                   fullName.c_str() ) ;
-         rc = SDB_SYS ;
          goto error ;
       }
 
@@ -635,34 +624,12 @@ namespace engine
       goto done ;
    }
 
-   string passwordTool::interactivePasswdInput()
+   void cipherMgr::getConnectionUserName( const std::string &userInfo,
+                                          std::string &connectionUserName )
    {
-      CHAR* line = NULL ;
-      string passwd ;
-      setEchoOff() ;
-      if ( ( line = linenoise( "password:" ) ) != NULL )
-      {
-         passwd = line ;
-         SDB_OSS_ORIGINAL_FREE( line ) ;
-      }
-      setEchoOn() ;
-      return passwd ;
-   }
+      string fullName ;
 
-   INT32 passwordTool::getPasswdByCipherFile( string &user,
-                                              const string &token,
-                                              const string &cipherFile,
-                                              string &password )
-   {
-      string file = cipherFile ;
-      if ( file.empty() )
-      {
-         file = "./passwd" ;
-      }
-
-      _cipherMgr.initialize( file, cipherMgr::RRole ) ;
-
-      return _cipherMgr.getPasswd( user, token, password ) ;
+      _extractUserInfo( userInfo, connectionUserName, fullName ) ;
    }
 
 }

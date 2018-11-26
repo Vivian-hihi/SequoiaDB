@@ -216,7 +216,9 @@ utilFiles = [
       "util/utilZlibStream.cpp",
       "util/utilJsonFile.cpp",
       "util/linenoise.cpp",
-      "util/utilCipher.cpp",
+      "util/utilPasswdTool.cpp",
+      "util/utilCipherFile.cpp",
+      "util/utilCipherMgr.cpp",
       "client/cipher.c"
       ]
 

@@ -3,7 +3,7 @@
 #include "ossMem.h"
 #include "ossIO.hpp"
 #include "ossTypes.h"
-#include "utilCipher.hpp"
+#include "utilPasswdTool.hpp"
 #include "pd.hpp"
 #include "utilParam.hpp"
 #include "passwdOptions.hpp"

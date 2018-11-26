@@ -2185,39 +2185,43 @@ SDB_EXPORT INT32 sdbSecureConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
 SDB_EXPORT INT32 sdbGetPasswdByCipherFile( const CHAR *pUsrName,
                                            const CHAR *pToken,
                                            const CHAR *pCipherFile,
-                                           CHAR **pUser, CHAR **pPasswd )
+                                           CHAR *pUser, CHAR *pPasswd )
 {
    INT32 rc = SDB_OK ;
 
-   CHAR *atPos = 0 ;
+   CHAR   *atPos = 0 ;
    UINT32 userLength = 0 ;
+   CHAR   userName[SDB_MAX_USERNAME_LENGTH] = {'\0'} ;
+   CHAR   fullName[SDB_MAX_USERNAME_LENGTH] = {'\0'} ;
 
-   rc = decryptUserCipher( pUsrName, pToken, pCipherFile, pPasswd ) ;
-   if ( SDB_OK != rc )
+   if ( NULL == pUsrName )
    {
-      rc = SDB_SYS ;
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
 
    atPos = ossStrchr( pUsrName, '@' ) ;
+
    if ( NULL != atPos )
    {
-      userLength = ( atPos - pUsrName ) + 1 ;
+      ossStrncpy( userName, pUsrName, atPos - pUsrName ) ;
    }
    else
    {
-      userLength = strlen( pUsrName ) + 1 ;
+      ossStrncpy( userName, pUsrName, ossStrlen( pUsrName ) ) ;
    }
 
-   *pUser = ( CHAR * )malloc( userLength ) ;
-   if ( NULL == *pUser )
+   ossStrncpy( fullName, pUsrName, ossStrlen( pUsrName ) ) ;
+
+   rc = decryptUserCipher( userName, fullName, pToken,
+                           pCipherFile, pPasswd ) ;
+   if ( SDB_OK != rc )
    {
-      rc = SDB_OOM ;
       goto error ;
    }
 
-   ossStrncpy( *pUser, pUsrName, userLength - 1 ) ;
-   ( *pUser )[userLength - 1] = '\0' ;
+   userLength = ossStrlen( userName ) + 1 ;
+   ossStrncpy( pUser, userName, userLength ) ;
 
 done:
    return rc ;

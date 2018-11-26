@@ -154,7 +154,7 @@ SDB_EXPORT INT32 initClient( sdbClientConf* config ) ;
 SDB_EXPORT INT32 sdbGetPasswdByCipherFile( const CHAR *pUsrName,
                                            const CHAR *pToken,
                                            const CHAR *pCipherFile,
-                                           CHAR **pUser, CHAR **pPasswd ) ;
+                                           CHAR *pUser, CHAR *pPasswd ) ;
 
 /** \fn INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
                            const CHAR *pUsrName, const CHAR *pPasswd ,

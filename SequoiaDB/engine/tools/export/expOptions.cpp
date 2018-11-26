@@ -35,7 +35,7 @@
 #include "utilParam.hpp"
 #include "ossUtil.h"
 #include "pd.hpp"
-#include "utilCipher.hpp"
+#include "utilPasswdTool.hpp"
 #include <iostream>
 
 namespace exprt
@@ -1131,14 +1131,19 @@ namespace exprt
 
             if ( _has(OPTION_CIPHER) && _get<bool>(OPTION_CIPHER) )
             {
+               string connectionUserName ;
+
                rc = passwdTool.getPasswdByCipherFile( _user, _token,
-                                                      _cipherfile, _password ) ;
+                                                      _cipherfile,
+                                                      connectionUserName,
+                                                      _password ) ;
                if ( SDB_OK != rc )
                {
                   cerr << "get user password failed" << endl ;
                   PD_LOG( PDERROR, "get user password failed" ) ;
                   goto error ;
                }
+               _user = connectionUserName ;
             }
             else
             {

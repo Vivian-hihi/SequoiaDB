@@ -1005,14 +1005,14 @@ sdbConnectionHandle sdbGetConnectionHandle( const char **serverList,
                                             int session_timeout,
                                             const char *transaction )
 {
-   sdbConnectionHandle hConnection = SDB_INVALID_HANDLE ;
-   SdbConnectionPool *pool         = NULL ;
-   INT32 count                     = 0 ;
-   INT32 rc                        = SDB_OK ;
-   INT32 i                         = 0 ;
-   SdbConnection *connect          = NULL ;
-   CHAR *userName                  = NULL ;
-   CHAR *password                  = NULL ;
+   sdbConnectionHandle hConnection        = SDB_INVALID_HANDLE ;
+   SdbConnectionPool *pool                = NULL ;
+   INT32 count                            = 0 ;
+   INT32 rc                               = SDB_OK ;
+   INT32 i                                = 0 ;
+   SdbConnection *connect                 = NULL ;
+   CHAR userName[SDB_MAX_USERNAME_LENGTH] = {'\0'} ;
+   CHAR password[SDB_MAX_PASSWORD_LENGTH] = {'\0'} ;
 
    /* connection string is address + service + user + password */
    StringInfo connName = makeStringInfo() ;
@@ -1080,20 +1080,10 @@ sdbConnectionHandle sdbGetConnectionHandle( const char **serverList,
    else
    {
       rc = sdbGetPasswdByCipherFile( usr, token, cipherfile,
-                                     &userName, &password ) ;
+                                     userName, password ) ;
       if ( !rc )
       {
-         
          rc = sdbConnect1( serverList, serverNum, userName, password, &hConnection ) ;
-
-         if ( NULL != userName )
-         {
-            free( userName ) ;
-         }
-         if ( NULL != password )
-         {
-            free( password ) ;
-         }
       }
    }
 

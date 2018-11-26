@@ -37,7 +37,7 @@
 #include "utilParam.hpp"
 #include "pmdDef.hpp"
 #include "ossVer.hpp"
-#include "utilCipher.hpp"
+#include "utilPasswdTool.hpp"
 #include "utilCommon.hpp"
 #include <iostream>
 
@@ -134,7 +134,6 @@ static INT32 parseCmdLine( const po::options_description &desc,
    if ( vm.count( MIG_USRNAME ) )
    {
       string user = vm[MIG_USRNAME].as<string>();
-      builder.append( MIG_USRNAME, user ) ;
 
       if ( vm.count( MIG_PASSWD ) )
       {
@@ -143,6 +142,7 @@ static INT32 parseCmdLine( const po::options_description &desc,
          {
             passwd = engine::passwordTool::interactivePasswdInput() ;
          }
+         builder.append( MIG_USRNAME, user ) ;
          builder.append( MIG_PASSWD, passwd ) ;
       }
       else
@@ -152,17 +152,24 @@ static INT32 parseCmdLine( const po::options_description &desc,
 
          if ( vm.count(MIG_CIPHER) && vm[MIG_CIPHER].as<bool>() )
          {
+            string connectionUserName ;
+            
             rc = passwdTool.getPasswdByCipherFile( user, token,
-                                                   cipherfile, passwd ) ;
+                                                   cipherfile,
+                                                   connectionUserName,
+                                                   passwd ) ;
             if ( SDB_OK != rc )
             {
                cerr << "get user password failed" << endl ;
                PD_LOG( PDERROR, "get user password failed" ) ;
                goto error ;
             }
+            builder.append( MIG_USRNAME, connectionUserName ) ;
+            builder.append( MIG_PASSWD, passwd ) ;
          }
          else
          {
+            builder.append( MIG_USRNAME, user ) ;
             if ( vm.count(MIG_TOKEN) || vm.count(MIG_CIPHERFILE) )
             {
                cout << "to use cipherfile, provide --cipher" << endl ;

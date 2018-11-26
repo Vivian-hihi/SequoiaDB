@@ -94,10 +94,10 @@ static void _arrayAppendElement( CHAR *array, UINT32 startPos, CHAR *appendArray
 static INT32 _extractRandomArray( CHAR *cipherText, UINT32 *cipherTextSize, 
                                   CHAR *array, UINT32 *arraySize )
 {
-   INT32 rc = SDB_OK ;
+   INT32          rc = SDB_OK ;
 
    UINT32         cipherLowPos = 0 ;
-   UINT32         cipherMidPos  = 0 ;
+   UINT32         cipherMidPos = 0 ;
    UINT32         cipherHighPos = 0 ;
    CHAR           arrayLowContent[ARRAY_CONTENT_LENGTH] = { '\0' } ;
    CHAR           arrayMidContent[ARRAY_CONTENT_LENGTH] = { '\0' } ;
@@ -177,8 +177,8 @@ static void _hashToKey( CHAR *cipherString, UINT32 cipherStringSize,
                                desiredLength : SHA256_DIGEST_LENGTH ) ;
 }
 
-static INT32 _decrypt( CHAR *cipherText, const CHAR *token,
-                       CHAR *clearText, UINT32 clearTextLen )
+static INT32 _decrypt( const CHAR *cipherText, UINT32 clearTextLen,
+                       const CHAR *token, CHAR *clearText )
 {
    INT32                 rc = SDB_OK ;
 
@@ -205,7 +205,7 @@ static INT32 _decrypt( CHAR *cipherText, const CHAR *token,
       goto error ;
    }
 
-   passwdEncrypted = ( CHAR * )malloc( strlen( cipherText ) / 2 ) ;
+   passwdEncrypted = ( CHAR * )malloc( ossStrlen( cipherText ) / 2 ) ;
 
    if ( NULL == passwdEncrypted )
    {
@@ -222,12 +222,12 @@ static INT32 _decrypt( CHAR *cipherText, const CHAR *token,
       goto error ;
    }
 
-   if ( NULL != token && 0 != strlen( token ) )
+   if ( NULL != token && 0 != ossStrlen( token ) )
    {
       ossStrncpy( cipherString, token, CIPHER_STRING_MAX_LENGTH - randArraySize  ) ;
-      cipherStringSize += strlen( token ) ;
+      cipherStringSize += ossStrlen( token ) ;
    }
-   _arrayAppendElement( cipherString, NULL == token ? 0 : strlen( token ),
+   _arrayAppendElement( cipherString, NULL == token ? 0 : ossStrlen( token ),
                         randArray, 0, randArraySize, &cipherStringSize ) ;
 
    _hashToKey( cipherString, cipherStringSize,
@@ -274,25 +274,7 @@ done:
 
    return rc ;
 error:
-   rc = SDB_SYS ;
    goto done ;
-}
-
-void _extractUserInfo( const CHAR *userInfo, CHAR *userName,
-                       CHAR *fullName )
-{
-   CHAR *atPos = ossStrchr( userInfo, '@' ) ;
-
-   if ( NULL != atPos )
-   {
-      ossStrncpy( userName, userInfo, atPos - userInfo ) ;
-   }
-   else
-   {
-      ossStrncpy( userName, userInfo, strlen( userInfo ) ) ;
-   }
-
-   ossStrncpy( fullName, userInfo, strlen( userInfo ) ) ;
 }
 
 INT32 _readn( INT32 fd, void *vptr, size_t n )
@@ -325,42 +307,20 @@ INT32 _readn( INT32 fd, void *vptr, size_t n )
    return ( n - nleft ) ;         /* return >= 0 */
 }
 
-INT32 _findAndDecrypt( const CHAR *userName, const CHAR *fullName,
-                       const CHAR *token, const CHAR *path, CHAR **clearText )
+INT32 _readFile( const CHAR *path, CHAR **fileContent, UINT32 *readLength )
 {
-   INT32 rc = SDB_OK ;
-
-   INT32 foundFullNameCount = 0 ;
-   INT32 foundHalfNameCount = 0 ;
-   CHAR  *atPos = NULL ;
-   CHAR  *colonPos = NULL ;
-   CHAR  *fileContent = NULL ;
-   off_t fileSize = 0 ;
-   INT32 fd ;
-   UINT32 nleft = fileSize ;
-   CHAR   *foundNewline = NULL ;
-   CHAR   *startPosition = fileContent ;
-   CHAR   *matchedPosition = NULL ;
-   UINT32 matchedLength = 0 ;
-   UINT32 fileFullNameLen = 0 ;
-   UINT32 fileUserNameLen = 0 ;
-   UINT32 fullNameLen = strlen( fullName ) ;
-   UINT32 userNameLen = strlen( userName ) ;
+   INT32  rc = SDB_OK ;
+   
+   off_t  fileSize = 0 ;
+   INT32  fd ;
+   UINT32 nleft = 0 ;
 #if defined (_LINUX)
    struct stat stat  ;
 #elif defined (_WINDOWS)
    struct _stat stat ;
 #endif
 
-   if ( NULL == userName || NULL == path ||
-        NULL == fullName  )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-
 #if defined (_LINUX)
-
    fd = open( path, O_RDONLY ) ;
    if ( -1 == fd )
    {
@@ -370,12 +330,11 @@ INT32 _findAndDecrypt( const CHAR *userName, const CHAR *fullName,
 
    if ( -1 == fstat( fd, &stat ) )
    {
-      rc = errno ;
+      rc = SDB_IO ;
       goto error ;
    }
 
 #elif defined (_WINDOWS)
-
    fd = _open( path, O_RDONLY ) ;
    if ( -1 == fd )
    {
@@ -385,33 +344,86 @@ INT32 _findAndDecrypt( const CHAR *userName, const CHAR *fullName,
 
    if ( -1 == _fstat( fd, &stat ) )
    {
-      rc = errno ;
+      rc = SDB_IO ;
       goto error ;
    }
 #endif
 
    fileSize = stat.st_size ;
-   fileContent = ( CHAR * )malloc( fileSize ) ;
-   if ( NULL == fileContent )
+   *fileContent = ( CHAR * )malloc( fileSize ) ;
+   if ( NULL == *fileContent )
    {
       rc = SDB_OOM ;
       goto error ;
    }
 
-   nleft = _readn( fd, ( void * )fileContent, fileSize ) ;
+   nleft = _readn( fd, ( void * )*fileContent, fileSize ) ;
    if ( 0 > nleft )
    {
       rc = SDB_SYS ;
       goto error ;
    }
 
-   startPosition = fileContent ;
-   while ( nleft > 0 )
+   *readLength = nleft ;
+
+#if defined (_LINUX)
+   if ( -1 == close( fd ) )
+#elif defined (_WINDOWS)
+   if ( -1 == _close( fd ) )
+#endif
    {
-      foundNewline = memchr( startPosition + 1, '\n', nleft ) ;
+      rc = SDB_IO ;
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 decryptUserCipher( const CHAR *userName, const CHAR *fullName,
+                         const CHAR *token, const CHAR *path, CHAR *clearText )
+{
+   INT32  rc = SDB_OK ;
+
+   INT32  foundFullNameCount = 0 ;
+   INT32  foundHalfNameCount = 0 ;
+   CHAR   *atPos = NULL ;
+   CHAR   *colonPos = NULL ;
+   CHAR   *fileContent = NULL ;
+   UINT32 fileLength = 0 ;
+   CHAR   *foundNewline = NULL ;
+   CHAR   *startPosition = NULL ;
+   CHAR   *matchedPosition = NULL ;
+   UINT32 matchedLength = 0 ;
+   UINT32 fileFullNameLen = 0 ;
+   UINT32 fileUserNameLen = 0 ;
+   UINT32 fullNameLen = 0 ;
+   UINT32 userNameLen = 0 ;
+
+   if ( NULL == userName || NULL == path ||
+        NULL == fullName || NULL == clearText )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = _readFile( path, &fileContent, &fileLength ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   fullNameLen = ossStrlen( fullName ) ;
+   userNameLen = ossStrlen( userName ) ;
+
+   startPosition = fileContent ;
+   while ( fileLength > 0 )
+   {
+      foundNewline = memchr( startPosition + 1, '\n', fileLength ) ;
       if ( NULL != foundNewline )
       {
-
          colonPos = memchr( startPosition, ':', 
                             foundNewline - startPosition ) ;
          atPos = memchr( startPosition, '@', 
@@ -452,7 +464,7 @@ INT32 _findAndDecrypt( const CHAR *userName, const CHAR *fullName,
          break ;
       }
       
-      nleft -= ( foundNewline + 1 ) - startPosition ;
+      fileLength -= ( foundNewline + 1 ) - startPosition ;
       startPosition = foundNewline + 1 ;      
    }
 
@@ -460,24 +472,19 @@ INT32 _findAndDecrypt( const CHAR *userName, const CHAR *fullName,
    {
       matchedPosition[matchedLength] = '\0' ;
 
-      *clearText = ( CHAR * )malloc( matchedLength ) ;
-      if ( NULL == *clearText )
+      rc = _decrypt( matchedPosition, matchedLength, token, clearText ) ;
+      if ( SDB_OK != rc )
       {
-         rc = SDB_OOM ;
          goto error ;
       }
-
-      _decrypt( matchedPosition, token, *clearText, matchedLength ) ;
    }
    else if ( 1 < foundHalfNameCount )
    {
-      printf( "ambiguous user name, try providing cluster name." ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
    else
    {
-      printf( "no matching user name." ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
@@ -489,31 +496,6 @@ done:
       free( fileContent ) ;
    }
 
-   return rc ;
-error:
-   goto done ;
-}
-
-INT32 decryptUserCipher( const CHAR* pUsername, const CHAR *pToken,
-                         const CHAR *pPath, CHAR **pPasswd )
-{
-   INT32   rc = SDB_OK ;
-
-   CHAR    userName[USERNAME_MAX_LENGTH] = {'\0'} ;
-   CHAR    fullName[USERNAME_MAX_LENGTH] = {'\0'} ;
-
-   _extractUserInfo( pUsername, userName, fullName ) ;
-
-   rc = _findAndDecrypt( userName, fullName, pToken,
-                         pPath, pPasswd ) ;
-   if ( SDB_OK != rc )
-   {
-      printf( "decrypt user %s passwd failed.", fullName ) ;
-      rc = SDB_SYS ;
-      goto error ;
-   }
-
-done:
    return rc ;
 error:
    goto done ;
