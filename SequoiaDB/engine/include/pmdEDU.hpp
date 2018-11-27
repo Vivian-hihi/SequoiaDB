@@ -170,6 +170,10 @@ namespace engine
 
          virtual void      releaseAlignedBuff() ;
 
+         virtual CHAR*     getBuffer( UINT32 len ) ;
+
+         virtual void      releaseBuffer() ;
+
          /*
             Operation Related
          */
@@ -264,7 +268,6 @@ namespace engine
          // otherwise it's infinite wait
 
          BOOLEAN waitMsg   = FALSE ;
-         writingDB( FALSE ) ;
 
          if ( resetStat && PMD_EDU_IDLE != _status )
          {
@@ -485,6 +488,9 @@ namespace engine
       /// aligned memory.
       void                    *_alignedMem ;
       UINT32                   _alignedMemSize ;
+      /// buffer memory
+      CHAR                    *_pBuffer ;
+      UINT32                  _buffSize ;
 
       SET_CONTEXT             _contextList ;
 

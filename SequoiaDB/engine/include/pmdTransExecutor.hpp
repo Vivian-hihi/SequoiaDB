@@ -63,6 +63,7 @@ namespace engine
          virtual EDUID        getEDUID() const ;
          virtual void         wakeup() ;
          virtual INT32        wait( INT64 timeout ) ;
+         virtual IExecutor*   getExecutor() ;
 
       protected:
          _pmdEDUCB            *_pEDUCB ;

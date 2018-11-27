@@ -117,6 +117,9 @@ namespace engine
       _alignedMem       = NULL ;
       _alignedMemSize   = 0 ;
 
+      _pBuffer          = NULL ;
+      _buffSize         = 0 ;
+
       _beginLsn         = 0 ;
       _endLsn           = 0 ;
       _lsnNumber        = 0 ;
@@ -183,6 +186,7 @@ namespace engine
       resetLsn() ;
       writingDB( FALSE ) ;
       releaseAlignedBuff() ;
+      releaseBuffer() ;
 
       resetLocks() ;
 
@@ -554,6 +558,27 @@ namespace engine
          SDB_OSS_ORIGINAL_FREE( _alignedMem ) ;
          _alignedMem = NULL ;
          _alignedMemSize = 0 ;
+      }
+   }
+
+   CHAR* _pmdEDUCB::getBuffer( UINT32 len )
+   {
+      if ( _buffSize < 0 )
+      {
+         releaseBuffer() ;
+         allocBuff( len, &_pBuffer, &_buffSize ) ;
+      }
+
+      return _pBuffer ;
+   }
+
+   void _pmdEDUCB::releaseBuffer()
+   {
+      if ( _pBuffer )
+      {
+         releaseBuff( _pBuffer ) ;
+         _pBuffer = NULL ;
+         _buffSize = 0 ;
       }
    }
 

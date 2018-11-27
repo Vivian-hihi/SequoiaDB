@@ -105,5 +105,10 @@ namespace engine
       return rc ;
    }
 
+   IExecutor* _pmdTransExecutor::getExecutor()
+   {
+      return _pEDUCB ;
+   }
+
 }
 

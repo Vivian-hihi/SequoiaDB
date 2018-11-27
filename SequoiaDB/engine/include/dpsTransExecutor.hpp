@@ -40,6 +40,7 @@
 #ifndef DPS_TRANS_EXECUTOR_HPP__
 #define DPS_TRANS_EXECUTOR_HPP__
 
+#include "sdbInterface.hpp"
 #include "dpsTransLockDef.hpp"
 #include "utilSegment.hpp"
 #include "utilMap.hpp"
@@ -108,6 +109,7 @@ namespace engine
          virtual EDUID        getEDUID() const = 0 ;
          virtual void         wakeup() = 0 ;
          virtual INT32        wait( INT64 timeout ) = 0 ;
+         virtual IExecutor*   getExecutor() = 0 ;
 
       protected:
          UTIL_OBJIDX             _waiterIdx ;

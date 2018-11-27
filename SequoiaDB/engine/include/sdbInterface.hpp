@@ -418,6 +418,10 @@ namespace engine
 
          virtual void      releaseAlignedBuff() = 0 ;
 
+         virtual CHAR*     getBuffer( UINT32 len ) = 0 ;
+
+         virtual void      releaseBuffer() = 0 ;
+
          /*
             Operation Related
          */
