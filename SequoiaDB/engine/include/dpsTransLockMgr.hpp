@@ -209,7 +209,7 @@ namespace engine
 
 
       // get LRB Header ( index and its pointer ) of a given lock from
-      // LRB Header bucket
+      // LRB Header bucket. Wrapper of _getLRBHdrByLockId
       BOOLEAN getLRBHdrByLockId
       (
          const dpsTransLockId & lockId,
@@ -281,6 +281,16 @@ namespace engine
          dpsTransLRB * & pLRB,
          UTIL_OBJIDX   & idxPrev,
          dpsTransLRB * & pLRBPrev
+      ) ;
+
+
+      // get LRB Header ( index and its pointer ) of a given lock from
+      // LRB Header bucket
+      BOOLEAN _getLRBHdrByLockId
+      (
+         const dpsTransLockId & lockId,
+         UTIL_OBJIDX          & hdrIdx,
+         dpsTransLRBHeader *  & pLRBHdr
       ) ;
 
 
