@@ -15,10 +15,9 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
-import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.SetBucketVersioningConfigurationRequest;
@@ -53,7 +52,7 @@ public class CommLib {
 		return s3Client;		
 	}
 	
-	public static AmazonS3 buildS3ClientWithVersion(){
+	/*public static AmazonS3 buildS3ClientWithVersion(){
 		AmazonS3 s3Client = null;
 		AWSCredentials credentials = new BasicAWSCredentials(AWS_ACCESS_KEY,AWS_SECRET_KEY);
 		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
@@ -65,7 +64,7 @@ public class CommLib {
 				.withCredentials(new AWSStaticCredentialsProvider(credentials))
 				.build();
 		return s3Client;		
-	}
+	}*/
 	
 	/**
 	 * set the bucket versioning status
@@ -108,16 +107,19 @@ public class CommLib {
 	* @param bucketName	
 	*/
 	public static void deleteAllObjects( AmazonS3 s3Client,String bucketName ){
-		ListObjectsV2Result objectListing;
+		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName)
+				.withEncodingType("url");
+		ListObjectsV2Result result;		
 		do{
-			objectListing = s3Client.listObjectsV2(bucketName);
-			Iterator<S3ObjectSummary> objIter = objectListing.getObjectSummaries().iterator();		    
+			result = s3Client.listObjectsV2(request);			
+			Iterator<S3ObjectSummary> objIter = result.getObjectSummaries().iterator();		    
 		    while( objIter.hasNext()){
-		    	S3ObjectSummary vs = objIter.next();
-		    	System.out.println("----key="+vs.getKey());
+		    	S3ObjectSummary vs = objIter.next();		    	
 		    	s3Client.deleteObject(bucketName,vs.getKey());		    	
 		    }
-		}while( objectListing.isTruncated() );
+		    String continuationToken = result.getNextContinuationToken();
+			request.setContinuationToken(continuationToken);
+		}while( result.isTruncated() );
 	}
 
 	    
@@ -133,9 +135,7 @@ public class CommLib {
 			Iterator<S3VersionSummary> versionIter = versionList.getVersionSummaries()
 					.iterator();			
 			while (versionIter.hasNext()) {			
-				S3VersionSummary vs = versionIter.next();				
-				System.out.println("----getkey="+vs.getKey());
-				System.out.println("----getversion="+vs.getVersionId());				
+				S3VersionSummary vs = versionIter.next();							
 				s3Client.deleteVersion(bucketName, vs.getKey(), vs.getVersionId());
 			}
 				
