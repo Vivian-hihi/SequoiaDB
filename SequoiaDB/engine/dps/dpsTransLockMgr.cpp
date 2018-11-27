@@ -260,7 +260,7 @@ namespace engine
    // Return:     true  -- found the LRB Header object with same lockId
    //             false -- not found
    //
-   BOOLEAN dpsTransLockManager::getLRBHdrByLockId
+   BOOLEAN dpsTransLockManager::_getLRBHdrByLockId
    (
       const dpsTransLockId &lockId,
       UTIL_OBJIDX          &hdrIdx,
@@ -278,6 +278,28 @@ namespace engine
          }
          hdrIdx = pLRBHdr->nextLRBHdrIdx ;
       }
+      return found ;
+   }
+
+
+   BOOLEAN dpsTransLockManager::getLRBHdrByLockId
+   (
+      const dpsTransLockId &lockId,
+      UTIL_OBJIDX          &hdrIdx,
+      dpsTransLRBHeader *  &pLRBHdr
+   )
+   {
+      BOOLEAN found = FALSE ;
+      UTIL_OBJIDX bktIdx = _getBucketNo( lockId ) ;
+
+      hdrIdx = _LockHdrBkt[ bktIdx ].lrbHdrIdx ;
+      found  = _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) ;
+      if ( ! found ) 
+      {
+
+         hdrIdx  = UTIL_INVALID_OBJ_INDEX ;
+         pLRBHdr = NULL ;
+      } 
       return found ;
    }
 
@@ -948,7 +970,7 @@ namespace engine
       // lookup the LRB header list and find the one with same lockId
       pLRBHdr = NULL ;
       hdrIdx  = _LockHdrBkt[ bktIdx ].lrbHdrIdx ;
-      if ( ! getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) ) 
+      if ( ! _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) ) 
       {
          // no LRB header with same lockId is found,
          // add the new LRB Header in the lrb header list
@@ -1604,7 +1626,7 @@ namespace engine
          hdrIdx = _LockHdrBkt[bktIdx].lrbHdrIdx ;
 
          // lookup LRB Header list to find the LRB Header with same lockId
-         if ( getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
+         if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
          {
             // lookup owner list to find the LRB with same eduid
             ownerLrbIdx = pLRBHdr->ownerLRBIdx ;
@@ -2087,7 +2109,7 @@ namespace engine
       _acquireOpLatch( bktIdx ) ;
 
       hdrIdx  = _LockHdrBkt[bktIdx].lrbHdrIdx ;
-      if ( getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
+      if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
       {
          SDB_ASSERT( pLRBHdr && IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
                      "Invalid LRB Header" ) ;
@@ -2328,7 +2350,7 @@ namespace engine
       _acquireOpLatch( bktIdx ) ; 
 
       hdrIdx  = _LockHdrBkt[bktIdx].lrbHdrIdx ;
-      if ( getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
+      if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
       {
          ossPrintf( "LRB Header " ) ;
          if ( lockId.isRootLevel() ) 
@@ -2531,7 +2553,7 @@ namespace engine
       _acquireOpLatch( bktIdx ) ;
 
       hdrIdx  = _LockHdrBkt[bktIdx].lrbHdrIdx ;
-      if ( getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
+      if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
       {
          monLockInfo._id = pLRBHdr->lockId ;
 
