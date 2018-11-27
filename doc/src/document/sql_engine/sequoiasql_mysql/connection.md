@@ -115,7 +115,7 @@
 |sequoiadb_user               |字符串|""     |false|SequoiaDB鉴权用户。|
 |sequoiadb_password           |字符串|""     |false|SequoiaDB鉴权密码。|
 |sequoiadb_use_partition      |布尔  |ON     |true |是否启用自动分区。|
-|sequoiadb_use_bulk_insert    |布尔  |OFF    |true |是否启用批量插入。|
+|sequoiadb_use_bulk_insert    |布尔  |ON     |true |是否启用批量插入。|
 |sequoiadb_bulk_insert_size   |整数  |100    |true |批量插入时每批的插入记录数。|
 |sequoiadb_use_autocommit     |布尔  |ON     |true |是否启用自动提交模式。|
 |sequoiadb_debug_log          |布尔  |OFF    |true |是否打印debug日志。|
