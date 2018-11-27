@@ -17,56 +17,64 @@ function main( db )
 	var cs = db.getCS(COMMCSNAME);
 	var cl = cs.createCL(clName,{ReplSize:claSize.ReplSize(), Compressed:true});
    
-	println("begin to insert  data")
-	// insert data
-	try
+	println("begin to insert  data and check result")
+	// test a : check ReturnOID and ContOnDup default values
+	var obj1 = {_id:1,a:1,b:1};
+	cl.insert(obj1);
+	if (cl.count(obj1) != 1)
 	{
-		cl.insert({_id:1,a:1,b:1});
-		var returnOidString = cl.insert({_id:oid,test:"test16714"},{ReturnOID:true});
-		cl.insert([{"_id":oid,test:"test167145_1"},{_id:123}],{ContOnDup:true});
-		println( "success to insert data to the collection" ) ;
-	}
-	catch( e )
-	{
-			throw buildException("check insert data with options", e);
+		throw "obj1 verify failed";
 	}
 	
+	// test b : ReturnOID is true
+	var obj2 = {"_id": oid,"test": "test16714"};
+	var returnOidString = cl.insert(obj2,{ReturnOID:true});
+	if(returnOidString.toObj()._id.toString() != oid)
+	{
+		throw "returned oid is incorrect"
+	}
+	if (cl.count(obj2) != 1)
+	{
+		throw "obj2 verify failed";
+	}
+	
+	//test c : ReturnOID is false
+	var obj3 = {"name": "Tom","age": "20"};
+	var returnOidNull = cl.insert(obj3,{ReturnOID:false});
+	if(returnOidNull !== undefined)
+	{
+		throw "obj3 verify failed, ReturnOID is false but returned oid is not undefined";
+	}
+	if (cl.count(obj3) != 1)
+	{
+		throw "obj3 verify failed";
+	}
+	
+	//test d : ContOnDup is true
+	var obj4 = {"_id": 123};
+	cl.insert([{"_id":oid,test:"test16714_1"},obj4],{ContOnDup:true});
+	if (cl.count({"_id":oid}) != 1)
+	{
+		throw "obj4 verify failed, contOnDup is true ,but duplicate data is inserted";
+	}
+	if (cl.count(obj4) != 1)
+	{
+		throw "obj4 verify failed";
+	}
+	
+	//test e : ContOnDup is false
 	try
 	{
-		if(cl.find().count() != 3)
-		{	
-			throw buildException("check data count result", null, "check the number  of records in the collection",
-									3, cl.find().count());
-		}	
-		
-		var obj1 = {_id:1,a:1,b:1};
-		var obj2 = {"_id": oid,"test": "test16714"};
-		var obj3 = {"_id": 123};
-		
-		var cur = cl.find({_id:1});
-		if (!compareObj(obj1, cur.next().toObj()))
+		cl.insert(obj1,{ContOnDup:false});
+		throw "exp fail but found success" 
+	}catch( e )
+	{
+		if(e != -38)
 		{
-			throw "obj1 verify failed";
+			throw buildException("check insert data with options teste", e);
 		}
-		
-		var cur = cl.find({_id:returnOidString.toObj()._id.toString()})
-		if (!compareObj(obj2, cur.next().toObj()))
-		throw "obj2 verify failed";
-
-		var cur = cl.find({_id:123});
-		if (!compareObj(obj3, cur.next().toObj()))
-		throw "obj3 verify failed";
-		println("successful insertion of data with options");
-		
-		cur.close();
 	}
-	catch( e )
-	{
-			throw buildException("check insert data with options results ", e);
-	}	
-	finally
-	{
-		commDropCL( db, COMMCSNAME, clName, true, true, "drop collection in the end , error" ) ;
-	}
+	println("successful insertion of data with options");
+	commDropCL( db, COMMCSNAME, clName, true, true, "drop collection in the end , error" ) ;
 }
 
