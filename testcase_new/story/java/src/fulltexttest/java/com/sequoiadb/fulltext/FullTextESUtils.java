@@ -36,6 +36,7 @@ public class FullTextESUtils {
     }
 	
     /**
+     * @param esClient
      * @param esIndexName
      */ 
     public static List<BSONObject> getAllRecordsFromES(Client esClient, String esIndexName) {
@@ -70,6 +71,7 @@ public class FullTextESUtils {
     }
 	
     /**
+    * @param esClient
     * @param esIndexName
     */ 
     public static long getCountFromES(Client esClient, String esIndexName) {
@@ -85,6 +87,7 @@ public class FullTextESUtils {
     }
 	
     /**
+     * @param esClient    
      * @param esIndexName
      */ 
     public static int getCommitIDFromES(Client esClient, String esIndexName) {
@@ -104,6 +107,7 @@ public class FullTextESUtils {
     }
 
     /**
+     * @param esClient
      * @param esIndexName
      */ 
     public static boolean isExistIndexInES(Client esClient, String esIndexName) {
@@ -135,6 +139,7 @@ public class FullTextESUtils {
     }
 
    /**
+    * @param esClient   
     * @param esIndexName
     */ 
     public static boolean isIndexDeletedInES(Client esClient, String esIndexName) {

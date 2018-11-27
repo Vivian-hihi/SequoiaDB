@@ -137,6 +137,29 @@ public class FullTextDBUtils {
         }
 
         /**
+        * @param db
+        * @param mainCLFullName
+        */
+        public static List<String> getSubCLNames(Sequoiadb db, String mainCLFullName) {
+            if(CommLib.isStandAlone(db)) {
+                return new ArrayList<>();
+            }
+            List<String> subCLNames = new ArrayList<>();
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put("Name", mainCLFullName);
+            DBCursor cur = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG , matcher, null, null);
+            while(cur.hasNext()) {
+                BasicBSONList bsonLists = (BasicBSONList) cur.getNext().get("CataInfo");
+                for(int i = 0; i < bsonLists.size(); i++) {
+                    BasicBSONObject obj = (BasicBSONObject) bsonLists.get(i);
+                    subCLNames.add(obj.getString("SubCLName"));
+                }
+            }
+
+            return subCLNames;
+        }
+
+        /**
         * @param cl
         * @param textIndexName
         * bug#SEQUOIADBMAINSTAREM-3778：drop full index will cause error -147 sometimes

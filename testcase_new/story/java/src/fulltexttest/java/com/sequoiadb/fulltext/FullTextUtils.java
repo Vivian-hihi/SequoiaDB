@@ -15,6 +15,7 @@ public class FullTextUtils {
      public static final int INSERT_NUMS = 200000; // insert 20w datas
 
     /**
+     * @param esClient    
      * @param db
      * @param csName
      * @param clName
@@ -40,6 +41,43 @@ public class FullTextUtils {
      }
 
      /**
+     * @param esClient
+     * @param db
+     * @param csName
+     * @param mainCLName
+     * @param textIndexName
+     * @param expectCount
+     */
+     public static void checkMainCLFullSyncToES(Client esClient, Sequoiadb db, String csName, String mainCLName, String textIndexName, int expectCount) {
+          List<String> subCLFullNames = FullTextDBUtils.getSubCLNames(db, csName + "." + mainCLName);
+          
+          // get all indexs from maincl 
+          List<String> esIndexNames = new ArrayList<>();
+          List<DBCollection> cappedCLs = new ArrayList<>();
+          for(String subCLFullName: subCLFullNames){
+              String subCSName = subCLFullName.split("\\.")[0];
+              String subCLName = subCLFullName.split("\\.")[1];
+
+              esIndexNames.addAll(FullTextDBUtils.getESIndexNames(db, subCSName, subCLName, textIndexName));
+              cappedCLs.addAll(FullTextDBUtils.getCappedCLs(db, subCSName, subCLName, textIndexName));
+          }  
+          esIndexNames = removeDuplicateItems(esIndexNames);
+          // sort esIndexNames
+          FullTextDBUtils.compare(esIndexNames);
+        
+          // check indexnames sync to ES
+          for(String esIndexName: esIndexNames) {
+             String msg = esIndexName + " is not exist";
+             Assert.assertTrue(FullTextESUtils.isExistIndexInES(esClient, esIndexName), msg);
+          }
+
+          // check all indices sync to ES
+          checkCountInES(esClient, esIndexNames, expectCount);
+          checkLidInES(esClient, esIndexNames, cappedCLs);
+     }
+
+     /**
+     * @param esClient
      * @param esIndexNames
      */ 
      public static void checkIndexNotExistInES(Client esClient, List<String> esIndexNames) {
@@ -51,6 +89,7 @@ public class FullTextUtils {
      }
 
      /**
+      * @param esClient     
       * @param esIndexNames
       * @param expectCount
       */ 
@@ -93,6 +132,7 @@ public class FullTextUtils {
      }
 	
      /**
+      * @param esClient     
       * @param esIndexNames
       * @param cappedCLs
       */ 
