@@ -66,7 +66,7 @@ function main()
       try
       { 
          cl.insert( { "id1" : "a" + i } );
-         
+         throw "insert error!";
       }catch(e)
       {
          if(e !== -6)
@@ -89,10 +89,15 @@ function main()
       throw "alter failed!";
    }
    
+   dbcl.truncate();
+   
    dbcl.insert({ "a" : "a", "id1" : 50 });
+   dbcl.insert({ "a" : "a1"});
    
    var rc = dbcl.find().sort( { "id1" : 1 } );
-   expRecs.push({ "a" : "a", "id1" : 50 })
+   var expRecs = new Array();
+   expRecs.push({ "a" : "a1", "id1" : 1 });
+   expRecs.push({ "a" : "a", "id1" : 50 });
    checkRec( rc, expRecs );
    
    commDropCL( db, COMMCSNAME, clName );

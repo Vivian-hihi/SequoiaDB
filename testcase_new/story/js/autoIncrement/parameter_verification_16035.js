@@ -19,11 +19,11 @@ function main()
    //illegal Field value
    create(dbcl, null);
    
-   create(dbcl, {Field:"$id2"});
+   create(dbcl, {Field : "$id2"});
    
-   create(dbcl, {Field:" id3"});
+   create(dbcl, {Field : " id3"});
    
-   create(dbcl, {Field:"5"});
+   create(dbcl, {Field : 5});
    
    //legal Field value
    dbcl.createAutoIncrement({ Field : "id6" });
