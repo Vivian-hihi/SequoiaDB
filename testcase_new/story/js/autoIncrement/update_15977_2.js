@@ -1,5 +1,6 @@
 /***************************************************************************
 @Description : seqDB-15977:更新记录，自增字段值保留，分区键与自增字段不同
+               seqDB-16715:使用replace操作符replace自增字段后，再使用unset操作符更新自增字段
 @Modify list :
               2018-10-17  zhaoyu  Create
 ****************************************************************************/
@@ -59,11 +60,11 @@ function main()
    println("---check replace autoIncrement field success");
    
    //SEQUOIADBMAINSTREAM-3871
-   /*dbcl.update({$unset:{id:""}});
+   dbcl.update({$unset:{id:""}});
    var actR = dbcl.find().sort({_id:1});
    var expR = [{a:1},{},{a:2},{}, {a:1}];
    checkRec(actR, expR);
-   println("---check unset autoIncrement field success");*/
+   println("---check unset autoIncrement field success");
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
