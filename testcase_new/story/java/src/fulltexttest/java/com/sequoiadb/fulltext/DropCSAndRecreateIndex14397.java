@@ -1,6 +1,5 @@
 package com.sequoiadb.fulltext;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,7 +33,6 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase{
       private DBCollection cl = null;
       private String csName = "ES_cs_14397";
       private String clName = "ES_cl_14397";
-      private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
       private Client esClient = null;
 

@@ -1,6 +1,5 @@
 package com.sequoiadb.fulltext;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -35,13 +34,11 @@ public class Range12017 extends SdbTestBase{
       private String clName = "ES_range_12017";
       private String srcGroupName = "";
       private String destGroupName = "";
-      private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
       private Client esClient = null;
 
       @BeforeClass
       public void setUp() {
-           System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
            esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
            sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
            if (CommLib.isStandAlone(sdb)) {
