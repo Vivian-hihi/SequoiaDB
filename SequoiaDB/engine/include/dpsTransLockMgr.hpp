@@ -170,6 +170,7 @@ namespace engine
       void dumpLockInfo
       (
          const dpsTransLockId & lockId,
+         const CHAR           * fileName,
          BOOLEAN                bOutputInPlainMode = FALSE
       ) ;
 
@@ -180,7 +181,8 @@ namespace engine
       void dumpLockInfo
       (
          _dpsTransExecutor * dpsTxExectr,
-         BOOLEAN bOutputInPlainMode = FALSE
+         const CHAR        * fileName,
+         BOOLEAN             bOutputInPlainMode = FALSE
       ) ;
 
 
