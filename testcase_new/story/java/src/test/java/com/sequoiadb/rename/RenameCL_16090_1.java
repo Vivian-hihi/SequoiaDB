@@ -1,6 +1,7 @@
 package com.sequoiadb.rename;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -14,12 +15,13 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * @Description RenameCL_16090.java 并发shanchu索引操作和修改cl名
+ * @Description RenameCL_16090.java 并发删除索引操作和修改cl名
  * @author luweikang
  * @date 2018年10月17日
  */
@@ -60,21 +62,28 @@ public class RenameCL_16090_1 extends SdbTestBase{
 		boolean drop = dropThread.isSuccess();
 		Assert.assertTrue(rename, renameCLThread.getErrorMsg());
 		
-		Sequoiadb db = null; 
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		if(!drop){
+			Integer[] errnos = { -23 };
+			BaseException error = (BaseException)dropThread.getExceptions().get(0);
+			if( !Arrays.asList(errnos).contains(error.getErrorCode()) ){
+				Assert.fail(dropThread.getErrorMsg());
+			}
+		}
+		
+		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
 			RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
 			checkDropIndex(db, csName, newCLName, drop);
-		} finally{
-			db.close();
 		}
 	}
 	
 	@AfterClass
 	public void tearDown(){
-		CommLib.clearCS(sdb, csName);
-		if(sdb!=null){
-			sdb.close();
+		try {
+			CommLib.clearCS(sdb, csName);
+		} finally {
+			if(sdb!=null){
+				sdb.close();
+			}
 		}
 	}
 	
@@ -82,12 +91,9 @@ public class RenameCL_16090_1 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				CollectionSpace cs = db.getCollectionSpace(csName);
 				cs.renameCollection(clName, newCLName);
-			}finally {
-				db.close();
 			}
 		}
 	}
@@ -96,15 +102,12 @@ public class RenameCL_16090_1 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 				for(int i=0; i<10; i++){
 					cl.dropIndex(indexNameB+"_"+i);
 					dropTimes--;
 				}
-			}finally {
-				db.close();
 			}
 		}
 	}

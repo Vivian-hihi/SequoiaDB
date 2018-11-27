@@ -1,8 +1,11 @@
 package com.sequoiadb.rename;
 
+import java.util.List;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -36,6 +39,14 @@ public class RenameCS_16136 extends SdbTestBase{
 	@BeforeClass
 	public void setUp(){
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		// 跳过 standAlone 和数据组不足的环境
+		if (CommLib.isStandAlone(sdb)) {
+			throw new SkipException("skip StandAlone");
+		}
+		List<String> groupsName = CommLib.getDataGroupNames(sdb);
+		if (groupsName.size() < 2) {
+			throw new SkipException("current environment less than tow groups ");
+		}
 		mainCS = sdb.createCollectionSpace(mainCSName);
 		subCS = sdb.createCollectionSpace(subCSName);
 		createMainAndSubCL();
@@ -52,22 +63,21 @@ public class RenameCS_16136 extends SdbTestBase{
 		
 		Assert.assertTrue(reCSNameThread.isSuccess(), reCSNameThread.getErrorMsg());
 		Assert.assertTrue(reCLNameThread.isSuccess(), reCLNameThread.getErrorMsg());
-		Sequoiadb db = null; 
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
 			RenameUtil.checkRenameCSResult(db, mainCSName, newMainCSName, 0);
 			RenameUtil.checkRenameCLResult(db, subCSName, subCLName, newSubCLName);
-		} finally{
-			db.close();
 		}
 	}
 	
 	@AfterClass
 	public void tearDown(){
-		CommLib.clearCS(sdb, newMainCSName);
-		CommLib.clearCS(sdb, subCSName);
-		if(sdb!=null){
-			sdb.close();
+		try {
+			CommLib.clearCS(sdb, newMainCSName);
+			CommLib.clearCS(sdb, subCSName);
+		} finally {
+			if(sdb!=null){
+				sdb.close();
+			}
 		}
 	}
 	
@@ -76,11 +86,8 @@ public class RenameCS_16136 extends SdbTestBase{
 		@Override
 		public void exec() throws Exception {
 			Thread.sleep(5);
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
 				db.renameCollectionSpace(mainCSName, newMainCSName);
-			}finally {
-				db.close();
 			}
 		}
 	}
@@ -89,12 +96,9 @@ public class RenameCS_16136 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				CollectionSpace cs = db.getCollectionSpace(subCSName);
 				cs.renameCollection(subCLName, newSubCLName);
-			}finally {
-				db.close();
 			}
 		}
 	}

@@ -1,5 +1,6 @@
 package com.sequoiadb.rename;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -15,6 +16,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Domain;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
@@ -57,9 +59,16 @@ public class RenameCS_16130 extends SdbTestBase{
 		removeThread.start();
 		
 		Assert.assertTrue(renameThread.isSuccess(), renameThread.getErrorMsg());
-		Sequoiadb db = null; 
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		
+		if(!removeThread.isSuccess()){
+			Integer[] errnosB = { -34 };
+			BaseException errorB = (BaseException)removeThread.getExceptions().get(0);
+			if( !Arrays.asList(errnosB).contains(errorB.getErrorCode()) ){
+				Assert.fail(removeThread.getErrorMsg());
+			}
+		}
+		
+		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
 			RenameUtil.checkRenameCSResult(db, csName, newCSName, 1);
 			if(removeThread.isSuccess()){
 				Domain domain = db.getDomain(domainName);
@@ -82,17 +91,18 @@ public class RenameCS_16130 extends SdbTestBase{
 					}
 				}
 			}
-		}finally{
-			db.close();
 		}
 	}
 	
 	@AfterClass
 	public void tearDown(){
-		CommLib.clearCS(sdb, newCSName);
-		sdb.dropDomain(domainName);
-		if(sdb!=null){
-			sdb.close();
+		try {
+			CommLib.clearCS(sdb, newCSName);
+		} finally {
+			sdb.dropDomain(domainName);
+			if(sdb!=null){
+				sdb.close();
+			}
 		}
 	}
 	
@@ -100,11 +110,8 @@ public class RenameCS_16130 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				db.renameCollectionSpace(csName, newCSName);
-			}finally {
-				db.close();
 			}
 		}
 	}
@@ -113,12 +120,9 @@ public class RenameCS_16130 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				CollectionSpace sdbcs = db.getCollectionSpace(csName);
 				sdbcs.removeDomain();
-			}finally {
-				db.close();
 			}
 		}
 	}

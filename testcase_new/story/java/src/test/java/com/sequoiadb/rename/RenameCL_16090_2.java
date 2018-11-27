@@ -1,7 +1,9 @@
 package com.sequoiadb.rename;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -14,6 +16,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
@@ -59,21 +62,28 @@ public class RenameCL_16090_2 extends SdbTestBase{
 		boolean create = createThread.isSuccess();
 		Assert.assertTrue(rename, renameCLThread.getErrorMsg());
 		
-		Sequoiadb db = null; 
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		if(!create){
+			Integer[] errnos = { -23 };
+			BaseException error = (BaseException)createThread.getExceptions().get(0);
+			if( !Arrays.asList(errnos).contains(error.getErrorCode()) ){
+				Assert.fail(createThread.getErrorMsg());
+			}
+		}
+		
+		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
 			RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
-			checkDropIndex(db, csName, newCLName, create);
-		} finally{
-			db.close();
+			checkCreateIndex(db, csName, newCLName, create);
 		}
 	}
 	
 	@AfterClass
 	public void tearDown(){
-		CommLib.clearCS(sdb, csName);
-		if(sdb!=null){
-			sdb.close();
+		try {
+			CommLib.clearCS(sdb, csName);
+		} finally {
+			if(sdb!=null){
+				sdb.close();
+			}
 		}
 	}
 	
@@ -81,12 +91,10 @@ public class RenameCL_16090_2 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {
+			Thread.sleep(new Random().nextInt(300));
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				CollectionSpace cs = db.getCollectionSpace(csName);
 				cs.renameCollection(clName, newCLName);
-			}finally {
-				db.close();
 			}
 		}
 	}
@@ -95,20 +103,17 @@ public class RenameCL_16090_2 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 				for(int i=0; i<10; i++){
-					cl.createIndex(indexNameA+"_"+i, new BasicBSONObject("a"+i, 1), false, false);
+					cl.createIndex(indexNameB+"_"+i, new BasicBSONObject("b"+i, 1), false, false);
 					createTimes++;
 				}
-			}finally {
-				db.close();
 			}
 		}
 	}
 	
-	private void checkDropIndex(Sequoiadb db, String csName, String clName, boolean success) {
+	private void checkCreateIndex(Sequoiadb db, String csName, String clName, boolean success) {
 		DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 		DBCursor cur = cl.getIndexes();
 		List<String> indexNames = new ArrayList<>();
@@ -125,7 +130,7 @@ public class RenameCL_16090_2 extends SdbTestBase{
 		Assert.assertEquals(indexAnum, 10, "check indexA num");
 		
 		if(success){
-			Assert.assertEquals(indexNames.size(), 10, "check indexB num");
+			Assert.assertEquals(indexNames.size(), 20, "check sum indexA and indexB num");
 		}else{
 			int leftNum = 0;
 			for (int i = 0; i < indexNames.size(); i++) {
@@ -133,8 +138,8 @@ public class RenameCL_16090_2 extends SdbTestBase{
 					leftNum++;
 				}
 			}
-			if(leftNum < createTimes){
-				Assert.fail("check indexB num error, exp: " + createTimes+"act: " + leftNum);
+			if(leftNum != createTimes ){
+				Assert.fail("check indexB num error, exp: " + createTimes+" act: " + leftNum);
 			}
 		}
 	}

@@ -1,5 +1,7 @@
 package com.sequoiadb.rename;
 
+import java.util.Arrays;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -8,19 +10,19 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * @Description RenameCL_16081.java 修改cs名和修改cl名并发 
+ * @Description RenameCL_16081.java 并发修改cl为相同名
  * @author luweikang
  * @date 2018年10月17日
  * @review  wuyan 2018.10.31
  */
 public class RenameCL_16081 extends SdbTestBase{
 	
-	private String csName = "renameCS_16081";
 	private String clNameA = "rename_CL_16081A";
 	private String clNameB = "rename_CL_16081B";
 	private String newCLName= "rename_CL_16081_new";
@@ -33,11 +35,11 @@ public class RenameCL_16081 extends SdbTestBase{
 	@BeforeClass
 	public void setUp(){
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		cs = sdb.createCollectionSpace(csName);//TODO:1.非特殊情况建议用公共CS，不需要再创建cs
-		clA = cs.createCollection(clNameA);
-		clB = cs.createCollection(clNameB);
-		RenameUtil.insertData(clA, recordNum);
-		RenameUtil.insertData(clB, recordNum);
+		cs = sdb.getCollectionSpace( SdbTestBase.csName );
+		clA = cs.createCollection( clNameA );
+		clB = cs.createCollection( clNameB );
+		RenameUtil.insertData( clA, recordNum );
+		RenameUtil.insertData( clB, recordNum );
 	}
 	
 	@Test
@@ -48,33 +50,51 @@ public class RenameCL_16081 extends SdbTestBase{
 		reCLANameThread.start();
 		reCLBNameThread.start();
 		
-		boolean clARe = reCLANameThread.isSuccess();
-		boolean clBRe = reCLBNameThread.isSuccess();
+		boolean renameCLA = reCLANameThread.isSuccess();
+		boolean renameCLB = reCLBNameThread.isSuccess();
 		
-		Sequoiadb db = null; //TODO:2、可以用放在try里面，使用jkd1.7新增资源释放接口，不需要写finally
-		try{//TODO:3、这里不需要再重新newdb了吧，既然sdb已作为全局变量，可以直接用sdb
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			if(clARe && !clBRe){//TODO:4、变量名尽量不要缩写，命名建议反应所代表的意义
-				RenameUtil.checkRenameCLResult(db, csName, clNameA, newCLName);
-				RenameUtil.checkRenameCLResult(db, csName, "16081NotExistCLB", clNameB);
-			}else if(!clARe && clBRe){
-				RenameUtil.checkRenameCLResult(db, csName, clNameB, newCLName);
-				RenameUtil.checkRenameCLResult(db, csName, "16081NotExistCLA", clNameA);
-			}else if(!clARe && !clBRe){
+		if(!renameCLA){
+			Integer[] errnosA = { -22 };
+			BaseException errorA = (BaseException)reCLANameThread.getExceptions().get(0);
+			if( !Arrays.asList(errnosA).contains(errorA.getErrorCode()) ){
+				Assert.fail(reCLANameThread.getErrorMsg());
+			}
+		}
+		
+		if(!renameCLB){
+			Integer[] errnosB = { -22 };
+			BaseException errorB = (BaseException)reCLBNameThread.getExceptions().get(0);
+			if( !Arrays.asList(errnosB).contains(errorB.getErrorCode()) ){
+				Assert.fail(reCLBNameThread.getErrorMsg());
+			}
+		}
+		
+		//java驱动会有缓存,需要从新获取连接,变量名缩写已修改
+		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+			if(renameCLA && !renameCLB){
+				RenameUtil.checkRenameCLResult(db, SdbTestBase.csName, clNameA, newCLName);
+				RenameUtil.checkRenameCLResult(db, SdbTestBase.csName, "16081NotExistCLB", clNameB);
+			}else if(!renameCLA && renameCLB){
+				RenameUtil.checkRenameCLResult(db, SdbTestBase.csName, clNameB, newCLName);
+				RenameUtil.checkRenameCLResult(db, SdbTestBase.csName, "16081NotExistCLA", clNameA);
+			}else if(!renameCLA && !renameCLB){
 				Assert.fail("rename cl name to the same name, all failed");
 			}else{
 				Assert.fail("rename cl name to the same name, all success");
-			}//TODO:5、上述代码存在同样问题，如果某个线程失败，没有捕获异常并判断是否符合预期
-		} finally{
-			db.close();
-		}
+			}
+		} 
 	}
 	
 	@AfterClass
 	public void tearDown(){
-		CommLib.clearCS(sdb, csName);
-		if(sdb!=null){//TODO：6、sdb建议在finally里面关闭，如果上述操作步骤失败就不会执行
-			sdb.close();
+		try {
+			CommLib.clearCL(sdb, SdbTestBase.csName, clNameA);
+			CommLib.clearCL(sdb, SdbTestBase.csName, clNameB);
+			CommLib.clearCL(sdb, SdbTestBase.csName, newCLName);
+		} finally {
+			if(sdb!=null){
+				sdb.close();
+			}
 		}
 	}
 	
@@ -82,12 +102,9 @@ public class RenameCL_16081 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {//TODO:7、同上，建议new db使用自动释放资源方式，放在try条件中
-				CollectionSpace cs = db.getCollectionSpace(csName);
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
+				CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
 				cs.renameCollection(clNameA, newCLName);
-			}finally {
-				db.close();
 			}
 		}
 	}
@@ -96,12 +113,9 @@ public class RenameCL_16081 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {
-				CollectionSpace cs = db.getCollectionSpace(csName);
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
+				CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
 				cs.renameCollection(clNameB, newCLName);
-			}finally {
-				db.close();
 			}
 		}
 	}

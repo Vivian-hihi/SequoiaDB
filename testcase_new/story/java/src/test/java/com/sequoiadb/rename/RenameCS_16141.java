@@ -1,8 +1,12 @@
 package com.sequoiadb.rename;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -11,6 +15,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
@@ -34,6 +39,14 @@ public class RenameCS_16141 extends SdbTestBase{
 	@BeforeClass
 	public void setUp(){
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		// 跳过 standAlone 和数据组不足的环境
+		if (CommLib.isStandAlone(sdb)) {
+			throw new SkipException("skip StandAlone");
+		}
+		List<String> groupsName = CommLib.getDataGroupNames(sdb);
+		if (groupsName.size() < 2) {
+			throw new SkipException("current environment less than tow groups ");
+		}
 		mainCS = sdb.createCollectionSpace(mainCSName);
 		subCS = sdb.createCollectionSpace(subCSName);
 		createMainAndSubCL();
@@ -48,26 +61,34 @@ public class RenameCS_16141 extends SdbTestBase{
 		atttachThread.start();
 		
 		Assert.assertTrue(reCSNameThread.isSuccess(), reCSNameThread.getErrorMsg());
-		Sequoiadb db = null; 
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		
+		if(!atttachThread.isSuccess()){
+			Integer[] errnos = { -23 };
+			BaseException error = (BaseException)atttachThread.getExceptions().get(0);
+			if( !Arrays.asList(errnos).contains(error.getErrorCode()) ){
+				Assert.fail(atttachThread.getErrorMsg());
+			}
+		}
+		
+		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
 			RenameUtil.checkRenameCSResult(db, subCSName, newSubCSName, 0);
 			if(atttachThread.isSuccess()){
 				checkSnapshot(db, newSubCSName+"." + subCLName, true);
 			}else{
 				checkSnapshot(db, newSubCSName+"." + subCLName, false);
 			}
-		} finally{
-			db.close();
 		}
 	}
 	
 	@AfterClass
 	public void tearDown(){
-		CommLib.clearCS(sdb, mainCSName);
-		CommLib.clearCS(sdb, newSubCSName);
-		if(sdb!=null){
-			sdb.close();
+		try {
+			CommLib.clearCS(sdb, mainCSName);
+			CommLib.clearCS(sdb, newSubCSName);
+		} finally {
+			if(sdb!=null){
+				sdb.close();
+			}
 		}
 	}
 	
@@ -75,11 +96,8 @@ public class RenameCS_16141 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				db.renameCollectionSpace(subCSName, newSubCSName);
-			}finally {
-				db.close();
 			}
 		}
 	}
@@ -88,16 +106,13 @@ public class RenameCS_16141 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				CollectionSpace cs = db.getCollectionSpace(mainCSName);
 				DBCollection cl = cs.getCollection(mainCLName);
 				BSONObject bound = new BasicBSONObject();
 				bound.put("LowBound", new BasicBSONObject("a", 0));
 				bound.put("UpBound", new BasicBSONObject("a", 2000));
 				cl.attachCollection(subCSName+"."+subCLName, bound);
-			}finally {
-				db.close();
 			}
 		}
 	}
@@ -119,9 +134,7 @@ public class RenameCS_16141 extends SdbTestBase{
 		}
 		if(mainCLExist){
 			String mainCLName = (String) obj.get("MainCLName");
-			if(!mainCLName.equals(fullMainCLName)){
-				Assert.fail("cl already detach, should not exist, snapshot:"+obj.toString());
-			}
+			Assert.assertEquals(mainCLName, fullMainCLName, "cl attach success");
 		}else{
 			if(obj.containsField("MainCLName")){
 				Assert.fail("cl not detach, snapshot:"+obj.toString());

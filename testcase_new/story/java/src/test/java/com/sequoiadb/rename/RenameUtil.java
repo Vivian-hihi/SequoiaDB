@@ -27,6 +27,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @author luweikang
  * @date 2018年10月17日
  */
+	
 public class RenameUtil extends SdbTestBase {
 	
 	public static void checkRenameCSResult(Sequoiadb db, String oldCSName, String newCSName, int clNum){
@@ -66,7 +67,9 @@ public class RenameUtil extends SdbTestBase {
 				lob.write(data);
 				idList.add(lob.getID());
 			} finally {
-				lob.close();
+				if(lob != null){
+					lob.close();
+				}
 			}
 		}
 		return idList;
