@@ -322,6 +322,51 @@ function checkFullSyncToES(csName, clName, textIndexName, expectCount)
    checkCountInES(esIndexNames, expectCount);
    checkLidInES(esIndexNames, cappedCLs);
 }
+
+/*****************************************************************
+@description:   check records of MainCL all sync to elasticsearch by comparing count and lid       
+@input:         csName
+                clName
+                expectCount
+******************************************************************/
+function checkMainCLFullSyncToES(csName, mainCLName, textIndexName, expectCount)
+{
+   var subCLNames = new Array();
+   var cursor = db.snapshot(8, {Name: csName + "." + mainCLName});
+   while(cursor.next())
+   {
+      var cateInfos = cursor.current().toObj().CataInfo;
+      for(var i = 0; i < cateInfos.length; i++)
+      {
+         subCLNames.push(cateInfos[i]['SubCLName']);
+      }
+   }
+
+   // get all indexs from maincl 
+   var esIndexNames = new Array();
+   var cappedCLs = new Array();
+   for(var i in subCLNames)
+   {
+      var subCSName = subCLNames[i].split('.')[0];
+      var subCLName = subCLNames[i].split('.')[1];
+
+      esIndexNames = esIndexNames.concat(dbOpr.getESIndexNames(subCSName, subCLName, textIndexName));
+      cappedCLs = cappedCLs.concat(dbOpr.getCappedCLs(subCSName, subCLName, textIndexName));
+   }
+
+   // check full sync to ES for each subcl
+   for(var i in esIndexNames)
+   {
+      if(!esOpr.isExistIndexInES(esIndexNames[i]))
+      {
+         throw buildException("checkFullSyncToES","check index name exist"," index name exsit", "exsit","not exsit");
+      }
+   }
+
+   checkCountInES(esIndexNames, expectCount);
+   checkLidInES(esIndexNames, cappedCLs); 
+}
+
 	
 /*****************************************************************
 @description:   check records is full sync to elasticsearch by comparing count         
@@ -364,7 +409,7 @@ function checkCountInES(esIndexNames, expectCount)
          }
          else
          {
-            throw buildException("checkCountInES()", "count sync to es", "check ES reords synchronization", "success","time out");
+            throw buildException("checkCountInES()", "count sync to es", "check ES reords synchronization", expectCount, actCount);
          }     
       }
       else 
@@ -426,7 +471,7 @@ function checkLidInES(esIndexNames, cappedCLs)
          }
          else
          {
-            throw buildException("checkLidInES()", "lid sync to es", "check ES records synchronization", "success","time out");
+            throw buildException("checkLidInES()", "lid sync to es", "check ES records synchronization", commitIDs, lastLogicalIDs);
          }
       }
       else
