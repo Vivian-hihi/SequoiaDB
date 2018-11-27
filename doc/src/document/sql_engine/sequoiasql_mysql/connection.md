@@ -10,7 +10,17 @@
 
 2. 配置SequoiaDB连接地址
 
-   默认的SequoiaDB连接地址为“localhost:11810”，如需修改可通过bin/sdb_mysql_ctl工具或配置文件的方式进行修改，具体修改方法详见后面的[配置说明](sql_engine/sequoiasql_mysql/connection.md#配置说明)
+   默认的SequoiaDB连接地址为“localhost:11810”，如需修改可参考以下两种方式
+   
+   (1)通过bin/sdb_mysql_ctl指定端口号修改
+
+ ```lang-javascript
+    # ./bin/sdb_mysql_ctl config 3306 sequoiadb_conn_addr 192.168.20.37:11810,192.168.20.38:11810
+ ```
+
+   > **Note:**该操作目前会修改所有实例sequoiadb_conn_addr的值
+
+   (2)通过配置文件修改，参考[配置说明]章节。(sql_engine/sequoiasql_mysql/connection.md#配置说明)。
 
 3. 创建数据库实例
 
@@ -22,8 +32,8 @@
 4. 创建表
 
  ```lang-javascript
- mysql> create table cl(a int, b int, c text, primary key(a, b) ) engine = SequoiaDB ;
- mysql> create table cl1(a int, b int, unique index idx_a(a) ) engine = SequoiaDB ;
+ mysql> create table cl(a int, b int, c text, primary key(a, b) ) ;
+ mysql> create table cl1(a int, b int, unique index idx_a(a) ) ;
  ```
 
 5. 基本数据操作
@@ -97,56 +107,50 @@
 
 ##配置说明##
 
-1. 配置SequoiaDB连接地址  
-   默认的SequoiaDB连接地址为“localhost:11810”，可以通过以下两种方式修改该地址：  
-   (1)通过bin/sdb_mysql_ctl指定端口号修改
+###引擎配置###
 
- ```lang-javascript
-    # ./bin/sdb_mysql_ctl config 3306 sequoiadb_conn_addr 192.168.20.37:11810,192.168.20.38:11810
- ```
+|参数名|类型|默认值|支持命令行修改|说明|
+|------|----|------|----------|----|
+|sequoiadb_conn_addr          |字符串|"localhost:11810" |false|SequoiaDB连接地址，可配置多个，之间用逗号隔开。|
+|sequoiadb_user               |字符串|""     |false|SequoiaDB鉴权用户。|
+|sequoiadb_password           |字符串|""     |false|SequoiaDB鉴权密码。|
+|sequoiadb_use_partition      |布尔  |ON     |true |是否启用自动分区。|
+|sequoiadb_use_bulk_insert    |布尔  |OFF    |true |是否启用批量插入。|
+|sequoiadb_bulk_insert_size   |整数  |100    |true |批量插入时每批的插入记录数。|
+|sequoiadb_use_autocommit     |布尔  |ON     |true |是否启用自动提交模式。|
+|sequoiadb_debug_log          |布尔  |OFF    |true |是否打印debug日志。|
 
-      注意：改操作目前会修改所有实例sequoiadb_conn_addr的值
+> **Note:**
+> 
+> * 配置多个SequoiaDB连接地址时，每次连接会从地址中随机选择。
+> * 自动分区默认启动，启动时，在mysql上创建表将同步在SequoiaDB上创建对应的分区表（hash分区，包含所有分区组）。
+> * 自动分区时，分区键优先使用主键字段，如果建表时没有创建主键则使用唯一键，如果没有创建唯一键则使用第一个字段。
 
-   (2)修改安装路径下的配置文件my.cnf，在[mysqldN]下添加如下配置（N表示正整数）：  
+配置参数有两种修改方式。
 
- ```lang-javascript
- sequoiadb_conn_addr=192.168.20.37:11810,192.168.20.38:11810
- ```
-
-	  注意：修改配置文件后需要重新启动MySQL服务
-
- 配置完成后，可以通过以下命令查看配置结果
-
- ```lang-javascript
- mysql> show variables like 'sequoiadb%';
- ```
- 
-2. 配置分区表  
-   默认情况下，在mysql上创建表将同步在SequoiaDB上创建对应的分区表（hash分区，包含所有分区组）。  
-   分区键优先使用主键字段，如果建表时没有创建主键则使用唯一键，如果没有创建唯一键则使用第一个字段。  
-   用户可以通过将配置参数“sequoiadb_use_partition”设置为“OFF”禁止创建默认分区表，该配置参数可以在shell命令行和配置文件中修改：  
-   (1)修改安装路径下的配置文件my.cnf，在[mysqldN]下添加如下配置（N表示正整数）：  
+   (1)修改安装路径下的配置文件my.cnf，在[mysqldN]下添加/更改对应配置项（N表示正整数）。示例：
 
  ```lang-javascript
  sequoiadb_use_partition=OFF
  ```
 
-	  注意：修改配置文件后需要重新启动MySQL服务
+> **Note:**修改配置文件后需要重新启动MySQL服务
 
-   (2)通过MySQL shell修改  
+   (2)通过MySQL命令行修改，示例：
 
  ```lang-javascript
  mysql> SET GLOBAL sequoiadb_use_partition=OFF;
  ```
 
-	  注意：通过shell方式进行的配置为临时有效，当重启MySQL服务后配置将失效。如果需要配置永久生效则必须通过修改配置文件。  
- 
-3. 建表参数  
-   在mysql上创建表时，也可以通过comment参数传入自定义分区表配置，comment参数为json格式，具体配置参数如下表：
+> **Note:**通过命令行方式进行的配置为临时有效，当重启MySQL服务后配置将失效。如果需要配置永久生效则必须通过修改配置文件。  
+
+###自定义表配置###
+
+   在mysql上创建表时，也可以通过comment参数传入自定义的表配置，comment参数为json格式，具体配置参数如下表：
  
 | 参数名 | 参数类型 | 描述 | 是否必填 |
 | ------ | --- | ------ | ------ |
-| table_options | json | 创建集合的相关参数。详见SequoiaDB集合相关参数，如：分区键(ShardingKey)、分区类型(ShardingType)等均在options中添加。| 否	|
+| table_options | json | 创建集合的相关参数。详见[SequoiaDB创建集合选项](reference/Sequoiadb_command/SdbCS/createCL.md)。| 否	|
 
  示例：  
  在SequoiaDB上创建分区键为“{a:1,b:-1}”，分区类型为范围分区的集合cl  
