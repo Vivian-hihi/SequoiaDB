@@ -39,6 +39,7 @@
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "sdbInterface.hpp"   // IContext
+#include <stdio.h>
 
 namespace engine
 {
@@ -2280,6 +2281,7 @@ namespace engine
    void dpsTransLockManager::dumpLockInfo
    (
       _dpsTransExecutor * dpsTxExectr,
+      const CHAR        * fileName,
       BOOLEAN bOutputInPlainMode
    )
    {
@@ -2288,9 +2290,16 @@ namespace engine
       CHAR * pStr = NULL ;
       CHAR * prefixStr = (CHAR*)"   " ; 
       CHAR szBuffer[ DPS_STRING_LEN_MAX ] = { '\0' } ;
+      FILE * fp   = NULL;
 
       if ( dpsTxExectr )
       {
+         // open output file
+         if ( NULL == ( fp = fopen( fileName, "ab+" ) ) )
+         {
+            goto error ;
+         }
+         
          lrbIdx = dpsTxExectr->getLastLRBIdx() ;
          while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
          {
@@ -2309,10 +2318,18 @@ namespace engine
                pStr = (CHAR*) _LRBToString( lrbIdx, szBuffer,
                                             sizeof(szBuffer), prefixStr ) ;
             }
-            ossPrintf( "%s"OSS_NEWLINE, pStr ) ;
+            fprintf( fp, "%s"OSS_NEWLINE, pStr ) ;
             lrbIdx = pLRB->eduLrbIdxPrev ;
          }
+
+         // close output file
+         if ( fp )
+         {
+            fclose( fp ) ;
+         }
       }
+   error:
+      return ;
    }
 
 
@@ -2323,7 +2340,8 @@ namespace engine
    void dpsTransLockManager::dumpLockInfo
    (
       const dpsTransLockId & lockId,
-      BOOLEAN bOutputInPlainMode
+      const CHAR           * fileName,
+      BOOLEAN                bOutputInPlainMode
    )
    {
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX,
@@ -2336,11 +2354,20 @@ namespace engine
       CHAR * prefixStr = (CHAR*)"   " ; 
       CHAR szBuffer[ DPS_STRING_LEN_MAX ] = { '\0' } ;
 
+      FILE * fp = NULL ;
+
+
       // dump intent lock at first
       if ( ! lockId.isRootLevel() )
       {
          iLockId = lockId.upOneLevel() ;
-         dumpLockInfo( iLockId, bOutputInPlainMode );
+         dumpLockInfo( iLockId, fileName, bOutputInPlainMode );
+      }
+
+      // open output file
+      if ( NULL == ( fp = fopen( fileName, "ab+" ) ) )
+      {
+         goto error ;
       }
 
       // calculate the hash index by lockId
@@ -2352,7 +2379,7 @@ namespace engine
       hdrIdx  = _LockHdrBkt[bktIdx].lrbHdrIdx ;
       if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
       {
-         ossPrintf( "LRB Header " ) ;
+         fprintf( fp, "%s",  "LRB Header " ) ;
          if ( lockId.isRootLevel() ) 
          {
             pStr = "( Container Space Lock )" ;
@@ -2366,8 +2393,8 @@ namespace engine
             pStr = "( Container Lock )" ;
          }
 
-         ossPrintf( " %s"OSS_NEWLINE, pStr ) ;
-         ossPrintf( "-------------------------------"OSS_NEWLINE ) ;
+         fprintf( fp, " %s"OSS_NEWLINE, pStr ) ;
+         fprintf( fp, "%s", "-------------------------------"OSS_NEWLINE ) ;
          if ( bOutputInPlainMode )
          {
             pStr = (CHAR*) _LRBHdrToString( hdrIdx, szBuffer, sizeof(szBuffer));
@@ -2377,18 +2404,18 @@ namespace engine
             pStr = (CHAR*) _LRBHdrToString( hdrIdx, szBuffer, sizeof(szBuffer),
                                             NULL );
          }
-         ossPrintf( "%s"OSS_NEWLINE OSS_NEWLINE, pStr ) ;
+         fprintf( fp, "%s"OSS_NEWLINE OSS_NEWLINE, pStr ) ;
          if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx ) ) 
          {
             if ( bOutputInPlainMode )
             {
-               ossPrintf( "Owner list:"OSS_NEWLINE ) ;
-               ossPrintf( "-----------"OSS_NEWLINE ) ;
+               fprintf( fp, "%s", "Owner list:"OSS_NEWLINE ) ;
+               fprintf( fp, "%s", "-----------"OSS_NEWLINE ) ;
             }
             else
             {
-               ossPrintf( "%sOwner list:"OSS_NEWLINE, prefixStr ) ;
-               ossPrintf( "%s-----------"OSS_NEWLINE, prefixStr ) ;
+               fprintf( fp, "%sOwner list:"OSS_NEWLINE, prefixStr ) ;
+               fprintf( fp, "%s-----------"OSS_NEWLINE, prefixStr ) ;
             }
             lrbIdx = pLRBHdr->ownerLRBIdx ;
             while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
@@ -2404,15 +2431,15 @@ namespace engine
                   pStr = (CHAR*) _LRBToString( lrbIdx, szBuffer,
                                                sizeof(szBuffer), prefixStr ) ;
                }
-               ossPrintf( "%s"OSS_NEWLINE, pStr ) ;
+               fprintf( fp, "%s"OSS_NEWLINE, pStr ) ;
                lrbIdx = pLRB->nextLRBIdx ;
             } 
-            ossPrintf( OSS_NEWLINE ) ;
+            fprintf( fp, "%s", OSS_NEWLINE ) ;
          }
          if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
          {
-            ossPrintf( "%sUpgrade list:"OSS_NEWLINE, prefixStr ) ;
-            ossPrintf( "%s-------------"OSS_NEWLINE, prefixStr ) ;
+            fprintf( fp, "%sUpgrade list:"OSS_NEWLINE, prefixStr ) ;
+            fprintf( fp, "%s-------------"OSS_NEWLINE, prefixStr ) ;
             lrbIdx = pLRBHdr->upgradeLRBIdx ;
             while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
             {
@@ -2427,15 +2454,15 @@ namespace engine
                   pStr = (CHAR*) _LRBToString( lrbIdx, szBuffer,
                                                sizeof(szBuffer), prefixStr );
                }
-               ossPrintf( "%s"OSS_NEWLINE, pStr ) ;
+               fprintf( fp, "%s"OSS_NEWLINE, pStr ) ;
                lrbIdx = pLRB->nextLRBIdx ;
             }
-            ossPrintf( OSS_NEWLINE ) ;
+            fprintf( fp, "%s", OSS_NEWLINE ) ;
          }
          if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx ) )
          {
-            ossPrintf( "%sWaiter list:"OSS_NEWLINE, prefixStr ) ;
-            ossPrintf( "%s------------"OSS_NEWLINE, prefixStr ) ;
+            fprintf( fp, "%sWaiter list:"OSS_NEWLINE, prefixStr ) ;
+            fprintf( fp, "%s------------"OSS_NEWLINE, prefixStr ) ;
             lrbIdx = pLRBHdr->waiterLRBIdx ;
             while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
             {
@@ -2450,16 +2477,24 @@ namespace engine
                   pStr = (CHAR*) _LRBToString( lrbIdx, szBuffer,
                                                sizeof(szBuffer), prefixStr );
                }
-               ossPrintf( "%s"OSS_NEWLINE, pStr ) ;
+               fprintf( fp, "%s"OSS_NEWLINE, pStr ) ;
                lrbIdx = pLRB->nextLRBIdx ;
             }
-            ossPrintf( OSS_NEWLINE ) ;
+            fprintf( fp, "%s", OSS_NEWLINE ) ;
          }
-         ossPrintf( OSS_NEWLINE ) ;
+         fprintf( fp, "%s", OSS_NEWLINE ) ;
       }
 
       // free bucket latch
       _releaseOpLatch( bktIdx ) ;
+
+      // close file
+      if ( fp ) 
+      {
+         fclose( fp ) ;
+      }
+   error:
+      return ;
    }
 
 
