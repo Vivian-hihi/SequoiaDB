@@ -9,6 +9,7 @@ import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
@@ -20,22 +21,36 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 
 /**
- * test content: To get a list of objects within a bucket.specify matching  delimiter 
- * testlink-case: seqDB-16422 * 
+ * test content: To get a list of objects within a bucket.specify matching
+ *               delimiter with different formats 
+ * testlink-case: seqDB-16424 * 
  * @author wuyan
  * @Date 2018.11.19
  * @version 1.00
  */
-public class ListObjectsWithDelimiter16422 extends S3TestBase {
+public class ListObjectsWithDelimiter16424 extends S3TestBase {
+	@DataProvider(name = "listWithDelimiterProvider")
+	public Object[][] generatePageSize() {
+		return new Object[][] {
+				// the parameter : delimiter and matchObjectPosition
+				// test a: delimiter type is letters and numbers
+				new Object[] { "/test1/AZ/", 0 },
+				// test b:delimiter type is special chararcter
+				new Object[] { "/test*_.(d!-t'')", 1 },
+				// test c:delimiter type is &@:,$=+?;ASCII
+				new Object[] { "/test&@:,$=+? t_1", 2 }, new Object[] { "\010te\065s", 3 },
+				new Object[] { "/\35te\41a\57", 4 },
+				// test d: delimiter type is 、^`><{}[]#%"~|
+				new Object[] { "test、^`><{}[]#%\"~|_1", 5 }, };
+	}
+
 	private boolean runSuccess = false;
-	private String bucketName = "bucket16422";
-	private String key = "/aa/bb/object16422";
+	private String bucketName = "bucket16424";
 	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 100;
-	private int matchObjectNums = 40;
+	private int fileSize = 1024 * 10;
 	private File localPath = null;
 	private String filePath = null;
-	private String delimiter = "/aa/";;
+	private List<String> keyList = null;
 
 	@SuppressWarnings("deprecation")
 	@BeforeClass
@@ -53,12 +68,14 @@ public class ListObjectsWithDelimiter16422 extends S3TestBase {
 		}
 
 		s3Client.createBucket(bucketName);
+		String[] keyNames = { "/test1/AZ/16424.txt", "/test*_.(d!-t'')/16424.png", "/test&@:,$=+? t_16424",
+				"\010te\065st_16424", "/\35te\41a\57st_16424", "test、^`><{}[]#%\"~|_16424" };
+		keyList = putObjects(keyNames);
 	}
 
-	@Test
-	public void testListObjects() throws Exception {
-		List<String> keyList = putObjects();
-		listObjectsAndCheckResult(keyList);
+	@Test(dataProvider = "listWithDelimiterProvider")
+	public void testListObjects(String delimiter, int position) throws Exception {
+		listObjectsAndCheckResult(delimiter, position);
 		runSuccess = true;
 	}
 
@@ -73,48 +90,44 @@ public class ListObjectsWithDelimiter16422 extends S3TestBase {
 		}
 	}
 
-	private void listObjectsAndCheckResult(List<String> keyList) throws IOException {
-		List<String> queryKeyList = new ArrayList<>();
-		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
-		request.withDelimiter(delimiter);
+	private void listObjectsAndCheckResult(String delimiter, int position) throws IOException {
+		List<String> expKeyList = new ArrayList<>(keyList);
+		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url")
+				.withDelimiter(delimiter);
 		ListObjectsV2Result result = s3Client.listObjectsV2(request);
 		List<String> commonPrefixes = result.getCommonPrefixes();
+
 		// matching delimiter displays only 1 record
 		Assert.assertEquals(commonPrefixes.size(), 1);
 		Assert.assertEquals(commonPrefixes.get(0), delimiter);
 
-		// objects do not match delimiter are displayed in contents,num is 10
+		// objects do not match delimiter are displayed in contents,num is 4
 		List<S3ObjectSummary> objects = result.getObjectSummaries();
-		int contentsNums = 10;
+		int contentsNums = 5;
 		Assert.assertEquals(objects.size(), contentsNums);
+		List<String> queryKeyList = new ArrayList<>();
 		for (S3ObjectSummary os : objects) {
 			String key = os.getKey();
 			String etag = os.getETag();
-			long size = os.getSize();
 			queryKeyList.add(key);
 			Assert.assertEquals(etag, TestTools.getMD5(filePath));
-			Assert.assertEquals(size, fileSize);
 		}
 
 		// check the keyName
-		Collections.sort(keyList);
+		expKeyList.remove(position);
+		Collections.sort(expKeyList);
 		Collections.sort(queryKeyList);
-		Assert.assertEquals(queryKeyList, keyList);
+		Assert.assertEquals(queryKeyList, expKeyList);
 	}
 
-	private List<String> putObjects() {
-		List<String> noMatchKeyList = new ArrayList<>();
-		int objectNums = 50;
-		String keyName;
-		for (int i = 0; i < objectNums; i++) {
-			if (i < matchObjectNums) {
-				keyName = key + "_" + i + TestTools.getRandomString(i);
-			} else {
-				keyName = "object16422_" + i;
-				noMatchKeyList.add(keyName);
-			}
+	private List<String> putObjects(String[] keys) {
+		List<String> keyList = new ArrayList<>();
+		for (int i = 0; i < keys.length; i++) {
+			String keyName = keys[i];
 			s3Client.putObject(bucketName, keyName, new File(filePath));
+			keyList.add(keyName);
 		}
-		return noMatchKeyList;
+
+		return keyList;
 	}
 }

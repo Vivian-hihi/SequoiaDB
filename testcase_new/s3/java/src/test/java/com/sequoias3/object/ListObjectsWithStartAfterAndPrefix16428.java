@@ -3,14 +3,12 @@ package com.sequoias3.object;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
@@ -20,22 +18,22 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 
 /**
- * test content: To get a list of objects within a bucket.specify matching prefix 
- * testlink-case: seqDB-16420 * 
+ * test content: To get a list of objects within a bucket.specify startAfter/prefix. 
+ * 				 match prefix, not match startAfter 
+ * testlink-case:seqDB-16428 
  * @author wuyan
- * @Date 2018.11.19
+ * @Date 2018.11.24
  * @version 1.00
  */
-public class ListObjectsWithPrefix16420 extends S3TestBase {
+public class ListObjectsWithStartAfterAndPrefix16428 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String bucketName = "bucket16420";
-	private String key = "/aa/bb/object16420";
+	private String bucketName = "bucket16428";
+	private String key = "/aa//bb/object16428.png";
 	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 100;
-	private int matchObjectNums = 40;
+	private int fileSize = 1024 * 20;
+	private int objectNums = 10;
 	private File localPath = null;
 	private String filePath = null;
-	private String prefix = "/dir_1/prefix/test16420";;
 
 	@SuppressWarnings("deprecation")
 	@BeforeClass
@@ -51,13 +49,17 @@ public class ListObjectsWithPrefix16420 extends S3TestBase {
 		if (s3Client.doesBucketExist(bucketName)) {
 			CommLib.clearBucket(s3Client, bucketName);
 		}
+
 		s3Client.createBucket(bucketName);
+		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+		putObjects();
 	}
 
 	@Test
-	public void testCreateObject() throws Exception {
-		List<String> keyList = putObjects();
-		listObjectsAndCheckResult(keyList);
+	public void testListObjects() throws Exception {
+		String startAfter = "key16427";
+		String prefix = "/aa//";
+		listObjectsAndCheckResult(startAfter, prefix);
 		runSuccess = true;
 	}
 
@@ -72,42 +74,24 @@ public class ListObjectsWithPrefix16420 extends S3TestBase {
 		}
 	}
 
-	private void listObjectsAndCheckResult(List<String> keyList) throws IOException {
-		List<String> queryKeyList = new ArrayList<>();
-		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
-		request.withPrefix(prefix);
+	private void listObjectsAndCheckResult(String startAfter, String prefix) {
+		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url")
+				.withStartAfter(startAfter).withPrefix(prefix);
 		ListObjectsV2Result result = s3Client.listObjectsV2(request);
 		List<S3ObjectSummary> objects = result.getObjectSummaries();
-		Assert.assertEquals(objects.size(), matchObjectNums);
-		for (S3ObjectSummary os : objects) {
-			String key = os.getKey();
-			String etag = os.getETag();
-			long size = os.getSize();
-			queryKeyList.add(key);
-			// check the etag and size
-			Assert.assertEquals(etag, TestTools.getMD5(filePath));
-			Assert.assertEquals(size, fileSize);
-		}
-
-		// check the keyName
-		Collections.sort(keyList);
-		Collections.sort(queryKeyList);
-		Assert.assertEquals(queryKeyList, keyList);
+		List<String> commonPrefixes = result.getCommonPrefixes();
+		// misMatchObject, the list size is 0
+		Assert.assertEquals(objects.size(), 0);
+		Assert.assertEquals(commonPrefixes.size(), 0);
 	}
 
-	private List<String> putObjects() {
-		List<String> matchKeyList = new ArrayList<>();
-		int objectNums = 50;
-		String keyName;
+	private void putObjects() {
+		List<String> keyList = new ArrayList<>();
 		for (int i = 0; i < objectNums; i++) {
-			if (i < matchObjectNums) {
-				keyName = prefix + "_" + i + TestTools.getRandomString(i);
-				matchKeyList.add(keyName);
-			} else {
-				keyName = key + "_" + i + TestTools.getRandomString(i);
-			}
+			String keyName = key + "_" + i;
+			keyList.add(keyName);
+			s3Client.putObject(bucketName, keyName, "test16428" + i);
 			s3Client.putObject(bucketName, keyName, new File(filePath));
 		}
-		return matchKeyList;
 	}
 }
