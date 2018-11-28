@@ -73,9 +73,10 @@ public class RenameCS_16141 extends SdbTestBase{
 		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
 			RenameUtil.checkRenameCSResult(db, subCSName, newSubCSName, 0);
 			if(atttachThread.isSuccess()){
-				checkSnapshot(db, newSubCSName+"." + subCLName, true);
+				checkSnapshot(db, mainCSName+"."+mainCLName, newSubCSName+"."+subCLName, true);
 			}else{
-				checkSnapshot(db, newSubCSName+"." + subCLName, false);
+				checkSnapshot(db, "", newSubCSName+"."+subCLName, false);
+				
 			}
 		}
 	}
@@ -126,8 +127,8 @@ public class RenameCS_16141 extends SdbTestBase{
 		subCS.createCollection(subCLName);
 	}
 	
-	private void checkSnapshot(Sequoiadb db, String fullMainCLName, boolean mainCLExist){
-		DBCursor cur = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{'Name':'" + fullMainCLName + "'}", "", "");
+	private void checkSnapshot(Sequoiadb db, String fullMainCLName, String fullSubCLName, boolean mainCLExist){
+		DBCursor cur = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{'Name':'" + fullSubCLName + "'}", "", "");
 		BSONObject obj = cur.getNext();
 		if(obj==null){
 			Assert.fail("snapshot do not contain " + fullMainCLName +" message");
