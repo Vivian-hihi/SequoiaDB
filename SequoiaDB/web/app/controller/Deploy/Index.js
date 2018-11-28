@@ -616,13 +616,7 @@
                   ++$scope.HostNum ;
                }
             } ) ;
-
-            //当前tab页是host时，更新host表格
-            if( $scope.CurrentPage == 'host' )
-            {
-               SdbSignal.commit( 'updateHostTable', hostTableContent ) ;
-            }
-            
+            SdbSignal.commit( 'updateHostTable', hostTableContent ) ;
          }
          $scope.bindResize() ;
       }
