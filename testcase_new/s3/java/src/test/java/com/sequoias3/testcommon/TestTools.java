@@ -278,7 +278,7 @@ public class TestTools {
 	 * @return character string
 	 */
 	public static String getRandomString(int length) {
-		String str = "adcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		String str = "adcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%&*中文adg字符串";
 		Random random = new Random();
 		StringBuffer sb = new StringBuffer();
 		for (int i = 0; i < length; i++) {

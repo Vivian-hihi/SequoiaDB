@@ -9,11 +9,7 @@ import org.testng.annotations.Parameters;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.services.s3.model.SetBucketVersioningConfigurationRequest;
 
 public class S3TestBase {
     protected static String coordUrl;
@@ -49,15 +45,14 @@ public class S3TestBase {
         s3Port = S3PORT;
         s3UserName = S3USERNAME;
         s3ClientUrl = "http://"+ S3HOSTNAME + ":" + S3PORT;
-        bucketName = "commbuckname";
-        enableVerBucketName = "commbucknamewithversion";
+        bucketName = "commbucket";
+        enableVerBucketName = "commbucketwithversion";
 
         //clean file
         File workDirFile = new File(workDir);
         if (!workDirFile.exists()) {
             workDirFile.mkdir();
-        }
-        
+        }        
        
         AmazonS3 s3Client = null;
         try{
@@ -66,25 +61,21 @@ public class S3TestBase {
             List<Bucket> buckets = s3Client.listBuckets();
             for ( int i = 0; i < buckets.size(); i++ ){
     			String bucketName = buckets.get(i).getName();
-    			//s3Client.deleteBucket(bucketName);
-    		}	
+    			String bucketVerStatus = s3Client.getBucketVersioningConfiguration(bucketName).getStatus();
+    			if( bucketVerStatus == "null"){
+    				CommLib.deleteAllObjects(s3Client, bucketName);
+    			}else{
+    				CommLib.deleteAllObjectVersions( s3Client, bucketName );;	
+    			}
+    			s3Client.deleteBucket(bucketName);
+    		}          
             
-            //delete object for the commbucket
-            //CommLib.deleteAllObjects(s3Client, bucketName);			
-    		
-    		//s3Client.deleteBucket(bucketName);            
-           // s3Client.createBucket(new CreateBucketRequest(bucketName));	
+            //create bucket       
+            s3Client.createBucket(new CreateBucketRequest(bucketName));	
             
-            //create bucketname by enable versioning
-            //CommLib.deleteAllObjectVersions( s3Client, enableVerBucketName );
-            //s3Client.deleteBucket(enableVerBucketName);
-           // s3Client.createBucket(new CreateBucketRequest(enableVerBucketName));
-            BucketVersioningConfiguration configuration =
-    				new BucketVersioningConfiguration().withStatus("Enabled");
-    		SetBucketVersioningConfigurationRequest setBucketVersioningConfigurationRequest =
-    				new SetBucketVersioningConfigurationRequest(enableVerBucketName, configuration);		
-    		s3Client.setBucketVersioningConfiguration(setBucketVersioningConfigurationRequest);
-            
+            //create bucket by enable versioning            
+            s3Client.createBucket(new CreateBucketRequest(enableVerBucketName));
+            CommLib.setBucketVersioning(s3Client, enableVerBucketName, "Enabled");            
         }finally {
             if (s3Client != null) {
                 s3Client.shutdown();

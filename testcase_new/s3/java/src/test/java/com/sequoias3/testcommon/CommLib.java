@@ -3,7 +3,6 @@ package com.sequoias3.testcommon;
 import java.util.Iterator;
 import java.util.List;
 
-import org.testng.Assert;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
@@ -12,7 +11,6 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
@@ -84,21 +82,17 @@ public class CommLib {
 	 * delete one bucket by bucketName
 	 * @param s3Client,bucketName 
 	 */	
+	@SuppressWarnings("deprecation")
 	public static void clearBucket( AmazonS3 s3Client, String bucketName ){
-		// if(s3Client.doesBucketExist(bucketName)){
-			// System.out.println("----is exist="+s3Client.doesBucketExist(bucketName));
-			 //s3Client.deleteBucket(bucketName);
-		// }
-		try{
-			deleteAllObjects( s3Client, bucketName );
-			deleteAllObjectVersions( s3Client, bucketName );
-			s3Client.deleteBucket(bucketName);			
-		}catch(AmazonS3Exception e){
-			if( !e.getErrorCode().equals("NoSuchBucket"))
-			{
-				Assert.fail("delete bucket:" + e.getErrorCode());
+		if(s3Client.doesBucketExist(bucketName)){
+			String bucketVerStatus = s3Client.getBucketVersioningConfiguration(bucketName).getStatus();
+			if( bucketVerStatus == "null"){
+				deleteAllObjects(s3Client, bucketName);
+			}else{
+				deleteAllObjectVersions( s3Client, bucketName );;	
 			}
-		}	 
+			s3Client.deleteBucket(bucketName);	
+		}		 
 	}
 	
 	/**
