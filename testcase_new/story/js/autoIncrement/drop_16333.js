@@ -19,6 +19,7 @@ function main()
    try
    {
       dbcl.dropAutoIncrement( "b1" );
+      throw "drop error!";  
    }catch(e)
    {
       if(e !== -333)

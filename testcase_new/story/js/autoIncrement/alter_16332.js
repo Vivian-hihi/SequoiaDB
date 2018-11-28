@@ -19,6 +19,7 @@ function main()
    try
    {
       dbcl.setAttributes({ Field : "a2", Increment : 3 });
+      throw "alter error!";  
    }catch(e)
    {
       if(e !== -6)

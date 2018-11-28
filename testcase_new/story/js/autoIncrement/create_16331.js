@@ -17,7 +17,8 @@ function main()
    try
    {
       var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : [{ Field : "a1", Increment : 2 }, 
-                                       {Field : "a1", Increment : 3}, {Field : "a1", Increment : 4}] } );     
+                                       {Field : "a1", Increment : 3}, {Field : "a1", Increment : 4}] } ); 
+      throw "create error!";                                       
    }catch(e)
    {
       if(e !== -6)
@@ -31,6 +32,7 @@ function main()
    try
    {
       dbcl.createAutoIncrement({ Field : "a1" });
+      throw "create error!";  
    }catch(e)
    {
       if(e !== -332)
