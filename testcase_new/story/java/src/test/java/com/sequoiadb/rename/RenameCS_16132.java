@@ -59,9 +59,8 @@ public class RenameCS_16132 extends SdbTestBase{
 		}
 		
 		if(!clRename){
-			Integer[] errnosB = { -34 };
+			Integer[] errnosB = { -23, -34 };
 			BaseException errorB = (BaseException)reCLNameThread.getExceptions().get(0);
-			System.out.println(Arrays.binarySearch(errnosB, errorB.getErrorCode()));
 			if( !Arrays.asList(errnosB).contains(errorB.getErrorCode()) ){
 				Assert.fail(reCLNameThread.getErrorMsg());
 			}

@@ -44,7 +44,7 @@ public class RenameCS_16129 extends SdbTestBase{
 	private int lobNum = 10;
 	private byte[] data = null;
 	
-	@BeforeClass
+	@BeforeClass(enabled = false)
 	public void setUp(){
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		if(CommLib.isStandAlone(sdb)){
@@ -72,7 +72,7 @@ public class RenameCS_16129 extends SdbTestBase{
 		
 	}
 	
-	@Test
+	@Test(enabled = false)
 	public void test(){ 
 		RenameCSThread renameThread = new RenameCSThread();
 		PutLobThread putThread = new PutLobThread();
@@ -126,7 +126,7 @@ public class RenameCS_16129 extends SdbTestBase{
 		}
 	}
 	
-	@AfterClass
+	@AfterClass(enabled = false)
 	public void tearDown(){
 		try {
 			CommLib.clearCS(sdb, newCSName);
