@@ -19,15 +19,15 @@ function main()
    dbcl.createAutoIncrement([{ Field : "a1", CacheSize : 2147483647 },
                              { Field : "a2", CacheSize : 2000 }]);
    
-   create(dbcl, "a3", -10000);
+   create(dbcl, {Field : "a3", CacheSize : -10000});
    
-   create(dbcl, "a4", 2147483648);
+   create(dbcl, {Field : "a4", CacheSize : 2147483648});
    
-   create(dbcl, "a5", 0);
+   create(dbcl, {Field : "a5", CacheSize : 0});
    
-   create(dbcl, "a6", 123.4);
+   create(dbcl, {Field : "a6", CacheSize : 123.4});
    
-   create(dbcl, "a7", { $decimal:"123.456" });
+   create(dbcl, {Field : "a7", CacheSize : { $decimal:"123.456" }});
    
    //check Sequence
    var clID = getCLID( COMMCSNAME, clName );
@@ -60,11 +60,12 @@ function main()
    commDropCL( db, COMMCSNAME, clName );
 }
 
-function create(dbcl, field, cacheSize)
+function create(dbcl, options)
 {
    try
    {
-      dbcl.createAutoIncrement({ Field : field, CacheSize : cacheSize });
+      dbcl.createAutoIncrement(options);
+      println(JSON.stringify(options));
       throw "create error!";
    }catch(e)
    {

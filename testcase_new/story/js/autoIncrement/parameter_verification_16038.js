@@ -21,13 +21,17 @@ function main()
                              { Field : "a2", MinValue : 5, StartValue : 10 },
                              { Field : "a3", MinValue : { "$numberLong" : "-9223372036854775808" } }]);
    
-   createAutoIncrement(dbcl, "a4", { "$numberLong" : "9223372036854775809" });
+   createAutoIncrement(dbcl, {Field : "a4", MinValue : { "$numberLong" : "9223372036854775809" }, StartValue : { "$numberLong" : "9223372036854775809" }});
    
-   createAutoIncrement(dbcl, "a5", { "$numberLong" : "9223372036854775807" });
+   createAutoIncrement(dbcl, {Field : "a5", MinValue : { "$numberLong" : "9223372036854775807" }, StartValue : { "$numberLong" : "9223372036854775809" }});
    
-   createAutoIncrement(dbcl, "a6", 123.4);
+   createAutoIncrement(dbcl, {Field : "a6", MinValue : 20, StartValue : 20, MaxValue : 20});
    
-   createAutoIncrement(dbcl, "a7", { $decimal:"123.456" });
+   createAutoIncrement(dbcl, {Field : "a7", MinValue : 25, MaxValue : 20});
+   
+   createAutoIncrement(dbcl, {Field : "a8", MinValue : 123.4});
+   
+   createAutoIncrement(dbcl, {Field : "a9", MinValue : { $decimal:"123.456" }});
    
    //check Sequence
    var clID = getCLID( COMMCSNAME, clName );
@@ -53,11 +57,11 @@ function main()
    commDropCL( db, COMMCSNAME, clName );
 }
 
-function createAutoIncrement(dbcl, field, minValue)
+function createAutoIncrement(dbcl, options)
 {
    try
    {
-      dbcl.createAutoIncrement({ Field : field, MinValue : minValue, StartValue : { "$numberLong" : "9223372036854775807" } });
+      dbcl.createAutoIncrement(options);
       throw "create error!";
    }catch(e)
    {

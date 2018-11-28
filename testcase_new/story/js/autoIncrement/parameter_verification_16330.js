@@ -16,27 +16,44 @@ function main()
    
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "a1" } } );
    
-   dbcl.createAutoIncrement({ Field : "a2", MaxValue : { "$numberLong" : "9223372036854775809" } });
+   create(dbcl, {Field : "a2", MaxValue : 2000, MinValue : 3000});
    
-   create(dbcl, "a3", { "$numberLong" : "-9223372036854775809" }, { "$numberLong" : "-9223372036854775860" });
+   create(dbcl, {Field : "a3", MaxValue : 2000, MinValue : 2000});
    
-   create(dbcl, "a4", { "$numberLong" : "-9223372036854775808" }, { "$numberLong" : "-9223372036854775860" } );
+   dbcl.createAutoIncrement({ Field : "a4", MaxValue : 5000 });
    
-   dbcl.createAutoIncrement({ Field : "a5", MaxValue : 5000 });
+   create(dbcl, "a5", { "$numberLong" : "-9223372036854775808" }, { "$numberLong" : "-9223372036854775860" } );
    
-   create(dbcl, "a6", 2000, 3000);
+   create(dbcl, "a6", { "$numberLong" : "-9223372036854775809" }, { "$numberLong" : "-9223372036854775860" } );
    
-   create(dbcl, "a7", 2000, 2000);
+   dbcl.createAutoIncrement({ Field : "a7", MaxValue : { "$numberLong" : "9223372036854775807" } });
+   
+   dbcl.createAutoIncrement({ Field : "a8", MaxValue : { "$numberLong" : "9223372036854775808" } });
    
    create(dbcl, "a8", 20.55);
    
    create(dbcl, "a9", { $decimal:"123.456" });
    
+   //check Sequence
+   var clID = getCLID( COMMCSNAME, clName );
+   var sequenceNames = ["SYS_" + clID + "_a1_SEQ",
+                        "SYS_" + clID + "_a4_SEQ",
+                        "SYS_" + clID + "_a7_SEQ",
+                        "SYS_" + clID + "_a8_SEQ"]; 
+   var expSequences =  [{},
+                        { MaxValue : 5000 },
+                        { MaxValue : { "$numberLong" : "9223372036854775807" }},
+                        { MaxValue : { "$numberLong" : "9223372036854775807" }}];
+   for(var i in sequenceNames)
+   {
+       checkSequence(sequenceNames[i], expSequences[i]);
+   }
+   
    var expRecs = [];
    for(var i = 0; i < 50; i++)
    {
       dbcl.insert({ a : i });
-      expRecs.push({ "a" : i, "a1" : 1 + i, "a2" : 1 + i, "a5" : 1 + i });
+      expRecs.push({ "a" : i, "a1" : 1 + i, "a4" : 1 + i, "a7" : 1 + i, "a8" : 1 + i });
    }
    
    var rc = dbcl.find().sort({ "a1" : 1 });
@@ -45,15 +62,11 @@ function main()
    commDropCL( db, COMMCSNAME, clName );
 }
 
-function create(dbcl, field, maxValue, minValue)
+function create(dbcl, options)
 {
-    if(minValue == undefined)
-    {
-       minValue = 1;
-    }
     try
     {
-       dbcl.createAutoIncrement({ Field : field, MaxValue : maxValue, MinValue : minValue, CacheSize : 1, AcquireSize : 1 });
+       dbcl.createAutoIncrement(options);
     }catch(e)
     {
        if(e !== -6)
