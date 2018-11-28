@@ -26,13 +26,15 @@ public class S3TestBase {
     protected static String reservedDir;
     protected static String workDir;
     protected static String s3UserName;
+    protected static String s3AccessKeyId;
 
     @Parameters({"HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND",
-    	"RSRVNODEDIR", "WORKDIR","S3HOSTNAME","S3PORT","S3USERNAME"})
+    	"RSRVNODEDIR", "WORKDIR","S3HOSTNAME","S3PORT","S3USERNAME","S3ACCESSKEYID"})
     @BeforeSuite
     public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME,
                                  int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR,
-                                 String WORKDIR,String S3HOSTNAME, String S3PORT,String S3USERNAME) {
+                                 String WORKDIR,String S3HOSTNAME, String S3PORT,String S3USERNAME,
+                                 String S3ACCESSKEYID) {
         hostName = HOSTNAME;
         serviceName = SVCNAME;
         csName = COMMCSNAME;
@@ -44,6 +46,7 @@ public class S3TestBase {
         s3HostName = S3HOSTNAME;
         s3Port = S3PORT;
         s3UserName = S3USERNAME;
+        s3AccessKeyId=S3ACCESSKEYID;
         s3ClientUrl = "http://"+ S3HOSTNAME + ":" + S3PORT;
         bucketName = "commbucket";
         enableVerBucketName = "commbucketwithversion";
