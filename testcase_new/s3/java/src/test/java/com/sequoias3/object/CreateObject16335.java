@@ -2,13 +2,14 @@ package com.sequoias3.object;
 
 import java.io.File;
 import java.io.IOException;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
@@ -25,7 +26,7 @@ public class CreateObject16335 extends S3TestBase{
 	private boolean runSuccess = false;			
 	private String keyName = "//aa/%maa/bb/object16335";	
 	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 10;	
+	private int fileSize = 1024 * 1024 * 300;	
 	private File localPath = null;
 	private String filePath = null;	
 
@@ -70,6 +71,13 @@ public class CreateObject16335 extends S3TestBase{
 		String expMd5 = TestTools.getMD5(filePath);
 		Assert.assertEquals(objAttrInfo.getETag(), expMd5 );
 		String isModify = null;
-		Assert.assertEquals(objAttrInfo.getExpirationTimeRuleId(), isModify );		
+		Assert.assertEquals(objAttrInfo.getExpirationTimeRuleId(), isModify );	
+		
+		//check the attributeInfo of get object
+		GetObjectMetadataRequest request = new GetObjectMetadataRequest(S3TestBase.bucketName,
+				keyName);		
+		ObjectMetadata result = s3Client.getObjectMetadata(request);	
+		Assert.assertEquals(result.getETag(), expMd5 );	
+		Assert.assertEquals(result.getContentLength(), fileSize);
 	}
 }

@@ -27,8 +27,8 @@ public class GetObjectWithIfMatch16354 extends S3TestBase{
 	private boolean runSuccess = false;			
 	private String key = "aa/bb/object16354";	
 	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 5;
-	private int updateSize = 1024 * 2;
+	private int fileSize = 1024 * 50;
+	private int updateSize = 1024 * 20;
 	private File localPath = null;
 	private String filePath = null;	
 	private String updatePath = null;	

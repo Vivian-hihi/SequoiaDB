@@ -9,7 +9,6 @@ import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 
@@ -48,8 +47,8 @@ public class GetObjectWithDeleteTag16353 extends S3TestBase{
 			if (runSuccess) {
 				ObjectUtils.deleteObjectAllVersions( s3Client,S3TestBase.enableVerBucketName,key );				
 			}
-		} catch (BaseException e) {
-			Assert.fail("clean up failed:" + e.getMessage());
+		} finally {
+		    s3Client.shutdown();
 		}
 	}
 	

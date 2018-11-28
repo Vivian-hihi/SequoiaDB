@@ -56,8 +56,11 @@ public class GetObjectWithRange16355 extends S3TestBase{
 		TestTools.LocalFile.removeFile(localPath);
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);		
-		s3Client = CommLib.buildS3Client();			
-		s3Client.deleteObject(S3TestBase.bucketName, key);
+		s3Client = CommLib.buildS3Client();	
+		
+		if( s3Client.doesObjectExist(S3TestBase.bucketName, key)){			
+    		s3Client.deleteObject(S3TestBase.bucketName,key);
+    	}		
 	}
 
 	@Test(dataProvider = "rangeProvider")
@@ -71,7 +74,7 @@ public class GetObjectWithRange16355 extends S3TestBase{
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				
+				s3Client.deleteObject(S3TestBase.bucketName,key);
 			}
 		} finally {
 		    s3Client.shutdown();

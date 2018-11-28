@@ -49,18 +49,15 @@ public class UpdateObjectWithVersion16341 extends S3TestBase{
 
 		TestTools.LocalFile.removeFile(localPath);
 		TestTools.LocalFile.createDir(localPath.toString());
-		TestTools.LocalFile.createFile(filePath, fileSize);
-		
-		s3Client = CommLib.buildS3Client();
-		ObjectUtils.deleteObjectAllVersions( s3Client,bucketName, key );
-		//s3Client.deleteBucket(bucketName);
-		//s3Client.createBucket(bucketName);
-			
+		TestTools.LocalFile.createFile(filePath, fileSize);		
+		s3Client = CommLib.buildS3Client();				
 	}
 
+	@SuppressWarnings("deprecation")
 	@Test(dataProvider = "objectParameterProvider")
-	public void test(  String versionStatus, String versionId ) throws Exception {
-		ObjectUtils.deleteObjectAllVersions( s3Client,bucketName, key );
+	public void test(  String versionStatus, String versionId ) throws Exception {		
+		CommLib.clearBucket(s3Client, bucketName);	
+		s3Client.createBucket(bucketName,"region");
 		CommLib.setBucketVersioning( s3Client, bucketName, versionStatus);	
 		s3Client.deleteObject( bucketName, key);
 		s3Client.putObject( bucketName, key, new File(filePath));	

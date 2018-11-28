@@ -29,8 +29,8 @@ public class UpdateObjectWithVersion16340 extends S3TestBase{
 	private String keyName = "aa/bb/object16340";	
 	private String bucketName = "bucket16340";	
 	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 5;
-	private int updateSize = 1024 * 10;
+	private int fileSize = 1024 * 1024;
+	private int updateSize = 1024 * 500;
 	private File localPath = null;
 	private String filePath = null;	
 	private String updatePath = null;	
@@ -45,12 +45,10 @@ public class UpdateObjectWithVersion16340 extends S3TestBase{
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		TestTools.LocalFile.createFile(updatePath, updateSize);
-		s3Client = CommLib.buildS3Client();		
-		//s3Client.deleteObject(bucketName, keyName);
-		//ObjectUtils.deleteObjectAllVersions( s3Client,bucketName, keyName );
-		//s3Client.deleteBucket(bucketName);
-		s3Client.createBucket(bucketName);
+		s3Client = CommLib.buildS3Client();	
+		CommLib.clearBucket(s3Client, bucketName);
 		
+		s3Client.createBucket(bucketName);		
 	}
 
 	@Test

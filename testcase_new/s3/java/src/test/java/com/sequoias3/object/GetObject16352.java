@@ -46,8 +46,8 @@ public class GetObject16352 extends S3TestBase{
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		TestTools.LocalFile.createFile(updatePath, updateSize);
 		s3Client = CommLib.buildS3Client();	
-		//ObjectUtils.deleteObjectAllVersions( s3Client,bucketName, key );
-		//s3Client.deleteBucket(bucketName);
+		CommLib.clearBucket(s3Client, bucketName);
+		
 		s3Client.createBucket(bucketName);
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");		
 	}

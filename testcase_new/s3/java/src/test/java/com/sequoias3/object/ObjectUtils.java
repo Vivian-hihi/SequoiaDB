@@ -91,12 +91,9 @@ public class ObjectUtils extends S3TestBase {
 			
 			while (versionIter.hasNext()) {			
 				S3VersionSummary vs = versionIter.next();	
-				String getKey = vs.getKey();
-				System.out.println("----getkey="+vs.getKey());
+				String getKey = vs.getKey();				
 				
-				if ( getKey.equals(keyName)){
-					System.out.println("----deleteKey="+vs.getKey());
-					System.out.println("----getversion="+vs.getVersionId());
+				if ( getKey.equals(keyName)){					
 					s3Client.deleteVersion(bucketName, vs.getKey(), vs.getVersionId());
 				}
 								
@@ -109,5 +106,11 @@ public class ObjectUtils extends S3TestBase {
 				break;
 			}
 		}		
-	}
+	}	
+	
+	public static void clearOneObject(AmazonS3 s3Client, String bucketName,String key){
+    	if( s3Client.doesObjectExist(bucketName, key)){
+    		s3Client.deleteObject(bucketName,key);
+    	}
+    } 
 }

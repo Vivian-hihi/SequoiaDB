@@ -26,7 +26,7 @@ public class CreateObjectWithVersion16337 extends S3TestBase{
 	private String bucketName = "bucket16337";	
 	private String keyName = "object16337";	
 	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 4;	
+	private int fileSize = 1024 * 1024;	
 	private File localPath = null;
 	private String filePath = null;	
 
@@ -38,9 +38,8 @@ public class CreateObjectWithVersion16337 extends S3TestBase{
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		s3Client = CommLib.buildS3Client();	
-			
-		CommLib.deleteAllObjectVersions(s3Client, bucketName);
-		s3Client.deleteBucket(bucketName);
+		CommLib.clearBucket(s3Client, bucketName);
+		
 		s3Client.createBucket(bucketName);
 		CommLib.setBucketVersioning(s3Client, bucketName, "Suspended");		
 	}
@@ -58,7 +57,7 @@ public class CreateObjectWithVersion16337 extends S3TestBase{
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				CommLib.deleteAllObjectVersions(s3Client, bucketName);
+				ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, keyName);
 				s3Client.deleteBucket(bucketName);				
 			}
 		} finally{

@@ -27,8 +27,8 @@ public class UpdateObject16338 extends S3TestBase{
 	private boolean runSuccess = false;			
 	private String keyName = "aa/bb/object16338";	
 	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 5;
-	private int updateSize = 1024 * 2;
+	private int fileSize = 1024 * 50;
+	private int updateSize = 1024 * 200;
 	private File localPath = null;
 	private String filePath = null;	
 	private String updatePath = null;	
@@ -42,8 +42,7 @@ public class UpdateObject16338 extends S3TestBase{
 		TestTools.LocalFile.removeFile(localPath);
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
-		TestTools.LocalFile.createFile(updatePath, updateSize);
-		s3Client = CommLib.buildS3Client();			
+		TestTools.LocalFile.createFile(updatePath, updateSize);			
 	}
 
 	@Test

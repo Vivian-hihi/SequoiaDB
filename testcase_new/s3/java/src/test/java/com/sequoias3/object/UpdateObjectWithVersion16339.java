@@ -44,8 +44,7 @@ public class UpdateObjectWithVersion16339 extends S3TestBase{
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		TestTools.LocalFile.createFile(updatePath, updateSize);
-		s3Client = CommLib.buildS3Client();	
-		ObjectUtils.deleteObjectAllVersions( s3Client,S3TestBase.enableVerBucketName, keyName );
+		s3Client = CommLib.buildS3Client();			
 	}
 
 	@Test
