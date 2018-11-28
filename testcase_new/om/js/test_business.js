@@ -122,6 +122,25 @@ UNIT_TEST.test( 'get sequoiadb distribution extend config', function(){
    BUZ_CONFIG = BUZ_CONFIG[0] ;
 
    delete BUZ_CONFIG['Property'] ;
+
+   for( var index in BUZ_CONFIG['Config'] )
+   {
+      var newNodeConfig = {} ;
+      var nodeConfig = BUZ_CONFIG['Config'][index] ;
+
+      for ( var key in nodeConfig )
+      {
+         if ( key != 'datagroupname' && typeof( nodeConfig[key] ) == 'string' && nodeConfig[key].length == 0 )
+         {
+            continue ;
+         }
+
+         newNodeConfig[key] = nodeConfig[key] ;
+      }
+
+      BUZ_CONFIG['Config'][index] = newNodeConfig ;
+   }
+
 }, true ) ;
 
 UNIT_TEST.test( 'extend sequoiadb distribution business', function(){

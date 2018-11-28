@@ -85,7 +85,8 @@ UNIT_TEST.test( 'check host', function(){
 
       for( var k in diskList )
       {
-         if( diskList[k]['CanUse'] == true && diskList[k]['IsLocal'] == true )
+         if( diskList[k]['CanUse'] == true && diskList[k]['IsLocal'] == true &&
+             diskList[k]['Mount'] == '/' )
          {
             HOST_CONF[i]['Disk'].push( {
                'Name':     diskList[k]['Name'],
@@ -171,7 +172,8 @@ UNIT_TEST.test( 'check host 2', function(){
 
       for( var k in diskList )
       {
-         if( diskList[k]['CanUse'] == true && diskList[k]['IsLocal'] == true )
+         if( diskList[k]['CanUse'] == true && diskList[k]['IsLocal'] == true &&
+             diskList[k]['Mount'] == '/' )
          {
             HOST_CONF[i]['Disk'].push( {
                'Name':     diskList[k]['Name'],
@@ -325,6 +327,24 @@ UNIT_TEST.test( 'get sequoiadb distribution config', function(){
 
    delete BUZ_CONFIG['Property'] ;
 
+   for( var index in BUZ_CONFIG['Config'] )
+   {
+      var newNodeConfig = {} ;
+      var nodeConfig = BUZ_CONFIG['Config'][index] ;
+
+      for ( var key in nodeConfig )
+      {
+         if ( key != 'datagroupname' && typeof( nodeConfig[key] ) == 'string' && nodeConfig[key].length == 0 )
+         {
+            continue ;
+         }
+
+         newNodeConfig[key] = nodeConfig[key] ;
+      }
+
+      BUZ_CONFIG['Config'][index] = newNodeConfig ;
+   }
+
 }, true ) ;
 
 UNIT_TEST.test( 'add sequoiadb distribution business', function(){
@@ -387,6 +407,24 @@ UNIT_TEST.test( 'get sequoiadb standlone config', function(){
    BUZ_CONFIG = BUZ_CONFIG[0] ;
 
    delete BUZ_CONFIG['Property'] ;
+
+   for( var index in BUZ_CONFIG['Config'] )
+   {
+      var newNodeConfig = {} ;
+      var nodeConfig = BUZ_CONFIG['Config'][index] ;
+
+      for ( var key in nodeConfig )
+      {
+         if ( key != 'datagroupname' && typeof( nodeConfig[key] ) == 'string' && nodeConfig[key].length == 0 )
+         {
+            continue ;
+         }
+
+         newNodeConfig[key] = nodeConfig[key] ;
+      }
+
+      BUZ_CONFIG['Config'][index] = newNodeConfig ;
+   }
 
 }, true ) ;
 
