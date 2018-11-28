@@ -180,6 +180,7 @@ namespace engine
       CHAR                       _name[ DMS_COLLECTION_FULL_NAME_SZ + 1 ];
       SUBCL_CONTEXT_LIST         _subContextList ;
       INT32                      _version ;
+      BOOLEAN                    _lockDms ;
 
    };
    typedef class _rtnContextDelMainCL rtnContextDelMainCL;
@@ -214,16 +215,14 @@ namespace engine
 
       INT32 _releaseLock( _pmdEDUCB *cb );
 
-      void _clean( _pmdEDUCB *cb );
-
    private:
-      _SDB_DMSCB            *_pDmsCB;
-      dpsTransCB           *_pTransCB;
-      _clsCatalogAgent     *_pCatAgent;
+      _SDB_DMSCB            *_pDmsCB ;
+      dpsTransCB           *_pTransCB ;
+      _clsCatalogAgent     *_pCatAgent ;
       CHAR                 _oldName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
       CHAR                 _newName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
-      BOOLEAN              _gotDmsCBWrite ;
-      UINT32               _logicCSID;
+      BOOLEAN              _lockDMS ;
+      UINT32               _logicCSID ;
    };
    typedef class _rtnContextRenameCS rtnContextRenameCS;
 
@@ -253,25 +252,21 @@ namespace engine
       virtual void  _toString( stringstream &ss ) ;
 
    private:
-      INT32 _tryLock( const CHAR *pCSName,
-                     _pmdEDUCB *cb );
-
+      INT32 _tryLock( const CHAR *pCSName, _pmdEDUCB *cb );
       INT32 _releaseLock( _pmdEDUCB *cb );
 
-      void _clean( _pmdEDUCB *cb );
-
    private:
-      _SDB_DMSCB           *_pDmsCB;
-      _clsCatalogAgent     *_pCatAgent;
-      dpsTransCB           *_pTransCB;
+      _SDB_DMSCB           *_pDmsCB ;
+      _clsCatalogAgent     *_pCatAgent ;
+      dpsTransCB           *_pTransCB ;
 
-      string               _clFullName ;
+      CHAR                 _clFullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
       CHAR                 _clShortName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
       CHAR                 _newCLShortName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
 
-      BOOLEAN              _gotDmsCBWrite ;
-      UINT16               _mbID ;
+      BOOLEAN              _lockDMS ;
       _dmsStorageUnit      *_su ;
+      UINT16               _mbID ;
    };
    typedef class _rtnContextRenameCL rtnContextRenameCL;
 }

@@ -1068,6 +1068,10 @@ namespace engine
                rc = SDB_RTN_IN_REBUILD ;
                goto done ;
             }
+            else if ( SDB_DB_RENAME == PMD_DB_STATUS() )
+            {
+               rc = SDB_RTN_IN_RENAME ;
+            }
             else
             {
                rc = SDB_DMS_STATE_NOT_COMPATIBLE ;

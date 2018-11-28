@@ -76,11 +76,11 @@ namespace engine
 
       setAlterJob( holder, FALSE ) ;
 
-      rc = _reserveLogSpace( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to reserve log space, rc: %d", rc ) ;
-
       rc = _checkWritable( cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to check DMS writable, rc: %d", rc ) ;
+
+      rc = _reserveLogSpace( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to reserve log space, rc: %d", rc ) ;
 
       rc = _lockTransaction( cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock transaction, rc: %d", rc ) ;
@@ -115,8 +115,8 @@ namespace engine
       }
 
       _releaseTransaction( cb ) ;
-      _releaseWritable( cb ) ;
       _releaseLogSpace( cb ) ;
+      _releaseWritable( cb ) ;
 
       PD_TRACE_EXIT( SDB__RTNALTERBASE__CLOSE ) ;
    }
@@ -261,7 +261,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERCSCTX__CLOSEINT, "rtnContextAlterCS::_closeInternal" )
-   INT32 rtnContextAlterCS::_closeInternal ( pmdEDUCB * cb )
+   INT32 _rtnContextAlterCS::_closeInternal ( pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
 

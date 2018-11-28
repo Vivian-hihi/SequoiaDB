@@ -44,6 +44,7 @@
 #include "rtnContextDel.hpp"
 #include "utilCompressor.hpp"
 #include "pmdStartup.hpp"
+#include "clsCommand.hpp"
 
 using namespace bson ;
 
@@ -406,9 +407,9 @@ namespace engine
                rc = _onDeleteReqMsg ( handle, msg, contextID ) ;
                break ;
             case MSG_BS_QUERY_REQ :
-               // There is no need to rollback any query. Simply fail it. 
+               // There is no need to rollback any query. Simply fail it.
                // If we decide to change this logic some day, we need to keep
-               // the same logic in coord. 
+               // the same logic in coord.
                // See related code in _pmdLocalSession::_onMsgBegin and
                // _coordQueryOperator::needRollback
                rc = _onQueryReqMsg ( handle, msg, buffObj, startFrom,
@@ -1556,17 +1557,6 @@ namespace engine
             goto error ;
          }
 
-         /// rename collection[space] should to remove catalog
-         /// drop collection/space remove catalog in context already
-         if ( CMD_RENAME_COLLECTION == pCommand->type() ||
-              CMD_ALTER_COLLECTION == pCommand->type() )
-         {
-            _pCatAgent->lock_w () ;
-            _pCatAgent->clear ( pCommand->collectionFullName() ) ;
-            _pCatAgent->release_w () ;
-
-            sdbGetClsCB()->invalidateCata( pCommand->collectionFullName() ) ;
-         }
       }
 
    done:
@@ -2839,6 +2829,7 @@ namespace engine
       vector< string > strSubCLList ;
       vector< string >::iterator iter ;
       INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ;
+      BOOLEAN lockDms = FALSE ;
 
       try
       {
@@ -2878,6 +2869,11 @@ namespace engine
                       "occur unexpected error(%s)",
                       e.what() );
       }
+
+      // we need to check dms writable when invalidate cata/plan/statistics
+      rc = pmdGetKRCB()->getDMSCB()->writable ( _pEDUCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      lockDms = TRUE ;
 
       rc = _getSubCLList( boMatcher, pCollection, boNewMatcher,
                           strSubCLList );
@@ -2927,6 +2923,11 @@ namespace engine
       sdbGetClsCB()->invalidatePlan( _pCollectionName ) ;
 
    done:
+      if ( lockDms )
+      {
+         _pDmsCB->writeDown( _pEDUCB ) ;
+         lockDms = FALSE ;
+      }
       return rc ;
    error:
       goto done ;
@@ -2948,6 +2949,7 @@ namespace engine
       vector< string >::iterator iter ;
       BSONElement ele;
       BOOLEAN isExist = FALSE ;
+      BOOLEAN lockDms = FALSE ;
 
       try
       {
@@ -2964,6 +2966,11 @@ namespace engine
                       "occur unexpected error(%s)",
                       e.what() );
       }
+
+      // we need to check dms writable when invalidate cata/plan/statistics
+      rc = _pDmsCB->writable ( _pEDUCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      lockDms = TRUE ;
 
       rc = _getSubCLList( boMatcher, pCollection, boNewMatcher,
                           strSubCLList );
@@ -3019,6 +3026,11 @@ namespace engine
       sdbGetClsCB()->invalidatePlan( _pCollectionName ) ;
 
    done:
+      if ( lockDms )
+      {
+         _pDmsCB->writeDown( _pEDUCB ) ;
+         lockDms = FALSE ;
+      }
       return rc ;
    error:
       goto done ;
@@ -3817,6 +3829,12 @@ namespace engine
       const CHAR *pSubCLName = NULL ;
       vector< string > subCLs ;
       vector< string >::iterator itr ;
+      BOOLEAN lockDms = FALSE ;
+
+      // we need to check dms writable when invalidate cata/plan/statistics
+      rc = _pDmsCB->writable ( _pEDUCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      lockDms = TRUE ;
 
       rc = _getSubCLList( fullName, subCLs ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s]: Get sub collection list "
@@ -3857,6 +3875,11 @@ namespace engine
       sdbGetClsCB()->invalidatePlan( _pCollectionName ) ;
 
    done:
+      if ( lockDms )
+      {
+         _pDmsCB->writeDown( _pEDUCB ) ;
+         lockDms = FALSE ;
+      }
       return rc ;
    error:
       goto done ;
@@ -3952,6 +3975,13 @@ namespace engine
       BSONObj newMatcher ;
       vector< string > subCLList ;
 
+      BOOLEAN lockDms = FALSE ;
+
+      // we need to check dms writable when invalidate cata/plan/statistics
+      rc = _pDmsCB->writable ( _pEDUCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      lockDms = TRUE ;
+
       // Get sub-collection list
       rc = _getSubCLList( matcher, collectionName, newMatcher, subCLList ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list of "
@@ -4025,6 +4055,11 @@ namespace engine
       sdbGetClsCB()->invalidatePlan( _pCollectionName ) ;
 
    done:
+      if ( lockDms )
+      {
+         _pDmsCB->writeDown( _pEDUCB ) ;
+         lockDms = FALSE ;
+      }
       return rc ;
    error:
       goto done ;
@@ -4033,6 +4068,7 @@ namespace engine
    INT32 _clsShdSession::_analyzeMainCL ( _rtnCommand *command )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN lockDms = FALSE ;
 
       SDB_ASSERT( command->type() == CMD_ANALYZE, "command is invalid" ) ;
 
@@ -4042,6 +4078,11 @@ namespace engine
       BOOLEAN foundIndex = FALSE ;
 
       _rtnAnalyze *pAnalyzeCmd = (_rtnAnalyze *)command ;
+
+      // we need to check dms writable when invalidate cata/plan/statistics
+      rc = _pDmsCB->writable ( _pEDUCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      lockDms = TRUE ;
 
       rc = _getSubCLList( pMainCLName, strSubCLList ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list of "
@@ -4111,6 +4152,11 @@ namespace engine
       sdbGetClsCB()->invalidatePlan( pMainCLName ) ;
 
    done :
+      if ( lockDms )
+      {
+         _pDmsCB->writeDown( _pEDUCB ) ;
+         lockDms = FALSE ;
+      }
       return rc ;
    error :
       goto done ;

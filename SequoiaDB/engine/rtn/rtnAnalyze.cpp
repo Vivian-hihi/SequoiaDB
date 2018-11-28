@@ -204,7 +204,7 @@ namespace engine
                       _dpsLogWrapper *dpsCB )
    {
       INT32 rc = SDB_OK ;
-
+      BOOLEAN lockDms = FALSE ;
       PD_TRACE_ENTRY( SDB_RTNANALYZE ) ;
 
       if ( SDB_ROLE_DATA != pmdGetDBRole() &&
@@ -221,6 +221,16 @@ namespace engine
       if ( NULL == dmsCB )
       {
          dmsCB = pmdGetKRCB()->getDMSCB() ;
+      }
+
+      // reload mode and clear mode do not write dps log, so they don't need to
+      // check writable
+      if ( param._mode != SDB_ANALYZE_MODE_RELOAD &&
+           param._mode != SDB_ANALYZE_MODE_CLEAR )
+      {
+         rc = dmsCB->writable ( cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+         lockDms = TRUE ;
       }
 
       if ( NULL != pCSName )
@@ -246,6 +256,11 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to run analyze command, rc: %d", rc ) ;
 
    done :
+      if ( lockDms )
+      {
+         dmsCB->writeDown( cb ) ;
+         lockDms = FALSE ;
+      }
       PD_TRACE_EXITRC( SDB_RTNANALYZE, rc ) ;
       return rc ;
 
@@ -1232,15 +1247,9 @@ namespace engine
       dmsStorageUnit *pSU = NULL ;
       dmsMBContext *mbContext = NULL ;
 
-      BOOLEAN writable = FALSE ;
-
       rtnAnalyzeParam localParam( param ) ;
 
       MON_IDX_LIST monIdxList ;
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
-      writable = TRUE ;
 
       rc = dmsCB->nameToSUAndLock( pCSName, suID, &pSU, SHARED, OSS_ONE_SEC ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock collection space for "
@@ -1283,11 +1292,9 @@ namespace engine
 
       pSU->data()->releaseMBContext( mbContext ) ;
       dmsCB->suUnlock( suID, SHARED ) ;
-      dmsCB->writeDown( cb ) ;
       pSU = NULL ;
       suID = DMS_INVALID_SUID ;
       mbContext = NULL ;
-      writable = FALSE ;
 
       if ( monIdxList.empty() )
       {
@@ -1340,10 +1347,6 @@ namespace engine
       if ( DMS_INVALID_SUID != suID )
       {
          dmsCB->suUnlock( suID, SHARED ) ;
-      }
-      if ( writable )
-      {
-         dmsCB->writeDown( cb ) ;
       }
       PD_TRACE_EXITRC( SDB__RTNANALYZECLSTATS, rc ) ;
       return rc ;
@@ -1471,12 +1474,6 @@ namespace engine
       dmsMBContext *mbContext = NULL ;
       dmsExtentID indexExtID = DMS_INVALID_EXTENT ;
 
-      BOOLEAN writable = FALSE ;
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
-      writable = TRUE ;
-
       rc = dmsCB->nameToSUAndLock( pCSName, suID, &pSU, SHARED, OSS_ONE_SEC ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock collection space for "
                    "collection [%s], rc: %d", pCLFullName, rc ) ;
@@ -1558,10 +1555,6 @@ namespace engine
       if ( DMS_INVALID_SUID != suID )
       {
          dmsCB->suUnlock( suID, SHARED ) ;
-      }
-      if ( writable )
-      {
-         dmsCB->writeDown( cb ) ;
       }
       PD_TRACE_EXITRC( SDB__RTNANALYZEIXSTAT, rc ) ;
       return rc ;
