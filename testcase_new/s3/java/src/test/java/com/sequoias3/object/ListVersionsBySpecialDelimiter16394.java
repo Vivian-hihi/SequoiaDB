@@ -1,0 +1,208 @@
+package com.sequoias3.object;
+
+import ch.qos.logback.core.net.SyslogOutputStream;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.*;
+import com.amazonaws.util.Md5Utils;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestTools;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.*;
+
+/**
+ * @Description: seqDB-16394 :: 指定不同格式分割符查询
+ * @author fanyu
+ * @Date:2018年11月26日
+ * @version:1.0
+ */
+
+public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
+    private boolean runSuccess1 = false;
+    private boolean runSuccess2 = false;
+    private boolean runSuccess3 = false;
+    private boolean runSuccess4 = false;
+    private String bucketName = "bucket16394";
+    private String[] objectNames = { "!-_.*',()", "&@: $=+?",  "^`><{}[]#%\"~|" , "a1b2C3D4"/*,"\012atest!!!"*/,"abc"};
+    private AmazonS3 s3Client = null;
+    private int versionNum = 1;
+    private File localPath = null;
+    private String filePath = null;
+    private int  fileSize = 10;
+
+    @BeforeClass
+    private void setUp() throws IOException {
+        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+        TestTools.LocalFile.removeFile(localPath);
+        TestTools.LocalFile.createDir(localPath.toString());
+        filePath = localPath + File.separator + "localFile_" + fileSize  + ".txt";
+        TestTools.LocalFile.createFile(filePath, fileSize );
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(bucketName);
+        CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
+        for (String objectName : objectNames) {
+            System.out.println("objectName = " + objectName);
+            for (int j = 0; j < versionNum; j++) {
+                s3Client.putObject(bucketName, objectName, new File(filePath));
+            }
+        }
+    }
+
+    @Test
+    private void testNormal() throws Exception {
+        String delimiter = objectNames[3];
+        VersionListing vsList = listVersions(bucketName,delimiter);
+        List<String> expCommonPrefixes = new ArrayList<String>();
+        expCommonPrefixes.add(objectNames[3]);
+        List<String> expKeys = new ArrayList<String>();
+        expKeys.add(objectNames[0]);
+        expKeys.add(objectNames[1]);
+        expKeys.add(objectNames[2]);
+        expKeys.add(objectNames[4]);
+        String[] versions = {"0", "0","0","0"};
+        if(!vsList.isTruncated()) {
+            checkResult(vsList, expCommonPrefixes, expKeys, versions);
+        }else{
+            Assert.fail("vsList.isTruncated() must be false");
+        }
+        runSuccess1 = true;
+    }
+
+    @Test
+    private void testSpecial() throws Exception {
+        String str = objectNames[0];
+        String[] delimiters = str.split("");
+        for(int i = 0; i < delimiters.length; i++) {
+            VersionListing vsList = listVersions(bucketName, delimiters[i]);
+            List<String> expCommonPrefixes = new ArrayList<String>();
+            expCommonPrefixes.add(str.substring(0,i+1));
+            List<String> expKeys = new ArrayList<String>();
+            expKeys.add(objectNames[1]);
+            expKeys.add(objectNames[2]);
+            expKeys.add(objectNames[3]);
+            expKeys.add(objectNames[4]);
+            String[] versions = {"0", "0","0","0"};
+            if(!vsList.isTruncated()) {
+                checkResult(vsList, expCommonPrefixes, expKeys, versions);
+            }else{
+                Assert.fail("vsList.isTruncated() must be false");
+            }
+        }
+        runSuccess2 = true;
+    }
+
+    @Test
+    private void testSpecial1() throws Exception {
+        String str = objectNames[1];
+        String[] delimiters = str.split("");
+        for(int i = 0; i < delimiters.length; i++) {
+            VersionListing vsList = listVersions(bucketName, delimiters[i]);
+            List<String> expCommonPrefixes = new ArrayList<String>();
+            expCommonPrefixes.add(str.substring(0,i+1));
+            List<String> expKeys = new ArrayList<String>();
+            expKeys.add(objectNames[0]);
+            expKeys.add(objectNames[2]);
+            expKeys.add(objectNames[3]);
+            expKeys.add(objectNames[4]);
+            String[] versions = {"0","0","0","0"};
+            if(!vsList.isTruncated()) {
+                checkResult(vsList, expCommonPrefixes, expKeys, versions);
+            }else{
+                Assert.fail("vsList.isTruncated() must be false");
+            }
+        }
+        runSuccess3 = true;
+    }
+
+    @Test
+    private void testSpecial3() throws Exception {
+        String str = objectNames[2];
+        String[] delimiters = str.split("");
+        for(int i = 0; i < delimiters.length; i++) {
+            VersionListing vsList = listVersions(bucketName, delimiters[i]);
+            List<String> expCommonPrefixes = new ArrayList<String>();
+            expCommonPrefixes.add(str.substring(0,i+1));
+            List<String> expKeys = new ArrayList<String>();
+            expKeys.add(objectNames[0]);
+            expKeys.add(objectNames[1]);
+            expKeys.add(objectNames[3]);
+            expKeys.add(objectNames[4]);
+            String[] keys = {objectNames[0],objectNames[1],objectNames[3],objectNames[4]};
+            String[] versions = {"0","0","0","0"};
+            if(!vsList.isTruncated()) {
+                checkResult(vsList, expCommonPrefixes, expKeys, versions);
+            }else{
+                Assert.fail("vsList.isTruncated() must be false");
+            }
+        }
+        runSuccess4 = true;
+    }
+
+//    @Test
+//    private void testSpecial5() throws Exception {
+//        String str = objectNames[4];
+//        String delimiter = "\010";
+//        VersionListing vsList = listVersions(bucketName, delimiter);
+//        List<String> expCommonPrefixes = new ArrayList<String>();
+//        expCommonPrefixes.add("this is\010");
+//        String[] keys = {objectNames[0], objectNames[1],objectNames[2],objectNames[3]};
+//        String[] versions = {"0", "0", "0", "0"};
+//        if (!vsList.isTruncated()) {
+//            checkResult(vsList, expCommonPrefixes, keys, versions);
+//        } else {
+//            Assert.fail("vsList.isTruncated() must be false");
+//        }
+//        runSuccess4 = true;
+//    }
+
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess1 && runSuccess2 && runSuccess3 && runSuccess4) {
+                CommLib.clearBucket(s3Client, bucketName);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
+
+    private void checkResult(VersionListing vsList,List<String> commonPrefixes, List<String> expKeys, String[] expVersions) throws Exception {
+        Assert.assertEquals(vsList.getBucketName(), bucketName);
+        List<String> actCommonPrefixes = vsList.getCommonPrefixes();
+        Assert.assertEquals(actCommonPrefixes.size(), commonPrefixes.size(),
+                "actCommonPrefixes = " + actCommonPrefixes.toString()+",expCommonPrefixes = " + commonPrefixes.toString());
+        Assert.assertEquals(actCommonPrefixes, commonPrefixes,
+                "actCommonPrefixes = " + actCommonPrefixes.toString() + ",expCommonPrefixes=" + commonPrefixes.toString());
+        List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
+        Assert.assertEquals(vsSummaryList.size(), expVersions.length,"vsSummaryList = " + vsSummaryList.toString());
+        String key = "";
+        List<String> actKeys = new ArrayList<String>();
+        for (int i = 0; i < vsSummaryList.size(); i++) {
+            S3VersionSummary versionSummary = vsSummaryList.get(i);
+            Assert.assertEquals(versionSummary.getBucketName(), bucketName);
+            if(!key.equals(versionSummary.getKey())){
+                actKeys.add(versionSummary.getKey());
+            }
+            key = versionSummary.getKey();
+        }
+        Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actkeys = " + actKeys + ",expkeys = " + objectNames);
+    }
+
+    private VersionListing listVersions(String bucketName, String delimiter) {
+        ListVersionsRequest request = new ListVersionsRequest();
+        request.setBucketName(bucketName);
+        request.setDelimiter(delimiter);
+       // request.setEncodingType("url");
+        return s3Client.listVersions(request);
+    }
+}

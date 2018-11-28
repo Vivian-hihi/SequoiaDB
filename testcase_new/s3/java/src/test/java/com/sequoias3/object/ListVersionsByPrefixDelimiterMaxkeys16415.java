@@ -1,0 +1,136 @@
+package com.sequoias3.object;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.S3VersionSummary;
+import com.amazonaws.services.s3.model.VersionListing;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * @author fanyu
+ * @Description: seqDB-16415 ::多次查询结果在commprefix中有相同记录
+ * @Date:2018年11月24日
+ * @version:1.0
+ */
+
+public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
+    private boolean runSuccess = false;
+    private String bucketName = "bucket16415";
+    private String[] objectNames = {"/aa/bb/test1","/aa/bb/test2","/bb/cc/test1",
+            "/bb/cc/test2","/cc/dd/test1","/cc/dd/test2"};
+    private AmazonS3 s3Client = null;
+    private int versionNum = 3;
+
+    @BeforeClass
+    private void setUp() throws IOException {
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(bucketName);
+        CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
+        for (String objectName : objectNames) {
+            for (int j = 0; j < versionNum; j++) {
+                s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
+            }
+        }
+    }
+
+    @Test(enabled = false) //SEQUOIADBMAINSTREAM-3987
+    private void test() throws Exception {
+        String prefix = "/";
+        String delimiter = "/";
+        Integer maxResults = 1;
+
+        VersionListing vsList = listVersions(bucketName,prefix ,delimiter, null,null,maxResults);
+        List<String> expCommonPrefixes = new ArrayList<String>();
+        expCommonPrefixes.add("/aa/");
+        System.out.println("vsList.isTruncated() = " + vsList.isTruncated());
+       if (vsList.isTruncated()) {
+            checkResult(vsList,expCommonPrefixes,new ArrayList<String>(),new String[]{});
+        } else {
+           Assert.fail("vsList.isTruncated() must be true");
+       }
+
+//        System.out.println("vsList.getNextKeyMarker() = " +vsList.getNextKeyMarker());
+//        System.out.println("vsList.getNextVersionIdMarker() = " +vsList.getNextVersionIdMarker());
+        String nextKeyMarker = vsList.getNextKeyMarker();
+        String nextVersionIdMarker = vsList.getNextVersionIdMarker();
+        Integer maxResults1 = 2;
+        VersionListing vsList1 = listVersions(bucketName,prefix ,delimiter,nextKeyMarker,nextVersionIdMarker,maxResults1);
+//        System.out.println("vsList1.isTruncated() = " + vsList1.isTruncated());
+
+        List<String> expCommonPrefixes1 = new ArrayList<String>();
+        expCommonPrefixes1.add("/bb/");
+        expCommonPrefixes1.add("/cc/");
+        if (!vsList1.isTruncated()) {
+            checkResult(vsList1,expCommonPrefixes1,new ArrayList<String>(),new String[]{});
+         } else {
+           Assert.fail("vsList1.isTruncated() must be false");
+        }
+
+        VersionListing vsList2 = listVersions(bucketName,prefix ,delimiter,vsList1.getNextKeyMarker(), vsList1.getNextVersionIdMarker(),maxResults1);
+//        System.out.println("vsList2.isTruncated() = " + vsList2.isTruncated());
+        checkResult(vsList2,expCommonPrefixes,new ArrayList<String>(),new String[]{});
+        runSuccess = true;
+    }
+
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
+
+    private void checkResult(VersionListing vsList, List<String> commonPrefixes, List<String> expKeys, String[] expVersions) throws Exception {
+        Assert.assertEquals(vsList.getBucketName(), bucketName);
+        List<String> actCommonPrefixes = vsList.getCommonPrefixes();
+        System.out.println("actCommonPrefixes = " + actCommonPrefixes.toString());
+        Assert.assertEquals(actCommonPrefixes.size(), commonPrefixes.size());
+        Assert.assertEquals(actCommonPrefixes, commonPrefixes,
+                "actCommonPrefixes = " + actCommonPrefixes.toString() + ",expCommonPrefixes=" + commonPrefixes.toString());
+        List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
+        Assert.assertEquals(vsSummaryList.size(), expVersions.length);
+        String key = "";
+        List<String> actKeys = new ArrayList<String>();
+        for (int i = 0; i < vsSummaryList.size(); i++) {
+            S3VersionSummary versionSummary = vsSummaryList.get(i);
+            System.out.println("key = " + versionSummary.getKey());
+            System.out.println("version = " + versionSummary.getVersionId());
+            Assert.assertEquals(versionSummary.getBucketName(), bucketName);
+            Assert.assertEquals(versionSummary.getVersionId(), expVersions[i], bucketName);
+            if(!key.equals(versionSummary.getKey())){
+                actKeys.add(versionSummary.getKey());
+            }
+            key = versionSummary.getKey();
+        }
+        Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actObjectNames = " + actKeys + ",keys = " + expKeys);
+    }
+
+    private VersionListing listVersions(String bucketName, String prefix, String delimiter, String keyMarker,String versionIdMarker,Integer maxResults) {
+        ListVersionsRequest request = new ListVersionsRequest();
+        request.setBucketName(bucketName);
+        request.setPrefix(prefix);
+        request.setDelimiter(delimiter);
+        request.setKeyMarker(keyMarker);
+        request.setVersionIdMarker(versionIdMarker);
+        request.setMaxResults(maxResults);
+        VersionListing list = s3Client.listVersions(request);
+        return list;
+    }
+}
