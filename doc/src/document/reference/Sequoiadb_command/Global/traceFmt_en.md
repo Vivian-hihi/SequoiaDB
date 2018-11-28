@@ -42,6 +42,7 @@ the exceptions of `traceFmt()` are as below:
 | -3 | SDB_PERM | Permission Error. | Check the path of the output file is ok or not. |
 | -4 | SDB_FNE | File Not Exist. | Check the input file exist or not. |
 | -6 | SDB_INVALIDARG | Invalid Argument. | Check the input format type is valid or not. |
+| -189 | SDB_PD_TRACE_FILE_INVALID | Trace file is not valid. | Check the input file is ok or not.	|
 
 when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please  reference to [Troubleshooting](troubleshooting/general/general_guide.md).
 
