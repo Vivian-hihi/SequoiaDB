@@ -121,6 +121,25 @@ T}@T{
 T}@T{
 type is valid or not.
 T}
+T{
+4
+T}@T{
+\-189
+T}@T{
+SDB_PD_TRACE_FILE_
+T}@T{
+Trace file is not valid.
+T}@T{
+Check the input file is
+T}
+T{
+T}@T{
+T}@T{
+INVALID
+T}@T{
+T}@T{
+ok or not.
+T}
 .TE
 .PP
 when exception happen, use getLastError() to get the error code and use
