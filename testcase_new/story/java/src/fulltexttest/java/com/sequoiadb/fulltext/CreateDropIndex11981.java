@@ -50,7 +50,7 @@ public class CreateDropIndex11981 extends SdbTestBase{
 	
       @AfterClass
       public void tearDown() {
-      //     cs.dropCollection(clName);
+           cs.dropCollection(clName);
       }
 
       @Test
