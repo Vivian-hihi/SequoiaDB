@@ -44,7 +44,7 @@ public class RestParamDefine {
         public static final String CONTENT_MD5          = "content-md5";
         public static final String DATE                 = "date";
         public static final String X_AMZ_DATE           = "x-amz-date";
-        public static final String CONTENT_ENCODING     = "content-Encoding";
+        public static final String CONTENT_ENCODING     = "content-encoding";
         public static final String CONTENT_TYPE         = "content-type";
         public static final String X_AMZ_META_PREFIX    = "x-amz-meta-";
         public static final String CACHE_CONTROL        = "cache-control";
