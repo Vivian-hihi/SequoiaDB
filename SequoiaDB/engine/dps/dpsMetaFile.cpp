@@ -75,23 +75,27 @@ namespace engine
       if ( SDB_OK == ossAccess( _path ) )
       {
          rc = _restore() ;
-         if ( SDB_OK != rc )
+         if ( SDB_OK == rc )
          {
-            PD_LOG( PDERROR, "Restore meta file failed:file=%s,rc=%d",
-                    _path, rc ) ;
-            goto error ;
+            goto done ;
          }
+
+         PD_LOG( PDWARNING, "Restore meta file failed:file=%s,rc=%d",
+                 _path, rc ) ;
+         PD_LOG( PDWARNING, "Try to delete meta file and recreate it:file=%s",
+                 _path ) ;
+         ossDelete( _path ) ;
       }
-      else
+
+      rc = _initNewFile() ;
+      if ( SDB_OK != rc )
       {
-         rc = _initNewFile() ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Init new meta file failed:file=%s,rc=%d",
-                    _path, rc ) ;
-            goto error ;
-         }
+         PD_LOG( PDERROR, "Init new meta file failed:file=%s,rc=%d",
+                 _path, rc ) ;
+         goto error ;
       }
+
+      PD_LOG( PDINFO, "create dps meta file success:file=%s", _path ) ;
 
    done:
       return rc ;
@@ -104,6 +108,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BOOLEAN isOpened = FALSE ;
       SINT64 read = 0 ;
+      DPS_LSN_OFFSET offset ;
 
       rc = ossOpen( _path, OSS_READWRITE, OSS_RWXU, _file ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to open meta file:file=%s,rc=%d",
@@ -126,6 +131,11 @@ namespace engine
          PD_LOG( PDERROR, "Meta header is invalid:rc=%d", rc ) ;
          goto error ;
       }
+
+      // try to read lsn
+      rc = readOldestLSNOffset( offset ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to read oldest lsn:file=%s,rc=%d",
+                  _path, rc ) ;
 
    done:
       return rc ;
