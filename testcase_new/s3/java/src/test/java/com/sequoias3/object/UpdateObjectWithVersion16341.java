@@ -14,6 +14,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
  * test content: object existence of delete tag, than create an object of the same name.

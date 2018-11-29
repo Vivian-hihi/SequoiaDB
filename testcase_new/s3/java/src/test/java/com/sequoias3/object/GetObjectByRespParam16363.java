@@ -6,6 +6,8 @@ import com.amazonaws.util.DateUtils;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
+
 import org.apache.tomcat.jni.Local;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
