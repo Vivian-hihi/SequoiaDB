@@ -7,12 +7,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
@@ -21,7 +16,7 @@ import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
 
 /**
- * @Description seqDB-15904:create buckets of the same name * 
+ * @Description seqDB-15904:create buckets of the same name 
  * @author wuyan
  * @Date 2018.09.30
  * @version 1.00
@@ -30,18 +25,14 @@ public class CreateBucket15904 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket15904";
 	private String userName = "bucket15904";
-	private String clientRegion = "us-east-1";
 	private String roleName = "normal";
 	private AmazonS3 s3Client = null;
 
 	@BeforeClass
-	private void setUp() throws Exception {	
+	private void setUp() throws Exception {
+		CommLib.clearUser(userName);
 		String[] acessKeys = RestClient.createUser(userName, roleName);
-		AWSCredentials credentials = new BasicAWSCredentials(acessKeys[0], acessKeys[1]);
-		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
-				S3TestBase.s3ClientUrl, clientRegion);
-		s3Client = AmazonS3ClientBuilder.standard().withEndpointConfiguration(endpointConfiguration)
-				.withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
+		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 		CommLib.clearBucket(s3Client, bucketName);
 	}
 
@@ -66,7 +57,7 @@ public class CreateBucket15904 extends S3TestBase {
 	private void tearDown() throws Exception {
 		try {
 			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
+				s3Client.deleteBucket(bucketName);
 				RestClient.deleteUser(userName);
 			}
 		} finally {

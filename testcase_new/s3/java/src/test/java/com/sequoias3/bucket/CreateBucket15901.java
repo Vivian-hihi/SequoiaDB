@@ -25,10 +25,13 @@ public class CreateBucket15901 extends S3TestBase{
 	String bucketName = "bucket15901";	
 	private AmazonS3 s3Client = null;
 
+	@SuppressWarnings("deprecation")
 	@BeforeClass
 	private void setUp() {		
 		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);	
+		if(s3Client.doesBucketExist(bucketName)){			
+			s3Client.deleteBucket(bucketName);	
+		}
 	}
 
 	@Test

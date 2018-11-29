@@ -1,5 +1,6 @@
 package com.sequoias3.bucket;
 
+import java.io.File;
 import java.util.List;
 
 import org.testng.Assert;
@@ -7,18 +8,15 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
  * @Description seqDB-15905:maximum number of buckets to be created *
@@ -29,21 +27,19 @@ import com.sequoias3.testcommon.S3TestBase;
 public class CreateBucket15905 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket15905";
+	private String key = "key15905";
 	private String userName = "user15905";
 	private String roleName = "normal";
-	private String clientRegion = "us-east-1";
 	private final int defaultMaxNums = 100;
+	private File localPath = null;
 	private AmazonS3 s3Client = null;
 
 	@BeforeClass
-	private void setUp() throws Exception {		
+	private void setUp() throws Exception {
+		CommLib.clearUser(userName);
 		String[] acessKeys = RestClient.createUser(userName, roleName);
-		AWSCredentials credentials = new BasicAWSCredentials(acessKeys[0], acessKeys[1]);
-		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
-				S3TestBase.s3ClientUrl, clientRegion);
-		s3Client = AmazonS3ClientBuilder.standard().withEndpointConfiguration(endpointConfiguration)
-				.withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
-		CommLib.clearBuckets(s3Client);
+		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
+		clearBucket(s3Client);		
 	}
 
 	@Test
@@ -68,11 +64,12 @@ public class CreateBucket15905 extends S3TestBase {
 			if (runSuccess) {
 				CommLib.clearBuckets(s3Client);
 				RestClient.deleteUser(userName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();
-			}
+			}			
 		}
 	}
 
@@ -80,10 +77,11 @@ public class CreateBucket15905 extends S3TestBase {
 		for (int i = 0; i < defaultMaxNums; i++) {
 			String subBucketName = bucketName + "." + i;
 			s3Client.createBucket(subBucketName);
+			s3Client.putObject(subBucketName, key, "test" + subBucketName);
 		}
 	}
 
-	private void checkCreateBucketResult(AmazonS3 s3Client) {
+	private void checkCreateBucketResult(AmazonS3 s3Client) throws Exception{
 		// check bucket nums
 		List<Bucket> buckets = s3Client.listBuckets();
 		Assert.assertEquals(buckets.size(), defaultMaxNums);
@@ -91,9 +89,32 @@ public class CreateBucket15905 extends S3TestBase {
 		for (int i = 0; i < buckets.size(); i++) {
 			Bucket bucket = buckets.get(i);
 			String actBucketName = bucket.getName();
-			String actOwner = bucket.getOwner().getDisplayName();
+			String actOwner = bucket.getOwner().getDisplayName();			
 			Assert.assertEquals(actBucketName, bucketName + "." + i);
 			Assert.assertEquals(actOwner, userName);
+			// check the object in the bucket
+			getObjectAndCheckContent(actBucketName);
+		}
+	}
+	
+	private void getObjectAndCheckContent(String bucketName) throws Exception{
+		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());		
+		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath,bucketName, key);		
+		String content = "test" + bucketName;			
+		String expEtag = TestTools.getMD5(content.getBytes());			
+		Assert.assertEquals(downfileMd5, expEtag);
+	}
+	
+	@SuppressWarnings("deprecation")
+	private void clearBucket(AmazonS3 s3Client){
+		for (int i = 0; i < defaultMaxNums; i++) {
+			String subBucketName = bucketName + "." + i;
+			if(s3Client.doesBucketExist(subBucketName)){
+				if(s3Client.doesObjectExist(subBucketName, key)){
+					s3Client.deleteObject(subBucketName, key);
+				}
+				s3Client.deleteBucket(subBucketName);
+			}			
 		}
 	}
 
