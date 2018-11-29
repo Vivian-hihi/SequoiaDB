@@ -51,13 +51,13 @@ namespace engine
    class _dpsTransExecutor ;
    class _IContext ;
 
-   // lock bucket, 1K slots for testing
+   // lock bucket, 512K slots for testing
    #define MAX_LOCKBUCKET_NUM             ( (UTIL_OBJIDX)( 524288  ) )
-   // LRB 1K for testing
+   // LRB 256K for testing
    #define DPS_INIT_NUM_OF_LRB            ( (UTIL_OBJIDX)( 262144  ) )
    // LRB MAX 2M 
    #define DPS_INIT_NUM_OF_LRB_MAX        ( (UTIL_OBJIDX)( 2097152 ) )
-   // LRB Header 1K for testing
+   // LRB Header 256K for testing
    #define DPS_INIT_NUM_OF_LRB_HEADER     ( (UTIL_OBJIDX)( 262144  ) )
    // LRB Header MAX 2M
    #define DPS_INIT_NUM_OF_LRB_HEADER_MAX ( (UTIL_OBJIDX)( 2097152 ) )
@@ -78,13 +78,15 @@ namespace engine
 
       virtual ~dpsTransLockManager();
 
-      // initialization, allocate segment for LRB and LRB Header,
+      // initialization,
+      //   . init _LockHdrBkt
+      //   . allocate segment for LRB and LRB Header
       INT32 init() ;
 
       // free allocated LRB and LRB Header segments
       void fini() ;
 
-      // if a lock has any waiters
+      // if a lock has any waiters ( upgrade and waiter list )
       BOOLEAN hasWait( const dpsTransLockId &lockId );
 
       // if lock manager has been initialized
@@ -156,17 +158,24 @@ namespace engine
 
       UINT32 getLockTimeout() { return _lockTimeout.fetch() ; }
 
-      // latch for monitoring( dump ) operation. The dump operation is mutually
-      // exclusive with normal lock operation. It latches the monitoring( dump )
-      // latch in exclusive mode
-      inline void acquireMonLatch() { _rwMutex.lock_w() ; }
+      // latch for monitoring( dump ) locking info of an EDU.
+      // This dump operation ( locking info of a specific EDU ) is mutually
+      // exclusive with normal lock operation( acquire, tryAcquire,
+      // testAcquire, release, releaseAll, hasWait etc on ) as it may be done
+      // by another thread ( monitoring ).
+      //   Normal lock operation :
+      //     . latch _rwMutext in shared mode
+      //     . latch a bucket slot in exclusively
+      //   Monitoring/dump EDU locking info :
+      //     . latch _rwMutext in exclusive mode 
+      OSS_INLINE void acquireMonLatch() { _rwMutex.lock_w() ; }
 
 
       // release monitoring( dump ) latch
-      inline void releaseMonLatch() { _rwMutex.release_w() ; }
+      OSS_INLINE void releaseMonLatch() { _rwMutex.release_w() ; }
 
 
-      // dump specific lock info to stdout for debugging purpose
+      // dump specific lock info to a file for debugging purpose
       void dumpLockInfo
       (
          const dpsTransLockId & lockId,
@@ -175,8 +184,8 @@ namespace engine
       ) ;
 
 
-      // dump all holding locks of an executor( EDU ) to stdout for debugging
-      // the caller shall acquire the monitoring( dump ) latch before
+      // dump all holding locks of an executor( EDU ) to a file for debugging.
+      // The caller shall acquire the monitoring( dump ) latch before
       // calling this function and make sure the dpsTxExectr is still valid
       void dumpLockInfo
       (
@@ -195,6 +204,10 @@ namespace engine
          VEC_TRANSLOCKCUR  & vecLocks
       ) ;
 
+     
+      // dump the waiting lock info of an executor ( EDU ) 
+      // the caller shall acquire the monitoring( dump ) latch before
+      // calling this function and make sure the dpsTxExectr is still valid
       void dumpLockInfo
       (
          UTIL_OBJIDX       lrbIdx,
@@ -224,14 +237,14 @@ namespace engine
       dpsTransLRBHeader * getLRBHdrPtrByIdx( const UTIL_OBJIDX hdrIdx ) ;
 
       // acquire lock bucket latch 
-      inline void acquireLockBktLatch( const dpsTransLockId & lockId )
+      OSS_INLINE void acquireLockBktLatch( const dpsTransLockId & lockId )
       {
          const UTIL_OBJIDX bktIdx = _getBucketNo( lockId ) ;
          _acquireOpLatch( bktIdx ) ;
       }
 
       // release lock bucket latch 
-      inline void releaseLockBktLatch( const dpsTransLockId & lockId )
+      OSS_INLINE void releaseLockBktLatch( const dpsTransLockId & lockId )
       {
          const UTIL_OBJIDX bktIdx = _getBucketNo( lockId ) ;
          _releaseOpLatch( bktIdx ) ;
@@ -239,8 +252,8 @@ namespace engine
 
    private:
       // for normal lock operation ( acquire, try, test, release, releaseAll )
-      // latch the monitor( dump ) latch in shared mode and latch the LRB bucket
-      // in exclusive mode
+      // latch the monitor( dump ) EDU lock info latch in shared mode
+      // and latch the LRB bucket in exclusive mode
       void _acquireOpLatch ( const UTIL_OBJIDX bucketIndex )
       {
          _rwMutex.lock_r() ;
@@ -265,13 +278,6 @@ namespace engine
 
       // release/return a LRB to LRB manager 
       INT32 _releaseLRB( const UTIL_OBJIDX idx );
-
-
-      // get the intent lock mode 
-      inline DPS_TRANSLOCK_TYPE _getIntentLockMode
-      (
-         const DPS_TRANSLOCK_TYPE request
-      );
 
 
       // search LRB list ( owner, waiter or upgrade list ) and find
@@ -423,7 +429,7 @@ namespace engine
       // calculate the index to LRB Header bucket
       UTIL_OBJIDX _getBucketNo( const dpsTransLockId &lockId );
 
-      // Wakeup a lock waiting exectuor ( EDU )
+      // wakeup a lock waiting exectuor ( EDU )
       void _wakeUp( _dpsTransExecutor *dpsTxExectr ) ;
 
       // wait a lock till be woken up, lock timeout elapsed, or be interrupted
@@ -474,7 +480,7 @@ namespace engine
       // lock timeout 
       ossAtomic32            _lockTimeout ;
 
-      // monitor/dump latch
+      // monitor/dump EDU locking info latch
       ossRWMutex             _rwMutex ;
    } ;
 }
