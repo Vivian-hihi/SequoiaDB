@@ -2697,5 +2697,14 @@
             <cn>正在重命名集合空间或者集合</cn>
          </description>
       </code>
+
+      <code>
+         <name>SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST</name>
+         <description>
+            <en>Invalid lock upgrade request</en>
+            <cn>非法锁升级请求</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
