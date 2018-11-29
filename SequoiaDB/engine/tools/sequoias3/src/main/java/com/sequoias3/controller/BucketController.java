@@ -41,7 +41,7 @@ public class BucketController {
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
         String location = getLocation(httpServletRequest);
-        logger.debug("Create bucket bucketName ={}, operator={}, location ",
+        logger.debug("Create bucket. bucketName ={}, operator={}, location ",
                 bucketName, operator.getUserName(), location);
         bucketService.createBucket(operator.getUserId(),bucketName, location);
         return ResponseEntity.ok()
@@ -54,7 +54,7 @@ public class BucketController {
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        logger.debug("list buckets:owner={}", operator.getUserName());
+        logger.debug("list buckets. operator={}", operator.getUserName());
         return ResponseEntity.ok()
                 .body(bucketService.getService(operator));
     }
@@ -65,7 +65,7 @@ public class BucketController {
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        logger.debug("delete bucket:bucket={}, operator={}", bucketName, operator.getUserName());
+        logger.debug("delete bucket. bucketName={}, operator={}", bucketName, operator.getUserName());
         bucketService.deleteBucket(operator.getUserId(), bucketName);
         return ResponseEntity.noContent().build();
     }
@@ -75,7 +75,7 @@ public class BucketController {
                                @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
-        logger.debug("head bucket:bucket={}, operator={}", bucketName, operator.getUserName());
+        logger.debug("head bucket. bucketName={}, operator={}", bucketName, operator.getUserName());
         Bucket bucket = bucketService.getBucket(operator.getUserId(), bucketName);
         HttpHeaders headers = new HttpHeaders();
         if (bucket.getRegion() != null){

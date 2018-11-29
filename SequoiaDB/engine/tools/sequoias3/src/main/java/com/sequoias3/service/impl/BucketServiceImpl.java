@@ -149,7 +149,7 @@ public class BucketServiceImpl implements BucketService {
         }
         if (bucket.getOwnerId() != ownerID){
             throw new S3ServerException(S3Error.ACCESS_DENIED,
-                    "You are not owned the specified bucket. bucket="+bucketName+"ownerID+"+ownerID);
+                    "You are not owned the specified bucket. bucket="+bucketName+", ownerID: "+ownerID);
         }
 
         return bucket;

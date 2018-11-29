@@ -1,17 +1,15 @@
 package com.sequoias3.context;
 
-import com.sequoias3.dao.QueryDbCursor;
-
 import static com.sequoias3.utils.DataFormatUtils.formatDate;
 
 public class Context {
     private String        token;
-    private QueryDbCursor dbCursor;
     private long          bucketId;
     private String        prefix;
     private String        startAfter;
     private String        delimiter;
     private long          lastModified;
+    private String        lastKey;
     private String        lastCommonPrefix;
 
     public Context(String token, long bucketId){
@@ -25,14 +23,6 @@ public class Context {
 
     public String getToken() {
         return token;
-    }
-
-    public void setDbCursor(QueryDbCursor dbCursor) {
-        this.dbCursor = dbCursor;
-    }
-
-    public QueryDbCursor getDbCursor() {
-        return dbCursor;
     }
 
     public void setPrefix(String prefix) {
@@ -73,6 +63,14 @@ public class Context {
 
     public long getLastModified() {
         return lastModified;
+    }
+
+    public void setLastKey(String lastKey) {
+        this.lastKey = lastKey;
+    }
+
+    public String getLastKey() {
+        return lastKey;
     }
 
     public void setLastCommonPrefix(String lastCommonPrefix) {

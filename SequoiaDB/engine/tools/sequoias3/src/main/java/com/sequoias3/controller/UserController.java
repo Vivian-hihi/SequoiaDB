@@ -36,7 +36,7 @@ public class UserController {
             throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR, "not an admin user.adminUser=" + adminUser.getUserName() + ",role=" + adminUser.getRole());
         }
 
-        logger.info("creating user:adminName={},user={},role={}", adminUser.getUserName(), username, role);
+        logger.info("create user. admin={},user={},role={}", adminUser.getUserName(), username, role);
         return ResponseEntity.ok()
                 .body(userService.createUser(username, role));
     }
@@ -51,7 +51,7 @@ public class UserController {
             throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR, "not an admin user.adminUser=" + adminUser.getUserName() + ",role=" + adminUser.getRole());
         }
 
-        logger.info("creating user:admin={},user={}", adminUser.getUserName(), username);
+        logger.info("create AccessKey. admin={},user={}", adminUser.getUserName(), username);
         return ResponseEntity.ok()
                 .body(userService.updateUser(username));
     }
@@ -66,7 +66,7 @@ public class UserController {
             throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR, "not an admin user.adminUser=" + adminUser.getUserName() + ",role=" + adminUser.getRole());
         }
 
-        logger.info("get user:admin={},user={}", adminUser.getUserName(), username);
+        logger.info("get AccessKey. admin={},user={}", adminUser.getUserName(), username);
         return ResponseEntity.ok()
                 .body(userService.getUser(username));
     }
@@ -93,7 +93,7 @@ public class UserController {
             }
         }
 
-        logger.info("delete user:admin={},user={},force={}",
+        logger.info("delete user. admin={},user={},force={}",
                 adminUser.getUserName(), username, forceDelete);
         userService.deleteUser(username, forceDelete);
 

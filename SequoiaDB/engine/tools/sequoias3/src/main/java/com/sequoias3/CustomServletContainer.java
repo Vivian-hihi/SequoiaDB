@@ -9,5 +9,6 @@ public class CustomServletContainer implements EmbeddedServletContainerCustomize
     @Override
     public void customize(ConfigurableEmbeddedServletContainer container) {
         System.setProperty("org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH", "true");
+        System.setProperty("org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH", "true");
     }
 }

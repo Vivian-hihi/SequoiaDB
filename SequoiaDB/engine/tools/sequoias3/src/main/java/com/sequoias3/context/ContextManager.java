@@ -64,9 +64,6 @@ public class ContextManager {
             }
         }finally {
             lock.unlock();
-            if (null != context && null != context.getDbCursor()) {
-                metaDao.releaseQueryDbCursor(context.getDbCursor());
-            }
         }
     }
 
@@ -74,7 +71,9 @@ public class ContextManager {
         lock.lock();
         try {
             Context context = contextMap.get(continueToken);
-            context.setLastModified(System.currentTimeMillis());
+            if (context != null) {
+                context.setLastModified(System.currentTimeMillis());
+            }
             return context;
         }finally {
             lock.unlock();
@@ -85,8 +84,6 @@ public class ContextManager {
         logger.debug("before scan. contextMap size:"+contextMap.size());
         long contextMaxLife = contextConfig.getLifecycle() * 60 * 1000;
 
-        List<Context> contextList = new ArrayList<>();
-
         lock.lock();
         try {
             long nowTime = System.currentTimeMillis();
@@ -95,20 +92,12 @@ public class ContextManager {
                 Map.Entry<String, Context> entry = it.next();
                 long diff = nowTime - entry.getValue().getLastModified();
                 if (diff > contextMaxLife) {
-                    contextList.add(entry.getValue());
+                    logger.info("release context. context{}", entry.getValue());
                     it.remove();
                 }
             }
         }finally {
             lock.unlock();
-        }
-
-        for (int i=0; i < contextList.size(); i++){
-            Context context = contextList.get(i);
-            logger.info("release context. context{}", context);
-            if (null != context.getDbCursor()) {
-                metaDao.releaseQueryDbCursor(context.getDbCursor());
-            }
         }
 
         logger.debug("after scan. contextMap size:"+contextMap.size());

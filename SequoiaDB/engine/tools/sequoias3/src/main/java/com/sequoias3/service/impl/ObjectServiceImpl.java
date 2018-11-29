@@ -414,7 +414,13 @@ public class ObjectServiceImpl implements ObjectService {
                 if (!IsContextMatch(queryContext, prefix, startAfter, delimiter)){
                     queryContext = null;
                 }else{
-                    dbCursor = queryContext.getDbCursor();
+                    //get cs,cl
+                    String metaCsName = metaDao.getMetaCSName(bucket.getRegion());
+                    String metaClName = metaDao.getMetaCurCLName();
+                    //get cursor
+                    dbCursor = metaDao.queryMetaByBucket(metaCsName, metaClName,
+                            bucket.getBucketId(), prefix, queryContext.getLastKey(),
+                            false, false);
                 }
             }
             if (null == queryContext){
@@ -436,7 +442,6 @@ public class ObjectServiceImpl implements ObjectService {
                 owner = userDao.getOwnerByUserID(ownerID);
             }
 
-            //DBCursor cursor = dbCursor.getCursor();
             int count = 0;
             int maxNumber = Math.min(maxKeys, RestParamDefine.MAX_KEYS_DEFAULT);
             int prefixLen = 0;
@@ -491,18 +496,18 @@ public class ObjectServiceImpl implements ObjectService {
             listObjectsResult.setKeyCount(count);
 
             if (dbCursor.hasNext()) {
+                BSONObject record = dbCursor.getCurrent();
+                String key = record.get(ObjectMeta.META_KEY_NAME).toString();
                 if (null == queryContext){
                     queryContext = contextManager.create(bucket.getBucketId());
                     queryContext.setPrefix(prefix);
                     queryContext.setStartAfter(startAfter);
                     queryContext.setDelimiter(delimiter);
-                    queryContext.setDbCursor(dbCursor);
                 }
 
+                queryContext.setLastKey(key);
                 //record context
                 if (null != delimiter) {
-                    BSONObject record = dbCursor.getCurrent();
-                    String key = record.get(ObjectMeta.META_KEY_NAME).toString();
                     int delimiterIndex = key.indexOf(delimiter, prefixLen);
                     if (-1 != delimiterIndex) {
                         queryContext.setLastCommonPrefix(key.substring(0, delimiterIndex+delimiterLen));
@@ -511,18 +516,17 @@ public class ObjectServiceImpl implements ObjectService {
                 listObjectsResult.setIsTruncated(true);
                 listObjectsResult.setNextContinueToken(queryContext.getToken());
             } else {
-                metaDao.releaseQueryDbCursor(dbCursor);
                 contextManager.release(queryContext);
             }
             return listObjectsResult;
         } catch (S3ServerException e){
-            metaDao.releaseQueryDbCursor(dbCursor);
             contextManager.release(queryContext);
             throw e;
         } catch (Exception e){
-            metaDao.releaseQueryDbCursor(dbCursor);
             contextManager.release(queryContext);
             throw new S3ServerException(S3Error.OBJECT_LIST_FAILED, "error message:"+e.getMessage());
+        }finally {
+            metaDao.releaseQueryDbCursor(dbCursor);
         }
     }
 
