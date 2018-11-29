@@ -17,9 +17,10 @@ function main()
    
    var increment = 12;
    var acquireSize = 11;
-   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, {AutoIncrement:{Field:fieldName, Increment:increment, AcquireSize:acquireSize}});
-   
    var coordNodes = getCoordNodeNames();
+   var coord1 = new Sdb(coordNodes[0]);
+   var dbcl = commCreateCLByOption(coord1, COMMCSNAME, clName, {AutoIncrement:{Field:fieldName, Increment:increment, AcquireSize:acquireSize}});
+   
    var coordNum = coordNodes.length;
    var expR = [];
    for(var k=0; k<coordNum; k++ )
@@ -61,14 +62,22 @@ function main()
    {
       var coord = new Sdb(coordNodes[k]);
       var cl = coord.getCS(COMMCSNAME).getCL(clName);
-      //alter操作会变更集合版本号，插入时会取2次seqence值，SEQUOIADBMAINSTREAM-3895,通过find操作更新版本号
-      var cursor = cl.find();
-      while(cursor.next()){}
       var doc = [];
       for(var i=0;i<100;i++)
       {
          doc.push({a:i});
-         expR.push({a:i, id: 1 + Math.ceil(100/acquireSize)*acquireSize*increment*coordNum + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment*i});
+         if(k == 0)
+         {
+            var expID =  1 + Math.ceil(100/acquireSize)*acquireSize*increment*coordNum + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment*i;
+	      }else
+         {
+            //alter操作修改Generated属性时，本coord插入不会更新版本号，其他coord插入时会更新版本号(跟开发确认无可避免)，自增字段产生空洞(空洞记录数个值)SEQUOIADBMAINSTREAM-3895
+            var expID = 1 + Math.ceil(100/acquireSize)*acquireSize*increment*coordNum + Math.ceil(100*2/acquireSize)*acquireSize*increment*k + increment*i;
+            //???
+            expID += increment;
+         }
+         expR.push({a:i, id: expID});
+         
       }
       cl.insert(doc);
       coord.close();
@@ -89,7 +98,8 @@ function main()
       }
    }
    println("---check insert after alter generated success");
-   commDropCL(db, COMMCSNAME, clName, true, true); 
+   commDropCL(coord1, COMMCSNAME, clName, true, true); 
+   coord1.close();
 }
 main()
 
