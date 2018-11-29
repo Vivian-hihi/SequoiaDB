@@ -54,52 +54,36 @@ function main()
    }
    checkMainCLFullSyncToES(COMMCSNAME, mainCLName, textIndexName, 30000);
    
-     // return datas from one group
-//   // skip + limit <= 1w without sort, result is random
-//   var dbOpr = new DBOperator();
-//   var limit = 100;
-//   var skip =  2000;
-//   var actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match" : {"a" : "test_15137"}}}}}, null, null, null, limit, skip);
-//   var expResult = dbOpr.findFromCL(mainCL, {"a": {"$lt": "z"}}, null, null, null, limit, skip);
-//   expResult.sort(compare("a"));
-//   actResult.sort(compare("a"));
-//   println("expResult: " + JSON.stringify(expResult) + "\nactResult: " + JSON.stringify(actResult));
-//   checkResult(expResult, actResult);
-//   println("---check skip+limit <= 1w success when return datas from one group---");
-//
-//   // skip + limit > 1w
-//   limit = 6000; // limit < 1w
-//   skip =  5000; // skip < 1w
-//   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match" : {"a" : "test_15137"}}}}}, null, null, null, limit, skip);
-//   expResult = dbOpr.findFromCL(mainCL, {"a": {"$lt": "z"}}, null, null, null, limit, skip);
-//   expResult.sort(compare("a"));
-//   actResult.sort(compare("a"));
-//   checkResult(expResult, actResult);
-//
-//   limit = 10000; // limit >= 1w
-//   skip =  10; // skip < 1w
-//   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match" : {"a" : "test_15137"}}}}}, null, null, null, limit, skip);
-//   expResult = dbOpr.findFromCL(mainCL, {"a": {"$lt": "z"}}, null, null, null, limit, skip);
-//   expResult.sort(compare("a"));
-//   actResult.sort(compare("a"));
-//   checkResult(expResult, actResult);
-//
-//   limit = 10; // limit < 1w
-//   skip =  10000; // skip >= 1w
-//   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match" : {"a" : "test_15137"}}}}}, null, null, null, limit, skip);
-//   expResult = dbOpr.findFromCL(mainCL, {"a": {"$lt": "z"}}, null, null, null, limit, skip);
-//   expResult.sort(compare("a"));
-//   actResult.sort(compare("a"));
-//   checkResult(expResult, actResult);
-//
-//   limit = 10000; // limit >= 1w
-//   skip =  10000; // skip >= 1w
-//   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match" : {"a" : "test_15137"}}}}}, null, null, null, limit, skip);
-//   expResult = dbOpr.findFromCL(mainCL, {"a": {"$lt": "z"}}, null, null, null, limit, skip);
-//   expResult.sort(compare("a"));
-//   actResult.sort(compare("a"));
-//   checkResult(expResult, actResult);
-//   println("---check skip+limit > 1w success when return datas from one group---");
+   // return datas from one group
+   // skip + limit <= 1w without sort
+   var dbOpr = new DBOperator();
+   var limit = 100;
+   var skip =  2000;
+   var actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match" : {"a" : "test_15137"}}}}}, null, null, null, limit, skip);
+   checkCount(limit, actResult.length);
+   println("---check skip+limit <= 1w success when return datas from one group---");
+
+   // skip + limit > 1w
+   limit = 6000; // limit < 1w
+   skip =  5000; // skip < 1w
+   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match" : {"a" : "test_15137"}}}}}, null, null, null, limit, skip);
+   checkCount(limit, actResult.length);
+
+   limit = 10000; // limit >= 1w
+   skip =  10; // skip < 1w
+   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match" : {"a" : "test_15137"}}}}}, null, null, null, limit, skip);
+   checkCount(limit, actResult.length);
+
+   limit = 10; // limit < 1w
+   skip =  10000; // skip >= 1w
+   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match" : {"a" : "test_15137"}}}}}, null, null, null, limit, skip);
+   checkCount(limit, actResult.length);
+
+   limit = 10000; // limit >= 1w
+   skip =  10000; // skip >= 1w
+   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match" : {"a" : "test_15137"}}}}}, null, null, null, limit, skip);
+   checkCount(limit, actResult.length);
+   println("---check skip+limit > 1w success when return datas from one group---");
 
    // return datas from one group
    // sort and skip + limit <= 1w
@@ -131,49 +115,34 @@ function main()
    println("---check skip+limit > 1w with sort success when return datas from one group---");
 
    // return datas from more groups
-//   // skip + limit <= 1w without sort, result is random
-//   limit = 5000;
-//   skip =  1000;
-//   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, null, null, limit, skip);
-//   expResult = dbOpr.findFromCL(mainCL, null, null, null, null, limit, skip);
-//   expResult.sort(compare("a"));
-//   actResult.sort(compare("a"));
-//   checkResult(expResult, actResult);
-//   println("---check skip+limit <= 1w success when return datas from more groups---");
-//
-//   // skip + limit > 1w
-//   limit = 6000; // limit < 1w
-//   skip =  5000; // skip < 1w
-//   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, null, null, limit, skip);
-//   expResult = dbOpr.findFromCL(mainCL, null, null, null, null, limit, skip);
-//   expResult.sort(compare("a"));
-//   actResult.sort(compare("a"));
-//   checkResult(expResult, actResult);
-//
-//   limit = 10000; // limit >= 1w
-//   skip =  10; // skip < 1w
-//   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, null, null, limit, skip);
-//   expResult = dbOpr.findFromCL(mainCL, null, null, null, null, limit, skip);
-//   expResult.sort(compare("a"));
-//   actResult.sort(compare("a"));
-//   checkResult(expResult, actResult);
-//
-//   limit = 10; // limit < 1w
-//   skip =  10000; // skip >= 1w
-//   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, null, null, limit, skip);
-//   expResult = dbOpr.findFromCL(mainCL, null, null, null, null, limit, skip);
-//   expResult.sort(compare("a"));
-//   actResult.sort(compare("a"));
-//   checkResult(expResult, actResult);
-//
-//   limit = 10000; // limit >= 1w
-//   skip =  10000; // skip >= 1w
-//   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, null, null, limit, skip);
-//   expResult = dbOpr.findFromCL(mainCL, null, null, null, null, limit, skip);
-//   expResult.sort(compare("a"));
-//   actResult.sort(compare("a"));
-//   checkResult(expResult, actResult);
-//   println("---check skip+limit > 1w success when return datas from more groups---");
+   // skip + limit <= 1w without sort
+   limit = 5000;
+   skip =  1000;
+   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, null, null, limit, skip);
+   checkCount(limit, actResult.length);
+   println("---check skip+limit <= 1w success when return datas from more groups---");
+
+   // skip + limit > 1w
+   limit = 6000; // limit < 1w
+   skip =  5000; // skip < 1w
+   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, null, null, limit, skip);
+   checkCount(limit, actResult.length);
+
+   limit = 10000; // limit >= 1w
+   skip =  10; // skip < 1w
+   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, null, null, limit, skip);
+   checkCount(limit, actResult.length);
+
+   limit = 10; // limit < 1w
+   skip =  10000; // skip >= 1w
+   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, null, null, limit, skip);
+   checkCount(limit, actResult.length);
+
+   limit = 10000; // limit >= 1w
+   skip =  10000; // skip >= 1w
+   actResult = dbOpr.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, null, null, limit, skip);
+   checkCount(limit, actResult.length);
+   println("---check skip+limit > 1w success when return datas from more groups---");
 
    // return datas from more groups
    // sort and skip + limit <= 1w
@@ -214,5 +183,12 @@ function main()
    commDropCL(db, COMMCSNAME, subCLName2, true, true);
    commDropCL(db, COMMCSNAME, mainCLName, true, true);
 }
-
+function checkCount( expectCount, actCount )
+{
+   if(expectCount != actCount)
+   {
+      throw buildException("checkCount()", "check count", "check count", expectCount, actCount);
+   }
+   println("check result success!");
+}
 main()
