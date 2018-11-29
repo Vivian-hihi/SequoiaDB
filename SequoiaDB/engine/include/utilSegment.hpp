@@ -136,20 +136,54 @@ namespace engine
       ~_utilSegmentManager() ;
 
    private :
-      // add a new segment and expand the _list when no free objects. 
-      INT32 _expandList( const UTIL_OBJIDX delta ) ;
+      //
+      // Description: add a new segment and expand the _list
+      //              when no free objects
+      // Input      : none
+      // Return     : SDB_OK               -- normal
+      //              SDB_OSS_UP_TO_LIMIT  -- exceed resource max threshold
+      //              SDB_OOM              -- out of memory
+      // Dependency : this function is called by acquire() only; and the caller
+      //              shall make sure the operation is protected by latch
+      INT32 _expandList() ;
 
+      //
+      // Description: check if need to expand before acquire an free object
+      // Input      : none
+      // Return     : TRUE   --  yes, need to expand
+      //              FALSE  --  no, acquire operation can proceed
+      // Dependency : this function is called by acquire() only; the caller
+      //              shall acquire the latch first.
+      //
       BOOLEAN _isFull() const
       {
          return _numOfObjs - 1 <= _acquiredCounter ? TRUE : FALSE ;
       }
 
+      //
+      // Description: check if current _numOfObjs is beyond the max threshold
+      //              _maxNumOfObjs
+      // Input      : none
+      // Return     : TRUE
+      //              FALSE
+      // Dependency : this function is called by acquire() only, which shall
+      //              acquire the latch first. 
+      //
       BOOLEAN _isUpToLimit() const
       {
          return _numOfObjs >= _maxNumOfObjs ? TRUE : FALSE ;
       }
 
-      // get an objX address by its index
+      //
+      // Description: get the address of internal object _objX by its index
+      // Input      : 
+      //              idx     -- object index
+      // Output     : 
+      //              _objX * -- the address of the object
+      //               
+      // Dependency : this function is internal/private helper function
+      //              called by getObjPtrByIndex(), acquire(), release() 
+      //              
       _objX * _getObjXByIndex( const UTIL_OBJIDX idx )
       {
          _objX * pObj     = NULL ;
@@ -175,7 +209,6 @@ namespace engine
          }
          return pObj ;
       }
-
 
       // round up to nearest power of 2
       // input :
@@ -210,47 +243,127 @@ namespace engine
          return result ;
       }
 
-
    public :
-      // initialization
-      //   numberOfObjs    : number of objects to allocate in a segemnt.
-      //   maxNumberOfObjs : the max number of objects.
+      //
+      // Description: initialization
+      //               . allocate the first array of objects, segment,
+      //                 and save the address of this segment in _segList
+      //               . fill the object index array, _list,
+      //                 with index of the newly allocated object 
+      // Input      :
+      //              numberOfObjs    -- number of objects in a segment
+      //              maxNumberOfObjs -- max number of objects, the max thresold
+      //
+      // Return     : SDB_OK          -- initialized successfully
+      //              SDB_INVALIDARG  -- invalid arguments
+      //              SDB_OOM         -- out of memory
+      // Dependency : this function shall be called one time only, and before
+      //              any other function of this class.
+      //
       INT32 init( const UTIL_OBJIDX numberOfObjs,
                   const UTIL_OBJIDX maxNumberOfObjs ) ;
 
-      // free all object allocated in segments
+      //
+      // Description: Free all objects allocated in segments and the object
+      //              index array, _list
+      // Return     : none
+      // Dependency : this function shall be called just before destory,
+      //              the caller shall guarantee no other threads are accessing
+      //              the objects. 
+      //
       void fini() ;
 
-      // get total number of objects without latch
+      //
+      // Description: peek total number of objects without latch
+      // Return     : total number of objects in segments
+      //
       UTIL_OBJIDX getNumOfObjectsNoSync() ;
 
-      // get total number of objects with latch
+      //
+      // Description: get total number of objects in segments
+      // Return     : total number of objects in segments
+      //
       UTIL_OBJIDX getNumOfObjects() ;
 
-      // get an object address by its index
+      //
+      // Description: get an object's address by its index
+      // Input      :
+      //              idx -- the object index
+      // Return     : address of the object ( specified by the index )
+      // Dependency : this function shall be called after the class is
+      //              initialized. It expects an correct index, i.e.,
+      //              idx < _numOfObjs
       T * getObjPtrByIndex( const UTIL_OBJIDX idx ) ;
 
-      // get an object index from its address
+      //
+      // Description: get an object's index by its address
+      // Return     : the object's index 
+      // Input      :
+      //              idx -- the object index
+      // Return     : index of the object ( specified by the address )
+      // Dependency : this function shall be called after the class is
+      //              initialized. It may return UTIL_INVALID_OBJ_INDEX,
+      //              if invalid address is passed in.
+      //
       UTIL_OBJIDX getIndexByAddr ( const T * pT ) ;
 
-      // acquire/apply a free object from the segments
-      //   idx : the object index ( to the segment, the object arrary )
-      //   pT  : the pointer of the object
-      // when _acquiredCounter is equal to '_numOfObjs - 1', means
-      // lack of free objects and a new segment ( array of object T ) will
-      // be added and the _list will be expanded.
+      //
+      // Description: acquire/apply a free object from the segments
+      // Input      : none
+      // Output     : 
+      //              idx -- the object index, each object has an unique index,
+      //                     the index number is continuous, starting from 0
+      //              pT  -- the pointer/address of the object
+      // Return     : SDB_OK, 
+      //              SDB_OSS_UP_TO_LIMIT,
+      //              SDB_SYS,
+      //              error rc returned from _expandList()
+      // Dependency : this function shall be called after the class is
+      //              initialized.
+      //              when _acquiredCounter is equal to '_numOfObjs - 1',
+      //              means lack of free objects and a new segment ( array of
+      //              object T ) will be added and the _list will be expanded.
+      //              acquire() protects all underneath operations by latch.
+      //
       INT32 acquire( UTIL_OBJIDX & idx,  T * &pT ) ;
 
-      // acquire/apply a free object from the segments
-      // pT : the pointer of the object
+      //
+      // Description: acquire/apply a free object from the segments
+      // Input      : none
+      // Output     :
+      //              pT  -- the pointer/address of the object
+      // Return     : SDB_OK, 
+      //              SDB_OSS_UP_TO_LIMIT,
+      //              SDB_SYS,
+      //              error rc returned from _expandList()
+      // Dependency : this function is thin wrapper of above acquire()
+      //
       INT32 acquire( T * &pT ) ;
 
-      // relase/return an object to the segments
-      //   idx : object index
+      //
+      // Description: release/return an object to the segments by its index
+      // Input      : idx -- the object index
+      // Output     : none
+      // Return     : SDB_OK  
+      //              SDB_SYS -- when error occurs
+      // Dependency : this function shall be called after the class is
+      //              initialized.
+      //              release() protects all underneath operations by latch.
+      //
       INT32 release( const UTIL_OBJIDX idx ) ;
 
-      // release/return an object to the segments by its address
-      //   pT : address / pointer of the object
+      //
+      // Description: release/return an object to the segments by its address
+      // Input      : pT -- address/pointer of the object
+      // Output     : none
+      // Return     : SDB_OK
+      //              SDB_SYS        -- when error occurs
+      //              SDB_INVALIDARG -- pT is invalid address
+      // Dependency : this function is thin wrapper function of above release()
+      //              this function will be slower than above release() as an
+      //              extra operation, getIndexByAddr(), is performed ( convert
+      //              address to index )
+      //
       INT32 release( const T * pT ) ;
 
    #ifdef _DEBUG
@@ -258,6 +371,7 @@ namespace engine
    #endif
    } ;
 
+   // get an object's index by its address
    template < class T >
    UTIL_OBJIDX _utilSegmentManager< T >::getIndexByAddr( const T * pT )
    {
@@ -283,6 +397,7 @@ namespace engine
       return idx ; 
    }
 
+   // Free all objects allocated in segments and the object index array, _list
    template < class T >
    void _utilSegmentManager< T >::fini()
    {
@@ -313,20 +428,29 @@ namespace engine
       }
    }
 
+   // allocate a new segment of objects and expand the _list
    template < class T >
-   INT32 _utilSegmentManager< T >::_expandList( const UTIL_OBJIDX delta )
+   INT32 _utilSegmentManager< T >::_expandList()
    {
       INT32         rc       = SDB_OK ;
       UTIL_OBJIDX * pListTmp = NULL ;
       _objX       * pSegTmp  = NULL ;
-      UTIL_OBJIDX   newSize  = _numOfObjs + delta ;
+      UTIL_OBJIDX   newSize  = _numOfObjs + _delta ;
 
-      if (    _isInitialized
-           && ( UTIL_INVALID_OBJ_INDEX != newSize )
+      SDB_ASSERT( _isInitialized,
+                  "Expand can only be done when segment is initialized" ) ;
+      SDB_ASSERT( _isFull(),
+                  "Expand can only be done if all current objs are acquired" ) ;
+      SDB_ASSERT( ( newSize <= _maxNumOfObjs ),
+                  "Expand failed due to exceed object maximum threshold."  ) ;
+
+      if (    ( UTIL_INVALID_OBJ_INDEX != newSize )
            && ( newSize <= _maxNumOfObjs )
-           && ( 0 != delta ) )
+           && ( 0 != _delta ) )
       {
-         pSegTmp  = SDB_OSS_NEW _objX[ delta ] ;
+         // allocate a new segment of object
+         pSegTmp  = SDB_OSS_NEW _objX[ _delta ] ;
+         // expand _list with new size
          pListTmp = ( UTIL_OBJIDX * )SDB_OSS_MALLOC( sizeof( UTIL_OBJIDX ) *
                                                      newSize ) ;
          if ( ( NULL != pListTmp ) && ( NULL != pSegTmp ) )
@@ -335,7 +459,7 @@ namespace engine
             ossMemcpy( pListTmp, _list, sizeof( UTIL_OBJIDX ) * _numOfObjs ) ;
 
             // initiate the newly allocated portion
-            for ( UTIL_OBJIDX i = 0 ; i < delta ; i++ )
+            for ( UTIL_OBJIDX i = 0 ; i < _delta ; i++ )
             {
                // initialize the list
                pListTmp[ _numOfObjs + i ] = _numOfObjs + i - 1 ;
@@ -368,6 +492,8 @@ namespace engine
                SDB_OSS_DEL [] pSegTmp ;  
             }
             rc = SDB_OOM ;
+
+            SDB_ASSERT( ( SDB_OK == rc ), "Failed to expand, out of memory" ) ;
          }
       }
       else
@@ -375,9 +501,13 @@ namespace engine
          // exceed the lock resorce limitation
          rc = SDB_OSS_UP_TO_LIMIT ;
       }
+      
       return rc ;
    }
 
+   // Initialization
+   //   numberOfObjs     -- number of objects in a segment
+   //   maxNumberOfObjs  -- max number of objects 
    template < class T >
    INT32 _utilSegmentManager< T >::init
    (
@@ -398,10 +528,20 @@ namespace engine
          _delta        = _nextPowerOf2( numberOfObjs, _exponent ) ;
          _numOfObjs    = _delta ;
          _maxNumOfObjs = maxNumberOfObjs ;
+
+         SDB_ASSERT( ( _maxNumOfObjs >= _delta ),
+                     "Invalid arguments, maxNumberOfObjs value is too small." );
+
+         if ( _maxNumOfObjs < _delta )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
       else
       {
          rc = SDB_INVALIDARG ;
+         SDB_ASSERT( ( SDB_OK == rc ), "Invalid arguments" ) ;
          goto error ;
       }
 
@@ -434,19 +574,22 @@ namespace engine
          SAFE_OSS_FREE( _list  ) ;
          _list = NULL ;
          rc = SDB_OOM ;
+         SDB_ASSERT( ( SDB_OK == rc ), "Failed to initialize, out of memory" );
       }
    done:
       return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
+   // peek _numOfObjs without latch
    template < class T >
    UTIL_OBJIDX _utilSegmentManager< T >::getNumOfObjectsNoSync()
    {  
       return _numOfObjs ;
    }
 
+   // get _numOfObjs
    template < class T >
    UTIL_OBJIDX _utilSegmentManager< T >::getNumOfObjects()
    {  
@@ -459,6 +602,7 @@ namespace engine
       return numOfObjs ;
    }
 
+   // get an object's address by its index 
    template < class T >
    T * _utilSegmentManager< T >::getObjPtrByIndex( const UTIL_OBJIDX idx )
    {
@@ -471,6 +615,9 @@ namespace engine
       return pObj ;
    }
 
+   // acquire a free object, upon successfully return,
+   //   idx -- the index of the object
+   //   pT  -- the address of the object
    template < class T >
    INT32 _utilSegmentManager< T >::acquire( UTIL_OBJIDX & idx,  T * &pT )
    {
@@ -499,8 +646,8 @@ namespace engine
                rc = SDB_OSS_UP_TO_LIMIT ;
                goto error ;
             }
-
-            rc = _expandList( _delta ) ;
+            
+            rc = _expandList() ;
             if ( rc )
             {
                goto error ;
@@ -547,6 +694,8 @@ namespace engine
       }
       else
       {
+         SDB_ASSERT( ( _isInitialized && _list ),
+                     "_utilSegmentManager has to be initialized." ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -556,11 +705,14 @@ namespace engine
       {
          _latch.release() ;
       }
+      SDB_ASSERT( ( SDB_OK == rc ), "Acquire failed" ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // acquire a free object, upon successfully return,
+   //   pT  -- the address of the object
    template < class T >
    INT32 _utilSegmentManager< T >::acquire( T * &pT )
    {
@@ -569,6 +721,8 @@ namespace engine
       return rc ;
    }
 
+   // release/return an object to the segments by its address
+   //   pT -- address of the object
    template < class T >
    INT32 _utilSegmentManager< T >::release( const T * pT )
    {
@@ -582,10 +736,13 @@ namespace engine
       else
       {
          rc = SDB_INVALIDARG ;
+         SDB_ASSERT( ( SDB_OK == rc ), "Invalid object address" ) ;
       }
       return rc ;
    }
 
+   // release/return an object to the segments by its index
+   //   idx -- the object index
    template < class T >
    INT32 _utilSegmentManager< T >::release( const UTIL_OBJIDX idx )
    {
@@ -642,29 +799,36 @@ namespace engine
                // error, probably the caller or someone else,
                // returned/released a non-acquired object
                rc = SDB_SYS ;
+               SDB_ASSERT( ( SDB_OK == rc ),
+                           "Can't release object more than acquired" ) ;
                goto error ;
             }
          }
          else
          {
             rc = SDB_SYS ;
+            SDB_ASSERT( ( SDB_OK == rc ),
+                        "Can't release an object without acquiring" ) ;
             goto error ;
          }
       }
       else
       {
+         SDB_ASSERT( ( _isInitialized && _list ),
+                     "_utilSegmentManager has to be initialized." ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
-    done:
-       if ( bLatched )
-       {
-          _latch.release() ;
-          bLatched = FALSE ;
-       }
-       return rc ;
-    error:
+   done:
+      if ( bLatched )
+      {
+         _latch.release() ;
+         bLatched = FALSE ;
+      }
+      SDB_ASSERT( ( SDB_OK == rc ), "Release failed" ) ;
+      return rc ;
+   error:
       goto done ;
    }
 
