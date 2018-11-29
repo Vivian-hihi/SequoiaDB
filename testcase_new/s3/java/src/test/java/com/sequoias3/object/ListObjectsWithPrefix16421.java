@@ -18,8 +18,8 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 
 /**
- * test content: To get a list of objects within a bucket.specify prefix does not match the object. 
- * testlink-case: seqDB-16421 * 
+ * @Description seqDB-16421: To get a list of objects within a bucket.specify
+ *              prefix does not match the object.
  * @author wuyan
  * @Date 2018.11.19
  * @version 1.00
@@ -64,6 +64,7 @@ public class ListObjectsWithPrefix16421 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLib.clearBucket(s3Client, bucketName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
 			s3Client.shutdown();

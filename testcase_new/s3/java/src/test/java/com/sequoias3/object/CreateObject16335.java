@@ -17,36 +17,35 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content: create object 
- * testlink-case: seqDB-16335 
+ * @Description seqDB-16335: create object
  * @author wuyan
  * @Date 2018.11.6
  * @version 1.00
  */
-public class CreateObject16335 extends S3TestBase{
-	private boolean runSuccess = false;			
-	private String keyName = "//aa/%maa/bb/object16335";	
+public class CreateObject16335 extends S3TestBase {
+	private boolean runSuccess = false;
+	private String keyName = "//aa/%maa/bb/object16335";
 	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 1024 * 300;	
+	private int fileSize = 1024 * 1024 * 300;
 	private File localPath = null;
-	private String filePath = null;	
+	private String filePath = null;
 
 	@BeforeClass
-	private void setUp() throws IOException {	
+	private void setUp() throws IOException {
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
 		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 
 		TestTools.LocalFile.removeFile(localPath);
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
-		s3Client = CommLib.buildS3Client();			
+		s3Client = CommLib.buildS3Client();
 	}
 
 	@Test
 	public void testCreateObject() throws Exception {
-		PutObjectResult result= s3Client.putObject(S3TestBase.bucketName, keyName, new File(filePath));	
-		checkObjectAttributeInfo( result );		
-		checkPutObjectResult( S3TestBase.bucketName );
+		PutObjectResult result = s3Client.putObject(S3TestBase.bucketName, keyName, new File(filePath));
+		checkObjectAttributeInfo(result);
+		checkPutObjectResult(S3TestBase.bucketName);
 		runSuccess = true;
 	}
 
@@ -54,31 +53,30 @@ public class CreateObject16335 extends S3TestBase{
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				s3Client.deleteObject(S3TestBase.bucketName, keyName);			
+				s3Client.deleteObject(S3TestBase.bucketName, keyName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
-		    s3Client.shutdown();
+			s3Client.shutdown();
 		}
 	}
 
-	private void checkPutObjectResult(String bucketName) throws Exception {		
-		//down file
-		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath,
-				bucketName, keyName);		
-        Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));        
+	private void checkPutObjectResult(String bucketName) throws Exception {
+		// down file
+		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+		Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 	}
-	
-	private void checkObjectAttributeInfo( PutObjectResult objAttrInfo) throws IOException{
+
+	private void checkObjectAttributeInfo(PutObjectResult objAttrInfo) throws IOException {
 		String expMd5 = TestTools.getMD5(filePath);
-		Assert.assertEquals(objAttrInfo.getETag(), expMd5 );
+		Assert.assertEquals(objAttrInfo.getETag(), expMd5);
 		String isModify = null;
-		Assert.assertEquals(objAttrInfo.getExpirationTimeRuleId(), isModify );	
-		
-		//check the attributeInfo of get object
-		GetObjectMetadataRequest request = new GetObjectMetadataRequest(S3TestBase.bucketName,
-				keyName);		
-		ObjectMetadata result = s3Client.getObjectMetadata(request);	
-		Assert.assertEquals(result.getETag(), expMd5 );	
+		Assert.assertEquals(objAttrInfo.getExpirationTimeRuleId(), isModify);
+
+		// check the attributeInfo of get object
+		GetObjectMetadataRequest request = new GetObjectMetadataRequest(S3TestBase.bucketName, keyName);
+		ObjectMetadata result = s3Client.getObjectMetadata(request);
+		Assert.assertEquals(result.getETag(), expMd5);
 		Assert.assertEquals(result.getContentLength(), fileSize);
 	}
 }

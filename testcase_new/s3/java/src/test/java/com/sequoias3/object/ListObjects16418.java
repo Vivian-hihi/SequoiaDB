@@ -19,28 +19,27 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 
 /**
- * test content:  To get a list of objects within a bucket.
- *                the object has multiple versions
- * testlink-case: seqDB-16418
+ * @Description seqDB-16418: To get a list of objects within a bucket. the
+ *              object has multiple versions
  * @author wuyan
  * @Date 2018.11.19
  * @version 1.00
  */
-public class ListObjects16418 extends S3TestBase{
-	private boolean runSuccess = false;	
+public class ListObjects16418 extends S3TestBase {
+	private boolean runSuccess = false;
 	private String bucketName = "bucket16418";
-	private String key = "aa/bb/object16418";	
+	private String key = "aa/bb/object16418";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 2;
 	private int updateSize = 1024 * 10;
-	private int objectNums = 200;	
+	private int objectNums = 200;
 	private File localPath = null;
 	private String filePath = null;
 	private String updatePath = null;
 
 	@SuppressWarnings("deprecation")
 	@BeforeClass
-	private void setUp() throws IOException {	
+	private void setUp() throws IOException {
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
 		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 		updatePath = localPath + File.separator + "localFile_" + updateSize + ".txt";
@@ -49,20 +48,21 @@ public class ListObjects16418 extends S3TestBase{
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		TestTools.LocalFile.createFile(updatePath, updateSize);
-		s3Client = CommLib.buildS3Client();		
-		
-		if(s3Client.doesBucketExist(bucketName)){
-			System.out.println("-----test="+s3Client.doesBucketExist(bucketName));
-			CommLib.clearBucket(s3Client, bucketName);	
-		};		
+		s3Client = CommLib.buildS3Client();
+
+		if (s3Client.doesBucketExist(bucketName)) {
+			System.out.println("-----test=" + s3Client.doesBucketExist(bucketName));
+			CommLib.clearBucket(s3Client, bucketName);
+		}
+		;
 		s3Client.createBucket(bucketName);
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 	}
 
 	@Test
-	public void testCreateObject() throws Exception {	
+	public void testCreateObject() throws Exception {
 		List<String> keyList = putObjects();
-		listObjectsAndCheckResult( keyList );
+		listObjectsAndCheckResult(keyList);
 		runSuccess = true;
 	}
 
@@ -70,42 +70,43 @@ public class ListObjects16418 extends S3TestBase{
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);	
+				CommLib.clearBucket(s3Client, bucketName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
-		    s3Client.shutdown();
+			s3Client.shutdown();
 		}
 	}
-	
-	private void listObjectsAndCheckResult( List<String> keyList) throws IOException{
+
+	private void listObjectsAndCheckResult(List<String> keyList) throws IOException {
 		List<String> queryKeyList = new ArrayList<>();
 		ListObjectsV2Result result = s3Client.listObjectsV2(bucketName);
 		List<S3ObjectSummary> objects = result.getObjectSummaries();
 		Assert.assertEquals(objects.size(), objectNums);
-		for( S3ObjectSummary os : objects){
+		for (S3ObjectSummary os : objects) {
 			String key = os.getKey();
 			String etag = os.getETag();
-			long size = os.getSize();				
+			long size = os.getSize();
 			queryKeyList.add(key);
-			//check the etag and size
+			// check the etag and size
 			Assert.assertEquals(etag, TestTools.getMD5(updatePath));
-			Assert.assertEquals(size, updateSize);			
+			Assert.assertEquals(size, updateSize);
 		}
-		
-		//check the keyName
+
+		// check the keyName
 		Collections.sort(keyList);
 		Collections.sort(queryKeyList);
-		Assert.assertEquals(queryKeyList, keyList);	
+		Assert.assertEquals(queryKeyList, keyList);
 	}
-	
-	private List<String> putObjects(){
-		List<String> keyList = new ArrayList<>();	
-		for ( int i = 0; i < objectNums; i++ ){
+
+	private List<String> putObjects() {
+		List<String> keyList = new ArrayList<>();
+		for (int i = 0; i < objectNums; i++) {
 			String keyName = key + "_" + i + TestTools.getRandomString(i);
 			keyList.add(keyName);
-			s3Client.putObject( bucketName, keyName, new File(filePath) );	
-			s3Client.putObject( bucketName, keyName, new File(updatePath) );
+			s3Client.putObject(bucketName, keyName, new File(filePath));
+			s3Client.putObject(bucketName, keyName, new File(updatePath));
 		}
 		return keyList;
-	}	
+	}
 }

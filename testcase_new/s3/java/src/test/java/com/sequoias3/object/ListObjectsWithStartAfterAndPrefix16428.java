@@ -18,9 +18,8 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 
 /**
- * test content: To get a list of objects within a bucket.specify startAfter/prefix. 
- * 				 match prefix, not match startAfter 
- * testlink-case:seqDB-16428 
+ * @Description seqDB-16428: To get a list of objects within a bucket.specify
+ *              startAfter/prefix. match prefix, not match startAfter
  * @author wuyan
  * @Date 2018.11.24
  * @version 1.00
@@ -68,6 +67,7 @@ public class ListObjectsWithStartAfterAndPrefix16428 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLib.clearBucket(s3Client, bucketName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
 			s3Client.shutdown();

@@ -17,52 +17,51 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content: object existence of delete tag, than create an object of the same name.
- * testlink-case: seqDB-16341
+ * @Description seqDB-16341: object existence of delete tag, than create an
+ *              object of the same name.
  * @author wuyan
  * @Date 2018.11.13
  * @version 1.00
  */
-public class UpdateObjectWithVersion16341 extends S3TestBase{
+public class UpdateObjectWithVersion16341 extends S3TestBase {
 	@DataProvider(name = "objectParameterProvider")
-	public Object[][] generatePageSize(){
-		return new Object[][]{
-			//the parameter : versionStatus and objectVersion
-			//the versioning is enabled,the objectVersion is 1
-			new Object[]{"Enabled", "1"},
-			//the versioning is enabled,the objectVersion is 1
-			new Object[]{"Suspended", "null"}			
-		};
-	}	
-	
-	private boolean runSuccess = false;			
-	private String key = "aa/bb/object16341";	
-	private String bucketName = "bucket16341";	
+	public Object[][] generatePageSize() {
+		return new Object[][] {
+				// the parameter : versionStatus and objectVersion
+				// the versioning is enabled,the objectVersion is 1
+				new Object[] { "Enabled", "1" },
+				// the versioning is enabled,the objectVersion is 1
+				new Object[] { "Suspended", "null" } };
+	}
+
+	private boolean runSuccess = false;
+	private String key = "aa/bb/object16341";
+	private String bucketName = "bucket16341";
 	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 100;	
+	private int fileSize = 1024 * 100;
 	private File localPath = null;
-	private String filePath = null;	
+	private String filePath = null;
 
 	@BeforeClass
-	private void setUp() throws IOException {	
+	private void setUp() throws IOException {
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";		
+		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 
 		TestTools.LocalFile.removeFile(localPath);
 		TestTools.LocalFile.createDir(localPath.toString());
-		TestTools.LocalFile.createFile(filePath, fileSize);		
-		s3Client = CommLib.buildS3Client();				
+		TestTools.LocalFile.createFile(filePath, fileSize);
+		s3Client = CommLib.buildS3Client();
 	}
 
 	@SuppressWarnings("deprecation")
 	@Test(dataProvider = "objectParameterProvider")
-	public void test(  String versionStatus, String versionId ) throws Exception {		
-		CommLib.clearBucket(s3Client, bucketName);	
-		s3Client.createBucket(bucketName,"region");
-		CommLib.setBucketVersioning( s3Client, bucketName, versionStatus);	
-		s3Client.deleteObject( bucketName, key);
-		s3Client.putObject( bucketName, key, new File(filePath));	
-		checkCreateObjectReslut( bucketName, versionId );		
+	public void test(String versionStatus, String versionId) throws Exception {
+		CommLib.clearBucket(s3Client, bucketName);
+		s3Client.createBucket(bucketName, "region");
+		CommLib.setBucketVersioning(s3Client, bucketName, versionStatus);
+		s3Client.deleteObject(bucketName, key);
+		s3Client.putObject(bucketName, key, new File(filePath));
+		checkCreateObjectReslut(bucketName, versionId);
 		runSuccess = true;
 	}
 
@@ -70,27 +69,27 @@ public class UpdateObjectWithVersion16341 extends S3TestBase{
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				CommLib.deleteAllObjectVersions( s3Client,bucketName);
+				CommLib.deleteAllObjectVersions(s3Client, bucketName);
 				s3Client.deleteBucket(bucketName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
-		    s3Client.shutdown();
+			s3Client.shutdown();
 		}
 	}
-	
-	private void checkCreateObjectReslut(String bucketName, String expVersionId) throws Exception{
-		//get the new object content is the create content
-		S3Object object = s3Client.getObject( bucketName, key);			
+
+	private void checkCreateObjectReslut(String bucketName, String expVersionId) throws Exception {
+		// get the new object content is the create content
+		S3Object object = s3Client.getObject(bucketName, key);
 		String versionId = object.getObjectMetadata().getVersionId();
-		//if the suspended versiong, get newobject versionId return null
-		if( versionId == null ){
+		// if the suspended versiong, get newobject versionId return null
+		if (versionId == null) {
 			expVersionId = null;
 		}
-		Assert.assertEquals( versionId, expVersionId);		
-		
-    	//check the content of the create object
-    	String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath,
-    							bucketName, key, versionId);		
-    	Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath)); 		
-	}	
+		Assert.assertEquals(versionId, expVersionId);
+
+		// check the content of the create object
+		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key, versionId);
+		Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
+	}
 }

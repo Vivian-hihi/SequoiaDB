@@ -20,25 +20,24 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content: enabling bucket versioning,get object with match conditions:
- *                ifModifiedSince and ifUnModifiedSince
- * testlink-case: seqDB-16377
+ * @Description seqDB-16377: enabling bucket versioning,get object with match
+ *              conditions: ifModifiedSince and ifUnModifiedSince
  * @author wuyan
  * @Date 2018.11.14
  * @version 1.00
  */
-public class GetObjectWithMatchConditions16377 extends S3TestBase{
-	private boolean runSuccess = false;			
-	private String key = "/aa/bb/object16377";	
+public class GetObjectWithMatchConditions16377 extends S3TestBase {
+	private boolean runSuccess = false;
+	private String key = "/aa/bb/object16377";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 100;
 	private int updateSize = 1024 * 150;
 	private File localPath = null;
-	private String filePath = null;	
-	private String updatePath = null;	
+	private String filePath = null;
+	private String updatePath = null;
 
 	@BeforeClass
-	private void setUp() throws IOException {	
+	private void setUp() throws IOException {
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
 		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 		updatePath = localPath + File.separator + "localFile_" + updateSize + ".txt";
@@ -47,28 +46,26 @@ public class GetObjectWithMatchConditions16377 extends S3TestBase{
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		TestTools.LocalFile.createFile(updatePath, updateSize);
-		s3Client = CommLib.buildS3Client();	
-		ObjectUtils.deleteObjectAllVersions( s3Client,S3TestBase.enableVerBucketName, key );
+		s3Client = CommLib.buildS3Client();
+		ObjectUtils.deleteObjectAllVersions(s3Client, S3TestBase.enableVerBucketName, key);
 	}
 
 	@Test
-	public void testGetObject() throws Exception {		
+	public void testGetObject() throws Exception {
 		s3Client.putObject(S3TestBase.enableVerBucketName, key, new File(filePath));
 		Date createDate = getCreateDate(S3TestBase.enableVerBucketName);
-		s3Client.putObject(S3TestBase.enableVerBucketName, key, new File(updatePath));		
-		
-		//set date one day later than create time		
+		s3Client.putObject(S3TestBase.enableVerBucketName, key, new File(updatePath));
+
+		// set date one day later than create time
 		long timestamp = createDate.getTime() + 96784000l;
 		Date unModifydate = new Date(timestamp);
 		String curVersionId = "1";
-		GetObjectRequest request = new GetObjectRequest( S3TestBase.enableVerBucketName,
-				key, curVersionId );
-		request.withUnmodifiedSinceConstraint(unModifydate)
-		.withModifiedSinceConstraint(createDate);		
+		GetObjectRequest request = new GetObjectRequest(S3TestBase.enableVerBucketName, key, curVersionId);
+		request.withUnmodifiedSinceConstraint(unModifydate).withModifiedSinceConstraint(createDate);
 		S3Object object = s3Client.getObject(request);
-		
-		//match current version object
-		checkGetObjectResult( object, updatePath );
+
+		// match current version object
+		checkGetObjectResult(object, updatePath);
 		runSuccess = true;
 	}
 
@@ -76,26 +73,27 @@ public class GetObjectWithMatchConditions16377 extends S3TestBase{
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				ObjectUtils.deleteObjectAllVersions( s3Client,S3TestBase.enableVerBucketName, key );			
+				ObjectUtils.deleteObjectAllVersions(s3Client, S3TestBase.enableVerBucketName, key);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
-		    s3Client.shutdown();
+			s3Client.shutdown();
 		}
 	}
-	
-	private Date getCreateDate( String bucketName){
-		S3Object object = s3Client.getObject( bucketName, key );
+
+	private Date getCreateDate(String bucketName) {
+		S3Object object = s3Client.getObject(bucketName, key);
 		ObjectMetadata metadata = object.getObjectMetadata();
 		Date date = metadata.getLastModified();
 		return date;
 	}
-	
-	private void checkGetObjectResult( S3Object object, String filePath ) throws Exception{
-		S3ObjectInputStream s3is = object.getObjectContent();		
+
+	private void checkGetObjectResult(S3Object object, String filePath) throws Exception {
+		S3ObjectInputStream s3is = object.getObjectContent();
 		String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
 				Thread.currentThread().getId());
-		ObjectUtils.inputStream2File( s3is, downloadPath);        
-        String getMd5 = TestTools.getMD5(downloadPath);
-        Assert.assertEquals(getMd5, TestTools.getMD5(filePath));         
-	}	
+		ObjectUtils.inputStream2File(s3is, downloadPath);
+		String getMd5 = TestTools.getMD5(downloadPath);
+		Assert.assertEquals(getMd5, TestTools.getMD5(filePath));
+	}
 }

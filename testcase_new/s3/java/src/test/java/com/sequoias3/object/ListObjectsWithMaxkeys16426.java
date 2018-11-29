@@ -20,8 +20,8 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 
 /**
- * test content: To get a list of objects within a bucket.specify matching maxKeys. 
- * testlink-case: seqDB-16426 * 
+ * @Description seqDB-16426: To get a list of objects within a bucket.specify
+ *              matching maxKeys.
  * @author wuyan
  * @Date 2018.11.23
  * @version 1.00
@@ -78,6 +78,7 @@ public class ListObjectsWithMaxkeys16426 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLib.clearBucket(s3Client, bucketName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
 			s3Client.shutdown();

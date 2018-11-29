@@ -18,25 +18,24 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content: enabling bucket versioning,create object on the bucket, 
- *               and the key name of the same name already exists
- * testlink-case: seqDB-16339
+ * @Description seqDB-16339:enabling bucket versioning,create object on the
+ *              bucket, and the key name of the same name already exists *              
  * @author wuyan
  * @Date 2018.11.13
  * @version 1.00
  */
-public class UpdateObjectWithVersion16339 extends S3TestBase{
-	private boolean runSuccess = false;			
-	private String keyName = "aa/bb/object16339";	
+public class UpdateObjectWithVersion16339 extends S3TestBase {
+	private boolean runSuccess = false;
+	private String keyName = "aa/bb/object16339";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 5;
 	private int updateSize = 1024 * 2;
 	private File localPath = null;
-	private String filePath = null;	
-	private String updatePath = null;	
+	private String filePath = null;
+	private String updatePath = null;
 
 	@BeforeClass
-	private void setUp() throws IOException {	
+	private void setUp() throws IOException {
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
 		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 		updatePath = localPath + File.separator + "localFile_" + updateSize + ".txt";
@@ -45,15 +44,15 @@ public class UpdateObjectWithVersion16339 extends S3TestBase{
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		TestTools.LocalFile.createFile(updatePath, updateSize);
-		s3Client = CommLib.buildS3Client();			
+		s3Client = CommLib.buildS3Client();
 	}
 
 	@Test
-	public void testCreateObject() throws Exception {		
-		s3Client.putObject(S3TestBase.enableVerBucketName, keyName, new File(filePath));	
-		updateObjectWithSameContent( S3TestBase.enableVerBucketName );
-		updateObjectWithDiffContent( S3TestBase.enableVerBucketName);	
-		checkObjectContent( S3TestBase.enableVerBucketName );
+	public void testCreateObject() throws Exception {
+		s3Client.putObject(S3TestBase.enableVerBucketName, keyName, new File(filePath));
+		updateObjectWithSameContent(S3TestBase.enableVerBucketName);
+		updateObjectWithDiffContent(S3TestBase.enableVerBucketName);
+		checkObjectContent(S3TestBase.enableVerBucketName);
 		runSuccess = true;
 	}
 
@@ -61,55 +60,53 @@ public class UpdateObjectWithVersion16339 extends S3TestBase{
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				ObjectUtils.deleteObjectAllVersions( s3Client,S3TestBase.enableVerBucketName, keyName );			
+				ObjectUtils.deleteObjectAllVersions(s3Client, S3TestBase.enableVerBucketName, keyName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
-		    s3Client.shutdown();
+			s3Client.shutdown();
 		}
 	}
-	
-	private void updateObjectWithSameContent(String bucketName) throws Exception{
-		//get the create object date
-		S3Object object = s3Client.getObject( bucketName, keyName);		
+
+	private void updateObjectWithSameContent(String bucketName) throws Exception {
+		// get the create object date
+		S3Object object = s3Client.getObject(bucketName, keyName);
 		Date createDate = object.getObjectMetadata().getLastModified();
-		
-		PutObjectResult result = s3Client.putObject( bucketName, keyName, new File(filePath));	
-		//check the versionId, should be 1	
+
+		PutObjectResult result = s3Client.putObject(bucketName, keyName, new File(filePath));
+		// check the versionId, should be 1
 		String updateVersionId = "1";
-		Assert.assertEquals( result.getVersionId(), updateVersionId);
-		
-		//check the modify date
-		S3Object updateObject = s3Client.getObject( bucketName, keyName);
+		Assert.assertEquals(result.getVersionId(), updateVersionId);
+
+		// check the modify date
+		S3Object updateObject = s3Client.getObject(bucketName, keyName);
 		Date updateDate = updateObject.getObjectMetadata().getLastModified();
-		if ( updateDate.getTime() < createDate.getTime()){
-			Assert.fail("updateDate must be grater than createDate! updateDate:" + updateDate.getTime() 
-							+ "\t createDate:" + createDate.getTime());
-		}    
+		if (updateDate.getTime() < createDate.getTime()) {
+			Assert.fail("updateDate must be grater than createDate! updateDate:" + updateDate.getTime()
+					+ "\t createDate:" + createDate.getTime());
+		}
 	}
-	
-	private void updateObjectWithDiffContent(String bucketName ) throws Exception{		
-		PutObjectResult result = s3Client.putObject( bucketName, keyName, new File(updatePath));
-		//check the versionId, should be 2		
-		Assert.assertEquals( result.getVersionId(), "2");
+
+	private void updateObjectWithDiffContent(String bucketName) throws Exception {
+		PutObjectResult result = s3Client.putObject(bucketName, keyName, new File(updatePath));
+		// check the versionId, should be 2
+		Assert.assertEquals(result.getVersionId(), "2");
 	}
-	
-	private void checkObjectContent( String bucketName ) throws Exception{
+
+	private void checkObjectContent(String bucketName) throws Exception {
 		String createVersionId = "0";
-		String updateVersionId = "1";		
-		
-		//check the content of the create object
-		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath,
-							bucketName, keyName, createVersionId);		
-		Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath)); 
-		
-		//check the content of the second update 
-		String updateMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath,
-							bucketName, keyName, updateVersionId);		
-		Assert.assertEquals(updateMd5, TestTools.getMD5(filePath)); 
-		
-		//check the content of the second update 
-		String secUdateMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath,
-							bucketName, keyName);		
-		Assert.assertEquals(secUdateMd5, TestTools.getMD5(updatePath)); 
+		String updateVersionId = "1";
+
+		// check the content of the create object
+		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName, createVersionId);
+		Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
+
+		// check the content of the second update
+		String updateMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName, updateVersionId);
+		Assert.assertEquals(updateMd5, TestTools.getMD5(filePath));
+
+		// check the content of the second update
+		String secUdateMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+		Assert.assertEquals(secUdateMd5, TestTools.getMD5(updatePath));
 	}
 }

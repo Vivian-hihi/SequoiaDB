@@ -20,10 +20,10 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 
 /**
- * test content: To get a list of objects within a bucket.specify matching delimiter and maxkeys. 
- *               test a: maxkeys is less than the matching records 
- *               test b: maxkeys is greater than the matching records 
- * testlink-case: seqDB-16423 * 
+ * @Description seqDB-16423: To get a list of objects within a bucket.specify
+ *              matching delimiter and maxkeys. 
+ *              test a: maxkeys is less than the matching records 
+ *              test b: maxkeys is greater than the matching records
  * @author wuyan
  * @Date 2018.11.23
  * @version 1.00
@@ -72,6 +72,7 @@ public class ListObjectsWithDelimiter16423 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLib.clearBucket(s3Client, bucketName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
 			s3Client.shutdown();
