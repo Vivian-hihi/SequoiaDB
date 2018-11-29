@@ -34,6 +34,8 @@
 #include "sptSshSession.hpp"
 #include "pd.hpp"
 
+#define SPT_SOCKET_TIMEOUT      3000
+
 namespace engine
 {
    _sptSshSession::_sptSshSession( const CHAR *host,
@@ -124,8 +126,8 @@ namespace engine
          PD_LOG( PDERROR, "failed to set keep alive:%d", rc ) ;
          goto error ;
       }
-
-      rc = _sock->connect() ;
+      
+      rc = _sock->connect( SPT_SOCKET_TIMEOUT ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "can not connect to host:%s:%d, rc:%d",
