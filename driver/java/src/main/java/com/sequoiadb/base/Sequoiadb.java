@@ -2226,12 +2226,18 @@ public class Sequoiadb implements Closeable {
     }
 
     private ByteBuffer receiveSdbResponse() {
-        byte[] lengthBytes = connection.receive(4);
-        int length = ByteBuffer.wrap(lengthBytes).order(byteOrder).getInt();
+        byte[] bytes;
+        try {
+            byte[] lengthBytes = connection.receive(4);
+            int length = ByteBuffer.wrap(lengthBytes).order(byteOrder).getInt();
 
-        byte[] bytes = new byte[length];
-        System.arraycopy(lengthBytes, 0, bytes, 0, lengthBytes.length);
-        connection.receive(bytes, 4, length - 4);
+            bytes = new byte[length];
+            System.arraycopy(lengthBytes, 0, bytes, 0, lengthBytes.length);
+            connection.receive(bytes, 4, length - 4);
+        } catch (Exception e) {
+            connection.close();
+            throw new BaseException(SDBError.SDB_NETWORK, "Failed to receive message.", e);
+        }
         ByteBuffer buffer = ByteBuffer.wrap(bytes).order(byteOrder);
         return buffer;
     }
