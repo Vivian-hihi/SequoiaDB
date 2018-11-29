@@ -44,6 +44,7 @@
 #include "oss.hpp"
 #include "dms.hpp"
 #include "ossUtil.hpp"
+#include "pd.hpp"     // SDB_ASSERT
 #include <sstream>
 #include "../bson/bson.h"
 
@@ -97,12 +98,15 @@ namespace engine
       { 1,  0,  1,  1,  0 },
       { 1,  0,  1,  0,  0 },
       { 0,  0,  0,  0,  0 }} ;
-   inline BOOLEAN dpsIsLockCompatible
+   OSS_INLINE BOOLEAN dpsIsLockCompatible
    (
       const DPS_TRANSLOCK_TYPE current,
       const DPS_TRANSLOCK_TYPE request
    )
    {
+      SDB_ASSERT( ( ( current < DPS_TRANSLOCK_MAX ) &&
+                    ( request < DPS_TRANSLOCK_MAX ) ),
+                  "Invalid arguments" ) ;
       return ( _LockCompatibilityMatrix[request][current] ? TRUE : FALSE ) ;
    }
 
@@ -134,12 +138,15 @@ namespace engine
       { 1, 0, 0, 0, 0 },
       { 0, 0, 0, 0, 0 },
       { 0, 0, 1, 1, 0 }} ;
-   inline INT32 dpsUpgradeCheck
+   OSS_INLINE INT32 dpsUpgradeCheck
    (
       const DPS_TRANSLOCK_TYPE current,
       const DPS_TRANSLOCK_TYPE request
    )
    {
+      SDB_ASSERT( ( ( current < DPS_TRANSLOCK_MAX ) &&
+                    ( request < DPS_TRANSLOCK_MAX ) ),
+                  "Invalid arguments" ) ;
       if ( _LockUpgradeCheckMatrix[request][current] )
       {
          return SDB_OK ;
@@ -166,14 +173,37 @@ namespace engine
       { 0, 0, 1, 1, 1 },
       { 0, 0, 0, 1, 1 },
       { 0, 0, 0, 0, 1 }} ;
-   inline BOOLEAN dpsLockCoverage
+   OSS_INLINE BOOLEAN dpsLockCoverage
    (
       const DPS_TRANSLOCK_TYPE current,
       const DPS_TRANSLOCK_TYPE request
    )
    {
+      SDB_ASSERT( ( ( current < DPS_TRANSLOCK_MAX ) &&
+                    ( request < DPS_TRANSLOCK_MAX ) ),
+                  "Invalid arguments" ) ;
       return ( _LockCoverageMatrix[request][current] ? TRUE : FALSE ) ;
    }
+
+
+   // get intent lock mode
+   static DPS_TRANSLOCK_TYPE _intentLockMatrix[DPS_TRANSLOCK_MAX] =
+   {
+      DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_IS
+      DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_IX
+      DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_S
+      DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_U
+      DPS_TRANSLOCK_IX   // <-- DPS_TRANSLOCK_X
+   };
+   OSS_INLINE DPS_TRANSLOCK_TYPE dpsIntentLockMode
+   (
+      const DPS_TRANSLOCK_TYPE request
+   )
+   {
+      SDB_ASSERT( ( request < DPS_TRANSLOCK_MAX ), "Invalid argument" ) ;
+      return ( _intentLockMatrix[request] ) ;
+   }
+
 
    // Convert lock mode to string
    static const CHAR* _lockModeString[DPS_TRANSLOCK_MAX] =
@@ -183,9 +213,9 @@ namespace engine
      "U",
      "X"
    } ;
-
-   inline const CHAR* lockModeToString ( const DPS_TRANSLOCK_TYPE lockMode )
+   OSS_INLINE const CHAR* lockModeToString ( const DPS_TRANSLOCK_TYPE lockMode )
    {
+      SDB_ASSERT( ( lockMode < DPS_TRANSLOCK_MAX ), "Invalid argument" ) ;
       return _lockModeString[lockMode] ;
    }
 
