@@ -50,7 +50,11 @@ public class TestRenameCS16133 extends SdbTestBase{
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");//驱动端存在缓存  因此修改cs需要重新new  db
             RenameUtil.checkRenameCSResult(sdb, csName, newCSName, 0);
             BaseException e = (BaseException)createClThread.getExceptions().get(0);
-            Assert.assertEquals(-34, e.getErrorCode(),"clThread failed : "+e.getMessage());
+            if (clExist) {
+                Assert.assertEquals(e.getErrorCode(), -23,"clThread failed : "+e.getMessage());
+            } else {
+                Assert.assertEquals(e.getErrorCode(), -34,"clThread failed : "+e.getMessage());
+            }
         } else if (!renameCSThread.isSuccess() && createClThread.isSuccess()){
             if (clExist) {
                 Assert.assertTrue(cs.isCollectionExist(clName));
@@ -58,7 +62,7 @@ public class TestRenameCS16133 extends SdbTestBase{
                 Assert.assertFalse(cs.isCollectionExist(clName));
             }
             BaseException e = (BaseException)renameCSThread.getExceptions().get(0);
-            Assert.assertEquals(-147, e.getErrorCode(),"renameCS failed : "+e.getMessage());
+            Assert.assertEquals(e.getErrorCode(), -147,"renameCS failed : "+e.getMessage());
         } else if (!renameCSThread.isSuccess() && !createClThread.isSuccess()){
             Assert.fail("renameCSThread and createClThread all failed: "+renameCSThread.getErrorMsg()+createClThread.getErrorMsg());
         } else{
