@@ -66,7 +66,7 @@ public class TestRenameCL16087 extends SdbTestBase {
                 maincl.detachCollection(SdbTestBase.csName+"."+newSubCLName);
                 Assert.fail("cl attachCollection ok, expected attachCollection fail!");
             }catch (BaseException e) {
-            	Assert.assertEquals(e.getErrorCode(), -23);
+            	Assert.assertEquals(e.getErrorCode(), -242);
             }
             BaseException e = (BaseException)attachCLThread.getExceptions().get(0);
             if ( e.getErrorCode() != -23 ) {
