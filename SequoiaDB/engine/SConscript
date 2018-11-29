@@ -179,7 +179,9 @@ utilFiles = [
       "util/utilZlibStream.cpp",
       "util/utilJsonFile.cpp",
       "util/utilMath.cpp",
-      "util/utilUniqueID.cpp"
+      "util/utilUniqueID.cpp",
+      "util/utilBuffBlock.cpp",
+      "util/utilCommBuff.cpp"
       ]
 
 rtnFiles = [
@@ -265,8 +267,7 @@ rtnFiles = [
       "rtn/rtnAlterTask.cpp",
       "rtn/rtnAlter.cpp",
       "rtn/rtnContextAlter.cpp",
-      "rtn/rtnExtContext.cpp",
-      "rtn/rtnSortArea.cpp"
+      "rtn/rtnExtContext.cpp"
       ]
 
 msgFiles = [
