@@ -204,6 +204,14 @@ namespace engine
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
       SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
                   "Invalid LRB Header index." ) ;
+      // reset LRB Header
+      dpsTransLRBHeader * pLRBHdr = getLRBHdrPtrByIdx( hdrIdx ) ;   
+      pLRBHdr->nextLRBHdrIdx = UTIL_INVALID_OBJ_INDEX ;
+      pLRBHdr->ownerLRBIdx   = UTIL_INVALID_OBJ_INDEX ;
+      pLRBHdr->waiterLRBIdx  = UTIL_INVALID_OBJ_INDEX ;
+      pLRBHdr->upgradeLRBIdx = UTIL_INVALID_OBJ_INDEX ;
+      pLRBHdr->lockId.reset() ;
+      // release LRB Header
       INT32 rc = _pLRBHdrMgr->release( hdrIdx );
       SDB_ASSERT( SDB_OK == rc, "Failed to release LRB Header" ) ;
       return rc ;
@@ -220,29 +228,21 @@ namespace engine
    {
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
       SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( idx ), "Invalid LRB index." ) ;
+      // reset LRB
+      dpsTransLRB * pLRB  = _getLRBPtrByIdx( idx ) ;
+      pLRB->dpsTxExectr   = NULL ;
+      pLRB->eduLrbIdxNext = UTIL_INVALID_OBJ_INDEX ;
+      pLRB->eduLrbIdxPrev = UTIL_INVALID_OBJ_INDEX ;
+      pLRB->lrbHdrIdx     = UTIL_INVALID_OBJ_INDEX ;
+      pLRB->nextLRBIdx    = UTIL_INVALID_OBJ_INDEX ;
+      pLRB->lockMode      = DPS_TRANSLOCK_MAX ; 
+      // release LRB
       INT32 rc = _pLRBMgr->release( idx );
       SDB_ASSERT( SDB_OK == rc, "Failed to release LRB" ) ;
       return rc ;
    }
 
 
-   static DPS_TRANSLOCK_TYPE _intentLockMatrix[DPS_TRANSLOCK_MAX] =
-   {
-      DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_IS
-      DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_IX
-      DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_S
-      DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_U
-      DPS_TRANSLOCK_IX   // <-- DPS_TRANSLOCK_X
-   };
-   inline DPS_TRANSLOCK_TYPE dpsTransLockManager::_getIntentLockMode
-   (
-      const DPS_TRANSLOCK_TYPE request
-   )
-   {
-      return ( _intentLockMatrix[request] ) ;
-   }
-
- 
    // 
    // Description: search the LRB Header chain and find the one with same lockId
    // Function:    walk through LRB Header list/chain, find the one with same
@@ -1434,11 +1434,12 @@ namespace engine
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
+      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 
       INT32 rc  = SDB_OK ,
             rc2 = SDB_OK ;
       dpsTransLockId     iLockId ;
-      DPS_TRANSLOCK_TYPE iLockMode = 0 ;
+      DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
       BOOLEAN isIntentLockAcquired = FALSE ;
 
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
@@ -1449,7 +1450,7 @@ namespace engine
       if ( ! lockId.isRootLevel() )
       {
          iLockId   = lockId.upOneLevel() ;
-         iLockMode = _getIntentLockMode( requestLockMode ) ;
+         iLockMode = dpsIntentLockMode( requestLockMode ) ;
          rc = acquire(dpsTxExectr, iLockId, iLockMode, pContext, pdpsTxResInfo);
          if ( SDB_OK != rc )
          {
@@ -1779,6 +1780,7 @@ namespace engine
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
+      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 
       dpsTransLockId iLockId ;
 
@@ -1817,15 +1819,18 @@ namespace engine
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 
       dpsTransLockId iLockId;
+ 
+      if ( lockId.isValid() )
+      { 
+         // main logic of release by lockId, force release mode
+         _release( dpsTxExectr, lockId, TRUE ) ;
 
-      // main logic of release by lockId, force release mode
-      _release( dpsTxExectr, lockId, TRUE ) ;
-
-      // release the intent lock
-      if ( ! lockId.isRootLevel() )
-      {
-         iLockId = lockId.upOneLevel() ;
-         _releaseAll( dpsTxExectr, iLockId ) ;
+         // release the intent lock
+         if ( ! lockId.isRootLevel() )
+         {
+            iLockId = lockId.upOneLevel() ;
+            _releaseAll( dpsTxExectr, iLockId ) ;
+         }
       }
       return ;
    }
@@ -1977,10 +1982,11 @@ namespace engine
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
+      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 
       INT32 rc = SDB_OK ;
       dpsTransLockId iLockId;
-      DPS_TRANSLOCK_TYPE iLockMode = 0 ;
+      DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
       BOOLEAN isIntentLockAcquired = FALSE;
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
 
@@ -1989,7 +1995,7 @@ namespace engine
       if ( ! lockId.isRootLevel() )
       {
          iLockId = lockId.upOneLevel() ;
-         iLockMode = _getIntentLockMode( requestLockMode ) ;
+         iLockMode = dpsIntentLockMode( requestLockMode ) ;
          rc = tryAcquire( dpsTxExectr, iLockId, iLockMode, pdpsTxResInfo );
          if ( SDB_OK != rc )
          {
@@ -2049,10 +2055,11 @@ namespace engine
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
+      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 
       INT32 rc = SDB_OK;
       dpsTransLockId iLockId;
-      DPS_TRANSLOCK_TYPE iLockMode = 0 ;
+      DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
 
       // get intent lock at first
@@ -2060,7 +2067,7 @@ namespace engine
       if ( ! lockId.isRootLevel() )
       {
          iLockId = lockId.upOneLevel() ;
-         iLockMode = _getIntentLockMode( requestLockMode ) ;
+         iLockMode = dpsIntentLockMode( requestLockMode ) ;
          rc = testAcquire( dpsTxExectr, iLockId, iLockMode, pdpsTxResInfo);
          if ( SDB_OK != rc )
          {
