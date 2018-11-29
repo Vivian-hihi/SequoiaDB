@@ -151,7 +151,7 @@ namespace engine
       {
          return SDB_OK ;
       }
-      return SDB_PERM ;
+      return SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST ;
    }
 
    // Lock coverage
