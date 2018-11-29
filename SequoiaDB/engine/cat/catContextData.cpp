@@ -1618,7 +1618,6 @@ namespace engine
    INT32 _catCtxCreateCL::_executeInternal ( _pmdEDUCB *cb, INT16 w )
    {
       INT32 rc = SDB_OK ;
-      INT32 tmpRC = SDB_OK ;
       BSONObj boNewObj ;
 
       PD_TRACE_ENTRY ( SDB_CATCTXCREATECL_EXECUTE_INT ) ;
