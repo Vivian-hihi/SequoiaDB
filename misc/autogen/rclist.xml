@@ -2115,7 +2115,7 @@
       </code>
 
       <code>
-         <name>SDB_OM_PASSWD_CHANGE_SUGGUEST</name>
+         <name>SDB_OM_PASSWD_CHANGE_SUGGEST</name>
          <description>
             <en>Changing password is required</en>
             <cn>提示用户修改登陆密码</cn>
