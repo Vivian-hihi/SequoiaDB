@@ -32,6 +32,7 @@
       <antcall target="compile_hadoop_connector"/>
       <antcall target="compile_spark_connector"/>
       <antcall target="compile_postgresql_plugin"/>
+      <antcall target="compile_sequoias3"/>
       <antcall target="build_driver_package"/>
       <if>
          <equals arg1="${IS_INCREMENTAL_COMPILE}" arg2="true"/>
@@ -240,6 +241,26 @@
       </exec>
       <exec executable="mvn" dir="${srccode_dir}/tools/om_plugins/sequoiasql/source" failonerror="true" logError="true">
          <arg line=" clean package -Drevision=${fdw_svn}" />
+      </exec>
+   </target>
+   
+   <target name="compile_sequoias3">
+      <var name="src_dir" value="${srccode_dir}/SequoiaDB/engine/tools/sequoias3" />
+      <if>
+         <equals arg1="${IS_DEBUG}" arg2="true"/>
+         <then>
+            <svnversion dir="${src_dir}" version="fdw_svn" />
+            <var name="cmd_mvn" value="versions:set -DnewVersion=${sequoiadb_version}-r${fdw_svn}"/>
+         </then>
+         <else>
+            <var name="cmd_mvn" value="versions:set -DnewVersion=${sequoiadb_version}"/>
+         </else>
+      </if>
+      <exec executable="mvn" dir="${srccode_dir}/SequoiaDB/engine/tools/sequoias3" failonerror="true" logError="true">
+         <arg line=" ${cmd_mvn} " />
+      </exec>
+      <exec executable="mvn" dir="${srccode_dir}/SequoiaDB/engine/tools/sequoias3" failonerror="true" logError="true">
+         <arg line=" clean package -Drevision=${fdw_svn} -Dmaven.test.skip=true" />
       </exec>
    </target>
    
@@ -535,6 +556,7 @@
       <mkdir dir="${release_db_dir}/python" />
       <mkdir dir="${release_db_dir}/samples" />
       <mkdir dir="${release_db_dir}/tools/server/php" />
+      <mkdir dir="${release_db_dir}/tools/sequoias3"/>
       <mkdir dir="${release_db_dir}/web" />
       <mkdir dir="${release_db_dir}/www" />
       <mkdir dir="${release_db_dir}/spark" />
@@ -587,6 +609,16 @@
       <copy todir="${release_db_dir}/plugins/SequoiaSQL/bin" >
          <fileset dir="${srccode_dir}/tools/om_plugins/sequoiasql/source/target" includes="*.jar" />
       </copy>
+
+      <copy todir="${release_db_dir}/tools/sequoias3" >
+         <fileset dir="${srccode_dir}/SequoiaDB/engine/tools/sequoias3/target" includes="sequoia*.jar" />
+      </copy>
+      
+      <copy todir="${release_db_dir}/tools/sequoias3" >
+         <fileset dir="${srccode_dir}/SequoiaDB/engine/tools/sequoias3" includes="conf/**/*,sequoias3.sh,README.txt" />
+      </copy>
+      
+      <chmod file="${release_db_dir}/tools/sequoias3/sequoias3.sh" perm="u+x" />
       
       <delete dir="${release_db_dir}/plugins/SequoiaSQL/source" failonerror="false"/>
       
