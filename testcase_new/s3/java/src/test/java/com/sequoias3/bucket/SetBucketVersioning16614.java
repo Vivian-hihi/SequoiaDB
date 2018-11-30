@@ -66,7 +66,6 @@ public class SetBucketVersioning16614 extends S3TestBase{
 	private void tearDown() throws Exception {
 		try {
 			if (runSuccess) {
-				CommLib.clearBuckets(s3ClientA);
 				UserUtils.deleteUser(userName_a);
 				UserUtils.deleteUser(userName_b);
 			}

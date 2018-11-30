@@ -51,7 +51,6 @@ public class CreateBucket15914 extends S3TestBase {
 	private void tearDown() throws Exception {
 		try {
 			if (runSuccess) {
-				CommLib.clearBuckets(s3Client);
 				UserUtils.deleteUser(userName);
 			}
 		} catch (BaseException e) {
