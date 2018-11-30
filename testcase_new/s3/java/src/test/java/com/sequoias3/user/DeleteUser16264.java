@@ -1,5 +1,7 @@
 package com.sequoias3.user;
 
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
 import org.json.JSONObject;
 import org.json.XML;
 import org.springframework.http.HttpStatus;
@@ -8,8 +10,6 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.sequoias3.testcommon.S3TestBase;
 
 /**
  * @Description: seqDB-16264 :: 普通用户删除用户

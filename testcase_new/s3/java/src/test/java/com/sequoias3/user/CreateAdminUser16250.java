@@ -1,7 +1,10 @@
 package com.sequoias3.user;
 
-import java.util.List;
-
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.Bucket;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
@@ -12,14 +15,11 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.S3TestBase;
+import java.util.List;
 
 /**
- * @Description: seqDB-16250 :: 管理员创建管理员（admin）用户
  * @author fanyu
+ * @Description: seqDB-16250 :: 管理员创建管理员（admin）用户
  * @Date:2018年10月29日
  * @version:1.0
  */
@@ -34,6 +34,12 @@ public class CreateAdminUser16250 extends S3TestBase {
     @BeforeClass
     private void setUp() {
         try {
+            UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
+                Assert.fail(e.getMessage());
+            }
+        }  try {
             UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {

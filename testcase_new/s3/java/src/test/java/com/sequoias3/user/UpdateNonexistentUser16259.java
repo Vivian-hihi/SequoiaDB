@@ -1,5 +1,7 @@
 package com.sequoias3.user;
 
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
@@ -9,8 +11,6 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.sequoias3.testcommon.S3TestBase;
 
 /**
  * @Description: seqDB-16259 :: 管理员更新不存在的用户
@@ -29,7 +29,7 @@ public class UpdateNonexistentUser16259 extends S3TestBase {
 		try {
 			UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
-			if(e.getStatusCode()!= HttpStatus.NOT_FOUND){
+			if (e.getStatusCode() != HttpStatus.NOT_FOUND) {
 				e.printStackTrace();
 				Assert.fail(e.getMessage());
 			}
@@ -37,7 +37,7 @@ public class UpdateNonexistentUser16259 extends S3TestBase {
 		try {
 			UserUtils.deleteUser(updateUsername, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
-			if(e.getStatusCode()!= HttpStatus.NOT_FOUND){
+			if (e.getStatusCode() != HttpStatus.NOT_FOUND) {
 				e.printStackTrace();
 				Assert.fail(e.getMessage());
 			}
@@ -70,5 +70,4 @@ public class UpdateNonexistentUser16259 extends S3TestBase {
 			UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
 		}
 	}
-
 }

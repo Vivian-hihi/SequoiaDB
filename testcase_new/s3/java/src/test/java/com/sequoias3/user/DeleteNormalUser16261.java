@@ -1,22 +1,21 @@
 package com.sequoias3.user;
 
-import java.util.List;
-import java.util.UUID;
-
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.Bucket;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
 import org.json.JSONObject;
 import org.json.XML;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.S3TestBase;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * @Description: seqDB-16261:管理员删除普通用户
@@ -84,7 +83,7 @@ public class DeleteNormalUser16261 extends S3TestBase {
     @AfterClass
     private void tearDown() {
         if (runSuccess) {
-            UserUtils.deleteUser(username2, UserUtils.accessKeyId, true);
+           // UserUtils.deleteUser(username2, UserUtils.accessKeyId, true);
         }
     }
 
@@ -95,7 +94,7 @@ public class DeleteNormalUser16261 extends S3TestBase {
             // create bucket
             s3Client.createBucket(name.toLowerCase());
             // create object
-           //s3Client.putObject(name, name + "_" + UUID.randomUUID(), UUID.randomUUID().toString());
+           s3Client.putObject(name, name + "_" + UUID.randomUUID(), UUID.randomUUID().toString());
         } finally {
             if (s3Client != null) {
                 s3Client.shutdown();

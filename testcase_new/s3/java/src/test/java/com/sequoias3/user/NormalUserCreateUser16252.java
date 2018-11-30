@@ -1,6 +1,8 @@
 package com.sequoias3.user;
 
 
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
@@ -10,8 +12,6 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.sequoias3.testcommon.S3TestBase;
 
 /**
  * @Description: seqDB-16252 :: 普通（normal）用户创建用户（管理员用户，普通用户）

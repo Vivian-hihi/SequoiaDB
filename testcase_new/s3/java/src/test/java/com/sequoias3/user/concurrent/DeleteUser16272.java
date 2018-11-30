@@ -1,8 +1,9 @@
 package com.sequoias3.user.concurrent;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.S3ThreadBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import com.sequoias3.user.UserCommDefind;
 import org.json.XML;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
@@ -11,10 +12,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.S3ThreadBase;
-import com.sequoias3.user.UserCommDefind;
-import com.sequoias3.user.UserUtils;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Description: seqDB-16272 :: 并发删除相同用户
@@ -35,7 +34,6 @@ public class DeleteUser16272 extends S3TestBase {
 			UserUtils.deleteUser(username, UserUtils.accessKeyId, true);
 		} catch (HttpClientErrorException e) {
 			if(e.getStatusCode()!= HttpStatus.NOT_FOUND){
-				e.printStackTrace();
 				Assert.fail(e.getMessage());
 			}
 		}
@@ -74,7 +72,6 @@ public class DeleteUser16272 extends S3TestBase {
 			try {
 				UserUtils.deleteUser(username, UserUtils.accessKeyId);
 			} catch (HttpClientErrorException e) {
-				// e.printStackTrace();
 				Assert.fail(e.getMessage());
 			}
 		}
@@ -88,7 +85,6 @@ public class DeleteUser16272 extends S3TestBase {
 			String errorMsg = e.getResponseBodyAsString();
 			org.json.JSONObject json1 = XML.toJSONObject(errorMsg);
 			if (!json1.getJSONObject(UserCommDefind.error).getString(UserCommDefind.errorCode).contains("NoSuchUser")) {
-				e.printStackTrace();
 				Assert.fail(e.getMessage());
 			}
 		}

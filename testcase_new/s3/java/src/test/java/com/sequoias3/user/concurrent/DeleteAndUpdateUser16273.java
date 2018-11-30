@@ -1,8 +1,9 @@
 package com.sequoias3.user.concurrent;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.S3ThreadBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import com.sequoias3.user.UserCommDefind;
 import org.json.XML;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
@@ -11,10 +12,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.S3ThreadBase;
-import com.sequoias3.user.UserCommDefind;
-import com.sequoias3.user.UserUtils;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Description:seqDB-16273 :: 并发删除用户和更新用户

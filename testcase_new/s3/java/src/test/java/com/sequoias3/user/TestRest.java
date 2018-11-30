@@ -1,7 +1,6 @@
 package com.sequoias3.user;
 
-import java.io.InputStream;
-
+import com.sequoias3.testcommon.S3TestBase;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -14,7 +13,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.sequoias3.testcommon.S3TestBase;
+import java.io.InputStream;
 
 public class TestRest extends S3TestBase {
     private HttpHeaders requestHeaders;
