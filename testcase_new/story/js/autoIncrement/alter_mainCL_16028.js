@@ -128,11 +128,10 @@ function main()
    var nextValue = Math.ceil(100/acquireSize)*acquireSize*coordNum*increment + 1;
    var cacheSize = 32;
    var acquireSize = 12;
-   var generated = "strict";
-   subcl1.setAttributes({AutoIncrement:{Field:fieldName2, CacheSize:cacheSize, AcquireSize:acquireSize, Generated:generated}});
+   subcl1.setAttributes({AutoIncrement:{Field:fieldName2, CacheSize:cacheSize, AcquireSize:acquireSize}});
    var clID = getCLID(maincsName, subclName1);
    var clSequenceName = "SYS_" + clID + "_" + fieldName2 + "_SEQ";
-   var expIncrementArr = [{Field:fieldName2, SequenceName:clSequenceName, Generated:generated}];
+   var expIncrementArr = [{Field:fieldName2, SequenceName:clSequenceName}];
    checkAutoIncrementonCL(maincsName, subclName1, expIncrementArr);
    println("---check cl autoIncrement after alter subcl success");
    
@@ -172,19 +171,6 @@ function main()
    var actR = subcl1.find().sort({_id:1});
    checkRec(actR, expR);
    println("---check insert after alter autoIncrement success");
-   
-   try
-   {
-      subcl1.insert({id2:"a"});
-      throw "NEED_INSERT_ERR";  
-   }catch(e)
-   {
-      if(-6 !== e)
-      {
-         throw e;
-      }
-   }
-   println("---check insert after alter generated success");
    
    commDropCS( db, subcsName);
    commDropCS( db, maincsName);

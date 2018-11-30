@@ -30,11 +30,7 @@ function main()
    checkSequence(sequenceName, expSequenceObj);
    
    dbcl.split(dataGroupNames[0], dataGroupNames[1], {id:50});
-   
-   //split操作会更新cl版本号，导致自增字段出现空洞，使用一次find规避,SEQUOIADBMAINSTREAM-3895
-   var cursor = dbcl.find();
-   while(cursor.next()){}
-   
+  
    var doc = [];
    var expR = [];
    for(var i=0; i<100; i++)

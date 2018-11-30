@@ -34,10 +34,6 @@ function main()
    
    dbcl.split(dataGroupNames[0], dataGroupNames[1], {id:150});
    
-   //split操作会更新cl版本号，导致自增字段出现空洞，使用一次find规避,SEQUOIADBMAINSTREAM-3895
-   var cursor = dbcl.find();
-   while(cursor.next()){}
-   
    var doc = [];
    var expR = [];
    for(var i=0; i<100; i++)
@@ -58,11 +54,10 @@ function main()
    var nextValue = Math.ceil(100/acquireSize)*acquireSize*increment + 1;
    var cacheSize = 32;
    var acquireSize = 12;
-   var generated = "strict";
-   dbcl.setAttributes({AutoIncrement:{Field:fieldName, CacheSize:cacheSize, AcquireSize:acquireSize, Generated:generated}});
+   dbcl.setAttributes({AutoIncrement:{Field:fieldName, CacheSize:cacheSize, AcquireSize:acquireSize}});
    var clID = getCLID(COMMCSNAME, clName);
    var clSequenceName = "SYS_" + clID + "_" + fieldName + "_SEQ";
-   var expIncrementArr = [{Field:fieldName, SequenceName:clSequenceName, Generated:generated}];
+   var expIncrementArr = [{Field:fieldName, SequenceName:clSequenceName}];
    checkAutoIncrementonCL(COMMCSNAME, clName, expIncrementArr);
    println("---check cl autoIncrement after alter success");
    
@@ -76,9 +71,7 @@ function main()
    {
       var coord = new Sdb(coordNodes[k]);
       var cl = coord.getCS(COMMCSNAME).getCL(clName);
-      //alter操作会变更集合版本号，插入时会取2次seqence值，SEQUOIADBMAINSTREAM-3895,通过find操作更新版本号
-      var cursor = cl.find();
-      while(cursor.next()){}
+     
       var doc = [];
       for(var i=0;i<100;i++)
       {
@@ -91,19 +84,6 @@ function main()
    var actR = dbcl.find().sort({_id:1});
    checkRec(actR, expR);
    println("---check insert after alter autoIncrement success");
-   
-   try
-   {
-      dbcl.insert({id:"a"});
-      throw "NEED_INSERT_ERR";  
-   }catch(e)
-   {
-      if(-6 !== e)
-      {
-         throw e;
-      }
-   }
-   println("---check insert after alter generated success");
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }

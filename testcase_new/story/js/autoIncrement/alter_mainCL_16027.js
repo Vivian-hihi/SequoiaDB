@@ -92,11 +92,10 @@ function main()
    var nextValue = Math.ceil(100/acquireSize)*acquireSize*coordNum*increment + 1;
    var cacheSize = 32;
    var acquireSize = 12;
-   var generated = "strict";
-   maincl.setAttributes({AutoIncrement:{Field:fieldName, CacheSize:cacheSize, AcquireSize:acquireSize, Generated:generated}});
+   maincl.setAttributes({AutoIncrement:{Field:fieldName, CacheSize:cacheSize, AcquireSize:acquireSize}});
    var clID = getCLID(maincsName, mainclName);
    var clSequenceName = "SYS_" + clID + "_" + fieldName + "_SEQ";
-   var expIncrementArr = [{Field:fieldName, SequenceName:clSequenceName, Generated:generated}];
+   var expIncrementArr = [{Field:fieldName, SequenceName:clSequenceName}];
    checkAutoIncrementonCL(maincsName, mainclName, expIncrementArr);
    println("---check cl autoIncrement after alter success");
    
@@ -110,9 +109,7 @@ function main()
    {
       var coord = new Sdb(coordNodes[k]);
       var cl = coord.getCS(maincsName).getCL(mainclName);
-      //alter操作会变更集合版本号，插入时会取2次seqence值，SEQUOIADBMAINSTREAM-3895,通过find操作更新版本号
-      var cursor = cl.find();
-      while(cursor.next()){}
+      
       var doc = [];
       for(var i=0;i<100;i++)
       {
@@ -125,19 +122,6 @@ function main()
    var actR = maincl.find().sort({_id:1});
    checkRec(actR, expR);
    println("---check insert after alter autoIncrement success");
-   
-   try
-   {
-      maincl.insert({id:"a"});
-      throw "NEED_INSERT_ERR";  
-   }catch(e)
-   {
-      if(-6 !== e)
-      {
-         throw e;
-      }
-   }
-   println("---check insert after alter generated success");
    
    commDropCS( db, subcsName);
    commDropCS( db, maincsName);
