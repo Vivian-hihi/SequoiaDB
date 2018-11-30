@@ -36,7 +36,7 @@ function Start()
 
   port=$1
 
-  confpath=`pwd`"/config"
+  confpath=`pwd`"/conf"
   if [ -n "$2" ];then
     confpath=$2
   fi
