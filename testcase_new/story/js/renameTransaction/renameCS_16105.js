@@ -29,9 +29,9 @@ function main()
       }
       catch(e)
       {
-         if(e!==-3)
+         if(e!==-336)
          {
-            throw buildException("rename cs during the trans", e, "trans", -3, e);
+            throw buildException("rename cs during the trans", e, "trans", -336, e);
          }
       }
    }

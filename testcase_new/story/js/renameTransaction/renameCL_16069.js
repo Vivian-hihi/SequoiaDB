@@ -46,7 +46,7 @@ function renameCLInTrans( db, csName, clName, newCLName )
    }
    catch( e )
    {
-      if ( -3 !== e )
+      if ( -336 !== e )
       {
          throw buildException("renameCLInTrans()", e);
       }      
