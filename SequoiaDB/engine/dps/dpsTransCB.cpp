@@ -137,6 +137,8 @@ namespace engine
             PD_LOG( PDERROR, "Failed to initialize lock manager, rc: %d", rc ) ;
             goto error ;
          }
+         // Initial lock timeout setting 
+         _transLockMgr.setLockTimeout( pmdGetOptionCB()->transTimeout() * 1000);
 
          rc = sdbGetDPSCB()->readOldestBeginLsnOffset( startLsnOffset ) ;
          PD_RC_CHECK( rc, PDERROR, "Read oldest begin lsn offset failed:rc=%d",
