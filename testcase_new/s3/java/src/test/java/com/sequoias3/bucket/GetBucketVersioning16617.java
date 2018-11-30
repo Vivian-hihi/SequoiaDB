@@ -1,11 +1,6 @@
 package com.sequoias3.bucket;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.S3ThreadBase;
@@ -17,7 +12,6 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 /**
  * test content: 并发查询桶版本状态控制信息
@@ -32,19 +26,13 @@ public class GetBucketVersioning16617 extends S3TestBase {
 	private String bucketName = "bucket16617";
 	private String roleName = "normal";
 	private AmazonS3 s3Client = null;
-	private String clientRegion = "us-east-1";
+	private String[] acessKeys = null;
 	private final int defaultNums = 100;
-	private AWSCredentials credentials = null;
-	private AwsClientBuilder.EndpointConfiguration endpointConfiguration = null;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		String[] acessKeys = UserUtils.createUser(userName, roleName);
-		credentials = new BasicAWSCredentials(acessKeys[0], acessKeys[1]);
-		endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
-				S3TestBase.s3ClientUrl, clientRegion);
-		s3Client = AmazonS3ClientBuilder.standard().withEndpointConfiguration(endpointConfiguration)
-				.withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
+		acessKeys = UserUtils.createUser(userName, roleName);
+		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
 		s3Client.createBucket(bucketName);
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 	}
@@ -83,8 +71,7 @@ public class GetBucketVersioning16617 extends S3TestBase {
 	private class GetBucketVersioningThread extends S3ThreadBase {
 		@Override
 		public void exec() throws Exception {
-			AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withEndpointConfiguration(endpointConfiguration)
-					.withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
+			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
 			try {
 				Assert.assertEquals(s3Client.getBucketVersioningConfiguration(bucketName).getStatus(), "Enabled");
 			} finally {

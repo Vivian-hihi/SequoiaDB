@@ -29,12 +29,7 @@ public class SetBucketVersioning16613 extends S3TestBase{
 	private void setUp() throws Exception {
 		String[] acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
-		try{
-			s3Client.deleteBucket(bucketName);
-		}catch (AmazonS3Exception e) {
-			Assert.assertEquals(e.getErrorCode(), "NoSuchBucket");
-		}
-		
+		CommLib.clearBucket(s3Client, bucketName);
 	}
 
 	@Test

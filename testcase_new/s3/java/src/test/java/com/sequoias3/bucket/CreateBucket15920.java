@@ -1,11 +1,6 @@
 package com.sequoias3.bucket;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
 import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
@@ -29,22 +24,16 @@ import java.util.List;
  */
 public class CreateBucket15920 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String clientRegion = "us-east-1";
 	private String userName = "user15920";
 	private String bucketName = "bucket15920";
 	private String roleName = "normal";
 	private AmazonS3 s3Client = null;
-	private AWSCredentials credentials = null;
-	private AwsClientBuilder.EndpointConfiguration endpointConfiguration = null;
+	private String[] acessKeys = null;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		String[] acessKeys = UserUtils.createUser(userName, roleName);
-		credentials = new BasicAWSCredentials(acessKeys[0], acessKeys[1]);
-		endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
-				S3TestBase.s3ClientUrl, clientRegion);
-		s3Client = AmazonS3ClientBuilder.standard().withEndpointConfiguration(endpointConfiguration)
-				.withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
+		acessKeys = UserUtils.createUser(userName, roleName);
+		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 	}
 
 	@Test
@@ -90,8 +79,7 @@ public class CreateBucket15920 extends S3TestBase {
 
 		@Override
 		public void exec() throws Exception {
-			AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withEndpointConfiguration(endpointConfiguration)
-					.withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
+			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 			try {
 				s3Client.createBucket(bucketName);
 			} finally {
@@ -111,8 +99,7 @@ public class CreateBucket15920 extends S3TestBase {
 
 		@Override
 		public void exec() throws Exception {
-			AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withEndpointConfiguration(endpointConfiguration)
-					.withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
+			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 			try {
 				Thread.sleep(2);
 				s3Client.deleteBucket(bucketName);

@@ -1,11 +1,6 @@
 package com.sequoias3.bucket;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
 import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
@@ -27,7 +22,6 @@ import java.util.List;
  */
 public class CreateBucket15911 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String clientRegion = "us-east-1";
 	private String bucketName = "bucket15911";
 	private String userName = "user15911";
 	private String roleName = "normal";
@@ -38,13 +32,8 @@ public class CreateBucket15911 extends S3TestBase {
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		String[] acessKeys = UserUtils.createUser(userName, roleName);
-		AWSCredentials credentials = new BasicAWSCredentials(acessKeys[0], acessKeys[1]);
-		
-		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
-				S3TestBase.s3ClientUrl, clientRegion);
-		s3Client = AmazonS3ClientBuilder.standard().withEndpointConfiguration(endpointConfiguration)
-				.withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
+		String[] accessKeys = UserUtils.createUser(userName, roleName);
+		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 	}
 
 	@Test
