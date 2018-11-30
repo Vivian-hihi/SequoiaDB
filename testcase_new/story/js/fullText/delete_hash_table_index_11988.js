@@ -51,7 +51,7 @@ function main()
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex1");
    commDropIndex( dbcl, "fullIndex1" );
    commCheckIndex( dbcl, "fullIndex1", false );
-   checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
+   checkIndexNotExistInES(esIndexNames);
    checkConsistency(COMMCSNAME, clName);
    checkInspectResult(COMMCSNAME, clName, 5);
    println("================================One Group Not on ShardingKey================================");
@@ -77,7 +77,7 @@ function main()
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex2");
    commDropIndex( dbcl, "fullIndex2" );
    commCheckIndex( dbcl, "fullIndex2", false );
-   checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
+   checkIndexNotExistInES(esIndexNames);
    checkConsistency(COMMCSNAME, clName);
    checkInspectResult(COMMCSNAME, clName, 5);
    println("================================One Group on ShardingKey================================");
@@ -116,7 +116,7 @@ function main()
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex3");
    commDropIndex( dbcl, "fullIndex3" );
    commCheckIndex( dbcl, "fullIndex3", false );
-   checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
+   checkIndexNotExistInES(esIndexNames);
    checkConsistency(COMMCSNAME, clName);
    checkInspectResult(COMMCSNAME, clName, 5);
    println("================================Many Group Not on ShardingKey================================");
@@ -143,7 +143,7 @@ function main()
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex4");
    commDropIndex( dbcl, "fullIndex4" );
    commCheckIndex( dbcl, "fullIndex4", false );
-   checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
+   checkIndexNotExistInES(esIndexNames);
    checkConsistency(COMMCSNAME, clName);
    checkInspectResult(COMMCSNAME, clName, 5);
    println("================================Many Group on ShardingKey================================");

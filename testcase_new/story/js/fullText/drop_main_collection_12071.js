@@ -51,8 +51,8 @@ function main()
    var esIndexNames2 = dbOperator.getESIndexNames(csName, slaveCLName2, "fullIndex_12071");
    
    db.getCS(COMMCSNAME).dropCL(clName);   
-   checkIndexNotExistInES(COMMCSNAME, slaveCLName1, esIndexNames1);
-   checkIndexNotExistInES(csName, slaveCLName2, esIndexNames2);
+   checkIndexNotExistInES(esIndexNames1);
+   checkIndexNotExistInES(esIndexNames2);
    
    try{
       slaveCL1.insert({a : 1});

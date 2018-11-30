@@ -50,7 +50,7 @@ function main()
    var dbOperator = new DBOperator();
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, slaveCLName1, "fullIndex_12072");
    db.getCS(COMMCSNAME).dropCL(slaveCLName1);     
-   checkIndexNotExistInES(COMMCSNAME, slaveCLName1, esIndexNames);
+   checkIndexNotExistInES(esIndexNames);
    checkMainCLFullSyncToES(COMMCSNAME, clName, "fullIndex_12072", 10000 - count);
    
    //get actResult and expResult

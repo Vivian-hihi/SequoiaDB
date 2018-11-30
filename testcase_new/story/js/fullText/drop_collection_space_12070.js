@@ -71,7 +71,7 @@ function main()
    checkResult(expResult, actResult);
    
    //check slave CL not exist in ES
-   checkIndexNotExistInES(csName, slaveCLName1, slave1ESIndexNames);
+   checkIndexNotExistInES(slave1ESIndexNames);
    
    commDropCS( db, csName );
    commDropCS( db, csName2 );

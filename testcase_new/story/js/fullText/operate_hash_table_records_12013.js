@@ -75,7 +75,7 @@ function main()
    var esIndexNames = dbOperator.getESIndexNames(csName, clName, "fullIndex_12013");
    commDropIndex( dbcl, "fullIndex_12013" );
    commCheckIndex( dbcl, "fullIndex_12013", false );
-   checkIndexNotExistInES(csName, clName, esIndexNames);
+   checkIndexNotExistInES(esIndexNames);
    checkConsistency(csName, clName);
    checkInspectResult(csName, clName, 5);
    println("================非分区键删除成功================");
@@ -120,7 +120,7 @@ function main()
    var esIndexNames = dbOperator.getESIndexNames(csName, clName, "fullIndex_12013");
    commDropIndex( dbcl, "fullIndex_12013" );
    commCheckIndex( dbcl, "fullIndex_12013", false );
-   checkIndexNotExistInES(csName, clName, esIndexNames);
+   checkIndexNotExistInES(esIndexNames);
    checkConsistency(csName, clName);
    checkInspectResult(csName, clName, 5);
    println("================分区键删除成功================");

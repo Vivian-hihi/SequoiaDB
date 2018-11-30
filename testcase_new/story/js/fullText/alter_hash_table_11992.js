@@ -53,7 +53,7 @@ function main()
    
    //alter为hash切分表，切分键覆盖：全文索引字段
    dbcl.dropIndex("fullIndex_11992");
-   checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
+   checkIndexNotExistInES(esIndexNames);
    
    commCreateIndex( dbcl, "fullIndex_11992", {a : "text"});
    checkFullSyncToES(COMMCSNAME, clName, "fullIndex_11992", 8000);

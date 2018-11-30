@@ -72,7 +72,7 @@ function main()
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_12014");
    commDropIndex( dbcl, "fullIndex_12014" );
    commCheckIndex( dbcl, "fullIndex_12014", false );
-   checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
+   checkIndexNotExistInES(esIndexNames);
    checkConsistency(COMMCSNAME, clName);
    checkInspectResult(COMMCSNAME, clName, 5);
    println("================非分区键删除成功================");
@@ -117,7 +117,7 @@ function main()
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_12014");
    commDropIndex( dbcl, "fullIndex_12014" );
    commCheckIndex( dbcl, "fullIndex_12014", false );
-   checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
+   checkIndexNotExistInES(esIndexNames);
    checkConsistency(COMMCSNAME, clName);
    checkInspectResult(COMMCSNAME, clName, 5);
    println("================分区键删除成功================");
@@ -177,7 +177,7 @@ function main()
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_12014");
    commDropIndex( dbcl, "fullIndex_12014" );
    commCheckIndex( dbcl, "fullIndex_12014", false );
-   checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
+   checkIndexNotExistInES(esIndexNames);
    checkConsistency(COMMCSNAME, clName);
    checkInspectResult(COMMCSNAME, clName, 5);
    println("================多分区键 非分区键删除成功================");
@@ -222,7 +222,7 @@ function main()
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_12014");
    commDropIndex( dbcl, "fullIndex_12014" );
    commCheckIndex( dbcl, "fullIndex_12014", false );
-   checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
+   checkIndexNotExistInES(esIndexNames);
    checkConsistency(COMMCSNAME, clName);
    checkInspectResult(COMMCSNAME, clName, 5);
    println("================多分区键 分区键删除成功================");

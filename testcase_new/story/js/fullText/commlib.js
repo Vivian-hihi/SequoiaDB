@@ -488,7 +488,7 @@ function checkLidInES(esIndexNames, cappedCLs)
                 clName
                 textIndexName
 ******************************************************************/
-function checkIndexNotExistInES(csName, clName, esIndexNames)
+function checkIndexNotExistInES(esIndexNames)
 {
    // check indexnames in ES not exist
    for(var i in esIndexNames)

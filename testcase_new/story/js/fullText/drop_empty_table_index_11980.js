@@ -36,7 +36,7 @@ function main()
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_11980");
    commDropIndex( dbcl, "fullIndex_11980" );
    commCheckIndex( dbcl, "fullIndex_11980", false );
-   checkIndexNotExistInES(COMMCSNAME, clName, esIndexNames);
+   checkIndexNotExistInES(esIndexNames);
    checkConsistency(COMMCSNAME, clName);
    checkInspectResult(COMMCSNAME, clName, 5);
    
