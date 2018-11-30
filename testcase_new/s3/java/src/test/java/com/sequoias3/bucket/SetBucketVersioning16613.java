@@ -1,15 +1,14 @@
 package com.sequoias3.bucket;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
-import com.sequoias3.testcommon.S3TestBase;
 
 /**
  * test content: 不存在桶，设置桶版本控制状态
@@ -28,7 +27,7 @@ public class SetBucketVersioning16613 extends S3TestBase{
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		String[] acessKeys = RestClient.createUser(userName, roleName);
+		String[] acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 		try{
 			s3Client.deleteBucket(bucketName);
@@ -68,7 +67,7 @@ public class SetBucketVersioning16613 extends S3TestBase{
 	private void tearDown() throws Exception {
 		try {
 			if (runSuccess) {
-				RestClient.deleteUser(userName);
+				UserUtils.deleteUser(userName);
 			}
 		}  finally {
 			if (s3Client != null) {

@@ -1,18 +1,18 @@
 package com.sequoias3.bucket;
 
-import java.util.List;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.List;
 
 /**
  * @Description seqDB-15917:delete bucket by different owners *
@@ -34,8 +34,8 @@ public class DeleteBucket15917 extends S3TestBase {
 	private void setUp() throws Exception {
 		CommLib.clearUser(userName1);
 		CommLib.clearUser(userName2);
-		String[] acessKeys1 = RestClient.createUser(userName1, roleName);
-		String[] acessKeys2 = RestClient.createUser(userName2, roleName);
+		String[] acessKeys1 = UserUtils.createUser(userName1, roleName);
+		String[] acessKeys2 = UserUtils.createUser(userName2, roleName);
 		s3Client1 = CommLib.buildS3Client(acessKeys1[0], acessKeys1[1]);
 		s3Client2 = CommLib.buildS3Client(acessKeys2[0], acessKeys2[1]);		
 
@@ -62,8 +62,8 @@ public class DeleteBucket15917 extends S3TestBase {
 			if (runSuccess) {
 				s3Client1.deleteBucket(bucketName1);
 				s3Client2.deleteBucket(bucketName2);
-				RestClient.deleteUser(userName1);
-				RestClient.deleteUser(userName2);
+				UserUtils.deleteUser(userName1);
+				UserUtils.deleteUser(userName2);
 			}
 		} finally {
 			s3Client1.shutdown();

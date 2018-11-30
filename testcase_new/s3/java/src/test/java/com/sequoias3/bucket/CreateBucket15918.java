@@ -1,12 +1,5 @@
 package com.sequoias3.bucket;
 
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -17,9 +10,15 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.S3ThreadBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.List;
 
 
 /**
@@ -32,7 +31,7 @@ import com.sequoias3.testcommon.S3ThreadBase;
 public class CreateBucket15918 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String clientRegion = "us-east-1";
-	private String userName = "user15908";
+	private String userName = "user15918";
 	private String bucketName = "bucket15918";
 	private String delBucketName = "bucket15918.28";
 	private String roleName = "normal";
@@ -43,7 +42,7 @@ public class CreateBucket15918 extends S3TestBase {
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		String[] acessKeys = RestClient.createUser(userName, roleName);
+		String[] acessKeys = UserUtils.createUser(userName, roleName);
 		credentials = new BasicAWSCredentials(acessKeys[0], acessKeys[1]);
 		endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
 				S3TestBase.s3ClientUrl, clientRegion);
@@ -67,7 +66,7 @@ public class CreateBucket15918 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLib.clearBuckets(s3Client);
-				RestClient.deleteUser(userName);
+				UserUtils.deleteUser(userName);
 			}
 		} catch (BaseException e) {
 			Assert.fail("clean up failed:" + e.getMessage());

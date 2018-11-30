@@ -1,18 +1,18 @@
 package com.sequoias3.bucket;
 
-import java.util.List;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.Owner;
 import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.List;
 
 /**
  * test content: 桶版本控制状态参数校验
@@ -31,7 +31,7 @@ public class SetBucketVersioning16611 extends S3TestBase{
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		String[] acessKeys = RestClient.createUser(userName, roleName);
+		String[] acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 	}
 
@@ -70,7 +70,7 @@ public class SetBucketVersioning16611 extends S3TestBase{
 		try {
 			if (runSuccess) {
 				CommLib.clearBuckets(s3Client);
-				RestClient.deleteUser(userName);
+				UserUtils.deleteUser(userName);
 			}
 		}  finally {
 			if (s3Client != null) {

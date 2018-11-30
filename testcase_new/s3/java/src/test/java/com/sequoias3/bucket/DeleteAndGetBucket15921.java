@@ -1,22 +1,21 @@
 package com.sequoias3.bucket;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.Bucket;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.S3ThreadBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.Bucket;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.S3ThreadBase;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @Description seqDB-15921:concurrent delete bucket and get bucketlist
@@ -35,7 +34,7 @@ public class DeleteAndGetBucket15921 extends S3TestBase {
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		acessKeys = RestClient.createUser(userName, roleName);		
+		acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);		
 		createBuckets(s3Client);
 	}
@@ -74,7 +73,7 @@ public class DeleteAndGetBucket15921 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				clearBuckets();
-				RestClient.deleteUser(userName);
+				UserUtils.deleteUser(userName);
 			}
 		} finally {
 			if (s3Client != null) {

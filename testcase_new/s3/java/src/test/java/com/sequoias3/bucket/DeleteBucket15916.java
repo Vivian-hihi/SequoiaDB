@@ -1,16 +1,15 @@
 package com.sequoias3.bucket;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-15916:delete bucket,the bucket existing object
@@ -29,7 +28,7 @@ public class DeleteBucket15916 extends S3TestBase {
 	@BeforeClass
 	private void setUp() throws Exception {
 		CommLib.clearUser(userName);		
-		String[] acessKeys = RestClient.createUser(userName, roleName);		
+		String[] acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);		
 
 		CommLib.clearBucket(s3Client, bucketName);
@@ -57,8 +56,8 @@ public class DeleteBucket15916 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				s3Client.deleteObject(bucketName, key);
-				s3Client.deleteBucket(bucketName);				
-				RestClient.deleteUser(userName);
+				s3Client.deleteBucket(bucketName);
+				UserUtils.deleteUser(userName);
 				
 			}
 		} finally {

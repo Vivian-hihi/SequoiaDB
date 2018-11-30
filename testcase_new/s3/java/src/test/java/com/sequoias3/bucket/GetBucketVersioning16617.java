@@ -1,13 +1,5 @@
 package com.sequoias3.bucket;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -15,9 +7,16 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.S3ThreadBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -40,7 +39,7 @@ public class GetBucketVersioning16617 extends S3TestBase {
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		String[] acessKeys = RestClient.createUser(userName, roleName);
+		String[] acessKeys = UserUtils.createUser(userName, roleName);
 		credentials = new BasicAWSCredentials(acessKeys[0], acessKeys[1]);
 		endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
 				S3TestBase.s3ClientUrl, clientRegion);
@@ -72,7 +71,7 @@ public class GetBucketVersioning16617 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLib.clearBuckets(s3Client);
-				RestClient.deleteUser(userName);
+				UserUtils.deleteUser(userName);
 			}
 		} finally {
 			if (s3Client != null) {

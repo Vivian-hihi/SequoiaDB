@@ -1,12 +1,5 @@
 package com.sequoias3.bucket;
 
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -16,8 +9,14 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
 import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.List;
 
 /**
  * test content: delete some buckets and get bucket list information
@@ -39,7 +38,7 @@ public class CreateBucket15911 extends S3TestBase {
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		String[] acessKeys = RestClient.createUser(userName, roleName);
+		String[] acessKeys = UserUtils.createUser(userName, roleName);
 		AWSCredentials credentials = new BasicAWSCredentials(acessKeys[0], acessKeys[1]);
 		
 		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
@@ -65,7 +64,7 @@ public class CreateBucket15911 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLib.clearBuckets(s3Client);
-				RestClient.deleteUser(userName);
+				UserUtils.deleteUser(userName);
 			}
 		} catch (BaseException e) {
 			Assert.fail("clean up failed:" + e.getMessage());

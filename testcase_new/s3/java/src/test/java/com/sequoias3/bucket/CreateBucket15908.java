@@ -1,18 +1,5 @@
 package com.sequoias3.bucket;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.List;
-import java.util.Random;
-
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.Owner;
@@ -20,6 +7,19 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.List;
+import java.util.Random;
 
 /**
  * test content: bucket name parameter verification  
@@ -40,7 +40,7 @@ public class CreateBucket15908 extends S3TestBase {
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		accessKeys = RestClient.createUser(userName, roleName);
+		accessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 	}
 
@@ -91,7 +91,7 @@ public class CreateBucket15908 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLib.clearBuckets(s3Client);
-				RestClient.deleteUser(userName);
+				UserUtils.deleteUser(userName);
 			}
 		} catch (BaseException e) {
 			Assert.fail("clean up failed:" + e.getMessage());
