@@ -772,9 +772,6 @@ namespace engine
          << ",Version:" << _version ;
    }
 
-   #define RTN_RENAME_BLOCKWRITE_INTERAL ( 0.1 * OSS_ONE_SEC )
-   #define RTN_RENAME_BLOCKWRITE_TIMES   ( 10 )
-
    RTN_CTX_AUTO_REGISTER(_rtnContextRenameCS, RTN_CONTEXT_RENAMECS, "RENAMECS")
 
    _rtnContextRenameCS::_rtnContextRenameCS( SINT64 contextID, UINT64 eduID )
@@ -977,9 +974,6 @@ namespace engine
                       "Get transaction-lock of CS[%s] failed, rc: %d",
                       pCSName, rc ) ;
          _logicCSID = logicCSID ;
-
-         // TODO: YUTING in windows, we need to lock su exclusive,
-         // because windows file need to close
       }
    done:
       PD_TRACE_EXITRC( SDB__RTNCTXRENAMECS__TRYLOCK, rc ) ;

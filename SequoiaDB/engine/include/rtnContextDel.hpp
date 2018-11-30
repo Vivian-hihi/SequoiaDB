@@ -185,6 +185,9 @@ namespace engine
    };
    typedef class _rtnContextDelMainCL rtnContextDelMainCL;
 
+   #define RTN_RENAME_BLOCKWRITE_INTERAL ( 0.1 * OSS_ONE_SEC )
+   #define RTN_RENAME_BLOCKWRITE_TIMES   ( 10 )
+
    /*
       _rtnContextRenameCS define
    */

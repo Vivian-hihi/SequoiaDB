@@ -1562,14 +1562,17 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNRENAMECSCOMMAND ) ;
-      BOOLEAN dmsLock = FALSE ;
+      BOOLEAN lockDMS = FALSE ;
 
-      rc = dmsCB->writable ( cb ) ;
-      if ( rc )
+      INT16 i = 0 ;
+      while ( ( rc = dmsCB->blockWrite( cb ) )  &&
+              ( i < RTN_RENAME_BLOCKWRITE_TIMES ) )
       {
-         goto error ;
+         ossSleep( RTN_RENAME_BLOCKWRITE_INTERAL ) ;
+         i++ ;
       }
-      dmsLock = TRUE ;
+      PD_RC_CHECK( rc, PDERROR, "Block dms write failed, rc: %d", rc ) ;
+      lockDMS = TRUE ;
 
       rc = dmsCB->renameCollectionSpace( csName, newCSName, cb, dpsCB ) ;
       PD_RC_CHECK( rc, PDERROR,
@@ -1579,9 +1582,10 @@ namespace engine
       PD_LOG( PDEVENT, "Rename cs[%s] to [%s] succeed", csName, newCSName ) ;
 
    done:
-      if ( dmsLock )
+      if ( lockDMS )
       {
-         dmsCB->writeDown( cb ) ;
+         dmsCB->unblockWrite( cb ) ;
+         lockDMS = FALSE ;
       }
       PD_TRACE_EXITRC ( SDB_RTNRENAMECSCOMMAND, rc ) ;
       return rc ;
@@ -1785,14 +1789,17 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNRENAMECLCOMMAND ) ;
       dmsStorageUnitID suID   = DMS_INVALID_CS ;
       dmsStorageUnit *su      = NULL ;
-      BOOLEAN dmsLock         = FALSE ;
+      BOOLEAN lockDMS         = FALSE ;
 
-      rc = dmsCB->writable ( cb ) ;
-      if ( rc )
+      INT16 i = 0 ;
+      while ( ( rc = dmsCB->blockWrite( cb ) )  &&
+              ( i < RTN_RENAME_BLOCKWRITE_TIMES ) )
       {
-         goto error ;
+         ossSleep( RTN_RENAME_BLOCKWRITE_INTERAL ) ;
+         i++ ;
       }
-      dmsLock = TRUE ;
+      PD_RC_CHECK( rc, PDERROR, "Block dms write failed, rc: %d", rc ) ;
+      lockDMS = TRUE ;
 
       rc = rtnCollectionSpaceLock ( csName, dmsCB, FALSE,
                                     &su, suID, SHARED ) ;
@@ -1814,9 +1821,10 @@ namespace engine
       {
          dmsCB->suUnlock ( suID ) ;
       }
-      if ( dmsLock )
+      if ( lockDMS )
       {
-         dmsCB->writeDown( cb ) ;
+         dmsCB->unblockWrite( cb ) ;
+         lockDMS = FALSE ;
       }
       PD_TRACE_EXITRC ( SDB_RTNRENAMECLCOMMAND, rc ) ;
       return rc ;
