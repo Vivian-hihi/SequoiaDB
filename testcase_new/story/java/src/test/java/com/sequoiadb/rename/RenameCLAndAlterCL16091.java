@@ -40,7 +40,7 @@ public class RenameCLAndAlterCL16091 extends SdbTestBase{
 	public void setUp(){
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");	
 		if(CommLib.isStandAlone(sdb)){
-			throw new SkipException("standAlone skip testcase16086");
+			throw new SkipException("standAlone skip testcase16091");
 		}
 		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
