@@ -764,6 +764,9 @@ namespace engine
          << ",Version:" << _version ;
    }
 
+   #define RTN_RENAME_BLOCKWRITE_INTERAL ( 0.1 * OSS_ONE_SEC )
+   #define RTN_RENAME_BLOCKWRITE_TIMES   ( 10 )
+
    RTN_CTX_AUTO_REGISTER(_rtnContextRenameCS, RTN_CONTEXT_RENAMECS, "RENAMECS")
 
    _rtnContextRenameCS::_rtnContextRenameCS( SINT64 contextID, UINT64 eduID )
@@ -936,10 +939,16 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECS__TRYLOCK, "_rtnContextRenameCS::_tryLock" )
    INT32 _rtnContextRenameCS::_tryLock( const CHAR *pCSName, _pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCTXRENAMECS__TRYLOCK ) ;
 
-      rc = _pDmsCB->blockWrite( cb, SDB_DB_RENAME ) ;
+      INT16 i = 0 ;
+      while ( ( rc = _pDmsCB->blockWrite( cb ) )  &&
+              ( i < RTN_RENAME_BLOCKWRITE_TIMES ) )
+      {
+         ossSleep( RTN_RENAME_BLOCKWRITE_INTERAL ) ;
+         i++ ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Block dms write failed, rc: %d", rc ) ;
       _lockDMS = TRUE;
 
@@ -1173,7 +1182,13 @@ namespace engine
       dmsMBContext* mbContext = NULL ;
       UINT16 mbID             = DMS_INVALID_MBID ;
 
-      rc = _pDmsCB->blockWrite( cb, SDB_DB_RENAME ) ;
+      INT16 i = 0 ;
+      while ( ( rc = _pDmsCB->blockWrite( cb ) )  &&
+              ( i < RTN_RENAME_BLOCKWRITE_TIMES ) )
+      {
+         ossSleep( RTN_RENAME_BLOCKWRITE_INTERAL ) ;
+         i++ ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Block dms write failed, rc: %d", rc ) ;
       _lockDMS = TRUE;
 

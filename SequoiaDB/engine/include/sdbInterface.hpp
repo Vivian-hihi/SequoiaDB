@@ -135,7 +135,6 @@ namespace engine
       SDB_DB_REBUILDING,
       SDB_DB_FULLSYNC,
       SDB_DB_OFFLINE_BK,
-      SDB_DB_RENAME,
 
       SDB_DB_STATUS_MAX
    } ;

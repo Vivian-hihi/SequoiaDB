@@ -2689,14 +2689,6 @@
             <cn>GlobalID达到上限</cn>
          </description>
       </code>
-      
-      <code>
-         <name>SDB_RTN_IN_RENAME</name>
-         <description>
-            <en>Renaming cs or cl is in progress</en>
-            <cn>正在重命名集合空间或者集合</cn>
-         </description>
-      </code>
 
       <code>
          <name>SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST</name>
