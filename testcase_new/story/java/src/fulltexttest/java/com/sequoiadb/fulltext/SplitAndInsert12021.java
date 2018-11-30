@@ -12,6 +12,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
@@ -25,9 +26,9 @@ import com.sequoiadb.testcommon.SdbTestBase;
 public class SplitAndInsert12021 extends SdbTestBase {
 	private Sequoiadb sdb = null;
 	private DBCollection cl;
-	private String clName = "cl_12021";
+	private String clName = "ES_cl_12021";
+	private int insertNum = FullTextUtils.INSERT_NUMS;
 	private String fullTextIndexName = "fullIndex12021";
-	private int insertNum = 500000;
 	private Client esClient = null;
 	private String srcGroup = null;
 	private String desGroup = null;
@@ -55,31 +56,30 @@ public class SplitAndInsert12021 extends SdbTestBase {
 	
 	@Test
     public void test() {
+		CollectionSpace cs = sdb.getCollectionSpace(csName);
 		cl.createIndex(fullTextIndexName, (BSONObject)JSON.parse("{a : 'text', b : 'text'}"), false, false);
 		cl.split(srcGroup, desGroup, (BSONObject)JSON.parse("{a : 1}"), (BSONObject)JSON.parse("{a : 1000}"));
 		insertData();
 		FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, fullTextIndexName, insertNum);
 		
-		DBCollection srcCL = sdb.getReplicaGroup(srcGroup).getMaster().connect().getCollectionSpace(csName).getCollection(clName);
-		DBCollection desCL = sdb.getReplicaGroup(desGroup).getMaster().connect().getCollectionSpace(csName).getCollection(clName);
-		long srcCount = srcCL.getCount();
-		long desCount = desCL.getCount();
-		System.out.println("srcCount:"+srcCount);
-		System.out.println("desCount:"+desCount);
-		long esCount = cl.getCount("{'' : {$Text : {'query' : {'match_all' :{}}}}}");
-		Assert.assertEquals(esCount, srcCount+desCount, "records is wrong!");
+		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, fullTextIndexName);
+		FullTextDBUtils.dropCollection(cs, clName);
+		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 	}
 	
 	@AfterClass
     public void tearDown() {
-         sdb.getCollectionSpace(csName).dropCollection(clName);
+		CollectionSpace cs = sdb.getCollectionSpace(csName);
+		if(cs.isCollectionExist(clName)){
+			cs.dropCollection(clName);
+		}
     }
 	
 	public void insertData() {
 		List<BSONObject> records = new ArrayList<BSONObject>();
 		try {
-			for(int i = 0; i < 100; i++) {
-				for(int j = 0; j < 5000; j++) {
+			for(int i = 0; i < insertNum/1000; i++) {
+				for(int j = 0; j < insertNum/200; j++) {
 					BSONObject record = (BSONObject)JSON.parse("{a:'a"+i+""+j+"',g:'g"+i+""+j+"'}");
 					records.add(record);
 				}
