@@ -58,7 +58,14 @@ namespace engine
    }
 
 
-   // free allocated LRB and LRB Headers
+   //
+   // Description: free allocated LRBs, LRB Headers and reset buckets
+   // Input:       none
+   // Output:      none
+   // Return:      none
+   // Dependency:  this function is called during system shutdown,  
+   //              the caller shall make sure no threads are accessing locking
+   //              resource.
    void dpsTransLockManager::fini()
    {
       if ( _initialized )
@@ -86,7 +93,18 @@ namespace engine
    }
 
 
-   // initialization 
+   //
+   // Description: Initialize lock manager
+   //              . initialize bucket
+   //              . allocate LRB Headers
+   //              . allocate LRBs
+   // Input:       none
+   // Output:      none
+   // Return:      none
+   // Dependency:  this function is called during system starting up,
+   //              the caller shall make sure no thread is trying to access
+   //              lock resource before lock manager is fully initialized
+   //
    INT32 dpsTransLockManager::init()
    {
       INT32 rc = SDB_OK;
@@ -145,6 +163,25 @@ namespace engine
    done :
       return rc ;
    error :
+      // clean up LRB in error code path
+      if ( _pLRBMgr )
+      {
+         // free LRB objects if allocated
+         _pLRBMgr->fini() ;
+         // delete LRB manager
+         SAFE_OSS_DELETE( _pLRBMgr ) ;
+         _pLRBMgr = NULL ;
+      }
+
+      // clean LRB Header in error code path
+      if ( _pLRBHdrMgr )
+      {
+         // free LRB Header objects if allocated
+         _pLRBHdrMgr->fini() ;
+         // delete LRB Header manager
+         SAFE_OSS_DELETE( _pLRBHdrMgr ) ;
+         _pLRBHdrMgr = NULL ;
+      }
       goto done ;
    }
 
@@ -250,7 +287,6 @@ namespace engine
    // Input: 
    //    lockId   -- lock Id
    //    hdrIdx   -- the first LRB Header object index in the chain
-   //    pLRBHdr  -- the first LRB index in the owner queue/list
    // Output:
    //    hdrIdx   -- the index of the first LRB Header object matches
    //                the lockId if it is found.
@@ -283,6 +319,22 @@ namespace engine
    }
 
 
+   //
+   // Description: search the LRB Header chain and find the one with same lockId
+   // Function:    walk through LRB Header list/chain, find the one with same
+   //              lockId.  A wrapper function of _getLRBHdrByLockId
+   // Input:
+   //    lockId   -- lock Id
+   // Output:
+   //    hdrIdx   -- the index of the first LRB Header object matches
+   //                the lockId if it is found.
+   //    pLRBHdr  -- the pointer of first LRB Header object matches
+   //                the lockId if it is found. If not, it shall be the
+   //                pointer of the last LRB Header object in the list
+   //
+   // Return:     true  -- found the LRB Header object with same lockId
+   //             false -- not found
+   //
    BOOLEAN dpsTransLockManager::getLRBHdrByLockId
    (
       const dpsTransLockId &lockId,
@@ -291,16 +343,19 @@ namespace engine
    )
    {
       BOOLEAN found = FALSE ;
-      UTIL_OBJIDX bktIdx = _getBucketNo( lockId ) ;
-
-      hdrIdx = _LockHdrBkt[ bktIdx ].lrbHdrIdx ;
-      found  = _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) ;
-      if ( ! found ) 
+      if ( lockId.isValid() )
       {
+         UTIL_OBJIDX bktIdx = _getBucketNo( lockId ) ;
 
-         hdrIdx  = UTIL_INVALID_OBJ_INDEX ;
-         pLRBHdr = NULL ;
-      } 
+         hdrIdx = _LockHdrBkt[ bktIdx ].lrbHdrIdx ;
+         found  = _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) ;
+         if ( ! found ) 
+         {
+
+            hdrIdx  = UTIL_INVALID_OBJ_INDEX ;
+            pLRBHdr = NULL ;
+         } 
+      }
       return found ;
    }
 
@@ -844,7 +899,7 @@ namespace engine
    //     return SDB_OK
    //       . lock acquired, new LRB is added in owner list
    //       . if holing higher level lock, no need to add new LRB in owner list
-   //     return SDB_PERM
+   //     return SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST
    //       . can't upgrade to requested lock mode
    //     return SDB_DPS_TRANS_APPEND_TO_WAIT
    //       . need to upgrade, new LRB is added to upgrade list
@@ -854,14 +909,14 @@ namespace engine
    //     return SDB_OK
    //       . lock acquired, new LRB is added in owner list
    //       . holing higher level lock, no need to add new LRB in owner list
-   //     return SDB_PERM
+   //     return SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST
    //       . can't upgrade to requested lock mode
    //     return SDB_DPS_TRANS_LOCK_INCOMPATIBLE
    //       . request lock mode can't be acquired
    //   3 DPS_TRANSLOCK_OP_MODE_TEST
    //     return SDB_OK
    //       . request lock can be acquired
-   //     return SDB_PERM
+   //     return SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST
    //       . can't upgrade to requested lock mode
    //     return SDB_DPS_TRANS_LOCK_INCOMPATIBLE
    //       . request lock mode can't be acquired
@@ -880,7 +935,7 @@ namespace engine
    //    pdpsTxResInfo   -- pointer to dpsTransRetInfo
    // Return:
    //     SDB_OK,
-   //     SDB_PERM,
+   //     SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST,
    //     SDB_DPS_TRANS_APPEND_TO_WAIT,
    //     SDB_DPS_TRANS_LOCK_INCOMPATIBLE,
    //     or other errors
@@ -1418,7 +1473,7 @@ namespace engine
    //    pdpsTxResInfo   -- pointer to dpsTransRetInfo
    // Return:
    //     SDB_OK,
-   //     SDB_PERM,
+   //     SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST,
    //     SDB_DPS_TRANS_APPEND_TO_WAIT,
    //     SDB_INTERRUPT,
    //     SDB_TIMEOUT,
@@ -1602,6 +1657,7 @@ namespace engine
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
+      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 
       UTIL_OBJIDX hdrIdx         = UTIL_INVALID_OBJ_INDEX ,
                   ownerLrbIdx    = UTIL_INVALID_OBJ_INDEX ,
@@ -1859,6 +1915,7 @@ namespace engine
          dpsTransLRB       *pLRB ;
          dpsTransLRBHeader *pLRBHdr ;
          UTIL_OBJIDX hdrIdx, lrbIdx = dpsTxExectr->getLastLRBIdx() ;
+         dpsTransLockId lockId;
 
          while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
          {
@@ -1871,9 +1928,9 @@ namespace engine
             if ( IS_VALID_SEG_OBJ_INDEX( hdrIdx ) )
             {
                pLRBHdr = getLRBHdrPtrByIdx( hdrIdx ) ;
-
+               lockId  = pLRBHdr->lockId ;
                // release the lock 
-               _releaseAll( dpsTxExectr, pLRBHdr->lockId ) ;
+               _releaseAll( dpsTxExectr, lockId ) ;
             }
 
             // _releaseAll will remove LRB from EDU list
@@ -1969,7 +2026,7 @@ namespace engine
    //    pdpsTxResInfo   -- pointer to dpsTransRetInfo
    // Return:
    //     SDB_OK,
-   //     SDB_PERM,
+   //     SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST,
    //     SDB_DPS_TRANS_LOCK_INCOMPATIBLE,
    //     or other errors
    //
@@ -2042,7 +2099,7 @@ namespace engine
    //    pdpsTxResInfo   -- pointer to dpsTransRetInfo
    // Return:
    //     SDB_OK,
-   //     SDB_PERM,
+   //     SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST,
    //     SDB_DPS_TRANS_LOCK_INCOMPATIBLE,
    //     or other errors
    //
