@@ -44,7 +44,7 @@ public class Split10537 extends SdbConfTestBase {
         stdalnConf.put("transactionon", true);
     }
     
-	@BeforeClass()
+	@BeforeClass(enabled=false)
 	public void setUp() {
 
 		try {
@@ -89,7 +89,7 @@ public class Split10537 extends SdbConfTestBase {
 
 	}
 
-	@Test()
+	@Test(enabled=false)
 	public void transaction() {
 		Sequoiadb db = null;
 		Split splitThread = null;
@@ -182,7 +182,7 @@ public class Split10537 extends SdbConfTestBase {
 		checkGroupData(db, destGroupName, destExpect);
 	}
 
-	@AfterClass()
+	@AfterClass(enabled=false)
 	public void tearDown() {
 		try {
 			CollectionSpace cs = commSdb.getCollectionSpace(csName);
