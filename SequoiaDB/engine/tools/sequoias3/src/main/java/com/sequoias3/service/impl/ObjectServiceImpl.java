@@ -404,6 +404,9 @@ public class ObjectServiceImpl implements ObjectService {
             ListObjectsResult listObjectsResult = new ListObjectsResult(bucketName, maxKeys,
                     encodingType, prefix, startAfter, delimiter, continueToken);
 
+            String metaCsName = metaDao.getMetaCSName(bucket.getRegion());
+            String metaClName = metaDao.getMetaCurCLName();
+
             //get cursor
             if (null != continueToken) {
                 queryContext = contextManager.get(continueToken);
@@ -414,20 +417,12 @@ public class ObjectServiceImpl implements ObjectService {
                 if (!IsContextMatch(queryContext, prefix, startAfter, delimiter)){
                     queryContext = null;
                 }else{
-                    //get cs,cl
-                    String metaCsName = metaDao.getMetaCSName(bucket.getRegion());
-                    String metaClName = metaDao.getMetaCurCLName();
-                    //get cursor
                     dbCursor = metaDao.queryMetaByBucket(metaCsName, metaClName,
                             bucket.getBucketId(), prefix, queryContext.getLastKey(),
                             false, false);
                 }
             }
             if (null == queryContext){
-                //get cs,cl
-                String metaCsName = metaDao.getMetaCSName(bucket.getRegion());
-                String metaClName = metaDao.getMetaCurCLName();
-                //get cursor
                 dbCursor = metaDao.queryMetaByBucket(metaCsName, metaClName,
                         bucket.getBucketId(), prefix, startAfter,
                         false, false);
