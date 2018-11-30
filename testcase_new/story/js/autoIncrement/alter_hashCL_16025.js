@@ -66,10 +66,11 @@ function main()
    var nextValue = Math.ceil(100/acquireSize)*acquireSize*increment + 1;
    var cacheSize = 32;
    var acquireSize = 12;
-   dbcl.setAttributes({AutoIncrement:{Field:fieldName, CacheSize:cacheSize, AcquireSize:acquireSize}});
+   var generated = "strict";
+   dbcl.setAttributes({AutoIncrement:{Field:fieldName, CacheSize:cacheSize, AcquireSize:acquireSize, Generated:generated}});
    var clID = getCLID(csName, clName);
    var clSequenceName = "SYS_" + clID + "_" + fieldName + "_SEQ";
-   var expIncrementArr = [{Field:fieldName, SequenceName:clSequenceName}];
+   var expIncrementArr = [{Field:fieldName, SequenceName:clSequenceName, Generated:generated}];
    checkAutoIncrementonCL(csName, clName, expIncrementArr);
    println("---check cl autoIncrement after alter success");
    
@@ -83,7 +84,9 @@ function main()
    {
       var coord = new Sdb(coordNodes[k]);
       var cl = coord.getCS(csName).getCL(clName);
-      
+      //alter操作会变更集合版本号，插入时会取2次seqence值，SEQUOIADBMAINSTREAM-3895,通过find操作更新版本号
+      var cursor = cl.find();
+      while(cursor.next()){}
       var doc = [];
       for(var i=0;i<100;i++)
       {
@@ -97,6 +100,18 @@ function main()
    checkRec(actR, expR);
    println("---check insert after alter autoIncrement success");
    
+   try
+   {
+      dbcl.insert({id:"a"});
+      throw "NEED_INSERT_ERR";  
+   }catch(e)
+   {
+      if(-6 !== e)
+      {
+         throw e;
+      }
+   }
+   println("---check insert after alter generated success");
    commDropCS( db, csName);
    db.dropDomain(domainName);
 }
