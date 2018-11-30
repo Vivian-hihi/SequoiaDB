@@ -735,16 +735,16 @@
       <detail>
          <en>1. The control strategy of data sync in repl group.<fig></fig>
                2. value enumeration:<fig></fig>
-               > none--no sync strategy. if the processing ability is much higher in master node than syncing ability in slave node, then slave node is susceptible to full sync under write-heavy workload.<fig></fig>
-               > keepnormal--actively lower the master node's processing speed relative to normal nodes's to avoid full sync(might affect performance).<fig></fig>
-               > keepall--actively lower the master node's processing speed relative to all nodes's to avoid full sync(might affect performance).<fig></fig>
+               ● none--no sync strategy. if the processing ability is much higher in master node than syncing ability in slave node, then slave node is susceptible to full sync under write-heavy workload.<fig></fig>
+               ● keepnormal--actively lower the master node's processing speed relative to normal nodes's to avoid full sync(might affect performance).<fig></fig>
+               ● keepall--actively lower the master node's processing speed relative to all nodes's to avoid full sync(might affect performance).<fig></fig>
                3. the difference between keepnormal and keepall is that, the existence of abnormal nodes will lower master node's processing speed in keepall while will not in keepnormal.<fig></fig>
-               4. if not specified, default value is keepnormal.</en> 
+               4. if not specified, default value is keepnormal.</en>
          <cn>1. 副本组之间数据同步控制策略。<fig></fig>
              2. 取值列表：<fig></fig>
-             > none: 不开启同步控制策略。若主节点处理数据的能力远超备节点同步数据的能力，则在写操作繁忙的场景下易导致备节点发生全量同步。<fig></fig>
-             > keepnormal: 主动降低主节点相对于正常节点的处理速度（可能会造成性能影响），以避免全量同步的发生。<fig></fig>
-             > keepall: 主动降低主节点相对于所有节点的处理速度（可能会造成性能影响），以避免全量同步的发生。<fig></fig>
+             ● none: 不开启同步控制策略。若主节点处理数据的能力远超备节点同步数据的能力，则在写操作繁忙的场景下易导致备节点发生全量同步。<fig></fig>
+             ● keepnormal: 主动降低主节点相对于正常节点的处理速度（可能会造成性能影响），以避免全量同步的发生。<fig></fig>
+             ● keepall: 主动降低主节点相对于所有节点的处理速度（可能会造成性能影响），以避免全量同步的发生。<fig></fig>
              3. keepnormal和keepall的区别在于，当有节点异常时keepall会降低主节点的处理速度，而keepnormal不受异常节点的影响。<fig></fig>
              4. 如果不指定，默认为keepnormal。</cn>
       </detail>
@@ -912,20 +912,20 @@
          <en>1. It specifies the instance on which to query.<fig></fig>
              2. If it is not specifed, the default value is "M", i.e. read and write instance.<fig></fig>
              3. value enum:<fig></fig>
-             > "M", "m": read and write instance( master instance ). If multiple numeric instances are given with "M", matched master instance will be chosen in higher priority. If multiple numeric instances are given with "M" or "m", master instance will be chosen if no numeric instance is matched.<fig></fig>
-             > "S", "s": read only instance( slave instance ). If multiple numeric instances are given with "S", matched slave instances will be chosen in higher priority. If multiple numeric instances are given with "S" or "s", slave instance will be chosen if no numeric instance is matched.<fig></fig>
-             > "A", "a": any instance.<fig></fig>
-             > 1-255: the instance with specified instance ID.<fig></fig>
-             > If multiple alphabet instances are given, only first one will be used.<fig></fig>
+             ● "M", "m": read and write instance( master instance ). If multiple numeric instances are given with "M", matched master instance will be chosen in higher priority. If multiple numeric instances are given with "M" or "m", master instance will be chosen if no numeric instance is matched.<fig></fig>
+             ● "S", "s": read only instance( slave instance ). If multiple numeric instances are given with "S", matched slave instances will be chosen in higher priority. If multiple numeric instances are given with "S" or "s", slave instance will be chosen if no numeric instance is matched.<fig></fig>
+             ● "A", "a": any instance.<fig></fig>
+             ● 1-255: the instance with specified instance ID.<fig></fig>
+             ● If multiple alphabet instances are given, only first one will be used.<fig></fig>
              4. If matched instance is not found, will choose instance by random.</en>
          <cn>1. 指定执行读请求时优先选择的实例<fig></fig>
              2. 如果不指定，则默认值为M，即选择可读写实例。<fig></fig>
              3. 取值列表：<fig></fig>
-             > "M", "m": 可读写实例（主实例）；如果多个 1-255 的实例和 "M" 一起指定，则满足指定实例中的主实例会优先选择；如果多个 1-255 的实例和 "M" 或 "m" 一起指定，则当没有满足指定的实例时选择主实例。<fig></fig>
-             > "S", "s": 只读实例（备实例）；如果多个 1-255 的实例和 "S" 一起指定，则满足指定实例中的备实例会被优先选择；如果多个 1-255 的实例和 "S" 或 "s" 一起指定，则当没有满足指定的实例时选择备实例。<fig></fig>
-             > "A", "a": 任意实例。<fig></fig>
-             > 1-255: 通过 --instanceid 指定实例 ID 的实例。<fig></fig>
-             > 如果指定多个 "M", "m", "S", "s", "A", "a" 实例，则只有第一个生效。<fig></fig>
+             ● "M", "m": 可读写实例（主实例）；如果多个 1-255 的实例和 "M" 一起指定，则满足指定实例中的主实例会优先选择；如果多个 1-255 的实例和 "M" 或 "m" 一起指定，则当没有满足指定的实例时选择主实例。<fig></fig>
+             ● "S", "s": 只读实例（备实例）；如果多个 1-255 的实例和 "S" 一起指定，则满足指定实例中的备实例会被优先选择；如果多个 1-255 的实例和 "S" 或 "s" 一起指定，则当没有满足指定的实例时选择备实例。<fig></fig>
+             ● "A", "a": 任意实例。<fig></fig>
+             ● 1-255: 通过 --instanceid 指定实例 ID 的实例。<fig></fig>
+             ● 如果指定多个 "M", "m", "S", "s", "A", "a" 实例，则只有第一个生效。<fig></fig>
              4. 如果没有匹配的实例，将随机选择。</cn>
       </detail>
       <typeofweb>str</typeofweb>
@@ -950,12 +950,12 @@
       <detail>
          <en>1. The mode to choose query instance when multiple prefered instances are found.<fig></fig>
            2. value enumeration:<fig></fig>
-                > "random": choose the instance from matched instances by random.<fig></fig>
-                > "ordered": choose the instance from matched instances by the order of --preferedinstance .</en>
+                ● "random": choose the instance from matched instances by random.<fig></fig>
+                ● "ordered": choose the instance from matched instances by the order of --preferedinstance .</en>
          <cn>1. 指定当多个实例符合 --preferedinstance 的条件时的选择模式。<fig></fig>
            2. 取值列表：<fig></fig>
-                > "random": 从候选的实例中随机选择。<fig></fig>
-                > "ordered": 从候选的实例中按照 --perferedinstance 的顺序进行选择。</cn>
+                ● "random": 从候选的实例中随机选择。<fig></fig>
+                ● "ordered": 从候选的实例中按照 --perferedinstance 的顺序进行选择。</cn>
       </detail>
       <typeofweb>str</typeofweb>
       <default>random</default>
@@ -1598,14 +1598,14 @@
       <detail>
          <en>1. The node's operation when its data lost. Value is 0/1/2. Default is 1.<fig></fig>
            2. Value enumeration:<fig></fig>
-             > 0: do nothing, run with error.<fig></fig>
-             > 1: auto sync full data from other nodes. <fig></fig>
-             > 2: shutdown the node.</en>
+             ● 0: do nothing, run with error.<fig></fig>
+             ● 1: auto sync full data from other nodes. <fig></fig>
+             ● 2: shutdown the node.</en>
          <cn>1. 节点在发生数据丢失错误时的处理操作，取值为 0/1/2。 缺省为1。<fig></fig>
            2. 取值列表：<fig></fig>
-             > 0: 不作任何处理，保持节点运行。<fig></fig>
-             > 1: 自动从该数据组的其它节点进行全量同步。<fig></fig>
-             > 2: 该节点停止运行。</cn>
+             ● 0: 不作任何处理，保持节点运行。<fig></fig>
+             ● 1: 自动从该数据组的其它节点进行全量同步。<fig></fig>
+             ● 2: 该节点停止运行。</cn>
       </detail>
       <type>int</type>
       <default>1</default>
@@ -1715,19 +1715,19 @@
       <detail>
          <en>1. Specify the cache level of query plans. Value is 0/1/2/3/4. Default is 3.<fig></fig>
            2. Value enumeration:<fig></fig>
-             > 0: No cache.<fig></fig>
-             > 1: Caching plan with original query.<fig></fig>
-             > 2: Caching plan with normalized query.<fig></fig>
-             > 3: Caching plan with parameterized query.<fig></fig>
-             > 4: Caching plan with parameterized query and fuzzy-matched operators.
+             ● 0: No cache.<fig></fig>
+             ● 1: Caching plan with original query.<fig></fig>
+             ● 2: Caching plan with normalized query.<fig></fig>
+             ● 3: Caching plan with parameterized query.<fig></fig>
+             ● 4: Caching plan with parameterized query and fuzzy-matched operators.
          </en>
          <cn>1. 指定查询计划的缓存级别，默认是3。<fig></fig>
            2. 取值列表：<fig></fig>
-             > 0: 不缓存查询计划。<fig></fig>
-             > 1: 缓存原查询计划。<fig></fig>
-             > 2: 缓存泛化后的查询计划。<fig></fig>
-             > 3: 缓存参数化的查询计划。<fig></fig>
-             > 4: 缓存参数化并带操作符模糊匹配的查询计划。
+             ● 0: 不缓存查询计划。<fig></fig>
+             ● 1: 缓存原查询计划。<fig></fig>
+             ● 2: 缓存泛化后的查询计划。<fig></fig>
+             ● 3: 缓存参数化的查询计划。<fig></fig>
+             ● 4: 缓存参数化并带操作符模糊匹配的查询计划。
          </cn>
       </detail>
       <type>int</type>
@@ -1750,17 +1750,17 @@
       <detail>
          <en>1. Specify the task scheduler type. Value is 0/1/2/3. Default is 0.<fig></fig>
            2. Value enumeration:<fig></fig>
-             > 0: None.<fig></fig>
-             > 1: First in first out.<fig></fig>
-             > 2: Based Priority.<fig></fig>
-             > 3: Based Container.
+             ● 0: None.<fig></fig>
+             ● 1: First in first out.<fig></fig>
+             ● 2: Based Priority.<fig></fig>
+             ● 3: Based Container.
          </en>
          <cn>1. 指定任务调度器类型，默认是0。<fig></fig>
            2. 取值列表：<fig></fig>
-             > 0: 不开启。<fig></fig>
-             > 1: 先入先出。<fig></fig>
-             > 2: 基于优先级调度。<fig></fig>
-             > 3: 基于容器调度。
+             ● 0: 不开启。<fig></fig>
+             ● 1: 先入先出。<fig></fig>
+             ● 2: 基于优先级调度。<fig></fig>
+             ● 3: 基于容器调度。
          </cn>
       </detail>
       <type>int</type>
@@ -1803,13 +1803,13 @@
       <detail>
          <en>1. Specify the isolation level of transaction. Value is 0/1. Default is 0.<fig></fig>
            2. Value enumeration:<fig></fig>
-             > 0: RU, read uncommited<fig></fig>
-             > 1: RC, read commited.<fig></fig>
+             ● 0: RU, read uncommited<fig></fig>
+             ● 1: RC, read commited.<fig></fig>
          </en>
          <cn>1. 指定事务隔离级别，默认是0。<fig></fig>
            2. 取值列表：<fig></fig>
-             > 0: RU，读未提交。<fig></fig>
-             > 1: RC, 读已提交。<fig></fig>
+             ● 0: RU，读未提交。<fig></fig>
+             ● 1: RC, 读已提交。<fig></fig>
          </cn>
       </detail>
       <type>int</type>
