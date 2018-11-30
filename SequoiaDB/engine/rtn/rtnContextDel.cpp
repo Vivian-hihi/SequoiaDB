@@ -224,6 +224,14 @@ namespace engine
          _status = DELCSPHASE_0 ;
          _clean( cb ) ;
       }
+      else
+      {
+         //It is main cs, which hasn't data file, we should invalidate plan here.
+         //If it is normal cs which its data file exists on data node,
+         //invalidate plan will be executed in dms by calling onDropCS().
+         pRtnCB->getAPM()->invalidateSUPlans( _name ) ;
+         pClsCB->invalidateCache( _name, DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
+      }
 
       /// close context
       _isOpened = FALSE ;

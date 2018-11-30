@@ -2757,9 +2757,18 @@ namespace engine
       return SDB_OK ;
    }
 
+   /* Description:
+         All collections belonging to the cs, clear their catalog info.
+         All maincl of the collection of the cs, clear their catalog info.
+      Return value:
+         pSubCLs: subcl of the collection of the cs, but excluding collections
+                  belonging to this cs
+         pMainCLs: maincl of the collection of the cs, but excluding collections
+                   belonging to this cs
+   */
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CRBYSPACENAME, "_clsCatalogAgent::clearBySpaceName" )
    INT32 _clsCatalogAgent::clearBySpaceName ( const CHAR * csName,
-                                              vector< string > *pRelatedCLs,
+                                              vector< string > *pSubCLs,
                                               _utilSet< string > * pMainCLs )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT_CRBYSPACENAME ) ;
@@ -2792,12 +2801,20 @@ namespace engine
          while ( curSet )
          {
             /// add sub collections
-            if ( pRelatedCLs &&
+            if ( pSubCLs &&
                  0 == ossStrncmp( curSet->_mainCLName.c_str(),
                                   csName, nameLen ) &&
                  '.' == curSet->_mainCLName.at( nameLen ) )
             {
-               pRelatedCLs->push_back( curSet->_name ) ;
+               if ( 0 == ossStrncmp( curSet->_name.c_str(), csName, nameLen ) &&
+                    '.' == curSet->_name.at( nameLen ) )
+               {
+                  // this cl belongs to the cs
+               }
+               else
+               {
+                  pSubCLs->push_back( curSet->_name ) ;
+               }
             }
 
             if ( ossStrncmp ( curSet->name(), csName, nameLen ) == 0
@@ -2806,7 +2823,15 @@ namespace engine
                string strMainCL = curSet->getMainCLName() ;
                if ( !strMainCL.empty() )
                {
-                  pMainCLs->insert( strMainCL ) ;
+                  if ( 0 == ossStrncmp( strMainCL.c_str(), csName, nameLen )
+                       && '.' == strMainCL.at( nameLen ) )
+                  {
+                     // this cl belongs to the cs
+                  }
+                  else
+                  {
+                     pMainCLs->insert( strMainCL ) ;
+                  }
                }
 
                csUniqueID = utilGetCSUniqueID( curSet->clUniqueID() ) ;

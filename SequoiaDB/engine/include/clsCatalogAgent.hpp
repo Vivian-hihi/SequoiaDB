@@ -380,7 +380,7 @@ namespace engine
          INT32   clear ( const CHAR* name,
                          CHAR* mainCL = NULL ) ;
          INT32   clearBySpaceName ( const CHAR* csName,
-                                    vector< string > *pRelatedCLs = NULL,
+                                    vector< string > *pSubCLs = NULL,
                                     _utilSet< string > * pMainCLs = NULL ) ;
          /// caller need to hold the write lock
          INT32   clearAll () ;
