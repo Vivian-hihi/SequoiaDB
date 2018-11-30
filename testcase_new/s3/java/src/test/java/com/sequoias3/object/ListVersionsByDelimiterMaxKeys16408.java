@@ -1,7 +1,10 @@
 package com.sequoias3.object;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.S3VersionSummary;
+import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import org.testng.Assert;
@@ -52,7 +55,7 @@ public class ListVersionsByDelimiterMaxKeys16408 extends S3TestBase {
             expKeys.add(objectName);
         }
         if (!vsList.isTruncated()) {
-            checkResult(vsList, delimiter,new ArrayList<>(), expKeys);
+            checkResult(vsList, delimiter,new ArrayList<String>(), expKeys);
         } else {
             Assert.fail("vsList.isTruncated() must be false");
         }

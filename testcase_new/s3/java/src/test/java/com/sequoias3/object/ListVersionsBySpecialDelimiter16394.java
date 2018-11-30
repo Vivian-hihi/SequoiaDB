@@ -1,9 +1,10 @@
 package com.sequoias3.object;
 
-import ch.qos.logback.core.net.SyslogOutputStream;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
-import com.amazonaws.util.Md5Utils;
+import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.S3VersionSummary;
+import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
@@ -14,8 +15,8 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Description: seqDB-16394 :: 指定不同格式分割符查询
@@ -190,6 +191,7 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
         for (int i = 0; i < vsSummaryList.size(); i++) {
             S3VersionSummary versionSummary = vsSummaryList.get(i);
             Assert.assertEquals(versionSummary.getBucketName(), bucketName);
+            Assert.assertEquals(versionSummary.getVersionId(),expVersions[i]);
             if(!key.equals(versionSummary.getKey())){
                 actKeys.add(versionSummary.getKey());
             }

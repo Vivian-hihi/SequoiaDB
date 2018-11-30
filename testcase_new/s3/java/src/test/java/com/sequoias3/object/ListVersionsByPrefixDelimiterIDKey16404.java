@@ -66,7 +66,7 @@ public class ListVersionsByPrefixDelimiterIDKey16404 extends S3TestBase {
         VersionListing vsList = listVersionsByPreDelimiter(bucketName, prefix, delimiter,keyMarker,versionIdMarker);
         List<String> keys = new ArrayList<String>();
         keys.add( objectNames[1]);
-        checkResult(vsList,prefix,delimiter,new ArrayList<>(),keys);
+        checkResult(vsList,prefix,delimiter,new ArrayList<String>(),keys);
         runSuccess = true;
     }
 
