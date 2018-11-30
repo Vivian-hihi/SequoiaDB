@@ -24,14 +24,16 @@ function main()
    mainCL.attachCL(csName1 + "." + slaveCLName1, {LowBound : {a : 0}, UpBound : {a : 4567}});
    mainCL.attachCL(csName2 + "." + slaveCLName2, {LowBound : {a : 4567}, UpBound : {a : 10001}});
    
+   //create index
    commCreateIndex( mainCL, "fullIndex_12069", {b : "text"});
    
+   //insert records
    var records = new Array();
-   var count = 0;
+   var oneSubCLCount = 0;
    for (var i = 0; i < 10000 ; i++){
       var randomNum = parseInt(Math.random()*10000 + 1);
       if (randomNum < 4567){
-         count++;
+         oneSubCLCount++;
       }
       var record = {a : randomNum, b : "b" + i};
       records.push(record);
@@ -47,7 +49,7 @@ function main()
    
    //删除部分子表所在的集合空间
    db.dropCS(csName1);
-   checkMainCLFullSyncToES(COMMCSNAME, clName, "fullIndex_12069", 10000 - count);
+   checkMainCLFullSyncToES(COMMCSNAME, clName, "fullIndex_12069", 10000 - oneSubCLCount);
    
    //其余子表主备节点数据一致
    checkConsistency(csName2, slaveCLName2);

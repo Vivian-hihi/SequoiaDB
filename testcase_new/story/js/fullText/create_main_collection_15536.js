@@ -25,6 +25,7 @@ function main()
    mainCL.attachCL(COMMCSNAME + "." + slaveCLName1, {LowBound : {a : 0}, UpBound : {a : 4567}});
    mainCL.attachCL(COMMCSNAME + "." + slaveCLName2, {LowBound : {a : 4567}, UpBound : {a : 10001}});
    
+   //createIndex
    commCreateIndex( mainCL, "fullIndex_15536", {b : "text"});
    
    //insert
@@ -56,10 +57,16 @@ function main()
    //update
    mainCL.update({$set : {b : "helloworld"}}, {b : "b1"});
    checkMainCLFullSyncToES(csName, clName, "fullIndex_15536", 10000);
+   var actResult = dbOperator.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, {"_id" : 1});
+   var expResult = dbOperator.findFromCL(mainCL, null, null, {"_id" : 1});
+   checkResult(expResult, actResult);
    
    //delete
    mainCL.remove({b : "helloworld"});
    checkMainCLFullSyncToES(csName, clName, "fullIndex_15536", 9999);
+   var actResult = dbOperator.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, {"_id" : 1});
+   var expResult = dbOperator.findFromCL(mainCL, null, null, {"_id" : 1});
+   checkResult(expResult, actResult);
    
    commDropCL(db, COMMCSNAME, slaveCLName1, true, true);
    commDropCL(db, COMMCSNAME, slaveCLName2, true, true);

@@ -10,7 +10,7 @@ function main()
       return;
    }
    
-   //主表及子表在相同集合空间上
+   //创建主子表，并在主表中创建全文索引 2.通过主表插入部分数据，数据分布在各子表中
    var clName = COMMCLNAME + "_ES_12072";
    commDropCL(db, COMMCSNAME, clName, true, true);
    var mainCL = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingKey : {a : 1}, ShardingType : "range", IsMainCL : true});
@@ -23,8 +23,10 @@ function main()
    mainCL.attachCL(COMMCSNAME + "." + slaveCLName1, {LowBound : {a : 0}, UpBound : {a : 4567}});
    mainCL.attachCL(COMMCSNAME + "." + slaveCLName2, {LowBound : {a : 4567}, UpBound : {a : 10001}});
    
+   //create index
    commCreateIndex( mainCL, "fullIndex_12072", {b : "text"});
    
+   //insert records
    var records = new Array();
    var count = 0;
    for (var i = 0; i < 10000 ; i++){
@@ -47,11 +49,11 @@ function main()
    //删除某个子表
    var dbOperator = new DBOperator();
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, slaveCLName1, "fullIndex_12072");
-     
    db.getCS(COMMCSNAME).dropCL(slaveCLName1);     
    checkIndexNotExistInES(COMMCSNAME, slaveCLName1, esIndexNames);
-   checkFullSyncToES(COMMCSNAME, slaveCLName2, "fullIndex_12072", 10000 - count);
+   checkMainCLFullSyncToES(COMMCSNAME, clName, "fullIndex_12072", 10000 - count);
    
+   //get actResult and expResult
    var expResult = dbOperator.findFromCL(slaveCL2, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {b : ""});
    esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, slaveCLName2, "fullIndex_12072"); 
    var actResult = new Array();
@@ -61,6 +63,7 @@ function main()
       actResult = actResult.concat(esRecords);
    }
    
+   //check result
    expResult.sort(compare("b"));
    actResult.sort(compare("b"));
    checkResult(expResult, actResult);
