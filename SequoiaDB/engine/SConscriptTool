@@ -219,7 +219,7 @@ utilFiles = [
       "util/utilPasswdTool.cpp",
       "util/utilCipherFile.cpp",
       "util/utilCipherMgr.cpp",
-      "client/cipher.c"
+      "util/utilCipher.c"
       ]
 
 dpsFiles = [

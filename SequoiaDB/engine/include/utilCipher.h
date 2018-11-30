@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-   Source File Name = utilPasswdTool.hpp
+   Source File Name = utilCipher.h
 
    Dependencies: N/A
 
@@ -29,30 +29,23 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef UTILPASSWDTOOL_H_
-#define UTILPASSWDTOOL_H_
+#ifndef UTILCIPHER_H_
+#define UTILCIPHER_H_
 
-#include "utilCipherMgr.hpp"
+#include "ossTypes.h"
 
-namespace engine
-{
+void   cipherGenerateRandomArray( CHAR* array, UINT32 arrayLen ) ;
+INT32  cipherExtractRandomArray( CHAR *cipherText, UINT32 cipherTextLen, 
+                                 CHAR *array, UINT32 *cipherTextNewLen, UINT32 *arrayNewLen ) ;
+void   cipherInsertRandomArray( CHAR *destArray, UINT32 destArrayLen,
+                                CHAR *randArray, UINT32 randArrayLen,
+                                UINT32 *destArrayNewLen ) ;
+INT32  cipherEncrypt( const CHAR *clearText, const CHAR *token,
+                      CHAR *cipherText ) ;
+INT32  cipherDecrypt( const CHAR *cipherText, const CHAR *token, 
+                      CHAR *clearText ) ;
+INT32  decryptUserCipher( const CHAR *userName, const CHAR *fullName,
+                          const CHAR *token, const CHAR *path, 
+                          CHAR *clearText ) ;
 
-   class passwordTool : public SDBObject
-   {
-   public:
-      passwordTool() {}
-      ~passwordTool() {}
-      static std::string interactivePasswdInput() ;
-      INT32              getPasswdByCipherFile( const std::string &user,
-                                                const std::string &token,
-                                                const std::string &cipherFile,
-                                                std::string &connectionUser,
-                                                std::string &password ) ;
-   private:
-      cipherMgr    _cipherMgr ;
-      cipherFile   _cipherfile ;
-   } ;
-
-}
-
-#endif
+#endif /* UTILCIPHER_H_ */

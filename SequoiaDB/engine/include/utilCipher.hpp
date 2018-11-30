@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-   Source File Name = utilPasswdTool.hpp
+   Source File Name = utilCipher.hpp
 
    Dependencies: N/A
 
@@ -29,30 +29,14 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef UTILPASSWDTOOL_H_
-#define UTILPASSWDTOOL_H_
+#ifndef UTILCIPHER_HPP_
+#define UTILCIPHER_HPP_
+#include "core.h"
 
-#include "utilCipherMgr.hpp"
+SDB_EXTERN_C_START
 
-namespace engine
-{
+#include "utilCipher.h"
 
-   class passwordTool : public SDBObject
-   {
-   public:
-      passwordTool() {}
-      ~passwordTool() {}
-      static std::string interactivePasswdInput() ;
-      INT32              getPasswdByCipherFile( const std::string &user,
-                                                const std::string &token,
-                                                const std::string &cipherFile,
-                                                std::string &connectionUser,
-                                                std::string &password ) ;
-   private:
-      cipherMgr    _cipherMgr ;
-      cipherFile   _cipherfile ;
-   } ;
+SDB_EXTERN_C_END
 
-}
-
-#endif
+#endif /* UTILCIPHER_HPP_ */

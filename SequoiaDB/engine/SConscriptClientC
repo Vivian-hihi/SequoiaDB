@@ -59,7 +59,7 @@ clientCLibFiles = [
       "client/timestampTm.c",
       "client/timestampValid.c",
       "bson/md5.c",
-      "client/cipher.c"
+      "util/utilCipher.c"
       ]
 
 #Shared Library

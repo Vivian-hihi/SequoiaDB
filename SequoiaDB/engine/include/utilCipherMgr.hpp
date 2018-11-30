@@ -1,3 +1,34 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2018 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+   Source File Name = utilCipherMgr.hpp
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          11/26/2018  ZWB  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
 #ifndef UTILCIPHERMGR_H_
 #define UTILCIPHERMGR_H_
 
@@ -32,25 +63,6 @@ namespace engine
                                    std::string &connectionUserName ) ;
 
    private:
-      INT32  _encrypt( const std::string &clearText, const std::string &token,
-                       std::string &cipherText ) ;
-      INT32  _decrypt( const std::string &cipherText, const std::string &token,
-                       std::string &clearText ) ;
-
-      void   _hashToKey( const std::string &cipherString,
-                         UINT8 *cipherKey, UINT32 desiredLength ) ;
-      INT16  _hexChar2dec( CHAR c ) ;
-      void   _hexToByte( const std::string &hex, std::string &bytes ) ;
-      std::string _byteToHex( const CHAR* in, INT32 len ) ;
-
-      INT32  _randBetween( INT32 begin, INT32 end ) ;
-      void   _generateRandomArray( CHAR* array ) ;
-      void   _generateRandArraySplits( UINT32 cipherTextLen,
-                                       CHAR *array, INT32 arrayLen,
-                                       std::vector<UINT32> &insertPositions,
-                                       std::vector<std::string> &arraySplits ) ;
-      void   _insertRandomArray( std::string &cipherText, CHAR *array, INT32 arrayLen ) ;
-      INT32  _extractRandomArray( std::string &cipherText, std::string &array ) ;
 
       INT32  _parseLine( std::string line, std::string& usr, std::string& cipherText ) ;
       INT32  _write( const std::string& fileContent ) ;

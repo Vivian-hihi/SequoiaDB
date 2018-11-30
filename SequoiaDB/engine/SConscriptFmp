@@ -182,7 +182,7 @@ utilFiles = [
       "client/timestampValid.c",
       "bson/md5.c",
       "bson/bsonDecimal.cpp",
-      "client/cipher.c"
+      "util/utilCipher.c"
       ]
 
 clientCFiles = [

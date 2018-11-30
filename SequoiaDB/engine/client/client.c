@@ -25,7 +25,7 @@
 #include "msgCatalogDef.h"
 #include "../bson/lib/md5.h"
 #include "fmpDef.h"
-#include "cipher.h"
+#include "utilCipher.h"
 
 #if defined( _LINUX ) || defined (_AIX)
 #include <arpa/inet.h>
