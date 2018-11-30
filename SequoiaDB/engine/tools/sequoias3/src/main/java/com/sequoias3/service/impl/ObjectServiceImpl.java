@@ -1222,11 +1222,17 @@ public class ObjectServiceImpl implements ObjectService {
                                 metaResult, 1, true);
                         metaDao.updateMeta(connection, metaCsName, metaClName, bucketId,
                                 objectName, null, objectMeta);
+                        ObjectMeta nullMeta = null;
                         if (VersioningStatusType.SUSPENDED == versioningStatusType) {
-                            metaDao.removeMeta(connection, metaCsName, metaHisClName, bucketId,
-                                    objectName, null, true);
+                            nullMeta = metaDao.queryForUpdate(connection, metaCsName, metaHisClName,
+                                    bucketId, objectName, null, true);
+                            if (null != nullMeta) {
+                                metaDao.removeMeta(connection, metaCsName, metaHisClName, bucketId,
+                                        objectName, null, true);
+                            }
                         }
                         transaction.commit(connection);
+                        deleteObjectLob(nullMeta);
                     }
                 }
                 return;
