@@ -614,6 +614,17 @@ namespace engine
                pLRB->eduLrbIdxNext = UTIL_INVALID_OBJ_INDEX ;
             }
          } 
+         else
+         {
+            // when dpsTxExectr->getLastLRBIdx() is invalid, means,
+            // this LRB ( idx ) is the first LRB to be added in EDU LRB list
+            if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+            {
+               dpsTransLRB *pLRB   = _getLRBPtrByIdx( idx ) ;
+               pLRB->eduLrbIdxPrev = UTIL_INVALID_OBJ_INDEX ;
+               pLRB->eduLrbIdxNext = UTIL_INVALID_OBJ_INDEX ;
+            }
+         }
 
          if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
          {
