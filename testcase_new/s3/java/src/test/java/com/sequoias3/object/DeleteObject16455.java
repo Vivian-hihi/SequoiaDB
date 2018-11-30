@@ -1,16 +1,15 @@
 package com.sequoias3.object;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * test content: 非桶管理用户删除对象
@@ -35,10 +34,10 @@ public class DeleteObject16455 extends S3TestBase {
 	@BeforeClass
 	private void setUp() throws Exception {
 		//create user A , user B
-		accessKeysA = RestClient.createUser(userNameA, roleName);
+		accessKeysA = UserUtils.createUser(userNameA, roleName);
 		s3ClientA = CommLib.buildS3Client(accessKeysA[0], accessKeysA[1]);
 		
-		accessKeysB = RestClient.createUser(userNameB, roleName);
+		accessKeysB = UserUtils.createUser(userNameB, roleName);
 		s3ClientB = CommLib.buildS3Client(accessKeysB[0], accessKeysB[1]);
 		
 		// create bucket
@@ -69,8 +68,8 @@ public class DeleteObject16455 extends S3TestBase {
 			if (runSuccess) {
 				CommLib.deleteAllObjectVersions(s3ClientA, bucketName);
 				s3ClientA.deleteBucket(bucketName);
-				RestClient.deleteUser(userNameA);
-				RestClient.deleteUser(userNameB);
+				UserUtils.deleteUser(userNameA);
+				UserUtils.deleteUser(userNameB);
 			}
 		}  finally {
 			if (s3ClientA != null) {

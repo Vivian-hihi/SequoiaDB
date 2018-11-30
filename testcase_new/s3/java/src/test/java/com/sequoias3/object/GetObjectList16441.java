@@ -1,22 +1,21 @@
 package com.sequoias3.object;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * test content: 带指定fetch-owner查询对象元数据列表，显示所有者信息 
@@ -41,7 +40,7 @@ public class GetObjectList16441 extends S3TestBase {
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		accessKeys = RestClient.createUser(userName, "normal");
+		accessKeys = UserUtils.createUser(userName, "normal");
 		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 		//create bucket
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
@@ -79,7 +78,7 @@ public class GetObjectList16441 extends S3TestBase {
 		if (runSuccess) {
 			CommLib.deleteAllObjectVersions(s3Client, bucketName);
 			s3Client.deleteBucket(bucketName);
-			RestClient.deleteUser(userName);
+			UserUtils.deleteUser(userName);
 		}
 	}
 

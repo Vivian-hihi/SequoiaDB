@@ -1,5 +1,18 @@
 package com.sequoias3.object;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -8,19 +21,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Base64.Encoder;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.TestTools;
 
 /**
  * test content: 增加对象，携带md5值
@@ -87,7 +87,7 @@ public class CreateObject16350 extends S3TestBase {
 	
 	private void checkPutObjectResult() throws Exception {		
 		//down file
-		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath,bucketName, keyName);		
+		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath,bucketName, keyName);
         Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));        
 	}
 	

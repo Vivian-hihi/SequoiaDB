@@ -1,24 +1,19 @@
 package com.sequoias3.object;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.*;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ListVersionsRequest;
-import com.amazonaws.services.s3.model.S3VersionSummary;
-import com.amazonaws.services.s3.model.VersionListing;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.TestTools;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * test content: 禁用版本控制，带versionId删除最新版本对象

@@ -96,7 +96,7 @@ public class ListVersionsByKeyVersionId16413 extends S3TestBase {
             }
             key = versionSummary.getKey();
         }
-        Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actObjectNames = " + actKeys + ",keys = " + expKeys);
+        Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actKeys = " + actKeys + ",expKeys = " + expKeys);
     }
 
     private VersionListing listVersions(String bucketName, String keyMarker,String versionIdMarker) {

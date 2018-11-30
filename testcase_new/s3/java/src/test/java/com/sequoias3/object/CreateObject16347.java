@@ -1,16 +1,15 @@
 package com.sequoias3.object;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * test content: 非桶管理用户增加对象
@@ -33,7 +32,7 @@ public class CreateObject16347 extends S3TestBase {
 	@BeforeClass
 	private void setUp() throws Exception {
 		//create user A
-		String[] acessKeys = RestClient.createUser(userNameA, roleName);
+		String[] acessKeys = UserUtils.createUser(userNameA, roleName);
 		s3ClientA = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 		
 		//create bucket
@@ -43,7 +42,7 @@ public class CreateObject16347 extends S3TestBase {
 	@Test
 	public void testPutObject() throws Exception {
 		//create user B
-		String[] acessKeys = RestClient.createUser(userNameB, roleName);
+		String[] acessKeys = UserUtils.createUser(userNameB, roleName);
 		s3ClientB = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 		
 		try{
@@ -65,8 +64,8 @@ public class CreateObject16347 extends S3TestBase {
 		if (runSuccess) {
 			try{
 				s3ClientA.deleteBucket(bucketName);
-				RestClient.deleteUser(userNameA);
-				RestClient.deleteUser(userNameB);
+				UserUtils.deleteUser(userNameA);
+				UserUtils.deleteUser(userNameB);
 			} catch (Exception e) {
 				Assert.fail("clean up failed:" + e.getMessage());
 			}finally{

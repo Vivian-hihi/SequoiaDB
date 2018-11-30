@@ -1,17 +1,13 @@
 package com.sequoias3.object;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
-import java.util.Base64;
-import java.util.TimeZone;
-import java.util.Base64.Encoder;
-import java.util.Date;
-import java.util.Locale;
-
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.RestClient;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -20,13 +16,17 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.TestTools;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.Base64;
+import java.util.Base64.Encoder;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * test content: 开启版本控制，增加对象，指定headers请求参数
