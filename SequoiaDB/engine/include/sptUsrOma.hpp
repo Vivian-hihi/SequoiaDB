@@ -125,7 +125,15 @@ namespace engine
                                   _sptReturnVal &rval,
                                   bson::BSONObj &detail ) ;
 
+      static INT32 getIniConfigs( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  bson::BSONObj &detail ) ;
+
       static INT32 setOmaConfigs( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  bson::BSONObj &detail ) ;
+
+      static INT32 setIniConfigs( const _sptArguments &arg,
                                   _sptReturnVal &rval,
                                   bson::BSONObj &detail ) ;
 

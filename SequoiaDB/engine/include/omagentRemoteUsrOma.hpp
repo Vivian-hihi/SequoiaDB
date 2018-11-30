@@ -132,6 +132,37 @@ namespace engine
          INT32 doit( BSONObj &retObj ) ;
    } ;
 
+   /*
+      _remoteOmaGetIniConfigs define
+   */
+   class _remoteOmaGetIniConfigs : public _remoteExec
+   {
+   DECLARE_OACMD_AUTO_REGISTER()
+   public:
+      _remoteOmaGetIniConfigs() ;
+
+      ~_remoteOmaGetIniConfigs() ;
+
+      const CHAR *name() ;
+
+      INT32 doit( BSONObj &retObj ) ;
+   } ;
+
+   /*
+      _remoteOmaSetIniConfigs define
+   */
+   class _remoteOmaSetIniConfigs : public _remoteExec
+   {
+   DECLARE_OACMD_AUTO_REGISTER()
+   public:
+      _remoteOmaSetIniConfigs() ;
+
+      ~_remoteOmaSetIniConfigs() ;
+
+      const CHAR *name() ;
+
+      INT32 doit( BSONObj &retObj ) ;
+   } ;
 
    /*
       _remoteOmaSetOmaConfigs define

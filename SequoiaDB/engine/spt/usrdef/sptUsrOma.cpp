@@ -73,7 +73,9 @@ namespace engine
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, getOmaInstallFile)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, getOmaConfigFile)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, getOmaConfigs)
+   JS_STATIC_FUNC_DEFINE(_sptUsrOma, getIniConfigs)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, setOmaConfigs)
+   JS_STATIC_FUNC_DEFINE(_sptUsrOma, setIniConfigs)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, getAOmaSvcName)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, addAOmaSvcName)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, delAOmaSvcName)
@@ -100,7 +102,9 @@ namespace engine
       JS_ADD_STATIC_FUNC("getOmaInstallFile", getOmaInstallFile)
       JS_ADD_STATIC_FUNC("getOmaConfigFile", getOmaConfigFile)
       JS_ADD_STATIC_FUNC("getOmaConfigs", getOmaConfigs)
+      JS_ADD_STATIC_FUNC("getIniConfigs", getIniConfigs)
       JS_ADD_STATIC_FUNC("setOmaConfigs", setOmaConfigs)
+      JS_ADD_STATIC_FUNC("setIniConfigs", setIniConfigs)
       JS_ADD_STATIC_FUNC("getAOmaSvcName", getAOmaSvcName)
       JS_ADD_STATIC_FUNC("addAOmaSvcName", addAOmaSvcName)
       JS_ADD_STATIC_FUNC("delAOmaSvcName", delAOmaSvcName)
@@ -840,6 +844,54 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptUsrOma::getIniConfigs( const _sptArguments & arg,
+                                    _sptReturnVal & rval,
+                                    BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+      string confFile ;
+      BSONObj conf ;
+      BSONObjBuilder argBuilder ;
+      string err ;
+
+      rc = arg.getString( 0, confFile ) ;
+      if ( rc )
+      {
+         detail = BSON( SPT_ERR << "confFile must be string" ) ;
+         goto error ;
+      }
+
+      argBuilder.append( "confFile", confFile ) ;
+
+      if ( arg.argc() > 1 )
+      {
+         BSONObj options ;
+
+         rc = arg.getBsonobj( 1, options ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "options must be object" ) ;
+            goto error ;
+         }
+
+         argBuilder.appendElements( options ) ;
+      }
+
+      rc = _sptUsrOmaCommon::getIniConfigs( argBuilder.obj(), conf, err ) ;
+      if ( rc )
+      {
+         detail = BSON( SPT_ERR << err ) ;
+         goto error ;
+      }
+
+      rval.getReturnVal().setValue( conf ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptUsrOma::setOmaConfigs( const _sptArguments & arg,
                                     _sptReturnVal & rval,
                                     BSONObj & detail )
@@ -879,6 +931,64 @@ namespace engine
          detail = BSON( SPT_ERR << err ) ;
          goto error ;
       }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrOma::setIniConfigs( const _sptArguments & arg,
+                                    _sptReturnVal & rval,
+                                    BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+      string confFile ;
+      BSONObj conf ;
+      BSONObjBuilder argBuilder ;
+      string err ;
+
+      rc = arg.getBsonobj( 0, conf ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "obj must be config" ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "obj must be object" ) ;
+         goto error ;
+      }
+
+      rc = arg.getString( 1, confFile ) ;
+      if ( rc )
+      {
+         detail = BSON( SPT_ERR << "confFile must be string" ) ;
+         goto error ;
+      }
+
+      argBuilder.append( "confFile", confFile ) ;
+
+      if ( arg.argc() > 2 )
+      {
+         BSONObj options ;
+
+         rc = arg.getBsonobj( 2, options ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "options must be object" ) ;
+            goto error ;
+         }
+
+         argBuilder.appendElements( options ) ;
+      }
+
+      rc = _sptUsrOmaCommon::setIniConfigs( argBuilder.obj(), conf, err ) ;
+      if ( rc )
+      {
+         detail = BSON( SPT_ERR << err ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:

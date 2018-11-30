@@ -368,6 +368,8 @@ namespace engine
    #define OMA_REMOTE_OMA_GET_OMA_CONFIG_FILE     "oma get oma config file"
    #define OMA_REMOTE_OMA_GET_OMA_CONFIGS         "oma get oma configs"
    #define OMA_REMOTE_OMA_SET_OMA_CONFIGS         "oma set oma configs"
+   #define OMA_REMOTE_OMA_GET_INI_CONFIGS         "oma get ini configs"
+   #define OMA_REMOTE_OMA_SET_INI_CONFIGS         "oma set ini configs"
    #define OMA_REMOTE_OMA_GET_A_OMA_SVC_NAME      "oma get a oma svc name"
    #define OMA_REMOTE_OMA_ADD_A_OMA_SVC_NAME      "oma add a oma svc name"
    #define OMA_REMOTE_OMA_DEL_A_OMA_SVC_NAME      "oma del a oma svc name"

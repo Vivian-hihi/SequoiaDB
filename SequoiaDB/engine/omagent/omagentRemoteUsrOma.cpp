@@ -193,6 +193,80 @@ namespace engine
    }
 
    /*
+      _remoteOmaGetIniConfigs implement
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _remoteOmaGetIniConfigs )
+
+   _remoteOmaGetIniConfigs::_remoteOmaGetIniConfigs()
+   {
+   }
+
+   _remoteOmaGetIniConfigs::~_remoteOmaGetIniConfigs()
+   {
+   }
+
+   const CHAR* _remoteOmaGetIniConfigs::name()
+   {
+      return OMA_REMOTE_OMA_GET_INI_CONFIGS ;
+   }
+
+   INT32 _remoteOmaGetIniConfigs::doit( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      string confFile ;
+      BSONObj conf ;
+      string err ;
+
+      rc = _sptUsrOmaCommon::getIniConfigs( _optionObj, retObj, err ) ;
+      if( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _remoteOmaSetIniConfigs implement
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _remoteOmaSetIniConfigs )
+
+   _remoteOmaSetIniConfigs::_remoteOmaSetIniConfigs()
+   {
+   }
+
+   _remoteOmaSetIniConfigs::~_remoteOmaSetIniConfigs()
+   {
+   }
+
+   const CHAR* _remoteOmaSetIniConfigs::name()
+   {
+      return OMA_REMOTE_OMA_SET_INI_CONFIGS ;
+   }
+
+   INT32 _remoteOmaSetIniConfigs::doit( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      string confFile ;
+      BSONObj conf ;
+      string err ;
+
+      rc = _sptUsrOmaCommon::setIniConfigs( _optionObj, _matchObj, err ) ;
+      if( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
       _remoteOmaSetOmaConfigs implement
    */
    IMPLEMENT_OACMD_AUTO_REGISTER( _remoteOmaSetOmaConfigs )

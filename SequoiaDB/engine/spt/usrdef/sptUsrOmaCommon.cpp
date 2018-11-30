@@ -44,6 +44,257 @@
 using namespace bson ;
 namespace engine
 {
+   #define CHAR_DOUBLE_QUOTE  '"'
+   #define CHAR_SINGLE_QUOTE  '\''
+
+   enum itemType
+   {
+      ITEM_TYPE_STRING = 0,
+      ITEM_TYPE_INT,
+      ITEM_TYPE_LONG,
+      ITEM_TYPE_DOUBLE,
+      ITEM_TYPE_BOOLEAN
+   } ;
+
+   typedef struct _itemInfo  : public SDBObject
+   {
+      itemType    type ;
+      INT32       stringLength ;
+      INT32       varInt ;
+      BOOLEAN     varBool ;
+      INT64       varLong ;
+      FLOAT64     varDouble ;
+      const CHAR *pVarString ;
+   } itemInfo ;
+
+   static INT32 _parseNumber( const CHAR *pBuffer, INT32 size,
+                              itemType &csvType,
+                              INT32 *pVarInt,
+                              INT64 *pVarLong,
+                              FLOAT64 *pVarDouble )
+   {
+      INT32 rc = SDB_OK ;
+      itemType type = ITEM_TYPE_INT ;
+      FLOAT64 n = 0 ;
+      FLOAT64 sign = 1 ;
+      FLOAT64 scale = 0 ;
+      FLOAT64 subscale = 0 ;
+      FLOAT64 signsubscale = 1 ;
+      INT32 n1 = 0 ;
+      INT64 n2 = 0 ;
+
+      if ( 0 == size )
+      {
+         type = ITEM_TYPE_STRING ;
+         goto done ;
+      }
+
+      if ( *pBuffer != '+' && *pBuffer != '-' &&
+           ( *pBuffer < '0' || *pBuffer >'9' ) )
+      {
+         type = ITEM_TYPE_STRING ;
+         goto done ;
+      }
+
+      /* Could use sscanf for this? */
+      /* Has sign? */
+      if ( '-' == *pBuffer )
+      {
+         sign = -1 ;
+         --size ;
+         ++pBuffer ;
+      }
+      else if ( '+' == *pBuffer )
+      {
+         sign = 1 ;
+         --size ;
+         ++pBuffer ;
+      }
+
+      while ( size > 0 && '0' == *pBuffer )
+      {
+         /* is zero */
+         ++pBuffer ;
+         --size ;
+      }
+
+      if ( size > 0 && *pBuffer >= '1' && *pBuffer <= '9' )
+      {
+         do
+         {
+            n  = ( n  * 10.0 ) + ( *pBuffer - '0' ) ;   
+            n1 = ( n1 * 10 )   + ( *pBuffer - '0' ) ;
+            n2 = ( n2 * 10 )   + ( *pBuffer - '0' ) ;
+            --size ;
+            ++pBuffer ;
+            if ( (INT64)n1 != n2 )
+            {
+               type = ITEM_TYPE_LONG ;
+            }
+         }
+         while ( size > 0 && *pBuffer >= '0' && *pBuffer <= '9' ) ;
+      }
+
+      if ( size > 0 && *pBuffer == '.' &&
+           pBuffer[1] >= '0' && pBuffer[1] <= '9' )
+      {
+         type = ITEM_TYPE_DOUBLE ;
+         --size ;
+         ++pBuffer ;
+         while ( size > 0 && *pBuffer >= '0' && *pBuffer <= '9' )
+         {
+            n = ( n ) + ( *pBuffer - '0' ) / pow( 10.0, ++scale ) ;
+            --size ;
+            ++pBuffer ;
+         }
+      }
+      else if( size == 1 && *pBuffer == '.' )
+      {
+         ++pBuffer ;
+         --size ;
+      }
+
+      if ( size > 0 && ( *pBuffer == 'e' || *pBuffer == 'E' ) )
+      {
+         --size ;
+         ++pBuffer ;
+         if ( size > 0 && '+' == *pBuffer )
+         {
+            --size ;
+            ++pBuffer ;
+            signsubscale = 1 ;
+         }
+         else if ( size > 0 && '-' == *pBuffer )
+         {
+            type = ITEM_TYPE_DOUBLE ;
+            --size ;
+            ++pBuffer ;
+            signsubscale = -1 ;
+         }
+         while ( size > 0 && *pBuffer >= '0' && *pBuffer <= '9' )
+         {
+            subscale = ( subscale * 10 ) + ( *pBuffer - '0' ) ;
+            --size ;
+            ++pBuffer ;
+         }
+      }
+
+      if ( size == 0 )
+      {
+         if ( ITEM_TYPE_DOUBLE == type )
+         {
+            n = sign * n * pow ( 10.0, ( subscale * signsubscale * 1.0 ) ) ;
+         }
+         else if ( ITEM_TYPE_LONG == type )
+         {
+            if ( 0 != subscale )
+            {
+               n2 = (INT64)( sign * n2 * pow( 10.0, subscale * 1.00 ) ) ;
+            }
+            else
+            {
+               n2 = ( ( (INT64) sign ) * n2 ) ;
+            }
+         }
+         else if ( ITEM_TYPE_INT == type )
+         {
+             n1 = (INT32)( sign * n1 * pow( 10.0, subscale * 1.00 ) ) ;
+             n2 = (INT64)( sign * n2 * pow( 10.0, subscale * 1.00 ) ) ;
+             if ( (INT64)n1 != n2 )
+             {
+                type = ITEM_TYPE_LONG ;
+             }
+         }
+      }
+      else
+      {
+         type = ITEM_TYPE_STRING ;
+      }
+
+   done:
+      csvType = type ;
+      if ( pVarInt )
+      {
+         (*pVarInt) = n1 ;
+      }
+      if ( pVarLong )
+      {
+         (*pVarLong) = n2 ;
+      }
+      if( pVarDouble )
+      {
+         (*pVarDouble) = n ;
+      }
+      return rc ;
+   }
+
+   static INT32 _parseValue( const CHAR *pStr, INT32 length, itemInfo &value,
+                             BOOLEAN sensitive, BOOLEAN delimiter )
+   {
+      INT32 rc = SDB_OK ;
+
+      //is string "xxxx"
+      if ( CHAR_DOUBLE_QUOTE == *pStr &&
+           CHAR_DOUBLE_QUOTE == *(pStr + length - 1) )
+      {
+         value.type = ITEM_TYPE_STRING ;
+         value.pVarString = pStr + 1 ;
+         value.stringLength = length - 2 ;
+         goto done ;
+      }
+      //is string 'xxxx'
+      else if ( FALSE == delimiter &&
+                CHAR_SINGLE_QUOTE == *pStr &&
+                CHAR_SINGLE_QUOTE == *(pStr + length - 1) )
+      {
+         value.type = ITEM_TYPE_STRING ;
+         value.pVarString = pStr + 1 ;
+         value.stringLength = length - 2 ;
+         goto done ;
+      }
+      //not string  xxxxx
+      else
+      {
+         //is number
+         if ( TRUE == sensitive )
+         {
+            rc =  _parseNumber ( pStr, length,
+                                 value.type,
+                                 &value.varInt,
+                                 &value.varLong,
+                                 &value.varDouble ) ;
+            if( rc )
+            {
+               goto error ;
+            }
+         }
+         else
+         {
+            value.type = ITEM_TYPE_STRING ;
+         }
+
+         if ( ITEM_TYPE_STRING == value.type )
+         {
+            //is bool
+            if ( TRUE == sensitive &&
+                 SDB_OK == ossStrToBoolean( pStr, &value.varBool ) )
+            {
+               value.type = ITEM_TYPE_BOOLEAN ;
+            }
+            else
+            {
+               value.pVarString = pStr ;
+               value.stringLength = length ;
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptUsrOmaCommon::getOmaInstallInfo( BSONObj& retObj, string &err )
    {
       utilInstallInfo info ;
@@ -129,9 +380,70 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptUsrOmaCommon::getIniConfigs( const bson::BSONObj &arg,
+                                          bson::BSONObj &retObj,
+                                          string &err )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN sensitive = FALSE ;
+      BOOLEAN delimiter = TRUE ;
+      string confFile ;
+      BSONObj conf ;
+
+      if( !arg.hasField( "confFile" ) )
+      {
+         err = "confFile must be config" ;
+         goto error ;
+      }
+
+      if( String != arg.getField( "confFile" ).type() )
+      {
+         err = "confFile must be string" ;
+         goto error ;
+      }
+
+      confFile = arg.getStringField( "confFile" ) ;
+
+      if( arg.hasField( "sensitive" ) )
+      {
+         if( Bool != arg.getField( "sensitive" ).type() )
+         {
+            err = "sensitive must be BOOLEAN" ;
+            goto error ;
+         }
+
+         sensitive = arg.getBoolField( "sensitive" ) ;
+      }
+
+      if( arg.hasField( "delimiter" ) )
+      {
+         if( Bool != arg.getField( "delimiter" ).type() )
+         {
+            err = "delimiter must be BOOLEAN" ;
+            goto error ;
+         }
+
+         delimiter = arg.getBoolField( "delimiter" ) ;
+      }
+
+      rc = _getConfInfo( confFile, conf, err, FALSE, FALSE,
+                         sensitive, delimiter ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      retObj = conf ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptUsrOmaCommon::setOmaConfigs( const BSONObj &arg,
-                                         const BSONObj &confObj,
-                                         string &err )
+                                          const BSONObj &confObj,
+                                          string &err )
    {
       INT32 rc = SDB_OK ;
       string confFile ;
@@ -157,6 +469,74 @@ namespace engine
       }
 
       rc = _confObj2Str( confObj, str, err ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      rc = utilWriteConfigFile( confFile.c_str(), str.c_str(), FALSE ) ;
+      if ( rc )
+      {
+         stringstream ss ;
+         ss << "write conf file[" << confFile << "] failed" ;
+         err = ss.str() ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrOmaCommon::setIniConfigs( const bson::BSONObj &arg,
+                                          const bson::BSONObj &confObj,
+                                          string &err )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN sensitive = FALSE ;
+      BOOLEAN delimiter = TRUE ;
+      string confFile ;
+      string str ;
+
+      if( !arg.hasField( "confFile" ) )
+      {
+         err = "confFile must be config" ;
+         goto error ;
+      }
+
+      if( String != arg.getField( "confFile" ).type() )
+      {
+         err = "confFile must be string" ;
+         goto error ;
+      }
+
+      confFile = arg.getStringField( "confFile" ) ;
+
+      if( arg.hasField( "sensitive" ) )
+      {
+         if( Bool != arg.getField( "sensitive" ).type() )
+         {
+            err = "sensitive must be BOOLEAN" ;
+            goto error ;
+         }
+
+         sensitive = arg.getBoolField( "sensitive" ) ;
+      }
+
+      if( arg.hasField( "delimiter" ) )
+      {
+         if( Bool != arg.getField( "delimiter" ).type() )
+         {
+            err = "delimiter must be BOOLEAN" ;
+            goto error ;
+         }
+
+         delimiter = arg.getBoolField( "delimiter" ) ;
+      }
+
+      rc = _confObj2Str( confObj, str, err, NULL,
+                         FALSE, sensitive, delimiter ) ;
       if ( rc )
       {
          goto error ;
@@ -536,13 +916,22 @@ namespace engine
    }
 
    INT32 _sptUsrOmaCommon::_getConfInfo( const string & confFile, BSONObj &conf,
-                                         string &err, BOOLEAN allowNotExist )
+                                         string &err, BOOLEAN allowNotExist,
+                                         BOOLEAN isSdbConfig, BOOLEAN sensitive,
+                                         BOOLEAN delimiter )
    {
       INT32 rc = SDB_OK ;
       po::options_description desc ;
       po ::variables_map vm ;
 
-      MAP_CONFIG_DESC( desc ) ;
+      if ( isSdbConfig )
+      {
+         MAP_CONFIG_DESC( desc ) ;
+      }
+      else
+      {
+         MAP_NORMAL_CONFIG_DESC( desc ) ;
+      }
 
       rc = ossAccess( confFile.c_str() ) ;
       if ( rc )
@@ -586,13 +975,13 @@ namespace engine
          po ::variables_map::iterator it = vm.begin() ;
          while ( it != vm.end() )
          {
-            if ( SDBCM_RESTART_COUNT == it->first ||
-                 SDBCM_RESTART_INTERVAL == it->first ||
-                 SDBCM_DIALOG_LEVEL == it->first )
+            if ( isSdbConfig &&( SDBCM_RESTART_COUNT == it->first ||
+                                 SDBCM_RESTART_INTERVAL == it->first ||
+                                 SDBCM_DIALOG_LEVEL == it->first ) )
             {
                builder.append( it->first, it->second.as<INT32>() ) ;
             }
-            else if ( SDBCM_AUTO_START == it->first )
+            else if ( isSdbConfig && SDBCM_AUTO_START == it->first )
             {
                BOOLEAN autoStart = TRUE ;
                ossStrToBoolean( it->second.as<string>().c_str(), &autoStart ) ;
@@ -600,7 +989,34 @@ namespace engine
             }
             else
             {
-               builder.append( it->first, it->second.as<string>() ) ;
+               string value = it->second.as<string>() ;
+               itemInfo valueData ;
+
+               _parseValue( value.c_str(), value.length(), valueData,
+                            sensitive, delimiter ) ;
+
+               if ( ITEM_TYPE_INT == valueData.type )
+               {
+                  builder.append( it->first, valueData.varInt ) ;
+               }
+               else if ( ITEM_TYPE_LONG == valueData.type )
+               {
+                  builder.append( it->first, valueData.varLong ) ;
+               }
+               else if ( ITEM_TYPE_DOUBLE == valueData.type )
+               {
+                  builder.append( it->first, valueData.varDouble ) ;
+               }
+               else if ( ITEM_TYPE_BOOLEAN == valueData.type )
+               {
+                  builder.appendBool( it->first, valueData.varBool ) ;
+               }
+               else
+               {
+                  builder.appendStrWithNoTerminating( it->first,
+                                                      valueData.pVarString,
+                                                      valueData.stringLength ) ;
+               }
             }
             ++it ;
          }
@@ -613,13 +1029,28 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptUsrOmaCommon::_confObj2Str( const BSONObj &conf, string &str,
+   INT32 _sptUsrOmaCommon::_confObj2Str( const BSONObj &conf,
+                                         string &str,
                                          string &err,
-                                         const CHAR* pExcept )
+                                         const CHAR* pExcept,
+                                         BOOLEAN isSdbConfig,
+                                         BOOLEAN sensitive,
+                                         BOOLEAN delimiter )
    {
       INT32 rc = SDB_OK ;
+      CHAR delimiterChar ;
       stringstream ss ;
       BSONObjIterator it ( conf ) ;
+
+      if ( delimiter )
+      {
+         delimiterChar = CHAR_DOUBLE_QUOTE ;
+      }
+      else
+      {
+         delimiterChar = CHAR_SINGLE_QUOTE ;
+      }
+
       while ( it.more() )
       {
          BSONElement e = it.next() ;
@@ -631,6 +1062,13 @@ namespace engine
          }
 
          ss << e.fieldName() << "=" ;
+
+         if ( ( FALSE == sensitive || e.type() == String ) &&
+              FALSE == isSdbConfig )
+         {
+            ss << delimiterChar ;
+         }
+
          if ( e.type() == String )
          {
             ss << e.valuestr() ;
@@ -659,8 +1097,16 @@ namespace engine
             err = errss.str() ;
             goto error ;
          }
+
+         if ( ( FALSE == sensitive || e.type() == String ) &&
+              FALSE == isSdbConfig )
+         {
+            ss << delimiterChar ;
+         }
+
          ss << endl ;
       }
+
       str = ss.str() ;
 
    done:

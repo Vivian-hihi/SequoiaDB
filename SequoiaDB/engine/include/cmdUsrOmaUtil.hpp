@@ -49,4 +49,11 @@ namespace engine
       ( SDBCM_ENABLE_WATCH, po::value<string>(), "" ) \
       ( "*", po::value<string>(), "" )
 
+   /*
+      define normal config
+   */
+   #define MAP_NORMAL_CONFIG_DESC( desc ) \
+      desc.add_options() \
+      ( "*", po::value<string>(), "" )
+
 }

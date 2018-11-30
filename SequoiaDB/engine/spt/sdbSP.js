@@ -225,6 +225,35 @@ Oma.prototype.getOmaConfigs = function( confFile ) {
    return recvObj ;
 }
 
+Oma.prototype.getIniConfigs = function( confFile, options ) {
+   var recvObj ;
+   var newOptions = options ;
+
+   if ( undefined == newOptions )
+   {
+      newOptions = {} ;
+   }
+
+   newOptions["confFile"] = confFile ;
+
+   recvObj = this._runCommand( "oma get ini configs", newOptions ) ;
+
+   return recvObj ;
+}
+
+Oma.prototype.setIniConfigs = function( configs, confFile, options ) {
+   var newOptions = options ;
+
+   if ( undefined == newOptions )
+   {
+      newOptions = {} ;
+   }
+
+   newOptions["confFile"] = confFile ;
+
+   this._runCommand( "oma set ini configs", newOptions, configs ) ;
+}
+
 Oma.prototype.setOmaConfigs = function( configsObj, confFile, isReload ) {
 
    // check argument

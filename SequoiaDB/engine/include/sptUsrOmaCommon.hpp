@@ -54,7 +54,15 @@ namespace engine
                                   bson::BSONObj &retObj,
                                   string &err ) ;
 
+      static INT32 getIniConfigs( const bson::BSONObj &arg,
+                                  bson::BSONObj &retObj,
+                                  string &err ) ;
+
       static INT32 setOmaConfigs( const bson::BSONObj &arg,
+                                  const bson::BSONObj &confObj,
+                                  string &err ) ;
+
+      static INT32 setIniConfigs( const bson::BSONObj &arg,
                                   const bson::BSONObj &confObj,
                                   string &err ) ;
 
@@ -72,14 +80,46 @@ namespace engine
    private:
       static INT32 _getConfFile( string &confFile ) ;
 
+      /*
+      confFile       [in] : Configuration file path
+      conf           [out]: Output configuration item
+      err            [out]: Description of execution failure
+      allowNotExist  [in] : Whether to allow files to not exist
+      isSdbConfig    [in] : If it is a sdb configuration file,
+                            need to parse the special configuration item.
+      sensitive      [in] : TRUE:  Automatically identify the type of
+                                   configuration item;
+                            FALSE: Configuration item types are
+                                   converted to strings.
+      delimiter      [in] : TRUE:  String only supports double quotes;
+                            FALSE: String supports double quotes and
+                                   single quotes.
+      */
       static INT32  _getConfInfo( const string &confFile,
                                   bson::BSONObj &conf,
                                   string &err,
-                                  BOOLEAN allowNotExist = FALSE ) ;
+                                  BOOLEAN allowNotExist = FALSE,
+                                  BOOLEAN isSdbConfig = TRUE,
+                                  BOOLEAN sensitive = FALSE,
+                                  BOOLEAN delimiter = TRUE ) ;
 
-      static INT32  _confObj2Str( const bson::BSONObj &conf, string &str,
+      /*
+      isSdbConfig    [in] : TRUE:  Force type sensitive and
+                                   not use character separators;
+                            FALSE: Sensitive and delimiter are valid and
+                                   use string separators.
+      sensitive      [in] : TRUE:  Output according to the type of value;
+                            FALSE: Forced value output string.
+      delimiter      [in] : TRUE:  Output string with double quotes;
+                            FALSE: Output string with single quotes.
+      */
+      static INT32  _confObj2Str( const bson::BSONObj &conf,
+                                  string &str,
                                   string &err,
-                                  const CHAR* pExcept = NULL ) ;
+                                  const CHAR* pExcept = NULL,
+                                  BOOLEAN isSdbConfig = TRUE,
+                                  BOOLEAN sensitive = FALSE,
+                                  BOOLEAN delimiter = TRUE ) ;
    } ;
 }
 
