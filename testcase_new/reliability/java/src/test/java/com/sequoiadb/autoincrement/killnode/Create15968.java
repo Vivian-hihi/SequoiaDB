@@ -38,6 +38,7 @@ public class Create15968 extends SdbTestBase {
 	private String clName = "cl_15968";
 	private String fieldName = "id";
 	private GroupMgr groupMgr = null;
+	private List<DBCollection> cls = new ArrayList<DBCollection>();
 	
 	@BeforeClass
     public void setUp() {
@@ -92,7 +93,9 @@ public class Create15968 extends SdbTestBase {
             try {
                 db = new Sequoiadb(coordUrl, "", "");
                 CollectionSpace cs = db.getCollectionSpace(csName);
-                DBCollection cl = cs.createCollection(clName, (BSONObject)JSON.parse("{AutoIncrement:{Field:'" + fieldName + "'}}"));
+                for(int i = 0; i < 50; i++){
+                	cls.add(cs.createCollection(clName+i, (BSONObject)JSON.parse("{AutoIncrement:{Field:'" + fieldName+i + "'}}")));	
+                    }
                 }catch (BaseException e){
                 	e.printStackTrace();
             } finally {
@@ -146,7 +149,11 @@ public class Create15968 extends SdbTestBase {
 	@AfterClass
     public void tearDown(){
 		Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		sdb.getCollectionSpace(csName).dropCollection(clName);
+		for(int i = 0; i < 50; i++){
+			if (sdb.getCollectionSpace(csName).isCollectionExist(clName+i)) {
+				sdb.getCollectionSpace(csName).dropCollection(clName+i);
+	        }
+		}
 		sdb.close();
 	}
 	

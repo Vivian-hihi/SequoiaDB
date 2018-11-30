@@ -19,6 +19,8 @@ import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
@@ -37,6 +39,7 @@ public class Create15969 extends SdbTestBase {
 	private String clName = "cl_15969";
 	private String fieldName = "id";
 	private GroupMgr groupMgr = null;
+	private List<DBCollection> cls = new ArrayList<DBCollection>();
 	
 	@BeforeClass
     public void setUp() {
@@ -94,8 +97,11 @@ public class Create15969 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).createCollection(clName, (BSONObject)JSON.parse("{AutoIncrement:{Field:'" + fieldName + "'}}"));
-                }catch (BaseException e){
+                CollectionSpace cs = db.getCollectionSpace(csName);
+                for(int i = 0; i < 50; i++){
+                	cls.add(cs.createCollection(clName+i, (BSONObject)JSON.parse("{AutoIncrement:{Field:'" + fieldName+i + "'}}")));	
+                    }    
+            }catch (BaseException e){
                 	e.printStackTrace();
             } finally {
                 if (db != null) {
@@ -148,9 +154,11 @@ public class Create15969 extends SdbTestBase {
 	@AfterClass
     public void tearDown(){
 		Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		if (sdb.getCollectionSpace(csName).isCollectionExist(clName)) {
-			sdb.getCollectionSpace(csName).dropCollection(clName);
-        }
+		for(int i = 0; i < 50; i++){
+			if (sdb.getCollectionSpace(csName).isCollectionExist(clName+i)) {
+				sdb.getCollectionSpace(csName).dropCollection(clName+i);
+	        }
+		}
 		sdb.close();
 	}
 }
