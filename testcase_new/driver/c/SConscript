@@ -126,7 +126,11 @@ testFiles = [
    [ "./alter/altercl_15174.cpp" ],
    [ "./datatype/timestamptest_15861.cpp"],
    [ "./paraVerify/snapshotTest15759.cpp"],
-   [ "./lob/lobIsEof15672.cpp"]
+   [ "./lob/lobIsEof15672.cpp"],
+   [ "./meta/renameCL16569.cpp"],
+   [ "./meta/renameCLFail16570_16571.cpp"],
+   [ "./meta/renameCS16565.cpp"],
+   [ "./meta/renameCSFail16566_16567.cpp"]
 ]
 
 def getFileName( filePath ):
