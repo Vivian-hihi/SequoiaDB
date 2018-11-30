@@ -1861,10 +1861,8 @@ namespace engine
    //           . wake up a waiter when necessary
    //           . release the upper level intent lock
    // Input:
-   //    eduId   -- edu Id
-   //    lockId  -- lock id
-   //    hdrIdx  -- LRB Header index ( optional )
-   //    pLRBHdr -- LRB Header pointer ( optional )
+   //    dpsTxExectr -- pointer to _dpsTransExecutor 
+   //    lockId      -- lock id
    //
    void dpsTransLockManager::_releaseAll
    (
@@ -1901,9 +1899,7 @@ namespace engine
    //           . wake up a waiter when necessary,
    //           . release the upper level intent lock
    // Input:
-   //    eduId           -- edu Id
-   //    lockId          -- lock id
-   //    bForceRelease   -- requested lock mode
+   //    dpsTxExectr     -- pointer to _dpsTransExecutor 
    //
    void dpsTransLockManager::releaseAll( _dpsTransExecutor *dpsTxExectr )
    {
