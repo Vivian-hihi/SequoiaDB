@@ -138,14 +138,15 @@ static void _hashToKey( CHAR *cipherString, UINT32 cipherStringSize,
                                desiredLength : SHA256_DIGEST_LENGTH ) ;
 }
 
-void _byteToHex( const CHAR* in, INT32 len, CHAR *out )
+void _byteToHex( const CHAR* in, UINT32 len, CHAR *out )
 {
     static const char hexchars[] = "0123456789ABCDEF" ;
+    UINT32 i = 0;
 
     SDB_ASSERT( NULL != in, "clearText can't be NULL" ) ;
     SDB_ASSERT( NULL != out, "cipherText can't be NULL" ) ;
 
-    for ( INT32 i = 0; i < len; ++i )
+    for ( i = 0; i < len; ++i )
     {
         CHAR c = in[i] ;
         CHAR high = hexchars[( c & 0xF0 ) >> 4] ;
@@ -218,9 +219,11 @@ static INT32 _randBetween( INT32 begin, INT32 end )
 
 void cipherGenerateRandomArray( CHAR* array, UINT32 arrayLen )
 {
+   UINT32 i = 0 ;
+
    SDB_ASSERT( NULL != array, "array can't be NULL" ) ;
 
-   for ( UINT32 i = 0; i < arrayLen; i++ )
+   for ( i = 0; i < arrayLen; i++ )
    {
      array[i] = ( CHAR )_randBetween( 1, UINT8_MAX_NUMBER ) ;
    }
@@ -391,6 +394,7 @@ INT32 cipherEncrypt( const CHAR *clearText, const CHAR *token,
    DES_cblock            outputText ;
    CHAR                  *result ;
    UINT32                resultSize = 0 ;
+   UINT32                i = 0 ;
 
    SDB_ASSERT( NULL != clearText, "clearText can't be NULL" ) ;
    SDB_ASSERT( NULL != cipherText, "cipherText can't be NULL" ) ;
@@ -424,7 +428,7 @@ INT32 cipherEncrypt( const CHAR *clearText, const CHAR *token,
    }
    ossMemset( result, 0, clearTextSize + RANDOM_ARRAY_MAX_LENGTH * 2 ) ;
 
-   for ( UINT32 i = 0; i < clearTextSize / BYTES_PER_TIME; i++ )  
+   for ( i = 0; i < clearTextSize / BYTES_PER_TIME; i++ )
    {  
       ossMemcpy( inputText, clearText + i * BYTES_PER_TIME, BYTES_PER_TIME ) ;  
       DES_ecb_encrypt( &inputText, &outputText, &keySchedule, DES_ENCRYPT ) ;  
