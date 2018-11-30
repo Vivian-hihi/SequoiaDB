@@ -1,9 +1,5 @@
 package com.sequoias3.testcommon;
 
-import java.util.Iterator;
-import java.util.List;
-
-
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
@@ -11,15 +7,14 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
-import com.amazonaws.services.s3.model.ListObjectsV2Request;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
-import com.amazonaws.services.s3.model.ListVersionsRequest;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.services.s3.model.S3VersionSummary;
-import com.amazonaws.services.s3.model.SetBucketVersioningConfigurationRequest;
-import com.amazonaws.services.s3.model.VersionListing;
+import com.amazonaws.services.s3.model.*;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
+import org.testng.Assert;
+
+import java.util.Iterator;
+import java.util.List;
 
 public class CommLib {
 	private static String AWS_ACCESS_KEY = "ABCDEFGHIJKLMNOPQRST";
@@ -39,7 +34,7 @@ public class CommLib {
 		AmazonS3 s3Client = null;
 		AWSCredentials credentials = new BasicAWSCredentials(ACCESS_KEY,SECRET_KEY);
 		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
-				S3TestBase.s3ClientUrl, clientRegion);
+				S3TestBase.s3ClientUrl + "/s3", clientRegion);
 		ClientConfiguration config = new ClientConfiguration();
 		config.setUseExpectContinue(false);
 		s3Client = AmazonS3ClientBuilder.standard()
@@ -54,7 +49,7 @@ public class CommLib {
 		AmazonS3 s3Client = null;
 		AWSCredentials credentials = new BasicAWSCredentials(AWS_ACCESS_KEY,AWS_SECRET_KEY);
 		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
-				S3TestBase.s3ClientUrl, clientRegion);
+				S3TestBase.s3ClientUrl + "/s3", clientRegion);
 		BucketVersioningConfiguration configuration =
 				new BucketVersioningConfiguration().withStatus("Enabled");
 		s3Client = AmazonS3ClientBuilder.standard()
@@ -157,5 +152,14 @@ public class CommLib {
 			}
 		}
 	}
-	
+
+	public static void clearUser(String userName) {
+		try {
+			UserUtils.deleteUser(userName);
+		} catch (HttpClientErrorException e) {
+			if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
+				Assert.fail(e.getMessage());
+			}
+		}
+	}
 }

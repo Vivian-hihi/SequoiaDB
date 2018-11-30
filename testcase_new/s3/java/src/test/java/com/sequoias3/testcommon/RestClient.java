@@ -1,20 +1,12 @@
 package com.sequoias3.testcommon;
 
-import java.net.URLDecoder;
-import java.util.List;
-
-
-
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
@@ -26,6 +18,9 @@ import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.URLDecoder;
+import java.util.List;
 
 public final class RestClient {   
 
@@ -211,71 +206,8 @@ public final class RestClient {
         		.setDefaultRequestConfig(reqConf)
                 .build();
         return client;
-    } 
-    
-    
-    /**
-	 * create user
-	 * @param userName,role	
-	 * @return accessKeyID, secretAccessKey
-	 */
-    public static String[] createUser(String userName, String role) throws Exception{
-		HttpPost request = new HttpPost(S3TestBase.s3ClientUrl + "/users/" 
-					+ userName + "?role=" + role);		
-        request.setHeader("Authorization", "Credential=ABCDEFGHIJKLMNOPQRST"); 
-        client = createHttpClient();
-        CloseableHttpResponse resp = RestClient.sendRequest(client, request);
-        String respStr = EntityUtils.toString(resp.getEntity(), "utf-8");
-//        System.out.println("----createuserrespstr="+respStr);
-//        org.json.JSONObject json = XML.toJSONObject(respStr); 
-//        
-//        System.out.println("---json="+ json.toString());        
-        String accessKeyID = getTotalMidValue( respStr, "<AccessKeyID>", "</AccessKeyID>");
-        String secretAccessKey = getTotalMidValue( respStr, "<SecretAccessKey>", "</SecretAccessKey>");
-        String[] accessKeys = { accessKeyID, secretAccessKey};
-        return accessKeys;
-    }   
-    
-    /**
-   	 * intercept string
-   	 * @param source
-   	 * @param startStr
-   	 * @param endStr	
-   	 * @return accessKeyID, secretAccessKey
-   	 */
-    public static String getTotalMidValue( String source,String startStr, String endStr){
-    	if( source == null )
-    		return null;
-    	int iFirst = source.indexOf(startStr);
-    	int iLast  = source.indexOf(endStr);
-    	if( iFirst < 0 || iLast < 0)
-    		return null;
-    	int beginIndex = iFirst + startStr.length();
-    	return source.substring(beginIndex,iLast);
     }
-    
-    /**
-	 * delete user
-	 * @param userName
-	 */
-    public static void deleteUser(String userName) throws Exception{
-        HttpDelete request  = new HttpDelete(S3TestBase.s3ClientUrl + "/users/" + userName);
-        request.setHeader("Authorization", "Credential=ABCDEFGHIJKLMNOPQRST"); 
-        client = createHttpClient();
-        CloseableHttpResponse resp = RestClient.sendRequest(client, request);
-        EntityUtils.toString(resp.getEntity(), "utf-8");
-        
-    }
-    
-    public static void getUser(String userName) throws Exception{
-        HttpGet request = new HttpGet(S3TestBase.s3ClientUrl + "/users/" + userName);
-        request.setHeader("Authorization", "Credential=ABCDEFGHIJKLMNOPQRST");
-        client = createHttpClient();
-        CloseableHttpResponse resp = RestClient.sendRequest(client, request);
-        String respStr = EntityUtils.toString(resp.getEntity(), "utf-8");
-        System.out.println("----getuser="+respStr);       
-    }
-    
+
     public static void createBucket() throws Exception{
         HttpPut request = new HttpPut(S3TestBase.s3ClientUrl + "/testbucket_.1001");
         request.setHeader("Authorization", "Credential=ABCDEFGHIJKLMNOPQRST");
@@ -284,7 +216,4 @@ public final class RestClient {
         String respStr = EntityUtils.toString(resp.getEntity(), "utf-8");
         System.out.println("----getuser="+respStr);       
     }
-
-
-	
 }
