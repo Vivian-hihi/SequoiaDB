@@ -6,7 +6,6 @@ import java.util.List;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.elasticsearch.client.Client;
-import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -63,7 +62,7 @@ public class SplitAndInsert12020 extends SdbTestBase {
 		FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, fullTextIndexName, insertNum);
 		
 		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, fullTextIndexName);
-		FullTextDBUtils.dropCollection(cs, clName);
+		FullTextDBUtils.dropFullTextIndex(cl, fullTextIndexName);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 	}
 	

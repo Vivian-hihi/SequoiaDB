@@ -63,7 +63,7 @@ public class SplitAndInsert12021 extends SdbTestBase {
 		FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, fullTextIndexName, insertNum);
 		
 		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, fullTextIndexName);
-		FullTextDBUtils.dropCollection(cs, clName);
+		FullTextDBUtils.dropFullTextIndex(cl, fullTextIndexName);
 		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 	}
 	
