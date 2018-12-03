@@ -317,8 +317,8 @@ BOOLEAN _dpsMetaFilter::match( const dpsCmdData *data, CHAR *pRecord )
 INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
                               const CHAR *logFilePath )
 {
-   UINT64 len           = 0
-   INT32 rc             = SDB_OK ;;
+   UINT64 len           = 0 ;
+   INT32 rc             = SDB_OK ;
    UINT64 outBufferSize = BLOCK_SIZE ;
    CHAR *pOutBuffer     = NULL ;
    BOOLEAN start        = FALSE ;
