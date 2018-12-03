@@ -1,4 +1,5 @@
 #!/bin/bash
+BashPath=$(dirname $(readlink -f $0))
 
 function Usage()
 {
@@ -16,13 +17,52 @@ function Usage()
     echo  "  list                      list all sequoias3 process and listening port"
 }
 
+function Large()
+{
+#new > old return 2
+#new < old return 1
+#new = old return 0
+  new=$1
+  old=$2
+
+  if [ -z $old ]; then
+    return 2
+  else
+    newversion=${new##*sequoia-s3-}
+    oldversion=${old##*sequoia-s3-}
+
+    newar=(${newversion//./ })
+    oldar=(${oldversion//./ })
+    if [ ${newar[0]} -gt ${oldar[0]} ]; then
+      return 2
+    elif [ ${newar[0]} -lt ${oldar[0]} ]; then
+      return 1
+    else
+      if [ ${newar[1]} -gt ${oldar[1]} ]; then
+        return 2
+      elif [ ${newar[1]} -lt ${oldar[1]} ]; then
+        return 1
+      else
+        if [ ${newar[2]} -gt ${oldar[2]} ]; then
+          return 2
+        elif [ ${newar[2]} -lt ${oldar[2]} ]; then
+          return 1
+        else
+          return 0
+        fi
+      fi
+    fi
+  fi
+}
+
 function Start()
 {
   package=""
-  for file in `ls`
+  for file in `ls $BashPath`
   do
     if [[ $file = sequoia-s3-*.jar ]]; then
-      if [[ $file > $package ]]; then
+      Large "$file" "$package"
+      if [ $? -eq 2 ]; then
         package=$file
       fi
     fi
@@ -36,14 +76,14 @@ function Start()
 
   port=$1
 
-  confpath=`pwd`"/conf"
+  packagepath="$BashPath/$package"
+  confpath=$BashPath"/conf"
   if [ -n "$2" ];then
     confpath=$2
   fi
   configfile=$confpath"/application.properties"
   logback=$confpath"/logback.xml"
-  logpath="../log"
-
+ 
   if [ "$port" != "" ]; then
     if [ $port -lt 0  -o  $port -gt 65535 ]; then
       echo -e "\033[31mthe port $port out of range:0-65535\033[0m"
@@ -54,13 +94,13 @@ function Start()
       echo -e "\033[31mthe port $port already be used\033[0m"                                                                                   
       exit 1                                                                                                                          
     fi
-    nohup java -jar $package --server.port=$port --spring.config.location=$configfile --logging.config=$logback &
+    nohup java -jar $packagepath --server.port=$port --spring.config.location=$configfile --logging.config=$logback 1>/dev/null 2>&1 &
   else
-    nohup java -jar $package --spring.config.location=$configfile --logging.config=$logback &
+    nohup java -jar $packagepath --spring.config.location=$configfile --logging.config=$logback 1>/dev/null 2>&1 &
   fi
 
   pid=$(jobs -l|awk '{print $2}')
-  echo "pid:"$pid
+#  echo "pid:"$pid
 
   sleep 5 
 
@@ -75,7 +115,7 @@ function Start()
     if [ "$listenpid" != "" ]; then
       if [ -n "$(lsof -p $pid |grep LISTEN )" ]; then
         listenport=$(lsof -p $pid |grep LISTEN | awk '{print $9}'|awk -F":" '{print $2}')
-        echo "start process:"$pid" port:"$listenport
+        echo "sequoias3($listenport) is started. pid: $pid"
         break
       else
         sleep 1
@@ -119,11 +159,10 @@ function Stop()
 
   if [ -n "$killall" ]; then
     pidlist=$(ps -ef|grep $prefix | grep -v grep | awk '{print $2}')
- #   while read pid
     for pid in $pidlist
     do
       kill $pid
-      echo "stop pid:$pid"
+      echo "Terminating process: $pid"
     done
     exit 0
   fi
@@ -139,7 +178,7 @@ function Stop()
     for pid in $pidlist
     do  
       if [ "$pid" == "$portpid" ]; then
-          echo "stop process:$pid port:$port"
+          echo "Terminating process $pid: sequoias3($port)"
           kill $pid
           exit 0
       fi
@@ -156,11 +195,16 @@ function List()
 
   pidlist=$( ps -ef|grep $prefix | grep -v grep | awk '{print $2}' )  
   #echo $pidlist
-  echo -e "PID \t Port"
+  echo -e "Name\t\t PID\t Port\t Version\t ConfPath"
   for pid in $pidlist
   do
+    pidinfo=$(ps -ef|grep $pid|grep $prefix|grep -v grep)
+    confinfo=${pidinfo##*--spring.config.location=}
+    conf=(${confinfo// / })
+    versioninfo=${pidinfo##*sequoia-s3-}
+    version=${versioninfo%.jar*}
     port=$(lsof -p $pid | grep LISTEN | awk '{print $9}' | awk -F":" '{print $2}')
-    echo -e "$pid \t $port"
+    echo -e "sequoias3\t $pid\t $port\t $version\t\t ${conf[0]}"
   done
 }
 
