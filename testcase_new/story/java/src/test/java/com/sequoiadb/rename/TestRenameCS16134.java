@@ -56,13 +56,17 @@ public class TestRenameCS16134 extends SdbTestBase{
             RenameUtil.checkRenameCSResult(sdb, csName1, newCSName, 1);
             Assert.assertTrue(sdb.isCollectionSpaceExist(csName2));
             BaseException e = (BaseException)renameCS2Thread.getExceptions().get(0);
-            Assert.assertEquals(-33, e.getErrorCode(),"renameCS2Thread failed : "+e.getMessage());
+            if(e.getErrorCode() != -33 && e.getErrorCode() !=-147 ) {
+                Assert.fail("renameCS2Thread failed : "+e.getMessage());
+            }
         } else if (!renameCS1Thread.isSuccess() && renameCS2Thread.isSuccess()){
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             RenameUtil.checkRenameCSResult(sdb, csName2, newCSName, 1);
             Assert.assertTrue(sdb.isCollectionSpaceExist(csName1));
             BaseException e = (BaseException)renameCS1Thread.getExceptions().get(0);
-            Assert.assertEquals(-33, e.getErrorCode(),"renameCS1Thread failed : "+e.getMessage());
+            if(e.getErrorCode() != -33 && e.getErrorCode() !=-147 ) {
+                Assert.fail("renameCS1Thread failed : "+e.getMessage());
+            }
         } else if (!renameCS1Thread.isSuccess() && !renameCS2Thread.isSuccess()){
             Assert.fail("renameCS1Thread and renameCS2Thread all failed :" + renameCS1Thread.getErrorMsg() + renameCS2Thread.getErrorMsg());
         } else {

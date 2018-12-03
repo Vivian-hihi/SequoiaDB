@@ -50,11 +50,7 @@ public class TestRenameCS16133 extends SdbTestBase{
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");//驱动端存在缓存  因此修改cs需要重新new  db
             RenameUtil.checkRenameCSResult(sdb, csName, newCSName, 0);
             BaseException e = (BaseException)createClThread.getExceptions().get(0);
-            if (clExist) {
-                Assert.assertEquals(e.getErrorCode(), -23,"clThread failed : "+e.getMessage());
-            } else {
-                Assert.assertEquals(e.getErrorCode(), -34,"clThread failed : "+e.getMessage());
-            }
+            Assert.assertEquals(e.getErrorCode(), -34,"clThread failed : "+e.getMessage()); 
         } else if (!renameCSThread.isSuccess() && createClThread.isSuccess()){
             if (clExist) {
                 Assert.assertTrue(cs.isCollectionExist(clName));
