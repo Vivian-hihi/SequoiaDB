@@ -260,6 +260,8 @@ function main()
          installGroupName   = BUS_JSON[InstallGroupName] ;
          installPath        = BUS_JSON[InstallPath] ;
          installConfig      = BUS_JSON[InstallConfig] ;
+
+         delete installConfig[InstallPath] ;
       }
       catch( e )
       {

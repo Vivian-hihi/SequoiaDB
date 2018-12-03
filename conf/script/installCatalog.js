@@ -286,6 +286,8 @@ function main()
          installSvcName    = BUS_JSON[InstallSvcName] ;
          installPath       = BUS_JSON[InstallPath] ;
          installConfig     = BUS_JSON[InstallConfig] ;
+
+         delete installConfig[InstallPath] ;
       }
       catch( e )
       {
