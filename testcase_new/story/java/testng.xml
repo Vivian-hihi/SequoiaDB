@@ -3,6 +3,7 @@
 <!--testcase for function test, which can be excuted concurrently-->
 
 <suite name="driver" verbose="1" parallel="classes" thread-count="5">  
+
    <parameter name="HOSTNAME"       value="${HOSTNAME}" />
    <parameter name="SVCNAME"        value="${SVCNAME}" />
    <parameter name="CHANGEDPREFIX" value="story_java_test" />
@@ -33,7 +34,7 @@
          <package name="com.sequoiadb.autoIncrement"/>
          <package name="com.sequoiadb.subcl"/>
          <package name="com.sequoiadb.split"/>
-         <package name="com.sequoiadb.rename"/>
+         <!-- <package name="com.sequoiadb.rename"/> -->
       </packages>      
    </test>
    
