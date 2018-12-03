@@ -3842,7 +3842,8 @@ namespace engine
             // ignore case for backward compatibility
             if ( 0 == ossStrcasecmp( elem.fieldName(), FIELD_NAME_MODE ) )
             {
-               if ( elem.String() == VALUE_NAME_LOCAL )
+               if ( 0 == ossStrcmp( elem.valuestr(), 
+                                    VALUE_NAME_LOCAL ) )
                {
                   _isLocalMode = TRUE ;
                }
