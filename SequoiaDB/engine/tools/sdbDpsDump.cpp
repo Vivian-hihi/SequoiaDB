@@ -317,8 +317,8 @@ BOOLEAN _dpsMetaFilter::match( const dpsCmdData *data, CHAR *pRecord )
 INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
                               const CHAR *logFilePath )
 {
-   INT32 rc             = SDB_OK ;
-   UINT64 len           = 0 ;
+   UINT64 len           = 0
+   INT32 rc             = SDB_OK ;;
    UINT64 outBufferSize = BLOCK_SIZE ;
    CHAR *pOutBuffer     = NULL ;
    BOOLEAN start        = FALSE ;
@@ -497,7 +497,8 @@ error:
 _dpsDumper::_dpsDumper()
 : _metaContent( NULL ),
   _metaContentSize( 0 ),
-  _filter( NULL )
+  _filter( NULL ),
+  _fileNum( 0 )
 {
 
 }
@@ -697,7 +698,7 @@ INT32 _dpsDumper::_changeFileName()
    static UINT32 fileId = 0;
    UINT32 len = 0;
    ossMemset( dstPath + dstPathLen, 0, OSS_MAX_PATHSIZE - dstPathLen + 1 ) ;
-   len = ossSnprintf( dstPath + dstPathLen, 
+   len = ossSnprintf( dstPath + dstPathLen,
                       OSS_MAX_PATHSIZE - dstPathLen + 1,
                       ".%d", fileId++ ) ;
    if ( dstPathLen + len >= OSS_MAX_PATHSIZE)
@@ -736,18 +737,18 @@ INT32 _dpsDumper::dump()
                 dstPath, rc ) ;
       goto error ;
    }
-   
+
    dstPathLen = ossStrlen(dstPath);
    if( _isDir )
    {
       if ( OSS_FILE_SEP_CHAR == dstPath[ dstPathLen - 1 ] )
       {
-         (void)ossStrncpy( dstPath + dstPathLen, "tmpLog.log", 
+         (void)ossStrncpy( dstPath + dstPathLen, "tmpLog.log",
                         OSS_MAX_PATHSIZE + 1 - dstPathLen);
       }
       else
       {
-         (void)ossStrncpy( dstPath + dstPathLen, OSS_FILE_SEP"tmpLog.log", 
+         (void)ossStrncpy( dstPath + dstPathLen, OSS_FILE_SEP"tmpLog.log",
                         OSS_MAX_PATHSIZE + 1 - dstPathLen);
       }
       dstPathLen = ossStrlen(dstPath);
@@ -758,7 +759,7 @@ INT32 _dpsDumper::dump()
    {
       goto error ;
    }
-   
+
    if( !consolePrint )
    {
       rc = ossOpen( dstPath, OSS_REPLACE | OSS_READWRITE,
@@ -1194,6 +1195,7 @@ INT32 _dpsDumper::_metaFilte( const CHAR *filename, INT32 index,
    meta.logID     = logHeader->_logID ;
    meta.firstLSN  = logHeader->_firstLSN.offset ;
    meta.lastLSN   = logHeader->_firstLSN.offset ;
+   _fileNum       = logHeader->_fileNum;
 
    if( DPS_LOG_INVALID_LSN != logHeader->_firstLSN.offset )
    {
@@ -1273,7 +1275,7 @@ INT64 _dpsDumper::_dumpMeta( const dpsMetaData& meta,
    UINT32 fileIndex = 0;
    UINT32 lastIndex = 0;
    UINT32 lastFileId = 0;
-   
+
    len += ossSnprintf( pBuffer + len, bufferSize - len,
                        "======================================="OSS_NEWLINE
                        ) ;
@@ -1319,15 +1321,14 @@ INT64 _dpsDumper::_dumpMeta( const dpsMetaData& meta,
       }
       else
       {
-         UINT32 lostFileNum = fMeta.logID - meta.metaList[lastIndex].logID - 1 ;
-         UINT32 totalN = lastFileId - fMeta.index + lostFileNum + 1;
+         UINT32 lostFileNum = fMeta.index + _fileNum - lastFileId -1;
 
-         for ( UINT32 i = 0; i < lostFileNum; i++ )
+         for ( UINT32 j = 0; j < lostFileNum; j++ )
          {
             len += ossSnprintf( pBuffer + len, bufferSize - len,
                                 OSS_NEWLINE"ERROR: Log File Name "
                                 "(sequoiadbLog.%d) is Missing"OSS_NEWLINE,
-                                ++lastFileId % totalN ) ;
+                                lastFileId + 1 + j) ;
          }
       }
 
@@ -1354,7 +1355,7 @@ INT64 _dpsDumper::_dumpMeta( const dpsMetaData& meta,
       lastFileId = fMeta.index;
       ++fileIndex;
       fileIndex = fileIndex % meta.metaList.size();
-          
+
    }
 
    return len ;
@@ -1563,7 +1564,7 @@ INT32 _dpsDumper::_writeTo( OSSFILE &file,
 {
    const static UINT32 FILE_MAX_SIZE = 500 * 1024 * 1024;
    static UINT32 curFileSize = 0;
-   
+
    INT32 rc        = SDB_OK ;
 
    ///< write buffer
@@ -1582,8 +1583,8 @@ INT32 _dpsDumper::_writeTo( OSSFILE &file,
       {
          return rc;
       }
-      
-      rc = ossOpen ( dstPath, OSS_REPLACE | OSS_WRITEONLY, 
+
+      rc = ossOpen ( dstPath, OSS_REPLACE | OSS_WRITEONLY,
                   OSS_RU|OSS_WU|OSS_RG, file ) ;
       if ( rc )
       {
@@ -1613,7 +1614,7 @@ INT32 _dpsDumper::_writeTo( OSSFILE &file,
       }
       curFileSize += 1;
    }
-   
+
 done:
    return rc ;
 error:

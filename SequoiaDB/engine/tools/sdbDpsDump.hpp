@@ -361,6 +361,7 @@ private:
    UINT64   _metaContentSize ;
    dpsDumpFilter *_filter ;
    dpsMetaData _meta ;
+   UINT32 _fileNum;
 };
 typedef _dpsDumper dpsDumper ;
 
