@@ -802,6 +802,8 @@
              windows-callback   可选    {}  弹窗接口
    */
    sacApp.directive( 'ngWindows', function( $animate, $compile, $timeout, SdbFunction, Tip ){
+      //保证只有一个弹窗
+      var IsOpen = false ;
       var dire = {
          restrict: 'A',
          replace: false,
@@ -919,10 +921,10 @@
                               $animate.enter( clone, bodyEle, null ) ;
                               bodyEle = null ;
                            } ) ;
+                           $( modal ).detach() ;
+                           $( document.body ).append( modal ) ;
+                           scope.Setting.Modal = modal ;
                         }
-                        $( modal ).detach() ;
-                        $( document.body ).append( modal ) ;
-                        scope.Setting.Modal = modal ;
                      } ) ;
                   }
 
@@ -979,12 +981,14 @@
 
                   //打开窗口
                   scope.openWindows = function(){
-                     $( element ).height( 0 ) ; //为了Ie7兼容
-                     if( scope.Setting.isShow == false )
+                     if( scope.Setting.isShow || IsOpen )
                      {
-                        $( document.body ).append( scope.Setting.Mask ) ;
+                        return ;
                      }
+                     $( element ).height( 0 ) ; //为了Ie7兼容
+                     $( document.body ).append( scope.Setting.Mask ) ;
                      scope.Setting.isShow = true ;
+                     IsOpen = true ;
                      createBody() ;
                   }
 
@@ -999,6 +1003,7 @@
                         scope.Setting.Modal = null ;
                      }
                      scope.Setting.isShow = false ;
+                     IsOpen = false ;
                      $( scope.Setting.Mask ).detach() ;
                   }
 
@@ -1987,6 +1992,42 @@
                                        getValue()                    //获取输入值
    */
    sacApp.directive( 'formCreate', function( $rootScope, SdbFunction ){
+      var text = {
+         'string': {
+            min: $rootScope.autoLanguage( '?长度不能小于?。' ),
+            max: $rootScope.autoLanguage( '?长度不能大于?。' ),
+            regex: $rootScope.autoLanguage( '?格式错误。' ),
+            ban: $rootScope.autoLanguage( '?不能有?字符。' )
+         },
+         'int': {
+            min: $rootScope.autoLanguage( '?的值不能小于?。' ),
+            max: $rootScope.autoLanguage( '?的值不能大于?。' ),
+            ban: $rootScope.autoLanguage( '?的值不能取?。' ),
+            step: $rootScope.autoLanguage( '?的值必须是?的倍数。' ),
+            format: $rootScope.autoLanguage( '?的值必须是整数。' )
+         },
+         'double': {
+            min: $rootScope.autoLanguage( '?的值不能小于?。' ),
+            max: $rootScope.autoLanguage( '?的值不能大于?。' ),
+            ban: $rootScope.autoLanguage( '?的值不能取?。' ),
+            step: $rootScope.autoLanguage( '?的值必须是?的倍数。' ),
+            format: $rootScope.autoLanguage( '?的值必须是数字。' )
+         },
+         'port':{
+            min: $rootScope.autoLanguage( '?不能小于?。' ),
+            max: $rootScope.autoLanguage( '?不能大于?。' ),
+            empty: $rootScope.autoLanguage( '?不能为空。' ),
+            format: $rootScope.autoLanguage( '?格式错误。' )
+         },
+         'multiple': {
+            min: $rootScope.autoLanguage( '?至少选择?个。' ),
+            max: $rootScope.autoLanguage( '?不能多于?个。' ),
+            empty: $rootScope.autoLanguage( '?不能为空。' ),
+            candidate: $rootScope.autoLanguage( '待选列表' ),
+            select: $rootScope.autoLanguage( '选中列表' )
+         },
+         'list': $rootScope.autoLanguage( '?参数错误。' )
+      } ;
       var dire = {
          restrict: 'A',
          scope: {
@@ -1995,6 +2036,7 @@
          templateUrl: './app/template/Component/Form.html',
          replace: false,
          controller: function( $scope, $element ){
+
             var init = function(){
                if( typeof( $scope.data ) == 'object' )
                {
@@ -2028,438 +2070,13 @@
                         }
                      }
                   } ) ;
-                  $scope.browserInfo = SdbFunction.getBrowserInfo() ;
-                  $scope.Setting = {
-                     Type: $scope.data.type,
-                     Grid: $scope.data.grid,
-                     Table: $scope.data.table,
-                     KeyWidth: $scope.data.keyWidth ? $scope.data.keyWidth : '130px',
-                     Text: {
-                        'string': {
-                           min: $rootScope.autoLanguage( '?长度不能小于?。' ),
-                           max: $rootScope.autoLanguage( '?长度不能大于?。' ),
-                           regex: $rootScope.autoLanguage( '?格式错误。' ),
-                           ban: $rootScope.autoLanguage( '?不能有?字符。' )
-                        },
-                        'int': {
-                           min: $rootScope.autoLanguage( '?的值不能小于?。' ),
-                           max: $rootScope.autoLanguage( '?的值不能大于?。' ),
-                           ban: $rootScope.autoLanguage( '?的值不能取?。' ),
-                           step: $rootScope.autoLanguage( '?的值必须是?的倍数。' ),
-                           format: $rootScope.autoLanguage( '?的值必须是整数。' )
-                        },
-                        'double': {
-                           min: $rootScope.autoLanguage( '?的值不能小于?。' ),
-                           max: $rootScope.autoLanguage( '?的值不能大于?。' ),
-                           ban: $rootScope.autoLanguage( '?的值不能取?。' ),
-                           step: $rootScope.autoLanguage( '?的值必须是?的倍数。' ),
-                           format: $rootScope.autoLanguage( '?的值必须是数字。' )
-                        },
-                        'port':{
-                           min: $rootScope.autoLanguage( '?不能小于?。' ),
-                           max: $rootScope.autoLanguage( '?不能大于?。' ),
-                           empty: $rootScope.autoLanguage( '?不能为空。' ),
-                           format: $rootScope.autoLanguage( '?格式错误。' )
-                        },
-                        'multiple': {
-                           min: $rootScope.autoLanguage( '?至少选择?个。' ),
-                           max: $rootScope.autoLanguage( '?不能多于?个。' ),
-                           empty: $rootScope.autoLanguage( '?不能为空。' ),
-                           candidate: $rootScope.autoLanguage( '待选列表' ),
-                           select: $rootScope.autoLanguage( '选中列表' )
-                        },
-                        'list': $rootScope.autoLanguage( '?参数错误。' )
-                     },
-                     inputList: $scope.data.inputList,
-                     checkString: function( name, value, valid ){
-                        var rc = true ;
-                        var error = '' ;
-                        if( typeof( valid ) == 'object' )
-                        {
-                           var min = valid.min ;
-                           var max = valid.max ;
-                           var reg = valid.regex ;
-                           var rer = valid.regexError ;
-                           var ban = valid.ban ;
-                           var len = typeof( value ) == 'string' ? value.length : 0 ;
-                           if( typeof( min ) == 'number' && len < min )
-                           {
-                              error = sprintf( $scope.Setting.Text.string.min, name, min ) ;
-                              rc = false ;
-                           }
-                           else if( typeof( max ) == 'number' && len > max )
-                           {
-                              error = sprintf( $scope.Setting.Text.string.max, name, max ) ;
-                              rc = false ;
-                           }
-                           else if( typeof( ban ) == 'string' && value.indexOf( ban ) >= 0 )
-                           {
-                              error = sprintf( $scope.Setting.Text.string.ban, name, ban ) ;
-                              rc = false ;
-                           }
-                           else if( isArray( ban ) )
-                           {
-                              $.each( ban, function( index, banChar ){
-                                 if( value.indexOf( banChar ) >= 0 )
-                                 {
-                                    error = sprintf( $scope.Setting.Text.string.ban, name, banChar ) ;
-                                    rc = false ;
-                                    return false ;
-                                 }
-                              } ) ;
-                           }
-                           else if( typeof( reg ) == 'string' )
-                           {
-                              var patt = new RegExp( reg, 'g' ) ;
-                              if( patt.test( value ) == false )
-                              {
-                                 if( typeof( rer ) == 'string' )
-                                 {
-                                    error = rer ;
-                                 }
-                                 else
-                                 {
-                                    error = sprintf( $scope.Setting.Text.string.regex, name ) ;
-                                 }
-                                 rc = false ;
-                              }
-                           }
-                        }
-                        return { rc: rc, error: error } ;
-                     },
-                     checkInt: function ( name, value, valid ){
-                        var rc = true ;
-                        var error = '' ;
-                        if( value.length == 0 && typeof( valid ) == 'object' && valid.empty == true )
-                        {
-                           return { rc: rc, error: error } ;
-                        }
-                        if( isNaN( value ) || parseInt( value ) != value )
-                        {
-                           error = sprintf( $scope.Setting['Text']['int']['format'], name ) ;
-                           rc = false ;
-                        }
-                        else if( typeof( valid ) == 'object' )
-                        {
-                           var num = parseInt( value ) ;
-                           var min = valid.min ;
-                           var max = valid.max ;
-                           var ban = valid.ban ;
-                           var step = valid.step ;
-                           if( typeof( min ) == 'number' && num < min )
-                           {
-                              error = sprintf( $scope.Setting['Text']['int']['min'], name, min ) ;
-                              rc = false ;
-                           }
-                           else if( typeof( max ) == 'number' && num > max )
-                           {
-                              error = sprintf( $scope.Setting['Text']['int']['max'], name, max ) ;
-                              rc = false ;
-                           }
-                           else if( typeof( ban ) == 'number' && num == ban )
-                           {
-                              error = sprintf( $scope.Setting['Text']['int']['ban'], name, ban ) ;
-                              rc = false ;
-                           }
-                           else if( isArray( ban ) )
-                           {
-                              $.each( ban, function( index, banInt ){
-                                 if( num == banInt )
-                                 {
-                                    error = sprintf( $scope.Setting['Text']['int']['ban'], name, banInt ) ;
-                                    rc = false ;
-                                    return false ;
-                                 }
-                              } ) ;
-                           }
-                           else if( typeof( step ) == 'number' && num % step != 0 )
-                           {
-                              error = sprintf( $scope.Setting['Text']['int']['step'], name, step ) ;
-                              rc = false ;
-                           }
-                        }
-                        return { rc: rc, error: error } ;
-                     },
-                     checkDouble: function ( name, value, valid ){
-                        var rc = true ;
-                        var error = '' ;
-                        if( isNaN( value ) )
-                        {
-                           error = sprintf( $scope.Setting['Text']['double']['format'], name ) ;
-                           rc = false ;
-                        }
-                        else if( typeof( valid ) == 'object' )
-                        {
-                           var num = parseFloat( value ) ;
-                           var min = valid.min ;
-                           var max = valid.max ;
-                           var ban = valid.ban ;
-                           var step = valid.step ;
-                           if( typeof( min ) == 'number' && num < min )
-                           {
-                              error = sprintf( $scope.Setting['Text']['double']['min'], name, min ) ;
-                              rc = false ;
-                           }
-                           else if( typeof( max ) == 'number' && num > max )
-                           {
-                              error = sprintf( $scope.Setting['Text']['double']['max'], name, max ) ;
-                              rc = false ;
-                           }
-                           else if( typeof( ban ) == 'number' && num == ban )
-                           {
-                              error = sprintf( $scope.Setting['Text']['double']['ban'], name, ban ) ;
-                              rc = false ;
-                           }
-                           else if( isArray( ban ) )
-                           {
-                              $.each( ban, function( index, banFloat ){
-                                 if( num == banFloat )
-                                 {
-                                    error = sprintf( $scope.Setting['Text']['double']['ban'], name, banFloat ) ;
-                                    rc = false ;
-                                    return false ;
-                                 }
-                              } ) ;
-                           }
-                           else if( typeof( step ) == 'number' && num % step != 0 )
-                           {
-                              error = sprintf( $scope.Setting['Text']['double']['step'], name, step ) ;
-                              rc = false ;
-                           }
-                        }
-                        return { rc: rc, error: error } ;
-                     },
-                     checkPort: function ( name, value, valid ){
-                        var rc = true ;
-                        var error = '' ;
-                        if( value.length == 0 && typeof( valid ) == 'object' && valid.empty == true )
-                        {
-                           return { rc: rc, error: error } ;
-                        }
-                        if( value.length == 0 )
-                        {
-                           rc = false ;
-                           error = sprintf( $scope.Setting.Text.port.empty, name ) ;
-                        }
-                        else if( checkPort( value ) == false )
-                        {
-                           rc = false ;
-                           error = sprintf( $scope.Setting.Text.port.format, name ) ;
-                        }
-                        else if( typeof( valid ) == 'object' )
-                        {
-                           var min = valid.min ;
-                           var max = valid.max ;
-                           var ban = valid.ban ;
-                           var step = valid.step ;
-                           if( typeof( min ) == 'number' && value < min )
-                           {
-                              error = sprintf( $scope.Setting['Text']['port']['min'], name, min ) ;
-                              rc = false ;
-                           }
-                           else if( typeof( max ) == 'number' && value > max )
-                           {
-                              error = sprintf( $scope.Setting['Text']['port']['max'], name, max ) ;
-                              rc = false ;
-                           }
-                        }
-                        return { rc: rc, error: error } ;
-                     },
-                     checkMultiple: function ( name, value, valid ){
-                        var rc = true ;
-                        var error = '' ;
-                        if( typeof( valid ) == 'object' )
-                        {
-                           value = [] ;
-                           $.each( valid['list'], function( listIndex, validInfo ){
-                              if( validInfo['checked'] == true )
-                              {
-                                 value.push( validInfo['value'] ) ;
-                              }
-                           } ) ;
-                           var min = valid.min ;
-                           var max = valid.max ;
-                           if( value.length == 0 && valid.empty == false )
-                           {
-                              rc = false ;
-                              error = sprintf( $scope.Setting.Text.multiple.empty, name ) ;
-                           }
-                           else if( typeof( min ) == 'number' && value.length < min )
-                           {
-                              rc = false ;
-                              error = sprintf( $scope.Setting.Text.multiple.min, name, min ) ;
-                           }
-                           else if( typeof( max ) == 'number' && value.length > max )
-                           {
-                              rc = false ;
-                              error = sprintf( $scope.Setting.Text.multiple.max, name, max ) ;
-                           }
-                        }
-                        return { rc: rc, error: error } ;
-                     },
-                     checkInput: function( inputList, customCheckFun ){
-                        var isAllClear = true ;
-                        $.each( inputList, function( index, inputInfo ){
-                           inputInfo.error = '' ;
-                           var rv = { rc: true, error: '' } ;
-                           switch( inputInfo.type )
-                           {
-                           case 'string':
-                              rv = $scope.Setting.checkString( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
-                              break ;
-                           case 'password':
-                              rv = $scope.Setting.checkString( inputInfo.webName, inputInfo.value, inputInfo.valid ) ;
-                              break ;
-                           case 'text':
-                              rv = $scope.Setting.checkString( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
-                              break ;
-                           case 'int':
-                              rv = $scope.Setting.checkInt( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
-                              break ;
-                           case 'double':
-                              rv = $scope.Setting.checkDouble( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
-                              break ;
-                           case 'port':
-                              rv = $scope.Setting.checkPort( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
-                              break ;
-                           case 'multiple':
-                              rv = $scope.Setting.checkMultiple( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
-                              break ;
-                           case 'group':
-                              isAllClear = $scope.Setting.checkInput( inputInfo.child ) ;
-                              break ;
-                           case 'inline':
-                              isAllClear = $scope.Setting.checkInput( inputInfo.child ) ;
-                              break ;
-                           case 'list':
-                              if( inputInfo.valid && inputInfo.valid.min == 0 && inputInfo.child.length == 1 )
-                              {
-                              }
-                              else
-                              {
-                                 var hasError = false ;
-                                 $.each( inputInfo.child, function( index2 ){
-                                    var rc = $scope.Setting.checkInput( inputInfo.child[index2] ) ;
-                                    if( rc == false )
-                                    {
-                                       hasError = true ;
-                                    }
-                                 } ) ;
-                                 if( hasError == true )
-                                 {
-                                    isAllClear = false ;
-                                    inputInfo.error = sprintf( $scope.Setting.Text.list, inputInfo.webName ) ;
-                                 }
-                              }
-                              break ;
-                           }
-                           if( rv.rc == false )
-                           {
-                              isAllClear = false ;
-                              inputInfo.error = rv.error ;
-                           }
-                        } ) ;
-                        if( typeof( customCheckFun ) == 'function' )
-                        {
-                           var rvs = customCheckFun( $scope.Setting.getValue( $scope.Setting.inputList ) ) ;
-                           if( rvs.length > 0 )
-                           {
-                              $.each( rvs, function( index2, errInfo ){
-                                 $.each( inputList, function( index3, inputInfo ){
-                                    if( inputInfo.name == errInfo.name )
-                                    {
-                                       inputInfo.error = errInfo.error ;
-                                       return false ;
-                                    }
-                                 } ) ;
-                              } ) ;
-                              isAllClear = false ;
-                           }
-                        }
-                        return isAllClear ;
-                     },
-                     getValue: function( inputList ){
-                        var returnValue = {} ;
-                        $.each( inputList, function( index, inputInfo ){
-                           switch( inputInfo.type )
-                           {
-                           case 'string':
-                              returnValue[ inputInfo.name ] = trim( inputInfo.value ) ;
-                              break ;
-                           case 'password':
-                              returnValue[ inputInfo.name ] = inputInfo.value ;
-                              break ;
-                           case 'text':
-                              returnValue[ inputInfo.name ] = trim( inputInfo.value ) ;
-                              break ;
-                           case 'int':
-                              returnValue[ inputInfo.name ] = parseInt( trim( inputInfo.value ) ) ;
-                              break ;
-                           case 'double':
-                              returnValue[ inputInfo.name ] = parseFloat( trim( inputInfo.value ) ) ;
-                              break ;
-                           case 'port':
-                              returnValue[ inputInfo.name ] = trim( inputInfo.value ) ;
-                              break ;
-                           case 'multiple':
-                              inputInfo.value = [] ;
-                              $.each( inputInfo.valid['list'], function( listIndex, validInfo ){
-                                 if( validInfo['checked'] == true )
-                                 {
-                                    inputInfo.value.push( validInfo['value'] ) ;
-                                 }
-                              } ) ;
-                              returnValue[ inputInfo.name ] = inputInfo.value ;
-                              break ;
-                           case 'select':
-                              returnValue[ inputInfo.name ] = inputInfo.value ;
-                              break ;
-                           case 'checkbox':
-                              returnValue[ inputInfo.name ] = inputInfo.value ;
-                              break ;
-                           case 'group':
-                              returnValue[ inputInfo.name ] = $scope.Setting.getValue( inputInfo.child ) ;
-                              break ;
-                           case 'inline':
-                              returnValue[ inputInfo.name ] = $scope.Setting.getValue( inputInfo.child ) ;
-                              break ;
-                           case 'list':
-                              var listValue = [] ;
-                              $.each( inputInfo.child, function( index2, items ){
-                                 listValue.push( $scope.Setting.getValue( items ) ) ;
-                              } ) ;
-                              returnValue[ inputInfo.name ] = listValue ;
-                              break ;
-                           case 'switch':
-                              returnValue[ inputInfo.name ] = inputInfo.value ;
-                              break ;
-                           case 'normal':
-                              returnValue[ inputInfo.name ] = inputInfo.value ;
-                              break ;
-                           }
-                        } ) ;
-                        return returnValue ;
-                     },
-                     getValue2: function( inputList ){
-                        var returnValue = [] ;
-                        $.each( inputList, function( index, inputLine ){
-                           var returnLine = [] ;
-                           $.each( inputLine, function( index2, inputInfo ){
-                              switch( inputInfo.type )
-                              {
-                              case 'textual':
-                              case 'string':
-                              case 'select':
-                              case 'checkbox':
-                                 returnLine.push( inputInfo.value ) ;
-                                 break ;
-                              }
-                           } ) ;
-                           returnValue.push( returnLine ) ;
-                        } ) ;
-                        return returnValue ;
-                     }
-                  } ;
+
+                  $scope.Setting['Type']  = $scope.data.type ;
+                  $scope.Setting['Grid']  = $scope.data.grid ;
+                  $scope.Setting['Table'] = $scope.data.table ;
+                  $scope.Setting['KeyWidth'] = $scope.data.keyWidth ? $scope.data.keyWidth : $scope.Setting['KeyWidth'] ;
+                  $scope.Setting['inputList'] = $scope.data.inputList ;
+
                   if( typeof( $scope.Setting['Grid'] ) == 'object' )
                   {
                      if( typeof( $scope.Setting['Grid']['options'] ) !== 'object' )
@@ -2492,6 +2109,401 @@
                   }
                }
             }
+
+            $scope.browserInfo = SdbFunction.getBrowserInfo() ;
+            $scope.Setting = {
+               KeyWidth: '130px',
+               Text: text,
+               inputList: [],
+               checkString: function( name, value, valid ){
+                  var rc = true ;
+                  var error = '' ;
+                  if( typeof( valid ) == 'object' )
+                  {
+                     var min = valid.min ;
+                     var max = valid.max ;
+                     var reg = valid.regex ;
+                     var rer = valid.regexError ;
+                     var ban = valid.ban ;
+                     var len = typeof( value ) == 'string' ? value.length : 0 ;
+                     if( typeof( min ) == 'number' && len < min )
+                     {
+                        error = sprintf( $scope.Setting.Text.string.min, name, min ) ;
+                        rc = false ;
+                     }
+                     else if( typeof( max ) == 'number' && len > max )
+                     {
+                        error = sprintf( $scope.Setting.Text.string.max, name, max ) ;
+                        rc = false ;
+                     }
+                     else if( typeof( ban ) == 'string' && value.indexOf( ban ) >= 0 )
+                     {
+                        error = sprintf( $scope.Setting.Text.string.ban, name, ban ) ;
+                        rc = false ;
+                     }
+                     else if( isArray( ban ) )
+                     {
+                        $.each( ban, function( index, banChar ){
+                           if( value.indexOf( banChar ) >= 0 )
+                           {
+                              error = sprintf( $scope.Setting.Text.string.ban, name, banChar ) ;
+                              rc = false ;
+                              return false ;
+                           }
+                        } ) ;
+                     }
+                     else if( typeof( reg ) == 'string' )
+                     {
+                        var patt = new RegExp( reg, 'g' ) ;
+                        if( patt.test( value ) == false )
+                        {
+                           if( typeof( rer ) == 'string' )
+                           {
+                              error = rer ;
+                           }
+                           else
+                           {
+                              error = sprintf( $scope.Setting.Text.string.regex, name ) ;
+                           }
+                           rc = false ;
+                        }
+                     }
+                  }
+                  return { rc: rc, error: error } ;
+               },
+               checkInt: function ( name, value, valid ){
+                  var rc = true ;
+                  var error = '' ;
+                  if( value.length == 0 && typeof( valid ) == 'object' && valid.empty == true )
+                  {
+                     return { rc: rc, error: error } ;
+                  }
+                  if( isNaN( value ) || parseInt( value ) != value )
+                  {
+                     error = sprintf( $scope.Setting['Text']['int']['format'], name ) ;
+                     rc = false ;
+                  }
+                  else if( typeof( valid ) == 'object' )
+                  {
+                     var num = parseInt( value ) ;
+                     var min = valid.min ;
+                     var max = valid.max ;
+                     var ban = valid.ban ;
+                     var step = valid.step ;
+                     if( typeof( min ) == 'number' && num < min )
+                     {
+                        error = sprintf( $scope.Setting['Text']['int']['min'], name, min ) ;
+                        rc = false ;
+                     }
+                     else if( typeof( max ) == 'number' && num > max )
+                     {
+                        error = sprintf( $scope.Setting['Text']['int']['max'], name, max ) ;
+                        rc = false ;
+                     }
+                     else if( typeof( ban ) == 'number' && num == ban )
+                     {
+                        error = sprintf( $scope.Setting['Text']['int']['ban'], name, ban ) ;
+                        rc = false ;
+                     }
+                     else if( isArray( ban ) )
+                     {
+                        $.each( ban, function( index, banInt ){
+                           if( num == banInt )
+                           {
+                              error = sprintf( $scope.Setting['Text']['int']['ban'], name, banInt ) ;
+                              rc = false ;
+                              return false ;
+                           }
+                        } ) ;
+                     }
+                     else if( typeof( step ) == 'number' && num % step != 0 )
+                     {
+                        error = sprintf( $scope.Setting['Text']['int']['step'], name, step ) ;
+                        rc = false ;
+                     }
+                  }
+                  return { rc: rc, error: error } ;
+               },
+               checkDouble: function ( name, value, valid ){
+                  var rc = true ;
+                  var error = '' ;
+                  if( isNaN( value ) )
+                  {
+                     error = sprintf( $scope.Setting['Text']['double']['format'], name ) ;
+                     rc = false ;
+                  }
+                  else if( typeof( valid ) == 'object' )
+                  {
+                     var num = parseFloat( value ) ;
+                     var min = valid.min ;
+                     var max = valid.max ;
+                     var ban = valid.ban ;
+                     var step = valid.step ;
+                     if( typeof( min ) == 'number' && num < min )
+                     {
+                        error = sprintf( $scope.Setting['Text']['double']['min'], name, min ) ;
+                        rc = false ;
+                     }
+                     else if( typeof( max ) == 'number' && num > max )
+                     {
+                        error = sprintf( $scope.Setting['Text']['double']['max'], name, max ) ;
+                        rc = false ;
+                     }
+                     else if( typeof( ban ) == 'number' && num == ban )
+                     {
+                        error = sprintf( $scope.Setting['Text']['double']['ban'], name, ban ) ;
+                        rc = false ;
+                     }
+                     else if( isArray( ban ) )
+                     {
+                        $.each( ban, function( index, banFloat ){
+                           if( num == banFloat )
+                           {
+                              error = sprintf( $scope.Setting['Text']['double']['ban'], name, banFloat ) ;
+                              rc = false ;
+                              return false ;
+                           }
+                        } ) ;
+                     }
+                     else if( typeof( step ) == 'number' && num % step != 0 )
+                     {
+                        error = sprintf( $scope.Setting['Text']['double']['step'], name, step ) ;
+                        rc = false ;
+                     }
+                  }
+                  return { rc: rc, error: error } ;
+               },
+               checkPort: function ( name, value, valid ){
+                  var rc = true ;
+                  var error = '' ;
+                  if( value.length == 0 && typeof( valid ) == 'object' && valid.empty == true )
+                  {
+                     return { rc: rc, error: error } ;
+                  }
+                  if( value.length == 0 )
+                  {
+                     rc = false ;
+                     error = sprintf( $scope.Setting.Text.port.empty, name ) ;
+                  }
+                  else if( checkPort( value ) == false )
+                  {
+                     rc = false ;
+                     error = sprintf( $scope.Setting.Text.port.format, name ) ;
+                  }
+                  else if( typeof( valid ) == 'object' )
+                  {
+                     var min = valid.min ;
+                     var max = valid.max ;
+                     var ban = valid.ban ;
+                     var step = valid.step ;
+                     if( typeof( min ) == 'number' && value < min )
+                     {
+                        error = sprintf( $scope.Setting['Text']['port']['min'], name, min ) ;
+                        rc = false ;
+                     }
+                     else if( typeof( max ) == 'number' && value > max )
+                     {
+                        error = sprintf( $scope.Setting['Text']['port']['max'], name, max ) ;
+                        rc = false ;
+                     }
+                  }
+                  return { rc: rc, error: error } ;
+               },
+               checkMultiple: function ( name, value, valid ){
+                  var rc = true ;
+                  var error = '' ;
+                  if( typeof( valid ) == 'object' )
+                  {
+                     value = [] ;
+                     $.each( valid['list'], function( listIndex, validInfo ){
+                        if( validInfo['checked'] == true )
+                        {
+                           value.push( validInfo['value'] ) ;
+                        }
+                     } ) ;
+                     var min = valid.min ;
+                     var max = valid.max ;
+                     if( value.length == 0 && valid.empty == false )
+                     {
+                        rc = false ;
+                        error = sprintf( $scope.Setting.Text.multiple.empty, name ) ;
+                     }
+                     else if( typeof( min ) == 'number' && value.length < min )
+                     {
+                        rc = false ;
+                        error = sprintf( $scope.Setting.Text.multiple.min, name, min ) ;
+                     }
+                     else if( typeof( max ) == 'number' && value.length > max )
+                     {
+                        rc = false ;
+                        error = sprintf( $scope.Setting.Text.multiple.max, name, max ) ;
+                     }
+                  }
+                  return { rc: rc, error: error } ;
+               },
+               checkInput: function( inputList, customCheckFun ){
+                  var isAllClear = true ;
+                  $.each( inputList, function( index, inputInfo ){
+                     inputInfo.error = '' ;
+                     var rv = { rc: true, error: '' } ;
+                     switch( inputInfo.type )
+                     {
+                     case 'string':
+                        rv = $scope.Setting.checkString( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                        break ;
+                     case 'password':
+                        rv = $scope.Setting.checkString( inputInfo.webName, inputInfo.value, inputInfo.valid ) ;
+                        break ;
+                     case 'text':
+                        rv = $scope.Setting.checkString( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                        break ;
+                     case 'int':
+                        rv = $scope.Setting.checkInt( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                        break ;
+                     case 'double':
+                        rv = $scope.Setting.checkDouble( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                        break ;
+                     case 'port':
+                        rv = $scope.Setting.checkPort( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                        break ;
+                     case 'multiple':
+                        rv = $scope.Setting.checkMultiple( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                        break ;
+                     case 'group':
+                        isAllClear = $scope.Setting.checkInput( inputInfo.child ) ;
+                        break ;
+                     case 'inline':
+                        isAllClear = $scope.Setting.checkInput( inputInfo.child ) ;
+                        break ;
+                     case 'list':
+                        if( inputInfo.valid && inputInfo.valid.min == 0 && inputInfo.child.length == 1 )
+                        {
+                        }
+                        else
+                        {
+                           var hasError = false ;
+                           $.each( inputInfo.child, function( index2 ){
+                              var rc = $scope.Setting.checkInput( inputInfo.child[index2] ) ;
+                              if( rc == false )
+                              {
+                                 hasError = true ;
+                              }
+                           } ) ;
+                           if( hasError == true )
+                           {
+                              isAllClear = false ;
+                              inputInfo.error = sprintf( $scope.Setting.Text.list, inputInfo.webName ) ;
+                           }
+                        }
+                        break ;
+                     }
+                     if( rv.rc == false )
+                     {
+                        isAllClear = false ;
+                        inputInfo.error = rv.error ;
+                     }
+                  } ) ;
+                  if( typeof( customCheckFun ) == 'function' )
+                  {
+                     var rvs = customCheckFun( $scope.Setting.getValue( $scope.Setting.inputList ) ) ;
+                     if( rvs.length > 0 )
+                     {
+                        $.each( rvs, function( index2, errInfo ){
+                           $.each( inputList, function( index3, inputInfo ){
+                              if( inputInfo.name == errInfo.name )
+                              {
+                                 inputInfo.error = errInfo.error ;
+                                 return false ;
+                              }
+                           } ) ;
+                        } ) ;
+                        isAllClear = false ;
+                     }
+                  }
+                  return isAllClear ;
+               },
+               getValue: function( inputList ){
+                  var returnValue = {} ;
+                  $.each( inputList, function( index, inputInfo ){
+                     switch( inputInfo.type )
+                     {
+                     case 'string':
+                        returnValue[ inputInfo.name ] = trim( inputInfo.value ) ;
+                        break ;
+                     case 'password':
+                        returnValue[ inputInfo.name ] = inputInfo.value ;
+                        break ;
+                     case 'text':
+                        returnValue[ inputInfo.name ] = trim( inputInfo.value ) ;
+                        break ;
+                     case 'int':
+                        returnValue[ inputInfo.name ] = parseInt( trim( inputInfo.value ) ) ;
+                        break ;
+                     case 'double':
+                        returnValue[ inputInfo.name ] = parseFloat( trim( inputInfo.value ) ) ;
+                        break ;
+                     case 'port':
+                        returnValue[ inputInfo.name ] = trim( inputInfo.value ) ;
+                        break ;
+                     case 'multiple':
+                        inputInfo.value = [] ;
+                        $.each( inputInfo.valid['list'], function( listIndex, validInfo ){
+                           if( validInfo['checked'] == true )
+                           {
+                              inputInfo.value.push( validInfo['value'] ) ;
+                           }
+                        } ) ;
+                        returnValue[ inputInfo.name ] = inputInfo.value ;
+                        break ;
+                     case 'select':
+                        returnValue[ inputInfo.name ] = inputInfo.value ;
+                        break ;
+                     case 'checkbox':
+                        returnValue[ inputInfo.name ] = inputInfo.value ;
+                        break ;
+                     case 'group':
+                        returnValue[ inputInfo.name ] = $scope.Setting.getValue( inputInfo.child ) ;
+                        break ;
+                     case 'inline':
+                        returnValue[ inputInfo.name ] = $scope.Setting.getValue( inputInfo.child ) ;
+                        break ;
+                     case 'list':
+                        var listValue = [] ;
+                        $.each( inputInfo.child, function( index2, items ){
+                           listValue.push( $scope.Setting.getValue( items ) ) ;
+                        } ) ;
+                        returnValue[ inputInfo.name ] = listValue ;
+                        break ;
+                     case 'switch':
+                        returnValue[ inputInfo.name ] = inputInfo.value ;
+                        break ;
+                     case 'normal':
+                        returnValue[ inputInfo.name ] = inputInfo.value ;
+                        break ;
+                     }
+                  } ) ;
+                  return returnValue ;
+               },
+               getValue2: function( inputList ){
+                  var returnValue = [] ;
+                  $.each( inputList, function( index, inputLine ){
+                     var returnLine = [] ;
+                     $.each( inputLine, function( index2, inputInfo ){
+                        switch( inputInfo.type )
+                        {
+                        case 'textual':
+                        case 'string':
+                        case 'select':
+                        case 'checkbox':
+                           returnLine.push( inputInfo.value ) ;
+                           break ;
+                        }
+                     } ) ;
+                     returnValue.push( returnLine ) ;
+                  } ) ;
+                  return returnValue ;
+               }
+            } ;
 
             $scope.$watch( 'data', function(){
                //清除网格内容
