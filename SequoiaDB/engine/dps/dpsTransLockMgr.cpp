@@ -1839,9 +1839,11 @@ namespace engine
    //           Wake up a waiter when necessary, it will also release the upper
    //           level intent lock
    // Input:
-   //    eduId           -- edu Id
+   //    dpsTxExectr     -- pointer to dpsTransExecutor 
    //    lockId          -- lock id
    //    bForceRelease   -- requested lock mode
+   // Output:
+   //    none
    //
    void dpsTransLockManager::release
    (
@@ -1968,7 +1970,7 @@ namespace engine
    // Input:
    //    lockId -- lock id
    // Return:
-   //        index to the LRB Header bucket
+   //    index to the LRB Header bucket
    //
    UTIL_OBJIDX dpsTransLockManager::_getBucketNo( const dpsTransLockId &lockId )
    {
@@ -2166,10 +2168,10 @@ namespace engine
    // Function:    test whether a lock is being waited by checking if
    //              the waiter list and upgrade list are empty.
    // Input:
-   //    lockId          -- lock Id
+   //    lockId -- lock Id
    // Return:
-   //    True  -- the lock has waiter(s)
-   //    False -- the lock has no waiter(s)
+   //    True   -- the lock has waiter(s)
+   //    False  -- the lock has no waiter(s)
    //
    BOOLEAN dpsTransLockManager::hasWait( const dpsTransLockId &lockId )
    {
@@ -2349,15 +2351,17 @@ namespace engine
 
 
    //
-   // dump all LRB in EDU LRB chain ( to stdout ), for debug purpose 
-   // the caller shall acquire the monitoring( dump ) latch, acquireMonLatch(),
-   // and make sure the executor is still available
+   // dump all LRB in EDU LRB chain to specified the file ( full path name )
+   // for debugging purpose .
+   // It walks through EDU LRB chain, the caller shall acquire the monitoring(
+   // dump ) latch, acquireMonLatch(), and make sure the executor is still
+   // available
    //
    void dpsTransLockManager::dumpLockInfo
    (
       _dpsTransExecutor * dpsTxExectr,
       const CHAR        * fileName,
-      BOOLEAN bOutputInPlainMode
+      BOOLEAN             bOutputInPlainMode
    )
    {
       UTIL_OBJIDX lrbIdx = UTIL_INVALID_OBJ_INDEX;
@@ -2409,9 +2413,10 @@ namespace engine
 
 
    //
-   // dump LRB Header, owner/waiter/upgrade list info to stdout,
-   // for debug purpose only
-   //
+   // dump LRB Header, owner/waiter/upgrade list info
+   // to specified file( full path name ), for debugging purpose only
+   // This function doesn't need to acquire monitoring/dump
+   // latch ( acquireMonLatch() ), it will get the bucket latch
    void dpsTransLockManager::dumpLockInfo
    (
       const dpsTransLockId & lockId,
@@ -2574,8 +2579,9 @@ namespace engine
 
 
    //
-   // dump EDU LRB info
-   // the caller shall acquire the monitoring( dump ) latch, acquireMonLatch(),
+   // dump EDU LRB info into VEC_TRANSLOCKCUR
+   // It walks through the EDU LRB chain, the caller shall acquire
+   // the monitoring( dump ) latch, acquireMonLatch(),
    // and make sure the executor is still available
    //
    void dpsTransLockManager::dumpLockInfo
@@ -2612,6 +2618,8 @@ namespace engine
    }
 
 
+   // dump the lock info ( lockId, lockMode, refCounter ) into monTransLockCur
+   // via LRB index
    void dpsTransLockManager::dumpLockInfo
    (
       UTIL_OBJIDX       lrbIdx,
@@ -2641,6 +2649,8 @@ namespace engine
 
    //
    // dump LRB Header and owner / waiter / upgrade list for a specific lock
+   // into monTransLockInfo. This function doesn't need to acquire
+   // monitoring/dump latch ( acquireMonLatch() ), it will get the bucket latch
    //
    void dpsTransLockManager::dumpLockInfo
    (
