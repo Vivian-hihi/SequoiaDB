@@ -1544,7 +1544,7 @@ namespace engine
       {
          rc2 = SDB_OK ;
 
-         // pause the context
+         // pause the context before waiting the lock
          if ( pContext )
          {
             rc2 = pContext->pause() ;
@@ -1554,6 +1554,12 @@ namespace engine
          if ( SDB_OK == rc2 )
          {
             rc = _waitLock( dpsTxExectr ) ;
+         }
+
+         // resume context if the context has been paused
+         if ( ( pContext ) && ( SDB_OK == rc2 ) )
+         {
+            rc2 = pContext->resume() ;
          }
 
          // latch before remove it from upgrade or waiter list
@@ -1589,13 +1595,10 @@ namespace engine
             pLRBHdr = NULL ;
          }
 
-         // resume context if the context has been paused
-         if ( ( pContext ) && ( SDB_OK == rc2 ) )
-         {
-            rc2 = pContext->resume() ;
-         }
-
          // retry acquire the lock if it is woken up
+         //   . SDB_OK == rc = _waitLock(), it has been woken up
+         //   . SDB_OK == rc2, context resumed successfully
+         //   . bLatched, holding the bucket latch
          if ( ( SDB_OK == rc ) && ( SDB_OK == rc2 ) && bLatched )
          {
             // need to hold the latch before retry acquiring the lock
@@ -1613,14 +1616,15 @@ namespace engine
          if ( ( SDB_OK != rc ) || ( SDB_OK != rc2 ) )
          {
             // failed to pause or resume context, or
-            // wait lock failed due to timeout or interrupt etc on,
+            // wait lock failed due to timeout or interrupted etc on,
             // shall release the upper level lock
             if ( isIntentLockAcquired )
             {
                release( dpsTxExectr, iLockId, FALSE ) ;
                isIntentLockAcquired = FALSE ;
             }
-            // set recode to rc2 when wailLock() fails
+            // set recode to rc2 when _waitLock succeeded but resume()
+            // or pause failed
             if ( ( SDB_OK != rc2 ) && ( SDB_OK == rc ) )
             {
                rc = rc2 ;
