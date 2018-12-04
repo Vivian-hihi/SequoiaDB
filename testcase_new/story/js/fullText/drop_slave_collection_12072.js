@@ -28,11 +28,11 @@ function main()
    
    //insert records
    var records = new Array();
-   var count = 0;
+   var oneSubCLCount = 0;
    for (var i = 0; i < 10000 ; i++){
       var randomNum = parseInt(Math.random()*10000 + 1);
       if (randomNum < 4567){
-         count++;
+         oneSubCLCount++;
       }
       var record = {a : randomNum, b : "b" + i};
       records.push(record);
@@ -51,21 +51,11 @@ function main()
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, slaveCLName1, "fullIndex_12072");
    db.getCS(COMMCSNAME).dropCL(slaveCLName1);     
    checkIndexNotExistInES(esIndexNames);
-   checkMainCLFullSyncToES(COMMCSNAME, clName, "fullIndex_12072", 10000 - count);
+   checkMainCLFullSyncToES(COMMCSNAME, clName, "fullIndex_12072", 10000 - oneSubCLCount);
    
    //get actResult and expResult
-   var expResult = dbOperator.findFromCL(slaveCL2, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {b : ""});
-   esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, slaveCLName2, "fullIndex_12072"); 
-   var actResult = new Array();
-   var esOperator = new ESOperator();
-   for (var i  in esIndexNames){
-      var esRecords = esOperator.findFromES(esIndexNames[i], '{"query":{"match_all":{}}, "size":10000}');
-      actResult = actResult.concat(esRecords);
-   }
-   
-   //check result
-   expResult.sort(compare("b"));
-   actResult.sort(compare("b"));
+   var actResult = dbOperator.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, {"_id" : 1});
+   var expResult = dbOperator.findFromCL(slaveCL2, null, null, {"_id" : 1});
    checkResult(expResult, actResult);
    
    checkConsistency(COMMCSNAME, slaveCLName2);
