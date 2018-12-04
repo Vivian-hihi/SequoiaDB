@@ -23,6 +23,8 @@
 
 * 开启数据库引擎程序跟踪的功能
 
+ 注： db.traceOn() 只对 db 连接的节点进行跟踪
+
 	```lang-javascript
 	> db.traceOn( 256 )
 	```
@@ -31,5 +33,34 @@
 
 	```lang-javascript
 	> db.traceOn( 256, "cls, dms, mth", "_dmsTempSUMgr::init", 12712 )
+	```
+  或者指定多个tid
+
+    ```lang-javascript
 	> db.traceOn( 256, "cls, dms, mth", "_dmsTempSUMgr::init", [12712, 12713, 12714] )
 	```
+
+* 当被跟踪的模块遇到断点被阻塞，如果想唤醒被跟踪的模块，具体可参考[traceResume()](reference/Sequoiadb_command/Sdb/traceResume.md)
+
+	```lang-javascript
+	> db.traceResume()
+	```
+
+* 查看当前程序跟踪的状态，具体可参考[traceStatus()](reference/Sequoiadb_command/Sdb/traceStatus.md)
+
+	```lang-javascript
+	> db.traceStatus()
+	```
+
+* 关闭数据库引擎跟踪，并将跟踪情况导出二进制文件： /opt/sequoiadb/trace.dump，具体可参考[traceOff()](reference/Sequoiadb_command/Sdb/traceOff.md)
+
+	```lang-javascript
+	> db.traceOff("/opt/sequoiadb/trace.dump")
+	```
+
+* 格式化输出二进制文件，具体可参考[traceFmt()](reference/Sequoiadb_command/Global/traceFmt.md)
+
+	```lang-javascript
+	> traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.flw" )
+ 	```
+	
