@@ -2540,21 +2540,27 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObj configs ;
       BSONObj options ;
-      rc = arg.getBsonobj( 0, configs ) ;
+      rc = arg.getBsonobj( 0, configs, TRUE, TRUE ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
-         BSON( SPT_ERR << "Configs must be config" ) ;
+         detail = BSON( SPT_ERR << "Configs must be config" ) ;
          goto error ;
       }
       else if( SDB_OK != rc )
       {
-         BSON( SPT_ERR << "Configs must be obj" ) ;
+         detail = BSON( SPT_ERR << "Configs must be obj" ) ;
          goto error ;
+      }
+      else if ( SDB_OK == rc && configs.isEmpty() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Configs cannot be empty" ) ;
+         goto error ; 
       }
       rc = arg.getBsonobj( 1, options ) ;
       if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {
-         BSON( SPT_ERR << "Options must be obj" ) ;
+         detail = BSON( SPT_ERR << "Options must be obj" ) ;
          goto error ;
       }
       rc = _sptSdb.updateConfig( configs, options ) ;
@@ -2576,21 +2582,27 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObj configs ;
       BSONObj options ;
-      rc = arg.getBsonobj( 0, configs ) ;
+      rc = arg.getBsonobj( 0, configs, TRUE, TRUE ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
-         BSON( SPT_ERR << "Configs must be config" ) ;
+         detail = BSON( SPT_ERR << "Configs must be config" ) ;
          goto error ;
       }
       else if( SDB_OK != rc )
       {
-         BSON( SPT_ERR << "Configs must be obj" ) ;
+         detail = BSON( SPT_ERR << "Configs must be obj" ) ;
          goto error ;
+      }
+      else if ( SDB_OK == rc && configs.isEmpty() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Configs cannot be empty" ) ;
+         goto error ; 
       }
       rc = arg.getBsonobj( 1, options ) ;
       if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {
-         BSON( SPT_ERR << "Options must be obj" ) ;
+         detail = BSON( SPT_ERR << "Options must be obj" ) ;
          goto error ;
       }
       rc = _sptSdb.deleteConfig( configs, options ) ;
