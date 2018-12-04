@@ -1,5 +1,5 @@
 ﻿/************************************
-*@Description: 主表与子表不在同一个cs上，删除子表cl，清空缓存功能验证
+*@Description: 主表cs下存在子表，且其他子表在子表cs下，删除主表cs，清空缓存功能验证
 *@author:      zhaoyu
 *@createdate:  2018.1.25
 *@testlinkCase:seqDB-12999
