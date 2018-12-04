@@ -42,7 +42,7 @@ public class BucketVersioningController {
 
         String status = getVersioningStatus(httpServletRequest);
 
-        logger.info("bucket={}@versioning", bucketName);
+        logger.debug("put bucket versioning. bucket={}, status={}", bucketName, status);
 
         versioningService.putBucketVersioning(operator.getUserId(), bucketName, status);
         return ResponseEntity.ok()
@@ -55,6 +55,8 @@ public class BucketVersioningController {
                                               @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
+
+        logger.debug("get bucket versioning. bucket={}", bucketName);
 
         return ResponseEntity.ok()
                 .body(versioningService.getBucketVersioning(operator.getUserId(),bucketName));

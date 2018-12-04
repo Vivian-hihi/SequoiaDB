@@ -491,25 +491,41 @@ public class ObjectServiceImpl implements ObjectService {
             listObjectsResult.setKeyCount(count);
 
             if (dbCursor.hasNext()) {
+                Boolean isHasNext = true;
+                String lastCommonPrefix = null;
                 BSONObject record = dbCursor.getCurrent();
                 String key = record.get(ObjectMeta.META_KEY_NAME).toString();
-                if (null == queryContext){
-                    queryContext = contextManager.create(bucket.getBucketId());
-                    queryContext.setPrefix(prefix);
-                    queryContext.setStartAfter(startAfter);
-                    queryContext.setDelimiter(delimiter);
-                }
-
-                queryContext.setLastKey(key);
-                //record context
+                String lastKey = key;
                 if (null != delimiter) {
                     int delimiterIndex = key.indexOf(delimiter, prefixLen);
                     if (-1 != delimiterIndex) {
-                        queryContext.setLastCommonPrefix(key.substring(0, delimiterIndex+delimiterLen));
+                        lastCommonPrefix = key.substring(0, delimiterIndex+delimiterLen);
+                        String newLastKey = getNewLastkey(dbCursor, lastCommonPrefix, key);
+                        if (null == newLastKey){
+                            isHasNext = false;
+                        }else {
+                            lastKey = newLastKey;
+                        }
                     }
                 }
-                listObjectsResult.setIsTruncated(true);
-                listObjectsResult.setNextContinueToken(queryContext.getToken());
+
+                if (isHasNext) {
+                    if (null == queryContext) {
+                        queryContext = contextManager.create(bucket.getBucketId());
+                        queryContext.setPrefix(prefix);
+                        queryContext.setStartAfter(startAfter);
+                        queryContext.setDelimiter(delimiter);
+                    }
+
+                    queryContext.setLastKey(lastKey);
+                    if (lastCommonPrefix != null) {
+                        queryContext.setLastCommonPrefix(lastCommonPrefix);
+                    }
+                    listObjectsResult.setIsTruncated(true);
+                    listObjectsResult.setNextContinueToken(queryContext.getToken());
+                }else {
+                    contextManager.release(queryContext);
+                }
             } else {
                 contextManager.release(queryContext);
             }
@@ -543,7 +559,7 @@ public class ObjectServiceImpl implements ObjectService {
             //get sdb and cursor
             Boolean isSpecifiedVId = false;
             Boolean isExistKeyVersion = false;
-            if (versionIdMarker != null){
+            if (versionIdMarker != null && versionIdMarker.length() > 0){
                 isSpecifiedVId = true;
                 isExistKeyVersion = isExistKeyVersion(metaCsName, metaClName, metaHisClName,
                         keyMarker, versionIdMarker,bucket);
@@ -746,12 +762,14 @@ public class ObjectServiceImpl implements ObjectService {
         while(queryDbCursorCur.hasNext()){
             Boolean isCommonPrefix = false;
             CommonPrefix commonPrefix = null;
+            String curPrefix = null;
             BSONObject recordA = queryDbCursorCur.getNext();
             String keyA = recordA.get(ObjectMeta.META_KEY_NAME).toString();
             int delimiterIndex = keyA.indexOf(delimiter, prefixLen);
             if (-1 != delimiterIndex){
                 isCommonPrefix = true;
-                commonPrefix = new CommonPrefix(keyA.substring(0, delimiterIndex+delimiterLen), encodingType);
+                curPrefix = keyA.substring(0, delimiterIndex+delimiterLen);
+                commonPrefix = new CommonPrefix(curPrefix, encodingType);
                 if (!commonPrefixesList.contains(commonPrefix)){
                     commonPrefixesList.add(commonPrefix);
                     count++;
@@ -763,8 +781,10 @@ public class ObjectServiceImpl implements ObjectService {
             }
 
             if (count >= maxNumber) {
-                if (isCommonPrefix && queryDbCursorCur.hasNext()){
-                    recordVersionsTruncated(listVersionsResult, commonPrefix.getPrefix(), null);
+                if (isCommonPrefix){
+                    if (getNewLastkey(queryDbCursorCur, curPrefix, keyA) != null) {
+                        recordVersionsTruncated(listVersionsResult, commonPrefix.getPrefix(), null);
+                    }
                 }else if (!isCommonPrefix && (queryDbCursorCur.hasNext() || queryDbCursorHis != null)){
                     Version version = convertBsonToVersion(recordA, encodingType);
                     recordVersionsTruncated(listVersionsResult, version.getKey(), version.getVersionId());
@@ -1096,8 +1116,8 @@ public class ObjectServiceImpl implements ObjectService {
                     }
                 }
                 if (count >= maxNumber) {
-                    if (isCommonPrefix && (cursorCur.hasNext() || cursorHis != null)) {
-                        if (commonPrefix != null) {
+                    if (isCommonPrefix) {
+                        if (commonPrefix != null && getNewLastkey(cursorCur, curPrefix, keyA) != null) {
                             recordVersionsTruncated(listVersionsResult, commonPrefix.getPrefix(), null);
                         }
                     } else if (!isCommonPrefix && (cursorCur.hasNext() || cursorHis != null)) {
@@ -1147,6 +1167,27 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (S3ServerException e){
             throw e;
         }
+    }
+
+    private String getNewLastkey(QueryDbCursor cursorCur, String curCommonPrefix, String curKey)
+            throws S3ServerException{
+        if (null == cursorCur){
+            return null;
+        }
+
+        String lastKey = curKey;
+        while (cursorCur.hasNext()){
+            BSONObject recordA = cursorCur.getNext();
+            String keyA = recordA.get(ObjectMeta.META_KEY_NAME).toString();
+            if(keyA.startsWith(curCommonPrefix)){
+                lastKey = keyA;
+                continue;
+            }else {
+                return lastKey;
+            }
+        }
+
+        return null;
     }
 
     private Boolean generateNoVersionFlag(VersioningStatusType status){
