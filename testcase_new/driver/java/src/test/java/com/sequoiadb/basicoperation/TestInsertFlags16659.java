@@ -74,7 +74,8 @@ public class TestInsertFlags16659 extends SdbTestBase{
         obj2.put(OID, id2);
         obj2.put("a", 1);
         BSONObject result2 = cl.insert(obj2, DBCollection.FLG_INSERT_RETURN_OID);
-        Assert.assertEquals(result2.get(OID).toString(), id2);
+        Assert.assertEquals(result2.get(OID), id2);
+        Assert.assertEquals(cl.getCount(obj2), 1);
 
         // case 5: flag 值不正确  1,2,-1
         BSONObject obj3 = new BasicBSONObject().append("test1", 123);
