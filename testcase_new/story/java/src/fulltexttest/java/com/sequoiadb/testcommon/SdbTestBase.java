@@ -20,14 +20,16 @@ public class SdbTestBase {
     protected static int reservedPortEnd;
     protected static String reservedDir;
     protected static String workDir;
+    protected static String remoteUser;
+	 protected static String remotePwd;
 
     @Parameters({"HOSTNAME", "SVCNAME", "ESHOSTNAME", "ESSVCNAME", "CHANGEDPREFIX",
-            "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR"})
+            "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR", "REMOTEUSER", "REMOTEPASSWD"})
     @BeforeSuite
     public static void initSuite(String HOSTNAME, String SVCNAME, 
                                  String ESHOSTNAME, String ESSVCNAME, String COMMCSNAME,  
                                  int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR,
-                                 String WORKDIR) {
+                                 String WORKDIR, String REMOTEUSER, String REMOTEPASSWD) {
         hostName = HOSTNAME;
         serviceName = SVCNAME;
         esHostName = ESHOSTNAME;
@@ -39,6 +41,8 @@ public class SdbTestBase {
         workDir = WORKDIR;
         coordUrl = HOSTNAME + ":" + SVCNAME;
         esUrl = ESHOSTNAME + ":" + ESSVCNAME;
+        remotePwd = REMOTEPASSWD;
+		  remoteUser = REMOTEUSER;
 
         Sequoiadb db = null;
         try {
