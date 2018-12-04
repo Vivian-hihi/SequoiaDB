@@ -47,6 +47,7 @@
 namespace engine
 {
    class _dpsTransExecutor ;
+#pragma pack(4)
 
    // Lock Request Block ( LRB )
    class dpsTransLRB : public SDBObject
@@ -58,8 +59,8 @@ namespace engine
       UTIL_OBJIDX lrbHdrIdx ;       // idx of the LRB Header
       UTIL_OBJIDX nextLRBIdx ;      // idx of next LRB in the owner/waiter chain
       UINT64 refCounter ;           // lock reference counter
-      DPS_TRANSLOCK_TYPE lockMode ; // lock mode
-      UINT8 pad[7] ; 
+      DPS_TRANSLOCK_TYPE lockMode ; // lock mode, UINT8, 1 byte
+      UINT8 pad[3] ;                // 3 byte for padding
    } ;
 
 
@@ -81,6 +82,7 @@ namespace engine
       UTIL_OBJIDX    lrbHdrIdx    ; // index of 1st LRB Header in the chain
       ossSpinXLatch  hashHdrLatch ; // ossSpinXLatch, 48 bytes
    } ;
+#pragma pack()
 }
 
 #endif // DPSTRANSLRB_HPP_
