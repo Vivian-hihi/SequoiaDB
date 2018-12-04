@@ -51,7 +51,7 @@ typedef UINT32 UTIL_OBJIDX ;
 
 namespace engine
 {
-
+#pragma pack(4)
 //
 //
 // segment 0: a segment is an array of object ( T )
@@ -831,7 +831,7 @@ namespace engine
    error:
       goto done ;
    }
-
+#pragma pack()
 } // namespace engine
 
 #endif // UTIL_SEGMENT_HPP__
