@@ -7,15 +7,12 @@ import org.testng.Assert;
 
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.testcommon.*;
 
 import org.elasticsearch.client.*;
 
 public class FullTextUtils {
 
      public static final int INSERT_NUMS = 200000; // insert 20w datas
-     private static GroupMgr groupMgr;
 
     /**
      * @param esClient    
@@ -203,16 +200,4 @@ public class FullTextUtils {
           arrayList.addAll(uniqueSet);
           return arrayList;
       }
-     /**
-      * @param checkTimes
-      */ 
-      public static void checkInspect(int checkTimes) throws ReliabilityException {
-		groupMgr = new GroupMgr();
-		List<GroupWrapper> glist = groupMgr.getAllDataGroup();
-		for (int i = 0; i < glist.size(); i++) {
-			String groupName = glist.get(i).getGroupName();
-			GroupWrapper gwr = groupMgr.getGroupByName(groupName);
-			gwr.checkInspect(checkTimes);
-		}
-	}
 }
