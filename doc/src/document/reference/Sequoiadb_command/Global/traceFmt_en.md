@@ -39,7 +39,7 @@ the exceptions of `traceFmt()` are as below:
 
 | Error code | Error type | Description | Solution |
 | ------ | ------ | --- | ------ |
-| -3 | SDB_PERM | Permission Error. | Check the path of the output file is ok or not. |
+| -3 | SDB_PERM | Permission Error. | Check the path of the input and output file is ok or not. |
 | -4 | SDB_FNE | File Not Exist. | Check the input file exist or not. |
 | -6 | SDB_INVALIDARG | Invalid Argument. | Check the input format type is valid or not. |
 | -189 | SDB_PD_TRACE_FILE_INVALID | Trace file is not valid. | Check the input file is ok or not.	|
@@ -52,7 +52,7 @@ Since v1.0.
 
 ##EXAMPLES##
 
-1. 格式化输出文件
+1. Format trace input to output.
 
 	```lang-javascript
 	> traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
