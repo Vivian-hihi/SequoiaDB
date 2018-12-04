@@ -82,14 +82,11 @@ public class InsertUpdateDel12010 extends SdbTestBase {
         	FullTextUtils.checkFullSyncToES(esClient, db, csName, clName, fullIndexName, insertNum);
         	
         	//insert records
-        	GroupWrapper cLGroup = groupMgr.getGroupByName(groupName);
-            NodeWrapper cLGroupMaster = cLGroup.getMaster();
-            FaultMakeTask faultTask = KillNode.getFaultMakeTask(cLGroupMaster.hostName(),
-            		cLGroupMaster.svcName(), 1);  
-            TaskMgr mgr = new TaskMgr(faultTask); 
-            mgr.execute();
+            NodeWrapper cLGroupMaster = groupMgr.getGroupByName(groupName).getMaster();
+            cLGroupMaster.stop();
             insert();
-            Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
+            cLGroupMaster.start();
+        	System.out.println("===start end===");
             Assert.assertEquals(groupMgr.checkBusiness(600), true);
             
             FullTextUtils.checkFullSyncToES(esClient, db, csName, clName, fullIndexName, insertNum);
@@ -98,12 +95,10 @@ public class InsertUpdateDel12010 extends SdbTestBase {
             checkRecords(insertRecords, actRecords);
             
             //update records
-            cLGroupMaster = cLGroup.getMaster();
-            faultTask = KillNode.getFaultMakeTask(cLGroupMaster.hostName(), cLGroupMaster.svcName(), 1); 
-            mgr = new TaskMgr(faultTask);
-            mgr.execute();
+            cLGroupMaster = groupMgr.getGroupByName(groupName).getMaster();
+            cLGroupMaster.stop();
             update();
-            Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
+            cLGroupMaster.start();
             Assert.assertEquals(groupMgr.checkBusiness(600), true);
             
             FullTextUtils.checkFullSyncToES(esClient, db, SdbTestBase.csName, clName, fullIndexName, insertNum);
@@ -112,13 +107,10 @@ public class InsertUpdateDel12010 extends SdbTestBase {
             checkRecords(insertRecords, actRecords);
             
             //delete records
-            cLGroupMaster = cLGroup.getMaster();
-            faultTask = KillNode.getFaultMakeTask(cLGroupMaster.hostName(),
-            		cLGroupMaster.svcName(), 1);
-            mgr = new TaskMgr(faultTask); 
-            mgr.execute();
+            cLGroupMaster = groupMgr.getGroupByName(groupName).getMaster();
+            cLGroupMaster.stop();
             delete();
-            Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
+            cLGroupMaster.start();
             Assert.assertEquals(groupMgr.checkBusiness(600), true);
             FullTextUtils.checkFullSyncToES(esClient, db, SdbTestBase.csName, clName, fullIndexName, insertNum);
             actRecords = FullTextDBUtils.getRecordsFromCL(cl, (BSONObject)JSON.parse("{'':{$Text:{query:{match_all:{}}}}}"), 
@@ -147,8 +139,8 @@ public class InsertUpdateDel12010 extends SdbTestBase {
  			}
  			cl.insert(insertRecords);
              }catch (BaseException e){
-            	if(e.getErrorCode() != -129){
-            		Assert.fail("insert error!");
+            	if(e.getErrorCode() != -105){
+            		Assert.fail("insert error!"+e.getErrorCode());
             	}
          } finally {
              if (db != null) {
@@ -166,7 +158,7 @@ public class InsertUpdateDel12010 extends SdbTestBase {
                 cl.update("{a: 'a" +i+ "'}", "{$set: {a : 'a'}}", null);
             }
             }catch (BaseException e){
-            	if(e.getErrorCode() != -129){
+            	if(e.getErrorCode() != -105){
             		Assert.fail("insert error!");
             	}
         } finally {
@@ -184,7 +176,7 @@ public class InsertUpdateDel12010 extends SdbTestBase {
                 cl.delete("{a : 'a'}");
             }
             }catch (BaseException e){
-            	if(e.getErrorCode() != -129){
+            	if(e.getErrorCode() != -105){
             		Assert.fail("insert error!");
             	}
         } finally {

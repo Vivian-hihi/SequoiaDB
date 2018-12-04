@@ -82,10 +82,9 @@ public class AlterReplSize12079 extends SdbTestBase {
 				records.add(record);
 			}
 			cl.insert(records);
-			records.clear();
 		} catch (BaseException e) {
-			if (-321 == e.getErrorCode() || e.getErrorCode() != -129) {
-				throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
+			if (-321 == e.getErrorCode() || e.getErrorCode() != -105) {
+				throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---"+e.getErrorCode());
 			}
 		}
 	}
@@ -97,17 +96,11 @@ public class AlterReplSize12079 extends SdbTestBase {
 		    cl.createIndex(fullIndexName, "{\"a\":\"text\"}", false, false);
         	insertData();
         	FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, clName, fullIndexName, 5000);
-        	GroupWrapper cLGroup = groupMgr.getGroupByName(groupName);
-            NodeWrapper cLGroupMaster = cLGroup.getMaster();
-            TaskMgr mgr = new TaskMgr(); 
-            FaultMakeTask faultTask = KillNode.getFaultMakeTask(cLGroupMaster.hostName(),
-            		cLGroupMaster.svcName(), 1);  
-            AlterTask alterTask = new AlterTask();
-            mgr.addTask(faultTask);
-            mgr.addTask(alterTask);
-            mgr.execute();
+            NodeWrapper cLGroupMaster = groupMgr.getGroupByName(groupName).getMaster();
+            cl.setAttributes((BSONObject)JSON.parse("{ReplSize : 3}"));
+            cLGroupMaster.stop();
             insertData();
-            Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
+            cLGroupMaster.start();
             Assert.assertEquals(groupMgr.checkBusiness(600), true);
             DBCursor cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{Name:'" +csName+ "." +clName+ "'}", null, null);
             if(!cursor.getNext().get("ReplSize").equals(3) || cl.getCount() != 5000){
@@ -124,24 +117,6 @@ public class AlterReplSize12079 extends SdbTestBase {
 
     }
 
-    private class AlterTask extends OperateTask {
-		@Override
-        public void exec() throws Exception {
-            Sequoiadb db = null;
-            try {
-                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                cl.setAttributes((BSONObject)JSON.parse("{ReplSize : 3}"));
-                }catch (BaseException e){
-                	e.printStackTrace();
-            } finally {
-                if (db != null) {
-                    db.close();
-                }
-            }
-        }
-    }
-    
     @AfterClass
     public void tearDown() {
         try {
