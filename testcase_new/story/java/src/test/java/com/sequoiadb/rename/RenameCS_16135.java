@@ -63,14 +63,16 @@ public class RenameCS_16135 extends SdbTestBase{
 			if( !Arrays.asList(errnos).contains(error.getErrorCode()) ){
 				Assert.fail(reCSBNameThread.getErrorMsg());
 			}
-		}
+		}		
 		
 		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+			//TODO:1、如果CSBrename成功，需要检查下对应的cl是否正确，只是校验cl个数不严谨
 			if(csBRename){
 				RenameUtil.checkRenameCSResult(db, csNameB, csNameA, 1);
 			}else{
 				RenameUtil.checkRenameCSResult(db, csNameA, csNameB, 1);
 			}
+			//TODO:2、"NotExistCS16135B"--这个cs名没有定义
 			RenameUtil.checkRenameCSResult(db, "NotExistCS16135B", newCSNameA, 1);
 		}
 	}
@@ -81,7 +83,7 @@ public class RenameCS_16135 extends SdbTestBase{
 			CommLib.clearCS(sdb, csNameA);
 			CommLib.clearCS(sdb, csNameB);
 			CommLib.clearCS(sdb, newCSNameA);
-		} finally {
+		} finally {//TODO:3、需要格式化，=左右加空格
 			if(sdb!=null){
 				sdb.close();
 			}

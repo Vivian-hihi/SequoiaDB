@@ -67,12 +67,13 @@ public class RenameCL_16081 extends SdbTestBase{
 			if( !Arrays.asList(errnosB).contains(errorB.getErrorCode()) ){
 				Assert.fail(reCLBNameThread.getErrorMsg());
 			}
-		}
+		}		
 		
 		//java驱动会有缓存,需要从新获取连接,变量名缩写已修改
 		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
 			if(renameCLA && !renameCLB){
 				RenameUtil.checkRenameCLResult(db, SdbTestBase.csName, clNameA, newCLName);
+				//TODO:1、这里如果是判断clNameB已存在，直接用判断cl接口校验，传入一个不存在的cl名没有意义，也没有加注释描述
 				RenameUtil.checkRenameCLResult(db, SdbTestBase.csName, "16081NotExistCLB", clNameB);
 			}else if(!renameCLA && renameCLB){
 				RenameUtil.checkRenameCLResult(db, SdbTestBase.csName, clNameB, newCLName);

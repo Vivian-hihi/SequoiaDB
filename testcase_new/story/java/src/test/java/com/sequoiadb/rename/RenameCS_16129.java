@@ -68,8 +68,7 @@ public class RenameCS_16129 extends SdbTestBase{
 		Random random = new Random();
 		random.nextBytes(data);
 		MD5 = RenameUtil.getMd5(data);
-		lobIdList = RenameUtil.putLob(cl, data, lobNum);
-		
+		lobIdList = RenameUtil.putLob(cl, data, lobNum);		
 	}
 	
 	@Test(enabled = false)
@@ -120,6 +119,7 @@ public class RenameCS_16129 extends SdbTestBase{
 			}
 		}
 		
+		//TOOD:1、切分表建议设置replsize为0或者设置从主节点查询，防止校验结果出现弱一致性
 		try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
 			RenameUtil.checkRenameCSResult(db, csName, newCSName, 1);
 			checkLob(db, newCSName, clName);
@@ -204,6 +204,7 @@ public class RenameCS_16129 extends SdbTestBase{
 	}
 	
 	private void checkLob(Sequoiadb db, String csName, String clNmae){
+		//TODO:2、校验结果和文本用例设计不一致，此处只是校验了lob内容，没有校验lob数量
 		DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 		DBCursor cur = cl.listLobs();
 		while(cur.hasNext()){

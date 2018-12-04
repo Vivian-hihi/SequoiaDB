@@ -48,7 +48,7 @@ public class RenameCL_16084 extends SdbTestBase{
 		
 		boolean renameCL = renameCLThread.isSuccess();
 		boolean createCL = createCLThread.isSuccess();
-		
+		//TODO:1、和文本用例测试点不符，请确认用例
 		Assert.assertTrue(renameCL, renameCLThread.getErrorMsg());
 		
 		if(!createCL){
@@ -60,9 +60,10 @@ public class RenameCL_16084 extends SdbTestBase{
 		}
 		
 		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
-			if(renameCL && !createCL){
+			if(renameCL && !createCL){	
 				RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
 			}else if(renameCL && createCL){
+				//TODO:2、校验不严谨，这里无法判断旧cl是残留还是新建的cl，需要补充测试点验证
 				cs = db.getCollectionSpace(SdbTestBase.csName);
 				if(!cs.isCollectionExist(clName)){
 					Assert.fail("cl is been create, should exist");

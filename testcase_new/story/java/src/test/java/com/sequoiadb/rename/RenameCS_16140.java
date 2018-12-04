@@ -45,6 +45,7 @@ public class RenameCS_16140 extends SdbTestBase{
 		if (CommLib.isStandAlone(sdb)) {
 			throw new SkipException("skip StandAlone");
 		}
+		//TODO:1、不需要屏蔽一组三节点模式
 		List<String> groupsName = CommLib.getDataGroupNames(sdb);
 		if (groupsName.size() < 2) {
 			throw new SkipException("current environment less than tow groups ");
@@ -71,16 +72,16 @@ public class RenameCS_16140 extends SdbTestBase{
 			if( !Arrays.asList(errnos).contains(error.getErrorCode()) ){
 				Assert.fail(detachThread.getErrorMsg());
 			}
-		}
-		
+		}		
+
 		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
 			RenameUtil.checkRenameCSResult(db, mainCSName, newMainCSName, 0);
-			if(detachThread.isSuccess()){
+			if(detachThread.isSuccess()){				
 				checkSnapshot(db, "", false);
 			}else{
 				checkSnapshot(db, newMainCSName+"."+mainCLName, true);
 			}
-		}
+		}//TODO:3、和文本测试用例结果不符，请确认检测点
 	}
 	
 	@AfterClass
@@ -139,7 +140,7 @@ public class RenameCS_16140 extends SdbTestBase{
 			if(!mainCLName.equals(fullMainCLName)){
 				Assert.fail("cl already detach, should not exist, snapshot:"+obj.toString());
 			}
-		}else{
+		}else{//TODO:2、测试点不严谨，如果此时子表被关联删除，用例不会报错
 			if(obj.get("MainCLName") != null){
 				Assert.fail("cl not detach, snapshot:"+obj.toString());
 			}

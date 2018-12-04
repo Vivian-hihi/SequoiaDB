@@ -55,6 +55,7 @@ public class RenameCS_16136 extends SdbTestBase{
 	
 	@Test
 	public void test(){ 
+		//TODO:1、测试点不正确，用例为并发修改主表和子表CS，不是修改子表名，请确认下测试点
 		RenameCSThread reCSNameThread = new RenameCSThread();
 		RenameCLThread reCLNameThread = new RenameCLThread();
 		

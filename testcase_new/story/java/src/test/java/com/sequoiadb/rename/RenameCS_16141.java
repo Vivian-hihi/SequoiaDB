@@ -43,6 +43,7 @@ public class RenameCS_16141 extends SdbTestBase{
 		if (CommLib.isStandAlone(sdb)) {
 			throw new SkipException("skip StandAlone");
 		}
+		//TODO:1、这里为啥要屏蔽一组的场景？
 		List<String> groupsName = CommLib.getDataGroupNames(sdb);
 		if (groupsName.size() < 2) {
 			throw new SkipException("current environment less than tow groups ");
@@ -59,9 +60,9 @@ public class RenameCS_16141 extends SdbTestBase{
 		
 		reCSNameThread.start();
 		atttachThread.start();
-		
+		//TODO:2、没有覆盖到renameCS失败的结果，请确认测试结果
 		Assert.assertTrue(reCSNameThread.isSuccess(), reCSNameThread.getErrorMsg());
-		
+		//TODO:3、测试用例没有attach失败的结果，请确认
 		if(!atttachThread.isSuccess()){
 			Integer[] errnos = { -23 };
 			BaseException error = (BaseException)atttachThread.getExceptions().get(0);

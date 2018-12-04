@@ -64,8 +64,8 @@ public class RenameCS_16132 extends SdbTestBase{
 			if( !Arrays.asList(errnosB).contains(errorB.getErrorCode()) ){
 				Assert.fail(reCLNameThread.getErrorMsg());
 			}
-		}
-		
+		}		
+	
 		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
 			if(csRename&&clRename){
 				RenameUtil.checkRenameCSResult(db, csName, newCSName, 1);
