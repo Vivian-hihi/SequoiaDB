@@ -58,7 +58,7 @@ public class SplitAndInsert12021 extends SdbTestBase {
     public void test() {
 		CollectionSpace cs = sdb.getCollectionSpace(csName);
 		cl.createIndex(fullTextIndexName, (BSONObject)JSON.parse("{a : 'text', b : 'text'}"), false, false);
-		cl.split(srcGroup, desGroup, (BSONObject)JSON.parse("{a : 1}"), (BSONObject)JSON.parse("{a : 1000}"));
+		cl.split(srcGroup, desGroup, (BSONObject)JSON.parse("{a : 'a1'}"), (BSONObject)JSON.parse("{a : 'a1000'}"));
 		insertData();
 		FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, fullTextIndexName, insertNum);
 		
