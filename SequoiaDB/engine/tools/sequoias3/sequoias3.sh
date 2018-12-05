@@ -77,7 +77,7 @@ function Start()
   port=$1
 
   packagepath="$BashPath/$package"
-  confpath=$BashPath"/conf"
+  confpath=$BashPath"/config"
   if [ -n "$2" ];then
     confpath=$2
   fi

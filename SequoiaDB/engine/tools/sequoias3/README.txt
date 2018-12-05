@@ -6,7 +6,7 @@
   1.3在元数据集合空间下，创建桶集合BucketList，并对ID，Name创建唯一索引
   （可参考createCSCLexample.js安装脚本）
   1.5数据节点下配置transactionon=true，transisolation=1,并重启数据节点
-2.修改jar包同级的conf目录中application.properties配置文件
+2.修改jar包同级的config目录中application.properties配置文件
   2.1修改sdbs3.sequoiadb.url中的数据库IP地址和coord端口，与安装数据库的协调节点IP、端口保
   持一致。
   2.2修改元数据的集合空间名称和对象数据的集合空间，如果使用默认值则不需要修改，确保数据库
