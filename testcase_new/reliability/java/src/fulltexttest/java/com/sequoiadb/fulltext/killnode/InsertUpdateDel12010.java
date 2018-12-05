@@ -8,7 +8,6 @@ import java.util.List;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.elasticsearch.client.Client;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -18,19 +17,20 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
-import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.fulltext.FullTextDBUtils;
 import com.sequoiadb.fulltext.FullTextESUtils;
 import com.sequoiadb.fulltext.FullTextUtils;
-import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.TaskMgr;
-
+/**
+ * @Description seqDB-12079: 集合中存在全文索引，修改普通集合的副本数 
+ * @author xiaoni Zhao
+ * @date 2018/12/3
+ */
 public class InsertUpdateDel12010 extends SdbTestBase {
 	private String clName = "ES_cl_12010";
     private CollectionSpace cs;
@@ -46,6 +46,11 @@ public class InsertUpdateDel12010 extends SdbTestBase {
     @BeforeClass()
     public void setUp() {
         try {
+        	sdb = new Sequoiadb(SdbTestBase.coordUrl,"","");
+    		CommLib commLib = new CommLib();
+    		if (commLib.isStandAlone(sdb)) {
+    			throw new SkipException("StandAlone environment!");
+    		}
             System.out.println(
                     "the TestCase Name:" + getClass().getName() + ". the TestCase begin at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
@@ -56,8 +61,6 @@ public class InsertUpdateDel12010 extends SdbTestBase {
                 throw new SkipException("checkBusiness return false");
             }
             groupName = groupMgr.getAllDataGroupName().get(0);
-
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             cs = sdb.getCollectionSpace(csName);
             cl = cs.createCollection(clName, (BSONObject) JSON
                     .parse("{Group:'"+groupName+"', ReplSize : 7}"));

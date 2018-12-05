@@ -18,6 +18,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
@@ -48,6 +49,11 @@ public class AlterReplSize12079 extends SdbTestBase {
     @BeforeClass()
     public void setUp() {
         try {
+        	sdb = new Sequoiadb(SdbTestBase.coordUrl,"","");
+    		CommLib commLib = new CommLib();
+    		if (commLib.isStandAlone(sdb)) {
+    			throw new SkipException("StandAlone environment!");
+    		}
             System.out.println(
                     "the TestCase Name:" + getClass().getName() + ". the TestCase begin at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
@@ -59,7 +65,6 @@ public class AlterReplSize12079 extends SdbTestBase {
             }
             groupName = groupMgr.getAllDataGroupName().get(0);
 
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             cs = sdb.getCollectionSpace(csName);
             cl = cs.createCollection(clName, (BSONObject) JSON
                     .parse("{Group:'"+groupName+"', ReplSize : 1}"));
