@@ -356,6 +356,11 @@ namespace engine
             pLRBHdr = NULL ;
          } 
       }
+      else
+      {
+         PD_LOG( PDERROR,
+                 "Invalid lockId:%s", lockId.toString().c_str() ) ;
+      }
       return found ;
    }
 
@@ -710,26 +715,27 @@ namespace engine
    //              one in waiting if its lock mode is compatible with
    //              current waiter
    // Input:
-   //    dpsTxExectr  -- dpsTxExectr
-   //
-   // Output:
-   //    hdrIdx  -- the LRB Header index in the waiter LRB
-   //    pLRBHdr -- the LRB Header address/pointer
-   // Return:     None
+   //    dpsTxExectr     -- pointer to _dpsTransExecutor
+   //    removeLRBHeader -- whether remove LRB Header when owner, waiter,
+   //                       upgrade queue are all empty
+   // Output:  none
+   // Return:  none
    //
    void dpsTransLockManager::_removeFromUpgradeOrWaitList
    (
-      _dpsTransExecutor *   dpsTxExectr,
-      UTIL_OBJIDX         & hdrIdx,
-      dpsTransLRBHeader * & pLRBHdr
+      _dpsTransExecutor * dpsTxExectr,
+      const UTIL_OBJIDX   bktIdx,
+      const BOOLEAN       removeLRBHeader
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 
       UTIL_OBJIDX idx = dpsTxExectr->getWaiterLRBIdx() ;
       UTIL_OBJIDX idxNext = UTIL_INVALID_OBJ_INDEX ;
+      UTIL_OBJIDX hdrIdx  = UTIL_INVALID_OBJ_INDEX ;
       dpsTransLRB *pLRB = NULL , *plrb = NULL ;
-      
+      dpsTransLRBHeader * pLRBHdr = NULL ;
+
       if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
       {
          pLRB = _getLRBPtrByIdx( idx ) ;
@@ -777,6 +783,22 @@ namespace engine
 
          // release the waiter LRB
          _releaseLRB( idx ) ;      
+
+         // when LRB Header is empty, release it if necessary
+         SDB_ASSERT( ( IS_VALID_SEG_OBJ_INDEX( hdrIdx ) && pLRBHdr ),
+                     "Invalid LRB Header." ) ;
+         if (    removeLRBHeader
+              && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx   ) )
+              && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
+              && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx  ) ) )
+         {
+            // remove the LRB Header from the list
+            _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdrIdx, hdrIdx ) ;
+            // release the LRB Header
+            _releaseLRBHdr( hdrIdx ) ;
+            hdrIdx = UTIL_INVALID_OBJ_INDEX ;
+            pLRBHdr = NULL ;
+         }
       }
    }
 
@@ -1083,14 +1105,14 @@ namespace engine
             if ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
             {
                pLRB = _getLRBPtrByIdx( lrbIdx ) ;
-            }
-            if ( pLRB && dpsLockCoverage( pLRB->lockMode, requestLockMode ) )
-            {
-               if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
+               if ( dpsLockCoverage( pLRB->lockMode, requestLockMode ) )
                {
-                  pLRB->refCounter++ ;
+                  if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
+                  {
+                     pLRB->refCounter++ ;
+                  }
+                  goto done ;
                }
-               goto done ;
             }
          }
       }
@@ -1431,6 +1453,9 @@ namespace engine
       rc = _pLRBHdrMgr->acquire( hdrIdxNew, pLRBHdrNew ) ;
       if ( SDB_OK != rc )
       {
+         // release LRB in case failed to acquire LRB Header
+         _releaseLRB( lrbIdxNew ) ;
+
          PD_LOG( PDERROR,
                  "Failed to acquire a free LRB Header (rc=%d)", rc );
          goto error ;
@@ -1463,7 +1488,7 @@ namespace engine
 
    //
    // Description: acquire a lock with given mode
-   // Function:    acquire a lock with given mode
+   // Function:    acquire a lock with requested mode
    //              . if the request is fulfilled, LRB is added to owner list
    //                and EDU LRB chain ( all locks in same TX ). 
    //              . if the lock is record lock, intent lock on collection
@@ -1477,17 +1502,20 @@ namespace engine
    //              . when it is woken up from lock waiting,
    //                it will try to acquire the lock again
    // Input:
-   //    dpsTxExectr     -- dpsTxExectr
+   //    dpsTxExectr     -- dpsTxExectr ( per EDU, similar to eduCB,
+   //                                     isolate pmd from dps )
    //    lockId          -- lock Id
    //    requestLockMode -- lock mode being requested
+   //    pContext        -- pointer to context( dms, index )
    // Output:
-   //    pdpsTxResInfo   -- pointer to dpsTransRetInfo
+   //    pdpsTxResInfo   -- pointer to dpsTransRetInfo, a structure used to
+   //                       save the conflict lock info
    // Return:
-   //     SDB_OK,
-   //     SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST,
-   //     SDB_DPS_TRANS_APPEND_TO_WAIT,
-   //     SDB_INTERRUPT,
-   //     SDB_TIMEOUT,
+   //     SDB_OK,                                 -- lock is acquired
+   //     SDB_DPS_TRANS_APPEND_TO_WAIT,           -- put on wait/upgrade list
+   //     SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST,   -- invalid upgrade request
+   //     SDB_INTERRUPT,                          -- lock wait interrrupted
+   //     SDB_TIMEOUT,                            -- lock wait timeout elapsed
    //     or other errors
    //
    INT32 dpsTransLockManager::acquire
@@ -1500,7 +1528,6 @@ namespace engine
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 
       INT32 rc  = SDB_OK ,
             rc2 = SDB_OK ;
@@ -1509,10 +1536,18 @@ namespace engine
       BOOLEAN isIntentLockAcquired = FALSE ;
 
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
-      BOOLEAN bLatched = FALSE ;
+      BOOLEAN bLatched   = FALSE ;
+
+      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+      if ( ! lockId.isValid() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR,
+                 "Invalid lockId:%s", lockId.toString().c_str() ) ;
+         goto error ;
+      }
 
       // get intent lock at first
-      // it is not need to get intent lock while lock space
       if ( ! lockId.isRootLevel() )
       {
          iLockId   = lockId.upOneLevel() ;
@@ -1529,123 +1564,123 @@ namespace engine
       bktIdx = _getBucketNo( lockId ) ;
 
    acquireRetry:
+      //
       // acquire the lock
-      // _tryAcquireOrTest acquires bucket latch by default unless the input
-      // parameter, bLatched, is set to TRUE; and it always releases the latch
-      // before returns
+      //
       rc = _tryAcquireOrTest( dpsTxExectr, lockId, requestLockMode,
                               DPS_TRANSLOCK_OP_MODE_ACQUIRE,
                               bktIdx,
                               bLatched,
                               pdpsTxResInfo ) ;
+      // _tryAcquireOrTest acquires bucket latch by default unless the input
+      // parameter, bLatched, is set to TRUE; and it always releases the latch
+      // before returns
       bLatched = FALSE ;
-      // if needs to wait
-      if ( SDB_DPS_TRANS_APPEND_TO_WAIT == rc )
+
+      if ( SDB_OK == rc )
       {
-         rc2 = SDB_OK ;
-
-         // pause the context before waiting the lock
-         if ( pContext )
-         {
-            rc2 = pContext->pause() ;
-         }
-
-         // wait for the lock
-         if ( SDB_OK == rc2 )
-         {
-            rc = _waitLock( dpsTxExectr ) ;
-         }
-
-         // resume context if the context has been paused
-         if ( ( pContext ) && ( SDB_OK == rc2 ) )
-         {
-            rc2 = pContext->resume() ;
-         }
-
-         // latch before remove it from upgrade or waiter list
-         if ( ! bLatched )
-         {
-            _acquireOpLatch( bktIdx ) ; 
-            bLatched = TRUE ;
-         }
-
-         // remove from upgrade or waiter list
-         UTIL_OBJIDX         hdrIdx  = UTIL_INVALID_OBJ_INDEX ;
-         dpsTransLRBHeader * pLRBHdr = NULL ;
-         _removeFromUpgradeOrWaitList( dpsTxExectr, hdrIdx, pLRBHdr ) ;
-
-         // when _waitLock fails, either timeout or interrupted 
-         // check if we need remove the LRB Header.
-         // The reason we don't do this in _removeFromUpgradeOrWaitList
-         // is if _waitLock returns success when retry, _tryAcquireOrTest,
-         // will add the LRB Header back again. 
-         if (    ( SDB_OK != rc ) 
-              && bLatched
-              && IS_VALID_SEG_OBJ_INDEX( hdrIdx )
-              && pLRBHdr
-              && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx   ) )
-              && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
-              && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx  ) ) )
-         {
-            // remove the LRB Header from the list
-            _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdrIdx, hdrIdx ) ;
-            // release the LRB Header
-            _releaseLRBHdr( hdrIdx ) ;
-            hdrIdx = UTIL_INVALID_OBJ_INDEX ;
-            pLRBHdr = NULL ;
-         }
-
-         // retry acquire the lock if it is woken up
-         //   . SDB_OK == rc = _waitLock(), it has been woken up
-         //   . SDB_OK == rc2, context resumed successfully
-         //   . bLatched, holding the bucket latch
-         if ( ( SDB_OK == rc ) && ( SDB_OK == rc2 ) && bLatched )
-         {
-            // need to hold the latch before retry acquiring the lock
-            // to avoid race condition
-            goto acquireRetry ;
-         }
-
-         // unlatch after remove it from upgrade/waiter list
-         if ( bLatched )
-         {
-            _releaseOpLatch( bktIdx ) ;
-            bLatched = FALSE ;
-         }
-
-         if ( ( SDB_OK != rc ) || ( SDB_OK != rc2 ) )
-         {
-            // failed to pause or resume context, or
-            // wait lock failed due to timeout or interrupted etc on,
-            // shall release the upper level lock
-            if ( isIntentLockAcquired )
-            {
-               release( dpsTxExectr, iLockId, FALSE ) ;
-               isIntentLockAcquired = FALSE ;
-            }
-            // set recode to rc2 when _waitLock succeeded but resume()
-            // or pause failed
-            if ( ( SDB_OK != rc2 ) && ( SDB_OK == rc ) )
-            {
-               rc = rc2 ;
-            }
-         }
+         // lock acquired sucessfully, job done
+         goto done ;
       }
+      else if ( SDB_DPS_TRANS_APPEND_TO_WAIT == rc )
+      {
+         // checks if need to process lock waiting logic
+         goto LockWaiting ;
+      }
+      else
+      {
+         // lock request is neither fulfilled nor put on wait
+         goto error ;
+      }
+
    done:
+      return rc ;
+   
+   LockWaiting:
+      //
+      // Processing lock waiting. 
+      //   at this time the lock request is put on upgrade or wait queue.
+      //
+ 
+      // init rc2. it is used to mark whether the context has
+      // been successfully paused / resumed
+      rc2 = SDB_OK ;
+
+      // pause the context before waiting the lock
+      if ( pContext )
+      {
+         rc2 = pContext->pause() ;
+      }
+      if ( SDB_OK != rc2 )
+      {
+         goto postLockWaiting ;
+      }
+     
+      // wait for the lock
+      rc = _waitLock( dpsTxExectr ) ;
+
+      // resume context
+      if ( pContext )
+      {
+         rc2 = pContext->resume() ;
+      }
+
+   postLockWaiting:
+      // remove the LRB from upgrade or waiter list and remove the empty
+      // LRB Header if it is needed
+      if ( ! bLatched )
+      {
+         // need latch bucket before remove it from upgrade or waiter list
+         _acquireOpLatch( bktIdx ) ; 
+         bLatched = TRUE ;
+      }
+
+      // remove the LRB from upgrade or waiter list and remove the empty
+      // LRB Header only when it is needed, i.e., when _waitLock() fails( either
+      // timeout duration elapsed or be interrupted )
+      // The reason removing the empty LRB Header only when _waitLock() fails
+      // is if _waitLock returns success, when retry acquiring the lock,
+      // _tryAcquireOrTest(), the LRB Header will be added back again.
+      _removeFromUpgradeOrWaitList( dpsTxExectr, bktIdx, ( SDB_OK != rc ) ) ;
+
+      // retry acquire the lock when following conditions are satisfied:
+      //   . SDB_OK == rc = _waitLock(), it has been woken up
+      //   . SDB_OK == rc2, context resumed successfully
+      //   . bLatched, holding the bucket latch, to avoid race condition
+      //     between itself and the one is woken up
+      if ( ( SDB_OK == rc ) && ( SDB_OK == rc2 ) && bLatched )
+      {
+         goto acquireRetry ;
+      }
+
       if ( bLatched )
       {
          _releaseOpLatch( bktIdx ) ;
          bLatched = FALSE ;
       }
-      return rc;
+
+      // when _waitLock() fails ( timeout or be interrupted ), or pause/resume
+      // context fails, we will need to release upper level intent lock
+
+      // set recode to rc2 when _waitLock() succeeded but resume()
+      // or pause() failed
+      if ( ( SDB_OK != rc2 ) && ( SDB_OK == rc ) )
+      {
+         rc = rc2 ;
+      }
 
    error:
+      if ( bLatched )
+      {
+         _releaseOpLatch( bktIdx ) ;
+         bLatched = FALSE ;
+      }
       if ( isIntentLockAcquired )
       {
          release( dpsTxExectr, iLockId, FALSE ) ;
          isIntentLockAcquired = FALSE ;
       }
-      goto done;
+      goto done ;
    }
 
 
@@ -1702,8 +1737,10 @@ namespace engine
          if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
          {
             // lookup owner list to find the LRB with same eduid
-            ownerLrbIdx = pLRBHdr->ownerLRBIdx ;
-            pOwnerLRB   = NULL ;
+            ownerLrbIdx   = pLRBHdr->ownerLRBIdx ;
+            pOwnerLRB     = NULL ;
+            prevOwnerIdx  = UTIL_INVALID_OBJ_INDEX ; 
+            pPrevOwnerLRB = NULL ;
             if ( _getLRBByEDUId( eduId,
                                  ownerLrbIdx,  pOwnerLRB,
                                  prevOwnerIdx, pPrevOwnerLRB ) ) 
@@ -1726,8 +1763,7 @@ namespace engine
                   {
                      pLRBHdr->ownerLRBIdx = pOwnerLRB->nextLRBIdx ;
                   }
-                  else if (    IS_VALID_SEG_OBJ_INDEX( prevOwnerIdx )
-                            && pPrevOwnerLRB )
+                  else if ( IS_VALID_SEG_OBJ_INDEX( prevOwnerIdx ) )
                   {
                      pPrevOwnerLRB->nextLRBIdx = pOwnerLRB->nextLRBIdx ;
                   }
@@ -1742,8 +1778,7 @@ namespace engine
                      // upgrade list is not empty and the owner is the last one
 
                      pWaiterLRB = _getLRBPtrByIdx( pLRBHdr->upgradeLRBIdx ) ;
-                     if ( IS_VALID_SEG_OBJ_INDEX( prevOwnerIdx ) &&
-                          pPrevOwnerLRB )
+                     if ( IS_VALID_SEG_OBJ_INDEX( prevOwnerIdx ) )
                      {
                         // exists a LRB previous to current owner LRB
                         if ( dpsIsLockCompatible( pPrevOwnerLRB->lockMode,
@@ -1769,8 +1804,7 @@ namespace engine
                   {
                      // waiter list is not empty and the owner is the last one
                      pWaiterLRB = _getLRBPtrByIdx( pLRBHdr->waiterLRBIdx ) ;
-                     if ( IS_VALID_SEG_OBJ_INDEX( prevOwnerIdx ) &&
-                          pPrevOwnerLRB )
+                     if ( IS_VALID_SEG_OBJ_INDEX( prevOwnerIdx ) )
                      {
                         // exists a LRB previous to current owner LRB
                         if ( dpsIsLockCompatible( pPrevOwnerLRB->lockMode,
@@ -1855,16 +1889,24 @@ namespace engine
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 
-      dpsTransLockId iLockId ;
-
-      // main logic of release by lockId
-      _release( dpsTxExectr, lockId, bForceRelease ) ;
-
-      // release the intent lock
-      if ( ! lockId.isRootLevel() )
+      if ( lockId.isValid() )
       {
-         iLockId = lockId.upOneLevel() ;
-         release( dpsTxExectr, iLockId, bForceRelease ) ;
+         dpsTransLockId iLockId ;
+
+         // main logic of release by lockId
+         _release( dpsTxExectr, lockId, bForceRelease ) ;
+
+         // release the intent lock
+         if ( ! lockId.isRootLevel() )
+         {
+            iLockId = lockId.upOneLevel() ;
+            release( dpsTxExectr, iLockId, bForceRelease ) ;
+         }
+      }
+      else
+      {
+         PD_LOG( PDERROR,
+                 "Invalid lockId:%s", lockId.toString().c_str() ) ;
       }
       return ;
    }
@@ -1903,6 +1945,11 @@ namespace engine
             _releaseAll( dpsTxExectr, iLockId ) ;
          }
       }
+      else
+      {
+         PD_LOG( PDERROR,
+                 "Invalid lockId:%s", lockId.toString().c_str() ) ;
+      }
       return ;
    }
 
@@ -1922,8 +1969,7 @@ namespace engine
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 
-      if (   ( dpsTxExectr )
-          && IS_VALID_SEG_OBJ_INDEX( dpsTxExectr->getLastLRBIdx() ) )
+      if ( IS_VALID_SEG_OBJ_INDEX( dpsTxExectr->getLastLRBIdx() ) )
       {
          dpsTransLRB       *pLRB ;
          dpsTransLRBHeader *pLRBHdr ;
@@ -1942,6 +1988,9 @@ namespace engine
             {
                pLRBHdr = getLRBHdrPtrByIdx( hdrIdx ) ;
                lockId  = pLRBHdr->lockId ;
+
+               SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+
                // release the lock 
                _releaseAll( dpsTxExectr, lockId ) ;
             }
@@ -1988,10 +2037,7 @@ namespace engine
    void dpsTransLockManager::_wakeUp( _dpsTransExecutor *dpsTxExectr )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTransExecutor can't be NULL" ) ;
-      if ( dpsTxExectr )
-      {
-         dpsTxExectr->wakeup() ;
-      }
+      dpsTxExectr->wakeup() ;
    }
 
 
@@ -2007,14 +2053,8 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       SDB_ASSERT( dpsTxExectr, "dpsTransExecutor can't be NULL" ) ;
-      if ( dpsTxExectr )
-      {     
-         rc = dpsTxExectr->wait( _lockTimeout.fetch() ) ;
-      }
-      else
-      {
-         rc = SDB_SYS ;
-      }
+      rc = dpsTxExectr->wait( _lockTimeout.fetch() ) ;
+
       return rc ;
    }
 
@@ -2052,13 +2092,21 @@ namespace engine
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 
       INT32 rc = SDB_OK ;
       dpsTransLockId iLockId;
       DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
       BOOLEAN isIntentLockAcquired = FALSE;
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
+
+      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+      if ( ! lockId.isValid() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR,
+                 "Invalid lockId:%s", lockId.toString().c_str() ) ;
+         goto error ;
+      }
 
       // get intent lock at first
       // it is not need to get intent lock while lock space
@@ -2084,8 +2132,14 @@ namespace engine
                               bktIdx,
                               FALSE,
                               pdpsTxResInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
    done:
       return rc;
+
    error:
       if ( isIntentLockAcquired )
       {
@@ -2125,12 +2179,20 @@ namespace engine
    )
    {
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 
       INT32 rc = SDB_OK;
       dpsTransLockId iLockId;
       DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
+
+      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+      if ( ! lockId.isValid() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR,
+                 "Invalid lockId:%s", lockId.toString().c_str() ) ;
+         goto error ;
+      }
 
       // get intent lock at first
       // it is not need to get intent lock while lock space
@@ -2156,6 +2218,10 @@ namespace engine
                               bktIdx,
                               FALSE,
                               pdpsTxResInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    done:
       return rc;
    error:
@@ -2180,6 +2246,14 @@ namespace engine
       UTIL_OBJIDX hdrIdx = UTIL_INVALID_OBJ_INDEX ;
       dpsTransLRBHeader *pLRBHdr = NULL ;
 
+      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+      if ( ! lockId.isValid() )
+      {
+         PD_LOG( PDERROR,
+                 "Invalid lockId:%s", lockId.toString().c_str() ) ;
+         goto error ;
+      }
+
       // calculate the hash index by lockId
       bktIdx = _getBucketNo( lockId ) ;
 
@@ -2203,7 +2277,10 @@ namespace engine
       // free LRB Header list latch
       _releaseOpLatch( bktIdx ) ;
 
+   done:
       return result ;
+   error:
+      goto done ;
    }
 
 
