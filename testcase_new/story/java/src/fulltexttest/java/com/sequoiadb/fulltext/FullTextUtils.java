@@ -114,6 +114,7 @@ public class FullTextUtils {
               }
               else {
                   doTimes++;
+                  System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes + ", actCount: " + actCount + ", expectCount: " + expectCount);
                   try {
                       Thread.sleep(1000);
                   } catch (InterruptedException e) {
@@ -123,7 +124,7 @@ public class FullTextUtils {
 
           }
           // after count fininsh sync
-          System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes + ", actCount: " + actCount + ", expectCount: " + expectCount);	  
+//          System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes + ", actCount: " + actCount + ", expectCount: " + expectCount);	  
 
           // print message while not finish sync
           String msg = "";
@@ -173,6 +174,7 @@ public class FullTextUtils {
               }  
               else {
                   doTimes++;
+                  System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes + ", commitIDs: " + commitIDs.toString() + ", lastLogicalIDs: " + lastLogicalIDs.toString());
                   try {
                       Thread.sleep(1000);
                   } catch (InterruptedException e) {
@@ -183,7 +185,7 @@ public class FullTextUtils {
           }
 
           // after lid finish sync
-          System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes + ", commitIDs: " + commitIDs.toString() + ", lastLogicalIDs: " + lastLogicalIDs.toString());
+//          System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes + ", commitIDs: " + commitIDs.toString() + ", lastLogicalIDs: " + lastLogicalIDs.toString());
 		 
           // print message while not finish sync
           String msg = "";
