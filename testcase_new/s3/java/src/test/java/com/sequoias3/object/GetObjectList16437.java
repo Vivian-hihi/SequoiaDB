@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -33,7 +34,6 @@ public class GetObjectList16437 extends S3TestBase {
 	@BeforeClass
 	private void setUp() throws Exception {
 		s3Client = CommLib.buildS3Client();
-		// create bucket
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 
 		// put multiple objects
@@ -55,23 +55,14 @@ public class GetObjectList16437 extends S3TestBase {
 		String NextContinuationToken = result.getNextContinuationToken();
 
 		//delete object that next token points to
-		s3Client.deleteObject(bucketName, "/dir/dir9/16437");
-		
-		ListObjectsV2Request req3 = new ListObjectsV2Request().withBucketName(bucketName);
-		ListObjectsV2Result result3 = s3Client.listObjectsV2(req3);
-		List<S3ObjectSummary> objectSummaries3 = result3.getObjectSummaries();
-		System.out.println("*****************************************************");
-		for (int i = 0; i < objectSummaries3.size(); i++) {
-			System.out.println(objectSummaries3.get(i).getKey());
-		}
-		System.out.println("*****************************************************");
-		
+		s3Client.deleteObject(bucketName, expresultList.get(keyCount));
+		expresultList.remove(keyCount);
 		
 		//second query
 		ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName).withContinuationToken(NextContinuationToken);
 		ListObjectsV2Result result2 = s3Client.listObjectsV2(req2);
 		List<S3ObjectSummary> objectSummaries2 = result2.getObjectSummaries();
-		checkListObjectsV2Result(objectSummaries2, keyCount + 1, objectTotalNum-1);
+		checkListObjectsV2Result(objectSummaries2, keyCount, objectTotalNum-keyCount-1);
 
 		runSuccess = true;
 	}
@@ -85,13 +76,11 @@ public class GetObjectList16437 extends S3TestBase {
 	}
 
 	private void checkListObjectsV2Result(List<S3ObjectSummary> objectSummaries, int startIndex , int expCount){
-		//Assert.assertEquals(objectSummaries.size(), expCount, "The number of returned results is wrong");
+		Assert.assertEquals(objectSummaries.size(), expCount, "The number of returned results is wrong");
 		Collections.sort(expresultList);
 		for (int i = 0; i < objectSummaries.size(); i++) {
-			System.out.println(objectSummaries.get(i).getKey());
-			//Assert.assertEquals(objectSummaries.get(i).getKey(), expresultList.get(startIndex), "commonPrefixes is wrong");
+			Assert.assertEquals(objectSummaries.get(i).getKey(), expresultList.get(startIndex), "contents is wrong");
 			startIndex++;
 		}
-		System.out.println("------------------------------------------------------");
 	}
 }
