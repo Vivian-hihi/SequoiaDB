@@ -41,6 +41,7 @@ public class FullTextDBUtils {
           DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
           String cappedCLName = getCappedCLName( cl, textIndexName ); 
           List<String> groupNames = getCLGroups( db, csName + "." + clName);
+          groupNames = FullTextUtils.removeDuplicateItems(groupNames);
           // sort groupNames
           compare(groupNames);	     
  
