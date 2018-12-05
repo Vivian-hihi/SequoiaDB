@@ -350,13 +350,13 @@ namespace engine
       ) ;
 
 
-      // remove LRB from waiter or upgrade queue/list, and wake up
-      // the next one in the queue if necessary
+      // remove LRB from waiter or upgrade queue/list,
+      // and wake up the next one in the queue if necessary
       void _removeFromUpgradeOrWaitList
       (
-         _dpsTransExecutor *   dpsTxExectr,
-         UTIL_OBJIDX         & hdrIdx,
-         dpsTransLRBHeader * & pLRBHdr
+         _dpsTransExecutor * dpsTxExectr,
+         const UTIL_OBJIDX   bktIdx,
+         const BOOLEAN       removeLRBHeader
       ) ;
 
   
