@@ -454,7 +454,8 @@ namespace engine
       return add ;
    }
 
-   void _coordResource::setCataGroupInfo( CoordGroupInfoPtr &groupPtr )
+   void _coordResource::setCataGroupInfo( CoordGroupInfoPtr &groupPtr,
+                                          BOOLEAN inheritStat )
    {
       ossScopedLock lock( &_nodeMutex, EXCLUSIVE ) ;
 
@@ -476,6 +477,12 @@ namespace engine
                           _cataNodeAddrList ) ;
             ++pos ;
          }
+      }
+
+      if ( inheritStat )
+      {
+         groupPtr->inheritStat( _cataGroupInfo.get(),
+                                NET_NODE_FAULTUP_MIN_TIME ) ;
       }
       _cataGroupInfo = groupPtr ;
    }
@@ -851,12 +858,12 @@ namespace engine
 
          /// update route info and add to local groups
          _updateRouteInfo( groupPtr, MSG_ROUTE_SHARD_SERVCIE ) ;
-         addGroupInfo( groupPtr ) ;
+         addGroupInfo( groupPtr, TRUE ) ;
 
          if ( CATALOG_GROUPID == groupPtr->groupID() )
          {
             _updateRouteInfo( groupPtr, MSG_ROUTE_CAT_SERVICE ) ;
-            setCataGroupInfo( groupPtr ) ;
+            setCataGroupInfo( groupPtr, TRUE ) ;
             syncAddress2Options( TRUE, FALSE) ;
          }
       }
@@ -947,11 +954,22 @@ namespace engine
       }
    }
 
-   void _coordResource::addGroupInfo( CoordGroupInfoPtr &groupPtr )
+   void _coordResource::addGroupInfo( CoordGroupInfoPtr &groupPtr,
+                                      BOOLEAN inheritStat )
    {
       ossScopedLock _lock( &_nodeMutex, EXCLUSIVE ) ;
 
       groupPtr->setIdentify( ++_upGrpIndentify ) ;
+
+      if ( inheritStat )
+      {
+         MAP_GROUP_INFO_IT it = _mapGroupInfo.find( groupPtr->groupID() ) ;
+         if ( it != _mapGroupInfo.end() )
+         {
+            groupPtr->inheritStat( it->second.get(),
+                                   NET_NODE_FAULTUP_MIN_TIME ) ;
+         }
+      }
       _mapGroupInfo[groupPtr->groupID()] = groupPtr ;
 
       // clear group name map
@@ -2090,6 +2108,19 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _coordResource::updateNodeStat( const MsgRouteID &nodeID, INT32 rc )
+   {
+      CoordGroupInfoPtr groupPtr ;
+      if ( SDB_OK == getGroupInfo( nodeID.columns.groupID, groupPtr ) )
+      {
+         if( groupPtr.get() )
+         {
+            groupPtr->updateNodeStat( nodeID.columns.nodeID,
+                                      netResult2Status( rc ) ) ;
+         }
+      }
    }
 
 }

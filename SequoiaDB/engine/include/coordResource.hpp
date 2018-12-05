@@ -186,10 +186,14 @@ namespace engine
                                           CoordCataInfoPtr &cataPtr,
                                           _pmdEDUCB *cb ) ;
 
+         void        updateNodeStat( const MsgRouteID &nodeID, INT32 rc ) ;
+
       protected:
-         void        setCataGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
+         void        setCataGroupInfo( CoordGroupInfoPtr &groupPtr,
+                                       BOOLEAN inheritStat = FALSE ) ;
          void        setOmGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
-         void        addGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
+         void        addGroupInfo( CoordGroupInfoPtr &groupPtr,
+                                   BOOLEAN inheritStat = FALSE ) ;
 
          UINT32      checkAndRemoveCataInfoBySub( const CHAR *collectionName ) ;
 

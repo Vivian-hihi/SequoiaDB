@@ -759,6 +759,12 @@ namespace engine
          rcTmp = pRemote->sendMsg( pSub ) ;
          if ( rcTmp )
          {
+            MsgRouteID nodeID = pSub->getNodeID() ;
+            /// should update the node status
+            _pResource->updateNodeStat( nodeID, rcTmp ) ;
+            _groupSession.getPropSite()->delLastNode( nodeID.columns.groupID,
+                                                      nodeID.value ) ;
+
             faileds[ *it ] = rcTmp ;
             pRemote->delSubSession( *it ) ;
          }
