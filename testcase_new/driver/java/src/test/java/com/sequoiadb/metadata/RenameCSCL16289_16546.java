@@ -41,6 +41,7 @@ public class RenameCSCL16289_16546 extends SdbTestBase{
 	
 	@Test()
 	public void test(){
+		//test seqDB-16289
 		try{
 
 			sdb.renameCollectionSpace(csName, newCSName);
@@ -51,8 +52,7 @@ public class RenameCSCL16289_16546 extends SdbTestBase{
 				}
 		}		
 		
-		//test rename cs name is valid parameter:special character/127bytes
-		
+		//test seqDB-16546
 		try{
 			cs.dropCollection(clName);
 			cs.renameCollection(clName, "test");
@@ -66,7 +66,8 @@ public class RenameCSCL16289_16546 extends SdbTestBase{
 	
 	@AfterClass()
 	public void tearDown(){
-		try{			
+		try{
+			sdb.dropCollectionSpace(csName);
 			sdb.dropCollectionSpace(newCSName);				
 		}finally {
 			if( sdb != null )
