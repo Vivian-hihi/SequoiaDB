@@ -91,7 +91,7 @@ public class CreateObject16346 extends S3TestBase{
 		
 		S3Object object = s3Client.getObject(bucketName, keyName);
 		Assert.assertEquals(object.getObjectMetadata().getContentLength(), content.length(), "ContentLength is wrong");
-		//Assert.assertEquals(object.getObjectMetadata().getContentEncoding(), content_encoding, "ContentEncoding is wrong");
+		Assert.assertEquals(object.getObjectMetadata().getContentEncoding(), content_encoding, "ContentEncoding is wrong");
 		Assert.assertEquals(object.getObjectMetadata().getContentType(), content_type, "ContentType is wrong");
 		Assert.assertEquals(object.getObjectMetadata().getCacheControl(), cache_control, "CacheControl is wrong");
 		Assert.assertEquals(object.getObjectMetadata().getContentDisposition(), content_disposition, "ContentDisposition is wrong");
