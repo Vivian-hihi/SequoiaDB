@@ -39,6 +39,7 @@ public class GetBucketVersioning16617 extends S3TestBase {
 
 	@Test
 	private void testGetBucketVersioning() throws Exception {
+		//TODO:1、建议直接用例start（20）
 		List<GetBucketVersioningThread> getBucketVersionings = new ArrayList<>(20);
 		for( int i = 0; i < defaultNums ; i++){
 			getBucketVersionings.add( new GetBucketVersioningThread());			
