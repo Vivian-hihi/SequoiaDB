@@ -14,7 +14,7 @@ function Usage()
     echo  "  stop  -p|--port arg       stop the sequoias3 process which listen the specified port"
     echo  "  stop  -a|--All            stop all sequoias3 process"
     echo  ""
-    echo  "  list                      list all sequoias3 process and listening port"
+    echo  "  status                    list all sequoias3 process and listening port"
 }
 
 function Large()
@@ -94,13 +94,13 @@ function Start()
       echo -e "\033[31mthe port $port already be used\033[0m"                                                                                   
       exit 1                                                                                                                          
     fi
-    nohup java -jar $packagepath --server.port=$port --spring.config.location=$configfile --logging.config=$logback 1>/dev/null 2>&1 &
+    nohup java -jar $packagepath --server.port=$port --spring.config.location=$configfile --logging.config=$logback 2>nohup.out &
   else
-    nohup java -jar $packagepath --spring.config.location=$configfile --logging.config=$logback 1>/dev/null 2>&1 &
+    nohup java -jar $packagepath --spring.config.location=$configfile --logging.config=$logback 2>nohup.out &
   fi
 
   pid=$(jobs -l|awk '{print $2}')
-#  echo "pid:"$pid
+  echo "pid:"$pid
 
   sleep 5 
 
@@ -193,6 +193,7 @@ function List()
 {
   prefix="sequoia-s3-"
 
+  count=0
   pidlist=$( ps -ef|grep $prefix | grep -v grep | awk '{print $2}' )  
   #echo $pidlist
   echo -e "Name\t\t PID\t Port\t Version\t ConfPath"
@@ -205,7 +206,9 @@ function List()
     version=${versioninfo%.jar*}
     port=$(lsof -p $pid | grep LISTEN | awk '{print $9}' | awk -F":" '{print $2}')
     echo -e "sequoias3\t $pid\t $port\t $version\t\t ${conf[0]}"
+    let "count++"  
   done
+  echo "Total: $count"
 }
 
 
@@ -221,7 +224,7 @@ if [ "$1" == "start" ]; then
     start="true"
 elif [ "$1" == "stop" ]; then
     stop="true"
-elif [ "$1" == "list" ]; then
+elif [ "$1" == "status" ]; then
     list="true"
 elif [ "$1" == "help" ]; then
     Usage
