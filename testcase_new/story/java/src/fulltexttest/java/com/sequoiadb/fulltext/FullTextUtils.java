@@ -24,9 +24,6 @@ public class FullTextUtils {
      */ 
      public static void checkFullSyncToES(Client esClient, Sequoiadb db, String csName, String clName, String textIndexName, int expectCount) {
          List<String> esIndexNames = FullTextDBUtils.getESIndexNames(db, csName, clName, textIndexName);
-         esIndexNames = removeDuplicateItems(esIndexNames);
-         // sort esIndexNames
-         FullTextDBUtils.compare(esIndexNames);
          List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs(db, csName, clName, textIndexName);
 
          // check indexnames sync to ES

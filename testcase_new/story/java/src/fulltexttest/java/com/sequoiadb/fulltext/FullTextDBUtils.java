@@ -41,10 +41,6 @@ public class FullTextDBUtils {
           DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
           String cappedCLName = getCappedCLName( cl, textIndexName ); 
           List<String> groupNames = getCLGroups( db, csName + "." + clName);
-          groupNames = FullTextUtils.removeDuplicateItems(groupNames);
-          // sort groupNames
-          compare(groupNames);	     
- 
           // get each cappedCL from each group
           List<DBCollection> cappedCLs = new ArrayList<>();
           for(String groupName : groupNames) {
@@ -68,8 +64,6 @@ public class FullTextDBUtils {
           // get es index names
           List<String> esIndexNames = new ArrayList<>();
           List<String> groupNames = getCLGroups(db, csName + "." + clName);
-          // sort groupNames
-          compare(groupNames);
 
           for(String groupName : groupNames) {
               esIndexNames.add(cappedCLName.toLowerCase() + "_" + groupName);
@@ -133,7 +127,10 @@ public class FullTextDBUtils {
                     groupNames.add(obj.getString("GroupName"));
                 }			
             }
-            
+           
+            groupNames = FullTextUtils.removeDuplicateItems(groupNames);
+            compare(groupNames);	     
+
             return groupNames;
         }
 
