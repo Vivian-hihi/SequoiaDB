@@ -73,3 +73,7 @@ Since v1.0.
 	> traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
  	```
 *   Using [traceStatus()](reference/Sequoiadb_command/Sdb/traceStatus.md) to view the tracking status of the current program. 
+
+	```lang-javascript
+	> db.traceStatus()
+	```

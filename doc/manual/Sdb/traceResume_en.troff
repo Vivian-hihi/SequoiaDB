@@ -4,20 +4,76 @@
 .hy
 .SH NAME
 .PP
-traceResume \- Resume the breakpoint trace tool.
+traceResume \- Reopen the breakpoint updater.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]db.traceResume()\f[]\f[]
 .SH CATEGORY
 .PP
-Sequoiadb
-.SH "DESCRIPTION"
-
-.sp 2
-Resume the breakpoint trace tool.
-.SH "Examples"
-
-.sp 2
-Resume the breakpoint trace tool.
-.sp 2
-db.traceResume()
+Sdb
+.SH DESCRIPTION
+.PP
+Turn on the database engine program tracking while db.traceOn() specifies a
+breakpoint.
+When the tracked module was blocked because of the breakpoint, db.traceResume()
+can wake up the module which was tracked and blocked.
+.SH PARAMETERS
+.PP
+None
+.SH RETURN VALUE
+.PP
+On success, return void.
+.PP
+On error, exception will be thrown.
+.SH ERRORS
+.PP
+when exception happen, use getLastError() to get the error code and use
+getLastErrMsg() to get error message.
+For more detial, please reference to Troubleshooting.
+.SH EXAMPLES
+.IP \[bu] 2
+Connect to the data node 20000, turn on database engine program tracking
+.RS 2
+.IP
+.nf
+\f[C]
+>\ var\ data\ =\ new\ Sdb(\ "localhost",\ 20000\ )
+>\ data.traceOn(\ 10000,\ "dms",\ "_dmsStorageUnit::insertRecord"\ )
+\f[]
+.fi
+.RE
+.IP \[bu] 2
+Connect to the coord node 50000.
+collection named bar and collectionspace named foo are belong to the data node
+20000, and execute an insert operation.
+However, the insert operation will be blocked.
+.RS 2
+.IP
+.nf
+\f[C]
+>\ var\ db\ =\ new\ Sdb(\ "localhost",\ 50000\ )
+>\ db.foo.bar.insert(\ {\ _id:\ 1,\ name:\ "a"\ }\ )
+\f[]
+.fi
+.RE
+.IP \[bu] 2
+After reopening the breakpoint updater, the insert operation succeeded and
+return result we expected.
+.RS 2
+.IP
+.nf
+\f[C]
+>\ db.traceResume()
+\f[]
+.fi
+.RE
+.IP \[bu] 2
+Using traceStatus() to view the tracking status of the current program.
+.RS 2
+.IP
+.nf
+\f[C]
+>\ db.traceStatus()
+\f[]
+.fi
+.RE
