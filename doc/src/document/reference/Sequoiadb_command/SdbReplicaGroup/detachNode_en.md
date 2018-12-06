@@ -1,10 +1,10 @@
 ##NAME##
 
-detachNode - Detach a node in the current group.
+detachNode - Detach a node from the current group.
 
 ##SYNOPSIS##
 
-**rg.detachNode( \<host\>, \<service\>, [options] )**
+**rg.detachNode( \<host\>, \<service\>, \<options\> )**
 
 ##CATEGORY##
 
@@ -24,19 +24,19 @@ Detach a node in the current partition group, but its configuration information 
 
 	Service name or port of node. 
 
-* `options` ( *Object*, *Optional* )
+* `options` ( *Object*, *Required* )
 
     Can be the following options:
 
-    1. `KeepData` ( *Bool* ): Whether to keep the original data of the current node, default to be false.
+    1. `KeepData` ( *Bool* ): Whether to keep the original data of the detached node. This option has no default value. User should specify its value explicitly.
 
-    1. `Enforced` ( *Bool* ): Whether to detach the node forcibly , default to be false.
+    2. `Enforced` ( *Bool* ): Whether to detach the node forcibly , default to be false.
 
 **Note:**
 
-1. It can not detach the last node which own CS/CL in the replica group.
-Never open KeepData if the node does not originally belong to the current group.
-2. The separated nodes will no longer be managed by the cluster. Please join other groups as soon as possible.
+1. The field `KeepData` in the `options` must be specified explicitly. For it will determine if the data of the detached node still be kept or not. So, be careful.
+2. It can not detach the last node in the replica group unless setting `Enforced` to be `true`.
+3. The separated nodes will no longer be managed by the cluster. Please join other groups as soon as possible.
 
 ##RETURN VALUE##
 
@@ -69,7 +69,7 @@ more detail.
 
 	```lang-javascript
 	> var rg1 = db.getRG("group1")
-	> rg1.detachNode('hostname1', '11830')
+	> rg1.detachNode('hostname1', '11830', {KeepData: true})
 	> var rg2 = db.getRG("group2")
-	> rg2.attachNode('hostname1', '11830')
+	> rg2.attachNode('hostname1', '11830', {KeepData: false})
 	```

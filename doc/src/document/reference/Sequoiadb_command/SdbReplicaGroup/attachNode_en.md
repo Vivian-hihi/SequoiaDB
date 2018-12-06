@@ -4,7 +4,7 @@ attachNode - Add a node that has been created but does not belong to any group t
 
 ##SYNOPSIS##
 
-**rg.attachNode( \<host\>, \<service\>, [options] )**
+**rg.attachNode( \<host\>, \<service\>, \<options\> )**
 
 ##CATEGORY##
 
@@ -24,16 +24,17 @@ Add a node that has been created but does not belong to any group to the current
 
 	Service name or port of node. 
 
-* `options` ( *Object*, *Optional* )
+* `options` ( *Object*, *Required* )
 
     Can be the following options:
 
-    1. `KeepData` ( *Bool* ): Whether to keep the original data of the current node, default to be false.
+    1. `KeepData` ( *Bool* ): Whether to keep the original data of the new node. This option has no default value. User should specify its value explicitly.
 
 **Note:**
 
-1. Never open KeepData if the node does not originally belong to the current group.
-2. Nodes in the node configuration file where roles are specified as catalogs can only be added to the catalog group; nodes whose roles are specified as data can only be added to data groups.
+1. The field `KeepData` in the `options` must be specified explicitly. For it will determine if the data of the new node still be kept or not. So, be careful.
+2. It's better to set `KeepData` to be `false` if the new node does not originally belong to the current group.
+3. Nodes in the node configuration file where roles are specified as `catalog` can only be added to the catalog group; nodes whose roles are specified as `data` can only be added to data groups.
 
 ##RETURN VALUE##
 
@@ -66,7 +67,7 @@ more detail.
 
 	```lang-javascript
 	> var rg1 = db.getRG("group1")
-	> rg1.detachNode('hostname1', '11830')
+	> rg1.detachNode('hostname1', '11830', { KeepData: true })
 	> var rg2 = db.getRG("group2")
-	> rg2.attachNode('hostname1', '11830')
+	> rg2.attachNode('hostname1', '11830', { KeepData: false })
 	```
