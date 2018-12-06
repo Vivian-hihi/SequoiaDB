@@ -3,6 +3,7 @@ package com.sequoias3.object;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.util.Md5Utils;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
@@ -19,11 +20,7 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
-import java.util.Base64;
-import java.util.Base64.Encoder;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -74,7 +71,7 @@ public class CreateObject16346 extends S3TestBase{
 	    request.setHeader("Authorization", "Credential=ABCDEFGHIJKLMNOPQRST");
 	    request.setHeader("Content-Encoding", content_encoding);
 	    request.setHeader("Content-Type", content_type);
-	    request.setHeader("Content-MD5", getBase64(getMD5ByteArray(content.getBytes())));
+	    request.setHeader("Content-MD5", Md5Utils.md5AsBase64(content.getBytes()));
 	    request.setHeader("Date", date);
 	    request.setHeader("x-amz-date", x_amz_date);
 	    request.setHeader("x-amz-meta-myparameter", x_amz_meta_x);
@@ -109,26 +106,6 @@ public class CreateObject16346 extends S3TestBase{
 			s3Client.deleteBucket(bucketName);
 			TestTools.LocalFile.removeFile(localPath);
 		}
-	}
-	
-	private String getBase64(byte[] b){
-		String result = null;
-		Encoder encoder = Base64.getEncoder();
-		result = encoder.encodeToString(b);
-		return result;
-	}
-	
-	private static byte[] getMD5ByteArray(byte[] buffer) throws IOException {
-		byte[] value = null;
-		try {
-			MessageDigest md5 = MessageDigest.getInstance("MD5");
-			md5.update((byte[]) buffer);
-			value = md5.digest();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-			throw new RuntimeException("fail to get md5base64!" + e.getMessage());
-		}
-		return value;
 	}
 	
 	private String getGMTDate(Date date){
