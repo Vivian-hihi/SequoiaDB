@@ -167,8 +167,6 @@ function Start()
   if [ -z "$(lsof -p $pid |grep ESTABLISHED)"  ]; then
     echo -e "\033[31mprocess is started, but the connection with db doesn't established, please check the application.properties config and db\033[0m"
   fi
-
-  exit 1
 }
 
 function Stop()
@@ -216,8 +214,6 @@ function Stop()
     done
   fi
 
-  echo "do nothing"
-  exit 0
 }
 
 function List()
