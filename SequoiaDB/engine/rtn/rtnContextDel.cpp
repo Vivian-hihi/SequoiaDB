@@ -259,7 +259,6 @@ namespace engine
          dmsStorageUnitID suID = DMS_INVALID_CS;
          UINT32 logicCSID = DMS_INVALID_LOGICCSID;
          dmsStorageUnit *su = NULL;
-         _releaseLock( cb );
          UINT32 length = ossStrlen ( pCollectionName );
          PD_CHECK( (length > 0 && length <= DMS_SU_NAME_SZ), SDB_INVALIDARG,
                    error, PDERROR, "Invalid length of collectionspace name:%s",
@@ -355,7 +354,7 @@ namespace engine
                    "(collection:%s, rc: %d)", _collectionName, rc ) ;
 
       // lock collection
-      if ( getDPSCB() && _pTransCB->isTransOn() )
+      if ( getDPSCB() )
       {
          rc = _su->data()->getMBContext( &_mbContext, _clShortName,
                                          EXCLUSIVE ) ;
@@ -955,9 +954,9 @@ namespace engine
          i++ ;
       }
       PD_RC_CHECK( rc, PDERROR, "Block dms write failed, rc: %d", rc ) ;
-      _lockDMS = TRUE;
+      _lockDMS = TRUE ;
 
-      if ( getDPSCB() && _pTransCB->isTransOn() )
+      if ( getDPSCB() )
       {
          dmsStorageUnitID suID = DMS_INVALID_CS;
          UINT32 logicCSID = DMS_INVALID_LOGICCSID;
@@ -1191,8 +1190,13 @@ namespace engine
          ossSleep( RTN_RENAME_BLOCKWRITE_INTERAL ) ;
          i++ ;
       }
+      if ( SDB_DMS_STATE_NOT_COMPATIBLE == rc )
+      {
+         PD_LOG( PDERROR, "Rename cs/cl is mutually exclusive with "
+                 "other rename cs/cl" ) ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Block dms write failed, rc: %d", rc ) ;
-      _lockDMS = TRUE;
+      _lockDMS = TRUE ;
 
       if ( getDPSCB() )
       {

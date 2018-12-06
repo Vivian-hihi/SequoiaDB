@@ -38,7 +38,6 @@
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 #include "rtn.hpp"
-#include "pmd.hpp"
 #include "rtnContextAlter.hpp"
 #include "msgMessageFormat.hpp"
 
@@ -302,7 +301,7 @@ namespace engine
                     FIELD_NAME_SUBCLNAME, rc ) ;
             goto error ;
          }
-         
+
       }
       catch( std::exception &e )
       {
@@ -455,7 +454,7 @@ namespace engine
       return CMD_SPACE_NODE_DATA | CMD_SPACE_NODE_CATA  ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNREELECT_INIT, "_rtnReelect::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREELECT_INIT, "_rtnReelect::init" )
    INT32 _rtnReelect::init ( INT32 flags, INT64 numToSkip,
                              INT64 numToReturn,
                              const CHAR *pMatcherBuff,
@@ -464,7 +463,7 @@ namespace engine
                              const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNREELECT_INIT ) ;
+      PD_TRACE_ENTRY( SDB__CLSREELECT_INIT ) ;
       BSONObj obj ;
       try
       {
@@ -502,19 +501,19 @@ namespace engine
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC( SDB__RTNREELECT_INIT, rc ) ;
+      PD_TRACE_EXITRC( SDB__CLSREELECT_INIT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNREELECT_DOIT, "_rtnReelect::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREELECT_DOIT, "_rtnReelect::doit" )
    INT32 _rtnReelect::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                             _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                             INT16 w, INT64 *pContextID )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNREELECT_DOIT ) ;
+      PD_TRACE_ENTRY( SDB__CLSREELECT_DOIT ) ;
       replCB *repl = sdbGetReplCB() ;
 
       rc = repl->reelect( _level, _timeout, cb ) ;
@@ -524,7 +523,7 @@ namespace engine
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC( SDB__RTNREELECT_DOIT, rc ) ;
+      PD_TRACE_EXITRC( SDB__CLSREELECT_DOIT, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -541,7 +540,7 @@ namespace engine
       return CMD_SPACE_SERVICE_LOCAL ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNFORCESTEPUP_INIT, "_rtnForceStepUp::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSFORCESTEPUP_INIT, "_rtnForceStepUp::init" )
    INT32 _rtnForceStepUp::init( INT32 flags, INT64 numToSkip,
                                 INT64 numToReturn,
                                 const CHAR *pMatcherBuff,
@@ -550,7 +549,7 @@ namespace engine
                                 const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNFORCESTEPUP_INIT ) ;
+      PD_TRACE_ENTRY( SDB__CLSFORCESTEPUP_INIT ) ;
       BSONObj options ;
       try
       {
@@ -568,19 +567,19 @@ namespace engine
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC( SDB__RTNFORCESTEPUP_INIT, rc ) ;
+      PD_TRACE_EXITRC( SDB__CLSFORCESTEPUP_INIT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNFORCESTEPUP_DOIT, "_rtnForceStepUp::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSFORCESTEPUP_DOIT, "_rtnForceStepUp::doit" )
    INT32 _rtnForceStepUp::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                                  _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                                  INT16 w, INT64 *pContextID )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNFORCESTEPUP_DOIT ) ;
+      PD_TRACE_ENTRY( SDB__CLSFORCESTEPUP_DOIT ) ;
       replCB *repl = sdbGetReplCB() ;
       rc = repl->stepUp( _seconds, cb ) ;
       if ( SDB_OK != rc )
@@ -589,7 +588,7 @@ namespace engine
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC( SDB__RTNFORCESTEPUP_DOIT, rc ) ;
+      PD_TRACE_EXITRC( SDB__CLSFORCESTEPUP_DOIT, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -738,7 +737,7 @@ namespace engine
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCMD_INIT, "_rtnAlterCommand::init" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__CLSALTERCMD_INIT, "_rtnAlterCommand::init" )
    INT32 _rtnAlterCommand::init ( INT32 flags,
                                   INT64 numToSkip,
                                   INT64 numToReturn,
@@ -749,7 +748,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__RTNALTERCMD_INIT ) ;
+      PD_TRACE_ENTRY( SDB__CLSALTERCMD_INIT ) ;
 
       try
       {
@@ -769,14 +768,14 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC( SDB__RTNALTERCMD_INIT, rc ) ;
+      PD_TRACE_EXITRC( SDB__CLSALTERCMD_INIT, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCMD_DOIT, "_rtnAlterCommand::doit" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__CLSALTERCMD_DOIT, "_rtnAlterCommand::doit" )
    INT32 _rtnAlterCommand::doit ( _pmdEDUCB * cb,
                                   _SDB_DMSCB * dmsCB,
                                   _SDB_RTNCB * rtnCB,
@@ -785,7 +784,7 @@ namespace engine
                                   INT64 * pContextID )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNALTERCMD_DOIT ) ;
+      PD_TRACE_ENTRY( SDB__CLSALTERCMD_DOIT ) ;
 
       const CHAR * objectName = _alterJob->getObjectName() ;
       const rtnAlterOptions * options = _alterJob->getOptions() ;
@@ -881,7 +880,7 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC( SDB__RTNALTERCMD_DOIT, rc ) ;
+      PD_TRACE_EXITRC( SDB__CLSALTERCMD_DOIT, rc ) ;
       return rc ;
 
    error :
@@ -908,7 +907,7 @@ namespace engine
    }
 
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTIONSPACE__EXECTASK, "_rtnAlterCollectionSpace::_executeTask" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__CLSALTERCOLLECTIONSPACE__EXECTASK, "_rtnAlterCollectionSpace::_executeTask" )
    INT32 _rtnAlterCollectionSpace::_executeTask ( const CHAR * collectionSpace,
                                                   const rtnAlterTask * task,
                                                   const rtnAlterOptions * options,
@@ -920,7 +919,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTIONSPACE__EXECTASK ) ;
+      PD_TRACE_ENTRY( SDB__CLSALTERCOLLECTIONSPACE__EXECTASK ) ;
 
       SDB_ASSERT( NULL != collectionSpace, "collection space is invalid" ) ;
       SDB_ASSERT( NULL != task, "task is invalid" ) ;
@@ -972,21 +971,21 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
 
    done :
-      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTIONSPACE__EXECTASK, rc ) ;
+      PD_TRACE_EXITRC( SDB__CLSALTERCOLLECTIONSPACE__EXECTASK, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTIONSPACE__OPENCONTEXT, "_rtnAlterCollectionSpace::_openContext" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__CLSALTERCOLLECTIONSPACE__OPENCONTEXT, "_rtnAlterCollectionSpace::_openContext" )
    INT32 _rtnAlterCollectionSpace::_openContext ( _pmdEDUCB * cb,
                                                   _SDB_RTNCB * rtnCB,
                                                   INT64 * pContextID )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTIONSPACE__OPENCONTEXT ) ;
+      PD_TRACE_ENTRY( SDB__CLSALTERCOLLECTIONSPACE__OPENCONTEXT ) ;
 
       rtnContextAlterCS * context = NULL ;
       rc = rtnCB->contextNew( RTN_CONTEXT_ALTERCS, (rtnContext **)( &context ),
@@ -998,7 +997,7 @@ namespace engine
                    "collection space, rc: %d", rc ) ;
 
    done :
-      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTIONSPACE__OPENCONTEXT, rc ) ;
+      PD_TRACE_EXITRC( SDB__CLSALTERCOLLECTIONSPACE__OPENCONTEXT, rc ) ;
       return rc ;
 
    error :
@@ -1027,7 +1026,7 @@ namespace engine
              _alterJob->getObjectName() : NULL ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTION__EXECTASK, "_rtnAlterCollection::_executeTask" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__CLSALTERCOLLECTION__EXECTASK, "_rtnAlterCollection::_executeTask" )
    INT32 _rtnAlterCollection::_executeTask ( const CHAR * collection,
                                              const rtnAlterTask * task,
                                              const rtnAlterOptions * options,
@@ -1039,7 +1038,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTION__EXECTASK ) ;
+      PD_TRACE_ENTRY( SDB__CLSALTERCOLLECTION__EXECTASK ) ;
 
       SDB_ASSERT( NULL != collection, "collection is invalid" ) ;
       SDB_ASSERT( NULL != task, "task is invalid" ) ;
@@ -1101,21 +1100,21 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
 
    done :
-      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTION__EXECTASK, rc ) ;
+      PD_TRACE_EXITRC( SDB__CLSALTERCOLLECTION__EXECTASK, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTION__OPENCONTEXT, "_rtnAlterCollection::_openContext" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__CLSALTERCOLLECTION__OPENCONTEXT, "_rtnAlterCollection::_openContext" )
    INT32 _rtnAlterCollection::_openContext ( _pmdEDUCB * cb,
                                              _SDB_RTNCB * rtnCB,
                                              INT64 * pContextID )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTION__OPENCONTEXT ) ;
+      PD_TRACE_ENTRY( SDB__CLSALTERCOLLECTION__OPENCONTEXT ) ;
 
       rtnContextAlterCL * context = NULL ;
       rc = rtnCB->contextNew( RTN_CONTEXT_ALTERCL, (rtnContext **)( &context ),
@@ -1127,7 +1126,7 @@ namespace engine
                    "collection space, rc: %d", rc ) ;
 
    done :
-      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTION__OPENCONTEXT, rc ) ;
+      PD_TRACE_EXITRC( SDB__CLSALTERCOLLECTION__OPENCONTEXT, rc ) ;
       return rc ;
 
    error :

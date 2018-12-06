@@ -226,7 +226,6 @@ namespace engine
                       _dpsLogWrapper *dpsCB )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN lockDms = FALSE ;
       PD_TRACE_ENTRY( SDB_RTNANALYZE ) ;
 
       if ( SDB_ROLE_DATA != pmdGetDBRole() &&
@@ -243,16 +242,6 @@ namespace engine
       if ( NULL == dmsCB )
       {
          dmsCB = pmdGetKRCB()->getDMSCB() ;
-      }
-
-      // reload mode and clear mode do not write dps log, so they don't need to
-      // check writable
-      if ( param._mode != SDB_ANALYZE_MODE_RELOAD &&
-           param._mode != SDB_ANALYZE_MODE_CLEAR )
-      {
-         rc = dmsCB->writable ( cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
-         lockDms = TRUE ;
       }
 
       if ( NULL != pCSName )
@@ -278,11 +267,6 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to run analyze command, rc: %d", rc ) ;
 
    done :
-      if ( lockDms )
-      {
-         dmsCB->writeDown( cb ) ;
-         lockDms = FALSE ;
-      }
       PD_TRACE_EXITRC( SDB_RTNANALYZE, rc ) ;
       return rc ;
 
@@ -344,6 +328,7 @@ namespace engine
       SDB_ASSERT( NULL != dmsCB, "dmsCB is invalid" ) ;
 
       MON_CS_SIM_LIST monCSList ;
+      BOOLEAN lockDms = FALSE ;
 
       PD_LOG( PDINFO, "Analyze full node, mode [%d]", param._mode ) ;
 
@@ -351,6 +336,16 @@ namespace engine
                 SDB_INVALIDARG, error, PDERROR,
                 "Do not support generating default statistics on all "
                 "collection spaces" ) ;
+
+      // reload mode and clear mode do not write dps log, so they don't need to
+      // check writable
+      if ( param._mode != SDB_ANALYZE_MODE_RELOAD &&
+           param._mode != SDB_ANALYZE_MODE_CLEAR )
+      {
+         rc = dmsCB->writable ( cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+         lockDms = TRUE ;
+      }
 
       if ( param._mode == SDB_ANALYZE_MODE_RELOAD )
       {
@@ -400,6 +395,11 @@ namespace engine
                    "rc: %d", rc ) ;
 
    done :
+      if ( lockDms )
+      {
+         dmsCB->writeDown( cb ) ;
+         lockDms = FALSE ;
+      }
       PD_TRACE_EXITRC( SDB__RTNANALYZEALL, rc ) ;
       return rc ;
 
@@ -423,7 +423,7 @@ namespace engine
       SDB_ASSERT( NULL != dmsCB, "dmsCB is invalid" ) ;
 
       BOOLEAN suLocked = FALSE ;
-
+      BOOLEAN lockDms = FALSE ;
       monCSSimple monCS ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       dmsStorageUnit *pSU = NULL ;
@@ -441,6 +441,16 @@ namespace engine
 
       PD_CHECK( !dmsIsSysCSName( pCSName ), SDB_INVALIDARG, error, PDERROR,
                 "Could not analyze SYS collection space [%s]", pCSName ) ;
+
+      // reload mode and clear mode do not write dps log, so they don't need to
+      // check writable
+      if ( param._mode != SDB_ANALYZE_MODE_RELOAD &&
+           param._mode != SDB_ANALYZE_MODE_CLEAR )
+      {
+         rc = dmsCB->writable ( cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+         lockDms = TRUE ;
+      }
 
       if ( param._mode == SDB_ANALYZE_MODE_CLEAR )
       {
@@ -538,7 +548,11 @@ namespace engine
       {
          dmsCB->suUnlock( suID, csLockType ) ;
       }
-
+      if ( lockDms )
+      {
+         dmsCB->writeDown( cb ) ;
+         lockDms = FALSE ;
+      }
       PD_TRACE_EXITRC( SDB__RTNANALYZECS, rc ) ;
       return rc ;
 
@@ -649,10 +663,6 @@ namespace engine
                                   cb, dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze statistics for "
                       "collection [%s], rc: %d", pCLFullName, rc ) ;
-
-         // Notify backup nodes to clear old cached statistics
-         rc = rtnAnalyzeDpsLog( NULL, pCLFullName, NULL, dpsCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to write analyze log, rc: %d", rc ) ;
       }
 
    done :
@@ -797,10 +807,6 @@ namespace engine
                                     cb, dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze statistics for "
                       "index [%s %s], rc: %d", pCLFullName, pIndexName, rc ) ;
-
-         // Notify backup nodes to clear old cached statistics
-         rc = rtnAnalyzeDpsLog( NULL, pCLFullName, pIndexName, dpsCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to write analyze log, rc: %d", rc ) ;
       }
 
    done :
@@ -1253,7 +1259,7 @@ namespace engine
                               _SDB_RTNCB *rtnCB,
                               _dpsLogWrapper *dpsCB )
    {
-      INT32 rc = SDB_OK ;
+       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__RTNANALYZECLSTATS ) ;
 
@@ -1269,9 +1275,15 @@ namespace engine
       dmsMBContext *mbContext = NULL ;
 
       _rtnInternalSortArea sortAreaTmp ;
+
       rtnAnalyzeParam localParam( param ) ;
 
       MON_IDX_LIST monIdxList ;
+      BOOLEAN writable = FALSE ;
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      writable = TRUE ;
 
       rc = dmsCB->nameToSUAndLock( pCSName, suID, &pSU, SHARED, OSS_ONE_SEC ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock collection space for "
@@ -1314,9 +1326,11 @@ namespace engine
 
       pSU->data()->releaseMBContext( mbContext ) ;
       dmsCB->suUnlock( suID, SHARED ) ;
+      dmsCB->writeDown( cb ) ;
       pSU = NULL ;
       suID = DMS_INVALID_SUID ;
       mbContext = NULL ;
+      writable = FALSE ;
 
       if ( monIdxList.empty() )
       {
@@ -1362,6 +1376,10 @@ namespace engine
          }
       }
 
+      // Notify backup nodes to clear old cached statistics
+      rc = rtnAnalyzeDpsLog( NULL, pCLFullName, NULL, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to write analyze log, rc: %d", rc ) ;
+
    done :
       if ( pSU && mbContext )
       {
@@ -1370,6 +1388,10 @@ namespace engine
       if ( DMS_INVALID_SUID != suID )
       {
          dmsCB->suUnlock( suID, SHARED ) ;
+      }
+      if ( writable )
+      {
+         dmsCB->writeDown( cb ) ;
       }
       PD_TRACE_EXITRC( SDB__RTNANALYZECLSTATS, rc ) ;
       return rc ;
@@ -1498,6 +1520,11 @@ namespace engine
       dmsExtentID indexExtID = DMS_INVALID_EXTENT ;
 
       _rtnInternalSortArea sortAreaTmp ;
+      BOOLEAN writable = FALSE ;
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      writable = TRUE ;
 
       rc = dmsCB->nameToSUAndLock( pCSName, suID, &pSU, SHARED, OSS_ONE_SEC ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock collection space for "
@@ -1573,6 +1600,10 @@ namespace engine
          goto error ;
       }
 
+      // Notify backup nodes to clear old cached statistics
+      rc = rtnAnalyzeDpsLog( NULL, pCLFullName, pIXName, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to write analyze log, rc: %d", rc ) ;
+
    done :
       if ( pSU && mbContext )
       {
@@ -1581,6 +1612,10 @@ namespace engine
       if ( DMS_INVALID_SUID != suID )
       {
          dmsCB->suUnlock( suID, SHARED ) ;
+      }
+      if ( writable )
+      {
+         dmsCB->writeDown( cb ) ;
       }
       PD_TRACE_EXITRC( SDB__RTNANALYZEIXSTAT, rc ) ;
       return rc ;
