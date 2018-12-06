@@ -26,7 +26,7 @@ Rename collection space.
 
 **Note:**
 
-1. The write operations of relevant data node will be blocked until rename operation commplete.
+1. The write operations of relevant data node will be blocked until rename operation complete.
 2. Do not allow to connect data node to rename collection spaces.
 
 ##RETURN VALUE##
