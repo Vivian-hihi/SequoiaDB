@@ -7,9 +7,11 @@ BUCKETNAME = "BucketList";
 
 if(typeof(COORDSVCNAME)=="undefined"){COORDSVCNAME="50000"}
 
+if(typeof(HOSTNAME)=="undefined"){HOSTNAME="localhost"}
+
 function main()
 {
-   var db = new Sdb("localhost",COORDSVCNAME);
+   var db = new Sdb(HOSTNAME, COORDSVCNAME);
    try{   
 //           db.dropCS(METACSNAME);
         	   
