@@ -60,8 +60,7 @@ public class CreateBucket15905 extends S3TestBase {
 	@AfterClass
 	private void tearDown() throws Exception {
 		try {
-			if (runSuccess) {
-				CommLib.clearBuckets(s3Client);
+			if (runSuccess) {				
 				UserUtils.deleteUser(userName);
 				TestTools.LocalFile.removeFile(localPath);
 			}

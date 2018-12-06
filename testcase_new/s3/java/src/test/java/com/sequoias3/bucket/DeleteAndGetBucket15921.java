@@ -1,7 +1,6 @@
 package com.sequoias3.bucket;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
@@ -14,7 +13,6 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -34,6 +32,7 @@ public class DeleteAndGetBucket15921 extends S3TestBase {
 
 	@BeforeClass
 	private void setUp() throws Exception {
+		CommLib.clearUser(userName);
 		acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);		
 		createBuckets(s3Client);
@@ -71,8 +70,7 @@ public class DeleteAndGetBucket15921 extends S3TestBase {
 	@AfterClass
 	private void tearDown() throws Exception {
 		try {
-			if (runSuccess) {
-				clearBuckets();
+			if (runSuccess) {				
 				UserUtils.deleteUser(userName);
 			}
 		} finally {
@@ -138,31 +136,9 @@ public class DeleteAndGetBucket15921 extends S3TestBase {
 			actExistBuckets.add(actBucketName);
 		}
 
-		Collections.sort(actExistBuckets, new Comparator<Object>() {
-			public int compare(Object a, Object b) {
-				if (a instanceof String && b instanceof String) {
-					return ((String) a).compareTo((String) b);
-				}
-				return 0;
-			}
-		});
-
+		Collections.sort(actExistBuckets);
 		Collections.sort(existBuckets);
 		Assert.assertEquals(actExistBuckets, existBuckets,
 				"buckets actual:" + actExistBuckets + ";the expect :" + existBuckets);
 	}
-
-	private void clearBuckets() {
-		for (int i = 0; i < defaultNums; i++) {
-			String subBucketName = bucketName + "." + i;
-			try {
-				s3Client.deleteBucket(subBucketName);
-			} catch (AmazonS3Exception e) {
-				if (!e.getErrorCode().equals("NoSuchBucket")) {
-					Assert.fail("delete bucket:" + e.getErrorCode());
-				}
-			}
-		}
-	}
-
 }

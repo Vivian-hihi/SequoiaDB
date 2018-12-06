@@ -29,9 +29,8 @@ public class DeleteBucket15916 extends S3TestBase {
 	private void setUp() throws Exception {
 		CommLib.clearUser(userName);		
 		String[] acessKeys = UserUtils.createUser(userName, roleName);
-		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);		
-
-		CommLib.clearBucket(s3Client, bucketName);
+		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
+		
 		s3Client.createBucket(new CreateBucketRequest(bucketName));	
 		s3Client.putObject(bucketName, key, "testdeletebucket");
 	}
@@ -54,11 +53,8 @@ public class DeleteBucket15916 extends S3TestBase {
 	@AfterClass
 	private void tearDown() throws Exception {
 		try {
-			if (runSuccess) {
-				s3Client.deleteObject(bucketName, key);
-				s3Client.deleteBucket(bucketName);
-				UserUtils.deleteUser(userName);
-				
+			if (runSuccess) {				
+				UserUtils.deleteUser(userName);				
 			}
 		} finally {
 			s3Client.shutdown();			

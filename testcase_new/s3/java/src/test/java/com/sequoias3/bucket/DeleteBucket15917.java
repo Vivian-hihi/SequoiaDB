@@ -59,9 +59,7 @@ public class DeleteBucket15917 extends S3TestBase {
 	@AfterClass
 	private void tearDown() throws Exception {
 		try {
-			if (runSuccess) {
-				s3Client1.deleteBucket(bucketName1);
-				s3Client2.deleteBucket(bucketName2);
+			if (runSuccess) {				
 				UserUtils.deleteUser(userName1);
 				UserUtils.deleteUser(userName2);
 			}
