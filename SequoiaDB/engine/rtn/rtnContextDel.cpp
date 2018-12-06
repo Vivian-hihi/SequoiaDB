@@ -953,6 +953,11 @@ namespace engine
          ossSleep( RTN_RENAME_BLOCKWRITE_INTERAL ) ;
          i++ ;
       }
+      if ( SDB_DMS_STATE_NOT_COMPATIBLE == rc )
+      {
+         PD_LOG( PDERROR, "Rename cs/cl is mutually exclusive with "
+                 "other rename cs/cl" ) ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Block dms write failed, rc: %d", rc ) ;
       _lockDMS = TRUE ;
 
