@@ -1506,7 +1506,9 @@ namespace engine
    //                                     isolate pmd from dps )
    //    lockId          -- lock Id
    //    requestLockMode -- lock mode being requested
-   //    pContext        -- pointer to context( dms, index )
+   //    pContext        -- pointer to context :
+   //                         dmsTBTransContext
+   //                         dmsIXTransContext
    // Output:
    //    pdpsTxResInfo   -- pointer to dpsTransRetInfo, a structure used to
    //                       save the conflict lock info
@@ -1613,16 +1615,25 @@ namespace engine
       }
       if ( SDB_OK != rc2 )
       {
+         PD_LOG( PDERROR, "Failed to pause context, rc:%d", rc2 ) ;
          goto postLockWaiting ;
       }
      
       // wait for the lock
       rc = _waitLock( dpsTxExectr ) ;
+      if ( SDB_OK != rc )
+      {
+         goto postLockWaiting ;
+      }
 
       // resume context
       if ( pContext )
       {
          rc2 = pContext->resume() ;
+      }
+      if ( SDB_OK != rc2 )
+      {
+         PD_LOG( PDERROR, "Failed to resume context, rc:%d", rc2 ) ;
       }
 
    postLockWaiting:
