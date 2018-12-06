@@ -26,7 +26,8 @@ Rename collection space.
 
 **Note:**
 
-1. Do not allow to connect data node to rename collection spaces.
+1. The write operations of relevant data node will be blocked until rename operation commplete.
+2. Do not allow to connect data node to rename collection spaces.
 
 ##RETURN VALUE##
 
@@ -42,6 +43,9 @@ the exceptions of `renameCS()` are as below:
 | ------ | --- | ------------ | ----------- |
 | -34 | SDB_DMS_CS_NOTEXIST | The cs corresponding to "oldname" does not exist. | Rename an existing collection space. |
 | -33 | SDB_DMS_CS_EXIST | The cs corresponding to "newname" already exists. | Set newname to a name that does not exist in the database. |
+| -67 | SDB_BACKUP_HAS_ALREADY_START | Backup has already been started. | Do rename operation after backup complete. |
+| -148 | SDB_DMS_STATE_NOT_COMPATIBLE | Other rename operation has already been started. | Do rename operation after other rename complete. |
+| -149 | SDB_REBUILD_HAS_ALREADY_START | Database rebuild has already been started. | Do rename operation after rebuild complete. |
 
 When error happen, use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)
 to get the error message or use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md)

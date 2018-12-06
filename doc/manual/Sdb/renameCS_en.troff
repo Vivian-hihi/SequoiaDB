@@ -31,6 +31,9 @@ New name of the collection space.
 .PP
 \f[B]Note:\f[]
 .IP "1." 3
+The write operations of relevant data node will be blocked until rename
+operation commplete.
+.IP "2." 3
 Do not allow to connect data node to rename collection spaces.
 .SH RETURN VALUE
 .PP
@@ -108,6 +111,74 @@ T}@T{
 exists.
 T}@T{
 the database.
+T}
+T{
+3
+T}@T{
+\-67
+T}@T{
+SDB_BACKUP_HAS_ALREADY_
+T}@T{
+Backup has already been
+T}@T{
+Do rename operation
+T}
+T{
+T}@T{
+T}@T{
+START
+T}@T{
+started.
+T}@T{
+after backup complete.
+T}
+T{
+4
+T}@T{
+\-148
+T}@T{
+SDB_DMS_STATE_NOT_
+T}@T{
+Other rename operation
+T}@T{
+Do rename operation
+T}
+T{
+T}@T{
+T}@T{
+COMPATIBLE
+T}@T{
+has already been
+T}@T{
+after other rename
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+started.
+T}@T{
+complete.
+T}
+T{
+5
+T}@T{
+\-149
+T}@T{
+SDB_REBUILD_HAS_ALREADY
+T}@T{
+Database rebuild has
+T}@T{
+Do rename operation
+T}
+T{
+T}@T{
+T}@T{
+_START
+T}@T{
+already been started.
+T}@T{
+after rebuild complete.
 T}
 .TE
 .PP

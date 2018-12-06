@@ -12,7 +12,8 @@
 
 >**Note:**
 >
-> 不允许直连数据节点，对集合改名。
+> * 改名过程中会阻塞相应数据节点的写操作。
+> * 不允许直连数据节点，对集合改名。
 
 ##返回值##
 
@@ -26,6 +27,9 @@
 | ------| ----------------------- | --- | ------ |
 | -23   | SDB_DMS_NOTEXIST | oldname对应的集合不存在。 | 对已存在的集合执行rename。 |
 | -22   | SDB_DMS_EXIST    | newname对应的集合已存在。 | newname设为不存在的名字。 |
+| -67   | SDB_BACKUP_HAS_ALREADY_START | 数据节点正在做备份。 | 等待备份完成，再执行改名。 |
+| -148  | SDB_DMS_STATE_NOT_COMPATIBLE | 数据节点上有其他rename操作正在执行。 | 等待其余rename完成，再执行改名。 |
+| -149  | SDB_REBUILD_HAS_ALREADY_START| 数据节点正在做rebuild。 | 等待rebuild完成，再执行改名。 |
 
 当异常抛出时，可以通过 [getLastErrObj()](reference/Sequoiadb_command/Global/getLastErrObj.md)  或 [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) 获取错误信息 或 通过 [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) 获取错误码。
 更多错误可以参考[常见错误处理指南](troubleshooting/general/general_guide.md) 。
