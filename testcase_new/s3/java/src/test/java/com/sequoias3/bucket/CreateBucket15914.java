@@ -2,6 +2,7 @@ package com.sequoias3.bucket;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.Owner;
 import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
@@ -11,6 +12,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -26,11 +29,13 @@ public class CreateBucket15914 extends S3TestBase {
 	private String userName = "user15914";
 	private String roleName = "normal";
 	private String delBucketName = "bucket15914.5";
+	private List<String> expBucketNameList = new ArrayList<String>();
 	private final int defaultNums = 10;
 	private AmazonS3 s3Client = null;
 
 	@BeforeClass
 	private void setUp() throws Exception {
+		CommLib.clearUser(userName);
 		String[] accessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 	}
@@ -66,6 +71,7 @@ public class CreateBucket15914 extends S3TestBase {
 		for (int i = 1; i <= defaultNums; i++) {
 			String subBucketName = bucketName + "." + i;
 			s3Client.createBucket(subBucketName);
+			expBucketNameList.add(subBucketName);
 		}
 	}
 
@@ -74,32 +80,22 @@ public class CreateBucket15914 extends S3TestBase {
 		List<Bucket> buckets = s3Client.listBuckets();
 		Assert.assertEquals(buckets.size(), defaultNums);
 
-		for (int index = 0; index < buckets.size(); index++) {
-			Bucket bucket = buckets.get(index);
-			String actBucketName = bucket.getName();
-			String actOwner = bucket.getOwner().getDisplayName();
-			Assert.assertEquals(actBucketName, bucketName + "." + (index + 1));
-			Assert.assertEquals(actOwner, userName);
+		List<String> actbucketNameLists = new ArrayList<>();
+		for(Bucket bucket : buckets){
+			Owner actOwner = bucket.getOwner();
+			Assert.assertEquals(actOwner.getDisplayName(), userName);
+			actbucketNameLists.add(bucket.getName());
 		}
+		Collections.sort(actbucketNameLists);
+		Collections.sort(expBucketNameList);
+		Assert.assertEquals(actbucketNameLists, expBucketNameList);
 	}
 
+	@SuppressWarnings("deprecation")
 	private void checkResultAfterDelete(AmazonS3 s3Client, String bucketname) {
 		// check bucket nums
 		List<Bucket> buckets = s3Client.listBuckets();
 		Assert.assertEquals(buckets.size(), defaultNums - 1);
-		Assert.assertFalse(doesBucketExist(bucketname), "bucket still exist!");
-	}
-
-	private boolean doesBucketExist(String bucketName) {
-		List<Bucket> buckets = s3Client.listBuckets();
-		boolean findBucketFlag = false;
-		for (int i = 0; i < buckets.size(); i++) {
-			String actBucketName = buckets.get(i).getName();
-			if (actBucketName.equals(bucketName)) {
-				findBucketFlag = true;
-				break;
-			}
-		}
-		return findBucketFlag;
+		Assert.assertFalse(s3Client.doesBucketExist(bucketname), "bucket still exist!");
 	}
 }

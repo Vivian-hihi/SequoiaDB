@@ -10,9 +10,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * test content: 并发查询桶版本状态控制信息
  * testlink-case: seqDB-16617
@@ -31,6 +28,7 @@ public class GetBucketVersioning16617 extends S3TestBase {
 
 	@BeforeClass
 	private void setUp() throws Exception {
+		CommLib.clearUser(userName);
 		acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
 		s3Client.createBucket(bucketName);
@@ -39,18 +37,9 @@ public class GetBucketVersioning16617 extends S3TestBase {
 
 	@Test
 	private void testGetBucketVersioning() throws Exception {
-		//TODO:1、建议直接用例start（20）
-		List<GetBucketVersioningThread> getBucketVersionings = new ArrayList<>(20);
-		for( int i = 0; i < defaultNums ; i++){
-			getBucketVersionings.add( new GetBucketVersioningThread());			
-		}
-		for( GetBucketVersioningThread getBucketVersioning : getBucketVersionings ){
-			getBucketVersioning.start();
-		}	
-		
-		for( GetBucketVersioningThread getBucketVersioning : getBucketVersionings ){
-			Assert.assertTrue( getBucketVersioning.isSuccess(), getBucketVersioning.getErrorMsg());
-		}
+		GetBucketVersioningThread getBucketVersioning = new GetBucketVersioningThread();
+		getBucketVersioning.start(defaultNums);
+		Assert.assertTrue( getBucketVersioning.isSuccess(), getBucketVersioning.getErrorMsg());
 
 		runSuccess = true;
 	}

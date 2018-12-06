@@ -32,7 +32,8 @@ public class CreateBucket15906 extends S3TestBase{
 	private AmazonS3 s3Client = null;
 
 	@BeforeClass
-	private void setUp() throws Exception {		
+	private void setUp() throws Exception {	
+		CommLib.clearUser(userName);
 		acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
 	}

@@ -2,6 +2,7 @@ package com.sequoias3.bucket;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.Owner;
 import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
@@ -12,6 +13,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,11 +30,13 @@ public class CreateBucket15912 extends S3TestBase {
 	private String bucketName = "bucket15912";
 	private String roleName = "normal";
 	private final int defaultNums = 30;
+	private List<String> expBucketNameList = new ArrayList<String>();
 	private AmazonS3 s3Client = null;
 	private String[] acessKeys = null;
 
 	@BeforeClass
 	private void setUp() throws Exception {
+		CommLib.clearUser(userName);
 		acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 		createBuckets(s3Client);
@@ -50,7 +55,6 @@ public class CreateBucket15912 extends S3TestBase {
 	private void tearDown() throws Exception {
 		try {
 			if (runSuccess) {
-				CommLib.clearBuckets(s3Client);
 				UserUtils.deleteUser(userName);
 			}
 		} catch (BaseException e) {
@@ -81,20 +85,24 @@ public class CreateBucket15912 extends S3TestBase {
 		for (int i = 0; i < defaultNums; i++) {
 			String subBucketName = bucketName + "." + i;
 			s3Client.createBucket(subBucketName);
+			expBucketNameList.add(subBucketName);
 		}
 	}
 
 	private void checkBucketResult(AmazonS3 s3Client) {
-		// check bucket nums
 		List<Bucket> buckets = s3Client.listBuckets();
 		Assert.assertEquals(buckets.size(), defaultNums);
-
-		for (int i = 0; i < buckets.size(); i++) {
-			Bucket bucket = buckets.get(i);
-			String actBucketName = bucket.getName();
-			String actOwner = bucket.getOwner().getDisplayName();
-			Assert.assertEquals(actBucketName, bucketName + "." + i);
-			Assert.assertEquals(actOwner, userName);
+		
+		List<String> actbucketNameLists = new ArrayList<>();
+		for(Bucket bucket : buckets){
+			Owner actOwner = bucket.getOwner();
+			Assert.assertEquals(actOwner.getDisplayName(), userName);
+			actbucketNameLists.add(bucket.getName());
+		}
+		Collections.sort(actbucketNameLists);
+		Collections.sort(expBucketNameList);
+		for(int i = 0 ; i < actbucketNameLists.size() ; i++){
+			Assert.assertEquals(actbucketNameLists.get(i),expBucketNameList.get(i));
 		}
 	}
 }

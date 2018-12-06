@@ -2,7 +2,6 @@ package com.sequoias3.bucket;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.Bucket;
 import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
@@ -11,8 +10,6 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 /**
  * test content: delete non existent bucket
@@ -23,33 +20,27 @@ import java.util.List;
  */
 public class CreateBucket15915 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String bucketName = "bucket15915";
 	private String userName = "user15915";
 	private String roleName = "normal";
 	private String delBucketName = "bucket15915.123";
-	private final int defaultNums = 10;
 	private AmazonS3 s3Client = null;
 
 	@BeforeClass
 	private void setUp() throws Exception {
+		CommLib.clearUser(userName);
 		String[] accessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 	}
 
 	@Test
 	private void testCreateBucket() throws Exception {
-		// create and delete buckets
-		createBucketbyNums();
-		checkCreateBucketResult(s3Client);
-
+		// delete bucket
 		try {
 			s3Client.deleteBucket(delBucketName);
 			Assert.fail("delete bucket should fail!");
 		} catch (AmazonS3Exception e) {
 			Assert.assertEquals(e.getErrorCode(), "NoSuchBucket");
 		}
-		// check buckets after delete
-		checkCreateBucketResult(s3Client);
 		runSuccess = true;
 	}
 
@@ -65,27 +56,6 @@ public class CreateBucket15915 extends S3TestBase {
 			if (s3Client != null) {
 				s3Client.shutdown();
 			}
-		}
-	}
-
-	private void createBucketbyNums() {
-		for (int i = 1; i <= defaultNums; i++) {
-			String subBucketName = bucketName + "." + i;
-			s3Client.createBucket(subBucketName);
-		}
-	}
-
-	private void checkCreateBucketResult(AmazonS3 s3Client) {
-		// check bucket nums
-		List<Bucket> buckets = s3Client.listBuckets();
-		Assert.assertEquals(buckets.size(), defaultNums);
-
-		for (int index = 0; index < buckets.size(); index++) {
-			Bucket bucket = buckets.get(index);
-			String actBucketName = bucket.getName();
-			String actOwner = bucket.getOwner().getDisplayName();
-			Assert.assertEquals(actBucketName, bucketName + "." + (index + 1));
-			Assert.assertEquals(actOwner, userName);
 		}
 	}
 }

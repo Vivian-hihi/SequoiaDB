@@ -18,6 +18,8 @@ import org.testng.annotations.Test;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -30,8 +32,8 @@ import java.util.Random;
  */
 public class CreateBucket15908 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String bucketName[] = new String[13];
-	private String illegalBucketName[] = new String[2];
+	private List<String> bucketNameList = new ArrayList<String>();
+	private List<String> illegalbucketNameList = new ArrayList<String>();
 	private String userName = "user15908";
 	private String roleName = "normal";
 	private AmazonS3 s3Client = null;
@@ -40,6 +42,7 @@ public class CreateBucket15908 extends S3TestBase {
 
 	@BeforeClass
 	private void setUp() throws Exception {
+		CommLib.clearUser(userName);
 		accessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 	}
@@ -47,41 +50,41 @@ public class CreateBucket15908 extends S3TestBase {
 	@SuppressWarnings("deprecation")
 	@Test
 	private void testCreateBucket() throws Exception {
-		bucketName[0] = "testbucket";
-		bucketName[1] = URLEncoder.encode(getRandomString(3), "UTF-8");
-		bucketName[2] = URLEncoder.encode(getRandomString(63), "UTF-8");
-		bucketName[3] = URLEncoder.encode("~`!@#$%^\"&*()-=+;?<>", "UTF-8");
-		bucketName[4] = URLEncoder.encode("Test_Bucket#001$A", "UTF-8");
-		bucketName[5] = ".testbucket01";
-		bucketName[6] = "test.bucket02";
-		bucketName[7] = "testbucket03.";
-		bucketName[8] = "test....bucket04";
-		bucketName[9] = "test-bucket05";
-		bucketName[10] = "-testbucket06";
-		bucketName[11] = "testbucket07-";
-		bucketName[12] = "users";
-		for (int i = 0; i < bucketName.length; i++) {
+		bucketNameList.add("testbucket");
+		bucketNameList.add(URLEncoder.encode(getRandomString(3), "UTF-8"));
+		bucketNameList.add(URLEncoder.encode(getRandomString(63), "UTF-8"));
+		bucketNameList.add(URLEncoder.encode("~`!@#$%^\"&*()-=+;?<>", "UTF-8"));
+		bucketNameList.add(URLEncoder.encode("Test_Bucket#001$A", "UTF-8"));
+		bucketNameList.add(".testbucket01");
+		bucketNameList.add("test.bucket02");
+		bucketNameList.add("testbucket03.");
+		bucketNameList.add("test....bucket04");
+		bucketNameList.add("test-bucket05");
+		bucketNameList.add("-testbucket06");
+		bucketNameList.add("testbucket07-");
+		bucketNameList.add("users");
+		for (int i = 0; i < bucketNameList.size(); i++) {
 			try {
-				createBucket(bucketName[i]);
+				createBucket(bucketNameList.get(i));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		checkBucketNameResult(bucketName.length);
+		checkbucketNameListResult(bucketNameList.size());
 
-		illegalBucketName[0] = URLEncoder.encode(getRandomString(2), "UTF-8");
-		illegalBucketName[1] = URLEncoder.encode(getRandomString(64), "UTF-8");
+		illegalbucketNameList.add(URLEncoder.encode(getRandomString(2), "UTF-8"));
+		illegalbucketNameList.add(URLEncoder.encode(getRandomString(64), "UTF-8"));
 
-		for (int i = 0; i < illegalBucketName.length; i++) {
+		for (int i = 0; i < illegalbucketNameList.size(); i++) {
 			try {
-				createBucket(illegalBucketName[i]);
+				createBucket(illegalbucketNameList.get(i));
 				Assert.fail("create bucket should fail!");
 			} catch (Exception e) {
 				String str = e.getMessage().replace("</Code>", "<Code>");
 				String[] strs = str.split("<Code>");
 				Assert.assertEquals(strs[1], "InvalidBucketName");
 			}
-			Assert.assertEquals(false, s3Client.doesBucketExist(URLEncoder.encode(illegalBucketName[i], "UTF-8").toLowerCase()));
+			Assert.assertEquals(false, s3Client.doesBucketExist(illegalbucketNameList.get(i).toLowerCase()));
 		}
 		runSuccess = true;
 	}
@@ -101,35 +104,34 @@ public class CreateBucket15908 extends S3TestBase {
 		}
 	}
 
-	private void createBucket(String bucketName) throws Exception {
-		HttpPut request = new HttpPut(S3TestBase.s3ClientUrl + "/s3/" + bucketName);
+	private void createBucket(String bucketNameList) throws Exception {
+		HttpPut request = new HttpPut(S3TestBase.s3ClientUrl + "/s3/" + bucketNameList);
 		request.setHeader("Authorization", "Credential=" + accessKeys[0]);
 		client = RestClient.createHttpClient();
 		RestClient.sendRequest(client, request);
 	}
 
-	private void checkBucketNameResult(int bucketNums) {
+	private void checkbucketNameListResult(int bucketNums) throws UnsupportedEncodingException {
 		// create one bucket,check the bucket name and owner name
 		List<Bucket> buckets = s3Client.listBuckets();
 		// check bucket number
 		Assert.assertEquals(buckets.size(), bucketNums);
-
-		boolean findBucketFlag = false;
-		for (int i = 0; i < buckets.size(); i++) {
-			String actBucketName = buckets.get(i).getName();
-			// get the create bucket,then check the bucket name and owner
-			try {
-				if (actBucketName.equals(URLDecoder.decode(bucketName[i], "UTF-8").toLowerCase())) {
-					Owner actOwner = buckets.get(i).getOwner();
-					Assert.assertEquals(actOwner.getDisplayName(), userName);
-					findBucketFlag = true;
-					break;
-				}
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			}
+		
+		List<String> actbucketNameLists = new ArrayList<>();
+		for(Bucket bucket : buckets){
+			Owner actOwner = bucket.getOwner();
+			Assert.assertEquals(actOwner.getDisplayName(), userName);
+			actbucketNameLists.add(bucket.getName());
 		}
-		Assert.assertTrue(findBucketFlag, " the bucket must be exist!");
+		Collections.sort(actbucketNameLists);
+		
+		List<String> expBucketNames = new ArrayList<>();
+		for(String bucket : bucketNameList){
+			expBucketNames.add(URLDecoder.decode(bucket, "UTF-8").toLowerCase());
+		}
+		
+		Collections.sort(expBucketNames);
+		Assert.assertEquals(actbucketNameLists, expBucketNames);
 	}
 
 	private String getRandomString(int length) {

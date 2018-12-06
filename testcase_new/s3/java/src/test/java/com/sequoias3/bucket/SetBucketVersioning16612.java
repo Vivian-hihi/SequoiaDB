@@ -30,6 +30,7 @@ public class SetBucketVersioning16612 extends S3TestBase{
 
 	@BeforeClass
 	private void setUp() throws Exception {
+		CommLib.clearUser(userName);
 		String[] acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 		s3Client.createBucket(bucketName);
