@@ -1666,7 +1666,7 @@ parse_listitem(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t s
 		while (end < size && data[end - 1] != '\n')
 			end++;
 
-      if( in_empty == 1 )
+      if( in_empty == 1 && !in_fence )
       {
          bufputc(work, '\n');
       }
