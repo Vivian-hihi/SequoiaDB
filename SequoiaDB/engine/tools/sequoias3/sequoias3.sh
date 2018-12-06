@@ -28,11 +28,12 @@ function Large()
   if [ -z $old ]; then
     return 2
   else
-    newversion=${new##*sequoia-s3-}
-    oldversion=${old##*sequoia-s3-}
+    newversion=(${new//-/ })
+    oldversion=(${old//-/ }) 
 
-    newar=(${newversion//./ })
-    oldar=(${oldversion//./ })
+    newar=(${newversion[2]//./ })
+    oldar=(${oldversion[2]//./ })
+
     if [ ${newar[0]} -gt ${oldar[0]} ]; then
       return 2
     elif [ ${newar[0]} -lt ${oldar[0]} ]; then
@@ -48,7 +49,37 @@ function Large()
         elif [ ${newar[2]} -lt ${oldar[2]} ]; then
           return 1
         else
-          return 0
+          newdebug=""
+          olddebug=""
+          if [ ${newversion[3]} ]; then
+            newD=${newversion[3]##*r}
+            newDe=(${newD[0]//./ })
+            newdebug=${newDe[0]}
+          else
+            return 2
+          fi
+          if [ ${oldversion[3]} ]; then
+            oldD=${oldversion[3]##*r}
+            oldDe=(${oldD[0]//./ })
+            olddebug=${oldDe[0]}
+          else
+            return 1
+          fi
+          if [ -z $newdebug ]; then
+            return 2 
+          fi
+          if [ -z $olddebug ]; then
+            return 1
+          fi
+          
+          if [ $newdebug -gt $olddebug ]; then
+            return 2
+          elif [ $newdebug -lt $olddebug ]; then
+            return 1
+          else
+            return 0 
+          fi
+         
         fi
       fi
     fi
@@ -122,7 +153,7 @@ function Start()
         continue
       fi
     else
-      echo -e "\033[31mstart failed. please check the application.properties config and re-run\033[0m "
+      echo -e "\033[31mstart failed. please check $BashPath/nohup.out and $configfile\033[0m "
       exit 1
     fi
   done
