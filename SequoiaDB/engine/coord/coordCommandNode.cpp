@@ -1888,14 +1888,11 @@ namespace engine
 
             rc = rtnGetBooleanElement( pArgs->_boQuery, FIELD_NAME_KEEP_DATA,
                                        _keepData ) ;
-            if ( SDB_FIELD_NOT_EXIST == rc )
+            if ( rc )
             {
-               rc = SDB_OK ;
-            }
-            else if ( rc )
-            {
-               PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
-                       "rc: %d", FIELD_NAME_KEEP_DATA, getName(), rc ) ;
+               PD_LOG_MSG( PDERROR, "Not specify the field[%s] or it has" 
+                           " an invalid value in options"
+                           " when attaching node.", FIELD_NAME_KEEP_DATA ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
@@ -2331,14 +2328,11 @@ namespace engine
 
             rc = rtnGetBooleanElement( pArgs->_boQuery, FIELD_NAME_KEEP_DATA,
                                        _keepData ) ;
-            if ( SDB_FIELD_NOT_EXIST == rc )
+            if ( rc )
             {
-               rc = SDB_OK ;
-            }
-            else if ( rc )
-            {
-               PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
-                       "rc: %d", FIELD_NAME_KEEP_DATA, getName(), rc ) ;
+               PD_LOG_MSG( PDERROR, "Not specify the field[%s] or it has" 
+                           " an invalid value in options"
+                           " when detaching node.", FIELD_NAME_KEEP_DATA ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }

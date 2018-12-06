@@ -486,6 +486,12 @@ namespace engine
       string svcname ;
       BSONObj options ;
 
+      if ( arg.argc() < 3 )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Need 3 arguments" ) ;
+         goto error ;
+      }
       rc = arg.getString( 0, hostname ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
@@ -536,6 +542,12 @@ namespace engine
       string svcname ;
       BSONObj options ;
 
+      if ( arg.argc() < 3 )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Need 3 arguments" ) ;
+         goto error ;
+      }
       rc = arg.getString( 0, hostname ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {

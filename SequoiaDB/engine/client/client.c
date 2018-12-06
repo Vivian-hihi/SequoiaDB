@@ -11465,7 +11465,8 @@ SDB_EXPORT INT32 sdbDetachNode( sdbReplicaGroupHandle cHandle,
    BSON_INIT( obj ) ;
    HANDLE_CHECK( cHandle, rg, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
 
-   if ( NULL == hostName || NULL == serviceName )
+   if ( NULL == hostName || !*hostName || 
+        NULL == serviceName || !*serviceName )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -11526,7 +11527,8 @@ SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
 
    BSON_INIT( obj ) ;
    HANDLE_CHECK( cHandle, rg, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
-   if ( NULL == hostName || NULL == serviceName )
+   if ( NULL == hostName || !*hostName || 
+        NULL == serviceName || !*serviceName )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
