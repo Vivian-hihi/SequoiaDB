@@ -17,7 +17,7 @@
 
 ##示例##
 
-* 链接数据节点 20000，开启数据库引擎程序跟踪的功能
+* 连接数据节点 20000，开启数据库引擎程序跟踪的功能
 
 	```lang-javascript
 	> var data = new Sdb( "localhost", 20000 )
@@ -38,3 +38,7 @@
 	```
 
 * 查看当前断点跟踪程序的状态可参考[traceStatus()](reference/Sequoiadb_command/Sdb/traceStatus.md)
+
+	```lang-javascript
+	> db.traceStatus()
+	```

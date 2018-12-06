@@ -29,7 +29,7 @@
 	> db.traceOn( 256 )
 	```
 
-* 开户数据库引擎程序跟踪功能，指定跟踪的模块名称和指定断点进行跟踪
+* 开启数据库引擎程序跟踪功能，指定跟踪的模块名称和指定断点进行跟踪
 
 	```lang-javascript
 	> db.traceOn( 256, "cls, dms, mth", "_dmsTempSUMgr::init", 12712 )
@@ -58,7 +58,7 @@
 	> db.traceOff("/opt/sequoiadb/trace.dump")
 	```
 
-* 格式化输出二进制文件，具体可参考[traceFmt()](reference/Sequoiadb_command/Global/traceFmt.md)
+* 解析二进制文件，具体可参考[traceFmt()](reference/Sequoiadb_command/Global/traceFmt.md)
 
 	```lang-javascript
 	> traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.flw" )

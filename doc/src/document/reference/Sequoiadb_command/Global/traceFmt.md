@@ -68,10 +68,14 @@ v1.0及以上版本。
 
 ##示例##
 
-* 格式化输出文件
+* 解析二进制文件
 
 	```lang-javascript
 	> traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
  	```
 
 * 查看当前程序跟踪的状态可参考[traceStatus()](reference/Sequoiadb_command/Sdb/traceStatus.md)
+
+	```lang-javascript
+	> db.traceStatus()
+	```

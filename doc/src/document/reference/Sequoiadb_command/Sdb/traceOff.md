@@ -25,3 +25,7 @@
 	```
 
 * 解析二进制文件可参考 [traceFmt()](reference/Sequoiadb_command/Global/traceFmt.md)
+
+	```lang-javascript
+	> traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
+ 	```
