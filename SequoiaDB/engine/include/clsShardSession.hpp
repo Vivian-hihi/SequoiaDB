@@ -268,7 +268,6 @@ namespace engine
 
          INT32 _renameMainCL( const CHAR *pCollection,
                               INT16 w,
-                              INT32 version,
                               SINT64 &contextID ) ;
 
          INT32 _updateVCS( const CHAR *fullName, const BSONObj &updator ) ;

@@ -2607,8 +2607,7 @@ namespace engine
 
       case CMD_RENAME_COLLECTION:
          /// wait sync in context, not set writable
-         rc = _renameMainCL( pCommand->collectionFullName(), w,
-                             version, contextID );
+         rc = _renameMainCL( pCommand->collectionFullName(), w, contextID );
          break;
 
       case CMD_TRUNCATE:
@@ -3074,9 +3073,8 @@ namespace engine
    }
 
    INT32 _clsShdSession::_renameMainCL( const CHAR *pCollection,
-                                      INT16 w,
-                                      INT32 version,
-                                      SINT64 &contextID )
+                                        INT16 w,
+                                        SINT64 &contextID )
    {
       INT32 rc = SDB_OK ;
       contextID = -1 ;
