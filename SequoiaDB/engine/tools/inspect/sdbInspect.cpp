@@ -2611,38 +2611,31 @@ error:
 }
 
 /**
-** prepend outfile path to tmpfile
+** modify tmpfile path if the user provides outfile path
 ***/
-void prependOutFilePath( const CHAR *outfile, CHAR *tmpfile )
+void modifyTmpFilePath( const CHAR *outFile, UINT32 loopIndex, CHAR *tmpFile )
 {
-   const CHAR *slashPos = NULL ;
-   UINT32 pathLength = 0 ;
-
-   if ( NULL == outfile || NULL == tmpfile )
+   if ( NULL == outFile || NULL == tmpFile )
    {
       goto done ;
    }
 
-   if ( 0 == ossStrncmp( "", outfile, OSS_MAX_PATHSIZE ) )
+   if ( 0 == ossStrncmp( "", outFile, OSS_MAX_PATHSIZE ) )
+   {
+      goto done ;
+   }
+   else if ( OSS_MAX_PATHSIZE < ossStrlen( outFile ) + 
+                                ossStrlen( CI_TMP_FILE_SUFFIX ) + 1 )
    {
       goto done ;
    }
    else
    {
-#if defined (_LINUX)
-      slashPos = ossStrrchr( outfile, '/') ;
-#elif defined (_WINDOWS)
-      slashPos = ossStrrchr( outfile, '\\') ;
-#endif
-
-      if ( NULL == slashPos )
-      {
-         goto done ;
-      }
-
-      pathLength = slashPos - outfile + 1 ;
-      ossMemmove( tmpfile + pathLength, tmpfile, pathLength ) ;
-      ossMemcpy( tmpfile, outfile, pathLength ) ;
+      ossMemset( tmpFile, 0, OSS_MAX_PATHSIZE ) ;
+      ossStrncpy( tmpFile, outFile, OSS_MAX_PATHSIZE ) ;
+      ossSnprintf( tmpFile + ossStrlen(tmpFile), 
+                   OSS_MAX_PATHSIZE - ossStrlen(tmpFile), 
+                   CI_TMP_FILE_SUFFIX, loopIndex ) ;
    }
 
 done:
@@ -3433,7 +3426,7 @@ INT32 _sdbCi::inspect()
          curLoop += 1 ;
          ossMemset( tmpFile, 0, OSS_MAX_PATHSIZE ) ;
          ossSnprintf( tmpFile, OSS_MAX_PATHSIZE, CI_TMP_FILE, curLoop ) ;
-         prependOutFilePath( _header._outfile, tmpFile ) ;
+         modifyTmpFilePath( _header._outfile, curLoop, tmpFile ) ;
          rc = inspectWithoutFile( coord, &_header, tmpFile, totalRecord ) ;
       }while ( CI_INSPECT_ERROR == rc ) ;
 
@@ -3464,7 +3457,7 @@ INT32 _sdbCi::inspect()
    {
       ossMemset( tmpFile, 0, OSS_MAX_PATHSIZE ) ;
       ossSnprintf( tmpFile, OSS_MAX_PATHSIZE, CI_TMP_FILE, idx + 1 ) ;
-      prependOutFilePath( _header._outfile, tmpFile ) ;
+      modifyTmpFilePath( _header._outfile, idx + 1, tmpFile ) ;
 
       rc = inspectWithFile( &_header, inFile, tmpFile, totalRecord, finish ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
