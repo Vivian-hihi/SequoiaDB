@@ -67,6 +67,7 @@
             </if>
             <ant antfile="${testcase_dir}/../../tools/runtest_java.xml" target="exec_testcase">
                <property name="casedir" value="${testcase_dir}"/>
+               <property name="testcasetype" value="${testcase_type}"/>
                <property name="reportdir" value="${report_dir}"/>
                <property name="sdbdriver" value="${tmpversion}" />
                <property name="sdbdriverDir" value="${INSTALL_DIR}/java" />
@@ -74,6 +75,7 @@
                <property name="svcname" value="${SVCNAME}"/>
                <property name="eshostname" value="${ES_IP}"/>
                <property name="essvcname" value="${ES_PORT_CLIENT}"/>
+               <property name="s3svcname" value="${S3SVCNAME}"/>
             </ant>
          </else>
       </if>

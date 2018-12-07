@@ -376,6 +376,10 @@
                      <case value="driver_java">
                         <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_java_case.xml"/>
                      </case>
+                    
+                     <case value="s3_java">
+                        <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_java_case.xml"/>
+                     </case>
                      
                      <case value="story_js">
                         <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_js_case.xml"/>
