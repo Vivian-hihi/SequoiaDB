@@ -241,11 +241,23 @@
       <attribute name="eshostname"/>
       <attribute name="essvcname"/>
       <sequential>
-         <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlfile} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DESHOSTNAME=@{eshostname} -DESSVCNAME=@{essvcname} "/>
+         <hostinfo prefix="host" />
+         <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlfile} -Dsdbdriver=@{sdbdriver} -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DS3HOSTNAME=${host.ADDR4} -DS3SVCNAME=${s3svcname} -DESHOSTNAME=@{eshostname} -DESSVCNAME=@{essvcname}"/>
          <echo message="cmd : mvn ${cmd} in dir ${casedir}"/>
-         <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
-            <arg line="${cmd}" />
-         </exec>
+         <if>
+            <equals arg1="${testcasetype}" arg2="s3_java"/>
+            <then>
+               <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
+                  <arg line="${cmd}" />
+                  <env key="JAVA_HOME" path="/opt/jdk1.8.0_152" />
+               </exec>
+            </then>
+            <else>
+               <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
+                  <arg line="${cmd}" />
+               </exec>
+            </else>
+         </if> 
          
          <if>
             <available file="${casedir}/pom_fulltext.xml" type="file"/>
