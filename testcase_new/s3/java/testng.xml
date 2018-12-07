@@ -13,7 +13,7 @@
    <parameter name="WORKDIR" value="/tmp/javatest" />
    <parameter name="S3USERNAME" value="administrator" />
    <parameter name="S3ACCESSKEYID" value="ABCDEFGHIJKLMNOPQRST" />
-   
+   <parameter name="CONFTOOL" value="/tmp/ci/testcase/tools/changeConf.js" />
    <listeners> 
           <listener class-name = "com.sequoias3.testcommon.TimePrinterListener"/>
    </listeners>

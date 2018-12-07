@@ -21,7 +21,9 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>1.8</java.version>
+		<java.version>1.7</java.version>
+      <sdbdriver.version>${sdbdriver}</sdbdriver.version>
+      <sdbdriver.dir>${sdbdriverDir}</sdbdriver.dir>
 	</properties>
 
 	<dependencies>
@@ -35,7 +37,7 @@
 			<artifactId>commons-logging</artifactId>
 			<version>1.2</version>
 		</dependency>
-		
+      
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>			
@@ -46,7 +48,6 @@
 				</exclusion>
 			</exclusions>			
 		</dependency>
-
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-s3</artifactId>
@@ -58,6 +59,21 @@
   				<artifactId>json</artifactId>
   				<version>20171018</version>
 		</dependency>			
+      
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <version>6.13.1</version>
+      </dependency>
+      
+      <dependency>
+         <groupId>com.sequoiadb</groupId>
+         <artifactId>sequoiadb-driver</artifactId>
+         <version>${sdbdriver.version}</version>
+         <scope>system</scope>
+         <systemPath>${sdbdriver.dir}/sequoiadb-driver-${sdbdriver.version}.jar</systemPath>
+      </dependency>
+      
 	</dependencies>
 
 	<dependencyManagement>
@@ -78,6 +94,19 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.20.1</version>
+            <configuration>
+               <reportsDirectory>${reportDir}</reportsDirectory>
+               <suiteXmlFiles>
+                  <file>${xmlFileName}</file>
+               </suiteXmlFiles>
+               <forkMode>pertest</forkMode>
+               <argLine>-Xms1024m -Xmx1024m -Xss1m</argLine>
+            </configuration>
+         </plugin>
 		</plugins>
 	</build>
 
