@@ -206,20 +206,26 @@ public class S3TestBase {
     }
     
     public static void stopS3() {
-        Properties prop = new Properties();
-        InputStream in = new FileInputStream( new File("/etc/default/sequoiadb") );
-        prop.load( in );
-        String installPath = prop.getProperty( "INSTALL_DIR" );
-        String[] cmd = new String[2];
-        cmd[0] = installPath+"/tools/sequoias3/sequoias3.sh";
-        cmd[1] = "stop";
-        System.out.println( "exec cmd: " + Arrays.toString( cmd ) );
-        process = Runtime.getRuntime().exec( cmd );
-        input = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
-
-        exitValue = process.waitFor();
-        if( 0 != exitValue ){
-            Assert.fail( "fail to stop s3, return code=" + exitValue );
-        } 
+        try{
+            Properties prop = new Properties();
+            InputStream in = new FileInputStream( new File("/etc/default/sequoiadb") );
+            prop.load( in );
+            String installPath = prop.getProperty( "INSTALL_DIR" );
+            String[] cmd = new String[2];
+            cmd[0] = installPath+"/tools/sequoias3/sequoias3.sh";
+            cmd[1] = "stop -a";
+            System.out.println( "exec cmd: " + Arrays.toString( cmd ) );
+            Process process = Runtime.getRuntime().exec( cmd );
+            BufferedReader input = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
+    
+            int exitValue = process.waitFor();
+            if( 0 != exitValue ){
+                Assert.fail( "fail to stop s3, return code=" + exitValue );
+            } 
+        }
+        catch( InterruptedException | IOException e ){
+            e.printStackTrace();
+            Assert.fail( "fail to stop s3" );
+        }
     }
 }
