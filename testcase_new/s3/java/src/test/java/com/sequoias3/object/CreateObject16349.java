@@ -51,7 +51,7 @@ public class CreateObject16349 extends S3TestBase {
 			s3Client.putObject(bucketName, keyName,new File(filePath));
 			Assert.fail("exp fail but found success");
 		}catch(SdkClientException e){	
-			Assert.assertEquals(e.getMessage(),"Unable to calculate MD5 hash: " + filePath + " (系统找不到指定的文件。)");
+			Assert.assertNotEquals(e.getMessage().indexOf("Unable to calculate MD5 hash: " + filePath),-1);
 		}
 		runSuccess = true;
 	}
@@ -60,6 +60,7 @@ public class CreateObject16349 extends S3TestBase {
 	private void tearDown() {
 		if (runSuccess) {
 			s3Client.deleteBucket(bucketName);
+			TestTools.LocalFile.removeFile(localPath);
 		}
 	}
 }
