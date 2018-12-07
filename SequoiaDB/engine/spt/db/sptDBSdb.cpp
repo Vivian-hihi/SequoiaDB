@@ -2540,7 +2540,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObj configs ;
       BSONObj options ;
-      rc = arg.getBsonobj( 0, configs, TRUE, TRUE ) ;
+      rc = arg.getBsonobj( 0, configs, TRUE, FALSE ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "Configs must be config" ) ;
@@ -2548,15 +2548,17 @@ namespace engine
       }
       else if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "Configs must be obj" ) ;
+         if ( arg.hasErrMsg() )
+         {
+            detail = BSON( SPT_ERR << arg.getErrMsg() ) ;
+         }
+         else
+         {
+            detail = BSON( SPT_ERR << "Config must be object" ) ;
+         }
          goto error ;
       }
-      else if ( SDB_OK == rc && configs.isEmpty() )
-      {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "Configs cannot be empty" ) ;
-         goto error ; 
-      }
+
       rc = arg.getBsonobj( 1, options ) ;
       if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {
@@ -2582,7 +2584,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObj configs ;
       BSONObj options ;
-      rc = arg.getBsonobj( 0, configs, TRUE, TRUE ) ;
+      rc = arg.getBsonobj( 0, configs, TRUE, FALSE ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "Configs must be config" ) ;
@@ -2590,15 +2592,17 @@ namespace engine
       }
       else if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "Configs must be obj" ) ;
+         if ( arg.hasErrMsg() )
+         {
+            detail = BSON( SPT_ERR << arg.getErrMsg() ) ;
+         }
+         else
+         {
+            detail = BSON( SPT_ERR << "Config must be object" ) ;
+         }
          goto error ;
       }
-      else if ( SDB_OK == rc && configs.isEmpty() )
-      {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "Configs cannot be empty" ) ;
-         goto error ; 
-      }
+
       rc = arg.getBsonobj( 1, options ) ;
       if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {

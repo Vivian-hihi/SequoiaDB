@@ -65,7 +65,7 @@ namespace engine
                                BOOLEAN strict = TRUE ) const = 0 ;
       virtual INT32 getBsonobj( UINT32 pos, bson::BSONObj &value,
                                 BOOLEAN strict = TRUE,
-                                BOOLEAN allowNull = FALSE )
+                                BOOLEAN allowNull = TRUE )
                                 const = 0 ;
       // BSONObj and BSONArray may exceed the size limit
       virtual INT32 getArray( UINT32 pos, vector< bson::BSONObj >&value,

@@ -160,9 +160,17 @@ namespace engine
          goto error ;
       }
 
-      if ( TRUE == JSVAL_IS_NULL( *val ) && TRUE == allowNull )
+      if ( TRUE == JSVAL_IS_NULL( *val ) )
       {
-         goto done ;
+         if ( !allowNull )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         else
+         {
+            goto done ;
+         }
       }
       else
       {
