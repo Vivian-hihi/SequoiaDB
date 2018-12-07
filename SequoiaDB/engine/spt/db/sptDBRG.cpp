@@ -486,12 +486,6 @@ namespace engine
       string svcname ;
       BSONObj options ;
 
-      if ( arg.argc() < 3 )
-      {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "Need 3 arguments" ) ;
-         goto error ;
-      }
       rc = arg.getString( 0, hostname ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
@@ -515,9 +509,14 @@ namespace engine
          goto error ;
       }
       rc = arg.getBsonobj( 2, options ) ;
-      if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      if( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "Options must be obj" ) ;
+         detail = BSON( SPT_ERR << "Options must be config" ) ;
+         goto error ;
+      }
+      else if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Options must be an object" ) ;
          goto error ;
       }
 
@@ -542,12 +541,6 @@ namespace engine
       string svcname ;
       BSONObj options ;
 
-      if ( arg.argc() < 3 )
-      {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "Need 3 arguments" ) ;
-         goto error ;
-      }
       rc = arg.getString( 0, hostname ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
@@ -571,9 +564,14 @@ namespace engine
          goto error ;
       }
       rc = arg.getBsonobj( 2, options ) ;
-      if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      if( SDB_OUT_OF_BOUND == rc )
       {
-         detail = BSON( SPT_ERR << "Options must be obj" ) ;
+         detail = BSON( SPT_ERR << "Options must be config" ) ;
+         goto error ;
+      }
+      else if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Options must be an object" ) ;
          goto error ;
       }
       rc = _rg.attachNode( hostname.c_str(), svcname.c_str(), options ) ;
