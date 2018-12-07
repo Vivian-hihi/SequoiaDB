@@ -491,10 +491,11 @@ class client(object):
                     11    : Get cached access plan snapshot
                     12    : Get node health detection snapshot
                     13    : Get node configuration's snapshot
+                    15    : Get node sequences' snapshot
         """
         if not isinstance(snap_type, int):
             raise SDBTypeError("snap type must be an instance of int")
-        if snap_type < 0 or snap_type > 13:
+        if snap_type < 0 or snap_type > 15:
             raise SDBTypeError("snap_type value is invalid")
 
         bson_condition = None
@@ -607,12 +608,13 @@ class client(object):
                   10         : Get tasks list
                   11         : Get transactions list
                   12         : Get current session's transaction list
+                  15         : Get all sequences list
                   129        : Get collection space list in domain
                   130        : Get collection list in domain
         """
         if not isinstance(list_type, int):
             raise SDBTypeError("list type must be an instance of int")
-        if list_type < 0 or (12 < list_type < 129) or list_type > 130:
+        if list_type < 0 or (15 < list_type < 129) or list_type > 130:
             raise SDBTypeError("list type value %d is not defined" %
                                list_type)
 

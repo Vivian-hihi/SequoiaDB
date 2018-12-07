@@ -1399,6 +1399,7 @@ class collection(object):
                                  CompressionType : The compression type of data, could be "snappy" or "lzw"
                                  EnsureShardingIndex : Assign to true to build sharding index
                                  StrictDataMode : Using strict date mode in numeric operations or not
+                                 AutoIncrement : Assign attributes of an autoincrement field or batch autoincrement fields. e.g { "AutoIncrement": { "Field": "studentID", "StartValue": 1 } }
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
@@ -1497,6 +1498,7 @@ class collection(object):
                                  CompressionType : The compression type of data, could be "snappy" or "lzw"
                                  EnsureShardingIndex : Assign to true to build sharding index
                                  StrictDataMode : Using strict date mode in numeric operations or not
+                                 AutoIncrement : Assign attributes of an autoincrement field or batch autoincrement fields. e.g { "AutoIncrement": { "Field": "studentID", "StartValue": 1 } }
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
