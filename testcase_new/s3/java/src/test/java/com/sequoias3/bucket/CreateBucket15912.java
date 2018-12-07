@@ -29,7 +29,7 @@ public class CreateBucket15912 extends S3TestBase {
 	private String userName = "user15912";
 	private String bucketName = "bucket15912";
 	private String roleName = "normal";
-	private final int defaultNums = 30;
+	private final int defaultNums = 100;
 	private List<String> expBucketNameList = new ArrayList<String>();
 	private AmazonS3 s3Client = null;
 	private String[] acessKeys = null;
@@ -40,6 +40,7 @@ public class CreateBucket15912 extends S3TestBase {
 		acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 		createBuckets(s3Client);
+		Collections.sort(expBucketNameList);
 	}
 
 	@Test
@@ -71,8 +72,8 @@ public class CreateBucket15912 extends S3TestBase {
 		public void exec() throws Exception {
 			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 			try {
-				s3Client.listBuckets();
-				checkBucketResult(s3Client);
+				List<Bucket> buckets = s3Client.listBuckets();
+				checkBucketResult(buckets);
 			} finally {
 				if (s3Client != null) {
 					s3Client.shutdown();
@@ -89,8 +90,7 @@ public class CreateBucket15912 extends S3TestBase {
 		}
 	}
 
-	private void checkBucketResult(AmazonS3 s3Client) {
-		List<Bucket> buckets = s3Client.listBuckets();
+	private void checkBucketResult(List<Bucket> buckets) {
 		Assert.assertEquals(buckets.size(), defaultNums);
 		
 		List<String> actbucketNameLists = new ArrayList<>();
@@ -100,7 +100,6 @@ public class CreateBucket15912 extends S3TestBase {
 			actbucketNameLists.add(bucket.getName());
 		}
 		Collections.sort(actbucketNameLists);
-		Collections.sort(expBucketNameList);
 		for(int i = 0 ; i < actbucketNameLists.size() ; i++){
 			Assert.assertEquals(actbucketNameLists.get(i),expBucketNameList.get(i));
 		}

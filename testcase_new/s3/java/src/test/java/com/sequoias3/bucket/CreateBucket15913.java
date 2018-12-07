@@ -40,22 +40,15 @@ public class CreateBucket15913 extends S3TestBase {
 		acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 		createBuckets();
+		Collections.sort(expBucketNameList);
 	}
 
 	@Test
 	private void testGetBucketList() throws Exception {
-		List<GetBucketThread> getBucketLists = new ArrayList<>(20);
-		for (int i = 0; i < defaultNums; i++) {
-			getBucketLists.add(new GetBucketThread());
-		}
-
-		for (GetBucketThread getBucketList : getBucketLists) {
-			getBucketList.start();
-		}
-
-		for (GetBucketThread getBucketList : getBucketLists) {
-			Assert.assertTrue(getBucketList.isSuccess(), getBucketList.getErrorMsg());
-		}
+		
+		GetBucketThread bucketThread = new GetBucketThread();
+		bucketThread.start(defaultNums);
+		Assert.assertTrue(bucketThread.isSuccess(), bucketThread.getErrorMsg());
 		runSuccess = true;
 	}
 
@@ -99,17 +92,15 @@ public class CreateBucket15913 extends S3TestBase {
 
 	private void checkBucketResult(List<Bucket> buckets) {
 		// check bucket nums
-		buckets = s3Client.listBuckets();
 		Assert.assertEquals(buckets.size(), defaultNums);
 		
-		List<String> actbucketNameLists = new ArrayList<>();
+		List<String> actBucketNameLists = new ArrayList<>();
 		for(Bucket bucket : buckets){
 			Owner actOwner = bucket.getOwner();
 			Assert.assertEquals(actOwner.getDisplayName(), userName);
-			actbucketNameLists.add(bucket.getName());
+			actBucketNameLists.add(bucket.getName());
 		}
-		Collections.sort(actbucketNameLists);
-		Collections.sort(expBucketNameList);
-		Assert.assertEquals(actbucketNameLists, expBucketNameList);
+		Collections.sort(actBucketNameLists);
+		Assert.assertEquals(actBucketNameLists, expBucketNameList,"actbucketNameList size is :" + actBucketNameLists.size() + "expBucketNameList size is:" + expBucketNameList.size());
 	}
 }
