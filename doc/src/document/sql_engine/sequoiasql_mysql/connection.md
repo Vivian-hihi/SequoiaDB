@@ -193,6 +193,6 @@
 | LONGTEXT        | STRING            | 最大长度16MB                                                      |
 | ENUM            | STRING            |                                                                   |
 | SET             | STRING            |                                                                   |
-| JSON            | STRING            |                                                                   |
+| JSON            | BINARY            |                                                                   |
 | GEOMETRY        | 不支持            |                                                                   |
 | NULL            | -                 | 不存储                                                            |
