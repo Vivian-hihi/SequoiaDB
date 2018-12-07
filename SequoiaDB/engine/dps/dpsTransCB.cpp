@@ -130,14 +130,14 @@ namespace engine
 
          // Initialize trans lock manager
          //   . allocate memory and under layer structures for the LRBs,
-         //     LRB Headers, LRB Header Hash buckets 
+         //     LRB Headers, LRB Header Hash buckets
          rc = _transLockMgr.init() ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to initialize lock manager, rc: %d", rc ) ;
             goto error ;
          }
-         // Initial lock timeout setting 
+         // Initial lock timeout setting
          _transLockMgr.setLockTimeout( pmdGetOptionCB()->transTimeout() * 1000);
 
          rc = sdbGetDPSCB()->readOldestBeginLsnOffset( startLsnOffset ) ;
@@ -994,7 +994,7 @@ namespace engine
 
    dpsTransLockManager * dpsTransCB::getLockMgrHandle()
    {
-      return ( _transLockMgr.isInitialized() ? ( & _transLockMgr ) : NULL ) ; 
+      return ( _transLockMgr.isInitialized() ? ( & _transLockMgr ) : NULL ) ;
    }
 
 
