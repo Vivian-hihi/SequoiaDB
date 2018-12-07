@@ -44,7 +44,7 @@ public class S3TestBase {
     private static SdbConfTestBase sdbConfTestBase = new SdbConfTestBase();
 
     @Parameters({"HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND",
-    	"RSRVNODEDIR", "WORKDIR","S3HOSTNAME","S3PORT","S3USERNAME","S3ACCESSKEYID","CONFTOOL"})
+        "RSRVNODEDIR", "WORKDIR","S3HOSTNAME","S3PORT","S3USERNAME","S3ACCESSKEYID","CONFTOOL"})
     @BeforeSuite
     public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME,
                                  int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR,
@@ -77,22 +77,22 @@ public class S3TestBase {
        
         AmazonS3 s3Client = null;
         try{
-        	//clean up existing buckets         
+            //clean up existing buckets         
             s3Client = CommLib.buildS3Client();        
             List<Bucket> buckets = s3Client.listBuckets();
             for ( int i = 0; i < buckets.size(); i++ ){
-    			String bucketName = buckets.get(i).getName();
-    			String bucketVerStatus = s3Client.getBucketVersioningConfiguration(bucketName).getStatus();
-    			if( bucketVerStatus == "null"){
-    				CommLib.deleteAllObjects(s3Client, bucketName);
-    			}else{
-    				CommLib.deleteAllObjectVersions( s3Client, bucketName );
-    			}
-    			s3Client.deleteBucket(bucketName);
-    		}          
+                String bucketName = buckets.get(i).getName();
+                String bucketVerStatus = s3Client.getBucketVersioningConfiguration(bucketName).getStatus();
+                if( bucketVerStatus == "null"){
+                    CommLib.deleteAllObjects(s3Client, bucketName);
+                }else{
+                    CommLib.deleteAllObjectVersions( s3Client, bucketName );
+                }
+                s3Client.deleteBucket(bucketName);
+            }          
             
             //create bucket       
-            s3Client.createBucket(new CreateBucketRequest(bucketName));	
+            s3Client.createBucket(new CreateBucketRequest(bucketName)); 
             
             //create bucket by enable versioning            
             s3Client.createBucket(new CreateBucketRequest(enableVerBucketName));
@@ -108,6 +108,7 @@ public class S3TestBase {
     @AfterSuite
     public static void finiSuite() {
         sdbConfTestBase.closeTransaction(hostName, serviceName);
+        stopS3();
     }
 
     public static String getDefaultCoordUrl() {
@@ -202,5 +203,23 @@ public class S3TestBase {
             e.printStackTrace();
             Assert.fail( "fail to createCSCLAndStartS3" );
         }
+    }
+    
+    public static void stopS3() {
+        Properties prop = new Properties();
+        InputStream in = new FileInputStream( new File("/etc/default/sequoiadb") );
+        prop.load( in );
+        String installPath = prop.getProperty( "INSTALL_DIR" );
+        String[] cmd = new String[2];
+        cmd[0] = installPath+"/tools/sequoias3/sequoias3.sh";
+        cmd[1] = "stop";
+        System.out.println( "exec cmd: " + Arrays.toString( cmd ) );
+        process = Runtime.getRuntime().exec( cmd );
+        input = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
+
+        exitValue = process.waitFor();
+        if( 0 != exitValue ){
+            Assert.fail( "fail to stop s3, return code=" + exitValue );
+        } 
     }
 }
