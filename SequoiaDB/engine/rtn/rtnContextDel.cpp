@@ -628,7 +628,7 @@ namespace engine
 
    RTN_CONTEXT_TYPE _rtnContextDelMainCL::getType () const
    {
-      return RTN_CONTEXT_DELMAINCL;
+      return RTN_CONTEXT_DELMAINCL ;
    }
 
    INT32 _rtnContextDelMainCL::open( const CHAR *pCollectionName,
@@ -1250,6 +1250,123 @@ namespace engine
 
       PD_TRACE_EXIT( SDB__RTNCTXRENAMECL__RELLOCK ) ;
       return SDB_OK ;
+   }
+
+   RTN_CTX_AUTO_REGISTER(_rtnContextRenameMainCL, RTN_CONTEXT_RENAMEMAINCL, "RENAMEMAINCL")
+
+   _rtnContextRenameMainCL::_rtnContextRenameMainCL( SINT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID )
+   {
+      _pDmsCB        = pmdGetKRCB()->getDMSCB() ;
+      _pCatAgent     = pmdGetKRCB()->getClsCB()->getCatAgent() ;
+      _lockDms       = FALSE ;
+      ossMemset( _name, 0, DMS_COLLECTION_FULL_NAME_SZ + 1 );
+   }
+
+   _rtnContextRenameMainCL::~_rtnContextRenameMainCL()
+   {
+      pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
+      pmdEDUCB *cb = eduMgr->getEDUByID( eduID() ) ;
+      _clean( cb ) ;
+   }
+
+   void _rtnContextRenameMainCL::_clean( _pmdEDUCB *cb )
+   {
+      if ( _lockDms )
+      {
+         _pDmsCB->writeDown( cb ) ;
+         _lockDms = FALSE ;
+      }
+   }
+
+   std::string _rtnContextRenameMainCL::name() const
+   {
+      return "RENAMEMAINCL" ;
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextRenameMainCL::getType () const
+   {
+      return RTN_CONTEXT_RENAMEMAINCL ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMEMCL_OPEN, "_rtnContextRenameMainCL::open" )
+   INT32 _rtnContextRenameMainCL::open( const CHAR *pCollectionName,
+                                        _pmdEDUCB *cb,
+                                        INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNCTXRENAMEMCL_OPEN ) ;
+
+      SDB_ASSERT( pCollectionName, "pCollectionName can't be null!" ) ;
+      PD_CHECK( pCollectionName, SDB_INVALIDARG, error, PDERROR,
+                "pCollectionName is null!" ) ;
+
+      rc = dmsCheckFullCLName( pCollectionName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Invalid collection name[%s])",
+                   pCollectionName ) ;
+
+      // For renaming maincl, we only need to write a dps log to clear cata
+      // info and access plan. This doesn't require setting ReplSize,
+      // Because ReplSize is for data reliability.
+      // _w = w ;
+
+      // we need to check dms writable when invalidate cata/plan/statistics
+      rc = _pDmsCB->writable ( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      _lockDms = TRUE ;
+
+      ossStrcpy( _name, pCollectionName ) ;
+      _isOpened = TRUE ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNCTXRENAMEMCL_OPEN, rc ) ;
+      return rc;
+   error:
+      goto done;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMEMCL_GETMORE, "_rtnContextRenameMainCL::getMore" )
+   INT32 _rtnContextRenameMainCL::getMore( INT32 maxNumToReturn,
+                                           rtnContextBuf &buffObj,
+                                           _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNCTXRENAMEMCL_GETMORE ) ;
+      SDB_RTNCB *pRtnCB = sdbGetRTNCB() ;
+
+      if ( !isOpened() )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE;
+         goto error ;
+      }
+
+      /// clear main collection's catalog info
+      _pCatAgent->lock_w () ;
+      _pCatAgent->clear ( _name ) ;
+      _pCatAgent->release_w () ;
+
+      /// clear main collection's access plan
+      pRtnCB->getAPM()->invalidateCLPlans( _name ) ;
+
+      /// tell secondary nodes to clear catalog info and access plan
+      sdbGetClsCB()->invalidateCache( _name,
+                                      DPS_LOG_INVALIDCATA_TYPE_CATA |
+                                      DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
+
+      _isOpened = FALSE ;
+      rc = SDB_DMS_EOC ;
+
+   done:
+      _clean( cb ) ;
+      PD_TRACE_EXITRC( SDB__RTNCTXRENAMEMCL_GETMORE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _rtnContextRenameMainCL::_toString( stringstream &ss )
+   {
+      ss << ",Name:" << _name ;
    }
 }
 

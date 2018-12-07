@@ -676,7 +676,7 @@ namespace engine
                    "Failed to create drop collection space [%s] task, rc: %d",
                    _targetName.c_str(), rc ) ;
 
-      rc = pDropCSTask->checkTask(cb, _lockMgr) ;
+      rc = pDropCSTask->checkTask( cb, _lockMgr ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to check drop collection space [%s] task, rc: %d",
                    _targetName.c_str(), rc ) ;
@@ -2441,7 +2441,32 @@ namespace engine
                       "Failed to parse catalog info[%s], rc: %d",
                       _targetName.c_str(), rc ) ;
 
-         if ( !cataSet.isMainCL() )
+         if ( cataSet.isMainCL() )
+         {
+            vector< string > subCLList ;
+            vector< string >::iterator iterSubCL ;
+
+            rc = cataSet.getSubCLList( subCLList );
+            PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list of "
+                         "collection[%s], rc: %d", _targetName.c_str(), rc ) ;
+
+            for ( vector< string >::iterator iterSubCL = subCLList.begin() ;
+                  iterSubCL != subCLList.end() ;
+                  iterSubCL ++ )
+            {
+               const string & subCLName = (*iterSubCL) ;
+               BSONObj boCollection ;
+
+               rc = catGetCollection( subCLName, boCollection, cb ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to get the collection [%s], "
+                            "rc: %d", _targetName.c_str() ) ;
+
+               rc = catGetCollectionGroupSet( boCollection, _groupList ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to collect groups for "
+                            "collection [%s], rc: %d", subCLName.c_str(), rc ) ;
+            }
+         }
+         else
          {
             rc = catGetCollectionGroupSet( boOldCL, _groupList ) ;
             PD_RC_CHECK( rc, PDERROR,
@@ -3004,7 +3029,7 @@ namespace engine
          }
          case RTN_ALTER_CL_SET_ATTRIBUTES :
          {
-            const rtnCLSetAttributeTask *setTask = 
+            const rtnCLSetAttributeTask *setTask =
                               dynamic_cast< const rtnCLSetAttributeTask * >( task ) ;
             if( setTask->containAutoincArgument() )
             {

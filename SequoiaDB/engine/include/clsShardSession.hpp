@@ -259,12 +259,17 @@ namespace engine
                                    const CHAR *pQuery,
                                    INT16 w,
                                    SINT64 &contextID,
-                                   BOOLEAN syscall = FALSE );
+                                   BOOLEAN syscall = FALSE ) ;
 
          INT32 _dropMainCL( const CHAR *pCollection,
                            INT16 w,
                            INT32 version,
-                           SINT64 &contextID );
+                           SINT64 &contextID ) ;
+
+         INT32 _renameMainCL( const CHAR *pCollection,
+                              INT16 w,
+                              INT32 version,
+                              SINT64 &contextID ) ;
 
          INT32 _updateVCS( const CHAR *fullName, const BSONObj &updator ) ;
 

@@ -183,7 +183,7 @@ namespace engine
       BOOLEAN                    _lockDms ;
 
    };
-   typedef class _rtnContextDelMainCL rtnContextDelMainCL;
+   typedef class _rtnContextDelMainCL rtnContextDelMainCL ;
 
    #define RTN_RENAME_BLOCKWRITE_INTERAL ( 0.1 * OSS_ONE_SEC )
    #define RTN_RENAME_BLOCKWRITE_TIMES   ( 10 )
@@ -227,7 +227,7 @@ namespace engine
       BOOLEAN              _lockDMS ;
       UINT32               _logicCSID ;
    };
-   typedef class _rtnContextRenameCS rtnContextRenameCS;
+   typedef class _rtnContextRenameCS rtnContextRenameCS ;
 
    /*
       _rtnContextRenameCL define
@@ -271,7 +271,41 @@ namespace engine
       _dmsStorageUnit      *_su ;
       UINT16               _mbID ;
    };
-   typedef class _rtnContextRenameCL rtnContextRenameCL;
+   typedef class _rtnContextRenameCL rtnContextRenameCL ;
+
+   /*
+      _rtnContextRenameMainCL define
+   */
+   class _rtnContextRenameMainCL : public _rtnContextBase
+   {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
+   public:
+      _rtnContextRenameMainCL( SINT64 contextID, UINT64 eduID );
+      ~_rtnContextRenameMainCL();
+      virtual std::string      name() const ;
+      virtual RTN_CONTEXT_TYPE getType () const;
+      virtual _dmsStorageUnit* getSU () { return NULL ; }
+      virtual BOOLEAN          isWrite() const { return TRUE ; }
+
+      INT32 open( const CHAR *pCollectionName, _pmdEDUCB *cb, INT16 w ) ;
+      virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
+                             _pmdEDUCB *cb ) ;
+
+   protected:
+      virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+      virtual void  _toString( stringstream &ss ) ;
+
+   private:
+      void _clean( _pmdEDUCB *cb );
+
+   private:
+      _SDB_DMSCB                 *_pDmsCB ;
+      _clsCatalogAgent           *_pCatAgent;
+      CHAR                       _name[ DMS_COLLECTION_FULL_NAME_SZ + 1 ];
+      BOOLEAN                    _lockDms ;
+
+   };
+   typedef class _rtnContextRenameMainCL rtnContextRenameMainCL ;
 }
 
 #endif /* RTN_CONTEXT_DEL_HPP_ */

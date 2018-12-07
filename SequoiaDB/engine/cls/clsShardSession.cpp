@@ -2605,6 +2605,12 @@ namespace engine
                            version, contextID );
          break;
 
+      case CMD_RENAME_COLLECTION:
+         /// wait sync in context, not set writable
+         rc = _renameMainCL( pCommand->collectionFullName(), w,
+                             version, contextID );
+         break;
+
       case CMD_TRUNCATE:
          writable = TRUE ;
          rc = _truncateMainCL( pCommand->collectionFullName() ) ;
@@ -3057,6 +3063,33 @@ namespace engine
                    "main collection[%s] failed, rc: %d", pCollection,
                    rc ) ;
       rc = delContext->open( pCollection, subCLLst, version, _pEDUCB, w ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to open context, drop "
+                   "main collection[%s] failed, rc: %d", pCollection,
+                   rc ) ;
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _clsShdSession::_renameMainCL( const CHAR *pCollection,
+                                      INT16 w,
+                                      INT32 version,
+                                      SINT64 &contextID )
+   {
+      INT32 rc = SDB_OK ;
+      contextID = -1 ;
+      rtnContextRenameMainCL *renameContext = NULL ;
+
+      rc = _pRtnCB->contextNew( RTN_CONTEXT_RENAMEMAINCL,
+                                (rtnContext **)&renameContext,
+                                contextID, _pEDUCB );
+      PD_RC_CHECK( rc, PDERROR, "Failed to create context, rename "
+                   "main collection[%s] failed, rc: %d", pCollection,
+                   rc ) ;
+
+      rc = renameContext->open( pCollection, _pEDUCB, w ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to open context, drop "
                    "main collection[%s] failed, rc: %d", pCollection,
                    rc ) ;
