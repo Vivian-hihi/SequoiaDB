@@ -1087,6 +1087,19 @@ namespace engine
       _utilSet< UINT32 > occupiedGroups ;
       INT64 taskCount = 0 ;
 
+      /// check old and new cs name
+      SDB_ASSERT( _targetName.c_str(), "cs name can't be null!" );
+      PD_CHECK( _targetName.c_str(), SDB_INVALIDARG, error, PDERROR,
+                "cs name is null!" );
+
+      SDB_ASSERT( _newCSName.c_str(), "new cs name can't be null!" );
+      PD_CHECK( _newCSName.c_str(), SDB_INVALIDARG, error, PDERROR,
+                "new cs name is null!" );
+
+      rc = dmsCheckCSName( _newCSName.c_str(), FALSE );
+      PD_RC_CHECK( rc, PDERROR, "Invalid cs name[%s]", _newCSName.c_str() );
+      /// end check
+
       try
       {
          // lock old cs
