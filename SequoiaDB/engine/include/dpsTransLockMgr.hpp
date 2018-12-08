@@ -107,7 +107,6 @@ namespace engine
          dpsTransRetInfo          * pdpsTxResInfo = NULL
       ) ;
 
-
       // release a lock. The higher level intent lock will be also released
       // respectively. It will also wake up the first one in upgrade or
       // waiter queue if it is necessary.
@@ -118,13 +117,11 @@ namespace engine
          const BOOLEAN          bForceRelease = FALSE
       ) ;
 
-
       // release all locks an executor ( EDU ) holding. The executor ( EDU )
       // walks through its EDU LRB chain ( all locks acquired within a tx ),
       // and release all locks its holding and wake up the first one in waiter
       // or upgrade queue if it is necessary.
       void releaseAll( _dpsTransExecutor * dpsTxExectr ) ;
-
 
       // try to acquire a lock with given mode and will try to acquire higher
       // level intent lock respectively.
@@ -137,7 +134,6 @@ namespace engine
          const DPS_TRANSLOCK_TYPE   requestLockMode,
          dpsTransRetInfo          * pdpsTxResInfo = NULL
       ) ;
-
 
       // test if a lock with give lock mode can be acquired, higher level intent
       // lock will also be tested.  It will not acquire the lock nor wait
@@ -152,21 +148,16 @@ namespace engine
          dpsTransRetInfo          * pdpsTxResInfo = NULL
       ) ;
 
-
       void setLockTimeout( UINT32 timeout ) { _lockTimeout.swap( timeout ) ; }
 
-
       UINT32 getLockTimeout() { return _lockTimeout.fetch() ; }
-
 
       // Latching for monitoring / dumping locking info of an EDU.
       //   . latch _rwMutext in exclusive mode
       OSS_INLINE void acquireMonLatch() { _rwMutex.lock_w() ; }
 
-
       // release monitoring / dumping latch
       OSS_INLINE void releaseMonLatch() { _rwMutex.release_w() ; }
-
 
       // dump specific lock info to a file for debugging purpose
       void dumpLockInfo
@@ -175,7 +166,6 @@ namespace engine
          const CHAR           * fileName,
          BOOLEAN                bOutputInPlainMode = FALSE
       ) ;
-
 
       // dump all holding locks of an executor( EDU ) to a file for debugging.
       // The caller shall acquire the monitoring( dump ) latch before
@@ -187,7 +177,6 @@ namespace engine
          BOOLEAN             bOutputInPlainMode = FALSE
       ) ;
 
-
       // dump all holding locks of an executor ( EDU )
       // the caller shall acquire the monitoring( dump ) latch before
       // calling this function and make sure the dpsTxExectr is still valid
@@ -196,7 +185,6 @@ namespace engine
          UTIL_OBJIDX       lastLRBIdx,
          VEC_TRANSLOCKCUR  & vecLocks
       ) ;
-
      
       // dump the waiting lock info of an executor ( EDU ) 
       // the caller shall acquire the monitoring( dump ) latch before
@@ -207,14 +195,12 @@ namespace engine
          monTransLockCur  &lockCur
       ) ;
 
-
       // dump a specific lock info ( waiter, owners, upgrade list etc )
       void dumpLockInfo
       (
          const dpsTransLockId & lockId,
          monTransLockInfo     & monLockInfo
       ) ;
-
 
       // get LRB Header ( index and its pointer ) of a given lock from
       // LRB Header bucket. Wrapper of _getLRBHdrByLockId
@@ -224,7 +210,6 @@ namespace engine
          UTIL_OBJIDX          & hdrIdx,
          dpsTransLRBHeader *  & pLRBHdr
       ) ;
-
      
       // get LRB Header handle ( address/pointer ) by LRB Header index 
       dpsTransLRBHeader * getLRBHdrPtrByIdx( const UTIL_OBJIDX hdrIdx ) ;
@@ -254,7 +239,6 @@ namespace engine
          _LockHdrBkt[ bucketIndex ].hashHdrLatch.get() ;
       }
 
-
       // release latches for normal lock operation
       void _releaseOpLatch ( const UTIL_OBJIDX bucketIndex )
       {
@@ -265,26 +249,39 @@ namespace engine
       // release/return a LRB Header to LRB Header manager
       INT32 _releaseLRBHdr( const UTIL_OBJIDX hdrIdx ) ;
 
-
       // get LRB pointer by its index
       dpsTransLRB * _getLRBPtrByIdx( const UTIL_OBJIDX idx ) ;
 
-
       // release/return a LRB to LRB manager 
       INT32 _releaseLRB( const UTIL_OBJIDX idx );
-
 
       // search LRB list ( owner, waiter or upgrade list ) and find
       // the one with given eduId
       BOOLEAN _getLRBByEDUId
       (
-         const EDUID     eduId,
-         UTIL_OBJIDX   & idx,
-         dpsTransLRB * & pLRB,
-         UTIL_OBJIDX   & idxPrev,
-         dpsTransLRB * & pLRBPrev
+         const EDUID       eduId,
+         const UTIL_OBJIDX lrbBegin,
+         UTIL_OBJIDX     & idxEduId,
+         dpsTransLRB *   & pLRBEduId,
+         UTIL_OBJIDX     & indexPrev,
+         dpsTransLRB *   & pLRBPrev
       ) ;
 
+      //
+      // walk through the owner LRB list, find the one with given
+      // eduid and check if the input lockMode is compatible with
+      // all owners
+      void _getLRBByEDUIdAndCheckWaiterLockMode
+      (
+         const EDUID               eduId,
+         const DPS_TRANSLOCK_TYPE  lockMode,
+         const UTIL_OBJIDX         lrbBegin,
+         UTIL_OBJIDX             & idxEduId,
+         dpsTransLRB *           & pLRBEduId,
+         UTIL_OBJIDX             & indexPrev,
+         dpsTransLRB *           & pLRBPrev,
+         BOOLEAN                 & foundIncomp
+      ) ;
 
       // get LRB Header ( index and its pointer ) of a given lock from
       // LRB Header bucket
