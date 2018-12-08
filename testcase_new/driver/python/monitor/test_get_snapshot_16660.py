@@ -6,7 +6,6 @@
 from lib import testlib
 from lib import sdbconfig
 from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
-import time
 
 SDB_SNAP_CATALOG = 8
 SDB_SNAP_CONFIGS = 13
@@ -31,26 +30,31 @@ class TestGetSnapshot16660(testlib.SdbTestBase):
          self.cs.create_collection("testcl_" + str(i))
       
       # get_snapshot snap_type is SDB_SNAP_CATALOG
+      # kwargs not appoint
       actResult = self.get_snapshot_result(SDB_SNAP_CATALOG, num_to_skip = 10, num_to_return = 10)
       actResultCount = len(actResult)
       expResultCount = 10
       self.assertEqual(actResultCount, expResultCount, "actResult length is not equal to expResult length ====> NOT appoint")
       
+      #kwargs appoint condition
       actResult = self.get_snapshot_result(SDB_SNAP_CATALOG, condition = {"UniqueID":{"$exists":1}}, num_to_skip = 8, num_to_return = 8)
       actResultCount = len(actResult)
       expResultCount = 8
       self.assertEqual(actResultCount, expResultCount, "actResult length is not equal to expResult length ====> appoint condition")
       
+      #kwargs appoint selector
       actResult = self.get_snapshot_result(SDB_SNAP_CATALOG, selector = {"Name":""}, num_to_skip = 9, num_to_return = 9)
       actResultCount = len(actResult)
       expResultCount = 9
       self.assertEqual(actResultCount, expResultCount, "actResult length is not equal to expResult length ====> appoint selector")
       
+      #kwargs appoint order_by
       actResult = self.get_snapshot_result(SDB_SNAP_CATALOG, order_by = {"Name":-1}, num_to_skip = 12, num_to_return = 12)
       actResultCount = len(actResult)
       expResultCount = 12
       self.assertEqual(actResultCount, expResultCount, "actResult length is not equal to expResult length ====> appoint order_by")
-      
+       
+      #only SDB_SNAP_CONFIGS has hint paramter, kwargs appoint hint
       actResult = self.get_snapshot_result(SDB_SNAP_CONFIGS, hint = {"$Option":{"expand":"false"}}, num_to_skip = 0, num_to_return = 1)
       actResultCount = len(actResult)
       expResultCount = 1
