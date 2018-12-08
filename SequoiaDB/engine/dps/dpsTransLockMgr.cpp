@@ -192,8 +192,9 @@ namespace engine
    // Function:    the LRB Header manager uses the index to find the object
    //              pointer from the object arrays   
    // Input:       the object ( LRB Header ) index to the object arrays
+   // Output:      none
    // Return:      the pointer of the object or NULL
-   //
+   // Dependency:  the lock manager must be initialized
    dpsTransLRBHeader * dpsTransLockManager::getLRBHdrPtrByIdx
    (
       const UTIL_OBJIDX hdrIdx
@@ -218,6 +219,7 @@ namespace engine
    //              from the object arrays   
    // Input:       the object ( LRB ) index to the object arrays
    // Return:      the pointer of the object or NULL
+   // Dependency:  the lock manager must be initialized
    //
    dpsTransLRB * dpsTransLockManager::_getLRBPtrByIdx( const UTIL_OBJIDX idx )
    {
@@ -235,7 +237,9 @@ namespace engine
    // Description: release/return a LRB Header to LRB Header manager
    // Function:    return a LRB Header to the LRB Header Manager
    // Input:       the object ( LRB Header ) index to the object arrays
+   // Output:      none
    // Return:      SDB_OK or SDB_INVALIDARG when error      
+   // Dependency:  the lock manager must be initialized
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR, "dpsTransLockManager::_releaseLRBHdr" )
@@ -271,7 +275,9 @@ namespace engine
    // Description: release/return a LRB to LRB manager
    // Function:    return a LRB to the LRB Manager
    // Input:       the object ( LRB ) index to the object arrays
+   // Output:      none
    // Return:      SDB_OK or SDB_INVALIDARG when error      
+   // Dependency:  the lock manager must be initialized
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASELRB, "dpsTransLockManager::_releaseLRB" )
@@ -319,6 +325,8 @@ namespace engine
    //
    // Return:     true  -- found the LRB Header object with same lockId
    //             false -- not found
+   //          
+   // Dependency:  the lock bucket latch shall be acquired
    //
    BOOLEAN dpsTransLockManager::_getLRBHdrByLockId
    (
@@ -357,6 +365,7 @@ namespace engine
    //
    // Return:     true  -- found the LRB Header object with same lockId
    //             false -- not found
+   // Dependency:  the lock bucket latch shall be acquired
    //
    BOOLEAN dpsTransLockManager::getLRBHdrByLockId
    (
@@ -406,6 +415,7 @@ namespace engine
    // Return: 
    //    true  -- found the LRB object with the given eduId
    //    false -- not found
+   // Dependency:  the lock bucket latch shall be acquired
    //
    BOOLEAN dpsTransLockManager::_getLRBByEDUId
    (
@@ -470,6 +480,7 @@ namespace engine
    //    idxPrev  -- the index of the LRB in the list previous to the owner
    //    pLRBPrev -- the pointer of the LRB in the list previous to the owner
    //    foundIncomp -- if an incompatible one is found in owner list
+   // Dependency:  the lock bucket latch shall be acquired
    //
    void dpsTransLockManager::_getLRBByEDUIdAndCheckWaiterLockMode
    (
@@ -542,10 +553,9 @@ namespace engine
    //    lrbBegin -- the first LRB index in the chain( owner, waiter or upgrade
    //                queue )
    //    idxNew   -- the LRB index to be added in
-   //
    // Output:     None
-   //
    // Return:     None
+   // Dependency:  the lock bucket latch shall be acquired
    //
    void dpsTransLockManager::_addToLRBListTail
    (
@@ -581,10 +591,9 @@ namespace engine
    //    lrbPos -- the LRB index where the new LRB index is being inserted after
    //               
    //    idxNew -- the LRB index to be added in
-   //
    // Output:     None
-   //
    // Return:     None
+   // Dependency:  the lock bucket latch shall be acquired
    //
    void dpsTransLockManager::_addToOwnerLRBList
    (
@@ -625,6 +634,7 @@ namespace engine
    //    idxPrevEduId  -- the LRB index previous to the idxEduId
    //    pLRBPrevEduId -- the address of the LRB previous to the idxEduId
    // Return:     None
+   // Dependency:  the lock bucket latch shall be acquired
    //
    void dpsTransLockManager::_searchOwnerLRBList
    (
@@ -707,14 +717,12 @@ namespace engine
    //              
    //              the dpsTxExectr::_lastLRBIdx is the latest LRB index
    //              acquired within the same tx
-   //
    // Input:
    //    dpsTxExectr -- _dpsTransExecutor ptr
    //    idx         -- the LRB index to be added in
-   //
    // Output:     None
-   //
    // Return:     None
+   // Dependency:  the lock bucket latch shall be acquired
    //
    void dpsTransLockManager::_addToEDULRBListTail
    (
@@ -788,6 +796,7 @@ namespace engine
    //                it will be updated with the index of LRB next to idxDel
    //    idxNext  -- the index next to the idxDel
    // Return:     None
+   // Dependency:  the lock bucket latch shall be acquired
    //
    void dpsTransLockManager::_removeFromLRBList
    (
@@ -839,8 +848,12 @@ namespace engine
    //    dpsTxExectr     -- pointer to _dpsTransExecutor
    //    removeLRBHeader -- whether remove LRB Header when owner, waiter,
    //                       upgrade queue are all empty
+   //                       when it is true, it means _waitLock returned
+   //                       non SDB_OK value, due to either lock waiting
+   //                       timeout elapsed or be interrupted.
    // Output:  none
    // Return:  none
+   // Dependency:  the lock bucket latch shall be acquired
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST, "dpsTransLockManager::_removeFromUpgradeOrWaitList" )
@@ -861,10 +874,12 @@ namespace engine
       dpsTransLRB *pLRB = NULL , *plrb = NULL ;
       dpsTransLRBHeader * pLRBHdr = NULL ;
       EDUID eduIDTrc = 0 ;
-      
 
-      PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
-                 PD_PACK_STRING( "LRB to be removed:"),
+      PD_TRACE5( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
+                 PD_PACK_ULONG( dpsTxExectr ),
+                 PD_PACK_UINT( bktIdx ),
+                 PD_PACK_UINT( removeLRBHeader ),
+                 PD_PACK_STRING( "LRB to be removed:" ),
                  PD_PACK_UINT( idx ) ) ;
 
       if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
@@ -911,9 +926,14 @@ namespace engine
                     PD_PACK_STRING( "Next LRB in wait or upgrade list:" ),
                     PD_PACK_UINT( idxNext ) ) ;
 
-         // wake up the next one if necessary, i.e., its lock mode is
-         // compatible with current waiter
-         if ( IS_VALID_SEG_OBJ_INDEX( idxNext ) )
+         // wake up the next waiting one if necessary, i.e., the next waiter's
+         // lock mode is compatible with current waiter and the current waiter
+         // is waken up ( _waitLock returned SDB_OK )
+         // when removeLRBHeader is true, means _waitLock returned
+         // non SDB_OK value due to either lock waiting timeout duration
+         // is elapsed or the _waitLock is interrupted. 
+         if (    ( FALSE == removeLRBHeader )
+              && IS_VALID_SEG_OBJ_INDEX( idxNext ) )
          {
             plrb = _getLRBPtrByIdx( idxNext ) ;
 
@@ -970,6 +990,7 @@ namespace engine
    //    idxBegin -- if the idxBegin is same as idxDel, it will be updated with
    //                the index of LRB Header next to idxDel
    // Return:     None
+   // Dependency:  the lock bucket latch shall be acquired
    //
    void dpsTransLockManager::_removeFromLRBHeaderList
    (
@@ -1024,6 +1045,7 @@ namespace engine
    //                                updated with the index of LRB previous
    //                                to idxDel
    // Return:     None
+   // Dependency:  the lock bucket latch shall be acquired
    //
    void dpsTransLockManager::_removeFromEDULRBList
    (
@@ -1126,6 +1148,7 @@ namespace engine
    //     SDB_DPS_TRANS_APPEND_TO_WAIT,
    //     SDB_DPS_TRANS_LOCK_INCOMPATIBLE,
    //     or other errors
+   // Dependency:  the lock manager must be initialized
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST, "dpsTransLockManager::_tryAcquireOrTest" )
@@ -1753,6 +1776,7 @@ namespace engine
    //     SDB_INTERRUPT,                          -- lock wait interrrupted
    //     SDB_TIMEOUT,                            -- lock wait timeout elapsed
    //     or other errors
+   // Dependency:  the lock manager must be initialized
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER_ACQUIRE, "dpsTransLockManager::acquire" )
@@ -1982,6 +2006,8 @@ namespace engine
    //    bForceRelease   -- force release flag
    // Output :
    //    none
+   // Dependency:  the lock manager must be initialized
+   //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASE, "dpsTransLockManager::_release" )
    void dpsTransLockManager::_release
@@ -2183,6 +2209,7 @@ namespace engine
    //    bForceRelease   -- requested lock mode
    // Output:
    //    none
+   // Dependency:  the lock manager must be initialized
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER_RELEASE, "dpsTransLockManager::release" )
@@ -2243,6 +2270,9 @@ namespace engine
    // Input:
    //    dpsTxExectr -- pointer to _dpsTransExecutor 
    //    lockId      -- lock id
+   // Output:
+   //    none
+   // Dependency:  the lock manager must be initialized
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASEALL, "dpsTransLockManager::_releaseAll" )
@@ -2299,6 +2329,9 @@ namespace engine
    //           . release the upper level intent lock
    // Input:
    //    dpsTxExectr     -- pointer to _dpsTransExecutor 
+   // Output:
+   //    none
+   // Dependency:  the lock manager must be initialized
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER_RELEASEALL, "dpsTransLockManager::releaseAll" )
@@ -2384,6 +2417,8 @@ namespace engine
    //
    // Input:
    //    dpsTxExectr -- pointer to _dpsTransExecutor
+   // Output:
+   //    none
    //
    void dpsTransLockManager::_wakeUp( _dpsTransExecutor *dpsTxExectr )
    {
@@ -2398,6 +2433,8 @@ namespace engine
    //
    // Input:
    //    dpsTxExectr -- pointer to _dpsTransExecutor
+   // Output:
+   //    none
    //
    INT32 dpsTransLockManager::_waitLock( _dpsTransExecutor *dpsTxExectr )
    {
@@ -2433,6 +2470,7 @@ namespace engine
    //     SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST,
    //     SDB_DPS_TRANS_LOCK_INCOMPATIBLE,
    //     or other errors
+   // Dependency:  the lock manager must be initialized
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER_TRYACQUIRE, "dpsTransLockManager::tryAcquire" )
@@ -2540,6 +2578,7 @@ namespace engine
    //     SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST,
    //     SDB_DPS_TRANS_LOCK_INCOMPATIBLE,
    //     or other errors
+   // Dependency:  the lock manager must be initialized
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER_TESTACQUIRE, "dpsTransLockManager::testAcquire" )
@@ -2622,9 +2661,12 @@ namespace engine
    //              the waiter list and upgrade list are empty.
    // Input:
    //    lockId -- lock Id
+   // Output:
+   //    none
    // Return:
    //    True   -- the lock has waiter(s)
    //    False  -- the lock has no waiter(s)
+   // Dependency:  the lock manager must be initialized
    //
    BOOLEAN dpsTransLockManager::hasWait( const dpsTransLockId &lockId )
    {
