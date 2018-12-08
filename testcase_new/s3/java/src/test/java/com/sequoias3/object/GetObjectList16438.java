@@ -47,7 +47,7 @@ public class GetObjectList16438 extends S3TestBase {
 		}
 	}
 
-	@Test
+	@Test(enabled = false)
 	public void testGetObjectList() throws Exception {
 		int keyCount = 5;
 		//first query
