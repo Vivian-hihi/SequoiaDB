@@ -14,7 +14,7 @@
 | MinValue                 | Int64    | 否   | 1         | 自增字段的最小值 |
 | MaxValue                 | Int64    | 否   | 2^63 -1   | 自增字段的最大值 |
 | CacheSize                | Int32    | 否   | 1000      | 编目节点每次缓存的序列值的数量，取值须大于0 |
-| AcquireSize              | Int32    | 否   | 1000      | 协调节点每次获取的序列值的数量，取值须大于0，小于CacheSize |
+| AcquireSize              | Int32    | 否   | 1000      | 协调节点每次获取的序列值的数量，取值须大于0，小于等于CacheSize |
 | Cycled                   | Bool     | 否   | false     | 序列值达到最大值或最小值时是否允许循环 |
 | Generated                | String   | 否   | "default" | 自增字段生成方式，取值为"always", "default"或"strict"。<br>"always" 表示自增字段总是由服务端生成，忽略客户端的设置；<br>"default" 表示缺省时生成，允许客户端的设置；<br>"strict" 则在允许客户端设置的同时增加类型检测，类型不为数值时报错。 |
 
