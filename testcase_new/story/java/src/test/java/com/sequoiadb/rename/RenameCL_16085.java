@@ -65,15 +65,15 @@ public class RenameCL_16085 extends SdbTestBase{
 			}
 		}
 		
-		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
+		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){//TODO：这个db在哪关闭的？？
 			if(renameCL && !createCL){
 				RenameUtil.checkRenameCLResult(db, SdbTestBase.csName, clName, newCLName);
 			}else if(!renameCL && createCL){
-				cs = db.getCollectionSpace(SdbTestBase.csName);
-				if(!cs.isCollectionExist(clName)){
+				cs = db.getCollectionSpace(SdbTestBase.csName);//TODO:renameCL 需要重新获取CS？？这句是否可以去掉？？
+				if(!cs.isCollectionExist(clName)){//TODO:直接使用Assert断言是不是更简洁？？
 					Assert.fail("cl is been create, should exist");
 				}
-				if(!cs.isCollectionExist(newCLName)){
+				if(!cs.isCollectionExist(newCLName)){//TODO:直接使用Assert断言是不是更简洁？？
 					Assert.fail("cl is been rename, should exist");
 				}
 			}else if(!renameCL && !createCL){
@@ -96,13 +96,13 @@ public class RenameCL_16085 extends SdbTestBase{
 		}
 	}
 	
-	private class RenameCLThread extends SdbThreadBase{
+	private class RenameCLThread extends SdbThreadBase {
 
 		@Override
 		public void exec() throws Exception {
 			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			try {
-				CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
+				CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);//TODO:cs使用不同的变量名是不是更容易维护？？同名容易与类的私有变量混淆
 				cs.renameCollection(clName, newCLName);
 			}finally {
 				db.close();
@@ -116,7 +116,7 @@ public class RenameCL_16085 extends SdbTestBase{
 		public void exec() throws Exception {
 			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			try {
-				CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
+				CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);//TODO:cs使用不同的变量名是不是更容易维护？？同名容易与类的私有变量混淆
 				cs.createCollection(newCLName);
 			}finally {
 				db.close();

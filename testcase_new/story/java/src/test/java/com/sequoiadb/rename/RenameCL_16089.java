@@ -80,24 +80,24 @@ public class RenameCL_16089 extends SdbTestBase{
 			}
 		}
 		
-		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
+		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){//TODO：这个db在哪关闭的？？
 			if(rename && !split){
 				RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
-				List<String> groups = new ArrayList<>();
+				List<String> groups = new ArrayList<>();//TODO:建议规范编码ArrayList<>中指定类型
 				groups.add(sourceGroup);
 				RenameUtil.checkSplitResult(db, csName, newCLName, groups);
 			}else if(!rename && split){
 				cs = db.getCollectionSpace(csName);
-				if(cs.isCollectionExist(clName)){
+				if(cs.isCollectionExist(clName)){//TODO:直接使用Assert断言是不是更简洁？？
 					Assert.fail("cl is been rename faild, should not exist");
 				}
-				List<String> groups = new ArrayList<>();
+				List<String> groups = new ArrayList<>();//TODO:建议规范编码ArrayList<>中指定类型
 				groups.add(sourceGroup);
 				groups.add(targetGroup);
 				RenameUtil.checkSplitResult(db, csName, clName, groups);
 			}else if(rename && split){
 				RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
-				List<String> groups = new ArrayList<>();
+				List<String> groups = new ArrayList<>();//TODO:建议规范编码ArrayList<>中指定类型
 				groups.add(sourceGroup);
 				groups.add(targetGroup);
 				RenameUtil.checkSplitResult(db, csName, newCLName, groups);
@@ -123,8 +123,8 @@ public class RenameCL_16089 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
-				CollectionSpace cs = db.getCollectionSpace(csName);
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {//TODO:这个db在哪里关闭？？
+				CollectionSpace cs = db.getCollectionSpace(csName);//TODO:cs使用不同的变量名是不是更容易维护？？同名容易与类的私有变量混淆
 				cs.renameCollection(clName, newCLName);
 			}
 		}
@@ -134,7 +134,7 @@ public class RenameCL_16089 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {//TODO:这个db在哪里关闭？？
 				DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 				cl.split(sourceGroup, targetGroup, 50);
 			}

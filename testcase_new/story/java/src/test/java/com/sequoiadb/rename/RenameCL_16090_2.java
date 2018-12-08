@@ -70,7 +70,7 @@ public class RenameCL_16090_2 extends SdbTestBase{
 			}
 		}
 		
-		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){//TODO:这个db在哪里关闭？？
 			RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
 			checkCreateIndex(db, csName, newCLName, create);
 		}
@@ -92,8 +92,8 @@ public class RenameCL_16090_2 extends SdbTestBase{
 		@Override
 		public void exec() throws Exception {
 			Thread.sleep(new Random().nextInt(300));
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
-				CollectionSpace cs = db.getCollectionSpace(csName);
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {//TODO:这个db在哪里关闭？？
+				CollectionSpace cs = db.getCollectionSpace(csName);//TODO:cs使用不同的变量名是不是更容易维护？？同名容易与类的私有变量混淆
 				cs.renameCollection(clName, newCLName);
 			}
 		}
@@ -103,8 +103,8 @@ public class RenameCL_16090_2 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
-				DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {//TODO:这个db在哪里关闭？？
+				DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);//TODO:cl使用不同的变量名是不是更容易维护？？同名容易与类的私有变量混淆
 				for(int i=0; i<10; i++){
 					cl.createIndex(indexNameB+"_"+i, new BasicBSONObject("b"+i, 1), false, false);
 					createTimes++;
@@ -114,11 +114,11 @@ public class RenameCL_16090_2 extends SdbTestBase{
 	}
 	
 	private void checkCreateIndex(Sequoiadb db, String csName, String clName, boolean success) {
-		DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+		DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);//TODO:cl使用不同的变量名是不是更容易维护？？同名容易与类的私有变量混淆
 		DBCursor cur = cl.getIndexes();
-		List<String> indexNames = new ArrayList<>();
+		List<String> indexNames = new ArrayList<>();//TODO:建议规范编码ArrayList<>中指定类型
 		int indexAnum = 0;
-		while (cur.hasNext()) {
+		while (cur.hasNext()) {//TODO:游标未关闭
 			BSONObject obj = cur.getNext();
 			BSONObject indexInfo = (BSONObject) obj.get("IndexDef");
 			String name = (String) indexInfo.get("name");
@@ -138,7 +138,7 @@ public class RenameCL_16090_2 extends SdbTestBase{
 					leftNum++;
 				}
 			}
-			if(leftNum != createTimes ){
+			if(leftNum != createTimes ){//TODO:直接使用Assert断言是不是更简洁？？
 				Assert.fail("check indexB num error, exp: " + createTimes+" act: " + leftNum);
 			}
 		}

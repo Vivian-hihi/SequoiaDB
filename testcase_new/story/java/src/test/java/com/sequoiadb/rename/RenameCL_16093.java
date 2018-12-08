@@ -80,7 +80,7 @@ public class RenameCL_16093 extends SdbTestBase{
 			}
 		}
 		
-		try ( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+		try ( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){//TODO:这个db在哪里关闭？？
 			RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
 			cl = db.getCollectionSpace(csName).getCollection(newCLName);
 			checkRecord(cl);
@@ -102,8 +102,8 @@ public class RenameCL_16093 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-				CollectionSpace cs = db.getCollectionSpace(csName);
+			try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {//TODO:这个db在哪里关闭？？
+				CollectionSpace cs = db.getCollectionSpace(csName);//TODO:cs使用不同的变量名是不是更容易维护？？同名容易与类的私有变量混淆
 				cs.renameCollection(clName, newCLName);
 			}
 		}
@@ -113,7 +113,7 @@ public class RenameCL_16093 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {//TODO:这个db在哪里关闭？？
 				DBCollection sdbcl = db.getCollectionSpace(csName).getCollection(clName);
 				for (int i = 0; i < 1000; i++) {
 					BSONObject record = new BasicBSONObject();
@@ -131,7 +131,7 @@ public class RenameCL_16093 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {//TODO:这个db在哪里关闭？？
 				DBCollection sdbcl = db.getCollectionSpace(csName).getCollection(clName);
 				sdbcl.delete(new BasicBSONObject("a", new BasicBSONObject("$lt", "1000")));
 			}
@@ -142,7 +142,7 @@ public class RenameCL_16093 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {//TODO:这个db在哪里关闭？？
 				DBCollection sdbcl = db.getCollectionSpace(csName).getCollection(clName);
 				sdbcl.update(new BasicBSONObject("a", new BasicBSONObject("$lt", "2000")),
 						     new BasicBSONObject("$set", new BasicBSONObject("no", "No.10086")),null);
