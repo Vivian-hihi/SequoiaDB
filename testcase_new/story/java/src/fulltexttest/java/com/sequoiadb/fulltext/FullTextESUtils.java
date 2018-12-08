@@ -112,7 +112,7 @@ public class FullTextESUtils {
      */ 
     public static boolean isExistIndexInES(Client esClient, String esIndexName) {
         boolean isExist = false;
-        int timeout = 300; // timeout 300s
+        int timeout = 600; // timeout 600s
         int doTimes = 0;
         int interval = 1; 
 		
@@ -144,7 +144,7 @@ public class FullTextESUtils {
     */ 
     public static boolean isIndexDeletedInES(Client esClient, String esIndexName) {
         boolean isDeleted = true;
-        int timeout = 300; // timeout 300s
+        int timeout = 600; // timeout 600s
         int doTimes = 0;
         int interval = 1;
  
