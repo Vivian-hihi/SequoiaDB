@@ -211,13 +211,14 @@ public class S3TestBase {
             InputStream in = new FileInputStream( new File("/etc/default/sequoiadb") );
             prop.load( in );
             String installPath = prop.getProperty( "INSTALL_DIR" );
-            String[] cmd = new String[2];
+            String[] cmd = new String[3];
             cmd[0] = installPath+"/tools/sequoias3/sequoias3.sh";
-            cmd[1] = "stop -a";
+            cmd[1] = "stop";
+            cmd[2] = "-a";
             System.out.println( "exec cmd: " + Arrays.toString( cmd ) );
             Process process = Runtime.getRuntime().exec( cmd );
             BufferedReader input = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
-    
+            
             int exitValue = process.waitFor();
             if( 0 != exitValue ){
                 Assert.fail( "fail to stop s3, return code=" + exitValue );
