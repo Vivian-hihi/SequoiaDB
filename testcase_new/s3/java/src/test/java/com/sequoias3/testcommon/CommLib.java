@@ -41,6 +41,7 @@ public class CommLib {
 				.withEndpointConfiguration(endpointConfiguration)
 				.withClientConfiguration(config)
 				.withChunkedEncodingDisabled(true)
+				.withPathStyleAccessEnabled(true)
 				.withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
 		return s3Client;		
 	}
