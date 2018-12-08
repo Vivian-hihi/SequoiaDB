@@ -20,7 +20,7 @@ Install.Paramers.LicenseRead.License-enterprise.Information.Part=重要信息：
 Install.Paramers.Force.Description=是否强制安装
 Install.Paramers.Force.Explanation=是否强制安装？强制安装时可能会强杀残留进程
 Install.Paramers.Force.Check=无效参数: --force ${force}, 参数值必须是true或者false
-Install.Paramers.SMS.Check=无效参数: --SMS ${SMS}, 参数值必须是true或者false
+Install.Paramers.SMS.Check=无效参数: --SMS ${SMS}, 参数值必须是true、false或者only
 Install.Paramers.ProcessAutoStart.Check=无效参数: --processAutoStart ${processAutoStart}, 参数值必须是true或者false
 Install.Parameter.Upgrade.explanation=检测到${installdir_inconf}下已有安装版本。
 Install.Parameter.Upgrade.description=是否切换到升级模式[upgrade/cover]？
@@ -80,6 +80,7 @@ Upgrade.ErrorMsg.JudgeComatible=因为不兼容，导致版本不能从 ${old_ve
 Upgrade.ErrorMsg.DiskSpace=磁盘空间不够
 Upgrade.ErrorMsg.UserExist=用户${username}不存在
 Upgrade.ErrorMsg.StopProcess=数据库相关进程未停止
+Upgrade.ErrorMsg.StopOMProcess=om相关进程未停止
 Upgrade.ErrorMsg.StartProcess=sdbcm或者sdbcmd未启动
 Upgrade.ErrorMsg.GetGoup=获取用户${username}的用户组失败
 

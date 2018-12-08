@@ -50,11 +50,38 @@
             <exec>${installdir}/tmp_${time}/sdblist</exec>
             <execArgs>-t all | grep -v "Total" | wc -l</execArgs>
         </setInstallerVariableFromScriptOutput>
+        <!--stop om  and  omplugin-->
+        <if>
+            <conditionRuleList>
+                <compareText logic="does_not_equal" text="${SMS}" value="false"/>
+                <compareText logic="equals" text="${installmode}" value="cover"/>
+            </conditionRuleList>
+            <actionList>
+                <stopOM/>
+            </actionList>
+        </if>
+        
+        <!--check om and om plugin-->
+        <setInstallerVariableFromScriptOutput>
+            <name>process_om_num</name>
+            <exec>${installdir}/tmp_${time}/sdblist</exec>
+            <execArgs>-t om | grep -v "Total" | wc -l</execArgs>
+        </setInstallerVariableFromScriptOutput>
+        
         <deleteFile path="${installdir}/tmp_${time}"/>
+        
         <throwError>
             <text>${msg(Upgrade.ErrorMsg.StopProcess)}</text>
             <ruleList>
                 <compareValues value1="${process_num}" logic="greater" value2="0"/>
+                <compareText logic="does_not_equal" text="${SMS}" value="only"/>
+            </ruleList>
+        </throwError>
+        <throwError>
+            <text>${msg(Upgrade.ErrorMsg.StopOMProcess)}</text>
+            <ruleList>
+                <compareValues value1="${process_om_num}" logic="greater" value2="0"/>
+                <compareText logic="does_not_equal" text="${SMS}" value="false"/>
             </ruleList>
         </throwError>
 
@@ -296,22 +323,39 @@
                  <compareText logic="equals" text="${program_exit_code}" value="0"/>
              </ruleList>
         </setInstallerVariable>
-        <startServiceFunction/>
+        <if>
+            <conditionRuleList>
+                <compareText logic="equals" text="${SMS}" value="only"/>
+                <compareText logic="equals" text="${installmode}" value="cover"/>
+            </conditionRuleList>
+            <elseActionList>
+                <startServiceFunction/>
+            </elseActionList>
+        </if>
 
         <!--start om-->
         <setInstallerVariable name="om_port"    value="11780"/>
         <setInstallerVariable name="om_dbpath"  value="${installdir}/database/sms/${om_port}"/>
         <setInstallerVariable name="http_port"  value="8000"/>
+
         <runProgram>
             <customErrorMessage>${msg(Install.ErrorMsg.IntallationOM.error)}</customErrorMessage>
             <program>${installdir}/install_om.sh</program>
             <programArguments>${project.installationType} "${installdir}" "${installer_pathname}" ${port} ${om_port} "${om_dbpath}" ${http_port}</programArguments>
             <ruleList>
-                <isTrue value="${SMS}" />
+                <compareText logic="does_not_equal" text="${SMS}" value="false"/>
             </ruleList>
             <onErrorActionList>
                 <consoleWrite text="&#xA;error message:&#xA;${program_stdout}&#xA;"/>
             </onErrorActionList>
+        </runProgram>
+        <runProgram>
+            <program>${installdir}/plugins/SequoiaSQL/bin/start.sh</program>
+            <programArguments></programArguments>
+            <runAs>${username}</runAs>
+            <ruleList>
+                <compareText logic="equals" text="${SMS}" value="only"/>
+            </ruleList>
         </runProgram>
         <changeOwnerAndGroup>
             <files>${installdir}/packet;${installdir}/packet/${installerFilename}</files>

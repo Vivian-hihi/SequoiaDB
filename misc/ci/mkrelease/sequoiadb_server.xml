@@ -36,10 +36,11 @@
             <variable>time</variable>
             <format>%Y-%m-%d-%H:%M:%S</format>
         </createTimeStamp>
-        <setInstallerVariable name="sys_conf_file" value="/etc/default/sequoiadb" persist="1"/>
+        <setInstallerVariable name="sys_conf_file"      value="/etc/default/sequoiadb"  persist="1"/>
         <setInstallerVariable name="exist_installation" value="false"/>
         <setInstallerVariable name="newsysconf_default" value="/usr/lib/systemd/system" persist="1"/>
-        <setInstallerVariable name="newsysconf_ubuntu" value="/lib/systemd/system" persist="1"/>
+        <setInstallerVariable name="newsysconf_ubuntu"  value="/lib/systemd/system"     persist="1"/>
+        <setInstallerVariable name="has_om"             value="FALSE"                   persist="1"/>
     </initializationActionList>
 
     <functionDefinitionList>
@@ -159,6 +160,7 @@
         <actionDefinition name="changePermissionOwnerFunction">
             <actionList>
                 <changePermissions permissions="0755" files="${installdir}/bin/{*,*/*}"/>
+                <changePermissions permissions="0755" files="${installdir}/plugins/SequoiaSQL/bin/*.sh"/>
                 <changePermissions permissions="0755" files="${installdir}/tools/server/php/bin/*"/>
                 <changePermissions permissions="0755" files="${installdir}/www/shell/*"/>
                 <changePermissions permissions="0755" files="${installdir}/install_om.sh"/>
@@ -416,6 +418,22 @@
                 </runProgram>
             </actionList>
         </actionDefinition>
+        <actionDefinition name="stopOM">
+           <actionList>
+              <runProgram>
+                  <program>${installdir}/bin/sdbstop</program>
+                  <programArguments>-t om -r om</programArguments>
+                  <runAs>${username}</runAs>
+                  <abortOnError>0</abortOnError>
+                  <showMessageOnError>0</showMessageOnError>
+              </runProgram>
+              <runProgram>
+                  <program>${installdir}/plugins/SequoiaSQL/bin/stop.sh</program>
+                  <programArguments></programArguments>
+                  <runAs>${username}</runAs>
+              </runProgram>
+           </actionList>
+        </actionDefinition>
     </functionDefinitionList>
 
     <!--exist installation? different mode has different parameterList-->
@@ -435,6 +453,7 @@
             <ruleList>
                 <compareText logic="does_not_equal" text="${SMS}" value="true"/>
                 <compareText logic="does_not_equal" text="${SMS}" value="false"/>
+                <compareText logic="does_not_equal" text="${SMS}" value="only"/>
             </ruleList>
         </throwError>
         <throwError>
@@ -532,7 +551,7 @@
                  <fileTest condition="is_not_empty" path="${installdir_inconf}"/>
             </ruleList>
         </setInstallerVariable>
-
+        
     </preInstallationActionList>
 
     <parameterList>
@@ -718,17 +737,31 @@
                 <compareValues value1="${installmode}" value2="upgrade" logic="does_not_equal"/>
             </ruleList>
         </booleanParameter>
-        <booleanParameter name="SMS">
+        <choiceParameter name="SMS">
             <insertAfter>processAutoStart</insertAfter>
             <description>${msg(Install.Paramers.sms.description)}</description>
             <value></value>
             <default>false</default>
             <cliOptionName>SMS</cliOptionName>
             <cliOptionText>${msg(Install.Paramers.sms.explanation)}</cliOptionText>
-            <ruleList>
+            <optionList>
+                <option>
+                    <text>true</text>
+                    <value>true</value>
+                </option>
+                <option>
+                    <text>false</text>
+                    <value>false</value>
+                </option>
+                <option>
+                    <text>only</text>
+                    <value>only</value>
+                </option>
+            </optionList>
+            <!--ruleList>
                 <compareValues value1="${installmode}" value2="upgrade" logic="does_not_equal"/>
-            </ruleList>
-        </booleanParameter>
+            </ruleList-->
+        </choiceParameter>
 
     </parameterList>
 

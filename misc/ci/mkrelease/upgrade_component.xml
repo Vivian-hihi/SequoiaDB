@@ -224,12 +224,18 @@
                     <program>service</program>
                     <programArguments> sdbcm stop</programArguments>
                     <abortOnError>0</abortOnError>
+                    <ruleList>
+                       <compareText logic="does_not_equal" text="${SMS}" value="only"/>
+                    </ruleList>
                 </runProgram>
                 <runProgram>
                     <program>${installdir}/bin/sdbcmtop</program>
                     <programArguments></programArguments>
                     <abortOnError>0</abortOnError>
                     <showMessageOnError>0</showMessageOnError>
+                    <ruleList>
+                       <compareText logic="does_not_equal" text="${SMS}" value="only"/>
+                    </ruleList>
                 </runProgram>
             </actionList>
             <ruleList>
@@ -244,6 +250,22 @@
             <abortOnError>0</abortOnError>
             <showMessageOnError>0</showMessageOnError>
         </setInstallerVariableFromScriptOutput>
+        <!--stop om  and  omplugin-->
+        <if>
+            <conditionRuleList>
+                <compareText logic="does_not_equal" text="${SMS}" value="false"/>
+            </conditionRuleList>
+            <actionList>
+                <stopOM/>
+            </actionList>
+        </if>
+        <!--check om and om plugin-->
+        <setInstallerVariableFromScriptOutput>
+            <name>process_om_num</name>
+            <exec>${installdir}/bin/sdblist</exec>
+            <execArgs>-t om | grep -v "Total" | wc -l</execArgs>
+        </setInstallerVariableFromScriptOutput>
+        
         <setInstallerVariable>
             <name>service_origin_status</name>
             <value>0</value>
@@ -257,6 +279,9 @@
             <runAs>${username}</runAs>
             <abortOnError>0</abortOnError>
             <showMessageOnError>0</showMessageOnError>
+            <ruleList>
+               <compareText logic="does_not_equal" text="${SMS}" value="only"/>
+            </ruleList>
         </runProgram>
 
         <!--check process has been stoped or not-->
@@ -289,6 +314,14 @@
             <text>${msg(Upgrade.ErrorMsg.StopProcess)}</text>
             <ruleList>
                 <compareValues value1="${process_num}" logic="greater" value2="0"/>
+                <compareText logic="does_not_equal" text="${SMS}" value="only"/>
+            </ruleList>
+        </throwError>
+        <throwError>
+            <text>${msg(Upgrade.ErrorMsg.StopOMProcess)}</text>
+            <ruleList>
+                <compareValues value1="${process_om_num}" logic="greater" value2="0"/>
+                <compareText logic="does_not_equal" text="${SMS}" value="false"/>
             </ruleList>
         </throwError>
         <consoleWrite text="ok&#xA;"/>
@@ -399,7 +432,15 @@
         </if>
 
         <!--start service-->
-        <startServiceFunction/>
+        <if>
+            <conditionRuleList>
+                <compareText logic="does_not_equal" text="${SMS}" value="only"/>
+            </conditionRuleList>
+            <actionList>
+                <startServiceFunction/>
+            </actionList>
+        </if>
+        
         <runProgram>
             <program>service</program>
             <programArguments> sdbcm status</programArguments>
@@ -415,7 +456,6 @@
         </consoleWrite>
 
         <!--start om-->
-        <setInstallerVariable name="has_om" value="FALSE"/>
         <propertiesFileGet>
             <file>${installdir}/conf/sdbcm.conf</file>
             <key>IsGeneral</key>
@@ -428,11 +468,32 @@
             <execArgs>'${has_om}' | sed 's/^\s*//g'</execArgs>
             <name>has_om</name>
         </setInstallerVariableFromScriptOutput>
+        <setInstallerVariable name="om_port"    value="11780"/>
+        <setInstallerVariable name="om_dbpath"  value="${installdir}/database/sms/${om_port}"/>
+        <setInstallerVariable name="http_port"  value="8000"/>
+
+        <setInstallerVariable name="install_om_mode" value="upgrade"/>
+        <setInstallerVariable>
+            <name>install_om_mode</name>
+            <value>normal</value>
+            <ruleList>
+                <compareText logic="does_not_equal" text="${SMS}" value="false"/>
+            </ruleList>
+        </setInstallerVariable>
+
         <runProgram>
             <program>${installdir}/install_om.sh</program>
-            <programArguments>${project.installationType} "${installdir}" "${installer_pathname}"</programArguments>
+            <programArguments>${install_om_mode} "${installdir}" "${installer_pathname}" ${port} ${om_port} "${om_dbpath}" ${http_port}</programArguments>
             <ruleList>
-                <isTrue value="${has_om}"/>
+                <compareText logic="does_not_equal" text="${SMS}" value="false"/>
+            </ruleList>
+        </runProgram>
+        <runProgram>
+            <program>${installdir}/plugins/SequoiaSQL/bin/start.sh</program>
+            <programArguments></programArguments>
+            <runAs>${username}</runAs>
+            <ruleList>
+                <compareText logic="equals" text="${SMS}" value="only"/>
             </ruleList>
         </runProgram>
         <changeOwnerAndGroup>

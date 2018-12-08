@@ -20,7 +20,7 @@ Install.Paramers.LicenseRead.License-enterprise.Information.Part=IMPORTANT: READ
 Install.Paramers.Force.Description=Force Installation
 Install.Paramers.Force.Explanation=Do you want to force the install? It may kill residual processes.
 Install.Paramers.Force.Check=Invalid parameter: --force ${force}, should be true or false
-Install.Paramers.SMS.Check=Invalid parameter: --SMS ${SMS}, should be true or false
+Install.Paramers.SMS.Check=Invalid parameter: --SMS ${SMS}, should be true, false or only
 Install.Paramers.ProcessAutoStart.Check=Invalid parameter: --processAutoStart ${processAutoStart}, should be true or false
 Install.Parameter.Upgrade.explanation=An existing installation has been detected in ${installdir_inconf}.
 Install.Parameter.Upgrade.description=Do you want to change to upgrade mode [upgrade/cover]?
@@ -80,6 +80,7 @@ Upgrade.ErrorMsg.JudgeComatible=You can't upgrade from version ${old_version} ${
 Upgrade.ErrorMsg.DiskSpace=There is not enough disk space for installation.
 Upgrade.ErrorMsg.UserExist=User ${username} does not exist.
 Upgrade.ErrorMsg.StopProcess=Relevant processes still exist.
+Upgrade.ErrorMsg.StopOMProcess=Relevant om processes still exist.
 Upgrade.ErrorMsg.StartProcess=sdbcm or sdbcmd has not been started.
 Upgrade.ErrorMsg.GetGoup=Failed to get group of user ${username}.
 
