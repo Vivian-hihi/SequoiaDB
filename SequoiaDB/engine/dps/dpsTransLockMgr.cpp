@@ -859,9 +859,10 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST, "dpsTransLockManager::_removeFromUpgradeOrWaitList" )
    void dpsTransLockManager::_removeFromUpgradeOrWaitList
    (
-      _dpsTransExecutor * dpsTxExectr,
-      const UTIL_OBJIDX   bktIdx,
-      const BOOLEAN       removeLRBHeader
+      _dpsTransExecutor *    dpsTxExectr,
+      const dpsTransLockId & lockId,
+      const UTIL_OBJIDX      bktIdx,
+      const BOOLEAN          removeLRBHeader
    )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST ) ;
@@ -875,8 +876,9 @@ namespace engine
       dpsTransLRBHeader * pLRBHdr = NULL ;
       EDUID eduIDTrc = 0 ;
 
-      PD_TRACE5( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
+      PD_TRACE6( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
                  PD_PACK_ULONG( dpsTxExectr ),
+                 PD_PACK_STRING( lockId.toString().c_str() ), 
                  PD_PACK_UINT( bktIdx ),
                  PD_PACK_UINT( removeLRBHeader ),
                  PD_PACK_STRING( "LRB to be removed:" ),
@@ -889,6 +891,21 @@ namespace engine
                      "Invalid LRB Header." );
          hdrIdx  = pLRB->lrbHdrIdx ;
          pLRBHdr = getLRBHdrPtrByIdx( hdrIdx ) ;
+
+         // sanity check, panic if fails.
+         if ( ! ( pLRBHdr->lockId == lockId ) )
+         {
+            PD_LOG( PDERROR,
+                    "Fatal error, requested lockId doesn't match LRB Header."
+                    "Requested lockId:%s, lockId in LRB Header %s",
+                    lockId.toString().c_str(),
+                    pLRBHdr->lockId.toString().c_str() ) ;
+            PD_TRACE3( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
+                       PD_PACK_STRING( "Invalid LRB Header, lockId not match"),
+                       PD_PACK_STRING( lockId.toString().c_str() ),
+                       PD_PACK_STRING( pLRBHdr->lockId.toString().c_str() ) ) ;
+            ossPanic() ;
+         }
        
          if ( DPS_QUE_UPGRADE == dpsTxExectr->getWaiterQueType() )
          {
@@ -1802,7 +1819,7 @@ namespace engine
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 
       INT32 rc  = SDB_OK ,
-            rc2 = SDB_OK ;
+            rc2 = SDB_OK ; // context pause or resume return code
       dpsTransLockId     iLockId ;
       DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
       BOOLEAN isIntentLockAcquired = FALSE ;
@@ -1942,7 +1959,8 @@ namespace engine
       // The reason removing the empty LRB Header only when _waitLock() fails
       // is if _waitLock returns success, when retry acquiring the lock,
       // _tryAcquireOrTest(), the LRB Header will be added back again.
-      _removeFromUpgradeOrWaitList( dpsTxExectr, bktIdx, ( SDB_OK != rc ) ) ;
+      _removeFromUpgradeOrWaitList( dpsTxExectr,
+                                    lockId, bktIdx, ( SDB_OK != rc ) ) ;
 
       // retry acquire the lock when following conditions are satisfied:
       //   . SDB_OK == rc = _waitLock(), it has been woken up
