@@ -944,9 +944,11 @@ namespace engine
                _wakeUp( plrb->dpsTxExectr ) ;   
 
                eduIDTrc = plrb->dpsTxExectr->getEDUID() ;
-               PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
+               PD_TRACE4( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
                           PD_PACK_STRING( "Wake up EDU:" ),
-                          PD_PACK_ULONG( eduIDTrc ) ) ;
+                          PD_PACK_ULONG( eduIDTrc ),
+                          PD_PACK_STRING( "Waiter LRB idx:" ),
+                          PD_PACK_UINT( idxNext ) ) ;
             }
          }
 
@@ -1978,6 +1980,10 @@ namespace engine
          _releaseOpLatch( bktIdx ) ;
          bLatched = FALSE ;
       }
+
+      PD_TRACE1( SDB_DPSTRANSLOCKMANAGER_ACQUIRE,
+                 PD_PACK_STRING("Eerror code path") ) ;
+
       if ( isIntentLockAcquired )
       {
          release( dpsTxExectr, iLockId, FALSE ) ;
@@ -2147,7 +2153,7 @@ namespace engine
                   _wakeUp( pWaiterLRB->dpsTxExectr ) ;
 
                   PD_TRACE4( SDB_DPSTRANSLOCKMANAGER__RELEASE,
-                             PD_PACK_STRING( "Wakeup the waiter:" ),
+                             PD_PACK_STRING( "Wakeup the EDU:" ),
                              PD_PACK_ULONG( eduIDTrc ),
                              PD_PACK_STRING( "Waiter LRB idx:" ),
                              PD_PACK_UINT( waiterIdx ) ) ;
