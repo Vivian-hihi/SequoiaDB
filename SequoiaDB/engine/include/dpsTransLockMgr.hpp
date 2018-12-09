@@ -351,9 +351,10 @@ namespace engine
       // and wake up the next one in the queue if necessary
       void _removeFromUpgradeOrWaitList
       (
-         _dpsTransExecutor * dpsTxExectr,
-         const UTIL_OBJIDX   bktIdx,
-         const BOOLEAN       removeLRBHeader
+         _dpsTransExecutor *    dpsTxExectr,
+         const dpsTransLockId & lockId,
+         const UTIL_OBJIDX      bktIdx,
+         const BOOLEAN          removeLRBHeader
       ) ;
 
   
