@@ -95,7 +95,6 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (S3ServerException e){
             throw e;
         }catch (Exception e){
-            logger.error("insert object data failed. e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_PUT_fAILED, "put object failed.", e);
         }
 
@@ -142,7 +141,6 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (Exception e){
             dataDao.deleteObjectDataByLobId(null, dataCsName,
                     dataClName, insertResult.getLobId());
-            logger.error("put object failed. bucket:"+bucketName+" key:"+objectName +" e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_PUT_fAILED, "put object failed.", e);
         }
     }
@@ -229,7 +227,6 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (S3ServerException e) {
             throw e;
         } catch (Exception e) {
-            logger.error("get object failed. bucket:"+bucketName+" key:"+objectName +". e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_GET_FAILED,
                     "get object failed. bucket:" + bucketName + ", object=" + objectName, e);
         }
@@ -247,9 +244,8 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (S3ServerException e){
             throw e;
         } catch (Exception e) {
-            logger.error("read object data failed. e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_GET_FAILED,
-                    "get object data failed. ");
+                    "get object data failed. ", e);
         }
     }
 
@@ -306,7 +302,6 @@ public class ObjectServiceImpl implements ObjectService {
                 throw e;
             }
         } catch (Exception e) {
-            logger.error("delete object failed. bucket:"+bucketName+" key:"+objectName +". e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_DELETE_FAILED,
                     "delete object failed. bucket:" + bucketName + ", object=" + objectName, e);
         }
@@ -392,7 +387,6 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (S3ServerException e) {
             throw e;
         } catch (Exception e) {
-            logger.error("delete object failed. bucket:"+bucketName+" key:"+objectName +". e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_DELETE_FAILED,
                     "delete object failed. bucket:" + bucketName + ", object=" + objectName, e);
         }
@@ -541,8 +535,7 @@ public class ObjectServiceImpl implements ObjectService {
             throw e;
         } catch (Exception e){
             contextManager.release(queryContext);
-            logger.error("list objects failed. bucket:"+bucketName +". e:"+ e);
-            throw new S3ServerException(S3Error.OBJECT_LIST_FAILED, "error message:"+e.getMessage());
+            throw new S3ServerException(S3Error.OBJECT_LIST_FAILED, "error message:"+e.getMessage(), e);
         }finally {
             metaDao.releaseQueryDbCursor(dbCursor);
         }
@@ -619,9 +612,8 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (S3ServerException e){
             throw e;
         }catch (Exception e){
-            logger.error("list versions failed. bucket:"+bucketName +". e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_LIST_VERSIONS_FAILED,
-                    "List versions failed. bucket:"+bucketName);
+                    "List versions failed. bucket:"+bucketName, e);
         }finally {
             metaDao.releaseQueryDbCursor(queryDbCursorCur);
             metaDao.releaseQueryDbCursor(queryDbCursorHis);
@@ -755,9 +747,9 @@ public class ObjectServiceImpl implements ObjectService {
             content.setSize((long) bsonObject.get(ObjectMeta.META_SIZE));
             return content;
         }catch (UnsupportedEncodingException e){
-            logger.error("Encode object name failed. e", e);
+            //logger.error("Encode object name failed. e", e);
             throw new S3ServerException(S3Error.UNKNOWN_ERROR,
-                    "encode object name failed."+e.getMessage());
+                    "encode object name failed."+e.getMessage(), e);
         }
     }
 
@@ -925,9 +917,9 @@ public class ObjectServiceImpl implements ObjectService {
             }
             return version;
         }catch (UnsupportedEncodingException e){
-            logger.error("Encode object name failed. e", e);
+            //logger.error("Encode object name failed. e", e);
             throw new S3ServerException(S3Error.UNKNOWN_ERROR,
-                    "encode object name failed."+e.getMessage());
+                    "encode object name failed."+e.getMessage(), e);
         }
     }
 
@@ -946,7 +938,7 @@ public class ObjectServiceImpl implements ObjectService {
             }
         }catch (Exception e){
             throw new S3ServerException(S3Error.OBJECT_INVALID_DIGEST,
-                    "decode md5 failed, contentMd5:"+contentMd5);
+                    "decode md5 failed, contentMd5:"+contentMd5, e);
         }
     }
 
@@ -1337,12 +1329,12 @@ public class ObjectServiceImpl implements ObjectService {
             logger.error("Parse versionIdMarker failed, versionIdMarker:{}",
                     versionIdMarker);
             throw new S3ServerException(S3Error.OBJECT_INVALID_VERSION,
-                    "Parse versionIdMarker failed, versionIdMarker:"+ versionIdMarker);
+                    "Parse versionIdMarker failed, versionIdMarker:"+ versionIdMarker, e);
         }catch (Exception e){
             logger.error("isExistKeyVersion failed, versionIdMarker:{}",
                     versionIdMarker);
             throw new S3ServerException(S3Error.OBJECT_INVALID_VERSION,
-                    "isExistKeyVersion failed, versionIdMarker:"+ versionIdMarker);
+                    "isExistKeyVersion failed, versionIdMarker:"+ versionIdMarker, e);
         }
     }
 
