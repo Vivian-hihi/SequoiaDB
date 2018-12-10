@@ -1,4 +1,4 @@
-package com.sequoiadb.metadata;
+package com.sequoiadb.metadata.sync;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
