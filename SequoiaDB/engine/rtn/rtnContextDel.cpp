@@ -834,7 +834,7 @@ namespace engine
       rc = rtnTestCollectionSpaceCommand( pCSName, _pDmsCB ) ;
       if ( SDB_DMS_CS_NOTEXIST == rc )
       {
-         // Ignore collection space not exist, bcs it may be a cs of maincl.
+         // Ignore collection space not exist, because it may be a cs of maincl.
          // And do not set _status to phase_1
          PD_LOG( PDINFO, "Ignored error[%d] when drop collection space[%s]",
                  rc, pCSName ) ;
