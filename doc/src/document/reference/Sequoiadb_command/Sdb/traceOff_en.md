@@ -33,12 +33,12 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Turn off the database engine program tracking and export tracking results to binary   files, /opt/sequoiadb/trace.dump.
 
-  ```lang-javascript
-  > db.traceOff("/opt/sequoiadb/trace.dump")
-  ```
+```lang-javascript
+> db.traceOff("/opt/sequoiadb/trace.dump")
+```
 
 * Using [traceFmt()](reference/Sequoiadb_command/Global/traceFmt.md) to analysis the binary file.
 
-  ```lang-javascript
-  > traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
-  ```
+```lang-javascript
+> traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
+```

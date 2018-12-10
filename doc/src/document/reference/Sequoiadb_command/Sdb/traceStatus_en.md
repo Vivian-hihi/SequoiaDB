@@ -30,44 +30,44 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * View the tracking status of the current program. 
 
-  ```lang-javascript
-  > db.traceStatus()
-  {
-	"TraceStarted": true,
-	"Wrapped": false,
-	"Size": 524288,
-	"Mask": 
-	[
-	"auth",
-	"bps",
-	"cat",
-	"cls",
-	"dps",
-	"mig",
-	"msg",
-	"net",
-	"oss",
-	"pd",
-	"rtn",
-	"sql",
-	"tools",
-	"bar",
-	"client",
-	"coord",
-	"dms",
-	"ixm",
-	"mon",
-	"mth",
-	"opt",
-	"pmd",
-	"rest",
-	"spt",
-	"util",
-	"aggr",
-	"spd",
-    "qgm"
-	],
-	"BreakPoint": [],
-    "Threads": [],
-  }
-  ```
+```lang-javascript
+> db.traceStatus()
+{
+  "TraceStarted": true,
+  "Wrapped": false,
+  "Size": 524288,
+  "Mask": 
+  [
+  "auth",
+  "bps",
+  "cat",
+  "cls",
+  "dps",
+  "mig",
+  "msg",
+  "net",
+  "oss",
+  "pd",
+  "rtn",
+  "sql",
+  "tools",
+  "bar",
+  "client",
+  "coord",
+  "dms",
+  "ixm",
+  "mon",
+  "mth",
+  "opt",
+  "pmd",
+  "rest",
+  "spt",
+  "util",
+  "aggr",
+  "spd",
+  "qgm"
+  ],
+  "BreakPoint": [],
+  "Threads": [],
+}
+```

@@ -64,12 +64,12 @@ Since v1.0.
 
 * Format trace input to output.
 
-  ```lang-javascript
-  > traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
-  ```
+```lang-javascript
+> traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
+```
 
 * Using [traceStatus()](reference/Sequoiadb_command/Sdb/traceStatus.md) to view the tracking status of the current program. 
 
-  ```lang-javascript
-  > db.traceStatus()
-  ```
+```lang-javascript
+> db.traceStatus()
+```

@@ -102,9 +102,17 @@ For more detial, please reference to Troubleshooting.
 .IP \[bu] 2
 Turn off the database engine program tracking and export tracking results to
 binary files, /opt/sequoiadb/trace.dump.
-.PP
-\f[C]lang\-javascript\ \ \ >\ db.traceOff("/opt/sequoiadb/trace.dump")\f[]
+.IP
+.nf
+\f[C]
+>\ db.traceOff("/opt/sequoiadb/trace.dump")
+\f[]
+.fi
 .IP \[bu] 2
 Using traceFmt() to analysis the binary file.
-.PP
-\f[C]lang\-javascript\ \ \ >\ traceFmt(\ 0,\ "/opt/sequoiadb/trace.dump",\ "/opt/sequoiadb/trace_output"\ )\f[]
+.IP
+.nf
+\f[C]
+>\ traceFmt(\ 0,\ "/opt/sequoiadb/trace.dump",\ "/opt/sequoiadb/trace_output"\ )
+\f[]
+.fi

@@ -33,21 +33,39 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Connect to the data node 20000, turn on database engine program tracking
-.PP
-\f[C]lang\-javascript\ \ \ >\ var\ data\ =\ new\ Sdb(\ "localhost",\ 20000\ )\ \ \ >\ data.traceOn(\ 10000,\ "dms",\ "_dmsStorageUnit::insertRecord"\ )\f[]
+.IP
+.nf
+\f[C]
+>\ var\ data\ =\ new\ Sdb(\ "localhost",\ 20000\ )
+>\ data.traceOn(\ 10000,\ "dms",\ "_dmsStorageUnit::insertRecord"\ )
+\f[]
+.fi
 .IP \[bu] 2
 Connect to the coord node 50000.
 collection named bar and collectionspace named foo are belong to the data node
 20000, and execute an insert operation.
 However, the insert operation will be blocked.
-.PP
-\f[C]lang\-javascript\ \ \ >\ var\ db\ =\ new\ Sdb(\ "localhost",\ 50000\ )\ \ \ >\ db.foo.bar.insert(\ {\ _id:\ 1,\ name:\ "a"\ }\ )\f[]
+.IP
+.nf
+\f[C]
+>\ var\ db\ =\ new\ Sdb(\ "localhost",\ 50000\ )
+>\ db.foo.bar.insert(\ {\ _id:\ 1,\ name:\ "a"\ }\ )
+\f[]
+.fi
 .IP \[bu] 2
 After resume the breakpoint tracking program, the insert operation succeeded and
 return result we expected.
-.PP
-\f[C]lang\-javascript\ \ \ >\ db.traceResume()\f[]
+.IP
+.nf
+\f[C]
+>\ db.traceResume()
+\f[]
+.fi
 .IP \[bu] 2
 Using traceStatus() to view the tracking status of the current program.
-.PP
-\f[C]lang\-javascript\ \ \ >\ db.traceStatus()\f[]
+.IP
+.nf
+\f[C]
+>\ db.traceStatus()
+\f[]
+.fi

@@ -122,31 +122,60 @@ For more detial, please reference to Troubleshooting.
 Turn on the database engine program tracking.
 .PP
 Note： Track only the node that db connected.
-.PP
-\f[C]lang\-javascript\ \ \ >\ db.traceOn(\ 256\ )\f[]
+.IP
+.nf
+\f[C]
+>\ db.traceOn(\ 256\ )
+\f[]
+.fi
 .IP \[bu] 2
 Turn on the database engine program tracking and specify a tracked module and
 break point.
-.PP
-\f[C]lang\-javascript\ \ \ >\ db.traceOn(\ 256,\ "cls,\ dms,\ mth",\ "_dmsTempSUMgr::init",\ 12712\ )\f[]
-Or specify multiple threads.
-.PP
-\f[C]lang\-javascript\ \ \ >\ db.traceOn(\ 256,\ "cls,\ dms,\ mth",\ "_dmsTempSUMgr::init",\ [12712,\ 12713,\ 12714]\ )\f[]
+.IP
+.nf
+\f[C]
+>\ db.traceOn(\ 256,\ "cls,\ dms,\ mth",\ "_dmsTempSUMgr::init",\ 12712\ )
+\f[]
+.fi
+.IP \[bu] 2
+Or turn on the database engine program tracking and specify multiple threads.
+.IP
+.nf
+\f[C]
+>\ db.traceOn(\ 256,\ "cls,\ dms,\ mth",\ "_dmsTempSUMgr::init",\ [12712,\ 12713,\ 12714]\ )
+\f[]
+.fi
 .IP \[bu] 2
 When the tracked module was blocked because of the breakpoint, you can use
 traceResume() to wake up the module which was tracked and blocked.
-.PP
-\f[C]lang\-javascript\ \ \ >\ db.traceResume()\f[]
+.IP
+.nf
+\f[C]
+>\ db.traceResume()
+\f[]
+.fi
 .IP \[bu] 2
 Using traceStatus() to view the tracking status of the current program.
-.PP
-\f[C]lang\-javascript\ \ \ >\ db.traceStatus()\f[]
+.IP
+.nf
+\f[C]
+>\ db.traceStatus()
+\f[]
+.fi
 .IP \[bu] 2
 Using traceOff() to turn off the database engine program tracking and export
 tracking results to binary files.
-.PP
-\f[C]lang\-javascript\ \ \ >\ db.traceOff("/opt/sequoiadb/trace.dump")\f[]
+.IP
+.nf
+\f[C]
+>\ db.traceOff("/opt/sequoiadb/trace.dump")
+\f[]
+.fi
 .IP \[bu] 2
 Using traceFmt() to analysis the binary file.
-.PP
-\f[C]lang\-javascript\ \ \ >\ traceFmt(\ 0,\ "/opt/sequoiadb/trace.dump",\ "/opt/sequoiadb/trace_output"\ )\f[]
+.IP
+.nf
+\f[C]
+>\ traceFmt(\ 0,\ "/opt/sequoiadb/trace.dump",\ "/opt/sequoiadb/trace_output"\ )
+\f[]
+.fi

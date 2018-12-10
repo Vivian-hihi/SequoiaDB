@@ -30,5 +30,47 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 View the tracking status of the current program.
-.PP
-\f[C]lang\-javascript\ \ \ >\ db.traceStatus()\ \ \ {\ \ \ \ \ "TraceStarted":\ true,\ \ \ \ \ "Wrapped":\ false,\ \ \ \ \ "Size":\ 524288,\ \ \ \ \ "Mask":\ \ \ \ \ \ [\ \ \ \ \ "auth",\ \ \ \ \ "bps",\ \ \ \ \ "cat",\ \ \ \ \ "cls",\ \ \ \ \ "dps",\ \ \ \ \ "mig",\ \ \ \ \ "msg",\ \ \ \ \ "net",\ \ \ \ \ "oss",\ \ \ \ \ "pd",\ \ \ \ \ "rtn",\ \ \ \ \ "sql",\ \ \ \ \ "tools",\ \ \ \ \ "bar",\ \ \ \ \ "client",\ \ \ \ \ "coord",\ \ \ \ \ "dms",\ \ \ \ \ "ixm",\ \ \ \ \ "mon",\ \ \ \ \ "mth",\ \ \ \ \ "opt",\ \ \ \ \ "pmd",\ \ \ \ \ "rest",\ \ \ \ \ "spt",\ \ \ \ \ "util",\ \ \ \ \ "aggr",\ \ \ \ \ "spd",\ \ \ \ \ "qgm"\ \ \ \ \ ],\ \ \ \ \ "BreakPoint":\ [],\ \ \ \ \ "Threads":\ [],\ \ \ }\f[]
+.IP
+.nf
+\f[C]
+>\ db.traceStatus()
+{
+\ \ "TraceStarted":\ true,
+\ \ "Wrapped":\ false,
+\ \ "Size":\ 524288,
+\ \ "Mask":\ 
+\ \ [
+\ \ "auth",
+\ \ "bps",
+\ \ "cat",
+\ \ "cls",
+\ \ "dps",
+\ \ "mig",
+\ \ "msg",
+\ \ "net",
+\ \ "oss",
+\ \ "pd",
+\ \ "rtn",
+\ \ "sql",
+\ \ "tools",
+\ \ "bar",
+\ \ "client",
+\ \ "coord",
+\ \ "dms",
+\ \ "ixm",
+\ \ "mon",
+\ \ "mth",
+\ \ "opt",
+\ \ "pmd",
+\ \ "rest",
+\ \ "spt",
+\ \ "util",
+\ \ "aggr",
+\ \ "spd",
+\ \ "qgm"
+\ \ ],
+\ \ "BreakPoint":\ [],
+\ \ "Threads":\ [],
+}
+\f[]
+.fi
