@@ -65,7 +65,7 @@ public class ClusterManager7069 extends SdbTestBase{
 			sdb.removeReplicaGroup(dataRGName1);
 			sdb.removeReplicaGroup(dataRGName2);
 				
-			sdb.disconnect();
+			sdb.close();
 		}catch(BaseException e){
 			Assert.fail("clear env failed, errMsg:" + e.getMessage());
 		}
@@ -76,7 +76,7 @@ public class ClusterManager7069 extends SdbTestBase{
 		//set node configure
 		int dataPortAdd1 = reservedPortBegin + 690 ;
 		String dataPathAdd1 = workDir + "/" + dataPortAdd1 + "/";
-		BSONObject dataConfigue = null;
+		BSONObject dataConfigue = (BSONObject) JSON.parse("{KeepData:true}");
 		
 		int dataPortAdd2 = reservedPortBegin + 700 ;
 		String dataPathAdd2 = workDir + "/" + dataPortAdd2 + "/";
