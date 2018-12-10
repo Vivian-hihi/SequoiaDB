@@ -2130,8 +2130,19 @@ namespace engine
                        PD_PACK_STRING( "Found an incompatible in owner Q:" ),
                        PD_PACK_UINT( foundIncomp ) ) ;
 
-            SDB_ASSERT( ( pOwnerLRB && IS_VALID_SEG_OBJ_INDEX( ownerLrbIdx ) ), 
-                        "Owner LRB was not found." ) ;
+            if ( ! ( pOwnerLRB && IS_VALID_SEG_OBJ_INDEX( ownerLrbIdx ) ) )
+            {
+               
+               PD_LOG( PDERROR,
+                       "Owner LRB is not found."OSS_NEWLINE
+                       "EDU:%llu lockId:%s"OSS_NEWLINE
+                       "LRB Header:%u Owner LRB:%u Waiter LRB:%u"OSS_NEWLINE
+                       "Found an incompatible LRB:%d",
+                       eduId,lockId.toString().c_str(),
+                       hdrIdx, ownerLrbIdx, waiterIdx,
+                       foundIncomp ) ;
+               goto done ;
+            }
             
             if ( bForceRelease )
             {
@@ -2198,7 +2209,7 @@ namespace engine
             }
          }
       }
-
+   done: 
       // release the bucket latch
       if ( bLatched )
       {
