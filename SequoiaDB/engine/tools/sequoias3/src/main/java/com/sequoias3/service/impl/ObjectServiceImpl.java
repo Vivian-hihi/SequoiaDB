@@ -95,6 +95,7 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (S3ServerException e){
             throw e;
         }catch (Exception e){
+            logger.error("insert object data failed. e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_PUT_fAILED, "put object failed.", e);
         }
 
@@ -141,6 +142,7 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (Exception e){
             dataDao.deleteObjectDataByLobId(null, dataCsName,
                     dataClName, insertResult.getLobId());
+            logger.error("put object failed. bucket:"+bucketName+" key:"+objectName +" e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_PUT_fAILED, "put object failed.", e);
         }
     }
@@ -227,6 +229,7 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (S3ServerException e) {
             throw e;
         } catch (Exception e) {
+            logger.error("get object failed. bucket:"+bucketName+" key:"+objectName +". e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_GET_FAILED,
                     "get object failed. bucket:" + bucketName + ", object=" + objectName, e);
         }
@@ -244,6 +247,7 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (S3ServerException e){
             throw e;
         } catch (Exception e) {
+            logger.error("read object data failed. e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_GET_FAILED,
                     "get object data failed. ");
         }
@@ -302,6 +306,7 @@ public class ObjectServiceImpl implements ObjectService {
                 throw e;
             }
         } catch (Exception e) {
+            logger.error("delete object failed. bucket:"+bucketName+" key:"+objectName +". e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_DELETE_FAILED,
                     "delete object failed. bucket:" + bucketName + ", object=" + objectName, e);
         }
@@ -322,7 +327,7 @@ public class ObjectServiceImpl implements ObjectService {
             ObjectMeta deleteObject = null;
             switch (versioningStatusType){
                 case NONE:
-                    if (isNoVersion) {
+                    if (isNoVersion != null) {
                         ObjectMeta objectMeta = metaDao.queryAndRemoveMeta(metaCsName, metaClName,
                                 bucket.getBucketId(), objectName);
                         deleteObject = objectMeta;
@@ -387,6 +392,7 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (S3ServerException e) {
             throw e;
         } catch (Exception e) {
+            logger.error("delete object failed. bucket:"+bucketName+" key:"+objectName +". e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_DELETE_FAILED,
                     "delete object failed. bucket:" + bucketName + ", object=" + objectName, e);
         }
@@ -535,6 +541,7 @@ public class ObjectServiceImpl implements ObjectService {
             throw e;
         } catch (Exception e){
             contextManager.release(queryContext);
+            logger.error("list objects failed. bucket:"+bucketName +". e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_LIST_FAILED, "error message:"+e.getMessage());
         }finally {
             metaDao.releaseQueryDbCursor(dbCursor);
@@ -557,21 +564,23 @@ public class ObjectServiceImpl implements ObjectService {
             String metaClName    = metaDao.getMetaCurCLName();
             String metaHisClName = metaDao.getMetaHistoryCLName();
             //get sdb and cursor
-            Boolean isSpecifiedVId = false;
-            Boolean isExistKeyVersion = false;
+            Boolean isSpecInnerVersionId = false;
+            Long specifiedVersionId = null;
             if (versionIdMarker != null && versionIdMarker.length() > 0){
-                isSpecifiedVId = true;
-                isExistKeyVersion = isExistKeyVersion(metaCsName, metaClName, metaHisClName,
+                specifiedVersionId = isExistKeyVersion(metaCsName, metaClName, metaHisClName,
                         keyMarker, versionIdMarker,bucket);
+                if (specifiedVersionId != null){
+                    isSpecInnerVersionId = true;
+                }
             }
             queryDbCursorCur = metaDao.queryMetaByBucket(metaCsName, metaClName,
-                    bucket.getBucketId(), prefix, keyMarker, isSpecifiedVId, true);
+                    bucket.getBucketId(), prefix, keyMarker, isSpecInnerVersionId, true);
             if (queryDbCursorCur == null){
                 return listVersionsResult;
             }
 
             queryDbCursorHis = metaDao.queryMetaByBucket(metaCsName, metaHisClName,
-                    bucket.getBucketId(), prefix, keyMarker, isSpecifiedVId, true);
+                    bucket.getBucketId(), prefix, keyMarker, isSpecInnerVersionId, true);
             if (queryDbCursorHis != null){
                 if (queryDbCursorHis.hasNext()){
                     queryDbCursorHis.getNext();
@@ -590,8 +599,8 @@ public class ObjectServiceImpl implements ObjectService {
             }
 
             if (keyMarker != null){
-                count = skipKeyMarker(queryDbCursorCur, queryDbCursorHis, keyMarker, versionIdMarker, listVersionsResult,
-                        delimiter, maxNumber, encodingType, owner, prefixLen, isExistKeyVersion);
+                count = skipKeyMarker(queryDbCursorCur, queryDbCursorHis, keyMarker, specifiedVersionId,
+                        listVersionsResult, delimiter, maxNumber, encodingType, owner, prefixLen);
                 if (count >= maxNumber){
                     return listVersionsResult;
                 }
@@ -610,6 +619,7 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (S3ServerException e){
             throw e;
         }catch (Exception e){
+            logger.error("list versions failed. bucket:"+bucketName +". e:"+ e);
             throw new S3ServerException(S3Error.OBJECT_LIST_VERSIONS_FAILED,
                     "List versions failed. bucket:"+bucketName);
         }finally {
@@ -654,15 +664,15 @@ public class ObjectServiceImpl implements ObjectService {
 
     private void deleteObjectByClBucket(String metaCsName, String metaClName, long bucketId)
             throws S3ServerException{
-        QueryDbCursor queryDbCursorHis = metaDao.queryMetaByBucket(metaCsName, metaClName,
+        QueryDbCursor queryDbCursor = metaDao.queryMetaByBucket(metaCsName, metaClName,
                 bucketId, null, null, false, true);
-        if (queryDbCursorHis == null){
+        if (queryDbCursor == null){
             return;
         }
         ConnectionDao connection = daoMgr.getConnectionDao();
         try {
-            while (queryDbCursorHis.hasNext()) {
-                BSONObject record = queryDbCursorHis.getNext();
+            while (queryDbCursor.hasNext()) {
+                BSONObject record = queryDbCursor.getNext();
                 String key = record.get(ObjectMeta.META_KEY_NAME).toString();
                 Long versionId = (Long)record.get(ObjectMeta.META_VERSION_ID);
                 metaDao.removeMeta(connection, metaCsName, metaClName, bucketId,
@@ -1060,9 +1070,9 @@ public class ObjectServiceImpl implements ObjectService {
         return count;
     }
 
-    private int skipKeyMarker(QueryDbCursor cursorCur, QueryDbCursor cursorHis, String keyMarker, String versionIdMarker,
+    private int skipKeyMarker(QueryDbCursor cursorCur, QueryDbCursor cursorHis, String keyMarker, Long versionId,
                               ListVersionsResult listVersionsResult, String delimiter, int maxNumber,
-                              String encodingType, Owner owner, int prefixLen, Boolean isExist)
+                              String encodingType, Owner owner, int prefixLen)
             throws S3ServerException{
         try {
             int count = 0;
@@ -1098,7 +1108,7 @@ public class ObjectServiceImpl implements ObjectService {
                         }
                     }
                 } else {
-                    if (!isExist) {
+                    if (null == versionId) {
                         isFindNext = true;
                     }
                     if (keyA.compareTo(keyMarker) > 0){
@@ -1109,9 +1119,16 @@ public class ObjectServiceImpl implements ObjectService {
                                 encodingType, owner, true);
                         count++;
                     } else {
-                        Version cvtVersion = convertBsonToVersion(recordA, encodingType);
-                        if (keyA.equals(keyMarker) && cvtVersion.getVersionId().equals(versionIdMarker)) {
-                            isFindNext = true;
+                        Long versionA = (Long)recordA.get(ObjectMeta.META_VERSION_ID);
+                        if (keyA.equals(keyMarker)){
+                            if (versionId > versionA){
+                                isFindNext = true;
+                                recordVersionDeleteMarker(recordA, listVersionsResult,
+                                        encodingType, owner, true);
+                                count++;
+                            }else if (versionId == versionA){
+                                isFindNext = true;
+                            }
                         }
                     }
                 }
@@ -1138,9 +1155,16 @@ public class ObjectServiceImpl implements ObjectService {
                                         encodingType, owner, false);
                                 count++;
                             } else {
-                                Version cvtVersion = convertBsonToVersion(recordB, encodingType);
-                                if (keyB.equals(keyMarker) && cvtVersion.getVersionId().equals(versionIdMarker)) {
-                                    isFindNext = true;
+                                Long versionB = (Long)recordB.get(ObjectMeta.META_VERSION_ID);
+                                if (keyB.equals(keyMarker)){
+                                    if (versionId > versionB){
+                                        isFindNext = true;
+                                        recordVersionDeleteMarker(recordB, listVersionsResult,
+                                                encodingType, owner, false);
+                                        count++;
+                                    }else if (versionId == versionB){
+                                        isFindNext = true;
+                                    }
                                 }
                             }
                         }
@@ -1290,30 +1314,35 @@ public class ObjectServiceImpl implements ObjectService {
                 "bucket+key duplicate too times. bucketId:"+bucketId+", key:"+objectName);
     }
 
-    private Boolean isExistKeyVersion(String metaCsName, String metaClName, String metaHisClName,
-                                            String keyMarker, String versionIdMarker, Bucket bucket){
-        Boolean isExistKeyVersion = false;
+    private Long isExistKeyVersion(String metaCsName, String metaClName, String metaHisClName,
+                                            String keyMarker, String versionIdMarker, Bucket bucket)
+            throws S3ServerException{
         try {
+            Long versionId = null;
             if (versionIdMarker.equals(ObjectMeta.NULL_VERSION_ID)) {
-                if (metaDao.queryMetaByObjectName(metaCsName, metaClName, bucket.getBucketId(), keyMarker, null, true) != null
-                        || metaDao.queryMetaByObjectName(metaCsName, metaHisClName, bucket.getBucketId(), keyMarker, null, true) != null) {
-                    isExistKeyVersion = true;
+                ObjectMeta metaCur = metaDao.queryMetaByObjectName(metaCsName, metaClName, bucket.getBucketId(), keyMarker, null, true);
+                if (metaCur != null){
+                    versionId = metaCur.getVersionId();
+                }else {
+                    ObjectMeta metaHis = metaDao.queryMetaByObjectName(metaCsName, metaHisClName, bucket.getBucketId(), keyMarker, null, true);
+                    if (metaHis != null) {
+                        versionId = metaHis.getVersionId();
+                    }
                 }
             } else {
-                Long specifiedVersionId = Long.parseLong(versionIdMarker);
-                if (metaDao.queryMetaByObjectName(metaCsName, metaClName, bucket.getBucketId(), keyMarker, specifiedVersionId, false) != null
-                        || metaDao.queryMetaByObjectName(metaCsName, metaHisClName, bucket.getBucketId(), keyMarker, specifiedVersionId, false) != null) {
-                    isExistKeyVersion = true;
-                }
+                versionId = Long.parseLong(versionIdMarker);
             }
+            return versionId;
         }catch (NumberFormatException e){
             logger.error("Parse versionIdMarker failed, versionIdMarker:{}",
                     versionIdMarker);
+            throw new S3ServerException(S3Error.OBJECT_INVALID_VERSION,
+                    "Parse versionIdMarker failed, versionIdMarker:"+ versionIdMarker);
         }catch (Exception e){
-            logger.error("isExistSpecifiedVersion failed, versionIdMarker:{}",
+            logger.error("isExistKeyVersion failed, versionIdMarker:{}",
                     versionIdMarker);
-        }finally {
-            return isExistKeyVersion;
+            throw new S3ServerException(S3Error.OBJECT_INVALID_VERSION,
+                    "isExistKeyVersion failed, versionIdMarker:"+ versionIdMarker);
         }
     }
 

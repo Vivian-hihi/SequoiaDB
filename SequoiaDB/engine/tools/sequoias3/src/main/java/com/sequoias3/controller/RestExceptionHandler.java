@@ -45,6 +45,7 @@ public class RestExceptionHandler {
             case OBJECT_INVALID_KEY:
             case BUCKET_INVALID_VERSIONING_STATUS:
             case OBJECT_INVALID_DIGEST:
+            case OBJECT_INVALID_VERSION:
                 status = HttpStatus.BAD_REQUEST;
                 break;
             case INVALID_ACCESSKEYID:

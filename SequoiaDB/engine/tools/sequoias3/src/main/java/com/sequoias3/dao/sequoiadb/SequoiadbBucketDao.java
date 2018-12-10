@@ -126,7 +126,10 @@ public class SequoiadbBucketDao implements BucketDao {
             BSONObject matcher = new BasicBSONObject();
             matcher.put(Bucket.BUCKET_OWNERID, ownerId);
 
-            DBCursor cursor = cl.query(matcher, null,null,null);
+            BSONObject orderBy = new BasicBSONObject();
+            orderBy.put(Bucket.BUCKET_NAME, 1);
+
+            DBCursor cursor = cl.query(matcher, null,orderBy,null);
             while (cursor.hasNext()){
                 BSONObject record = cursor.getNext();
                 Bucket bucket = convertBsonToBucket(record);

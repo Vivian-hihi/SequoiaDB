@@ -303,10 +303,11 @@ public class ObjectController {
                 return Long.parseLong(versionId);
             }
         }catch (NumberFormatException e) {
-            throw new S3ServerException(S3Error.INVALID_ARGUMENT,
+            throw new S3ServerException(S3Error.OBJECT_INVALID_VERSION,
                     "version id is invalid。 version id=" + versionId);
         }catch (Exception e){
-            throw new S3ServerException(S3Error.INVALID_ARGUMENT, "versionId is invalid. versionId="+versionId);
+            throw new S3ServerException(S3Error.OBJECT_INVALID_VERSION,
+                    "versionId is invalid. versionId="+versionId+",e:"+e.getMessage());
         }
     }
 

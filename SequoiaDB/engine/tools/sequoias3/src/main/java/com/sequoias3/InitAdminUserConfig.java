@@ -3,6 +3,8 @@ package com.sequoias3;
 import com.sequoias3.common.InitAdminUserDefine;
 import com.sequoias3.core.User;
 import com.sequoias3.dao.UserDao;
+import com.sequoias3.exception.S3Error;
+import com.sequoias3.exception.S3ServerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,8 +32,15 @@ public class InitAdminUserConfig implements ApplicationRunner {
                 userDao.insertUser(u);
                 logger.info("Insert init administrator into db.");
             }
-        } catch (Exception e) {
+        } catch (S3ServerException e){
+            if (e.getError().getErrIndex() != S3Error.DAO_DUPLICATE_KEY.getErrIndex()) {
+                logger.error("Init admin user failed.");
+                throw e;
+            }
+        }
+        catch (Exception e) {
             logger.error("Init admin user failed.");
+            throw e;
         }
     }
 }

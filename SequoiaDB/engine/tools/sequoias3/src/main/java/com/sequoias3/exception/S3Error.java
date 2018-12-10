@@ -48,12 +48,13 @@ public enum S3Error {
     OBJECT_RANGE_INVALID(-619, "InvalidRange", "Requested range not satisfiable."),
     OBJECT_INVALID_DIGEST(-620, "InvalidDigest", " The Content-MD5 you specified is not valid."),
     OBJECT_NO_SUCH_VERSION(-621, "NoSuchVersion", "The specified version does not exist."),
+    OBJECT_INVALID_VERSION(-622, "InvalidArgument", "Invalid version id specified"),
 
-    OBJECT_IF_MODIFIED_SINCE_FAILED(-621, "NotModified", "If-Modified-Since not match"),
-    OBJECT_IF_UNMODIFIED_SINCE_FAILED(-621, "PreconditionFailed ", "If-Unmodified-Since not match"),
-    OBJECT_IF_MATCH_FAILED(-621, "PreconditionFailed", "If-Match not match"),
-    OBJECT_IF_NONE_MATCH_FAILED(-621, "NotModified", "If-None-Match not match"),
-    OBJECT_INVALID_TIME(-622, "InvalidArgument", "Time is invalid"),
+    OBJECT_IF_MODIFIED_SINCE_FAILED(-631, "NotModified", "If-Modified-Since not match"),
+    OBJECT_IF_UNMODIFIED_SINCE_FAILED(-632, "PreconditionFailed ", "If-Unmodified-Since not match"),
+    OBJECT_IF_MATCH_FAILED(-633, "PreconditionFailed", "If-Match not match"),
+    OBJECT_IF_NONE_MATCH_FAILED(-634, "NotModified", "If-None-Match not match"),
+    OBJECT_INVALID_TIME(-635, "InvalidArgument", "Time is invalid"),
 
     //authorization
     INVALID_ADMINISTRATOR(-701, "AccessDenied", "Not admin user."),
