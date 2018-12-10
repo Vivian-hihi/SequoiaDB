@@ -92,14 +92,15 @@ TEST_F( attachDetachNodeTest12553, attachDetachNode12553 )
    ASSERT_EQ( SDB_OK, rc ) << "fail to create node" ;
 
    // detach node from rg1
-   rc = rg1.detachNode( hostName, svcName ) ;
+   BSONObj opt = BSON("KeepData" << true);
+   rc = rg1.detachNode( hostName, svcName, opt ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to detach node" ;
    sdbNode node ;
    rc = rg1.getNode( hostName, svcName, node ) ;
    ASSERT_EQ( SDB_CLS_NODE_NOT_EXIST, rc ) << "fail to check detach" ;
 
    // attach node to rg
-   rc = rg.attachNode( hostName, svcName ) ;
+   rc = rg.attachNode( hostName, svcName, opt ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to attach node" ;
    rc = rg.getNode( hostName, svcName, node ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to check attach" ;
