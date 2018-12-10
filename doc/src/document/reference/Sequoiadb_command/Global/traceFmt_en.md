@@ -20,17 +20,13 @@ The trace file exported by db.traceOff() is in binary format and is not convenie
 
   `formatType` can take the following two values:
 
-  * 0: Output analysis file, including thread execution sequence and other information(output file suffix is .flw).
+  * 0: Output analysis file, including thread execution sequence (output file suffix is .flw), execution time analysis(output file suffix is .CSV), execution time peak(output file suffix is .except) and trace record error information(output file suffix is .error).
 
   * 1: Output dump record information(output file suffix is .fmt).
 
   > **Note:**   
 	
-  >1. When `formatType` is 0, it is accompanied by three other files: execution time analysis(CSV file), execution time peak(except file), trace record error information(error file). 
-
-  >2. When `formatType` is 1, the database engine program tracking won't produce the above three files.
-
-  >3. The CSV file can be viewed by using Excel.
+  > The CSV file can be viewed by using Excel.
  
 * `input` ( *String*， *Required* )
 

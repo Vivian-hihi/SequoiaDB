@@ -24,8 +24,10 @@ and output it to the specified file.
 .PP
 \f[C]formatType\f[] can take the following two values:
 .IP \[bu] 2
-0: Output analysis file, including thread execution sequence and other
-information(output file suffix is .flw).
+0: Output analysis file, including thread execution sequence (output file suffix
+is .flw), execution time analysis(output file suffix is .CSV), execution time
+peak(output file suffix is .except) and trace record error information(output
+file suffix is .error).
 .IP \[bu] 2
 1: Output dump record information(output file suffix is .fmt).
 .RS
@@ -33,18 +35,7 @@ information(output file suffix is .flw).
 \f[B]Note:\f[]
 .RE
 .RS
-.IP "1." 3
-When \f[C]formatType\f[] is 0, it is accompanied by three other files: execution
-time analysis(CSV file), execution time peak(except file), trace record error
-information(error file).
-.RE
-.RS
-.IP "2." 3
-When \f[C]formatType\f[] is 1, the database engine program tracking won\[aq]t
-produce the above three files.
-.RE
-.RS
-.IP "3." 3
+.PP
 The CSV file can be viewed by using Excel.
 .RE
 .IP \[bu] 2
