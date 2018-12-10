@@ -52,7 +52,7 @@ namespace engine
                                BOOLEAN strict = TRUE ) const ;
       virtual INT32 getBsonobj( UINT32 pos, bson::BSONObj &value,
                                 BOOLEAN strict = TRUE,
-                                BOOLEAN allowNull = TRUE )
+                                BOOLEAN allowNull = FALSE )
                                 const ;
       virtual INT32 getArray( UINT32 pos, vector< bson::BSONObj > &value,
                               SPT_CONVERT_MODE mode = SPT_CONVERT_NORMAL )
