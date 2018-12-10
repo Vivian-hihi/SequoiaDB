@@ -107,8 +107,13 @@ public class S3TestBase {
 
     @AfterSuite
     public static void finiSuite() {
-        sdbConfTestBase.closeTransaction(hostName, serviceName);
-        stopS3();
+        try {
+            sdbConfTestBase.closeTransaction(hostName, serviceName);
+        } finally {
+            stopS3();
+        }
+        
+        
     }
 
     public static String getDefaultCoordUrl() {
