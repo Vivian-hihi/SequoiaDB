@@ -55,7 +55,7 @@ public class ListVersionsByPrefixDelimiterIDKey16404 extends S3TestBase {
         }
     }
 
-    @Test(enabled = false)//SEQUOIADBMAINSTREAM-3974
+    @Test//SEQUOIADBMAINSTREAM-3974
     private void test() throws Exception {
         String prefix = "dir";
         String delimiter = "%";
@@ -104,7 +104,7 @@ public class ListVersionsByPrefixDelimiterIDKey16404 extends S3TestBase {
             }
             key = versionSummary.getKey();
         }
-        Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actObjectNames = " + actKeys + ",keys = " + expKeys);
+        Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actKeys = " + actKeys + ",expKeys = " + expKeys);
     }
 
 
