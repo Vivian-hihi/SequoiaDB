@@ -41,7 +41,7 @@ class SequoiaDB
    /** Get the snapshot of the system. */
    define( "SDB_SNAP_SYSTEM",              7 ) ;
    /** Get the snapshot of the catalog. */
-   define( "SDB_SNAP_CATALOG",                8 ) ;
+   define( "SDB_SNAP_CATALOG",             8 ) ;
    /** Get the snapshot of all the transactions. */
    define( "SDB_SNAP_TRANSACTIONS",        9 ) ;
    /** Get the snapshot of current transaction. */
@@ -49,9 +49,13 @@ class SequoiaDB
    /** Get the snapshot of cached access plans. */
    define( "SDB_SNAP_ACCESSPLANS",         11 ) ;
    /** Get the snapshot of node health detection. */
-   define( "SDB_SNAP_HEALTH", 12 ) ;
+   define( "SDB_SNAP_HEALTH",              12 ) ;
    /** Get the snapshot of node configurations. */
-   define( "SDB_SNAP_CONFIGS", 13 ) ;
+   define( "SDB_SNAP_CONFIGS",             13 ) ;
+   /** Get the snapshot of service tasks. */
+   define( "SDB_SNAP_SVCTASKS",            14 ) ;
+   /** Get the snapshot of sequences. */
+   define( "SDB_SNAP_SEQUENCES",           15 ) ;
 
    /**
     * Get the snapshot of all the collections.
@@ -99,31 +103,35 @@ class SequoiaDB
    define( "SDB_SNAP_TRANSACTION_CURRENT", 10 ) ;
 
    /** Get the list of the contexts. */
-   define( "SDB_LIST_CONTEXTS",         0 ) ;
+   define( "SDB_LIST_CONTEXTS",                 0 ) ;
    /** Get the list of current context. */
-   define( "SDB_LIST_CONTEXTS_CURRENT", 1 ) ;
+   define( "SDB_LIST_CONTEXTS_CURRENT",         1 ) ;
    /** Get the list of the sessions. */
-   define( "SDB_LIST_SESSIONS",         2 ) ;
+   define( "SDB_LIST_SESSIONS",                 2 ) ;
    /** Get the list of current session. */
-   define( "SDB_LIST_SESSIONS_CURRENT", 3 ) ;
+   define( "SDB_LIST_SESSIONS_CURRENT",         3 ) ;
    /** Get the list of the collections. */
-   define( "SDB_LIST_COLLECTIONS",      4 ) ;
+   define( "SDB_LIST_COLLECTIONS",              4 ) ;
    /** Get the list of the collecion spaces. */
-   define( "SDB_LIST_COLLECTIONSPACES", 5 ) ;
+   define( "SDB_LIST_COLLECTIONSPACES",         5 ) ;
    /** Get the list of the storage units. */
-   define( "SDB_LIST_STORAGEUNITS",     6 ) ;
+   define( "SDB_LIST_STORAGEUNITS",             6 ) ;
    /** Get the list of the replica groups ( only applicable in sharding env ). */
-   define( "SDB_LIST_GROUPS",           7 ) ;
+   define( "SDB_LIST_GROUPS",                   7 ) ;
    /** Get the list of the stored procedures ( only applicable in sharding env ). */
-   define( "SDB_LIST_STOREPROCEDURES",  8 ) ;
+   define( "SDB_LIST_STOREPROCEDURES",          8 ) ;
    /** Get the list of the domains ( only applicable in sharding env ). */
-   define( "SDB_LIST_DOMAINS",          9 ) ;
+   define( "SDB_LIST_DOMAINS",                  9 ) ;
    /** Get the list of the tasks ( only applicable in sharding env ). */
-   define( "SDB_LIST_TASKS",            10 ) ;
+   define( "SDB_LIST_TASKS",                    10 ) ;
    /** Get all the transactions information. */
-   define( "SDB_LIST_TRANSACTIONS",     11 ) ;
+   define( "SDB_LIST_TRANSACTIONS",             11 ) ;
    /** Get the transactions information of current session. */
-   define( "SDB_LIST_TRANSACTIONS_CURRENT", 12 ) ;
+   define( "SDB_LIST_TRANSACTIONS_CURRENT",     12 ) ;
+   /** Get the list of service tasks. */
+   define( "SDB_LIST_SVCTASKS",                 14 ) ;
+   /** Get the list of sequences. */
+   define( "SDB_LIST_SEQUENCES",                15 ) ;
    /** Get the list of the collections in specified domain. */
    define( "SDB_LIST_CL_IN_DOMAIN",     129 ) ;
    /** Get the list of the collection spaces in specified domain. */

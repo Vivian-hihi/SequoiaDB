@@ -89,7 +89,20 @@ class SequoiaCL
    /**
     * Alter collection options.
     *
-    * @param $options an array or the string argument. New collection options.
+    * @param $options an array or the string argument. The options are as following:
+    *                                              @code
+    *                                              ReplSize             : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+    *                                              ShardingKey          : Assign the sharding key
+    *                                              ShardingType         : Assign the sharding type
+    *                                              Partition            : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+    *                                              CompressionType      : The compression type of data, could be "snappy" or "lzw"
+    *                                              EnsureShardingIndex  : Assign to true to build sharding index
+    *                                              StrictDataMode       : Using strict date mode in numeric operations or not
+    *                                                                     e.g. array( "RepliSize" => 0, "ShardingKey" => array( "a" => 1 ), "ShardingType" => "hash", "Partition" =>1024 )
+    *                                              AutoIncrement        : Assign attributes of an autoincrement field or batch autoincrement fields.
+    *                                                                     e.g. array( "AutoIncrement" => array( "Field" => "a", "Maxvalue" => 2000 ) )
+    *                                                                     array( "AutoIncrement" => array( array( "Field" => "a", "Maxvalue" => 2000 ), array( "Field" => "a", "Maxvalue" => 4000 ) ) )
+    *                                              @endcode
     *
     * @return Returns the result, default return array.
     *
@@ -194,7 +207,20 @@ class SequoiaCL
    /**
     * Alter collection options.
     *
-    * @param $options an array or the string argument. New collection options.
+    * @param $options an array or the string argument. The options are as following:
+    *                                              @code
+    *                                              ReplSize             : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+    *                                              ShardingKey          : Assign the sharding key
+    *                                              ShardingType         : Assign the sharding type
+    *                                              Partition            : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+    *                                              CompressionType      : The compression type of data, could be "snappy" or "lzw"
+    *                                              EnsureShardingIndex  : Assign to true to build sharding index
+    *                                              StrictDataMode       : Using strict date mode in numeric operations or not
+    *                                                                     e.g. array( "RepliSize" => 0, "ShardingKey" => array( "a" => 1 ), "ShardingType" => "hash", "Partition" =>1024 )
+    *                                              AutoIncrement        : Assign attributes of an autoincrement field or batch autoincrement fields.
+    *                                                                     e.g. array( "AutoIncrement" => array( "Field" => "a", "Maxvalue" => 2000 ) )
+    *                                                                     array( "AutoIncrement" => array( array( "Field" => "a", "Maxvalue" => 2000 ), array( "Field" => "a", "Maxvalue" => 4000 ) ) )
+    *                                              @endcode
     *
     * @return Returns the result, default return array.
     *
