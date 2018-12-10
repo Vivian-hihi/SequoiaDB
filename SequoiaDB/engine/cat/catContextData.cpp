@@ -1138,18 +1138,11 @@ namespace engine
 
          // we need reply groups list to coord, so that coord can send msg to
          // corresponding data by groups list
-         rc = catGetCSGroups( _targetName.c_str(), cb, occupiedGroups, FALSE ) ;
+         rc = catGetCSGroupsFromCLs( _targetName.c_str(), cb,
+                                     _groupList, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to get group list of cs[%s], rc: %d",
                       _targetName.c_str(), rc ) ;
-
-         for ( _utilSet< UINT32 >::iterator iterGroup = occupiedGroups.begin() ;
-               iterGroup != occupiedGroups.end() ;
-               iterGroup ++ )
-         {
-            UINT32 groupID = ( *iterGroup ) ;
-            _groupList.push_back( groupID ) ;
-         }
       }
       catch( std::exception &e )
       {

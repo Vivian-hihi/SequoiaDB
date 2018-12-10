@@ -49,15 +49,15 @@ namespace engine
    _rtnContextDelCS::_rtnContextDelCS( SINT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID )
    {
-      _status = DELCSPHASE_0;
+      _status = DELCSPHASE_0 ;
       _pDmsCB = pmdGetKRCB()->getDMSCB() ;
       _pDpsCB = pmdGetKRCB()->getDPSCB() ;
       _pCatAgent = pmdGetKRCB()->getClsCB ()->getCatAgent () ;
       _pTransCB = pmdGetKRCB()->getTransCB();
-      _gotDmsCBWrite = FALSE;
-      _gotLogSize = 0;
-      _logicCSID = DMS_INVALID_LOGICCSID;
-      ossMemset( _name, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 );
+      _gotDmsCBWrite = FALSE ;
+      _gotLogSize = 0 ;
+      _logicCSID = DMS_INVALID_LOGICCSID ;
+      ossMemset( _name, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
    }
 
    _rtnContextDelCS::~_rtnContextDelCS()
@@ -782,6 +782,7 @@ namespace engine
       _pTransCB   = pmdGetKRCB()->getTransCB();
       _lockDMS    = FALSE ;
       _logicCSID  = DMS_INVALID_LOGICCSID ;
+      _status     = RENAMECSPHASE_0 ;
       ossMemset( _oldName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
       ossMemset( _newName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
    }
@@ -833,9 +834,12 @@ namespace engine
       rc = rtnTestCollectionSpaceCommand( pCSName, _pDmsCB ) ;
       if ( SDB_DMS_CS_NOTEXIST == rc )
       {
-         PD_LOG( PDERROR,
-                 "Collection space[%s] does not exists, rc: %d",
-                 pCSName, rc ) ;
+         // Ignore collection space not exist, bcs it may be a cs of maincl.
+         // And do not set _status to phase_1
+         PD_LOG( PDINFO, "Ignored error[%d] when drop collection space[%s]",
+                 rc, pCSName ) ;
+         rc = SDB_OK ;
+         _isOpened = TRUE ;
          goto done ;
       }
 
@@ -853,6 +857,7 @@ namespace engine
       rc = _tryLock( pCSName, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock, rc: %d", rc ) ;
 
+      _status   = RENAMECSPHASE_1 ;
       _isOpened = TRUE ;
 
    done:
@@ -881,7 +886,7 @@ namespace engine
 
       if ( !isOpened() )
       {
-         rc = SDB_DMS_CONTEXT_IS_CLOSE;
+         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
          goto error ;
       }
 
@@ -915,13 +920,25 @@ namespace engine
          ++ mainIter ;
       }
 
-      rc = _pDmsCB->renameCollectionSpace( _oldName, _newName, cb, _pDpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to rename collectionspace from [%s] to [%s], rc: %d",
-                   _oldName, _newName, rc ) ;
+      if ( _status == RENAMECSPHASE_1 )
+      {
+         rc = _pDmsCB->renameCollectionSpace( _oldName, _newName, cb, _pDpsCB );
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to rename cs from [%s] to [%s], rc: %d",
+                      _oldName, _newName, rc ) ;
+         _status = RENAMECSPHASE_0 ;
+         _releaseLock( cb ) ;
+      }
+      else
+      {
+         //It is main cs, which hasn't data file, we should invalidate plan here.
+         //If it is normal cs which its data file exists on data node,
+         //invalidate plan will be executed in dms by calling onRenameCS().
+         pRtnCB->getAPM()->invalidateSUPlans( _oldName ) ;
+         pClsCB->invalidateCache( _oldName, DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
+      }
 
       /// close context
-      _releaseLock( cb ) ;
       _isOpened = FALSE ;
       rc = SDB_DMS_EOC ;
 
@@ -937,7 +954,8 @@ namespace engine
       ss << ",Name:" << _oldName
          << ",NewName:" << _newName
          << ",LockDMS:" << _lockDMS
-         << ",LogicalID:" << _logicCSID ;
+         << ",LogicalID:" << _logicCSID
+         << ",Step:" << _status ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECS__TRYLOCK, "_rtnContextRenameCS::_tryLock" )

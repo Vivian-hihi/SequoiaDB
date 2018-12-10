@@ -193,6 +193,11 @@ namespace engine
    */
    class _rtnContextRenameCS : public _rtnContextBase
    {
+      enum renameCSPhase
+      {
+         RENAMECSPHASE_0 = 0,
+         RENAMECSPHASE_1
+      } ;
       DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextRenameCS( SINT64 contextID, UINT64 eduID ) ;
@@ -219,13 +224,14 @@ namespace engine
       INT32 _releaseLock( _pmdEDUCB *cb );
 
    private:
-      _SDB_DMSCB            *_pDmsCB ;
+      _SDB_DMSCB           *_pDmsCB ;
       dpsTransCB           *_pTransCB ;
       _clsCatalogAgent     *_pCatAgent ;
       CHAR                 _oldName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
       CHAR                 _newName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
       BOOLEAN              _lockDMS ;
       UINT32               _logicCSID ;
+      renameCSPhase        _status ;
    };
    typedef class _rtnContextRenameCS rtnContextRenameCS ;
 
