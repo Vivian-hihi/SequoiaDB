@@ -11,14 +11,13 @@ Sdb
 
 ##DESCRIPTION##
 
- Turn off the database engine program tracking and export tracking results to binary files.
+Turn off the database engine program tracking and export tracking results to binary files.
 
 ##PARAMETERS##
 
 | Name 		| Type 	| Description 				| Required or not 	|
 | ------ 		| ------ 	| ------ 			| ------ 	|
 | dumpFile 		| string 	| file'name of the dump; if the path of the specified file is a relative path, you must store the file in the `diagpath` directory of the corresponding node. | not 		|
-
 
 ##RETURN VALUE##
 
@@ -34,12 +33,12 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Turn off the database engine program tracking and export tracking results to binary   files, /opt/sequoiadb/trace.dump.
 
-	```lang-javascript
-	> db.traceOff("/opt/sequoiadb/trace.dump")
-	```
+  ```lang-javascript
+  > db.traceOff("/opt/sequoiadb/trace.dump")
+  ```
 
 * Using [traceFmt()](reference/Sequoiadb_command/Global/traceFmt.md) to analysis the binary file.
 
-	```lang-javascript
-	> traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
- 	```
+  ```lang-javascript
+  > traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
+  ```

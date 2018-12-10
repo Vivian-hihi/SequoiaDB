@@ -18,20 +18,19 @@ The trace file exported by db.traceOff() is in binary format and is not convenie
 
 * `formatType` ( *Int32*, *Required* )
 
-	`formatType` can take the following two values:
+  `formatType` can take the following two values:
 
-	* 0: Output analysis file, including thread execution sequence and other information(output file suffix is .flw).
+  * 0: Output analysis file, including thread execution sequence and other information(output file suffix is .flw).
 
-	* 1: Output dump record information(output file suffix is .fmt).
+  * 1: Output dump record information(output file suffix is .fmt).
 
-
-	> **Note:**   
+  > **Note:**   
 	
-	>1. When `formatType` is 0, it is accompanied by three other files: execution time analysis(CSV file), execution time peak(except file), trace record error information(error file). 
+  >1. When `formatType` is 0, it is accompanied by three other files: execution time analysis(CSV file), execution time peak(except file), trace record error information(error file). 
 
-    >2. When `formatType` is 1, no these three files.
+  >2. When `formatType` is 1, the database engine program tracking won't produce the above three files.
 
-    >3. The CSV file can be viewed by using Excel.
+  >3. The CSV file can be viewed by using Excel.
  
 * `input` ( *String*， *Required* )
 
@@ -67,13 +66,14 @@ Since v1.0.
 
 ##EXAMPLES##
 
-*   Format trace input to output.
+* Format trace input to output.
 
-	```lang-javascript
-	> traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
- 	```
-*   Using [traceStatus()](reference/Sequoiadb_command/Sdb/traceStatus.md) to view the tracking status of the current program. 
+  ```lang-javascript
+  > traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
+  ```
 
-	```lang-javascript
-	> db.traceStatus()
-	```
+* Using [traceStatus()](reference/Sequoiadb_command/Sdb/traceStatus.md) to view the tracking status of the current program. 
+
+  ```lang-javascript
+  > db.traceStatus()
+  ```

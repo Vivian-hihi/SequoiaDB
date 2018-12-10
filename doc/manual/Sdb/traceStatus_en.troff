@@ -4,93 +4,31 @@
 .hy
 .SH NAME
 .PP
-traceStatus \- Show the current status of the program trace.
+traceStatus \- Show the tracking status of the current program.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]db.traceStatus()\f[]\f[]
 .SH CATEGORY
 .PP
-Sequoiadb
-.SH "DESCRIPTION"
-
-.sp 2
-Show the current status of the program trace.
-.SH "Examples"
-
-.sp 2
-Show the current status of the program trace.
-.sp 2
-db.traceStatus()
-.br
-{
-.br
-  "TraceStarted": true,
-.br
-  "Wrapped": false,
-.br
-  "Size": 524288,
-.br
-  "Mask": [
-.br
-    "auth",
-.br
-    "bps",
-.br
-    "cat",
-.br
-    "cls",
-.br
-    "dps",
-.br
-    "mig",
-.br
-    "msg",
-.br
-    "net",
-.br
-    "oss",
-.br
-    "pd",
-.br
-    "rtn",
-.br
-    "sql",
-.br
-    "tools",
-.br
-    "bar",
-.br
-    "client",
-.br
-    "coord",
-.br
-    "dms",
-.br
-    "ixm",
-.br
-    "mon",
-.br
-    "mth",
-.br
-    "opt",
-.br
-    "pmd",
-.br
-    "rest",
-.br
-    "spt",
-.br
-    "util",
-.br
-    "aggr",
-.br
-    "spd",
-.br
-    "qgm"
-.br
-  ],
-.br
-  "BreakPoint": [],
-  "Threads": [],
-.br
-}
+Sdb
+.SH DESCRIPTION
+.PP
+Show the tracking status of the current program.
+.SH PARAMETERS
+.PP
+None
+.SH RETURN VALUE
+.PP
+On success, return void.
+.PP
+On error, exception will be thrown.
+.SH ERRORS
+.PP
+when exception happen, use getLastError() to get the error code and use
+getLastErrMsg() to get error message.
+For more detial, please reference to Troubleshooting.
+.SH EXAMPLES
+.IP \[bu] 2
+View the tracking status of the current program.
+.PP
+\f[C]lang\-javascript\ \ \ >\ db.traceStatus()\ \ \ {\ \ \ \ \ "TraceStarted":\ true,\ \ \ \ \ "Wrapped":\ false,\ \ \ \ \ "Size":\ 524288,\ \ \ \ \ "Mask":\ \ \ \ \ \ [\ \ \ \ \ "auth",\ \ \ \ \ "bps",\ \ \ \ \ "cat",\ \ \ \ \ "cls",\ \ \ \ \ "dps",\ \ \ \ \ "mig",\ \ \ \ \ "msg",\ \ \ \ \ "net",\ \ \ \ \ "oss",\ \ \ \ \ "pd",\ \ \ \ \ "rtn",\ \ \ \ \ "sql",\ \ \ \ \ "tools",\ \ \ \ \ "bar",\ \ \ \ \ "client",\ \ \ \ \ "coord",\ \ \ \ \ "dms",\ \ \ \ \ "ixm",\ \ \ \ \ "mon",\ \ \ \ \ "mth",\ \ \ \ \ "opt",\ \ \ \ \ "pmd",\ \ \ \ \ "rest",\ \ \ \ \ "spt",\ \ \ \ \ "util",\ \ \ \ \ "aggr",\ \ \ \ \ "spd",\ \ \ \ \ "qgm"\ \ \ \ \ ],\ \ \ \ \ "BreakPoint":\ [],\ \ \ \ \ "Threads":\ [],\ \ \ }\f[]

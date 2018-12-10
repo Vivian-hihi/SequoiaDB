@@ -11,7 +11,7 @@ Sdb
 
 ##DESCRIPTION##
 
- Turn on the database engine program tracking.
+Turn on the database engine program tracking.
 
 ##PARAMETERS##
 
@@ -37,43 +37,43 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Turn on the database engine program tracking.
 
- Note： Track only the node that db connected. 
+  Note： Track only the node that db connected. 
 
-	```lang-javascript
-	> db.traceOn( 256 )
-	```
+  ```lang-javascript
+  > db.traceOn( 256 )
+  ```
 
 * Turn on the database engine program tracking and specify a tracked module and break point. 
 
-	```lang-javascript
-	> db.traceOn( 256, "cls, dms, mth", "_dmsTempSUMgr::init", 12712 )
-	```
+  ```lang-javascript
+  > db.traceOn( 256, "cls, dms, mth", "_dmsTempSUMgr::init", 12712 )
+  ```
   Or specify multiple threads.
 
-    ```lang-javascript
-	> db.traceOn( 256, "cls, dms, mth", "_dmsTempSUMgr::init", [12712, 12713, 12714] )
-	```
+  ```lang-javascript
+  > db.traceOn( 256, "cls, dms, mth", "_dmsTempSUMgr::init", [12712, 12713, 12714] )
+  ```
 
 * When the tracked module was blocked because of the breakpoint, you can use [traceResume()](reference/Sequoiadb_command/Sdb/traceResume.md) to wake up the module which was tracked and blocked. 
 
-	```lang-javascript
-	> db.traceResume()
-	```
+  ```lang-javascript
+  > db.traceResume()
+  ```
 
-*   Using [traceStatus()](reference/Sequoiadb_command/Sdb/traceStatus.md) to view the tracking status of the current program. 
+* Using [traceStatus()](reference/Sequoiadb_command/Sdb/traceStatus.md) to view the tracking status of the current program. 
 
-	```lang-javascript
-	> db.traceStatus()
-	```
+  ```lang-javascript
+  > db.traceStatus()
+  ```
 
 * Using [traceOff()](reference/Sequoiadb_command/Sdb/traceOff.md) to turn off the database engine program tracking and export tracking results to binary files.
 
-	```lang-javascript
-	> db.traceOff("/opt/sequoiadb/trace.dump")
-	```
+  ```lang-javascript
+  > db.traceOff("/opt/sequoiadb/trace.dump")
+  ```
 
 * Using [traceFmt()](reference/Sequoiadb_command/Global/traceFmt.md) to analysis the binary file.
 
-	```lang-javascript
-	> traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
- 	```
+  ```lang-javascript
+  > traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
+  ```

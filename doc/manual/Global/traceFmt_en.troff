@@ -21,7 +21,6 @@ and output it to the specified file.
 .SH PARAMETERS
 .IP \[bu] 2
 \f[C]formatType\f[] ( \f[I]Int32\f[], \f[I]Required\f[] )
-.RS 2
 .PP
 \f[C]formatType\f[] can take the following two values:
 .IP \[bu] 2
@@ -41,12 +40,12 @@ information(error file).
 .RE
 .RS
 .IP "2." 3
-When \f[C]formatType\f[] is 1, no these three files.
+When \f[C]formatType\f[] is 1, the database engine program tracking won\[aq]t
+produce the above three files.
 .RE
 .RS
 .IP "3." 3
 The CSV file can be viewed by using Excel.
-.RE
 .RE
 .IP \[bu] 2
 \f[C]input\f[] ( \f[I]String\f[]， \f[I]Required\f[] )
@@ -175,13 +174,9 @@ Since v1.0.
 .SH EXAMPLES
 .IP \[bu] 2
 Format trace input to output.
-.RS 2
-.IP
-.nf
-\f[C]
->\ traceFmt(\ 0,\ "/opt/sequoiadb/trace.dump",\ "/opt/sequoiadb/trace_output"\ )
-\f[]
-.fi
-.RE
+.PP
+\f[C]lang\-javascript\ \ \ >\ traceFmt(\ 0,\ "/opt/sequoiadb/trace.dump",\ "/opt/sequoiadb/trace_output"\ )\f[]
 .IP \[bu] 2
 Using traceStatus() to view the tracking status of the current program.
+.PP
+\f[C]lang\-javascript\ \ \ >\ db.traceStatus()\f[]

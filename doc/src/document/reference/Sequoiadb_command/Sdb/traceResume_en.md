@@ -1,6 +1,6 @@
 ##NAME##
 
-traceResume - Reopen the breakpoint updater.
+traceResume - Resume the breakpoint tracking program.
 
 ##SYNOPSIS##
 ***db.traceResume()***
@@ -11,7 +11,7 @@ Sdb
 
 ##DESCRIPTION##
 
- Turn on the database engine program tracking while db.traceOn() specifies a breakpoint. When the tracked module was blocked because of the breakpoint, db.traceResume() can wake up the module which was tracked and blocked. 
+Turn on the database engine program tracking while db.traceOn() specifies a breakpoint. When the tracked module was blocked because of the breakpoint, db.traceResume() can wake up the module which was tracked and blocked. 
 
 ##PARAMETERS##
 None
@@ -30,26 +30,26 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Connect to the data node 20000, turn on database engine program tracking
 
-	```lang-javascript
-	> var data = new Sdb( "localhost", 20000 )
-	> data.traceOn( 10000, "dms", "_dmsStorageUnit::insertRecord" )
-	```
+  ```lang-javascript
+  > var data = new Sdb( "localhost", 20000 )
+  > data.traceOn( 10000, "dms", "_dmsStorageUnit::insertRecord" )
+  ```
 
 * Connect to the coord node 50000. collection named bar and collectionspace named foo are belong to the data node 20000, and execute an insert operation. However, the insert operation will be blocked.
    
-	```lang-javascript
-	> var db = new Sdb( "localhost", 50000 )
-	> db.foo.bar.insert( { _id: 1, name: "a" } )
-	```      
+  ```lang-javascript
+  > var db = new Sdb( "localhost", 50000 )
+  > db.foo.bar.insert( { _id: 1, name: "a" } )
+  ```      
 
-* After reopening the breakpoint updater, the insert operation succeeded and return result we expected.
+* After resume the breakpoint tracking program, the insert operation succeeded and return result we expected.
 
-	```lang-javascript
-	> db.traceResume()
-	```
+  ```lang-javascript
+  > db.traceResume()
+  ```
 
-*   Using [traceStatus()](reference/Sequoiadb_command/Sdb/traceStatus.md) to view the tracking status of the current program. 
+* Using [traceStatus()](reference/Sequoiadb_command/Sdb/traceStatus.md) to view the tracking status of the current program. 
 
-	```lang-javascript
-	> db.traceStatus()
-	```
+  ```lang-javascript
+  > db.traceStatus()
+  ```
