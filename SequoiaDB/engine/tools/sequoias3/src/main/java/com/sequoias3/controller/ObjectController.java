@@ -247,7 +247,7 @@ public class ObjectController {
     }
 
     @RequestMapping(method = RequestMethod.HEAD, value="/{bucketname:.+}/*/**")
-    public ResponseEntity headObject(@PathVariable("bucketname") String bucketName,
+    public void headObject(@PathVariable("bucketname") String bucketName,
                                      @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
                                      @RequestParam(value = RestParamDefine.VERSION_ID, required = false) String versionId,
                                      HttpServletRequest httpServletRequest,
@@ -255,7 +255,7 @@ public class ObjectController {
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
         String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
-        logger.debug("get object. bucketName={}, objectName={}", bucketName, objectName);
+        logger.debug("head object. bucketName={}, objectName={}", bucketName, objectName);
 
         Map<String,String> requestHeaders = new HashMap<>();
         Enumeration headerNames = httpServletRequest.getHeaderNames();
@@ -290,8 +290,6 @@ public class ObjectController {
         }finally {
             objectService.releaseGetResult(result);
         }
-
-        return ResponseEntity.ok().build();
     }
 
     private Long convertVersionId(String versionId)
