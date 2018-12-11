@@ -120,8 +120,10 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Turn on the database engine program tracking.
+.RS
 .PP
-Note： Track only the node that db connected.
+\f[B]Note:\f[] Track only the node that db connected.
+.RE
 .IP
 .nf
 \f[C]

@@ -37,7 +37,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Turn on the database engine program tracking.
 
-  Note： Track only the node that db connected. 
+  > **Note:** Track only the node that db connected. 
 
 ```lang-javascript
 > db.traceOn( 256 )
