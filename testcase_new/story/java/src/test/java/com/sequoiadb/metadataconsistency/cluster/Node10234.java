@@ -1,16 +1,15 @@
 package com.sequoiadb.metadataconsistency.cluster;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.AfterClass;
+import org.bson.BasicBSONObject;
 import org.testng.Assert;
 import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import com.sequoiadb.base.Node;
 import com.sequoiadb.base.ReplicaGroup;
@@ -27,7 +26,6 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 */
 
 public class Node10234 extends SdbTestBase {
-	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
 	private Random random = new Random();
 	private static Sequoiadb sdb = null;
 	private String rgName = "rg10234";
@@ -99,7 +97,7 @@ public class Node10234 extends SdbTestBase {
 				String hostName = slaveNode.getHostName();
 				int svcName = slaveNode.getPort();
 				
-				rgDB.detachNode(hostName, svcName, null);
+				rgDB.detachNode(hostName, svcName, new BasicBSONObject("KeepData", false));
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
 				if( eCode != -204 //-204:Unable to remove the last node or primary in a group
@@ -125,7 +123,7 @@ public class Node10234 extends SdbTestBase {
 				String hostName = slaveNode.getHostName();
 				int svcName = slaveNode.getPort();
 				
-				rgDB.attachNode(hostName, svcName, null);
+				rgDB.attachNode(hostName, svcName, new BasicBSONObject("KeepData", false));
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
 				if( eCode != -145 ){ //-145:Node already exists
@@ -158,7 +156,7 @@ public class Node10234 extends SdbTestBase {
 			String hostName = info[0];
 			int port = Integer.parseInt(info[1]);
 			try {
-				rg.attachNode(hostName, port, null);
+				rg.attachNode(hostName, port, new BasicBSONObject("KeepData", false));
 			} catch (BaseException e) {
 				if (-145 != e.getErrorCode()) {
 					e.printStackTrace();
