@@ -35,8 +35,7 @@ public class SessionAccessUtils extends SdbTestBase {
         String tmphostName = sdb.getReplicaGroup("SYSCatalogGroup").getMaster().getHostName();
         for( int i = 0; i < nodeNum; i++ ){        	
         	int dataPort = reservedPortBegin + 100*i;
-        	//String dataPath = workDir + "/" + dataPort + "/";
-        	String dataPath = "/opt/sequoiadb/database/data/11830/";
+        	String dataPath = workDir + "/" + dataPort + "/";        	
         	int times = 0;
         	int maxRetryTimes = 10;
         	while(new File(dataPath).exists() && times < maxRetryTimes ){ 
