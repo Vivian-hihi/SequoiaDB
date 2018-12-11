@@ -5,7 +5,7 @@
             <tr ng-if="inputInfo.type == 'group'">
                <td colspan="2">
                   <div class="FormName">
-                     <label><span class="error" ng-if="inputInfo.required == true">*</span> {{inputInfo.webName}}</label> <i ng-if="inputInfo.desc" class="fa fa-info-circle" ng-attr="{'data-desc':inputInfo.desc}"></i>
+                     <label><span class="error" ng-if="inputInfo.required == true">*</span> {{inputInfo.webName}}</label> <i ng-if="inputInfo.desc" class="fa fa-info-circle" style="font-size:18px;" ng-attr="{'data-desc':inputInfo.desc}"></i>
                   </div>
                   <div class="FormInput" ng-include="'./app/template/Component/Form_child.html'"></div>
                   <span class="FormHelp error">{{inputInfo.error}}</span>
@@ -14,15 +14,22 @@
             <tr ng-if="inputInfo.type != 'group' && inputInfo.type != 'grid'">
                <td ng-style="{true:{'vertical-align':'middle'},false:{'vertical-align':'top','padding-top':'8px'}}[inputInfo.type!='list'];{width:Setting.KeyWidth}">
                   <div class="FormName">
-                     <label><span class="error" ng-if="inputInfo.required == true">*</span> {{inputInfo.webName}}</label> <i ng-if="inputInfo.desc" class="fa fa-info-circle" ng-attr="{'data-desc':inputInfo.desc}"></i>
+                     <label>
+                        <span class="error" ng-if="inputInfo.required == true">*</span> <span ng-if="!inputInfo.showName">{{inputInfo.webName}}</span>
+                        <span ng-if="inputInfo.showName" data-desc="{{inputInfo.webName}}">{{inputInfo.name}}</span>
+                     </label> <i ng-if="inputInfo.desc" class="fa fa-info-circle" style="font-size:18px;" ng-attr="{'data-desc':inputInfo.desc}"></i>
                   </div>
                </td>
-               <td style="padding-left:10px;">
+               <td style="padding-left:10px;padding-right:10px;">
                   <div class="FormInput" ng-include="'./app/template/Component/Form_child.html'"></div>
+               </td>
+               <td ng-if="inputInfo.showName" ng-style="{width:Setting.KeyWidth}">
+                  <span ng-if="inputInfo.webName != inputInfo.name">{{inputInfo.webName}}</span>
                </td>
             </tr>
             <tr>
-               <td colspan="2" class="error">{{inputInfo.error}}</td>
+               <td colspan="2" class="error" ng-if="!inputInfo.showName">{{inputInfo.error}}</td>
+               <td colspan="3" class="error" ng-if="inputInfo.showName">{{inputInfo.error}}</td>
             </tr>
          </tbody>
       </table>

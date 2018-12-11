@@ -4725,6 +4725,7 @@
              table-title    必填 {}    表格的标题， key是要对应该列的字段名，用于排序和过滤， 如果value是false，那么该列不显示
              table-content  必填 []    表格的内容
              table-key      必填 ""    列名，对应table-title的key
+             table-if       选填       用在body的列中，某些情况下代替ng-if
              table-callback 可选 {}    只要空对象就行，指令会把回调函数传回来
                                        GetPageData( 指定第几页 )
                                        GetAllData()

@@ -1417,12 +1417,31 @@
          'callback': {}
       }
 
+      function restartModule( clusterName, moduleName )
+      {
+         var data = { 'cmd': 'restart business', 'ClusterName': clusterName, 'BusinessName': moduleName } ;
+         SdbRest.OmOperation( data, {
+            'success': function( taskInfo ){
+               $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
+               $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
+               $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
+               $location.path( 'Deploy/Restart' ).search( { 'r': new Date().getTime() } ) ;
+            }, 
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  restartModule( clusterName, moduleName ) ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
+      }
+
       //打开 重启业务 弹窗
       var showRestartWindow = function(){
          if( SdbSwap.sdbModuleNum != 0 )
          {
-            $scope.RestartWindow['config']['inputList']['value'] = null ;
-            $scope.RestartWindow['config']['inputList']['valid'] = [] ;
+            $scope.RestartWindow['config']['inputList'][0]['value'] = null ;
+            $scope.RestartWindow['config']['inputList'][0]['valid'] = [] ;
 
             var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
             $.each( $scope.ModuleList, function( index, moduleInfo ){
@@ -1441,16 +1460,14 @@
                if( isAllClear )
                {
                   var formVal = $scope.RestartWindow['config'].getValue() ;
-
-                  var data = { 'cmd': 'restart business', 'ClusterName': $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'], 'BusinessName': $scope.ModuleList[ formVal['moduleName'] ]['BusinessName'] } ;
-                  SdbRest.OmOperation( data, {
-                     'success': function(){
-                        
-                     }, 
-                     'failed': function( errorInfo ){
-
-                     }
-                  } ) ;
+                  $scope.Components.Confirm.type = 2 ;
+                  $scope.Components.Confirm.context = $scope.autoLanguage( '该操作将重启该业务所有节点，是否确定继续？' ) ;
+                  $scope.Components.Confirm.isShow = true ;
+                  $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+                  $scope.Components.Confirm.ok = function(){
+                     restartModule( $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'], $scope.ModuleList[ formVal['moduleName'] ]['BusinessName'] ) ;
+                     $scope.Components.Confirm.isShow = false ;
+                  }
                }
                return isAllClear ;
             } ) ;

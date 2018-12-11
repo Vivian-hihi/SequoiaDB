@@ -168,7 +168,7 @@
          $scope.Components.Modal.ShowType = 1 ;
          $scope.Components.Modal.form1 = {
             'keyWidth': '160px',
-            'inputList': _Deploy.ConvertTemplate( $scope.Template, 0 )
+            'inputList': _Deploy.ConvertTemplate( $scope.Template, 0, false, false, true )
          } ;
          if( $scope.Configure['DeployMod'] == 'distribution' )
          {
@@ -176,7 +176,7 @@
          }
          $scope.Components.Modal.form2 = {
             'keyWidth': '160px',
-            'inputList': _Deploy.ConvertTemplate( $scope.Template, 1 )
+            'inputList': _Deploy.ConvertTemplate( $scope.Template, 1, false, false, true )
          } ;
          $scope.Components.Modal.form3 = {
             'keyWidth': '160px',
@@ -1315,11 +1315,11 @@
                {
                   $scope.StandaloneForm1 = {
                      'keyWidth': '160px',
-                     'inputList': _Deploy.ConvertTemplate( $scope.Template, 0 )
+                     'inputList': _Deploy.ConvertTemplate( $scope.Template, 0, false, false, true )
                   } ;
                   $scope.StandaloneForm2 = {
                      'keyWidth': '160px',
-                     'inputList': _Deploy.ConvertTemplate( $scope.Template, 1 )
+                     'inputList': _Deploy.ConvertTemplate( $scope.Template, 1, false, false, true )
                   } ;
                   $scope.StandaloneForm3 = {
                      'keyWidth': '160px',

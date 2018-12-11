@@ -140,7 +140,7 @@
             {{autoLanguage("选择显示列")}}&nbsp;<i class="fa fa-caret-down"></i>
          </button>&nbsp;
          <div ng-dropdown="config in FieldDropdown.config" dropdown-callback="FieldDropdown.callback">
-            <label class="Ellipsis" style="padding:5px 10px;display:block;cursor:pointer;" ng-click="SaveField()">
+            <label class="Ellipsis" style="padding:5px 10px;display:block;cursor:pointer;" data-desc="{{TemplateDesc[config.key]['Desc']}}" ng-click="SaveField()">
                <input type="checkbox" ng-model="config.isShow" />&nbsp;{{config.value}}
             </label>
          </div>
@@ -150,8 +150,10 @@
 
          <div ng-if="NodeNum == 1" ng-container="{}" ng-table="OneNodeTable['table']" table-title="OneNodeTable['title']" table-content="row in OneNodeTable['content']" table-callback="OneNodeTable['callback']">
             <div table-key="name" ng-style="{'true':{'color':'red'}}[row.diff == true]">
-               <span ng-if="TemplateDesc[row.name]['WebName']">{{TemplateDesc[row.name]['WebName']}}</span>
-               <span ng-if="!TemplateDesc[row.name]['WebName']">{{row.name}}</span>
+               {{row.name}}
+            </div>
+            <div table-key="webName" ng-style="{'true':{'color':'red'}}[row.diff == true]">
+               <span ng-if="TemplateDesc[row.name]['WebName'] != row.name">{{TemplateDesc[row.name]['WebName']}}</span>
             </div>
             <div table-key="value" ng-style="{'true':{'color':'red'}}[row.diff == true]" table-if="IsConfigsSame == false">
                {{row.value}}
@@ -171,7 +173,7 @@
          </div>
 
          <div ng-if="NodeNum > 1" ng-container="{}" ng-table="MultiNodeTable['table']" table-title="MultiNodeTable['title']" table-content="row in MultiNodeTable['content']" table-callback="MultiNodeTable['callback']">
-            <div table-key="$auto">{{$autoValue}}</div>
+            <div table-key="$auto" ng-style="{'true':{'color':'red'}}[DiffNodesConfigs[$index].indexOf('$auto')>=0]" data-desc="{{TemplateDesc['$auto']['Desc']}}">{{$autoValue}}</div>
          </div>
 
       </div>

@@ -702,11 +702,15 @@ _Deploy.BuildDeployPackageStep = function( $scope, $location, action, deployModu
 }
 
 //参数模板转换
-_Deploy.ConvertTemplate = function( templateList, level, canEmpty, checkConfType ){
+_Deploy.ConvertTemplate = function( templateList, level, canEmpty, checkConfType, showName ){
    var setLevel = 0 ;
    if( typeof( level ) != 'undefined' )
    {
       setLevel = level ;
+   }
+   if( typeof( showName ) == 'undefined' )
+   {
+      showName = false ;
    }
    var newTemplateList = [] ;
    $.each( templateList, function( index, templateInfo ){
@@ -718,6 +722,7 @@ _Deploy.ConvertTemplate = function( templateList, level, canEmpty, checkConfType
          }
          var newTemplateInfo = {
             'name':     templateInfo['Name'],
+            'showName': showName,
             'value':    templateInfo['Default'],
             'webName':  templateInfo['WebName'],
             'disabled': templateInfo['Edit'] == "false" ? true : false,

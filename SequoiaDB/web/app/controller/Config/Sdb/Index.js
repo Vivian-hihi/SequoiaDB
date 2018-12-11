@@ -944,7 +944,7 @@
 
       function HidderKeyClass()
       {
-         this.list = [ 'installpath', 'businessname', 'clustername', 'usertag' ] ;
+         this.list = [ 'businessname', 'clustername', 'usertag' ] ;
          this.get = function()
          {
             return this.list ;
@@ -1454,10 +1454,14 @@
       //本地的配置
       var localConfigs = {} ;
 
-      function requestModifyConfig( cmd, config )
+      function requestModifyConfig( cmd, config, func )
       {
          if ( config == null )
          {
+            if ( isFunction( func ) )
+            {
+               func( false ) ;
+            }
             return ;
          }
 
@@ -1474,8 +1478,10 @@
 
          SdbRest.OmOperation( data, {
             'success': function(){
-               //刷新
-               $scope.ReloadConfig() ;
+               if ( isFunction( func ) )
+               {
+                  func( false ) ;
+               }
             }, 
             'failed': function( errorInfo ){
                //部分节点未成功
@@ -1502,14 +1508,18 @@
 
                   if ( hasError == false )
                   {
-                     //刷新
-                     $scope.ReloadConfig() ;
+                     if ( isFunction( func ) )
+                     {
+                        func( true ) ;
+                     }
                   }
                }
                else if ( errorInfo['errno'] == -322 )
                {
-                  //刷新
-                  $scope.ReloadConfig() ;
+                  if ( isFunction( func ) )
+                  {
+                     func( true ) ;
+                  }
                }
                else
                {
@@ -1587,8 +1597,23 @@
 
                modifyConfReq.parse( $scope.NodeNum, localConfigs, $scope.TemplateDesc, configs1, configs2, configs3 ) ;
 
-               requestModifyConfig( 'update business config', modifyConfReq.getUpdateConfig() ) ;
-               requestModifyConfig( 'delete business config', modifyConfReq.getDeleteConfig() ) ;
+               requestModifyConfig( 'update business config', modifyConfReq.getUpdateConfig(), function( needTips1 ){
+                  requestModifyConfig( 'delete business config', modifyConfReq.getDeleteConfig(), function( needTips2 ){
+                     $scope.ReloadConfig() ;
+                     if ( $scope.NodeNum > 1 && ( needTips1 || needTips2 ) )
+                     {
+                        $scope.Components.Confirm.type = 2 ;
+                        $scope.Components.Confirm.context = $scope.autoLanguage( '红色标注的节点配置需要重启生效。' ) ;
+                        $scope.Components.Confirm.isShow = true ;
+                        $scope.Components.Confirm.noClose = true ;
+                        $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+                        $scope.Components.Confirm.ok = function(){
+                           $scope.Components.Confirm.isShow = false ;
+                           $scope.Components.Confirm.noClose = false ;
+                        }
+                     }
+                  } ) ;
+               } ) ;
             }
             return isAllClear1 && isAllClear2 && isAllClear3 ;
          } ) ;
@@ -1598,17 +1623,23 @@
       //单节点配置表
       $scope.OneNodeTable = {
          'table': {
+            'width': {
+               'name':     '200px',
+               'webName':  '200px'
+            },
             'tools': false,
             'max': 10000
          },
          'title': {},
          'title1': {
-            'name':  $scope.autoLanguage( '配置项' ),
-            'value': $scope.autoLanguage( '值' ),
-            'desc':  $scope.autoLanguage( '描述' )
+            'name':     $scope.autoLanguage( '配置项' ),
+            'webName':  $scope.autoLanguage( '项名' ),
+            'value':    $scope.autoLanguage( '值' ),
+            'desc':     $scope.autoLanguage( '描述' )
          },
          'title2': {
             'name':        $scope.autoLanguage( '配置项' ),
+            'webName':     $scope.autoLanguage( '项名' ),
             'value1':      $scope.autoLanguage( '值' ) + '(Run)',
             'value2':      $scope.autoLanguage( '值' ) + '(Local)',
             'reloadable':  $scope.autoLanguage( '生效类型' ),
@@ -1643,12 +1674,12 @@
             nodeNum = $scope.NodeName.length ;
          }
 
-         if( nodeNum == 1 && $scope.OneNodeTable['callback'] )
+         if( nodeNum == 1 && $scope.OneNodeTable['callback']['Resize'] )
          {
             $scope.OneNodeTable['callback']['Resize']() ;
             $scope.OneNodeTable['callback']['ResizeTableHeader']() ;
          }
-         else if( nodeNum > 1 && $scope.MultiNodeTable['callback'] )
+         else if( nodeNum > 1 && $scope.MultiNodeTable['callback']['Resize'] )
          {
             $scope.MultiNodeTable['callback']['Resize']() ;
             $scope.MultiNodeTable['callback']['ResizeTableHeader']() ;
@@ -1679,7 +1710,7 @@
          {
             $scope.TemplateDesc = {
                'InstallPath': { 'WebName': $scope.autoLanguage( '安装路径' ) },
-               'NodeName': { 'WebName': $scope.autoLanguage( '节点名' ) },
+               'NodeName':    { 'WebName': $scope.autoLanguage( '节点名' ) }
             } ;
 
             $scope.TemplateDesc = $.extend( $scope.TemplateDesc, SdbSwap.TemplateDesc ) ;
@@ -1735,7 +1766,7 @@
                $scope.OneNodeTable['title'] = $scope.OneNodeTable['title1'] ;
 
                $.each( runConfigs, function( key, value ) {
-                  $scope.OneNodeTable['content'].push( { 'name': key, 'value': value, 'desc': '', 'diff': false } ) ;
+                  $scope.OneNodeTable['content'].push( { 'name': key, 'webName': '', 'value': value, 'desc': '', 'diff': false } ) ;
                } ) ;
 
                $scope.IsConfigsSame = true ;
@@ -1748,6 +1779,7 @@
                   var isSame = ( runConfigs[key] === localConfigs[key] ) ;
                   $scope.OneNodeTable['content'].push( {
                      'name': key,
+                     'webName': '',
                      'value1': runConfigs[key],
                      'value2': isSame ? '' : localConfigs[key],
                      'reloadable': '',
@@ -1765,6 +1797,9 @@
             runConfigs = [] ;
             localConfigs = [] ;
             var keyList = [] ;
+            var priorityList = [ 'NodeName', 'role', 'dbpath', 'weight', 'transactionon', 'transactiontimeout', 'transisolation', 'auditmask',
+               'logfilesz', 'logfilenum', 'preferedinstance', 'instanceid', 'planbuckets', 'plancachelevel', 'maxpool', 'maxcachesize', 'directioinlob',
+               'syncdeep', 'syncinterval', 'syncrecordnum' ] ;
 
             clearObject( $scope.MultiNodeTable['title'] ) ;
             clearArray( $scope.MultiNodeTable['content'] ) ;
@@ -1787,22 +1822,71 @@
                }
             } ) ;
 
+            $scope.DiffNodesConfigs = [] ;
+            var hasDiff = false ;
+            for( var i = 0; i < localConfigs.length; ++i )
+            {
+               if ( runConfigs[i]['NodeName'] == localConfigs[i]['NodeName'] )
+               {
+                  var diff = diffObject( runConfigs[i], localConfigs[i] ) ;
+                  $scope.DiffNodesConfigs.push( diff ) ;
+                  if( diff.length > 0 )
+                  {
+                     hasDiff = true ;
+                  }
+               }
+               else
+               {
+                  $scope.DiffNodesConfigs.push( [] ) ;
+               }
+            }
+
+            keyList.sort() ;
+
+            var hiddenKeyObj = new HidderKeyClass() ;
+
+            var maxShow = 8 ;
+            var showNum = 0 ;
             $.each( keyList, function( index, key ){
 
-               var isShow = ( index < 6 ) ;
-
-               //标题
-               var webName = key ;
-               if ( $scope.TemplateDesc.hasOwnProperty( key ) &&
-                    $scope.TemplateDesc[key].hasOwnProperty( 'WebName' ) )
+               if ( hiddenKeyObj.isHiddenKey( key ) )
                {
-                  webName = $scope.TemplateDesc[key]['WebName'] ;
+                  return true ;
                }
-               $scope.MultiNodeTable['title'][key] = isShow ? webName : isShow ;
 
-               $scope.FieldDropdown['config'].push( { 'key': key, 'value': webName, 'isShow': isShow } ) ;
+               //优先显示指定字段
+               var isShow = ( priorityList.indexOf( key ) >= 0 ) ;
+
+               if ( isShow && showNum < maxShow )
+               {
+                  ++showNum ;
+               }
+               else
+               {
+                  isShow = false ;
+               }
+
+               $scope.MultiNodeTable['title'][key] = isShow ? key : isShow ;
+
+               $scope.FieldDropdown['config'].push( { 'key': key, 'value': key, 'isShow': isShow } ) ;
 
             } ) ;
+
+            //显示字段不足maxShow个，补充
+            for( var i = 0; i < $scope.FieldDropdown['config'].length; ++i )
+            {
+               if ( showNum >= maxShow )
+               {
+                  break ;
+               }
+               if ( $scope.FieldDropdown['config'][i]['isShow'] == false )
+               {
+                  var key = $scope.FieldDropdown['config'][i]['key'] ;
+                  $scope.FieldDropdown['config'][i]['isShow'] = true ;
+                  $scope.MultiNodeTable['title'][key] = $scope.FieldDropdown['config'][i]['value'] ;
+                  ++showNum ;
+               }
+            }
 
             if ( $scope.MultiNodeTable['callback']['ShowCurrentPage'] )
             {
@@ -1843,6 +1927,31 @@
          $scope.ReloadConfig() ;
       }
       
+      function restartNode( nodes )
+      {
+         var data = {
+            'cmd': 'restart business',
+            'ClusterName': SdbSwap.clusterName,
+            'BusinessName': SdbSwap.moduleName,
+            'Options': JSON.stringify( { 'Nodes': nodes } )
+         } ;
+
+         SdbRest.OmOperation( data, {
+            'success': function( taskInfo ){
+               $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
+               $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
+               $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
+               $location.path( 'Deploy/Restart' ).search( { 'r': new Date().getTime() } ) ;
+            }, 
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  restartNode( nodes ) ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
+      }
+
       //重启节点
       $scope.RestartNode = function(){
          var nodes = [] ;
@@ -1858,24 +1967,15 @@
             var tmp = $scope.NodeName.split( ':' ) ;
             nodes.push( { 'HostName': tmp[0], 'svcname': tmp[1] } ) ;
          }
-         
-         var data = {
-            'cmd': 'restart business',
-            'ClusterName': SdbSwap.clusterName,
-            'BusinessName': SdbSwap.moduleName,
-            'Options': JSON.stringify( { 'Nodes': nodes } )
-         } ;
-         SdbRest.OmOperation( data, {
-            'success': function( taskInfo ){
-               $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
-               $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
-               $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
-               $location.path( 'Deploy/Restart' ).search( { 'r': new Date().getTime() } ) ;
-            }, 
-            'failed': function( errorInfo ){
 
-            }
-         } ) ;
+         $scope.Components.Confirm.type = 2 ;
+         $scope.Components.Confirm.context = $scope.autoLanguage( '该操作将重启节点，是否确定继续？' ) ;
+         $scope.Components.Confirm.isShow = true ;
+         $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+         $scope.Components.Confirm.ok = function(){
+            restartNode( nodes ) ;
+            $scope.Components.Confirm.isShow = false ;
+         }
       }
 
    } ) ;

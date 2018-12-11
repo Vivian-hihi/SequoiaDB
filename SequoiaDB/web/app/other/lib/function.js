@@ -2432,6 +2432,7 @@ function configConvertTemplate( templateList, level ){
          }
          var newTemplateInfo = {
             'name':     templateInfo['Name'],
+            'showName': true,
             'value':    '',
             'webName':  templateInfo['WebName'],
             'disabled': false,
