@@ -482,6 +482,7 @@ Oma.prototype.startAllNodes = function( businessName ) {
    var total = svcname.length
    var failed = 0 ;
    var failedList = [] ;
+   var failedInfo = {} ;
 
    var result = this._nodesOperation( 'start', svcname ) ;
 
@@ -490,6 +491,8 @@ Oma.prototype.startAllNodes = function( businessName ) {
       for( var i in result['ErrNodes'] )
       {
          failedList.push( result['ErrNodes'][i]['svcname'] ) ;
+
+         failedInfo[result['ErrNodes'][i]['svcname']] = result['ErrNodes'][i] ;
       }
 
       failed = failedList.length ;
@@ -505,7 +508,9 @@ Oma.prototype.startAllNodes = function( businessName ) {
       }
       else
       {
-         println( "failed" ) ;
+         println( "failed, errno: " + failedInfo[svcname[i]]["errno"] +
+                  ", description: " + failedInfo[svcname[i]]["description"] +
+                  ", detail: " + failedInfo[svcname[i]]["detail"] ) ;
       }
    }
 
