@@ -1800,6 +1800,10 @@
          <en>Specify the isolation level of transaction, 0 for RU, 1 for RC. Default is 0</en>
          <cn>指定事务的隔离级别，0为RU级别，1为RC级别。默认为0。</cn>
       </description>
+      <reloadable>
+         <en>Take effect after restart</en>
+         <cn>重启生效</cn>
+      </reloadable>
       <detail>
          <en>1. Specify the isolation level of transaction. Value is 0/1. Default is 0.<fig></fig>
            2. Value enumeration:<fig></fig>
