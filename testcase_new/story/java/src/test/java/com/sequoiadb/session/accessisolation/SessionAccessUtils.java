@@ -1,5 +1,6 @@
 package com.sequoiadb.session.accessisolation;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,9 +33,19 @@ public class SessionAccessUtils extends SdbTestBase {
 		ReplicaGroup dataRG = sdb.createReplicaGroup(groupName);
 		 //get hostname
         String tmphostName = sdb.getReplicaGroup("SYSCatalogGroup").getMaster().getHostName();
-        for( int i = 0; i < nodeNum; i++ ){
+        for( int i = 0; i < nodeNum; i++ ){        	
         	int dataPort = reservedPortBegin + 100*i;
-            String dataPath = workDir + "/" + dataPort + "/";
+        	//String dataPath = workDir + "/" + dataPort + "/";
+        	String dataPath = "/opt/sequoiadb/database/data/11830/";
+        	int times = 0;
+        	int maxRetryTimes = 10;
+        	while(new File(dataPath).exists() && times < maxRetryTimes ){ 
+        		dataPort += 10;
+        		dataPath = workDir + "/" + dataPort + "/"; 
+        		System.out.println("--path="+dataPath);
+        		times++;
+        	}        	
+            
             BSONObject dataConfigue = (BSONObject) JSON.parse("{instanceid :"+instanceidarr[i]+"}");
             dataRG.createNode(tmphostName, dataPort, dataPath, dataConfigue);
             
