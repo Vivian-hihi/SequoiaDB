@@ -96,7 +96,8 @@ namespace engine
       BSONElement idEle ;
       const bson::OID *oidPtr = NULL ;
       UINT32 sequence = 0 ;
-      BOOLEAN paralla = FALSE ;
+      BOOLEAN clParalla = FALSE ;
+      BOOLEAN recRaralla = FALSE ;
       BOOLEAN updateSameOID = FALSE ;
       UINT32 bucketID = ~0 ;
 
@@ -106,9 +107,11 @@ namespace engine
       switch( recordHeader->_type )
       {
          case LOG_TYPE_DATA_INSERT :
+            clParalla = TRUE ;
             rc = dpsRecord2Insert( (CHAR *)recordHeader, &fullname, obj ) ;
             break ;
          case LOG_TYPE_DATA_DELETE :
+            clParalla = TRUE ;
             rc = dpsRecord2Delete( (CHAR *)recordHeader, &fullname, obj ) ;
             break ;
          case LOG_TYPE_DATA_UPDATE :
@@ -117,6 +120,7 @@ namespace engine
             BSONObj oldObj ;
             BSONObj newMatch ;
             BSONObj modifier ;   //new change obj
+            clParalla = TRUE ;
             rc = dpsRecord2Update( (CHAR *)recordHeader, &fullname,
                                    match, oldObj, newMatch, modifier ) ;
             if ( SDB_OK == rc &&
@@ -129,7 +133,7 @@ namespace engine
          }
          case LOG_TYPE_LOB_WRITE :
          {
-            paralla = TRUE ;
+            recRaralla = TRUE ;
             const CHAR *fullName = NULL ;
             const bson::OID *oid = NULL ;
             UINT32 offset = 0 ;
@@ -146,7 +150,7 @@ namespace engine
          }
          case LOG_TYPE_LOB_UPDATE :
          {
-            paralla = TRUE ;
+            recRaralla = TRUE ;
             const CHAR *fullName = NULL ;
             const bson::OID *oid = NULL ;
             UINT32 offset = 0 ;
@@ -166,7 +170,7 @@ namespace engine
          }
          case LOG_TYPE_LOB_REMOVE :
          {
-            paralla = TRUE ;
+            recRaralla = TRUE ;
             const CHAR *fullName = NULL ;
             const bson::OID *oid = NULL ;
             UINT32 offset = 0 ;
@@ -211,9 +215,9 @@ namespace engine
                // For collection who has text indices, parallel replay should
                // also be forbidden. Otherwise, the records in the capped
                // collection will not be exactly the same.
-               paralla = ( mbContext->mbStat()->_uniqueIdxNum <= 1 &&
-                           0 == mbContext->mbStat()->_textIdxNum ) ?
-                         TRUE : FALSE ;
+               recRaralla = ( mbContext->mbStat()->_uniqueIdxNum <= 1 &&
+                              0 == mbContext->mbStat()->_textIdxNum ) ?
+                            TRUE : FALSE ;
                su->data()->releaseMBContext( mbContext ) ;
             }
 
@@ -222,13 +226,13 @@ namespace engine
             // the ones on primary node, including their positions.
             if ( DMS_STORAGE_CAPPED == su->type() )
             {
-               paralla = FALSE ;
+               recRaralla = FALSE ;
             }
             _dmsCB->suUnlock( suID, SHARED ) ;
          }
       }
 
-      if ( paralla )
+      if ( recRaralla )
       {
          idEle = obj.getField( DMS_ID_KEY_NAME ) ;
          if ( !idEle.eoo() )
@@ -245,6 +249,10 @@ namespace engine
                        sizeof( sequence ) ) ;
             bucketID = pBucket->calcIndex( tmpData, sizeof( tmpData ) ) ;
          }
+      }
+      else if ( clParalla )
+      {
+         bucketID = pBucket->calcIndex( fullname, ossStrlen( fullname ) ) ;
       }
 
       if ( (UINT32)~0 != bucketID )
