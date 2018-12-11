@@ -129,11 +129,43 @@ namespace engine
    } ;
    typedef _startNodeJob startNodeJob ;
 
-   INT32 startStartNodeJOb ( const string &svcname,
-                             NODE_START_TYPE startType,
-                             _omAgentNodeMgr *pNodeMgr,
-                             EDUID *pEDUID = NULL,
-                             BOOLEAN returnResult = FALSE ) ;
+   /*
+      _stopNodeJob define
+   */
+   class _stopNodeJob : public _rtnBaseJob
+   {
+   public:
+      _stopNodeJob( const string &svcname, NODE_START_TYPE type,
+                    _omAgentNodeMgr *pNodeMgr ) ;
+      virtual ~_stopNodeJob() ;
+
+      const string& getSvcName() const { return _svcName ; }
+
+   public:
+      virtual RTN_JOB_TYPE type () const ;
+      virtual const CHAR* name () const ;
+      virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) ;
+      virtual INT32 doit () ;
+
+   private:
+      string               _svcName ;
+      NODE_START_TYPE      _type ;
+      _omAgentNodeMgr      *_pNodeMgr ;
+      string               _jobName ;
+   } ;
+   typedef _stopNodeJob stopNodeJob ;
+
+   INT32 runStartNodeJob ( const string &svcname,
+                           NODE_START_TYPE startType,
+                           _omAgentNodeMgr *pNodeMgr,
+                           EDUID *pEDUID = NULL,
+                           BOOLEAN returnResult = FALSE ) ;
+
+   INT32 runStopNodeJob( const string &svcname,
+                         NODE_START_TYPE type,
+                         _omAgentNodeMgr *pNodeMgr,
+                         EDUID *pEDUID = NULL,
+                         BOOLEAN returnResult = FALSE ) ;
 
    /*
       _cmSyncJob define

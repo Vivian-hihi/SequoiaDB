@@ -133,6 +133,59 @@ namespace engine
    } ;
 
    /*
+      _remoteOmaNodesOperation define
+   */
+   class _remoteOmaNodesOperation : public _remoteExec
+   {
+   public:
+      _remoteOmaNodesOperation() ;
+
+      ~_remoteOmaNodesOperation() ;
+
+      virtual const CHAR * name() = 0 ;
+
+   protected:
+      INT32 _runNodesJob( BOOLEAN isStartNodes ) ;
+      void _mergeResult( BOOLEAN isStartNodes, BSONObj &retObj ) ;
+
+   private:
+      list< pair<EDUID,string> > _jobList ;
+   } ;
+
+   /*
+      _remoteOmaStartNodes define
+   */
+   class _remoteOmaStartNodes : public _remoteOmaNodesOperation
+   {
+   DECLARE_OACMD_AUTO_REGISTER()
+   public:
+      _remoteOmaStartNodes() ;
+
+      ~_remoteOmaStartNodes() ;
+
+      const CHAR *name() ;
+
+      INT32 doit( BSONObj &retObj ) ;
+   } ;
+
+   /*
+      _remoteOmaStopNodes define
+   */
+   class _remoteOmaStopNodes : public _remoteOmaNodesOperation
+   {
+   DECLARE_OACMD_AUTO_REGISTER()
+   public:
+      _remoteOmaStopNodes() ;
+
+      ~_remoteOmaStopNodes() ;
+
+      const CHAR *name() ;
+
+      INT32 doit( BSONObj &retObj ) ;
+   } ;
+
+
+   /*
       _remoteOmaGetIniConfigs define
    */
    class _remoteOmaGetIniConfigs : public _remoteExec

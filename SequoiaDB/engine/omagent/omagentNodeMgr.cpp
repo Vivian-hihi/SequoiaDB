@@ -131,9 +131,77 @@ namespace engine
       goto done ;
    }
 
-   INT32 startStartNodeJOb( const string &svcname, NODE_START_TYPE startType,
-                            _omAgentNodeMgr *pNodeMgr, EDUID * pEDUID,
-                            BOOLEAN returnResult )
+   /*
+      _stopNodeJob implement
+   */
+   _stopNodeJob::_stopNodeJob( const string &svcname,
+                               NODE_START_TYPE type,
+                               _omAgentNodeMgr *pNodeMgr )
+   {
+      _svcName    = svcname ;
+      _type       = type ;
+      _pNodeMgr   = pNodeMgr ;
+
+      _jobName = "StopNode[" ;
+      _jobName += _svcName ;
+      _jobName += "]" ;
+   }
+
+   _stopNodeJob::~_stopNodeJob()
+   {
+   }
+
+   RTN_JOB_TYPE _stopNodeJob::type() const
+   {
+      return RTN_JOB_STOPNODE ;
+   }
+
+   const CHAR* _stopNodeJob::name() const
+   {
+      return _jobName.c_str() ;
+   }
+
+   BOOLEAN _stopNodeJob::muteXOn( const _rtnBaseJob *pOther )
+   {
+      BOOLEAN mutex = FALSE ;
+
+      if ( RTN_JOB_STOPNODE == pOther->type() )
+      {
+         _stopNodeJob *pOtherJob = ( _stopNodeJob* )pOther ;
+         if ( 0 == ossStrcmp( _svcName.c_str(),
+                              pOtherJob->getSvcName().c_str() ) )
+         {
+            mutex = TRUE ;
+         }
+      }
+
+      return mutex ;
+   }
+
+   INT32 _stopNodeJob::doit()
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _pNodeMgr->stopANode( _svcName.c_str(), _type, TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Stop SequoaiDB node[svcname = %s] failed, rc: %d",
+                 _svcName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      PD_LOG( PDEVENT, "Stop SequoaiDB node[svcname = %s] succeed",
+              _svcName.c_str() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 runStartNodeJob( const string &svcname, NODE_START_TYPE startType,
+                          _omAgentNodeMgr *pNodeMgr, EDUID * pEDUID,
+                          BOOLEAN returnResult )
    {
       INT32 rc = SDB_OK ;
       startNodeJob *pJob = NULL ;
@@ -142,6 +210,30 @@ namespace engine
       if ( !pJob )
       {
          PD_LOG( PDERROR, "Failed to alloc start node job" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_REUSE, pEDUID,
+                                     returnResult ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 runStopNodeJob( const string &svcname, NODE_START_TYPE type,
+                         _omAgentNodeMgr *pNodeMgr, EDUID * pEDUID,
+                         BOOLEAN returnResult )
+   {
+      INT32 rc = SDB_OK ;
+      stopNodeJob *pJob = NULL ;
+
+      pJob = SDB_OSS_NEW stopNodeJob( svcname, type, pNodeMgr ) ;
+      if ( !pJob )
+      {
+         PD_LOG( PDERROR, "Failed to alloc stop node job" ) ;
          rc = SDB_OOM ;
          goto error ;
       }
@@ -332,7 +424,7 @@ namespace engine
          {
             continue ;
          }
-         rc = startStartNodeJOb( pSvcName, startType, this, NULL, FALSE ) ;
+         rc = runStartNodeJob( pSvcName, startType, this, NULL, FALSE ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Start startNodeJob failed, svcname = %s, rc: %d",
@@ -533,8 +625,8 @@ namespace engine
                        "Begin to restart", pSvcName,
                        OMNODE_CRASH == pInfo->_status ?
                        "crashed" : "start failed" ) ;
-               startStartNodeJOb( pSvcName, NODE_START_MONITOR, this,
-                                  NULL, FALSE ) ;
+               runStartNodeJob( pSvcName, NODE_START_MONITOR, this,
+                                NULL, FALSE ) ;
             }
             else if( !pInfo->_isDetected )
             {

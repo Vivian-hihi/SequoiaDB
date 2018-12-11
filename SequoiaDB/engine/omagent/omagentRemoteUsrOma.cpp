@@ -193,6 +193,252 @@ namespace engine
    }
 
    /*
+      _remoteOmaNodesOperation implement
+   */
+   _remoteOmaNodesOperation::_remoteOmaNodesOperation()
+   {
+   }
+
+   _remoteOmaNodesOperation::~_remoteOmaNodesOperation()
+   {
+   }
+
+   INT32 _remoteOmaNodesOperation::_runNodesJob( BOOLEAN isStartNodes )
+   {
+      INT32 rc = SDB_OK ;
+      omAgentNodeMgr *pNodeMgr = sdbGetOMAgentMgr()->getNodeMgr() ;
+      BSONElement svcnameEle = _optionObj.getField( "svcname" ) ;
+
+      if ( Array != svcnameEle.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "svcname must be array" ) ;
+         goto error ;
+      }
+
+      {
+         BSONObjIterator iter( svcnameEle.embeddedObject() ) ;
+
+         while ( iter.more() )
+         {
+            BOOLEAN isRunJob = TRUE ;
+            EDUID eduID = PMD_INVALID_EDUID ;
+            string svcname ;
+            BSONElement ele = iter.next() ;
+
+            if ( NumberInt == ele.type() )
+            {
+               INT32 tmp = ele.Int() ;
+
+               svcname = boost::lexical_cast< string >( tmp ) ;
+
+               if ( tmp <= 0 || tmp > 65535 )
+               {
+                  isRunJob = FALSE ;
+               }
+            }
+            else if ( String == ele.type() )
+            {
+               svcname = ele.String() ;
+            }
+            else
+            {
+               svcname = ele.toString( false, true ) ;
+               isRunJob = FALSE ;
+            }
+
+            if ( isRunJob && isStartNodes )
+            {
+               rc = runStartNodeJob( svcname, NODE_START_CLIENT,
+                                     pNodeMgr, &eduID, TRUE ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Failed to start node job: "
+                                   "svcname=%s, rc=%d",
+                          svcname.c_str(), rc ) ;
+                  goto error ;
+               }
+            }
+            else if ( isRunJob && !isStartNodes )
+            {
+               rc = runStopNodeJob( svcname, NODE_START_CLIENT,
+                                    pNodeMgr, &eduID, TRUE ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Failed to start node job: "
+                                   "svcname=%s, rc=%d",
+                          svcname.c_str(), rc ) ;
+                  goto error ;
+               }
+            }
+
+            _jobList.push_back( make_pair<EDUID,string>( eduID, svcname ) );
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _remoteOmaNodesOperation::_mergeResult( BOOLEAN isStartNodes,
+                                                BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      _pmdEDUCB* cb = pmdGetThreadEDUCB () ;
+      list< pair<EDUID,string> >::iterator iter ;
+      BSONObjBuilder resultBuilder ;
+      BSONArrayBuilder errNodesBuilder ;
+
+      for ( iter = _jobList.begin(); iter != _jobList.end(); ++iter )
+      {
+         INT32 result = SDB_OK ;
+         EDUID eduID = iter->first ;
+         string svcname = iter->second ;
+         string detail ;
+         BSONObj nodeErrInfo ;
+
+         if ( PMD_INVALID_EDUID == eduID )
+         {
+            result = SDB_INVALIDARG ;
+            detail = "Invalid svcname: svcname=" + svcname ;
+            rc = SDB_COORD_NOT_ALL_DONE ;
+         }
+         else
+         {
+            while( cb->isInterrupted() == FALSE &&
+                   rtnGetJobMgr()->findJob( eduID, &result ) )
+            {
+               ossSleep( OSS_ONE_SEC ) ;
+            }
+
+            if ( SDBCM_SVC_STARTED == result )
+            {
+               result = SDB_OK ;
+            }
+            else if ( result )
+            {
+               rc = SDB_COORD_NOT_ALL_DONE ;
+               detail = "Failed to " ;
+               if ( isStartNodes )
+               {
+                  detail += "start" ;
+               }
+               else
+               {
+                  detail += "stop" ;
+               }
+               detail += " node: svcname=" + svcname ;
+            }
+         }
+
+         if ( result )
+         {
+            nodeErrInfo = BSON( OP_ERRNOFIELD      << result <<
+                                OP_ERRDESP_FIELD   << getErrDesp( result ) <<
+                                OP_ERR_DETAIL      << detail <<
+                                PMD_OPTION_SVCNAME << svcname ) ;
+            errNodesBuilder.append( nodeErrInfo ) ;
+         }
+      }
+
+      resultBuilder.append( OP_ERRNOFIELD, rc ) ;
+      resultBuilder.append( OP_ERRDESP_FIELD, getErrDesp( rc ) ) ;
+      resultBuilder.append( OP_ERR_DETAIL, "" ) ;
+      if ( rc )
+      {
+         resultBuilder.append( FIELD_NAME_ERROR_NODES, errNodesBuilder.arr() ) ;
+      }
+
+      retObj = resultBuilder.obj() ;
+   }
+
+   /*
+      _remoteOmaStartNodes implement
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _remoteOmaStartNodes )
+
+   _remoteOmaStartNodes::_remoteOmaStartNodes()
+   {
+   }
+
+   _remoteOmaStartNodes::~_remoteOmaStartNodes()
+   {
+   }
+
+   const CHAR* _remoteOmaStartNodes::name()
+   {
+      return OMA_REMOTE_OMA_START_NODES ;
+   }
+
+   INT32 _remoteOmaStartNodes::doit( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _runNodesJob( TRUE ) ;
+      if ( rc )
+      {
+         BSONObjBuilder resultBuilder ;
+
+         resultBuilder.append( OP_ERRNOFIELD, rc ) ;
+         resultBuilder.append( OP_ERRDESP_FIELD, getErrDesp( rc ) ) ;
+         resultBuilder.append( OP_ERR_DETAIL, "" ) ;
+
+         retObj = resultBuilder.obj() ;
+         rc = SDB_OK ;
+         goto done ;
+      }
+
+      _mergeResult( TRUE, retObj ) ;
+
+   done:
+      return rc ;
+   }
+
+   /*
+      _remoteOmaStopNodes implement
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _remoteOmaStopNodes )
+
+   _remoteOmaStopNodes::_remoteOmaStopNodes()
+   {
+   }
+
+   _remoteOmaStopNodes::~_remoteOmaStopNodes()
+   {
+   }
+
+   const CHAR* _remoteOmaStopNodes::name()
+   {
+      return OMA_REMOTE_OMA_STOP_NODES ;
+   }
+
+   INT32 _remoteOmaStopNodes::doit( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _runNodesJob( FALSE ) ;
+      if ( rc )
+      {
+         BSONObjBuilder resultBuilder ;
+
+         resultBuilder.append( OP_ERRNOFIELD, rc ) ;
+         resultBuilder.append( OP_ERRDESP_FIELD, getErrDesp( rc ) ) ;
+         resultBuilder.append( OP_ERR_DETAIL, "" ) ;
+
+         retObj = resultBuilder.obj() ;
+         rc = SDB_OK ;
+         goto done ;
+      }
+
+      _mergeResult( FALSE, retObj ) ;
+
+   done:
+      return rc ;
+   }
+
+   /*
       _remoteOmaGetIniConfigs implement
    */
    IMPLEMENT_OACMD_AUTO_REGISTER( _remoteOmaGetIniConfigs )

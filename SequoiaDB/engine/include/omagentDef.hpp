@@ -378,6 +378,8 @@ namespace engine
    #define OMA_REMOTE_OMA_SET_NODE_CONFIGS        "oma set node configs"
    #define OMA_REMOTE_OMA_UPDATE_NODE_CONFIGS     "oma update node configs"
    #define OMA_REMOTE_OMA_RELOAD_CONFIGS          CMD_NAME_RELOAD_CONFIG
+   #define OMA_REMOTE_OMA_START_NODES             "oma start nodes"
+   #define OMA_REMOTE_OMA_STOP_NODES              "oma stop nodes"
 }
 
 #endif // OMAGENT_DEF_HPP__

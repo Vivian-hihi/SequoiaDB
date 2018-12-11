@@ -77,6 +77,8 @@ namespace engine
 
       RTN_JOB_CLS_NAME_CHECK_BY_UNIQUEID = 26,
 
+      RTN_JOB_STOPNODE           = 27, // stop node
+
       RTN_JOB_MAX
    } ;
 
