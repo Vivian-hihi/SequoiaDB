@@ -580,7 +580,7 @@ namespace engine
                                                     BOOLEAN isFirst )
    {
       /// already disconnect
-      return SDB_NET_NOT_CONNECT ;
+      return SDB_COORD_REMOTE_DISC ;
    }
 
    /*
