@@ -60,18 +60,32 @@ public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
            Assert.fail("vsList.isTruncated() must be true");
        }
 
+
+       //has same commonprefixes
+        Integer maxResults2 = 2;
+        VersionListing vsList2 = listVersions(bucketName,prefix ,delimiter, null,null,maxResults2);
+        List<String> expCommonPrefixes2 = new ArrayList<String>();
+        expCommonPrefixes2.add("/aa/");
+        expCommonPrefixes2.add("/bb/");
+        if (vsList.isTruncated()) {
+            checkResult(vsList2,expCommonPrefixes2,new ArrayList<String>(),new String[]{});
+        } else {
+            Assert.fail("vsList1.isTruncated() must be true");
+        }
+
+        //test isTruncated
         String nextKeyMarker = vsList.getNextKeyMarker();
         String nextVersionIdMarker = vsList.getNextVersionIdMarker();
-        Integer maxResults1 = 2;
-        VersionListing vsList1 = listVersions(bucketName,prefix ,delimiter,nextKeyMarker,nextVersionIdMarker,maxResults1);
+        Integer maxResults3 = 2;
+        VersionListing vsList3 = listVersions(bucketName,prefix ,delimiter,nextKeyMarker,nextVersionIdMarker,maxResults3);
 
-        List<String> expCommonPrefixes1 = new ArrayList<String>();
-        expCommonPrefixes1.add("/bb/");
-        expCommonPrefixes1.add("/cc/");
-        if (!vsList1.isTruncated()) {
-            checkResult(vsList1,expCommonPrefixes1,new ArrayList<String>(),new String[]{});
+        List<String> expCommonPrefixes3 = new ArrayList<String>();
+        expCommonPrefixes3.add("/bb/");
+        expCommonPrefixes3.add("/cc/");
+        if (!vsList3.isTruncated()) {
+            checkResult(vsList3,expCommonPrefixes3,new ArrayList<String>(),new String[]{});
          } else {
-           Assert.fail("vsList1.isTruncated() must be false");
+           Assert.fail("vsList3.isTruncated() must be false");
         }
         runSuccess = true;
     }
