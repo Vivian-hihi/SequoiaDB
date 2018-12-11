@@ -1633,46 +1633,20 @@ namespace engine
                           BOOLEAN includeSubCLGroups )
    {
       INT32 rc = SDB_OK ;
-
       PD_TRACE_ENTRY( SDB_CATGETCSGRPS ) ;
 
       SDB_DMSCB * dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_RTNCB * rtnCB = pmdGetKRCB()->getRTNCB() ;
       INT64 contextID = -1 ;
-
-      BSONObjBuilder builder ;
-      stringstream ss ;
+      INT32 csNameLen = ossStrlen( csName ) ;
 
       rtnQueryOptions queryOptions ;
-
-      ss << "^" << csName << "\\." ;
-
-      if ( FALSE == includeSubCLGroups )
-      {
-         builder.appendRegex( CAT_COLLECTION_NAME, ss.str() ) ;
-      }
-      else
-      {
-         /// get the sub collection's groups
-         BSONArrayBuilder orBuilder( builder.subarrayStart( "$or" ) ) ;
-         BSONObjBuilder nameObjBuilder( orBuilder.subobjStart() ) ;
-         nameObjBuilder.appendRegex( CAT_COLLECTION_NAME, ss.str() ) ;
-         nameObjBuilder.done() ;
-         BSONObjBuilder subCLObjBuilder( orBuilder.subobjStart() ) ;
-         subCLObjBuilder.appendRegex( CAT_MAINCL_NAME, ss.str() ) ;
-         subCLObjBuilder.done() ;
-         orBuilder.done() ;
-      }
-
       queryOptions.setCLFullName( CAT_COLLECTION_INFO_COLLECTION ) ;
-      queryOptions.setQuery( builder.obj() ) ;
 
-      // query
       rc = rtnQuery( queryOptions, cb, dmsCB, rtnCB, contextID ) ;
       PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, "
                    "rc: %d", CAT_COLLECTION_INFO_COLLECTION, rc ) ;
 
-      // get more
       while ( TRUE )
       {
          BSONObj obj ;
@@ -1688,12 +1662,51 @@ namespace engine
          try
          {
             obj = BSONObj( contextBuf.data() ) ;
-            BSONElement eleCataInfo = obj.getField( CAT_CATALOGINFO_NAME ) ;
-            if ( Array != eleCataInfo.type() )
+            BSONElement ele ;
+
+            /// 1. check this cl belongs to the cs
+            ele = obj.getField( CAT_COLLECTION_NAME ) ;
+            if ( String != ele.type() )
             {
                continue ;
             }
-            BSONObjIterator itr( eleCataInfo.embeddedObject() ) ;
+            const CHAR* clName = ele.valuestr() ;
+            if (    0 == ossStrncmp( csName, clName, csNameLen )
+                 && '.' == clName[ csNameLen ] )
+            {
+               // it belongs to the cs
+            }
+            else
+            {
+               if ( !includeSubCLGroups )
+               {
+                  continue ;
+               }
+               /// 2. check this collection's maincl belongs to the cs
+               BSONElement eleMainCL = obj.getField( CAT_MAINCL_NAME ) ;
+               if ( String != eleMainCL.type() )
+               {
+                  continue ;
+               }
+               const CHAR* mainclName = eleMainCL.valuestr() ;
+               if (    0 == ossStrncmp( csName, mainclName, csNameLen )
+                    && '.' == mainclName[ csNameLen ] )
+               {
+                  // it belongs to the cs
+               }
+               else
+               {
+                  continue ;
+               }
+            }
+
+            /// 3. get collection's group id
+            ele = obj.getField( CAT_CATALOGINFO_NAME ) ;
+            if ( Array != ele.type() )
+            {
+               continue ;
+            }
+            BSONObjIterator itr( ele.embeddedObject() ) ;
             while( itr.more() )
             {
                BSONElement e = itr.next() ;
@@ -1823,18 +1836,61 @@ namespace engine
 
       SDB_ASSERT( NULL != csName, "cs is invalid" ) ;
 
-      BSONObj dummyObj, matcher ;
-      stringstream ss ;
-      BSONObjBuilder builder ;
+      SDB_DMSCB * dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_RTNCB * rtnCB = pmdGetKRCB()->getRTNCB() ;
+      INT64 contextID = -1 ;
+      INT32 csNameLen = ossStrlen( csName ) ;
+      count = 0 ;
 
-      ss << "^" << csName << "\\." ;
-      builder.appendRegex( CAT_COLLECTION_NAME, ss.str() ) ;
-      matcher = builder.obj() ;
+      rtnQueryOptions queryOptions ;
+      queryOptions.setCLFullName( CAT_TASK_INFO_COLLECTION ) ;
 
-      rc = catGetObjectCount( CAT_TASK_INFO_COLLECTION, dummyObj, matcher,
-                              dummyObj, cb, count ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get task count of cs[%s], "
-                   "rc: %d", csName, rc ) ;
+      rc = rtnQuery( queryOptions, cb, dmsCB, rtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, "
+                   "rc: %d", CAT_COLLECTION_INFO_COLLECTION, rc ) ;
+
+      while ( TRUE )
+      {
+         BSONObj obj ;
+         rtnContextBuf contextBuf ;
+         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Get more failed, rc: %d", rc ) ;
+
+         try
+         {
+            obj = BSONObj( contextBuf.data() ) ;
+            BSONElement ele = obj.getField( CAT_COLLECTION_NAME ) ;
+            if ( String != ele.type() )
+            {
+               continue ;
+            }
+            const CHAR* clName = ele.valuestr() ;
+            if (    0 == ossStrncmp( csName, clName, csNameLen )
+                 && '.' == clName[ csNameLen ] )
+            {
+               // it belongs to the cs
+               count++ ;
+            }
+            else
+            {
+               continue ;
+            }
+         }
+         catch( exception & e )
+         {
+            rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
+            PD_LOG( PDERROR,
+                    "Get collection name from obj[%s] occur exception: %s",
+                    obj.toString().c_str(), e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
 
    done :
       PD_TRACE_EXITRC( SDB_CATGETTASKCOUNTBYCS, rc ) ;
@@ -2093,30 +2149,20 @@ namespace engine
                               _utilSet< UINT32 > & groups )
    {
       INT32 rc = SDB_OK ;
-
       PD_TRACE_ENTRY( SDB_CATGETCSTASKGRPS ) ;
 
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-
       INT64 contextID = -1 ;
-
-      BSONObjBuilder builder ;
-      stringstream ss ;
+      INT32 csNameLen = ossStrlen( csName ) ;
 
       rtnQueryOptions queryOptions ;
-
-      ss << "^" << csName << "\\." ;
-      builder.appendRegex( CAT_COLLECTION_NAME, ss.str() ) ;
-
       queryOptions.setCLFullName( CAT_TASK_INFO_COLLECTION ) ;
-      queryOptions.setQuery( builder.obj() ) ;
 
       rc = rtnQuery( queryOptions, cb, dmsCB, rtnCB, contextID ) ;
       PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, "
                    "rc: %d", CAT_TASK_INFO_COLLECTION, rc ) ;
 
-      // get more
       while ( TRUE )
       {
          BSONObj obj ;
@@ -2132,7 +2178,31 @@ namespace engine
          try
          {
             obj = BSONObj( contextBuf.data() ) ;
-            BSONElement ele = obj.getField( CAT_TARGETID_NAME ) ;
+            BSONElement ele ;
+
+            /// 1. check this cl belongs to the cs
+            ele = obj.getField( CAT_COLLECTION_NAME ) ;
+            if ( String != ele.type() )
+            {
+               continue ;
+            }
+            const CHAR* clName = ele.valuestr() ;
+            if (    0 == ossStrncmp( csName, clName, csNameLen )
+                 && '.' == clName[ csNameLen ] )
+            {
+               // it belongs to the cs
+            }
+            else
+            {
+               continue ;
+            }
+
+            /// 2. get task's target group id
+            ele = obj.getField( CAT_TARGETID_NAME ) ;
+            if ( !ele.isNumber() )
+            {
+               continue ;
+            }
             groups.insert( ele.numberInt() ) ;
          }
          catch( std::exception &e )
@@ -4340,7 +4410,7 @@ namespace engine
                   BSONElement ele ;
                   BSONObj options ;
                   ele = it.next() ;
-                  PD_CHECK( Object == ele.type(), SDB_INVALIDARG, error, 
+                  PD_CHECK( Object == ele.type(), SDB_INVALIDARG, error,
                             PDWARNING, "AutoIncrement[%s] definition is invalid",
                             eleTmp.String().c_str() ) ;
                   options = ele.Obj() ;
@@ -4572,7 +4642,7 @@ namespace engine
       utilSequenceID seqID = UTIL_SEQUENCEID_NULL ;
 
       fieldName = obj.getField( CAT_AUTOINC_FIELD ).valuestr() ;
-      
+
       builder.append( CAT_AUTOINC_FIELD, fieldName ) ;
       builder.append( CAT_AUTOINC_SEQ,
                       catGetSeqName4AutoIncFld( clUniqueID, fieldName ) ) ;
