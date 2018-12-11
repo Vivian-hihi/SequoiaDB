@@ -8,7 +8,6 @@ if exist %pandocFile% (
 ) else (
    echo %pandocFile% 不存在
    echo 请去安装 共享盘:\soft\pandoc\pandoc-1.18-windows.msi
-   exit /B 1
 )
 
 if exist %convertFile% (
