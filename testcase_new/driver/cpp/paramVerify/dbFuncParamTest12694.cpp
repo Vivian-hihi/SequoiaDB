@@ -243,7 +243,8 @@ TEST_F( dbFuncParamTest, getReplicaGroup12703 )
    INT32 rc = SDB_OK ;
    sdbReplicaGroup result ;
 
-   rc = db.getReplicaGroup( NULL, result ) ;
+   //rc = db.getReplicaGroup( NULL, result ) ;
+   rc = db.getReplicaGroup( (const CHAR *)NULL, result ) ;
    EXPECT_EQ( SDB_CLS_GRP_NOT_EXIST, rc ) ;
    string longStr( 200, 'a' ) ; // must more than 127
    rc = db.getReplicaGroup( longStr.c_str(), result ) ;
