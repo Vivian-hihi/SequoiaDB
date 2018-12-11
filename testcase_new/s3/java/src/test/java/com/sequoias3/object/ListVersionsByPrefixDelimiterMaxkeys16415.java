@@ -45,7 +45,7 @@ public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
         }
     }
 
-    @Test(enabled = false) //SEQUOIADBMAINSTREAM-3987
+    @Test//SEQUOIADBMAINSTREAM-3987
     private void test() throws Exception {
         String prefix = "/";
         String delimiter = "/";
@@ -54,20 +54,16 @@ public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
         VersionListing vsList = listVersions(bucketName,prefix ,delimiter, null,null,maxResults);
         List<String> expCommonPrefixes = new ArrayList<String>();
         expCommonPrefixes.add("/aa/");
-        System.out.println("vsList.isTruncated() = " + vsList.isTruncated());
        if (vsList.isTruncated()) {
             checkResult(vsList,expCommonPrefixes,new ArrayList<String>(),new String[]{});
         } else {
            Assert.fail("vsList.isTruncated() must be true");
        }
 
-//        System.out.println("vsList.getNextKeyMarker() = " +vsList.getNextKeyMarker());
-//        System.out.println("vsList.getNextVersionIdMarker() = " +vsList.getNextVersionIdMarker());
         String nextKeyMarker = vsList.getNextKeyMarker();
         String nextVersionIdMarker = vsList.getNextVersionIdMarker();
         Integer maxResults1 = 2;
         VersionListing vsList1 = listVersions(bucketName,prefix ,delimiter,nextKeyMarker,nextVersionIdMarker,maxResults1);
-//        System.out.println("vsList1.isTruncated() = " + vsList1.isTruncated());
 
         List<String> expCommonPrefixes1 = new ArrayList<String>();
         expCommonPrefixes1.add("/bb/");
@@ -77,10 +73,6 @@ public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
          } else {
            Assert.fail("vsList1.isTruncated() must be false");
         }
-
-        VersionListing vsList2 = listVersions(bucketName,prefix ,delimiter,vsList1.getNextKeyMarker(), vsList1.getNextVersionIdMarker(),maxResults1);
-//        System.out.println("vsList2.isTruncated() = " + vsList2.isTruncated());
-        checkResult(vsList2,expCommonPrefixes,new ArrayList<String>(),new String[]{});
         runSuccess = true;
     }
 
@@ -110,10 +102,8 @@ public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
         List<String> actKeys = new ArrayList<String>();
         for (int i = 0; i < vsSummaryList.size(); i++) {
             S3VersionSummary versionSummary = vsSummaryList.get(i);
-            System.out.println("key = " + versionSummary.getKey());
-            System.out.println("version = " + versionSummary.getVersionId());
             Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            Assert.assertEquals(versionSummary.getVersionId(), expVersions[i], bucketName);
+            Assert.assertEquals(versionSummary.getVersionId(), expVersions[i], versionSummary.getKey());
             if(!key.equals(versionSummary.getKey())){
                 actKeys.add(versionSummary.getKey());
             }
