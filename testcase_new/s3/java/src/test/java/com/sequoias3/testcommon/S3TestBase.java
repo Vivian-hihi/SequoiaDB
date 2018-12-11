@@ -1,16 +1,11 @@
 package com.sequoias3.testcommon;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.ReplicaGroup;
+import com.sequoiadb.base.Sequoiadb;
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
 import org.testng.Assert;
@@ -18,11 +13,10 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Parameters;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.sequoiadb.base.ReplicaGroup;
-import com.sequoiadb.base.Sequoiadb;
+import java.io.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 
 public class S3TestBase {
     protected static String coordUrl;
@@ -108,12 +102,11 @@ public class S3TestBase {
     @AfterSuite
     public static void finiSuite() {
         try {
+            trans_snapshot();
             sdbConfTestBase.closeTransaction(hostName, serviceName);
         } finally {
             stopS3();
         }
-        
-        
     }
 
     public static String getDefaultCoordUrl() {
@@ -232,6 +225,28 @@ public class S3TestBase {
         catch( InterruptedException | IOException e ){
             e.printStackTrace();
             Assert.fail( "fail to stop s3" );
+        }
+    }
+
+    //transactions snapshot
+    private static void trans_snapshot(){
+        Sequoiadb db = null;
+        DBCursor cursor = null;
+        try{
+            db =  new Sequoiadb(coordUrl, "", "");
+            cursor =  db.getSnapshot(9,"","","");
+            System.out.println("===============begin print transaction snapshot============");
+            while(cursor.hasNext()){
+                System.out.println(cursor.getNext().toString());
+            }
+            System.out.println("===============end print transaction snapshot==============");
+        }finally{
+            if(cursor != null){
+                cursor.close();
+            }
+            if(db != null){
+                db.close();
+            }
         }
     }
 }
