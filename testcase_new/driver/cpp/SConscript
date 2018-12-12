@@ -34,6 +34,7 @@ testFiles = [
    [ "./meta/cl12660.cpp" ],
    [ "./meta/loadUnloadCS14680.cpp" ],
    [ "./meta/renameCsCl14681.cpp" ],
+   [ "./meta/renamecsandcl_16557.cpp" ],
    [ "./meta/listGroupInDomain14685.cpp" ], # sync
    [ "./index/index12514.cpp" ],
    [ "./index/idIndex12515.cpp" ],
