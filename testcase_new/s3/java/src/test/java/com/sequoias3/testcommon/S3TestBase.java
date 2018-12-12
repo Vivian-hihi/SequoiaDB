@@ -3,9 +3,14 @@ package com.sequoias3.testcommon;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
+
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
 import org.testng.Assert;
@@ -14,6 +19,7 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Parameters;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -61,8 +67,8 @@ public class S3TestBase {
         enableVerBucketName = "commbucketwithversion";
         confTool = CONFTOOL;
 
-        sdbConfTestBase.openTransaction(confTool, hostName, serviceName);
-        createCSCLAndStartS3();
+        //sdbConfTestBase.openTransaction(confTool, hostName, serviceName);
+        //createCSCLAndStartS3();
         //clean file
         File workDirFile = new File(workDir);
         if (!workDirFile.exists()) {
@@ -100,12 +106,13 @@ public class S3TestBase {
     }
 
     @AfterSuite
-    public static void finiSuite() {
+    public static void finiSuite() throws Exception {
         try {
             trans_snapshot();
-            sdbConfTestBase.closeTransaction(hostName, serviceName);
+            //sdbConfTestBase.closeTransaction(hostName, serviceName);
+            printResidualData();
         } finally {
-            stopS3();
+            //stopS3();
         }
     }
 
@@ -248,5 +255,69 @@ public class S3TestBase {
                 db.close();
             }
         }
+    }
+    
+    @SuppressWarnings("resource")
+	private static void printResidualData() throws Exception{
+    	int errorCount = 0;
+    	Sequoiadb db = null;
+        DBCursor cursor = null;
+        try{
+            db =  new Sequoiadb(coordUrl, "", "");
+            CollectionSpace metaCs = db.getCollectionSpace("MetaCollectionSpace");
+            List<DBCollection> clList = new ArrayList<DBCollection>();
+            List<String> clNameList = metaCs.getCollectionNames();
+            for(String csclName : clNameList){
+            	String clname = csclName.substring(metaCs.getName().length()+1);
+            	clList.add(metaCs.getCollection(clname));
+            }
+            
+            for(DBCollection cl : clList){
+            	cursor = cl.query();
+            	if(cursor.hasNext()){
+            		System.out.println("\n===============begin print " + metaCs.getName() +"."+ cl.getName() + " data============");
+	                while(cursor.hasNext()){
+	                	if(cursor.getNext().containsField("Name")){
+	                		if(!cursor.getCurrent().get("Name").equals(s3UserName)&&!cursor.getCurrent().get("Name").equals(bucketName)&&!cursor.getCurrent().get("Name").equals(enableVerBucketName)){
+	                			System.out.println(cursor.getCurrent().toString());
+	                			errorCount++;
+			            	}
+	                	}else{
+	                		System.out.println(cursor.getCurrent().toString());
+	                		errorCount++;
+	                	}
+	                }
+	                System.out.println("===============end print " + metaCs.getName() +"."+ cl.getName() + " data==============\n");
+            	}
+            }
+            
+            CollectionSpace dataCs = db.getCollectionSpace("DataCollectionSpace");
+            try{
+            	DBCollection objectDataList = dataCs.getCollection("ObjectDataList");
+            	cursor = objectDataList.listLobs();
+            	if(cursor.hasNext()){
+		        	System.out.println("\n===============begin print " + dataCs.getName() +"."+ objectDataList.getName() + " data============");
+		        	while(cursor.hasNext()){
+		        		System.out.println(cursor.getNext().toString());
+		        		errorCount++;
+		        	}
+		        	System.out.println("===============end print " + dataCs.getName() +"."+ objectDataList.getName() + " data============\n");
+            	}
+            }catch(BaseException e){
+            	Assert.assertEquals(e.getErrorCode(), SDBError.SDB_DMS_NOTEXIST.getErrorCode(), "getCollection ObjectDataList failed");
+            }
+            
+            if(errorCount != 0){
+            	throw new Exception("There is data residue problem");
+            }
+        }finally{
+            if(cursor != null){
+                cursor.close();
+            }
+            if(db != null){
+                db.close();
+            }
+        }
+    	
     }
 }
