@@ -67,8 +67,8 @@ public class S3TestBase {
         enableVerBucketName = "commbucketwithversion";
         confTool = CONFTOOL;
 
-        //sdbConfTestBase.openTransaction(confTool, hostName, serviceName);
-        //createCSCLAndStartS3();
+        sdbConfTestBase.openTransaction(confTool, hostName, serviceName);
+        createCSCLAndStartS3();
         //clean file
         File workDirFile = new File(workDir);
         if (!workDirFile.exists()) {
@@ -109,10 +109,10 @@ public class S3TestBase {
     public static void finiSuite() throws Exception {
         try {
             trans_snapshot();
-            //sdbConfTestBase.closeTransaction(hostName, serviceName);
+            sdbConfTestBase.closeTransaction(hostName, serviceName);
             printResidualData();
         } finally {
-            //stopS3();
+            stopS3();
         }
     }
 
