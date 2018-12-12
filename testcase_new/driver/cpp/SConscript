@@ -37,6 +37,7 @@ testFiles = [
    [ "./meta/listGroupInDomain14685.cpp" ], # sync
    [ "./index/index12514.cpp" ],
    [ "./index/idIndex12515.cpp" ],
+   [ "./index/getindextest_16781.cpp" ],
    [ "./cursor/closeCursor12685_12686.cpp" ],
    [ "./cursor/closeAllCursors12687.cpp" ],
    [ "./cursor/closeAllCursors14183.cpp" ],
