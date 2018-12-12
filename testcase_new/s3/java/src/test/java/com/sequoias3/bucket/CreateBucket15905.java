@@ -15,6 +15,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,6 +32,7 @@ public class CreateBucket15905 extends S3TestBase {
 	private String userName = "user15905";
 	private String roleName = "normal";
 	private final int defaultMaxNums = 100;
+	private List<String> bucketNameList = new ArrayList<String>();
 	private File localPath = null;
 	private AmazonS3 s3Client = null;
 
@@ -45,7 +48,7 @@ public class CreateBucket15905 extends S3TestBase {
 	public void testCreateBucket() throws Exception {
 		createBucketbyMaxNums();
 
-		// create buckets of the same name fail
+		// create buckets over maximum number
 		try {
 			s3Client.createBucket(new CreateBucketRequest(bucketName));
 			Assert.fail("create bucket maxnum is 100 by default!");
@@ -76,6 +79,7 @@ public class CreateBucket15905 extends S3TestBase {
 			String subBucketName = bucketName + "." + i;
 			s3Client.createBucket(subBucketName);
 			s3Client.putObject(subBucketName, key, "test" + subBucketName);
+			bucketNameList.add(subBucketName);
 		}
 	}
 
@@ -83,16 +87,21 @@ public class CreateBucket15905 extends S3TestBase {
 		// check bucket nums
 		List<Bucket> buckets = s3Client.listBuckets();
 		Assert.assertEquals(buckets.size(), defaultMaxNums);
-
+		
+		List<String> actbucketNameLists = new ArrayList<>();
 		for (int i = 0; i < buckets.size(); i++) {
 			Bucket bucket = buckets.get(i);
 			String actBucketName = bucket.getName();
 			String actOwner = bucket.getOwner().getDisplayName();			
-			Assert.assertEquals(actBucketName, bucketName + "." + i);
+			actbucketNameLists.add(actBucketName);
 			Assert.assertEquals(actOwner, userName);
 			// check the object in the bucket
 			getObjectAndCheckContent(actBucketName);
 		}
+		
+		Collections.sort(actbucketNameLists);
+		Collections.sort(bucketNameList);
+		Assert.assertEquals(actbucketNameLists, bucketNameList);
 	}
 	
 	private void getObjectAndCheckContent(String bucketName) throws Exception{
