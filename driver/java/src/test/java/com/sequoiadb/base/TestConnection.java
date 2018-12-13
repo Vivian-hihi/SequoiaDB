@@ -45,6 +45,7 @@ public class TestConnection extends TestCase {
         messages.add("12345679012345");
         messages.add("123456790123456");
         messages.add("1234567901234567");
+        messages.add("巨杉数据库");
 
         for(String message : messages) {
             sdb.msg(message);

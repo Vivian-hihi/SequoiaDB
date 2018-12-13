@@ -24,23 +24,25 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 public class MessageRequest extends SdbRequest {
-    private String message;
+    private byte[] messageBytes;
 
     public MessageRequest(String message) {
         length = HEADER_LENGTH;
         opCode = MsgOpCode.MSG_REQ;
 
-        this.message = message == null ? "" : message;
-        length += this.message.length() + 1;
+        try {
+            message = message == null ? "" : message;
+            this.messageBytes = message.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, e);
+        }
+
+        length += this.messageBytes.length + 1;
     }
 
     @Override
     protected void encodeBody(ByteBuffer out) {
-        try {
-            out.put(message.getBytes("UTF-8"));
-            out.put((byte) 0); // end of string
-        } catch (UnsupportedEncodingException e) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, e);
-        }
+        out.put(messageBytes);
+        out.put((byte) 0); // end of string
     }
 }

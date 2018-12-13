@@ -761,4 +761,23 @@ public class DBCollectionTest {
         cursor.close();
     }
 
+    @Test
+    public void testExplain() {
+        BSONObject options1 = new BasicBSONObject();
+        options1.put("Expand", true);
+        BSONObject options2 = new BasicBSONObject();
+//        options2.put("Expand", false);
+        DBCursor cursor1 = cl.explain(null, null, null, null, 0, -1, 0, options1);
+        DBCursor cursor2 = cl.explain(null, null, null, null, 0, -1, 0, options2);
+        while (cursor1.hasNext()) {
+            BSONObject obj = cursor1.getNext();
+            System.out.println("obj1 is: " + obj.toString());
+        }
+        while (cursor2.hasNext()) {
+            BSONObject obj = cursor2.getNext();
+            System.out.println("obj2 is: " + obj.toString());
+        }
+
+    }
+
 }
