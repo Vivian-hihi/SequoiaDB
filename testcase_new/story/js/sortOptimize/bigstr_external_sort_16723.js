@@ -23,10 +23,14 @@ function main()
    dbcl.insert(objs);
 
    // check result
-   var sortKey = "a";
-   var cursor = dbcl.find().sort({a : 1, b : 1});
-   checkSortResultForLargeData(cursor, sortKey);
+   var cursor = dbcl.find().sort({a : 1, b : 1, c : 1});
+   checkSortResultForLargeData(cursor, {a : 1, b : 1, c : 1});
    cursor.close();
+
+   // check sort type
+//   var expectResult = "External";
+//   var actResult = getSortType(dbcl, null, null, {a : 1, b : 1, c : 1});
+//   checkSortType(expectResult, actResult);
 
    commDropCL(db, COMMCSNAME, clName, true, true);
 }

@@ -30,10 +30,14 @@ function main()
    }
 
    // check result
-   var sortKey = "a";
    var cursor = dbcl.find().sort({a: 1, b:1, c:1, d:1, e:1});
-   checkSortResultForLargeData(cursor, sortKey);
+   checkSortResultForLargeData(cursor, {a: 1, b:1, c:1, d:1, e:1});
    cursor.close();
+
+   // check sort type
+   var expectResult = "InMemory";
+   var actResult = getSortType(dbcl, null, null, {a: 1, b:1, c:1, d:1, e:1});
+   checkSortType(expectResult, actResult);
   
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
