@@ -59,6 +59,143 @@ namespace engine
                          _dpsLogWrapper *dpsCB,
                          BOOLEAN isRollBack ) ;
 
+   /*
+      _clsCLParallaInfo implement
+   */
+   _clsCLParallaInfo::_clsCLParallaInfo()
+   {
+      _lastInsertLSN = DPS_INVALID_LSN_OFFSET ;
+      _lastUpdateLSN = DPS_INVALID_LSN_OFFSET ;
+      _lastDelLSN = DPS_INVALID_LSN_OFFSET ;
+
+      _lastParallaType = CLS_PARALLA_NULL ;
+   }
+
+   _clsCLParallaInfo::~_clsCLParallaInfo()
+   {
+   }
+
+   INT32 _clsCLParallaInfo::waitLastLSN( _clsBucket *pBucket )
+   {
+      INT32 rc = SDB_OK ;
+      DPS_LSN completeLSN = pBucket->completeLSN() ;
+      DPS_LSN_OFFSET maxLSN = _lastInsertLSN ;
+
+      if ( DPS_INVALID_LSN_OFFSET == maxLSN ||
+           ( _lastUpdateLSN != DPS_INVALID_LSN_OFFSET &&
+             _lastUpdateLSN > maxLSN ) )
+      {
+         maxLSN = _lastUpdateLSN ;
+      }
+
+      if ( DPS_INVALID_LSN_OFFSET == maxLSN ||
+           ( _lastDelLSN != DPS_INVALID_LSN_OFFSET &&
+             _lastDelLSN > maxLSN ) )
+      {
+         maxLSN = _lastDelLSN ;
+      }
+
+      while ( completeLSN.compareOffset( maxLSN ) < 0 )
+      {
+         if ( CLS_BUCKET_NORMAL != pBucket->getStatus() ||
+              pBucket->bucketSize() == 0 )
+         {
+            rc = pBucket->waitEmptyWithCheck() ;
+            break ;
+         }
+         pBucket->waitSubmit( OSS_ONE_SEC ) ;
+         completeLSN = pBucket->completeLSN() ;
+      }
+
+      return rc ;
+   }
+
+   BOOLEAN _clsCLParallaInfo::checkParalla( UINT16 type,
+                                            _clsBucket *pBucket ) const
+   {
+      DPS_LSN completeLSN = pBucket->completeLSN() ;
+      BOOLEAN canRecParalla = FALSE ;
+
+      switch ( (INT32)type )
+      {
+         case LOG_TYPE_DATA_INSERT :
+            if ( completeLSN.compareOffset( _lastDelLSN ) >= 0 &&
+                 completeLSN.compareOffset( _lastUpdateLSN ) >= 0 )
+            {
+               canRecParalla = TRUE ;
+            }
+            break ;
+         case LOG_TYPE_DATA_UPDATE :
+            break ;
+         case LOG_TYPE_DATA_DELETE :
+            if ( completeLSN.compareOffset( _lastInsertLSN ) >= 0 &&
+                 completeLSN.compareOffset( _lastUpdateLSN ) >= 0 )
+            {
+               canRecParalla = TRUE ;
+            }
+            break ;
+         default :
+            break ;
+      }
+
+      return canRecParalla ;
+   }
+
+   void _clsCLParallaInfo::updateParalla( CLS_PARALLA_TYPE parallaType,
+                                          UINT16 type,
+                                          DPS_LSN_OFFSET curLSN )
+   {
+      _lastParallaType = parallaType ;
+
+      if ( DPS_INVALID_LSN_OFFSET != _lastInsertLSN &&
+           _lastInsertLSN > curLSN )
+      {
+         _lastInsertLSN = curLSN ;
+      }
+      if ( DPS_INVALID_LSN_OFFSET != _lastUpdateLSN &&
+           _lastUpdateLSN > curLSN )
+      {
+         _lastUpdateLSN = curLSN ;
+      }
+      if ( DPS_INVALID_LSN_OFFSET != _lastDelLSN &&
+           _lastDelLSN > curLSN )
+      {
+         _lastDelLSN = curLSN ;
+      }
+
+      switch ( (INT32)type )
+      {
+         case LOG_TYPE_DATA_INSERT :
+            _lastInsertLSN = curLSN ;
+            break ;
+         case LOG_TYPE_DATA_UPDATE :
+            _lastUpdateLSN = curLSN ;
+            break ;
+         case LOG_TYPE_DATA_DELETE :
+            _lastDelLSN = curLSN ;
+            break ;
+         default :
+            break ;
+      }
+   }
+
+   CLS_PARALLA_TYPE _clsCLParallaInfo::getLastParallaType() const
+   {
+      return _lastParallaType ;
+   }
+
+   BOOLEAN _clsCLParallaInfo::isParallaTypeSwitch( CLS_PARALLA_TYPE type ) const
+   {
+      if ( CLS_PARALLA_NULL == _lastParallaType )
+      {
+         return FALSE ;
+      }
+      return _lastParallaType != type ? TRUE : FALSE ;
+   }
+
+   /*
+      _clsReplayer implement
+   */
    _clsReplayer::_clsReplayer( BOOLEAN useDps )
    {
       _dmsCB = sdbGetDMSCB() ;
@@ -97,8 +234,9 @@ namespace engine
       const bson::OID *oidPtr = NULL ;
       UINT32 sequence = 0 ;
       BOOLEAN clParalla = FALSE ;
-      BOOLEAN recRaralla = FALSE ;
-      BOOLEAN updateSameOID = FALSE ;
+      BOOLEAN recParalla = FALSE ;
+      BOOLEAN doSameOID = FALSE ;
+      clsCLParallaInfo *pInfo = NULL ;
       UINT32 bucketID = ~0 ;
 
       SDB_ASSERT( recordHeader && pBucket, "Invalid param" ) ;
@@ -108,10 +246,12 @@ namespace engine
       {
          case LOG_TYPE_DATA_INSERT :
             clParalla = TRUE ;
+            doSameOID = TRUE ;
             rc = dpsRecord2Insert( (CHAR *)recordHeader, &fullname, obj ) ;
             break ;
          case LOG_TYPE_DATA_DELETE :
             clParalla = TRUE ;
+            doSameOID = TRUE ;
             rc = dpsRecord2Delete( (CHAR *)recordHeader, &fullname, obj ) ;
             break ;
          case LOG_TYPE_DATA_UPDATE :
@@ -127,13 +267,13 @@ namespace engine
                  0 == match.woCompare( newMatch, BSONObj(), false ) )
             {
                obj = match ;
-               updateSameOID = TRUE ;
+               doSameOID = TRUE ;
             }
             break ;
          }
          case LOG_TYPE_LOB_WRITE :
          {
-            recRaralla = TRUE ;
+            recParalla = TRUE ;
             const CHAR *fullName = NULL ;
             const bson::OID *oid = NULL ;
             UINT32 offset = 0 ;
@@ -150,7 +290,7 @@ namespace engine
          }
          case LOG_TYPE_LOB_UPDATE :
          {
-            recRaralla = TRUE ;
+            recParalla = TRUE ;
             const CHAR *fullName = NULL ;
             const bson::OID *oid = NULL ;
             UINT32 offset = 0 ;
@@ -170,7 +310,7 @@ namespace engine
          }
          case LOG_TYPE_LOB_REMOVE :
          {
-            recRaralla = TRUE ;
+            recParalla = TRUE ;
             const CHAR *fullName = NULL ;
             const bson::OID *oid = NULL ;
             UINT32 offset = 0 ;
@@ -196,43 +336,89 @@ namespace engine
                    "falied, rc: %d", recordHeader->_type,
                    recordHeader->_lsn, recordHeader->_length, rc ) ;
 
-      /// when collection has multi unique index, can't use paralla sync
-      if ( LOG_TYPE_DATA_INSERT == recordHeader->_type ||
-           LOG_TYPE_DATA_DELETE == recordHeader->_type ||
-           ( LOG_TYPE_DATA_UPDATE == recordHeader->_type && updateSameOID ) )
+      /*
+         When collection paralla(clParalla) is true, but recParalla is false,
+         we should update clParalla to recParalla in bellow case:
+            1. unique index number <= 1 and no text index
+         or 2. only the simple operator as insert/delete
+      */
+      if ( clParalla )
       {
          dmsStorageUnit *su = NULL ;
          const CHAR *pShortName = NULL ;
          dmsStorageUnitID suID = DMS_INVALID_SUID ;
+         CLS_PARALLA_TYPE parallaType = CLS_PARALLA_CL ;
+         INT32 rcTmp = SDB_OK ;
+
          rc = rtnResolveCollectionNameAndLock( fullname, _dmsCB, &su,
                                                &pShortName, suID ) ;
          if ( SDB_OK == rc )
          {
-            dmsMBContext *mbContext = NULL ;
-            rc = su->data()->getMBContext( &mbContext, pShortName, SHARED ) ;
-            if ( SDB_OK == rc )
-            {
-               // For collection who has text indices, parallel replay should
-               // also be forbidden. Otherwise, the records in the capped
-               // collection will not be exactly the same.
-               recRaralla = ( mbContext->mbStat()->_uniqueIdxNum <= 1 &&
-                              0 == mbContext->mbStat()->_textIdxNum ) ?
-                            TRUE : FALSE ;
-               su->data()->releaseMBContext( mbContext ) ;
-            }
-
             // Currently parallel replaying on capped collection is forbidden,
             // because we need to be sure the records are exactly the same with
             // the ones on primary node, including their positions.
-            if ( DMS_STORAGE_CAPPED == su->type() )
+            if ( DMS_STORAGE_CAPPED != su->type() )
             {
-               recRaralla = FALSE ;
+               dmsMBContext *mbContext = NULL ;
+               rc = su->data()->getMBContext( &mbContext, pShortName, SHARED ) ;
+               if ( SDB_OK == rc )
+               {
+                  pInfo = _getOrCreateInfo( mbContext->mb()->_clUniqueID ) ;
+                  if ( !pInfo )
+                  {
+                     rcTmp = SDB_OOM ;
+                     /// can't goto error
+                  }
+                  // For collection who has text indices, parallel replay should
+                  // also be forbidden. Otherwise, the records in the capped
+                  // collection will not be exactly the same.
+                  if ( !doSameOID || 0 != mbContext->mbStat()->_textIdxNum )
+                  {
+                     /// can't upgrade to recParalla
+                  }
+                  else if ( mbContext->mbStat()->_uniqueIdxNum <= 1 )
+                  {
+                     recParalla = TRUE ;
+                     parallaType = CLS_PARALLA_REC ;
+                  }
+                  else if ( pInfo && pInfo->checkParalla( recordHeader->_type,
+                                                          pBucket ) )
+                  {
+                     recParalla = TRUE ;
+                     parallaType = CLS_PARALLA_REC ;
+                  }
+                  su->data()->releaseMBContext( mbContext ) ;
+               }
             }
             _dmsCB->suUnlock( suID, SHARED ) ;
-         }
-      }
 
-      if ( recRaralla )
+            /// when get or create clParallaInfo failed
+            if ( rcTmp )
+            {
+               rc = rcTmp ;
+               goto error ;
+            }
+            else if ( pInfo )
+            {
+               if ( pInfo->isParallaTypeSwitch( parallaType ) &&
+                    SDB_OK != ( rc = pInfo->waitLastLSN( pBucket ) ) )
+               {
+                  INT32 bucketStatus = (INT32)pBucket->getStatus() ;
+                  PD_LOG( PDWARNING, "Wait repl bucket empty failed, its "
+                          "status[%s(%d)] is error",
+                          clsGetReplBucketStatusDesp( bucketStatus ),
+                          bucketStatus ) ;
+                  goto error ;
+               }
+
+               /// update paralla info
+               pInfo->updateParalla( parallaType, recordHeader->_type,
+                                     recordHeader->_lsn ) ;
+            } // else if ( pInfo )
+         } // if ( SDB_OK == rc )
+      } // if ( clParalla )
+
+      if ( recParalla )
       {
          idEle = obj.getField( DMS_ID_KEY_NAME ) ;
          if ( !idEle.eoo() )
@@ -285,6 +471,9 @@ namespace engine
             rc = SDB_CLS_REPLAY_LOG_FAILED ;
             goto error ;
          }
+
+         _clearParallaInfo() ;
+
          rc = replay( recordHeader, eduCB ) ;
          // re-calc complete lsn
          if ( SDB_OK == rc && !pBucket->_expectLSN.invalid() )
@@ -1450,6 +1639,25 @@ namespace engine
       return rtnWriteLob( fullName, oid, sequence,
                           offset, len, data, eduCB,
                           1, _dpsCB ) ;
+   }
+
+   clsCLParallaInfo* _clsReplayer::_getOrCreateInfo( utilCLUniqueID clUID )
+   {
+      try
+      {
+         clsCLParallaInfo &info = _mapParallaInfo[ clUID ] ;
+         return &info ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+      }
+      return NULL ;
+   }
+
+   void _clsReplayer::_clearParallaInfo()
+   {
+      _mapParallaInfo.clear() ;
    }
 
    static BOOLEAN _isTextIdx( const BSONObj &index )

@@ -57,10 +57,55 @@ namespace engine
    class _clsBucket ;
 
    /*
+      CLS_PARALLA_TYPE define
+   */
+   enum CLS_PARALLA_TYPE
+   {
+      CLS_PARALLA_NULL     = 0,
+      CLS_PARALLA_REC,
+      CLS_PARALLA_CL
+   } ;
+
+   /*
+      _clsCLParallaInfo define
+   */
+   class _clsCLParallaInfo : public SDBObject
+   {
+      public:
+         _clsCLParallaInfo() ;
+         ~_clsCLParallaInfo() ;
+
+         BOOLEAN           checkParalla( UINT16 type,
+                                         _clsBucket *pBucket ) const ;
+
+         void              updateParalla( CLS_PARALLA_TYPE parallaType,
+                                          UINT16 type,
+                                          DPS_LSN_OFFSET curLSN ) ;
+
+         CLS_PARALLA_TYPE  getLastParallaType() const ;
+
+         BOOLEAN           isParallaTypeSwitch( CLS_PARALLA_TYPE type ) const ;
+
+         INT32             waitLastLSN( _clsBucket *pBucket ) ;
+
+      protected:
+         DPS_LSN_OFFSET       _lastInsertLSN ;
+         DPS_LSN_OFFSET       _lastDelLSN ;
+         DPS_LSN_OFFSET       _lastUpdateLSN ;
+
+         CLS_PARALLA_TYPE     _lastParallaType ;
+
+   } ;
+   typedef _clsCLParallaInfo clsCLParallaInfo ;
+
+
+   /*
       _clsReplayer define
    */
    class _clsReplayer : public SDBObject
    {
+      typedef map<utilCLUniqueID, clsCLParallaInfo>   MAP_CL_PARALLAINFO ;
+
    public:
       _clsReplayer( BOOLEAN useDps = FALSE ) ;
       ~_clsReplayer() ;
@@ -105,10 +150,16 @@ namespace engine
                             const CHAR *data,
                             _pmdEDUCB *eduCB ) ;
 
+   protected:
+      clsCLParallaInfo*    _getOrCreateInfo( utilCLUniqueID clUID ) ;
+      void                 _clearParallaInfo() ;
+
    private:
       _SDB_DMSCB              *_dmsCB ;
       _dpsLogWrapper          *_dpsCB ;
       monDBCB                 *_monDBCB ;
+
+      MAP_CL_PARALLAINFO      _mapParallaInfo ;
 
    } ;
    typedef class _clsReplayer clsReplayer ;
