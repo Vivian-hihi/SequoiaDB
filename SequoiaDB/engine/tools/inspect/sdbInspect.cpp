@@ -2611,35 +2611,14 @@ error:
 }
 
 /**
-** modify tmpfile path if the user provides outfile path
+** make tmpFile path from outFile
 ***/
-void modifyTmpFilePath( const CHAR *outFile, UINT32 loopIndex, CHAR *tmpFile )
+void makeTmpFileName( const CHAR *outFile, UINT32 loopIndex, CHAR *tmpFile, UINT32 len )
 {
-   if ( NULL == outFile || NULL == tmpFile )
-   {
-      goto done ;
-   }
+   SDB_ASSERT( NULL != outFile && NULL != tmpFile, "outFile & tmpFile can't be NULL" ) ;
 
-   if ( 0 == ossStrncmp( "", outFile, OSS_MAX_PATHSIZE ) )
-   {
-      goto done ;
-   }
-   else if ( OSS_MAX_PATHSIZE < ossStrlen( outFile ) + 
-                                ossStrlen( CI_TMP_FILE_SUFFIX ) + 1 )
-   {
-      goto done ;
-   }
-   else
-   {
-      ossMemset( tmpFile, 0, OSS_MAX_PATHSIZE ) ;
-      ossStrncpy( tmpFile, outFile, OSS_MAX_PATHSIZE ) ;
-      ossSnprintf( tmpFile + ossStrlen(tmpFile), 
-                   OSS_MAX_PATHSIZE - ossStrlen(tmpFile), 
-                   CI_TMP_FILE_SUFFIX, loopIndex ) ;
-   }
-
-done:
-   return ;
+   ossMemset( tmpFile, 0, OSS_MAX_PATHSIZE ) ;
+   ossSnprintf( tmpFile, len, "%s"CI_TMP_FILE_SUFFIX, outFile, loopIndex ) ;
 }
 
 /**
@@ -3424,9 +3403,8 @@ INT32 _sdbCi::inspect()
       do
       {
          curLoop += 1 ;
-         ossMemset( tmpFile, 0, OSS_MAX_PATHSIZE ) ;
-         ossSnprintf( tmpFile, OSS_MAX_PATHSIZE, CI_TMP_FILE, curLoop ) ;
-         modifyTmpFilePath( _header._outfile, curLoop, tmpFile ) ;
+         makeTmpFileName( _header._outfile, curLoop, tmpFile, OSS_MAX_PATHSIZE ) ;
+
          rc = inspectWithoutFile( coord, &_header, tmpFile, totalRecord ) ;
       }while ( CI_INSPECT_ERROR == rc ) ;
 
@@ -3455,9 +3433,7 @@ INT32 _sdbCi::inspect()
 
    for (INT32 idx = curLoop ; idx < _header._loop && !finish ; ++idx)
    {
-      ossMemset( tmpFile, 0, OSS_MAX_PATHSIZE ) ;
-      ossSnprintf( tmpFile, OSS_MAX_PATHSIZE, CI_TMP_FILE, idx + 1 ) ;
-      modifyTmpFilePath( _header._outfile, idx + 1, tmpFile ) ;
+      makeTmpFileName( _header._outfile, idx + 1, tmpFile, OSS_MAX_PATHSIZE ) ;
 
       rc = inspectWithFile( &_header, inFile, tmpFile, totalRecord, finish ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
@@ -3485,8 +3461,7 @@ INT32 _sdbCi::inspect()
    // delete temp file
    for ( INT32 idx = 0 ; idx < _header._loop ; ++idx )
    {
-      ossMemset( tmpFile, 0, OSS_MAX_PATHSIZE ) ;
-      ossSnprintf( tmpFile, OSS_MAX_PATHSIZE, CI_TMP_FILE, idx + 1 ) ;
+      makeTmpFileName( _header._outfile, idx + 1, tmpFile, OSS_MAX_PATHSIZE ) ;
 
       ossDelete( tmpFile ) ;
    }
