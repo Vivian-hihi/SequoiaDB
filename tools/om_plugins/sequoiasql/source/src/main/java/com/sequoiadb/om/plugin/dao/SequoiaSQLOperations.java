@@ -19,7 +19,7 @@ public abstract class SequoiaSQLOperations {
 
     public List<JSONObject> query(String hostName, String svcname,
                                   String user, String pwd,
-                                  String dbName, String sql) throws Exception {
+                                  String dbName, String sql, boolean isAll) throws Exception {
         Connection c = null;
         Statement stmt = null;
         ResultSet rs = null;
@@ -38,7 +38,7 @@ public abstract class SequoiaSQLOperations {
 
             if (sql.toLowerCase().indexOf("select") == 0) {
                 rs = stmt.executeQuery(sql);
-                for (int i = 0; i < 100 && rs.next(); ++i) {
+                for (int i = 0; (i < 100 || isAll) && rs.next(); ++i) {
                     content.add(resultSet2Json(rs));
                 }
             } else {

@@ -50,6 +50,8 @@ public class SQLController {
         String BusinessName = request.getHeader("SdbBusinessName");
         String Sql = request.getParameter("Sql");
         String DbName = request.getParameter("DbName");
+        String allData = request.getParameter("IsAll");
+        boolean isAll = false;
         if (ClusterName == null || ClusterName.trim().length() == 0) {
             return outputResult(-1, "SdbClusterName is NULL", "", content);
         }
@@ -58,6 +60,9 @@ public class SQLController {
         }
         if (Sql == null || Sql.trim().length() == 0) {
             return outputResult(-1, "Sql is NULL", "", content);
+        }
+        if (allData != null && allData.equals("true")) {
+            isAll = true;
         }
 
         Sql = Sql.trim();
@@ -90,7 +95,7 @@ public class SQLController {
 
         try {
             content = ssqlo.query(node.getHostName(), node.getSvcName(),
-                    auth.getUser(), auth.getPasswd(), DbName, Sql);
+                    auth.getUser(), auth.getPasswd(), DbName, Sql, isAll);
         } catch (Exception e) {
             /*
             StackTraceElement elements[] = e.getStackTrace();
