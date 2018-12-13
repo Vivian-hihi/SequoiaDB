@@ -152,6 +152,10 @@
     <Compile Include="Cluster\TestReplicaGroup15935.cs" />
     <Compile Include="TestBaseException\ExceptionTest16532.cs" />
     <Compile Include="TestBaseException\ExceptionTest16533.cs" />
+    <Compile Include="AutoIncrement\AutoIncrement16634.cs" />
+    <Compile Include="AutoIncrement\AutoIncrement16635.cs" />
+    <Compile Include="AutoIncrement\AutoIncrement16636.cs" />
+    <Compile Include="AutoIncrement\AutoIncrement16656.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
