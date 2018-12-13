@@ -1633,20 +1633,50 @@ namespace engine
                           BOOLEAN includeSubCLGroups )
    {
       INT32 rc = SDB_OK ;
+
       PD_TRACE_ENTRY( SDB_CATGETCSGRPS ) ;
 
       SDB_DMSCB * dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_RTNCB * rtnCB = pmdGetKRCB()->getRTNCB() ;
       INT64 contextID = -1 ;
-      INT32 csNameLen = ossStrlen( csName ) ;
-
+      BSONObj matcher ;
       rtnQueryOptions queryOptions ;
-      queryOptions.setCLFullName( CAT_COLLECTION_INFO_COLLECTION ) ;
+      CHAR lowBound[ DMS_COLLECTION_SPACE_NAME_SZ + 1 + 1 ] = { 0 } ;
+      CHAR upBound[  DMS_COLLECTION_SPACE_NAME_SZ + 1 + 1 ] = { 0 } ;
 
+      ossStrncpy( lowBound, csName, DMS_COLLECTION_NAME_SZ ) ;
+      ossStrncat( lowBound, ".", 1 ) ;
+      ossStrncpy( upBound, csName, DMS_COLLECTION_NAME_SZ ) ;
+      ossStrncat( upBound, "/", 1 ) ;
+
+      if ( !includeSubCLGroups )
+      {
+         // eg: csName is "test", { Name: { $regex: "^test\\." } } is equal to
+         // { Name: { $gt: "test.", $lt: "test/" } }. So if csName has
+         // metacharacter(eg: "^"), we do not need to escape it.
+         matcher = BSON( CAT_COLLECTION_NAME
+                      << BSON( "$gt" << lowBound << "$lt" << upBound ) ) ;
+      }
+      else
+      {
+         matcher = BSON( "$or"
+                      << BSON_ARRAY( BSON( CAT_COLLECTION_NAME
+                                        << BSON( "$gt" << lowBound
+                                              << "$lt" << upBound ) )
+                                  << BSON( CAT_MAINCL_NAME
+                                        << BSON( "$gt" << lowBound
+                                              << "$lt" << upBound ) ) ) ) ;
+      }
+
+      queryOptions.setCLFullName( CAT_COLLECTION_INFO_COLLECTION ) ;
+      queryOptions.setQuery( matcher ) ;
+
+      // query
       rc = rtnQuery( queryOptions, cb, dmsCB, rtnCB, contextID ) ;
       PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, "
                    "rc: %d", CAT_COLLECTION_INFO_COLLECTION, rc ) ;
 
+      // get more
       while ( TRUE )
       {
          BSONObj obj ;
@@ -1662,51 +1692,12 @@ namespace engine
          try
          {
             obj = BSONObj( contextBuf.data() ) ;
-            BSONElement ele ;
-
-            /// 1. check this cl belongs to the cs
-            ele = obj.getField( CAT_COLLECTION_NAME ) ;
-            if ( String != ele.type() )
+            BSONElement eleCataInfo = obj.getField( CAT_CATALOGINFO_NAME ) ;
+            if ( Array != eleCataInfo.type() )
             {
                continue ;
             }
-            const CHAR* clName = ele.valuestr() ;
-            if (    0 == ossStrncmp( csName, clName, csNameLen )
-                 && '.' == clName[ csNameLen ] )
-            {
-               // it belongs to the cs
-            }
-            else
-            {
-               if ( !includeSubCLGroups )
-               {
-                  continue ;
-               }
-               /// 2. check this collection's maincl belongs to the cs
-               BSONElement eleMainCL = obj.getField( CAT_MAINCL_NAME ) ;
-               if ( String != eleMainCL.type() )
-               {
-                  continue ;
-               }
-               const CHAR* mainclName = eleMainCL.valuestr() ;
-               if (    0 == ossStrncmp( csName, mainclName, csNameLen )
-                    && '.' == mainclName[ csNameLen ] )
-               {
-                  // it belongs to the cs
-               }
-               else
-               {
-                  continue ;
-               }
-            }
-
-            /// 3. get collection's group id
-            ele = obj.getField( CAT_CATALOGINFO_NAME ) ;
-            if ( Array != ele.type() )
-            {
-               continue ;
-            }
-            BSONObjIterator itr( ele.embeddedObject() ) ;
+            BSONObjIterator itr( eleCataInfo.embeddedObject() ) ;
             while( itr.more() )
             {
                BSONElement e = itr.next() ;
@@ -1836,61 +1827,25 @@ namespace engine
 
       SDB_ASSERT( NULL != csName, "cs is invalid" ) ;
 
-      SDB_DMSCB * dmsCB = pmdGetKRCB()->getDMSCB() ;
-      SDB_RTNCB * rtnCB = pmdGetKRCB()->getRTNCB() ;
-      INT64 contextID = -1 ;
-      INT32 csNameLen = ossStrlen( csName ) ;
-      count = 0 ;
+      BSONObj dummyObj, matcher ;
+      CHAR lowBound[ DMS_COLLECTION_SPACE_NAME_SZ + 1 + 1 ] = { 0 } ;
+      CHAR upBound[  DMS_COLLECTION_SPACE_NAME_SZ + 1 + 1 ] = { 0 } ;
 
-      rtnQueryOptions queryOptions ;
-      queryOptions.setCLFullName( CAT_TASK_INFO_COLLECTION ) ;
+      ossStrncpy( lowBound, csName, DMS_COLLECTION_NAME_SZ ) ;
+      ossStrncat( lowBound, ".", 1 ) ;
+      ossStrncpy( upBound, csName, DMS_COLLECTION_NAME_SZ ) ;
+      ossStrncat( upBound, "/", 1 ) ;
 
-      rc = rtnQuery( queryOptions, cb, dmsCB, rtnCB, contextID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, "
-                   "rc: %d", CAT_COLLECTION_INFO_COLLECTION, rc ) ;
+      // eg: csName is "test", { Name: { $regex: "^test\\." } } is equal to
+      // { Name: { $gt: "test.", $lt: "test/" } }. So if csName has
+      // metacharacter(eg: "^"), we do not need to escape it.
+      matcher = BSON( CAT_COLLECTION_NAME
+                   << BSON( "$gt" << lowBound << "$lt" << upBound ) ) ;
 
-      while ( TRUE )
-      {
-         BSONObj obj ;
-         rtnContextBuf contextBuf ;
-         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
-         if ( SDB_DMS_EOC == rc )
-         {
-            rc = SDB_OK ;
-            break ;
-         }
-         PD_RC_CHECK( rc, PDERROR, "Get more failed, rc: %d", rc ) ;
-
-         try
-         {
-            obj = BSONObj( contextBuf.data() ) ;
-            BSONElement ele = obj.getField( CAT_COLLECTION_NAME ) ;
-            if ( String != ele.type() )
-            {
-               continue ;
-            }
-            const CHAR* clName = ele.valuestr() ;
-            if (    0 == ossStrncmp( csName, clName, csNameLen )
-                 && '.' == clName[ csNameLen ] )
-            {
-               // it belongs to the cs
-               count++ ;
-            }
-            else
-            {
-               continue ;
-            }
-         }
-         catch( exception & e )
-         {
-            rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
-            PD_LOG( PDERROR,
-                    "Get collection name from obj[%s] occur exception: %s",
-                    obj.toString().c_str(), e.what() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-      }
+      rc = catGetObjectCount( CAT_TASK_INFO_COLLECTION, dummyObj, matcher,
+                              dummyObj, cb, count ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get task count of cs[%s], "
+                   "rc: %d", csName, rc ) ;
 
    done :
       PD_TRACE_EXITRC( SDB_CATGETTASKCOUNTBYCS, rc ) ;
@@ -2149,20 +2104,36 @@ namespace engine
                               _utilSet< UINT32 > & groups )
    {
       INT32 rc = SDB_OK ;
+
       PD_TRACE_ENTRY( SDB_CATGETCSTASKGRPS ) ;
 
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       INT64 contextID = -1 ;
-      INT32 csNameLen = ossStrlen( csName ) ;
-
+      BSONObj matcher ;
       rtnQueryOptions queryOptions ;
+      CHAR lowBound[ DMS_COLLECTION_SPACE_NAME_SZ + 1 + 1 ] = { 0 } ;
+      CHAR upBound[  DMS_COLLECTION_SPACE_NAME_SZ + 1 + 1 ] = { 0 } ;
+
+      ossStrncpy( lowBound, csName, DMS_COLLECTION_NAME_SZ ) ;
+      ossStrncat( lowBound, ".", 1 ) ;
+      ossStrncpy( upBound, csName, DMS_COLLECTION_NAME_SZ ) ;
+      ossStrncat( upBound, "/", 1 ) ;
+
+      // eg: csName is "test", { Name: { $regex: "^test\\." } } is equal to
+      // { Name: { $gt: "test.", $lt: "test/" } }. So if csName has
+      // metacharacter(eg: "^"), we do not need to escape it.
+      matcher = BSON( CAT_COLLECTION_NAME
+                   << BSON( "$gt" << lowBound << "$lt" << upBound ) ) ;
+
       queryOptions.setCLFullName( CAT_TASK_INFO_COLLECTION ) ;
+      queryOptions.setQuery( matcher ) ;
 
       rc = rtnQuery( queryOptions, cb, dmsCB, rtnCB, contextID ) ;
       PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, "
                    "rc: %d", CAT_TASK_INFO_COLLECTION, rc ) ;
 
+      // get more
       while ( TRUE )
       {
          BSONObj obj ;
@@ -2178,31 +2149,7 @@ namespace engine
          try
          {
             obj = BSONObj( contextBuf.data() ) ;
-            BSONElement ele ;
-
-            /// 1. check this cl belongs to the cs
-            ele = obj.getField( CAT_COLLECTION_NAME ) ;
-            if ( String != ele.type() )
-            {
-               continue ;
-            }
-            const CHAR* clName = ele.valuestr() ;
-            if (    0 == ossStrncmp( csName, clName, csNameLen )
-                 && '.' == clName[ csNameLen ] )
-            {
-               // it belongs to the cs
-            }
-            else
-            {
-               continue ;
-            }
-
-            /// 2. get task's target group id
-            ele = obj.getField( CAT_TARGETID_NAME ) ;
-            if ( !ele.isNumber() )
-            {
-               continue ;
-            }
+            BSONElement ele = obj.getField( CAT_TARGETID_NAME ) ;
             groups.insert( ele.numberInt() ) ;
          }
          catch( std::exception &e )
