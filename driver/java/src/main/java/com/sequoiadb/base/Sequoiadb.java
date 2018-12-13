@@ -1153,6 +1153,9 @@ public class Sequoiadb implements Closeable {
      * @throws BaseException If error happens.
      */
     public void execUpdate(String sql) throws BaseException {
+        if (sql == null || sql.isEmpty()) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "sql can not be null or empty");
+        }
         SQLRequest request = new SQLRequest(sql);
         SdbReply response = requestAndResponse(request);
         throwIfError(response, sql);
@@ -1166,6 +1169,9 @@ public class Sequoiadb implements Closeable {
      * @throws BaseException If error happens.
      */
     public DBCursor exec(String sql) throws BaseException {
+        if (sql == null || sql.isEmpty()) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "sql can not be null or empty");
+        }
         SQLRequest request = new SQLRequest(sql);
         SdbReply response = requestAndResponse(request);
 
