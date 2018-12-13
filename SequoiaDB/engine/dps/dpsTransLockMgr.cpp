@@ -882,8 +882,10 @@ namespace engine
       UTIL_OBJIDX hdrIdx  = UTIL_INVALID_OBJ_INDEX ;
       dpsTransLRB *pLRB = NULL , *plrb = NULL ;
       dpsTransLRBHeader * pLRBHdr = NULL ;
+
 #ifdef _DEBUG
       EDUID eduIDTrc = 0 ;
+
       PD_TRACE6( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
                  PD_PACK_ULONG( dpsTxExectr ),
                  PD_PACK_STRING( lockId.toString().c_str() ), 
@@ -892,6 +894,7 @@ namespace engine
                  PD_PACK_STRING( "LRB to be removed:" ),
                  PD_PACK_UINT( idx ) ) ;
 #endif
+
       if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
       {
          pLRB = _getLRBPtrByIdx( idx ) ;
@@ -972,12 +975,14 @@ namespace engine
 
 #ifdef _DEBUG
                eduIDTrc = plrb->dpsTxExectr->getEDUID() ;
+
                PD_TRACE4( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
                           PD_PACK_STRING( "Wake up EDU:" ),
                           PD_PACK_ULONG( eduIDTrc ),
                           PD_PACK_STRING( "Waiter LRB idx:" ),
                           PD_PACK_UINT( idxNext ) ) ;
 #endif
+
             }
          }
 
@@ -1219,8 +1224,10 @@ namespace engine
               bLatched       = FALSE ;
 
       EDUID eduId    = dpsTxExectr->getEDUID() ;
+
 #ifdef _DEBUG
       EDUID eduIDTrc = 0 ;
+
       PD_TRACE8( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
                  PD_PACK_ULONG( dpsTxExectr ),
                  PD_PACK_STRING( lockId.toString().c_str() ),
@@ -1231,6 +1238,7 @@ namespace engine
                  PD_PACK_ULONG( pdpsTxResInfo ),
                  PD_PACK_ULONG( eduId ) ) ;
 #endif
+
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
 
       // acquire and prepare new LRB and LRB Header
@@ -1482,13 +1490,17 @@ namespace engine
                pdpsTxResInfo->_lockType = pLRBIncomp->lockMode ;
                pdpsTxResInfo->_eduID    = pLRBIncomp->dpsTxExectr->getEDUID();
             }
+
 #ifdef _DEBUG
+
             eduIDTrc = pLRBIncomp->dpsTxExectr->getEDUID() ;
+
             PD_TRACE3( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
                        PD_PACK_STRING( "May put in upgrade Q, conflict with:" ),
                        PD_PACK_ULONG( eduIDTrc ),
                        PD_PACK_BYTE( pLRBIncomp->lockMode ) ) ; 
 #endif
+
             // job done
             goto done ;
          }
@@ -1592,13 +1604,17 @@ namespace engine
                pdpsTxResInfo->_lockType = pLRBIncomp->lockMode ;
                pdpsTxResInfo->_eduID    = pLRBIncomp->dpsTxExectr->getEDUID();
             }
+
 #ifdef _DEBUG
+
             eduIDTrc = pLRBIncomp->dpsTxExectr->getEDUID() ;
+
             PD_TRACE3( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
                        PD_PACK_STRING( "May put in waiter Q, conflict with:" ),
                        PD_PACK_ULONG( eduIDTrc ),
                        PD_PACK_BYTE( pLRBIncomp->lockMode ) ) ; 
 #endif
+
             // job done
             goto done ;
 
@@ -1679,12 +1695,16 @@ namespace engine
                   pdpsTxResInfo->_lockType = pLRB->lockMode ;
                   pdpsTxResInfo->_eduID    = pLRB->dpsTxExectr->getEDUID() ;
 #ifdef _DEBUG
+
                   eduIDTrc = pLRB->dpsTxExectr->getEDUID() ;
+
                   PD_TRACE3( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
                              PD_PACK_STRING("Conflict with:"),
                              PD_PACK_ULONG( eduIDTrc ),
                              PD_PACK_BYTE( pLRB->lockMode ) ) ; 
+
 #endif
+
                }
 
 #ifdef _DEBUG
@@ -2093,12 +2113,18 @@ namespace engine
    )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASE ) ;
+
 #ifdef _DEBUG
+
+      EDUID eduIDTrc = 0 ;
+
       PD_TRACE3( SDB_DPSTRANSLOCKMANAGER__RELEASE,
                  PD_PACK_ULONG( dpsTxExectr ),
                  PD_PACK_STRING( lockId.toString().c_str() ),
                  PD_PACK_UINT( bForceRelease ) ) ;
+
 #endif
+
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 
@@ -2114,7 +2140,6 @@ namespace engine
                   *pWaiterLRB    = NULL ;
       dpsTransLRBHeader *pLRBHdr = NULL ;
       EDUID eduId = dpsTxExectr->getEDUID() ;
-      EDUID eduIDTrc = 0 ;
       BOOLEAN bLatched = FALSE ;
       BOOLEAN foundIncomp = FALSE ;
 
@@ -2137,17 +2162,25 @@ namespace engine
             {
                pWaiterLRB = _getLRBPtrByIdx( pLRBHdr->upgradeLRBIdx ) ;
                waiterIdx  = pLRBHdr->upgradeLRBIdx ;     
+
+#ifdef _DEBUG
                eduIDTrc   = pWaiterLRB->dpsTxExectr->getEDUID() ;
+#endif
+
             }
             else if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx ) )
             {
                pWaiterLRB = _getLRBPtrByIdx( pLRBHdr->waiterLRBIdx ) ;
                waiterIdx  = pLRBHdr->waiterLRBIdx ;
+
+#ifdef _DEBUG
                eduIDTrc   = pWaiterLRB->dpsTxExectr->getEDUID() ;
+#endif
+
             }
 
             // lookup owner list to find the LRB with same eduid
-            ownerLrbIdx = pLRBHdr->ownerLRBIdx ;
+            ownerLrbIdx = UTIL_INVALID_OBJ_INDEX ;
             pOwnerLRB   = NULL ;
 
             if ( pWaiterLRB )
@@ -2227,12 +2260,16 @@ namespace engine
                   pPrevOwnerLRB->nextLRBIdx = pOwnerLRB->nextLRBIdx ;
                }
 
-               // if the waiter lockMode is compabile with other owners
+               // if the owner queue is empty ( after remove current owner ),
+               // or if the waiter lockMode is compabile with other owners
                // wake it up
-               if ( pWaiterLRB && ( FALSE == foundIncomp ) )
+               if ( pWaiterLRB && 
+                    ( ( FALSE == foundIncomp ) || 
+                      ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx ) ) ) )
                {
                   // wake up the edu by posting an event
                   _wakeUp( pWaiterLRB->dpsTxExectr ) ;
+
 #ifdef _DEBUG
                   PD_TRACE4( SDB_DPSTRANSLOCKMANAGER__RELEASE,
                              PD_PACK_STRING( "Wakeup the EDU:" ),
@@ -2240,6 +2277,7 @@ namespace engine
                              PD_PACK_STRING( "Waiter LRB idx:" ),
                              PD_PACK_UINT( waiterIdx ) ) ;
 #endif
+
                }
 
                // save the index of owner LRB to be released
