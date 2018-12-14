@@ -90,7 +90,7 @@ TEST_F( reNameCSTest16566_16567, renamecsfail )
    bson_append_bool( &option, "Global", true ) ;
    bson_finish( &option ) ;
    rc = sdbRenameCollectionSpace( db, csOldName, csNewName, &option ) ;
-   ASSERT_NE( SDB_OK, rc ) << "success to rename cs when old cs not exist " << csOldName ;
+   ASSERT_EQ( -34, rc ) << "success to rename cs when old cs not exist " << csOldName ;
 
    // check cs
    BOOLEAN exist ;
@@ -106,9 +106,9 @@ TEST_F( reNameCSTest16566_16567, renamecsfail )
 
    // rename cs and newCSName exist
    rc = sdbRenameCollectionSpace( db, csOldName, csNewName, &option ) ;
-   ASSERT_NE( SDB_OK, rc ) << "success to rename cs when new cs exist " ; 
+   ASSERT_EQ( -33, rc ) << "success to rename cs when new cs exist " ; 
    rc = sdbRenameCollectionSpace( db, csNewName, csNewName, &option ) ;
-   ASSERT_NE( SDB_OK, rc ) << "success to rename same cs " ;
+   ASSERT_EQ( -33, rc ) << "success to rename same cs " ;
    
    // check cs
    rc = checkCSExist( db, csOldName, &exist ) ;
@@ -117,5 +117,8 @@ TEST_F( reNameCSTest16566_16567, renamecsfail )
    rc = checkCSExist( db, csNewName, &exist ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    ASSERT_TRUE( exist ) << "fail to check rename cs" ;
+
+   // destroy bson   
+   bson_destroy( &option ) ;
 }
 

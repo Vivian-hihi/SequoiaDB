@@ -97,7 +97,7 @@ TEST_F( reNameCLTest16570_16571, renameclfail )
    bson_append_bool( &option, "Global", true ) ;
    bson_finish( &option ) ;
    rc = sdbRenameCollection( cs, clOldName, clNewName, &option ) ;
-   ASSERT_NE( SDB_OK, rc ) << "success to rename old cl: " << clOldName << " new cl: " << clNewName ;
+   ASSERT_EQ( -23, rc ) << "success to rename old cl: " << clOldName << " new cl: " << clNewName ;
 
    // check cl
    CHAR clNewFullName[100] ;
@@ -115,9 +115,9 @@ TEST_F( reNameCLTest16570_16571, renameclfail )
 
    // rename cl when new cl exist
    rc = sdbRenameCollection( cs, clOldName, clNewName, &option ) ;
-   ASSERT_NE( SDB_OK, rc ) << "fail to rename cl when new cl exist " ;
+   ASSERT_EQ( -22, rc ) << "fail to rename cl when new cl exist " ;
    rc = sdbRenameCollection( cs, clNewName, clNewName, &option ) ;
-   ASSERT_NE( SDB_OK, rc ) << "fail to rename same cl " ;
+   ASSERT_EQ( -22, rc ) << "fail to rename same cl " ;
    
    rc = checkCLExist( db, clNewFullName, &exist ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
@@ -127,4 +127,7 @@ TEST_F( reNameCLTest16570_16571, renameclfail )
    rc = checkCLExist( db, clOldFullName, &exist ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    ASSERT_TRUE( exist ) << "fail to check rename cl" ;
+
+   // destroy bson
+   bson_destroy( &option ) ;
 }
