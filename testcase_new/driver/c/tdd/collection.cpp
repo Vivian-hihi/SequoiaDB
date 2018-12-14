@@ -624,9 +624,10 @@ TEST(collection,sdbBulkInsert2)
    type = bson_find( &it, &ret, "_id") ;
    ASSERT_EQ( type, BSON_ARRAY) ;
    
-   bson_iterator_subiterator(&it, &sit) ;
-   //bson_print( &sub ) ;
-   //bson_iterator_init(&sit, &sub) ;
+   //bson_iterator_subiterator(&it, &sit) ;
+   bson_iterator_subobject( &it, &sub) ;
+   bson_print( &sub ) ;
+   bson_iterator_init(&sit, &sub) ;
    count = 0 ;
    while( BSON_EOO != ( stype = bson_iterator_next( &sit ) ) )
    {
