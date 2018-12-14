@@ -76,6 +76,7 @@ namespace engine
          ~_clsCLParallaInfo() ;
 
          BOOLEAN           checkParalla( UINT16 type,
+                                         DPS_LSN_OFFSET curLSN,
                                          _clsBucket *pBucket ) const ;
 
          void              updateParalla( CLS_PARALLA_TYPE parallaType,
@@ -87,6 +88,18 @@ namespace engine
          BOOLEAN           isParallaTypeSwitch( CLS_PARALLA_TYPE type ) const ;
 
          INT32             waitLastLSN( _clsBucket *pBucket ) ;
+
+      protected:
+         DPS_LSN_OFFSET       _max( DPS_LSN_OFFSET lsn1,
+                                    DPS_LSN_OFFSET lsn2 ) const
+         {
+            DPS_LSN_OFFSET maxLSN = lsn1 ;
+            if ( DPS_INVALID_LSN_OFFSET != lsn2 && lsn2 > maxLSN )
+            {
+               maxLSN = lsn2 ;
+            }
+            return maxLSN ;
+         }
 
       protected:
          DPS_LSN_OFFSET       _lastInsertLSN ;

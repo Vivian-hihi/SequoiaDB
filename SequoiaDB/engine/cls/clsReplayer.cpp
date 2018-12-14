@@ -59,6 +59,8 @@ namespace engine
                          _dpsLogWrapper *dpsCB,
                          BOOLEAN isRollBack ) ;
 
+   #define CLS_PARALLA_CHECK_LSN_MIN_SPAN          ( 4096 )
+
    /*
       _clsCLParallaInfo implement
    */
@@ -79,21 +81,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       DPS_LSN completeLSN = pBucket->completeLSN() ;
-      DPS_LSN_OFFSET maxLSN = _lastInsertLSN ;
+      DPS_LSN_OFFSET maxLSN = DPS_INVALID_LSN_OFFSET ;
 
-      if ( DPS_INVALID_LSN_OFFSET == maxLSN ||
-           ( _lastUpdateLSN != DPS_INVALID_LSN_OFFSET &&
-             _lastUpdateLSN > maxLSN ) )
-      {
-         maxLSN = _lastUpdateLSN ;
-      }
-
-      if ( DPS_INVALID_LSN_OFFSET == maxLSN ||
-           ( _lastDelLSN != DPS_INVALID_LSN_OFFSET &&
-             _lastDelLSN > maxLSN ) )
-      {
-         maxLSN = _lastDelLSN ;
-      }
+      maxLSN = _max( _max( _lastInsertLSN, _lastUpdateLSN ),
+                     _lastDelLSN ) ;
 
       while ( completeLSN.compareOffset( maxLSN ) < 0 )
       {
@@ -111,27 +102,37 @@ namespace engine
    }
 
    BOOLEAN _clsCLParallaInfo::checkParalla( UINT16 type,
+                                            DPS_LSN_OFFSET curLSN,
                                             _clsBucket *pBucket ) const
    {
       DPS_LSN completeLSN = pBucket->completeLSN() ;
+      DPS_LSN_OFFSET otherLSN = DPS_INVALID_LSN_OFFSET ;
       BOOLEAN canRecParalla = FALSE ;
 
       switch ( (INT32)type )
       {
          case LOG_TYPE_DATA_INSERT :
-            if ( completeLSN.compareOffset( _lastDelLSN ) >= 0 &&
-                 completeLSN.compareOffset( _lastUpdateLSN ) >= 0 )
+            otherLSN = _max( _lastDelLSN, _lastUpdateLSN ) ;
+            if ( completeLSN.compareOffset( otherLSN ) >= 0 )
             {
-               canRecParalla = TRUE ;
+               if ( DPS_INVALID_LSN_OFFSET == otherLSN ||
+                    curLSN - otherLSN >= CLS_PARALLA_CHECK_LSN_MIN_SPAN )
+               {
+                  canRecParalla = TRUE ;
+               }
             }
             break ;
          case LOG_TYPE_DATA_UPDATE :
             break ;
          case LOG_TYPE_DATA_DELETE :
-            if ( completeLSN.compareOffset( _lastInsertLSN ) >= 0 &&
-                 completeLSN.compareOffset( _lastUpdateLSN ) >= 0 )
+            otherLSN = _max( _lastInsertLSN, _lastUpdateLSN ) ;
+            if ( completeLSN.compareOffset( otherLSN ) >= 0 )
             {
-               canRecParalla = TRUE ;
+               if ( DPS_INVALID_LSN_OFFSET == otherLSN ||
+                    curLSN - otherLSN >= CLS_PARALLA_CHECK_LSN_MIN_SPAN )
+               {
+                  canRecParalla = TRUE ;
+               }
             }
             break ;
          default :
@@ -382,6 +383,7 @@ namespace engine
                      parallaType = CLS_PARALLA_REC ;
                   }
                   else if ( pInfo && pInfo->checkParalla( recordHeader->_type,
+                                                          recordHeader->_lsn,
                                                           pBucket ) )
                   {
                      recParalla = TRUE ;
