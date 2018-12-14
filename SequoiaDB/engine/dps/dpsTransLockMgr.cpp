@@ -850,8 +850,22 @@ namespace engine
    // Description: remove waiter from waiter or upgrade queue/list
    // Function:    remove the waiter LRB ( dpsTxExectr->getWaiterLRBIdx() )
    //              from upgrade or waiter queue/list, and wakeup the next
-   //              one in waiting if its lock mode is compatible with
-   //              current waiter
+   //              one if necessary
+   // REVISIT:
+   // Here are two cases :
+   // 1. an EDU was waken up ( _waitLock returned SDB_OK )
+   //    it checks next waiters lock mode whether compatible with itself
+   //    as itself will retry acquire the lock. Only wake up next waiter
+   //    if the lock mode is compatbile with current waiter.
+   //
+   // 2. an EDU was timeout / interrupted from _waitLock
+   //    if the owner list is empty, we may wake up the next waiter, as
+   //    the current one will not retry acquire the lock.
+   //
+   //    alternatives :
+   //      a. treat this EDU same as been waken up case and retry acquire.
+   //      b. do nothing, next waiter(s) can timeout same as this EDU.
+   //
    // Input:
    //    dpsTxExectr     -- pointer to _dpsTransExecutor
    //    removeLRBHeader -- whether remove LRB Header when owner, waiter,
@@ -956,33 +970,65 @@ namespace engine
                     PD_PACK_STRING( "Next LRB in wait or upgrade list:" ),
                     PD_PACK_UINT( idxNext ) ) ;
 #endif
-         // wake up the next waiting one if necessary, i.e., the next waiter's
-         // lock mode is compatible with current waiter and the current waiter
-         // is waken up ( _waitLock returned SDB_OK )
-         // when removeLRBHeader is true, means _waitLock returned
-         // non SDB_OK value due to either lock waiting timeout duration
-         // is elapsed or the _waitLock is interrupted. 
-         if (    ( FALSE == removeLRBHeader )
-              && IS_VALID_SEG_OBJ_INDEX( idxNext ) )
+         // wake up the next waiting one if necessary.
+         // Here are two cases :
+         // 1. an EDU was waken up ( _waitLock returned SDB_OK )
+         //    it checks next waiters lock mode whether compatible with itself
+         //    as itself will retry acquire the lock. Only wake up next waiter
+         //    if the lock mode is compatbile with current waiter.
+         //
+         // REVISIT 
+         //
+         // 2. an EDU was timeout / interrupted from _waitLock  
+         //    if the owner list is empty, we may wake up the next waiter, as
+         //    the current one will not retry acquire the lock. 
+         //
+         //    another approach is treat this EDU same as been waken up case
+         //    and retry acquire. Or, do nothing let other waiters timeout.
+         //    
+         if ( IS_VALID_SEG_OBJ_INDEX( idxNext ) )
          {
             plrb = _getLRBPtrByIdx( idxNext ) ;
-
             SDB_ASSERT( pLRB->lrbHdrIdx == plrb->lrbHdrIdx, "Invalid LRB" ) ;
 
-            if ( dpsIsLockCompatible( pLRB->lockMode, plrb->lockMode ) )
+            // the EDU was waken up ( _waitLock returned SDB_OK )
+            if ( FALSE == removeLRBHeader ) 
             {
-               _wakeUp( plrb->dpsTxExectr ) ;   
-
+               if ( dpsIsLockCompatible( pLRB->lockMode, plrb->lockMode ) )
+               {
+                  // wake up next waiter if the lock mode is compatible
+                  _wakeUp( plrb->dpsTxExectr ) ;   
 #ifdef _DEBUG
-               eduIDTrc = plrb->dpsTxExectr->getEDUID() ;
+                  eduIDTrc = plrb->dpsTxExectr->getEDUID() ;
 
-               PD_TRACE4( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
-                          PD_PACK_STRING( "Wake up EDU:" ),
-                          PD_PACK_ULONG( eduIDTrc ),
-                          PD_PACK_STRING( "Waiter LRB idx:" ),
-                          PD_PACK_UINT( idxNext ) ) ;
+                  PD_TRACE4(
+                     SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
+                     PD_PACK_STRING( "Wake up EDU:" ),
+                     PD_PACK_ULONG( eduIDTrc ),
+                     PD_PACK_STRING( "Waiter LRB idx:" ),
+                     PD_PACK_UINT( idxNext ) ) ;
 #endif
+               }
+            }
+            else
+            {
+               // the _waitLock() returned timeout or interrupted
 
+               if ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx ) )
+               {
+                  // wake up next waiter if owner list is empty
+                  _wakeUp( plrb->dpsTxExectr ) ;   
+#ifdef _DEBUG
+                  eduIDTrc = plrb->dpsTxExectr->getEDUID() ;
+
+                  PD_TRACE4(
+                     SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
+                     PD_PACK_STRING( "Wake up EDU:" ),
+                     PD_PACK_ULONG( eduIDTrc ),
+                     PD_PACK_STRING( "Waiter LRB idx:" ),
+                     PD_PACK_UINT( idxNext ) ) ;
+#endif
+               }
             }
          }
 
@@ -2020,9 +2066,10 @@ namespace engine
          bLatched = TRUE ;
       }
 
-      // remove the LRB from upgrade or waiter list and remove the empty
-      // LRB Header only when it is needed, i.e., when _waitLock() fails( either
-      // timeout duration elapsed or be interrupted )
+      // remove the LRB from upgrade or waiter list and wakeup next waiter
+      // if necessary. The empty LRB Header will be removed only when it is
+      // needed, i.e., when _waitLock() fails( either timeout duration elapsed
+      // or be interrupted )
       // The reason removing the empty LRB Header only when _waitLock() fails
       // is if _waitLock returns success, when retry acquiring the lock,
       // _tryAcquireOrTest(), the LRB Header will be added back again.
