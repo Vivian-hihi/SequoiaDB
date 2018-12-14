@@ -17,6 +17,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -34,6 +35,9 @@ public class ConcurrentSortQuery16719 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl,"","");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
+        }
         cs = sdb.getCollectionSpace(csName);
         cl = cs.createCollection(clName);
     }
@@ -51,12 +55,12 @@ public class ConcurrentSortQuery16719 extends SdbTestBase {
         // check sortType
         String expectResult = "InMemory";
         String actResult = Utils.getSortType(cl, null, null, (BSONObject)JSON.parse("{a:1, b:1, c:1}"));
-        Assert.assertEquals(expectResult, actResult, "expectResult: " + expectResult + ", actResult: " + actResult);
+        Assert.assertEquals(actResult, expectResult, "expectResult: " + expectResult + ", actResult: " + actResult);
     }
 	
     @AfterClass
     public void tearDown() {
-        sdb.dropCollectionSpace(csName);
+        cs.dropCollection(clName);
     }
 
     public void insertData(DBCollection cl, int insertNums) {
@@ -78,7 +82,6 @@ public class ConcurrentSortQuery16719 extends SdbTestBase {
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             DBCollection newcl = db.getCollectionSpace(csName).getCollection(clName);
             // check records
-            String sortKey = "a";
             BSONObject sortObj = new BasicBSONObject();
             sortObj.put("a", 1);
             sortObj.put("b", 1);

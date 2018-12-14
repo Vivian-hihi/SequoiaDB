@@ -16,6 +16,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -38,6 +39,9 @@ public class ConcurrentSortQuery16725 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl,"","");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
+        }
         try{
             sdb.dropCollectionSpace(csName1);   
         }catch(BaseException e){
@@ -70,8 +74,8 @@ public class ConcurrentSortQuery16725 extends SdbTestBase {
 //        String expectResult = "External";
 //        String actResult1 = Utils.getSortType(cl1, null, null, (BSONObject)JSON.parse("{a:1, b:1, c:1}"));
 //        String actResult2 = Utils.getSortType(cl2, null, null, (BSONObject)JSON.parse("{a:1, b:1, c:1}"));
-//        Assert.assertEquals(expectResult, actResult1, "expectResult: " + expectResult + ", actResult: " + actResult1);
-//        Assert.assertEquals(expectResult, actResult2, "expectResult: " + expectResult + ", actResult: " + actResult2);
+//        Assert.assertEquals(actResult1, expectResult, "expectResult: " + expectResult + ", actResult: " + actResult1);
+//        Assert.assertEquals(actResult2, expectResult, "expectResult: " + expectResult + ", actResult: " + actResult2);
     }
 	
     @AfterClass
@@ -101,7 +105,6 @@ public class ConcurrentSortQuery16725 extends SdbTestBase {
             DBCollection cl2 = db.getCollectionSpace(csName2).getCollection(clName2);
 
             // check records
-            String sortKey = "a";
             BSONObject sortObj = new BasicBSONObject();
             sortObj.put("a", 1);
             sortObj.put("b", 1);
