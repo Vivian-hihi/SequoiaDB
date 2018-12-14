@@ -41,7 +41,7 @@
 namespace engine
 {
 
-   class cipherMgr : public SDBObject
+   class _utilCipherMgr : public SDBObject
    {
    public:
       static const INT32  BYTES_PER_TIME = 8 ;
@@ -50,10 +50,10 @@ namespace engine
       static const INT32  UINT8_MAX_NUMBER = 65536 ;
       static const UINT32 INSERTABLE_MAX_LENGTH = 234 ;
 
-      cipherMgr() {}
-      ~cipherMgr() {}
+      _utilCipherMgr() {}
+      ~_utilCipherMgr() {}
 
-      INT32 init( cipherAbstractFile *file ) ;
+      INT32 init( utilCipherAbstractFile *file ) ;
       INT32 addUser( const std::string &user, const std::string &token,
                      const std::string &passwd ) ;
       INT32 removeUser( const std::string &user ) ;
@@ -72,10 +72,10 @@ namespace engine
                               std::string &cipherText ) ;
 
    private:
-      cipherAbstractFile *_cipherfile ;
+      utilCipherAbstractFile *_cipherfile ;
       std::map<std::string, std::string> _usersCipher ;
    } ;
-
+   typedef _utilCipherMgr utilCipherMgr ;
 
 }
 

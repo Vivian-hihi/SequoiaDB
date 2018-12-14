@@ -54,8 +54,8 @@ INT32 main(INT32 argc, char* argv[])
 
    sdbEnablePD( SDBPASSWD_LOG ) ;
    setPDLevel( PDINFO ) ;
-   cipherMgr mgr ;
-   cipherFile cipherfile ;
+   utilCipherMgr mgr ;
+   utilCipherFile cipherfile ;
 
    try
    {
@@ -71,7 +71,7 @@ INT32 main(INT32 argc, char* argv[])
          goto error;
       }
 
-      cipherfile.initFile( options.file(), cipherFile::WRole ) ;
+      cipherfile.initFile( options.file(), utilCipherFile::WRole ) ;
       if ( SDB_OK != rc )
       {
          std::cerr << "init cipherfile failed" << std::endl ;
@@ -82,8 +82,8 @@ INT32 main(INT32 argc, char* argv[])
       rc = mgr.init( &cipherfile );
       if ( SDB_OK != rc )
       {
-         std::cerr << "init cipherMgr failed" << std::endl ;
-         PD_LOG( PDERROR, "cipherMgr initialize error [%d]", rc ) ;
+         std::cerr << "init utilCipherMgr failed" << std::endl ;
+         PD_LOG( PDERROR, "utilCipherMgr initialize error [%d]", rc ) ;
          goto error;
       }
       if ( passwdOptions::OpAddUser == options.mode() )
@@ -91,7 +91,7 @@ INT32 main(INT32 argc, char* argv[])
          string password ;
          if ( !options.hasPassword() )
          {
-            password = passwordTool::interactivePasswdInput() ;
+            password = utilPasswordTool::interactivePasswdInput() ;
          }
          else
          {
@@ -102,7 +102,7 @@ INT32 main(INT32 argc, char* argv[])
          if ( SDB_OK != rc )
          {
             std::cerr << "adduser failed" << std::endl ;
-            PD_LOG( PDINFO, "cipherMgr adduser [%s], error [%d]",
+            PD_LOG( PDINFO, "utilCipherMgr adduser [%s], error [%d]",
                     options.user().c_str(), rc ) ;
          }
       }
@@ -112,7 +112,7 @@ INT32 main(INT32 argc, char* argv[])
          if ( SDB_OK != rc )
          {
             std::cerr << "removeuser failed" << std::endl ;
-            PD_LOG( PDINFO, "cipherMgr removeuser [%s], error [%d]",
+            PD_LOG( PDINFO, "utilCipherMgr removeuser [%s], error [%d]",
                     options.user().c_str(), rc ) ;
          }
       }
@@ -120,7 +120,7 @@ INT32 main(INT32 argc, char* argv[])
       {
          rc = SDB_SYS ;
          std::cerr << "unexpected error" << std::endl ;
-         PD_LOG( PDERROR, "cipherMgr illegal method" ) ;
+         PD_LOG( PDERROR, "utilCipherMgr illegal method" ) ;
          goto error;
       }
    }

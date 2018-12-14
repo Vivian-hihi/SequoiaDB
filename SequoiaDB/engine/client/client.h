@@ -145,10 +145,9 @@ SDB_EXPORT INT32 initClient( sdbClientConf* config ) ;
     \param [in] pUsrName The User's Name in the cipherfile
     \param [in] pToken The Password encryption token
     \param [in] pCipherFile The Cipherfile location, default ./passwd
-    \param [out] pUser a buffer holds usrName without @ and follow,
-                 user is responsible for freeing this buffer when finished    
-    \param [out] pPasswd a buffer holds decrypted Password,
-                 user is responsible for freeing this buffer when finished
+    \param [out] pUser a buffer to hold usrName without @ and following text,
+                 this user name is used for database connection
+    \param [out] pPasswd a buffer to hold decrypted Password
     \retval SDB_OK Retrieval Success
     \retval Others Retrieval Fail
 */

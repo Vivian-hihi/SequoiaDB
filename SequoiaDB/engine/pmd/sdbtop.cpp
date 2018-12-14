@@ -6053,7 +6053,7 @@ INT32 resolveArgument ( po::options_description &desc,
    }
    if( vm.count( OPTION_USRNAME) )
    {
-      engine::passwordTool passwdTool ;
+      engine::utilPasswordTool passwdTool ;
 
       usrName = vm[OPTION_USRNAME].as<string>();
 

@@ -349,13 +349,13 @@ namespace replay
             string passwd = get<string>(RPL_OPTION_PASSWD) ;
             if ( "" == passwd )
             {
-               passwd = engine::passwordTool::interactivePasswdInput() ;
+               passwd = engine::utilPasswordTool::interactivePasswdInput() ;
             }
             _password = passwd ;
          }
          else
          {
-            engine::passwordTool passwdTool ;
+            engine::utilPasswordTool passwdTool ;
 
             if ( has(RPL_OPTION_CIPHER) && get<bool>(RPL_OPTION_CIPHER) )
             {

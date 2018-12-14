@@ -34,18 +34,19 @@
 
 #include "ossTypes.h"
 
-void   cipherGenerateRandomArray( CHAR* array, UINT32 arrayLen ) ;
-INT32  cipherExtractRandomArray( CHAR *cipherText, UINT32 cipherTextLen, 
-                                 CHAR *array, UINT32 *cipherTextNewLen, UINT32 *arrayNewLen ) ;
-void   cipherInsertRandomArray( CHAR *destArray, UINT32 destArrayLen,
-                                CHAR *randArray, UINT32 randArrayLen,
-                                UINT32 *destArrayNewLen ) ;
-INT32  cipherEncrypt( const CHAR *clearText, const CHAR *token,
-                      CHAR *cipherText ) ;
-INT32  cipherDecrypt( const CHAR *cipherText, const CHAR *token, 
-                      CHAR *clearText ) ;
-INT32  decryptUserCipher( const CHAR *userName, const CHAR *fullName,
-                          const CHAR *token, const CHAR *path, 
+void   utilCipherGenerateRandomArray( CHAR* array, UINT32 arrayLen ) ;
+INT32  utilCipherExtractRandomArray( CHAR *cipherText, UINT32 cipherTextLen, 
+                                     CHAR *array, UINT32 *cipherTextNewLen, 
+                                     UINT32 *arrayNewLen ) ;
+void   utilCipherInsertRandomArray( CHAR *destArray, UINT32 destArrayLen,
+                                    CHAR *randArray, UINT32 randArrayLen,
+                                    UINT32 *destArrayNewLen ) ;
+INT32  utilCipherEncrypt( const CHAR *clearText, const CHAR *token,
+                          CHAR *cipherText ) ;
+INT32  utilCipherDecrypt( const CHAR *cipherText, const CHAR *token, 
                           CHAR *clearText ) ;
+INT32  utilDecryptUserCipher( const CHAR *user, const CHAR *token, 
+                              const CHAR *path, CHAR *connectionUser,
+                              CHAR *clearText ) ;
 
 #endif /* UTILCIPHER_H_ */

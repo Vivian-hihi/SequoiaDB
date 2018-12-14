@@ -140,14 +140,14 @@ static INT32 parseCmdLine( const po::options_description &desc,
          string passwd = vm[MIG_PASSWD].as<string>() ;
          if ( "" == passwd )
          {
-            passwd = engine::passwordTool::interactivePasswdInput() ;
+            passwd = engine::utilPasswordTool::interactivePasswdInput() ;
          }
          builder.append( MIG_USRNAME, user ) ;
          builder.append( MIG_PASSWD, passwd ) ;
       }
       else
       {
-         engine::passwordTool passwdTool ;
+         engine::utilPasswordTool passwdTool ;
          string passwd ;
 
          if ( vm.count(MIG_CIPHER) && vm[MIG_CIPHER].as<bool>() )

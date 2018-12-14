@@ -1121,13 +1121,13 @@ namespace exprt
             string passwd = _get<string>(OPTION_PASSWORD) ;
             if ( "" == passwd )
             {
-               passwd = passwordTool::interactivePasswdInput() ;
+               passwd = utilPasswordTool::interactivePasswdInput() ;
             }
             _password = passwd ;
          }
          else
          {
-            passwordTool passwdTool ;
+            utilPasswordTool passwdTool ;
 
             if ( _has(OPTION_CIPHER) && _get<bool>(OPTION_CIPHER) )
             {

@@ -104,7 +104,7 @@ namespace passwd
             string passwd = _cmdVm[OPTIONS_PASSWD].as<string>() ;
             if ( "" ==  passwd )
             {
-               _password = passwordTool::interactivePasswdInput() ;
+               _password = utilPasswordTool::interactivePasswdInput() ;
             }
             else
             {

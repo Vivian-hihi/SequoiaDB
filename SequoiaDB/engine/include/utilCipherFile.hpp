@@ -37,7 +37,7 @@
 namespace engine
 {
 
-   class cipherAbstractFile : public SDBObject
+   class _utilCipherAbstractFile : public SDBObject
    {
    public:
       enum cipherRole
@@ -46,22 +46,23 @@ namespace engine
          WRole
       } ;
 
-      cipherAbstractFile() {}
-      virtual ~cipherAbstractFile() {}
+      _utilCipherAbstractFile() {}
+      virtual ~_utilCipherAbstractFile() {}
 
       virtual INT32 initFile( const std::string &fileName, 
-                              cipherRole role) = 0 ;
+                              cipherRole role ) = 0 ;
       virtual INT32 readFromFile( const CHAR **fileContent,
                                   INT64 *contentLen ) = 0 ;
       virtual INT32 writeToFile( const std::string& fileContent ) = 0 ;
    } ;
+   typedef _utilCipherAbstractFile utilCipherAbstractFile ;
 
 
-   class cipherFile : public cipherAbstractFile
+   class _utilCipherFile : public _utilCipherAbstractFile
    {
    public:
-      cipherFile() : _fileContent( NULL ) {}
-      ~cipherFile() ;
+      _utilCipherFile() : _fileContent( NULL ) {}
+      ~_utilCipherFile() ;
 
       INT32 initFile( const std::string &fileName, 
                       cipherRole role) ;
@@ -72,6 +73,7 @@ namespace engine
       ossFile  _file ;
       CHAR    *_fileContent ;
    } ;
+   typedef _utilCipherFile utilCipherFile ;
 
 }
 

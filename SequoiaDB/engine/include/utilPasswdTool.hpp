@@ -37,11 +37,11 @@
 namespace engine
 {
 
-   class passwordTool : public SDBObject
+   class _utilPasswordTool : public SDBObject
    {
    public:
-      passwordTool() {}
-      ~passwordTool() {}
+      _utilPasswordTool() {}
+      ~_utilPasswordTool() {}
       static std::string interactivePasswdInput() ;
       INT32              getPasswdByCipherFile( const std::string &user,
                                                 const std::string &token,
@@ -49,9 +49,10 @@ namespace engine
                                                 std::string &connectionUser,
                                                 std::string &password ) ;
    private:
-      cipherMgr    _cipherMgr ;
-      cipherFile   _cipherfile ;
+      utilCipherMgr    _cipherMgr ;
+      utilCipherFile   _cipherfile ;
    } ;
+   typedef _utilPasswordTool utilPasswordTool ;
 
 }
 

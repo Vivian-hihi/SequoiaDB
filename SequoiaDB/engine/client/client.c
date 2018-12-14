@@ -2189,44 +2189,21 @@ SDB_EXPORT INT32 sdbGetPasswdByCipherFile( const CHAR *pUsrName,
 {
    INT32 rc = SDB_OK ;
 
-   CHAR   *atPos = 0 ;
-   UINT32 userLength = 0 ;
-   CHAR   userName[SDB_MAX_USERNAME_LENGTH] = {'\0'} ;
-   CHAR   fullName[SDB_MAX_USERNAME_LENGTH] = {'\0'} ;
-
    if ( NULL == pUsrName )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
 
-   atPos = ossStrchr( pUsrName, '@' ) ;
-
-   if ( NULL != atPos )
-   {
-      ossStrncpy( userName, pUsrName, atPos - pUsrName ) ;
-   }
-   else
-   {
-      ossStrncpy( userName, pUsrName, ossStrlen( pUsrName ) ) ;
-   }
-
-   ossStrncpy( fullName, pUsrName, ossStrlen( pUsrName ) ) ;
-
-   rc = decryptUserCipher( userName, fullName, pToken,
-                           pCipherFile, pPasswd ) ;
+   rc = utilDecryptUserCipher( pUsrName, pToken,
+                               pCipherFile, pUser, pPasswd ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
 
-   userLength = ossStrlen( userName ) + 1 ;
-   ossStrncpy( pUser, userName, userLength ) ;
-
-done:
-   return rc ;
 error:
-   goto done ;
+   return rc;
 }
 
 void _sdbDisconnect_inner ( sdbConnectionHandle handle )

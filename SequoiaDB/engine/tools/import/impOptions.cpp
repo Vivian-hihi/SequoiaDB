@@ -480,13 +480,13 @@ namespace import
             string passwd = get<string>(IMP_OPTION_PASSWORD) ;
             if ( "" == passwd )
             {
-               passwd = passwordTool::interactivePasswdInput() ;
+               passwd = utilPasswordTool::interactivePasswdInput() ;
             }
             _password = passwd ;
          }
          else
          {
-            passwordTool passwdTool ;
+            utilPasswordTool passwdTool ;
 
             if ( has(IMP_OPTION_CIPHER) && get<bool>(IMP_OPTION_CIPHER) )
             {

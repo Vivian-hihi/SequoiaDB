@@ -35,7 +35,7 @@
 namespace engine
 {
 
-   string passwordTool::interactivePasswdInput()
+   string _utilPasswordTool::interactivePasswdInput()
    {
       CHAR* line = NULL ;
       string passwd ;
@@ -49,11 +49,11 @@ namespace engine
       return passwd ;
    }
 
-   INT32 passwordTool::getPasswdByCipherFile( const string &user,
-                                              const string &token,
-                                              const string &cipherFile,
-                                              string &connectionUserName,
-                                              string &password )
+   INT32 _utilPasswordTool::getPasswdByCipherFile( const string &user,
+                                                   const string &token,
+                                                   const string &cipherFile,
+                                                   string &connectionUserName,
+                                                   string &password )
    {
       INT32  rc = SDB_OK ;
 
@@ -64,7 +64,7 @@ namespace engine
          filePath = "./passwd" ;
       }
 
-      _cipherfile.initFile( filePath, cipherFile::RRole ) ;
+      _cipherfile.initFile( filePath, utilCipherFile::RRole ) ;
 
       rc = _cipherMgr.init( &_cipherfile ) ;
       if ( SDB_OK != rc )

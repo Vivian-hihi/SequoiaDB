@@ -34,7 +34,7 @@
 namespace engine
 {
 
-   cipherFile::~cipherFile()
+   _utilCipherFile::~_utilCipherFile()
    {
       if ( NULL != _fileContent )
       {
@@ -42,8 +42,8 @@ namespace engine
       }
    }
 
-   INT32 cipherFile::initFile( const string &fileName, 
-                               cipherRole role )
+   INT32 _utilCipherFile::initFile( const string &fileName, 
+                                    cipherRole role )
    {
       INT32 rc = SDB_OK ;
 
@@ -63,8 +63,8 @@ namespace engine
       goto error ;
    }
 
-   INT32 cipherFile::readFromFile( const CHAR **fileContent,
-                                   INT64 *contentLen )
+   INT32 _utilCipherFile::readFromFile( const CHAR **fileContent,
+                                        INT64 *contentLen )
    {
       INT32 rc = SDB_OK ;
 
@@ -108,7 +108,7 @@ namespace engine
       goto error ;
    }
 
-   INT32 cipherFile::writeToFile( const std::string& fileContent )
+   INT32 _utilCipherFile::writeToFile( const std::string& fileContent )
    {
       INT32  rc = SDB_OK ;
 

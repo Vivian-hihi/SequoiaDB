@@ -3870,7 +3870,7 @@ INT32 _sdbCi::splitAuth()
    // assume the user has only specified 'user' as in the case of cipherfile
    if ( NULL == pch )
    {
-      passwordTool passwdTool ;
+      utilPasswordTool passwdTool ;
       std::string user = _auth ;
       std::string connectionUserName ;
       std::string passwd ;

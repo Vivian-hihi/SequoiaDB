@@ -42,8 +42,7 @@
 namespace engine
 {
 
-
-   INT32 cipherMgr::_parseLine( string line, string& usr, string& cipherText )
+   INT32 _utilCipherMgr::_parseLine( string line, string &usr, string &cipherText )
    {
       INT32 rc = SDB_OK ;
 
@@ -64,13 +63,13 @@ namespace engine
       goto done ;
    }
 
-   INT32 cipherMgr::_write( const string &fileContent )
+   INT32 _utilCipherMgr::_write( const string &fileContent )
    {
       return _cipherfile->writeToFile( fileContent ) ;
    }
 
-   void cipherMgr::_extractUserInfo( const string &userInfo, string &userName,
-                                     string &fullName )
+   void _utilCipherMgr::_extractUserInfo( const string &userInfo, string &userName,
+                                          string &fullName )
    {
       string::size_type atPos = userInfo.find( "@" ) ;
 
@@ -85,8 +84,8 @@ namespace engine
       fullName = userInfo ;
    }
 
-   INT32 cipherMgr::_findCipherText( const string &userName, const string &fullName,
-                                     string &cipherText )
+   INT32 _utilCipherMgr::_findCipherText( const string &userName, const string &fullName,
+                                          string &cipherText )
    {
       INT32                           rc = SDB_OK ;
 
@@ -143,7 +142,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 cipherMgr::init( cipherAbstractFile *file )
+   INT32 _utilCipherMgr::init( utilCipherAbstractFile *file )
    {
       INT32  rc = SDB_OK ;
 
@@ -182,14 +181,14 @@ namespace engine
          }  
       }
 
-   done:      
+   done:
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 cipherMgr::addUser( const string &user, const string &token,
-                             const string &passwd )
+   INT32 _utilCipherMgr::addUser( const string &user, const string &token,
+                                  const string &passwd )
    {
       INT32 rc = SDB_OK ;
 
@@ -218,7 +217,7 @@ namespace engine
          goto error ;
       }
 
-      rc = cipherEncrypt( passwd.c_str(), token.c_str(), cipherText ) ;
+      rc = utilCipherEncrypt( passwd.c_str(), token.c_str(), cipherText ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "encrypt user %s passwd failed.",
@@ -243,7 +242,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 cipherMgr::removeUser( const string &user )
+   INT32 _utilCipherMgr::removeUser( const string &user )
    {
       INT32 rc = SDB_OK ;
 
@@ -265,8 +264,8 @@ namespace engine
       return rc ;
    }
 
-   INT32 cipherMgr::getPasswd( const string &userInfo, const string &token,
-                               string &passwd )
+   INT32 _utilCipherMgr::getPasswd( const string &userInfo, const string &token,
+                                    string &passwd )
    {
       INT32 rc = SDB_OK ;
 
@@ -283,7 +282,7 @@ namespace engine
          goto error ;
       }
 
-      rc = cipherDecrypt( cipherText.c_str(), token.c_str(), clearText ) ;
+      rc = utilCipherDecrypt( cipherText.c_str(), token.c_str(), clearText ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "decrypt user %s passwd failed.",
@@ -298,8 +297,8 @@ namespace engine
       goto done ;
    }
 
-   void cipherMgr::getConnectionUserName( const std::string &userInfo,
-                                          std::string &connectionUserName )
+   void _utilCipherMgr::getConnectionUserName( const std::string &userInfo,
+                                               std::string &connectionUserName )
    {
       string fullName ;
 
