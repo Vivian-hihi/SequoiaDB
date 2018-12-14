@@ -95,9 +95,8 @@ public class ObjectUtils extends S3TestBase {
 				
 				if ( getKey.equals(keyName)){					
 					s3Client.deleteVersion(bucketName, vs.getKey(), vs.getVersionId());
-				}
-								
-				s3Client.deleteVersion(bucketName, vs.getKey(), vs.getVersionId());
+				}						
+				
 			}
 				
 			if( versionList.isTruncated()){
