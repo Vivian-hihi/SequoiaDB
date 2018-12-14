@@ -29,8 +29,8 @@ public class GetObjectList16439 extends S3TestBase {
 	private String prefix = "/";
 	private String delimiter = "/";
 	private int maxKeys = 2;
-	private List<String> expresultList = new ArrayList<String>(3000);
-	private int samePrefixObjNum = 5;
+	private List<String> expresultList = new ArrayList<String>();
+	private int samePrefixObjNum = 4;
 	private int sameDirNum = 3;
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
@@ -38,7 +38,7 @@ public class GetObjectList16439 extends S3TestBase {
 	@BeforeClass
 	private void setUp() throws Exception {
 		s3Client = CommLib.buildS3Client();
-		//create bucket and set bucket version status
+		//create bucket
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 		String currentKeyName = null;
 		String expCurrentKeyName = null;
@@ -71,8 +71,11 @@ public class GetObjectList16439 extends S3TestBase {
 				}else{
 					Assert.assertEquals(result.getKeyCount(), samePrefixObjNum%maxKeys, "The expected results do not match the actual number of returns");
 				}
+				//SEQUOIADBMAINSTREAM-3987
+				Assert.assertFalse(result.isTruncated(), "last turn result.isTruncated should be false!");
 			}else{
 				Assert.assertEquals(result.getKeyCount(), maxKeys, "The expected results do not match the actual number of returns");
+				Assert.assertTrue(result.isTruncated(), "when it is not last turn result.isTruncated should be true!");
 			}
 			checkListObjectsV2Result(commprefixesResult, (currentTurn-1)*maxKeys);
 			
