@@ -59,7 +59,7 @@ namespace engine
                          _dpsLogWrapper *dpsCB,
                          BOOLEAN isRollBack ) ;
 
-   #define CLS_PARALLA_CHECK_LSN_MIN_SPAN          ( 4096 )
+   #define CLS_PARALLA_CHECK_LSN_MIN_SPAN          ( 524288 )
 
    /*
       _clsCLParallaInfo implement
