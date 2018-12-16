@@ -35,7 +35,6 @@
          <package name="com.sequoiadb.subcl"/>
          <package name="com.sequoiadb.split"/>
          <package name="com.sequoiadb.sortOptimize"/>
-         <!-- <package name="com.sequoiadb.rename"/> -->
       </packages>      
    </test>
    

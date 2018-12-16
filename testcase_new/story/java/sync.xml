@@ -25,6 +25,7 @@
          <package name="com.sequoiadb.datasourceserial" />
          <package name="com.sequoiadb.session.accessisolation" />
          <package name="com.sequoiadb.metadataconsistency.cluster"/>
+         <package name="com.sequoiadb.rename"/>
       </packages>    
    </test>
 </suite>
