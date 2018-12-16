@@ -6,10 +6,8 @@ import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -25,20 +23,18 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * @Description RenameCS_16129.java cs数据在多个组上，并发修改cs名和读写删查LOB
+ * @Description RenameCS_16284.java cs数据在多个组上，并发修改cs名和读写删查LOB
  * @author luweikang
  * @date 2018年10月17日
  */
-public class RenameCS_16129 extends SdbTestBase{
+public class RenameCS_16284 extends SdbTestBase{
 	
-	private String csName = "renameCS_16129";
-	private String newCSName = "renameCS_16129_new";
-	private String clName = "renameCS_CL_16129";
+	private String csName = "renameCS_16284";
+	private String newCSName = "renameCS_16284_new";
+	private String clName = "renameCS_CL_16284";
 	private Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
 	private DBCollection cl = null;
-	private String groupName1 = null;
-	private String groupName2 = null;
 	private List<ObjectId> lobIdList = null;
 	private int fileSize = 1024 * 1024;
 	private String MD5 = null;
@@ -50,23 +46,8 @@ public class RenameCS_16129 extends SdbTestBase{
 	@BeforeClass
 	public void setUp(){
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		if(CommLib.isStandAlone(sdb)){
-			throw new SkipException("skip StandAlone");
-		}
-		List<String> rgNames = CommLib.getDataGroupNames(sdb);
-		if(rgNames.size() <= 1){
-			throw new SkipException("current environment less than tow groups");
-		}
-		groupName1 = rgNames.get(0);
-		groupName2 = rgNames.get(1);
 		cs = sdb.createCollectionSpace(csName);
-		BSONObject options = new BasicBSONObject();
-		options.put("Group", groupName1);
-		options.put("ShardingType", "hash");
-		options.put("ShardingKey", new BasicBSONObject("a", 1));
-		options.put("ReplSize", 0);
-		cl = cs.createCollection(clName, options);
-		cl.split(groupName1, groupName2, 50);
+		cl = cs.createCollection( clName );
 		
 		data = new byte[fileSize];
 		Random random = new Random();
@@ -144,7 +125,7 @@ public class RenameCS_16129 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			Thread.sleep(3000);
+			Thread.sleep(100);
 			try(Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" )) {
 				db.renameCollectionSpace(csName, newCSName);
 			}
@@ -185,9 +166,10 @@ public class RenameCS_16129 extends SdbTestBase{
 		public void exec() throws Exception {
 			try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
 				DBCollection sdbcl = db.getCollectionSpace(csName).getCollection(clName);
+				Thread.sleep(50);
 				for (int i = 0; i < lobNum/2; i++) {
 					sdbcl.removeLob(lobIdList.get(i));
-					deleteLobNum++;
+					deleteLobNum ++;
 				}
 			}
 		}
@@ -208,6 +190,7 @@ public class RenameCS_16129 extends SdbTestBase{
 	}
 	
 	private void checkLob(Sequoiadb db, String csName, String clNmae){
+		//TODO:2、校验结果和文本用例设计不一致，此处只是校验了lob内容，没有校验lob数量
 		DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 		DBCursor cur = cl.listLobs();
 		int actLobNum = 0;
@@ -227,7 +210,6 @@ public class RenameCS_16129 extends SdbTestBase{
 			}
 			actLobNum++;
 		}
-		cur.close();
 		Assert.assertEquals(actLobNum, lobNum + putLobNum - deleteLobNum, "check lob num");
 		cur.close();
 	}

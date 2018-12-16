@@ -25,7 +25,8 @@ public class RenameCL_16081 extends SdbTestBase{
 	
 	private String clNameA = "rename_CL_16081A";
 	private String clNameB = "rename_CL_16081B";
-	private String newCLName= "rename_CL_16081_new";
+	private String newCLName = "rename_CL_16081_new";
+	private String tmpCLName = "tmpCLName_16081";
 	private Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
 	private DBCollection clA = null;
@@ -53,35 +54,45 @@ public class RenameCL_16081 extends SdbTestBase{
 		boolean renameCLA = reCLANameThread.isSuccess();
 		boolean renameCLB = reCLBNameThread.isSuccess();
 		
+		Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		if(!renameCLA){
-			Integer[] errnosA = { -22 };
+			Integer[] errnosA = { -22, -148 };
 			BaseException errorA = (BaseException)reCLANameThread.getExceptions().get(0);
 			if( !Arrays.asList(errnosA).contains(errorA.getErrorCode()) ){
 				Assert.fail(reCLANameThread.getErrorMsg());
 			}
+			if( errorA.getErrorCode() == -148 ){
+				RenameUtil.retryToRenameCL(db, csName, clNameA, tmpCLName);
+			}
 		}
 		
 		if(!renameCLB){
-			Integer[] errnosB = { -22 };
+			Integer[] errnosB = { -22, -148 };
 			BaseException errorB = (BaseException)reCLBNameThread.getExceptions().get(0);
 			if( !Arrays.asList(errnosB).contains(errorB.getErrorCode()) ){
 				Assert.fail(reCLBNameThread.getErrorMsg());
 			}
+			if( errorB.getErrorCode() == -148 ){
+				RenameUtil.retryToRenameCL(db, csName, clNameB, tmpCLName);
+			}
 		}		
 		
 		//java驱动会有缓存,需要从新获取连接,变量名缩写已修改
-		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+		try {
 			if(renameCLA && !renameCLB){
 				RenameUtil.checkRenameCLResult(db, SdbTestBase.csName, clNameA, newCLName);
-				//TODO:1、这里如果是判断clNameB已存在，直接用判断cl接口校验，传入一个不存在的cl名没有意义，也没有加注释描述
-				RenameUtil.checkRenameCLResult(db, SdbTestBase.csName, "16081NotExistCLB", clNameB);
+				Assert.assertTrue(db.getCollectionSpace(csName).isCollectionExist(clNameB), "clB rename faild, should exist : "+ clNameB);
 			}else if(!renameCLA && renameCLB){
 				RenameUtil.checkRenameCLResult(db, SdbTestBase.csName, clNameB, newCLName);
-				RenameUtil.checkRenameCLResult(db, SdbTestBase.csName, "16081NotExistCLA", clNameA);
+				Assert.assertTrue(db.getCollectionSpace(csName).isCollectionExist(clNameA), "clB rename faild, should exist : "+ clNameA);
 			}else if(!renameCLA && !renameCLB){
 				Assert.fail("rename cl name to the same name, all failed");
 			}else{
 				Assert.fail("rename cl name to the same name, all success");
+			}
+		}finally{
+			if( db != null ){
+				db.close();
 			}
 		} 
 	}

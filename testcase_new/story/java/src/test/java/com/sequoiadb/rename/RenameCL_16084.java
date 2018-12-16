@@ -35,20 +35,18 @@ public class RenameCL_16084 extends SdbTestBase{
 		cs = sdb.getCollectionSpace( SdbTestBase.csName );
 		cl = cs.createCollection(clName);
 		RenameUtil.insertData(cl, recordNum);
-		RenameUtil.insertData(cl, 1000);
 	}
 	
 	@Test
 	public void test(){ 
 		RenameCLThread renameCLThread = new RenameCLThread();
-		CreateCLBThread createCLThread = new CreateCLBThread();
+		CreateCLThread createCLThread = new CreateCLThread();
 		
 		renameCLThread.start();
 		createCLThread.start();
 		
 		boolean renameCL = renameCLThread.isSuccess();
 		boolean createCL = createCLThread.isSuccess();
-		//TODO:1、和文本用例测试点不符，请确认用例
 		Assert.assertTrue(renameCL, renameCLThread.getErrorMsg());
 		
 		if(!createCL){
@@ -63,7 +61,6 @@ public class RenameCL_16084 extends SdbTestBase{
 			if(renameCL && !createCL){	
 				RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
 			}else if(renameCL && createCL){
-				//TODO:2、校验不严谨，这里无法判断旧cl是残留还是新建的cl，需要补充测试点验证
 				cs = db.getCollectionSpace(SdbTestBase.csName);
 				if(!cs.isCollectionExist(clName)){
 					Assert.fail("cl is been create, should exist");
@@ -71,6 +68,8 @@ public class RenameCL_16084 extends SdbTestBase{
 				if(!cs.isCollectionExist(newCLName)){
 					Assert.fail("cl is been rename, should exist");
 				}
+				checkCLRecord(db, clName, 0, "The cl is newly created, should be empty");
+				checkCLRecord(db, newCLName, recordNum, "The cl is rename, should have record");
 			}
 		}
 	}
@@ -98,7 +97,7 @@ public class RenameCL_16084 extends SdbTestBase{
 		}
 	}
 	
-	private class CreateCLBThread extends SdbThreadBase{
+	private class CreateCLThread extends SdbThreadBase{
 
 		@Override
 		public void exec() throws Exception {
@@ -107,6 +106,12 @@ public class RenameCL_16084 extends SdbTestBase{
 				cs.createCollection(clName);
 			}
 		}
+	}
+	
+	private void checkCLRecord( Sequoiadb db, String clName, int recordNum, String msg ){
+		DBCollection dbcl = db.getCollectionSpace(csName).getCollection(clName);
+		long actNum = dbcl.getCount();
+		Assert.assertEquals(actNum, recordNum, msg);
 	}
 	
 }

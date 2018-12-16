@@ -22,6 +22,7 @@ public class TestRenameCS16134 extends SdbTestBase{
     private String csName1 = "cs16134_1";
     private String csName2 = "cs16134_2";
     private String newCSName = "newcs16134";
+    private String tmpCSName = "tmpcs16134";
     private String clName = "cl16134";
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
@@ -56,7 +57,10 @@ public class TestRenameCS16134 extends SdbTestBase{
             RenameUtil.checkRenameCSResult(sdb, csName1, newCSName, 1);
             Assert.assertTrue(sdb.isCollectionSpaceExist(csName2));
             BaseException e = (BaseException)renameCS2Thread.getExceptions().get(0);
-            if(e.getErrorCode() != -33 && e.getErrorCode() !=-147 ) {
+            if( e.getErrorCode() == -148){
+            	RenameUtil.retryToRenameCS(sdb, csName2, tmpCSName);
+            }
+            if(e.getErrorCode() != -33 && e.getErrorCode() !=-147 &&  e.getErrorCode() != -148) {
                 Assert.fail("renameCS2Thread failed : "+e.getMessage());
             }
         } else if (!renameCS1Thread.isSuccess() && renameCS2Thread.isSuccess()){
@@ -64,7 +68,10 @@ public class TestRenameCS16134 extends SdbTestBase{
             RenameUtil.checkRenameCSResult(sdb, csName2, newCSName, 1);
             Assert.assertTrue(sdb.isCollectionSpaceExist(csName1));
             BaseException e = (BaseException)renameCS1Thread.getExceptions().get(0);
-            if(e.getErrorCode() != -33 && e.getErrorCode() !=-147 ) {
+            if( e.getErrorCode() == -148){
+            	RenameUtil.retryToRenameCS(sdb, csName1, tmpCSName);
+            }
+            if(e.getErrorCode() != -33 && e.getErrorCode() !=-147 && e.getErrorCode() !=-148 ) {
                 Assert.fail("renameCS1Thread failed : "+e.getMessage());
             }
         } else if (!renameCS1Thread.isSuccess() && !renameCS2Thread.isSuccess()){

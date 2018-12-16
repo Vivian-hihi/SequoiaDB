@@ -24,6 +24,7 @@ public class TestRenameCL16082 extends SdbTestBase{
     private String clName1 = "cl16082_1";
     private String clName2 = "cl16082_2";
     private String newclName = "newcl16082";
+    private String tmpCLName = "tmpcl16082";
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private int insertNum1 = 5;//cl1中插入的记录数
@@ -56,7 +57,10 @@ public class TestRenameCL16082 extends SdbTestBase{
             checkCLRecord(newclName, insertNum1);
             checkCLRecord(clName2, insertNum2);
             BaseException e = (BaseException)rename2.getExceptions().get(0);
-            if ( e.getErrorCode() != -22 && e.getErrorCode() != -147) {
+            if( e.getErrorCode() == -148){
+            	RenameUtil.retryToRenameCL(sdb, csName, clName2, tmpCLName);
+            }
+            if ( e.getErrorCode() != -22 && e.getErrorCode() != -147 && e.getErrorCode() != -148 ) {
                 Assert.fail("errcode not expected : " + e.getMessage());
             }
         } else {

@@ -59,14 +59,20 @@ public class TestRenameCL16088 extends SdbTestBase {
             RenameUtil.checkRenameCLResult(sdb, SdbTestBase.csName, subCLName, newSubCLName);
             Assert.assertEquals(cs.isCollectionExist(mainCLName), true);
             BaseException e = (BaseException)mainCLThread.getExceptions().get(0);
-            if ( e.getErrorCode() != -147 ) {
+            if( e.getErrorCode() == -148){
+            	RenameUtil.retryToRenameCL(sdb, csName, mainCLName, newMainCLName);
+            }
+            if ( e.getErrorCode() != -147 && e.getErrorCode() != -148) {
                 Assert.fail("errcode not expected : " + e.getMessage());
             }
         } else if ( !subCLThread.isSuccess() && mainCLThread.isSuccess() ) {
             RenameUtil.checkRenameCLResult(sdb, SdbTestBase.csName, mainCLName, newMainCLName);
             Assert.assertEquals(cs.isCollectionExist(subCLName), true);
             BaseException e = (BaseException)subCLThread.getExceptions().get(0);
-            if ( e.getErrorCode() != -147 ) {
+            if( e.getErrorCode() == -148){
+            	RenameUtil.retryToRenameCL(sdb, csName, subCLName, newSubCLName );
+            }
+            if ( e.getErrorCode() != -147 && e.getErrorCode() != -148 ) {
                 Assert.fail("errcode not expected : " + e.getMessage());
             }
         } else if (subCLThread.isSuccess() && mainCLThread.isSuccess()) {

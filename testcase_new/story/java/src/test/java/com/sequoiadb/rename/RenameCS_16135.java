@@ -27,6 +27,7 @@ public class RenameCS_16135 extends SdbTestBase{
 	private String newCSNameA = "renameCS_16135A_new";
 	private String clNameA = "renameCS_CL_16135A";
 	private String clNameB = "renameCS_CL_16135B";
+	private String tmpCSName = "tmpName_16135A";
 	private Sequoiadb sdb = null;
 	private CollectionSpace csA = null;
 	private CollectionSpace csB = null;
@@ -57,23 +58,32 @@ public class RenameCS_16135 extends SdbTestBase{
 		boolean csBRename = reCSBNameThread.isSuccess();
 		
 		Assert.assertTrue(csARename, reCSANameThread.getErrorMsg());
+		
+		Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		if(!csBRename){
-			Integer[] errnos = { -33, -147 };
+			Integer[] errnos = { -33, -147, -148 };
 			BaseException error = (BaseException)reCSBNameThread.getExceptions().get(0);
 			if( !Arrays.asList(errnos).contains(error.getErrorCode()) ){
 				Assert.fail(reCSBNameThread.getErrorMsg());
 			}
+			if(error.getErrorCode()==-148){
+				RenameUtil.retryToRenameCS(db, csName, tmpCSName);
+			}
 		}		
 		
-		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+		try {
 			//TODO:1、如果CSBrename成功，需要检查下对应的cl是否正确，只是校验cl个数不严谨
 			if(csBRename){
 				RenameUtil.checkRenameCSResult(db, csNameB, csNameA, 1);
 			}else{
 				RenameUtil.checkRenameCSResult(db, csNameA, csNameB, 1);
 			}
-			//TODO:2、"NotExistCS16135B"--这个cs名没有定义
-			RenameUtil.checkRenameCSResult(db, "NotExistCS16135B", newCSNameA, 1);
+			//rename csA be bound to success,check rename csA result
+			Assert.assertTrue(db.isCollectionSpaceExist(newCSNameA), "csA is rename success, but not found, cs name: "+ newCSNameA);
+		}finally{
+			if( db!=null){
+				db.close();
+			}
 		}
 	}
 	
@@ -83,8 +93,8 @@ public class RenameCS_16135 extends SdbTestBase{
 			CommLib.clearCS(sdb, csNameA);
 			CommLib.clearCS(sdb, csNameB);
 			CommLib.clearCS(sdb, newCSNameA);
-		} finally {//TODO:3、需要格式化，=左右加空格
-			if(sdb!=null){
+		} finally {
+			if(sdb != null){
 				sdb.close();
 			}
 		}

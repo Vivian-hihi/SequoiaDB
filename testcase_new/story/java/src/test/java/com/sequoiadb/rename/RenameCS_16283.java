@@ -1,13 +1,11 @@
 package com.sequoiadb.rename;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BSONDecimal;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -16,54 +14,35 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
-* @FileName  RenameCSAndCurd16128.java
-* @content   the cl in multiple groups,concurrent rename cs and data operations of cl
-* @testlink  seqDB-16128
-* @author    wuyan
+* @FileName  RenameCS_16283.java
+* @content   concurrent rename cs and data operations of cl
+* @testlink  seqDB-16283
+* @author    luweikang
 * @Date      2018.10.29
 * @version   1.00
 */
-public class RenameCSAndCurd16128 extends SdbTestBase{
+public class RenameCS_16283 extends SdbTestBase{
 	
-	private String csName = "renameCS16128";
-	private String newCSName = "renameCSNew16128";
-	private String clName = "rename16128";
+	private String csName = "renameCS16283";
+	private String newCSName = "renameCSNew16283";
+	private String clName = "rename16283";
 	private Sequoiadb sdb = null;
 	private int insertSuccessNums = 0;
 	private int updateSuccessNums = 0;
-	private String srcGroupName = null;
-	private String targetGroupName = null;
 	
 	
 	@BeforeClass
 	public void setUp(){
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		RenameUtil.removeCS(sdb, csName);
-		if(CommLib.isStandAlone(sdb)){
-			throw new SkipException("standAlone skip testcase16128");
-		}
-		
-		if (CommLib.OneGroupMode(sdb)){
-			throw new SkipException("less than two groups skip testcase16128");
-		}
-		RenameUtil.removeCS(sdb, csName);
 		RenameUtil.removeCS(sdb, newCSName);	
 		
-		List<String> rgNames = CommLib.getDataGroupNames(sdb);		
-		srcGroupName = rgNames.get(0);
-		targetGroupName = rgNames.get(1);
 		CollectionSpace cs = RenameUtil.createCS(sdb, csName);
-		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-				+ "ReplSize:0,Compressed:true, Group:'" + srcGroupName + "'}";
-		
-		DBCollection cl = RenameUtil.createCL(cs, clName, clOptions);		
-		int present = 50;
-		cl.split(srcGroupName, targetGroupName, present);
+		DBCollection cl = RenameUtil.createCL(cs, clName);		
 		insertDatas(cl);		
 	}
 	

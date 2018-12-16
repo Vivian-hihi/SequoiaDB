@@ -50,23 +50,30 @@ public class RenameCS_16132 extends SdbTestBase{
 		boolean csRename = reCSNameThread.isSuccess();
 		boolean clRename = reCLNameThread.isSuccess();
 		
+		Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		if(!csRename){
-			Integer[] errnosA = { -22 };
+			Integer[] errnosA = { -22, -148 };
 			BaseException errorA = (BaseException)reCSNameThread.getExceptions().get(0);
 			if( !Arrays.asList(errnosA).contains(errorA.getErrorCode()) ){
 				Assert.fail(reCSNameThread.getErrorMsg());
 			}
+			if(errorA.getErrorCode()==-148 && clRename){
+				RenameUtil.retryToRenameCS(db, csName, newCSName);
+			}
 		}
 		
 		if(!clRename){
-			Integer[] errnosB = { -23, -34 };
+			Integer[] errnosB = { -23, -34, -148 };
 			BaseException errorB = (BaseException)reCLNameThread.getExceptions().get(0);
 			if( !Arrays.asList(errnosB).contains(errorB.getErrorCode()) ){
 				Assert.fail(reCLNameThread.getErrorMsg());
 			}
+			if(errorB.getErrorCode()==-148 && clRename){
+				RenameUtil.retryToRenameCL(db, newCSName, clName, newCLName);
+			}
 		}		
 	
-		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+		try {
 			if(csRename&&clRename){
 				RenameUtil.checkRenameCSResult(db, csName, newCSName, 1);
 				RenameUtil.checkRenameCLResult(db, newCSName, clName, newCLName);
@@ -78,6 +85,10 @@ public class RenameCS_16132 extends SdbTestBase{
 				RenameUtil.checkRenameCLResult(db, newCSName, newCLName, clName);
 			}else if(!csRename&&!clRename){
 				Assert.fail("Concurrent to renameCS and renameCL failed");
+			}
+		}finally{
+			if( db!=null){
+				db.close();
 			}
 		}
 	}

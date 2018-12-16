@@ -268,4 +268,23 @@ public class RenameUtil extends SdbTestBase {
 	public static DBCollection createCL(CollectionSpace cs, String clName) {
 		return createCL(cs, clName, null);
     }
+	
+	public static void retryToRenameCS(Sequoiadb db, String oldCSName, String newCSName){
+		
+		db.renameCollectionSpace(oldCSName, newCSName);
+		
+		db.renameCollectionSpace(newCSName, oldCSName);
+		
+	}
+	
+	public static void retryToRenameCL(Sequoiadb db, String csName, String oldCLName, String newCLName){
+		
+		CollectionSpace cs = db.getCollectionSpace(csName);
+		
+		cs.renameCollection(oldCLName, newCLName);
+		
+		cs.renameCollection(newCLName, oldCLName);
+		
+	}
+	
 }

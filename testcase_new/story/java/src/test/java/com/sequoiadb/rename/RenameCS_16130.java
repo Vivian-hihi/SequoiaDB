@@ -58,7 +58,6 @@ public class RenameCS_16130 extends SdbTestBase{
 		renameThread.start();
 		removeThread.start();
 		
-		//TODO:1、文本用例中有描述修改cs名失败的场景，自动化用例没有这个场景，请确认
 		Assert.assertTrue(renameThread.isSuccess(), renameThread.getErrorMsg());
 		
 		if(!removeThread.isSuccess()){

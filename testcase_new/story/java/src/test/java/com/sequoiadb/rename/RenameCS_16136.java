@@ -1,5 +1,6 @@
 package com.sequoiadb.rename;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -13,6 +14,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
@@ -25,11 +27,11 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 public class RenameCS_16136 extends SdbTestBase{
 	
 	private String mainCSName = "maincs_16136";
+	private String mainCLName = "maincl_16136";
 	private String newMainCSName = "maincs_16136_new";
 	private String subCSName = "subcs_16136";
-	private String mainCLName = "maincl_16136";
 	private String subCLName = "subcl_16136";
-	private String newSubCLName = "subcl_16136_new";
+	private String newSubCSName = "subcs_16136_new";
 	private Sequoiadb sdb = null;
 	private CollectionSpace mainCS = null;
 	private CollectionSpace subCS = null;
@@ -55,19 +57,36 @@ public class RenameCS_16136 extends SdbTestBase{
 	
 	@Test
 	public void test(){ 
-		//TODO:1、测试点不正确，用例为并发修改主表和子表CS，不是修改子表名，请确认下测试点
-		RenameCSThread reCSNameThread = new RenameCSThread();
-		RenameCLThread reCLNameThread = new RenameCLThread();
+		RenameMainCSThread reMainCSNameThread = new RenameMainCSThread();
+		RenameSubCSThread reSubCSNameThread = new RenameSubCSThread();
 		
-		reCSNameThread.start();
-		reCLNameThread.start();
+		reMainCSNameThread.start();
+		reSubCSNameThread.start();
 		
-		Assert.assertTrue(reCSNameThread.isSuccess(), reCSNameThread.getErrorMsg());
-		Assert.assertTrue(reCLNameThread.isSuccess(), reCLNameThread.getErrorMsg());
-		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
-			RenameUtil.checkRenameCSResult(db, mainCSName, newMainCSName, 0);
-			RenameUtil.checkRenameCLResult(db, subCSName, subCLName, newSubCLName);
+		try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+			if( !reMainCSNameThread.isSuccess() ){
+				Integer[] errnosB = { -148 };
+				BaseException errorB = (BaseException)reMainCSNameThread.getExceptions().get(0);
+				if( !Arrays.asList(errnosB).contains(errorB.getErrorCode()) ){
+					Assert.fail(reMainCSNameThread.getErrorMsg());
+				}
+				RenameUtil.retryToRenameCS(db, mainCSName, newMainCSName);
+			}else{
+				RenameUtil.checkRenameCSResult(db, mainCSName, newMainCSName, 0);
+			}
+			
+			if( !reSubCSNameThread.isSuccess() ){
+				Integer[] errnosB = { -148 };
+				BaseException errorB = (BaseException)reSubCSNameThread.getExceptions().get(0);
+				if( !Arrays.asList(errnosB).contains(errorB.getErrorCode()) ){
+					Assert.fail(reSubCSNameThread.getErrorMsg());
+				}
+				RenameUtil.retryToRenameCS(db, subCSName, newSubCSName);
+			}else{
+				RenameUtil.checkRenameCSResult(db, subCSName, newSubCSName, 1);
+			}
 		}
+		
 	}
 	
 	@AfterClass
@@ -82,7 +101,7 @@ public class RenameCS_16136 extends SdbTestBase{
 		}
 	}
 	
-	private class RenameCSThread extends SdbThreadBase{
+	private class RenameMainCSThread extends SdbThreadBase{
 
 		@Override
 		public void exec() throws Exception {
@@ -93,13 +112,12 @@ public class RenameCS_16136 extends SdbTestBase{
 		}
 	}
 	
-	private class RenameCLThread extends SdbThreadBase{
+	private class RenameSubCSThread extends SdbThreadBase{
 
 		@Override
 		public void exec() throws Exception {
 			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
-				CollectionSpace cs = db.getCollectionSpace(subCSName);
-				cs.renameCollection(subCLName, newSubCLName);
+				db.renameCollectionSpace(subCSName, newSubCSName);
 			}
 		}
 	}

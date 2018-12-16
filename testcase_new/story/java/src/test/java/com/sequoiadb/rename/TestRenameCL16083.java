@@ -9,6 +9,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -55,6 +56,8 @@ public class TestRenameCL16083 extends SdbTestBase{
             if ( e.getErrorCode() != -23 ) {
                 Assert.fail("errcode not expected : " + e.getMessage());
             }
+        } else if(renameCLThread.isSuccess() && dropCLThread.isSuccess()){
+        	System.out.println("wo dou chenggong le ");
         } else {
             Assert.fail("renameCLThread and dropCLThread failed: "+renameCLThread.getErrorMsg() + dropCLThread.getErrorMsg());
         }
@@ -63,12 +66,8 @@ public class TestRenameCL16083 extends SdbTestBase{
     @AfterClass
     public void tearDown() {
         try {
-            if(cs.isCollectionExist(clName)){
-                cs.dropCollection(clName);
-            }
-            if(cs.isCollectionExist(newclName)){
-                cs.dropCollection(newclName);
-            }
+        	CommLib.clearCL(sdb, SdbTestBase.csName, clName);
+        	CommLib.clearCL(sdb, SdbTestBase.csName, newclName);
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
         } finally {
