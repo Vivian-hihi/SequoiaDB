@@ -233,9 +233,6 @@
                     <programArguments></programArguments>
                     <abortOnError>0</abortOnError>
                     <showMessageOnError>0</showMessageOnError>
-                    <ruleList>
-                       <compareText logic="does_not_equal" text="${SMS}" value="only"/>
-                    </ruleList>
                 </runProgram>
             </actionList>
             <ruleList>
@@ -250,7 +247,6 @@
             <abortOnError>0</abortOnError>
             <showMessageOnError>0</showMessageOnError>
         </setInstallerVariableFromScriptOutput>
-        <!--stop om  and  omplugin-->
         <if>
             <conditionRuleList>
                 <compareText logic="does_not_equal" text="${SMS}" value="false"/>
@@ -259,7 +255,7 @@
                 <stopOM/>
             </actionList>
         </if>
-        <!--check om and om plugin-->
+       <!--check om and om plugin-->
         <setInstallerVariableFromScriptOutput>
             <name>process_om_num</name>
             <exec>${installdir}/bin/sdblist</exec>
@@ -439,6 +435,14 @@
             <actionList>
                 <startServiceFunction/>
             </actionList>
+            <elseActionList>
+               <runProgram>
+                   <program>${installdir}/bin/sdbcmart</program>
+                   <programArguments></programArguments>
+                   <abortOnError>0</abortOnError>
+                   <showMessageOnError>0</showMessageOnError>
+               </runProgram>
+            </elseActionList>
         </if>
         
         <runProgram>
@@ -486,14 +490,6 @@
             <programArguments>${install_om_mode} "${installdir}" "${installer_pathname}" ${port} ${om_port} "${om_dbpath}" ${http_port}</programArguments>
             <ruleList>
                 <compareText logic="does_not_equal" text="${SMS}" value="false"/>
-            </ruleList>
-        </runProgram>
-        <runProgram>
-            <program>${installdir}/plugins/SequoiaSQL/bin/start.sh</program>
-            <programArguments></programArguments>
-            <runAs>${username}</runAs>
-            <ruleList>
-                <compareText logic="equals" text="${SMS}" value="only"/>
             </ruleList>
         </runProgram>
         <changeOwnerAndGroup>

@@ -418,6 +418,7 @@
                 </runProgram>
             </actionList>
         </actionDefinition>
+    
         <actionDefinition name="stopOM">
            <actionList>
               <runProgram>
@@ -426,11 +427,6 @@
                   <runAs>${username}</runAs>
                   <abortOnError>0</abortOnError>
                   <showMessageOnError>0</showMessageOnError>
-              </runProgram>
-              <runProgram>
-                  <program>${installdir}/plugins/SequoiaSQL/bin/stop.sh</program>
-                  <programArguments></programArguments>
-                  <runAs>${username}</runAs>
               </runProgram>
            </actionList>
         </actionDefinition>

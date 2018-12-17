@@ -57,7 +57,13 @@
                 <compareText logic="equals" text="${installmode}" value="cover"/>
             </conditionRuleList>
             <actionList>
-                <stopOM/>
+               <stopOM/>
+               <runProgram>
+                   <program>${installdir}/bin/sdbcmtop</program>
+                   <programArguments></programArguments>
+                   <abortOnError>0</abortOnError>
+                   <showMessageOnError>0</showMessageOnError>
+               </runProgram>
             </actionList>
         </if>
         
@@ -328,6 +334,14 @@
                 <compareText logic="equals" text="${SMS}" value="only"/>
                 <compareText logic="equals" text="${installmode}" value="cover"/>
             </conditionRuleList>
+            <actionList>
+               <runProgram>
+                   <program>${installdir}/bin/sdbcmart</program>
+                   <programArguments></programArguments>
+                   <abortOnError>0</abortOnError>
+                   <showMessageOnError>0</showMessageOnError>
+               </runProgram>
+            </actionList>
             <elseActionList>
                 <startServiceFunction/>
             </elseActionList>
@@ -348,14 +362,6 @@
             <onErrorActionList>
                 <consoleWrite text="&#xA;error message:&#xA;${program_stdout}&#xA;"/>
             </onErrorActionList>
-        </runProgram>
-        <runProgram>
-            <program>${installdir}/plugins/SequoiaSQL/bin/start.sh</program>
-            <programArguments></programArguments>
-            <runAs>${username}</runAs>
-            <ruleList>
-                <compareText logic="equals" text="${SMS}" value="only"/>
-            </ruleList>
         </runProgram>
         <changeOwnerAndGroup>
             <files>${installdir}/packet;${installdir}/packet/${installerFilename}</files>
