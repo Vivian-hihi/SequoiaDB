@@ -3237,7 +3237,7 @@ INT32 _sdbCi::handle( const po::options_description &desc,
 
    byGroup = ( 0 != ossStrncmp( CI_VIEW_CL, _header._view,
                                 CI_VIEWOPTION_SIZE ) ) ? TRUE : FALSE ;
-   useOutput = ( 0 != ossStrncmp( "", _header._outfile, OSS_MAX_PATHSIZE ) ) ;
+   useOutput = vm.count( CONSISTENCY_INSPECT_OUTPUT ) ? TRUE : FALSE ;
 
    if ( 0 == ossStrncmp( CI_ACTION_REPORT,
                          _header._action, CI_ACTION_SIZE ) &&
@@ -3246,17 +3246,18 @@ INT32 _sdbCi::handle( const po::options_description &desc,
       // report file
       if ( !useOutput )
       {
-         ossMemcpy( outReport, _header._filepath, OSS_MAX_PATHSIZE ) ;
-         ossStrncat( outReport, CI_FILE_REPORT, ossStrlen( CI_FILE_REPORT ) ) ;
+         ossSnprintf( outReport, OSS_MAX_PATHSIZE, "%s%s",
+                      _header._filepath, CI_FILE_REPORT ) ;
       }
       else
       {
-         ossMemcpy( outReport, _header._outfile, OSS_MAX_PATHSIZE ) ;
+         ossSnprintf( outReport, OSS_MAX_PATHSIZE, "%s%s",
+                      _header._outfile, CI_FILE_REPORT ) ;
       }
       rc = byGroup ? report ( _header._filepath, outReport,
                               tailBuffer, tailBufferSize )
                    : report2( _header._filepath, outReport,
-                              tailBuffer, tailBufferSize );
+                              tailBuffer, tailBufferSize ) ;
       //rc = report2( _header._filepath ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
       std::cout << _header._action << " done" << std::endl ;
@@ -3280,15 +3281,6 @@ INT32 _sdbCi::handle( const po::options_description &desc,
 
    rc = splitAuth() ;
    CHECK_VALUE( ( SDB_OK != rc ), error ) ;
-
-   if ( 0 != ossStrncmp( CI_VIEW_GROUP, _header._view, CI_VIEWOPTION_SIZE ) &&
-        0 != ossStrncmp( CI_VIEW_CL, _header._view, CI_VIEWOPTION_SIZE ) )
-   {
-      std::cout << "Invalid parameters:" << std::endl
-                << "Unknown action : " << _header._action << std::endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
 
    // in one dir, sdbinspect can be started only once
    rc = ossOpen( CI_START_TMP_FILE, OSS_CREATE | OSS_READWRITE,
@@ -3320,16 +3312,11 @@ INT32 _sdbCi::handle( const po::options_description &desc,
    }
 
    CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
    // report file
-   if ( !useOutput )
-   {
-      ossMemcpy( outReport, CI_FILE_NAME, OSS_MAX_PATHSIZE ) ;
-   }
-   else
-   {
-      ossMemcpy( outReport, _header._outfile, OSS_MAX_PATHSIZE ) ;
-   }
-   ossStrncat( outReport, CI_FILE_REPORT, ossStrlen( CI_FILE_REPORT ) ) ;
+   ossSnprintf( outReport, OSS_MAX_PATHSIZE, "%s%s",
+                _header._outfile, CI_FILE_REPORT ) ;
+
    rc = byGroup ? report ( _header._outfile, outReport,
                            tailBuffer, tailBufferSize )
                 : report2( _header._outfile, outReport,
@@ -3403,7 +3390,8 @@ INT32 _sdbCi::inspect()
       do
       {
          curLoop += 1 ;
-         makeTmpFileName( _header._outfile, curLoop, tmpFile, OSS_MAX_PATHSIZE ) ;
+         makeTmpFileName( _header._outfile, curLoop, tmpFile,
+                          OSS_MAX_PATHSIZE ) ;
 
          rc = inspectWithoutFile( coord, &_header, tmpFile, totalRecord ) ;
       }while ( CI_INSPECT_ERROR == rc ) ;
@@ -3443,14 +3431,7 @@ INT32 _sdbCi::inspect()
       ossMemcpy( inFile, tmpFile, OSS_MAX_PATHSIZE ) ;
    }
 
-   if ( 0 != ossStrncmp( "", _header._outfile, OSS_MAX_PATHSIZE ) )
-   {
-      rc = ossRenamePath( tmpFile, _header._outfile ) ;
-   }
-   else
-   {
-      rc = ossRenamePath( tmpFile, CI_FILE_NAME ) ;
-   }
+   rc = ossRenamePath( tmpFile, _header._outfile ) ;
    if ( SDB_OK != rc )
    {
       std::cout << "Error: failed to rename temp file to \""
@@ -3752,49 +3733,56 @@ INT32 _sdbCi::doDataExchange( engine::pmdCfgExchange *pEx )
 {
    resetResult() ;
 
-   rdxString( pEx, CONSISTENCY_INSPECT_COORD, _coordAddr,
-                   CI_ADDRESS_SIZE , FALSE, PMD_CFG_CHANGE_FORBIDDEN, CI_COORD_DEFVAL, FALSE ) ;
+   rdxString( pEx, CONSISTENCY_INSPECT_COORD, _coordAddr, CI_ADDRESS_SIZE,
+              FALSE, PMD_CFG_CHANGE_FORBIDDEN, CI_COORD_DEFVAL, FALSE ) ;
 
-   rdxString( pEx, CONSISTENCY_INSPECT_AUTH, _auth,
-                   CI_AUTH_SIZE , FALSE, PMD_CFG_CHANGE_FORBIDDEN, "\"\":\"\"", FALSE ) ;
+   rdxString( pEx, CONSISTENCY_INSPECT_AUTH, _auth, CI_AUTH_SIZE,
+              FALSE, PMD_CFG_CHANGE_FORBIDDEN, "\"\":\"\"", FALSE ) ;
 
-   rdxString( pEx, CONSISTENCY_INSPECT_TOKEN, _token,
-                   CI_TOKEN_SIZE , FALSE, PMD_CFG_CHANGE_FORBIDDEN, "", FALSE ) ;
+   rdxString( pEx, CONSISTENCY_INSPECT_TOKEN, _token, CI_TOKEN_SIZE,
+              FALSE, PMD_CFG_CHANGE_FORBIDDEN, "", FALSE ) ;
 
    rdxBooleanS( pEx, CONSISTENCY_INSPECT_CIPHER, _cipher,
-                     FALSE, PMD_CFG_CHANGE_FORBIDDEN, FALSE, FALSE ) ;
+                FALSE, PMD_CFG_CHANGE_FORBIDDEN, FALSE, FALSE ) ;
 
    rdxString( pEx, CONSISTENCY_INSPECT_CIPHERFILE, _cipherfile,
-                   CI_CIPHERFILE_SIZE , FALSE, PMD_CFG_CHANGE_FORBIDDEN, "./passwd", FALSE ) ;
+              CI_CIPHERFILE_SIZE , FALSE, PMD_CFG_CHANGE_FORBIDDEN,
+              "./passwd", FALSE ) ;
 
-   rdxString( pEx, CONSISTENCY_INSPECT_ACTION, _header._action,
-                   CI_ACTION_SIZE , FALSE, PMD_CFG_CHANGE_FORBIDDEN, CI_ACTION_INSPECT, FALSE ) ;
+   rdxString( pEx, CONSISTENCY_INSPECT_ACTION, _header._action, CI_ACTION_SIZE,
+              FALSE, PMD_CFG_CHANGE_FORBIDDEN, CI_ACTION_INSPECT, FALSE ) ;
 
-   rdxInt( pEx, CONSISTENCY_INSPECT_LOOP, _header._loop, FALSE, PMD_CFG_CHANGE_RUN, 5 ) ;
+   rdxInt( pEx, CONSISTENCY_INSPECT_LOOP, _header._loop, FALSE,
+           PMD_CFG_CHANGE_RUN, 5 ) ;
 
    rdxString( pEx, CONSISTENCY_INSPECT_GROUP, _header._groupName,
-                   CI_GROUPNAME_SIZE, FALSE, PMD_CFG_CHANGE_FORBIDDEN, "", FALSE ) ;
+              CI_GROUPNAME_SIZE, FALSE, PMD_CFG_CHANGE_FORBIDDEN, "", FALSE ) ;
 
-   rdxString( pEx, CONSISTENCY_INSPECT_CS, _header._csName,
-                   CI_CS_NAME_SIZE, FALSE, PMD_CFG_CHANGE_FORBIDDEN, "", FALSE ) ;
+   rdxString( pEx, CONSISTENCY_INSPECT_CS, _header._csName, CI_CS_NAME_SIZE,
+              FALSE, PMD_CFG_CHANGE_FORBIDDEN, "", FALSE ) ;
 
-   rdxString( pEx, CONSISTENCY_INSPECT_CL, _header._clName,
-                   CI_CL_NAME_SIZE, FALSE, PMD_CFG_CHANGE_FORBIDDEN, "", FALSE ) ;
+   rdxString( pEx, CONSISTENCY_INSPECT_CL, _header._clName, CI_CL_NAME_SIZE,
+              FALSE, PMD_CFG_CHANGE_FORBIDDEN, "", FALSE ) ;
 
    rdxString( pEx, CONSISTENCY_INSPECT_FILE, _header._filepath,
-                   OSS_MAX_PATHSIZE, FALSE, PMD_CFG_CHANGE_FORBIDDEN, "" ) ;
+              OSS_MAX_PATHSIZE, FALSE, PMD_CFG_CHANGE_FORBIDDEN, "" ) ;
 
    rdxString( pEx, CONSISTENCY_INSPECT_OUTPUT, _header._outfile,
-                   OSS_MAX_PATHSIZE, FALSE, PMD_CFG_CHANGE_FORBIDDEN, CI_FILE_NAME ) ;
+              OSS_MAX_PATHSIZE, FALSE, PMD_CFG_CHANGE_FORBIDDEN,
+              CI_FILE_NAME ) ;
 
-   rdxString( pEx, CONSISTENCY_INSPECT_VIEW, _header._view,
-                   CI_VIEWOPTION_SIZE, FALSE, PMD_CFG_CHANGE_FORBIDDEN, CI_VIEW_GROUP, FALSE ) ;
+   rdxString( pEx, CONSISTENCY_INSPECT_VIEW, _header._view, CI_VIEWOPTION_SIZE,
+              FALSE, PMD_CFG_CHANGE_FORBIDDEN, CI_VIEW_GROUP, FALSE ) ;
 
    return getResult() ;
 }
 
 INT32 _sdbCi::postLoaded( PMD_CFG_STEP step )
 {
+   if ( _header._outfile[ 0 ] == '\0' )
+   {
+      ossStrcpy( _header._outfile, CI_FILE_NAME ) ;
+   }
    return SDB_OK ;
 }
 
