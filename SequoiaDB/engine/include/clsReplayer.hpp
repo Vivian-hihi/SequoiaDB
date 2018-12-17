@@ -101,12 +101,19 @@ namespace engine
             return maxLSN ;
          }
 
+         void                 _clearID() ;
+
       protected:
          DPS_LSN_OFFSET       _lastInsertLSN ;
          DPS_LSN_OFFSET       _lastDelLSN ;
          DPS_LSN_OFFSET       _lastUpdateLSN ;
 
+         UINT64               _lastInsertID ;
+         UINT64               _lastDelID ;
+         UINT64               _lastUpdateID ;
+
          CLS_PARALLA_TYPE     _lastParallaType ;
+         UINT64               _idValue ;
 
    } ;
    typedef _clsCLParallaInfo clsCLParallaInfo ;
