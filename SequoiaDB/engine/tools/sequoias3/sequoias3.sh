@@ -1,6 +1,8 @@
 #!/bin/bash
 BashPath=$(dirname $(readlink -f $0))
 
+pwdpath=$(pwd)
+
 function Usage()
 {
     echo  "Usage: sequoias3 <subcommand> [options] [args]"
@@ -9,7 +11,7 @@ function Usage()
     echo  ""
     echo  "  start                     start sequoias3 with config"
     echo  "  start -p|--port arg       start sequoias3 with specified port and config"
-    echo  "  start -c|--confpath arg   start sequoias3 with config in confpath"
+#    echo  "  start -c|--confpath arg   start sequoias3 with config in confpath"
     echo  ""
     echo  "  stop  -p|--port arg       stop the sequoias3 process which listen the specified port"
     echo  "  stop  -a|--All            stop all sequoias3 process"
@@ -112,8 +114,8 @@ function Start()
   if [ -n "$2" ];then
     confpath=$2
   fi
-  configfile=$confpath"/application.properties"
-  logback=$confpath"/logback.xml"
+  #configfile=$confpath"/application.properties"
+  #logback=$confpath"/logback.xml"
  
   if [ "$port" != "" ]; then
     if [ $port -lt 0  -o  $port -gt 65535 ]; then
@@ -125,10 +127,20 @@ function Start()
       echo -e "\033[31mthe port $port already be used\033[0m"                                                                                   
       exit 1                                                                                                                          
     fi
-    nohup java -jar $packagepath --server.port=$port --spring.config.location=$configfile --logging.config=$logback 2>nohup.out &
+
+    cd $BashPath
+
+    configfile="$confpath/$port/application.properties"
+    logback="$confpath/$port/logback.xml"
+    nohup java -jar $packagepath --spring.config.location=$configfile --logging.config=$logback 2>nohup.out &
   else
+    cd $BashPath
+    configfile="$confpath/application.properties"
+    logback="$confpath/logback.xml"
     nohup java -jar $packagepath --spring.config.location=$configfile --logging.config=$logback 2>nohup.out &
   fi
+
+  cd $pwdpath  
 
   pid=$(jobs -l|awk '{print $2}')
   echo "pid:"$pid
@@ -177,12 +189,12 @@ function Stop()
   port=$2
 
   if [ -z "$killall" ] && [ -z "$port" ]; then
-    echo "stop command must specified -p or -a"
+    echo -e "\033[31mstop command must specified -p or -a\033[0m"
     exit 1
   fi
 
   if [ -n "$killall" ] && [ -n "$port" ]; then
-    echo "can not specified -a and -p at the same time"
+    echo -e "\033[31mcan not specified -a and -p at the same time\033[0m"
     exit 1
   fi
 

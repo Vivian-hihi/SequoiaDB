@@ -1,10 +1,10 @@
 <configuration scan="true" scanPeriod="60" debug="false">
-    <property name="LOG_PATH" value="../log" />
+    <property name="LOG_PATH" value="log" />
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/sequoiadbs3.log</file>
+        <file>${LOG_PATH}/sequoias3.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/sequoiadbs3.%i.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}sequoias3.%i.log</fileNamePattern>
             <minIndex>1</minIndex>
             <maxIndex>10</maxIndex>
         </rollingPolicy>
