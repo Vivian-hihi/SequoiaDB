@@ -29,13 +29,13 @@ function main()
       longStr += "a";
    }
    checkNewCSName( db, csName, longStr, -6 );
-   
+   //TODO:2、还需要补充长度边界值的测试点，如超过长度边界值128字节
    // rename cs new name is 127 str
    var shotStr = "";
    for(var i=0; i< 127; i++)
    {
       shotStr += "a";
-   }
+   } 
    checkNewCSName( db, csName, shotStr, 0 );
    db.renameCS( shotStr, csName );
    
@@ -55,7 +55,7 @@ function checkNewCSName( db, oldCSName, newCSName, error )
 {
    try
    {
-      db.renameCS( oldCSName, newCSName );
+      db.renameCS( oldCSName, newCSName );//TODO:1、此处需要增加rename成功判断，如果rename成功则报错
    }
    catch( e )
    {

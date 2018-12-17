@@ -22,7 +22,7 @@ function main()
    
    // rename cs new name is ""
    checkNewCLName( db, csName, clName, "", -6 );
-   return;
+   return;//TODO:2、这里为啥要return？
    // rename cs new name is long str
    var longStr = "a";
    for(var i=0; i< 1000; i++)
@@ -30,7 +30,7 @@ function main()
       longStr += "a";
    }
    checkNewCLName( db, csName, clName, longStr, -6 );
-   
+   //TODO:2、还需要补充长度边界值的测试点，如超过长度边界值128字节
    // rename cs new name is 127 str
    var shotStr = "";
    for(var i=0; i< 127; i++)
@@ -56,7 +56,7 @@ function checkNewCLName( db, csName, oldCLName, newCLName, error )
 {
    try
    {
-      db.getCS( csName ).renameCL( oldCLName, newCLName );
+      db.getCS( csName ).renameCL( oldCLName, newCLName );//TODO:1、需要增加rename成功报错处理
    }
    catch( e )
    {
