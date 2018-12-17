@@ -36,11 +36,6 @@ public class RenameCSAndCreateCS16131 extends SdbTestBase{
 	@BeforeClass
 	public void setUp(){
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		//TODO:http://jira:8080/browse/SEQUOIADBMAINSTREAM-3997
-		if(CommLib.isStandAlone(sdb)){
-			throw new SkipException("standAlone skip testcase16131");
-		}
-		
 		RenameUtil.removeCS(sdb, newCSName);		
 		String option = "{ PageSize : "+ pageSizeByRenameCS + "}";
 		RenameUtil.createCS(sdb, csName, option);		

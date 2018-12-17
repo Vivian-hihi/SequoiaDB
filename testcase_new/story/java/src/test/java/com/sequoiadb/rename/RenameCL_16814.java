@@ -101,7 +101,7 @@ public class RenameCL_16814 extends SdbTestBase{
 			filter2.put("CollectionSpace", csName);
 			long num2 = stat.getCount(filter2);
 			long expNum;
-			if(analyzeMode > 3){
+			if(analyzeMode > 3 || !analyze){
 				expNum = 0;
 			}else{
 				expNum = 1;
