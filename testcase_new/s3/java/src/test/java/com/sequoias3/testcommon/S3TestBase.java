@@ -257,7 +257,6 @@ public class S3TestBase {
         }
     }
     
-    @SuppressWarnings("resource")
 	private static void printResidualData() throws Exception{
     	int errorCount = 0;
     	Sequoiadb db = null;
@@ -290,6 +289,7 @@ public class S3TestBase {
 	                System.out.println("===============end print " + metaCs.getName() +"."+ cl.getName() + " data==============\n");
             	}
             }
+            cursor.close();
             
             CollectionSpace dataCs = db.getCollectionSpace("DataCollectionSpace");
             try{
