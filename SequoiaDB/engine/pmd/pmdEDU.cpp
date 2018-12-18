@@ -563,7 +563,7 @@ namespace engine
 
    CHAR* _pmdEDUCB::getBuffer( UINT32 len )
    {
-      if ( _buffSize < 0 )
+      if ( _buffSize < len )
       {
          releaseBuffer() ;
          allocBuff( len, &_pBuffer, &_buffSize ) ;
