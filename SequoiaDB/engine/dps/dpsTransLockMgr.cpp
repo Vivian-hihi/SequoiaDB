@@ -1673,10 +1673,13 @@ namespace engine
             PD_TRACE1( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
                        PD_PACK_STRING( "Compatible with all owners" ) );
 #endif
-            // if both upgrade and waiter list are empty add it to owner list
-            // else add it to wait list
-            if (   ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
-                && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx ) ) )
+            // add to owner list when satisfy following conditions :
+            // a. if both upgrade and waiter list are empty
+            // b. if it is doing retry-acquire after been woken up.( when input
+            //    parameter, bktLatched, is true, means retry acquiring )
+            if (   (    ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
+                     && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx ) ) )
+                || ( bktLatched ) )
             {
                if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
                {
@@ -1698,7 +1701,7 @@ namespace engine
                }
 #ifdef _DEBUG
                PD_TRACE1( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
-                          PD_PACK_STRING( "No waiter, lock acquired" ) );
+                          PD_PACK_STRING( "Lock acquired" ) );
 #endif
                // job done
                goto done ;
