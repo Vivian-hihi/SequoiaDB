@@ -178,7 +178,8 @@ public class NodeWrapper {
             BasicBSONObject obj = getDataBaseSnapshot(printRes);
             checkResult.serviceStatus = obj.getBoolean("ServiceStatus");
             checkResult.connect = true;
-            checkResult.LSN = ((BasicBSONObject) obj.get("CurrentLSN")).getLong("Offset");
+            checkResult.LSNVer = ((BasicBSONObject) obj.get("CompleteLSN")).getInt("Version") ;
+            checkResult.LSN = ((BasicBSONObject) obj.get("CompleteLSN"));
             checkResult.isPrimary = obj.getBoolean("IsPrimary");
             checkResult.freeSpace = ((BasicBSONObject) obj.get("Disk")).getLong("FreeSpace");
         }
