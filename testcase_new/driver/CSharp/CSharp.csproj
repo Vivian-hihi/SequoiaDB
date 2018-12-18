@@ -156,7 +156,7 @@
     <Compile Include="AutoIncrement\AutoIncrement16635.cs" />
     <Compile Include="AutoIncrement\AutoIncrement16636.cs" />
     <Compile Include="AutoIncrement\AutoIncrement16656.cs" />
-    <Compile Include="AutoIncrement\TestListReplicaGroups16815.cs" />
+    <Compile Include="Sdb\TestListReplicaGroups16815.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
