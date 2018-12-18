@@ -111,6 +111,7 @@
     <Compile Include="Crud\Lob\Lob13404.cs" />
     <Compile Include="Crud\Lob\Lob13468.cs" />
     <Compile Include="Cluster\TestGetSlave14891.cs" />
+    <Compile Include="Cluster\TestAttachDetachNodePara16816.cs" />
     <Compile Include="Monitor\TestSnapshotAccessplan14516.cs" />
     <Compile Include="Meta\Common.cs" />
     <Compile Include="Meta\Meta15186.cs" />
