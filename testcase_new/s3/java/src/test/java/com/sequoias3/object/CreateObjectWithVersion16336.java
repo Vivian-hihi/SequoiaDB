@@ -37,6 +37,7 @@ public class CreateObjectWithVersion16336 extends S3TestBase {
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		s3Client = CommLib.buildS3Client();
+		ObjectUtils.deleteObjectAllVersions(s3Client, S3TestBase.enableVerBucketName, keyName);	
 	}
 
 	@Test
@@ -51,7 +52,7 @@ public class CreateObjectWithVersion16336 extends S3TestBase {
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				s3Client.deleteObject(S3TestBase.enableVerBucketName, keyName);
+				ObjectUtils.deleteObjectAllVersions(s3Client, S3TestBase.enableVerBucketName, keyName);				
 				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
