@@ -41,7 +41,8 @@ function main()
 
    // update to string
    dbcl.update({"$set" : {a : "updated string"}}, {a : {"$exists" : 1}});
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 8);
+   dbcl.insert({a : "new"});
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 9);
    
    // check result
    var expResult = dbOpr.findFromCL(dbcl, null);

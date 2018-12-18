@@ -35,12 +35,14 @@ function main()
    checkResult( expectResult, actResult );
    
    updateData( dbcl );
+   dbcl.insert({a : "new", b : "new"});
    
-   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 3 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 4 );
    
    expectResult = new Array( { "a" : "a", "b" : "b" },
                              { "a" : "a"},
-							 { "a" : "a2", "b" : "b2" });
+							 { "a" : "a2", "b" : "b2" },
+                             {"a" : "new", "b" : "new" });
    actResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a', compare( 'b' ) ) );
    checkResult( expectResult, actResult );
    

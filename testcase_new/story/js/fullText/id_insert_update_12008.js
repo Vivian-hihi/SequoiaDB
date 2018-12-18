@@ -31,8 +31,9 @@ function main()
    checkResult( expectResult, actResult );
    
    dbcl.update( { $set: { _id: "_id" + 1 } }, { _id: 1 } );
+   dbcl.insert({a : "new"});
    
-   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 1 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 2 );
    
    expectResult = dbOperator.findFromCL( dbcl, null, selectorCond );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond );
@@ -52,8 +53,9 @@ function main()
    checkResult( expectResult, actResult );
    
    dbcl.update( { $set: { _id: "_id" + 1 } }, { _id: 1 } );
+   dbcl.insert({a : "new"});
    
-   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 1 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 2 );
    
    expectResult = dbOperator.findFromCL( dbcl, null, selectorCond );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond );

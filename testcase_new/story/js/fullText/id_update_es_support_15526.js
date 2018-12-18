@@ -32,8 +32,9 @@ function main()
    checkResult( expectResult, actResult );
    
    updateData( dbcl );
+   dbcl.insert({a : "new"});
    
-   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 10 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 11 );
    
    expectResult = dbOperator.findFromCL( dbcl, null, selectorCond ).sort( compare ( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare ( 'a' ) );
@@ -50,11 +51,12 @@ function main()
    
    expectResult = dbOperator.findFromCL( dbcl, null, selectorCond ).sort( compare ( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare ( 'a' ) );
-   checkResult( expectResult, actResult );
+   checkResult( expectResult, actResult ); 
    
    updateData( dbcl );
+   dbcl.insert({a : "new"});
    
-   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 10 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 11 );
    
    expectResult = dbOperator.findFromCL( dbcl, null, selectorCond ).sort( compare ( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare ( 'a' ) );

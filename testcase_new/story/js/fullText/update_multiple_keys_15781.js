@@ -34,12 +34,14 @@ function main()
    
    // update all to string  after create text index
    dbcl.update({$set:{a:"string_a", b:"string_b", c:"string_c", d:"string_d"}});
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 1);
+   dbcl.insert({a : "new"});
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 2);
 
    // check result
-   var expectResult = [{a:"string_a", b:"string_b", c:"string_c", d:"string_d"}];
+   var expectResult = [{a:"string_a", b:"string_b", c:"string_c", d:"string_d"},
+                       {a:"new"}];
    var actResult = esOpr.findFromES(esIndexNames[0], searchCond);
-   checkResult(expectResult, actResult);
+   checkResult(expectResult.sort(compare("a")), actResult.sort(compare("a")));
   
    commDropCL(db, COMMCSNAME, clName, true, true);
 }

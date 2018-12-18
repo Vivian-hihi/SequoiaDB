@@ -61,6 +61,7 @@ function main(){
 function updateFieldId(dbcl){
    try{
       dbcl.update({$set : {_id : 1002}},{_id : 1001});
+      throw "update error!";
    }
    catch(e){
       if(e != -38){

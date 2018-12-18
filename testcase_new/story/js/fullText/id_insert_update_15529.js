@@ -35,32 +35,36 @@ function main()
    checkResult( expectResult, actResult );
    
    updateToSameTypeAndSuppot( dbcl );
+   dbcl.insert({a : "new1"});
    
-   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 10 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 11 );
    
    expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );
    checkResult( expectResult, actResult );
    
    updateToSameTypeButNotSuppot( dbcl );
+   dbcl.insert({a : "new2"});
    
-   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 10 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 12 );
    
    expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );
    checkResult( expectResult, actResult );
    
    updateToDifferTypeAndSuppot( dbcl );
+   dbcl.insert({a : "new3"});
    
-   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 14 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 17 );
    
    expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );
    checkResult( expectResult, actResult );
    
    updateToDifferTypeNotSuppot( dbcl );
+   dbcl.insert({a : "new4"});
    
-   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 0 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 4 );
    
    commDropCL( db, COMMCSNAME, clName, true, true );
 }

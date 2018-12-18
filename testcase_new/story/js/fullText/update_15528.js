@@ -34,8 +34,9 @@ function main()
    checkResult( expectResult, actResult );
    
    update( dbcl );
+   dbcl.insert({a : "new"});
    
-   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 4 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 7 );
    
    expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );
@@ -55,8 +56,9 @@ function main()
    checkResult( expectResult, actResult );
    
    update( dbcl );
+   dbcl.insert({a : "new"});
    
-   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 4 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 7 );
    
    expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );

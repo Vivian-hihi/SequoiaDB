@@ -47,8 +47,8 @@ function main()
          throw "update error!";
       }
    }
-   
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 10000);
+   dbcl.insert({a : "new"});
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 10001);
    
    var dbOperator = new DBOperator();
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});

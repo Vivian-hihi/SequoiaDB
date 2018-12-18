@@ -31,8 +31,9 @@ function main()
    checkResult( expectResult, actResult );
    
    dbcl.update( { $set : { a : "text1" } } );
+   dbcl.insert({a : "new"});
    
-   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 1 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 2 );
    
    expectResult = dbOperator.findFromCL( dbcl, null, selectorCond );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond );
