@@ -172,6 +172,15 @@ class SequoiaCL
     * @deprecated This function is deprecated, use the function dropIndex() instead.
    */
    public function deleteIndex(){}
+
+   /**
+    * Get all of or one of the indexes in current collection.
+    *
+    * @see getIndexes() and getIndexInfo().
+    *
+    * @deprecated This function is deprecated, use the function getIndexes() and getIndexInfo() instead.
+   */
+   public function getIndex( string $indexName = "" ){}
 }
 
 /**

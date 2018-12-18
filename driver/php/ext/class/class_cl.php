@@ -1038,9 +1038,7 @@ class SequoiaCL
    public function dropIndex( string $indexName ){}
 
    /**
-    * Get all of or one of the indexes in current collection.
-    *
-    * @param $indexName the string argument. The index name, returns all of the indexes if this parameter is empty string.
+    * Get the information of all the indexes in current collection.
     *
     * @return Returns a new SequoiaCursor object.
     *
@@ -1048,7 +1046,7 @@ class SequoiaCL
     *
     * Example:
     * @code
-    * $cursor = $cl -> getIndex() ;
+    * $cursor = $cl -> getIndexes() ;
     * if( empty( $cursor ) ) {
     *    $err = $db -> getLastErrorMsg() ;
     *    echo "Failed to get indexes, error code: ".$err['errno'] ;
@@ -1059,7 +1057,31 @@ class SequoiaCL
     * }
     * @endcode
    */
-   public function getIndex( string $indexName = "" ){}
+   public function getIndexes(){}
+
+   /**
+    * Get the information of the specified index in current collection.
+    *
+    * @param $name the string argument. The index name.
+    *
+    * @return Returns the information of index., default return array.
+    *
+    * @retval array   record
+    * @retval string  record
+    *
+    * Example:
+    * @code
+    * $indexInfo = $cl -> getIndexInfo( 'myIndex' ) ;
+    * if ( empty( $indexInfo ) )
+    * {
+    *    $err = $db -> getLastErrorMsg() ;
+    *    echo "Failed to get index, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * var_dump( $indexInfo ) ;
+    * @endcode
+   */
+   public function getIndexInfo( string $name ){}
 
    /**
     * Create $id index in collection.

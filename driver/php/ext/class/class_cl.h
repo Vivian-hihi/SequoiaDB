@@ -61,6 +61,8 @@ PHP_METHOD( SequoiaCL, aggregate ) ;
 PHP_METHOD( SequoiaCL, createIndex ) ;
 PHP_METHOD( SequoiaCL, dropIndex ) ;
 PHP_METHOD( SequoiaCL, getIndex ) ;
+PHP_METHOD( SequoiaCL, getIndexes ) ;
+PHP_METHOD( SequoiaCL, getIndexInfo ) ;
 PHP_METHOD( SequoiaCL, createIdIndex ) ;
 PHP_METHOD( SequoiaCL, dropIdIndex ) ;
 

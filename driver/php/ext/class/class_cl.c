@@ -1757,6 +1757,82 @@ error:
    goto done ;
 }
 
+PHP_METHOD( SequoiaCL, getIndexes )
+{
+   INT32 rc = SDB_OK ;
+   zval *pThisObj         = getThis() ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
+
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+
+   PHP_READ_HANDLE( pThisObj,
+                    cl,
+                    sdbCollectionHandle,
+                    SDB_CL_HANDLE_NAME,
+                    clDesc ) ;
+
+   rc = sdbGetIndexInfo( cl, &cursor ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+   PHP_BUILD_CLASS( FALSE,
+                    pThisObj,
+                    pSequoiadbCursor,
+                    cursor,
+                    cursorDesc ) ;
+done:
+   return ;
+error:
+   RETVAL_NULL() ;
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
+PHP_METHOD( SequoiaCL, getIndexInfo )
+{
+   INT32 rc = SDB_OK ;
+   PHP_LONG indexNameLen  = 0 ;
+   CHAR *pIndexName       = NULL ;
+   zval *pThisObj         = getThis() ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   bson record ;
+   bson_init( &record ) ;
+
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+
+   if ( PHP_GET_PARAMETERS( "s", &pIndexName, &indexNameLen ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   PHP_READ_HANDLE( pThisObj,
+                    cl,
+                    sdbCollectionHandle,
+                    SDB_CL_HANDLE_NAME,
+                    clDesc ) ;
+
+   rc = sdbGetIndex( cl, pIndexName, &record ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+done:
+   PHP_RETURN_AUTO_RECORD( FALSE,
+                           pThisObj,
+                           (rc == SDB_OK ? FALSE : TRUE),
+                           record ) ;
+   bson_destroy( &record ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
 PHP_METHOD( SequoiaCL, createIdIndex )
 {
    INT32 rc = SDB_OK ;
