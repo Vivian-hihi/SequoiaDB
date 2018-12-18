@@ -98,13 +98,13 @@ class TestSequence16630 extends PHPUnit_Framework_TestCase
       self::checkSnapshotValue( $record['Name'], self::$sequenceName );
       self::checkSnapshotValue( $record['Internal'], true );
       self::checkSnapshotValue( $record['Version'] -> __toString(), '0');
-      self::checkSnapshotValue( settype( $record['CurrentValue'], 'int'), 2048 );
-      self::checkSnapshotValue( settype( $record['StartValue'], 'int'), 2048 );
-      self::checkSnapshotValue( settype( $record['MinValue'], 'int'), 1024 );
-      self::checkSnapshotValue( settype( $record['MaxValue'], 'int'), 4096 );
-      self::checkSnapshotValue( settype( $record['Increment'], 'int'), 1 );
-      self::checkSnapshotValue( settype( $record['CacheSize'], 'int'), 1000 );
-      self::checkSnapshotValue( settype( $record['AcquireSize'], 'int'), 1000 );
+      self::checkSnapshotValue( intval( $record['CurrentValue'] -> __toString() ), 2048 );
+      self::checkSnapshotValue( intval( $record['StartValue'] -> __toString() ), 2048 );
+      self::checkSnapshotValue( intval( $record['MinValue'] -> __toString() ), 1024 );
+      self::checkSnapshotValue( intval( $record['MaxValue'] -> __toString() ), 4096 );
+      self::checkSnapshotValue( $record['Increment'], 1 );
+      self::checkSnapshotValue( $record['CacheSize'], 1000 );
+      self::checkSnapshotValue( $record['AcquireSize'], 1000 );
       self::checkSnapshotValue( $record['Cycled'], false );
       self::checkSnapshotValue( $record['Initial'], true );
       

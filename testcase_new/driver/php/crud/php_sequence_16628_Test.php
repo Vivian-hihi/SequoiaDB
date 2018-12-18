@@ -111,7 +111,7 @@ class TestSequence16628 extends PHPUnit_Framework_TestCase
       $times = 1;
       while( $record = $cursor -> next() )
       {
-         if( settype($record['a'], 'int') != $times || settype($record['b'], 'int') != $times )
+         if( intval($record['a'] -> __toString()) != $times || intval($record['b'] -> __toString()) != $times )
          {
             throw new Exception( "check record error, exp: ". $times ." act: " ."a = ".$record['a'].", b = ".$record['b'] );
          }
