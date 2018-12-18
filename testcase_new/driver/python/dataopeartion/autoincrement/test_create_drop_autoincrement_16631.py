@@ -5,6 +5,7 @@
 
 from lib import testlib
 from lib import sdbconfig
+from dataopeartion.autoincrement.commlib import *
 from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
 
 
@@ -24,55 +25,55 @@ class TestCreateDropAutoIncrement16631(testlib.SdbTestBase):
       try:
          self.cl.create_autoincrement({})
       except SDBBaseError as e:
-         self.assertEqual(-6, e.code, "===> step 1 check create autoincrement with {} fail")
+         self.assertEqual(-6, e.code)
          
       try:
          self.cl.create_autoincrement(None)
       except SDBBaseError as e:
-         self.assertEqual(-6, e.code, "===> step 2 check create autoincrement with None fail")
+         self.assertEqual(-6, e.code)
       
       #create autoincrement with invalid paramter
       try:
          self.cl.create_autoincrement({"FirstField":"age", "Increment":"10"})
       except SDBBaseError as e:
-         self.assertEqual(-6, e.code, "===> step 3 check create autoincrement with invalid paramter fail")
+         self.assertEqual(-6, e.code)
       
       #create autoincrement with effective paramter
-      self.cl.create_autoincrement({"Field":"age", "Increment":2, "StartValue":12, "MinValue":10, "MaxValue":500, "CacheSize":100, "AcquireSize":50, "Cycled" : True, "Generated":"strict"})
+      self.cl.create_autoincrement({"Field":"age", "Increment":2, "StartValue":12, "MinValue":10, "MaxValue":500, "CacheSize":100, "AcquireSize":50, "Cycled":True, "Generated":"strict"})
+      options = {"Increment":2, "StartValue":12, "MinValue":10, "MaxValue":500, "CacheSize":100, "AcquireSize":50, "Cycled":True}
+      self.assertTrue(check_autoincrement(self.db, self.cs_name + "." + self.cl_name, "age", options))
       self.cl.create_autoincrement({"Field":"number"})
+      options = {"Increment":1, "StartValue":1, "MinValue":1, "MaxValue":9223372036854775807, "CacheSize":1000, "AcquireSize":1000, "Cycled":False}
+      self.assertTrue(check_autoincrement(self.db, self.cs_name + "." + self.cl_name, "number", options))
       
       #insert
       self.insert_records() 
       except_records = self.get_expect_records()
       cursor = self.cl.query()
       actual_records = testlib.get_all_records_noid(cursor)
-      msg = "===> step 4 " + str(except_records) + "expect is not equal to actResult" + str(actual_records)
+      msg = str(except_records) + "expect is not equal to actResult" + str(actual_records)
       self.assertListEqual(except_records, actual_records, msg)
       
       #drop_autoincrement
       try:
          self.cl.drop_autoincrement("test")
       except SDBBaseError as e:
-         self.assertEqual(-333, e.code, "===> step 5 drop_autoincrement not exist fail")
+         self.assertEqual(-333, e.code)
          
       try:
          self.cl.drop_autoincrement("")
       except SDBBaseError as e:
-         self.assertEqual(-6, e.code, "===> step 6 drop_autoincrement no str fail")
+         self.assertEqual(-6, e.code)
          
       try:
          self.cl.drop_autoincrement(None)
       except SDBBaseError as e:
-         self.assertEqual(-6, e.code, "===> step 7 drop_autoincrement None fail")
+         self.assertEqual(-6, e.code)
          
-      #check sequence
-      sequence_name = self.get_sequence_name("age")
-      if (sequence_name == "ERROR"):
-         self.assertFail("===> step 8 get_sequence_name fail")
-      
-      self.assertTrue(self.check_sequence_name_exist(sequence_name), "===> step 9 check sequence_name exist fail")
+      #check sequence exist
+      self.assertTrue(check_autoincrement_exist(self.db, self.cs_name + "." + self.cl_name, "age"))
       self.cl.drop_autoincrement("age")
-      self.assertFalse(self.check_sequence_name_exist(sequence_name), "===> step 10 check sequence_name not exist fail")
+      self.assertFalse(check_autoincrement_exist(self.db, self.cs_name + "." + self.cl_name, "age"))
       
    def tearDown(self):
       self.db.drop_collection_space(self.cs_name)   
@@ -92,24 +93,4 @@ class TestCreateDropAutoIncrement16631(testlib.SdbTestBase):
       doc = []
       for i in range(0, 10):
          doc.append({"name":"a"+str(i), "age":12+2*i, "number":i+1})
-      return doc
-      
-   def get_sequence_name(self, field):
-      cursor = self.db.get_snapshot(8, condition = {"Name":self.cs_name + "." + self.cl_name})
-      snapshots = testlib.get_all_records(cursor)
-      obj = snapshots[0]
-      AutoIncrement = obj["AutoIncrement"]
-      for item in AutoIncrement:
-         if (field == item["Field"]):
-            return item["SequenceName"]
-      return "ERROR"
-      
-   def check_sequence_name_exist(self, sequence_name):
-      print("sequence_name : " + sequence_name)
-      cursor = self.db.get_snapshot(15, condition = {"Name":sequence_name})
-      try:
-         cursor.next()
-         return True 
-      except SDBEndOfCursor:
-         return False
-      
+      return doc 
