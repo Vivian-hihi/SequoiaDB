@@ -59,6 +59,10 @@ namespace CSharp.AutoIncrement
         [TestCleanup()]
         public void TearDown()
         {
+            if (cs.IsCollectionExist(clName))
+            {
+                cs.DropCollection(clName);
+            }
             if (sdb != null)
             {
                 sdb.Disconnect();
@@ -102,7 +106,7 @@ namespace CSharp.AutoIncrement
             BsonDocument orderBy = new BsonDocument();
             BsonDocument matcher = new BsonDocument();
             BsonArray arr = new BsonArray();
-            arr.Add(new BsonDocument { { "Name", autoIncrementInfos[0].GetElement("SequenceName").Value.ToString() } } );
+            arr.Add(new BsonDocument { { "Name", autoIncrementInfos[0].GetElement("SequenceName").Value.ToString() } });
             arr.Add(new BsonDocument { { "Name", autoIncrementInfos[1].GetElement("SequenceName").Value.ToString() } });
             arr.Add(new BsonDocument { { "Name", autoIncrementInfos[2].GetElement("SequenceName").Value.ToString() } });
             matcher.Add("$or", arr);
@@ -179,7 +183,7 @@ namespace CSharp.AutoIncrement
             }
             if (actual < expected)
             {
-                Assert.Fail("expected >= 3 actual : " + actual );
+                Assert.Fail("expected >= 3 actual : " + actual);
             }
             cur.Close();
 
@@ -201,7 +205,7 @@ namespace CSharp.AutoIncrement
                 Assert.Fail("expected >= 3 actual : " + actual);
             }
             cur.Close();
-            
+
         }
 
         public List<BsonDocument> GetAutoIncrement(string clFullName)

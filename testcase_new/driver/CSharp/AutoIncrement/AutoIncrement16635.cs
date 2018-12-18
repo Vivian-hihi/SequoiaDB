@@ -41,7 +41,7 @@ namespace CSharp.AutoIncrement
             {
                 return;
             }
-           TestInvalidArg();
+            TestInvalidArg();
 
             //所有参数项均给非默认值
             TestNoDefaultOption();
@@ -53,6 +53,10 @@ namespace CSharp.AutoIncrement
         [TestCleanup()]
         public void TearDown()
         {
+            if (cs.IsCollectionExist(clName))
+            {
+                cs.DropCollection(clName);
+            }
             if (sdb != null)
             {
                 sdb.Disconnect();
@@ -119,7 +123,7 @@ namespace CSharp.AutoIncrement
             cs.DropCollection(clName);
         }
 
- 
+
         public void TestNoDefaultOption()
         {
             BsonDocument options = new BsonDocument();
@@ -263,7 +267,7 @@ namespace CSharp.AutoIncrement
             BsonDocument doc = new BsonDocument();
             BsonDocument matcher = new BsonDocument();
             matcher.Add("Name", SequenceName);
-            
+
             DBCursor cur = sdb.GetSnapshot(SDBConst.SDB_SNAP_SEQUENCES, matcher, null, null);
             while (cur.Next() != null)
             {

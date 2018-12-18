@@ -52,14 +52,18 @@ namespace CSharp.AutoIncrement
         [TestCleanup()]
         public void TearDown()
         {
+            if (cs.IsCollectionExist(clName))
+            {
+                cs.DropCollection(clName);
+            }
             if (sdb != null)
             {
                 sdb.Disconnect();
             }
             Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " end  : " + this.GetType().ToString());
         }
-         
-        public void CreatAutoIncreamentCL( 
+
+        public void CreatAutoIncreamentCL(
             )
         {
             DBCollection cl = cs.CreateCollection(clName);
@@ -75,7 +79,7 @@ namespace CSharp.AutoIncrement
 
         }
 
-        public void AlterAutoIncreamentCL( )
+        public void AlterAutoIncreamentCL()
         {
             //Alter (BsonDocument options)
             DBCollection cl = cs.GetCollection(clName);
@@ -95,10 +99,10 @@ namespace CSharp.AutoIncrement
             BsonDocument options = new BsonDocument();
             options.Add("Alter", alterArray);
             cl.Alter(options);
-            List<BsonDocument> doc = GetAutoIncrement( SdbTestBase.csName + "." + clName );
+            List<BsonDocument> doc = GetAutoIncrement(SdbTestBase.csName + "." + clName);
             BsonDocument matcher = new BsonDocument();
             matcher.Add("Name", doc[0].GetElement("SequenceName").Value.ToString());
-            DBCursor cur = sdb.GetSnapshot(SDBConst.SDB_SNAP_SEQUENCES, matcher, new BsonDocument { {"StartValue", 1} }, new BsonDocument());
+            DBCursor cur = sdb.GetSnapshot(SDBConst.SDB_SNAP_SEQUENCES, matcher, new BsonDocument { { "StartValue", 1 } }, new BsonDocument());
             List<BsonDocument> expected = new List<BsonDocument>();
             List<BsonDocument> actual = new List<BsonDocument>();
             expected.Add(new BsonDocument { { "StartValue", 3 } });
@@ -112,7 +116,7 @@ namespace CSharp.AutoIncrement
         }
 
         // SetAttributes (BsonDocument options)
-        public void SetAttributesAutoIncreamentCL( )
+        public void SetAttributesAutoIncreamentCL()
         {
             DBCollection cl = cs.GetCollection(clName);
             cl.SetAttributes(new BsonDocument{

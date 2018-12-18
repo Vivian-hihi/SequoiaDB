@@ -35,7 +35,7 @@ namespace CSharp.AutoIncrement
         }
 
         [TestMethod]
-        public void Test16634() 
+        public void Test16634()
         {
             if (Common.IsStandalone(sdb))
             {
@@ -58,6 +58,10 @@ namespace CSharp.AutoIncrement
         [TestCleanup()]
         public void TearDown()
         {
+            if (cs.IsCollectionExist(clName))
+            {
+                cs.DropCollection(clName);
+            }
             if (sdb != null)
             {
                 sdb.Disconnect();
@@ -104,10 +108,10 @@ namespace CSharp.AutoIncrement
             Assert.AreEqual("num", actInfo.GetElement("Field").Value);
             Assert.AreEqual("default", actInfo.GetElement("Generated").Value);
             BsonDocument record = new BsonDocument();
-            record.Add("_id",1);
+            record.Add("_id", 1);
             cl.Insert(record);
             BsonDocument matcher = new BsonDocument();
-            matcher.Add("_id",1);
+            matcher.Add("_id", 1);
             matcher.Add("num", 1);
             Assert.AreEqual(1, cl.GetCount(matcher));
             cs.DropCollection(clName);
@@ -187,7 +191,7 @@ namespace CSharp.AutoIncrement
             }
             catch (BaseException e)
             {
-                Assert.Fail("DropAutoIncrement failed : "+e.ErrorCode);
+                Assert.Fail("DropAutoIncrement failed : " + e.ErrorCode);
             }
             cs.DropCollection(clName);
         }
@@ -215,7 +219,7 @@ namespace CSharp.AutoIncrement
             BsonDocument doc = new BsonDocument();
             BsonDocument matcher = new BsonDocument();
             matcher.Add("Name", SequenceName);
-            
+
             DBCursor cur = sdb.GetSnapshot(SDBConst.SDB_SNAP_SEQUENCES, matcher, null, null);
             while (cur.Next() != null)
             {
