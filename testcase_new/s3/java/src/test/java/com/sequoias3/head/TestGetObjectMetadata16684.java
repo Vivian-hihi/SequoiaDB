@@ -1,7 +1,9 @@
 package com.sequoias3.head;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -54,12 +56,11 @@ public class TestGetObjectMetadata16684  extends S3TestBase{
 		String versionId = result.getVersionId();
 		
 		Date date = new Date();
-		String rfc1123 = getGMTDate(date);
 		
 		//指定versionId对象在指定时间未修改
 		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName+"?versionId="+versionId);
 	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
-	    request.setHeader("If-Modified-Since", rfc1123);
+	    request.setHeader("If-Modified-Since", getModifiedGMTDate(date ,1));
 	    client = RestClient.createHttpClient();
 	    try{
 	    	RestClient.sendRequest(client, request);
@@ -83,6 +84,15 @@ public class TestGetObjectMetadata16684  extends S3TestBase{
 				s3Client.shutdown();
 			}
 		}
+	}
+	
+	private String getModifiedGMTDate(Date date , int amount){
+		Calendar calendar = new GregorianCalendar();
+		calendar.setTime(date);
+		//把日期往后增加，正数往后推，负数往前推
+		calendar.add(Calendar.DATE, amount);
+		date = calendar.getTime();
+		return getGMTDate(date);
 	}
 	
 	private String getGMTDate(Date date){
