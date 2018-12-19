@@ -40,6 +40,42 @@ using namespace bson ;
 
 namespace engine
 {
+   /*
+      _omaAsyncCommand
+   */
+   _omaAsyncCommand::_omaAsyncCommand()
+   {
+   }
+
+   _omaAsyncCommand::~_omaAsyncCommand()
+   {
+   }
+
+   void _omaAsyncCommand::_aggrFlowArray( const BSONObj& array1,
+                                          const BSONObj& array2,
+                                          BSONArray& out )
+   {
+      BSONArrayBuilder arrayBuilder ;
+
+      {
+         BSONObjIterator iter( array1 ) ;
+         while( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            arrayBuilder.append( ele.String() ) ;
+         }
+      }
+
+      {
+         BSONObjIterator iter( array2 ) ;
+         while( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            arrayBuilder.append( ele.String() ) ;
+         }
+      }
+      out = arrayBuilder.arr() ;
+   }
 
    /*
       _omaAddHost
@@ -3178,84 +3214,201 @@ namespace engine
      goto done ;
    }
 
-   void _omaRestartBusiness::_aggrFlowArray( const BSONObj& array1,
-                                             const BSONObj& array2,
-                                             BSONArray& out )
+   void _omaRestartBusiness::_matchNode( const string &businessType,
+                                         const BSONObj &itemInfo,
+                                         const BSONObj &taskResultInfo,
+                                         BOOLEAN &isNode,
+                                         INT32 &updateProgress,
+                                         BSONObj &updateFlow,
+                                         BSONObj &updateInfo )
    {
-      BSONArrayBuilder arrayBuilder ;
+      INT32 rc = SDB_OK ;
+      BSONObj condition = BSON( OMA_FIELD_PROGRESS << 0  <<
+                                OMA_FIELD_FLOW     << ""  ) ;
+
+      if ( OMA_BUS_TYPE_SEQUOIADB == businessType )
+      {
+         string matchHostName ;
+         string matchSvcname ;
+
+         matchHostName = taskResultInfo.getStringField( OMA_FIELD_HOSTNAME ) ;
+         matchSvcname  = taskResultInfo.getStringField( OMA_FIELD_SVCNAME ) ;
+
+         {
+            BSONObjIterator iter( itemInfo ) ;
+
+            while( iter.more() )
+            {
+               BSONElement nodeEle = iter.next() ;
+               BSONObj nodeInfo = nodeEle.embeddedObject() ;
+               string updateHostName ;
+               string updateSvcname ;
+
+               updateHostName = nodeInfo.getStringField( OMA_FIELD_HOSTNAME ) ;
+               updateSvcname  = nodeInfo.getStringField( OMA_FIELD_SVCNAME ) ;
+
+               if ( matchHostName == updateHostName &&
+                    matchSvcname == updateSvcname )
+               {
+                  isNode = true ;
+
+                  rc = omaGetIntElement( nodeInfo, OMA_FIELD_PROGRESS,
+                                         updateProgress ) ;
+                  if( rc )
+                  {
+                     updateProgress = 0 ;
+                  }
+
+                  updateFlow = nodeInfo.getObjectField( OMA_FIELD_FLOW ) ;
+                  updateInfo = nodeInfo.filterFieldsUndotted( condition,
+                                                              FALSE ) ;
+                  break ;
+               }
+            }
+         }
+      }
+      else if ( OMA_BUS_TYPE_SEQUOIAPOSTGRESQL == businessType )
+      {
+         string hostName = itemInfo.getStringField( OMA_FIELD_HOSTNAME ) ;
+         string port     = itemInfo.getStringField( OMA_FIELD_PORT2 ) ;
+
+         isNode = (
+            taskResultInfo.getStringField( OMA_FIELD_HOSTNAME ) == hostName &&
+            taskResultInfo.getStringField( OMA_FIELD_PORT2 ) == port
+         ) ;
+
+         rc = omaGetIntElement( itemInfo, OMA_FIELD_PROGRESS, updateProgress ) ;
+         if( rc )
+         {
+            updateProgress = 0 ;
+         }
+
+         updateFlow = itemInfo.getObjectField( OMA_FIELD_FLOW ) ;
+         updateInfo = itemInfo.filterFieldsUndotted( condition, FALSE ) ;
+      }
+   }
+
+   INT32 _omaRestartBusiness::setRuningStatus( const BSONObj& itemInfo,
+                                               BSONObj& taskInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj condition  = BSON( OMA_FIELD_RESULTINFO << "" ) ;
+      BSONObj condition2 = BSON( OMA_FIELD_STATUS     << 0 <<
+                                 OMA_FIELD_STATUSDESC << "" ) ;
+      BSONObj taskInfoObj ;
+      BSONArrayBuilder newResultInfo ;
+      string businessType ;
+
+      rc = omaGetObjElement( taskInfo, OMA_FIELD_INFO, taskInfoObj ) ;
+      if( rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+
+      rc = omaGetStringElement( taskInfoObj, OMA_FIELD_BUSINESSTYPE,
+                                businessType ) ;
+      if( rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
 
       {
-         BSONObjIterator iter( array1 ) ;
-         while( iter.more() )
+         BSONObj resultInfo = taskInfo.getObjectField( OMA_FIELD_RESULTINFO ) ;
+         BSONObjIterator resultIter( resultInfo ) ;
+
+         while( resultIter.more() )
          {
-            BSONElement ele = iter.next() ;
-            arrayBuilder.append( ele.String() ) ;
+            BOOLEAN isNode = FALSE ;
+            INT32 updateProgress = 0 ;
+            BSONElement resultEle = resultIter.next() ;
+            BSONObj oneResult = resultEle.embeddedObject() ;
+            BSONObj updateFlow ;
+            BSONObj updateInfo ;
+
+            _matchNode( businessType, itemInfo, oneResult,
+                        isNode, updateProgress, updateFlow, updateInfo ) ;
+
+            if( isNode )
+            {
+               BSONObjBuilder oneResultBuilder ;
+               BSONObj newResult = oneResult.filterFieldsUndotted( condition2,
+                                                                   FALSE ) ;
+
+               oneResultBuilder.appendElements( newResult ) ;
+               oneResultBuilder.append( OMA_FIELD_STATUS,
+                                        OMA_TASK_STATUS_RUNNING ) ;
+               oneResultBuilder.append( OMA_FIELD_STATUSDESC,
+                                        OMA_TASK_STATUS_DESC_RUNNING ) ;
+               newResultInfo.append( oneResultBuilder.obj() ) ;
+            }
+            else
+            {
+               newResultInfo.append( oneResult ) ;
+            }
          }
       }
 
       {
-         BSONObjIterator iter( array2 ) ;
-         while( iter.more() )
-         {
-            BSONElement ele = iter.next() ;
-            arrayBuilder.append( ele.String() ) ;
-         }
+         BSONObjBuilder newTaskInfo ;
+         BSONObj taskInfo2 = taskInfo.filterFieldsUndotted( condition, FALSE ) ;
+
+         newTaskInfo.appendElements( taskInfo2 ) ;
+         newTaskInfo.append( OMA_FIELD_RESULTINFO, newResultInfo.arr() ) ;
+
+         taskInfo = newTaskInfo.obj() ;
       }
-      out = arrayBuilder.arr() ;
+
+   done:
+      return rc ;
    }
 
    INT32 _omaRestartBusiness::convertResult( const BSONObj& itemInfo,
                                              BSONObj& taskInfo )
    {
       INT32 rc = SDB_OK ;
-      INT32 updateProgress = 0 ;
       INT32 progress = taskInfo.getIntField( OMA_FIELD_PROGRESS ) ;
       BSONObj condition  = BSON( OMA_FIELD_ERRNO      << "" <<
                                  OMA_FIELD_DETAIL     << "" <<
                                  OMA_FIELD_PROGRESS   << "" <<
                                  OMA_FIELD_RESULTINFO << "" ) ;
-      BSONObj oneResultCondition = BSON( OMA_FIELD_PROGRESS << 0  <<
-                                         OMA_FIELD_FLOW     << ""  ) ;
+      BSONObj taskInfoObj ;
       BSONArrayBuilder newResultInfo ;
-      string updateHostName ;
-      string updateSvcname ;
+      string businessType ;
 
-      rc = omaGetStringElement( itemInfo, OMA_FIELD_HOSTNAME, updateHostName ) ;
+      rc = omaGetObjElement( taskInfo, OMA_FIELD_INFO, taskInfoObj ) ;
       if( rc )
       {
          rc = SDB_OK ;
          goto done ;
       }
 
-      rc = omaGetStringElement( itemInfo, OMA_FIELD_SVCNAME, updateSvcname ) ;
+      rc = omaGetStringElement( taskInfoObj, OMA_FIELD_BUSINESSTYPE,
+                                businessType ) ;
       if( rc )
       {
          rc = SDB_OK ;
          goto done ;
-      }
-
-      rc = omaGetIntElement( itemInfo, OMA_FIELD_PROGRESS, updateProgress ) ;
-      if( rc )
-      {
-         rc = SDB_OK ;
-         updateProgress = 0 ;
       }
 
       {
          BSONObj resultInfo = taskInfo.getObjectField( OMA_FIELD_RESULTINFO ) ;
-         BSONObj updateFlow = itemInfo.getObjectField( OMA_FIELD_FLOW ) ;
-         BSONObj nodeResult = itemInfo.filterFieldsUndotted( oneResultCondition,
-                                                             FALSE ) ;
          BSONObjIterator resultIter( resultInfo ) ;
 
          while( resultIter.more() )
          {
+            BOOLEAN isNode = FALSE ;
+            INT32 updateProgress = 0 ;
             BSONElement resultEle = resultIter.next() ;
             BSONObj oneResult = resultEle.embeddedObject() ;
-            string hostName = oneResult.getStringField( OMA_FIELD_HOSTNAME ) ;
-            string svcname = oneResult.getStringField( OMA_FIELD_SVCNAME ) ;
+            BSONObj updateFlow ;
+            BSONObj updateInfo ;
 
-            if( updateHostName == hostName && updateSvcname == svcname )
+            _matchNode( businessType, itemInfo, oneResult,
+                        isNode, updateProgress, updateFlow, updateInfo ) ;
+
+            if( isNode )
             {
                BSONObjBuilder newOneResultInfoBuilder ;
                BSONArray newFlowArray ;
@@ -3277,7 +3430,7 @@ namespace engine
 
                _aggrFlowArray( flow, updateFlow, newFlowArray ) ;
 
-               newOneResultInfoBuilder.appendElements( nodeResult ) ;
+               newOneResultInfoBuilder.appendElements( updateInfo ) ;
                newOneResultInfoBuilder.append( OMA_FIELD_FLOW, newFlowArray ) ;
 
                newResultInfo.append( newOneResultInfoBuilder.obj() ) ;

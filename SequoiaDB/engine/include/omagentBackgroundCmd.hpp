@@ -41,6 +41,20 @@ using namespace std ;
 
 namespace engine
 {
+   /*
+      _omaAsyncCommand
+   */
+   class _omaAsyncCommand : public _omaCommand
+   {
+   public:
+      _omaAsyncCommand() ;
+      virtual ~_omaAsyncCommand() ;
+
+   protected:
+      virtual void _aggrFlowArray( const BSONObj& array1,
+                                   const BSONObj& array2,
+                                   BSONArray& out ) ;
+   } ;
 
    /*
       _omaAddHost
@@ -704,7 +718,7 @@ namespace engine
    /*
       restart Business
    */
-   class _omaRestartBusiness : public _omaCommand
+   class _omaRestartBusiness : public _omaAsyncCommand
    {
       DECLARE_OACMD_AUTO_REGISTER()
 
@@ -712,16 +726,24 @@ namespace engine
       _omaRestartBusiness() ;
       ~_omaRestartBusiness() ;
 
-      virtual const CHAR* name () { return OMA_CMD_RESTART_BUSINESS ; }
+      const CHAR* name () { return OMA_CMD_RESTART_BUSINESS ; }
 
-      virtual INT32 init ( const CHAR *pInterruptInfo ) ;
+      INT32 init ( const CHAR *pInterruptInfo ) ;
 
-      virtual INT32 convertResult( const BSONObj& itemInfo,
-                                   BSONObj& taskInfo ) ;
+      INT32 setRuningStatus( const BSONObj& itemInfo,
+                             BSONObj& taskInfo ) ;
+
+      INT32 convertResult( const BSONObj& itemInfo,
+                           BSONObj& taskInfo ) ;
 
    private:
-      void _aggrFlowArray( const BSONObj& array1, const BSONObj& array2,
-                           BSONArray& out ) ;
+      void _matchNode( const string &businessType,
+                       const BSONObj &itemInfo,
+                       const BSONObj &taskResultInfo,
+                       BOOLEAN &isNode,
+                       INT32 &updateProgress,
+                       BSONObj &updateFlow,
+                       BSONObj &updateInfo ) ;
    } ;
 
    /*

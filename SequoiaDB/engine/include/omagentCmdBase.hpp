@@ -89,9 +89,6 @@ namespace engine
 
          virtual INT32 final( BSONObj &rval, BSONObj &retObj ) ;
 
-         virtual INT32 convertResult( const BSONObj& retObj,
-                                      BSONObj& newRetObj ) ;
-
          virtual INT32 setJsFile ( const CHAR *fileName ) ;
          
          virtual INT32 addJsFile ( const CHAR *filename,
@@ -101,6 +98,14 @@ namespace engine
                                    const CHAR *other = NULL ) ;
 
          virtual INT32 getExcuteJsContent ( string &content ) ;
+
+      public:
+         // async task command callback
+         virtual INT32 setRuningStatus( const BSONObj& itemInfo,
+                                        BSONObj& taskInfo ) ;
+
+         virtual INT32 convertResult( const BSONObj& retObj,
+                                      BSONObj& newRetObj ) ;
 
       protected:
          CHAR                            _jsFileName[ OSS_MAX_PATHSIZE + 1 ] ;

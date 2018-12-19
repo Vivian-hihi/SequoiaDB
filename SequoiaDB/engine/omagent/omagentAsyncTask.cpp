@@ -137,6 +137,26 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omaAsyncTask::setTaskRunning( _omaCommand* cmd,
+                                        const BSONObj& itemInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj resultInfo = itemInfo.getObjectField( OMA_FIELD_RESULTINFO ) ;
+      ossScopedLock lock( &_planLatch, EXCLUSIVE ) ;
+
+      rc = cmd->setRuningStatus( resultInfo, _taskInfo ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "Failed to convert command result, rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _omaAsyncTask::updateTaskInfo( _omaCommand* cmd,
                                         const BSONObj& itemInfo )
    {
@@ -767,6 +787,15 @@ namespace engine
                     _task->getOmaCmdName() ) ;
             goto error ;
          }
+
+         rc = _task->setTaskRunning( cmd, argument ) ;
+         if( rc )
+         {
+            PD_LOG( PDERROR, "Failed to set task status, rc=%d", rc ) ;
+            rc = SDB_OK ;
+         }
+
+         _task->updateProgressToOM( FALSE ) ;
 
          rc = _addStepVar( cmd, OMA_STR_STEP_DOIT ) ;
          if( rc )

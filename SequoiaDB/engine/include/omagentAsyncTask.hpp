@@ -53,6 +53,7 @@ namespace engine
       INT32 doit() ;
 
    public:
+      INT32 setTaskRunning( _omaCommand* cmd, const BSONObj& itemInfo ) ;
       INT32 updateTaskInfo( _omaCommand* cmd, const BSONObj& itemInfo ) ;
       void notifyUpdateProgress() ;
       INT32 updateProgressToOM( BOOLEAN isSuccessReturn = TRUE ) ;

@@ -149,6 +149,7 @@ namespace engine
    #define OM_PUBLIC_FIELD_DBNAME               "DbName"
    #define OM_PUBLIC_FIELD_GRANT_TYPE           "GrantType"
    #define OM_PUBLIC_FIELD_SVCNAME              "svcname"
+   #define OM_PUBLIC_FIELD_DBPATH               "dbpath"
 
    /******* SYSCLUSTER *******/
    #define OM_CS_DEPLOY_CL_CLUSTER              OM_CS_DEPLOY".SYSCLUSTER"
@@ -202,6 +203,7 @@ namespace engine
    #define OM_CONFIGURE_FIELD_PORT              "Port"
    #define OM_CONFIGURE_FIELD_PORT2             "port"
    #define OM_CONFIGURE_FIELD_INSTALLPATH       "InstallPath"
+   #define OM_CONFIGURE_FIELD_DBPATH            OM_PUBLIC_FIELD_DBPATH
 
    /******* SYSHOST *******/
    #define OM_CS_DEPLOY_CL_HOST                 OM_CS_DEPLOY".SYSHOST"

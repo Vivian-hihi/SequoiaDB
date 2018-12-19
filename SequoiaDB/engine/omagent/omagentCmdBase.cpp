@@ -297,6 +297,12 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omaCommand::setRuningStatus( const BSONObj& itemInfo,
+                                       BSONObj& taskInfo )
+   {
+      return SDB_OK ;
+   }
+
    INT32 _omaCommand::convertResult( const BSONObj& itemInfo,
                                      BSONObj& taskInfo )
    {

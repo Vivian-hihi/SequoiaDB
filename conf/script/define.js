@@ -335,7 +335,6 @@ var FIELD_BUSINESS_NAME2                   = BusinessName2 ;
 var FIELD_BUSINESS_TYPE                    = BusinessType ;
 var FIELD_CLUSTER_NAME                     = ClusterName ;
 var FIELD_CLUSTER_NAME2                    = ClusterName2 ;
-var FIELD_CONFIG                           = Config ;
 var FIELD_HOST_INFO                        = HostInfo ;
 var FIELD_SEQUOIADB                        = "sequoiadb" ;
 var FIELD_HOSTLIST                         = "HostList" ;
@@ -370,6 +369,10 @@ var FIELD_UPDATE_BUSINESS_CONFIG           = "update business config" ;
 var FIELD_DELETE_BUSINESS_CONFIG           = "delete business config" ;
 var FIELD_PROPERTY                         = "property" ;
 var FIELD_OPTIONS2                         = "options" ;
+var FIELD_NODE_INFO                        = "NodeInfo" ;
+var FIELD_ERR_NODES                        = "ErrNodes" ;
+var FIELD_DESCRIPTION                      = Description ;
+var FIELD_DESCRIPTION2                     = "description" ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;

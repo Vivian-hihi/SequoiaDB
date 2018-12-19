@@ -392,12 +392,14 @@ namespace engine
 
       if( !arg.hasField( "confFile" ) )
       {
+         rc = SDB_INVALIDARG ;
          err = "confFile must be config" ;
          goto error ;
       }
 
       if( String != arg.getField( "confFile" ).type() )
       {
+         rc = SDB_INVALIDARG ;
          err = "confFile must be string" ;
          goto error ;
       }
@@ -408,6 +410,7 @@ namespace engine
       {
          if( Bool != arg.getField( "sensitive" ).type() )
          {
+            rc = SDB_INVALIDARG ;
             err = "sensitive must be BOOLEAN" ;
             goto error ;
          }
@@ -419,6 +422,7 @@ namespace engine
       {
          if( Bool != arg.getField( "delimiter" ).type() )
          {
+            rc = SDB_INVALIDARG ;
             err = "delimiter must be BOOLEAN" ;
             goto error ;
          }
@@ -501,12 +505,14 @@ namespace engine
 
       if( !arg.hasField( "confFile" ) )
       {
+         rc = SDB_INVALIDARG ;
          err = "confFile must be config" ;
          goto error ;
       }
 
       if( String != arg.getField( "confFile" ).type() )
       {
+         rc = SDB_INVALIDARG ;
          err = "confFile must be string" ;
          goto error ;
       }
@@ -517,6 +523,7 @@ namespace engine
       {
          if( Bool != arg.getField( "sensitive" ).type() )
          {
+            rc = SDB_INVALIDARG ;
             err = "sensitive must be BOOLEAN" ;
             goto error ;
          }
@@ -528,6 +535,7 @@ namespace engine
       {
          if( Bool != arg.getField( "delimiter" ).type() )
          {
+            rc = SDB_INVALIDARG ;
             err = "delimiter must be BOOLEAN" ;
             goto error ;
          }

@@ -25,15 +25,15 @@
       var SYS_STEP = "Generate plan" ;
       var BUS_JSON = {"AgentHost":"ubuntu-jw-01","AgentService":"11790","CreateTime":{"$timestamp":"2018-10-25-10.55.50.000000"},"EndTime":{"$timestamp":"2018-10-25-10.55.50.000000"},"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiadb","BusinessName":"myModule2","Config":[{"HostName":"ubuntu-jw-02","svcname":"11810","role":"coord","datagroupname":""},{"HostName":"ubuntu-jw-02","svcname":"11820","role":"catalog","datagroupname":""},{"HostName":"ubuntu-jw-02","svcname":"11830","role":"data","datagroupname":"group1"}]},"Progress":0,"ResultInfo":[{"Status":4,"StatusDesc":"FINISH","HostName":"ubuntu-jw-02","svcname":"11810","errno":0,"detail":"","Flow":[]},{"Status":4,"StatusDesc":"FINISH","HostName":"ubuntu-jw-02","svcname":"11820","errno":0,"detail":"","Flow":[]},{"Status":4,"StatusDesc":"FINISH","HostName":"ubuntu-jw-02","svcname":"11830","errno":0,"detail":"","Flow":[]}],"Status":4,"StatusDesc":"FINISH","TaskID":5,"TaskName":"RESTART_BUSINESS","Type":8,"TypeDesc":"RESTART_BUSINESS","_id":{"$oid":"5bd130b6e8abe5ed4c64396e"},"detail":"","errno":0}
    @return
-      RET_JSON: the format is: {"Plan":[[{"TaskID":90,"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiasql-mysql","BusinessName":"myModule1","Config":{"HostName":"ubuntu-jw-01","dbpath":"/sequoiasql-mysql/database/5432","port":"5432","shared_buffers":"128MB","log_timezone":"PRC","datestyle":"iso, ymd","timezone":"PRC","lc_messages":"zh_CN.UTF-8","lc_monetary":"zh_CN","lc_numeric":"zh_CN","lc_time":"zh_CN","default_text_search_config":"pg_catalog.simple","InstallPath":"/opt/sequoiasql-mysql","AgentService":"11790"}},"ResultInfo":{"HostName":"ubuntu-jw-01","port":"5432","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}}]]}
+      RET_JSON: the format is: {"Plan":[[{"TaskID":65,"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiadb","BusinessName":"myModule1","Config":{"HostName":"ubuntu-jw-01","NodeInfo":[{"HostName":"ubuntu-jw-01","svcname":"11810","role":"coord","datagroupname":""},{"HostName":"ubuntu-jw-01","svcname":"11820","role":"catalog","datagroupname":""},{"HostName":"ubuntu-jw-01","svcname":"11830","role":"data","datagroupname":"group1"}],"AgentService":"11790"}},"ResultInfo":[{"HostName":"ubuntu-jw-01","svcname":"11810","role":"coord","datagroupname":"","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]},{"HostName":"ubuntu-jw-01","svcname":"11820","role":"catalog","datagroupname":"","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]},{"HostName":"ubuntu-jw-01","svcname":"11830","role":"data","datagroupname":"group1","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]}]},{"TaskID":65,"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiadb","BusinessName":"myModule1","Config":{"HostName":"ubuntu-jw-02","NodeInfo":[{"HostName":"ubuntu-jw-02","svcname":"11810","role":"coord","datagroupname":""},{"HostName":"ubuntu-jw-02","svcname":"11820","role":"data","datagroupname":"group1"},{"HostName":"ubuntu-jw-02","svcname":"11830","role":"data","datagroupname":"group1"}],"AgentService":"11790"}},"ResultInfo":[{"HostName":"ubuntu-jw-02","svcname":"11810","role":"coord","datagroupname":"","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]},{"HostName":"ubuntu-jw-02","svcname":"11820","role":"data","datagroupname":"group1","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]},{"HostName":"ubuntu-jw-02","svcname":"11830","role":"data","datagroupname":"group1","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]}]}]]}
 
 2. create instance
    @parameter
       var SYS_STEP = "Doit" ;
-      var BUS_JSON = {"TaskID":90,"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiasql-mysql","BusinessName":"myModule1","Config":{"HostName":"ubuntu-jw-01","dbpath":"/sequoiasql-mysql/database/5432","port":"5432","shared_buffers":"128MB","log_timezone":"PRC","datestyle":"iso, ymd","timezone":"PRC","lc_messages":"zh_CN.UTF-8","lc_monetary":"zh_CN","lc_numeric":"zh_CN","lc_time":"zh_CN","default_text_search_config":"pg_catalog.simple","InstallPath":"/opt/sequoiasql-mysql","AgentService":"11790"}},"ResultInfo":{"HostName":"ubuntu-jw-01","port":"5432","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}}
+      var BUS_JSON = {"TaskID":70,"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiadb","BusinessName":"myModule1","Config":{"HostName":"ubuntu-jw-02","NodeInfo":[{"HostName":"ubuntu-jw-02","svcname":"11810","role":"coord","datagroupname":""},{"HostName":"ubuntu-jw-02","svcname":"11820","role":"data","datagroupname":"group1"},{"HostName":"ubuntu-jw-02","svcname":"11830","role":"data","datagroupname":"group1"}],"AgentService":"11790"}},"ResultInfo":[{"HostName":"ubuntu-jw-02","svcname":"11810","role":"coord","datagroupname":"","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":15},{"HostName":"ubuntu-jw-02","svcname":"11820","role":"data","datagroupname":"group1","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":15},{"HostName":"ubuntu-jw-02","svcname":"11830","role":"data","datagroupname":"group1","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":15}]}
 
    @return
-      RET_JSON: the format is: {"HostName":"ubuntu-jw-02","Status":4,"StatusDesc":"FINISH","errno":0,"detail":"","Flow":[],"Progress":90}
+      RET_JSON: the format is: {"ResultInfo":[{"HostName":"ubuntu-jw-02","svcname":"11810","role":"coord","datagroupname":"","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]},15,{"HostName":"ubuntu-jw-02","svcname":"11820","role":"data","datagroupname":"group1","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]},{"HostName":"ubuntu-jw-02","svcname":"11830","role":"data","datagroupname":"group1","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[]}]}
 
 3. Check result
    @parameter
@@ -74,42 +74,65 @@ function GeneratePlan( PD_LOGGER )
    nodeNum = planInfo[FIELD_CONFIG].length ;
    progressStep = parseInt( 90 / nodeNum ) ;
 
-   var useIndexList = [] ;
    var planTask = [] ;
-   while( useIndexList.length < nodeNum )
+   var useIndexList = [] ;
+   var jobNum = 0 ;
+
+   while( jobNum < nodeNum )
    {
+      var planJob = [] ;
       var tmpHostList = [] ;
+
       for( var index in planInfo[FIELD_CONFIG] )
       {
-         var planConfig = {} ;
          var config    = planInfo[FIELD_CONFIG][index] ;
          var hostName  = config[FIELD_HOSTNAME] ;
          var agentPort = _getAgentPort( hostName ) ;
+         var jobIndex  = tmpHostList.indexOf( hostName ) ;
 
-         if ( tmpHostList.indexOf( hostName ) >= 0 ||
-              useIndexList.indexOf( index ) >= 0 )
+         if ( useIndexList.indexOf( index ) >= 0 )
          {
             continue ;
          }
+         else if ( jobIndex >= 0 )
+         {
+            var nodeIndex = planJob[jobIndex][FIELD_RESULTINFO].length ;
 
-         tmpHostList.push( hostName ) ;
-         useIndexList.push( index ) ;
+            planJob[jobIndex][FIELD_INFO][FIELD_CONFIG][FIELD_NODE_INFO].push( config ) ;
+            planJob[jobIndex][FIELD_RESULTINFO].push( resultInfo[index] ) ;
+            planJob[jobIndex][FIELD_RESULTINFO][nodeIndex][FIELD_PROGRESS] = progressStep ;
 
-         planConfig[FIELD_TASKID] = taskID ;
-         planConfig[FIELD_INFO]   = {} ;
-         planConfig[FIELD_INFO][FIELD_CLUSTER_NAME] = clusterName ;
-         planConfig[FIELD_INFO][FIELD_BUSINESS_TYPE] = businessType ;
-         planConfig[FIELD_INFO][FIELD_BUSINESS_NAME] = businessName ;
-         planConfig[FIELD_INFO][FIELD_CONFIG] = config ;
-         planConfig[FIELD_INFO][FIELD_CONFIG][FIELD_AGENT_SERVICE] = agentPort ;
-         planConfig[FIELD_RESULTINFO] = resultInfo[index] ;
-         planConfig[FIELD_RESULTINFO][FIELD_PROGRESS] = progressStep ;
+            useIndexList.push( index ) ;
+         }
+         else
+         {
+            var planConfig = {} ;
 
-         planTask.push( planConfig ) ;
+            planConfig[FIELD_TASKID] = taskID ;
+            planConfig[FIELD_INFO]   = {} ;
+            planConfig[FIELD_INFO][FIELD_CLUSTER_NAME] = clusterName ;
+            planConfig[FIELD_INFO][FIELD_BUSINESS_TYPE] = businessType ;
+            planConfig[FIELD_INFO][FIELD_BUSINESS_NAME] = businessName ;
+            planConfig[FIELD_INFO][FIELD_CONFIG] = {} ;
+            planConfig[FIELD_INFO][FIELD_CONFIG][FIELD_HOSTNAME] = hostName ;
+            planConfig[FIELD_INFO][FIELD_CONFIG][FIELD_NODE_INFO] = [ config ] ;
+            planConfig[FIELD_INFO][FIELD_CONFIG][FIELD_AGENT_SERVICE] = agentPort ;
+            planConfig[FIELD_RESULTINFO] = [ resultInfo[index] ] ;
+            planConfig[FIELD_RESULTINFO][0][FIELD_PROGRESS] = progressStep ;
+
+            planJob.push( planConfig ) ;
+
+            tmpHostList.push( hostName ) ;
+            useIndexList.push( index ) ;
+         }
+
+         ++jobNum ;
       }
+
+      planTask.push( planJob ) ;
    }
 
-   plan[FIELD_PLAN] = [ planTask ] ;
+   plan[FIELD_PLAN] = planTask ;
 
    PD_LOGGER.logTask( PDEVENT, "Finish generate plan" ) ;
 
@@ -144,44 +167,97 @@ function RestartNode( PD_LOGGER )
    var businessName  = taskInfo[FIELD_BUSINESS_NAME] ;
 
    var hostName      = config[FIELD_HOSTNAME] ;
-   var svcname       = config[FIELD_SVCNAME] ;
    var agentPort     = config[FIELD_AGENT_SERVICE] ;
 
    var error   = null ;
    var oma     = null ;
 
-   PD_LOGGER.logTask( PDEVENT, sprintf( "Begin to restart node [?:?]",
-                                        hostName, svcname ) ) ;
-   resultInfo[FIELD_FLOW].push( sprintf( "Begin to restart node [?:?]",
-                                         hostName, svcname ) ) ;
+   var nodeList = [] ;
+
+   for( var index in config[FIELD_NODE_INFO] )
+   {
+      var svcname = config[FIELD_NODE_INFO][index][FIELD_SVCNAME] ;
+
+      PD_LOGGER.logTask( PDEVENT, sprintf( "Begin to restart node [?:?]",
+                                           hostName, svcname ) ) ;
+      resultInfo[index][FIELD_FLOW].push( sprintf( "Begin to restart node [?:?]",
+                                                   hostName, svcname ) ) ;
+
+      nodeList.push( svcname ) ;
+   }
 
    try
    {
       oma = new Oma( hostName, agentPort ) ;
-      oma.stopNode( svcname ) ;
-      oma.startNode( svcname ) ;
+      oma.stopNodes( nodeList ) ;
+      oma.startNodes( nodeList ) ;
    }
    catch( e )
    {
-      error = _getErrorMsg( getLastError(), e,
-                            sprintf( "Failed to restart node [?:?]",
-                                     hostName, svcname ) ) ;
-      resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
-      resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
-      resultInfo[FIELD_STATUS] = STATUS_FAIL ;
-      resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
-      resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
-      PD_LOGGER.logTask( PDERROR, error ) ;
-      return resultInfo ;
+      var obj = getLastErrObj() ;
+      obj = obj.toObj() ;
+
+      if ( obj[FIELD_ERRNO] == SDB_COORD_NOT_ALL_DONE )
+      {
+         var errNodes = obj[FIELD_ERR_NODES] ;
+
+         for ( var index in errNodes )
+         {
+            var nodeErrno   = errNodes[index][FIELD_ERRNO] ;
+            var nodeSvcname = errNodes[index][FIELD_SVCNAME] ;
+            var desc        = errNodes[index][FIELD_DESCRIPTION2] ;
+            var detail      = errNodes[index][FIELD_DETAIL] ;
+
+            for( var index2 in resultInfo )
+            {
+               if ( resultInfo[index2][FIELD_SVCNAME] == nodeSvcname )
+               {
+                  resultInfo[index2][FIELD_ERRNO]  = nodeErrno ;
+                  resultInfo[index2][FIELD_DETAIL] = desc ;
+                  resultInfo[index2][FIELD_STATUS] = STATUS_FAIL ;
+                  resultInfo[index2][FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
+                  resultInfo[index2][FIELD_FLOW].push( desc ) ;
+                  break ;
+               }
+            }
+
+            PD_LOGGER.logTask( PDERROR, detail ) ;
+         }
+      }
+      else
+      {
+         var rc   = obj[FIELD_ERRNO] ;
+         var desc = obj[FIELD_DESCRIPTION2] ;
+
+         for( var index in resultInfo )
+         {
+            resultInfo[index][FIELD_ERRNO]  = rc ;
+            resultInfo[index][FIELD_DETAIL] = desc ;
+            resultInfo[index][FIELD_STATUS] = STATUS_FAIL ;
+            resultInfo[index][FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
+            resultInfo[index][FIELD_FLOW].push( desc ) ;
+         }
+
+         PD_LOGGER.logTask( PDERROR, desc ) ;
+         return resultInfo ;
+      }
    }
 
-   resultInfo[FIELD_STATUS] = STATUS_FINISH ;
-   resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FINISH ;
+   for( var index in resultInfo )
+   {
+      if ( resultInfo[index][FIELD_ERRNO] == SDB_OK )
+      {
+         var svcname = resultInfo[index][FIELD_SVCNAME] ;
 
-   PD_LOGGER.logTask( PDEVENT, sprintf( "Finish to restart node [?:?]",
-                                        hostName, svcname ) ) ;
-   resultInfo[FIELD_FLOW].push( sprintf( "Finish to restart node [?:?]",
-                                         hostName, svcname ) ) ;
+         resultInfo[index][FIELD_STATUS] = STATUS_FINISH ;
+         resultInfo[index][FIELD_STATUS_DESC] = DESC_STATUS_FINISH ;
+
+         PD_LOGGER.logTask( PDEVENT, sprintf( "Finish to restart node [?:?]",
+                                              hostName, svcname ) ) ;
+         resultInfo[index][FIELD_FLOW].push( sprintf( "Finish to restart node [?:?]",
+                                                      hostName, svcname ) ) ;
+      }
+   }
 
    return resultInfo ;
 }
