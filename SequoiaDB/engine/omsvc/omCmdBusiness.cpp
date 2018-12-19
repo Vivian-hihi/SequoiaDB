@@ -1560,6 +1560,19 @@ namespace engine
                   configList.push_back( configInfoBuilder.obj() ) ;
                }
             }
+            else if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == _businessType )
+            {
+               string port = nodeInfo.getStringField(
+                                             OM_CONFIGURE_FIELD_PORT2 ) ;
+               string installPath = nodeInfo.getStringField(
+                                             OM_CONFIGURE_FIELD_INSTALLPATH ) ;
+
+               configInfoBuilder.append( OM_BSON_HOSTNAME, hostName ) ;
+               configInfoBuilder.append( OM_BSON_PORT, port ) ;
+               configInfoBuilder.append( OM_BSON_INSTALL_PATH, installPath ) ;
+
+               configList.push_back( configInfoBuilder.obj() ) ;
+            }
          }
       }
 
@@ -1738,38 +1751,101 @@ namespace engine
       string authPwd ;
       BSONObjBuilder builder ;
       BSONArrayBuilder arrayBuilder ;
-      vector<simpleAddressInfo> addressList ;
-      vector<simpleAddressInfo>::iterator iter ;
       omDatabaseTool dbTool( _cb ) ;
-
-      rc = dbTool.getBusinessAddressWithConfig( _businessName, addressList ) ;
-      if ( rc )
-      {
-         _errorMsg.setError( TRUE, "failed to get business address: "
-                                   "businessName=%s, rc=%d",
-                             _businessName.c_str(), rc ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-      _getBusinessAuth( _businessName, authUser, authPwd ) ;
-
-      for ( iter = addressList.begin(); iter != addressList.end(); ++iter )
-      {
-         BSONObjBuilder addressBuilder ;
-
-         addressBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME, iter->hostName ) ;
-         addressBuilder.append( OM_CONFIGURE_FIELD_SVCNAME, iter->port ) ;
-         arrayBuilder.append( addressBuilder.obj() ) ;
-      }
 
       builder.append( OM_BSON_COMMAND, name() ) ;
       builder.append( OM_BSON_CLUSTER_NAME, _clusterName ) ;
       builder.append( OM_BSON_BUSINESS_NAME, _businessName ) ;
       builder.append( OM_BSON_BUSINESS_TYPE, _businessType ) ;
+
+      _getBusinessAuth( _businessName, authUser, authPwd ) ;
+
       builder.append( OM_BSON_USER, authUser ) ;
       builder.append( OM_BSON_PASSWD, authPwd ) ;
-      builder.append( OM_BSON_ADDRESS, arrayBuilder.arr() ) ;
+
+      if ( OM_BUSINESS_SEQUOIADB == _businessType )
+      {
+         vector<simpleAddressInfo> addressList ;
+         vector<simpleAddressInfo>::iterator iter ;
+
+         rc = dbTool.getBusinessAddressWithConfig( _businessName,
+                                                   addressList ) ;
+         if ( rc )
+         {
+            _errorMsg.setError( TRUE, "failed to get business address: "
+                                      "businessName=%s, rc=%d",
+                                _businessName.c_str(), rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         for ( iter = addressList.begin(); iter != addressList.end(); ++iter )
+         {
+            BSONObjBuilder addressBuilder ;
+
+            addressBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME,
+                                   iter->hostName ) ;
+            addressBuilder.append( OM_CONFIGURE_FIELD_SVCNAME, iter->port ) ;
+            arrayBuilder.append( addressBuilder.obj() ) ;
+         }
+
+         builder.append( OM_BSON_ADDRESS, arrayBuilder.arr() ) ;
+      }
+      else if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == _businessType )
+      {
+         BSONObj buzInfo ;
+         BSONObj buzConfig ;
+         list<BSONObj> configList ;
+         string hostName ;
+         string dbpath ;
+         string installPath ;
+
+         rc = dbTool.getConfigByBusiness( _businessName, configList ) ;
+         if ( rc || configList.empty() )
+         {
+            if ( configList.empty() )
+            {
+               rc = SDB_DMS_RECORD_NOTEXIST ;
+            }
+
+            _errorMsg.setError( TRUE, "failed to get business info: "
+                                      "businessName=%s, rc=%d",
+                                _businessName.c_str(), rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         buzInfo = configList.back() ;
+         hostName = buzInfo.getStringField( OM_CONFIGURE_FIELD_HOSTNAME ) ;
+
+         buzConfig = buzInfo.getObjectField( OM_CONFIGURE_FIELD_CONFIG ) ;
+
+         {
+            BSONObjIterator iter( buzConfig ) ;
+
+            if ( iter.more() )
+            {
+               BSONElement ele = iter.next() ;
+               BSONObj oneNodeConfig = ele.embeddedObject() ;
+
+               dbpath = oneNodeConfig.getStringField(
+                                             OM_CONFIGURE_FIELD_DBPATH ) ;
+               installPath = oneNodeConfig.getStringField(
+                                             OM_CONFIGURE_FIELD_INSTALLPATH ) ;
+            }
+         }
+
+         {
+            BSONObjBuilder infoBuilder ;
+
+            infoBuilder.append( OM_BSON_HOSTNAME, hostName ) ;
+            infoBuilder.append( OM_BSON_DBPATH, dbpath ) ;
+            infoBuilder.append( OM_BSON_INSTALL_PATH, installPath ) ;
+
+            builder.append( OM_BSON_INFO, infoBuilder.obj() ) ;
+         }
+      }
+
       builder.append( OM_BSON_CONFIG,
                       configInfo.getObjectField( OM_BSON_CONFIG ) ) ;
 

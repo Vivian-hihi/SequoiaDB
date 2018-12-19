@@ -1760,11 +1760,12 @@ namespace engine
                   simpleAddressInfo address ;
                   BSONElement ele = iterBson.next() ;
                   BSONObj oneNode = ele.embeddedObject() ;
-                  string role = oneNode.getStringField( OM_CONF_DETAIL_ROLE ) ;
+                  string role = oneNode.getStringField(
+                                                   OM_CONFIGURE_FIELD_ROLE ) ;
 
                   address.hostName = hostName ;
                   address.port = oneNode.getStringField(
-                                                      OM_CONF_DETAIL_SVCNAME ) ;
+                                                OM_CONFIGURE_FIELD_SVCNAME ) ;
                   if ( OM_DEPLOY_MOD_DISTRIBUTION == deployMod &&
                        OM_NODE_ROLE_COORD == role )
                   {
@@ -1775,6 +1776,25 @@ namespace engine
                   {
                      addressList.push_back( address ) ;
                   }
+               }
+            }
+            else if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == businessType )
+            {
+               BSONObj nodes = result.getObjectField(
+                                                   OM_CONFIGURE_FIELD_CONFIG ) ;
+               BSONObjIterator iterBson( nodes ) ;
+
+               while ( iterBson.more() )
+               {
+                  simpleAddressInfo address ;
+                  BSONElement ele = iterBson.next() ;
+                  BSONObj oneNode = ele.embeddedObject() ;
+
+                  address.hostName = hostName ;
+                  address.port = oneNode.getStringField(
+                                                   OM_CONFIGURE_FIELD_PORT2 ) ;
+
+                  addressList.push_back( address ) ;
                }
             }
          }
