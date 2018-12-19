@@ -97,6 +97,7 @@ TEST_F( reNameCLTest16569, renamecl )
    bson_finish( &option ) ;
    rc = sdbRenameCollection( cs, clOldName, clNewName, &option ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to rename old cl: " << clOldName << " new cl: " << clNewName ;
+   bson_destroy( &option ) ;
 
    // check rename cl
    CHAR clOldFullName[100] ;
@@ -135,6 +136,8 @@ TEST_F( reNameCLTest16569, renamecl )
    bson_finish( &rule ) ;
    rc = sdbUpdate( cl, &rule, &cond, NULL ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to update" ;
+   bson_destroy( &cond ) ;
+   bson_destroy( &rule ) ;
 
    // delete with new cl
    rc = sdbDelete( cl, &doc, NULL ) ;

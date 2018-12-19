@@ -92,6 +92,7 @@ TEST_F( reNameCSTest16565, renamecs )
    bson_finish( &option ) ;
    rc = sdbRenameCollectionSpace( db, csOldName, csNewName, &option ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to rename cs oldName: " << csOldName << " newName: " << csNewName ; 
+   bson_destroy( &option ) ;
 
    // check rename cs
    BOOLEAN exist ;
