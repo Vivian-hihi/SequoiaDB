@@ -50,12 +50,12 @@ class TestSequence16652 extends PHPUnit_Framework_TestCase
       //insert 30 record
       for( $i = 0; $i < 1000; $i++ )
       {
-         self::$cl -> insert( array( 'c' => i ) );
+         self::$cl -> insert( array( 'c' => $i ) );
          self::checkErrno( 0, self::$db -> getError()['errno'] );
       }
 
       //insert more than 30 records
-      self::$cl -> insert( array( 'c' => i ) );
+      self::$cl -> insert( array( 'c' => 31 ) );
       self::checkErrno( -325, self::$db -> getError()['errno'] );
    }
    
