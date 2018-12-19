@@ -73,6 +73,22 @@
          } ) ;
       }
 
+      SdbSwap.sortNodeName = function( a, b )
+      {
+         if( a['NodeName'] == b['NodeName'] )
+         {
+            return 0 ;
+         }
+         else if( a['NodeName'] > b['NodeName'] )
+         {
+            return 1 ;
+         }
+         else
+         {
+            return -1 ;
+         }
+      }
+
       SdbSwap.getGroupList = function( func )
       {
          if ( moduleMode == 'standalone' )
@@ -117,8 +133,26 @@
          var data = { 'cmd': 'snapshot configs', 'hint': JSON.stringify( { '$options': { 'mode': 'run', 'expand': expand } } ) } ;
          SdbRest.DataOperation( data, {
             'success': function( result ){
-               SdbSwap.RunConfigs = result ;
-               SdbSwap.initDefer.resolve( 'run', result ) ;
+
+               var newResult = [] ;
+               $.each( result, function( index, info ){
+                  if( hasKey( info, 'ErrNodes' ) && getObjectSize( info ) == 1 )
+                  {
+                     for( var i in info['ErrNodes'] )
+                     {
+                        newResult.push( { 'NodeName': info['ErrNodes'][i]['NodeName'] } ) ;
+                     }
+                  }
+                  else
+                  {
+                     newResult.push( info ) ;
+                  }
+               } ) ;
+
+               newResult = newResult.sort( SdbSwap.sortNodeName ) ;
+
+               SdbSwap.RunConfigs = newResult ;
+               SdbSwap.initDefer.resolve( 'run', newResult ) ;
                if ( isFunction( func ) )
                {
                   func() ;
@@ -138,8 +172,26 @@
          var data = { 'cmd': 'snapshot configs', 'hint': JSON.stringify( { '$options': { 'mode': 'local', 'expand': expand } } ) } ;
          SdbRest.DataOperation( data, {
             'success': function( result ){
-               SdbSwap.LocalConfigs = result ;
-               SdbSwap.initDefer.resolve( 'local', result ) ;
+
+               var newResult = [] ;
+               $.each( result, function( index, info ){
+                  if( hasKey( info, 'ErrNodes' ) && getObjectSize( info ) == 1 )
+                  {
+                     for( var i in info['ErrNodes'] )
+                     {
+                        newResult.push( { 'NodeName': info['ErrNodes'][i]['NodeName'] } ) ;
+                     }
+                  }
+                  else
+                  {
+                     newResult.push( info ) ;
+                  }
+               } ) ;
+
+               newResult = newResult.sort( SdbSwap.sortNodeName ) ;
+
+               SdbSwap.LocalConfigs = newResult ;
+               SdbSwap.initDefer.resolve( 'local', newResult ) ;
                if ( isFunction( func ) )
                {
                   func() ;
@@ -274,7 +326,7 @@
          $scope.GroupList[index]['checked'] = !$scope.GroupList[index]['checked'] ;
 
          SdbSignal.commit( 'SetNodeTableFilter', { 'key': 'status', 'value': '' } ) ;
-         SdbSignal.commit( 'SetNodeTableFilter', { 'key': 'nodeName', 'value': '' } ) ;
+         SdbSignal.commit( 'SetNodeTableFilter', { 'key': 'NodeName', 'value': '' } ) ;
          SdbSignal.commit( 'SetNodeTableFilter', { 'key': 'dbpath', 'value': '' } ) ;
          SdbSignal.commit( 'SetNodeTableFilter', { 'key': 'role', 'value': '' } ) ;
          if( $scope.GroupList[index]['checked'] == true )
@@ -297,7 +349,7 @@
          'title': {
             'checked':        '',
             'status':         $scope.autoLanguage( '状态' ),
-            'nodeName':       $scope.autoLanguage( '节点名' ),
+            'NodeName':       $scope.autoLanguage( '节点名' ),
             'dbpath':         $scope.autoLanguage( '数据路径' ),
             'role':           $scope.autoLanguage( '角色' ),
             'datagroupname':  $scope.autoLanguage( '分区组' )
@@ -307,7 +359,7 @@
             'width': {
                'checked':        '26px',
                'status':         '60px',
-               'nodeName':       '30%',
+               'NodeName':       '30%',
                'dbpath':         '45%',
                'role':           '70px',
                'datagroupname':  '25%'
@@ -315,7 +367,7 @@
             'sort': {
                'checked':        false,
                'status':         true,
-               'nodeName':       true,
+               'NodeName':       true,
                'dbpath':         true,
                'role':           true,
                'datagroupname':  true
@@ -327,7 +379,7 @@
                   { 'key': $scope.autoLanguage( '变化' ), 'value': 'change' },
                   { 'key': $scope.autoLanguage( '无变化' ), 'value': 'unchanged' }
                ],
-               'nodeName': 'indexof',
+               'NodeName': 'indexof',
                'dbpath':   'indexof',
                'role': [
                   { 'key': $scope.autoLanguage( '全部' ), 'value': '' },
@@ -820,9 +872,10 @@
       //节点列表
       SdbSignal.on( 'SetNodeList', function( data ){
          var tableBody = [] ;
-         $.each( data, function( index, groupInfo ){
 
+         $.each( data, function( index, groupInfo ){
             var role = 'data' ;
+
             if ( groupInfo['Role'] == 1 )
             {
                role = 'coord'
@@ -831,23 +884,22 @@
             {
                role = 'catalog'
             }
+
             $.each( groupInfo['Group'], function( index2, nodeInfo ){
                var newNode = {} ;
 
                newNode['checked'] = false ;
                newNode['status'] = '' ;
-               newNode['nodeName'] = nodeInfo['HostName'] + ':' + nodeInfo['Service'][0]['Name'] ;
+               newNode['NodeName'] = nodeInfo['HostName'] + ':' + nodeInfo['Service'][0]['Name'] ;
                newNode['dbpath'] = nodeInfo['dbpath'] ;
                newNode['role'] = role ;
                newNode['datagroupname'] = groupInfo['GroupName'] ;
 
                tableBody.push( newNode ) ;
-
             } ) ;
-
          } ) ;
 
-         $scope.NodeTable['body'] = tableBody ;
+         $scope.NodeTable['body'] = tableBody.sort( SdbSwap.sortNodeName ) ;
          SdbSwap.initDefer.resolve( 'table', tableBody ) ;
 
       } ) ;
@@ -895,13 +947,13 @@
          $.each( tmpList, function( index, nodeInfo ){
             if ( nodeInfo['checked'] == true )
             {
-               nodeNameList.push( nodeInfo['nodeName'] ) ;
+               nodeNameList.push( nodeInfo['NodeName'] ) ;
             }
          } ) ;
          if ( nodeNameList.length == 0 )
          {
             $.each( tmpList, function( index, nodeInfo ){
-               nodeNameList.push( nodeInfo['nodeName'] ) ;
+               nodeNameList.push( nodeInfo['NodeName'] ) ;
             } ) ;
          }
          $scope.SwitchNode( nodeNameList ) ;
@@ -1495,10 +1547,20 @@
                         var tmpError = {
                            'cmd': cmd,
                            'errno': node['Flag'],
-                           'detail': sprintf( $scope.autoLanguage( '节点错误 ? : ?' ), node['NodeName'], node['ErrInfo']['detail'] )
+                           'detail': ''
                         } ;
+
+                        if ( hasKey( node['ErrInfo'], 'detail' ) )
+                        {
+                           tmpError['detail'] = sprintf( $scope.autoLanguage( '节点错误 ? : ?' ), node['NodeName'], node['ErrInfo']['detail'] ) ;
+                        }
+                        else
+                        {
+                           tmpError['detail'] = sprintf( $scope.autoLanguage( '节点错误 ? : ?' ), node['NodeName'], node['Flag'] ) ;
+                        }
+
                         _IndexPublic.createRetryModel( $scope, tmpError, function(){
-                           requestModifyConfig( cmd, config ) ;
+                           requestModifyConfig( cmd, config, func ) ;
                            return true ;
                         } ) ;
                         hasError = true ;
@@ -1524,7 +1586,7 @@
                else
                {
                   _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                     requestModifyConfig( cmd, config ) ;
+                     requestModifyConfig( cmd, config, func ) ;
                      return true ;
                   } ) ;
                }
@@ -1745,18 +1807,6 @@
                SdbSignal.commit( 'SetTitle', '' ) ;
                $scope.SwitchTab( 'Node' ) ;
                return ;
-            }
-
-            //防止local config不对称
-            if ( localConfigs['NodeName'] !== runConfigs['NodeName'] )
-            {
-               $.each( SdbSwap.LocalConfigs, function( index, config ){
-                  if( nodeName.indexOf( config['NodeName'] ) >= 0 )
-                  {
-                     localConfigs = config ;
-                     return false ;
-                  }
-               } ) ;
             }
 
             var diffs = diffObject( runConfigs, localConfigs ) ;

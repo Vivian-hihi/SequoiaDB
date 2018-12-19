@@ -78,58 +78,21 @@
                   <div class="bar" ng-class="{'0':'blue','1':'orange','2':'red','3':'green'}[BarColor]" ng-style="{'width':TaskInfo['Progress']+'%'}"></div>
                </div>
 
-               <div ng-container="{offsetY:-50,marginTop:10}" ng-table="TaskTable['options']" table-title="TaskTable['title']" table-content="installInfo in NewTaskInfo['ResultInfo']">
+               <div ng-container="{offsetY:-50,marginTop:10}" ng-table="TaskTable['options']" table-title="TaskTable['title']" table-content="info in NewTaskInfo['ResultInfo']">
                   <div table-key="Status">
-                     <img src="./images/loading2.gif" style="width:22px;height:22px;" ng-if="installInfo['Status'] == 1 || installInfo['Status'] == 0" />
-                     <i class="fa fa-undo" style="font-size:22px;color:#F9A937;" ng-if="installInfo['Status'] == 2"></i>
-                     <i class="fa fa-check" style="font-size:22px;color:#00CC66;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] == 0"></i>
-                     <i class="fa fa-times" style="font-size:22px;color:#D9534F;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] != 0"></i>
-                     <i class="fa fa-times" style="font-size:22px;color:#D9534F;" ng-if="installInfo['Status'] == 10 && installInfo['errno'] != 0"></i>
+                     <img src="./images/loading2.gif" style="width:22px;height:22px;" ng-if="info['Status'] == 1 || info['Status'] == 0" />
+                     <i class="fa fa-undo" style="font-size:22px;color:#F9A937;" ng-if="info['Status'] == 2"></i>
+                     <i class="fa fa-check" style="font-size:22px;color:#00CC66;" ng-if="info['Status'] == 4 && info['errno'] == 0"></i>
+                     <i class="fa fa-times" style="font-size:22px;color:#D9534F;" ng-if="info['Status'] == 4 && info['errno'] != 0"></i>
+                     <i class="fa fa-times" style="font-size:22px;color:#D9534F;" ng-if="info['Status'] == 10 && info['errno'] != 0"></i>
                   </div>
-                  <div class="Ellipsis" table-key="HostName">{{installInfo['HostName']}}</div>
-                  <div class="Ellipsis" table-key="svcname">{{installInfo['svcname']}}</div>
-                  <div class="Ellipsis" table-key="role">{{installInfo['role']}}</div>
-                  <div class="Ellipsis" table-key="datagroupname">{{installInfo['datagroupname']}}</div>
-                  <div class="Ellipsis" table-key="StatusDesc">{{installInfo['StatusDesc']}}</div>
-                  <div class="Ellipsis" table-key="Flow">{{installInfo['Flow'][installInfo['Flow'].length-1]}}</div>
-               </div>
-
-               <div ng-container="{offsetY:-50,marginTop:10}" ng-if="(TaskInfo['TaskName'] == 'ADD_BUSINESS' || TaskInfo['TaskName'] == 'REMOVE_BUSINESS') && ModuleType == 'sequoiasql'" ng-table="TaskTable['options']" table-title="TaskTable['title']" table-content="installInfo in NewTaskInfo['ResultInfo']">
-                  <div table-key="Status">
-                     <img src="./images/loading2.gif" style="width:22px;height:22px;" ng-if="installInfo['Status'] == 1 || installInfo['Status'] == 0" />
-                     <i class="fa fa-undo" style="font-size:22px;color:#F9A937;" ng-if="installInfo['Status'] == 2"></i>
-                     <i class="fa fa-check" style="font-size:22px;color:#00CC66;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] == 0"></i>
-                     <i class="fa fa-times" style="font-size:22px;color:#D9534F;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] != 0"></i>
-                  </div>
-                  <div class="Ellipsis" table-key="HostName">{{installInfo['HostName']}}</div>
-                  <div class="Ellipsis" table-key="role">{{installInfo['role']}}</div>
-                  <div class="Ellipsis" table-key="StatusDesc">{{installInfo['StatusDesc']}}</div>
-                  <div class="Ellipsis" table-key="Flow">{{installInfo['Flow'][installInfo['Flow'].length-1]}}</div>
-               </div>
-
-               <div ng-container="{offsetY:-50,marginTop:10}" ng-if="(TaskInfo['TaskName'] == 'ADD_BUSINESS' || TaskInfo['TaskName'] == 'REMOVE_BUSINESS') && ModuleType == 'zookeeper'" ng-table="TaskTable['options']" table-title="TaskTable['title']" table-content="installInfo in NewTaskInfo['ResultInfo']">
-                  <div table-key="Status">
-                     <img src="./images/loading2.gif" style="width:22px;height:22px;" ng-if="installInfo['Status'] == 1 || installInfo['Status'] == 0" />
-                     <i class="fa fa-undo" style="font-size:22px;color:#F9A937;" ng-if="installInfo['Status'] == 2"></i>
-                     <i class="fa fa-check" style="font-size:22px;color:#00CC66;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] == 0"></i>
-                     <i class="fa fa-times" style="font-size:22px;color:#D9534F;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] != 0"></i>
-                  </div>
-                  <div class="Ellipsis" table-key="zooid">{{installInfo['zooid']}}</div>
-                  <div class="Ellipsis" table-key="HostName">{{installInfo['HostName']}}</div>
-                  <div class="Ellipsis" table-key="StatusDesc">{{installInfo['StatusDesc']}}</div>
-                  <div class="Ellipsis" table-key="Flow">{{installInfo['Flow'][installInfo['Flow'].length-1]}}</div>
-               </div>
-
-               <div ng-container="{offsetY:-50,marginTop:10}" ng-if="(TaskInfo['TaskName'] == 'ADD_BUSINESS' || TaskInfo['TaskName'] == 'REMOVE_BUSINESS') && ModuleType == 'sequoiasql-postgresql' || ModuleType == 'sequoiasql-mysql'" ng-table="TaskTable['options']" table-title="TaskTable['title']" table-content="installInfo in NewTaskInfo['ResultInfo']">
-                  <div table-key="Status">
-                     <img src="./images/loading2.gif" style="width:22px;height:22px;" ng-if="installInfo['Status'] == 1 || installInfo['Status'] == 0" />
-                     <i class="fa fa-undo" style="font-size:22px;color:#F9A937;" ng-if="installInfo['Status'] == 2"></i>
-                     <i class="fa fa-check" style="font-size:22px;color:#00CC66;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] == 0"></i>
-                     <i class="fa fa-times" style="font-size:22px;color:#D9534F;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] != 0"></i>
-                  </div>
-                  <div class="Ellipsis" table-key="HostName">{{installInfo['HostName']}}</div>
-                  <div class="Ellipsis" table-key="StatusDesc">{{installInfo['StatusDesc']}}</div>
-                  <div class="Ellipsis" table-key="Flow">{{installInfo['Flow'][installInfo['Flow'].length-1]}}</div>
+                  <div class="Ellipsis" table-key="HostName">{{info['HostName']}}</div>
+                  <div class="Ellipsis" table-key="svcname">{{info['svcname']}}</div>
+                  <div class="Ellipsis" table-key="port">{{info['port']}}</div>
+                  <div class="Ellipsis" table-key="role">{{info['role']}}</div>
+                  <div class="Ellipsis" table-key="datagroupname">{{info['datagroupname']}}</div>
+                  <div class="Ellipsis" table-key="StatusDesc">{{info['StatusDesc']}}</div>
+                  <div class="Ellipsis" table-key="Flow">{{info['Flow'][info['Flow'].length-1]}}</div>
                </div>
             </div>
 

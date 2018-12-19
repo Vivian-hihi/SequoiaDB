@@ -33,7 +33,8 @@
          return ;
       }
 
-      var setTaskTable = function( moduleType ){
+      function setTaskTable( moduleType )
+      {
          //任务表格
          if( moduleType == 'sequoiadb' )
          {
@@ -56,53 +57,21 @@
                'Flow':           '35%'
             } ;
          }
-         else if( moduleType == 'sequoiasql' )
+         else if( moduleType == 'sequoiasql-postgresql' || moduleType == 'sequoiasql-mysql' )
          {
             $scope.TaskTable['title'] = {
                'Status':         '',
                'HostName':       $scope.autoLanguage( '主机名' ),
-               'role':           $scope.autoLanguage( '角色' ),
+               'port':           $scope.autoLanguage( '端口' ),
                'StatusDesc':     $scope.autoLanguage( '状态' ),
                'Flow':           $scope.autoLanguage( '描述' )
             } ;
             $scope.TaskTable['options']['width'] = {
                'Status':      '24px',
                'HostName':    '30%',
-               'role':        '20%',
-               'StatusDesc':  '20%',
+               'port':        '15%',
+               'StatusDesc':  '25%',
                'Flow':        '30%'
-            } ;
-         }
-         else if( moduleType == 'zookeeper' )
-         {
-            $scope.TaskTable['title'] = {
-               'Status':         '',
-               'zooid':          $scope.autoLanguage( '节点Id' ),
-               'HostName':       $scope.autoLanguage( '主机名' ),
-               'StatusDesc':     $scope.autoLanguage( '状态' ),
-               'Flow':           $scope.autoLanguage( '描述' )
-            } ;
-            $scope.TaskTable['options']['width'] = {
-               'Status':      '24px',
-               'zooid':       '30%',
-               'HostName':    '15%',
-               'StatusDesc':  '15%',
-               'Flow':        '40%'
-            } ;
-         }
-         else if( moduleType == 'sequoiasql-postgresql' || moduleType == 'sequoiasql-mysql' )
-         {
-            $scope.TaskTable['title'] = {
-               'Status':         '',
-               'HostName':       $scope.autoLanguage( '主机名' ),
-               'StatusDesc':     $scope.autoLanguage( '状态' ),
-               'Flow':           $scope.autoLanguage( '描述' )
-            } ;
-            $scope.TaskTable['options']['width'] = {
-               'Status':      '24px',
-               'HostName':    '35%',
-               'StatusDesc':  '30%',
-               'Flow':        '35%'
             } ;
          }
       }
@@ -210,11 +179,11 @@
                         }
                         if( nodeInfo['role'] == 'coord' )
                         {
-                           $scope.TimeLeft += 0.5 ;
+                           $scope.TimeLeft += 0.3 ;
                         }
                         else
                         {
-                           $scope.TimeLeft += 1 ;
+                           $scope.TimeLeft += 0.5 ;
                         }
                      } ) ;
                      if( $scope.TaskInfo['ResultInfo'].length == errorNum )
@@ -303,8 +272,10 @@
                   {
                      $scope.NewTaskInfo = $scope.TaskInfo ;
                   }
+
                   $.each( $scope.NewTaskInfo['ResultInfo'], function( index, hostInfo ){
-                     if( hostInfo['Status'] == $scope.TaskInfo['ResultInfo'][index]['Status'] && hostInfo['errno'] == $scope.TaskInfo['ResultInfo'][index]['errno'] )
+                     if( hostInfo['Status'] == $scope.TaskInfo['ResultInfo'][index]['Status'] &&
+                         hostInfo['errno'] == $scope.TaskInfo['ResultInfo'][index]['errno'] )
                      {
                         $scope.NewTaskInfo['ResultInfo'][index]['StatusDesc'] = $scope.TaskInfo['ResultInfo'][index]['StatusDesc'] ;
                         $scope.NewTaskInfo['ResultInfo'][index]['detail'] = $scope.TaskInfo['ResultInfo'][index]['detail'] ;
