@@ -7,7 +7,6 @@ from lib import testlib
 from lib import sdbconfig
 from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
 
-
 class TestRenameCS16573(testlib.SdbTestBase):
    def setUp(self):
       # create cs 
@@ -15,59 +14,51 @@ class TestRenameCS16573(testlib.SdbTestBase):
       self.test_cs_newname = "test2_16573"
       testlib.drop_cs(self.db, self.test_cs_name, ignore_not_exist=True)
       testlib.drop_cs(self.db, self.test_cs_newname, ignore_not_exist=True)      
-      
 		 
    def test_rename_cs_16573(self):
       #rename collection space
       self.cs = self.db.create_collection_space(self.test_cs_name)
-      self.assertTrue(self.is_collection_space_exist(self.test_cs_name), "===> step 1 create collection space fail")
+      self.assertTrue(self.is_collection_space_exist(self.test_cs_name))
       
+      #rename collection space
       self.db.rename_collection_space(self.test_cs_name, self.test_cs_newname)
-      self.assertTrue(self.is_collection_space_exist(self.test_cs_newname), "===> step 2 rename collection space fail")
-      self.assertFalse(self.is_collection_space_exist(self.test_cs_name), "===> step 3 rename collection space fail")
+      self.assertTrue(self.is_collection_space_exist(self.test_cs_newname))
+      self.assertFalse(self.is_collection_space_exist(self.test_cs_name))
       
-      #metadata operation
+      #create collection
       self.cs = self.db.get_collection_space(self.test_cs_newname)
       self.cs.create_collection("test_cl")
-      self.assertTrue(self.is_collection_exist("test_cl"), "===> step 4 create collection fail")
+      self.assertTrue(self.is_collection_exist("test_cl"))
       
+      #drop collection
       self.cs.drop_collection("test_cl")
-      self.assertFalse(self.is_collection_exist("test_cl"), "===> step 5 drop collection fail")
+      self.assertFalse(self.is_collection_exist("test_cl"))
+      
+      #rename not exist collection space
+      try:
+         self.db.rename_collection_space(self.test_cs_name, "test3_16573")
+      except SDBBaseError as e:
+         self.assertEqual(-34, e.code, e.detail)
+      self.assertFalse(self.is_collection_space_exist("test3_16573"))
       
    def tearDown(self):
       self.db.drop_collection_space(self.test_cs_newname)   
       self.db.disconnect()
       
    def is_collection_space_exist(self, collection_space_name):
-      collection_spaces = []
-      cursor = self.db.list_collection_spaces()
-      while True:
-         try:
-            collection_space = cursor.next()
-            collection_spaces.append(collection_space) 
-         except SDBEndOfCursor:
-            break
-      cursor.close()
-      for i in range(len(collection_spaces)):
-         cs_name = collection_spaces[i]["Name"]
-         if(collection_space_name == cs_name):
+      try:
+         cs_name = self.db.get_collection_space(collection_space_name).get_collection_space_name()
+         if (cs_name == collection_space_name):
             return True
-      return False
+      except SDBBaseError as e:
+         self.assertEqual(-34, e.code, e.detail)
+         return False
       
    def is_collection_exist(self, collection_name):
-      collections = []
-      cursor = self.db.list_collections()
-      while True:
-         try:
-            collection = cursor.next()
-            collections.append(collection) 
-         except SDBEndOfCursor:
-            break
-      cursor.close()
-      for i in range(len(collections)):
-         cl_name = collections[i]["Name"]
-         if(self.test_cs_newname + "." + collection_name == cl_name):
+      try:
+         cl_name = self.cs.get_collection(collection_name).get_collection_name()
+         if (cl_name == collection_name):
             return True
-      return False
-         
-         
+      except SDBBaseError as e:
+         self.assertEqual(-23, e.code, e.detail)
+         return False         
