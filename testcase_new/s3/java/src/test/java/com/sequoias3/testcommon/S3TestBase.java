@@ -42,6 +42,7 @@ public class S3TestBase {
     protected static String s3AccessKeyId;
     protected static String confTool;
     private static SdbConfTestBase sdbConfTestBase = new SdbConfTestBase();
+    private static String installPath;
 
     @Parameters({"HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND",
         "RSRVNODEDIR", "WORKDIR","S3HOSTNAME","S3PORT","S3USERNAME","S3ACCESSKEYID","CONFTOOL"})
@@ -66,6 +67,11 @@ public class S3TestBase {
         bucketName = "commbucket";
         enableVerBucketName = "commbucketwithversion";
         confTool = CONFTOOL;
+        
+        Properties prop = new Properties();
+        InputStream in = new FileInputStream( new File("/etc/default/sequoiadb") );
+        prop.load( in );
+        String installPath = prop.getProperty( "INSTALL_DIR" );
 
         sdbConfTestBase.openTransaction(confTool, hostName, serviceName);
         createCSCLAndStartS3();
@@ -130,10 +136,6 @@ public class S3TestBase {
     
     public static void createCSCLAndStartS3() {
         try{
-            Properties prop = new Properties();
-            InputStream in = new FileInputStream( new File("/etc/default/sequoiadb") );
-            prop.load( in );
-            String installPath = prop.getProperty( "INSTALL_DIR" );
             String sdbFullName = installPath + "/bin/sdb";
             System.out.println("begin exec createCSCLexample.js");
             String[] strCmd = new String[5];
@@ -212,10 +214,6 @@ public class S3TestBase {
     
     public static void stopS3() {
         try{
-            Properties prop = new Properties();
-            InputStream in = new FileInputStream( new File("/etc/default/sequoiadb") );
-            prop.load( in );
-            String installPath = prop.getProperty( "INSTALL_DIR" );
             String[] cmd = new String[3];
             cmd[0] = installPath+"/tools/sequoias3/sequoias3.sh";
             cmd[1] = "stop";
