@@ -159,6 +159,18 @@
       <copy todir="${backup_basedir}/${backup_reltdir}">
          <fileset dir="${INSTALL_DIR}/conf/log" includes="sdbseadapterlog/**/*"/>
       </copy>
+      
+      <!--backup s3 log-->
+      <if>
+         <available file="${INSTALL_DIR}/tools/sequoias3/log" type="dir"/>
+         <then>
+            <mkdir dir="${backup_basedir}/${backup_reltdir}/s3log"/>
+            <copy todir="${backup_basedir}/${backup_reltdir}/s3log">
+               <fileset dir="${INSTALL_DIR}/tools/sequoias3/log" includes="*.log*"/>
+            </copy>
+         </then>
+      </if>
+      
       <!--backup conf-->
       <copy todir="${backup_basedir}/${backup_reltdir}">
          <fileset dir="${INSTALL_DIR}/conf" includes="local/**/*"/>
