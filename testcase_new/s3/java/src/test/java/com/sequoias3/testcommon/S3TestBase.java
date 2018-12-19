@@ -254,7 +254,7 @@ public class S3TestBase {
                 System.out.println(cursor.getNext().toString());
             }
             System.out.println("===============end print transaction snapshot==============");
-        }finally{
+        } finally {
             if(cursor != null){
                 cursor.close();
             }
@@ -264,9 +264,9 @@ public class S3TestBase {
         }
     }
     
-	private static void printResidualData() throws Exception{
-    	int errorCount = 0;
-    	Sequoiadb db = null;
+    private static void printResidualData() throws Exception{
+        int errorCount = 0;
+        Sequoiadb db = null;
         DBCursor cursor = null;
         try{
             db =  new Sequoiadb(coordUrl, "", "");
@@ -274,50 +274,50 @@ public class S3TestBase {
             List<DBCollection> clList = new ArrayList<DBCollection>();
             List<String> clNameList = metaCs.getCollectionNames();
             for(String csclName : clNameList){
-            	String clname = csclName.substring(metaCs.getName().length()+1);
-            	clList.add(metaCs.getCollection(clname));
+                String clname = csclName.substring(metaCs.getName().length()+1);
+                clList.add(metaCs.getCollection(clname));
             }
             
-            for(DBCollection cl : clList){
-            	cursor = cl.query();
-            	if(cursor.hasNext()){
-            		System.out.println("\n===============begin print " + metaCs.getName() +"."+ cl.getName() + " data============");
-	                while(cursor.hasNext()){
-	                	if(cursor.getNext().containsField("Name")){
-	                		if(!cursor.getCurrent().get("Name").equals(s3UserName)&&!cursor.getCurrent().get("Name").equals(bucketName)&&!cursor.getCurrent().get("Name").equals(enableVerBucketName)){
-	                			System.out.println(cursor.getCurrent().toString());
-	                			errorCount++;
-			            	}
-	                	}else{
-	                		System.out.println(cursor.getCurrent().toString());
-	                		errorCount++;
-	                	}
-	                }
-	                System.out.println("===============end print " + metaCs.getName() +"."+ cl.getName() + " data==============\n");
-            	}
+            for(DBCollection cl : clList) {
+                cursor = cl.query();
+                if(cursor.hasNext()) {
+                    System.out.println("\n===============begin print " + metaCs.getName() +"."+ cl.getName() + " data============");
+                    while(cursor.hasNext()){
+                        if(cursor.getNext().containsField("Name")){
+                            if(!cursor.getCurrent().get("Name").equals(s3UserName)&&!cursor.getCurrent().get("Name").equals(bucketName)&&!cursor.getCurrent().get("Name").equals(enableVerBucketName)){
+                                System.out.println(cursor.getCurrent().toString());
+                                errorCount++;
+                            }
+                        }else{
+                            System.out.println(cursor.getCurrent().toString());
+                            errorCount++;
+                        }
+                    }
+                    System.out.println("===============end print " + metaCs.getName() +"."+ cl.getName() + " data==============\n");
+                }
             }
             cursor.close();
             
             CollectionSpace dataCs = db.getCollectionSpace("DataCollectionSpace");
             try{
-            	DBCollection objectDataList = dataCs.getCollection("ObjectDataList");
-            	cursor = objectDataList.listLobs();
-            	if(cursor.hasNext()){
-		        	System.out.println("\n===============begin print " + dataCs.getName() +"."+ objectDataList.getName() + " data============");
-		        	while(cursor.hasNext()){
-		        		System.out.println(cursor.getNext().toString());
-		        		errorCount++;
-		        	}
-		        	System.out.println("===============end print " + dataCs.getName() +"."+ objectDataList.getName() + " data============\n");
-            	}
-            }catch(BaseException e){
-            	Assert.assertEquals(e.getErrorCode(), SDBError.SDB_DMS_NOTEXIST.getErrorCode(), "getCollection ObjectDataList failed");
+                DBCollection objectDataList = dataCs.getCollection("ObjectDataList");
+                cursor = objectDataList.listLobs();
+                if(cursor.hasNext()){
+                    System.out.println("\n===============begin print " + dataCs.getName() +"."+ objectDataList.getName() + " data============");
+                    while(cursor.hasNext()){
+                        System.out.println(cursor.getNext().toString());
+                        errorCount++;
+                    }
+                    System.out.println("===============end print " + dataCs.getName() +"."+ objectDataList.getName() + " data============\n");
+                }
+            } catch(BaseException e){
+                Assert.assertEquals(e.getErrorCode(), SDBError.SDB_DMS_NOTEXIST.getErrorCode(), "getCollection ObjectDataList failed");
             }
             
             if(errorCount != 0){
-            	throw new Exception("There is data residue problem");
+                throw new Exception("There is data residue problem");
             }
-        }finally{
+        } finally{
             if(cursor != null){
                 cursor.close();
             }
@@ -325,6 +325,6 @@ public class S3TestBase {
                 db.close();
             }
         }
-    	
+        
     }
 }
