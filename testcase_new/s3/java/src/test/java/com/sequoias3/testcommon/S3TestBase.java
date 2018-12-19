@@ -68,10 +68,7 @@ public class S3TestBase {
         enableVerBucketName = "commbucketwithversion";
         confTool = CONFTOOL;
         
-        Properties prop = new Properties();
-        InputStream in = new FileInputStream( new File("/etc/default/sequoiadb") );
-        prop.load( in );
-        String installPath = prop.getProperty( "INSTALL_DIR" );
+        getInstallPath();
 
         sdbConfTestBase.openTransaction(confTool, hostName, serviceName);
         createCSCLAndStartS3();
@@ -209,6 +206,18 @@ public class S3TestBase {
         catch( InterruptedException | IOException e ){
             e.printStackTrace();
             Assert.fail( "fail to createCSCLAndStartS3" );
+        }
+    }
+    public static void getInstallPath() {
+        try {
+           Properties prop = new Properties();
+           InputStream in = new FileInputStream( new File("/etc/default/sequoiadb") );
+           prop.load( in );
+           installPath = prop.getProperty( "INSTALL_DIR" );
+        }
+        catch( InterruptedException | IOException e ){
+            e.printStackTrace();
+            Assert.fail( "fail to get installPath" );
         }
     }
     
