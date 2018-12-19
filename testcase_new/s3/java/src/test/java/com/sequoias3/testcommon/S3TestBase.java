@@ -215,7 +215,7 @@ public class S3TestBase {
            prop.load( in );
            installPath = prop.getProperty( "INSTALL_DIR" );
         }
-        catch( InterruptedException | IOException e ){
+        catch( IOException e ){
             e.printStackTrace();
             Assert.fail( "fail to get installPath" );
         }
