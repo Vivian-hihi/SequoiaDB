@@ -111,6 +111,7 @@ public class S3TestBase {
     @AfterSuite
     public static void finiSuite() throws Exception {
         try {
+            getClusterInfo();
             trans_snapshot();
             sdbConfTestBase.closeTransaction(hostName, serviceName);
             printResidualData();
@@ -218,6 +219,34 @@ public class S3TestBase {
         catch( IOException e ){
             e.printStackTrace();
             Assert.fail( "fail to get installPath" );
+        }
+    }
+    
+    public static void getClusterInfo() throws IOException{
+        Sequoiadb db = null;
+        try{
+            db = new Sequoiadb(coordUrl, "", "");
+            DBCursor cur = db.getList(7, null, null, null);
+            String info = "";
+            while (cur.hasNext()) {
+                info+=cur.getNext().toString();
+            }
+            cur.close();
+            File file = new File(installPath+"/tools/sequoias3/log/cluster.log");
+            if(!file.exists()) {
+                file.createNewFile();
+            }
+            
+            FileWriter fw = new FileWriter(file.getAbsoluteFile(),false);
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write(info);
+            bw.close();
+        } catch(BaseException e) {
+            Assert.fail("connect " + coordUrl + " get cluster info error : " + e.getErrorCode());
+        } finally {
+            if (db != null) {
+                db.disconnect();
+            }
         }
     }
     
