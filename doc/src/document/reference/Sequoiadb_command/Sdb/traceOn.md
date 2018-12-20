@@ -1,6 +1,9 @@
 ##语法##
 ***db.traceOn( \<bufferSize\>, [strComp], [strBreakPoint], [tids] )***
 
+##类别##
+Sdb
+##功能##
 开启数据库引擎跟踪功能。
 
 ##参数描述##

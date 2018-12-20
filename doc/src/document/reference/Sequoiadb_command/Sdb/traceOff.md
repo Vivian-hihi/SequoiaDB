@@ -1,6 +1,9 @@
 ##语法##
 ***db.traceOff( [dumpFile] )***
 
+##类别##
+Sdb
+##功能##
 关闭数据库引擎跟踪功能，并将跟踪情况导出二进制文件，如：/opt/sequoiadb/trace.dump
 
 ##参数描述##
