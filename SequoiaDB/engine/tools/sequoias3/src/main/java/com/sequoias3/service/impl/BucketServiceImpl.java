@@ -52,10 +52,10 @@ public class BucketServiceImpl implements BucketService {
                 if (null != result){
                     if (result.getOwnerId() == ownerID){
                         throw new S3ServerException(S3Error.BUCKET_ALREADY_OWNED_BY_YOU,
-                                "Bucket already owned you. bucketname="+bucketName);
+                                "Bucket already owned you. bucket name="+bucketName);
                     }else {
                         throw new S3ServerException(S3Error.BUCKET_ALREADY_EXIST,
-                                "Bucket already exist. bucketname="+bucketName);
+                                "Bucket already exist. bucket name="+bucketName);
                     }
                 }
 
@@ -80,7 +80,7 @@ public class BucketServiceImpl implements BucketService {
                 bucketDao.insertBucket(bucket);
                 return;
             }catch (S3ServerException e) {
-                logger.warn("Create bucket failed. bucketname={}", bucketName, e);
+                logger.warn("Create bucket failed. bucket name = {}, error = {}", bucketName, e.getError().getErrIndex());
                 if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex() && tryTime > 0) {
                     continue;
                 } else {
@@ -88,7 +88,7 @@ public class BucketServiceImpl implements BucketService {
                 }
             }catch (Exception e){
                 throw new S3ServerException(S3Error.BUCKET_CREATE_FAILED,
-                        "create bucket failed. bucketname="+bucketName, e);
+                        "create bucket failed. bucket name="+bucketName, e);
             }
         }
     }
@@ -104,7 +104,7 @@ public class BucketServiceImpl implements BucketService {
             //is bucket empty
             if (!isBucketEmpty(bucket)){
                 throw new S3ServerException(S3Error.BUCKET_NOT_EMPTY,
-                        "The bucket you tried to delete is not empty. bucket name="+bucketName);
+                        "The bucket you tried to delete is not empty. bucket name = "+bucketName);
             }
 
             //delete bucket
@@ -145,11 +145,11 @@ public class BucketServiceImpl implements BucketService {
         Bucket bucket = bucketDao.getBucketByName(bucketName.toLowerCase());
         if (bucket == null){
             throw new S3ServerException(S3Error.BUCKET_NOT_EXIST,
-                    "The specified bucket does not exist. bucket name="+bucketName);
+                    "The specified bucket does not exist. bucket name = "+bucketName);
         }
         if (bucket.getOwnerId() != ownerID){
             throw new S3ServerException(S3Error.ACCESS_DENIED,
-                    "You are not owned the specified bucket. bucket="+bucketName+", ownerID: "+ownerID);
+                    "You are not owned the specified bucket. bucket name = "+bucketName+", ownerID = "+ownerID);
         }
 
         return bucket;

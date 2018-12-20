@@ -135,13 +135,15 @@ public class UserServiceImpl implements UserService {
             String userName = deleteUserName.toLowerCase();
             User user = userDao.getUserByName(userName);
             if (null == user) {
-                logger.info("The username is not exit. username=" + deleteUserName);
-                throw new S3ServerException(S3Error.USER_NOT_EXIST, "The username is not exit.");
+//                logger.info("The username is not exit. username=" + deleteUserName);
+                throw new S3ServerException(S3Error.USER_NOT_EXIST,
+                        "The username is not exit. username=" + deleteUserName);
             }
 
             if (userName.equals(InitAdminUserDefine.ADMIN_NAME)) {
-                logger.info("Init admin user cannot be delete.");
-                throw new S3ServerException(S3Error.USER_DELETE_INIT_ADMIN, "Last admin user cannot be delete.");
+//                logger.info("Init admin user cannot be delete.");
+                throw new S3ServerException(S3Error.USER_DELETE_INIT_ADMIN,
+                        "Last admin user cannot be delete. username=" + deleteUserName);
             }
 
             //       2.delete buckets
@@ -168,7 +170,7 @@ public class UserServiceImpl implements UserService {
         } catch (S3ServerException e) {
             throw e;
         } catch (Exception e) {
-            throw new S3DeleteUserException("delete user failed:username=" + deleteUserName, e);
+            throw new S3DeleteUserException("delete user failed. username=" + deleteUserName, e);
         }
     }
 
