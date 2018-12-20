@@ -53,6 +53,16 @@
                "./app/controller/Data/MySQL/Operate/Structure.js"
             ]
          }
+      },
+      //≈‰÷√
+      {
+         "path": "/Config/SequoiaSQL/PostgreSQL/Index",
+         "options": {
+            "templateUrl": "./app/template/Config/PostgreSQL/Index.html",
+            "resolve": [
+               "./app/controller/Config/PostgreSQL/Index.js"
+            ]
+         }
       }
    ]
 }

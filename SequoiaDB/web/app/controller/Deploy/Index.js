@@ -1445,7 +1445,8 @@
 
             var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
             $.each( $scope.ModuleList, function( index, moduleInfo ){
-               if( clusterName == moduleInfo['ClusterName'] && moduleInfo['BusinessType'] == 'sequoiadb')
+               if( clusterName == moduleInfo['ClusterName'] &&
+                   ( moduleInfo['BusinessType'] == 'sequoiadb' || moduleInfo['BusinessType'] == 'sequoiasql-postgresql' ) )
                {
                   if( $scope.RestartWindow['config']['inputList'][0]['value'] == null )
                   {
@@ -2655,7 +2656,7 @@
          //获取postgresql数据库列表
          var queryPgsqlDatabase = function( cluster, module ){
             var sql = 'SELECT datname FROM pg_database WHERE datname NOT LIKE \'template0\' AND datname NOT LIKE \'template1\'' ;
-            var data = { 'Sql': sql } ;
+            var data = { 'Sql': sql, 'IsAll': 'true' } ;
             SdbRest.DataOperationV21( cluster, module, '/sql', data, {
                'success': function( dbList ){
                   $.each( dbList, function( index, dbInfo ){

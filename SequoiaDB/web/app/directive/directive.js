@@ -1963,6 +1963,7 @@
                                        {
                                           'name':        'xxx',      //配置项
                                           'webName':     'xxx',      //配置项名字
+                                          'showName':    true|false  //是否优先显示name，默认false
                                           'desc':        'xxx',      //配置项描述
                                           'type':        'xxx',      //配置项类型, group, list, string, int, double, port, text, checkbox, password
                                                                                   select, inline, multiple, switch, normal
@@ -2346,28 +2347,29 @@
                   $.each( inputList, function( index, inputInfo ){
                      inputInfo.error = '' ;
                      var rv = { rc: true, error: '' } ;
+                     var showName = ( inputInfo.showName === true ? inputInfo.name : inputInfo.webName ) ;
                      switch( inputInfo.type )
                      {
                      case 'string':
-                        rv = $scope.Setting.checkString( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                        rv = $scope.Setting.checkString( showName, trim( inputInfo.value ), inputInfo.valid ) ;
                         break ;
                      case 'password':
-                        rv = $scope.Setting.checkString( inputInfo.webName, inputInfo.value, inputInfo.valid ) ;
+                        rv = $scope.Setting.checkString( showName, inputInfo.value, inputInfo.valid ) ;
                         break ;
                      case 'text':
-                        rv = $scope.Setting.checkString( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                        rv = $scope.Setting.checkString( showName, trim( inputInfo.value ), inputInfo.valid ) ;
                         break ;
                      case 'int':
-                        rv = $scope.Setting.checkInt( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                        rv = $scope.Setting.checkInt( showName, trim( inputInfo.value ), inputInfo.valid ) ;
                         break ;
                      case 'double':
-                        rv = $scope.Setting.checkDouble( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                        rv = $scope.Setting.checkDouble( showName, trim( inputInfo.value ), inputInfo.valid ) ;
                         break ;
                      case 'port':
-                        rv = $scope.Setting.checkPort( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                        rv = $scope.Setting.checkPort( showName, trim( inputInfo.value ), inputInfo.valid ) ;
                         break ;
                      case 'multiple':
-                        rv = $scope.Setting.checkMultiple( inputInfo.webName, trim( inputInfo.value ), inputInfo.valid ) ;
+                        rv = $scope.Setting.checkMultiple( showName, trim( inputInfo.value ), inputInfo.valid ) ;
                         break ;
                      case 'group':
                         isAllClear = $scope.Setting.checkInput( inputInfo.child ) ;
@@ -2392,7 +2394,7 @@
                            if( hasError == true )
                            {
                               isAllClear = false ;
-                              inputInfo.error = sprintf( $scope.Setting.Text.list, inputInfo.webName ) ;
+                              inputInfo.error = sprintf( $scope.Setting.Text.list, showName ) ;
                            }
                         }
                         break ;

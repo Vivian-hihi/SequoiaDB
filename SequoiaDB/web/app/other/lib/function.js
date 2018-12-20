@@ -144,8 +144,7 @@ var isPluginPath = function( fileName )
       return false ;
    }
 
-   if( files[2] != 'Data' &&
-       files[2] != 'Monitor' )
+   if( window.PluginModule.indexOf( files[2] ) < 0 )
    {
       return false ;
    }
@@ -2583,6 +2582,94 @@ function configConvertTemplate( templateList, level ){
    return newTemplateList ;
 }
 
+//pg_setting转表单
+function pgSettingConvertTemplate( template )
+{
+   var newTemplateList = [] ;
+
+   $.each( template, function( index, info ){
+
+      if ( info['context'] == 'internal' || info['name'] == 'port' )
+      {
+         return true ;
+      }
+
+      var newTemplateInfo = {
+         'name':     info['name'],
+         'showName': true,
+         'value':    '',
+         'webName':  info['short_desc'],
+         'disabled': false,
+         'desc':     info['extra_desc'],
+         'type':     '',
+         'valid':    ''
+      } ;
+
+      if ( info['source'] == 'configuration file' )
+      {
+         newTemplateInfo['value'] = info['setting'] ;
+      }
+
+      switch( info['vartype'] )
+      {
+      case 'bool':
+         newTemplateInfo['type'] = 'select' ;
+         newTemplateInfo['valid'] = [ { 'key': '', 'value': '' } ] ;
+         newTemplateInfo['valid'].push( { 'key': 'on',  'value': 'on' } ) ;
+         newTemplateInfo['valid'].push( { 'key': 'off', 'value': 'off' } ) ;
+         break ;
+      case 'enum':
+         enumvals = info['enumvals'] ;
+         enumvals = enumvals.substring( 1, enumvals.length - 1 ) ;
+         enumvals = enumvals.split( ',' ) ;
+
+         newTemplateInfo['type'] = 'select' ;
+         newTemplateInfo['valid'] = [ { 'key': '', 'value': '' } ] ;
+
+         $.each( enumvals, function( i, val ){
+            newTemplateInfo['valid'].push( { 'key': val,  'value': val } ) ;
+         } ) ;
+         break ;
+      case 'integer':
+         newTemplateInfo['type'] = 'int' ;
+         newTemplateInfo['valid'] = {} ;
+
+         if ( isNaN( info['min_val'] ) == false )
+         {
+            newTemplateInfo['valid']['min'] = parseInt( info['min_val'] ) ;
+         }
+         if ( isNaN( info['max_val'] ) == false )
+         {
+            newTemplateInfo['valid']['max'] = parseInt( info['max_val'] ) ;
+         }
+         newTemplateInfo['valid']['empty'] = true ;
+         break ;
+      case 'real':
+         newTemplateInfo['type'] = 'double' ;
+         newTemplateInfo['valid'] = {} ;
+
+         if ( isNaN( info['min_val'] ) == false )
+         {
+            newTemplateInfo['valid']['min'] = parseInt( info['min_val'] ) ;
+         }
+         if ( isNaN( info['max_val'] ) == false )
+         {
+            newTemplateInfo['valid']['max'] = parseInt( info['max_val'] ) ;
+         }
+         newTemplateInfo['valid']['empty'] = true ;
+         break ;
+      case 'string':
+         newTemplateInfo['type'] = 'string' ;
+         newTemplateInfo['valid'] = { 'empty': true } ;
+         break ;
+      } ;
+
+      newTemplateList.push( newTemplateInfo ) ;
+   } ) ;
+
+   return newTemplateList ;
+}
+
 /*
 比较2个对象是否相同
 filter 选填   过滤的字段列表。默认 []
@@ -2774,4 +2861,10 @@ function object2csv( obj, fields )
    }
 
    return tmp ;
+}
+
+//判断对象是否含有某个key
+function hasKey( obj, key )
+{
+   return (key in obj) ;
 }

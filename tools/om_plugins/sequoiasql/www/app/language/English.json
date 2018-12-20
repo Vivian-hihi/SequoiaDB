@@ -1,4 +1,13 @@
-﻿{ 
+﻿{
+   "修改配置项": "Modify configs",
+   "查看配置": "View config",
+   "该操作将重启业务，是否确定继续？": "This operation will restart the business, are you sure to continue?",
+   "详细描述": "Detailed description",
+   "生效类型": "Reloadable",
+   "配置项": "Config",
+   "修改配置": "Modify config",
+   "重启业务": "Restart Module",
+   "查看详细配置": "View details",
    "数据库列表": "Database List",
    "操作": "Operation",
    "创建数据库": "Create Database",

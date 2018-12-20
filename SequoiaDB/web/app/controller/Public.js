@@ -420,6 +420,8 @@
                {
                case 'sequoiadb':
                   $location.path( '/Config/SDB/Index' ).search( params ) ; break ;
+               case 'sequoiasql-postgresql':
+                  $location.path( '/Config/SequoiaSQL/PostgreSQL/Index' ).search( params ) ; break ;
                default:
                   break ;
                }
@@ -548,12 +550,9 @@
 
       function addConfig( businessInfo )
       {
-         if( businessInfo['type'] == 'sequoiadb' )
-         {
-            var title = getNavTitle( businessInfo['type'] ) ;
-            var titleInfo = addBusinessTitle( $scope.Left.navMenu[4]['list'], title ) ;
-            titleInfo['list'].push( businessInfo ) ;
-         }
+         var title = getNavTitle( businessInfo['type'] ) ;
+         var titleInfo = addBusinessTitle( $scope.Left.navMenu[4]['list'], title ) ;
+         titleInfo['list'].push( businessInfo ) ;
       }
 
       function addBusiness( businessInfo )

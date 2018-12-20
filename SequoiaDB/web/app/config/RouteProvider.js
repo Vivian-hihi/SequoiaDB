@@ -1,5 +1,6 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
+   var moduleTypeList = [ 'sequoiadb' ] ;
    function _getPluginRoute( async, clusterName, businessName, func )
    {
       $.ajax( {
@@ -53,9 +54,14 @@
    {
       _getBusinessList( async, function( buzList ){
          $.each( buzList, function( index, buzInfo ){
-            if( buzInfo['BusinessType'] != 'sequoiadb' )
+            if( moduleTypeList.indexOf( buzInfo['BusinessType'] ) < 0 )
             {
                _getPluginRoute( async, buzInfo['ClusterName'], buzInfo['BusinessName'], function( routes ){
+                  if( moduleTypeList.indexOf( buzInfo['BusinessType'] ) >= 0 )
+                  {
+                     return ;
+                  }
+                  moduleTypeList.push( buzInfo['BusinessType'] ) ;
                   $.each( routes['route'], function( index, aRoute ){
                      aRoute['options']['resolve'] = resolveFun( aRoute['options']['resolve'] ) ;
                      $routeProvider.when( aRoute['path'], aRoute['options'] ) ;
