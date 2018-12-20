@@ -83,7 +83,7 @@ public class DeleteNormalUser16261 extends S3TestBase {
     @AfterClass
     private void tearDown() {
         if (runSuccess) {
-           // UserUtils.deleteUser(username2, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(username2, UserUtils.accessKeyId, true);
         }
     }
 
