@@ -302,10 +302,10 @@
 
          SdbRest.OmOperation( data, {
             'success': function( taskInfo ){
-               $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
-               $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
+               $rootScope.tempData( 'Deploy', 'Model', 'Update Config' ) ;
+               $rootScope.tempData( 'Deploy', 'Module', 'sequoiasql-postgresql' ) ;
                $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
-               $location.path( 'Deploy/Restart' ).search( { 'r': new Date().getTime() } ) ;
+               $location.path( '/Deploy/Task/Restart' ).search( { 'r': new Date().getTime() } ) ;
             }, 
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){

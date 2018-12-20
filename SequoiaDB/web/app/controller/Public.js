@@ -252,7 +252,7 @@
             if( taskInfo['TaskName'] == 'ADD_HOST' || taskInfo['TaskName'] == 'REMOVE_HOST' || taskInfo['TaskName'] == 'DEPLOY_PACKAGE' )
             {
                $rootScope.tempData( 'Deploy', 'HostTaskID', taskInfo['TaskID'] ) ;
-               $location.path( '/Deploy/InstallHost' ).search( params ) ;
+               $location.path( '/Deploy/Task/Host' ).search( params ) ;
             }
             else if( taskInfo['TaskName'] == 'EXTEND_BUSINESS' )
             {
@@ -262,17 +262,17 @@
             else if( taskInfo['TaskName'] == 'ADD_BUSINESS' )
             {
                $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo['TaskID'] ) ;
-               $location.path( '/Deploy/InstallModule' ).search( params ) ;
+               $location.path( '/Deploy/Task/Module' ).search( params ) ;
             }
             else if( taskInfo['TaskName'] == 'RESTART_BUSINESS' )
             {
                $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo['TaskID'] ) ;
-               $location.path( '/Deploy/Restart' ).search( params ) ;
+               $location.path( '/Deploy/Task/Restart' ).search( params ) ;
             }
             else
             {
                $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo['TaskID'] ) ;
-               $location.path( '/Deploy/InstallModule' ).search( params ) ;
+               $location.path( '/Deploy/Task/Module' ).search( params ) ;
             }
          }
          $scope.Components.French.title = $scope.autoLanguage( '任务列表' ) ;
@@ -550,9 +550,12 @@
 
       function addConfig( businessInfo )
       {
-         var title = getNavTitle( businessInfo['type'] ) ;
-         var titleInfo = addBusinessTitle( $scope.Left.navMenu[4]['list'], title ) ;
-         titleInfo['list'].push( businessInfo ) ;
+         if( businessInfo['type'] == 'sequoiadb' || businessInfo['type'] == 'sequoiasql-postgresql' )
+         {
+            var title = getNavTitle( businessInfo['type'] ) ;
+            var titleInfo = addBusinessTitle( $scope.Left.navMenu[4]['list'], title ) ;
+            titleInfo['list'].push( businessInfo ) ;
+         }
       }
 
       function addBusiness( businessInfo )
@@ -707,7 +710,7 @@
             $scope.cursorIndex[1] = -1 ;
             $scope.cursorIndex[2] = -1 ;
          }
-         else if( $scope.Left.nav2Show == false && $scope.Left.nav1Btn['visibility'] == 'visible' )
+         else if( $scope.Left.nav2Show == false )
          {
          }
          else

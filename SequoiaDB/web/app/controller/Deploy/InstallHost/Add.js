@@ -67,7 +67,7 @@
          SdbRest.OmOperation( data, {
             'success': function( taskInfo ){
                $rootScope.tempData( 'Deploy', 'HostTaskID', taskInfo[0]['TaskID'] ) ;
-               $location.path( '/Deploy/InstallHost' ).search( { 'r': new Date().getTime() } ) ;
+               $location.path( '/Deploy/Task/Host' ).search( { 'r': new Date().getTime() } ) ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){

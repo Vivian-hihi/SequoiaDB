@@ -249,7 +249,7 @@
            resolve: resolveFun( [ './app/controller/Monitor/other/Preview.js' ] )
          }
       },
-      //²¿Êð
+      // =============== ²¿Êð =============
       { path: '/Deploy/Index',
         options: {
            templateUrl: './app/template/Deploy/Index.html',
@@ -282,18 +282,26 @@
            resolve: resolveFun( [ './app/controller/Deploy/InstallModule/Sdb/Mod.js' ] )
         }
       },
-      { path: '/Deploy/InstallHost',
+      // ================== task ==================
+      { path: '/Deploy/Task/Host',
         options: {
            templateUrl: './app/template/Deploy/Task/Host.html',
            resolve: resolveFun( [ './app/controller/Deploy/Task/Host.js' ] )
         }
       },
-      { path: '/Deploy/InstallModule',
+      { path: '/Deploy/Task/Module',
         options: {
            templateUrl: './app/template/Deploy/Task/Module.html',
            resolve: resolveFun( [ './app/controller/Deploy/Task/Module.js' ] )
         }
       },
+      { path: '/Deploy/Task/Restart',
+        options: {
+           templateUrl: './app/template/Deploy/Task/Restart.html',
+           resolve: resolveFun( [ './app/controller/Deploy/Task/Restart.js' ] )
+        }
+      },
+      // ================== extend ==================
       { path: '/Deploy/SDB-ExtendConf',
         options: {
            templateUrl: './app/template/Deploy/ExtendModule/Sdb/Conf.html',
@@ -310,12 +318,6 @@
         options: {
            templateUrl: './app/template/Deploy/ExtendModule/Sdb/Install.html',
            resolve: resolveFun( [ './app/controller/Deploy/ExtendModule/Sdb/Install.js' ] )
-        }
-      },
-      { path: '/Deploy/Restart',
-        options: {
-           templateUrl: './app/template/Deploy/RestartModule/Task.html',
-           resolve: resolveFun( [ './app/controller/Deploy/RestartModule/Task.js' ] )
         }
       },
       { path: '/Deploy/PostgreSQL-Mod',
