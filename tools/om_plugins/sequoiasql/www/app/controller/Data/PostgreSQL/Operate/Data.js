@@ -206,7 +206,7 @@
                    information_schema.columns \
                    WHERE \
                    table_name = '?'", SdbSwap.tbName ) ;
-         var data = { 'Sql': sql, 'DbName': SdbSwap.dbName } ;
+         var data = { 'Sql': sql, 'DbName': SdbSwap.dbName, 'IsAll': 'true' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( result ){
                fieldList = result ;
@@ -814,7 +814,6 @@
          else
          {
             $scope.InsertWindow['config']['inputList'] = $.extend( true, [], insertGridData ) ;
-
             $scope.InsertWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定'), function(){
                $scope.ErrorTip = '' ;
                var value = $scope.InsertWindow['config'].getValue() ;

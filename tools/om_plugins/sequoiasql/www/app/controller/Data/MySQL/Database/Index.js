@@ -61,7 +61,7 @@
       var queryTableList = function( dbName ){
          var sql = '' ;
          sql = sprintf( 'select * from information_schema.TABLES where TABLE_SCHEMA = "?"', dbName ) ;
-         var data = { 'Sql': sql, 'DbName': dbName, 'Type': 'mysql' } ;
+         var data = { 'Sql': sql, 'DbName': dbName, 'Type': 'mysql', 'IsAll': 'true' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( tableList ){
                $scope.GridTable['body'] = [] ;
@@ -97,7 +97,7 @@
       //获取database列表
       var queryDbList = function(){
          var sql = 'select * from information_schema.SCHEMATA where SCHEMA_NAME != "information_schema" and SCHEMA_NAME != "performance_schema" and SCHEMA_NAME != "mysql" and SCHEMA_NAME != "sys"' ;
-         var data = { 'Sql': sql, 'DbName': $scope.CurrentDbName, 'Type': 'mysql' } ;
+         var data = { 'Sql': sql, 'DbName': $scope.CurrentDbName, 'Type': 'mysql', 'IsAll': 'true' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( dbList ){
                //数据库列表补全系统数据库
@@ -128,7 +128,7 @@
       //获取存储引擎列表
       var getEngineList = function(){
          var sql = 'select * from information_schema.engines' ;
-         var data = { 'Sql': sql, 'DbName': $scope.CurrentDbName, 'Type': 'mysql' } ;
+         var data = { 'Sql': sql, 'DbName': $scope.CurrentDbName, 'Type': 'mysql', 'IsAll': 'true' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( result ){
                $.each( result, function( index, info ){

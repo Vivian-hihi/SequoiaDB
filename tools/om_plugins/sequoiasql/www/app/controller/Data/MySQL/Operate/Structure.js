@@ -22,7 +22,7 @@
       $scope.QueryTableStruct = function(){
          var sql = sprintf( "SELECT TABLE_NAME,COLUMN_NAME,COLUMN_DEFAULT,DATA_TYPE,COLUMN_TYPE,CHARACTER_MAXIMUM_LENGTH,IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '?' AND TABLE_SCHEMA = '?' ORDER BY ORDINAL_POSITION", SdbSwap.tbName, SdbSwap.dbName ) ;
 
-         var data = { 'Sql': sql, 'DbName': SdbSwap.dbName, 'Type': 'mysql' } ;
+         var data = { 'Sql': sql, 'DbName': SdbSwap.dbName, 'Type': 'mysql', 'IsAll': 'true' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( fieldList ){
                SdbSignal.commit( 'setTableData', fieldList ) ;

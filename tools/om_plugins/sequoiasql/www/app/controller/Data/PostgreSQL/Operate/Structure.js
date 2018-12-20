@@ -33,7 +33,7 @@
                    information_schema.columns \
                    WHERE \
                    table_name = '?'", SdbSwap.tbName ) ;
-         var data = { 'Sql': sql, 'DbName': SdbSwap.dbName } ;
+         var data = { 'Sql': sql, 'DbName': SdbSwap.dbName, 'IsAll': 'true' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( fieldList ){
                SdbSignal.commit( 'setTableData', fieldList ) ;

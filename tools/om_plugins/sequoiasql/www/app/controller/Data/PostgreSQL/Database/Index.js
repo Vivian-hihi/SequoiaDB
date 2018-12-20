@@ -71,7 +71,7 @@
                   where t.table_schema=\'public\' order by t.table_type desc' ;
          }
          
-         var data = { 'Sql': sql, 'DbName': dbName } ;
+         var data = { 'Sql': sql, 'DbName': dbName, 'IsAll': 'true' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( tableList ){
                $scope.GridTable['body'] = [] ;
@@ -134,7 +134,7 @@
       //查询foreign servers
       SdbSwap.getForeignServers = function( dbName ){
          var sql = 'SELECT srvname FROM pg_foreign_server WHERE srvfdw IN ( select oid from pg_foreign_data_wrapper where fdwname = \'sdb_fdw\' )' ;
-         var data = { 'Sql': sql, 'DbName': dbName } ;
+         var data = { 'Sql': sql, 'DbName': dbName, 'IsAll': 'true' } ;
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( result ){
                var url = $location.url() ;
@@ -178,14 +178,15 @@
       //获取database列表
       var queryDbList = function(){
          SdbSwap.isShowCreateTable.clear() ;
+         var data ;
          var sql = 'SELECT datname FROM pg_database WHERE datname NOT LIKE \'template0\' AND datname NOT LIKE \'template1\'' ;
          if( $scope.CurrentDbName.length == 0 )
          {
-            var data = { 'Sql': sql } ;
+            data = { 'Sql': sql, 'IsAll': 'true' } ;
          }
          else
          {
-            var data = { 'Sql': sql, 'DbName': $scope.CurrentDbName } ;
+            data = { 'Sql': sql, 'DbName': $scope.CurrentDbName, 'IsAll': 'true' } ;
          }
          SdbRest.DataOperationV2( '/sql', data, {
             'success': function( dbList ){
