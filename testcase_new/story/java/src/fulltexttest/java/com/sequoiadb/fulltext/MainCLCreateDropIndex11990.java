@@ -68,6 +68,8 @@ public class MainCLCreateDropIndex11990 extends SdbTestBase{
            cs.dropCollection(subCLName1);
            cs.dropCollection(subCLName2);
            cs.dropCollection(mainCLName);
+           sdb.close();
+           esClient.close();
       }
 
       @Test
@@ -102,27 +104,21 @@ public class MainCLCreateDropIndex11990 extends SdbTestBase{
            FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS);           
            System.out.println("check fulltext of maincl shardingkey success when datas in one group!");
 
-           // create fulltext of subcl shardingkey
+           // create fulltext of subcl shardingkey and non-shardingkey
            FullTextDBUtils.dropFullTextIndex(maincl, textIndexName);
            FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 
            indexObj = new BasicBSONObject();
            indexObj.put("a0", "text");
-           maincl.createIndex(textIndexName, indexObj, false, false);
-
-           FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS);
-           System.out.println("check fulltext of subcl shardingkey success when datas in one group!");
-
-           // create fulltext of non-shardingkey
-           FullTextDBUtils.dropFullTextIndex(maincl, textIndexName); 
-           FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
-           
-           indexObj = new BasicBSONObject();
            indexObj.put("b", "text");
+           indexObj.put("c", "text");
+           indexObj.put("d", "text");
+           indexObj.put("e", "text");
+           indexObj.put("f", "text");
            maincl.createIndex(textIndexName, indexObj, false, false);
 
            FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS);
-           System.out.println("check fulltext of non-shardingkey success when datas in one group!");
+           System.out.println("check fulltext of subcl shardingkey and non-shardingkey success when datas in one group!");
 
            FullTextDBUtils.dropFullTextIndex(maincl, textIndexName);
            FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
@@ -142,28 +138,21 @@ public class MainCLCreateDropIndex11990 extends SdbTestBase{
            FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS);
            System.out.println("check fulltext of maincl shardingkey success when datas in more groups!");
            
-           // create fulltext of subcl shardingkey
+           // create fulltext of subcl shardingkey and non-shardingkey
            FullTextDBUtils.dropFullTextIndex(maincl, textIndexName);
            FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 
            indexObj = new BasicBSONObject();
            indexObj.put("a0", "text");
-           maincl.createIndex(textIndexName, indexObj, false, false);
-
-           FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS);
-           System.out.println("check fulltext of subcl shardingkey success when datas in more groups!");
-
-           // create fulltext of non-shardingkey
-           FullTextDBUtils.dropFullTextIndex(maincl, textIndexName);
-           FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
-
-           indexObj = new BasicBSONObject();
            indexObj.put("b", "text");
+           indexObj.put("c", "text");
+           indexObj.put("d", "text");
+           indexObj.put("e", "text");
+           indexObj.put("f", "text");
            maincl.createIndex(textIndexName, indexObj, false, false);
 
            FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS);
-
-           System.out.println("check fulltext of non-shardingkey success when datas in more groups!");
+           System.out.println("check fulltext of subcl shardingkey and non-shardingkey success when datas in more groups!");
 
            FullTextDBUtils.dropFullTextIndex(maincl, textIndexName);
            FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
@@ -174,7 +163,9 @@ public class MainCLCreateDropIndex11990 extends SdbTestBase{
            try {
                 for(int i = 0; i < 100; i++){
                     for (int j = 0; j < insertNums/100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'testa " + i*j + "', a0:" + "'test_12051 " + i*j + "', b: 'testb" + i*j  + "'}"));
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'testa " + i*j + "', a0:" + "'test_11990 " + i*j + "', b: '" + FullTextUtils.getRandomString(32)
+                                      + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '" + FullTextUtils.getRandomString(64)
+                                      + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '" + FullTextUtils.getRandomString(128) + "'}"));
                     }
                     cl.insert(insertObjs, 0);
                     insertObjs.clear();
@@ -194,10 +185,14 @@ public class MainCLCreateDropIndex11990 extends SdbTestBase{
            try {
                 for(int i = 0; i < 100; i++){
                     for (int j = 0; j < insertNums/2/100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'testa " + i*j + "', a0:" + "'test_12051 " + i*j + "', b: 'testb" + i*j  + "'}"));
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'testa " + i*j + "', a0:" + "'test_11990 " + i*j + "', b: '" + FullTextUtils.getRandomString(32)
+                                      + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '" + FullTextUtils.getRandomString(64)
+                                      + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '" + FullTextUtils.getRandomString(128) + "'}"));
                     }
                     for (int j = 0; j < insertNums/2/100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'zzza " + i*j + "', a0:" + "'test_12051 " + i*j + "', b: 'testb" + i*j + "'}"));
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'zzza " + i*j + "', a0:" + "'test_11990 " + i*j + "', b: '" + FullTextUtils.getRandomString(32)
+                                      + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '" + FullTextUtils.getRandomString(64)
+                                      + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '" + FullTextUtils.getRandomString(128) + "'}"));
                     }
                     cl.insert(insertObjs, 0);
                     insertObjs.clear();

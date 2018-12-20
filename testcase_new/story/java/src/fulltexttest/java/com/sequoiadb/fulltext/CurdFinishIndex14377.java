@@ -51,6 +51,8 @@ public class CurdFinishIndex14377 extends SdbTestBase{
       @AfterClass
       public void tearDown() {
            cs.dropCollection(clName);
+           sdb.close();
+           esClient.close();
       }
 
       @Test
@@ -59,6 +61,12 @@ public class CurdFinishIndex14377 extends SdbTestBase{
            String textIndexName = "fulltext14377";
            BSONObject indexObj = new BasicBSONObject();
            indexObj.put("a", "text");
+           indexObj.put("b", "text");
+           indexObj.put("c", "text");
+           indexObj.put("d", "text");
+           indexObj.put("e", "text");
+           indexObj.put("f", "text");
+           indexObj.put("g", "text");
            cl.createIndex(textIndexName, indexObj, false, false);
 
            List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
@@ -72,7 +80,7 @@ public class CurdFinishIndex14377 extends SdbTestBase{
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
 
            // insert/update/delete 
-           insertData(cl, 10000);
+           insertData(cl, 100000);
            updateData(cl);
            removeData(cl); 
 
@@ -91,7 +99,9 @@ public class CurdFinishIndex14377 extends SdbTestBase{
            try {
                 for(int i = 0; i < 100; i++){
                     for (int j = 0; j < insertNums/100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_14377_" + i*j + "', b:" + (i*10000 + j) + "}"));
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_14377_" + i*j + "', b: '" + FullTextUtils.getRandomString(32)
+                                      + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '" + FullTextUtils.getRandomString(64)
+                                      + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '" + FullTextUtils.getRandomString(128) +  "', g: " + i*j + "}"));
                     }
                     cl.insert(insertObjs, 0);
                     insertObjs.clear();
@@ -111,10 +121,10 @@ public class CurdFinishIndex14377 extends SdbTestBase{
            BSONObject value = new BasicBSONObject();
            BSONObject matcher = new BasicBSONObject();
            BSONObject subMatcher = new BasicBSONObject();			
-           value.put("b", "-1");
+           value.put("g", "-1");
            modifier.put("$set", value);
            subMatcher.put("$lt", 100000);
-           matcher.put("b", subMatcher);
+           matcher.put("g", subMatcher);
            cl.update(matcher, modifier, null);	
       }
 
@@ -122,7 +132,7 @@ public class CurdFinishIndex14377 extends SdbTestBase{
            BSONObject matcher = new BasicBSONObject();
            BSONObject subMatcher = new BasicBSONObject();
            subMatcher.put("$gt", 100000);
-           matcher.put("b", subMatcher);	
+           matcher.put("g", subMatcher);	
            cl.delete(matcher);
       }
 }

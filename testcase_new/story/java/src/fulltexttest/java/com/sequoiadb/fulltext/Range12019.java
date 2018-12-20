@@ -59,6 +59,8 @@ public class Range12019 extends SdbTestBase{
       @AfterClass
       public void tearDown() {
            cs.dropCollection(clName);
+           sdb.close();
+           esClient.close();
       }
 
       @Test
@@ -72,30 +74,21 @@ public class Range12019 extends SdbTestBase{
            // split
            cl.split(srcGroupName, destGroupName, 50);
 
-           // create fulltext, shardingkey
+           // create fulltext, with shardingkey and non-shardingkey
            String textIndexName = "fulltext12019";
            BSONObject indexObj = new BasicBSONObject();
            indexObj.put("a", "text");
+           indexObj.put("b", "text");
+           indexObj.put("c", "text");
+           indexObj.put("d", "text");
+           indexObj.put("e", "text");
+           indexObj.put("f", "text");
            cl.createIndex(textIndexName, indexObj, false, false);
 
            List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
  
            // check consistency
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
-           // drop fulltext
-           FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
-
-           // check fulltext deleted
-           FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
-
-           // create fulltext, non-shardingkey
-           indexObj = new BasicBSONObject();
-           indexObj.put("b", "text");
-           cl.createIndex(textIndexName, indexObj, false, false);
-
-           // check consistency
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
-
            // drop fulltext
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
 
@@ -108,7 +101,10 @@ public class Range12019 extends SdbTestBase{
            try {
                 for(int i = 0; i < 100; i++){
                     for (int j = 0; j < insertNums/100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_range12019_" + i*j + "', b: 'testb_" + i*j + "'}"));
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_range12019_" + i*j + "', b: '" + FullTextUtils.getRandomString(32)
+                                      + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '" + FullTextUtils.getRandomString(64)
+                                      + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '" + FullTextUtils.getRandomString(128) + "'}"));
+
                     }
                     cl.insert(insertObjs, 0);
                     insertObjs.clear();

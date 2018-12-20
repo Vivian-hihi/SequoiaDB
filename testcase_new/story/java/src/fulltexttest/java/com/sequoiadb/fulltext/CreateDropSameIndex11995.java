@@ -53,6 +53,8 @@ public class CreateDropSameIndex11995 extends SdbTestBase{
       @AfterClass
       public void tearDown() {
            cs.dropCollection(clName);
+           sdb.close();
+           esClient.close();
       }
 
       @Test
@@ -66,6 +68,11 @@ public class CreateDropSameIndex11995 extends SdbTestBase{
            String textIndexName = "fulltext11995";
            BSONObject indexObj = new BasicBSONObject();
            indexObj.put("a", "text");
+           indexObj.put("b", "text");
+           indexObj.put("c", "text");
+           indexObj.put("d", "text");
+           indexObj.put("e", "text");
+           indexObj.put("f", "text");
 
            List<String> esIndexNames = null;
 
@@ -79,21 +86,27 @@ public class CreateDropSameIndex11995 extends SdbTestBase{
            }
 
            // create and drop fulltext while processing cappedcl data
-           cl.createIndex(textIndexName, indexObj, false, false);
-           int newInsertNums = 10000;
-           InsertThread insertThread = new InsertThread(newInsertNums);
-           DropIndexThread dropIdxThread = new DropIndexThread();
-           insertThread.start();
-           dropIdxThread.start();
+           doTimes = 5;
+           int newInsertNums = 100000;
+           while(--doTimes > 0){
+               cl.createIndex(textIndexName, indexObj, false, false);
+               insertData(cl, 1000);
+               FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, (int)cl.getCount());
 
-           Assert.assertTrue(insertThread.isSuccess(), insertThread.getErrorMsg());
-           Assert.assertTrue(dropIdxThread.isSuccess(), dropIdxThread.getErrorMsg());
-           FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
+               InsertThread insertThread = new InsertThread(newInsertNums);
+               DropIndexThread dropIdxThread = new DropIndexThread();
+               insertThread.start();
+               dropIdxThread.start();
+
+               Assert.assertTrue(insertThread.isSuccess(), insertThread.getErrorMsg());
+               Assert.assertTrue(dropIdxThread.isSuccess(), dropIdxThread.getErrorMsg());
+               FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
+           }
 
            // last time create index
            cl.createIndex(textIndexName, indexObj, false, false);
            // check consistency
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS + newInsertNums); 
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, (int)cl.getCount()); 
 
            // last time drop index
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
@@ -106,10 +119,9 @@ public class CreateDropSameIndex11995 extends SdbTestBase{
            try {
                 for(int i = 0; i < 100; i++){
                     for (int j = 0; j < insertNums/100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_11995_" + i*j + "', b: 'testb_" + i*j 
-                                      + "', c: 'testc_" + i*j + "', d: 'testd_" + i*j + "', e: 'teste_" + i*j 
-                                      + "', f: 'testf_" + i*j + "', g: 'testg_" + i*j + "', h: 'testh_" + i*j 
-                                      + "', i: 'testi_" + i*j + "', j: 'testj_" + i*j + "', k: 'testk_" + i*j +"'}"));
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_11995_" + i*j + "', b: '" + FullTextUtils.getRandomString(32)  
+                                      + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '" + FullTextUtils.getRandomString(64)
+                                      + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '" + FullTextUtils.getRandomString(128) + "'}")); 
                     }
                     cl.insert(insertObjs, 0);
                     insertObjs.clear();

@@ -51,6 +51,8 @@ public class CreateDropIndex11981 extends SdbTestBase{
       @AfterClass
       public void tearDown() {
            cs.dropCollection(clName);
+           sdb.close();
+           esClient.close();
       }
 
       @Test
@@ -66,6 +68,11 @@ public class CreateDropIndex11981 extends SdbTestBase{
            String textIndexName = "fulltext11981";
            BSONObject indexObj = new BasicBSONObject();
            indexObj.put("a", "text");
+           indexObj.put("b", "text");
+           indexObj.put("c", "text");
+           indexObj.put("d", "text");
+           indexObj.put("e", "text");
+           indexObj.put("f", "text");
            cl.createIndex(textIndexName, indexObj, false, false);
 
            List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
@@ -124,12 +131,9 @@ public class CreateDropIndex11981 extends SdbTestBase{
            try {
                 for(int i = 0; i < 100; i++){
                     for (int j = 0; j < insertNums/100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_11981_" + i*j + "', b: 'testb_" + i*j 
-                                      + "', c: 'testc_" + i*j + "', d: 'testd_" + i*j + "', e: 'teste_" + i*j 
-                                      + "', f: 'testf_" + i*j + "', g: 'testg_" + i*j + "', h: 'testh_" + i*j 
-                                      + "', i: 'testi_" + i*j + "', j: 'testj_" + i*j + "', k: 'testk_" + i*j 
-                                      + "', m: 'testm_" + i*j + "', n: 'testn_" + i*j + "', o: 'testo_" + i*j  
-                                      + "', x: 'testx_" + i*j + "', y: 'testy_" + i*j + "', z: 'testz_" + i*j + "'}"));
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_11981_" + i*j + "', b: '" + FullTextUtils.getRandomString(16)
+                                      + "', c: '" + FullTextUtils.getRandomString(16) + "', d: '" + FullTextUtils.getRandomString(32)
+                                      + "', e: '" + FullTextUtils.getRandomString(32) + "', f: '" + FullTextUtils.getRandomString(128) + "'}"));
                     }
                     cl.insert(insertObjs, 0);
                     insertObjs.clear();

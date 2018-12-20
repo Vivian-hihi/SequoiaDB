@@ -52,6 +52,8 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase{
       @AfterClass
       public void tearDown() {
            sdb.dropCollectionSpace(this.csName);
+           sdb.close();
+           esClient.close();
       }
 
       @Test
@@ -60,12 +62,17 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase{
            String textIndexName = "fulltext14397";
            BSONObject indexObj = new BasicBSONObject();
            indexObj.put("a", "text");
+           indexObj.put("b", "text");
+           indexObj.put("c", "text");
+           indexObj.put("d", "text");
+           indexObj.put("e", "text");
+           indexObj.put("f", "text");
            cl.createIndex(textIndexName, indexObj, false, false);
 
            List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
            
            // check drop cs and recreate index after index clear in ES
-           boolean isSuccess = initInsertData(cl, FullTextUtils.INSERT_NUMS);
+           boolean isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS);
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
@@ -83,7 +90,7 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase{
            
            // insert new datas
            int newInsertNums = 210000;
-           isSuccess = newInsertData(cl, newInsertNums);
+           isSuccess = insertData(cl, newInsertNums);
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
@@ -101,7 +108,7 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase{
            cl.createIndex(textIndexName, indexObj, false, false);
 
            // init insert datas
-           isSuccess = initInsertData(cl, FullTextUtils.INSERT_NUMS);
+           isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS);
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
@@ -116,7 +123,7 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase{
            cl.createIndex(textIndexName, indexObj, false, false);
 
            // insert new datas
-           isSuccess = newInsertData(cl, newInsertNums);
+           isSuccess = insertData(cl, newInsertNums);
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
@@ -127,37 +134,20 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase{
            System.out.println("----------success check drop cs while index processing to clear in ES----------");
       }
 	
-      public boolean initInsertData(DBCollection cl, int insertNums) {
+      public boolean insertData(DBCollection cl, int insertNums) {
            List<BSONObject> insertObjs = new ArrayList<>();
            try {
                 for(int i = 0; i < 100; i++){
                     for (int j = 0; j < insertNums/100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_14397_" + i*j + "', b: 'testb_" + i*j +"'}")); 
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_14397_" + FullTextUtils.getRandomString(10) + "', b: '" + FullTextUtils.getRandomString(32)
+                                      + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '" + FullTextUtils.getRandomString(64)
+                                      + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '" + FullTextUtils.getRandomString(128) + "'}"));
+ 
                     }
                     cl.insert(insertObjs, 0);
                     insertObjs.clear();
                 }
 	   } catch (BaseException e) {
-                if(-321 == e.getErrorCode()) {
-                     return false;
-                }
-                throw e;
-           }
-
-           return true;
-      }
-
-      public boolean newInsertData(DBCollection cl, int insertNums) {
-           List<BSONObject> insertObjs = new ArrayList<>();
-           try {
-                for(int i = 0; i < 100; i++){
-                    for (int j = 0; j < insertNums/100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'newa_" + i*j + "', b: 'newb_" + i*j +"'}"));
-                    }
-                    cl.insert(insertObjs, 0);
-                    insertObjs.clear();
-                }
-           } catch (BaseException e) {
                 if(-321 == e.getErrorCode()) {
                      return false;
                 }

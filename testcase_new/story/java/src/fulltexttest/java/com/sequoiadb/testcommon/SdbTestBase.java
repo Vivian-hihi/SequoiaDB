@@ -6,6 +6,8 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Parameters;
 
+import com.sequoiadb.fulltext.FullTextESUtils;
+import org.elasticsearch.client.Client;
 import com.sequoiadb.base.Sequoiadb;
 
 public class SdbTestBase {
@@ -38,10 +40,13 @@ public class SdbTestBase {
         reservedDir = RSRVNODEDIR;
         workDir = WORKDIR;
         coordUrl = HOSTNAME + ":" + SVCNAME;
-        esUrl = ESHOSTNAME + ":" + ESSVCNAME;
 
         Sequoiadb db = null;
+        Client esClient = null;
         try {
+            esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+            // delete indices in ES before running testcases
+            FullTextESUtils.clearAllIndicesInES(esClient); 
             db = new Sequoiadb(coordUrl, "", "");
             if (db.isCollectionSpaceExist(csName)) db.dropCollectionSpace(csName);
             db.createCollectionSpace(csName);
@@ -52,6 +57,9 @@ public class SdbTestBase {
         } finally {
             if (db != null) {
                 db.disconnect();
+            }
+            if(esClient != null){
+                esClient.close();
             }
         }
     }

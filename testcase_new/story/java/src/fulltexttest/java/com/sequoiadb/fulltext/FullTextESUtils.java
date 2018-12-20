@@ -7,8 +7,14 @@ import java.util.Set;
 import java.net.InetAddress;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.elasticsearch.action.ActionFuture;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.admin.indices.stats.IndexStats;
+import org.elasticsearch.action.admin.indices.stats.IndicesStatsRequest;
+import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.*;
@@ -169,5 +175,38 @@ public class FullTextESUtils {
    		
         return isDeleted;
     }
-     
+
+    /**
+    * @param esClient   
+    */
+    public static boolean isDeleteAllIndices(Client esClient){
+        boolean isSuccess = false;
+        DeleteIndexRequest deleteRequest = new DeleteIndexRequest("_all");
+        DeleteIndexResponse deleteResponse = esClient.admin().indices().delete(deleteRequest).actionGet();
+        isSuccess = deleteResponse.isAcknowledged();
+        return isSuccess;
+    }
+
+    /**
+    * @param esClient   
+    */ 
+    public static void getAllIndices(Client esClient){
+        ActionFuture<IndicesStatsResponse> isr = esClient.admin().indices().stats(new IndicesStatsRequest().all());
+        IndicesAdminClient indicesAdminClient = esClient.admin().indices();
+        Map<String, IndexStats> indexStatsMap = isr.actionGet().getIndices();
+        Set<String> sets = isr.actionGet().getIndices().keySet();
+        System.out.println("get all indieces in ES: ");
+        for(String set: sets) {
+            System.out.println(set);
+        }
+    }
+
+    /**
+    * @param esClient   
+    */ 
+    public static void clearAllIndicesInES(Client esClient){
+        if(!FullTextESUtils.isDeleteAllIndices(esClient)){
+            FullTextESUtils.getAllIndices(esClient); 
+        }
+    }    
 }

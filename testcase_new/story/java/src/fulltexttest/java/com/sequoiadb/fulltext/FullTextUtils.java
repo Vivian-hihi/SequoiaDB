@@ -3,6 +3,7 @@ package com.sequoiadb.fulltext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
+import java.util.Random;
 import org.testng.Assert;
 
 import com.sequoiadb.base.DBCollection;
@@ -193,10 +194,23 @@ public class FullTextUtils {
      /**
       * @param arrayList
       */ 
-      public static List<String> removeDuplicateItems(List<String> arrayList){
+     public static List<String> removeDuplicateItems(List<String> arrayList){
           HashSet uniqueSet = new HashSet(arrayList);
           arrayList.clear();
           arrayList.addAll(uniqueSet);
           return arrayList;
-      }
+     }
+
+     /**
+      * @param length
+      */
+     public static String getRandomString(int length){
+          String base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()!";
+          StringBuffer sb = new StringBuffer();
+          for(int i = 0; i < length; i++){
+              char randomChar = base.charAt(new Random().nextInt(base.length()));
+              sb.append(randomChar);
+          }
+          return sb.toString();
+     }
 }

@@ -60,6 +60,8 @@ public class MainCLCurdFullIndex12015 extends SdbTestBase{
            cs.dropCollection(subCLName1);
            cs.dropCollection(subCLName2);
            cs.dropCollection(mainCLName);
+           sdb.close();
+           esClient.close();
       }
 
       @Test
@@ -70,10 +72,16 @@ public class MainCLCurdFullIndex12015 extends SdbTestBase{
            maincl.attachCollection(csName + "." + subCLName1, options1);
            maincl.attachCollection(csName + "." + subCLName2, options2);
           
-           // create fulltext of maincl shardingkey
+           // create fulltext of maincl shardingkey and non-shardingkey
            String textIndexName = "fulltext12015";
            BSONObject indexObj = new BasicBSONObject();
            indexObj.put("a", "text");
+           indexObj.put("a0", "text");
+           indexObj.put("b", "text");
+           indexObj.put("c", "text");
+           indexObj.put("d", "text");
+           indexObj.put("e", "text");
+           indexObj.put("f", "text");
            maincl.createIndex(textIndexName, indexObj, false, false);
 
            // get esIndexNames of each subcl
@@ -92,45 +100,16 @@ public class MainCLCurdFullIndex12015 extends SdbTestBase{
            }
            FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS);           
 
-           // update
-           update1(maincl);
-           FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS);
+           // update, should change cl count
+           update(maincl);
+           insertData(maincl, 10000);
+           FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS + 10000);
 
            // delete
-           remove1(maincl);
+           remove(maincl);
            FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, (int)maincl.getCount());
 
-           System.out.println("check fulltext of maincl shardingkey success!");
-
-           // create fulltext of non-shardingkey
-           FullTextDBUtils.dropFullTextIndex(maincl, textIndexName); 
-           FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
-           maincl.truncate();
-           
-           indexObj = new BasicBSONObject();
-           indexObj.put("b", "text");
-           maincl.createIndex(textIndexName, indexObj, false, false);
-
-           // insert
-           isSuccess = insertData(maincl, FullTextUtils.INSERT_NUMS);
-           if(!isSuccess) {
-                throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
-           }
-           FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS);
-
-           // update
-           update2(maincl);
-           FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS);
-
-           // delete
-           remove2(maincl);
-           FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, (int)maincl.getCount());
-
-           FullTextDBUtils.dropFullTextIndex(maincl, textIndexName);  
-           FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
-
-           System.out.println("check fulltext of non-shardingkey success!");
-                    
+           System.out.println("check fulltext of maincl shardingkey and non-shardingkey success!");
       }
 	
       public boolean insertData(DBCollection cl, int insertNums) {
@@ -138,10 +117,14 @@ public class MainCLCurdFullIndex12015 extends SdbTestBase{
            try {
                 for(int i = 0; i < 100; i++){
                     for (int j = 0; j < insertNums/2/100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'testa " + i*j + "', a0:" + "'test_12051 " + i*j + "', b: 'testb" + i*j  + "'}"));
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'testa " + i*j + "', a0:" + "'test_12051 " + i*j + "', b: '" + FullTextUtils.getRandomString(32)
+                                      + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '" + FullTextUtils.getRandomString(64)
+                                      + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '" + FullTextUtils.getRandomString(128) + "'}"));
                     }
                     for (int j = 0; j < insertNums/2/100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'zzza " + i*j + "', a0:" + "'test_12051 " + i*j + "', b: 'testb" + i*j + "'}"));
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'zzza " + i*j + "', a0:" + "'test_12051 " + i*j + "', b: '" + FullTextUtils.getRandomString(32)
+                                      + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '" + FullTextUtils.getRandomString(64)
+                                      + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '" + FullTextUtils.getRandomString(128) + "'}"));
                     }
                     cl.insert(insertObjs, 0);
                     insertObjs.clear();
@@ -156,7 +139,7 @@ public class MainCLCurdFullIndex12015 extends SdbTestBase{
            return true;
       }
 
-      private void update1(DBCollection cl){
+      private void update(DBCollection cl){
           BSONObject modifier = new BasicBSONObject();
           BSONObject value = new BasicBSONObject();
           BSONObject matcher = new BasicBSONObject();
@@ -168,31 +151,11 @@ public class MainCLCurdFullIndex12015 extends SdbTestBase{
           cl.update(matcher, modifier, null);
       }
  
-      private void remove1(DBCollection cl){
+      private void remove(DBCollection cl){
           BSONObject matcher = new BasicBSONObject();
           BSONObject subMatcher = new BasicBSONObject();
           subMatcher.put("$et", "testa 99999");
           matcher.put("a", subMatcher);
           cl.delete(matcher);
       } 
-
-      private void update2(DBCollection cl){
-          BSONObject modifier = new BasicBSONObject();
-          BSONObject value = new BasicBSONObject();
-          BSONObject matcher = new BasicBSONObject();
-          BSONObject subMatcher = new BasicBSONObject();
-          value.put("b", "update b");
-          modifier.put("$set", value);
-          subMatcher.put("$lt", "testb 10000");
-          matcher.put("b", subMatcher);
-          cl.update(matcher, modifier, null);
-      }
- 
-      private void remove2(DBCollection cl){
-          BSONObject matcher = new BasicBSONObject();
-          BSONObject subMatcher = new BasicBSONObject();
-          subMatcher.put("$et", "update b");
-          matcher.put("b", subMatcher);
-          cl.delete(matcher);
-      }
 }
