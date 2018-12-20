@@ -43,29 +43,31 @@ public class SequoiadbMetaDao implements MetaDao {
                 sdbDatasourceWrapper.createCS(sdb, csMetaName, null);
                 sdbDatasourceWrapper.createCL(sdb, csMetaName, clMetaName, null);
                 BSONObject indexKey = new BasicBSONObject();
+                String indexName = ObjectMeta.META_BUCKET_ID+"+"+ObjectMeta.META_KEY_NAME;
                 indexKey.put(ObjectMeta.META_BUCKET_ID, 1);
                 indexKey.put(ObjectMeta.META_KEY_NAME, 1);
                 if (isHistory) {
                     indexKey.put(ObjectMeta.META_VERSION_ID, 1);
+                    indexName = indexName + "+" + ObjectMeta.META_VERSION_ID;
                 }
                 sdbDatasourceWrapper.createIndex(sdb, csMetaName, clMetaName,
-                        ObjectMeta.META_BUCKET_ID+"+"+ObjectMeta.META_KEY_NAME+"+"+ObjectMeta.META_VERSION_ID,
-                        indexKey, true,true);
+                        indexName, indexKey, true,true);
                 insert(sdb, csMetaName, clMetaName, objectMeta, isIgnoreDup);
             } else if (e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
                 if (!sdb.isCollectionSpaceExist(csMetaName)) {
                     sdbDatasourceWrapper.createCS(sdb, csMetaName, null);
                 }
                 sdbDatasourceWrapper.createCL(sdb, csMetaName, clMetaName, null);
+                String indexName = ObjectMeta.META_BUCKET_ID + "+" + ObjectMeta.META_KEY_NAME;
                 BSONObject indexKey = new BasicBSONObject();
                 indexKey.put(ObjectMeta.META_BUCKET_ID, 1);
                 indexKey.put(ObjectMeta.META_KEY_NAME, 1);
                 if (isHistory) {
                     indexKey.put(ObjectMeta.META_VERSION_ID, 1);
+                    indexName = indexName + "+" + ObjectMeta.META_VERSION_ID;
                 }
                 sdbDatasourceWrapper.createIndex(sdb, csMetaName, clMetaName,
-                        ObjectMeta.META_BUCKET_ID+"+"+ObjectMeta.META_KEY_NAME+"+"+ObjectMeta.META_VERSION_ID,
-                        indexKey, true,true);
+                        indexName, indexKey, true,true);
                 insert(sdb, csMetaName, clMetaName, objectMeta, isIgnoreDup);
             } else if (e.getErrorCode() == SDBError.SDB_IXM_DUP_KEY.getErrorCode()) {
                 throw new S3ServerException(S3Error.DAO_DUPLICATE_KEY,

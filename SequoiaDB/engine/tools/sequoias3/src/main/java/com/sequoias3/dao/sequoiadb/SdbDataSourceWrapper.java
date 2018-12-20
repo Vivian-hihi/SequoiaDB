@@ -91,16 +91,16 @@ public class SdbDataSourceWrapper {
             sdb.createCollectionSpace(csName);
         }
         catch (BaseException e) {
-            logger.error("creating cs:csName={} failed. error:",csName, e.getErrorCode());
+            logger.error("creating cs:csName={} failed. error:{}",csName, e.getErrorCode());
             if (e.getErrorCode() != SDBError.SDB_DMS_CS_EXIST.getErrorCode()) {
                 throw new S3ServerException(S3Error.DAO_DB_ERROR,
-                        "create cs failed:cs=" + csName + e.getMessage());
+                        "create cs failed:cs=" + csName, e);
             }
         }
         catch (Exception e) {
-            logger.error("creating cs:csName={} failed. error：",csName, e.getMessage());
+            logger.error("creating cs:csName={} failed. error:{}",csName, e.getMessage());
             throw new S3ServerException(S3Error.DAO_DB_ERROR,
-                    "create cs failed:cs=" + csName + e.getMessage());
+                    "create cs failed:cs=" + csName, e);
         }
     }
 
@@ -112,16 +112,16 @@ public class SdbDataSourceWrapper {
             cs.createCollection(clName);
         }
         catch (BaseException e) {
-            logger.error("creating cl:clName={}.{} failed. error:",csName, clName, e.getErrorCode());
+            logger.error("creating cl:clName={}.{} failed. error:{}",csName, clName, e.getErrorCode());
             if (e.getErrorCode() != SDBError.SDB_DMS_EXIST.getErrorCode()) {
                 throw new S3ServerException(S3Error.DAO_DB_ERROR,
-                        "create cl failed:cs=" + csName + ",cl=" + clName+ e.getMessage());
+                        "create cl failed:cs=" + csName + ",cl=" + clName, e);
             }
         }
         catch (Exception e) {
-            logger.error("creating cl:clName={}.{} failed. error:",csName, clName, e.getMessage());
+            logger.error("creating cl:clName={}.{} failed. error:{}",csName, clName, e.getMessage());
             throw new S3ServerException(S3Error.DAO_DB_ERROR,
-                    "create cl failed:cs=" + csName + ",cl=" + clName + e.getMessage());
+                    "create cl failed:cs=" + csName + ",cl=" + clName, e);
         }
     }
 
@@ -135,18 +135,18 @@ public class SdbDataSourceWrapper {
             cl.createIndex(indexName, key, isUnique, enforced);
         }
         catch (BaseException e) {
-            logger.error("creating index:clName={}.{} failed. error:",csName, clName, e.getErrorCode());
+            logger.error("creating index:clName={}.{} failed. error:{}",csName, clName, e.getErrorCode());
             if (e.getErrorCode() != SDBError.SDB_IXM_DUP_KEY.getErrorCode()) {
                 throw new S3ServerException(S3Error.DAO_DB_ERROR,
                         "create Index failed:cs=" + csName + ",cl=" + clName +
-                                ",indexName=" + indexName + e.getMessage());
+                                ",indexName=" + indexName, e);
             }
         }
         catch (Exception e) {
-            logger.error("creating Index:clName={}.{} failed. error:",csName, clName, e.getMessage());
+            logger.error("creating Index:clName={}.{} failed. error:{}",csName, clName, e.getMessage());
             throw new S3ServerException(S3Error.DAO_DB_ERROR,
                     "create Index failed:cs=" + csName + ",cl=" + clName +
-                            ",indexName = " + indexName + e.getMessage());
+                            ",indexName = " + indexName, e);
         }
     }
 }
