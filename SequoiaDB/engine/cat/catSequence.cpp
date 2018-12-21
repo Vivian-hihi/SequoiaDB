@@ -442,6 +442,8 @@ namespace engine
 
       if ( !this->initial() )
       {
+         // clear flag before exceeded check
+         this->setExceeded( FALSE ) ;
          if ( this->increment() > 0 )
          {
             if ( this->cachedValue() == this->maxValue() ||
