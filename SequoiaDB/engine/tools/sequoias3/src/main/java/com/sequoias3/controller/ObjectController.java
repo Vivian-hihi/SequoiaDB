@@ -76,6 +76,8 @@ public class ObjectController {
             headers.add(RestParamDefine.PutObjectResultHeader.VERSION_ID,
                     result.getVersionId());
         }
+
+        logger.debug("put object success. bucketName={}, objectName={}, versionId={}, eTag={}", bucketName, objectName, result.getVersionId(), result.geteTag());
         return ResponseEntity.ok()
                 .headers(headers)
                 .build();
