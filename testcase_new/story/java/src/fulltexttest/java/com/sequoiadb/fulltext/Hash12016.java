@@ -90,6 +90,7 @@ public class Hash12016 extends SdbTestBase{
  
            // check consistency
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
+           FullTextUtils.checkConsistency(sdb, csName, clName);
 
            // drop fulltext
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);

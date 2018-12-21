@@ -92,7 +92,8 @@ public class CurdProcessingIndex14376 extends SdbTestBase{
            Assert.assertTrue(removeThread.isSuccess(),removeThread.getErrorMsg()); 
 
            // check consistency after insert/update/delete
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, (int)cl.getCount());           
+           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, (int)cl.getCount());
+           FullTextUtils.checkConsistency(sdb, csName, clName);           
 
            // drop fulltext
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);

@@ -64,10 +64,13 @@ public class DropCollectionSpace12067 extends SdbTestBase {
         //删除集合空间
         List<String> esIndexNames1 = FullTextDBUtils.getESIndexNames(sdb, csName12067, clName1, fullIndexName);
         FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName1, fullIndexName, FullTextUtils.INSERT_NUMS);
+        FullTextUtils.checkConsistency(sdb, csName12067, clName1);
         List<String> esIndexNames2 = FullTextDBUtils.getESIndexNames(sdb, csName12067, clName2, fullIndexName);
         FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName2, fullIndexName, FullTextUtils.INSERT_NUMS);
+        FullTextUtils.checkConsistency(sdb, csName12067, clName2);
         List<String> esIndexNames3 = FullTextDBUtils.getESIndexNames(sdb, csName12067, clName3, fullIndexName);
         FullTextUtils.checkFullSyncToES(esClient, sdb, csName12067, clName3, fullIndexName, FullTextUtils.INSERT_NUMS);
+        FullTextUtils.checkConsistency(sdb, csName12067, clName3);
         FullTextDBUtils.dropCollectionSpace(sdb, csName12067);
         FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames1);
         FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames2);

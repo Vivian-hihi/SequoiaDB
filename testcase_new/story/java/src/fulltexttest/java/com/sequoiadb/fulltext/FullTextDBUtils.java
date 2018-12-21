@@ -271,4 +271,14 @@ public class FullTextDBUtils {
                 }
             });
         }
+        
+        public static boolean isMainCL(Sequoiadb sdb, String clFullName) {
+    		DBCursor cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{'Name':'" + clFullName + "'}", null, null);
+    		Object isMainCL = cursor.getNext().get("IsMainCL");
+    		if (isMainCL != null) {
+    			boolean isMain = (Boolean) isMainCL;
+    			return isMain;
+    		}
+    		return false;
+    	}
 }

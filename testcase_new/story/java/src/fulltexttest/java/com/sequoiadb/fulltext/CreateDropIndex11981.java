@@ -79,6 +79,7 @@ public class CreateDropIndex11981 extends SdbTestBase{
  
            // check consistency
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums1);
+           FullTextUtils.checkConsistency(sdb, csName, clName);
 
            // drop fulltext
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
@@ -98,6 +99,7 @@ public class CreateDropIndex11981 extends SdbTestBase{
 
            // check consistency
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums1 + insertNums2);
+           FullTextUtils.checkConsistency(sdb, csName, clName);
 
            // drop fulltext
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
@@ -118,6 +120,7 @@ public class CreateDropIndex11981 extends SdbTestBase{
 
            // check consistency
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, insertNums1 + insertNums2 + insertNums3);
+           FullTextUtils.checkConsistency(sdb, csName, clName);
 
            // drop fulltext
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);

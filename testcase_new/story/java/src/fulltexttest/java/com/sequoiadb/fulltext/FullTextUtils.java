@@ -6,9 +6,10 @@ import java.util.HashSet;
 import java.util.Random;
 import org.testng.Assert;
 
-import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.*;
 import com.sequoiadb.base.Sequoiadb;
-
+import com.sequoiadb.testcommon.CommLib;
+import org.bson.BSONObject;
 import org.elasticsearch.client.*;
 
 public class FullTextUtils {
@@ -213,4 +214,98 @@ public class FullTextUtils {
           }
           return sb.toString();
      }
+     
+     public static void checkConsistency(Sequoiadb sdb, String csName, String clName) {
+		if (FullTextDBUtils.isMainCL(sdb, csName + "." + clName)) {
+			checkMainCLConsistency(sdb, csName + "." + clName);
+         return;
+		}
+		boolean isConsistency = false;
+		List<String> groupNames = FullTextDBUtils.getCLGroups(sdb, csName + "." + clName);
+      groupNames = removeDuplicateItems(groupNames);
+		for (int i = 0; i < groupNames.size(); i++) {
+			String groupName = groupNames.get(i);
+			List<String> nodeNames = CommLib.getNodeAddress(sdb, groupName);
+			ReplicaGroup group = sdb.getReplicaGroup(groupName);
+			List<Node> nodes = new ArrayList<Node>();
+			for (String nodeName : nodeNames) {
+				nodes.add(group.getNode(nodeName));
+			}
+			isConsistency = isConsistency(nodes, csName, clName);
+			Assert.assertTrue(isConsistency, "check inspect fail");
+		}
+	}
+
+	public static void checkMainCLConsistency(Sequoiadb sdb, String mainCLFullName) {
+		List<String> subCLNames = FullTextDBUtils.getSubCLNames(sdb, mainCLFullName);
+		for (int i = 0; i < subCLNames.size(); i++) {
+			String tmpCSName = subCLNames.get(i).split("\\.")[0];
+			String tmpCLName = subCLNames.get(i).split("\\.")[1];
+			checkConsistency(sdb, tmpCSName, tmpCLName);
+		}
+	}
+
+	public static boolean isConsistency(List<Node> nodes, String csName, String clName) {
+		boolean isConsistency = false;
+		int doTimes = 0;
+		while (true) {
+			isConsistency = isNodeRecordsConsistency(nodes, csName, clName);
+			if (isConsistency) {
+				return isConsistency;
+			} else {
+				doTimes++;
+				System.out.println("csName : " + csName + " clName: " + clName + " isConsistency : " + isConsistency
+						+ " , doTimes: " + doTimes);
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			if (doTimes == 120) {
+				break;
+			}
+		}
+		return isConsistency;
+	}
+
+	public static boolean isNodeRecordsConsistency(List<Node> nodes, String csName, String clName) {
+		if (nodes.size() == 1) {
+			return true;
+		}
+		Sequoiadb firstDataDB = nodes.get(0).connect();
+		DBCollection firstCL = firstDataDB.getCollectionSpace(csName).getCollection(clName);
+		for (int i = 1; i < nodes.size(); i++) {
+			Sequoiadb anotherDataDB = nodes.get(i).connect();
+			DBCollection anotherCL = anotherDataDB.getCollectionSpace(csName).getCollection(clName);
+			if (firstCL.getCount() != anotherCL.getCount()) {
+				System.out.println("expCount : " + firstCL.getCount() + "  actCount : " + anotherCL.getCount());
+				return false;
+			}
+			DBCursor firstCLCursor = firstCL.query(null, null, "{\"_id\":1}", null);
+			DBCursor anotherCLCursor = anotherCL.query(null, null, "{\"_id\":1}", null);
+			if (!isCLRecordsConsistency(firstCLCursor, anotherCLCursor)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static boolean isCLRecordsConsistency(DBCursor firstCLCursor, DBCursor anotherCLCursor) {
+		try {
+			while (firstCLCursor.hasNext() && anotherCLCursor.hasNext()) {
+				BSONObject firstCLRecord = firstCLCursor.getNext();
+				BSONObject anotherCLRecord = anotherCLCursor.getNext();
+				if (!firstCLRecord.equals(anotherCLRecord)) {
+					System.out.println("First collection record : " + firstCLRecord.toString()
+							+ "\n Another collection record : " + anotherCLRecord.toString());
+					return false;
+				}
+			}
+		} finally {
+			firstCLCursor.close();
+			anotherCLCursor.close();
+		}
+		return true;
+	}
 }

@@ -92,6 +92,7 @@ public class CreateDropSameIndex11995 extends SdbTestBase{
                cl.createIndex(textIndexName, indexObj, false, false);
                insertData(cl, 1000);
                FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, (int)cl.getCount());
+               FullTextUtils.checkConsistency(sdb, csName, clName);
 
                InsertThread insertThread = new InsertThread(newInsertNums);
                DropIndexThread dropIdxThread = new DropIndexThread();
@@ -107,6 +108,7 @@ public class CreateDropSameIndex11995 extends SdbTestBase{
            cl.createIndex(textIndexName, indexObj, false, false);
            // check consistency
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, (int)cl.getCount()); 
+           FullTextUtils.checkConsistency(sdb, csName, clName);
 
            // last time drop index
            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);

@@ -59,6 +59,7 @@ public class SplitAndInsert12021 extends SdbTestBase {
          cl.split(srcGroup, desGroup, (BSONObject)JSON.parse("{a : 'test_hash12021_0'}"), (BSONObject)JSON.parse("{a : 'test_hash12021_1000'}"));
          insertData();
          FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, fullTextIndexName, FullTextUtils.INSERT_NUMS);
+         FullTextUtils.checkConsistency(sdb, csName, clName);
 		
          List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, fullTextIndexName);
          FullTextDBUtils.dropFullTextIndex(cl, fullTextIndexName);

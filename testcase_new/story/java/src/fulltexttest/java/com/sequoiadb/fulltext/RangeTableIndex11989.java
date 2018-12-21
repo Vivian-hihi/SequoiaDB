@@ -56,6 +56,7 @@ public class RangeTableIndex11989 extends SdbTestBase {
         //创建全文索引，索引字段覆盖：分区键和非分区键
         this.cl.createIndex(fullIndexName, "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}", false, false);
         FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, FullTextUtils.INSERT_NUMS);
+        FullTextUtils.checkConsistency(sdb, csName, clName);
         List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, SdbTestBase.csName, this.clName, this.fullIndexName); 
         FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
         FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);

@@ -98,16 +98,19 @@ public class MainCLCurdFullIndex12015 extends SdbTestBase{
            if(!isSuccess) {
                 throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
            }
-           FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS);           
+           FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS);
+           FullTextUtils.checkConsistency(sdb, csName, mainCLName);           
 
            // update, should change cl count
            update(maincl);
            insertData(maincl, 10000);
            FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, FullTextUtils.INSERT_NUMS + 10000);
+           FullTextUtils.checkConsistency(sdb, csName, mainCLName);
 
            // delete
            remove(maincl);
            FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, textIndexName, (int)maincl.getCount());
+           FullTextUtils.checkConsistency(sdb, csName, mainCLName);
 
            System.out.println("check fulltext of maincl shardingkey and non-shardingkey success!");
       }

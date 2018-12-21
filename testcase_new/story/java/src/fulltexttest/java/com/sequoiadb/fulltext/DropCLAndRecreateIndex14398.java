@@ -78,6 +78,7 @@ public class DropCLAndRecreateIndex14398 extends SdbTestBase{
            }
 
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
+           FullTextUtils.checkConsistency(sdb, csName, clName);
 
            FullTextDBUtils.dropCollection(cs, clName);
  
@@ -96,6 +97,7 @@ public class DropCLAndRecreateIndex14398 extends SdbTestBase{
 
            // check consistency
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, newInsertNums);
+           FullTextUtils.checkConsistency(sdb, csName, clName);
 
            System.out.println("----------success check drop cl after index clear in ES----------");
 
@@ -112,6 +114,7 @@ public class DropCLAndRecreateIndex14398 extends SdbTestBase{
            }
 
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
+           FullTextUtils.checkConsistency(sdb, csName, clName);
 
            FullTextDBUtils.dropCollection(cs, clName);
 
@@ -127,6 +130,7 @@ public class DropCLAndRecreateIndex14398 extends SdbTestBase{
 
            // check consistency
            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, newInsertNums);
+           FullTextUtils.checkConsistency(sdb, csName, clName);
 
            System.out.println("----------success check drop cl while index processing to clear in ES----------");
       }
