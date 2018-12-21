@@ -20,7 +20,7 @@
 
    > **Note:**该操作目前会修改所有实例sequoiadb_conn_addr的值
 
-   (2)通过配置文件修改，参考[配置说明]章节。(sql_engine/sequoiasql_mysql/connection.md#配置说明)。
+   (2)通过配置文件修改，参考[配置说明](sql_engine/sequoiasql_mysql/connection.md#配置说明)。
 
 3. 创建数据库实例
 
