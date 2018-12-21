@@ -1,11 +1,6 @@
 package com.sequoias3.head;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -18,6 +13,7 @@ import com.amazonaws.services.s3.model.PutObjectResult;
 import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.HeadUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 
 /**
@@ -55,21 +51,12 @@ public class TestGetObjectMetadata16681  extends S3TestBase{
 		String expVersionid = result.getVersionId();
 			
 		ObjectMetadata metadata = s3Client.getObjectMetadata(new GetObjectMetadataRequest(bucketName, keyName, expVersionid));
-		Calendar expLastModified[] = getGMTDateRange(new Date());
+		String expLastModified = HeadUtils.getGMTDate(new Date());
 		
 		Assert.assertEquals(metadata.getETag(), expEtag, "etag is wrong!");
 		Assert.assertEquals(metadata.getContentLength(), (long)content.length(), "size is wrong!");
-		Assert.assertEquals(metadata.getVersionId(), expVersionid);
-		
-		Date actDate = metadata.getLastModified();
-		Calendar actCalendar = Calendar.getInstance();
-		actCalendar.setTime(actDate);
-		
-		if(actCalendar.before(expLastModified[0]) || actCalendar.after(expLastModified[1])){
-			Assert.fail("get' lastModified is wrong , "
-					+ "exp actual time is in :[" + expLastModified[0].getTime().toString()+ ", " + expLastModified[1].getTime().toString() + "] , "
-							+ "but actual time is : " + actCalendar.getTime().toString());
-		}
+		Assert.assertEquals(metadata.getVersionId(), expVersionid ,"versionid is wrong!");
+		Assert.assertEquals(HeadUtils.getGMTDate(metadata.getLastModified()), expLastModified, "lastModified is wrong!");
 		runSuccess = true;
 	}
 
@@ -86,21 +73,5 @@ public class TestGetObjectMetadata16681  extends S3TestBase{
 				s3Client.shutdown();
 			}
 		}
-	}
-	
-	private Calendar[] getGMTDateRange(Date date) throws ParseException{
-		Calendar calRange[] = new Calendar[2];
-		SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z",Locale.US);
-		String rfc1123 = sdf.format(date);
-		
-		Date formattedDate = sdf.parse(rfc1123);
-		//设置误差为半小时内
-		calRange[0] = Calendar.getInstance();
-		calRange[0].setTime(formattedDate);
-		calRange[0].set(Calendar.MINUTE, calRange[0].get(Calendar.MINUTE)- 15 );
-		calRange[1] = Calendar.getInstance();
-		calRange[1].setTime(formattedDate);
-		calRange[1].set(Calendar.MINUTE, calRange[1].get(Calendar.MINUTE)+ 15 );
-		return calRange;
 	}
 }

@@ -2,6 +2,7 @@ package com.sequoias3.head;
 
 import java.io.File;
 
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.testng.Assert;
@@ -57,13 +58,33 @@ public class TestGetObjectMetadata16690 extends S3TestBase {
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 		PutObjectResult result = s3Client.putObject(bucketName, keyName, new File(filePath));
 		String versionid = result.getVersionId();
+		String etag = result.getETag();
 
 		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/" + bucketName + "/" + keyName+"?versionId="+versionid);
 		request.setHeader("Authorization", "Credential=" + accessKeys[0]);
 
-		//指定range不在范围[0k~99k]内
-		int leftBoundary = fileSize;
+		//指定range超过边界值,右边界
+		int leftBoundary = fileSize - 10;
 		int rightBoundary = fileSize + 1;
+		
+		request.setHeader("Range", "bytes=" + String.valueOf(leftBoundary) + "-" + String.valueOf(rightBoundary));
+		client = RestClient.createHttpClient();
+		CloseableHttpResponse resp1 = RestClient.sendRequest(client, request);
+		Assert.assertEquals(resp1.getFirstHeader("ETag").getValue(), etag);
+		System.out.println(resp1.getFirstHeader("Content-Length").getValue());
+		Assert.assertEquals(resp1.getFirstHeader("Content-Length").getValue(), String.valueOf((fileSize - 1) - leftBoundary + 1));
+		
+		//指定range超过边界值,左边界
+		request.setHeader("Range", "bytes=-" + String.valueOf(fileSize+1));
+		client = RestClient.createHttpClient();
+		CloseableHttpResponse resp2 = RestClient.sendRequest(client, request);
+		Assert.assertEquals(resp2.getFirstHeader("ETag").getValue(), etag);
+		Assert.assertEquals(resp2.getFirstHeader("Content-Length").getValue(), String.valueOf(fileSize));
+		
+		
+		//指定range不在范围[0k~99k]内
+		leftBoundary = fileSize + 100;
+		rightBoundary = fileSize + 101;
 		
 		request.setHeader("Range", "bytes=" + String.valueOf(leftBoundary) + "-" + String.valueOf(rightBoundary));
 		client = RestClient.createHttpClient();
@@ -73,6 +94,7 @@ public class TestGetObjectMetadata16690 extends S3TestBase {
 		} catch (Exception e) {
 			Assert.assertNotEquals(e.getMessage().indexOf("errcode=416"), -1);
 		}
+		
 		runSuccess = true;
 	}
 

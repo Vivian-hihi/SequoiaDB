@@ -8,6 +8,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
@@ -28,6 +29,23 @@ import com.sequoias3.testcommon.s3utils.UserUtils;
  */
 
 public class TestGetObjectMetadata16680 extends S3TestBase {
+	@DataProvider(name = "rangeProvider")
+	public Object[][] generatePageSize() {
+		return new Object[][] {
+				// the parameter : begin and end, fileSize is 1024 * 100
+				// test a : 指定range为起始位置0
+				new Object[] { "0", "0", 1 },
+				// test b : 指定range为结束位置99k、100k
+				new Object[] { "102398", "102398" ,1 },
+				new Object[] {"102399", "102399", 1 },
+				// test c : 指定range为中间范围100k-100k+1byte(超过边界值)、10k-99k
+				new Object[] {"102399", "102400", 1},
+				new Object[] {"10240", "101376", ((99 * 1024) - (10 * 1024)) + 1},
+				// test d : 指定range起始范围超过对象最大长度(100k),设置为199k
+				new Object[] { "203776", "203776", 0 }
+		};
+	}
+	
 	private boolean runSuccess = false;
 	private String bucketName = "bucket16680";
 	private String userName = "user16680";
@@ -51,49 +69,29 @@ public class TestGetObjectMetadata16680 extends S3TestBase {
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		accessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
-	}
-
-	@Test
-	private void testGetObjectMetadata() throws Exception {
+		
 		s3Client.createBucket(bucketName);
 		PutObjectResult result = s3Client.putObject(bucketName, keyName, new File(filePath));
 		expEtag = result.getETag();
-
+	}
+	
+	@Test(dataProvider = "rangeProvider")
+	public void testGetObjectMetadata(String start, String end, int size) throws Exception {
 		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/" + bucketName + "/" + keyName);
 		request.setHeader("Authorization", "Credential=" + accessKeys[0]);
-		// test a : 指定range为起始位置0
-		request.setHeader("Range", "bytes=0-0");
-		getRespAndcheckMetadata(request, 1);
-
-		// test b : 指定range为结束位置99k、100k
-		int leftBoundary = 100 * 1024 - 2;
-		request.setHeader("Range", "bytes=" + String.valueOf(leftBoundary) + "-" + String.valueOf(leftBoundary));
-		getRespAndcheckMetadata(request, 1);
-
-		request.setHeader("Range", "bytes=-1");
-		getRespAndcheckMetadata(request, 1);
-
-		// test c : 指定range为中间范围10k-199k(超过边界值)、10k-99k
-		leftBoundary = 10 * 1024;
-		int rightBoundary = 199 * 1024;
-		request.setHeader("Range", "bytes=" + String.valueOf(leftBoundary) + "-" + String.valueOf(rightBoundary));
-		getRespAndcheckMetadata(request, ((fileSize - 1) - leftBoundary) + 1);
-
-		leftBoundary = 10 * 1024;
-		rightBoundary = 99 * 1024;
-		request.setHeader("Range", "bytes=" + String.valueOf(leftBoundary) + "-" + String.valueOf(rightBoundary));
-		getRespAndcheckMetadata(request, rightBoundary - leftBoundary + 1);
-
-		// test d : 指定range起始范围超过对象最大长度(100k),设置为199k
-		leftBoundary = 199 * 1024;
-		try {
-			request.setHeader("Range", "bytes=" + String.valueOf(leftBoundary) + "-" + String.valueOf(leftBoundary));
-			client = RestClient.createHttpClient();
-			RestClient.sendRequest(client, request);
-			Assert.fail("exp fail but found success");
-		} catch (Exception e) {
-			Assert.assertNotEquals(e.getMessage().indexOf("errcode=416"), -1);
+		request.setHeader("Range", "bytes=" + start + "-" + end);
+		if(!start.equals("") && Integer.parseInt(start)> fileSize){
+			try {
+				client = RestClient.createHttpClient();
+				RestClient.sendRequest(client, request);
+				Assert.fail("exp fail but found success");
+			} catch (Exception e) {
+				Assert.assertNotEquals(e.getMessage().indexOf("errcode=416"), -1);
+			}
+		}else{
+			getRespAndcheckMetadata(request, size);
 		}
+		
 		runSuccess = true;
 	}
 

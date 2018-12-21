@@ -1,10 +1,6 @@
 package com.sequoias3.head;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
@@ -20,6 +16,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.HeadUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 
 /**
@@ -56,7 +53,7 @@ public class TestGetObjectMetadata16679  extends S3TestBase{
 		
 		Date date = new Date();
 		PutObjectResult resultV2 = s3Client.putObject(bucketName, keyName, content+"v2");
-		Calendar expLastModified[] = getGMTDateRange(date);
+		String expLastModified = HeadUtils.getGMTDate(date);
 		String expVersionId = resultV2.getVersionId();
 		String etagV1 = resultV1.getETag();
 		String etagV2 = resultV2.getETag();
@@ -78,17 +75,7 @@ public class TestGetObjectMetadata16679  extends S3TestBase{
     	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), etagV2);
     	Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), expVersionId);
     	Assert.assertEquals(resp.getFirstHeader("Content-Length").getValue(), String.valueOf((content+"v2").length()));
-    	
-    	SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z",Locale.US);
-		Date actDate = sdf.parse(resp.getFirstHeader("Last-Modified").getValue());
-		Calendar actCalendar = Calendar.getInstance();
-		actCalendar.setTime(actDate);
-		
-		if(actCalendar.before(expLastModified[0]) || actCalendar.after(expLastModified[1])){
-			Assert.fail("versions' lastModified is wrong , "
-					+ "exp actual time is in :[" + expLastModified[0].getTime().toString()+ ", " + expLastModified[1].getTime().toString() + "] , "
-							+ "but actual time is : " + actCalendar.getTime().toString());
-		}
+    	Assert.assertEquals(resp.getFirstHeader("Last-Modified").getValue(),expLastModified);
 		runSuccess = true;
 	}
 
@@ -105,21 +92,5 @@ public class TestGetObjectMetadata16679  extends S3TestBase{
 				s3Client.shutdown();
 			}
 		}
-	}
-	
-	private Calendar[] getGMTDateRange(Date date) throws ParseException{
-		Calendar calRange[] = new Calendar[2];
-		SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z",Locale.US);
-		String rfc1123 = sdf.format(date);
-		
-		Date formattedDate = sdf.parse(rfc1123);
-		//设置误差为半小时内
-		calRange[0] = Calendar.getInstance();
-		calRange[0].setTime(formattedDate);
-		calRange[0].set(Calendar.MINUTE, calRange[0].get(Calendar.MINUTE)- 15 );
-		calRange[1] = Calendar.getInstance();
-		calRange[1].setTime(formattedDate);
-		calRange[1].set(Calendar.MINUTE, calRange[1].get(Calendar.MINUTE)+ 15 );
-		return calRange;
 	}
 }

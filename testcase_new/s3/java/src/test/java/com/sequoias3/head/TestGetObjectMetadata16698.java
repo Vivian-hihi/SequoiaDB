@@ -1,9 +1,6 @@
 package com.sequoias3.head;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
 
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -18,6 +15,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.HeadUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 
 /**
@@ -56,12 +54,11 @@ public class TestGetObjectMetadata16698  extends S3TestBase{
 		String etag = result.getETag();
 
 		Date date = new Date();
-		String rfc1123 = getGMTDate(date);
 		
 		//ifUnModifiedSince指定为时间A，时间A后该对象未修改；ifNoneMatch指定为该对象当前版本的Etag值（匹配不到对象）
 		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName);
 	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
-	    request.setHeader("If-Unmodified-Since", rfc1123);
+	    request.setHeader("If-Unmodified-Since", HeadUtils.getModifiedGMTDate(date, 1));
 	    request.setHeader("If-None-Match", etag);
 	    
 	    client = RestClient.createHttpClient();
@@ -89,12 +86,5 @@ public class TestGetObjectMetadata16698  extends S3TestBase{
 				s3Client.shutdown();
 			}
 		}
-	}
-	
-	private String getGMTDate(Date date){
-		SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z",Locale.US);
-		sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-		String rfc1123 = sdf.format(date);
-		return rfc1123;
 	}
 }

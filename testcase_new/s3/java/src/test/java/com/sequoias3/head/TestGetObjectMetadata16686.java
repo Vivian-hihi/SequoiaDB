@@ -1,11 +1,6 @@
 package com.sequoias3.head;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.Locale;
-import java.util.TimeZone;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
@@ -21,6 +16,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.HeadUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 
 /**
@@ -65,7 +61,7 @@ public class TestGetObjectMetadata16686  extends S3TestBase{
 		//指定ifUnModifiedSince匹配条件，匹配在指定时间后尚未修改的对象(即v1版本)
 		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName+"?versionId="+versionId);
 	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
-	    request.setHeader("If-Unmodified-Since", getModifiedGMTDate(date ,1));
+	    request.setHeader("If-Unmodified-Since", HeadUtils.getModifiedGMTDate(date ,1));
 	    
 	    client = RestClient.createHttpClient();
 		CloseableHttpResponse resp = RestClient.sendRequest(client, request);
@@ -88,21 +84,5 @@ public class TestGetObjectMetadata16686  extends S3TestBase{
 				s3Client.shutdown();
 			}
 		}
-	}
-	
-	private String getModifiedGMTDate(Date date , int amount){
-		Calendar calendar = new GregorianCalendar();
-		calendar.setTime(date);
-		//把日期往后增加，正数往后推，负数往前推
-		calendar.add(Calendar.DATE, amount);
-		date = calendar.getTime();
-		return getGMTDate(date);
-	}
-	
-	private String getGMTDate(Date date){
-		SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z",Locale.US);
-		sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-		String rfc1123 = sdf.format(date);
-		return rfc1123;
 	}
 }
