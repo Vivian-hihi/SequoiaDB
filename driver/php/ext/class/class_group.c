@@ -581,7 +581,7 @@ PHP_METHOD( SequoiaGroup, attachNode )
    bson configure ;
    bson_init( &configure ) ;
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
-   if( PHP_GET_PARAMETERS( "ss|z",
+   if( PHP_GET_PARAMETERS( "ssz",
                            &pHostName,
                            &hostLen,
                            &pServiceName,
@@ -631,7 +631,7 @@ PHP_METHOD( SequoiaGroup, detachNode )
    bson configure ;
    bson_init( &configure ) ;
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
-   if( PHP_GET_PARAMETERS( "ss|z",
+   if( PHP_GET_PARAMETERS( "ssz",
                            &pHostName,
                            &hostLen,
                            &pServiceName,
