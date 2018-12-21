@@ -1,5 +1,6 @@
 package com.sequoiadb.rename;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -14,6 +15,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
@@ -90,23 +92,27 @@ public class RenameCL_16814 extends SdbTestBase{
 		
 		//只校验rename之后旧统计信息有清理,新统计信息有创建,不关注内容
 		try(Sequoiadb dataDB = sdb.getReplicaGroup(groupName).getMaster().connect()){
-			DBCollection stat = dataDB.getCollectionSpace("SYSSTAT").getCollection("SYSCOLLECTIONSTAT");
+			DBCollection dataStat = dataDB.getCollectionSpace("SYSSTAT").getCollection("SYSCOLLECTIONSTAT");
 			BSONObject filter1 = new BasicBSONObject();
 			filter1.put("Collection", testCLName);
 			filter1.put("CollectionSpace", csName);
-			long num1 = stat.getCount(filter1);
+			long num1 = 0;
+			num1 = dataStat.getCount(filter1);
 			Assert.assertEquals(num1, 0, "check cl " + testCLName +" be rename, analyze shuold cleanUp");
 			BSONObject filter2 = new BasicBSONObject();
 			filter2.put("Collection", testNewCLName);
 			filter2.put("CollectionSpace", csName);
-			long num2 = stat.getCount(filter2);
-			long expNum;
-			if(analyzeMode > 3 || !analyze){
-				expNum = 0;
-			}else{
-				expNum = 1;
+			List<BSONObject> actBson = new ArrayList<BSONObject>();
+			DBCursor cursor = dataStat.query(filter2, null, null, null);
+			while( cursor.hasNext() ){
+				actBson.add(cursor.getNext());
 			}
-			Assert.assertEquals(num2, expNum, "check new name cl " + testNewCLName +" , analyze shuold create");
+			//analyze在执行的时候,是先拿锁统计data,统计完成后放锁,然后再次拿锁统计index,再次放锁,
+			//所以rename有可能在统计完data之后执行,导致统计index失败
+			//anaylze执行失败的时候有可能还是会产生统计信息,所以只判断统计信息正常
+			if(actBson.size() > 1 ){
+				Assert.fail("check cl analyze error: " + testNewCLName + ", msg: " + actBson.toString());
+			}
 		}
 	}
 	

@@ -80,6 +80,12 @@ public class RenameCS_16140 extends SdbTestBase{
 				Assert.fail(detachThread.getErrorMsg());
 			}
 		}
+		
+		if(!renameCS && !detachCL){
+			Assert.fail("rename and detach cl all failed," +
+							" rename msg: " + reCSNameThread.getErrorMsg() +
+							" detach msg: " + detachThread.getErrorMsg());
+		}
 
 		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
 			if(renameCS){
