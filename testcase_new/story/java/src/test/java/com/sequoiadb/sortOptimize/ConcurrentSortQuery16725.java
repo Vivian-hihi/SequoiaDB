@@ -71,11 +71,11 @@ public class ConcurrentSortQuery16725 extends SdbTestBase {
         Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
 
         // check sortType
-//        String expectResult = "External";
-//        String actResult1 = Utils.getSortType(cl1, null, null, (BSONObject)JSON.parse("{a:1, b:1, c:1}"));
-//        String actResult2 = Utils.getSortType(cl2, null, null, (BSONObject)JSON.parse("{a:1, b:1, c:1}"));
-//        Assert.assertEquals(actResult1, expectResult, "expectResult: " + expectResult + ", actResult: " + actResult1);
-//        Assert.assertEquals(actResult2, expectResult, "expectResult: " + expectResult + ", actResult: " + actResult2);
+        String expectResult = "External";
+        String actResult1 = Utils.getSortType(cl1, null, null, (BSONObject)JSON.parse("{a:1, b:1, c:1}"));
+        String actResult2 = Utils.getSortType(cl2, null, null, (BSONObject)JSON.parse("{a:1, b:1, c:1}"));
+        Assert.assertEquals(actResult1, expectResult, "expectResult: " + expectResult + ", actResult: " + actResult1);
+        Assert.assertEquals(actResult2, expectResult, "expectResult: " + expectResult + ", actResult: " + actResult2);
     }
 	
     @AfterClass
@@ -88,7 +88,7 @@ public class ConcurrentSortQuery16725 extends SdbTestBase {
         List<BSONObject> records = new ArrayList<BSONObject>();
         for(int i = 0; i < 100; i++){
             for(int j = 0; j < insertNums/100; j++){
-                BSONObject record = (BSONObject)JSON.parse("{a:'" + Utils.getRandomString(127) + "', b: '" + Utils.getRandomString(260) + "', c: '" + Utils.getRandomString(255) + "'}");
+                BSONObject record = (BSONObject)JSON.parse("{a:'" + Utils.getRandomString(256) + "', b: '" + Utils.getRandomString(512) + "', c: '" + Utils.getRandomString(255) + "'}");
                 records.add(record);
             }
             cl.bulkInsert(records, 0);
