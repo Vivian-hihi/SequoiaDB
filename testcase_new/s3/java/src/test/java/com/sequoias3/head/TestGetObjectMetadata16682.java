@@ -43,26 +43,25 @@ public class TestGetObjectMetadata16682  extends S3TestBase{
 
 	@Test
 	private void testGetObjectMetadata() throws Exception {
+		String contentV1 = content+"v1111";
+		String contentV2 = content+"v2222222";
 		s3Client.createBucket(bucketName);
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
-		String content1 = content+"v1111";
-		String content2 = content+"v2222222";
-		PutObjectResult result1 = s3Client.putObject(bucketName, keyName, content1);
-		PutObjectResult result2 = s3Client.putObject(bucketName, keyName, content2);
+		
+		Date datev1_1 = new Date();
+		PutObjectResult result1 = s3Client.putObject(bucketName, keyName, contentV1);
+		Date datev1_2 = new Date();
+		
+		Date datev2_1 = new Date();
+		PutObjectResult result2 = s3Client.putObject(bucketName, keyName, contentV2);
+		Date datev2_2 = new Date();
 		s3Client.putObject(bucketName, keyName, content);
-		String expEtagV1 = result1.getETag();
-		String expEtagV2 = result2.getETag();
-		String expVersionidV1 = result1.getVersionId();
-		String expVersionidV2 = result2.getVersionId();
-		
 			
-		ObjectMetadata metadata = s3Client.getObjectMetadata(new GetObjectMetadataRequest(bucketName, keyName, expVersionidV1));
-		String expLastModified1 = HeadUtils.getGMTDate(new Date());
-		checkResult(metadata, expEtagV1, (long)content1.length(), expVersionidV1, expLastModified1);
+		ObjectMetadata metadata = s3Client.getObjectMetadata(new GetObjectMetadataRequest(bucketName, keyName, result1.getVersionId()));
+		checkResult(metadata, result1,(long)contentV1.length(), datev1_1, datev1_2);
 		
-		metadata = s3Client.getObjectMetadata(new GetObjectMetadataRequest(bucketName, keyName, expVersionidV2));
-		String expLastModified2 = HeadUtils.getGMTDate(new Date());
-		checkResult(metadata, expEtagV2, (long)content2.length(), expVersionidV2, expLastModified2);
+		metadata = s3Client.getObjectMetadata(new GetObjectMetadataRequest(bucketName, keyName, result2.getVersionId()));
+		checkResult(metadata, result2, (long)contentV2.length(), datev2_1, datev2_2);
 		
 		runSuccess = true;
 	}
@@ -82,10 +81,17 @@ public class TestGetObjectMetadata16682  extends S3TestBase{
 		}
 	}
 	
-	private void checkResult(ObjectMetadata metadata, String etag, long size, String versionid, String expLastModified){
-		Assert.assertEquals(metadata.getETag(), etag, "etag is wrong!");
-		Assert.assertEquals(metadata.getContentLength(), size, "size is wrong!");
-		Assert.assertEquals(metadata.getVersionId(), versionid, "versionid is wrong!");
-		Assert.assertEquals(HeadUtils.getGMTDate(metadata.getLastModified()), expLastModified, "lastModified is wrong!");
+	private void checkResult(ObjectMetadata metadata, PutObjectResult result, long expsize, Date date1, Date date2 ){
+		String expEtag = result.getETag();
+		String expVersionid = result.getVersionId();
+		
+		Assert.assertEquals(metadata.getETag(), expEtag, "etag is wrong!");
+		Assert.assertEquals(metadata.getContentLength(), expsize, "size is wrong!");
+		Assert.assertEquals(metadata.getVersionId(), expVersionid, "versionid is wrong!");
+    	Date actDate = metadata.getLastModified();
+    	//校验对象lastModified时间在[date1, date2]范围内，只精确到秒，忽略毫秒
+    	if(actDate.getTime()<(date1.getTime()/1000)*1000 || actDate.getTime()> (date2.getTime()/1000)*1000){
+    		Assert.fail("lastmodified is wrong!  actDate is : " + HeadUtils.getGMTDate(actDate) + ", date1 is :" + HeadUtils.getGMTDate(date1) + ", date2 is : " + HeadUtils.getGMTDate(date2));
+    	}
 	}
 }

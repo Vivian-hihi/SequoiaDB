@@ -1,6 +1,8 @@
 package com.sequoias3.head;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
@@ -51,9 +53,9 @@ public class TestGetObjectMetadata16679  extends S3TestBase{
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 		PutObjectResult resultV1 =  s3Client.putObject(bucketName, keyName, content+"v1");
 		
-		Date date = new Date();
+		Date date1 = new Date();
 		PutObjectResult resultV2 = s3Client.putObject(bucketName, keyName, content+"v2");
-		String expLastModified = HeadUtils.getGMTDate(date);
+		Date date2 = new Date();
 		String expVersionId = resultV2.getVersionId();
 		String etagV1 = resultV1.getETag();
 		String etagV2 = resultV2.getETag();
@@ -75,7 +77,14 @@ public class TestGetObjectMetadata16679  extends S3TestBase{
     	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), etagV2);
     	Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), expVersionId);
     	Assert.assertEquals(resp.getFirstHeader("Content-Length").getValue(), String.valueOf((content+"v2").length()));
-    	Assert.assertEquals(resp.getFirstHeader("Last-Modified").getValue(),expLastModified);
+    	
+    	String actDateString = resp.getFirstHeader("Last-Modified").getValue();
+    	SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z",Locale.US);
+    	Date actDate = sdf.parse(actDateString);
+    	//校验对象lastModified时间在[date1, date2]范围内，只精确到秒，忽略毫秒
+    	if(actDate.getTime()<(date1.getTime()/1000)*1000 || actDate.getTime()> (date2.getTime()/1000)*1000){
+    		Assert.fail("lastmodified is wrong!  actDate is : " + HeadUtils.getGMTDate(actDate) + ", date1 is :" + HeadUtils.getGMTDate(date1) + ", date2 is : " + HeadUtils.getGMTDate(date2));
+    	}
 		runSuccess = true;
 	}
 
