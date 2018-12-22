@@ -1,5 +1,7 @@
 package com.sequoias3.head;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import org.testng.Assert;
@@ -31,6 +33,7 @@ public class TestDoesObjectExist16708  extends S3TestBase{
 	private String roleName = "normal";
 	private String keyName = "key16708";
 	private String content = "content16708";
+	private List<String> validValues = new ArrayList<>(); 
 	private AmazonS3 s3Client = null;
 
 	@BeforeClass
@@ -42,29 +45,23 @@ public class TestDoesObjectExist16708  extends S3TestBase{
 
 	@Test
 	private void testDoesObjectExist() throws Exception {
-		bucketName = getRandomString(3);
-		s3Client.createBucket(bucketName);
-		PutObjectResult objectResult =  s3Client.putObject(bucketName, keyName, content+"content1");
-
+		validValues.add(getRandomString(3));
+		validValues.add(getRandomString(63));
+		
 		//test a :指定桶名为合法名  长度边界值为：3个字符，63个字符
-		Assert.assertTrue(s3Client.doesObjectExist(bucketName, keyName));
-		Assert.assertFalse(s3Client.doesObjectExist(getRandomString(63), keyName));
-		
-		ObjectMetadata metadata = s3Client.getObjectMetadata(bucketName, keyName);
-		Assert.assertEquals(metadata.getETag(), objectResult.getETag());
-		
-		bucketName = getRandomString(63);
-		s3Client.createBucket(bucketName);
-		objectResult =  s3Client.putObject(bucketName, keyName, content+"content2");
-		metadata = s3Client.getObjectMetadata(bucketName, keyName);
-		Assert.assertEquals(metadata.getETag(), objectResult.getETag());
+		for (String validname : validValues) {
+			s3Client.createBucket(validname);
+			PutObjectResult objectResult =  s3Client.putObject(validname, keyName, content+validname);
+			Assert.assertTrue(s3Client.doesObjectExist(validname, keyName));
+			ObjectMetadata metadata = s3Client.getObjectMetadata(validname, keyName);
+			Assert.assertEquals(metadata.getETag(), objectResult.getETag());
+		}
 		
 		//test b :指定对象名为合法名  长度边界值为：900个字符
 		keyName = getRandomString(900);
-		objectResult =  s3Client.putObject(bucketName, keyName, content+"content3");
+		PutObjectResult objectResult =  s3Client.putObject(bucketName, keyName, content+"testb");
 		Assert.assertTrue(s3Client.doesObjectExist(bucketName, keyName));
-		
-		metadata = s3Client.getObjectMetadata(bucketName, keyName);
+		ObjectMetadata metadata = s3Client.getObjectMetadata(bucketName, keyName);
 		Assert.assertEquals(metadata.getETag(), objectResult.getETag());
 		
 		//test c :指定桶名，对象名分别为null和空串""
