@@ -21,144 +21,146 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import org.elasticsearch.client.*;
 
 /**
-* FileName: DropCSAndRecreateIndex14397.java
-* test content: 集合空间删除后重建相同的全文索引   
-* @author liuxiaoxuan
-    * @Date    2018.11.21
-*/
-public class DropCSAndRecreateIndex14397 extends SdbTestBase{
+ * FileName: DropCSAndRecreateIndex14397.java test content: 集合空间删除后重建相同的全文索引
+ * 
+ * @author liuxiaoxuan
+ * @Date 2018.11.21
+ */
+public class DropCSAndRecreateIndex14397 extends SdbTestBase {
 
-      private Sequoiadb sdb = null;
-      private CollectionSpace cs = null;
-      private DBCollection cl = null;
-      private String csName = "ES_cs_14397";
-      private String clName = "ES_cl_14397";
+     private Sequoiadb sdb = null;
+     private CollectionSpace cs = null;
+     private DBCollection cl = null;
+     private String csName = "ES_cs_14397";
+     private String clName = "ES_cl_14397";
 
-      private Client esClient = null;
+     private Client esClient = null;
 
-      @BeforeClass
-      public void setUp() {
-           esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
-           sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
-           if (CommLib.isStandAlone(sdb)) {
-                throw new SkipException("skip StandAlone");
-           }
+     @BeforeClass
+     public void setUp() {
+          esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+          sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+          if (CommLib.isStandAlone(sdb)) {
+               throw new SkipException("skip StandAlone");
+          }
 
-           // create cl 
-           cs = sdb.createCollectionSpace(this.csName);
-           cl = cs.createCollection(clName);
-      }
-	
-      @AfterClass
-      public void tearDown() {
-           sdb.dropCollectionSpace(this.csName);
-           sdb.close();
-           esClient.close();
-      }
+          // create cl
+          cs = sdb.createCollectionSpace(this.csName);
+          cl = cs.createCollection(clName);
+     }
 
-      @Test
-      public void test() {
-           // create fulltext
-           String textIndexName = "fulltext14397";
-           BSONObject indexObj = new BasicBSONObject();
-           indexObj.put("a", "text");
-           indexObj.put("b", "text");
-           indexObj.put("c", "text");
-           indexObj.put("d", "text");
-           indexObj.put("e", "text");
-           indexObj.put("f", "text");
-           cl.createIndex(textIndexName, indexObj, false, false);
+     @AfterClass
+     public void tearDown() {
+          sdb.dropCollectionSpace(this.csName);
+          sdb.close();
+          esClient.close();
+     }
 
-           List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
-           
-           // check drop cs and recreate index after index clear in ES
-           boolean isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS);
-           if(!isSuccess) {
-                throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
-           }
+     @Test
+     public void test() {
+          // create fulltext
+          String textIndexName = "fulltext14397";
+          BSONObject indexObj = new BasicBSONObject();
+          indexObj.put("a", "text");
+          indexObj.put("b", "text");
+          indexObj.put("c", "text");
+          indexObj.put("d", "text");
+          indexObj.put("e", "text");
+          indexObj.put("f", "text");
+          cl.createIndex(textIndexName, indexObj, false, false);
 
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
-           FullTextUtils.checkConsistency(sdb, csName, clName);
+          List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
 
-           FullTextDBUtils.dropCollectionSpace(sdb, csName);
+          // check drop cs and recreate index after index clear in ES
+          boolean isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS);
+          if (!isSuccess) {
+               throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
+          }
 
-           FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames); 
+          FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
+          FullTextUtils.checkConsistency(sdb, csName, clName);
 
-           // recreate after ES index clear
-           cs = sdb.createCollectionSpace(this.csName); 
-           cl = cs.createCollection(clName);
-           cl.createIndex(textIndexName, indexObj, false, false);
-           
-           // insert new datas
-           int newInsertNums = 210000;
-           isSuccess = insertData(cl, newInsertNums);
-           if(!isSuccess) {
-                throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
-           }
+          FullTextDBUtils.dropCollectionSpace(sdb, csName);
 
-           // check consistencty
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, newInsertNums);
-           FullTextUtils.checkConsistency(sdb, csName, clName);
+          FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 
-           System.out.println("----------success check drop cs after index clear in ES----------");
+          // recreate after ES index clear
+          cs = sdb.createCollectionSpace(this.csName);
+          cl = cs.createCollection(clName);
+          cl.createIndex(textIndexName, indexObj, false, false);
 
-           // check drop cs and recreate index while index processing to clear in ES
-           FullTextDBUtils.dropFullTextIndex(cl, textIndexName);// init env
-           cl.truncate();
-           FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);         
- 
-           cl.createIndex(textIndexName, indexObj, false, false);
+          // insert new datas
+          int newInsertNums = 210000;
+          isSuccess = insertData(cl, newInsertNums);
+          if (!isSuccess) {
+               throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
+          }
 
-           // init insert datas
-           isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS);
-           if(!isSuccess) {
-                throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
-           }
+          // check consistencty
+          FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, newInsertNums);
+          FullTextUtils.checkConsistency(sdb, csName, clName);
 
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
-           FullTextUtils.checkConsistency(sdb, csName, clName);
+          System.out.println("----------success check drop cs after index clear in ES----------");
 
-           FullTextDBUtils.dropCollectionSpace(sdb, csName);
+          // check drop cs and recreate index while index processing to clear in ES
+          FullTextDBUtils.dropFullTextIndex(cl, textIndexName);// init env
+          cl.truncate();
+          FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 
-           // recreate cs and index while index processing to clear in ES
-           cs = sdb.createCollectionSpace(this.csName);
-           cl = cs.createCollection(clName);
-           cl.createIndex(textIndexName, indexObj, false, false);
+          cl.createIndex(textIndexName, indexObj, false, false);
 
-           // insert new datas
-           isSuccess = insertData(cl, newInsertNums);
-           if(!isSuccess) {
-                throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
-           }
+          // init insert datas
+          isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS);
+          if (!isSuccess) {
+               throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
+          }
 
-           // check result after index recreate
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, newInsertNums);
-           FullTextUtils.checkConsistency(sdb, csName, clName);
+          FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
+          FullTextUtils.checkConsistency(sdb, csName, clName);
 
-           System.out.println("----------success check drop cs while index processing to clear in ES----------");
-      }
-	
-      public boolean insertData(DBCollection cl, int insertNums) {
-           List<BSONObject> insertObjs = new ArrayList<>();
-           try {
-                for(int i = 0; i < 100; i++){
-                    for (int j = 0; j < insertNums/100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_14397_" + FullTextUtils.getRandomString(10) + "', b: '" + FullTextUtils.getRandomString(32)
-                                      + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '" + FullTextUtils.getRandomString(64)
-                                      + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '" + FullTextUtils.getRandomString(128) + "'}"));
- 
+          FullTextDBUtils.dropCollectionSpace(sdb, csName);
+
+          // recreate cs and index while index processing to clear in ES
+          cs = sdb.createCollectionSpace(this.csName);
+          cl = cs.createCollection(clName);
+          cl.createIndex(textIndexName, indexObj, false, false);
+
+          // insert new datas
+          isSuccess = insertData(cl, newInsertNums);
+          if (!isSuccess) {
+               throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
+          }
+
+          // check result after index recreate
+          FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, newInsertNums);
+          FullTextUtils.checkConsistency(sdb, csName, clName);
+
+          System.out.println("----------success check drop cs while index processing to clear in ES----------");
+     }
+
+     public boolean insertData(DBCollection cl, int insertNums) {
+          List<BSONObject> insertObjs = new ArrayList<>();
+          try {
+               for (int i = 0; i < 100; i++) {
+                    for (int j = 0; j < insertNums / 100; j++) {
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_14397_" + FullTextUtils.getRandomString(10)
+                                   + "', b: '" + FullTextUtils.getRandomString(32) + "', c: '"
+                                   + FullTextUtils.getRandomString(64) + "', d: '" + FullTextUtils.getRandomString(64)
+                                   + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '"
+                                   + FullTextUtils.getRandomString(128) + "'}"));
+
                     }
                     cl.insert(insertObjs, 0);
                     insertObjs.clear();
-                }
-	   } catch (BaseException e) {
-                if(-321 == e.getErrorCode()) {
-                     return false;
-                }
-                throw e;
-           }
+               }
+          } catch (BaseException e) {
+               if (-321 == e.getErrorCode()) {
+                    return false;
+               }
+               throw e;
+          }
 
-           return true;
-      }
+          return true;
+     }
 
 }

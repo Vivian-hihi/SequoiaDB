@@ -21,104 +21,106 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import org.elasticsearch.client.*;
 
 /**
-* FileName: Hash12016.java
-* test content: 插入记录并创建全文索引再执行hash切分
-* @author liuxiaoxuan
-    * @Date    2018.11.20
-*/
-public class Hash12016 extends SdbTestBase{
+ * FileName: Hash12016.java test content: 插入记录并创建全文索引再执行hash切分
+ * 
+ * @author liuxiaoxuan
+ * @Date 2018.11.20
+ */
+public class Hash12016 extends SdbTestBase {
 
-      private Sequoiadb sdb = null;
-      private CollectionSpace cs = null;
-      private DBCollection cl = null;
-      private String clName = "ES_hash_12016";
-      private String srcGroupName = "";
-      private String destGroupName = "";
+     private Sequoiadb sdb = null;
+     private CollectionSpace cs = null;
+     private DBCollection cl = null;
+     private String clName = "ES_hash_12016";
+     private String srcGroupName = "";
+     private String destGroupName = "";
 
-      private Client esClient = null;
+     private Client esClient = null;
 
-      @BeforeClass
-      public void setUp() {
-           esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
-           sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
-           if (CommLib.isStandAlone(sdb)) {
-                throw new SkipException("skip StandAlone");
-           }
-           ArrayList<String> groupsName = CommLib.getDataGroupNames(sdb);
-           if (groupsName.size() < 2) {
-                throw new SkipException("current environment less than tow groups ");
-           }
+     @BeforeClass
+     public void setUp() {
+          esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+          sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+          if (CommLib.isStandAlone(sdb)) {
+               throw new SkipException("skip StandAlone");
+          }
+          ArrayList<String> groupsName = CommLib.getDataGroupNames(sdb);
+          if (groupsName.size() < 2) {
+               throw new SkipException("current environment less than tow groups ");
+          }
 
-           // create hash cl 
-           srcGroupName = groupsName.get(0);
-           destGroupName = groupsName.get(1);
-           cs = sdb.getCollectionSpace(csName);
-           cl = cs.createCollection(clName, (BSONObject) JSON
-                     .parse("{ShardingKey:{a:1},ShardingType:'hash',Group:'" + srcGroupName + "'}"));
-      }
-	
-      @AfterClass
-      public void tearDown() {
-           cs.dropCollection(clName);
-           sdb.close();
-           esClient.close();
-      }
+          // create hash cl
+          srcGroupName = groupsName.get(0);
+          destGroupName = groupsName.get(1);
+          cs = sdb.getCollectionSpace(csName);
+          cl = cs.createCollection(clName,
+                    (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash',Group:'" + srcGroupName + "'}"));
+     }
 
-      @Test
-      public void test() {
-           // create fulltext, with shardingkey and non-shardingkey
-           String textIndexName = "fulltext12016";
-           BSONObject indexObj = new BasicBSONObject();
-           indexObj.put("a", "text");
-           indexObj.put("b", "text");
-           indexObj.put("c", "text");
-           indexObj.put("d", "text");
-           indexObj.put("e", "text");
-           indexObj.put("f", "text");
-           cl.createIndex(textIndexName, indexObj, false, false);
+     @AfterClass
+     public void tearDown() {
+          cs.dropCollection(clName);
+          sdb.close();
+          esClient.close();
+     }
 
-           // insert big datas
-           boolean isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS);
-           if(!isSuccess) {
-                throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
-           }
+     @Test
+     public void test() {
+          // create fulltext, with shardingkey and non-shardingkey
+          String textIndexName = "fulltext12016";
+          BSONObject indexObj = new BasicBSONObject();
+          indexObj.put("a", "text");
+          indexObj.put("b", "text");
+          indexObj.put("c", "text");
+          indexObj.put("d", "text");
+          indexObj.put("e", "text");
+          indexObj.put("f", "text");
+          cl.createIndex(textIndexName, indexObj, false, false);
 
-           // split
-           cl.split(srcGroupName, destGroupName, 50);
+          // insert big datas
+          boolean isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS);
+          if (!isSuccess) {
+               throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
+          }
 
-           List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
- 
-           // check consistency
-           FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
-           FullTextUtils.checkConsistency(sdb, csName, clName);
+          // split
+          cl.split(srcGroupName, destGroupName, 50);
 
-           // drop fulltext
-           FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
+          List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
 
-           // check fulltext deleted
-           FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
-      }
-	
-      public boolean insertData(DBCollection cl, int insertNums) {
-           List<BSONObject> insertObjs = new ArrayList<>();
-           try {
-                for(int i = 0; i < 100; i++){
-                    for (int j = 0; j < insertNums/100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_hash12016_" + i*j + "', b: '" + FullTextUtils.getRandomString(32)
-                                      + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '" + FullTextUtils.getRandomString(64)
-                                      + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '" + FullTextUtils.getRandomString(128) + "'}"));
+          // check consistency
+          FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
+          FullTextUtils.checkConsistency(sdb, csName, clName);
+
+          // drop fulltext
+          FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
+
+          // check fulltext deleted
+          FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
+     }
+
+     public boolean insertData(DBCollection cl, int insertNums) {
+          List<BSONObject> insertObjs = new ArrayList<>();
+          try {
+               for (int i = 0; i < 100; i++) {
+                    for (int j = 0; j < insertNums / 100; j++) {
+                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_hash12016_" + i * j + "', b: '"
+                                   + FullTextUtils.getRandomString(32) + "', c: '" + FullTextUtils.getRandomString(64)
+                                   + "', d: '" + FullTextUtils.getRandomString(64) + "', e: '"
+                                   + FullTextUtils.getRandomString(128) + "', f: '" + FullTextUtils.getRandomString(128)
+                                   + "'}"));
 
                     }
                     cl.insert(insertObjs, 0);
                     insertObjs.clear();
-                }
-	   } catch (BaseException e) {
-                if(-321 == e.getErrorCode()) {
-                     return false;
-                }
-                throw e;
-           }
+               }
+          } catch (BaseException e) {
+               if (-321 == e.getErrorCode()) {
+                    return false;
+               }
+               throw e;
+          }
 
-           return true;
-      }
+          return true;
+     }
 }
