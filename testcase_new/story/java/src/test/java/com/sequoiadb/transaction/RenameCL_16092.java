@@ -1,4 +1,4 @@
-package com.sequoiadb.rename.transaction;
+package com.sequoiadb.transaction;
 
 import java.util.Arrays;
 import java.util.Random;
