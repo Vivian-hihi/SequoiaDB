@@ -155,7 +155,7 @@ namespace engine
       // Dependency : this function is called by acquire() only; the caller
       //              shall acquire the latch first.
       //
-      BOOLEAN _isFull() const
+      OSS_INLINE BOOLEAN _isFull() const
       {
          return _numOfObjs - 1 <= _acquiredCounter ? TRUE : FALSE ;
       }
@@ -169,7 +169,7 @@ namespace engine
       // Dependency : this function is called by acquire() only, which shall
       //              acquire the latch first. 
       //
-      BOOLEAN _isUpToLimit() const
+      OSS_INLINE BOOLEAN _isUpToLimit() const
       {
          return _numOfObjs >= _maxNumOfObjs ? TRUE : FALSE ;
       }
@@ -184,7 +184,7 @@ namespace engine
       // Dependency : this function is internal/private helper function
       //              called by getObjPtrByIndex(), acquire(), release() 
       //              
-      _objX * _getObjXByIndex( const UTIL_OBJIDX idx )
+      OSS_INLINE _objX * _getObjXByIndex( const UTIL_OBJIDX idx )
       {
          _objX * pObj     = NULL ;
          _objX * pSegList = NULL ;
@@ -293,7 +293,7 @@ namespace engine
       // Dependency : this function shall be called after the class is
       //              initialized. It expects an correct index, i.e.,
       //              idx < _numOfObjs
-      T * getObjPtrByIndex( const UTIL_OBJIDX idx ) ;
+      OSS_INLINE T * getObjPtrByIndex( const UTIL_OBJIDX idx ) ;
 
       //
       // Description: get an object's index by its address
@@ -604,10 +604,13 @@ namespace engine
 
    // get an object's address by its index 
    template < class T >
-   T * _utilSegmentManager< T >::getObjPtrByIndex( const UTIL_OBJIDX idx )
+   OSS_INLINE T * _utilSegmentManager< T >::getObjPtrByIndex
+   (
+      const UTIL_OBJIDX idx
+   )
    {
-      T * pObj          = NULL ;
-      _objX *pObjX      = _getObjXByIndex( idx ) ;
+      T * pObj     = NULL ;
+      _objX *pObjX = _getObjXByIndex( idx ) ;
       if ( pObjX )
       {
          pObj = ( T * )&( pObjX->_obj ) ;
