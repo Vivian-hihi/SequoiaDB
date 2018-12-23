@@ -190,9 +190,10 @@ namespace engine
          _objX * pSegList = NULL ;
          UTIL_OBJIDX i    = 0 ;
          UTIL_OBJIDX j    = 0 ;
-
+#ifdef _DEBUG
          SDB_ASSERT( ( idx < _numOfObjs ) && IS_VALID_SEG_OBJ_INDEX( idx ),
                      "Invalid object index." ) ;
+#endif
          if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
          {
             // i = idx / _delta ;
@@ -437,12 +438,14 @@ namespace engine
       _objX       * pSegTmp  = NULL ;
       UTIL_OBJIDX   newSize  = _numOfObjs + _delta ;
 
+#ifdef _DEBUG
       SDB_ASSERT( _isInitialized,
                   "Expand can only be done when segment is initialized" ) ;
       SDB_ASSERT( _isFull(),
                   "Expand can only be done if all current objs are acquired" ) ;
       SDB_ASSERT( ( newSize <= _maxNumOfObjs ),
                   "Expand failed due to exceed object maximum threshold."  ) ;
+#endif
 
       if (    ( UTIL_INVALID_OBJ_INDEX != newSize )
            && ( newSize <= _maxNumOfObjs )
@@ -493,7 +496,9 @@ namespace engine
             }
             rc = SDB_OOM ;
 
+#ifdef _DEBUG
             SDB_ASSERT( ( SDB_OK == rc ), "Failed to expand, out of memory" ) ;
+#endif
          }
       }
       else
@@ -697,8 +702,10 @@ namespace engine
       }
       else
       {
+#ifdef _DEBUG
          SDB_ASSERT( ( _isInitialized && _list ),
                      "_utilSegmentManager has to be initialized." ) ;
+#endif
          rc = SDB_SYS ;
          goto error ;
       }
@@ -708,7 +715,9 @@ namespace engine
       {
          _latch.release() ;
       }
+#ifdef _DEBUG
       SDB_ASSERT( ( SDB_OK == rc ), "Acquire failed" ) ;
+#endif
       return rc ;
    error:
       goto done ;
@@ -739,7 +748,9 @@ namespace engine
       else
       {
          rc = SDB_INVALIDARG ;
+#ifdef _DEBUG
          SDB_ASSERT( ( SDB_OK == rc ), "Invalid object address" ) ;
+#endif
       }
       return rc ;
    }
@@ -802,23 +813,29 @@ namespace engine
                // error, probably the caller or someone else,
                // returned/released a non-acquired object
                rc = SDB_SYS ;
+#ifdef _DEBUG
                SDB_ASSERT( ( SDB_OK == rc ),
                            "Can't release object more than acquired" ) ;
+#endif
                goto error ;
             }
          }
          else
          {
             rc = SDB_SYS ;
+#ifdef _DEBUG
             SDB_ASSERT( ( SDB_OK == rc ),
                         "Can't release an object without acquiring" ) ;
+#endif
             goto error ;
          }
       }
       else
       {
+#ifdef _DEBUG
          SDB_ASSERT( ( _isInitialized && _list ),
                      "_utilSegmentManager has to be initialized." ) ;
+#endif
          rc = SDB_SYS ;
          goto error ;
       }
@@ -829,7 +846,9 @@ namespace engine
          _latch.release() ;
          bLatched = FALSE ;
       }
+#ifdef _DEBUG
       SDB_ASSERT( ( SDB_OK == rc ), "Release failed" ) ;
+#endif
       return rc ;
    error:
       goto done ;
