@@ -212,7 +212,13 @@ namespace engine
       ) ;
      
       // get LRB Header handle ( address/pointer ) by LRB Header index 
-      dpsTransLRBHeader * getLRBHdrPtrByIdx( const UTIL_OBJIDX hdrIdx ) ;
+      dpsTransLRBHeader * getLRBHdrPtrByIdx
+      (
+         const UTIL_OBJIDX hdrIdx
+      )
+      {
+         return _getLRBHdrPtrByIdx( hdrIdx ) ;
+      }
 
       // acquire lock bucket latch, wrapper of _acquireOpLatch()
       OSS_INLINE void acquireLockBktLatch( const dpsTransLockId & lockId )
@@ -233,27 +239,30 @@ namespace engine
       // testAcquire, release, releaseAll, hasWait etc on ) :
       //     . latch _rwMutext in shared mode
       //     . latch a bucket slot in exclusively
-      void _acquireOpLatch ( const UTIL_OBJIDX bucketIndex )
+      OSS_INLINE void _acquireOpLatch ( const UTIL_OBJIDX bucketIndex )
       {
          _rwMutex.lock_r() ;
          _LockHdrBkt[ bucketIndex ].hashHdrLatch.get() ;
       }
 
       // release latches for normal lock operation
-      void _releaseOpLatch ( const UTIL_OBJIDX bucketIndex )
+      OSS_INLINE void _releaseOpLatch ( const UTIL_OBJIDX bucketIndex )
       {
          _LockHdrBkt[ bucketIndex ].hashHdrLatch.release() ;
          _rwMutex.release_r() ;
       }
 
       // release/return a LRB Header to LRB Header manager
-      INT32 _releaseLRBHdr( const UTIL_OBJIDX hdrIdx ) ;
+      OSS_INLINE INT32 _releaseLRBHdr( const UTIL_OBJIDX hdrIdx ) ;
+
+      // get LRB Header handle ( address/pointer ) by LRB Header index
+      dpsTransLRBHeader * _getLRBHdrPtrByIdx( const UTIL_OBJIDX hdrIdx ) ;
 
       // get LRB pointer by its index
-      dpsTransLRB * _getLRBPtrByIdx( const UTIL_OBJIDX idx ) ;
+      OSS_INLINE dpsTransLRB * _getLRBPtrByIdx( const UTIL_OBJIDX idx ) ;
 
       // release/return a LRB to LRB manager 
-      INT32 _releaseLRB( const UTIL_OBJIDX idx );
+      OSS_INLINE INT32 _releaseLRB( const UTIL_OBJIDX idx );
 
       // search LRB list ( owner, waiter or upgrade list ) and find
       // the one with given eduId
