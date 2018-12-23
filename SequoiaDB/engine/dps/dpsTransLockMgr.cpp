@@ -195,7 +195,7 @@ namespace engine
    // Output:      none
    // Return:      the pointer of the object or NULL
    // Dependency:  the lock manager must be initialized
-   dpsTransLRBHeader * dpsTransLockManager::getLRBHdrPtrByIdx
+   OSS_INLINE dpsTransLRBHeader * dpsTransLockManager::_getLRBHdrPtrByIdx
    (
       const UTIL_OBJIDX hdrIdx
    )
@@ -221,7 +221,10 @@ namespace engine
    // Return:      the pointer of the object or NULL
    // Dependency:  the lock manager must be initialized
    //
-   dpsTransLRB * dpsTransLockManager::_getLRBPtrByIdx( const UTIL_OBJIDX idx )
+   OSS_INLINE dpsTransLRB * dpsTransLockManager::_getLRBPtrByIdx
+   (
+      const UTIL_OBJIDX idx
+   )
    {
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
       SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( idx ), "Invalid LRB index." ) ;
@@ -243,7 +246,10 @@ namespace engine
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR, "dpsTransLockManager::_releaseLRBHdr" )
-   INT32 dpsTransLockManager::_releaseLRBHdr( const UTIL_OBJIDX hdrIdx )
+   OSS_INLINE INT32 dpsTransLockManager::_releaseLRBHdr
+   (
+      const UTIL_OBJIDX hdrIdx
+   )
    {
 #ifdef _DEBUG
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR ) ;
@@ -253,7 +259,7 @@ namespace engine
       SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
                   "Invalid LRB Header index." ) ;
       // reset LRB Header
-      dpsTransLRBHeader * pLRBHdr = getLRBHdrPtrByIdx( hdrIdx ) ;   
+      dpsTransLRBHeader * pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;   
       pLRBHdr->nextLRBHdrIdx = UTIL_INVALID_OBJ_INDEX ;
       pLRBHdr->ownerLRBIdx   = UTIL_INVALID_OBJ_INDEX ;
       pLRBHdr->waiterLRBIdx  = UTIL_INVALID_OBJ_INDEX ;
@@ -285,7 +291,7 @@ namespace engine
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASELRB, "dpsTransLockManager::_releaseLRB" )
-   INT32 dpsTransLockManager::_releaseLRB( const UTIL_OBJIDX idx )
+   OSS_INLINE INT32 dpsTransLockManager::_releaseLRB( const UTIL_OBJIDX idx )
    {
 #ifdef _DEBUG
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASELRB ) ;
@@ -346,7 +352,7 @@ namespace engine
       BOOLEAN found = FALSE ;
       while ( IS_VALID_SEG_OBJ_INDEX( hdrIdx ) )
       {
-         pLRBHdr = getLRBHdrPtrByIdx( hdrIdx ) ;
+         pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;
          if ( lockId == pLRBHdr->lockId )
          {
             found = TRUE ;
@@ -915,7 +921,7 @@ namespace engine
          SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( pLRB->lrbHdrIdx ),
                      "Invalid LRB Header." );
          hdrIdx  = pLRB->lrbHdrIdx ;
-         pLRBHdr = getLRBHdrPtrByIdx( hdrIdx ) ;
+         pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;
 
          // sanity check, panic if fails.
          if ( ! ( pLRBHdr->lockId == lockId ) )
@@ -1090,17 +1096,17 @@ namespace engine
          // if the first one is the one to be removed
          if ( idxDel == idxBegin )
          {
-            pLRBHeader = getLRBHdrPtrByIdx( idxDel ) ;
+            pLRBHeader = _getLRBHdrPtrByIdx( idxDel ) ;
             idxBegin   = pLRBHeader->nextLRBHdrIdx ;
          }
          else
          {
             while ( IS_VALID_SEG_OBJ_INDEX( idx ) )
             {
-               plrbHdr = getLRBHdrPtrByIdx( idx ) ;
+               plrbHdr = _getLRBHdrPtrByIdx( idx ) ;
                if ( idxDel == plrbHdr->nextLRBHdrIdx )
                {
-                  pLRBHeader             = getLRBHdrPtrByIdx( idxDel ) ;
+                  pLRBHeader             = _getLRBHdrPtrByIdx( idxDel ) ;
                   plrbHdr->nextLRBHdrIdx = pLRBHeader->nextLRBHdrIdx ;
                   break ;
                }
@@ -2546,7 +2552,7 @@ namespace engine
             // get LRB Header
             if ( IS_VALID_SEG_OBJ_INDEX( hdrIdx ) )
             {
-               pLRBHdr = getLRBHdrPtrByIdx( hdrIdx ) ;
+               pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;
                lockId  = pLRBHdr->lockId ;
 #ifdef _DEBUG
                PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
@@ -2993,7 +2999,7 @@ namespace engine
    {
       if ( IS_VALID_SEG_OBJ_INDEX( idx )  )
       {
-         dpsTransLRBHeader *pLRBHdr = getLRBHdrPtrByIdx( idx ) ;
+         dpsTransLRBHeader *pLRBHdr = _getLRBHdrPtrByIdx( idx ) ;
          ossSnprintf( pBuf, bufSz,
                       "LRB Header: %u, nextLRBHdrIdx: %u, "
                       "ownerLRBIdx: %u, waiterLRBIdx : %u, upgradeLRBIdx: %u, "
@@ -3025,7 +3031,7 @@ namespace engine
       CHAR * pStr  = ( prefix ? prefix : pDummy ) ;
       if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
       {
-         dpsTransLRBHeader *pLRBHdr = getLRBHdrPtrByIdx( idx ) ;
+         dpsTransLRBHeader *pLRBHdr = _getLRBHdrPtrByIdx( idx ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%sLRB Header    : %u"OSS_NEWLINE, pStr,
                                idx ) ;
@@ -3304,7 +3310,7 @@ namespace engine
          SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
                      "Invalid LRB Header index." ) ;
 
-         pLRBHdr = getLRBHdrPtrByIdx( hdrIdx ) ;
+         pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;
 
          monLock._id    = pLRBHdr->lockId ;
          monLock._mode  = pLRB->lockMode ;
@@ -3337,7 +3343,7 @@ namespace engine
          SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
                      "Invalid LRB Header index." ) ;
 
-         pLRBHdr = getLRBHdrPtrByIdx( hdrIdx ) ;
+         pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;
 
          lockCur._id = pLRBHdr->lockId ;
          lockCur._mode = pLRB->lockMode ;
