@@ -200,15 +200,15 @@ namespace engine
       const UTIL_OBJIDX hdrIdx
    )
    {
- 
+#ifdef _DEBUG 
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
       SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
                   "Invalid LRB Header index." ) ;
-
+#endif
       dpsTransLRBHeader * pLRBHdr = _pLRBHdrMgr->getObjPtrByIndex( hdrIdx ) ;
-
+#ifdef _DEBUG 
       SDB_ASSERT( pLRBHdr, "Invalid LRB Header." ) ;
-      
+#endif      
       return pLRBHdr ;
    }
 
@@ -226,12 +226,14 @@ namespace engine
       const UTIL_OBJIDX idx
    )
    {
+#ifdef _DEBUG 
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
       SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( idx ), "Invalid LRB index." ) ;
-      
+#endif      
       dpsTransLRB * pLRB = _pLRBMgr->getObjPtrByIndex( idx );
+#ifdef _DEBUG 
       SDB_ASSERT( pLRB, "Invalid LRB." ) ;
-     
+#endif     
       return pLRB ;
    }
 
@@ -253,11 +255,11 @@ namespace engine
    {
 #ifdef _DEBUG
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR ) ;
-#endif
 
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
       SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
                   "Invalid LRB Header index." ) ;
+#endif
       // reset LRB Header
       dpsTransLRBHeader * pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;   
       pLRBHdr->nextLRBHdrIdx = UTIL_INVALID_OBJ_INDEX ;
@@ -267,10 +269,9 @@ namespace engine
       pLRBHdr->lockId.reset() ;
       // release LRB Header
       INT32 rc = _pLRBHdrMgr->release( hdrIdx );
-
+#ifdef _DEBUG
       SDB_ASSERT( SDB_OK == rc, "Failed to release LRB Header" ) ;
 
-#ifdef _DEBUG
       PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR,
                  PD_PACK_STRING( "Release LRB Header:" ),
                  PD_PACK_UINT( hdrIdx ) ) ; 
@@ -295,10 +296,10 @@ namespace engine
    {
 #ifdef _DEBUG
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASELRB ) ;
-#endif
 
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
       SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( idx ), "Invalid LRB index." ) ;
+#endif
       // reset LRB
       dpsTransLRB * pLRB  = _getLRBPtrByIdx( idx ) ;
       pLRB->dpsTxExectr   = NULL ;
@@ -309,10 +310,9 @@ namespace engine
       pLRB->lockMode      = DPS_TRANSLOCK_MAX ; 
       // release LRB
       INT32 rc = _pLRBMgr->release( idx );
-
+#ifdef _DEBUG
       SDB_ASSERT( SDB_OK == rc, "Failed to release LRB" ) ;
 
-#ifdef _DEBUG
       PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASELRB,
                  PD_PACK_STRING( "Release LRB:" ),
                  PD_PACK_UINT( idx ) ) ; 
@@ -745,8 +745,10 @@ namespace engine
       const dpsTransLockId & lockId
    )
    {
+#ifdef _DEBUG
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
       if ( dpsTxExectr )
+#endif
       {
          // get the index of last LRB in the EDU LRB chain
          // and add the new LRB into the chain
@@ -894,15 +896,14 @@ namespace engine
    )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST ) ;
-
+#ifdef _DEBUG
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-
+#endif
       UTIL_OBJIDX idx = dpsTxExectr->getWaiterLRBIdx() ;
       UTIL_OBJIDX idxNext = UTIL_INVALID_OBJ_INDEX ;
       UTIL_OBJIDX hdrIdx  = UTIL_INVALID_OBJ_INDEX ;
       dpsTransLRB *pLRB = NULL , *plrb = NULL ;
       dpsTransLRBHeader * pLRBHdr = NULL ;
-
 #ifdef _DEBUG
       EDUID eduIDTrc = 0 ;
 
@@ -914,12 +915,13 @@ namespace engine
                  PD_PACK_STRING( "LRB to be removed:" ),
                  PD_PACK_UINT( idx ) ) ;
 #endif
-
       if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
       {
          pLRB = _getLRBPtrByIdx( idx ) ;
+#ifdef _DEBUG
          SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( pLRB->lrbHdrIdx ),
                      "Invalid LRB Header." );
+#endif
          hdrIdx  = pLRB->lrbHdrIdx ;
          pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;
 
@@ -995,8 +997,9 @@ namespace engine
          if ( IS_VALID_SEG_OBJ_INDEX( idxNext ) )
          {
             plrb = _getLRBPtrByIdx( idxNext ) ;
+#ifdef _DEBUG
             SDB_ASSERT( pLRB->lrbHdrIdx == plrb->lrbHdrIdx, "Invalid LRB" ) ;
-
+#endif
             // the EDU was waken up ( _waitLock returned SDB_OK )
             if ( FALSE == removeLRBHeader ) 
             {
@@ -1042,8 +1045,10 @@ namespace engine
          _releaseLRB( idx ) ;      
 
          // when LRB Header is empty, release it if necessary
+#ifdef _DEBUG
          SDB_ASSERT( ( IS_VALID_SEG_OBJ_INDEX( hdrIdx ) && pLRBHdr ),
                      "Invalid LRB Header." ) ;
+#endif
          if (    removeLRBHeader
               && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx   ) )
               && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
@@ -1253,9 +1258,9 @@ namespace engine
    )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST ) ;
-
+#ifdef _DEBUG
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-
+#endif
       INT32 rc = SDB_OK ;
       UTIL_OBJIDX hdrIdxNew = UTIL_INVALID_OBJ_INDEX ,
                   lrbIdxNew = UTIL_INVALID_OBJ_INDEX ,
@@ -1289,9 +1294,9 @@ namespace engine
                  PD_PACK_UINT( bktLatched ),
                  PD_PACK_ULONG( pdpsTxResInfo ),
                  PD_PACK_ULONG( eduId ) ) ;
-#endif
 
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
+#endif
 
       // acquire and prepare new LRB and LRB Header
       if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
@@ -1304,10 +1309,12 @@ namespace engine
          {
             goto error ;
          }
+#ifdef _DEBUG
          SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( lrbIdxNew ) &&
                      IS_VALID_SEG_OBJ_INDEX( hdrIdxNew ) &&
                      pLRBNew &&
                      pLRBHdrNew, "Invalid LRB or LRB Header." ) ;
+#endif
          bFreeLRB       = TRUE ;
          bFreeLRBHeader = TRUE ;
 #ifdef _DEBUG
@@ -1381,10 +1388,11 @@ namespace engine
       PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
                  PD_PACK_STRING( "Found LRB Header:" ),
                  PD_PACK_UINT( hdrIdx ) ) ;
-#endif
-      // found the LRB header with same lockId
+
       SDB_ASSERT( ( NULL != pLRBHdr ), "Invalid LRB Header" ) ;
       SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ), "Invalid LRB Header index");
+#endif
+      // found the LRB header with same lockId
 
       // update the lrbHdrIdx of new LRB to current LRB Header index
       if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
@@ -1463,10 +1471,11 @@ namespace engine
          // in owner list
          //
          pLRB = _getLRBPtrByIdx( idxEduId ) ;
+#ifdef _DEBUG
          SDB_ASSERT( pLRB && ( pLRB->lrbHdrIdx == hdrIdx ),
                      "Invalid LRB or the lrbHdrIdx doesn't match "
                      "the LRB Header index" ) ;
-
+#endif
          // if current holding lock mode covers the requesting mode,
          // then job is done
          if ( dpsLockCoverage( pLRB->lockMode, requestLockMode ) )
@@ -1542,9 +1551,7 @@ namespace engine
                pdpsTxResInfo->_lockType = pLRBIncomp->lockMode ;
                pdpsTxResInfo->_eduID    = pLRBIncomp->dpsTxExectr->getEDUID();
             }
-
 #ifdef _DEBUG
-
             eduIDTrc = pLRBIncomp->dpsTxExectr->getEDUID() ;
 
             PD_TRACE3( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
@@ -1574,7 +1581,9 @@ namespace engine
                {
                   // when idxPrevEduId is the valid, the pLRBPrevEduId
                   // must be a valid address. 
+#ifdef _DEBUG
                   SDB_ASSERT( pLRBPrevEduId, "Invalid LRB index " ) ;
+#endif
                   pLRBPrevEduId->nextLRBIdx = pLRB->nextLRBIdx ;
                }
                else
@@ -1656,9 +1665,7 @@ namespace engine
                pdpsTxResInfo->_lockType = pLRBIncomp->lockMode ;
                pdpsTxResInfo->_eduID    = pLRBIncomp->dpsTxExectr->getEDUID();
             }
-
 #ifdef _DEBUG
-
             eduIDTrc = pLRBIncomp->dpsTxExectr->getEDUID() ;
 
             PD_TRACE3( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
@@ -1666,7 +1673,6 @@ namespace engine
                        PD_PACK_ULONG( eduIDTrc ),
                        PD_PACK_BYTE( pLRBIncomp->lockMode ) ) ; 
 #endif
-
             // job done
             goto done ;
 
@@ -1823,8 +1829,9 @@ namespace engine
       dpsTransLRB       *      & pLRBNew
    )
    {
+#ifdef _DEBUG
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-
+#endif
       INT32 rc = SDB_OK ;
 
       // acquire a free LRB
@@ -1834,9 +1841,10 @@ namespace engine
          PD_LOG( PDERROR, "Failed to acquire a free LRB (rc=%d)", rc );
          goto error ;
       }
+#ifdef _DEBUG
       SDB_ASSERT( pLRBNew,
                   "_prepareNewLRBAndHeader: LRB can't be null" ) ;
-
+#endif
       // acuqire a free LRB Header
       rc = _pLRBHdrMgr->acquire( hdrIdxNew, pLRBHdrNew ) ;
       if ( SDB_OK != rc )
@@ -1848,9 +1856,10 @@ namespace engine
                  "Failed to acquire a free LRB Header (rc=%d)", rc );
          goto error ;
       }
+#ifdef _DEBUG
       SDB_ASSERT( pLRBHdrNew,
                   "_prepareNewLRBAndHeader: LRB Header can't be null" ) ;
-
+#endif
       // initial the new LRB
       // and mark the new LRB Header index in its lrbHdrIdx
       pLRBNew->dpsTxExectr    = dpsTxExectr ;
@@ -1928,9 +1937,9 @@ namespace engine
                  PD_PACK_BYTE( requestLockMode ),
                  PD_PACK_ULONG( pContext ),
                  PD_PACK_ULONG( pdpsTxResInfo ) ) ;
-#endif
-      SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 
+      SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
+#endif
       INT32 rc  = SDB_OK ,
             rc2 = SDB_OK ; // context pause or resume return code
       dpsTransLockId     iLockId ;
@@ -1939,8 +1948,9 @@ namespace engine
 
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
       BOOLEAN bLatched   = FALSE ;
-
+#ifdef _DEBUG
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+#endif
       if ( ! lockId.isValid() )
       {
          rc = SDB_SYS ;
@@ -2169,9 +2179,7 @@ namespace engine
    )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASE ) ;
-
 #ifdef _DEBUG
-
       EDUID eduIDTrc = 0 ;
 
       PD_TRACE3( SDB_DPSTRANSLOCKMANAGER__RELEASE,
@@ -2179,11 +2187,9 @@ namespace engine
                  PD_PACK_STRING( lockId.toString().c_str() ),
                  PD_PACK_UINT( bForceRelease ) ) ;
 
-#endif
-
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
-
+#endif
       UTIL_OBJIDX hdrIdx         = UTIL_INVALID_OBJ_INDEX ,
                   ownerLrbIdx    = UTIL_INVALID_OBJ_INDEX ,
                   prevOwnerIdx   = UTIL_INVALID_OBJ_INDEX ,
@@ -2291,8 +2297,10 @@ namespace engine
             }
             else
             {
+#ifdef _DEBUG
                SDB_ASSERT( pOwnerLRB->refCounter > 0,
                            "refCounter is negative" ) ;
+#endif
                pOwnerLRB->refCounter -- ; 
             }
 
@@ -2410,9 +2418,10 @@ namespace engine
                  PD_PACK_ULONG( dpsTxExectr ),
                  PD_PACK_STRING( lockId.toString().c_str() ),
                  PD_PACK_UINT( bForceRelease ) ) ;
-#endif
+
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+#endif
 
       if ( lockId.isValid() )
       {
@@ -2472,8 +2481,9 @@ namespace engine
       PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASEALL,
                  PD_PACK_ULONG( dpsTxExectr ),
                  PD_PACK_STRING( lockId.toString().c_str() ) ) ;
-#endif
+
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
+#endif
 
       dpsTransLockId iLockId;
  
@@ -2527,8 +2537,9 @@ namespace engine
 #ifdef _DEBUG
       PD_TRACE1( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
                  PD_PACK_ULONG( dpsTxExectr ) ) ;
-#endif
+
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
+#endif
 
       if ( IS_VALID_SEG_OBJ_INDEX( dpsTxExectr->getLastLRBIdx() ) )
       {
@@ -2558,8 +2569,9 @@ namespace engine
                PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
                           PD_PACK_STRING( "Releasing lock:" ),
                           PD_PACK_STRING( lockId.toString().c_str() ) ) ;
-#endif
+
                SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+#endif
 
                // release the lock 
                _releaseAll( dpsTxExectr, lockId ) ;
@@ -2612,7 +2624,9 @@ namespace engine
    void dpsTransLockManager::_wakeUp( _dpsTransExecutor *dpsTxExectr )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__WAKEUP ) ;
+#ifdef _DEBUG
       SDB_ASSERT( dpsTxExectr, "dpsTransExecutor can't be NULL" ) ;
+#endif
       dpsTxExectr->wakeup() ;
       PD_TRACE_EXIT( SDB_DPSTRANSLOCKMANAGER__WAKEUP ) ;
    }
@@ -2634,8 +2648,9 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__WAITLOCK ) ;
-
+#ifdef _DEBUG
       SDB_ASSERT( dpsTxExectr, "dpsTransExecutor can't be NULL" ) ;
+#endif
       rc = dpsTxExectr->wait( _lockTimeout.fetch() ) ;
 
       PD_TRACE_EXITRC( SDB_DPSTRANSLOCKMANAGER__WAITLOCK, rc ) ;
@@ -2685,16 +2700,18 @@ namespace engine
                  PD_PACK_STRING( lockId.toString().c_str() ),
                  PD_PACK_BYTE( requestLockMode ),
                  PD_PACK_ULONG( pdpsTxResInfo ) ) ;
-#endif
+
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
+#endif
 
       INT32 rc = SDB_OK ;
       dpsTransLockId iLockId;
       DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
       BOOLEAN isIntentLockAcquired = FALSE;
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
-
+#ifdef _DEBUG
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+#endif
       if ( ! lockId.isValid() )
       {
          rc = SDB_SYS ;
@@ -2795,15 +2812,16 @@ namespace engine
                  PD_PACK_STRING( lockId.toString().c_str() ),
                  PD_PACK_BYTE( requestLockMode ),
                  PD_PACK_ULONG( pdpsTxResInfo ) ) ;
-#endif
-      SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 
+      SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
+#endif
       INT32 rc = SDB_OK;
       dpsTransLockId iLockId;
       DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
-
+#ifdef _DEBUG
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+#endif
       if ( ! lockId.isValid() )
       {
          rc = SDB_SYS ;
