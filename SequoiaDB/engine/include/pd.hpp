@@ -52,7 +52,7 @@
       #include <assert.h>
       #define SDB_ASSERT(cond,str)  assert(cond)
    #else
-      #define SDB_ASSERT(cond,str)  do{ if( !(cond)) {} } while ( 0 )
+      #define SDB_ASSERT(cond,str)
    #endif // _DEBUG
 #else
    #ifdef _DEBUG
@@ -61,7 +61,7 @@
          if( !(cond) ) { pdassert(str,__FUNC__,__FILE__,__LINE__) ; } \
       } while ( 0 )
    #else
-      #define SDB_ASSERT(cond,str)  do{ if( !(cond)) {} } while ( 0 )
+      #define SDB_ASSERT(cond,str)
    #endif // _DEBUG
 #endif // SDB_CLIENT
 
