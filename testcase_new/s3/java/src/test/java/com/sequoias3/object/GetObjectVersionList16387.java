@@ -49,7 +49,7 @@ public class GetObjectVersionList16387 extends S3TestBase {
 		}
 		
 		//put object key = "/dir/dir1/16387" twice again
-		String currentKeyName = keyName+"1/16387";
+		String currentKeyName = keyName+"1/16387";//TODO:1、建议修改变量名，这里的变量名和上面的同名变量名时不同的意思，需要区别命名
 		s3Client.putObject(bucketName, currentKeyName, "object_file16387");
 		expresultList.add(currentKeyName);
 		PutObjectResult result = s3Client.putObject(bucketName, currentKeyName, "object_file16387");
@@ -78,6 +78,7 @@ public class GetObjectVersionList16387 extends S3TestBase {
 		Assert.assertEquals(versions.size(), expresultList.size(),"The number of results returned does not match the expected value");
 		for( int i = 0;i< versions.size();i++){
 			Assert.assertEquals(versions.get(i).getKey(),expresultList.get(i), "commonPrefixes is wrong");
+			//TODO:1、多个版本的key名，前面已经定义了变量，这里可以直接用变量，或者补充描述
 			if(versions.get(i).getKey().equals("/dir/dir1/16387")){
 				if(versions.get(i).getVersionId().equals(latestVersionId)){
 					Assert.assertEquals(versions.get(i).isLatest(), true, "isLatest is wrong");

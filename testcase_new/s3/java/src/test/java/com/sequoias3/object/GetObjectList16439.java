@@ -48,8 +48,8 @@ public class GetObjectList16439 extends S3TestBase {
 				currentKeyName = keyName+i+"/subdir"+j+"/16439";
 				s3Client.putObject(bucketName, currentKeyName, "object_file16439");
 			}
-			expCurrentKeyName = keyName + i +"/";
-			expresultList.add(expCurrentKeyName);
+			expCurrentKeyName = keyName + i +"/";//TODO:1、定义变量命名不准确，建议补充注释或者修改变量名，不是keyName
+			expresultList.add(expCurrentKeyName);//TODO:2、同问题1，expresultList建议加上注释或者优化变量名
 		}
 	}
 
@@ -59,12 +59,13 @@ public class GetObjectList16439 extends S3TestBase {
 						.withPrefix(prefix).withDelimiter(delimiter).withMaxKeys(maxKeys);
 		ListObjectsV2Result result; 
 		//currentTurn is query times
-		int currentTurn = 0;
+		int currentTurn = 0;//TODO:3、建议直接定义为查询次数
 		
 		do{
 			currentTurn++;
 			result = s3Client.listObjectsV2(req);
 			List<String> commprefixesResult = result.getCommonPrefixes();
+			//TODO:4、下面代码请简化处理，已经有预置数据，每次查询的结果时可预期的，可直接给出预期结果判断
 			if(currentTurn == Math.ceil((double)samePrefixObjNum/maxKeys)){
 				if(samePrefixObjNum%maxKeys==0){
 					Assert.assertEquals(result.getKeyCount(), maxKeys, "The expected results do not match the actual number of returns");
@@ -83,7 +84,7 @@ public class GetObjectList16439 extends S3TestBase {
 			req.setContinuationToken(NextContinuationToken);
 			
 		}while(result.isTruncated());
-		
+		//TODO:5、补充总的记录数检查，参考上述代码，使用的if-else，如果只是走了一个分支，无法检测到。
 		runSuccess =true;
 	}
 
@@ -94,7 +95,7 @@ public class GetObjectList16439 extends S3TestBase {
 			s3Client.deleteBucket(bucketName);
 		}
 	}
-
+	//TODO:6、可提取公共方法。
 	private void checkListObjectsV2Result(List<String> resultList,int startKeyNum){
 		Collections.sort(expresultList);
 		for( int i = 0;i< resultList.size();i++){

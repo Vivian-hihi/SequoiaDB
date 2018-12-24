@@ -21,7 +21,7 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 public class CreateObject16348 extends S3TestBase {
 	private boolean runSuccess = false;
-	String non_existent_bucketName = "bucket16348";
+	String non_existent_bucketName = "bucket16348";//TODO:1、建议增加private
 	String keyName = "/aa/bb/object16348.png";
 	private AmazonS3 s3Client = null;
 	private String expContent = "file16348";

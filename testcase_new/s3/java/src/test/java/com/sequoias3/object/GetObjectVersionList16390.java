@@ -49,10 +49,11 @@ public class GetObjectVersionList16390 extends S3TestBase {
 
 		for(int i = 0 ; i < keyName.length ; i ++ ){
 			objReault = s3Client.putObject(bucketName, keyName[i], file);
-			if(i == 1 || i == 2){
+			if(i == 1 || i == 2){//TODO:1、这里的条件有什么含义？
 				expEtagList.add(objReault.getETag());
 			}
 		}
+		//TODO:2、这种比较时间太复杂，如果比较LastModified，可直接比较范围[创建前时间、创建对象后时间]
 		beforeCalEarliest = Calendar.getInstance();
 		beforeCalEarliest.setTime(beforeDate);
 		
@@ -83,9 +84,10 @@ public class GetObjectVersionList16390 extends S3TestBase {
 		for( int i = 0; i < expEtagList.size(); i++){
 			Assert.assertEquals(versions.get(i).getKey(), keyName[i], "versions' key is wrong");
 			Assert.assertEquals(versions.get(i).getVersionId(), "null", "versions' versionid is wrong");
-			Assert.assertEquals(versions.get(i).getSize(), file.length(), "versions' size is wrong");
+			//TODO:3、上传对象内容都一样，etag都是一样的，这样比较没有意义
+			Assert.assertEquals(versions.get(i).getSize(), file.length(), "versions' size is wrong");			
 			Assert.assertEquals(versions.get(i).getETag(), expEtagList.get(i), "versions' Etag is wrong");
-			
+			//TODO:4、比较时间请直接比较范围内时间，请TODO2
 			Calendar actCal = Calendar.getInstance();
 			actCal.setTime(versions.get(i).getLastModified());
 			actCal.set(Calendar.HOUR, actCal.get(Calendar.HOUR)- 8 );

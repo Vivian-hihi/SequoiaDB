@@ -41,12 +41,12 @@ public class GetObjectVersionList16389 extends S3TestBase {
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 		
 		for(int i = 0 ; i < objectTotalNum ; i ++ ){
-			keyName[i] = "/dir"+i+"/16389";
+			keyName[i] = "/dir"+i+"/16389";//TODO:1、可以放到下面的循环语句中
 		}
 		//put multiple objects
 		for(int i = 0 ; i < objectTotalNum ; i++){
 			s3Client.putObject(bucketName, keyName[i], "object_file16389");
-			expVersionsList.add(keyName[i]);
+			expVersionsList.add(keyName[i]);//TODO：2、请修改变量名，和实际存储内容一致
 		}
 		//delete object key = "/dir1/16389" and "/dir4/16389"
 		s3Client.deleteObject(bucketName, keyName[1]);
@@ -86,6 +86,7 @@ public class GetObjectVersionList16389 extends S3TestBase {
 			Assert.assertEquals(versions.get(i).getKey(), expVersionsList.get(i), "versions is wrong");
 			Assert.assertEquals(versions.get(i).isDeleteMarker(),false, "isdeleteMarKer is wrong");
 		}
+		//TODO:3、这段代码请优化，前面已经指定删除的对象，这里直接比较结果就可以了，另外versions.get(expVersionsList.size() + i)请补充下描述。
 		for(int i = 0 ; i < expDeleteMarKersList.size() ; i++){
 			Assert.assertEquals(versions.get(expVersionsList.size() + i).getKey(), expDeleteMarKersList.get(i), "deleteMarKerList key is wrong");
 			Assert.assertEquals(versions.get(expVersionsList.size() + i).isDeleteMarker(),true, "isdeleteMarKer is wrong");

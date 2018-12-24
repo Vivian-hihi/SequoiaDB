@@ -28,7 +28,7 @@ public class GetObjectList16440 extends S3TestBase {
 	private String[] keyNames = {"%6Ftest!_ST.-(test0|0.txt","%6Ftest!_、/abc*st/ab）|1.txt","%6Ftest!_@#$%~^@><|2.txt"};
 	private String prefix = "%6Ftest!_";
 	private String delimiter = "|";
-	private List<String> expresultList = new ArrayList<String>(3000);
+	private List<String> expresultList = new ArrayList<String>(3000);//TODO:1、建议修改下变量名，符合实际意义，另外没有必要生气
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
@@ -45,7 +45,7 @@ public class GetObjectList16440 extends S3TestBase {
 			expresultList.add(expCommPrefixes);
 		}
 	}
-
+	//TODO:1、没有覆盖包含contents的记录信息，请参考文本用例中列出的测试点。
 	@Test
 	public void testGetObject() throws Exception {
 		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url")
@@ -65,7 +65,7 @@ public class GetObjectList16440 extends S3TestBase {
 			s3Client.deleteBucket(bucketName);
 		}
 	}
-
+	//TODO:2、可提取公共方法使用。
 	private void checkListObjectsV2Result(List<String> resultList){
 		Collections.sort(expresultList);
 		Assert.assertEquals(resultList.size(), expresultList.size(), "The expected results do not match the actual number of returns");

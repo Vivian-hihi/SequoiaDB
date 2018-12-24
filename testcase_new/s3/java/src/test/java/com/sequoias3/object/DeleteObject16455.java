@@ -66,6 +66,7 @@ public class DeleteObject16455 extends S3TestBase {
 	private void tearDown() throws Exception {
 		try {
 			if (runSuccess) {
+				//TODO:1、删除object和bucket可以去掉，删除用户已包含该操作
 				CommLib.deleteAllObjectVersions(s3ClientA, bucketName);
 				s3ClientA.deleteBucket(bucketName);
 				UserUtils.deleteUser(userNameA);

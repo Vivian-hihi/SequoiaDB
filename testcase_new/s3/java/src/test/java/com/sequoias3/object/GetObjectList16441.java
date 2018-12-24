@@ -81,7 +81,7 @@ public class GetObjectList16441 extends S3TestBase {
 			UserUtils.deleteUser(userName);
 		}
 	}
-
+	//TODO:1、可提取公共方法，简化代码
 	private void checkCommPrefixesResult(List<String> resultList){
 		Collections.sort(expCommPrefixesList);
 		Assert.assertEquals(resultList.size(), expCommPrefixesList.size(), "The expected results do not match the actual number of returns");

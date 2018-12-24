@@ -29,7 +29,7 @@ import java.io.InputStream;
 public class CreateObject16350 extends S3TestBase {
 	private boolean runSuccess = false;
 	String bucketName = "bucket16350";
-	String keyName = "/aa/bb/object16350";
+	String keyName = "/aa/bb/object16350";//TODO:1、建议增加private
 	private AmazonS3 s3Client = null;
 	private String beforeMd5 = null;
 	private String wrongMd5 = null;

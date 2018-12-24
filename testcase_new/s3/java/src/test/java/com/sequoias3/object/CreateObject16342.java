@@ -25,6 +25,7 @@ import java.util.Date;
  * @version 1.00
  */
 public class CreateObject16342 extends S3TestBase {
+	//TODO:1、建议申明私有变量，bucket和key只对该用例使用
 	String bucketName = "bucket16342";
 	String keyName = "/aa/bb/object16342.png";
 	private AmazonS3 s3Client = null;
@@ -46,12 +47,12 @@ public class CreateObject16342 extends S3TestBase {
 	public void testPutSameNameObject() throws Exception {
 		//put the same object with the same content and different contents.
 		s3Client.putObject(bucketName, keyName, "same_file16342");
-		Thread.sleep(1000);
+		Thread.sleep(1000);//TODO:2、为啥要sleep？
 		s3Client.putObject(bucketName, keyName, "same_file16342");
 		Thread.sleep(1000);
 		expContent = "different_file16342";
 		s3Client.putObject(bucketName, keyName, expContent);
-		expCreateTime = new Date().toString();
+		expCreateTime = new Date().toString();//TODO:3、获取当前时间为创建对象时间不准确，自动化可以获取最后修改时间不超过当前时间，手工检查时间准确性
 		
 		//check result
 		checkPutObjectResult();

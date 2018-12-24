@@ -44,7 +44,7 @@ public class DeleteObject16448 extends S3TestBase {
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 		for (int i = 0; i < oneObjVersionNum; i++) {
 			s3Client.putObject(bucketName, keyName, file + "." + i);
-
+			//TODO:1、这里写的太复杂了，已经预置版本号，可直接按版本号规则存入版本号旧可以了，如versionId分别为0/1/2
 			if (i < oneObjVersionNum - 1) {
 				S3VersionSummary version = new S3VersionSummary();
 				version.setKey(keyName);

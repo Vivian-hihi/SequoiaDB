@@ -25,7 +25,7 @@ import java.io.IOException;
  */
 public class CreateObject16345 extends S3TestBase {
 	private boolean runSuccess = false;
-	String bucketName = "bucket16345";
+	String bucketName = "bucket16345";//TODO:1、建议申明私有变量，bucket和key只对该用例使用
 	String keyName = "object16345";
 	private AmazonS3 s3Client = null;
 	private File localPath = null;
@@ -52,7 +52,7 @@ public class CreateObject16345 extends S3TestBase {
 				checkPutObjectResultRandom(currVersionID,currentExpContent);
 			}
 		}
-		
+		//TODO:2、只是检查当前对象元数据信息，遗漏其它版本元数据信息的检测。
 		String currentContent = expContent+".199";
 		String version = putObjResult.getVersionId();
 		String eTag = putObjResult.getETag();

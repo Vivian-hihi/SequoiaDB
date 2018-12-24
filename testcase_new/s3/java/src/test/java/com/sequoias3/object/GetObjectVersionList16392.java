@@ -40,11 +40,12 @@ public class GetObjectVersionList16392 extends S3TestBase {
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 		for(int i = 0 ; i < keyName.length ; i ++ ){
-			s3Client.putObject(bucketName, keyName[i], file);
+			s3Client.putObject(bucketName, keyName[i], file);//TODO:1、可以和下面的for循环合并，请加描述信息。建议不同版本对象输入不同内容
 		}
 		for(int i = 0 ; i < keyName.length ; i ++ ){
 			s3Client.putObject(bucketName, keyName[i], file);
 		}
+		//TODO:2、请参加描述信息，为啥只存keyName【2】和keyName【3】
 		expVersionsKeyName.add(keyName[2]);
 		expVersionsKeyName.add(keyName[2]);
 		expVersionsKeyName.add(keyName[3]);
@@ -72,6 +73,7 @@ public class GetObjectVersionList16392 extends S3TestBase {
 	private void checkVersionsResult(List<S3VersionSummary> verList){
 		Assert.assertEquals(verList.size(), expVersionsKeyName.size(), "The number of results returned does not match the expected value");
 		for(int i = 0 ; i < verList.size() ; i++){
+			//TODO:3、没有比较key属性信息和版本信息
 			Assert.assertEquals(verList.get(i).getKey(), expVersionsKeyName.get(i), "the result of versions is wrong!");
 		}
 	}

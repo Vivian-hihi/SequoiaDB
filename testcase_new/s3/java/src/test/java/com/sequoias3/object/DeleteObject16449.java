@@ -49,11 +49,12 @@ public class DeleteObject16449 extends S3TestBase {
 
 		for (int i = 0; i < oneObjVersionNum; i++) {
 			s3Client.putObject(bucketName, keyName, file + "." + i);
+			//TODO:1、可直接按版本号规则存入版本号旧可以了，如versionId分别为0/1/2
 			if (i < oneObjVersionNum - 1) {
 				S3VersionSummary version = new S3VersionSummary();
 				version.setKey(keyName);
 				version.setVersionId(String.valueOf((oneObjVersionNum - 1) - i));
-				expVersionList.add(version);
+				expVersionList.add(version);//TODO:2、expVersionList只存了两个版本的对象，建议增加描述信息
 			}
 		}
 	}
@@ -61,6 +62,7 @@ public class DeleteObject16449 extends S3TestBase {
 	@Test
 	public void testGetObjectList() throws Exception {
 		// delete object with latest version id
+		//TODO:3、直接参考版本号规则给出预期版本号，如historyVersionId = '0';
 		String historyVersionId = String.valueOf(0);
 		s3Client.deleteVersion(bucketName, keyName, historyVersionId);
 
@@ -74,7 +76,7 @@ public class DeleteObject16449 extends S3TestBase {
 		// check the object version list
 		ListVersionsRequest req = new ListVersionsRequest().withBucketName(bucketName);
 		VersionListing versionList = s3Client.listVersions(req);
-		List<S3VersionSummary> verList = versionList.getVersionSummaries();
+		List<S3VersionSummary> verList = versionList.getVersionSummaries();		
 		Assert.assertEquals(verList.size(), expVersionList.size());
 		for (int i = 0; i < verList.size(); i++) {
 			Assert.assertEquals(verList.get(i).getKey(), expVersionList.get(i).getKey());

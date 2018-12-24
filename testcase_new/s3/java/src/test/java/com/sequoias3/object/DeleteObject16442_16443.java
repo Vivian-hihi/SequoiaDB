@@ -39,7 +39,6 @@ public class DeleteObject16442_16443 extends S3TestBase {
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		s3Client = CommLib.buildS3Client();
-
 	}
 
 	@Test

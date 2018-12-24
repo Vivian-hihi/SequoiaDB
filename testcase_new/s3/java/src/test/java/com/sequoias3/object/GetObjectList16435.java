@@ -67,7 +67,8 @@ public class GetObjectList16435 extends S3TestBase {
 			currentTurn++;
 			result = s3Client.listObjectsV2(req);
 			List<S3ObjectSummary> objectSummaries= result.getObjectSummaries();
-			// if current turn is the last turn
+			// if current turn is the last turn 
+			//TODO:1、这里的注释建议优化下，last trun不准确吧，另外最后一次查询应该明确list记录数的，为啥还有两个条件分支？
 			if(currentTurn == Math.ceil((double)objectTotalNum/maxKeys)){
 				if(objectTotalNum % maxKeys == 0){
 					Assert.assertEquals(maxKeys, result.getKeyCount(),"The result of the last round of return is not equal to the expected result");
@@ -77,12 +78,13 @@ public class GetObjectList16435 extends S3TestBase {
 			}else{
 				Assert.assertEquals(maxKeys, result.getKeyCount(),"The number of returned results is not equal to maxKeys");
 			}
+			//TODO:4、建议list完后一起比较结果，如果某次查询结果比较有问题只能看到这次查询的记录数，无法看到后面的记录数，不方便定位
 			checkListObjectsV2Result(objectSummaries, currentTurn);
 			
 			String NextContinuationToken = result.getNextContinuationToken();
 			req.setContinuationToken(NextContinuationToken);
 		}while(result.isTruncated());
-		
+		//TODO:2、这里需要补充总记录数检测，最终所有的记录都要list出来
 		runSuccess =true;
 	}
 
@@ -97,7 +99,7 @@ public class GetObjectList16435 extends S3TestBase {
 	private void checkListObjectsV2Result(List<S3ObjectSummary> objectSummaries, int currentTurn){
 		Collections.sort(expresultList);
 		int startKeyNum = (currentTurn - 1)* maxKeys;
-		for( int i = 0;i< objectSummaries.size();i++){
+		for( int i = 0;i< objectSummaries.size();i++){//TODO:3、assert出错建议打印startKeyNum数，如果出现问题方便定位
 			Assert.assertEquals(objectSummaries.get(i).getKey(),expresultList.get(startKeyNum), "commonPrefixes is wrong");
 			startKeyNum++;
 		}

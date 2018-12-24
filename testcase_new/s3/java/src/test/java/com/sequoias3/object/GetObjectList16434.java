@@ -60,7 +60,7 @@ public class GetObjectList16434 extends S3TestBase {
 			expresultList2.add(currentKeyName);
 		}
 	}
-
+	//TODO:1、start-after匹配条件建议从中间对象开始，不要从起始开始，如果start-after匹配失效则无法检测到
 	@Test
 	public void testGetObjectList() throws Exception {
 		// First query

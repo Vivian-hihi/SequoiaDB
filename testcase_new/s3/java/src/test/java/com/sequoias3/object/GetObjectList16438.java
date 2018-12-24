@@ -47,7 +47,7 @@ public class GetObjectList16438 extends S3TestBase {
 		}
 	}
 
-	@Test(enabled = false)
+	@Test(enabled = false)//TODO:1、屏蔽用例请标注下原因，如有问题单请附上单号，另外屏蔽用例需要把before和after都屏蔽的
 	public void testGetObjectList() throws Exception {
 		int keyCount = 5;
 		//first query
@@ -77,7 +77,7 @@ public class GetObjectList16438 extends S3TestBase {
 			s3Client.deleteBucket(bucketName);
 		}
 	}
-
+	//TODO:2、该方法有很多用例使用，建议提取公共方法，不需要每个用例都写相同代码
 	private void checkListObjectsV2Result(List<S3ObjectSummary> objectSummaries ,int expCount){
 		Assert.assertEquals(objectSummaries.size(), expCount, "The number of returned results is wrong");
 		Collections.sort(expresultList);

@@ -50,7 +50,7 @@ public class GetObjectList16433 extends S3TestBase {
 	}
 
 	@Test
-	public void testGetObjectList() throws Exception {
+	public void testGetObjectList() throws Exception {//TODO:1、startAfter建议指定匹配部分对象记录，如果指定所有的话功能失效无法检测到
 		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName)
 						.withPrefix(prefix).withDelimiter(delimiter).withStartAfter("/dir/123");
 		ListObjectsV2Result result; 
@@ -77,7 +77,7 @@ public class GetObjectList16433 extends S3TestBase {
 			s3Client.deleteBucket(bucketName);
 		}
 	}
-
+    //TODO:2、检测结果代码太复杂，请简化代码，另外需要比较获取的内容是否正确
 	private void checkListObjectsV2Result(List<String> resultList,int currentTurn){
 		int lastIndex = 0;
 		Collections.sort(expresultList);

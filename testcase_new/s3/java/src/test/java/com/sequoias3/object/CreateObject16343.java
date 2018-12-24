@@ -24,7 +24,7 @@ import java.util.Date;
  */
 public class CreateObject16343 extends S3TestBase {
 	private boolean runSuccess = false;
-	String bucketName = "bucket16343";
+	String bucketName = "bucket16343";//TODO:1、建议申明私有变量，bucket和key只对该用例使用
 	String keyName = "/aa/bb/object16343.png";
 	private AmazonS3 s3Client = null;
 	private File localPath = null;
@@ -48,18 +48,18 @@ public class CreateObject16343 extends S3TestBase {
 		//put the same object with contents.
 		firstTime_expContent = "first_time_file16343";
 		PutObjectResult putObjResult = s3Client.putObject(bucketName, keyName,firstTime_expContent);
-		expFirstCreateTime = new Date().toString();
+		expFirstCreateTime = new Date().toString();//TODO:2、获取当前时间为创建对象时间不准确，如ci环境比较慢的情况下可能存在误差较大
 		historyVersionId = putObjResult.getVersionId();
 		
-		Thread.sleep(1000);
+		Thread.sleep(1000);//TODO:3、用例中没有特殊场景不要sleep
 		CommLib.setBucketVersioning(s3Client, bucketName, "Suspended");
 		
 		secondTime_expContent = "second_time_file16343";
 		s3Client.putObject(bucketName, keyName,secondTime_expContent);
-		expSecondCreateTime = new Date().toString();
+		expSecondCreateTime = new Date().toString();//TODO:4、获取当前时间为创建对象时间不准确
 		
 		//check result
-		checkCurrentObjectResult();
+		checkCurrentObjectResult();//TODO:5、这两个check方法实现一致，建议统一命名，另外这两个方法可以传入参数用一个方法减少代码量
 		checkHistoryObjectData();
 		runSuccess = true;
 	}

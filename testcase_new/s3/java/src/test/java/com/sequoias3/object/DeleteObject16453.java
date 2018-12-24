@@ -48,7 +48,7 @@ public class DeleteObject16453 extends S3TestBase {
 			version.setVersionId(String.valueOf(deleteVersionNum-i));
 			expDeleteMarkersList.add(version);
 		}
-		expDeleteMarkersList.size();
+		expDeleteMarkersList.size();//TODO:1、多余的代码吗？
 	}
 
 	@Test
@@ -60,7 +60,7 @@ public class DeleteObject16453 extends S3TestBase {
 		ListVersionsRequest req = new ListVersionsRequest().withBucketName(bucketName);
 		VersionListing versionList = s3Client.listVersions(req);
 		List<S3VersionSummary> verList = versionList.getVersionSummaries();
-		checkDeleteMarkerResult(verList, 0);
+		checkDeleteMarkerResult(verList, 0);//TODO:1、这里的0请给下说明或者定义变量名。
 		
 		// delete the history version of deletemarker
 		s3Client.deleteVersion(bucketName, keyName, "1");
@@ -84,8 +84,8 @@ public class DeleteObject16453 extends S3TestBase {
 	
 	private void checkDeleteMarkerResult(List<S3VersionSummary> verList, int removeIndex){
 		expDeleteMarkersList.remove(removeIndex);
-		Assert.assertEquals(verList.size()-1, expDeleteMarkersList.size());
-		for(int i = 1 ; i < verList.size() ; i++){
+		Assert.assertEquals(verList.size()-1, expDeleteMarkersList.size());//TODO:2、这里比较为啥要把实际的versionList减去一个？
+		for(int i = 1 ; i < verList.size() ; i++){//TODO:3、这里为啥忽略0？
 			Assert.assertEquals(verList.get(i).getKey(), expDeleteMarkersList.get(i-1).getKey());
 			Assert.assertEquals(verList.get(i).isDeleteMarker(), expDeleteMarkersList.get(i-1).isDeleteMarker());
 			Assert.assertEquals(verList.get(i).getVersionId(), expDeleteMarkersList.get(i-1).getVersionId());

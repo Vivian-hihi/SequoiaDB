@@ -41,12 +41,12 @@ public class GetObjectVersionList16388 extends S3TestBase {
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 		
 		for(int i = 0 ; i < objectTotalNum ; i ++ ){
-			keyName[i] = "/dir"+i+"/16388";
+			keyName[i] = "/dir"+i+"/16388";//TODO:1、这个一段代码可以放到下面的循环中。
 		}
 		//put multiple objects
 		for(int i = 0 ; i < objectTotalNum ; i++){
 			s3Client.putObject(bucketName, keyName[i], "object_file16388");
-			expVersionsList.add(keyName[i]);
+			expVersionsList.add(keyName[i]);//TODO:2、该变量名和实际存储内容不符，请修改变量名
 		}
 		
 		//put object key = "/dir/dir1/16388" again
