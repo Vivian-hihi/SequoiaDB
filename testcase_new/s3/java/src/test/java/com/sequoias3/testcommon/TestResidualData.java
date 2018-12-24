@@ -45,11 +45,11 @@ public class TestResidualData extends S3TestBase{
                     while(cursor.hasNext()){
                         if(cursor.getNext().containsField("Name")){
                             if(!cursor.getCurrent().get("Name").equals(S3TestBase.s3UserName)&&!cursor.getCurrent().get("Name").equals(S3TestBase.bucketName)&&!cursor.getCurrent().get("Name").equals(S3TestBase.enableVerBucketName)){
-                                System.out.println(cursor.getCurrent().toString());
+                            	printInfo+=cursor.getCurrent().toString();
                                 errorCount++;
                             }
                         }else{
-                            System.out.println(cursor.getCurrent().toString());
+                        	printInfo+=cursor.getCurrent().toString();
                             errorCount++;
                         }
                     }
@@ -65,7 +65,7 @@ public class TestResidualData extends S3TestBase{
                 if(cursor.hasNext()){
                 	printInfo+="\n===============begin print " + dataCs.getName() +"."+ objectDataList.getName() + " data============";
                     while(cursor.hasNext()){
-                        System.out.println(cursor.getNext().toString());
+                    	printInfo+=cursor.getNext().toString();
                         errorCount++;
                     }
                     printInfo+="===============end print " + dataCs.getName() +"."+ objectDataList.getName() + " data============\n";
