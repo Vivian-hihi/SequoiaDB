@@ -490,9 +490,7 @@ public class GroupMgr {
             try {
                 results.add(group.checkBusiness(printAndThrowAllException));
             } catch (Exception e) {
-                if (printAndThrowAllException) {
-                    throw e;
-                }
+                throw e;
             }
         }
         return results;
