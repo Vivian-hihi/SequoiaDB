@@ -42,7 +42,7 @@ public class S3TestBase {
     protected static String s3AccessKeyId;
     protected static String confTool;
     private static SdbConfTestBase sdbConfTestBase = new SdbConfTestBase();
-    private static String installPath;
+    protected static String installPath;
 
     @Parameters({"HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND",
         "RSRVNODEDIR", "WORKDIR","S3HOSTNAME","S3PORT","S3USERNAME","S3ACCESSKEYID","CONFTOOL"})
@@ -114,7 +114,6 @@ public class S3TestBase {
             getClusterInfo();
             trans_snapshot();
             sdbConfTestBase.closeTransaction(hostName, serviceName);
-            printResidualData();
         } finally {
             stopS3();
         }
@@ -291,69 +290,5 @@ public class S3TestBase {
                 db.close();
             }
         }
-    }
-    
-    private static void printResidualData() throws Exception{
-        int errorCount = 0;
-        Sequoiadb db = null;
-        DBCursor cursor = null;
-        try{
-            db =  new Sequoiadb(coordUrl, "", "");
-            CollectionSpace metaCs = db.getCollectionSpace("MetaCollectionSpace");
-            List<DBCollection> clList = new ArrayList<DBCollection>();
-            List<String> clNameList = metaCs.getCollectionNames();
-            for(String csclName : clNameList){
-                String clname = csclName.substring(metaCs.getName().length()+1);
-                clList.add(metaCs.getCollection(clname));
-            }
-            
-            for(DBCollection cl : clList) {
-                cursor = cl.query();
-                if(cursor.hasNext()) {
-                    System.out.println("\n===============begin print " + metaCs.getName() +"."+ cl.getName() + " data============");
-                    while(cursor.hasNext()){
-                        if(cursor.getNext().containsField("Name")){
-                            if(!cursor.getCurrent().get("Name").equals(s3UserName)&&!cursor.getCurrent().get("Name").equals(bucketName)&&!cursor.getCurrent().get("Name").equals(enableVerBucketName)){
-                                System.out.println(cursor.getCurrent().toString());
-                                errorCount++;
-                            }
-                        }else{
-                            System.out.println(cursor.getCurrent().toString());
-                            errorCount++;
-                        }
-                    }
-                    System.out.println("===============end print " + metaCs.getName() +"."+ cl.getName() + " data==============\n");
-                }
-            }
-            cursor.close();
-            
-            CollectionSpace dataCs = db.getCollectionSpace("DataCollectionSpace");
-            try{
-                DBCollection objectDataList = dataCs.getCollection("ObjectDataList");
-                cursor = objectDataList.listLobs();
-                if(cursor.hasNext()){
-                    System.out.println("\n===============begin print " + dataCs.getName() +"."+ objectDataList.getName() + " data============");
-                    while(cursor.hasNext()){
-                        System.out.println(cursor.getNext().toString());
-                        errorCount++;
-                    }
-                    System.out.println("===============end print " + dataCs.getName() +"."+ objectDataList.getName() + " data============\n");
-                }
-            } catch(BaseException e){
-                Assert.assertEquals(e.getErrorCode(), SDBError.SDB_DMS_NOTEXIST.getErrorCode(), "getCollection ObjectDataList failed");
-            }
-            
-            if(errorCount != 0){
-                throw new Exception("There is data residue problem");
-            }
-        } finally{
-            if(cursor != null){
-                cursor.close();
-            }
-            if(db != null){
-                db.close();
-            }
-        }
-        
     }
 }
