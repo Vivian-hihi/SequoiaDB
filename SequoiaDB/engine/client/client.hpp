@@ -755,7 +755,7 @@ namespace sdbclient
                                      inserting.
                FLG_INSERT_RETURN_OID:    return the value of "_id" field in the record.
 
-          \param [out] id The object id of inserted bson object in current collection, the memory of id will be invalidated when next insert/bulkInsert is performed or the obj is destroyed
+          \param [out] pResult The result of inserting.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -787,7 +787,7 @@ namespace sdbclient
                                      inserting.
                FLG_INSERT_RETURN_OID:    return the value of "_id" field in the record.
 
-          \param [out] id The object id of inserted bson object in current collection, the memory of id will be invalidated when next insert/bulkInsert is performed or the obj is destroyed
+          \param [out] pResult The result of inserting.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -800,7 +800,8 @@ namespace sdbclient
          return pCollection->insert( objs, flags, pResult ) ;
       }
 
-      /** \fn INT32 insert ( bson::BSONObj objs[], INT32 size,
+      /** \fn INT32 insert ( bson::BSONObj objs[], 
+                             INT32 size,
                              INT32 flags = 0,
                              bson::BSONObj *pResult = NULL )
           \brief Insert bson objects into current collection.
@@ -819,6 +820,7 @@ namespace sdbclient
                                      inserting.
                FLG_INSERT_RETURN_OID:    return the value of "_id" field in the records.
 
+          \param [out] pResult The result of inserting.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
