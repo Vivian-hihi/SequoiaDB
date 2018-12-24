@@ -41,19 +41,19 @@ public class TestResidualData extends S3TestBase{
             for(DBCollection cl : clList) {
                 cursor = cl.query();
                 if(cursor.hasNext()) {
-                	printInfo+="\n===============begin print " + metaCs.getName() +"."+ cl.getName() + " data============";
+                	printInfo+="\n===============begin print " + metaCs.getName() +"."+ cl.getName() + " data============\n";
                     while(cursor.hasNext()){
                         if(cursor.getNext().containsField("Name")){
                             if(!cursor.getCurrent().get("Name").equals(S3TestBase.s3UserName)&&!cursor.getCurrent().get("Name").equals(S3TestBase.bucketName)&&!cursor.getCurrent().get("Name").equals(S3TestBase.enableVerBucketName)){
-                            	printInfo+=cursor.getCurrent().toString();
+                            	printInfo+=cursor.getCurrent().toString()+"\n";
                                 errorCount++;
                             }
                         }else{
-                        	printInfo+=cursor.getCurrent().toString();
+                        	printInfo+=cursor.getCurrent().toString()+"\n";
                             errorCount++;
                         }
                     }
-                    printInfo+="===============end print " + metaCs.getName() +"."+ cl.getName() + " data==============\n";
+                    printInfo+="\n===============end print " + metaCs.getName() +"."+ cl.getName() + " data==============\n";
                 }
             }
             cursor.close();
@@ -63,12 +63,12 @@ public class TestResidualData extends S3TestBase{
                 DBCollection objectDataList = dataCs.getCollection("ObjectDataList");
                 cursor = objectDataList.listLobs();
                 if(cursor.hasNext()){
-                	printInfo+="\n===============begin print " + dataCs.getName() +"."+ objectDataList.getName() + " data============";
+                	printInfo+="\n===============begin print " + dataCs.getName() +"."+ objectDataList.getName() + " data============\n";
                     while(cursor.hasNext()){
-                    	printInfo+=cursor.getNext().toString();
+                    	printInfo+=cursor.getNext().toString()+"\n";
                         errorCount++;
                     }
-                    printInfo+="===============end print " + dataCs.getName() +"."+ objectDataList.getName() + " data============\n";
+                    printInfo+="\n===============end print " + dataCs.getName() +"."+ objectDataList.getName() + " data============\n";
                 }
             } catch(BaseException e){
                 Assert.assertEquals(e.getErrorCode(), SDBError.SDB_DMS_NOTEXIST.getErrorCode(), "getCollection ObjectDataList failed");
