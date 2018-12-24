@@ -59,6 +59,7 @@ public class TestDoesObjectExist16708  extends S3TestBase{
 		
 		//test b :指定对象名为合法名  长度边界值为：900个字符
 		keyName = getRandomString(900);
+		s3Client.createBucket(bucketName);
 		PutObjectResult objectResult =  s3Client.putObject(bucketName, keyName, content+"testb");
 		Assert.assertTrue(s3Client.doesObjectExist(bucketName, keyName));
 		ObjectMetadata metadata = s3Client.getObjectMetadata(bucketName, keyName);
