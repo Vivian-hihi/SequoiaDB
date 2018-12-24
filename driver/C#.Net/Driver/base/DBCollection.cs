@@ -1533,8 +1533,8 @@ namespace SequoiaDB
          *     StrictDataMode : Using strict date mode in numeric operations or not
          *                    e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
          *     AutoIncrement : Assign attributes of an autoincrement field or batch autoincrement fields.
-         *                     e.g. {AutoIncrement:{Field:"a",Maxvalue:2000}}, 
-         *                          {AutoIncrement:[{Field:"a",Maxvalue:2000},{Field:"a",Maxvalue:4000}]}
+         *                     e.g. {AutoIncrement:{Field:"a",MaxValue:2000}}, 
+         *                          {AutoIncrement:[{Field:"a",MaxValue:2000},{Field:"a",MaxValue:4000}]}
          * \note Can't alter attributes about split in partition collection; After altering a collection to
          *       be a partition collection, need to split this collection manually
          * \exception SequoiaDB.BaseException
@@ -1866,8 +1866,8 @@ namespace SequoiaDB
          *     StrictDataMode : Using strict date mode in numeric operations or not
          *                    e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
          *     AutoIncrement : Assign attributes of an autoincrement field or batch autoincrement fields.
-         *                     e.g. {AutoIncrement:{Field:"a",Maxvalue:2000}}
-         *                          {AutoIncrement:[{Field:"a",Maxvalue:2000},{Field:"a",Maxvalue:4000}]}
+         *                     e.g. {AutoIncrement:{Field:"a",MaxValue:2000}}
+         *                          {AutoIncrement:[{Field:"a",MaxValue:2000},{Field:"a",MaxValue:4000}]}
          * \note Can't alter attributes about split in partition collection; After altering a collection to
          *       be a partition collection, need to split this collection manually
          * \exception SequoiaDB.BaseException
