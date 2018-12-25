@@ -90,6 +90,7 @@ namespace engine
       INT32 _createUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w = 1 ) ;
       INT32 _valid( BSONObj &obj, BOOLEAN notEmpty ) ;
       INT32 _validSource( BSONObj &obj, BOOLEAN chkPasswd ) ;
+      INT32 _validOptions( const BSONObj &options ) ;
 
    private:
       BOOLEAN _authEnabled ;

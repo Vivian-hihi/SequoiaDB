@@ -518,44 +518,106 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_AUTHCB__VALID ) ;
-      BSONElement usr, passwd ;
+      BSONElement usr, passwd, option ;
       INT32 fieldNum = 0 ;
+
       if ( obj.isEmpty() )
       {
-         PD_TRACE0 ( SDB_AUTHCB__VALID ) ;
          goto error ;
       }
 
       usr = obj.getField( SDB_AUTH_USER ) ;
-      if ( usr.eoo() || String != usr.type() ||
-           ( usr.String().empty() && notEmpty ) )
+      if ( String != usr.type() )
       {
-         PD_TRACE0 ( SDB_AUTHCB__VALID ) ;
+         goto error ;
+      }
+      else if ( notEmpty && 0 == ossStrlen( usr.valuestr() ) )
+      {
          goto error ;
       }
       ++fieldNum ;
 
       passwd = obj.getField( SDB_AUTH_PASSWD ) ;
-      if ( passwd.eoo() || String != passwd.type() ||
-           ( passwd.String().empty() && notEmpty ) )
+      if ( String != passwd.type() )
       {
-         PD_TRACE0 ( SDB_AUTHCB__VALID ) ;
+         goto error ;
+      }
+      else if ( notEmpty && 0 == ossStrlen( passwd.valuestr() ) )
+      {
          goto error ;
       }
       ++fieldNum ;
 
-      if ( fieldNum != obj.nFields() )
+      option = obj.getField( FIELD_NAME_OPTIONS ) ;
+      if ( Object == option.type() )
       {
-         PD_TRACE0 ( SDB_AUTHCB__VALID ) ;
+         ++fieldNum ;
+         rc = _validOptions( option.embeddedObject() ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+      else if ( !option.eoo() )
+      {
          goto error ;
       }
+
+      if ( fieldNum != obj.nFields() )
+      {
+         goto error ;
+      }
+
    done:
       PD_TRACE_EXITRC ( SDB_AUTHCB__VALID, rc ) ;
       return rc ;
    error:
-      rc = SDB_INVALIDARG ;
+      rc = rc ? rc : SDB_INVALIDARG ;
       PD_LOG( PDDEBUG, "invalid obj of the auth[%s]",
               obj.toString().c_str() ) ;
+      goto done ;
+   }
+
+   INT32 _authCB::_validOptions( const BSONObj &options )
+   {
+      INT32 rc = SDB_OK ;
+
+      BSONObjIterator itr( options ) ;
+      while ( itr.more() )
+      {
+         BSONElement e = itr.next() ;
+
+         if ( 0 == ossStrcmp( e.fieldName(), FIELD_NAME_AUDIT_MASK ) )
+         {
+            UINT32 mask = 0 ;
+            if ( String != e.fieldName() )
+            {
+               PD_LOG( PDERROR, "Field[%s] is invalid in option[%s]",
+                       FIELD_NAME_AUDIT_MASK, options.toString().c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            rc = pdString2AuditMask( e.valuestr(), mask ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Field[%s] is invalid in option[%s]",
+                       FIELD_NAME_AUDIT_MASK, options.toString().c_str() ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Invalid field[%s] in option[%s]",
+                    e.fieldName(), options.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 
