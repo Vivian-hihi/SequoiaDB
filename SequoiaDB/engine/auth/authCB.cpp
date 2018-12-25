@@ -590,7 +590,7 @@ namespace engine
          if ( 0 == ossStrcmp( e.fieldName(), FIELD_NAME_AUDIT_MASK ) )
          {
             UINT32 mask = 0 ;
-            if ( String != e.fieldName() )
+            if ( String != e.type() )
             {
                PD_LOG( PDERROR, "Field[%s] is invalid in option[%s]",
                        FIELD_NAME_AUDIT_MASK, options.toString().c_str() ) ;
