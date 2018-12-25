@@ -132,12 +132,6 @@ INT32 clientAppendAggrRequestCpp ( CHAR **ppBuffer, INT32 *bufferSize,
                                    const CHAR *obj,
                                    BOOLEAN endianConvert ) ;
 
-INT32 clientBuildOpenLobMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
-                                const CHAR *pMeta,
-                                SINT32 flags, SINT16 w,
-                                UINT64 reqID,
-                                BOOLEAN endianConvert ) ;
-
 INT32 clientBuildLobMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
                             INT32 msgType, const CHAR *pMeta,
                             SINT32 flags, SINT16 w,
@@ -146,6 +140,12 @@ INT32 clientBuildLobMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
                             const UINT32 *len,
                             const CHAR *data,
                             BOOLEAN endianConvert ) ;
+
+INT32 clientBuildOpenLobMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
+                                const CHAR *pMeta,
+                                SINT32 flags, SINT16 w,
+                                UINT64 reqID,
+                                BOOLEAN endianConvert ) ;
 
 INT32 clientBuildRemoveLobMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
                                   const CHAR *pMeta,
