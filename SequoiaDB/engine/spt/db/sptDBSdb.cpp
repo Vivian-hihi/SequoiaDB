@@ -1007,6 +1007,13 @@ namespace engine
       INT32 rc = SDB_OK ;
       string username ;
       string passwd ;
+      BSONObj options ;
+
+      if ( arg.argc() > 3 )
+      {
+         detail = BSON( SPT_ERR << "arguments exceed 3" ) ;
+         goto error ;
+      }
 
       rc = arg.getString( 0, username ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -1032,6 +1039,15 @@ namespace engine
          goto error ;
       }
 
+      rc = arg.getBsonobj( 2, options ) ;
+      if ( rc && SDB_OUT_OF_BOUND != rc )
+      {
+         detail = BSON( SPT_ERR << ( arg.hasErrMsg() ?
+                                     arg.getErrMsg() :
+                                     "Options must be object" ) ) ;
+         goto error ;
+      }
+
       if ( SDB_MAX_USERNAME_LENGTH < username.size() )
       {
          rc = SDB_INVALIDARG ;
@@ -1046,7 +1062,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _sptSdb.createUsr( username.c_str(), passwd.c_str() ) ;
+      rc = _sptSdb.createUsr( username.c_str(), passwd.c_str(), options ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to create user" ) ;
