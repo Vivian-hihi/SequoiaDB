@@ -1012,6 +1012,7 @@ namespace engine
       if ( arg.argc() > 3 )
       {
          detail = BSON( SPT_ERR << "arguments exceed 3" ) ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
