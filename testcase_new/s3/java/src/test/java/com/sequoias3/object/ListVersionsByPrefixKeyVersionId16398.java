@@ -66,6 +66,7 @@ public class ListVersionsByPrefixKeyVersionId16398 extends S3TestBase {
         for(String objectName: objectNames){
             expKeys.add(objectName);
         }
+        //TODO:4、需要补充测试点，key存在不满足prefix的记录，该用例中所有对象都满足prefix，返回所有记录
        //check
         checkResult(vsList,prefix,keyMarker,versionIdMarker,objectNames.length*versionNum,expKeys);
         runSuccess = true;
@@ -97,7 +98,7 @@ public class ListVersionsByPrefixKeyVersionId16398 extends S3TestBase {
         for (int i = 0; i < vsSummaryList.size(); i++) {
             S3VersionSummary versionSummary = vsSummaryList.get(i);
             Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            if(!key.equals(versionSummary.getKey())){
+            if(!key.equals(versionSummary.getKey())){//TODO:1、这里的if判断没有意义，建议去掉，直接存实际获取的key
                 actKeys.add(versionSummary.getKey());
             }
             key = versionSummary.getKey();
@@ -105,7 +106,7 @@ public class ListVersionsByPrefixKeyVersionId16398 extends S3TestBase {
         Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actObjectNames = " + actKeys + ",keys = " + objectNames);
     }
 
-
+  //TODO:2、多个用例都用到这段代码，建议提取公共方法
     private VersionListing listVersionsByPreKeyVersion(String bucketName,String prefix,String keyMarker,String versionIdMarker){
         ListVersionsRequest request = new ListVersionsRequest();
         request.setBucketName(bucketName);
@@ -115,6 +116,7 @@ public class ListVersionsByPrefixKeyVersionId16398 extends S3TestBase {
         return s3Client.listVersions(request);
     }
 
+    //TODO:3、多个用例都用到这段代码，建议提取公共方法
     private PutObjectResult putObject(String bucketName, String key, String filePath) {
         PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
         ObjectMetadata metaData = new ObjectMetadata();

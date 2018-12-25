@@ -44,10 +44,11 @@ public class ListVersionsByDelimiterMaxKeys16407 extends S3TestBase {
             }
         }
     }
-
+    //TODO:2、不同的test请描述下测试点
     @Test
     private void testGtMaxKeys() throws Exception {
         String delimiter = "/";
+        //TODO:1、参考文本用例，没有必要知道keyMarker和versionIdMarcker参数
         String keyMarker = "acr";
         String versionIdMarker = "1";
 
@@ -70,6 +71,7 @@ public class ListVersionsByDelimiterMaxKeys16407 extends S3TestBase {
     @Test
     private void testLtMaxKeys() throws Exception {
         String delimiter = "/";
+        //TODO:4、参考文本用例，没有必要知道keyMarker和versionIdMarcker参数
         String keyMarker = "abc";
         String versionIdMarker = "1";
 
@@ -77,7 +79,7 @@ public class ListVersionsByDelimiterMaxKeys16407 extends S3TestBase {
         VersionListing vsList = listVersionsByDelimiterMaxKeys(bucketName, delimiter, 1, keyMarker, versionIdMarker);
         List<String> expCommonPrefixes1 = new ArrayList<String>();
         expCommonPrefixes1.add("air/");
-        if (vsList.isTruncated()) {
+        if (vsList.isTruncated()) {//TODO:5、多次返回还需要验证最终返回记录的结果，确保所有记录返回正确
             checkResult(vsList, delimiter, expCommonPrefixes1,new ArrayList<String>());
         } else {
             Assert.fail("vsList.isTruncated() must be true");
@@ -124,7 +126,7 @@ public class ListVersionsByDelimiterMaxKeys16407 extends S3TestBase {
         List<String> actKeys = new ArrayList<String>();
         for (S3VersionSummary versionSummary : vsSummaryList) {
             Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            if(!key.equals(versionSummary.getKey())){
+            if(!key.equals(versionSummary.getKey())){//TODO:3、这里不需要if分支判断，建议优化逻辑，尽量简洁
                 actKeys.add(versionSummary.getKey());
             }
             key = versionSummary.getKey();

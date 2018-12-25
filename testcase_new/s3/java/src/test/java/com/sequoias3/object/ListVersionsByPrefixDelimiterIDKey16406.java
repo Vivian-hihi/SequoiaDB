@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
+//TODO:1、注释描述的是16405，需要修改
 /**
  * @Description: seqDB-16405 ::带prefix、keyMarker、versionIdMarker和delimiter查询对象版本列表，不匹配prefix
  * @author fanyu
@@ -49,14 +49,14 @@ public class ListVersionsByPrefixDelimiterIDKey16406 extends S3TestBase {
             objectNames.add(objectNameBase + "/16406-" + i);
         }
         for (int i = objectNum / 2; i < objectNum; i++) {
-            objectNames.add(objectNameBase + ":16406-" + i);
+            objectNames.add(objectNameBase + ":16406-" + i);            
         }
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (int i = 0; i < objectNum; i++) {
-            for (int j = 0; j < versionNum; j++) {
+            for (int j = 0; j < versionNum; j++) {//TODO:2、只是一个版本，没有必要写循环
                 putObject(bucketName, objectNames.get(i), filePathList.get(0));
             }
         }
@@ -66,13 +66,15 @@ public class ListVersionsByPrefixDelimiterIDKey16406 extends S3TestBase {
     private void test() throws Exception {
         String prefix = "dir";
         String delimiter = "/";
-        String keyMarker = "air";
+        String keyMarker = "air";//TODO:2、构造的keyname中没有匹配air的key名
         String versionIdMarker = "1";
 
         //list versions by prefix/delimiter/currentversionId/key
         VersionListing vsList = listVersionsByPreDelimiter(bucketName, prefix, delimiter, keyMarker, versionIdMarker);
         List<String> commonPrefixes = new ArrayList<String>();
         commonPrefixes.add("dir/");
+        //TODO:3、参考用例中的描述，第一次的查询的返回的记录数应该是1000条，需要比较下记录数        
+        //TODO:4、预置keysList定义太复杂，建议优化或者增加描述信息，这里的getMaxKeys默认就是1000，可以直接用或者校验最大值，另外有其他方法尽量不要用subList
         checkResult(vsList, prefix, delimiter, commonPrefixes, objectNames.subList(objectNum / 2, objectNum / 2 + vsList.getMaxKeys() - 1));
 
         //list versions by prefix/delimiter/cusrrentversionId/key
@@ -116,7 +118,7 @@ public class ListVersionsByPrefixDelimiterIDKey16406 extends S3TestBase {
         for(int i = 0; i < vsSummaryList.size(); i++){
             S3VersionSummary versionSummary = vsSummaryList.get(i);
             Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            if(!key.equals(versionSummary.getKey())){
+            if(!key.equals(versionSummary.getKey())){//TODO:1、只有一个版本，没有必要if判断，直接存储实际的key
                 actKeys.add(versionSummary.getKey());
             }
             key = versionSummary.getKey();

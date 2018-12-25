@@ -28,7 +28,7 @@ public class ListVersionsByKeyVersionIdMaxKeys16410 extends S3TestBase {
     private boolean runSuccess1 = false;
     private boolean runSuccess2 = false;
     private boolean runSuccess3 = false;
-    private String bucketName = "bucket16409";
+    private String bucketName = "bucket16409";//TODO:1、桶名和对象名Id需要更新，方法和16409用例冲突
     private String[] objectNames = {"123#16409", "234#16409", "345#16409", "456#16409","567#16409"};
     private AmazonS3 s3Client = null;
     private int versionNum = 10;
@@ -45,11 +45,12 @@ public class ListVersionsByKeyVersionIdMaxKeys16410 extends S3TestBase {
             }
         }
     }
-
+    //TODO:2、使用多个test测试不同场景请增加测试点描述，另外每个场景代码相同，建议使用testng的DataProvider
     @Test
     private void testHead() throws Exception {
         String keyMarker = "0";
         String versionIdMarker = "0";
+        //TODO:3、场景a中需要设置maxkeys小于匹配对象数，请参考测试点实现
         Integer maxResults = versionNum*objectNames.length + 1;
         VersionListing vsList = listVersions(bucketName, keyMarker,versionIdMarker, maxResults);
         List<String> expKeys = new ArrayList<String>();
@@ -79,7 +80,7 @@ public class ListVersionsByKeyVersionIdMaxKeys16410 extends S3TestBase {
         }
         runSuccess2 = true;
     }
-
+    //TODO:4、文本用例中场景c是指定最后一个key，匹配值为空，请确认测试点和文本用例保持一致
     @Test
     private void testTail2() throws Exception {
         String keyMarker = "567#16409";

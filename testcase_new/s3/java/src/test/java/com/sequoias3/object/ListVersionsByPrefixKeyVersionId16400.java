@@ -80,6 +80,7 @@ public class ListVersionsByPrefixKeyVersionId16400 extends S3TestBase {
         //list by prefix/keyMarker/versionIdMarker
         VersionListing vsList = listVersionsByPreKeyVersion(bucketName,prefix,keyMarker,versionIdMarker);
         //check
+        //TODO:3、文本用例中是分两种场景验证，一种时一次返回所有对象，还有一种时多次返回匹配对象，用例实现没有覆盖到
         checkResult(vsList,true,prefix,keyMarker,versionIdMarker,vsList.getMaxKeys(),sortObjectNames.subList(0,3));
 
         //list by prefix/keyMarker/versionIdMarker
@@ -126,6 +127,7 @@ public class ListVersionsByPrefixKeyVersionId16400 extends S3TestBase {
         Assert.assertEquals(actKeys,sortedObjectNames,"actObjectNames = " + actKeys + ",keys = " + sortedObjectNames);
     }
 
+    //TODO:1、建议提取公共方法，不用每个用例都写相同代码
     private VersionListing listVersionsByPreKeyVersion(String bucketName,String prefix,String keyMarker,String versionIdMarker){
         ListVersionsRequest request = new ListVersionsRequest();
         request.setBucketName(bucketName);
@@ -134,7 +136,7 @@ public class ListVersionsByPrefixKeyVersionId16400 extends S3TestBase {
         request.setVersionIdMarker(versionIdMarker);
         return s3Client.listVersions(request);
     }
-
+   //TODO:2、建议提取公共方法，不用每个用例都写相同代码
     private PutObjectResult putObject(String bucketName, String key, String filePath) {
         PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
         ObjectMetadata metaData = new ObjectMetadata();

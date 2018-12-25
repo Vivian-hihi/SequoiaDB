@@ -54,7 +54,7 @@ public class ListVersionsByPrefixDelimiterIDKey16404 extends S3TestBase {
             }
         }
     }
-
+    //TODO:1、请补充指定keyMarker匹配prefix的场景（可增加构造key数据）
     @Test//SEQUOIADBMAINSTREAM-3974
     private void test() throws Exception {
         String prefix = "dir";
@@ -97,13 +97,14 @@ public class ListVersionsByPrefixDelimiterIDKey16404 extends S3TestBase {
         String key = "";
         List<String> actKeys = new ArrayList<String>();
         for(int i = 0; i < vsSummaryList.size(); i++){
-            S3VersionSummary versionSummary = vsSummaryList.get(i);
+            S3VersionSummary versionSummary = vsSummaryList.get(i);            
             Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            if(!key.equals(versionSummary.getKey())){
+            if(!key.equals(versionSummary.getKey())){//TODO:1、这几行代码建议优化，直接存key和对应的versonid,另外构造对象建议多补充不同的场景，测试结果覆盖多个不同key的情况
                 actKeys.add(versionSummary.getKey());
             }
             key = versionSummary.getKey();
-        }
+            
+        }        
         Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actKeys = " + actKeys + ",expKeys = " + expKeys);
     }
 
@@ -118,6 +119,7 @@ public class ListVersionsByPrefixDelimiterIDKey16404 extends S3TestBase {
         return s3Client.listVersions(request);
     }
 
+    //TODO:建议提取公共方法
     private PutObjectResult putObject(String bucketName, String key, String filePath) {
         PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
         ObjectMetadata metaData = new ObjectMetadata();

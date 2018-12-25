@@ -127,7 +127,7 @@ public class ListVersionsByMaxKeys16394 extends S3TestBase {
         for(int i = 0; i < vsSummaryList.size(); i++){
             S3VersionSummary versionSummary = vsSummaryList.get(i);
             Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            if(!key.equals(versionSummary.getKey())){
+            if(!key.equals(versionSummary.getKey())){//TODO:1、这里的if判断没有意义，建议去掉，直接存实际获取的key
                 actKeys.add(versionSummary.getKey());
             }
             key = versionSummary.getKey();

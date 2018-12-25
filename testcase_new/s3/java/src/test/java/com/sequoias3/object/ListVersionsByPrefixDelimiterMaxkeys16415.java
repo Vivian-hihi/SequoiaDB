@@ -44,7 +44,7 @@ public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
             }
         }
     }
-
+    //TODO:4、补充场景b测试点
     @Test//SEQUOIADBMAINSTREAM-3987
     private void test() throws Exception {
         String prefix = "/";
@@ -68,6 +68,7 @@ public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
         expCommonPrefixes2.add("/aa/");
         expCommonPrefixes2.add("/bb/");
         if (vsList.isTruncated()) {
+        	//TODO:1、这里是测试场景a，返回记录数为0条，建议传入记录数会比较直观，或者增加描述信息。
             checkResult(vsList2,expCommonPrefixes2,new ArrayList<String>(),new String[]{});
         } else {
             Assert.fail("vsList1.isTruncated() must be true");
@@ -83,6 +84,7 @@ public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
         expCommonPrefixes3.add("/bb/");
         expCommonPrefixes3.add("/cc/");
         if (!vsList3.isTruncated()) {
+        	//TODO:2、这里返回为空记录的结果校验请优化代码，尽量简洁或者增加描述信息
             checkResult(vsList3,expCommonPrefixes3,new ArrayList<String>(),new String[]{});
          } else {
            Assert.fail("vsList3.isTruncated() must be false");
@@ -102,7 +104,7 @@ public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
             }
         }
     }
-
+    //TODO:3、这段代码可以提取公共方法，或者针对该用例实现检测结果
     private void checkResult(VersionListing vsList, List<String> commonPrefixes, List<String> expKeys, String[] expVersions) throws Exception {
         Assert.assertEquals(vsList.getBucketName(), bucketName);
         List<String> actCommonPrefixes = vsList.getCommonPrefixes();

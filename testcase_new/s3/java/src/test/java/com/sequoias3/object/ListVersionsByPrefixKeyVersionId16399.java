@@ -53,9 +53,9 @@ public class ListVersionsByPrefixKeyVersionId16399 extends S3TestBase {
             for(int i = 0; i < versionNum; i++) {
                 putObject(bucketName, objectName, filePathList.get(i));
             }
-            sortObjectNames.add(objectName);
+            sortObjectNames.add(objectName);            
         }
-        Collections.sort(sortObjectNames);
+        Collections.sort(sortObjectNames);        
     }
 
     @Test
@@ -86,12 +86,13 @@ public class ListVersionsByPrefixKeyVersionId16399 extends S3TestBase {
         }
     }
 
+    //TODO:1、多个用例使用该方法，建议提取公共方法
     private void checkResult(VersionListing vsList,String prefix,String keyMarker,String versionIdMarker,int size,List<String> sortedObjectNames)throws  Exception {
         Assert.assertFalse(vsList.isTruncated());
         Assert.assertEquals(vsList.getPrefix(),prefix);
         Assert.assertEquals(vsList.getKeyMarker(),keyMarker);
         Assert.assertEquals(vsList.getVersionIdMarker(),versionIdMarker);
-        List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
+        List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();        
         Assert.assertEquals(vsSummaryList.size(),size);
         String key = "";
         List<String> actKeys = new ArrayList<String>();
@@ -101,11 +102,11 @@ public class ListVersionsByPrefixKeyVersionId16399 extends S3TestBase {
             if(!key.equals(versionSummary.getKey())){
                 actKeys.add(versionSummary.getKey());
             }
-            key = versionSummary.getKey();
+            key = versionSummary.getKey();            
         }
         Assert.assertEquals(actKeys,sortedObjectNames,"actObjectNames = " + actKeys + ",keys = " + sortedObjectNames);
     }
-
+  //TODO:2、多个用例使用该方法，建议提取公共方法
     private VersionListing listVersionsByPreKeyVersion(String bucketName,String prefix,String keyMarker,String versionIdMarker){
         ListVersionsRequest request = new ListVersionsRequest();
         request.setBucketName(bucketName);
@@ -114,7 +115,7 @@ public class ListVersionsByPrefixKeyVersionId16399 extends S3TestBase {
         request.setVersionIdMarker(versionIdMarker);
         return s3Client.listVersions(request);
     }
-
+  //TODO:3、多个用例使用该方法，建议提取公共方法
     private PutObjectResult putObject(String bucketName, String key, String filePath) {
         PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
         ObjectMetadata metaData = new ObjectMetadata();

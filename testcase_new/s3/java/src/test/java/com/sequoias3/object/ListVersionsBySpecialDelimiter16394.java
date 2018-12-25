@@ -50,13 +50,13 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (String objectName : objectNames) {
-            System.out.println("objectName = " + objectName);
-            for (int j = 0; j < versionNum; j++) {
+            System.out.println("objectName = " + objectName);//TODO:1、控制台正常输出信息建议删除
+            for (int j = 0; j < versionNum; j++) {//TODO:2、只有一个版本没有必要for循环，可直接putObject
                 s3Client.putObject(bucketName, objectName, new File(filePath));
             }
         }
     }
-
+    //TODO:3、用例中有多个test，每个test请增加描述信息，如对应测试场景，另外这里多个test代码一致，建议用testng中的DtaProvider，只需要一份代码
     @Test
     private void testNormal() throws Exception {
         String delimiter = objectNames[3];
@@ -68,7 +68,7 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
         expKeys.add(objectNames[1]);
         expKeys.add(objectNames[2]);
         expKeys.add(objectNames[4]);
-        String[] versions = {"0", "0","0","0"};
+        String[] versions = {"0", "0","0","0"};//TODO:4、用例中预置key只有一个版本，这里可以直接用初始版本0，下面多个test可以直接使用，不用每个test都定义该变量
         if(!vsList.isTruncated()) {
             checkResult(vsList, expCommonPrefixes, expKeys, versions);
         }else{
@@ -136,7 +136,7 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
             expKeys.add(objectNames[1]);
             expKeys.add(objectNames[3]);
             expKeys.add(objectNames[4]);
-            String[] keys = {objectNames[0],objectNames[1],objectNames[3],objectNames[4]};
+            String[] keys = {objectNames[0],objectNames[1],objectNames[3],objectNames[4]};//TODO:6、这里的keys没有使用，建议去掉
             String[] versions = {"0","0","0","0"};
             if(!vsList.isTruncated()) {
                 checkResult(vsList, expCommonPrefixes, expKeys, versions);
@@ -146,7 +146,7 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
         }
         runSuccess4 = true;
     }
-
+    //TODO:5、这里注释的代码请添加备注，如果是问题单请加上问题单号，如多余代码请删除
 //    @Test
 //    private void testSpecial5() throws Exception {
 //        String str = objectNames[4];
@@ -184,6 +184,7 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
                 "actCommonPrefixes = " + actCommonPrefixes.toString()+",expCommonPrefixes = " + commonPrefixes.toString());
         Assert.assertEquals(actCommonPrefixes, commonPrefixes,
                 "actCommonPrefixes = " + actCommonPrefixes.toString() + ",expCommonPrefixes=" + commonPrefixes.toString());
+       
         List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
         Assert.assertEquals(vsSummaryList.size(), expVersions.length,"vsSummaryList = " + vsSummaryList.toString());
         String key = "";
@@ -192,7 +193,7 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
             S3VersionSummary versionSummary = vsSummaryList.get(i);
             Assert.assertEquals(versionSummary.getBucketName(), bucketName);
             Assert.assertEquals(versionSummary.getVersionId(),expVersions[i]);
-            if(!key.equals(versionSummary.getKey())){
+            if(!key.equals(versionSummary.getKey())){//TODO:4、这里的if判断没有意见，建议直接存获取的key名
                 actKeys.add(versionSummary.getKey());
             }
             key = versionSummary.getKey();

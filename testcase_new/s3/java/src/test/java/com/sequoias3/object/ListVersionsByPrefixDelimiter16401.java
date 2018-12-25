@@ -94,7 +94,7 @@ public class ListVersionsByPrefixDelimiter16401 extends S3TestBase {
         for(int i = 0; i < vsSummaryList.size(); i++){
             S3VersionSummary versionSummary = vsSummaryList.get(i);
             Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            if(!key.equals(versionSummary.getKey())){
+            if(!key.equals(versionSummary.getKey())){//TODO:1、这里代码需要优化，直接存key和对应versionId比较
                 actKeys.add(versionSummary.getKey());
             }
             key = versionSummary.getKey();
@@ -127,7 +127,7 @@ public class ListVersionsByPrefixDelimiter16401 extends S3TestBase {
         }
         return keys;
     }
-
+    //TODO:使用公共方法
     private VersionListing listVersionsByPreDelimiter(String bucketName, String prefix, String delimiter) {
         ListVersionsRequest request = new ListVersionsRequest();
         request.setBucketName(bucketName);
@@ -135,7 +135,7 @@ public class ListVersionsByPrefixDelimiter16401 extends S3TestBase {
         request.setDelimiter(delimiter);
         return s3Client.listVersions(request);
     }
-
+    //TODO：使用公共方法
     private PutObjectResult putObject(String bucketName, String key, String filePath) {
         PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
         ObjectMetadata metaData = new ObjectMetadata();

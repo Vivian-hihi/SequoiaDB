@@ -86,7 +86,7 @@ public class ListVersionsByDelimiterMaxKeys16408 extends S3TestBase {
         List<String> actKeys = new ArrayList<String>();
         for (S3VersionSummary versionSummary : vsSummaryList) {
             Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            if(!key.equals(versionSummary.getKey())){
+            if(!key.equals(versionSummary.getKey())){//TODO:没有必要用if判断，可直接存储获取的key
                 actKeys.add(versionSummary.getKey());
             }
             key = versionSummary.getKey();

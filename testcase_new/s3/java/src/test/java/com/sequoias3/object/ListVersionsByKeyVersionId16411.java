@@ -93,7 +93,7 @@ public class ListVersionsByKeyVersionId16411 extends S3TestBase {
             Assert.assertEquals(versionSummary.getVersionId(), expVersions[i],
                     "bucketName = " + bucketName+",key = " + versionSummary.getKey() +
                             ",versionId = " +  versionSummary.getVersionId());
-            if(!key.equals(versionSummary.getKey())){
+            if(!key.equals(versionSummary.getKey())){//TODO:这里不需要if判断，还要比较重复的可以值，建议key和versionId组合比较
                 actKeys.add(versionSummary.getKey());
             }
             key = versionSummary.getKey();

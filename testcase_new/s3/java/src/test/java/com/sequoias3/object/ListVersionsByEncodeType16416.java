@@ -57,6 +57,7 @@ public class ListVersionsByEncodeType16416 extends S3TestBase {
         for(int i = 1;i < objectNames.length;i++){
             expCommonPrefixes.add(URLEncoder.encode(objectNames[i],"utf-8"));
         }
+        //TODO:1、和文本用例结果不一致，文本用例中显示匹配分隔符的记录，该用例实现不匹配分隔符
         checkResult(vsList, encodingType,expCommonPrefixes,new ArrayList<String>(),new String[]{});
         runSuccess1 = true;
     }
@@ -93,7 +94,7 @@ public class ListVersionsByEncodeType16416 extends S3TestBase {
             }
         }
     }
-
+  //TODO:2、这段代码可以提取公共方法，或者针对该用例实现检测结果
     private void checkResult(VersionListing vsList,String encodingType, List<String> commonPrefixes, List<String> expKeys, String[] expVersions) throws Exception {
         Assert.assertEquals(vsList.getBucketName(), bucketName);
         Assert.assertEquals(vsList.getEncodingType(),encodingType);

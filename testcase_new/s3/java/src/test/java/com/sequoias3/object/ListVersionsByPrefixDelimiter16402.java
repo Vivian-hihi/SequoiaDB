@@ -94,10 +94,10 @@ public class ListVersionsByPrefixDelimiter16402 extends S3TestBase {
         for(int i = 0; i < vsSummaryList.size(); i++){
             S3VersionSummary versionSummary = vsSummaryList.get(i);
             Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            if(!key.equals(versionSummary.getKey())){
+            if(!key.equals(versionSummary.getKey())){//TODO:1、这里没有必要用if判断，可以直接存放实际结果,相同key增加比较versionId
                 actKeys.add(versionSummary.getKey());
             }
-            key = versionSummary.getKey();
+            key = versionSummary.getKey();//TODO:2、同上，这样写不简洁，也没有比较versionID            
         }
         Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actObjectNames = " + actKeys + ",keys = " + expKeys);
     }
@@ -136,6 +136,7 @@ public class ListVersionsByPrefixDelimiter16402 extends S3TestBase {
         return s3Client.listVersions(request);
     }
 
+    //TODO:1、建议提取公共方法
     private PutObjectResult putObject(String bucketName, String key, String filePath) {
         PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
         ObjectMetadata metaData = new ObjectMetadata();

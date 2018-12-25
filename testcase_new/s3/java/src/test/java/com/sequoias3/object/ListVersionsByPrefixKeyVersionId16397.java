@@ -85,7 +85,7 @@ public class ListVersionsByPrefixKeyVersionId16397 extends S3TestBase {
             }
         }
     }
-
+  //TODO:1、多个用例都用到这段代码，建议提取公共方法
     private VersionListing listVersionsByPreKeyVersion(String bucketName,String prefix,String keyMarker,String versionIdMarker){
         ListVersionsRequest request = new ListVersionsRequest();
         request.setBucketName(bucketName);
@@ -94,12 +94,12 @@ public class ListVersionsByPrefixKeyVersionId16397 extends S3TestBase {
         request.setVersionIdMarker(versionIdMarker);
         return s3Client.listVersions(request);
     }
-
+  //TODO:2、多个用例都用到这段代码，建议提取公共方法
     private PutObjectResult putObject(String bucketName, String key, String filePath) {
         PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
         ObjectMetadata metaData = new ObjectMetadata();
         metaData.setExpirationTime(new Date());
-        metaData.addUserMetadata("meta-1", "16394");
+        metaData.addUserMetadata("meta-1", "16394");//TODO:3、这里的用例自定义元数据值时用例ID吗？建议和用例ID保持一致
         request.withMetadata(metaData);
         return s3Client.putObject(request);
     }
