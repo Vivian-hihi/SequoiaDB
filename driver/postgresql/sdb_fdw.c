@@ -102,6 +102,8 @@ static void sdb_slot_deform_tuple( TupleTableSlot *slot, int natts ) ;
 
 static Var *getRealVar(Var *arg);
 
+static BOOLEAN isVarValid( Var *var, SdbExprTreeState *exprState ) ;
+
 
 typedef struct
 {
@@ -1245,14 +1247,13 @@ INT32 sdbOperExprParamVar( OpExpr *expr, SdbExprTreeState *expr_state,
       if ( T_Var == nodeTag(tmp) )
       {
          var = (Var *)tmp ;
-         if ( var->varno != expr_state->foreign_table_index
-              || var->varlevelsup != 0 )
+         if (  !isVarValid( var, expr_state )  )
          {
-            //rc = SDB_INVALIDARG ;
+            rc = SDB_INVALIDARG ;
             elog( DEBUG1, "##column is not reconigzed:table_index=%d, varno=%d, "
                "valevelsup=%d", expr_state->foreign_table_index,
                var->varno, var->varlevelsup ) ;
-            //goto error ;
+            goto error ;
          }
 
          if ( NUMERICOID == var->vartype && !expr_state->is_use_decimal )
@@ -1359,6 +1360,31 @@ Var *getRealVar(Var *arg)
    }
 }
 
+BOOLEAN isVarValid( Var *var, SdbExprTreeState *exprState )
+{
+   if ( var->varlevelsup != 0 )
+   {
+      return FALSE ;
+   }
+
+   if ( var->varno == exprState->foreign_table_index )
+   {
+      return TRUE ;
+   }
+
+   if ( var->varno >= 1 && var->varno <= list_length(exprState->range_table) )
+   {
+      RangeTblEntry *rte = rt_fetch( var->varno, exprState->range_table );
+      if ( rte->relid == exprState->foreign_table_id )
+      {
+         return TRUE ;
+      }
+   }
+
+   return FALSE ;
+}
+
+
 INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
                          sdbbson *condition )
 {
@@ -1386,9 +1412,9 @@ INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
             goto error ;
          }
 
-         if ( ( argument1->varno != expr_state->foreign_table_index )
-          || ( argument1->varlevelsup != 0 ) )
+         if (  !isVarValid( argument1, expr_state )  )
          {
+            rc = SDB_INVALIDARG ;
             elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, "
                   "valevelsup=%d", expr_state->foreign_table_index,
                   argument1->varno, argument1->varlevelsup ) ;
@@ -1411,8 +1437,7 @@ INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
             goto error ;
          }
 
-         if ( ( argument2->varno != expr_state->foreign_table_index )
-                   || ( argument2->varlevelsup != 0 ) )
+         if (  !isVarValid( argument2, expr_state )  )
          {
             rc = SDB_INVALIDARG ;
             elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, "
@@ -1529,8 +1554,7 @@ INT32 sdbOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
       }
       elog( DEBUG1, "var info:foreign_table_id=%d, varattno=%d, valevelsup=%d",
                     expr_state->foreign_table_id, var->varattno, var->varlevelsup ) ;
-      if ( ( var->varno != expr_state->foreign_table_index )
-             || ( var->varlevelsup != 0 ) )
+      if (  !isVarValid( var, expr_state )  )
       {
          rc = SDB_INVALIDARG ;
          elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d",
@@ -1644,8 +1668,7 @@ INT32 sdbScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr,
       goto error ;
    }
 
-   if ( ( var->varno != expr_state->foreign_table_index )
-          || ( var->varlevelsup != 0 ) )
+   if (  !isVarValid( var, expr_state )  )
    {
       rc = SDB_INVALIDARG ;
       elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d",
@@ -1713,8 +1736,7 @@ INT32 sdbVarExpr( Var *var, SdbExprTreeState *expr_state,
    char *columnName = NULL ;
    AttrNumber columnId ;
 
-   if ( ( var->varno != expr_state->foreign_table_index )
-          || ( var->varlevelsup != 0 ) )
+   if (  !isVarValid( var, expr_state )  )
    {
       rc = SDB_INVALIDARG ;
       elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d",
@@ -1826,8 +1848,7 @@ INT32 sdbBooleanTestExpr( BooleanTest *boolTest, SdbExprTreeState *expr_state,
 
    var = ( Var *) node ;
 
-   if ( ( var->varno != expr_state->foreign_table_index )
-          || ( var->varlevelsup != 0 ) )
+   if ( !isVarValid( var, expr_state ) )
    {
       rc = SDB_INVALIDARG ;
       elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d",
@@ -1903,8 +1924,7 @@ INT32 sdbNullTestExpr( NullTest *ntest, SdbExprTreeState *expr_state,
    }
 
    var = ( Var * )ntest->arg ;
-   if ( ( var->varno != expr_state->foreign_table_index )
-          || ( var->varlevelsup != 0 ) )
+   if (  !isVarValid( var, expr_state )  )
    {
       rc = SDB_INVALIDARG ;
       elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d",
@@ -1976,6 +1996,7 @@ INT32 sdbRecurBoolExpr( BoolExpr *boolexpr, SdbExprTreeState *expr_state,
    tmp_expr_state.foreign_table_id      = expr_state->foreign_table_id ;
    tmp_expr_state.foreign_table_index   = expr_state->foreign_table_index ;
    tmp_expr_state.is_use_decimal        = expr_state->is_use_decimal ;
+   tmp_expr_state.range_table           = expr_state->range_table ;
 
    sdbbson_init( &tmpCondition ) ;
    sdbbson_append_start_array( &tmpCondition, key ) ;
@@ -2154,6 +2175,7 @@ INT32 sdbGenerateFilterCondition ( Oid foreign_id, RelOptInfo *baserel,
    expr_state.foreign_table_index = baserel->relid ;
    expr_state.foreign_table_id    = foreign_id ;
    expr_state.is_use_decimal      = isUseDecimal ;
+   expr_state.range_table         = NIL ;
 
    sdbbson_destroy( condition ) ;
    sdbbson_init( condition ) ;
