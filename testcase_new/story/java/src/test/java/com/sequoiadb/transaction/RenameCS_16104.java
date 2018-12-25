@@ -72,9 +72,7 @@ public class RenameCS_16104 extends SdbConfTestBase{
             }
         }
         
-        Sequoiadb db = null; 
-        try{
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");){
             if(rename && !trans){
                 RenameUtil.checkRenameCSResult(db, csName, newCSName, 1);
                 checkRecordNum(db, newCSName, clName, 0);
@@ -87,36 +85,34 @@ public class RenameCS_16104 extends SdbConfTestBase{
             }else{
                 Assert.fail("rename cl and split cl all failed");
             }
-        } finally{
-            db.close();//TODO：这个db应该判断是否为null再关闭？？
         }
     }
     
     @AfterClass
     public void tearDown(){
-        CommLib.clearCS(sdb, csName);
-        if(sdb!=null){//TODO：建议放在finally
-            sdb.close();
+        try {
+            CommLib.clearCS(sdb, csName);
+        } finally {
+            if(sdb!=null){
+                sdb.close();
+            }
         }
     }
     
     private class RenameCSThread extends SdbThreadBase{
 
         @Override
-        public void exec() throws Exception {//TODO： 为啥时抛出Exception，建议抛出BaseException
-            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            try {
+        public void exec() throws Exception {
+            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 Thread.sleep(new Random().nextInt(50) + 50);
                 db.renameCollectionSpace(csName, newCSName);
-            }finally {
-                db.close();
             }
         }
     }
     
     private class TransactionThread extends SdbThreadBase{
         @Override
-        public void exec() throws Exception {//TODO： 为啥时抛出Exception，建议抛出BaseException
+        public void exec() throws Exception {
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             try {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);

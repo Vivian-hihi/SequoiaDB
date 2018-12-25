@@ -72,7 +72,7 @@ public class RenameCL_16092 extends SdbConfTestBase{
             }
         }
         
-        try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){//TODO：这个db在哪关闭的？？
+        try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
             if(rename && !trans){
                 RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
                 checkRecordNum( db, newCLName, 0 );
@@ -84,7 +84,7 @@ public class RenameCL_16092 extends SdbConfTestBase{
                 checkRecordNum( db, clName, recordNum );
             }else if(rename && trans){
                 RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
-                checkRecordNum( db, newCLName, 0 );
+                checkRecordNum( db, newCLName, recordNum );
             }else{
                 Assert.fail("rename cl and split cl all failed");
             }
@@ -106,7 +106,7 @@ public class RenameCL_16092 extends SdbConfTestBase{
 
         @Override
         public void exec() throws Exception {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {//TODO：这个db在哪关闭的？？
+            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 CollectionSpace cs = db.getCollectionSpace(csName);
                 Thread.sleep(new Random().nextInt(50) + 50);
                 cs.renameCollection(clName, newCLName);
@@ -117,7 +117,7 @@ public class RenameCL_16092 extends SdbConfTestBase{
     private class TransactionThread extends SdbThreadBase{
         @Override
         public void exec() throws Exception {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {//TODO：这个db在哪关闭的？？
+            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 db.beginTransaction();
                 RenameUtil.insertData(cl, recordNum);
