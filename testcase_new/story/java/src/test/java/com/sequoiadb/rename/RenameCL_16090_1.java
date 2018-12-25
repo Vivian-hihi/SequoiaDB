@@ -69,7 +69,7 @@ public class RenameCL_16090_1 extends SdbTestBase{
 				Assert.fail(dropThread.getErrorMsg());
 			}
 		}
-		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){//TODO:这个db在哪里关闭？？
+		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
 			RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
 			checkDropIndex(db, csName, newCLName, drop);
 		}
@@ -90,8 +90,8 @@ public class RenameCL_16090_1 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {//TODO:这个db在哪里关闭？？
-				CollectionSpace cs = db.getCollectionSpace(csName);//TODO:cs使用不同的变量名是不是更容易维护？？同名容易与类的私有变量混淆
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
+				CollectionSpace cs = db.getCollectionSpace(csName);
 				cs.renameCollection(clName, newCLName);
 			}
 		}
@@ -101,8 +101,8 @@ public class RenameCL_16090_1 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {//TODO:这个db在哪里关闭？？
-				DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);//TODO:cl使用不同的变量名是不是更容易维护？？同名容易与类的私有变量混淆
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
+				DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 				for(int i=0; i<10; i++){
 					cl.dropIndex(indexNameB+"_"+i);
 					dropTimes--;
@@ -112,24 +112,30 @@ public class RenameCL_16090_1 extends SdbTestBase{
 	}
 	
 	private void checkDropIndex(Sequoiadb db, String csName, String clName, boolean success) {
-		DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);//TODO:cl使用不同的变量名是不是更容易维护？？同名容易与类的私有变量混淆
+		DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 		DBCursor cur = cl.getIndexes();
-		List<String> indexNames = new ArrayList<>();//TODO:建议规范编码ArrayList<>中指定类型
+		List<String> indexNames = new ArrayList<String>();
 		int indexAnum = 0;
-		while (cur.hasNext()) {//TODO:游标未关闭
-			BSONObject obj = cur.getNext();
-			BSONObject indexInfo = (BSONObject) obj.get("IndexDef");
-			String name = (String) indexInfo.get("name");
-			indexNames.add(name);
-			if(name.indexOf(indexNameA)!=-1){
-				indexAnum++;
-			}
-		}
+		try {
+		    while (cur.hasNext()) {
+		        BSONObject obj = cur.getNext();
+		        BSONObject indexInfo = (BSONObject) obj.get("IndexDef");
+		        String name = (String) indexInfo.get("name");
+		        indexNames.add(name);
+		        if(name.indexOf(indexNameA)!=-1){
+		            indexAnum++;
+		        }
+		    }
+        } finally{
+            if( cur != null){
+                cur.close();
+            }
+        }
 		Assert.assertEquals(indexAnum, 10, "check indexA num");
 		
 		if(success){
 			for (int i = 0; i < indexNames.size(); i++) {
-				if(indexNames.get(i).indexOf(indexNameB)!=-1){//TODO:直接使用Assert断言是不是更简洁？？
+				if(indexNames.get(i).indexOf(indexNameB)!=-1){
 					Assert.fail("drop all indexB success, indexB should not exist: "+indexNames.get(i));
 				}
 			}

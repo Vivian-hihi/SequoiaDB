@@ -190,7 +190,6 @@ public class RenameCS_16284 extends SdbTestBase{
 	}
 	
 	private void checkLob(Sequoiadb db, String csName, String clNmae){
-		//TODO:2、校验结果和文本用例设计不一致，此处只是校验了lob内容，没有校验lob数量
 		DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 		DBCursor cur = cl.listLobs();
 		int actLobNum = 0;

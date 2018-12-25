@@ -35,7 +35,6 @@ public class RenameCL_16085 extends SdbTestBase{
 		cs = sdb.getCollectionSpace( SdbTestBase.csName );
 		cl = cs.createCollection(clName);
 		RenameUtil.insertData(cl, recordNum);
-		RenameUtil.insertData(cl, 1000);
 	}
 	
 	@Test
@@ -65,19 +64,21 @@ public class RenameCL_16085 extends SdbTestBase{
 			}
 		}
 		
-		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){//TODO：这个db在哪关闭的？？
+		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
 			if(renameCL && !createCL){
 				RenameUtil.checkRenameCLResult(db, SdbTestBase.csName, clName, newCLName);
 			}else if(!renameCL && createCL){
-				cs = db.getCollectionSpace(SdbTestBase.csName);//TODO:renameCL 需要重新获取CS？？这句是否可以去掉？？
-				if(!cs.isCollectionExist(clName)){//TODO:直接使用Assert断言是不是更简洁？？
-					Assert.fail("cl is been create, should exist");
-				}
-				if(!cs.isCollectionExist(newCLName)){//TODO:直接使用Assert断言是不是更简洁？？
-					Assert.fail("cl is been rename, should exist");
-				}
+				cs = db.getCollectionSpace(SdbTestBase.csName);
+				
+				Assert.assertTrue(cs.isCollectionExist(clName));
+				long actNum1 = cs.getCollection(clName).getCount();
+				Assert.assertEquals(actNum1, recordNum);
+				
+				Assert.assertTrue(cs.isCollectionExist(newCLName));
+				long actNum2 = cs.getCollection(newCLName).getCount();
+				Assert.assertEquals(actNum2, 0);
 			}else if(!renameCL && !createCL){
-				Assert.fail("rename cl and create cl to the same name, all failed");
+				Assert.fail("rename cl failed: " + renameCLThread.getErrorMsg() +", create cl failed: "+ createCLThread.getErrorMsg());
 			}else{
 				Assert.fail("rename cl and create cl to the same name, all success");
 			}
@@ -102,7 +103,7 @@ public class RenameCL_16085 extends SdbTestBase{
 		public void exec() throws Exception {
 			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			try {
-				CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);//TODO:cs使用不同的变量名是不是更容易维护？？同名容易与类的私有变量混淆
+				CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
 				cs.renameCollection(clName, newCLName);
 			}finally {
 				db.close();
@@ -114,12 +115,9 @@ public class RenameCL_16085 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			try {
-				CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);//TODO:cs使用不同的变量名是不是更容易维护？？同名容易与类的私有变量混淆
+			try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+				CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
 				cs.createCollection(newCLName);
-			}finally {
-				db.close();
 			}
 		}
 	}

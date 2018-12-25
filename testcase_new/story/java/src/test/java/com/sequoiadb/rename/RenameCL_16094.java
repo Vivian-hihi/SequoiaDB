@@ -125,7 +125,7 @@ public class RenameCL_16094 extends SdbTestBase{
 		@Override
 		public void exec() throws Exception {
 			Thread.sleep(200);
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {//TODO:这个db在哪里关闭？？
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				CollectionSpace cs = db.getCollectionSpace(csName);
 				cs.renameCollection(clName, newCLName);
 			}
@@ -136,7 +136,7 @@ public class RenameCL_16094 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {//TODO:这个db在哪里关闭？？
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				DBCollection sdbcl = db.getCollectionSpace(csName).getCollection(clName);
 				RenameUtil.putLob(sdbcl, data, lobNum/2);
 			}
@@ -147,7 +147,7 @@ public class RenameCL_16094 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {//TODO:这个db在哪里关闭？？
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				DBCollection sdbcl = db.getCollectionSpace(csName).getCollection(clName);
 				sdbcl.listLobs();
 				byte[] data = new byte[fileSize];
@@ -164,7 +164,7 @@ public class RenameCL_16094 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {//TODO:这个db在哪里关闭？？
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				DBCollection sdbcl = db.getCollectionSpace(csName).getCollection(clName);
 				for (int i = 0; i < lobNum/2; i++) {
 					sdbcl.removeLob(lobIdList.get(i));
@@ -177,7 +177,7 @@ public class RenameCL_16094 extends SdbTestBase{
 
 		@Override
 		public void exec() throws Exception {
-			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {//TODO:这个db在哪里关闭？？
+			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
 				DBCollection sdbcl = db.getCollectionSpace(csName).getCollection(clName);
 				for (int i = 0; i < 10; i++) {
 					Thread.sleep(500);
@@ -190,21 +190,27 @@ public class RenameCL_16094 extends SdbTestBase{
 	private void checkLob(Sequoiadb db, String csName, String clNmae){
 		DBCollection cl = db.getCollectionSpace(csName).getCollection(clNmae);
 		DBCursor cur = cl.listLobs();
-		while(cur.hasNext()){//TODO:游标未关闭
-			try {
-				BSONObject idObj = cur.getNext();
-				ObjectId id = (ObjectId) idObj.get("Oid");
-				DBLob lob = cl.openLob(id);
-				byte[] data = new byte[fileSize];
-				lob.read(data);
-				String actMD5 = RenameUtil.getMd5(data);
-				if(!actMD5.equals(MD5)){
-					Assert.fail("file md5 error, exp: " + MD5 + ", act: " + actMD5);
-				}
-			} catch (BaseException e) {
-				Assert.assertEquals(e.getErrorCode(), -269, e.getMessage());
-			}
-		}
+		try {
+		    while(cur.hasNext()){
+		        try {
+		            BSONObject idObj = cur.getNext();
+		            ObjectId id = (ObjectId) idObj.get("Oid");
+		            DBLob lob = cl.openLob(id);
+		            byte[] data = new byte[fileSize];
+		            lob.read(data);
+		            String actMD5 = RenameUtil.getMd5(data);
+		            if(!actMD5.equals(MD5)){
+		                Assert.fail("file md5 error, exp: " + MD5 + ", act: " + actMD5);
+		            }
+		        } catch (BaseException e) {
+		            Assert.assertEquals(e.getErrorCode(), -269, e.getMessage());
+		        }
+		    }
+        } finally {
+            if( cur != null ){
+                cur.close();
+            }
+        }
 	}
 	
 }
