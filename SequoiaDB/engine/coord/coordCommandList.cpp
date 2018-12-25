@@ -568,10 +568,15 @@ namespace engine
    {
       BSONObjBuilder builder ;
       clName = AUTH_USR_COLLECTION ;
-      if ( queryOpt.isSelectorEmpty() )
-      {
-         builder.appendNull( FIELD_NAME_USER ) ;
-      }
+
+      BSONObjBuilder passBuilder( builder.subobjStart( SDB_AUTH_PASSWD ) ) ;
+      passBuilder.append( "$include", 0 ) ;
+      passBuilder.done() ;
+
+      BSONObjBuilder idBuilder( builder.subobjStart( DMS_ID_KEY_NAME ) ) ;
+      idBuilder.append( "$include", 0 ) ;
+      idBuilder.done() ;
+
       queryOpt.setSelector( builder.obj() ) ;
       return SDB_OK ;
    }

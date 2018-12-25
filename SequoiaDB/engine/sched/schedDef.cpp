@@ -163,7 +163,7 @@ namespace engine
       bobObj.append( FIELD_NAME_RULEID, _ruleID ) ;
       bobObj.append( FIELD_NAME_TASK_NAME, _taskName ) ;
       bobObj.append( FIELD_NAME_CONTAINER_NAME, _containerName ) ;
-      bobObj.append( FIELD_NAME_USER, _userName ) ;
+      bobObj.append( SDB_AUTH_USER, _userName ) ;
       bobObj.append( FIELD_NAME_IP, _ip ) ;
 
       return bobObj.obj() ;
@@ -211,7 +211,7 @@ namespace engine
          setContainerName( beField.valuestr() ) ;
       }
 
-      beField= obj.getField( FIELD_NAME_USER ) ;
+      beField= obj.getField( SDB_AUTH_USER ) ;
       if( beField.type() == String )
       {
          setUserName( beField.valuestr() ) ;
