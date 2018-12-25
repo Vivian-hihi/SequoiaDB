@@ -577,6 +577,7 @@ namespace engine
       idBuilder.append( "$include", 0 ) ;
       idBuilder.done() ;
 
+      outSelector = queryOpt.getSelector() ;
       queryOpt.setSelector( builder.obj() ) ;
       return SDB_OK ;
    }
