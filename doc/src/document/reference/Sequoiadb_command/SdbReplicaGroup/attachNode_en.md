@@ -50,7 +50,7 @@ the exceptions of `attachNode()` are as below:
 | ------ | --- | ------------ | ----------- |
 | -15 | SDB_NETWORK | Network error. | 1. Check the state of sdbcm. 2. Check whether hostname or service name is ok or not. |
 | -146 | SDBCM_NODE_NOTEXISTED | Node does not exist. | Check whether the note exists or not. |
-| -157 | SDB_CM_CONFIG_CONFLICTS | The replica group does not exist. | Check if the node has joined to the current or other replication group. If it belongs to any replication group, this operation will not be supported.. |
+| -157 | SDB_CM_CONFIG_CONFLICTS | Node may have been in another group. | Check if the node has joined to the current or other replication group. If it belongs to any replication group, this operation will not be supported. |
 
 When error happen, use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)
 to get the error message or use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md)
