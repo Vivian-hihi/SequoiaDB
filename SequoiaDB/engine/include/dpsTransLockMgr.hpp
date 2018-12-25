@@ -253,16 +253,16 @@ namespace engine
       }
 
       // release/return a LRB Header to LRB Header manager
-      OSS_INLINE INT32 _releaseLRBHdr( const UTIL_OBJIDX hdrIdx ) ;
+      INT32 _releaseLRBHdr( const UTIL_OBJIDX hdrIdx ) ;
 
       // get LRB Header handle ( address/pointer ) by LRB Header index
       dpsTransLRBHeader * _getLRBHdrPtrByIdx( const UTIL_OBJIDX hdrIdx ) ;
 
       // get LRB pointer by its index
-      OSS_INLINE dpsTransLRB * _getLRBPtrByIdx( const UTIL_OBJIDX idx ) ;
+      dpsTransLRB * _getLRBPtrByIdx( const UTIL_OBJIDX idx ) ;
 
       // release/return a LRB to LRB manager 
-      OSS_INLINE INT32 _releaseLRB( const UTIL_OBJIDX idx );
+      INT32 _releaseLRB( const UTIL_OBJIDX idx );
 
       // search LRB list ( owner, waiter or upgrade list ) and find
       // the one with given eduId
