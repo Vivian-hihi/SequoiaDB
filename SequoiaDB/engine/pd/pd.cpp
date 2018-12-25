@@ -638,17 +638,43 @@ const CHAR* pdGetAuditTypeDesp( AUDIT_TYPE auditType )
    return "UNKNOW" ;
 }
 
-static INT32 _pdString2AuditMask( const CHAR *pStr, UINT32 &mask )
+static INT32 _pdString2AuditMask( const CHAR *pStr,
+                                  UINT32 &mask,
+                                  UINT32 *pConfigMask )
 {
    if ( !pStr || !*pStr )
+   {
       return SDB_OK ;
+   }
+
    const CHAR *start = pStr ;
-   while( *start && ' ' == *start )
+   BOOLEAN isNot = FALSE ;
+   UINT32 theMask = 0 ;
+
+   while( ' ' == *start )
    {
       ++start ;
    }
+
    if ( !*start )
+   {
       return SDB_OK ;
+   }
+
+   if ( '!' == *start && !isNot )
+   {
+      isNot = TRUE ;
+      ++start ;
+      while( ' ' == *start )
+      {
+         ++start ;
+      }
+      if ( !*start )
+      {
+         return SDB_INVALIDARG ;
+      }
+   }
+
    const CHAR *end = start + ossStrlen( start ) - 1 ;
    while( end != start && ' ' == *end )
    {
@@ -658,64 +684,76 @@ static INT32 _pdString2AuditMask( const CHAR *pStr, UINT32 &mask )
    /// compare
    if ( 0 == ossStrncasecmp( start, "ACCESS", len ) )
    {
-      mask |= AUDIT_MASK_ACCESS ;
+      theMask = AUDIT_MASK_ACCESS ;
    }
    else if ( 0 == ossStrncasecmp( start, "CLUSTER", len ) )
    {
-      mask |= AUDIT_MASK_CLUSTER ;
+      theMask = AUDIT_MASK_CLUSTER ;
    }
    else if ( 0 == ossStrncasecmp( start, "SYSTEM", len ) )
    {
-      mask |= AUDIT_MASK_SYSTEM ;
+      theMask = AUDIT_MASK_SYSTEM ;
    }
    else if ( 0 == ossStrncasecmp( start, "DML", len ) )
    {
-      mask |= AUDIT_MASK_DML ;
+      theMask = AUDIT_MASK_DML ;
    }
    else if ( 0 == ossStrncasecmp( start, "DDL", len ) )
    {
-      mask |= AUDIT_MASK_DDL ;
+      theMask = AUDIT_MASK_DDL ;
    }
    else if ( 0 == ossStrncasecmp( start, "DCL", len ) )
    {
-      mask |= AUDIT_MASK_DCL ;
+      theMask = AUDIT_MASK_DCL ;
    }
    else if ( 0 == ossStrncasecmp( start, "DQL", len ) )
    {
-      mask |= AUDIT_MASK_DQL ;
+      theMask = AUDIT_MASK_DQL ;
    }
    else if ( 0 == ossStrncasecmp( start, "DELETE", len ) )
    {
-      mask |= AUDIT_MASK_DELETE ;
+      theMask = AUDIT_MASK_DELETE ;
    }
    else if ( 0 == ossStrncasecmp( start, "UPDATE", len ) )
    {
-      mask |= AUDIT_MASK_UPDATE ;
+      theMask = AUDIT_MASK_UPDATE ;
    }
    else if ( 0 == ossStrncasecmp( start, "INSERT", len ) )
    {
-      mask |= AUDIT_MASK_INSERT ;
+      theMask = AUDIT_MASK_INSERT ;
    }
    else if ( 0 == ossStrncasecmp( start, "OTHER", len ) )
    {
-      mask |= AUDIT_MASK_OTHER ;
+      theMask = AUDIT_MASK_OTHER ;
    }
    else if ( 0 == ossStrncasecmp( start, "NONE", len ) )
    {
-      mask = 0 ;
+      /// do nothing
    }
    else if ( 0 == ossStrncasecmp( start, "ALL", len ) )
    {
-      mask = AUDIT_MASK_ALL ;
+      theMask = AUDIT_MASK_ALL ;
    }
    else
    {
       return SDB_INVALIDARG ;
    }
+
+   if ( pConfigMask )
+   {
+      *pConfigMask |= theMask ;
+   }
+   if ( !isNot )
+   {
+      mask |= theMask ;
+   }
+
    return SDB_OK ;
 }
 
-INT32 pdString2AuditMask( const CHAR *pStr, UINT32 &mask )
+INT32 pdString2AuditMask( const CHAR *pStr,
+                          UINT32 &mask,
+                          UINT32 *pConfigMask )
 {
    INT32 rc = SDB_OK ;
    if ( !pStr || !*pStr )
@@ -731,7 +769,7 @@ INT32 pdString2AuditMask( const CHAR *pStr, UINT32 &mask )
       {
          *p1 = 0 ;
       }
-      rc = _pdString2AuditMask( p, mask ) ;
+      rc = _pdString2AuditMask( p, mask, pConfigMask ) ;
       if ( p1 )
       {
          *p1 = '|' ;
@@ -741,11 +779,6 @@ INT32 pdString2AuditMask( const CHAR *pStr, UINT32 &mask )
          break ;
       }
       p = p1 ? p1 + 1 : NULL ;
-
-      if ( 0 == mask || AUDIT_MASK_ALL == mask )
-      {
-         break ;
-      }
    }
    return rc ;
 }

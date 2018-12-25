@@ -313,7 +313,9 @@ const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype ) ;
 
 UINT32 pdAuditType2Mask( AUDIT_TYPE auditType ) ;
 const CHAR* pdGetAuditTypeDesp( AUDIT_TYPE auditType ) ;
-INT32  pdString2AuditMask( const CHAR *pStr, UINT32 &mask ) ;
+INT32  pdString2AuditMask( const CHAR *pStr,
+                           UINT32 &mask,
+                           UINT32 *pConfigMask = NULL ) ;
 
 UINT32&     getAuditMask() ;
 UINT32      setAuditMask( UINT32 newMask ) ;

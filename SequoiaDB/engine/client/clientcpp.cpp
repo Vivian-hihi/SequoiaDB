@@ -7589,16 +7589,16 @@ error :
    }
 
    INT32 _sdbImpl::createUsr( const CHAR *pUsrName,
-                              const CHAR *pPasswd )
+                              const CHAR *pPasswd,
+                              const bson::BSONObj &options )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
-      CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] ;
+      CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] = { 0 } ;
       BOOLEAN r ;
       SINT64 contextID = 0 ;
 
-      if ( NULL == pUsrName ||
-           NULL == pPasswd )
+      if ( NULL == pUsrName || NULL == pPasswd )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -7610,9 +7610,9 @@ error :
          goto error ;
       }
 
-      rc = clientBuildAuthCrtMsg( &_pSendBuffer, &_sendBufferSize,
-                               pUsrName, md5, 0,
-                               _endianConvert ) ;
+      rc = clientBuildAuthCrtMsgCpp( &_pSendBuffer, &_sendBufferSize,
+                                     pUsrName, md5, options.objdata(),
+                                     0, _endianConvert ) ;
       if ( rc )
       {
          goto error ;

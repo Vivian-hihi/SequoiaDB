@@ -459,6 +459,7 @@
 #define FIELD_NAME_SEQUENCE_ID               "ID"
 #define FIELD_NAME_CONTONDUP                 "ContOnDup"
 #define FIELD_NAME_RETURN_OID                "ReturnOID"
+#define FIELD_NAME_AUDIT_MASK                "AuditMask"
 
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"
