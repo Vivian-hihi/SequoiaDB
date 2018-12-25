@@ -747,7 +747,6 @@ namespace engine
    {
 #ifdef _DEBUG
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-      if ( dpsTxExectr )
 #endif
       {
          // get the index of last LRB in the EDU LRB chain
@@ -2604,7 +2603,10 @@ namespace engine
    // Return:
    //    index to the LRB Header bucket
    //
-   UTIL_OBJIDX dpsTransLockManager::_getBucketNo( const dpsTransLockId &lockId )
+   OSS_INLINE UTIL_OBJIDX dpsTransLockManager::_getBucketNo
+   (
+      const dpsTransLockId &lockId
+   )
    {
       return (UTIL_OBJIDX)( lockId.lockIdHash() % MAX_LOCKBUCKET_NUM );
    }
