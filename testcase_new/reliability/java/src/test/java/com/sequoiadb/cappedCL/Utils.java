@@ -13,6 +13,7 @@ import java.util.Random;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.GroupMgr ;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
@@ -24,8 +25,10 @@ public class Utils {
 	/**
 	* check whether all data nodes is consistent
 	*/
-	public static void checkConsistency(GroupWrapper dataGroup) throws ReliabilityException{
-	    dataGroup.refresh();
+	public static void checkConsistency(GroupMgr groupMgr, GroupWrapper dataGroup) throws ReliabilityException{
+	    int groupId = dataGroup.getGroupID() ;
+	    groupMgr.refresh() ;
+	    dataGroup  = groupMgr.getGroupById( groupId ) ;
         List<String> urls = dataGroup.getAllUrls();
         List<List<BSONObject>> resultList = new ArrayList<List<BSONObject>>();
         // get datagroup info from all data nodes

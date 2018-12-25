@@ -105,7 +105,10 @@ public class OprLobAndAddNode3228 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
             
-            if (!Utils.checkBusinessWithExNode(groupMgr, 600)) { Assert.fail("checkBusiness occurs timeout"); }
+            groupMgr.refresh();
+            if ( groupMgr.checkBusiness( 600, true )){
+                Assert.fail("checkBusiness occurs timeout"); 
+            }
             
             if (!dataGroup.checkInspect(1)) {
                 Assert.fail("data is different on " + dataGroup.getGroupName());

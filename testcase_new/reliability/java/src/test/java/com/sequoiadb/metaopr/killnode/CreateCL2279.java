@@ -11,6 +11,7 @@ import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.metaopr.diskfull.Utils ;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
@@ -91,7 +92,7 @@ public class CreateCL2279 extends SdbTestBase {
 
             if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
             checkListCL(db);
-            Utils.checkConsistency(cataGroup);
+            Utils.checkConsistency(groupMgr);
             runSuccess = true;
         } catch (ReliabilityException e) {
             e.printStackTrace();

@@ -11,6 +11,7 @@ import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.metaopr.diskfull.Utils ;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
@@ -89,7 +90,7 @@ public class CreateCLAndKillSlaveCatalog2281 extends SdbTestBase {
                         
             //check result
             checkCreateCLResult();
-            Utils.checkConsistency(cataGroup);           
+            Utils.checkConsistency(groupMgr);          
            
             //Normal operating environment
             clearFlag = true;

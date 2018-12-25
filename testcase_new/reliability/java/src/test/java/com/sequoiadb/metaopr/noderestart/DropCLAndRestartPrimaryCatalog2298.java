@@ -81,7 +81,7 @@ public class DropCLAndRestartPrimaryCatalog2298 extends SdbTestBase {
             
             //check result
             checkDropCLResult();
-            Utils.checkConsistency(cataGroup);   
+            Utils.checkConsistency(groupMgr);   
             
             //Normal operating environment
             clearFlag = true;

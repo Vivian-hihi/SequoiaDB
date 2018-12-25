@@ -89,7 +89,7 @@ public class AttachCL2169 extends SdbTestBase {
                 Assert.fail("checkBusinessWithLSN() occurs timeout");
             }
 
-            Utils.checkConsistency(cataGroup);
+            Utils.checkConsistency(groupMgr);
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             Utils.checkIntegrated(db, mclName);
             Utils.checkAttached(db, mclName, aTask.getAttachedSclCnt());

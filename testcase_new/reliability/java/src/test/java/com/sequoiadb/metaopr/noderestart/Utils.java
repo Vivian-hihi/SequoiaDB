@@ -3,6 +3,7 @@ package com.sequoiadb.metaopr.noderestart;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.GroupMgr ;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.exception.ReliabilityException;
 import org.bson.BSONObject;
@@ -12,9 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Utils {
-    public static void checkConsistency(GroupWrapper cataGroup) 
+    public static void checkConsistency(GroupMgr groupMgr) 
     		throws ReliabilityException, InterruptedException {
-        cataGroup.refresh();
+        groupMgr.refresh();
+        
+        GroupWrapper cataGroup = groupMgr.getGroupById( 1 ) ;
         List<String> urls = cataGroup.getAllUrls();
         
         int retryTimes = 0;

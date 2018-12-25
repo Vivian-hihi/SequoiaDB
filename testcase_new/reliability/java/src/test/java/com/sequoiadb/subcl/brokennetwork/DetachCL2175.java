@@ -88,7 +88,7 @@ public class DetachCL2175 extends SdbTestBase {
                 Assert.fail("checkBusinessWithLSN() occurs timeout");
             }
 
-            Utils.checkConsistency(cataGroup);
+            Utils.checkConsistency(groupMgr);
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             Utils.checkIntegrated(db, mclName);
             Utils.checkDetached(db, mclName, aTask.getDetachedSclCnt());

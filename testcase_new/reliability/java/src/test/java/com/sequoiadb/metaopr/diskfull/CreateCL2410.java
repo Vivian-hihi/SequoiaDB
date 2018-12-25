@@ -92,7 +92,7 @@ public class CreateCL2410 extends SdbTestBase {
 
             if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
             checkListCL(db);
-            Utils.checkConsistency(cataGroup);
+            Utils.checkConsistency(groupMgr);
             runSuccess = true;
         } catch (ReliabilityException e) {
             e.printStackTrace();

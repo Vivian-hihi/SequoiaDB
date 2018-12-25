@@ -45,9 +45,17 @@ public class GroupCheckResult {
         ret += "}";
         return ret;
     }
-
-    public boolean check() {
-        return connCheck && primaryCheck && serviceCheck && deployCheck;
+    
+    public boolean check(  ){
+        return check( false ) ;
+    }
+    
+    public boolean check( boolean ignoreInDepoly ) {
+        if ( ignoreInDepoly ){
+            return connCheck && primaryCheck && serviceCheck;
+        }else{
+            return connCheck && primaryCheck && serviceCheck && deployCheck;
+        }
     }
 
     public boolean checkWithLSN() {

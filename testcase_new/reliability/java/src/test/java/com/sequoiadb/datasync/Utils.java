@@ -63,44 +63,6 @@ public class Utils {
         return currentLSN ;
     }
 
-    /**
-     * 框架提供的checkBusiness接口会排斥新建节点，认为是组部署异常。 因此要重新定制一个检查集群的方法。
-     * 
-     * @param timeOutSecond
-     * @throws ReliabilityException
-     */
-    public static boolean checkBusinessWithExNode( GroupMgr groupMgr,
-            int timeOutSecond ) throws ReliabilityException {
-        for ( int i = 0; i < timeOutSecond; i++ ) {
-            List< String > groupNames = groupMgr.getAllDataGroupName() ;
-            groupNames.remove( "SYSCoord" ) ;
-            boolean ok = true ;
-
-            try {
-                for ( String groupName : groupNames ) {
-                    GroupWrapper group = groupMgr.getGroupByName( groupName ) ;
-                    GroupCheckResult grpRes = group.checkBusiness( false ) ;
-                    if ( !( grpRes.connCheck && grpRes.primaryCheck
-                            && grpRes.serviceCheck && grpRes.LSNCheck ) ) {
-                        ok = false ;
-                    }
-                }
-            } catch ( Exception e ) {
-                ok = false ;
-            }
-
-            if ( ok ) {
-                return true ;
-            }
-
-            try {
-                Thread.sleep( 1000 ) ;
-            } catch ( InterruptedException e ) {
-            }
-        }
-        return false ;
-    }
-
     public static void testLob( Sequoiadb db, String clName )
             throws ReliabilityException {
         DBCollection cl = db.getCollectionSpace( SdbTestBase.csName )

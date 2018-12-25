@@ -106,7 +106,10 @@ public class CRUDWithIndex3229 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!Utils.checkBusinessWithExNode(groupMgr, 600)) { Assert.fail("checkBusiness occurs time out"); }
+            groupMgr.refresh();
+            if ( groupMgr.checkBusiness( 600, true )){
+                Assert.fail("checkBusiness occurs time out"); 
+            }
 
             db = new Sequoiadb(coordUrl, "", "");
             Utils.testLob(db, clName);

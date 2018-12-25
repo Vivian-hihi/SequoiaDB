@@ -89,7 +89,7 @@ public class DetachCL2179 extends SdbTestBase {
             }
 
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-            Utils.checkConsistency(cataGroup);
+            Utils.checkConsistency(groupMgr);
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             Utils.checkIntegrated(db, mclName);
             Utils.checkDetached(db, mclName, dTask.getDetachedSclCnt());

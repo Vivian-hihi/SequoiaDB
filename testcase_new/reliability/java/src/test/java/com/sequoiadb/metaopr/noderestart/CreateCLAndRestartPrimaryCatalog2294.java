@@ -83,7 +83,7 @@ public class CreateCLAndRestartPrimaryCatalog2294 extends SdbTestBase {
                         
             //check result
             checkCreateCLResult();
-            Utils.checkConsistency(cataGroup);           
+            Utils.checkConsistency(groupMgr);           
            
             //Normal operating environment
             clearFlag = true;

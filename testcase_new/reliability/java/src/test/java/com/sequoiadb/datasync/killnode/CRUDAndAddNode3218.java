@@ -92,7 +92,8 @@ public class CRUDAndAddNode3218 extends SdbTestBase {
             taskMgr.start();
             taskMgr.join();
             // 等待集群恢复,本用例中有新增的节点，会被认为集群部署异常，因此自定义了一个检测方法。
-            if (!Utils.checkBusinessWithExNode(groupMgr, 600)) { // in 600s
+            groupMgr.refresh();
+            if ( groupMgr.checkBusiness( 600, true )){
                 Assert.fail("checkBusinessWithExNode occurs time out(1)");
             }
             // 各个任务检查各自结果
@@ -100,7 +101,8 @@ public class CRUDAndAddNode3218 extends SdbTestBase {
             taskMgr.check(); 
             // 公共的结果检查，以下为检查cl所在数据组节点间一致性
             // Note: checkBusinessWithExNode的检测有包括LSN一致
-            if (!Utils.checkBusinessWithExNode(groupMgr, 600)) {
+            groupMgr.refresh();
+            if ( groupMgr.checkBusiness( 600, true )){
                 Assert.fail("checkBusinessWithExNode occurs time out(2)");
             }
             if (!clGroupWrapper.checkInspect(1)) {

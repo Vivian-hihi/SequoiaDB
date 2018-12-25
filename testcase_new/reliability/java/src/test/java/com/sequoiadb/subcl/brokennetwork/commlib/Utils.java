@@ -4,6 +4,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.GroupMgr ;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
@@ -124,14 +125,15 @@ public class Utils {
         }
     }
 
-    public static void checkConsistency(GroupWrapper cataGroup) throws ReliabilityException {
+    public static void checkConsistency(GroupMgr groupMgr) throws ReliabilityException {
         int checkTimes = 20;
         int checkInterval = 500; // 0.5s
         boolean success = false;
         String lastErrMsg = null;
         for (int t = 0; t < checkTimes; ++t) {
             success = true;
-            cataGroup.refresh();
+            groupMgr.refresh() ;
+            GroupWrapper cataGroup = groupMgr.getGroupById( 1 ) ;
             List<String> urls = cataGroup.getAllUrls();
             List<List<BSONObject>> resList = new ArrayList<List<BSONObject>>();
             // get catalog info from all catalog nodes

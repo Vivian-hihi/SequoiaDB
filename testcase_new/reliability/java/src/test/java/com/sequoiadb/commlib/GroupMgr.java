@@ -47,6 +47,8 @@ public class GroupMgr {
     }
 
     public void refresh(String coordUrl) throws ReliabilityException {
+        name2group.clear() ;
+        id2group.clear() ;
         DBCursor cursor = null;
         try {
             if (sdb != null) {
@@ -115,6 +117,12 @@ public class GroupMgr {
     }
 
     public GroupWrapper getGroupByName(String name) {
+        try {
+            this.refresh() ;
+        } catch ( ReliabilityException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         if (name2group.containsKey(name)) {
             return name2group.get(name);
         } else {
@@ -136,7 +144,10 @@ public class GroupMgr {
 //        return mgr;
         return new GroupMgr();
     }
-
+    
+    public boolean checkBusiness(int timeOutSecond ) throws ReliabilityException{
+        return checkBusiness( timeOutSecond, false ) ;
+    }
     /**
      * 持续检测集群当前的状态（组内是否有主，各节点可连接，ServiceStatus），若在timeOutSecond时间内检测仍不通过，
      * 则会打印当前集群状态信息（也可能会抛出异常，如-104，网络错误等等），并返回false
@@ -146,11 +157,11 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
-    public boolean checkBusiness(int timeOutSecond) throws ReliabilityException {
+    public boolean checkBusiness(int timeOutSecond, boolean ignoreIndeploy ) throws ReliabilityException {
         long timestamp = System.currentTimeMillis();
-        while (!checkBusiness(false)) {
+        while (!checkBusiness(false, ignoreIndeploy)) {
             if (System.currentTimeMillis() - timestamp > timeOutSecond * 1000) {
-                return checkBusiness(true);
+                return checkBusiness(true, ignoreIndeploy);
             }
             try {
                 Thread.sleep(1000);
@@ -182,11 +193,11 @@ public class GroupMgr {
      * @throws ReliabilityException
      */
     // TODO:可被替代，屏蔽
-    private boolean checkBusiness(boolean printAndThrowAllException) throws ReliabilityException {
+    private boolean checkBusiness(boolean printAndThrowAllException, boolean ignoreIndeploy ) throws ReliabilityException {
         List<GroupCheckResult> results = checkGroup(printAndThrowAllException);
 
         for (GroupCheckResult result : results) {
-            if (!result.check()) {
+            if (!result.check(ignoreIndeploy)) {
                 if (printAndThrowAllException) {
                     System.out.println(result.toString());
                 }
@@ -297,7 +308,7 @@ public class GroupMgr {
             CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
             for (index = 0; index < groupNames.size(); index++) {
                 cs.createCollection("clForTestBusiness_reliability", (BSONObject) JSON
-                        .parse("{ReplSize:3,Group:'" + groupNames.get(index) + "'}"));
+                        .parse("{ReplSize:0,Group:'" + groupNames.get(index) + "'}"));
 
                 if (index != groupNames.size() - 1) {
                     cs.dropCollection("clForTestBusiness_reliability");

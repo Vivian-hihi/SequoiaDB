@@ -41,17 +41,17 @@ public class GroupWrapper {
         return this.groupInfo.getInt("GroupID");
     }
 
-    public void refresh(String coordUrl) throws ReliabilityException {
+    /*public void refresh(String coordUrl) throws ReliabilityException {
         mgr.refresh(coordUrl);
         this.group = mgr.getGroupByName(getGroupName()).getGroup();
         this.groupInfo = mgr.getGroupByName(getGroupName()).getGroupInfo();
         init();
-    }
-
-    public void refresh() throws ReliabilityException {
+    }*/
+    
+    /*public void refresh() throws ReliabilityException {
         refresh(SdbTestBase.coordUrl);
-    }
-
+    }*/
+    
     public void init() throws ReliabilityException {
         String hostName = null;
         String port = null;
@@ -136,7 +136,7 @@ public class GroupWrapper {
                     throw new ReliabilityException(
                             "After execute reelect,check business have an error");
                 }
-                refresh();
+                
                 if (priNode != getMaster().nodeID()) {
                     return true;
                 }
@@ -146,9 +146,9 @@ public class GroupWrapper {
         }
         return false;
     }
+ 
 
-    public GroupCheckResult checkBusiness(boolean printRes) throws ReliabilityException {
-        refresh();
+    public GroupCheckResult checkBusiness(boolean printRes ) throws ReliabilityException {
         GroupCheckResult checkRes = new GroupCheckResult();
         if (getGroupName().equals("SYSCoord")) {
             return checkRes;
@@ -201,7 +201,6 @@ public class GroupWrapper {
      * @throws ReliabilityException
      */
     public boolean checkInspect(int checktime, int intervelSecond) throws ReliabilityException {
-        this.refresh();
         for (int i = 0; i < checktime; i++) {
             if (inspect()) {
                 return true;

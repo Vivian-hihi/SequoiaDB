@@ -3,6 +3,7 @@ package com.sequoiadb.metaopr.killnode;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.GroupMgr ;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.exception.ReliabilityException;
 import org.bson.BSONObject;
@@ -12,8 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Utils {
-    public static void checkConsistency(GroupWrapper cataGroup) throws ReliabilityException {
-        cataGroup.refresh();
+    public static void checkConsistency(GroupMgr groupMgr) throws ReliabilityException {
+        groupMgr.refresh() ;
+        GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
         List<String> urls = cataGroup.getAllUrls();
         List<List<BSONObject>> resList = new ArrayList<List<BSONObject>>();
         // get catalog info from all catalog nodes
