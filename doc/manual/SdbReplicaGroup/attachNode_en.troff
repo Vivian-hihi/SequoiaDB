@@ -140,7 +140,7 @@ T}@T{
 T}@T{
 SDB_CM_CONFIG_CONFLICTS
 T}@T{
-The replica group does
+Node may have been in
 T}@T{
 Check if the node has
 T}
@@ -148,7 +148,7 @@ T{
 T}@T{
 T}@T{
 T}@T{
-not exist.
+another group.
 T}@T{
 joined to the current
 T}
@@ -186,7 +186,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-not be supported..
+not be supported.
 T}
 .TE
 .PP
