@@ -49,6 +49,7 @@
 #include "dpsLogWrapper.hpp"
 #include "pmd.hpp"
 #include "pd.hpp"
+#include "utilRenameLogger.hpp"
 
 #define RTN_SORT_INDEX_NAME "sort"
 using namespace bson;
@@ -521,6 +522,15 @@ namespace engine
    INT32 rtnTransReleaseLock( const CHAR *pCollection,
                            _pmdEDUCB *cb,SDB_DMSCB *dmsCB,
                            SDB_DPSCB *dpsCB );
+
+   INT32 rtnCorrectCollectionSpaceFile( const CHAR *dataPath,
+                                        const CHAR *indexPath,
+                                        const CHAR *lobPath,
+                                        const CHAR *lobMetaPath ) ;
+
+   INT32 rtnCorrectCollectionSpaceFile( const CHAR* pFileName,
+                                        const CHAR* pPath,
+                                        const utilRenameLog& renameLog ) ;
 
    BOOLEAN rtnVerifyCollectionSpaceFileName ( const CHAR *pFileName,
                                               CHAR *pSUName,

@@ -791,6 +791,9 @@ namespace engine
    {
       pmdEDUMgr *eduMgr    = pmdGetKRCB()->getEDUMgr() ;
       pmdEDUCB *cb         = eduMgr->getEDUByID( eduID() ) ;
+
+      _logger.clear() ;
+
       _releaseLock( cb ) ;
    }
 
@@ -860,6 +863,22 @@ namespace engine
       _status   = RENAMECSPHASE_1 ;
       _isOpened = TRUE ;
 
+      /// log to .SEQUOIADB_RENAME_INFO
+      {
+         BOOLEAN fileExist = FALSE ;
+         utilRenameLog aLog ( _oldName, _newName ) ;
+
+         rc = _logger.init( &fileExist ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to init rename logger, rc: %d", rc ) ;
+         PD_CHECK ( !fileExist, SDB_FE, error, PDERROR,
+                    "File[%s] already exists, rc: %d",
+                    _logger.fileName(), rc ) ;
+
+         rc = _logger.log( aLog ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to log rename info to file, rc: %d", rc ) ;
+      }
+
    done:
       PD_TRACE_EXITRC( SDB__RTNCTXRENAMECS_OPEN, rc ) ;
       return rc;
@@ -926,6 +945,13 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to rename cs from [%s] to [%s], rc: %d",
                       _oldName, _newName, rc ) ;
+
+         rc = _logger.clear() ;
+         if ( rc )
+         {
+            PD_LOG( PDWARNING, "Failed to clear rename info, rc: %d", rc ) ;
+         }
+
          _status = RENAMECSPHASE_0 ;
          _releaseLock( cb ) ;
       }

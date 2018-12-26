@@ -181,7 +181,8 @@ utilFiles = [
       "util/utilMath.cpp",
       "util/utilUniqueID.cpp",
       "util/utilBuffBlock.cpp",
-      "util/utilCommBuff.cpp"
+      "util/utilCommBuff.cpp",
+      "util/utilRenameLogger.cpp"
       ]
 
 rtnFiles = [

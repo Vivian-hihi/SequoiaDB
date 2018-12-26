@@ -1563,7 +1563,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNRENAMECSCOMMAND ) ;
       BOOLEAN lockDMS = FALSE ;
+      utilRenameLogger logger ;
 
+      /// dms lock
       INT16 i = 0 ;
       while ( ( rc = dmsCB->blockWrite( cb ) )  &&
               ( i < RTN_RENAME_BLOCKWRITE_TIMES ) )
@@ -1574,10 +1576,34 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Block dms write failed, rc: %d", rc ) ;
       lockDMS = TRUE ;
 
+      /// log to .SEQUOIADB_RENAME_INFO
+      {
+         BOOLEAN fileExist = FALSE ;
+         utilRenameLog aLog ( csName, newCSName ) ;
+
+         rc = logger.init( &fileExist ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to init rename logger, rc: %d", rc ) ;
+         PD_CHECK ( !fileExist, SDB_FE, error, PDERROR,
+                    "File[%s] already exists, rc: %d",
+                    logger.fileName(), rc ) ;
+
+         rc = logger.log( aLog ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to log rename info to file, rc: %d", rc ) ;
+      }
+
+      /// dms rename
       rc = dmsCB->renameCollectionSpace( csName, newCSName, cb, dpsCB ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to rename collectionspace from %s to %s, rc: %d",
                    csName, newCSName, rc ) ;
+
+      /// remove .SEQUOIADB_RENAME_INFO
+      rc = logger.clear() ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Failed to clear rename info, rc: %d", rc ) ;
+      }
 
       PD_LOG( PDEVENT, "Rename cs[%s] to [%s] succeed", csName, newCSName ) ;
 

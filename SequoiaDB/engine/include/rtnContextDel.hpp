@@ -40,6 +40,7 @@
 #define RTN_CONTEXT_DEL_HPP_
 
 #include "rtnContext.hpp"
+#include "utilRenameLogger.hpp"
 
 namespace engine
 {
@@ -232,6 +233,7 @@ namespace engine
       BOOLEAN              _lockDMS ;
       UINT32               _logicCSID ;
       renameCSPhase        _status ;
+      utilRenameLogger     _logger ;
    };
    typedef class _rtnContextRenameCS rtnContextRenameCS ;
 
