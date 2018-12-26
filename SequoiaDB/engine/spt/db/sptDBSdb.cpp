@@ -1142,7 +1142,7 @@ namespace engine
       rc = _sptSdb.exec( sql.c_str(), &pCursor ) ;
       if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "Failed to exec update" ) ;
+         detail = BSON( SPT_ERR << "Failed to exec sql" ) ;
          goto error ;
       }
       SPT_SET_CURSOR_TO_RETURNVAL( pCursor ) ;

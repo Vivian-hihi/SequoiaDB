@@ -123,7 +123,7 @@ namespace engine
                                     &pSptObj ) ;
          if ( rc )
          {
-            errMsg = "Failed to get option field" ;
+            errMsg = "Failed to get options field" ;
             goto error ;
          }
 
