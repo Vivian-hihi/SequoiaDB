@@ -274,7 +274,7 @@ typedef class _pdTraceArgument pdTraceArgument ;
 /*
    _pdTraceRecord define
 */
-struct _pdTraceRecord 
+struct _pdTraceRecord
 {
    CHAR           _eyeCatcher[ TRACE_EYE_CATCHER_SIZE ] ;
    UINT8          _flag ;
@@ -362,7 +362,7 @@ struct _pdTraceHeader
          _bufHeader = ( ( ( ( current + TRACE_CHUNK_SIZE - 1 ) /
                           TRACE_CHUNK_SIZE ) *
                         TRACE_CHUNK_SIZE ) % _bufSize ) ;
-         
+
       }
       else
       {
@@ -388,8 +388,8 @@ typedef struct _pdTraceHeader pdTraceHeader ;
 */
 struct _pdAllocPair
 {
-   ossAtomic64       _b ;
-   volatile UINT64   _e ;
+   ossAtomic64       _b ;  // begin
+   volatile UINT64   _e ;  // end
 
    _pdAllocPair()
    :_b( 0 ), _e( TRACE_CHUNK_SIZE )
@@ -553,34 +553,34 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
 
 #ifndef SDB_ENGINE
 
-#define PD_TRACE_DECLARE_FUNCTION(x,y) 
-#define PD_TRACE_ENTRY(funcCode) 
-#define PD_TRACE_EXIT(funcCode) 
-#define PD_TRACE_EXITRC(funcCode,rc) 
-#define PD_TRACE1(funcCode,pack0) 
-#define PD_TRACE2(funcCode,pack0,pack1) 
-#define PD_TRACE3(funcCode,pack0,pack1,pack2) 
-#define PD_TRACE4(funcCode,pack0,pack1,pack2,pack3) 
-#define PD_TRACE5(funcCode,pack0,pack1,pack2,pack3,pack4) 
-#define PD_TRACE6(funcCode,pack0,pack1,pack2,pack3,pack4,pack5) 
-#define PD_TRACE7(funcCode,pack0,pack1,pack2,pack3,pack4,pack5,pack6) 
-#define PD_TRACE8(funcCode,pack0,pack1,pack2,pack3,pack4,pack5,pack6,pack7) 
-#define PD_TRACE9(funcCode,pack0,pack1,pack2,pack3,pack4,pack5,pack6,pack7,pack8) 
+#define PD_TRACE_DECLARE_FUNCTION(x,y)
+#define PD_TRACE_ENTRY(funcCode)
+#define PD_TRACE_EXIT(funcCode)
+#define PD_TRACE_EXITRC(funcCode,rc)
+#define PD_TRACE1(funcCode,pack0)
+#define PD_TRACE2(funcCode,pack0,pack1)
+#define PD_TRACE3(funcCode,pack0,pack1,pack2)
+#define PD_TRACE4(funcCode,pack0,pack1,pack2,pack3)
+#define PD_TRACE5(funcCode,pack0,pack1,pack2,pack3,pack4)
+#define PD_TRACE6(funcCode,pack0,pack1,pack2,pack3,pack4,pack5)
+#define PD_TRACE7(funcCode,pack0,pack1,pack2,pack3,pack4,pack5,pack6)
+#define PD_TRACE8(funcCode,pack0,pack1,pack2,pack3,pack4,pack5,pack6,pack7)
+#define PD_TRACE9(funcCode,pack0,pack1,pack2,pack3,pack4,pack5,pack6,pack7,pack8)
 
-#define PD_PACK_NONE 
-#define PD_PACK_NULL 
-#define PD_PACK_CHAR(x) 
-#define PD_PACK_BYTE(x) 
-#define PD_PACK_SHORT(x) 
-#define PD_PACK_USHORT(x) 
-#define PD_PACK_INT(x) 
-#define PD_PACK_UINT(x) 
-#define PD_PACK_LONG(x) 
-#define PD_PACK_ULONG(x) 
-#define PD_PACK_FLOAT(x) 
-#define PD_PACK_DOUBLE(x) 
-#define PD_PACK_STRING(x) 
-#define PD_PACK_BSON(x) 
+#define PD_PACK_NONE
+#define PD_PACK_NULL
+#define PD_PACK_CHAR(x)
+#define PD_PACK_BYTE(x)
+#define PD_PACK_SHORT(x)
+#define PD_PACK_USHORT(x)
+#define PD_PACK_INT(x)
+#define PD_PACK_UINT(x)
+#define PD_PACK_LONG(x)
+#define PD_PACK_ULONG(x)
+#define PD_PACK_FLOAT(x)
+#define PD_PACK_DOUBLE(x)
+#define PD_PACK_STRING(x)
+#define PD_PACK_BSON(x)
 
 #else
 
