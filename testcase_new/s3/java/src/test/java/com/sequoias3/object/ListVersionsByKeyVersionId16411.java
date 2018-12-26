@@ -3,10 +3,12 @@ package com.sequoias3.object;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
-import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -14,7 +16,6 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -49,17 +50,24 @@ public class ListVersionsByKeyVersionId16411 extends S3TestBase {
         int index = 3;
         String keyMarker = objectNames[index];
         int versionIdMarker = versionNum-1;
-        VersionListing vsList = listVersions(bucketName, keyMarker,""+versionIdMarker);
-        String[] expVersions = new String[]{"1","0","2","1","0"};
-        List<String> expKeys = new ArrayList<String>();
-        for(int i = index; i < objectNames.length; i++){
-            expKeys.add(objectNames[i]);
+        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withKeyMarker(keyMarker)
+                .withVersionIdMarker(String.valueOf(versionIdMarker)));
+
+        //expected results
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        for (int i = versionNum - 2; i >= 0; i--) {
+            expMap.add(objectNames[index], String.valueOf(i));
         }
-        if (!vsList.isTruncated()) {
-            checkResult(vsList, null, new ArrayList<String>(),expKeys,expVersions);
-        } else {
-            Assert.fail("vsList.isTruncated() must be false");
+        for(int i = index + 1; i < objectNames.length;i++){
+            for (int j = versionNum -1; j >= 0; j--) {
+                expMap.add(objectNames[i], String.valueOf(j));
+            }
         }
+        //check
+        Assert.assertEquals(vsList.isTruncated(),false);
+        ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),expMap);
         runSuccess = true;
     }
 
@@ -74,38 +82,5 @@ public class ListVersionsByKeyVersionId16411 extends S3TestBase {
                 s3Client.shutdown();
             }
         }
-    }
-
-    private void checkResult(VersionListing vsList, String delimiter, List<String> commonPrefixes, List<String> expKeys,String[] expVersions) throws Exception {
-        Assert.assertEquals(vsList.getBucketName(), bucketName);
-        Assert.assertEquals(vsList.getDelimiter(), delimiter);
-        List<String> actCommonPrefixes = vsList.getCommonPrefixes();
-        Assert.assertEquals(actCommonPrefixes.size(), commonPrefixes.size());
-        Assert.assertEquals(actCommonPrefixes,commonPrefixes,
-                "actCommonPrefixes = " + actCommonPrefixes.toString() + ",expCommonPrefixes="+commonPrefixes.toString());
-        List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
-        Assert.assertEquals(vsSummaryList.size(), expVersions.length);
-        String key = "";
-        List<String> actKeys = new ArrayList<String>();
-        for(int i = 0; i < vsSummaryList.size(); i++){
-            S3VersionSummary versionSummary = vsSummaryList.get(i);
-            Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            Assert.assertEquals(versionSummary.getVersionId(), expVersions[i],
-                    "bucketName = " + bucketName+",key = " + versionSummary.getKey() +
-                            ",versionId = " +  versionSummary.getVersionId());
-            if(!key.equals(versionSummary.getKey())){//TODO:这里不需要if判断，还要比较重复的可以值，建议key和versionId组合比较
-                actKeys.add(versionSummary.getKey());
-            }
-            key = versionSummary.getKey();
-        }
-        Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actObjectNames = " + actKeys + ",keys = " + expKeys);
-    }
-
-    private VersionListing listVersions(String bucketName, String keyMarker,String versionIdMarker) {
-        ListVersionsRequest request = new ListVersionsRequest();
-        request.setBucketName(bucketName);
-        request.setKeyMarker(keyMarker);
-        request.setVersionIdMarker(versionIdMarker);
-        return  s3Client.listVersions(request);
     }
 }

@@ -3,10 +3,12 @@ package com.sequoias3.object;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
-import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -44,43 +46,50 @@ public class ListVersionsByDelimiterMaxKeys16407 extends S3TestBase {
             }
         }
     }
-    //TODO:2、不同的test请描述下测试点
+
+    //指定maxkeys一次返回所有匹配条件的对象
     @Test
     private void testGtMaxKeys() throws Exception {
         String delimiter = "/";
-        //TODO:1、参考文本用例，没有必要知道keyMarker和versionIdMarcker参数
-        String keyMarker = "acr";
-        String versionIdMarker = "1";
-
         //maxResults > versionNum*objectNames.length
-        VersionListing vsList = listVersionsByDelimiterMaxKeys(bucketName, delimiter, versionNum * objectNames.length, keyMarker, versionIdMarker);
+        VersionListing vsList =  s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withDelimiter(delimiter)
+                .withMaxResults(versionNum*objectNames.length +1));
+
+        //expected results
         List<String> expCommonPrefixes = new ArrayList<String>();
         expCommonPrefixes.add("air/");
         expCommonPrefixes.add("dir/");
-        List<String> expKeys = new ArrayList<String>();
-        expKeys.add("fire16407");
-        expKeys.add("test16407");
+
+        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
+        for(int i = 2; i < objectNames.length;i++){
+            for(int j = versionNum-1; j >= 0; j-- ){
+                expMap.add(objectNames[i],String.valueOf(j));
+            }
+        }
+
         if (!vsList.isTruncated()) {
-            checkResult(vsList, delimiter, expCommonPrefixes,expKeys);
+            ObjectUtils.checkListVSResults(vsList,expCommonPrefixes,expMap);
         } else {
             Assert.fail("vsList.isTruncated() must be false");
         }
         runSuccess1 = true;
     }
 
+    //指定maxkeys多次返回所有匹配条件的对象
     @Test
     private void testLtMaxKeys() throws Exception {
         String delimiter = "/";
-        //TODO:4、参考文本用例，没有必要知道keyMarker和versionIdMarcker参数
-        String keyMarker = "abc";
-        String versionIdMarker = "1";
-
         //maxResults < versionNum*objectNames.length
-        VersionListing vsList = listVersionsByDelimiterMaxKeys(bucketName, delimiter, 1, keyMarker, versionIdMarker);
+        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withDelimiter(delimiter)
+                .withMaxResults(1));
         List<String> expCommonPrefixes1 = new ArrayList<String>();
         expCommonPrefixes1.add("air/");
-        if (vsList.isTruncated()) {//TODO:5、多次返回还需要验证最终返回记录的结果，确保所有记录返回正确
-            checkResult(vsList, delimiter, expCommonPrefixes1,new ArrayList<String>());
+        if (vsList.isTruncated()) {
+            ObjectUtils.checkListVSResults(vsList,expCommonPrefixes1,new LinkedMultiValueMap<String,String>());
         } else {
             Assert.fail("vsList.isTruncated() must be true");
         }
@@ -88,14 +97,23 @@ public class ListVersionsByDelimiterMaxKeys16407 extends S3TestBase {
         //maxResults > versionNum*objectNames.length
         String nextKeyMarker = vsList.getNextKeyMarker();
         String nestVersionIdMarker = vsList.getNextVersionIdMarker();
-        VersionListing vsList1 = listVersionsByDelimiterMaxKeys(bucketName, delimiter, 10, nextKeyMarker, nestVersionIdMarker);
+        VersionListing vsList1 = s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withKeyMarker(nextKeyMarker)
+                .withVersionIdMarker(nestVersionIdMarker)
+                .withDelimiter(delimiter)
+                .withMaxResults(versionNum*objectNames.length));
+        //expected results
         List<String> expCommonPrefixes2 = new ArrayList<String>();
         expCommonPrefixes2.add("dir/");
-        List<String> expKeys = new ArrayList<String>();
-        expKeys.add("fire16407");
-        expKeys.add("test16407");
+        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
+        for(int i = 2; i < objectNames.length;i++){
+            for(int j = versionNum-1; j >= 0; j-- ){
+                expMap.add(objectNames[i],String.valueOf(j));
+            }
+        }
         if (!vsList1.isTruncated()) {
-            checkResult(vsList1, delimiter,expCommonPrefixes2,expKeys);
+            ObjectUtils.checkListVSResults(vsList1,expCommonPrefixes2,expMap);
         } else {
             Assert.fail("vsList.isTruncated() must be false");
         }
@@ -113,34 +131,5 @@ public class ListVersionsByDelimiterMaxKeys16407 extends S3TestBase {
                 s3Client.shutdown();
             }
         }
-    }
-
-    private void checkResult(VersionListing vsList, String delimiter, List<String> commonPrefixes, List<String> expKeys) throws Exception {
-        Assert.assertEquals(vsList.getBucketName(), bucketName);
-        Assert.assertEquals(vsList.getDelimiter(), delimiter);
-        List<String> actCommonPrefixes = vsList.getCommonPrefixes();
-        Assert.assertEquals(actCommonPrefixes, commonPrefixes);
-        List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
-        Assert.assertEquals(vsSummaryList.size(),expKeys.size() * versionNum);
-        String key = "";
-        List<String> actKeys = new ArrayList<String>();
-        for (S3VersionSummary versionSummary : vsSummaryList) {
-            Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            if(!key.equals(versionSummary.getKey())){//TODO:3、这里不需要if分支判断，建议优化逻辑，尽量简洁
-                actKeys.add(versionSummary.getKey());
-            }
-            key = versionSummary.getKey();
-        }
-        Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actObjectNames = " + actKeys + ",keys = " + expKeys);
-    }
-
-    private VersionListing listVersionsByDelimiterMaxKeys(String bucketName, String delimiter, Integer maxResults, String keyMarker, String versionIdMarker) {
-        ListVersionsRequest request = new ListVersionsRequest();
-        request.setBucketName(bucketName);
-        request.setDelimiter(delimiter);
-        request.setMaxResults(maxResults);
-        request.setKeyMarker(keyMarker);
-        request.setVersionIdMarker(versionIdMarker);
-        return s3Client.listVersions(request);
     }
 }

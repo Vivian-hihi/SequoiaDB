@@ -1,10 +1,15 @@
 package com.sequoias3.object;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import org.springframework.util.LinkedMultiValueMap;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -13,7 +18,6 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -50,7 +54,7 @@ public class ListVersionsByPrefixDelimiterIDKey16403 extends S3TestBase {
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (String objectName : objectNames) {
             for (int i = 0; i < versionNum; i++) {
-                putObject(bucketName, objectName, filePathList.get(i));
+                s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i))));
             }
         }
     }
@@ -61,19 +65,34 @@ public class ListVersionsByPrefixDelimiterIDKey16403 extends S3TestBase {
         String delimiter = "/";
         String keyMarker = objectNames[0];
 
-        List<String> commPrefixes = new ArrayList<String>();
-        commPrefixes.add("dir2/");
-        commPrefixes.add("dir3/");
+        //expected results
+        List<String> expCommPrefixes = ObjectUtils.getCommPrefixes(objectNames,prefix,delimiter);
 
         //list versions by prefix/delimiter/currentversionId/key
         String versionIdMarker1 = "4";
-        VersionListing vsList = listVersionsByPreDelimiter(bucketName, prefix, delimiter,keyMarker,versionIdMarker1);
-        checkResult(vsList, prefix, delimiter, commPrefixes);
+        VersionListing vsList =  s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withDelimiter(delimiter)
+                .withPrefix(prefix)
+                .withKeyMarker(keyMarker)
+                .withVersionIdMarker(versionIdMarker1));
+
+       //check
+        Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList,expCommPrefixes,new LinkedMultiValueMap<String, String>());
 
         //list versions by prefix/delimiter/histversionId/key
         String versionIdMarker2 = "3";
-        VersionListing vsList1 = listVersionsByPreDelimiter(bucketName, prefix, delimiter,keyMarker,versionIdMarker2);
-        checkResult(vsList1, prefix, delimiter, commPrefixes);
+        VersionListing vsList1 = s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withDelimiter(delimiter)
+                .withPrefix(prefix)
+                .withKeyMarker(keyMarker)
+                .withVersionIdMarker(versionIdMarker2));
+
+        //check
+        Assert.assertEquals(vsList1.isTruncated(),false,"vsList1.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList1,expCommPrefixes,new LinkedMultiValueMap<String, String>());
         runSuccess = true;
     }
 
@@ -89,35 +108,5 @@ public class ListVersionsByPrefixDelimiterIDKey16403 extends S3TestBase {
                 s3Client.shutdown();
             }
         }
-    }
-
-    private void checkResult(VersionListing vsList, String prefix, String delimiter, List<String> commonPrefixes) throws Exception {
-        Assert.assertEquals(vsList.getBucketName(), bucketName);
-        Assert.assertEquals(vsList.getPrefix(), prefix);
-        Assert.assertEquals(vsList.getDelimiter(), delimiter);
-        List<String> actCommonPrefixes = vsList.getCommonPrefixes();
-        Assert.assertEquals(actCommonPrefixes.size(), commonPrefixes.size());
-        Assert.assertEquals(actCommonPrefixes, commonPrefixes);        
-        List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
-        Assert.assertEquals(vsSummaryList.size(), 0);        
-    }
-
-    private VersionListing listVersionsByPreDelimiter(String bucketName, String prefix, String delimiter,String keyMarker,String versionIdMarker) {
-        ListVersionsRequest request = new ListVersionsRequest();
-        request.setBucketName(bucketName);
-        request.setPrefix(prefix);
-        request.setDelimiter(delimiter);
-        request.setKeyMarker(keyMarker);
-        request.setVersionIdMarker(versionIdMarker);
-        return s3Client.listVersions(request);
-    }
-    //TODO:1、可提取公共方法
-    private PutObjectResult putObject(String bucketName, String key, String filePath) {
-        PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
-        ObjectMetadata metaData = new ObjectMetadata();
-        metaData.setExpirationTime(new Date());
-        metaData.addUserMetadata("meta-1", "16401");
-        request.withMetadata(metaData);
-        return s3Client.putObject(request);
     }
 }

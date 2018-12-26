@@ -3,10 +3,12 @@ package com.sequoias3.object;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
-import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -14,7 +16,6 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -28,8 +29,8 @@ public class ListVersionsByKeyVersionIdMaxKeys16410 extends S3TestBase {
     private boolean runSuccess1 = false;
     private boolean runSuccess2 = false;
     private boolean runSuccess3 = false;
-    private String bucketName = "bucket16409";//TODO:1、桶名和对象名Id需要更新，方法和16409用例冲突
-    private String[] objectNames = {"123#16409", "234#16409", "345#16409", "456#16409","567#16409"};
+    private String bucketName = "bucket16410";
+    private String[] objectNames = {"123#16410", "234#16410", "345#16410", "456#16410","567#16410"};
     private AmazonS3 s3Client = null;
     private int versionNum = 10;
 
@@ -45,55 +46,66 @@ public class ListVersionsByKeyVersionIdMaxKeys16410 extends S3TestBase {
             }
         }
     }
-    //TODO:2、使用多个test测试不同场景请增加测试点描述，另外每个场景代码相同，建议使用testng的DataProvider
+
+    //keyMarker、versionIdMarker匹配从第一条记录开始，设置maxkeys小于对象数
     @Test
     private void testHead() throws Exception {
-        String keyMarker = "0";
-        String versionIdMarker = "0";
-        //TODO:3、场景a中需要设置maxkeys小于匹配对象数，请参考测试点实现
-        Integer maxResults = versionNum*objectNames.length + 1;
-        VersionListing vsList = listVersions(bucketName, keyMarker,versionIdMarker, maxResults);
-        List<String> expKeys = new ArrayList<String>();
-        for(String objectName : objectNames){
-            expKeys.add(objectName);
+        String keyMarker = objectNames[0];
+        String versionIdMarker = String.valueOf(versionNum);
+        Integer maxResults = versionNum*(objectNames.length - 1);
+        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withKeyMarker(keyMarker)
+                .withVersionIdMarker(versionIdMarker)
+                .withMaxResults(maxResults));
+
+        //expected results
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        for(int i = 0; i < objectNames.length-1;i++) {
+            for (int j = versionNum - 1; j >= 0; j--) {
+                expMap.add(objectNames[i ], String.valueOf(j));
+            }
         }
-        if (!vsList.isTruncated()) {
-            checkResult(vsList, null, new ArrayList<String>(),expKeys,versionNum*objectNames.length);
-        } else {
-            Assert.fail("vsList.isTruncated() must be false");
-        }
+        //check
+        Assert.assertEquals(vsList.isTruncated(),true,"vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),expMap);
         runSuccess1 = true;
     }
 
+   //keyMarker、versionIdMarker匹配最后1条记录，设置maxkeys大于1
     @Test
     private void testTail1() throws Exception {
         String keyMarker = objectNames[objectNames.length-1];
         String versionIdMarker = "1";
         Integer maxResults = 2;
-        VersionListing vsList = listVersions(bucketName, keyMarker,versionIdMarker, maxResults);
-        List<String> expKeys = new ArrayList<String>();
-        expKeys.add(objectNames[objectNames.length-1]);
-        if (!vsList.isTruncated()) {
-            checkResult(vsList, null, new ArrayList<String>(), expKeys,1);
-        } else {
-            Assert.fail("vsList.isTruncated() must be false");
-        }
+        VersionListing vsList =  s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withKeyMarker(keyMarker)
+                .withVersionIdMarker(versionIdMarker)
+                .withMaxResults(maxResults));
+        //expected results
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        expMap.add(objectNames[objectNames.length-1], String.valueOf(0));
+        //check
+        Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),expMap);
         runSuccess2 = true;
     }
-    //TODO:4、文本用例中场景c是指定最后一个key，匹配值为空，请确认测试点和文本用例保持一致
+
+    //keyMarker、versionIdMarker指定最后1条对象key，指定maxkeys为1
     @Test
     private void testTail2() throws Exception {
-        String keyMarker = "567#16409";
-        String versionIdMarker = "1";
+        String keyMarker = objectNames[objectNames.length-1];
+        String versionIdMarker = "0";
         Integer maxResults = 1;
-        VersionListing vsList = listVersions(bucketName, keyMarker,versionIdMarker, maxResults);
-        List<String> expKeys = new ArrayList<String>();
-        expKeys.add(objectNames[objectNames.length-1]);
-        if (!vsList.isTruncated()) {
-            checkResult(vsList, null, new ArrayList<String>(), expKeys,1);
-        } else {
-            Assert.fail("vsList.isTruncated() must be false");
-        }
+        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withKeyMarker(keyMarker)
+                .withVersionIdMarker(versionIdMarker)
+                .withMaxResults(maxResults));
+        //check
+        Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),new LinkedMultiValueMap<String, String>());
         runSuccess3 = true;
     }
 
@@ -108,36 +120,5 @@ public class ListVersionsByKeyVersionIdMaxKeys16410 extends S3TestBase {
                 s3Client.shutdown();
             }
         }
-    }
-
-    private void checkResult(VersionListing vsList, String delimiter, List<String> commonPrefixes, List<String> expKeys,int expVersionsNum) throws Exception {
-        Assert.assertEquals(vsList.getBucketName(), bucketName);
-        Assert.assertEquals(vsList.getDelimiter(), delimiter);
-        List<String> actCommonPrefixes = vsList.getCommonPrefixes();
-        Assert.assertEquals(actCommonPrefixes.size(), commonPrefixes.size());
-        Assert.assertEquals(actCommonPrefixes,commonPrefixes,
-                "actCommonPrefixes = " + actCommonPrefixes.toString() + ",expCommonPrefixes="+commonPrefixes.toString());
-        List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
-        Assert.assertEquals(vsSummaryList.size(), expVersionsNum);
-        String key = "";
-        List<String> actKeys = new ArrayList<String>();
-        for(int i = 0; i < vsSummaryList.size(); i++){
-            S3VersionSummary versionSummary = vsSummaryList.get(i);
-            Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            if(!key.equals(versionSummary.getKey())){
-                actKeys.add(versionSummary.getKey());
-            }
-            key = versionSummary.getKey();
-        }
-        Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actObjectNames = " + actKeys + ",keys = " + expKeys);
-    }
-
-    private VersionListing listVersions(String bucketName, String keyMarker,String versionIdMarker, Integer maxResults) {
-        ListVersionsRequest request = new ListVersionsRequest();
-        request.setBucketName(bucketName);
-        request.setKeyMarker(keyMarker);
-        request.setVersionIdMarker(versionIdMarker);
-        request.setMaxResults(maxResults);
-        return s3Client.listVersions(request);
     }
 }

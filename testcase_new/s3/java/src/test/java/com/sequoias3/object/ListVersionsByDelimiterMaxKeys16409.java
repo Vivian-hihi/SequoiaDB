@@ -3,17 +3,17 @@ package com.sequoias3.object;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
-import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import org.springframework.util.LinkedMultiValueMap;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,19 +43,21 @@ public class ListVersionsByDelimiterMaxKeys16409 extends S3TestBase {
             }
         }
     }
-    //TODO:1、这个用例是不匹配maxKeys场景，测试步骤有问题，需要更新文本用例再重新写自动化用例测试
+
     @Test
     private void test() throws Exception {
-        String delimiter = "#";
+        String delimiter = "%";
         Integer maxResults = versionNum*objectNames.length + 1;
         //maxResults > versionNum*objectNames.length
-        VersionListing vsList = listVersionsByDelimiterMaxKeys(bucketName, delimiter, maxResults);
-        List<String> expKeys = new ArrayList<String>();
-        for(String key : objectNames){
-            expKeys.add(key);
-        }
+        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withDelimiter(delimiter)
+                .withMaxResults(maxResults));
+        //expected results
+        List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(objectNames,"",delimiter);
+        //check results
         if (!vsList.isTruncated()) {
-            checkResult(vsList, delimiter, new ArrayList<String>(), expKeys);
+           ObjectUtils.checkListVSResults(vsList, expCommonPrefixes, new LinkedMultiValueMap<String, String>());
         } else {
             Assert.fail("vsList.isTruncated() must be false");
         }
@@ -73,31 +75,5 @@ public class ListVersionsByDelimiterMaxKeys16409 extends S3TestBase {
                 s3Client.shutdown();
             }
         }
-    }
-    private void checkResult(VersionListing vsList, String delimiter, List<String> commonPrefixes, List<String> expKeys) throws Exception {
-        Assert.assertEquals(vsList.getBucketName(), bucketName);
-        Assert.assertEquals(vsList.getDelimiter(), delimiter);
-        List<String> actCommonPrefixes = vsList.getCommonPrefixes();
-        Assert.assertEquals(actCommonPrefixes, commonPrefixes);
-        List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
-        Assert.assertEquals(vsSummaryList.size(),expKeys.size() * versionNum);
-        String key = "";
-        List<String> actKeys = new ArrayList<String>();
-        for (S3VersionSummary versionSummary : vsSummaryList) {
-            Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            if(!key.equals(versionSummary.getKey())){
-                actKeys.add(versionSummary.getKey());
-            }
-            key = versionSummary.getKey();
-        }
-        Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actObjectNames = " + actKeys + ",keys = " + expKeys);
-    }
-
-    private VersionListing listVersionsByDelimiterMaxKeys(String bucketName, String delimiter, Integer maxResults) {
-        ListVersionsRequest request = new ListVersionsRequest();
-        request.setBucketName(bucketName);
-        request.setDelimiter(delimiter);
-        request.setMaxResults(maxResults);
-        return s3Client.listVersions(request);
     }
 }

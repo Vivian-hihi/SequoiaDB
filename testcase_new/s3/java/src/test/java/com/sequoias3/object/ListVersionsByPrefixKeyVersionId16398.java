@@ -1,20 +1,22 @@
 package com.sequoias3.object;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.UUID;
 
 /**
  * @Description:   seqDB-16398 :: 带prefix、keyMarker和versionIdMarker查询对象版本列表，不匹配keyMarker
@@ -30,26 +32,16 @@ public class ListVersionsByPrefixKeyVersionId16398 extends S3TestBase {
     private AmazonS3 s3Client = null;
     private int fileSize = 3;
     private int versionNum = 3;
-    private File localPath = null;
-    private List<String> filePathList = new ArrayList<String>();
 
     @BeforeClass
     private void setUp() throws IOException {
-        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-        TestTools.LocalFile.removeFile(localPath);
-        TestTools.LocalFile.createDir(localPath.toString());
-        for(int i = 0; i < versionNum; i++) {
-            String filePath = localPath + File.separator + "localFile_" + (fileSize+i) + ".txt";
-            TestTools.LocalFile.createFile(filePath, fileSize+i);
-            filePathList.add(filePath);
-        }
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client,bucketName);
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (String objectName : objectNames) {
             for(int i = 0; i < versionNum; i++) {
-                putObject(bucketName, objectName, filePathList.get(i));
+               s3Client.putObject(bucketName,objectName,""+ UUID.randomUUID());
             }
         }
     }
@@ -59,16 +51,37 @@ public class ListVersionsByPrefixKeyVersionId16398 extends S3TestBase {
         String prefix = "dir";
         //keyMarker does not exist
         String keyMarker = "air16398C";
-        String versionIdMarker = "2";
+        String versionIdMarker = String.valueOf(versionNum-1);
         //list by prefix/keyMarker/versionIdMarker
-        VersionListing vsList = listVersionsByPreKeyVersion(bucketName,prefix,keyMarker,versionIdMarker);
-        List<String> expKeys = new ArrayList<String>();
-        for(String objectName: objectNames){
-            expKeys.add(objectName);
+        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withPrefix(prefix)
+                .withKeyMarker(keyMarker)
+                .withVersionIdMarker(versionIdMarker));
+
+        //expected results
+        MultiValueMap<String,String> expMap =  new LinkedMultiValueMap<String,String>();
+        for(String objectName : objectNames){
+            for(int i = versionNum -1; i >= 0; i--){
+                expMap.add(objectName,String.valueOf(i));
+            }
         }
-        //TODO:4、需要补充测试点，key存在不满足prefix的记录，该用例中所有对象都满足prefix，返回所有记录
-       //check
-        checkResult(vsList,prefix,keyMarker,versionIdMarker,objectNames.length*versionNum,expKeys);
+        //check
+        Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),expMap);
+
+        String prefix1 = "air";
+        //keyMarker does not exist
+        String keyMarker1 = "dir16398/dir16398A/dir16398AB";
+        String versionIdMarker1 = String.valueOf(versionNum-1);
+        //list by prefix/keyMarker/versionIdMarker
+        VersionListing vsList1 = s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withPrefix(prefix1)
+                .withKeyMarker(keyMarker1)
+                .withVersionIdMarker(versionIdMarker1));
+        //check
+        ObjectUtils.checkListVSResults(vsList1,new ArrayList<String>(),new LinkedMultiValueMap<String, String>());
         runSuccess = true;
     }
 
@@ -77,52 +90,11 @@ public class ListVersionsByPrefixKeyVersionId16398 extends S3TestBase {
         try {
             if (runSuccess) {
                 CommLib.clearBucket(s3Client,bucketName);
-                TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
             if (s3Client != null) {
                 s3Client.shutdown();
             }
         }
-    }
-
-    private void checkResult(VersionListing vsList,String prefix,String keyMarker,String versionIdMarker,int size,List<String> expKeys)throws  Exception {
-        Assert.assertFalse(vsList.isTruncated());
-        Assert.assertEquals(vsList.getPrefix(),prefix);
-        Assert.assertEquals(vsList.getKeyMarker(),keyMarker);
-        Assert.assertEquals(vsList.getVersionIdMarker(),versionIdMarker);
-        List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
-        Assert.assertEquals(vsSummaryList.size(),size);
-        String key = "";
-        List<String> actKeys = new ArrayList<String>();
-        for (int i = 0; i < vsSummaryList.size(); i++) {
-            S3VersionSummary versionSummary = vsSummaryList.get(i);
-            Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            if(!key.equals(versionSummary.getKey())){//TODO:1、这里的if判断没有意义，建议去掉，直接存实际获取的key
-                actKeys.add(versionSummary.getKey());
-            }
-            key = versionSummary.getKey();
-        }
-        Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actObjectNames = " + actKeys + ",keys = " + objectNames);
-    }
-
-  //TODO:2、多个用例都用到这段代码，建议提取公共方法
-    private VersionListing listVersionsByPreKeyVersion(String bucketName,String prefix,String keyMarker,String versionIdMarker){
-        ListVersionsRequest request = new ListVersionsRequest();
-        request.setBucketName(bucketName);
-        request.setPrefix(prefix);
-        request.setKeyMarker(keyMarker);
-        request.setVersionIdMarker(versionIdMarker);
-        return s3Client.listVersions(request);
-    }
-
-    //TODO:3、多个用例都用到这段代码，建议提取公共方法
-    private PutObjectResult putObject(String bucketName, String key, String filePath) {
-        PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
-        ObjectMetadata metaData = new ObjectMetadata();
-        metaData.setExpirationTime(new Date());
-        metaData.addUserMetadata("meta-1", "16394");
-        request.withMetadata(metaData);
-        return s3Client.putObject(request);
     }
 }

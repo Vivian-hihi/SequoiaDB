@@ -3,10 +3,12 @@ package com.sequoias3.object;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
-import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -44,51 +46,72 @@ public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
             }
         }
     }
-    //TODO:4、补充场景b测试点
+
     @Test//SEQUOIADBMAINSTREAM-3987
-    private void test() throws Exception {
+    private void test1() throws Exception {
         String prefix = "/";
         String delimiter = "/";
         Integer maxResults = 1;
 
-        VersionListing vsList = listVersions(bucketName,prefix ,delimiter, null,null,maxResults);
+        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withPrefix(prefix)
+                .withDelimiter(delimiter)
+                .withMaxResults(maxResults));
+        //expected results
         List<String> expCommonPrefixes = new ArrayList<String>();
         expCommonPrefixes.add("/aa/");
-       if (vsList.isTruncated()) {
-            checkResult(vsList,expCommonPrefixes,new ArrayList<String>(),new String[]{});
-        } else {
-           Assert.fail("vsList.isTruncated() must be true");
-       }
 
-
-       //has same commonprefixes
-        Integer maxResults2 = 2;
-        VersionListing vsList2 = listVersions(bucketName,prefix ,delimiter, null,null,maxResults2);
-        List<String> expCommonPrefixes2 = new ArrayList<String>();
-        expCommonPrefixes2.add("/aa/");
-        expCommonPrefixes2.add("/bb/");
-        if (vsList.isTruncated()) {
-        	//TODO:1、这里是测试场景a，返回记录数为0条，建议传入记录数会比较直观，或者增加描述信息。
-            checkResult(vsList2,expCommonPrefixes2,new ArrayList<String>(),new String[]{});
-        } else {
-            Assert.fail("vsList1.isTruncated() must be true");
-        }
+        //chceck
+        Assert.assertEquals(vsList.isTruncated(),true,"vsList.isTruncated() must be true");
+        ObjectUtils.checkListVSResults(vsList,expCommonPrefixes,new LinkedMultiValueMap<String, String>());
 
         //test isTruncated
         String nextKeyMarker = vsList.getNextKeyMarker();
         String nextVersionIdMarker = vsList.getNextVersionIdMarker();
-        Integer maxResults3 = 2;
-        VersionListing vsList3 = listVersions(bucketName,prefix ,delimiter,nextKeyMarker,nextVersionIdMarker,maxResults3);
+        Integer maxResults2 = 2;
+        VersionListing vsList2 = s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withKeyMarker(nextKeyMarker)
+                .withVersionIdMarker(nextVersionIdMarker)
+                .withPrefix(prefix)
+                .withDelimiter(delimiter)
+                .withMaxResults(maxResults2));
 
+        //expected results
+        List<String> expCommonPrefixes2 = new ArrayList<String>();
+        expCommonPrefixes2.add("/bb/");
+        expCommonPrefixes2.add("/cc/");
+        Assert.assertEquals(vsList2.isTruncated(),false,"vsList3.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList2,expCommonPrefixes2,new LinkedMultiValueMap<String, String>());
+
+
+        //add new object
+        String newObjectName = "/dd";
+        for (int j = 0; j < versionNum; j++) {
+            s3Client.putObject(bucketName, newObjectName, "" + UUID.randomUUID());
+        }
+
+        //test isTruncated
+        Integer maxResults3 = 100;
+        VersionListing vsList3 = s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withKeyMarker(nextKeyMarker)
+                .withVersionIdMarker(nextVersionIdMarker)
+                .withPrefix(prefix)
+                .withDelimiter(delimiter)
+                .withMaxResults(maxResults3));
+
+        //expected results
         List<String> expCommonPrefixes3 = new ArrayList<String>();
         expCommonPrefixes3.add("/bb/");
         expCommonPrefixes3.add("/cc/");
-        if (!vsList3.isTruncated()) {
-        	//TODO:2、这里返回为空记录的结果校验请优化代码，尽量简洁或者增加描述信息
-            checkResult(vsList3,expCommonPrefixes3,new ArrayList<String>(),new String[]{});
-         } else {
-           Assert.fail("vsList3.isTruncated() must be false");
+        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
+        for(int k = versionNum-1;k >= 0; k--){
+            expMap.add(newObjectName,String.valueOf(k));
         }
+        Assert.assertEquals(vsList3.isTruncated(),false,"vsList3.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList3,expCommonPrefixes3,expMap);
         runSuccess = true;
     }
 
@@ -103,40 +126,5 @@ public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
                 s3Client.shutdown();
             }
         }
-    }
-    //TODO:3、这段代码可以提取公共方法，或者针对该用例实现检测结果
-    private void checkResult(VersionListing vsList, List<String> commonPrefixes, List<String> expKeys, String[] expVersions) throws Exception {
-        Assert.assertEquals(vsList.getBucketName(), bucketName);
-        List<String> actCommonPrefixes = vsList.getCommonPrefixes();
-        System.out.println("actCommonPrefixes = " + actCommonPrefixes.toString());
-        Assert.assertEquals(actCommonPrefixes.size(), commonPrefixes.size());
-        Assert.assertEquals(actCommonPrefixes, commonPrefixes,
-                "actCommonPrefixes = " + actCommonPrefixes.toString() + ",expCommonPrefixes=" + commonPrefixes.toString());
-        List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
-        Assert.assertEquals(vsSummaryList.size(), expVersions.length);
-        String key = "";
-        List<String> actKeys = new ArrayList<String>();
-        for (int i = 0; i < vsSummaryList.size(); i++) {
-            S3VersionSummary versionSummary = vsSummaryList.get(i);
-            Assert.assertEquals(versionSummary.getBucketName(), bucketName);
-            Assert.assertEquals(versionSummary.getVersionId(), expVersions[i], versionSummary.getKey());
-            if(!key.equals(versionSummary.getKey())){
-                actKeys.add(versionSummary.getKey());
-            }
-            key = versionSummary.getKey();
-        }
-        Assert.assertEquals(actKeys.toString(),expKeys.toString(),"actObjectNames = " + actKeys + ",keys = " + expKeys);
-    }
-
-    private VersionListing listVersions(String bucketName, String prefix, String delimiter, String keyMarker,String versionIdMarker,Integer maxResults) {
-        ListVersionsRequest request = new ListVersionsRequest();
-        request.setBucketName(bucketName);
-        request.setPrefix(prefix);
-        request.setDelimiter(delimiter);
-        request.setKeyMarker(keyMarker);
-        request.setVersionIdMarker(versionIdMarker);
-        request.setMaxResults(maxResults);
-        VersionListing list = s3Client.listVersions(request);
-        return list;
     }
 }
