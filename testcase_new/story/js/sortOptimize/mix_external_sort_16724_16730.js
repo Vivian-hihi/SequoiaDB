@@ -42,21 +42,11 @@ function main()
    checkSortResultForLargeData(cursor, {a: 1, b:1, c:1, d:1, e:1});
    cursor.close();
 
-   // check sort type of primary node
-//   var expectResult = "External";
-//   var actResult = getSortType(dbclPrimary, null, null, {a: 1, b:1, c:1, d:1, e:1});
-//   checkSortType(expectResult, actResult);
-
    // check result from Slave node
    var cursor = dbclSlave.find().sort({a: 1, b:1, c:1, d:1, e:1});
    checkSortResultForLargeData(cursor, {a: 1, b:1, c:1, d:1, e:1});
    cursor.close();
    db1.close();
-
-   // check sort type of slave node 
-//   var expectResult = "External";
-//   var actResult = getSortType(dbclSlave, null, null, {a: 1, b:1, c:1, d:1, e:1});
-//   checkSortType(expectResult, actResult);
 
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
