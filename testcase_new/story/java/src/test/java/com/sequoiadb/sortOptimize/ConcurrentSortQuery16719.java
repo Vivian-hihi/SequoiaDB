@@ -51,11 +51,6 @@ public class ConcurrentSortQuery16719 extends SdbTestBase {
         queryThread.start(threadNums);
 
         Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
-
-        // check sortType
-        String expectResult = "InMemory";
-        String actResult = Utils.getSortType(cl, null, null, (BSONObject)JSON.parse("{a:1, b:1, c:1}"));
-        Assert.assertEquals(actResult, expectResult, "expectResult: " + expectResult + ", actResult: " + actResult);
     }
 	
     @AfterClass

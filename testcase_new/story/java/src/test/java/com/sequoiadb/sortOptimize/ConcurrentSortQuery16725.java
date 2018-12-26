@@ -69,13 +69,6 @@ public class ConcurrentSortQuery16725 extends SdbTestBase {
         queryThread.start(threadNums);
 
         Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
-
-        // check sortType
-        String expectResult = "External";
-        String actResult1 = Utils.getSortType(cl1, null, null, (BSONObject)JSON.parse("{a:1, b:1, c:1}"));
-        String actResult2 = Utils.getSortType(cl2, null, null, (BSONObject)JSON.parse("{a:1, b:1, c:1}"));
-        Assert.assertEquals(actResult1, expectResult, "expectResult: " + expectResult + ", actResult: " + actResult1);
-        Assert.assertEquals(actResult2, expectResult, "expectResult: " + expectResult + ", actResult: " + actResult2);
     }
 	
     @AfterClass
