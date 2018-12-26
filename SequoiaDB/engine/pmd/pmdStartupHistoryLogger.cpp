@@ -310,7 +310,7 @@ namespace engine
 
       // write to file
       rc = _file.seek( 0, OSS_SEEK_END ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to write seek file[%s], ",
+      PD_RC_CHECK ( rc, PDERROR, "Failed to write seek file[%s], "
                     "rc: %d", _file.getPath().c_str(), rc ) ;
       rc = _file.writeN( strLog.c_str(), strLog.length() ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to write start info into file[%s], "
