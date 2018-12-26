@@ -1206,7 +1206,7 @@ SdbQueryOption.prototype.update = function( rule, returnNew, options ) {
    this._hint = BSONObj({$Modify:BSONObj(modify)});
 
    if (undefined != options) {
-      this._options = options;
+      this._options = BSONObj( options ) ;
    }
 
    return this;
