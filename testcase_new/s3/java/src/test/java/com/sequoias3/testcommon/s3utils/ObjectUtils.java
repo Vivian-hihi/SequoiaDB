@@ -1,20 +1,21 @@
 package com.sequoias3.testcommon.s3utils;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.*;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestTools;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.testng.Assert;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Iterator;
-
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ListVersionsRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.amazonaws.services.s3.model.S3VersionSummary;
-import com.amazonaws.services.s3.model.VersionListing;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.TestTools;
+import java.util.List;
+import java.util.Map;
 
 public class ObjectUtils extends S3TestBase {
     
@@ -111,5 +112,46 @@ public class ObjectUtils extends S3TestBase {
     	if( s3Client.doesObjectExist(bucketName, key)){
     		s3Client.deleteObject(bucketName,key);
     	}
-    } 
+    }
+
+    public static void checkListVSResults(VersionListing vsList, List<String> expCommonPrefixes, MultiValueMap<String,String> expMap){
+		List<String> actCommonPrefixes = vsList.getCommonPrefixes();
+		Assert.assertEquals(actCommonPrefixes, expCommonPrefixes,"actCommonPrefixes = " +
+				actCommonPrefixes.toString() + ",expCommonPrefixes = " + expCommonPrefixes.toString());
+		List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
+		MultiValueMap<String,String> actMap = new LinkedMultiValueMap<String,String>();
+		for (S3VersionSummary versionSummary : vsSummaryList) {
+			actMap.add(versionSummary.getKey(),versionSummary.getVersionId());
+		}
+		Assert.assertEquals(actMap.size(),expMap.size(),"actMap = " + actMap.toString() + ",expMap = " + expMap.toString());
+		for(Map.Entry<String, List<String>> entry : expMap.entrySet()){
+			Assert.assertEquals(actMap.get(entry.getKey()),expMap.get(entry.getKey()),"actMap = " + actMap.toString() + ",expMap = " + expMap.toString());
+		}
+	}
+
+	public static  List<String> getCommPrefixes(String[] objectNames, String prefix, String delimiter) {
+		List<String> commPrefixes = new ArrayList<String>();
+		for (String objectName : objectNames) {
+			if (objectName.startsWith(prefix)) {
+				int end = objectName.indexOf(delimiter, prefix.length());
+				if (end != -1) {
+					commPrefixes.add( objectName.substring(0, end + delimiter.length()));
+				}
+			}
+		}
+		return commPrefixes;
+	}
+
+	public static List<String> getKeys(String[] objectNames, String prefix, String delimiter) {
+		List<String> keys = new ArrayList<String>();
+		for (String objectName : objectNames) {
+			if (objectName.startsWith(prefix)) {
+				int index = objectName.indexOf(delimiter, prefix.length());
+				if (index == -1) {
+					keys.add(objectName);
+				}
+			}
+		}
+		return keys;
+	}
 }
