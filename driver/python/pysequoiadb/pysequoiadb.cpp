@@ -3097,7 +3097,7 @@ __METHOD_IMP(cl_drop_autoincrement)
    PYOBJECT *obj               = NULL ;
    PYOBJECT *str_list          = NULL ;
    sdbCollection *cl           = NULL ;
-   std::vector< char * > str_vec ;
+   std::vector< const char * > str_vec ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &str_list ) )
    {
