@@ -3784,7 +3784,6 @@ namespace sdbclient
 
       virtual void disconnect () = 0 ;
 
-
       virtual INT32 createUsr( const CHAR *pUsrName,
                                const CHAR *pPasswd,
                                const bson::BSONObj &options = _sdbStaticObject
@@ -3969,10 +3968,10 @@ namespace sdbclient
                         const bson::BSONObj &hint = _sdbStaticObject) = 0 ;
 
       virtual INT32 waitTasks ( const SINT64 *taskIDs,
-                        SINT32 num ) = 0 ;
+                                SINT32 num ) = 0 ;
 
       virtual INT32 cancelTask ( SINT64 taskID,
-                        BOOLEAN isAsync ) = 0 ;
+                                 BOOLEAN isAsync ) = 0 ;
       // set session attribute
       virtual INT32 setSessionAttr ( const bson::BSONObj &options =
                                      _sdbStaticObject ) = 0 ;

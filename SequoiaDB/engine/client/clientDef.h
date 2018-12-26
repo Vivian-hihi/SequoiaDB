@@ -57,37 +57,41 @@
 #define SDB_SNAP_SVCTASKS         14
 /** snapshot of sequences */
 #define SDB_SNAP_SEQUENCES        15
+/** reserved */
+#define SDB_SNAP_RESERVED1        16
 
-/** snapshot of all the contexts of all the sessions */
+/** list of all the contexts of all the sessions */
 #define SDB_LIST_CONTEXTS         0
-/** snapshot of the contexts of current session */
+/** list of the contexts of current session */
 #define SDB_LIST_CONTEXTS_CURRENT 1
-/** snapshot of all the sessions */
+/** list of all the sessions */
 #define SDB_LIST_SESSIONS         2
-/** snapshot of current session */
+/** list of current session */
 #define SDB_LIST_SESSIONS_CURRENT 3
-/** snapshot of collections */
+/** list of collections */
 #define SDB_LIST_COLLECTIONS      4
-/** snapshot of collection spaces */
+/** list of collection spaces */
 #define SDB_LIST_COLLECTIONSPACES 5
-/** snapshot of strorage units */
+/** list of strorage units */
 #define SDB_LIST_STORAGEUNITS     6
-/** snapshot of all the groups */
+/** list of all the groups */
 #define SDB_LIST_GROUPS           7
-/** snapshot of store procedures */
+/** list of store procedures */
 #define SDB_LIST_STOREPROCEDURES  8
-/** snapshot of domains */
+/** list of domains */
 #define SDB_LIST_DOMAINS          9
-/** snapshot of tasks */
+/** list of tasks */
 #define SDB_LIST_TASKS            10
-/** snapshot of all the transactions of all the sessions */
+/** list of all the transactions of all the sessions */
 #define SDB_LIST_TRANSACTIONS     11
-/** snapshot of all transactions of current session */
+/** list of all transactions of current session */
 #define SDB_LIST_TRANSACTIONS_CURRENT 12
-/** snapshot of service tasks */
+/** list of service tasks */
 #define SDB_LIST_SVCTASKS         14
-/** snapshot of sequences **/
+/** list of sequences **/
 #define SDB_LIST_SEQUENCES        15
+/** list userS **/
+#define SDB_LIST_USERS            16
 // reserved
 #define SDB_LIST_CL_IN_DOMAIN     129
 // reserved
@@ -104,4 +108,5 @@ typedef struct _sdbClientConf
    UINT32  cacheTimeInterval ;   /**< The life cycle(in seconds) of cached object */
 } sdbClientConf ;
 
-#endif
+
+#endif // CLIENT_DEFINITION_H__
