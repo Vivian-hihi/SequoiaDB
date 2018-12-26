@@ -149,6 +149,7 @@ public class GroupWrapper {
  
 
     public GroupCheckResult checkBusiness(boolean printRes ) throws ReliabilityException {
+        final String PrimaryNode = "PrimaryNode" ;
         GroupCheckResult checkRes = new GroupCheckResult();
         if (getGroupName().equals("SYSCoord")) {
             return checkRes;
@@ -156,7 +157,10 @@ public class GroupWrapper {
 
         checkRes.groupName = getGroupName();
         checkRes.groupID = getGroupID();
-        checkRes.primaryNode = groupInfo.getInt("PrimaryNode");
+        
+        if ( groupInfo.containsField( PrimaryNode ) ){
+            checkRes.primaryNode = groupInfo.getInt(PrimaryNode);
+        }
 
         for (NodeWrapper node : nodes) {
             NodeCheckResult res = node.checkBusiness(printRes);

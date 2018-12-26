@@ -115,7 +115,14 @@ public class GroupMgr {
 
         return hosts;
     }
-
+    
+    private GroupWrapper getGroupByNameInner(String name) {
+        if (name2group.containsKey(name)) {
+            return name2group.get(name);
+        } else {
+            return null;
+        }
+    }
     public GroupWrapper getGroupByName(String name) {
         try {
             this.refresh() ;
@@ -123,11 +130,7 @@ public class GroupMgr {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        if (name2group.containsKey(name)) {
-            return name2group.get(name);
-        } else {
-            return null;
-        }
+        return getGroupByNameInner( name );
     }
 
     public GroupWrapper getGroupById(int id) {
@@ -215,7 +218,7 @@ public class GroupMgr {
     }
 
     private boolean isCatalogSync(boolean printAndThrowAllException) throws ReliabilityException {
-        GroupWrapper catagroup = new GroupMgr().getGroupByName("SYSCatalogGroup");
+        GroupWrapper catagroup = getGroupByNameInner("SYSCatalogGroup");
         List<NodeWrapper> nodes = catagroup.getNodes();
         boolean ret = true;
         long[] clCount = new long[nodes.size()];
@@ -303,7 +306,7 @@ public class GroupMgr {
         int index = 0;
         boolean result = true;
         try {
-            groupNames = new GroupMgr().getAllDataGroupName();
+            groupNames = getAllDataGroupName();
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
             for (index = 0; index < groupNames.size(); index++) {
@@ -501,7 +504,8 @@ public class GroupMgr {
             try {
                 results.add(group.checkBusiness(printAndThrowAllException));
             } catch (Exception e) {
-                throw e;
+                e.printStackTrace() ;
+                throw new ReliabilityException(e);
             }
         }
         return results;
@@ -575,6 +579,20 @@ public class GroupMgr {
         if (sdb != null) {
             sdb.close();
         }
+    }
+    
+    public static void main(String[] args){
+        GroupMgr mgr ;
+        try {
+            mgr = new GroupMgr("192.168.30.62:50000") ;
+            SdbTestBase.coordUrl = "192.168.30.62:50000" ;
+            SdbTestBase.csName = "reablity" ;
+            mgr.checkBusiness() ;
+        } catch ( ReliabilityException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
     }
 
 }

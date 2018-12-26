@@ -5,204 +5,220 @@
  * @author wenjingwang Date:2017-2-21下午4:54:48
  * @version 1.00
  */
-package com.sequoiadb.commlib;
+package com.sequoiadb.commlib ;
 
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.Node;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.ReliabilityException;
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.bson.types.BasicBSONList;
+import com.sequoiadb.base.DBCursor ;
+import com.sequoiadb.base.Node ;
+import com.sequoiadb.base.Sequoiadb ;
+import com.sequoiadb.exception.BaseException ;
+import com.sequoiadb.exception.ReliabilityException ;
+import org.bson.BSONObject ;
+import org.bson.BasicBSONObject ;
+import org.bson.types.BasicBSONList ;
 
 public class NodeWrapper {
     public enum NodeStatus {
-        STOP_SUCCESS,
-        STOP_FAILURE,
-        START_SUCCESS,
-        START_FAILURE
-    };
+        STOP_SUCCESS, STOP_FAILURE, START_SUCCESS, START_FAILURE
+    } ;
 
-    private NodeStatus status;
-    private Node node;
-    private BasicBSONObject nodeInfo;
+    private NodeStatus status ;
+    private Node node ;
+    private BasicBSONObject nodeInfo ;
 
     @Override
     public String toString() {
-        return "NodeWrapper{" +
-                "status=" + status +
-                ", node=" + node +
-                ", nodeInfo=" + nodeInfo +
-                '}';
+        return "NodeWrapper{" + "status=" + status + ", node=" + node
+                + ", nodeInfo=" + nodeInfo + '}' ;
     }
 
-    public NodeWrapper(Node node, BasicBSONObject nodeInfo) {
-        this.node = node;
-        this.nodeInfo = nodeInfo;
+    public NodeWrapper( Node node, BasicBSONObject nodeInfo ) {
+        this.node = node ;
+        this.nodeInfo = nodeInfo ;
     }
 
-    private BasicBSONObject getDataBaseSnapshot(boolean printRes) throws ReliabilityException {
-        Sequoiadb sdb = null;
-        BasicBSONObject retObj = null;
+    private BasicBSONObject getDataBaseSnapshot( boolean printRes )
+            throws ReliabilityException {
+        Sequoiadb sdb = null ;
+        BasicBSONObject retObj = null ;
         try {
-            sdb = node.connect();
-            BSONObject nullObj = null;
-            DBCursor cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_DATABASE, nullObj, nullObj,
-                    nullObj);
-            while (cursor.hasNext()) {
-                retObj = (BasicBSONObject) cursor.getNext();
+            sdb = node.connect() ;
+            BSONObject nullObj = null ;
+            DBCursor cursor = sdb.getSnapshot( Sequoiadb.SDB_SNAP_DATABASE,
+                    nullObj, nullObj, nullObj ) ;
+            while ( cursor.hasNext() ) {
+                retObj = ( BasicBSONObject ) cursor.getNext() ;
             }
-            cursor.close();
-        }
-        catch (BaseException e) {
-            if (printRes) {
-                System.out.println(node.getNodeName() + " getSnapshot( "
-                        + Sequoiadb.SDB_SNAP_DATABASE + ") failed " + e.getErrorCode());
+            cursor.close() ;
+        } catch ( BaseException e ) {
+            if ( printRes ) {
+                System.out.println( node.getNodeName() + " getSnapshot( "
+                        + Sequoiadb.SDB_SNAP_DATABASE + ") failed "
+                        + e.getErrorCode() ) ;
             }
-            throw new ReliabilityException(e);
-        }
-        finally {
-            if (sdb != null) {
-                sdb.close();
+            throw new ReliabilityException( e ) ;
+        } finally {
+            if ( sdb != null ) {
+                sdb.close() ;
             }
         }
-        return retObj;
+        return retObj ;
     }
 
     public boolean start() throws ReliabilityException {
         try {
-            node.start();
-            status = NodeStatus.START_SUCCESS;
+            node.start() ;
+            status = NodeStatus.START_SUCCESS ;
 
+        } catch ( BaseException e ) {
+            System.out.println( "start " + node.getNodeName() + " failed "
+                    + e.getErrorCode() ) ;
+            status = NodeStatus.START_FAILURE ;
+            throw new ReliabilityException( e ) ;
         }
-        catch (BaseException e) {
-            System.out.println("start " + node.getNodeName() + " failed " + e.getErrorCode());
-            status = NodeStatus.START_FAILURE;
-            throw new ReliabilityException(e);
-        }
-        return true;
+        return true ;
     }
 
     public boolean stop() throws ReliabilityException {
         try {
-            node.stop();
-            status = NodeStatus.STOP_SUCCESS;
+            node.stop() ;
+            status = NodeStatus.STOP_SUCCESS ;
 
+        } catch ( BaseException e ) {
+            System.out.println( "stop " + node.getNodeName() + " failed "
+                    + e.getErrorCode() ) ;
+            status = NodeStatus.STOP_FAILURE ;
+            throw new ReliabilityException( e ) ;
         }
-        catch (BaseException e) {
-            System.out.println("stop " + node.getNodeName() + " failed " + e.getErrorCode());
-            status = NodeStatus.STOP_FAILURE;
-            throw new ReliabilityException(e);
-        }
-        return true;
+        return true ;
     }
 
     public boolean checkStop() {
-        if (status == NodeStatus.STOP_FAILURE) {
-            return false;
-        }
-        else {
-            return true;
+        if ( status == NodeStatus.STOP_FAILURE ) {
+            return false ;
+        } else {
+            return true ;
         }
     }
 
     public boolean checkStart() {
-        if (status == NodeStatus.START_FAILURE) {
-            return false;
-        }
-        else {
-            return true;
+        if ( status == NodeStatus.START_FAILURE ) {
+            return false ;
+        } else {
+            return true ;
         }
     }
 
     public boolean isNodeActive() {
         try {
-            Sequoiadb db = node.connect();
-            BSONObject nullObj = null;
-            DBCursor cursor = db.getList(Sequoiadb.SDB_LIST_CONTEXTS_CURRENT, nullObj, nullObj,
-                    nullObj);
-            while (cursor.hasNext()) {
-                cursor.getNext();
+            Sequoiadb db = node.connect() ;
+            BSONObject nullObj = null ;
+            DBCursor cursor = db.getList( Sequoiadb.SDB_LIST_CONTEXTS_CURRENT,
+                    nullObj, nullObj, nullObj ) ;
+            while ( cursor.hasNext() ) {
+                cursor.getNext() ;
             }
-            cursor.close();
+            cursor.close() ;
+        } catch ( BaseException e ) {
+            return false ;
         }
-        catch (BaseException e) {
-            return false;
-        }
-        return true;
+        return true ;
     }
 
     public String hostName() {
-        return nodeInfo.getString("HostName");
+        final String HostName = "HostName" ;
+        if ( nodeInfo.containsField( HostName ) ) {
+            return nodeInfo.getString( HostName ) ;
+        } else {
+            return "" ;
+        }
     }
 
     public int nodeID() {
-        return nodeInfo.getInt("NodeID");
+        final String NodeID = "NodeID" ;
+        if ( nodeInfo.containsField( NodeID ) ) {
+            return nodeInfo.getInt( NodeID ) ;
+        } else {
+            return -1 ;
+        }
     }
 
     public String svcName() {
-        return ((BasicBSONObject) ((BasicBSONList) nodeInfo.get("Service")).get(0))
-                .getString("Name");
+        return ( ( BasicBSONObject ) ( ( BasicBSONList ) nodeInfo
+                .get( "Service" ) ).get( 0 ) ).getString( "Name" ) ;
     }
 
     public String dbPath() {
-        return nodeInfo.getString("dbpath");
+        return nodeInfo.getString( "dbpath" ) ;
     }
 
     public boolean isMaster() throws ReliabilityException {
-        return isMaster(true);
+        return isMaster( true ) ;
     }
 
-    public boolean isMaster(boolean printException) throws ReliabilityException {
-        BasicBSONObject obj = getDataBaseSnapshot(printException);
-        if (obj != null) {
-            return obj.getBoolean("IsPrimary");
+    public boolean isMaster( boolean printException )
+            throws ReliabilityException {
+        BasicBSONObject obj = getDataBaseSnapshot( printException ) ;
+        if ( obj != null ) {
+            return obj.getBoolean( "IsPrimary" ) ;
         }
 
-        return false;
+        return false ;
     }
 
-    public NodeCheckResult checkBusiness(boolean printRes) {
-        NodeCheckResult checkResult = new NodeCheckResult();
-        checkResult.hostName = hostName();
-        checkResult.nodeID = nodeID();
-        checkResult.svcName = svcName();
+    public NodeCheckResult checkBusiness( boolean printRes ) {
+        NodeCheckResult checkResult = new NodeCheckResult() ;
+        checkResult.hostName = hostName() ;
+        checkResult.nodeID = nodeID() ;
+        checkResult.svcName = svcName() ;
 
-        int svcPort = Integer.parseInt(checkResult.svcName);
-        if (svcPort >= SdbTestBase.reservedPortBegin && svcPort <= SdbTestBase.reservedPortEnd) {
-            checkResult.isInDeploy = false;
+        int svcPort = Integer.parseInt( checkResult.svcName ) ;
+        if ( svcPort >= SdbTestBase.reservedPortBegin
+                && svcPort <= SdbTestBase.reservedPortEnd ) {
+            checkResult.isInDeploy = false ;
         }
 
         try {
-            BasicBSONObject obj = getDataBaseSnapshot(printRes);
-            checkResult.serviceStatus = obj.getBoolean("ServiceStatus");
-            checkResult.connect = true;
-            checkResult.LSNVer = ((BasicBSONObject) obj.get("CurrentLSN")).getInt("Version") ;
-            checkResult.LSN = obj.getLong("CompleteLSN"); 
-            checkResult.isPrimary = obj.getBoolean("IsPrimary");
-            checkResult.freeSpace = ((BasicBSONObject) obj.get("Disk")).getLong("FreeSpace");
-        }
-        catch (ReliabilityException e) {
-            checkResult.connect = false;
+            BasicBSONObject obj = getDataBaseSnapshot( printRes ) ;
+            checkResult.serviceStatus = obj.getBoolean( "ServiceStatus" ) ;
+            checkResult.connect = true ;
+            if ( obj.containsField( "CurrentLSN" ) ) {
+                checkResult.LSNVer = ( ( BasicBSONObject ) obj
+                        .get( "CurrentLSN" ) ).getInt( "Version" ) ;
+            }
+
+            if ( obj.containsField( "CompleteLSN" ) ) {
+                checkResult.LSN = obj.getLong( "CompleteLSN" ) ;
+            }
+
+            if ( obj.containsField( "IsPrimary" ) ) {
+                checkResult.isPrimary = obj.getBoolean( "IsPrimary" ) ;
+            }
+            if ( obj.containsField( "Disk" ) ) {
+                checkResult.freeSpace = ( ( BasicBSONObject ) obj.get( "Disk" ) )
+                        .getLong( "FreeSpace" ) ;
+            }
+        } catch ( ReliabilityException e ) {
+            checkResult.connect = false ;
         }
 
-        return checkResult;
+        return checkResult ;
     }
 
-    public void backupDiaglog(String testCaseName) throws ReliabilityException {
+    public void backupDiaglog( String testCaseName )
+            throws ReliabilityException {
 
-        Ssh remote = new Ssh(hostName(), SdbTestBase.remoteUser, SdbTestBase.remotePwd);
-        remote.exec(String.format("cp -r %s/diaglog %s/backup_%s", dbPath(), SdbTestBase.workDir,
-                testCaseName));
-        if (0 != remote.getExitStatus()) {
-            throw new ReliabilityException(
-                    "stdout:" + remote.getStdout() + "\nstderr:" + remote.getStderr());
+        Ssh remote = new Ssh( hostName(), SdbTestBase.remoteUser,
+                SdbTestBase.remotePwd ) ;
+        remote.exec( String.format( "cp -r %s/diaglog %s/backup_%s", dbPath(),
+                SdbTestBase.workDir, testCaseName ) ) ;
+        if ( 0 != remote.getExitStatus() ) {
+            throw new ReliabilityException( "stdout:" + remote.getStdout()
+                    + "\nstderr:" + remote.getStderr() ) ;
         }
     }
 
     public Sequoiadb connect() {
-        Sequoiadb db = new Sequoiadb(hostName() + ":" + svcName(), "", "");
-        return db;
+        Sequoiadb db = new Sequoiadb( hostName() + ":" + svcName(), "", "" ) ;
+        return db ;
     }
 }
