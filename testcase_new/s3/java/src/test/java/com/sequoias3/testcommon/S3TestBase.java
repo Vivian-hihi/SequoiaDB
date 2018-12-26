@@ -180,6 +180,21 @@ public class S3TestBase {
                 f.close();
                 
                 System.out.println("write properties: " + installPath + "/tools/sequoias3/config/application.properties" );
+                //change log level
+                
+                File file = new File(installPath+"/tools/sequoias3/config/logback.xml" );
+                BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+                CharArrayWriter caw = new CharArrayWriter();
+                line = null;
+                while((line=br.readLine()) != null) {
+                    line = line.replaceAll("INFO", "DEBUG");
+                    caw.write(line);
+                    caw.append(System.getProperty("line.separator"));
+                }
+                br.close();
+                FileWriter fw = new FileWriter(file);
+                caw.writeTo(fw);
+                fw.close();
             }catch( Exception e ){
                 e.printStackTrace();
                 Assert.fail( "update application.properties file failed" );
@@ -197,7 +212,6 @@ public class S3TestBase {
             System.out.println( "exec cmd: " + Arrays.toString( cmd ) );
             process = Runtime.getRuntime().exec( cmd );
             input = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
-
             exitValue = process.waitFor();
             if( 0 != exitValue ){
                 Assert.fail( "fail to start s3, return code=" + exitValue );
