@@ -51,6 +51,9 @@ namespace engine
       SPT_NATIVE_FLOAT64
    } ;
 
+   /*
+      _sptArguments define
+   */
    class _sptArguments : public SDBObject
    {
    public:
@@ -67,13 +70,10 @@ namespace engine
                                 BOOLEAN strict = TRUE,
                                 BOOLEAN allowNull = FALSE )
                                 const = 0 ;
-      // BSONObj and BSONArray may exceed the size limit
       virtual INT32 getArray( UINT32 pos, vector< bson::BSONObj >&value,
-                              SPT_CONVERT_MODE mode = SPT_CONVERT_NORMAL )
-                              const = 0 ;
-      virtual INT32 getChrArray( UINT32 pos, vector< CHAR* > &value,
-                                 SPT_CONVERT_MODE mode = SPT_CONVERT_NORMAL )
-                                 const = 0 ;
+                              BOOLEAN strict = TRUE ) const = 0 ;
+      virtual INT32 getArray( UINT32 pos, vector< string > &value,
+                              BOOLEAN strict = TRUE ) const = 0 ;
 
       virtual INT32 getUserObj( UINT32 pos, const _sptObjDesc &objDesc,
                                 const void** value ) const = 0 ;

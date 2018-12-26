@@ -56,14 +56,6 @@ namespace engine
    #define SPT_CVT_FLAGS_OBJ_TO_STRING  0x8
    #define SPT_CVT_FLAGS_OBJ_TO_BSON    0x10
 
-   // Convertor mode define
-   enum SPT_CONVERT_MODE
-   {
-      SPT_CONVERT_NORMAL = 0,
-      SPT_CONVERT_MATCHER,
-      SPT_CONVERT_AGGREGATE
-   } ;
-
    // Function type define
    typedef INT32 (*CVT_TO_BSON_FUNC)( const CHAR* key, const sptObject &value,
                                       BOOLEAN isSpecialObj,

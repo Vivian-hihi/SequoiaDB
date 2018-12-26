@@ -1783,8 +1783,8 @@ namespace engine
    }
 
    INT32 _sptDBCL::createAutoIncrement( const _sptArguments &arg,
-                                  _sptReturnVal &rval,
-                                  bson::BSONObj &detail )
+                                        _sptReturnVal &rval,
+                                        bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
 
@@ -1843,10 +1843,9 @@ namespace engine
       goto done ;
    }
 
-
    INT32 _sptDBCL::dropAutoIncrement( const _sptArguments &arg,
-                                _sptReturnVal &rval,
-                                bson::BSONObj &detail )
+                                      _sptReturnVal &rval,
+                                      bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
       string fieldName ;
@@ -1878,26 +1877,23 @@ namespace engine
          }
          else if( arg.isArray( 0 ) )
          {
-            vector<CHAR *> fieldNames ;
-            rc = arg.getChrArray( 0, fieldNames ) ;
+            vector< const CHAR * > fieldNames ;
+            vector< string > vecStr ;
+            rc = arg.getArray( 0, vecStr ) ;
             if( SDB_OUT_OF_BOUND == rc )
             {
                detail = BSON( SPT_ERR << "Docs array must be config" ) ;
                goto error ;
+            }
+            for ( UINT32 i = 0 ; i < vecStr.size() ; ++i )
+            {
+               fieldNames.push_back( vecStr[i].c_str() ) ;
             }
             rc = _cl.dropAutoIncrement( fieldNames ) ;
             if( SDB_OK != rc )
             {
                detail = BSON( SPT_ERR << "Failed to drop autoincrement field" ) ;
                goto error ;
-            }
-            for( UINT32 i = 0 ; i < fieldNames.size(); i++ )
-            {
-               if( fieldNames[i] )
-               {
-                  delete fieldNames[i] ;
-                  fieldNames[i] = NULL ;
-               }
             }
          }
          else

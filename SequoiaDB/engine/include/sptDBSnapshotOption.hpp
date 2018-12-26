@@ -31,12 +31,20 @@
 *******************************************************************************/
 #ifndef SPT_DB_SNAPSHOTOPTION_HPP
 #define SPT_DB_SNAPSHOTOPTION_HPP
+
 #include "sptApi.hpp"
+#include "sptDBOptionBase.hpp"
+
+using namespace bson ;
+
 namespace engine
 {
    #define SPT_SNAPSHOTOPTION_NAME      "SdbSnapshotOption"
 
-   class _sptDBSnapshotOption : public SDBObject
+   /*
+      _sptDBSnapshotOption define
+   */
+   class _sptDBSnapshotOption : public _sptDBOptionBase
    {
       JS_DECLARE_CLASS( _sptDBSnapshotOption )
    public:
@@ -47,14 +55,10 @@ namespace engine
                        _sptReturnVal &rval,
                        bson::BSONObj &detail ) ;
       INT32 destruct() ;
-      static INT32 cvtToBSON( const CHAR* key, const sptObject &value,
-                              BOOLEAN isSpecialObj, BSONObjBuilder& builder,
-                              string &errMsg ) ;
-      static INT32 fmpToBSON( const sptObject &value, BSONObj &retObj,
-                              string &errMsg ) ;
-      static INT32 bsonToJSObj( sdbclient::sdb &db, const BSONObj &data,
-                                _sptReturnVal &rval, bson::BSONObj &detail ) ;
+
    } ;
+
    typedef _sptDBSnapshotOption sptDBSnapshotOption ;
 }
-#endif
+
+#endif // SPT_DB_SNAPSHOTOPTION_HPP

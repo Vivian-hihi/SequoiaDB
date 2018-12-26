@@ -31,38 +31,57 @@
 #ifndef SPT_DB_OPTIONBASE_HPP
 #define SPT_DB_OPTIONBASE_HPP
 #include "sptApi.hpp"
-   namespace engine
+
+using namespace bson ;
+
+namespace engine
+{
+   #define SPT_OPTIONBASE_NAME                "SdbOptionBase"
+   #define SPT_OPTIONBASE_COND_FIELD          "_cond"
+   #define SPT_OPTIONBASE_SEL_FIELD           "_sel"
+   #define SPT_OPTIONBASE_SORT_FIELD          "_sort"
+   #define SPT_OPTIONBASE_HINT_FIELD          "_hint"
+   #define SPT_OPTIONBASE_SKIP_FIELD          "_skip"
+   #define SPT_OPTIONBASE_LIMIT_FIELD         "_limit"
+   #define SPT_OPTIONBASE_FLAGS_FIELD         "_flags"
+
+   /*
+      _sptDBOptionBase define
+   */
+   class _sptDBOptionBase : public SDBObject
    {
-      #define SPT_OPTIONBASE_NAME                "SdbOptionBase"
-      #define SPT_OPTIONBASE_COND_FIELD          "_cond"
-      #define SPT_OPTIONBASE_SEL_FIELD           "_sel"
-      #define SPT_OPTIONBASE_SORT_FIELD          "_sort"
-      #define SPT_OPTIONBASE_HINT_FIELD          "_hint"
-      #define SPT_OPTIONBASE_SKIP_FIELD          "_skip"
-      #define SPT_OPTIONBASE_LIMIT_FIELD         "_limit"
-      #define SPT_OPTIONBASE_FLAGS_FIELD         "_flags"
+      JS_DECLARE_CLASS( _sptDBOptionBase )
+   public:
+      _sptDBOptionBase() ;
+      virtual ~_sptDBOptionBase() ;
+   public:
+      INT32 construct( const _sptArguments &arg,
+                       _sptReturnVal &rval,
+                       bson::BSONObj &detail ) ;
+      INT32 destruct() ;
 
-      class _sptDBOptionBase : public SDBObject
-      {
-         JS_DECLARE_CLASS( _sptDBOptionBase )
-      public:
-         _sptDBOptionBase() ;
-         virtual ~_sptDBOptionBase() ;
-      public:
-         INT32 construct( const _sptArguments &arg,
-                          _sptReturnVal &rval,
-                          bson::BSONObj &detail ) ;
-         INT32 destruct() ;
+      static INT32 cvtToBSON( const CHAR* key,
+                              const sptObject &value,
+                              BOOLEAN isSpecialObj,
+                              BSONObjBuilder& builder,
+                              string &errMsg ) ;
 
-         static INT32 cvtToBSON( const CHAR* key, const sptObject &value,
-                                 BOOLEAN isSpecialObj, BSONObjBuilder& builder,
-                                 string &errMsg ) ;
-         static INT32 fmpToBSON( const sptObject &value, BSONObj &retObj,
-                                 string &errMsg ) ;
-         static INT32 bsonToJSObj( sdbclient::sdb &db, const BSONObj &data,
-                                   _sptReturnVal &rval, bson::BSONObj &detail ) ;
-      } ;
-      typedef _sptDBOptionBase sptDBOptionBase ;
-   }
+      static INT32 fmpToBSON( const sptObject &value,
+                              BSONObj &retObj,
+                              string &errMsg ) ;
+
+      static INT32 bsonToJSObj( sdbclient::sdb &db,
+                                const BSONObj &data,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail ) ;
+
+   protected:
+      static void _setReturnVal( const BSONObj &data,
+                                 _sptReturnVal &rval ) ;
+
+   } ;
+   typedef _sptDBOptionBase sptDBOptionBase ;
+}
+
 #endif
 

@@ -39,6 +39,9 @@
 
 namespace engine
 {
+   /*
+      _sptSPArguments define
+   */
    class _sptSPArguments : public _sptArguments
    {
    public:
@@ -48,18 +51,21 @@ namespace engine
    public:
       virtual INT32 getNative( UINT32 pos, void *value,
                                SPT_NATIVE_TYPE type ) const ;
+
       virtual INT32 getString( UINT32 pos, std::string &value,
                                BOOLEAN strict = TRUE ) const ;
+
       virtual INT32 getBsonobj( UINT32 pos, bson::BSONObj &value,
                                 BOOLEAN strict = TRUE,
                                 BOOLEAN allowNull = FALSE )
                                 const ;
+
       virtual INT32 getArray( UINT32 pos, vector< bson::BSONObj > &value,
-                              SPT_CONVERT_MODE mode = SPT_CONVERT_NORMAL )
-                              const ;
-      virtual INT32 getChrArray( UINT32 pos, vector< CHAR* > &value,
-                                 SPT_CONVERT_MODE mode = SPT_CONVERT_NORMAL )
-                                 const ;
+                              BOOLEAN strict = TRUE ) const ;
+
+      virtual INT32 getArray( UINT32 pos, vector< string > &value,
+                              BOOLEAN strict = TRUE ) const ;
+
       virtual INT32 getUserObj( UINT32 pos, const _sptObjDesc &objDesc,
                                 const void** value ) const ;
 

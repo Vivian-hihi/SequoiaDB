@@ -101,7 +101,7 @@ namespace engine
    INT32 _sptDBOID::cvtToBSON( const CHAR* key, const sptObject &value,
                                BOOLEAN isSpecialObj, BSONObjBuilder& builder,
                                string &errMsg )
-      {
+   {
       string data ;
       string fieldName ;
       INT32 rc = SDB_OK ;

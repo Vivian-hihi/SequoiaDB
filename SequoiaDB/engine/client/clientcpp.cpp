@@ -4128,7 +4128,7 @@ error:
       goto done ;
    }
 
-   INT32 _sdbCollectionImpl::dropAutoIncrement( const std::vector<CHAR*> &fieldNames )
+   INT32 _sdbCollectionImpl::dropAutoIncrement( const std::vector<const CHAR*> &fieldNames )
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
@@ -7704,8 +7704,8 @@ error :
                                  const BSONObj &selector,
                                  const BSONObj &orderBy,
                                  const BSONObj &hint,
-                                 INT32 numToSkip,
-                                 INT32 numToRet
+                                 INT64 numToSkip,
+                                 INT64 numToRet
                                )
    {
       INT32 rc                        = SDB_OK ;
@@ -7777,7 +7777,8 @@ error :
                                     condition.objdata(),
                                     selector.objdata(),
                                     orderBy.objdata(),
-                                    hint.objdata(), _endianConvert ) ;
+                                    hint.objdata(),
+                                    _endianConvert ) ;
       if ( rc )
       {
          goto error ;
@@ -7845,7 +7846,10 @@ error :
                              INT32 listType,
                              const BSONObj &condition,
                              const BSONObj &selector,
-                             const BSONObj &orderBy
+                             const BSONObj &orderBy,
+                             const bson::BSONObj &hint,
+                             INT64 numToSkip,
+                             INT64 numToRet
                            )
    {
       INT32 rc                        = SDB_OK ;
@@ -7910,6 +7914,9 @@ error :
       case SDB_LIST_SEQUENCES :
          p = CMD_ADMIN_PREFIX CMD_NAME_LIST_SEQUENCES ;
          break ;
+      case SDB_LIST_USERS :
+         p = CMD_ADMIN_PREFIX CMD_NAME_LIST_USERS ;
+         break ;
       default :
          rc = SDB_INVALIDARG ;
          goto exit ;
@@ -7917,11 +7924,13 @@ error :
       lock () ;
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer,
                                     &_sendBufferSize,
-                                    p, 0, 0, 0, -1,
+                                    p, 0, 0,
+                                    numToSkip, numToRet,
                                     condition.objdata(),
                                     selector.objdata(),
                                     orderBy.objdata(),
-                                    NULL, _endianConvert ) ;
+                                    hint.objdata(),
+                                    _endianConvert ) ;
       if ( rc )
       {
          goto error ;
@@ -9587,17 +9596,17 @@ error :
    }
 
    INT32 _sdbImpl::listTasks ( _sdbCursor **cursor,
-                           const bson::BSONObj &condition,
-                           const bson::BSONObj &selector,
-                           const bson::BSONObj &orderBy,
-                           const bson::BSONObj &hint)
+                               const bson::BSONObj &condition,
+                               const bson::BSONObj &selector,
+                               const bson::BSONObj &orderBy,
+                               const bson::BSONObj &hint)
 
    {
       return getList ( cursor, SDB_LIST_TASKS, condition, selector, orderBy ) ;
    }
 
    INT32 _sdbImpl::waitTasks ( const SINT64 *taskIDs,
-                         SINT32 num )
+                               SINT32 num )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
@@ -9672,8 +9681,7 @@ error :
       goto done ;
    }
 
-   INT32 _sdbImpl::cancelTask ( SINT64 taskID,
-                            BOOLEAN isAsync )
+   INT32 _sdbImpl::cancelTask ( SINT64 taskID, BOOLEAN isAsync )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;

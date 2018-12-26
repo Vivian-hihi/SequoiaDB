@@ -198,13 +198,12 @@ namespace engine
    }
 
    INT32 _sptSPArguments::getArray( UINT32 pos, vector< bson::BSONObj > &value,
-                                    SPT_CONVERT_MODE mode )
-                                    const
+                                    BOOLEAN strict ) const
    {
       INT32 rc = SDB_OK ;
       JSObject *jsObj = NULL ;
       jsval *val = NULL ;
-      sptConvertor convertor( _context, mode ) ;
+      sptConvertor convertor( _context, strict ) ;
 
       _errMsg.clear() ;
 
@@ -249,14 +248,13 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptSPArguments::getChrArray( UINT32 pos, vector< CHAR* > &value,
-                                    SPT_CONVERT_MODE mode )
-                                    const
+   INT32 _sptSPArguments::getArray( UINT32 pos, vector< string > &value,
+                                    BOOLEAN strict ) const
    {
       INT32 rc = SDB_OK ;
       JSObject *jsObj = NULL ;
       jsval *val = NULL ;
-      sptConvertor convertor( _context, mode ) ;
+      sptConvertor convertor( _context, strict ) ;
 
       _errMsg.clear() ;
 
@@ -289,7 +287,7 @@ namespace engine
          goto error ;
       }
 
-      rc = convertor.toChrArray( jsObj, value ) ;
+      rc = convertor.toStrArray( jsObj, value ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, convertor.getErrMsg().c_str() ) ;
@@ -340,7 +338,7 @@ namespace engine
       }
 
       if( string( objDesc.getJSClassName() ) !=
-            sptGetObjFactory()->getClassName( _context, jsObj ) )
+          sptGetObjFactory()->getClassName( _context, jsObj ) )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "jsObj className must be: %s", objDesc.getJSClassName() ) ;

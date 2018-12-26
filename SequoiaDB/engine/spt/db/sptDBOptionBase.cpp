@@ -31,8 +31,9 @@
 *******************************************************************************/
 #include "sptDBOptionBase.hpp"
 #include "sptBsonobj.hpp"
-#include <boost/lexical_cast.hpp>
+
 using namespace bson ;
+
 namespace engine
 {
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBOptionBase, construct )
@@ -55,8 +56,8 @@ namespace engine
    }
 
    INT32 _sptDBOptionBase::construct( const _sptArguments &arg,
-                                   _sptReturnVal &rval,
-                                   bson::BSONObj &detail )
+                                      _sptReturnVal &rval,
+                                      bson::BSONObj &detail )
    {
       rval.addSelfProperty( SPT_OPTIONBASE_COND_FIELD,
                             SPT_PROP_ENUMERATE )->setValue( BSONObj() ) ;
@@ -81,125 +82,22 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _sptDBOptionBase::cvtToBSON( const CHAR* key, const sptObject &value,
-                                   BOOLEAN isSpecialObj, BSONObjBuilder& builder,
-                                   string &errMsg )
+   INT32 _sptDBOptionBase::cvtToBSON( const CHAR* key,
+                                      const sptObject &value,
+                                      BOOLEAN isSpecialObj,
+                                      BSONObjBuilder& builder,
+                                      string &errMsg )
    {
       INT32 rc = SDB_OK ;
+      BSONObj obj ;
 
-      sptObject *condObj ;
-      sptObject *selObj ;
-      sptObject *sortObj ;
-      sptObject *hintObj ;
-      INT32 skip = 0 ;
-      INT32 limit = -1 ;
-      INT32 flags = 0 ;
-      sptBsonobj *pBsonObj ;
-
-      if ( value.isFieldExist( SPT_OPTIONBASE_COND_FIELD ) )
+      rc = fmpToBSON( value, obj, errMsg ) ;
+      if ( rc )
       {
-         rc = value.getObjectField( SPT_OPTIONBASE_COND_FIELD, &condObj ) ;
-         if( SDB_OK != rc )
-         {
-            errMsg = "Failed to get cond data field" ;
-            goto error ;
-         }
-
-         rc = condObj->getUserObj( _sptBsonobj::__desc, (const void **)&pBsonObj ) ;
-         if( SDB_OK != rc )
-         {
-            errMsg = "Failed to get cond data field" ;
-            goto error ;
-         }
-         builder.append( SPT_OPTIONBASE_COND_FIELD, pBsonObj->getBson() ) ;
+         goto error ;
       }
 
-      if ( value.isFieldExist( SPT_OPTIONBASE_SEL_FIELD ) )
-      {
-         rc = value.getObjectField( SPT_OPTIONBASE_SEL_FIELD, &selObj ) ;
-         if( SDB_OK != rc )
-         {
-            errMsg = "Failed to get sel type field" ;
-            goto error ;
-         }
-
-         rc = selObj->getUserObj( _sptBsonobj::__desc, (const void **)&pBsonObj ) ;
-         if( SDB_OK != rc )
-         {
-            errMsg = "Failed to get sel data field" ;
-            goto error ;
-         }
-         builder.append( SPT_OPTIONBASE_SEL_FIELD, pBsonObj->getBson() ) ;
-      }
-
-      if ( value.isFieldExist( SPT_OPTIONBASE_SORT_FIELD ) )
-      {
-         rc = value.getObjectField( SPT_OPTIONBASE_SORT_FIELD, &sortObj ) ;
-         if( SDB_OK != rc )
-         {
-            errMsg = "Failed to get sort type field" ;
-            goto error ;
-         }
-
-         rc = sortObj->getUserObj( _sptBsonobj::__desc, (const void **)&pBsonObj ) ;
-         if( SDB_OK != rc )
-         {
-            errMsg = "Failed to get sort data field" ;
-            goto error ;
-         }
-         builder.append( SPT_OPTIONBASE_SORT_FIELD, pBsonObj->getBson() ) ;
-      }
-
-      if ( value.isFieldExist( SPT_OPTIONBASE_HINT_FIELD ) )
-      {
-         rc = value.getObjectField( SPT_OPTIONBASE_HINT_FIELD, &hintObj ) ;
-         if( SDB_OK != rc )
-         {
-            errMsg = "Failed to get hint type field" ;
-            goto error ;
-         }
-
-         rc = hintObj->getUserObj( _sptBsonobj::__desc, (const void **)&pBsonObj ) ;
-         if( SDB_OK != rc )
-         {
-            errMsg = "Failed to get hint data field" ;
-            goto error ;
-         }
-         builder.append( SPT_OPTIONBASE_HINT_FIELD, pBsonObj->getBson() ) ;
-      }
-
-      if ( value.isFieldExist( SPT_OPTIONBASE_SKIP_FIELD ) )
-      {
-         rc = value.getIntField( SPT_OPTIONBASE_SKIP_FIELD, skip ) ;
-         if( SDB_OK != rc )
-         {
-            errMsg = "Failed to get skip type field" ;
-            goto error ;
-         }
-         builder.append( SPT_OPTIONBASE_SKIP_FIELD, skip ) ;
-      }
-
-      if ( value.isFieldExist( SPT_OPTIONBASE_LIMIT_FIELD ) )
-      {
-         rc = value.getIntField( SPT_OPTIONBASE_LIMIT_FIELD, limit ) ;
-         if( SDB_OK != rc )
-         {
-            errMsg = "Failed to get limit type field" ;
-            goto error ;
-         }
-         builder.append( SPT_OPTIONBASE_LIMIT_FIELD, limit ) ;
-      }
-
-      if ( value.isFieldExist( SPT_OPTIONBASE_FLAGS_FIELD ) )
-      {
-         rc = value.getIntField( SPT_OPTIONBASE_FLAGS_FIELD, flags ) ;
-         if( SDB_OK != rc )
-         {
-            errMsg = "Failed to get flags type field" ;
-            goto error ;
-         }
-         builder.append( SPT_OPTIONBASE_FLAGS_FIELD, flags ) ;
-      }
+      builder.append( key, obj ) ;
 
    done:
       return rc ;
@@ -207,15 +105,14 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptDBOptionBase::fmpToBSON( const sptObject &value, BSONObj &retObj,
-                                          string &errMsg )
+   INT32 _sptDBOptionBase::fmpToBSON( const sptObject &value,
+                                      BSONObj &retObj,
+                                      string &errMsg )
    {
       INT32 rc = SDB_OK ;
+      sptObject *pSptObj = NULL ;
+      sptBsonobj *pBsonObj = NULL ;
 
-      sptObject *condObj ;
-      sptObject *selObj ;
-      sptObject *sortObj ;
-      sptObject *hintObj ;
       BSONObj cond ;
       BSONObj sel ;
       BSONObj sort ;
@@ -223,18 +120,18 @@ namespace engine
       INT32 skip = 0 ;
       INT32 limit = -1 ;
       INT32 flags = 0 ;
-      sptBsonobj *pBsonObj ;
 
       if ( value.isFieldExist( SPT_OPTIONBASE_COND_FIELD ) )
       {
-         rc = value.getObjectField( SPT_OPTIONBASE_COND_FIELD, &condObj ) ;
+         rc = value.getObjectField( SPT_OPTIONBASE_COND_FIELD, &pSptObj ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to get cond data field" ;
             goto error ;
          }
 
-         rc = condObj->getUserObj( _sptBsonobj::__desc, (const void **)&pBsonObj ) ;
+         rc = pSptObj->getUserObj( _sptBsonobj::__desc,
+                                   (const void **)&pBsonObj ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to contruct Bson from cond data field" ;
@@ -245,14 +142,15 @@ namespace engine
 
       if ( value.isFieldExist( SPT_OPTIONBASE_SEL_FIELD ) )
       {
-         rc = value.getObjectField( SPT_OPTIONBASE_SEL_FIELD, &selObj ) ;
+         rc = value.getObjectField( SPT_OPTIONBASE_SEL_FIELD, &pSptObj ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to get sel type field" ;
             goto error ;
          }
 
-         rc = selObj->getUserObj( _sptBsonobj::__desc, (const void **)&pBsonObj ) ;
+         rc = pSptObj->getUserObj( _sptBsonobj::__desc,
+                                   (const void **)&pBsonObj ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to contruct Bson from sel data field" ;
@@ -263,14 +161,15 @@ namespace engine
 
       if ( value.isFieldExist( SPT_OPTIONBASE_SORT_FIELD ) )
       {
-         rc = value.getObjectField( SPT_OPTIONBASE_SORT_FIELD, &sortObj ) ;
+         rc = value.getObjectField( SPT_OPTIONBASE_SORT_FIELD, &pSptObj ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to get sort type field" ;
             goto error ;
          }
 
-         rc = sortObj->getUserObj( _sptBsonobj::__desc, (const void **)&pBsonObj ) ;
+         rc = pSptObj->getUserObj( _sptBsonobj::__desc,
+                                   (const void **)&pBsonObj ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to contruct Bson from sort data field" ;
@@ -281,14 +180,15 @@ namespace engine
 
       if ( value.isFieldExist( SPT_OPTIONBASE_HINT_FIELD ) )
       {
-         rc = value.getObjectField( SPT_OPTIONBASE_HINT_FIELD, &hintObj ) ;
+         rc = value.getObjectField( SPT_OPTIONBASE_HINT_FIELD, &pSptObj ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to get hint type field" ;
             goto error ;
          }
 
-         rc = hintObj->getUserObj( _sptBsonobj::__desc, (const void **)&pBsonObj ) ;
+         rc = pSptObj->getUserObj( _sptBsonobj::__desc,
+                                   (const void **)&pBsonObj ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to contruct Bson from hint data field" ;
@@ -340,38 +240,13 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptDBOptionBase::bsonToJSObj( sdbclient::sdb &db, const BSONObj &data,
-                                     _sptReturnVal &rval,
-                                     bson::BSONObj &detail )
+   INT32 _sptDBOptionBase::bsonToJSObj( sdbclient::sdb &db,
+                                        const BSONObj &data,
+                                        _sptReturnVal &rval,
+                                        bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      BSONObj cond ;
-      BSONObj sel ;
-      BSONObj sort ;
-      BSONObj hint ;
-      INT32   skip = 0 ;
-      INT32   limit = -1 ;
-      INT32   flags = 0 ;
-
       sptDBOptionBase *pSnapOption = NULL ;
-
-      cond = data.getObjectField( SPT_OPTIONBASE_COND_FIELD ) ;
-      sel = data.getObjectField( SPT_OPTIONBASE_SEL_FIELD ) ;
-      sort = data.getObjectField( SPT_OPTIONBASE_SORT_FIELD ) ;
-      hint = data.getObjectField( SPT_OPTIONBASE_HINT_FIELD ) ;
-
-      if (data.hasField( SPT_OPTIONBASE_SKIP_FIELD ) )
-      {
-         skip = data.getIntField( SPT_OPTIONBASE_SKIP_FIELD ) ;
-      }
-      if (data.hasField( SPT_OPTIONBASE_LIMIT_FIELD ) )
-      {
-         limit = data.getIntField( SPT_OPTIONBASE_LIMIT_FIELD ) ;
-      }
-      if (data.hasField( SPT_OPTIONBASE_FLAGS_FIELD ) )
-      {
-         flags = data.getIntField( SPT_OPTIONBASE_FLAGS_FIELD ) ;
-      }
 
       pSnapOption = SDB_OSS_NEW sptDBOptionBase() ;
       if( NULL == pSnapOption )
@@ -380,26 +255,16 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to new sptDBOptionBase obj" ) ;
          goto error ;
       }
+
       rc = rval.setUsrObjectVal< sptDBOptionBase >( pSnapOption ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to set ret obj" ) ;
          goto error ;
       }
-      rval.addReturnValProperty( SPT_OPTIONBASE_COND_FIELD,
-                                 SPT_PROP_ENUMERATE )->setValue( cond ) ;
-      rval.addReturnValProperty( SPT_OPTIONBASE_SEL_FIELD,
-                                 SPT_PROP_ENUMERATE )->setValue( sel ) ;
-      rval.addReturnValProperty( SPT_OPTIONBASE_SORT_FIELD,
-                                 SPT_PROP_ENUMERATE )->setValue( sort ) ;
-      rval.addReturnValProperty( SPT_OPTIONBASE_HINT_FIELD,
-                                 SPT_PROP_ENUMERATE )->setValue( hint ) ;
-      rval.addReturnValProperty( SPT_OPTIONBASE_SKIP_FIELD,
-                                 SPT_PROP_ENUMERATE )->setValue( skip ) ;
-      rval.addReturnValProperty( SPT_OPTIONBASE_LIMIT_FIELD,
-                                 SPT_PROP_ENUMERATE )->setValue( limit ) ;
-      rval.addReturnValProperty( SPT_OPTIONBASE_FLAGS_FIELD,
-                                 SPT_PROP_ENUMERATE )->setValue( flags ) ;
+
+      _setReturnVal( data, rval ) ;
+
    done:
       return rc ;
    error:
@@ -407,4 +272,57 @@ namespace engine
       goto done ;
    }
 
+   void _sptDBOptionBase::_setReturnVal( const BSONObj &data,
+                                         _sptReturnVal &rval )
+   {
+      BSONObj obj ;
+
+      /// _cond
+      obj = data.getObjectField( SPT_OPTIONBASE_COND_FIELD ) ;
+      rval.addReturnValProperty( SPT_OPTIONBASE_COND_FIELD,
+                                 SPT_PROP_ENUMERATE )->setValue( obj ) ;
+      /// _sel
+      obj = data.getObjectField( SPT_OPTIONBASE_SEL_FIELD ) ;
+      rval.addReturnValProperty( SPT_OPTIONBASE_SEL_FIELD,
+                                 SPT_PROP_ENUMERATE )->setValue( obj ) ;
+
+      /// _sort
+      obj = data.getObjectField( SPT_OPTIONBASE_SORT_FIELD ) ;
+      rval.addReturnValProperty( SPT_OPTIONBASE_SORT_FIELD,
+                                 SPT_PROP_ENUMERATE )->setValue( obj ) ;
+
+      /// _hint
+      obj = data.getObjectField( SPT_OPTIONBASE_HINT_FIELD ) ;
+      rval.addReturnValProperty( SPT_OPTIONBASE_HINT_FIELD,
+                                 SPT_PROP_ENUMERATE )->setValue( obj ) ;
+
+      /// _skip
+      INT32   skip = 0 ;
+      if ( data.hasField( SPT_OPTIONBASE_SKIP_FIELD ) )
+      {
+         skip = data.getIntField( SPT_OPTIONBASE_SKIP_FIELD ) ;
+      }
+      rval.addReturnValProperty( SPT_OPTIONBASE_SKIP_FIELD,
+                                 SPT_PROP_ENUMERATE )->setValue( skip ) ;
+
+      /// _limit
+      INT32   limit = -1 ;
+      if ( data.hasField( SPT_OPTIONBASE_LIMIT_FIELD ) )
+      {
+         limit = data.getIntField( SPT_OPTIONBASE_LIMIT_FIELD ) ;
+      }
+      rval.addReturnValProperty( SPT_OPTIONBASE_LIMIT_FIELD,
+                                 SPT_PROP_ENUMERATE )->setValue( limit ) ;
+
+      /// _flags
+      INT32   flags = 0 ;
+      if ( data.hasField( SPT_OPTIONBASE_FLAGS_FIELD ) )
+      {
+         flags = data.getIntField( SPT_OPTIONBASE_FLAGS_FIELD ) ;
+      }
+      rval.addReturnValProperty( SPT_OPTIONBASE_FLAGS_FIELD,
+                                 SPT_PROP_ENUMERATE )->setValue( flags ) ;
+   }
+
 }
+

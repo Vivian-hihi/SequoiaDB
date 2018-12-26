@@ -821,7 +821,7 @@ namespace engine
       {
          if( !arg.isNull( 1 ) )
          {
-            rc = arg.getBsonobj( 1, cond, SPT_CONVERT_MATCHER ) ;
+            rc = arg.getBsonobj( 1, cond ) ;
             if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
             {
                detail = BSON( SPT_ERR << "Cond must be obj" ) ;
@@ -915,7 +915,7 @@ namespace engine
 
       if( arg.argc() > 1 )
       {
-         rc = arg.getBsonobj( 1, cond, SPT_CONVERT_MATCHER ) ;
+         rc = arg.getBsonobj( 1, cond ) ;
          if( SDB_OK != rc )
          {
             detail = BSON( SPT_ERR << "Cond must be obj" ) ;
@@ -1757,11 +1757,9 @@ namespace engine
 
          if( arg.argc() > 1 )
          {
-            rc = arg.getBsonobj( 1, cond, SPT_CONVERT_MATCHER ) ;
+            rc = arg.getBsonobj( 1, cond ) ;
             if( SDB_OK != rc )
             {
-
-
                detail = BSON( SPT_ERR << "Condition must be obj" ) ;
                goto error ;
             }
@@ -1836,11 +1834,9 @@ namespace engine
 
       if( arg.argc() > 0 )
       {
-         rc = arg.getBsonobj( 0, cond, SPT_CONVERT_MATCHER ) ;
+         rc = arg.getBsonobj( 0, cond ) ;
          if( SDB_OK != rc )
          {
-
-
             detail = BSON( SPT_ERR << "Condition must be obj" ) ;
             goto error ;
          }
@@ -2177,7 +2173,7 @@ namespace engine
 
       if( arg.argc() > 0 )
       {
-         rc = arg.getBsonobj( 0, cond, SPT_CONVERT_MATCHER ) ;
+         rc = arg.getBsonobj( 0, cond ) ;
          if( SDB_OK != rc )
          {
             detail = BSON( SPT_ERR << "Condition must be obj" ) ;

@@ -108,7 +108,6 @@ namespace engine
       string option ;
       if( isSpecialObj )
       {
-
          UINT32 fieldNumber = 0 ;
          rc = value.getFieldNumber( fieldNumber ) ;
          if( SDB_OK != rc )

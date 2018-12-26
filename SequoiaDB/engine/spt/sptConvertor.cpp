@@ -127,11 +127,11 @@ namespace engine
       goto done ;
    }
 
-   INT32 sptConvertor::toChrArray( JSObject *obj, vector< CHAR* > &bsArray )
+   INT32 sptConvertor::toStrArray( JSObject *obj, vector< string > &bsArray )
    {
       INT32 rc = SDB_OK ;
       UINT32 length = 0 ;
-      vector< CHAR * > tmpVec ;
+
       if ( NULL == obj )
       {
          goto done ;
@@ -151,9 +151,7 @@ namespace engine
 
       for ( UINT32 i = 0; i < length; i++ )
       {
-         BSONObj tmpObj ;
          std::string str ;
-         CHAR * chr ;
          jsval val ;
          if( !JS_GetElement( _cx, obj, i, &val ) )
          {
@@ -173,17 +171,14 @@ namespace engine
             _setErrMsg( "Failed to conversion string", FALSE ) ;
             goto error ;
          }
-         chr = new CHAR[ str.length() + 1 ] ;
-         ossStrcpy( chr, str.c_str() ) ;
-         tmpVec.push_back( chr ) ;
+         bsArray.push_back( str ) ;
       }
-      bsArray.swap( tmpVec ) ;
+
    done:
       return rc ;
    error:
       goto done ;
    }
-
 
    INT32 sptConvertor::_traverse( JSObject *obj , BSONObjBuilder &builder )
    {

@@ -47,6 +47,9 @@
 
 namespace engine
 {
+   /*
+      sptConvertor define
+   */
    class sptConvertor
    {
    public:
@@ -63,7 +66,7 @@ namespace engine
    public:
       INT32 toBson( JSObject *obj , bson::BSONObj &bsobj ) ;
       INT32 toObjArray( JSObject *obj, vector< bson::BSONObj > &bsArray ) ;
-      INT32 toChrArray( JSObject *obj, vector< CHAR* > &bsArray ) ;
+      INT32 toStrArray( JSObject *obj, vector< string > &bsArray ) ;
       INT32 _toString(  const jsval &val, std::string &str ) ;
       INT32 _toInt( const jsval &val, INT32 &str ) ;
       INT32 _toDouble( const jsval &val, FLOAT64 &fV ) ;

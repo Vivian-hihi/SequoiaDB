@@ -31,13 +31,20 @@
 *******************************************************************************/
 #ifndef SPT_DB_QUERYOPTION_HPP
 #define SPT_DB_QUERYOPTION_HPP
-#include "sptApi.hpp"
+
+#include "sptDBOptionBase.hpp"
+
+using namespace bson ;
+
 namespace engine
 {
    #define SPT_QUERYOPTION_NAME                "SdbQueryOption"
    #define SPT_QUERYOPTION_OPTIONS_FIELD       "_options"  
 
-   class _sptDBQueryOption : public SDBObject
+   /*
+      _sptDBQueryOption define
+   */
+   class _sptDBQueryOption : public _sptDBOptionBase
    {
       JS_DECLARE_CLASS( _sptDBQueryOption )
    public:
@@ -48,14 +55,28 @@ namespace engine
                        _sptReturnVal &rval,
                        bson::BSONObj &detail ) ;
       INT32 destruct() ;
-      static INT32 cvtToBSON( const CHAR* key, const sptObject &value,
-                              BOOLEAN isSpecialObj, BSONObjBuilder& builder,
+
+      static INT32 cvtToBSON( const CHAR* key,
+                              const sptObject &value,
+                              BOOLEAN isSpecialObj,
+                              BSONObjBuilder& builder,
                               string &errMsg ) ;
-      static INT32 fmpToBSON( const sptObject &value, BSONObj &retObj,
+
+      static INT32 fmpToBSON( const sptObject &value,
+                              BSONObj &retObj,
                               string &errMsg ) ;
-      static INT32 bsonToJSObj( sdbclient::sdb &db, const BSONObj &data,
-                                _sptReturnVal &rval, bson::BSONObj &detail ) ;
+
+      static INT32 bsonToJSObj( sdbclient::sdb &db,
+                                const BSONObj &data,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail ) ;
+
+   protected:
+      static void _setReturnVal( const BSONObj &data,
+                                 _sptReturnVal &rval ) ;
+
    } ;
    typedef _sptDBQueryOption sptDBQueryOption ;
 }
-#endif
+
+#endif //SPT_DB_QUERYOPTION_HPP

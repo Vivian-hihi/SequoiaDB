@@ -486,7 +486,7 @@ namespace sdbclient
 
       INT32 dropAutoIncrement( const CHAR* fieldName );
 
-      INT32 dropAutoIncrement( const std::vector<CHAR*> &fieldNames ) ;
+      INT32 dropAutoIncrement( const std::vector<const CHAR*> &fieldNames ) ;
 
       INT32 enableSharding ( const bson::BSONObj & options ) ;
 
@@ -1161,8 +1161,8 @@ namespace sdbclient
                           const BSONObj &selector = _sdbStaticObject,
                           const BSONObj &orderBy = _sdbStaticObject,
                           const BSONObj &hint   = _sdbStaticObject,
-                          INT32 numToSkip = 0,
-                          INT32 numToRet  = -1 ) ;
+                          INT64 numToSkip = 0,
+                          INT64 numToRet  = -1 ) ;
 
       INT32 getSnapshot ( sdbCursor &cursor,
                           INT32 snapType,
@@ -1170,8 +1170,8 @@ namespace sdbclient
                           const BSONObj &selector = _sdbStaticObject,
                           const BSONObj &orderBy = _sdbStaticObject,
                           const BSONObj &hint   = _sdbStaticObject,
-                          INT32 numToSkip = 0,
-                          INT32 numToRet  = -1 )
+                          INT64 numToSkip = 0,
+                          INT64 numToRet  = -1 )
       {
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return getSnapshot ( &cursor.pCursor,
@@ -1185,22 +1185,29 @@ namespace sdbclient
       }
 
       INT32 getList ( _sdbCursor **cursor,
-                      INT32 snapType,
+                      INT32 listType,
                       const BSONObj &condition = _sdbStaticObject,
                       const BSONObj &selector = _sdbStaticObject,
-                      const BSONObj &orderBy = _sdbStaticObject
+                      const BSONObj &orderBy = _sdbStaticObject,
+                      const bson::BSONObj &hint = _sdbStaticObject,
+                      INT64 numToSkip = 0,
+                      INT64 numToRet = -1
                     ) ;
 
       INT32 getList ( sdbCursor &cursor,
-                      INT32 snapType,
+                      INT32 listType,
                       const BSONObj &condition = _sdbStaticObject,
                       const BSONObj &selector = _sdbStaticObject,
-                      const BSONObj &orderBy = _sdbStaticObject
+                      const BSONObj &orderBy = _sdbStaticObject,
+                      const bson::BSONObj &hint = _sdbStaticObject,
+                      INT64 numToSkip = 0,
+                      INT64 numToRet = -1
                     )
       {
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
-         return getList ( &cursor.pCursor, snapType, condition,
-                          selector, orderBy ) ;
+         return getList ( &cursor.pCursor, listType, condition,
+                          selector, orderBy, hint,
+                          numToSkip, numToRet ) ;
       }
 
       INT32 resetSnapshot ( const BSONObj &options = _sdbStaticObject ) ;
@@ -1417,10 +1424,10 @@ namespace sdbclient
          return listTasks ( &cursor.pCursor, condition,
                              selector, orderBy, hint ) ;
       }
-      INT32 waitTasks ( const SINT64 *taskIDs,
-                        SINT32 num ) ;
-      INT32 cancelTask ( SINT64 taskID,
-                         BOOLEAN isAsync ) ;
+
+      INT32 waitTasks ( const SINT64 *taskIDs, SINT32 num ) ;
+
+      INT32 cancelTask ( SINT64 taskID, BOOLEAN isAsync ) ;
       // set session attribute
       INT32 setSessionAttr ( const bson::BSONObj &options = _sdbStaticObject ) ;
 
@@ -1430,7 +1437,7 @@ namespace sdbclient
       INT32 closeAllCursors ();
 
       // connection is closed
-      INT32 isValid( BOOLEAN *result ) ;
+      INT32   isValid( BOOLEAN *result ) ;
       BOOLEAN isValid() ;
       BOOLEAN isClosed() ;
 
@@ -1538,10 +1545,10 @@ namespace sdbclient
                              const bson::BSONObj &options = _sdbStaticObject ) ;
 
       INT32 getLastErrorObj( bson::BSONObj &result ) ;
-      void cleanLastErrorObj() ;
+      void  cleanLastErrorObj() ;
 
    } ;
    typedef class _sdbImpl sdbImpl ;
 }
 
-#endif
+#endif //CLIENTIMPL_HPP__
