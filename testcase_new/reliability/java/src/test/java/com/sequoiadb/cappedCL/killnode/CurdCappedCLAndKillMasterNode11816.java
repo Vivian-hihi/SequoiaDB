@@ -49,7 +49,7 @@ public class CurdCappedCLAndKillMasterNode11816 extends SdbTestBase{
 		System.out.println(this.getClass().getName() + " begin at:"
                 + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 		try {
-			groupMgr = new GroupMgr();
+			groupMgr = GroupMgr.getInstance();
 			//check environment for 120s
 			if(!groupMgr.checkBusiness(120)) {
 				throw new SkipException("checkBusiness failed");

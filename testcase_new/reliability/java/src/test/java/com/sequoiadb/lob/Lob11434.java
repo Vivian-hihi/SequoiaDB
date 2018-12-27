@@ -65,7 +65,7 @@ public class Lob11434 implements StandTestInterface {
      */
     @Test
     public void test() throws ReliabilityException {
-        GroupMgr groupMgr = new GroupMgr();
+        GroupMgr groupMgr = GroupMgr.getInstance();
         NodeWrapper master = groupMgr.getGroupByName("group1").getMaster();
         FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(master, 0, 3);
 

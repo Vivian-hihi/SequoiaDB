@@ -52,7 +52,7 @@ public class NodeRestartSubcl2426 extends SdbTestBase {
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            groupMgr = new GroupMgr();
+            groupMgr = GroupMgr.getInstance();
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
             if (!groupMgr.checkBusiness(20)) {
@@ -88,7 +88,7 @@ public class NodeRestartSubcl2426 extends SdbTestBase {
     @Test
     public void test() {
         try {
-            GroupMgr groupMgr = new GroupMgr();
+            GroupMgr groupMgr = GroupMgr.getInstance();
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
             NodeWrapper cataMaster = cataGroup.getMaster();
             System.out.println("Restar Node:" + cataMaster.hostName() + ":" + cataMaster.svcName());

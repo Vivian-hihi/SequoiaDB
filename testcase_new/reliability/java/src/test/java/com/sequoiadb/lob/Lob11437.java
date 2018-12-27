@@ -87,7 +87,7 @@ public class Lob11437 implements StandTestInterface {
     }
 
     private boolean isCountOfClInspect() throws ReliabilityException {
-        GroupMgr mgr = new GroupMgr();
+        GroupMgr mgr = GroupMgr.getInstance();
 
         GroupWrapper groupWrapper = mgr.getGroupByName("group1");
         long num = MyUtil.getClCountFromNode(csName, clName, groupWrapper.getMaster());
@@ -118,14 +118,14 @@ public class Lob11437 implements StandTestInterface {
      */
     @Test
     public void testSlaver() throws ReliabilityException {
-        GroupMgr mgr = new GroupMgr();
+        GroupMgr mgr = GroupMgr.getInstance();
         NodeWrapper node = mgr.getGroupByName("group1").getSlave();
         test(BrokenNetwork.getFaultMakeTask(node.hostName(), 0, 5));
     }
 
     @Test
     public void testMaster() throws ReliabilityException {
-        GroupMgr mgr = new GroupMgr();
+        GroupMgr mgr = GroupMgr.getInstance();
         NodeWrapper node = mgr.getGroupByName("group1").getMaster();
         test(BrokenNetwork.getFaultMakeTask(node.hostName(), 0, 5));
     }

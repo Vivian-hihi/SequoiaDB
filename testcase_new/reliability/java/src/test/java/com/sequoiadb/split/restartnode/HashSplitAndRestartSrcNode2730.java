@@ -58,7 +58,7 @@ public class HashSplitAndRestartSrcNode2730 extends SdbTestBase {
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));          
 
             // check the current cluster,if there is an exception to return false
-            groupMgr = new GroupMgr();                      
+            groupMgr = GroupMgr.getInstance();                      
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness return false");
             }

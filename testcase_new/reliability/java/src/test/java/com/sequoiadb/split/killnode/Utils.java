@@ -76,14 +76,14 @@ public class Utils {
     public static void reelect(String destHost, String groupName1, String groupName2)
             throws ReliabilityException {
         List<GroupWrapper> groups = new ArrayList<GroupWrapper>();
-        groups.add(new GroupMgr().getGroupByName(groupName1));
-        groups.add(new GroupMgr().getGroupByName(groupName2));
+        groups.add(GroupMgr.getInstance().getGroupByName(groupName1));
+        groups.add(GroupMgr.getInstance().getGroupByName(groupName2));
         reelect(destHost, groups);
     }
 
     public static void reelect(String destHost, String groupName) throws ReliabilityException {
         List<GroupWrapper> groups = new ArrayList<GroupWrapper>();
-        groups.add(new GroupMgr().getGroupByName(groupName));
+        groups.add(GroupMgr.getInstance().getGroupByName(groupName));
         reelect(destHost, groups);
     }
 

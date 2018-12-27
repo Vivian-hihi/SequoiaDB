@@ -44,7 +44,7 @@ public class Insert15976 extends SdbTestBase {
 	@BeforeClass
 	public void setUP(){
         try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
-        	groupMgr = new GroupMgr();
+        	groupMgr = GroupMgr.getInstance();
 			if (!groupMgr.checkBusiness()) {
 	            throw new SkipException("checkBusiness failed");
 	        }

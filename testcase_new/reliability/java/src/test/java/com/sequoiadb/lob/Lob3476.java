@@ -66,7 +66,7 @@ public class Lob3476 implements StandTestInterface {
     @Test
     public void test() throws ReliabilityException {
 
-        GroupMgr groupMgr = new GroupMgr();
+        GroupMgr groupMgr = GroupMgr.getInstance();
         String hostName = groupMgr.getGroupByName("group1").getMaster().hostName();
         FaultMakeTask faultMakeTask = BrokenNetwork.getFaultMakeTask(hostName, 0, 5);
         String safeHosName = CommLib.getSafeCoordUrl(hostName);

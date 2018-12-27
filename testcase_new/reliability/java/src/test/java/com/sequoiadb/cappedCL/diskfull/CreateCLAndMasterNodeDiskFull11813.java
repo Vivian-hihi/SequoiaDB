@@ -52,7 +52,7 @@ public class CreateCLAndMasterNodeDiskFull11813 extends SdbTestBase {
             //print the testcase begin time
             Utils.printBeginTime(this);
 
-            groupMgr = new GroupMgr();
+            groupMgr = GroupMgr.getInstance();
             //check whether the environment is normal
             if (!groupMgr.checkBusiness(CHECK_TIME)) {
                 throw new SkipException("checkBusiness failed");

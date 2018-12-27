@@ -50,7 +50,7 @@ public class OperateAutoIncrement15970 extends SdbTestBase {
 	@BeforeClass
     public void setUp() {
 		try(Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-			groupMgr = new GroupMgr();
+			groupMgr = GroupMgr.getInstance();
 			if (!groupMgr.checkBusiness()) {
 	            throw new SkipException("checkBusiness failed");
 	        }

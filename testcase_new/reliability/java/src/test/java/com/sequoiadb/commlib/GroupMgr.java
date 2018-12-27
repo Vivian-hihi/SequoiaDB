@@ -25,28 +25,23 @@ import java.util.Map.Entry;
 public class GroupMgr {
     private Map<String, GroupWrapper> name2group = new HashMap<String, GroupWrapper>();
     private Map<Integer, GroupWrapper> id2group = new HashMap<Integer, GroupWrapper>();
-    //    private static GroupMgr mgr = null;
+    private static GroupMgr mgr = new GroupMgr()  ;
     private Sequoiadb sdb = null;
     private String coordUrl = null;
-
-//    static {
-//        try {
-//            mgr = new GroupMgr();
-//        } catch (ReliabilityException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
-    public GroupMgr() throws ReliabilityException {
-        this.refresh();
+    private long refreshTime  ;
+    
+    private GroupMgr(){
     }
 
-    public GroupMgr(String coordUrl) throws ReliabilityException {
+    private GroupMgr(String coordUrl) {
         this.coordUrl = coordUrl;
-        this.refresh(coordUrl);
     }
 
     public void refresh(String coordUrl) throws ReliabilityException {
+        if ( System.currentTimeMillis() - refreshTime < 1000 ){
+            return ;
+        }
+        
         name2group.clear() ;
         id2group.clear() ;
         DBCursor cursor = null;
@@ -69,6 +64,7 @@ public class GroupMgr {
         } catch (BaseException e) {
             throw new ReliabilityException(e);
         } finally {
+            refreshTime = System.currentTimeMillis() ;
             if (cursor != null) {
                 cursor.close();
             }
@@ -84,6 +80,12 @@ public class GroupMgr {
     }
 
     public List<GroupWrapper> getAllDataGroup() {
+        try {
+            this.refresh() ;
+        } catch ( ReliabilityException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         List<GroupWrapper> dataGroups = new ArrayList<GroupWrapper>();
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
             if (!entry.getKey().equals("SYSSpare") && !entry.getKey().equals("SYSCatalogGroup")
@@ -96,6 +98,13 @@ public class GroupMgr {
     }
 
     public List<String> getAllDataGroupName() {
+        try {
+            this.refresh() ;
+        } catch ( ReliabilityException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return null ;
+        }
         List<String> names = new ArrayList<String>();
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
             if (!entry.getKey().equals("SYSSpare") && !entry.getKey().equals("SYSCatalogGroup")
@@ -107,6 +116,12 @@ public class GroupMgr {
     }
 
     public List<String> getAllHosts() {
+        try {
+            this.refresh() ;
+        } catch ( ReliabilityException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         List<String> hosts = new ArrayList<String>();
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
             List<String> hostsPerGroup = entry.getValue().getAllHosts();
@@ -140,15 +155,14 @@ public class GroupMgr {
             return null;
         }
     }
-
-    @Deprecated
+    
     public static GroupMgr getInstance() throws ReliabilityException {
-//        mgr = new GroupMgr();
-//        return mgr;
-        return new GroupMgr();
+        mgr.refresh() ;
+        return mgr ;
     }
     
     public boolean checkBusiness(int timeOutSecond ) throws ReliabilityException{
+        
         return checkBusiness( timeOutSecond, false ) ;
     }
     /**
@@ -161,6 +175,7 @@ public class GroupMgr {
      * @throws ReliabilityException
      */
     public boolean checkBusiness(int timeOutSecond, boolean ignoreIndeploy ) throws ReliabilityException {
+        refresh() ;
         long timestamp = System.currentTimeMillis();
         while (!checkBusiness(false, ignoreIndeploy)) {
             if (System.currentTimeMillis() - timestamp > timeOutSecond * 1000) {
@@ -186,7 +201,16 @@ public class GroupMgr {
     public boolean checkBusiness() throws ReliabilityException {
         return checkBusiness(120);
     }
-
+    
+    private void refreshAllGroup(){
+        for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
+            String name = entry.getKey();
+            GroupWrapper group = entry.getValue();
+            if (name.equals("SYSCoord"))
+                continue;
+            group.refresh() ;
+        }
+    }
     /**
      * 检测集群状态（组内是否有主，各节点可连接，ServiceStatus），
      * 失败则根据变量printAndThrowAllException决定是否打印集群信息，是否屏蔽检测过程中发生的异常，并返回false
@@ -204,6 +228,7 @@ public class GroupMgr {
                 if (printAndThrowAllException) {
                     System.out.println(result.toString());
                 }
+                refreshAllGroup() ;
                 return false;
             }
         }
@@ -344,6 +369,7 @@ public class GroupMgr {
      * @throws ReliabilityException
      */
     public boolean checkBusinessWithLSN(int timeOutSecond) throws ReliabilityException {
+        refresh() ;
         long timestamp = System.currentTimeMillis();
         boolean ret = true ;
         do{
@@ -411,6 +437,7 @@ public class GroupMgr {
                 if (printAndThrowAllException) {
                     System.out.println(result.toString());
                 }
+                refreshAllGroup() ;
                 return false;
             }
         }
@@ -427,6 +454,7 @@ public class GroupMgr {
      * @throws ReliabilityException
      */
     public boolean checkBusinessWithLSNAndDisk(int timeOutSecond) throws ReliabilityException {
+        refresh() ;
         long timestamp = System.currentTimeMillis();
         while (!checkBusinessWithLSNAndDisk(false)) {
             if (System.currentTimeMillis() - timestamp > timeOutSecond * 1000) {
@@ -479,6 +507,7 @@ public class GroupMgr {
                 if (printAndThrowAllException) {
                     System.out.println(result.toString());
                 }
+                refreshAllGroup() ;
                 return false;
             }
         }
@@ -584,10 +613,13 @@ public class GroupMgr {
     public static void main(String[] args){
         GroupMgr mgr ;
         try {
-            mgr = new GroupMgr("192.168.30.62:50000") ;
-            SdbTestBase.coordUrl = "192.168.30.62:50000" ;
-            SdbTestBase.csName = "reablity" ;
-            mgr.checkBusiness() ;
+            SdbTestBase.coordUrl = "192.168.28.107:11810" ;
+            mgr = new GroupMgr() ;
+            SdbTestBase.csName = "reliability_test" ;
+            boolean ret = mgr.checkBusiness() ;
+            if (!ret){
+                System.out.println("failed");
+            }
         } catch ( ReliabilityException e ) {
             // TODO Auto-generated catch block
             e.printStackTrace();

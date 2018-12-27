@@ -60,7 +60,7 @@ public class OprLob3198 extends SdbTestBase {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             db = new Sequoiadb(coordUrl, "", "");
-            groupMgr = new GroupMgr();
+            groupMgr = GroupMgr.getInstance();
 
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");

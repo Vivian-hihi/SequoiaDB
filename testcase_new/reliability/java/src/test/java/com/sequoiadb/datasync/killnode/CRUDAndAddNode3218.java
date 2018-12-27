@@ -58,7 +58,7 @@ public class CRUDAndAddNode3218 extends SdbTestBase {
         try {
             System.out.println(this.getClass().getName() + " begin at " + sdf.format(new Date()));
             // 检测集群是否可用
-            groupMgr = new GroupMgr();
+            groupMgr = GroupMgr.getInstance();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
@@ -93,7 +93,7 @@ public class CRUDAndAddNode3218 extends SdbTestBase {
             taskMgr.join();
             // 等待集群恢复,本用例中有新增的节点，会被认为集群部署异常，因此自定义了一个检测方法。
             groupMgr.refresh();
-            if ( groupMgr.checkBusiness( 600, true )){
+            if ( !groupMgr.checkBusiness( 600, true )){
                 Assert.fail("checkBusinessWithExNode occurs time out(1)");
             }
             // 各个任务检查各自结果

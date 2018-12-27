@@ -3,6 +3,8 @@ package com.sequoiadb.metaopr.commons;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Domain;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.GroupMgr ;
+import com.sequoiadb.exception.ReliabilityException ;
 import com.sequoiadb.task.OperateTask;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
@@ -129,7 +131,15 @@ public abstract class DBoperateTask extends OperateTask {
         return new DBoperateTask() {
             @Override
             void operate() throws InterruptedException {
-                List<String> groupNames = MyUtil.getDataGroupNames();
+                List< String > groupNames ;
+                try {
+                    groupNames = GroupMgr.getInstance().getAllDataGroupName() ;
+                } catch ( ReliabilityException e ) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                    return ;
+                }
+                
                 String groupName1 = groupNames.get(0);
                 String groupName2 = groupNames.get(1);
                 BSONObject options = (BSONObject) JSON.parse("{'Groups':['" + groupName1 + "','" + groupName2 + "']}");

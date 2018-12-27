@@ -59,7 +59,7 @@ public class DropCs2292 implements StandTestInterface {
 
     @Test
     void testMasterRestart() throws ReliabilityException {
-        assertTrue(new GroupMgr().checkBusiness());
+        assertTrue(GroupMgr.getInstance().checkBusiness());
         MyUtil.createCS(csNames);
         NodeWrapper masterNode=MyUtil.getMasterNodeOfCatalog();
         TaskMgr taskMgr = new TaskMgr(NodeRestart.getFaultMakeTask(masterNode,0, 5));
@@ -77,7 +77,7 @@ public class DropCs2292 implements StandTestInterface {
 
     @Test
     void testSlaveRestart() throws ReliabilityException {
-        assertTrue(new GroupMgr().checkBusiness());
+        assertTrue(GroupMgr.getInstance().checkBusiness());
         MyUtil.createCS(csNames);
         NodeWrapper slaveNode =MyUtil.getSlaveNodeOfCatalog();
         TaskMgr taskMgr=new TaskMgr(NodeRestart.getFaultMakeTask(slaveNode,0,5));

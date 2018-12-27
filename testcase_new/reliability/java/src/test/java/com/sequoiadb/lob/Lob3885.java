@@ -42,7 +42,7 @@ public class Lob3885 implements StandTestInterface {
     @Test
     public void test() throws ReliabilityException {
         //备节点重启
-        GroupMgr groupMgr = new GroupMgr();
+        GroupMgr groupMgr = GroupMgr.getInstance();
         NodeWrapper node = groupMgr.getGroupByName("group1").getSlave();
         FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(node, 0, 5);
 

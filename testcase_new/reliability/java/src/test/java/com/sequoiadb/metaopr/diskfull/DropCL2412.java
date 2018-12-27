@@ -55,7 +55,7 @@ public class DropCL2412 extends SdbTestBase {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             
-            groupMgr = new GroupMgr();
+            groupMgr = GroupMgr.getInstance();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }

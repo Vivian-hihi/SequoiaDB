@@ -48,7 +48,7 @@ public class UpdateDomain2286 {
     public void setup() throws ReliabilityException {
         MyUtil.printBeginTime(this);
         db = getSdb();
-        groupNames = new GroupMgr().getAllDataGroupName();
+        groupNames = GroupMgr.getInstance().getAllDataGroupName();
     }
 
     @Test

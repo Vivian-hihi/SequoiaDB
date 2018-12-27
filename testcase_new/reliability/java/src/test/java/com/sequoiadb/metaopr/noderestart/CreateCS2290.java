@@ -97,7 +97,7 @@ public class CreateCS2290 implements StandTestInterface {
 
     @Test
     public void testMaster() throws ReliabilityException {
-        assertTrue(new GroupMgr().checkBusiness());
+        assertTrue(GroupMgr.getInstance().checkBusiness());
         FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(MyUtil.getMasterNodeOfCatalog(), 0, 5);
         TaskMgr taskMgr = new TaskMgr(faultMakeTask);
         CreateCSTask csTask = new CreateCSTask(10);
@@ -116,7 +116,7 @@ public class CreateCS2290 implements StandTestInterface {
 
     @Test
     void testSlaver() throws ReliabilityException {
-        assertTrue(new GroupMgr().checkBusiness());
+        assertTrue(GroupMgr.getInstance().checkBusiness());
         FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(MyUtil.getSlaveNodeOfCatalog(), 0, 5);
         TaskMgr taskMgr = new TaskMgr(faultMakeTask);
         CreateCSTask csTask = new CreateCSTask(0);

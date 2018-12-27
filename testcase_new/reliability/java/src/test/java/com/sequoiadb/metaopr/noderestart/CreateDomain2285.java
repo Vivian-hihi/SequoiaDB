@@ -54,7 +54,7 @@ public class CreateDomain2285 implements StandTestInterface {
 
     @Test
     void test() throws ReliabilityException {
-        FaultMakeTask faultMakeTask = com.sequoiadb.fault.NodeRestart.getFaultMakeTask(new GroupMgr().getGroupByName("SYSCatalogGroup").getSlave(), 1, 10);
+        FaultMakeTask faultMakeTask = com.sequoiadb.fault.NodeRestart.getFaultMakeTask(GroupMgr.getInstance().getGroupByName("SYSCatalogGroup").getSlave(), 1, 10);
         TaskMgr taskMgr = new TaskMgr(faultMakeTask);
         OperateTask task = DBoperateTask.getTaskCreateDomains(domainNames);
         taskMgr.addTask(task);

@@ -62,7 +62,7 @@ public class DropDomain2288 {
     @Test
         //测试备节点正常重启
     void testSlave() throws ReliabilityException {
-        assertTrue(new GroupMgr().checkBusiness());
+        assertTrue(GroupMgr.getInstance().checkBusiness());
         createDomains(domainNames);
         TaskMgr taskMgr = new TaskMgr(NodeRestart.getFaultMakeTask(MyUtil.getSlaveNodeOfCatalog(), 2, 5));
         taskMgr.addTask(DBoperateTask.getTaskDropDomains(domainNames, 10));
@@ -76,7 +76,7 @@ public class DropDomain2288 {
     @Test
         //测试主节点正常重启
     void testMaster() throws ReliabilityException {
-        assertTrue(new GroupMgr().checkBusiness());
+        assertTrue(GroupMgr.getInstance().checkBusiness());
         createDomains(domainNames);
         TaskMgr taskMgr = new TaskMgr(NodeRestart.getFaultMakeTask(MyUtil.getMasterNodeOfCatalog(), 0, 5));
         DBoperateTask task = DBoperateTask.getTaskDropDomains(domainNames, 10);

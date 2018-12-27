@@ -47,7 +47,7 @@ public class Index4118 extends IndexTestBase {
      */
     @Test
     public void test() throws ReliabilityException {
-        NodeWrapper node = new GroupMgr().getGroupByName("group1").getSlave();
+        NodeWrapper node = GroupMgr.getInstance().getGroupByName("group1").getSlave();
         TaskMgr taskMgr = new TaskMgr(KillNode.getFaultMakeTask(node.hostName(), node.svcName(), 0));
         IndexTask createTask = getCreateTask();
         IndexTask deleteTask = getDeleteTask();

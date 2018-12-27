@@ -45,7 +45,7 @@ public class DropCappedCLAndKillSlaveNode11815 extends SdbTestBase {
         try {
             //print the testcase begin time
             Utils.printBeginTime(this);
-            groupMgr = new GroupMgr();
+            groupMgr = GroupMgr.getInstance();
             //check whether environment is normal
             if (!groupMgr.checkBusiness(CHECK_TIME)) {
                 throw new SkipException("checkBusiness failed");

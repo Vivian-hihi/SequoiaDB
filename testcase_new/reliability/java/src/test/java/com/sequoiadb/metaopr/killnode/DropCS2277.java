@@ -55,7 +55,7 @@ public class DropCS2277 extends SdbTestBase {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             
-            groupMgr = new GroupMgr();
+            groupMgr = GroupMgr.getInstance();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
@@ -96,7 +96,7 @@ public class DropCS2277 extends SdbTestBase {
 
             if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
             checkListCS(db);
-            groupMgr.refresh();
+            //groupMgr.refresh();
             cataGroup = groupMgr.getGroupByName("SYSCatalogGroup"); 
             Utils.checkConsistency(groupMgr);
             runSuccess = true;

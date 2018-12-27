@@ -92,7 +92,7 @@ public class Lob3890 implements StandTestInterface {
     }
 
     private void allNodeRestart() throws ReliabilityException {
-        GroupMgr groupMgr = new GroupMgr();
+        GroupMgr groupMgr = GroupMgr.getInstance();
         for (NodeWrapper node : groupMgr.getGroupByName("group1").getNodes()) {
             FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(node, 0, 3);
             taskMgr.addTask(faultMakeTask);

@@ -53,7 +53,7 @@ public class CreateCappedCLAndRestartMasterNode11811 extends SdbTestBase{
         System.out.println(this.getClass().getName() + " begin at:"
                 + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         try {
-			groupMgr = new GroupMgr();
+			groupMgr = GroupMgr.getInstance();
 			if(!groupMgr.checkBusiness()) {
 	        	throw new SkipException("checkBusiness failed");
 	        }

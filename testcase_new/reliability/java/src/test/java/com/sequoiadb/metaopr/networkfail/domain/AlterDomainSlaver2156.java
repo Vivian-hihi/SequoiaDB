@@ -1,12 +1,15 @@
 package com.sequoiadb.metaopr.networkfail.domain;
 
 import com.sequoiadb.commlib.CommLib;
+import com.sequoiadb.commlib.GroupMgr ;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.metaopr.commons.DBoperateTask;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
+
+import org.testng.SkipException ;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -70,7 +73,14 @@ public class AlterDomainSlaver2156 implements StandTestInterface {
     public void setup() {
         printBeginTime(this);
         checkBusiness();
-        groupNames = getDataGroupNames();
+        try {
+            groupNames = GroupMgr.getInstance().getAllDataGroupName();
+        } catch ( ReliabilityException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            throw new SkipException(e.getMessage()) ;
+        }
+        
         createDomainAutoSplit(domain, groupNames.get(0), groupNames.get(1));
 
     }

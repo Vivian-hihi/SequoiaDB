@@ -120,7 +120,7 @@ class IndexTestBase implements StandTestInterface {
     }
 
     boolean isIndexesAllCreatedInNodes(String... groups) throws ReliabilityException {
-        GroupMgr mgr = new GroupMgr();
+        GroupMgr mgr = GroupMgr.getInstance();
         List<GroupWrapper> list = new ArrayList<>();
         for (String group : groups) {
             list.add(mgr.getGroupByName(group));
@@ -129,7 +129,7 @@ class IndexTestBase implements StandTestInterface {
     }
 
     boolean isIndexesAllDeletedInNodes(String... groups) throws ReliabilityException {
-        GroupMgr mgr = new GroupMgr();
+        GroupMgr mgr = GroupMgr.getInstance();
         List<GroupWrapper> list = new ArrayList<>();
         for (String group : groups) {
             list.add(mgr.getGroupByName(group));

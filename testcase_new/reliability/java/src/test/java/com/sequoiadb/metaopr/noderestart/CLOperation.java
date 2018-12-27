@@ -10,6 +10,8 @@ import com.sequoiadb.metaopr.commons.MyUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
+
+import org.testng.SkipException ;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -37,16 +39,21 @@ public class CLOperation implements StandTestInterface {
     @Override
     public void setup() {
         printBeginTime(this);
-        GroupMgr groupMgr = null;
+        GroupMgr groupMgr ;
+        List<String> groupNames = null;
         try {
-            groupMgr = new GroupMgr();
-        } catch (ReliabilityException e) {
-            MyUtil.throwSkipException("skip");
+            groupMgr = GroupMgr.getInstance() ;
+            groupNames = groupMgr.getAllDataGroupName() ;
+        } catch ( ReliabilityException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            throw new SkipException("") ;
         }
-        List<String> groupNames = groupMgr.getAllDataGroupName();
-        groupMgr.close();
-        groupName1 = groupNames.get(0);
-        groupName2 = groupNames.get(1);
+        
+        if ( groupNames != null && groupNames.size() >= 2){
+            groupName1 = groupNames.get(0);
+            groupName2 = groupNames.get(1);
+        }
 
         MyUtil.createDomain(DOMAINNAME, groupName1, groupName2);
         MyUtil.createCS(CSNAME, DOMAINNAME);

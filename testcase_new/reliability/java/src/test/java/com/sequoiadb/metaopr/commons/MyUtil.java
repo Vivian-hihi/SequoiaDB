@@ -106,7 +106,7 @@ public class MyUtil {
      * 检查主备节点是否同步
      */
     public static boolean isCatalogGroupSync() throws ReliabilityException {
-        GroupMgr mgr = new GroupMgr();
+        GroupMgr mgr = GroupMgr.getInstance();
         GroupWrapper catalogGroup = mgr.getGroupByName("SYSCatalogGroup");
         boolean result = catalogGroup.checkInspect(60);
         mgr.close();
@@ -139,34 +139,25 @@ public class MyUtil {
      * @throws ReliabilityException
      */
     public static NodeWrapper getMasterNodeOfCatalog() throws ReliabilityException {
-        GroupMgr mgr = new GroupMgr();
+        GroupMgr mgr = GroupMgr.getInstance();
         NodeWrapper master = mgr.getGroupByName("SYSCatalogGroup").getMaster();
 //        mgr.close();//这里不能close
         return master;
     }
 
     public static GroupWrapper getCataGroup() throws ReliabilityException {
-        GroupMgr mgr = new GroupMgr();
+        GroupMgr mgr = GroupMgr.getInstance();
         return mgr.getGroupByName("SYSCatalogGroup");
     }
 
     private static List<String> groupNames = null;
 
     @BeforeSuite
-    public static List<String> getDataGroupNames() {
+    public static List<String> getDataGroupNames() throws ReliabilityException {
         if (groupNames != null)
             return new ArrayList<>(groupNames);
-        GroupMgr mgr = null;
-        try {
-            mgr = new GroupMgr();
-            groupNames = mgr.getAllDataGroupName();
-            mgr.close();
-        } catch (ReliabilityException e) {
-            throw new BaseException(e.getMessage());
-        } finally {
-            if (mgr != null)
-                mgr.close();
-        }
+        GroupMgr mgr = GroupMgr.getInstance();
+        groupNames = mgr.getAllDataGroupName();
         return new ArrayList<>(groupNames);
     }
 
@@ -178,7 +169,7 @@ public class MyUtil {
      * @throws ReliabilityException
      */
     public static NodeWrapper getSlaveNodeOfCatalog() throws ReliabilityException {
-        GroupMgr mgr = new GroupMgr();
+        GroupMgr mgr = GroupMgr.getInstance();
         NodeWrapper slave = mgr.getGroupByName("SYSCatalogGroup").getSlave();
 //        mgr.close();这里不能close
         return slave;
@@ -594,7 +585,7 @@ public class MyUtil {
     public static boolean checkBusiness() {
         GroupMgr groupMgr = null;
         try {
-            groupMgr = new GroupMgr();
+            groupMgr = GroupMgr.getInstance();
             if (groupMgr.checkBusiness() == true)
                 return true;
             else {
@@ -642,7 +633,7 @@ public class MyUtil {
         GroupMgr mgr = null;
         Sequoiadb db = null;
         try {
-            mgr = new GroupMgr();
+            mgr = GroupMgr.getInstance();
             GroupWrapper groupWrapper = mgr.getGroupByName(groupName);
             NodeWrapper node = groupWrapper.getMaster();
             if (node == null)
@@ -847,7 +838,7 @@ public class MyUtil {
     }
 
     public static boolean isLobNumInspectInGroup(String csName, String clName, String groupName) throws ReliabilityException {
-        GroupMgr groupMgr = new GroupMgr();
+        GroupMgr groupMgr = GroupMgr.getInstance();
         groupMgr.checkBusiness();
         GroupWrapper group = groupMgr.getGroupByName(groupName);
         int num = getNumOfLobFromDataNode(csName, clName, group.getMaster());
@@ -870,7 +861,7 @@ public class MyUtil {
             targetMd5.add(Arrays.toString(lob.getContentMd5()));
         }
 
-        GroupMgr groupMgr = new GroupMgr();
+        GroupMgr groupMgr = GroupMgr.getInstance();
         GroupWrapper groupWrapper = groupMgr.getGroupByName(groupName);
 
         for (NodeWrapper node : groupWrapper.getNodes()) {
@@ -1072,7 +1063,7 @@ public class MyUtil {
         List<String> groupList = null;
         int count = 0;
         try {
-            GroupMgr mgr = new GroupMgr();
+            GroupMgr mgr = GroupMgr.getInstance();
             while (true) {
                 if (++count > maxTime) {
                     throw new RuntimeException("切主失败");

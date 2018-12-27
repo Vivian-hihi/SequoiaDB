@@ -1,12 +1,15 @@
 package com.sequoiadb.metaopr.networkfail.cl;
 
 import com.sequoiadb.commlib.CommLib;
+import com.sequoiadb.commlib.GroupMgr ;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.metaopr.commons.DBoperateTask;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
+
+import org.testng.SkipException ;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -34,7 +37,14 @@ public class CreateClMaster2165 implements StandTestInterface {
         printBeginTime(this);
         checkBusiness();
         clNames = createNames("cl2165", 1000);
-        List<String> groupnames = getDataGroupNames();
+        List< String > groupnames ;
+        try {
+            groupnames = GroupMgr.getInstance().getAllDataGroupName() ;
+        } catch ( ReliabilityException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            throw new SkipException(e.getMessage()) ;
+        }
         createDomain(domain, groupnames.get(0), groupnames.get(1));
         createCS(csName, domain);
     }
