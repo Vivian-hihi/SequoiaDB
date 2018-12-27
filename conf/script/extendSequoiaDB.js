@@ -505,16 +505,28 @@ function _createNode( coordList, user, passwd, hostName, svcname, dbpath,
    var db   = null ;
    var rg   = null ;
    var node = null ;
+   var newConfig = {} ;
+   var filterField = [ FIELD_DATAGROUPNAME, FIELD_HOSTNAME ] ;
+   var groupName = nodeConfig[FIELD_DATAGROUPNAME] ;
 
    resultInfo[FIELD_FLOW].push( sprintf( "Installing ?[?:?]",
                                          role, hostName, svcname ) ) ;
 
    db = _connectCoord( coordList, user, passwd ) ;
-   rg = _getGroup( db, role, nodeConfig[FIELD_DATAGROUPNAME], true ) ;
+   rg = _getGroup( db, role, groupName, true ) ;
 
    try
    {
-      node = rg.createNode( hostName, svcname, dbpath, nodeConfig ) ;
+      for ( var key in nodeConfig )
+      {
+         if ( filterField.indexOf( key ) >= 0 )
+         {
+            continue ;
+         }
+         newConfig[key] = nodeConfig[key] ;
+      }
+
+      node = rg.createNode( hostName, svcname, dbpath, newConfig ) ;
    }
    catch( e )
    {
