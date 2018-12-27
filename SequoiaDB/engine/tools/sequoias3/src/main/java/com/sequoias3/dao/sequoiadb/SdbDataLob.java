@@ -53,13 +53,13 @@ public class SdbDataLob implements DataLob {
                         readLength > ONCE_WRITE_BYTES ? ONCE_WRITE_BYTES : (int)readLength);
             }
         }catch (BaseException e){
-            logger.error("read lob failed. error:");
+            logger.error("read lob failed. error:"+e.getMessage());
             throw e;
         } catch (IOException e){
             logger.error("read lob failed.");
             throw new S3ServerException(S3Error.UNKNOWN_ERROR, "IOException. error:"+e.getMessage(), e);
         } catch (Exception e){
-            logger.error("read lob failed.");
+            logger.error("read lob failed."+e.getMessage());
             throw e;
         }
     }

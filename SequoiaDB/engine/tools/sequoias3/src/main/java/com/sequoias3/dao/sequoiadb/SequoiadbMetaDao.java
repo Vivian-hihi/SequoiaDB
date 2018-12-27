@@ -302,8 +302,8 @@ public class SequoiadbMetaDao implements MetaDao {
 
             cl.update(matcher, setUpdate, null);
         } catch (Exception e){
-            logger.error("update meta failed. error:",e);
-            throw new S3ServerException(S3Error.DAO_DB_ERROR, "db error . e" + e);
+            logger.error("update meta failed. error:"+e.getMessage());
+            throw new S3ServerException(S3Error.DAO_DB_ERROR, "db error.", e);
         }
     }
 
@@ -328,8 +328,8 @@ public class SequoiadbMetaDao implements MetaDao {
 
             cl.delete(matcher);
         } catch (Exception e){
-            logger.error("remove meta failed. error:",e);
-            throw new S3ServerException(S3Error.DAO_DB_ERROR, "db error . e" + e);
+            logger.error("remove meta failed. error:"+e.getMessage());
+            throw new S3ServerException(S3Error.DAO_DB_ERROR, "db error.", e);
         }
     }
 
@@ -352,7 +352,7 @@ public class SequoiadbMetaDao implements MetaDao {
                 //no cs or cl ,return null
                 return 0;
             } else {
-                logger.error("query object number failed. error:",e);
+                logger.error("query object number failed. error:"+e.getMessage());
                 throw e;
             }
         } catch (Exception e){
