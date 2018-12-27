@@ -42,8 +42,9 @@
 
 #include "core.h"
 
-SDB_EXTERN_C_START
-
+/*
+   _SDB_SPD_RES_TYPE define
+*/
 enum _SDB_SPD_RES_TYPE
 {
    SDB_SPD_RES_TYPE_VOID = 0, /**< Js return void type */
@@ -62,7 +63,5 @@ enum _SDB_SPD_RES_TYPE
 /** Js return type */
 typedef enum _SDB_SPD_RES_TYPE SDB_SPD_RES_TYPE ;
 
-SDB_EXTERN_C_END
-
-#endif
+#endif //SPD_H_
 
