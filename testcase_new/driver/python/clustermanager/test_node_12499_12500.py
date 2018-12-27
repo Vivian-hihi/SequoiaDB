@@ -51,11 +51,7 @@ class TestDataNode12499(testlib.SdbTestBase):
       
       #create cs cl
       cs = self.db.create_collection_space(self.cs_name)
-      cl = cs.create_collection(self.cl_name, {"Group":self.data_rg_name,"ReplSize":0})
-      
-      #insert record to keep slave node create cl success
-      record = [{"a": 1}, {"a": 2}]
-      cl.bulk_insert(0, record)
+      cl = cs.create_collection(self.cl_name, {"Group":self.data_rg_name})
       
       # detach node
       data_rg_slave_service = data_rg.get_slave().get_servicename()
@@ -64,30 +60,12 @@ class TestDataNode12499(testlib.SdbTestBase):
       # attach node with config
       spare_rg.attach_node(data_hostname, data_rg_slave_service, {"KeepData": True})
       spare_rg.start()
-      
+            
       # check data
       cl_full_name = self.cl_name_qualified
       spare_data = client(data_hostname, data_rg_slave_service)
       get_full_name = spare_data.get_collection(cl_full_name).get_full_name()
       self.assertEqual(get_full_name, cl_full_name)
-      
-      # detach node no config
-      try:
-         spare_rg.detach_node(data_hostname, data_rg_slave_service)
-         self.fail("need failed!");
-      except SDBBaseError as e:
-         if(-6 != e.code):
-            print(e.detail);
-            self.fail("check detach node error code failed");
-      
-      #attach node no config
-      try:
-         data_rg.attach_node(data_hostname, data_rg_slave_service)
-         self.fail("need failed!");
-      except SDBBaseError as e:
-         if(-6 != e.code):
-            print(e.detail);
-            self.fail("check attach node error code failed");
             
       #dropcs from catalog
       self.db.drop_collection_space(self.cs_name)
@@ -97,11 +75,6 @@ class TestDataNode12499(testlib.SdbTestBase):
       self.db.remove_replica_group("SYSSpare")
    
    def tearDown(self):
-      try:
-         self.db.drop_collection_space(self.cs_name)
-      except SDBBaseError as e:
-         print("cs dropped already.")
-         
       self.remove_rg(self.data_rg_name, 'tear_down_fail')
       self.remove_rg('SYSSpare', 'tear_down_fail')
       self.db.disconnect()
