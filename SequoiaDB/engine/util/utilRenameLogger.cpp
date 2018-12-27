@@ -34,6 +34,7 @@
 *******************************************************************************/
 
 #include "utilRenameLogger.hpp"
+#include "utilTrace.hpp"
 #include "utilStr.hpp"
 #include "pmd.hpp"
 
@@ -92,27 +93,6 @@ namespace engine
       }
       ossStrncpy( log.newName, pSep + 1, DMS_COLLECTION_SPACE_NAME_SZ ) ;
 
-
-      /*
-      vector<string> line1 = utilStrSplit( lines.at(0),
-                                           UTIL_RENAME_LOG_SEP ) ;
-      vector<string> line2 = utilStrSplit( lines.at(1),
-                                           UTIL_RENAME_LOG_SEP ) ;
-      if ( 0 != ossStrcmp( line1.at(0).c_str(), UTIL_RENAME_LOG_OLDNAME ) )
-      {
-         goto error ;
-      }
-      if ( 0 != ossStrcmp( line2.at(0).c_str(), UTIL_RENAME_LOG_NEWNAME ) )
-      {
-         goto error ;
-      }
-      ossStrncpy( log.oldName,
-                  line1.at(1).c_str(),
-                  DMS_COLLECTION_SPACE_NAME_SZ ) ;
-      ossStrncpy( log.newName,
-                  line2.at(1).c_str(),
-                  DMS_COLLECTION_SPACE_NAME_SZ ) ;*/
-
       isOk = TRUE ;
 
    done :
@@ -133,109 +113,133 @@ namespace engine
       if ( _isOpened )
       {
          ossClose( _file ) ;
+         _isOpened = FALSE ;
       }
    }
 
-   INT32 _utilRenameLogger::init( BOOLEAN* fileExist )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_UTILRENAMELOGGER_INIT, "_utilRenameLogger::init" )
+   INT32 _utilRenameLogger::init( UTIL_RENAME_LOGGER_MODE mode )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_UTILRENAMELOGGER_INIT ) ;
+
+      INT32 fileMode = OSS_READWRITE ;
+      INT32 permission = OSS_RU | OSS_WU | OSS_RG | OSS_RO ;
 
       rc = utilBuildFullPath( pmdGetOptionCB()->getDbPath(),
-                              UTIL_RENAME_LOG_FILE_NAME,
+                              UTIL_RENAME_LOG_FILENAME,
                               OSS_MAX_PATHSIZE,
                               _fileName ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to build full file path , rc: %d", rc  );
 
       rc = ossFile::exists( _fileName, _fileExist ) ;
-      PD_RC_CHECK ( rc, PDERROR,
+      PD_RC_CHECK( rc, PDERROR,
                     "Failed to check existence of file[%s], rc: %d",
                     _fileName, rc ) ;
 
-      if ( _fileExist )
+      switch ( mode )
       {
-         INT32 mode = OSS_READWRITE ;
-         INT32 permission = OSS_RU | OSS_WU | OSS_RG | OSS_RO ;
-         rc = ossOpen( _fileName, mode, permission, _file ) ;
-         PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to open file[%s], rc: %d", _fileName, rc ) ;
-         _isOpened = TRUE ;
-      }
+         case UTIL_RENAME_LOGGER_WRITE :
+         {
+            // delete file if exists
+            if ( _fileExist )
+            {
+               PD_LOG( PDWARNING, "File[%s] already exists!", _fileName ) ;
+               rc = ossDelete( _fileName ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to delete file[%s], rc: %d",
+                            _fileName, rc ) ;
+               _fileExist = FALSE ;
+            }
+            // create
+            fileMode = OSS_READWRITE | OSS_CREATE ;
+            rc = ossOpen( _fileName, fileMode, permission, _file ) ;
+            PD_RC_CHECK ( rc, PDERROR,
+                          "Failed to open file[%s], rc: %d", _fileName, rc ) ;
+            _fileExist = TRUE ;
+            _isOpened = TRUE ;
+            break ;
+         }
 
-      if ( fileExist )
-      {
-         *fileExist = _fileExist ;
+         case UTIL_RENAME_LOGGER_READ :
+         {
+            if ( _fileExist )
+            {
+               fileMode = OSS_READWRITE ;
+               rc = ossOpen( _fileName, fileMode, permission, _file ) ;
+               PD_RC_CHECK ( rc, PDERROR, "Failed to open file[%s], rc: %d",
+                             _fileName, rc ) ;
+               _isOpened = TRUE ;
+            }
+            else
+            {
+               rc = SDB_FNE ;
+            }
+            break ;
+         }
+
+         default :
+               rc = SDB_INVALIDARG ;
+               SDB_ASSERT( FALSE, "Invalid rename logger mode!" ) ;
+               break ;
       }
 
    done:
+      PD_TRACE_EXITRC( SDB_UTILRENAMELOGGER_INIT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_UTILRENAMELOGGER_LOG, "_utilRenameLogger::log" )
    INT32 _utilRenameLogger::log( const utilRenameLog& log )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_UTILRENAMELOGGER_LOG ) ;
+
       SINT64 written = 0 ;
-      INT32 mode = OSS_READWRITE | OSS_CREATE ;
-      INT32 permission = OSS_RU | OSS_WU | OSS_RG | OSS_RO ;
+      CHAR strLog[ UTIL_RENAME_LOG_FILESIZE_MAX ] = { 0 } ;
 
-      PD_CHECK ( !_fileExist, SDB_FE, error, PDERROR,
-                 "File[%s] already exists, rc: %d", _fileName, rc ) ;
+      SDB_ASSERT( _fileExist, "File doesn't exist" ) ;
+      PD_CHECK( _fileExist, SDB_FNE, error, PDERROR,
+                "File[%s] doesn't exist, rc: %d", _fileName, rc ) ;
 
-      // create file
-      rc = ossOpen( _fileName, mode, permission, _file ) ;
+      log.toString( strLog, UTIL_RENAME_LOG_FILESIZE_MAX ) ;
+      rc = ossSeekAndWriteN( &_file, 0, strLog, ossStrlen( strLog ),
+                             written ) ;
       PD_RC_CHECK ( rc, PDERROR,
-                    "Failed to open file[%s], rc: %d", _fileName, rc ) ;
-      _isOpened = TRUE ;
-
-      // write to file
-      {
-         CHAR strLog[ UTIL_RENAME_LOG_MAXLEN ] = { 0 } ;
-         log.toString( strLog, UTIL_RENAME_LOG_MAXLEN ) ;
-         rc = ossSeekAndWriteN( &_file, 0, strLog, ossStrlen( strLog ),
-                                written ) ;
-         PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to write start info into file[%s], rc: %d",
-                       _fileName, rc ) ;
-      }
+                    "Failed to write start info into file[%s], rc: %d",
+                    _fileName, rc ) ;
 
       ossFsync( &_file ) ;
 
    done :
-      if ( _isOpened )
-      {
-         ossClose( _file ) ;
-      }
+      PD_TRACE_EXITRC( SDB_UTILRENAMELOGGER_LOG, rc ) ;
       return rc ;
    error :
-      if ( _isOpened )
-      {
-         ossClose( _file ) ;
-      }
-      rc = ossDelete( _fileName ) ;
-      rc = SDB_FNE == rc ? SDB_OK : rc ;
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_UTILRENAMELOGGER_LOAD, "_utilRenameLogger::load" )
    INT32 _utilRenameLogger::load( utilRenameLog& log )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_UTILRENAMELOGGER_LOAD ) ;
 
       INT64 fileSize = 0 ;
       SINT64 readSize = 0 ;
       CHAR* readBuf = NULL ;
 
-      // expect file exists
+      SDB_ASSERT( _fileExist, "File doesn't exist" ) ;
       PD_CHECK ( _fileExist, SDB_FNE, error, PDERROR,
-                 "File[%s] not exists, rc: %d", _fileName, rc ) ;
+                 "File[%s] doesn't exist, rc: %d", _fileName, rc ) ;
 
       // if the file too large, it is abnormal
       rc = ossGetFileSize( &_file, &fileSize ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to get size of file[%s], rc: %d", _fileName, rc ) ;
 
-      if ( fileSize > UTIL_RENAME_LOG_MAXLEN )
+      if ( fileSize > UTIL_RENAME_LOG_FILESIZE_MAX )
       {
          rc = SDB_SYS ;
          PD_RC_CHECK ( rc, PDERROR,
@@ -271,6 +275,7 @@ namespace engine
          SDB_OSS_FREE( readBuf ) ;
          readBuf = NULL ;
       }
+      PD_TRACE_EXITRC( SDB_UTILRENAMELOGGER_LOAD, rc ) ;
       return rc ;
    error :
       goto done ;

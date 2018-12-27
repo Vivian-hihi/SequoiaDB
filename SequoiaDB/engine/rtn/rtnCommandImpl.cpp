@@ -1578,14 +1578,10 @@ namespace engine
 
       /// log to .SEQUOIADB_RENAME_INFO
       {
-         BOOLEAN fileExist = FALSE ;
          utilRenameLog aLog ( csName, newCSName ) ;
 
-         rc = logger.init( &fileExist ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to init rename logger, rc: %d", rc ) ;
-         PD_CHECK ( !fileExist, SDB_FE, error, PDERROR,
-                    "File[%s] already exists, rc: %d",
-                    logger.fileName(), rc ) ;
+         rc = logger.init() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to init rename logger, rc: %d", rc );
 
          rc = logger.log( aLog ) ;
          PD_RC_CHECK( rc, PDERROR,
@@ -1600,10 +1596,7 @@ namespace engine
 
       /// remove .SEQUOIADB_RENAME_INFO
       rc = logger.clear() ;
-      if ( rc )
-      {
-         PD_LOG( PDWARNING, "Failed to clear rename info, rc: %d", rc ) ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to clear rename info, rc: %d", rc ) ;
 
       PD_LOG( PDEVENT, "Rename cs[%s] to [%s] succeed", csName, newCSName ) ;
 
@@ -1616,6 +1609,13 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNRENAMECSCOMMAND, rc ) ;
       return rc ;
    error:
+      {
+         INT32 tmpRC = logger.clear() ;
+         if ( tmpRC )
+         {
+            PD_LOG( PDERROR, "Failed to clear rename info, rc: %d", tmpRC ) ;
+         }
+      }
       goto done ;
    }
 

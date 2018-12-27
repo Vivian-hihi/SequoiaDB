@@ -865,14 +865,10 @@ namespace engine
 
       /// log to .SEQUOIADB_RENAME_INFO
       {
-         BOOLEAN fileExist = FALSE ;
          utilRenameLog aLog ( _oldName, _newName ) ;
 
-         rc = _logger.init( &fileExist ) ;
+         rc = _logger.init() ;
          PD_RC_CHECK( rc, PDERROR, "Failed to init rename logger, rc: %d", rc ) ;
-         PD_CHECK ( !fileExist, SDB_FE, error, PDERROR,
-                    "File[%s] already exists, rc: %d",
-                    _logger.fileName(), rc ) ;
 
          rc = _logger.log( aLog ) ;
          PD_RC_CHECK( rc, PDERROR,

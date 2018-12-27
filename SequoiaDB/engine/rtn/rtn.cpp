@@ -297,12 +297,15 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCORRECTCS1, "rtnCorrectCollectionSpaceFile" )
    INT32 rtnCorrectCollectionSpaceFile( const CHAR *dataPath,
                                         const CHAR *indexPath,
                                         const CHAR *lobPath,
                                         const CHAR *lobMetaPath )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCORRECTCS1 ) ;
+
       CHAR csName [ DMS_SU_FILENAME_SZ + 1 ] = { 0 } ;
       UINT32 sequence = 0 ;
       std::set< std::string > pathList ;
@@ -311,15 +314,13 @@ namespace engine
       // get rename info
       utilRenameLogger logger ;
       utilRenameLog renameLog ;
-      BOOLEAN fileExist = FALSE ;
-      rc = logger.init( &fileExist ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to init logger, rc: %d" , rc ) ;
-
-      if ( FALSE == fileExist )
+      rc = logger.init( UTIL_RENAME_LOGGER_READ ) ;
+      if ( SDB_FNE == rc )
       {
          rc = SDB_OK ;
          goto done ;
       }
+      PD_RC_CHECK( rc, PDERROR, "Failed to init logger, rc: %d" , rc ) ;
 
       rc = logger.load( renameLog ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to load rename log file, rc: %d" , rc );
@@ -364,14 +365,10 @@ namespace engine
                      // correct cs file by rename info
                      rc = rtnCorrectCollectionSpaceFile( file.c_str(),
                                                          path.c_str(),
-                                                         renameLog );
-                     if ( rc )
-                     {
-                        // ignore error
-                        PD_LOG( PDERROR, "Correct cs file fail, rc: %d", rc ) ;
-                        continue ;
-                     }
-                     PD_LOG( PDDEBUG, "Correct cs file[%s] "
+                                                         renameLog ) ;
+                     PD_RC_CHECK( rc, PDERROR,
+                                  "Correct cs file fail, rc: %d", rc ) ;
+                     PD_LOG( PDEVENT, "Correct cs file[%s] "
                              "in path[%s] by rename log[old: %s, new: %s]",
                              file.c_str(), path.c_str(),
                              renameLog.oldName, renameLog.newName ) ;
@@ -389,16 +386,20 @@ namespace engine
       logger.clear() ;
 
    done:
+      PD_TRACE_EXITRC( SDB_RTNCORRECTCS1, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCORRECTCS2, "rtnCorrectCollectionSpaceFile" )
    INT32 rtnCorrectCollectionSpaceFile( const CHAR* pFileName,
                                         const CHAR* pPath,
                                         const utilRenameLog& renameLog )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCORRECTCS2 ) ;
+
       const CHAR *pDot = ossStrchr ( pFileName, '.' ) ;
       UINT32 csnameSize = pDot - pFileName ;
       CHAR newFileName[ DMS_SU_FILENAME_SZ + 1 ] = { 0 } ;
@@ -434,8 +435,12 @@ namespace engine
                    renameLog.newName, pDot ) ;
       rc = utilBuildFullPath( pPath, newFileName, OSS_MAX_PATHSIZE,
                               newFullFileName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build full path by [%s] [%s], "
+                   "rc: %d", pPath, newFileName, rc ) ;
       rc = utilBuildFullPath( pPath, pFileName, OSS_MAX_PATHSIZE,
                               oldFullFileName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build full path by [%s] [%s], "
+                   "rc: %d", pPath, pFileName, rc ) ;
 
       /// 2. correct name field in header
 
@@ -511,6 +516,7 @@ namespace engine
       {
          cb->releaseBuff( pBuff ) ;
       }
+      PD_TRACE_EXITRC( SDB_RTNCORRECTCS2, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -965,12 +971,8 @@ namespace engine
 
       rc = rtnCorrectCollectionSpaceFile( dataPath, indexPath,
                                           lobPath, lobMetaPath ) ;
-      if ( rc )
-      {
-         // ignore error
-         PD_LOG( PDWARNING,
-                 "Failed to correct collection space file, rc: %d", rc ) ;
-      }
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to correct collection space file, rc: %d", rc ) ;
 
       try
       {

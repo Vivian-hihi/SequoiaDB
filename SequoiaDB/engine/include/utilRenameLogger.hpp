@@ -41,16 +41,14 @@
 #include "ossUtil.hpp"
 #include "dms.hpp"
 
-#define UTIL_RENAME_LOG_FILE_NAME ".SEQUOIADB_RENAME_INFO"
-
 namespace engine
 {
-   #define UTIL_RENAME_LOG_SEP       '='
-   #define UTIL_RENAME_LOG_OLDNAME   "oldname"
-   #define UTIL_RENAME_LOG_NEWNAME   "newname"
-   #define UTIL_RENAME_LOG_FIELD_NUM 2
-   #define UTIL_RENAME_LOG_MAXLEN ( ( DMS_COLLECTION_SPACE_NAME_SZ + 9 ) * UTIL_RENAME_LOG_FIELD_NUM )
-
+   #define UTIL_RENAME_LOG_FILENAME     ".SEQUOIADB_RENAME_INFO"
+   #define UTIL_RENAME_LOG_FILESIZE_MAX 512
+   #define UTIL_RENAME_LOG_SEP          '='
+   #define UTIL_RENAME_LOG_OLDNAME      "oldname"
+   #define UTIL_RENAME_LOG_NEWNAME      "newname"
+   #define UTIL_RENAME_LOG_FIELD_NUM    2
 
    struct _utilRenameLog
    {
@@ -84,13 +82,19 @@ namespace engine
 
    BOOLEAN utilStr2RenameLog( const string& str, utilRenameLog& log ) ;
 
+   enum UTIL_RENAME_LOGGER_MODE
+   {
+      UTIL_RENAME_LOGGER_WRITE = 0,
+      UTIL_RENAME_LOGGER_READ
+   } ;
+
    class _utilRenameLogger : public SDBObject
    {
       public:
          _utilRenameLogger () ;
          ~_utilRenameLogger () ;
 
-         INT32 init( BOOLEAN *fileExist = NULL ) ;
+         INT32 init( UTIL_RENAME_LOGGER_MODE mode = UTIL_RENAME_LOGGER_WRITE ) ;
          INT32 log( const utilRenameLog& log ) ;
          INT32 load( utilRenameLog& log );
          INT32 clear() ;
@@ -101,7 +105,7 @@ namespace engine
          OSSFILE _file ;
          CHAR _fileName[ OSS_MAX_PATHSIZE + 1 ] ;
          BOOLEAN _fileExist ;
-   };
+   } ;
    typedef _utilRenameLogger utilRenameLogger ;
 
 }
