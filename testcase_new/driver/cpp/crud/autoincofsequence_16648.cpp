@@ -11,6 +11,7 @@
 #include <client.hpp>
 #include <stdio.h>
 #include "testBase.hpp"
+#include "testcommon.hpp"
 
 class autoIncrement_16648 : public testBase
 {
