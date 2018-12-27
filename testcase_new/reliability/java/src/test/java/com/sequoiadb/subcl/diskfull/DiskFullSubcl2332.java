@@ -129,7 +129,6 @@ public class DiskFullSubcl2332 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            groupMgr.close();
             if (clearFlag) {
                 commSdb.dropCollectionSpace(csName);
             }

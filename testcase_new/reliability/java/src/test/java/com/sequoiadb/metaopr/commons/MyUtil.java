@@ -109,7 +109,6 @@ public class MyUtil {
         GroupMgr mgr = GroupMgr.getInstance();
         GroupWrapper catalogGroup = mgr.getGroupByName("SYSCatalogGroup");
         boolean result = catalogGroup.checkInspect(60);
-        mgr.close();
         return result;
     }
 
@@ -595,10 +594,7 @@ public class MyUtil {
         } catch (ReliabilityException e) {
             System.out.println("当前环境异常，GroupMgr.checkBusiness()==false，跳过该用例。");
             throw new SkipException("当前环境异常，GroupMgr.checkBusiness()==false，跳过该用例。");
-        } finally {
-            if (groupMgr != null)
-                groupMgr.close();
-        }
+        } 
     }
 
     /**
@@ -646,8 +642,6 @@ public class MyUtil {
         } catch (ReliabilityException e) {
             return 0;
         } finally {
-            if (mgr != null)
-                mgr.close();
             if (db != null)
                 db.close();
         }

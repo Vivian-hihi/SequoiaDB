@@ -177,7 +177,6 @@ public class NetSplit2576 extends SdbTestBase {
     public void tearDown() {
         Sequoiadb commSdb = new Sequoiadb(coordUrl, "", "");
         try {
-            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = commSdb.getCollectionSpace(csName);
                 commCS.dropCollection(clName);

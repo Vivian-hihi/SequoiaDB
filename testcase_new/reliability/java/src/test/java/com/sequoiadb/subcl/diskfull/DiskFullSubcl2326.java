@@ -176,7 +176,6 @@ public class DiskFullSubcl2326 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            groupMgr.close();
             if (clearFlag) {
                 for (String subClName : subClNames) {
                     commCS.dropCollection(subClName);

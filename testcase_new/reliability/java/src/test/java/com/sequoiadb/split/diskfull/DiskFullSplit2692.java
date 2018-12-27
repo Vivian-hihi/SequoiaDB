@@ -157,7 +157,6 @@ public class DiskFullSplit2692 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            groupMgr.close();
             if (clearFlag) {
                 commSdb.dropCollectionSpace(csName);
             }

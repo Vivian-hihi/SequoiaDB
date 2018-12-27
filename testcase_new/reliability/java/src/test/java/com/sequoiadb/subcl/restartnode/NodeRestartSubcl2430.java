@@ -120,7 +120,6 @@ public class NodeRestartSubcl2430 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = commSdb.getCollectionSpace(csName);
                 commCS.dropCollection(mainClName);

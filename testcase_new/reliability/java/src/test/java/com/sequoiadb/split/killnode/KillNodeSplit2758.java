@@ -163,7 +163,6 @@ public class KillNodeSplit2758 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = commSdb.getCollectionSpace(csName);
                 commCS.dropCollection(clName);

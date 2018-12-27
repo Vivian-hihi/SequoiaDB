@@ -101,6 +101,5 @@ public class Lob3890 implements StandTestInterface {
             FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(node, 0, 3);
             taskMgr.addTask(faultMakeTask);
         }
-        groupMgr.close();
     }
 }

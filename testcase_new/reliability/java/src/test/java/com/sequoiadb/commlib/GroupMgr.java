@@ -46,10 +46,9 @@ public class GroupMgr {
         id2group.clear() ;
         DBCursor cursor = null;
         try {
-            if (sdb != null) {
-                sdb.close();
+            if ( sdb == null || sdb.isClosed() || !sdb.isValid() ){
+                sdb = new Sequoiadb(coordUrl, "", "");
             }
-            sdb = new Sequoiadb(coordUrl, "", "");
             cursor = sdb.getList(Sequoiadb.SDB_LIST_GROUPS, null, null, null);
             while (cursor.hasNext()) {
                 BasicBSONObject obj = (BasicBSONObject) cursor.getNext();
@@ -121,6 +120,7 @@ public class GroupMgr {
         } catch ( ReliabilityException e ) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+            return null ;
         }
         List<String> hosts = new ArrayList<String>();
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
