@@ -55,7 +55,7 @@ public class GetObjectByNoEtagAndModifiedSince16383 extends S3TestBase {
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(putObject(bucketName, objectName, filePathList.get(i)));
+            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         //get history eTag
@@ -66,7 +66,9 @@ public class GetObjectByNoEtagAndModifiedSince16383 extends S3TestBase {
         //get object by no eTag and modified
         //the object has not been modified since now+one_month
         cal.set(Calendar.MONTH,cal.get(Calendar.MONTH)+1);
-        S3Object currObject = getObjectByEtagAndModify(bucketName, objectName, histETag,cal.getTime());
+        S3Object currObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName)
+                .withNonmatchingETagConstraint(histETag)
+                .withModifiedSinceConstraint(cal.getTime()));
         //check the eTag and the content of object
         String currPath = filePathList.get(fileNum - 1);
         chectResult(currObject,currPath);
@@ -101,25 +103,5 @@ public class GetObjectByNoEtagAndModifiedSince16383 extends S3TestBase {
                 s3InputStream.close();
             }
         }
-    }
-
-    private S3Object getObjectByEtagAndModify(String bucketName, String objectName, String noMatchETag, Date modifiedSince) {
-        GetObjectRequest request = new GetObjectRequest(bucketName, objectName);
-        ResponseHeaderOverrides overrideHeaders = new ResponseHeaderOverrides();
-        overrideHeaders.setCacheControl("CacheControl");
-        overrideHeaders.setContentDisposition("disposition");
-        request.withResponseHeaders(overrideHeaders);
-        request.withNonmatchingETagConstraint(noMatchETag);
-        request.withModifiedSinceConstraint(modifiedSince);
-        return s3Client.getObject(request);
-    }
-
-    private PutObjectResult putObject(String bucketName, String key, String filePath) {
-        PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
-        ObjectMetadata metaData = new ObjectMetadata();
-        metaData.setExpirationTime(new Date());
-        metaData.addUserMetadata("meta-1", "12346788");
-        request.withMetadata(metaData);
-        return s3Client.putObject(request);
     }
 }

@@ -22,34 +22,21 @@ public class GetObjectByInexistenceBucket16368 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16368";
     private String inexistbucketName = "inexistence16368";
-    private String key = "a16368/b16368/b16368";
+    private String objectName = "a16368/b16368/b16368";
     private AmazonS3 s3Client = null;
 
     @BeforeClass
     private void setUp() throws IOException {
         s3Client = CommLib.buildS3Client();
-        try {
-            s3Client.deleteObject(bucketName, key);
-        } catch (AmazonS3Exception e) {
-            if (e.getStatusCode() != 404) {
-                Assert.fail(e.getMessage());
-            }
-        }
-        try {
-            s3Client.deleteBucket(bucketName);
-        } catch (AmazonS3Exception e) {
-            if (e.getStatusCode() != 404) {
-                Assert.fail(e.getMessage());
-            }
-        }
+        CommLib.clearBucket(s3Client,bucketName);
     }
 
     @Test
     private void test() throws Exception {
         s3Client.createBucket(bucketName);
-        s3Client.putObject(bucketName, key, "1234");
+        s3Client.putObject(bucketName, objectName, "1234");
         try {
-            s3Client.getObject(inexistbucketName, key);
+            s3Client.getObject(inexistbucketName, objectName);
             Assert.fail("exp fail but act success");
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
@@ -63,8 +50,7 @@ public class GetObjectByInexistenceBucket16368 extends S3TestBase {
     private void tearDown() {
         try {
             if(runSuccess) {
-                s3Client.deleteObject(bucketName, key);
-                s3Client.deleteBucket(bucketName);
+               CommLib.clearBucket(s3Client,bucketName);
             }
         } finally {
             if (s3Client != null) {

@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -58,19 +57,21 @@ public class GetObjectByModifiedSince16371 extends S3TestBase {
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            PutObjectResult restult = putObject(bucketName, objectName, filePathList.get(i));
-            objectVSList.add(restult);
+            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         //the object has not been modified since now+one_month
         cal.set(Calendar.MONTH,cal.get(Calendar.MONTH)+1);
-        S3Object object = getObjectByVersion(bucketName, objectName,cal.getTime());
+        S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, objectName)
+                .withModifiedSinceConstraint(cal.getTime()));
+
         //AmazonS3  Java driver handles error,so it returns null
         Assert.assertNull(object);
 
-        //the object has  been modified since  now-two_month
+        //the object has  been modified since now-one_month
         cal.set(Calendar.MONTH,cal.get(Calendar.MONTH)-2);
-        S3Object object1 = getObjectByVersion(bucketName, objectName,cal.getTime());
+        S3Object object1 = s3Client.getObject(new GetObjectRequest(bucketName, objectName)
+                .withModifiedSinceConstraint(cal.getTime()));
        //check the content
         String filePath = filePathList.get(fileNum-1);
         chectResult(object1,filePath);
@@ -105,24 +106,5 @@ public class GetObjectByModifiedSince16371 extends S3TestBase {
                 s3InputStream.close();
             }
         }
-    }
-
-    private S3Object getObjectByVersion(String bucketName, String objectName, Date modifiedSince) {
-        GetObjectRequest request = new GetObjectRequest(bucketName, objectName);
-        ResponseHeaderOverrides overrideHeaders = new ResponseHeaderOverrides();
-        overrideHeaders.setCacheControl("CacheControl");
-        overrideHeaders.setContentDisposition("disposition");
-        request.withResponseHeaders(overrideHeaders);
-        request.withModifiedSinceConstraint(modifiedSince);
-        return s3Client.getObject(request);
-    }
-
-    private PutObjectResult putObject(String bucketName, String key, String filePath) {
-        PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
-        ObjectMetadata metaData = new ObjectMetadata();
-        metaData.setExpirationTime(new Date());
-        metaData.addUserMetadata("meta-1", "12346788");
-        request.withMetadata(metaData);
-        return s3Client.putObject(request);
     }
 }

@@ -11,10 +11,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -28,7 +26,7 @@ import java.util.Random;
 public class GetObjectByRange16362 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16362";
-    private String key = "object16362";
+    private String objectName = "object16362";
     private AmazonS3 s3Client = null;
     private int fileSize = 204800;
     private File localPath = null;
@@ -56,7 +54,7 @@ public class GetObjectByRange16362 extends S3TestBase {
     @Test
     private void test() throws Exception {
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(putObject(bucketName, key, filePathList.get(i)));
+            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         //random version
@@ -65,27 +63,25 @@ public class GetObjectByRange16362 extends S3TestBase {
         int currfileSize = fileSize+ randomIndex;
         String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
                 Thread.currentThread().getId());
+        String tmpPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
+                Thread.currentThread().getId());
         String randomVersionId = objectVSList.get(randomIndex).getVersionId();
-
         int interval = 1024 * 100;
         int start = 0;
         int end = interval;
         for (int i = 0; i < currfileSize / interval; i++) {
-            S3Object object = getObjectByVersion(bucketName, key, randomVersionId, start, end);
-            S3ObjectInputStream s3InputStream = null;
-            try {
-                ObjectUtils.inputStream2File(object.getObjectContent(), downloadPath);
-                if(i < currfileSize/interval-1) {
-                    start = end + 1;
-                    if (i == (currfileSize / interval - 2)) {
-                        end = currfileSize;
-                    } else {
-                        end = end + interval;
-                    }
-                }
-            } finally {
-                if (s3InputStream != null) {
-                    s3InputStream.close();
+            S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, objectName)
+                    .withVersionId(randomVersionId)
+                    .withRange(start, end));
+            ObjectUtils.inputStream2File(object.getObjectContent(), downloadPath);
+            seekFile(new FileInputStream((new File(filePathList.get(randomIndex)))),tmpPath, start,end);
+            Assert.assertEquals(TestTools.getMD5(downloadPath),TestTools.getMD5(tmpPath));
+            if (i < currfileSize / interval - 1 ) {
+                start = end + 1;
+                if (i == (currfileSize / interval - 2)) {
+                    end = currfileSize;
+                } else {
+                    end = end + interval;
                 }
             }
         }
@@ -107,23 +103,28 @@ public class GetObjectByRange16362 extends S3TestBase {
         }
     }
 
-    private S3Object getObjectByVersion(String bucketName, String key, String versionId, long start, long end) {
-        GetObjectRequest request = new GetObjectRequest(bucketName, key);
-        ResponseHeaderOverrides overrideHeaders = new ResponseHeaderOverrides();
-        overrideHeaders.setCacheControl("CacheControl");
-        overrideHeaders.setContentDisposition("disposition");
-        request.setRange(start, end);
-        request.withResponseHeaders(overrideHeaders);
-        request.withVersionId(versionId);
-        return s3Client.getObject(request);
-    }
-
-    private PutObjectResult putObject(String bucketName, String key, String filePath) {
-        PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
-        ObjectMetadata metaData = new ObjectMetadata();
-        metaData.setExpirationTime(new Date());
-        metaData.addUserMetadata("meta-1", "12346788");
-        request.withMetadata(metaData);
-        return s3Client.putObject(request);
+    private  String seekFile(InputStream inputStream,String downloadPath,int start,int end) throws Exception {
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(new File(downloadPath), true);
+            byte[] read_buf = new byte[end - start + 1];
+            int read_len = 0;
+            if(start != 0) {
+                inputStream.skip(start);
+            }
+            int count = 0;
+            while ((read_len = inputStream.read(read_buf)) > -1 && count < end - start + 1) {
+                fos.write(read_buf, 0, read_len);
+                count += read_len;
+            }
+        }finally{
+            if(inputStream != null){
+                inputStream.close();
+            }
+            if(fos != null){
+                fos.close();
+            }
+        }
+        return downloadPath;
     }
 }

@@ -25,7 +25,7 @@ import java.util.*;
 public class GetObjectByUnModifiedSince16361 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16361";
-    private String key = "object16361";
+    private String objectName = "object16361";
     private AmazonS3 s3Client = null;
     private int fileSize = 7;
     private File localPath = null;
@@ -54,7 +54,7 @@ public class GetObjectByUnModifiedSince16361 extends S3TestBase {
     @Test
     private void test() throws Exception {
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(putObject(bucketName, key, filePathList.get(i)));
+            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         //history version
@@ -63,7 +63,9 @@ public class GetObjectByUnModifiedSince16361 extends S3TestBase {
         String histVersionId = objectVSList.get(histIndex).getVersionId();
         //the object has not been modified since now+one_month
         cal.set(Calendar.MONTH,cal.get(Calendar.MONTH)+1);
-        S3Object histObject = getObjectByVersion(bucketName, key, histVersionId,cal.getTime());
+        S3Object histObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName)
+                .withVersionId(histVersionId)
+                .withUnmodifiedSinceConstraint(cal.getTime()));
 
         //check
         Assert.assertEquals(histObject.getObjectMetadata().getVersionId(),histVersionId);
@@ -100,24 +102,5 @@ public class GetObjectByUnModifiedSince16361 extends S3TestBase {
                 s3ObjectInputStream.close();
             }
         }
-    }
-
-    private S3Object getObjectByVersion(String bucketName, String key, String versionId,Date unModifiedSince) {
-        GetObjectRequest request = new GetObjectRequest(bucketName, key);
-        ResponseHeaderOverrides overrideHeaders = new ResponseHeaderOverrides();
-        overrideHeaders.setCacheControl("CacheControl");
-        overrideHeaders.setContentDisposition("disposition");
-        request.withResponseHeaders(overrideHeaders);
-        request.withVersionId(versionId);
-        request.setUnmodifiedSinceConstraint(unModifiedSince);
-        return s3Client.getObject(request);
-    }
-
-    private PutObjectResult putObject(String bucketName, String key, String filePath) {
-        PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
-        ObjectMetadata metaData = new ObjectMetadata();
-        metaData.addUserMetadata("meta-1", "12346788");
-        request.withMetadata(metaData);
-        return s3Client.putObject(request);
     }
 }

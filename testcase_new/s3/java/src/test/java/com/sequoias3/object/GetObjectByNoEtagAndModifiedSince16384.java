@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -57,7 +56,7 @@ public class GetObjectByNoEtagAndModifiedSince16384 extends S3TestBase {
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add( putObject(bucketName, objectName, filePathList.get(i)));
+            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         //get current eTag
@@ -65,11 +64,11 @@ public class GetObjectByNoEtagAndModifiedSince16384 extends S3TestBase {
         String currETag = objectVSList.get(currIndex).getETag();
 
         //get object by NonMatchingETag and modified
-        //the object has been modified since now-one_day
+        //the object has been modified since now-one_month
         cal.set(Calendar.DAY_OF_MONTH,cal.get(Calendar.DAY_OF_MONTH)-1);
-        System.out.println("time = " + cal.getTime());
-        System.out.println("currETag = " + currETag);
-        S3Object currObject = getObjectByEtagAndModify(bucketName, objectName, currETag,cal.getTime());
+        S3Object currObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName)
+                .withNonmatchingETagConstraint(currETag)
+                .withModifiedSinceConstraint(cal.getTime()));
         Assert.assertNull(currObject);
         runSuccess = true;
     }
@@ -86,26 +85,5 @@ public class GetObjectByNoEtagAndModifiedSince16384 extends S3TestBase {
                 s3Client.shutdown();
             }
         }
-    }
-
-    private S3Object getObjectByEtagAndModify(String bucketName, String objectName, String noMatchETag, Date modifiedSince) {
-        GetObjectRequest request = new GetObjectRequest(bucketName, objectName);
-        ResponseHeaderOverrides overrideHeaders = new ResponseHeaderOverrides();
-        overrideHeaders.setCacheControl("CacheControl");
-        overrideHeaders.setContentDisposition("disposition");
-        request.withResponseHeaders(overrideHeaders);
-        request.withNonmatchingETagConstraint(noMatchETag);
-        request.withModifiedSinceConstraint(modifiedSince);
-        S3Object object = s3Client.getObject(request);
-        return s3Client.getObject(request);
-    }
-
-    private PutObjectResult putObject(String bucketName, String key, String filePath) {
-        PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
-        ObjectMetadata metaData = new ObjectMetadata();
-        metaData.setExpirationTime(new Date());
-        metaData.addUserMetadata("meta-1", "12346788");
-        request.withMetadata(metaData);
-        return s3Client.putObject(request);
     }
 }

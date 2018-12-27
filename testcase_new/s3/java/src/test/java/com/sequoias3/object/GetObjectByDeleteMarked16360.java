@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.model.*;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -13,7 +14,6 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -25,8 +25,8 @@ import java.util.List;
 
 public class GetObjectByDeleteMarked16360 extends S3TestBase {
     private boolean runSuccess = false;
-    private String bucketName = "bucket16360";
-    private String key = "object16360";
+    private String bucketName = null;
+    private String objectName = "object16360";
     private AmazonS3 s3Client = null;
     private int fileSize = 3;
     private File localPath = null;
@@ -45,45 +45,35 @@ public class GetObjectByDeleteMarked16360 extends S3TestBase {
             TestTools.LocalFile.createFile(filePath, fileSize + i);
             filePathList.add(filePath);
         }
+        bucketName = S3TestBase.enableVerBucketName;
         s3Client = CommLib.buildS3Client();
-        CommLib.clearBucket(s3Client,bucketName);
-        s3Client.createBucket(bucketName);
-        CommLib.setBucketVersioning(s3Client,bucketName, BucketVersioningConfiguration.ENABLED);
     }
 
     @Test
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(putObject(bucketName, key, filePathList.get(i)));
+            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
-        //get the id of history version
-        String histVersionId = objectVSList.get(0).getVersionId();
-        //delete version by versionId
-        s3Client.deleteVersion(bucketName, key, histVersionId);
+        //get the id of current version
+        String versionId = objectVSList.get(fileNum-1).getVersionId();
+        //delete object
+        s3Client.deleteObject(bucketName, objectName);
         //get the deleted version
-        try {
-            getObjectByVersion(bucketName, key, histVersionId);
-            Assert.fail("exp failed but act success");
-        } catch (AmazonS3Exception e) {
-            if (e.getStatusCode() != 404) {
-                Assert.fail(e.getMessage());
-            }
-        }
+        S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, objectName, versionId));
+        chectResult(object, filePathList.get(fileNum - 1));
 
-        // get the id of current version
-        String currVersionId = objectVSList.get(fileNum - 1).getVersionId();
-        //delete version by versionId
-        s3Client.deleteVersion(bucketName, key, currVersionId);
+        // put new version in object
+        objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(0)))));
         //get the deleted version
-        try {
-            getObjectByVersion(bucketName, key, currVersionId);
-            Assert.fail("exp failed but act success");
-        } catch (AmazonS3Exception e) {
-            if (e.getStatusCode() != 404) {
-                Assert.fail(e.getMessage());
-            }
-        }
+        S3Object object1 = s3Client.getObject(new GetObjectRequest(bucketName, objectName, versionId));
+        chectResult(object1, filePathList.get(fileNum - 1));
+
+        //get the id of current version
+        String currVersionId = objectVSList.get(fileNum).getVersionId();
+        //get current version object
+        S3Object object2 = s3Client.getObject(new GetObjectRequest(bucketName, objectName, currVersionId));
+        chectResult(object2, filePathList.get(0));
         runSuccess = true;
     }
 
@@ -91,7 +81,7 @@ public class GetObjectByDeleteMarked16360 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                CommLib.clearBucket(s3Client,bucketName);
+                ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
@@ -101,22 +91,19 @@ public class GetObjectByDeleteMarked16360 extends S3TestBase {
         }
     }
 
-    private S3Object getObjectByVersion(String bucketName, String objectName, String versionId) {
-        GetObjectRequest request = new GetObjectRequest(bucketName, objectName);
-        ResponseHeaderOverrides overrideHeaders = new ResponseHeaderOverrides();
-        overrideHeaders.setCacheControl("CacheControl");
-        overrideHeaders.setContentDisposition("disposition");
-        request.withResponseHeaders(overrideHeaders);
-        request.withVersionId(versionId);
-        return s3Client.getObject(request);
-    }
-
-    private PutObjectResult putObject(String bucketName, String key, String filePath) {
-        PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
-        ObjectMetadata metaData = new ObjectMetadata();
-        metaData.setExpirationTime(new Date());
-        metaData.addUserMetadata("meta-1", "12346788");
-        request.withMetadata(metaData);
-        return s3Client.putObject(request);
+    private void chectResult(S3Object object,String filePath)throws  Exception{
+        Assert.assertEquals(object.getObjectMetadata().getETag(), TestTools.getMD5(filePath));
+        S3ObjectInputStream s3InputStream = null;
+        try {
+            s3InputStream = object.getObjectContent();
+            String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
+                    Thread.currentThread().getId());
+            ObjectUtils.inputStream2File(s3InputStream,downloadPath);
+            Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath));
+        }finally {
+            if(s3InputStream != null){
+                s3InputStream.close();
+            }
+        }
     }
 }

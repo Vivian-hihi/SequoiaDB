@@ -25,7 +25,7 @@ import java.util.List;
 
 public class GetObjectByCurrVersion16356 extends S3TestBase {
     private boolean runSuccess = false;
-    private String bucketName = "bucket16356";
+    private String bucketName = null;
     private String objectName = "object16356";
     private AmazonS3 s3Client = null;
     private int fileSize = 10;
@@ -45,22 +45,20 @@ public class GetObjectByCurrVersion16356 extends S3TestBase {
             TestTools.LocalFile.createFile(filePath, fileSize + i);
             filePathList.add(filePath);
         }
+        bucketName = S3TestBase.enableVerBucketName;
         s3Client = CommLib.buildS3Client();
-        CommLib.clearBucket(s3Client,bucketName);
-        s3Client.createBucket(bucketName);
-        CommLib.setBucketVersioning(s3Client,bucketName, BucketVersioningConfiguration.ENABLED);
     }
 
     @Test
     private void test() throws Exception {
         //create multiple versions object in bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(putObject(bucketName, objectName, filePathList.get(i)));
+            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         //get the current version object
         String currVersionId = objectVSList.get(fileNum - 1).getVersionId();
-        S3Object currObject = getObjectByVersion(bucketName, objectName, currVersionId);
+        S3Object currObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName, currVersionId));
 
         // check the Etag and the md5 of object content
         String currPath = filePathList.get(fileNum - 1);
@@ -72,7 +70,7 @@ public class GetObjectByCurrVersion16356 extends S3TestBase {
     private void tearDown() {
         try {
             if(runSuccess) {
-                CommLib.clearBucket(s3Client,bucketName);
+                ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
@@ -90,30 +88,11 @@ public class GetObjectByCurrVersion16356 extends S3TestBase {
             String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
                     Thread.currentThread().getId());
             ObjectUtils.inputStream2File(s3InputStream,downloadPath);
-            System.out.println(TestTools.getMD5(downloadPath));
             Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath));
         }finally {
             if(s3InputStream != null){
                 s3InputStream.close();
             }
         }
-    }
-
-    private S3Object getObjectByVersion(String bucketName, String objectName, String versionId) {
-        GetObjectRequest request = new GetObjectRequest(bucketName, objectName);
-        ResponseHeaderOverrides overrideHeaders = new ResponseHeaderOverrides();
-        overrideHeaders.setCacheControl("CacheControl");
-        overrideHeaders.setContentDisposition("disposition");
-        request.withResponseHeaders(overrideHeaders);
-        request.withVersionId(versionId);
-        return s3Client.getObject(request);
-    }
-
-    private PutObjectResult putObject(String bucketName, String key, String filePath) {
-        PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
-        ObjectMetadata metaData = new ObjectMetadata();
-        metaData.addUserMetadata("meta-1", "12346788");
-        request.withMetadata(metaData);
-        return s3Client.putObject(request);
     }
 }

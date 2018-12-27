@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.model.*;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -23,7 +24,7 @@ import java.util.*;
 
 public class GetObjectByEtagAndUnModifiedSince16381 extends S3TestBase {
     private boolean runSuccess = false;
-    private String bucketName = "bucket16381";
+    private String bucketName = null;
     private String objectName = "object16381";
     private AmazonS3 s3Client = null;
     private int fileSize = 0;
@@ -44,18 +45,16 @@ public class GetObjectByEtagAndUnModifiedSince16381 extends S3TestBase {
             TestTools.LocalFile.createFile(filePath, fileSize + i);
             filePathList.add(filePath);
         }
-
+        bucketName = S3TestBase.enableVerBucketName;
         s3Client = CommLib.buildS3Client();
-        CommLib.clearBucket(s3Client,bucketName);
-        s3Client.createBucket(bucketName);
-        CommLib.setBucketVersioning(s3Client,bucketName, BucketVersioningConfiguration.ENABLED);
+        ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
     }
 
     @Test
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(putObject(bucketName, objectName, filePathList.get(i)));
+            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         //get history eTag
@@ -66,7 +65,9 @@ public class GetObjectByEtagAndUnModifiedSince16381 extends S3TestBase {
         //get object by eTag and unmodified
         //the object has not been modified since now+one_month
         cal.set(Calendar.MONTH,cal.get(Calendar.MONTH)+1);
-        S3Object currObject = getObjectByEtagAndModify(bucketName, objectName, histETag,cal.getTime());
+        S3Object currObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName)
+                .withMatchingETagConstraint(histETag)
+                .withUnmodifiedSinceConstraint(cal.getTime()));
         Assert.assertNull(currObject);
         runSuccess = true;
     }
@@ -75,7 +76,7 @@ public class GetObjectByEtagAndUnModifiedSince16381 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                CommLib.clearBucket(s3Client,bucketName);
+                ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
@@ -83,25 +84,5 @@ public class GetObjectByEtagAndUnModifiedSince16381 extends S3TestBase {
                 s3Client.shutdown();
             }
         }
-    }
-
-    private S3Object getObjectByEtagAndModify(String bucketName, String objectName, String matchETag, Date unModifiedSince) {
-        GetObjectRequest request = new GetObjectRequest(bucketName, objectName);
-        ResponseHeaderOverrides overrideHeaders = new ResponseHeaderOverrides();
-        overrideHeaders.setCacheControl("CacheControl");
-        overrideHeaders.setContentDisposition("disposition");
-        request.withResponseHeaders(overrideHeaders);
-        request.withMatchingETagConstraint(matchETag);
-        request.withUnmodifiedSinceConstraint(unModifiedSince);
-        return s3Client.getObject(request);
-    }
-
-    private PutObjectResult putObject(String bucketName, String key, String filePath) {
-        PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
-        ObjectMetadata metaData = new ObjectMetadata();
-        metaData.setExpirationTime(new Date());
-        metaData.addUserMetadata("meta-1", "12346788");
-        request.withMetadata(metaData);
-        return s3Client.putObject(request);
     }
 }

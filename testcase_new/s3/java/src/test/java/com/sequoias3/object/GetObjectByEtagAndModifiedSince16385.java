@@ -26,7 +26,7 @@ import java.util.List;
 
 public class GetObjectByEtagAndModifiedSince16385 extends S3TestBase {
     private boolean runSuccess = false;
-    private String bucketName = "bucket16385";
+    private String bucketName = null;
     private String objectName = "object16385";
     private AmazonS3 s3Client = null;
     private int fileSize = 3;
@@ -46,17 +46,15 @@ public class GetObjectByEtagAndModifiedSince16385 extends S3TestBase {
             TestTools.LocalFile.createFile(filePath, fileSize + i);
             filePathList.add(filePath);
         }
+        bucketName = S3TestBase.enableVerBucketName;
         s3Client = CommLib.buildS3Client();
-        CommLib.clearBucket(s3Client,bucketName);
-        s3Client.createBucket(bucketName);
-        CommLib.setBucketVersioning(s3Client,bucketName, BucketVersioningConfiguration.ENABLED);
     }
 
     @Test
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(putObject(bucketName, objectName, filePathList.get(i)));
+            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         //get history eTag
@@ -73,7 +71,11 @@ public class GetObjectByEtagAndModifiedSince16385 extends S3TestBase {
         Date unModified  = getLastModified(bucketName,objectName,versionid3);
 
         //get object by matchingETag/nonMatchingETag/modifiedSince/unModifiedSince
-        S3Object currObject = getObjectByEtagAndModify(bucketName, objectName,versionId2,histEtag2,histETag1,modified,unModified);
+        S3Object currObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName, versionId2)
+                .withMatchingETagConstraint(histEtag2)
+                .withNonmatchingETagConstraint(histETag1)
+                .withModifiedSinceConstraint(modified)
+                .withUnmodifiedSinceConstraint(unModified));
 
         //check the eTag and the content of object
         String currPath = filePathList.get(fileNum - 2);
@@ -85,7 +87,7 @@ public class GetObjectByEtagAndModifiedSince16385 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                CommLib.clearBucket(s3Client,bucketName);
+                ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
@@ -115,28 +117,5 @@ public class GetObjectByEtagAndModifiedSince16385 extends S3TestBase {
         GetObjectRequest getObjectRequest = new GetObjectRequest(bucketName,objectName,versionId);
         S3Object object = s3Client.getObject(getObjectRequest);
         return  object.getObjectMetadata().getLastModified();
-    }
-
-    private S3Object getObjectByEtagAndModify(String bucketName, String objectName,String versionId, String matchETag, String noMatchETag,Date modifiedSince,Date unModifiedSince) {
-        GetObjectRequest request = new GetObjectRequest(bucketName, objectName);
-        ResponseHeaderOverrides overrideHeaders = new ResponseHeaderOverrides();
-        overrideHeaders.setCacheControl("CacheControl");
-        overrideHeaders.setContentDisposition("disposition");
-        request.withResponseHeaders(overrideHeaders);
-        request.withMatchingETagConstraint(matchETag);
-        request.withNonmatchingETagConstraint(noMatchETag);
-        request.withModifiedSinceConstraint(modifiedSince);
-        request.withUnmodifiedSinceConstraint(unModifiedSince);
-        request.withVersionId(versionId);
-        return s3Client.getObject(request);
-    }
-
-    private PutObjectResult putObject(String bucketName, String key, String filePath) {
-        PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
-        ObjectMetadata metaData = new ObjectMetadata();
-        metaData.setExpirationTime(new Date());
-        metaData.addUserMetadata("meta-1", "12346788");
-        request.withMetadata(metaData);
-        return s3Client.putObject(request);
     }
 }

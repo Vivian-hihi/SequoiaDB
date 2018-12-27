@@ -25,7 +25,7 @@ import java.util.*;
 
 public class GetObjectByRespParam16363 extends S3TestBase {
     private String bucketName = "bucket16363";
-    private String key = "object16363";
+    private String objectName = "object16363";
     private AmazonS3 s3Client = null;
     private int fileSize = 204800;
     private File localPath = null;
@@ -53,7 +53,7 @@ public class GetObjectByRespParam16363 extends S3TestBase {
     @Test
     private void test() throws Exception {
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(putObject(bucketName, key, filePathList.get(i)));
+            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         //random version
@@ -63,7 +63,7 @@ public class GetObjectByRespParam16363 extends S3TestBase {
 
         Date date = new Date();
         String dateStr = DateUtils.formatRFC822Date(date);
-        S3Object object = getObjectByVersion(bucketName,key,randomVersionId,dateStr);
+        S3Object object = getObjectByVersion(bucketName,objectName,randomVersionId,dateStr);
 
         //check
         ObjectMetadata objectMetadata = object.getObjectMetadata();
@@ -111,16 +111,5 @@ public class GetObjectByRespParam16363 extends S3TestBase {
         request.withResponseHeaders(overrideHeaders);
         request.withVersionId(versionId);
         return s3Client.getObject(request);
-    }
-
-    private PutObjectResult putObject(String bucketName, String key, String filePath) {
-        PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
-        ObjectMetadata metaData = new ObjectMetadata();
-        Map<String, String> xMeta = new HashMap<String, String>();
-        xMeta.put("test1", "1234");
-        xMeta.put("test2", "123343");
-        metaData.setUserMetadata(xMeta);
-        request.withMetadata(metaData);
-        return s3Client.putObject(request);
     }
 }

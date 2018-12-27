@@ -42,7 +42,6 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (String objectName : objectNames) {
-            System.out.println("objectName = " + objectName);
             s3Client.putObject(bucketName, objectName,""+ UUID.randomUUID());
         }
     }

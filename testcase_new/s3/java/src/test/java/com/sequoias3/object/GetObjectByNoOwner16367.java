@@ -1,7 +1,9 @@
 package com.sequoias3.object;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
@@ -15,7 +17,6 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
 
 /**
  * @Description: seqDB-16367 ::非桶管理用户获取对象
@@ -26,12 +27,12 @@ import java.util.Date;
 public class GetObjectByNoOwner16367 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16367";
-    private String username = "user163367";
-    private String key = "object116367";
+    private String username = "user16367";
+    private String objectName = "object16367";
     private AmazonS3 s3Client = null;
     private String accessKeyID = null;
     private String secretAccessKey = null;
-    private int fileSize = 0;
+    private int fileSize = 1024*200;
     private File localPath = null;
     private String filePath = null;
 
@@ -50,7 +51,7 @@ public class GetObjectByNoOwner16367 extends S3TestBase {
 
     @Test
     private void test() throws Exception {
-        putObject(bucketName, key, filePath);
+        s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePath)));
         createUser();
         getObjectByNoOwner();
         runSuccess = true;
@@ -76,7 +77,7 @@ public class GetObjectByNoOwner16367 extends S3TestBase {
         AmazonS3 s3 = null;
         try {
             s3 = CommLib.buildS3Client(accessKeyID, secretAccessKey);
-            s3.getObject(bucketName, key);
+            s3.getObject(bucketName, objectName);
             Assert.fail("exp fail but act success");
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 403) {
@@ -94,14 +95,5 @@ public class GetObjectByNoOwner16367 extends S3TestBase {
         JSONObject userJSON = user.getJSONObject(UserCommDefind.accessKeys);
         accessKeyID = userJSON.getString(UserCommDefind.accessKeyID);
         secretAccessKey = userJSON.getString(UserCommDefind.secretAccessKey);
-    }
-
-    private PutObjectResult putObject(String bucketName, String key, String filePath) {
-        PutObjectRequest request = new PutObjectRequest(bucketName, key, new File(filePath));
-        ObjectMetadata metaData = new ObjectMetadata();
-        metaData.setExpirationTime(new Date());
-        metaData.addUserMetadata("meta-1", "12346788");
-        request.withMetadata(metaData);
-        return s3Client.putObject(request);
     }
 }
