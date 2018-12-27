@@ -26,6 +26,7 @@
          <package name="com.sequoiadb.session.accessisolation" />
          <package name="com.sequoiadb.metadataconsistency.cluster"/>
          <package name="com.sequoiadb.rename"/>
+         <package name="com.sequoiadb.alter"/>
       </packages>    
    </test>
 </suite>
