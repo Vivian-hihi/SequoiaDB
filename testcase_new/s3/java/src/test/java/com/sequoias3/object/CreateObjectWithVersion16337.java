@@ -2,6 +2,7 @@ package com.sequoias3.object;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -9,6 +10,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
@@ -46,8 +49,9 @@ public class CreateObjectWithVersion16337 extends S3TestBase {
 
 	@Test
 	public void testCreateObject() throws Exception {
+		Date beforeDate = new Date();
 		PutObjectResult result = s3Client.putObject(bucketName, keyName, new File(filePath));
-		checkObjectAttributeInfo(result);
+		checkObjectAttributeInfo( result , beforeDate );
 		checkPutObjectResult(bucketName);
 		runSuccess = true;
 	}
@@ -73,13 +77,26 @@ public class CreateObjectWithVersion16337 extends S3TestBase {
 		Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 	}
 
-	private void checkObjectAttributeInfo(PutObjectResult objAttrInfo) throws IOException {
+	private void checkObjectAttributeInfo(PutObjectResult objAttrInfo, Date beforeDate) throws IOException {
+		Date afterDate = new Date();
 		String expMd5 = TestTools.getMD5(filePath);
 		Assert.assertEquals(objAttrInfo.getETag(), expMd5);
-		String isModify = null;
-		Assert.assertEquals(objAttrInfo.getExpirationTimeRuleId(), isModify);
-
-		// check the versionId,enable versiong the versionId is 0
+		//suspended versiong the versionId is null
 		Assert.assertEquals(objAttrInfo.getVersionId(), "null");
+		
+		// check the attributeInfo of get object
+		GetObjectMetadataRequest request = new GetObjectMetadataRequest(S3TestBase.bucketName, keyName);
+		ObjectMetadata result = s3Client.getObjectMetadata(request);
+		Date modifiedDate =  result.getLastModified();		
+		Assert.assertEquals(result.getVersionId(), "null");
+		Assert.assertEquals(result.getETag(), expMd5);
+		Assert.assertEquals(result.getContentLength(), fileSize);
+		//modifiedDate range is [ beforeDate, afterDate]	
+		Assert.assertFalse(modifiedDate.before(beforeDate) ,"modifiedDate must not be less than beforeDate,"
+											+ "modifiedDate:" + modifiedDate 
+											+ " beforeDate:" + beforeDate);
+		Assert.assertFalse(modifiedDate.after(afterDate),"modifiedDate must not be greater than afterDate,"
+											+ "modifiedDate:" + modifiedDate 
+											+ " afterDate:" + afterDate);		
 	}
 }

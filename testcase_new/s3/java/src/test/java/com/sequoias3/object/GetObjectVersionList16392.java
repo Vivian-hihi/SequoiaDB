@@ -70,7 +70,7 @@ public class GetObjectVersionList16392 extends S3TestBase {
 		}
 	}
 	
-	private void checkVersionsResult(List<S3VersionSummary> verList){
+	private void checkVersionsResult(List<S3VersionSummary> verList){		
 		Assert.assertEquals(verList.size(), expVersionsKeyName.size(), "The number of results returned does not match the expected value");
 		for(int i = 0 ; i < verList.size() ; i++){
 			//TODO:3、没有比较key属性信息和版本信息

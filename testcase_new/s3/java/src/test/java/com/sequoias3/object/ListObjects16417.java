@@ -34,7 +34,6 @@ public class ListObjects16417 extends S3TestBase {
 	private File localPath = null;
 	private String filePath = null;
 
-	@SuppressWarnings("deprecation")
 	@BeforeClass
 	private void setUp() throws IOException {
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
@@ -43,13 +42,8 @@ public class ListObjects16417 extends S3TestBase {
 		TestTools.LocalFile.removeFile(localPath);
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
-		s3Client = CommLib.buildS3Client();
-
-		if (s3Client.doesBucketExist(bucketName)) {
-			System.out.println("-----test=" + s3Client.doesBucketExist(bucketName));
-			CommLib.clearBucket(s3Client, bucketName);
-		}
-		;
+		s3Client = CommLib.buildS3Client();			
+		CommLib.clearBucket(s3Client, bucketName);		
 		s3Client.createBucket(bucketName);
 	}
 

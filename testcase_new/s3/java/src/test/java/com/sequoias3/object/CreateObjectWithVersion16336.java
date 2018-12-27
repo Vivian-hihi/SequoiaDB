@@ -74,7 +74,7 @@ public class CreateObjectWithVersion16336 extends S3TestBase {
 		String isModify = null;
 		Assert.assertEquals(objAttrInfo.getExpirationTimeRuleId(), isModify);
 
-		// check the versionId,enable versiong the versionId is 0
+		// check the versionId,enable version the versionId is 0
 		Assert.assertEquals(objAttrInfo.getVersionId(), "0");
 	}
 }

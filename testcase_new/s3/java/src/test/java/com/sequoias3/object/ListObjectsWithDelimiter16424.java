@@ -37,7 +37,8 @@ public class ListObjectsWithDelimiter16424 extends S3TestBase {
 				// test b:delimiter type is special chararcter
 				new Object[] { "/test*_.(d!-t'')", 1 },
 				// test c:delimiter type is &@:,$=+?;ASCII
-				new Object[] { "/test&@:,$=+? t_1", 2 }, new Object[] { "\010te\065s", 3 },
+				new Object[] { "/test&@:,$=+? t_1", 2 }, 
+				new Object[] { "\010te\065s", 3 },
 				new Object[] { "/\35te\41a\57", 4 },
 				// test d: delimiter type is 、^`><{}[]#%"~|
 				new Object[] { "test、^`><{}[]#%\"~|_1", 5 }, };
@@ -101,7 +102,7 @@ public class ListObjectsWithDelimiter16424 extends S3TestBase {
 		Assert.assertEquals(commonPrefixes.size(), 1);
 		Assert.assertEquals(commonPrefixes.get(0), delimiter);
 
-		// objects do not match delimiter are displayed in contents,num is 4
+		// objects do not match delimiter are displayed in contents,num is 5
 		List<S3ObjectSummary> objects = result.getObjectSummaries();
 		int contentsNums = 5;
 		Assert.assertEquals(objects.size(), contentsNums);
@@ -127,7 +128,6 @@ public class ListObjectsWithDelimiter16424 extends S3TestBase {
 			s3Client.putObject(bucketName, keyName, new File(filePath));
 			keyList.add(keyName);
 		}
-
 		return keyList;
 	}
 }

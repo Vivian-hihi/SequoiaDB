@@ -36,7 +36,6 @@ public class ListObjectsWithMaxkeys16426 extends S3TestBase {
 	private File localPath = null;
 	private String filePath = null;
 
-	@SuppressWarnings("deprecation")
 	@BeforeClass
 	private void setUp() throws IOException {
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
@@ -46,11 +45,7 @@ public class ListObjectsWithMaxkeys16426 extends S3TestBase {
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		s3Client = CommLib.buildS3Client();
-
-		if (s3Client.doesBucketExist(bucketName)) {
-			CommLib.clearBucket(s3Client, bucketName);
-		}
-
+		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(bucketName);
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 	}
@@ -91,19 +86,20 @@ public class ListObjectsWithMaxkeys16426 extends S3TestBase {
 		ListObjectsV2Result result;
 		List<String> queryKeyList = new ArrayList<>();
 		do {
-			List<String> oneQueryKeyList = new ArrayList<>();
 			result = s3Client.listObjectsV2(request);
 			List<S3ObjectSummary> objects = result.getObjectSummaries();
+			int oneQueryKeyNums = 0;
 			for (S3ObjectSummary os : objects) {
 				String key = os.getKey();
-				oneQueryKeyList.add(key);
+				//oneQueryKeyList.add(key);
 				queryKeyList.add(key);
+				oneQueryKeyNums++;
 			}
 
 			if (maxKeys < objectNums) {
-				Assert.assertEquals(oneQueryKeyList.size(), maxKeys);
+				Assert.assertEquals(oneQueryKeyNums, maxKeys);
 			} else {
-				Assert.assertEquals(oneQueryKeyList.size(), objectNums);
+				Assert.assertEquals(oneQueryKeyNums, objectNums);
 			}
 			String continuationToken = result.getNextContinuationToken();
 			request.setContinuationToken(continuationToken);

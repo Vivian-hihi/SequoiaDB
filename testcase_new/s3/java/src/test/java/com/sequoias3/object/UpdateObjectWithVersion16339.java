@@ -81,10 +81,8 @@ public class UpdateObjectWithVersion16339 extends S3TestBase {
 		// check the modify date
 		S3Object updateObject = s3Client.getObject(bucketName, keyName);
 		Date updateDate = updateObject.getObjectMetadata().getLastModified();
-		if (updateDate.getTime() < createDate.getTime()) {
-			Assert.fail("updateDate must be grater than createDate! updateDate:" + updateDate.getTime()
-					+ "\t createDate:" + createDate.getTime());
-		}
+		Assert.assertFalse(updateDate.before(createDate),"updateDate must be grater than createDate! "
+								+ "updateDate:" + updateDate + "\t createDate:" + createDate);		
 	}
 
 	private void updateObjectWithDiffContent(String bucketName) throws Exception {
@@ -101,7 +99,7 @@ public class UpdateObjectWithVersion16339 extends S3TestBase {
 		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName, createVersionId);
 		Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 
-		// check the content of the second update
+		// check the content of the first update
 		String updateMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName, updateVersionId);
 		Assert.assertEquals(updateMd5, TestTools.getMD5(filePath));
 

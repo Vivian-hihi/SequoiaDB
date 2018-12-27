@@ -30,7 +30,7 @@ public class UpdateObjectWithVersion16341 extends S3TestBase {
 				// the parameter : versionStatus and objectVersion
 				// the versioning is enabled,the objectVersion is 1
 				new Object[] { "Enabled", "1" },
-				// the versioning is enabled,the objectVersion is 1
+				// the versioning is suspended,the objectVersion is null
 				new Object[] { "Suspended", "null" } };
 	}
 
@@ -81,11 +81,7 @@ public class UpdateObjectWithVersion16341 extends S3TestBase {
 	private void checkCreateObjectReslut(String bucketName, String expVersionId) throws Exception {
 		// get the new object content is the create content
 		S3Object object = s3Client.getObject(bucketName, key);
-		String versionId = object.getObjectMetadata().getVersionId();
-		// if the suspended versiong, get newobject versionId return null
-		if (versionId == null) {
-			expVersionId = null;
-		}
+		String versionId = object.getObjectMetadata().getVersionId();		
 		Assert.assertEquals(versionId, expVersionId);
 
 		// check the content of the create object
