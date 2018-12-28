@@ -13,6 +13,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -153,5 +154,21 @@ public class ObjectUtils extends S3TestBase {
 			}
 		}
 		return keys;
+	}
+	
+	public static void checkListObjectsV2Commprefixes(List<String> resultList, List<String> expresultList){
+		Collections.sort(expresultList);
+		Assert.assertEquals(resultList.size(), expresultList.size(), "The expected results do not match the actual number of returns");
+		for( int i = 0;i< resultList.size();i++){
+			Assert.assertEquals(resultList.get(i),expresultList.get(i), "commonPrefixes is wrong");
+		}
+	}
+	
+	public static void checkListObjectsV2KeyName(List<S3ObjectSummary> objectSummaries ,List<String> expresultList){
+		Collections.sort(expresultList);
+		Assert.assertEquals(objectSummaries.size(), expresultList.size(), "The number of returned results is wrong");
+		for (int i = 0; i < objectSummaries.size(); i++) {
+			Assert.assertEquals(objectSummaries.get(i).getKey(), expresultList.get(i), "keyName is wrong");
+		}
 	}
 }
