@@ -627,7 +627,7 @@ namespace engine
                }
                else if ( _isReplSync )
                {
-                  SDB_ASSERT( updateNum > 0, "Updated number must > 0" ;
+                  SDB_ASSERT( updateNum > 0, "Updated number must > 0" ) ;
                }
             }
             break ;
