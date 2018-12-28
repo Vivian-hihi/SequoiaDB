@@ -85,7 +85,7 @@ public class CreateObjectWithVersion16337 extends S3TestBase {
 		Assert.assertEquals(objAttrInfo.getVersionId(), "null");
 		
 		// check the attributeInfo of get object
-		GetObjectMetadataRequest request = new GetObjectMetadataRequest(S3TestBase.bucketName, keyName);
+		GetObjectMetadataRequest request = new GetObjectMetadataRequest(bucketName, keyName);
 		ObjectMetadata result = s3Client.getObjectMetadata(request);
 		Date modifiedDate =  result.getLastModified();		
 		Assert.assertEquals(result.getVersionId(), "null");
