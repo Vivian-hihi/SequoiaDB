@@ -35,6 +35,7 @@ public class TestAlterCL14992 extends SdbTestBase {
 	private String clName = "altercl_14992";	
 	private static Sequoiadb sdb = null;
 	private CollectionSpace cs = null;	
+	private boolean altercompressionTypeSuccess = false;
     	
 	@BeforeClass
 	public void setUp(){
@@ -88,7 +89,11 @@ public class TestAlterCL14992 extends SdbTestBase {
 		    	DBCollection dbcl = sdb.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 		    	BSONObject options = (BSONObject)JSON.parse("{ShardingKey:{a:1}}");
 		    	dbcl.enableSharding(options);
-		    }
+		    }catch (BaseException e) {            	
+                if( e.getErrorCode() != -147 ){
+                	Assert.fail("alter shardingKey1 fail!! e:"+e.getErrorCode());
+                }
+            }
 		}
 	}
 	
@@ -98,7 +103,11 @@ public class TestAlterCL14992 extends SdbTestBase {
 		    	DBCollection dbcl = sdb.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 		    	BSONObject options = (BSONObject)JSON.parse("{ShardingKey:{b:1}}");
 		    	dbcl.setAttributes(options);
-		    }
+		    }catch (BaseException e) {            	
+                if( e.getErrorCode() != -147 ){
+                	Assert.fail("alter shardingKey2 fail!! e:"+e.getErrorCode());
+                }
+            }
 		}
 	}	
 	
@@ -108,7 +117,12 @@ public class TestAlterCL14992 extends SdbTestBase {
 		    	DBCollection dbcl = sdb.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 		    	BSONObject options = (BSONObject)JSON.parse("{CompressionType:'lzw'}");
 		    	dbcl.setAttributes(options);
-		    }
+		    	altercompressionTypeSuccess = true;
+		    }catch (BaseException e) {            	
+                if( e.getErrorCode() != -147 ){
+                	Assert.fail("alter compressionType fail!! e:"+e.getErrorCode());
+                }
+            }
 		}
 	}
 	
@@ -140,16 +154,17 @@ public class TestAlterCL14992 extends SdbTestBase {
 		String cond = String.format("{Name:\"%s.%s\"}", SdbTestBase.csName, clName);	
 		DBCursor collections = sdb.getSnapshot(8, cond, null, null);	
 		String  actCompressionType = "";
-		String  expCompressionType = "lzw";
+		String  expCompressionType = "lzw";		
 		Object  actShardingKey = null;
 		while(collections.hasNext()){
-			BasicBSONObject doc = (BasicBSONObject)collections.getNext();		
-			actCompressionType = (String) doc.get("CompressionTypeDesc");
-			actShardingKey = doc.get("ShardingKey");			
+			BasicBSONObject doc = (BasicBSONObject)collections.getNext();			
+			actShardingKey = doc.get("ShardingKey");
+			if(altercompressionTypeSuccess){
+				actCompressionType = (String) doc.get("CompressionTypeDesc");
+				Assert.assertEquals(actCompressionType, expCompressionType);
+			}
 		}
-		collections.close();
-		Assert.assertEquals(actCompressionType, expCompressionType);
-		
+		collections.close();		
 		List<BSONObject> objects = new ArrayList<BSONObject>();
 		BSONObject subObj1 = new BasicBSONObject();
 		BSONObject subObj2 = new BasicBSONObject();
