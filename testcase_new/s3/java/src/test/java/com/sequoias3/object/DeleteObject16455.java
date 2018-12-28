@@ -1,15 +1,16 @@
 package com.sequoias3.object;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.UserUtils;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 /**
  * test content: 非桶管理用户删除对象
@@ -66,9 +67,6 @@ public class DeleteObject16455 extends S3TestBase {
 	private void tearDown() throws Exception {
 		try {
 			if (runSuccess) {
-				//TODO:1、删除object和bucket可以去掉，删除用户已包含该操作
-				CommLib.deleteAllObjectVersions(s3ClientA, bucketName);
-				s3ClientA.deleteBucket(bucketName);
 				UserUtils.deleteUser(userNameA);
 				UserUtils.deleteUser(userNameB);
 			}

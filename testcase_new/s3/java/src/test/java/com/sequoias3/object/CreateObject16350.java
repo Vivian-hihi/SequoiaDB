@@ -1,5 +1,15 @@
 package com.sequoias3.object;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
@@ -9,15 +19,6 @@ import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * test content: 增加对象，携带md5值
@@ -28,8 +29,8 @@ import java.io.InputStream;
  */
 public class CreateObject16350 extends S3TestBase {
 	private boolean runSuccess = false;
-	String bucketName = "bucket16350";
-	String keyName = "/aa/bb/object16350";//TODO:1、建议增加private
+	private String bucketName = "bucket16350";
+	private String keyName = "/aa/bb/object16350";
 	private AmazonS3 s3Client = null;
 	private String beforeMd5 = null;
 	private String wrongMd5 = null;

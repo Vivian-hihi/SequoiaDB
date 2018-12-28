@@ -6,6 +6,7 @@ import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
@@ -24,10 +25,18 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class DeleteObject16453 extends S3TestBase {
+	@DataProvider(name = "removeProvider")
+	public Object[][] generateRemoveIndex() {
+		return new Object[][] {
+				// delete the latest version of deletemarker
+				new Object[] { 0 },
+				// delete the history version of deletemarker
+				new Object[] { 1 }
+		};
+	}
 	private String bucketName = "bucket16453";
 	private String keyName = "testkey16453";
 	private int deleteVersionNum = 3;
-	private String file = "object16453";
 	private List<S3VersionSummary> expDeleteMarkersList = new ArrayList<S3VersionSummary>();
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
@@ -38,39 +47,31 @@ public class DeleteObject16453 extends S3TestBase {
 		// create bucket and set bucket status is enabled
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
-		s3Client.putObject(bucketName, keyName, file);
-		
+	}
+
+	@Test(dataProvider = "removeProvider")
+	public void testGetObjectList(int remove_index) throws Exception {
 		for(int i = 0 ; i < deleteVersionNum ; i++){
 			s3Client.deleteObject(bucketName, keyName);
 			S3VersionSummary version = new S3VersionSummary();
 			version.setKey(keyName);
 			version.setIsDeleteMarker(true);
-			version.setVersionId(String.valueOf(deleteVersionNum-i));
+			//Objects in the version list are stored in reverse order by versionId , like 2,1,0
+			version.setVersionId(String.valueOf((deleteVersionNum -1) -i));
 			expDeleteMarkersList.add(version);
 		}
-		expDeleteMarkersList.size();//TODO:1、多余的代码吗？
-	}
-
-	@Test
-	public void testGetObjectList() throws Exception {
-		// delete the latest version of deletemarker
-		s3Client.deleteVersion(bucketName, keyName, expDeleteMarkersList.get(0).getVersionId());
+		
+		//remove_index ：which index should be deleted from expDeleteMarkersList
+		s3Client.deleteVersion(bucketName, keyName, expDeleteMarkersList.get(remove_index).getVersionId());
 		
 		// check the object version list
 		ListVersionsRequest req = new ListVersionsRequest().withBucketName(bucketName);
 		VersionListing versionList = s3Client.listVersions(req);
 		List<S3VersionSummary> verList = versionList.getVersionSummaries();
-		checkDeleteMarkerResult(verList, 0);//TODO:1、这里的0请给下说明或者定义变量名。
+		checkDeleteMarkerResult(verList, remove_index);
 		
-		// delete the history version of deletemarker
-		s3Client.deleteVersion(bucketName, keyName, "1");
-		
-		// check the object version list
-		req = new ListVersionsRequest().withBucketName(bucketName);
-		versionList = s3Client.listVersions(req);
-		verList = versionList.getVersionSummaries();
-		checkDeleteMarkerResult(verList, expDeleteMarkersList.size()-1);
-		
+		CommLib.deleteAllObjectVersions(s3Client, bucketName);
+		expDeleteMarkersList.clear();
 		runSuccess = true;
 	}
 
@@ -84,11 +85,11 @@ public class DeleteObject16453 extends S3TestBase {
 	
 	private void checkDeleteMarkerResult(List<S3VersionSummary> verList, int removeIndex){
 		expDeleteMarkersList.remove(removeIndex);
-		Assert.assertEquals(verList.size()-1, expDeleteMarkersList.size());//TODO:2、这里比较为啥要把实际的versionList减去一个？
-		for(int i = 1 ; i < verList.size() ; i++){//TODO:3、这里为啥忽略0？
-			Assert.assertEquals(verList.get(i).getKey(), expDeleteMarkersList.get(i-1).getKey());
-			Assert.assertEquals(verList.get(i).isDeleteMarker(), expDeleteMarkersList.get(i-1).isDeleteMarker());
-			Assert.assertEquals(verList.get(i).getVersionId(), expDeleteMarkersList.get(i-1).getVersionId());
+		Assert.assertEquals(verList.size(), expDeleteMarkersList.size());
+		for(int i = 0 ; i < verList.size() ; i++){
+			Assert.assertEquals(verList.get(i).getKey(), expDeleteMarkersList.get(i).getKey());
+			Assert.assertEquals(verList.get(i).isDeleteMarker(), expDeleteMarkersList.get(i).isDeleteMarker());
+			Assert.assertEquals(verList.get(i).getVersionId(), expDeleteMarkersList.get(i).getVersionId());
 		}
 	}
 }

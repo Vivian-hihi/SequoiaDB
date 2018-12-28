@@ -49,13 +49,11 @@ public class DeleteObject16451 extends S3TestBase {
 
 		for (int i = 0; i < oneObjVersionNum; i++) {
 			s3Client.putObject(bucketName, keyName, file + "." + i);
-			//TODO:1、可直接按版本号规则存入版本号旧可以了，如versionId分别为0/1/2，另外expVersionList只存了版本号为0/1的对象，请增加说明
-			if (i < oneObjVersionNum - 1) {
-				S3VersionSummary version = new S3VersionSummary();
-				version.setKey(keyName);
-				version.setVersionId(String.valueOf((oneObjVersionNum - 1) - i));
-				expVersionList.add(version);
-			}
+			S3VersionSummary version = new S3VersionSummary();
+			version.setKey(keyName);
+			//Objects in the version list are stored in reverse order by versionId , like 2,1,0
+			version.setVersionId(String.valueOf((oneObjVersionNum - 1) - i));
+			expVersionList.add(version);
 		}
 	}
 
@@ -64,8 +62,9 @@ public class DeleteObject16451 extends S3TestBase {
 		//set bucket status is suspended
 		CommLib.setBucketVersioning(s3Client, bucketName, "Suspended");
 		// delete object with latest version id
-		String historyVersionId = String.valueOf(0);
+		String historyVersionId = "0";
 		s3Client.deleteVersion(bucketName, keyName, historyVersionId);
+		expVersionList.remove(oneObjVersionNum-1);
 
 		try {
 			s3Client.getObject(new GetObjectRequest(bucketName, keyName, historyVersionId));

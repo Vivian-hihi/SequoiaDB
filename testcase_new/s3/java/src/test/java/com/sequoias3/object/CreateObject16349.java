@@ -24,8 +24,8 @@ import com.sequoias3.testcommon.TestTools;
  */
 public class CreateObject16349 extends S3TestBase {
 	private boolean runSuccess = false;
-	String bucketName = "bucket16349";
-	String keyName = "/aa/bb/object16349.png";//TODO:1、建议增加private
+	private String bucketName = "bucket16349";
+	private String keyName = "/aa/bb/object16349.png";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 10;	
 	private File localPath = null;

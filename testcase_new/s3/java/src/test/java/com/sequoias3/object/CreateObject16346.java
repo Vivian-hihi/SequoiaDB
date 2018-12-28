@@ -34,8 +34,8 @@ import java.util.TimeZone;
  */
 public class CreateObject16346 extends S3TestBase{
 	private boolean runSuccess = false;
-	String bucketName = "bucket16346";//TODO:1、建议申明私有变量，bucket和key只对该用例使用
-	String keyName = "object16346";
+	private String bucketName = "bucket16346";
+	private String keyName = "object16346";
 	private AmazonS3 s3Client = null;
 	private File localPath = null;
 	private static CloseableHttpClient client;
@@ -107,7 +107,7 @@ public class CreateObject16346 extends S3TestBase{
 			TestTools.LocalFile.removeFile(localPath);
 		}
 	}
-	//TODO:2、很多用例用到该方法，可以提公共方法使用
+
 	private String getGMTDate(Date date){
 		SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z",Locale.US);
 		sdf.setTimeZone(TimeZone.getTimeZone("GMT"));

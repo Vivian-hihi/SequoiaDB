@@ -29,7 +29,7 @@ public class GetObjectVersionList16389 extends S3TestBase {
 	private int objectTotalNum = 5;
 	private String[] keyName = new String[objectTotalNum];
 	private List<String> expDeleteMarKersList = new ArrayList<String>();
-	private List<String> expVersionsList = new ArrayList<String>();
+	private List<String> expVersionsKeyNameList = new ArrayList<String>();
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
@@ -40,13 +40,11 @@ public class GetObjectVersionList16389 extends S3TestBase {
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 		
-		for(int i = 0 ; i < objectTotalNum ; i ++ ){
-			keyName[i] = "/dir"+i+"/16389";//TODO:1、可以放到下面的循环语句中
-		}
 		//put multiple objects
 		for(int i = 0 ; i < objectTotalNum ; i++){
+			keyName[i] = "/dir"+i+"/16389";
 			s3Client.putObject(bucketName, keyName[i], "object_file16389");
-			expVersionsList.add(keyName[i]);//TODO：2、请修改变量名，和实际存储内容一致
+			expVersionsKeyNameList.add(keyName[i]);
 		}
 		//delete object key = "/dir1/16389" and "/dir4/16389"
 		s3Client.deleteObject(bucketName, keyName[1]);
@@ -79,21 +77,23 @@ public class GetObjectVersionList16389 extends S3TestBase {
 	}
 
 	private void checklistVersionsResult(List<S3VersionSummary> versions){
-		Collections.sort(expVersionsList);
+		Collections.sort(expVersionsKeyNameList);
 		Collections.sort(expDeleteMarKersList);
-		Assert.assertEquals(versions.size(), expVersionsList.size()+ expDeleteMarKersList.size(),"The number of results returned does not match the expected value");
-		for( int i = 0; i < expVersionsList.size(); i++){
-			Assert.assertEquals(versions.get(i).getKey(), expVersionsList.get(i), "versions is wrong");
+		Assert.assertEquals(versions.size(), expVersionsKeyNameList.size()+ expDeleteMarKersList.size(),"The number of results returned does not match the expected value");
+		for( int i = 0; i < expVersionsKeyNameList.size(); i++){
+			Assert.assertEquals(versions.get(i).getKey(), expVersionsKeyNameList.get(i), "versions is wrong");
 			Assert.assertEquals(versions.get(i).isDeleteMarker(),false, "isdeleteMarKer is wrong");
 		}
-		//TODO:3、这段代码请优化，前面已经指定删除的对象，这里直接比较结果就可以了，另外versions.get(expVersionsList.size() + i)请补充下描述。
+		
+		//versions = expVersionsKeyNameList + expDeleteMarKersList
+		//deleteMarKersList should start from expVersionsKeyNameList.size()+1
 		for(int i = 0 ; i < expDeleteMarKersList.size() ; i++){
-			Assert.assertEquals(versions.get(expVersionsList.size() + i).getKey(), expDeleteMarKersList.get(i), "deleteMarKerList key is wrong");
-			Assert.assertEquals(versions.get(expVersionsList.size() + i).isDeleteMarker(),true, "isdeleteMarKer is wrong");
-			if(versions.get(expVersionsList.size() + i).getKey().equals(keyName[0])){
-				Assert.assertEquals(versions.get(expVersionsList.size() + i).getVersionId(),"null", "isdeleteMarKer is wrong");
+			Assert.assertEquals(versions.get(expVersionsKeyNameList.size() + i).getKey(), expDeleteMarKersList.get(i), "deleteMarKerList key is wrong");
+			Assert.assertEquals(versions.get(expVersionsKeyNameList.size() + i).isDeleteMarker(),true, "isdeleteMarKer is wrong");
+			if(versions.get(expVersionsKeyNameList.size() + i).getKey().equals(keyName[0])){
+				Assert.assertEquals(versions.get(expVersionsKeyNameList.size() + i).getVersionId(),"null", "isdeleteMarKer is wrong");
 			}else{
-				Assert.assertNotEquals(versions.get(expVersionsList.size() + i).getVersionId(),"null", "isdeleteMarKer is wrong");
+				Assert.assertNotEquals(versions.get(expVersionsKeyNameList.size() + i).getVersionId(),"null", "isdeleteMarKer is wrong");
 			}
 		}
 	}

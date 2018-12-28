@@ -1,7 +1,6 @@
 package com.sequoias3.object;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.testng.Assert;
@@ -15,6 +14,7 @@ import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
  * test content: 多次查询结果在commprefix中有相同记录
@@ -29,8 +29,8 @@ public class GetObjectList16439 extends S3TestBase {
 	private String prefix = "/";
 	private String delimiter = "/";
 	private int maxKeys = 2;
-	private List<String> expresultList = new ArrayList<String>();
-	private int samePrefixObjNum = 4;
+	private List<String> exCommprefixList = new ArrayList<String>();
+	private int samePrefixObjNum = 5;
 	private int sameDirNum = 3;
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
@@ -41,15 +41,15 @@ public class GetObjectList16439 extends S3TestBase {
 		//create bucket
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 		String currentKeyName = null;
-		String expCurrentKeyName = null;
+		String expCommprefix = null;
 		//put multiple objects
 		for(int i = 0 ; i < samePrefixObjNum ; i++){
 			for(int j = 0 ; j < sameDirNum ; j++){
 				currentKeyName = keyName+i+"/subdir"+j+"/16439";
 				s3Client.putObject(bucketName, currentKeyName, "object_file16439");
 			}
-			expCurrentKeyName = keyName + i +"/";//TODO:1、定义变量命名不准确，建议补充注释或者修改变量名，不是keyName
-			expresultList.add(expCurrentKeyName);//TODO:2、同问题1，expresultList建议加上注释或者优化变量名
+			expCommprefix = keyName + i +"/";
+			exCommprefixList.add(expCommprefix);
 		}
 	}
 
@@ -58,33 +58,27 @@ public class GetObjectList16439 extends S3TestBase {
 		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName)
 						.withPrefix(prefix).withDelimiter(delimiter).withMaxKeys(maxKeys);
 		ListObjectsV2Result result; 
+		List<String> commprefixesResult = new ArrayList<>();
 		//currentTurn is query times
-		int currentTurn = 0;//TODO:3、建议直接定义为查询次数
+		int queryTime = 0;
 		
 		do{
-			currentTurn++;
+			queryTime++;
 			result = s3Client.listObjectsV2(req);
-			List<String> commprefixesResult = result.getCommonPrefixes();
-			//TODO:4、下面代码请简化处理，已经有预置数据，每次查询的结果时可预期的，可直接给出预期结果判断
-			if(currentTurn == Math.ceil((double)samePrefixObjNum/maxKeys)){
-				if(samePrefixObjNum%maxKeys==0){
-					Assert.assertEquals(result.getKeyCount(), maxKeys, "The expected results do not match the actual number of returns");
-				}else{
-					Assert.assertEquals(result.getKeyCount(), samePrefixObjNum%maxKeys, "The expected results do not match the actual number of returns");
-				}
-				//SEQUOIADBMAINSTREAM-3987
+			commprefixesResult.addAll(result.getCommonPrefixes());
+			if(queryTime == 3){
+				Assert.assertEquals(result.getKeyCount(), 1, "The expected results do not match the actual number of returns");
 				Assert.assertFalse(result.isTruncated(), "last turn result.isTruncated should be false!");
 			}else{
 				Assert.assertEquals(result.getKeyCount(), maxKeys, "The expected results do not match the actual number of returns");
 				Assert.assertTrue(result.isTruncated(), "when it is not last turn result.isTruncated should be true!");
 			}
-			checkListObjectsV2Result(commprefixesResult, (currentTurn-1)*maxKeys);
-			
 			String NextContinuationToken = result.getNextContinuationToken();
 			req.setContinuationToken(NextContinuationToken);
 			
 		}while(result.isTruncated());
-		//TODO:5、补充总的记录数检查，参考上述代码，使用的if-else，如果只是走了一个分支，无法检测到。
+		Assert.assertEquals(queryTime, 3, "the query time is wrong!");
+		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, exCommprefixList);
 		runSuccess =true;
 	}
 
@@ -93,14 +87,6 @@ public class GetObjectList16439 extends S3TestBase {
 		if (runSuccess) {
 			CommLib.deleteAllObjectVersions(s3Client, bucketName);
 			s3Client.deleteBucket(bucketName);
-		}
-	}
-	//TODO:6、可提取公共方法。
-	private void checkListObjectsV2Result(List<String> resultList,int startKeyNum){
-		Collections.sort(expresultList);
-		for( int i = 0;i< resultList.size();i++){
-			Assert.assertEquals(resultList.get(i),expresultList.get(startKeyNum), "commonPrefixes is wrong");
-			startKeyNum++;
 		}
 	}
 }

@@ -40,7 +40,7 @@ public class GetObjectVersionList16395 extends S3TestBase {
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 		for (int i = 0; i < keyName.length; i++) {
-			//TODO:1、这段代码是要创建多版本对象吧，可以简化或者增加描述信息
+			//create multi-version objects and save the key and versionid to expVersionList
 			for(int j = 0 ; j < oneObjVersionNum ; j ++){
 				s3Client.putObject(bucketName, keyName[i], file);
 				S3VersionSummary version = new S3VersionSummary();
@@ -53,10 +53,9 @@ public class GetObjectVersionList16395 extends S3TestBase {
 
 	@Test
 	public void testGetObjectList() throws Exception {
-		//TODO:2、index这行建议放到60行上面
-		int index = (keyName.length/2)-1;
 		List<S3VersionSummary> versionList = new ArrayList<>();
 		//test a:指定位置为中间记录
+		int index = (keyName.length/2)-1;
 		versionList =  getVersionList(keyName[index]);
 		checkVersionResult(versionList, index);
 		

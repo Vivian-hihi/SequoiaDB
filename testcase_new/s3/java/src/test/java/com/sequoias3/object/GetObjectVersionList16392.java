@@ -1,6 +1,7 @@
 package com.sequoias3.object;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.testng.Assert;
@@ -15,6 +16,7 @@ import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestTools;
 
 /**
  * test content: 带分隔符delimiter查询对象版本列表
@@ -29,7 +31,9 @@ public class GetObjectVersionList16392 extends S3TestBase {
 	private String delimiter = "/";
 	private String expPrefix = "dir1/";
 	private List<String> expVersionsKeyName = new ArrayList<String>();
-	private String file = "object16392";
+	private List<String> expVersionsKeyEtag = new ArrayList<String>();
+	private String[] expVersionId = {"1","0","1","0"};
+	private String content = "object16392";
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
@@ -39,17 +43,30 @@ public class GetObjectVersionList16392 extends S3TestBase {
 		//create bucket
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+		
 		for(int i = 0 ; i < keyName.length ; i ++ ){
-			s3Client.putObject(bucketName, keyName[i], file);//TODO:1、可以和下面的for循环合并，请加描述信息。建议不同版本对象输入不同内容
+			List<String> tempEtag = new ArrayList<>();
+			String currentContent = content+TestTools.getRandomString(i);
+			s3Client.putObject(bucketName, keyName[i], currentContent);
+			tempEtag.add(TestTools.getMD5(currentContent.getBytes()));
+			
+			currentContent = content+TestTools.getRandomString(i);
+			s3Client.putObject(bucketName, keyName[i], currentContent);
+			tempEtag.add(TestTools.getMD5(currentContent.getBytes()));
+			//同一个对象不同版本的etag，最新版本排在最前面
+			Collections.reverse(tempEtag);
+			expVersionsKeyEtag.addAll(tempEtag);
 		}
-		for(int i = 0 ; i < keyName.length ; i ++ ){
-			s3Client.putObject(bucketName, keyName[i], file);
-		}
-		//TODO:2、请参加描述信息，为啥只存keyName【2】和keyName【3】
+		
+		//verions 里面存放匹配不到delimiter的 "test3"、"test4"
 		expVersionsKeyName.add(keyName[2]);
 		expVersionsKeyName.add(keyName[2]);
 		expVersionsKeyName.add(keyName[3]);
 		expVersionsKeyName.add(keyName[3]);
+		//将"dir1/test1","dir1/dir2/test2" 的etag从expVersionsKeyEtag里面去掉
+		for(int i = 0 ; i < 4 ; i++){
+			expVersionsKeyEtag.remove(0);
+		}
 	}
 
 	@Test
@@ -58,6 +75,7 @@ public class GetObjectVersionList16392 extends S3TestBase {
 		Assert.assertEquals(versionList.getCommonPrefixes().size(), 1, "the number of results returned by commonPrefixes is wrong");
 		Assert.assertEquals(versionList.getCommonPrefixes().get(0), expPrefix, "the result of commonPrefixes is wrong");
 		List<S3VersionSummary> verList = versionList.getVersionSummaries();
+		
 		checkVersionsResult(verList);
 		runSuccess =true;
 	}
@@ -70,11 +88,12 @@ public class GetObjectVersionList16392 extends S3TestBase {
 		}
 	}
 	
-	private void checkVersionsResult(List<S3VersionSummary> verList){		
+	private void checkVersionsResult(List<S3VersionSummary> verList){
 		Assert.assertEquals(verList.size(), expVersionsKeyName.size(), "The number of results returned does not match the expected value");
 		for(int i = 0 ; i < verList.size() ; i++){
-			//TODO:3、没有比较key属性信息和版本信息
 			Assert.assertEquals(verList.get(i).getKey(), expVersionsKeyName.get(i), "the result of versions is wrong!");
+			Assert.assertEquals(verList.get(i).getVersionId(), expVersionId[i], "version id is wrong! the key is : " + verList.get(i).getKey());
+			Assert.assertEquals(verList.get(i).getETag(), expVersionsKeyEtag.get(i), "etag is wrong! the key is : " + verList.get(i).getKey());
 		}
 	}
 }

@@ -1,20 +1,25 @@
 package com.sequoias3.object;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.amazonaws.services.s3.model.PutObjectResult;
-import com.amazonaws.services.s3.model.S3Object;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.TestTools;
-import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.File;
-import java.io.IOException;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.S3VersionSummary;
+import com.amazonaws.services.s3.model.VersionListing;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
  * test content: 开启版本控制，增加多个同名对象
@@ -25,8 +30,9 @@ import java.io.IOException;
  */
 public class CreateObject16345 extends S3TestBase {
 	private boolean runSuccess = false;
-	String bucketName = "bucket16345";//TODO:1、建议申明私有变量，bucket和key只对该用例使用
-	String keyName = "object16345";
+	private String bucketName = "bucket16345";
+	private String keyName = "object16345";
+	private int countNum = 20;
 	private AmazonS3 s3Client = null;
 	private File localPath = null;
 	private String expContent = "object_file16345";
@@ -42,22 +48,13 @@ public class CreateObject16345 extends S3TestBase {
 
 	@Test
 	public void testPutObject() throws Exception {
-		PutObjectResult putObjResult = null;
-		int randomNum = (int)(Math.random()* 200);
-		for(int i  = 0 ; i < 200 ; i++){
-			putObjResult = s3Client.putObject(bucketName, keyName, expContent+"." + i);
-			if(i == randomNum){
-				String currentExpContent = expContent+"." + i;
-				String currVersionID = putObjResult.getVersionId();
-				checkPutObjectResultRandom(currVersionID,currentExpContent);
-			}
+		List<String> contentList = new ArrayList<>();
+		for(int i  = 0 ; i < countNum ; i++){
+			String currentExpContent = expContent+"." + i;
+			s3Client.putObject(bucketName, keyName, currentExpContent);
+			contentList.add(currentExpContent);
 		}
-		//TODO:2、只是检查当前对象元数据信息，遗漏其它版本元数据信息的检测。
-		String currentContent = expContent+".199";
-		String version = putObjResult.getVersionId();
-		String eTag = putObjResult.getETag();
-		long size = currentContent.getBytes().length;
-		checkCurrentObjectResult(version,eTag,size);
+		checkPutObjectResult(contentList);
 		runSuccess = true;
 	}
 
@@ -66,25 +63,23 @@ public class CreateObject16345 extends S3TestBase {
 		if (runSuccess) {
 			CommLib.deleteAllObjectVersions(s3Client, bucketName);
 			s3Client.deleteBucket(bucketName);
+			TestTools.LocalFile.removeFile(localPath);
 		}
 	}
 	
-	private void checkPutObjectResultRandom(String currVersionID,String currExpContent) throws Exception {
+	private void checkPutObjectResult(List<String> contentList) throws Exception {
+		//Objects in the version list are stored in reverse order by versionId
+		Collections.reverse(contentList);
+		VersionListing listing = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName));
+		List<S3VersionSummary> list = listing.getVersionSummaries();
+		Assert.assertEquals(list.size(), countNum);
+		
 		// check object content by md5
-		String actMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName, currVersionID);
-		String expMd5 = TestTools.getMD5(currExpContent.getBytes());
-		Assert.assertEquals(actMd5, expMd5,"md5 is different!");
-	}
-
-	private void checkCurrentObjectResult(String versionid, String etag, long size) throws Exception {
-		S3Object object = s3Client.getObject(bucketName, keyName);
-		String actVersionId = object.getObjectMetadata().getVersionId();
-		Assert.assertEquals(actVersionId, versionid,"versionID is different!");
-		
-		String actETag = object.getObjectMetadata().getETag();
-		Assert.assertEquals(actETag, etag,"ETag is different!");
-		
-		long actSize = object.getObjectMetadata().getContentLength();
-		Assert.assertEquals(actSize, size,"size is different!");
+		for(int i = 0 ; i < list.size() ; i++){
+			Assert.assertEquals(Integer.parseInt(list.get(i).getVersionId()), (list.size()-1) - i , "versionid is wrong!");
+			String actMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName, list.get(i).getVersionId());
+			Assert.assertEquals(actMd5,  TestTools.getMD5(contentList.get(i).getBytes()),"md5 is different!");
+			Assert.assertEquals(list.get(i).getSize(), (long)contentList.get(i).length(),"size is wrong!");
+		}
 	}
 }

@@ -29,7 +29,7 @@ public class GetObjectVersionList16388 extends S3TestBase {
 	private int objectTotalNum = 5;
 	private String[] keyName = new String[objectTotalNum];
 	private List<String> expDeleteMarKersList = new ArrayList<String>();
-	private List<String> expVersionsList = new ArrayList<String>();
+	private List<String> expVersionsKeyNameList = new ArrayList<String>();
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
@@ -40,18 +40,16 @@ public class GetObjectVersionList16388 extends S3TestBase {
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 		
-		for(int i = 0 ; i < objectTotalNum ; i ++ ){
-			keyName[i] = "/dir"+i+"/16388";//TODO:1、这个一段代码可以放到下面的循环中。
-		}
 		//put multiple objects
 		for(int i = 0 ; i < objectTotalNum ; i++){
+			keyName[i] = "/dir"+i+"/16388";
 			s3Client.putObject(bucketName, keyName[i], "object_file16388");
-			expVersionsList.add(keyName[i]);//TODO:2、该变量名和实际存储内容不符，请修改变量名
+			expVersionsKeyNameList.add(keyName[i]);
 		}
 		
 		//put object key = "/dir/dir1/16388" again
 		s3Client.putObject(bucketName, keyName[1], "object_file16388");
-		expVersionsList.add(keyName[1]);
+		expVersionsKeyNameList.add(keyName[1]);
 		
 		//delete object key = "/dir/dir1/16388" and "/dir/dir4/16388"
 		s3Client.deleteObject(bucketName, keyName[1]);
@@ -78,16 +76,16 @@ public class GetObjectVersionList16388 extends S3TestBase {
 	}
 
 	private void checklistVersionsResult(List<S3VersionSummary> versions){
-		Collections.sort(expVersionsList);
+		Collections.sort(expVersionsKeyNameList);
 		Collections.sort(expDeleteMarKersList);
-		Assert.assertEquals(versions.size(), expVersionsList.size()+ expDeleteMarKersList.size(),"The number of results returned does not match the expected value");
-		for( int i = 0; i < expVersionsList.size(); i++){
-			Assert.assertEquals(versions.get(i).getKey(), expVersionsList.get(i), "versions is wrong");
+		Assert.assertEquals(versions.size(), expVersionsKeyNameList.size()+ expDeleteMarKersList.size(),"The number of results returned does not match the expected value");
+		for( int i = 0; i < expVersionsKeyNameList.size(); i++){
+			Assert.assertEquals(versions.get(i).getKey(), expVersionsKeyNameList.get(i), "versions is wrong");
 			Assert.assertEquals(versions.get(i).isDeleteMarker(),false, "isdeleteMarKer is wrong");
 		}
 		for(int i = 0 ; i < expDeleteMarKersList.size() ; i++){
-			Assert.assertEquals(versions.get(expVersionsList.size() + i).getKey(), expDeleteMarKersList.get(i), "deleteMarKerList key is wrong");
-			Assert.assertEquals(versions.get(expVersionsList.size() + i).isDeleteMarker(),true, "isdeleteMarKer is wrong");
+			Assert.assertEquals(versions.get(expVersionsKeyNameList.size() + i).getKey(), expDeleteMarKersList.get(i), "deleteMarKerList key is wrong");
+			Assert.assertEquals(versions.get(expVersionsKeyNameList.size() + i).isDeleteMarker(),true, "isdeleteMarKer is wrong");
 		}
 	}
 }

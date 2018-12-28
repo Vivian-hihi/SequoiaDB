@@ -33,7 +33,7 @@ public class GetObjectList16438 extends S3TestBase {
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
-	@BeforeClass
+	@BeforeClass(enabled = false)
 	private void setUp() throws IOException {
 		s3Client = CommLib.buildS3Client();
 		// create bucket
@@ -47,7 +47,8 @@ public class GetObjectList16438 extends S3TestBase {
 		}
 	}
 
-	@Test(enabled = false)//TODO:1、屏蔽用例请标注下原因，如有问题单请附上单号，另外屏蔽用例需要把before和after都屏蔽的
+	//暂时未解决修改配置文件 调整上下文生命周期
+	@Test(enabled = false)
 	public void testGetObjectList() throws Exception {
 		int keyCount = 5;
 		//first query
@@ -70,14 +71,14 @@ public class GetObjectList16438 extends S3TestBase {
 		runSuccess = true;
 	}
 
-	@AfterClass
+	@AfterClass(enabled = false)
 	private void tearDown() {
 		if (runSuccess) {
 			CommLib.deleteAllObjectVersions(s3Client, bucketName);
 			s3Client.deleteBucket(bucketName);
 		}
 	}
-	//TODO:2、该方法有很多用例使用，建议提取公共方法，不需要每个用例都写相同代码
+	
 	private void checkListObjectsV2Result(List<S3ObjectSummary> objectSummaries ,int expCount){
 		Assert.assertEquals(objectSummaries.size(), expCount, "The number of returned results is wrong");
 		Collections.sort(expresultList);

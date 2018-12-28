@@ -1,5 +1,13 @@
 package com.sequoias3.object;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
@@ -7,15 +15,8 @@ import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * test content: 带指定fetch-owner查询对象元数据列表，显示所有者信息 
@@ -66,7 +67,7 @@ public class GetObjectList16441 extends S3TestBase {
 						.withPrefix(prefix).withDelimiter(delimiter).withFetchOwner(true);
 		ListObjectsV2Result result = s3Client.listObjectsV2(req);
 		List<String> commprefixesResult = result.getCommonPrefixes();
-		checkCommPrefixesResult(commprefixesResult);
+		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expCommPrefixesList);
 		
 		List<S3ObjectSummary> objectSummaries =  result.getObjectSummaries();
 		checkContentsResult(objectSummaries);
@@ -79,14 +80,6 @@ public class GetObjectList16441 extends S3TestBase {
 			CommLib.deleteAllObjectVersions(s3Client, bucketName);
 			s3Client.deleteBucket(bucketName);
 			UserUtils.deleteUser(userName);
-		}
-	}
-	//TODO:1、可提取公共方法，简化代码
-	private void checkCommPrefixesResult(List<String> resultList){
-		Collections.sort(expCommPrefixesList);
-		Assert.assertEquals(resultList.size(), expCommPrefixesList.size(), "The expected results do not match the actual number of returns");
-		for( int i = 0;i< resultList.size();i++){
-			Assert.assertEquals(resultList.get(i),expCommPrefixesList.get(i), "commonPrefixes is wrong");
 		}
 	}
 	

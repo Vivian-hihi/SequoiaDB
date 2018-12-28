@@ -1,8 +1,12 @@
 package com.sequoias3.object;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -11,11 +15,15 @@ import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.S3ThreadBase;
+import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
  * test content: 开启版本控制增加对象，桶中增加/删除多个对象
@@ -29,13 +37,17 @@ public class CreateObject16344 extends S3TestBase {
 	String bucketName = "bucket16344";
 	String keyName = "object16344";
 	private AmazonS3 s3Client = null;
-	private String expContent = "object_file16344";
-	private String expETag = null;
-	private long expSize = 0;
+	private List<String> keyNames = new ArrayList<>();
+	private Random random = new Random();
+	private LinkedBlockingQueue<SaveEtagAndMd5> etag2md5 = new LinkedBlockingQueue<SaveEtagAndMd5>();	
+	private File localPath = null;
 	private int defaultNums = 10;
 
 	@BeforeClass
 	private void setUp() throws IOException {
+		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+		TestTools.LocalFile.removeFile(localPath);
+		TestTools.LocalFile.createDir(localPath.toString());
 		s3Client = CommLib.buildS3Client();
 		//create bucket and set bucket version status
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
@@ -44,7 +56,7 @@ public class CreateObject16344 extends S3TestBase {
 
 	@Test
 	public void testPutObject() throws Exception {
-		List<PutObjectThread> putObjects = new ArrayList<>(20);		
+		List<PutObjectThread> putObjects = new ArrayList<>();		
 		
 		for( int i = 0; i < defaultNums ; i++){
 			String subKeyName = keyName + "." + i;							
@@ -58,9 +70,8 @@ public class CreateObject16344 extends S3TestBase {
 		for( PutObjectThread putObject : putObjects ){
 			Assert.assertTrue( putObject.isSuccess(), putObject.getErrorMsg());
 		}		
-		//TODO:3、检测结果遗漏比较上传对象元数据信息，建议将key和对应etag写到队列中，获取结果时分别比较。另外对象内容不要写一样的，如果内容被覆盖无法验证
-		String randomKeyName = keyName+"."+(int)(Math.random()*10)+"."+(int)(Math.random()*1000);
-		checkCurrentObjectResult(randomKeyName);
+		
+		checkCurrentObjectResult();
 		runSuccess = true;
 	}
 
@@ -69,6 +80,7 @@ public class CreateObject16344 extends S3TestBase {
 		if (runSuccess) {
 			CommLib.deleteAllObjectVersions(s3Client, bucketName);
 			s3Client.deleteBucket(bucketName);
+			TestTools.LocalFile.removeFile(localPath);
 		}
 	}
 	
@@ -83,10 +95,14 @@ public class CreateObject16344 extends S3TestBase {
 			PutObjectResult putObjResult = null;
 			try{
 				for(int i  = 0 ; i < 1000 ; i++){
-					putObjResult = s3Client.putObject(bucketName, keyName+ "." + i,expContent);
+					int writeSize = random.nextInt(1024);
+					String currContent = TestTools.getRandomString(writeSize);
+					String currmd5 = TestTools.getMD5(currContent.getBytes());
+					String currentName = keyName+ "." + i;
+					putObjResult = s3Client.putObject(bucketName, currentName, currContent);
+					etag2md5.offer(new SaveEtagAndMd5(currentName, putObjResult.getETag(), currmd5));
+					keyNames.add(currentName);
 				}
-				expETag = putObjResult.getETag();//TODO:2、这里的etag和size为全局变量，实际检测只是测试了最后一次的结果
-				expSize = expContent.getBytes().length;
 			}finally{
 				if (s3Client != null) {
 					s3Client.shutdown();
@@ -95,12 +111,71 @@ public class CreateObject16344 extends S3TestBase {
 		}		
 	}
 	
-	private void checkCurrentObjectResult(String keyName) throws Exception {
-		S3Object object = s3Client.getObject(bucketName, keyName);
-		String actETag = object.getObjectMetadata().getETag();
-		Assert.assertEquals(expETag, actETag,"ETag is different!");
+	private void checkCurrentObjectResult() throws Exception {
+		for(int i = 0 ; i < keyNames.size(); i++){
+			GetObjectRequest request = new GetObjectRequest(bucketName, keyNames.get(i));
+			S3Object object = s3Client.getObject(request);
+			String actEtag = object.getObjectMetadata().getETag();
+			S3ObjectInputStream s3is = object.getObjectContent();		
+			String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
+					Thread.currentThread().getId());
+			ObjectUtils.inputStream2File(s3is,downloadPath);
+			s3is.close();
+	        String actMd5 = TestTools.getMD5(downloadPath);
+	        
+			String expEtagAndMd5[] = getEtagAndMd5ByKeyName(keyNames.get(i));
+			String expEtag = expEtagAndMd5[0];
+			String expMd5 = expEtagAndMd5[1];
+			
+			Assert.assertEquals(actEtag, expEtag, "etag is wrong , key name is:" + keyNames.get(i));
+			Assert.assertEquals(actMd5, expMd5, "MD5 is wrong , key name is:" + keyNames.get(i));
+		}
 		
-		long actSize = object.getObjectMetadata().getContentLength();
-		Assert.assertEquals(expSize, actSize,"size is different!");
+		Assert.assertTrue(etag2md5.isEmpty(), "the remaining " + etag2md5.size() + "objects were not found!");
+	}
+	
+	private String[] getEtagAndMd5ByKeyName(String keyName){
+		Iterator<SaveEtagAndMd5> iterator = etag2md5.iterator();
+		boolean found = false;
+		String[] findEtagAndMd5 = new String[2];
+		while(iterator.hasNext()){
+			SaveEtagAndMd5 current = iterator.next();
+			String curkeyName = current.getKeyName();
+			if(curkeyName.equals(keyName)){
+				findEtagAndMd5[0] = current.getEtag();
+				findEtagAndMd5[1] = current.getMd5();
+				etag2md5.remove(current);
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			Assert.fail("keyName[" + keyName + "] not found");
+		}		
+		return findEtagAndMd5;
+	}
+	
+	private class SaveEtagAndMd5{
+		private String keyName;
+		private String etag;
+		private String md5;
+		
+		public SaveEtagAndMd5(String keyName, String etag, String md5){
+			this.keyName = keyName;
+			this.etag = etag;
+			this.md5 = md5;
+		}
+		
+		public String getKeyName(){
+			return keyName;
+		}
+		
+		public String getEtag(){
+			return etag;
+		}
+		
+		public String getMd5(){
+			return md5;
+		}
 	}
 }

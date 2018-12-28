@@ -1,19 +1,25 @@
 package com.sequoias3.object;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.TestTools;
-import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.S3VersionSummary;
+import com.amazonaws.services.s3.model.VersionListing;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
  * test content: 开启版本控制，带versionId删除最新版本对象
@@ -44,13 +50,11 @@ public class DeleteObject16448 extends S3TestBase {
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 		for (int i = 0; i < oneObjVersionNum; i++) {
 			s3Client.putObject(bucketName, keyName, file + "." + i);
-			//TODO:1、这里写的太复杂了，已经预置版本号，可直接按版本号规则存入版本号旧可以了，如versionId分别为0/1/2
-			if (i < oneObjVersionNum - 1) {
-				S3VersionSummary version = new S3VersionSummary();
-				version.setKey(keyName);
-				version.setVersionId(String.valueOf((oneObjVersionNum - 2) - i));
-				expVersionList.add(version);
-			}
+			S3VersionSummary version = new S3VersionSummary();
+			version.setKey(keyName);
+			//Objects in the version list are stored in reverse order by versionId , like 2,1,0
+			version.setVersionId(String.valueOf((oneObjVersionNum - 1) - i));
+			expVersionList.add(version);
 		}
 	}
 
@@ -59,6 +63,7 @@ public class DeleteObject16448 extends S3TestBase {
 		// delete object with latest version id
 		String latestVersionId = String.valueOf(oneObjVersionNum - 1);
 		s3Client.deleteVersion(bucketName, keyName, latestVersionId);
+		expVersionList.remove(0);
 
 		try {
 			s3Client.getObject(new GetObjectRequest(bucketName, keyName, latestVersionId));
@@ -90,6 +95,7 @@ public class DeleteObject16448 extends S3TestBase {
 		if (runSuccess) {
 			CommLib.deleteAllObjectVersions(s3Client, bucketName);
 			s3Client.deleteBucket(bucketName);
+			TestTools.LocalFile.removeFile(localPath);
 		}
 	}
 }
