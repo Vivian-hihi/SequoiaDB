@@ -692,7 +692,7 @@
       </copy>
       
       <copy todir="${release_db_dir}/tools">
-         <fileset dir="${srccode_dir}/tools/expect" includes="**/*"/>
+         <fileset dir="${srccode_dir}/tools" includes="expect/**/*"/>
       </copy>
       <chmod file="${release_db_dir}/tools/bin/expect" perm="u+x" />
       <chmod file="${release_db_dir}/tools/trust/trustRelpConf.sh" perm="u+x" />
