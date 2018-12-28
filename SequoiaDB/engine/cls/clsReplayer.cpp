@@ -96,7 +96,7 @@ namespace engine
       maxLSN = _max( _max( _lastInsertLSN, _lastUpdateLSN ),
                      _lastDelLSN ) ;
 
-      while ( completeLSN.compareOffset( maxLSN ) < 0 )
+      while ( completeLSN.compareOffset( maxLSN ) <= 0 )
       {
          if ( CLS_BUCKET_NORMAL != pBucket->getStatus() ||
               pBucket->bucketSize() == 0 )
@@ -135,7 +135,7 @@ namespace engine
             else
             {
                completeLSN = pBucket->completeLSN() ;
-               if ( completeLSN.compareOffset( otherLSN ) >= 0 &&
+               if ( completeLSN.compareOffset( otherLSN ) > 0 &&
                     _idValue - maxID >= CLS_PARALLA_CHECK_LSNNUM_MIN_SPAN )
                {
                   canRecParalla = TRUE ;
@@ -157,7 +157,7 @@ namespace engine
             else
             {
                completeLSN = pBucket->completeLSN() ;
-               if ( completeLSN.compareOffset( otherLSN ) >= 0 &&
+               if ( completeLSN.compareOffset( otherLSN ) > 0 &&
                     _idValue - maxID >= CLS_PARALLA_CHECK_LSNNUM_MIN_SPAN )
                {
                   canRecParalla = TRUE ;
