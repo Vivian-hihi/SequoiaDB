@@ -42,6 +42,7 @@ public class RenameCSNetworkfailNode16771 extends SdbTestBase{
 	private String groupName = null;
 	private Sequoiadb sdb = null;
 	private int csNum = 10;
+	private int completeTimes = 0;
 	
 	
 	@BeforeClass
@@ -49,7 +50,7 @@ public class RenameCSNetworkfailNode16771 extends SdbTestBase{
         System.out.println(
                 "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                         + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-        groupMgr = GroupMgr.getInstance();
+        groupMgr = new GroupMgr();
 
         // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
         if (!groupMgr.checkBusiness(20)) {
@@ -73,16 +74,16 @@ public class RenameCSNetworkfailNode16771 extends SdbTestBase{
         // 建立并行任务
         FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataMaster.hostName(), 0, 10);
         TaskMgr mgr = new TaskMgr(faultTask);
-        for (int i = 0; i < 10; i++) {
-        	Rename renameTask = new Rename(oldCSNameList.get(i), oldCSNameList.get(i));
-        	mgr.addTask(renameTask);
-		}
+    	Rename renameTask = new Rename();
+    	mgr.addTask(renameTask);
         mgr.execute();
         Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusiness(120));
         
         for (int i = 0; i < oldCSNameList.size(); i++) {
-        	RenameUtils.retryRenameCS(oldCSNameList.get(i), newCSNameList.get(i));
+            if( completeTimes < i + 1 ){
+                RenameUtils.retryRenameCS(oldCSNameList.get(i), newCSNameList.get(i));
+            }
     		RenameUtils.checkRenameCSResult(sdb, oldCSNameList.get(i), newCSNameList.get(i),1);
 		}
         
@@ -117,21 +118,15 @@ public class RenameCSNetworkfailNode16771 extends SdbTestBase{
 	
 	class Rename extends OperateTask {
 		
-		private String oldCSNameA = null;
-		private String newCSNameA = null;
-		
-		public Rename(String oldCSNameA, String newCSNameA){
-			this.oldCSNameA = oldCSNameA;
-			this.newCSNameA = newCSNameA;
-		} 
-		
         @Override
         public void exec() throws Exception {
             try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
-                db.renameCollectionSpace(oldCSNameA, newCSNameA);
+                for (int i = 0; i < csNum; i++) {
+                    db.renameCollectionSpace(oldCSNameList.get(i), newCSNameList.get(i));
+                    completeTimes++;
+                }
             }catch(BaseException e){
-            	e.printStackTrace();
-//            	Assert.assertEquals(e.getErrorCode(), -134, e.getMessage());
+            	Assert.assertEquals(e.getErrorCode(), -134, e.getMessage());
             }
         }
     }

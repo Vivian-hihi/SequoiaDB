@@ -42,6 +42,7 @@ public class RenameClNetworkfailNode16771 extends SdbTestBase{
 	private String groupName = null;
 	private Sequoiadb sdb = null;
 	private int clNum = 10;
+	private int completeTimes = 0;
 	
 	
 	@BeforeClass
@@ -49,7 +50,7 @@ public class RenameClNetworkfailNode16771 extends SdbTestBase{
         System.out.println(
                 "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                         + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-        groupMgr = GroupMgr.getInstance();
+        groupMgr = new GroupMgr();
 
         // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
         if (!groupMgr.checkBusiness(20)) {
@@ -81,7 +82,9 @@ public class RenameClNetworkfailNode16771 extends SdbTestBase{
         Assert.assertTrue(groupMgr.checkBusiness(120));
         
         for (int i = 0; i < oldCLNameList.size(); i++) {
-        	RenameUtils.retryRenameCL(csName, oldCLNameList.get(i), newCLNameList.get(i));
+            if( completeTimes < i + 1 ){
+                RenameUtils.retryRenameCL(csName, oldCLNameList.get(i), newCLNameList.get(i));
+            }
     		RenameUtils.checkRenameCLResult(sdb, csName, oldCLNameList.get(i), newCLNameList.get(i));
 		}
         
@@ -118,10 +121,10 @@ public class RenameClNetworkfailNode16771 extends SdbTestBase{
             try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
             	for (int i = 0; i < oldCLNameList.size(); i++) {
             		db.getCollectionSpace(csName).renameCollection(oldCLNameList.get(i), newCLNameList.get(i));
+            		completeTimes++;
 				}
             }catch(BaseException e){
-            	e.printStackTrace();
-//            	Assert.assertEquals(e.getErrorCode(), -134, e.getMessage());
+            	Assert.assertEquals(e.getErrorCode(), -134, e.getMessage());
             }
         }
     }

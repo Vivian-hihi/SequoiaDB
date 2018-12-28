@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -23,10 +24,9 @@ import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
-import com.sequoiadb.task.TaskMgr;
 
 /**
- * @Description RenameKillMainNode16297.java  seqDB-16298:执行renameCS过程中，编目主节点故障
+ * @Description RenameKillMainNode16298.java  seqDB-16298:执行renameCS过程中，编目主节点故障
  * @author luweikang
  * @date 2018年11月7日
  */
@@ -40,14 +40,14 @@ public class RenameCSKillCataMainNode16298 extends SdbTestBase{
 	private GroupMgr groupMgr = null;
 	private Sequoiadb sdb = null;
 	private int csNum = 10;
+	private int completeTimes = 0;
 	
-	
-	@BeforeClass(enabled=false)
+	@BeforeClass
 	public void setUp() throws ReliabilityException{
         System.out.println(
                 "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                         + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-        groupMgr = GroupMgr.getInstance();
+        groupMgr = new GroupMgr();
 
         // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
         if (!groupMgr.checkBusiness(20)) {
@@ -63,24 +63,30 @@ public class RenameCSKillCataMainNode16298 extends SdbTestBase{
 		}
 	}
 	
-	@Test(enabled=false)
-    public void test() throws ReliabilityException {
+	@Test
+    public void test() throws ReliabilityException, InterruptedException {
         GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
         NodeWrapper cataMaster = cataGroup.getMaster();
 
-        // 建立并行任务
+     // 建立并行任务
         FaultMakeTask faultTask = KillNode.getFaultMakeTask(cataMaster.hostName(),
-        		cataMaster.svcName(), 0);
-        TaskMgr mgr = new TaskMgr(faultTask);
-    	Rename renameTask = new Rename();
-    	mgr.addTask(renameTask);
-        mgr.execute();
+                cataMaster.svcName(), 0);
         
-        Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
+        Rename renameTask = new Rename();
+        faultTask.init();
+        
+        renameTask.start();
+        Thread.sleep(new Random().nextInt(50));
+        faultTask.start();
+        
+        Assert.assertTrue(renameTask.isSuccess(), renameTask.getErrorMsg());
+        Assert.assertTrue(faultTask.isSuccess(), faultTask.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusiness(120));
         
         for (int i = 0; i < oldCSNameList.size(); i++) {
-        	RenameUtils.retryRenameCS(oldCSNameList.get(i), newCSNameList.get(i));
+            if( completeTimes < i + 1 ){
+                RenameUtils.retryRenameCS(oldCSNameList.get(i), newCSNameList.get(i));
+            }
     		RenameUtils.checkRenameCSResult(sdb, oldCSNameList.get(i), newCSNameList.get(i),1);
 		}
         
@@ -95,7 +101,7 @@ public class RenameCSKillCataMainNode16298 extends SdbTestBase{
         Assert.assertTrue(groupMgr.checkBusiness(120));
 	}
 	
-	@AfterClass(enabled=false)
+	@AfterClass
     public void tearDown() {
 		try {
 			for (int i = 0; i < newCSNameList.size(); i++) {
@@ -120,6 +126,7 @@ public class RenameCSKillCataMainNode16298 extends SdbTestBase{
             try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
             	for (int i = 0; i < oldCSNameList.size(); i++) {
             		db.renameCollectionSpace(oldCSNameList.get(i), newCSNameList.get(i));
+            		completeTimes++;
 				}
             }catch(BaseException e){
             	Assert.assertEquals(e.getErrorCode(), -134, e.getMessage());

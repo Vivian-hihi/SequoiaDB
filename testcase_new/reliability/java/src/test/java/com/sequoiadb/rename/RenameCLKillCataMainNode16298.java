@@ -24,7 +24,6 @@ import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
-import com.sequoiadb.task.TaskMgr;
 
 /**
  * @Description RenameKillMainNode16297.java  seqDB-16298:执行renameCL过程中，编目主节点故障
@@ -36,20 +35,21 @@ public class RenameCLKillCataMainNode16298 extends SdbTestBase{
 	private List<String> oldCLNameList = new ArrayList<>();
 	private List<String> newCLNameList = new ArrayList<>();
 	private String csName = "cs_16298_A";
-	private String oldCLName = "cl_16298_A";
-	private String newCLName = "cl_16298_A";
+	private String oldCLName = "oldCL_16298_A";
+	private String newCLName = "newCL_16298_A";
 	private GroupMgr groupMgr = null;
 	private String groupName = null;
 	private Sequoiadb sdb = null;
-	private int clNum = 10;
+	private int clNum = 20;
+	private int completeTimes = 0;
 	
 	
-	@BeforeClass(enabled=false)
+	@BeforeClass
 	public void setUp() throws ReliabilityException{
         System.out.println(
                 "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                         + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-        groupMgr = GroupMgr.getInstance();
+        groupMgr = new GroupMgr();
 
         // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
         if (!groupMgr.checkBusiness(20)) {
@@ -60,13 +60,13 @@ public class RenameCLKillCataMainNode16298 extends SdbTestBase{
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         CollectionSpace cs = sdb.createCollectionSpace(csName);
         for (int i = 0; i < clNum; i++) {
-        	cs.createCollection(oldCLName+i, new BasicBSONObject("Group", groupName));
+        	cs.createCollection(oldCLName + i, new BasicBSONObject("Group", groupName));
         	oldCLNameList.add(oldCLName + i);
         	newCLNameList.add(newCLName + i);
 		}
 	}
 	
-	@Test(enabled=false)
+	@Test
     public void test() throws ReliabilityException {
         GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
         NodeWrapper cataMaster = cataGroup.getMaster();
@@ -74,17 +74,22 @@ public class RenameCLKillCataMainNode16298 extends SdbTestBase{
         // 建立并行任务
         FaultMakeTask faultTask = KillNode.getFaultMakeTask(cataMaster.hostName(),
         		cataMaster.svcName(), 0);
-        TaskMgr mgr = new TaskMgr(faultTask);
-    	Rename renameTask = new Rename();
-    	mgr.addTask(renameTask);
-        mgr.execute();
         
-        Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
+    	Rename renameTask = new Rename();
+    	renameTask.start();
+        
+        faultTask.init();
+        faultTask.start();
+        
+        Assert.assertTrue(renameTask.isSuccess(), renameTask.getErrorMsg());
+        Assert.assertTrue(faultTask.isSuccess(), faultTask.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusiness(120));
         
         //继续执行rename将剩下未修改的cl修改,然后再进行检查结果
         for (int i = 0; i < oldCLNameList.size(); i++) {
-        	RenameUtils.retryRenameCL(csName, oldCLNameList.get(i), newCLNameList.get(i));
+            if( completeTimes < i + 1 ){
+                RenameUtils.retryRenameCL(csName, oldCLNameList.get(i), newCLNameList.get(i));
+            }
     		RenameUtils.checkRenameCLResult(sdb, csName, oldCLNameList.get(i), newCLNameList.get(i));
 		}
         
@@ -99,7 +104,7 @@ public class RenameCLKillCataMainNode16298 extends SdbTestBase{
         Assert.assertTrue(groupMgr.checkBusiness(120));
 	}
 	
-	@AfterClass(enabled=false)
+	@AfterClass
     public void tearDown() {
 		try {
 			sdb.dropCollectionSpace(csName);
@@ -120,12 +125,10 @@ public class RenameCLKillCataMainNode16298 extends SdbTestBase{
             	CollectionSpace cs = db.getCollectionSpace(csName);
             	for(int i=0; i < oldCLNameList.size(); i++){
             		cs.renameCollection(oldCLNameList.get(i), newCLNameList.get(i));
+            		completeTimes++;
             	}
             }catch(BaseException e){
-            	if(e.getErrorCode() != -134){
-            		throw e;
-            	}
-            	e.printStackTrace();
+                Assert.assertEquals(e.getErrorCode(), -134, e.getMessage());
             }
         }
     }
