@@ -127,11 +127,3 @@ $ chmod 755 sdbsupport.sh
 >   Begin to Collect information...
 >   success to collect information from hostname2
 >   ```
->
->   使用 sdbsupport 时可能需要使用 expect 和 tcl 工具，可以使用 apt-get 等安装 Linux 提供的 expect 和 tcl 工具（推荐），也可以使用 SequoiaDB 自带的 expect 和 tcl 工具：
->
->   ```lang-javascript
->   # 使用 root 权限进入 sdbsupport 的安装目录
->   $ cd expect
->   $ ./install.sh
->   ```
