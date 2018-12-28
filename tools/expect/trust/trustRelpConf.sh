@@ -25,7 +25,7 @@ done
 for i in $(seq 2 $roLen)
 do
 	#create the id_rsa.pub in the every host of group 
-	/usr/local/bin/expect -c	"
+	../bin/expect -c	"
 		set timeout 10 ;
 		spawn ssh ${USER[$i]}@${HOST[$i]} ; 
 		expect {
@@ -51,7 +51,7 @@ echo "******************************Copy authorized_keys to localhost***********
 #copy the authorized_keys to localhost
 for i in $(seq 2 $roLen)
 do
-	 /usr/local/bin/expect -c    	"
+	 ../bin/expect -c    	"
 		set timeout 10 ;
 		spawn scp -r ${USER[$i]}@${HOST[$i]}:~/.ssh/cpfolder $locPath ;
 		expect {
@@ -71,7 +71,7 @@ echo "******************************Copy localhost authorized_keys to remote hos
 #copy the authorized_keys to other hosts 
 for i in $(seq 2 $roLen)
 do
-	/usr/local/bin/expect -c	"
+	../bin/expect -c	"
 		set timeout 5 ;
 		spawn scp /root/.ssh/authorized_keys ${USER[$i]}@${HOST[$i]}:~/.ssh/ ; 
 		expect {
@@ -91,7 +91,7 @@ echo "******************************SSH hosts and remove cpfolder***************
 #ssh the hosts and remove cpfolder
 for i in $(seq 2 $roLen)
 do
-	/usr/local/bin/expect -c 	"
+	../bin/expect -c 	"
 		set timeout 5 ;
 		spawn ssh ${USER[$i]}@${HOST[$i]} ;  
 		expect {
