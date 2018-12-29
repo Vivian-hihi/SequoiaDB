@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject ;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;

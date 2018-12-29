@@ -2,6 +2,7 @@ package com.sequoiadb.metaopr.networkfail.cl;
 
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr ;
+import com.sequoiadb.commlib.SdbTestBase ;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
@@ -26,7 +27,7 @@ import static org.testng.Assert.assertTrue;
  * @Date 17-4-28
  * @Version 1.00
  */
-public class CreateClMaster2165 implements StandTestInterface {
+public class CreateClMaster2165 extends SdbTestBase implements StandTestInterface {
     private final String domain = "domain2165";
     private final String csName = "cs2165";
     private List<String> clNames;

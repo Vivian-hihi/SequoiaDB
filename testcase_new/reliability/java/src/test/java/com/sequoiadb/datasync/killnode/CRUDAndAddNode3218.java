@@ -102,7 +102,7 @@ public class CRUDAndAddNode3218 extends SdbTestBase {
             // 公共的结果检查，以下为检查cl所在数据组节点间一致性
             // Note: checkBusinessWithExNode的检测有包括LSN一致
             groupMgr.refresh();
-            if ( groupMgr.checkBusiness( 600, true )){
+            if ( !groupMgr.checkBusiness( 600, true )){
                 Assert.fail("checkBusinessWithExNode occurs time out(2)");
             }
             if (!clGroupWrapper.checkInspect(1)) {

@@ -45,29 +45,37 @@ public class GroupMgr {
         name2group.clear() ;
         id2group.clear() ;
         DBCursor cursor = null;
-        try {
-            if ( sdb == null || sdb.isClosed() || !sdb.isValid() ){
-                sdb = new Sequoiadb(coordUrl, "", "");
-            }
-            cursor = sdb.getList(Sequoiadb.SDB_LIST_GROUPS, null, null, null);
-            while (cursor.hasNext()) {
-                BasicBSONObject obj = (BasicBSONObject) cursor.getNext();
+        do {
+            try {
+                if ( sdb == null || sdb.isClosed() || !sdb.isValid() ) {
+                    sdb = new Sequoiadb( coordUrl, "", "" ) ;
+                }
+                cursor = sdb.getList( Sequoiadb.SDB_LIST_GROUPS, null, null,
+                        null ) ;
+                while ( cursor.hasNext() ) {
+                    BasicBSONObject obj = ( BasicBSONObject ) cursor.getNext() ;
 
-                String groupName = obj.getString("GroupName");
+                    String groupName = obj.getString( "GroupName" ) ;
 
-                GroupWrapper group = new GroupWrapper(obj, sdb.getReplicaGroup(groupName), this);
-                group.init();
-                name2group.put(groupName, group);
-                id2group.put(group.getGroupID(), group);
+                    GroupWrapper group = new GroupWrapper( obj,
+                            sdb.getReplicaGroup( groupName ), this ) ;
+                    group.init() ;
+                    name2group.put( groupName, group ) ;
+                    id2group.put( group.getGroupID(), group ) ;
+                }
+                break ;
+            } catch ( BaseException e ) {
+                if ( e.getErrorCode() == -104 ) {
+                    continue ;
+                }
+                throw new ReliabilityException( e ) ;
+            } finally {
+                refreshTime = System.currentTimeMillis() ;
+                if ( cursor != null ) {
+                    cursor.close() ;
+                }
             }
-        } catch (BaseException e) {
-            throw new ReliabilityException(e);
-        } finally {
-            refreshTime = System.currentTimeMillis() ;
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
+        } while ( true ) ;
     }
 
     public void refresh() throws ReliabilityException {

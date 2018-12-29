@@ -1,6 +1,7 @@
 package com.sequoiadb.metaopr.networkfail.cl;
 
 import com.sequoiadb.commlib.CommLib;
+import com.sequoiadb.commlib.SdbTestBase ;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
@@ -27,7 +28,7 @@ import static org.testng.Assert.assertTrue;
  * @Date 17-4-28
  * @Version 1.00
  */
-public class CreateClSlaver2164 implements StandTestInterface {
+public class CreateClSlaver2164 extends SdbTestBase implements StandTestInterface {
     final String csName = "cs2164";
     List<String> clnames;
 
