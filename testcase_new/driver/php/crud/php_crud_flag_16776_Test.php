@@ -1,6 +1,6 @@
 /****************************************************
 @description:     test timestamp increment
-@testlink cases:   seqDB-16676
+@testlink cases:   seqDB-16776
 @modify list:
         2018-11-19 Luweikang init
 ****************************************************/
@@ -8,10 +8,10 @@
 define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/../global.php';
 
-class TestCURDFlag16676 extends PHPUnit_Framework_TestCase
+class TestCURDFlag16776 extends PHPUnit_Framework_TestCase
 {
-   private static $csName = "cs16676";
-   private static $clName = "cl16676";
+   private static $csName = "cs16776";
+   private static $clName = "cl16776";
    private static $cs;
    private static $cl;
    private static $db;
@@ -48,6 +48,10 @@ class TestCURDFlag16676 extends PHPUnit_Framework_TestCase
       $rc = self::$cl -> insert( $data1, SDB_FLG_INSERT_CONTONDUP );
       self::checkErrno( 0, self::$db -> getError()['errno'] ); 
       self::checkRecordNum( 1, array('test' => "testflag0"),  "inser the record, flag = SDB_FLG_INSERT_CONTONDUP" );
+
+      $rc = self::$cl -> insert( array( 'test' => 'recordNotExist' ), SDB_FLG_INSERT_CONTONDUP );
+      self::checkErrno( 0, self::$db -> getError()['errno'] ); 
+      self::checkRecordNum( 1, array('test' => 'recordNotExist' ),  "inser the record, flag = SDB_FLG_INSERT_CONTONDUP" );
 
       $data2 = array( '_id' => 2, 'test' => "testflagSDB_FLG_INSERT_RETURN_OID");
       $rc = self::$cl -> insert( $data2, SDB_FLG_INSERT_RETURN_OID );
@@ -103,7 +107,7 @@ class TestCURDFlag16676 extends PHPUnit_Framework_TestCase
    private static function createUniqueIndex()
    {
       $index = array( "test" => 1);
-      self::$cl -> createIndex( $index, 'index16676', true );
+      self::$cl -> createIndex( $index, 'index16776', true );
       self::checkErrno( 0, self::$db -> getError()['errno'] );
    }
 
