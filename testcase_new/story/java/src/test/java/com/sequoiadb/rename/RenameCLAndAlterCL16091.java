@@ -1,6 +1,7 @@
 package com.sequoiadb.rename;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import org.bson.BSONObject;
@@ -36,7 +37,7 @@ public class RenameCLAndAlterCL16091 extends SdbTestBase{
 	private Sequoiadb sdb = null;	
 	private CollectionSpace cs = null;
 	
-	@BeforeClass(enabled=false)
+	@BeforeClass
 	public void setUp(){
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");	
 		if(CommLib.isStandAlone(sdb)){
@@ -51,7 +52,7 @@ public class RenameCLAndAlterCL16091 extends SdbTestBase{
 		insertDatas( cl );
 	}
 	
-	@Test(enabled=false)
+	@Test
 	public void test(){ 
 		AlterCLThread alterCLThread = new AlterCLThread();		
 		RenameCLThread renameCLThread = new RenameCLThread();
@@ -86,7 +87,7 @@ public class RenameCLAndAlterCL16091 extends SdbTestBase{
 		}	
 	}
 	
-	@AfterClass(enabled=false)
+	@AfterClass
 	public void tearDown(){
 		try{					
 			if( cs.isCollectionExist(clName)){
@@ -129,7 +130,7 @@ public class RenameCLAndAlterCL16091 extends SdbTestBase{
 			try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
 				DBCollection dbcl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 				BSONObject options = new BasicBSONObject();
-				options.put("CompressionType", "lzw");
+				options.put("CompressionType","lzw");
 				dbcl.setAttributes(options);				
 			}			
 		}
@@ -154,15 +155,16 @@ public class RenameCLAndAlterCL16091 extends SdbTestBase{
 	
 	private void checkAlterCLResult( String clName, Boolean alterSuccess){
 		try( DBCursor cursor = sdb.getSnapshot(8, "{'Name':'" + SdbTestBase.csName
-				+ "." + clName + "'}", "", "")) {
-			//detach cl fail, than the subcl is exist on the maincl
+				+ "." + clName + "'}", "", "")) {			
 			while(cursor.hasNext()){
 				BSONObject objInfo = cursor.getNext();
 				String compressionType = (String)objInfo.get("CompressionTypeDesc");
 				if( alterSuccess ){
 					Assert.assertEquals(compressionType, "lzw");
 				}else{
-					Assert.assertEquals(compressionType, "snappy");
+					//does not rollback after alter compressionType fails.
+					String[] expResult = {"lzw","snappy"};
+					Assert.assertTrue(Arrays.asList(expResult).contains(compressionType), "the type:"+compressionType);
 				}				
 			}
 		} 
