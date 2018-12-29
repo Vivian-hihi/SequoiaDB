@@ -94,7 +94,8 @@ namespace engine
                                     DPS_LSN_OFFSET lsn2 ) const
          {
             DPS_LSN_OFFSET maxLSN = lsn1 ;
-            if ( DPS_INVALID_LSN_OFFSET != lsn2 && lsn2 > maxLSN )
+            if ( DPS_INVALID_LSN_OFFSET == maxLSN ||
+                 ( DPS_INVALID_LSN_OFFSET != lsn2 && lsn2 > maxLSN ) )
             {
                maxLSN = lsn2 ;
             }
