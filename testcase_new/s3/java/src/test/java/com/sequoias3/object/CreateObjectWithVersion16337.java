@@ -49,7 +49,9 @@ public class CreateObjectWithVersion16337 extends S3TestBase {
 
 	@Test
 	public void testCreateObject() throws Exception {
-		Date beforeDate = new Date();
+		long currentTime = new Date().getTime();
+		//current time 1 seccond earlier to reduce acquisition error
+		Date beforeDate = new Date( currentTime - 1000);
 		PutObjectResult result = s3Client.putObject(bucketName, keyName, new File(filePath));
 		checkObjectAttributeInfo( result , beforeDate );
 		checkPutObjectResult(bucketName);
