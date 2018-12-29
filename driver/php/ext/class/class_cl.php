@@ -100,8 +100,8 @@ class SequoiaCL
     *                                              StrictDataMode       : Using strict date mode in numeric operations or not
     *                                                                     e.g. array( "RepliSize" => 0, "ShardingKey" => array( "a" => 1 ), "ShardingType" => "hash", "Partition" =>1024 )
     *                                              AutoIncrement        : Assign attributes of an autoincrement field or batch autoincrement fields.
-    *                                                                     e.g. array( "AutoIncrement" => array( "Field" => "a", "Maxvalue" => 2000 ) )
-    *                                                                     array( "AutoIncrement" => array( array( "Field" => "a", "Maxvalue" => 2000 ), array( "Field" => "a", "Maxvalue" => 4000 ) ) )
+    *                                                                     e.g. array( "AutoIncrement" => array( "Field" => "a", "MaxValue" => 2000 ) )
+    *                                                                     array( "AutoIncrement" => array( array( "Field" => "a", "MaxValue" => 2000 ), array( "Field" => "a", "MaxValue" => 4000 ) ) )
     *                                              @endcode
     *
     * @return Returns the result, default return array.
@@ -218,8 +218,8 @@ class SequoiaCL
     *                                              StrictDataMode       : Using strict date mode in numeric operations or not
     *                                                                     e.g. array( "RepliSize" => 0, "ShardingKey" => array( "a" => 1 ), "ShardingType" => "hash", "Partition" =>1024 )
     *                                              AutoIncrement        : Assign attributes of an autoincrement field or batch autoincrement fields.
-    *                                                                     e.g. array( "AutoIncrement" => array( "Field" => "a", "Maxvalue" => 2000 ) )
-    *                                                                     array( "AutoIncrement" => array( array( "Field" => "a", "Maxvalue" => 2000 ), array( "Field" => "a", "Maxvalue" => 4000 ) ) )
+    *                                                                     e.g. array( "AutoIncrement" => array( "Field" => "a", "MaxValue" => 2000 ) )
+    *                                                                     array( "AutoIncrement" => array( array( "Field" => "a", "MaxValue" => 2000 ), array( "Field" => "a", "MaxValue" => 4000 ) ) )
     *                                              @endcode
     *
     * @return Returns the result, default return array.
