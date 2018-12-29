@@ -76,7 +76,7 @@ public class RenameCS_16812 extends SdbTestBase{
 		analyzeCL.start();
 		
 		boolean analyze = analyzeCL.isSuccess();
-		Assert.assertTrue(reCSNameThread.isSuccess(), "concurrent exec rename cs and analyze, renameCS failed");
+		Assert.assertTrue(reCSNameThread.isSuccess(), "concurrent exec rename cs and analyze, renameCS failed " + reCSNameThread.getErrorMsg());
 		
 		try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
 			RenameUtil.checkRenameCSResult(db, testCSName, testNewCSName, 1);

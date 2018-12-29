@@ -3,6 +3,7 @@ package com.sequoiadb.rename;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -12,33 +13,33 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
- *  @FileName: TestRenameCS16864
- *  @content 主子表，修改主表cs名，查看访问计划被清除
- *  @author chensiqin
- *  @Date 2018-12-20
+ *  @FileName: RenameCL_17010
+ *  @content 主子表，修改主表名，查看访问计划被清除
+ *  @author luweikang
+ *  @Date 2018-12-29
  *  @version 1.00
  */
-public class TestRenameCS16864 extends SdbTestBase{
+public class RenameCL_17010 extends SdbTestBase{
 
-    private String mainCSName = "maincs16864";
-    private String newMainCSName = "newmaincs16864";
-    private String subCSName = "subcs16864";
-    private String mainCLName = "maincl16864";
-    private String subCLName = "subcl16864";
+    private String mainCSName = "maincs17010";
+    private String subCSName = "subcs17010";
+    private String mainCLName = "maincl17010";
+    private String newMainCLName = "newMainCL17010";
+    private String subCLName = "subcl17010";
     private Sequoiadb sdb = null;
     
     @BeforeClass
     public void setUp() {
-       //主子表需要判断独立模式
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if(CommLib.isStandAlone(sdb)){
+            throw new SkipException("skip StandAlone");
+        }
         if(sdb.isCollectionSpaceExist(mainCSName)){
             sdb.dropCollectionSpace(mainCSName);
-        }
-        if(sdb.isCollectionSpaceExist(newMainCSName)){
-            sdb.dropCollectionSpace(newMainCSName);
         }
         if(sdb.isCollectionSpaceExist(subCSName)){
             sdb.dropCollectionSpace(subCSName);
@@ -47,25 +48,40 @@ public class TestRenameCS16864 extends SdbTestBase{
     }
     
     @Test
-    public void test16864() {
+    public void test17010() {
         prepareCSCL();
         
         BSONObject matcher = new BasicBSONObject();
-        matcher.put("CollectionSpace", mainCSName);
+        matcher.put("Collection", mainCSName + "." + mainCLName);
         BSONObject selector = new BasicBSONObject();
-        selector.put("Collection", 1);
+        selector.put("CollectionSpace", 1);
         DBCursor cur = sdb.getSnapshot(Sequoiadb.SDB_SNAP_ACCESSPLANS, matcher, selector, null);
         while(cur.hasNext()) {
-            Assert.assertEquals(cur.getNext().toString(), "{ \"Collection\" : \""+mainCSName+"."+mainCLName+"\" }");
+            Assert.assertEquals(cur.getNext().toString(), "{ \"CollectionSpace\" : \""+mainCSName+"\" }");
         }
         cur.close();
         
-        sdb.renameCollectionSpace(mainCSName, newMainCSName);
+        sdb.getCollectionSpace(mainCSName).renameCollection(mainCLName, newMainCLName);
         
         cur = sdb.getSnapshot(Sequoiadb.SDB_SNAP_ACCESSPLANS, matcher, selector, null);
         while(cur.hasNext()) {
             Assert.fail("expected no records !");
         }
+        
+        DBCollection newMainCL = sdb.getCollectionSpace(mainCSName).getCollection(newMainCLName);
+        DBCursor cursor = newMainCL.query();
+        while(cursor.hasNext()){
+            Assert.assertEquals(cursor.getNext().toString(), "{ \"_id\" : 1 , \"a\" : 1 , \"b\" : 1 }");
+        }
+        cursor.close();
+        
+        BSONObject newMatcher = new BasicBSONObject();
+        newMatcher.put("Collection", mainCSName + "." + newMainCLName);
+        cur = sdb.getSnapshot(Sequoiadb.SDB_SNAP_ACCESSPLANS, newMatcher, selector, null);
+        while(cur.hasNext()) {
+            Assert.assertEquals(cur.getNext().toString(), "{ \"CollectionSpace\" : \""+mainCSName+"\" }");
+        }
+        
         cur.close();
     }
     
@@ -101,9 +117,6 @@ public class TestRenameCS16864 extends SdbTestBase{
         try {
             if(sdb.isCollectionSpaceExist(mainCSName)){
                 sdb.dropCollectionSpace(mainCSName);
-            }
-            if(sdb.isCollectionSpaceExist(newMainCSName)){
-                sdb.dropCollectionSpace(newMainCSName);
             }
             if(sdb.isCollectionSpaceExist(subCSName)){
                 sdb.dropCollectionSpace(subCSName);
