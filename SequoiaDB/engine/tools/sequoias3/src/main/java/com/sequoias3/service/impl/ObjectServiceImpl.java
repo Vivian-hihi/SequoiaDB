@@ -134,7 +134,7 @@ public class ObjectServiceImpl implements ObjectService {
                     dataClName, insertResult.getLobId());
             if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex()) {
                 throw new S3ServerException(S3Error.OBJECT_PUT_fAILED,
-                        "bucket+key duplicate too times. bucket:"+bucketName+" key:"+objectName);
+                        "bucket+key duplicate too times. bucket:"+bucketName+" key:"+objectName, e);
             } else {
                 throw e;
             }
@@ -973,7 +973,7 @@ public class ObjectServiceImpl implements ObjectService {
         Object unModifiedSince = headers.get(RestParamDefine.GetObjectReqHeader.REQ_IF_UNMODIFIED_SINCE);
         if (null != unModifiedSince){
             Date date = parseDate(unModifiedSince.toString());
-            if (date.getTime() < lastModifiedTime) {
+            if (getSecondTime(date.getTime()) < getSecondTime(lastModifiedTime)) {
                 if (!isMatch) {
                     throw new S3ServerException(S3Error.OBJECT_IF_UNMODIFIED_SINCE_FAILED,
                             "if-unmodified-since failed: if-unmodified-since value:" + unModifiedSince.toString() +
@@ -985,7 +985,7 @@ public class ObjectServiceImpl implements ObjectService {
         Object modifiedSince = headers.get(RestParamDefine.GetObjectReqHeader.REQ_IF_MODIFIED_SINCE);
         if (null != modifiedSince){
             Date date = parseDate(modifiedSince.toString());
-            if (date.getTime() >= lastModifiedTime) {
+            if (getSecondTime(date.getTime()) >= getSecondTime(lastModifiedTime)) {
                 if (!isNoneMatch) {
                     throw new S3ServerException(S3Error.OBJECT_IF_MODIFIED_SINCE_FAILED,
                             "if-modified-since failed: if-modified-since value:" + modifiedSince.toString() +
@@ -1376,5 +1376,9 @@ public class ObjectServiceImpl implements ObjectService {
 
         long readLength  = range.getEnd() - range.getStart() + 1;
         range.setContentLength(readLength);
+    }
+
+    private long getSecondTime(long millionSecond){
+        return millionSecond/1000;
     }
 }
