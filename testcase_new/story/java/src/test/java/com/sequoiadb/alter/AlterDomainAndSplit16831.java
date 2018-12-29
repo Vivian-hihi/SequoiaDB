@@ -65,11 +65,11 @@ public class AlterDomainAndSplit16831 extends SdbTestBase{
         SplitThread splitThread = new SplitThread();
         domainThread.start();
         splitThread.start();
-        if(domainThread.isSuccess() && !splitThread.isSuccess()) {
+        if(domainThread.isSuccess() && !splitThread.isSuccess()) {//TODO:split失败了需要检查错误码和数据分区结果
             checkDomain();
-        } else if(!domainThread.isSuccess() && splitThread.isSuccess()) {
+        } else if(!domainThread.isSuccess() && splitThread.isSuccess()) {//TODO:split成功了需要检查切分结果
             Assert.assertEquals(cl.getCount(), 1000);
-            BaseException e = (BaseException)domainThread.getExceptions().get(0);
+            BaseException e = (BaseException)domainThread.getExceptions().get(0);//TODO:domain alter失败了也需要检查没被修改
             if ( e.getErrorCode() != -256 ) {
                 Assert.fail("errcode not expected : " + e.getMessage());
             }
