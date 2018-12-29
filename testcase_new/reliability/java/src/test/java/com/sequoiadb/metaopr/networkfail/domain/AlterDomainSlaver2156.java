@@ -2,6 +2,7 @@ package com.sequoiadb.metaopr.networkfail.domain;
 
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr ;
+import com.sequoiadb.commlib.SdbTestBase ;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
@@ -26,7 +27,7 @@ import static org.testng.Assert.assertTrue;
  * @Date 17-4-28
  * @Version 1.00
  */
-public class AlterDomainSlaver2156 implements StandTestInterface {
+public class AlterDomainSlaver2156 extends SdbTestBase implements StandTestInterface {
     final String domain = "domain2156";
     final String cs = "cs2156";
     final String cl = "cl2156";

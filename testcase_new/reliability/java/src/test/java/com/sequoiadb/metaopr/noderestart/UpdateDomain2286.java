@@ -4,6 +4,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.commlib.SdbTestBase ;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
@@ -37,7 +38,7 @@ import static org.testng.Assert.assertTrue;
  * @Date 17-4-20
  * @Version 1.00
  */
-public class UpdateDomain2286 {
+public class UpdateDomain2286 extends SdbTestBase{
     private final String CSNAME = "cs2286";
     private final String CLNAME = "cl2286";
     private final String DOMAINNAME = "domain2286";

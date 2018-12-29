@@ -3,6 +3,7 @@ package com.sequoiadb.metaopr.noderestart;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.SdbTestBase ;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.metaopr.commons.DBoperateTask;
@@ -39,7 +40,7 @@ import static org.testng.Assert.assertTrue;
  * @Date 17-4-20
  * @Version 1.00
  */
-public class CreateDomain2285 implements StandTestInterface {
+public class CreateDomain2285 extends SdbTestBase implements StandTestInterface {
     private List<String> domainNames = new ArrayList<>(100);
     private Sequoiadb db;
 

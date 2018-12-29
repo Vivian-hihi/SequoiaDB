@@ -2,6 +2,7 @@ package com.sequoiadb.metaopr.noderestart;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.SdbTestBase ;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
@@ -36,7 +37,7 @@ import static org.testng.Assert.assertTrue;
  * @Date 17-4-20
  * @Version 1.00
  */
-public class DropDomain2288 {
+public class DropDomain2288 extends SdbTestBase{
     private List<String> domainNames = new ArrayList<>(200);
     private Map<String, String> domainNamesMap = new HashMap<>();
 

@@ -2,6 +2,7 @@ package com.sequoiadb.metaopr.noderestart;
 
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.commlib.SdbTestBase ;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
@@ -28,7 +29,7 @@ import static org.testng.Assert.assertTrue;
  * @Date 17-4-21
  * @Version 1.00
  */
-public class CLOperation implements StandTestInterface {
+public class CLOperation extends SdbTestBase implements StandTestInterface {
     final String CSNAME = "cs2295";
     final String DOMAINNAME = "domain2295";
     final long DATASIZE = 1000;

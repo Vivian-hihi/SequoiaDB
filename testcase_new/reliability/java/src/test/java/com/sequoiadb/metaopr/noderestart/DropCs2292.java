@@ -2,6 +2,7 @@ package com.sequoiadb.metaopr.noderestart;
 
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.commlib.SdbTestBase ;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
@@ -37,7 +38,7 @@ import static org.testng.Assert.assertTrue;
  * @Date 17-4-21
  * @Version 1.00
  */
-public class DropCs2292 implements StandTestInterface {
+public class DropCs2292 extends SdbTestBase implements StandTestInterface {
     List<String> csNames = new ArrayList<>(500);
 
     @BeforeClass

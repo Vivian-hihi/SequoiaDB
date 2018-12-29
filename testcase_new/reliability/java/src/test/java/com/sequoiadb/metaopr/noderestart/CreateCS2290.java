@@ -3,6 +3,7 @@ package com.sequoiadb.metaopr.noderestart;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.SdbTestBase ;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
@@ -66,7 +67,7 @@ import static org.testng.Assert.assertTrue;
  * 6、查看CS信息（执行db.listCollections（）命令查看domain/CS信息是否和实际一致
  * 7、查看catalog主备节点是否存在该CS相关信息
  */
-public class CreateCS2290 implements StandTestInterface {
+public class CreateCS2290 extends SdbTestBase implements StandTestInterface {
     private Sequoiadb db;
     List<String> csNames = new ArrayList<>();
 

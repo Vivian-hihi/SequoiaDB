@@ -1,6 +1,7 @@
 package com.sequoiadb.metaopr.networkfail.domain;
 
 import com.sequoiadb.commlib.CommLib;
+import com.sequoiadb.commlib.SdbTestBase ;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
@@ -23,7 +24,7 @@ import static org.testng.Assert.assertTrue;
  * @Date 17-4-28
  * @Version 1.00
  */
-public class DropDomainSlaver2158 implements StandTestInterface {
+public class DropDomainSlaver2158 extends SdbTestBase implements StandTestInterface {
     List<String> domains = new ArrayList<>();
 
     @BeforeClass
