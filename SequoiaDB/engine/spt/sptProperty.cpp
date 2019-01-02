@@ -91,7 +91,7 @@ namespace engine
       _pReleaseFunc = NULL ;
       _desc = NULL ;
       _type = bson::EOO ;
-	  _isRawData = FALSE ;
+      _isRawData = FALSE ;
    }
 
    _sptProperty::~_sptProperty()
