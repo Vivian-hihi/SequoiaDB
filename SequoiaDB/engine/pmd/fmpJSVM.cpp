@@ -94,8 +94,7 @@ error:
    goto done ;
 }
 
-INT32 _fmpJSVM::eval( const BSONObj &func,
-                      BSONObj &res )
+INT32 _fmpJSVM::eval( const BSONObj &func, BSONObj &res )
 {
    INT32 rc = SDB_OK ;
    BSONElement ele = func.getField( FMP_FUNC_VALUE ) ;

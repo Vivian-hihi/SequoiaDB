@@ -186,33 +186,40 @@ namespace engine
          _specialFieldName = fieldName ;
       }
 
-      INT32 cvtToBSON( const CHAR* key, const sptObject &value,
-                       BOOLEAN isSpecialObj, bson::BSONObjBuilder& builder,
+      INT32 cvtToBSON( const CHAR* key,
+                       const sptObject &value,
+                       BOOLEAN isSpecialObj,
+                       bson::BSONObjBuilder& builder,
                        string &errMsg ) const ;
 
       void setCVTToBSONFunc( CVT_TO_BSON_FUNC pFunc ) ;
 
-      INT32 cvtToBool( const sptObject &obj, BOOLEAN isSpecialObj,
+      INT32 cvtToBool( const sptObject &obj,
+                       BOOLEAN isSpecialObj,
                        BOOLEAN &retVal ) const ;
 
       void setCVTToBoolFunc( CVT_TO_BOOL_FUNC pFunc ) ;
 
-      INT32 cvtToDouble( const sptObject &obj, BOOLEAN isSpecialObj,
+      INT32 cvtToDouble( const sptObject &obj,
+                         BOOLEAN isSpecialObj,
                          FLOAT64 &retVal ) const ;
 
       void setCVTToDoubleFunc( CVT_TO_DOUBLE_FUNC pFunc ) ;
 
-      INT32 cvtToInt( const sptObject &obj, BOOLEAN isSpecialObj,
+      INT32 cvtToInt( const sptObject &obj,
+                      BOOLEAN isSpecialObj,
                       INT32 &retVal ) const ;
 
       void setCVTToIntFunc( CVT_TO_INT_FUNC pFunc ) ;
 
-      INT32 cvtToString( const sptObject &obj, BOOLEAN isSpecialObj,
+      INT32 cvtToString( const sptObject &obj,
+                         BOOLEAN isSpecialObj,
                          string &retVal ) const ;
 
       void setCVTToStringFunc( CVT_TO_STRING_FUNC pFunc ) ;
 
-      INT32 fmpToBSON( const sptObject &value, bson::BSONObj &retObj,
+      INT32 fmpToBSON( const sptObject &value,
+                       bson::BSONObj &retObj,
                        string &errMsg ) const ;
 
       void setFMPToBSONFunc( FMP_TO_BSON_FUNC pFunc )
@@ -220,7 +227,8 @@ namespace engine
          _fmpToBSONFunc = pFunc ;
       }
 
-      INT32 fmpToCursor( const sptObject &value, sdbclient::_sdbCursor** pCursor,
+      INT32 fmpToCursor( const sptObject &value,
+                         sdbclient::_sdbCursor** pCursor,
                          string &errMsg ) const ;
 
       void setFMPToCursorFunc( FMP_TO_CURSOR_FUNC pFunc )
@@ -228,13 +236,16 @@ namespace engine
          _fmpToCursorFunc = pFunc ;
       }
 
-      INT32 bsonToJSObj( sdbclient::sdb &db, const bson::BSONObj &data,
-                         _sptReturnVal &rval, bson::BSONObj &detail ) const ;
+      INT32 bsonToJSObj( sdbclient::sdb &db,
+                         const bson::BSONObj &data,
+                         _sptReturnVal &rval,
+                         bson::BSONObj &detail ) const ;
 
       void setBSONToJSObjFunc( BSON_TO_JSOBJ_FUNC pFunc )
       {
          _bsonToJSObjFunc = pFunc ;
       }
+
    protected:
       std::string _jsClassName ;
       _sptFuncMap _funcMap ;
