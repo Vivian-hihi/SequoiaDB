@@ -488,7 +488,7 @@
       <short>f</short>
       <description>
          <en>Log file size ( in MB ),default:64,value range:[64,2048]</en>
-         <cn>日志文件尺寸(MB),默认值:64,取值范围:[64,2048]</cn>
+         <cn>同步日志文件的大小(MB),默认值:64,取值范围:[64,2048]</cn>
       </description>
       <type>int</type>
       <default>64</default>
@@ -506,16 +506,16 @@
       <long>logfilenum</long>
       <short>n</short>
       <description>
-         <en>Number of log files,default:20, value range:[1,11800]</en>
+         <en>Number of log files,default:1, value range:[1,11800]</en>
          <cn>日志文件数量,默认值:1,取值范围:[1,11800]</cn>
       </description>
       <type>int</type>
-      <default>20</default>
+      <default>1</default>
       <detail>
           <en>1. It specifies the amount of synchronous log file.<fig></fig>
-              2. If it is not specified, the default value is 20.</en>
+              2. If it is not specified, the default value is 1.</en>
           <cn>1. 指定同步日志文件的数量。<fig></fig>
-              2. 如果不指定，则默认为20。</cn>
+              2. 如果不指定，则默认为1。</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
@@ -1017,8 +1017,8 @@
       <name>PMD_OPTION_DIRECT_IO_IN_LOB</name>
       <long>directioinlob</long>
       <description>
-         <en>Open direct io in large object</en>
-         <cn>在大对象功能中关闭文件系统缓存</cn>
+         <en>Open direct io in large object, if it is not specified, the default value is "false"</en>
+         <cn>在大对象功能中关闭文件系统缓存，如果不指定，默认值为"false"</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
@@ -1040,8 +1040,8 @@
       <name>PMD_OPTION_SPARSE_FILE</name>
       <long>sparsefile</long>
       <description>
-         <en>Extend the file as a sparse file</en>
-         <cn>当扩展文件时，使用稀疏文件功能</cn>
+         <en>Extend the file as a sparse file, if it is not specified, the default value is "false"</en>
+         <cn>当扩展文件时，使用稀疏文件功能，如果不指定，默认值为"false"</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>

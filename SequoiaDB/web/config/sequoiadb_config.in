@@ -55,10 +55,10 @@
       <Name>logfilesz</Name>
       <WebName>
          <en>Log file size</en>
-         <cn>日志文件大小</cn>
+         <cn>同步日志文件的大小</cn>
       </WebName>
       <Type>int</Type>
-      <Default>64</Default>
+      <Default></Default>
       <Valid>64-2048</Valid>
       <Display>edit box</Display>
       <Level>0</Level>
@@ -70,7 +70,7 @@
          <cn>同步日志文件数量</cn>
       </WebName>
       <Type>int</Type>
-      <Default>20</Default>
+      <Default></Default>
       <Valid>1-11800</Valid>
       <Display>edit box</Display>
       <Level>0</Level>
