@@ -463,7 +463,6 @@ namespace engine
       }
       else
       {
-
          value = newValue ;
          (*_pMapKeyField)[ pFieldName ] = pmdParamValue( newValue, TRUE,
                                                          hasFieldValue,
@@ -491,7 +490,6 @@ namespace engine
       }
       else
       {
-
          ossStrncpy( pValue, newValue.c_str(), len ) ;
          pValue[ len - 1 ] = 0 ;
          (*_pMapKeyField)[ pFieldName ] = pmdParamValue( newValue, TRUE,
@@ -1094,6 +1092,7 @@ done:
             ++iter ;
             continue ;
          }
+
          _mapKeyValue[ iter->first ] = iter->second ;
          ++iter ;
       }
@@ -1306,7 +1305,8 @@ done:
 
             if ( PMD_CFG_CHANGE_REBOOT == changeLevel )
             {
-               if ( _mapColdKeyValue.end() != ( itCold = _mapColdKeyValue.find( pFieldName ) ) )
+               itCold = _mapColdKeyValue.find( pFieldName ) ;
+               if ( _mapColdKeyValue.end() != itCold && pEX->isLocalMode() )
                {
                   it = _mapKeyValue.end() ;
                }
@@ -1478,42 +1478,43 @@ done:
       }
       else
       {
-          MAP_K2V::iterator it ;
-          MAP_K2V::iterator itCold ;
+         MAP_K2V::iterator it ;
+         MAP_K2V::iterator itCold ;
 
-          /// 1. when is default
-          if ( value == defaultValue )
-          {
-             if ( hideParam && pEX->isSkipHideDefault() )
-             {
-                goto done ;
-             }
-             else if ( !hideParam && pEX->isSkipNormalDefault() )
-             {
-                goto done ;
-             }
-          }
+         /// 1. when is default
+         if ( value == defaultValue )
+         {
+            if ( hideParam && pEX->isSkipHideDefault() )
+            {
+               goto done ;
+            }
+            else if ( !hideParam && pEX->isSkipNormalDefault() )
+            {
+               goto done ;
+            }
+         }
 
-          /// 2. skip unfield
-          if ( pEX->isSkipUnField() )
-          {
-             it = _mapKeyValue.find( pFieldName ) ;
-             itCold = _mapColdKeyValue.end() ;
+         /// 2. skip unfield
+         if ( pEX->isSkipUnField() )
+         {
+            it = _mapKeyValue.find( pFieldName ) ;
+            itCold = _mapColdKeyValue.end() ;
 
-             if ( PMD_CFG_CHANGE_REBOOT == changeLevel )
-             {
-                if ( _mapColdKeyValue.end() != ( itCold = _mapColdKeyValue.find( pFieldName ) ) )
-                {
-                   it = _mapKeyValue.end() ;
-                }
-             }
+            if ( PMD_CFG_CHANGE_REBOOT == changeLevel )
+            {
+               itCold = _mapColdKeyValue.find( pFieldName ) ;
+               if ( _mapColdKeyValue.end() != itCold && pEX->isLocalMode() )
+               {
+                  it = _mapKeyValue.end() ;
+               }
+            }
 
-             if ( ( it == _mapKeyValue.end() || !it->second._hasField ) &&
-                  ( itCold == _mapColdKeyValue.end() || !itCold->second._hasField ) )
-             {
-                goto done ;
-             }
-          }
+            if ( ( it == _mapKeyValue.end() || !it->second._hasField ) &&
+                 ( itCold == _mapColdKeyValue.end() || !itCold->second._hasField ) )
+            {
+               goto done ;
+            }
+         }
 
          if ( PMD_CFG_CHANGE_REBOOT != changeLevel ||
               !pEX->isLocalMode() ||
