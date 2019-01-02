@@ -90,32 +90,32 @@ namespace engine
 
       virtual SPT_SCOPE_TYPE getType() const = 0 ;
 
-      UINT32 getLoadMask() const { return _loadMask ; }
-      INT32  getLastError() const ;
-      const CHAR* getLastErrMsg() const ;
-      bson::BSONObj getLastErrObj() const ;
+      UINT32         getLoadMask() const { return _loadMask ; }
+      INT32          getLastError() const ;
+      const CHAR*    getLastErrMsg() const ;
+      bson::BSONObj  getLastErrObj() const ;
 
       // be used to implement import function
-      void pushJSFileNameToStack( const string &filename ) ;
-      void popJSFileNameFromStack() ;
-      INT32 getStackSize() ;
-      void addJSFileNameToList( const string &filename ) ;
-      void clearJSFileNameList() ;
+      void     pushJSFileNameToStack( const string &filename ) ;
+      void     popJSFileNameFromStack() ;
+      INT32    getStackSize() ;
+      void     addJSFileNameToList( const string &filename ) ;
+      void     clearJSFileNameList() ;
       BOOLEAN  isJSFileNameExistInStack( const string &filename ) ;
       BOOLEAN  isJSFileNameExistInList( const string &filename ) ;
 
       string   calcImportPath( const string &filename ) ;
 
    public:
-      virtual INT32 start( UINT32 loadMask = SPT_OBJ_MASK_ALL ) = 0 ;
+      virtual INT32  start( UINT32 loadMask = SPT_OBJ_MASK_ALL ) = 0 ;
 
-      virtual void shutdown() = 0 ;
+      virtual void   shutdown() = 0 ;
 
-      virtual INT32 eval( const CHAR *code, UINT32 len,
-                          const CHAR *filename,
-                          UINT32 lineno,
-                          INT32 flag, // SPT_EVAL_FLAG_NONE/SPT_EVAL_FLAG_PRINT
-                          const sptResultVal **ppRval ) = 0 ;
+      virtual INT32  eval( const CHAR *code, UINT32 len,
+                           const CHAR *filename,
+                           UINT32 lineno,
+                           INT32 flag, // SPT_EVAL_FLAG_NONE/SPT_EVAL_FLAG_PRINT
+                           const sptResultVal **ppRval ) = 0 ;
 
       virtual void   getGlobalFunNames( set<string> &setFunc,
                                         BOOLEAN showHide = FALSE ) = 0 ;
