@@ -198,7 +198,8 @@ public class AutoIncrement16626 extends SdbTestBase{
     	
     	//删除自增字段为空
     	try{
-    		cl.dropAutoIncrement(new ArrayList<>());
+    		List<String> noneIncrement = new ArrayList<>();
+    		cl.dropAutoIncrement(noneIncrement);
     		Assert.fail("dropAutocrement with '' field should fail!");
     	}catch(BaseException e){
     		Assert.assertEquals(e.getErrorCode(), -6);
