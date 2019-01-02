@@ -7,6 +7,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.HeadBucketRequest;
 import com.sequoiadb.exception.BaseException;
@@ -37,7 +38,7 @@ public class TestHeadBucket16668  extends S3TestBase{
 	}
 
 	@SuppressWarnings("deprecation")
-	@Test(enabled=false)
+	@Test
 	private void testDoesObjectExist() throws Exception {
 		//test a :指定桶名为合法名  长度边界值为：3个字符，63个字符
 		bucketName = getRandomString(3);
@@ -58,8 +59,12 @@ public class TestHeadBucket16668  extends S3TestBase{
 			Assert.assertTrue(e.getMessage().equals("The bucketName parameter must be specified."));
 		}
 		
-		//SEQUOIADBMAINSTREAM-4041
-		s3Client.headBucket(new HeadBucketRequest(""));
+		try{
+			s3Client.headBucket(new HeadBucketRequest(""));
+			Assert.fail("test b headBucket:bucket name is '' should fail");
+		}catch(AmazonServiceException e){
+			Assert.assertEquals(e.getStatusCode(), 405);
+		}
 		
 		try{
 			Assert.assertFalse(s3Client.doesBucketExist(null));
@@ -67,7 +72,14 @@ public class TestHeadBucket16668  extends S3TestBase{
 		}catch(IllegalArgumentException e){
 			Assert.assertTrue(e.getMessage().equals("The bucketName parameter must be specified."));
 		}
-		Assert.assertTrue(s3Client.doesBucketExist(""));
+		
+		try{
+			Assert.assertTrue(s3Client.doesBucketExist(""));
+			Assert.fail("test b doesBucketExist:bucket name is '' should fail");
+		}catch(AmazonServiceException e){
+			Assert.assertEquals(e.getStatusCode(), 405);
+		}
+		
 		runSuccess = true;
 	}
 
