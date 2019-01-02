@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-   Source File Name = sptConvertor2.hpp
+   Source File Name = sptConvertor.hpp
 
    Descriptive Name =
 
@@ -64,15 +64,22 @@ namespace engine
       }
 
    public:
+      static INT32 toString( JSContext *cx,
+                             const jsval &val,
+                             std::string &str ) ;
+
+   public:
       INT32 toBson( JSObject *obj , bson::BSONObj &bsobj ) ;
       INT32 toObjArray( JSObject *obj, vector< bson::BSONObj > &bsArray ) ;
       INT32 toStrArray( JSObject *obj, vector< string > &bsArray ) ;
+
+      string getErrMsg() const ;
+
+   protected:
       INT32 _toString(  const jsval &val, std::string &str ) ;
       INT32 _toInt( const jsval &val, INT32 &str ) ;
       INT32 _toDouble( const jsval &val, FLOAT64 &fV ) ;
       INT32 _toBoolean( const jsval &val, BOOLEAN &bL ) ;
-      static INT32 toString( JSContext *cx, const jsval &val, std::string &str ) ;
-      string getErrMsg() const ;
 
    private:
       INT32 _traverse( JSObject *obj , bson::BSONObjBuilder &builder ) ;
@@ -80,12 +87,12 @@ namespace engine
                            const jsval &val,
                            bson::BSONObjBuilder &builder ) ;
       void _setErrMsg( const string &msg, BOOLEAN isReplace ) ;
+
    private:
-      JSContext *_cx ;
-      BOOLEAN _hasSetErrMsg ;
-      string _errMsg ;
-      BOOLEAN _inMatcher ;
-      BOOLEAN _strict ;
+      JSContext   *_cx ;
+      BOOLEAN     _hasSetErrMsg ;
+      string      _errMsg ;
+      BOOLEAN     _strict ;
    } ;
 }
 #endif // SPTCONVERTOR2_HPP_

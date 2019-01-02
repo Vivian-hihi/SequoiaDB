@@ -48,11 +48,11 @@
 using namespace bson ;
 using namespace engine ;
 
-#define SPT_CONVERTOR_SPE_OBJSTART  '$'
-#define SPT_AGGREGATE_MATCHER       "$match"
-
 namespace engine
 {
+   /*
+      sptConvertor implement
+   */
    INT32 sptConvertor::toBson( JSObject *obj , bson::BSONObj &bsobj )
    {
       INT32 rc = SDB_OK ;
@@ -77,7 +77,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       UINT32 length = 0 ;
-      vector< BSONObj > tmpVec ;
+
       if ( NULL == obj )
       {
          goto done ;
@@ -118,9 +118,9 @@ namespace engine
          {
             goto error ;
          }
-         tmpVec.push_back( tmpObj ) ;
+         bsArray.push_back( tmpObj ) ;
       }
-      bsArray.swap( tmpVec ) ;
+
    done:
       return rc ;
    error:
@@ -180,7 +180,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 sptConvertor::_traverse( JSObject *obj , BSONObjBuilder &builder )
+   INT32 sptConvertor::_traverse( JSObject *obj, BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       JSIdArray *properties = NULL ;
@@ -241,8 +241,8 @@ namespace engine
    }
 
    INT32 sptConvertor::_appendToBson( const std::string &name,
-                                       const jsval &val,
-                                       BSONObjBuilder &builder )
+                                      const jsval &val,
+                                      BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       switch ( JS_TypeOfValue( _cx, val ) )
@@ -322,7 +322,6 @@ namespace engine
                }
                else
                {
-                  BOOLEAN setMatcher = FALSE ;
                   const sptObjDesc *desc = NULL ;
                   BOOLEAN isSpecialObj = FALSE ;
                   rc = sptGetObjFactory()->getObjDesc( _cx, obj, isSpecialObj,
@@ -342,7 +341,6 @@ namespace engine
                      }
                      else if( SDB_SPT_NOT_SPECIAL_JSON == rc )
                      {
-                        // $match could set strict = FALSE to ignore some errors
                         if ( TRUE == _strict )
                         {
                            rc = SDB_INVALIDARG ;
@@ -364,10 +362,6 @@ namespace engine
                         _setErrMsg( "Failed to convert js obj to BSONObj",
                                     FALSE ) ;
                         goto error ;
-                     }
-                     if ( setMatcher )
-                     {
-                        _inMatcher = FALSE ;
                      }
                      if( JS_IsArrayObject( _cx, obj ) )
                      {
@@ -463,8 +457,8 @@ namespace engine
    }
 
    INT32 sptConvertor::toString( JSContext *cx,
-                                  const jsval &val,
-                                  std::string &str )
+                                 const jsval &val,
+                                 std::string &str )
    {
       INT32 rc = SDB_OK ;
       //CHAR *utf8 = NULL ;
@@ -489,6 +483,7 @@ namespace engine
             SAFE_JS_FREE( cx, p ) ;
          }
       }
+
    done:
       return rc ;
    }
