@@ -179,7 +179,7 @@ public class NodeWrapper {
 
         try {
             BasicBSONObject obj = getDataBaseSnapshot( printRes ) ;
-            System.out.println(node.toString() + "snapshot(6)" + obj.toString()) ;
+            //System.out.println(node.toString() + "snapshot(6)" + obj.toString()) ;
             checkResult.serviceStatus = obj.getBoolean( "ServiceStatus" ) ;
             checkResult.connect = true ;
             if ( obj.containsField( "CurrentLSN" ) ) {

@@ -150,7 +150,7 @@ public class GroupWrapper {
 
         checkRes.groupName = getGroupName();
         checkRes.groupID = getGroupID();
-        System.out.println( groupInfo.toString() ) ;
+        //System.out.println( groupInfo.toString() ) ;
         
         if ( groupInfo.containsField( PrimaryNode ) ){
             checkRes.primaryNode = groupInfo.getInt(PrimaryNode);

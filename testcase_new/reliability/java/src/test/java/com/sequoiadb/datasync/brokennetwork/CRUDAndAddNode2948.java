@@ -113,7 +113,6 @@ public class CRUDAndAddNode2948 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            groupMgr.refresh();
             if ( !groupMgr.checkBusiness( 600, true )){
                 Assert.fail("checkBusiness occurs time out");
             }
