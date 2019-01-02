@@ -27,7 +27,6 @@ spt2Files = [
       "spt/sptReturnVal.cpp",
       "spt/sptScope.cpp",
       "spt/sptSPArguments.cpp",
-      "spt/sptSPVal.cpp",
       "spt/sptSPScope.cpp",
       "spt/sptConvertor.cpp",
       "spt/sptBsonobj.cpp",
