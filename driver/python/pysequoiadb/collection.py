@@ -831,8 +831,8 @@ class collection(object):
 
         Parameters:
            Name         Type  Info:
-           idx_name     str   The index name, returns all of the indexes
-                                    if this parameter is None.
+           idx_name     str   The index name, returns all of the indexes if this parameter is None.
+                              Deprecated, use get_index_info to get specific index.
         Return values:
            a cursor object of result
         Exceptions:
@@ -853,6 +853,67 @@ class collection(object):
             raise
 
         return result
+
+    def get_index_info(self, idx_name):
+        """Get the information of specified index in current collection.
+
+        Parameters:
+           Name         Type  Info:
+           idx_name     str   The index name.
+        Return values:
+           a record of json/dict
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        if idx_name is None or not isinstance(idx_name, str_type):
+            raise SDBTypeError("index name must be an instance of str_type")
+
+        if idx_name == "":
+            return None
+
+        result = cursor()
+        try:
+            rc = sdb.cl_get_index(self._cl, result._cursor, idx_name)
+            raise_if_error(rc, "Failed to get indexes")
+        except SDBBaseError:
+            del result
+            result = None
+            raise
+
+        try:
+            record = result.next()
+        except SDBEndOfCursor:
+            record = None
+        except SDBBaseError:
+            raise
+
+        del result
+
+        return record
+
+    def is_index_exist(self, idx_name):
+        """Test if the specified index exists or not.
+
+        Parameters:
+           Name         Type  Info:
+           idx_name     str   The index name.
+        Return values:
+           bool
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        if idx_name is None or not isinstance(idx_name, str_type):
+            raise SDBTypeError("index name must be an instance of str_type")
+
+        try:
+            result = self.get_index_info(idx_name)
+        except SDBBaseError:
+            return False
+
+        if result is not None:
+            return True
+        else:
+            return False
 
     def drop_index(self, idx_name):
         """The index name.
