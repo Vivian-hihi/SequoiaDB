@@ -195,7 +195,26 @@ function RestartNode( PD_LOGGER )
    catch( e )
    {
       var obj = getLastErrObj() ;
-      obj = obj.toObj() ;
+
+      if ( obj === undefined )
+      {
+         obj = {} ;
+
+         if ( typeof( e ) == 'number' )
+         {
+            obj[FIELD_ERRNO] = e ;
+         }
+         else
+         {
+            obj[FIELD_ERRNO] = SDB_SYS ;
+         }
+
+         obj[FIELD_DESCRIPTION2] = getLastErrMsg() ;
+      }
+      else
+      {
+         obj = obj.toObj() ;
+      }
 
       if ( obj[FIELD_ERRNO] == SDB_COORD_NOT_ALL_DONE )
       {
