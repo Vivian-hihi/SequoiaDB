@@ -1855,7 +1855,7 @@ void sdbPreprocessLimit(PlannerInfo *root, INT64 *offset, INT64 *limit)
             *limit = DatumGetInt64(((Const *) est)->constvalue);
             if (*limit <= 0)
             {
-               *limit = -1;      /* force to at least 1 */
+               *limit = 1 ;   /* force to at least 1 */
             }
 
             isParsedLimit = TRUE ;
