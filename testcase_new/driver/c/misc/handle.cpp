@@ -435,6 +435,7 @@ TEST( invalidHandle, domainHandle )
    bson opt ; 
    bson_init( &opt ) ; 
    bson_append_bool( &opt, "AutoSplit", true ) ;
+   bson_finish( &opt ) ;
    rc = sdbAlterDomain( domain, &opt ) ; 
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
    bson_destroy( &opt ) ;
