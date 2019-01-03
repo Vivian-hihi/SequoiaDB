@@ -10,6 +10,8 @@
 
 2. 配置SequoiaDB连接地址
 
+   > **Note：** SequoiaDB需要开启事务。
+
    默认的SequoiaDB连接地址为“localhost:11810”，如需修改可参考以下两种方式
    
    (1)通过bin/sdb_mysql_ctl指定端口号修改
