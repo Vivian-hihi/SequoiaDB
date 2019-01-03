@@ -547,6 +547,9 @@
                   func() ;
                }
             }, 
+            'complete': function(){
+               Loading.close() ;
+            },
             'failed': function( errorInfo ){
                //部分节点未成功
                if ( errorInfo['errno'] == -264 )
@@ -600,6 +603,11 @@
       function saveConfig()
       {
          var nodeList = parseSaveConfig() ;
+         if ( nodeList === false )
+         {
+            return false ;
+         }
+
          var contrastList = [] ;
          $.each( SdbSwap.Template, function( index, item ){
             if ( item['reloadable'].length > 0 )
@@ -630,6 +638,12 @@
                if ( objectEqual( tmp, nodeList[i], contrastList, false ) )
                {
                   var nodeInfo = filterObject( nodeList[i], contrastList, false, false ) ;
+
+                  if ( hasKey( nodeList[i], 'HostName' ) == false ||  hasKey( nodeList[i], 'svcname' ) == false )
+                  {
+                     alert( $scope.autoLanguage( '配置项必须有HostName和svcname' ) ) ;
+                     return false ;
+                  }
 
                   for( var key in nodeInfo )
                   {
