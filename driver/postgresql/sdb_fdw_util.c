@@ -296,7 +296,7 @@ bool isSortCanPushDown( PlannerInfo *root, Index foreignTableIndex )
    if ( NIL == sort_paths )
    {
       elog( DEBUG1, "isSortCanPushDown:empty pathkeys" ) ;
-      return false ;
+      return true ;
    }
 
    if ( list_length(root->parse->rtable) > 1 )
@@ -406,15 +406,15 @@ INT32 sdbGenerateSortCondition ( Index foreignTableIndex, Oid foreign_id,
    rc = sdbbson_finish( condition ) ;
    if ( SDB_OK != rc )
    {
-      sdbbson_destroy( condition ) ;
-      sdbbson_init( condition ) ;
-      sdbbson_finish( condition ) ;
       goto error ;
    }
 
 done:
    return rc ;
 error:
+   sdbbson_destroy( condition ) ;
+   sdbbson_init( condition ) ;
+   sdbbson_finish( condition ) ;
    goto done ;
 }
 
@@ -1633,12 +1633,14 @@ EnumSdbArgType getArgumentType(List *arguments)
 int sdbGenerateRescanCondition(SdbExecState *fdw_state, PlanState *planState,
                                sdbbson *rescanCondition)
 {
-   ListCell *cell     = NULL ;
-   int rc             = SDB_OK ;
+   ListCell *cell       = NULL ;
+   int rc               = SDB_OK ;
+   BOOLEAN existFailure = FALSE ;
    SdbExprTreeState expr_state ;
 
    if ( bms_is_empty(planState->chgParam) )
    {
+      rc = SDB_INVALIDARG ;
       sdbbson_finish( rescanCondition ) ;
       goto error ;
    }
@@ -1667,6 +1669,10 @@ int sdbGenerateRescanCondition(SdbExecState *fdw_state, PlanState *planState,
             sdbbson_append_elements( rescanCondition, &subBson ) ;
          }
       }
+      else
+      {
+         existFailure = TRUE ;
+      }
 
       sdbbson_destroy( &subBson ) ;
    }
@@ -1677,6 +1683,12 @@ int sdbGenerateRescanCondition(SdbExecState *fdw_state, PlanState *planState,
       sdbbson_destroy( rescanCondition ) ;
       sdbbson_init( rescanCondition ) ;
       sdbbson_finish( rescanCondition ) ;
+      goto error ;
+   }
+
+   if ( existFailure )
+   {
+      goto error ;
    }
 
 done:
@@ -1813,6 +1825,8 @@ void SdbReleaseRecord( SdbRecordCache *recordCache, UINT64 recordID )
 
 void sdbPreprocessLimit(PlannerInfo *root, INT64 *offset, INT64 *limit)
 {
+   BOOLEAN isParsedOffset = FALSE ;
+   BOOLEAN isParsedLimit = FALSE ;
    Query *parse = root->parse;
    Node *est;
 
@@ -1843,8 +1857,14 @@ void sdbPreprocessLimit(PlannerInfo *root, INT64 *offset, INT64 *limit)
             {
                *limit = -1;      /* force to at least 1 */
             }
+
+            isParsedLimit = TRUE ;
          }
       }
+   }
+   else
+   {
+      isParsedLimit = TRUE ;
    }
 
    if (parse->limitOffset)
@@ -1859,8 +1879,26 @@ void sdbPreprocessLimit(PlannerInfo *root, INT64 *offset, INT64 *limit)
             {
                *offset = 0;
             }
+
+            isParsedOffset = TRUE ;
          }
       }
+   }
+   else
+   {
+      isParsedOffset = TRUE ;
+   }
+
+   if (isParsedLimit && isParsedOffset)
+   {
+      elog( DEBUG1, "reset parse's limit and offset" ) ;
+      parse->limitCount = NULL ;
+      parse->limitOffset = NULL ;
+   }
+   else
+   {
+      *limit = -1;
+      *offset = 0;
    }
 
    return;
