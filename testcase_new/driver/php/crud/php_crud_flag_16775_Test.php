@@ -1,6 +1,6 @@
 /****************************************************
 @description:     test timestamp increment
-@testlink cases:   seqDB-16675
+@testlink cases:   seqDB-16775
 @modify list:
         2018-11-19 Luweikang init
 ****************************************************/
@@ -8,10 +8,10 @@
 define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/../global.php';
 
-class TestCURDFlag16675 extends PHPUnit_Framework_TestCase
+class TestCURDFlag16775 extends PHPUnit_Framework_TestCase
 {
-   private static $csName = "cs16675";
-   private static $clName = "cl16675";
+   private static $csName = "cs16775";
+   private static $clName = "cl16775";
    private static $cs;
    private static $cl;
    private static $db;
@@ -119,7 +119,7 @@ class TestCURDFlag16675 extends PHPUnit_Framework_TestCase
    private static function createUniqueIndex()
    {
       $keyArr = array('int' => 1, 'double' => 1, 'string' => 1, 'OID' => 1, 'boolean' => 1, 'date' => 1, 'timestamp' => 1, 'binary' => 1, 'object' => 1, 'regex' => 1, 'array' => 1);
-      self::$cl -> createIndex( $keyArr, 'index16675', true );
+      self::$cl -> createIndex( $keyArr, 'index16775', true );
       self::checkErrno( 0, self::$db -> getError()['errno'] );
    }
 
