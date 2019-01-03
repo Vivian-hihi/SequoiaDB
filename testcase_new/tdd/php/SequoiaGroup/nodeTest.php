@@ -235,10 +235,10 @@ class Group_node_Test extends PHPUnit_Framework_TestCase
             $this -> assertEquals( 0, $err['errno'], 'getGroup错误' ) ;
             $this -> assertNotEmpty( $group, 'getGroup错误' ) ;
             
-            $err = $group -> detachNode( $hostName, $serviceName ) ;
+            $err = $group -> detachNode( $hostName, $serviceName, array( 'KeepData' => true ) ) ;
             $this -> assertEquals( 0, $err['errno'], 'detachNode错误' ) ;
             
-            $err = $group -> attachNode( $hostName, $serviceName ) ;
+            $err = $group -> attachNode( $hostName, $serviceName, array( 'KeepData' => true ) ) ;
             $this -> assertEquals( 0, $err['errno'], 'attachNode错误' ) ;
          }
       }

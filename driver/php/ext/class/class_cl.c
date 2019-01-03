@@ -796,18 +796,27 @@ PHP_METHOD( SequoiaCL, bulkInsert )
    zval *pFlags     = NULL ;
    zval *pThisObj   = getThis() ;
    sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   bson result ;
+   bson tmp ;
    bson **ppBsonRecords = NULL ;
+
+   bson_init( &tmp ) ;
+   bson_init( &result ) ;
+
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+
    if ( PHP_GET_PARAMETERS( "z|z", &pRecords, &pFlags ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+
    PHP_READ_HANDLE( pThisObj,
                     cl,
                     sdbCollectionHandle,
                     SDB_CL_HANDLE_NAME,
                     clDesc ) ;
+
    rc = php_assocArray2BsonArray( pRecords,
                                   &ppBsonRecords,
                                   (INT32 *)&insertNum TSRMLS_CC ) ;
@@ -815,18 +824,27 @@ PHP_METHOD( SequoiaCL, bulkInsert )
    {
       goto error ;
    }
+
    rc = php_zval2Int( pFlags, (INT32 *)&flags TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
-   rc = sdbBulkInsert( cl, flags, ppBsonRecords, insertNum ) ;
+
+   rc = sdbBulkInsert2( cl, flags, ppBsonRecords, insertNum, &tmp ) ;
    if( rc )
    {
       goto error ;
    }
+
+   bson_append_elements( &result, &tmp ) ;
+
 done:
-   PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+   bson_append_int( &result, "errno", rc ) ;
+   bson_finish( &result ) ;
+   PHP_RETURN_AUTO_RECORD( FALSE, pThisObj, FALSE, result ) ;
+   bson_destroy( &result ) ;
+   bson_destroy( &tmp ) ;
    if( ppBsonRecords )
    {
       for( i = 0; i < insertNum; ++i )

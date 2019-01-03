@@ -562,8 +562,14 @@ class SequoiaCL
     *
     * @param $records	an array or the string argument. The inserted record, cannot be empty.
     *
-    * @param $flags an integer argument. While SDB_FLG_INSERT_CONTONDUP is set, if some records hit index key duplicate error,
-    *                                    database will skip them and go on inserting. However, while 0 is set, database will stop inserting in that case, and return errno code.
+    * @param $flags an integer argument. 
+    *                                    @code
+    *                                    0                           :  while 0 is set, database will stop inserting
+    *                                                                   when the record hit index key duplicate error.
+    *                                    SDB_FLG_INSERT_CONTONDUP    :  if the record hit index key duplicate error,
+    *                                                                   database will skip them and go on inserting.
+    *                                    SDB_FLG_INSERT_RETURN_OID   :  return the value of "_id" field in the record.
+    *                                    @endcode
     *
     * @return Returns the result, default return array.
     *
@@ -628,6 +634,45 @@ class SequoiaCL
     *    echo "Failed to insert records, error code: ".$err['errno'] ;
     *    return ;
     * }
+    * @endcode
+    *
+    * Example: Set $flags SDB_FLG_INSERT_RETURN_OID
+    * @code
+    * $records = array(
+    *    array( 'a' => 3 ),
+    *    array( 'a' => 4 ),
+    *    array( 'a' => 5 )
+    * ) ;
+    * $err = $cl -> bulkInsert( $records, SDB_FLG_INSERT_RETURN_OID ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to insert records, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * var_dump( $err ) ;
+    *
+    * Print $err is 
+    * array(2) {
+        ["_id"]=>
+        array(3) {
+          [0]=>
+          object(SequoiaID)#4 (1) {
+            ["$oid"]=>
+            string(24) <24 hexadecimal characters>
+          }
+          [1]=>
+          object(SequoiaID)#5 (1) {
+            ["$oid"]=>
+            string(24) <24 hexadecimal characters>
+          }
+          [2]=>
+          object(SequoiaID)#6 (1) {
+            ["$oid"]=>
+            string(24) <24 hexadecimal characters>
+          }
+        }
+        ["errno"]=>
+        int(0)
+      }
     * @endcode
    */
    public function bulkInsert( array|string $records, integer $flags = 0 ){}
