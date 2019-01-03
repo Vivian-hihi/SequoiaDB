@@ -16,6 +16,8 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Domain;
+import com.sequoiadb.base.Node;
+import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
@@ -65,16 +67,43 @@ public class AlterDomainAndSplit16831 extends SdbTestBase{
         SplitThread splitThread = new SplitThread();
         domainThread.start();
         splitThread.start();
-        if(domainThread.isSuccess() && !splitThread.isSuccess()) {//TODO:split失败了需要检查错误码和数据分区结果
-            checkDomain();
-        } else if(!domainThread.isSuccess() && splitThread.isSuccess()) {//TODO:split成功了需要检查切分结果
+        if(domainThread.isSuccess() && !splitThread.isSuccess()) {
+            checkDomain(true);
             Assert.assertEquals(cl.getCount(), 1000);
-            BaseException e = (BaseException)domainThread.getExceptions().get(0);//TODO:domain alter失败了也需要检查没被修改
+            ReplicaGroup rg = sdb.getReplicaGroup(rgList.get(0));
+            Node srcGroupMaster = rg.getMaster();
+            Sequoiadb localDB = srcGroupMaster.connect();
+            CollectionSpace localCS = localDB.getCollectionSpace(localCSName);
+            DBCollection localCL = localCS.getCollection(clName);
+            Assert.assertEquals(localCL.getCount(), 1000);
+            //检查错误码
+            BaseException e = (BaseException)splitThread.getExceptions().get(0);
+            if ( e.getErrorCode() != -216 ) {
+                Assert.fail("errcode not expected : " + e.getMessage());
+            }
+        } else if(!domainThread.isSuccess() && splitThread.isSuccess()) {
+            Assert.assertEquals(cl.getCount(), 1000);
+            //源组
+            ReplicaGroup rg = sdb.getReplicaGroup(rgList.get(0));
+            Node srcGroupMaster = rg.getMaster();
+            Sequoiadb localDB = srcGroupMaster.connect();
+            CollectionSpace localCS = localDB.getCollectionSpace(localCSName);
+            DBCollection srcCL = localCS.getCollection(clName);
+            //目标组
+            rg = sdb.getReplicaGroup(rgList.get(0));
+            Node destGroupMaster = rg.getMaster();
+            localDB = destGroupMaster.connect();
+            localCS = localDB.getCollectionSpace(localCSName);
+            DBCollection destCL = localCS.getCollection(clName);
+            //源组和目标组之和正确性
+            Assert.assertEquals(srcCL.getCount() + destCL.getCount(), 1000);
+            BaseException e = (BaseException)domainThread.getExceptions().get(0);
             if ( e.getErrorCode() != -256 ) {
                 Assert.fail("errcode not expected : " + e.getMessage());
             }
+            checkDomain(false);
         } else if(domainThread.isSuccess() && splitThread.isSuccess()) {
-            checkDomain();
+            checkDomain(true);
             Assert.assertEquals(cl.getCount(), 1000);
         } else if(!domainThread.isSuccess() && !splitThread.isSuccess()){
             BaseException e1 = (BaseException)domainThread.getExceptions().get(0);
@@ -102,15 +131,21 @@ public class AlterDomainAndSplit16831 extends SdbTestBase{
         }
     }
     
-    public void checkDomain() {
+    public void checkDomain(boolean isSuccess) {
         BSONObject matcher = new BasicBSONObject();
         matcher.put("Name", domainName);
         BSONObject selector = new BasicBSONObject();
         selector.put("Groups", 1);
         DBCursor cur = sdb.listDomains(matcher, selector, null, null);
+        BSONObject act = new BasicBSONObject();
         while(cur.hasNext()) {
-            BSONObject obj = cur.getNext();
-            Assert.assertTrue(obj.toString().contains(rgList.get(0)));
+            act = cur.getNext();
+        }
+        if (isSuccess) {
+            Assert.assertTrue(act.toString().contains(rgList.get(0)));
+        } else {
+            Assert.assertTrue(act.toString().contains(rgList.get(0)));
+            Assert.assertTrue(act.toString().contains(rgList.get(1)));
         }
         cur.close();
     }
