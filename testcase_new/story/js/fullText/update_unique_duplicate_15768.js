@@ -7,7 +7,7 @@ function main(){
    
    if(commIsStandalone( db )){
       println("Deploy is standalone");
-	  return;
+      return;
    };
    
    var clName = COMMCLNAME + "_ES_15768";
@@ -63,7 +63,8 @@ function main(){
 
 function updateRecords(dbcl){
    try{
-   dbcl.update({$set : {content : "this is my hometown"}},{content : "this is my college"});
+       dbcl.update({$set : {content : "this is my hometown"}},{content : "this is my college"});
+       throw "update duplicate key should fail!";
    }
    catch(e){
       if(e != -38){

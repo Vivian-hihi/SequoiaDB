@@ -32,8 +32,9 @@ function main()
    checkResult( expectResult, actResult );
 	
    update( dbcl );
+   dbcl.insert( { _id : 3, a : "a2" } );
 	
-   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 1 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 2 );
    
    expectResult = dbOperator.findFromCL( dbcl, null, selectorCond );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond );

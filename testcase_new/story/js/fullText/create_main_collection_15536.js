@@ -56,14 +56,15 @@ function main()
    
    //update
    mainCL.update({$set : {b : "helloworld"}}, {b : "b1"});
-   checkMainCLFullSyncToES(csName, clName, "fullIndex_15536", 10000);
+   mainCL.insert({a : 4568, b : "b4568"});
+   checkMainCLFullSyncToES(csName, clName, "fullIndex_15536", 10001);
    var actResult = dbOperator.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(mainCL, null, null, {"_id" : 1});
    checkResult(expResult, actResult);
    
    //delete
    mainCL.remove({b : "helloworld"});
-   checkMainCLFullSyncToES(csName, clName, "fullIndex_15536", 9999);
+   checkMainCLFullSyncToES(csName, clName, "fullIndex_15536", 10000);
    var actResult = dbOperator.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(mainCL, null, null, {"_id" : 1});
    checkResult(expResult, actResult);

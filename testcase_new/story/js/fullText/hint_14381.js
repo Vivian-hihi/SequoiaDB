@@ -38,7 +38,8 @@ function main()
    
    // update with hint textIndex
    dbcl.update({"$set" : {"a" : "update text index 0"}}, {"a" : "test_14381_0"}, {"" : textIndexName});
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10000);
+   dbcl.insert({a: "test_14381_10001", b : "testb_10001"});
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10001);
 
    // check result
    var dbOpr = new DBOperator();
@@ -51,7 +52,8 @@ function main()
 
    // update with hint commonIndex
    dbcl.update({"$set" : {"a" : "update text index many"}}, {"a" : {"$gt" : "test_14381_1000"}}, {"" : commonIndexName});
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10000);
+   dbcl.insert({a: "test_14381_10002", b : "testb_10002"});
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10002);
 
    // check result
    var actResult = dbOpr.findFromCL(dbcl, findCond);

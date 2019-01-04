@@ -50,7 +50,8 @@ function main()
    
    //更新包含全文索引字段的记录
    dbcl.update({$set:{b:"fullindex"}}, {b:"b1"});
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10000);
+   dbcl.insert({a : "a10001", b : "b10001"});
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10001);
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
@@ -61,7 +62,7 @@ function main()
    
    //删除包含全文索引字段的记录
    dbcl.remove({b:"fullindex"});
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 9999);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10000);
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
@@ -84,7 +85,7 @@ function main()
    commCheckIndex( dbcl, "fullIndex_12014", true );
    
    dbcl.insert({a:"about"});
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10000);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10001);
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
@@ -95,7 +96,8 @@ function main()
    
    //更新包含全文索引字段的记录
    dbcl.update({$set:{a:"fullindex"}}, {a:"a2"});
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10000);
+   dbcl.insert({a : "a10002", b : "b10002"});
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10002);
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
@@ -106,7 +108,7 @@ function main()
    
    //删除包含全文索引字段的记录
    dbcl.remove({a:"a2"});
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 9999);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10001);
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
@@ -155,7 +157,8 @@ function main()
    
    //更新包含全文索引字段的记录
    dbcl.update({$set:{b:"fullindex"}}, {b:"b1"});
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10000);
+   dbcl.insert({a : "a10001", b : "b10001", c : "c10001"});
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10001);
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
@@ -166,7 +169,7 @@ function main()
    
    //删除包含全文索引字段的记录
    dbcl.remove({b:"fullindex"});
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 9999);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10000);
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
@@ -189,7 +192,7 @@ function main()
    commCheckIndex( dbcl, "fullIndex_12014", true );
    
    dbcl.insert({a:"about", c : "content"});
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10000);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10001);
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
@@ -200,7 +203,8 @@ function main()
    
    //更新包含全文索引字段的记录
    dbcl.update({$set:{a:"fullindex"}}, {a:"a2"});
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10000);
+   dbcl.insert({a : "a10002", b : "b10002", c : "c10002"});
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10002);
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
@@ -211,7 +215,7 @@ function main()
    
    //删除包含全文索引字段的记录
    dbcl.remove({a:"a2"});
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 9999);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12014", 10001);
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});

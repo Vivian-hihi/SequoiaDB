@@ -33,7 +33,8 @@ function main()
    println("---check insert success---");
    
    dbcl.update({$set:{a:"update"}},{c:{$exists:1}});
-   checkFullSyncToES(COMMCSNAME, clName, indexName, 4);
+   dbcl.insert({No:4,a:"update",b:"update",c:"update"});
+   checkFullSyncToES(COMMCSNAME, clName, indexName, 5);
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match:{a:"update"}}}}});
    var expectRecords = dbOperator.findFromCL(dbcl, {a:"update"});
    checkResult(expectRecords, actRecords);
