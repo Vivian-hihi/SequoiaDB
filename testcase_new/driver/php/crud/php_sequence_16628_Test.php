@@ -15,11 +15,16 @@ class TestSequence16628 extends PHPUnit_Framework_TestCase
    private static $cs;
    private static $cl;
    private static $db;
-   private static $data;
    private static $skipTest = false;
+   private static $beginTime;
+   private static $endTime;
 
    public static function setUpBeforeClass()
    {
+      date_default_timezone_set("Asia/Shanghai");
+      self::$beginTime = microtime( true );
+      echo "\n---Begin time: " . date( "Y-m-d H:i:s", self::$beginTime ) ."\n";
+   
       self::$db = new Sequoiadb();
       self::$db -> connect(globalParameter::getHostName().':'.
                            globalParameter::getCoordPort()) ;
@@ -85,6 +90,11 @@ class TestSequence16628 extends PHPUnit_Framework_TestCase
       }
 
       self::$db->close();
+      
+      self::$endTime = microtime( true );
+      echo "\n---End the Test,End time: " . date( "Y-m-d H:i:s", self::$endTime ) . "\n";
+      echo "\n---Test 16628 spend time: " . ( self::$endTime - self::$beginTime ) . " seconds.\n";
+      
    }
    
    private static function checkErrno( $expErrno, $actErrno, $msg = "" )

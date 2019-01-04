@@ -75,9 +75,15 @@ class TestUpdateShardingKey12633 extends PHPUnit_Framework_TestCase
    private static $csName;
    private static $clName;
    private static $clDB;
+   private static $beginTime;
+   private static $endTime;
    
    public static function setUpBeforeClass()
    {
+      date_default_timezone_set("Asia/Shanghai");
+      self::$beginTime = microtime( true );
+      echo "\n---Begin time: " . date( "Y-m-d H:i:s", self::$beginTime ) ."\n";
+   
       self::$dbh = new UpdateShardingKey12633();
       
       if( self::$dbh -> commIsStandlone() === false )
@@ -139,6 +145,10 @@ class TestUpdateShardingKey12633 extends PHPUnit_Framework_TestCase
    {
       echo "\n---Begin to drop cl in the end.\n";      
       self::$dbh -> dropCL( self::$csName, self::$clName, false );
+      
+      self::$endTime = microtime( true );
+      echo "\n---End the Test,End time: " . date( "Y-m-d H:i:s", self::$endTime ) . "\n";
+      echo "\n---Test 12633 spend time: " . ( self::$endTime - self::$beginTime ) . " seconds.\n";
    }
    
 }

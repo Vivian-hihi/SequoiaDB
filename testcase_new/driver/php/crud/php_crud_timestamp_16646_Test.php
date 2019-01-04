@@ -15,9 +15,15 @@ class TestTimestamp16646 extends PHPUnit_Framework_TestCase
    private static $cs;
    private static $cl;
    private static $db;
+   private static $beginTime;
+   private static $endTime;
 
    public static function setUpBeforeClass()
    {
+      date_default_timezone_set("Asia/Shanghai");
+      self::$beginTime = microtime( true );
+      echo "\n---Begin time: " . date( "Y-m-d H:i:s", self::$beginTime ) ."\n";
+      
       self::$db = new Sequoiadb();
       self::$db -> connect(globalParameter::getHostName().':'.
                            globalParameter::getCoordPort()) ;
@@ -71,6 +77,10 @@ class TestTimestamp16646 extends PHPUnit_Framework_TestCase
       }
 
       self::$db->close();
+      
+      self::$endTime = microtime( true );
+      echo "\n---End the Test,End time: " . date( "Y-m-d H:i:s", self::$endTime ) . "\n";
+      echo "\n---Test 16646 spend time: " . ( self::$endTime - self::$beginTime ) . " seconds.\n";
    }
 
    function checkIncResult( $times, $No)

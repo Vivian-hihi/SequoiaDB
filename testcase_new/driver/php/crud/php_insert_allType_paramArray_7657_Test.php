@@ -190,14 +190,20 @@ class TestData08 extends PHPUnit_Framework_TestCase
    private static $clName;
    private static $clDB;
    private static $rawData;
+   private static $beginTime;
+   private static $endTime;
    
    public static function setUpBeforeClass()
    {
+      date_default_timezone_set("Asia/Shanghai");
+      self::$beginTime = microtime( true );
+      echo "\n---Begin time: " . date( "Y-m-d H:i:s", self::$beginTime ) ."\n";
+   
       self::$dbh = new DataOperator08();
       
       echo "\n---Begin to ready parameter.\n";
       self::$csName = self::$dbh -> COMMCSNAME;
-      self::$clName = self::$dbh -> COMMCLNAME;
+      self::$clName = self::$dbh -> COMMCLNAME . '_7657_01';
       
       echo "\n---Begin to drop cl in the begin.\n";
       self::$dbh -> dropCL( self::$csName, self::$clName, true );
@@ -330,6 +336,13 @@ class TestData08 extends PHPUnit_Framework_TestCase
       self::$dbh -> dropCL( self::$csName, self::$clName, false );
       $errno = self::$dbh -> getErrno();
       $this -> assertEquals( 0, $errno );
+   }
+   
+   public static function tearDownAfterClass()
+   {
+      self::$endTime = microtime( true );
+      echo "\n---End the Test,End time: " . date( "Y-m-d H:i:s", self::$endTime ) . "\n";
+      echo "\n---Test 7657_01 spend time: " . ( self::$endTime - self::$beginTime ) . " seconds.\n";
    }
    
 }
