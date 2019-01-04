@@ -912,4 +912,158 @@ public :
 } ;
 typedef class _ossScopedLock ossScopedLock;
 
+
+#if defined (_LINUX)
+
+//
+// FIFO queue simulation
+//
+class _ossTicket : public SDBObject
+{
+private :
+   UINT32 _QHead ;
+   UINT32 _QTail ;
+   pthread_cond_t  _cond ;
+   pthread_mutex_t _mutex ;
+public : 
+   _ossTicket()
+   {
+      pthread_mutex_init( & _mutex, NULL ) ;
+      pthread_cond_init( & _cond, NULL ) ;
+      _QHead  = 0 ;
+      _QTail  = 0 ;
+   }
+
+   ~_ossTicket()
+   {
+      pthread_cond_destroy( & _cond ) ;
+      pthread_mutex_destroy( & _mutex ) ;
+   }
+
+   inline void lock()
+   {
+      UINT32 myTicket ;
+
+      pthread_mutex_lock( & _mutex ) ;
+      myTicket = _QTail ++ ;
+      while ( ( myTicket != _QHead ) )
+      {
+         pthread_cond_wait( & _cond, & _mutex ) ;
+         if ( ( myTicket < _QHead ) )
+         {
+            // in case missed the ticket, get and wait on a new one.
+            myTicket = _QTail ++ ;
+         }
+      }
+      pthread_mutex_unlock( & _mutex ) ;
+   }
+
+   inline void unlock()
+   {
+      pthread_mutex_lock( & _mutex ) ;
+      _QHead ++ ;
+      pthread_cond_broadcast( & _cond ) ;
+      pthread_mutex_unlock( & _mutex ) ;
+   }
+} ;
+
+
+//
+// Read and Write latch with X starvation avoidance
+//
+class _ossRWLatchNS: public SDBObject
+{
+private :
+   _ossTicket       _ticket ;
+   pthread_rwlock_t _rwlock ;
+
+public :
+   _ossRWLatchNS()
+   {
+      SINT32 rc = pthread_rwlock_init( & _rwlock, NULL ) ;
+      SDB_ASSERT( 0 == rc, "init rwlock failed" ) ; 
+   }
+
+   ~_ossRWLatchNS()
+   {
+      SINT32 rc = pthread_rwlock_destroy( & _rwlock ) ;
+      SDB_ASSERT( 0 == rc, "destory rwlock failed" ) ; 
+   }
+
+   inline void get()
+   {
+      SINT32 rc ;
+
+      _ticket.lock() ;
+      rc = pthread_rwlock_wrlock( & _rwlock ) ;
+      SDB_ASSERT( 0 == rc, "get write rwlock failed" ) ;
+   }
+
+   inline void get_shared()
+   {
+      SINT32 rc ;
+      _ticket.lock() ;
+      rc = pthread_rwlock_rdlock( & _rwlock ) ;
+      SDB_ASSERT( 0 == rc, "get read rwlock failed" ) ;
+   }
+
+   inline BOOLEAN try_get()
+   {
+      INT32 rc ;
+      _ticket.lock() ;
+      rc = pthread_rwlock_trywrlock( & _rwlock ) ;
+
+      if ( 0 == rc )
+      {
+         return TRUE ;
+      }
+      else
+      {
+         _ticket.unlock() ;
+         return FALSE ;
+      }
+   }
+
+   inline BOOLEAN try_get_shared()
+   {
+      SINT32 rc ;
+
+      _ticket.lock() ;
+      rc = pthread_rwlock_tryrdlock( & _rwlock ) ;
+
+      if ( 0 == rc )
+      {
+         return TRUE ;
+      }
+      else
+      {
+         _ticket.unlock() ;
+         return FALSE ;
+      }
+   }
+
+   inline void release()
+   {
+      SINT32 rc ;
+
+      rc = pthread_rwlock_unlock( & _rwlock ) ;
+      SDB_ASSERT( 0 == rc, "release write rwlock failed" ) ;
+
+      _ticket.unlock() ;
+   }
+
+   inline void release_shared()
+   {
+      SINT32 rc ;
+
+      rc = pthread_rwlock_unlock( & _rwlock ) ;
+      SDB_ASSERT( 0 == rc, "release read rwlock failed" ) ;
+
+      _ticket.unlock() ;
+   }
+} ;
+typedef class _ossRWLatchNS ossRWLatchNS;
+
+#endif
+
 #endif //OSS_SPINLOCK_HPP_
