@@ -80,11 +80,7 @@ namespace engine
    {
    public :
       UTIL_OBJIDX    lrbHdrIdx    ; // index of 1st LRB Header in the chain
-#if defined ( _LINUX )
-      ossRWLatchNS   hashHdrLatch ;
-#else
-      ossSpinSLatch  hashHdrLatch ;
-#endif
+      ossSpinXLatch  hashHdrLatch ; // ossSpinXLatch, 48 bytes
    } ;
 #pragma pack()
 }
