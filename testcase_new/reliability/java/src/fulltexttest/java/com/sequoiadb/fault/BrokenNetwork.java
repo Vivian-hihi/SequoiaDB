@@ -83,7 +83,6 @@ public class BrokenNetwork extends Fault {
     }
 
     public void continuouslyMakeOnPri() throws ReliabilityException {
-        group.refresh();
         List<String> allHosts = group.getAllHosts();
         System.out.println(allHosts);
         List<String> brokenHost = new ArrayList<String>();
@@ -116,7 +115,6 @@ public class BrokenNetwork extends Fault {
             Exception exception2 = new Exception();
             while (true) {
                 try {
-                    group.refresh(allHosts.get(0) + ":" + SdbTestBase.serviceName);
                     for (NodeWrapper node : group.getNodes()) {
                         // System.out.println(node.hostName());
                         try {

@@ -68,7 +68,7 @@ public class SdbTestBase {
 
     private static void createReserveDir() {
         try {
-            GroupMgr mgr = new GroupMgr();
+            GroupMgr mgr = GroupMgr.getInstance();
             List<String> hosts = mgr.getAllHosts();
             for (String host : hosts) {
                 Ssh ssh = new Ssh(host, "root", SdbTestBase.rootPwd);
@@ -89,7 +89,7 @@ public class SdbTestBase {
 
     private static void createWorkDir() {
         try {
-            GroupMgr mgr = new GroupMgr();
+            GroupMgr mgr = GroupMgr.getInstance();
             List<String> hosts = mgr.getAllHosts();
             for (String host : hosts) {
                 Ssh ssh = new Ssh(host, "root", SdbTestBase.rootPwd);

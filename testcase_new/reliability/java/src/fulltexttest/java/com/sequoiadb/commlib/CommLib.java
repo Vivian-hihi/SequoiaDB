@@ -725,7 +725,7 @@ public class CommLib {
      * @throws ReliabilityException
      */
     public static String getSafeHost(String brokenNetHost) throws ReliabilityException {
-        List<String> allHost = new GroupMgr().getAllHosts();
+        List<String> allHost = GroupMgr.getInstance().getAllHosts();
         for (String entry : allHost) {
             if (!entry.equals(brokenNetHost)) {
                 return entry;
@@ -742,7 +742,7 @@ public class CommLib {
      * @throws ReliabilityException
      */
     public static String getSafeCoordUrl(String brokenNetHost) throws ReliabilityException {
-        List<String> allHost = new GroupMgr().getAllHosts();
+        List<String> allHost = GroupMgr.getInstance().getAllHosts();
         for (String entry : allHost) {
             if (!entry.equals(brokenNetHost)) {
                 return entry + ":" + SdbTestBase.serviceName;

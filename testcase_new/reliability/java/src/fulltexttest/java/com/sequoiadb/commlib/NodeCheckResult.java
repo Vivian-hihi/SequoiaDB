@@ -11,9 +11,9 @@ public class NodeCheckResult {
     public String hostName;
     public String svcName;
     public int nodeID;
-
     public boolean connect = true;
     public boolean isPrimary = false;
+    public int LSNVer = 0 ;
     public long LSN = -1;
     public boolean serviceStatus = true;
     public long freeSpace = -1;
@@ -32,7 +32,9 @@ public class NodeCheckResult {
             result.serviceCheck = false;
         }
 
-        if (result.nodesResult.size() > 0 && result.nodesResult.get(0).LSN != LSN) {
+        if (result.nodesResult.size() > 0 && 
+             ( result.nodesResult.get(0).LSNVer != LSNVer 
+               || result.nodesResult.get(0).LSN != LSN )) {
             result.LSNCheck = false;
         }
 

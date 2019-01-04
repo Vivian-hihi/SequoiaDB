@@ -25,12 +25,12 @@ public class GroupWrapper {
     private static final String SYSCOLLECTIONSPACES = "SYSCOLLECTIONSPACES";
     private static final String SYSDOMAINS = "SYSDOMAINS";
     private static final String SYSNODES = "SYSNODES";
-    private GroupMgr mgr;
+   // private GroupMgr mgr;
 
     public GroupWrapper(BasicBSONObject groupInfo, ReplicaGroup group, GroupMgr mgr) {
         this.groupInfo = groupInfo;
         this.group = group;
-        this.mgr = mgr;
+       // this.mgr = mgr;
     }
 
     public String getGroupName() {
@@ -40,18 +40,11 @@ public class GroupWrapper {
     public int getGroupID() {
         return this.groupInfo.getInt("GroupID");
     }
-
-    public void refresh(String coordUrl) throws ReliabilityException {
-        mgr.refresh(coordUrl);
-        this.group = mgr.getGroupByName(getGroupName()).getGroup();
-        this.groupInfo = mgr.getGroupByName(getGroupName()).getGroupInfo();
-        init();
+    
+    public void refresh(){
+        this.groupInfo = ( BasicBSONObject ) this.group.getDetail() ;
     }
-
-    public void refresh() throws ReliabilityException {
-        refresh(SdbTestBase.coordUrl);
-    }
-
+    
     public void init() throws ReliabilityException {
         String hostName = null;
         String port = null;
@@ -125,7 +118,7 @@ public class GroupWrapper {
         String groupName = getGroupName();
         int priNode = getMaster().nodeID();
         Ssh ssh = new Ssh(SdbTestBase.hostName, SdbTestBase.remoteUser, SdbTestBase.remotePwd);
-        GroupMgr groupMgr = new GroupMgr();
+        GroupMgr groupMgr = GroupMgr.getInstance();
         try {
             for (int i = 0; i < times; i++) {
 
@@ -136,7 +129,7 @@ public class GroupWrapper {
                     throw new ReliabilityException(
                             "After execute reelect,check business have an error");
                 }
-                refresh();
+                
                 if (priNode != getMaster().nodeID()) {
                     return true;
                 }
@@ -146,9 +139,10 @@ public class GroupWrapper {
         }
         return false;
     }
+ 
 
-    public GroupCheckResult checkBusiness(boolean printRes) throws ReliabilityException {
-        refresh();
+    public GroupCheckResult checkBusiness(boolean printRes ) throws ReliabilityException {
+        final String PrimaryNode = "PrimaryNode" ;
         GroupCheckResult checkRes = new GroupCheckResult();
         if (getGroupName().equals("SYSCoord")) {
             return checkRes;
@@ -156,7 +150,11 @@ public class GroupWrapper {
 
         checkRes.groupName = getGroupName();
         checkRes.groupID = getGroupID();
-        checkRes.primaryNode = groupInfo.getInt("PrimaryNode");
+        System.out.println( groupInfo.toString() ) ;
+        
+        if ( groupInfo.containsField( PrimaryNode ) ){
+            checkRes.primaryNode = groupInfo.getInt(PrimaryNode);
+        }
 
         for (NodeWrapper node : nodes) {
             NodeCheckResult res = node.checkBusiness(printRes);
@@ -201,7 +199,6 @@ public class GroupWrapper {
      * @throws ReliabilityException
      */
     public boolean checkInspect(int checktime, int intervelSecond) throws ReliabilityException {
-        this.refresh();
         for (int i = 0; i < checktime; i++) {
             if (inspect()) {
                 return true;
