@@ -452,10 +452,19 @@
             <showMessageOnError>0</showMessageOnError>
         </runProgram>
         <setInstallerVariable name="service_status" value="${program_exit_code}"/>
+        <setInstallerVariable name="cm_num" value="-1"/>
+        <setInstallerVariableFromScriptOutput>
+            <name>cm_num</name>
+            <exec>${installdir}/bin/sdblist</exec>
+            <execArgs>-t cm | grep -v "Total" | wc -l</execArgs>
+            <abortOnError>0</abortOnError>
+            <showMessageOnError>0</showMessageOnError>
+        </setInstallerVariableFromScriptOutput>
         <consoleWrite>
             <text>${msg(Upgrade.WarnMsg.StartProcess)}&#xA;</text>
             <ruleList>
                 <compareValues value1="${service_status}" logic="does_not_equal" value2="0"/>
+                <compareValues value1="${cm_num}" logic="does_not_equal" value2="2"/>
             </ruleList>
         </consoleWrite>
 
@@ -476,12 +485,21 @@
         <setInstallerVariable name="om_dbpath"  value="${installdir}/database/sms/${om_port}"/>
         <setInstallerVariable name="http_port"  value="8000"/>
 
-        <setInstallerVariable name="install_om_mode" value="upgrade"/>
+        <setInstallerVariable name="install_om_mode" value="normal"/>
         <setInstallerVariable>
             <name>install_om_mode</name>
-            <value>normal</value>
+            <value>upgrade</value>
             <ruleList>
-                <compareText logic="does_not_equal" text="${SMS}" value="false"/>
+                <isTrue value="${has_om}"/>
+            </ruleList>
+        </setInstallerVariable>
+        <setInstallerVariable name="need_install_om" value="true"/>
+        <setInstallerVariable>
+            <name>need_install_om</name>
+            <value>false</value>
+            <ruleList>
+                <isFalse value="${has_om}"/>
+                <compareText logic="equals" text="${SMS}" value="false"/>
             </ruleList>
         </setInstallerVariable>
 
@@ -489,9 +507,19 @@
             <program>${installdir}/install_om.sh</program>
             <programArguments>${install_om_mode} "${installdir}" "${installer_pathname}" ${port} ${om_port} "${om_dbpath}" ${http_port}</programArguments>
             <ruleList>
-                <compareText logic="does_not_equal" text="${SMS}" value="false"/>
+                <compareText logic="equals" text="${install_om_mode}" value="normal"/>
+                <isTrue value="${need_install_om}"/>
             </ruleList>
         </runProgram>
+        <runProgram>
+            <program>${installdir}/install_om.sh</program>
+            <programArguments>${install_om_mode} "${installdir}" "${installer_pathname}"</programArguments>
+            <ruleList>
+                <compareText logic="equals" text="${install_om_mode}" value="upgrade"/>
+                <isTrue value="${need_install_om}"/>
+            </ruleList>
+        </runProgram>
+        
         <changeOwnerAndGroup>
             <files>${installdir}/packet;${installdir}/packet/${installerFilename}</files>
             <group>${groupname}</group>
