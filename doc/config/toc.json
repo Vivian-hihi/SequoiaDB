@@ -3653,10 +3653,10 @@
                      ]
                   },
                   {
-                     "id": 1483944502,
-                     "dir": "add_module",
-                     "cn": "添加业务",
-                     "en": "Add module",
+                     "id": 1546587187,
+                     "dir": "add_sdb_module",
+                     "cn": "添加SequoiaDB业务",
+                     "en": "Add SequoiaDB module",
                      "contents": [
                         {
                            "id": 1484036823,
@@ -3675,24 +3675,32 @@
                            "file": "install_module",
                            "cn": "安装业务",
                            "en": "Install module"
-                        },
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1501736518,
+                     "file": "install_postgresql",
+                     "cn": "添加SequoiaSQL-PostgreSQL业务",
+                     "en": "Install SequoiaSQL-PostgreSQL"
+                  },
+                  {
+                     "id": 1534834770,
+                     "file": "install_mysql",
+                     "cn": "添加SequoiaSQL-MySQL业务",
+                     "en": "Install SequoiaSQL-MySQL"
+                  },
+                  {
+                     "id": 1546587283,
+                     "dir": "discover_module",
+                     "cn": "发现业务",
+                     "en": "Add module",
+                     "contents": [
                         {
                            "id": 1501731657,
-                           "file": "append_module",
-                           "cn": "发现业务",
-                           "en": "Append module"
-                        },
-                        {
-                           "id": 1501736518,
-                           "file": "install_postgresql",
-                           "cn": "创建SequoiaSQL-PostgreSQL业务",
-                           "en": "Install SequoiaSQL-PostgreSQL"
-                        },
-                        {
-                           "id": 1534834770,
-                           "file": "install_mysql",
-                           "cn": "创建SequoiaSQL-MySQL业务",
-                           "en": "Install SequoiaSQL-MySQL"
+                           "file": "append_sdb_module",
+                           "cn": "发现SequoiaDB业务",
+                           "en": "Append SequoiaDB module"
                         }
                      ]
                   },

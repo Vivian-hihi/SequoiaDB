@@ -5,11 +5,11 @@
 
 1. 进入部署首页点击添加业务-创建业务，业务类型选择“SequoiaSQL-MySQL”点击确定开始创建业务。
 
-  ![创建SequoiaSQL-MySQL](sac/deployment/add_module/add_mysql.png)
+  ![创建SequoiaSQL-MySQL](sac/deployment/add_mysql.png)
 
 2. 进入业务配置页面，页面中填写SequoiaSQL-MySQL的相关配置信息，填写完成后点击下一步开始安装。
 
-  ![安装SequoiaSQL-MySQL](sac/deployment/add_module/config_mysql.png)
+  ![安装SequoiaSQL-MySQL](sac/deployment/config_mysql.png)
 
   > **Note：**
   >
@@ -20,7 +20,7 @@
 
 3. 等待安装完成。
 
-  ![安装SequoiaSQL-MySQL](sac/deployment/add_module/install_mysql.png)
+  ![安装SequoiaSQL-MySQL](sac/deployment/install_mysql.png)
 
 4. 创建SequoiaSQL-MySQL业务完成。
 

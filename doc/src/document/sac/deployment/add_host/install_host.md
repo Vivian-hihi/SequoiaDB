@@ -18,6 +18,6 @@
 
 3. 完成添加主机。
 
-   * 如果是 **一键部署**，点击底部的 **下一步** 按钮，进入配置业务，开始配置业务，[点击查看](sac/deployment/add_module/config_module.md)。
+   * 如果是 **一键部署**，点击底部的 **下一步** 按钮，进入配置业务，开始配置SequoiaDB业务，[点击查看](sac/deployment/add_sdb_module/config_module.md)。
 
    * 如果是添加主机，点击底部的 **完成** 按钮，页面自动返回到部署首页。

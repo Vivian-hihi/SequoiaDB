@@ -2,7 +2,7 @@
 当前文档以SequoiaSQL-PostgreSQL业务关联SequoiaDB业务为例。
 
 > **Note：**  
-> 使用关联业务需要SAC有[SequoiaDB业务](sac/deployment/add_module/config_module.md)以及[SequoiaSQL-PostgreSQL业务](sac/deployment/add_module/install_postgresql.md)。
+> 使用关联业务需要SAC有[SequoiaDB业务](sac/deployment/add_sdb_module/config_module.md)以及[SequoiaSQL-PostgreSQL业务](sac/deployment/install_postgresql.md)。
 
 
 ###创建关联

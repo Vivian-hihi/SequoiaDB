@@ -5,15 +5,15 @@
 
 1. 进入部署首页点击添加业务-创建业务，业务类型选择“SequoiaSQL-PostgreSQL”点击确定开始创建业务。
 
-  ![创建SequoiaSQL-PostgreSQL](sac/deployment/add_module/add_oltp.png)
+  ![创建SequoiaSQL-PostgreSQL](sac/deployment/add_oltp.png)
 
 2. 进入业务配置页面，页面中填写SequoiaSQL-PostgreSQL的相关配置信息，配置项留空表示使用该项默认值，填写完成后点击下一步开始安装。
 
-  ![安装SequoiaSQL-PostgreSQL](sac/deployment/add_module/config_oltp.png)
+  ![安装SequoiaSQL-PostgreSQL](sac/deployment/config_oltp.png)
 
 3. 等待安装完成。
 
-  ![安装SequoiaSQL-PostgreSQL](sac/deployment/add_module/install_oltp.png)
+  ![安装SequoiaSQL-PostgreSQL](sac/deployment/install_oltp.png)
 
 4. 创建SequoiaSQL-PostgreSQL业务完成。
 
