@@ -178,8 +178,8 @@
          <cn>副本组之间数据同步控制策略</cn>
       </WebName>
       <Type>string</Type>
-      <Default>keepnormal</Default>
-      <Valid>none,keepnormal,keepall</Valid>
+      <Default>KeepNormal</Default>
+      <Valid>None,KeepNormal,KeepAll</Valid>
       <Display>select box</Display>
       <Level>1</Level>
    </FILLER>
@@ -361,6 +361,199 @@
       <Default></Default>
       <Valid></Valid>
       <Display>text box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>memdebug</Name>
+      <WebName>
+         <en>Enable memory debug</en>
+         <cn>打开内存调试</cn>
+      </WebName>
+      <Type>bool</Type>
+      <Default>false</Default>
+      <Valid>true,false</Valid>
+      <Display>select box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>memdebugsize</Name>
+      <WebName>
+         <en>Memory debug segment size</en>
+         <cn>内存调试段大小</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default>0</Default>
+      <Valid>256-4194304</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>dpslocal</Name>
+      <WebName>
+         <en>Log the operation from local port</en>
+         <cn>记录来自本地端口的操作</cn>
+      </WebName>
+      <Type>bool</Type>
+      <Default>false</Default>
+      <Valid>true,false</Valid>
+      <Display>select box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>traceon</Name>
+      <WebName>
+         <en>Turn on trace when starting</en>
+         <cn>启动时开启跟踪</cn>
+      </WebName>
+      <Type>bool</Type>
+      <Default>false</Default>
+      <Valid>true,false</Valid>
+      <Display>select box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>perfstat</Name>
+      <WebName>
+         <en>Enable performance statistics</en>
+         <cn>开启性能统计</cn>
+      </WebName>
+      <Type>bool</Type>
+      <Default>false</Default>
+      <Valid>true,false</Valid>
+      <Display>select box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>enablemixcmp</Name>
+      <WebName>
+         <en>The compare mode of query matcher</en>
+         <cn>查询的匹配模式</cn>
+      </WebName>
+      <Type>bool</Type>
+      <Default>false</Default>
+      <Valid>true,false</Valid>
+      <Display>select box</Display>
+      <Level>1</Level>
+   </FILLER>
+
+   <FILLER>
+      <Name>maxsubquery</Name>
+      <WebName>
+         <en>The maximum number of sub-query for each SQL request</en>
+         <cn>查询任务的最大分解子查询数量</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default></Default>
+      <Valid>0-</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>replbucketsize</Name>
+      <WebName>
+         <en>Repl bucket size</en>
+         <cn>日志并发同步桶大小</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default></Default>
+      <Valid>1-4096</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>indexscanstep</Name>
+      <WebName>
+         <en>Index scan step</en>
+         <cn>索引扫描步长</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default></Default>
+      <Valid>1-10000</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>tracebufsz</Name>
+      <WebName>
+         <en>Trace buffer size</en>
+         <cn>开启跟踪的缓冲区大小</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default></Default>
+      <Valid>1-1024</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>sharingbreak</Name>
+      <WebName>
+         <en>The timeout period for heartbeat</en>
+         <cn>判定心跳中断的时间</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default></Default>
+      <Valid>5000-300000</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>startshifttime</Name>
+      <WebName>
+         <en>Nodes starting shift time</en>
+         <cn>节点起动漂移时间</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default></Default>
+      <Valid>0-7200</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>extendthreshold</Name>
+      <WebName>
+         <en>The threshold size</en>
+         <cn>预扩展数据段的阈值</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default></Default>
+      <Valid>0-128</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>signalinterval</Name>
+      <WebName>
+         <en>Signal test interval</en>
+         <cn>信号测试周期</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default></Default>
+      <Valid>0-2147483647</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>dmschkinterval</Name>
+      <WebName>
+         <en>The interval for Cluster to check data storage files</en>
+         <cn>检查数据文件一致性的间隔</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default></Default>
+      <Valid>0-240</Valid>
+      <Display>edit box</Display>
+      <Level>1</Level>
+   </FILLER>
+   <FILLER>
+      <Name>optcostthreshold</Name>
+      <WebName>
+         <en>The optimizer estimates a number of data pages</en>
+         <cn>查询优化器忽略IO影响的最小的页数</cn>
+      </WebName>
+      <Type>int</Type>
+      <Default></Default>
+      <Valid>-1-2147483647</Valid>
+      <Display>edit box</Display>
       <Level>1</Level>
    </FILLER>
 </Property>
