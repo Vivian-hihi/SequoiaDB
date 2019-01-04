@@ -13,9 +13,9 @@ include_once Cur_Path.'/../commlib/RenameUtils.php';
 
 class Rename16549 extends PHPUnit_Framework_TestCase
 {
-   private static $oldCSName = "cs16549old";
-   private static $newCSName = "cs16549new";
-   private static $clName = "cl16549";
+   private static $oldCSName = 'cs16549old';
+   private static $newCSName = 'cs16549new';
+   private static $clName = 'cl16549';
    private static $cs;
    private static $db;
    private static $RenameUtils;
@@ -51,17 +51,17 @@ class Rename16549 extends PHPUnit_Framework_TestCase
       $err = self::$db -> dropCS( self::$newCSName );
       if ( $err['errno'] != 0 )
       {
-         throw new Exception("failed to drop cs, errno=".$err['errno']);
+         throw new Exception('failed to drop cs, errno='.$err['errno']);
       }
-      
+      echo "\n---End of the test.\n";
       self::$db->close();
    }
    
-   private static function checkErrno( $expErrno, $actErrno, $msg = "" )
+   private static function checkErrno( $expErrno, $actErrno, $msg = '' )
    {
       if( $expErrno != $actErrno ) 
       {
-         throw new Exception( "expect [".$expErrno."] but found [".$actErrno."]. ".$msg );
+         throw new Exception( 'expect ['.$expErrno.'] but found ['.$actErrno.']. '.$msg );
       }
    }
    
