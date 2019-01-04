@@ -17,6 +17,7 @@
 
 typedef struct _SAC_XML_ELE
 {
+   bool   hidden ;
    string name ;
    string type ;
    string defaultVal ;

@@ -124,6 +124,7 @@ int optGenForSAC::outputFile( int id, fileOutStream &fout, string &outputPath )
            << "      <reloadable>" << tmpInfo.reloadable[lang] << "</reloadable>" << endl
            << "      <reloadstrategy>" << tmpInfo.reloadstrategy[lang] << "</reloadstrategy>" << endl
            << "      <Level>"    << tmpInfo.level << "</Level>" << endl
+           << "      <hidden>"    << ( tmpInfo.hidden ? "true" : "false" ) << "</hidden>" << endl
            << "   </FILLER>" << endl ;
    }
 
@@ -168,11 +169,6 @@ int optGenForSAC::_mergeConfig()
    {
       bool isSkip = false ;
       OPTION_ELE optInfo = _optionList[i] ;
-
-      if ( optInfo.hiddentag )
-      {
-         continue ;
-      }
 
       for ( k = 0; k < SKIP_LIST_SIZE; ++k )
       {
@@ -229,6 +225,8 @@ int optGenForSAC::_mergeConfig()
       {
          _sacXmlList[index].defaultVal = optInfo.defttag ;
       }
+
+      _sacXmlList[index].hidden = optInfo.hiddentag ;
 
       for( k = 0; k < _langListSize(); ++k )
       {
