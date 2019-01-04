@@ -221,34 +221,64 @@ namespace engine
       }
 
       // acquire lock bucket latch, wrapper of _acquireOpLatch()
-      OSS_INLINE void acquireLockBktLatch( const dpsTransLockId & lockId )
+      OSS_INLINE void acquireLockBktLatch
+      (
+         const dpsTransLockId & lockId,
+         const OSS_LATCH_MODE mode
+      )
       {
          const UTIL_OBJIDX bktIdx = _getBucketNo( lockId ) ;
-         _acquireOpLatch( bktIdx ) ;
+         _acquireOpLatch( bktIdx, mode ) ;
       }
 
       // release lock bucket latch, wrapper of _releaseOpLatch
-      OSS_INLINE void releaseLockBktLatch( const dpsTransLockId & lockId )
+      OSS_INLINE void releaseLockBktLatch
+      (
+         const dpsTransLockId & lockId,
+         const OSS_LATCH_MODE mode
+      )
       {
          const UTIL_OBJIDX bktIdx = _getBucketNo( lockId ) ;
-         _releaseOpLatch( bktIdx ) ;
+         _releaseOpLatch( bktIdx, mode ) ;
       }
 
    private:
       // Latch for normal lock operation ( acquire, tryAcquire,
       // testAcquire, release, releaseAll, hasWait etc on ) :
       //     . latch _rwMutext in shared mode
-      //     . latch a bucket slot in exclusively
-      OSS_INLINE void _acquireOpLatch ( const UTIL_OBJIDX bucketIndex )
+      //     . latch a bucket slot
+      OSS_INLINE void _acquireOpLatch 
+      (
+         const UTIL_OBJIDX    bucketIndex,
+         const OSS_LATCH_MODE mode
+      )
       {
          _rwMutex.lock_r() ;
-         _LockHdrBkt[ bucketIndex ].hashHdrLatch.get() ;
+         if ( EXCLUSIVE == mode )
+         {
+            _LockHdrBkt[ bucketIndex ].hashHdrLatch.get() ;
+         }
+         else
+         {
+            _LockHdrBkt[ bucketIndex ].hashHdrLatch.get_shared() ;
+         }
       }
 
       // release latches for normal lock operation
-      OSS_INLINE void _releaseOpLatch ( const UTIL_OBJIDX bucketIndex )
+      OSS_INLINE void _releaseOpLatch
+      (
+         const UTIL_OBJIDX    bucketIndex,
+         const OSS_LATCH_MODE mode
+      )
       {
-         _LockHdrBkt[ bucketIndex ].hashHdrLatch.release() ;
+         if ( EXCLUSIVE == mode )
+         {
+            _LockHdrBkt[ bucketIndex ].hashHdrLatch.release() ;
+         }
+         else
+         {
+            _LockHdrBkt[ bucketIndex ].hashHdrLatch.release_shared() ;
+         }
          _rwMutex.release_r() ;
       }
 
