@@ -3,6 +3,7 @@
 @Modify list :
               2018-10-19  zhaoyu  Create
 ****************************************************************************/
+var sortField=0;
 function main()
 {
    var dataGroupNames = getDataGroupNames();
@@ -74,8 +75,9 @@ function main()
          var doc = [];
          for(var i=1; i<11; i++)
          {
-            doc.push({a0:i});
-            expR.push({a0:i,a:j*coordNum*10 + 10*k + i});
+            doc.push({a1:sortField,a0:i});
+            expR.push({a1:sortField,a0:i,a:j*coordNum*10 + 10*k + i});
+            sortField++;
          }
          cl.insert(doc);
          coord.close();
@@ -83,7 +85,7 @@ function main()
       
    }
    
-   var actR = maincl.find().sort({_id:1});
+   var actR = maincl.find().sort({a1:1});
    checkRec(actR, expR);
    println("---check insert into maincl success");
    

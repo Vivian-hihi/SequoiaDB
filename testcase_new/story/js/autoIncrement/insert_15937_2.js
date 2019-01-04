@@ -3,6 +3,7 @@
 @Modify list :
               2018-10-15  zhaoyu  Create
 ****************************************************************************/
+var sortField=0;
 function main()
 {
    if(commIsStandalone( db ))
@@ -36,14 +37,15 @@ function main()
          var doc = [];
          for(var i=1; i<6; i++)
          {
-            doc.push({a:i, b:i, c:i + "test"});
+            doc.push({a:sortField, b:i, c:i + "test"});
             if(j%2 !==0)
             {
-               expR.push({a:i, b:i, c:i + "test", id:getCacheNum * coordNum *acquireSize + k*acquireSize + i});
+               expR.push({a:sortField, b:i, c:i + "test", id:getCacheNum * coordNum *acquireSize + k*acquireSize + i});
             }else
             {
-               expR.push({a:i, b:i, c:i + "test", id:getCacheNum * coordNum *acquireSize + k*acquireSize + 5 + i});
+               expR.push({a:sortField, b:i, c:i + "test", id:getCacheNum * coordNum *acquireSize + k*acquireSize + 5 + i});
             }
+            sortField++;
          }
          cl.insert(doc);
          coord.close();
@@ -51,7 +53,7 @@ function main()
       
    }
    
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert success");
    

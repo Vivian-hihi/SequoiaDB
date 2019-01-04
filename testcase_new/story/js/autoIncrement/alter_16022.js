@@ -3,6 +3,7 @@
 @Modify list :
               2018-10-25  zhaoyu  Create
 ****************************************************************************/
+var sortField=0;
 function main()
 {
    if(commIsStandalone( db ))
@@ -27,13 +28,14 @@ function main()
       var doc = [];
       for(var i=0;i<100;i++)
       {
-         doc.push({a:i});
-         expR.push({a:i, id:1 + k*1000 + i});
+         doc.push({a:sortField});
+         expR.push({a:sortField, id:1 + k*1000 + i});
+         sortField++;
       }
       cl.insert(doc);
       coord.close();
    }
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert success");
    
@@ -69,13 +71,14 @@ function main()
       var doc = [];
       for(var i=0;i<100;i++)
       {
-         doc.push({a:i});
-         expR.push({a:i, id: currentValue + increment + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment*i});
+         doc.push({a:sortField});
+         expR.push({a:sortField, id: currentValue + increment + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment*i});
+         sortField++;
       }
       cl.insert(doc);
       coord.close();
    }
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert after alter autoIncrement success");
    commDropCL(db, COMMCSNAME, clName, true, true); 

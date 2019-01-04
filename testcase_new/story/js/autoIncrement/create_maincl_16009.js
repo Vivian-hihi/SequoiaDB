@@ -108,7 +108,7 @@ function main()
       expR.push({a:i,b:i,id1:startValue + increment*i});
    }
    maincl.insert(doc);
-   var actR = maincl.find().sort({_id:1});
+   var actR = maincl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert into maincl success");
    

@@ -3,6 +3,7 @@
 @Modify list :
               2018-10-26  zhaoyu  Create
 ****************************************************************************/
+var sortField=0;
 function main()
 {
    var dataGroupNames = getDataGroupNames();
@@ -50,12 +51,13 @@ function main()
    var expR = [];
    for(var i=0; i<100; i++)
    {
-      doc.push({a:i,b:i});
-      expR.push({a:i,b:i,id:i*increment +1});
+      doc.push({a:sortField,b:i});
+      expR.push({a:sortField,b:i,id:i*increment +1});
+      sortField++;
    }
    dbcl.insert(doc);
    
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert success");
    
@@ -87,13 +89,14 @@ function main()
       var doc = [];
       for(var i=0;i<100;i++)
       {
-         doc.push({a:i});
-         expR.push({a:i, id: nextValue + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment*i});
+         doc.push({a:sortField});
+         expR.push({a:sortField, id: nextValue + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment*i});
+         sortField++;
       }
       cl.insert(doc);
       coord.close();
    }
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert after alter autoIncrement success");
    

@@ -3,6 +3,7 @@
 @Modify list :
               2018-10-25  zhaoyu  Create
 ****************************************************************************/
+var sortField=0;
 function main()
 {
    var coordNodes = getCoordNodeNames();
@@ -27,11 +28,12 @@ function main()
    var expR = [];
    for(var i=0; i<1001; i++)
    {
-      dbcl.insert({a:i});
-      expR.push({a:i, id:1 + increment *i});
+      dbcl.insert({a:sortField});
+      expR.push({a:sortField, id:1 + increment *i});
+      sortField++;
    }
    
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert when set Increment>0 success");
    
@@ -53,7 +55,7 @@ function main()
       }
       coord.close();
    }
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert when Sequence is exceeded success");
    
@@ -66,11 +68,12 @@ function main()
    dbcl.createAutoIncrement({Field: fieldName, CacheSize:cacheSize, AcquireSize:acquireSize, Increment:increment, MinValue:minValue, MaxValue:maxValue});
    for(var i=0; i<1001; i++)
    {
-      dbcl.insert({a:i});
-      expR.push({a:i, id:-1 + increment *i});
+      dbcl.insert({a:sortField});
+      expR.push({a:sortField, id:-1 + increment *i});
+      sortField++;
    }
    
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert when set Increment<0 success");
    
@@ -92,7 +95,7 @@ function main()
       }
       coord.close();
    }
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert when Sequence is exceeded success");
    

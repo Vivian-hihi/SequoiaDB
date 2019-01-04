@@ -3,6 +3,7 @@
 @Modify list :
               2018-10-17  zhaoyu  Create
 ****************************************************************************/
+var sortField=0;
 function main()
 {
    var dataGroupNames = getDataGroupNames();
@@ -34,32 +35,34 @@ function main()
    var expR = [];
    for(var i=0; i<100; i++)
    {
-      doc.push({a:i,b:i});
-      expR.push({a:i,b:i,id:i*increment +1});
+      doc.push({a1:sortField,a:i,b:i});
+      expR.push({a1:sortField,a:i,b:i,id:i*increment +1});
+      sortField++;
    }
    dbcl.insert(doc);
    
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a1:1});
    checkRec(actR, expR);
    println("---check insert before split success");
    
    dbcl.split(dataGroupNames[0], dataGroupNames[1], {a:50});
    
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    
    var doc = [];
    for(var i=0; i<100; i++)
    {
-      doc.push({a:i,b:i});
-      expR.push({a:i,b:i,id:(100+i)*increment +1});
+      doc.push({a1:sortField,a:i,b:i});
+      expR.push({a1:sortField,a:i,b:i,id:(100+i)*increment +1});
+      sortField++;
    }
    dbcl.insert(doc);
    
    checkCountFromNode( dataGroupNames[0], COMMCSNAME, clName, 100 );
    checkCountFromNode( dataGroupNames[1], COMMCSNAME, clName, 100 );
    
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a1:1});
    checkRec(actR, expR);
    println("---check insert after split success");
    

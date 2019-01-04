@@ -3,6 +3,7 @@
 @Modify list :
               2018-10-16  zhaoyu  Create
 ****************************************************************************/
+var sortField=0;
 function main()
 {
    if(commIsStandalone( db ))
@@ -31,15 +32,16 @@ function main()
          var doc = [];
          for(var i=1; i<2001; i++)
          {
-            doc.push({a:i, b:i, c:i + "test"});
-            expR.push({a:i, b:i, c:i + "test", id:k*4000 + j*2000 + i});
+            doc.push({a:sortField, b:i, c:i + "test"});
+            expR.push({a:sortField, b:i, c:i + "test", id:k*4000 + j*2000 + i});
+            sortField++;
          }
          cl.insert(doc);
       }
       coord.close();
    }
    
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert success");
    

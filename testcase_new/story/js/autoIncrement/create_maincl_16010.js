@@ -3,6 +3,7 @@
 @Modify list :
               2018-10-25  zhaoyu  Create
 ****************************************************************************/
+var sortField=0;
 function main()
 {
    var dataGroupNames = getDataGroupNames();
@@ -43,7 +44,7 @@ function main()
    var acquireSize = 10;
    var cycled = true;
    var generated = "strict";
-   var mainclOption = {IsMainCL: true, ShardingKey: {"a": 1}, ShardingType: "range", AutoIncrement:{Field:mainclFieldName, Increment:increment,
+   var mainclOption = {IsMainCL: true, ShardingKey: {"a1": 1}, ShardingType: "range", AutoIncrement:{Field:mainclFieldName, Increment:increment,
                        StartValue:startValue, MinValue:minValue, MaxValue:maxValue, CacheSize:cacheSize, AcquireSize:acquireSize, Cycled:cycled,
                        Generated:generated}};
    maincl = commCreateCLByOption( db, maincsName, mainclName, mainclOption);
@@ -61,9 +62,9 @@ function main()
    subcl1.split( dataGroupNames[0], dataGroupNames[1], {a0:10}, {a0:20} );
    subcl2.split( dataGroupNames[0], dataGroupNames[1], 50 );
    
-   maincl.attachCL( subclFullName1, {LowBound: {a:0}, UpBound:{a:20}} );
-   maincl.attachCL( subclFullName2, {LowBound: {a:20}, UpBound:{a:40}} );
-   maincl.attachCL( subclFullName3, {LowBound: {a:40}, UpBound:{a:6000}} );
+   maincl.attachCL( subclFullName1, {LowBound: {a1:0}, UpBound:{a1:20}} );
+   maincl.attachCL( subclFullName2, {LowBound: {a1:20}, UpBound:{a1:40}} );
+   maincl.attachCL( subclFullName3, {LowBound: {a1:40}, UpBound:{a1:6000}} );
   
    var mainclID = getCLID(maincsName, mainclName);
    var mainclSequenceName = "SYS_" + mainclID + "_" + mainclFieldName + "_SEQ";
@@ -104,11 +105,12 @@ function main()
    var expR = [];
    for(var i=0; i<100; i++)
    {
-      doc.push({a:i,b:i});
-      expR.push({a:i,b:i,id1:startValue + increment*i});
+      doc.push({a:sortField,a1:i,b:i});
+      expR.push({a:sortField,a1:i,b:i,id1:startValue + increment*i});
+      sortField++;
    }
    maincl.insert(doc);
-   var actR = maincl.find().sort({_id:1});
+   var actR = maincl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert into maincl success");
    
@@ -133,11 +135,12 @@ function main()
    var expR = [];
    for(var i=100; i<200; i++)
    {
-      doc.push({a:i,b:i});
-      expR.push({a:i,b:i,id1:startValue + increment*i});
+      doc.push({a:sortField,a1:i,b:i});
+      expR.push({a:sortField,a1:i,b:i,id1:startValue + increment*i});
+      sortField++;
    }
    maincl.insert(doc);
-   var actR = maincl.find({a:{$gte:100}}).sort({_id:1});
+   var actR = maincl.find({a1:{$gte:100}}).sort({a:1});
    checkRec(actR, expR);
    println("---check insert into maincl after drop subcl success");
    
@@ -146,12 +149,13 @@ function main()
    var j=0;
    for(var i=200; i<300; i++)
    {
-      doc.push({a:i,b:i});
-      expR.push({a:i,b:i,id3:1 + j});
+      doc.push({a:sortField,a1:i,b:i});
+      expR.push({a:sortField,a1:i,b:i,id3:1 + j});
+      sortField++;
       j++;
    }
    subcl3.insert(doc);
-   var actR = maincl.find({a:{$gte:200}}).sort({_id:1});
+   var actR = maincl.find({a1:{$gte:200}}).sort({a:1});
    checkRec(actR, expR);
    println("---check insert into other subcl success");
    

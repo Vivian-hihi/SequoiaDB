@@ -42,7 +42,7 @@ function main()
    
    checkCountFromNode( dataGroupNames[0], COMMCSNAME, clName, 49);
    checkCountFromNode( dataGroupNames[1], COMMCSNAME, clName, 51);
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    
    commDropCL(db, COMMCSNAME, clName, true, true);

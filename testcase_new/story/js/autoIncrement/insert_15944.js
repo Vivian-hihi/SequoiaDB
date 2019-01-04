@@ -3,6 +3,7 @@
 @Modify list :
               2018-10-16  zhaoyu  Create
 ****************************************************************************/
+var sortField=0;
 function main()
 {
    if(commIsStandalone( db ))
@@ -22,12 +23,13 @@ function main()
       var doc = [];
       for(var i=1; i<6; i++)
       {
-         doc.push({a:i});
-         expR.push({a:i, id1:j*5 + i, id2:-(j*5 + i)});
+         doc.push({a:sortField});
+         expR.push({a:sortField, id1:j*5 + i, id2:-(j*5 + i)});
+         sortField++;
       }
       dbcl.insert(doc);
    }
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert record not set increment field success");
    
@@ -36,12 +38,13 @@ function main()
       var doc = [];
       for(var i=0; i<5; i++)
       {
-         doc.push({a:i, id1:i, id2:i});
-         expR.push({a:i, id1:i, id2:i});
+         doc.push({a:sortField, id1:i, id2:i});
+         expR.push({a:sortField, id1:i, id2:i});
+         sortField++;
       }
       dbcl.insert(doc);
    }
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert set increment field success");
    

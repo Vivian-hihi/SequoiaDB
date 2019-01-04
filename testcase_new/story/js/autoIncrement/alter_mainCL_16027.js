@@ -3,6 +3,7 @@
 @Modify list :
               2018-10-26  zhaoyu  Create
 ****************************************************************************/
+var sortField=0;
 function main()
 {
    var dataGroupNames = getDataGroupNames();
@@ -73,14 +74,15 @@ function main()
       var doc = [];
       for(var i=0; i<100; i++)
       {
-         doc.push({a:i, a0:i});
-         expR.push({a:i, a0:i, id: 1 + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment *i});
+         doc.push({a:sortField, a0:i});
+         expR.push({a:sortField, a0:i, id: 1 + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment *i});
+         sortField++;
       }
       cl.insert(doc);
       coord.close();
    }
    
-   var actR = maincl.find().sort({_id:1});
+   var actR = maincl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert into maincl success");
    
@@ -113,13 +115,14 @@ function main()
       var doc = [];
       for(var i=0;i<100;i++)
       {
-         doc.push({a:i});
-         expR.push({a:i, id: nextValue + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment*i});
+         doc.push({a:sortField});
+         expR.push({a:sortField, id: nextValue + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment*i});
+         sortField++;
       }
       cl.insert(doc);
       coord.close();
    }
-   var actR = maincl.find().sort({_id:1});
+   var actR = maincl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert after alter autoIncrement success");
    

@@ -3,6 +3,7 @@
 @Modify list :
               2018-10-24  zhaoyu  Create
 ****************************************************************************/
+var sortField=0;
 function main()
 {
    if(commIsStandalone( db ))
@@ -37,12 +38,13 @@ function main()
    var expR = [];
    for(var i=0; i<2000; i++)
    {
-      doc.push({a:i});
-      expR.push({a:i, id:startValue + increment *i});
+      doc.push({a:sortField});
+      expR.push({a:sortField, id:startValue + increment *i});
+      sortField++;
    }
    dbcl.insert(doc);
    
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert when set cacheSize success");
    

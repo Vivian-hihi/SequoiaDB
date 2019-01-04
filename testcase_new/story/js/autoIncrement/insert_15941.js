@@ -32,7 +32,7 @@ function main()
       }
    }
    
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert success");
    

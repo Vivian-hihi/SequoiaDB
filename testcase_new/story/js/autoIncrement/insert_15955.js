@@ -33,7 +33,7 @@ function main()
       expR.push({a:i,id:{a:{b:{c:i+1}}}});
    }
    
-   var actR = dbcl.find().sort({_id:1});
+   var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check not set increment field insert record success");
    

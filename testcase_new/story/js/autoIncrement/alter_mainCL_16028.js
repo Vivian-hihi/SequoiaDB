@@ -3,6 +3,7 @@
 @Modify list :
               2018-10-26  zhaoyu  Create
 ****************************************************************************/
+var sortField=0;
 function main()
 {
    var dataGroupNames = getDataGroupNames();
@@ -89,8 +90,9 @@ function main()
       var doc = [];
       for(var i=0; i<100; i++)
       {
-         doc.push({a:i, a0:i});
-         expR.push({a:i, a0:i, id1: 1 + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment *i});
+         doc.push({a:sortField, a0:i});
+         expR.push({a:sortField, a0:i, id1: 1 + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment *i});
+         sortField++;
       }
       cl.insert(doc);
       coord.close();
@@ -99,7 +101,7 @@ function main()
       
    }
    
-   var actR = maincl.find().sort({_id:1});
+   var actR = maincl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert into maincl success");
    
@@ -110,13 +112,14 @@ function main()
       var doc = [];
       for(var i=0; i<100; i++)
       {
-         doc.push({a:i, a0:i});
-         expR.push({a:i, a0:i, id2: 1 + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment *i});
+         doc.push({a:sortField, a0:i});
+         expR.push({a:sortField, a0:i, id2: 1 + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment *i});
+         sortField++;
       }
       cl.insert(doc);
       coord.close();
    }
-   var actR = subcl1.find().sort({_id:1});
+   var actR = subcl1.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert into subcl1 success");
    
@@ -144,11 +147,12 @@ function main()
       var coord = new Sdb(coordNodes[k]);
       var cl = coord.getCS(maincsName).getCL(mainclName);
       var doc = [];
-      cl.insert({a:1});
-      expR.push({a:1, id1: mainclCoordCurrentvalue[k]});
+      cl.insert({a:sortField});
+      expR.push({a:sortField, id1: mainclCoordCurrentvalue[k]});
+      sortField++;
       coord.close();
    }
-   var actR = maincl.find().sort({_id:1});
+   var actR = maincl.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert after alter autoIncrement success");
    
@@ -162,13 +166,14 @@ function main()
       var doc = [];
       for(var i=0;i<100;i++)
       {
-         doc.push({a:i});
-         expR.push({a:i, id2: nextValue + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment*i});
+         doc.push({a:sortField});
+         expR.push({a:sortField, id2: nextValue + Math.ceil(100/acquireSize)*acquireSize*increment*k + increment*i});
+         sortField++;
       }
       cl.insert(doc);
       coord.close();
    }
-   var actR = subcl1.find().sort({_id:1});
+   var actR = subcl1.find().sort({a:1});
    checkRec(actR, expR);
    println("---check insert after alter autoIncrement success");
    
