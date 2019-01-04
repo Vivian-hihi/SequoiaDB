@@ -19,16 +19,16 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 /**
- * @Description: seqDB-16414 :: 指定nextVersionIdMarker匹配记录被删除，查询版本列表信息
+ * @Description:  seqDB-17049:指定versionIdMarker != null查询对象版本列表，且版本列表中有versionId == null的记录
  * @author fanyu
- * @Date:2018年11月23日
+ * @Date:2019年01月04日
  * @version:1.0
  */
 
-public class ListVersionsByNextKeyMaxKey16414 extends S3TestBase {
+public class ListVersionsByVersionId17049 extends S3TestBase {
     private boolean runSuccess = false;
-    private String bucketName = "bucket16414";
-    private String[] objectNames = {"16414/123", "16414/456", "16414/789", "16414/ABC", "16414/DEF"};
+    private String bucketName = "bucket17049";
+    private String[] objectNames = {"17049:012", "17049:345", "17049:678", "17049:9AB", "17049:CDE"};
     private AmazonS3 s3Client = null;
     private int versionNum = 3;
 
@@ -39,13 +39,20 @@ public class ListVersionsByNextKeyMaxKey16414 extends S3TestBase {
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (String objectName : objectNames) {
-            for (int j = 0; j < versionNum; j++) {
-                s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
-            }
+            s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
+        }
+        CommLib.setBucketVersioning(s3Client, bucketName,  BucketVersioningConfiguration.SUSPENDED);
+        for (String objectName : objectNames) {
+            s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
+        }
+        CommLib.setBucketVersioning(s3Client, bucketName,  BucketVersioningConfiguration.ENABLED);
+        for (String objectName : objectNames) {
+            s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
         }
     }
 
-    @Test//bug:3986
+    //null的内部versionId小于versionIdMarker记录
+    @Test
     private void test() throws Exception {
         int index = 0;
         String keyMarker = objectNames[index];
@@ -62,7 +69,11 @@ public class ListVersionsByNextKeyMaxKey16414 extends S3TestBase {
         MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
         for (int i = index; i < maxResults / versionNum; i++) {
             for (int j = versionNum - 1; j >= 0; j--) {
-                expMap.add(objectNames[i], String.valueOf(j));
+                if(j != 1) {
+                    expMap.add(objectNames[i], String.valueOf(j));
+                }else{
+                    expMap.add(objectNames[i], "null");
+                }
             }
         }
         expMap.add(objectNames[2],"2");
@@ -70,22 +81,27 @@ public class ListVersionsByNextKeyMaxKey16414 extends S3TestBase {
         Assert.assertTrue(vsList.isTruncated(),"vsList.isTruncated() must be true");
         ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),expMap);
 
+       //null的内部versionId大于versionIdMarker记录
+        Integer maxResults1 = 7;
         String nextKeyMarker = vsList.getNextKeyMarker();
-        String nextVersionIdMarker = String.valueOf(1);
-        s3Client.deleteVersion(bucketName, nextKeyMarker, nextVersionIdMarker);
+        String nextVersionIdMarker ="1";
 
         VersionListing vsList1 = s3Client.listVersions( new ListVersionsRequest()
                 .withBucketName(bucketName)
                 .withKeyMarker(nextKeyMarker)
                 .withVersionIdMarker(String.valueOf(nextVersionIdMarker))
-                .withMaxResults(maxResults));
+                .withMaxResults(maxResults1));
 
         //expected results
         MultiValueMap<String,String> expMap1 = new LinkedMultiValueMap<String,String>();
-        expMap1.add(objectNames[2],"0");
+        expMap1.add(objectNames[2],String.valueOf(0));
         for (int i = 3; i < objectNames.length; i++) {
             for (int j = versionNum - 1; j >= 0; j--) {
-                expMap1.add(objectNames[i], String.valueOf(j));
+                if(j != 1) {
+                    expMap1.add(objectNames[i], String.valueOf(j));
+                }else{
+                    expMap1.add(objectNames[i], "null");
+                }
             }
         }
         Assert.assertFalse(vsList1.isTruncated(),"vsList.isTruncated() must be false");

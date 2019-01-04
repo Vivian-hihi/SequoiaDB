@@ -19,16 +19,16 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 /**
- * @Description: seqDB-16414 :: 指定nextVersionIdMarker匹配记录被删除，查询版本列表信息
+ * @Description: seqDB-17050:指定versionIdmarker == null查询对象版本列表，且版本列表中有versionId == null的记录
  * @author fanyu
- * @Date:2018年11月23日
+ * @Date:2019年01月04日
  * @version:1.0
  */
 
-public class ListVersionsByNextKeyMaxKey16414 extends S3TestBase {
+public class ListVersionsByVersionId17050 extends S3TestBase {
     private boolean runSuccess = false;
-    private String bucketName = "bucket16414";
-    private String[] objectNames = {"16414/123", "16414/456", "16414/789", "16414/ABC", "16414/DEF"};
+    private String bucketName = "bucket17050";
+    private String[] objectNames = {"17050//123", "17050//345", "17050//567", "17050//9AB", "17050//CDE"};
     private AmazonS3 s3Client = null;
     private int versionNum = 3;
 
@@ -37,59 +37,41 @@ public class ListVersionsByNextKeyMaxKey16414 extends S3TestBase {
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
-        CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (String objectName : objectNames) {
-            for (int j = 0; j < versionNum; j++) {
+            s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
+        }
+        CommLib.setBucketVersioning(s3Client, bucketName,  BucketVersioningConfiguration.ENABLED);
+        for (String objectName : objectNames) {
+            for(int i = 0; i < versionNum -1; i++) {
                 s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
             }
         }
     }
 
-    @Test//bug:3986
+    @Test
     private void test() throws Exception {
         int index = 0;
         String keyMarker = objectNames[index];
-        int versionIdMarker = versionNum;
-        Integer maxResults = 7;
+        String  versionIdMarker = "null";
 
         VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
                 .withBucketName(bucketName)
                 .withKeyMarker(keyMarker)
-                .withVersionIdMarker(String.valueOf(versionIdMarker))
-                .withMaxResults(maxResults));
+                .withVersionIdMarker(versionIdMarker));
 
         //expected results
         MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-        for (int i = index; i < maxResults / versionNum; i++) {
+        for (int i = index+1; i < objectNames.length; i++) {
             for (int j = versionNum - 1; j >= 0; j--) {
-                expMap.add(objectNames[i], String.valueOf(j));
+                if(j != 0) {
+                    expMap.add(objectNames[i], String.valueOf(j));
+                }else{
+                    expMap.add(objectNames[i], "null");
+                }
             }
         }
-        expMap.add(objectNames[2],"2");
-
-        Assert.assertTrue(vsList.isTruncated(),"vsList.isTruncated() must be true");
+        Assert.assertFalse(vsList.isTruncated(),"vsList.isTruncated() must be false");
         ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),expMap);
-
-        String nextKeyMarker = vsList.getNextKeyMarker();
-        String nextVersionIdMarker = String.valueOf(1);
-        s3Client.deleteVersion(bucketName, nextKeyMarker, nextVersionIdMarker);
-
-        VersionListing vsList1 = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withKeyMarker(nextKeyMarker)
-                .withVersionIdMarker(String.valueOf(nextVersionIdMarker))
-                .withMaxResults(maxResults));
-
-        //expected results
-        MultiValueMap<String,String> expMap1 = new LinkedMultiValueMap<String,String>();
-        expMap1.add(objectNames[2],"0");
-        for (int i = 3; i < objectNames.length; i++) {
-            for (int j = versionNum - 1; j >= 0; j--) {
-                expMap1.add(objectNames[i], String.valueOf(j));
-            }
-        }
-        Assert.assertFalse(vsList1.isTruncated(),"vsList.isTruncated() must be false");
-        ObjectUtils.checkListVSResults(vsList1,new ArrayList<String>(),expMap1);
         runSuccess = true;
     }
 
