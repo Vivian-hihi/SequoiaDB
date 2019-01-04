@@ -26,12 +26,13 @@
 设置Authorization的Header值为Credential=ABCDEFGHIJKLMNOPQRST/20180524/china/s3/aws4_request
 
 错误排查：
-1.如果系统启动后执行任何命令都出现“GetDBConnectFail”错误，需检查application.properties中
-sdbs3.sequoiadb.url的IP、端口配置是否与数据库配置相匹配
+1.如果系统启动失败
+  a.首先排查监听端口号是否被占用，修改端口号后重新启动验证。
+  b.非端口号问题，再检查application.properties中sdbs3.sequoiadb.url的IP、端口配置是否与数据库配置相匹配，修改后重新启动验证
+  c.如出现“Collection space does not exist”或“Collection does not exist”此类错误，请检查数据库中集合空间
+    名称是否与配置文件中的集合空间名称一致，用户集合名称是否为User，桶集合名称是否为BucketList，建议通过
+	createCSCLexample.js脚本创建集合空间及User和BucketList，配置完成后重新启动验证。
+  d.打开nohup.out，检查错误日志，排查错误后重新启动验证。
 
-2.如果初次启动系统出现1中的数据库连接错误，默认管理员用户创建失败，修正数据库连接错误后，
-需重新启动系统以触发创建默认管理员用户操作。如出现“Collection space does not exist”或
-“Collection does not exist”此类错误，请检查数据库中集合空间名称是否与配置文件中的集合空
-间名称一致，用户集合名称是否为User，桶集合名称是否为BucketList
 
 
