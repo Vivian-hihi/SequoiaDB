@@ -1927,8 +1927,6 @@ namespace engine
       {
          rc = clsAutoIncItem::validAutoIncOption( fldList[i]->getArgument() ) ;
          PD_RC_CHECK( rc, PDWARNING, "Invalid autoIncrement options" ) ;
-         rc = catValidSequenceOption( fldList[i]->getArgument() ) ;
-         PD_RC_CHECK( rc, PDWARNING, "Invalid autoIncrement options" ) ;
       }
 
    done :
