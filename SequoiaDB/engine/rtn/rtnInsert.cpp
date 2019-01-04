@@ -226,36 +226,45 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s",
                    pCollectionName ) ;
 
-      // Insertion on capped collection should be done by position.
-      if ( DMS_STORAGE_CAPPED == su->type() )
+      try
       {
-         positionEle = obj.getField( DMS_ID_KEY_NAME ) ;
-         if ( NumberLong != positionEle.type() )
+         // Insertion on capped collection should be done by position.
+         if ( DMS_STORAGE_CAPPED == su->type() )
          {
-            PD_LOG( PDERROR, "Field _id type[ %d ] is not as expected"
-                    "[ %d ]", positionEle.type(), NumberLong ) ;
-            rc = SDB_SYS ;
-            goto error ;
+            positionEle = obj.getField( DMS_ID_KEY_NAME ) ;
+            if ( NumberLong != positionEle.type() )
+            {
+               PD_LOG( PDERROR, "Field _id type[ %d ] is not as expected"
+                       "[ %d ]", positionEle.type(), NumberLong ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            position = positionEle.numberLong() ;
          }
 
-         position = positionEle.numberLong() ;
+         rc = su->insertRecord( clShortName, obj, cb, dpsCB, TRUE,
+                                TRUE, NULL, position ) ;
+         if ( rc )
+         {
+            if ( ( SDB_IXM_DUP_KEY == rc ) &&
+                 ( FLG_INSERT_CONTONDUP & flags ) )
+            {
+               rc = SDB_OK ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Insert record by position[ %lld ] failed, "
+                       "rc: %d", positionEle.numberLong(), rc) ;
+               goto error ;
+            }
+         }
       }
-
-      rc = su->insertRecord( clShortName, obj, cb, dpsCB, TRUE,
-                             TRUE, NULL, position ) ;
-      if ( rc )
+      catch( std::exception &e )
       {
-         if ( ( SDB_IXM_DUP_KEY == rc ) &&
-              ( FLG_INSERT_CONTONDUP & flags ) )
-         {
-            rc = SDB_OK ;
-         }
-         else
-         {
-            PD_LOG( PDERROR, "Insert record by position[ %lld ] failed, "
-                    "rc: %d", positionEle.numberLong(), rc) ;
-            goto error ;
-         }
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Occur exception: %s, rc: %d", e.what(), rc ) ;
+         goto error ;
       }
 
    done:

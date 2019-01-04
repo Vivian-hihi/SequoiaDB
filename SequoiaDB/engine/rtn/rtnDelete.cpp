@@ -146,84 +146,93 @@ namespace engine
          goto error ;
       }
 
-      apm = rtnCB->getAPM() ;
-      SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
-
-      // plan is released when exiting the function
-      rc = apm->getAccessPlan( options, FALSE, su, mbContext, planRuntime ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s for delete, "
-                   "rc: %d", options._fullName, rc ) ;
-
-      if ( planRuntime.getScanType() == TBSCAN )
+      try
       {
-         rc = rtnGetTBScanner( pCollectionShortName, &planRuntime, su,
-                               mbContext, cb, &pScanner,
-                               DMS_ACCESS_TYPE_DELETE ) ;
-      }
-      else if ( planRuntime.getScanType() == IXSCAN )
-      {
-         rc = rtnGetIXScanner( pCollectionShortName, &planRuntime, su,
-                               mbContext, cb, &pScanner,
-                               DMS_ACCESS_TYPE_DELETE ) ;
-      }
-      else
-      {
-         PD_LOG ( PDERROR, "Invalid return type for scan" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get dms scanner, rc: %d", rc ) ;
+         apm = rtnCB->getAPM() ;
+         SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
-      // delete
-      {
-         _mthRecordGenerator generator ;
-         dmsRecordID recordID ;
-         ossValuePtr recordDataPtr = 0 ;
+         // plan is released when exiting the function
+         rc = apm->getAccessPlan( options, FALSE, su, mbContext, planRuntime ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for %s for delete"
+                      ", rc: %d", options._fullName, rc ) ;
 
-         ossTick startTime, endTime, execStartTime, execEndTime ;
-         ossTickDelta queryTime ;
-         monContextCB monCtxCB ;
-         rtnReturnOptions returnOptions ;
-
-         if ( cb->getMonConfigCB()->timestampON )
+         if ( planRuntime.getScanType() == TBSCAN )
          {
-            monCtxCB.recordStartTimestamp() ;
+            rc = rtnGetTBScanner( pCollectionShortName, &planRuntime, su,
+                                  mbContext, cb, &pScanner,
+                                  DMS_ACCESS_TYPE_DELETE ) ;
          }
-
-         startTime = krcb->getCurTime() ;
-
-         while ( SDB_OK == ( rc = pScanner->advance( recordID, generator,
-                                                     cb ) ) )
+         else if ( planRuntime.getScanType() == IXSCAN )
          {
-            execStartTime = krcb->getCurTime() ;
-
-            generator.getDataPtr( recordDataPtr ) ;
-            rc = su->data()->deleteRecord( mbContext, recordID, recordDataPtr,
-                                           cb, dpsCB ) ;
-            PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
-            ++delNum ;
-
-            execEndTime = krcb->getCurTime() ;
-            monCtxCB.monExecuteTimeInc( execStartTime, execEndTime ) ;
+            rc = rtnGetIXScanner( pCollectionShortName, &planRuntime, su,
+                                  mbContext, cb, &pScanner,
+                                  DMS_ACCESS_TYPE_DELETE ) ;
          }
-
-         if ( SDB_DMS_EOC == rc )
+         else
          {
-            rc = SDB_OK ;
-         }
-         else if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to get next record, rc: %d", rc ) ;
+            PD_LOG ( PDERROR, "Invalid return type for scan" ) ;
+            rc = SDB_SYS ;
             goto error ;
          }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get dms scanner, rc: %d", rc ) ;
 
-         endTime = krcb->getCurTime() ;
-         queryTime = endTime - startTime ;
-         queryTime -= monCtxCB.getExecuteTime() ;
-         monCtxCB.setQueryTime( queryTime ) ;
+         // delete
+         {
+            _mthRecordGenerator generator ;
+            dmsRecordID recordID ;
+            ossValuePtr recordDataPtr = 0 ;
 
-         planRuntime.setQueryActivity( MON_DELETE, monCtxCB, returnOptions,
-                                       TRUE ) ;
+            ossTick startTime, endTime, execStartTime, execEndTime ;
+            ossTickDelta queryTime ;
+            monContextCB monCtxCB ;
+            rtnReturnOptions returnOptions ;
+
+            if ( cb->getMonConfigCB()->timestampON )
+            {
+               monCtxCB.recordStartTimestamp() ;
+            }
+
+            startTime = krcb->getCurTime() ;
+
+            while ( SDB_OK == ( rc = pScanner->advance( recordID, generator,
+                                                        cb ) ) )
+            {
+               execStartTime = krcb->getCurTime() ;
+
+               generator.getDataPtr( recordDataPtr ) ;
+               rc = su->data()->deleteRecord( mbContext, recordID, recordDataPtr,
+                                              cb, dpsCB ) ;
+               PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
+               ++delNum ;
+
+               execEndTime = krcb->getCurTime() ;
+               monCtxCB.monExecuteTimeInc( execStartTime, execEndTime ) ;
+            }
+
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+            }
+            else if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to get next record, rc: %d", rc ) ;
+               goto error ;
+            }
+
+            endTime = krcb->getCurTime() ;
+            queryTime = endTime - startTime ;
+            queryTime -= monCtxCB.getExecuteTime() ;
+            monCtxCB.setQueryTime( queryTime ) ;
+
+            planRuntime.setQueryActivity( MON_DELETE, monCtxCB, returnOptions,
+                                          TRUE ) ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Occur exception: %s, rc: %d", e.what(), rc ) ;
+         goto error ;
       }
 
    done :

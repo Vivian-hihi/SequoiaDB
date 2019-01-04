@@ -656,6 +656,8 @@ namespace engine
          goto error ;
       }
 
+      try
+      {
       // create a new context
       rc = rtnCB->contextNew ( options.testFlag( FLG_QUERY_PARALLED ) ?
                                RTN_CONTEXT_PARADATA : RTN_CONTEXT_DATA,
@@ -800,6 +802,13 @@ namespace engine
          rc = rtnSort ( (rtnContext**)&dataContext, options.getOrderBy(), cb,
                         options.getSkip(), options.getLimit(), contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
+      }
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Occur exception: %s, rc: %d", e.what(), rc ) ;
+         goto error ;
       }
 
       // sample timetamp

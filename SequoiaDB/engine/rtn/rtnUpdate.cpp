@@ -188,6 +188,8 @@ namespace engine
          goto error ;
       }
 
+      try
+      {
       apm = rtnCB->getAPM() ;
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
@@ -317,6 +319,14 @@ namespace engine
 
       planRuntime.setQueryActivity( MON_UPDATE, monCtxCB, returnOptions,
                                     TRUE ) ;
+
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Occur exception: %s, rc: %d", e.what(), rc ) ;
+         goto error ;
+      }
 
    done :
       if ( pUpdateNum )
