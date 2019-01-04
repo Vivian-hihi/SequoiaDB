@@ -301,24 +301,28 @@ TEST_F( replicaGroupTest, detachNode )
 
    //SEQUOIADBMAINSTREAM-4004
    // detach node 
-//   rc = sdbDetachNode( rg, hostName, svcName2, NULL ) ;
-//   ASSERT_EQ( SDB_OK, rc ) << "Failed to detach data node from group " <<
-//      pGroupName << ", rc = " << rc ;
+   bson option;
+   bson_init( &option );
+   bson_append_bool( &option,"KeepData", true ) ;
+   bson_finish( &option ) ;
+   rc = sdbDetachNode( rg, hostName, svcName2, &option ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "Failed to detach data node from group " <<
+   pGroupName << ", rc = " << rc ;
 
    // check
-//   rc = sdbGetNodeByHost( rg, hostName, svcName2, &node ) ;
-//   ASSERT_EQ( SDB_CLS_NODE_NOT_EXIST, rc ) << "What we expect is "
-//      "SDB_CLS_NODE_NOT_EXIST, but rc = " << rc ;
+   rc = sdbGetNodeByHost( rg, hostName, svcName2, &node ) ;
+   ASSERT_EQ( SDB_CLS_NODE_NOT_EXIST, rc ) << "What we expect is "
+      "SDB_CLS_NODE_NOT_EXIST, but rc = " << rc ;
 
    // attach node
-//   rc = sdbAttachNode( rg, hostName, svcName2, NULL ) ;
-//   ASSERT_EQ( SDB_OK, rc ) << "Failed to attach data node to group " <<
-//      pGroupName << ", rc = " << rc ;
+   rc = sdbAttachNode( rg, hostName, svcName2, &option ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "Failed to attach data node to group " <<
+      pGroupName << ", rc = " << rc ;
   
    // check 
    rc = sdbGetNodeByHost( rg, hostName, svcName2, &node ) ;
    ASSERT_EQ( SDB_OK, rc ) << "Failed to get data node from group " <<
       pGroupName << ", rc = " << rc ;
-
+   bson_destroy( &option ) ;
 }
 

@@ -62,18 +62,23 @@ protected:
 TEST_F( attachAndDetachNodeTest, onlyAttachOnlyDetach )
 {
    INT32 rc = SDB_OK ;
-
+ 
    // detach tmp node from data group
-   rc = sdbDetachNode( rg, hostName, svcName, NULL ) ;
+   bson option;
+   bson_init( &option );
+   bson_append_bool( &option,"KeepData", true ) ;
+   bson_finish( &option ) ;
+   rc = sdbDetachNode( rg, hostName, svcName, &option ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to detach temp node" ;
    rc = sdbGetNodeByHost( rg, hostName, svcName, &tmpNode ) ;
    ASSERT_EQ( SDB_CLS_NODE_NOT_EXIST, rc ) << "fail to check detach" ;
 
    // attach tmp node to tmp data group
-   rc = sdbAttachNode( tmpRg, hostName, svcName, NULL ) ;
+   rc = sdbAttachNode( tmpRg, hostName, svcName, &option ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to attach tmp node" ;
    rc = sdbGetNodeByHost( tmpRg, hostName, svcName, &tmpNode ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to check attach" ;
+   bson_destroy( &option ) ;
 
    // start tempRG
    rc = sdbStartReplicaGroup( tmpRg ) ;

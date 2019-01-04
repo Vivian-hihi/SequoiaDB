@@ -41,7 +41,7 @@ testFiles = [
    [ "./concurrent/concurrentOidGen.cpp" ],
    [ "./misc/JSCompatible.cpp" ],
    [ "./misc/analyze.cpp" ],
-   #[ "./misc/attachAndDetachNode.cpp" ], # sync
+   [ "./misc/attachAndDetachNode.cpp" ], # sync
    [ "./misc/backup.cpp" ],
    [ "./misc/bson_array.cpp" ],
    [ "./misc/bson_oid.cpp" ],
