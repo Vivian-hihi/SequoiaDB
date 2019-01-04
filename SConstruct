@@ -741,6 +741,8 @@ elif guess_os == "win32":
     # UNICODE
     env.Append( CPPDEFINES=[ "_UNICODE" ] )
     env.Append( CPPDEFINES=[ "UNICODE" ] )
+    # warning macro
+    env.Append( CPPDEFINES=[ "_SCL_SECURE_NO_WARNINGS" ] )
     # find windows SDK
     winSDKHome = findVersion( [ "C:/Program Files/Microsoft SDKs/Windows/", "C:/Program Files (x86)/Microsoft SDKs/Windows/" ] ,
                               [ "v7.1", "v7.0A", "v7.0", "v6.1", "v6.0a", "v6.0" ] )
@@ -749,8 +751,8 @@ elif guess_os == "win32":
     env.Append( EXTRACPPPATH=[ winSDKHome + "/Include" ] )
 
     env.Append( CPPFLAGS=" /EHsc /W3 " )
-
-    env.Append( CPPFLAGS=" /wd4355 /wd4800 /wd4267 /wd4244 /wd4200 " )
+    # disable warning
+    env.Append( CPPFLAGS=" /wd4355 /wd4800 /wd4267 /wd4244 /wd4200 /wd4251 /wd4275 " )
 
     env.Append( CPPDEFINES=["_CONSOLE","_CRT_SECURE_NO_WARNINGS","PSAPI_VERSION=1","_CRT_RAND_S" ] )
 

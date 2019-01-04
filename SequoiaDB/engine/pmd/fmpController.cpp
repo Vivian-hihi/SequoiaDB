@@ -106,8 +106,8 @@ INT32 _fmpController::run()
    _inBufSize = FMP_DEFAULT_BUF_SIZE ;
 
 #if defined (_WINDOWS)
-   _in.hFile = (HANDLE)(fileno( stdin )) ;
-   _out.hFile = (HANDLE)fileno( stdout ) ;
+   _in.hFile = (HANDLE)(_fileno( stdin )) ;
+   _out.hFile = (HANDLE)_fileno( stdout ) ;
 #else
    _in.fd = fileno( stdin ) ;
    _out.fd = fileno( stdout ) ;

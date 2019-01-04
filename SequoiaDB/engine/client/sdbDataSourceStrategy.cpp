@@ -252,11 +252,10 @@ namespace sdbclient
       ossStrcpy( hostname, ipstr.substr(0, pos).c_str() ) ;
       if ( 0 == ossStrcmp( SDB_DS_LOCAL_IP1, hostname ) )
          return TRUE ;
-   
+
+#if defined (_LINUX) || defined (_AIX)
       struct ifaddrs* ifAddrStruct, *ifAddr ;
       void* tmpAddrPtr = NULL ;
-
-      #if defined (_LINUX) || defined (_AIX)
       if ( 0 != getifaddrs( &ifAddrStruct ) )
          return FALSE ;
       ifAddr = ifAddrStruct ;
@@ -277,7 +276,7 @@ namespace sdbclient
       }
       freeifaddrs( ifAddr ) ;
       return FALSE ;
-      #else
+#else
       WORD wVersionRequested = MAKEWORD( 2, 2 ) ;
       WSADATA wsaData ;
       WSAStartup( wVersionRequested, &wsaData ) ;
@@ -300,7 +299,7 @@ namespace sdbclient
       }
       WSACleanup() ;
       return FALSE ;
-      #endif
+#endif
    }
 
 

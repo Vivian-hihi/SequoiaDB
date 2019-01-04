@@ -1891,7 +1891,8 @@ static void _sdbSetSessionAttrCache ( sdbConnectionStruct * connection,
    }
    if ( NULL == attribute )
    {
-      return _sdbClearSessionAttrCache( connection, TRUE ) ;
+      _sdbClearSessionAttrCache( connection, TRUE ) ;
+      return ;
    }
    ossMutexLock( &connection->_sockMutex ) ;
    if ( NULL == connection->_attributeCache )

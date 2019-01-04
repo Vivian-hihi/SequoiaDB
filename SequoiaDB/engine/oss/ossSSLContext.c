@@ -45,7 +45,7 @@ typedef struct SSLGlobalContext
 
 static SSLGlobalContext sslGlobalContext = {NULL};
 
-static void _ossSSLInitGlobalContext()
+static void _ossSSLInitGlobalContext( void )
 {
    SSLKey* key = NULL;
    SSLCertificate* cert = NULL;
