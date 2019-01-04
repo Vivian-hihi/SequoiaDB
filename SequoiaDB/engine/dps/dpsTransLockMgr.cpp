@@ -1328,14 +1328,7 @@ namespace engine
       // latch bucket
       if ( ! bktLatched )
       {
-         if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
-         {
-            _acquireOpLatch( bktIdx, EXCLUSIVE ) ;
-         }
-         else
-         {
-            _acquireOpLatch( bktIdx, SHARED ) ;
-         }
+         _acquireOpLatch( bktIdx ) ;
       }
       bLatched = TRUE ;
 
@@ -1787,14 +1780,7 @@ namespace engine
    done:
       if ( bLatched )
       {
-         if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
-         {
-            _releaseOpLatch( bktIdx, EXCLUSIVE ) ;
-         }
-         else
-         {
-            _releaseOpLatch( bktIdx, SHARED ) ;
-         }
+         _releaseOpLatch( bktIdx ) ;
          bLatched = FALSE ;
       }
       if ( bFreeLRB )
@@ -2094,7 +2080,7 @@ namespace engine
       if ( ! bLatched )
       {
          // need latch bucket before remove it from upgrade or waiter list
-         _acquireOpLatch( bktIdx, EXCLUSIVE ) ; 
+         _acquireOpLatch( bktIdx ) ; 
          bLatched = TRUE ;
       }
 
@@ -2124,7 +2110,7 @@ namespace engine
 
       if ( bLatched )
       {
-         _releaseOpLatch( bktIdx, EXCLUSIVE ) ;
+         _releaseOpLatch( bktIdx ) ;
          bLatched = FALSE ;
       }
 
@@ -2144,7 +2130,7 @@ namespace engine
    error:
       if ( bLatched )
       {
-         _releaseOpLatch( bktIdx, EXCLUSIVE ) ;
+         _releaseOpLatch( bktIdx ) ;
          bLatched = FALSE ;
       }
 #ifdef _DEBUG
@@ -2222,7 +2208,7 @@ namespace engine
       bktIdx = _getBucketNo( lockId ) ;
 
       // latch the bucket 
-      _acquireOpLatch( bktIdx, EXCLUSIVE ) ;
+      _acquireOpLatch( bktIdx ) ;
       bLatched = TRUE ;
 
       if ( IS_VALID_SEG_OBJ_INDEX( _LockHdrBkt[bktIdx].lrbHdrIdx ) ) 
@@ -2383,7 +2369,7 @@ namespace engine
       // release the bucket latch
       if ( bLatched )
       {
-         _releaseOpLatch( bktIdx, EXCLUSIVE ) ;
+         _releaseOpLatch( bktIdx ) ;
          bLatched = FALSE ;
       }
       if ( IS_VALID_SEG_OBJ_INDEX( lrbToRelase ) )
@@ -2920,7 +2906,7 @@ namespace engine
       bktIdx = _getBucketNo( lockId ) ;
 
       // latch the LRB Header list
-      _acquireOpLatch( bktIdx, SHARED ) ;
+      _acquireOpLatch( bktIdx ) ;
 
       hdrIdx  = _LockHdrBkt[bktIdx].lrbHdrIdx ;
       if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
@@ -2937,7 +2923,7 @@ namespace engine
       }
 
       // free LRB Header list latch
-      _releaseOpLatch( bktIdx, SHARED ) ;
+      _releaseOpLatch( bktIdx ) ;
 
    done:
       return result ;
@@ -3193,7 +3179,7 @@ namespace engine
       bktIdx = _getBucketNo( lockId ) ;
 
       // latch the bucket
-      _acquireOpLatch( bktIdx, SHARED ) ; 
+      _acquireOpLatch( bktIdx ) ; 
 
       hdrIdx  = _LockHdrBkt[bktIdx].lrbHdrIdx ;
       if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
@@ -3305,7 +3291,7 @@ namespace engine
       }
 
       // free bucket latch
-      _releaseOpLatch( bktIdx, SHARED ) ;
+      _releaseOpLatch( bktIdx ) ;
 
       // close file
       if ( fp ) 
@@ -3409,7 +3395,7 @@ namespace engine
       bktIdx = _getBucketNo( lockId ) ;
 
       // acquire bucket latch
-      _acquireOpLatch( bktIdx, SHARED ) ;
+      _acquireOpLatch( bktIdx ) ;
 
       hdrIdx  = _LockHdrBkt[bktIdx].lrbHdrIdx ;
       if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
@@ -3467,7 +3453,7 @@ namespace engine
       }
 
       // release bucket latch
-      _releaseOpLatch( bktIdx, SHARED ) ;
+      _releaseOpLatch( bktIdx ) ;
    }
 
 
