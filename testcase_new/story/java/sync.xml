@@ -27,6 +27,7 @@
          <package name="com.sequoiadb.metadataconsistency.cluster"/>
          <package name="com.sequoiadb.rename"/>
          <package name="com.sequoiadb.alter"/>
+         <package name="com.sequoiadb.dataconsistency"/>
       </packages>    
    </test>
 </suite>
