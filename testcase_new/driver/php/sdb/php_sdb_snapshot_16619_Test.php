@@ -57,6 +57,7 @@ class Rename16619 extends PHPUnit_Framework_TestCase
          //check record contain
          $IsPrimary = $record['IsPrimary'];
          $ServiceStatus = $record['ServiceStatus'];
+         $times = 0;
          if( $IsPrimary != true )
          {
             throw new Exception( 'check record error, exp : IsPrimary => true, act IsPrimary => ' . $IsPrimary );
