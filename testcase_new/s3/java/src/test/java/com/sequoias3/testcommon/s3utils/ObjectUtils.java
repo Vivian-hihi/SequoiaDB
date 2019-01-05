@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class ObjectUtils extends S3TestBase {
     
@@ -170,5 +171,16 @@ public class ObjectUtils extends S3TestBase {
 		for (int i = 0; i < objectSummaries.size(); i++) {
 			Assert.assertEquals(objectSummaries.get(i).getKey(), expresultList.get(i), "keyName is wrong");
 		}
+	}
+	
+	public static String getRandomString(int length) {
+		String str = "adcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		Random random = new Random();
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < length; i++) {
+			int number = random.nextInt(str.length());
+			sb.append(str.charAt(number));
+		}
+		return sb.toString();
 	}
 }
