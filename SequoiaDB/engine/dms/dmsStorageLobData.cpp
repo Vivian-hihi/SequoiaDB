@@ -73,7 +73,7 @@ namespace engine
 
    _dmsStorageLobData::~_dmsStorageLobData()
    {
-      close() ;
+      close() ;   
    }
 
    void _dmsStorageLobData::enableSparse( BOOLEAN sparse )
@@ -183,17 +183,6 @@ namespace engine
             }
          }
 #else
-         /// modify header
-         ossStrncpy( pHeader->_name, csName, DMS_SU_NAME_SZ ) ;
-         pHeader->_name[ DMS_SU_NAME_SZ ] = 0 ;
-
-         rc = _writeFileHeader( *pHeader, cb ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Write file header failed, rc: %d", rc ) ;
-            goto error ;
-         }
-
          /// rename filename
          rc = ossRenamePath( _fullPath, tmpPathFile ) ;
          if ( rc )
@@ -206,6 +195,16 @@ namespace engine
          _fileName = suFileName ;
          ossStrcpy( _fullPath, tmpPathFile ) ;
 
+         /// modify header
+         ossStrncpy( pHeader->_name, csName, DMS_SU_NAME_SZ ) ;
+         pHeader->_name[ DMS_SU_NAME_SZ ] = 0 ;
+
+         rc = _writeFileHeader( *pHeader, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Write file header failed, rc: %d", rc ) ;
+            goto error ;
+         }
 #endif //_WINDOWS
       }
 
@@ -228,7 +227,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_DMSSTORAGELOBDATA_OPEN ) ;
-      UINT32 mode = OSS_READWRITE | OSS_SHAREREAD ;
+      UINT32 mode = OSS_READWRITE | OSS_SHAREREAD ; 
       SDB_ASSERT( path, "path can't be NULL" ) ;
       INT64 fileSize = 0 ;
       INT64 rightSize = 0 ;
@@ -284,7 +283,7 @@ namespace engine
          {
             PD_LOG ( PDERROR, "lobd file is empty: %s", _fileName.c_str() ) ;
             rc = SDB_DMS_INVALID_SU ;
-            goto error ;
+            goto error ;   
          }
          rc = _initFileHeader( info, cb ) ;
          if ( SDB_OK != rc )
@@ -508,7 +507,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "Failed to write data, page:%d, rc:%d",
                  pageID, rc ) ;
-         goto error ;
+         goto error ; 
       }
 
       buffer.done() ;
@@ -581,7 +580,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "Failed to write data, offset:%lld, len:%d, rc:%d",
                  offset, len, rc ) ;
-         goto error ;
+         goto error ; 
       }
 
       buffer.done() ;
@@ -769,8 +768,8 @@ namespace engine
          {
             break ;
          }
-
-      } while (  TRUE ) ;
+     
+      } while (  TRUE ) ; 
    done:
       PD_TRACE_EXITRC( SDB_DMSSTORAGELOBDATA_EXTEND, rc ) ;
       return rc ;
@@ -1288,7 +1287,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTORAGELOBDATA_FLUSH, "_dmsStorageLobData::flush" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTORAGELOBDATA_FLUSH, "_dmsStorageLobData::flush" ) 
    INT32 _dmsStorageLobData::flush()
    {
       INT32 rc = SDB_OK ;

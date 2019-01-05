@@ -1084,11 +1084,6 @@ namespace engine
          }
       }
 #else
-      /// modify the header
-      ossStrncpy( _dmsHeader->_name, csName, DMS_SU_NAME_SZ ) ;
-      _dmsHeader->_name[ DMS_SU_NAME_SZ ] = 0 ;
-      flushHeader( TRUE ) ;
-
       /// rename filename
       rc = ossRenamePath( _fullPathName, tmpPathFile ) ;
       if ( rc )
@@ -1102,6 +1097,11 @@ namespace engine
       _suFileName[ DMS_SU_FILENAME_SZ ] = '\0' ;
 
       ossStrcpy( _fullPathName, tmpPathFile ) ;
+
+      /// modify the header
+      ossStrncpy( _dmsHeader->_name, csName, DMS_SU_NAME_SZ ) ;
+      _dmsHeader->_name[ DMS_SU_NAME_SZ ] = 0 ;
+      flushHeader( TRUE ) ;
 
 #endif // _WINDOWS
 

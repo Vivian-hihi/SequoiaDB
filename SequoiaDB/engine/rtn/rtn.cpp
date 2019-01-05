@@ -301,89 +301,63 @@ namespace engine
    INT32 rtnCorrectCollectionSpaceFile( const CHAR *dataPath,
                                         const CHAR *indexPath,
                                         const CHAR *lobPath,
-                                        const CHAR *lobMetaPath )
+                                        const CHAR *lobMetaPath,
+                                        UINT32 sequence,
+                                        const utilRenameLog& renameLog )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCORRECTCS1 ) ;
 
-      CHAR csName [ DMS_SU_FILENAME_SZ + 1 ] = { 0 } ;
-      UINT32 sequence = 0 ;
-      std::set< std::string > pathList ;
-      std::set< std::string >::iterator it ;
+      UINT8 fileTypeCnt = 4 ;
+      UINT8 csNameCnt = 2 ;
+      const CHAR* pathList[ fileTypeCnt ]  = { dataPath,
+                                               indexPath,
+                                               lobPath,
+                                               lobMetaPath } ;
+      const CHAR* extNameList[fileTypeCnt] = { DMS_DATA_SU_EXT_NAME,
+                                               DMS_INDEX_SU_EXT_NAME,
+                                               DMS_LOB_DATA_SU_EXT_NAME,
+                                               DMS_LOB_META_SU_EXT_NAME } ;
+      const CHAR* csNameList[ csNameCnt ]  = { renameLog.oldName,
+                                               renameLog.newName } ;
 
-      // get rename info
-      utilRenameLogger logger ;
-      utilRenameLog renameLog ;
-      rc = logger.init( UTIL_RENAME_LOGGER_READ ) ;
-      if ( SDB_FNE == rc )
+      for( UINT8 i = 0 ; i < fileTypeCnt ; i++ )
       {
-         rc = SDB_OK ;
-         goto done ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to init logger, rc: %d" , rc ) ;
+         const CHAR* basePath = pathList[i] ;
+         const CHAR* extName = extNameList[i] ;
 
-      rc = logger.load( renameLog ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to load rename log file, rc: %d" , rc );
-
-      // remove duplicate path
-      pathList.insert( dataPath ) ;
-      pathList.insert( indexPath ) ;
-      pathList.insert( lobPath ) ;
-      pathList.insert( lobMetaPath ) ;
-
-      // traverse data, index, lob path
-      for( it = pathList.begin(); it != pathList.end(); it++ )
-      {
-         try
+         for( UINT8 j = 0 ; j < csNameCnt ; j++ )
          {
-            fs::path dbDir( (*it).c_str() ) ;
-            if ( !fs::exists( dbDir ) || !fs::is_directory( dbDir ) )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_RC_CHECK ( rc, PDERROR, "Given path[%s] "
-                             "is not a directory or not exist, rc: %d",
-                             dataPath, rc ) ;
-            }
+            const CHAR* csName = csNameList[j] ;
+            CHAR fileName[ DMS_SU_FILENAME_SZ + 1 ] = { 0 } ;
+            CHAR fullFileName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+            BOOLEAN fileExist = FALSE ;
 
-            // traverse every file
-            fs::directory_iterator dir_iter( dbDir ) ;
-            fs::directory_iterator end_iter ;
-            for ( ; dir_iter != end_iter ; ++dir_iter )
+            ossSnprintf( fileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
+                         csName, sequence, extName ) ;
+
+            rc = utilBuildFullPath( basePath, fileName, OSS_MAX_PATHSIZE,
+                                    fullFileName ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to build full path by [%s] [%s], "
+                         "rc: %d", basePath, fileName, rc ) ;
+
+            rc = ossFile::exists( fullFileName, fileExist ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                          "Failed to check existence of file[%s], rc: %d",
+                          fullFileName, rc ) ;
+
+            if ( fileExist )
             {
-               if ( !fs::is_regular_file( dir_iter->status() ) )
-               {
-                  continue ;
-               }
-               const std::string path = dir_iter->path().parent_path().string();
-               const std::string file = dir_iter->path().filename().string() ;
-               if ( rtnVerifyCollectionSpaceFileName( file.c_str(), csName,
-                                                      DMS_SU_FILENAME_SZ,
-                                                      sequence, NULL ) )
-               {
-                  if ( 0 == ossStrcmp( csName, renameLog.oldName ) )
-                  {
-                     // correct cs file by rename info
-                     rc = rtnCorrectCollectionSpaceFile( file.c_str(),
-                                                         path.c_str(),
-                                                         renameLog ) ;
-                     PD_RC_CHECK( rc, PDERROR,
-                                  "Correct cs file fail, rc: %d", rc ) ;
-                     PD_LOG( PDEVENT, "Correct cs file[%s] "
-                             "in path[%s] by rename log[old: %s, new: %s]",
-                             file.c_str(), path.c_str(),
-                             renameLog.oldName, renameLog.newName ) ;
-                  }
-               }
+               rc = rtnCorrectCollectionSpaceFile( basePath, fileName,
+                                                   renameLog ) ;
+               PD_RC_CHECK( rc, PDERROR, "Correct cs file[%s] fail, rc: %d",
+                            fullFileName, rc ) ;
+               break ;
             }
-         }
-         catch ( std::exception &e )
-         {
-            PD_RC_CHECK ( SDB_SYS, PDERROR, "Failed to iterate directory %s: %s",
-                          dataPath, e.what() ) ;
          }
       }
 
-      logger.clear() ;
+
 
    done:
       PD_TRACE_EXITRC( SDB_RTNCORRECTCS1, rc ) ;
@@ -393,17 +367,17 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCORRECTCS2, "rtnCorrectCollectionSpaceFile" )
-   INT32 rtnCorrectCollectionSpaceFile( const CHAR* pFileName,
-                                        const CHAR* pPath,
+   INT32 rtnCorrectCollectionSpaceFile( const CHAR* pPath,
+                                        const CHAR* pFileName,
                                         const utilRenameLog& renameLog )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCORRECTCS2 ) ;
 
-      const CHAR *pDot = ossStrchr ( pFileName, '.' ) ;
-      UINT32 csnameSize = pDot - pFileName ;
+      const CHAR *pDot = NULL ;
+      UINT32 csnameSize = 0 ;
       CHAR newFileName[ DMS_SU_FILENAME_SZ + 1 ] = { 0 } ;
-      CHAR oldFullFileName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR curFullFileName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR newFullFileName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       OSSFILE file ;
       CHAR *pBuff = NULL ;
@@ -417,28 +391,18 @@ namespace engine
       /// We need to correct file name and header from old cs name to new cs
       /// name.
 
-      if (    0 == ossStrncmp( pFileName, renameLog.oldName, csnameSize )
-           && ossStrlen( renameLog.oldName ) == csnameSize )
-      {
-         // it is ok
-      }
-      else
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Collection space name in file name[%s], expect:[%s]",
-                 pFileName, renameLog.oldName ) ;
-         goto done ;
-      }
-
       /// 1. get file full name
+      pDot = ossStrchr ( pFileName, '.' ) ;
       ossSnprintf( newFileName, DMS_SU_FILENAME_SZ, "%s%s",
                    renameLog.newName, pDot ) ;
+
       rc = utilBuildFullPath( pPath, newFileName, OSS_MAX_PATHSIZE,
                               newFullFileName ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to build full path by [%s] [%s], "
                    "rc: %d", pPath, newFileName, rc ) ;
+
       rc = utilBuildFullPath( pPath, pFileName, OSS_MAX_PATHSIZE,
-                              oldFullFileName ) ;
+                              curFullFileName ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to build full path by [%s] [%s], "
                    "rc: %d", pPath, pFileName, rc ) ;
 
@@ -451,10 +415,10 @@ namespace engine
                    sizeof( dmsStorageUnitHeader ), rc ) ;
 
       //  read header
-      rc = ossOpen( oldFullFileName, OSS_READWRITE, OSS_RU|OSS_WU|OSS_RG,
+      rc = ossOpen( curFullFileName, OSS_READWRITE, OSS_RU|OSS_WU|OSS_RG,
                     file ) ;
       PD_RC_CHECK( rc, PDERROR,
-                   "Failed to open file[%s], rc: %d", oldFullFileName, rc ) ;
+                   "Failed to open file[%s], rc: %d", curFullFileName, rc ) ;
       isOpened = TRUE ;
 
       rc = ossSeekAndReadN( &file, 0,
@@ -475,14 +439,14 @@ namespace engine
       else if ( 0 == ossStrncmp( pHeader->_name, renameLog.newName,
                                  DMS_SU_NAME_SZ ) )
       {
-         // it is ok
+         // it is ok, do nothing
       }
       else
       {
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "Name[%s] in header isn't [%s] or [%s], in file[%s]",
                  pHeader->_name, renameLog.oldName, renameLog.newName,
-                 oldFullFileName ) ;
+                 curFullFileName ) ;
          goto error ;
       }
 
@@ -493,7 +457,7 @@ namespace engine
                                 (CHAR *)pHeader, sizeof( dmsStorageUnitHeader ),
                                 writeLen ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to write data in file[%s], rc: %d",
-                      oldFullFileName, rc ) ;
+                      curFullFileName, rc ) ;
 
          ossFsync( &file ) ;
       }
@@ -502,9 +466,32 @@ namespace engine
       isOpened = FALSE ;
 
       /// 3. rename file name
-      rc = ossRenamePath( oldFullFileName, newFullFileName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Rename file[%s] to [%s] failed, rc: %d",
-                   oldFullFileName, newFullFileName, rc ) ;
+      csnameSize = pDot - pFileName ;
+
+      if ( 0 == ossStrncmp( pFileName, renameLog.oldName, csnameSize ) &&
+           ossStrlen( renameLog.oldName ) == csnameSize )
+      {
+         rc = ossRenamePath( curFullFileName, newFullFileName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Rename file[%s] to [%s] failed, rc: %d",
+                      curFullFileName, newFullFileName, rc ) ;
+      }
+      else if ( 0 == ossStrncmp( pFileName, renameLog.newName, csnameSize ) &&
+                ossStrlen( renameLog.newName ) == csnameSize )
+      {
+         // it is ok, do nothing
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR,
+                 "Collection space name in file name[%s], expect:[%s] or [%s]",
+                 pFileName, renameLog.oldName, renameLog.newName ) ;
+         goto error ;
+      }
+
+      PD_LOG( PDEVENT,
+              "Correct cs file[%s] in path[%s] by rename log[old: %s, new: %s]",
+              pFileName, pPath, renameLog.oldName, renameLog.newName ) ;
 
    done:
       if ( isOpened )
@@ -544,23 +531,9 @@ namespace engine
       }
 
       // ext check
-      if ( extFilter )
+      if ( extFilter && 0 != ossStrcmp( pDotr + 1, extFilter ) )
       {
-         if ( 0 != ossStrcmp( pDotr + 1, extFilter ) )
-         {
-            goto done ;
-         }
-      }
-      else
-      {
-         // if extFilter is NULL, check all type
-         if (    0 != ossStrcmp( pDotr + 1, DMS_DATA_SU_EXT_NAME )
-              && 0 != ossStrcmp( pDotr + 1, DMS_INDEX_SU_EXT_NAME )
-              && 0 != ossStrcmp( pDotr + 1, DMS_LOB_META_SU_EXT_NAME )
-              && 0 != ossStrcmp( pDotr + 1, DMS_LOB_DATA_SU_EXT_NAME ) )
-         {
-            goto done ;
-         }
+         goto done ;
       }
 
       {
@@ -614,6 +587,10 @@ namespace engine
       else if ( 0 == ossStrcmp( pFileName, PMD_STARTUPHST_FILE_NAME ) )
       {
          fileType = SDB_FILE_STARTUP_HST ;
+      }
+      else if ( 0 == ossStrcmp( pFileName, UTIL_RENAME_LOG_FILENAME ) )
+      {
+         fileType = SDB_FILE_RENAME_INFO ;
       }
       else
       {
@@ -969,10 +946,28 @@ namespace engine
       SDB_ASSERT ( lobMetaPath, "lob meta path can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
-      rc = rtnCorrectCollectionSpaceFile( dataPath, indexPath,
-                                          lobPath, lobMetaPath ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to correct collection space file, rc: %d", rc ) ;
+      utilRenameLogger logger ;
+      utilRenameLog renameLog ;
+      BOOLEAN hasRenameInfo = FALSE ;
+
+      rc = logger.init( UTIL_RENAME_LOGGER_READ ) ;
+      if ( SDB_OK == rc )
+      {
+         hasRenameInfo = TRUE ;
+         rc = logger.load( renameLog ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to load rename log file, rc: %d" , rc ) ;
+      }
+      else if ( SDB_FNE == rc )
+      {
+         rc = SDB_OK ;
+         hasRenameInfo = FALSE ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Failed to init logger, rc: %d" , rc ) ;
+         goto error ;
+      }
 
       try
       {
@@ -993,12 +988,35 @@ namespace engine
                continue ;
             }
             // 1) file name must be <collectionspace>.<sequence>.<data>
-            const std::string fileName = dir_iter->path().filename().string();
-            const CHAR *pFileName = fileName.c_str() ;
-            if ( rtnVerifyCollectionSpaceFileName( pFileName, csName,
+            const std::string fileName = dir_iter->path().filename().string() ;
+            if ( rtnVerifyCollectionSpaceFileName( fileName.c_str(), csName,
                                                    DMS_SU_FILENAME_SZ,
                                                    sequence ) )
             {
+               if ( hasRenameInfo &&
+                    ( 0 == ossStrcmp( csName, renameLog.oldName ) ||
+                    0 == ossStrcmp( csName, renameLog.newName ) ) )
+               {
+                  rc = rtnCorrectCollectionSpaceFile( dataPath, indexPath,
+                                                      lobPath, lobMetaPath,
+                                                      sequence, renameLog ) ;
+                  PD_RC_CHECK( rc, PDERROR,
+                               "Correct cs file failed, rc: %d", rc ) ;
+
+                  if ( 0 == ossStrcmp( csName, renameLog.oldName ) )
+                  {
+                     ossStrcpy( csName, renameLog.newName );
+                  }
+
+                  rc = logger.clear() ;
+                  if ( rc )
+                  {
+                     PD_LOG( PDWARNING,
+                             "Failed to clear rename log, rc: %d" , rc ) ;
+                  }
+                  hasRenameInfo = FALSE ;
+               }
+
                storageUnit = SDB_OSS_NEW dmsStorageUnit ( csName,
                                                           UTIL_UNIQUEID_NULL,
                                                           sequence,
@@ -1056,7 +1074,7 @@ namespace engine
                PD_RC_CHECK( rc, PDERROR, "Failed to resume dictionary creating "
                             "job for %s, rc: %d", csName, rc ) ;
             } // if ( rtnVerifyCollectionSpaceFileName
-            else if ( SDB_FILE_UNKNOW == rtnParseFileName( pFileName ) )
+            else if ( SDB_FILE_UNKNOW == rtnParseFileName( fileName.c_str() ) )
             {
                PD_LOG( PDWARNING, "Found unknow file[%s] when load collection "
                        "spaces, ignored", dir_iter->path().string().c_str() ) ;

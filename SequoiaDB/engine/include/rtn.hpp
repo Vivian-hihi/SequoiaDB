@@ -526,10 +526,12 @@ namespace engine
    INT32 rtnCorrectCollectionSpaceFile( const CHAR *dataPath,
                                         const CHAR *indexPath,
                                         const CHAR *lobPath,
-                                        const CHAR *lobMetaPath ) ;
+                                        const CHAR *lobMetaPath,
+                                        UINT32 sequence,
+                                        const utilRenameLog& renameLog ) ;
 
-   INT32 rtnCorrectCollectionSpaceFile( const CHAR* pFileName,
-                                        const CHAR* pPath,
+   INT32 rtnCorrectCollectionSpaceFile( const CHAR* pPath,
+                                        const CHAR* pFileName,
                                         const utilRenameLog& renameLog ) ;
 
    BOOLEAN rtnVerifyCollectionSpaceFileName ( const CHAR *pFileName,
@@ -548,6 +550,7 @@ namespace engine
 
       SDB_FILE_STARTUP     = 10,
       SDB_FILE_STARTUP_HST = 11,
+      SDB_FILE_RENAME_INFO = 12,
       SDB_FILE_UNKNOW      = 255
    } ;
 
