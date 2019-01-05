@@ -44,8 +44,18 @@
                extendNodeList = result[0]['Config'] ;
                SdbSwap.groupDefer.resolve( 'ExtendNodeList', extendNodeList ) ;
                SdbSwap.nodeDefer.resolve( 'ExtendNodeList', extendNodeList ) ;
-               SdbSwap.templateDefer.resolve( 'Template', result[0]['Property'] ) ;
-               template = result[0]['Property'] ;
+               
+               template = [] ;
+               $.each( result[0]['Property'], function( index, info ){
+                  if ( info['hidden'] == 'true' )
+                  {
+                     return true ;
+                  }
+                  template.push( info ) ;
+               } ) ;
+
+               SdbSwap.templateDefer.resolve( 'Template', template ) ;
+               
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){

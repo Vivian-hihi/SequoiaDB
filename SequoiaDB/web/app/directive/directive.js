@@ -1284,6 +1284,10 @@
                         scope.closeWindows() ;
                      }
                   }
+
+                  scope.$on( '$locationChangeStart', function(){
+                     IsOpen = false ;
+                  } ) ;
                }
             } ;
          }
@@ -1969,7 +1973,8 @@
                                                                                   select, inline, multiple, switch, normal
                                           'placeholder': 'xxx'，     //配置项默认描述内容, 类型是 string, int, double, port, text 有效。
                                           'valid':       { ... }     //值的校验规则
-                                          'default':     xxx         //默认值, list 可能用到, 如果不填, 则value作为default的值
+                                          'default':     xxx         //默认值, list 的子项用到, default的值作为List的新的子项的值
+                                          'template':    { ... }     //模板, list 用，添加新的子项时，使用模板来构建，如果没有模板就用添加按钮的那个项
                                           'value':       xxx         //默认值
                                           'required':    true|false  //要不要显示必填提示, 默认false
                                           'disabled':    true|false  //是否禁止修改, 默认false
@@ -1983,6 +1988,7 @@
                                           regex:         'xxx',      //通过正则匹配字符串, string 有效
                                           regexError:    'xxx',      //设置当正则匹配失败时, 输出错误的自定义内容, string 有效, 非必填
                                           ban:           'xxx' | [ 'xxx', ... ]  //禁止某些特定值, string, int, double 有效
+                                          white:         'xxx' | [ 'xxx', ... ]  //允许某些特定值, int 有效
                                           empty:         true|false  //允许为空, 最高优先级, 默认false
                                           step:          xxx,        //步进, 数值的步进, 默认0, int, double 有效
                                        }
@@ -2037,6 +2043,21 @@
          templateUrl: './app/template/Component/Form.html',
          replace: false,
          controller: function( $scope, $element ){
+
+            function isEmptyGroup( groupList )
+            {
+               var empty = true ;
+
+               for( var i in groupList )
+               {
+                  if ( !isString( groupList[i]['value'] ) || groupList[i]['value'].length > 0 )
+                  {
+                     empty = false ;
+                     break ;
+                  }
+               }
+               return empty ;
+            }
 
             var init = function(){
                if( typeof( $scope.data ) == 'object' )
@@ -2175,7 +2196,7 @@
                checkInt: function ( name, value, valid ){
                   var rc = true ;
                   var error = '' ;
-                  if( value.length == 0 && typeof( valid ) == 'object' && valid.empty == true )
+                  if( value && value.length == 0 && typeof( valid ) == 'object' && valid.empty == true )
                   {
                      return { rc: rc, error: error } ;
                   }
@@ -2190,8 +2211,29 @@
                      var min = valid.min ;
                      var max = valid.max ;
                      var ban = valid.ban ;
+                     var white = valid.white ;
                      var step = valid.step ;
-                     if( typeof( min ) == 'number' && num < min )
+                     var skip = false ;
+
+                     if( typeof( white ) == 'number' && num == white )
+                     {
+                        skip = true ;
+                     }
+                     else if( isArray( white ) )
+                     {
+                        $.each( white, function( index, whiteInt ){
+                           if( num == whiteInt )
+                           {
+                              skip = true ;
+                              return false ;
+                           }
+                        } ) ;
+                     }
+                     
+                     if ( skip == true )
+                     {
+                     }
+                     else if( typeof( min ) == 'number' && num < min )
                      {
                         error = sprintf( $scope.Setting['Text']['int']['min'], name, min ) ;
                         rc = false ;
@@ -2378,8 +2420,9 @@
                         isAllClear = $scope.Setting.checkInput( inputInfo.child ) ;
                         break ;
                      case 'list':
-                        if( inputInfo.valid && inputInfo.valid.min == 0 && inputInfo.child.length == 1 )
+                        if( inputInfo.valid && inputInfo.valid.min == 0 && inputInfo.child.length == 1 && isEmptyGroup( inputInfo.child[0] ) )
                         {
+
                         }
                         else
                         {
@@ -2570,14 +2613,22 @@
                         item.onChange( item.name, item.value ) ;
                      }
                   }
-                  scope.listAppend = function( items, item ){
+                  scope.listAppend = function( items, item, template ){
+                     var newItem ;
                      var index = items.indexOf( item ) ;
-                     var newItem = [] ;
-                     $.each( item, function( index2, inputInfo ){
-                        var newInputInfo = $.extend( true, {}, inputInfo ) ;
-                        newInputInfo['value'] = newInputInfo['default'] ;
-                        newItem.push( newInputInfo ) ;
-                     } ) ;
+                     if ( isArray( template ) )
+                     {
+                        newItem = $.extend( true, [], template ) ;
+                     }
+                     else
+                     {
+                        newItem = [] ;
+                        $.each( item, function( index2, inputInfo ){
+                           var newInputInfo = $.extend( true, {}, inputInfo ) ;
+                           newInputInfo['value'] = newInputInfo['default'] ;
+                           newItem.push( newInputInfo ) ;
+                        } ) ;
+                     }
                      items.splice( index + 1, 0, newItem ) ;
                   }
                   scope.listRemove = function( items, item ){

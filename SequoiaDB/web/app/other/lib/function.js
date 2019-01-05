@@ -2414,6 +2414,178 @@ function parseJson2( str, isParseJson, errJson )
 	return jsonArr ;
 }
 
+//配置参数模板转换(一个)
+function configConvertTemplateByOne( templateInfo, setLevel )
+{
+   var skipLevel = false ;
+
+   if ( isNaN( setLevel ) )
+   {
+      skipLevel = true ;
+   }
+
+   if( typeof( templateInfo['Name'] ) == 'string' )
+   {
+      if( skipLevel == false && setLevel != templateInfo['Level'] )
+      {
+         return null ;
+      }
+
+      var newTemplateInfo = {
+         'name':     templateInfo['Name'],
+         'showName': true,
+         'value':    '',
+         'webName':  templateInfo['WebName'],
+         'disabled': false,
+         'desc':     templateInfo['Desc'],
+         'type':     '',
+         'valid':    ''
+      } ;
+
+      if( templateInfo['Display'] == 'select box' )
+      {
+         newTemplateInfo['type'] = 'select' ;
+         newTemplateInfo['valid'] = [ { 'key': '', 'value': '' } ] ;
+         var validArr = templateInfo['Valid'].split( ',' ) ;
+         $.each( validArr, function( index2 ){
+            newTemplateInfo['valid'].push( { 'key': validArr[index2], 'value': validArr[index2] } ) ;
+         } ) ;
+      }
+      else if( templateInfo['Display'] == 'edit box' )
+      {
+         if( templateInfo['Type'] == 'int' )
+         {
+            newTemplateInfo['type'] = 'int' ;
+            newTemplateInfo['valid'] = {} ;
+            var pos1 = templateInfo['Valid'].indexOf( '-' ) ;
+            if( templateInfo['Valid'] !== '' && pos1 !== -1 )
+			   {
+               var minValue ;
+               var maxValue ;
+               var pos2 = templateInfo['Valid'].indexOf( '-', pos1 + 1 ) ;
+               if( pos2 == -1 )
+               {
+                  var splitValue = templateInfo['Valid'].split( '-' ) ;
+                  minValue = splitValue[0] ;
+                  maxValue = splitValue[1] ;
+               }
+               else
+               {
+                  minValue = templateInfo['Valid'].substr( 0, pos2 ) ;
+                  maxValue = templateInfo['Valid'].substr( pos2 + 1 ) ;
+               }
+               if( isNaN( minValue ) == false )
+               {
+                  newTemplateInfo['valid']['min'] = parseInt( minValue ) ;
+               }
+               if( isNaN( maxValue ) == false )
+               {
+                  newTemplateInfo['valid']['max'] = parseInt( maxValue ) ;
+               }
+            }
+            newTemplateInfo['valid']['empty'] = true ;
+            if ( !isNaN( templateInfo['Default'] ) )
+            {
+               newTemplateInfo['valid']['white'] = parseInt( templateInfo['Default'] ) ;
+            }
+         }
+         else if( templateInfo['Type'] == 'double' )
+         {
+            newTemplateInfo['type'] = 'double' ;
+            newTemplateInfo['valid'] = {} ;
+            var pos1 = templateInfo['Valid'].indexOf( '-' ) ;
+            if( templateInfo['Valid'] !== '' && pos1 !== -1 )
+			   {
+               var minValue ;
+				   var maxValue ;
+               var pos2 = templateInfo['Valid'].indexOf( '-', pos1 + 1 ) ;
+               if( pos2 == -1 )
+               {
+				      var splitValue = templateInfo['Valid'].split( '-' ) ;
+				      minValue = splitValue[0] ;
+				      maxValue = splitValue[1] ;
+               }
+               else
+               {
+                  minValue = templateInfo['Valid'].substr( 0, pos2 ) ;
+                  maxValue = templateInfo['Valid'].substr( pos2 + 1 ) ;
+               }
+               if( isNaN( minValue ) == false )
+               {
+                  newTemplateInfo['valid']['min'] = parseFloat( minValue ) ;
+               }
+               if( isNaN( maxValue ) == false )
+               {
+                  newTemplateInfo['valid']['max'] = parseFloat( maxValue ) ;
+               }
+			   }
+            newTemplateInfo['valid']['empty'] = true ;
+         }
+         else if( templateInfo['Type'] === 'port' )
+		   {
+            newTemplateInfo['type'] = 'port' ;
+            newTemplateInfo['valid'] = {} ;
+            if( templateInfo['Valid'] !== '' && templateInfo['Valid'].indexOf('-') !== -1 )
+			   {
+				   var splitValue = templateInfo['Valid'].split( '-' ) ;
+				   var minValue = splitValue[0] ;
+				   var maxValue = splitValue[1] ;
+				   if( isNaN( minValue ) == false )
+               {
+                  newTemplateInfo['valid']['min'] = parseInt( minValue ) ;
+               }
+               if( isNaN( maxValue ) == false )
+               {
+                  newTemplateInfo['valid']['max'] = parseInt( maxValue ) ;
+               }
+			   }
+            else
+            {
+               newTemplateInfo['valid']['empty'] = true ;
+            }
+		   }
+         else if( templateInfo['Type'] === 'string' )
+		   {
+            newTemplateInfo['type'] = 'string' ;
+            newTemplateInfo['valid'] = {} ;
+            if( templateInfo['Valid'] !== '' && templateInfo['Valid'].indexOf('-') !== -1 )
+			   {
+				   var splitValue = templateInfo['Valid'].split( '-' ) ;
+				   var minValue = splitValue[0] ;
+				   var maxValue = splitValue[1] ;
+				   if( isNaN( minValue ) == false )
+               {
+                  newTemplateInfo['valid']['min'] = parseInt( minValue ) ;
+               }
+               if( isNaN( maxValue ) == false )
+               {
+                  newTemplateInfo['valid']['max'] = parseInt( maxValue ) ;
+               }
+			   }
+		   }
+      }
+      else if( templateInfo['Display'] == 'text box' )
+      {
+         newTemplateInfo['type'] = 'text' ;
+         if( templateInfo['Type'] == 'path' )
+         {
+            newTemplateInfo['valid'] = {
+               'min': 1
+            } ;
+         }
+      }
+
+      if( templateInfo['Display'] == 'hidden' )
+      {
+         return null ;
+      }
+
+      return newTemplateInfo ;
+   }
+
+   return templateInfo ;
+}
+
 //配置参数模板转换
 function configConvertTemplate( templateList, level ){
    var setLevel = 0 ;
@@ -2423,162 +2595,22 @@ function configConvertTemplate( templateList, level ){
    }
    var newTemplateList = [] ;
    $.each( templateList, function( index, templateInfo ){
-      if( typeof( templateInfo['Name'] ) == 'string' )
-      {
-         if( setLevel != templateInfo['Level'] )
-         {
-            return true ;
-         }
-         var newTemplateInfo = {
-            'name':     templateInfo['Name'],
-            'showName': true,
-            'value':    '',
-            'webName':  templateInfo['WebName'],
-            'disabled': false,
-            'desc':     templateInfo['Desc'],
-            'type':     '',
-            'valid':    ''
-         } ;
 
-         if( templateInfo['Display'] == 'select box' )
-         {
-            newTemplateInfo['type'] = 'select' ;
-            newTemplateInfo['valid'] = [ { 'key': '', 'value': '' } ] ;
-            var validArr = templateInfo['Valid'].split( ',' ) ;
-            $.each( validArr, function( index2 ){
-               newTemplateInfo['valid'].push( { 'key': validArr[index2], 'value': validArr[index2] } ) ;
-            } ) ;
-         }
-         else if( templateInfo['Display'] == 'edit box' )
-         {
-            if( templateInfo['Type'] == 'int' )
-            {
-               newTemplateInfo['type'] = 'int' ;
-               newTemplateInfo['valid'] = {} ;
-               var pos1 = templateInfo['Valid'].indexOf( '-' ) ;
-               if( templateInfo['Valid'] !== '' && pos1 !== -1 )
-			      {
-                  var minValue ;
-                  var maxValue ;
-                  var pos2 = templateInfo['Valid'].indexOf( '-', pos1 + 1 ) ;
-                  if( pos2 == -1 )
-                  {
-                     var splitValue = templateInfo['Valid'].split( '-' ) ;
-                     minValue = splitValue[0] ;
-                     maxValue = splitValue[1] ;
-                  }
-                  else
-                  {
-                     minValue = templateInfo['Valid'].substr( 0, pos2 ) ;
-                     maxValue = templateInfo['Valid'].substr( pos2 + 1 ) ;
-                  }
-                  if( isNaN( minValue ) == false )
-                  {
-                     newTemplateInfo['valid']['min'] = parseInt( minValue ) ;
-                  }
-                  if( isNaN( maxValue ) == false )
-                  {
-                     newTemplateInfo['valid']['max'] = parseInt( maxValue ) ;
-                  }
-               }
-               newTemplateInfo['valid']['empty'] = true ;
-            }
-            else if( templateInfo['Type'] == 'double' )
-            {
-               newTemplateInfo['type'] = 'double' ;
-               newTemplateInfo['valid'] = {} ;
-               var pos1 = templateInfo['Valid'].indexOf( '-' ) ;
-               if( templateInfo['Valid'] !== '' && pos1 !== -1 )
-			      {
-                  var minValue ;
-				      var maxValue ;
-                  var pos2 = templateInfo['Valid'].indexOf( '-', pos1 + 1 ) ;
-                  if( pos2 == -1 )
-                  {
-				         var splitValue = templateInfo['Valid'].split( '-' ) ;
-				         minValue = splitValue[0] ;
-				         maxValue = splitValue[1] ;
-                  }
-                  else
-                  {
-                     minValue = templateInfo['Valid'].substr( 0, pos2 ) ;
-                     maxValue = templateInfo['Valid'].substr( pos2 + 1 ) ;
-                  }
-                  if( isNaN( minValue ) == false )
-                  {
-                     newTemplateInfo['valid']['min'] = parseFloat( minValue ) ;
-                  }
-                  if( isNaN( maxValue ) == false )
-                  {
-                     newTemplateInfo['valid']['max'] = parseFloat( maxValue ) ;
-                  }
-			      }
-               newTemplateInfo['valid']['empty'] = true ;
-            }
-            else if( templateInfo['Type'] === 'port' )
-		      {
-               newTemplateInfo['type'] = 'port' ;
-               newTemplateInfo['valid'] = {} ;
-               if( templateInfo['Valid'] !== '' && templateInfo['Valid'].indexOf('-') !== -1 )
-			      {
-				      var splitValue = templateInfo['Valid'].split( '-' ) ;
-				      var minValue = splitValue[0] ;
-				      var maxValue = splitValue[1] ;
-				      if( isNaN( minValue ) == false )
-                  {
-                     newTemplateInfo['valid']['min'] = parseInt( minValue ) ;
-                  }
-                  if( isNaN( maxValue ) == false )
-                  {
-                     newTemplateInfo['valid']['max'] = parseInt( maxValue ) ;
-                  }
-			      }
-               else
-               {
-                  newTemplateInfo['valid']['empty'] = true ;
-               }
-		      }
-            else if( templateInfo['Type'] === 'string' )
-		      {
-               newTemplateInfo['type'] = 'string' ;
-               newTemplateInfo['valid'] = {} ;
-               if( templateInfo['Valid'] !== '' && templateInfo['Valid'].indexOf('-') !== -1 )
-			      {
-				      var splitValue = templateInfo['Valid'].split( '-' ) ;
-				      var minValue = splitValue[0] ;
-				      var maxValue = splitValue[1] ;
-				      if( isNaN( minValue ) == false )
-                  {
-                     newTemplateInfo['valid']['min'] = parseInt( minValue ) ;
-                  }
-                  if( isNaN( maxValue ) == false )
-                  {
-                     newTemplateInfo['valid']['max'] = parseInt( maxValue ) ;
-                  }
-			      }
-		      }
-         }
-         else if( templateInfo['Display'] == 'text box' )
-         {
-            newTemplateInfo['type'] = 'text' ;
-            if( templateInfo['Type'] == 'path' )
-            {
-               newTemplateInfo['valid'] = {
-                  'min': 1
-               } ;
-            }
-         }
-         if( templateInfo['Display'] == 'hidden' )
-         {
-            return true ;
-         }
-         newTemplateList.push( newTemplateInfo ) ;
-      }
-      else
+      if ( templateInfo['hidden'] == 'true' )
       {
-         newTemplateList.push( templateInfo ) ;
+         return true ;
       }
+
+      var tmp = configConvertTemplateByOne( templateInfo, setLevel ) ;
+      if( tmp == null )
+      {
+         return true ;
+      }
+
+      newTemplateList.push( tmp ) ;
+
    } ) ;
+
    return newTemplateList ;
 }
 
@@ -2753,6 +2785,12 @@ function isFunction( obj )
    return typeof( obj ) == 'function' ;
 }
 
+//是不是字符串
+function isString( str )
+{
+   return typeof( str ) == 'string' ;
+}
+
 //是不是对象
 function isObject( obj )
 {
@@ -2867,4 +2905,39 @@ function object2csv( obj, fields )
 function hasKey( obj, key )
 {
    return (key in obj) ;
+}
+
+//判断是不是相同值
+function isSameValueByStrBool( v1, v2 )
+{
+   var t1 = typeof( v1 ) ;
+   var t2 = typeof( v2 ) ;
+
+   if( t1 == 'string' )
+   {
+      var tmp = v1.toLowerCase() ;
+      if ( tmp == 'true' )
+      {
+         v1 = true ;
+      }
+      else if ( tmp == 'false' )
+      {
+         v1 = false ;
+      }
+   }
+
+   if( t2 == 'string' )
+   {
+      var tmp = v2.toLowerCase() ;
+      if ( tmp == 'true' )
+      {
+         v2 = true ;
+      }
+      else if ( tmp == 'false' )
+      {
+         v2 = false ;
+      }
+   }
+
+   return v1 == v2 ;
 }

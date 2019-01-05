@@ -25,6 +25,7 @@
       SdbSwap.TemplateIndex = [] ;
       SdbSwap.TemplateDesc = {} ;
       SdbSwap.Template = [] ;
+      SdbSwap.HiddenTemplate = [] ;
       SdbSwap.RunConfigs = [] ;
       SdbSwap.LocalConfigs = [] ;
       SdbSwap.GroupList = [] ;
@@ -59,7 +60,14 @@
 
                   $.each( SdbSwap.Template, function( index, configInfo ){
                      var key = configInfo['Name'] ;
-                     SdbSwap.TemplateIndex.push( configInfo['Name'] ) ;
+                     if ( configInfo['hidden'] != 'true' )
+                     {
+                        SdbSwap.TemplateIndex.push( configInfo['Name'] ) ;
+                     }
+                     else
+                     {
+                        SdbSwap.HiddenTemplate.push( configInfo ) ;
+                     }
                      SdbSwap.TemplateDesc[key] = configInfo ;
                   } ) ;
                }
@@ -980,7 +988,7 @@
       function DisableKeyClass()
       {
          this.isInit = false ;
-         this.list = [ 'nodename', 'hostname' ] ;
+         this.list = [ 'nodename', 'hostname', 'confpath' ] ;
 
          this.init = function( hiddenKey, templateKey )
          {
@@ -1047,6 +1055,28 @@
          {
             this.normal = configConvertTemplate( template, 0 ) ;
             this.advance = configConvertTemplate( template, 1 ) ;
+            var template = [
+               {
+                  "name": "name",
+                  "webName": $scope.autoLanguage( "参数名" ), 
+                  "placeholder": $scope.autoLanguage( "参数名" ),
+                  "type": "string",
+                  "valid": {
+                     "min": 1
+                  },
+                  "default": "",
+                  "value": ""
+               },
+               {
+                  "name": "value",
+                  "webName": $scope.autoLanguage( "值" ), 
+                  "placeholder": $scope.autoLanguage( "值" ),
+                  "type": "string",
+                  "valid": {},
+                  "default": "",
+                  "value": ""
+               }
+            ] ;
             this.custom = [
                {
                   "name": "other",
@@ -1055,30 +1085,8 @@
                   "valid": {
                      "min": 0
                   },
-                  "child": [
-                     [
-                        {
-                           "name": "name",
-                           "webName": $scope.autoLanguage( "参数名" ), 
-                           "placeholder": $scope.autoLanguage( "参数名" ),
-                           "type": "string",
-                           "valid": {
-                              "min": 1
-                           },
-                           "default": "",
-                           "value": ""
-                        },
-                        {
-                           "name": "value",
-                           "webName": $scope.autoLanguage( "值" ), 
-                           "placeholder": $scope.autoLanguage( "值" ),
-                           "type": "string",
-                           "valid": {},
-                           "default": "",
-                           "value": ""
-                        }
-                     ]
-                  ]
+                  "template": $.extend( true, [], template ),
+                  "child": [ template ]
                }
             ] ;
          }
@@ -1175,6 +1183,19 @@
             }
          }
 
+         this.getHiddenTemplate = function( key )
+         {
+            for( var i in SdbSwap.HiddenTemplate )
+            {
+               var template = SdbSwap.HiddenTemplate[i] ;
+               if ( template['Name'] == key )
+               {
+                  return configConvertTemplateByOne( template ) ;
+               }
+            }
+            return { 'type': 'string', 'valid': '' } ;
+         }
+
          this.loadCustom = function( nodeNum, configs, disableKeyObj )
          {
             var isFirst = true ;
@@ -1190,19 +1211,35 @@
                      continue ;
                   }
 
+                  if ( value == 'TRUE' || value == 'FALSE' )
+                  {
+                     value = value.toLowerCase() ;
+                  }
+
                   this.useKeyList.push( key ) ;
+
+                  var hiddenTemplate = this.getHiddenTemplate( key ) ;
 
                   if( isFirst )
                   {
-                     this.custom[0]['child'][0][0]['value'] = key ;
-                     this.custom[0]['child'][0][1]['value'] = value ;
+                     this.custom[0]['child'][0][0]['value']    = key ;
+                     this.custom[0]['child'][0][0]['disabled'] = true ;
+                     this.custom[0]['child'][0][1]['value']    = value ;
+                     this.custom[0]['child'][0][1]['type']     = hiddenTemplate['type'] ;
+                     this.custom[0]['child'][0][1]['valid']    = hiddenTemplate['valid'] ;
+
                      isFirst = false ;
                   }
                   else
                   {
                      var newInput = $.extend( true, [], this.custom[0]['child'][0] ) ;
-                     newInput[0]['value'] = key ;
-                     newInput[1]['value'] = value ;
+
+                     newInput[0]['value']    = key ;
+                     newInput[0]['disabled'] = true ;
+                     newInput[1]['value']    = value ;
+                     newInput[1]['type']     = hiddenTemplate['type'] ;
+                     newInput[1]['valid']    = hiddenTemplate['valid'] ;
+
                      this.custom[0]['child'].push( newInput ) ;
                   }
                }
@@ -1228,18 +1265,33 @@
                      this.useKeyList.push( key ) ;
 
                      var value = configs[0][key] ;
+                     if ( value == 'TRUE' || value == 'FALSE' )
+                     {
+                        value = value.toLowerCase() ;
+                     }
+
+                     var hiddenTemplate = this.getHiddenTemplate( key ) ;
 
                      if( isFirst )
                      {
-                        this.custom[0]['child'][0][0]['value'] = key ;
-                        this.custom[0]['child'][0][1]['value'] = value ;
+                        this.custom[0]['child'][0][0]['value']    = key ;
+                        this.custom[0]['child'][0][0]['disabled'] = true ;
+                        this.custom[0]['child'][0][1]['value']    = value ;
+                        this.custom[0]['child'][0][1]['type']     = hiddenTemplate['type'] ;
+                        this.custom[0]['child'][0][1]['valid']    = hiddenTemplate['valid'] ;
+
                         isFirst = false ;
                      }
                      else
                      {
                         var newInput = $.extend( true, [], this.custom[0]['child'][0] ) ;
-                        newInput[0]['value'] = key ;
-                        newInput[1]['value'] = value ;
+
+                        newInput[0]['value']    = key ;
+                        newInput[0]['disabled'] = true ;
+                        newInput[1]['value']    = value ;
+                        newInput[1]['type']     = hiddenTemplate['type'] ;
+                        newInput[1]['valid']    = hiddenTemplate['valid'] ;
+
                         this.custom[0]['child'].push( newInput ) ;
                      }
                   }
@@ -1331,7 +1383,7 @@
             if ( nodeNum == 1 )
             {
                //只要有一个值不一样，就修改
-               if ( nodeConfigs[key] !== value )
+               if ( !isSameValueByStrBool( nodeConfigs[key], value ) )
                {
                   this.updateConfig['property'][key] = value ;
                }
@@ -1340,7 +1392,7 @@
             {
                for( var index in nodeConfigs )
                {
-                  if ( nodeConfigs[index][key] !== value )
+                  if ( !isSameValueByStrBool( nodeConfigs[index][key], value ) )
                   {
                      //只要有一个值不一样，就修改
                      this.updateConfig['property'][key] = value ;
@@ -1371,25 +1423,28 @@
                else
                {
                   //根据模板做类型转换
-                  if( template[key]['Type'] == 'int' )
+                  if ( template[key] )
                   {
-                     tmpValue = parseInt( tmpValue ) ;
-                     if ( isNaN( tmpValue ) )
+                     if( template[key]['Type'] == 'int' )
                      {
-                        continue ;
+                        tmpValue = parseInt( tmpValue ) ;
+                        if ( isNaN( tmpValue ) )
+                        {
+                           continue ;
+                        }
                      }
-                  }
-                  else if( template[key]['Type'] == 'double' )
-                  {
-                     tmpValue = parseFloat( tmpValue ) ;
-                     if ( isNaN( tmpValue ) )
+                     else if( template[key]['Type'] == 'double' )
                      {
-                        continue ;
+                        tmpValue = parseFloat( tmpValue ) ;
+                        if ( isNaN( tmpValue ) )
+                        {
+                           continue ;
+                        }
                      }
-                  }
-                  else if( template[key]['Type'] == 'bool' )
-                  {
-                     tmpValue = tmpValue.toUpperCase() ;
+                     else if( template[key]['Type'] == 'bool' )
+                     {
+                        tmpValue = tmpValue.toUpperCase() ;
+                     }
                   }
                }
 
@@ -1467,7 +1522,7 @@
 
             this.loadUpdateConfig( nodeNum, nodeConfigs, template, config1 ) ;
             this.loadUpdateConfig( nodeNum, nodeConfigs, template, config2 ) ;
-            this.loadUpdateConfig( nodeNum, nodeConfigs, null, this.convertCustom( config3 ) ) ;
+            this.loadUpdateConfig( nodeNum, nodeConfigs, template, this.convertCustom( config3 ) ) ;
 
             this.loadDeleteConfigs( nodeNum, nodeConfigs, config1 ) ;
             this.loadDeleteConfigs( nodeNum, nodeConfigs, config2 ) ;
@@ -1655,6 +1710,7 @@
             var isAllClear2 = $scope.ModifyConfigWindow['config']['form2'].check() ;
             var isAllClear3 = $scope.ModifyConfigWindow['config']['form3'].check( function( valueList ){
                var error = [] ;
+               //检查禁用字段
                $.each( valueList['other'], function( index, configInfo ){
                   if( disableKeyObj.isDisableKey( configInfo['name'] ) )
                   {
