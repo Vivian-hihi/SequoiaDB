@@ -139,7 +139,6 @@ utilFiles = [
       "client/timestampTm.c",
       "client/timestampValid.c",
       "bson/md5.c",
-      "util/linenoise.cpp",
       "util/utilCipher.c"
       ]
 
