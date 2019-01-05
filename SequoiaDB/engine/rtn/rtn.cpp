@@ -308,20 +308,23 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCORRECTCS1 ) ;
 
-      UINT8 fileTypeCnt = 4 ;
-      UINT8 csNameCnt = 2 ;
-      const CHAR* pathList[ fileTypeCnt ]  = { dataPath,
-                                               indexPath,
-                                               lobPath,
-                                               lobMetaPath } ;
-      const CHAR* extNameList[fileTypeCnt] = { DMS_DATA_SU_EXT_NAME,
-                                               DMS_INDEX_SU_EXT_NAME,
-                                               DMS_LOB_DATA_SU_EXT_NAME,
-                                               DMS_LOB_META_SU_EXT_NAME } ;
-      const CHAR* csNameList[ csNameCnt ]  = { renameLog.oldName,
-                                               renameLog.newName } ;
+      const CHAR* pathList[]    = { dataPath,
+                                    indexPath,
+                                    lobPath,
+                                    lobMetaPath } ;
+      const CHAR* extNameList[] = { DMS_DATA_SU_EXT_NAME,
+                                    DMS_INDEX_SU_EXT_NAME,
+                                    DMS_LOB_DATA_SU_EXT_NAME,
+                                    DMS_LOB_META_SU_EXT_NAME } ;
+      const CHAR* csNameList[]  = { renameLog.oldName,
+                                    renameLog.newName } ;
+      UINT8 pathCnt   = sizeof( pathList ) / sizeof( const CHAR* ) ;
+      UINT8 csNameCnt = sizeof( csNameList ) / sizeof( const CHAR* ) ;
 
-      for( UINT8 i = 0 ; i < fileTypeCnt ; i++ )
+      SDB_ASSERT( ( sizeof(extNameList)/sizeof(const CHAR*) )== pathCnt,
+                  "ext name cnt must equals to path cnt" ) ;
+
+      for( UINT8 i = 0 ; i < pathCnt ; i++ )
       {
          const CHAR* basePath = pathList[i] ;
          const CHAR* extName = extNameList[i] ;
@@ -356,8 +359,6 @@ namespace engine
             }
          }
       }
-
-
 
    done:
       PD_TRACE_EXITRC( SDB_RTNCORRECTCS1, rc ) ;
@@ -1085,6 +1086,17 @@ namespace engine
       {
          PD_RC_CHECK ( SDB_SYS, PDERROR, "Failed to iterate directory %s: %s",
                        dataPath, e.what() ) ;
+      }
+
+      if ( hasRenameInfo )
+      {
+         rc = logger.clear() ;
+         if ( rc )
+         {
+            PD_LOG( PDWARNING,
+                    "Failed to clear rename log, rc: %d" , rc ) ;
+         }
+         hasRenameInfo = FALSE ;
       }
 
    done :
