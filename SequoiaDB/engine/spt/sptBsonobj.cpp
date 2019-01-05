@@ -50,6 +50,8 @@ namespace engine
      JS_ADD_CONSTRUCT_FUNC( construct )
      JS_ADD_DESTRUCT_FUNC( destruct )
      JS_SET_CVT_TO_BSON_FUNC( _sptBsonobj::cvtToBSON )
+     JS_SET_JSOBJ_TO_BSON_FUNC( _sptBsonobj::fmpToBSON )
+     JS_SET_BSON_TO_JSOBJ_FUNC( _sptBsonobj::bsonToJSObj )
    JS_MAPPING_END()
 
    _sptBsonobj::_sptBsonobj()
@@ -106,15 +108,61 @@ namespace engine
                                  string &errMsg )
    {
       INT32 rc = SDB_OK ;
+      BSONObj obj ;
 
-      _sptBsonobj *pBsonObj ;
+      rc = fmpToBSON( value, obj, errMsg ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      builder.append( key, obj ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptBsonobj::fmpToBSON( const sptObject &value,
+                                 BSONObj &retObj,
+                                 string &errMsg )
+   {
+      INT32 rc = SDB_OK ;
+
+      _sptBsonobj *pBsonObj = NULL ;
       rc = value.getUserObj( _sptBsonobj::__desc, (const void **)&pBsonObj ) ;
       if( SDB_OK != rc )
       {
          errMsg = "Failed to get BSONObj field" ;
          goto error ;
       }
-      builder.append( key, pBsonObj->getBson() ) ;
+
+      retObj = pBsonObj->getBson() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptBsonobj::bsonToJSObj( sdbclient::sdb &db,
+                                   const BSONObj &data,
+                                   _sptReturnVal &rval,
+                                   bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      _sptBsonobj *pBsonObj = NULL ;
+
+      pBsonObj = SDB_OSS_NEW _sptBsonobj( data ) ;
+      if ( !pBsonObj )
+      {
+         rc = SDB_OOM ;
+         detail = BSON( SPT_ERR << "Failed to new _sptBsonobj" ) ;
+         goto error ;
+      }
+
+      rval.setUsrObjectVal<_sptBsonobj>( pBsonObj ) ;
 
    done:
       return rc ;

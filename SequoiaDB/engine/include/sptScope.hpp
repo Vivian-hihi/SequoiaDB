@@ -37,6 +37,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "sptSPDef.hpp"
+#include "sptSPVal.hpp"
 #include "../bson/bson.hpp"
 #include <list>
 #include <string>
@@ -66,6 +67,7 @@ namespace engine
          _sptResultVal() ;
          virtual ~_sptResultVal() ;
 
+         virtual const sptSPVal* getVal() const = 0 ;
          virtual const void*     rawPtr() const = 0 ;
          virtual bson::BSONObj   toBSON() const = 0 ;
 

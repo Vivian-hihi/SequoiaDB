@@ -266,6 +266,7 @@ spt2Files = [
       "spt/sptInvoker.cpp",
       "spt/sptObjDesc.cpp",
       "spt/sptReturnVal.cpp",
+      "spt/sptSPVal.cpp",
       "spt/sptScope.cpp",
       "spt/sptSPArguments.cpp",
       "spt/sptSPScope.cpp",

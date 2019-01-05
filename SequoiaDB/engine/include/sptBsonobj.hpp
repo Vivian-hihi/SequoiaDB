@@ -68,6 +68,12 @@ namespace engine
                               BOOLEAN isSpecialObj, BSONObjBuilder& builder,
                               string &errMsg ) ;
 
+      static INT32 fmpToBSON( const sptObject &value, BSONObj &retObj,
+                              string &errMsg ) ;
+
+      static INT32 bsonToJSObj( sdbclient::sdb &db, const BSONObj &data,
+                                _sptReturnVal &rval, bson::BSONObj &detail ) ;
+
    private:
       bson::BSONObj _obj ;
    } ;

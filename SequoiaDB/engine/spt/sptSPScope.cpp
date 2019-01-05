@@ -37,8 +37,6 @@
 #include "ossUtil.hpp"
 #include "ossMem.hpp"
 #include "sptSPDef.hpp"
-#include "sptBsonobj.hpp"
-#include "sptBsonobjArray.hpp"
 #include "sptGlobalFunc.hpp"
 #include "sptConvertor.hpp"
 #include "sptCommon.hpp"
@@ -243,7 +241,6 @@ namespace engine
       _sptSPResultVal implement
    */
    _sptSPResultVal::_sptSPResultVal()
-   :_value( JSVAL_VOID )
    {
       _ctx = NULL ;
    }
@@ -252,15 +249,20 @@ namespace engine
    {
    }
 
+   const sptSPVal* _sptSPResultVal::getVal() const
+   {
+      return &_value ;
+   }
+
    const void* _sptSPResultVal::rawPtr() const
    {
-      return (void*)&_value ;
+      return ( const void* )_value.valuePtr() ;
    }
 
    bson::BSONObj _sptSPResultVal::toBSON() const
    {
       bson::BSONObj obj ;
-      _rval2obj( _ctx, _value, obj ) ;
+      _rval2obj( _ctx, &_value, obj ) ;
       return obj ;
    }
 
@@ -268,106 +270,25 @@ namespace engine
    {
       _ctx = ctx ;
       _errStr.clear() ;
-      _value = JSVAL_VOID ;
+      _value.reset( _ctx ) ;
    }
 
    INT32 _sptSPResultVal::_rval2obj( JSContext *cx,
-                                     const jsval &jsrval,
+                                     const sptSPVal *pVal,
                                      bson::BSONObj &rval ) const
    {
       INT32 rc = SDB_OK ;
       bson::BSONObjBuilder builder ;
+      sptConvertor c( cx ) ;
 
-      if ( JSVAL_IS_VOID( jsrval ) )
+      rc = c.appendToBson( SPT_RVAL_KEY, *pVal, builder ) ;
+      if ( SDB_OK != rc )
       {
-      }
-      else if ( JSVAL_IS_STRING( jsrval ) )
-      {
-         std::string v ;
-         rc = sptConvertor::toString( cx, jsrval, v ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-         builder.append( SPT_RVAL_KEY, v ) ;
-      }
-      else if ( JSVAL_IS_INT( jsrval ) )
-      {
-         int32 v = 0 ;
-         if ( !JS_ValueToInt32( cx, jsrval, &v ) )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         builder.append( SPT_RVAL_KEY, v ) ;
-      }
-      else if ( JSVAL_IS_DOUBLE( jsrval ) )
-      {
-         jsdouble v ;
-         if ( !JS_ValueToNumber( cx, jsrval, &v ))
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         builder.appendNumber( SPT_RVAL_KEY, v ) ;
-      }
-      else if ( JSVAL_IS_BOOLEAN( jsrval ) )
-      {
-         JSBool v ;
-         if ( !JS_ValueToBoolean( cx, jsrval, &v ) )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         builder.appendBool( SPT_RVAL_KEY, v ) ;
-      }
-      else if ( JSVAL_IS_OBJECT( jsrval ) )
-      {
-         JSObject *obj = JSVAL_TO_OBJECT( jsrval ) ;
-         if ( _sptBsonobj::__desc.isInstanceOf( cx, obj ) )
-         {
-            _sptBsonobj *p = (_sptBsonobj*)JS_GetPrivate( cx, obj ) ;
-            if ( NULL == p )
-            {
-               rc = SDB_SYS ;
-               goto error ;
-            }
-            builder.append( SPT_RVAL_KEY, p->getBson() ) ;
-         }
-         else if ( _sptBsonobjArray::__desc.isInstanceOf( cx, obj ) )
-         {
-            _sptBsonobjArray *p = (_sptBsonobjArray*)JS_GetPrivate( cx, obj ) ;
-            const vector<bson::BSONObj> vecObjs = p->getBsonArray() ;
-            bson::BSONArrayBuilder sub( builder.subarrayStart( SPT_RVAL_KEY ) ) ;
-            for ( UINT32 i = 0 ; i < vecObjs.size() ; ++i )
-            {
-               sub.append( vecObjs[ i ] ) ;
-            }
-            sub.done() ;
-         }
-         else if ( !sptGetObjFactory()->findObj(
-                     sptGetObjFactory()->getClassName( cx, obj ) ) )
-         {
-            // Not sdb obj
-            sptConvertor c( cx ) ;
-            bson::BSONObj v ;
-            rc = c.toBson( JSVAL_TO_OBJECT( jsrval ), v ) ;
-            if ( SDB_OK != rc )
-            {
-               goto error ;
-            }
-            builder.append( SPT_RVAL_KEY, v ) ;
-         }
-      }
-      else
-      {
-         ossPrintf( "the type[%d] is not supported yet"OSS_NEWLINE,
-                    JS_TypeOfValue( cx, jsrval ) ) ;
-         rc = SDB_INVALIDARG ;
+         ossPrintf( "%s"OSS_NEWLINE, c.getErrMsg().c_str() ) ;
          goto error ;
       }
-
       rval = builder.obj() ;
+
    done:
       return rc ;
    error:
@@ -776,7 +697,7 @@ namespace engine
       SDB_ASSERT ( _context && _global, "this scope has not been initilized" ) ;
       SDB_ASSERT( NULL != code || 0 < len, "code can not be empty" ) ;
       jsval exception = JSVAL_VOID ;
-      CHAR *print = NULL ;
+      string strPrint ;
 
       _rval.reset( _context ) ;
       jsval *pRval = ( jsval* )_rval.rawPtr() ;
@@ -797,19 +718,20 @@ namespace engine
 
       if ( flag & SPT_EVAL_FLAG_PRINT )
       {
-         if ( !JSVAL_IS_VOID ( *pRval ) )
+         if ( !_rval.getVal()->isVoid() )
          {
-            print = convertJsvalToString ( _context , *pRval ) ;
-            if ( !print )
+            rc = _rval.getVal()->toString( strPrint ) ;
+            if ( rc )
             {
-               rc = SDB_SYS ;
+               ossPrintf( "Convert result to string failed: %d"OSS_NEWLINE,
+                          rc ) ;
                goto error ;
             }
          }
 
-         if ( NULL != print && print[0] != '\0' )
+         if ( !strPrint.empty() )
          {
-            ossPrintf( "%s"OSS_NEWLINE, print ) ;
+            ossPrintf( "%s"OSS_NEWLINE, strPrint.c_str() ) ;
          }
       }
 
@@ -825,7 +747,6 @@ namespace engine
       {
          *ppRval = &_rval ;
       }
-      SAFE_JS_FREE ( _context , print ) ;
       return rc ;
    error:
       // report error while calling eval() recursively

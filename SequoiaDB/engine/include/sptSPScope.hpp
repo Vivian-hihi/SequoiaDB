@@ -50,6 +50,7 @@ namespace engine
          _sptSPResultVal() ;
          virtual ~_sptSPResultVal() ;
 
+         virtual const sptSPVal* getVal() const ;
          virtual const void*     rawPtr() const ;
          virtual bson::BSONObj   toBSON() const ;
 
@@ -57,11 +58,11 @@ namespace engine
 
       protected:
          INT32  _rval2obj( JSContext *cx,
-                           const jsval &jsrval,
+                           const sptSPVal *pVal,
                            bson::BSONObj &rval ) const ;
 
       protected:
-         jsval             _value ;
+         sptSPVal          _value ;
          JSContext         *_ctx ;
 
    } ;

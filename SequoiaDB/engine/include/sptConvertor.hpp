@@ -44,6 +44,7 @@
 #include "../bson/bson.hpp"
 #include <string>
 #include "sptObjDesc.hpp"
+#include "sptSPVal.hpp"
 
 namespace engine
 {
@@ -69,22 +70,28 @@ namespace engine
                              std::string &str ) ;
 
    public:
-      INT32 toBson( JSObject *obj , bson::BSONObj &bsobj ) ;
+      INT32 toBson( JSObject *obj,
+                    bson::BSONObj &bsobj,
+                    BOOLEAN *pIsArray = NULL ) ;
+
+      INT32 toBson( const sptSPVal *pVal,
+                    bson::BSONObj &obj,
+                    BOOLEAN *pIsArray = NULL ) ;
+
+      INT32 appendToBson( const std::string &key,
+                          const sptSPVal &val,
+                          bson::BSONObjBuilder &builder ) ;
+
       INT32 toObjArray( JSObject *obj, vector< bson::BSONObj > &bsArray ) ;
       INT32 toStrArray( JSObject *obj, vector< string > &bsArray ) ;
 
-      string getErrMsg() const ;
-
-   protected:
-      INT32 _toString(  const jsval &val, std::string &str ) ;
-      INT32 _toInt( const jsval &val, INT32 &str ) ;
-      INT32 _toDouble( const jsval &val, FLOAT64 &fV ) ;
-      INT32 _toBoolean( const jsval &val, BOOLEAN &bL ) ;
+      const string& getErrMsg() const ;
 
    private:
-      INT32 _traverse( JSObject *obj , bson::BSONObjBuilder &builder ) ;
+      INT32 _traverse( JSObject *obj,
+                       bson::BSONObjBuilder &builder ) ;
       INT32 _appendToBson( const std::string &name,
-                           const jsval &val,
+                           const sptSPVal &val,
                            bson::BSONObjBuilder &builder ) ;
       void _setErrMsg( const string &msg, BOOLEAN isReplace ) ;
 

@@ -59,8 +59,8 @@ namespace engine
    }
 
    INT32 _sptDBNumberLong::construct( const _sptArguments &arg,
-                                  _sptReturnVal &rval,
-                                  bson::BSONObj &detail )
+                                      _sptReturnVal &rval,
+                                      bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
       if( arg.argc() != 1 )
