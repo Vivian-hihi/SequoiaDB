@@ -58,15 +58,41 @@ class TestCURDFlag16775 extends PHPUnit_Framework_TestCase
       self::checkErrno( 0, self::$db -> getError()['errno'] ); 
       self::checkRecordNum( count(self::$data), "bulkInser the record, but part data not the same" );
 
-      $dataOID = array( "_id" => 1, "test" => "testFlagSDB_FLG_INSERT_RETURN_OID");
-      self::$cl -> bulkInsert( $dataOID, SDB_FLG_INSERT_RETURN_OID );
+      $dataOID = array( "_id" => 1024, "test" => "testFlagSDB_FLG_INSERT_RETURN_OID");
+      $rc = self::$cl -> bulkInsert( $dataOID, SDB_FLG_INSERT_RETURN_OID );
       self::checkErrno( 0, self::$db -> getError()['errno'] );
       self::checkRecordNum( count(self::$data) + 1, "bulkInser the same record, check SDB_FLG_INSERT_RETURN_OID" );
+      if( $rc['_id'][0] != 1024 )
+      {
+         throw new Exception( 'check return oid error, exp: 1024, act: ' . $rc['_id'] );
+      }
 
       $testData =  array( "flag" => "test flag = 2");
       self::$cl -> bulkInsert( $testData, 2 );
       self::checkErrno( 0, self::$db -> getError()['errno'] );
       self::checkRecordNum( count(self::$data) + 2, "test flag = 2" );
+
+      $datas = array();
+      $datas[0] = array( "_id" => 1, "test" => "testFlagSDB_FLG_INSERT_RETURN_OID_1" );
+      $datas[1] = array( "_id" => 2, "test" => "testFlagSDB_FLG_INSERT_RETURN_OID_2" );
+      $datas[2] = array( "_id" => 3, "test" => "testFlagSDB_FLG_INSERT_RETURN_OID_3" );
+      $datas[3] = array( "_id" => 4, "test" => "testFlagSDB_FLG_INSERT_RETURN_OID_4" );
+      $datas[4] = array( "_id" => 5, "test" => "testFlagSDB_FLG_INSERT_RETURN_OID_5" );
+      $rc_recordIds = self::$cl -> bulkInsert( $datas, SDB_FLG_INSERT_RETURN_OID );
+      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      $idArray = $rc_recordIds['_id'];
+      if( count($idArray) != count($datas) )
+      {
+         throw new Exception( 'return record id num error, exp: 5, act: ' . count($idArray) );
+      }
+      sort( $idArray );
+      for( $i = 0; $i < count( $idArray ); $i++ )
+      {
+          if( $idArray[$i] != $i + 1)
+          {
+             throw new Exception( 'check record id error:' . $idArray );
+          }
+      }
    }
    
    public static function tearDownAfterClass()
