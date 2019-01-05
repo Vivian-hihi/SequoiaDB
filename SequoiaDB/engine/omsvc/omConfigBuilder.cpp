@@ -618,15 +618,6 @@ namespace engine
          goto error ;
       }
 
-      if ( !_confValidator.isValid( _defaultValue ) )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "%s's default value is invalid:value=%s,valid=%s", 
-                     _name.c_str(), _defaultValue.c_str(), 
-                     _validateStr.c_str() ) ;
-         goto error ;
-      }
-
    done:
       return rc ;
    error:
@@ -1051,7 +1042,19 @@ namespace engine
             BSONElement ele = i.next() ;
             if ( Object == ele.type() )
             {
+               BOOLEAN isHidden = false ;
                BSONObj oneProperty = ele.embeddedObject() ;
+               string hidden = oneProperty.getStringField(
+                                                   OM_BSON_PROPERTY_HIDDEN ) ;
+
+               ossStrToBoolean( hidden.c_str(), &isHidden ) ;
+
+               //filtering hidden config item
+               if ( isHidden )
+               {
+                  continue ;
+               }
+
                rc = properties.addProperty( oneProperty ) ;
                if ( SDB_OK != rc )
                {

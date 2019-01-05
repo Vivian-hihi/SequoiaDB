@@ -826,6 +826,7 @@ unique: true, enforced: true }"
    #define  OM_XML_CONFIG                    "config"
    #define  OM_REST_TEMPLATE_INFO            "TemplateInfo"
    #define  OM_BSON_PROPERTY_VALUE           "Value"
+   #define  OM_BSON_PROPERTY_HIDDEN          "hidden"
    //**************************************************************************
 
    //*********************command between om and agent*************************
