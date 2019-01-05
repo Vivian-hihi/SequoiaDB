@@ -57,11 +57,15 @@ public class GetObjectWithMatchConditions16377 extends S3TestBase {
 		s3Client.putObject(S3TestBase.enableVerBucketName, key, new File(updatePath));
 
 		// set date one day later than create time
-		long timestamp = createDate.getTime() + 96784000l;
-		Date unModifydate = new Date(timestamp);
+		long timestamp1 = createDate.getTime() + 96784000l;
+		//current time 1 seccond earlier to reduce acquisition error
+		long timestamp2 = createDate.getTime() - 1000;
+		Date unModifydate = new Date(timestamp1);
+		Date modifydate = new Date(timestamp2);
+		
 		String curVersionId = "1";
 		GetObjectRequest request = new GetObjectRequest(S3TestBase.enableVerBucketName, key, curVersionId);
-		request.withUnmodifiedSinceConstraint(unModifydate).withModifiedSinceConstraint(createDate);
+		request.withUnmodifiedSinceConstraint(unModifydate).withModifiedSinceConstraint(modifydate);
 		S3Object object = s3Client.getObject(request);
 
 		// match current version object
