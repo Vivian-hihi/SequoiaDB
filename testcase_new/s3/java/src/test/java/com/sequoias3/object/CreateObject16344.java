@@ -96,7 +96,7 @@ public class CreateObject16344 extends S3TestBase {
 			try{
 				for(int i  = 0 ; i < 1000 ; i++){
 					int writeSize = random.nextInt(1024);
-					String currContent = TestTools.getRandomString(writeSize);
+					String currContent = ObjectUtils.getRandomString(writeSize);
 					String currmd5 = TestTools.getMD5(currContent.getBytes());
 					String currentName = keyName+ "." + i;
 					putObjResult = s3Client.putObject(bucketName, currentName, currContent);

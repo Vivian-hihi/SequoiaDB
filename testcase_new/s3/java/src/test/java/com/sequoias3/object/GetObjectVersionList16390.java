@@ -19,6 +19,7 @@ import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.HeadUtils;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
  * test content: 带前缀prefix查询对象版本列表 
@@ -44,10 +45,9 @@ public class GetObjectVersionList16390 extends S3TestBase {
 		//create bucket
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 
-		
 		for(int i = 0 ; i < keyName.length ; i ++ ){
 			dateRange[0] = new Date();
-			String currentContent = content+TestTools.getRandomString(i);
+			String currentContent = content + ObjectUtils.getRandomString(i);
 			s3Client.putObject(bucketName, keyName[i], currentContent);
 			dateRange[1] = new Date();
 			expEtagList.add(TestTools.getMD5(currentContent.getBytes()));
@@ -76,7 +76,7 @@ public class GetObjectVersionList16390 extends S3TestBase {
 		for( int i = 0; i < 2; i++){
 			Assert.assertEquals(versions.get(i).getKey(), keyName[i], "versions' key is wrong");
 			Assert.assertEquals(versions.get(i).getVersionId(), "null", "versions' versionid is wrong");
-			Assert.assertEquals(versions.get(i).getSize(), (long)(content.length()+i), "versions' size is wrong");			
+			Assert.assertEquals(versions.get(i).getSize(), (long)(content.length()+i), "versions' size is wrong");	
 			Assert.assertEquals(versions.get(i).getETag(), expEtagList.get(i), "versions' Etag is wrong");
 			
 			Date actDate = versions.get(i).getLastModified();

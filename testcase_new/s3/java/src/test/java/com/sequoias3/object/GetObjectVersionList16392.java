@@ -17,6 +17,7 @@ import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
  * test content: 带分隔符delimiter查询对象版本列表
@@ -46,11 +47,11 @@ public class GetObjectVersionList16392 extends S3TestBase {
 		
 		for(int i = 0 ; i < keyName.length ; i ++ ){
 			List<String> tempEtag = new ArrayList<>();
-			String currentContent = content+TestTools.getRandomString(i);
+			String currentContent = content + ObjectUtils.getRandomString(i);
 			s3Client.putObject(bucketName, keyName[i], currentContent);
 			tempEtag.add(TestTools.getMD5(currentContent.getBytes()));
 			
-			currentContent = content+TestTools.getRandomString(i);
+			currentContent = content + ObjectUtils.getRandomString(i);
 			s3Client.putObject(bucketName, keyName[i], currentContent);
 			tempEtag.add(TestTools.getMD5(currentContent.getBytes()));
 			//同一个对象不同版本的etag，最新版本排在最前面
