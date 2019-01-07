@@ -77,7 +77,7 @@ function checkResult( rc, rawData, dataType )
    //println(JSON.stringify(findRecsArray));
    
    //compare number
-   var expLen = 1;  
+   var expLen = 0 ;  
    if( findRecsArray.length !== expLen )
    {
       throw buildException("checkResult", null, "[compare number]", 
@@ -85,13 +85,4 @@ function checkResult( rc, rawData, dataType )
                           "[recsNum:"+ findRecsArray.length +"]");
    }
    
-   //compare records
-   var actB = findRecsArray[0]["b"]["$undefined"];
-   var expB = rawData[11]["tmp"];  //rawData[11]: {tmp:1}
-   if( actB !== expB )
-   {
-   throw buildException("checkResult", null, "[compare records]", 
-                     '["b": '+ expB +']',
-                     '["b": '+ actB +']');
-   }
 }
