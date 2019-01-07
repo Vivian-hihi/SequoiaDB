@@ -877,7 +877,7 @@ namespace engine
                if ( NULL == host->getDisk( value ) )
                {
                   rc = SDB_INVALIDARG ;
-                  PD_LOG_MSG( PDERROR, "dataPath's disk is not exist: hostName=%s, "
+                  PD_LOG_MSG( PDERROR, "dataPath's disk does not exist: hostName=%s, "
                               "dataPath=%s", hostName.c_str(), value.c_str() ) ;
                   goto error ;
                }

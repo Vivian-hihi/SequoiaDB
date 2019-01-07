@@ -296,7 +296,7 @@ namespace engine
          if ( SDB_DMS_EOC == rc )
          {
             rc = SDB_STRTGY_TASK_NOT_EXISTED ;
-            PD_LOG( PDERROR, "Task[%s] is not exist",
+            PD_LOG( PDERROR, "Task[%s] does not exist",
                     matcher.toString().c_str() ) ;
          }
          else
@@ -354,7 +354,7 @@ namespace engine
          if ( SDB_DMS_EOC == rc )
          {
             rc = SDB_RULE_ID_IS_NOT_EXIST ;
-            PD_LOG( PDWARNING, "Strategy[%s] is not exist",
+            PD_LOG( PDWARNING, "Strategy[%s] does not exist",
                     matcher.toString().c_str() ) ;
          }
          else
@@ -904,7 +904,7 @@ namespace engine
          }
          else if ( 0 == updatedNum )
          {
-            PD_LOG( PDWARNING, "Strategy[%s] is not exist",
+            PD_LOG( PDWARNING, "Strategy[%s] does not exist",
                     matcher.toString().c_str() ) ;
             rc = SDB_RULE_ID_IS_NOT_EXIST ;
             goto error ;
@@ -977,7 +977,7 @@ namespace engine
             }
             else if ( 0 == updatedNum )
             {
-               PD_LOG( PDERROR, "Strategy[%s] is not exist",
+               PD_LOG( PDERROR, "Strategy[%s] does not exist",
                        matcher.toString().c_str() ) ;
                rc = SDB_RULE_ID_IS_NOT_EXIST ;
                goto error ;
@@ -1048,7 +1048,7 @@ namespace engine
             }
             else if ( 0 == updatedNum )
             {
-               PD_LOG( PDERROR, "Strategy[%s] is not exist",
+               PD_LOG( PDERROR, "Strategy[%s] does not exist",
                        matcher.toString().c_str() ) ;
                rc = SDB_RULE_ID_IS_NOT_EXIST ;
                goto error ;
@@ -1110,7 +1110,7 @@ namespace engine
             }
             else if ( 0 == updatedNum )
             {
-               PD_LOG( PDERROR, "Strategy[%s] is not exist",
+               PD_LOG( PDERROR, "Strategy[%s] does not exist",
                        matcher.toString().c_str() ) ;
                rc = SDB_RULE_ID_IS_NOT_EXIST ;
                goto error ;

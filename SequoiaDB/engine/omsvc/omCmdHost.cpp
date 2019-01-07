@@ -145,7 +145,7 @@ namespace engine
       {
          if ( SDB_DMS_RECORD_NOTEXIST == rc )
          {
-            _errorMsg.setError( TRUE, "cluster is not exist: name=%s",
+            _errorMsg.setError( TRUE, "cluster does not exist: name=%s",
                                 _clusterName.c_str() ) ;
          }
          else
@@ -171,7 +171,7 @@ namespace engine
       rc = getPacketFile( _packageName, packetPath ) ;
       if ( rc )
       {
-         _errorMsg.setError( TRUE, "%s package is not exist",
+         _errorMsg.setError( TRUE, "%s package does not exist",
                              _packageName.c_str() ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
@@ -196,7 +196,7 @@ namespace engine
                                                        _clusterName ) )
             {
                rc = SDB_INVALIDARG ;
-               _errorMsg.setError( TRUE, "host is not exist: name=%s",
+               _errorMsg.setError( TRUE, "host does not exist: name=%s",
                                    hostName.c_str() ) ;
                PD_LOG( PDERROR, _errorMsg.getError() ) ;
                goto error ;

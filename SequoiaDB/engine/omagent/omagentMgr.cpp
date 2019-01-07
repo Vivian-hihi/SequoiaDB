@@ -1228,7 +1228,7 @@ namespace engine
             MAPTASKQUERY::iterator it = _mapTaskQuery.find ( msg->requestID ) ;
             if ( it == _mapTaskQuery.end() )
             {
-               PD_LOG ( PDWARNING, "The query task response[%lld] is not exist",
+               PD_LOG ( PDWARNING, "The query task response[%lld] does not exist",
                         msg->requestID ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
@@ -1294,7 +1294,7 @@ namespace engine
          MAP_TASKEVENT::iterator it = _mapTaskEvent.find( msg->requestID ) ;
          if ( it == _mapTaskEvent.end() )
          {
-            PD_LOG ( PDWARNING, "The update task response[%lld] is not exist",
+            PD_LOG ( PDWARNING, "The update task response[%lld] does not exist",
                      msg->requestID ) ;
             rc = SDB_SYS ;
             goto error ;

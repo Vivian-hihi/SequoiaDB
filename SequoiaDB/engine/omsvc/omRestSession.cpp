@@ -99,7 +99,7 @@ namespace engine
             else
             {
                rc = SDB_PMD_SESSION_NOT_EXIST ;
-               PD_LOG_MSG( PDERROR, "session is not exist:rc=%d", rc ) ;
+               PD_LOG_MSG( PDERROR, "session does not exist:rc=%d", rc ) ;
                _sendOpError2Web( rc, pAdaptor, response, this, _pEDUCB ) ;
                goto done ;
             }
@@ -238,7 +238,7 @@ namespace engine
       if ( !_isClusterExist( pClusterName ) )
       {
          rc = SDB_OM_CLUSTER_NOT_EXIST ;
-         PD_LOG_MSG( PDERROR, "cluster is not exist:cluster=%s", 
+         PD_LOG_MSG( PDERROR, "cluster does not exist:cluster=%s", 
                      pClusterName ) ;
          goto error ;
       }
@@ -564,7 +564,7 @@ namespace engine
       if ( !isAuthOK() )
       {
          rc = SDB_PMD_SESSION_NOT_EXIST ;
-         PD_LOG( PDERROR, "session is not exist:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "session does not exist:rc=%d", rc ) ;
          _sendOpError2Web( rc, pAdaptor, response, this, eduCB() ) ;
          goto error ;
       }
@@ -806,7 +806,7 @@ namespace engine
       if ( !isAuthOK() )
       {
          rc = SDB_PMD_SESSION_NOT_EXIST ;
-         PD_LOG( PDERROR, "session is not exist:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "session does not exist:rc=%d", rc ) ;
          _sendOpError2Web( rc, pAdptor, response, this, eduCB() ) ;
 
          PD_LOG( PDEVENT, "OM: redirect to:%s", OM_REST_LOGIN_HTML ) ;
@@ -916,7 +916,7 @@ namespace engine
          // except login_rep and check_seesion_req, other commands can only 
          // execute in authrity status
          rc = SDB_PMD_SESSION_NOT_EXIST ;
-         PD_LOG( PDERROR, "session is not exist:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "session does not exist:rc=%d", rc ) ;
          _sendOpError2Web( rc, pAdptor, response, this, eduCB() ) ;
 
          PD_LOG( PDEVENT, "OM: redirect to:%s", OM_REST_LOGIN_HTML ) ;

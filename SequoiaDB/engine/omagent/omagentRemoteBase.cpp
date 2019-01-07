@@ -228,7 +228,7 @@ namespace engine
             goto done ;
          }
          stringstream ss ;
-         ss << "conf file[" << confFile << "] is not exist" ;
+         ss << "conf file[" << confFile << "] does not exist" ;
          errMsg = ss.str() ;
          goto error ;
       }
@@ -237,7 +237,7 @@ namespace engine
       if ( SDB_FNE == rc )
       {
          stringstream ss ;
-         ss << "conf file[" << confFile << "] is not exist" ;
+         ss << "conf file[" << confFile << "] does not exist" ;
          errMsg = ss.str() ;
          goto error ;
       }

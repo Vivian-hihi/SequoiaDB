@@ -505,7 +505,7 @@ namespace engine
          else
          {
             rc = SDB_PMD_SESSION_NOT_EXIST ;
-            PD_LOG_MSG( PDERROR, "session is not exist:rc=%d", rc ) ;
+            PD_LOG_MSG( PDERROR, "session does not exist:rc=%d", rc ) ;
             _sendOpError2Web( rc, pAdaptor, response, this, _pEDUCB ) ;
             goto done ;
          }

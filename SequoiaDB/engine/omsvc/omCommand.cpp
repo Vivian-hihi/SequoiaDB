@@ -322,7 +322,7 @@ namespace engine
          {
             if ( SDB_DMS_EOC == rc )
             {
-               PD_LOG_MSG( PDERROR, "cluster is not exist:cluster=%s,rc=%d",
+               PD_LOG_MSG( PDERROR, "cluster does not exist:cluster=%s,rc=%d",
                            clusterName.c_str(), rc ) ;
                goto error ;
             }
@@ -664,7 +664,7 @@ namespace engine
       if ( iterList == deployModList.end() )
       {
          rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "%s is not exsit: %s", OM_BSON_DEPLOY_MOD,
+         _errorMsg.setError( TRUE, "%s does not exsit: %s", OM_BSON_DEPLOY_MOD,
                              _deployMod.c_str() ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
@@ -3830,7 +3830,7 @@ namespace engine
          {
             if ( SDB_DMS_EOC == rc )
             {
-               PD_LOG_MSG( PDERROR, "cluster is not exist:cluster=%s,rc=%d",
+               PD_LOG_MSG( PDERROR, "cluster does not exist:cluster=%s,rc=%d",
                            clusterName.c_str(), rc ) ;
                goto error ;
             }
@@ -6707,7 +6707,7 @@ namespace engine
       if ( !isClusterExist )
       {
          rc = SDB_DMS_RECORD_NOTEXIST ;
-         PD_LOG_MSG( PDERROR, "%s is not exist:rc=%d",
+         PD_LOG_MSG( PDERROR, "%s does not exist:rc=%d",
                      clusterName.c_str(), rc ) ;
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
@@ -8358,7 +8358,7 @@ namespace engine
       if ( !_isHostExistInCluster( hostName, clusterName ) )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "host is not exist in cluster:host=%s,"
+         PD_LOG_MSG( PDERROR, "host does not exist in cluster:host=%s,"
                      "cluster=%s", hostName.c_str(),
                       clusterName.c_str() ) ;
          goto error ;
@@ -8465,7 +8465,7 @@ namespace engine
       if ( FALSE == dbTool.isClusterExist( _clusterName ) )
       {
          rc = SDB_OM_CLUSTER_NOT_EXIST ;
-         _errorMsg.setError( TRUE, "cluster is not exist:cluster=%s",
+         _errorMsg.setError( TRUE, "cluster does not exist:cluster=%s",
                              _clusterName.c_str() ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
@@ -9022,7 +9022,7 @@ namespace engine
          if ( SDB_DMS_EOC == rc )
          {
             rc = SDB_OM_BUSINESS_NOT_EXIST ;
-            PD_LOG_MSG( PDERROR, "business is not exist:business=%s",
+            PD_LOG_MSG( PDERROR, "business does not exist:business=%s",
                         businessName.c_str() ) ;
             goto error ;
          }
@@ -9339,7 +9339,7 @@ namespace engine
       else if ( records.size() == 0 )
       {
          rc = SDB_OM_TASK_NOT_EXIST ;
-         PD_LOG_MSG( PDERROR, "task is not exist:taskID="OSS_LL_PRINT_FORMAT,
+         PD_LOG_MSG( PDERROR, "task does not exist:taskID="OSS_LL_PRINT_FORMAT,
                      _taskID ) ;
          goto error ;
       }
@@ -9859,7 +9859,7 @@ namespace engine
       if ( !_isClusterExist( clsName ) ||
            !_isBusinessExist( clsName, bizName ) )
       {
-         _errorDetail = string( "cluster or business is not exist" ) ;
+         _errorDetail = string( "cluster or business does not exist" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }

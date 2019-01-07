@@ -509,7 +509,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          rc = SDB_OM_TASK_NOT_EXIST ;
-         PD_LOG_MSG( PDERROR, "task is not exist:task="OSS_LL_PRINT_FORMAT
+         PD_LOG_MSG( PDERROR, "task does not exist:task="OSS_LL_PRINT_FORMAT
                      ",rc=%d", _taskID, rc ) ;
          goto error ;
       }
@@ -604,7 +604,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          rc = SDB_OM_TASK_NOT_EXIST ;
-         PD_LOG_MSG( PDERROR, "task is not exist:task="OSS_LL_PRINT_FORMAT
+         PD_LOG_MSG( PDERROR, "task does not exist:task="OSS_LL_PRINT_FORMAT
                      ",rc=%d", _taskID, rc ) ;
          goto error ;
       }
