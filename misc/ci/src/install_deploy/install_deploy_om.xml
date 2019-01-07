@@ -37,6 +37,18 @@
             <staf location="@{testhost}" service="FS"
                   request="DELETE ENTRY ${INSTALL_DIR} RECURSE CONFIRM"
                   throwBuildException=""/>
+            <staf location="@{testhost}" service="PROCESS"
+                  request="START SHELL COMMAND ${INSTALL_PG_DIR}/uninstall --mode unattended WAIT 10m RETURNSTDOUT RETURNSTDERR"
+                  throwBuildException="1"/>
+            <staf location="@{testhost}" service="FS"
+                  request="DELETE ENTRY ${INSTALL_PG_DIR} RECURSE CONFIRM"
+                  throwBuildException=""/>
+            <staf location="@{testhost}" service="PROCESS"
+                  request="START SHELL COMMAND ${INSTALL_MySQL_DIR}/uninstall --mode unattended WAIT 10m RETURNSTDOUT RETURNSTDERR"
+                  throwBuildException="1"/>
+            <staf location="@{testhost}" service="FS"
+                  request="DELETE ENTRY ${INSTALL_MySQL_DIR} RECURSE CONFIRM"
+                  throwBuildException=""/>
             <if>
                <equals arg1="${TEST_TYPE}" arg2="PERFORMANCETEST_TPCC" />
                <then>
