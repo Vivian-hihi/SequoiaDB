@@ -179,7 +179,34 @@
             <program>echo</program>
             <programArguments> ${username}:${userpasswd} | chpasswd</programArguments>
         </runProgram>
-
+        <propertiesFileGet>
+            <file>${installdir}/conf/sdbcm.conf</file>
+            <key>IsGeneral</key>
+            <variable>has_om</variable>
+            <abortOnError>0</abortOnError>
+            <showMessageOnError>0</showMessageOnError>
+        </propertiesFileGet>
+        <setInstallerVariableFromScriptOutput>
+            <exec>echo</exec>
+            <execArgs>'${has_om}' | sed 's/^\s*//g'</execArgs>
+            <name>has_om</name>
+        </setInstallerVariableFromScriptOutput>
+        <propertiesFileGet>
+            <file>${installdir}/conf/sdbcm.conf</file>
+            <key>IsGeneral</key>
+            <variable>IsGeneral</variable>
+            <ruleList>
+               <isTrue value="${has_om}"/>
+            </ruleList>
+        </propertiesFileGet>
+        <propertiesFileGet>
+            <file>${installdir}/conf/sdbcm.conf</file>
+            <key>OMAddress</key>
+            <variable>OMAddress</variable>
+            <ruleList>
+               <isTrue value="${has_om}"/>
+            </ruleList>
+        </propertiesFileGet>
     </readyToInstallActionList>
 
     <folderList>
@@ -266,7 +293,22 @@
                 </isTrue>
             </ruleList>
         </propertiesFileSet>
-
+        <propertiesFileSet>
+            <file>${installdir}/conf/sdbcm.conf</file>
+            <key>IsGeneral</key>
+            <value>${IsGeneral}</value>
+            <ruleList>
+               <isTrue value="${has_om}"/>
+            </ruleList>
+        </propertiesFileSet>
+        <propertiesFileSet>
+            <file>${installdir}/conf/sdbcm.conf</file>
+            <key>OMAddress</key>
+            <value>${OMAddress}</value>
+            <ruleList>
+               <isTrue value="${has_om}"/>
+            </ruleList>
+        </propertiesFileSet>
         <!-- 
             set environment variable, rule:
             add env to ~/.bashrc       whether it exists or not
@@ -347,22 +389,52 @@
             </elseActionList>
         </if>
 
+        <setInstallerVariable name="install_om_mode" value="normal"/>
+        <setInstallerVariable>
+            <name>install_om_mode</name>
+            <value>upgrade</value>
+            <ruleList>
+                <isTrue value="${has_om}"/>
+            </ruleList>
+        </setInstallerVariable>
+        <setInstallerVariable name="need_install_om" value="true"/>
+        <setInstallerVariable>
+            <name>need_install_om</name>
+            <value>false</value>
+            <ruleList>
+                <isFalse value="${has_om}"/>
+                <compareText logic="equals" text="${SMS}" value="false"/>
+            </ruleList>
+        </setInstallerVariable>
+        
         <!--start om-->
         <setInstallerVariable name="om_port"    value="11780"/>
         <setInstallerVariable name="om_dbpath"  value="${installdir}/database/sms/${om_port}"/>
         <setInstallerVariable name="http_port"  value="8000"/>
 
         <runProgram>
-            <customErrorMessage>${msg(Install.ErrorMsg.IntallationOM.error)}</customErrorMessage>
             <program>${installdir}/install_om.sh</program>
-            <programArguments>${project.installationType} "${installdir}" "${installer_pathname}" ${port} ${om_port} "${om_dbpath}" ${http_port}</programArguments>
+            <programArguments>${install_om_mode} "${installdir}" "${installer_pathname}" ${port} ${om_port} "${om_dbpath}" ${http_port}</programArguments>
             <ruleList>
-                <compareText logic="does_not_equal" text="${SMS}" value="false"/>
+                <compareText logic="equals" text="${install_om_mode}" value="normal"/>
+                <isTrue value="${need_install_om}"/>
             </ruleList>
             <onErrorActionList>
                 <consoleWrite text="&#xA;error message:&#xA;${program_stdout}&#xA;"/>
             </onErrorActionList>
         </runProgram>
+        <runProgram>
+            <program>${installdir}/install_om.sh</program>
+            <programArguments>${install_om_mode} "${installdir}" "${installer_pathname}"</programArguments>
+            <ruleList>
+                <compareText logic="equals" text="${install_om_mode}" value="upgrade"/>
+                <isTrue value="${need_install_om}"/>
+            </ruleList>
+            <onErrorActionList>
+                <consoleWrite text="&#xA;error message:&#xA;${program_stdout}&#xA;"/>
+            </onErrorActionList>
+        </runProgram>
+        
         <changeOwnerAndGroup>
             <files>${installdir}/packet;${installdir}/packet/${installerFilename}</files>
             <group>${groupname}</group>

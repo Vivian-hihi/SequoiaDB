@@ -510,6 +510,9 @@
                 <compareText logic="equals" text="${install_om_mode}" value="normal"/>
                 <isTrue value="${need_install_om}"/>
             </ruleList>
+            <onErrorActionList>
+                <consoleWrite text="&#xA;error message:&#xA;${program_stdout}&#xA;"/>
+            </onErrorActionList>
         </runProgram>
         <runProgram>
             <program>${installdir}/install_om.sh</program>
@@ -518,6 +521,9 @@
                 <compareText logic="equals" text="${install_om_mode}" value="upgrade"/>
                 <isTrue value="${need_install_om}"/>
             </ruleList>
+            <onErrorActionList>
+                <consoleWrite text="&#xA;error message:&#xA;${program_stdout}&#xA;"/>
+            </onErrorActionList>
         </runProgram>
         
         <changeOwnerAndGroup>
