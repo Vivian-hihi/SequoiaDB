@@ -1,5 +1,6 @@
 package com.sequoiadb.fulltext.killnode;
 
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
