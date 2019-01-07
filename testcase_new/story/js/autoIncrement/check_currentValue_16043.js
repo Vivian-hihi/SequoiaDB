@@ -29,11 +29,11 @@ function main()
    dbcl.setAttributes({ AutoIncrement : { Field : "a" } });
    dbcl.setAttributes({ AutoIncrement : { Field : "a1", CurrentValue : { "$numberLong" : "9223372036854775807" } } });
    //修改CurrentValue的同时修改MinValue才能通过，已提单，单号为SEQUOIADBMAINSTREAM-4060
-   dbcl.setAttributes({ AutoIncrement : { Field : "a2", CurrentValue : { "$numberLong" : "-9223372036854775808" }, MinValue : { "$numberLong" : "-9223372036854775808" } } });
+   dbcl.setAttributes({ AutoIncrement : { Field : "a2", CurrentValue : { "$numberLong" : "-9223372036854775808" } } });
    
    dbcl.setAttributes({ AutoIncrement : { Field : "a4", CurrentValue : { "$numberLong" : "9223372036854775809" } } });  
     //修改CurrentValue的同时修改MinValue才能通过，已提单，单号为SEQUOIADBMAINSTREAM-4060
-   dbcl.setAttributes({ AutoIncrement : { Field : "a5", CurrentValue : { "$numberLong" : "-9223372036854775809" }, MinValue : { "$numberLong" : "-9223372036854775808" } } });
+   dbcl.setAttributes({ AutoIncrement : { Field : "a5", CurrentValue : { "$numberLong" : "-9223372036854775809" } } });
 
    try
    {
