@@ -1082,6 +1082,7 @@
                   "name": "other",
                   "webName": $scope.autoLanguage( "自定义配置" ),
                   "type": "list",
+                  "listType": 2,
                   "valid": {
                      "min": 0
                   },

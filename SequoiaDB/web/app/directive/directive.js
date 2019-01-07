@@ -1977,6 +1977,9 @@
                                           'template':    { ... }     //模板, list 用，添加新的子项时，使用模板来构建，如果没有模板就用添加按钮的那个项
                                           'value':       xxx         //默认值
                                           'required':    true|false  //要不要显示必填提示, 默认false
+                                          'listType':    1 | 2       //list父项专用，默认1
+                                                                       1: 所有子项都可以新增或移除
+                                                                       2: 原有的子项禁止移除，新增的子项可以移除
                                           'disabled':    true|false  //是否禁止修改, 默认false
                                           'child':       [ <item>, ... ]     //子配置项, group, list 有效, 只能嵌套一层！
                                        }
@@ -2196,7 +2199,7 @@
                checkInt: function ( name, value, valid ){
                   var rc = true ;
                   var error = '' ;
-                  if( value && value.length == 0 && typeof( valid ) == 'object' && valid.empty == true )
+                  if( value.length == 0 && typeof( valid ) == 'object' && valid.empty == true )
                   {
                      return { rc: rc, error: error } ;
                   }
@@ -2613,12 +2616,41 @@
                         item.onChange( item.name, item.value ) ;
                      }
                   }
-                  scope.listAppend = function( items, item, template ){
+                  scope.canRemove = function( listType, items ){
+
+                     if ( listType === 2 )
+                     {
+                        var canRemove = true ;
+
+                        for( var i in items )
+                        {
+                           if ( !hasKey( items[i], 'remove' ) || items[i]['remove'] == false )
+                           {
+                              canRemove = false ;
+                              break ;
+                           }
+                        }
+
+                        return canRemove ;
+                     }
+                     
+                     return true ;
+                  }
+                  scope.listAppend = function( inputInfo, item ){
+                     var items = inputInfo.child ;
+                     var template = inputInfo.template ;
                      var newItem ;
                      var index = items.indexOf( item ) ;
                      if ( isArray( template ) )
                      {
                         newItem = $.extend( true, [], template ) ;
+                        if ( inputInfo['listType'] === 2 )
+                        {
+                           for( var i in newItem )
+                           {
+                              newItem[i]['remove'] = true ;
+                           }
+                        }
                      }
                      else
                      {
@@ -2626,6 +2658,10 @@
                         $.each( item, function( index2, inputInfo ){
                            var newInputInfo = $.extend( true, {}, inputInfo ) ;
                            newInputInfo['value'] = newInputInfo['default'] ;
+                           if ( inputInfo['listType'] === 2 )
+                           {
+                              newInputInfo['remove'] = true ;
+                           }
                            newItem.push( newInputInfo ) ;
                         } ) ;
                      }

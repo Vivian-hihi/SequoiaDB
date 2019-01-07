@@ -239,6 +239,30 @@ var sprintf = function( format )
 	return newStr ;
 } ;
 
+//是不是函数
+function isFunction( obj )
+{
+   return typeof( obj ) == 'function' ;
+}
+
+//是不是未定义
+function isUndefined( val )
+{
+   return typeof( val ) == 'undefined' ;
+}
+
+//是不是字符串
+function isString( str )
+{
+   return typeof( str ) == 'string' ;
+}
+
+//是不是对象
+function isObject( obj )
+{
+   return typeof( obj ) == 'object' && obj !== null ;
+}
+
 //判断是否空
 function isEmpty( val )
 {
@@ -261,6 +285,18 @@ function isEmpty( val )
       return false ;
    }
    return false ;
+}
+
+//判断是不是数组
+function isArray( object )
+{
+   if( typeof( object ) == 'undefined' )
+      return false ;
+   if( object === null )
+      return false ;
+   //判断length属性是否是可枚举的 对于数组 将得到false
+   return object && typeof( object ) === 'object' && typeof( object.length ) === 'number' &&
+            typeof( object.splice ) === 'function' && !( object.propertyIsEnumerable( 'length' ) ) ;
 }
 
 //保留多少位小数
@@ -366,17 +402,6 @@ function trim( str )
       return str.replace( /(^\s*)|(\s*$)/g, '' ) ;
    }
    return str ;
-}
-
-//判断是不是数组
-function isArray( object ) {
-   if( typeof( object ) == 'undefined' )
-      return false ;
-   if( object === null )
-      return false ;
-   //判断length属性是否是可枚举的 对于数组 将得到false
-   return object && typeof( object ) === 'object' && typeof( object.length ) === 'number' &&
-            typeof( object.splice ) === 'function' && !( object.propertyIsEnumerable( 'length' ) ) ;
 }
 
 //自动判断类型并转换
@@ -2777,24 +2802,6 @@ function diffObject( o1, o2 )
    }
 
    return list ;
-}
-
-//是不是函数
-function isFunction( obj )
-{
-   return typeof( obj ) == 'function' ;
-}
-
-//是不是字符串
-function isString( str )
-{
-   return typeof( str ) == 'string' ;
-}
-
-//是不是对象
-function isObject( obj )
-{
-   return typeof( obj ) == 'object' && obj !== null ;
 }
 
 //清除对象

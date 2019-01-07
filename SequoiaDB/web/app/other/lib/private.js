@@ -723,7 +723,7 @@ _Deploy.ConvertTemplate = function( templateList, level, canEmpty, checkConfType
          var newTemplateInfo = {
             'name':     templateInfo['Name'],
             'showName': showName,
-            'value':    templateInfo['Default'],
+            'value':    isUndefined( templateInfo['Default'] ) ? '' : templateInfo['Default'],
             'webName':  templateInfo['WebName'],
             'disabled': templateInfo['Edit'] == "false" ? true : false,
             'desc':     templateInfo['Desc'],
