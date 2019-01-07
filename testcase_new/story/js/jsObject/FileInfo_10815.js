@@ -144,7 +144,7 @@ function checkRemoteFileInfo( info, ft )  // ft: FileTest对象
    }
    if( ft.filename === undefined )
    {
-      if( info.filename["$undefined"] !== 1 )
+      if( info.filename !== undefined )
       {
          throw buildException( "checkRemoteFileInfo", null, 
                "check file name undefined", ft, JSON.stringify( info ) ) ;         
