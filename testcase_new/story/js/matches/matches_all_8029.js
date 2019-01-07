@@ -27,8 +27,7 @@ function main()
    	                 {regex:  {"$regex": "^rg", "$options": "i"}}, 
    	                 {binary: {"$binary": "aGVsbG8gd29ybGQ=", "$type": "1"}}, 
    	                 {date:   {"$date": "2038-01-18"}}, 
-   	                 {timestamp: {"$timestamp": "2038-01-18-23.59.59.999999"}},
-   	                 {tmp: 1} ];
+   	                 {timestamp: {"$timestamp": "2038-01-18-23.59.59.999999"}} ];
       insertRecs( cl, rawData, dataType );
       
       var rc = findRecs( cl, rawData, dataType );
@@ -119,17 +118,12 @@ function checkResult( rc, rawData, dataType, indexName )
          var actA = findRecsArray[0]["a"][i];
          var expA = rawData[i][dataType[i]];
       }
-      else if( 5 <= i && i < rawData.length -1 )
+      else
       {
          var actA = findRecsArray[0]["a"][i].toString();
          var expA = rawData[i][dataType[i]].toString();
       }
-      else if( i === rawData.length -1 )
-      {
-         var actA = findRecsArray[0]["a"][i]["$undefined"];
-         var expA = rawData[i]["tmp"];
-      }
-      
+
       if( actA !== expA )
       {
          throw buildException("checkResult", null, "[compare records]", 
