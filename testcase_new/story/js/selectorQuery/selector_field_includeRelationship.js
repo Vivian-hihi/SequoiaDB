@@ -70,7 +70,6 @@ function main( db )
       // verify
       var retObj = JSON.parse( ret ) ;
       if( 1 != retObj["GroupID"] || 1 != retObj["Version"] ||
-          1 != retObj["ExtraField4"]["$undefined"] ||
           "A,B,C,D,E,F,G,H" != retObj["ExtraField3"][0]["nest1"][0]["nest2"][0]["nest3"] )
       {
          println( "return record: " + ret ) ;
@@ -136,8 +135,7 @@ function main( db )
           1 != retObj["GroupID"] ||
           "a" != retObj["ExtraField1"]["nest1"]["nest2"]["nest3"] ||
           "a" != retObj["ExtraField2"][0]["nest1"][0]["nest2"][0]["nest3"] ||
-          "A,B,C,D,E" != retObj["ExtraField3"][0]["nest1"][0]["nest2"][0]["nest3"] ||
-          1 != retObj["ExtraField4"]["$undefined"] )
+          "A,B,C,D,E" != retObj["ExtraField3"][0]["nest1"][0]["nest2"][0]["nest3"] )
       {
          println( "return record : " + ret ) ;
          throw "ErrReturnRecord$slice" ;
