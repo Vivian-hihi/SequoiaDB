@@ -2033,7 +2033,7 @@ public class DBCollection {
     }
 
     /**
-     * Drop one of more auto-increment of current collection.
+     * Drop one or more auto-increment of current collection.
      *
      * @param fieldNames The auto-increment field name(s)
      * @throws BaseException If error happens.

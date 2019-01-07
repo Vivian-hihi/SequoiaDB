@@ -1061,7 +1061,7 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_LIST_TASKS                : Get all the running split tasks ( only applicable in sharding env )
      *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS         : Get all the transactions information.
      *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS_CURRENT : Get the transactions information of current session.
-     *                 <dt>Sequoiadb.SDB_List_SEQUENCES            : Get the information of sequences
+     *                 <dt>Sequoiadb.SDB_LIST_SEQUENCES            : Get the information of sequences
      *                 </dl>
      * @param query    The matching rule, match all the documents if null.
      * @param selector The selective rule, return the whole document if null.
