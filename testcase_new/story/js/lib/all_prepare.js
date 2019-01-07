@@ -89,7 +89,7 @@ function main( db )
    createDummyCollection( db ) ;
    
    // 4. drop ES index information
-   dropESIndexInfo();
+   // dropESIndexInfo();
 }
 
 try
