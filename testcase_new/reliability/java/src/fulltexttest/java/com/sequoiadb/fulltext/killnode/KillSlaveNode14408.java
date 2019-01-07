@@ -51,6 +51,7 @@ public class KillSlaveNode14408 extends SdbTestBase {
 	@BeforeClass()
 	public void setUp() {
 		try {
+			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			CommLib commLib = new CommLib();
 			if (commLib.isStandAlone(sdb)) {
 				throw new SkipException("StandAlone environment!");
@@ -65,8 +66,7 @@ public class KillSlaveNode14408 extends SdbTestBase {
 				throw new SkipException("checkBusiness return false");
 			}
 			groupName = groupMgr.getAllDataGroupName().get(0);
-
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			
 			cs = sdb.getCollectionSpace(csName);
 			cl = cs.createCollection(clName, (BSONObject) JSON.parse("{Group:'" + this.groupName + "'}"));
 
