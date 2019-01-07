@@ -37,7 +37,7 @@ public class CreateObject16344 extends S3TestBase {
 	String bucketName = "bucket16344";
 	String keyName = "object16344";
 	private AmazonS3 s3Client = null;
-	private List<String> keyNames = new ArrayList<>();
+	private LinkedBlockingQueue<String> keyNames = new LinkedBlockingQueue<>();
 	private Random random = new Random();
 	private LinkedBlockingQueue<SaveEtagAndMd5> etag2md5 = new LinkedBlockingQueue<SaveEtagAndMd5>();	
 	private File localPath = null;
@@ -112,8 +112,10 @@ public class CreateObject16344 extends S3TestBase {
 	}
 	
 	private void checkCurrentObjectResult() throws Exception {
-		for(int i = 0 ; i < keyNames.size(); i++){
-			GetObjectRequest request = new GetObjectRequest(bucketName, keyNames.get(i));
+		Assert.assertEquals(keyNames.size(), 10000, "keyNames size is wrong! ");
+		for(int i = 0 ; i < 10000; i++){
+			String currentKeyName = keyNames.poll();
+			GetObjectRequest request = new GetObjectRequest(bucketName, currentKeyName);
 			S3Object object = s3Client.getObject(request);
 			String actEtag = object.getObjectMetadata().getETag();
 			S3ObjectInputStream s3is = object.getObjectContent();		
@@ -123,15 +125,13 @@ public class CreateObject16344 extends S3TestBase {
 			s3is.close();
 	        String actMd5 = TestTools.getMD5(downloadPath);
 	        
-			String expEtagAndMd5[] = getEtagAndMd5ByKeyName(keyNames.get(i));
+			String expEtagAndMd5[] = getEtagAndMd5ByKeyName(currentKeyName);
 			String expEtag = expEtagAndMd5[0];
 			String expMd5 = expEtagAndMd5[1];
 			
-			Assert.assertEquals(actEtag, expEtag, "etag is wrong , key name is:" + keyNames.get(i));
-			Assert.assertEquals(actMd5, expMd5, "MD5 is wrong , key name is:" + keyNames.get(i));
+			Assert.assertEquals(actEtag, expEtag, "etag is wrong , key name is:" + currentKeyName);
+			Assert.assertEquals(actMd5, expMd5, "MD5 is wrong , key name is:" + currentKeyName);
 		}
-		
-		Assert.assertTrue(etag2md5.isEmpty(), "the remaining " + etag2md5.size() + "objects were not found!");
 	}
 	
 	private String[] getEtagAndMd5ByKeyName(String keyName){
