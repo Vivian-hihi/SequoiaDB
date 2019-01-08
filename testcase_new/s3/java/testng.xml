@@ -24,7 +24,7 @@
       <packages>    
                <package name="com.sequoias3.bucket" /> 
                <package name="com.sequoias3.object" />
-               <package name="com.sequoias3.object_concurrent" />
+               <package name="com.sequoias3.object.concurrent" />
                <package name="com.sequoias3.head" />
                <package name="com.sequoias3.user" />
       </packages>
