@@ -15,29 +15,105 @@ function main()
    commDropCL( db, COMMCSNAME, clName );
    
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName );
-   dbcl.createAutoIncrement([{Field : "a" }, { Field : "a1" }, { Field : "a2", Increment : -1}, { Field : "a3"},
-                             { Field : "a4"}, { Field : "a5", Increment : -1 }, { Field : "a6" }]);
+   dbcl.createAutoIncrement({Field : "a" });
    
-   dbcl.setAttributes({ AutoIncrement : { Field : "a3", CurrentValue : 10 } });
-   
-   dbcl.insert( { "q" : 1 } );
-   
+   dbcl.setAttributes({ AutoIncrement : { Field : "a" } }); 
+   var clID = getCLID( COMMCSNAME, clName );
+   var sequenceName = "SYS_" + clID + "_a_SEQ";
+   var expSequence =  {};
+   checkSequence(sequenceName, expSequence);
+   var expRecs = [];
+   for(var i = 0; i < 100; i++)
+   {
+      dbcl.insert({"q" : i});
+      expRecs.push({"q" : i, "a" : 1 + i});
+   }
    var rc = dbcl.find();
-   var expRecs = [{"q" : 1, "a" : 1, "a1" : 1, "a2" : -1, "a3" : 11, "a4" : 1, "a5" : -1, "a6" : 1}];
    checkRec( rc, expRecs );
    
-   dbcl.setAttributes({ AutoIncrement : { Field : "a" } });
-   dbcl.setAttributes({ AutoIncrement : { Field : "a1", CurrentValue : { "$numberLong" : "9223372036854775807" } } });
-   //修改CurrentValue的同时修改MinValue才能通过，已提单，单号为SEQUOIADBMAINSTREAM-4060
-   dbcl.setAttributes({ AutoIncrement : { Field : "a2", CurrentValue : { "$numberLong" : "-9223372036854775808" } } });
-   
-   dbcl.setAttributes({ AutoIncrement : { Field : "a4", CurrentValue : { "$numberLong" : "9223372036854775809" } } });  
-    //修改CurrentValue的同时修改MinValue才能通过，已提单，单号为SEQUOIADBMAINSTREAM-4060
-   dbcl.setAttributes({ AutoIncrement : { Field : "a5", CurrentValue : { "$numberLong" : "-9223372036854775809" } } });
-
+   dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : { "$numberLong" : "9223372036854775807" } } });
+   var expSequence =  {CurrentValue : { "$numberLong" : "9223372036854775807" }};
+   checkSequence(sequenceName, expSequence);
    try
    {
-      dbcl.setAttributes({ AutoIncrement : { Field : "a6", CurrentValue : "a" } });
+      dbcl.insert( { "q" : 2 } );
+      throw "insert ERROR";
+   }catch(e)
+   {
+       if(e !== -325)
+       {
+           throw e;
+       }
+   }
+   var rc = dbcl.find();
+   checkRec( rc, expRecs );
+   
+   dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : 4 } });
+   for(var i = 0; i < 100; i++)
+   {
+      dbcl.insert({"q" : i});
+      expRecs.push({"q" : i, "a" : 5 + i});
+   }
+   var rc = dbcl.find();
+   checkRec( rc, expRecs );
+   
+   dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : { "$numberLong" : "9223372036854775809" } } });  
+   var expSequence =  {CurrentValue : { "$numberLong" : "9223372036854775807" }};
+   checkSequence(sequenceName, expSequence);
+   try
+   {
+      dbcl.insert( { "q" : 2 } );
+      println("aaa");
+      throw "insert ERROR";
+   }catch(e)
+   {
+       if(e !== -325)
+       {
+           throw e;
+       }
+   }
+   var rc = dbcl.find();
+   checkRec( rc, expRecs );
+   
+   dbcl.dropAutoIncrement("a");
+   dbcl.createAutoIncrement({Field : "a", Increment : -1});
+   dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : { "$numberLong" : "-9223372036854775808" } } });
+   var expSequence = { CurrentValue : {"$numberLong" : "-9223372036854775808"}, Increment : -1, MinValue : { "$numberLong" : "-9223372036854775808" }, MaxValue : -1, StartValue : -1 };
+   checkSequence(sequenceName, expSequence);
+   try
+   {
+      dbcl.insert( { "q" : 2 } );
+      throw "insert ERROR";
+   }catch(e)
+   {
+       if(e !== -325)
+       {
+           throw e;
+       }
+   }
+   var rc = dbcl.find();
+   checkRec( rc, expRecs );
+   
+   dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : { "$numberLong" : "-9223372036854775809" } } });
+   var expSequence = { CurrentValue : {"$numberLong" : "-9223372036854775808"}, Increment : -1, MinValue : { "$numberLong" : "-9223372036854775808" }, MaxValue : -1, StartValue : -1 };
+   checkSequence(sequenceName, expSequence);
+   try
+   {
+      dbcl.insert( { "q" : 2 } );
+      throw "insert ERROR";
+   }catch(e)
+   {
+       if(e !== -325)
+       {
+           throw e;
+       }
+   }
+   var rc = dbcl.find();
+   checkRec( rc, expRecs );
+   
+   try
+   {
+      dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : "a" } });
       throw "setAttributes error!";
    }catch(e)
    {
@@ -46,51 +122,6 @@ function main()
          throw e;
       }
    }
-   
-   //check Sequence
-   var clID = getCLID( COMMCSNAME, clName );
-   var sequenceNames = ["SYS_" + clID + "_a_SEQ",
-                        "SYS_" + clID + "_a1_SEQ",
-                        "SYS_" + clID + "_a2_SEQ",
-                        "SYS_" + clID + "_a3_SEQ",
-                        "SYS_" + clID + "_a4_SEQ",
-                        "SYS_" + clID + "_a5_SEQ",
-                        "SYS_" + clID + "_a6_SEQ"]; 
-   var expSequences =  [{ CurrentValue : 1001 },
-                        { CurrentValue : { "$numberLong" : "9223372036854775807" } },
-                        { CurrentValue : { "$numberLong" : "-9223372036854775808" }, Increment : -1, MinValue : { "$numberLong" : "-9223372036854775808" }, MaxValue : -1, "StartValue":-1 },
-                        { CurrentValue : 1010 },
-                        { CurrentValue : { "$numberLong" : "9223372036854775807" } },
-                        { CurrentValue : { "$numberLong" : "-9223372036854775808" },Increment : -1, MinValue : { "$numberLong" : "-9223372036854775808" }, MaxValue : -1,"StartValue":-1 },
-                        { CurrentValue : 1001 }];
-   for(var i in sequenceNames)
-   {
-       checkSequence(sequenceNames[i], expSequences[i]);
-   }
-   
-   try
-   {
-       dbcl.insert( { "q" : 2 } );
-       throw "insert ERROR";
-   }catch(e)
-   {
-       if(e !== -325)
-       {
-           throw e;
-       }
-   }
-   
-   dbcl.dropAutoIncrement(["a2", "a4", "a5"]);
-   
-   //检查_exceeded变量是否复位
-   dbcl.setAttributes({ AutoIncrement : { Field : "a1", CurrentValue : 4 } });
-   
-   dbcl.insert({"q" : 3});
-   
-   var rc = dbcl.find();
-   var expRecs = [{"q" : 1, "a" : 1, "a1" : 1, "a2" : -1, "a3" : 11, "a4" : 1, "a5" : -1, "a6" : 1},
-                  {"q" : 3, "a" : 1002, "a1" : 5, "a3" : 12, "a6" : 2}];
-   checkRec( rc, expRecs );
    
    commDropCL( db, COMMCSNAME, clName );
 }

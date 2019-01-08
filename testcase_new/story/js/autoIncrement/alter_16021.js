@@ -73,11 +73,43 @@ function main()
    {
       var coord = new Sdb( coordNodes[ i ] );
       var cl = coord.getCS( COMMCSNAME ).getCL( clName );
-      var rc = cl.find();
-      while(rc.next())
-      {}
       cl.insert( { "a" : i, "b" : i } );
       expRecs.push({ "a" : i, "b" : i, "id1" : i*acquireSize + 4001 });
+      coord.close();
+   }
+    
+   var rc = dbcl.find().sort( { "id1" : 1 } );
+   checkRec( rc, expRecs.sort(compare("id1")) );
+   
+   //alter attributes
+   dbcl.setAttributes({ AutoIncrement : { Field : "id1", CurrentValue : { "$numberLong" : "9223372036854775807" } } });
+
+   //insert records and check
+   try
+   {
+      dbcl.insert( { "q" : 2 } );
+      throw "insert ERROR";
+   }catch(e)
+   {
+       if(e !== -325)
+       {
+           throw e;
+       }
+   }
+   var rc = dbcl.find().sort( { "id1" : 1 } );
+   checkRec( rc, expRecs.sort(compare("id1")) );
+   
+   //alter attributes
+   dbcl.setAttributes({ AutoIncrement : { Field : "id1", CurrentValue : 4 } });
+   
+   //insert records and check
+   var coordNodes = getCoordNodeNames();
+   for( var i = 0; i < coordNodes.length; i++ )
+   {
+      var coord = new Sdb( coordNodes[ i ] );
+      var cl = coord.getCS( COMMCSNAME ).getCL( clName );
+      cl.insert( { "a" : i, "b" : i } );
+      expRecs.push({ "a" : i, "b" : i, "id1" : i*acquireSize + 5 });
       coord.close();
    }
     
