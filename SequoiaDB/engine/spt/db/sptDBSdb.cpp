@@ -1603,6 +1603,7 @@ namespace engine
          /// is void
          if( EOO == type )
          {
+            rc = SDB_OK ;
          }
          else if ( jstNULL == type )
          {
