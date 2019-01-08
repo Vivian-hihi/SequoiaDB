@@ -49,7 +49,7 @@ namespace engine
 
       sptScope *getScope() ;
 
-      std::string getErrFileName() ;
+      const CHAR* getErrFileName() ;
 
       UINT32 getErrLineno() ;
 

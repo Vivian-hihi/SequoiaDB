@@ -54,9 +54,9 @@ namespace engine
       return _scope ;
    }
 
-   string _sptPrivateData::getErrFileName()
+   const CHAR* _sptPrivateData::getErrFileName()
    {
-      return _errFileName ;
+      return _errFileName.c_str() ;
    }
 
    UINT32 _sptPrivateData::getErrLineno()

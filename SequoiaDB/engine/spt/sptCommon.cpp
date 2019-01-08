@@ -433,7 +433,7 @@ namespace engine
       sptPrivateData *privateData = ( sptPrivateData* ) JS_GetContextPrivate( cx ) ;
       if( NULL != privateData && privateData->isSetErrInfo() )
       {
-         filename = privateData->getErrFileName().c_str() ;
+         filename = privateData->getErrFileName() ;
          lineno = privateData->getErrLineno() ;
       }
       else

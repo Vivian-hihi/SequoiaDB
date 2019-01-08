@@ -788,7 +788,7 @@ namespace engine
             if( NULL != privateData && privateData->isSetErrInfo() )
             {
                {
-                  errPrefix << privateData->getErrFileName().c_str() << ":"
+                  errPrefix << privateData->getErrFileName() << ":"
                             << privateData->getErrLineno() << " " ;
                }
                if( flag & SPT_EVAL_FLAG_IGNORE_ERR_PREFIX && !sdbIsErrMsgEmpty() )
