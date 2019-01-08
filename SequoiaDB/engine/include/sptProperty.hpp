@@ -126,6 +126,10 @@ namespace engine
       {
          assignBsonArray( value ) ;
       }
+      void  setNull()
+      {
+         assignNull() ;
+      }
 
       template< typename T >
       void  setValue( const std::vector<T> &array )
@@ -163,6 +167,8 @@ namespace engine
       /// value should be base64 coded when
       /// it is a binary data.
       INT32 assignString( const CHAR *value ) ;
+
+      void  assignNull() ;
 
       INT32 assignBsonobj( const bson::BSONObj &value ) ;
 

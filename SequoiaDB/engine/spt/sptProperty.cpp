@@ -164,6 +164,12 @@ namespace engine
       goto done ;
    }
 
+   void _sptProperty::assignNull()
+   {
+      clear() ;
+      _type = jstNULL ;
+   }
+
    INT32 _sptProperty::assignBsonobj( const bson::BSONObj &value )
    {
       INT32 rc = SDB_OK ;

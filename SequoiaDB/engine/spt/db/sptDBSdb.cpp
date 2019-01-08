@@ -1527,9 +1527,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       sdbCursor cursor ;
       string code ;
-      SDB_SPD_RES_TYPE valueType ;
+      SDB_SPD_RES_TYPE valueType = SDB_SPD_RES_TYPE_MAX ;
       BSONObj errMsg ;
       BSONObj nextRecord ;
+
       rc = arg.getString( 0, code, FALSE ) ;
       if( SDB_OK != rc )
       {
@@ -1539,22 +1540,27 @@ namespace engine
       rc = _sptSdb.evalJS( code.c_str(), valueType, cursor, errMsg ) ;
       if( SDB_OK != rc )
       {
-         string errDetail ;
+         const CHAR *pEerrDetail ;
          BSONElement ele = errMsg.getField( FMP_ERR_MSG ) ;
          if( String == ele.type() )
          {
-            errDetail = ele.String() ;
+            pEerrDetail = ele.valuestr() ;
          }
          else
          {
-            errDetail = getErrDesp( rc ) ;
+            pEerrDetail = getErrDesp( rc ) ;
          }
-         detail = BSON( SPT_ERR << errDetail ) ;
+         detail = BSON( SPT_ERR << pEerrDetail ) ;
          goto error ;
       }
+
       if ( FMP_RES_TYPE_VOID == valueType )
       {
          // ignore
+      }
+      else if ( FMP_RES_TYPE_NULL == valueType )
+      {
+         rval.getReturnVal().setNull() ;
       }
       else if ( FMP_RES_TYPE_STR == valueType ||
                 FMP_RES_TYPE_NUMBER == valueType ||
@@ -1611,66 +1617,6 @@ namespace engine
          SPT_SET_CURSOR_TO_RETURNVAL( cursor.pCursor ) ;
          cursor.pCursor = NULL ;
       }
-      else if ( FMP_RES_TYPE_CS == valueType ||
-                FMP_RES_TYPE_CL == valueType ||
-                FMP_RES_TYPE_RG == valueType ||
-                FMP_RES_TYPE_RN == valueType )
-      {
-         string name ;
-         BSONObj nextRecord ;
-         BSONElement ele ;
-         BSONType type ;
-         rc = cursor.next( nextRecord ) ;
-         if( SDB_OK != rc  )
-         {
-            detail = BSON( SPT_ERR << "Failed to fetch bson obj" ) ;
-            goto error ;
-         }
-         ele = nextRecord.getField( FMP_RES_VALUE ) ;
-         type = ele.type() ;
-         if ( String != type )
-         {
-            detail = BSON( SPT_ERR << "Invalid bson obj was fetched" ) ;
-            goto error ;
-         }
-         name = ele.toString( FALSE, TRUE ) ;
-         if ( FMP_RES_TYPE_CS == valueType )
-         {
-            BSONObj data = BSON( SPT_CS_NAME_FIELD << name ) ;
-            rc = sptDBCS::bsonToJSObj( _sptSdb, data, rval, detail ) ;
-            if( SDB_OK != rc )
-            {
-               goto error ;
-            }
-         }
-         else if ( FMP_RES_TYPE_CL == valueType )
-         {
-            BSONObj data = BSON( SPT_CL_NAME_FIELD << name ) ;
-            rc = sptDBCL::bsonToJSObj( _sptSdb, data, rval, detail ) ;
-            if( SDB_OK != rc )
-            {
-               goto error ;
-            }
-         }
-         else if ( FMP_RES_TYPE_RG == valueType )
-         {
-            BSONObj data = BSON( SPT_RG_NAME_FIELD << name ) ;
-            rc = sptDBRG::bsonToJSObj( _sptSdb, data, rval, detail ) ;
-            if( SDB_OK != rc )
-            {
-               goto error ;
-            }
-         }
-         else
-         {
-            BSONObj data = BSON( SPT_NODE_NAME_FIELD << name ) ;
-            rc = sptDBNode::bsonToJSObj( _sptSdb, data, rval, detail ) ;
-            if( SDB_OK != rc )
-            {
-               goto error ;
-            }
-         }
-      }
       else if( FMP_RES_TYPE_SPECIALOBJ == valueType )
       {
          BSONObj data ;
@@ -1704,6 +1650,7 @@ namespace engine
          detail = BSON( SPT_ERR << "Unknown type of res valueType" ) ;
          goto error ;
       }
+
    done:
       cursor.close() ;
       return rc ;

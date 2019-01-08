@@ -150,6 +150,11 @@ namespace engine
                                                        &desc ) &&
               desc )
          {
+            if ( isSpecialObj && !pIsSpecial )
+            {
+               return FALSE ;
+            }
+
             if ( pIsSpecial )
             {
                *pIsSpecial = isSpecialObj ;

@@ -94,6 +94,14 @@ namespace engine
          }
          val = DOUBLE_TO_JSVAL( v ) ;
       }
+      else if ( jstNULL == pro.getType() )
+      {
+         val = JSVAL_NULL ;
+      }
+      else if ( EOO == pro.getType() )
+      {
+         val = JSVAL_VOID ;
+      }
       else
       {
          PD_LOG( PDERROR, "the type %d is not surpported yet.",
@@ -130,11 +138,7 @@ namespace engine
       else
       {
          /// process return val
-         if ( EOO == rpro.getType() )
-         {
-            *rvp = JSVAL_VOID ;
-         }
-         else if ( rpro.isObject() )
+         if ( rpro.isObject() )
          {
             JSObject *jsObj = JS_NewObject ( cx,
                                              (JSClass *)(rpro.getObjDesc()->getClassDef()),

@@ -45,6 +45,7 @@ namespace engine
 {
    class _sptContainer ;
    class _sptScope ;
+   class _sptSPVal ;
 }
 namespace sdbclient
 {
@@ -69,6 +70,8 @@ public:
 
 private:
    INT32 _transCode2Str( const BSONElement &ele, std::string &str ) ;
+
+   INT32 _getValType( const engine::_sptSPVal *pVal ) const ;
 
 private:
    engine::_sptContainer   *_engine ;

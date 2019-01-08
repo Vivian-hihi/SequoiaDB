@@ -94,14 +94,46 @@ error:
    goto done ;
 }
 
+INT32 _fmpJSVM::_getValType( const sptSPVal *pVal ) const
+{
+   if ( pVal->isNull() )
+   {
+      return FMP_RES_TYPE_NULL ;
+   }
+   else if ( pVal->isVoid() )
+   {
+      return FMP_RES_TYPE_VOID ;
+   }
+   else if ( pVal->isNumber() )
+   {
+      return FMP_RES_TYPE_NUMBER ;
+   }
+   else if ( pVal->isString() )
+   {
+      return FMP_RES_TYPE_STR ;
+   }
+   else if ( pVal->isBoolean() )
+   {
+      return FMP_RES_TYPE_BOOL ;
+   }
+   else if( pVal->isSPTObject() )
+   {
+      return FMP_RES_TYPE_SPECIALOBJ ;
+   }
+   else if ( pVal->isObject() )
+   {
+      return FMP_RES_TYPE_OBJ ;
+   }
+
+   return FMP_RES_TYPE_VOID ;
+}
+
 INT32 _fmpJSVM::eval( const BSONObj &func, BSONObj &res )
 {
    INT32 rc = SDB_OK ;
    BSONElement ele = func.getField( FMP_FUNC_VALUE ) ;
    BSONElement type ;
    const _sptResultVal *pRval = NULL ;
-   JSContext *pContext = NULL ;
-   jsval val = JSVAL_VOID ;
 
    if ( ele.eoo() || Code != ele.type() )
    {
@@ -147,102 +179,51 @@ INT32 _fmpJSVM::eval( const BSONObj &func, BSONObj &res )
                   FMP_RES_CODE << lastErrno ) ;
       goto error ;
    }
-   val = *((jsval*)pRval->rawPtr()) ;
-   pContext = ((sptSPScope*)_scope)->getContext() ;
 
-   if ( JSVAL_IS_NULL( val ) )
    {
-      res = BSON( FMP_RES_TYPE << FMP_RES_TYPE_VOID ) ;
-   }
-   else if ( JSVAL_IS_VOID( val ) )
-   {
-      res = BSON( FMP_RES_TYPE << FMP_RES_TYPE_VOID ) ;
-   }
-   else if ( JSVAL_IS_INT( val ) )
-   {
-      INT32 i = 0 ;
-      if ( !JS_ValueToInt32( pContext, val, &i ) )
-      {
-         rc = SDB_SYS ;
-         res = BSON( FMP_ERR_MSG << "failed to convert jsval to int32" <<
-                     FMP_RES_CODE << rc ) ;
-         goto error ;
-      }
-      res = BSON( FMP_RES_TYPE << FMP_RES_TYPE_NUMBER <<
-                  FMP_RES_VALUE << i ) ;
-   }
-   else if ( JSVAL_IS_DOUBLE(val) )
-   {
-      jsdouble jsd = 0 ;
-      FLOAT64 f = 0 ;
-      if ( !JS_ValueToNumber( pContext, val, &jsd ))
-      {
-         rc = SDB_SYS ;
-         res = BSON( FMP_ERR_MSG << "failed to convert jsval to float" <<
-                     FMP_RES_CODE << rc ) ;
-         goto error ;
-      }
-      f = jsd ;
-      res = BSON( FMP_RES_TYPE << FMP_RES_TYPE_NUMBER <<
-                  FMP_RES_VALUE << f ) ;
-   }
-   else if ( JSVAL_IS_STRING(val))
-   {
-      std::string s ;
-      if ( SDB_OK != JSVal2String( pContext, val, s ) )
-      {
-         rc = SDB_SYS ;
-         res = BSON( FMP_ERR_MSG << "failed to convert jsval to string" <<
-                     FMP_RES_CODE << rc ) ;
-         goto error ;
-      }
-      res = BSON( FMP_RES_TYPE << FMP_RES_TYPE_STR <<
-                  FMP_RES_VALUE << s ) ;
-   }
-   else if ( JSVAL_IS_BOOLEAN(val) )
-   {
-      JSBool bp ;
       BSONObjBuilder builder ;
-      if ( !JS_ValueToBoolean( pContext, val, &bp ) )
-      {
-         rc = SDB_SYS ;
-         res = BSON( FMP_ERR_MSG << "failed to convert jsval to boolean" <<
-                     FMP_RES_CODE << rc ) ;
-         goto error ;
-      }
-
-      builder.append( FMP_RES_TYPE, FMP_RES_TYPE_BOOL ) ;
-      builder.appendBool( FMP_RES_VALUE, bp ) ;
-      res = builder.obj() ;
-   }
-   else if( JSVAL_IS_OBJECT( val ) )
-   {
-      JSObject *obj = NULL ;
+      const sptSPVal *pVal = pRval->getVal() ;
+      JSContext *pContext = ((sptSPScope*)_scope)->getContext() ;
       const sptObjDesc *desc = NULL ;
-      string className ;
-      if( !JS_ValueToObject( pContext, val, &obj ) )
+      sptConvertor convertor( pContext ) ;
+
+      if ( !pVal->isSPTObject( NULL, NULL, &desc ) )
       {
-         rc = SDB_SYS ;
-         res = BSON( FMP_ERR_MSG << "Failed to convert jsval to object" <<
-                     FMP_RES_CODE << rc ) ;
-         goto error ;
+         builder.append( FMP_RES_TYPE, _getValType( pVal ) ) ;
+         rc = convertor.appendToBson( FMP_RES_VALUE, *pVal, builder ) ;
+         if ( rc )
+         {
+            res = BSON( FMP_ERR_MSG << convertor.getErrMsg() <<
+                        FMP_RES_CODE << rc ) ;
+            goto error ;
+         }
+         res = builder.obj() ;
       }
-      className = sptGetObjFactory()->getClassName( pContext, obj ) ;
-      desc = sptGetObjFactory()->findObj( className ) ;
-      if( desc )
+      else
       {
          string errMsg ;
+         JSObject *obj = NULL ;
          BSONObj val ;
-         sptSPObject sptObj( pContext, obj ) ;
-         rc = desc->fmpToBSON( sptObj, val, errMsg ) ;
-         if( SDB_OK != rc )
+
+         obj = JSVAL_TO_OBJECT( *(pVal->valuePtr()) ) ;
+         if ( !obj )
          {
-            res = BSON( FMP_ERR_MSG << errMsg
-                        << FMP_RES_CODE << rc ) ;
+            rc = SDB_SYS ;
+            res = BSON( FMP_ERR_MSG << "Failed to convert jsval to object" <<
+                        FMP_RES_CODE << rc ) ;
             goto error ;
          }
 
-         rc = desc->fmpToCursor( sptObj, &_cursor, errMsg );
+         rc = desc->fmpToBSON( sptSPObject( pContext, obj ), val, errMsg ) ;
+         if( SDB_OK != rc )
+         {
+            res = BSON( FMP_ERR_MSG << errMsg <<
+                        FMP_RES_CODE << rc ) ;
+            goto error ;
+         }
+
+         rc = desc->fmpToCursor( sptSPObject( pContext, obj ), &_cursor,
+                                 errMsg ) ;
          if( SDB_OK != rc )
          {
             res = BSON( FMP_ERR_MSG << errMsg <<
@@ -260,29 +241,8 @@ INT32 _fmpJSVM::eval( const BSONObj &func, BSONObj &res )
                         FMP_RES_CLASSNAME << desc->getJSClassName() ) ;
          }
       }
-      else
-      {
-         BSONObj retObj ;
-         sptConvertor convertor( pContext ) ;
-         rc = convertor.toBson( obj, retObj ) ;
-         if( SDB_OK != rc )
-         {
-            res = BSON( FMP_ERR_MSG << "Failed to convert js obj to bson" <<
-                        FMP_RES_CODE << rc ) ;
-            goto error ;
-         }
-         res = BSON( FMP_RES_TYPE << FMP_RES_TYPE_OBJ <<
-                     FMP_RES_VALUE << retObj ) ;
+   }
 
-      }
-   }
-   else
-   {
-      rc = SDB_INVALIDARG ;
-      res = BSON( FMP_ERR_MSG << "unknown result type" <<
-                  FMP_RES_CODE << rc ) ;
-      goto error ;
-   }
 done:
    return rc ;
 error:
