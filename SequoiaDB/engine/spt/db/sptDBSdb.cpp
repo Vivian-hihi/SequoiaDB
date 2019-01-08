@@ -1554,65 +1554,7 @@ namespace engine
          goto error ;
       }
 
-      if ( FMP_RES_TYPE_VOID == valueType )
-      {
-         // ignore
-      }
-      else if ( FMP_RES_TYPE_NULL == valueType )
-      {
-         rval.getReturnVal().setNull() ;
-      }
-      else if ( FMP_RES_TYPE_STR == valueType ||
-                FMP_RES_TYPE_NUMBER == valueType ||
-                FMP_RES_TYPE_OBJ == valueType ||
-                FMP_RES_TYPE_BOOL == valueType )
-      {
-         BSONElement ele ;
-         BSONType type ;
-         rc = cursor.next( nextRecord ) ;
-         if( SDB_OK != rc )
-         {
-            detail = BSON( SPT_ERR << "Failed to fetch" ) ;
-            goto error ;
-         }
-         ele = nextRecord.getField( FMP_RES_VALUE ) ;
-         type = ele.type() ;
-         if( EOO == type )
-         {
-            detail = BSON( SPT_ERR << "Invalid bson obj was fetched" ) ;
-            goto error ;
-         }
-         else if ( String == type )
-         {
-            rval.getReturnVal().setValue( ele.String() ) ;
-         }
-         else if ( Bool == type )
-         {
-            rval.getReturnVal().setValue( ele.Bool() ) ;
-         }
-         else if ( NumberDouble == type )
-         {
-            rval.getReturnVal().setValue( ele.Double() ) ;
-         }
-         else if ( NumberInt == type )
-         {
-            rval.getReturnVal().setValue( ele.Int() ) ;
-         }
-         else if ( NumberLong == type )
-         {
-            rval.getReturnVal().setValue( ele.Long() ) ;
-         }
-         else if ( Object == type )
-         {
-            rval.getReturnVal().setValue( ele.Obj() ) ;
-         }
-         else
-         {
-            detail = BSON( SPT_ERR << "Invaliad bson obj was fetched" ) ;
-            goto error ;
-         }
-      }
-      else if ( FMP_RES_TYPE_RECORDSET == valueType )
+      if ( FMP_RES_TYPE_RECORDSET == valueType )
       {
          SPT_SET_CURSOR_TO_RETURNVAL( cursor.pCursor ) ;
          cursor.pCursor = NULL ;
@@ -1646,9 +1588,65 @@ namespace engine
       }
       else
       {
-         rc = SDB_SYS ;
-         detail = BSON( SPT_ERR << "Unknown type of res valueType" ) ;
-         goto error ;
+         BSONElement ele ;
+         BSONType type ;
+         rc = cursor.next( nextRecord ) ;
+         if( rc && SDB_DMS_EOC != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to fetch return data" ) ;
+            goto error ;
+         }
+
+         ele = nextRecord.getField( FMP_RES_VALUE ) ;
+         type = ele.type() ;
+
+         /// is void
+         if( EOO == type )
+         {
+         }
+         else if ( jstNULL == type )
+         {
+            rval.getReturnVal().setNull() ;
+         }
+         else if ( String == type )
+         {
+            rval.getReturnVal().setValue( ele.String() ) ;
+         }
+         else if ( Bool == type )
+         {
+            rval.getReturnVal().setValue( ele.Bool() ) ;
+         }
+         else if ( NumberDouble == type )
+         {
+            rval.getReturnVal().setValue( ele.Double() ) ;
+         }
+         else if ( NumberInt == type )
+         {
+            rval.getReturnVal().setValue( ele.Int() ) ;
+         }
+         else if ( NumberLong == type )
+         {
+            rval.getReturnVal().setValue( ele.Long() ) ;
+         }
+         else if ( Code == type )
+         {
+            rval.getReturnVal().setJSCode( ele.code().c_str() ) ;
+         }
+         else if ( Object == type )
+         {
+            rval.getReturnVal().setJSCode(
+               ele.Obj().toString( FALSE, TRUE ).c_str() ) ;
+         }
+         else if ( Array == type )
+         {
+            rval.getReturnVal().setJSCode(
+               ele.Obj().toString( TRUE, TRUE ).c_str() ) ;
+         }
+         else
+         {
+            detail = BSON( SPT_ERR << "Invaliad bson obj was fetched" ) ;
+            goto error ;
+         }
       }
 
    done:

@@ -67,6 +67,8 @@ namespace engine
          _sptResultVal() ;
          virtual ~_sptResultVal() ;
 
+         virtual _sptResultVal*  copy() const = 0 ;
+
          virtual const sptSPVal* getVal() const = 0 ;
          virtual const void*     rawPtr() const = 0 ;
          virtual bson::BSONObj   toBSON() const = 0 ;

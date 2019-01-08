@@ -48,7 +48,10 @@ namespace engine
    {
       public:
          _sptSPResultVal() ;
+         _sptSPResultVal( const _sptSPResultVal &right ) ;
          virtual ~_sptSPResultVal() ;
+
+         virtual _sptResultVal*  copy() const ;
 
          virtual const sptSPVal* getVal() const ;
          virtual const void*     rawPtr() const ;

@@ -245,8 +245,20 @@ namespace engine
       _ctx = NULL ;
    }
 
+   _sptSPResultVal::_sptSPResultVal( const _sptSPResultVal &right )
+   {
+      _value = right._value ;
+      _ctx = right._ctx ;
+   }
+
    _sptSPResultVal::~_sptSPResultVal()
    {
+   }
+
+   _sptResultVal* _sptSPResultVal::copy() const
+   {
+      _sptResultVal *pRVal = SDB_OSS_NEW _sptSPResultVal( *this ) ;
+      return pRVal ;
    }
 
    const sptSPVal* _sptSPResultVal::getVal() const

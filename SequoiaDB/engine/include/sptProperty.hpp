@@ -130,6 +130,10 @@ namespace engine
       {
          assignNull() ;
       }
+      void  setJSCode( const CHAR *codeStr )
+      {
+         assignJSCode( codeStr ) ;
+      }
 
       template< typename T >
       void  setValue( const std::vector<T> &array )
@@ -175,6 +179,8 @@ namespace engine
       INT32 assignBsonArray( const std::vector< bson::BSONObj > &vecObj ) ;
 
       INT32 assignResultVal( const sptResultVal* value ) ;
+
+      INT32 assignJSCode( const CHAR *codeStr  ) ;
 
       _sptProperty* addArrayItem() ;
 
@@ -258,7 +264,9 @@ namespace engine
       /// copy value if u want to modify or keep it.
       const CHAR *getString() const ;
 
-      INT32 getResultVal( sptResultVal ** ppResultVal ) const ;
+      const CHAR *getJSCodeStr() const ;
+
+      INT32 getResultVal( const sptResultVal ** ppResultVal ) const ;
 
       inline bson::BSONType getType() const
       {
@@ -267,7 +275,7 @@ namespace engine
 
       inline BOOLEAN isRawData() const
       {
-         return _isRawData ;
+         return bson::JSTypeMax == _type ? TRUE : FALSE ;
       }
 
       inline BOOLEAN isObject() const
@@ -334,8 +342,6 @@ namespace engine
       const _sptObjDesc       *_desc ;
       UINT32                  _attr ;
       BOOLEAN                 _deleted ;
-      // flag of js engine result value
-      BOOLEAN                 _isRawData ;
 
       SPT_PROP_ARRAY          _array ;
 

@@ -9337,7 +9337,7 @@ error :
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
-      BOOLEAN r ;
+      BOOLEAN r = TRUE ;
       SINT64 contextID = 0 ;
       BSONObj newObj ;
       BSONObjBuilder ob ;
@@ -9354,9 +9354,10 @@ error :
       newObj = ob.obj() ;
 
       rc = clientBuildQueryMsgCpp( &_pSendBuffer, &_sendBufferSize,
-                                (CMD_ADMIN_PREFIX CMD_NAME_EVAL),
-                                0, 0, 0, -1, newObj.objdata(), NULL, NULL, NULL,
-                                 _endianConvert ) ;
+                                   (CMD_ADMIN_PREFIX CMD_NAME_EVAL),
+                                   0, 0, 0, -1, newObj.objdata(),
+                                   NULL, NULL, NULL,
+                                   _endianConvert ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -9370,7 +9371,7 @@ error :
          goto error ;
       }
       rc = _recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
-                        contextID, r ) ;
+                          contextID, r ) ;
       if ( rc )
       {
          if( FALSE == r )

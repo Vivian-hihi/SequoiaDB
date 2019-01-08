@@ -49,7 +49,6 @@ namespace engine
       _desc = NULL ;
       _attr = SPT_PROP_DEFAULT ;
       _deleted = FALSE ;
-      _isRawData = FALSE ;
       _backwardProp = NULL ;
    }
 
@@ -57,7 +56,7 @@ namespace engine
    {
       UINT32 i = 0 ;
 
-      if ( String == _type )
+      if ( String == _type || Code == _type )
       {
          CHAR *p = ( CHAR * )_value ;
          SDB_OSS_FREE( p ) ;
@@ -87,11 +86,16 @@ namespace engine
          _backwardProp = NULL ;
       }
 
+      if ( isRawData() )
+      {
+         _sptResultVal *pRVal = (_sptResultVal*)_value ;
+         SDB_OSS_DEL pRVal ;
+      }
+
       _value = 0 ;
       _pReleaseFunc = NULL ;
       _desc = NULL ;
       _type = bson::EOO ;
-      _isRawData = FALSE ;
    }
 
    _sptProperty::~_sptProperty()
@@ -164,6 +168,34 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptProperty::assignJSCode( const CHAR *codeStr )
+   {
+      INT32 rc = SDB_OK ;
+
+      clear() ;
+
+      UINT32 size = ossStrlen( codeStr ) + 3 ;
+       /// +3 for '(',')','\0'
+      CHAR *p = ( CHAR * )SDB_OSS_MALLOC( size ) ;
+      if ( NULL == p )
+      {
+         PD_LOG( PDERROR, "failed to allocate mem." ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      ossMemset( p, size, 0 ) ;
+      ossSnprintf( p, size, "(%s)", codeStr ) ;
+
+      _value = (UINT64)p ;
+      _type = Code ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    void _sptProperty::assignNull()
    {
       clear() ;
@@ -224,9 +256,18 @@ namespace engine
    INT32 _sptProperty::assignResultVal( const sptResultVal* value )
    {
       clear() ;
-      _value = ( UINT64 )value ;
-      _isRawData = TRUE ;
-      return SDB_OK ;
+
+      sptResultVal *pCopy = value->copy() ;
+      if ( pCopy )
+      {
+         _value = ( UINT64 )pCopy ;
+         _type = JSTypeMax ;
+         return SDB_OK ;
+      }
+      else
+      {
+         return SDB_OOM ;
+      }
    }
 
    INT32 _sptProperty::getNative( bson::BSONType type,
@@ -259,13 +300,19 @@ namespace engine
    const CHAR *_sptProperty::getString() const
    {
       SDB_ASSERT( String == _type, "type must be string" ) ;
-      return ( CHAR * )_value ;
+      return ( const CHAR * )_value ;
    }
 
-   INT32 _sptProperty::getResultVal( sptResultVal ** ppResultVal ) const
+   const CHAR *_sptProperty::getJSCodeStr() const
+   {
+      SDB_ASSERT( Code == _type, "type must be code" ) ;
+      return ( const CHAR* )_value ;
+   }
+
+   INT32 _sptProperty::getResultVal( const sptResultVal ** ppResultVal ) const
    {
       INT32 rc = SDB_OK ;
-      if( FALSE == _isRawData )
+      if( !isRawData() )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
