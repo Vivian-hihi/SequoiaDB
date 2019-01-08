@@ -1202,8 +1202,9 @@ SdbQueryOption.prototype.update = function( rule, returnNew, options ) {
    var modify = {};
    modify.OP = "update";
    modify.Update = rule;
-   modify.ReturnNew = (returnNew != undefined) ? returnNew : false;
-   this._hint = BSONObj({$Modify:BSONObj(modify)});
+   modify.ReturnNew = (returnNew != undefined) ? returnNew : false ;
+   hintObj["$Modify"] = modify ;
+   this._hint = BSONObj( hintObj );
 
    if (undefined != options) {
       this._options = BSONObj( options ) ;
@@ -1225,7 +1226,8 @@ SdbQueryOption.prototype.remove = function() {
    var modify = {};
    modify.OP = "remove";
    modify.Remove = true;
-   this._hint = BSONObj({$Modify:BSONObj(modify)});
+   hintObj["$Modify"] = modify ;
+   this._hint = BSONObj( hintObj );
 
    return this;
 }
