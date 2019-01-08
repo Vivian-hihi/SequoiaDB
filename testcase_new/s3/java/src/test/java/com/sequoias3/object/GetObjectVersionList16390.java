@@ -18,7 +18,6 @@ import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
-import com.sequoias3.testcommon.s3utils.HeadUtils;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
@@ -34,8 +33,7 @@ public class GetObjectVersionList16390 extends S3TestBase {
 	private String prefix = "dir1";
 	private List<String> expEtagList = new ArrayList<String>();
 	private String content = "object16390";
-	private Date dateRange[] = new Date[2];
-	private List<Date[]> dateRangeList = new ArrayList<>();
+	private List<long[]> dateRangeList = new ArrayList<>();
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
@@ -46,10 +44,13 @@ public class GetObjectVersionList16390 extends S3TestBase {
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 
 		for(int i = 0 ; i < keyName.length ; i ++ ){
-			dateRange[0] = new Date();
+			long dateRange[] = new long[2];
+			dateRange[0] = System.currentTimeMillis();
+			
 			String currentContent = content + ObjectUtils.getRandomString(i);
 			s3Client.putObject(bucketName, keyName[i], currentContent);
-			dateRange[1] = new Date();
+			
+			dateRange[1] = System.currentTimeMillis();
 			expEtagList.add(TestTools.getMD5(currentContent.getBytes()));
 			dateRangeList.add(dateRange);
 		}
@@ -79,16 +80,15 @@ public class GetObjectVersionList16390 extends S3TestBase {
 			Assert.assertEquals(versions.get(i).getSize(), (long)(content.length()+i), "versions' size is wrong");	
 			Assert.assertEquals(versions.get(i).getETag(), expEtagList.get(i), "versions' Etag is wrong");
 			
+	    	//校验对象lastModified时间在[date1, date2]范围内，因时区问题再加8小时
 			Date actDate = versions.get(i).getLastModified();
-			Date date1 = dateRangeList.get(i)[0];
-			Date date2 = dateRangeList.get(i)[1];
-	    	//校验对象lastModified时间在[date1, date2]范围内，只精确到秒，忽略毫秒,另因时区问题再加8小时
-			long actDateTime = (actDate.getTime()/1000)*1000;
-			long date1Time = (date1.getTime()/1000)*1000+28800000;
-			long date2Time = (date2.getTime()/1000)*1000+28800000;
+			
+			long actDateTime = actDate.getTime();
+			long date1Time = dateRangeList.get(i)[0]+28800000L;
+			long date2Time = dateRangeList.get(i)[1]+28800000L;
 			
 	    	if(actDateTime < date1Time || actDateTime > date2Time){
-	    		Assert.fail("lastmodified is wrong!  actDate is : " + HeadUtils.getGMTDate(actDate) + ", date1 is :" + HeadUtils.getGMTDate(date1) + ", date2 is : " + HeadUtils.getGMTDate(date2));
+	    		Assert.fail("lastmodified is wrong!  actDate is : " + actDate.getTime() + ", date1 is :" + dateRangeList.get(i)[0] + ", date2 is : " + dateRangeList.get(i)[1]);
 	    	}
 		}
 	}
