@@ -58,7 +58,7 @@ namespace engine
             PD_LOG( PDERROR, "Failed to get result value" ) ;
             goto error ;
          }
-         val = *(jsval*)( pResultVal->getVal() ) ;
+         val = *(jsval*)( pResultVal->rawPtr() ) ;
       }
       else if ( String == pro.getType() )
       {
@@ -140,7 +140,7 @@ namespace engine
          }
 
          /// set the return value
-         val = *(jsval*)(pRVal->getVal() ) ;
+         val = *(jsval*)(pRVal->rawPtr() ) ;
       }
       else
       {
