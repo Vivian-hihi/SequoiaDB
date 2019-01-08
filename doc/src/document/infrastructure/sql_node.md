@@ -1,6 +1,6 @@
 ##概念##
 
-  SQL节点是系统提供SQL访问能力的逻辑节点，兼容所有标准SQL2003语法，并且完全兼容PostgrepSQL语法。
+  SQL节点是系统提供SQL访问能力的逻辑节点，兼容所有标准SQL2003语法，并且完全兼容PostgreSQL语法。
 
   SQL节点将接收的外部请求进行SQL解析，生成内部的执行计划，将执行计划下发至协调节点，并汇总协调节点的应答进行外部响应。
 
@@ -11,9 +11,9 @@
 ##操作##
 
   > **Note：**  
-  > 一、以下操作以SequoiaSQL-PostgreSQL为例。  
+  > 一、以下操作以SequoiaSQL-PostgreSQL为例，如需要对接SequoiaSQL-MySQL请参考[SequoiaSQL-MySQL引擎安装部署](sql_engine/sequoiasql_mysql/install_deploy.md)。  
   > 二、在进行下列操作前，请确保 SequoiaSQL 已经安装，并将当前目录切换至 SequoiaSQL 安装的根目录。  
-  > 三、SQL节点的详细操作，请参考 [SQL引擎安装部署](sql_engine/sequoiasql_pg/install/install_deploy.md)
+  > 三、SQL节点的详细操作，请参考 [SequoiaSQL-PostgreSQL引擎安装部署](sql_engine/sequoiasql_pg/install/install_deploy.md)
 
 - 创建SQL节点
 
