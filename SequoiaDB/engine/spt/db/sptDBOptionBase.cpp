@@ -246,17 +246,17 @@ namespace engine
                                         bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      sptDBOptionBase *pSnapOption = NULL ;
+      sptDBOptionBase *pOptionBase = NULL ;
 
-      pSnapOption = SDB_OSS_NEW sptDBOptionBase() ;
-      if( NULL == pSnapOption )
+      pOptionBase = SDB_OSS_NEW sptDBOptionBase() ;
+      if( NULL == pOptionBase )
       {
          rc = SDB_OOM ;
          detail = BSON( SPT_ERR << "Failed to new sptDBOptionBase obj" ) ;
          goto error ;
       }
 
-      rc = rval.setUsrObjectVal< sptDBOptionBase >( pSnapOption ) ;
+      rc = rval.setUsrObjectVal< sptDBOptionBase >( pOptionBase ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to set ret obj" ) ;
@@ -268,7 +268,7 @@ namespace engine
    done:
       return rc ;
    error:
-      SAFE_OSS_DELETE( pSnapOption ) ;
+      SAFE_OSS_DELETE( pOptionBase ) ;
       goto done ;
    }
 

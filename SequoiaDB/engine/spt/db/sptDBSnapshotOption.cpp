@@ -47,7 +47,7 @@ namespace engine
       JS_ADD_DESTRUCT_FUNC( destruct )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBOptionBase::cvtToBSON )
       JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBOptionBase::fmpToBSON )
-      JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBOptionBase::bsonToJSObj )
+      JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBSnapshotOption::bsonToJSObj )
    JS_MAPPING_END()
 
    _sptDBSnapshotOption::_sptDBSnapshotOption()
@@ -72,5 +72,38 @@ namespace engine
       _sptDBOptionBase::destruct() ;
       return SDB_OK ;
    }
+
+   INT32 _sptDBSnapshotOption::bsonToJSObj( sdbclient::sdb &db,
+                                            const BSONObj &data,
+                                            _sptReturnVal &rval,
+                                            bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      _sptDBSnapshotOption *pSnapOption = NULL ;
+
+      pSnapOption = SDB_OSS_NEW _sptDBSnapshotOption() ;
+      if( NULL == pSnapOption )
+      {
+         rc = SDB_OOM ;
+         detail = BSON( SPT_ERR << "Failed to new _sptDBSnapshotOption obj" ) ;
+         goto error ;
+      }
+
+      rc = rval.setUsrObjectVal< _sptDBSnapshotOption >( pSnapOption ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to set ret obj" ) ;
+         goto error ;
+      }
+
+      _sptDBOptionBase::_setReturnVal( data, rval ) ;
+
+   done:
+      return rc ;
+   error:
+      SAFE_OSS_DELETE( pSnapOption ) ;
+      goto done ;
+   }
+
 
 }
