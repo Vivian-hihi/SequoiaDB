@@ -1861,6 +1861,7 @@ error:
 
 PHP_METHOD( SequoiaDB, evalJs )
 {
+/*
    INT32 rc = SDB_OK ;
    PHP_LONG codeLen = 0 ;
    SDB_SPD_RES_TYPE type = SDB_SPD_RES_TYPE_VOID ;
@@ -2070,6 +2071,7 @@ error:
    PHP_RETVAL_STRING( pErrMsg, 1 ) ;
    PHP_SET_ERROR( TRUE, pThisObj, rc ) ;
    goto done ;
+*/
 }
 
 //transaction
