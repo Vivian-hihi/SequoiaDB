@@ -56,18 +56,8 @@
          
          </sequential>
       </for>
-      <var name="fail_exist" unset="true"/>
-      <available property="fail_exist" file="${report_dir}/.TESTCASE_FAIL" /> 
-      <if>
-         <condition>
-            <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
-            <isset property="fail_exist" />
-         </condition>
-         <else>
-            <detectenv detectfile="${testcase_dir}/lib/all_clean.js" prefix="${prefix}" envisok="envrc"/> 
-         </else>
-      </if>
-        
+      
+      <detectenv detectfile="${testcase_dir}/lib/all_clean.js" prefix="${prefix}" envisok="envrc"/>   
            
    </target>
 
