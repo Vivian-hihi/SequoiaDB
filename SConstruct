@@ -752,7 +752,7 @@ elif guess_os == "win32":
 
     env.Append( CPPFLAGS=" /EHsc /W3 " )
     # disable warning
-    env.Append( CPPFLAGS=" /wd4355 /wd4800 /wd4267 /wd4244 /wd4200 /wd4251 /wd4275 " )
+    env.Append( CPPFLAGS=" /wd4355 /wd4800 /wd4267 /wd4244 /wd4200 /wd4251 /wd4275 /wd4273 " )
 
     env.Append( CPPDEFINES=["_CONSOLE","_CRT_SECURE_NO_WARNINGS","PSAPI_VERSION=1","_CRT_RAND_S" ] )
 
