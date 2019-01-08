@@ -71,7 +71,7 @@ function main()
          //处理跨块的情况
 			expIDs.push(expID);
          nextExpID = expID + recordLength;
-         if( blockID == Math.floor(nextExpID/33554396))
+         if( nextExpID/33554396 !=blockID && blockID == Math.floor(nextExpID/33554396))
          {
 				expIDs.pop();
             expID = 33554396 * blockID++;
