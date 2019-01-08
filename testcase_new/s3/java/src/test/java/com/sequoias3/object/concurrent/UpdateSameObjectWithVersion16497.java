@@ -1,0 +1,123 @@
+package com.sequoias3.object.concurrent;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.S3VersionSummary;
+import com.amazonaws.services.s3.model.VersionListing;
+import com.sequoiadb.exception.BaseException;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.S3ThreadBase;
+import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+
+/**
+ * test content: 开启版本控制，对象已存在，并发更新相同对象 
+ * testlink-case: seqDB-16497
+ * @author wangkexin
+ * @Date 2019.01.04
+ * @version 1.00
+ */
+public class UpdateSameObjectWithVersion16497 extends S3TestBase {
+	private boolean runSuccess = false;	
+	private int defaultNums = 50;
+	private String userName = "user16497";
+	private String bucketName = "bucket16497";
+	private String content = "content16497";
+	private String keyName = "key16497";
+	private String roleName = "normal";
+	private List<String> expEtags = new ArrayList<>();
+	private String[] acessKeys = null;
+	private AmazonS3 s3Client = null;
+	
+	@BeforeClass
+	private void setUp() throws Exception {	
+		CommLib.clearUser(userName);
+		acessKeys = UserUtils.createUser(userName, roleName);
+		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
+		s3Client.createBucket(bucketName);
+		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+		s3Client.putObject(bucketName, keyName, content);
+		expEtags.add(TestTools.getMD5(content.getBytes()));
+	}
+	
+	@Test
+	public void testUpdateObject() throws Exception {
+		List<UpdateObjectThread> updateObjects = new ArrayList<>();		
+		for( int i = 0; i < defaultNums ; i++){
+			String currContent = content + "." + ObjectUtils.getRandomString(i);	
+			updateObjects.add( new UpdateObjectThread(currContent));
+			expEtags.add(TestTools.getMD5(currContent.getBytes()));
+		}
+		
+		for( UpdateObjectThread updateObject : updateObjects ){
+			updateObject.start();
+		}	
+		
+		for( UpdateObjectThread updateObject : updateObjects ){
+			Assert.assertTrue( updateObject.isSuccess(), updateObject.getErrorMsg());
+		}
+		
+		checkCreateObjectResult();
+		runSuccess = true;			
+	}
+	
+	@AfterClass
+	private void tearDown() throws Exception {
+		try {
+			if (runSuccess) {
+				UserUtils.deleteUser(userName);
+			}
+		} catch (BaseException e) {
+			Assert.fail("clean up failed:" + e.getMessage());
+		} finally {
+			if( s3Client != null ){
+				s3Client.shutdown();
+			}
+		}
+	}
+	
+	private class UpdateObjectThread extends S3ThreadBase{
+		String content;	
+		public UpdateObjectThread ( String content ){
+			this.content = content;	
+		}
+		@Override
+		public void exec() throws Exception {
+			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
+			try{
+				s3Client.putObject(bucketName, keyName, content);
+			}finally{
+				if (s3Client != null) {
+					s3Client.shutdown();
+				}
+			}			
+		}		
+	}	
+	
+	private void checkCreateObjectResult() {
+		List<String> actEtags = new ArrayList<>();
+		ListVersionsRequest req = new ListVersionsRequest().withBucketName(bucketName);
+		VersionListing versionList = s3Client.listVersions(req);
+		List<S3VersionSummary> objectVersionList = versionList.getVersionSummaries();
+		Assert.assertEquals(objectVersionList.size(), defaultNums + 1);
+		for(S3VersionSummary obj : objectVersionList){
+			Assert.assertEquals(obj.getBucketName(),bucketName, "bucketName is wrong!");
+			Assert.assertEquals(obj.getKey(),keyName, "keyName is wrong!");
+			actEtags.add(obj.getETag());
+		}
+		Collections.sort(expEtags);
+		Collections.sort(actEtags);
+		Assert.assertEquals(actEtags, expEtags, "etag is wrong! , the act etag is :" + actEtags.toString() + ", exp etag is : " + expEtags.toString());
+	}
+}
