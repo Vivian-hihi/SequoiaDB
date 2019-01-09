@@ -26,7 +26,7 @@ function main()
    {
       if(e != -6 )
       {
-         throw "alter error!";
+         throw e;
       }
    }
    
@@ -62,7 +62,7 @@ function main()
    {
       if(e != -6 )
       {
-         throw "alter error!";
+         throw e;
       }
    }
    

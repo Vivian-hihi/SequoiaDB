@@ -63,7 +63,6 @@ function main()
    try
    {
       dbcl.insert( { "q" : 2 } );
-      println("aaa");
       throw "insert ERROR";
    }catch(e)
    {
