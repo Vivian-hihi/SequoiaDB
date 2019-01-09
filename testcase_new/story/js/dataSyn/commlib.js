@@ -147,7 +147,7 @@ function checkRec( rc, expRecs, filterId, fileNameId )
    //check count
 	if( actRecs.length !== expRecs.length )
    {
-   	save( fileNameId, actRecs, expRecs);
+   	saveCheckRecords( fileNameId, actRecs, expRecs);
    	throw buildException("check count", null, "",
 									expRecs.length, actRecs.length);
    }
@@ -200,6 +200,18 @@ function compareObj(lobj, robj, ignoreId)
    }
 }
 
+/******************************************************************************
+@Description : check data from cl
+@parameter:
+   sdb: 
+   csName: 
+   clName: 
+   sortCOnd:sort condition,eg:{a:1}
+   expRecs:export datas
+   testcaseId:castID,used to fileName of save datas.eg:16992
+   filterID:whether to filter id fields
+   findCond:query condition,eg:{a:{$gt:0}}
+******************************************************************************/
 function checkDataContent(sdb,csName, clName, sortCond, expRecs, testcaseId, filterId,findCond)
 {
    if ( undefined == filterId ) { filterId = true ; }	
@@ -283,6 +295,14 @@ function checkInspectResult(csName, clName, checkTimes)
    }   
 }
 
+/************************************
+@Description: save records to file
+@parameter:
+   fileNameId: caseId,save the file name is caseId
+   actRecs: actual query datas
+   expRecs: expect datas
+@author£ºwuyan 2018/12/27
+**************************************/
 function saveCheckRecords( fileNameId, actRecs, expRecs)
 {  
    var fileName1 = saveRecordsDir + "actRecs_" + fileNameId + ".txt";
