@@ -20,6 +20,7 @@
    </taskdef>    
    
    <target name="main">  
+      <propertyregex property="firsthost" input="${testhost_list}" regexp=",(.*)" replace="" defaultValue="${testhost_list}"/>
       <if>
          <equals arg1="${TEST_TYPE}" arg2="SMOKETEST"/>
          <then>
@@ -35,12 +36,7 @@
       </if>  
       <antcall target="change_limits"/>
       <antcall target="deploy"/> 
-      <if>
-         <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
-         <else>
-            <antcall target="create_es_nodeconf"/>
-         </else>
-      </if>
+      <antcall target="create_es_nodeconf"/>
    </target>
    
    <target name="clear_cluster">
@@ -227,15 +223,34 @@
    </target>
    
    <target name="create_es_nodeconf">
-      <staf location="local" service="FS"
+      <staf location="${firsthost}" service="FS"
                   request="DELETE ENTRY ${INSTALL_DIR}/conf/sdbseadpter RECURSE CONFIRM"
                   throwBuildException=""/>
-      <staf location="local" service="FS"
+      <staf location="${firsthost}" service="FS"
                   request="CREATE DIRECTORY ${INSTALL_DIR}/conf/sdbseadpter FULLPATH"
                   throwBuildException="1"/>
-      <staf location="local" service="PROCESS"
+      <staf location="${firsthost}" service="PROCESS"
             request="START SHELL COMMAND chown jenkins:jenkins ${INSTALL_DIR}/conf/sdbseadpter -R WAIT 10m RETURNSTDERR"
             throwBuildException="1"/>
+      <hostinfo prefix="host" />
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
+         <then>
+            <mkdir dir="${INSTALL_DIR}"/>
+            <mkdir dir="${INSTALL_DIR}/database"/>
+            <mkdir dir="${INSTALL_DIR}/conf"/>
+            <delete dir="${INSTALL_DIR}/database/data" failonerror="false"/>
+            <mkdir dir="${INSTALL_DIR}/database/data"/>
+            <staf location="${firsthost}" service="FS"
+                  request="COPY DIRECTORY ${INSTALL_DIR}/database/data TODIRECTORY ${INSTALL_DIR}/database/data TOMACHINE ${host.NAME} RECURSE"
+                  throwBuildException="1"/>
+            <delete dir="${INSTALL_DIR}/conf/samples" failonerror="false"/>
+            <mkdir dir="${INSTALL_DIR}/conf/samples"/>
+            <staf location="${firsthost}" service="FS"
+                  request="COPY FILE ${INSTALL_DIR}/conf/samples/sdbseadapter.conf TODIRECTORY ${INSTALL_DIR}/conf/samples TOMACHINE ${host.NAME}"
+                  throwBuildException="1"/>
+         </then>
+      </if>
       <if>
          <or>
             <equals arg1="${DEPLOY_MODE}" arg2="G1D3"/>
@@ -260,7 +275,7 @@
                </sequential>
             </for>
             <!--copy to other host -->
-            <hostinfo prefix="host" />
+            
             <for list="${testhost_list}" param="testhost" parallel="true">
                <sequential>
                   <if>
@@ -346,7 +361,6 @@
       <!--copy sdb shell to localhost-->
       <delete file="${CI_WORK_DIR}/sdb" failonerror="false"/>
       <!--mkdir dir="${CI_WORK_DIR}"/-->
-      <propertyregex property="firsthost" input="${testhost_list}" regexp=",(.*)" replace="" defaultValue="${testhost_list}"/>
       <staf location="${firsthost}" service="FS"
             request="COPY FILE ${INSTALL_DIR}/bin/sdb TODIRECTORY ${CI_WORK_DIR}"
             throwBuildException="1"/>
