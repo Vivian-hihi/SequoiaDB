@@ -315,7 +315,7 @@ function main()
    
    //check analyze not exist cs and cl 
    var expectErrCode_alone = -34;
-   var expectErrCode_cluster = -23;
+   var expectErrCode_cluster = -34;
    var cs_null = "non_exist_cl.non_exist_cl"
    if(commIsStandalone(db))
    {
