@@ -326,8 +326,8 @@ namespace engine
    }
 
    INT32 _sptUsrCmd::staticHelp( const _sptArguments & arg,
-                           _sptReturnVal & rval,
-                           BSONObj & detail )
+                                 _sptReturnVal & rval,
+                                 BSONObj & detail )
    {
       stringstream ss ;
       ss << "Methods to access:" << endl
@@ -343,7 +343,7 @@ namespace engine
          << "   getCommand()" << endl
          << "   getLastRet()" << endl
          << "   getLastOut()" << endl
-		 << "   getInfo()" << endl
+		   << "   getInfo()" << endl
          << "Remote Cmd member functions:" << endl
          << "   runJS( code )" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
