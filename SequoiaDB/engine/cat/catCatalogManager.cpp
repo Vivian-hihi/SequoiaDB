@@ -354,19 +354,33 @@ namespace engine
          PD_RC_CHECK ( rc, PDERROR,
                        "Failed to query from catalog, rc = %d", rc ) ;
          if ( 0 == ossStrcmp( matcher.firstElementFieldName(),
-                              CAT_CATALOGNAME_NAME ) )
+                              CAT_COLLECTION_NAME ) ||
+              0 == ossStrcmp( matcher.firstElementFieldName(),
+                              CAT_CL_UNIQUEID ) )
          {
             // check for how many records were returned
             // need to make sure returned record must be one
             // 1) if returned = 0, it means collection does not exist
+            // 1.1) if cs does not exist, rc = SDB_DMS_CS_NOTEXIST
+            // 1.2) if cs exists, rc = SDB_DMS_NOTEXIST
             // 2) if returned > 1, it means possible catalog corruption
-            PD_CHECK ( pReply->numReturned >= 1, SDB_DMS_NOTEXIST, error,
-                       PDWARNING, "Collection does not exist:%s",
-                       matcher.toString().c_str() ) ;
             PD_CHECK ( pReply->numReturned <= 1, SDB_CAT_CORRUPTION, error,
                        PDSEVERE,
                        "More than one records returned for query, "
                        "possible catalog corruption" ) ;
+            if ( pReply->numReturned < 1 )
+            {
+               BOOLEAN csExist = TRUE ;
+               rc = _checkCSExistByCLInfo( matcher, csExist ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDWARNING, "Fail to check cs exist, rc: %d", rc ) ;
+               }
+               rc = csExist ? SDB_DMS_NOTEXIST : SDB_DMS_CS_NOTEXIST ;
+               PD_LOG( PDWARNING, "Collection does not exist: %s, rc: %d",
+                       matcher.toString().c_str(), rc ) ;
+               goto error ;
+            }
          }
          else
          {
@@ -417,6 +431,60 @@ namespace engine
          SDB_OSS_FREE ( pReply );
       }
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_QUERYCATALOG, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 catCatalogueManager::_checkCSExistByCLInfo( const BSONObj& clMatcher,
+                                                     BOOLEAN &isExist )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *clName = NULL ;
+      CHAR csName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
+      utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
+      utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
+      BOOLEAN hasID = FALSE ;
+      BSONObj boSpace ;
+
+      rc = rtnGetNumberLongElement( clMatcher, CAT_CL_UNIQUEID,
+                                    (INT64&)clUniqueID ) ;
+      if ( SDB_OK == rc )
+      {
+         hasID = TRUE ;
+         csUniqueID = utilGetCSUniqueID( clUniqueID ) ;
+      }
+      else if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         rc = SDB_OK ;
+         hasID = FALSE ;
+      }
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get field[%s], rc: %d", CAT_CL_UNIQUEID, rc ) ;
+
+      if ( !hasID )
+      {
+         rc = rtnGetStringElement( clMatcher, CAT_COLLECTION_NAME, &clName ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get field[%s], rc: %d",
+                      CAT_COLLECTION_NAME, rc ) ;
+
+         rc = rtnResolveCollectionSpaceName( clName,
+                                             ossStrlen( clName ),
+                                             csName,
+                                             DMS_COLLECTION_SPACE_NAME_SZ ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get cs name from cl name[%s], rc: %d",
+                      clName, rc ) ;
+
+      }
+
+      rc = catCheckSpaceExist( csName, csUniqueID, isExist, boSpace, _pEduCB ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Check collection space[name: %s, id: %u] exist failed, "
+                   "rc: %d", csName, csUniqueID, rc ) ;
+
+   done :
       return rc ;
    error :
       goto done ;
