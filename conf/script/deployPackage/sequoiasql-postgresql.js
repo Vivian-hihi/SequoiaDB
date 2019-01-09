@@ -376,9 +376,9 @@ function InstallPackage( taskID )
    catch( e )
    {
       error = _getErrorMsg( getLastError(), e,
-                            sprintf( "Failed to geve package executable " +
-                                     "authority: host [?], " +
-                                     "detail[?]", hostName, getLastErrMsg() ) ) ;
+                            sprintf( "Failed to change execute permission " +
+                                     "of package: host [?], ?", hostName,
+                                     getLastErrMsg() ) ) ;
       resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
       resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
       resultInfo[FIELD_STATUS] = STATUS_FAIL ;
