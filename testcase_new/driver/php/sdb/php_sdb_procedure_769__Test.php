@@ -47,11 +47,11 @@ class ProcedureTest extends PHPUnit_Framework_TestCase
       $err = self::$procedure->create( 'function sum7693( a,b ){ return a + b ; }' );
       $this->assertEquals( 0, $err ) ;
       
-      $result = self::$procedure->exec( 'sum7693(1,2)' );
-      $this->assertEquals( 3, $result ) ;
+      //$result = self::$procedure->exec( 'sum7693(1,2)' );
+      //$this->assertEquals( 3, $result ) ;
       
-      $ret = self::$procedure->listbyname( 'sum7693' );
-      $this->assertEquals( true, $ret ) ;
+      //$ret = self::$procedure->listbyname( 'sum7693' );
+      //$this->assertEquals( true, $ret ) ;
    }
    
    /**
@@ -62,8 +62,8 @@ class ProcedureTest extends PHPUnit_Framework_TestCase
       $err = self::$procedure->remove( 'sum7693' );
       $this->assertEquals( 0, $err ) ;
       
-      $err = self::$procedure->exec( 'sum7693(1,2)' );
-      $this->assertEquals( -152, $err ) ;
+      //$err = self::$procedure->exec( 'sum7693(1,2)' );
+      //$this->assertEquals( -152, $err ) ;
    }
    
    /**
@@ -71,8 +71,8 @@ class ProcedureTest extends PHPUnit_Framework_TestCase
     */
    public function testList()
    {
-      $ret = self::$procedure->listbyname( 'sum7693' );
-      $this->assertEquals( false, $ret ) ;
+      //$ret = self::$procedure->listbyname( 'sum7693' );
+      //$this->assertEquals( false, $ret ) ;
    }
    
    public static function tearDownAfterClass()
