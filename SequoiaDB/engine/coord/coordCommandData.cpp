@@ -1074,14 +1074,14 @@ namespace engine
       {
          pFactory->release( pOperator ) ;
       }
-      PD_TRACE_EXITRC ( COORD_CMD_TESTCL_EXE, rc ) ;
-      return rc ;
-   error:
       if ( pNewMsg )
       {
          msgReleaseBuffer( pNewMsg, cb ) ;
          pNewMsg = NULL ;
       }
+      PD_TRACE_EXITRC ( COORD_CMD_TESTCL_EXE, rc ) ;
+      return rc ;
+   error:
       goto done ;
    }
 
