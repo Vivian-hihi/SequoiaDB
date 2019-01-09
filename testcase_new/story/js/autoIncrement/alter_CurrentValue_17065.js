@@ -17,6 +17,18 @@ function main()
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName );
    dbcl.createAutoIncrement({Field : "a"});
    
+   try
+   {
+      dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : -20 } });
+   }
+   catch(e)
+   {
+      if(e != -6 )
+      {
+         throw "alter error!";
+      }
+   }
+   
    dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : 20 } }); 
    var clID = getCLID( COMMCSNAME, clName );
    var sequenceName = "SYS_" + clID + "_a_SEQ";
@@ -33,6 +45,19 @@ function main()
    
    dbcl.dropAutoIncrement("a");
    dbcl.createAutoIncrement({Field : "a", Increment : -2});
+   
+   try
+   {
+      dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : 2 } });
+   }
+   catch(e)
+   {
+      if(e != -6 )
+      {
+         throw "alter error!";
+      }
+   }
+   
    dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : -50 } });
    var expSequence =  {"Increment" : -2, "CurrentValue" : -50, "MaxValue":-1,"MinValue":{"$numberLong":"-9223372036854775808"},"StartValue":-1};
    checkSequence(sequenceName, expSequence);
