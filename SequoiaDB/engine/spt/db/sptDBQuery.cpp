@@ -105,7 +105,7 @@ namespace engine
                                  string &errMsg )
    {
       errMsg = "SdbQuery can not be converted to bson" ;
-      return SDB_SYS ;
+      return SDB_INVALIDARG ;
    }
 
    INT32 _sptDBQuery::fmpToCursor( const sptObject &value, _sdbCursor** pCursor,

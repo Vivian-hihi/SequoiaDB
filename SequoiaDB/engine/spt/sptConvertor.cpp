@@ -50,6 +50,8 @@ using namespace engine ;
 namespace engine
 {
 
+   #define SPT_SPTOBJ_DUMMY_FIELD         "__dummy__"
+
    /*
       sptConvertor implement
    */
@@ -58,7 +60,10 @@ namespace engine
                                BOOLEAN *pIsArray )
    {
       INT32 rc = SDB_OK ;
-      BSONObjBuilder builder ;
+      BSONObjBuilder builder( 1024 ) ;
+      sptSPVal spVal ;
+      const sptObjDesc *pDesc = NULL ;
+
       SDB_ASSERT( NULL != obj, "can not be NULL" ) ;
 
       _hasSetErrMsg = FALSE ;
@@ -68,13 +73,43 @@ namespace engine
          *pIsArray = TRUE ;
       }
 
-      rc = _traverse( obj, builder ) ;
-      if ( SDB_OK != rc )
+      spVal.reset( _cx, OBJECT_TO_JSVAL( obj ) ) ;
+
+      /// When is spt object
+      if ( spVal.isSPTObject( NULL, NULL, &pDesc ) &&
+           pDesc->hasCVTToBSONFunc() )
       {
-         _setErrMsg( "Failed to call traverse", FALSE ) ;
-         goto error ;
+         string errMsg ;
+         BSONElement e ;
+         BSONObj tmpObj ;
+         rc = pDesc->cvtToBSON( SPT_SPTOBJ_DUMMY_FIELD,
+                                sptSPObject( _cx, obj ),
+                                FALSE, builder, errMsg ) ;
+         if ( rc )
+         {
+            _setErrMsg( errMsg, FALSE ) ;
+            goto error ;
+         }
+         tmpObj = builder.obj() ;
+         e = tmpObj.getField( SPT_SPTOBJ_DUMMY_FIELD ) ;
+         if ( Object != e.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            _setErrMsg( "Specail object can't convert to BSONObj", FALSE ) ;
+            goto error ;
+         }
+         bsobj = e.embeddedObject().copy() ;
       }
-      bsobj = builder.obj() ;
+      else
+      {
+         rc = _traverse( obj, builder ) ;
+         if ( SDB_OK != rc )
+         {
+            _setErrMsg( "Failed to call traverse", FALSE ) ;
+            goto error ;
+         }
+         bsobj = builder.obj() ;
+      }
 
    done:
       return rc ;
@@ -104,7 +139,7 @@ namespace engine
          goto error ;
       }
 
-      rc =  toBson( pJSObj, obj, pIsArray ) ;
+      rc = toBson( pJSObj, obj, pIsArray ) ;
       if ( rc )
       {
          goto error ;
@@ -414,21 +449,21 @@ namespace engine
 
          if ( !hasDone )
          {
-            BSONObj tmpObj ;
-            BOOLEAN isArray = FALSE ;
-            rc = toBson( obj, tmpObj, &isArray ) ;
+            BSONObjBuilder subBuild( 1024 ) ;
+            BOOLEAN isArray = JS_IsArrayObject( _cx, obj ) ;
+
+            rc = _traverse( obj, subBuild ) ;
             if ( rc )
             {
-               _setErrMsg( "Failed to convert js obj to BSONObj", FALSE ) ;
                goto error ;
             }
             if ( isArray )
             {
-               builder.appendArray( name, tmpObj ) ;
+               builder.appendArray( name, subBuild.obj() ) ;
             }
             else
             {
-               builder.append( name, tmpObj ) ;
+               builder.append( name, subBuild.obj() ) ;
             }
          }
       }
@@ -450,32 +485,9 @@ namespace engine
                                  const jsval &val,
                                  std::string &str )
    {
-      INT32 rc = SDB_OK ;
-      //CHAR *utf8 = NULL ;
-      SDB_ASSERT( NULL != cx, "impossible" ) ;
-      size_t len = 0 ;
-      JSString *jsStr = JS_ValueToString( cx, val ) ;
-      if ( NULL == jsStr )
-      {
-         goto done ;
-      }
-      len = JS_GetStringLength( jsStr ) ;
-      if ( 0 == len )
-      {
-         goto done ;
-      }
-      else
-      {
-         CHAR *p = JS_EncodeString ( cx , jsStr ) ;
-         if ( NULL != p )
-         {
-            str.assign( p ) ;
-            SAFE_JS_FREE( cx, p ) ;
-         }
-      }
 
-   done:
-      return rc ;
+      sptSPVal spVal( cx, val ) ;
+      return spVal.toString( str ) ;
    }
 
    void sptConvertor::_setErrMsg( const string &msg, BOOLEAN isReplace )

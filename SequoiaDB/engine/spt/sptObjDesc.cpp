@@ -640,13 +640,18 @@ namespace engine
       _cvtToBSONFunc = pFunc ;
    }
 
+   BOOLEAN _sptObjDesc::hasCVTToBSONFunc() const
+   {
+      return _cvtToBSONFunc ? TRUE : FALSE ;
+   }
+
    INT32 _sptObjDesc::cvtToBool( const sptObject &obj, BOOLEAN isSpecialObj,
                                  BOOLEAN &retVal ) const
    {
       INT32 rc = SDB_OK ;
       if( !( _cvtFlags & SPT_CVT_FLAGS_OBJ_TO_BOOL ) )
       {
-         rc = SDB_PERM ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
       if( NULL == _cvtToBoolFunc )
@@ -684,7 +689,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       if( !( _cvtFlags & SPT_CVT_FLAGS_OBJ_TO_DOUBLE ) )
       {
-         rc = SDB_PERM ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
       if( NULL == _cvtToDoubleFunc )
@@ -722,7 +727,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       if( !( _cvtFlags & SPT_CVT_FLAGS_OBJ_TO_INT ) )
       {
-         rc = SDB_PERM ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
       if( NULL == _cvtToIntFunc )
@@ -760,7 +765,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       if( !( _cvtFlags & SPT_CVT_FLAGS_OBJ_TO_STRING ) )
       {
-         rc = SDB_PERM ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
       if( NULL == _cvtToStringFunc )

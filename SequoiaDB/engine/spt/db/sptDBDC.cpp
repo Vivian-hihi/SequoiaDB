@@ -330,7 +330,7 @@ namespace engine
                               string &errMsg )
    {
       errMsg = "SdbDC can not be converted to bson" ;
-      return SDB_SYS ;
+      return SDB_INVALIDARG ;
    }
 
    INT32 _sptDBDC::bsonToJSObj( sdbclient::sdb &db, const BSONObj &data,

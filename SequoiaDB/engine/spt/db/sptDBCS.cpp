@@ -492,7 +492,7 @@ namespace engine
                               string &errMsg )
    {
       errMsg = "SdbCS can not be converted to bson" ;
-      return SDB_SYS ;
+      return SDB_INVALIDARG ;
    }
 
    INT32 _sptDBCS::fmpToBSON( const sptObject &value, BSONObj &retObj,

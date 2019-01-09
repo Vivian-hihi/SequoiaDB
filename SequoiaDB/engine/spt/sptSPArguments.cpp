@@ -36,6 +36,7 @@
 #include "pd.hpp"
 #include "sptConvertor.hpp"
 #include "sptObjDesc.hpp"
+#include "sptSPVal.hpp"
 
 using namespace bson ;
 
@@ -60,8 +61,7 @@ namespace engine
                                      BOOLEAN strict ) const
    {
       INT32 rc = SDB_OK ;
-      JSString *jsStr = NULL ;
-      CHAR *str = NULL ;
+      sptSPVal spVal ;
       jsval *val = NULL ;
 
       _errMsg.clear() ;
@@ -75,47 +75,32 @@ namespace engine
       val = _getValAtPos( pos ) ;
       if ( NULL == val )
       {
-         PD_LOG( PDERROR, "failed to get val at pos" ) ;
+         _errMsg = "Failed to get val at pos" ;
          rc = SDB_SYS ;
          goto error ;
       }
+
+      spVal.reset( _context, *val ) ;
 
       /// strict for String
       if ( strict )
       {
-         if ( !JSVAL_IS_STRING( *val ) )
+         if ( !spVal.isString() )
          {
-            PD_LOG( PDERROR, "jsval is not a string." ) ;
+            _errMsg = "Paramter is not string" ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         jsStr = JSVAL_TO_STRING( *val ) ;
-      }
-      /// transfer other to string
-      else
-      {
-         jsStr = JS_ValueToString( _context, *val ) ;
-      }
-      /// Check the result
-      if ( NULL == jsStr )
-      {
-         PD_LOG( PDERROR, "failed to convert jsval to jsstr" ) ;
-         rc = SDB_SYS ;
-         goto error ;
       }
 
-      str = JS_EncodeString ( _context , jsStr ) ;
-      if ( NULL == str )
+      rc = spVal.toString( value ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "failed to convert a js str to a normal str" ) ;
-         rc = SDB_SYS ;
+         _errMsg = "Failed to convert a jsval to string" ;
          goto error ;
       }
-
-      value.assign( str ) ;
 
    done:
-      SAFE_JS_FREE( _context, str ) ;
       return rc ;
    error:
       goto done ;
@@ -133,8 +118,8 @@ namespace engine
                                       BOOLEAN allowNull ) const
    {
       INT32 rc = SDB_OK ;
-      JSObject *jsObj = NULL ;
       jsval *val = NULL ;
+      sptSPVal spVal ;
       sptConvertor convertor( _context, strict ) ;
 
       _errMsg.clear() ;
@@ -148,19 +133,14 @@ namespace engine
       val = _getValAtPos( pos ) ;
       if ( NULL == val )
       {
-         PD_LOG( PDERROR, "failed to get val at pos" ) ;
+         _errMsg = "Failed to get val at pos" ;
          rc = SDB_SYS ;
          goto error ;
       }
 
-      if ( !JSVAL_IS_OBJECT( *val ) )
-      {
-         PD_LOG( PDERROR, "jsval is not a object" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
+      spVal.reset( _context, *val ) ;
 
-      if ( TRUE == JSVAL_IS_NULL( *val ) )
+      if ( spVal.isNull() )
       {
          if ( !allowNull )
          {
@@ -172,23 +152,20 @@ namespace engine
             goto done ;
          }
       }
+      else if ( !spVal.isObject() )
+      {
+         _errMsg = "Parameter is not a object" ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
       else
       {
-         jsObj = JSVAL_TO_OBJECT( *val ) ;
-         if ( NULL == jsObj )
+         rc = convertor.toBson( &spVal, value ) ;
+         if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to convert jsval to object" ) ;
-            rc = SDB_SYS ;
+            _errMsg = convertor.getErrMsg() ;
             goto error ;
          }
-      }
-
-      rc = convertor.toBson( jsObj, value ) ;
-      if ( SDB_OK != rc )
-      {
-         _errMsg = convertor.getErrMsg() ;
-         PD_LOG( PDERROR, _errMsg.c_str() ) ;
-         goto error ;
       }
 
    done:
@@ -216,14 +193,14 @@ namespace engine
       val = _getValAtPos( pos ) ;
       if ( NULL == val )
       {
-         PD_LOG( PDERROR, "failed to get val at pos" ) ;
+         _errMsg = "Failed to get val at pos" ;
          rc = SDB_SYS ;
          goto error ;
       }
 
       if ( !JSVAL_IS_OBJECT( *val ) )
       {
-         PD_LOG( PDERROR, "jsval is not a object" ) ;
+         _errMsg = "Parameter is not Object" ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -231,7 +208,7 @@ namespace engine
       jsObj = JSVAL_TO_OBJECT( *val ) ;
       if ( NULL == jsObj )
       {
-         PD_LOG( PDERROR, "failed to convert jsval to object" ) ;
+         _errMsg = "Failed to convert jsval to Object" ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -239,9 +216,10 @@ namespace engine
       rc = convertor.toObjArray( jsObj, value ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, convertor.getErrMsg().c_str() ) ;
+         _errMsg = convertor.getErrMsg() ;
          goto error ;
       }
+
    done:
       return rc ;
    error:
@@ -267,14 +245,14 @@ namespace engine
       val = _getValAtPos( pos ) ;
       if ( NULL == val )
       {
-         PD_LOG( PDERROR, "failed to get val at pos" ) ;
+         _errMsg = "Failed to get val at pos" ;
          rc = SDB_SYS ;
          goto error ;
       }
 
       if ( !JSVAL_IS_OBJECT( *val ) )
       {
-         PD_LOG( PDERROR, "jsval is not a object" ) ;
+         _errMsg = "Parameter is not Object" ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -282,7 +260,7 @@ namespace engine
       jsObj = JSVAL_TO_OBJECT( *val ) ;
       if ( NULL == jsObj )
       {
-         PD_LOG( PDERROR, "failed to convert jsval to object" ) ;
+         _errMsg = "Failed to convert jsval to object" ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -290,9 +268,10 @@ namespace engine
       rc = convertor.toStrArray( jsObj, value ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, convertor.getErrMsg().c_str() ) ;
+         _errMsg = convertor.getErrMsg() ;
          goto error ;
       }
+
    done:
       return rc ;
    error:
@@ -317,14 +296,14 @@ namespace engine
       val = _getValAtPos( pos ) ;
       if ( NULL == val )
       {
-         PD_LOG( PDERROR, "failed to get val at pos" ) ;
+         _errMsg = "Failed to get val at pos" ;
          rc = SDB_SYS ;
          goto error ;
       }
 
       if ( !JSVAL_IS_OBJECT( *val ) )
       {
-         PD_LOG( PDERROR, "jsval is not a object" ) ;
+         _errMsg = "Parameter is not Object" ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -332,7 +311,7 @@ namespace engine
       jsObj = JSVAL_TO_OBJECT( *val ) ;
       if ( NULL == jsObj )
       {
-         PD_LOG( PDERROR, "failed to convert jsval to object" ) ;
+         _errMsg = "Failed to convert jsval to object" ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -341,7 +320,8 @@ namespace engine
           sptGetObjFactory()->getClassName( _context, jsObj ) )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "jsObj className must be: %s", objDesc.getJSClassName() ) ;
+         _errMsg = "Object is not the instance of " ;
+         _errMsg += objDesc.getJSClassName() ;
          goto error ;
       }
 
@@ -349,7 +329,7 @@ namespace engine
       if( *value == NULL )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "failed to convert jsobj to user obj:%d", rc ) ;
+         _errMsg = "Faild to convert jsobj to user Object" ;
          goto error ;
       }
 
@@ -533,7 +513,7 @@ namespace engine
                *(FLOAT64*)pData = ( FLOAT64 )( value ) ; \
                break ; \
             default : \
-               PD_LOG( PDERROR, "type[%d] is error", type ) ; \
+               _errMsg = "unexpect type of the parameter" ; \
                rc = SDB_INVALIDARG ; \
                goto error ; \
          } \
@@ -546,6 +526,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       jsval *val = NULL ;
 
+      _errMsg.clear() ;
+
       if ( _argc <= pos )
       {
          rc = SDB_OUT_OF_BOUND ;
@@ -555,7 +537,7 @@ namespace engine
       val = _getValAtPos( pos ) ;
       if ( NULL == val )
       {
-         PD_LOG( PDERROR, "failed to get val at pos" ) ;
+         _errMsg = "Failed to get val at pos" ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -574,7 +556,7 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDERROR, "jsval is not a native value" ) ;
+         _errMsg = "Parameter is not a native value" ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }

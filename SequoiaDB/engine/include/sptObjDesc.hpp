@@ -194,6 +194,8 @@ namespace engine
 
       void setCVTToBSONFunc( CVT_TO_BSON_FUNC pFunc ) ;
 
+      BOOLEAN hasCVTToBSONFunc() const ;
+
       INT32 cvtToBool( const sptObject &obj,
                        BOOLEAN isSpecialObj,
                        BOOLEAN &retVal ) const ;

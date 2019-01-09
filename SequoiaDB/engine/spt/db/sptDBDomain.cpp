@@ -302,7 +302,7 @@ namespace engine
                                   string &errMsg )
    {
       errMsg = "SdbDomain can not be converted to bson" ;
-      return SDB_SYS ;
+      return SDB_INVALIDARG ;
    }
 
    INT32 _sptDBDomain::fmpToBSON( const sptObject &value, BSONObj &retObj,

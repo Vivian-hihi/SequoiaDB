@@ -90,9 +90,11 @@ namespace engine
    private:
       INT32 _traverse( JSObject *obj,
                        bson::BSONObjBuilder &builder ) ;
+
       INT32 _appendToBson( const std::string &name,
                            const sptSPVal &val,
                            bson::BSONObjBuilder &builder ) ;
+
       void _setErrMsg( const string &msg, BOOLEAN isReplace ) ;
 
    private:
