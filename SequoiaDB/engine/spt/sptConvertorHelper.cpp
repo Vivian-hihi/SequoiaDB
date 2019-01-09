@@ -46,23 +46,5 @@ using sdbclient::_sdbCursor ;
 
 namespace engine
 {
-   INT32 JSVal2String( JSContext *cx, const jsval &val, std::string &str )
-   {
-      return sptConvertor::toString( cx, val, str ) ;
-   }
 
-   INT32 cursorNextRecord( void *cursor, BSONObj &record )
-   {
-      INT32 rc = SDB_OK ;
-      _sdbCursor *handle = ( _sdbCursor* )cursor ;
-      rc = handle->next( record ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
 }

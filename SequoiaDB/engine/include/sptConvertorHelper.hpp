@@ -48,9 +48,7 @@ using bson::BSONObj ;
 
 namespace engine
 {
-   INT32 JSVal2String( JSContext *cx, const jsval &val, std::string &str ) ;
 
-   INT32 cursorNextRecord( void *cursor, BSONObj &record ) ;
 }
 
 #endif

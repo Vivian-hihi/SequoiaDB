@@ -15,11 +15,11 @@ bsonFiles = [
       ]
 
 sptFiles = [
-      "spt/sptConvertorHelper.cpp",
       "spt/sptCommon.cpp"
       ]
 
-spt2Files = [
+sptFiles = [
+      "spt/sptCommon.cpp",
       "spt/sptSPObject.cpp",
       "spt/sptContainer.cpp",
       "spt/sptInvoker.cpp",
@@ -216,11 +216,10 @@ fmpEnv.StaticLibrary('pmd', pmdFiles)
 fmpEnv.StaticLibrary('fmp', fmpFiles)
 #Scripting
 fmpEnv.StaticLibrary('spt', sptFiles)
-fmpEnv.StaticLibrary('spt2', spt2Files)
 fmpEnv.StaticLibrary('ssh2', ssh2Files)
 
 #
 sdbfmp = fmpEnv.Program("sdbfmp", fmpMain,
-      LIBDEPS=["oss","pd","util","clientc","clientcpp","fmp","bson","pmd", "spt","spt2", "ssh2"],
+      LIBDEPS=["oss","pd","util","clientc","clientcpp","fmp","bson","pmd", "spt", "ssh2"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 fmpEnv.Install( '#/bin', sdbfmp )

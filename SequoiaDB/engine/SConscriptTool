@@ -256,11 +256,7 @@ omagentFiles = [
       ]
 
 sptFiles = [
-      "spt/sptConvertorHelper.cpp",
-      "spt/sptCommon.cpp"
-      ]
-
-spt2Files = [
+      "spt/sptCommon.cpp",
       "spt/sptSPObject.cpp",
       "spt/sptContainer.cpp",
       "spt/sptInvoker.cpp",
@@ -648,7 +644,6 @@ if linux:
    toolEnv.StaticLibrary('ncurses', ncursesFiles)
 #Scripting
 toolEnv.StaticLibrary('spt', sptFiles)
-toolEnv.StaticLibrary('spt2', spt2Files)
 toolEnv.StaticLibrary('ssh2', ssh2Files)
 
 #Export Executable
@@ -681,7 +676,7 @@ sdblist = toolEnv.Program("sdblist", sdbListMain,
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcm = toolEnv.Program("sdbcm", sdbcmMain,
-         LIBDEPS=["pd","oss","msg","bson","util","net","pmd", "clientcpp","pmdMT","omagent","client", "spt","spt2","ssh2","rtnJob"],
+         LIBDEPS=["pd","oss","msg","bson","util","net","pmd", "clientcpp","pmdMT","omagent","client", "spt","ssh2","rtnJob"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcmd = toolEnv.Program("sdbcmd", sdbcmDMNMain,

@@ -40,7 +40,6 @@
 #include "ossMem.hpp"
 #include "sptContainer.hpp"
 #include "sptSPScope.hpp"
-#include "sptConvertorHelper.hpp"
 #include "sptConvertor.hpp"
 #include "sptObjDesc.hpp"
 #include "sptSPObject.hpp"
@@ -253,7 +252,7 @@ INT32 _fmpJSVM::fetch( BSONObj &res )
 {
    INT32 rc = SDB_OK ;
    BSONObj record ;
-   rc = cursorNextRecord( _cursor, record ) ;
+   rc = _cursor->next( record ) ;
    if ( SDB_DMS_EOC == rc )
    {
       res = BSON( FMP_RES_CODE << rc ) ;

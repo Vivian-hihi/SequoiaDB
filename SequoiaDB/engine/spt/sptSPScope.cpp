@@ -45,7 +45,7 @@
 #include "sptHelp.hpp"
 #include "sptInvoker.hpp"
 #include "../spt/js_in_cpp.hpp"
-#include "sptConvertorHelper.hpp"
+
 using namespace std ;
 
 namespace engine
