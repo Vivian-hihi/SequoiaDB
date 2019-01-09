@@ -45,11 +45,11 @@ function main()
    {
       if( cur.length !== 3)
       {
-         throw "autoIncrement count error!";
+         throw buildException("expect autoIncrement count is 3, but real count is" , cur.length);
       }
       if( cur[i].Generated !== generated[i])
       {
-         throw "create failed!";
+         throw buildException("expect Generated is ", generated[i], "but Generated is" , cur[i].Generated);
       }   
    }
    

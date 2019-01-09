@@ -33,9 +33,10 @@ function main()
    var clID = getCLID( COMMCSNAME, clName );
    var sequenceName = "SYS_" + clID + "_a_SEQ";
    var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
-   if( cursor.current().toObj().CurrentValue !== 1)
+   var currentValue = cursor.current().toObj().CurrentValue;
+   if( currentValue !== 1)
    {
-      throw "currentValue has error!";
+      throw buildException("expect CurrentValue is :", currentValue);
    }
    
    dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : 20 } });
@@ -67,9 +68,10 @@ function main()
    }
    
    var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
-   if( cursor.current().toObj().CurrentValue !== -1)
+   var currentValue = cursor.current().toObj().CurrentValue;
+   if( currentValue !== -1)
    {
-      throw "currentValue has error!";
+      throw buildException("expect CurrentValue is :", currentValue);
    }
    
    dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : -50 } });

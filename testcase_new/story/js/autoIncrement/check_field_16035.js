@@ -39,9 +39,10 @@ function main()
    
    //check autoIncrement count
    var cursor = db.snapshot(8, { Name : COMMCSNAME + "." + clName });
-   if( cursor.current().toObj().AutoIncrement.length !== 7)
+   var count = cursor.current().toObj().AutoIncrement.length;
+   if( count !== 7)
    {
-      throw "autoIncrement count error!";
+      throw buildException("count:", count, "----autoIncrement field count has error!");
    }
    
    //check autoIncrement value

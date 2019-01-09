@@ -58,9 +58,11 @@ function checkCurrentValue( db, csName, clName, fields )
    {
       var sequenceName = "SYS_" + clID + "_" + fields[i] + "_SEQ";
       var cursor = db.snapshot( SDB_SNAP_SEQUENCES, { Name : sequenceName } );
-      if( cursor.current().toObj().CurrentValue !== cursor.current().toObj().StartValue )
+      var currentValue = cursor.current().toObj().CurrentValue ;
+      var startValue = cursor.current().toObj().StartValue
+      if( currentValue !== startValue )
       {
-         throw "currentValue is not equals to StartValue!";
+         throw buildException("currentValue:", currentValue, "is not equals to StartValue:", startValue);
       }
    }
    

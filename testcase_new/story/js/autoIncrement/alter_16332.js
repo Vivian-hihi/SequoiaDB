@@ -24,7 +24,7 @@ function main()
    {
       if(e !== -6)
       {
-         throw "drop autoIncrement error!";
+         throw e;
       }
    }
    
