@@ -15,10 +15,6 @@ bsonFiles = [
       ]
 
 sptFiles = [
-      "spt/sptCommon.cpp"
-      ]
-
-sptFiles = [
       "spt/sptCommon.cpp",
       "spt/sptSPObject.cpp",
       "spt/sptContainer.cpp",
