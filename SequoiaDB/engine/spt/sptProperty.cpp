@@ -184,7 +184,7 @@ namespace engine
          goto error ;
       }
 
-      ossMemset( p, size, 0 ) ;
+      ossMemset( p, 0, size ) ;
       ossSnprintf( p, size, "(%s)", codeStr ) ;
 
       _value = (UINT64)p ;
