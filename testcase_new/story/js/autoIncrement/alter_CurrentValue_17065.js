@@ -20,6 +20,7 @@ function main()
    try
    {
       dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : -20 } });
+      throw "alter error";
    }
    catch(e)
    {
@@ -29,9 +30,15 @@ function main()
       }
    }
    
-   dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : 20 } }); 
    var clID = getCLID( COMMCSNAME, clName );
    var sequenceName = "SYS_" + clID + "_a_SEQ";
+   var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
+   if( cursor.current().toObj().CurrentValue !== 1)
+   {
+      throw "currentValue has error!";
+   }
+   
+   dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : 20 } });
    var expSequence =  {CurrentValue : 20};
    checkSequence(sequenceName, expSequence);
    var expRecs = [];
@@ -49,6 +56,7 @@ function main()
    try
    {
       dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : 2 } });
+      throw "alter error";
    }
    catch(e)
    {
@@ -56,6 +64,12 @@ function main()
       {
          throw "alter error!";
       }
+   }
+   
+   var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
+   if( cursor.current().toObj().CurrentValue !== -1)
+   {
+      throw "currentValue has error!";
    }
    
    dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : -50 } });

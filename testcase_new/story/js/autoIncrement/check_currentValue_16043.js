@@ -123,6 +123,20 @@ function main()
       }
    }
    
+   try
+   {
+      dbcl.insert( { "q" : 2 } );
+      throw "insert ERROR";
+   }catch(e)
+   {
+      if(e !== -325)
+      {
+         throw e;
+      }
+   }
+   var rc = dbcl.find();
+   checkRec( rc, expRecs );
+   
    commDropCL( db, COMMCSNAME, clName );
 }
 main();
