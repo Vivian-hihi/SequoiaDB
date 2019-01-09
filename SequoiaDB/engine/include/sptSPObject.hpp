@@ -31,10 +31,12 @@
 *******************************************************************************/
 #include "sptObject.hpp"
 #include "jsapi.h"
+
 namespace engine
 {
-
-
+   /*
+      sptSPObject define
+   */
    class sptSPObject: public sptObject
    {
    public:
@@ -43,7 +45,7 @@ namespace engine
       virtual ~sptSPObject() ;
 
       INT32 getObjectField( const std::string &fieldName,
-                            sptObject**obj ) const ;
+                            sptObjectPtr &objPtr ) const ;
 
       INT32 getBoolField( const std::string &fieldName, BOOLEAN &rval,
                           INT32 mask = SPT_CVT_FLAGS_FROM_BOOL ) const ;
@@ -69,6 +71,7 @@ namespace engine
       BOOLEAN isFieldExist( const std::string &fieldName ) const ;
 
       INT32 getFieldNumber( UINT32 &number ) const ;
+
    protected:
       INT32 _getTypeOfVal( jsval val, SPT_JS_TYPE &type ) const ;
 

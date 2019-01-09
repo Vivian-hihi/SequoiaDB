@@ -103,7 +103,7 @@ namespace engine
                                        string &errMsg )
    {
       INT32 rc = SDB_OK ;
-      sptObject *pSptObj = NULL ;
+      sptObjectPtr ptr ;
       sptBsonobj *pBsonObj = NULL ;
 
       BSONObj baseRetObj ;
@@ -120,15 +120,15 @@ namespace engine
       if ( value.isFieldExist( SPT_QUERYOPTION_OPTIONS_FIELD ) )
       {
          rc = value.getObjectField( SPT_QUERYOPTION_OPTIONS_FIELD,
-                                    &pSptObj ) ;
+                                    ptr ) ;
          if ( rc )
          {
             errMsg = "Failed to get options field" ;
             goto error ;
          }
 
-         rc = pSptObj->getUserObj( _sptBsonobj::__desc,
-                                   (const void**)&pBsonObj ) ;
+         rc = ptr->getUserObj( _sptBsonobj::__desc,
+                               (const void**)&pBsonObj ) ;
          if ( rc )
          {
             errMsg = "Failed to get option data field" ;

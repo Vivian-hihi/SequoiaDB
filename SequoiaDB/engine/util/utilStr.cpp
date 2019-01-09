@@ -329,13 +329,13 @@ namespace engine
       goto done ;
    }
 
-   INT32 utilStr2Num( const CHAR *str, INT32 &num, INT32 supportSystem )
+   INT32 utilStr2Num( const CHAR *str, INT32 &num, INT32 typeMask )
    {
       INT32 rc = SDB_OK ;
       INT32 scanRc = SDB_OK ;
       INT32 tmpNum = 0 ;
 
-      if ( ( supportSystem & UTIL_STR2NUM_HEX ) &&
+      if ( ( typeMask & UTIL_STR2NUM_HEX ) &&
            0 == ossStrncmp( str, HEX_PRE, HEX_PRE_SIZE ) )
       {
          str = str + 2 ;
@@ -356,7 +356,7 @@ namespace engine
             goto error ;
          }
       }
-      else if ( ( supportSystem & UTIL_STR2NUM_OCT ) &&
+      else if ( ( typeMask & UTIL_STR2NUM_OCT ) &&
                 0 == ossStrncmp( str, OCT_PRE, OCT_PRE_SIZE ) )
       {
          if ( ! utilStrIsODigit( str ) )
@@ -371,7 +371,7 @@ namespace engine
             goto error ;
          }
       }
-      else if ( supportSystem & UTIL_STR2NUM_DEC )
+      else if ( typeMask & UTIL_STR2NUM_DEC )
       {
          if ( ! utilStrIsDigit( str ) )
          {

@@ -51,27 +51,6 @@ namespace engine
       return sptConvertor::toString( cx, val, str ) ;
    }
 
-   // caller should free the return pointer using SAFE_JS_FREE
-   CHAR *convertJsvalToString ( JSContext *cx , jsval val )
-   {
-      JSString *  str   = NULL ;
-      CHAR *      cstr  = NULL ;
-
-      str = JS_ValueToString ( cx , val ) ;
-      if ( ! str )
-         goto error ;
-
-      // cstr is freed by caller
-      cstr = JS_EncodeString ( cx , str ) ;
-      if ( ! cstr )
-         goto error ;
-
-   done :
-      return cstr ;
-   error :
-      goto done ;
-   }
-
    INT32 cursorNextRecord( void *cursor, BSONObj &record )
    {
       INT32 rc = SDB_OK ;

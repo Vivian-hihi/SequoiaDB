@@ -31,11 +31,14 @@
 *******************************************************************************/
 #ifndef SPT_OBJECT_HPP
 #define SPT_OBJECT_HPP
+
 #include "core.hpp"
 #include "oss.hpp"
 #include "../bson/bson.hpp"
 #include <string>
 #include "sptObjDesc.hpp"
+#include <boost/shared_ptr.hpp>
+
 namespace engine
 {
    #define SPT_CVT_FLAGS_FROM_BOOL     0x1
@@ -53,6 +56,12 @@ namespace engine
       SPT_JS_TYPE_OBJECT
    } ;
 
+   class sptObject ;
+   typedef boost::shared_ptr< sptObject >       sptObjectPtr ;
+
+   /*
+      sptObject define
+   */
    class sptObject: public SDBObject
    {
    public:
@@ -61,7 +70,7 @@ namespace engine
       }
 
       virtual INT32 getObjectField( const std::string &fieldName,
-                                    sptObject **obj ) const = 0 ;
+                                    sptObjectPtr &objPtr ) const = 0 ;
 
       virtual INT32 getBoolField( const std::string &fieldName, BOOLEAN &rval,
                                   INT32 mask = SPT_CVT_FLAGS_FROM_BOOL )
@@ -93,5 +102,8 @@ namespace engine
 
       virtual INT32 getFieldNumber( UINT32 &number ) const = 0 ;
    } ;
+
 }
-#endif
+
+#endif //SPT_OBJECT_HPP
+

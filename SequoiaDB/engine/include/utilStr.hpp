@@ -108,7 +108,7 @@ namespace engine
                        const string &seperators ) ;
 
    INT32 utilStr2Num( const CHAR *str, INT32 &num,
-                      INT32 supportSystem = UTIL_STR2NUM_ALL ) ;
+                      INT32 typeMask = UTIL_STR2NUM_ALL ) ;
    /// non-reentrant
    INT32 utilStr2TimeT( const CHAR *str,
                         time_t &tm,

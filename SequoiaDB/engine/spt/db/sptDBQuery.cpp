@@ -112,12 +112,8 @@ namespace engine
                                    string &errMsg )
    {
       INT32 rc = SDB_OK ;
-      sptObject *collectionObj = NULL ;
-      sptObject *condObj = NULL ;
-      sptObject *selObj = NULL ;
-      sptObject *orderObj = NULL ;
-      sptObject *hintObj = NULL ;
-      sptObject *optionsObj = NULL ;
+      sptObjectPtr clPtr ;
+      sptObjectPtr objPtr ;
       BSONObj cond ;
       BSONObj sel ;
       BSONObj sort ;
@@ -126,15 +122,15 @@ namespace engine
       INT32 numToSkip = 0 ;
       INT32 numToRet = -1 ;
       INT32 flags = 0 ;
-      _sptDBCL *pCL ;
+      _sptDBCL *pCL = NULL ;
 
-      rc = value.getObjectField( SPT_QUERY_COLLECTION_FIELD, &collectionObj ) ;
+      rc = value.getObjectField( SPT_QUERY_COLLECTION_FIELD, clPtr ) ;
       if( SDB_OK != rc )
       {
          errMsg = "Failed to get collection js obj" ;
          goto error ;
       }
-      rc = collectionObj->getUserObj( _sptDBCL::__desc, (const void**)&pCL ) ;
+      rc = clPtr->getUserObj( _sptDBCL::__desc, (const void**)&pCL ) ;
       if( SDB_OK != rc )
       {
          errMsg = "Failed to get SdbCL obj" ;
@@ -144,10 +140,10 @@ namespace engine
       // Get _query field
       if( value.isFieldExist( SPT_QUERY_QUERY_FIELD ) )
       {
-         rc = value.getObjectField( SPT_QUERY_QUERY_FIELD, &condObj ) ;
+         rc = value.getObjectField( SPT_QUERY_QUERY_FIELD, objPtr ) ;
          if( SDB_OK == rc )
          {
-            rc = condObj->toBSON( cond ) ;
+            rc = objPtr->toBSON( cond ) ;
             if( SDB_OK != rc )
             {
                errMsg = "Field _query must be obj" ;
@@ -158,10 +154,10 @@ namespace engine
       // Get _select field
       if( value.isFieldExist( SPT_QUERY_SELECT_FIELD ) )
       {
-         rc = value.getObjectField( SPT_QUERY_SELECT_FIELD, &selObj ) ;
+         rc = value.getObjectField( SPT_QUERY_SELECT_FIELD, objPtr ) ;
          if( SDB_OK == rc )
          {
-            rc = selObj->toBSON( sel ) ;
+            rc = objPtr->toBSON( sel ) ;
             if( SDB_OK != rc )
             {
                errMsg = "Field _select must be obj" ;
@@ -172,10 +168,10 @@ namespace engine
       // Get _sort field
       if( value.isFieldExist( SPT_QUERY_SORT_FIELD ) )
       {
-         rc = value.getObjectField( SPT_QUERY_SORT_FIELD, &orderObj ) ;
+         rc = value.getObjectField( SPT_QUERY_SORT_FIELD, objPtr ) ;
          if( SDB_OK == rc )
          {
-            rc = orderObj->toBSON( sort ) ;
+            rc = objPtr->toBSON( sort ) ;
             if( SDB_OK != rc )
             {
                errMsg = "Field _sort must be obj" ;
@@ -186,10 +182,10 @@ namespace engine
       // Get _hint field
       if( value.isFieldExist( SPT_QUERY_HINT_FIELD ) )
       {
-         rc = value.getObjectField( SPT_QUERY_HINT_FIELD, &hintObj ) ;
+         rc = value.getObjectField( SPT_QUERY_HINT_FIELD, objPtr ) ;
          if( SDB_OK == rc )
          {
-            rc = hintObj->toBSON( hint ) ;
+            rc = objPtr->toBSON( hint ) ;
             if( SDB_OK != rc )
             {
                errMsg = "Field _hint must be obj" ;
@@ -200,10 +196,10 @@ namespace engine
       // Get _options field
       if( value.isFieldExist( SPT_QUERY_OPTIONS_FIELD ) )
       {
-         rc = value.getObjectField( SPT_QUERY_OPTIONS_FIELD, &optionsObj ) ;
+         rc = value.getObjectField( SPT_QUERY_OPTIONS_FIELD, objPtr ) ;
          if( SDB_OK == rc )
          {
-            rc = optionsObj->toBSON( options ) ;
+            rc = objPtr->toBSON( options ) ;
             if( SDB_OK != rc )
             {
                errMsg = "Field _options must be obj" ;
@@ -250,13 +246,8 @@ namespace engine
          errMsg = "Failed to convert query to cursor obj" ;
          goto error ;
       }
+
    done:
-      SAFE_OSS_DELETE( collectionObj ) ;
-      SAFE_OSS_DELETE( condObj ) ;
-      SAFE_OSS_DELETE( selObj ) ;
-      SAFE_OSS_DELETE( orderObj ) ;
-      SAFE_OSS_DELETE( hintObj ) ;
-      SAFE_OSS_DELETE( optionsObj ) ;
       return rc ;
    error:
       goto done ;

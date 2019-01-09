@@ -31,6 +31,9 @@
 *******************************************************************************/
 #include "sptDBCount.hpp"
 #include "sptDBCL.hpp"
+
+using namespace bson ;
+
 namespace engine
 {
    #define SPT_COUNT_NAME              "CLCount"
@@ -82,20 +85,20 @@ namespace engine
                                  string &errMsg )
    {
       INT32 rc = SDB_OK ;
-      sptObject *collectionObj ;
+      sptObjectPtr clPtr ;
+      sptObjectPtr objPtr ;
       BSONObj cond ;
       BSONObj hint ;
-      sptObject *condObj = NULL ;
-      sptObject *hintObj = NULL ;
       _sptDBCL *pCL = NULL ;
       SINT64 count = 0 ;
-      rc = value.getObjectField( SPT_COUNT_COLLECTION_FIELD, &collectionObj ) ;
+
+      rc = value.getObjectField( SPT_COUNT_COLLECTION_FIELD, clPtr ) ;
       if( SDB_OK != rc )
       {
          errMsg = "Failed to get collection js obj" ;
          goto error ;
       }
-      rc = collectionObj->getUserObj( _sptDBCL::__desc, (const void**)&pCL ) ;
+      rc = clPtr->getUserObj( _sptDBCL::__desc, (const void**)&pCL ) ;
       if( SDB_OK != rc )
       {
          errMsg = "Failed to get SdbCL obj" ;
@@ -104,10 +107,10 @@ namespace engine
       // Get _query field
       if( value.isFieldExist( SPT_COUNT_CONDITION_FIELD ) )
       {
-         rc = value.getObjectField( SPT_COUNT_CONDITION_FIELD, &condObj ) ;
+         rc = value.getObjectField( SPT_COUNT_CONDITION_FIELD, objPtr ) ;
          if( SDB_OK == rc )
          {
-            rc = condObj->toBSON( cond ) ;
+            rc = objPtr->toBSON( cond ) ;
             if( SDB_OK != rc )
             {
                errMsg = "Field _query must be obj" ;
@@ -118,10 +121,10 @@ namespace engine
       // Get _hint field
       if( value.isFieldExist( SPT_COUNT_HINT_FIELD ) )
       {
-         rc = value.getObjectField( SPT_COUNT_HINT_FIELD, &hintObj ) ;
+         rc = value.getObjectField( SPT_COUNT_HINT_FIELD, objPtr ) ;
          if( SDB_OK == rc )
          {
-            rc = hintObj->toBSON( hint ) ;
+            rc = objPtr->toBSON( hint ) ;
             if( SDB_OK != rc )
             {
                errMsg = "Field _hint must be obj" ;
@@ -136,19 +139,8 @@ namespace engine
          goto error ;
       }
       retObj = BSON( SPT_COUNT_COUNT_FIELD << count ) ;
+
    done:
-      if( NULL != collectionObj )
-      {
-         SDB_OSS_DEL collectionObj ;
-      }
-      if( NULL != condObj )
-      {
-         SDB_OSS_DEL condObj ;
-      }
-      if( NULL != hintObj )
-      {
-         SDB_OSS_DEL hintObj ;
-      }
       return rc ;
    error:
       goto done ;
@@ -174,4 +166,5 @@ namespace engine
    error:
       goto done ;
    }
+
 }

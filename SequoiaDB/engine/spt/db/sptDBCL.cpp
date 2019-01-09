@@ -2190,26 +2190,28 @@ namespace engine
       INT32 rc = SDB_OK ;
       string clName ;
       string csName ;
-      sptObject *csObj = NULL ;
+      sptObjectPtr csPtr ;
+
       rc = value.getStringField( SPT_CL_NAME_FIELD, clName ) ;
       if( SDB_OK != rc )
       {
          errMsg = "Failed to get cl name field" ;
          goto error ;
       }
-      rc = value.getObjectField( SPT_CL_CS_FIELD, &csObj ) ;
+      rc = value.getObjectField( SPT_CL_CS_FIELD, csPtr ) ;
       if( SDB_OK != rc )
       {
          errMsg = "Failed to get cs" ;
          goto error ;
       }
-      rc = csObj->getStringField( SPT_CS_NAME_FIELD, csName ) ;
+      rc = csPtr->getStringField( SPT_CS_NAME_FIELD, csName ) ;
       if( SDB_OK != rc )
       {
          errMsg = "Failed to get cs name field" ;
          goto error ;
       }
       retObj = BSON( SPT_CL_NAME_FIELD << csName + "." + clName ) ;
+
    done:
       return rc ;
    error:

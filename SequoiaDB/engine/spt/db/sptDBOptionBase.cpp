@@ -110,7 +110,7 @@ namespace engine
                                       string &errMsg )
    {
       INT32 rc = SDB_OK ;
-      sptObject *pSptObj = NULL ;
+      sptObjectPtr ptr ;
       sptBsonobj *pBsonObj = NULL ;
 
       BSONObj cond ;
@@ -123,15 +123,15 @@ namespace engine
 
       if ( value.isFieldExist( SPT_OPTIONBASE_COND_FIELD ) )
       {
-         rc = value.getObjectField( SPT_OPTIONBASE_COND_FIELD, &pSptObj ) ;
+         rc = value.getObjectField( SPT_OPTIONBASE_COND_FIELD, ptr ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to get cond data field" ;
             goto error ;
          }
 
-         rc = pSptObj->getUserObj( _sptBsonobj::__desc,
-                                   (const void **)&pBsonObj ) ;
+         rc = ptr->getUserObj( _sptBsonobj::__desc,
+                               (const void **)&pBsonObj ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to contruct Bson from cond data field" ;
@@ -142,15 +142,15 @@ namespace engine
 
       if ( value.isFieldExist( SPT_OPTIONBASE_SEL_FIELD ) )
       {
-         rc = value.getObjectField( SPT_OPTIONBASE_SEL_FIELD, &pSptObj ) ;
+         rc = value.getObjectField( SPT_OPTIONBASE_SEL_FIELD, ptr ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to get sel type field" ;
             goto error ;
          }
 
-         rc = pSptObj->getUserObj( _sptBsonobj::__desc,
-                                   (const void **)&pBsonObj ) ;
+         rc = ptr->getUserObj( _sptBsonobj::__desc,
+                               (const void **)&pBsonObj ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to contruct Bson from sel data field" ;
@@ -161,15 +161,15 @@ namespace engine
 
       if ( value.isFieldExist( SPT_OPTIONBASE_SORT_FIELD ) )
       {
-         rc = value.getObjectField( SPT_OPTIONBASE_SORT_FIELD, &pSptObj ) ;
+         rc = value.getObjectField( SPT_OPTIONBASE_SORT_FIELD, ptr ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to get sort type field" ;
             goto error ;
          }
 
-         rc = pSptObj->getUserObj( _sptBsonobj::__desc,
-                                   (const void **)&pBsonObj ) ;
+         rc = ptr->getUserObj( _sptBsonobj::__desc,
+                               (const void **)&pBsonObj ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to contruct Bson from sort data field" ;
@@ -180,15 +180,15 @@ namespace engine
 
       if ( value.isFieldExist( SPT_OPTIONBASE_HINT_FIELD ) )
       {
-         rc = value.getObjectField( SPT_OPTIONBASE_HINT_FIELD, &pSptObj ) ;
+         rc = value.getObjectField( SPT_OPTIONBASE_HINT_FIELD, ptr ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to get hint type field" ;
             goto error ;
          }
 
-         rc = pSptObj->getUserObj( _sptBsonobj::__desc,
-                                   (const void **)&pBsonObj ) ;
+         rc = ptr->getUserObj( _sptBsonobj::__desc,
+                               (const void **)&pBsonObj ) ;
          if( SDB_OK != rc )
          {
             errMsg = "Failed to contruct Bson from hint data field" ;

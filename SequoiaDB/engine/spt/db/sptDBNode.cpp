@@ -31,7 +31,10 @@
 *******************************************************************************/
 #include "sptDBNode.hpp"
 #include "sptDBRG.hpp"
+
 using sdbclient::_sdbReplicaGroup ;
+using namespace bson ;
+
 namespace engine
 {
    #define SPT_NODE_NAME   "SdbNode"
@@ -119,17 +122,18 @@ namespace engine
                                 string &errMsg )
    {
       INT32 rc = SDB_OK ;      
-      sptObject *rgObj = NULL ;
+      sptObjectPtr rgPtr ;
       string rgName ;
       string nodeName ;
+
       // get rg name
-      rc = value.getObjectField( SPT_NODE_RG_FIELD, &rgObj ) ;
+      rc = value.getObjectField( SPT_NODE_RG_FIELD, rgPtr ) ;
       if( SDB_OK != rc )
       {
          errMsg = "Failed to get rg js obj" ;
          goto error ;
       }
-      rgObj->getStringField( SPT_NODE_RGNAME_FIELD, rgName ) ;
+      rgPtr->getStringField( SPT_NODE_RGNAME_FIELD, rgName ) ;
       // get node name
       rc = value.getStringField( SPT_NODE_NAME_FIELD, nodeName ) ;
       if( SDB_OK != rc )
@@ -139,11 +143,8 @@ namespace engine
       }
       // build result
       retObj = BSON( SPT_NODE_NAME_FIELD << rgName + ":" + nodeName ) ;
+
    done:
-      if ( NULL != rgObj )
-      {
-         SDB_OSS_DEL rgObj ;
-      }
       return rc ;
    error:
       goto done ;
