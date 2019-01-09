@@ -42,7 +42,7 @@ function main()
    var count = cursor.current().toObj().AutoIncrement.length;
    if( count !== 7)
    {
-      throw buildException("count:", count, "----autoIncrement field count has error!");
+      throw buildException("main()", "autoIncrement field count is wrong", "compare", 7, count);
    }
    
    //check autoIncrement value

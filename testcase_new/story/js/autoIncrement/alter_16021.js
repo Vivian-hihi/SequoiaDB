@@ -38,9 +38,10 @@ function main()
    var clID = getCLID(COMMCSNAME, clName);
    var sequenceName = "SYS_" + clID + "_id1_SEQ";
    var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
-   if( cursor.current().toObj().CurrentValue !== 10)
+   var currentValue = cursor.current().toObj().CurrentValue;
+   if( currentValue !== 10)
    {
-      throw "alter failed!";
+      throw buildException("main()", "currentValue is wrong", "compare", 10, currentValue);
    }
    
    //insert records and check
@@ -62,9 +63,10 @@ function main()
    var clID = getCLID(COMMCSNAME, clName);
    var sequenceName = "SYS_" + clID + "_id1_SEQ";
    var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
-   if( cursor.current().toObj().CurrentValue !== 4000)
+   var currentValue = cursor.current().toObj().CurrentValue;
+   if( currentValue !== 4000)
    {
-      throw "alter failed!";
+      throw buildException("main()", "currentValue is wrong", "compare", 4000, currentValue);
    }
    
    //insert records and check

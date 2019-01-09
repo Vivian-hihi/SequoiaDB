@@ -62,7 +62,7 @@ function checkCurrentValue( db, csName, clName, fields )
       var startValue = cursor.current().toObj().StartValue
       if( currentValue !== startValue )
       {
-         throw buildException("currentValue:", currentValue, "is not equals to StartValue:", startValue);
+         throw buildException("checkCurrentValue()", "currentValue is not equals to startValue", "compare", startValue, currentValue);
       }
    }
    

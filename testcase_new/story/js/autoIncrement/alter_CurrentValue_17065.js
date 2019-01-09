@@ -36,7 +36,7 @@ function main()
    var currentValue = cursor.current().toObj().CurrentValue;
    if( currentValue !== 1)
    {
-      throw buildException("expect CurrentValue is :", currentValue);
+      throw buildException("main()", "currentValue is wrong", "compare", 1, currentValue);
    }
    
    dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : 20 } });
@@ -71,7 +71,7 @@ function main()
    var currentValue = cursor.current().toObj().CurrentValue;
    if( currentValue !== -1)
    {
-      throw buildException("expect CurrentValue is :", currentValue);
+      throw buildException("main()", "currentValue is wrong", "compare", -1, currentValue);
    }
    
    dbcl.setAttributes({ AutoIncrement : { Field : "a", CurrentValue : -50 } });
