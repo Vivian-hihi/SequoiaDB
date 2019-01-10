@@ -54,10 +54,7 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 		testCaseCSName += r.nextInt();
 		clName += r.nextInt();
 		
-		expectRes = "SDB_DMS_NOTEXIST";
-		if (isStandAlone()){
-			expectRes = "SDB_DMS_CS_NOTEXIST";
-		}
+		expectRes = "SDB_DMS_CS_NOTEXIST";
 	}
 	
 	@AfterMethod
@@ -392,10 +389,6 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 			}
 		}
 		
-		String expectRes = "SDB_DMS_CS_NOTEXIST";
-		if (isStandAlone()){
-			expectRes = "SDB_DMS_NOTEXIST";
-		}
 		try{
 			getCL(db);
 		}catch(BaseException e){
