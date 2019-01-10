@@ -72,10 +72,10 @@ public class DropMainSub106 extends SdbTestBase {
 	public void checkTable() {
 		insertDatas();
 		// drop子表cs2
-		sdb.dropCollectionSpace(commCS2.getName());
+		sdb.dropCollectionSpace(cs2Name);
 		// 检查 drop commCS2
-		if (commCS2.isCollectionExist(commCS2.getName())) {
-			Assert.fail("drop commCS2 fail");
+		if (sdb.isCollectionSpaceExist(cs2Name)) {
+			Assert.fail("drop cs:" + cs2Name + "failed.");
 		}
 		// 第二次执行插入数据
 		try {

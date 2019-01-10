@@ -69,10 +69,10 @@ public class DropMainSub107 extends SdbTestBase {
 	@Test
 	public void testMasterTable() {
 		// drop不是主表的cs
-		sdb.dropCollectionSpace(commCS2.getName());
+		sdb.dropCollectionSpace(cs2Name);
 		// 检查 drop commCS2
-		if (commCS2.isCollectionExist(commCS2.getName())) {
-			Assert.fail("drop commCS2.getName() fail");
+		if (sdb.isCollectionSpaceExist(cs2Name)) {
+			Assert.fail("drop cs:" + cs2Name + "failed.");
 		}
 		// drop主表cs下的子表
 		commCS1.dropCollection(subClName1);
