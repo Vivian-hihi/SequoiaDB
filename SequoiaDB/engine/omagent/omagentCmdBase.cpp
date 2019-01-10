@@ -277,20 +277,29 @@ namespace engine
    INT32 _omaCommand::final ( BSONObj &rval, BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
+      BSONElement ele = rval.getField( "" ) ;
+      BSONType type   = ele.type();
       BSONObjBuilder bob ;
       BSONObj subObj ;
 
       PD_LOG ( PDDEBUG, "Js return raw result for command[%s]: %s",
                name(), rval.toString(FALSE, TRUE).c_str() ) ;
-      rc = omaGetObjElement( rval, "", subObj ) ;
-      if ( rc )
+
+      if ( Object == type || Array == type )
       {
+         subObj = ele.embeddedObject() ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
          PD_LOG ( PDERROR, "Failed to get the nameless field from the js"
                   "return object, rc: %d", rc ) ;
          goto error ;
       }
+
       bob.appendElements( subObj ) ;
       retObj = bob.obj() ;
+
    done:
       return rc ;
    error:

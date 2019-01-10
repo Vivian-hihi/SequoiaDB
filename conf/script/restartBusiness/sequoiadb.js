@@ -246,18 +246,22 @@ function RestartNode( PD_LOGGER )
       else
       {
          var rc   = obj[FIELD_ERRNO] ;
-         var desc = obj[FIELD_DESCRIPTION2] ;
 
          for( var index in resultInfo )
          {
+            var svcname = resultInfo[index][FIELD_SVCNAME] ;
+            var desc = obj[FIELD_DESCRIPTION2] ;
+
             resultInfo[index][FIELD_ERRNO]  = rc ;
             resultInfo[index][FIELD_DETAIL] = desc ;
             resultInfo[index][FIELD_STATUS] = STATUS_FAIL ;
             resultInfo[index][FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
             resultInfo[index][FIELD_FLOW].push( desc ) ;
+
+            PD_LOGGER.logTask( PDERROR, sprintf( "Failed to restart node [?:?], ?",
+                               hostName, svcname, desc ) ) ;
          }
 
-         PD_LOGGER.logTask( PDERROR, desc ) ;
          return resultInfo ;
       }
    }
