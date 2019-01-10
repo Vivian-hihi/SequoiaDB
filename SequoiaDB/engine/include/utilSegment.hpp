@@ -32,6 +32,7 @@
    defect Date        Who Description
    ====== =========== === ==============================================
           10/10/2018  JT  Initial Draft
+          01/08/2019  CW  Optimize memory access
 
    Last Changed =
 
@@ -77,16 +78,18 @@ namespace engine
 //   +----+----+----+----+      +----+
 //   | -1 | -1 |  2 | 73 | ...  | -1 |
 //   +----+----+----+----+      +----+
-//               ^                ^
-//               |                |
-//              _begin            _end
+//               ^
+//               |
+//              _begin
 //
 // _begin: the position in _list where to acquire a free object 
-// _end  : the position in _list where to release/return an object
+// _begin-1 : the position in _list where to release/return an object
 
+#ifdef _DEBUG
    #define _SEGMENT_OBJ_EYE_CATCHER    ( ( UINT32 ) 0xBEEFCAFE )
    #define _SEGMENT_OBJ_FLAG_ACQUIRED  ( ( UINT32 ) 0x0F0F     )
    #define _SEGMENT_OBJ_FLAG_RELEASED  ( ( UINT32 ) 0xF0F0     )
+#endif
 
    #define IS_VALID_SEG_OBJ_INDEX( _objectIndex_ ) \
       ( UTIL_INVALID_OBJ_INDEX != _objectIndex_ )
@@ -97,20 +100,21 @@ namespace engine
    private :
       struct _objX : public SDBObject
       {
+#ifdef _DEBUG
          UINT32 _eyeCatcher ;
          UINT32 _flag ;
-         T      _obj ;
 
          _objX()
          {
             _eyeCatcher = _SEGMENT_OBJ_EYE_CATCHER ;
             _flag       = _SEGMENT_OBJ_FLAG_RELEASED ;
          }
+#endif
+         T      _obj ;
       } ;
 
       UTIL_OBJIDX *  _list  ;         // a list of obj indices to a segment
       UTIL_OBJIDX    _begin ;         // the position in list where acquire from
-      UTIL_OBJIDX    _end ;           // the position in list where release to
       UTIL_OBJIDX    _numOfObjs ;     // total number of objects
       UTIL_OBJIDX    _delta ;         // number of objects in a segment
       UTIL_OBJIDX    _maxNumOfObjs ;  // max number of objects
@@ -124,7 +128,6 @@ namespace engine
    public :
       _utilSegmentManager() : _list(NULL),
                               _begin(0),
-                              _end(0),
                               _numOfObjs(0),
                               _delta(0),
                               _maxNumOfObjs(0),
@@ -465,15 +468,8 @@ namespace engine
             for ( UTIL_OBJIDX i = 0 ; i < _delta ; i++ )
             {
                // initialize the list
-               pListTmp[ _numOfObjs + i ] = _numOfObjs + i - 1 ;
-               // initialize the _objX
-               pSegTmp[i]._eyeCatcher     = _SEGMENT_OBJ_EYE_CATCHER ;
-               pSegTmp[i]._flag           = _SEGMENT_OBJ_FLAG_RELEASED ;
+               pListTmp[ _numOfObjs + i ] = _numOfObjs + i;
             }
-
-            // move _begin and _end to new position
-            _begin = _numOfObjs ;
-            _end   = 0 ;
 
             // set _numOfObjs to new size
             _numOfObjs = newSize ;
@@ -560,12 +556,7 @@ namespace engine
          {
             // initialize the list
             _list[ i ] = i ;
-            // initialize the _objX
-            pSegTmp[i]._eyeCatcher = _SEGMENT_OBJ_EYE_CATCHER ;
-            pSegTmp[i]._flag       = _SEGMENT_OBJ_FLAG_RELEASED ;
          }
-         _list[ _numOfObjs - 1 ] = UTIL_INVALID_OBJ_INDEX ;
-         _end = _numOfObjs - 1 ;
          _segList.push_back( pSegTmp ) ;
          _isInitialized = TRUE ;
       }
@@ -638,8 +629,8 @@ namespace engine
       //         ^               ^
       //         |  ==>          |
       //         begin   next    end
-      // when _acquiredCounter is equal to '_numOfObjs - 1' ( i.e,
-      // '_begin + 1' == '_end' ), means lack of free objects and we will
+      // when _acquiredCounter is equal to '_numOfObjs - 1',
+      // means lack of free objects and we will
       // add a new segment and expand the _list
       if ( _isInitialized && ( NULL != _list ) )
       {
@@ -662,14 +653,10 @@ namespace engine
             }
          }
 
-         if ( _begin == _end )
-         {
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         // sanity check
          pObjX = _getObjXByIndex( _list[ _begin ] ) ;
+
+#ifdef _DEBUG
+         // sanity check
          if (    ( NULL != pObjX )
               && ( _SEGMENT_OBJ_EYE_CATCHER   == pObjX->_eyeCatcher )
               && ( _SEGMENT_OBJ_FLAG_RELEASED == pObjX->_flag ) )
@@ -684,7 +671,7 @@ namespace engine
             rc  = SDB_SYS ;
             goto error ;
          }
-
+#endif
          // get the obj index( to the segment, the object array )
          idx = _list[ _begin ] ;
 
@@ -692,7 +679,7 @@ namespace engine
          _list[ _begin ] = UTIL_INVALID_OBJ_INDEX ;
 
          // advance to next position
-         _begin = ( _begin + 1 ) % _numOfObjs ;
+         _begin ++; 
 
          // increase the acquired counter
          _acquiredCounter ++ ;
@@ -762,16 +749,8 @@ namespace engine
    {
       INT32   rc           = SDB_OK ;
       BOOLEAN bLatched     = FALSE ;
-      UTIL_OBJIDX  next    = UTIL_INVALID_OBJ_INDEX ;
       _objX * pObjX        = NULL ;
 
-      //                 *       .
-      // -       -       -       -      -
-      //         ^       ^
-      //         |       |   ==>
-      //         begin   end     next
-      //
-      // when 'end' + 1 is equal to 'begin' means all objects are returned
       if ( _isInitialized && ( NULL != _list ) )
       {
          _latch.get() ;
@@ -779,12 +758,12 @@ namespace engine
 
          if ( _acquiredCounter > 0 )
          {
-            next = ( _end + 1 ) % _numOfObjs ;
-            if ( next != _begin ) // _list is not full
+            if ( _numOfObjs != _begin ) // _list is not full
             {
                // get the _objX address by the index
                pObjX = _getObjXByIndex( idx ) ;
 
+#ifdef _DEBUG
                // sanity check
                if (    ( NULL != pObjX )
                     && ( _SEGMENT_OBJ_EYE_CATCHER   == pObjX->_eyeCatcher )
@@ -799,11 +778,12 @@ namespace engine
                   goto error ;
                }
 
-               // fill in current slot with the obj index( to the segment)
-               _list[ _end ] = idx ;
+               SDB_ASSERT (_list[_begin - 1] == UTIL_INVALID_OBJ_INDEX,
+                           "Corruption detected in list");
+#endif
 
-               // advance to next position
-               _end = next ;
+               // fill in current slot with the obj index( to the segment)
+               _list[ --_begin ] = idx ;
 
                // decrease the acquired counter
                _acquiredCounter -- ;
