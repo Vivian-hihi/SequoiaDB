@@ -714,7 +714,13 @@ namespace engine
       {
          _arguments.addPostTaskObj( *iterTask ) ;
       }
+
    done :
+      if(NULL != msgBuff)
+      {
+         msgReleaseBuffer( msgBuff, cb ) ;
+         msgBuff = NULL;
+      }
       PD_TRACE_EXITRC( COORD_DATAALTER__GETPOSTTASKS, rc ) ;
       return rc ;
 
