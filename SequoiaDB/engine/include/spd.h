@@ -48,13 +48,13 @@
 enum _SDB_SPD_RES_TYPE
 {
    SDB_SPD_RES_TYPE_VOID = 0, /**< Js return void type */
-   SDB_SPD_RES_TYPE_NULL,     /**< Js return null type */
    SDB_SPD_RES_TYPE_STR,      /**< Js return a string */
    SDB_SPD_RES_TYPE_NUMBER,   /**< Js return a number */
    SDB_SPD_RES_TYPE_OBJ,      /**< Js return an object */
    SDB_SPD_RES_TYPE_BOOL,     /**< Js return a bool */
    SDB_SPD_RES_TYPE_RECORDSET,/**< Js return a cursor handle */
-   SDB_SPD_RES_TYPE_SPECIALOBJ, /**< Js return a special obj */
+   SDB_SPD_RES_TYPE_SPECIALOBJ = 10, /**< Js return a special obj */
+   SDB_SPD_RES_TYPE_NULL,     /**< Js return null type */
 
    SDB_SPD_RES_TYPE_MAX
 } ;
