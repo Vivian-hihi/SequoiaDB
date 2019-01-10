@@ -901,19 +901,12 @@ namespace engine
       CHAR csName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
       BSONObj matcher ;
       const CHAR* clName    = NULL ;
-      SINT32 flag           = 0 ;
-      SINT64 numToSkip      = 0 ;
-      SINT64 numToReturn    = -1 ;
       CHAR *pQuery          = NULL ;
-      CHAR *pSelector       = NULL ;
-      CHAR *pOrderBy        = NULL ;
-      CHAR *pHint           = NULL ;
-      CHAR* pNewMsg         = NULL ;
+      CHAR* pTestCSMsg      = NULL ;
       contextID             = -1 ;
 
-      rc = msgExtractQuery  ( (CHAR *)pMsg, &flag, NULL,
-                              &numToSkip, &numToReturn, &pQuery,
-                              &pSelector, &pOrderBy, &pHint ) ;
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
+                            &pQuery, NULL, NULL, NULL ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Extract query message failed, rc: %d", rc ) ;
@@ -1013,15 +1006,12 @@ namespace engine
          }
          BSONObj newMatcher = builder.obj() ;
 
-         BSONObj selector = BSONObj( pSelector ) ;
-         BSONObj orderBy = BSONObj( pOrderBy ) ;
-         BSONObj hint = BSONObj( pHint ) ;
-
          INT32 buffSize = 0 ;
-         rc = msgBuildQueryMsg( &pNewMsg, &buffSize,
+
+         rc = msgBuildQueryMsg( &pTestCSMsg, &buffSize,
                                 CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTIONSPACE,
-                                flag, pMsg->requestID, numToSkip, numToReturn,
-                                &newMatcher, &selector, &orderBy, &hint, cb ) ;
+                                0, 0, 0, -1,
+                                &newMatcher, NULL, NULL, NULL, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build new msg, rc: %d", rc ) ;
 
       }
@@ -1049,7 +1039,7 @@ namespace engine
          goto error ;
       }
 
-      rc = pOperator->execute( (MsgHeader*)pNewMsg, cb, contextID, buf ) ;
+      rc = pOperator->execute( (MsgHeader*)pTestCSMsg, cb, contextID, buf ) ;
       if ( SDB_OK == rc )
       {
          rc = SDB_DMS_NOTEXIST ;
@@ -1074,10 +1064,10 @@ namespace engine
       {
          pFactory->release( pOperator ) ;
       }
-      if ( pNewMsg )
+      if ( pTestCSMsg )
       {
-         msgReleaseBuffer( pNewMsg, cb ) ;
-         pNewMsg = NULL ;
+         msgReleaseBuffer( pTestCSMsg, cb ) ;
+         pTestCSMsg = NULL ;
       }
       PD_TRACE_EXITRC ( COORD_CMD_TESTCL_EXE, rc ) ;
       return rc ;
