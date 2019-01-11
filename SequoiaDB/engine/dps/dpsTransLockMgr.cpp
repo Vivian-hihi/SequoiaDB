@@ -308,6 +308,8 @@ namespace engine
       pLRB->lrbHdrIdx     = UTIL_INVALID_OBJ_INDEX ;
       pLRB->nextLRBIdx    = UTIL_INVALID_OBJ_INDEX ;
       pLRB->lockMode      = DPS_TRANSLOCK_MAX ; 
+      pLRB->refCounter    = 0 ; 
+      pLRB->beginTick.clear() ; 
       // release LRB
       INT32 rc = _pLRBMgr->release( idx );
 #ifdef _DEBUG
@@ -1423,6 +1425,9 @@ namespace engine
                   if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
                   {
                      pLRB->refCounter++ ;
+
+                     // clear the wait info in dpsTxExectr
+                     dpsTxExectr->clearWaiterInfo() ;
                   }
 #ifdef _DEBUG
                   PD_TRACE1( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
@@ -1482,6 +1487,9 @@ namespace engine
             if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
             {
                pLRB->refCounter++ ;
+
+               // clear the wait info in dpsTxExectr
+               dpsTxExectr->clearWaiterInfo() ;
             }
 #ifdef _DEBUG
             PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
@@ -1788,6 +1796,16 @@ namespace engine
          _releaseLRB( lrbIdxNew ) ;
          bFreeLRB = FALSE ;
       }
+      else
+      {
+         // sample lock owning( first time ) or waiting timestamp ( ossTick )
+         if (    ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
+              && IS_VALID_SEG_OBJ_INDEX( lrbIdxNew ) )
+         {
+            pLRB = _getLRBPtrByIdx( lrbIdxNew ) ;            
+            pLRB->beginTick.sample() ;
+         }
+      }
       if ( bFreeLRBHeader )
       {
          _releaseLRBHdr( hdrIdxNew ) ;
@@ -1868,6 +1886,7 @@ namespace engine
       pLRBNew->eduLrbIdxPrev  = UTIL_INVALID_OBJ_INDEX ;
       pLRBNew->lrbHdrIdx      = hdrIdxNew ;
       pLRBNew->nextLRBIdx     = UTIL_INVALID_OBJ_INDEX ;
+      pLRBNew->beginTick.clear() ;
 
       // inital the new LRB Header
       // and add the new LRB into the new LRB Header owner list
@@ -2946,15 +2965,25 @@ namespace engine
       if ( IS_VALID_SEG_OBJ_INDEX( idx )  )
       {
          dpsTransLRB *pLRB = _getLRBPtrByIdx( idx ) ;
+
+         UINT32 seconds, microseconds ;
+         ossTickConversionFactor factor ;
+         ossTick endTick ;
+         endTick.sample() ;
+         ossTickDelta delta = endTick - pLRB->beginTick ;
+         delta.convertToTime( factor, seconds, microseconds ) ;
+ 
          ossSnprintf( pBuf, bufSz,
                       "LRB: %u, dpsTxExectr: %p, "
                       "eduLrbIdxNext: %u, eduLrbIdxPrev: %u, "
                       "lrbHdrIdx: %u, nextLRBIdx: %u "
-                      "refCounter: %llu, lockMode: %s",
+                      "refCounter: %llu, lockMode: %s, duration:%llu",
                       idx, pLRB->dpsTxExectr,
                       pLRB->eduLrbIdxNext, pLRB->eduLrbIdxPrev,
                       pLRB->lrbHdrIdx, pLRB->nextLRBIdx,
-                      pLRB->refCounter, lockModeToString( pLRB->lockMode ) ) ;
+                      pLRB->refCounter,
+                      lockModeToString( pLRB->lockMode ),
+                      (UINT64)(seconds*1000 + microseconds / 1000 ) ) ;
       }
       return pBuf ;
    }
@@ -2978,6 +3007,14 @@ namespace engine
       if ( IS_VALID_SEG_OBJ_INDEX( idx )  )
       {
          dpsTransLRB *pLRB = _getLRBPtrByIdx( idx ) ;
+
+         UINT32 seconds, microseconds ;
+         ossTickConversionFactor factor ;
+         ossTick endTick ; 
+         endTick.sample() ;
+         ossTickDelta delta = endTick - pLRB->beginTick ;
+         delta.convertToTime( factor, seconds, microseconds ) ;
+
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%sLRB          : %u"OSS_NEWLINE, pStr,
                                idx ) ;
@@ -3002,6 +3039,9 @@ namespace engine
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%slockMode     : %s"OSS_NEWLINE, pStr,
                                lockModeToString( pLRB->lockMode ) ) ;
+         pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
+                               "%sduration     : %llu"OSS_NEWLINE, pStr,
+                               (UINT64)(seconds*1000 + microseconds / 1000 ) ) ;
       }
       return pBuf ;
    }
@@ -3335,6 +3375,7 @@ namespace engine
          monLock._id    = pLRBHdr->lockId ;
          monLock._mode  = pLRB->lockMode ;
          monLock._count = pLRB->refCounter ;
+         monLock._beginTick = pLRB->beginTick ;
 
          vecLocks.push_back( monLock ) ;
 
@@ -3368,6 +3409,7 @@ namespace engine
          lockCur._id = pLRBHdr->lockId ;
          lockCur._mode = pLRB->lockMode ;
          lockCur._count = pLRB->refCounter ;
+         lockCur._beginTick = pLRB->beginTick ;
       }
    }
 
@@ -3413,6 +3455,8 @@ namespace engine
                monLockItem._eduID = pLRB->dpsTxExectr->getEDUID() ;
                monLockItem._mode  = pLRB->lockMode ;
                monLockItem._count = pLRB->refCounter ;
+               monLockItem._beginTick = pLRB->beginTick ;
+
                monLockInfo._vecHolder.push_back( monLockItem ) ;
 
                lrbIdx = pLRB->nextLRBIdx ;
@@ -3429,6 +3473,8 @@ namespace engine
                monLockItem._eduID = pLRB->dpsTxExectr->getEDUID() ;
                monLockItem._mode  = pLRB->lockMode ;
                monLockItem._count = pLRB->refCounter ;
+               monLockItem._beginTick = pLRB->beginTick ;
+
                monLockInfo._vecWaiter.push_back( monLockItem ) ;
 
                lrbIdx = pLRB->nextLRBIdx ;
@@ -3445,6 +3491,8 @@ namespace engine
                monLockItem._eduID = pLRB->dpsTxExectr->getEDUID() ;
                monLockItem._mode  = pLRB->lockMode ;
                monLockItem._count = pLRB->refCounter ;
+               monLockItem._beginTick = pLRB->beginTick ;
+
                monLockInfo._vecWaiter.push_back( monLockItem ) ;
 
                lrbIdx = pLRB->nextLRBIdx ;
