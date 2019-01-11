@@ -7,7 +7,8 @@
 snapshot \- It lists snapshots. 
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.snapshot([sanpType], [cond], [sel], [sort])\f[]\f[]
+\f[B]\f[I]db.snapshot(<snapType>, [cond], [sel], [sort])\f[]\f[]
+\f[B]\f[I]db.snapshot(<snapType>, [SdbSnapshotOption])\f[]\f[]
 .SH CATEGORY
 .PP
 Sequoiadb
