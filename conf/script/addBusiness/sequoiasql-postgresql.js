@@ -163,7 +163,7 @@ function _setPostgresqlConf( remote, hostName, confPath, configs )
       file = remote.getFile( confPath, 0,
                              SDB_FILE_REPLACE | SDB_FILE_WRITEONLY ) ;
 
-      file.write( 'listen_addresses = \'*\'\n' ) ;
+      file.write( 'listen_addresses = \'0.0.0.0\'\n' ) ;
 
       for ( key in configs )
       {
