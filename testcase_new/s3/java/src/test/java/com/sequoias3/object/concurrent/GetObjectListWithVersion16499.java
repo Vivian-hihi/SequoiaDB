@@ -29,7 +29,7 @@ import com.sequoias3.testcommon.s3utils.UserUtils;
  */
 public class GetObjectListWithVersion16499 extends S3TestBase {
 	private String bucketName = "bucket16499";
-	private String userName = "user16485";
+	private String userName = "user16499";
 	private String roleName = "normal";
 	private String keyName = "/dir/dir";
 	private String prefix = "/dir";
