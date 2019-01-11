@@ -1139,7 +1139,7 @@ SdbOptionBase.prototype.hint = function(hint) {
 }
 
 SdbOptionBase.prototype.skip = function(skip) {
-   if ( typeof( skip ) == Number ) {
+   if ( typeof( skip ) == "number" ) {
       this._skip = skip ;
    } else {
       throw "SdbOptionBase.skip() param must be Number" ;
@@ -1148,7 +1148,7 @@ SdbOptionBase.prototype.skip = function(skip) {
 }
 
 SdbOptionBase.prototype.limit = function(limit) {
-   if ( typeof( limit ) == Number ) {
+   if ( typeof( limit ) == "number" ) {
       this._limit = limit ;
    } else {
       throw "SdbOptionBase.limit() param must be Number" ;
@@ -1157,7 +1157,7 @@ SdbOptionBase.prototype.limit = function(limit) {
 }
 
 SdbOptionBase.prototype.flags = function(flags) {
-   if ( typeof ( flags ) == Number ) {
+   if ( typeof ( flags ) == "number" ) {
       this._flags = flags ;
    } else {
       throw "SdbOptionBase.flags() param must be Number" ;
