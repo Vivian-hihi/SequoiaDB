@@ -54,7 +54,6 @@ current status of system.
 \fBSnapshotOption (SdbOptionBase object or SdbSnapshotOption object)\fR
 .br
        It's a SdbOptionBase or SdbSnapshotOption object.
-.sp 2
 
 .sp 2
 \fBNote: \fR
