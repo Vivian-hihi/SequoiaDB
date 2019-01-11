@@ -1139,17 +1139,29 @@ SdbOptionBase.prototype.hint = function(hint) {
 }
 
 SdbOptionBase.prototype.skip = function(skip) {
-   this._skip = skip ;
+   if ( typeof( skip ) == Number ) {
+      this._skip = skip ;
+   } else {
+      throw "SdbOptionBase.skip() param must be Number" ;
+   }
    return this ;
 }
 
 SdbOptionBase.prototype.limit = function(limit) {
-   this._limit = limit ;
+   if ( typeof( limit ) == Number ) {
+      this._limit = limit ;
+   } else {
+      throw "SdbOptionBase.limit() param must be Number" ;
+   }
    return this ;
 }
 
 SdbOptionBase.prototype.flags = function(flags) {
-   this._flags = flags ;
+   if ( typeof ( flags ) == Number ) {
+      this._flags = flags ;
+   } else {
+      throw "SdbOptionBase.flags() param must be Number" ;
+   }
    return this ;
 }
 
