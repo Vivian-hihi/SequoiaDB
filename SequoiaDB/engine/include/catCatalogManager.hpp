@@ -225,8 +225,6 @@ namespace engine
       INT16 _majoritySize() ;
       INT32 _setCSCLUniqueID( string csName, const BSONObj& boCollections,
                               UINT32 csUniqueID ) ;
-      INT32 _checkCSExistByCLInfo( const BSONObj& clMatcher,
-                                   BOOLEAN &isExist ) ;
 
    private:
       sdbCatalogueCB       *_pCatCB;

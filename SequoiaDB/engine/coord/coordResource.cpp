@@ -1860,8 +1860,7 @@ namespace engine
          PD_LOG( PDERROR, "Update collection[%s]'s catalog info failed, "
                  "rc: %d", collectionName, rc ) ;
 
-         if ( SDB_DMS_NOTEXIST == rc || SDB_DMS_EOC == rc ||
-              SDB_DMS_CS_NOTEXIST == rc )
+         if ( SDB_DMS_NOTEXIST == rc || SDB_DMS_EOC == rc )
          {
             if ( checkAndRemoveCataInfoBySub( collectionName ) > 0 )
             {
@@ -2078,7 +2077,7 @@ namespace engine
             /// add to catalog map
             addCataInfo( tmpPtr ) ;
             /// set return
-            if ( isSpec &&
+            if ( isSpec && 
                  0 == ossStrcmp( collectionName, tmpPtr->getName() ) )
             {
                cataPtr = tmpPtr ;
