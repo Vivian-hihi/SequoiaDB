@@ -735,8 +735,6 @@ namespace engine
             rc = _rval.getVal()->toString( strPrint ) ;
             if ( rc )
             {
-               ossPrintf( "Convert result to string failed: %d"OSS_NEWLINE,
-                          rc ) ;
                goto error ;
             }
          }
