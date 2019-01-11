@@ -8,7 +8,8 @@ snapshot \- It lists snapshots.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]db.snapshot(<snapType>, [cond], [sel], [sort])\f[]\f[]
-\f[B]\f[I]db.snapshot(<snapType>, [SdbSnapshotOption])\f[]\f[]
+
+\f[B]\f[I]db.snapshot(<snapType>, [SnapshotOption])\f[]\f[]
 .SH CATEGORY
 .PP
 Sequoiadb
@@ -49,6 +50,10 @@ current status of system.
               {"snapType":"<snapshot type>",["cond":"{"Field name
               1":{"operation 1":"value 1"},"Field name
               2":{"Operation 2":"value 2"}...}"]}
+.sp 2
+\fBSnapshotOption (SdbOptionBase object or SdbSnapshotOption object)\fR
+.br
+       It's a SdbOptionBase or SdbSnapshotOption object.
 .sp 2
 
 .sp 2

@@ -7,7 +7,9 @@
 list \- Enumerate list.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.list(<listType>)\f[]\f[]
+\f[B]\f[I]db.list(<listType>, [cond], [sel], [sort] )\f[]\f[]
+
+\f[B]\f[I]db.list(<listType>, [ListOption] )\f[]\f[]
 .SH CATEGORY
 .PP
 Sequoiadb
@@ -51,6 +53,11 @@ system status.
               name 1":"","field name
               2":"",...}"],["sort":"{"field name 1":-1|1,"field
               name 2":1|-1,...}"]}
+.sp 2
+
+\fBListOption (SdbOptionBase object or SdbSnapshotOption object)\fR
+.br
+       It's a SdbOptionBase or SdbSnapshotOption object..
 .sp 2
 
 .sp 2
