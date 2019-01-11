@@ -58,6 +58,7 @@ namespace engine
       UTIL_OBJIDX eduLrbIdxPrev ;   // idx of prev LRB in chain EDU owning in tx
       UTIL_OBJIDX lrbHdrIdx ;       // idx of the LRB Header
       UTIL_OBJIDX nextLRBIdx ;      // idx of next LRB in the owner/waiter chain
+      ossTick beginTick ;           // timestamp( ossTick ) of owning / waiting
       UINT32 refCounter ;           // lock reference counter
       DPS_TRANSLOCK_TYPE lockMode ; // lock mode, UINT8, 1 byte
       UINT8 pad[3] ;                // 3 byte for padding
