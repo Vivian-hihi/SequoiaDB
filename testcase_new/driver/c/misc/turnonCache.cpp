@@ -602,12 +602,7 @@ TEST( turnonCache, getMulCLAfterDropCS)
    rc = sdbDropCollectionSpace( db, csName ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << csName ;
    
-   INT32 expectRes = SDB_DMS_NOTEXIST ;
-   if( isStandalone( db ) )
-   {
-      expectRes = SDB_DMS_CS_NOTEXIST ;
-   }
-   
+   INT32 expectRes = SDB_DMS_CS_NOTEXIST ;
    for( INT32 i = 0;i < 5;++i )
    {
       snprintf( fullName, sizeof(fullName), "%s.%s%d", csName, "turnonCacheTestCl", i ) ;
