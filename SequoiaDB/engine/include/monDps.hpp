@@ -57,6 +57,8 @@ namespace engine
    #define MON_TRANS_HOLDER               "Holder"
    #define MON_TRANS_WAITER               "Waiter"
 
+   #define MON_TRANS_DURATION             "Duration"
+
    /*
       _monTransLockCur define
    */
@@ -67,6 +69,7 @@ namespace engine
          {
             _mode       = 0 ;
             _count      = 0 ;
+            _beginTick.clear() ;
          }
          ~_monTransLockCur()
          {
@@ -77,6 +80,7 @@ namespace engine
             _mode       = 0 ;
             _count      = 0 ;
             _id.reset() ;
+            _beginTick.clear() ;
          }
 
          OSS_INLINE BSONObj   toBson( BOOLEAN showCount = TRUE ) const ;
@@ -87,9 +91,26 @@ namespace engine
          dpsTransLockId       _id ;
          DPS_TRANSLOCK_TYPE   _mode ;
          UINT32               _count ;
+         ossTick              _beginTick ;
    } ;
    typedef _monTransLockCur                     monTransLockCur ;
    typedef vector< monTransLockCur >            VEC_TRANSLOCKCUR ;
+
+   static UINT64 calDurationInMicroseconds( const ossTick beginTick )
+   {
+      UINT64 durationInMicroseconds ;
+      UINT32 seconds, microseconds ;
+      ossTickConversionFactor factor ;
+      ossTick endTick ;
+      ossTickDelta delta ;
+
+      endTick.sample() ;
+      delta = endTick - beginTick ;
+      delta.convertToTime( factor, seconds, microseconds ) ;
+      durationInMicroseconds = (UINT64)( seconds * 1000 + microseconds / 1000 );
+
+      return durationInMicroseconds ;
+   }
 
    /*
       _monTransLockCur implement
@@ -104,6 +125,9 @@ namespace engine
       {
          builder.append( MON_TRANS_LOCK_COUNT, (INT32)_count ) ;
       }
+
+      UINT64 duration = calDurationInMicroseconds( _beginTick ) ;
+      builder.append( MON_TRANS_DURATION, (INT64)duration ) ;
    }
 
    OSS_INLINE BSONObj _monTransLockCur::toBson( BOOLEAN showCount ) const
@@ -130,6 +154,7 @@ namespace engine
                   _eduID = 0 ;
                   _mode  = 0 ;
                   _count = 0 ;
+                  _beginTick.clear() ;
                }
                ~_lockItem() {}
 
@@ -142,12 +167,16 @@ namespace engine
                   {
                      builder.append( MON_TRANS_LOCK_COUNT, (INT32)_count ) ;
                   }
+
+                  UINT64 duration = calDurationInMicroseconds( _beginTick ) ;
+                  builder.append( MON_TRANS_DURATION, (INT64)duration ) ;
                }
 
             public:
                EDUID                   _eduID ;
                DPS_TRANSLOCK_TYPE      _mode ;
                UINT32                  _count ;
+               ossTick                 _beginTick ;
          } ;
          typedef _lockItem lockItem ;
          typedef vector< lockItem >          VEC_LOCKITEM ;
