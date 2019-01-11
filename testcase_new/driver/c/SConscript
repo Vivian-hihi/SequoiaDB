@@ -131,7 +131,8 @@ testFiles = [
    [ "./meta/renameCLFail16570_16571.cpp"],
    [ "./meta/renameCS16565.cpp"],
    [ "./meta/renameCSFail16566_16567.cpp"],
-   [ "./indexs/getIndextest_16780.cpp"]
+   [ "./indexs/getIndextest_16780.cpp"],
+   [ "./misc/getLastErrObj.cpp"]
 ]
 
 def getFileName( filePath ):
