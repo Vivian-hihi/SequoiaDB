@@ -1615,7 +1615,10 @@ namespace engine
          /// waiter lock
          BSONObjBuilder subWaiter( builder.subobjStart(
                                    FIELD_NAME_TRANS_WAIT_LOCK ) ) ;
-         _curTransInfo._waitLock.toBson( subWaiter, FALSE ) ;
+         if ( IS_VALID_SEG_OBJ_INDEX( _curTransInfo._waitLRBIdx ) )
+         {
+            _curTransInfo._waitLock.toBson( subWaiter, FALSE ) ;
+         }
          subWaiter.done() ;
 
          builder.append( FIELD_NAME_TRANS_LOCKS_NUM,
@@ -1676,7 +1679,7 @@ namespace engine
             }
 
             BSONObjBuilder subLock( babLockList.subobjStart() ) ;
-            (*_pos)._id.toBson( subLock ) ;
+            (*_pos).toBson( subLock ) ;
             subLock.done() ;
             ++_pos ;
          }
