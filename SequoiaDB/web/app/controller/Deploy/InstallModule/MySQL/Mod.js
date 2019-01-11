@@ -292,7 +292,7 @@
             if( configure['Config'][0]['GrantType'] == 'do nothing' )
             {
                $scope.Components.Confirm.type = 2 ;
-               $scope.Components.Confirm.context = $scope.autoLanguage( '选择不设置授权添加业务后，需要手工设置授权，SAC才能正常访问业务数据，是否继续？' ) ;
+               $scope.Components.Confirm.context = $scope.autoLanguage( '选择不设置授权添加服务后，需要手工设置授权，SAC才能正常访问服务数据，是否继续？' ) ;
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.okText = $scope.pAutoLanguage( '继续' ) ;
                $scope.Components.Confirm.ok = function(){

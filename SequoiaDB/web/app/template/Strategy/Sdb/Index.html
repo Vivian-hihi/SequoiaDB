@@ -16,12 +16,12 @@
 
    <div ng-container="{height:30,marginBottom:10}">
       <button class="topBtn" ng-click="QueryTasksList()"><i class="fa fa-refresh"></i> {{autoLanguage("刷新")}}</button>
-      <button class="topBtn" ng-click="ShowCreateTask()"><i class="fa fa-plus"></i> {{autoLanguage("添加Task")}}</button>
+      <button class="topBtn" ng-click="ShowCreateTask()"><i class="fa fa-plus"></i> {{autoLanguage("添加任务")}}</button>
    </div>
 
    <div ng-show="TaskTable['body'].length == 0">
       <div class="data_empty">
-         <div class="title">{{autoLanguage("当前业务没有任务。")}}</div>
+         <div class="title">{{autoLanguage("当前服务没有任务。")}}</div>
          <div class="tips">
             {{autoLanguage("使用")}}
             <span class="linkButton" ng-click="ShowCreateTask()">{{autoLanguage("添加任务")}}</span>

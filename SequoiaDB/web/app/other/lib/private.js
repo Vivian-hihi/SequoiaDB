@@ -218,7 +218,7 @@ _IndexPublic.pLanguageCtrl = function( $scope, text ){
 // --------------------- Index.Left ---------------------
 var _IndexLeft = {} ;
 
-//激活导航要激活的业务的索引
+//激活导航要激活的服务的索引
 _IndexLeft.getActiveIndex = function( $rootScope, SdbFunction, navMenu )
 {
    var defaultIndex   = [ -1, -1, -1 ] ;
@@ -388,7 +388,7 @@ _IndexTop.logout = function( $location, SdbFunction ){
    SdbFunction.LocalData( 'SdbUser', null ) ;
    //删除选中的集群
    SdbFunction.LocalData( 'SdbClusterName', null ) ;
-   //删除选中的业务
+   //删除选中的服务
    SdbFunction.LocalData( 'SdbModuleType', null ) ;
    SdbFunction.LocalData( 'SdbModuleMode', null ) ;
    SdbFunction.LocalData( 'SdbModuleName', null ) ;
@@ -463,19 +463,19 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
       }
       if( deployModule == 'sequoiadb' )
       {
-         stepList['info'].push( { 'text': $scope.autoLanguage( '配置业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Conf' ); } } ) ;
-         stepList['info'].push( { 'text': $scope.autoLanguage( '修改业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Mod'  ); } } ) ;
+         stepList['info'].push( { 'text': $scope.autoLanguage( '配置服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Conf' ); } } ) ;
+         stepList['info'].push( { 'text': $scope.autoLanguage( '修改服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Mod'  ); } } ) ;
       }
       else if( deployModule == 'sequoiasql' )
       {
-         stepList['info'].push( { 'text': $scope.autoLanguage( '配置业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SSQL-Conf' ); } } ) ;
-         stepList['info'].push( { 'text': $scope.autoLanguage( '修改业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SSQL-Mod'  ); } } ) ;
+         stepList['info'].push( { 'text': $scope.autoLanguage( '配置服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SSQL-Conf' ); } } ) ;
+         stepList['info'].push( { 'text': $scope.autoLanguage( '修改服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SSQL-Mod'  ); } } ) ;
       }
       else if( deployModule == 'zookeeper' )
       {
-         stepList['info'].push( { 'text': $scope.autoLanguage( '修改业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'ZKP-Mod'  ); } } ) ;
+         stepList['info'].push( { 'text': $scope.autoLanguage( '修改服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'ZKP-Mod'  ); } } ) ;
       }
-      stepList['info'].push( { 'text': $scope.autoLanguage( '安装业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'Install'  ); } } ) ;
+      stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'Install'  ); } } ) ;
       break ;
    }
    case 'Deploy':
@@ -515,19 +515,19 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
       stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'Install'  ); } } ) ;
       if( deployModule == 'sequoiadb' )
       {
-         stepList['info'].push( { 'text': $scope.autoLanguage( '配置业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Conf' ); } } ) ;
-         stepList['info'].push( { 'text': $scope.autoLanguage( '修改业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Mod'  ); } } ) ;
+         stepList['info'].push( { 'text': $scope.autoLanguage( '配置服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Conf' ); } } ) ;
+         stepList['info'].push( { 'text': $scope.autoLanguage( '修改服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Mod'  ); } } ) ;
       }
       else if( deployModule == 'sequoiasql' )
       {
-         stepList['info'].push( { 'text': $scope.autoLanguage( '配置业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SSQL-Conf' ); } } ) ;
-         stepList['info'].push( { 'text': $scope.autoLanguage( '修改业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SSQL-Mod'  ); } } ) ;
+         stepList['info'].push( { 'text': $scope.autoLanguage( '配置服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SSQL-Conf' ); } } ) ;
+         stepList['info'].push( { 'text': $scope.autoLanguage( '修改服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SSQL-Mod'  ); } } ) ;
       }
       else if( deployModule == 'zookeeper' )
       {
-         stepList['info'].push( { 'text': $scope.autoLanguage( '修改业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'ZKP-Mod'  ); } } ) ;
+         stepList['info'].push( { 'text': $scope.autoLanguage( '修改服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'ZKP-Mod'  ); } } ) ;
       }
-      stepList['info'].push( { 'text': $scope.autoLanguage( '安装业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'Install'  ); } } ) ;
+      stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'Install'  ); } } ) ;
       break ;
    }
    }
@@ -556,14 +556,14 @@ _Deploy.BuildSdbExtStep = function( $scope, $location, action, deployModule ){
    if( deployModule == 'sequoiadb' )
    {
       stepList['info'].push( { 'text': $scope.autoLanguage( '扩容配置' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-ExtendConf' ); } } ) ;
-      stepList['info'].push( { 'text': $scope.autoLanguage( '修改业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Extend'  ); } } ) ;
+      stepList['info'].push( { 'text': $scope.autoLanguage( '修改服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Extend'  ); } } ) ;
    }
-   stepList['info'].push( { 'text': $scope.autoLanguage( '安装业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-ExtendInstall'  ); } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-ExtendInstall'  ); } } ) ;
 
    return stepList ;
 }
 
-//生成安装主机-发现业务步骤图
+//生成安装主机-发现服务步骤图
 _Deploy.BuildSdbDiscoverStep = function( $scope, $location, action, deployModule ){
    var stepList = {
       'step': 0,
@@ -588,11 +588,11 @@ _Deploy.BuildSdbDiscoverStep = function( $scope, $location, action, deployModule
    stepList['info'].push( { 'text': $scope.autoLanguage( '扫描主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'ScanHost') ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '检查主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost' ) ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallHost' ) ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '发现业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Discover'  ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '发现服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Discover'  ) ; } } ) ;
    return stepList ;
 }
 
-//生成安装主机-同步业务步骤图
+//生成安装主机-同步服务步骤图
 _Deploy.BuildSdbSyncStep = function( $scope, $location, action, deployModule ){
    var stepList = {
       'step': 0,
@@ -617,11 +617,11 @@ _Deploy.BuildSdbSyncStep = function( $scope, $location, action, deployModule ){
    stepList['info'].push( { 'text': $scope.autoLanguage( '扫描主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'ScanHost') ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '检查主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost' ) ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallHost' ) ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '同步业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Sync'  ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '同步服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Sync'  ) ; } } ) ;
    return stepList ;
 }
 
-//生成业务减容步骤图
+//生成服务减容步骤图
 _Deploy.BuildSdbShrinkStep = function( $scope, $location, action, deployModule ){
    var stepList = {
       'step': 0,
@@ -637,7 +637,7 @@ _Deploy.BuildSdbShrinkStep = function( $scope, $location, action, deployModule )
       break ;
    }
    stepList['info'].push( { 'text': $scope.autoLanguage( '减容配置' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-ShrinkConf') ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '业务减容' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '服务减容' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
    return stepList ;
 }
 
@@ -656,8 +656,8 @@ _Deploy.BuildSdbPgsqlStep = function( $scope, $location, action, deployModule ){
       stepList['step'] = 2 ;
       break ;
    }
-   stepList['info'].push( { 'text': $scope.autoLanguage( '配置业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'PostgreSQL-Mod') ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '安装业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '配置服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'PostgreSQL-Mod') ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
    return stepList ;
 }
 
@@ -676,8 +676,8 @@ _Deploy.BuildSdbMysqlStep = function( $scope, $location, action, deployModule ){
       stepList['step'] = 2 ;
       break ;
    }
-   stepList['info'].push( { 'text': $scope.autoLanguage( '配置业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'MySQL-Mod') ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '安装业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '配置服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'MySQL-Mod') ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
    return stepList ;
 }
 

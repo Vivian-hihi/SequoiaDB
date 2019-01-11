@@ -3,7 +3,7 @@
       <div class="underlineTab" ng-container="{height:50}">
          <ul class="left">
             <li ng-class="{'module': 'active'}[CurrentPage]">
-               <a class="linkButton" ng-click="SwitchPage('module')">{{autoLanguage("业务")}}</a> <span class="badge badge-info">{{ModuleNum}}</span>
+               <a class="linkButton" ng-click="SwitchPage('module')">{{autoLanguage("服务")}}</a> <span class="badge badge-info">{{ModuleNum}}</span>
             </li>
             <li ng-class="{'host': 'active'}[CurrentPage]">
                <a class="linkButton" ng-click="SwitchPage('host')">{{autoLanguage("主机")}}</a> <span class="badge badge-info">{{HostNum}}</span>
@@ -11,7 +11,7 @@
          </ul>
       </div>
 
-      <!--业务页面-->
+      <!--服务页面-->
       <div ng-container="{offsetY:-50}" ng-controller="Deploy.Index.Module.Ctrl" ng-hide="CurrentPage!='module'">
          <div ng-windows="form as InstallModule.config" windows-callback="InstallModule.callback">
             <div form-create para="form"></div>
@@ -58,8 +58,8 @@
                <tr>
                   <td style="width:40%;background-color:#F1F4F5;">{{autoLanguage("关联名")}}</td>
                   <td style="width:20%;background-color:#F1F4F5;" ng-if="Typeof(list[0]['Options']['DbName'])!='undefined'">{{autoLanguage("数据库名")}}</td>
-                  <td style="width:20%;background-color:#F1F4F5;">{{autoLanguage("关联业务名")}}</td>
-                  <td style="width:20%;background-color:#F1F4F5;">{{autoLanguage("被关联业务名")}}</td>
+                  <td style="width:20%;background-color:#F1F4F5;">{{autoLanguage("关联服务名")}}</td>
+                  <td style="width:20%;background-color:#F1F4F5;">{{autoLanguage("被关联服务名")}}</td>
                </tr>
                <tr ng-repeat="info in list track by $index">
                   <td>{{info['Name']}}</td>
@@ -82,10 +82,10 @@
             <span class="Ellipsis" style="padding:5px 10px;display:block;" ng-click="RelationDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
          </div>
          <div ng-container="{height:40}">
-            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length == 0]" ng-disabled="ClusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenAddModuleDropdown($event)">{{autoLanguage("添加业务")}} <i class="fa fa-caret-down"></i></button>
-            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||ModuleNum==0]" ng-disabled="ClusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenDeleteModuleDropdown($event)">{{autoLanguage("删除业务")}} <i class="fa fa-caret-down"></i></button>
-            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||ModuleNum==0]" ng-disabled="ClusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenEditModuleDropdown($event)">{{autoLanguage("业务操作")}} <i class="fa fa-caret-down"></i></button>
-            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||ModuleNum==0]" ng-disabled="ClusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenRelationDropdown($event)">{{autoLanguage("关联业务")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length == 0]" ng-disabled="ClusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenAddModuleDropdown($event)">{{autoLanguage("添加服务")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||ModuleNum==0]" ng-disabled="ClusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenDeleteModuleDropdown($event)">{{autoLanguage("删除服务")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||ModuleNum==0]" ng-disabled="ClusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenEditModuleDropdown($event)">{{autoLanguage("服务操作")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||ModuleNum==0]" ng-disabled="ClusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenRelationDropdown($event)">{{autoLanguage("关联服务")}} <i class="fa fa-caret-down"></i></button>
          </div>
 
          <div style="padding-right:15px;overflow-y:auto;border:1px solid #ccc;padding:10px;position:relative;" ng-container="{offsetY:-40}">
@@ -177,7 +177,7 @@
                   </div>
                   <div class="pull-left" style="max-width:650px;min-height:145px;" ng-container="{width:'50%',height:'30w'}" ng-if="moduleInfo['BusinessType']=='sequoiasql-postgresql'||moduleInfo['BusinessType']=='sequoiasql-mysql'">
                      <div style="height:20px;margin-bottom:15px;">
-                        {{autoLanguage("业务关联信息")}}
+                        {{autoLanguage("服务关联信息")}}
                      </div>
                      <div ng-if="moduleInfo['Relationship'].length>0">
                         <div class="Ellipsis" style="margin-right:15px;" ng-container="{width:'100%',height:34}" ng-repeat="relationship in moduleInfo['Relationship'] track by $index" ng-if="$index < 3">
@@ -196,7 +196,7 @@
                      </div>
                      <div ng-if="moduleInfo['Relationship'].length==0">
                         <i class="fa fa-exclamation-circle" style="color:#45B0E4;font-size:20px;"></i>
-                        <span>{{autoLanguage("当前业务没有关联信息")}}</span>
+                        <span>{{autoLanguage("当前服务没有关联信息")}}</span>
                      </div>
                   </div>
 
@@ -216,12 +216,12 @@
                </div>
             </div>
             <div class="data_empty" ng-show="ClusterList.length > 0 && ModuleNum == 0">
-               <div class="title">{{autoLanguage("当前集群还没有创建业务")}}</div>
+               <div class="title">{{autoLanguage("当前集群还没有创建服务")}}</div>
                <div class="tips">
                   <span>{{autoLanguage("使用")}}</span>
-                  <span class="linkButton" ng-click="ShowInstallModule()">{{autoLanguage("创建业务")}}</span>
+                  <span class="linkButton" ng-click="ShowInstallModule()">{{autoLanguage("创建服务")}}</span>
                   <span>{{autoLanguage("或者")}}</span>
-                  <span class="linkButton" ng-click="ShowAppendModule()">{{autoLanguage("发现业务")}}</span>
+                  <span class="linkButton" ng-click="ShowAppendModule()">{{autoLanguage("发现服务")}}</span>
                   <span>{{autoLanguage("操作。")}}</span>
                </div>
             </div>
@@ -350,7 +350,7 @@
                      <a class="linkButton" ng-click="SwitchParam(1)">{{autoLanguage("集群配置")}}</a>
                   </li>
                   <li ng-class="{true:'active'}[ShowType == 2]">
-                     <a class="linkButton" ng-click="SwitchParam(2)">{{autoLanguage("业务配置")}}</a>
+                     <a class="linkButton" ng-click="SwitchParam(2)">{{autoLanguage("服务配置")}}</a>
                   </li>
                   <li ng-class="{true:'active'}[ShowType == 3]">
                      <a class="linkButton" ng-click="SwitchParam(3)">{{autoLanguage("资源授权")}}</a>

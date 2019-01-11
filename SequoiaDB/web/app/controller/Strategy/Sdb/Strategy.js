@@ -429,7 +429,7 @@
                },
                {
                   "name": 'businessName',
-                  "webName": $scope.autoLanguage( '业务名' ),
+                  "webName": $scope.autoLanguage( '服务名' ),
                   "type": "string",
                   "required": true,
                   "value": moduleName,
@@ -506,7 +506,7 @@
          else
          {
             $scope.Components.Confirm.type = 1 ;
-            $scope.Components.Confirm.context = $scope.autoLanguage( '当前业务没有任务，请前往Task页面新增任务。' ) ;
+            $scope.Components.Confirm.context = $scope.autoLanguage( '当前服务没有任务，请前往Task页面新增任务。' ) ;
             $scope.Components.Confirm.isShow = true ;
             $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
             $scope.Components.Confirm.ok = function(){
@@ -552,7 +552,7 @@
             },
             {
                "name": 'businessName',
-               "webName": $scope.autoLanguage( '业务名' ),
+               "webName": $scope.autoLanguage( '服务名' ),
                "type": "string",
                "required": true,
                "value": moduleName,
@@ -618,7 +618,7 @@
             },
             {
                "name": 'businessName',
-               "webName": $scope.autoLanguage( '业务名' ),
+               "webName": $scope.autoLanguage( '服务名' ),
                "type": "string",
                "required": true,
                "value": moduleName,
