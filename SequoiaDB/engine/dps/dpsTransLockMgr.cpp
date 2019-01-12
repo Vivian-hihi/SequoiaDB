@@ -44,6 +44,7 @@
 
 namespace engine
 {
+   #define DPS_LOCKID_STRING_MAX_SIZE ( 128 ) 
    dpsTransLockManager::dpsTransLockManager() : _pLRBMgr( NULL ),
                                                 _pLRBHdrMgr( NULL ),
                                                 _initialized( FALSE ),
@@ -898,6 +899,9 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST ) ;
 #ifdef _DEBUG
+      CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
+      CHAR hdrLockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
+
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 #endif
       UTIL_OBJIDX idx = dpsTxExectr->getWaiterLRBIdx() ;
@@ -908,9 +912,11 @@ namespace engine
 #ifdef _DEBUG
       EDUID eduIDTrc = 0 ;
 
+      ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                   "%s", lockId.toString().c_str() ) ;
       PD_TRACE6( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
                  PD_PACK_ULONG( dpsTxExectr ),
-                 PD_PACK_STRING( lockId.toString().c_str() ), 
+                 PD_PACK_STRING( lockIdStr ), 
                  PD_PACK_UINT( bktIdx ),
                  PD_PACK_UINT( removeLRBHeader ),
                  PD_PACK_STRING( "LRB to be removed:" ),
@@ -935,10 +941,12 @@ namespace engine
                     lockId.toString().c_str(),
                     pLRBHdr->lockId.toString().c_str() ) ;
 #ifdef _DEBUG
+            ossSnprintf( hdrLockIdStr, sizeof( hdrLockIdStr ),
+                         "%s", pLRBHdr->lockId.toString().c_str() ) ;
             PD_TRACE3( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
                        PD_PACK_STRING( "Invalid LRB Header, lockId not match"),
-                       PD_PACK_STRING( lockId.toString().c_str() ),
-                       PD_PACK_STRING( pLRBHdr->lockId.toString().c_str() ) ) ;
+                       PD_PACK_STRING( lockIdStr ),
+                       PD_PACK_STRING( hdrLockIdStr ) ) ;
 #endif
             ossPanic() ;
          }
@@ -1285,10 +1293,13 @@ namespace engine
 
 #ifdef _DEBUG
       EDUID eduIDTrc = 0 ;
+      CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
 
+      ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                   "%s", lockId.toString().c_str() ) ;
       PD_TRACE8( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
                  PD_PACK_ULONG( dpsTxExectr ),
-                 PD_PACK_STRING( lockId.toString().c_str() ),
+                 PD_PACK_STRING( lockIdStr ),
                  PD_PACK_BYTE( requestLockMode ),
                  PD_PACK_BYTE( opMode ),
                  PD_PACK_UINT( bktIdx ),
@@ -1949,9 +1960,13 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_ACQUIRE ) ;
 #ifdef _DEBUG
+      CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
+      CHAR iLockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
+      ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                   "%s", lockId.toString().c_str() ) ;
       PD_TRACE5( SDB_DPSTRANSLOCKMANAGER_ACQUIRE,
                  PD_PACK_ULONG( dpsTxExectr ),
-                 PD_PACK_STRING( lockId.toString().c_str() ),
+                 PD_PACK_STRING( lockIdStr ),
                  PD_PACK_BYTE( requestLockMode ),
                  PD_PACK_ULONG( pContext ),
                  PD_PACK_ULONG( pdpsTxResInfo ) ) ;
@@ -1983,9 +1998,11 @@ namespace engine
          iLockId   = lockId.upOneLevel() ;
          iLockMode = dpsIntentLockMode( requestLockMode ) ;
 #ifdef _DEBUG
+         ossSnprintf( iLockIdStr, sizeof( iLockIdStr ),
+                      "%s", iLockId.toString().c_str() ) ;
          PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_ACQUIRE,
                     PD_PACK_STRING( "Acquiring intent lock:" ),
-                    PD_PACK_STRING( iLockId.toString().c_str() ),
+                    PD_PACK_STRING( iLockIdStr ),
                     PD_PACK_BYTE( iLockMode )  ) ;
 #endif
          rc = acquire(dpsTxExectr, iLockId, iLockMode, pContext, pdpsTxResInfo);
@@ -2200,9 +2217,12 @@ namespace engine
 #ifdef _DEBUG
       EDUID eduIDTrc = 0 ;
 
+      CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
+      ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                   "%s", lockId.toString().c_str() ) ;
       PD_TRACE3( SDB_DPSTRANSLOCKMANAGER__RELEASE,
                  PD_PACK_ULONG( dpsTxExectr ),
-                 PD_PACK_STRING( lockId.toString().c_str() ),
+                 PD_PACK_STRING( lockIdStr ),
                  PD_PACK_UINT( bForceRelease ) ) ;
 
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
@@ -2432,9 +2452,12 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_RELEASE ) ;
 #ifdef _DEBUG
+      CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
+      ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                   "%s", lockId.toString().c_str() ) ;
       PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_RELEASE,
                  PD_PACK_ULONG( dpsTxExectr ),
-                 PD_PACK_STRING( lockId.toString().c_str() ),
+                 PD_PACK_STRING( lockIdStr ),
                  PD_PACK_UINT( bForceRelease ) ) ;
 
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
@@ -2496,9 +2519,12 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASEALL ) ;
 #ifdef _DEBUG
+      CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
+      ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                   "%s", lockId.toString().c_str() ) ;
       PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASEALL,
                  PD_PACK_ULONG( dpsTxExectr ),
-                 PD_PACK_STRING( lockId.toString().c_str() ) ) ;
+                 PD_PACK_STRING( lockIdStr ) ) ;
 
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 #endif
@@ -2553,6 +2579,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_RELEASEALL ) ;
 #ifdef _DEBUG
+      CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
       PD_TRACE1( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
                  PD_PACK_ULONG( dpsTxExectr ) ) ;
 
@@ -2584,9 +2611,11 @@ namespace engine
                pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;
                lockId  = pLRBHdr->lockId ;
 #ifdef _DEBUG
+               ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                            "%s", lockId.toString().c_str() ) ;
                PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
                           PD_PACK_STRING( "Releasing lock:" ),
-                          PD_PACK_STRING( lockId.toString().c_str() ) ) ;
+                          PD_PACK_STRING( lockIdStr ) ) ;
 
                SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 #endif
@@ -2716,9 +2745,13 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_TRYACQUIRE ) ;
 #ifdef _DEBUG
+      CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
+      CHAR iLockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
+      ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                   "%s", lockId.toString().c_str() ) ;
       PD_TRACE4( SDB_DPSTRANSLOCKMANAGER_TRYACQUIRE,
                  PD_PACK_ULONG( dpsTxExectr ),
-                 PD_PACK_STRING( lockId.toString().c_str() ),
+                 PD_PACK_STRING( lockIdStr ),
                  PD_PACK_BYTE( requestLockMode ),
                  PD_PACK_ULONG( pdpsTxResInfo ) ) ;
 
@@ -2748,9 +2781,11 @@ namespace engine
          iLockId = lockId.upOneLevel() ;
          iLockMode = dpsIntentLockMode( requestLockMode ) ;
 #ifdef _DEBUG
+         ossSnprintf( iLockIdStr, sizeof( iLockIdStr ),
+                      "%s", iLockId.toString().c_str() ) ;
          PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_TRYACQUIRE,
                     PD_PACK_STRING( "Trying intent lock:" ),
-                    PD_PACK_STRING( iLockId.toString().c_str() ),
+                    PD_PACK_STRING( iLockIdStr ),
                     PD_PACK_BYTE( iLockMode )  ) ;
 #endif
          rc = tryAcquire( dpsTxExectr, iLockId, iLockMode, pdpsTxResInfo );
@@ -2828,9 +2863,13 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_TESTACQUIRE ) ;
 #ifdef _DEBUG
+      CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
+      CHAR iLockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
+      ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                   "%s", lockId.toString().c_str() ) ;
       PD_TRACE4( SDB_DPSTRANSLOCKMANAGER_TESTACQUIRE,
                  PD_PACK_ULONG( dpsTxExectr ),
-                 PD_PACK_STRING( lockId.toString().c_str() ),
+                 PD_PACK_STRING( lockIdStr ),
                  PD_PACK_BYTE( requestLockMode ),
                  PD_PACK_ULONG( pdpsTxResInfo ) ) ;
 
@@ -2858,9 +2897,11 @@ namespace engine
          iLockId = lockId.upOneLevel() ;
          iLockMode = dpsIntentLockMode( requestLockMode ) ;
 #ifdef _DEBUG
+         ossSnprintf( iLockIdStr, sizeof( iLockIdStr ),
+                      "%s", iLockId.toString().c_str() ) ;
          PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_TESTACQUIRE,
                     PD_PACK_STRING( "Testing intent lock:" ),
-                    PD_PACK_STRING( iLockId.toString().c_str() ),
+                    PD_PACK_STRING( iLockIdStr ),
                     PD_PACK_BYTE( iLockMode )  ) ;
 #endif
          rc = testAcquire( dpsTxExectr, iLockId, iLockMode, pdpsTxResInfo);
