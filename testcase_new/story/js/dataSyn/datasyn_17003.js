@@ -7,42 +7,29 @@
 *@author:      wuyan
 *@date:        2018.12.28
 **************************************/
-main();
-function main()
-{ 
-   if( true == commIsStandalone( db ) )
-   {
-      println( "run mode is standalone" );
-      return;
-   }
-   var clName = COMMCLNAME + "_IndexAndDataSyn_17003";
-   commDropCL(db, COMMCSNAME, clName, true, true);
-   var groups = getOneGroups(db);   
-   var groupName = groups[0].GroupName;
-   var options = {ShardingKey:{no:1},ReplSize:0,Compressed:true, Group:groupName};
-   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, options);
+var csName = COMMCSNAME ;
+var clName = COMMCLNAME + "_IndexAndDataSyn_17003";
+DataSyncTestCase.prototype.execTest = function()
+{   
    var insertNums = 30000;        
-   var expRecs = buckInsertData( dbcl, insertNums);   
+   var expRecs = buckInsertData( this.dbcl, insertNums);  
    
-   dbcl.createIndex("idxa",{'inta':1,'str':1,'no':1},true);  
-   dbcl.createIndex("idxb",{'fc':1,'no':-1},true);
+   this.dbcl.createIndex("idxa",{'inta':1,'str':1,'no':1},true);  
+   this.dbcl.createIndex("idxb",{'fc':1,'no':-1},true);
    
    var updateNums = 20000;
-   updateDatasOfId( dbcl, updateNums);  
+   updateDatasOfId( this.dbcl, updateNums);  
    getUpdateExpRecs(expRecs, updateNums);
       
    println("---begin to delete datas.");
    var deleteSerial = 10000;
-   dbcl.remove( { no:{'$gte':deleteSerial}});
+   this.dbcl.remove( { no:{'$gte':deleteSerial}});
    expRecs.splice(deleteSerial);
    
    var sortCond = {'inta':1};   
-   checkDataContent(db, COMMCSNAME, clName, sortCond, expRecs, "17003");        
-   checkInspectResult(COMMCSNAME, clName);     
-   
-   commDropCL(db, COMMCSNAME, clName, true, true);
+   this.checkResult( sortCond, expRecs, "17003") ;
 }
-
+main();
 function updateDatasOfId( dbcl, nums)
 {   
    println("---begin to update datas.");
@@ -51,7 +38,6 @@ function updateDatasOfId( dbcl, nums)
       dbcl.update({ $set: { '_id': i } }, { 'inta': i});
    }
 }
-
 
 function getUpdateExpRecs(expRecs, updateNums)
 {

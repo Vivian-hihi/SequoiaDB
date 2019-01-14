@@ -8,42 +8,28 @@
 *@author:      wuyan
 *@date:        2018.12.28
 **************************************/
-main();
-function main()
-{ 
-   if( true == commIsStandalone( db ) )
-   {
-      println( "run mode is standalone" );
-      return;
-   }
-   var clName = COMMCLNAME + "_IndexAndDataSyn_16997";
-   commDropCL(db, COMMCSNAME, clName, true, true);
-   var groups = getOneGroups(db);   
-   var groupName = groups[0].GroupName;
-   var options = {ReplSize:0,Compressed:true, Group:groupName};
-   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, options);     
+var csName = COMMCSNAME ;
+var clName = COMMCLNAME + "_IndexAndDataSyn_16997";
+DataSyncTestCase.prototype.execTest = function()
+{   
+   this.dbcl.createIndex("idxfull",{'inta':"text",'str':"text"},true) 
+   this.dbcl.createIndex("idxa",{'inta':1,'str':1},true);  
+   this.dbcl.createIndex("idxb",{'fc':1},true);
    
-   dbcl.createIndex("idxfull",{'inta':"text",'str':"text"},true) 
-   dbcl.createIndex("idxa",{'inta':1,'str':1},true);  
-   dbcl.createIndex("idxb",{'fc':1},true);
-   
-   var expRecs = insertData( dbcl );  
-   updateDatas( dbcl, expRecs);  
-   getUpdateExpRecs(expRecs);
-   
-   dbcl.dropIndex("idxfull");
-   
+   var expRecs = insertData( this.dbcl );  
+   updateDatas( this.dbcl, expRecs);  
+   getUpdateExpRecs(expRecs);  
+   this.dbcl.dropIndex("idxfull");  
+  
    // insert 2W records again, with a range of 20000-40000,eg:no:[20000,39999]
    var beginNo = 20000;
-   var expRecsAfterInsert = buckInsertData( dbcl, 20000, beginNo);   
+   var expRecsAfterInsert = buckInsertData( this.dbcl, 20000, beginNo);   
    
    var sortCond = {'inta':1};
-   var expRecs = expRecs.concat(expRecsAfterInsert);   
-   checkDataContent(db,COMMCSNAME, clName, sortCond, expRecs, "16997");        
-   checkInspectResult(COMMCSNAME, clName);
-   
-   commDropCL(db, COMMCSNAME, clName, true, true);
+   var expRecs = expRecs.concat(expRecsAfterInsert); 
+   this.checkResult( sortCond, expRecs, "16997");
 }
+main();
 
 function updateDatas( dbcl, expRecs)
 {   

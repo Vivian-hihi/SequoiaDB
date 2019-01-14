@@ -7,40 +7,28 @@
 *@author:      wuyan
 *@date:        2018.12.28
 **************************************/
-main();
-function main()
-{ 
-   if( true == commIsStandalone( db ) )
-   {
-      println( "run mode is standalone" );
-      return;
-   }
-   var clName = COMMCLNAME + "_IndexAndDataSyn_17001";
-   commDropCL(db, COMMCSNAME, clName, true, true);
-   var groups = getOneGroups(db);   
-   var groupName = groups[0].GroupName;
-   var options = {ShardingKey:{no:1},ReplSize:0,Compressed:true, Group:groupName};
-   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, options);        
-   var expRecs = insertData( dbcl );   
+var csName = COMMCSNAME ;
+var clName = COMMCLNAME + "_IndexAndDataSyn_17001";
+DataSyncTestCase.prototype.execTest = function()
+{   
+   var expRecs = insertData( this.dbcl ); 
+      
+   this.dbcl.createIndex("idxa",{'inta':1,'str':1,'no':1},true);  
+   this.dbcl.createIndex("idxb",{'fc':1,'no':-1},true);
    
-   dbcl.createIndex("idxa",{'inta':1,'str':1,'no':1},true);  
-   dbcl.createIndex("idxb",{'fc':1,'no':-1},true);
-   
-   updateDatas( dbcl, expRecs.length);   
+   updateDatas( this.dbcl, expRecs.length);   
    
    var sortCond = {'inta':1};
    var expRecsAfterUpdate = getUpdateExpRecs(expRecs);
-   checkDataContent(db, COMMCSNAME, clName, sortCond, expRecsAfterUpdate, "17001a", false);  
+   checkDataContent(db, csName, clName, sortCond, expRecsAfterUpdate, "17001a", false);  
   
    // insert 2W records again, with a range of 20000-40000,eg:no:[20000,39999]
    var beginNo = 20000;
-   var expRecsAfterInsert = buckInsertData( dbcl, 20000, beginNo);
-   var findCond = {'no':{$gte: beginNo}};   
-   checkDataContent(db, COMMCSNAME, clName, sortCond, expRecsAfterInsert, "17001b", true, findCond);        
-   checkInspectResult(COMMCSNAME, clName);   
-   
-   commDropCL(db, COMMCSNAME, clName, true, true);
+   var expRecsAfterInsert = buckInsertData( this.dbcl, 20000, beginNo);
+   var findCond = {'no':{$gte: beginNo}};    
+   this.checkResult( sortCond, expRecsAfterInsert, "17001b", true, findCond) ;
 }
+main();
 
 function updateDatas( dbcl, nums)
 {   

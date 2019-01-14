@@ -3,33 +3,22 @@
 *@author:      wuyan
 *@date:        2018.12.27
 **************************************/
-main();
-function main()
-{ 
-   if( true == commIsStandalone( db ) )
-   {
-      println( "run mode is standalone" );
-      return;
-   }
-   var clName = COMMCLNAME + "_IndexAndDataSyn_16992";
-   commDropCL(db, COMMCSNAME, clName, true, true);
-   var groups = getOneGroups(db);   
-   var groupName = groups[0].GroupName;
-   var options = {ReplSize:0,Compressed:true, Group:groupName};
-   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, options);        
-   var expRecs = insertData( dbcl );   
+var csName = COMMCSNAME ;
+var clName = COMMCLNAME + "_IndexAndDataSyn_16992";
+DataSyncTestCase.prototype.execTest = function()
+{   
+   var expRecs = insertData( this.dbcl );
    
-   dbcl.createIndex("idxa",{'inta':1,'str':1},true);  
-   dbcl.createIndex("idxb",{'fc':1},true);
+   this.dbcl.createIndex("idxa",{'inta':1,'str':1},true);  
+   this.dbcl.createIndex("idxb",{'fc':1},true);
    
-   updateDatas( dbcl, expRecs);   
+   updateDatas( this.dbcl, expRecs);   
    
    var sortCond = {'inta':1};
-   var expRecsAfterUpdate = getUpdateExpRecs(expRecs);
-   checkDataContent(db, COMMCSNAME, clName, sortCond, expRecs, "16992");
-   checkInspectResult(COMMCSNAME, clName);
-   commDropCL(db, COMMCSNAME, clName, true, true);
+   var expRecsAfterUpdate = getUpdateExpRecs(expRecs);   
+   this.checkResult( sortCond, expRecsAfterUpdate, "16992") ;
 }
+main();
 
 function updateDatas( dbcl, expRecs)
 {   

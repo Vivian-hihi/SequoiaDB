@@ -104,30 +104,6 @@ function getRandomString(len)
    return str;
 }
 
-function createIndex( cl, idxName, idxKeygen, unique, enforced , errno )
-{
-   if ( undefined == unique ) { unique = false ; }
-   if ( undefined == enforced ) { enforced = false ; }
-   if ( undefined == errno ) { errno = "" ; }
-   try
-   {
-      if( undefined == cl || undefined == idxName || undefined == idxKeygen )
-      {
-         println( "please check the argument of createIndex" ) ;
-         throw "ErrArg" ;
-      }
-      cl.createIndex( idxName, idxKeygen, unique, enforced ) ;     
-   }
-   catch ( e )
-   {
-      if ( errno != e )
-      {
-         println( "failed to create index, rc = "+ e ) ;
-         throw e ;
-      }
-   }
-}
-
 /****************************************************
 @description: check the result of query
 @modify list:
@@ -223,36 +199,6 @@ function checkDataContent(sdb,csName, clName, sortCond, expRecs, testcaseId, fil
    checkRec( rc, expRecs, filterId, testcaseId);  
 }
 
-function checkResult(csName, clName, groups, sortCond, expRecs, testcaseId, filterId,findCond)
-{
-   if ( undefined == filterId ) { filterId = true ; }	
-   if ( undefined == findCond ) { findCond = null ; }	
-    
-   println("---begin to check result.");
-   for( var i = 1; i < groups.length; i++ )
-   {
-      try
-      {
-         var subDB = new Sdb( groups[i].HostName, groups[i].svcname);
-         var dbcl = subDB.getCS(csName).getCL(clName);
-         //var rc = dbcl.find({},{ "_id": { "$include": 0 } }).sort(sortCond); 
-         var rc = dbcl.find(findCond).sort(sortCond);          
-         checkRec( rc, expRecs, filterId, testcaseId);
-      }catch(e)
-      {
-         throw buildException( "checkResult", e, "checkResult", "data sync", 
-                  "data inconsistency,node info:" + groups[i].HostName + ":" + groups[i].svcname);
-      }
-      finally
-      {
-         if ( undefined !== subDB )
-         {
-            subDB.close();
-         }
-      }      
-   }    
-}
-
 /******************************************************************************
 @Description : check inpect result
 @input:         csName
@@ -325,11 +271,202 @@ function saveCheckRecords( fileNameId, actRecs, expRecs)
    
 }
 
-function getOneGroups(db)
+/*****************************************************************
+*@Description: get all nodes of all groups
+@input:        groups
+******************************************************************/
+function getNodesInGroups(groups)
 {
-   var groups = commGetGroups( db, "GroupName", "", true, true );
-   //random selection of a group
-   var serialNo = Math.floor( Math.random()*groups.length);   
-   var getGroupInfo = groups[serialNo];   
-   return getGroupInfo;   
+   var datas = new Array();
+   
+   for (var i = 0 ; i < groups.length; ++i)
+   {
+      datas[i] = Array();
+         
+      var rg = db.getRG(groups[i]);
+      var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
+      var nodesInGroup = rgDetail.Group;
+      for(var j = 0; j < nodesInGroup.length; ++j)
+      {
+         var hostName = nodesInGroup[j].HostName;
+         var serviceName = nodesInGroup[j].Service[0].Name;
+         datas[i][j] = new Sdb(hostName, serviceName);                                                                                                                                 
+      }
+         
+   }
+   return datas;
+}
+
+/*****************************************************************
+*@Description: check lsn consistency
+@input:         groups
+                primaryNodeLSNs
+******************************************************************/
+function checkLSN(groups, primaryNodeLSNs)
+{
+   var slaveNodeLSNs = getSlaveNodeLSNs(groups);
+ 
+   var checkLSN = true;
+   for(var i = 0; i < slaveNodeLSNs.length; ++i)
+   {
+      for(var j = 0; j < slaveNodeLSNs[i].length; ++j)
+      {
+         if(primaryNodeLSNs[i][0] > slaveNodeLSNs[i][j])
+         {
+            checkLSN = false;
+            return checkLSN;
+         }
+      }
+   }
+   
+   return checkLSN;
+}
+
+/*****************************************************************
+*@Description: get lsn of primary node
+@input:        groups
+******************************************************************/
+function getPrimaryNodeLSNs(groups)
+{
+   
+   var datas = getNodesInGroups(groups);
+   
+   var LSNs = new Array();
+   for(var i = 0; i < datas.length; ++i)
+   {
+      var nodesInGroup = datas[i];
+      LSNs[i] = Array();
+      for(var j = 0; j < nodesInGroup.length; ++j)
+      { 
+         var getSnapshot6 = eval( "(" + nodesInGroup[j].snapshot(6).toArray()[0] + ")" );
+         
+         var completeLSN = getSnapshot6.CompleteLSN;
+         var isPrimary = getSnapshot6.IsPrimary;
+         if(isPrimary)
+         {
+            LSNs[i][0] = completeLSN;
+            break;
+         }   
+      }
+   }
+   
+   return LSNs;
+}
+
+/*****************************************************************
+*@Description: get lsn of slave node
+@input:        groups
+******************************************************************/
+function getSlaveNodeLSNs(groups)
+{
+   var datas = getNodesInGroups(groups);
+   
+   var LSNs = new Array();
+   for(var i = 0; i < datas.length; ++i)
+   {
+      var nodesInGroup = datas[i];
+      LSNs[i] = Array();
+      var f = 0;
+      for(var j = 0; j < nodesInGroup.length; ++j)
+      { 
+         var getSnapshot6 = eval( "(" + nodesInGroup[j].snapshot(6).toArray()[0] + ")" );
+         
+         var completeLSN = getSnapshot6.CompleteLSN;
+         var isPrimary = getSnapshot6.IsPrimary;
+         if(!isPrimary)
+         {
+            LSNs[i][f++] = completeLSN;
+         }   
+      }
+   }
+   
+   return LSNs;
+}
+
+/*****************************************************************
+*@Description : check consistency: LSNs consistency of all nodes, ES consistency
+@input:         csName
+                clName
+******************************************************************/
+function checkConsistency(csName, clName)
+{
+   // check LSN consistency
+   if(csName == null) { var csName = "UNDEFINED"; }
+   if(clName == null) { var clName = "UNDEFINED"; }
+
+   var groups = commGetCLGroups( db, csName + "." + clName );
+   
+   //the longest waiting time is 600S
+   var lsnFlag = false;
+   var timeout = 600;
+   var doTimes = 0; 
+   
+   //get primary nodes
+   var primaryNodeLSNs = getPrimaryNodeLSNs(groups);
+   while(true)
+   {
+      lsnFlag = checkLSN(groups, primaryNodeLSNs);
+      if(!lsnFlag)
+      {
+         if(doTimes < timeout)
+         {
+            ++doTimes;
+            sleep(1000);
+         }
+         else
+         {
+            throw "check lsn time out";
+         }     
+      }
+      else 
+      {
+         break;
+      }
+   }
+
+   println("---check consistency success!");
+}
+
+function DataSyncTestCase( db, csName, clName )
+{
+   this.db = db ;
+   this.csName = csName ;
+   this.clName = clName ;
+}
+
+DataSyncTestCase.prototype.setUp = function()
+{
+   commDropCL(this.db, this.csName, this.clName, true, true);
+   var options = {Compressed:true};
+   this.dbcl = commCreateCLByOption(this.db, this.csName, this.clName, options);
+}
+
+DataSyncTestCase.prototype.tearDown = function()
+{
+   commDropCL(this.db, this.COMMCSNAME, this.clName, true, true);
+}
+
+DataSyncTestCase.prototype.checkResult = 
+function( sortCond, expRecs, testcaseId,filterId, findCond )
+{
+   if ( undefined == filterId ) { filterId = true ; }	
+   if ( undefined == findCond ) { findCond = null ; }	
+   checkDataContent(this.db, this.csName, this.clName, sortCond, expRecs, testcaseId, filterId,findCond);
+   checkConsistency(this.csName, this.clName);        
+   checkInspectResult(this.csName, this.clName);
+}
+
+
+function main()
+{
+   if( true == commIsStandalone( db ) )
+   {
+      println( "run mode is standalone" );
+      return;
+   }
+   
+   testcase = new DataSyncTestCase(db, csName, clName) ;
+   testcase.setUp() ;
+   testcase.execTest() ;
+   testcase.tearDown();
 }

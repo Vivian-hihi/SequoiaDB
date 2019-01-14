@@ -3,36 +3,26 @@
 *@author:      wuyan
 *@date:        2018.12.27
 **************************************/
-main();
-function main()
+var csName = COMMCSNAME ;
+var clName = COMMCLNAME + "_IndexAndDataSyn_16993";
+DataSyncTestCase.prototype.execTest = function()
 { 
-   if( true == commIsStandalone( db ) )
-   {
-      println( "run mode is standalone" );
-      return;
-   }
-   var clName = COMMCLNAME + "_IndexAndDataSyn_16993";
-   commDropCL(db, COMMCSNAME, clName, true, true);
-   var groups = getOneGroups(db);   
-   var groupName = groups[0].GroupName;
-   var options = {ReplSize:0,Compressed:true, Group:groupName};
-   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, options);        
-
-   dbcl.createIndex("idxa",{'inta':1},true);
-   dbcl.createIndex("idxb",{'str':1},true);
-   dbcl.createIndex("idxc",{'fc':1},true);
+   this.dbcl.createIndex("idxa",{'inta':1},true);
+   this.dbcl.createIndex("idxb",{'str':1},true);
+   this.dbcl.createIndex("idxc",{'fc':1},true);
    
-   var expRecs = insertData( dbcl );
+   var expRecs = insertData( this.dbcl );
    
    println("---begin to remove.");
-   dbcl.remove({ no : {"$gt":0}});
+   this.dbcl.remove({ no : {"$gt":0}});
+   
    var expRecsAfterRemove = [];
    expRecsAfterRemove.push(expRecs[0]);
    var sortCond = {no:1};
-   checkDataContent(db, COMMCSNAME, clName, sortCond, expRecsAfterRemove, "16993");        
-   checkInspectResult(COMMCSNAME, clName); 
-   
-   commDropCL(db, COMMCSNAME, clName, true, true);
+   this.checkResult( sortCond, expRecsAfterRemove, "16993") ;
 }
+main();
+
+
 
 
