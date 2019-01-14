@@ -3,8 +3,10 @@ package com.sequoias3.object.concurrent;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
+import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.S3ThreadBase;
@@ -34,7 +36,8 @@ public class UpdateAndGetSameObject16514 extends S3TestBase {
 	private File localPath = null;
 	private String filePath = null;
 	private String updatePath = null;
-	private S3Object object = null;
+	private long objectLength = 0;
+	private String getObjectMd5 = "";
 
 	@BeforeClass
 	private void setUp() throws Exception {
@@ -115,7 +118,14 @@ public class UpdateAndGetSameObject16514 extends S3TestBase {
 		public void exec() throws Exception {
 			AmazonS3 s3Client = CommLib.buildS3Client();
 			try {
-				object = s3Client.getObject(bucketName, keyName);
+				S3Object object = s3Client.getObject(bucketName, keyName);
+				objectLength = object.getObjectMetadata().getContentLength();
+				S3ObjectInputStream s3is = object.getObjectContent();		
+				String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
+						Thread.currentThread().getId());
+				ObjectUtils.inputStream2File(s3is,downloadPath);
+				s3is.close();
+		        getObjectMd5 = TestTools.getMD5(downloadPath);
 			} finally {
 				if (s3Client != null) {
 					s3Client.shutdown();
@@ -124,15 +134,12 @@ public class UpdateAndGetSameObject16514 extends S3TestBase {
 		}
 	}
 
-	private void checkGetObject(String bucketName, String key) throws Exception {
-		ObjectMetadata metadata = object.getObjectMetadata();
-		long objectLength = metadata.getContentLength();
-		if (objectLength == fileSize) {
-			String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key);
-			Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
-		} else {
-			String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key);
-			Assert.assertEquals(downfileMd5, TestTools.getMD5(updatePath));
+	private void checkGetObject(String bucketName, String key) throws Exception {        
+        //check get object result from md5
+        if (objectLength == fileSize) {			
+			Assert.assertEquals(getObjectMd5, TestTools.getMD5(filePath));
+		} else {			
+			Assert.assertEquals(getObjectMd5, TestTools.getMD5(updatePath));
 		}
 	}
 

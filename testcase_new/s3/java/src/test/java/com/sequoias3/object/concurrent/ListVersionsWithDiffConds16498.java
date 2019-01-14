@@ -187,6 +187,7 @@ public class ListVersionsWithDiffConds16498 extends S3TestBase {
 			keyList.add(keyName);
 			s3Client.putObject(bucketName, keyName, new File(updatePath));
 			keyList.add(keyName);
+			Collections.sort(keyList);
 		}
 	}
 
@@ -197,8 +198,7 @@ public class ListVersionsWithDiffConds16498 extends S3TestBase {
 		if (commPrefixes.size() != 0) {
 			Assert.assertEquals(commPrefixes.get(0), commPrefix);
 		}
-		// check the keyName
-		Collections.sort(expVersionKeys);
+		// check the keyName		
 		Collections.sort(actVersionKeys);
 		Assert.assertEquals(actVersionKeys, expVersionKeys);
 	}
