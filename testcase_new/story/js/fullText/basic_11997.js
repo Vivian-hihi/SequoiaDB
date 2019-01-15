@@ -11,7 +11,7 @@ function main()
       return;
    }
    
-   var clName = COMMCLNAME + "_ES_11996";
+   var clName = COMMCLNAME + "_ES_11997";
    var clFullName = COMMCSNAME + "." + clName
    var indexName = "abc";
    
