@@ -171,9 +171,7 @@ namespace bson {
         return b.obj();
     }
 
-    inline void BSONObj::getFields( unsigned n, const char **fieldNames,
-                                   BSONElement *fields ) const
-    {
+    inline void BSONObj::getFields(unsigned n, const char **fieldNames, BSONElement *fields) const {
         BSONObjIterator i(*this);
         while ( i.more() ) {
             BSONElement e = i.next();

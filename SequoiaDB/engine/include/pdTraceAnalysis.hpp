@@ -81,7 +81,7 @@ typedef PD_MAP_TID_RECORDS::iterator                        PD_MAP_TID_RECORDS_I
 */
 struct _pdFunctionRecord
 {
-   UINT32        _indexidx ;
+   UINT32        _indexidx ; 
    UINT32        _sequenceNum ;
    UINT32        _tid ;
    UINT32        _nChild ;
@@ -225,8 +225,7 @@ class _pdTraceParser
 
       INT32    init( const CHAR *pInputFileName,
                      const CHAR *pOutputFileName,
-                     pdTraceFormatType type,
-                     BOOLEAN option ) ;
+                     pdTraceFormatType type ) ;
 
       INT32    parse() ;
 
@@ -236,7 +235,7 @@ class _pdTraceParser
       INT32    _loadDumpFile( const CHAR *pInputFileName,
                               pdTraceHeader *pHeader ) ;
 
-      INT32    _parseTraceDumpFile( OSSFILE *file,
+      INT32    _parseTraceDumpFile( OSSFILE *file, 
                                     const pdTraceHeader *pHeader,
                                     const CHAR *fmtFilePath ) ;
 
@@ -254,15 +253,15 @@ class _pdTraceParser
                                          PD_MAP_FUNCS &errFunctions,
                                          PD_MAP_RECORD &summaryRecords ) ;
 
-      // 1 select exception
-      // 2 output exception
+      // 1 select exception 
+      // 2 output exception 
       INT32 _dealWithExceptRecords( const pdTraceHeader *pHeader,
                                     OSSFILE *inFile,
                                     OSSFILE *funcRecFile,
                                     OSSFILE *exceptFile,
                                     PD_MAP_RECORD &summaryRecords ) ;
 
-      INT32 _outputErrorFunctions( PD_MAP_FUNCS &errFunctions,
+      INT32 _outputErrorFunctions( PD_MAP_FUNCS &errFunctions, 
                                    OSSFILE *errFile ) ;
 
       INT32 _readTraceRecord( OSSFILE *file,
@@ -277,45 +276,40 @@ class _pdTraceParser
                                     UINT32 sequenceNum,
                                     UINT64 timeInterval,
                                     const pdTraceRecord *pRecord,
-                                    PD_MAP_FUNCS &errFunctions,
+                                    PD_MAP_FUNCS &errFunctions, 
                                     PD_MAP_RECORD &summaryRecords ) ;
 
-      INT32 _outputTraceRecordByThread( OSSFILE *flwFile,
-                                        UINT32 sequence,
-                                        INT32 &numIndent,
-                                        UINT64 timeInterval,
+      INT32 _outputTraceRecordByThread( OSSFILE *flwFile, 
+                                        UINT32 sequence, 
+                                        INT32 &numIndent, 
+                                        UINT64 timeInterval, 
                                         const CHAR *recordBuf ) ;
 
-      INT32 _selectExceptRecords( pdFunctionSummaryRecord &record,
+      INT32 _selectExceptRecords( pdFunctionSummaryRecord &record, 
                                   PD_SET_FUNCS &exceptRecords ) ;
 
       INT32 _outputFunctionSummaryRecord( UINT64 funcId,
-                                          pdFunctionSummaryRecord &record,
+                                          pdFunctionSummaryRecord &record, 
                                           OSSFILE *funcFile ) ;
 
-      INT32 _outputExceptionReport( OSSFILE *inFile,
-                                    OSSFILE *exceptFile,
+      INT32 _outputExceptionReport( OSSFILE *inFile, 
+                                    OSSFILE *exceptFile, 
                                     PD_SET_FUNCS &exceptRecords ) ;
 
       UINT32   _outputTraceRecordFormat( CHAR *pBuffer,
                                          UINT32 bufSize,
-                                         const pdTraceRecord *record,
-                                         UINT32 sequence,
+                                         const pdTraceRecord *record, 
+                                         UINT32 sequence, 
                                          BOOLEAN isChild ) ;
 
-      INT32 _outputTraceRecordByFMT( OSSFILE *out,
-                                     const pdTraceRecord *pRecord,
+      INT32 _outputTraceRecordByFMT( OSSFILE *out, 
+                                     const pdTraceRecord *pRecord, 
                                      UINT32 sequenceNum ) ;
-
-      const CHAR  *_getFunctionName( UINT32 functionID ) ;
-
-      INT32 _dumpFunctionList( OSSFILE *file );
 
    private:
       pdTraceFormatType _type ;
       OSSFILE  _inFile ;
       BOOLEAN  _inOpen ;
-      BOOLEAN  _useFunctionListFile ;
 
       string   _inFilePath ;
       string   _fmtFilePath ;
@@ -329,16 +323,9 @@ class _pdTraceParser
       PD_MAP_TID_RECORDS   _tid2recordsMap ;
 
       CHAR     *_pFormatBuf ;
-      UINT32    _bufSize ;
+      UINT32   _bufSize ;
 
       CHAR     *_pMaxRecordBuf ;
-
-      UINT32    _functionsCount ;
-      CHAR     *_functionsNames ;
-      UINT32   *_functionsOffsets ;
-
-      CHAR     *_versionInfo ;
-      UINT32    _versionInfoSize ;
 
 } ;
 typedef _pdTraceParser pdTraceParser ;
