@@ -53,11 +53,10 @@ public class UpdateObjectWithVersion16341 extends S3TestBase {
 		s3Client = CommLib.buildS3Client();
 	}
 
-	@SuppressWarnings("deprecation")
 	@Test(dataProvider = "objectParameterProvider")
 	public void test(String versionStatus, String versionId) throws Exception {
 		CommLib.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(bucketName, "region");
+		s3Client.createBucket(bucketName);
 		CommLib.setBucketVersioning(s3Client, bucketName, versionStatus);
 		s3Client.deleteObject(bucketName, key);
 		s3Client.putObject(bucketName, key, new File(filePath));
