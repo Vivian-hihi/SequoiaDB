@@ -88,7 +88,7 @@ public class ListVersionsWithDiffConds16498 extends S3TestBase {
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
+				UserUtils.deleteUser(userName);
 				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
