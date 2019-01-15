@@ -3,7 +3,7 @@
 
    ![创建索引](sac/data_operation/index/create_index_1.jpg)
 
-2. 点击 **创建索引**，集合选 foo.bar，索引名输入 Name，索引键输入 name，点击 **确定**（参数根据实际业务修改，这里仅作演示用途）。
+2. 点击 **创建索引**，集合选 foo.bar，索引名输入 Name，索引键输入 name，点击 **确定**（参数根据实际服务修改，这里仅作演示用途）。
 
    ![创建索引](sac/data_operation/index/create_index_2.jpg)
 

@@ -3,7 +3,7 @@
 
    ![创建集合](sac/data_operation/collection/create_cl_1.jpg)
 
-2. 进入业务的数据操作主页，点击 **集合** 分页，点击 **创建集合**，选择集合空间，输入集合名，点击 **确定**。
+2. 进入服务的数据操作主页，点击 **集合** 分页，点击 **创建集合**，选择集合空间，输入集合名，点击 **确定**。
 
    ![创建集合](sac/data_operation/collection/create_cl_2.jpg)
 

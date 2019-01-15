@@ -1,8 +1,8 @@
-会话页面可以查看当前业务的所有会话快照。
+会话页面可以查看当前服务的所有会话快照。
 
 ![会话列表](sac/monitor/resource/sessions_list_1.jpg)
 
-- 该表格列出了当前业务的所有[会话快照](database_management/monitoring/snapshot/SDB_SNAP_SESSIONS.md)信息。
+- 该表格列出了当前服务的所有[会话快照](database_management/monitoring/snapshot/SDB_SNAP_SESSIONS.md)信息。
   - 点击 **SessionID** 可以查看所选会话的详细信息。
   - 需要选择显示哪些字段，可以通过点击表格上方的 **选择显示列** 按钮来选择。
   - 需要排序时，可以通过点击表格表头来根据字段进行排序。

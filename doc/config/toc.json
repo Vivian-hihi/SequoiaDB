@@ -3655,52 +3655,52 @@
                   {
                      "id": 1546587187,
                      "dir": "add_sdb_module",
-                     "cn": "添加SequoiaDB业务",
-                     "en": "Add SequoiaDB module",
+                     "cn": "添加SequoiaDB服务",
+                     "en": "Add SequoiaDB service",
                      "contents": [
                         {
                            "id": 1484036823,
                            "file": "config_module",
-                           "cn": "配置业务",
-                           "en": "Config module"
+                           "cn": "配置服务",
+                           "en": "Config service"
                         },
                         {
                            "id": 1484036824,
                            "file": "mod_module",
-                           "cn": "修改业务",
-                           "en": "Modify module"
+                           "cn": "修改服务",
+                           "en": "Modify service"
                         },
                         {
                            "id": 1484036825,
                            "file": "install_module",
-                           "cn": "安装业务",
-                           "en": "Install module"
+                           "cn": "安装服务",
+                           "en": "Install service"
                         }
                      ]
                   },
                   {
                      "id": 1501736518,
                      "file": "install_postgresql",
-                     "cn": "添加SequoiaSQL-PostgreSQL业务",
+                     "cn": "添加SequoiaSQL-PostgreSQL服务",
                      "en": "Install SequoiaSQL-PostgreSQL"
                   },
                   {
                      "id": 1534834770,
                      "file": "install_mysql",
-                     "cn": "添加SequoiaSQL-MySQL业务",
+                     "cn": "添加SequoiaSQL-MySQL服务",
                      "en": "Install SequoiaSQL-MySQL"
                   },
                   {
                      "id": 1546587283,
                      "dir": "discover_module",
-                     "cn": "发现业务",
-                     "en": "Add module",
+                     "cn": "发现服务",
+                     "en": "Add service",
                      "contents": [
                         {
                            "id": 1501731657,
                            "file": "append_sdb_module",
-                           "cn": "发现SequoiaDB业务",
-                           "en": "Append SequoiaDB module"
+                           "cn": "发现SequoiaDB服务",
+                           "en": "Append SequoiaDB service"
                         }
                      ]
                   },
@@ -3727,20 +3727,20 @@
                   {
                      "id": 1509430533,
                      "dir": "remove_module",
-                     "cn": "删除业务",
-                     "en": "remove module",
+                     "cn": "删除服务",
+                     "en": "Remove service",
                      "contents": [
                         {
                            "id": 1483944504,
                            "file": "uninstall_module",
-                           "cn": "卸载业务",
-                           "en": "Uninstall module"
+                           "cn": "卸载服务",
+                           "en": "Uninstall service"
                         },
                         {
                            "id": 1509430534,
                            "file": "unbind_module",
-                           "cn": "解绑业务",
-                           "en": "Unbind module"
+                           "cn": "解绑服务",
+                           "en": "Unbind service"
                         }
                      ]
                   },
@@ -3767,26 +3767,26 @@
                   {
                      "id": 1509430536,
                      "dir": "modify_module",
-                     "cn": "修改业务",
-                     "en": "Modify module",
+                     "cn": "修改服务",
+                     "en": "Modify service",
                      "contents": [
                         {
                            "id": 1501731655,
                            "file": "extend_module",
-                           "cn": "业务扩容",
-                           "en": "Extend module"
+                           "cn": "服务扩容",
+                           "en": "Extend service"
                         },
                         {
                            "id": 1509430537,
                            "file": "shrink_module",
-                           "cn": "业务减容",
-                           "en": "Shrink module"
+                           "cn": "服务减容",
+                           "en": "Shrink service"
                         },
                         {
                            "id": 1501731656,
                            "file": "sync_module",
-                           "cn": "同步业务",
-                           "en": "Sync module"
+                           "cn": "同步服务",
+                           "en": "Sync service"
                         },
                         {
                            "id": 1483944518,
@@ -3799,8 +3799,8 @@
                   {
                      "id": 1509432854,
                      "file": "relationship_module",
-                     "cn": "关联业务",
-                     "en": "Relationship module"
+                     "cn": "关联服务",
+                     "en": "Relationship service"
                   }
                ]
             },

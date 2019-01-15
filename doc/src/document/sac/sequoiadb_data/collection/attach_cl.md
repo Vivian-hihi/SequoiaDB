@@ -3,7 +3,7 @@
 
    ![挂载集合](sac/data_operation/collection/attach_cl_1.jpg)
 
-2. 创建一个垂直分区的集合 main，分区键输入 name，分区键需要根据实际业务，演示取 name 字段。
+2. 创建一个垂直分区的集合 main，分区键输入 name，分区键需要根据实际服务，演示取 name 字段。
 
    ![挂载集合](sac/data_operation/collection/attach_cl_2.jpg)
 
@@ -15,7 +15,7 @@
 
    ![挂载集合](sac/data_operation/collection/attach_cl_4.jpg)
 
-5. 点击 **挂载集合**，集合选垂直分区 foo.main，分区选 foo.bar。分区范围 字段名输入 main的分区键，范围根据实际业务，演示取 1 - 100，点击 **确定**。
+5. 点击 **挂载集合**，集合选垂直分区 foo.main，分区选 foo.bar。分区范围 字段名输入 main的分区键，范围根据实际服务，演示取 1 - 100，点击 **确定**。
 
    ![挂载集合](sac/data_operation/collection/attach_cl_5.jpg)
 

@@ -18,16 +18,16 @@
       Takes 0.394340s.
       ```
 
-- 在 SAC 设置业务鉴权
+- 在 SAC 设置服务鉴权
    1. 在部署首页，创建鉴权前。
 
       ![设置鉴权](sac/deployment/sdb_auth_1.jpg)
-   2. 创建鉴权后，业务报错：Authority is forbidden，错误码-179。
+   2. 创建鉴权后，服务报错：Authority is forbidden，错误码-179。
 
       ![设置鉴权](sac/deployment/sdb_auth_2.jpg)
-   3. 点击业务的 **鉴权**，在 **设置鉴权** 窗口输入在 sdb shell 创建的用户名和密码，点击 **确定**。
+   3. 点击服务的 **鉴权**，在 **设置鉴权** 窗口输入在 sdb shell 创建的用户名和密码，点击 **确定**。
 
       ![设置鉴权](sac/deployment/sdb_auth_3.jpg)
-   4. 业务恢复正常。
+   4. 服务恢复正常。
 
       ![设置鉴权](sac/deployment/sdb_auth_4.jpg)

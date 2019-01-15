@@ -1,7 +1,7 @@
 
 > **Note:**  
-> 删除主机必须先卸载业务，否则卸载会提示主机有业务存在（防止误操作导致卸载业务）。  
-> 卸载业务，[点击查看](sac/deployment/remove_module/uninstall_module.md)
+> 删除主机必须先卸载服务，否则卸载会提示主机有服务存在（防止误操作导致卸载服务）。  
+> 卸载服务，[点击查看](sac/deployment/remove_module/uninstall_module.md)
 
 1. 打开部署首页，点击 **主机** 分页。
 

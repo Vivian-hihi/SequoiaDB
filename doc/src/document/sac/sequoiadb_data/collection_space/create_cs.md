@@ -1,5 +1,5 @@
 
-1. 进入业务的数据操作主页，点击导航 **数据**，点击 **业务名**，演示中点击的是 **myModule1**。
+1. 进入服务的数据操作主页，点击导航 **数据**，点击 **服务名**，演示中点击的是 **myService1**。
 
    ![创建集合空间](sac/data_operation/collection_space/create_cs_1.jpg)
 

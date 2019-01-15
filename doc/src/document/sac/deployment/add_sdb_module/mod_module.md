@@ -1,23 +1,23 @@
 
-添加业务流程共3步骤：
+添加服务流程共3步骤：
 
 | 步骤 | 说明 |
 | ---- | ------------- |
-| [配置业务](sac/deployment/add_sdb_module/config_module.md)  | 配置业务部署模式、主机、节点分布。 |
-| [修改业务](sac/deployment/add_sdb_module/mod_module.md)     | 修改业务的配置参数。 |
-| [安装业务](sac/deployment/add_sdb_module/install_module.md) | 安装业务的服务。 |
+| [配置服务](sac/deployment/add_sdb_module/config_module.md)  | 配置服务部署模式、主机、节点分布。 |
+| [修改服务](sac/deployment/add_sdb_module/mod_module.md)     | 修改服务的配置参数。 |
+| [安装服务](sac/deployment/add_sdb_module/install_module.md) | 安装服务的服务。 |
 
-1. 进入修改业务页面，这里可以修改业务的配置，这里演示的是集群模式的配置。
+1. 进入修改服务页面，这里可以修改服务的配置，这里演示的是集群模式的配置。
 
-   ![修改业务](sac/deployment/add_sdb_module/modify_module_1.jpg)
+   ![修改服务](sac/deployment/add_sdb_module/modify_module_1.jpg)
 
 2. 一般自动生成的配置不需要修改就能直接下一步安装。
 
-   ![修改业务](sac/deployment/add_sdb_module/modify_module_3.jpg)
+   ![修改服务](sac/deployment/add_sdb_module/modify_module_3.jpg)
 
-3. 点击底部的 **下一步** 按钮，进入安装业务页面。
+3. 点击底部的 **下一步** 按钮，进入安装服务页面。
 
-4. 开始安装业务，[点击查看](sac/deployment/add_sdb_module/install_module.md)。
+4. 开始安装服务，[点击查看](sac/deployment/add_sdb_module/install_module.md)。
 
 > **Note:**  
 > 1. 如果要开启事务，必须所有节点都开启。  
@@ -30,4 +30,4 @@
 
 点击 **编辑配置** 按钮，出现编辑配置的窗口。
 
-![修改业务](sac/deployment/add_sdb_module/modify_module_4.jpg)
+![修改服务](sac/deployment/add_sdb_module/modify_module_4.jpg)
