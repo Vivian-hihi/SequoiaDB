@@ -196,22 +196,6 @@ function _setPostgresqlConf( remote, hostName, confPath, configs )
    return error ;
 }
 
-function _getLogMessage( PD_LOGGER, cmd, installPath, businessName )
-{
-   var error = null ;
-   var logFile = installPath + '/' + businessName + '.log' ;
-   var timeout = 600000 ;
-
-   error = _runRemoteCmd( cmd, 'cat', logFile, timeout ) ;
-   if ( error !== null )
-   {
-      PD_LOGGER.logTask( PDERROR, error ) ;
-      return null ;
-   }
-
-   return cmd.getLastOut() ;
-}
-
 function CreateInst( PD_LOGGER )
 {
    var taskInfo   = BUS_JSON[FIELD_INFO] ;
@@ -275,15 +259,10 @@ function CreateInst( PD_LOGGER )
    args = '' ;
    args += ' addinst ' + businessName ;
    args += ' -D ' + dbpath ;
+   args += ' --print' ;
    error = _runRemoteCmd( cmd, exec, args, timeout ) ;
    if ( error !== null )
    {
-      var logMsg = _getLogMessage( PD_LOGGER, cmd, installPath, businessName ) ;
-      if( logMsg !== null )
-      {
-         PD_LOGGER.logTask( PDERROR, logMsg ) ;
-      }
-
       resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
       resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
       resultInfo[FIELD_STATUS] = STATUS_FAIL ;
@@ -321,15 +300,10 @@ function CreateInst( PD_LOGGER )
    //start
    args = '' ;
    args += ' start ' + businessName ;
+   args += ' --print' ;
    error = _runRemoteCmd( cmd, exec, args, timeout ) ;
    if ( error !== null )
    {
-      var logMsg = _getLogMessage( PD_LOGGER, cmd, installPath, businessName ) ;
-      if( logMsg !== null )
-      {
-         PD_LOGGER.logTask( PDERROR, logMsg ) ;
-      }
-
       resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
       resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
       resultInfo[FIELD_STATUS] = STATUS_FAIL ;
