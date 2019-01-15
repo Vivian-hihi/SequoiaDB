@@ -37,7 +37,7 @@ public class SetBucketVersioning16616 extends S3TestBase{
 		String[] acessKeysB = UserUtils.createUser(userName_b, roleName);
 		s3ClientB = CommLib.buildS3Client(acessKeysB[0], acessKeysB[1]);
 		
-		//user A crete bucket
+		//user A create bucket
 		s3ClientA.createBucket(bucketName);
 	}
 
