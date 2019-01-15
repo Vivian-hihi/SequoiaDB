@@ -35,7 +35,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 		};
 	}
 	
-	@BeforeClass
+	//TODO:SEQUOIADBMAINSTREAM-3982
+	@BeforeClass( enabled = false)
 	void init(){
 		try{
 			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -56,8 +57,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 		
 		expectRes = "SDB_DMS_CS_NOTEXIST";
 	}
-	
-	@AfterMethod
+	//TODO:SEQUOIADBMAINSTREAM-3982
+	@AfterMethod( enabled = false )
 	void clearCS(){
 		try{
 			if(db.isCollectionSpaceExist(testCaseCSName)){
@@ -189,8 +190,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 	    return end - start ;
 	}
 	
-	
-	@Test(dataProvider= "clientoption-provider")
+	//TODO:SEQUOIADBMAINSTREAM-3982
+	@Test(dataProvider= "clientoption-provider", enabled = false)
 	void testCreateCS(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace  cs = createCS();
@@ -212,8 +213,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 			}
 		}
 	}
-	
-	@Test(dataProvider= "clientoption-provider")
+	//TODO:SEQUOIADBMAINSTREAM-3982
+	@Test(dataProvider= "clientoption-provider", enabled = false)
 	void testCreateCL(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS(null);
@@ -235,8 +236,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 			}
 		}
 	}
-	
-	@Test(dataProvider= "clientoption-provider")
+	//TODO:SEQUOIADBMAINSTREAM-3982
+	@Test(dataProvider= "clientoption-provider", enabled = false)
 	void testCreateCLWithOptions(boolean enable, int inteval){
 		initClient(enable, inteval);
 		BSONObject options = new BasicBSONObject();
@@ -260,8 +261,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 			}
 		}
 	}
-	
-	@Test(dataProvider= "clientoption-provider")
+	//TODO:SEQUOIADBMAINSTREAM-3982
+	@Test(dataProvider= "clientoption-provider", enabled = false)
 	void testDropCS(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS();
@@ -274,8 +275,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 				new BaseException("SDB_DMS_CS_NOTEXIST").getErrorCode());
 		}
 	}
-	
-	@Test(dataProvider= "clientoption-provider")
+	//TODO:SEQUOIADBMAINSTREAM-3982
+	@Test(dataProvider= "clientoption-provider", enabled =false)
 	void testDropCL(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS(null);
@@ -290,8 +291,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 		}
 		dropCS(cs);
 	}
-	
-	@Test(dataProvider= "clientoption-provider")
+	//TODO:SEQUOIADBMAINSTREAM-3982
+	@Test(dataProvider= "clientoption-provider", enabled = false)
 	void testGetCSOfTimeOut(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS();
@@ -311,8 +312,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 					new BaseException("SDB_DMS_CS_NOTEXIST").getErrorCode());
 		}
 	}
-	
-	@Test(dataProvider= "clientoption-provider")
+	//TODO:SEQUOIADBMAINSTREAM-3982
+	@Test(dataProvider= "clientoption-provider", enabled =false)
 	void testGetCLOfTimeOut(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS(null);
@@ -348,8 +349,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 		}
 		return false;
 	}
-	
-	@Test(dataProvider= "clientoption-provider")
+	//TODO:SEQUOIADBMAINSTREAM-3982
+	@Test(dataProvider= "clientoption-provider", enabled=false)
 	void testGetCLAfterDropCS(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS(null);
@@ -361,8 +362,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 			Assert.assertEquals(e.getErrorCode(), new BaseException(expectRes).getErrorCode());
 		}
 	}
-	
-	@Test(dataProvider= "clientoption-provider")
+	//TODO:SEQUOIADBMAINSTREAM-3982
+	@Test(dataProvider= "clientoption-provider", enabled=false)
 	void testUpdateTimeStamp(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS(null);
@@ -399,8 +400,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 			}
 		}
 	}
-	
-	@AfterClass
+	//TODO:SEQUOIADBMAINSTREAM-3982
+	@AfterClass(enabled = false)
 	void fini(){
 		try{
 			if (db != null){
