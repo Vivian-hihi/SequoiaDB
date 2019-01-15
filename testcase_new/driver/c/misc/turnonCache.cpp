@@ -164,13 +164,13 @@ TEST( turnonCache, createCollection )
 }
 
 // 测试新建连接两次获取相同cs，第一次走查询，第二次走缓存
-TEST( turnonCache, getCollectionSpace )
+TEST( turnonCache17276, getCollectionSpace )
 {
    INT32 rc = SDB_OK ;
    sdbConnectionHandle db ;
    sdbConnectionHandle db1 ;
    sdbCSHandle cs, cs1, cs2 ;
-   const char* csName = "turnonCacheTestCs" ;
+   const char* csName = "turnonCacheTestCs17276" ;
    clock_t diff1, diff2 ;
   
    rc = connect( &db, 0 ) ;
@@ -289,12 +289,12 @@ TEST( turnonCache, getCollection1 )
 }
 
 // 测试缓存超时前后获取相同cs
-TEST( turnonCache, getCollectionSpaceOfTimeOut )
+TEST( turnonCache17277, getCollectionSpaceOfTimeOut )
 {
    INT32 rc = SDB_OK ;
    sdbConnectionHandle db ;
    sdbCSHandle cs, cs1, cs2 ;
-   const CHAR* csName = "turnonCacheTestCs" ;
+   const CHAR* csName = "turnonCacheTestCs17277" ;
    clock_t diff1, diff2 ;
    
    //初始化客户端，启用缓存，超时1s
@@ -325,14 +325,14 @@ TEST( turnonCache, getCollectionSpaceOfTimeOut )
 }
 
 // 测试缓存超时前后获取相同cl
-TEST( turnonCache, getCollectionOfTimeOut )
+TEST( turnonCache17278, getCollectionOfTimeOut )
 {
    INT32 rc = SDB_OK ;
    sdbConnectionHandle db ;
    sdbCSHandle cs ;
    sdbCollectionHandle cl, cl1, cl2 ;
-   const CHAR* csName = "turnonCacheTestCs" ;
-   const CHAR* clName = "turnonCacheTestCl" ;
+   const CHAR* csName = "turnonCacheTestCs17278" ;
+   const CHAR* clName = "turnonCacheTestCl17278" ;
    clock_t diff1, diff2 ;
    
    //初始化客户端，启用缓存，超时1s
@@ -364,12 +364,12 @@ TEST( turnonCache, getCollectionOfTimeOut )
 }
 
 // 测试删除cs后获取cs
-TEST( turnonCache, getCollectionSpaceAfterDrop)
+TEST( turnonCache17279, getCollectionSpaceAfterDrop)
 {
    INT32 rc = SDB_OK ;
    sdbConnectionHandle db ;
    sdbCSHandle cs ;
-   const CHAR* csName = "turnonCacheTestCs" ;
+   const CHAR* csName = "turnonCacheTestCs17279" ;
    
    rc = connect( &db, 0 ) ;
    ASSERT_EQ( SDB_OK, rc ) ; 
@@ -387,15 +387,15 @@ TEST( turnonCache, getCollectionSpaceAfterDrop)
 }
 
 // 测试删除cl后获取cl
-TEST( turnonCache, getCollectionAfterDrop )
+TEST( turnonCache17280, getCollectionAfterDrop )
 {
    INT32 rc = SDB_OK ;
    sdbConnectionHandle db ;
    sdbCSHandle cs ;
    sdbCollectionHandle cl, cl1, cl2 ;
-   const CHAR* csName = "turnonCacheTestCs" ;
-   const CHAR* clName = "turnonCacheTestCl" ;
-   const CHAR* fullName = "turnonCacheTestCs.turnonCacheTestCl" ;
+   const CHAR* csName = "turnonCacheTestCs17280" ;
+   const CHAR* clName = "turnonCacheTestCl17280" ;
+   const CHAR* fullName = "turnonCacheTestCs17280.turnonCacheTestCl17280" ;
    
    rc = connect( &db, 0 ) ;
    ASSERT_EQ( SDB_OK, rc ) ; 
@@ -577,44 +577,44 @@ TEST( turnonCache, getCSOfTimeOutandDropbyOtherConn )
 }
 
 // 删除cs后获取cs下的多个cl
-TEST( turnonCache, getMulCLAfterDropCS)
-{
-   INT32 rc = SDB_OK ;
-   sdbConnectionHandle db ;
-   sdbCSHandle cs, cs1 ;
-   sdbCollectionHandle cl[5], cl1[5] ;
-   const CHAR* csName = "turnonCacheTestCs" ;
-   CHAR clName[127] ;
-   CHAR fullName[256] ;
+//TEST( turnonCache17281, getMulCLAfterDropCS)
+//{
+//   INT32 rc = SDB_OK ;
+//   sdbConnectionHandle db ;
+//   sdbCSHandle cs, cs1 ;
+//   sdbCollectionHandle cl[5], cl1[5] ;
+//   const CHAR* csName = "turnonCacheTestCs17281" ;
+//   CHAR clName[127] ;
+//   CHAR fullName[256] ;
    
-   rc = connect( &db, 1 ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ; 
-   ASSERT_EQ( SDB_OK, rc ) << "fail to create cs " << csName ;
+//   rc = connect( &db, 1 ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ; 
+//   ASSERT_EQ( SDB_OK, rc ) << "fail to create cs " << csName ;
    
-   for( INT32 i = 0;i < 5;++i )
-   {
-      snprintf( clName, sizeof(clName), "%s%d", "turnonCacheTestCl", i ) ;
-      rc = sdbCreateCollection( cs, clName, &cl[i] ) ;
-      ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
-   }
+//   for( INT32 i = 0;i < 5;++i )
+//   {
+//      snprintf( clName, sizeof(clName), "%s%d", "turnonCacheTestCl17281", i ) ;
+//      rc = sdbCreateCollection( cs, clName, &cl[i] ) ;
+//      ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
+//   }
    
-   rc = sdbDropCollectionSpace( db, csName ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << csName ;
+//   rc = sdbDropCollectionSpace( db, csName ) ;
+//   ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << csName ;
    
-   INT32 expectRes = SDB_DMS_CS_NOTEXIST ;
-   for( INT32 i = 0;i < 5;++i )
-   {
-      snprintf( fullName, sizeof(fullName), "%s.%s%d", csName, "turnonCacheTestCl", i ) ;
-      rc = sdbGetCollection( db, fullName, &cl1[i] ) ;
-      ASSERT_EQ( expectRes, rc ) << "fail to test get cl " << fullName ;
-   }
+//   INT32 expectRes = SDB_DMS_CS_NOTEXIST ;
+//   for( INT32 i = 0;i < 5;++i )
+//   {
+//      snprintf( fullName, sizeof(fullName), "%s.%s%d", csName, "turnonCacheTestCl17281", i ) ;
+//      rc = sdbGetCollection( db, fullName, &cl1[i] ) ;
+//      ASSERT_EQ( expectRes, rc ) << "fail to test get cl " << fullName ;
+//   }
  
-   sdbDisconnect( db ) ;
-   for( INT32 i = 0;i < 5;++i )
-   {
-      sdbReleaseCollection( cl[i] ) ;
-   } 
-   sdbReleaseCS( cs ) ;
-   sdbReleaseConnection( db ) ;
-}
+//   sdbDisconnect( db ) ;
+//   for( INT32 i = 0;i < 5;++i )
+//   {
+//      sdbReleaseCollection( cl[i] ) ;
+//   } 
+//   sdbReleaseCS( cs ) ;
+//   sdbReleaseConnection( db ) ;
+//}
