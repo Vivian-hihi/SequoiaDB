@@ -110,7 +110,7 @@ function _checkData( hostName, svcName )
    }
    catch( e )
    {
-      PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_INSTALL_STANDALONE,
+      PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ROLLBACKSTANDALONE,
             sprintf( "Failed to connect standalone[?:?], detail: ?",
                      hostName, svcName, GETLASTERRMSG() ) ) ;
    }
