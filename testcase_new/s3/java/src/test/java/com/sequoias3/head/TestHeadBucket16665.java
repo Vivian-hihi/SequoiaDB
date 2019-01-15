@@ -30,14 +30,14 @@ public class TestHeadBucket16665  extends S3TestBase{
 	private String region = "us-east-1";
 	private AmazonS3 s3Client = null;
 
-	@BeforeClass
+	@BeforeClass(enabled=false)
 	private void setUp() throws Exception {
 		CommLib.clearUser(userName);
 		String[] accessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 	}
 
-	@Test
+	@Test(enabled=false)
 	private void testDoesBucketExist() throws Exception {
 		s3Client.createBucket(new CreateBucketRequest(bucketName, region));
 		HeadBucketResult bucketResult = s3Client.headBucket(new HeadBucketRequest(bucketName));
@@ -45,7 +45,7 @@ public class TestHeadBucket16665  extends S3TestBase{
 		runSuccess = true;
 	}
 
-	@AfterClass
+	@AfterClass(enabled=false)
 	private void tearDown() throws Exception {
 		try {
 			if (runSuccess) {

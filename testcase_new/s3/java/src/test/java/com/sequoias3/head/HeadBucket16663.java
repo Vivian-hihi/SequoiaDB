@@ -25,13 +25,13 @@ public class HeadBucket16663 extends S3TestBase{
 	private String bucketName = "bucket16663";	
 	private AmazonS3 s3Client = null;
 
-	@BeforeClass
+	@BeforeClass(enabled=false)
 	private void setUp() {		
 		s3Client = CommLib.buildS3Client();
 		HeadUtils.clearOneBucket(s3Client, bucketName);
 	}
 
-	@Test
+	@Test(enabled=false)
 	public void testCreateBucket() {
 		s3Client.createBucket(new CreateBucketRequest(bucketName, "region16663a"));		
 		HeadBucketRequest request1 = new HeadBucketRequest(bucketName);
@@ -56,7 +56,7 @@ public class HeadBucket16663 extends S3TestBase{
 		runSuccess = true;
 	}
 
-	@AfterClass
+	@AfterClass(enabled=false)
 	private void tearDown() {
 		try {
 			if (runSuccess) {
