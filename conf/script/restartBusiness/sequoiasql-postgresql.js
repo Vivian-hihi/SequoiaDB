@@ -25,12 +25,12 @@
       var SYS_STEP = "Generate plan" ;
       var BUS_JSON = {"AgentHost":"ubuntu-jw-01","AgentService":"11790","CreateTime":{"$timestamp":"2018-12-13-11.13.53.000000"},"EndTime":{"$timestamp":"2018-12-13-11.13.54.000000"},"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiasql-postgresql","BusinessName":"myModule3","Config":[{"HostName":"ubuntu-jw-02","port":"5432","InstallPath":"/opt/sequoiasql/postgresql/"}]},"Progress":100,"ResultInfo":[{"Status":4,"StatusDesc":"FINISH","HostName":"ubuntu-jw-02","port":"5432","InstallPath":"/opt/sequoiasql/postgresql/","errno":0,"detail":"","Flow":[]}],"Status":4,"StatusDesc":"FINISH","TaskID":36,"TaskName":"RESTART_BUSINESS","Type":8,"TypeDesc":"RESTART_BUSINESS","_id":{"$oid":"5c11ce714430570bf1dc2dcd"},"detail":"","errno":0}
    @return
-      RET_JSON: the format is: {"Plan":[[{"TaskID":90,"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiasql-mysql","BusinessName":"myModule1","Config":{"HostName":"ubuntu-jw-02","port":"5432","InstallPath":"/opt/sequoiasql/postgresql/"}},"ResultInfo":{"HostName":"ubuntu-jw-02","port":"5432","InstallPath":"/opt/sequoiasql/postgresql/","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}}]]}
+      RET_JSON: the format is: {"Plan":[[{"TaskID":90,"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiasql-postgresql","BusinessName":"myModule1","Config":{"HostName":"ubuntu-jw-02","port":"5432","InstallPath":"/opt/sequoiasql/postgresql/"}},"ResultInfo":{"HostName":"ubuntu-jw-02","port":"5432","InstallPath":"/opt/sequoiasql/postgresql/","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}}]]}
 
 2. create instance
    @parameter
       var SYS_STEP = "Doit" ;
-      var BUS_JSON = {"TaskID":90,"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiasql-mysql","BusinessName":"myModule1","Config":{"HostName":"ubuntu-jw-02","port":"5432","InstallPath":"/opt/sequoiasql/postgresql/"}},"ResultInfo":{"HostName":"ubuntu-jw-02","port":"5432","InstallPath":"/opt/sequoiasql/postgresql/","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}}
+      var BUS_JSON = {"TaskID":90,"Info":{"ClusterName":"myCluster1","BusinessType":"sequoiasql-postgresql","BusinessName":"myModule1","Config":{"HostName":"ubuntu-jw-02","port":"5432","InstallPath":"/opt/sequoiasql/postgresql/"}},"ResultInfo":{"HostName":"ubuntu-jw-02","port":"5432","InstallPath":"/opt/sequoiasql/postgresql/","Status":0,"StatusDesc":"INIT","errno":0,"detail":"","Flow":[],"Progress":90}}
 
    @return
       RET_JSON: the format is: {"HostName":"ubuntu-jw-02","port":"5432","Status":4,"StatusDesc":"FINISH","errno":0,"detail":"","Flow":[],"Progress":90}
@@ -202,9 +202,8 @@ function RestartModule( PD_LOGGER )
    libraryCmd += installPath + '/lib ;' ;
    exec = libraryCmd + exec ;
 
-   //add inst
-   args = '' ;
-   args += ' restart ' + businessName ;
+   //restart
+   args = ' restart ' + businessName + ' --print' ;
    error = _runRemoteCmd( cmd, exec, args, timeout ) ;
    if ( error !== null )
    {
