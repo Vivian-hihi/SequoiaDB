@@ -56,7 +56,6 @@ public abstract class SdbThreadBase implements Runnable {
     // join所有线程
     public void join() {
         synchronized (this) {
-            Iterator<Thread> iter = threadList.iterator();
             for (Thread thread : threadList) {
                 try {
                     thread.join();
@@ -82,6 +81,34 @@ public abstract class SdbThreadBase implements Runnable {
         } catch (Throwable e) {
             exceptionList.add(e);
         }
+    }
+    
+    public String getBlockingMethod(){
+        assert threadList.size() == 1 ;
+        final int oneSeonds = 1000 ;
+        int alreadyWaitTime = 0 ;
+        String prevMethod = threadList.get( 0 ).getStackTrace()[0].getMethodName() ;
+        do{
+            try {
+                Thread.sleep( 1 ) ;
+                alreadyWaitTime += 1;
+            } catch ( InterruptedException e ) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
+            if ( alreadyWaitTime >= oneSeonds  ){
+                return "" ;
+            }
+            String curMethod  = threadList.get( 0 ).getStackTrace()[0].getMethodName() ;
+            if ( curMethod.equals( prevMethod )){
+                break ;
+            }
+            
+            prevMethod = curMethod ;
+        }while(true) ;
+        
+        return prevMethod ;
     }
 
     public abstract void exec() throws Exception;
