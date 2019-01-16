@@ -3683,7 +3683,7 @@
                      "file": "deploy_package",
                      "cn": "部署包",
                      "en": "Deploy package"
-                  }
+                  },
                   {
                      "id": 1546587187,
                      "dir": "add_sdb_module",
