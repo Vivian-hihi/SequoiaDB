@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<testcases xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<testcase name="指定桶名创建桶">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>3</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建一个桶，指定桶名（如testbucket）
+2、获取桶列表，查询创建桶信息
+3、查询桶元数据表信息，检查桶信息记录</actions>
+				<expectedresults>1、创建桶操作返回成功
+2、查询桶列表中存在创建桶信息，且和实际创建信息一致
+3、查询桶元数据表中记录新建桶信息正确</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="不同用户创建桶">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A和用户B，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、用户A创建桶A，指定桶名（如testbucketA）
+2、用户B创建桶B，指定桶名（如testbucketB）
+3、用户A和B分别获取桶列表，查询创建桶信息
+4、查询桶元数据表信息，检查桶信息记录</actions>
+				<expectedresults>1、多个用户创建桶操作成功
+2、用户A查询桶列表中存在桶A信息，不存在桶B信息；用户B查询桶列表中存在桶B信息，不存在桶A信息
+3、查询桶元数据表中存在桶A和桶B信息，且记录桶信息正确和实际创建桶信息一致</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="不同用户创建同名桶">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A和用户B，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、用户A创建桶A，指定桶名（如testbucket）
+2、用户B创建桶B，指定桶名和桶A相同（如testbucket）
+3、检查操作返回结果
+4、查询桶元数据表信息，检查桶信息记录</actions>
+				<expectedresults>1、用户A创建桶成功，用户B创建桶失败，返回重复桶名等相关错误信息
+2、查询桶元数据表中存在桶A信息，不存在桶B信息</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="相同用户创建同名桶">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建桶A，指定桶名（如testbucket）
+2、再次创建桶B，指定桶名和桶A相同（如testbucket）
+3、检查操作返回结果
+4、获取桶列表信息，检查结果
+5、查询桶元数据表信息，检查桶信息记录</actions>
+				<expectedresults>1、创建桶A成功，创建桶B失败，返回重复桶名等相关错误信息
+2、获取桶列表信息中存在桶A信息，不存在桶B信息
+3、查询桶元数据表中存在桶A信息，不存在桶B信息</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建桶到达最大数限制">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建多个桶，达到默认最大限制（默认最大100个桶），分别验证如下两个场景：
+a、桶数为最大值，如100个
+b、桶数超过最大限制，如101个
+2、获取桶列表，查询创建桶信息
+3、查询桶元数据表信息，检查桶信息记录</actions>
+				<expectedresults>1、创建100个桶成功，创建101个桶失败，返回对应错误信息
+2、查询桶列表中存在所有桶信息（100个桶），且和实际创建信息一致</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="并发创建相同桶">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、多线程并发创建相同桶
+2、检查操作结果
+3、获取桶列表信息，检查创建桶记录信息</actions>
+				<expectedresults>1、只有一个线程创建桶成功，其它线程返回失败等相关信息
+2、获取桶列表信息中只存在创建成功的桶信息</expectedresults>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建桶过程中db端节点异常">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>1</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、并发多线程创建桶，指定不同桶名
+2、操作过程中db端节点异常
+3、检查创建结果
+4、故障恢复后再次创建创建相同桶名，检查操作结果</actions>
+				<expectedresults>1、db端故障时创建桶失败，返回对应错误信息
+2、故障恢复后，再次创建桶（故障时创建失败的桶）成功，查看桶信息正确</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="桶名参数校验">
+		<summary>校验规则：1、 String
+2、 长度范围3-63
+3、 不能为“users”
+4、 建议：由小写字母，数字和连字符和英文句点组成
+</summary>
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>1</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建一个桶，分别指定桶名为合法和非法值，合法参数校验如下：
+a、范围内取值，如testbucket
+b、长度边界值：3个字符、63个字符
+c、包含特殊字符，如包含@#￥%……&amp;*$！等
+d、包含大写字母、_、其它字符，如Bucket_#$001
+e、包含点.，分别在桶名起始、中间、结尾位置；连续出现点
+f、包含连字符，分别以连字符开始、结尾
+非法参数校验如下：
+a、超出长度范围：2个字符、64个字符
+b、为“users”
+2、检查创建结果</actions>
+				<expectedresults>1、设置为合法值时，创建桶操作返回成功；查看桶列表中桶信息正确
+2、设置为非法值时创建失败，返回对应失败信息</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建多个桶，获取桶列表信息">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建多个桶
+2、获取桶列表，查询创建桶信息
+3、查询桶元数据表信息，检查桶信息记录</actions>
+				<expectedresults>1、创建桶操作返回成功
+2、查询桶列表中存在所有桶信息，且和实际创建信息一致
+3、查询桶元数据表中记录新建桶信息正确</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="不存在桶，获取桶列表信息">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、不存在桶
+2、获取桶列表，查询桶信息
+</actions>
+				<expectedresults>1、查询桶列表信息为空</expectedresults>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="删除桶，获取桶列表信息">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建多个桶
+2、获取桶列表，查询创建桶信息
+3、删除部分桶
+4、获取桶列表，查询桶信息</actions>
+				<expectedresults>1、查询桶列表中存在所有桶信息，且和实际创建信息一致
+2、删除桶后，查询桶列表中对应删除桶已不存在（其它桶信息正确）</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="并发查询桶列表信息">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、多线程并发查询桶列表信息
+2、检查操作结果
+</actions>
+				<expectedresults>1、所有查询都成功，获取桶列表信息正确</expectedresults>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="获取桶列表信息过程中db端节点异常">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、并发多线程获取桶列表信息（存在大量桶，如100个桶）
+2、操作过程中db端节点异常
+3、检查查询结果
+</actions>
+				<expectedresults>1、db端故障时查询桶列表失败，返回对应错误信息
+2、故障恢复后，再次查询桶列表信息成功，查看返回桶信息正确</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="删除空桶">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3，该用户下存在多个桶
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>3</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、指定一个桶执行删除桶操作
+2、检查删除结果</actions>
+				<expectedresults>1、删除桶操作成功
+2、查询桶列表中删除桶已不存在
+3、db端查询桶元数据表中不存在删除桶的信息</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="删除不存在的桶">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3，该用户下存在多个桶
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、指定一个桶执行删除桶操作，其中指定桶不存在
+2、检查删除结果</actions>
+				<expectedresults>1、删除桶操作失败，返回对应错误信息
+</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="桶中存在对象，执行删除操作">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3，该用户下存在多个桶
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、指定一个桶，该桶中存在对象数据，执行删除桶操作
+2、检查删除结果</actions>
+				<expectedresults>1、删除桶操作失败，返回对应错误信息
+2、查询桶列表中该桶还存在
+</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="删除其它用户的桶">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，用户B，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、用户A上创建桶A
+2、用户B执行删除桶A操作
+3、检查删除结果</actions>
+				<expectedresults>1、删除桶操作失败，返回对应错误信息
+2、查询用户A桶列表中该桶还存在
+</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="并发删除相同桶信息">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、多线程并发删除相同桶
+2、检查操作结果
+</actions>
+				<expectedresults>1、只有一个线程删除桶成功，其它线程返回失败等相关信息
+2、获取桶列表信息中该桶已不存在</expectedresults>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="删除桶列过程中db端节点异常">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、并发多线程执行删除桶（存在大量桶，如100个桶，不同线程删除不同桶）
+2、操作过程中db端节点异常
+3、检查查询结果
+</actions>
+				<expectedresults>1、db端故障时删除桶失败，返回对应错误信息
+2、故障恢复后，再次删除桶</expectedresults>
+				<execution_type>2</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="并发创建和删除相同桶">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、多线程并发如下操作：
+a、线程A创建桶A
+b、线程B删除桶A
+2、检查操作结果
+3、获取桶列表信息，检查创建桶记录信息</actions>
+				<expectedresults>存在两种情况：
+a、创建桶成功，删除桶操作已成功，获取桶列表中不存在该桶信息
+b、创建桶成功，删除桶失败，获取桶列表信息中存在创建成功的桶信息</expectedresults>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="并发获取和删除桶">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、sequoiaS3与sequoiadb连接正常
+3、存在用户A，连接sequoiaS3
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、多线程并发如下操作：
+a、线程A删除桶
+b、线程B获取桶列表信息
+2、检查操作结果
+</actions>
+				<expectedresults>删除桶和获取桶信息都成功，获取桶列表操作存在两种结果：
+a、获取桶列表中不存在删除桶信息
+b、获取桶列表中存在删除的桶信息，删除成功后，再次获取桶列表中不存在删除的桶信息</expectedresults>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="多个S3并发创建/删除/获取桶信息">
+		<preconditions>
+1、sequoiadb集群运行正常
+2、存在多个sequoiaS3连接同一个sequoiadb
+3、存在用户A
+</preconditions>
+		<execution_type>2</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、多线程并发如下操作：
+a、sequoiaS3_1使用用户A创建桶A
+b、sequoiaS3_2使用用户A创建桶B
+c、sequoiaS3_3使用用户A创建桶C
+d、sequoiaS3_1使用用户B创建桶B1
+e、sequoiaS3_2使用用户B创建桶B2
+f、sequoiaS3_2使用用户B删除桶B3
+g、sequoiaS3_3使用用户B获取桶列表信息
+2、检查操作结果
+</actions>
+				<expectedresults>1、创建/删除/获取桶列表操作都成功
+2、登录每个S3上获取桶列表信息中存在创建成功的桶信息；执行删除桶操作中，获取对应用户中桶信息已不存在；对应用户获取桶列表信息正确</expectedresults>
+			</step>
+		</steps>
+	</testcase>
+</testcases>
