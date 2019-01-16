@@ -3653,6 +3653,38 @@
                      ]
                   },
                   {
+                     "id": 1509430531,
+                     "dir": "remove_host",
+                     "cn": "删除主机",
+                     "en": "Remove host",
+                     "contents": [
+                        {
+                           "id": 1483944505,
+                           "file": "uninstall_host",
+                           "cn": "卸载主机",
+                           "en": "Uninstall host"
+                        },
+                        {
+                           "id": 1509430532,
+                           "file": "unbind_host",
+                           "cn": "解绑主机",
+                           "en": "Unbind host"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1483944503,
+                     "file": "update_host_info",
+                     "cn": "更新主机信息",
+                     "en": "Update host information"
+                  },
+                  {
+                     "id": 1509430539,
+                     "file": "deploy_package",
+                     "cn": "部署包",
+                     "en": "Deploy package"
+                  }
+                  {
                      "id": 1546587187,
                      "dir": "add_sdb_module",
                      "cn": "添加SequoiaDB服务",
@@ -3705,26 +3737,6 @@
                      ]
                   },
                   {
-                     "id": 1509430531,
-                     "dir": "remove_host",
-                     "cn": "删除主机",
-                     "en": "Remove host",
-                     "contents": [
-                        {
-                           "id": 1483944505,
-                           "file": "uninstall_host",
-                           "cn": "卸载主机",
-                           "en": "Uninstall host"
-                        },
-                        {
-                           "id": 1509430532,
-                           "file": "unbind_host",
-                           "cn": "解绑主机",
-                           "en": "Unbind host"
-                        }
-                     ]
-                  },
-                  {
                      "id": 1509430533,
                      "dir": "remove_module",
                      "cn": "删除服务",
@@ -3741,26 +3753,6 @@
                            "file": "unbind_module",
                            "cn": "解绑服务",
                            "en": "Unbind service"
-                        }
-                     ]
-                  },
-                  {
-                     "id": 1509430535,
-                     "dir": "operation_host",
-                     "cn": "主机操作",
-                     "en": "Operation host",
-                     "contents": [
-                        {
-                           "id": 1483944503,
-                           "file": "update_host_info",
-                           "cn": "更新主机信息",
-                           "en": "Update host information"
-                        },
-                        {
-                           "id": 1509430539,
-                           "file": "deploy_package",
-                           "cn": "部署包",
-                           "en": "Deploy package"
                         }
                      ]
                   },

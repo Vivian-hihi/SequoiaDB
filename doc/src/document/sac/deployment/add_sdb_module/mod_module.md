@@ -11,13 +11,20 @@
 
    ![修改服务](sac/deployment/add_sdb_module/modify_module_1.jpg)
 
-2. 一般自动生成的配置不需要修改就能直接下一步安装。
+   > **Note:**  
+   > 一般自动生成的配置不需要修改，这里演示设置全部节点开启 **事务**。
 
-   ![修改服务](sac/deployment/add_sdb_module/modify_module_3.jpg)
+2. 点击 **全选**
 
-3. 点击底部的 **下一步** 按钮，进入安装服务页面。
+   ![修改服务](sac/deployment/add_sdb_module/modify_module_2.jpg)
 
-4. 开始安装服务，[点击查看](sac/deployment/add_sdb_module/install_module.md)。
+3. 点击 **批量修改节点**，把 **transactionon** 改为 **true**，点击 **确定**。
+
+   ![修改服务](sac/deployment/add_sdb_module/modify_module_3.jpg)   
+
+4. 点击底部的 **下一步** 按钮，进入安装服务页面。
+
+5. 开始安装服务，[点击查看](sac/deployment/add_sdb_module/install_module.md)。
 
 > **Note:**  
 > 1. 如果要开启事务，必须所有节点都开启。  
@@ -26,7 +33,7 @@
 
 ####导入导出配置####
 
-**v2.8版本**新增SequoiaDB集群模式下导入导出配置，支持JSON和XML格式。
+**v2.8版本** 新增SequoiaDB集群模式下导入导出配置，支持JSON和XML格式。
 
 点击 **编辑配置** 按钮，出现编辑配置的窗口。
 

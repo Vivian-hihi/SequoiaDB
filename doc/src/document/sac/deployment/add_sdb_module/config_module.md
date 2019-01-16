@@ -7,14 +7,16 @@
 | [修改服务](sac/deployment/add_sdb_module/mod_module.md)     | 修改服务的配置参数。 |
 | [安装服务](sac/deployment/add_sdb_module/install_module.md) | 安装服务的服务。 |
 
-1. 在部署首页点击 **添加服务**，选择 **创建服务**，服务类型选择SequoiaDB数据库，点击确定开始添加服务。
+1. 在 **部署** 页面点击 **添加服务**，选择 **创建服务**，服务类型选择SequoiaDB数据库，点击确定开始添加服务。  
+   也可以在 **一键部署的安装主机** 之后进入该页面。
+
    ![配置服务](sac/deployment/add_sdb_module/add_module.jpg)
 
 2. 配置服务，根据实际需求配置。
 
    ![配置服务](sac/deployment/add_sdb_module/config_module_1.jpg)
 
-3. 点击 **选择安装服务的主机**，可以指定主机安装服务，默认全选。
+3. 点击 **选择安装服务的主机**，可以指定主机安装服务，默认已经全选。
 
    ![配置服务](sac/deployment/add_sdb_module/config_module_2.jpg)
 
