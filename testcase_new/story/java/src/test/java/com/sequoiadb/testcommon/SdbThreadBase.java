@@ -94,8 +94,10 @@ public abstract class SdbThreadBase implements Runnable {
      *       methodName: 方法名(query ...)
      *
      * Returns:
-     *       如果当前线程执行CL.update(cl.getClass().getName(), "update")阻塞，则返回true
-     *       如果当前线程执行CL.query(cl.getClass().getName(), "query")阻塞，则返回true
+     *       如果当前线程执行CL.update()阻塞
+     *         matchBlockingMethod(cl.getClass().getName(), "update")则返回true
+     *       如果当前线程执行CL.query()阻塞，则返回true
+     *         matchBlockingMethod(cl.getClass().getName(), "query")则返回true
      *       否则返回false 
      *--------------------------------------------------------------------------
      */
