@@ -10,6 +10,7 @@ import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.config.SequoiadbConfig;
 import com.sequoias3.core.Bucket;
 import com.sequoias3.dao.BucketDao;
+import com.sequoias3.dao.ConnectionDao;
 import com.sequoias3.dao.DaoCollectionDefine;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
@@ -36,7 +37,6 @@ public class SequoiadbBucketDao implements BucketDao {
 
     @Override
     public void insertBucket(Bucket bucket) throws S3ServerException {
-
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -61,7 +61,7 @@ public class SequoiadbBucketDao implements BucketDao {
             }
         }
         catch (Exception e) {
-            logger.error("insertBucket failed. errorMessage = " + e.getMessage(), e);
+            logger.error("insertBucket failed. errorMessage = " + e.getMessage());
             throw e;
         }finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -142,6 +142,46 @@ public class SequoiadbBucketDao implements BucketDao {
             throw e;
         } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
+    @Override
+    public List<Bucket> getBucketListByRegion(ConnectionDao connection, String regionName) throws S3ServerException {
+        Sequoiadb sdb = null;
+        DBCursor cursor = null;
+        ArrayList<Bucket> bucketList = new ArrayList<Bucket>();
+        try {
+            if (connection != null){
+                sdb = ((SdbConnectionDao)connection).getConnection();
+            }else {
+                sdb = sdbDatasourceWrapper.getSequoiadb();
+            }
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            DBCollection cl = cs.getCollection(DaoCollectionDefine.BUCKET_LIST_COLLECTION);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(Bucket.BUCKET_REGION, regionName);
+
+            BSONObject orderBy = new BasicBSONObject();
+            orderBy.put(Bucket.BUCKET_NAME, 1);
+
+            cursor = cl.query(matcher, null,orderBy,null);
+            while (cursor.hasNext()){
+                BSONObject record = cursor.getNext();
+                Bucket bucket = convertBsonToBucket(record);
+                bucketList.add(bucket);
+            }
+            return bucketList;
+        }catch (Exception e) {
+            logger.error("getBucketListByRegion failed. errorMessage = " + e.getMessage(), e);
+            throw e;
+        } finally {
+            if (null == connection){
+                sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            }
+            if (cursor != null){
+                cursor.close();
+            }
         }
     }
 

@@ -7,15 +7,17 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoias3.common.DBParamDefine;
+import com.sequoias3.common.DataShardingType;
 import com.sequoias3.config.SequoiadbConfig;
 import com.sequoias3.core.DataAttr;
-import com.sequoias3.dao.ConnectionDao;
-import com.sequoias3.dao.DaoCollectionDefine;
-import com.sequoias3.dao.DataDao;
-import com.sequoias3.dao.DataLob;
+import com.sequoias3.core.Region;
+import com.sequoias3.dao.*;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
+import com.sequoias3.utils.ShardingTypeUtils;
 import org.apache.commons.codec.binary.Hex;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,13 +41,16 @@ public class SequoiadbDataDao implements DataDao {
     @Autowired
     SequoiadbConfig sdbConfig;
 
+    @Autowired
+    SequoiadbRegionSpaceDao sequoiadbRegionSpaceDao;
+
     @Override
-    public DataAttr insertObjectData(String csName, String clName, InputStream data)
+    public DataAttr insertObjectData(String csName, String clName, InputStream data, Region region)
             throws S3ServerException {
         Sequoiadb sdb = null;
         try {
             sdb               = sdbDatasourceWrapper.getSequoiadb();
-            DBLob dbLob       = createLobWithCsCl(sdb, csName, clName);
+            DBLob dbLob       = createLobWithCsCl(sdb, csName, clName, region);
             MessageDigest MD5 = MessageDigest.getInstance("MD5");
 
             byte[] buffer    = new byte[ONCE_WRITE_BYTES];
@@ -87,18 +92,28 @@ public class SequoiadbDataDao implements DataDao {
         }
     }
 
-    private DBLob createLobWithCsCl(Sequoiadb sdb, String csName, String clName)
+    private DBLob createLobWithCsCl(Sequoiadb sdb, String csName, String clName, Region region)
             throws S3ServerException{
         try {
             return createLob(sdb, csName, clName);
         } catch (BaseException e) {
-            if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode()) {
-                sdbDatasourceWrapper.createCS(sdb, csName, null);
-                sdbDatasourceWrapper.createCL(sdb, csName, clName, null);
-                return createLob(sdb, csName, clName);
-            } else if (e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
+            if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode()
+                || e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
+                if (region != null && region.getDataLocation() != null) {
+                    throw new S3ServerException(S3Error.REGION_LOCATION_NOT_EXIST,
+                            "location not exist. csName="+csName+", clName="+clName);
+                }
+
+                BSONObject option = null;
+                if (region != null && region.getDataDomain() != null){
+                    option = new BasicBSONObject();
+                    option.put("Domain", region.getDataDomain());
+                }
+
                 if (!sdb.isCollectionSpaceExist(csName)) {
-                    sdbDatasourceWrapper.createCS(sdb, csName, null);
+                    if(DBParamDefine.CREATE_OK == sdbDatasourceWrapper.createCS(sdb, csName, option)){
+                        sequoiadbRegionSpaceDao.insertRegionCSList(sdb, csName, region.getName());
+                    }
                 }
                 sdbDatasourceWrapper.createCL(sdb, csName, clName, null);
                 return createLob(sdb, csName, clName);
@@ -216,21 +231,51 @@ public class SequoiadbDataDao implements DataDao {
     }
 
     @Override
-    public String getDataCSName( String region, Date date){
+    public String getDataCSName(Region region, Date date){
         StringBuilder csName = new StringBuilder();
 
         if (null != region){
-            csName.append(region);
-            csName.append(DBParamDefine.CS_DATA);
+            if (region.getDataLocation() != null){
+                csName.append(region.getDataCSLocation());
+            }else {
+                csName.append(DBParamDefine.CS_S3);
+                csName.append(region.getName());
+                csName.append(DBParamDefine.CS_DATA);
+                DataShardingType type = DataShardingType.getShardingType(region.getDataCSShardingType());
+                if (type != null){
+                    csName.append("_");
+                    csName.append(ShardingTypeUtils.getShardingTypeStr(type, date));
+                }
+            }
         }else {
             csName.append(sdbConfig.getDataCsName());
+            csName.append("_");
+            csName.append(ShardingTypeUtils.getShardingTypeStr(DataShardingType.YEAR, date));
         }
 
         return csName.toString();
     }
 
     @Override
-    public String getDataClName(){
-        return DaoCollectionDefine.OBJECT_DATA_LIST;
+    public String getDataClName(Region region, Date date){
+        StringBuilder clName = new StringBuilder();
+
+        if (null != region){
+            if (region.getDataLocation() != null){
+                clName.append(region.getDataCLLocation());
+            }else {
+                clName.append(DaoCollectionDefine.OBJECT_DATA_LIST);
+                DataShardingType type = DataShardingType.getShardingType(region.getDataCLShardingType());
+                if (type != null){
+                    clName.append("_");
+                    clName.append(ShardingTypeUtils.getShardingTypeStr(type, date));
+                }
+            }
+        }else {
+            clName.append(DaoCollectionDefine.OBJECT_DATA_LIST);
+            clName.append("_");
+            clName.append(ShardingTypeUtils.getShardingTypeStr(DataShardingType.QUARTER, date));
+        }
+        return clName.toString();
     }
 }

@@ -12,13 +12,13 @@ public class Range {
     public Range(String range) throws S3ServerException {
         int beginIndex = range.indexOf(RestParamDefine.REST_RANGE_START);
         if (-1 == beginIndex){
-            throw new S3ServerException(S3Error.INVALID_ARGUMENT, "range is invalid. range:"+range);
+            throw new S3ServerException(S3Error.OBJECT_INVALID_RANGE, "range is invalid. range:"+range);
         }
         String substring = range.substring(beginIndex+RestParamDefine.REST_RANGE_START.length(), range.length());
 
         String[] numbers = substring.split(RestParamDefine.REST_HYPHEN);
         if (numbers.length < 2){
-            throw new S3ServerException(S3Error.INVALID_ARGUMENT, "range  is invalid"+range);
+            throw new S3ServerException(S3Error.OBJECT_INVALID_RANGE, "range  is invalid"+range);
         }
         try {
             if (numbers[0].length() > 0){
@@ -32,13 +32,13 @@ public class Range {
                 this.end = -1;
             }
             if (-1 == this.start && -1 == this.end){
-                throw new S3ServerException(S3Error.INVALID_ARGUMENT, "range is invalid"+range);
+                throw new S3ServerException(S3Error.OBJECT_INVALID_RANGE, "range is invalid"+range);
             }
             if (this.start > this.end){
-                throw new S3ServerException(S3Error.INVALID_ARGUMENT, "range is invalid"+range);
+                throw new S3ServerException(S3Error.OBJECT_INVALID_RANGE, "range is invalid"+range);
             }
         }catch (NumberFormatException e){
-            throw new S3ServerException(S3Error.INVALID_ARGUMENT, "range is invalid"+range);
+            throw new S3ServerException(S3Error.OBJECT_INVALID_RANGE, "range is invalid"+range);
         }catch (S3ServerException e){
             throw e;
         }

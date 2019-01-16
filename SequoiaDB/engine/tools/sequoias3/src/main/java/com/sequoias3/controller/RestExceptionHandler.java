@@ -38,14 +38,26 @@ public class RestExceptionHandler {
             case NO_CREDENTIALS:
             case BUCKET_INVALID_BUCKETNAME:
             case BUCKET_TOO_MANY_BUCKETS:
+            case BUCKET_INVALID_VERSIONING_STATUS:
+            case BUCKET_INVALID_LOCATION:
             case OBJECT_KEY_TOO_LONG:
             case OBJECT_METADATA_TOO_LARGE:
             case OBJECT_INVALID_TOKEN:
             case OBJECT_BAD_DIGEST:
             case OBJECT_INVALID_KEY:
-            case BUCKET_INVALID_VERSIONING_STATUS:
             case OBJECT_INVALID_DIGEST:
             case OBJECT_INVALID_VERSION:
+            case OBJECT_INVALID_RANGE:
+            case REGION_INVALID_SHARDINGTYPE:
+//            case REGION_INVALID_LOCATION:
+            case REGION_LOCATION_NULL:
+            case REGION_LOCATION_SAME:
+            case REGION_LOCATION_SPLIT:
+            case REGION_LOCATION_EXIST:
+            case REGION_LOCATION_INDEX:
+            case REGION_LOCATION_INDEX_HIS:
+            case REGION_INVALID_DOMAIN:
+            case REGION_INVALID_REGIONNAME:
                 status = HttpStatus.BAD_REQUEST;
                 break;
             case INVALID_ACCESSKEYID:
@@ -59,6 +71,7 @@ public class RestExceptionHandler {
             case BUCKET_NOT_EXIST:
             case OBJECT_NO_SUCH_KEY:
             case OBJECT_NO_SUCH_VERSION:
+            case REGION_NO_SUCH_REGION:
                 status = HttpStatus.NOT_FOUND;
                 break;
             case METHOD_NOT_ALLOWED:
@@ -69,13 +82,17 @@ public class RestExceptionHandler {
             case BUCKET_ALREADY_OWNED_BY_YOU:
             case BUCKET_NOT_EMPTY:
             case OBJECT_IS_IN_USE:
+            case REGION_NOT_EMPTY:
+            case REGION_CONFLICT_TYPE:
+            case REGION_CONFLICT_DOMAIN:
+            case REGION_CONFLICT_LOCATION:
                 status = HttpStatus.CONFLICT;
                 break;
             case OBJECT_IF_MATCH_FAILED:
             case OBJECT_IF_UNMODIFIED_SINCE_FAILED:
                 status = HttpStatus.PRECONDITION_FAILED;
                 break;
-            case OBJECT_RANGE_INVALID:
+            case OBJECT_RANGE_NOT_SATISFIABLE:
                 status = HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE;
                 break;
             default:

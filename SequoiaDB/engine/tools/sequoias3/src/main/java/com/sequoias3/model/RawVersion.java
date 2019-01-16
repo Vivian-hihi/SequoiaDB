@@ -1,5 +1,6 @@
 package com.sequoias3.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RawVersion {
@@ -14,6 +15,7 @@ public class RawVersion {
     @JsonProperty("Owner")
     private Owner owner;
 
+    @JsonIgnore
     private Boolean noVersionFlag;
 
     public void setKey(String key) {
@@ -32,12 +34,12 @@ public class RawVersion {
         return lastModified;
     }
 
-    public void setLatest(Boolean latest) {
-        isLatest = latest;
+    public void setIsLatest(Boolean latest) {
+        this.isLatest = latest;
     }
 
-    public Boolean getLatest() {
-        return isLatest;
+    public Boolean getIsLatest() {
+        return this.isLatest;
     }
 
     public void setVersionId(String versionId) {

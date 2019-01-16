@@ -6,6 +6,7 @@ public class RestParamDefine {
     public static final String VERSIONS                = "versions";
     public static final String VERSION_ID              = "versionId";
     public static final String VERSIONING              = "versioning";
+    public static final String LOCATION                = "location";
 
     public static final int    MAX_KEYS_DEFAULT        = 1000;
 
@@ -103,13 +104,12 @@ public class RestParamDefine {
     public static final int KEY_LENGTH              = 900;
     public static final int X_AMZ_META_LENGTH       = 2*1024;
 
-    public static final String LOCATION             = "location";
-
     public static final String REST_CREDENTIAL      = "Credential=";
 
     public static final String REST_DELIMITER       = "/";
     public static final String REST_S3              = "/s3";
     public static final String REST_USERS           = "/users";
+    public static final String REST_REGION          = "/region";
 
     public static final String REST_RANGE_START     = "bytes=";
     public static final String REST_HYPHEN          = "-";

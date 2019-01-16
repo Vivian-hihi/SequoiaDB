@@ -62,6 +62,9 @@ public class ObjectServiceImpl implements ObjectService {
     @Autowired
     Transaction transaction;
 
+    @Autowired
+    RegionDao regionDao;
+
     @Override
     public PutDeleteResult putObject(int ownerID, String bucketName, String objectName,
                                      String contentMD5, Map<String, String> headers,
@@ -82,16 +85,19 @@ public class ObjectServiceImpl implements ObjectService {
         //get and check bucket
         Bucket bucket = bucketService.getBucket(ownerID, bucketName);
 
+        Region region = null;
+        if (bucket.getRegion() != null) {
+            region = regionDao.queryRegion(bucket.getRegion());
+        }
+
         //get cs and cl
         Date createDate      = new Date();
-        String dataCsName    = dataDao.getDataCSName(bucket.getRegion(), createDate);
-        String dataClName    = dataDao.getDataClName();
-        String metaCsName    = metaDao.getMetaCSName(bucket.getRegion());
-        String metaClName    = metaDao.getMetaCurCLName();
+        String dataCsName    = dataDao.getDataCSName(region, createDate);
+        String dataClName    = dataDao.getDataClName(region, createDate);
 
         DataAttr insertResult;
         try {//insert lob
-            insertResult = dataDao.insertObjectData(dataCsName, dataClName, inputStream);
+            insertResult = dataDao.insertObjectData(dataCsName, dataClName, inputStream, region);
         }catch (S3ServerException e){
             throw e;
         }catch (Exception e){
@@ -117,8 +123,8 @@ public class ObjectServiceImpl implements ObjectService {
             objectMeta.setSize(insertResult.getSize());
             objectMeta.setLobId(insertResult.getLobId());
 
-            writeObjectMeta(metaCsName, metaClName, objectMeta,
-                    objectName, bucket.getBucketId(), versioningStatusType);
+            writeObjectMeta(objectMeta, objectName, bucket.getBucketId(),
+                    versioningStatusType, region);
 
             //build response
             PutDeleteResult response = new PutDeleteResult();
@@ -147,15 +153,21 @@ public class ObjectServiceImpl implements ObjectService {
 
     @Override
     public GetResult getObject(int ownerID, String bucketName, String objectName,
-                                Long versionId, Boolean isNoVersion, Map headers,
-                                Range range)
+                               Long versionId, Boolean isNoVersion, Map headers,
+                               Range range)
             throws S3ServerException {
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
 
-            String metaCsName    = metaDao.getMetaCSName(bucket.getRegion());
-            String metaClName    = metaDao.getMetaCurCLName();
-            String metaHisClName = metaDao.getMetaHistoryCLName();
+            Region region = null;
+            if (bucket.getRegion() != null) {
+                region = regionDao.queryRegion(bucket.getRegion());
+            }
+
+            String metaCsName    = metaDao.getMetaCurCSName(region);
+            String metaClName    = metaDao.getMetaCurCLName(region);
+            String metaHisCsName = metaDao.getMetaHisCSName(region);
+            String metaHisClName = metaDao.getMetaHisCLName(region);
 
             int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
             while (tryTime > 0) {
@@ -177,7 +189,7 @@ public class ObjectServiceImpl implements ObjectService {
                         if (versionId == objectMeta.getVersionId() && !objectMeta.getNoVersionFlag()){
                             versionIdMeta = objectMeta;
                         }else {
-                            ObjectMeta objectMetaHis = metaDao.queryMetaByObjectName(metaCsName,
+                            ObjectMeta objectMetaHis = metaDao.queryMetaByObjectName(metaHisCsName,
                                     metaHisClName, bucket.getBucketId(), objectName, versionId, false);
                             if (null == objectMetaHis) {
                                 throw new S3ServerException(S3Error.OBJECT_NO_SUCH_VERSION,
@@ -189,7 +201,7 @@ public class ObjectServiceImpl implements ObjectService {
                         if (objectMeta.getNoVersionFlag()) {
                             versionIdMeta = objectMeta;
                         } else {
-                            ObjectMeta objectMetaHis = metaDao.queryMetaByObjectName(metaCsName,
+                            ObjectMeta objectMetaHis = metaDao.queryMetaByObjectName(metaHisCsName,
                                     metaHisClName, bucket.getBucketId(), objectName, null, true);
                             if (null == objectMetaHis) {
                                 throw new S3ServerException(S3Error.OBJECT_NO_SUCH_VERSION,
@@ -260,8 +272,10 @@ public class ObjectServiceImpl implements ObjectService {
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
 
-            String metaCsName    = metaDao.getMetaCSName(bucket.getRegion());
-            String metaClName    = metaDao.getMetaCurCLName();
+            Region region = null;
+            if (bucket.getRegion() != null) {
+                region = regionDao.queryRegion(bucket.getRegion());
+            }
 
             VersioningStatusType versioningStatusType = VersioningStatusType.getVersioningStatus(bucket.getVersioningStatus());
             Boolean noVersionFlag = generateNoVersionFlag(versioningStatusType);
@@ -269,6 +283,8 @@ public class ObjectServiceImpl implements ObjectService {
             PutDeleteResult response = null;
             switch (versioningStatusType) {
                 case NONE:
+                    String metaCsName    = metaDao.getMetaCurCSName(region);
+                    String metaClName    = metaDao.getMetaCurCLName(region);
                     ObjectMeta objectMeta = metaDao.queryAndRemoveMeta(metaCsName, metaClName,
                             bucket.getBucketId(), objectName);
                     deleteObjectLob(objectMeta);
@@ -279,8 +295,8 @@ public class ObjectServiceImpl implements ObjectService {
                             bucket.getBucketId(), null, null,
                             null, null, true,
                             noVersionFlag);
-                    writeObjectMeta(metaCsName, metaClName, deleteMarker,
-                                    objectName, bucket.getBucketId(), versioningStatusType);
+                    writeObjectMeta(deleteMarker, objectName,
+                            bucket.getBucketId(), versioningStatusType, region);
 
                     response = new PutDeleteResult();
                     if (deleteMarker.getNoVersionFlag()){
@@ -314,9 +330,15 @@ public class ObjectServiceImpl implements ObjectService {
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
 
-            String metaCsName    = metaDao.getMetaCSName(bucket.getRegion());
-            String metaClName    = metaDao.getMetaCurCLName();
-            String metaHisClName = metaDao.getMetaHistoryCLName();
+            Region region = null;
+            if (bucket.getRegion() != null) {
+                region = regionDao.queryRegion(bucket.getRegion());
+            }
+
+            String metaCsName    = metaDao.getMetaCurCSName(region);
+            String metaClName    = metaDao.getMetaCurCLName(region);
+            String metaHisCsName = metaDao.getMetaHisCSName(region);
+            String metaHisClName = metaDao.getMetaHisCLName(region);
 
             VersioningStatusType versioningStatusType = VersioningStatusType.getVersioningStatus(bucket.getVersioningStatus());
             ObjectMeta deleteObject = null;
@@ -343,12 +365,12 @@ public class ObjectServiceImpl implements ObjectService {
                         }
                         if (objectMeta != null){
                             deleteObject = objectMeta;
-                            ObjectMeta objectMeta1 = metaDao.queryForUpdate(connection, metaCsName,
+                            ObjectMeta objectMeta1 = metaDao.queryForUpdate(connection, metaHisCsName,
                                     metaHisClName, bucket.getBucketId(), objectName, null, null);
                             if (objectMeta1 != null){
                                 metaDao.updateMeta(connection, metaCsName, metaClName, bucket.getBucketId(),
                                         objectName, versionId, objectMeta1);
-                                metaDao.removeMeta(connection, metaCsName, metaHisClName, bucket.getBucketId(),
+                                metaDao.removeMeta(connection, metaHisCsName, metaHisClName, bucket.getBucketId(),
                                         objectName, objectMeta1.getVersionId(), null);
                             }else {
                                 metaDao.removeMeta(connection, metaCsName, metaClName, bucket.getBucketId(),
@@ -357,16 +379,16 @@ public class ObjectServiceImpl implements ObjectService {
                         }else{
                             ObjectMeta objectMeta2 = null;
                             if (isNoVersion != null){
-                                objectMeta2 = metaDao.queryForUpdate(connection, metaCsName,
+                                objectMeta2 = metaDao.queryForUpdate(connection, metaHisCsName,
                                         metaHisClName, bucket.getBucketId(), objectName, null, true);
                             }else if (versionId != null){
-                                objectMeta2 = metaDao.queryForUpdate(connection, metaCsName,
+                                objectMeta2 = metaDao.queryForUpdate(connection, metaHisCsName,
                                         metaHisClName, bucket.getBucketId(), objectName, versionId, false);
                             }
 
                             if (objectMeta2 != null){
                                 deleteObject = objectMeta2;
-                                metaDao.removeMeta(connection, metaCsName, metaHisClName, bucket.getBucketId(),
+                                metaDao.removeMeta(connection, metaHisCsName, metaHisClName, bucket.getBucketId(),
                                         objectName, versionId, null);
                             }
                         }
@@ -401,11 +423,15 @@ public class ObjectServiceImpl implements ObjectService {
         QueryDbCursor dbCursor = null;
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+            Region region = null;
+            if (bucket.getRegion() != null) {
+                region = regionDao.queryRegion(bucket.getRegion());
+            }
             ListObjectsResult listObjectsResult = new ListObjectsResult(bucketName, maxKeys,
                     encodingType, prefix, startAfter, delimiter, continueToken);
 
-            String metaCsName = metaDao.getMetaCSName(bucket.getRegion());
-            String metaClName = metaDao.getMetaCurCLName();
+            String metaCsName = metaDao.getMetaCurCSName(region);
+            String metaClName = metaDao.getMetaCurCLName(region);
 
             //get cursor
             if (null != continueToken) {
@@ -550,23 +576,28 @@ public class ObjectServiceImpl implements ObjectService {
         QueryDbCursor queryDbCursorHis = null;
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+            Region region = null;
+            if (bucket.getRegion() != null) {
+                region = regionDao.queryRegion(bucket.getRegion());
+            }
             ListVersionsResult listVersionsResult = new ListVersionsResult(bucketName, maxKeys,
                     encodingType, prefix, delimiter, keyMarker, versionIdMarker);
 
-            String metaCsName    = metaDao.getMetaCSName(bucket.getRegion());
-            String metaClName    = metaDao.getMetaCurCLName();
-            String metaHisClName = metaDao.getMetaHistoryCLName();
+            String metaCsName    = metaDao.getMetaCurCSName(region);
+            String metaClName    = metaDao.getMetaCurCLName(region);
+            String metaHisCsName = metaDao.getMetaHisCSName(region);
+            String metaHisClName = metaDao.getMetaHisCLName(region);
             //get sdb and cursor
             Boolean isSpecInnerVersionId = false;
             Long specifiedVersionId = null;
             if (versionIdMarker != null && versionIdMarker.length() > 0){
-                specifiedVersionId = isExistKeyVersion(metaCsName, metaClName, metaHisClName,
+                specifiedVersionId = isExistKeyVersion(metaCsName, metaClName, metaHisCsName, metaHisClName,
                         keyMarker, versionIdMarker,bucket);
                 if (specifiedVersionId != null){
                     isSpecInnerVersionId = true;
                 }
             }
-            queryDbCursorCur = metaDao.queryMetaByBucket(metaCsName, metaClName,
+            queryDbCursorCur = metaDao.queryMetaByBucket(metaHisCsName, metaClName,
                     bucket.getBucketId(), prefix, keyMarker, isSpecInnerVersionId, true);
             if (queryDbCursorCur == null){
                 return listVersionsResult;
@@ -623,12 +654,17 @@ public class ObjectServiceImpl implements ObjectService {
     @Override
     public long getObjectNumberByBucketId(Bucket bucket) throws S3ServerException{
         try {
-            String metaCsName = metaDao.getMetaCSName(bucket.getRegion());
-            String metaClName = metaDao.getMetaCurCLName();
-            String metaHisClName = metaDao.getMetaHistoryCLName();
+            Region region = null;
+            if (bucket.getRegion() != null) {
+                region = regionDao.queryRegion(bucket.getRegion());
+            }
+            String metaCsName    = metaDao.getMetaCurCSName(region);
+            String metaClName    = metaDao.getMetaCurCLName(region);
+            String metaHisCsName = metaDao.getMetaHisCSName(region);
+            String metaHisClName = metaDao.getMetaHisCLName(region);
 
             long curCount = metaDao.getObjectNumber(metaCsName, metaClName, bucket.getBucketId());
-            long hisCount = metaDao.getObjectNumber(metaCsName, metaHisClName, bucket.getBucketId());
+            long hisCount = metaDao.getObjectNumber(metaHisCsName, metaHisClName, bucket.getBucketId());
             return curCount+hisCount;
         }catch (S3ServerException e){
             throw e;
@@ -640,13 +676,18 @@ public class ObjectServiceImpl implements ObjectService {
     @Override
     public void deleteObjectByBucket(Bucket bucket) throws S3ServerException {
         try {
-            String metaCsName    = metaDao.getMetaCSName(bucket.getRegion());
-            String metaCurClName = metaDao.getMetaCurCLName();
-            String metaHisClName = metaDao.getMetaHistoryCLName();
+            Region region = null;
+            if (bucket.getRegion() != null) {
+                region = regionDao.queryRegion(bucket.getRegion());
+            }
+            String metaCsName    = metaDao.getMetaCurCSName(region);
+            String metaClName    = metaDao.getMetaCurCLName(region);
+            String metaHisCsName = metaDao.getMetaHisCSName(region);
+            String metaHisClName = metaDao.getMetaHisCLName(region);
             long bucketId = bucket.getBucketId();
 
-            deleteObjectByClBucket(metaCsName, metaHisClName, bucketId);
-            deleteObjectByClBucket(metaCsName, metaCurClName, bucketId);
+            deleteObjectByClBucket(metaHisCsName, metaHisClName, bucketId);
+            deleteObjectByClBucket(metaCsName, metaClName, bucketId);
         }catch (S3ServerException e){
             throw e;
         }catch (Exception e){
@@ -884,11 +925,11 @@ public class ObjectServiceImpl implements ObjectService {
             deleteMarker.setKey(version.getKey());
             deleteMarker.setLastModified(version.getLastModified());
             deleteMarker.setVersionId(version.getVersionId());
-            deleteMarker.setLatest(isLatest);
+            deleteMarker.setIsLatest(isLatest);
             deleteMarker.setOwner(owner);
             result.getDeleteMarkerList().add(deleteMarker);
         }else {
-            version.setLatest(isLatest);
+            version.setIsLatest(isLatest);
             version.setOwner(owner);
             result.getVersionList().add(version);
         }
@@ -1243,11 +1284,13 @@ public class ObjectServiceImpl implements ObjectService {
         }
     }
 
-    private void writeObjectMeta(String metaCsName, String metaClName,
-                                 ObjectMeta objectMeta, String objectName, long bucketId,
-                                 VersioningStatusType versioningStatusType)
+    private void writeObjectMeta(ObjectMeta objectMeta, String objectName, long bucketId,
+                                 VersioningStatusType versioningStatusType, Region region)
             throws S3ServerException{
-        String metaHisClName = metaDao.getMetaHistoryCLName();
+        String metaCsName    = metaDao.getMetaCurCSName(region);
+        String metaClName    = metaDao.getMetaCurCLName(region);
+        String metaHisCSName = metaDao.getMetaHisCSName(region);
+        String metaHisClName = metaDao.getMetaHisCLName(region);
 
         int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
         while (tryTime > 0) {
@@ -1260,7 +1303,7 @@ public class ObjectServiceImpl implements ObjectService {
                 if (null == metaResult) {
                     objectMeta.setVersionId(0);
                     metaDao.insertMeta(connection, metaCsName, metaClName, objectMeta,
-                            0, false);
+                            false, region);
                     transaction.commit(connection);
                 } else {
                     objectMeta.setVersionId(metaResult.getVersionId() + 1);
@@ -1272,16 +1315,16 @@ public class ObjectServiceImpl implements ObjectService {
                         transaction.commit(connection);
                         deleteObjectLob(metaResult);
                     } else {
-                        metaDao.insertMeta(connection, metaCsName, metaHisClName,
-                                metaResult, 1, true);
+                        metaDao.insertMeta(connection, metaHisCSName, metaHisClName,
+                                metaResult, true, region);
                         metaDao.updateMeta(connection, metaCsName, metaClName, bucketId,
                                 objectName, null, objectMeta);
                         ObjectMeta nullMeta = null;
                         if (VersioningStatusType.SUSPENDED == versioningStatusType) {
-                            nullMeta = metaDao.queryForUpdate(connection, metaCsName, metaHisClName,
+                            nullMeta = metaDao.queryForUpdate(connection, metaHisCSName, metaHisClName,
                                     bucketId, objectName, null, true);
                             if (null != nullMeta) {
-                                metaDao.removeMeta(connection, metaCsName, metaHisClName, bucketId,
+                                metaDao.removeMeta(connection, metaHisCSName, metaHisClName, bucketId,
                                         objectName, null, true);
                             }
                         }
@@ -1308,8 +1351,8 @@ public class ObjectServiceImpl implements ObjectService {
                 "bucket+key duplicate too times. bucketId:"+bucketId+", key:"+objectName);
     }
 
-    private Long isExistKeyVersion(String metaCsName, String metaClName, String metaHisClName,
-                                            String keyMarker, String versionIdMarker, Bucket bucket)
+    private Long isExistKeyVersion(String metaCsName, String metaClName,
+                                   String metaHisCsName, String metaHisClName, String keyMarker, String versionIdMarker, Bucket bucket)
             throws S3ServerException{
         try {
             Long versionId = null;
@@ -1318,7 +1361,7 @@ public class ObjectServiceImpl implements ObjectService {
                 if (metaCur != null){
                     versionId = metaCur.getVersionId();
                 }else {
-                    ObjectMeta metaHis = metaDao.queryMetaByObjectName(metaCsName, metaHisClName, bucket.getBucketId(), keyMarker, null, true);
+                    ObjectMeta metaHis = metaDao.queryMetaByObjectName(metaHisCsName, metaHisClName, bucket.getBucketId(), keyMarker, null, true);
                     if (metaHis != null) {
                         versionId = metaHis.getVersionId();
                     }
@@ -1347,7 +1390,7 @@ public class ObjectServiceImpl implements ObjectService {
 
         long contentLength = dataLob.getSize();
         if (range.getStart() >= contentLength){
-            throw new S3ServerException(S3Error.OBJECT_RANGE_INVALID,
+            throw new S3ServerException(S3Error.OBJECT_RANGE_NOT_SATISFIABLE,
                     "start > contentlength. start:" + range.getStart() +
                             ", contentlength:" + contentLength);
         }

@@ -15,6 +15,8 @@ public interface BucketDao {
 
     List<Bucket> getBucketListByOwnerID(int ownerId) throws S3ServerException;
 
+    List<Bucket> getBucketListByRegion(ConnectionDao connection, String regionName) throws S3ServerException;
+
     long getMaxID() throws S3ServerException;
 
     long getBucketNumber(int ownerID) throws S3ServerException;

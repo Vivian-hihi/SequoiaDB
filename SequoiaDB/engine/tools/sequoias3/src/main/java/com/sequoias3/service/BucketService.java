@@ -4,9 +4,9 @@ import com.sequoias3.core.Bucket;
 import com.sequoias3.model.GetServiceResult;
 import com.sequoias3.core.User;
 import com.sequoias3.exception.S3ServerException;
+import com.sequoias3.model.LocationConstraint;
 
 public interface BucketService {
-
     void createBucket(int ownerID, String bucketName, String region) throws S3ServerException;
 
     void deleteBucket(int ownerID, String bucketName) throws S3ServerException;
@@ -16,4 +16,6 @@ public interface BucketService {
     Bucket getBucket(int ownerID, String bucketName) throws S3ServerException;
 
     void deleteBucketForce(Bucket bucket) throws S3ServerException;
+
+    LocationConstraint getBucketLocation(int ownerID, String bucketName) throws S3ServerException;
 }

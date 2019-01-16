@@ -25,20 +25,8 @@ public class SequoiadbConfig {
         return meta.getCsName();
     }
 
-    public String getMetaClName() {
-        return meta.getClName();
-    }
-
     public String getDataCsName() {
         return data.getCsName();
-    }
-
-    public String getCsRate() {
-        return data.getCsRate();
-    }
-
-    public String getClRate() {
-        return data.getClRate();
     }
 
     public String getUrl() {

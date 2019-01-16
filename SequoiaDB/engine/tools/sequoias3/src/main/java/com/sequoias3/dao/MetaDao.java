@@ -1,12 +1,13 @@
 package com.sequoias3.dao;
 
 import com.sequoias3.core.ObjectMeta;
+import com.sequoias3.core.Region;
 import com.sequoias3.exception.S3ServerException;
 import org.bson.BSONObject;
 
 public interface MetaDao {
     void insertMeta(ConnectionDao connectionDao, String metaCsName, String metaClName,
-                    ObjectMeta object, int isIgnoreDup, Boolean isHistory)
+                    ObjectMeta object, Boolean isHistory, Region region)
             throws S3ServerException;
 
     QueryDbCursor queryMetaByBucket(String metaCsName, String metaClName, long bucketId,
@@ -38,11 +39,13 @@ public interface MetaDao {
     long getObjectNumber(String metaCsName, String metaClName, long bucketId)
             throws S3ServerException;
 
-    String getMetaCSName( String region);
+    String getMetaCurCSName( Region region);
 
-    String getMetaCurCLName();
+    String getMetaCurCLName(Region region);
 
-    String getMetaHistoryCLName();
+    String getMetaHisCSName( Region region);
+
+    String getMetaHisCLName(Region region);
 
     void releaseQueryDbCursor(QueryDbCursor queryDbCursor);
 }

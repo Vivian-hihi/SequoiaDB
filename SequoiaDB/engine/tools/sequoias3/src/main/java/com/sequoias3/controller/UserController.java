@@ -33,7 +33,8 @@ public class UserController {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
 
         if (!adminUser.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
-            throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR, "not an admin user.adminUser=" + adminUser.getUserName() + ",role=" + adminUser.getRole());
+            throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR,
+                    "not an admin user. operator = " + adminUser.getUserName() + ",role=" + adminUser.getRole());
         }
 
         logger.info("create user. admin={},user={},role={}", adminUser.getUserName(), username, role);
@@ -48,7 +49,8 @@ public class UserController {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
 
         if (!adminUser.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
-            throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR, "not an admin user.adminUser=" + adminUser.getUserName() + ",role=" + adminUser.getRole());
+            throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR,
+                    "not an admin user. operator = " + adminUser.getUserName() + ",role=" + adminUser.getRole());
         }
 
         logger.info("create AccessKey. admin={},user={}", adminUser.getUserName(), username);
@@ -63,7 +65,8 @@ public class UserController {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
 
         if (!adminUser.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
-            throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR, "not an admin user.adminUser=" + adminUser.getUserName() + ",role=" + adminUser.getRole());
+            throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR,
+                    "not an admin user. operator = " + adminUser.getUserName() + ",role=" + adminUser.getRole());
         }
 
         logger.info("get AccessKey. admin={},user={}", adminUser.getUserName(), username);
@@ -79,7 +82,8 @@ public class UserController {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
 
         if (!adminUser.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
-            throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR, "not an admin user.adminUser=" + adminUser.getUserName() + ",role=" + adminUser.getRole());
+            throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR,
+                    "not an admin user. operator = " + adminUser.getUserName() + ",role=" + adminUser.getRole());
         }
 
         Boolean forceDelete = false;

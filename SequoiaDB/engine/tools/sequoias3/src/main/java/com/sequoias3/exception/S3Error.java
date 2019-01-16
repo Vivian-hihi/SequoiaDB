@@ -1,8 +1,32 @@
 package com.sequoias3.exception;
 
 public enum S3Error {
-
     UNKNOWN_ERROR(-1, "InternalError", "We encountered an internal error. Please try again."),
+
+    //region error
+    REGION_INVALID_REGIONNAME(-300, "InvalidRegionName", "Region name length must between 3 and 20, and cannot contain characters other than 'a-zA-Z0-9' and '-'."),
+    REGION_INVALID_SHARDINGTYPE(-302, "InvalidShardingType", "Invalid shardingtype"),
+    REGION_INVALID_DOMAIN(-303, "InvalidDomain", "Domain not exist."),
+    REGION_CONFLICT_TYPE(-305, "ConflictRegionType", "Conflict region type"),
+    REGION_CONFLICT_DOMAIN(-306, "ConflictDomain", "Conflict domain"),
+    REGION_CONFLICT_LOCATION(-307, "ConflictLocation", "Conflict location"),
+
+    REGION_NO_SUCH_REGION(-311, "NoSuchRegion", "No such region."),
+    REGION_NOT_EMPTY(-312, "RegionNotEmpty", "Region is not empty."),
+    REGION_LOCATION_NOT_EXIST(-313, "LocationNotExist", "Location not exist."),
+
+    REGION_PUT_FAILED(-320, "PutRegionFailed", "Put region failed."),
+    REGION_GET_FAILED(-321, "GetRegionFailed", "Get region config failed."),
+    REGION_DELETE_FAILED(-322, "DeleteRegionFailed", "Delete region failed."),
+    REGION_GET_LIST_FAILED(-323, "GetRegionListFailed", "Get region list failed."),
+    REGION_HEAD_FAILED(-324, "HeadRegionFailed", "Head region config failed."),
+
+    REGION_LOCATION_NULL(-330, "InvalidLocation", "Location cannot be null"),
+    REGION_LOCATION_SAME(-331, "InvalidLocation", "MetaLocation can not same as MetaHisLocation"),
+    REGION_LOCATION_SPLIT(-332, "InvalidLocation", "Location cannot be split to CS and CL."),
+    REGION_LOCATION_EXIST(-333, "InvalidLocation", "Location not found"),
+    REGION_LOCATION_INDEX(-334, "InvalidLocation", "MetaLocation need enforce unique index on Key and BucketId."),
+    REGION_LOCATION_INDEX_HIS(-335, "InvalidLocation", "MetaHisLocation need enforce unique index on Key and BucketId and VersionId"),
 
     // dao error
     DAO_GETCONN_ERROR(-401, "GetDBConnectFail", "Get connection failed."),
@@ -20,6 +44,7 @@ public enum S3Error {
     BUCKET_GET_SERVICE_FAILED(-502, "GetServiceFailed", "Get service failed."),
     BUCKET_VERSIONING_SET_FAILED(-503, "PutBucketVersioningFailed", "Put bucket versioning failed."),
     BUCKET_VERSIONING_GET_FAILED(-504, "GetBucketVersioningFailed", "Get bucket versioning failed."),
+    BUCKET_LOCATION_GET_FAILED(-505, "GetBucketLocationFailed", "Get bucket location failed."),
 
     BUCKET_NOT_EXIST(-510, "NoSuchBucket", "The specified bucket does not exist."),
     BUCKET_INVALID_BUCKETNAME(-511, "InvalidBucketName", "The specified bucket Name is not valid."),
@@ -28,6 +53,7 @@ public enum S3Error {
     BUCKET_NOT_EMPTY(-514, "BucketNotEmpty", "The bucket you tried to delete is not empty."),
     BUCKET_TOO_MANY_BUCKETS(-515, "TooManyBuckets", "You have attempted to create more buckets than allowed."),
     BUCKET_INVALID_VERSIONING_STATUS(-516, "InvalidVersioningStatus", "The versioning status is invalid."),
+    BUCKET_INVALID_LOCATION(-517, "InvalidLocation", "The location is invalid."),
 
     //object
     OBJECT_WRITE_fAILED(-600, "WriteObjectFailed", "Put object failed."),
@@ -45,10 +71,11 @@ public enum S3Error {
     OBJECT_INVALID_ENCODING_TYPE(-616, "InvalidArgument", "Invalid Encoding Method specified in Request"),
     OBJECT_INVALID_TOKEN(-617, "InvalidArgument", "The continuation token provided is incorrect."),
     OBJECT_IS_IN_USE(-618, "ObjectIsInUse", "The object is in use."),
-    OBJECT_RANGE_INVALID(-619, "InvalidRange", "Requested range not satisfiable."),
+    OBJECT_RANGE_NOT_SATISFIABLE(-619, "InvalidRange", "Requested range not satisfiable."),
     OBJECT_INVALID_DIGEST(-620, "InvalidDigest", " The Content-MD5 you specified is not valid."),
     OBJECT_NO_SUCH_VERSION(-621, "NoSuchVersion", "The specified version does not exist."),
     OBJECT_INVALID_VERSION(-622, "InvalidArgument", "Invalid version id specified"),
+    OBJECT_INVALID_RANGE(-623, "InvalidArgument", "Invalid range."),
 
     OBJECT_IF_MODIFIED_SINCE_FAILED(-631, "NotModified", "If-Modified-Since not match"),
     OBJECT_IF_UNMODIFIED_SINCE_FAILED(-632, "PreconditionFailed ", "If-Unmodified-Since not match"),
@@ -57,7 +84,7 @@ public enum S3Error {
     OBJECT_INVALID_TIME(-635, "InvalidArgument", "Time is invalid"),
 
     //authorization
-    INVALID_ADMINISTRATOR(-701, "AccessDenied", "Not admin user."),
+    INVALID_ADMINISTRATOR(-701, "AccessDenied", "Non-admin users cannot do this operator."),
     INVALID_ACCESSKEYID(-702, "InvalidAccessKeyId", "Invalid accessKeyId."),
     SIGNATURE_NOT_MATCH(-703, "SignatureDoesNotMatch", "Signature does not match."),
     ACCESS_DENIED(-704, "AccessDenied", "Access Denied."),

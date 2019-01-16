@@ -8,6 +8,7 @@ import com.sequoiadb.datasource.SequoiadbDatasource;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.base.ConfigOptions;
+import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.config.SequoiadbConfig;
 import com.sequoias3.exception.S3DaoGetConnException;
 import com.sequoias3.exception.S3Error;
@@ -84,42 +85,67 @@ public class SdbDataSourceWrapper {
         }
     }
 
-    public static void createCS(Sequoiadb sdb, String csName, BSONObject options)
+    public static int createCS(Sequoiadb sdb, String csName, BSONObject options)
             throws S3ServerException  {
         try {
             logger.info("creating cs:csName={}", csName);
-            sdb.createCollectionSpace(csName);
+            sdb.createCollectionSpace(csName, options);
+            return DBParamDefine.CREATE_OK;
         }
         catch (BaseException e) {
-            logger.error("creating cs:csName={} failed. error:{}",csName, e.getErrorCode());
+            logger.error("creating cs failed: csName={}, db error:{}",csName, e.getErrorCode());
             if (e.getErrorCode() != SDBError.SDB_DMS_CS_EXIST.getErrorCode()) {
                 throw new S3ServerException(S3Error.DAO_DB_ERROR,
-                        "create cs failed:cs=" + csName, e);
+                        "create cs failed. cs=" + csName, e);
             }
+            return DBParamDefine.CREATE_EXIST;
         }
         catch (Exception e) {
-            logger.error("creating cs:csName={} failed. error:{}",csName, e.getMessage());
+            logger.error("creating cs failed: csName={}, error:{}",csName, e.getMessage());
             throw new S3ServerException(S3Error.DAO_DB_ERROR,
-                    "create cs failed:cs=" + csName, e);
+                    "create cs failed. cs=" + csName, e);
         }
     }
 
-    public static void createCL(Sequoiadb sdb, String csName, String clName, BSONObject options)
+    public static int createCL(Sequoiadb sdb, String csName, String clName, BSONObject options)
             throws S3ServerException {
         try {
             logger.info("creating cl:clName={}.{}",csName, clName);
             CollectionSpace cs = sdb.getCollectionSpace(csName);
-            cs.createCollection(clName);
+            cs.createCollection(clName, options);
+            return DBParamDefine.CREATE_OK;
         }
         catch (BaseException e) {
-            logger.error("creating cl:clName={}.{} failed. error:{}",csName, clName, e.getErrorCode());
+            logger.error("creating cl failed: clName={}.{}, db error:{}",csName, clName, e.getErrorCode());
             if (e.getErrorCode() != SDBError.SDB_DMS_EXIST.getErrorCode()) {
                 throw new S3ServerException(S3Error.DAO_DB_ERROR,
-                        "create cl failed:cs=" + csName + ",cl=" + clName, e);
+                        "create cl failed. cs=" + csName + ",cl=" + clName, e);
+            } else {
+                return DBParamDefine.CREATE_EXIST;
             }
         }
         catch (Exception e) {
-            logger.error("creating cl:clName={}.{} failed. error:{}",csName, clName, e.getMessage());
+            logger.error("creating cl failed: clName={}.{}, error:{}",csName, clName, e.getMessage());
+            throw new S3ServerException(S3Error.DAO_DB_ERROR,
+                    "create cl failed. cs=" + csName + ",cl=" + clName, e);
+        }
+    }
+
+    public static void dropCL(Sequoiadb sdb, String csName, String clName)
+            throws S3ServerException{
+        try{
+            logger.info("drop cl:clName={}.{}",csName, clName);
+            CollectionSpace cs = sdb.getCollectionSpace(csName);
+            cs.dropCollection(clName);
+        }catch (BaseException e) {
+            logger.error("drop cl failed: clName={}.{}, db error:{}",csName, clName, e.getErrorCode());
+            if (e.getErrorCode() != SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
+                throw new S3ServerException(S3Error.DAO_DB_ERROR,
+                        "drop cl failed. cs=" + csName + ",cl=" + clName, e);
+            }
+        }
+        catch (Exception e) {
+            logger.error("creating cl failed: clName={}.{}, error:{}",csName, clName, e.getMessage());
             throw new S3ServerException(S3Error.DAO_DB_ERROR,
                     "create cl failed:cs=" + csName + ",cl=" + clName, e);
         }
@@ -135,18 +161,36 @@ public class SdbDataSourceWrapper {
             cl.createIndex(indexName, key, isUnique, enforced);
         }
         catch (BaseException e) {
-            logger.error("creating index:clName={}.{} failed. error:{}",csName, clName, e.getErrorCode());
-            if (e.getErrorCode() != SDBError.SDB_IXM_DUP_KEY.getErrorCode()) {
+            logger.error("creating index failed: clName={}.{}, db error:{}",csName, clName, e.getErrorCode());
+            if (e.getErrorCode() != SDBError.SDB_IXM_REDEF.getErrorCode()) {
                 throw new S3ServerException(S3Error.DAO_DB_ERROR,
-                        "create Index failed:cs=" + csName + ",cl=" + clName +
+                        "create Index failed. cs=" + csName + ",cl=" + clName +
                                 ",indexName=" + indexName, e);
             }
         }
         catch (Exception e) {
-            logger.error("creating Index:clName={}.{} failed. error:{}",csName, clName, e.getMessage());
+            logger.error("creating Index failed: clName={}.{}, error:{}",csName, clName, e.getMessage());
             throw new S3ServerException(S3Error.DAO_DB_ERROR,
                     "create Index failed:cs=" + csName + ",cl=" + clName +
                             ",indexName = " + indexName, e);
+        }
+    }
+
+    public static void dropCS(Sequoiadb sdb, String csName)throws S3ServerException{
+        try{
+            logger.info("drop cs. csName:{}", csName);
+            sdb.dropCollectionSpace(csName);
+        }catch (BaseException e) {
+            logger.error("drop cs failed: cs={}, db error:{}",csName, e.getErrorCode());
+            if (e.getErrorCode() != SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode()) {
+                throw new S3ServerException(S3Error.DAO_DB_ERROR,
+                        "drop cs failed. cs=" + csName, e);
+            }
+        }
+        catch (Exception e) {
+            logger.error("drop cs failed: cs={}, error:{}",csName, e.getMessage());
+            throw new S3ServerException(S3Error.DAO_DB_ERROR,
+                    "drop cs failed. cs=" + csName, e);
         }
     }
 }

@@ -4,11 +4,11 @@ import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.common.VersioningStatusType;
 import com.sequoias3.config.BucketConfig;
 import com.sequoias3.core.*;
-import com.sequoias3.dao.BucketDao;
-import com.sequoias3.dao.UserDao;
+import com.sequoias3.dao.*;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.model.GetServiceResult;
+import com.sequoias3.model.LocationConstraint;
 import com.sequoias3.service.BucketService;
 import com.sequoias3.service.ObjectService;
 import org.slf4j.Logger;
@@ -34,6 +34,15 @@ public class BucketServiceImpl implements BucketService {
     @Autowired
     ObjectService objectService;
 
+    @Autowired
+    RegionDao regionDao;
+
+    @Autowired
+    DaoMgr daoMgr;
+
+    @Autowired
+    Transaction transaction;
+
     @Override
     public void createBucket(int ownerID, String bucketName, String region) throws S3ServerException {
         int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
@@ -46,6 +55,8 @@ public class BucketServiceImpl implements BucketService {
         String newBucketName = bucketName.toLowerCase();
         while (tryTime > 0){
             tryTime--;
+            ConnectionDao connection = daoMgr.getConnectionDao();
+            transaction.begin(connection);
             try {
                 //check duplicate bucket
                 Bucket result = bucketDao.getBucketByName(newBucketName);
@@ -56,6 +67,14 @@ public class BucketServiceImpl implements BucketService {
                     }else {
                         throw new S3ServerException(S3Error.BUCKET_ALREADY_EXIST,
                                 "Bucket already exist. bucket name="+bucketName);
+                    }
+                }
+
+                if (region != null) {
+                    Region regionCon = regionDao.queryForUpdateRegion(connection, region);
+                    if (null == regionCon){
+                        throw new S3ServerException(S3Error.REGION_NO_SUCH_REGION,
+                                "no such region. regionName:"+region);
                     }
                 }
 
@@ -89,6 +108,9 @@ public class BucketServiceImpl implements BucketService {
             }catch (Exception e){
                 throw new S3ServerException(S3Error.BUCKET_CREATE_FAILED,
                         "create bucket failed. bucket name="+bucketName, e);
+            }finally {
+                transaction.rollback(connection);
+                daoMgr.releaseConnectionDao(connection);
             }
         }
     }
@@ -173,13 +195,25 @@ public class BucketServiceImpl implements BucketService {
         }
     }
 
+    @Override
+    public LocationConstraint getBucketLocation(int ownerID, String bucketName) throws S3ServerException {
+        try{
+            Bucket bucket = getBucket(ownerID, bucketName);
+            LocationConstraint locationConstraint = new LocationConstraint();
+            locationConstraint.setLocation(bucket.getRegion());
+            return locationConstraint;
+        }catch (S3ServerException e){
+            throw e;
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.BUCKET_LOCATION_GET_FAILED,
+                    "get bucket location failed. bucketName="+bucketName, e);
+        }
+    }
+
     private Boolean isValidBucketName(String bucketName){
         if (bucketName.length() < 3 || bucketName.length() > 63){
             return false;
         }
-//        if (bucketName.equalsIgnoreCase("users")){
-//            return false;
-//        }
         return true;
     }
 

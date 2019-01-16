@@ -6,6 +6,7 @@ import com.sequoiadb.exception.SDBError;
 import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.config.SequoiadbConfig;
 import com.sequoias3.core.ObjectMeta;
+import com.sequoias3.core.Region;
 import com.sequoias3.dao.*;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
@@ -17,9 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Repository("MetaDao")
 public class SequoiadbMetaDao implements MetaDao {
     private static final Logger logger = LoggerFactory.getLogger(SequoiadbMetaDao.class);
@@ -30,49 +28,23 @@ public class SequoiadbMetaDao implements MetaDao {
     @Autowired
     SequoiadbConfig config;
 
+    @Autowired
+    SequoiadbRegionSpaceDao sequoiadbRegionSpaceDao;
+
     @Override
     public void insertMeta(ConnectionDao connection, String csMetaName, String clMetaName,
-                           ObjectMeta objectMeta, int isIgnoreDup, Boolean isHistory)
+                           ObjectMeta objectMeta, Boolean isHistory, Region region)
             throws S3ServerException {
         Sequoiadb sdb = null;
         try {
             sdb = ((SdbConnectionDao)connection).getConnection();
-            insert(sdb, csMetaName, clMetaName, objectMeta, isIgnoreDup);
+            insert(sdb, csMetaName, clMetaName, objectMeta, isHistory);
         }catch (BaseException e){
-            if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode()) {
-                sdbDatasourceWrapper.createCS(sdb, csMetaName, null);
-                sdbDatasourceWrapper.createCL(sdb, csMetaName, clMetaName, null);
-                BSONObject indexKey = new BasicBSONObject();
-                String indexName = ObjectMeta.META_BUCKET_ID+"+"+ObjectMeta.META_KEY_NAME;
-                indexKey.put(ObjectMeta.META_BUCKET_ID, 1);
-                indexKey.put(ObjectMeta.META_KEY_NAME, 1);
-                if (isHistory) {
-                    indexKey.put(ObjectMeta.META_VERSION_ID, 1);
-                    indexName = indexName + "+" + ObjectMeta.META_VERSION_ID;
-                }
-                sdbDatasourceWrapper.createIndex(sdb, csMetaName, clMetaName,
-                        indexName, indexKey, true,true);
-                insert(sdb, csMetaName, clMetaName, objectMeta, isIgnoreDup);
-            } else if (e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
-                if (!sdb.isCollectionSpaceExist(csMetaName)) {
-                    sdbDatasourceWrapper.createCS(sdb, csMetaName, null);
-                }
-                sdbDatasourceWrapper.createCL(sdb, csMetaName, clMetaName, null);
-                String indexName = ObjectMeta.META_BUCKET_ID + "+" + ObjectMeta.META_KEY_NAME;
-                BSONObject indexKey = new BasicBSONObject();
-                indexKey.put(ObjectMeta.META_BUCKET_ID, 1);
-                indexKey.put(ObjectMeta.META_KEY_NAME, 1);
-                if (isHistory) {
-                    indexKey.put(ObjectMeta.META_VERSION_ID, 1);
-                    indexName = indexName + "+" + ObjectMeta.META_VERSION_ID;
-                }
-                sdbDatasourceWrapper.createIndex(sdb, csMetaName, clMetaName,
-                        indexName, indexKey, true,true);
-                insert(sdb, csMetaName, clMetaName, objectMeta, isIgnoreDup);
-            } else if (e.getErrorCode() == SDBError.SDB_IXM_DUP_KEY.getErrorCode()) {
-                throw new S3ServerException(S3Error.DAO_DUPLICATE_KEY,
-                        "Duplicate key. csname:"+csMetaName+", clname:"+clMetaName);
-            }else {
+            if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode()
+                    || e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
+                createMetaCSCL(sdb, region, csMetaName, clMetaName, isHistory);
+                insert(sdb, csMetaName, clMetaName, objectMeta, isHistory);
+            } else {
                 logger.error("insert meta failed. error:",e);
                 throw e;
             }
@@ -80,15 +52,27 @@ public class SequoiadbMetaDao implements MetaDao {
     }
 
     private void insert(Sequoiadb sdb, String csMetaName, String clMetaName,
-                       ObjectMeta objectMeta, int isIgnoreDup) {
+                       ObjectMeta objectMeta, Boolean isHistory)
+            throws S3ServerException{
         try {
             CollectionSpace cs = sdb.getCollectionSpace(csMetaName);
             DBCollection cl = cs.getCollection(clMetaName);
 
             BSONObject insertData = convertMetaToBson(objectMeta);
-            List<BSONObject> insertList = new ArrayList<>();
-            insertList.add(insertData);
-            cl.insert(insertList, isIgnoreDup);
+            cl.insert(insertData);
+        }catch (BaseException e){
+            if (e.getErrorCode() == SDBError.SDB_IXM_DUP_KEY.getErrorCode()) {
+                logger.error("duplicate key. csname:{}, clname:{}, key:{}, versionId:{}, isHistory:{}",
+                        csMetaName, clMetaName, objectMeta.getKey(), objectMeta.getVersionId(), isHistory);
+                if (!isHistory) {
+                    throw new S3ServerException(S3Error.DAO_DUPLICATE_KEY,
+                            "Duplicate key. csname:" + csMetaName + ", clname:" + clMetaName
+                                    + ", key:" + objectMeta.getKey()
+                                    + ", versionId:" + objectMeta.getVersionId());
+                }
+            }else{
+                throw e;
+            }
         }catch (Exception e){
             logger.error("Insert object meta failed");
             throw e;
@@ -192,7 +176,7 @@ public class SequoiadbMetaDao implements MetaDao {
                 //no cs or cl ,return null
                 return null;
             } else {
-                logger.error("query meta by name failed. error:",e);
+                logger.error("query meta by name failed. error:"+e.getMessage());
                 throw e;
             }
         } catch (Exception e){
@@ -364,12 +348,17 @@ public class SequoiadbMetaDao implements MetaDao {
     }
 
     @Override
-    public String getMetaCSName( String region){
+    public String getMetaCurCSName( Region region){
         StringBuilder csName = new StringBuilder();
 
         if (null != region){
-            csName.append(region);
-            csName.append(DBParamDefine.CS_META);
+            if (region.getMetaLocation() != null){
+                csName.append(region.getMetaCSLocation());
+            }else {
+                csName.append(DBParamDefine.CS_S3);
+                csName.append(region.getName());
+                csName.append(DBParamDefine.CS_META);
+            }
         }else {
             csName.append(config.getMetaCsName());
         }
@@ -378,13 +367,40 @@ public class SequoiadbMetaDao implements MetaDao {
     }
 
     @Override
-    public String getMetaCurCLName(){
-        return DaoCollectionDefine.OBJECT_META_LIST;
+    public String getMetaCurCLName(Region region){
+        if (region != null && region.getMetaLocation() != null){
+            return region.getMetaCLLocation();
+        }else {
+            return DaoCollectionDefine.OBJECT_META_LIST;
+        }
     }
 
     @Override
-    public String getMetaHistoryCLName(){
-        return DaoCollectionDefine.OBJECT_META_LIST_HISTORY;
+    public String getMetaHisCSName( Region region){
+        StringBuilder csName = new StringBuilder();
+
+        if (null != region){
+            if (region.getMetaHisLocation() != null){
+                csName.append(region.getMetaHisCSLocation());
+            }else {
+                csName.append(DBParamDefine.CS_S3);
+                csName.append(region.getName());
+                csName.append(DBParamDefine.CS_META);
+            }
+        }else {
+            csName.append(config.getMetaCsName());
+        }
+
+        return csName.toString();
+    }
+
+    @Override
+    public String getMetaHisCLName(Region region){
+        if (region != null && region.getMetaHisLocation() != null){
+            return region.getMetaHisCLLocation();
+        }else {
+            return DaoCollectionDefine.OBJECT_META_LIST_HISTORY;
+        }
     }
 
     private ObjectMeta convertBsonToMeta(BSONObject bsonObject){
@@ -476,5 +492,50 @@ public class SequoiadbMetaDao implements MetaDao {
             sdbQueryDbCursor.setCursor(null);
             sdbQueryDbCursor.setSdb(null);
         }
+    }
+
+    private void createMetaCSCL(Sequoiadb sdb, Region region, String csMetaName,
+                                String clMetaName, Boolean isHistory)
+            throws S3ServerException{
+        if (region != null && region.getMetaLocation() != null) {
+            throw new S3ServerException(S3Error.REGION_LOCATION_NOT_EXIST,
+                    "location not exist. csName="+csMetaName+", clName="+clMetaName);
+        }else{
+            if (!sdb.isCollectionSpaceExist(csMetaName)) {
+                BSONObject option = null;
+                if (region != null && region.getMetaDomain() != null){
+                    option = new BasicBSONObject();
+                    option.put("Domain", region.getMetaDomain());
+                }
+                if(DBParamDefine.CREATE_OK == sdbDatasourceWrapper.createCS(sdb, csMetaName, option)){
+                    sequoiadbRegionSpaceDao.insertRegionCSList(sdb, csMetaName, region.getName());
+                }
+            }
+
+            BSONObject option = generateMetaCLOption();
+            sdbDatasourceWrapper.createCL(sdb, csMetaName, clMetaName, option);
+            BSONObject indexKey = new BasicBSONObject();
+            String indexName = ObjectMeta.META_BUCKET_ID + "+" + ObjectMeta.META_KEY_NAME;
+            indexKey.put(ObjectMeta.META_BUCKET_ID, 1);
+            indexKey.put(ObjectMeta.META_KEY_NAME, 1);
+            if (isHistory) {
+                indexKey.put(ObjectMeta.META_VERSION_ID, 1);
+                indexName = indexName + "+" + ObjectMeta.META_VERSION_ID;
+            }
+            sdbDatasourceWrapper.createIndex(sdb, csMetaName, clMetaName,
+                    indexName, indexKey, true, true);
+        }
+    }
+
+    private BSONObject generateMetaCLOption(){
+        BSONObject clOption = new BasicBSONObject();
+
+        BSONObject shardingKey = new BasicBSONObject(ObjectMeta.META_KEY_NAME, 1);
+        clOption.put("ShardingKey", shardingKey);
+        clOption.put("ShardingType", "hash");
+        clOption.put("ReplSize", -1);
+        clOption.put("AutoSplit", true);
+
+        return clOption;
     }
 }
