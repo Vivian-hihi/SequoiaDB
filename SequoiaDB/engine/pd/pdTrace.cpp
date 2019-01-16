@@ -38,6 +38,7 @@
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
 #include "pd.hpp"
+//#include "Client.c"
 
 #if defined (SDB_ENGINE)
 #include "pmd.hpp"
@@ -47,6 +48,8 @@
 #endif //SDB_ENGINE
 
 #include <sstream>
+
+#define TRACE_FUNCTIONSLIST_SIZE      ( 204800 )      /* bytes */
 
 using namespace engine ;
 
@@ -465,10 +468,50 @@ void _pdTraceCB::destroy()
    _metaOpr.swap( 0 ) ;
 }
 
+INT32 _pdTraceCB::_appendFuncName( CHAR **ppBuffer, UINT32 &bufferSize,
+                                   UINT32 &usedSize, UINT32 functionNameID )
+{
+   INT32 rc                = SDB_OK ;
+   CHAR  *pNewBuffer       = NULL ;
+   UINT32 functionsNameLen = ossStrlen( pdGetTraceFunction( functionNameID ) )
+                             + 1 ;
+
+   if ( ( usedSize + functionsNameLen ) > bufferSize )
+   {
+      pNewBuffer = (CHAR*)SDB_OSS_REALLOC( *ppBuffer,
+                                           ( UINT32 )( bufferSize * 1.5 ) ) ;
+      if ( !pNewBuffer )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      bufferSize = ( UINT32 )( bufferSize * 1.5 ) ;
+      *ppBuffer = pNewBuffer ;
+   }
+
+   ossMemcpy( *ppBuffer + usedSize,
+              pdGetTraceFunction( functionNameID ), functionsNameLen ) ;
+   usedSize += functionsNameLen ;
+
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
 INT32 _pdTraceCB::dump( OSSFILE *outFile )
 {
    INT32 rc = SDB_OK ;
    pdAllocPair *pAllocPair = NULL ;
+
+   UINT32 mallocSize = 0 ;
+   UINT32 readLen = 0 ;
+   UINT32 usedSize = 0 ;
+
+   const UINT32 functionsListNum = pdGetTraceFunctionListNum() ;
+   CHAR* functionsListString = NULL ;
+   UINT32 *functionsOffsets = NULL ;
+   UINT32 offsetsSize = 0 ;
 
    while( !_metaOpr.compareAndSwap( 0, 1 ) )
    {
@@ -490,13 +533,59 @@ INT32 _pdTraceCB::dump( OSSFILE *outFile )
       goto error ;
    }
 
+   mallocSize = TRACE_FUNCTIONSLIST_SIZE ;
+   functionsListString = ( CHAR* )SDB_OSS_MALLOC( mallocSize  ) ;
+   if ( !functionsListString )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+
+   functionsOffsets = ( UINT32* )SDB_OSS_MALLOC( ( functionsListNum ) *
+                      sizeof( *functionsOffsets ) ) ;
+   if ( !functionsOffsets )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+   offsetsSize = ( functionsListNum ) * sizeof( *functionsOffsets ) ;
+
+   //init functionsList, including count, offset and names
+   ossMemcpy( functionsListString,
+              ( const CHAR* )&functionsListNum,
+              sizeof( functionsListNum ) ) ;
+
+   usedSize = sizeof( functionsListNum ) + offsetsSize ;
+   for( UINT32 i = 0 ; i < functionsListNum ; i++ )
+   {
+      functionsOffsets[i] = readLen ;
+
+      rc = _appendFuncName( &functionsListString, mallocSize, usedSize, i ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "Append function name failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      readLen += ( ossStrlen( pdGetTraceFunction(i) ) + 1 ) ;
+   }
+
+   ossMemcpy( functionsListString + sizeof( functionsListNum ),
+              ( const CHAR* )functionsOffsets, offsetsSize ) ;
+
+   _header._functionListSize = sizeof( functionsListNum ) +
+                               offsetsSize + readLen ;
+
    // write header first
    pAllocPair = ( pdAllocPair* )_ptr.fetch() ;
    _header.savePosition( pAllocPair->_b.fetch(), _size ) ;
+
    if ( _header._bufTail % TRACE_CHUNK_SIZE )
    {
       _pBuffer[_header._bufTail] = 0;
    }
+
+   _header._functionListHeader = sizeof(_header) + _header._bufSize ;
 
    rc = ossWriteN( outFile, ( const CHAR* )&_header, sizeof( _header ) ) ;
    if ( rc )
@@ -513,7 +602,25 @@ INT32 _pdTraceCB::dump( OSSFILE *outFile )
       goto error ;
    }
 
+   // write functionsList
+   rc = ossWriteN( outFile, functionsListString, _header._functionListSize ) ;
+   if ( rc )
+   {
+      PD_LOG( PDERROR, "Write functionsList to file failed, rc: %d", rc ) ;
+      goto error ;
+   }
+
 done :
+   if ( functionsListString )
+   {
+      SDB_OSS_FREE( functionsListString ) ;
+      functionsListString = NULL ;
+   }
+   if ( functionsOffsets )
+   {
+      SDB_OSS_FREE( functionsOffsets ) ;
+      functionsOffsets = NULL ;
+   }
    _metaOpr.swap( 0 ) ;
    return rc ;
 error :
@@ -540,7 +647,6 @@ INT32 _pdTraceCB::_addBreakPoint( UINT64 functionCode )
    }
    _bpList[_numBP] = functionCode ;
    ++_numBP ;
-
 done :
    return rc ;
 error :

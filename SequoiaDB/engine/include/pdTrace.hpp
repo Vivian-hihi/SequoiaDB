@@ -45,6 +45,7 @@
 #include "ossIO.hpp"
 #include <list>
 #include <vector>
+#include <ossVer.h>
 
 #ifdef SDB_ENGINE
 #include "pdTrace.h"
@@ -329,7 +330,7 @@ typedef struct _pdTraceRecord pdTraceRecord ;
 /*
    Current Version
 */
-#define PD_TRACE_VERSION_CUR        1
+#define PD_TRACE_VERSION_CUR        2
 
 /*
    _pdTraceHeader define
@@ -338,14 +339,22 @@ struct _pdTraceHeader
 {
    CHAR     _eyeCatcher[ TRACECB_EYE_CATCHER_SIZE ] ;
    UINT16   _headerSize ;      // size of header
-   UINT8    _version ;
-   UINT8    _pad[ 3 ] ;
+   UINT8    _version ;         // trace dump file version
+
+   UINT8    _engineVersion ;
+   UINT8    _engineSubVersion ;
+   UINT8    _engineFixVersion ;
 
    UINT64   _bufSize ;
    UINT64   _bufHeader ;
    UINT64   _bufTail ;
 
-   UINT32   _pad1[ 10 ] ;
+   UINT32   _release ;
+
+   UINT32   _functionListSize ;
+   UINT32   _functionListHeader ;
+
+   UINT32   _pad1[ 7 ] ;
 
    _pdTraceHeader()
    {
@@ -376,11 +385,16 @@ struct _pdTraceHeader
    {
       ossMemset( this, 0, sizeof( _pdTraceHeader ) ) ;
       ossMemcpy( _eyeCatcher, TRACECB_EYE_CATCHER, TRACECB_EYE_CATCHER_SIZE ) ;
-      _headerSize    = sizeof( _pdTraceHeader ) ;
-      _version       = PD_TRACE_VERSION_CUR ;
+      _headerSize          = sizeof( _pdTraceHeader ) ;
+      _version             = PD_TRACE_VERSION_CUR ;
+      _engineVersion       = SDB_ENGINE_VERISON_CURRENT ;
+      _engineSubVersion    = SDB_ENGINE_SUBVERSION_CURRENT ;
+      _engineFixVersion    = SDB_ENGINE_FIXVERSION_CURRENT ;
+      _release             = SDB_ENGINE_RELEASE_CURRENT ;
+      _functionListSize    = 0 ;
+      _functionListHeader  = 0 ;
    }
-
-} ;
+};
 typedef struct _pdTraceHeader pdTraceHeader ;
 
 /*
@@ -487,6 +501,8 @@ protected:
    INT32          _addBreakPoint( UINT64 functionCode ) ;
    INT32          _addTidFilter( UINT32 tid ) ;
    void           _removeAllTidFilter() ;
+   INT32          _appendFuncName( CHAR **ppBuffer, UINT32 &bufferSize,
+                                   UINT32 &usedSize, UINT32 functionNameID ) ;
 
    void           _reset() ;
 
@@ -803,8 +819,9 @@ extern BOOLEAN g_isTraceStarted ;
 
 #endif // SDB_ENGINE
 
-const CHAR *pdGetTraceFunction ( UINT64 id ) ;
-const CHAR *pdGetTraceComponent ( UINT32 id ) ;
+const CHAR     *pdGetTraceFunction ( UINT64 id ) ;
+const CHAR     *pdGetTraceComponent ( UINT32 id ) ;
+const UINT32   pdGetTraceFunctionListNum() ;
 UINT32      pdGetTraceComponentSize() ;
 void pdTraceFunc ( UINT64 funcCode, INT32 type,
                    const CHAR* file, UINT32 line,

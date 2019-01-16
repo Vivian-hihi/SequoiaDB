@@ -41,6 +41,8 @@
 #include "sptSPScope.hpp"
 #include "pdTraceAnalysis.hpp"
 
+#define SPT_FIELD_FUNCTIONLIST "UseFunctionListFile"
+
 using namespace bson ;
 
 namespace engine
@@ -241,7 +243,9 @@ JS_MAPPING_END()
       INT32 formatType = 0 ;
       string input ;
       string output ;
+      BSONObj option ;
       pdTraceParser traceParser ;
+      BOOLEAN useFunctionListFile = TRUE ;
 
       /// 1st
       rc = arg.getNative( 0, (void*)&formatType, SPT_NATIVE_INT32 ) ;
@@ -287,9 +291,26 @@ JS_MAPPING_END()
          goto error ;
       }
 
+      //4th
+      if ( 4 == arg.argc() )
+      {
+         rc = arg.getBsonobj( 3, option ) ;
+         if( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "The 4th param value must be json" ) ;
+            goto error ;
+         }
+         if ( option.hasField( SPT_FIELD_FUNCTIONLIST )&&
+              Bool == option.getField( SPT_FIELD_FUNCTIONLIST ).type())
+         {
+            useFunctionListFile = option.getBoolField( SPT_FIELD_FUNCTIONLIST );
+         }
+      }
+
       rc = traceParser.init( input.c_str(),
                              output.c_str(),
-                             (pdTraceFormatType)formatType ) ;
+                             (pdTraceFormatType)formatType,
+                             useFunctionListFile ) ;
       if ( rc )
       {
          goto error ;
