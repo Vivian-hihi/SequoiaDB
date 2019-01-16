@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 public abstract class SdbThreadBase implements Runnable {
@@ -83,28 +82,64 @@ public abstract class SdbThreadBase implements Runnable {
         }
     }
     
+    /*
+     *--------------------------------------------------------------------------
+     *
+     *  getBlockingMethod --
+     *   获取当前线程阻塞在哪一个函数调用上
+     *    
+     * Parameters:
+     *       无
+     *
+     * Returns:
+     *       如果当前线程执行CL.update()阻塞，则返回update
+     *       如果当前线程执行CL.query()阻塞，则返回query
+     *--------------------------------------------------------------------------
+     */
     public String getBlockingMethod(){
         assert threadList.size() == 1 ;
-        final int oneSeonds = 1000 ;
+        
+        final int oneSeonds = 5000 ;
+        final int totalTimes = 3 ;
+        int nullTimes = 0 ;
+        int matchTimes = 0 ;
         int alreadyWaitTime = 0 ;
-        String prevMethod = threadList.get( 0 ).getStackTrace()[0].getMethodName() ;
+        String prevMethod = "" ;
+        
         do{
+            StackTraceElement[] stackElem = threadList.get( 0 ).getStackTrace() ;
             try {
-                Thread.sleep( 1 ) ;
+                Thread.sleep( 5 ) ;
                 alreadyWaitTime += 1;
             } catch ( InterruptedException e ) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-            
-            if ( alreadyWaitTime >= oneSeonds  ){
+           
+            if ( nullTimes >= totalTimes || alreadyWaitTime >= oneSeonds  ){
                 return "" ;
             }
-            String curMethod  = threadList.get( 0 ).getStackTrace()[0].getMethodName() ;
-            if ( curMethod.equals( prevMethod )){
-                break ;
+            
+            if ( stackElem.length == 0 ) {
+                nullTimes++ ;
+                continue ;
             }
             
+            prevMethod = stackElem[0].getMethodName() ;
+            StackTraceElement[] currentStackElem = threadList.get( 0 ).getStackTrace() ;
+            if ( currentStackElem.length == 0 ){
+                return "" ;
+            }
+            
+            String curMethod  = currentStackElem[0].getMethodName() ;
+            if ( curMethod.equals( prevMethod )){
+                matchTimes++ ;
+            }
+            
+            if (  matchTimes >= totalTimes ){
+                break ;
+            }
+
             prevMethod = curMethod ;
         }while(true) ;
         
@@ -112,4 +147,19 @@ public abstract class SdbThreadBase implements Runnable {
     }
 
     public abstract void exec() throws Exception;
+    
+    public static void main(String[] args){
+        SdbThreadBase t = new SdbThreadBase(){
+
+            @Override
+            public void exec() throws Exception {
+                // TODO Auto-generated method stub
+                Thread.sleep(5000) ;
+            }
+        } ;
+        
+        t.start() ;
+        t.getBlockingMethod() ;
+        t.getBlockingMethod() ;
+    }
 }
