@@ -46,7 +46,7 @@
 #include "dmsEventHandler.hpp"
 #include "dmsExtDataHandler.hpp"
 
-#include <map>
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -827,17 +827,17 @@ namespace engine
          }
       } ;
 
-      typedef std::map<const CHAR*, UINT16, cmp_str>        COLNAME_MAP ;
-      typedef std::map<utilCLUniqueID, UINT16>              COLID_MAP ;
+      typedef ossPoolMap<const CHAR*, UINT16, cmp_str>::Type COLNAME_MAP ;
+      typedef ossPoolMap<utilCLUniqueID, UINT16>::Type       COLID_MAP ;
 #if defined (_WINDOWS)
       typedef COLNAME_MAP::iterator                         COLNAME_MAP_IT ;
       typedef COLNAME_MAP::const_iterator                   COLNAME_MAP_CIT ;
 #else
-      typedef std::map<const CHAR*, UINT16>::iterator       COLNAME_MAP_IT ;
-      typedef std::map<const CHAR*, UINT16>::const_iterator COLNAME_MAP_CIT ;
+      typedef ossPoolMap<const CHAR*, UINT16>::Type::iterator       COLNAME_MAP_IT ;
+      typedef ossPoolMap<const CHAR*, UINT16>::Type::const_iterator COLNAME_MAP_CIT ;
 #endif
-      typedef std::map<utilCLUniqueID, UINT16>::iterator    COLID_MAP_IT ;
-      typedef std::map<utilCLUniqueID, UINT16>::const_iterator COLID_MAP_CIT ;
+      typedef COLID_MAP::iterator    COLID_MAP_IT ;
+      typedef COLID_MAP::const_iterator COLID_MAP_CIT ;
 
       public:
          _dmsStorageDataCommon ( const CHAR *pSuFileName,

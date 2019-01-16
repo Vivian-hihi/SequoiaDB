@@ -44,6 +44,7 @@
 #include "ossRWMutex.hpp"
 #include "monCB.hpp"
 #include "ossAtomic.hpp"
+#include "ossMemPool.hpp"
 #include "dmsCB.hpp"
 #include "dpsLogWrapper.hpp"
 #include "mthSelector.hpp"
@@ -511,9 +512,11 @@ namespace engine
       void _releaseContextInfos() ;
 
    private:
-      std::map<RTN_CONTEXT_TYPE, _rtnContextInfo*> _contextInfoMap ;
+      typedef ossPoolMap<RTN_CONTEXT_TYPE, _rtnContextInfo*>::Type CONTEXT_INFO_MAP;
+
+      CONTEXT_INFO_MAP _contextInfoMap ;
       typedef std::pair<RTN_CONTEXT_TYPE, _rtnContextInfo*> pair_type ;
-      typedef std::map<RTN_CONTEXT_TYPE, _rtnContextInfo*>::const_iterator ctx_info_iterator ;
+      typedef CONTEXT_INFO_MAP::const_iterator ctx_info_iterator ;
    } ;
 
    _rtnContextBuilder* sdbGetRTNContextBuilder() ;

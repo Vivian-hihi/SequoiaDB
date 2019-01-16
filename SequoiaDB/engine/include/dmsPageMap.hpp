@@ -41,7 +41,7 @@
 
 #include "dms.hpp"
 #include "ossAtomic.hpp"
-#include <map>
+#include "ossMemPool.hpp"
 
 namespace engine
 {
@@ -54,9 +54,9 @@ namespace engine
       friend class _dmsPageMapUnit ;
 
       public:
-         typedef std::map< dmsExtentID, dmsExtentID >    MAP_PAGES ;
-         typedef MAP_PAGES::iterator                     MAP_PAGES_IT ;
-         typedef MAP_PAGES::const_iterator               MAP_PAGES_CIT ;
+         typedef ossPoolMap< dmsExtentID, dmsExtentID >::Type MAP_PAGES ;
+         typedef MAP_PAGES::iterator                          MAP_PAGES_IT ;
+         typedef MAP_PAGES::const_iterator                    MAP_PAGES_CIT ;
 
       public:
          _dmsPageMap() ;

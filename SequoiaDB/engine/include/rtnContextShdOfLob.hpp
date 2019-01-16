@@ -39,6 +39,7 @@
 #include "rtnLobPieces.hpp"
 #include "rtnLobAccessManager.hpp"
 #include "dmsLobDef.hpp"
+#include "ossMemPool.hpp"
 
 namespace engine
 {
@@ -163,7 +164,7 @@ namespace engine
       const CHAR*          _pData ;
       UINT32               _dataLen ;
       INT64                _offset ;
-      std::set<UINT32>     _written ;
+      ossPoolSet<UINT32>::Type  _written ;
       _rtnLobPiecesInfo    _lobPieces ;
       _rtnLobAccessInfo*   _accessInfo ;
       _rtnLobSections      _lockSections ;

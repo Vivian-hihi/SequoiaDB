@@ -56,8 +56,7 @@
 #include "dmsIxmKeySorter.hpp"
 #include "utilMap.hpp"
 #include "dmsStorageJob.hpp"
-#include <map>
-#include <set>
+#include "ossMemPool.hpp"
 
 
 using namespace std ;
@@ -149,8 +148,8 @@ namespace engine
             return std::strcmp(a,b)<0 ;
          }
       } ;
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb> _cscbNameMap ;
-      std::map<utilCSUniqueID, dmsStorageUnitID>        _cscbIDMap ;
+      ossPoolMap<const CHAR*, dmsStorageUnitID, cmp_cscb>::Type _cscbNameMap ;
+      ossPoolMap<utilCSUniqueID, dmsStorageUnitID>::Type  _cscbIDMap ;
       std::vector<SDB_DMS_CSCB*>          _cscbVec ;
       std::vector<SDB_DMS_CSCB*>          _delCscbVec ;
       std::vector<ossRWMutex*>            _latchVec ;
@@ -159,22 +158,22 @@ namespace engine
       std::vector< ossSpinRecursiveXLatch* >  _vecCSMutex ;
 
 #if defined (_WINDOWS)
-      typedef std::map<const CHAR*,
+      typedef ossPoolMap<const CHAR*,
                        dmsStorageUnitID,
-                       cmp_cscb>::const_iterator CSCB_MAP_CONST_ITER ;
-      typedef std::map<const CHAR*,
+                       cmp_cscb>::Type::const_iterator CSCB_MAP_CONST_ITER ;
+      typedef ossPoolMap<const CHAR*,
                        dmsStorageUnitID,
-                       cmp_cscb>::iterator CSCB_MAP_ITER ;
+                       cmp_cscb>::Type::iterator CSCB_MAP_ITER ;
 #elif defined (_LINUX)
-      typedef std::map<const CHAR*,
-                       dmsStorageUnitID>::const_iterator CSCB_MAP_CONST_ITER ;
-      typedef std::map<const CHAR*,
-                       dmsStorageUnitID>::iterator CSCB_MAP_ITER ;
+      typedef ossPoolMap<const CHAR*,
+                       dmsStorageUnitID>::Type::const_iterator CSCB_MAP_CONST_ITER ;
+      typedef ossPoolMap<const CHAR*,
+                       dmsStorageUnitID>::Type::iterator CSCB_MAP_ITER ;
 #endif
-      typedef std::map<utilCSUniqueID,
-                       dmsStorageUnitID>::const_iterator CSCB_ID_MAP_CONST_ITER ;
-      typedef std::map<utilCSUniqueID,
-                       dmsStorageUnitID>::iterator CSCB_ID_MAP_ITER ;
+      typedef ossPoolMap<utilCSUniqueID,
+                       dmsStorageUnitID>::Type::const_iterator CSCB_ID_MAP_CONST_ITER ;
+      typedef ossPoolMap<utilCSUniqueID,
+                       dmsStorageUnitID>::Type::iterator CSCB_ID_MAP_ITER ;
 
       /*
        * Queue of collections which are waitting for dictionaies creation.

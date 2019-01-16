@@ -41,7 +41,7 @@
 #define DPS_TRANSCBLOCKINFO_HPP__
 
 #include "dpsTransLockDef.hpp"
-#include <map>
+#include "ossMemPool.hpp"
 #include "ossAtomic.hpp"
 #include "msg.h"
 
@@ -49,7 +49,7 @@ namespace engine
 {
    class _pmdEDUCB ;
 
-   typedef std::map<UINT32, MsgRouteID>      DpsTransNodeMap ;
+   typedef ossPoolMap<UINT32, MsgRouteID>::Type  DpsTransNodeMap ;
 
    /*
       _dpsTransCBLockInfo define
@@ -74,7 +74,7 @@ namespace engine
       ossAtomicSigned64          *_pRef ;
    } ;
    typedef _dpsTransCBLockInfo dpsTransCBLockInfo ;
-   typedef std::map< dpsTransLockId, dpsTransCBLockInfo * > DpsTransCBLockList ;
+   typedef ossPoolMap< dpsTransLockId, dpsTransCBLockInfo * >::Type DpsTransCBLockList ;
 
 }
 

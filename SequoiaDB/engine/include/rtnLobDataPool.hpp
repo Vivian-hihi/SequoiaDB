@@ -38,7 +38,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include <vector>
-#include <list>
+#include "ossMemPool.hpp"
 
 namespace engine
 {
@@ -136,7 +136,7 @@ namespace engine
       CHAR *_buf ;
       UINT32 _bufSz ;
       std::vector<tuple> _pool ;
-      std::list<CHAR *> _toBeFreed ;
+      ossPoolList<CHAR *>::Type _toBeFreed ;
       UINT32 _lastDataSz ;
       UINT32 _dataSz ;
       SINT32 _current ;

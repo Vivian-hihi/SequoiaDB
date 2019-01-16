@@ -52,6 +52,7 @@
 #include "../bson/bson.h"
 #include "../bson/bsonobj.h"
 #include "mthMatchRuntime.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -181,8 +182,8 @@ namespace engine
    class _dmsCappedExtScanner : public _dmsExtScannerBase
    {
       typedef std::pair<dmsExtentID, dmsExtentID>  EXT_LID_PAIR ;
-      typedef std::set<EXT_LID_PAIR>               EXT_RANGE_SET ;
-      typedef std::set<EXT_LID_PAIR>::iterator     EXT_RANGE_SET_ITR ;
+      typedef ossPoolSet<EXT_LID_PAIR>::Type       EXT_RANGE_SET ;
+      typedef EXT_RANGE_SET::iterator              EXT_RANGE_SET_ITR ;
 
       public:
          _dmsCappedExtScanner ( dmsStorageDataCommon *su,

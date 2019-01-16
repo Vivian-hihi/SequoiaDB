@@ -53,7 +53,7 @@
 #include "utilConcurrentMap.hpp"
 #include "optAPM.hpp"
 #include <map>
-#include <set>
+#include "ossMemPool.hpp"
 #include "rtnRemoteMessenger.hpp"
 
 #define RTN_INIT_TEXT_INDEX_VERSION    -1
@@ -113,7 +113,7 @@ namespace engine
          return _contextMap.size() ;
       }
 
-      OSS_INLINE void contextDump ( std::map<UINT64, std::set<SINT64> > &contextList,
+      OSS_INLINE void contextDump ( std::map<UINT64, ossPoolSet<SINT64>::Type > &contextList,
                                     EDUID filterEDUID = PMD_INVALID_EDUID )
       {
          FOR_EACH_CMAP_ELEMENT_S( RTN_CTX_MAP, _contextMap )

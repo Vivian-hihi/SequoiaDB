@@ -674,54 +674,51 @@ namespace engine
               foundInsert   = FALSE,
               foundLastComp = FALSE ;
 
-      if ( IS_VALID_SEG_OBJ_INDEX( lrbBegin ) )
+      while ( IS_VALID_SEG_OBJ_INDEX( idx ) )
       {
-         while ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+         plrb     = _getLRBPtrByIdx( idx ) ;
+         lrbEduid = plrb->dpsTxExectr->getEDUID() ;
+         if ( ( ! foundMyself ) && ( eduId == lrbEduid ) )
          {
-            plrb     = _getLRBPtrByIdx( idx ) ;
-            lrbEduid = plrb->dpsTxExectr->getEDUID() ;
-            if ( ( ! foundMyself ) && ( eduId == lrbEduid ) )
-            {
-               // save the index if the given eduId is found in the owner list
-               idxEduId      = idx ;
-               // save the previous LRB index and the pointer/address
-               idxPrevEduId  = idxPrev ;
-               pLRBPrevEduId = plrbPrev ;
-               foundMyself   = TRUE ;
-            }
-
-            // the owner list is sorted on lock mode in ascent order
-            if ( ( ! foundInsert ) && ( lockMode < plrb->lockMode ) )
-            {
-               // save the LRB index where it shall be inserted after 
-               idxToInsert = idxPrev ;
-               foundInsert = TRUE ; 
-            }
-
-            if (    ( ! foundLastComp )
-                 && ( eduId != lrbEduid )
-                 && ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) ) )
-            {
-               // save the LRB index previous to first incompatible LRB
-               idxLastComp   = idxPrev ; 
-               // save the address/pointer of first incompatible LRB
-               pLRBIncomp    = plrb ;
-               foundLastComp = TRUE ;
-            } 
-
-            // break if all jobs are done
-            if ( foundMyself && foundInsert && foundLastComp )
-            {
-               break ;
-            }
-
-            // remember previous index and pointer
-            idxPrev  = idx ;
-            plrbPrev = plrb ;
-
-            // move to next      
-            idx      = plrb->nextLRBIdx ;
+            // save the index if the given eduId is found in the owner list
+            idxEduId      = idx ;
+            // save the previous LRB index and the pointer/address
+            idxPrevEduId  = idxPrev ;
+            pLRBPrevEduId = plrbPrev ;
+            foundMyself   = TRUE ;
          }
+
+         // the owner list is sorted on lock mode in ascent order
+         if ( ( ! foundInsert ) && ( lockMode < plrb->lockMode ) )
+         {
+            // save the LRB index where it shall be inserted after 
+            idxToInsert = idxPrev ;
+            foundInsert = TRUE ; 
+         }
+
+         if (    ( ! foundLastComp )
+              && ( eduId != lrbEduid )
+              && ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) ) )
+         {
+            // save the LRB index previous to first incompatible LRB
+            idxLastComp   = idxPrev ; 
+            // save the address/pointer of first incompatible LRB
+            pLRBIncomp    = plrb ;
+            foundLastComp = TRUE ;
+         } 
+
+         // break if all jobs are done
+         if ( foundMyself && foundInsert && foundLastComp )
+         {
+            break ;
+         }
+
+         // remember previous index and pointer
+         idxPrev  = idx ;
+         plrbPrev = plrb ;
+
+         // move to next
+         idx      = plrb->nextLRBIdx ;
       }
    }
 

@@ -38,7 +38,7 @@
 
 #include "ossEvent.hpp"
 #include "pmdEDUMgr.hpp"
-#include <map>
+#include "ossMemPool.hpp"
 
 namespace engine
 {
@@ -113,8 +113,8 @@ namespace engine
          INT32 _removeJob ( EDUID eduID, INT32 result = SDB_OK ) ;
 
       private:
-         std::map<EDUID, _rtnBaseJob*>        _mapJobs ;
-         std::map<EDUID, INT32>               _mapResult ;
+         ossPoolMap<EDUID, _rtnBaseJob*>::Type  _mapJobs ;
+         ossPoolMap<EDUID, INT32>::Type         _mapResult ;
          ossSpinSLatch                        _latch ;
          ossSpinSLatch                        _latchRemove ;
          pmdEDUMgr                            *_eduMgr ;

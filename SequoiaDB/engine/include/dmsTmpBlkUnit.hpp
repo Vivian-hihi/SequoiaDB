@@ -40,8 +40,8 @@
 #define DMSTMPBLKUNIT_HPP_
 
 #include "ossIO.hpp"
+#include "ossMemPool.hpp"
 #include <string>
-#include <list>
 
 #define DMS_TMP_BLK_FILE_BEGIN "TMP_"
 
@@ -77,7 +77,7 @@ namespace engine
    } ;
    typedef class _dmsTmpBlk dmsTmpBlk ;
 
-   typedef std::list<_dmsTmpBlk> RTN_SORT_BLKS ;
+   typedef ossPoolList<_dmsTmpBlk>::Type RTN_SORT_BLKS ;
    typedef SINT64 DMS_TMP_FILE_ID ;
 
    class _dmsTmpBlkUnit

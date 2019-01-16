@@ -40,7 +40,7 @@
 
 #include "rtnSQLFunc.hpp"
 #include "../bson/bsonobj.h"
-#include <set>
+#include "ossMemPool.hpp"
 #include <string>
 
 namespace engine
@@ -48,8 +48,8 @@ namespace engine
 
    class rtnSQLAddToSet : public _rtnSQLFunc
    {
-   typedef std::set< bson::BSONElement >     FIELD_SET;
-   typedef std::vector< bson::BSONObj >      OBJ_VEC;
+   typedef ossPoolSet< bson::BSONElement >::Type FIELD_SET;
+   typedef std::vector< bson::BSONObj >          OBJ_VEC;
    public:
       rtnSQLAddToSet( const CHAR *pName );
 

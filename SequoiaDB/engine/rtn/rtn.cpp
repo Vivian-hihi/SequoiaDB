@@ -1122,7 +1122,7 @@ namespace engine
 
       // let's find out whether the collection space is held by this
       // EDU. If so we have to get rid of those contexts
-      std::set<SINT64> contextList ;
+      pmdEDUCB::SET_CONTEXT contextList ;
       cb->contextCopy( contextList ) ;
 
       std::set<SINT64>::iterator it = contextList.begin() ;

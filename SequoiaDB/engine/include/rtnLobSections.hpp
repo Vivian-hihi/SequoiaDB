@@ -37,7 +37,7 @@
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include "../bson/bson.h"
-#include <map>
+#include "ossMemPool.hpp"
 #include <vector>
 #include <string>
 
@@ -135,7 +135,7 @@ namespace engine
    class _rtnLobSections: public SDBObject
    {
    private:
-      typedef std::map<INT64, _rtnLobSection> LOB_SECTIONS_TYPE ;
+      typedef ossPoolMap<INT64, _rtnLobSection>::Type LOB_SECTIONS_TYPE ;
 
    public:
       _rtnLobSections() ;

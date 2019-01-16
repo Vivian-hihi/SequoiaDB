@@ -53,6 +53,7 @@
 #include "monCB.hpp"
 #include "monEDU.hpp"
 #include "utilUniqueID.hpp"
+#include "ossMemPool.hpp"
 
 #if defined ( SDB_ENGINE )
 #include "dpsLogDef.hpp"
@@ -62,7 +63,6 @@
 #include "pmdTransExecutor.hpp"
 #endif // SDB_ENGINE
 
-#include <set>
 #include <string>
 
 using namespace std ;
@@ -109,10 +109,10 @@ namespace engine
       typedef std::multimap<UINT32,CHAR*>    CATCH_MAP ;
       typedef CATCH_MAP::iterator            CATCH_MAP_IT ;
 
-      typedef std::map<CHAR*,UINT32>         ALLOC_MAP ;
+      typedef ossPoolMap<CHAR*,UINT32>::Type ALLOC_MAP ;
       typedef ALLOC_MAP::iterator            ALLOC_MAP_IT ;
 
-      typedef std::set<INT64>                SET_CONTEXT ;
+      typedef ossPoolSet<INT64>::Type        SET_CONTEXT ;
 
    public:
          /*

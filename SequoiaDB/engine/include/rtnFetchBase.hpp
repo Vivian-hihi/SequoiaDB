@@ -37,7 +37,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "pmdEDU.hpp"
-#include <map>
+#include "ossMemPool.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -134,7 +134,7 @@ namespace engine
    {
       friend class _rtnFetchAssit ;
 
-      typedef std::map< INT32, FETCH_NEW_FUNC >    MAP_FUNCS ;
+      typedef ossPoolMap< INT32, FETCH_NEW_FUNC >::Type  MAP_FUNCS ;
 
       public:
          _rtnFetchBuilder () ;

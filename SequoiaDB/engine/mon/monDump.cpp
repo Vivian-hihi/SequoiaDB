@@ -41,6 +41,7 @@
 #include <map>
 #include "pmd.hpp"
 #include "pmdCB.hpp"
+#include "pmdEDU.hpp"
 #include "pmdEDUMgr.hpp"
 #include "dmsCB.hpp"
 #include "monDump.hpp"
@@ -1754,7 +1755,7 @@ namespace engine
       {
          if ( _dumpCurrent )
          {
-            std::set <SINT64> &contextList = _contextList[ cb->getID() ] ;
+            pmdEDUCB::SET_CONTEXT &contextList = _contextList[ cb->getID() ] ;
             cb->contextCopy( contextList ) ;
          }
          else
@@ -1832,11 +1833,11 @@ namespace engine
       try
       {
          BSONObjBuilder ob ;
-         std::map<UINT64, std::set<SINT64> >::iterator it ;
-         std::set<SINT64>::iterator itSet ;
+         std::map<UINT64, pmdEDUCB::SET_CONTEXT>::iterator it ;
+         pmdEDUCB::SET_CONTEXT::iterator itSet ;
 
          it = _contextList.begin() ;
-         std::set<SINT64> &setCtx = it->second ;
+         pmdEDUCB::SET_CONTEXT &setCtx = it->second ;
 
          /// add system info
          monAppendSystemInfo( ob, _addInfoMask ) ;

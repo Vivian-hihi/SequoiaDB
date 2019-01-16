@@ -189,7 +189,7 @@ namespace engine
          UINT32                     _addInfoMask ;
          BOOLEAN                    _hitEnd ;
 
-         std::map<UINT64, std::set<SINT64> >          _contextList ;
+         std::map<UINT64, pmdEDUCB::SET_CONTEXT >  _contextList ;
          std::map<UINT64, std::set<monContextFull> >  _contextInfoList ;
    } ;
    typedef _monContextFetcher monContextFetcher ;

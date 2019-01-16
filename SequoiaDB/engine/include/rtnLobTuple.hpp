@@ -36,7 +36,7 @@
 #define RTN_LOBTUPLE_HPP
 
 #include "msg.h"
-#include <list>
+#include "ossMemPool.hpp"
 
 namespace engine
 {
@@ -78,7 +78,7 @@ namespace engine
      }
    } ;
 
-   typedef std::list<_rtnLobTuple> RTN_LOB_TUPLES ;
+   typedef ossPoolList<_rtnLobTuple>::Type RTN_LOB_TUPLES ;
 }
 
 #endif
