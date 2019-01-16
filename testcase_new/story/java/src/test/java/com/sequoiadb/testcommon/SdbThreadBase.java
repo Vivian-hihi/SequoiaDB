@@ -2,6 +2,7 @@ package com.sequoiadb.testcommon;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.lang.Thread.State ;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -85,81 +86,93 @@ public abstract class SdbThreadBase implements Runnable {
     /*
      *--------------------------------------------------------------------------
      *
-     *  getBlockingMethod --
-     *   获取当前线程阻塞在哪一个函数调用上
+     *  matchBlockingMethod --
+     *   当前线程是否阻塞在相应的调用上
      *    
      * Parameters:
-     *       无
+     *       className: 类名 (DBCollection.class.getName())
+     *       methodName: 方法名(query ...)
      *
      * Returns:
-     *       如果当前线程执行CL.update()阻塞，则返回update
-     *       如果当前线程执行CL.query()阻塞，则返回query
+     *       如果当前线程执行CL.update(cl.getClass().getName(), "update")阻塞，则返回true
+     *       如果当前线程执行CL.query(cl.getClass().getName(), "query")阻塞，则返回true
+     *       否则返回false 
      *--------------------------------------------------------------------------
      */
-    public String getBlockingMethod(){
+    public boolean matchBlockingMethod(String className, String methodName){
         assert threadList.size() == 1 ;
         
-        final int oneSeonds = 5000 ;
+        final int fiveSeonds = 5000 ;
         final int totalTimes = 3 ;
-        int nullTimes = 0 ;
+        int nonMatchTimes = 0 ;
         int matchTimes = 0 ;
         int alreadyWaitTime = 0 ;
-        String prevMethod = "" ;
+        boolean ret = true ;
         
+        int pos = 0 ;
         do{
-            StackTraceElement[] stackElem = threadList.get( 0 ).getStackTrace() ;
-            try {
-                Thread.sleep( 5 ) ;
-                alreadyWaitTime += 1;
-            } catch ( InterruptedException e ) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-           
-            if ( nullTimes >= totalTimes || alreadyWaitTime >= oneSeonds  ){
-                return "" ;
+            if ( nonMatchTimes >= totalTimes || alreadyWaitTime >= fiveSeonds  ){
+                ret = false ;
+                break ;
             }
             
-            if ( stackElem.length == 0 ) {
-                nullTimes++ ;
+            if ( threadList.get( 0 ).getState() == State.TERMINATED ){
+                ret = false ;
+                break ;
+            }
+            
+            try {
+                Thread.sleep( 5 ) ;
+                alreadyWaitTime += 1 ;
+            } catch ( InterruptedException e ) {
+                e.printStackTrace();
+            }
+            
+            if ( threadList.get( 0 ).getState() == State.NEW ){
                 continue ;
             }
             
-            prevMethod = stackElem[0].getMethodName() ;
-            StackTraceElement[] currentStackElem = threadList.get( 0 ).getStackTrace() ;
-            if ( currentStackElem.length == 0 ){
-                return "" ;
+            StackTraceElement[] stackElem = threadList.get( 0 ).getStackTrace() ;
+            if ( pos != 0 ){
+                stackElem = threadList.get( 0 ).getStackTrace() ;
+                if ( stackElem.length == 0 
+                     || stackElem.length <= pos ){
+                    ret = false ;
+                    break ;
+                }
+                
+                if ( stackElem[pos].getClassName().equals( className ) 
+                        && stackElem[pos].getMethodName().equals( methodName ) ){
+                    ++matchTimes ;
+                }
             }
-            
-            String curMethod  = currentStackElem[0].getMethodName() ;
-            if ( curMethod.equals( prevMethod )){
-                matchTimes++ ;
+            else{
+                for ( pos = 0; pos < stackElem.length; ++pos ){
+                    if ( stackElem[pos].getClassName().equals( className ) 
+                        && stackElem[pos].getMethodName().equals( methodName ) ){
+                        ++matchTimes ;
+                        break ;
+                    }
+                }
+                
+                if ( pos == stackElem.length){
+                    nonMatchTimes++;
+                    pos = 0 ;
+                }
             }
             
             if (  matchTimes >= totalTimes ){
                 break ;
             }
-
-            prevMethod = curMethod ;
+            
         }while(true) ;
         
-        return prevMethod ;
+        return ret ;
     }
 
     public abstract void exec() throws Exception;
     
     public static void main(String[] args){
-        SdbThreadBase t = new SdbThreadBase(){
-
-            @Override
-            public void exec() throws Exception {
-                // TODO Auto-generated method stub
-                Thread.sleep(5000) ;
-            }
-        } ;
         
-        t.start() ;
-        t.getBlockingMethod() ;
-        t.getBlockingMethod() ;
     }
 }
