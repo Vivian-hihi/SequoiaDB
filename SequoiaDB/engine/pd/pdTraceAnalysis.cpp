@@ -469,9 +469,8 @@ INT32 _pdTraceParser::_parseTraceDumpFile( OSSFILE *file,
    CHAR     *pTmpBuf                = NULL ;
    UINT32   dataOffset              = 0 ;
    UINT32   sequenceNum             = 0 ;
-
-   const     pdTraceRecord *record  = NULL ;
-   OSSFILE   fmtFile ;
+   const    pdTraceRecord *record   = NULL ;
+   OSSFILE  fmtFile ;
    pdTraceRecordIndex recIdx ;
 
    pTmpBuf = (CHAR*)SDB_OSS_MALLOC( TRACE_CHUNK_SIZE ) ;

@@ -226,7 +226,7 @@ class _pdTraceParser
       INT32    init( const CHAR *pInputFileName,
                      const CHAR *pOutputFileName,
                      pdTraceFormatType type,
-                     BOOLEAN option ) ;
+                     BOOLEAN useFunctionListFile ) ;
 
       INT32    parse() ;
 

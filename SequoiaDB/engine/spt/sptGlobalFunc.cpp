@@ -301,7 +301,7 @@ JS_MAPPING_END()
             goto error ;
          }
          if ( option.hasField( SPT_FIELD_FUNCTIONLIST )&&
-              Bool == option.getField( SPT_FIELD_FUNCTIONLIST ).type())
+              Bool == option.getField( SPT_FIELD_FUNCTIONLIST ).type() )
          {
             useFunctionListFile = option.getBoolField( SPT_FIELD_FUNCTIONLIST );
          }
