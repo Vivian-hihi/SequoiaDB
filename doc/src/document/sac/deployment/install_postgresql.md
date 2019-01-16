@@ -1,22 +1,24 @@
-创建SequoiaSQL-PostgreSQL服务是指在已经部署了SequoiaSQL-PostgreSQL包的主机中创建一个实例。
+创建 SequoiaSQL-PostgreSQL 服务是指在已经部署了 SequoiaSQL-PostgreSQL 包的主机中创建一个实例。
 
 > **Note:**  
-> 创建SequoiaSQL-PostgreSQL服务需要先进行[部署包](sac/deployment/operation_host/deploy_package.md) 操作。
+> 创建SequoiaSQL-PostgreSQL服务需要先进行部署包操作，[点击查看](sac/deployment/operation_host/deploy_package.md)。
 
-1. 进入部署首页点击添加服务-创建服务，服务类型选择“SequoiaSQL-PostgreSQL”点击确定开始创建服务。
+1. 进入 **部署** 页面。
 
-  ![创建SequoiaSQL-PostgreSQL](sac/deployment/add_oltp.png)
+  ![创建SequoiaSQL-PostgreSQL](sac/deployment/add_pgsql_1.jpg)
 
-2. 进入服务配置页面，页面中填写SequoiaSQL-PostgreSQL的相关配置信息，配置项留空表示使用该项默认值，填写完成后点击下一步开始安装。
+2. 点击 **添加服务 - 创建服务**，服务类型选择 **SequoiaSQL-PostgreSQL**， 点击 **确定** 按钮进入 **配置服务** 页面。
 
-  ![安装SequoiaSQL-PostgreSQL](sac/deployment/config_oltp.png)
+  ![安装SequoiaSQL-PostgreSQL](sac/deployment/add_pgsql_2.jpg)
 
-3. 等待安装完成。
+3. 在 **配置服务** 页面，可以修改 SequoiaSQL-PostgreSQL 的配置，配置项留空表示默认值，点击 **下一步** 按钮开始安装。
 
-  ![安装SequoiaSQL-PostgreSQL](sac/deployment/install_oltp.png)
+  ![安装SequoiaSQL-PostgreSQL](sac/deployment/add_pgsql_3.jpg)
 
-4. 创建SequoiaSQL-PostgreSQL服务完成。
+4. 安装服务完成。
 
-> **Note：**
->
-> SequoiaSQL-PostgreSQL创建完成后，可以通过首页进行与SequoiaDB服务的[关联](sac/deployment/relationship_module.md)及进行[数据操作](sac/postgresql_data/database.md)。
+  ![安装SequoiaSQL-PostgreSQL](sac/deployment/add_pgsql_4.jpg)
+
+> **Note：**  
+> SequoiaSQL-PostgreSQL 服务创建后，可以关联 SequoiaDB 服务，[点击查看](sac/deployment/relationship_module.md)。  
+> 也可以对 SequoiaSQL-PostgreSQL 进行数据操作，[点击查看](sac/postgresql_data/database.md)。

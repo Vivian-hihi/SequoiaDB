@@ -1,12 +1,24 @@
-解绑服务是将选择的服务从SAC中将该服务分离出来，不会卸载该服务。  
-
-1. 打开部署首页，点击删除服务-解绑服务。
-
-   ![解绑服务](sac/deployment/unbind_module_1.jpg)
-
-2. 在解绑服务窗口选择要解绑的服务，点击确定。
-
-   ![卸载服务](sac/deployment/uninstall_module_3.jpg)
+**解绑服务** 是将服务从 SAC 中分离出来，不会卸载该服务。  
 
 > **Note:**  
-> 当选择解绑的服务有关联服务时，将会解绑失败。
+> 如果需要解绑的服务跟其他服务有关联，需要先解除关联。
+
+1. 进入 **部署** 页面。
+
+   ![解绑服务](sac/deployment/remove_module/unbind_1.jpg)
+
+2. 点击 **删除服务 - 解绑服务**。
+
+   ![卸载服务](sac/deployment/remove_module/unbind_2.jpg)
+
+3. 选择要解绑的服务，点击 **确定** 按钮。
+
+   ![卸载服务](sac/deployment/remove_module/unbind_3.jpg)
+
+4. 解绑成功，点击 **确定** 按钮。
+
+   ![卸载服务](sac/deployment/remove_module/unbind_4.jpg)
+
+5. 服务已经不在 SAC 中。
+
+   ![卸载服务](sac/deployment/remove_module/unbind_5.jpg)
