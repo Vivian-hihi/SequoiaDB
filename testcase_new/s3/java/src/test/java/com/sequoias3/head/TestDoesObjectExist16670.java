@@ -47,6 +47,7 @@ public class TestDoesObjectExist16670  extends S3TestBase{
 		s3ClientA.putObject(bucketName, keyName, content);
 		try {
 			s3ClientB.doesObjectExist(bucketName, keyName);
+			Assert.fail("exp fail but found success!");
 		} catch (AmazonS3Exception e) {
 			Assert.assertEquals(e.getStatusCode(), 403);
 		}
