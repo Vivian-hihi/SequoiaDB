@@ -22,7 +22,7 @@ function main()
    var dbOperator = new DBOperator();
    var clName = COMMCLNAME + "_ES_15521";
    var findCond  = {"":{"$Text":{"query":{"match_all":{}}}}};
-   var textIndexName = "a";
+   var textIndexName = "a_15521";
    var selectorCond = { a : "" };
 
    commDropCL( db, COMMCSNAME, clName, true, true );

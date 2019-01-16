@@ -16,7 +16,7 @@ function main()
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
    
    //删除存在的全文索引，删除成功
-   var indexName = "a";
+   var indexName = "a_11994";
    commCreateIndex( dbcl, indexName, {content:"text"});
    commCheckIndex( dbcl, indexName, true );
    dbcl.dropIndex( indexName ); 

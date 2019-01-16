@@ -18,7 +18,7 @@ function main()
    var objs = new Array({a: ["arr1"]}, {a: ["arr1", "arr2"]}, {a: ["arr1", 1]});
    dbcl.insert(objs);
 
-   var textIndexName = "textIndex";
+   var textIndexName = "textIndex_15778";
    dbcl.createIndex(textIndexName, {"a" : "text"});
 
    // check sync to es

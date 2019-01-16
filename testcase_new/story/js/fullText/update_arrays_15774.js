@@ -25,7 +25,7 @@ function main()
                         {a: ["arr1", 1]});
    dbcl.insert(objs);
 
-   var textIndexName = "textIndex";
+   var textIndexName = "textIndex_15774";
    dbcl.createIndex(textIndexName, {"a" : "text"});
 
    var dbOpr = new DBOperator();

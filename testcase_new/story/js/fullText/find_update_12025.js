@@ -15,7 +15,7 @@ function main()
    var clName = COMMCLNAME + "_ES_12025";
    var findCond = {"":{"$Text":{"query":{"match_all":{}}}}};
    var selectorCond = { a : "" };
-   var textIndexName = "a";
+   var textIndexName = "a_12025";
 	
    commDropCL( db, COMMCSNAME, clName, true, true );
 	

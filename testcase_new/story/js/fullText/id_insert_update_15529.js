@@ -17,7 +17,7 @@ function main()
    var queryCond = '{ "query" : { "match_all" : {} }, "size" : "20" }';
    var findCond  = {"":{"$Text":{"query":{"match_all":{}}}}};
    var selectorCond = { a : "" };
-   var textIndexName = "a";
+   var textIndexName = "a_15529";
    
    commDropCL( db, COMMCSNAME, clName, true, true );
 

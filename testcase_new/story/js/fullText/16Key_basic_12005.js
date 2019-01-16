@@ -13,7 +13,7 @@ function main()
    
    var clName = COMMCLNAME + "_ES_12005_2";
    var clFullName = COMMCSNAME + "." + clName
-   var indexName = "a";
+   var indexName = "a_12005";
    var doc = [{No:1,a1:"text",a2:"text",a3:"text",a4:"text",a5:"text",a6:"text",a7:"text",a8:"text",a9:"text",a10:"text",a11:"text",a12:"text",a13:"text",a14:"text",a15:"text",a16:"text"}];
    
    commDropCL( db, COMMCSNAME, clName);

@@ -21,7 +21,7 @@ function main()
    
    //创建range分区表，并创建全文索引
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingType : "range", ShardingKey : {a : 1}, Group : groups[0][0]["GroupName"]} );
-   commCreateIndex( dbcl, "fullIndex", {a : "text"});
+   commCreateIndex( dbcl, "fullIndex_14518", {a : "text"});
    
    //插入包含全文索引字段的记录
    var records = new Array();
@@ -41,9 +41,9 @@ function main()
       return ;
    }
    
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 10000);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_14518", 10000);
    dbcl.split(groups[0][0]["GroupName"], groups[1][0]["GroupName"], {a : "c"}, {a : "g"});
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 10000);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_14518", 10000);
    
    //查询发送到单组
    var dbOperator = new DBOperator();

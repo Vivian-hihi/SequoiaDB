@@ -12,7 +12,7 @@ function main()
    }
    
    var clName = COMMCLNAME + "_ES_12011";
-   var textIndexName = "a";
+   var textIndexName = "a_12011";
    
    commDropCL( db, COMMCSNAME, clName, true, true );
    

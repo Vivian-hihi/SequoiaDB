@@ -26,7 +26,7 @@ function main()
    mainCL.attachCL(csName + "." + clName + "_4_2", {LowBound : {content : "x"}, UpBound : {content : "z"}});
    
    //在不同的集合空间，不同的集合创建全文索引
-   var indexName = "a"
+   var indexName = "a_14368"
    commCreateIndex( dbcl, indexName, {content:"text"});
    commCreateIndex( dbcl1, indexName, {content:"text"});
    commCreateIndex( dbcl2, indexName, {content:"text"});

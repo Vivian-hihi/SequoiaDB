@@ -21,7 +21,7 @@ function main()
    
    //创建range分区表，并创建全文索引
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingType : "hash", ShardingKey : {a : 1}, Group : groups[0][0]["GroupName"]} );
-   commCreateIndex( dbcl, "fullIndex", {a : "text"});
+   commCreateIndex( dbcl, "fullIndex_14517", {a : "text"});
    
    //插入包含全文索引字段的记录
    var records = new Array();
@@ -31,7 +31,7 @@ function main()
    }
    dbcl.insert(records);
    
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 100);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_14517", 100);
    dbcl.split(groups[0][0]["GroupName"], groups[1][0]["GroupName"], 50);
 
    var dbOperator = new DBOperator();
@@ -49,7 +49,7 @@ function main()
       }
    }
    
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 100);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_14517", 100);
          
    //查询发送到单组
    var actResult = dbOperator.findFromCL(dbcl, {"":{$Text:{"query":{"bool":{"should":[{"match":{"a":result[0]["a"]}},{"match":{"a" : result[1]["a"]}}]}}}}}, null, {"_id" : 1});

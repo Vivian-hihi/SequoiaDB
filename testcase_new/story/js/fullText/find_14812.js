@@ -14,7 +14,7 @@ function main()
 
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
-   var textIndexName = "textIndex";
+   var textIndexName = "textIndex_14812";
    dbcl.createIndex(textIndexName, {"a" : "text"});
   
    // insert record length < 1000 and > 1000

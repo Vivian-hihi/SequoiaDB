@@ -16,7 +16,7 @@ function main()
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
    
    //索引名长度为1时，全文索引创建成功
-   var indexName = "a"
+   var indexName = "a_14369"
    dbcl.createIndex(indexName, {content : "text"});
    commCheckIndex( dbcl, indexName, true );
    println("===create index success===");

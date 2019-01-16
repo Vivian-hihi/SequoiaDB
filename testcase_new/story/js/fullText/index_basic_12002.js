@@ -13,7 +13,7 @@ function main()
    
    var clName = COMMCLNAME + "_ES_12002";
    var clFullName = COMMCSNAME + "." + clName
-   var textIndexName = "fullIndex";
+   var textIndexName = "fullIndex_12002";
    var commIndexName = "commIndex";
    
    commDropCL( db, COMMCSNAME, clName);

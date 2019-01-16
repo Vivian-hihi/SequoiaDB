@@ -25,12 +25,12 @@ function main()
    //指定集合的replSize、group、AutoIndexId、压缩为非默认值
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {ReplSize : 0, Group : arrayGroup[0], AutoIndexId : false, Compressed : true, CompressionType : "lzw"} );
    
-   commCreateIndex( dbcl, "a", {content:"text"});
-   commCheckIndex( dbcl, "a", true );
+   commCreateIndex( dbcl, "a_11979", {content:"text"});
+   commCheckIndex( dbcl, "a_11979", true );
    
    //固定集合属性为默认值(与原集合属性无关)
    var dbOperator = new DBOperator();
-   var cappedCLName = dbOperator.getCappedCLName( dbcl, "a" );
+   var cappedCLName = dbOperator.getCappedCLName( dbcl, "a_11979" );
    var cappedDB = db.getRG(arrayGroup[0]).getMaster().connect();
    var cappedAttr = cappedDB.snapshot(4, {Name : cappedCLName + "." + cappedCLName});
    var cappedAttr = cappedAttr.next().toObj();

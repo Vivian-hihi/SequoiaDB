@@ -17,9 +17,9 @@ function main()
    
    var a = new Array(1024*1024*16 - 5*1024).join("a");
    dbcl.insert({a : a});
-   dbcl.createIndex( "a", {a : "text"});
+   dbcl.createIndex( "a_11984", {a : "text"});
    
-   checkFullSyncToES(COMMCSNAME, clName, "a", 1);
+   checkFullSyncToES(COMMCSNAME, clName, "a_11984", 1);
    
    var dbOperator = new DBOperator();
    var actResult = dbOperator.findFromCL( dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {a : ""});

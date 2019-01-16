@@ -16,7 +16,7 @@ function main()
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
    
    //创建索引类型非法的全文索引
-   var indexName = "a";
+   var indexName = "a_11993";
    try{
       dbcl.createIndex(indexName, {content:"int"});
       throw "CREATEINDEXERR";

@@ -17,7 +17,7 @@ function main()
    // insert before create text index
    dbcl.insert({a: ["arr1"], b: ["arr1", "arr2"], c: "string1", d: -1});
 
-   var textIndexName = "textIndex";
+   var textIndexName = "textIndex_15538";
    dbcl.createIndex(textIndexName, {"a" : "text", "b" : "text", "c" : "text", "d" : "text"});
 
    var dbOpr = new DBOperator();

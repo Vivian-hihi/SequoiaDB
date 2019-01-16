@@ -13,7 +13,7 @@ function main()
    var clName = COMMCLNAME + "_ES_14370";
    commDropCL(db, COMMCSNAME, clName, true, true);
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
-   dbcl.createIndex( "fullIndex", {content : "text"});
+   dbcl.createIndex( "fullIndex_14370", {content : "text"});
    
    var indexes = dbcl.listIndexes();
    var actIndexes = new Array();
@@ -25,7 +25,7 @@ function main()
    
    //获取预期的索引结果
    var dbOperator = new DBOperator();
-   var cappedCLName = dbOperator.getCappedCLName( dbcl, "fullIndex" );
+   var cappedCLName = dbOperator.getCappedCLName( dbcl, "fullIndex_14370" );
    var expIndexes = getExpectIndexes(cappedCLName);
    
    expIndexes.sort(compare("Type"));
@@ -33,7 +33,7 @@ function main()
    checkResult(expIndexes, actIndexes);
    
    //get全文索引
-   var index = dbcl.getIndex("fullIndex");
+   var index = dbcl.getIndex("fullIndex_14370");
    var actIndexes = new Array();
    actIndexes.push(index.toObj());
    actIndexes = getActualIndexes(actIndexes);
@@ -47,7 +47,7 @@ function main()
 
 function getExpectIndexes(cappedCLName){
    var arrayIndexes = new Array();
-   var index = { "IndexDef": { "name": "fullIndex", "key": { "content": "text" }, "v": 0, "unique": false, "dropDups": false, "enforced": false }, "IndexFlag": "Normal", "Type": "Text", "ExtDataName": cappedCLName };
+   var index = { "IndexDef": { "name": "fullIndex_14370", "key": { "content": "text" }, "v": 0, "unique": false, "dropDups": false, "enforced": false }, "IndexFlag": "Normal", "Type": "Text", "ExtDataName": cappedCLName };
    arrayIndexes.push(index);
    var index = { "IndexDef": { "name": "$id", "key": { "_id": 1 }, "v": 0, "unique": true, "dropDups": false, "enforced": true }, "IndexFlag": "Normal", "Type": "Positive" };
    arrayIndexes.push(index);

@@ -19,7 +19,7 @@ function main()
    commDropCL(db, COMMCSNAME, clName, true, true);
    
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingType : "hash", ShardingKey : {a : 1}, Group : groups[0][0]["GroupName"]} );
-   commCreateIndex( dbcl, "fullIndex", {a : "text", b : "text"});
+   commCreateIndex( dbcl, "fullIndex_12047", {a : "text", b : "text"});
    
    var records = [];
    for (var i = 0; i < 10000 ; i++){
@@ -34,9 +34,9 @@ function main()
       return ;
    }
    
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 10000);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12047", 10000);
    dbcl.split(groups[0][0]["GroupName"], groups[1][0]["GroupName"], {Partion : 1}, {Partion : 2048});
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 10000);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12047", 10000);
    
    var dbOperator = new DBOperator();
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});

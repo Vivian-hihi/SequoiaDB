@@ -13,7 +13,7 @@ function main()
    
    var clName = COMMCLNAME + "_ES_12004";
    var clFullName = COMMCSNAME + "." + clName
-   var indexName = "a";
+   var indexName = "a_12004";
    var doc = [{a:"string1"},
               {a:"string2",b:1},
               {b:2}];

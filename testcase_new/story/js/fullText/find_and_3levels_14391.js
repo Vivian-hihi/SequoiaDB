@@ -14,7 +14,7 @@ function main()
 
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
    
-   var textIndexName = "textIndex";   
+   var textIndexName = "textIndex_14391";   
    dbcl.createIndex(textIndexName, {"a" : "text"});
    
    // insert

@@ -21,8 +21,8 @@ function main()
    
    //创建切分集合，并创建普通索引及全文索引
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingType : "hash", ShardingKey : {a : 1}} );
-   commCreateIndex( dbcl, "fullIndex", {a : "text"});
-   commCreateIndex( dbcl, "commIndex", {b : 1});
+   commCreateIndex( dbcl, "fullIndex_12074", {a : "text"});
+   commCreateIndex( dbcl, "commIndex_12074", {b : 1});
    
    //插入lob、记录(包含索引及全文索引的记录) 
    var records = new Array();
@@ -35,7 +35,7 @@ function main()
    lobGenerateFile( testFile ) ;
    dbcl.putLob(testFile);
    
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 100);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12074", 100);
    
    //删除集合，检查结果
    var commCS = db.getCS(COMMCSNAME);

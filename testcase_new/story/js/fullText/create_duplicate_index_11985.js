@@ -16,7 +16,7 @@ function main()
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
    
    //创建索引名已存在的全文索引
-   var indexName = "a";
+   var indexName = "a_11985";
    dbcl.createIndex( indexName, {about : 1});
    commCheckIndex( dbcl, indexName, true );
    try{
@@ -30,10 +30,10 @@ function main()
    }
    
    //在已存在全文索引定义的集合中，再次创建全文索引
-   dbcl.createIndex( "b", {content:"text"});
-   commCheckIndex( dbcl, "b", true );
+   dbcl.createIndex( "b_11985", {content:"text"});
+   commCheckIndex( dbcl, "b_11985", true );
    try{
-      dbcl.createIndex( "c", {content:"text"});
+      dbcl.createIndex( "c_11985", {content:"text"});
       throw "CREATEINDEXERR" ;
    }
    catch( e ){

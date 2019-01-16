@@ -20,7 +20,7 @@ function main()
    commDropCL(db, COMMCSNAME, clName, true, true);
    
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {Group : groups[0][0]["GroupName"]} );
-   commCreateIndex( dbcl, "fullIndex", {b : "text"});
+   commCreateIndex( dbcl, "fullIndex_11991", {b : "text"});
    
    //插入大量包含全文索引字段的数据
    var records = new Array();
@@ -35,17 +35,17 @@ function main()
       println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
       return ;
    }
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 10000);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_11991", 10000);
    
    //alter为range切分表，切分键覆盖：非全文索引字段
    dbcl.alter({ShardingType : "range", ShardingKey : {a : 1}})
    dbcl.split(groups[0][0]["GroupName"], groups[1][0]["GroupName"], 50);
    
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 10000);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_11991", 10000);
    var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
    var expResult = dbOperator.findFromCL (dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {b : ""});
-   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex");
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_11991");
    var actResult = new Array();
    for (var i in esIndexNames){
       var result = esOperator.findFromES (esIndexNames[i], '{"query" : {"match_all" : {}}, "size" : 10000}');
@@ -58,7 +58,7 @@ function main()
    //alter为range切分表，切分键覆盖：全文索引字段
    commDropCL(db, COMMCSNAME, clName, true, true);
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {Group : groups[0][0]["GroupName"]} );
-   commCreateIndex( dbcl, "fullIndex", {b : "text"});
+   commCreateIndex( dbcl, "fullIndex_11991", {b : "text"});
    
    //插入大量包含全文索引字段的数据
    var records = new Array();
@@ -73,16 +73,16 @@ function main()
       println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
       return ;
    }
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 10000);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_11991", 10000);
    
    dbcl.alter({ShardingType : "range", ShardingKey : {b : 1}})
    dbcl.split(groups[0][0]["GroupName"], groups[1][0]["GroupName"], 50);
    
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 10000);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_11991", 10000);
    var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
    var expResult = dbOperator.findFromCL (dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {b : ""});
-   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex");
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_11991");
    var actResult = new Array();
    for (var i in esIndexNames){
       var result = esOperator.findFromES (esIndexNames[i], '{"query" : {"match_all" : {}}, "size" : 10000}');

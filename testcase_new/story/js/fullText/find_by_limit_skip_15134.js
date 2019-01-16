@@ -19,7 +19,7 @@ function main()
    commDropCL(db, COMMCSNAME, clName, true, true);
    
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingType : "hash", ShardingKey : {a : 1}, Group : groups[0][0]["GroupName"]} );
-   commCreateIndex( dbcl, "fullIndex", {a : "text"});
+   commCreateIndex( dbcl, "fullIndex_15134", {a : "text"});
    
    dbcl.split(groups[0][0]["GroupName"], groups[1][0]["GroupName"], {Partion : 1}, {Partion : 2048});
    
@@ -36,7 +36,7 @@ function main()
       return ;
    }
    
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex", 30000);
+   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_15134", 30000);
    
    //skip/limit/sort组合查询结果覆盖多组返回
    var dbOperator = new DBOperator();

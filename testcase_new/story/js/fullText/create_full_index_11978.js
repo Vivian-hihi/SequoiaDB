@@ -18,12 +18,12 @@ function main()
    commCreateCS( db, csName, false, {PageSize : 4096, LobPageSize : 4096} );
    var dbcl = commCreateCL( db, csName, clName );
    
-   commCreateIndex( dbcl, "a", {content:"text"});
-   commCheckIndex( dbcl, "a", true );
+   commCreateIndex( dbcl, "a_11978", {content:"text"});
+   commCheckIndex( dbcl, "a_11978", true );
    
    //固定集合属性为默认值(与原集合属性无关)
    var dbOperator = new DBOperator();
-   var cappedCLName = dbOperator.getCappedCLName( dbcl, "a" );
+   var cappedCLName = dbOperator.getCappedCLName( dbcl, "a_11978" );
    var group = commGetCLGroups( db, csName + "." + clName );
    
    var cappedDB = db.getRG(group[0]).getMaster().connect();

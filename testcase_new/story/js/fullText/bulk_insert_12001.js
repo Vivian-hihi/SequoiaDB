@@ -13,7 +13,7 @@ function main()
    
    var clName = COMMCLNAME + "_ES_12001";
    var clFullName = COMMCSNAME + "." + clName
-   var indexName = "a";
+   var indexName = "a_12001";
    
    commDropCL( db, COMMCSNAME, clName);
    var dbcl = commCreateCL( db, COMMCSNAME, clName);

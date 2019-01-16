@@ -17,7 +17,7 @@ function main(){
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
    var fullIndex = "fullIndex_ES_12073";
    commCreateIndex(dbcl, fullIndex, {content : "text"});
-   commCreateIndex(dbcl, "commIndex", {content : 1});
+   commCreateIndex(dbcl, "commIndex_12073", {content : 1});
    
    //插入lob、记录(包含索引及全文索引的记录) 
    var dataGenerator = new commDataGenerator();
