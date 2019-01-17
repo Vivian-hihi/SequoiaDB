@@ -234,7 +234,8 @@ namespace engine
          _mapResult[ eduID ] = result ;
       }
 
-      std::map<EDUID, _rtnBaseJob*>::iterator it = _mapJobs.find ( eduID ) ;
+      ossPoolMap<EDUID, _rtnBaseJob*>::Type::iterator it =
+         _mapJobs.find ( eduID ) ;
       if ( it == _mapJobs.end() )
       {
          rc = SDB_RTN_JOB_NOT_EXIST ;
