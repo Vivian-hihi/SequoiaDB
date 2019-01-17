@@ -2289,9 +2289,20 @@ namespace engine
       // which cb is NULL
       if ( cb && dpscb )
       {
-         rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to lock the collection, rc: %d",
-                      rc ) ;
+         dpsTransRetInfo lockConflict ;
+         rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID(),
+                                       NULL, &lockConflict ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to lock the collection, rc: %d"OSS_NEWLINE
+                      "Conflict( representative ):"OSS_NEWLINE
+                      "   EDUID:  %llu"OSS_NEWLINE
+                      "   LockId: %s"OSS_NEWLINE
+                      "   Mode:   %s"OSS_NEWLINE,
+                      rc,
+                      lockConflict._eduID,
+                      lockConflict._lockID.toString().c_str(),
+                      lockModeToString( lockConflict._lockType ) ) ;
+
          isTransLocked = TRUE ;
       }
 
@@ -2478,9 +2489,20 @@ namespace engine
       // trans lock
       if ( cb && dpscb )
       {
-         rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to lock the collection, rc: %d",
-                      rc ) ;
+         dpsTransRetInfo lockConflict ;
+         rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID(),
+                                       NULL, &lockConflict ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to lock the collection, rc: %d"OSS_NEWLINE
+                      "Conflict( representative ):"OSS_NEWLINE
+                      "   EDUID:  %llu"OSS_NEWLINE
+                      "   LockId: %s"OSS_NEWLINE
+                      "   Mode:   %s"OSS_NEWLINE,
+                      rc,
+                      lockConflict._eduID,
+                      lockConflict._lockID.toString().c_str(),
+                      lockModeToString( lockConflict._lockType ) ) ;
+
          isTransLocked = TRUE ;
       }
 
@@ -2782,9 +2804,20 @@ namespace engine
 
       if ( cb && dpscb )
       {
-         rc = pTransCB->transLockTryX( cb, _logicalCSID, mbID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to lock the collection, rc: %d",
-                      rc ) ;
+         dpsTransRetInfo lockConflict ;
+         rc = pTransCB->transLockTryX( cb, _logicalCSID, mbID,
+                                       NULL, &lockConflict ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to lock the collection, rc: %d"OSS_NEWLINE
+                      "Conflict( representative ):"OSS_NEWLINE
+                      "   EDUID:  %llu"OSS_NEWLINE
+                      "   LockId: %s"OSS_NEWLINE
+                      "   Mode:   %s"OSS_NEWLINE,
+                      rc,
+                      lockConflict._eduID,
+                      lockConflict._lockID.toString().c_str(),
+                      lockModeToString( lockConflict._lockType ) ) ;
+
          isTransLocked = TRUE ;
       }
 
@@ -3084,11 +3117,21 @@ namespace engine
 
          if ( dpscb )
          {
+            dpsTransRetInfo lockConflict ;
             rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID(),
-                                          &foundRID ) ;
+                                          &foundRID, &lockConflict ) ;
             SDB_ASSERT( SDB_OK == rc, "Failed to get record-X-LOCK" );
             PD_RC_CHECK( rc, PDERROR, "Failed to insert the record, get "
-                        "transaction-X-lock of record failed, rc: %d", rc );
+                        "transaction-X-lock of record failed, rc: %d"OSS_NEWLINE
+                        "Conflict( representative ):"OSS_NEWLINE
+                        "   EDUID:  %llu"OSS_NEWLINE
+                        "   LockId: %s"OSS_NEWLINE
+                        "   Mode:   %s"OSS_NEWLINE,
+                        rc,
+                        lockConflict._eduID,
+                        lockConflict._lockID.toString().c_str(),
+                        lockModeToString( lockConflict._lockType ) ) ;
+
             isTransLocked = TRUE ;
          }
          // insert to extent
