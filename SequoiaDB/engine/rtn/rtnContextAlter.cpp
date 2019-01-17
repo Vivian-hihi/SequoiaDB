@@ -365,7 +365,7 @@ namespace engine
       if ( NULL != getDPSCB() )
       {
          const CHAR * collectionSpace = _alterJob->getObjectName() ;
-
+         dpsTransRetInfo lockConflict ;
          dmsStorageUnitID suID = DMS_INVALID_CS ;
          UINT32 logicalCSID = DMS_INVALID_LOGICCSID ;
          dmsStorageUnit * su = NULL ;
@@ -378,9 +378,19 @@ namespace engine
          logicalCSID = su->LogicalCSID() ;
          _dmsCB->suUnlock( suID ) ;
 
-         rc = _transCB->transLockTryX( cb, logicalCSID ) ;
+         rc = _transCB->transLockTryX( cb, logicalCSID, DMS_INVALID_MBID,
+                                       NULL, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get transaction-lock of "
-                      "collection space [%s], rc: %d", collectionSpace, rc ) ;
+                      "collection space [%s], rc: %d"OSS_NEWLINE
+                      "Conflict( representative ):"OSS_NEWLINE
+                      "   EDUID:  %llu"OSS_NEWLINE
+                      "   LockId: %s"OSS_NEWLINE
+                      "   Mode:   %s"OSS_NEWLINE,
+                      collectionSpace, rc,
+                      lockConflict._eduID,
+                      lockConflict._lockID.toString().c_str(),
+                      lockModeToString( lockConflict._lockType ) ) ;
+
          _logicalCSID = logicalCSID ;
       }
 
@@ -678,11 +688,22 @@ namespace engine
 
       if ( NULL != getDPSCB() && _transCB->isTransOn() )
       {
+         dpsTransRetInfo lockConflict ;
          _releaseTransaction( cb ) ;
 
-         rc = _transCB->transLockTryX( cb, _su->LogicalCSID(), _mbContext->mbID() ) ;
+         rc = _transCB->transLockTryX( cb, _su->LogicalCSID(),
+                                       _mbContext->mbID(),
+                                       NULL, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get transaction-lock of "
-                      "collection [%s], rc: %d", collection, rc ) ;
+                      "collection [%s], rc: %d"OSS_NEWLINE
+                      "Conflict( representative ):"OSS_NEWLINE
+                      "   EDUID:  %llu"OSS_NEWLINE
+                      "   LockId: %s"OSS_NEWLINE
+                      "   Mode:   %s"OSS_NEWLINE,
+                      collection, rc,
+                      lockConflict._eduID,
+                      lockConflict._lockID.toString().c_str(),
+                      lockModeToString( lockConflict._lockType ) ) ;
 
          _logicalCSID = _su->LogicalCSID() ;
          _mbID = _mbContext->mbID() ;
