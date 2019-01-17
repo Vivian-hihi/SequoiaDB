@@ -10,7 +10,9 @@ import java.util.List;
 public abstract class SdbThreadBase implements Runnable {
     private List<Throwable> exceptionList = Collections.synchronizedList(new ArrayList<Throwable>());
     private List<Thread> threadList = new ArrayList<>();
-
+    private Integer sync = new Integer(0) ;
+    private Object result = null ;
+    
     public void start() {
         start(1);
     }
@@ -23,6 +25,53 @@ public abstract class SdbThreadBase implements Runnable {
                 t.start();
             }
         }
+    }
+    
+    /*
+     *--------------------------------------------------------------------------
+     *
+     *  getExecResult --
+     *   获取线程的执行结果，只适应启动一个线程的情况
+     *   必须在线程结束前通过setExecResult进行设置
+     *   如果线程没有开始或者已经结束调用直接返回，否则会阻塞到结果被设置
+     * Parameters:
+     *
+     * Returns:
+     *       结果对象实例，如果是一个DBCursor，返回后通过
+     *                 Object ret = getExecResult() ;
+     *                 if ( ret instanceof DBCursor){
+     *                    DBCursor cursor = (DBCursor)ret;
+     *                 }
+     *--------------------------------------------------------------------------
+     */
+    public Object getExecResult() throws InterruptedException{
+        assert this.threadList.size() == 1 ;
+        if ( this.threadList.get( 0 ).getState() == State.NEW ||
+             this.threadList.get( 0 ).getState() == State.TERMINATED ){
+            return this.result ;
+        }
+        
+        sync.wait() ;
+        return this.result ;
+    }
+    
+    /*
+     *--------------------------------------------------------------------------
+     *
+     *  setExecResult --
+     *   设置线程的执行结果，只适合启单个线程的情况
+     *    
+     * Parameters:
+     *       result: Object 可以是任意对象类型
+     *
+     * Returns:
+     *       void 
+     *--------------------------------------------------------------------------
+     */
+    public void setExecResult(Object result){
+        assert this.threadList.size() == 1 ;
+        this.result = result ;
+        sync.notifyAll() ;
     }
 
     // 返回结果集
