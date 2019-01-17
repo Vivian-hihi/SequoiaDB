@@ -1125,7 +1125,7 @@ namespace engine
       pmdEDUCB::SET_CONTEXT contextList ;
       cb->contextCopy( contextList ) ;
 
-      std::set<SINT64>::iterator it = contextList.begin() ;
+      pmdEDUCB::SET_CONTEXT::iterator it = contextList.begin() ;
       while ( it != contextList.end() )
       {
          SINT64 contextID = *it ;
