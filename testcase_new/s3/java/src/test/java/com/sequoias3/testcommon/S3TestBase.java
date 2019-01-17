@@ -134,27 +134,6 @@ public class S3TestBase {
     public static void createCSCLAndStartS3() {
         try{
             String sdbFullName = installPath + "/bin/sdb";
-            System.out.println("begin exec createCSCLexample.js");
-            String[] strCmd = new String[5];
-            strCmd[0] = sdbFullName;
-            strCmd[1] = "-f";
-            strCmd[2] = installPath+"/tools/sequoias3/createCSCLexample.js";
-            strCmd[3] = "-e";
-            strCmd[4] = "var COORDSVCNAME='" + serviceName + "'";
-            System.out.println( "exec cmd: " + Arrays.toString( strCmd ) );
-            Process process = Runtime.getRuntime().exec( strCmd );
-         
-            BufferedReader input = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
-            String line = "";
-            while( (line = input.readLine()) != null ){
-                System.out.println(line);
-            }
-         
-            int exitValue = process.waitFor();
-            if( 0 != exitValue ){
-                Assert.fail( "fail to exec createCSCLexample.js, return code=" + exitValue );
-            }
-            System.out.println("finish exec createCSCLexample.js");
             //更新properties
             System.out.println("begin update application.properties");
             Sequoiadb localdb = null;
@@ -185,7 +164,7 @@ public class S3TestBase {
                 File file = new File(installPath+"/tools/sequoias3/config/logback.xml" );
                 BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
                 CharArrayWriter caw = new CharArrayWriter();
-                line = null;
+                String line = null;
                 while((line=br.readLine()) != null) {
                     line = line.replaceAll("INFO", "DEBUG");
                     caw.write(line);
@@ -210,9 +189,9 @@ public class S3TestBase {
             cmd[0] = installPath+"/tools/sequoias3/sequoias3.sh";
             cmd[1] = "start";
             System.out.println( "exec cmd: " + Arrays.toString( cmd ) );
-            process = Runtime.getRuntime().exec( cmd );
-            input = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
-            exitValue = process.waitFor();
+            Process process = Runtime.getRuntime().exec( cmd );
+            BufferedReader input = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
+            int exitValue = process.waitFor();
             if( 0 != exitValue ){
                 Assert.fail( "fail to start s3, return code=" + exitValue );
             }  
