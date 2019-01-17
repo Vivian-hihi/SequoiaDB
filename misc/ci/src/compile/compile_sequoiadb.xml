@@ -615,7 +615,7 @@
       </copy>
       
       <copy todir="${release_db_dir}/tools/sequoias3" >
-         <fileset dir="${srccode_dir}/SequoiaDB/engine/tools/sequoias3" includes="config/**/*,sequoias3.sh,README.txt,createCSCLexample.js" />
+         <fileset dir="${srccode_dir}/SequoiaDB/engine/tools/sequoias3" includes="config/**/*,sequoias3.sh,README.txt" />
       </copy>
       
       <chmod file="${release_db_dir}/tools/sequoias3/sequoias3.sh" perm="u+x" />
