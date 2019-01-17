@@ -77,7 +77,7 @@ public class ObjectServiceImpl implements ObjectService {
         }
 
         //check meta length
-        if (xMeta.toString().length() > RestParamDefine.X_AMZ_META_LENGTH){
+        if (getXMetaLength(xMeta) > RestParamDefine.X_AMZ_META_LENGTH){
             throw new S3ServerException(S3Error.OBJECT_METADATA_TOO_LARGE,
                     "metadata headers exceed the maximum. xMeta:"+xMeta.toString());
         }
@@ -1419,6 +1419,25 @@ public class ObjectServiceImpl implements ObjectService {
 
         long readLength  = range.getEnd() - range.getStart() + 1;
         range.setContentLength(readLength);
+    }
+
+    private int getXMetaLength(Map<String, String> xMeta){
+        if (xMeta == null){
+            return 0;
+        }
+
+        int length = 0;
+        int prefixLength = RestParamDefine.PutObjectHeader.X_AMZ_META_PREFIX.length();
+        for (Map.Entry<String, String> entry : xMeta.entrySet()){
+            String headerName = entry.getKey();
+            String headerValue = entry.getValue();
+            if(headerName.startsWith(RestParamDefine.PutObjectHeader.X_AMZ_META_PREFIX)){
+                length += (headerName.length()-prefixLength);
+                length += headerValue.length();
+            }
+        }
+
+        return length;
     }
 
     private long getSecondTime(long millionSecond){
