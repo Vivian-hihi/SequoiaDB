@@ -51,7 +51,9 @@ public abstract class SdbThreadBase implements Runnable {
             return this.result ;
         }
         
-        sync.wait() ;
+        synchronized( sync ){
+            sync.wait();
+        }
         return this.result ;
     }
     
@@ -71,7 +73,9 @@ public abstract class SdbThreadBase implements Runnable {
     public void setExecResult(Object result){
         assert this.threadList.size() == 1 ;
         this.result = result ;
-        sync.notifyAll() ;
+        synchronized( sync ){
+            sync.notifyAll();
+        }
     }
 
     // 返回结果集
