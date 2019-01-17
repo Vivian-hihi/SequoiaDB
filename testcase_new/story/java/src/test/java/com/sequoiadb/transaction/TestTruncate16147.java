@@ -15,7 +15,6 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.crud.truncate.TruncateUtils;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -26,16 +25,11 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @Date 2018-09-18
  * @Version 1.00
  */
-public class TestTruncate16147 extends SdbConfTestBase {
+public class TestTruncate16147 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl_16147";
     private boolean runSuccess = false;
     
-    @Override
-    protected void setNodeConf(){
-        dataConf.put("transactionon", true);
-        stdalnConf.put("transactionon", true);
-    }
     
     @BeforeClass
     public void setUp() {

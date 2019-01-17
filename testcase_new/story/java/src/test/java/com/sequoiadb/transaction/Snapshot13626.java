@@ -12,7 +12,6 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -22,17 +21,11 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @version 1.00
  */
 
-public class Snapshot13626 extends SdbConfTestBase {
+public class Snapshot13626 extends SdbTestBase {
 	
 	private String clName = "Snapshot13626";
 	private Sequoiadb sdb = null;
 	private String master = null;
-	
-	@Override
-    protected void setNodeConf(){
-        dataConf.put("transactionon", true);
-        stdalnConf.put("transactionon", true);
-    }
 	
 	@BeforeClass
 	public void setUp(){

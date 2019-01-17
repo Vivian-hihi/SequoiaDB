@@ -14,7 +14,6 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.rename.RenameUtil;
 import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -23,7 +22,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @author luweikang
  * @date 2018年10月17日
  */
-public class RenameCS_16104 extends SdbConfTestBase{
+public class RenameCS_16104 extends SdbTestBase{
     
     private String csName = "renameCS_16104";
     private String newCSName= "renameCS_16104_new";
@@ -31,12 +30,6 @@ public class RenameCS_16104 extends SdbConfTestBase{
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private int recordNum = 1000;
-    
-    @Override
-    protected void setNodeConf(){
-        dataConf.put("transactionon", true);
-        stdalnConf.put("transactionon", true);
-    }
     
     @BeforeClass
     public void setUp(){
