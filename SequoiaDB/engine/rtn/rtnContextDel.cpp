@@ -259,6 +259,7 @@ namespace engine
          dmsStorageUnitID suID = DMS_INVALID_CS;
          UINT32 logicCSID = DMS_INVALID_LOGICCSID;
          dmsStorageUnit *su = NULL;
+         dpsTransRetInfo lockConflict ;
          UINT32 length = ossStrlen ( pCollectionName );
          PD_CHECK( (length > 0 && length <= DMS_SU_NAME_SZ), SDB_INVALIDARG,
                    error, PDERROR, "Invalid length of collectionspace name:%s",
@@ -269,10 +270,19 @@ namespace engine
                      pCollectionName, rc );
          logicCSID = su->LogicalCSID();
          _pDmsCB->suUnlock ( suID ) ;
-         rc = _pTransCB->transLockTryX( cb, logicCSID ) ;
+         rc = _pTransCB->transLockTryX( cb, logicCSID, DMS_INVALID_MBID,
+                                        NULL, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR,
-                      "Get transaction-lock of CS(%s) failed(rc=%d)",
-                      pCollectionName, rc ) ;
+                      "Get transaction-lock of CS(%s) failed(rc=%d)"OSS_NEWLINE
+                      "Conflict( representative ):"OSS_NEWLINE
+                      "   EDUID:  %llu"OSS_NEWLINE
+                      "   LockId: %s"OSS_NEWLINE
+                      "   Mode:   %s"OSS_NEWLINE,
+                      pCollectionName, rc,
+                      lockConflict._eduID,
+                      lockConflict._lockID.toString().c_str(),
+                      lockModeToString( lockConflict._lockType ) ) ;
+
          _logicCSID = logicCSID ;
       }
    done:
@@ -356,16 +366,27 @@ namespace engine
       // lock collection
       if ( getDPSCB() )
       {
+         dpsTransRetInfo lockConflict ;
          rc = _su->data()->getMBContext( &_mbContext, _clShortName,
                                          EXCLUSIVE ) ;
          PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
                       "rc: %d", pCollectionName, rc ) ;
 
          rc = _pTransCB->transLockTryX( cb, _su->LogicalCSID(),
-                                        _mbContext->mbID() ) ;
+                                        _mbContext->mbID(),
+                                        NULL, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR,
-                      "Get transaction-lock of collection(%s) failed(rc=%d)",
-                      pCollectionName, rc ) ;
+                      "Get transaction-lock of collection(%s) failed(rc=%d)"
+                      OSS_NEWLINE
+                      "Conflict( representative ):"OSS_NEWLINE
+                      "   EDUID:  %llu"OSS_NEWLINE
+                      "   LockId: %s"OSS_NEWLINE
+                      "   Mode:   %s"OSS_NEWLINE,
+                      pCollectionName, rc,
+                      lockConflict._eduID,
+                      lockConflict._lockID.toString().c_str(),
+                      lockModeToString( lockConflict._lockType ) ) ;
+
          _hasLock = TRUE ;
       }
 
@@ -1006,6 +1027,7 @@ namespace engine
          dmsStorageUnitID suID = DMS_INVALID_CS;
          UINT32 logicCSID = DMS_INVALID_LOGICCSID;
          dmsStorageUnit *su = NULL;
+         dpsTransRetInfo lockConflict ;
 
          rc = _pDmsCB->nameToSUAndLock( pCSName, suID, &su );
          PD_RC_CHECK(rc, PDERROR, "lock collection space[%s] failed, rc: %d",
@@ -1013,10 +1035,19 @@ namespace engine
          logicCSID = su->LogicalCSID();
          _pDmsCB->suUnlock ( suID ) ;
 
-         rc = _pTransCB->transLockTryX( cb, logicCSID ) ;
+         rc = _pTransCB->transLockTryX( cb, logicCSID, DMS_INVALID_MBID,
+                                        NULL, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR,
-                      "Get transaction-lock of CS[%s] failed, rc: %d",
-                      pCSName, rc ) ;
+                      "Get transaction-lock of CS[%s] failed, rc: %d"OSS_NEWLINE
+                      "Conflict( representative ):"OSS_NEWLINE
+                      "   EDUID:  %llu"OSS_NEWLINE
+                      "   LockId: %s"OSS_NEWLINE
+                      "   Mode:   %s"OSS_NEWLINE,
+                      pCSName, rc,
+                      lockConflict._eduID,
+                      lockConflict._lockID.toString().c_str(),
+                      lockModeToString( lockConflict._lockType ) ) ;
+
          _logicCSID = logicCSID ;
       }
    done:
@@ -1245,6 +1276,7 @@ namespace engine
 
       if ( getDPSCB() )
       {
+         dpsTransRetInfo lockConflict ;
          rc = _pDmsCB->nameToSUAndLock( csName, suID, &_su, SHARED );
          PD_RC_CHECK( rc, PDERROR, "lock collection space[%s] failed, rc: %d",
                       csName, rc );
@@ -1257,10 +1289,20 @@ namespace engine
          _su->data()->releaseMBContext( mbContext ) ;
          _pDmsCB->suUnlock ( suID ) ;
 
-         rc = _pTransCB->transLockTryX( cb, _su->LogicalCSID(), mbID ) ;
+         rc = _pTransCB->transLockTryX( cb, _su->LogicalCSID(), mbID,
+                                        NULL, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR,
-                      "Get transaction-lock of collection[%s] failed, rc: %d",
-                      _clFullName, rc ) ;
+                      "Get transaction-lock of collection[%s] failed, rc: %d"
+                      OSS_NEWLINE
+                      "Conflict( representative ):"OSS_NEWLINE
+                      "   EDUID:  %llu"OSS_NEWLINE
+                      "   LockId: %s"OSS_NEWLINE
+                      "   Mode:   %s"OSS_NEWLINE,
+                      _clFullName, rc,
+                      lockConflict._eduID,
+                      lockConflict._lockID.toString().c_str(),
+                      lockModeToString( lockConflict._lockType ) ) ;
+
          _mbID = mbID ;
       }
 
