@@ -73,7 +73,8 @@ namespace engine
 
       {
          ossScopedLock lock ( &_latch, SHARED ) ;
-         std::map<EDUID, _rtnBaseJob*>::iterator it = _mapJobs.find( eduID ) ;
+         ossPoolMap<EDUID, _rtnBaseJob*>::Type::iterator it =
+            _mapJobs.find( eduID ) ;
          if ( it != _mapJobs.end() )
          {
             PD_TRACE_EXIT ( SDB__RTNJOBMGR_FINDJOB ) ;
@@ -84,7 +85,8 @@ namespace engine
       INT32 res = SDB_OK ;
       {
          ossScopedLock lock ( &_latch, EXCLUSIVE ) ;
-         std::map<EDUID, INT32>::iterator itRes = _mapResult.find( eduID ) ;
+         ossPoolMap<EDUID, INT32>::Type::iterator itRes =
+            _mapResult.find( eduID ) ;
          if ( itRes != _mapResult.end() )
          {
             res = itRes->second ;
@@ -116,7 +118,7 @@ namespace engine
       if ( RTN_JOB_MUTEX_NONE != type )
       {
          _rtnBaseJob *itJob = NULL ;
-         std::map<EDUID, _rtnBaseJob*>::iterator it = _mapJobs.begin() ;
+         ossPoolMap<EDUID, _rtnBaseJob*>::Type::iterator it = _mapJobs.begin() ;
          while ( it != _mapJobs.end() )
          {
             itJob = it->second ;
