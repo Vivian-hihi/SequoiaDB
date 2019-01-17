@@ -343,21 +343,30 @@ namespace engine
          if ( _recordLock != -1 )
          {
             dmsTBTransContext tbTxContext( _context, _accessType ) ;
+            dpsTransRetInfo   lockConflict ;
             if ( EXCLUSIVE == _recordLock )
             {
                rc = _pTransCB->transLockGetX( cb, _pSu->logicalID(),
                                               _context->mbID(), &_curRID,
-                                              & tbTxContext ) ;
+                                              & tbTxContext, & lockConflict ) ;
             }
             else
             {
                rc = _pTransCB->transLockGetS( cb, _pSu->logicalID(),
                                               _context->mbID(), &_curRID,
-                                              & tbTxContext ) ;
+                                              & tbTxContext, & lockConflict ) ;
             }
 
             PD_RC_CHECK( rc, PDERROR,
-                         "Failed to get record lock, rc: %d", rc ) ;
+                         "Failed to get record lock, rc: %d"OSS_NEWLINE
+                         "Conflict ( representative ):"OSS_NEWLINE
+                         "   EDUID:  %llu"OSS_NEWLINE
+                         "   LockId: %s"OSS_NEWLINE
+                         "   Mode:   %s"OSS_NEWLINE, 
+                         rc,
+                         lockConflict._eduID,
+                         lockConflict._lockID.toString().c_str(), 
+                         lockModeToString( lockConflict._lockType ) ) ;
 
             lockedRecord = TRUE ;
             _next = _curRecordPtr->getNextOffset() ;
@@ -1336,21 +1345,30 @@ namespace engine
          {
             dmsIXTransContext ixTxContext( _context, _accessType,
                                            _scanner, isReadOnly() ) ;
+            dpsTransRetInfo   lockConflict ;
             if ( EXCLUSIVE == _recordLock )
             {
                rc = _pTransCB->transLockGetX( cb, _pSu->logicalID(),
                                               _context->mbID(), &_curRID,
-                                              &ixTxContext ) ;
+                                              &ixTxContext, & lockConflict ) ;
             }
             else
             {
                rc = _pTransCB->transLockGetS( cb, _pSu->logicalID(),
                                               _context->mbID(), &_curRID,
-                                              &ixTxContext ) ;
+                                              &ixTxContext, & lockConflict ) ;
             }
 
             PD_RC_CHECK( rc, PDERROR,
-                         "Failed to get record lock, rc: %d", rc ) ;
+                         "Failed to get record lock, rc: %d"OSS_NEWLINE
+                         "Conflict ( representative ):"OSS_NEWLINE
+                         "   EDUID:  %llu"OSS_NEWLINE
+                         "   LockId: %s"OSS_NEWLINE
+                         "   Mode:   %s"OSS_NEWLINE,
+                         rc,
+                         lockConflict._eduID,
+                         lockConflict._lockID.toString().c_str(),
+                         lockModeToString( lockConflict._lockType ) ) ;
 
             lockedRecord = TRUE ;
          }
