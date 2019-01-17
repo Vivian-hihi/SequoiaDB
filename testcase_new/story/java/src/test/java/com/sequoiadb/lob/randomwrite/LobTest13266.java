@@ -73,7 +73,9 @@ public class LobTest13266 extends SdbTestBase {
         t2.join();
 
         if (t1.isTaskSuccess()) {
-            Assert.assertEquals(t2.getSdbErrCode(), SDBError.SDB_LOB_LOCK_CONFLICTED.getErrorCode());
+            if(!t2.isTaskSuccess()) {
+               Assert.assertEquals(t2.getSdbErrCode(), SDBError.SDB_LOB_LOCK_CONFLICTED.getErrorCode());
+            } 
         } else {
             Assert.assertEquals(t1.getSdbErrCode(), SDBError.SDB_LOB_LOCK_CONFLICTED.getErrorCode());
         }
