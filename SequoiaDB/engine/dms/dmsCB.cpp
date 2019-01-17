@@ -556,11 +556,22 @@ namespace engine
       csLID = pCSCB->_su->LogicalCSID() ;
       if ( cb )
       {
-         rc = pTransCB->transLockTryX( cb, csLID ) ;
+         dpsTransRetInfo lockConflict ;
+         rc = pTransCB->transLockTryX( cb, csLID, DMS_INVALID_MBID,
+                                       NULL, &lockConflict ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to lock collection-space, rc:%d",
-                     rc ) ;
+            PD_LOG ( PDERROR,
+                     "Failed to lock collection-space, rc:%d"OSS_NEWLINE
+                     "Conflict( representative ):"OSS_NEWLINE
+                     "   EDUID:  %llu"OSS_NEWLINE
+                     "   LockId: %s"OSS_NEWLINE
+                     "   Mode:   %s"OSS_NEWLINE,
+                     rc,
+                     lockConflict._eduID,
+                     lockConflict._lockID.toString().c_str(),
+                     lockModeToString( lockConflict._lockType ) ) ;
+
             goto error ;
          }
          isTransLocked = TRUE ;
@@ -683,11 +694,21 @@ namespace engine
 
       if ( cb && dpsCB )
       {
-         rc = pTransCB->transLockTryX( cb, csLID ) ;
+         dpsTransRetInfo lockConflict ;
+         rc = pTransCB->transLockTryX( cb, csLID, DMS_INVALID_MBID,
+                                       NULL, &lockConflict ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to lock collection-space, rc:%d",
-                     rc ) ;
+            PD_LOG ( PDERROR,
+                     "Failed to lock collection-space, rc:%d"OSS_NEWLINE
+                     "Conflict( representative ):"OSS_NEWLINE
+                     "   EDUID:  %llu"OSS_NEWLINE
+                     "   LockId: %s"OSS_NEWLINE
+                     "   Mode:   %s"OSS_NEWLINE,
+                     rc,
+                     lockConflict._eduID,
+                     lockConflict._lockID.toString().c_str(),
+                     lockModeToString( lockConflict._lockType ) ) ;
             goto error ;
          }
          isTransLocked = TRUE ;
@@ -932,11 +953,22 @@ namespace engine
       csLID = pCSCB->_su->LogicalCSID() ;
       if ( cb )
       {
-         rc = pTransCB->transLockTryX( cb, csLID ) ;
+         dpsTransRetInfo lockConflict ;
+         rc = pTransCB->transLockTryX( cb, csLID, DMS_INVALID_MBID,
+                                       NULL, &lockConflict ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to lock collection-space, rc:%d",
-                     rc ) ;
+            PD_LOG ( PDERROR,
+                     "Failed to lock collection-space, rc:%d"OSS_NEWLINE
+                     "Conflict( representative ):"OSS_NEWLINE
+                     "   EDUID:  %llu"OSS_NEWLINE
+                     "   LockId: %s"OSS_NEWLINE
+                     "   Mode:   %s"OSS_NEWLINE,
+                     rc,
+                     lockConflict._eduID,
+                     lockConflict._lockID.toString().c_str(),
+                     lockModeToString( lockConflict._lockType ) ) ;
+
             goto error ;
          }
          isTransLocked = TRUE ;
