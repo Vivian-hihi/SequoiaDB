@@ -103,14 +103,10 @@ public class UpdateAndDeleteSameObject16491 extends S3TestBase {
 	private void checkUpdateAndDeleteObjectResult(String bucketName, String key) throws Exception {
 		boolean isExistObject = s3Client.doesObjectExist(bucketName, key);
 		if (isExistObject) {
-			checkUpdateObjectResult(bucketName, key);
+			String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+			Assert.assertEquals(downfileMd5, TestTools.getMD5(updatePath));
 		} else {
 			Assert.assertFalse(isExistObject, "the object must be deleted!");
 		}
-	}
-
-	private void checkUpdateObjectResult(String bucketName, String key) throws Exception {
-		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
-		Assert.assertEquals(downfileMd5, TestTools.getMD5(updatePath));
-	}
+	}	
 }

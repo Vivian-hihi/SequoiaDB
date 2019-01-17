@@ -50,19 +50,14 @@ public class DeleteAndGetSameObject16492 extends S3TestBase {
 		deleteObjectThread.start();
 		getObjectThread.start();
 
-		if (deleteObjectThread.isSuccess()) {
-			Assert.assertTrue(deleteObjectThread.isSuccess(), deleteObjectThread.getErrorMsg());
-			if (getObjectThread.isSuccess()) {
-				Assert.assertTrue(getObjectThread.isSuccess(), getObjectThread.getErrorMsg());
-				checkDeleteObjectResult(S3TestBase.bucketName, keyName);
-			} else {
-				Assert.assertTrue(!getObjectThread.isSuccess(), getObjectThread.getErrorMsg());
+		if (deleteObjectThread.isSuccess()) {			
+			if (!getObjectThread.isSuccess()) {
 				AmazonS3Exception e = (AmazonS3Exception) (getObjectThread.getExceptions().get(0));
 				if (!e.getErrorCode().equals("NoSuchKey")) {
 					Assert.fail("getObject fail:" + getObjectThread.getErrorMsg() + "  e:" + e.getErrorCode());
-				}
-				checkDeleteObjectResult(S3TestBase.bucketName, keyName);
-			}
+				}				
+			} 
+			checkDeleteObjectResult(S3TestBase.bucketName, keyName);
 		} else {
 			Assert.fail("Unexpected results! deleteObjectError:" + deleteObjectThread.getErrorMsg() + "getObjectError:"
 					+ getObjectThread.getErrorMsg());
@@ -74,8 +69,7 @@ public class DeleteAndGetSameObject16492 extends S3TestBase {
 	@AfterClass
 	private void tearDown() throws Exception {
 		try {
-			if (runSuccess) {
-				s3Client.deleteObject(S3TestBase.bucketName, keyName);
+			if (runSuccess) {				
 				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {

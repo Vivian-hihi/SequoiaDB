@@ -186,9 +186,9 @@ public class ListVersionsWithDiffConds16498 extends S3TestBase {
 			s3Client.putObject(bucketName, keyName, new File(filePath));
 			keyList.add(keyName);
 			s3Client.putObject(bucketName, keyName, new File(updatePath));
-			keyList.add(keyName);
-			Collections.sort(keyList);
+			keyList.add(keyName);			
 		}
+		Collections.sort(keyList);
 	}
 
 	private void checkListVersionResult(AmazonS3 s3Client, List<String> actVersionKeys, List<String> expVersionKeys,

@@ -3,8 +3,6 @@ package com.sequoias3.object.concurrent;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.sequoias3.testcommon.CommLib;
@@ -64,19 +62,16 @@ public class UpdateAndGetSameObject16514 extends S3TestBase {
 		getObjectThread.start();
 
 		if (updateObjectThread.isSuccess()) {
-			Assert.assertTrue(updateObjectThread.isSuccess(), updateObjectThread.getErrorMsg());
-			if (getObjectThread.isSuccess()) {
-				Assert.assertTrue(getObjectThread.isSuccess(), getObjectThread.getErrorMsg());
-				checkGetObject(bucketName, keyName);
-				checkUpdateObjectResult(bucketName, keyName);
-			} else {
-				Assert.assertTrue(!getObjectThread.isSuccess(), getObjectThread.getErrorMsg());
+			
+			if (getObjectThread.isSuccess()) {				
+				checkGetObject(bucketName, keyName);				
+			} else {				
 				AmazonS3Exception e = (AmazonS3Exception) (getObjectThread.getExceptions().get(0));
 				if (!e.getErrorCode().equals("NoSuchKey")) {
 					Assert.fail("getObject fail:" + getObjectThread.getErrorMsg() + "  e:" + e.getErrorCode());
-				}
-				checkUpdateObjectResult(bucketName, keyName);
+				}				
 			}
+			checkUpdateObjectResult(bucketName, keyName);
 		} else {
 			Assert.fail("Unexpected results! updateObjectError:" + updateObjectThread.getErrorMsg() + "getObjectError:"
 					+ getObjectThread.getErrorMsg());

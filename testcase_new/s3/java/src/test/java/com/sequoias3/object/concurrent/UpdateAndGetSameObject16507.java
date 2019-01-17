@@ -56,20 +56,16 @@ public class UpdateAndGetSameObject16507 extends S3TestBase {
 		updateObjectThread.start();
 		getObjectThread.start();
 
-		if (updateObjectThread.isSuccess()) {
-			Assert.assertTrue(updateObjectThread.isSuccess(), updateObjectThread.getErrorMsg());
-			if (getObjectThread.isSuccess()) {
-				Assert.assertTrue(getObjectThread.isSuccess(), getObjectThread.getErrorMsg());
-				checkGetObject(S3TestBase.enableVerBucketName, keyName);
-				checkUpdateObjectResult(S3TestBase.enableVerBucketName, keyName);
-			} else {
-				Assert.assertTrue(!getObjectThread.isSuccess(), getObjectThread.getErrorMsg());
+		if (updateObjectThread.isSuccess()) {			
+			if (getObjectThread.isSuccess()) {				
+				checkGetObject(S3TestBase.enableVerBucketName, keyName);				
+			} else {				
 				AmazonS3Exception e = (AmazonS3Exception) (getObjectThread.getExceptions().get(0));
 				if (!e.getErrorCode().equals("NoSuchKey")) {
 					Assert.fail("getObject fail:" + getObjectThread.getErrorMsg() + "  e:" + e.getErrorCode());
-				}
-				checkUpdateObjectResult(S3TestBase.enableVerBucketName, keyName);
+				}				
 			}
+			checkUpdateObjectResult(S3TestBase.enableVerBucketName, keyName);
 		} else {
 			Assert.fail("Unexpected results! updateObjectError:" + updateObjectThread.getErrorMsg() + "getObjectError:"
 					+ getObjectThread.getErrorMsg());
