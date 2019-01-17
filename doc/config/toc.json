@@ -3790,9 +3790,23 @@
                   },
                   {
                      "id": 1509432854,
-                     "file": "relationship_module",
+                     "dir": "relation",
                      "cn": "关联服务",
-                     "en": "Relationship service"
+                     "en": "Relationship service",
+                     "contents": [
+                        {
+                           "id": 1547704802,
+                           "file": "relationship_pg",
+                           "cn": "SequoiaSQL-PostgreSQL",
+                           "en": "SequoiaSQL-PostgreSQL"
+                        },
+                        {
+                           "id": 1547704803,
+                           "file": "relationship_mysql",
+                           "cn": "SequoiaSQL-MySQL",
+                           "en": "SequoiaSQL-MySQL"
+                        }
+                     ]
                   }
                ]
             },

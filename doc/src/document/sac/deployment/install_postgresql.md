@@ -1,7 +1,7 @@
 创建 SequoiaSQL-PostgreSQL 服务是指在已经部署了 SequoiaSQL-PostgreSQL 包的主机中创建一个实例。
 
 > **Note:**  
-> 创建SequoiaSQL-PostgreSQL服务需要先进行部署包操作，[点击查看](sac/deployment/operation_host/deploy_package.md)。
+> 创建SequoiaSQL-PostgreSQL服务需要先进行部署包操作，[点击查看](sac/deployment/deploy_package.md)。
 
 1. 进入 **部署** 页面。
 
