@@ -23,6 +23,11 @@
          <packages>
             <package name="com.sequoiadb.transaction"/>
          </packages>
+         <groups>
+         <run>
+          <include name = "ru" />
+         </run>
+         </groups>
    </test>
    
 </suite>
