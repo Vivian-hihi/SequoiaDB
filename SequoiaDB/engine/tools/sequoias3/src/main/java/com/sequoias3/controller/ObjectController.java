@@ -36,7 +36,7 @@ public class ObjectController {
     @Autowired
     ObjectService objectService;
 
-    @PutMapping(value="/{bucketname:.+}/*/**", produces = MediaType.APPLICATION_XML_VALUE)
+    @PutMapping(value="/{bucketname:.+}/**", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity putObject(@PathVariable("bucketname") String bucketName,
                                     @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
                                     @RequestHeader(name = RestParamDefine.PutObjectHeader.CONTENT_MD5, required = false) String contentMD5,
@@ -83,7 +83,7 @@ public class ObjectController {
                 .build();
     }
 
-    @GetMapping(value="/{bucketname:.+}/*/**", produces = MediaType.APPLICATION_XML_VALUE )
+    @GetMapping(value="/{bucketname:.+}/**", produces = MediaType.APPLICATION_XML_VALUE )
     public void getObject(@PathVariable("bucketname") String bucketName,
                                     @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
                                     @RequestParam(value = RestParamDefine.VERSION_ID, required = false) String versionId,
@@ -142,7 +142,7 @@ public class ObjectController {
         }
     }
 
-    @DeleteMapping(value = "/{bucketname:.+}/*/**", produces = MediaType.APPLICATION_XML_VALUE)
+    @DeleteMapping(value = "/{bucketname:.+}/**", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity deleteObject(@PathVariable("bucketname") String bucketName,
                                        @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
                                        HttpServletRequest httpServletRequest)
@@ -168,7 +168,7 @@ public class ObjectController {
                 .build();
     }
 
-    @DeleteMapping(value = "/{bucketname:.+}/*/**", params = RestParamDefine.VERSION_ID, produces = MediaType.APPLICATION_XML_VALUE)
+    @DeleteMapping(value = "/{bucketname:.+}/**", params = RestParamDefine.VERSION_ID, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity deleteObjectByVersionId(@PathVariable("bucketname") String bucketName,
                                                   @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
                                                   @RequestParam(RestParamDefine.VERSION_ID) String versionId,
@@ -222,6 +222,16 @@ public class ObjectController {
                 .body(result);
     }
 
+    @GetMapping(value = "/{bucketname:.+}", produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity listObjectsV1(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+            throws S3ServerException{
+        restUtils.getOperatorByAuthorization(authorization);
+        logger.debug("list objectsV1.");
+
+        throw new S3ServerException(S3Error.BUCKET_NO_LIST_OBJECTS_V1,
+                "not support list objects v1");
+    }
+
     @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.VERSIONS, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity listObjectsVersions(@PathVariable("bucketname") String bucketName,
                                               @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
@@ -248,7 +258,7 @@ public class ObjectController {
                 .body(result);
     }
 
-    @RequestMapping(method = RequestMethod.HEAD, value="/{bucketname:.+}/*/**")
+    @RequestMapping(method = RequestMethod.HEAD, value="/{bucketname:.+}/**")
     public void headObject(@PathVariable("bucketname") String bucketName,
                                      @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
                                      @RequestParam(value = RestParamDefine.VERSION_ID, required = false) String versionId,

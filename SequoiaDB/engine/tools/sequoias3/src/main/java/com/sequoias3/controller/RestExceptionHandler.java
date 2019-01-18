@@ -58,6 +58,7 @@ public class RestExceptionHandler {
             case REGION_LOCATION_INDEX_HIS:
             case REGION_INVALID_DOMAIN:
             case REGION_INVALID_REGIONNAME:
+            case BUCKET_NO_LIST_OBJECTS_V1:
                 status = HttpStatus.BAD_REQUEST;
                 break;
             case INVALID_ACCESSKEYID:

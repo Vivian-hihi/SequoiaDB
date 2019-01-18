@@ -116,8 +116,8 @@ public class BucketController {
             }else {
                 return null;
             }
-        }catch (IOException e){
-            throw new S3ServerException(S3Error.UNKNOWN_ERROR, "get location failed", e);
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.BUCKET_INVALID_LOCATION, "get location failed", e);
         }
     }
 }
