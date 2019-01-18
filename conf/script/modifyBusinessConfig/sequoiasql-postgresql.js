@@ -52,15 +52,17 @@ function _getAgentPort( hostName )
 function _runRemoteCmd( cmd, command, arg, timeout )
 {
    var error = null ;
+   var out = '' ;
 
    try
    {
       cmd.run( command, arg, timeout ) ;
+      out = cmd.getLastOut() ;
    }
    catch( e )
    {
       var rc = cmd.getLastRet() ;
-      var out = cmd.getLastOut() ;
+      out = cmd.getLastOut() ;
 
       if( rc )
       {
@@ -79,44 +81,20 @@ function _runRemoteCmd( cmd, command, arg, timeout )
       }
    }
 
-   return error ;
+   return { 'error': error, 'out': out } ;
 }
 
-function _deleteConfig( PD_LOGGER )
+function _deleteConfig( oma, configFile, options, original, config )
 {
-   var result        = {} ;
-   var info          = BUS_JSON[FIELD_INFO] ;
-   var config        = BUS_JSON[FIELD_CONFIG] ;
-   var businessName  = BUS_JSON[FIELD_BUSINESS_NAME] ;
-
-   var hostName      = info[FIELD_HOSTNAME] ;
-   var dbpath        = info[FIELD_DBPATH] ;
-   var installPath   = info[FIELD_INSTALL_PATH] ;
-   var agentPort     = _getAgentPort( hostName ) ;
-   var deleteConfig  = config[FIELD_PROPERTY] ;
-
-   var ctlFile       = installPath + '/bin/sdb_sql_ctl' ;
-   var exec          = ctlFile ;
-   var args          = '' ;
-   var timeout       = 600000 ;
-
-   result[FIELD_ERRNO] = SDB_OK ;
-   result[FIELD_DETAIL] = "" ;
-
    try
    {
-      var options = { 'sensitive': true, 'delimiter': false } ;
-      var configFile = dbpath + '/postgresql.conf' ;
-      var oma = new Oma( hostName, agentPort ) ;
-
       var newConfig = {} ;
-      var oldConfig = oma.getIniConfigs( configFile, options ).toObj() ;
 
-      for ( var key in oldConfig )
+      for ( var key in original )
       {
-         if ( deleteConfig[key] == undefined )
+         if ( config[key] == undefined )
          {
-            newConfig[key] = oldConfig[key] ;
+            newConfig[key] = original[key] ;
          }
       }
 
@@ -125,52 +103,44 @@ function _deleteConfig( PD_LOGGER )
    catch( e )
    {
       var lastErrObj = getLastErrObj() ;
-
-      result = lastErrObj.toObj() ;
-
-      PD_LOGGER.log( PDERROR, lastErrObj ) ;
+      if ( lastErrObj )
+      {
+         return lastErrObj ;
+      }
    }
+   return null ;
+}
 
+function _updateConfig( oma, configFile, options, original, config )
+{
    try
    {
-      var remote = new Remote( hostName, agentPort ) ;
-      var cmd    = remote.getCmd() ;
+      var newConfig = {} ;
 
-      var libraryCmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:' ;
-
-      libraryCmd += installPath + '/lib ;' ;
-      exec = libraryCmd + exec ;
-
-      //add inst
-      args = ' reload ' + businessName ;
-      var error = _runRemoteCmd( cmd, exec, args, timeout ) ;
-      if ( error !== null )
+      for ( var key in original )
       {
-         if ( error.getErrCode() > 0 )
-         {
-            result[FIELD_ERRNO]  = SDB_RTN_CONF_NOT_TAKE_EFFECT ;
-         }
-         else
-         {
-            result[FIELD_ERRNO]  = error.getErrCode() ;
-         }
-
-         result[FIELD_DETAIL] = error.getErrMsg() ;
-         PD_LOGGER.log( PDERROR, result[FIELD_DETAIL] ) ;
+         newConfig[key] = original[key] ;
       }
+
+      for ( var key in config )
+      {
+         newConfig[key] = config[key] ;
+      }
+
+      oma.setIniConfigs( newConfig, configFile, options ) ;
    }
    catch( e )
    {
-      result[FIELD_ERRNO]  = SDB_RTN_CONF_NOT_TAKE_EFFECT ;
-      result[FIELD_DETAIL] = getErr( SDB_RTN_CONF_NOT_TAKE_EFFECT ) ;
-
-      PD_LOGGER.log( PDERROR, e ) ;
+      var lastErrObj = getLastErrObj() ;
+      if ( lastErrObj )
+      {
+         return lastErrObj ;
+      }
    }
-
-   return result ;
+   return null ;
 }
 
-function _updateConfig( PD_LOGGER )
+function _modifyConfig( PD_LOGGER, command )
 {
    var result        = {} ;
    var info          = BUS_JSON[FIELD_INFO] ;
@@ -181,39 +151,47 @@ function _updateConfig( PD_LOGGER )
    var dbpath        = info[FIELD_DBPATH] ;
    var installPath   = info[FIELD_INSTALL_PATH] ;
    var agentPort     = _getAgentPort( hostName ) ;
-   var updateConfig  = config[FIELD_PROPERTY] ;
+   var property      = config[FIELD_PROPERTY] ;
 
    var ctlFile       = installPath + '/bin/sdb_sql_ctl' ;
+   var configFile    = dbpath + '/postgresql.conf' ;
    var exec          = ctlFile ;
    var args          = '' ;
    var timeout       = 600000 ;
-
-   result[FIELD_ERRNO] = SDB_OK ;
-   result[FIELD_DETAIL] = "" ;
+   var original      = null ;
+   var oma           = null ;
+   var options       = { 'sensitive': true, 'delimiter': false } ;
 
    try
    {
-      var options = { 'sensitive': true, 'delimiter': false } ;
-      var configFile = dbpath + '/postgresql.conf' ;
-      var oma = new Oma( hostName, agentPort ) ;
-
-      var newConfig = oma.getIniConfigs( configFile, options ).toObj() ;
-
-      for ( var key in updateConfig )
-      {
-         newConfig[key] = updateConfig[key] ;
-      }
-
-      oma.setIniConfigs( newConfig, configFile, options ) ;
+      oma = new Oma( hostName, agentPort ) ;
+      original = oma.getIniConfigs( configFile, options ).toObj() ;
    }
    catch( e )
    {
       var lastErrObj = getLastErrObj() ;
-
       result = lastErrObj.toObj() ;
-
       PD_LOGGER.log( PDERROR, lastErrObj ) ;
+      return result ;
    }
+
+   if ( FIELD_UPDATE_BUSINESS_CONFIG == command )
+   {
+      result = _updateConfig( oma, configFile, options, original, property ) ;
+   }
+   else if ( FIELD_DELETE_BUSINESS_CONFIG == command )
+   {
+      result = _deleteConfig( oma, configFile, options, original, property ) ;
+   }
+
+   if ( result !== null )
+   {
+      PD_LOGGER.log( PDERROR, result ) ;
+      oma.setIniConfigs( original, configFile, options ) ;
+      return result.toObj() ;
+   }
+
+   result = {} ;
 
    try
    {
@@ -225,31 +203,62 @@ function _updateConfig( PD_LOGGER )
       libraryCmd += installPath + '/lib ;' ;
       exec = libraryCmd + exec ;
 
-      //add inst
-      args = ' reload ' + businessName ;
-      var error = _runRemoteCmd( cmd, exec, args, timeout ) ;
-      if ( error !== null )
+      //reload
+      args = ' reload ' + businessName + ' --print' ;
+      var rc = _runRemoteCmd( cmd, exec, args, timeout ) ;
+      if ( rc['error'] !== null )
       {
-         if ( error.getErrCode() > 0 )
+         if ( rc['error'].getErrCode() > 0 )
          {
             result[FIELD_ERRNO]  = SDB_RTN_CONF_NOT_TAKE_EFFECT ;
          }
          else
          {
-            result[FIELD_ERRNO]  = error.getErrCode() ;
+            result[FIELD_ERRNO]  = rc['error'].getErrCode() ;
          }
 
-         result[FIELD_DETAIL] = error.getErrMsg() ;
+         result[FIELD_DETAIL] = rc['error'].getErrMsg() ;
          PD_LOGGER.log( PDERROR, result[FIELD_DETAIL] ) ;
+
+         oma.setIniConfigs( original, configFile, options ) ;
+         return result ;
+      }
+
+      if ( rc['out'].length > 0 &&
+           rc['out'].indexOf( 'invalid value for parameter' ) > 0 )
+      {
+         var lines = rc['out'].split( "\n" ) ;
+
+         result[FIELD_ERRNO] = SDB_INVALIDARG ;
+         result[FIELD_DETAIL] = rc['out'] ;
+
+         for ( var i in lines )
+         {
+            if ( lines[i].indexOf( 'invalid value for parameter' ) > 0 )
+            {
+               result[FIELD_DETAIL] = lines[i].replace( 'LOG: ', '' ) ;
+               break ;
+            }
+         }
+
+         oma.setIniConfigs( original, configFile, options ) ;
+         return result ;
       }
    }
    catch( e )
    {
+      PD_LOGGER.log( PDERROR, e ) ;
+
       result[FIELD_ERRNO]  = SDB_RTN_CONF_NOT_TAKE_EFFECT ;
       result[FIELD_DETAIL] = getErr( SDB_RTN_CONF_NOT_TAKE_EFFECT ) ;
 
-      PD_LOGGER.log( PDERROR, e ) ;
+      oma.setIniConfigs( original, configFile, options ) ;
+
+      return result ;
    }
+
+   result[FIELD_ERRNO] = SDB_OK ;
+   result[FIELD_DETAIL] = "" ;
 
    return result ;
 }
@@ -261,13 +270,10 @@ function run()
 
    var command = BUS_JSON[FIELD_COMMAND] ;
 
-   if ( FIELD_UPDATE_BUSINESS_CONFIG == command )
+   if ( FIELD_UPDATE_BUSINESS_CONFIG == command ||
+        FIELD_DELETE_BUSINESS_CONFIG == command )
    {
-      result = _updateConfig( PD_LOGGER ) ;
-   }
-   else if ( FIELD_DELETE_BUSINESS_CONFIG == command )
-   {
-      result = _deleteConfig( PD_LOGGER ) ;
+      result = _modifyConfig( PD_LOGGER, command ) ;
    }
    else
    {
