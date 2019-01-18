@@ -192,11 +192,16 @@ public class SequoiadbRegionDao implements RegionDao {
                 }
 
                 if (findIndex == false) {
-                    if (locationType == RegionParamDefine.LocationType.Meta) {
-                        throw new S3ServerException(S3Error.REGION_LOCATION_INDEX, "need enforce unique index on Key and BucketId.");
-                    }else {
-                        throw new S3ServerException(S3Error.REGION_LOCATION_INDEX_HIS, "need enforce unique index on Key and BucketId and VersionId");
+                    BSONObject indexKey = new BasicBSONObject();
+                    String indexName = ObjectMeta.META_BUCKET_ID + "+" + ObjectMeta.META_KEY_NAME;
+                    indexKey.put(ObjectMeta.META_BUCKET_ID, 1);
+                    indexKey.put(ObjectMeta.META_KEY_NAME, 1);
+                    if (locationType == RegionParamDefine.LocationType.MetaHis) {
+                        indexKey.put(ObjectMeta.META_VERSION_ID, 1);
+                        indexName = indexName + "+" + ObjectMeta.META_VERSION_ID;
                     }
+                    sdbDatasourceWrapper.createIndex(sdb, CSName, CLName,
+                            indexName, indexKey, true, true);
                 }
             }
 

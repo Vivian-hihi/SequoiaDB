@@ -54,8 +54,6 @@ public class RestExceptionHandler {
             case REGION_LOCATION_SAME:
             case REGION_LOCATION_SPLIT:
             case REGION_LOCATION_EXIST:
-            case REGION_LOCATION_INDEX:
-            case REGION_LOCATION_INDEX_HIS:
             case REGION_INVALID_DOMAIN:
             case REGION_INVALID_REGIONNAME:
             case BUCKET_NO_LIST_OBJECTS_V1:

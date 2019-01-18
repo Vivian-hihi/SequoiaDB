@@ -25,8 +25,6 @@ public enum S3Error {
     REGION_LOCATION_SAME(-331, "InvalidLocation", "MetaLocation can not same as MetaHisLocation"),
     REGION_LOCATION_SPLIT(-332, "InvalidLocation", "Location cannot be split to CS and CL."),
     REGION_LOCATION_EXIST(-333, "InvalidLocation", "Location not found"),
-    REGION_LOCATION_INDEX(-334, "InvalidLocation", "MetaLocation need enforce unique index on Key and BucketId."),
-    REGION_LOCATION_INDEX_HIS(-335, "InvalidLocation", "MetaHisLocation need enforce unique index on Key and BucketId and VersionId"),
 
     // dao error
     DAO_GETCONN_ERROR(-401, "GetDBConnectFail", "Get connection failed."),
