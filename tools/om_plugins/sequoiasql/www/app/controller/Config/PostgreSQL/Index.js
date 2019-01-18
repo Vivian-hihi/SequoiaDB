@@ -55,11 +55,14 @@
          $scope.Expand = !$scope.Expand ;
 
          clearArray( $scope.SettingTable['content'] ) ;
+         clearObject( currentConfigs ) ;
 
          $.each( template, function( index, info ){
             if ( $scope.Expand || info['source'] == 'configuration file' )
             {
                $scope.SettingTable['content'].push( info ) ;
+
+               currentConfigs[info['name']] = info['setting'] ;
             }
          } ) ;
       }
@@ -102,6 +105,7 @@
                }
 
                //根据模板做类型转换
+               var isIntEqual = false ;
                var templateInfo = this.getTemplateInfo( template, key ) ;
                if ( templateInfo )
                {
@@ -112,6 +116,7 @@
                      {
                         continue ;
                      }
+                     isIntEqual = integerEqual( nodeConfigs[key], config[key] ) ;
                      break ;
                   case 'real':
                      if ( isNaN( tmpValue ) )
@@ -123,14 +128,15 @@
                }
 
                this.updateConfig[key] = tmpValue ;
-               if ( templateInfo && templateInfo['context'] == 'postmaster' )
+               if ( templateInfo && templateInfo['context'] == 'postmaster' &&
+                    ( isIntEqual == false && nodeConfigs[key] != config[key] ) )
                {
                   this.restartConfig.push( key ) ;
                }
             }
          }
 
-         this.loadDeleteConfigs = function( nodeConfigs, config )
+         this.loadDeleteConfigs = function( nodeConfigs, template, config )
          {
             for( var key in config )
             {
@@ -145,6 +151,12 @@
                   {
                      //看看节点原来有没有这个值
                      this.deleteConfig[key] = 1 ;
+
+                     var templateInfo = this.getTemplateInfo( template, key ) ;
+                     if ( templateInfo && templateInfo['context'] == 'postmaster' )
+                     {
+                        this.restartConfig.push( key ) ;
+                     }
                   }
                }
             }
@@ -157,7 +169,7 @@
 
             this.loadUpdateConfig( nodeConfigs, template, config ) ;
 
-            this.loadDeleteConfigs( nodeConfigs, config ) ;
+            this.loadDeleteConfigs( nodeConfigs, template, config ) ;
          }
 
          this.getUpdateConfig = function()
@@ -254,7 +266,7 @@
 
       $scope.OpenModifyConfigWindow = function(){
 
-         $scope.ModifyConfigWindow['config']['inputList'] = pgSettingConvertTemplate( template ) ;
+         $scope.ModifyConfigWindow['config']['inputList'] = pgSettingConvertTemplate( template, $scope.Expand ) ;
          
          $scope.ModifyConfigWindow['callback']['SetTitle']( $scope.pAutoLanguage( '修改配置项' ) ) ;
          $scope.ModifyConfigWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
