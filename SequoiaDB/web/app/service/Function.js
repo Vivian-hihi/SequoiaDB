@@ -363,7 +363,10 @@
          {
             (function( i ){
                $timeout( function(){
-                  listOfResizeFun[i]['fun']() ;
+                  if ( isObject( listOfResizeFun[i] ) )
+                  {
+                     listOfResizeFun[i]['fun']() ;
+                  }
                } ) ;
             })( i ) ;
          }

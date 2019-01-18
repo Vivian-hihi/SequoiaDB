@@ -2218,6 +2218,16 @@
                      var step = valid.step ;
                      var skip = false ;
 
+                     if( value.length > 2 && value.charAt( 0 ) == '0' && ( value.charAt( 1 ) == 'x' || value.charAt( 1 ) == 'X' ) )
+                     {
+                        //判断十六进制
+                     }
+                     else if ( value.length > 1 && value.charAt( 0 ) == '0' )
+                     {
+                        //判断八进制
+                        num = parseInt( value, 8 ) ;
+                     }
+
                      if( typeof( white ) == 'number' && num == white )
                      {
                         skip = true ;
@@ -2485,7 +2495,21 @@
                         returnValue[ inputInfo.name ] = trim( inputInfo.value ) ;
                         break ;
                      case 'int':
-                        returnValue[ inputInfo.name ] = parseInt( trim( inputInfo.value ) ) ;
+                        if( inputInfo.value.length > 2 && inputInfo.value.charAt( 0 ) == '0' &&
+                            ( inputInfo.value.charAt( 1 ) == 'x' || inputInfo.value.charAt( 1 ) == 'X' ) )
+                        {
+                           //判断十六进制
+                           returnValue[ inputInfo.name ] = parseInt( trim( inputInfo.value ) ) ;
+                        }
+                        else if ( inputInfo.value.length > 1 && inputInfo.value.charAt( 0 ) == '0' )
+                        {
+                           //判断八进制
+                           returnValue[ inputInfo.name ] = parseInt( trim( inputInfo.value ), 8 ) ;
+                        }
+                        else
+                        {
+                           returnValue[ inputInfo.name ] = parseInt( trim( inputInfo.value ) ) ;
+                        }
                         break ;
                      case 'double':
                         returnValue[ inputInfo.name ] = parseFloat( trim( inputInfo.value ) ) ;

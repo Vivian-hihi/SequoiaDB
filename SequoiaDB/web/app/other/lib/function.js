@@ -2640,7 +2640,7 @@ function configConvertTemplate( templateList, level ){
 }
 
 //pg_setting转表单
-function pgSettingConvertTemplate( template )
+function pgSettingConvertTemplate( template, extend )
 {
    var newTemplateList = [] ;
 
@@ -2662,7 +2662,7 @@ function pgSettingConvertTemplate( template )
          'valid':    ''
       } ;
 
-      if ( info['source'] == 'configuration file' )
+      if ( info['source'] == 'configuration file' || extend === true )
       {
          newTemplateInfo['value'] = info['setting'] ;
       }
@@ -2707,11 +2707,11 @@ function pgSettingConvertTemplate( template )
 
          if ( isNaN( info['min_val'] ) == false )
          {
-            newTemplateInfo['valid']['min'] = parseInt( info['min_val'] ) ;
+            newTemplateInfo['valid']['min'] = parseFloat( info['min_val'] ) ;
          }
          if ( isNaN( info['max_val'] ) == false )
          {
-            newTemplateInfo['valid']['max'] = parseInt( info['max_val'] ) ;
+            newTemplateInfo['valid']['max'] = parseFloat( info['max_val'] ) ;
          }
          newTemplateInfo['valid']['empty'] = true ;
          break ;
@@ -2767,6 +2767,38 @@ function objectEqual( o1, o2, filter, flags )
    }
 
    return true ;
+}
+
+//字符串的整数（含十六进制和八进制）转换成十进制
+function convertDecimal( val )
+{
+   if ( typeof( val ) == 'string' )
+   {
+      if( val.length > 2 && val.charAt( 0 ) == '0' &&
+         ( val.charAt( 1 ) == 'x' || val.charAt( 1 ) == 'X' ) )
+      {
+         //判断十六进制
+         return parseInt( trim( val ) ) ;
+      }
+      else if ( val.length > 1 && val.charAt( 0 ) == '0' )
+      {
+         //判断八进制
+         return parseInt( trim( val ), 8 ) ;
+      }
+      else
+      {
+         return parseInt( trim( val ) ) ;
+      }
+   }
+   return val ;
+}
+
+//对比两个数值，仅支持整数和字符串的整数（含十六进制和八进制）
+function integerEqual( v1, v2 )
+{
+   v1 = convertDecimal( v1 ) ;
+   v2 = convertDecimal( v2 ) ;
+   return v1 == v2 ;
 }
 
 //找出2个对象不相同的字段

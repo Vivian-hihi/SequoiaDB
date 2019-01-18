@@ -3,7 +3,7 @@
    <div style="padding:10px 15px;" ng-container="{offsetY:-70}">
       <div ng-container="{offsetY:-45}">
          <div style="height:30px;font-size:110%;font-weight:bold;">{{autoLanguage("服务")}}: {{ModuleName}}</div>
-         <div class="underlineTab" ng-container="{height:WindowWidth<965?100:WindowWidth>1730?35:70}">
+         <div class="underlineTab" ng-container="{height:WindowWidth>1291?70:105}">
             <ul class="left">
                <li ng-class="{true:'active'}[ShowType == 'normal']">
                   <a class="linkButton" ng-click="SwitchParam('normal')">normal</a>
@@ -13,7 +13,7 @@
                </li>
             </ul>
          </div>
-         <div class="borderBox" style="padding:10px;overflow-y:auto;position:relative;" ng-container="{offsetY:WindowWidth<965?-135:WindowWidth>1730?-65:-100,marginTop:10}" ng-repeat="(key,confType) in AllForm track by $index" ng-show="ShowType==key">
+         <div class="borderBox" style="padding:10px;overflow-y:auto;position:relative;" ng-container="{offsetY:WindowWidth>1291?-110:-145,marginTop:10}" ng-repeat="(key,confType) in AllForm track by $index" ng-show="ShowType==key">
             <div form-create para="AllForm[key]"></div>
          </div>
       </div>

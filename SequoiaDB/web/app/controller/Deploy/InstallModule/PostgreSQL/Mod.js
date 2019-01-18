@@ -53,7 +53,7 @@
             $scope.AllForm['normal']['inputList'][index]['value'] = buildConf[0][name] ;
          } ) ;
 
-         var otherForm =  _Deploy.ConvertTemplate( $scope.Template, 1, true, true ) ;
+         var otherForm = _Deploy.ConvertTemplate( $scope.Template, 1, true, true ) ;
          $.each( otherForm, function( index, formInfo ){
             formInfo['confType'] = formInfo['confType'].toLowerCase() ;
             if( typeof( $scope.AllForm[formInfo['confType']] ) == 'undefined' )
@@ -200,6 +200,23 @@
          return config ;
       }
 
+      function isFilterDefaultItem( key, value ) {
+         var result = false ;
+         var unSkipList = [ 'HostName', 'dbpath', 'port' ] ;
+         if ( unSkipList.indexOf( key ) >= 0 )
+         {
+            return false ;
+         }
+         $.each( $scope.Template, function( index, item ){
+            if ( item['Name'] == key )
+            {
+               result = ( item['Default'] == value ) ;
+               return false ;
+            }
+         } ) ;
+         return result ;
+      }
+
       $scope.GotoInstall = function(){
          var oldConfigure = convertConfig() ;
          if( oldConfigure == false )
@@ -214,7 +231,7 @@
          $.each( oldConfigure['Config'], function( nodeIndex, nodeInfo ){
             var nodeConfig = {} ;
             $.each( nodeInfo, function( key, value ){
-               if( value.length > 0 )
+               if( value.length > 0 && isFilterDefaultItem( key, value ) == false )
                {
                    nodeConfig[key] = value ;
                }
