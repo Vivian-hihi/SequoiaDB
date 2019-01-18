@@ -426,13 +426,13 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
       case 'AddHost':
          stepList['step'] = 2 ;
          break ;
-      case 'InstallHost':
+      case 'Host':
          stepList['step'] = 3 ;
          break ;
       }
       stepList['info'].push( { 'text': $scope.autoLanguage( '扫描主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'ScanHost' ); } } ) ;
       stepList['info'].push( { 'text': $scope.autoLanguage( '检查主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost'  ); } } ) ;
-      stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallHost'  ); } } ) ;
+      stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Host'  ); } } ) ;
       break ;
    }
    case 'Module':
@@ -450,7 +450,7 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
       case 'ZKP-Mod':
          stepList['step'] = 1 ;
          break ;
-      case 'InstallModule':
+      case 'Module':
          if( deployModule == 'sequoiadb' || deployModule == 'sequoiasql' )
          {
             stepList['step'] = 3 ;
@@ -475,7 +475,7 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
       {
          stepList['info'].push( { 'text': $scope.autoLanguage( '修改服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'ZKP-Mod'  ); } } ) ;
       }
-      stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'Install'  ); } } ) ;
+      stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Module'  ); } } ) ;
       break ;
    }
    case 'Deploy':
@@ -488,7 +488,7 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
       case 'AddHost':
          stepList['step'] = 2 ;
          break ;
-      case 'InstallHost':
+      case 'Host':
          stepList['step'] = 3 ;
          break ;
       case 'SDB-Conf':
@@ -499,7 +499,7 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
       case 'SSQL-Mod':
          stepList['step'] = 5 ;
          break ;
-      case 'InstallModule':
+      case 'Module':
          if( deployModule == 'zookeeper' )
          {
             stepList['step'] = 5 ;
@@ -512,7 +512,7 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
       }
       stepList['info'].push( { 'text': $scope.autoLanguage( '扫描主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'ScanHost' ); } } ) ;
       stepList['info'].push( { 'text': $scope.autoLanguage( '检查主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost'  ); } } ) ;
-      stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'Install'  ); } } ) ;
+      stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Host'  ); } } ) ;
       if( deployModule == 'sequoiadb' )
       {
          stepList['info'].push( { 'text': $scope.autoLanguage( '配置服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Conf' ); } } ) ;
@@ -527,7 +527,7 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
       {
          stepList['info'].push( { 'text': $scope.autoLanguage( '修改服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'ZKP-Mod'  ); } } ) ;
       }
-      stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'Install'  ); } } ) ;
+      stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Module'  ); } } ) ;
       break ;
    }
    }
@@ -578,7 +578,7 @@ _Deploy.BuildSdbDiscoverStep = function( $scope, $location, action, deployModule
    case 'AddHost':
       stepList['step'] = 2 ;
       break ;
-   case 'InstallHost':
+   case 'Host':
       stepList['step'] = 3 ;
       break ;
    case 'SDB-Discover':
@@ -587,7 +587,7 @@ _Deploy.BuildSdbDiscoverStep = function( $scope, $location, action, deployModule
    }
    stepList['info'].push( { 'text': $scope.autoLanguage( '扫描主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'ScanHost') ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '检查主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost' ) ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallHost' ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Host' ) ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '发现服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Discover'  ) ; } } ) ;
    return stepList ;
 }
@@ -607,7 +607,7 @@ _Deploy.BuildSdbSyncStep = function( $scope, $location, action, deployModule ){
    case 'AddHost':
       stepList['step'] = 2 ;
       break ;
-   case 'InstallHost':
+   case 'Host':
       stepList['step'] = 3 ;
       break ;
    case 'SDB-Sync':
@@ -616,7 +616,7 @@ _Deploy.BuildSdbSyncStep = function( $scope, $location, action, deployModule ){
    }
    stepList['info'].push( { 'text': $scope.autoLanguage( '扫描主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'ScanHost') ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '检查主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost' ) ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallHost' ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Host' ) ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '同步服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Sync'  ) ; } } ) ;
    return stepList ;
 }
@@ -632,12 +632,12 @@ _Deploy.BuildSdbShrinkStep = function( $scope, $location, action, deployModule )
    case 'SDB-ShrinkConf':
       stepList['step'] = 1 ;
       break ;
-   case 'InstallModule':
+   case 'Module':
       stepList['step'] = 2 ;
       break ;
    }
    stepList['info'].push( { 'text': $scope.autoLanguage( '减容配置' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-ShrinkConf') ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '服务减容' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '服务减容' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Module'  ) ; } } ) ;
    return stepList ;
 }
 
@@ -652,12 +652,12 @@ _Deploy.BuildSdbPgsqlStep = function( $scope, $location, action, deployModule ){
    case 'PostgreSQL-Mod':
       stepList['step'] = 1 ;
       break ;
-   case 'InstallModule':
+   case 'Module':
       stepList['step'] = 2 ;
       break ;
    }
    stepList['info'].push( { 'text': $scope.autoLanguage( '配置服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'PostgreSQL-Mod') ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Module'  ) ; } } ) ;
    return stepList ;
 }
 
@@ -672,12 +672,12 @@ _Deploy.BuildSdbMysqlStep = function( $scope, $location, action, deployModule ){
    case 'MySQL-Mod':
       stepList['step'] = 1 ;
       break ;
-   case 'InstallModule':
+   case 'Module':
       stepList['step'] = 2 ;
       break ;
    }
    stepList['info'].push( { 'text': $scope.autoLanguage( '配置服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'MySQL-Mod') ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallModule'  ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Module'  ) ; } } ) ;
    return stepList ;
 }
 
@@ -692,12 +692,12 @@ _Deploy.BuildDeployPackageStep = function( $scope, $location, action, deployModu
    case 'Package':
       stepList['step'] = 1 ;
       break ;
-   case 'InstallHost':
+   case 'Host':
       stepList['step'] = 2 ;
       break ;
    }
    stepList['info'].push( { 'text': $scope.autoLanguage( '配置' ), 'click': function(){ _Deploy.GotoStep( $location, 'Package') ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '部署' ), 'click': function(){ _Deploy.GotoStep( $location, 'InstallHost'  ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '部署' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Host'  ) ; } } ) ;
    return stepList ;
 }
 

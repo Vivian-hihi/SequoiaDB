@@ -55,19 +55,19 @@
       {
          if( discoverConf != null )
          {
-            $scope.stepList = _Deploy.BuildSdbDiscoverStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+            $scope.stepList = _Deploy.BuildSdbDiscoverStep( $scope, $location, $scope['Url']['Method'], 'sequoiadb' ) ;
          }
          else if( syncConf != null )
          {
-            $scope.stepList = _Deploy.BuildSdbSyncStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+            $scope.stepList = _Deploy.BuildSdbSyncStep( $scope, $location, $scope['Url']['Method'], 'sequoiadb' ) ;
          }
          else if( $scope.DeployType == 'Package' )
          {
-            $scope.stepList = _Deploy.BuildDeployPackageStep( $scope, $location, $scope['Url']['Action'], $scope.DeployType ) ;
+            $scope.stepList = _Deploy.BuildDeployPackageStep( $scope, $location, $scope['Url']['Method'], $scope.DeployType ) ;
          }
          else
          {
-            $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], $scope.ModuleType ) ;
+            $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Method'], $scope.ModuleType ) ;
          }
          if( $scope.stepList['info'].length == 0 )
          {

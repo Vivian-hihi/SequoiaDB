@@ -37,19 +37,19 @@
       {
          if( shrink == true )
          {
-            $scope.stepList = _Deploy.BuildSdbShrinkStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+            $scope.stepList = _Deploy.BuildSdbShrinkStep( $scope, $location, $scope['Url']['Method'], 'sequoiadb' ) ;
          }
          else if( $scope.ModuleType == 'sequoiasql-postgresql' )
          {
-            $scope.stepList = _Deploy.BuildSdbPgsqlStep( $scope, $location, $scope['Url']['Action'] ) ;
+            $scope.stepList = _Deploy.BuildSdbPgsqlStep( $scope, $location, $scope['Url']['Method'] ) ;
          }
          else if( $scope.ModuleType == 'sequoiasql-mysql' )
          {
-            $scope.stepList = _Deploy.BuildSdbMysqlStep( $scope, $location, $scope['Url']['Action'] ) ;
+            $scope.stepList = _Deploy.BuildSdbMysqlStep( $scope, $location, $scope['Url']['Method'] ) ;
          }
          else
          {
-            $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], $scope.ModuleType ) ;
+            $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Method'], $scope.ModuleType ) ;
          }
 
          if( $scope.DeployType != 'Task' && $scope.stepList['info'].length == 0 )
