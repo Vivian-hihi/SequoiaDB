@@ -58,7 +58,8 @@ function main()
    dbcl.insert({ "q" : 2, "id1" : 5});
    try
    {
-      dbcl.insert({ "q" : 2, "id1" : 2, "id2" : 5, "id3" : "f" });     
+      dbcl.insert({ "q" : 2, "id1" : 2, "id2" : 5, "id3" : "f" });
+      throw "need error for insert";     
    }catch(e)
    {
       if(e !== -6)
@@ -69,7 +70,7 @@ function main()
    
    var rc = dbcl.find().sort( { "id1" : 1 } );
    var expRecs = [ { "q" : 1, "id1" : 1, "id2" : 1, "id3" : 5 },
-                   { "q" : 2, "id1" : 5, "id2" : 2, "id3" : 1 }];
+                   { "q" : 2, "id1" : 5, "id2" : 2, "id3" : 6 }];
    checkRec( rc, expRecs );
   
    commDropCL( db, COMMCSNAME, clName );

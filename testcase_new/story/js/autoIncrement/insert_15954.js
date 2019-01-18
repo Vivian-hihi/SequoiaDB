@@ -24,7 +24,7 @@ function main()
    var mainclSequenceName = "SYS_" + clID + "_" + fieldName + "_SEQ";
    var expIncrementArr = [{Field:fieldName, SequenceName:mainclSequenceName, Generated:generated}];
    checkAutoIncrementonCL(COMMCSNAME, clName, expIncrementArr);
-   
+   /*需求变更SEQUOIADBMAINSTREAM-4045，用例后续重新实现，已将该用例记录到对应的问题单中
    var expR = [];
    var j=1;
    for(var i=0; i<100; i++)
@@ -63,7 +63,7 @@ function main()
    var actR = dbcl.find().sort({_id:1});
    checkRec(actR, expR);
    println("---check set \"id.xxx\" insert record success");
-   
+   */
    var arr = [{id:1.25,a:"float"},
               {id:{$decimal:"123"},a:"decimal"},
               {id:"string",a:"string"},

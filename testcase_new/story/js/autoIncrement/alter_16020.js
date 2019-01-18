@@ -42,7 +42,7 @@ function main()
       var coord = new Sdb( coordNodes[ i ] );
       var cl = coord.getCS( COMMCSNAME ).getCL( clName );
       cl.insert({ "a" : i, "b" : i, "id1" : i });
-      expRecs.push({ "a" : i, "b" : i, "id1" : i*acquireSize+11 });
+      expRecs.push({ "a" : i, "b" : i, "id1" : i*acquireSize + 11 });
       coord.close();
    }
     
@@ -90,14 +90,13 @@ function main()
    }
    
    dbcl.truncate();
-   
    dbcl.insert({ "a" : "a", "id1" : 50 });
    dbcl.insert({ "a" : "a1"});
    
    var rc = dbcl.find().sort( { "id1" : 1 } );
    var expRecs = new Array();
-   expRecs.push({ "a" : "a1", "id1" : 1 });
    expRecs.push({ "a" : "a", "id1" : 50 });
+   expRecs.push({ "a" : "a1", "id1" : 51 });
    checkRec( rc, expRecs );
    
    commDropCL( db, COMMCSNAME, clName );
