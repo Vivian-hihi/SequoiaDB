@@ -116,13 +116,31 @@ namespace engine
                                  pmdEDUCB *cb,
                                  CHAR **ppNewMsg,
                                  INT32 &newMsgSize,
-                                 INT32 &newMsgLen ) ;
+                                 INT32 &newMsgLen,
+                                 BOOLEAN &hasExplicitKey ) ;
 
          template <typename T>
          INT32 _addAutoIncToObj( const BSONObj &objIn,
                                  const T &set,
                                  pmdEDUCB *cb,
-                                 _SimpleBSONBuilder &builder ) ;
+                                 _SimpleBSONBuilder &builder,
+                                 BOOLEAN &hasExplicitKey ) ;
+
+         INT32 _processUserInput( const clsAutoIncItem *pItem,
+                                  BSONElement &ele,
+                                  pmdEDUCB *cb,
+                                  _SimpleBSONBuilder &builder,
+                                  BOOLEAN &hasExplicitKey ) ;
+
+         INT32 _appendAutoIncField( const clsAutoIncItem *pItem,
+                                    pmdEDUCB *cb,
+                                    _SimpleBSONBuilder &builder ) ;
+
+         BOOLEAN _canRetry( INT32 count,
+                            INT32 rc,
+                            BOOLEAN hasExplicitKey ) ;
+
+         void _removeLocalSeqCache( const clsAutoIncSet &set ) ;
 
       protected:
 
@@ -161,6 +179,7 @@ namespace engine
       private:
          UINT32         _insertedNum ;
          UINT32         _ignoredNum ;
+         BOOLEAN        _hasRetry ;
 
          /*
             For main collection

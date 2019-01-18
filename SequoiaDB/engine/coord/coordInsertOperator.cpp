@@ -84,7 +84,7 @@ namespace engine
             init() ;
          }
 
-         UINT32 getLen() const { return _pCur - _pBuf ; }
+         UINT32 len() const { return _pCur - _pBuf ; }
 
          const CHAR* done()
          {
@@ -158,6 +158,7 @@ namespace engine
    {
       _insertedNum = 0 ;
       _ignoredNum = 0 ;
+      _hasRetry = FALSE ;
 
       const static string s_insertStr("Insert" ) ;
       setName( s_insertStr ) ;
@@ -209,6 +210,7 @@ namespace engine
 
       coordCataSel cataSel ;
       MsgRouteID errNodeID ;
+      CoordCataInfoPtr cataPtr ;
 
       // for autoIncrement
       CHAR *pNewMsg = NULL ;
@@ -219,6 +221,8 @@ namespace engine
       const clsAutoIncSet *pAutoIncSet = NULL ;
       clsAutoIncIDSet curAutoIncIDs ;
       clsAutoIncIDSet lastAutoIncIDs ;
+      BOOLEAN hasExplicitKey = FALSE ;
+      BOOLEAN needNewAutoInc = FALSE ;
 
       // fill default-reply(insert success)
       MsgOpInsert *pInsertMsg          = (MsgOpInsert *)pMsg ;
@@ -264,36 +268,39 @@ namespace engine
       orgMsgLen = pMsg->messageLength ;
 
    retry:
-      if ( cataSel.getCataPtr()->hasAutoIncrement() )
+      cataPtr = cataSel.getCataPtr() ;
+      if ( cataPtr->hasAutoIncrement() )
       {
-         pAutoIncSet = &cataSel.getCataPtr()->getAutoIncSet() ;
+         pAutoIncSet = &cataPtr->getAutoIncSet() ;
          curAutoIncIDs = pAutoIncSet->getIDs() ;
 
+         /*
+            when retry, only in two conditions we need to generate key again.
+            1. auto-increment attributes are altered;
+            2. auto-increment key from system is a dupplicate key.
+          */
          if ( 0 == result._sucGroupLst.size() &&
-              curAutoIncIDs != lastAutoIncIDs )
+              ( curAutoIncIDs != lastAutoIncIDs || needNewAutoInc ) )
          {
+            needNewAutoInc = FALSE ;
             // in case of reshard, clear the last shard result.
-            if ( cataSel.getCataPtr()->isMainCL() )
-            {
-               _grpSubCLDatas.clear() ;
-            }
-            else
-            {
-               inMsg.data()->clear() ;
-            }
+            cataPtr->isMainCL() ? _grpSubCLDatas.clear() : inMsg.data()->clear() ;
 
+            hasExplicitKey = FALSE ;
             rc = _addAutoIncToMsg( *pAutoIncSet, pInsertMsg, pInsertor,
                                    count, orgMsgLen, cb,
-                                   &pNewMsg, newMsgSize, newMsgLen ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement fields to "
-                         "msg, rc: %d", rc ) ;
+                                   &pNewMsg, newMsgSize, newMsgLen,
+                                   hasExplicitKey ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to add autoIncrement fields to msg, rc: %d",
+                         rc ) ;
             inMsg._pMsg = (MsgHeader*)pNewMsg ;
             lastAutoIncIDs = curAutoIncIDs ;
          }
       }
 
       pTmpInsertMsg = (MsgOpInsert*) inMsg._pMsg ;
-      pTmpInsertMsg->version = cataSel.getCataPtr()->getVersion() ;
+      pTmpInsertMsg->version = cataPtr->getVersion() ;
       pTmpInsertMsg->w = 0 ;
 
       /// Do on collection
@@ -307,6 +314,14 @@ namespace engine
       {
          nokRC.clear() ;
          _groupSession.getGroupCtrl()->incRetry() ;
+         goto retry ;
+      }
+      else if ( cataPtr->hasAutoIncrement() &&
+                _canRetry( count, rc, hasExplicitKey ) )
+      {
+         nokRC.clear() ;
+         _removeLocalSeqCache( cataPtr->getAutoIncSet() ) ;
+         needNewAutoInc = TRUE ;
          goto retry ;
       }
       else
@@ -916,7 +931,7 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__ADD_AUTOINC_TO_MSG, "_coordInsertOperator::_addAutoIncToMsg" )
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_INSERTOPR__ADD_AUTOINC_TO_MSG, "_coordInsertOperator::_addAutoIncToMsg" )
    INT32 _coordInsertOperator::_addAutoIncToMsg( const clsAutoIncSet &autoIncSet,
                                                  MsgOpInsert *pInsertMsg,
                                                  CHAR const *pInsertor,
@@ -925,9 +940,10 @@ namespace engine
                                                  pmdEDUCB *cb,
                                                  CHAR **ppNewMsg,
                                                  INT32 &newMsgSize,
-                                                 INT32 &newMsgLen )
+                                                 INT32 &newMsgLen,
+                                                 BOOLEAN &hasExplicitKey )
    {
-      PD_TRACE_ENTRY( SDB__ADD_AUTOINC_TO_MSG ) ;
+      PD_TRACE_ENTRY( COORD_INSERTOPR__ADD_AUTOINC_TO_MSG ) ;
 
       INT32 rc = SDB_OK ;
       INT32 i = 0 ;
@@ -953,13 +969,13 @@ namespace engine
       {
          const BSONObj objIn( (const CHAR*)pInsertor ) ;
          _SimpleBSONBuilder builder( pCurPos ) ;
-         rc = _addAutoIncToObj( objIn, autoIncSet, cb, builder ) ;
+         rc = _addAutoIncToObj( objIn, autoIncSet, cb, builder, hasExplicitKey ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to add autoIncrement field to obj[%s], rc: %d",
                       objIn.toString().c_str(), rc ) ;
          builder.done() ;
 
-         pCurPos += ossRoundUpToMultipleX( builder.getLen(), 4 ) ;
+         pCurPos += ossRoundUpToMultipleX( builder.len(), 4 ) ;
          pInsertor += ossRoundUpToMultipleX( objIn.objsize(), 4 ) ;
       }
 
@@ -968,7 +984,7 @@ namespace engine
       ((MsgHeader*)(*ppNewMsg))->messageLength = newMsgLen ;
 
    done:
-      PD_TRACE_EXIT( SDB__ADD_AUTOINC_TO_MSG ) ;
+      PD_TRACE_EXITRC( COORD_INSERTOPR__ADD_AUTOINC_TO_MSG, rc ) ;
       return rc ;
    error:
       newMsgLen = 0 ;
@@ -976,152 +992,237 @@ namespace engine
    }
 
    template <typename T>
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__ADD_AUTOINC_TO_OBJ, "_coordInsertOperator::_addAutoIncToObj" )
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_INSERTOPR__ADD_AUTOINC_TO_OBJ, "_coordInsertOperator::_addAutoIncToObj" )
    INT32 _coordInsertOperator::_addAutoIncToObj( const BSONObj &objIn,
                                                  const T &set,
                                                  pmdEDUCB *cb,
-                                                 _SimpleBSONBuilder &builder )
+                                                 _SimpleBSONBuilder &builder,
+                                                 BOOLEAN &hasExplicitKey )
    {
-      PD_TRACE_ENTRY( SDB__ADD_AUTOINC_TO_OBJ ) ;
+      PD_TRACE_ENTRY( COORD_INSERTOPR__ADD_AUTOINC_TO_OBJ ) ;
       typedef _utilSet<_utilMapStringKey, 1>    StringKeySet ;
 
       INT32                      rc = SDB_OK ;
       BSONElement                ele ;
-      const CHAR*                eleField = NULL;
       const clsAutoIncItem       *pItem = NULL ;
       StringKeySet               doneSet ;
 
-      coordSequenceAgent         *pSequenceAgent = NULL ;
-      INT64                      nextValue = 0 ;
-
-      try
+      // 1. Handle autoIncrement fields inputted by user.
+      BSONObjIterator boIt( objIn ) ;
+      while( boIt.more() )
       {
-         // 1. Handle autoIncrement fields inputted by user.
-
-         BSONObjIterator boIt( objIn ) ;
-         while( boIt.more() )
+         ele = boIt.next() ;
+         pItem = set.findItem( ele.fieldName() ) ;
+         if ( NULL == pItem )
          {
-            ele = boIt.next() ;
-            eleField = ele.fieldName() ;
-            pItem = set.findItem( eleField ) ;
-            if ( NULL == pItem )
-            {
-               builder.appendElement( ele ) ;
-               continue ;
-            }
-
-            if ( !pItem->hasSubField() )
-            {
-               switch( pItem->generatedType() )
-               {
-               case AUTOINC_GEN_ALWAYS:
-                  break ;
-               case AUTOINC_GEN_STRICT:
-                  PD_CHECK( NumberInt == ele.type() ||
-                            NumberLong == ele.type(),
-                            SDB_INVALIDARG, error, PDERROR,
-                            "Wrong type[%d] of autoIncrement field[%s]",
-                            ele.type(), eleField ) ;
-               case AUTOINC_GEN_DEFAULT:
-                  builder.appendElement( ele ) ;
-                  doneSet.insert( pItem->fieldName() ) ;
-                  break ;
-               }
-            }
-            else
-            {
-               if ( Object == ele.type() )
-               {
-                  _SimpleBSONBuilder subBuilder(
-                        builder.subobjStart( eleField ) ) ;
-
-                  rc = _addAutoIncToObj( ele.embeddedObject(), *pItem,
-                                         cb, subBuilder ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement "
-                               "field[%s], rc: %d",
-                               eleField, rc ) ;
-                  subBuilder.done() ;
-
-                  doneSet.insert( pItem->fieldName() ) ;
-               }
-               else
-               {
-                  // autoIncrement field is "a.b",
-                  // and user just input field "a".
-                  PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                               "Field[%s] conflicted with autoIncrement field",
-                               eleField ) ;
-               }
-            }
-
-            if ( doneSet.size() == set.itemCount() )
-            {
-               break ;
-            }
-         }
-
-         while( boIt.more() )
-         {
-            ele = boIt.next() ;
             builder.appendElement( ele ) ;
+            continue ;
          }
 
-         // 2. Complete the rest of autoIncrement fields.
+         UINT32 oldLen = builder.len() ;
+         rc = _processUserInput( pItem, ele, cb, builder, hasExplicitKey ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to process user entered field, rc: %d", rc ) ;
 
-         pSequenceAgent = _pResource->getSequenceAgent() ;
+         if ( builder.len() > oldLen ) {
+            doneSet.insert( ele.fieldName() ) ;
+         }
 
-         clsAutoIncIterator autoIncIt( set ) ;
+         if ( doneSet.size() == set.itemCount() )
+         {
+            break ;
+         }
+      }
+
+      while( boIt.more() )
+      {
+         ele = boIt.next() ;
+         builder.appendElement( ele ) ;
+      }
+
+      // 2. Complete the rest of autoIncrement fields.
+      {
+         clsAutoIncIterator autoIncIt( set );
          while ( autoIncIt.more() )
          {
             /// already exist
-            pItem = autoIncIt.next() ;
+            pItem = autoIncIt.next();
             if ( doneSet.find( pItem->fieldName() ) != doneSet.end() )
             {
-               continue ;
+               continue;
             }
 
-            if ( !pItem->hasSubField() )
-            {
-               rc = pSequenceAgent->getNextValue( pItem->sequenceName(),
-                                                  pItem->sequenceID(),
-                                                  nextValue, cb ) ;
-               if ( SDB_SEQUENCE_NOT_EXIST == rc )
-               {
-                  rc = SDB_OK ;
-                  continue ;
-               }
-               else if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "Failed to get sequence[%s] next value, "
-                          "rc: %d", pItem->sequenceName(), rc ) ;
-                  goto error ;
-               }
-
-               builder.append( pItem->fieldName(), nextValue ) ;
-            }
-            else
-            {
-               _SimpleBSONBuilder subBuilder(
-                     builder.subobjStart( pItem->fieldName() ) ) ;
-
-               rc = _addAutoIncToObj( BSONObj(), *pItem, cb, subBuilder ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement "
-                            "field[%s], rc: %d", pItem->fieldName(), rc ) ;
-               subBuilder.done() ;
-            }
+            rc = _appendAutoIncField( pItem, cb, builder );
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to append auto-increment field[%s], rc: %d",
+                         pItem->fieldName(), rc );
          }
-      }
-      catch ( std::exception &e )
-      {
-         PD_RC_CHECK( SDB_SYS, PDERROR, "Unexpected exception happened[%s]",
-                      e.what() ) ;
       }
 
    done:
-      PD_TRACE_EXIT( SDB__ADD_AUTOINC_TO_OBJ ) ;
+      PD_TRACE_EXITRC( COORD_INSERTOPR__ADD_AUTOINC_TO_OBJ, rc ) ;
       return rc ;
    error:
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_INSERTOPR__PROCESS_USER_INPUT, "_coordInsertOperator::_processUserInput" )
+   INT32 _coordInsertOperator::_processUserInput( const clsAutoIncItem *pItem,
+                                                  BSONElement &ele,
+                                                  pmdEDUCB *cb,
+                                                  _SimpleBSONBuilder &builder,
+                                                  BOOLEAN &hasExplicitKey )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *eleField = ele.fieldName() ;
+      PD_TRACE_ENTRY( COORD_INSERTOPR__PROCESS_USER_INPUT ) ;
+
+      if ( !pItem->hasSubField() )
+      {
+         BOOLEAN isNumber = FALSE ;
+
+         if ( AUTOINC_GEN_ALWAYS == pItem->generatedType() )
+         {
+            goto done ;
+         }
+
+         isNumber = (NumberInt == ele.type() || NumberLong == ele.type()) ;
+         if ( AUTOINC_GEN_STRICT == pItem->generatedType() )
+         {
+            PD_CHECK( isNumber, SDB_INVALIDARG, error, PDERROR,
+                      "Wrong type[%d] of autoIncrement field[%s]",
+                      ele.type(), eleField ) ;
+         }
+
+         if ( isNumber )
+         {
+            coordSequenceAgent *pSequenceAgent = _pResource->getSequenceAgent() ;
+            rc = pSequenceAgent->adjustNextValue( pItem->sequenceName(),
+                                                  pItem->sequenceID(),
+                                                  ele.numberLong(),
+                                                  cb ) ;
+            if ( SDB_SEQUENCE_NOT_EXIST == rc )
+            {
+               rc = SDB_OK ;
+            }
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to adjust sequence[%s] next value, rc:%d",
+                       pItem->sequenceName(), rc ) ;
+               goto error ;
+            }
+         }
+
+         builder.appendElement( ele ) ;
+         hasExplicitKey = TRUE ;
+      }
+      else
+      {
+         if ( Object == ele.type() )
+         {
+            _SimpleBSONBuilder subBuilder( builder.subobjStart( eleField ) ) ;
+            rc = _addAutoIncToObj( ele.embeddedObject(), *pItem,
+                                   cb, subBuilder, hasExplicitKey ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement field[%s], "
+                         "rc: %d", eleField, rc ) ;
+            subBuilder.done();
+         }
+         else
+         {
+            // autoIncrement field is "a.b",
+            // and user just input field "a".
+            PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
+                         "Field[%s] conflicted with autoIncrement field",
+                         eleField );
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( COORD_INSERTOPR__PROCESS_USER_INPUT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_INSERTOPR__APPEND_AUTOINC_FLD, "_coordInsertOperator::_appendAutoIncField" )
+   INT32 _coordInsertOperator::_appendAutoIncField( const clsAutoIncItem *pItem,
+                                                    pmdEDUCB *cb,
+                                                    _SimpleBSONBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_INSERTOPR__APPEND_AUTOINC_FLD ) ;
+
+      if ( !pItem->hasSubField() )
+      {
+         coordSequenceAgent *pSequenceAgent = _pResource->getSequenceAgent() ;
+         INT64 nextValue = 0 ;
+
+         rc = pSequenceAgent->getNextValue( pItem->sequenceName(),
+                                            pItem->sequenceID(),
+                                            nextValue, cb ) ;
+         if ( SDB_SEQUENCE_NOT_EXIST == rc )
+         {
+            rc = SDB_OK ;
+            goto done ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to get sequence[%s] next value, rc: %d",
+                    pItem->sequenceName(), rc ) ;
+            goto error ;
+         }
+
+         builder.append( pItem->fieldName(), nextValue ) ;
+      }
+      else
+      {
+         _SimpleBSONBuilder subBuilder(
+               builder.subobjStart( pItem->fieldName() ) ) ;
+
+         BOOLEAN hasExplicitKey = FALSE ; // it must be FALSE here, used to compile
+         rc = _addAutoIncToObj( BSONObj(), *pItem, cb,
+                                subBuilder, hasExplicitKey ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to add autoIncrement "
+                      "field[%s], rc: %d", pItem->fieldName(), rc ) ;
+         subBuilder.done() ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( COORD_INSERTOPR__APPEND_AUTOINC_FLD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN _coordInsertOperator::_canRetry( INT32 count,
+                                            INT32 rc,
+                                            BOOLEAN hasExplicitKey )
+   {
+      BOOLEAN retry = FALSE ;
+      if (1 == count && SDB_IXM_DUP_KEY == rc &&
+          !hasExplicitKey && !_hasRetry )
+      {
+         _hasRetry = TRUE ;
+         retry = TRUE ;
+      }
+      return retry ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_INSERTOPR__REMOVE_LOCAL_SEQ_CACHE, "_coordInsertOperator::_removeLocalSeqCache" )
+   void _coordInsertOperator::_removeLocalSeqCache( const clsAutoIncSet &set )
+   {
+      PD_TRACE_ENTRY( COORD_INSERTOPR__REMOVE_LOCAL_SEQ_CACHE ) ;
+
+      coordSequenceAgent *pSequenceAgent = _pResource->getSequenceAgent() ;
+      clsAutoIncIterator iter( set, clsAutoIncIterator::RECURS ) ;
+      while ( iter.more() )
+      {
+         const clsAutoIncItem *pItem = iter.next() ;
+         pSequenceAgent->removeCache( pItem->sequenceName(),
+                                      pItem->sequenceID() ) ;
+      }
+
+      PD_TRACE_EXIT( COORD_INSERTOPR__REMOVE_LOCAL_SEQ_CACHE ) ;
    }
 
 }

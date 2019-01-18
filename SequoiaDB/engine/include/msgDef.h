@@ -134,6 +134,7 @@
 #define FIELD_NAME_INTERNAL                  "Internal"
 #define FIELD_NAME_INITIAL                   "Initial"
 #define FIELD_NAME_NEXT_VALUE                "NextValue"
+#define FIELD_NAME_EXPECT_VALUE              "ExpectValue"
 #define FIELD_NAME_MAJOR                     "Major"
 #define FIELD_NAME_MINOR                     "Minor"
 #define FIELD_NAME_FIX                       "Fix"

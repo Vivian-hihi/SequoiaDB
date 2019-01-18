@@ -437,10 +437,11 @@ namespace engine
    INT32 _catGTSMsgHandler::_processSequenceAcquireMsg( MsgHeader* msg, rtnContextBuf& buf, _pmdEDUCB* eduCB )
    {
       INT32 rc = SDB_OK ;
-      BSONElement ele ;
       BSONObj options ;
-      string name ;
+      const CHAR *name = NULL ;
       utilSequenceID ID = UTIL_SEQUENCEID_NULL ;
+      BOOLEAN hasExpectValue = FALSE ;
+      INT64 expectValue = 0 ;
       _catSequenceAcquirer acquirer ;
 
       PD_TRACE_ENTRY( SDB_GTS_MSG_HANDLER__PROCESS_SEQ_ACQUIRE ) ;
@@ -455,30 +456,67 @@ namespace engine
          goto error ;
       }
 
-      ele = options.getField( CAT_SEQUENCE_NAME ) ;
-      if ( String != ele.type() )
+      {
+         BSONObjIterator iter( options );
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next();
+            if ( 0 == ossStrcmp( ele.fieldName(), CAT_SEQUENCE_NAME ) )
+            {
+               if ( String != ele.type() )
+               {
+                  rc = SDB_INVALIDARG;
+                  PD_LOG( PDERROR, "Invalid type[%d] of sequence options[%s]",
+                          ele.type(), CAT_SEQUENCE_NAME );
+                  goto error;
+               }
+               name = ele.valuestr();
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), CAT_SEQUENCE_ID ) )
+            {
+               if ( !ele.isNumber() )
+               {
+                  rc = SDB_INVALIDARG;
+                  PD_LOG( PDERROR, "Invalid type[%d] of sequence options[%s]",
+                          ele.type(), CAT_SEQUENCE_ID );
+                  goto error;
+               }
+               ID = ele.Long();
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(),
+                                      CAT_SEQUENCE_EXPECT_VALUE ) )
+            {
+               if ( !ele.isNumber() )
+               {
+                  rc = SDB_INVALIDARG;
+                  PD_LOG( PDERROR, "Invalid type[%d] of sequence options[%s]",
+                          ele.type(), CAT_SEQUENCE_EXPECT_VALUE );
+                  goto error;
+               }
+               hasExpectValue = TRUE;
+               expectValue = ele.Long();
+            }
+         }
+      }
+
+      if ( NULL == name )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid type[%d] of sequence options[%s]",
-                 ele.type(), CAT_SEQUENCE_NAME ) ;
-         goto error ;
-      }
-      name = ele.String() ;
-
-      ele = options.getField( CAT_SEQUENCE_ID ) ;
-      if ( ele.isNumber() )
-      {
-         ID = ele.Long() ;
-      }
-      else if ( EOO != ele.type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid type[%d] of sequence options[%s]",
-                 ele.type(), CAT_SEQUENCE_ID ) ;
+         PD_LOG( PDERROR, "No sequence name" ) ;
          goto error ;
       }
 
-      rc = seqMgr->acquireSequence( name, ID, acquirer, eduCB, _catCB->majoritySize( TRUE ) ) ;
+      if ( hasExpectValue )
+      {
+         rc = seqMgr->adjustSequence( name, ID, expectValue, eduCB, 1 ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
+      rc = seqMgr->acquireSequence( name, ID, acquirer, eduCB,
+                                    _catCB->majoritySize( TRUE ) ) ;
       if ( SDB_OK != rc )
       {
          goto error ;

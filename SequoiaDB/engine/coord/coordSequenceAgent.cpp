@@ -119,6 +119,57 @@ namespace engine
    } ;
    typedef _coordSequence coordSequence ;
 
+   class _coordSequenceAgent::_operateSequence
+   {
+   public:
+      virtual INT32 operator() ( coordSequenceAgent *pAgent,
+                                 _coordSequence& seq,
+                                 _pmdEDUCB *eduCB )
+      {
+         return SDB_OK ;
+      }
+      virtual ~_operateSequence() {}
+   } ;
+
+   class _coordSequenceAgent::_getNextValue:
+         public _coordSequenceAgent::_operateSequence
+   {
+   public:
+      _getNextValue( INT64 &nextValue ): _nextValue( nextValue )
+      {
+      }
+
+      virtual INT32 operator() ( coordSequenceAgent *pAgent,
+                                 _coordSequence& seq,
+                                 _pmdEDUCB *eduCB ) ;
+   private:
+      INT64& _nextValue ;
+   } ;
+
+   class _coordSequenceAgent::_adjustNextValue:
+         public _coordSequenceAgent::_operateSequence
+   {
+   public:
+      _adjustNextValue( INT64 expectValue ): _expectValue( expectValue )
+      {
+      }
+
+      virtual INT32 operator() ( coordSequenceAgent *pAgent,
+                                 _coordSequence& seq,
+                                 _pmdEDUCB *eduCB ) ;
+
+   private:
+      void _adjustAscendingly( _coordSequence& seq,
+                               INT64 expectValue,
+                               BOOLEAN& needAcquire ) ;
+      void _adjustDecendingly( _coordSequence& seq,
+                               INT64 expectValue,
+                               BOOLEAN& needAcquire ) ;
+
+   private:
+      INT64 _expectValue ;
+   } ;
+
    _coordSequenceAgent::_coordSequenceAgent()
    {
       _resource = NULL ;
@@ -195,24 +246,189 @@ namespace engine
       PD_TRACE_EXIT( SDB_COORD_SEQ_AGENT_CLEAR ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT_GET_NEXT_VALUE, "_coordSequenceAgent::getNextValue" )
    INT32 _coordSequenceAgent::getNextValue( const std::string& name,
                                             const utilSequenceID ID,
                                             INT64& nextValue,
                                             _pmdEDUCB* eduCB )
    {
+      _getNextValue func( nextValue ) ;
+      return _doOnSequence( name, ID, eduCB, func ) ;
+   }
+
+   INT32 _coordSequenceAgent::adjustNextValue( const std::string& name,
+                                               const utilSequenceID ID,
+                                               INT64 userValue,
+                                               _pmdEDUCB* eduCB )
+   {
+      _adjustNextValue func( userValue ) ;
+      return _doOnSequence( name, ID, eduCB, func ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE, "_coordSequenceAgent::_getNextValue::operator" )
+   INT32 _coordSequenceAgent::_getNextValue::operator() ( coordSequenceAgent *pAgent,
+                                                          _coordSequence& seq,
+                                                          _pmdEDUCB* eduCB )
+   {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT_GET_NEXT_VALUE ) ;
+      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE ) ;
+
+      SDB_ASSERT( seq.acquireSize() >= 0, "AcquireSize should >= 0" ) ;
+
+      if ( seq.acquireSize() == 0 )
+      {
+         rc = pAgent->_acquireSequence( seq, eduCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
+                    seq.name().c_str(), rc ) ;
+            goto error ;
+         }
+
+         if ( seq.acquireSize() == 0 )
+         {
+            SDB_ASSERT( FALSE, "AcquireSize == 0" ) ;
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Invalid AcquireSize of sequence[%s], rc=%d",
+                    seq.name().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+      seq.decreaseAcquireSize() ;
+      _nextValue = seq.nextValue() ;
+      seq.setNextValue( seq.nextValue() + seq.increment() ) ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__ADJUST_NEXT_VALUE, "_coordSequenceAgent::_adjustNextValue::operator" )
+   INT32 _coordSequenceAgent::_adjustNextValue::operator() ( coordSequenceAgent *pAgent,
+                                                             _coordSequence& seq,
+                                                             _pmdEDUCB *eduCB )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN needAcquire = FALSE ;
+      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__ADJUST_NEXT_VALUE ) ;
+
+      SDB_ASSERT( seq.acquireSize() >= 0, "AcquireSize should >= 0" ) ;
+
+      if ( 0 != seq.acquireSize() )
+      {
+         if ( seq.increment() > 0 )
+         {
+            _adjustAscendingly( seq, _expectValue, needAcquire ) ;
+         }
+         else
+         {
+            _adjustDecendingly( seq, _expectValue, needAcquire ) ;
+         }
+      }
+      else
+      {
+         needAcquire = TRUE ;
+      }
+
+      if ( needAcquire )
+      {
+         rc = pAgent->_acquireSequence( seq, eduCB, TRUE, _expectValue ) ;
+         if ( SDB_SEQUENCE_EXCEEDED == rc )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to acquire sequence[%s], rc=%d",
+                      seq.name().c_str(), rc ) ;
+         goto done ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__ADJUST_NEXT_VALUE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _coordSequenceAgent::_adjustNextValue::_adjustAscendingly(
+         _coordSequence& seq,
+         INT64 expectValue,
+         BOOLEAN& needAcquire )
+   {
+      /*
+         adjust rule:
+         if expectValue >= maxValue
+            acquire a new cache which value greater than expectValue
+         if maxValue > expectValue >= nextValue
+            adjust nextValue to be greater than expectValue
+         if nextValue > expectValue
+            ignore
+      */
+      INT64 maxValue = seq.nextValue() + seq.increment() * (seq.acquireSize() - 1) ;
+      if ( expectValue >= maxValue )
+      {
+         seq.setAcquireSize( 0 ) ;
+         needAcquire = TRUE ;
+      }
+      else if ( expectValue >= seq.nextValue() )
+      {
+         // any way, an UINT64 can hold the difference between two SINT64
+         UINT64 diff = (UINT64) (expectValue - seq.nextValue() + 1) ;
+         // acquireSize must be INT32, so this result is always in INT32 range.
+         INT32 acquireCount = (INT32) (( diff - 1 ) / seq.increment() + 1) ;
+         seq.setAcquireSize( seq.acquireSize() - acquireCount ) ;
+         seq.setNextValue( seq.nextValue() + seq.increment() * acquireCount ) ;
+      }
+   }
+
+   void _coordSequenceAgent::_adjustNextValue::_adjustDecendingly(
+         _coordSequence& seq,
+         INT64 expectValue,
+         BOOLEAN& needAcquire )
+   {
+      /*
+         adjust rule:
+         if expectValue <= minValue
+            acquire a new cache which value less than expectValue
+         if minValue < expectValue <= nextValue
+            adjust nextValue to be less than expectValue
+         if nextValue < expectValue
+            ignore
+      */
+      INT64 minValue = seq.nextValue() + seq.increment() * (seq.acquireSize() - 1) ;
+      if ( expectValue <= minValue )
+      {
+         seq.setAcquireSize( 0 ) ;
+         needAcquire = TRUE ;
+      }
+      else if ( expectValue <= seq.nextValue() )
+      {
+         UINT64 diff = (UINT64) (seq.nextValue() - expectValue + 1) ;
+         INT32 acquireCount = (INT32) (( diff - 1 ) / (-seq.increment()) + 1) ;
+         seq.setAcquireSize( seq.acquireSize() - acquireCount ) ;
+         seq.setNextValue( seq.nextValue() + seq.increment() * acquireCount ) ;
+      }
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__DO_ON_SEQUENCE, "_coordSequenceAgent::_doOnSequence" )
+   INT32 _coordSequenceAgent::_doOnSequence( const std::string& name,
+                                             const utilSequenceID ID,
+                                             pmdEDUCB *eduCB,
+                                             _operateSequence& func )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__DO_ON_SEQUENCE ) ;
       BOOLEAN noCache = FALSE ;
       utilSequenceID cachedID = UTIL_SEQUENCEID_NULL ;
 
-      rc = _getNextValueBySLock( name, nextValue, noCache, ID, &cachedID, eduCB ) ;
+      rc = _doOnSequenceBySLock( name, ID, eduCB, func, noCache, &cachedID ) ;
       if ( SDB_OK == rc )
       {
          // if no sequence cache, should get bucket by XLock
          if ( noCache )
          {
-            rc = _getNextValueByXLock( name, ID, nextValue, eduCB ) ;
+            rc = _doOnSequenceByXLock( name, ID, eduCB, func ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -230,24 +446,24 @@ namespace engine
       }
 
    done:
-      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT_GET_NEXT_VALUE, rc ) ;
+      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__DO_ON_SEQUENCE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_SLOCK, "_coordSequenceAgent::_getNextValueBySLock" )
-   INT32 _coordSequenceAgent::_getNextValueBySLock( const std::string& name,
-                                                    INT64& nextValue,
-                                                    BOOLEAN& noCache,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__DO_ON_SEQ_BY_SLOCK, "_coordSequenceAgent::_doOnSequenceBySLock" )
+   INT32 _coordSequenceAgent::_doOnSequenceBySLock( const std::string& name,
                                                     const utilSequenceID ID,
-                                                    utilSequenceID* cachedSeqID,
-                                                    _pmdEDUCB* eduCB )
+                                                    _pmdEDUCB *eduCB,
+                                                    _operateSequence& func,
+                                                    BOOLEAN& noCache,
+                                                    utilSequenceID* cachedSeqID )
    {
       INT32 rc = SDB_OK ;
       _coordSequence* cache = NULL ;
       BOOLEAN cacheLocked = FALSE ;
-      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_SLOCK ) ;
+      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__DO_ON_SEQ_BY_SLOCK ) ;
 
       COORD_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
       BUCKET_SLOCK( bucket ) ;
@@ -275,10 +491,10 @@ namespace engine
       cache->lock() ;
       cacheLocked = TRUE ;
 
-      rc = _getNextValueFromCache( *cache, nextValue, eduCB ) ;
+      rc = func( this, *cache, eduCB ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
+         PD_LOG( PDERROR, "Failed to process sequence[%s], rc=%d",
                  name.c_str(), rc ) ;
          // if rc==SDB_SEQUENCE_NOT_EXIST, we should delete the cache
          // here we get SLOCK, so we need to get XLOCK to delete the cache
@@ -293,22 +509,22 @@ namespace engine
          cache->unlock() ;
          cacheLocked = FALSE ;
       }
-      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_SLOCK, rc ) ;
+      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__DO_ON_SEQ_BY_SLOCK, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_XLOCK, "_coordSequenceAgent::_getNextValueByXLock" )
-   INT32 _coordSequenceAgent::_getNextValueByXLock( const std::string& name,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__DO_ON_SEQ_BY_XLOCK, "_coordSequenceAgent::_doOnSequenceByXLock" )
+   INT32 _coordSequenceAgent::_doOnSequenceByXLock( const std::string &name,
                                                     const utilSequenceID ID,
-                                                    INT64& nextValue,
-                                                    _pmdEDUCB* eduCB )
+                                                    pmdEDUCB *eduCB,
+                                                    _operateSequence& func )
    {
       INT32 rc = SDB_OK ;
       _coordSequence* cache = NULL ;
       _coordSequence* sequence = NULL ;
-      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_XLOCK ) ;
+      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__DO_ON_SEQ_BY_XLOCK ) ;
 
       COORD_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
       BUCKET_XLOCK( bucket ) ;
@@ -381,10 +597,10 @@ namespace engine
 
       // we have got XLOCK, so no need to lock cache
 
-      rc = _getNextValueFromCache( *cache, nextValue, eduCB ) ;
+      rc = func( this, *cache, eduCB ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to get next value of sequence[%s], rc=%d",
+         PD_LOG( PDERROR, "Failed to process sequence[%s], rc=%d",
                  name.c_str(), rc ) ;
          if ( SDB_SEQUENCE_NOT_EXIST == rc )
          {
@@ -399,48 +615,7 @@ namespace engine
 
    done:
       SAFE_OSS_DELETE( sequence ) ;
-      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_BY_XLOCK, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_FROM_CACHE, "_coordSequenceAgent::_getNextValueFromCache" )
-   INT32 _coordSequenceAgent::_getNextValueFromCache( _coordSequence& seq,
-                                                      INT64& nextValue,
-                                                      _pmdEDUCB* eduCB )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_FROM_CACHE ) ;
-
-      SDB_ASSERT( seq.acquireSize() >= 0, "AcquireSize should >= 0" ) ;
-
-      if ( seq.acquireSize() == 0 )
-      {
-         rc = _acquireSequence( seq, eduCB ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
-                    seq.name().c_str(), rc ) ;
-            goto error ;
-         }
-
-         if ( seq.acquireSize() == 0 )
-         {
-            SDB_ASSERT( FALSE, "AcquireSize == 0" ) ;
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Invalid AcquireSize of sequence[%s], rc=%d",
-                    seq.name().c_str(), rc ) ;
-            goto error ;
-         }
-      }
-
-      seq.decreaseAcquireSize() ;
-      nextValue = seq.nextValue() ;
-      seq.setNextValue( seq.nextValue() + seq.increment() ) ;
-
-   done:
-      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__GET_NEXT_VALUE_FROM_CACHE, rc ) ;
+      PD_TRACE_EXITRC ( SDB_COORD_SEQ_AGENT__DO_ON_SEQ_BY_XLOCK, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -448,7 +623,9 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_AGENT__ACQUIRE_SEQ, "_coordSequenceAgent::_acquireSequence" )
    INT32 _coordSequenceAgent::_acquireSequence( _coordSequence& seq,
-                                                _pmdEDUCB* eduCB )
+                                                _pmdEDUCB* eduCB,
+                                                BOOLEAN hasExpectValue,
+                                                INT64 expectValue )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_COORD_SEQ_AGENT__ACQUIRE_SEQ ) ;
@@ -469,6 +646,10 @@ namespace engine
          if ( seq.ID() != UTIL_SEQUENCEID_NULL )
          {
             builder.append( CAT_SEQUENCE_ID, (INT64)seq.ID() ) ;
+         }
+         if ( hasExpectValue )
+         {
+            builder.append( CAT_SEQUENCE_EXPECT_VALUE, expectValue ) ;
          }
          options = builder.obj() ;
       }

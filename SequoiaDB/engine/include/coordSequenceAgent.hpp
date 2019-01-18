@@ -52,6 +52,7 @@ namespace engine
    {
    private:
       typedef utilConcurrentMap<std::string, _coordSequence*, 64> COORD_SEQ_MAP ;
+
    public:
       _coordSequenceAgent() ;
       ~_coordSequenceAgent() ;
@@ -60,28 +61,41 @@ namespace engine
       void fini() ;
 
    public:
-      INT32 getNextValue( const std::string& name,
-                          const utilSequenceID ID,
-                          INT64& nextValue,
-                          _pmdEDUCB* eduCB ) ;
+      INT32 getNextValue( const std::string& name, const utilSequenceID ID,
+                          INT64& nextValue, _pmdEDUCB* eduCB ) ;
+      INT32 adjustNextValue( const std::string& name, const utilSequenceID ID,
+                             INT64 userValue, _pmdEDUCB* eduCB ) ;
       BOOLEAN removeCache( const std::string& sequenceName,  utilSequenceID ID ) ;
       void clear() ;
 
    private:
-      INT32 _getNextValueByXLock( const std::string& name,
+      class _operateSequence ;
+      class _getNextValue ;
+      class _adjustNextValue ;
+      friend class _getNextValue ;
+      friend class _adjustNextValue ;
+
+      INT32 _doOnSequence( const std::string& name,
+                           const utilSequenceID ID,
+                           _pmdEDUCB *eduCB,
+                           _operateSequence& func ) ;
+      INT32 _doOnSequenceByXLock( const std::string& name,
                                   const utilSequenceID ID,
-                                  INT64& nextValue,
-                                  _pmdEDUCB* eduCB ) ;
-      INT32 _getNextValueBySLock( const std::string& name,
-                                 INT64& nextValue,
-                                 BOOLEAN& noCache,
-                                 const utilSequenceID ID,
-                                 utilSequenceID* cachedSeqID,
-                                 _pmdEDUCB* eduCB ) ;
-      INT32 _getNextValueFromCache( _coordSequence& seq, INT64& nextValue, _pmdEDUCB* eduCB ) ;
-      INT32 _acquireSequence( _coordSequence& seq, _pmdEDUCB* eduCB ) ;
+                                  _pmdEDUCB *eduCB,
+                                  _operateSequence& func ) ;
+      INT32 _doOnSequenceBySLock( const std::string& name,
+                                  const utilSequenceID ID,
+                                  _pmdEDUCB *eduCB,
+                                  _operateSequence& func,
+                                  BOOLEAN& noCache,
+                                  utilSequenceID* cachedSeqID ) ;
+      INT32 _acquireSequence( _coordSequence& seq,
+                              _pmdEDUCB* eduCB,
+                              BOOLEAN hasExpectValue = FALSE,
+                              INT64 expectValue = 0 ) ;
       INT32 _processAcquireReply( MsgHeader* msg, _coordSequence& seq ) ;
-      BOOLEAN _removeCacheByID( const std::string& sequenceName, const utilSequenceID ID ) ;
+      BOOLEAN _removeCacheByID( const std::string& sequenceName,
+                                const utilSequenceID ID ) ;
 
    private:
       _coordResource*   _resource ;

@@ -47,6 +47,67 @@ using namespace bson ;
 
 namespace engine
 {
+   class _catSequenceManager::_operateSequence
+   {
+   public:
+      virtual INT32 operator()( _catSequenceManager *pMgr,
+                                _catSequence& seq,
+                                _pmdEDUCB* eduCB,
+                                INT16 w )
+      {
+         return SDB_OK ;
+      }
+      virtual ~_operateSequence() {}
+   } ;
+
+   class _catSequenceManager::_acquireSequence:
+         public _catSequenceManager::_operateSequence
+   {
+   public:
+      _acquireSequence( _catSequenceAcquirer &acquirer ):
+            _acquirer( acquirer )
+      {
+      }
+
+      virtual INT32 operator()( _catSequenceManager *pMgr,
+                                _catSequence &seq,
+                                _pmdEDUCB *eduCB,
+                                INT16 w ) ;
+   private:
+      INT32 _acquireAscendingSequence( _catSequence& seq,
+                                       _catSequenceAcquirer& acquirer,
+                                       BOOLEAN& needUpdate ) ;
+      INT32 _acquireDescendingSequence( _catSequence& seq,
+                                        _catSequenceAcquirer& acquirer,
+                                        BOOLEAN& needUpdate ) ;
+   private:
+      _catSequenceAcquirer& _acquirer ;
+   } ;
+
+   class _catSequenceManager::_adjustSequence:
+         public _catSequenceManager::_operateSequence
+   {
+   public:
+      _adjustSequence( INT64 expectValue ) :
+            _expectValue( expectValue )
+      {
+      }
+
+      virtual INT32 operator()( _catSequenceManager *pMgr,
+                                _catSequence &seq,
+                                _pmdEDUCB *eduCB,
+                                INT16 w ) ;
+   private:
+      void _adjustAscendingSequence( _catSequence& seq,
+                                     INT64 expectValue,
+                                     BOOLEAN& needUpdate ) ;
+      void _adjustDecendingSequence( _catSequence& seq,
+                                     INT64 expectValue,
+                                     BOOLEAN& needUpdate ) ;
+   private:
+      INT64 _expectValue ;
+   } ;
+
    _catSequenceManager::_catSequenceManager()
    {
    }
@@ -75,7 +136,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
-      OID oid;
       BSONElement ele ;
       utilGlobalID ID = UTIL_GLOBAL_NULL ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR_CREATE_SEQ ) ;
@@ -301,48 +361,27 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR_ACQUIRE_SEQ, "_catSequenceManager::acquireSequence" )
    INT32 _catSequenceManager::acquireSequence( const std::string& name,
                                                const utilSequenceID ID,
                                                _catSequenceAcquirer& acquirer,
                                                _pmdEDUCB* eduCB, INT16 w )
    {
-      INT32 rc = SDB_OK ;
-      BOOLEAN noCache = FALSE ;
-      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR_ACQUIRE_SEQ ) ;
+      _acquireSequence func( acquirer ) ;
+      return _doOnSequence( name, ID, eduCB, w, func ) ;
+   }
 
-      rc = _acquireSequenceBySLock( name, ID, acquirer, noCache, eduCB, w ) ;
-      if ( SDB_OK == rc )
-      {
-         // if no sequence cache, should get bucket by XLock
-         if ( noCache )
-         {
-            rc = _acquireSequenceByXLock( name, ID, acquirer, eduCB, w ) ;
-            if ( SDB_OK != rc )
-            {
-               goto error ;
-            }
-         }
-      }
-      else
-      {
-         if ( SDB_SEQUENCE_NOT_EXIST == rc )
-         {
-            // remove cache if sequence not exist
-            _removeCacheByID( name, acquirer.ID ) ;
-         }
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR_ACQUIRE_SEQ, rc ) ;
-      return rc ;
-   error:
-      goto done ;
+   INT32 _catSequenceManager::adjustSequence( const std::string &name,
+                                              const utilSequenceID ID,
+                                              INT64 expectValue,
+                                              _pmdEDUCB *eduCB, INT16 w )
+   {
+      _adjustSequence func( expectValue ) ;
+      return _doOnSequence( name, ID, eduCB, w, func ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR_RESET_SEQ, "_catSequenceManager::resetSequence" )
-   INT32 _catSequenceManager::resetSequence( const std::string& name, _pmdEDUCB* eduCB, INT16 w )
+   INT32 _catSequenceManager::resetSequence( const std::string& name,
+                                             _pmdEDUCB* eduCB, INT16 w )
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
@@ -414,181 +453,23 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_SLOCK, "_catSequenceManager::_acquireSequenceBySLock" )
-   INT32 _catSequenceManager::_acquireSequenceBySLock( const std::string& name,
-                                                       const utilSequenceID ID,
-                                                       _catSequenceAcquirer& acquirer,
-                                                       BOOLEAN& noCache,
-                                                       _pmdEDUCB* eduCB, INT16 w )
-   {
-      INT32 rc = SDB_OK ;
-      _catSequence* cache = NULL ;
-      BOOLEAN cacheLocked = FALSE ;
-      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_SLOCK ) ;
-
-      CAT_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
-      BUCKET_SLOCK( bucket ) ;
-
-      CAT_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
-      if ( bucket.end() != iter )
-      {
-         cache = (*iter).second ;
-         noCache = FALSE ;
-      }
-      else
-      {
-         // no sequence cache, should get bucket by XLock
-         noCache = TRUE ;
-         goto done ;
-      }
-
-      cache->lock() ;
-      cacheLocked = TRUE ;
-
-      // check ID
-      if ( ID != UTIL_SEQUENCEID_NULL && ID != cache->ID() )
-      {
-         PD_LOG( PDERROR, "Mismatch ID(%llu) for sequence[%s, %llu]",
-                 ID, cache->name().c_str(), cache->ID() ) ;
-         rc = SDB_SEQUENCE_NOT_EXIST ;
-         goto error ;
-      }
-
-      rc = _acquireSequenceFromCache( *cache, acquirer, eduCB, w ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
-                 name.c_str(), rc ) ;
-         // if rc==SDB_SEQUENCE_NOT_EXIST, we should delete the cache
-         // here we get SLOCK, so we need to get XLOCK to delete the cache
-         // check the ID consistency when delete cache
-         acquirer.ID = cache->ID() ;
-         goto error ;
-      }
-
-   done:
-      if ( cacheLocked )
-      {
-         cache->unlock() ;
-         cacheLocked = FALSE ;
-      }
-      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_SLOCK, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_XLOCK, "_catSequenceManager::_acquireSequenceByXLock" )
-   INT32 _catSequenceManager::_acquireSequenceByXLock( const std::string& name,
-                                                       const utilSequenceID ID,
-                                                       _catSequenceAcquirer& acquirer,
-                                                       _pmdEDUCB* eduCB, INT16 w )
-   {
-      INT32 rc = SDB_OK ;
-      _catSequence* cache = NULL ;
-      _catSequence* sequence = NULL ;
-      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_XLOCK ) ;
-
-      CAT_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
-      BUCKET_XLOCK( bucket ) ;
-
-      CAT_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
-      if ( bucket.end() != iter )
-      {
-         cache = (*iter).second ;
-      }
-      else
-      {
-         BSONObj seqObj ;
-
-         rc = _findSequence( name, seqObj, eduCB ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to find sequence[%s] from system collection, rc=%d",
-                    name.c_str(), rc ) ;
-            goto error ;
-         }
-
-         sequence = SDB_OSS_NEW _catSequence( name ) ;
-         if ( NULL == sequence )
-         {
-            rc = SDB_OOM ;
-            PD_LOG( PDERROR, "Failed to alloc sequence[%s], rc=%d",
-                    name.c_str(), rc ) ;
-            goto error ;
-         }
-
-         rc = sequence->setOptions( seqObj, FALSE, TRUE ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to set sequence[%s], rc=%d",
-                    name.c_str(), rc ) ;
-            goto error ;
-         }
-
-         try
-         {
-            bucket.insert( CAT_SEQ_MAP::value_type( name, sequence ) ) ;
-         }
-         catch( std::exception& e )
-         {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to insert sequence[%s] to cache", name.c_str() ) ;
-            goto error ;
-         }
-
-         cache = sequence ;
-         sequence = NULL ;
-      }
-
-      // check id
-      if ( ID != UTIL_SEQUENCEID_NULL && ID != cache->ID() )
-      {
-         PD_LOG( PDERROR, "Mismatch ID(%llu) for sequence[%s, %llu]",
-                 ID, cache->name().c_str(), cache->ID() ) ;
-         rc = SDB_SEQUENCE_NOT_EXIST ;
-         goto error ;
-      }
-
-      rc = _acquireSequenceFromCache( *cache, acquirer, eduCB, w ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
-                 name.c_str(), rc ) ;
-         if ( SDB_SEQUENCE_NOT_EXIST == rc )
-         {
-            // remove cache if sequence not exist
-            // we have got XLOCK, so we can delete it directly
-            bucket.erase( name ) ;
-            SDB_OSS_DEL( cache ) ;
-            cache = NULL ;
-         }
-         goto error ;
-      }
-
-   done:
-      SAFE_OSS_DELETE( sequence ) ;
-      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_BY_XLOCK, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_FROM_CACHE, "_catSequenceManager::_acquireSequenceFromCache" )
-   INT32 _catSequenceManager::_acquireSequenceFromCache( _catSequence& seq, _catSequenceAcquirer& acquirer,
-                                                         _pmdEDUCB* eduCB, INT16 w )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ, "_catSequenceManager::_acquireSequence::operator" )
+   INT32 _catSequenceManager::_acquireSequence::operator()( _catSequenceManager *pMgr,
+                                                            _catSequence& seq,
+                                                            _pmdEDUCB* eduCB,
+                                                            INT16 w )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN needUpdate = FALSE ;
-      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_FROM_CACHE ) ;
+      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ ) ;
 
       if ( seq.increment() > 0 )
       {
-         rc = _acquireAscendingSequence( seq, acquirer, needUpdate ) ;
+         rc = _acquireAscendingSequence( seq, _acquirer, needUpdate ) ;
       }
       else
       {
-         rc = _acquireDescendingSequence( seq, acquirer, needUpdate );
+         rc = _acquireDescendingSequence( seq, _acquirer, needUpdate );
       }
 
       if ( SDB_OK != rc )
@@ -598,7 +479,7 @@ namespace engine
          goto error ;
       }
 
-      acquirer.ID = seq.ID() ;
+      _acquirer.ID = seq.ID() ;
 
       if ( needUpdate )
       {
@@ -616,7 +497,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _updateSequence( seq.name(), options, eduCB, w ) ;
+         rc = pMgr->_updateSequence( seq.name(), options, eduCB, w ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to update sequence[%s], rc=%d",
@@ -626,14 +507,17 @@ namespace engine
       }
 
    done:
-      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ_FROM_CACHE, rc ) ;
+      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ACQUIRE_ASCENDING_SEQ, "_catSequenceManager::_acquireAscendingSequence" )
-   INT32 _catSequenceManager::_acquireAscendingSequence( _catSequence& seq, _catSequenceAcquirer& acquirer, BOOLEAN& needUpdate )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ACQUIRE_ASCENDING_SEQ, "_catSequenceManager::_acquireSequence::_acquireAscendingSequence" )
+   INT32 _catSequenceManager::_acquireSequence::_acquireAscendingSequence(
+         _catSequence& seq,
+         _catSequenceAcquirer& acquirer,
+         BOOLEAN& needUpdate )
    {
       INT32 rc = SDB_OK ;
       INT64 nextValue = 0 ;
@@ -733,8 +617,11 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ACQUIRE_DESCENDING_SEQ, "_catSequenceManager::_acquireDescendingSequence" )
-   INT32 _catSequenceManager::_acquireDescendingSequence( _catSequence& seq, _catSequenceAcquirer& acquirer, BOOLEAN& needUpdate )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ACQUIRE_DESCENDING_SEQ, "_catSequenceManager::_acquireSequence::_acquireDescendingSequence" )
+   INT32 _catSequenceManager::_acquireSequence::_acquireDescendingSequence(
+         _catSequence& seq,
+         _catSequenceAcquirer& acquirer,
+         BOOLEAN& needUpdate )
    {
       INT32 rc = SDB_OK ;
       INT64 nextValue = 0 ;
@@ -829,6 +716,391 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__ACQUIRE_DESCENDING_SEQ, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ADJUST_SEQUENCE, "_catSequenceManager::_adjustSequence::operator" )
+   INT32 _catSequenceManager::_adjustSequence::operator()(
+         _catSequenceManager *pMgr,
+         _catSequence& seq,
+         _pmdEDUCB* eduCB,
+         INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ADJUST_SEQUENCE ) ;
+
+      BOOLEAN needUpdate = FALSE ;
+      if ( seq.increment() > 0 )
+      {
+         _adjustAscendingSequence( seq, _expectValue, needUpdate ) ;
+      }
+      else
+      {
+         _adjustDecendingSequence( seq, _expectValue, needUpdate ) ;
+      }
+
+      if ( needUpdate )
+      {
+         BSONObj options ;
+         try
+         {
+            options = BSON( CAT_SEQUENCE_CURRENT_VALUE << seq.currentValue()
+                         << CAT_SEQUENCE_INITIAL << (bool) seq.initial() ) ;
+         }
+         catch( std::exception& e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to build bson, exception: %s, rc=%d",
+                    e.what(), rc ) ;
+            goto error ;
+         }
+
+         rc = pMgr->_updateSequence( seq.name(), options, eduCB, w ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to update sequence[%s], rc=%d",
+                    seq.name().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__ADJUST_SEQUENCE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ADJUST_ASCENDING_SEQ, "_catSequenceManager::_adjustSequence::_adjustAscendingSequence" )
+   void _catSequenceManager::_adjustSequence::_adjustAscendingSequence(
+         _catSequence &seq,
+         INT64 expectValue,
+         BOOLEAN &needUpdate )
+   {
+      /*
+         adjust rule:
+         if expectValue >= maxValue
+            mark sequence as exceed
+         if maxValue > expectValue >= currentValue
+            adjust currentValue to be greater than expectValue
+         if currentValue > expectValue >= nextValue
+            adjust nextValue to be greater than expectValue
+         if nextValue > expectValue
+            ignore
+       */
+      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ADJUST_ASCENDING_SEQ ) ;
+
+      UINT64 diff = 0 ;
+      UINT64 reminder = 0 ;
+      UINT64 diffInc = 0 ;
+      INT64 newCachedValue = 0 ;
+      INT64 newNextValue = 0 ;
+
+      // When sequence is initial, cachedValue is inexistent.
+      // We can ignore it, because when the conflict occurs, coord will retry.
+      // At that time, we can handle it.
+      if ( seq.initial() || seq.exceeded() ||
+           seq.cachedValue() + seq.increment() > expectValue )
+      {
+         goto done ;
+      }
+
+      diff = ( UINT64 )( expectValue - seq.cachedValue() ) ;
+      reminder = diff % seq.increment() ;
+      diffInc = reminder == 0 ? diff : (diff - reminder + seq.increment()) ;
+      newCachedValue = seq.cachedValue() + diffInc ;
+      if ( diffInc < diff ||
+           newCachedValue < seq.cachedValue() ||
+           newCachedValue > seq.maxValue() - seq.increment() )
+      {
+         seq.setCachedValue( seq.maxValue() ) ;
+         seq.setCurrentValue( seq.maxValue() ) ;
+         seq.setExceeded( TRUE ) ;
+         goto done ;
+      }
+
+      newNextValue = newCachedValue + seq.increment() ;
+      if ( newNextValue <= seq.currentValue() )
+      {
+         seq.setCachedValue( newCachedValue ) ;
+      }
+      else
+      {
+         seq.setCachedValue( newCachedValue ) ;
+         seq.setCurrentValue( newNextValue ) ;
+         needUpdate = TRUE ;
+      }
+
+   done:
+      PD_TRACE_EXIT ( SDB_GTS_SEQ_MGR__ADJUST_ASCENDING_SEQ ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__ADJUST_DECENDING_SEQ, "_catSequenceManager::_adjustSequence::_adjustDecendingSequence" )
+   void _catSequenceManager::_adjustSequence::_adjustDecendingSequence(
+         _catSequence& seq,
+         INT64 expectValue,
+         BOOLEAN& needUpdate )
+   {
+      /*
+         adjust rule:
+         if expectValue <= minValue
+            mark sequence as exceed
+         if minValue < expectValue <= currentValue
+            adjust currentValue to be less than expectValue
+         if currentValue < expectValue <= nextValue
+            adjust nextValue to be less than expectValue
+         if nextValue < expectValue
+            ignore
+       */
+      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ADJUST_DECENDING_SEQ ) ;
+
+      UINT64 diff = 0 ;
+      UINT64 reminder = 0 ;
+      UINT64 diffInc = 0 ;
+      INT64 newCachedValue = 0 ;
+      INT64 newNextValue = 0 ;
+
+      // When sequence is initial, cachedValue is inexistent.
+      // We can ignore it, because when the conflict occurs, coord will retry.
+      // At that time, we can handle it.
+      if ( seq.initial() || seq.exceeded() ||
+           seq.cachedValue() + seq.increment() < expectValue )
+      {
+         goto done ;
+      }
+
+      diff = ( UINT64 )( seq.cachedValue() - expectValue ) ;
+      reminder = diff % seq.increment() ;
+      diffInc = reminder == 0 ? diff : (diff - reminder - seq.increment()) ;
+      newCachedValue = seq.cachedValue() - diffInc ;
+      if ( diffInc < diff ||
+           newCachedValue > seq.cachedValue() ||
+           newCachedValue < seq.minValue() - seq.increment() )
+      {
+         seq.setCachedValue( seq.minValue() ) ;
+         seq.setCurrentValue( seq.minValue() ) ;
+         seq.setExceeded( TRUE ) ;
+         goto done ;
+      }
+
+      newNextValue = newCachedValue + seq.increment() ;
+      if ( newNextValue >= seq.currentValue() )
+      {
+         seq.setCachedValue( newCachedValue ) ;
+      }
+      else
+      {
+         seq.setCachedValue( newCachedValue ) ;
+         seq.setCurrentValue( newNextValue ) ;
+         needUpdate = TRUE ;
+      }
+
+   done:
+      PD_TRACE_EXIT ( SDB_GTS_SEQ_MGR__ADJUST_DECENDING_SEQ ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__DO_ON_SEQUENCE, "_catSequenceManager::_doOnSequence" )
+   INT32 _catSequenceManager::_doOnSequence( const std::string& name,
+                                             const utilSequenceID ID,
+                                             _pmdEDUCB* eduCB,
+                                             INT16 w,
+                                             _operateSequence& func )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN noCache = FALSE ;
+      utilSequenceID cachedID = UTIL_SEQUENCEID_NULL ;
+      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__DO_ON_SEQUENCE ) ;
+
+      rc = _doOnSequenceBySLock( name, ID, eduCB, w, func, noCache, cachedID ) ;
+      if ( SDB_OK == rc )
+      {
+         // if no sequence cache, should get bucket by XLock
+         if ( noCache )
+         {
+            rc = _doOnSequenceByXLock( name, ID, eduCB, w, func ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+         }
+      }
+      else
+      {
+         if ( SDB_SEQUENCE_NOT_EXIST == rc )
+         {
+            // remove cache if sequence not exist
+            _removeCacheByID( name, cachedID ) ;
+         }
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__DO_ON_SEQUENCE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__DO_ON_SEQ_BY_SLOCK, "_catSequenceManager::_doOnSequenceBySLock" )
+   INT32 _catSequenceManager::_doOnSequenceBySLock( const std::string& name,
+                                                    const utilSequenceID ID,
+                                                    _pmdEDUCB* eduCB,
+                                                    INT16 w,
+                                                    _operateSequence& func,
+                                                    BOOLEAN& noCache,
+                                                    utilSequenceID &cachedSeqID )
+   {
+      INT32 rc = SDB_OK ;
+      _catSequence* cache = NULL ;
+      BOOLEAN cacheLocked = FALSE ;
+      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__DO_ON_SEQ_BY_SLOCK ) ;
+
+      CAT_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
+      BUCKET_SLOCK( bucket ) ;
+
+      CAT_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
+      if ( bucket.end() != iter )
+      {
+         cache = (*iter).second ;
+         noCache = FALSE ;
+      }
+      else
+      {
+         // no sequence cache, should get bucket by XLock
+         noCache = TRUE ;
+         goto done ;
+      }
+
+      cache->lock() ;
+      cacheLocked = TRUE ;
+
+      // check ID
+      if ( ID != UTIL_SEQUENCEID_NULL && ID != cache->ID() )
+      {
+         PD_LOG( PDERROR, "Mismatch ID(%llu) for sequence[%s, %llu]",
+                 ID, cache->name().c_str(), cache->ID() ) ;
+         rc = SDB_SEQUENCE_NOT_EXIST ;
+         goto error ;
+      }
+
+      rc = func( this, *cache, eduCB, w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to process sequence[%s], rc=%d",
+                 name.c_str(), rc ) ;
+         // if rc==SDB_SEQUENCE_NOT_EXIST, we should delete the cache
+         // here we get SLOCK, so we need to get XLOCK to delete the cache
+         // check the ID consistency when delete cache
+         cachedSeqID = cache->ID() ;
+         goto error ;
+      }
+
+   done:
+      if ( cacheLocked )
+      {
+         cache->unlock() ;
+         cacheLocked = FALSE ;
+      }
+      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__DO_ON_SEQ_BY_SLOCK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR__DO_ON_SEQ_BY_XLOCK, "_catSequenceManager::_doOnSequenceByXLock" )
+   INT32 _catSequenceManager::_doOnSequenceByXLock( const std::string& name,
+                                                   const utilSequenceID ID,
+                                                   _pmdEDUCB* eduCB,
+                                                   INT16 w,
+                                                   _operateSequence& func )
+   {
+      INT32 rc = SDB_OK ;
+      _catSequence* cache = NULL ;
+      _catSequence* sequence = NULL ;
+      PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__DO_ON_SEQ_BY_XLOCK ) ;
+
+      CAT_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
+      BUCKET_XLOCK( bucket ) ;
+
+      CAT_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
+      if ( bucket.end() != iter )
+      {
+         cache = (*iter).second ;
+      }
+      else
+      {
+         BSONObj seqObj ;
+
+         rc = _findSequence( name, seqObj, eduCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to find sequence[%s] from system collection, rc=%d",
+                    name.c_str(), rc ) ;
+            goto error ;
+         }
+
+         sequence = SDB_OSS_NEW _catSequence( name ) ;
+         if ( NULL == sequence )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Failed to alloc sequence[%s], rc=%d",
+                    name.c_str(), rc ) ;
+            goto error ;
+         }
+
+         rc = sequence->setOptions( seqObj, FALSE, TRUE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to set sequence[%s], rc=%d",
+                    name.c_str(), rc ) ;
+            goto error ;
+         }
+
+         try
+         {
+            bucket.insert( CAT_SEQ_MAP::value_type( name, sequence ) ) ;
+         }
+         catch( std::exception& e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to insert sequence[%s] to cache", name.c_str() ) ;
+            goto error ;
+         }
+
+         cache = sequence ;
+         sequence = NULL ;
+      }
+
+      // check id
+      if ( ID != UTIL_SEQUENCEID_NULL && ID != cache->ID() )
+      {
+         PD_LOG( PDERROR, "Mismatch ID(%llu) for sequence[%s, %llu]",
+                 ID, cache->name().c_str(), cache->ID() ) ;
+         rc = SDB_SEQUENCE_NOT_EXIST ;
+         goto error ;
+      }
+
+      rc = func( this, *cache, eduCB, w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to process sequence[%s], rc=%d",
+                 name.c_str(), rc ) ;
+         if ( SDB_SEQUENCE_NOT_EXIST == rc )
+         {
+            // remove cache if sequence not exist
+            // we have got XLOCK, so we can delete it directly
+            bucket.erase( name ) ;
+            SDB_OSS_DEL( cache ) ;
+            cache = NULL ;
+         }
+         goto error ;
+      }
+
+   done:
+      SAFE_OSS_DELETE( sequence ) ;
+      PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR__DO_ON_SEQ_BY_XLOCK, rc ) ;
       return rc ;
    error:
       goto done ;

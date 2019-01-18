@@ -79,31 +79,55 @@ namespace engine
       INT32 createSequence( const std::string& name, const bson::BSONObj& options,
                             _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 dropSequence( const std::string& name, _pmdEDUCB* eduCB, INT16 w ) ;
-      INT32 alterSequence( const std::string& name, const bson::BSONObj& options,
+      INT32 alterSequence( const std::string& name,
+                           const bson::BSONObj& options,
                            _pmdEDUCB* eduCB, INT16 w ) ;
-      INT32 acquireSequence( const std::string& name, const utilSequenceID ID, _catSequenceAcquirer& acquirer,
+      INT32 acquireSequence( const std::string& name,
+                             const utilSequenceID ID,
+                             _catSequenceAcquirer& acquirer,
                              _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 resetSequence( const std::string& name, _pmdEDUCB* eduCB, INT16 w ) ;
-      OSS_INLINE INT32 getSequence( const std::string& name, bson::BSONObj& sequence, _pmdEDUCB* eduCB )
+      INT32 adjustSequence( const std::string &name,
+                            const utilSequenceID ID,
+                            INT64 expectValue,
+                            _pmdEDUCB *eduCB, INT16 w ) ;
+      OSS_INLINE INT32 getSequence( const std::string& name,
+                                    bson::BSONObj& sequence,
+                                    _pmdEDUCB* eduCB )
       {
          return _findSequence( name, sequence, eduCB ) ;
       }
 
    private:
+      class _operateSequence ;
+      class _acquireSequence ;
+      class _adjustSequence ;
+      friend class _acquireSequence ;
+      friend class _adjustSequence ;
+
       INT32 _insertSequence( bson::BSONObj& sequence, _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 _deleteSequence( const std::string& name, _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 _updateSequence( const std::string& name, const bson::BSONObj& options,
                              _pmdEDUCB* eduCB, INT16 w ) ;
-      INT32 _findSequence( const std::string& name, bson::BSONObj& sequence, _pmdEDUCB* eduCB ) ;
-      INT32 _acquireSequenceBySLock( const std::string& name, const utilSequenceID ID,
-                                     _catSequenceAcquirer& acquirer, BOOLEAN& noCache,
-                                     _pmdEDUCB* eduCB, INT16 w ) ;
-      INT32 _acquireSequenceByXLock( const std::string& name, const utilSequenceID ID, _catSequenceAcquirer& acquirer,
-                                     _pmdEDUCB* eduCB, INT16 w ) ;
-      INT32 _acquireSequenceFromCache( _catSequence& sequence, _catSequenceAcquirer& acquirer,
-                                       _pmdEDUCB* eduCB, INT16 w ) ;
-      INT32 _acquireAscendingSequence( _catSequence& sequence, _catSequenceAcquirer& acquirer, BOOLEAN& needUpdate ) ;
-      INT32 _acquireDescendingSequence( _catSequence& sequence, _catSequenceAcquirer& acquirer, BOOLEAN& needUpdate ) ;
+      INT32 _findSequence( const std::string& name, bson::BSONObj& sequence,
+                           _pmdEDUCB* eduCB ) ;
+      INT32 _doOnSequence( const std::string& name,
+                           const utilSequenceID ID,
+                           _pmdEDUCB* eduCB,
+                           INT16 w,
+                           _operateSequence& func ) ;
+      INT32 _doOnSequenceBySLock( const std::string& name,
+                                  const utilSequenceID ID,
+                                  _pmdEDUCB* eduCB,
+                                  INT16 w,
+                                  _operateSequence& func,
+                                  BOOLEAN& noCache,
+                                  utilSequenceID &cachedSeqID ) ;
+      INT32 _doOnSequenceByXLock( const std::string& name,
+                                  const utilSequenceID ID,
+                                  _pmdEDUCB* eduCB,
+                                  INT16 w,
+                                  _operateSequence& func ) ;
       BOOLEAN _removeCacheByID( const std::string& name, utilSequenceID ID ) ;
       void  _cleanCache( BOOLEAN needFlush ) ;
 
