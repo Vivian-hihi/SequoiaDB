@@ -74,6 +74,7 @@ public class DeleteAndListVersions16495 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLib.clearBucket(s3Client, bucketName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
 			if (s3Client != null) {

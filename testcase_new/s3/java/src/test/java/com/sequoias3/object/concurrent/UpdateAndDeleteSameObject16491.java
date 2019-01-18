@@ -64,6 +64,7 @@ public class UpdateAndDeleteSameObject16491 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				ObjectUtils.clearOneObject(s3Client, S3TestBase.bucketName, keyName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
 			if (s3Client != null) {

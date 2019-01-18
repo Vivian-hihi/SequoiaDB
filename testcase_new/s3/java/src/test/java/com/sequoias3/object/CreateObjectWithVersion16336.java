@@ -25,7 +25,7 @@ public class CreateObjectWithVersion16336 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String keyName = "object16336";
 	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 1024 * 200;
+	private int fileSize = 1024 * 1024 * 500;
 	private File localPath = null;
 	private String filePath = null;
 
