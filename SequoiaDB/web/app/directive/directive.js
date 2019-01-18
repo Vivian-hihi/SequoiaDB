@@ -2053,6 +2053,10 @@
 
                for( var i in groupList )
                {
+                  if ( groupList[i]['type'] == 'select' )
+                  {
+                     continue ;
+                  }
                   if ( !isString( groupList[i]['value'] ) || groupList[i]['value'].length > 0 )
                   {
                      empty = false ;
