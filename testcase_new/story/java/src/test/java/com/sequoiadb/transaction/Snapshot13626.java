@@ -20,7 +20,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @author luweikang
  * @version 1.00
  */
-
+@Test(groups="ru")
 public class Snapshot13626 extends SdbTestBase {
 	
 	private String clName = "Snapshot13626";
@@ -46,7 +46,7 @@ public class Snapshot13626 extends SdbTestBase {
 		master = host + ":" + port;
 	}
 	
-	@Test
+	@Test(groups="ru")
 	public void test() throws InterruptedException{
 		TransactionThread transaction = new TransactionThread();
 		transaction.start(100);

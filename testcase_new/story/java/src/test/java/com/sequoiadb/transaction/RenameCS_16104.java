@@ -38,7 +38,7 @@ public class RenameCS_16104 extends SdbTestBase{
         cs.createCollection(clName);
     }
     
-    @Test
+    @Test(groups="ru")
     public void test(){ 
         RenameCSThread renameCSThread = new RenameCSThread();
         TransactionThread transThread = new TransactionThread();

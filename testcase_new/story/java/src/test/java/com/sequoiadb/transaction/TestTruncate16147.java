@@ -67,7 +67,7 @@ public class TestTruncate16147 extends SdbTestBase {
         }
     }
     
-    @Test
+    @Test(groups="ru")
     public void test(){
         TruncateThread truncateThread = new TruncateThread();
         InsertThread insertThread = new InsertThread();
