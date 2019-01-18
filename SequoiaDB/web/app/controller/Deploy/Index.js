@@ -2164,7 +2164,22 @@
                   var formVal = $scope.UnbindModuleWindow['config'].getValue() ;
                   var businessName = $scope.ModuleList[ formVal['moduleIndex'] ]['BusinessName'] ;
                   var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
-                  unbindModule( clusterName, businessName ) ;
+                  var businessType = $scope.ModuleList[ formVal['moduleIndex'] ]['BusinessType'] ;
+                  if( businessType == 'sequoiasql-mysql' )
+                  {
+                     $scope.Components.Confirm.type = 1 ;
+                     $scope.Components.Confirm.context = $scope.autoLanguage( '解绑服务将重启MySQL服务，是否继续？' ) ;
+                     $scope.Components.Confirm.isShow = true ;
+                     $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+                     $scope.Components.Confirm.ok = function(){
+                        $scope.Components.Confirm.isShow = false ;
+                        unbindModule( clusterName, businessName ) ;
+                     }
+                  }
+                  else
+                  {
+                     unbindModule( clusterName, businessName ) ;
+                  }
                }
                return isAllClear ;
             } ) ;

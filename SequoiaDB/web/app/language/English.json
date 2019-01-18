@@ -348,6 +348,7 @@
    "结束范围": "UpBound",
    "结束范围条件": "Ending At",
    "解绑服务": "Unbind Service",
+   "解绑服务将重启MySQL服务，是否继续？":  "Unbind Service will restart the MySQL service. Do you want to continue creating it?",
    "解绑主机": "Unbind Host",
    "解除关联": "Remove Relation",
    "解除关联成功：?": "Remove Relation Successfully: ?",
