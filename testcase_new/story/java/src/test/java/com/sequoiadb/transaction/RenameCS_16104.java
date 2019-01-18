@@ -31,7 +31,7 @@ public class RenameCS_16104 extends SdbTestBase{
     private CollectionSpace cs = null;
     private int recordNum = 1000;
     
-    @BeforeClass
+    @BeforeClass(alwaysRun = true)
     public void setUp(){
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cs = sdb.createCollectionSpace(csName);
@@ -81,7 +81,7 @@ public class RenameCS_16104 extends SdbTestBase{
         }
     }
     
-    @AfterClass
+    @AfterClass(alwaysRun = true)
     public void tearDown(){
         try {
             CommLib.clearCS(sdb, csName);

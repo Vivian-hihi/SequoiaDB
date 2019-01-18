@@ -27,7 +27,7 @@ public class Snapshot13626 extends SdbTestBase {
 	private Sequoiadb sdb = null;
 	private String master = null;
 	
-	@BeforeClass
+	@BeforeClass(alwaysRun = true)
 	public void setUp(){
 		sdb = new Sequoiadb(coordUrl, "", "");
 		// 跳过 standAlone 和数据组不足的环境
@@ -59,7 +59,7 @@ public class Snapshot13626 extends SdbTestBase {
 		Assert.assertTrue(snapshot.isSuccess(), snapshot.getErrorMsg());
 	}
 	
-	@AfterClass
+	@AfterClass(alwaysRun = true)
 	public void tearDown(){
 		sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
 	}

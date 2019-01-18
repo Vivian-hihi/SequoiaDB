@@ -31,7 +31,7 @@ public class TestTruncate16147 extends SdbTestBase {
     private boolean runSuccess = false;
     
     
-    @BeforeClass
+    @BeforeClass(alwaysRun = true)
     public void setUp() {
         try{
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -51,7 +51,7 @@ public class TestTruncate16147 extends SdbTestBase {
         }
     }
     
-    @AfterClass
+    @AfterClass(alwaysRun = true)
     public void tearDown(){
         try{
         	if(runSuccess){
