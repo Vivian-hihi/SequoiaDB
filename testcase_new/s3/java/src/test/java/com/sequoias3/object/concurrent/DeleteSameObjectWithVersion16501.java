@@ -18,6 +18,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.S3ThreadBase;
+import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 
@@ -36,6 +37,7 @@ public class DeleteSameObjectWithVersion16501 extends S3TestBase {
 	private String roleName = "normal";
 	private String content = "testContent16501";
 	private String deleteVersionId = "1";
+	private List<String> expEtag = new ArrayList<>();
 	private List<String> expVersionId = new ArrayList<>();
 	private String[] acessKeys = null;
 	private AmazonS3 s3Client = null;
@@ -53,6 +55,7 @@ public class DeleteSameObjectWithVersion16501 extends S3TestBase {
 			String currentContent = content + ObjectUtils.getRandomString(i);
 			PutObjectResult result = s3Client.putObject(bucketName, keyName, currentContent);
 			expVersionId.add(result.getVersionId());
+			expEtag.add(TestTools.getMD5(currentContent.getBytes()));
 		}
 		
 		//version id : 0-102
@@ -60,6 +63,7 @@ public class DeleteSameObjectWithVersion16501 extends S3TestBase {
 			expVersionId.add(String.valueOf(i));
 		}
 		
+		expEtag.remove(Integer.parseInt(deleteVersionId));
 		expVersionId.remove(deleteVersionId);
 	}
 	
@@ -70,7 +74,7 @@ public class DeleteSameObjectWithVersion16501 extends S3TestBase {
 		deleteSameObject.start(100);
 		Assert.assertTrue( deleteSameObject.isSuccess(), deleteSameObject.getErrorMsg());
 		
-		//test b : Delete the same object with the specified version (version id is : 3,4,5,...,102)
+		//test b : Delete the same object with the specified version (version id is : 0,1,2,3,4,5,...,102)
 		DeleteObjectWithVersionThread deleteObjectWithVersion = new DeleteObjectWithVersionThread(deleteVersionId);
 		deleteObjectWithVersion.start(100);
 		Assert.assertTrue( deleteObjectWithVersion.isSuccess(), deleteObjectWithVersion.getErrorMsg());
@@ -148,5 +152,8 @@ public class DeleteSameObjectWithVersion16501 extends S3TestBase {
 		Collections.sort(actVersionId);
 		Collections.sort(expVersionId);
 		Assert.assertEquals(actVersionId, expVersionId);
+		
+		Collections.reverse(expEtag);
+		Assert.assertEquals(actEtg, expEtag);
 	}
 }

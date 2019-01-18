@@ -60,10 +60,10 @@ public class GetObjectListWithVersion16499 extends S3TestBase {
 		}
 		
 		//put another objects that do not match prefix
-		s3Client.putObject(bucketName, "/testa", "object_file16499");
-		s3Client.putObject(bucketName, "/testb", "object_file16499");
-		expresultList1.add("/testa");
-		expresultList1.add("/testb");
+		s3Client.putObject(bucketName, "/testa16499", "object_file16499");
+		s3Client.putObject(bucketName, "/testb16499", "object_file16499");
+		expresultList1.add("/testa16499");
+		expresultList1.add("/testb16499");
 		
 		Collections.sort(expresultList1);
 		Collections.sort(expresultList2);

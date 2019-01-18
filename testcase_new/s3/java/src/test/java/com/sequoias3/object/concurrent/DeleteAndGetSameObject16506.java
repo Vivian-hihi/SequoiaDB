@@ -1,6 +1,6 @@
 package com.sequoias3.object.concurrent;
 
-import java.io.IOException;
+import java.io.File;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -10,13 +10,14 @@ import org.testng.annotations.Test;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.S3ThreadBase;
 import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 
 /**
@@ -34,11 +35,13 @@ public class DeleteAndGetSameObject16506 extends S3TestBase {
 	private String roleName = "normal";
 	private String content = "testContent16506";
 	private String deleteVersionId = "1";
+	private File localPath = null;
 	private String[] acessKeys = null;
 	private AmazonS3 s3Client = null;
 	
 	@BeforeClass
 	private void setUp() throws Exception {	
+		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
 		CommLib.clearUser(userName);
 		acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
@@ -74,6 +77,7 @@ public class DeleteAndGetSameObject16506 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				UserUtils.deleteUser(userName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} catch (BaseException e) {
 			Assert.fail("clean up failed:" + e.getMessage());
@@ -104,8 +108,14 @@ public class DeleteAndGetSameObject16506 extends S3TestBase {
 			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
 			try{
 				S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, keyName, deleteVersionId));
-				ObjectMetadata metadata = object.getObjectMetadata();
-				checkGetObjectResult(metadata);
+				S3ObjectInputStream s3is = object.getObjectContent();		
+				String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
+						Thread.currentThread().getId());
+				ObjectUtils.inputStream2File(s3is,downloadPath);
+				s3is.close();
+		        String getObjectMd5 = TestTools.getMD5(downloadPath);
+		        Assert.assertEquals(getObjectMd5, TestTools.getMD5((content+"v1").getBytes()),"md5 is wrong!");
+				Assert.assertEquals(object.getObjectMetadata().getVersionId(), deleteVersionId);
 			}catch(AmazonS3Exception e){
 				Assert.assertEquals(e.getErrorCode(), "NoSuchVersion");
 			}finally{
@@ -115,9 +125,4 @@ public class DeleteAndGetSameObject16506 extends S3TestBase {
 			}			
 		}		
 	}	
-	
-	private void checkGetObjectResult(ObjectMetadata metadata) throws IOException {
-		Assert.assertEquals(metadata.getETag(), TestTools.getMD5((content+"v1").getBytes()),"md5 is wrong!");
-		Assert.assertEquals(metadata.getVersionId(), deleteVersionId);
-	}
 }

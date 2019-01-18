@@ -99,7 +99,6 @@ public class CreateAndDelectSameObject16503 extends S3TestBase {
 		public void exec() throws Exception {
 			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
 			try{
-				Thread.sleep(50);
 				s3Client.deleteObject(bucketName, keyName);
 			}finally{
 				if (s3Client != null) {

@@ -59,10 +59,10 @@ public class GetObjectList16486 extends S3TestBase {
 		}
 		
 		//put another objects that do not match prefix
-		s3Client.putObject(bucketName, "/testa", "object_file16486");
-		s3Client.putObject(bucketName, "/testb", "object_file16486");
-		expresultList1.add("/testa");
-		expresultList1.add("/testb");
+		s3Client.putObject(bucketName, "/testa16486", "object_file16486");
+		s3Client.putObject(bucketName, "/testb16486", "object_file16486");
+		expresultList1.add("/testa16486");
+		expresultList1.add("/testb16486");
 		
 		Collections.sort(expresultList1);
 		Collections.sort(expresultList2);

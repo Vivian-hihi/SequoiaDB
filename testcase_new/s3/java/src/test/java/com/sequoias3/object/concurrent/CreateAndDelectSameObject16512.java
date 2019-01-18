@@ -43,7 +43,7 @@ public class CreateAndDelectSameObject16512 extends S3TestBase {
 	@Test
 	public void testCreateAndDeleteObject() throws Exception {
 		CreateObjectThread createObject = new CreateObjectThread();
-		DeleteObjectThread deleteObject = new DeleteObjectThread(keyName);
+		DeleteObjectThread deleteObject = new DeleteObjectThread();
 		createObject.start();
 		deleteObject.start();
 		
@@ -87,15 +87,10 @@ public class CreateAndDelectSameObject16512 extends S3TestBase {
 	}	
 	
 	private class DeleteObjectThread extends S3ThreadBase{
-		String keyName;	
-		public DeleteObjectThread ( String keyName ){
-			this.keyName = keyName;	
-		}
 		@Override
 		public void exec() throws Exception {
 			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
 			try{
-				Thread.sleep(50);
 				s3Client.deleteObject(bucketName, keyName);
 			}finally{
 				if (s3Client != null) {

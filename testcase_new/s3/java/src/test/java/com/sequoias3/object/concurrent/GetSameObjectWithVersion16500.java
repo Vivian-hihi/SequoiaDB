@@ -1,5 +1,6 @@
 package com.sequoias3.object.concurrent;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
@@ -37,9 +39,11 @@ public class GetSameObjectWithVersion16500 extends S3TestBase {
 	private List<String> etagList = new ArrayList<>();
 	private String[] acessKeys = null;
 	private AmazonS3 s3Client = null;
+	private File localPath = null;
 	
 	@BeforeClass
 	private void setUp() throws Exception {	
+		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
 		CommLib.clearUser(userName);
 		acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
@@ -88,6 +92,7 @@ public class GetSameObjectWithVersion16500 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				UserUtils.deleteUser(userName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} catch (BaseException e) {
 			Assert.fail("clean up failed:" + e.getMessage());
@@ -104,8 +109,14 @@ public class GetSameObjectWithVersion16500 extends S3TestBase {
 			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
 			try{
 				S3Object object = s3Client.getObject(bucketName, keyName);
+				S3ObjectInputStream s3is = object.getObjectContent();		
+				String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
+						Thread.currentThread().getId());
+				ObjectUtils.inputStream2File(s3is,downloadPath);
+				s3is.close();
+		        String getObjectMd5 = TestTools.getMD5(downloadPath);
+				Assert.assertEquals(getObjectMd5, etagList.get(2),"md5 is wrong!");
 				ObjectMetadata metadata = object.getObjectMetadata();
-				Assert.assertEquals(metadata.getETag(), etagList.get(2),"md5 is wrong!");
 				Assert.assertEquals(metadata.getVersionId(), "2");
 			}finally{
 				if (s3Client != null) {
@@ -121,8 +132,14 @@ public class GetSameObjectWithVersion16500 extends S3TestBase {
 			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
 			try{
 				S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, keyName, "1"));
+				S3ObjectInputStream s3is = object.getObjectContent();		
+				String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
+						Thread.currentThread().getId());
+				ObjectUtils.inputStream2File(s3is,downloadPath);
+				s3is.close();
+		        String getObjectMd5 = TestTools.getMD5(downloadPath);
+				Assert.assertEquals(getObjectMd5, etagList.get(1),"md5 is wrong!");
 				ObjectMetadata metadata = object.getObjectMetadata();
-				Assert.assertEquals(metadata.getETag(), etagList.get(1),"md5 is wrong!");
 				Assert.assertEquals(metadata.getVersionId(), "1");
 			}finally{
 				if (s3Client != null) {
@@ -142,8 +159,14 @@ public class GetSameObjectWithVersion16500 extends S3TestBase {
 			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
 			try{
 				S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, keyName, versionid));
+				S3ObjectInputStream s3is = object.getObjectContent();		
+				String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
+						Thread.currentThread().getId());
+				ObjectUtils.inputStream2File(s3is,downloadPath);
+				s3is.close();
+		        String getObjectMd5 = TestTools.getMD5(downloadPath);
+				Assert.assertEquals(getObjectMd5, etagList.get(Integer.parseInt(versionid)),"md5 is wrong!");
 				ObjectMetadata metadata = object.getObjectMetadata();
-				Assert.assertEquals(metadata.getETag(), etagList.get(Integer.parseInt(versionid)),"md5 is wrong!");
 				Assert.assertEquals(metadata.getVersionId(), versionid);
 			}finally{
 				if (s3Client != null) {

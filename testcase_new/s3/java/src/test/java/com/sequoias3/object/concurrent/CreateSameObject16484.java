@@ -1,5 +1,7 @@
 package com.sequoias3.object.concurrent;
 
+import java.io.File;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -11,6 +13,8 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.S3ThreadBase;
+import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 
 /**
@@ -26,11 +30,20 @@ public class CreateSameObject16484 extends S3TestBase {
 	private String bucketName = "bucket16484";
 	private String keyName = "key16484";
 	private String roleName = "normal";
+	private int fileSize = 1024 * 1024 * 4;
+	private File localPath = null;
+	private String filePath = null;
 	private String[] acessKeys = null;
 	private AmazonS3 s3Client = null;
 	
 	@BeforeClass
 	private void setUp() throws Exception {	
+		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
+		TestTools.LocalFile.removeFile(localPath);
+		TestTools.LocalFile.createDir(localPath.toString());
+		TestTools.LocalFile.createFile(filePath, fileSize);
+
 		CommLib.clearUser(userName);
 		acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
@@ -39,7 +52,7 @@ public class CreateSameObject16484 extends S3TestBase {
 	
 	@Test
 	public void testCreateObject() throws Exception {
-		CreateObjectThread createSameObject = new CreateObjectThread(keyName);
+		CreateObjectThread createSameObject = new CreateObjectThread();
 		createSameObject.start(100);
 		
 		Assert.assertTrue( createSameObject.isSuccess(), createSameObject.getErrorMsg());
@@ -53,6 +66,7 @@ public class CreateSameObject16484 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				UserUtils.deleteUser(userName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} catch (BaseException e) {
 			Assert.fail("clean up failed:" + e.getMessage());
@@ -64,15 +78,11 @@ public class CreateSameObject16484 extends S3TestBase {
 	}
 	
 	private class CreateObjectThread extends S3ThreadBase{
-		String keyName;	
-		public CreateObjectThread ( String keyName ){
-			this.keyName = keyName;	
-		}
 		@Override
 		public void exec() throws Exception {
 			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
 			try{
-				s3Client.putObject(bucketName, keyName, "testContent16484");
+				s3Client.putObject(bucketName, keyName, new File(filePath));
 			}finally{
 				if (s3Client != null) {
 					s3Client.shutdown();
@@ -81,10 +91,12 @@ public class CreateSameObject16484 extends S3TestBase {
 		}		
 	}	
 	
-	private void checkCreateObjectResult(AmazonS3 s3Client) {
+	private void checkCreateObjectResult(AmazonS3 s3Client) throws Exception {
 		ListObjectsV2Result listObjectsV2Result = s3Client.listObjectsV2(bucketName);
 		Assert.assertEquals(listObjectsV2Result.getObjectSummaries().size(), 1);
 		Assert.assertEquals(listObjectsV2Result.getObjectSummaries().get(0).getBucketName(),bucketName, "bucketName is wrong!");
 		Assert.assertEquals(listObjectsV2Result.getObjectSummaries().get(0).getKey(),keyName, "keyName is wrong!");
+		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+		Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 	}
 }

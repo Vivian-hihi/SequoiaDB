@@ -45,7 +45,7 @@ public class UpdateSameObject16485 extends S3TestBase {
 	
 	@Test
 	public void testUpdateObject() throws Exception {
-		UpdateObjectThread updateSameObject = new UpdateObjectThread(keyName);
+		UpdateObjectThread updateSameObject = new UpdateObjectThread();
 		updateSameObject.start(50);
 		
 		Assert.assertTrue( updateSameObject.isSuccess(), updateSameObject.getErrorMsg());
@@ -70,10 +70,6 @@ public class UpdateSameObject16485 extends S3TestBase {
 	}
 	
 	private class UpdateObjectThread extends S3ThreadBase{
-		String keyName;	
-		public UpdateObjectThread ( String keyName ){
-			this.keyName = keyName;	
-		}
 		@Override
 		public void exec() throws Exception {
 			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
