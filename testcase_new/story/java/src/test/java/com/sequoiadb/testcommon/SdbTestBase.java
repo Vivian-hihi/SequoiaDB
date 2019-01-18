@@ -2,7 +2,6 @@ package com.sequoiadb.testcommon;
 
 import java.io.File;
 
-import org.bson.BSONObject ;
 import org.bson.BasicBSONObject ;
 import org.testng.SkipException ;
 import org.testng.annotations.AfterGroups ;
@@ -144,64 +143,46 @@ public class SdbTestBase {
     
     @Parameters({"TRANSACTIONON"})
     @BeforeGroups(groups = "ru", inheritGroups = true )
-    public static void initRuGroups( boolean transactionon){
-        if ( !transactionon ){
-            return ;
-        }
-        
+    public static void initRuGroups(){
         int transisolation = 0 ; 
         int translockwait = 0;
         try{
-            modifyNodeConf(transactionon, transisolation, translockwait ) ;
+            modifyNodeConf( true, transisolation, translockwait ) ;
         }catch(BaseException e){
             e.printStackTrace() ;
             throw new SkipException("initGroups failed!!!") ;
         }
     }
     
-    @Parameters({"TRANSACTIONON"})
     @BeforeGroups(groups = "rc", inheritGroups = true)
-    public static void initRcGroups( boolean transactionon){
-        if ( !transactionon ){
-            return ;
-        }
-        
+    public static void initRcGroups(){
         int transisolation = 1 ; 
         int translockwait = 0;
         try{
-            modifyNodeConf(transactionon, transisolation, translockwait ) ;
+            modifyNodeConf( true, transisolation, translockwait ) ;
         }catch(BaseException e){
             e.printStackTrace() ;
             throw new SkipException("initGroups failed!!!") ;
         }
     }
     
-    @Parameters({"TRANSACTIONON"})
     @BeforeGroups(groups = "rcwaitlock", inheritGroups = true)
-    public static void initRcLockwaitGroups( boolean transactionon){
-        if ( !transactionon ){
-            return ;
-        }
-        
+    public static void initRcLockwaitGroups(){
         int transisolation = 1 ; 
         int translockwait = 1;
         try{
-            modifyNodeConf(transactionon, transisolation, translockwait ) ;
+            modifyNodeConf( true, transisolation, translockwait ) ;
         }catch(BaseException e){
             e.printStackTrace() ;
             throw new SkipException("initGroups failed!!!") ;
         }
     }
     
-    @Parameters({"TRANSACTIONON"})
+
     @AfterGroups(groups = {"ru", "rc", "rcwaitlock"},inheritGroups = true)
-    public static void finiGroups( boolean transactionon ){
-        if ( !transactionon ){
-            return ;
-        }
-        
+    public static void finiGroups(){
         try{
-            modifyNodeConf(!transactionon, 0, 0);
+            modifyNodeConf( false, 0, 0 );
         }catch(BaseException e){
             e.printStackTrace() ;
             throw e ;

@@ -157,16 +157,16 @@ public abstract class SdbThreadBase implements Runnable {
     public boolean matchBlockingMethod(String className, String methodName){
         assert threadList.size() == 1 ;
         
-        final int fiveSeonds = 5000 ;
+        final int fiveSeonds = 50000 ;
         final int totalTimes = 3 ;
-        int nonMatchTimes = 0 ;
+        //int nonMatchTimes = 0 ;
         int matchTimes = 0 ;
         int alreadyWaitTime = 0 ;
         boolean ret = true ;
         
         int pos = 0 ;
         do{
-            if ( nonMatchTimes >= totalTimes || alreadyWaitTime >= fiveSeonds  ){
+            if (  alreadyWaitTime >= fiveSeonds  ){
                 ret = false ;
                 break ;
             }
@@ -178,7 +178,7 @@ public abstract class SdbThreadBase implements Runnable {
             
             try {
                 Thread.sleep( 5 ) ;
-                alreadyWaitTime += 1 ;
+                alreadyWaitTime += 5 ;
             } catch ( InterruptedException e ) {
                 e.printStackTrace();
             }
@@ -211,7 +211,7 @@ public abstract class SdbThreadBase implements Runnable {
                 }
                 
                 if ( pos == stackElem.length){
-                    nonMatchTimes++;
+                    //nonMatchTimes++;
                     pos = 0 ;
                 }
             }
