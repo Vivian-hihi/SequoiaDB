@@ -54,6 +54,7 @@ public enum S3Error {
     BUCKET_TOO_MANY_BUCKETS(-515, "TooManyBuckets", "You have attempted to create more buckets than allowed."),
     BUCKET_INVALID_VERSIONING_STATUS(-516, "InvalidVersioningStatus", "The versioning status is invalid."),
     BUCKET_INVALID_LOCATION(-517, "InvalidLocation", "The location is invalid."),
+    BUCKET_NO_LIST_OBJECTS_V1(-518, "InvalidRequest", "Please use list objects V2 request instead of list objects V1."),
 
     //object
     OBJECT_WRITE_fAILED(-600, "WriteObjectFailed", "Put object failed."),
