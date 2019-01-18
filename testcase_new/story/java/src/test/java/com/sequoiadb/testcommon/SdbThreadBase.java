@@ -46,7 +46,8 @@ public abstract class SdbThreadBase implements Runnable {
      */
     public Object getExecResult() throws InterruptedException{
         assert this.threadList.size() == 1 ;
-        if ( this.threadList.get( 0 ).getState() == State.NEW ||
+        if ( this.threadList.isEmpty() ||
+             this.threadList.get( 0 ).getState() == State.NEW ||
              this.threadList.get( 0 ).getState() == State.TERMINATED ){
             return this.result ;
         }
