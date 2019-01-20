@@ -77,5 +77,23 @@ class globalParameter
       }
    }
 
+   public static function isStandalone( $db ){
+      $db -> listGroup() ;
+      $err = $db -> getError();
+      if ( $err['errno'] != 0 )
+      {
+         return true;
+      }
+      return false;
+   }
+
+   public static function checkError( $db, $expErrno, $msg = "" ){
+      $actErrno = $db -> getError()['errno'];
+      if( $expErrno != $actErrno )
+      {
+         throw new Exception( 'expect ['.$expErrno.'] but found ['.$actErrno.']. '.$msg );
+      }
+   }
+
 };
 ?>
