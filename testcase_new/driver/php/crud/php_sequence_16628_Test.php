@@ -19,7 +19,7 @@ class TestSequence16628 extends PHPUnit_Framework_TestCase
    private static $beginTime;
    private static $endTime;
 
-   public static function setUpBeforeClass()
+   public function setUp()
    {
       date_default_timezone_set("Asia/Shanghai");
       self::$beginTime = microtime( true );
@@ -28,61 +28,49 @@ class TestSequence16628 extends PHPUnit_Framework_TestCase
       self::$db = new Sequoiadb();
       self::$db -> connect(globalParameter::getHostName().':'.
                            globalParameter::getCoordPort()) ;
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
-      self::$skipTest = self::isStandlone();
-      if( self::$skipTest)
-      {  
-         return;
+      globalParameter::checkError( self::$db, 0);
+      if( globalParameter::isStandalone( self::$db ) )
+      {
+         $this -> markTestSkipped( "Database is standlone." );
       }
       self::$cs = self::$db -> selectCS( self::$csName );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      globalParameter::checkError( self::$db, 0, "create cs error");
       self::$cl = self::$cs -> selectCL( self::$clName );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      globalParameter::checkError( self::$db, 0, "create cl error");
    }
 
    function test()
    {
-      if( self::$skipTest)
-      {
-         return;
-      }
-      echo "\n---Begin to test bulkInsert.\n";
-      $err = self::$cl -> createAutoIncrement( array('Field' => '', 'MaxValue' =>2000));
-      self::checkErrno( -6, self::$db -> getError()['errno'] );
+      echo "\n---Begin to test Sequence.\n";
+      //$options, $expErrno, $expArray
+      self::createSequence( null, -6, null );
 
-      $err = self::$cl -> createAutoIncrement( array('Field' => null, 'MaxValue' =>2000));
-      self::checkErrno( -6, self::$db -> getError()['errno'] );
+      self::createSequence( array(), -6, null );
 
-      $err = self::$cl -> createAutoIncrement( array( 'MaxValue' =>2000 ) );
-      self::checkErrno( -6, self::$db -> getError()['errno'] );
+      self::createSequence( "", -258, null );
 
-      $err = self::$cl -> createAutoIncrement( array( 'Field' => 'a' ) );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      self::createSequence( array( 'Field' => 'a' ), 0, array( 'a' ) );
 
-      $err = self::$cl -> createAutoIncrement( "{ 'Field':'b' }");
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      self::createSequence( "{ 'Field':'b' }" , 0, array( 'a', 'b' ) );
 
       self::insertAndCheckRecord();
+      //$options, $expErrno, $expArray
+      self::dropSequence( null, -6, array( 'a', 'b' ) );
 
-      $err = self::$cl -> dropAutoIncrement( array( 'Field' => 'c' ) ) ;
-      self::checkErrno( -333, self::$db -> getError()['errno'] );
+      self::dropSequence( array( 'Field' => 'c' ), -333, array( 'a', 'b' ) );
 
-      $err = self::$cl -> dropAutoIncrement( array( 'Field' => '' ) ) ;
-      self::checkErrno( -6, self::$db -> getError()['errno'] );
+      self::dropSequence( "", -258, array( 'a', 'b' ) );
 
-      $err = self::$cl -> dropAutoIncrement( array( 'Field' => null ) ) ;
-      self::checkErrno( -6, self::$db -> getError()['errno'] );
+      self::dropSequence( array(), -6, array( 'a', 'b' ) );
 
-      $err = self::$cl -> dropAutoIncrement( array( 'Field' => 'a' ) ) ;
-      self::checkErrno( -0, self::$db -> getError()['errno'] );
+      self::dropSequence( array( 'Field' => 'a' ), 0, array( 'b' ) );
+
+      self::dropSequence( "{ 'Field':'b' }" , 0, null );
+      
    }
    
-   public static function tearDownAfterClass()
+   public function tearDown()
    {
-      if( self::$skipTest)
-      {
-         return;
-      }
       $err = self::$db -> dropCS( self::$csName );
       if ( $err['errno'] != 0 )
       {
@@ -96,22 +84,66 @@ class TestSequence16628 extends PHPUnit_Framework_TestCase
       echo "\n---Test 16628 spend time: " . ( self::$endTime - self::$beginTime ) . " seconds.\n";
       
    }
-   
-   private static function checkErrno( $expErrno, $actErrno, $msg = "" )
+
+   private static function createSequence( $options, $expErrno, $expArray )
    {
-      if( $expErrno != $actErrno )
-      {
-         throw new Exception( "expect [".$expErrno."] but found [".$actErrno."]. ".$msg );
-      }
+      self::$cl -> createAutoIncrement( $options );
+      globalParameter::checkError( self::$db, $expErrno, "create autoIncrement error" );
+
+      $clFullName = self::$cl -> getFullName();
+      self::checkSequence( $clFullName, $expArray );
    }
 
+   private static function dropSequence( $options, $expErrno, $expArray )
+   {
+      self::$cl -> dropAutoIncrement( $options );
+      globalParameter::checkError( self::$db, $expErrno, "drop autoIncrement error");
+
+      $clFullName = self::$cl -> getFullName();
+      self::checkSequence( $clFullName, $expArray );
+   }
+
+   private static function checkSequence( $clFullName, $expArray )
+   {
+      $cursor = self::$db -> snapshot( SDB_SNAP_CATALOG, array( 'Name' => $clFullName ) );
+      if( empty($cursor) )
+      {
+         throw new Exception( $clFullName . " snapshot doesn't exist." );
+      }
+      if( $expArray != null )
+      {
+         $AutoIncrements = $cursor -> next()['AutoIncrement'];
+         $actArray = array();
+         for ( $i = 0; $i < count( $AutoIncrements ); $i++ )
+         {
+            $actArray[ $i ] = $AutoIncrements[$i]["Field"];
+         }
+         sort( $expArray );
+         sort( $actArray );
+         if( $expArray !=  $actArray )
+         {
+            throw new Exception( "check the cl sequence error, exp: " . $expArray . "act: " . $actArray );
+         }
+      }
+      else
+      {
+         $record = $cursor -> next();
+         if( array_key_exists( "AutoIncrement", $record ) && count( $record["AutoIncrement"] ) != 0 )
+         {
+            var_dump( $record );
+            throw new Exception( "AutoIncrement should not exist, but can found it AutoIncrement" );
+         }
+      }
+   }
+   
    private static function insertAndCheckRecord()
    {
-      for( $i = 0; $i < 1000; $i++ )
+      $recordNum = 10;
+      for( $i = 0; $i < $recordNum; $i++ )
       {
          self::$cl -> insert( array( "str" => "test increment" . $i) );
       }
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      globalParameter::checkError( self::$db, 0, "insert record");
 
       $cursor = self::$cl -> find( null, null, array( 'a' => 1 ) );
       if( empty( $cursor ) ) 
@@ -126,20 +158,6 @@ class TestSequence16628 extends PHPUnit_Framework_TestCase
             throw new Exception( "check record error, exp: ". $times ." act: " ."a = ".$record['a'].", b = ".$record['b'] );
          }
          $times++;
-      }
-   }
-
-   private static function isStandlone()
-   {
-      self::$db -> list( SDB_LIST_GROUPS );
-      $error = self::$db -> getError();
-      if($error['errno'] === -159 )
-      {
-         echo "   Is standlone mode!! \n";
-         return true;
-      }else
-      {
-         return false;
       }
    }
 

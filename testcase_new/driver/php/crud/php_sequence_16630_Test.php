@@ -21,7 +21,7 @@ class TestSequence16630 extends PHPUnit_Framework_TestCase
    private static $beginTime;
    private static $endTime;
 
-   public static function setUpBeforeClass()
+   public function setUp()
    {
       date_default_timezone_set("Asia/Shanghai");
       self::$beginTime = microtime( true );
@@ -30,27 +30,22 @@ class TestSequence16630 extends PHPUnit_Framework_TestCase
       self::$db = new Sequoiadb();
       self::$db -> connect(globalParameter::getHostName().':'.
                            globalParameter::getCoordPort()) ;
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
-      self::$skipTest = self::isStandlone();  
-      if( self::$skipTest)
-      {  
-         return;
+      globalParameter::checkError( self::$db, 0);
+      if( globalParameter::isStandalone( self::$db ) )
+      {
+         $this -> markTestSkipped( "Database is standlone." );
       }
       self::$cs = self::$db -> selectCS( self::$csName );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      globalParameter::checkError( self::$db, 0, "create cs error");
       self::$cl = self::$cs -> selectCL( self::$clName );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      globalParameter::checkError( self::$db, 0, "create cl error");
    }
 
    function test()
    {
-      if( self::$skipTest)
-      {
-         return;
-      }
       echo "\n---Begin to test bulkInsert.\n";
       $err = self::$cl -> createAutoIncrement( array( 'Field' => 'a', 'MaxValue' => 4096, 'MinValue' => 1024, 'StartValue' => 2048 ) );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      globalParameter::checkError( self::$db, 0, "create autoInrement error");
 
       self::checkSnapshot();
 
@@ -58,12 +53,8 @@ class TestSequence16630 extends PHPUnit_Framework_TestCase
       
    }
    
-   public static function tearDownAfterClass()
+   public function tearDown()
    {
-      if( self::$skipTest)
-      {
-         return;
-      }
       $err = self::$db -> dropCS( self::$csName );
       if ( $err['errno'] != 0 )
       {
@@ -77,14 +68,6 @@ class TestSequence16630 extends PHPUnit_Framework_TestCase
       echo "\n---Test 16630 spend time: " . ( self::$endTime - self::$beginTime ) . " seconds.\n";
    }
    
-   private static function checkErrno( $expErrno, $actErrno, $msg = "" )
-   {
-      if( $expErrno != $actErrno )
-      {
-         throw new Exception( "expect [".$expErrno."] but found [".$actErrno."]. ".$msg );
-      }
-   }
-
    private static function checkSnapshot( )
    {  
       $cursor = self::$db -> snapshot( SDB_SNAP_CATALOG, array( 'Name' => self::$fullName ) );
@@ -136,19 +119,6 @@ class TestSequence16630 extends PHPUnit_Framework_TestCase
       }
    }
 
-   private static function isStandlone()
-   {
-      self::$db -> list( SDB_LIST_GROUPS );
-      $error = self::$db -> getError();
-      if($error['errno'] === -159 )
-      {
-         echo "   Is standlone mode!! \n";
-         return true;
-      }else
-      {
-         return false;
-      }
-   }
 }
 
 ?>
