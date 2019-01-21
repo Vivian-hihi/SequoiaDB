@@ -1,7 +1,7 @@
 package com.sequoias3.testcommon.s3utils;
 
 import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.user.TestRest;
+import com.sequoias3.testcommon.TestRest;
 import com.sequoias3.user.UserCommDefind;
 import org.json.JSONObject;
 import org.json.XML;

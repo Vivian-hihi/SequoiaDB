@@ -1,27 +1,19 @@
 package com.sequoias3.testcommon;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.SDBError;
-
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Parameters;
+import reliabillity.commlib.SdbConfTestBase;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Properties;
 
 public class S3TestBase {
@@ -68,55 +60,54 @@ public class S3TestBase {
         enableVerBucketName = "commbucketwithversion";
         confTool = CONFTOOL;
         
-        getInstallPath();
+    //    getInstallPath();
 
-        sdbConfTestBase.openTransaction(confTool, hostName, serviceName);
-        createCSCLAndStartS3();
+//        sdbConfTestBase.openTransaction(confTool, hostName, serviceName);
+//        createCSCLAndStartS3();
         //clean file
         File workDirFile = new File(workDir);
         if (!workDirFile.exists()) {
             workDirFile.mkdir();
         }        
        
-        AmazonS3 s3Client = null;
-        try{
-            //clean up existing buckets         
-            s3Client = CommLib.buildS3Client();        
-            List<Bucket> buckets = s3Client.listBuckets();
-            for ( int i = 0; i < buckets.size(); i++ ){
-                String bucketName = buckets.get(i).getName();
-                String bucketVerStatus = s3Client.getBucketVersioningConfiguration(bucketName).getStatus();
-                if( bucketVerStatus == "null"){
-                    CommLib.deleteAllObjects(s3Client, bucketName);
-                }else{
-                    CommLib.deleteAllObjectVersions( s3Client, bucketName );
-                }
-                s3Client.deleteBucket(bucketName);
-            }          
-            
-            //create bucket       
-            s3Client.createBucket(new CreateBucketRequest(bucketName)); 
-            
-            //create bucket by enable versioning            
-            s3Client.createBucket(new CreateBucketRequest(enableVerBucketName));
-            CommLib.setBucketVersioning(s3Client, enableVerBucketName, "Enabled");            
-        }finally {
-            if (s3Client != null) {
-                s3Client.shutdown();
-            }
-        }    
-
+//        AmazonS3 s3Client = null;
+//        try{
+//            //clean up existing buckets
+//            s3Client = CommLib.buildS3Client();
+//            List<Bucket> buckets = s3Client.listBuckets();
+//            for ( int i = 0; i < buckets.size(); i++ ){
+//                String bucketName = buckets.get(i).getName();
+//                String bucketVerStatus = s3Client.getBucketVersioningConfiguration(bucketName).getStatus();
+//                if( bucketVerStatus == "null"){
+//                    CommLib.deleteAllObjects(s3Client, bucketName);
+//                }else{
+//                    CommLib.deleteAllObjectVersions( s3Client, bucketName );
+//                }
+//                s3Client.deleteBucket(bucketName);
+//            }
+//
+//            //create bucket
+//            s3Client.createBucket(new CreateBucketRequest(bucketName));
+//
+//            //create bucket by enable versioning
+//            s3Client.createBucket(new CreateBucketRequest(enableVerBucketName));
+//            CommLib.setBucketVersioning(s3Client, enableVerBucketName, "Enabled");
+//        }finally {
+//            if (s3Client != null) {
+//                s3Client.shutdown();
+//            }
+//        }
     }
 
     @AfterSuite
     public static void finiSuite() throws Exception {
-        try {
-            getClusterInfo();
-            trans_snapshot();
-            sdbConfTestBase.closeTransaction(hostName, serviceName);
-        } finally {
-            stopS3();
-        }
+//        try {
+//            getClusterInfo();
+//            trans_snapshot();
+//            sdbConfTestBase.closeTransaction(hostName, serviceName);
+//        } finally {
+//            stopS3();
+//        }
     }
 
     public static String getDefaultCoordUrl() {

@@ -28,7 +28,7 @@ public class GetObjectByCurrVersion16356 extends S3TestBase {
     private String bucketName = null;
     private String objectName = "object16356";
     private AmazonS3 s3Client = null;
-    private int fileSize = 10;
+    private int fileSize = 1024*200;
     private File localPath = null;
     private List<String> filePathList = new ArrayList<String>();
     private List<PutObjectResult> objectVSList = new ArrayList<PutObjectResult>();

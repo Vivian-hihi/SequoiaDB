@@ -21,8 +21,7 @@
    
    
    <test name="javadriver" parallel="classes" thread-count="5">  
-      <packages>    
-     
+      <packages>
                <package name="com.sequoias3.object" /> 
       </packages>
    </test>   

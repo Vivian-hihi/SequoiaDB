@@ -27,7 +27,7 @@ public class ObjectUtils extends S3TestBase {
 	 * @param s3Client
 	 * @param localPath
 	 * @param bucketName
-	 * @param keyName
+	 * @param key Name
 	 * @return md5
 	 */
     public static String getMd5OfObject(AmazonS3 s3Client, File localPath,String bucketName, 
@@ -40,7 +40,7 @@ public class ObjectUtils extends S3TestBase {
 	 * @param s3Client
 	 * @param localPath
 	 * @param bucketName
-	 * @param keyName
+	 * @param //keyName
 	 * @param versionId
 	 * @return md5
 	 */
@@ -125,9 +125,9 @@ public class ObjectUtils extends S3TestBase {
 		for (S3VersionSummary versionSummary : vsSummaryList) {
 			actMap.add(versionSummary.getKey(),versionSummary.getVersionId());
 		}
-		Assert.assertEquals(actMap.size(),expMap.size(),"actMap = " + actMap.toString() + ",expMap = " + expMap.toString());
+		Assert.assertEquals(actMap.size(),expMap.size(),"\nactMap = " + actMap.toString() + "\nexpMap = " + expMap.toString());
 		for(Map.Entry<String, List<String>> entry : expMap.entrySet()){
-			Assert.assertEquals(actMap.get(entry.getKey()),expMap.get(entry.getKey()),"actMap = " + actMap.toString() + ",expMap = " + expMap.toString());
+			Assert.assertEquals(actMap.get(entry.getKey()),expMap.get(entry.getKey()),"actMap = " + actMap.toString() + "\nexpMap = " + expMap.toString());
 		}
 	}
 
