@@ -89,7 +89,6 @@ sdbLobToolMain = [
 msgFiles = [
       "msg/msgMessage.cpp",
       "msg/msgMessageFormat.cpp",
-      "msg/msgReplicator.cpp",
       "msg/msgCatalog.cpp",
       "msg/msgAuth.cpp"
       ]
