@@ -44,8 +44,7 @@ public class TestWithMetadata16479 extends S3TestBase {
 			// test a : 合法元数据信息，空串，null
 			new Object[] { expMeta },
 			// test b : 长度等于2kB （key+value总大小）
-			// SEQUOIADBMAINSTREAM-4090
-			// new Object[] { expMeta2 }
+			new Object[] { expMeta2 }
 		};
 	}
 	private String bucketName = "bucket16479";
