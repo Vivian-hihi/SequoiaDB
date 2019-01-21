@@ -1160,6 +1160,10 @@ CHAR *changeToRegexFormat( CHAR *likeStr )
    static const CHAR *anyCharPattern = "([\\s\\S]*)" ;
    INT32 anyPatternLen = strlen( anyCharPattern ) ;
 
+   //'/' -> '//', '*' -> '\*'
+   // we do not want to check everything. so just double it
+   newLength = 2 * oldlength ;
+
    newLength += 3; // '^' + '$' + '\0'
    for ( i = 0; i < oldlength; i++ )
    {
