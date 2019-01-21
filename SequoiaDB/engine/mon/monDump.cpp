@@ -3828,31 +3828,29 @@ namespace engine
    }
 
    INT32 _monConfigsFetch::init( pmdEDUCB *cb,
-                                BOOLEAN isCurrent,
-                                BOOLEAN isDetail,
-                                UINT32 addInfoMask,
-                                const BSONObj obj )
+                                 BOOLEAN isCurrent,
+                                 BOOLEAN isDetail,
+                                 UINT32 addInfoMask,
+                                 const BSONObj obj )
    {
       INT32 rc = SDB_OK ;
 
       try
       {
-         BSONObjIterator itor ;
+         BSONObjIterator itr( obj ) ;
          BSONElement elem ;
-         itor = obj.begin() ;
-         while ( itor.more() )
+         while ( itr.more() )
          {
-            elem = itor.next() ;
+            elem = itr.next() ;
             // ignore case for backward compatibility
             if ( 0 == ossStrcasecmp( elem.fieldName(), FIELD_NAME_MODE ) )
             {
-               if ( 0 == ossStrcmp( elem.valuestr(), 
-                                    VALUE_NAME_LOCAL ) )
+               if ( 0 == ossStrcmp( elem.valuestr(), VALUE_NAME_LOCAL ) )
                {
                   _isLocalMode = TRUE ;
                }
             }
-            if ( 0 == ossStrcasecmp( elem.fieldName(), FIELD_NAME_EXPAND ) )
+            else if ( 0 == ossStrcasecmp( elem.fieldName(), FIELD_NAME_EXPAND ) )
             {
                if ( elem.type() == bson::Bool )
                {

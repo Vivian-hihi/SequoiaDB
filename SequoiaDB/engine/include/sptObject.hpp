@@ -47,6 +47,9 @@ namespace engine
    #define SPT_CVT_FLAGS_FROM_STRING   0x8
    #define SPT_CVT_FLAGS_FROM_OBJECT   0x10
 
+   #define SPT_CVT_FLAGS_FROM_NUMBER \
+      ( SPT_CVT_FLAGS_FROM_INT | SPT_CVT_FLAGS_FROM_DOUBLE )
+
    enum SPT_JS_TYPE
    {
       SPT_JS_TYPE_BOOLEAN = 0 ,

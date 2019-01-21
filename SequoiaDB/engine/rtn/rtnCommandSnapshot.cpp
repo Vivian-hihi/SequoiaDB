@@ -1022,28 +1022,31 @@ namespace engine
 
    BSONObj _rtnSnapshotConfigs::_getOptObj() const
    {
+      BSONObj obj ;
+
       try
       {
-         BSONObjIterator itor ;
          BSONElement elem ;
-         string optionsTag = string( "$" ) + FIELD_NAME_OPTIONS ;
          BSONObj hintObj( _hintBuff ) ;
-         itor = hintObj.begin() ;
-         while ( itor.more() )
+         BSONObjIterator itr( hintObj ) ;
+         while ( itr.more() )
          {
-            elem = itor.next() ;
-            if ( 0 == ossStrcasecmp( elem.fieldName(), optionsTag.c_str() ) )
+            elem = itr.next() ;
+            if ( Object == elem.type() &&
+                 0 == ossStrcasecmp( elem.fieldName(),
+                                     "$"FIELD_NAME_OPTIONS ) )
             {
-               return hintObj.getObjectField( elem.fieldName() ) ;
+               obj = elem.embeddedObject() ;
+               break ;
             }
          }
-         return BSONObj() ;
       }
       catch( std::exception &e )
       {
          PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
       }
-      return BSONObj() ;
+
+      return obj ;
    }
 
    const CHAR* _rtnSnapshotConfigs::getIntrCMDName()
