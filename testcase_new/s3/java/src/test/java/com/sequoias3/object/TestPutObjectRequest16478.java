@@ -29,12 +29,12 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 public class TestPutObjectRequest16478 extends S3TestBase {
 	@DataProvider(name = "legalKeyNameProvider")
 	public Object[][] generateKeyName() {
-		String a = new String();
-		for(int i=0 ; i < 32 ; i ++){
-				a+=(char)i;
+		String ascii = new String();
+		for(int i=1 ; i < 32 ; i ++){
+				ascii+=(char)i;
 		}
 		for(int i=127 ; i < 256 ; i ++){
-				a+=(char)i;
+				ascii+=(char)i;
 		}
 		return new Object[][] {
 				// test a : 范围内取值
@@ -46,8 +46,8 @@ public class TestPutObjectRequest16478 extends S3TestBase {
 				new Object[] {"!-_.*'()"},
 				// test d : 包含 数字字符[0-9a-zA-Z]
 				new Object[] {"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"},
-				// test e : 包含需要特殊处理的字符   SEQUOIADBMAINSTREAM-4088
-				//new Object[] {"&@:,$=+?;" + a + " "},
+				// test e : 包含需要特殊处理的字符
+				new Object[] {"&@:,$=+?;" + ascii + " "},
 				// test f : 包含不建议使用的字符
 				new Object[] {"\\^`><{}][#%“~|"},
 				// test g : 包含中文字符
@@ -87,14 +87,12 @@ public class TestPutObjectRequest16478 extends S3TestBase {
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		//test a : 对象名为空串，null，901个字节
-		
-		//SEQUOIADBMAINSTREAM-4088
-		/*try{
+		try{
 			s3Client.putObject(new PutObjectRequest(bucketName, "", new File(filePath)));
 			Assert.fail("when key name is '',it should fail");
-		}catch(IllegalArgumentException e){
-			Assert.assertEquals(e.getMessage(), "The key parameter must be specified when uploading an object");
-		}*/
+		}catch(AmazonS3Exception e){
+			Assert.assertEquals(e.getErrorCode(), "InvalidLocation");
+		}
 		
 		try{
 			s3Client.putObject(new PutObjectRequest(bucketName, null, new File(filePath)));
@@ -133,8 +131,7 @@ public class TestPutObjectRequest16478 extends S3TestBase {
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				CommLib.deleteAllObjectVersions(s3Client, bucketName);
-				s3Client.deleteBucket(bucketName);
+				CommLib.clearBucket(s3Client, bucketName);
 				TestTools.LocalFile.removeFile(localPath);
 			}
 		} catch (BaseException e) {
