@@ -723,18 +723,33 @@ namespace sdbclient
          return pCollection->alterCollection ( options ) ;
       }
 
-      /** \fn INT32 insert ( bson::BSONObj &obj, bson::OID *id = NULL )
+      /** \fn INT32 insert ( bson::BSONObj &obj, bson::OID *pId = NULL )
           \brief Insert a bson object into current collection
           \param [in] obj The inserted bson object
-          \param [out] id The object id of inserted bson object in current collection, the memory of id will be invalidated when next insert/bulkInsert is performed or the obj is destroyed
+          \param [out] pId The object id of inserted bson object. Can be the 
+                           follow value:
+               <ul>
+               <li> NULL: 
+                     when this argument is NULL.
+               <li> valid OID object: 
+                     when the inserted bson object has no "_id" or it has a 
+                     field which type is "ObjectId", pId has a valid value.
+                     In this case, pId points the position of the record where 
+                     the value of "_id" field is. Note that: the memory of pId 
+                     will be invalidated when next insert/bulkInsert is 
+                     performed or the inserted bson object is destroyed.
+               <li> invalid OID object: 
+                     when the inserted bson object has "_id" field and its type
+                     is not an "ObjectId" type, pId gets a invalid value which 
+                     is "000000000000000000000000".
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
-      INT32 insert ( const bson::BSONObj &obj, bson::OID *id = NULL )
+      INT32 insert ( const bson::BSONObj &obj, bson::OID *pId = NULL )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->insert ( obj, id ) ;
+         return pCollection->insert ( obj, pId ) ;
       }
 
       /** \fn INT32 insert ( const bson::BSONObj &obj, 
@@ -745,17 +760,28 @@ namespace sdbclient
           \param [in] flags The flag to control the behavior of inserting. The
                             value of flag default to be 0, and it can choose
                             the follow values:
-
+               <ul>
+               <li>
                0:                    while 0 is set(default to be 0), database 
                                      will stop inserting when some records hit 
                                      index key duplicate error.
+               <li>
                FLG_INSERT_CONTONDUP: 
                                      if some records hit index key duplicate
                                      error, database will skip them and go on 
                                      inserting.
+               <li>
                FLG_INSERT_RETURN_OID:    return the value of "_id" field in the record.
-
-          \param [out] pResult The result of inserting.
+          \param [out] pResult The result of inserting. Can be NULL or a bson:
+               <ul>
+               <li> NULL: 
+                     when this argument is NULL.
+               <li> empty bson: when this argument is not NULL but there is no 
+                                result return.
+               <li> bson which contains the "_id" field: 
+                     when flag "FLG_INSERT_RETURN_OID" is set, return the 
+                     value of "_id" field of the inserted record. 
+                     e.g.: { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } }
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -766,7 +792,6 @@ namespace sdbclient
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
          return pCollection->insert ( obj, flags, pResult ) ;
-
       }
 
       /** \fn INT32 insert ( std::vector<bson::BSONObj> &objs, 
@@ -777,17 +802,29 @@ namespace sdbclient
           \param [in] flags The flag to control the behavior of inserting. The
                             value of flag default to be 0, and it can choose
                             the follow values:
-
+               <ul>
+               <li>
                0:                    while 0 is set(default to be 0), database 
                                      will stop inserting when some records hit 
                                      index key duplicate error.
+               <li>
                FLG_INSERT_CONTONDUP: 
                                      if some records hit index key duplicate
                                      error, database will skip them and go on 
                                      inserting.
+               <li>
                FLG_INSERT_RETURN_OID:    return the value of "_id" field in the record.
-
-          \param [out] pResult The result of inserting.
+          \param [out] pResult The result of inserting. Can be NULL or a bson:
+               <ul>
+               <li> NULL: 
+                     when this argument is NULL.
+               <li> empty bson: when this argument is not NULL but there is no 
+                                result return.
+               <li> bson which contains the field "_id": 
+                     when flag "FLG_INSERT_RETURN_OID" is set, return all the 
+                     values of "_id" field in a bson array. 
+                     e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" }, 
+                                      { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -810,17 +847,30 @@ namespace sdbclient
           \param [in] flags The flag to control the behavior of inserting. The
                             value of flag default to be 0, and it can choose
                             the follow values:
-
+               <ul>
+               <li>
                0:                    while 0 is set(default to be 0), database 
                                      will stop inserting when some records hit 
                                      index key duplicate error.
+               <li>
                FLG_INSERT_CONTONDUP: 
                                      if some records hit index key duplicate
                                      error, database will skip them and go on 
                                      inserting.
+               <li>
                FLG_INSERT_RETURN_OID:    return the value of "_id" field in the records.
-
-          \param [out] pResult The result of inserting.
+          \param [out] pResult The result of inserting. 
+                       Can be NULL or a bson:
+               <ul>
+               <li> NULL: 
+                     when this argument is NULL.
+               <li> empty bson: when this argument is not NULL but there is no 
+                                result return.
+               <li> bson which contains the "_id" field: 
+                     when flag "FLG_INSERT_RETURN_OID" is set, return all the 
+                     values of "_id" field in a bson array. 
+                     e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" }, 
+                                      { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -840,10 +890,12 @@ namespace sdbclient
           \param [in] flags The flag to control the behavior of inserting. The
                             value of flag default to be 0, and it can choose
                             the follow values:
-          
+               <ul>
+               <li>
                0:                    while 0 is set(default to be 0), database 
                                      will stop inserting when some records hit 
                                      index key duplicate error.
+               <li>
                FLG_INSERT_CONTONDUP: 
                                      if some records hit index key duplicate
                                      error, database will skip them and go on 

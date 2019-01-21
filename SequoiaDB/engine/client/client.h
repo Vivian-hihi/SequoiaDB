@@ -1558,16 +1558,25 @@ SDB_EXPORT INT32 sdbInsert ( sdbCollectionHandle cHandle,
                              bson *obj ) ;
 
 /** \fn INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
-                           bson *obj, bson_iterator *id )
+                           bson *obj, bson_iterator *pId )
     \brief Insert a bson object into current collection
     \param [in] cHandle The collection handle
     \param [in] obj The inserted bson object, cannot be null
-    \param [out] id The object id of inserted bson object in current collection
+    \param [out] pId The object id of inserted bson object. Can be the 
+                     follow value:
+         <ul>
+         <li> NULL: 
+               when this argument is NULL.
+         <li> value of "_id" field: 
+               pId points the position of the record where 
+               the value of "_id" field is. Note that: the memory of pId 
+               will be invalidated when next insert/bulkInsert is 
+               performed or the inserted bson object is destroyed.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
-                              bson *obj, bson_iterator *id ) ;
+                              bson *obj, bson_iterator *pId ) ;
 
 
 /** \fn INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
@@ -1579,17 +1588,28 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
     \param [in] flags The flag to control the behavior of inserting. The
                       value of flags default to be 0, and it can choose
                       the follow values:
-    
+         <ul>
+         <li>
          0:                    while 0 is set(default to be 0), database 
                                will stop inserting when the record hit 
                                index key duplicate error.
+         <li>
          FLG_INSERT_CONTONDUP: 
                                if the record hit index key duplicate
                                error, database will skip them and go on 
                                inserting.
-         FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.                     
-
-    \param [out] pResult The insert result.
+         <li>
+         FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.
+    \param [out] pResult The result of inserting. Can be NULL or a bson:
+         <ul>
+         <li> NULL: 
+               when this argument is NULL.
+         <li> empty bson: when this argument is not NULL but there is no 
+                          result return.
+         <li> bson which contains the "_id" field: 
+               when flag "FLG_INSERT_RETURN_OID" is set, return the 
+               value of "_id" field of the inserted record. 
+               e.g.: { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } }
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -1603,10 +1623,12 @@ SDB_EXPORT INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
     \param [in] flags The flag to control the behavior of inserting. The
                       value of flags default to be 0, and it can choose
                       the follow values:
-    
+         <ul>
+         <li>
          0:                    while 0 is set(default to be 0), database 
                                will stop inserting when the record hit 
                                index key duplicate error.
+         <li>
          FLG_INSERT_CONTONDUP: 
                                if the record hit index key duplicate
                                error, database will skip them and go on 
@@ -1656,23 +1678,34 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
     \param [in] flags The flag to control the behavior of inserting. The
                       value of flags default to be 0, and it can choose
                       the follow values:
-    
+         <ul>
+         <li>
          0:                    while 0 is set(default to be 0), database 
                                will stop inserting when the record hit 
                                index key duplicate error.
+         <li>
          FLG_INSERT_CONTONDUP: 
                                if the record hit index key duplicate
                                error, database will skip them and go on 
                                inserting.
-         FLG_INSERT_RETURN_OID: return the value of "_id" field in the records.                     
-
-    \param [in] objs The array of inserted bson objects, cannot be null
-    \param [in] num The number of inserted bson objects
-    \param [out] pResult The insert result
+         <li>
+         FLG_INSERT_RETURN_OID: return the value of "_id" field in the records.
+    \param [in] objs The array of inserted bson objects, cannot be null.
+    \param [in] num The number of inserted bson objects.
+    \param [out] pResult The result of inserting. Can be NULL or a bson:
+         <ul>
+         <li> NULL: 
+               when this argument is NULL.
+         <li> empty bson: when this argument is not NULL but there is no 
+                          result return.
+         <li> bson which contains the "_id" field: 
+               when flag "FLG_INSERT_RETURN_OID" is set, return all the 
+               values of "_id" field in a bson array. 
+               e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" }, 
+                                { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-
 SDB_EXPORT INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
                                   SINT32 flags, bson **objs, 
                                   SINT32 num,
