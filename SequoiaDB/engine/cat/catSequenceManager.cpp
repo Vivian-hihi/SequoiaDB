@@ -811,13 +811,14 @@ namespace engine
       reminder = diff % seq.increment() ;
       diffInc = reminder == 0 ? diff : (diff - reminder + seq.increment()) ;
       newCachedValue = seq.cachedValue() + diffInc ;
-      if ( diffInc < diff ||
-           newCachedValue < seq.cachedValue() ||
+      if ( diffInc < diff || // check for diffInc overflow
+           newCachedValue < seq.cachedValue() || // check for newCachedValue overflow
            newCachedValue > seq.maxValue() - seq.increment() )
       {
          seq.setCachedValue( seq.maxValue() ) ;
          seq.setCurrentValue( seq.maxValue() ) ;
          seq.setExceeded( TRUE ) ;
+         needUpdate = TRUE ;
          goto done ;
       }
 
@@ -875,13 +876,14 @@ namespace engine
       reminder = diff % seq.increment() ;
       diffInc = reminder == 0 ? diff : (diff - reminder - seq.increment()) ;
       newCachedValue = seq.cachedValue() - diffInc ;
-      if ( diffInc < diff ||
-           newCachedValue > seq.cachedValue() ||
+      if ( diffInc < diff || // check for diffInc overflow
+           newCachedValue > seq.cachedValue() || // check for newCachedValue overflow
            newCachedValue < seq.minValue() - seq.increment() )
       {
          seq.setCachedValue( seq.minValue() ) ;
          seq.setCurrentValue( seq.minValue() ) ;
          seq.setExceeded( TRUE ) ;
+         needUpdate = TRUE ;
          goto done ;
       }
 
