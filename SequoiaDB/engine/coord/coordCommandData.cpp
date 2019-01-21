@@ -904,9 +904,12 @@ namespace engine
       coordCommandFactory *pFactory = coordGetFactory() ;
       coordOperator *pOperator = NULL ;
       rtnContextBuf buffObj ;
-      CHAR *pQuery = NULL ;
-
-      contextID                        = -1 ;
+      CHAR csName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
+      BSONObj matcher ;
+      const CHAR* clName    = NULL ;
+      CHAR *pQuery          = NULL ;
+      CHAR* pTestCSMsg      = NULL ;
+      contextID             = -1 ;
 
       rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
                             &pQuery, NULL, NULL, NULL ) ;
@@ -918,10 +921,12 @@ namespace engine
 
       try
       {
-         BSONObj objQuery( pQuery ) ;
-         BSONElement e = objQuery.getField( FIELD_NAME_NAME ) ;
-         if ( 0 == ossStrcmp( e.valuestrsafe(),
-                              CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO ) )
+         matcher = BSONObj( pQuery ) ;
+         rc = rtnGetStringElement( matcher, FIELD_NAME_NAME, &clName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+                      FIELD_NAME_NAME, rc ) ;
+
+         if ( 0 == ossStrcmp( clName, CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO ) )
          {
             goto done ;
          }
@@ -933,6 +938,7 @@ namespace engine
          goto error ;
       }
 
+      // check cl exist or not
       rc = pFactory->create( CMD_NAME_LIST_COLLECTIONS, pOperator ) ;
       if ( rc )
       {
@@ -956,16 +962,101 @@ namespace engine
       }
 
       rc = rtnGetMore( contextID, -1, buffObj, cb, pRtncb ) ;
-      if ( rc )
+      if ( SDB_OK == rc )
+      {
+         goto done ;
+      }
+      else
       {
          contextID = -1 ;
          if ( SDB_DMS_EOC == rc )
          {
-            rc = SDB_DMS_NOTEXIST ;
+            // we need to check cs
          }
          else
          {
             PD_LOG ( PDERROR, "Getmore failed, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
+      // if cl doesn't exist, check cs exist or not
+      // build new msg, eg: {Name: 'cs.cl'} => {Name: 'cs'}
+      if ( pOperator )
+      {
+         pFactory->release( pOperator ) ;
+         pOperator = NULL ;
+      }
+      rc = rtnResolveCollectionSpaceName( clName,
+                                          ossStrlen( clName ),
+                                          csName,
+                                          DMS_COLLECTION_SPACE_NAME_SZ ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get cs name from cl name[%s], rc: %d",
+                   clName, rc ) ;
+      try
+      {
+         BSONObjBuilder builder ;
+         BSONObjIterator it( matcher );
+         while ( it.more() )
+         {
+            BSONElement e = it.next();
+            if ( 0 == ossStrcmp( e.fieldName(), FIELD_NAME_NAME ) )
+            {
+               builder.append( FIELD_NAME_NAME, csName ) ;
+            }
+            else
+            {
+               builder.append( e );
+            }
+         }
+         BSONObj newMatcher = builder.obj() ;
+
+         INT32 buffSize = 0 ;
+
+         rc = msgBuildQueryMsg( &pTestCSMsg, &buffSize,
+                                CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTIONSPACE,
+                                0, 0, 0, -1,
+                                &newMatcher, NULL, NULL, NULL, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build new msg, rc: %d", rc ) ;
+
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      // test collection space
+      rc = pFactory->create( CMD_NAME_TEST_COLLECTIONSPACE, pOperator ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Create operator by name[%s] failed, rc: %d",
+                 CMD_NAME_LIST_COLLECTIONSPACES, rc ) ;
+         goto error ;
+      }
+
+      rc = pOperator->init( _pResource, cb, getTimeout() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init operator failed[%s], rc: %d",
+                 pOperator->getName(), rc ) ;
+         goto error ;
+      }
+
+      rc = pOperator->execute( (MsgHeader*)pTestCSMsg, cb, contextID, buf ) ;
+      if ( SDB_OK == rc )
+      {
+         rc = SDB_DMS_NOTEXIST ;
+      }
+      else
+      {
+         if ( SDB_DMS_CS_NOTEXIST != rc )
+         {
+            PD_LOG ( PDERROR, "Execute operator[%s] failed, rc: %d",
+                  pOperator->getName(), rc ) ;
+            goto error ;
          }
       }
 
@@ -978,6 +1069,11 @@ namespace engine
       if ( pOperator )
       {
          pFactory->release( pOperator ) ;
+      }
+      if ( pTestCSMsg )
+      {
+         msgReleaseBuffer( pTestCSMsg, cb ) ;
+         pTestCSMsg = NULL ;
       }
       PD_TRACE_EXITRC ( COORD_CMD_TESTCL_EXE, rc ) ;
       return rc ;

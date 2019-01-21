@@ -2829,7 +2829,7 @@ namespace engine
 
       rc = pShard->syncUpdateCatalog( _curCollecitonName.c_str(),
                                       OSS_ONE_SEC ) ;
-      if ( SDB_OK != rc && SDB_DMS_NOTEXIST != rc )
+      if ( SDB_OK != rc && SDB_DMS_NOTEXIST != rc && SDB_DMS_CS_NOTEXIST != rc )
       {
          goto done ;
       }

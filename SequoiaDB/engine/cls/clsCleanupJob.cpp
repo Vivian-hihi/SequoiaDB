@@ -174,7 +174,7 @@ namespace engine
          }
 
          rc = pShardCB->syncUpdateCatalog( _clFullName.c_str(), OSS_ONE_SEC ) ;
-         if ( SDB_DMS_NOTEXIST == rc )
+         if ( SDB_DMS_NOTEXIST == rc || SDB_DMS_CS_NOTEXIST == rc )
          {
             dropCollection = TRUE ;
             break ;
@@ -287,7 +287,7 @@ namespace engine
          }
          else
          {
-            if ( SDB_DMS_NOTEXIST != rc )
+            if ( SDB_DMS_NOTEXIST != rc && SDB_DMS_CS_NOTEXIST != rc )
             {
                PD_LOG( PDERROR, "Failed to update catalog info of %s",
                        _clFullName.c_str() ) ;
@@ -313,7 +313,7 @@ namespace engine
       {
          INT32 range = clsPartition( page._oid, page._sequence,
                                      catSet->getPartitionBit() ) ;
-         need2Remove = _splitKeyObj.firstElement().Int() <= range && 
+         need2Remove = _splitKeyObj.firstElement().Int() <= range &&
            ( _splitEndKeyObj.isEmpty() ||
              range < _splitEndKeyObj.firstElement().Int() ) ;
       }
@@ -367,7 +367,7 @@ namespace engine
          if ( SDB_OK == rc )
          {
             rc = _filterDel( page, need2Remove ) ;
-            if ( SDB_DMS_NOTEXIST == rc )
+            if ( SDB_DMS_NOTEXIST == rc || SDB_DMS_CS_NOTEXIST == rc )
             {
                clsTaskMgr *pTaskMgr = pmdGetKRCB()->getClsCB()->getTaskMgr() ;
                pTaskMgr->lockReg( SHARED ) ;
@@ -501,8 +501,8 @@ namespace engine
          }
 
          //delete records
-         if ( SDB_DMS_NOTEXIST == _filterDel( buffObj.data(), buffObj.size(),
-                                              cleanType, groupID ) )
+         rc = _filterDel( buffObj.data(), buffObj.size(), cleanType, groupID ) ;
+         if ( SDB_DMS_NOTEXIST == rc || SDB_DMS_CS_NOTEXIST == rc )
          {
             clsTaskMgr *pTaskMgr = pmdGetKRCB()->getClsCB()->getTaskMgr() ;
             pTaskMgr->lockReg( SHARED ) ;
@@ -649,15 +649,16 @@ namespace engine
                   {
                      goto retry ;
                   }
-                  else if ( SDB_DMS_NOTEXIST == rc )
+                  else if ( SDB_DMS_NOTEXIST == rc ||
+                            SDB_DMS_CS_NOTEXIST == rc )
                   {
                      break ;
                   }
                }
- 
+
                PD_LOG ( PDWARNING, "Job[%s] filter del not found collection[%s]"
-                        " catalog info", name(), _clFullName.c_str() ) ;
-               rc = SDB_DMS_NOTEXIST ;
+                        " catalog info, rc: %d", name(), _clFullName.c_str(),
+                        rc ) ;
                break ;
             }
 

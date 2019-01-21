@@ -2489,7 +2489,7 @@ namespace engine
          //need to update catalog
          INT32 rc = _pShardMgr->syncUpdateCatalog( _pTask->clFullName(),
                                                    OSS_ONE_SEC ) ;
-         if ( SDB_DMS_NOTEXIST == rc )
+         if ( SDB_DMS_NOTEXIST == rc || SDB_DMS_CS_NOTEXIST == rc )
          {
             _step = STEP_END_NTY ;
             _lend() ;
