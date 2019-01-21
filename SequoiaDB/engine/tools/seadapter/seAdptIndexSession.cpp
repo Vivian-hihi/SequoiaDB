@@ -1604,9 +1604,15 @@ namespace seadapter
       {
          if ( _bulkBuilder.getItemNum() > 0 )
          {
-            rc = _esClt->bulk( _meta.getEsIdxName().c_str(), _meta.getEsTypeName().c_str(),
+            rc = _esClt->bulk( _meta.getEsIdxName().c_str(),
+                               _meta.getEsTypeName().c_str(),
                                _bulkBuilder.getData() ) ;
             PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]" ) ;
+
+            PD_LOG( PDDEBUG, "Index documents in bulk mode successfully. "
+                             "Document number[%u]. Total size[%u]",
+                    _bulkBuilder.getItemNum(), _bulkBuilder.getDataLen() ) ;
+
             _bulkBuilder.reset() ;
          }
          else
@@ -1634,9 +1640,13 @@ namespace seadapter
 
       if ( _bulkBuilder.getDataLen() > 0 )
       {
-         rc = _esClt->bulk( _meta.getEsIdxName().c_str(), _meta.getEsTypeName().c_str(),
+         rc = _esClt->bulk( _meta.getEsIdxName().c_str(),
+                            _meta.getEsTypeName().c_str(),
                             _bulkBuilder.getData() ) ;
          PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]", rc ) ;
+         PD_LOG( PDDEBUG, "Index documents in bulk mode successfully. "
+                          "Document number[%u]. Total size[%u]",
+                 _bulkBuilder.getItemNum(), _bulkBuilder.getDataLen() ) ;
       }
 
    done:
