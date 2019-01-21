@@ -579,7 +579,6 @@ namespace seadapter
          chunk += string( data + totalSent, chunkSize ) ;
          chunk += "\r\n" ;
 
-         PD_LOG( PDDEBUG, "chunk string: %s", chunk.c_str() ) ;
          rc = _send( chunk.c_str(), chunk.size() ) ;
          PD_RC_CHECK( rc, PDERROR, "Send chund data failed[ %d ]", rc ) ;
          totalSent += chunkSize;

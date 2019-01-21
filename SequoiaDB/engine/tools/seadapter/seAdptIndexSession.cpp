@@ -831,9 +831,6 @@ namespace seadapter
             }
 
             sourceObj = builder.obj() ;
-            PD_LOG( PDDEBUG, "Operation type: %d, _lid: %lld, "
-                    "_source: %s", oprType, logicalID,
-                    sourceObj.toString().c_str() ) ;
          }
       }
       catch ( std::exception &e )
@@ -1607,8 +1604,6 @@ namespace seadapter
       {
          if ( _bulkBuilder.getItemNum() > 0 )
          {
-            PD_LOG( PDDEBUG, "Bulk operation data: %s",
-                    _bulkBuilder.getData() ) ;
             rc = _esClt->bulk( _meta.getEsIdxName().c_str(), _meta.getEsTypeName().c_str(),
                                _bulkBuilder.getData() ) ;
             PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]" ) ;
@@ -1639,8 +1634,6 @@ namespace seadapter
 
       if ( _bulkBuilder.getDataLen() > 0 )
       {
-         PD_LOG( PDDEBUG, "Bulk operation data: %s",
-                 _bulkBuilder.getData() ) ;
          rc = _esClt->bulk( _meta.getEsIdxName().c_str(), _meta.getEsTypeName().c_str(),
                             _bulkBuilder.getData() ) ;
          PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]", rc ) ;
