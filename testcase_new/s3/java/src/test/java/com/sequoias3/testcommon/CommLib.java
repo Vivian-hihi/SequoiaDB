@@ -34,7 +34,7 @@ public class CommLib {
 		AmazonS3 s3Client = null;
 		AWSCredentials credentials = new BasicAWSCredentials(ACCESS_KEY,SECRET_KEY);
 		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
-				SdbTestBase.s3ClientUrl + "/s3", clientRegion);
+				S3TestBase.s3ClientUrl + "/s3", clientRegion);
 		ClientConfiguration config = new ClientConfiguration();
 		config.setUseExpectContinue(false);
 		s3Client = AmazonS3ClientBuilder.standard()
@@ -50,7 +50,7 @@ public class CommLib {
 		AmazonS3 s3Client = null;
 		AWSCredentials credentials = new BasicAWSCredentials(AWS_ACCESS_KEY,AWS_SECRET_KEY);
 		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
-				SdbTestBase.s3ClientUrl + "/s3", clientRegion);
+				S3TestBase.s3ClientUrl + "/s3", clientRegion);
 		BucketVersioningConfiguration configuration =
 				new BucketVersioningConfiguration().withStatus("Enabled");
 		s3Client = AmazonS3ClientBuilder.standard()
