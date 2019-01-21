@@ -1181,7 +1181,7 @@ SdbOptionBase.prototype.toString = function() {
 
 SdbSnapshotOption.prototype.options = function(options) {
    if (undefined != options && (typeof options) != "object") {
-      throw "SdbSnapshotOption.update(): param should be object";
+      throw "SdbSnapshotOption.options(): param should be object";
    }
 
    this._hint = BSONObj({$Options:BSONObj(options)}) ;
