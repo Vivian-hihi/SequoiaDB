@@ -2104,7 +2104,20 @@ TEST( collection, sdbQueryAndUpdate )
    // The optimizer is able to find index2
    rc = sdbQueryAndUpdate( cl, &condition, &selector, &orderBy, NULL,
                            &update, 0, -1, 0, TRUE, &cursor ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
+   // check
+   i = 0 ;
+   while ( SDB_OK == ( rc = sdbNext( cursor, &tmp ) ) )
+   {
+      i++ ;
+      bson_iterator it ;
+      bson_iterator_init( &it, &tmp ) ;
+      const CHAR *pKey = bson_iterator_key( &it ) ;
+      ASSERT_EQ( 0, strncmp( pKey, pField2, strlen(pField2) ) ) ;
+      INT32 value =  bson_iterator_int( &it ) ;
+      ASSERT_EQ( set_value, value ) ;
+      bson_destroy( &tmp ) ;
+   }
+   ASSERT_EQ( 10, i ) ;
 
    /// in case: use selector orderBy with hint
    bson_init( &hint ) ;
@@ -2144,10 +2157,26 @@ TEST( collection, sdbQueryAndUpdate )
    bson_init( &condition ) ;
    bson_append_bson( &condition, pField1, &tmp ) ;
    bson_finish( &condition ) ;
+   bson_init( &orderBy ) ;
+   bson_append_int( &orderBy, pField1, 1 ) ;
+   bson_finish( &orderBy ) ;
 
-   rc = sdbQueryAndUpdate( cl, &condition, NULL, NULL, NULL,
+   rc = sdbQueryAndUpdate( cl, &condition, NULL, &orderBy, NULL,
                            &update, 10, -1, 0, TRUE, &cursor ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
+   // check
+   i = 0 ;
+   while ( SDB_OK == ( rc = sdbNext( cursor, &tmp ) ) )
+   {
+      i++ ;
+      bson_iterator it ;
+      bson_iterator_init( &it, &tmp ) ;
+      bson_print( &tmp ) ;
+      bson_destroy( &tmp ) ;
+   }
+   ASSERT_EQ( 0, i ) ;
+   bson_destroy( &tmp ) ;
+   bson_destroy( &condition ) ;
+   bson_destroy( &orderBy ) ;
 
    /// in case: use limit and skip in different groups, need to split
    //ASSERT_EQ( SDB_RTN_QUERYMODIFY_MULTI_NODES, rc ) ;
