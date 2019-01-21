@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -14,6 +15,8 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 
 public class TestResidualData extends S3TestBase{
     Sequoiadb db = null;
@@ -27,12 +30,17 @@ public class TestResidualData extends S3TestBase{
 	private void printResidualData() throws Exception{
     	List<String> csNames = new ArrayList<String>();
     	List<String> s3CSNames = new ArrayList<String>();
+    	List<String> s3DataCSNames = new ArrayList<String>();
         db =  new Sequoiadb(S3TestBase.coordUrl, "", "");
         csNames = db.getCollectionSpaceNames();
         
         for(String csName : csNames){
         	if(csName.startsWith("S3_")){
-        		s3CSNames.add(csName);
+        		if(csName.startsWith("S3_SYS_Meta")){
+        			s3CSNames.add(csName);
+        		}else{
+        			s3DataCSNames.add(csName);
+        		}
         	}
         }
         
@@ -44,13 +52,24 @@ public class TestResidualData extends S3TestBase{
                 String clname = csclName.substring(cs.getName().length()+1);
                 clList.add(cs.getCollection(clname));
             }
-            printCLResidualData(cs, clList);
+            printResidualMetaData(cs, clList);
+        }
+        
+        for(String csName : s3DataCSNames){
+        	CollectionSpace cs = db.getCollectionSpace(csName);
+        	List<DBCollection> clList = new ArrayList<DBCollection>();
+            List<String> clNameList = cs.getCollectionNames();
+            for(String csclName : clNameList){
+                String clname = csclName.substring(cs.getName().length()+1);
+                clList.add(cs.getCollection(clname));
+            }
+            printResidualData(cs, clList);
         }
         
         writeToFile();
     }
 	
-	private void printCLResidualData(CollectionSpace cs, List<DBCollection> clList){
+	private void printResidualMetaData(CollectionSpace cs, List<DBCollection> clList){
         DBCursor cursor = null;
         try{
 		    for(DBCollection cl : clList) {
@@ -72,6 +91,30 @@ public class TestResidualData extends S3TestBase{
 		        }
 		    }
 		    cursor.close();
+        }finally{
+        	if(cursor != null){
+                cursor.close();
+            }
+        }
+	}
+	
+	private void printResidualData(CollectionSpace cs, List<DBCollection> clList){
+        DBCursor cursor = null;
+        try{
+		    for(DBCollection cl : clList) {
+		    	cursor = cl.listLobs();
+		        if(cursor.hasNext()) {
+		        	printInfo+="\n===============begin print " + cs.getName() +"."+ cl.getName() + " data============\n";
+		            while(cursor.hasNext()){
+		            	printInfo+=cursor.getNext().toString()+"\n";
+		            	errorCount++;
+		            }
+		            printInfo+="===============end print " + cs.getName() +"."+ cl.getName() + " data==============\n";
+		        }
+		    }
+		    cursor.close();
+        }catch(BaseException e){
+            Assert.assertEquals(e.getErrorCode(), SDBError.SDB_DMS_NOTEXIST.getErrorCode(), "getCollection ObjectDataList failed");
         }finally{
         	if(cursor != null){
                 cursor.close();
