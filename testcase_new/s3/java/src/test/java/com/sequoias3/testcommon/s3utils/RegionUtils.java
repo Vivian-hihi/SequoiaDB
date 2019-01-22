@@ -85,7 +85,9 @@ public class RegionUtils extends S3TestBase {
 				doesExist = true;
 			}
 		} catch (HttpClientErrorException e) {
-			throw httpToAmazon(e);
+			if( e.getStatusCode().value() != 404 ){
+				throw httpToAmazon(e);
+			}			
 		}
 		return doesExist;
 	}
@@ -149,7 +151,7 @@ public class RegionUtils extends S3TestBase {
 	private static AmazonS3Exception httpToAmazon(HttpClientErrorException e) {
 		AmazonS3Exception amazonS3Exception = new AmazonS3Exception(e.getMessage());
 		amazonS3Exception.setStatusCode(e.getStatusCode().value());
-		JSONObject jsonBody = XML.toJSONObject(e.getResponseBodyAsString());
+		JSONObject jsonBody = XML.toJSONObject(e.getResponseBodyAsString());		
 		JSONObject subjsonBody = jsonBody.getJSONObject("Error");
 		amazonS3Exception.setErrorCode(subjsonBody.getString("Code"));
 		amazonS3Exception.setErrorMessage(subjsonBody.getString("Message"));
