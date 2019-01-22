@@ -3,6 +3,8 @@ package com.sequoias3.testcommon.s3utils;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.util.DateUtils;
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.region.GetRegionResult;
 import com.sequoias3.region.Region;
 import com.sequoias3.testcommon.S3TestBase;
@@ -41,7 +43,7 @@ public class RegionUtils extends S3TestBase {
         }
     }
 
-    public boolean deleteRegion(String regionName) throws Exception {
+    public static boolean deleteRegion(String regionName) throws Exception {
         TestRest rest = new TestRest();
         ResponseEntity<?> resp;
         boolean isDelete = false;
@@ -102,7 +104,7 @@ public class RegionUtils extends S3TestBase {
         ResponseEntity<?> resp;
         List<String> listResult;
         try {
-            resp = rest.setApi("/region")
+        	resp = rest.setApi("/region")
                     .setRequestHeaders(UserCommDefind.authorization, "ABCDEFGHIJKLMNOPQRST")
                     .setRequestMethod(HttpMethod.GET)
                     .setResponseType(String.class)
@@ -110,12 +112,16 @@ public class RegionUtils extends S3TestBase {
             String xmlBody = resp.getBody().toString();
             JSONObject jsonBody = XML.toJSONObject(xmlBody);
             JSONObject regions = jsonBody.getJSONObject("ListAllRegionsResult");
-            JSONArray array = regions.getJSONArray("Region");
+            Object object =  regions.get("Region");
             listResult = new ArrayList<>();
-            for (int i = 0; i < array.length(); i++) {
-                listResult.add(array.getString(i));
+            if(object instanceof JSONArray) {
+                JSONArray array = (JSONArray)object;
+                for (int i = 0; i < array.length(); i++) {
+                    listResult.add(array.getString(i));
+                }
+            }else {
+                listResult.add(object.toString());
             }
-
         } catch (HttpClientErrorException e) {
             throw httpToAmazon(e);
         }
@@ -124,7 +130,8 @@ public class RegionUtils extends S3TestBase {
 
 
     private static GetRegionResult stringToObject(String xmlBody) {
-        JSONObject jsonBody = XML.toJSONObject(xmlBody);
+    	JSONObject jsonBody = XML.toJSONObject(xmlBody);
+    	System.out.println("---jsonBody="+jsonBody);
         JSONObject subjsonBody = jsonBody.getJSONObject("RegionConfiguration");
         Region region = new Region();
         region.withName(subjsonBody.getString("Name"));
@@ -133,18 +140,21 @@ public class RegionUtils extends S3TestBase {
         region.withDataDomain(subjsonBody.getString("DataDomain"));
         region.withMetaDomain(subjsonBody.getString("MetaDomain"));
         region.withDataLocation(subjsonBody.getString("DataLocation"));
-        region.withMetaHisLocation(subjsonBody.getString("MetaLocation"));
-        region.withMetaHisLocation(subjsonBody.getString("MetaLocation"));
+        region.withMetaLocation(subjsonBody.getString("MetaLocation"));
+        region.withMetaHisLocation(subjsonBody.getString("MetaHisLocation"));
         GetRegionResult result = new GetRegionResult(region);
-        JSONObject bucketsJSON = subjsonBody.getJSONObject("Buckets");
-        JSONArray jsonArray = bucketsJSON.getJSONArray("Bucket");
         List<Bucket> buckets = new ArrayList<>();
-        for (int i = 0; i < jsonArray.length(); i++) {
-            Bucket bucket = new Bucket();
-            JSONObject subjsonObject = jsonArray.getJSONObject(i);
-            bucket.setName(subjsonObject.getString("Name"));
-            bucket.setCreationDate(DateUtils.parseISO8601Date(subjsonObject.getString("CreationDate")));
-            buckets.add(bucket);
+        Object objects = subjsonBody.get("Buckets");
+        if(objects instanceof  JSONObject) {
+            JSONObject jsonObject = (JSONObject)objects;
+            JSONArray jsonArray = jsonObject.getJSONArray("Bucket");
+            for (int i = 0; i < jsonArray.length(); i++) {
+                Bucket bucket = new Bucket();
+                JSONObject subjsonObject = jsonArray.getJSONObject(i);
+                bucket.setName(subjsonObject.getString("Name"));
+                bucket.setCreationDate(DateUtils.parseISO8601Date(subjsonObject.getString("CreationDate")));
+                buckets.add(bucket);
+            }
         }
         result.setBuckets(buckets);
         return result;
@@ -155,4 +165,14 @@ public class RegionUtils extends S3TestBase {
         amazonS3Exception.setStatusCode(e.getStatusCode().value());
         return amazonS3Exception;
     }
+    
+    public static void createCSAndCL(Sequoiadb sdb,String csName,String[] clNames){
+		if(sdb.isCollectionSpaceExist(csName)){
+			sdb.dropCollectionSpace(csName);
+		}
+		CollectionSpace cs = sdb.createCollectionSpace(csName);
+		for( int i = 0; i < clNames.length; i++){
+			cs.createCollection(clNames[i]);					
+		}				
+	}
 }
