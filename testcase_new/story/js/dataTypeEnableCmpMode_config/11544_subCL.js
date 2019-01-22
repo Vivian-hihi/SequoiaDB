@@ -22,7 +22,7 @@ function main()
    commDropCL( db, COMMCSNAME, subCL_Name1, true, true, "clean sub collection" );
    commDropCL( db, COMMCSNAME, subCL_Name2, true, true, "clean sub collection" );
    commDropCL( db, COMMCSNAME, subCL_Name3, true, true, "clean sub collection" );
-	 commDropCL( db, COMMCSNAME, mainCL_Name, true, true, "clean main collection" );
+   commDropCL( db, COMMCSNAME, mainCL_Name, true, true, "clean main collection" );
    
     //check test environment before split
    try
@@ -127,6 +127,11 @@ function main()
       	           {a:[199],b:[-98]},
                    //subcl3
       	           {a:[1000],b:[-101],c:[4,3,2,1]}];
-   checkResult( dbcl, findCondition2, hintConf, sortConf, expRecs2 );         
+   checkResult( dbcl, findCondition2, hintConf, sortConf, expRecs2 );   
+
+   commDropCL( db, COMMCSNAME, subCL_Name1, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name2, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name3, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, mainCL_Name, true, true, "clean main collection in the end" );   
 }
 main();

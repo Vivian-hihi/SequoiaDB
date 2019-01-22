@@ -123,5 +123,7 @@ function main(){
 	                {a:[1,20]},
 	                {a:[20,1,30]}];         
    checkResult( dbcl, findConf10, hintConf, sortConf, expRecs10 );
+   
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" ) ;
 }
 main();

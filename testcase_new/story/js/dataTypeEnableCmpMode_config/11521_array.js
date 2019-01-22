@@ -178,5 +178,6 @@ function main(){
       	           {a:{$minKey:1}},
       	           {a:{$maxKey:1}}];         
    checkResult( dbcl, findConf6, hintConf, sortConf, expRecs6 );  
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" ) ;
 }
 main();

@@ -133,6 +133,6 @@ function main()
    var expRecs2 = [ {a:"bb",b:"bb",c:"bb"},
       	           {a:"Bb",b:"Bb",c:"Bb"}];     
    checkResult( dbcl, findCondition2, hintConf, sortConf, expRecs2 );
-   
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" ) ;
 }
 main();
