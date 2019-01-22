@@ -708,7 +708,7 @@ namespace engine
       fieldList = localTask->getAutoincrementArgument() ;
       autoIncSet = cataSet.getAutoIncSet() ;
       for( UINT32 i = 0 ; i < fieldList.size() ; i++ )
-      {            
+      {
          const CHAR *fieldName = NULL ;
          const clsAutoIncItem *field = NULL ;
          fieldName = fieldList[i]->getFieldName() ;
@@ -1389,7 +1389,7 @@ namespace engine
             if( fieldList[i]->testArgumentMask( UTIL_CL_AUTOINC_GENERATED_FIELD ) )
             {
                const CHAR *generated = NULL ;
-               generated = field->generated() ;            
+               generated = field->generated() ;
                PD_CHECK( generated, SDB_SYS, error, PDERROR,
                          "Invalid generated type[%d] in catalog sequence field[%s]",
                          field->generatedType(), field->fieldName() ) ;
@@ -1830,7 +1830,7 @@ namespace engine
 
          fieldName = fldList[i]->getFieldName() ;
          PD_CHECK( fieldName, SDB_SYS, error, PDERROR, "Failed to get field "
-                   "name[%s]", fieldName ) ;         
+                   "name[%s]", fieldName ) ;
          field = autoIncSet->find( fieldName ) ;
          if( NULL == field )
          {
@@ -2156,7 +2156,7 @@ namespace engine
          rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
          if( SDB_SEQUENCE_EXIST == rc )
          {
-            rc = SDB_AUTOINCREMENT_FIELD_EXIST_OR_NESTED ;
+            rc = SDB_AUTOINCREMENT_FIELD_CONFLICT ;
             PD_LOG( PDERROR, "Failed to create sequence[%s], rc: %d",
                     seqName.c_str(), rc ) ;
             goto error ;

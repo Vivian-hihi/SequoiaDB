@@ -4607,7 +4607,7 @@ namespace engine
       }
 
       rc = clInfo._autoIncSet.insert( builder.obj() ) ;
-      if(  SDB_AUTOINCREMENT_FIELD_EXIST_OR_NESTED == rc )
+      if(  SDB_AUTOINCREMENT_FIELD_CONFLICT == rc )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Failed to insert autoinc field "

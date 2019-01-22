@@ -177,7 +177,7 @@ namespace engine
             {
                PD_LOG( PDERROR, "Field[%s] in obj[%s] must be string",
                        CAT_AUTOINC_FIELD, obj.toString().c_str() ) ;
-               /* 
+               /*
                 *init will be called by geting from catalog, so if the type is
                 *invalid, it must be sys error.
                */
@@ -390,7 +390,7 @@ namespace engine
       }
       else
       {
-         rc = SDB_AUTOINCREMENT_FIELD_EXIST_OR_NESTED ;
+         rc = SDB_AUTOINCREMENT_FIELD_CONFLICT ;
          PD_LOG( PDERROR, "AutoIncrement fields[%s, %s] conflict.",
                  fieldName(), pItem->fieldName() ) ;
          goto error ;
@@ -537,7 +537,7 @@ namespace engine
       }
 
       if( option.hasField( CAT_AUTOINC_GENERATED ) )
-      {      
+      {
          ele = option.getField( CAT_AUTOINC_GENERATED ) ;
          if( String != ele.type() )
          {
@@ -759,7 +759,7 @@ namespace engine
    const BSONObj _clsAutoIncSet::toBson() const
    {
       PD_TRACE_ENTRY( CLSAUTOINCSET_TOBSON ) ;
-   
+
       BSONObjBuilder fieldObj ;
       const clsAutoIncItem* pItem = NULL ;
       BSONArrayBuilder fieldArr( fieldObj.subarrayStart( CAT_AUTOINCREMENT ) ) ;

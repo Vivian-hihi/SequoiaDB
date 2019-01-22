@@ -2659,10 +2659,10 @@
       </code>
 
       <code>
-         <name>SDB_AUTOINCREMENT_FIELD_EXIST_OR_NESTED</name>
+         <name>SDB_AUTOINCREMENT_FIELD_CONFLICT</name>
          <description>
-            <en>Autoincrement field exists or nested on collection</en>
-            <cn>自增字段已存在或者存在嵌套</cn>
+            <en>Autoincrement field conflicts on collection</en>
+            <cn>自增字段冲突</cn>
          </description>
       </code>
 
