@@ -258,15 +258,15 @@ public class RegionServiceImpl implements RegionService {
     private void checkLocation(Region regionCon) throws S3ServerException{
         if (null == regionCon.getDataLocation()) {
             throw new S3ServerException(S3Error.REGION_LOCATION_NULL,
-                    "DataLocation and MetaLocation must specified at the same time.");
+                    "DataLocation and MetaLocation and MetaHisLocation must specified at the same time.");
         }
         if (null == regionCon.getMetaLocation()) {
             throw new S3ServerException(S3Error.REGION_LOCATION_NULL,
-                    "DataLocation and MetaLocation must specified at the same time.");
+                    "DataLocation and MetaLocation and MetaHisLocation must specified at the same time.");
         }
         if (null == regionCon.getMetaHisLocation()) {
             throw new S3ServerException(S3Error.REGION_LOCATION_NULL,
-                    "DataLocation and MetaLocation must specified at the same time.");
+                    "DataLocation and MetaLocation and MetaHisLocation must specified at the same time.");
         }
         if (regionCon.getMetaLocation().equals(regionCon.getMetaHisLocation())){
             throw new S3ServerException(S3Error.REGION_LOCATION_SAME,

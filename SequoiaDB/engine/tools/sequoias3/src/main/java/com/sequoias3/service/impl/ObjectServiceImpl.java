@@ -1295,6 +1295,7 @@ public class ObjectServiceImpl implements ObjectService {
         int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
         while (tryTime > 0) {
             tryTime--;
+            ObjectMeta deleteObject = null;
             ConnectionDao connection = daoMgr.getConnectionDao();
             transaction.begin(connection);
             try {
@@ -1313,7 +1314,7 @@ public class ObjectServiceImpl implements ObjectService {
                         metaDao.updateMeta(connection, metaCsName, metaClName, bucketId,
                                 objectName, null, objectMeta);
                         transaction.commit(connection);
-                        deleteObjectLob(metaResult);
+                        deleteObject = metaResult;
                     } else {
                         metaDao.insertMeta(connection, metaHisCSName, metaHisClName,
                                 metaResult, true, region);
@@ -1327,12 +1328,11 @@ public class ObjectServiceImpl implements ObjectService {
                                 metaDao.removeMeta(connection, metaHisCSName, metaHisClName, bucketId,
                                         objectName, null, true);
                             }
+                            deleteObject = nullMeta;
                         }
                         transaction.commit(connection);
-                        deleteObjectLob(nullMeta);
                     }
                 }
-                return;
             } catch (S3ServerException e) {
                 transaction.rollback(connection);
                 if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex() && tryTime > 0) {
@@ -1346,9 +1346,9 @@ public class ObjectServiceImpl implements ObjectService {
             } finally {
                 daoMgr.releaseConnectionDao(connection);
             }
+            deleteObjectLob(deleteObject);
+            return;
         }
-        throw new S3ServerException(S3Error.DAO_DUPLICATE_KEY,
-                "bucket+key duplicate too times. bucketId:"+bucketId+", key:"+objectName);
     }
 
     private Long isExistKeyVersion(String metaCsName, String metaClName,
