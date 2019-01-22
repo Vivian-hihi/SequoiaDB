@@ -54,7 +54,7 @@ namespace engine
       friend class _dmsPageMapUnit ;
 
       public:
-         typedef ossPoolMap< dmsExtentID, dmsExtentID >::Type MAP_PAGES ;
+         typedef ossPoolMap< dmsExtentID, dmsExtentID > MAP_PAGES ;
          typedef MAP_PAGES::iterator                          MAP_PAGES_IT ;
          typedef MAP_PAGES::const_iterator                    MAP_PAGES_CIT ;
 

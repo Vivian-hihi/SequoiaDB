@@ -78,7 +78,7 @@ namespace engine
      }
    } ;
 
-   typedef ossPoolList<_rtnLobTuple>::Type RTN_LOB_TUPLES ;
+   typedef ossPoolList<_rtnLobTuple> RTN_LOB_TUPLES ;
 }
 
 #endif

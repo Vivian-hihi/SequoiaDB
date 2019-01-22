@@ -113,7 +113,7 @@ namespace engine
          return _contextMap.size() ;
       }
 
-      OSS_INLINE void contextDump ( std::map<UINT64, ossPoolSet<SINT64>::Type > &contextList,
+      OSS_INLINE void contextDump ( std::map<UINT64, ossPoolSet<SINT64> > &contextList,
                                     EDUID filterEDUID = PMD_INVALID_EDUID )
       {
          FOR_EACH_CMAP_ELEMENT_S( RTN_CTX_MAP, _contextMap )

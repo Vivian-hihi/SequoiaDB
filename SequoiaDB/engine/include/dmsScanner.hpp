@@ -182,7 +182,7 @@ namespace engine
    class _dmsCappedExtScanner : public _dmsExtScannerBase
    {
       typedef std::pair<dmsExtentID, dmsExtentID>  EXT_LID_PAIR ;
-      typedef ossPoolSet<EXT_LID_PAIR>::Type       EXT_RANGE_SET ;
+      typedef ossPoolSet<EXT_LID_PAIR>       EXT_RANGE_SET ;
       typedef EXT_RANGE_SET::iterator              EXT_RANGE_SET_ITR ;
 
       public:

@@ -73,7 +73,7 @@ namespace engine
 
       {
          ossScopedLock lock ( &_latch, SHARED ) ;
-         ossPoolMap<EDUID, _rtnBaseJob*>::Type::iterator it =
+         ossPoolMap<EDUID, _rtnBaseJob*>::iterator it =
             _mapJobs.find( eduID ) ;
          if ( it != _mapJobs.end() )
          {
@@ -85,7 +85,7 @@ namespace engine
       INT32 res = SDB_OK ;
       {
          ossScopedLock lock ( &_latch, EXCLUSIVE ) ;
-         ossPoolMap<EDUID, INT32>::Type::iterator itRes =
+         ossPoolMap<EDUID, INT32>::iterator itRes =
             _mapResult.find( eduID ) ;
          if ( itRes != _mapResult.end() )
          {
@@ -118,7 +118,7 @@ namespace engine
       if ( RTN_JOB_MUTEX_NONE != type )
       {
          _rtnBaseJob *itJob = NULL ;
-         ossPoolMap<EDUID, _rtnBaseJob*>::Type::iterator it = _mapJobs.begin() ;
+         ossPoolMap<EDUID, _rtnBaseJob*>::iterator it = _mapJobs.begin() ;
          while ( it != _mapJobs.end() )
          {
             itJob = it->second ;
@@ -234,7 +234,7 @@ namespace engine
          _mapResult[ eduID ] = result ;
       }
 
-      ossPoolMap<EDUID, _rtnBaseJob*>::Type::iterator it =
+      ossPoolMap<EDUID, _rtnBaseJob*>::iterator it =
          _mapJobs.find ( eduID ) ;
       if ( it == _mapJobs.end() )
       {

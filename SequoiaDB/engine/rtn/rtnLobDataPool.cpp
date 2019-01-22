@@ -225,7 +225,7 @@ namespace engine
       _dataSz = 0 ;
       _current = -1 ;
       _currentTuple.clear() ;
-      ossPoolList<CHAR *>::Type::iterator itr = _toBeFreed.begin() ;
+      ossPoolList<CHAR *>::iterator itr = _toBeFreed.begin() ;
       for ( ; itr != _toBeFreed.end(); ++itr )
       {
          SDB_OSS_FREE( *itr ) ;

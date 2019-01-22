@@ -185,7 +185,7 @@ namespace engine
 
    class _dmsStorageDataCapped : public _dmsStorageDataCommon
    {
-      typedef ossPoolMap<UINT32, UINT32>::Type SIZE_REQ_MAP ;
+      typedef ossPoolMap<UINT32, UINT32> SIZE_REQ_MAP ;
    public:
       _dmsStorageDataCapped( const CHAR* pSuFileName,
                              dmsStorageInfo *pInfo,

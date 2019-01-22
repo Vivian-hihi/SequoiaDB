@@ -164,7 +164,7 @@ namespace engine
       const CHAR*          _pData ;
       UINT32               _dataLen ;
       INT64                _offset ;
-      ossPoolSet<UINT32>::Type  _written ;
+      ossPoolSet<UINT32>  _written ;
       _rtnLobPiecesInfo    _lobPieces ;
       _rtnLobAccessInfo*   _accessInfo ;
       _rtnLobSections      _lockSections ;

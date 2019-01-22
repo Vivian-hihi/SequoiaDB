@@ -56,30 +56,41 @@ struct ossPoolAllocator {
  * Containers that utilize the pool allocator. Currently only has map/list/set,
  * as these are the most commonly used containers. Will add other containers in
  * the future.
+ * When C++11 is supported, the following structures should be modified to use
+ * alias declaration instead.
  */
 
 /*
  * Map utilizing memory pool
  */
 template < typename K, typename V, class Compare = std::less<K> >
-struct ossPoolMap {
-  typedef std::map<K, V, Compare, boost::fast_pool_allocator<std::pair<const K, V> > > Type;
+class ossPoolMap : public std::map<K, V, Compare, boost::fast_pool_allocator<std::pair<const K, V> > >{
+  /**
+   * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
+   * DO NOT USE THIS CLASS IN POLYMORPHISM
+   */
 };
 
 /*
  * Set utilizing memory pool
  */
 template < typename K, class Compare = std::less<K> >
-struct ossPoolSet {
-  typedef std::set<K, Compare, boost::fast_pool_allocator<K> > Type;
+class ossPoolSet : public std::set<K, Compare, boost::fast_pool_allocator<K> >{
+  /**
+   * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
+   * DO NOT USE THIS CLASS IN POLYMORPHISM
+   */
 };
 
 /*
  * List utilizing memory pool
  */
 template < typename K >
-struct ossPoolList {
-  typedef std::list<K, boost::fast_pool_allocator<K> > Type;
+class ossPoolList : public std::list<K, boost::fast_pool_allocator<K> > {
+  /**
+   * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
+   * DO NOT USE THIS CLASS IN POLYMORPHISM
+   */
 };
 #endif
 

@@ -290,10 +290,10 @@ namespace engine
    class _pmdAsycSessionMgr : public SDBObject
    {
       public:
-      typedef ossPoolMap<UINT64, _pmdAsyncSession*>::Type  MAPSESSION ;
+      typedef ossPoolMap<UINT64, _pmdAsyncSession*>  MAPSESSION ;
       typedef MAPSESSION::iterator                         MAPSESSION_IT ;
 
-      typedef ossPoolMap<NET_HANDLE, pmdSessionMeta*>::Type  MAPMETA ;
+      typedef ossPoolMap<NET_HANDLE, pmdSessionMeta*>  MAPMETA ;
       typedef MAPMETA::iterator                              MAPMETA_IT ;
 
       typedef std::deque<_pmdAsyncSession*>           DEQSESSION ;

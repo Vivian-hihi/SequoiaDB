@@ -49,7 +49,7 @@ namespace engine
 {
    class _pmdEDUCB ;
 
-   typedef ossPoolMap<UINT32, MsgRouteID>::Type  DpsTransNodeMap ;
+   typedef ossPoolMap<UINT32, MsgRouteID>  DpsTransNodeMap ;
 
    /*
       _dpsTransCBLockInfo define
@@ -74,7 +74,7 @@ namespace engine
       ossAtomicSigned64          *_pRef ;
    } ;
    typedef _dpsTransCBLockInfo dpsTransCBLockInfo ;
-   typedef ossPoolMap< dpsTransLockId, dpsTransCBLockInfo * >::Type DpsTransCBLockList ;
+   typedef ossPoolMap< dpsTransLockId, dpsTransCBLockInfo * > DpsTransCBLockList ;
 
 }
 

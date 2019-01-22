@@ -135,7 +135,7 @@ namespace engine
    class _rtnLobSections: public SDBObject
    {
    private:
-      typedef ossPoolMap<INT64, _rtnLobSection>::Type LOB_SECTIONS_TYPE ;
+      typedef ossPoolMap<INT64, _rtnLobSection> LOB_SECTIONS_TYPE ;
 
    public:
       _rtnLobSections() ;

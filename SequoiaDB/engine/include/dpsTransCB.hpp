@@ -64,10 +64,10 @@ namespace engine
    class _dmsExtScanner ;
    class _dmsIXSecScanner ;
 
-   typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET>::Type TRANS_MAP;
-   typedef ossPoolMap<DPS_TRANS_ID, _pmdEDUCB * >::Type   TRANS_CB_MAP;
-   typedef ossPoolMap<DPS_LSN_OFFSET, DPS_TRANS_ID>::Type  TRANS_LSN_ID_MAP;
-   typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET>::Type  TRANS_ID_LSN_MAP;
+   typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET> TRANS_MAP;
+   typedef ossPoolMap<DPS_TRANS_ID, _pmdEDUCB * >   TRANS_CB_MAP;
+   typedef ossPoolMap<DPS_LSN_OFFSET, DPS_TRANS_ID>  TRANS_LSN_ID_MAP;
+   typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET>  TRANS_ID_LSN_MAP;
    typedef std::queue< EDUID >                     TRANS_EDU_LIST ;
 
    /*

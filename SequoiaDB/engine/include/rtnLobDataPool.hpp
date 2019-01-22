@@ -136,7 +136,7 @@ namespace engine
       CHAR *_buf ;
       UINT32 _bufSz ;
       std::vector<tuple> _pool ;
-      ossPoolList<CHAR *>::Type _toBeFreed ;
+      ossPoolList<CHAR *> _toBeFreed ;
       UINT32 _lastDataSz ;
       UINT32 _dataSz ;
       SINT32 _current ;

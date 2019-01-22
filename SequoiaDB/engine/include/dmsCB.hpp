@@ -148,8 +148,8 @@ namespace engine
             return std::strcmp(a,b)<0 ;
          }
       } ;
-      ossPoolMap<const CHAR*, dmsStorageUnitID, cmp_cscb>::Type _cscbNameMap ;
-      ossPoolMap<utilCSUniqueID, dmsStorageUnitID>::Type  _cscbIDMap ;
+      ossPoolMap<const CHAR*, dmsStorageUnitID, cmp_cscb> _cscbNameMap ;
+      ossPoolMap<utilCSUniqueID, dmsStorageUnitID>  _cscbIDMap ;
       std::vector<SDB_DMS_CSCB*>          _cscbVec ;
       std::vector<SDB_DMS_CSCB*>          _delCscbVec ;
       std::vector<ossRWMutex*>            _latchVec ;
@@ -160,20 +160,20 @@ namespace engine
 #if defined (_WINDOWS)
       typedef ossPoolMap<const CHAR*,
                        dmsStorageUnitID,
-                       cmp_cscb>::Type::const_iterator CSCB_MAP_CONST_ITER ;
+                       cmp_cscb>::const_iterator CSCB_MAP_CONST_ITER ;
       typedef ossPoolMap<const CHAR*,
                        dmsStorageUnitID,
-                       cmp_cscb>::Type::iterator CSCB_MAP_ITER ;
+                       cmp_cscb>::iterator CSCB_MAP_ITER ;
 #elif defined (_LINUX)
       typedef ossPoolMap<const CHAR*,
-                       dmsStorageUnitID>::Type::const_iterator CSCB_MAP_CONST_ITER ;
+                       dmsStorageUnitID>::const_iterator CSCB_MAP_CONST_ITER ;
       typedef ossPoolMap<const CHAR*,
-                       dmsStorageUnitID>::Type::iterator CSCB_MAP_ITER ;
+                       dmsStorageUnitID>::iterator CSCB_MAP_ITER ;
 #endif
       typedef ossPoolMap<utilCSUniqueID,
-                       dmsStorageUnitID>::Type::const_iterator CSCB_ID_MAP_CONST_ITER ;
+                       dmsStorageUnitID>::const_iterator CSCB_ID_MAP_CONST_ITER ;
       typedef ossPoolMap<utilCSUniqueID,
-                       dmsStorageUnitID>::Type::iterator CSCB_ID_MAP_ITER ;
+                       dmsStorageUnitID>::iterator CSCB_ID_MAP_ITER ;
 
       /*
        * Queue of collections which are waitting for dictionaies creation.

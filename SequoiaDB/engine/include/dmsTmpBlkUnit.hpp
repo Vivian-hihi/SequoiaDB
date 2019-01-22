@@ -77,7 +77,7 @@ namespace engine
    } ;
    typedef class _dmsTmpBlk dmsTmpBlk ;
 
-   typedef ossPoolList<_dmsTmpBlk>::Type RTN_SORT_BLKS ;
+   typedef ossPoolList<_dmsTmpBlk> RTN_SORT_BLKS ;
    typedef SINT64 DMS_TMP_FILE_ID ;
 
    class _dmsTmpBlkUnit

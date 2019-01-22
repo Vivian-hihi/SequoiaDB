@@ -48,7 +48,7 @@ namespace engine
 
    class rtnSQLAddToSet : public _rtnSQLFunc
    {
-   typedef ossPoolSet< bson::BSONElement >::Type FIELD_SET;
+   typedef ossPoolSet< bson::BSONElement > FIELD_SET;
    typedef std::vector< bson::BSONObj >          OBJ_VEC;
    public:
       rtnSQLAddToSet( const CHAR *pName );

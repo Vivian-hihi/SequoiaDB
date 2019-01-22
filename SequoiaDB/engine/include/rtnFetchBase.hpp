@@ -134,7 +134,7 @@ namespace engine
    {
       friend class _rtnFetchAssit ;
 
-      typedef ossPoolMap< INT32, FETCH_NEW_FUNC >::Type  MAP_FUNCS ;
+      typedef ossPoolMap< INT32, FETCH_NEW_FUNC >  MAP_FUNCS ;
 
       public:
          _rtnFetchBuilder () ;

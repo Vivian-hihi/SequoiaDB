@@ -1067,7 +1067,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB__ROLLBACK ) ;
       UINT64 sucNum = 0 ;
-      ossPoolSet<UINT32>::Type::reverse_iterator itr = _written.rbegin() ;
+      ossPoolSet<UINT32>::reverse_iterator itr = _written.rbegin() ;
       for ( ; itr != _written.rend(); ++itr )
       {
          if ( !sdbGetReplCB()->primaryIsMe() )

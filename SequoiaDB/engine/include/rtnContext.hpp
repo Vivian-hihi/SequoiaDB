@@ -512,7 +512,7 @@ namespace engine
       void _releaseContextInfos() ;
 
    private:
-      typedef ossPoolMap<RTN_CONTEXT_TYPE, _rtnContextInfo*>::Type CONTEXT_INFO_MAP;
+      typedef ossPoolMap<RTN_CONTEXT_TYPE, _rtnContextInfo*> CONTEXT_INFO_MAP;
 
       CONTEXT_INFO_MAP _contextInfoMap ;
       typedef std::pair<RTN_CONTEXT_TYPE, _rtnContextInfo*> pair_type ;
