@@ -124,7 +124,7 @@ public class RenameCL_16090_2 extends SdbTestBase{
 		        BSONObject indexInfo = (BSONObject) obj.get("IndexDef");
 		        String name = (String) indexInfo.get("name");
 		        indexNames.add(name);
-		        if(name.indexOf(indexNameA)!=-1){
+		        if(name.indexOf(indexNameA) >= 0){
 		            indexAnum++;
 		        }
 		    }
@@ -136,7 +136,7 @@ public class RenameCL_16090_2 extends SdbTestBase{
 		Assert.assertEquals(indexAnum, 10, "check indexA num");
 		
 		if(success){
-			Assert.assertEquals(indexNames.size(), 20, "check sum indexA and indexB num");
+			Assert.assertEquals(indexNames.size(), 21, "check sum indexA and indexB num");
 		}else{
 			int leftNum = 0;
 			for (int i = 0; i < indexNames.size(); i++) {
