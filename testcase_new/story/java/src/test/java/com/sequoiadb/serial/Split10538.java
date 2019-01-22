@@ -124,13 +124,12 @@ public class Split10538 extends SdbTestBase {
 	}
 
 	private void checkBackup(Sequoiadb db, String backupName, int backupNum) {
-		DBCursor cursor = null;
-		BSONObject obj = null;
+		DBCursor cursor = null;		
 		try {
 			cursor = db.listBackup(null, (BSONObject) JSON.parse("{Name:'" + backupName + "'}"), null, null);
 			int actualBackupNum = 0;
 			while (cursor.hasNext()) {
-				obj = cursor.getNext();
+				BSONObject obj = cursor.getNext();
 				//circumvent the problem of null pointers to list does not obtain correct info
 				if( !obj.containsField("HasError")){
 					Assert.fail("list info exist error:" + obj);
@@ -143,7 +142,7 @@ public class Split10538 extends SdbTestBase {
 			}
 			Assert.assertEquals(actualBackupNum, backupNum, "backupNum wrong");
 		} catch (BaseException e) {
-			Assert.fail("obj="+obj.toString()+"\n"+e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (cursor != null) {
 				cursor.close();
