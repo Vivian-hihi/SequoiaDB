@@ -49,10 +49,13 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       rc = pmdGetKRCB()->getAggrCB()->build( objs, objNum, pCollectionName,
-                                             cb, contextID );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to execute aggregation operation(rc=%d)",
-                  rc );
+                                             BSONObj(), cb, contextID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to execute aggregation operation, rc: %d",
+                 rc ) ;
+         goto error ;
+      }
 
    done:
       return rc;

@@ -114,7 +114,7 @@ namespace engine
                              flags, flags ) ;
 
          rc = pAggrBuilder->build( objs, count, pCollectionName,
-                                   cb, contextID ) ;
+                                   BSONObj(), cb, contextID ) ;
          /// AUDIT
          PD_AUDIT_OP( AUDIT_DQL, pMsg->opCode, AUDIT_OBJ_CL,
                       pCollectionName, rc,

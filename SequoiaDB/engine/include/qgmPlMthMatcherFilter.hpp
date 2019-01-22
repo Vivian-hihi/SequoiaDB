@@ -48,9 +48,9 @@ namespace engine
    {
    public:
       qgmPlMthMatcherFilter( const qgmOPFieldVec &selector,
-                           INT64 numSkip,
-                           INT64 numReturn,
-                           const qgmField &alias );
+                             INT64 numSkip,
+                             INT64 numReturn,
+                             const qgmField &alias );
 
       INT32 loadPattern( bson::BSONObj matcher );
 

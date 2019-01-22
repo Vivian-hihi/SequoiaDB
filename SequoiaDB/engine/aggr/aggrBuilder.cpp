@@ -103,8 +103,11 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 aggrBuilder::build( const BSONObj &objs, INT32 objNum,
-                             const CHAR *pCLName, _pmdEDUCB *cb,
+   INT32 aggrBuilder::build( const BSONObj &objs,
+                             INT32 objNum,
+                             const CHAR *pCLName,
+                             const BSONObj &hint,
+                             _pmdEDUCB *cb,
                              SINT64 &contextID )
    {
       INT32 rc = SDB_OK;
@@ -123,7 +126,7 @@ namespace engine
 
       // 1.parse the input objs and build the opti tree
       rc = buildTree( objs, objNum, pOptiTree, pContainer->ptrTable(),
-                      pContainer->paramTable(), pCLName );
+                      pContainer->paramTable(), pCLName, hint );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to build the opti tree(rc=%d)",
                   rc );
@@ -188,54 +191,78 @@ namespace engine
                                  _qgmOptiTreeNode *&root,
                                  _qgmPtrTable * pPtrTable,
                                  _qgmParamTable *pParamTable,
-                                 const CHAR *pCollectionName )
+                                 const CHAR *pCollectionName,
+                                 const BSONObj &hint )
    {
-      INT32 rc = SDB_OK;
-      INT32 i = 0;
-      const CHAR *pCLNameTmp = pCollectionName;
-      ossValuePtr pDataPos = 0;
+      INT32 rc = SDB_OK ;
+      INT32 i = 0 ;
+
+      const CHAR *pCLNameTmp = pCollectionName ;
+      BSONObj tmpHint = hint ;
+      ossValuePtr pDataPos = 0 ;
+
+      AGGR_PARSER_MAP::iterator iterMap ;
+
       PD_CHECK( !objs.isEmpty(), SDB_INVALIDARG, error, PDERROR,
-               "Parameter-object can't be empty!" );
-      pDataPos = (ossValuePtr)objs.objdata();
+                "Parameter-object can't be empty!" ) ;
+
+      pDataPos = (ossValuePtr)objs.objdata() ;
       while ( i < objNum )
       {
          try
          {
             // parse an obj, i.e:{$group:{_id: groupby, total:{$sum: "$num"}}}
-            BSONObj paraObj ( (const CHAR*)pDataPos );
-            PD_CHECK( paraObj.nFields() == 1, SDB_INVALIDARG,
-                     error, PDERROR,
-                     "only one element in one aggregate object is allowed" );
-            BSONElement bePara = paraObj.firstElement();
-            const CHAR *pAggrOp = bePara.fieldName();
-            AGGR_PARSER_MAP::iterator iterMap
-                                       = _parserMap.find( pAggrOp );
-            PD_CHECK( iterMap != _parserMap.end(), SDB_INVALIDARG,
-                     error, PDERROR,
-                     "unknow aggregation-operator name(%s)",
-                     pAggrOp );
+            BSONObj paraObj ( (const CHAR*)pDataPos ) ;
+            BSONElement bePara ;
+            const CHAR *pAggrOp = NULL ;
+
+            if ( paraObj.nFields() != 1 )
+            {
+               PD_LOG( PDERROR, "Only one element in one aggregate object "
+                       "is allowed: %s", paraObj.toString().c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            bePara = paraObj.firstElement() ;
+            pAggrOp = bePara.fieldName() ;
+
+            iterMap = _parserMap.find( pAggrOp ) ;
+            if ( iterMap == _parserMap.end() )
+            {
+               PD_LOG( PDERROR, "Unknow aggregation-operator name: %s",
+                       pAggrOp ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
             rc = iterMap->second->parse( bePara, root, pPtrTable,
-                                         pParamTable, pCLNameTmp );
-            PD_RC_CHECK( rc, PDERROR,
-                        "failed to build the opti tree(rc=%d)", rc );
+                                         pParamTable, pCLNameTmp,
+                                         tmpHint ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to build the opti tree, rc: %d", rc ) ;
+               goto error ;
+            }
+
             pDataPos += ossAlignX( (ossValuePtr)paraObj.objsize(), 4 );
-            i++;
-            pCLNameTmp = NULL;
+            i++ ;
+            pCLNameTmp = NULL ;
          }
          catch ( std::exception &e )
          {
-            PD_LOG( PDERROR,
-                  "Failed to build tree, received unexpected error:%s",
-                  e.what() );
-            rc = SDB_INVALIDARG;
-            goto error;
+            PD_LOG( PDERROR, "Failed to build tree, occur unexpected "
+                    "error:%s", e.what() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
          }
       }
+
    done:
       return rc;
    error:
-      SAFE_OSS_DELETE( root );
-      goto done;
+      SAFE_OSS_DELETE( root ) ;
+      goto done ;
    }
 
    INT32 aggrBuilder::createContext( _qgmPlanContainer *container,
@@ -312,6 +339,9 @@ namespace engine
                                     INT32 objNum,
                                     const CHAR *pInnerCmd,
                                     const BSONObj &selector,
+                                    const BSONObj &hint,
+                                    INT64 skip,
+                                    INT64 limit,
                                     _pmdEDUCB *cb,
                                     SINT64 &contextID )
    {
@@ -334,6 +364,7 @@ namespace engine
 
       rc = pmdGetKRCB()->getAggrCB()->build( obj, objNum,
                                              pInnerCmd,
+                                             hint,
                                              cb, aggrContextID ) ;
       if ( SDB_OK != rc )
       {
@@ -349,7 +380,7 @@ namespace engine
          goto error ;
       }
 
-      rc = context->open( selector, BSONObj() ) ;
+      rc = context->open( selector, BSONObj(), limit, skip ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to open dump context, rc: %d", rc ) ;
@@ -403,7 +434,8 @@ namespace engine
    }
 
    INT32 _aggrCmdBase::parseUserAggr( const BSONObj &hint,
-                                      vector<BSONObj> &vecObj )
+                                      vector<BSONObj> &vecObj,
+                                      BSONObj &newHint )
    {
       INT32 rc = SDB_OK ;
 
@@ -412,10 +444,13 @@ namespace engine
          BSONElement e = hint.getField( FIELD_NAME_SYS_AGGR ) ;
          if ( e.eoo() )
          {
+            newHint = hint ;
             goto done ;
          }
          else if ( Object == e.type() )
          {
+            newHint = hint.filterFieldsUndotted( BSON( FIELD_NAME_SYS_AGGR <<
+                                                 1 ), false ) ;
             vecObj.push_back( e.embeddedObject() ) ;
          }
          else if ( Array != e.type() )
@@ -426,6 +461,8 @@ namespace engine
          }
          else
          {
+            newHint = hint.filterFieldsUndotted( BSON( FIELD_NAME_SYS_AGGR <<
+                                                 1 ), false ) ;
             BSONObjIterator it( e.embeddedObject() ) ;
             while( it.more() )
             {

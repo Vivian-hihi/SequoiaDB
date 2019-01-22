@@ -36,15 +36,21 @@
 ******************************************************************************/
 #include "aggrParser.hpp"
 #include "qgmDef.hpp"
-#include "qgmOptiSelect.hpp"
 #include "aggrDef.hpp"
 #include "msgDef.h"
 #include "qgmOptiTree.hpp"
 
-using namespace bson;
+using namespace bson ;
 
 namespace engine
 {
+
+   void aggrEmptyBSONObj( BSONObj &obj )
+   {
+      static BSONObj s_emptyObj ;
+      obj = s_emptyObj ;
+   }
+
    /*
       aggrParser implement
    */
@@ -52,7 +58,8 @@ namespace engine
                             _qgmOptiTreeNode *&root,
                             _qgmPtrTable * pPtrTable,
                             _qgmParamTable *pParamTable,
-                            const CHAR *pCollectionName )
+                            const CHAR *pCollectionName,
+                            BSONObj &hint )
    {
       INT32 rc = SDB_OK;
       SDB_ASSERT( pPtrTable!=NULL, "pPtrTable can't be NULL!" );
@@ -61,10 +68,11 @@ namespace engine
                   "collectionname can't be NULL in leaf-node" );
       _qgmOptiTreeNode *pNode = NULL;
 
-      rc = buildNode( elem, pCollectionName, pNode,
+      rc = buildNode( elem, pCollectionName, hint, pNode,
                       pPtrTable, pParamTable ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to build the node, rc: %d", rc ) ;
 
+      /// add node
       if ( root != NULL )
       {
          rc = pNode->addChild( root ) ;

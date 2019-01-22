@@ -248,12 +248,13 @@ namespace engine
       BSONObj selector ;
       BSONObj orderBy ;
       BSONObj hint ;
+      BSONObj newHint ;
 
       try
       {
          hint = BSONObj( _hintBuff ) ;
 
-         rc = parseUserAggr( hint, vecUserAggr ) ;
+         rc = parseUserAggr( hint, vecUserAggr, newHint ) ;
          PD_RC_CHECK( rc, PDERROR, "Parse user define aggr failed, rc: %d",
                       rc ) ;
 
@@ -304,9 +305,27 @@ namespace engine
                          rc ) ;
          }
 
+         /// offset
+         if ( _numToSkip > 0 )
+         {
+            rc = appendObj( BSON( AGGR_SKIP_PARSER_NAME << _numToSkip ),
+                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append skip failed, rc: %d", rc ) ;
+         }
+
+         /// limit
+         if ( _numToReturn != -1 )
+         {
+            rc = appendObj( BSON( AGGR_LIMIT_PARSER_NAME << _numToReturn ),
+                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append limit failed, rc: %d", rc ) ;
+         }
+
          /// open context
          rc = openContext( pOutBuff, buffObjNum, getIntrCMDName(),
-                           selector, cb, *pContextID ) ;
+                           selector, newHint,
+                           0, -1,
+                           cb, *pContextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
       }
       else

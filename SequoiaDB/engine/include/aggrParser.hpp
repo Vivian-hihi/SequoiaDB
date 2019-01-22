@@ -52,6 +52,8 @@ namespace engine
    class _qgmPtrTable;
    class _qgmParamTable;
 
+   void aggrEmptyBSONObj( BSONObj &obj ) ;
+
    /*
       aggrParser define
    */
@@ -64,15 +66,18 @@ namespace engine
                            _qgmOptiTreeNode *&root,
                            _qgmPtrTable * pPtrTable,
                            _qgmParamTable *pParamTable,
-                           const CHAR *pCollectionName );
+                           const CHAR *pCollectionName,
+                           BSONObj &hint ) ;
 
    private:
       virtual INT32 buildNode( const BSONElement &elem,
                                const CHAR *pCLName,
+                               BSONObj &hint,
                                qgmOptiTreeNode *&pNode,
                                _qgmPtrTable *pTable,
                                _qgmParamTable *pParamTable ) = 0 ;
-   };
+
+   } ;
 }
 
 #endif // AGGRPARSER_HPP__

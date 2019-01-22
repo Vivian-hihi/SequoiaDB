@@ -286,6 +286,7 @@ namespace engine
       rtnQueryOptions queryOption ;
       coordCtrlParam ctrlParam ;
       vector< BSONObj > vecUserAggr ;
+      BSONObj newHint ;
 
       contextID = -1 ;
 
@@ -296,7 +297,7 @@ namespace engine
                                    COORD_CTRL_MASK_RAWDATA, NULL, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Parse control param failed, rc: %d", rc ) ;
 
-      rc = parseUserAggr( queryOption.getHint(), vecUserAggr ) ;
+      rc = parseUserAggr( queryOption.getHint(), vecUserAggr, newHint ) ;
       PD_RC_CHECK( rc, PDERROR, "Parse user define aggr[%s] failed, rc: %d",
                    queryOption.getHint().toString().c_str(), rc ) ;
 
@@ -355,9 +356,30 @@ namespace engine
                          rc ) ;
          }
 
+         /// offset
+         if ( queryOption.getSkip() > 0 )
+         {
+            rc = appendObj( BSON( AGGR_SKIP_PARSER_NAME <<
+                                  queryOption.getSkip() ),
+                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append skip failed, rc: %d", rc ) ;
+         }
+
+         /// limit
+         if ( queryOption.getLimit() != -1 )
+         {
+            rc = appendObj( BSON( AGGR_LIMIT_PARSER_NAME <<
+                                  queryOption.getLimit() ),
+                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append limit failed, rc: %d", rc ) ;
+         }
+
          /// open context
          rc = openContext( pOutBuff, buffObjNum, getIntrCMDName(),
-                           queryOption.getSelector(), cb, contextID ) ;
+                           queryOption.getSelector(),
+                           newHint,
+                           0, -1,
+                           cb, contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
       }
       else

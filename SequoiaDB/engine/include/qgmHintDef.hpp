@@ -49,7 +49,11 @@ namespace engine
 
 #define QGM_HINT_USEFLAG         "use_flag"
 #define QGM_HINT_USEFLAG_SIZE    ( sizeof( QGM_HINT_USEFLAG ) -1 )
+
+#define QGM_HINT_USEOPTION       "use_option"
+#define QGM_HINT_USEOPTION_SIZE  ( sizeof( QGM_HINT_USEOPTION ) - 1 )
+
 }
 
-#endif
+#endif // QGMHINTDEF_HPP_
 

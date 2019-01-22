@@ -51,7 +51,7 @@ namespace engine
                                              const qgmField &alias,
                                              const bson::BSONObj &matcher )
    : _qgmPlScan( collection, selector, orderby, hint, numSkip, numReturn,
-               alias, NULL )
+                 alias, NULL )
    {
       _condition = matcher.copy();
    }

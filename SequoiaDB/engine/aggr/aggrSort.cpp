@@ -48,6 +48,7 @@ namespace engine
    */
    INT32 aggrSortParser::buildNode( const BSONElement &elem,
                                     const CHAR *pCLName,
+                                    BSONObj &hint,
                                     qgmOptiTreeNode *&pNode,
                                     _qgmPtrTable *pTable,
                                     _qgmParamTable *pParamTable )
@@ -76,6 +77,8 @@ namespace engine
          pSelect->_skip = 0 ;
          pSelect->_type = QGM_OPTI_TYPE_SELECT ;
          pSelect->_hasFunc = FALSE ;
+         pSelect->_objHint = hint ;
+         aggrEmptyBSONObj( hint ) ;
 
          rc = pTable->getOwnField( AGGR_CL_DEFAULT_ALIAS, pSelect->_alias ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",

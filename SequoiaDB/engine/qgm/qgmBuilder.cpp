@@ -852,7 +852,7 @@ namespace engine
       pScan = SDB_OSS_NEW qgmPlMthMatcherScan( s->_collection.value,
                                                s->_selector,
                                                orderby,
-                                               BSONObj(),
+                                               s->getHint(),
                                                s->_skip,
                                                s->_limit,
                                                s->_alias,

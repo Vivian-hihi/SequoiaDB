@@ -123,9 +123,9 @@ namespace engine
 
    string qgmHintToString( const QGM_HINS &hint ) ;
 
-   BSONObj qgmUseIndexHintToBson( const qgmHint &h ) ;
-
-   INT32 qgmUseHintToFlag( const qgmHint &h, INT32 &flag ) ;
+   void   qgmUseIndexHintToBson( const qgmHint &h, BSONObjBuilder &build ) ;
+   void   qgmUseOptionToBson( const qgmHint &h, BSONObjBuilder &build ) ;
+   INT32  qgmUseHintToFlag( const qgmHint &h, INT32 &flag ) ;
 
    const CHAR* qgmGetNodeTypeStr( INT32 type ) ;
 

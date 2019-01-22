@@ -51,6 +51,8 @@
 #include "qgmTrace.hpp"
 #include "qgmHintDef.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    _qgmOptiSelect::_qgmOptiSelect( _qgmPtrTable *table,
@@ -633,7 +635,6 @@ namespace engine
       goto done ;
    }
 
-   
    void _qgmOptiSelect::_handleHint( QGM_HINS &hints )
    {
       if ( &hints != &_hints )
@@ -641,35 +642,65 @@ namespace engine
          QGM_HINS::const_iterator itr = hints.begin() ;
          for ( ; itr != hints.end(); ++itr )
          {
-            if ( 0 != ossStrncmp( itr->value.begin(),
+            if ( 0 == ossStrncmp( itr->value.begin(),
                                   QGM_HINT_USEINDEX,
+                                  itr->value.size() ) ||
+                 0 == ossStrncmp( itr->value.begin(),
+                                  QGM_HINT_USEOPTION,
                                   itr->value.size() ) )
             {
-               continue ;
+               _hints.push_back( *itr ) ;
             }
-            _hints.push_back( *itr ) ;
-            break ;
          }
       }
-      return ;
    }
 
    BSONObj _qgmOptiSelect::getHint() const
    {
       BSONObj obj ;
-      QGM_HINS::const_iterator itr = _hints.begin() ;
-      for( ; itr != _hints.end(); ++itr )
-      {
-         if ( 0 != ossStrncmp( itr->value.begin(),
-                               QGM_HINT_USEINDEX,
-                               itr->value.size() ) )
-         {
-            continue ;
-         }
 
-         obj = qgmUseIndexHintToBson( *itr ) ;
-         break ;
+      if ( !_objHint.isEmpty() )
+      {
+         obj = _objHint ;
       }
+      else
+      {
+         try
+         {
+            BSONObjBuilder buildOpt ;
+            BSONObjBuilder build ;
+            QGM_HINS::const_iterator itr = _hints.begin() ;
+            for( ; itr != _hints.end(); ++itr )
+            {
+               if ( 0 == ossStrncmp( itr->value.begin(),
+                                     QGM_HINT_USEINDEX,
+                                     itr->value.size() ) )
+               {
+                  qgmUseIndexHintToBson( *itr, buildOpt ) ;
+               }
+               else if ( 0 == ossStrncmp( itr->value.begin(),
+                                          QGM_HINT_USEOPTION,
+                                          itr->value.size() ) )
+               {
+                  qgmUseOptionToBson( *itr, buildOpt ) ;
+               }
+            }
+
+            BSONObj objOpt = buildOpt.obj() ;
+            if ( !objOpt.isEmpty() )
+            {
+               BSONObjBuilder sub( build.subobjStart( "$"FIELD_NAME_OPTIONS )  ) ;
+               sub.appendElements( objOpt ) ;
+               sub.done() ;         
+            }
+            obj = build.obj() ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
+         }
+      }
+
       return obj ;
    }
 

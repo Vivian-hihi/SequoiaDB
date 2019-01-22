@@ -971,9 +971,8 @@ namespace engine
       return ss.str() ;
    }
 
-   BSONObj qgmUseIndexHintToBson( const qgmHint &h )
+   void qgmUseIndexHintToBson( const qgmHint &h, BSONObjBuilder &build )
    {
-      BSONObjBuilder builder ;
       qgmField f ;
       if ( 1 == h.param.size() )
       {
@@ -991,19 +990,41 @@ namespace engine
       if ( TABLE_SCAN_SIZE == f.size() &&
            0 == ossStrncmp( f.begin(), TABLE_SCAN, f.size() ) )
       {
-         builder.appendNull("") ;
+         build.appendNull("") ;
          goto done ;
       }
       if ( TABLE_SCAN_LOWER_SIZE == f.size() &&
            0 == ossStrncmp( f.begin(), TABLE_SCAN_LOWER, f.size() ) )
       {
-         builder.appendNull("") ;
+         build.appendNull("") ;
          goto done ;
       }
-      builder.appendStrWithNoTerminating( "", f.begin(), f.size() ) ;
+      build.appendStrWithNoTerminating( "", f.begin(), f.size() ) ;
 
    done:
-      return builder.obj() ;
+      return ;
+   }
+
+   void qgmUseOptionToBson( const qgmHint &h, BSONObjBuilder &build )
+   {
+      qgmField key ;
+      qgmField value ;
+
+      if ( 2 == h.param.size() )
+      {
+         key = h.param.at(0).value.attr() ;
+         value = h.param.at(1).value.attr() ;
+      }
+      else
+      {
+         goto done ;
+      }
+
+      build.appendStrWithNoTerminating( key.toString(), value.begin(),
+                                        value.size() ) ;
+
+   done:
+      return ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMUSEHINTTOFLAG, "qgmUseHintToFlag" )

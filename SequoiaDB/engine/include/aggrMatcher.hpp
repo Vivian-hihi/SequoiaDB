@@ -52,9 +52,11 @@ namespace engine
    private:
       INT32 buildNode( const BSONElement &elem,
                        const CHAR *pCLName,
+                       BSONObj &hint,
                        qgmOptiTreeNode *&pNode,
                        _qgmPtrTable *pTable,
                        _qgmParamTable *pParamTable ) ;
+
    } ;
 
 }

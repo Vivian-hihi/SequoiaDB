@@ -50,8 +50,11 @@ namespace engine
    class aggrProjectParser : public aggrParser
    {
    private:
-      INT32 buildNode( const BSONElement &elem, const CHAR *pCLName,
-                       qgmOptiTreeNode *&pNode, _qgmPtrTable *pTable,
+      INT32 buildNode( const BSONElement &elem,
+                       const CHAR *pCLName,
+                       BSONObj &hint,
+                       qgmOptiTreeNode *&pNode,
+                       _qgmPtrTable *pTable,
                        _qgmParamTable *pParamTable ) ;
 
       INT32 parseSelectorField( const BSONElement &beField,

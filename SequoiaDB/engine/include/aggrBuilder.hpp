@@ -78,8 +78,11 @@ namespace engine
       virtual INT32  deactive () ;
       virtual INT32  fini () ;
 
-      INT32 build( const BSONObj &objs, INT32 objNum,
-                   const CHAR *pCLName, _pmdEDUCB *cb,
+      INT32 build( const BSONObj &objs,
+                   INT32 objNum,
+                   const CHAR *pCLName,
+                   const BSONObj &hint,
+                   _pmdEDUCB *cb,
                    SINT64 &contextID  ) ;
 
    private:
@@ -88,7 +91,8 @@ namespace engine
                        _qgmOptiTreeNode *&root,
                        _qgmPtrTable * pPtrTable,
                        _qgmParamTable *pParamTable,
-                       const CHAR *pCollectionName );
+                       const CHAR *pCollectionName,
+                       const BSONObj &hint );
 
       INT32 createContext( _qgmPlanContainer *container,
                            _pmdEDUCB *cb, SINT64 &contextID );
@@ -116,11 +120,15 @@ namespace engine
                                INT32 objNum,
                                const CHAR *pInnerCmd,
                                const BSONObj &selector,
+                               const BSONObj &hint,
+                               INT64 skip,
+                               INT64 limit,
                                _pmdEDUCB *cb,
                                SINT64 &contextID ) ;
 
          INT32    parseUserAggr( const BSONObj &hint,
-                                 vector< BSONObj > &vecObj ) ;
+                                 vector< BSONObj > &vecObj,
+                                 BSONObj &newHint ) ;
 
          INT32    parseMatcher( const BSONObj &query,
                                 BSONObj &nodesMatcher,

@@ -42,6 +42,8 @@
 #include "qgmOptiTree.hpp"
 #include "qgmConditionNode.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    class _qgmExtendSelectPlan ;
@@ -103,10 +105,11 @@ namespace engine
       qgmDbAttr            _splitby ;
       qgmOpField           _collection ;
       qgmConditionNode     *_condition ;
-      INT64 _limit ;
-      INT64 _skip ;
-      BOOLEAN _hasFunc ;
-      _qgmOptiTreeNode *_from ;
+      INT64                _limit ;
+      INT64                _skip ;
+      BSONObj              _objHint ;
+      BOOLEAN              _hasFunc ;
+      _qgmOptiTreeNode     *_from ;
    } ;
    typedef class _qgmOptiSelect qgmOptiSelect ;
 }

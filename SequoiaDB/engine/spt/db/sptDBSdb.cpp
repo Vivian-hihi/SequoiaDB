@@ -763,8 +763,8 @@ namespace engine
       BSONObj sel ;
       BSONObj order ;
       BSONObj hint ;
-      INT32 numToSkip = 0 ;
-      INT32 numToRet = -1 ;
+      INT64 numToSkip = 0 ;
+      INT64 numToRet = -1 ;
 
       rc = arg.getNative( 0, &snapshotType, SPT_NATIVE_INT32 ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -788,7 +788,8 @@ namespace engine
          rc = arg.getBsonobj( 1, obj ) ;
          if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
          {
-            detail = BSON( SPT_ERR << "Cond must be obj" ) ;
+            detail = BSON( SPT_ERR << ( arg.hasErrMsg() ? arg.getErrMsg() :
+                                        "Cond must be obj" ) ) ;
             goto error ;
          }
 
@@ -895,11 +896,16 @@ namespace engine
                           bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
+      string objectName ;
       _sdbCursor *pCursor = NULL ;
       INT32 listType = 0 ;
+      BSONObj obj ;
       BSONObj cond ;
       BSONObj sel ;
       BSONObj order ;
+      BSONObj hint ;
+      INT64 numToRet = -1 ;
+      INT64 numToSkip = 0 ;
 
       rc = arg.getNative( 0, &listType, SPT_NATIVE_INT32 ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -913,7 +919,48 @@ namespace engine
          goto error ;
       }
 
-      if( arg.argc() > 1 )
+      if( !arg.isNull( 1 ) )
+      {
+         objectName = arg.getUserObjClassName( 1 ) ;
+      }
+
+      if ( SPT_OPTIONBASE_NAME == objectName ||
+           SPT_SNAPSHOTOPTION_NAME == objectName )
+      {
+         rc = arg.getBsonobj( 1, obj ) ;
+         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         {
+            detail = BSON( SPT_ERR << ( arg.hasErrMsg() ? arg.getErrMsg() :
+                                        "Cond must be obj" ) ) ;
+            goto error ;
+         }
+
+         if ( obj.hasField( SPT_OPTIONBASE_COND_FIELD ) )
+         {
+            cond = obj.getObjectField( SPT_OPTIONBASE_COND_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_SEL_FIELD ) )
+         {
+            sel = obj.getObjectField( SPT_OPTIONBASE_SEL_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_SORT_FIELD ) )
+         {
+            order = obj.getObjectField( SPT_OPTIONBASE_SORT_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_HINT_FIELD ) )
+         {
+            hint = obj.getObjectField( SPT_OPTIONBASE_HINT_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_SKIP_FIELD ) )
+         {
+            numToSkip = obj.getIntField( SPT_OPTIONBASE_SKIP_FIELD ) ;
+         }
+         if ( obj.hasField( SPT_OPTIONBASE_LIMIT_FIELD ) )
+         {
+            numToRet = obj.getIntField( SPT_OPTIONBASE_LIMIT_FIELD ) ;
+         }
+      }
+      else if( arg.argc() > 1 )
       {
          rc = arg.getBsonobj( 1, cond ) ;
          if( SDB_OK != rc )
@@ -921,7 +968,6 @@ namespace engine
             detail = BSON( SPT_ERR << "Cond must be obj" ) ;
             goto error ;
          }
-
          if( arg.argc() > 2 )
          {
             rc = arg.getBsonobj( 2, sel ) ;
@@ -930,7 +976,6 @@ namespace engine
                detail = BSON( SPT_ERR << "Sel must be obj" ) ;
                goto error ;
             }
-
             if( arg.argc() > 3 )
             {
                rc = arg.getBsonobj( 3, order ) ;
@@ -942,7 +987,9 @@ namespace engine
             }
          }
       }
-      rc = _sptSdb.getList( &pCursor, listType, cond, sel, order ) ;
+
+      rc = _sptSdb.getList( &pCursor, listType, cond, sel, order, hint,
+                            numToSkip, numToRet ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to get list" ) ;
