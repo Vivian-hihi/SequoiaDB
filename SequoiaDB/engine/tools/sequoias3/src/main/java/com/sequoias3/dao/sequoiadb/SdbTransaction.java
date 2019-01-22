@@ -47,7 +47,7 @@ public class SdbTransaction implements Transaction {
         SdbConnectionDao sdbConnection = (SdbConnectionDao)connection;
         Sequoiadb sdb = sdbConnection.getConnection();
         try {
-            sdb.commit();
+            sdb.rollback();
         }catch (Exception e){
             logger.error("rollback failed.", e);
         }finally {
