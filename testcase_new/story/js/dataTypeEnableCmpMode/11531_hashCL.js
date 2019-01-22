@@ -165,5 +165,7 @@ function main()
    	             {a:35,b:34},
    	             {a:35,b:36}];
    checkResult( dbcl, findCondition10, hintConf, sortConf, expRecs10 );
+   
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" ) ;
 }
 main();

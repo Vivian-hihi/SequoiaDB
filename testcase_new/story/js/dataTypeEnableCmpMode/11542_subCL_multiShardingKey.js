@@ -171,5 +171,10 @@ function main()
    var expRecs10 = [//subcl1
       	           {a:-1000,b:-1000,c:-1000,d:-1}]      
    checkResult( dbcl, findConf10, hintConf, sortConf, expRecs10 );
+   
+   commDropCL( db, COMMCSNAME, subCL_Name1, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name2, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name3, true, true, "clean main collection in the end" );
+	commDropCL( db, COMMCSNAME, mainCL_Name, true, true, "clean main collection in the end" );
 }
 main();

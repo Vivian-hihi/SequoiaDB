@@ -134,5 +134,7 @@ function main()
    var findConf9 = {a:{$all:[{$timestamp: "2015-05-01-15.32.18.000000"}]}};
    var expRecs9 = [{a:{$timestamp: "2015-05-01-15.32.18.000000"}}];
    checkResult( dbcl, findConf9, hintConf, sortConf, expRecs9 );
+   
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" ) ;
 }
 main()

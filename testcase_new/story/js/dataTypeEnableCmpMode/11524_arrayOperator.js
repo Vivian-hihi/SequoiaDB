@@ -248,5 +248,6 @@ function main(){
    var findCondition21 = {c:{$returnMatch:[0,1],$in:[]}};
    var expRecs21 =[];
    checkResult( dbcl, findCondition21, hintConf, sortConf, expRecs21);
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" ) ;
 }
 main();

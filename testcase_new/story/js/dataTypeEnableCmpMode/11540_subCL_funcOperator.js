@@ -319,5 +319,9 @@ function main()
       	           {a:[{$decimal:"1999"}],b:[1]}]      
    checkResult( dbcl, findConf12, hintConf, sortConf, expRecs12 );
    
+   commDropCL( db, COMMCSNAME, subCL_Name1, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name2, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name3, true, true, "clean main collection in the end" );
+	commDropCL( db, COMMCSNAME, mainCL_Name, true, true, "clean main collection in the end" );
 }
 main();

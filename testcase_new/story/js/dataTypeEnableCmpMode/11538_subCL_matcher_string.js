@@ -303,7 +303,7 @@ function main()
    checkResult( dbcl, findConf10, hintConf, sortConf, expRecs10 );
    
    //SEQUOIADBMAINSTREAM-2449
-   /*var findConf10 = {a:{$regex:"^a",$lt:"ad"}};
+   var findConf10 = {a:{$regex:"^a",$lt:"ad"}};
    var expRecs10 = [//subcl1
       	           {a:"aa",b:-1000},
       	           {a:"ab",b:-999},
@@ -311,7 +311,11 @@ function main()
       	           {a:["aa"],b:[-1000]},
       	           {a:["ab"],b:[-999]},
       	           {a:["ac"],b:[0]}];
-   checkResult( dbcl, findConf10, hintConf, sortConf, expRecs10 );*/
+   checkResult( dbcl, findConf10, hintConf, sortConf, expRecs10 );
    
+   commDropCL( db, COMMCSNAME, subCL_Name1, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name2, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name3, true, true, "clean main collection in the end" );
+	commDropCL( db, COMMCSNAME, mainCL_Name, true, true, "clean main collection in the end" );
 }
 main()

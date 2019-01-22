@@ -465,6 +465,8 @@ function main()
    var expRecs7= [{a:-10},{a:0},{a:10},
                   {a:[-10]},{a:[0]},{a:[10]}];                                 
    checkResult( dbcl, findCondition7, hintConf, sortConf, expRecs7 );
+   
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" ) ;
 }
 
 main();

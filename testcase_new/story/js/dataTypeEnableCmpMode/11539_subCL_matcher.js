@@ -209,5 +209,10 @@ function main()
       	           {a:[1998],b:[0]},
       	           {a:[1999],b:[1]}];
    checkResult( dbcl, findConf4, hintConf, sortConf, expRecs4 );
+   
+   commDropCL( db, COMMCSNAME, subCL_Name1, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name2, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name3, true, true, "clean main collection in the end" );
+	commDropCL( db, COMMCSNAME, mainCL_Name, true, true, "clean main collection in the end" );
 }
 main()

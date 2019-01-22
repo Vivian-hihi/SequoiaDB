@@ -236,5 +236,10 @@ function main()
       	           {a:{$date:"2017-01-01"},b:-1000},
       	           {a:[{$date:"2017-01-01"}],b:[-1000]}];
    checkResult( dbcl, findConf9, hintConf, sortConf, expRecs9 );
+   
+   commDropCL( db, COMMCSNAME, subCL_Name1, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name2, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name3, true, true, "clean main collection in the end" );
+	commDropCL( db, COMMCSNAME, mainCL_Name, true, true, "clean main collection in the end" );
 }
 main()

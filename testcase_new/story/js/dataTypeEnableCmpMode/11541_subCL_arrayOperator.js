@@ -131,5 +131,10 @@ function main()
       	           {a:[1000],b:[-1000]},
       	           {a:[1001],b:[-999]}]      
    checkResult( dbcl, findConf1, hintConf, sortConf, expRecs1 );
+   
+   commDropCL( db, COMMCSNAME, subCL_Name1, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name2, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name3, true, true, "clean main collection in the end" );
+	commDropCL( db, COMMCSNAME, mainCL_Name, true, true, "clean main collection in the end" );
 }
 main();

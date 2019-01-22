@@ -119,5 +119,7 @@ function main()
                    {a:-1,b:{$timestamp: "2017-05-02-20.32.18.000000"}},
 	                {a:1001,b:{$timestamp: "2017-05-21-20.32.18.000000"}}];
    checkResult( dbcl, findCondition7, hintConf, sortConf, expRecs7 );
+   
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" ) ;
 }
 main();

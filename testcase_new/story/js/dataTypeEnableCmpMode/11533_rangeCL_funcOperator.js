@@ -303,6 +303,8 @@ function main()
 	 //$type+$exists
    var findCondition21 = {a:{$type:1,$exists:0}};
    var expRecs21 = [{b:1}];
-	 checkResult( dbcl, findCondition21, hintConf, sortConf, expRecs21 );
+   checkResult( dbcl, findCondition21, hintConf, sortConf, expRecs21 );
+    
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" ) ;
 }
 main();

@@ -58,5 +58,7 @@ function main(){
    
    var findConf4 = {a:{$options:"i"}};        
    InvalidArgCheck( dbcl, findConf4, null, -6 );
+   
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" ) ;
 }
 main();

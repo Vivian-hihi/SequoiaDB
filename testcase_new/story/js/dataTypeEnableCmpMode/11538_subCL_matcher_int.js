@@ -328,5 +328,10 @@ function main()
    var findConf11 = {a:{$exists:0}};
    var expRecs11 = [];
    checkResult( dbcl, findConf11, hintConf, sortConf, expRecs11 );
+   
+   commDropCL( db, COMMCSNAME, subCL_Name1, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name2, true, true, "clean sub collection in the end" );
+   commDropCL( db, COMMCSNAME, subCL_Name3, true, true, "clean main collection in the end" );
+	commDropCL( db, COMMCSNAME, mainCL_Name, true, true, "clean main collection in the end" );
 }
 main()

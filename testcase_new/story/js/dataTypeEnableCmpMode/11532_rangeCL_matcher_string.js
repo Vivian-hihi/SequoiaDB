@@ -242,6 +242,6 @@ function main()
       	           {a:["ac"]},
       	           {a:["ad"]}];
    checkResult( dbcl, findConf11, hintConf, sortConf, expRecs11 );
-   
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" ) ;
 }
 main()

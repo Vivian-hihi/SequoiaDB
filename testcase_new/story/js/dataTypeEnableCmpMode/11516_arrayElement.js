@@ -385,6 +385,6 @@ function main(){
       	           {a:[2,1,3]},
       	           {a:[2,3,4]}];         
    checkResult( dbcl, findConf22, hintConf, sortConf, expRecs22 );
-   
+   commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the end" ) ;
 }
 main();
