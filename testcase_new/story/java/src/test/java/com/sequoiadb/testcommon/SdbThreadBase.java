@@ -6,25 +6,39 @@ import java.lang.Thread.State ;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService ;
+import java.util.concurrent.Executors ;
 
 public abstract class SdbThreadBase implements Runnable {
     private List<Throwable> exceptionList = Collections.synchronizedList(new ArrayList<Throwable>());
     private List<Thread> threadList = new ArrayList<>();
     private Integer sync = new Integer(0) ;
     private Object result = null ;
+    private static final int MAX_THREAD_NUMBER = 100 ;
+    private static ExecutorService service = Executors.newFixedThreadPool( MAX_THREAD_NUMBER ) ;
     
     public void start() {
         start(1);
+        
     }
 
     public void start(int threadNum) {
-        synchronized (this) {
+        if ( threadNum == 1 ){
+            Thread t = new Thread(this);
+            threadList.add(t);
+            t.start();
+            return ;
+        }
+        
+        synchronized (service) {
             for (int i = 0; i < threadNum; i++) {
-                Thread t = new Thread(this);
-                threadList.add(t);
-                t.start();
+                service.execute( this ) ;
             }
         }
+    }
+    
+    public static void shutdown(){
+        service.shutdown() ;
     }
     
     /*
