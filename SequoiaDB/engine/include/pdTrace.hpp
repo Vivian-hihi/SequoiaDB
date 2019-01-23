@@ -351,8 +351,8 @@ struct _pdTraceHeader
 
    UINT32   _release ;
 
-   UINT32   _functionListSize ;
-   UINT32   _functionListHeader ;
+   UINT32   _functionsSegmentSize ;
+   UINT32   _functionsSegmentOffset ;
 
    UINT32   _pad1[ 7 ] ;
 
@@ -389,10 +389,14 @@ struct _pdTraceHeader
       _version             = PD_TRACE_VERSION_CUR ;
       _engineVersion       = SDB_ENGINE_VERISON_CURRENT ;
       _engineSubVersion    = SDB_ENGINE_SUBVERSION_CURRENT ;
-      _engineFixVersion    = SDB_ENGINE_FIXVERSION_CURRENT ;
-      _release             = SDB_ENGINE_RELEASE_CURRENT ;
-      _functionListSize    = 0 ;
-      _functionListHeader  = 0 ;
+   #ifdef SDB_ENGINE_FIXVERSION_CURRENT
+      _engineFixVersion = SDB_ENGINE_FIXVERSION_CURRENT ;
+   #else
+      _engineFixVersion = -1 ;
+   #endif
+      _release                = SDB_ENGINE_RELEASE_CURRENT ;
+      _functionsSegmentSize   = 0 ;
+      _functionsSegmentOffset = 0 ;
    }
 };
 typedef struct _pdTraceHeader pdTraceHeader ;

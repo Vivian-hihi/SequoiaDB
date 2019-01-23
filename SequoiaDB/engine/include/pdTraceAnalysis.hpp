@@ -307,6 +307,8 @@ class _pdTraceParser
                                      const pdTraceRecord *pRecord,
                                      UINT32 sequenceNum ) ;
 
+      INT32 _outputDBversionInfo( const CHAR *versionFilePath ) ;
+
       const CHAR  *_getFunctionName( UINT32 functionID ) ;
 
       INT32 _dumpFunctionList( OSSFILE *file );
@@ -318,6 +320,7 @@ class _pdTraceParser
       BOOLEAN  _useFunctionListFile ;
 
       string   _inFilePath ;
+      string   _versionFilePath ;
       string   _fmtFilePath ;
       string   _flwFilePath ;
       string   _sumFilePath ;
@@ -334,8 +337,8 @@ class _pdTraceParser
       CHAR     *_pMaxRecordBuf ;
 
       UINT32    _functionsCount ;
-      CHAR     *_functionsNames ;
-      UINT32   *_functionsOffsets ;
+      CHAR     *_funcNames ;
+      UINT32   *_funcOffsetList ;
 
       CHAR     *_versionInfo ;
       UINT32    _versionInfoSize ;

@@ -45,7 +45,7 @@
 using namespace bson ;
 using namespace engine ;
 
-#define TRACE_VERSION_INFO_SIZE                   ( 40 )
+#define TRACE_VERSION_INFO_SIZE                   ( 50 )
 #define PD_FUNC_RECORD_TITLE \
    "name, count, avgcost, min, maxIn2OutCost, maxCurrentCost, first, second, third, fourth, fifth"
 /*
@@ -62,8 +62,8 @@ _pdTraceParser::_pdTraceParser()
    _versionInfoSize = 0 ;
    _useFunctionListFile = TRUE ;
    _functionsCount = 0 ;
-   _functionsNames = NULL ;
-   _functionsOffsets = NULL ;
+   _funcNames = NULL ;
+   _funcOffsetList = NULL ;
 }
 
 _pdTraceParser::~_pdTraceParser()
@@ -89,15 +89,15 @@ _pdTraceParser::~_pdTraceParser()
       SDB_OSS_FREE( _versionInfo ) ;
       _versionInfo = NULL ;
    }
-   if ( _functionsNames )
+   if ( _funcNames )
    {
-      SDB_OSS_FREE( _functionsNames ) ;
-      _functionsNames = NULL ;
+      SDB_OSS_FREE( _funcNames ) ;
+      _funcNames = NULL ;
    }
-   if ( _functionsOffsets )
+   if ( _funcOffsetList )
    {
-      SDB_OSS_FREE( _functionsOffsets ) ;
-      _functionsOffsets = NULL ;
+      SDB_OSS_FREE( _funcOffsetList ) ;
+      _funcOffsetList = NULL ;
    }
 }
 
@@ -107,7 +107,7 @@ INT32 _pdTraceParser::init( const CHAR *pInputFileName,
                             BOOLEAN useFunctionListFile )
 {
    INT32 rc = SDB_OK ;
-   CHAR   filePath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+   CHAR  filePath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
    if ( !pInputFileName || !pOutputFileName ||
         !(*pInputFileName) || !(*pOutputFileName) )
@@ -146,6 +146,8 @@ INT32 _pdTraceParser::init( const CHAR *pInputFileName,
    }
    ossMemset( _versionInfo, 0, TRACE_VERSION_INFO_SIZE ) ;
 
+   _versionFilePath = string(filePath) + string(".version") ;
+
    if ( type == PD_TRACE_FORMAT_TYPE_FORMAT )
    {
       _fmtFilePath = string(filePath) + string(".fmt") ;
@@ -173,11 +175,80 @@ error:
    goto done ;
 }
 
+INT32 _pdTraceParser::_outputDBversionInfo( const CHAR *versionFilePath )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN versionOpen = FALSE ;
+   OSSFILE versionFile ;
+
+   if ( versionFilePath && 0 != versionFilePath[0] )
+   {
+      rc = ossOpen( versionFilePath, OSS_REPLACE|OSS_READWRITE,
+                    OSS_DEFAULTFILE, versionFile ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Open file[%s] failed, rc: %d",
+                 versionFilePath, rc ) ;
+         goto error ;
+      }
+      versionOpen = TRUE ;
+   }
+
+   // write version info
+   if ( _traceHeader._engineFixVersion )
+   {
+      _versionInfoSize = ossSnprintf( _versionInfo, TRACE_VERSION_INFO_SIZE,
+                                      "SequoiaDB version : %u.%u.%u"OSS_NEWLINE
+                                      "Release : %u"OSS_NEWLINE,
+                                      _traceHeader._engineVersion,
+                                      _traceHeader._engineSubVersion,
+                                      _traceHeader._engineFixVersion,
+                                      _traceHeader._release ) ;
+   }
+   else
+   {
+      _versionInfoSize = ossSnprintf( _versionInfo, TRACE_VERSION_INFO_SIZE,
+                                      "SequoiaDB version : %u.%u"OSS_NEWLINE
+                                      "Release : %u"OSS_NEWLINE,
+                                      _traceHeader._engineVersion,
+                                      _traceHeader._engineSubVersion,
+                                      _traceHeader._release ) ;
+   }
+
+   if ( versionOpen )
+   {
+      rc = ossWriteN( &versionFile, _versionInfo, _versionInfoSize ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Write db version to versionFile failed, rc: %d", rc ) ;
+         goto error ;
+      }
+   }
+
+done:
+   if ( versionOpen )
+   {
+      ossClose( versionFile) ;
+      versionOpen = FALSE ;
+   }
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 _pdTraceParser::parse()
 {
    INT32 rc = SDB_OK ;
 
    /// step 1
+   rc = _outputDBversionInfo( _versionFilePath.c_str() ) ;
+   if ( rc )
+   {
+      PD_LOG( PDERROR, "Parse dbversion info failed, rc: %d", rc ) ;
+      goto error ;
+   }
+
+   /// step 2
    rc = _parseTraceDumpFile( &_inFile, &_traceHeader, _fmtFilePath.c_str() ) ;
    if ( rc )
    {
@@ -186,7 +257,7 @@ INT32 _pdTraceParser::parse()
       goto error ;
    }
 
-   /// step 2
+   /// step 3
    if ( _type != PD_TRACE_FORMAT_TYPE_FORMAT )
    {
       rc = _analysisTraceRecords( &_inFile, &_traceHeader ) ;
@@ -206,20 +277,19 @@ error:
 
 INT32 _pdTraceParser::_dumpFunctionList( OSSFILE *file )
 {
-   INT32  rc                  = SDB_OK ;
-   UINT32 cursor              = 0 ;
-   INT64  hasRead             = 0 ;
+   INT32  rc                    = SDB_OK ;
+   UINT32 cursor                = 0 ;
+   INT64  hasRead               = 0 ;
+   UINT32 funcOffsetListSize    = 0 ;
+   UINT32 funcNamesSize         = 0 ;
 
-   UINT32  offsetsBufSize     = 0 ;
-   UINT32  functionsNamesSize = 0 ;
-
-   //1. get functions count
-   rc = ossSeek( file, (INT64)( _traceHeader._functionListHeader ),
+   // 1. get functions count
+   rc = ossSeek( file, (INT64)( _traceHeader._functionsSegmentOffset ),
                  OSS_SEEK_SET ) ;
    if ( rc )
    {
       PD_LOG( PDERROR, "Seek to %llu failed, rc: %d",
-              (INT64)( _traceHeader._functionListHeader ), rc ) ;
+              (INT64)( _traceHeader._functionsSegmentOffset ), rc ) ;
       goto error ;
    }
 
@@ -238,28 +308,28 @@ INT32 _pdTraceParser::_dumpFunctionList( OSSFILE *file )
       goto error ;
    }
 
-   //2. malloc space
-   offsetsBufSize = ( ( _functionsCount ) * sizeof( *_functionsOffsets ) ) ;
-   functionsNamesSize = _traceHeader._functionListSize - offsetsBufSize
-                        - sizeof( _functionsCount ) ;
+   // 2. malloc space
+   funcOffsetListSize = ( _functionsCount ) * sizeof( *_funcOffsetList ) ;
+   funcNamesSize      = _traceHeader._functionsSegmentSize -
+                        sizeof( _functionsCount ) - funcOffsetListSize ;
 
-   _functionsOffsets = ( UINT32* )SDB_OSS_MALLOC( offsetsBufSize ) ;
-   if ( !_functionsOffsets )
+   _funcOffsetList = ( UINT32* )SDB_OSS_MALLOC( funcOffsetListSize ) ;
+   if ( !_funcOffsetList )
    {
       rc = SDB_OOM ;
       goto error ;
    }
 
-   _functionsNames = ( CHAR* )SDB_OSS_MALLOC( functionsNamesSize ) ;
-   if ( !_functionsNames )
+   _funcNames = ( CHAR* )SDB_OSS_MALLOC( funcNamesSize ) ;
+   if ( !_funcNames )
    {
       rc = SDB_OOM ;
       goto error ;
    }
 
-   //3. get Offsets
+   // 3. get Offsets
    hasRead = 0 ;
-   cursor = _traceHeader._functionListHeader + sizeof( _functionsCount );
+   cursor = _traceHeader._functionsSegmentOffset + sizeof( _functionsCount );
 
    rc = ossSeek( file, ( INT64 )cursor, OSS_SEEK_SET ) ;
    if ( rc )
@@ -269,25 +339,35 @@ INT32 _pdTraceParser::_dumpFunctionList( OSSFILE *file )
       goto error ;
    }
 
-   rc = ossReadN( file, offsetsBufSize,
-                  ( CHAR* )_functionsOffsets, hasRead ) ;
+   rc = ossReadN( file, funcOffsetListSize,
+                  ( CHAR* )_funcOffsetList, hasRead ) ;
    if ( rc )
    {
-      PD_LOG( PDERROR, "Read functinonOffset failed, rc: %d", rc ) ;
+      PD_LOG( PDERROR, "Read functinonOffsets failed, rc: %d", rc ) ;
       goto error ;
    }
-   else if ( hasRead != offsetsBufSize )
+   else if ( hasRead != funcOffsetListSize )
    {
       PD_LOG( PDERROR, "Read size[%llu] is not the same with %u",
-              hasRead, offsetsBufSize ) ;
+              hasRead, funcOffsetListSize ) ;
       rc = SDB_SYS ;
       goto error ;
    }
 
-   //4. read functions names
+   // 4. check offsets
+   for( UINT32 i = 0 ; i < _functionsCount ; i++ )
+   {
+      if( _funcOffsetList[i] > funcNamesSize || _funcOffsetList[i] < 0 )
+      {
+         _funcOffsetList[i] = -1 ;
+         PD_LOG( PDERROR, "FuncOffsetList[%llu] is invalid", i ) ;
+      }
+   }
+
+   // 5. read functions names
    hasRead = 0 ;
-   cursor = _traceHeader._functionListHeader + sizeof( _functionsCount )
-            + offsetsBufSize ;
+   cursor = _traceHeader._functionsSegmentOffset + sizeof( _functionsCount )
+            + funcOffsetListSize ;
 
    rc = ossSeek( file, (INT64)cursor, OSS_SEEK_SET ) ;
    if ( rc )
@@ -297,16 +377,16 @@ INT32 _pdTraceParser::_dumpFunctionList( OSSFILE *file )
       goto error ;
    }
 
-   rc = ossReadN( file, functionsNamesSize, _functionsNames, hasRead ) ;
+   rc = ossReadN( file, funcNamesSize, _funcNames, hasRead ) ;
    if ( rc )
    {
       PD_LOG( PDERROR, "Read funcNames failed, rc: %d", rc ) ;
       goto error ;
    }
-   else if ( hasRead != functionsNamesSize )
+   else if ( hasRead != funcNamesSize )
    {
       PD_LOG( PDERROR, "Read size[%llu] is not the same with %u",
-              hasRead, functionsNamesSize ) ;
+              hasRead, funcNamesSize ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -319,18 +399,17 @@ error :
 
 const CHAR *_pdTraceParser::_getFunctionName( UINT32 functionID )
 {
-   UINT32 offset = 0 ;
-   const CHAR *functionsName = NULL ;
+   const CHAR *functionsName = "unknown" ;
+   UINT32 offset = _funcOffsetList[ functionID ] ;
 
-   if ( functionID >= _functionsCount || functionID < 0 )
+   if ( functionID >= _functionsCount || functionID < 0 || offset == -1 )
    {
       return functionsName ;
    }
 
    if ( _useFunctionListFile )
    {
-      offset = _functionsOffsets[ functionID ] ;
-      functionsName = _functionsNames + offset ;
+      functionsName = _funcNames + offset ;
    }
    else
    {
@@ -423,14 +502,14 @@ INT32 _pdTraceParser::_loadDumpFile( const CHAR *pInputFileName,
       goto error ;
    }
    /// check total size
-   if ( pHeader->_headerSize + pHeader->_bufSize + pHeader->_functionListSize
-        != (UINT64)fileSize )
+   if ( pHeader->_headerSize + pHeader->_bufSize +
+        pHeader->_functionsSegmentSize != (UINT64)fileSize )
    {
       PD_LOG( PDERROR, "HeaderSize[%u] + BufSize[%llu] + FunctionsSize[%u]"
               " is not the same with FileSize[%llu]",
               pHeader->_headerSize,
               pHeader->_bufSize,
-              pHeader->_functionListSize,
+              pHeader->_functionsSegmentSize,
               fileSize ) ;
       rc = SDB_PD_TRACE_FILE_INVALID ;
       goto error ;
@@ -480,15 +559,6 @@ INT32 _pdTraceParser::_parseTraceDumpFile( OSSFILE *file,
       goto error ;
    }
 
-   // write version info
-   _versionInfoSize = ossSnprintf( _versionInfo, TRACE_VERSION_INFO_SIZE,
-                                   "Sequoiadb-v%u.%u.%u"OSS_NEWLINE
-                                   "Realse:%u"OSS_NEWLINE,
-                                   pHeader->_engineVersion,
-                                   pHeader->_engineSubVersion,
-                                   pHeader->_engineFixVersion,
-                                   pHeader->_release ) ;
-
    if ( fmtFilePath && 0 != fmtFilePath[0] )
    {
       rc = ossOpen( fmtFilePath, OSS_REPLACE|OSS_READWRITE,
@@ -500,16 +570,6 @@ INT32 _pdTraceParser::_parseTraceDumpFile( OSSFILE *file,
          goto error ;
       }
       isOpen = TRUE ;
-   }
-
-   if ( isOpen )
-   {
-      rc = ossWriteN( &fmtFile, _versionInfo, _versionInfoSize ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Write db version to file failed, rc: %d", rc ) ;
-         goto error ;
-      }
    }
 
    // dump function list
@@ -675,49 +735,6 @@ INT32 _pdTraceParser::_analysisTraceRecords( OSSFILE *file,
    }
    exceptOpen = TRUE ;
 
-   if ( flwOpen )
-   {
-      rc = ossWriteN( &flwFile, _versionInfo, _versionInfoSize ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Write db version to flwFile failed, rc: %d", rc ) ;
-         goto error ;
-      }
-   }
-
-   if ( funcRecOpen )
-   {
-      rc = ossWriteN( &funcRecFile, _versionInfo, _versionInfoSize ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Write db version to funcRecFile failed, rc: %d",
-                 rc ) ;
-         goto error ;
-      }
-   }
-
-   if ( exceptOpen )
-   {
-      rc = ossWriteN( &exceptFile, _versionInfo, _versionInfoSize ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Write db version to exceptFile failed, rc: %d",
-                 rc ) ;
-         goto error ;
-      }
-   }
-
-   if ( errOpen )
-   {
-      rc = ossWriteN( &errFile, _versionInfo, _versionInfoSize ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Write db version to errFile failed, rc: %d",
-                 rc ) ;
-         goto error ;
-      }
-   }
-
    /// analysis thread
    for ( PD_MAP_TID_RECORDS_IT it = _tid2recordsMap.begin() ;
          it != _tid2recordsMap.end() ;
@@ -791,9 +808,7 @@ INT32 _pdTraceParser::_analysisRecordsByThread( UINT32 tid,
    const pdTraceRecord *pRecord = NULL ;
    PD_STACK_FUNCS funcStack ;
 
-   length = ossSnprintf( _pFormatBuf, _bufSize,
-                         OSS_NEWLINE OSS_NEWLINE"tid: %u"OSS_NEWLINE,
-                         tid ) ;
+   length = ossSnprintf( _pFormatBuf, _bufSize, "tid: %u"OSS_NEWLINE, tid ) ;
    rc = ossWriteN( flwFile, _pFormatBuf, length ) ;
    if ( rc )
    {
@@ -909,16 +924,9 @@ INT32  _pdTraceParser::_outputErrorFunctions( PD_MAP_FUNCS &errFunctions,
          it != errFunctions.end() ;
          ++it )
    {
-      const CHAR *funcName = _getFunctionName( it->first ) ;
-      if ( !funcName )
-      {
-         rc = SDB_DMS_RECORD_INVALID ;
-         PD_LOG( PDERROR, "ErrFile gets functionsName[%d] failed", it->first ) ;
-         goto error ;
-      }
       length = ossSnprintf( _pFormatBuf, _bufSize,
                             "%d: %s "OSS_NEWLINE"       ( ",
-                            nCount, funcName ) ;
+                            nCount, _getFunctionName( it->first ) ) ;
 
       for ( UINT32 item = 0 ; item < it->second.size() ; ++item )
       {
@@ -943,11 +951,7 @@ INT32  _pdTraceParser::_outputErrorFunctions( PD_MAP_FUNCS &errFunctions,
       ++nCount ;
    }
 
-
-done :
    return rc ;
-error :
-   goto done ;
 }
 
 INT32 _pdTraceParser::_readTraceRecord( OSSFILE *file,
@@ -1080,15 +1084,6 @@ INT32 _pdTraceParser::_outputTraceRecordByThread( OSSFILE *flwFile,
    const pdTraceRecord *record = (const pdTraceRecord *)recordBuf ;
    UINT32 length = 0 ;
    ossTimestamp tmpTime ;
-   const CHAR *funcName = _getFunctionName( record->_functionID ) ;
-
-   if ( !funcName )
-   {
-      rc = SDB_DMS_RECORD_INVALID ;
-      PD_LOG( PDERROR, "FlwFile gets functionsName[%d] failed",
-              record->_functionID ) ;
-      goto error ;
-   }
 
    length += ossSnprintf( _pFormatBuf, _bufSize, OSS_NEWLINE"%10u:  ",
                           sequence ) ;
@@ -1111,7 +1106,7 @@ INT32 _pdTraceParser::_outputTraceRecordByThread( OSSFILE *flwFile,
 
    // output the main part
    length += ossSnprintf( _pFormatBuf + length, _bufSize - length,
-                          "%s", funcName ) ;
+                          "%s", _getFunctionName( record->_functionID ) ) ;
 
    // then check if it's start/exit
    if ( record->_flag == PD_TRACE_RECORD_FLAG_ENTRY )
@@ -1197,18 +1192,11 @@ INT32 _pdTraceParser::_outputFunctionSummaryRecord( UINT64 funcId,
    INT32 rc = SDB_OK ;
    UINT32 length = 0 ;
    UINT32 count = 0 ;
-   const CHAR *funcName = _getFunctionName( funcId ) ;
 
-   if ( !funcName )
-   {
-      rc = SDB_DMS_RECORD_INVALID ;
-      PD_LOG( PDERROR, "FuncFile gets functionsName[%d] failed", funcId ) ;
-      goto error ;
-   }
    // PD_FUNC_RECORD_TITLE
    length = ossSnprintf( _pFormatBuf, _bufSize,
                          OSS_NEWLINE"%s,%d,%.1f,%u,%lld,%lld",
-                         funcName,
+                         _getFunctionName( funcId ),
                          record._count,
                          record.avgCost(),
                          record._minCost,
@@ -1270,15 +1258,7 @@ INT32 _pdTraceParser::_outputExceptionReport( OSSFILE *inFile,
       isFinish = FALSE ;
       preTimestamp = 0 ;
       tid = rit->_tid ;
-      const CHAR *funcName = _getFunctionName( rit->_functionID ) ;
 
-      if ( !funcName )
-      {
-         rc = SDB_DMS_RECORD_INVALID ;
-         PD_LOG( PDERROR, "ExceptFile gets functionsName[%d] failed",
-                 rit->_functionID ) ;
-         goto error ;
-      }
       length = ossSnprintf( _pFormatBuf, _bufSize,
                             OSS_NEWLINE"------------------------------"
                             "-----------------------------------------"
@@ -1286,7 +1266,7 @@ INT32 _pdTraceParser::_outputExceptionReport( OSSFILE *inFile,
 
       length += ossSnprintf( _pFormatBuf + length, _bufSize - length,
                              "%s "OSS_NEWLINE,
-                             funcName ) ;
+                             _getFunctionName( rit->_functionID ) ) ;
 
       length += ossSnprintf( _pFormatBuf + length, _bufSize - length,
                              "sequence: %u tid: %u  cost: %ld (%ld) "
@@ -1499,15 +1479,6 @@ INT32 _pdTraceParser::_outputTraceRecordByFMT( OSSFILE *out,
    UINT32 length = 0 ;
    ossTimestamp tmpTime ;
    const CHAR *pTypeStr = "Normal" ;
-   const CHAR *funcName = _getFunctionName( pRecord->_functionID ) ;
-
-   if ( !funcName )
-   {
-      rc = SDB_DMS_RECORD_INVALID ;
-      PD_LOG( PDERROR, "FmtFile gets functionsName[%d] failed",
-              pRecord->_functionID ) ;
-      goto error ;
-   }
 
    if ( PD_TRACE_RECORD_FLAG_EXIT == pRecord->_flag )
    {
@@ -1526,7 +1497,7 @@ INT32 _pdTraceParser::_outputTraceRecordByFMT( OSSFILE *out,
    ossTimestampToString ( tmpTime, timestamp ) ;
    length += ossSnprintf( _pFormatBuf + length, _bufSize - length,
                           "%s %s(%u): %s"OSS_NEWLINE,
-                          funcName,
+                          _getFunctionName( pRecord->_functionID ),
                           pTypeStr,
                           pRecord->_line,
                           timestamp ) ;
