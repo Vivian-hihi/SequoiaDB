@@ -676,7 +676,7 @@ namespace engine
                                      QGM_HINT_USEINDEX,
                                      itr->value.size() ) )
                {
-                  qgmUseIndexHintToBson( *itr, buildOpt ) ;
+                  qgmUseIndexHintToBson( *itr, build ) ;
                }
                else if ( 0 == ossStrncmp( itr->value.begin(),
                                           QGM_HINT_USEOPTION,
