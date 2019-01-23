@@ -73,11 +73,11 @@ public class ExceptionTest12799_12800 extends DataSourceTestBase {
         if (ds != null){
             ds.close();
         }
-        
+        String invalidUrl = "192.168.10.63:11810" ;
         DatasourceOptions dsOpt = new DatasourceOptions() ;
         dsOpt.setMaxCount( 20 ) ;
         ConfigOptions opt = null ;
-        ds = new SequoiadbDatasource( "192.168.10.63:11810", "", "", dsOpt ) ;
+        ds = new SequoiadbDatasource( invalidUrl, "", "", dsOpt ) ;
         List< Sequoiadb > dbs = new ArrayList< Sequoiadb >() ;
         try{
             getConnToPoolFull(dbs);
@@ -90,7 +90,7 @@ public class ExceptionTest12799_12800 extends DataSourceTestBase {
         }
         
         ds.addCoord( super.coordUrl );
-        ds.removeCoord( "192.168.10.63:11810" );
+        ds.removeCoord( invalidUrl );
         try{
             getConnToPoolFull(dbs);
         }catch(BaseException e){
