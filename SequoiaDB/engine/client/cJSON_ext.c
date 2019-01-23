@@ -44,7 +44,7 @@ static const CHAR* readMinKey( const CHAR *pStr,
 static const CHAR* readNumberLong( const CHAR *pStr,
                                    const CJSON_MACHINE *pMachine,
                                    CJSON_READ_INFO **ppReadInfo ) ;
-static void _appendFunction() ;
+static void _appendFunction( void ) ;
 
 CHAR *_pEmptyString = "" ;
 
@@ -76,7 +76,7 @@ SDB_EXPORT void cJsonExtAppendFunction()
    ossOnceRun( &initOnce, _appendFunction ) ;
 }
 
-static void _appendFunction()
+static void _appendFunction( void )
 {
    cJsonExtendAppend( CJSON_MATCH_FUNC,
                       readBinary,
