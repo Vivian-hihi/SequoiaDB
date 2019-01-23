@@ -63,6 +63,15 @@
                "./app/controller/Config/PostgreSQL/Index.js"
             ]
          }
+      },
+      {
+         "path": "/Config/SequoiaSQL/MySQL/Index",
+         "options": {
+            "templateUrl": "./app/template/Config/MySQL/Index.html",
+            "resolve": [
+               "./app/controller/Config/MySQL/Index.js"
+            ]
+         }
       }
    ]
 }
