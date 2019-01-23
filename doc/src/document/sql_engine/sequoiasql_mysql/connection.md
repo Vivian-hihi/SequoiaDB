@@ -111,16 +111,16 @@
 
 ###引擎配置###
 
-|参数名|类型|默认值|说明|
+|参数名|类型|默认值|支持命令行修改|说明|
 |------|----|------|----------|----|
-|sequoiadb_conn_addr          |字符串|"localhost:11810" |SequoiaDB连接地址，可配置多个，之间用逗号隔开。|
-|sequoiadb_user               |字符串|""     |SequoiaDB鉴权用户。|
-|sequoiadb_password           |字符串|""     |SequoiaDB鉴权密码。|
-|sequoiadb_use_partition      |布尔  |ON     |是否启用自动分区。|
-|sequoiadb_use_bulk_insert    |布尔  |ON     |是否启用批量插入。|
-|sequoiadb_bulk_insert_size   |整数  |100    |批量插入时每批的插入记录数。|
-|sequoiadb_use_autocommit     |布尔  |ON     |是否启用自动提交模式。|
-|sequoiadb_debug_log          |布尔  |OFF    |是否打印debug日志。|
+|sequoiadb_conn_addr          |字符串|"localhost:11810" |true |SequoiaDB连接地址，可配置多个，之间用逗号隔开。|
+|sequoiadb_user               |字符串|""     |true |SequoiaDB鉴权用户。|
+|sequoiadb_password           |字符串|""     |true |SequoiaDB鉴权密码。|
+|sequoiadb_use_partition      |布尔  |ON     |true |是否启用自动分区。|
+|sequoiadb_use_bulk_insert    |布尔  |ON     |true |是否启用批量插入。|
+|sequoiadb_bulk_insert_size   |整数  |100    |true |批量插入时每批的插入记录数。|
+|sequoiadb_use_autocommit     |布尔  |ON     |true |是否启用自动提交模式。|
+|sequoiadb_debug_log          |布尔  |OFF    |true |是否打印debug日志。|
 
 > **Note:**
 > 
