@@ -538,7 +538,7 @@ namespace engine
     */
    _rtnSessionProperty::_rtnSessionProperty ()
    : _instanceOption(),
-     _operationTimeout( -1 )
+     _operationTimeout( RTN_SESSION_OPERATION_TIMEOUT_MAX )
    {
    }
 
