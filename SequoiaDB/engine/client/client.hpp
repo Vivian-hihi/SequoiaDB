@@ -3855,7 +3855,7 @@ namespace sdbclient
                                   const bson::BSONObj &orderBy   = _sdbStaticObject,
                                   const bson::BSONObj &hint      = _sdbStaticObject,
                                   INT64 numToSkip = 0,
-                                  INT64 numToRet = -1
+                                  INT64 numToReturn = -1
                                 ) = 0 ;
 
       virtual INT32 getSnapshot ( sdbCursor &cursor,
@@ -3865,7 +3865,7 @@ namespace sdbclient
                                   const bson::BSONObj &orderBy   = _sdbStaticObject,
                                   const bson::BSONObj &hint      = _sdbStaticObject,
                                   INT64 numToSkip = 0,
-                                  INT64 numToRet = -1
+                                  INT64 numToReturn = -1
                                 ) = 0 ;
 
       virtual INT32 resetSnapshot ( const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
@@ -3877,7 +3877,7 @@ namespace sdbclient
                               const bson::BSONObj &orderBy   = _sdbStaticObject,
                               const bson::BSONObj &hint      = _sdbStaticObject,
                               INT64 numToSkip = 0,
-                              INT64 numToRet = -1
+                              INT64 numToReturn = -1
                             ) = 0 ;
       virtual INT32 getList ( sdbCursor &cursor,
                               INT32 listType,
@@ -3886,7 +3886,7 @@ namespace sdbclient
                               const bson::BSONObj &orderBy   = _sdbStaticObject,
                               const bson::BSONObj &hint      = _sdbStaticObject,
                               INT64 numToSkip = 0,
-                              INT64 numToRet = -1
+                              INT64 numToReturn = -1
                             ) = 0 ;
 
       virtual INT32 getCollection ( const CHAR *pCollectionFullName,
@@ -4353,8 +4353,8 @@ namespace sdbclient
                                   const bson::BSONObj &selector  = _sdbStaticObject,
                                   const bson::BSONObj &orderBy   = _sdbStaticObject,
                                   const bson::BSONObj &hint      = _sdbStaticObject,
-                                  SINT64 numToSkip = 0,
-                                  SINT64 numToRet = -1 )
+                                  INT64 numToSkip = 0,
+                                  INT64 numToReturn = -1 )
           \brief Get the snapshots of specified type.
           \param [in] snapType The snapshot type as below
 
@@ -4391,8 +4391,8 @@ namespace sdbclient
                           const bson::BSONObj &selector  = _sdbStaticObject,
                           const bson::BSONObj &orderBy   = _sdbStaticObject,
                           const bson::BSONObj &hint      = _sdbStaticObject,
-                          SINT64 numToSkip = 0,
-                          SINT64 numToRet = -1 )
+                          INT64 numToSkip = 0,
+                          INT64 numToReturn = -1 )
       {
          if ( !pSDB )
          {
@@ -4401,7 +4401,7 @@ namespace sdbclient
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pSDB->getSnapshot ( cursor, snapType, condition,
                                     selector, orderBy, hint, 
-                                    numToSkip, numToRet ) ;
+                                    numToSkip, numToReturn ) ;
       }
 
       /* \fn  INT32 getSnapshot ( _sdbCursor **cursor,
@@ -4410,8 +4410,8 @@ namespace sdbclient
                                   const bson::BSONObj &selector,
                                   const bson::BSONObj &orderBy,
                                   const bson::BSONObj &hint,
-                                  SINT64 numToSkip,
-                                  SINT64 numToRet
+                                  INT64 numToSkip,
+                                  INT64 numToReturn
                                  )
           \brief Get the snapshots of specified type.
           \param [in] snapType The snapshot type as below
@@ -4449,14 +4449,14 @@ namespace sdbclient
                           const bson::BSONObj &selector = _sdbStaticObject,
                           const bson::BSONObj &orderBy = _sdbStaticObject,
                           const bson::BSONObj &hint   = _sdbStaticObject,
-                          SINT64 numToSkip = 0,
-                          SINT64 numToRet = -1 )
+                          INT64 numToSkip = 0,
+                          INT64 numToReturn = -1 )
       {
          if ( !pSDB )
             return SDB_NOT_CONNECTED ;
          return pSDB->getSnapshot ( cursor, snapType, condition,
                                     selector, orderBy, hint, 
-                                    numToSkip, numToRet ) ;
+                                    numToSkip, numToReturn ) ;
       }
 
       /** \fn INT32 resetSnapshot ( const bson::BSONObj &options )
@@ -4493,10 +4493,10 @@ namespace sdbclient
                              const bson::BSONObj &condition,
                              const bson::BSONObj &selector,
                              const bson::BSONObj &orderBy,
-                             const bson::BSONObj &hint = _sdbStaticObject,
-                             INT64 numToSkip = 0,
-                             INT64 numToReturn = -1
-                          )
+                             const bson::BSONObj &hint,
+                             INT64 numToSkip,
+                             INT64 numToReturn
+                           )
           \brief Get the informations of specified type.
           \param [in] listType The list type as below
 

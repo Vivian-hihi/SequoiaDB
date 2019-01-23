@@ -1158,56 +1158,52 @@ namespace sdbclient
       INT32 getSnapshot ( _sdbCursor **cursor,
                           INT32 snapType,
                           const BSONObj &condition = _sdbStaticObject,
-                          const BSONObj &selector = _sdbStaticObject,
-                          const BSONObj &orderBy = _sdbStaticObject,
-                          const BSONObj &hint   = _sdbStaticObject,
-                          INT64 numToSkip = 0,
-                          INT64 numToRet  = -1 ) ;
+                          const BSONObj &selector  = _sdbStaticObject,
+                          const BSONObj &orderBy   = _sdbStaticObject,
+                          const BSONObj &hint      = _sdbStaticObject,
+                          INT64 numToSkip    = 0,
+                          INT64 numToReturn  = -1 ) ;
 
       INT32 getSnapshot ( sdbCursor &cursor,
                           INT32 snapType,
                           const BSONObj &condition = _sdbStaticObject,
-                          const BSONObj &selector = _sdbStaticObject,
-                          const BSONObj &orderBy = _sdbStaticObject,
-                          const BSONObj &hint   = _sdbStaticObject,
-                          INT64 numToSkip = 0,
-                          INT64 numToRet  = -1 )
+                          const BSONObj &selector  = _sdbStaticObject,
+                          const BSONObj &orderBy   = _sdbStaticObject,
+                          const BSONObj &hint      = _sdbStaticObject,
+                          INT64 numToSkip    = 0,
+                          INT64 numToReturn  = -1 )
       {
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return getSnapshot ( &cursor.pCursor,
                               snapType,
-                              condition,
-                              selector,
-                              orderBy,
-                              hint,
-                              numToSkip,
-                              numToRet ) ;
+                              condition, selector, orderBy, hint,
+                              numToSkip, numToReturn ) ;
       }
 
       INT32 getList ( _sdbCursor **cursor,
                       INT32 listType,
-                      const BSONObj &condition = _sdbStaticObject,
-                      const BSONObj &selector = _sdbStaticObject,
-                      const BSONObj &orderBy = _sdbStaticObject,
+                      const BSONObj &condition  = _sdbStaticObject,
+                      const BSONObj &selector   = _sdbStaticObject,
+                      const BSONObj &orderBy    = _sdbStaticObject,
                       const bson::BSONObj &hint = _sdbStaticObject,
-                      INT64 numToSkip = 0,
-                      INT64 numToRet = -1
+                      INT64 numToSkip   = 0,
+                      INT64 numToReturn = -1
                     ) ;
 
       INT32 getList ( sdbCursor &cursor,
                       INT32 listType,
-                      const BSONObj &condition = _sdbStaticObject,
-                      const BSONObj &selector = _sdbStaticObject,
-                      const BSONObj &orderBy = _sdbStaticObject,
+                      const BSONObj &condition  = _sdbStaticObject,
+                      const BSONObj &selector   = _sdbStaticObject,
+                      const BSONObj &orderBy    = _sdbStaticObject,
                       const bson::BSONObj &hint = _sdbStaticObject,
-                      INT64 numToSkip = 0,
-                      INT64 numToRet = -1
+                      INT64 numToSkip   = 0,
+                      INT64 numToReturn = -1
                     )
       {
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return getList ( &cursor.pCursor, listType, condition,
                           selector, orderBy, hint,
-                          numToSkip, numToRet ) ;
+                          numToSkip, numToReturn ) ;
       }
 
       INT32 resetSnapshot ( const BSONObj &options = _sdbStaticObject ) ;

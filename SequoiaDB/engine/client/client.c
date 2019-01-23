@@ -1604,8 +1604,8 @@ static INT32 _sdbGetList ( sdbConnectionHandle cHandle,
                            bson *selector,
                            bson *orderBy,
                            bson *hint,
-                           SINT64 numToskip,
-                           SINT64 numToRet,
+                           INT64 numToSkip,
+                           INT64 numToReturn,
                            sdbCursorHandle *handle )
 {
    INT32 rc                        = SDB_OK ;
@@ -1685,7 +1685,7 @@ static INT32 _sdbGetList ( sdbConnectionHandle cHandle,
    rc = clientBuildQueryMsg ( &connection->_pSendBuffer,
                               &connection->_sendBufferSize,
                               p, 0, 0,
-                              numToskip, numToRet,
+                              numToSkip, numToReturn,
                               condition, selector, orderBy, hint,
                               connection->_endianConvert ) ;
    if ( SDB_OK != rc )
@@ -2505,12 +2505,15 @@ error:
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
-                                  INT32 snapType,
-                                  bson *condition,
-                                  bson *selector,
-                                  bson *orderBy,
-                                  sdbCursorHandle *handle )
+static INT32 _sdbGetSnapshot ( sdbConnectionHandle cHandle,
+                               INT32 snapType,
+                               bson *condition,
+                               bson *selector,
+                               bson *orderBy,
+                               bson *hint,
+                               INT64 numToSkip,
+                               INT64 numToReturn,
+                               sdbCursorHandle *handle )
 {
    INT32 rc                        = SDB_OK ;
    sdbCursorStruct *cursor         = NULL ;
@@ -2582,9 +2585,9 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    rc = clientBuildQueryMsg ( &connection->_pSendBuffer,
                               &connection->_sendBufferSize,
-                              p, 0, 0, 0, -1,
-                              condition, selector, orderBy,
-                              NULL, connection->_endianConvert ) ;
+                              p, 0, 0, numToSkip, numToReturn,
+                              condition, selector, orderBy, hint, 
+                              connection->_endianConvert ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -2636,136 +2639,59 @@ error :
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
+                                  INT32 snapType,
+                                  bson *condition,
+                                  bson *selector,
+                                  bson *orderBy,
+                                  sdbCursorHandle *handle )
+{
+   INT32 rc = SDB_OK ;
+   if ( !handle )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   rc = _sdbGetSnapshot ( cHandle, snapType, 
+                          condition, selector, orderBy, NULL, 
+                          0, -1, handle ) ;
+   if ( rc ) 
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   SET_INVALID_HANDLE( handle ) ;
+   goto done ;
+}
+
 SDB_EXPORT INT32 sdbGetSnapshot1 ( sdbConnectionHandle cHandle,
                                    INT32 snapType,
                                    bson *condition,
                                    bson *selector,
                                    bson *orderBy,
                                    bson *hint,
-                                   SINT64 numToskip,
-                                   SINT64 numToRet,
+                                   INT64 numToSkip,
+                                   INT64 numToReturn,
                                    sdbCursorHandle *handle )
 {
-   INT32 rc                        = SDB_OK ;
-   sdbCursorStruct *cursor         = NULL ;
-   SINT64 contextID                = -1 ;
-   const CHAR *p                   = NULL ;
-   sdbConnectionStruct *connection = NULL ;
-
+   INT32 rc = SDB_OK ;
    if ( !handle )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   switch ( snapType )
-   {
-   case SDB_SNAP_CONTEXTS :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS ;
-      break ;
-   case SDB_SNAP_CONTEXTS_CURRENT :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS_CURRENT ;
-      break ;
-   case SDB_SNAP_SESSIONS :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONS ;
-      break ;
-   case SDB_SNAP_SESSIONS_CURRENT :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONS_CURRENT ;
-      break ;
-   case SDB_SNAP_COLLECTIONS :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_COLLECTIONS ;
-      break ;
-   case SDB_SNAP_COLLECTIONSPACES :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_COLLECTIONSPACES ;
-      break ;
-   case SDB_SNAP_DATABASE :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_DATABASE ;
-      break ;
-   case SDB_SNAP_SYSTEM :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SYSTEM ;
-      break ;
-   case SDB_SNAP_CATALOG :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CATA ;
-      break ;
-   case SDB_SNAP_TRANSACTIONS :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_TRANSACTIONS ;
-      break ;
-   case SDB_SNAP_TRANSACTIONS_CURRENT :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_TRANSACTIONS_CUR ;
-      break ;
-   case SDB_SNAP_ACCESSPLANS :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_ACCESSPLANS ;
-      break ;
-   case SDB_SNAP_HEALTH :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_HEALTH ;
-      break ;
-   case SDB_SNAP_CONFIGS :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONFIGS ;
-      break ;
-   case SDB_SNAP_SVCTASKS :
-      p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SVCTASKS ;
-      break ;
-   case SDB_SNAP_SEQUENCES :
-	  p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SEQUENCES ;
-	  break ;
-   default :
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-
-   connection = (sdbConnectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-   rc = clientBuildQueryMsg ( &connection->_pSendBuffer,
-                              &connection->_sendBufferSize,
-                              p, 0, 0, numToskip, numToRet,
-                              condition, selector, orderBy,
-                              hint, connection->_endianConvert ) ;
-   if ( SDB_OK != rc )
+   rc = _sdbGetSnapshot ( cHandle, snapType, 
+                          condition, selector, orderBy, hint, 
+                          numToSkip, numToReturn, handle ) ;
+   if ( rc ) 
    {
       goto error ;
    }
-
-   // send and recv
-   rc = _sendAndRecv( cHandle, connection->_sock,
-                      (MsgHeader*)connection->_pSendBuffer,
-                      (MsgHeader**)&connection->_pReceiveBuffer,
-                      &connection->_receiveBufferSize,
-                      TRUE, connection->_endianConvert ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-   // extract revc message
-   rc = _extract( cHandle,
-                  (MsgHeader*)connection->_pReceiveBuffer,
-                  connection->_receiveBufferSize,
-                  &contextID,
-                  connection->_endianConvert ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-   // check return msg header
-   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
-                        cHandle ) ;
-   ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
-   INIT_CURSOR( cursor, connection, connection, contextID ) ;
-   // register cursor in connection
-   rc = _regCursor ( cursor->_connection, (sdbCursorHandle)cursor ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-   // set output result
-   *handle = (sdbCursorHandle)cursor ;
-done :
+done:
    return rc ;
-error :
-   if ( cursor )
-   {
-      SDB_OSS_FREE ( cursor ) ;
-   }
+error:
    SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
@@ -2952,8 +2878,8 @@ SDB_EXPORT INT32 sdbGetList1( sdbConnectionHandle cHandle,
                               bson *selector,
                               bson *orderBy,
                               bson *hint,
-                              SINT64 numToskip,
-                              SINT64 numToRet,
+                              INT64 numToSkip,
+                              INT64 numToReturn,
                               sdbCursorHandle *handle )
 {
    INT32 rc                        = SDB_OK ;
@@ -2966,7 +2892,7 @@ SDB_EXPORT INT32 sdbGetList1( sdbConnectionHandle cHandle,
    rc = _sdbGetList ( cHandle,
                       listType,
                       condition, selector, orderBy, hint,
-                      numToskip, numToRet,
+                      numToSkip, numToReturn,
                       handle ) ;
    if ( SDB_OK != rc )
    {

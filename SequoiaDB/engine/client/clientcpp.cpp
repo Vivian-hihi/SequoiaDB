@@ -7705,7 +7705,7 @@ error :
                                  const BSONObj &orderBy,
                                  const BSONObj &hint,
                                  INT64 numToSkip,
-                                 INT64 numToRet
+                                 INT64 numToReturn
                                )
    {
       INT32 rc                        = SDB_OK ;
@@ -7773,7 +7773,7 @@ error :
       }
       lock () ;
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
-                                    p, 0, 0, numToSkip, numToRet,
+                                    p, 0, 0, numToSkip, numToReturn,
                                     condition.objdata(),
                                     selector.objdata(),
                                     orderBy.objdata(),
@@ -7849,7 +7849,7 @@ error :
                              const BSONObj &orderBy,
                              const bson::BSONObj &hint,
                              INT64 numToSkip,
-                             INT64 numToRet
+                             INT64 numToReturn
                            )
    {
       INT32 rc                        = SDB_OK ;
@@ -7925,7 +7925,7 @@ error :
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer,
                                     &_sendBufferSize,
                                     p, 0, 0,
-                                    numToSkip, numToRet,
+                                    numToSkip, numToReturn,
                                     condition.objdata(),
                                     selector.objdata(),
                                     orderBy.objdata(),

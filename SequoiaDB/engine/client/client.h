@@ -386,8 +386,8 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
                                   bson *selector,
                                   bson *orderBy,
                                   bson *hint,
-                                  SINT64 numToskip,
-                                  SINT64 numToRet,
+                                  INT64 numToSkip,
+                                  INT64 numToReturn,
                                   sdbCursorHandle *handle )
     \brief Get the snapshot
     \param [in] cHandle The connection handle
@@ -426,8 +426,8 @@ SDB_EXPORT INT32 sdbGetSnapshot1 ( sdbConnectionHandle cHandle,
                                    bson *selector,
                                    bson *orderBy,
                                    bson *hint,
-                                   SINT64 numToskip,
-                                   SINT64 numToRet,
+                                   INT64 numToSkip,
+                                   INT64 numToReturn,
                                    sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbResetSnapshot ( sdbConnectionHandle cHandle,
@@ -582,8 +582,8 @@ SDB_EXPORT INT32 sdbGetList ( sdbConnectionHandle cHandle,
                             bson *selector,
                             bson *orderBy,
                             bson *hint,
-                            SINT64 numToskip,
-                            SINT64 numToRet,
+                            INT64 numToSkip,
+                            INT64 numToReturn,
                             sdbCursorHandle *handle )
     \brief Get the specified list
     \param [in] cHandle The collection handle
@@ -624,8 +624,8 @@ SDB_EXPORT INT32 sdbGetList1( sdbConnectionHandle cHandle,
                               bson *selector,
                               bson *orderBy,
                               bson *hint,
-                              SINT64 numToskip,
-                              SINT64 numToRet,
+                              INT64 numToSkip,
+                              INT64 numToReturn,
                               sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbGetCollection ( sdbConnectionHandle cHandle,
