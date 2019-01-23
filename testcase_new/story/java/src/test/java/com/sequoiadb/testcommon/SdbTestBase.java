@@ -1,8 +1,10 @@
 package com.sequoiadb.testcommon;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicInteger ;
 
 import org.bson.BasicBSONObject ;
+import org.testng.Assert ;
 import org.testng.SkipException ;
 import org.testng.annotations.AfterGroups ;
 import org.testng.annotations.AfterSuite;
@@ -33,6 +35,7 @@ public class SdbTestBase {
     private static final String TRANSACTIONON  = "transactionon" ;
     private static final String TRANSISOLATION = "transisolation" ;
     private static final String TRANSLOCKWAIT  = "translockwait" ;
+    private static AtomicInteger count = new AtomicInteger(0) ;
 
     @Parameters({"HOSTNAME", "SVCNAME", "CHANGEDPREFIX",
             "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR"})
@@ -179,7 +182,7 @@ public class SdbTestBase {
     }
     
 
-    @AfterGroups(groups = {"ru", "rc", "rcwaitlock"},inheritGroups = true)
+    @AfterGroups(groups = {"ru", "rc", "rcwaitlock"},inheritGroups = true, alwaysRun=true)
     public static void finiGroups(){
         try{
             modifyNodeConf( false, 0, 0 );
@@ -191,6 +194,7 @@ public class SdbTestBase {
 
     @AfterSuite(groups={"ru", "rc", "rcwaitlock"},inheritGroups = true)
     public static void finiSuite() {
+        count.getAndIncrement() ;
         try {
             if ( sequoiadb.isClosed() ){
                 sequoiadb = new Sequoiadb(coordUrl, "", "");
@@ -199,7 +203,9 @@ public class SdbTestBase {
             if (sequoiadb.isCollectionSpaceExist(csName)) {
                 sequoiadb.dropCollectionSpace(csName);
             }
-        } finally {
+        } catch(BaseException e){
+            Assert.fail( e.getMessage() + " called: " + count.get() ) ;
+        }finally {
             if (sequoiadb != null) {
                 sequoiadb.close();
             }
