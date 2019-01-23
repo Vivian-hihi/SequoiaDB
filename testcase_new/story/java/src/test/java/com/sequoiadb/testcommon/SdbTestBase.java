@@ -27,7 +27,7 @@ public class SdbTestBase {
     protected static int reservedPortEnd;
     protected static String reservedDir;
     protected static String workDir;
-    private static Sequoiadb sdb = null;
+    private static Sequoiadb sequoiadb = null;
     private static final String ROLE = "Role" ;
     private static final String DATA = "data" ;
     private static final String TRANSACTIONON  = "transactionon" ;
@@ -50,11 +50,11 @@ public class SdbTestBase {
         coordUrl = HOSTNAME + ":" + SVCNAME;
         
         try {
-            sdb = new Sequoiadb(coordUrl, "", "");
-            if (sdb.isCollectionSpaceExist(csName)){ 
-                sdb.dropCollectionSpace(csName);
+            sequoiadb = new Sequoiadb(coordUrl, "", "");
+            if (sequoiadb.isCollectionSpaceExist(csName)){ 
+                sequoiadb.dropCollectionSpace(csName);
             }
-            sdb.createCollectionSpace(csName);
+            sequoiadb.createCollectionSpace(csName);
             
             File workDirFile = new File(workDir);
             if (!workDirFile.exists()) {
@@ -71,19 +71,19 @@ public class SdbTestBase {
         final int COORDGROUPID = 2 ;
         final String GT = "$gt" ;
         
-        if (sdb == null || sdb.isClosed()){
-            sdb = new Sequoiadb( coordUrl, "", "") ;
+        if (sequoiadb == null || sequoiadb.isClosed()){
+            sequoiadb = new Sequoiadb( coordUrl, "", "") ;
         }
         
         BasicBSONObject cond = new BasicBSONObject() ;
         BasicBSONObject subCond = new BasicBSONObject() ;
         subCond.put( GT, COORDGROUPID );
         cond.put( GROUPID, subCond ) ;
-        DBCursor cursor = sdb.getList( Sequoiadb.SDB_LIST_GROUPS , cond, null, null ) ;
+        DBCursor cursor = sequoiadb.getList( Sequoiadb.SDB_LIST_GROUPS , cond, null, null ) ;
         while ( cursor.hasNext() ){
             BasicBSONObject doc = ( BasicBSONObject ) cursor.getNext() ;
-            sdb.getReplicaGroup( doc.getInt( GROUPID ) ).stop();
-            sdb.getReplicaGroup( doc.getInt( GROUPID ) ).start();
+            sequoiadb.getReplicaGroup( doc.getInt( GROUPID ) ).stop();
+            sequoiadb.getReplicaGroup( doc.getInt( GROUPID ) ).start();
         }
     }
    
@@ -98,7 +98,7 @@ public class SdbTestBase {
         options.put( ROLE, DATA ) ; 
         
         try{
-            sdb.updateConfig( configs, options ) ;
+            sequoiadb.updateConfig( configs, options ) ;
         }catch(BaseException e){
             if ( e.getErrorCode() != SDBError.SDB_COORD_NOT_ALL_DONE.getErrorCode()){
                 e.printStackTrace() ;
@@ -192,17 +192,19 @@ public class SdbTestBase {
     @AfterSuite(groups={"ru", "rc", "rcwaitlock"},inheritGroups = true)
     public static void finiSuite() {
         try {
-            if ( sdb.isClosed() ){
-                sdb = new Sequoiadb(coordUrl, "", "");
+            if ( sequoiadb.isClosed() ){
+                sequoiadb = new Sequoiadb(coordUrl, "", "");
             }
             
-            if (sdb.isCollectionSpaceExist(csName)) {
-                sdb.dropCollectionSpace(csName);
+            if (sequoiadb.isCollectionSpaceExist(csName)) {
+                sequoiadb.dropCollectionSpace(csName);
             }
         } finally {
-            if (sdb != null) {
-                sdb.close();
+            if (sequoiadb != null) {
+                sequoiadb.close();
             }
+            
+            SdbThreadBase.shutdown() ;
         }
     }
 
