@@ -158,13 +158,25 @@ public class RegionUtils extends S3TestBase {
 		return amazonS3Exception;
 	}
 
-	public static void createCSAndCL(Sequoiadb sdb, String csName, String[] clNames) {
-		if (sdb.isCollectionSpaceExist(csName)) {
-			sdb.dropCollectionSpace(csName);
-		}
-		CollectionSpace cs = sdb.createCollectionSpace(csName);
-		for (int i = 0; i < clNames.length; i++) {
-			cs.createCollection(clNames[i]);
-		}
+	public static void createCSAndCL(String csName, String[] clNames) {
+		try( Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "") ){
+			if (sdb.isCollectionSpaceExist(csName)) {
+				sdb.dropCollectionSpace(csName);
+			}
+			CollectionSpace cs = sdb.createCollectionSpace(csName);
+			for (int i = 0; i < clNames.length; i++) {
+				cs.createCollection(clNames[i]);
+			}
+		}		
+	}
+	
+	public static void dropCS(String[] csNames) {
+		try( Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "") ){			
+			for (int i = 0; i < csNames.length; i++) {
+				if (sdb.isCollectionSpaceExist(csNames[i])) {
+					sdb.dropCollectionSpace(csNames[i]);
+				}
+			}
+		}		
 	}
 }
