@@ -16,44 +16,43 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
 
 /**
- * @Description seqDB-17297: create Region and  specify set DataCLShardingType. 
+ * @Description seqDB-17297: create Region and specify set DataCLShardingType.
  * @author wuyan
  * @Date 2019.1.22
  * @version 1.00
  */
-public class CreateRegion17297 extends S3TestBase{
-	@DataProvider(name = "regionProvider",parallel=true)
-	public Object[][] generateRegion(){
-		return new Object[][]{
-			//the parameter : regionName and dataCLShardingType			
-			new Object[]{"region17297a", "year", "bucket17297a"},		
-			new Object[]{"region17297b", "quarter", "bucket17297b"},
-			new Object[]{"region17297c", "month", "bucket17297c"}		
-		};
+public class CreateRegion17297 extends S3TestBase {
+	@DataProvider(name = "regionProvider", parallel = true)
+	public Object[][] generateRegion() {
+		return new Object[][] {
+				// the parameter : regionName and dataCLShardingType
+				new Object[] { "region17297a", "year", "bucket17297a" },
+				new Object[] { "region17297b", "quarter", "bucket17297b" },
+				new Object[] { "region17297c", "month", "bucket17297c" } };
 	}
-	
-	private boolean runSuccess = false;		
-	private String key = "key17297";	
-	private AmazonS3 s3Client = null;	
+
+	private boolean runSuccess = false;
+	private String key = "key17297";
+	private AmazonS3 s3Client = null;
 
 	@BeforeClass
-	private void setUp() throws Exception {		
-		s3Client = CommLib.buildS3Client();				
+	private void setUp() throws Exception {
+		s3Client = CommLib.buildS3Client();
 	}
 
 	@Test(dataProvider = "regionProvider")
-	public void testRegion(String regionName,String dataCLShardingType,String bucketName) throws Exception{
-		RegionUtils.deleteRegion(regionName);	
-		
-		Region region = new Region();			
+	public void testRegion(String regionName, String dataCLShardingType, String bucketName) throws Exception {
+		RegionUtils.deleteRegion(regionName);
+
+		Region region = new Region();
 		region.withDataCLShardingType(dataCLShardingType).withName(regionName);
-		RegionUtils.putRegion(region);		
-		
-		//get region and check region info
-		checkRegion(regionName,dataCLShardingType);		
-		
-		//create object on region
-		createObjectAndCheckResult(regionName,bucketName);		
+		RegionUtils.putRegion(region);
+
+		// get region and check region info
+		checkRegion(regionName, dataCLShardingType);
+
+		// create object on region
+		createObjectAndCheckResult(regionName, bucketName);
 		runSuccess = true;
 	}
 
@@ -66,40 +65,40 @@ public class CreateRegion17297 extends S3TestBase{
 				CommLib.clearBucket(s3Client, "bucket17297c");
 				RegionUtils.deleteRegion("region17297a");
 				RegionUtils.deleteRegion("region17297b");
-				RegionUtils.deleteRegion("region17297c");									
+				RegionUtils.deleteRegion("region17297c");
 			}
-		}finally {
-			s3Client.shutdown();			
+		} finally {
+			s3Client.shutdown();
 		}
 	}
-	
-	private void checkRegion(String regionName,String dataCLShardingType) throws Exception{
+
+	private void checkRegion(String regionName, String dataCLShardingType) throws Exception {
 		GetRegionResult result = RegionUtils.getRegion(regionName);
-		Region regionInfo = result.getRegion();		
+		Region regionInfo = result.getRegion();
 		Assert.assertEquals(regionInfo.getDataCLShardingType(), dataCLShardingType);
-		//get the region infor to take the default value
+		// get the region infor to take the default value
 		Assert.assertEquals(regionInfo.getDataCSShardingType(), "year");
 		Assert.assertEquals(regionInfo.getMetaDomain(), "");
 		Assert.assertEquals(regionInfo.getDataDomain(), "");
 		Assert.assertEquals(regionInfo.getMetaLocation(), "");
 		Assert.assertEquals(regionInfo.getMetaHisLocation(), "");
-		Assert.assertEquals(regionInfo.getDataLocation(), "");		
+		Assert.assertEquals(regionInfo.getDataLocation(), "");
 	}
-	
+
 	@SuppressWarnings("deprecation")
-	private void createObjectAndCheckResult(String regionName,String bucketName) throws Exception{	
-		AmazonS3 s3Client = CommLib.buildS3Client();	
+	private void createObjectAndCheckResult(String regionName, String bucketName) throws Exception {
+		AmazonS3 s3Client = CommLib.buildS3Client();
 		s3Client.createBucket(bucketName, regionName);
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 		String context = "testcreatekeyonregion17297";
-		for( int i = 0; i < 10; i++ ){
-			s3Client.putObject( bucketName, key, context);
-			File localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());	
+		for (int i = 0; i < 10; i++) {
+			s3Client.putObject(bucketName, key, context);
+			File localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
 			String versionId = i + "";
-			String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key,versionId);	
+			String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key, versionId);
 			Assert.assertEquals(downfileMd5, TestTools.getMD5(context.getBytes()));
-		}	
+		}
 		s3Client.shutdown();
 	}
-	
+
 }
