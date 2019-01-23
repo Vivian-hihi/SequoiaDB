@@ -498,6 +498,7 @@ namespace engine
                                           string &err )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN noDelimiter = FALSE ;
       BOOLEAN sensitive = FALSE ;
       BOOLEAN delimiter = TRUE ;
       string confFile ;
@@ -533,18 +534,24 @@ namespace engine
 
       if( arg.hasField( "delimiter" ) )
       {
-         if( Bool != arg.getField( "delimiter" ).type() )
+         if( jstNULL == arg.getField( "delimiter" ).type() )
+         {
+            noDelimiter = TRUE ;
+         }
+         else if( Bool == arg.getField( "delimiter" ).type() )
+         {
+            delimiter = arg.getBoolField( "delimiter" ) ;
+         }
+         else
          {
             rc = SDB_INVALIDARG ;
             err = "delimiter must be BOOLEAN" ;
             goto error ;
          }
-
-         delimiter = arg.getBoolField( "delimiter" ) ;
       }
 
-      rc = _confObj2Str( confObj, str, err, NULL,
-                         FALSE, sensitive, delimiter ) ;
+      rc = _config2Ini( confObj, str, err,
+                        noDelimiter, sensitive, delimiter ) ;
       if ( rc )
       {
          goto error ;
@@ -1029,6 +1036,134 @@ namespace engine
             ++it ;
          }
          conf = builder.obj() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrOmaCommon::_config2Ini( const BSONObj &config,
+                                        string &out,
+                                        string &err,
+                                        BOOLEAN noDelimiter,
+                                        BOOLEAN sensitive,
+                                        BOOLEAN delimiter )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR delimiterChar ;
+      map<string, string> sectionList ;
+      BSONObjIterator it ( config ) ;
+
+      if ( delimiter )
+      {
+         delimiterChar = CHAR_DOUBLE_QUOTE ;
+      }
+      else
+      {
+         delimiterChar = CHAR_SINGLE_QUOTE ;
+      }
+
+      while ( it.more() )
+      {
+         BSONElement e = it.next() ;
+         BSONType type = e.type() ;
+         const CHAR *pKey = e.fieldName() ;
+         const CHAR *pPoint = ossStrchr( pKey, '.' ) ;
+         string section ;
+         string key ;
+         stringstream ss ;
+
+         if ( pPoint )
+         {
+            INT32 sectionLength = pPoint - pKey ;
+            INT32 length = ossStrlen( pKey ) ;
+
+            section = string( pKey, 0, sectionLength ) ;
+            key = string( pKey, sectionLength + 1, length - sectionLength - 1 );
+         }
+         else
+         {
+            section = "" ;
+            key = pKey ;
+         }
+
+         ss << key << "=" ;
+
+         if ( FALSE == noDelimiter &&
+              ( FALSE == sensitive || e.type() == String ) )
+         {
+            ss << delimiterChar ;
+         }
+
+         if ( String == type )
+         {
+            ss << e.valuestr() ;
+         }
+         else if ( e.type() == NumberInt )
+         {
+            ss << e.numberInt() ;
+         }
+         else if ( e.type() == NumberLong )
+         {
+            ss << e.numberLong() ;
+         }
+         else if ( e.type() == NumberDouble )
+         {
+            ss << e.numberDouble() ;
+         }
+         else if ( e.type() == Bool )
+         {
+            ss << ( e.boolean() ? "TRUE" : "FALSE" ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            err = e.toString() + " is invalid config" ;
+            goto error ;
+         }
+
+         if ( FALSE == noDelimiter &&
+              ( FALSE == sensitive || e.type() == String ) )
+         {
+            ss << delimiterChar ;
+         }
+
+         ss << endl ;
+
+         if ( sectionList.find( section ) == sectionList.end() )
+         {
+            sectionList[section] = ss.str() ;
+         }
+         else
+         {
+            sectionList[section] += ss.str() ;
+         }
+      }
+
+      {
+         stringstream ss ;
+         map<string, string>::iterator iter ;
+
+         for ( iter = sectionList.begin(); iter != sectionList.end(); ++iter )
+         {
+            string section = iter->first ;
+
+            if ( iter != sectionList.begin() )
+            {
+               ss << endl ;
+            }
+
+            if ( section.length() > 0 )
+            {
+               ss << "[" << section << "]" << endl ;
+            }
+
+            ss << iter->second ;
+         }
+
+         out = ss.str() ;
       }
 
    done:

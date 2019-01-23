@@ -120,6 +120,13 @@ namespace engine
                                   BOOLEAN isSdbConfig = TRUE,
                                   BOOLEAN sensitive = FALSE,
                                   BOOLEAN delimiter = TRUE ) ;
+
+      static INT32 _config2Ini( const bson::BSONObj &config,
+                                string &out,
+                                string &err,
+                                BOOLEAN noDelimiter = FALSE,
+                                BOOLEAN sensitive = FALSE,
+                                BOOLEAN delimiter = TRUE ) ;
    } ;
 }
 
