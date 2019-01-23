@@ -1,13 +1,20 @@
 package com.sequoias3.object;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.amazonaws.services.s3.model.PutObjectResult;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.S3TestBase;
+import java.util.List;
+
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.PutObjectResult;
+import com.amazonaws.services.s3.model.S3VersionSummary;
+import com.amazonaws.services.s3.model.VersionListing;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
 
 /**
  * test content: 设置不同版本控制状态，删除对象 
@@ -28,8 +35,7 @@ public class DeleteObject16458 extends S3TestBase {
 	private void setUp() throws Exception {
 		s3Client = CommLib.buildS3Client();
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
-		PutObjectResult object = s3Client.putObject(bucketName, keyName, file);
-		System.out.println("object = " + object.getVersionId());
+		s3Client.putObject(bucketName, keyName, file);
 	}
 
 	@Test
@@ -38,29 +44,24 @@ public class DeleteObject16458 extends S3TestBase {
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 		result = s3Client.putObject(bucketName, keyName, file);
 		versionId[0] = result.getVersionId();
-
-		System.out.println("versinId[0] = " + versionId[0]);
 		
 		CommLib.setBucketVersioning(s3Client, bucketName, "Suspended");
-		PutObjectResult obj = s3Client.putObject(bucketName, keyName, file);
-		System.out.println("versionIdSus = " + obj.getVersionId());
-
-//		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
-//		result = s3Client.putObject(bucketName, keyName, file);
-//		versionId[1] = result.getVersionId();
-//		System.out.println("versionId[1] = " + versionId[1]);
-
+		s3Client.putObject(bucketName, keyName, file);
 		
-//		// delete object with versions
-//		for(int i = 0 ; i < versionId.length ; i++){
-//			s3Client.deleteVersion(bucketName, keyName, versionId[i]);
-//		}
-//		s3Client.deleteVersion(bucketName, keyName, "null");
-//		// check the object version list
-//		ListVersionsRequest req = new ListVersionsRequest().withBucketName(bucketName);
-//		VersionListing versionList = s3Client.listVersions(req);
-//		List<S3VersionSummary> verList = versionList.getVersionSummaries();
-//		Assert.assertEquals(verList.size(), 0, "object is still exist!");
+		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+		result = s3Client.putObject(bucketName, keyName, file);
+		versionId[1] = result.getVersionId();
+		
+		// delete object with versions
+		for(int i = 0 ; i < versionId.length ; i++){
+			s3Client.deleteVersion(bucketName, keyName, versionId[i]);
+		}
+		s3Client.deleteVersion(bucketName, keyName, "null");
+		// check the object version list
+		ListVersionsRequest req = new ListVersionsRequest().withBucketName(bucketName);
+		VersionListing versionList = s3Client.listVersions(req);
+		List<S3VersionSummary> verList = versionList.getVersionSummaries();
+		Assert.assertEquals(verList.size(), 0, "object is still exist!");
 		
 		runSuccess = true;
 	}
@@ -68,7 +69,7 @@ public class DeleteObject16458 extends S3TestBase {
 	@AfterClass
 	private void tearDown() {
 		if (runSuccess) {
-		//	s3Client.deleteBucket(bucketName);
+			s3Client.deleteBucket(bucketName);
 		}
 	}
 }
