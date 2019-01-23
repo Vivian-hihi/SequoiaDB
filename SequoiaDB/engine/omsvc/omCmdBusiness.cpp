@@ -1791,7 +1791,8 @@ namespace engine
 
          builder.append( OM_BSON_ADDRESS, arrayBuilder.arr() ) ;
       }
-      else if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == _businessType )
+      else if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == _businessType ||
+                OM_BUSINESS_SEQUOIASQL_MYSQL == _businessType )
       {
          BSONObj buzInfo ;
          BSONObj buzConfig ;
