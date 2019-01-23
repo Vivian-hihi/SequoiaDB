@@ -27,6 +27,7 @@
                <package name="com.sequoias3.object.concurrent" />
                <package name="com.sequoias3.head" />
                <package name="com.sequoias3.user" />
+               <package name="com.sequoias3.region" />
       </packages>
    </test> 
    
