@@ -6,6 +6,8 @@
 #define USERDEF       "sequoiadb"
 #define PASSWDDEF     "sequoiadb"
 
+using namespace std ;
+
 TEST(sdb,sdbConnect_without_usr)
 {
    sdbConnectionHandle connection = 0 ;
@@ -1064,6 +1066,37 @@ TEST(sdb, sdbGetLastErrorObjTest)
    sdbCleanLastErrorObj( collectionspace ) ;
 }
 
+TEST(sdb, sdbGetListAndSnapshot)
+{
+   sdbConnectionHandle db         = 0 ;
+   sdbConnectionHandle cdb        = 0 ;
+   sdbConnectionHandle ddb        = 0 ;
+   sdbCursorHandle cursor         = 0 ;
+   sdbCursorHandle cursor1        = 0 ;
+   sdbCursorHandle cursor2        = 0 ;
+   sdbCursorHandle cursor3        = 0 ;
+   INT32 rc                       = SDB_OK ;
+
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
+   ASSERT_TRUE( rc == SDB_OK ) ;
+   // get list
+   rc = sdbGetList1( db, SDB_LIST_COLLECTIONS, NULL, NULL, NULL, NULL, 0, -1, &cursor ) ;
+   if ( rc == SDB_RTN_COORD_ONLY )
+   ASSERT_TRUE( rc == SDB_OK ) ;
+   cout << "get list shows: " << endl ;
+   displayRecord( &cursor ) ;
+   // get snapshot
+   rc = sdbGetSnapshot1( db, SDB_SNAP_COLLECTIONS, NULL, NULL, NULL, NULL, 0, -1, &cursor1 ) ;
+   ASSERT_TRUE( rc == SDB_OK ) ;
+   cout << "get snapshot shows: " << endl ;
+   displayRecord( &cursor1 ) ;
+
+   sdbReleaseCursor ( cursor ) ;
+   sdbReleaseCursor ( cursor1 ) ;
+   sdbDisconnect ( db ) ;
+   sdbReleaseConnection ( db ) ;
+}
 
 
 /*
