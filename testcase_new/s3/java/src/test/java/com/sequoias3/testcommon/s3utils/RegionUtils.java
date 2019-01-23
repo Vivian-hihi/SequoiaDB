@@ -4,12 +4,16 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.util.DateUtils;
 import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.region.GetRegionResult;
 import com.sequoias3.region.Region;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestRest;
 import com.sequoias3.user.UserCommDefind;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.bson.types.BasicBSONList;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
@@ -17,12 +21,18 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
+import org.testng.SkipException;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class RegionUtils extends S3TestBase {
 	private static MediaType type = MediaType.parseMediaType("text/xml;charset=UTF-8");
+	private static String pregix = "S3_";
+	private static SimpleDateFormat yearFm = new SimpleDateFormat("yyyy");
+	private static SimpleDateFormat monthFm = new SimpleDateFormat("MM");
 
 	public static void putRegion(Region region) throws Exception {
 		TestRest rest = new TestRest(type);
@@ -135,12 +145,21 @@ public class RegionUtils extends S3TestBase {
 		Object objects = subjsonBody.get("Buckets");
 		if (objects instanceof JSONObject) {
 			JSONObject jsonObject = (JSONObject) objects;
-			JSONArray jsonArray = jsonObject.getJSONArray("Bucket");
-			for (int i = 0; i < jsonArray.length(); i++) {
+			Object jsonObjectBucket = jsonObject.get("Bucket");
+			if(jsonObjectBucket instanceof  JSONArray) {
+				JSONArray jsonArray = (JSONArray)jsonObjectBucket;
+				for (int i = 0; i < jsonArray.length(); i++) {
+					Bucket bucket = new Bucket();
+					JSONObject subjsonObject = jsonArray.getJSONObject(i);
+					bucket.setName(subjsonObject.getString("Name"));
+					bucket.setCreationDate(DateUtils.parseISO8601Date(subjsonObject.getString("CreationDate")));
+					buckets.add(bucket);
+				}
+			}else{
+				JSONObject json = (JSONObject) jsonObjectBucket;
 				Bucket bucket = new Bucket();
-				JSONObject subjsonObject = jsonArray.getJSONObject(i);
-				bucket.setName(subjsonObject.getString("Name"));
-				bucket.setCreationDate(DateUtils.parseISO8601Date(subjsonObject.getString("CreationDate")));
+				bucket.setName(json.getString("Name"));
+				bucket.setCreationDate(DateUtils.parseISO8601Date(json.getString("CreationDate")));
 				buckets.add(bucket);
 			}
 		}
@@ -178,5 +197,129 @@ public class RegionUtils extends S3TestBase {
 				}
 			}
 		}		
+	}
+
+	public static String getDataCSName(String regionName,String shardType, Date currTime){
+		return pregix +regionName+"_DataCS_" + getCsClPostfix(shardType, currTime) ;
+	}
+
+	public static String getDataCLName(String shardType,Date currTime){
+		return  pregix + "ObjectData_" + getCsClPostfix(shardType, currTime) ;
+	}
+
+	public static String getCsClPostfix(String shardType, Date currTime) {
+		String currY = yearFm.format(currTime);
+		String currM = monthFm.format(currTime);
+		String postfix = null;
+		if (shardType.equals("none")) {
+			postfix = "";
+		} else if (shardType.equals("year")) {
+			postfix = currY;
+		} else if (shardType.equals("quarter")) {
+			int quarter = (int) Math.ceil(Double.parseDouble(currM) / 3);
+			postfix = "Q" + quarter;
+		} else if (shardType.equals("month")) {
+			postfix = currM;
+		}
+		return postfix;
+	}
+
+	public static boolean clInCS(String csName,String clName){
+		Sequoiadb db = null;
+		List<String> clNames = null;
+		try{
+			db = new Sequoiadb(S3TestBase.coordUrl, "", "");
+			clNames = db.getCollectionSpace(csName).getCollectionNames();
+		}finally {
+			if(db != null){
+				db.close();
+			}
+		}
+		return clNames.contains(csName+"." + clName);
+	}
+
+	public static List<String> getDomainNames() {
+		Sequoiadb sdb = null;
+		DBCursor cursor = null;
+		List<String> domainNames = new ArrayList<>();
+		try {
+			sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
+			cursor = sdb.listDomains(null, null, null, null);
+			while (cursor.hasNext()) {
+				String name = (String) cursor.getNext().get("Name");
+				domainNames.add(name);
+			}
+		} finally {
+			if (null != cursor) {
+				cursor.close();
+			}
+			if (null != sdb) {
+				sdb.close();
+			}
+		}
+		return domainNames;
+	}
+
+	public static void createDomain(String domainName) {
+		Sequoiadb sdb = null;
+		try {
+			sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
+			if(!sdb.isDomainExist(domainName)) {
+				List<String> groupList = sdb.getReplicaGroupNames();
+				groupList.remove("SYSCatalogGroup");
+				groupList.remove("SYSCoord");
+				groupList.remove("SYSSpare");
+				BSONObject option = new BasicBSONObject();
+				BSONObject groups = new BasicBSONList();
+				if (groupList.size() < 1) {
+					throw new SkipException("At least one group is required!!! please check env");
+				}
+				for (int i = 0; i < groupList.size(); i++) {
+					groups.put(String.valueOf(i), groupList.get(i));
+				}
+				option.put("Groups", groups);
+				sdb.createDomain(domainName, option);
+				if (!sdb.isDomainExist(domainName)) {
+					sdb.createDomain(domainName, option);
+				}
+			}
+		} finally {
+			if (null != sdb) {
+				sdb.close();
+			}
+		}
+	}
+
+	public static void dropDomain(String domainName){
+		Sequoiadb sdb = null;
+		try {
+			sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
+			if(!sdb.isDomainExist(domainName)){
+				sdb.dropDomain(domainName);
+			}
+		} finally {
+			if (null != sdb) {
+				sdb.close();
+			}
+		}
+	}
+
+	public static int getRecordNum(String csName,String clName){
+		Sequoiadb sdb = null;
+		int count = 0;
+		DBCursor cursor = null;
+		try {
+			sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
+			cursor = sdb.getCollectionSpace(csName).getCollection(clName).listLobs();
+			while (cursor.hasNext()){
+				cursor.getNext();
+				count++;
+			}
+		} finally {
+			if (null != sdb) {
+				sdb.close();
+			}
+		}
+		return count;
 	}
 }
