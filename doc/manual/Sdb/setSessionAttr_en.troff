@@ -63,7 +63,8 @@ Set session attributes.
        \fBTimeout\fR
 .br
               The timeout (in ms) for operations in the current
-              session. -1 means no timeout for operations.
+              session. -1 means no timeout for operations. 
+              Minimum value is 1000 ms.
 .br
               "Timeout" : 10000
 .SH "Examples"
