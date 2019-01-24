@@ -1,7 +1,5 @@
 package com.sequoiadb.lob.basicoperation;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Random;
 
 import org.bson.BSONObject;
@@ -33,8 +31,7 @@ public class TestLob10424 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private ObjectId delOid = null; // which lob will be delete
-    private int delLobSize;
-    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+    private int delLobSize;    
     
     public class Md5Data{
         public ObjectId oid = null;
@@ -67,7 +64,7 @@ public class TestLob10424 extends SdbTestBase {
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }finally{
-            sdb.disconnect();
+            sdb.close();;
         }
     }
     
@@ -100,7 +97,7 @@ public class TestLob10424 extends SdbTestBase {
                     throw e;
                 }
             }finally{
-                db.disconnect();
+                db.close();
             }
         }
     }
@@ -155,7 +152,7 @@ public class TestLob10424 extends SdbTestBase {
         // check whether lob is removed
         try{
             cl.openLob(delOid);
-            Assert.fail("lob has not been removed!");
+            Assert.fail("lob has not been removed! loboid="+delOid);
         }catch(BaseException e){
             Assert.assertEquals(e.getErrorCode(), -4, e.getMessage());
         }
@@ -175,7 +172,7 @@ public class TestLob10424 extends SdbTestBase {
             rLob.close();
             // check the correctness of the new lob
             if(!prevMd5.equals(afterMd5)){
-                Assert.fail("lob remains!");
+                Assert.fail("lob remains! the lob oid ="+delOid);
             }
         }catch(BaseException e){
             Assert.fail(e.getMessage());
