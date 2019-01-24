@@ -161,13 +161,14 @@ public abstract class SdbThreadBase implements Runnable {
             thread = Thread.currentThread() ;
             count.incrementAndGet() ;
             exec();
+        } catch (Throwable e) {
+            exceptionList.add(e);
+        }finally{
             if (0 == count.decrementAndGet()){
                 synchronized (this){
                     this.notify() ;
                 }
             }
-        } catch (Throwable e) {
-            exceptionList.add(e);
         }
     }
     
