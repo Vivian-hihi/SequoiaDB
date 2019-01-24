@@ -797,6 +797,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_SNAP_ACCESSPLANS
          *      SDBConst.SDB_SNAP_HEALTH
          *      SDBConst.SDB_SNAP_CONFIGS
+         *      SDBConst.SDB_SNAP_SVCTASKS
          *      SDBConst.SDB_SNAP_SEQUENCES
          *      
          *  \param matcher The matching condition or null
@@ -831,6 +832,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_SNAP_ACCESSPLANS
          *      SDBConst.SDB_SNAP_HEALTH
          *      SDBConst.SDB_SNAP_CONFIGS
+         *      SDBConst.SDB_SNAP_SVCTASKS
          *      SDBConst.SDB_SNAP_SEQUENCES
          *      
          *  \param matcher The matching condition or null
@@ -868,6 +870,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_SNAP_ACCESSPLANS
          *      SDBConst.SDB_SNAP_HEALTH
          *      SDBConst.SDB_SNAP_CONFIGS
+         *      SDBConst.SDB_SNAP_SVCTASKS
          *      SDBConst.SDB_SNAP_SEQUENCES
          *      
          *  \param matcher The matching condition or null
@@ -983,37 +986,9 @@ namespace SequoiaDB
             return new DBCursor(rtn, this);
         }
 
-        /** \fn DBCursor GetList(int listType)
-         *  \brief Get the informations of specified type
-         *  \param listType The specified type as below:
-         *  
-         *      SDBConst.SDB_LIST_CONTEXTS
-         *      SDBConst.SDB_LIST_CONTEXTS_CURRENT
-         *      SDBConst.SDB_LIST_SESSIONS
-         *      SDBConst.SDB_LIST_SESSIONS_CURRENT
-         *      SDBConst.SDB_LIST_COLLECTIONS
-         *      SDBConst.SDB_LIST_COLLECTIONSPACES
-         *      SDBConst.SDB_LIST_STORAGEUNITS
-         *      SDBConst.SDB_LIST_GROUPS
-         *      SDBConst.SDB_LIST_STOREPROCEDURES
-         *      SDBConst.SDB_LIST_DOMAINS
-         *      SDBConst.SDB_LIST_TASKS
-         *      SDBConst.SDB_LIST_TRANSACTIONS
-         *      SDBConst.SDB_LIST_TRANSACTIONS_CURRENT
-         *      SDBConst.SDB_LIST_SEQUENCES
-         *      
-         *  \return A DBCursor of all the fitted objects or null
-         *  \exception SequoiaDB.BaseException
-         *  \exception System.Exception
-         */
-        public DBCursor GetList(int listType)
-        {
-            BsonDocument dummyObj = new BsonDocument();
-            return GetList(listType, dummyObj, dummyObj, dummyObj);
-        }
-
         /** \fn DBCursor GetList(int listType, BsonDocument matcher, BsonDocument selector,
-                                          BsonDocument orderBy)
+                                 BsonDocument orderBy, BsonDocument hint, 
+                                 long skipRows, long returnRows)
          *  \brief Get the informations of specified type
          *  \param listType The specified type as below:
          *  
@@ -1030,17 +1005,23 @@ namespace SequoiaDB
          *      SDBConst.SDB_LIST_TASKS
          *      SDBConst.SDB_LIST_TRANSACTIONS
          *      SDBConst.SDB_LIST_TRANSACTIONS_CURRENT
+         *      SDBConst.SDB_LIST_SVCTASKS
          *      SDBConst.SDB_LIST_SEQUENCES
+         *      SDBConst.SDB_LIST_USERS
          *      
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
          *  \param orderBy The ordered rule or null
+         *  \param hint The options provided for specific list type. Reserved.
+         *  \param skipRows Skip the first skipRows documents.
+         *  \param returnRows Only return returnRows documents. -1 means return all matched results.
          *  \return A DBCursor of all the fitted objects or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
         public DBCursor GetList(int listType, BsonDocument matcher, BsonDocument selector,
-                                BsonDocument orderBy)
+                                BsonDocument orderBy, BsonDocument hint,
+                                long skipRows, long returnRows)
         {
             string command = null;
             switch (listType)
@@ -1097,9 +1078,17 @@ namespace SequoiaDB
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
                            SequoiadbConstants.TRANSACTIONS_CURRENT;
                     break;
+                case SDBConst.SDB_LIST_SVCTASKS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
+                           SequoiadbConstants.SVCTASKS;
+                    break;
                 case SDBConst.SDB_LIST_SEQUENCES:
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
                            SequoiadbConstants.SEQUENCES;
+                    break;
+                case SDBConst.SDB_LIST_USERS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
+                           SequoiadbConstants.USERS;
                     break;
                 case SDBConst.SDB_LIST_CL_IN_DOMAIN:
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
@@ -1120,7 +1109,9 @@ namespace SequoiaDB
                 selector = dummyObj;
             if (orderBy == null)
                 orderBy = dummyObj;
-            SDBMessage rtn = AdminCommand(command, matcher, selector, orderBy, dummyObj);
+            if (hint == null)
+                hint = dummyObj;
+            SDBMessage rtn = AdminCommand(command, matcher, selector, orderBy, hint, skipRows, returnRows);
 
             int flags = rtn.Flags;
             if (flags != 0 && flags != SequoiadbConstants.SDB_DMS_EOC)
@@ -1129,6 +1120,72 @@ namespace SequoiaDB
             }
 
             return new DBCursor(rtn, this);
+        }
+
+        /** \fn DBCursor GetList(int listType, BsonDocument matcher, BsonDocument selector,
+                                          BsonDocument orderBy)
+         *  \brief Get the informations of specified type
+         *  \param listType The specified type as below:
+         *  
+         *      SDBConst.SDB_LIST_CONTEXTS
+         *      SDBConst.SDB_LIST_CONTEXTS_CURRENT
+         *      SDBConst.SDB_LIST_SESSIONS
+         *      SDBConst.SDB_LIST_SESSIONS_CURRENT
+         *      SDBConst.SDB_LIST_COLLECTIONS
+         *      SDBConst.SDB_LIST_COLLECTIONSPACES
+         *      SDBConst.SDB_LIST_STORAGEUNITS
+         *      SDBConst.SDB_LIST_GROUPS
+         *      SDBConst.SDB_LIST_STOREPROCEDURES
+         *      SDBConst.SDB_LIST_DOMAINS
+         *      SDBConst.SDB_LIST_TASKS
+         *      SDBConst.SDB_LIST_TRANSACTIONS
+         *      SDBConst.SDB_LIST_TRANSACTIONS_CURRENT
+         *      SDBConst.SDB_LIST_SVCTASKS
+         *      SDBConst.SDB_LIST_SEQUENCES
+         *      SDBConst.SDB_LIST_USERS
+         *      
+         *  \param matcher The matching condition or null
+         *  \param selector The selective rule or null
+         *  \param orderBy The ordered rule or null
+         *  \return A DBCursor of all the fitted objects or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public DBCursor GetList(int listType, BsonDocument matcher, BsonDocument selector,
+                                BsonDocument orderBy) 
+        {
+            return GetList(listType, matcher, selector, orderBy, null, 0, -1);
+        }
+
+        /** \fn DBCursor GetList(int listType)
+         *  \brief Get the informations of specified type
+         *  \param listType The specified type as below:
+         *  
+         *      SDBConst.SDB_LIST_CONTEXTS
+         *      SDBConst.SDB_LIST_CONTEXTS_CURRENT
+         *      SDBConst.SDB_LIST_SESSIONS
+         *      SDBConst.SDB_LIST_SESSIONS_CURRENT
+         *      SDBConst.SDB_LIST_COLLECTIONS
+         *      SDBConst.SDB_LIST_COLLECTIONSPACES
+         *      SDBConst.SDB_LIST_STORAGEUNITS
+         *      SDBConst.SDB_LIST_GROUPS
+         *      SDBConst.SDB_LIST_STOREPROCEDURES
+         *      SDBConst.SDB_LIST_DOMAINS
+         *      SDBConst.SDB_LIST_TASKS
+         *      SDBConst.SDB_LIST_TRANSACTIONS
+         *      SDBConst.SDB_LIST_TRANSACTIONS_CURRENT
+         *      SDBConst.SDB_LIST_SVCTASKS
+         *      SDBConst.SDB_LIST_SEQUENCES
+         *      SDBConst.SDB_LIST_USERS
+         *      
+         *  \return A DBCursor of all the fitted objects or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public DBCursor GetList(int listType)
+        {
+            BsonDocument dummyObj = new BsonDocument();
+            return GetList(listType, dummyObj, dummyObj, dummyObj);
         }
 
         /** \fn void ResetSnapshot(BsonDocument options)
@@ -2266,7 +2323,8 @@ namespace SequoiaDB
         }
 
         private SDBMessage AdminCommand(string command, BsonDocument matcher, BsonDocument selector,
-                                        BsonDocument orderBy, BsonDocument hint)
+                                        BsonDocument orderBy, BsonDocument hint, 
+                                        long skipRows, long returnRows)
         {
             BsonDocument dummyObj = new BsonDocument();
             SDBMessage sdbMessage = new SDBMessage();
@@ -2278,8 +2336,8 @@ namespace SequoiaDB
             sdbMessage.Flags = 0;
             sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
             sdbMessage.RequestID = 0;
-            sdbMessage.SkipRowsCount = 0;
-            sdbMessage.ReturnRowsCount = -1;
+            sdbMessage.SkipRowsCount = skipRows;
+            sdbMessage.ReturnRowsCount = returnRows;
             // matcher
             if (null == matcher)
             {
@@ -2318,12 +2376,18 @@ namespace SequoiaDB
             }
 
             byte[] request = SDBMessageHelper.BuildQueryRequest(sdbMessage, isBigEndian);
-            if(connection == null)
+            if (connection == null)
                 throw new BaseException("SDB_NOT_CONNECTED");
             connection.SendMessage(request);
             SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
             rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             return rtnSDBMessage;
+        }
+
+        private SDBMessage AdminCommand(string command, BsonDocument matcher, BsonDocument selector,
+                                        BsonDocument orderBy, BsonDocument hint)
+        {
+            return AdminCommand(command, matcher, selector, orderBy, hint, 0, -1);
         }
 
         private SDBMessage AdminCommand(string command, BsonDocument query, BsonDocument selector, BsonDocument orderBy,

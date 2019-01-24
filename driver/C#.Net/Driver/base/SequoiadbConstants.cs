@@ -75,7 +75,9 @@ namespace SequoiaDB
         public const string ACCESSPLANS = "accessplans";
         public const string HEALTH = "health";
         public const string CONFIGS = "configs";
+        public const string SVCTASKS = "service tasks";
         public const string SEQUENCES = "sequences";
+        public const string USERS = "users";
         public const string CS_IN_DOMAIN = "collectionspaces in domain";
         public const string CL_IN_DOMAIN = "collections in domain";
         public const string ALTER_CS = "alter collectionspace";
