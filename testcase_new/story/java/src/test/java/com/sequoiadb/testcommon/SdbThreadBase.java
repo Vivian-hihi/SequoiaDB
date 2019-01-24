@@ -8,12 +8,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService ;
 import java.util.concurrent.Executors ;
+import java.util.concurrent.atomic.AtomicInteger ;
 
 public abstract class SdbThreadBase implements Runnable {
     private List<Throwable> exceptionList = Collections.synchronizedList(new ArrayList<Throwable>());
     private List<Thread> threadList = new ArrayList<>();
     private Integer sync = new Integer(0) ;
     private Object result = null ;
+    private AtomicInteger count = new AtomicInteger(0);
     private static final int MAX_THREAD_NUMBER = 100 ;
     private static ExecutorService service = Executors.newFixedThreadPool( MAX_THREAD_NUMBER ) ;
     
@@ -132,6 +134,15 @@ public abstract class SdbThreadBase implements Runnable {
             }
             threadList.clear();
         }
+        
+        synchronized (this){
+            try {
+                this.wait() ;
+            } catch ( InterruptedException e ) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
     }
 
     public boolean isSuccess() {
@@ -144,7 +155,13 @@ public abstract class SdbThreadBase implements Runnable {
 
     public void run() {
         try {
+            count.incrementAndGet() ;
             exec();
+            if (0 == count.decrementAndGet()){
+                synchronized (this){
+                    this.notify() ;
+                }
+            }
         } catch (Throwable e) {
             exceptionList.add(e);
         }
