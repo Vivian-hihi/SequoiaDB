@@ -71,7 +71,6 @@ public class TestGetObjectMetadata16690 extends S3TestBase {
 		client = RestClient.createHttpClient();
 		CloseableHttpResponse resp1 = RestClient.sendRequest(client, request);
 		Assert.assertEquals(resp1.getFirstHeader("ETag").getValue(), etag);
-		System.out.println(resp1.getFirstHeader("Content-Length").getValue());
 		Assert.assertEquals(resp1.getFirstHeader("Content-Length").getValue(), String.valueOf((fileSize - 1) - leftBoundary + 1));
 		
 		//指定range超过边界值,左边界
