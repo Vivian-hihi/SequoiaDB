@@ -175,11 +175,17 @@ INT32 _pdTraceParser::_outputDBVersionInfo( const CHAR *versionFilePath )
                     OSS_DEFAULTFILE, versionFile ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Open file[%s] failed, rc: %d",
+         PD_LOG( PDERROR, "Open file [%s] failed, rc: %d",
                  versionFilePath, rc ) ;
          goto error ;
       }
       versionOpen = TRUE ;
+   }
+   else
+   {
+      PD_LOG( PDERROR, "VersionFilePath [%s] is invalid",
+              versionFilePath ) ;
+      goto error ;
    }
 
    versionInfo = (CHAR*)SDB_OSS_MALLOC( TRACE_VERSION_INFO_SIZE ) ;
