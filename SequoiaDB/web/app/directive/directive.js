@@ -1997,11 +1997,20 @@
                                        }
 
              para           必填 {}    指令会把回调函数传回来
-                                       check( customCheckFun )       //校验输入值
-                                                               customCheckFun:      自定义检查值的函数
-                                       getValue()                    //获取输入值
+                                       check( customCheckFun )             //校验输入值
+                                                                             customCheckFun: 自定义检查值的函数
+
+                                       getErrNum( customCheckFun )         //获取错误输入的个数，同时会校验输入值，getErrNum 和 check 二选一使用
+                                                                             customCheckFun: 自定义检查值的函数
+
+                                       getValue()                          //获取输入值
+
+                                       scrollToError( containerEle, offset )  //自动控制容器的滚动条，移动到第一个错误的地方
+                                                                             containerEle: 容器的dom元素，如果是父元素，可以填 null
+                                                                             offset: 偏移量，移动的位置偏移量，默认 0
+
    */
-   sacApp.directive( 'formCreate', function( $rootScope, SdbFunction ){
+   sacApp.directive( 'formCreate', function( $rootScope, $timeout, SdbFunction ){
       var text = {
          'string': {
             min: $rootScope.autoLanguage( '?长度不能小于?。' ),
@@ -2125,6 +2134,14 @@
                   }
                   $scope.data.check = function( customCheckFun ){
                      return $scope.Setting.checkInput( $scope.Setting.inputList, customCheckFun ) ;
+                  }
+                  $scope.data.getErrNum = function( customCheckFun ){
+                     return $scope.Setting.getErrNum( $scope.Setting.inputList, customCheckFun ) ;
+                  }
+                  $scope.data.scrollToError = function( containerEle, offset ){
+                     $timeout( function(){
+                          $scope.Setting.scrollToError( containerEle, $scope.Setting.inputList, offset ) ;
+                     }, 1 ) ;
                   }
                   $scope.data.getValue = function(){
                      if( $scope.Setting.Type == 'grid' || $scope.Setting.Type == 'table' )
@@ -2402,7 +2419,10 @@
                   return { rc: rc, error: error } ;
                },
                checkInput: function( inputList, customCheckFun ){
-                  var isAllClear = true ;
+                  return $scope.Setting.getErrNum( inputList, customCheckFun ) == 0 ;
+               },
+               getErrNum: function( inputList, customCheckFun ){
+                  var errNum = 0 ;
                   $.each( inputList, function( index, inputInfo ){
                      inputInfo.error = '' ;
                      var rv = { rc: true, error: '' } ;
@@ -2431,29 +2451,41 @@
                         rv = $scope.Setting.checkMultiple( showName, trim( inputInfo.value ), inputInfo.valid ) ;
                         break ;
                      case 'group':
-                        isAllClear = $scope.Setting.checkInput( inputInfo.child ) ;
+                        var tmp = $scope.Setting.getErrNum( inputInfo.child ) ;
+                        if( tmp > 0 )
+                        {
+                           ++errNum ;
+                        }
                         break ;
                      case 'inline':
-                        isAllClear = $scope.Setting.checkInput( inputInfo.child ) ;
+                        var tmp = $scope.Setting.getErrNum( inputInfo.child ) ;
+                        if( tmp > 0 )
+                        {
+                           ++errNum ;
+                        }
                         break ;
                      case 'list':
                         if( inputInfo.valid && inputInfo.valid.min == 0 && inputInfo.child.length == 1 && isEmptyGroup( inputInfo.child[0] ) )
                         {
-
+                           $.each( inputInfo.child, function( index2 ){
+                              $.each( inputInfo.child[index2], function( index3 ){
+                                 inputInfo.child[index2][index3].error = '' ;
+                              } ) ;
+                           } ) ;
                         }
                         else
                         {
                            var hasError = false ;
                            $.each( inputInfo.child, function( index2 ){
-                              var rc = $scope.Setting.checkInput( inputInfo.child[index2] ) ;
-                              if( rc == false )
+                              var rc = $scope.Setting.getErrNum( inputInfo.child[index2] ) ;
+                              if( rc > 0 )
                               {
+                                 ++errNum ;
                                  hasError = true ;
                               }
                            } ) ;
                            if( hasError == true )
                            {
-                              isAllClear = false ;
                               inputInfo.error = sprintf( $scope.Setting.Text.list, showName ) ;
                            }
                         }
@@ -2461,7 +2493,7 @@
                      }
                      if( rv.rc == false )
                      {
-                        isAllClear = false ;
+                        ++errNum ;
                         inputInfo.error = rv.error ;
                      }
                   } ) ;
@@ -2479,10 +2511,10 @@
                               }
                            } ) ;
                         } ) ;
-                        isAllClear = false ;
+                        errNum += rvs.length ;
                      }
                   }
-                  return isAllClear ;
+                  return errNum ;
                },
                getValue: function( inputList ){
                   var returnValue = {} ;
@@ -2578,6 +2610,25 @@
                      returnValue.push( returnLine ) ;
                   } ) ;
                   return returnValue ;
+               },
+               scrollToError: function( container, inputList, offset ){
+                  if ( isNull( container ) )
+                  {
+                     container = $( $element ).parent() ;
+                  }
+                  if ( !isNumber( offset ) )
+                  {
+                     offset = 0 ;
+                  }
+                  $.each( inputList, function( index, inputInfo ){
+                     if ( isString( inputInfo.error ) && inputInfo.error.length > 0 )
+                     {
+                        var scrollTo = $( inputInfo.target ) ;
+
+                        container.animate( { scrollTop: scrollTo.offset().top - container.offset().top + container.scrollTop() + offset } ) ;
+                        return false ;
+                     }
+                  } ) ;
                }
             } ;
 
@@ -6268,6 +6319,34 @@
                      if( scope.loadStatus['onSort']['last'] !== null ) //如果有排序，那么要做一次重新排序
                         sortFun( scope.loadStatus['onSort']['last']['index'], scope.loadStatus['onSort']['last']['key'], true ) ;
                   }
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   } ) ;
+
+   /*
+   元素，用来获取元素对象
+   支持命令： ng-element       必填 {}    //会在参数中加入 target 属性，把当前元素赋值给 target
+   */
+   sacApp.directive( 'ngElement', function(){
+      var dire = {
+         restrict: 'A',
+         scope: true,
+         controller: function( $scope, $element, $attrs, $transclude ){},
+         compile: function( element, attributes ){
+            return {
+               pre: function preLink( scope, element, attributes ){},
+               post: function postLink( scope, element, attributes ){
+
+                  scope.$watch( attributes.ngElement, function ngElement( options ){
+                     if( isObject( options ) )
+                     {
+                        options.target = element ;
+                     }
+                  } ) ;
+
                }
             } ;
          }

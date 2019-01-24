@@ -21,6 +21,7 @@
          return ;
       }
 
+      $scope.InputErrNum = {} ;
       $scope.ShowType  = 'normal' ;
       
       var hostSelectList = [] ;
@@ -136,20 +137,23 @@
          } ) ;
       }
 
-      var convertConfig = function(){
+      function convertConfig()
+      {
          var config = {} ;
          config['ClusterName']  = installConfig['ClusterName'] ;
          config['BusinessType'] = installConfig['BusinessType'] ;
          config['BusinessName'] = installConfig['BusinessName'] ;
          config['DeployMod']    = installConfig['DeployMod'] ;
 
+         var firstErrFormName = null ;
          var allFormVal = {} ;
-         var checkErrNum = 0 ;
+         var isAllClear = true ;
          $.each( $scope.AllForm, function( key, formInfo ){
-            //检查普通页port、dbpath配置
+            var inputErrNum = 0 ;
             if( key == 'normal' )
             {
-               var isAllClear = $scope.AllForm['normal'].check( function( formVal ){
+               inputErrNum = formInfo.getErrNum( function( formVal ){
+                  //检查普通页port、dbpath配置
                   var error = [] ;
                   if( checkPort( formVal['port'] ) == false )
                   {
@@ -161,23 +165,34 @@
                   }
                   return error ;
                } ) ;
-               if( isAllClear == false )
+               if( inputErrNum > 0 )
                {
-                  ++checkErrNum ;
+                  if( isNull( firstErrFormName ) )
+                  {
+                     firstErrFormName = key ;
+                  }
+                  isAllClear = false ;
                }
             }
             else
             {
-               if( formInfo.check() == false )
+               inputErrNum = formInfo.getErrNum() ;
+               if( inputErrNum > 0 )
                {
-                  ++checkErrNum ;
+                  if( isNull( firstErrFormName ) )
+                  {
+                     firstErrFormName = key ;
+                  }
+                  isAllClear = false ;
                }
             }
-            
+            $scope.InputErrNum[key] = inputErrNum ;
          } ) ;
 
-         if ( checkErrNum > 0 )
+         if ( isAllClear == false )
          {
+            $scope.SwitchParam( firstErrFormName ) ;
+            $scope.AllForm[firstErrFormName].scrollToError( null, -10 ) ;
             return false ;
          }
 

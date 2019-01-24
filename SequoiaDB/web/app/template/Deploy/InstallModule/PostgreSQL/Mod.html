@@ -7,9 +7,11 @@
             <ul class="left">
                <li ng-class="{true:'active'}[ShowType == 'normal']">
                   <a class="linkButton" ng-click="SwitchParam('normal')">normal</a>
+                  <span class="badge badge-danger" ng-if="InputErrNum['normal'] > 0">{{InputErrNum['normal']}}</span>
                </li>
                <li ng-repeat="(key,confType) in AllForm track by $index" ng-class="{true:'active'}[ShowType == key]" ng-if="key!='normal'">
                   <a class="linkButton" ng-click="SwitchParam(key)">{{key}}</a>
+                  <span class="badge badge-danger" ng-if="InputErrNum[key] > 0">{{InputErrNum[key]}}</span>
                </li>
             </ul>
          </div>

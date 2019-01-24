@@ -166,6 +166,9 @@
          $scope.Components.Modal.icon = '' ;
          $scope.Components.Modal.title = $scope.autoLanguage( '编辑节点配置' ) ;
          $scope.Components.Modal.ShowType = 1 ;
+         $scope.Components.Modal.inputErrNum1 = 0 ;
+         $scope.Components.Modal.inputErrNum2 = 0 ;
+         $scope.Components.Modal.inputErrNum3 = 0 ;
          $scope.Components.Modal.form1 = {
             'keyWidth': '160px',
             'inputList': _Deploy.ConvertTemplate( $scope.Template, 0, false, false, true )
@@ -451,13 +454,16 @@
 <div class="underlineTab" style="height:50px;">\
    <ul class="left">\
       <li ng-class="{true:\'active\'}[data.ShowType == 1]">\
-         <a class="linkButton" ng-click="data.Switch1()">' + $scope.autoLanguage( '普通' ) + '</a>\
+         <a class="linkButton" ng-click="data.Switch1()">' + $scope.autoLanguage( '普通' ) + '</a>\n\
+         <span class="badge badge-danger" ng-if="data.inputErrNum1 > 0">{{data.inputErrNum1}}</span>\
       </li>\
       <li ng-class="{true:\'active\'}[data.ShowType == 2]">\
-         <a class="linkButton" ng-click="data.Switch2()">' + $scope.autoLanguage( '高级' ) + '</a>\
+         <a class="linkButton" ng-click="data.Switch2()">' + $scope.autoLanguage( '高级' ) + '</a>\n\
+         <span class="badge badge-danger" ng-if="data.inputErrNum2 > 0">{{data.inputErrNum2}}</span>\
       </li>\
       <li ng-class="{true:\'active\'}[data.ShowType == 3]">\
-         <a class="linkButton" ng-click="data.Switch3()">' + $scope.autoLanguage( '自定义' ) + '</a>\
+         <a class="linkButton" ng-click="data.Switch3()">' + $scope.autoLanguage( '自定义' ) + '</a>\n\
+         <span class="badge badge-danger" ng-if="data.inputErrNum3 > 0">{{data.inputErrNum3}}</span>\
       </li>\
    </ul>\
 </div>\
@@ -465,7 +471,7 @@
 <div form-create para="data.form2" ng-show="data.ShowType == 2"></div>\
 <div form-create para="data.form3" ng-show="data.ShowType == 3"></div>' ;
          $scope.Components.Modal.ok = function(){
-            var isAllClear1 = $scope.Components.Modal.form1.check( function( valueList ){
+            var inputErrNum1 = $scope.Components.Modal.form1.getErrNum( function( valueList ){
                var error = [] ;
                if( type != 4 && valueList['dbpath'].length == 0 )
                {
@@ -481,8 +487,8 @@
                }
                return error ;
             } ) ;
-            var isAllClear2 = $scope.Components.Modal.form2.check() ;
-            var isAllClear3 = $scope.Components.Modal.form3.check( function( valueList ){
+            var inputErrNum2 = $scope.Components.Modal.form2.getErrNum() ;
+            var inputErrNum3 = $scope.Components.Modal.form3.getErrNum( function( valueList ){
                var error = [] ;
                $.each( valueList['other'], function( index, configInfo ){
                   if( configInfo['name'].toLowerCase() == 'hostname' ||
@@ -497,7 +503,10 @@
                } )
                return error ;
             } ) ;
-            if( isAllClear1 && isAllClear2 && isAllClear3 )
+            $scope.Components.Modal.inputErrNum1 = inputErrNum1 ;
+            $scope.Components.Modal.inputErrNum2 = inputErrNum2 ;
+            $scope.Components.Modal.inputErrNum3 = inputErrNum3 ;
+            if( inputErrNum1 == 0 && inputErrNum2 == 0 && inputErrNum3 == 0 )
             {
                var formVal1 = $scope.Components.Modal.form1.getValue() ;
                var formVal2 = $scope.Components.Modal.form2.getValue() ;
@@ -573,20 +582,23 @@
             }
             else
             {
-               if( !isAllClear1 )
+               if ( inputErrNum1 > 0 )
                {
-                  $scope.Components.Modal.ShowType = 1 ;
+                  $scope.Components.Modal.Switch1() ;
+                  $scope.Components.Modal.form1.scrollToError( null ) ;
                }
-               else if( !isAllClear2 )
+               else if ( inputErrNum2 > 0 )
                {
-                  $scope.Components.Modal.ShowType = 2 ;
+                  $scope.Components.Modal.Switch2() ;
+                  $scope.Components.Modal.form2.scrollToError( null ) ;
                }
-               else if( !isAllClear3 )
+               else if ( inputErrNum3 > 0 )
                {
-                  $scope.Components.Modal.ShowType = 3 ;
+                  $scope.Components.Modal.Switch3() ;
+                  $scope.Components.Modal.form3.scrollToError( null ) ;
                }
             }
-            return isAllClear1 && isAllClear2 && isAllClear3 ;
+            return inputErrNum1 == 0 && inputErrNum2 == 0 && inputErrNum3 == 0 ;
          }
       }
 

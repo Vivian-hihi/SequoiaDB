@@ -257,10 +257,22 @@ function isString( str )
    return typeof( str ) == 'string' ;
 }
 
+//是不是数字
+function isNumber( val )
+{
+   return typeof( val ) == 'number' ;
+}
+
 //是不是对象
 function isObject( obj )
 {
    return typeof( obj ) == 'object' && obj !== null ;
+}
+
+//是不是空
+function isNull( obj )
+{
+   return obj === null ;
 }
 
 //判断是否空
@@ -2646,7 +2658,7 @@ function pgSettingConvertTemplate( template, extend )
 
    $.each( template, function( index, info ){
 
-      if ( info['context'] == 'internal' || info['name'] == 'port' )
+      if ( info['context'] == 'internal' || info['name'] == 'port' || info['name'] == 'listen_addresses' )
       {
          return true ;
       }

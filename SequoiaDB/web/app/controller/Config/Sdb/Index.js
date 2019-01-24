@@ -1668,6 +1668,9 @@
       $scope.ModifyConfigWindow = {
          'config': {
             'ShowType': 1,
+            'inputErrNum1': 0,
+            'inputErrNum2': 0,
+            'inputErrNum3': 0,
             'form1': { 'keyWidth': '160px', 'inputList': [] },
             'form2': { 'keyWidth': '160px', 'inputList': [] },
             'form3': { 'keyWidth': '160px', 'inputList': [] }
@@ -1707,9 +1710,9 @@
 
          $scope.ModifyConfigWindow['callback']['SetTitle']( $scope.autoLanguage( '修改配置项' ) ) ;
          $scope.ModifyConfigWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-            var isAllClear1 = $scope.ModifyConfigWindow['config']['form1'].check() ;
-            var isAllClear2 = $scope.ModifyConfigWindow['config']['form2'].check() ;
-            var isAllClear3 = $scope.ModifyConfigWindow['config']['form3'].check( function( valueList ){
+            var inputErrNum1 = $scope.ModifyConfigWindow['config']['form1'].getErrNum() ;
+            var inputErrNum2 = $scope.ModifyConfigWindow['config']['form2'].getErrNum() ;
+            var inputErrNum3 = $scope.ModifyConfigWindow['config']['form3'].getErrNum( function( valueList ){
                var error = [] ;
                //检查禁用字段
                $.each( valueList['other'], function( index, configInfo ){
@@ -1720,7 +1723,10 @@
                } ) ;
                return error ;
             } ) ;
-            if( isAllClear1 && isAllClear2 && isAllClear3 )
+            $scope.ModifyConfigWindow['config']['inputErrNum1'] = inputErrNum1 ;
+            $scope.ModifyConfigWindow['config']['inputErrNum2'] = inputErrNum2 ;
+            $scope.ModifyConfigWindow['config']['inputErrNum3'] = inputErrNum3 ;
+            if( inputErrNum1 == 0 && inputErrNum2 == 0 && inputErrNum3 == 0 )
             {
                var configs1 = $scope.ModifyConfigWindow['config']['form1'].getValue() ;
                var configs2 = $scope.ModifyConfigWindow['config']['form2'].getValue() ;
@@ -1748,7 +1754,25 @@
                   } ) ;
                } ) ;
             }
-            return isAllClear1 && isAllClear2 && isAllClear3 ;
+            else
+            {
+               if ( inputErrNum1 > 0 )
+               {
+                  $scope.ModifyConfigWindow['config']['ShowType'] = 1 ;
+                  $scope.ModifyConfigWindow['config']['form1'].scrollToError( null ) ;
+               }
+               else if ( inputErrNum2 > 0 )
+               {
+                  $scope.ModifyConfigWindow['config']['ShowType'] = 2 ;
+                  $scope.ModifyConfigWindow['config']['form2'].scrollToError( null ) ;
+               }
+               else if ( inputErrNum3 > 0 )
+               {
+                  $scope.ModifyConfigWindow['config']['ShowType'] = 3 ;
+                  $scope.ModifyConfigWindow['config']['form3'].scrollToError( null ) ;
+               }
+            }
+            return inputErrNum1 == 0 && inputErrNum2 == 0 && inputErrNum3 == 0 ;
          } ) ;
          $scope.ModifyConfigWindow['callback']['Open']() ;
       }

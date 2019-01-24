@@ -1,6 +1,6 @@
 <form class="Form" ng-if="Setting.Type != 'grid'&&Setting.Type != 'table'">
    <div class="FormGroup" ng-repeat="inputInfo in Setting.inputList track by $index">
-      <table class="table">
+      <table class="table" ng-element="inputInfo">
          <tbody>
             <tr ng-if="inputInfo.type == 'group'">
                <td colspan="2">

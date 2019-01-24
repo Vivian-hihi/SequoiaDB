@@ -112,12 +112,15 @@
             <ul class="left">
                <li ng-class="{true:'active'}[config.ShowType == 1]">
                   <a class="linkButton" ng-click="config.ShowType=1">{{autoLanguage('普通')}}</a>
+                  <span class="badge badge-danger" ng-if="config.inputErrNum1 > 0">{{config.inputErrNum1}}</span>
                </li>
                <li ng-class="{true:'active'}[config.ShowType == 2]">
                   <a class="linkButton" ng-click="config.ShowType=2">{{autoLanguage('高级')}}</a>
+                  <span class="badge badge-danger" ng-if="config.inputErrNum2 > 0">{{config.inputErrNum2}}</span>
                </li>
                <li ng-class="{true:'active'}[config.ShowType == 3]">
                   <a class="linkButton" ng-click="config.ShowType=3">{{autoLanguage('自定义')}}</a>
+                  <span class="badge badge-danger" ng-if="config.inputErrNum3 > 0">{{config.inputErrNum3}}</span>
                </li>
             </ul>
          </div>
