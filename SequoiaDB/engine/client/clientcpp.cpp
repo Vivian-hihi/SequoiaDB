@@ -6944,6 +6944,7 @@ do                                                            \
          break ;
       case SDB_LIST_BACKUPS:
          p = CMD_ADMIN_PREFIX CMD_NAME_LIST_BACKUPS ;
+         break ;
       default :
          rc = SDB_INVALIDARG ;
          goto error ;
