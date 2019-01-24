@@ -59,6 +59,8 @@
 #define SDB_SNAP_SEQUENCES        15
 /** reserved */
 #define SDB_SNAP_RESERVED1        16
+/** reserved */
+#define SDB_SNAP_RESERVED2        17
 
 /** list of all the contexts of all the sessions */
 #define SDB_LIST_CONTEXTS         0
@@ -90,8 +92,11 @@
 #define SDB_LIST_SVCTASKS         14
 /** list of sequences **/
 #define SDB_LIST_SEQUENCES        15
-/** list userS **/
+/** list users **/
 #define SDB_LIST_USERS            16
+/** list backups **/
+#define SDB_LIST_BACKUPS          17
+
 // reserved
 #define SDB_LIST_CL_IN_DOMAIN     129
 // reserved

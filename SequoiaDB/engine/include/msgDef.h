@@ -599,6 +599,7 @@
 #define CMD_NAME_FORCE_SESSION               "force session"
 #define CMD_NAME_LIST_LOBS                   "list lobs"
 #define CMD_NAME_ALTER_DC                    "alter dc"
+#define CMD_NAME_ALTER_USR                   "alter user"
 #define CMD_NAME_REELECT                     "reelect"
 #define CMD_NAME_FORCE_STEP_UP               "force step up"
 #define CMD_NAME_JSON_LOAD                   "json load"
@@ -660,6 +661,12 @@
 #define CMD_VALUE_NAME_ENABLE_READONLY       "enable readonly"
 #define CMD_VALUE_NAME_DISABLE_READONLY      "disable readonly"
 
+/*
+   alter user
+*/
+#define CMD_VALUE_NAME_CHANGEPASSWD          "change passwd"
+#define CMD_VALUE_NAME_SETATTR               "set attributes"
+
 #define CLS_REPLSET_MAX_NODE_SIZE            7
 #define SDB_MAX_MSG_LENGTH                   ( 512 * 1024 * 1024 )
 
@@ -703,6 +710,7 @@
 
 #define SDB_AUTH_USER                        "User"
 #define SDB_AUTH_PASSWD                      "Passwd"
+#define SDB_AUTH_OLDPASSWD                   "OldPasswd"
 #define SDB_AUTH_SOURCE                      "Source"
 
 #define SDB_LOB_OID_LEN                      16

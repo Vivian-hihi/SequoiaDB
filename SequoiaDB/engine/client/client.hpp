@@ -3844,9 +3844,13 @@ namespace sdbclient
       virtual INT32 removeUsr( const CHAR *pUsrName,
                                const CHAR *pPasswd ) = 0 ;
 
-      /*virtual INT32 alterUsr( const CHAR *pUsrName,
+      virtual INT32 alterUsr( const CHAR *pUsrName,
                               const CHAR *pAction,
-                              const bson::BSONObj &options ) = 0 ;*/
+                              const bson::BSONObj &options ) = 0 ;
+
+      virtual INT32 changeUsrPasswd( const CHAR *pUsrName,
+                                     const CHAR *pOldPasswd,
+                                     const CHAR *pNewPasswd ) = 0 ;
 
       virtual INT32 getSnapshot ( _sdbCursor **cursor,
                                   INT32 snapType,
@@ -4335,6 +4339,46 @@ namespace sdbclient
          if ( !pSDB )
             return SDB_NOT_CONNECTED ;
          return pSDB->removeUsr( pUsrName, pPasswd ) ;
+      }
+
+      /** \fn INT32 alterUsr( const CHAR *pUsrName,
+                              const CHAR *pAction,
+                              const bson::BSONObj &options )
+          \brief Alter the spacified user's information.
+          \param [in] pUsrName The username needed to alter information.
+          \param [in] pAction The alter action.
+          \param [in] options The action corresponding options.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+          \note Alter action and options list:
+                "set attributes" : { AuditMask : ... }
+      */
+      INT32 alterUsr( const CHAR *pUsrName,
+                      const CHAR *pAction,
+                      const bson::BSONObj &options )
+      {
+         if ( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->alterUsr( pUsrName, pAction, options ) ;
+      }
+
+      /** \fn INT32 changeUsrPasswd( const CHAR *pUsrName,
+                                     const CHAR *pOldPasswd,
+                                     const CHAR *pNewPasswd )
+          \brief Change the spacified user's password.
+          \param [in] pUsrName The username needed to change password.
+          \param [in] pOldPasswd The old password.
+          \param [in] pNewPasswd The new password.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 changeUsrPasswd( const CHAR *pUsrName,
+                             const CHAR *pOldPasswd,
+                             const CHAR *pNewPasswd )
+      {
+         if ( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->changeUsrPasswd( pUsrName, pOldPasswd, pNewPasswd ) ;         
       }
 
       /** \fn void disconnect ()

@@ -33,6 +33,7 @@ namespace sdbclient
 #define CLIENT_REPLICAGROUP_NAMESZ         127
 #define CLIENT_DOMAIN_NAMESZ               127
 #define CLIENT_DC_NAMESZ                   127
+#define CLIENT_CL_FULLNAME_SZ              ( CLIENT_COLLECTION_NAMESZ + CLIENT_CS_NAMESZ + 1 )
 
    class _sdbCollectionSpaceImpl ;
    class _sdbCollectionImpl ;
@@ -51,39 +52,41 @@ namespace sdbclient
    private :
       _sdbCursorImpl ( const _sdbCursorImpl& other ) ;
       _sdbCursorImpl& operator=( const _sdbCursorImpl& ) ;
-      _sdbImpl *_connection ;
-      _sdbCollectionImpl *_collection ;
-      CHAR *_pSendBuffer ;
-      INT32 _sendBufferSize ;
-      CHAR *_pReceiveBuffer ;
-      INT32 _receiveBufferSize ;
-      BSONObj *_modifiedCurrent ;
-      BOOLEAN _isDeleteCurrent ;
-      SINT64 _contextID ;
-      BSONObj _hintObj ;
-      BOOLEAN _isClosed ;
 
-      INT64 _totalRead ;
-      INT32 _offset ;
-      INT32 _killCursor () ;
-      INT32 _readNextBuffer () ;
-      void _attachConnection ( _sdbImpl *connection ) ;
-      void _attachCollection ( _sdbCollectionImpl *collection ) ;
-      void _detachConnection() ;
-      void _detachCollection() ;
-      void _close() ;
+      _sdbImpl             *_connection ;
+      _sdbCollectionImpl   *_collection ;
+
+      CHAR                 *_pSendBuffer ;
+      INT32                _sendBufferSize ;
+      CHAR                 *_pReceiveBuffer ;
+      INT32                _receiveBufferSize ;
+
+      SINT64               _contextID ;
+      BOOLEAN              _isClosed ;
+
+      INT64                _totalRead ;
+      INT32                _offset ;
+
+   private:
+      INT32    _killCursor () ;
+      INT32    _readNextBuffer () ;
+      void     _attachConnection ( _sdbImpl *connection ) ;
+      void     _attachCollection ( _sdbCollectionImpl *collection ) ;
+      void     _detachConnection() ;
+      void     _detachCollection() ;
+      void     _close() ;
 
       friend class _sdbCollectionImpl ;
       friend class _sdbNodeImpl ;
       friend class _sdbImpl ;
+
    public :
       _sdbCursorImpl () ;
       ~_sdbCursorImpl () ;
+
       INT32 next          ( BSONObj &obj ) ;
       INT32 current       ( BSONObj &obj ) ;
       INT32 close () ;
-      //INT32 updateCurrent ( BSONObj &rule ) ;
-      //INT32 delCurrent    () ;
    } ;
 
    typedef class _sdbCursorImpl sdbCursorImpl ;
@@ -96,6 +99,7 @@ namespace sdbclient
    private :
       _sdbCollectionImpl ( const _sdbCollectionImpl& other ) ;
       _sdbCollectionImpl& operator=( const _sdbCollectionImpl& ) ;
+
 #if defined CLIENT_THREAD_SAFE
       ossSpinSLatch            _mutex ;
 #endif
@@ -106,38 +110,50 @@ namespace sdbclient
       INT32                    _receiveBufferSize ;
       CHAR                    *_pAppendOIDBuffer ;
       INT32                    _appendOIDBufferSize ;
-      std::set<ossValuePtr> _cursors ;
+      std::set<ossValuePtr>   _cursors ;
+
       CHAR _collectionSpaceName [ CLIENT_CS_NAMESZ+1 ] ;
       CHAR _collectionName      [ CLIENT_COLLECTION_NAMESZ+1 ] ;
-      CHAR _collectionFullName  [ CLIENT_COLLECTION_NAMESZ +
-                                  CLIENT_CS_NAMESZ +
-                                  1 + 1 ] ;
-      INT32 _setName ( const CHAR *pCollectionFullName ) ;
-      void _setConnection ( _sdb *connection ) ;
-      void* _getConnection () ;
-      void _dropConnection() ;
-      void _regCursor ( _sdbCursorImpl *cursor ) ;
-      void _unregCursor ( _sdbCursorImpl * cursor ) ;
-      INT32 _queryAndModify  ( _sdbCursor **cursor,
-                               const BSONObj &condition,
-                               const BSONObj &selected,
-                               const BSONObj &orderBy,
-                               const BSONObj &hint,
-                               const BSONObj &update,
-                               INT64 numToSkip,
-                               INT64 numToReturn,
-                               INT32 flag,
-                               BOOLEAN isUpdate,
-                               BOOLEAN returnNew ) ;
+      CHAR _collectionFullName  [ CLIENT_CL_FULLNAME_SZ + 1 ] ;
+
+   private:
+      INT32    _setName ( const CHAR *pCollectionFullName ) ;
+      void     _setConnection ( _sdb *connection ) ;
+      void*    _getConnection () ;
+      void     _dropConnection() ;
+      void     _regCursor ( _sdbCursorImpl *cursor ) ;
+      void     _unregCursor ( _sdbCursorImpl * cursor ) ;
+
+      INT32    _queryAndModify( _sdbCursor **cursor,
+                                const BSONObj &condition,
+                                const BSONObj &selected,
+                                const BSONObj &orderBy,
+                                const BSONObj &hint,
+                                const BSONObj &update,
+                                INT64 numToSkip,
+                                INT64 numToReturn,
+                                INT32 flag,
+                                BOOLEAN isUpdate,
+                                BOOLEAN returnNew ) ;
 
       INT32 _update ( const BSONObj &rule,
                       const BSONObj &condition,
                       const BSONObj &hint,
                       INT32 flag ) ;
+
       INT32 _appendOID ( const BSONObj &input,
                          BSONObj &output ) ;
+
       INT32 _runCmdOfLob ( const CHAR *cmd, const BSONObj &obj,
                            _sdbCursor **cursor ) ;
+
+      INT32 _getRetLobInfo( CHAR **ppBuffer,
+                            INT32 *pBufSize,
+                            const OID &oid,
+                            INT32 mode,
+                            SINT64 contextID,
+                            _sdbLob **lob ) ;
+
 #if defined CLIENT_THREAD_SAFE
       void lock ()
       {
@@ -158,6 +174,7 @@ namespace sdbclient
       friend class _sdbCollectionSpaceImpl ;
       friend class _sdbImpl ;
       friend class _sdbCursorImpl ;
+
    public :
       _sdbCollectionImpl () ;
       _sdbCollectionImpl ( CHAR *pCollectionFullName ) ;
@@ -362,62 +379,58 @@ namespace sdbclient
                     const CHAR *pTargetReplicaGroupName,
                     FLOAT64 percent ) ;
       INT32 splitAsync ( SINT64 &taskID,
-               const CHAR *pSourceReplicaGroupName,
-                    const CHAR *pTargetReplicaGroupName,
-                    const bson::BSONObj &splitCondition,
-                    const bson::BSONObj &splitEndCondition = _sdbStaticObject ) ;
+                         const CHAR *pSourceReplicaGroupName,
+                         const CHAR *pTargetReplicaGroupName,
+                         const bson::BSONObj &splitCondition,
+                         const bson::BSONObj &splitEndCondition = _sdbStaticObject ) ;
       INT32 splitAsync ( const CHAR *pSourceReplicaGroupName,
-                    const CHAR *pTargetReplicaGroupName,
-                    FLOAT64 percent,
-                    SINT64 &taskID ) ;
+                         const CHAR *pTargetReplicaGroupName,
+                         FLOAT64 percent,
+                         SINT64 &taskID ) ;
       // aggregate
       INT32 aggregate ( _sdbCursor **cursor,
-                     std::vector<bson::BSONObj> &obj
-                   ) ;
+                        std::vector<bson::BSONObj> &obj ) ;
       INT32 aggregate ( sdbCursor &cursor,
-                     std::vector<bson::BSONObj> &obj
-                   )
+                        std::vector<bson::BSONObj> &obj )
       {
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return aggregate ( &cursor.pCursor, obj ) ;
       }
       INT32 getQueryMeta  ( _sdbCursor **cursor,
-                     const BSONObj &condition = _sdbStaticObject,
-                     const BSONObj &orderBy = _sdbStaticObject,
-                     const BSONObj &hint = _sdbStaticObject,
-                     INT64 numToSkip = 0,
-                     INT64 numToReturn = -1
-                   ) ;
+                            const BSONObj &condition = _sdbStaticObject,
+                            const BSONObj &orderBy = _sdbStaticObject,
+                            const BSONObj &hint = _sdbStaticObject,
+                            INT64 numToSkip = 0,
+                            INT64 numToReturn = -1 ) ;
       INT32 getQueryMeta  ( sdbCursor &cursor,
-                     const BSONObj &condition = _sdbStaticObject,
-                     const BSONObj &orderBy = _sdbStaticObject,
-                     const BSONObj &hint = _sdbStaticObject,
-                     INT64 numToSkip = 0,
-                     INT64 numToReturn = -1
-                   )
+                            const BSONObj &condition = _sdbStaticObject,
+                            const BSONObj &orderBy = _sdbStaticObject,
+                            const BSONObj &hint = _sdbStaticObject,
+                            INT64 numToSkip = 0,
+                            INT64 numToReturn = -1 )
       {
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return getQueryMeta ( &cursor.pCursor,
-                        condition, orderBy, hint,
-                        numToSkip, numToReturn ) ;
+                               condition, orderBy, hint,
+                               numToSkip, numToReturn ) ;
       }
 
       INT32 attachCollection ( const CHAR *subClFullName,
-                                      const bson::BSONObj &options) ;
+                               const bson::BSONObj &options) ;
       INT32 detachCollection ( const CHAR *subClFullName) ;
 
       INT32 alterCollection ( const bson::BSONObj &options ) ;
 
       /// explain
       INT32 explain ( _sdbCursor **cursor,
-                              const bson::BSONObj &condition = _sdbStaticObject,
-                              const bson::BSONObj &select    = _sdbStaticObject,
-                              const bson::BSONObj &orderBy   = _sdbStaticObject,
-                              const bson::BSONObj &hint      = _sdbStaticObject,
-                              INT64 numToSkip                = 0,
-                              INT64 numToReturn              = -1,
-                              INT32 flag                     = 0,
-                              const bson::BSONObj &options   = _sdbStaticObject ) ;
+                      const bson::BSONObj &condition = _sdbStaticObject,
+                      const bson::BSONObj &select    = _sdbStaticObject,
+                      const bson::BSONObj &orderBy   = _sdbStaticObject,
+                      const bson::BSONObj &hint      = _sdbStaticObject,
+                      INT64 numToSkip                = 0,
+                      INT64 numToReturn              = -1,
+                      INT32 flag                     = 0,
+                      const bson::BSONObj &options   = _sdbStaticObject ) ;
 
       virtual INT32 explain ( sdbCursor &cursor,
                               const bson::BSONObj &condition = _sdbStaticObject,
@@ -516,15 +529,18 @@ namespace sdbclient
    /*
       _sdbNodeImpl
    */
-#define SDB_NODE_INVALID_NODEID -1
+   #define SDB_NODE_INVALID_NODEID     -1
+
    class _sdbNodeImpl : public _sdbNode
    {
    private :
       _sdbNodeImpl ( const _sdbNodeImpl& other ) ;
       _sdbNodeImpl& operator=( const _sdbNodeImpl& ) ;
+
 #if defined CLIENT_THREAD_SAFE
       ossSpinSLatch _mutex ;
 #endif
+
       _sdbImpl                *_connection ;
       CHAR                     _hostName [ OSS_MAX_HOSTNAME + 1 ] ;
       CHAR                     _serviceName [ OSS_MAX_SERVICENAME + 1 ] ;
@@ -537,8 +553,10 @@ namespace sdbclient
          _connection = NULL ;
       }
       INT32 _stopStart ( BOOLEAN start ) ;
+
       friend class _sdbReplicaGroupImpl ;
       friend class _sdbImpl ;
+
    public :
       _sdbNodeImpl () ;
       ~_sdbNodeImpl () ;
@@ -594,9 +612,11 @@ namespace sdbclient
    private :
       _sdbReplicaGroupImpl ( const _sdbReplicaGroupImpl& other ) ;
       _sdbReplicaGroupImpl& operator=( const _sdbReplicaGroupImpl& ) ;
+
 #if defined CLIENT_THREAD_SAFE
       ossSpinSLatch _mutex ;
 #endif
+
       _sdbImpl                *_connection ;
       BOOLEAN                 _isCatalog ;
       INT32                   _replicaGroupID ;
@@ -608,7 +628,9 @@ namespace sdbclient
       INT32 _stopStart ( BOOLEAN start ) ;
       INT32 _extractNode ( _sdbNode **node,
                            const CHAR *primaryData ) ;
+
       friend class _sdbImpl ;
+
    public :
       _sdbReplicaGroupImpl () ;
       ~_sdbReplicaGroupImpl () ;
@@ -708,9 +730,11 @@ namespace sdbclient
    private :
       _sdbCollectionSpaceImpl ( const _sdbCollectionSpaceImpl& other ) ;
       _sdbCollectionSpaceImpl& operator=( const _sdbCollectionSpaceImpl& ) ;
+
 #if defined CLIENT_THREAD_SAFE
       ossSpinSLatch _mutex ;
 #endif
+
       _sdbImpl                *_connection ;
       CHAR                    *_pSendBuffer ;
       INT32                    _sendBufferSize ;
@@ -725,6 +749,7 @@ namespace sdbclient
       }
 
       friend class _sdbImpl ;
+
    public :
       _sdbCollectionSpaceImpl () ;
       _sdbCollectionSpaceImpl ( CHAR *pCollectionSpaceName ) ;
@@ -806,9 +831,11 @@ namespace sdbclient
    private :
       _sdbDomainImpl ( const _sdbDomainImpl& other ) ;
       _sdbDomainImpl& operator= ( const _sdbDomainImpl& other ) ;
+
 #if defined CLIENT_THREAD_SAFE
       ossSpinSLatch           _mutex ;
 #endif
+
       _sdbImpl                *_connection ;
       CHAR                    *_pSendBuffer ;
       INT32                   _sendBufferSize ;
@@ -887,9 +914,11 @@ namespace sdbclient
    private :
       _sdbDataCenterImpl ( const _sdbDataCenterImpl& other ) ;
       _sdbDataCenterImpl& operator= ( const _sdbDataCenterImpl& other ) ;
+
 #if defined CLIENT_THREAD_SAFE
       ossSpinSLatch           _mutex ;
 #endif
+
       _sdbImpl                *_connection ;
       CHAR                    *_pSendBuffer ;
       INT32                   _sendBufferSize ;
@@ -927,7 +956,8 @@ namespace sdbclient
       INT32 detachGroups( const bson::BSONObj &info ) ;
 
    private :
-      INT32 _DCCommon( const CHAR *pValue, const bson::BSONObj *pInfo = NULL ) ;
+      INT32 _innerAlter( const CHAR *pValue,
+                         const bson::BSONObj *pInfo = NULL ) ;
 
    } ;
    typedef class _sdbDataCenterImpl sdbDataCenterImpl ;
@@ -940,9 +970,11 @@ namespace sdbclient
    private :
       _sdbLobImpl ( const _sdbLobImpl& other ) ;
       _sdbLobImpl& operator= ( const _sdbLobImpl& other ) ;
+
 #if defined CLIENT_THREAD_SAFE
       ossSpinSLatch           _mutex ;
 #endif
+
       _sdbImpl                *_connection ;
       _sdbCollectionImpl      *_collection ;
       CHAR                    *_pSendBuffer ;
@@ -1031,9 +1063,11 @@ namespace sdbclient
    private :
       _sdbImpl ( const _sdbImpl& other ) ;
       _sdbImpl& operator=( const _sdbImpl& ) ;
+
 #if defined CLIENT_THREAD_SAFE
       ossSpinSLatch            _mutex ;
 #endif
+
       ossSocket               *_sock ;
       CHAR                     _hostName [ OSS_MAX_HOSTNAME + 1 ] ;
       UINT16                   _port ;
@@ -1056,7 +1090,6 @@ namespace sdbclient
       const CHAR*              _pErrorBuf ;
       INT32                    _errorBufSize ;
 
-
       // last send or recive time
       ossTimestamp             _lastAliveTime;
 
@@ -1064,14 +1097,22 @@ namespace sdbclient
       void _setErrorBuffer( const CHAR *pBuf, INT32 bufSize ) ;
       INT32 _send ( CHAR *pBuffer ) ;
       INT32 _recv ( CHAR **ppBuffer, INT32 *size ) ;
-      INT32 _recvExtract ( CHAR **ppBuffer, INT32 *size, SINT64 &contextID,
-                           BOOLEAN &result ) ;
-      INT32 _reallocBuffer ( CHAR **ppBuffer, INT32 *size, INT32 newSize ) ;
-      INT32 _getRetInfo ( CHAR **ppBuffer, INT32 *size,
-                          SINT64 contextID, _sdbCursor **ppCursor ) ;
-      INT32 _runCommand ( const CHAR *pString, BOOLEAN &result,
-                          const BSONObj *arg1 = NULL, const BSONObj *arg2 = NULL,
-                          const BSONObj *arg3 = NULL, const BSONObj *arg4 = NULL ) ;
+
+      INT32 _recvExtract ( CHAR **ppBuffer,
+                           INT32 *size,
+                           SINT64 &contextID,
+                           BOOLEAN *pRemoteErr = NULL,
+                           BOOLEAN *pHasRecv = NULL ) ;
+
+      INT32 _reallocBuffer ( CHAR **ppBuffer,
+                             INT32 *size,
+                             INT32 newSize ) ;
+
+      INT32 _getRetInfo ( CHAR **ppBuffer,
+                          INT32 *size,
+                          SINT64 contextID,
+                          _sdbCursor **ppCursor ) ;
+
       INT32 _runCommand ( const CHAR *pString,
                           const BSONObj *arg1 = NULL,
                           const BSONObj *arg2 = NULL,
@@ -1082,6 +1123,13 @@ namespace sdbclient
                           SINT64 numToSkip = -1,
                           SINT64 numToReturn = -1,
                           _sdbCursor **ppCursor = NULL ) ;
+
+      INT32 _sendAndRecv( const CHAR *pSendBuf,
+                          CHAR **ppRecvBuf,
+                          INT32 *recvBufSize,
+                          _sdbCursor **ppCursor = NULL,
+                          BOOLEAN needLock = TRUE ) ;
+
       INT32 _buildEmptyCursor( _sdbCursor **ppCursor ) ;
       INT32 _requestSysInfo () ;
       void _regCursor ( _sdbCursorImpl *cursor ) ;
@@ -1144,13 +1192,21 @@ namespace sdbclient
       BOOLEAN isConnected ()
       { return NULL != _sock ; }
 
+      void initCacheStrategy( BOOLEAN enableCacheStrategy,
+                              const UINT32 cacheTimeInterval,
+                              const UINT32 maxCacheSlotCount ) ;
+
       INT32 createUsr( const CHAR *pUsrName,
                        const CHAR *pPasswd,
                        const bson::BSONObj &options = _sdbStaticObject ) ;
 
-      void initCacheStrategy( BOOLEAN enableCacheStrategy,
-                              const UINT32 cacheTimeInterval,
-                              const UINT32 maxCacheSlotCount ) ;
+      INT32 alterUsr( const CHAR *pUsrName,
+                      const CHAR *pAction,
+                      const bson::BSONObj &options ) ;
+
+      INT32 changeUsrPasswd( const CHAR *pUsrName,
+                             const CHAR *pOldPasswd,
+                             const CHAR *pNewPasswd ) ;
 
       INT32 removeUsr( const CHAR *pUsrName,
                        const CHAR *pPasswd ) ;
@@ -1324,9 +1380,11 @@ namespace sdbclient
          return getReplicaGroup ( id, &result.pReplicaGroup ) ;
       }
 
-      INT32 createReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **replicaGroup ) ;
+      INT32 createReplicaGroup ( const CHAR *pName,
+                                 _sdbReplicaGroup **replicaGroup ) ;
 
-      INT32 createReplicaGroup ( const CHAR *pName, sdbReplicaGroup &replicaGroup )
+      INT32 createReplicaGroup ( const CHAR *pName,
+                                 sdbReplicaGroup &replicaGroup )
       {
          RELEASE_INNER_HANDLE( replicaGroup.pReplicaGroup ) ;
          return createReplicaGroup ( pName, &replicaGroup.pReplicaGroup ) ;
@@ -1335,12 +1393,14 @@ namespace sdbclient
       INT32 removeReplicaGroup ( const CHAR *pName ) ;
 
       INT32 createReplicaCataGroup (  const CHAR *pHostName,
-                               const CHAR *pServiceName,
-                               const CHAR *pDatabasePath,
-                               const BSONObj &configure ) ;
+                                      const CHAR *pServiceName,
+                                      const CHAR *pDatabasePath,
+                                      const BSONObj &configure ) ;
 
-      INT32 activateReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **replicaGroup ) ;
-      INT32 activateReplicaGroup ( const CHAR *pName, sdbReplicaGroup &replicaGroup )
+      INT32 activateReplicaGroup ( const CHAR *pName,
+                                   _sdbReplicaGroup **replicaGroup ) ;
+      INT32 activateReplicaGroup ( const CHAR *pName,
+                                   sdbReplicaGroup &replicaGroup )
       {
          RELEASE_INNER_HANDLE( replicaGroup.pReplicaGroup ) ;
          return activateReplicaGroup( pName, &replicaGroup.pReplicaGroup ) ;
@@ -1366,8 +1426,10 @@ namespace sdbclient
       // stored procedure
       INT32 crtJSProcedure ( const CHAR *code ) ;
       INT32 rmProcedure( const CHAR *spName ) ;
-      INT32 listProcedures( _sdbCursor **cursor, const bson::BSONObj &condition ) ;
-      INT32 listProcedures( sdbCursor &cursor, const bson::BSONObj &condition )
+      INT32 listProcedures( _sdbCursor **cursor,
+                            const bson::BSONObj &condition ) ;
+      INT32 listProcedures( sdbCursor &cursor,
+                            const bson::BSONObj &condition )
       {
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return listProcedures ( &cursor.pCursor, condition ) ;
@@ -1537,8 +1599,9 @@ namespace sdbclient
          return traceStatus( &(cursor.pCursor) ) ;
       }
 
-      INT32 renameCollectionSpace( const CHAR* oldName, const CHAR* newName,
-                             const bson::BSONObj &options = _sdbStaticObject ) ;
+      INT32 renameCollectionSpace( const CHAR* oldName,
+                                   const CHAR* newName,
+                                   const bson::BSONObj &options = _sdbStaticObject ) ;
 
       INT32 getLastErrorObj( bson::BSONObj &result ) ;
       void  cleanLastErrorObj() ;
