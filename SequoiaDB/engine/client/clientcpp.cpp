@@ -181,7 +181,7 @@ do                                                            \
          alterBuilder.done() ;
          alterObject = builder.obj() ;
       }
-      catch ( exception & e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -211,7 +211,7 @@ do                                                            \
       {
          localObj.init( pErrorBuf ) ;
       }
-      catch( std::exception &e )
+      catch( std::exception )
       {
          rc = SDB_CORRUPTED_RECORD ;
          goto error ;
@@ -1052,7 +1052,7 @@ do                                                            \
             {
                sub.append( newObj.getField( CLIENT_RECORD_ID_FIELD ) ) ;
             }
-            catch ( std::exception &e )
+            catch ( std::exception )
             {
                rc = SDB_DRIVER_BSON_ERROR ;
                goto error ;
@@ -1147,7 +1147,7 @@ do                                                            \
             {
                sub.append( newObj.getField ( CLIENT_RECORD_ID_FIELD ) ) ;     
             }
-            catch ( std::exception &e )
+            catch ( std::exception )
             {
                rc = SDB_DRIVER_BSON_ERROR ;
                goto error ;
@@ -1256,7 +1256,7 @@ do                                                            \
             newHint = hint ;
          }
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_SYS ;
          goto error ;
@@ -1385,7 +1385,7 @@ do                                                            \
 
          cmdOption = builder.done() ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -1556,7 +1556,7 @@ do                                                            \
          newHintBuilder.appendObject( FIELD_NAME_MODIFY, modify.objdata() ) ;
          newHint = newHintBuilder.obj() ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_SYS ;
          goto error ;
@@ -2468,7 +2468,7 @@ do                                                            \
          bob.append( FIELD_NAME_OPTIONS, options ) ;
          newObj= bob.obj() ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -2511,7 +2511,7 @@ do                                                            \
       {
          obj = BSONObj( *ppBuffer + sizeof( MsgOpReply ) ) ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -2695,7 +2695,7 @@ do                                                            \
          bob.append( FIELD_NAME_LOB_OPEN_MODE, SDB_LOB_CREATEONLY ) ;
          obj = bob.obj() ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -2777,7 +2777,7 @@ do                                                            \
          bob.appendOID( FIELD_NAME_LOB_OID, (OID *)(&oid) ) ;
          meta = bob.obj() ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -2834,7 +2834,7 @@ do                                                            \
          bob.append( FIELD_NAME_LOB_LENGTH, length ) ;
          meta = bob.obj() ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -2902,7 +2902,7 @@ do                                                            \
          bob.append( FIELD_NAME_LOB_OPEN_MODE, mode ) ;
          obj = bob.obj() ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -2981,7 +2981,7 @@ do                                                            \
          bob.append( FIELD_NAME_COLLECTION, _collectionFullName ) ;
          obj = bob.obj() ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -3152,10 +3152,9 @@ do                                                            \
             goto error ;
          }
       }
-      catch( std::exception& e )
+      catch( std::exception )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to build fields, exception=%s", e.what() ) ;
          goto error ;
       }
 
@@ -3226,10 +3225,9 @@ do                                                            \
             goto error ;
          }
       }
-      catch( std::exception& e )
+      catch( std::exception )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to build fields, exception=%s", e.what() ) ;
          goto error ;
       }
 
@@ -5684,7 +5682,7 @@ do                                                            \
                _modificationTime = (UINT64) ele.numberLong() ;
             }
          }
-         catch ( std::exception &e )
+         catch ( std::exception )
          {
             rc = SDB_DRIVER_BSON_ERROR ;
             goto error ;
@@ -8230,7 +8228,7 @@ do                                                            \
             {
                errmsg.init( _pReceiveBuffer + sizeof( MsgOpReply ) ) ;
             }
-            catch( std::exception &e )
+            catch( std::exception )
             {
                rc = SDB_SYS ;
             }
@@ -8269,7 +8267,7 @@ do                                                            \
             }
             type = ( SDB_SPD_RES_TYPE )( rType.Int() ) ;
          }
-         catch ( std::exception &e )
+         catch ( std::exception )
          {
             rc = SDB_SYS ;
             goto error ;
@@ -9389,7 +9387,7 @@ do                                                            \
          {
             localObj.init( _pErrorBuf ) ;
          }
-         catch( std::exception &e )
+         catch( std::exception )
          {
             rc = SDB_CORRUPTED_RECORD ;
             goto error ;
@@ -9398,7 +9396,7 @@ do                                                            \
          {
             result = localObj.copy() ;
          }
-         catch( std::exception &e )
+         catch( std::exception )
          {
             rc = SDB_DRIVER_BSON_ERROR ;
             goto error ;

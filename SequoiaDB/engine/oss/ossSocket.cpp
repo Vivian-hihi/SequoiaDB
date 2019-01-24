@@ -1222,12 +1222,14 @@ INT32 _ossSocket::getPort ( const CHAR *pServiceName, UINT16 &port )
    return ossGetPort( pServiceName, port ) ;
 }
 
+#if defined (_LINUX) || defined (_AIX)
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK__COMPLETE, "_ossSocket::_complete" )
 INT32 _ossSocket::_complete( INT32 timeout )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY( SDB__OSSSK__COMPLETE ) ;
-#if defined (_LINUX) || defined (_AIX)
+
    INT32 err = 0 ;
    socklen_t errlen = sizeof(err) ;
    timeval tv ;
@@ -1274,7 +1276,7 @@ retry:
       rc = SDB_NET_CANNOT_CONNECT ;
       goto error ;
    }
-#endif
+
 done:
    PD_TRACE_EXITRC( SDB__OSSSK__COMPLETE, rc ) ;
    return rc ;
@@ -1282,6 +1284,15 @@ error:
    close() ;
    goto done ;
 }
+
+#else
+
+INT32 _ossSocket::_complete( INT32 timeout )
+{
+   return SDB_OK ;
+}
+
+#endif // (_LINUX) || defined (_AIX)
 
 // socket functions implement:
 

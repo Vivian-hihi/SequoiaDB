@@ -1403,7 +1403,6 @@ error :
 INT32 ossReadlink ( const CHAR *pPath, CHAR *pLinkedPath, INT32 maxLen )
 {
    INT32 rc = SDB_OK ;
-
    PD_TRACE_ENTRY ( SDB_OSSREADLINK ) ;
 
 #if defined (_LINUX) || defined (_AIX)
@@ -1411,16 +1410,15 @@ INT32 ossReadlink ( const CHAR *pPath, CHAR *pLinkedPath, INT32 maxLen )
    if ( len <= 0 || len >= maxLen )
    {
       rc = SDB_INVALIDARG ;
-      goto error ;
    }
-   pLinkedPath[len] = '\0' ;
+   else
+   {
+      pLinkedPath[len] = '\0' ;
+   }
 #endif
 
-done :
    PD_TRACE_EXITRC( SDB_OSSREADLINK, rc ) ;
    return rc ;
-error :
-   goto done ;
 }
 
 #if defined (_LINUX) || defined (_AIX)
@@ -1495,14 +1493,16 @@ INT32 ossGetDiskIOStat ( const CHAR *pDriverName, ossDiskIOStat &ioStat )
    }
 
    fclose( fp ) ;
-#endif
 
 done :
    PD_TRACE_EXITRC ( SDB_OSSGETDISKIOSTAT, rc ) ;
    return rc ;
-
 error :
    goto done ;
+#else
+   PD_TRACE_EXITRC ( SDB_OSSGETDISKIOSTAT, rc ) ;
+   return rc ;
+#endif //(_LINUX) || defined (_AIX)
 }
 
 #if defined (_WINDOWS)
