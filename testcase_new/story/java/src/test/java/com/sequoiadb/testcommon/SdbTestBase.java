@@ -204,6 +204,7 @@ public class SdbTestBase {
                 sequoiadb.dropCollectionSpace(csName);
             }
         } catch(BaseException e){
+            e.printStackTrace() ;
             Assert.fail( e.getMessage() + " called: " + count.get() ) ;
         }finally {
             if (sequoiadb != null) {
