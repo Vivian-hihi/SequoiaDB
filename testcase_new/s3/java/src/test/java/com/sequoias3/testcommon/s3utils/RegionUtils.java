@@ -68,12 +68,16 @@ public class RegionUtils extends S3TestBase {
 	}
 
 	public static GetRegionResult getRegion(String regionName) throws Exception {
+		return getRegion(regionName,S3TestBase.s3AccessKeyId);
+	}
+
+	public static GetRegionResult getRegion(String regionName,String accessKeyId) throws Exception {
 		TestRest rest = new TestRest();
 		ResponseEntity<?> resp;
 		GetRegionResult result;
 		try {
 			resp = rest.setApi("/region/" + regionName)
-					.setRequestHeaders(UserCommDefind.authorization, "ABCDEFGHIJKLMNOPQRST")
+					.setRequestHeaders(UserCommDefind.authorization, accessKeyId)
 					.setRequestMethod(HttpMethod.GET).setResponseType(String.class).exec();
 			String xmlBody = resp.getBody().toString();
 			result = stringToObject(xmlBody);
@@ -226,7 +230,7 @@ public class RegionUtils extends S3TestBase {
 
 	public static boolean clInCS(String csName,String clName){
 		Sequoiadb db = null;
-		List<String> clNames = null;
+		List<String> clNames;
 		try{
 			db = new Sequoiadb(S3TestBase.coordUrl, "", "");
 			clNames = db.getCollectionSpace(csName).getCollectionNames();
@@ -294,7 +298,7 @@ public class RegionUtils extends S3TestBase {
 		Sequoiadb sdb = null;
 		try {
 			sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
-			if(!sdb.isDomainExist(domainName)){
+			if(sdb.isDomainExist(domainName)){
 				sdb.dropDomain(domainName);
 			}
 		} finally {
@@ -307,7 +311,7 @@ public class RegionUtils extends S3TestBase {
 	public static int getRecordNum(String csName,String clName){
 		Sequoiadb sdb = null;
 		int count = 0;
-		DBCursor cursor = null;
+		DBCursor cursor;
 		try {
 			sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
 			cursor = sdb.getCollectionSpace(csName).getCollection(clName).listLobs();
