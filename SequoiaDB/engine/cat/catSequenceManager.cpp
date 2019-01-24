@@ -873,7 +873,7 @@ namespace engine
       }
 
       diff = ( UINT64 )( seq.cachedValue() - expectValue ) ;
-      reminder = diff % seq.increment() ;
+      reminder = diff % (-seq.increment()) ;
       diffInc = reminder == 0 ? diff : (diff - reminder - seq.increment()) ;
       newCachedValue = seq.cachedValue() - diffInc ;
       if ( diffInc < diff || // check for diffInc overflow
