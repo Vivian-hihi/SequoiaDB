@@ -12,12 +12,13 @@ import java.util.concurrent.atomic.AtomicInteger ;
 
 public abstract class SdbThreadBase implements Runnable {
     private List<Throwable> exceptionList = Collections.synchronizedList(new ArrayList<Throwable>());
-    private List<Thread> threadList = new ArrayList<>();
+    //private List<Thread> threadList = new ArrayList<>();
     private Integer sync = new Integer(0) ;
     private Object result = null ;
     private AtomicInteger count = new AtomicInteger(0);
     private static final int MAX_THREAD_NUMBER = 100 ;
     private static ExecutorService service = Executors.newFixedThreadPool( MAX_THREAD_NUMBER ) ;
+    private Thread thread = null ;
     
     public void start() {
         start(1);
@@ -25,12 +26,12 @@ public abstract class SdbThreadBase implements Runnable {
     }
 
     public void start(int threadNum) {
-        if ( threadNum == 1 ){
+        /*if ( threadNum == 1 ){
             Thread t = new Thread(this);
             threadList.add(t);
             t.start();
             return ;
-        }
+        }*/
         
         synchronized (service) {
             for (int i = 0; i < threadNum; i++) {
@@ -61,9 +62,9 @@ public abstract class SdbThreadBase implements Runnable {
      *--------------------------------------------------------------------------
      */
     public Object getExecResult() throws InterruptedException{
-        if ( this.threadList.isEmpty() ||
-             this.threadList.get( 0 ).getState() == State.NEW ||
-             this.threadList.get( 0 ).getState() == State.TERMINATED ){
+        if ( thread == null ||
+             thread.getState() == State.NEW ||
+             thread.getState() == State.TERMINATED ){
             return this.result ;
         }
         
@@ -87,7 +88,7 @@ public abstract class SdbThreadBase implements Runnable {
      *--------------------------------------------------------------------------
      */
     public void setExecResult(Object result){
-        assert this.threadList.size() == 1 ;
+        assert thread != null ;
         this.result = result ;
         synchronized( sync ){
             sync.notifyAll();
@@ -124,7 +125,7 @@ public abstract class SdbThreadBase implements Runnable {
 
     // join所有线程
     public void join() {
-        synchronized (this) {
+        /*synchronized (this) {
             for (Thread thread : threadList) {
                 try {
                     thread.join();
@@ -133,11 +134,13 @@ public abstract class SdbThreadBase implements Runnable {
                 }
             }
             threadList.clear();
-        }
+        }*/
         
         synchronized (this){
             try {
-                this.wait() ;
+                if (count.get() !=0 ){
+                    this.wait() ;
+                }
             } catch ( InterruptedException e ) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -155,6 +158,7 @@ public abstract class SdbThreadBase implements Runnable {
 
     public void run() {
         try {
+            thread = Thread.currentThread() ;
             count.incrementAndGet() ;
             exec();
             if (0 == count.decrementAndGet()){
@@ -186,7 +190,7 @@ public abstract class SdbThreadBase implements Runnable {
      *--------------------------------------------------------------------------
      */
     public boolean matchBlockingMethod(String className, String methodName){
-        assert threadList.size() == 1 ;
+        assert thread != null ;
         
         final int fiveSeonds = 50000 ;
         final int totalTimes = 3 ;
@@ -202,7 +206,7 @@ public abstract class SdbThreadBase implements Runnable {
                 break ;
             }
             
-            if ( threadList.get( 0 ).getState() == State.TERMINATED ){
+            if ( thread.getState() == State.TERMINATED ){
                 ret = false ;
                 break ;
             }
@@ -214,13 +218,13 @@ public abstract class SdbThreadBase implements Runnable {
                 e.printStackTrace();
             }
             
-            if ( threadList.get( 0 ).getState() == State.NEW ){
+            if ( thread.getState() == State.NEW ){
                 continue ;
             }
             
-            StackTraceElement[] stackElem = threadList.get( 0 ).getStackTrace() ;
+            StackTraceElement[] stackElem = thread.getStackTrace() ;
             if ( pos != 0 ){
-                stackElem = threadList.get( 0 ).getStackTrace() ;
+                stackElem = thread.getStackTrace() ;
                 if ( stackElem.length == 0 
                      || stackElem.length <= pos ){
                     ret = false ;
