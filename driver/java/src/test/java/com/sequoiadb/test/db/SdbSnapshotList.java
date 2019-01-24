@@ -110,6 +110,13 @@ public class SdbSnapshotList {
                 System.out.println(cursor.getNext());
             }
 
+            // 14
+            cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_SVCTASKS, null, null, null, null, 0, -1);
+            System.out.println("result of SDB_SNAP_SVCTASKS is: ");
+            while(cursor.hasNext()){
+                System.out.println(cursor.getNext());
+            }
+
             // 15
             cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_SEQUENCES, "", "", "");
             System.out.println("result of SDB_SNAP_TRANSACTIONS is: ");
@@ -146,6 +153,7 @@ public class SdbSnapshotList {
 
     @Test
     public void getList() {
+        BSONObject dump = new BasicBSONObject();
         BSONObject matcher = new BasicBSONObject();
         BSONObject selector = new BasicBSONObject();
         BSONObject orderBy = new BasicBSONObject();
@@ -213,7 +221,6 @@ public class SdbSnapshotList {
         // 11
         try {
             sdb.beginTransaction();
-            BSONObject dump = new BasicBSONObject();
             BSONObject obj = new BasicBSONObject();
             cl.insert(obj);
             cursor = sdb.getList(Sequoiadb.SDB_LIST_TRANSACTIONS_CURRENT, dump, dump, dump);
@@ -227,17 +234,31 @@ public class SdbSnapshotList {
             while(cursor.hasNext()){
                 System.out.println(cursor.getNext());
             }
-
-            // 15
-            cursor = sdb.getList(Sequoiadb.SDB_LIST_SEQUENCES, dump, dump, dump);
-            System.out.println("result of SDB_LIST_SEQUENCES is: ");
-            while(cursor.hasNext()){
-                System.out.println(cursor.getNext());
-            }
         } catch(BaseException e) {
             Assert.assertTrue(e.getErrorType().equals("SDB_DPS_TRANS_DIABLED"));
         } finally {
             sdb.commit();
+        }
+
+        // 14
+        cursor = sdb.getList(Sequoiadb.SDB_LIST_SVCTASKS, dump, dump, dump, dump, 0, -1);
+        System.out.println("result of SDB_LIST_SVCTASKS is: ");
+        while(cursor.hasNext()){
+            System.out.println(cursor.getNext());
+        }
+
+        // 15
+        cursor = sdb.getList(Sequoiadb.SDB_LIST_SEQUENCES, dump, dump, dump);
+        System.out.println("result of SDB_LIST_SEQUENCES is: ");
+        while(cursor.hasNext()){
+            System.out.println(cursor.getNext());
+        }
+
+        // 16
+        cursor = sdb.getList(Sequoiadb.SDB_LIST_USERS, dump, dump, dump, dump, 0, -1);
+        System.out.println("result of SDB_LIST_USERS is: ");
+        while(cursor.hasNext()){
+            System.out.println(cursor.getNext());
         }
     }
 }

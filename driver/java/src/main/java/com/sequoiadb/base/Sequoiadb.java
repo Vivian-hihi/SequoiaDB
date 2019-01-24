@@ -99,7 +99,9 @@ public class Sequoiadb implements Closeable {
     public final static int SDB_LIST_TASKS = 10;
     public final static int SDB_LIST_TRANSACTIONS = 11;
     public final static int SDB_LIST_TRANSACTIONS_CURRENT = 12;
+    public final static int SDB_LIST_SVCTASKS = 14;
     public final static int SDB_LIST_SEQUENCES = 15;
+    public final static int SDB_LIST_USERS = 16;
     public final static int SDB_LIST_CL_IN_DOMAIN = 129;
     public final static int SDB_LIST_CS_IN_DOMAIN = 130;
 
@@ -117,7 +119,9 @@ public class Sequoiadb implements Closeable {
     public final static int SDB_SNAP_ACCESSPLANS = 11;
     public final static int SDB_SNAP_HEALTH = 12;
     public final static int SDB_SNAP_CONFIGS = 13;
+    public final static int SDB_SNAP_SVCTASKS = 14;
     public final static int SDB_SNAP_SEQUENCES = 15;
+
 
     public final static int FMP_FUNC_TYPE_INVALID = -1;
     public final static int FMP_FUNC_TYPE_JS = 0;
@@ -1061,17 +1065,23 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_LIST_TASKS                : Get all the running split tasks ( only applicable in sharding env )
      *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS         : Get all the transactions information.
      *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS_CURRENT : Get the transactions information of current session.
+     *                 <dt>Sequoiadb.SDB_LIST_SVCTASKS             : Get all the schedule task information
      *                 <dt>Sequoiadb.SDB_LIST_SEQUENCES            : Get the information of sequences
+     *                 <dt>Sequoiadb.SDB_LIST_USERS                : Get all the user information.
      *                 </dl>
      * @param query    The matching rule, match all the documents if null.
      * @param selector The selective rule, return the whole document if null.
      * @param orderBy  The ordered rule, never sort if null.
+     * @param hint The options provided for specific list type. Reserved.
+     * @param skipRows Skip the first skipRows documents.
+     * @param returnRows Only return returnRows documents. -1 means return all matched results.
      * @return The target information by cursor.
      * @throws BaseException If error happens.
      */
-    public DBCursor getList(int listType, BSONObject query, BSONObject selector, BSONObject orderBy) throws BaseException {
+    public DBCursor getList(int listType, BSONObject query, BSONObject selector, BSONObject orderBy, BSONObject hint,
+                            long skipRows, long returnRows) throws BaseException {
         String command = getListCommand(listType);
-        AdminRequest request = new AdminRequest(command, query, selector, orderBy, null);
+        AdminRequest request = new AdminRequest(command, query, selector, orderBy, hint, skipRows, returnRows);
         SdbReply response = requestAndResponse(request);
 
         int flags = response.getFlag();
@@ -1083,6 +1093,38 @@ public class Sequoiadb implements Closeable {
         }
 
         return new DBCursor(response, this);
+    }
+
+    /**
+     * Get the information of specified type.
+     *
+     * @param listType The list type as below:
+     *                 <dl>
+     *                 <dt>Sequoiadb.SDB_LIST_CONTEXTS             : Get all contexts list
+     *                 <dt>Sequoiadb.SDB_LIST_CONTEXTS_CURRENT     : Get contexts list for the current session
+     *                 <dt>Sequoiadb.SDB_LIST_SESSIONS             : Get all sessions list
+     *                 <dt>Sequoiadb.SDB_LIST_SESSIONS_CURRENT     : Get the current session
+     *                 <dt>Sequoiadb.SDB_LIST_COLLECTIONS          : Get all collections list
+     *                 <dt>Sequoiadb.SDB_LIST_COLLECTIONSPACES     : Get all collection spaces list
+     *                 <dt>Sequoiadb.SDB_LIST_STORAGEUNITS         : Get storage units list
+     *                 <dt>Sequoiadb.SDB_LIST_GROUPS               : Get replica group list ( only applicable in sharding env )
+     *                 <dt>Sequoiadb.SDB_LIST_STOREPROCEDURES      : Get stored procedure list ( only applicable in sharding env )
+     *                 <dt>Sequoiadb.SDB_LIST_DOMAINS              : Get all the domains list ( only applicable in sharding env )
+     *                 <dt>Sequoiadb.SDB_LIST_TASKS                : Get all the running split tasks ( only applicable in sharding env )
+     *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS         : Get all the transactions information.
+     *                 <dt>Sequoiadb.SDB_LIST_TRANSACTIONS_CURRENT : Get the transactions information of current session.
+     *                 <dt>Sequoiadb.SDB_LIST_SVCTASKS             : Get all the schedule task information
+     *                 <dt>Sequoiadb.SDB_LIST_SEQUENCES            : Get the information of sequences
+     *                 <dt>Sequoiadb.SDB_LIST_USERS                : Get all the user information.
+     *                 </dl>
+     * @param query    The matching rule, match all the documents if null.
+     * @param selector The selective rule, return the whole document if null.
+     * @param orderBy  The ordered rule, never sort if null.
+     * @return The target information by cursor.
+     * @throws BaseException If error happens.
+     */
+    public DBCursor getList(int listType, BSONObject query, BSONObject selector, BSONObject orderBy) throws BaseException {
+        return getList(listType, query, selector, orderBy, null, 0, -1);
     }
 
     /**
@@ -1206,6 +1248,7 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_SNAP_ACCESSPLANS          : Get the snapshot of cached access plans
      *                 <dt>Sequoiadb.SDB_SNAP_HEALTH               : Get the snapshot of node health detection
      *                 <dt>Sequoiadb.SDB_SNAP_CONFIGS              : Get the snapshot of node configurations
+     *                 <dt>Sequoiadb.SDB_SNAP_SVCTASKS             : Get all the information of schedule task
      *                 <ds>Sequoiadb.SDB_SNAP_SEQUENCES            : Get the snapshot of the sequence
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
@@ -1251,6 +1294,7 @@ public class Sequoiadb implements Closeable {
      *                 <dt>SequoiaDB.SDB_SNAP_ACCESSPLANS          : Get the snapshot of cached access plans
      *                 <dt>Sequoiadb.SDB_SNAP_HEALTH               : Get the snapshot of node health detection
      *                 <dt>Sequoiadb.SDB_SNAP_CONFIGS              : Get the snapshot of node configurations
+     *                 <dt>Sequoiadb.SDB_SNAP_SVCTASKS             : Get all the information of schedule task
      *                 <ds>Sequoiadb.SDB_SNAP_SEQUENCES            : Get the snapshot of the sequence
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
@@ -1283,6 +1327,7 @@ public class Sequoiadb implements Closeable {
      *                 <dt>SequoiaDB.SDB_SNAP_ACCESSPLANS          : Get the snapshot of cached access plans
      *                 <dt>Sequoiadb.SDB_SNAP_HEALTH               : Get the snapshot of node health detection
      *                 <dt>Sequoiadb.SDB_SNAP_CONFIGS              : Get the snapshot of node configurations
+     *                 <dt>Sequoiadb.SDB_SNAP_SVCTASKS             : Get all the information of schedule task
      *                 <ds>Sequoiadb.SDB_SNAP_SEQUENCES            : Get the snapshot of the sequence
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
@@ -1293,7 +1338,7 @@ public class Sequoiadb implements Closeable {
 	 * @param skipRows   skip the first numToSkip documents, never skip if this parameter is 0
      * @param returnRows return the specified amount of documents,
      *                   when returnRows is 0, return nothing,
-     *                   when returnRows is -1, return all the documents   
+     *                   when returnRows is -1, return all the documents.
      * @return the DBCursor instance of the result
      * @throws BaseException If error happens.
      */
@@ -2166,8 +2211,12 @@ public class Sequoiadb implements Closeable {
                 return AdminCommand.LIST_TRANSACTIONS;
             case SDB_LIST_TRANSACTIONS_CURRENT:
                 return AdminCommand.LIST_TRANSACTIONS_CURRENT;
+            case SDB_LIST_SVCTASKS:
+                return AdminCommand.LIST_SVCTASKS;
             case SDB_LIST_SEQUENCES:
                 return AdminCommand.LIST_SEQUENCES;
+            case SDB_LIST_USERS:
+                return AdminCommand.LIST_USERS;
             case SDB_LIST_CL_IN_DOMAIN:
                 return AdminCommand.LIST_CL_IN_DOMAIN;
             case SDB_LIST_CS_IN_DOMAIN:

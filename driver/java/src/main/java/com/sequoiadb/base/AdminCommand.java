@@ -73,7 +73,9 @@ final class AdminCommand {
     final static String LIST_TASKS = PREFIX + "list tasks";
     final static String LIST_TRANSACTIONS = PREFIX + "list transactions";
     final static String LIST_TRANSACTIONS_CURRENT = PREFIX + "list transactions current";
+    final static String LIST_SVCTASKS = PREFIX + "list service tasks";
     final static String LIST_SEQUENCES = PREFIX + "list sequences";
+    final static String LIST_USERS = PREFIX + "list users";
     final static String LIST_CL_IN_DOMAIN = PREFIX + "list collections in domain";
     final static String LIST_CS_IN_DOMAIN = PREFIX + "list collectionspaces in domain";
 
