@@ -597,11 +597,14 @@ static INT32 _recv ( sdbConnectionHandle cHandle, Socket* sock,
       // quick ack
       {
          INT32 i = 1 ;
-         setsockopt( clientGetRawSocket ( sock ), IPPROTO_TCP, TCP_QUICKACK, (void*)&i, sizeof(i) ) ;
+         setsockopt( clientGetRawSocket ( sock ),
+                     IPPROTO_TCP, TCP_QUICKACK,
+                     (void*)&i, sizeof(i) ) ;
       }
 #endif
       break ;
    }
+
    ossEndianConvertIf4 ( len, realLen, endianConvert ) ;
    rc = _reallocBuffer ( ppBuffer, size, realLen+1 ) ;
    if ( SDB_OK != rc )
@@ -694,7 +697,9 @@ done:
    return rc ;
 
 error:
-   if ( SDB_NETWORK_CLOSE == rc || SDB_NETWORK == rc || isNeedDisconnect )
+   if ( SDB_NETWORK_CLOSE == rc ||
+        SDB_NETWORK == rc ||
+        isNeedDisconnect )
    {
       _sdbDisconnect_inner( cHandle ) ;
    }

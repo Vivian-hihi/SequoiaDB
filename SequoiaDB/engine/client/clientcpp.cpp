@@ -7095,13 +7095,6 @@ do                                                            \
       _sock->quickAck() ;
 
       ossEndianConvertIf4 ( length, realLen, _endianConvert ) ;
-      if ( realLen < (INT32)sizeof( MsgHeader ) ||
-           realLen > SDB_MAX_MSG_LENGTH )
-      {
-         /// message is error
-         rc = SDB_UNKNOWN_MESSAGE ;
-         goto error ;
-      }
       rc = _reallocBuffer ( ppBuffer, size, realLen+1 ) ;
       if ( rc )
       {
@@ -7124,7 +7117,6 @@ do                                                            \
    error :
       if ( SDB_NETWORK_CLOSE == rc ||
            SDB_NETWORK == rc ||
-           SDB_UNKNOWN_MESSAGE == rc ||
            isNeedDiscWithErr )
       {
          delete _sock ;
