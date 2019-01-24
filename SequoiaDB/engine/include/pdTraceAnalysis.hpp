@@ -307,7 +307,7 @@ class _pdTraceParser
                                      const pdTraceRecord *pRecord,
                                      UINT32 sequenceNum ) ;
 
-      INT32 _outputDBversionInfo( const CHAR *versionFilePath ) ;
+      INT32 _outputDBVersionInfo( const CHAR *versionFilePath ) ;
 
       const CHAR  *_getFunctionName( UINT32 functionID ) ;
 
@@ -339,9 +339,6 @@ class _pdTraceParser
       UINT32    _functionsCount ;
       CHAR     *_funcNames ;
       UINT32   *_funcOffsetList ;
-
-      CHAR     *_versionInfo ;
-      UINT32    _versionInfoSize ;
 
 } ;
 typedef _pdTraceParser pdTraceParser ;

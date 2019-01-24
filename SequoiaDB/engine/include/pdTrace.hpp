@@ -392,7 +392,7 @@ struct _pdTraceHeader
    #ifdef SDB_ENGINE_FIXVERSION_CURRENT
       _engineFixVersion = SDB_ENGINE_FIXVERSION_CURRENT ;
    #else
-      _engineFixVersion = -1 ;
+      _engineFixVersion = 0 ;
    #endif
       _release                = SDB_ENGINE_RELEASE_CURRENT ;
       _functionsSegmentSize   = 0 ;

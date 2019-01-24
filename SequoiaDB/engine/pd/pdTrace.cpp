@@ -475,7 +475,7 @@ INT32 _pdTraceCB::_appendFuncName( CHAR **ppBuffer, UINT32 &bufferSize,
    UINT32 tempBufferSize   = 0 ;
    UINT32 functionsNameLen = ossStrlen( pdGetTraceFunction( functionNameID ) )
                              + 1 ;
-   if ( !( *ppBuffer ) && !bufferSize )
+   if ( !( *ppBuffer ) )
    {
       tempBufferSize = TRACE_FUNCTIONSNAMES_INIT_SIZE ;
       *ppBuffer = ( CHAR* )SDB_OSS_MALLOC( tempBufferSize ) ;

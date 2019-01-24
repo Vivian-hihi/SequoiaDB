@@ -46,6 +46,7 @@ using namespace bson ;
 using namespace engine ;
 
 #define TRACE_VERSION_INFO_SIZE                   ( 50 )
+#define TRACE_INVALID_FUNCTIONOFFSET              0xFFFFFFFFU
 #define PD_FUNC_RECORD_TITLE \
    "name, count, avgcost, min, maxIn2OutCost, maxCurrentCost, first, second, third, fourth, fifth"
 /*
@@ -58,8 +59,6 @@ _pdTraceParser::_pdTraceParser()
    _pFormatBuf = NULL ;
    _bufSize = 0 ;
    _pMaxRecordBuf = NULL ;
-   _versionInfo = NULL ;
-   _versionInfoSize = 0 ;
    _useFunctionListFile = TRUE ;
    _functionsCount = 0 ;
    _funcNames = NULL ;
@@ -83,11 +82,6 @@ _pdTraceParser::~_pdTraceParser()
    {
       SDB_OSS_FREE( _pMaxRecordBuf ) ;
       _pMaxRecordBuf = NULL ;
-   }
-   if ( _versionInfo )
-   {
-      SDB_OSS_FREE( _versionInfo ) ;
-      _versionInfo = NULL ;
    }
    if ( _funcNames )
    {
@@ -138,14 +132,6 @@ INT32 _pdTraceParser::init( const CHAR *pInputFileName,
       goto error ;
    }
 
-   _versionInfo = (CHAR*)SDB_OSS_MALLOC( TRACE_VERSION_INFO_SIZE ) ;
-   if ( !_versionInfo )
-   {
-      rc = SDB_OOM ;
-      goto error ;
-   }
-   ossMemset( _versionInfo, 0, TRACE_VERSION_INFO_SIZE ) ;
-
    _versionFilePath = string(filePath) + string(".version") ;
 
    if ( type == PD_TRACE_FORMAT_TYPE_FORMAT )
@@ -175,11 +161,13 @@ error:
    goto done ;
 }
 
-INT32 _pdTraceParser::_outputDBversionInfo( const CHAR *versionFilePath )
+INT32 _pdTraceParser::_outputDBVersionInfo( const CHAR *versionFilePath )
 {
-   INT32 rc = SDB_OK ;
-   BOOLEAN versionOpen = FALSE ;
+   INT32   rc = SDB_OK ;
+   CHAR   *versionInfo ;
+   UINT32  versionInfoSize ;
    OSSFILE versionFile ;
+   BOOLEAN versionOpen = FALSE ;
 
    if ( versionFilePath && 0 != versionFilePath[0] )
    {
@@ -194,30 +182,38 @@ INT32 _pdTraceParser::_outputDBversionInfo( const CHAR *versionFilePath )
       versionOpen = TRUE ;
    }
 
+   versionInfo = (CHAR*)SDB_OSS_MALLOC( TRACE_VERSION_INFO_SIZE ) ;
+   if ( !versionInfo )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+   ossMemset( versionInfo, 0, TRACE_VERSION_INFO_SIZE ) ;
+
    // write version info
    if ( _traceHeader._engineFixVersion )
    {
-      _versionInfoSize = ossSnprintf( _versionInfo, TRACE_VERSION_INFO_SIZE,
-                                      "SequoiaDB version : %u.%u.%u"OSS_NEWLINE
-                                      "Release : %u"OSS_NEWLINE,
-                                      _traceHeader._engineVersion,
-                                      _traceHeader._engineSubVersion,
-                                      _traceHeader._engineFixVersion,
-                                      _traceHeader._release ) ;
+      versionInfoSize = ossSnprintf( versionInfo, TRACE_VERSION_INFO_SIZE,
+                                     "SequoiaDB version : %u.%u.%u"OSS_NEWLINE
+                                     "Release : %u"OSS_NEWLINE,
+                                     _traceHeader._engineVersion,
+                                     _traceHeader._engineSubVersion,
+                                     _traceHeader._engineFixVersion,
+                                     _traceHeader._release ) ;
    }
    else
    {
-      _versionInfoSize = ossSnprintf( _versionInfo, TRACE_VERSION_INFO_SIZE,
-                                      "SequoiaDB version : %u.%u"OSS_NEWLINE
-                                      "Release : %u"OSS_NEWLINE,
-                                      _traceHeader._engineVersion,
-                                      _traceHeader._engineSubVersion,
-                                      _traceHeader._release ) ;
+      versionInfoSize = ossSnprintf( versionInfo, TRACE_VERSION_INFO_SIZE,
+                                     "SequoiaDB version : %u.%u"OSS_NEWLINE
+                                     "Release : %u"OSS_NEWLINE,
+                                     _traceHeader._engineVersion,
+                                     _traceHeader._engineSubVersion,
+                                     _traceHeader._release ) ;
    }
 
    if ( versionOpen )
    {
-      rc = ossWriteN( &versionFile, _versionInfo, _versionInfoSize ) ;
+      rc = ossWriteN( &versionFile, versionInfo, versionInfoSize ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Write db version to versionFile failed, rc: %d", rc ) ;
@@ -231,6 +227,11 @@ done:
       ossClose( versionFile) ;
       versionOpen = FALSE ;
    }
+   if ( versionInfo )
+   {
+      SDB_OSS_FREE( versionInfo ) ;
+      versionInfo = NULL ;
+   }
    return rc ;
 error:
    goto done ;
@@ -241,7 +242,7 @@ INT32 _pdTraceParser::parse()
    INT32 rc = SDB_OK ;
 
    /// step 1
-   rc = _outputDBversionInfo( _versionFilePath.c_str() ) ;
+   rc = _outputDBVersionInfo( _versionFilePath.c_str() ) ;
    if ( rc )
    {
       PD_LOG( PDERROR, "Parse dbversion info failed, rc: %d", rc ) ;
@@ -359,7 +360,7 @@ INT32 _pdTraceParser::_dumpFunctionList( OSSFILE *file )
    {
       if( _funcOffsetList[i] > funcNamesSize || _funcOffsetList[i] < 0 )
       {
-         _funcOffsetList[i] = -1 ;
+         _funcOffsetList[i] = TRACE_INVALID_FUNCTIONOFFSET ;
          PD_LOG( PDERROR, "FuncOffsetList[%llu] is invalid", i ) ;
       }
    }
@@ -402,7 +403,8 @@ const CHAR *_pdTraceParser::_getFunctionName( UINT32 functionID )
    const CHAR *functionsName = "unknown" ;
    UINT32 offset = _funcOffsetList[ functionID ] ;
 
-   if ( functionID >= _functionsCount || functionID < 0 || offset == -1 )
+   if ( functionID >= _functionsCount || functionID < 0 ||
+        offset == TRACE_INVALID_FUNCTIONOFFSET )
    {
       return functionsName ;
    }
