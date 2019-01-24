@@ -810,7 +810,9 @@ INT32 _pdTraceParser::_analysisRecordsByThread( UINT32 tid,
    const pdTraceRecord *pRecord = NULL ;
    PD_STACK_FUNCS funcStack ;
 
-   length = ossSnprintf( _pFormatBuf, _bufSize, "tid: %u"OSS_NEWLINE, tid ) ;
+   length = ossSnprintf( _pFormatBuf, _bufSize,
+                         OSS_NEWLINE OSS_NEWLINE"tid: %u"OSS_NEWLINE,
+                         tid ) ;
    rc = ossWriteN( flwFile, _pFormatBuf, length ) ;
    if ( rc )
    {
