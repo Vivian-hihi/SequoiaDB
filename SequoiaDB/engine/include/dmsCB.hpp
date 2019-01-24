@@ -151,7 +151,8 @@ namespace engine
       ossPoolMap<const CHAR*, dmsStorageUnitID, cmp_cscb> _cscbNameMap ;
       ossPoolMap<utilCSUniqueID, dmsStorageUnitID>  _cscbIDMap ;
       std::vector<SDB_DMS_CSCB*>          _cscbVec ;
-      std::vector<SDB_DMS_CSCB*>          _delCscbVec ;
+      std::vector<SDB_DMS_CSCB*>          _tmpCscbVec ;
+      std::vector<BYTE>                   _tmpCscbStatusVec ;
       std::vector<ossRWMutex*>            _latchVec ;
       std::vector<dmsStorageUnitID>       _freeList ;
       // collection spaces mutex in create and drop operations
@@ -242,9 +243,25 @@ namespace engine
       void _CSCBRelease ( dmsStorageUnitID suID,
                           OSS_LATCH_MODE lockType = SHARED ) ;
 
-      INT32 _CSCBNameRemove ( const CHAR *pName, _pmdEDUCB *cb,
-                              SDB_DPSCB *dpsCB, BOOLEAN onlyEmpty,
-                              SDB_DMS_CSCB *&pCSCB ) ;
+      INT32 _moveCSCB2TmpList( const CHAR *pName, BYTE status ) ;
+
+      INT32 _restoreCSCBFromTmpList( const CHAR *pName ) ;
+
+      INT32 _CSCBRenameP1( const CHAR *pName,
+                           const CHAR *pNewName,
+                           _pmdEDUCB *cb,
+                           SDB_DPSCB *dpsCB ) ;
+
+      INT32 _CSCBRenameP1Cancel( const CHAR *pName,
+                                     const CHAR *pNewName,
+                                     _pmdEDUCB *cb,
+                                     SDB_DPSCB *dpsCB ) ;
+
+      INT32 _CSCBRenameP2( const CHAR *pName,
+                           const CHAR *pNewName,
+                           _pmdEDUCB *cb,
+                           SDB_DPSCB *dpsCB ) ;
+
       INT32 _CSCBNameRemoveP1 ( const CHAR *pName,
                                 _pmdEDUCB *cb,
                                 SDB_DPSCB *dpsCB ) ;
@@ -257,11 +274,6 @@ namespace engine
                                 SDB_DMS_CSCB *&pCSCB ) ;
 
       void _CSCBNameMapCleanup () ;
-
-      INT32 _CSCBRename( const CHAR *pName,
-                         const CHAR *pNewName,
-                         _pmdEDUCB *cb,
-                         SDB_DPSCB *dpsCB ) ;
 
       INT32 _delCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB, BOOLEAN removeFile,
@@ -333,6 +345,18 @@ namespace engine
                                    const CHAR *pNewName,
                                    _pmdEDUCB *cb,
                                    SDB_DPSCB *dpsCB ) ;
+      INT32 renameCollectionSpaceP1( const CHAR *pName,
+                                     const CHAR *pNewName,
+                                     _pmdEDUCB *cb,
+                                     SDB_DPSCB *dpsCB ) ;
+      INT32 renameCollectionSpaceP1Cancel( const CHAR *pName,
+                                           const CHAR *pNewName,
+                                           _pmdEDUCB *cb,
+                                           SDB_DPSCB *dpsCB ) ;
+      INT32 renameCollectionSpaceP2( const CHAR *pName,
+                                     const CHAR *pNewName,
+                                     _pmdEDUCB *cb,
+                                     SDB_DPSCB *dpsCB ) ;
 
       void dumpInfo ( MON_CL_SIM_LIST &collectionList,
                       BOOLEAN sys = FALSE ) ;
@@ -367,13 +391,15 @@ namespace engine
       void changeSUCaches ( const MON_CS_SIM_LIST &monCSList, UINT32 mask ) ;
 
       INT32 dropCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
-                                    SDB_DPSCB *dpsCB );
+                                    SDB_DPSCB *dpsCB,
+                                    BOOLEAN removeFile = TRUE ) ;
 
       INT32 dropCollectionSpaceP1Cancel ( const CHAR *pName, _pmdEDUCB *cb,
                                           SDB_DPSCB *dpsCB );
 
       INT32 dropCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
-                                    SDB_DPSCB *dpsCB ) ;
+                                    SDB_DPSCB *dpsCB,
+                                    BOOLEAN removeFile = TRUE ) ;
 
       BOOLEAN dispatchDictJob( dmsDictJob &job ) ;
       void pushDictJob( dmsDictJob job ) ;

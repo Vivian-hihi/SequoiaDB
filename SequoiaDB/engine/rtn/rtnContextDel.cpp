@@ -799,7 +799,7 @@ namespace engine
    {
       _pDmsCB     = pmdGetKRCB()->getDMSCB() ;
       _pDpsCB     = pmdGetKRCB()->getDPSCB() ;
-      _pCatAgent  = pmdGetKRCB()->getClsCB ()->getCatAgent () ;
+      _pCatAgent  = pmdGetKRCB()->getClsCB()->getCatAgent() ;
       _pTransCB   = pmdGetKRCB()->getTransCB();
       _lockDMS    = FALSE ;
       _logicCSID  = DMS_INVALID_LOGICCSID ;
@@ -812,6 +812,21 @@ namespace engine
    {
       pmdEDUMgr *eduMgr    = pmdGetKRCB()->getEDUMgr() ;
       pmdEDUCB *cb         = eduMgr->getEDUByID( eduID() ) ;
+
+#ifdef _WINDOWS
+      if ( RENAMECSPHASE_1 == _status )
+      {
+         INT32 rcTmp = SDB_OK;
+         rcTmp = _pDmsCB->renameCollectionSpaceP1Cancel( _oldName, _newName,
+                                                         cb, getDPSCB() );
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "failed to cancel rename cs[%s], rc: %d",
+                    _oldName, rcTmp );
+         }
+         _status = RENAMECSPHASE_0;
+      }
+#endif
 
       _logger.clear() ;
 
@@ -881,9 +896,6 @@ namespace engine
       rc = _tryLock( pCSName, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock, rc: %d", rc ) ;
 
-      _status   = RENAMECSPHASE_1 ;
-      _isOpened = TRUE ;
-
       /// log to .SEQUOIADB_RENAME_INFO
       {
          utilRenameLog aLog ( _oldName, _newName ) ;
@@ -895,6 +907,18 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to log rename info to file, rc: %d", rc ) ;
       }
+
+      /// rename cs at phase 1
+#ifdef _WINDOWS
+         rc = _pDmsCB->renameCollectionSpaceP1( _oldName, _newName,
+                                                cb, _pDpsCB );
+         PD_RC_CHECK( rc, PDERROR, "Failed to rename cs "
+                      "from [%s] to [%s] at phase 1, rc: %d",
+                      _oldName, _newName, rc ) ;
+#endif
+
+      _status   = RENAMECSPHASE_1 ;
+      _isOpened = TRUE ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNCTXRENAMECS_OPEN, rc ) ;
@@ -958,7 +982,13 @@ namespace engine
 
       if ( _status == RENAMECSPHASE_1 )
       {
-         rc = _pDmsCB->renameCollectionSpace( _oldName, _newName, cb, _pDpsCB );
+#ifdef _WINDOWS
+         rc = _pDmsCB->renameCollectionSpaceP2( _oldName, _newName,
+                                                cb, _pDpsCB );
+#else
+         rc = _pDmsCB->renameCollectionSpace( _oldName, _newName,
+                                              cb, _pDpsCB );
+#endif
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to rename cs from [%s] to [%s], rc: %d",
                       _oldName, _newName, rc ) ;

@@ -1811,18 +1811,18 @@ namespace engine
 
       if ( CMD_SPACE_SERVICE_SHARD == getFromService() )
       {
-         rtnContextRenameCS *renameContext = NULL;
+         rtnContextRenameCS *renameContext = NULL ;
          rc = rtnCB->contextNew( RTN_CONTEXT_RENAMECS,
                                  (rtnContext **)&renameContext,
                                  *pContextID, cb );
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to create context, rename cs failed, rc: %d",
-                      rc );
+                      rc ) ;
 
          rc = renameContext->open( _oldName, _newName, cb );
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to open context, rename cs failed, rc: %d)",
-                      rc );
+                      rc ) ;
       }
       else
       {
@@ -1837,8 +1837,8 @@ namespace engine
    error :
       if ( -1 != *pContextID )
       {
-         rtnCB->contextDelete( *pContextID, cb );
-         *pContextID = -1;
+         rtnCB->contextDelete( *pContextID, cb ) ;
+         *pContextID = -1 ;
       }
       goto done;
    }
