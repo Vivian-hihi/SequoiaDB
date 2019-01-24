@@ -426,6 +426,7 @@ namespace engine
       dmsRecordRW delRecordRW ;
       const dmsDeletedRecord* pRead = NULL ;
       dpsTransCB *pTransCB          = pmdGetKRCB()->getTransCB() ;
+      dpsTransRetInfo retInfo ;
 
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__RESERVEFROMDELETELIST ) ;
       PD_TRACE1 ( SDB__DMSSTORAGEDATA__RESERVEFROMDELETELIST,
@@ -476,7 +477,8 @@ namespace engine
                {
                   if ( SDB_OK == pTransCB->transLockTestX( cb, _logicalCSID,
                                                            context->mbID(),
-                                                           &foundDeletedID ) )
+                                                           &foundDeletedID,
+                                                           &retInfo ) )
                   {
                      if ( preRW.isEmpty() )
                      {
@@ -502,11 +504,10 @@ namespace engine
                      rc = SDB_OK ;
                      goto done ;
                   }
-                  /// Test cl IX lock
-                  else if ( SDB_OK != pTransCB->transLockTestIX( cb,
-                                                                 _logicalCSID,
-                                                                 context->mbID(),
-                                                                 NULL ) )
+                  else if ( DPS_TRANSLOCK_X == retInfo._lockType &&
+                            dpsTransLockId( _logicalCSID,
+                                            context->mbID(),
+                                            NULL ) == retInfo._lockID )
                   {
                      context->pause() ;
                      ossSleep( 10 ) ;

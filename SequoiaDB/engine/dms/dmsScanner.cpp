@@ -101,7 +101,7 @@ namespace engine
       _extent              = NULL ;
       _pTransCB            = NULL ;
       _curRID._extent      = curExtentID ;
-      _recordLock          = -1 ;
+      _recordLock          = DPS_TRANSLOCK_MAX ;
       _needUnLock          = FALSE ;
       _selectForUpdate     = FALSE ;
       _cb                  = NULL ;
@@ -115,13 +115,13 @@ namespace engine
            DMS_ACCESS_TYPE_DELETE == _accessType ||
            DMS_ACCESS_TYPE_INSERT == _accessType )
       {
-         _recordLock = EXCLUSIVE ;
+         _recordLock = DPS_TRANSLOCK_X ;
       }
       else if ( ( DMS_ACCESS_TYPE_QUERY == _accessType ||
                   DMS_ACCESS_TYPE_FETCH == _accessType ) &&
                  TRANS_ISOLATION_RU != pmdGetOptionCB()->transIsolation() )
       {
-         _recordLock = _selectForUpdate ? EXCLUSIVE : SHARED ;
+         _recordLock = _selectForUpdate ? DPS_TRANSLOCK_U : DPS_TRANSLOCK_S ;
       }
    }
 
@@ -129,7 +129,7 @@ namespace engine
    {
       _extent     = NULL ;
 
-      if ( FALSE == _firstRun && _recordLock != -1 &&
+      if ( FALSE == _firstRun && _recordLock != DPS_TRANSLOCK_MAX &&
            DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
@@ -215,7 +215,7 @@ namespace engine
 
    void _dmsExtScannerBase::stop()
    {
-      if ( FALSE == _firstRun && _recordLock != -1
+      if ( FALSE == _firstRun && _recordLock != DPS_TRANSLOCK_MAX
            && DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
@@ -249,7 +249,7 @@ namespace engine
       BOOLEAN   bPreLoadEnabled = pBPSCB->isPreLoadEnabled() ;
 
       /// no trans or read(not for update) in trans need to unlock
-      if ( -1 != _recordLock )
+      if ( DPS_TRANSLOCK_MAX != _recordLock )
       {
          if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
          {
@@ -340,15 +340,23 @@ namespace engine
          _curRecordPtr = _recordRW.readPtr( 0 ) ;
          _next = _curRecordPtr->getNextOffset() ;
 
-         if ( _recordLock != -1 )
+         if ( _recordLock != DPS_TRANSLOCK_MAX )
          {
             dmsTBTransContext tbTxContext( _context, _accessType ) ;
             dpsTransRetInfo   lockConflict ;
-            if ( EXCLUSIVE == _recordLock )
+            if ( DPS_TRANSLOCK_X == _recordLock )
             {
                rc = _pTransCB->transLockGetX( cb, _pSu->logicalID(),
                                               _context->mbID(), &_curRID,
-                                              & tbTxContext, & lockConflict ) ;
+                                              & tbTxContext,
+                                              &lockConflict ) ;
+            }
+            else if ( DPS_TRANSLOCK_U == _recordLock )
+            {
+               rc = _pTransCB->transLockGetU( cb, _pSu->logicalID(),
+                                              _context->mbID(), &_curRID,
+                                              &tbTxContext,
+                                              &lockConflict ) ;
             }
             else
             {
@@ -374,7 +382,7 @@ namespace engine
 
          if ( _curRecordPtr->isDeleting() )
          {
-            if ( _recordLock == EXCLUSIVE )
+            if ( _recordLock == DPS_TRANSLOCK_X )
             {
                INT32 rc1 = _pSu->deleteRecord( _context, _curRID,
                                                0, cb, NULL ) ;
@@ -383,6 +391,10 @@ namespace engine
                   PD_LOG( PDWARNING, "Failed to delete the deleting record, "
                           "rc: %d", rc ) ;
                }
+            }
+
+            if ( lockedRecord )
+            {
                _pTransCB->transLockRelease( cb, _pSu->logicalID(),
                                             _context->mbID(), &_curRID ) ;
                lockedRecord = FALSE ;
@@ -490,7 +502,7 @@ namespace engine
             }
          }
 
-         if ( _recordLock != -1 )
+         if ( _recordLock != DPS_TRANSLOCK_MAX )
          {
             _pTransCB->transLockRelease( cb, _pSu->logicalID(),
                                          _context->mbID(), &_curRID ) ;
@@ -504,7 +516,7 @@ namespace engine
    done:
       return rc ;
    error:
-      if ( lockedRecord && _recordLock != -1 )
+      if ( lockedRecord && _recordLock != DPS_TRANSLOCK_MAX )
       {
          _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
                                       &_curRID ) ;
@@ -540,7 +552,7 @@ namespace engine
       _fastScanByID = FALSE ;
 
       /// not support transaction
-      _recordLock = -1 ;
+      _recordLock = DPS_TRANSLOCK_MAX ;
    }
 
    _dmsCappedExtScanner::~_dmsCappedExtScanner()
@@ -1028,7 +1040,7 @@ namespace engine
       _skipNum             = skipNum ;
       _firstRun            = TRUE ;
       _pTransCB            = NULL ;
-      _recordLock          = -1 ;
+      _recordLock          = DPS_TRANSLOCK_MAX ;
       _needUnLock          = FALSE ;
       _selectForUpdate     = FALSE ;
       _cb                  = NULL ;
@@ -1051,19 +1063,19 @@ namespace engine
            DMS_ACCESS_TYPE_DELETE == _accessType ||
            DMS_ACCESS_TYPE_INSERT == _accessType )
       {
-         _recordLock = EXCLUSIVE ;
+         _recordLock = DPS_TRANSLOCK_X ;
       }
       else if ( ( DMS_ACCESS_TYPE_QUERY == _accessType ||
                   DMS_ACCESS_TYPE_FETCH == _accessType ) &&
                  TRANS_ISOLATION_RU != pmdGetOptionCB()->transIsolation() )
       {
-         _recordLock = _selectForUpdate ? EXCLUSIVE : SHARED ;
+         _recordLock = _selectForUpdate ? DPS_TRANSLOCK_U : DPS_TRANSLOCK_S ;
       }
    }
 
    _dmsIXSecScanner::~_dmsIXSecScanner ()
    {
-      if ( FALSE == _firstRun && _recordLock != -1
+      if ( FALSE == _firstRun && _recordLock != DPS_TRANSLOCK_MAX
            && DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
@@ -1150,7 +1162,7 @@ namespace engine
       INT32 rc          = SDB_OK ;
       _pTransCB         = pmdGetKRCB()->getTransCB() ;
       /// no trans or read(not for update) in trans need to unlock
-      if ( -1 != _recordLock )
+      if ( DPS_TRANSLOCK_MAX != _recordLock )
       {
          if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
          {
@@ -1341,16 +1353,24 @@ namespace engine
 
          _recordRW = _pSu->record2RW( _curRID, _context->mbID() ) ;
          _curRecordPtr = _recordRW.readPtr( 0 ) ;
-         if ( _recordLock != -1 )
+         if ( _recordLock != DPS_TRANSLOCK_MAX )
          {
             dmsIXTransContext ixTxContext( _context, _accessType,
                                            _scanner, isReadOnly() ) ;
             dpsTransRetInfo   lockConflict ;
-            if ( EXCLUSIVE == _recordLock )
+            if ( DPS_TRANSLOCK_X == _recordLock )
             {
                rc = _pTransCB->transLockGetX( cb, _pSu->logicalID(),
                                               _context->mbID(), &_curRID,
-                                              &ixTxContext, & lockConflict ) ;
+                                              &ixTxContext,
+                                              & lockConflict ) ;
+            }
+            else if ( DPS_TRANSLOCK_U == _recordLock )
+            {
+               rc = _pTransCB->transLockGetU( cb, _pSu->logicalID(),
+                                              _context->mbID(), &_curRID,
+                                              &ixTxContext,
+                                              & lockConflict ) ;
             }
             else
             {
@@ -1375,7 +1395,7 @@ namespace engine
 
          if ( _curRecordPtr->isDeleting() )
          {
-            if ( _recordLock != -1 )
+            if ( _recordLock == DPS_TRANSLOCK_X )
             {
                rc = _scanner->pauseScan( isReadOnly() ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to pause ixscan, rc: %d", rc ) ;
@@ -1389,7 +1409,10 @@ namespace engine
 
                rc = _scanner->resumeScan( isReadOnly() ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to resume ixscan, rc: %d", rc ) ;
+            }
 
+            if ( lockedRecord )
+            {
                _pTransCB->transLockRelease( cb, _pSu->logicalID(),
                                             _context->mbID(), &_curRID ) ;
                lockedRecord = FALSE ;
@@ -1488,7 +1511,7 @@ namespace engine
             }
          }
 
-         if ( _recordLock != -1 )
+         if ( _recordLock != DPS_TRANSLOCK_MAX )
          {
             _pTransCB->transLockRelease( cb, _pSu->logicalID(),
                                          _context->mbID(), &_curRID ) ;
@@ -1519,7 +1542,7 @@ namespace engine
 
       return rc ;
    error:
-      if ( lockedRecord && _recordLock != -1 )
+      if ( lockedRecord && _recordLock != DPS_TRANSLOCK_MAX )
       {
          _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
                                       &_curRID ) ;
@@ -1533,7 +1556,7 @@ namespace engine
 
    void _dmsIXSecScanner::stop ()
    {
-      if ( FALSE == _firstRun && _recordLock != -1
+      if ( FALSE == _firstRun && _recordLock != DPS_TRANSLOCK_MAX
            && DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),

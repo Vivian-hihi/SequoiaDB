@@ -182,7 +182,7 @@ namespace engine
 
       void transLockReleaseAll( _pmdEDUCB *eduCB ) ;
 
-      BOOLEAN isTransOn() ;
+      BOOLEAN isTransOn() const ;
 
       // test if the lock can be got.
       // test record-S-lock: also test the space-IS-lock and collection-IS-lock
@@ -263,6 +263,7 @@ namespace engine
       ossSpinXLatch     _CBMapMutex ;
       TRANS_CB_MAP      _cbMap ;
       BOOLEAN           _isOn ;
+      BOOLEAN           _lockEnabled ;
       BOOLEAN           _doRollback ;
       ossEvent          _rollbackEvent ;
       ossSpinXLatch     _lsnMapMutex ;
