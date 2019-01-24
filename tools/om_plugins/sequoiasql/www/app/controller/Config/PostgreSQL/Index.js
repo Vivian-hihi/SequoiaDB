@@ -298,6 +298,10 @@
                   } ) ;
                } ) ;
             }
+            else
+            {
+               $scope.ModifyConfigWindow['config'].scrollToError( null ) ;
+            }
             return isAllClear ;
          } ) ;
          $scope.ModifyConfigWindow['callback']['Open']() ;

@@ -28,11 +28,13 @@
       </div>
 
       <div ng-windows="form as ConfigsWindow.config" windows-callback="ConfigsWindow.callback">
-         <div form-create para="form"></div>
+         <div class="error" style="margin-top:10px;">Tips: {{pAutoLanguage("修改的配置会自动同步到配置文件。")}}</div>
+         <div style="margin-top:10px;" form-create para="form"></div>
       </div>
 
       <div ng-windows="form as ConfigWindow.config" windows-callback="ConfigWindow.callback">
-         <div form-create para="form"></div>
+         <div class="error" style="margin-top:10px;">Tips: {{pAutoLanguage("修改的配置会自动同步到配置文件。")}}</div>
+         <div style="margin-top:10px;" form-create para="form"></div>
       </div>
 
       <div>

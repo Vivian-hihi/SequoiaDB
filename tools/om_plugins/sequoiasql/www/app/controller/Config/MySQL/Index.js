@@ -104,7 +104,7 @@
             {
                sql += ', ' ;
             }
-            if ( isNaN( updator[key] ) )
+            if ( isNaN( updator[key] ) || ( isString( updator[key] ) && updator[key].length == 0 ) )
             {
                sql += key + "='" + updator[key] + "'" ;
             }
@@ -158,6 +158,10 @@
                {
                   updateServiceConfig( newConfigs ) ;
                }
+            }
+            else
+            {
+               $scope.ConfigsWindow['config'].scrollToError( null ) ;
             }
             return isAllClear ;
          } ) ;
