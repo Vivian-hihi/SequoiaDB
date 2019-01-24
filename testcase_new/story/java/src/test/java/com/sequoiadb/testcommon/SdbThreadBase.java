@@ -8,17 +8,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService ;
 import java.util.concurrent.Executors ;
+import java.util.concurrent.atomic.AtomicBoolean ;
 import java.util.concurrent.atomic.AtomicInteger ;
 
 public abstract class SdbThreadBase implements Runnable {
     private List<Throwable> exceptionList = Collections.synchronizedList(new ArrayList<Throwable>());
-    //private List<Thread> threadList = new ArrayList<>();
     private Integer sync = new Integer(0) ;
     private Object result = null ;
     private AtomicInteger count = new AtomicInteger(0);
     private static final int MAX_THREAD_NUMBER = 100 ;
+    
     private static ExecutorService service = Executors.newFixedThreadPool( MAX_THREAD_NUMBER ) ;
     private Thread thread = null ;
+   
     
     public void start() {
         start(1);
@@ -26,13 +28,7 @@ public abstract class SdbThreadBase implements Runnable {
     }
 
     public void start(int threadNum) {
-        /*if ( threadNum == 1 ){
-            Thread t = new Thread(this);
-            threadList.add(t);
-            t.start();
-            return ;
-        }*/
-        
+        count.set( threadNum ) ;
         synchronized (service) {
             for (int i = 0; i < threadNum; i++) {
                 service.execute( this ) ;
@@ -124,21 +120,10 @@ public abstract class SdbThreadBase implements Runnable {
     }
 
     // join所有线程
-    public void join() {
-        /*synchronized (this) {
-            for (Thread thread : threadList) {
-                try {
-                    thread.join();
-                } catch (InterruptedException e) {
-                    exceptionList.add(e);
-                }
-            }
-            threadList.clear();
-        }*/
-        
+    public void join() {       
         synchronized (this){
             try {
-                if (count.get() !=0 ){
+                if ( count.get() != 0 ){
                     this.wait() ;
                 }
             } catch ( InterruptedException e ) {
@@ -158,8 +143,9 @@ public abstract class SdbThreadBase implements Runnable {
 
     public void run() {
         try {
-            thread = Thread.currentThread() ;
-            count.incrementAndGet() ;
+            if ( count.get() == 1 ){
+               thread = Thread.currentThread() ;
+            }
             exec();
         } catch (Throwable e) {
             exceptionList.add(e);
