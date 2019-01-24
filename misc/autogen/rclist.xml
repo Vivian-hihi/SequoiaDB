@@ -2698,5 +2698,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_DMS_CS_RENAMING</name>
+         <description>
+            <en>Renaming the collection space is in progress</en>
+            <cn>正在对集合空间改名</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
