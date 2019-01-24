@@ -34,7 +34,6 @@
 
 #trunk om test
 192.168.28.142 test-ci-cent9
-192.168.30.186 ci-test-suse4
 192.168.28.202 test-ci-ubun3
 192.168.28.144 test-ci-cent11
 
@@ -106,7 +105,7 @@
 
 #scm db（hbase）
 192.168.28.173 scm-test-ci-suse1（控制机）
-192.168.28.171 scm-test-ci-rhel1 主站点
+192.168.28.171 scm-test-ci-rhel1 主站点（Ldap）
 192.168.28.122 scm-test-ci-ubun1
 192.168.28.172 scm-test-ci-cent6
 192.168.28.137 scm-ci-test-ubun1
@@ -133,6 +132,11 @@
 192.168.30.190 scm-ci-test-suse3(暂时没用)
 新做一台suse12 sp2
 
+#DB ES环境
+192.168.28.143
 
 curl -XDELETE http://192.168.28.143:9200/_all
+
+    http://192.168.20.11/sequoiadb/trunk : 38718
+    http://192.168.20.11/sequoiadb/otherdb/postgres : 38675
 
