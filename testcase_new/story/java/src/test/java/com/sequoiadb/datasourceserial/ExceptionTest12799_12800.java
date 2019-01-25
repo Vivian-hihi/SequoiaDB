@@ -20,12 +20,12 @@ import org.testng.annotations.AfterMethod ;
 import org.testng.annotations.BeforeMethod ;
 import org.testng.annotations.Test ;
 import com.sequoiadb.datasource.SequoiadbDatasource ;
-import com.sequoiadb.base.ConfigOptions ;
 import com.sequoiadb.base.Node ;
 import com.sequoiadb.base.Sequoiadb ;
 import com.sequoiadb.datasource.DatasourceOptions ;
 import com.sequoiadb.exception.BaseException ;
 import com.sequoiadb.exception.SDBError ;
+import com.sequoiadb.testcommon.SdbTestBase ;
 
 public class ExceptionTest12799_12800 extends DataSourceTestBase {
     private SequoiadbDatasource ds ;
@@ -36,8 +36,7 @@ public class ExceptionTest12799_12800 extends DataSourceTestBase {
             DatasourceOptions dsOpt = new DatasourceOptions() ;
             dsOpt.setMaxCount( 20 ) ;
             dsOpt.setSyncCoordInterval( 1 ) ;
-            ConfigOptions opt = null ;
-            ds = new SequoiadbDatasource( super.coordUrl, "", "", dsOpt ) ;
+            ds = new SequoiadbDatasource( SdbTestBase.coordUrl, "", "", dsOpt ) ;
         } catch ( BaseException e ) {
             Assert.fail( e.getMessage() ) ;
         }
@@ -76,7 +75,7 @@ public class ExceptionTest12799_12800 extends DataSourceTestBase {
         String invalidUrl = "192.168.10.63:11810" ;
         DatasourceOptions dsOpt = new DatasourceOptions() ;
         dsOpt.setMaxCount( 20 ) ;
-        ConfigOptions opt = null ;
+  
         ds = new SequoiadbDatasource( invalidUrl, "", "", dsOpt ) ;
         List< Sequoiadb > dbs = new ArrayList< Sequoiadb >() ;
         try{
@@ -89,7 +88,7 @@ public class ExceptionTest12799_12800 extends DataSourceTestBase {
             }
         }
         
-        ds.addCoord( super.coordUrl );
+        ds.addCoord( SdbTestBase.coordUrl );
         ds.removeCoord( invalidUrl );
         try{
             getConnToPoolFull(dbs);
@@ -152,7 +151,7 @@ public class ExceptionTest12799_12800 extends DataSourceTestBase {
             }
 
             String inCoordAddr = "" ;
-            String[] pair = super.coordUrl.split( ":" ) ;
+            String[] pair = SdbTestBase.coordUrl.split( ":" ) ;
             try {
                 InetAddress[] addrs = InetAddress.getAllByName( pair[0] ) ;
                 inCoordAddr = addrs[0].getHostAddress() + ":" + pair[1] ;
