@@ -157,8 +157,8 @@ public abstract class SdbThreadBase implements Runnable {
             if (0 == count.decrementAndGet()){
                 synchronized (this){
                     this.notify() ;
+                    thread = null ;
                 }
-                thread = null ;
             }
         }
     }
@@ -192,7 +192,6 @@ public abstract class SdbThreadBase implements Runnable {
                 }
             }
         }
-        assert thread != null ;
         
         final int fiftySeonds = 50000 ;
         final int totalTimes = 3 ;
@@ -203,12 +202,21 @@ public abstract class SdbThreadBase implements Runnable {
         
         int pos = 0 ;
         do{
+            Thread traceThread = null ;
+            synchronized (this){
+                traceThread = thread ;
+            }
+            if ( traceThread == null ){
+                ret = false ;
+                break ;
+            }
+            
             if (  alreadyWaitTime >= fiftySeonds  ){
                 ret = false ;
                 break ;
             }
             
-            if ( thread.getState() == State.TERMINATED ){
+            if ( traceThread.getState() == State.TERMINATED ){
                 ret = false ;
                 break ;
             }
@@ -220,13 +228,13 @@ public abstract class SdbThreadBase implements Runnable {
                 e.printStackTrace();
             }
             
-            if ( thread.getState() == State.NEW ){
+            if ( traceThread.getState() == State.NEW ){
                 continue ;
             }
             
-            StackTraceElement[] stackElem = thread.getStackTrace() ;
+            StackTraceElement[] stackElem = traceThread.getStackTrace() ;
             if ( pos != 0 ){
-                stackElem = thread.getStackTrace() ;
+                stackElem = traceThread.getStackTrace() ;
                 if ( stackElem.length == 0 
                      || stackElem.length <= pos ){
                     ret = false ;
@@ -265,6 +273,32 @@ public abstract class SdbThreadBase implements Runnable {
     public abstract void exec() throws Exception;
     
     public static void main(String[] args){
+        Thread t = Thread.currentThread() ;
+        Thread t1 = t;
+        t = null ;
+        t1.getStackTrace() ;
+        
+        SdbThreadBase base = new SdbThreadBase(){
+
+            @Override
+            public void exec() throws Exception {
+                // TODO Auto-generated method stub
+                Thread.sleep( 5000 ) ;
+            }
+            
+        };
+        
+        base.start() ;
+        base.matchBlockingMethod( base.getClass().getName(), "exec" );
+        
+        try {
+            Thread.sleep( 10000 ) ;
+        } catch ( InterruptedException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        base.matchBlockingMethod( base.getClass().getName(), "exec" );
+        
         
     }
 }
