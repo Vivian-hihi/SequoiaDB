@@ -1726,8 +1726,8 @@ do                                                            \
                                      0, 0, 0, -1,
                                      cursor ) ;
       /// ignore update result
-      rc = updateCachedObject( rc, _connection->_getCachedContainer(),
-                               _collectionFullName ) ;
+      updateCachedObject( rc, _connection->_getCachedContainer(),
+                          _collectionFullName ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
