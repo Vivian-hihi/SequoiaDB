@@ -196,9 +196,11 @@ public class SdbTestBase {
     public static void finiSuite() {
         count.getAndIncrement() ;
         try {
-            if ( sequoiadb.isClosed() ){
+            /*if ( sequoiadb.isClosed() ){
                 sequoiadb = new Sequoiadb(coordUrl, "", "");
-            }
+            }*/
+            sequoiadb.close() ;
+            sequoiadb = new Sequoiadb(coordUrl, "", "");
             
             if (sequoiadb.isCollectionSpaceExist(csName)) {
                 sequoiadb.dropCollectionSpace(csName);
