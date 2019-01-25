@@ -78,6 +78,8 @@ done:
       {
          rc = sdbDropCollectionSpace( db, csName.c_str() ) ; 
          ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << csName ;
+         rc = sdbDropDomain( db, "altercs_15172" ) ;
+         ASSERT_EQ( SDB_OK, rc ) << "fail to drop domain " << domainName ;
          sdbReleaseCS( cs ) ;
       } 
       testBase::TearDown() ;
