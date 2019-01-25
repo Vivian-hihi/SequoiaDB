@@ -331,7 +331,7 @@ typedef struct _pdTraceRecord pdTraceRecord ;
    Current Version
 */
 #define PD_TRACE_VERSION_CUR           2
-#define PD_TRACE_INVALID_FIXVERSION   0
+#define PD_TRACE_INVALID_FIXVERSION    0
 
 /*
    _pdTraceHeader define
