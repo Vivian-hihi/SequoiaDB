@@ -243,6 +243,26 @@ public class Sequoiadb implements Closeable {
         return getIP() + ":" + getPort();
     }
 
+    /**
+     * @return the socket address of remote host.
+     */
+    public String getRemoteAddress() {
+        if (connection == null) {
+            return null;
+        }
+        return connection.getRemoteAddress();
+    }
+
+    /**
+     * @return the socket address of localhost.
+     */
+    public String getLocalAddress() {
+        if (connection == null) {
+            return null;
+        }
+        return connection.getLocalAddress();
+    }
+
     @Override
     public String toString() {
         return String.format("%s:%d", getHost(), getPort());

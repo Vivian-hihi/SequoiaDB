@@ -27,6 +27,10 @@ public interface IConnection {
 
     boolean isClosed();
 
+    String getRemoteAddress();
+
+    String getLocalAddress();
+
     void send(ByteBuffer buffer) throws BaseException;
 
     void send(byte[] msg) throws BaseException;

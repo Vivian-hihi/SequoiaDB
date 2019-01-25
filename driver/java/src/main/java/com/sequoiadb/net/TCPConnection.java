@@ -168,6 +168,22 @@ public class TCPConnection implements IConnection {
     }
 
     @Override
+    public String getRemoteAddress() {
+        if (socket == null) {
+            return null;
+        }
+        return socket.getRemoteSocketAddress().toString();
+    }
+
+    @Override
+    public String getLocalAddress() {
+        if (socket == null) {
+            return null;
+        }
+        return socket.getLocalSocketAddress().toString();
+    }
+
+    @Override
     public byte[] receive(int length) throws BaseException {
         byte[] buf = new byte[length];
         receive(buf, 0, length);
