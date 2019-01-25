@@ -80,7 +80,7 @@ class TestSessiontimeout14175(testlib.SdbTestBase):
       
       # check session attr
       act_session_attr = self.db.get_session_attri()
-      expect_session_attr = {'PreferedInstance' : 12, 'PreferedInstanceMode' : 'random', 'Timeout' : 1}
+      expect_session_attr = {'PreferedInstance' : 12, 'PreferedInstanceMode' : 'random', 'Timeout' : 1000}
       self.check_session_attr(expect_session_attr, act_session_attr)
       
       # set session attr, timeout 60s
