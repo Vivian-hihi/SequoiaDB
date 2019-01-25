@@ -331,7 +331,7 @@ typedef struct _pdTraceRecord pdTraceRecord ;
    Current Version
 */
 #define PD_TRACE_VERSION_CUR           2
-#define SDB_ENGINE_INVILD_FIXVERSION   0
+#define PD_TRACE_INVALID_FIXVERSION   0
 
 /*
    _pdTraceHeader define
@@ -393,7 +393,7 @@ struct _pdTraceHeader
    #ifdef SDB_ENGINE_FIXVERSION_CURRENT
       _engineFixVersion = SDB_ENGINE_FIXVERSION_CURRENT ;
    #else
-      _engineFixVersion = SDB_ENGINE_INVILD_FIXVERSION ;
+      _engineFixVersion = PD_TRACE_INVALID_FIXVERSION ;
    #endif
       _release                = SDB_ENGINE_RELEASE_CURRENT ;
       _functionsSegmentSize   = 0 ;

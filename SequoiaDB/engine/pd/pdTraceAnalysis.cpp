@@ -198,7 +198,7 @@ INT32 _pdTraceParser::_outputDBVersionInfo( const CHAR *versionFilePath )
    ossMemset( versionInfo, 0, TRACE_VERSION_INFO_SIZE ) ;
 
    // write version info
-   if ( SDB_ENGINE_INVILD_FIXVERSION == _traceHeader._engineFixVersion )
+   if ( PD_TRACE_INVALID_FIXVERSION == _traceHeader._engineFixVersion )
    {
       versionInfoSize = ossSnprintf( versionInfo, TRACE_VERSION_INFO_SIZE,
                                      "SequoiaDB version : %u.%u"OSS_NEWLINE
