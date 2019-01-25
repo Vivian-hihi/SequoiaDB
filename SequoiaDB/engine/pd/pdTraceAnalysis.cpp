@@ -164,10 +164,10 @@ error:
 INT32 _pdTraceParser::_outputDBVersionInfo( const CHAR *versionFilePath )
 {
    INT32   rc = SDB_OK ;
-   CHAR   *versionInfo ;
-   UINT32  versionInfoSize ;
+   CHAR   *versionInfo     = NULL ;
+   UINT32  versionInfoSize = 0 ;
+   BOOLEAN versionOpen     = FALSE ;
    OSSFILE versionFile ;
-   BOOLEAN versionOpen = FALSE ;
 
    if ( versionFilePath && 0 != versionFilePath[0] )
    {
@@ -183,6 +183,7 @@ INT32 _pdTraceParser::_outputDBVersionInfo( const CHAR *versionFilePath )
    }
    else
    {
+      rc = SDB_SYS ;
       PD_LOG( PDERROR, "VersionFilePath [%s] is invalid",
               versionFilePath ) ;
       goto error ;
@@ -197,7 +198,16 @@ INT32 _pdTraceParser::_outputDBVersionInfo( const CHAR *versionFilePath )
    ossMemset( versionInfo, 0, TRACE_VERSION_INFO_SIZE ) ;
 
    // write version info
-   if ( _traceHeader._engineFixVersion )
+   if ( SDB_ENGINE_INVILD_FIXVERSION == _traceHeader._engineFixVersion )
+   {
+      versionInfoSize = ossSnprintf( versionInfo, TRACE_VERSION_INFO_SIZE,
+                                     "SequoiaDB version : %u.%u"OSS_NEWLINE
+                                     "Release : %u"OSS_NEWLINE,
+                                     _traceHeader._engineVersion,
+                                     _traceHeader._engineSubVersion,
+                                     _traceHeader._release ) ;
+   }
+   else
    {
       versionInfoSize = ossSnprintf( versionInfo, TRACE_VERSION_INFO_SIZE,
                                      "SequoiaDB version : %u.%u.%u"OSS_NEWLINE
@@ -205,15 +215,6 @@ INT32 _pdTraceParser::_outputDBVersionInfo( const CHAR *versionFilePath )
                                      _traceHeader._engineVersion,
                                      _traceHeader._engineSubVersion,
                                      _traceHeader._engineFixVersion,
-                                     _traceHeader._release ) ;
-   }
-   else
-   {
-      versionInfoSize = ossSnprintf( versionInfo, TRACE_VERSION_INFO_SIZE,
-                                     "SequoiaDB version : %u.%u"OSS_NEWLINE
-                                     "Release : %u"OSS_NEWLINE,
-                                     _traceHeader._engineVersion,
-                                     _traceHeader._engineSubVersion,
                                      _traceHeader._release ) ;
    }
 
