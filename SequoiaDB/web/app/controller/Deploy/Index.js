@@ -1446,7 +1446,9 @@
             var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
             $.each( $scope.ModuleList, function( index, moduleInfo ){
                if( clusterName == moduleInfo['ClusterName'] &&
-                   ( moduleInfo['BusinessType'] == 'sequoiadb' || moduleInfo['BusinessType'] == 'sequoiasql-postgresql' ) )
+                   ( moduleInfo['BusinessType'] == 'sequoiadb' ||
+                     moduleInfo['BusinessType'] == 'sequoiasql-postgresql' ||
+                     moduleInfo['BusinessType'] == 'sequoiasql-mysql' ) )
                {
                   if( $scope.RestartWindow['config']['inputList'][0]['value'] == null )
                   {
