@@ -83,27 +83,63 @@
   安装程序已经完成安装 SequoiaSQL MySQL Server 于你的电脑中.
   ```
 
-##SequoiaSQL MySQL实例管理##
+##部署SequoiaSQL MySQL##
 
-#####注意: 安装完成后实例已经自动启动，无需执行以下启动步骤。
-
-安装SequoiaSQL MySQL时，会自动添加默认实例，默认端口号为3306，默认数据目录为安装路径下的data3306.
-
-1. 启动实例
+1. 切换用户和目录
 
  ```lang-javascript
- # /opt/sequoiasql/mysql/bin/sdb_mysql_ctl start 3306
+ $ su - sdbadmin
+ $ cd /opt/sequoiasql/mysql
  ```
 
-2. 停止实例
+2. 添加实例
+
+   指定实例名为myinst，该实例名映射相应的数据目录和日志路径，用户可以根据自己需要指定不同的实例名，实例默认端口号为3306。
 
  ```lang-javascript
- # /opt/sequoiasql/mysql/bin/sdb_mysql_ctl stop 3306
+ $ /bin/sdb_sql_ctl addinst myinst -D sql_data/
  ```
 
-3. 查看实例状态
+   若端口号3306被占用，用户可以使用-p参数指定实例端口号：
 
  ```lang-javascript
- # /opt/sequoiasql/mysql/bin/sdb_mysql_ctl status 3306
+ $ /bin/sdb_sql_ctl addinst myinst -D sql_data/ -p 3307
  ```
- 
+
+   查看实例：
+
+ ```lang-javascript
+ $ bin/sdb_sql_ctl listinst
+  NAME      SQLDATA                                  SQLLOG                                  
+  myinst     /opt/sequoiasql/mysql/sql_data/          /opt/sequoiasql/mysql/myinst.log        
+  Total: 1
+ ```
+
+3. 启动实例
+
+ ```lang-javascript
+ $ bin/sdb_sql_ctl start myinst
+  Starting instance myinst ...
+  ok (PID: 25174)
+ ```
+
+4. 查看实例状态
+
+ ```lang-javascript
+ $bin/sdb_mysql_ctl status
+  INSTANCE   PID        SVCNAME    SQLDATA                                  SQLLOG            
+myinst     25174      3306       /opt/sequoiasql/mysql/sql_data/          /opt/sequoiasql/mysql/myinst.log        
+Total: 1; Run: 1
+ ```
+
+5. 停止实例
+
+ ```lang-javascript
+ $ bin/sdb_sql_ctl stop myinst
+   Stoping instance myinst (PID: 25174) ...
+   ok
+ ```
+
+##SequoiaSQL MySQL开机自启动##
+
+1. 安装 SequoiaSQL MySQL 时，会自动添加系统服务：sequoiasql-mysql。该服务在启动时，会自动拉起相关的实例。
