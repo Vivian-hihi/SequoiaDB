@@ -4,7 +4,7 @@
 ******************************************************************************/
 function main()
 {
-   if( true === commIsStandalone( db ) )
+   if( true == commIsStandalone( db ) )
 	{
 	   println( "Standalone environment!" );
       return;	
@@ -48,6 +48,9 @@ function main()
    
    //check data
    checkSplitResult( srcGroup, desGroup, clName, csName )
+   
+   commDropCL( db, COMMCSNAME, clName );
+   dropDomain( domName, csName );
 }
 
 main()
