@@ -122,6 +122,11 @@
                   $location.path( '/Config/SequoiaSQL/PostgreSQL/Index' ).search( { 'r': new Date().getTime() } ) ;
                   return ;
                }
+               else if ( 'sequoiasql-mysql' == $scope.ModuleType )
+               {
+                  $location.path( '/Config/SequoiaSQL/MySQL/Index' ).search( { 'r': new Date().getTime() } ) ;
+                  return ;
+               }
             }
 
             $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
