@@ -278,6 +278,7 @@ function _rollbackNode( PD_LOGGER, businessName, config, resultInfo )
    //add inst
    args = '' ;
    args += ' start ' + businessName ;
+   args += ' --print' ;
    error = _runRemoteCmd( cmd, exec, args, timeout ) ;
    if ( error !== null )
    {
