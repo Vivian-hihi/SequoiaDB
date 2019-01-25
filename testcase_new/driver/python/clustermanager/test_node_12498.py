@@ -77,9 +77,9 @@ class TestDataNode12498(testlib.SdbTestBase):
       
       #get master and slave
       data_master_status = rg_master.get_status()
-      self.assertEqual(data_master_status, 3)
+      self.assertEqual(data_master_status, 2)
       data_slave_status = rg_slave.get_status()
-      self.assertEqual(data_slave_status, 3)
+      self.assertEqual(data_slave_status, 2)
       
       #get node information and check
       node1_service_name = node1.get_servicename()
