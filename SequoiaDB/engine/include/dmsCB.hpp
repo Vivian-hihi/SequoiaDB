@@ -247,6 +247,11 @@ namespace engine
 
       INT32 _restoreCSCBFromTmpList( const CHAR *pName ) ;
 
+      INT32 _CSCBRename( const CHAR *pName,
+                         const CHAR *pNewName,
+                         _pmdEDUCB *cb,
+                         SDB_DPSCB *dpsCB ) ;
+
       INT32 _CSCBRenameP1( const CHAR *pName,
                            const CHAR *pNewName,
                            _pmdEDUCB *cb,
@@ -278,6 +283,17 @@ namespace engine
       INT32 _delCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB, BOOLEAN removeFile,
                                   BOOLEAN onlyEmpty ) ;
+
+      INT32 _delCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB,
+                                    BOOLEAN removeFile = TRUE ) ;
+
+      INT32 _delCollectionSpaceP1Cancel ( const CHAR *pName, _pmdEDUCB *cb,
+                                          SDB_DPSCB *dpsCB );
+
+      INT32 _delCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB,
+                                    BOOLEAN removeFile = TRUE ) ;
 
       void _getCSList( vector<std::string> &csNameVec ) ;
 
@@ -391,15 +407,13 @@ namespace engine
       void changeSUCaches ( const MON_CS_SIM_LIST &monCSList, UINT32 mask ) ;
 
       INT32 dropCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
-                                    SDB_DPSCB *dpsCB,
-                                    BOOLEAN removeFile = TRUE ) ;
+                                    SDB_DPSCB *dpsCB ) ;
 
       INT32 dropCollectionSpaceP1Cancel ( const CHAR *pName, _pmdEDUCB *cb,
                                           SDB_DPSCB *dpsCB );
 
       INT32 dropCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
-                                    SDB_DPSCB *dpsCB,
-                                    BOOLEAN removeFile = TRUE ) ;
+                                    SDB_DPSCB *dpsCB ) ;
 
       BOOLEAN dispatchDictJob( dmsDictJob &job ) ;
       void pushDictJob( dmsDictJob job ) ;

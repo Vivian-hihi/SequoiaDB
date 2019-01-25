@@ -593,6 +593,142 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__CSCBRENAME, "_SDB_DMSCB::_CSCBRename" )
+   INT32 _SDB_DMSCB::_CSCBRename( const CHAR *pName,
+                                  const CHAR *pNewName,
+                                  _pmdEDUCB *cb,
+                                  SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__SDB_DMSCB__CSCBRENAME ) ;
+
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      UINT32 csLID = ~0 ;
+      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
+      BOOLEAN isReserved = FALSE ;
+      BOOLEAN isLocked = FALSE ;
+      UINT32 logRecSize = 0 ;
+      dpsMergeInfo info ;
+      dpsLogRecord &record = info.getMergeBlock().record() ;
+      SDB_DMS_CSCB *pCSCB = NULL ;
+      IDmsExtDataHandler *extHandler = NULL ;
+
+      // reserved log-size
+      if ( NULL != dpsCB )
+      {
+         rc = dpsCSRename2Record( pName, pNewName, record ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to build record:%d",rc ) ;
+            goto error ;
+         }
+         rc = dpsCB->checkSyncControl( record.alignedLen(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
+
+         logRecSize = record.alignedLen() ;
+         rc = pTransCB->reservedLogSpace( logRecSize, cb );
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to reserved log space(length=%u)",
+                      logRecSize ) ;
+         isReserved = TRUE ;
+      }
+
+      _mutex.get() ;
+      isLocked = TRUE ;
+
+      /// check old name and new name
+      rc = _CSCBNameLookup( pName, &pCSCB, &suID, TRUE ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      rc = _CSCBNameLookup( pNewName, &pCSCB, NULL, TRUE ) ;
+      if ( SDB_DMS_CS_NOTEXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      else if ( SDB_OK == rc )
+      {
+         rc = SDB_DMS_CS_EXIST ;
+         goto error ;
+      }
+      else
+      {
+         goto error ;
+      }
+
+      SDB_ASSERT ( pCSCB->_su, "su can't be null" ) ;
+
+      /// rename cs file
+      rc = pCSCB->_su->renameCS( pNewName ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Rename collection space[%s] to [%s] failed, "
+                 "rc: %d", pName, pNewName, rc ) ;
+         goto error ;
+      }
+
+      extHandler = pCSCB->_su->data()->getExtDataHandler() ;
+      if ( extHandler )
+      {
+         rc = extHandler->onRenameCS( pName, pNewName, cb, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "External operation on rename cs failed, "
+                                   "rc: %d", rc ) ;
+      }
+
+      /// rename in map
+      // 1) erase map must before reset the name, because map'key is CBCB's name
+      _cscbNameMap.erase( pName ) ;
+      // 2) rename the CSCB's name
+      ossStrncpy( pCSCB->_name, pNewName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
+      pCSCB->_name[ DMS_COLLECTION_SPACE_NAME_SZ ] = 0 ;
+      // 3) insert new name to map
+      _cscbNameMap[ pCSCB->_name ] = suID ;
+
+      /// write log
+      csLID = pCSCB->_su->LogicalCSID() ;
+      if ( dpsCB )
+      {
+         info.setInfoEx( csLID, ~0, DMS_INVALID_EXTENT, cb ) ;
+         rc = dpsCB->prepare ( info ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to insert cscrt into log, rc = %d", rc ) ;
+            goto error ;
+         }
+         _mutex.release() ;
+         isLocked = FALSE ;
+
+         dpsCB->writeData( info ) ;
+      }
+
+      // Release the mutex first, since event handler needs the mutex
+      if ( isLocked )
+      {
+         _mutex.release () ;
+         isLocked = FALSE ;
+      }
+      pCSCB->_su->getEventHolder()->onRenameCS( DMS_EVENT_MASK_ALL, pName,
+                                                pNewName, cb, dpsCB ) ;
+
+   done :
+      if ( isLocked )
+      {
+         _mutex.release () ;
+         isLocked = FALSE ;
+      }
+      if ( isReserved )
+      {
+         pTransCB->releaseLogSpace( logRecSize, cb ) ;
+         isReserved = FALSE ;
+      }
+      PD_TRACE_EXITRC ( SDB__SDB_DMSCB__CSCBRENAME, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
    INT32 _SDB_DMSCB::_CSCBRenameP1( const CHAR *pName,
                                     const CHAR *pNewName,
                                     _pmdEDUCB *cb,
@@ -1685,6 +1821,7 @@ namespace engine
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
       BOOLEAN isTransLocked = FALSE ;
       SDB_DMS_CSCB* pCSCB = NULL ;
+      BOOLEAN doneP1 = FALSE ;
 
       // get cs cb
       _mutex.get_shared() ;
@@ -1729,37 +1866,31 @@ namespace engine
       }
 
       // drop phase 1
-      rc = dropCollectionSpaceP1( pName, cb, dpsCB, removeFile ) ;
+      rc = _delCollectionSpaceP1( pName, cb, dpsCB, removeFile ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR,
-                 "Failed to drop collection space at phase 1 [%s], rc: %d",
-                 pName, rc ) ;
+         goto error ;
+      }
+      doneP1 = TRUE ;
 
-         INT32 rcTmp = SDB_OK ;
-         rcTmp = dropCollectionSpaceP1Cancel( pName, cb, dpsCB ) ;
-         if ( rcTmp )
-         {
-            PD_LOG( PDERROR,
-                    "Failed to cancel drop collection space at phase 1 [%s], "
-                    "rc: %d", pName, rc ) ;
-         }
+      // drop phase 2
+      rc = _delCollectionSpaceP2( pName, cb, dpsCB, removeFile ) ;
+      if ( rc )
+      {
          goto error ;
       }
 
-      // drop phase 2
-      rc = dropCollectionSpaceP2( pName, cb, dpsCB, removeFile ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to drop collection space at phase 2 [%s], rc: %d",
-                   pName, rc ) ;
-
    done:
+      if ( doneP1 )
+      {
+         _delCollectionSpaceP1Cancel( pName, cb, dpsCB ) ;
+      }
       if ( isTransLocked )
       {
          pTransCB->transLockRelease( cb, csLID ) ;
          isTransLocked = FALSE ;
       }
-      PD_TRACE_EXITRC( SDB__SDB_DMSCB_RENAMECS, rc ) ;
+      PD_TRACE_EXITRC( SDB__SDB_DMSCB_DELCS, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1794,13 +1925,13 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DROPCSP1, "_SDB_DMSCB::dropCollectionSpaceP1" )
-   INT32 _SDB_DMSCB::dropCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__DELCSP1, "_SDB_DMSCB::_delCollectionSpaceP1" )
+   INT32 _SDB_DMSCB::_delCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
                                              SDB_DPSCB *dpsCB,
                                              BOOLEAN removeFile )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DROPCSP1 ) ;
+      PD_TRACE_ENTRY ( SDB__SDB_DMSCB__DELCSP1 ) ;
       IDmsExtDataHandler *extHandler = NULL ;
       SDB_DMS_CSCB *pCSCB = NULL ;
 
@@ -1847,21 +1978,21 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DROPCSP1, rc );
+      PD_TRACE_EXITRC ( SDB__SDB_DMSCB__DELCSP1, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DROPCSP1CANCEL, "_SDB_DMSCB::dropCollectionSpaceP1Cancel" )
-   INT32 _SDB_DMSCB::dropCollectionSpaceP1Cancel ( const CHAR *pName, _pmdEDUCB *cb,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__DELCSP1CANCEL, "_SDB_DMSCB::_delCollectionSpaceP1Cancel" )
+   INT32 _SDB_DMSCB::_delCollectionSpaceP1Cancel ( const CHAR *pName, _pmdEDUCB *cb,
                                                    SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
       IDmsExtDataHandler *extHandler = NULL ;
       SDB_DMS_CSCB *pCSCB = NULL ;
 
-      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DROPCSP1CANCEL ) ;
+      PD_TRACE_ENTRY ( SDB__SDB_DMSCB__DELCSP1CANCEL ) ;
       if ( !pName )
       {
          rc = SDB_INVALIDARG ;
@@ -1900,14 +2031,14 @@ namespace engine
                    rc );
 
    done :
-      PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DROPCSP1CANCEL, rc );
+      PD_TRACE_EXITRC ( SDB__SDB_DMSCB__DELCSP1CANCEL, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DROPCSP2, "_SDB_DMSCB::dropCollectionSpaceP2" )
-   INT32 _SDB_DMSCB::dropCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__DELCSP2, "_SDB_DMSCB::_delCollectionSpaceP2" )
+   INT32 _SDB_DMSCB::_delCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
                                              SDB_DPSCB *dpsCB,
                                              BOOLEAN removeFile )
    {
@@ -1915,7 +2046,7 @@ namespace engine
       SDB_DMS_CSCB *pCSCB = NULL ;
       IDmsExtDataHandler *extHandler = NULL ;
 
-      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DROPCSP2 ) ;
+      PD_TRACE_ENTRY ( SDB__SDB_DMSCB__DELCSP2 ) ;
       if ( !pName )
       {
          rc = SDB_INVALIDARG ;
@@ -1959,10 +2090,29 @@ namespace engine
                    "remove failed(rc=%d)", rc ) ;
 
    done :
-      PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DROPCSP2, rc );
+      PD_TRACE_EXITRC ( SDB__SDB_DMSCB__DELCSP2, rc );
       return rc ;
    error :
       goto done ;
+   }
+
+   INT32 _SDB_DMSCB::dropCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
+                                             SDB_DPSCB *dpsCB )
+   {
+      return _delCollectionSpaceP1( pName, cb, dpsCB, TRUE ) ;
+   }
+
+   INT32 _SDB_DMSCB::dropCollectionSpaceP1Cancel ( const CHAR *pName,
+                                                   _pmdEDUCB *cb,
+                                                   SDB_DPSCB *dpsCB )
+   {
+      return _delCollectionSpaceP1Cancel( pName, cb, dpsCB ) ;
+   }
+
+   INT32 _SDB_DMSCB::dropCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
+                                             SDB_DPSCB *dpsCB )
+   {
+      return _delCollectionSpaceP2( pName, cb, dpsCB, TRUE ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_RENAMECS, "_SDB_DMSCB::renameCollectionSpace" )
@@ -2014,28 +2164,29 @@ namespace engine
          isTransLocked = TRUE ;
       }
 
+#ifdef _WINDOWS
       rc = renameCollectionSpaceP1( pName, pNewName, cb, dpsCB ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR,
-                 "Failed to rename collection space at phase 1 [%s] to [%s], "
-                 "rc: %d", pName, pNewName, rc ) ;
-
-         INT32 rcTmp = SDB_OK ;
-         rcTmp = renameCollectionSpaceP1Cancel( pName, pNewName, cb, dpsCB ) ;
-         if ( rcTmp )
-         {
-            PD_LOG( PDERROR,
-                    "Failed to cancel rename collection space at phase 1 "
-                    "[%s] to [%s], rc: %d", pName, pNewName, rc ) ;
-         }
          goto error ;
       }
 
       rc = renameCollectionSpaceP2( pName, pNewName, cb, dpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to rename collection space at phase 2 [%s] to [%s], "
-                   "rc: %d", pName, pNewName, rc ) ;
+      if ( rc )
+      {
+         renameCollectionSpaceP1Cancel( pName, pNewName, cb, dpsCB ) ;
+         goto error ;
+      }
+#else
+      rc = _CSCBRename( pName, pNewName, cb, dpsCB ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      PD_LOG( PDEVENT, "Rename collection space[%s] to [%s] succeed",
+              pName, pNewName ) ;
+#endif
 
    done:
       if ( isTransLocked )

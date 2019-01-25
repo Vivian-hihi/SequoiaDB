@@ -876,8 +876,22 @@ namespace engine
             {
                goto error ;
             }
+#ifdef _WINDOWS
+            while ( TRUE )
+            {
+               rc = rtnRenameCollectionSpaceCommand( oldName, newName,
+                                                     eduCB, _dmsCB, _dpsCB ) ;
+               if ( SDB_LOCK_FAILED == rc )
+               {
+                  ossSleep ( 100 ) ;
+                  continue ;
+               }
+               break ;
+            }
+#else
             rc = rtnRenameCollectionSpaceCommand( oldName, newName,
                                                   eduCB, _dmsCB, _dpsCB ) ;
+#endif
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to rename %s to %s, rc: %d",
