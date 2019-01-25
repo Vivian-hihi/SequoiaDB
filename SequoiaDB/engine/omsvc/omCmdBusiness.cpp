@@ -1560,7 +1560,8 @@ namespace engine
                   configList.push_back( configInfoBuilder.obj() ) ;
                }
             }
-            else if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == _businessType )
+            else if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == _businessType ||
+                      OM_BUSINESS_SEQUOIASQL_MYSQL == _businessType )
             {
                string port = nodeInfo.getStringField(
                                              OM_CONFIGURE_FIELD_PORT2 ) ;
