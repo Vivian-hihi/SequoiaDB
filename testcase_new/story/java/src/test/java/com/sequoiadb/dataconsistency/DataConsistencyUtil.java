@@ -83,12 +83,13 @@ public class DataConsistencyUtil {
     }
     
     public static boolean isLsnConsistency(List< String > nodeUrls){
-        boolean isConsistency = true ;
+        boolean isConsistency ;
         int eachSleepTime = 1000 ;
         int maxSleetTime = 600000 ;
         int alreadySleepTime = 0 ;
         
         do{
+            isConsistency = true ;
             long lsnOfPrevNode = -1 ;
             int versionOfPrevNode = 0 ;
             for (String nodeUrl: nodeUrls){
@@ -136,7 +137,7 @@ public class DataConsistencyUtil {
             String csName, String clName, List< BSONObject > expRecord,
             String matcher ) {
         List< String > nodeInfo = CommLib.getNodeAddress( sdb, groupName ) ;
-        if (!isLsnConsistency(nodeInfo)){
+        if ( !isLsnConsistency(nodeInfo) ){
             Assert.fail( "lsn consistency fail exceeds maximum waiting time") ;
         }
         
