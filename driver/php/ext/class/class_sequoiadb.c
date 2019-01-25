@@ -540,67 +540,106 @@ error:
 PHP_METHOD( SequoiaDB, list )
 {
    INT32 rc = SDB_OK ;
-   INT32 type       = 0 ;
+   INT32 type        = 0 ;
+   INT64 numToSkip   = 0 ;
+   INT64 numToReturn = -1 ;
    zval *pType      = NULL ;
    zval *pCondition = NULL ;
    zval *pSelector  = NULL ;
    zval *pOrderBy   = NULL ;
    zval *pHint      = NULL ;
+   zval *pNumToSkip   = NULL ;
+   zval *pNumToReturn = NULL ;
    zval *pThisObj   = getThis() ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
    sdbCursorHandle cursor         = SDB_INVALID_HANDLE ;
    bson condition ;
    bson selector ;
    bson orderBy ;
+   bson hint ;
+
    bson_init( &condition ) ;
    bson_init( &selector ) ;
    bson_init( &orderBy ) ;
+   bson_init( &hint ) ;
+
    PHP_SET_ERRNO_OK( TRUE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "z|zzzz",
+
+   if ( PHP_GET_PARAMETERS( "z|zzzzzz",
                             &pType,
                             &pCondition,
                             &pSelector,
                             &pOrderBy,
-                            &pHint ) == FAILURE )
+                            &pHint,
+                            &pNumToSkip,
+                            &pNumToReturn ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+
    rc = php_zval2Int( pType, &type TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
+
    rc = php_auto2Bson( pCondition, &condition TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
+
    rc = php_auto2Bson( pSelector, &selector TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
+
    rc = php_auto2Bson( pOrderBy, &orderBy TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
+
+   rc = php_auto2Bson( pHint, &hint TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+   rc = php_zval2Long( pNumToSkip, &numToSkip TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+   rc = php_zval2Long( pNumToReturn, &numToReturn TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
    PHP_READ_HANDLE( pThisObj,
                     connection,
                     sdbConnectionHandle,
                     SDB_HANDLE_NAME,
                     connectionDesc ) ;
-   rc = sdbGetList( connection,
-                    type,
-                    &condition,
-                    &selector,
-                    &orderBy,
-                    &cursor ) ;
+
+   rc = sdbGetList1( connection,
+                     type,
+                     &condition,
+                     &selector,
+                     &orderBy,
+                     &hint,
+                     numToSkip,
+                     numToReturn,
+                     &cursor ) ;
    if( rc )
    {
       goto error ;
    }
+
    PHP_BUILD_CLASS( TRUE,
                     pThisObj,
                     pSequoiadbCursor,
@@ -610,6 +649,7 @@ done:
    bson_destroy( &condition ) ;
    bson_destroy( &selector ) ;
    bson_destroy( &orderBy ) ;
+   bson_destroy( &hint ) ;
    return ;
 error:
    RETVAL_NULL() ;

@@ -132,6 +132,8 @@ class SequoiaDB
    define( "SDB_LIST_SVCTASKS",                 14 ) ;
    /** Get the list of sequences. */
    define( "SDB_LIST_SEQUENCES",                15 ) ;
+   /** Get the list of users. */
+   define( "SDB_LIST_USERS",                    16 ) ;
    /** Get the list of the collections in specified domain. */
    define( "SDB_LIST_CL_IN_DOMAIN",     129 ) ;
    /** Get the list of the collection spaces in specified domain. */
@@ -670,7 +672,7 @@ class SequoiaDB
    /**
     * Get the specified list.
     *
-    * @param $type	an integer argument. The list type as below: @code
+    * @param $type an integer argument. The list type as below: @code
     *                                                           SDB_LIST_CONTEXTS
     *                                                           SDB_LIST_CONTEXTS_CURRENT
     *                                                           SDB_LIST_SESSIONS
@@ -684,6 +686,9 @@ class SequoiaDB
     *                                                           SDB_LIST_TASKS
     *                                                           SDB_LIST_TRANSACTIONS
     *                                                           SDB_LIST_TRANSACTIONS_CURRENT
+    *                                                           SDB_LIST_SVCTASKS
+    *                                                           SDB_LIST_SEQUENCES
+    *                                                           SDB_LIST_USERS
     *                                                           SDB_LIST_CL_IN_DOMAIN
     *                                                           SDB_LIST_CS_IN_DOMAIN
     *                                                           @endcode
@@ -694,7 +699,11 @@ class SequoiaDB
     *
     * @param $orderBy an array or the string argument. The ordered rule, never sort if null.
     *
-    * @param $hint	an array or the string argument. This parameter is reserved and must be null.
+    * @param $hint an array or the string argument. The options provided for specific list type. Reserved.
+    *
+    * @param $numToSkip an integer argument.	Skip the first numToSkip records, never skip if this parameter is 0.
+    *
+    * @param $numToReturn	an integer argument. Only return numToReturn records, return all if this parameter is -1.
     *
     * @return Returns a new SequoiaCursor object.
     *
@@ -719,7 +728,7 @@ class SequoiaDB
     * }
     * @endcode
    */
-   public function list( integer $type, array|string $condition = null, array|string $selector = null, array|string $orderBy = null, array|string $hint = null ){}
+   public function list( integer $type, array|string $condition = null, array|string $selector = null, array|string $orderBy = null, array|string $hint = null, integer $numToSkip = 0, integer $numToReturn = -1 ){}
 
    /**
     * List all collection space of current database(include temporary collection space)
