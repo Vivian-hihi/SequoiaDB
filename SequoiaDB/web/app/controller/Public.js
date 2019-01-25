@@ -39,7 +39,7 @@
       Tip.create() ;
       Tip.auto() ;
       //-------- 全局变量 ---------
-      $rootScope.Url = { Module: '', Action: '', Method: '' } ;
+      $rootScope.Url = { Module: '', Action: '', Method: '', Type: '' } ;
       //临时存储, 用于跨页用
       $rootScope.TempStorage = {} ;
       //用于触发自定义重绘
@@ -118,7 +118,7 @@
       $rootScope.updateNav = function(){} ;
       //更新Url变量
       $rootScope.updateUrl = function(){
-         var url   = $location.url() ;
+         var url = $location.url() ;
          if( url.indexOf( '?' ) >= 0 )
          {
             url = url.split( '?' )[0] ;
@@ -127,6 +127,7 @@
          $rootScope.Url.Module = route[1] ;
          $rootScope.Url.Action = route[2] ;
          $rootScope.Url.Method = route[3] ;
+         $rootScope.Url.Type   = route[4] ;
       } ;
       //触发自定义的onResize
       $rootScope.bindResize = function(){
@@ -422,6 +423,8 @@
                   $location.path( '/Config/SDB/Index' ).search( params ) ; break ;
                case 'sequoiasql-postgresql':
                   $location.path( '/Config/SequoiaSQL/PostgreSQL/Index' ).search( params ) ; break ;
+               case 'sequoiasql-mysql':
+                  $location.path( '/Config/SequoiaSQL/MySQL/Index' ).search( params ) ; break ;
                default:
                   break ;
                }
@@ -550,7 +553,9 @@
 
       function addConfig( businessInfo )
       {
-         if( businessInfo['type'] == 'sequoiadb' || businessInfo['type'] == 'sequoiasql-postgresql' )
+         if( businessInfo['type'] == 'sequoiadb' ||
+             businessInfo['type'] == 'sequoiasql-postgresql' ||
+             businessInfo['type'] == 'sequoiasql-mysql' )
          {
             var title = getNavTitle( businessInfo['type'] ) ;
             var titleInfo = addBusinessTitle( $scope.Left.navMenu[4]['list'], title ) ;
