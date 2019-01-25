@@ -125,12 +125,32 @@
                }
             },
             'failed': function( errorInfo ){
-               var str = sprintf( $scope.pAutoLanguage( '? ? 执行失败，错误码: ?，?. ?' ),
-                                    timeFormat( new Date(), 'hh:mm:ss' ),
-                                    $scope.FullName,
-                                    errorInfo['errno'],
-                                    errorInfo['description'],
-                                    errorInfo['detail'] ) ;
+               var str = '' ;
+               if( errorInfo['description'].length == 0 )
+               {
+                  str = sprintf( $scope.pAutoLanguage( '? ? 执行失败，错误码: ?，?' ),
+                                 timeFormat( new Date(), 'hh:mm:ss' ),
+                                 $scope.FullName,
+                                 errorInfo['errno'],
+                                 errorInfo['detail'] ) ;
+               }
+               else if( errorInfo['detail'].length == 0 )
+               {
+                  str = sprintf( $scope.pAutoLanguage( '? ? 执行失败，错误码: ?，?' ),
+                                 timeFormat( new Date(), 'hh:mm:ss' ),
+                                 $scope.FullName,
+                                 errorInfo['errno'],
+                                 errorInfo['description'] ) ;
+               }
+               else
+               {
+                  str = sprintf( $scope.pAutoLanguage( '? ? 执行失败，错误码: ?，?. ?' ),
+                                 timeFormat( new Date(), 'hh:mm:ss' ),
+                                 $scope.FullName,
+                                 errorInfo['errno'],
+                                 errorInfo['description'],
+                                 errorInfo['detail'] ) ;
+               }
                SdbSignal.commit( 'update_result', { 'rc': false, 'result': str } ) ;
             }
          } ) ;
@@ -157,12 +177,32 @@
                SdbSignal.commit( 'goto_page', 2 ) ;
             },
             'failed': function( errorInfo ){
-               var str = sprintf( $scope.pAutoLanguage( '? ? 执行失败，错误码: ?，?. ?' ),
-                                  timeFormat( new Date(), 'hh:mm:ss' ),
-                                  $scope.FullName,
-                                  errorInfo['errno'],
-                                  errorInfo['description'],
-                                  errorInfo['detail'] ) ;
+               var str = '' ;
+               if( errorInfo['description'].length == 0 )
+               {
+                  str = sprintf( $scope.pAutoLanguage( '? ? 执行失败，错误码: ?，?' ),
+                                 timeFormat( new Date(), 'hh:mm:ss' ),
+                                 $scope.FullName,
+                                 errorInfo['errno'],
+                                 errorInfo['detail'] ) ;
+               }
+               else if( errorInfo['detail'].length == 0 )
+               {
+                  str = sprintf( $scope.pAutoLanguage( '? ? 执行失败，错误码: ?，?' ),
+                                 timeFormat( new Date(), 'hh:mm:ss' ),
+                                 $scope.FullName,
+                                 errorInfo['errno'],
+                                 errorInfo['description'] ) ;
+               }
+               else
+               {
+                  str = sprintf( $scope.pAutoLanguage( '? ? 执行失败，错误码: ?，?. ?' ),
+                                 timeFormat( new Date(), 'hh:mm:ss' ),
+                                 $scope.FullName,
+                                 errorInfo['errno'],
+                                 errorInfo['description'],
+                                 errorInfo['detail'] ) ;
+               }
                SdbSignal.commit( 'update_result', { 'rc': false, 'result': str } ) ;
             }
          } ) ;
