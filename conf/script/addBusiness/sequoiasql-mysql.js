@@ -154,49 +154,6 @@ function _runRemoteCmd( cmd, command, arg, timeout )
    return error ;
 }
 
-//'/opt/sequoiasql-mysql/database/5432/mysql.conf'
-function _setPostgresqlConf( remote, hostName, confPath, configs )
-{
-   var file    = null ;
-   var error   = null ;
-
-   try
-   {
-      file = remote.getFile( confPath, 0, SDB_FILE_REPLACE | SDB_FILE_WRITEONLY ) ;
-
-      file.write( 'listen_addresses = \'*\'\n' ) ;
-
-      for ( key in configs )
-      {
-         if( FIELD_HOSTNAME != key &&
-             FIELD_DBPATH   != key &&
-             FIELD_INSTALL_PATH != key &&
-             FIELD_AGENT_SERVICE != key )
-         {
-            if ( configs[key].length > 0 )
-            {
-               if ( isNaN( configs[key] ) == true )
-               {
-                  file.write( key + ' = \'' + configs[key] + '\'\n' ) ;
-               }
-               else
-               {
-                  file.write( key + ' = ' + configs[key] + '\n' ) ;
-               }
-            }
-         }
-      }
-   }
-   catch( e )
-   {
-      error = _getErrorMsg( getLastError(), e,
-                            sprintf( "Failed to set config: " +
-                                     "host [?]", hostName ) ) ;
-   }
-
-   return error ;
-}
-
 function _getLogMessage( PD_LOGGER, cmd, installPath, businessName )
 {
    return cmd.getLastOut() ;
@@ -291,7 +248,7 @@ function CreateInst( PD_LOGGER )
    var port          = config[FIELD_PORT2] ;
    var agentPort     = config[FIELD_AGENT_SERVICE] ;
    var installPath   = config[FIELD_INSTALL_PATH] ;
-   var ctlFile       = installPath + '/bin/sdb_mysql_ctl' ;
+   var ctlFile       = installPath + '/bin/sdb_sql_ctl' ;
 
    var error   = null ;
    var remote  = null ;
@@ -326,29 +283,24 @@ function CreateInst( PD_LOGGER )
    }
 
    //set LD_LIBRARY_PATH
-   //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiasql-postgresql/lib
+   //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiasql-mysql/lib
    var libraryCmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:' ;
    libraryCmd += installPath + '/lib ;' ;
    exec = libraryCmd + exec ;
 
-   PD_LOGGER.logTask( PDEVENT, sprintf( "Begin to add instance [?]",
+   PD_LOGGER.logTask( PDEVENT, sprintf( "add instance [?]",
                                         hostName ) ) ;
-   resultInfo[FIELD_FLOW].push( sprintf( "Begin to add instance [?]",
+   resultInfo[FIELD_FLOW].push( sprintf( "add instance [?]",
                                          hostName ) ) ;
 
    //add inst
    args = '' ;
-   args += ' addinst ' + port ;
-   args += ' -d ' + dbpath ;
+   args += ' addinst ' + businessName ;
+   args += ' -D ' + dbpath ;
+   args += ' --print' ;
    error = _runRemoteCmd( cmd, exec, args, timeout ) ;
    if ( error !== null )
    {
-      var logMsg = _getLogMessage( PD_LOGGER, cmd, installPath, port ) ;
-      if( logMsg !== null )
-      {
-         PD_LOGGER.logTask( PDERROR, logMsg ) ;
-      }
-
       resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
       resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
       resultInfo[FIELD_STATUS] = STATUS_FAIL ;
@@ -358,23 +310,18 @@ function CreateInst( PD_LOGGER )
       return resultInfo ;
    }
 
-   PD_LOGGER.logTask( PDEVENT, sprintf( "Begin to start instance [?]",
+   PD_LOGGER.logTask( PDEVENT, sprintf( "start instance [?]",
                                         hostName ) ) ;
-   resultInfo[FIELD_FLOW].push( sprintf( "Begin to start instance [?]",
+   resultInfo[FIELD_FLOW].push( sprintf( "start instance [?]",
                                          hostName ) ) ;
 
    //start
    args = '' ;
-   args += ' start ' + port ;
+   args += ' start ' + businessName ;
+   args += ' --print' ;
    error = _runRemoteCmd( cmd, exec, args, timeout ) ;
    if ( error !== null )
    {
-      var logMsg = _getLogMessage( PD_LOGGER, cmd, installPath, businessName ) ;
-      if( logMsg !== null )
-      {
-         PD_LOGGER.logTask( PDERROR, logMsg ) ;
-      }
-
       resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
       resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
       resultInfo[FIELD_STATUS] = STATUS_FAIL ;
@@ -468,7 +415,7 @@ function Rollback( PD_LOGGER )
       var port          = nodeResult[FIELD_PORT2] ;
       var agentPort     = _getAgentPort( hostName ) ;
       var installPath   = configs[index][FIELD_INSTALL_PATH] ;
-      var ctlFile       = installPath + '/bin/sdb_mysql_ctl' ;
+      var ctlFile       = installPath + '/bin/sdb_sql_ctl' ;
 
       var error   = null ;
       var remote  = null ;
@@ -485,7 +432,7 @@ function Rollback( PD_LOGGER )
                                             hostName ) ) ;
 
       //set LD_LIBRARY_PATH
-      //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiasql-postgresql/lib
+      //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiasql-mysql/lib
       var libraryCmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:' ;
       libraryCmd += installPath + '/lib ;' ;
       exec = libraryCmd + exec ;

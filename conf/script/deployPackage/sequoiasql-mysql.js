@@ -389,7 +389,7 @@ function InstallPackage( taskID )
       return resultInfo ;
    }
 
-   options += " --mode unattended --installInstance false --prefix " + installPath ;
+   options += " --mode unattended --prefix " + installPath ;
    options += " --username " + sdbUser + " --userpasswd " + sdbPasswd ;
    options += " --groupname " + sdbUserGroup ;
 

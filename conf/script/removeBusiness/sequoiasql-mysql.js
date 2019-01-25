@@ -265,7 +265,7 @@ function RemoveBusiness( PD_LOGGER )
    var port          = config[FIELD_PORT2] ;
    var agentPort     = config[FIELD_AGENT_SERVICE] ;
    var installPath   = config[FIELD_INSTALL_PATH] ;
-   var ctlFile       = installPath + '/bin/sdb_mysql_ctl' ;
+   var ctlFile       = installPath + '/bin/sdb_sql_ctl' ;
 
    var error   = null ;
    var remote  = null ;
@@ -305,7 +305,7 @@ function RemoveBusiness( PD_LOGGER )
    }
 
    //set LD_LIBRARY_PATH
-   //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiasql-postgresql/lib
+   //export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sequoiasql-mysql/lib
    var libraryCmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:' ;
    libraryCmd += installPath + '/lib ;' ;
    exec = libraryCmd + exec ;
@@ -317,7 +317,8 @@ function RemoveBusiness( PD_LOGGER )
 
    //del
    args = '' ;
-   args += ' delinst ' + port ;
+   args += ' delinst ' + businessName ;
+   args += ' --print' ;
    error = _runRemoteCmd( cmd, exec, args, timeout ) ;
    if ( error !== null )
    {
@@ -419,9 +420,5 @@ function run()
       throw error ;
    }
 
-   //print( "\n\n" + JSON.stringify( result, null, 3 ) + "\n\n" ) ;
-
    return result ;
 }
-
-//run() ;
