@@ -37,7 +37,7 @@ function main()
       var error = new SdbError( SDB_INVALIDARG,
                                 sprintf( "Invalid business name [?]",
                                          businessType ) ) ;
-      PD_LOGGER.logTask( PDERROR, error ) ;
+      PD_LOGGER.logComm( PDERROR, error ) ;
       throw error ;
    }
 
