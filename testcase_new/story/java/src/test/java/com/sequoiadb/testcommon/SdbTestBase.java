@@ -14,6 +14,7 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest ;
 import org.testng.annotations.Parameters;
 
+import com.sequoiadb.base.ConfigOptions ;
 import com.sequoiadb.base.DBCursor ;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException ;
@@ -30,12 +31,14 @@ public class SdbTestBase {
     protected static String reservedDir;
     protected static String workDir;
     private static Sequoiadb sequoiadb = null;
+    private static Sequoiadb sdb = null ;
     private static final String ROLE = "Role" ;
     private static final String DATA = "data" ;
     private static final String TRANSACTIONON  = "transactionon" ;
     private static final String TRANSISOLATION = "transisolation" ;
     private static final String TRANSLOCKWAIT  = "translockwait" ;
     private static AtomicInteger count = new AtomicInteger(0) ;
+    private static ConfigOptions options = new ConfigOptions();
 
     @Parameters({"HOSTNAME", "SVCNAME", "CHANGEDPREFIX",
             "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR"})
@@ -53,7 +56,9 @@ public class SdbTestBase {
         coordUrl = HOSTNAME + ":" + SVCNAME;
         
         try {
-            sequoiadb = new Sequoiadb(coordUrl, "", "");
+            options.setSocketKeepAlive( true ) ;
+            sequoiadb = new Sequoiadb(coordUrl, "", "", options);
+            sdb = new Sequoiadb(coordUrl, "", "");
             if (sequoiadb.isCollectionSpaceExist(csName)){ 
                 sequoiadb.dropCollectionSpace(csName);
             }
@@ -74,8 +79,8 @@ public class SdbTestBase {
         final int COORDGROUPID = 2 ;
         final String GT = "$gt" ;
         
-        if (sequoiadb == null || sequoiadb.isClosed()){
-            sequoiadb = new Sequoiadb( coordUrl, "", "") ;
+        if (sequoiadb == null || !sequoiadb.isValid()){
+            sequoiadb = new Sequoiadb( coordUrl, "", "", options) ;
         }
         
         BasicBSONObject cond = new BasicBSONObject() ;
@@ -196,15 +201,14 @@ public class SdbTestBase {
     public static void finiSuite() {
         count.getAndIncrement() ;
         try {
-            /*if ( sequoiadb.isClosed() ){
-                sequoiadb = new Sequoiadb(coordUrl, "", "");
-            }*/
-            sequoiadb.close() ;
-            sequoiadb = new Sequoiadb(coordUrl, "", "");
+            if ( !sequoiadb.isValid() ){
+                sequoiadb = new Sequoiadb(coordUrl, "", "", options);
+            }
             
             if (sequoiadb.isCollectionSpaceExist(csName)) {
                 sequoiadb.dropCollectionSpace(csName);
             }
+            sdb.close() ;
         } catch(BaseException e){
             e.printStackTrace() ;
             Assert.fail( e.getMessage() + " called: " + count.get() ) ;

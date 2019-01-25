@@ -13,7 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger ;
 
 public abstract class SdbThreadBase implements Runnable {
     private List<Throwable> exceptionList = Collections.synchronizedList(new ArrayList<Throwable>());
-    private Integer sync = new Integer(0) ;
+    private Integer syncRes = new Integer(0) ;
+    private Integer syncRunning = new Integer(0) ;
     private Object result = null ;
     private AtomicInteger count = new AtomicInteger(0);
     private static final int MAX_THREAD_NUMBER = 100 ;
@@ -64,8 +65,8 @@ public abstract class SdbThreadBase implements Runnable {
             return this.result ;
         }
         
-        synchronized( sync ){
-            sync.wait();
+        synchronized( syncRes ){
+            syncRes.wait();
         }
         return this.result ;
     }
@@ -86,8 +87,8 @@ public abstract class SdbThreadBase implements Runnable {
     public void setExecResult(Object result){
         assert thread != null ;
         this.result = result ;
-        synchronized( sync ){
-            sync.notifyAll();
+        synchronized( syncRes ){
+            syncRes.notifyAll();
         }
     }
 
@@ -145,6 +146,9 @@ public abstract class SdbThreadBase implements Runnable {
         try {
             if ( count.get() == 1 ){
                thread = Thread.currentThread() ;
+               synchronized(syncRunning){
+                   syncRunning.notifyAll() ;
+               }
             }
             exec();
         } catch (Throwable e) {
@@ -177,9 +181,19 @@ public abstract class SdbThreadBase implements Runnable {
      *--------------------------------------------------------------------------
      */
     public boolean matchBlockingMethod(String className, String methodName){
+        if (thread == null){
+            synchronized(syncRunning){
+                try {
+                    syncRunning.wait(1000) ;
+                } catch ( InterruptedException e ) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
         assert thread != null ;
         
-        final int fiveSeonds = 50000 ;
+        final int fiftySeonds = 50000 ;
         final int totalTimes = 3 ;
         //int nonMatchTimes = 0 ;
         int matchTimes = 0 ;
@@ -188,7 +202,7 @@ public abstract class SdbThreadBase implements Runnable {
         
         int pos = 0 ;
         do{
-            if (  alreadyWaitTime >= fiveSeonds  ){
+            if (  alreadyWaitTime >= fiftySeonds  ){
                 ret = false ;
                 break ;
             }
