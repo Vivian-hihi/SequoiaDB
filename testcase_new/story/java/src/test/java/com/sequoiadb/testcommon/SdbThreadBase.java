@@ -158,6 +158,7 @@ public abstract class SdbThreadBase implements Runnable {
                 synchronized (this){
                     this.notify() ;
                 }
+                thread = null ;
             }
         }
     }
