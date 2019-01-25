@@ -68,7 +68,7 @@ testFiles = [
    [ "./misc/invalidFlag15382.cpp" ],
    [ "./load/loadUnloadCS.cpp" ],
    [ "./load/reloadConf.cpp" ],
-   [ "./load/rename.cpp" ],
+   [ "./load/rename.cpp" ],   # sync
    [ "./load/setPDLevel.cpp" ],
    [ "./ssl/sslFalse.cpp" ],
    [ "./ssl/sslTrue.cpp" ],  # conf
@@ -127,10 +127,10 @@ testFiles = [
    [ "./datatype/timestamptest_15861.cpp"],
    [ "./paraVerify/snapshotTest15759.cpp"],
    [ "./lob/lobIsEof15672.cpp"],
-   [ "./meta/renameCL16569.cpp"],
-   [ "./meta/renameCLFail16570_16571.cpp"],
-   [ "./meta/renameCS16565.cpp"],
-   [ "./meta/renameCSFail16566_16567.cpp"],
+   [ "./meta/renameCL16569.cpp"],  # sync
+   [ "./meta/renameCLFail16570_16571.cpp"],  # sync
+   [ "./meta/renameCS16565.cpp"],  # sync
+   [ "./meta/renameCSFail16566_16567.cpp"],  # sync
    [ "./indexs/getIndextest_16780.cpp"],
    [ "./misc/getLastErrObj.cpp"]
 ]
