@@ -123,8 +123,6 @@
          } ) ;
       }
 
-      queryDbList() ;
-
       //获取存储引擎列表
       var getEngineList = function(){
          var sql = 'select * from information_schema.engines' ;
@@ -134,6 +132,7 @@
                $.each( result, function( index, info ){
                   SdbSwap.engineList.push( { 'key': info['ENGINE'], value: info['ENGINE'] } ) ;
                } ) ;
+               queryDbList() ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
