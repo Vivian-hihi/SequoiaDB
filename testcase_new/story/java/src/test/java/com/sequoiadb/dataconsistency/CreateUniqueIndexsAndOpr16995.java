@@ -1,23 +1,23 @@
-package com.sequoiadb.dataconsistency;
+package com.sequoiadb.dataconsistency ;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayList ;
+import java.util.List ;
 
-import org.bson.BSONObject;
-import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import org.bson.BSONObject ;
+import org.testng.Assert ;
+import org.testng.SkipException ;
+import org.testng.annotations.AfterClass ;
+import org.testng.annotations.BeforeClass ;
+import org.testng.annotations.DataProvider ;
+import org.testng.annotations.Test ;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
-import com.sequoiadb.testcommon.SdbThreadBase;
+import com.sequoiadb.base.CollectionSpace ;
+import com.sequoiadb.base.DBCollection ;
+import com.sequoiadb.base.Sequoiadb ;
+import com.sequoiadb.exception.BaseException ;
+import com.sequoiadb.testcommon.CommLib ;
+import com.sequoiadb.testcommon.SdbTestBase ;
+import com.sequoiadb.testcommon.SdbThreadBase ;
 
 /**
  * @FileName CreateUniqueIndexsAndOpr16995.java
@@ -29,141 +29,152 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @version 1.00
  */
 public class CreateUniqueIndexsAndOpr16995 extends SdbTestBase {
-	@DataProvider(name = "dataProvider", parallel = true)
-	public Object[][] generateData() {
-		return new Object[][] {
-			// the parameter : clName
-			new Object[] { "dataConsistency_16995_a" }, 
-			new Object[] { "dataConsistency_16995_b" },
-			new Object[] { "dataConsistency_16995_c" }, };
-	}
+    @DataProvider( name = "dataProvider", parallel = true )
+    public Object[][] generateData() {
+        return new Object[][] {
+                // the parameter : clName
+                new Object[] { "dataConsistency_16995_a" },
+                new Object[] { "dataConsistency_16995_b" },
+                new Object[] { "dataConsistency_16995_c" }, } ;
+    }
 
-	private Sequoiadb sdb = null;
-	private String csName = "cs_16995";
-	private String groupName = "";
-	//environmental Resource problems on CI,the cases set unabled.
-	@BeforeClass(enabled=false)
-	public void setUp() {
-		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		if (CommLib.isStandAlone(sdb)) {
-			throw new SkipException("standAlone skip testcase");
-		}
+    private Sequoiadb sdb = null ;
+    private String csName = "cs_16995" ;
+    private String groupName = "" ;
 
-		groupName = DataConsistencyUtil.getGroupName(sdb);
-		if (sdb.isCollectionSpaceExist(csName)) {
-			sdb.dropCollectionSpace(csName);
-		}
-		sdb.createCollectionSpace(csName);
-	}
+    // environmental Resource problems on CI,the cases set unabled.
+    @BeforeClass( enabled = false )
+    public void setUp() {
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ;
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "standAlone skip testcase" ) ;
+        }
 
-	@Test(dataProvider = "dataProvider",enabled=false)
-	public void test(String clName) {
-		Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		String options = "{ShardingKey:{no:1},ReplSize:1,Group:'" + groupName + "'}";
-		CollectionSpace cs = sdb.getCollectionSpace(csName);
-		DBCollection dbcl = DataConsistencyUtil.createCL(cs, clName, options);
-		createUnquieIndexes(cs, clName);
-		int beginInsertNums = 50000;
-		ArrayList<BSONObject> expRecords = DataConsistencyUtil.insertDatas(dbcl, beginInsertNums, 0);
+        groupName = DataConsistencyUtil.getGroupName( sdb ) ;
+        if ( sdb.isCollectionSpaceExist( csName ) ) {
+            sdb.dropCollectionSpace( csName ) ;
+        }
+        sdb.createCollectionSpace( csName ) ;
+    }
 
-		// update 1w records per batch
-		List<UpdateThread> UpdateThreads = new ArrayList<>(5);
-		int beginNo = 0;
-		int endNo = 10000;
-		for (int i = 0; i < 5; i++) {
-			UpdateThreads.add(new UpdateThread(beginNo, endNo, clName));
-			beginNo = endNo;
-			endNo = beginNo + 10000;
-		}
-		for (UpdateThread updateThread : UpdateThreads) {
-			updateThread.start();
-		}
-		InsertThread insertThread = new InsertThread(beginInsertNums, clName, expRecords);
-		insertThread.start();
+    @Test( dataProvider = "dataProvider", enabled = false )
+    public void test( String clName ) {
+        Sequoiadb sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ;
+        String options = "{ShardingKey:{no:1},ReplSize:1,Group:'" + groupName
+                + "'}" ;
+        CollectionSpace cs = sdb.getCollectionSpace( csName ) ;
+        DBCollection dbcl = DataConsistencyUtil.createCL( cs, clName, options ) ;
+        createUnquieIndexes( cs, clName ) ;
+        int beginInsertNums = 50000 ;
+        ArrayList< BSONObject > expRecords = DataConsistencyUtil.insertDatas(
+                dbcl, beginInsertNums, 0 ) ;
 
-		Assert.assertTrue(insertThread.isSuccess(), insertThread.getErrorMsg());
-		for (UpdateThread updateThread : UpdateThreads) {
-			Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
-		}
+        // update 1w records per batch
+        List< UpdateThread > UpdateThreads = new ArrayList<>( 5 ) ;
+        int beginNo = 0 ;
+        int endNo = 10000 ;
+        for ( int i = 0; i < 5; i++ ) {
+            UpdateThreads.add( new UpdateThread( beginNo, endNo, clName ) ) ;
+            beginNo = endNo ;
+            endNo = beginNo + 10000 ;
+        }
+        for ( UpdateThread updateThread : UpdateThreads ) {
+            updateThread.start() ;
+        }
+        InsertThread insertThread = new InsertThread( beginInsertNums, clName,
+                expRecords ) ;
+        insertThread.start() ;
 
-		updateExpDatas(expRecords, beginInsertNums);
-		DataConsistencyUtil.checkDataContent(dbcl, expRecords);
-		DataConsistencyUtil.checkDataConsistency(sdb, groupName, csName, clName, expRecords);
-	}
+        Assert.assertTrue( insertThread.isSuccess(), insertThread.getErrorMsg() ) ;
+        for ( UpdateThread updateThread : UpdateThreads ) {
+            Assert.assertTrue( updateThread.isSuccess(),
+                    updateThread.getErrorMsg() ) ;
+        }
 
-	@AfterClass(enabled=false)
-	public void tearDown() {
-		try {
-			sdb.dropCollectionSpace(csName);
-		} finally {
-			if (sdb != null)
-				sdb.close();
-		}
-	}
+        updateExpDatas( expRecords, beginInsertNums ) ;
+        DataConsistencyUtil.checkDataContent( dbcl, expRecords ) ;
+        DataConsistencyUtil.checkDataConsistency( sdb, groupName, csName,
+                clName, expRecords ) ;
+    }
 
-	public class UpdateThread extends SdbThreadBase {
-		private String clName;
-		private int beginNo;
-		private int endNo;
+    @AfterClass( enabled = false )
+    public void tearDown() {
+        try {
+            sdb.dropCollectionSpace( csName ) ;
+        } finally {
+            if ( sdb != null )
+                sdb.close() ;
+        }
+    }
 
-		public UpdateThread(int beginNo, int endNo, String clName) {
-			this.clName = clName;
-			this.beginNo = beginNo;
-			this.endNo = endNo;
-		}
+    public class UpdateThread extends SdbThreadBase {
+        private String clName ;
+        private int beginNo ;
+        private int endNo ;
 
-		@Override
-		public void exec() throws BaseException {
-			try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-				DBCollection dbcl = db.getCollectionSpace(csName).getCollection(clName);
-				String modifier = "{ $set: { 'str':'testupdate_field16995'} }";
-				String matcher = "{ '$and': [ { 'no': { '$gte':" + beginNo + " } }, " + "{ 'no': { '$lt': " + endNo
-						+ "}}]}";
-				dbcl.update(matcher, modifier, "");
-			}
-		}
-	}
+        public UpdateThread( int beginNo, int endNo, String clName ) {
+            this.clName = clName ;
+            this.beginNo = beginNo ;
+            this.endNo = endNo ;
+        }
 
-	public class InsertThread extends SdbThreadBase {
-		private String clName;
-		private int beginNo;
-		private ArrayList<BSONObject> expRecords;
+        @Override
+        public void exec() throws BaseException {
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                DBCollection dbcl = db.getCollectionSpace( csName )
+                        .getCollection( clName ) ;
+                String modifier = "{ $set: { 'str':'testupdate_field16995'} }" ;
+                String matcher = "{ '$and': [ { 'no': { '$gte':" + beginNo
+                        + " } }, " + "{ 'no': { '$lt': " + endNo + "}}]}" ;
+                dbcl.update( matcher, modifier, "" ) ;
+            }
+        }
+    }
 
-		public InsertThread(int beginNo, String clName, ArrayList<BSONObject> expRecords) {
-			this.clName = clName;
-			this.beginNo = beginNo;
-			this.expRecords = expRecords;
-		}
+    public class InsertThread extends SdbThreadBase {
+        private String clName ;
+        private int beginNo ;
+        private ArrayList< BSONObject > expRecords ;
 
-		@Override
-		public void exec() throws BaseException {
-			try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-				DBCollection dbcl = db.getCollectionSpace(csName).getCollection(clName);
-				List<BSONObject> expSubRecords = DataConsistencyUtil.insertDatas(dbcl, 50000, beginNo,5000);
-				expRecords.addAll(expSubRecords);
-			}
-		}
-	}
+        public InsertThread( int beginNo, String clName,
+                ArrayList< BSONObject > expRecords ) {
+            this.clName = clName ;
+            this.beginNo = beginNo ;
+            this.expRecords = expRecords ;
+        }
 
-	// update the same range of elements in the expected list.
-	private void updateExpDatas(ArrayList<BSONObject> expRecords, int updateNums) {
-		for (BSONObject object : expRecords) {
-			int value = (int) object.get("no");
-			if (value < updateNums) {
-				object.put("str", "testupdate_field16995");
-			} else {
-				break;
-			}
-		}
-	}
+        @Override
+        public void exec() throws BaseException {
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                DBCollection dbcl = db.getCollectionSpace( csName )
+                        .getCollection( clName ) ;
+                List< BSONObject > expSubRecords = DataConsistencyUtil
+                        .insertDatas( dbcl, 50000, beginNo ) ;
+                expRecords.addAll( expSubRecords ) ;
+            }
+        }
+    }
 
-	private void createUnquieIndexes(CollectionSpace cs, String clName) {
-		DBCollection dbcl = cs.getCollection(clName);
-		dbcl.createIndex("testa", "{no:1}", true, false);
-		dbcl.createIndex("testb", "{inta:1,no:1}", true, false);
-		dbcl.createIndex("testc", "{str:1,no:1}", true, false);
-		dbcl.createIndex("teste", "{ftest:1,no:-1}", true, false);
-		dbcl.createIndex("testf", "{ftest:-1,no:1}", true, false);
-		dbcl.createIndex("testg", "{str:-1,order:1,no:-1}", true, false);
-	}
+    // update the same range of elements in the expected list.
+    private void updateExpDatas( ArrayList< BSONObject > expRecords,
+            int updateNums ) {
+        for ( BSONObject object : expRecords ) {
+            int value = ( int ) object.get( "no" ) ;
+            if ( value < updateNums ) {
+                object.put( "str", "testupdate_field16995" ) ;
+            } else {
+                break ;
+            }
+        }
+    }
+
+    private void createUnquieIndexes( CollectionSpace cs, String clName ) {
+        DBCollection dbcl = cs.getCollection( clName ) ;
+        dbcl.createIndex( "testa", "{no:1}", true, false ) ;
+        dbcl.createIndex( "testb", "{inta:1,no:1}", true, false ) ;
+        dbcl.createIndex( "testc", "{str:1,no:1}", true, false ) ;
+        dbcl.createIndex( "teste", "{ftest:1,no:-1}", true, false ) ;
+        dbcl.createIndex( "testf", "{ftest:-1,no:1}", true, false ) ;
+        dbcl.createIndex( "testg", "{str:-1,order:1,no:-1}", true, false ) ;
+    }
 }
