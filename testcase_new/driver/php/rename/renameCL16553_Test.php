@@ -9,7 +9,6 @@
 <?php
 define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/../global.php';
-include_once Cur_Path.'/../commlib/RenameUtils.php';
 
 class Rename16553 extends PHPUnit_Framework_TestCase
 {
@@ -18,21 +17,19 @@ class Rename16553 extends PHPUnit_Framework_TestCase
    private static $newCLName = 'cl16549new';
    private static $cs;
    private static $db;
-   private static $RenameUtils;
    
-   public static function setUpBeforeClass()
+   public function setUp()
    {
       self::$db = new Sequoiadb();
       self::$db -> connect(globalParameter::getHostName().':'. 
                            globalParameter::getCoordPort()) ;
-      self::checkErrno( 0, self::$db -> getError()['errno'] );                     
+      $this -> assertEquals( 0, self::$db -> getError()['errno']);
                            
       self::$cs = self::$db -> selectCS( self::$csName );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      $this -> assertEquals( 0, self::$db -> getError()['errno']);
       self::$cs -> selectCL( self::$oldCLName );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      $this -> assertEquals( 0, self::$db -> getError()['errno']);
       
-      self::$RenameUtils = new RenameUtils();
    }
    
    function test()
@@ -40,12 +37,16 @@ class Rename16553 extends PHPUnit_Framework_TestCase
       echo "\n---Begin to rename cs.\n";
       
       self::$cs -> renameCL( self::$oldCLName, self::$newCLName );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      $this -> assertEquals( 0, self::$db -> getError()['errno']);
       
-      self::$RenameUtils -> checkRenameCL( self::$db, self::$csName,  self::$oldCLName, self::$newCLName );
+      self::$db -> getCS( self::$csName ) -> getCL( self::$oldCLName );
+      $this -> assertEquals( -23, self::$db -> getError()['errno']);
+
+      self::$db -> getCS( self::$csName ) -> getCL( self::$newCLName );
+      $this -> assertEquals( 0, self::$db -> getError()['errno']);
    }
    
-   public static function tearDownAfterClass()
+   public function tearDown()
    {
       $err = self::$db -> dropCS( self::$csName );
       if ( $err['errno'] != 0 )
@@ -54,14 +55,6 @@ class Rename16553 extends PHPUnit_Framework_TestCase
       }
       echo "\n---End of the test.\n";
       self::$db->close();
-   }
-   
-   private static function checkErrno( $expErrno, $actErrno, $msg = '' )
-   {
-      if( $expErrno != $actErrno ) 
-      {
-         throw new Exception( 'expect ['.$expErrno.'] but found ['.$actErrno.']. '.$msg );
-      }
    }
    
 }

@@ -9,7 +9,6 @@
 <?php
 define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/../global.php';
-include_once Cur_Path.'/../commlib/RenameUtils.php';
 
 class Rename16552 extends PHPUnit_Framework_TestCase
 {
@@ -17,76 +16,40 @@ class Rename16552 extends PHPUnit_Framework_TestCase
    private static $clName = 'cl16552';
    private static $cs;
    private static $db;
-   private static $RenameUtils;
    
-   public static function setUpBeforeClass()
+   public function setUp()
    {
       self::$db = new Sequoiadb();
       self::$db -> connect(globalParameter::getHostName().':'.
                            globalParameter::getCoordPort()) ;
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
 
       self::$cs = self::$db -> selectCS( self::$csName );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       self::$cs -> selectCL( self::$clName );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
 
-      self::$RenameUtils = new RenameUtils();
    }
    
    function test()
    {
       echo "\n---Begin to rename cs.\n";
       
-      //use string starting with $
-      self::$db -> renameCS( self::$csName, '$newCSName' );
-      self::checkErrno( -6, self::$db -> getError()['errno'] );
+      //use null cs name .
+      self::$db -> renameCS( self::$csName, null );
+      $this -> assertEquals( -6, self::$db -> getError()['errno'] );
+      self::$db -> getCS( self::$csName );
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       
-      //use string contain .
-      self::$db -> renameCS( self::$csName, 'new.csName' );
-      self::checkErrno( -6, self::$db -> getError()['errno'] );
-      
-      //use null cs name
+      //use "" cs name
       self::$db -> renameCS( self::$csName, '' );
-      self::checkErrno( -6, self::$db -> getError()['errno'] );
-      
-      //use to long string
-      $baseStr = 'qwertyuiopasdfghjklzxcvbnm';
-      $nameStr = '';
-      for( $i=0; $i<40; $i++ )
-      {
-         $nameStr = $nameStr . $baseStr;
-      }
-      self::$db -> renameCS( self::$csName, $nameStr );
-      self::checkErrno( -6, self::$db -> getError()['errno'] );
-      
-      //use 127 string
-      $str = 'a';
-      $name = '';
-      for( $i=0; $i<127; $i++)
-      {
-         $name = $name . $str;
-      }
-      self::$db -> renameCS( self::$csName, $name );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
-      self::$RenameUtils -> checkRenameCS( self::$db, self::$csName, $name );
-      self::$db -> renameCS( $name, self::$csName );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
-      return;
-      //use string starting with a%@!~=+-^&()
-      self::$db -> renameCS( self::$csName, 'a%@!~=+-^&()' );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
-      self::$RenameUtils -> checkRenameCS( self::$db, self::$csName, 'a%@!~=+-^&()' );
-      self::$db -> renameCS( 'a%@!~=+-^&()', self::$csName );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
-      
-      //use string starting with $
-      self::$db -> renameCS( self::$csName, 'SYSnewName' );
-      self::checkErrno( -6, self::$db -> getError()['errno'] );
+      $this -> assertEquals( -6, self::$db -> getError()['errno'] );
+      self::$db -> getCS( self::$csName );
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       
    }
    
-   public static function tearDownAfterClass()
+   public function tearDown()
    {
       $err = self::$db -> dropCS( self::$csName );
       if ( $err['errno'] != 0 )
@@ -95,14 +58,6 @@ class Rename16552 extends PHPUnit_Framework_TestCase
       }
       echo "\n---End of the test.\n";
       self::$db->close();
-   }
-   
-   private static function checkErrno( $expErrno, $actErrno, $msg = '' )
-   {
-      if( $expErrno != $actErrno ) 
-      {
-         throw new Exception( 'expect [' . $expErrno . '] but found [' . $actErrno . ']. ' . $msg );
-      }
    }
    
 }

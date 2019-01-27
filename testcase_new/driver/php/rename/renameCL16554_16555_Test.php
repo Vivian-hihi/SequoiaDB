@@ -18,18 +18,19 @@ class Rename16554_16555 extends PHPUnit_Framework_TestCase
    private static $cl;
    private static $db;
    
-   public static function setUpBeforeClass()
+   public function setUp()
    {
       self::$db = new Sequoiadb();
       self::$db -> connect(globalParameter::getHostName().':'. 
                            globalParameter::getCoordPort()) ;
-      self::checkErrno( 0, self::$db -> getError()['errno'] );                     
+      $this -> assertEquals( 0, self::$db -> getError()['errno']);
                            
       self::$cs = self::$db -> selectCS( self::$csName );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      $this -> assertEquals( 0, self::$db -> getError()['errno']);
       self::$cs -> selectCL( self::$clName1 );
+      $this -> assertEquals( 0, self::$db -> getError()['errno']);
       self::$cs -> selectCL( self::$clName2 );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      $this -> assertEquals( 0, self::$db -> getError()['errno']);
       
    }
    
@@ -38,17 +39,17 @@ class Rename16554_16555 extends PHPUnit_Framework_TestCase
       echo "\n---Begin to rename cs.\n";
       
       self::$cs -> renameCL( 'clNameNotExist', self::$clName1 );
-      self::checkErrno( -23, self::$db -> getError()['errno'] );
+      $this -> assertEquals( -23, self::$db -> getError()['errno'] );
       
       self::$cs -> renameCL( self::$clName1, self::$clName1 );
-      self::checkErrno( -22, self::$db -> getError()['errno'] );
+      $this -> assertEquals( -22, self::$db -> getError()['errno'] );
       
       self::$cs -> renameCL( self::$clName1, self::$clName2 );
-      self::checkErrno( -22, self::$db -> getError()['errno'] );
+      $this -> assertEquals( -22, self::$db -> getError()['errno'] );
       
    }
    
-   public static function tearDownAfterClass()
+   public function tearDown()
    {
       $err = self::$db -> dropCS( self::$csName );
       if ( $err['errno'] != 0 )
@@ -57,14 +58,6 @@ class Rename16554_16555 extends PHPUnit_Framework_TestCase
       }
       echo "\n---End of the test.\n";
       self::$db->close();
-   }
-   
-   private static function checkErrno( $expErrno, $actErrno, $msg = '' )
-   {
-      if( $expErrno != $actErrno ) 
-      {
-         throw new Exception( 'expect ['.$expErrno.'] but found ['.$actErrno.']. '.$msg );
-      }
    }
    
 }
