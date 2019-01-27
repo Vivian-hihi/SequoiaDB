@@ -31,7 +31,7 @@ public class SdbTestBase {
     protected static String reservedDir;
     protected static String workDir;
     private static Sequoiadb sequoiadb = null;
-    private static Sequoiadb sdb = null ;
+    //private static Sequoiadb sdb = null ;
     private static final String ROLE = "Role" ;
     private static final String DATA = "data" ;
     private static final String TRANSACTIONON  = "transactionon" ;
@@ -58,7 +58,7 @@ public class SdbTestBase {
         try {
             options.setSocketKeepAlive( true ) ;
             sequoiadb = new Sequoiadb(coordUrl, "", "", options);
-            sdb = new Sequoiadb(coordUrl, "", "");
+           // sdb = new Sequoiadb(coordUrl, "", "");
             if (sequoiadb.isCollectionSpaceExist(csName)){ 
                 sequoiadb.dropCollectionSpace(csName);
             }
@@ -208,7 +208,7 @@ public class SdbTestBase {
             if (sequoiadb.isCollectionSpaceExist(csName)) {
                 sequoiadb.dropCollectionSpace(csName);
             }
-            sdb.close() ;
+            //sdb.close() ;
         } catch(BaseException e){
             e.printStackTrace() ;
             Assert.fail( e.getMessage() + " called: " + count.get() ) ;
