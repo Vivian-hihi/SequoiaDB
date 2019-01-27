@@ -15,34 +15,50 @@ class GetLastErrMsg16657 extends PHPUnit_Framework_TestCase
    private static $cl;
    private static $db;
    
-   public static function setUpBeforeClass()
+   public function setUp()
    {
       self::$db = new Sequoiadb();
       self::$db -> connect(globalParameter::getHostName().':'. 
                            globalParameter::getCoordPort()) ;
-      self::checkErrno( 0, self::$db -> getError()['errno'] );                     
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );                     
                            
       $cs = self::$db -> selectCS( self::$csName );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       self::$cl = $cs -> selectCL( self::$clName );	
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       self::$cl -> createIndex( array( 'a' => 1), "myIndex", true );
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
    }
    
    function test()
    {
       echo "\n---Begin to check getError.\n";
       self::$cl -> insert( array( 'a' => 1) );
-      self::checkErrno( 0, self::$db -> getError()['errno'] );
+      $this -> assertEquals( 0, self::$db -> getError()['errno'] );
       self::$cl -> insert( array( 'a' => 1) );
       $errMsg1 = self::$db -> getLastErrorMsg();
-      self::checkErrorMsg( $errMsg1, -38, "insert the same record");
+      $this -> assertEquals( $errMsg1["errno"], -38, "insert the same record");
+      $this -> assertTrue(array_key_exists("errno", $errMsg1));
+      $this -> assertTrue(array_key_exists("description", $errMsg1));
+      $this -> assertTrue(array_key_exists("detail", $errMsg1));
+      if( !globalParameter::isStandalone( self::$db ))
+      {
+         $this -> assertTrue(array_key_exists("ErrNodes", $errMsg1));
+         $this -> assertTrue(array_key_exists("NodeName", $errMsg1["ErrNodes"][0]));
+         $this -> assertTrue(array_key_exists("GroupName", $errMsg1["ErrNodes"][0]));
+         $this -> assertTrue(array_key_exists("Flag", $errMsg1["ErrNodes"][0]));
+         $this -> assertTrue(array_key_exists("ErrInfo", $errMsg1["ErrNodes"][0]));
+         $this -> assertTrue(array_key_exists("errno", $errMsg1["ErrNodes"][0]["ErrInfo"]));
+         $this -> assertEquals($errMsg1["ErrNodes"][0]["ErrInfo"]["errno"], $errMsg1["errno"]);
+         $this -> assertEquals($errMsg1["ErrNodes"][0]["ErrInfo"]["description"], $errMsg1["description"]);
+         $this -> assertEquals($errMsg1["ErrNodes"][0]["ErrInfo"]["detail"], $errMsg1["detail"]);
+      }
       self::$db -> getCS("NOT_EXIST_CS16657");
       $errMsg2 = self::$db -> getLastErrorMsg();
-      self::checkErrorMsg( $errMsg2, -34, "get not exist cl");
+      $this -> assertEquals( $errMsg2["errno"], -34, "get not exist cl");
    }
    
-   public static function tearDownAfterClass()
+   public function tearDown()
    {
       $err = self::$db -> dropCS( self::$csName );
       if ( $err['errno'] != 0 )
@@ -50,23 +66,6 @@ class GetLastErrMsg16657 extends PHPUnit_Framework_TestCase
          throw new Exception("failed to drop cs, errno=".$err['errno']);
       }
       self::$db->close();
-   }
-   
-   private static function checkErrno( $expErrno, $actErrno, $msg = "" )
-   {
-      if( $expErrno != $actErrno ) 
-      {
-         throw new Exception( "expect [".$expErrno."] but found [".$actErrno."]. ".$msg );
-      }
-   }
-
-   private static function checkErrorMsg( $errorMsg, $expErrno, $msg = "" )
-   {
-      $actErrno = $errorMsg['errno'];
-      if( $actErrno != $expErrno )
-      {
-         throw new Exception( "expect [".$expErrno."] but found [".$actErrno."]. ".$msg );
-      }
    }
    
 }
