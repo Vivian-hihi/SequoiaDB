@@ -24,27 +24,27 @@ function main()
    var mainclSequenceName = "SYS_" + clID + "_" + fieldName + "_SEQ";
    var expIncrementArr = [{Field:fieldName, SequenceName:mainclSequenceName, Generated:generated}];
    checkAutoIncrementonCL(COMMCSNAME, clName, expIncrementArr);
-   /*需求变更SEQUOIADBMAINSTREAM-4045，用例后续重新实现，已将该用例记录到对应的问题单中
+  
    var expR = [];
-   var j=1;
+   var currentValue = 0;
    for(var i=0; i<100; i++)
    {
-      if(i%2===1)
+      if(i%2===0)
       {
-         var doc = {a:i,id:i};
+         currentValue = i+10;
+         var doc = {a:i,id:currentValue};
          dbcl.insert(doc);
-         expR.push({a:i,id:i});
+         expR.push(doc);
       }else
       {
          dbcl.insert({a:i});
-         expR.push({a:i,id:j});
-         j++;
+         expR.push({a:i,id:currentValue + 1});
       }
    }
    
    var actR = dbcl.find().sort({a:1});
    checkRec(actR, expR);
-   println("---check set increment field insert record success");
+   println("---check insert success");
    
    var doc = {id:{$numberLong:"9223372036854775807"},a:"numberLong"};
    expR.push({id:{$numberLong:"9223372036854775807"},a:"numberLong"});
@@ -54,16 +54,6 @@ function main()
    checkRec(actR, expR);
    println("---check increment field set numberLong success");
    
-   dbcl.insert({"id.1":100});
-   expR.push({"id.1":100,id:j});
-   j++
-   
-   dbcl.insert({"id.a":101});
-   expR.push({"id.a":101,id:j});
-   var actR = dbcl.find().sort({_id:1});
-   checkRec(actR, expR);
-   println("---check set \"id.xxx\" insert record success");
-   */
    var arr = [{id:1.25,a:"float"},
               {id:{$decimal:"123"},a:"decimal"},
               {id:"string",a:"string"},
