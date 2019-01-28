@@ -105,9 +105,9 @@ function main()
       println("--check logical id on slave success!");
       
       //随机获取某条记录的logicalID
-      var minRecordNum = 0;
+      var minRecordNum = 1;
       var maxRecordNum = expectNum;
-      var skipNum = Math.ceil( minRecordNum + Math.random() * (maxRecordNum - minRecordNum) );
+      var skipNum = Math.floor( minRecordNum + Math.random() * (maxRecordNum - minRecordNum) );
       println("--skipNum:" + skipNum);
       var logicalID = getLogicalID(dbcl, null, null, {_id:1}, 1, skipNum);
       
