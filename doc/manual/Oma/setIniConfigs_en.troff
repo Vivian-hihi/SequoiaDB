@@ -28,11 +28,11 @@ The path of INI file.
 .PP
 Options for parsing configuration items.
 .PP
-sensitive: true is data type sensitive, false is the data type as a string,
+enableType: true is enable type, false is all types are treated as strings,
 default false.
 .PP
-delimiter: true is string with double quotes, false is string with single
-quotes, default true.
+strDelimiter: true is string with double quotes, false is string with single
+quotes, null is no string delimiter, default true.
 .SH RETURN VALUE
 .PP
 On success, nothing returns.
@@ -51,10 +51,10 @@ set the configuration information of INI file.
 .fi
 .RE
 .IP "2." 3
-set the configuration information of INI file and data type sensitive.
+set the configuration information of INI file and enable type.
 .nf
 \f[C]
->\ Oma.setIniConfigs(\ {\ "a":\ 1,\ "b":\ true,\ "c":\ "hello"},\ "/opt/config.ini",\ {\ sensitive:\ true\ }\ )
+>\ Oma.setIniConfigs(\ {\ "a":\ 1,\ "b":\ true,\ "c":\ "hello"},\ "/opt/config.ini",\ {\ enableType:\ true\ }\ )
 \f[]
 .fi
 .RE
