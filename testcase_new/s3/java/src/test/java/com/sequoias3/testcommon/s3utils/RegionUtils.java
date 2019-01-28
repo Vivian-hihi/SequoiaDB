@@ -119,11 +119,14 @@ public class RegionUtils extends S3TestBase {
 	}
 
 	public static List<String> listRegions() throws Exception {
+		return listRegions(S3TestBase.s3AccessKeyId);
+	}
+	public static List<String> listRegions(String accessKeyId) throws Exception {
 		TestRest rest = new TestRest();
 		ResponseEntity<?> resp;
 		List<String> listResult;
 		try {
-			resp = rest.setApi("/region").setRequestHeaders(UserCommDefind.authorization, "ABCDEFGHIJKLMNOPQRST")
+			resp = rest.setApi("/region").setRequestHeaders(UserCommDefind.authorization, accessKeyId)
 					.setRequestMethod(HttpMethod.GET).setResponseType(String.class).exec();
 			String xmlBody = resp.getBody().toString();
 			JSONObject jsonBody = XML.toJSONObject(xmlBody);
