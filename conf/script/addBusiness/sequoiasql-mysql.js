@@ -297,6 +297,7 @@ function CreateInst( PD_LOGGER )
    args = '' ;
    args += ' addinst ' + businessName ;
    args += ' -D ' + dbpath ;
+   args += ' -p ' + port ;
    args += ' --print' ;
    error = _runRemoteCmd( cmd, exec, args, timeout ) ;
    if ( error !== null )
@@ -481,7 +482,8 @@ function Rollback( PD_LOGGER )
 
          //del inst
          args = '' ;
-         args += ' delinst ' + port ;
+         args += ' delinst ' + businessName ;
+         args += ' --print'
          error = _runRemoteCmd( cmd, exec, args, timeout ) ;
          if ( error !== null )
          {
