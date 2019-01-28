@@ -35,11 +35,15 @@ public class RegionUtils extends S3TestBase {
 	private static SimpleDateFormat monthFm = new SimpleDateFormat("MM");
 
 	public static void putRegion(Region region) throws Exception {
+		putRegion(region,S3TestBase.s3AccessKeyId);
+	}
+	
+	public static void putRegion(Region region, String accessKeyId) throws Exception {
 		TestRest rest = new TestRest(type);
 		ResponseEntity<?> resp;
 		try {
 			resp = rest.setApi("/region/" + region.getName())
-					.setRequestHeaders(UserCommDefind.authorization, "ABCDEFGHIJKLMNOPQRST").setRequestBody(region)
+					.setRequestHeaders(UserCommDefind.authorization, accessKeyId).setRequestBody(region)
 					.setRequestMethod(HttpMethod.PUT).setResponseType(String.class).exec();
 			int status = resp.getStatusCodeValue();
 			if (status != 200) {
@@ -49,14 +53,18 @@ public class RegionUtils extends S3TestBase {
 			throw httpToAmazon(e);
 		}
 	}
-
+	
 	public static boolean deleteRegion(String regionName) throws Exception {
+		return deleteRegion(regionName, S3TestBase.s3AccessKeyId);
+	}
+
+	public static boolean deleteRegion(String regionName, String accessKeyId) throws Exception {
 		TestRest rest = new TestRest();
 		ResponseEntity<?> resp;
 		boolean isDelete = false;
 		try {
 			resp = rest.setApi("/region/" + regionName)
-					.setRequestHeaders(UserCommDefind.authorization, "ABCDEFGHIJKLMNOPQRST")
+					.setRequestHeaders(UserCommDefind.authorization, accessKeyId)
 					.setRequestMethod(HttpMethod.DELETE).setResponseType(String.class).exec();
 			if (resp.getStatusCodeValue() == 204) {
 				isDelete = true;
@@ -86,21 +94,25 @@ public class RegionUtils extends S3TestBase {
 		}
 		return result;
 	}
-
+	
 	public static boolean headRegion(String regionName) throws Exception {
+		return headRegion(regionName, S3TestBase.s3AccessKeyId);
+	}
+
+	public static boolean headRegion(String regionName, String accessKeyId) throws Exception {
 		TestRest rest = new TestRest();
 		ResponseEntity<?> resp;
 		boolean doesExist = false;
 		try {
 			resp = rest.setApi("/region/" + regionName)
-					.setRequestHeaders(UserCommDefind.authorization, "ABCDEFGHIJKLMNOPQRST")
+					.setRequestHeaders(UserCommDefind.authorization, accessKeyId)
 					.setRequestMethod(HttpMethod.HEAD).setResponseType(String.class).exec();
 			if (resp.getStatusCodeValue() == 200) {
 				doesExist = true;
 			}
 		} catch (HttpClientErrorException e) {
 			if( e.getStatusCode().value() != 404 ){
-				throw httpToAmazon(e);
+				throw httpToAmazonHead(e);
 			}			
 		}
 		return doesExist;
@@ -180,6 +192,12 @@ public class RegionUtils extends S3TestBase {
 		amazonS3Exception.setErrorMessage(subjsonBody.getString("Message"));
 		return amazonS3Exception;
 	}
+	
+	private static AmazonS3Exception httpToAmazonHead(HttpClientErrorException e) {
+		AmazonS3Exception amazonS3Exception = new AmazonS3Exception(e.getMessage());
+		amazonS3Exception.setStatusCode(e.getStatusCode().value());
+		return amazonS3Exception;
+	}
 
 	public static void createCSAndCL(String csName, String[] clNames) {
 		try( Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "") ){
@@ -205,6 +223,10 @@ public class RegionUtils extends S3TestBase {
 
 	public static String getDataCSName(String regionName,String shardType, Date currTime){
 		return pregix +regionName+"_DataCS_" + getCsClPostfix(shardType, currTime) ;
+	}
+	
+	public static String getMetaCSName(String regionName){
+		return pregix +regionName+"_MetaCS";
 	}
 
 	public static String getDataCLName(String shardType,Date currTime){
