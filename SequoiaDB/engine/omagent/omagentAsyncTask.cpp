@@ -746,6 +746,7 @@ namespace engine
    _omaAsyncSubTask::_omaAsyncSubTask( INT64 taskID ) : _omaTask( taskID )
    {
       _taskID = taskID ;
+      _taskName = OMA_CMD_ASYNC_SUB_TASK ;
    }
 
    _omaAsyncSubTask::~_omaAsyncSubTask()

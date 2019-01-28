@@ -182,6 +182,8 @@ namespace engine
 
    #define OMA_CMD_UPDATE_TASK                        "update task"
 
+   #define OMA_CMD_ASYNC_SUB_TASK                     "async sub task"
+
 
    /*
       oma js file
