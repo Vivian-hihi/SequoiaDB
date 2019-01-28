@@ -24,9 +24,9 @@ Get the INI file configuration information.
 
    Options for parsing configuration items.
 
-   sensitive: true is data type sensitive, false is the data type as a string, default false.
+   enableType: true is enable type, false is all types are treated as strings, default false.
 
-   delimiter: true is string only supports double quotes, false is String supports double quotes and single quotes, default true.
+   strDelimiter: true is string only supports double quotes, false is String supports double quotes and single quotes, default true.
 
 ##RETURN VALUE##
 
@@ -62,10 +62,10 @@ Since v3.0.2.
 	}
 	```
 
-2. print the configuration information of INI file and data type sensitive.
+2. print the configuration information of INI file and enable type.
 
 	```lang-javascript
-	> Oma.getIniConfigs( "/opt/config.ini", { "sensitive": true } )
+	> Oma.getIniConfigs( "/opt/config.ini", { "enableType": true } )
 	{
 		"datestyle": "iso, ymd",
 		"listen_addresses": "*",

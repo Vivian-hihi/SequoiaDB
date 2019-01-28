@@ -28,9 +28,9 @@ Set the INI file configuration information.
 
    Options for parsing configuration items.
 
-   sensitive: true is data type sensitive, false is the data type as a string, default false.
+   enableType: true is enable type, false is all types are treated as strings, default false.
 
-   delimiter: true is string with double quotes, false is string with single quotes, default true.
+   strDelimiter: true is string with double quotes, false is string with single quotes, null is no string delimiter, default true.
 
 ##RETURN VALUE##
 
@@ -50,8 +50,8 @@ Since v3.0.2.
 	> Oma.setIniConfigs( { "a": 1, "b": true, "c": "hello"}, "/opt/config.ini" )
 	```
 
-2. set the configuration information of INI file and data type sensitive.
+2. set the configuration information of INI file and enable type.
 
 	```lang-javascript
-	> Oma.setIniConfigs( { "a": 1, "b": true, "c": "hello"}, "/opt/config.ini", { sensitive: true } )
+	> Oma.setIniConfigs( { "a": 1, "b": true, "c": "hello"}, "/opt/config.ini", { enableType: true } )
 	```

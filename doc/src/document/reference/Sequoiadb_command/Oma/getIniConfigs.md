@@ -24,9 +24,9 @@ Oma
 
    解析配置文件的参数项.
 
-   sensitive: true 是数据类型敏感, false 是数据类型都作为字符串, 默认 false.
+   enableType: true 是开启数据类型, false 是所有类型都视为字符串, 默认 false.
 
-   delimiter: true 是字符串只支持双引号, false 是字符串只是双引号和单引号, 默认 true.
+   strDelimiter: true 是字符串只支持双引号, false 是字符串只是双引号和单引号, 默认 true.
 
 ##返回值##
 
@@ -66,10 +66,10 @@ v3.0.2及以上版本。
 	}
 	```
 
-2. 打印 INI 配置文件，并且对数据类型敏感。
+2. 打印 INI 配置文件，并且开启数据类型。
 
 	```lang-javascript
-	> Oma.getIniConfigs( "/opt/config.ini", { "sensitive": true } )
+	> Oma.getIniConfigs( "/opt/config.ini", { "enableType": true } )
 	{
 		"datestyle": "iso, ymd",
 		"listen_addresses": "*",
