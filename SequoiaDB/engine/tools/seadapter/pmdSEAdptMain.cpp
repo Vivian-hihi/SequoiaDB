@@ -186,12 +186,16 @@ namespace seadapter
       }
 
       {
-         const CHAR *cfgFileName = sdbGetSeAdptOptions()->getCfgFileName() ;
-         const CHAR *pathEnd = ossStrrchr( cfgFileName, OSS_FILE_SEP_CHAR ) ;
-
-         ossStrncpy( lockFilePath, cfgFileName, pathEnd - cfgFileName ) ;
+         // To avoid multiple adapters connecting to the same data node by using
+         // the same configuration file, or with the same db node service.
+         ossStrncpy( lockFilePath, dialogPath, OSS_MAX_PATHSIZE + 1 ) ;
          rc = utilCatPath( lockFilePath, OSS_MAX_PATHSIZE,
                            SDB_SEADPT_LOCK_FILE_NAME ) ;
+         if ( rc )
+         {
+            ossPrintf( "Build path for lock file failed[%d]"OSS_NEWLINE, rc ) ;
+            goto error ;
+         }
 
          rc = procMutex.init( "sdbseadapter", (void *)lockFilePath ) ;
          if ( rc )
@@ -204,7 +208,8 @@ namespace seadapter
          if ( rc )
          {
             ossPrintf( "Lock process mutex failed. Maybe another process is "
-                       "running using the same configuration file" ) ;
+                       "running using the same configuration file, or try to "
+                       "connect to the same data node" ) ;
             goto error ;
          }
       }

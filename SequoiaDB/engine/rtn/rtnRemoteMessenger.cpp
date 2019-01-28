@@ -76,8 +76,10 @@ namespace engine
       return SDB_OK ;
    }
 
-   _rtnMsgHandler::_rtnMsgHandler( pmdRemoteSessionMgr *pRSManager )
+   _rtnMsgHandler::_rtnMsgHandler( _rtnRemoteMessenger *remoteMessenger,
+                                   pmdRemoteSessionMgr *pRSManager )
    {
+      _remoteMessenger = remoteMessenger ;
       _pRSManager = pRSManager ;
    }
 
@@ -113,6 +115,8 @@ namespace engine
    {
       SDB_ASSERT( _pRSManager, "Remote session manager can't be NULL" ) ;
       PD_TRACE_ENTRY( SDB__RTNMSGHANDLER_HANDLECLOSE ) ;
+
+      _remoteMessenger->onDisconnect() ;
       _pRSManager->handleClose( handle, id ) ;
       PD_TRACE_EXIT( SDB__RTNMSGHANDLER_HANDLECLOSE ) ;
    }
@@ -128,7 +132,7 @@ namespace engine
    }
 
    _rtnRemoteMessenger::_rtnRemoteMessenger()
-   : _msgHandler( &_rsMgr ),
+   : _msgHandler( this, &_rsMgr ),
      _routeAgent( &_msgHandler ),
      _ready( FALSE ),
      _targetNodeID( 0 )
@@ -387,6 +391,12 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _rtnRemoteMessenger::onDisconnect()
+   {
+      ossScopedRWLock lock( &_lock, EXCLUSIVE ) ;
+      _ready = FALSE ;
    }
 }
 

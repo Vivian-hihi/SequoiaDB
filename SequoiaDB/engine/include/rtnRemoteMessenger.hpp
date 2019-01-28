@@ -66,10 +66,13 @@ namespace engine
    } ;
    typedef _rtnRSHandler rtnRSHandler ;
 
+   class _rtnRemoteMessenger ;
+
    class _rtnMsgHandler : public _netMsgHandler
    {
       public:
-         _rtnMsgHandler( pmdRemoteSessionMgr *pRSManager ) ;
+         _rtnMsgHandler( _rtnRemoteMessenger *remoteMessenger,
+                         pmdRemoteSessionMgr *pRSManager ) ;
          virtual ~_rtnMsgHandler() ;
 
          virtual INT32 handleMsg( const NET_HANDLE &handle,
@@ -81,6 +84,7 @@ namespace engine
                                       BOOLEAN isPositive ) ;
 
       protected:
+         _rtnRemoteMessenger     *_remoteMessenger ;
          _pmdRemoteSessionMgr    *_pRSManager ;
    } ;
    typedef _rtnMsgHandler rtnMsgHandler ;
@@ -104,6 +108,9 @@ namespace engine
       INT32 removeSession( UINT64 sessionID, pmdEDUCB *cb ) ;
       INT32 send( UINT64 sessionID, const MsgHeader *msg, pmdEDUCB *cb ) ;
       INT32 receive( UINT64 sessionID, pmdEDUCB *cb, MsgOpReply *&reply ) ;
+
+      // If disconnect with adapter, disable the messenger.
+      void onDisconnect() ;
 
       OSS_INLINE BOOLEAN isReady()
       {

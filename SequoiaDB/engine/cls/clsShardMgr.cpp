@@ -2759,6 +2759,14 @@ namespace engine
                       rc ) ;
          messenger = rtnCB->getRemoteMessenger() ;
       }
+      else if ( messenger->isReady() )
+      {
+         // Someone else has registered and is still available.
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Remote messenger is ready now. Reject new "
+                          "registration" ) ;
+         goto error ;
+      }
 
       rc = extractAuthMsg( msg, bodyObj ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract auth message failed[ %d ]", rc ) ;
