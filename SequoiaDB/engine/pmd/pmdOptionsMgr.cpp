@@ -2638,6 +2638,11 @@ done:
          }
       }
 
+      if ( SCHED_TYPE_NONE == _svcSchedulerType )
+      {
+         _svcMaxConcurrency = 0 ;
+      }
+
    done:
       return rc ;
    error:
