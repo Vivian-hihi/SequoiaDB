@@ -47,7 +47,7 @@ public class GetRegionListByNormalUser17319 extends S3TestBase{
         region.withName(regionName);
         RegionUtils.putRegion(region);
 		
-        List<String> regions = RegionUtils.listRegions();
+        List<String> regions = RegionUtils.listRegions(accessKeys[0]);
         Assert.assertTrue(regions.contains(regionName.toLowerCase()));
     	runSuccess = true;
 	}
