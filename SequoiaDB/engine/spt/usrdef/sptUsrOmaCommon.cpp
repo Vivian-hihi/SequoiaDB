@@ -229,7 +229,7 @@ namespace engine
    }
 
    static INT32 _parseValue( const CHAR *pStr, INT32 length, itemInfo &value,
-                             BOOLEAN sensitive, BOOLEAN delimiter )
+                             BOOLEAN enableType, BOOLEAN strDelimiter )
    {
       INT32 rc = SDB_OK ;
 
@@ -243,7 +243,7 @@ namespace engine
          goto done ;
       }
       //is string 'xxxx'
-      else if ( FALSE == delimiter &&
+      else if ( FALSE == strDelimiter &&
                 CHAR_SINGLE_QUOTE == *pStr &&
                 CHAR_SINGLE_QUOTE == *(pStr + length - 1) )
       {
@@ -256,7 +256,7 @@ namespace engine
       else
       {
          //is number
-         if ( TRUE == sensitive )
+         if ( TRUE == enableType )
          {
             rc =  _parseNumber ( pStr, length,
                                  value.type,
@@ -276,7 +276,7 @@ namespace engine
          if ( ITEM_TYPE_STRING == value.type )
          {
             //is bool
-            if ( TRUE == sensitive &&
+            if ( TRUE == enableType &&
                  SDB_OK == ossStrToBoolean( pStr, &value.varBool ) )
             {
                value.type = ITEM_TYPE_BOOLEAN ;
@@ -385,8 +385,8 @@ namespace engine
                                           string &err )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN sensitive = FALSE ;
-      BOOLEAN delimiter = TRUE ;
+      BOOLEAN enableType = FALSE ;
+      BOOLEAN strDelimiter = TRUE ;
       string confFile ;
       BSONObj conf ;
 
@@ -406,32 +406,32 @@ namespace engine
 
       confFile = arg.getStringField( "confFile" ) ;
 
-      if( arg.hasField( "sensitive" ) )
+      if( arg.hasField( "enableType" ) )
       {
-         if( Bool != arg.getField( "sensitive" ).type() )
+         if( Bool != arg.getField( "enableType" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "sensitive must be BOOLEAN" ;
+            err = "enableType must be BOOLEAN" ;
             goto error ;
          }
 
-         sensitive = arg.getBoolField( "sensitive" ) ;
+         enableType = arg.getBoolField( "enableType" ) ;
       }
 
-      if( arg.hasField( "delimiter" ) )
+      if( arg.hasField( "strDelimiter" ) )
       {
-         if( Bool != arg.getField( "delimiter" ).type() )
+         if( Bool != arg.getField( "strDelimiter" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "delimiter must be BOOLEAN" ;
+            err = "strDelimiter must be BOOLEAN" ;
             goto error ;
          }
 
-         delimiter = arg.getBoolField( "delimiter" ) ;
+         strDelimiter = arg.getBoolField( "strDelimiter" ) ;
       }
 
       rc = _getConfInfo( confFile, conf, err, FALSE, FALSE,
-                         sensitive, delimiter ) ;
+                         enableType, strDelimiter ) ;
       if ( rc )
       {
          goto error ;
@@ -499,8 +499,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BOOLEAN noDelimiter = FALSE ;
-      BOOLEAN sensitive = FALSE ;
-      BOOLEAN delimiter = TRUE ;
+      BOOLEAN enableType = FALSE ;
+      BOOLEAN strDelimiter = TRUE ;
       string confFile ;
       string str ;
 
@@ -520,38 +520,38 @@ namespace engine
 
       confFile = arg.getStringField( "confFile" ) ;
 
-      if( arg.hasField( "sensitive" ) )
+      if( arg.hasField( "enableType" ) )
       {
-         if( Bool != arg.getField( "sensitive" ).type() )
+         if( Bool != arg.getField( "enableType" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "sensitive must be BOOLEAN" ;
+            err = "enableType must be BOOLEAN" ;
             goto error ;
          }
 
-         sensitive = arg.getBoolField( "sensitive" ) ;
+         enableType = arg.getBoolField( "enableType" ) ;
       }
 
-      if( arg.hasField( "delimiter" ) )
+      if( arg.hasField( "strDelimiter" ) )
       {
-         if( jstNULL == arg.getField( "delimiter" ).type() )
+         if( jstNULL == arg.getField( "strDelimiter" ).type() )
          {
             noDelimiter = TRUE ;
          }
-         else if( Bool == arg.getField( "delimiter" ).type() )
+         else if( Bool == arg.getField( "strDelimiter" ).type() )
          {
-            delimiter = arg.getBoolField( "delimiter" ) ;
+            strDelimiter = arg.getBoolField( "strDelimiter" ) ;
          }
          else
          {
             rc = SDB_INVALIDARG ;
-            err = "delimiter must be BOOLEAN" ;
+            err = "strDelimiter must be BOOLEAN" ;
             goto error ;
          }
       }
 
       rc = _config2Ini( confObj, str, err,
-                        noDelimiter, sensitive, delimiter ) ;
+                        noDelimiter, enableType, strDelimiter ) ;
       if ( rc )
       {
          goto error ;
@@ -930,10 +930,12 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptUsrOmaCommon::_getConfInfo( const string & confFile, BSONObj &conf,
-                                         string &err, BOOLEAN allowNotExist,
-                                         BOOLEAN isSdbConfig, BOOLEAN sensitive,
-                                         BOOLEAN delimiter )
+   INT32 _sptUsrOmaCommon::_getConfInfo( const string &confFile, BSONObj &conf,
+                                         string &err,
+                                         BOOLEAN allowNotExist,
+                                         BOOLEAN isSdbConfig,
+                                         BOOLEAN enableType,
+                                         BOOLEAN strDelimiter )
    {
       INT32 rc = SDB_OK ;
       po::options_description desc ;
@@ -1008,7 +1010,7 @@ namespace engine
                itemInfo valueData ;
 
                _parseValue( value.c_str(), value.length(), valueData,
-                            sensitive, delimiter ) ;
+                            enableType, strDelimiter ) ;
 
                if ( ITEM_TYPE_INT == valueData.type )
                {
@@ -1048,15 +1050,15 @@ namespace engine
                                         string &out,
                                         string &err,
                                         BOOLEAN noDelimiter,
-                                        BOOLEAN sensitive,
-                                        BOOLEAN delimiter )
+                                        BOOLEAN enableType,
+                                        BOOLEAN strDelimiter )
    {
       INT32 rc = SDB_OK ;
       CHAR delimiterChar ;
       map<string, string> sectionList ;
       BSONObjIterator it ( config ) ;
 
-      if ( delimiter )
+      if ( strDelimiter )
       {
          delimiterChar = CHAR_DOUBLE_QUOTE ;
       }
@@ -1092,7 +1094,7 @@ namespace engine
          ss << key << "=" ;
 
          if ( FALSE == noDelimiter &&
-              ( FALSE == sensitive || e.type() == String ) )
+              ( FALSE == enableType || e.type() == String ) )
          {
             ss << delimiterChar ;
          }
@@ -1115,7 +1117,7 @@ namespace engine
          }
          else if ( e.type() == Bool )
          {
-            ss << ( e.boolean() ? "TRUE" : "FALSE" ) ;
+            ss << ( e.boolean() ? "true" : "false" ) ;
          }
          else
          {
@@ -1125,7 +1127,7 @@ namespace engine
          }
 
          if ( FALSE == noDelimiter &&
-              ( FALSE == sensitive || e.type() == String ) )
+              ( FALSE == enableType || e.type() == String ) )
          {
             ss << delimiterChar ;
          }
@@ -1177,15 +1179,15 @@ namespace engine
                                          string &err,
                                          const CHAR* pExcept,
                                          BOOLEAN isSdbConfig,
-                                         BOOLEAN sensitive,
-                                         BOOLEAN delimiter )
+                                         BOOLEAN enableType,
+                                         BOOLEAN strDelimiter )
    {
       INT32 rc = SDB_OK ;
       CHAR delimiterChar ;
       stringstream ss ;
       BSONObjIterator it ( conf ) ;
 
-      if ( delimiter )
+      if ( strDelimiter )
       {
          delimiterChar = CHAR_DOUBLE_QUOTE ;
       }
@@ -1206,7 +1208,7 @@ namespace engine
 
          ss << e.fieldName() << "=" ;
 
-         if ( ( FALSE == sensitive || e.type() == String ) &&
+         if ( ( FALSE == enableType || e.type() == String ) &&
               FALSE == isSdbConfig )
          {
             ss << delimiterChar ;
@@ -1241,7 +1243,7 @@ namespace engine
             goto error ;
          }
 
-         if ( ( FALSE == sensitive || e.type() == String ) &&
+         if ( ( FALSE == enableType || e.type() == String ) &&
               FALSE == isSdbConfig )
          {
             ss << delimiterChar ;

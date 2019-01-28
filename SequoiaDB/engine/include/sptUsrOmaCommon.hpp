@@ -87,11 +87,11 @@ namespace engine
       allowNotExist  [in] : Whether to allow files to not exist
       isSdbConfig    [in] : If it is a sdb configuration file,
                             need to parse the special configuration item.
-      sensitive      [in] : TRUE:  Automatically identify the type of
+      enableType     [in] : TRUE:  Automatically identify the type of
                                    configuration item;
                             FALSE: Configuration item types are
                                    converted to strings.
-      delimiter      [in] : TRUE:  String only supports double quotes;
+      strDelimiter   [in] : TRUE:  String only supports double quotes;
                             FALSE: String supports double quotes and
                                    single quotes.
       */
@@ -100,17 +100,17 @@ namespace engine
                                   string &err,
                                   BOOLEAN allowNotExist = FALSE,
                                   BOOLEAN isSdbConfig = TRUE,
-                                  BOOLEAN sensitive = FALSE,
-                                  BOOLEAN delimiter = TRUE ) ;
+                                  BOOLEAN enableType = FALSE,
+                                  BOOLEAN strDelimiter = TRUE ) ;
 
       /*
-      isSdbConfig    [in] : TRUE:  Force type sensitive and
+      isSdbConfig    [in] : TRUE:  Force type enableType and
                                    not use character separators;
-                            FALSE: Sensitive and delimiter are valid and
+                            FALSE: enableType and strDelimiter are valid and
                                    use string separators.
-      sensitive      [in] : TRUE:  Output according to the type of value;
+      enableType     [in] : TRUE:  Output according to the type of value;
                             FALSE: Forced value output string.
-      delimiter      [in] : TRUE:  Output string with double quotes;
+      strDelimiter   [in] : TRUE:  Output string with double quotes;
                             FALSE: Output string with single quotes.
       */
       static INT32  _confObj2Str( const bson::BSONObj &conf,
@@ -118,15 +118,15 @@ namespace engine
                                   string &err,
                                   const CHAR* pExcept = NULL,
                                   BOOLEAN isSdbConfig = TRUE,
-                                  BOOLEAN sensitive = FALSE,
-                                  BOOLEAN delimiter = TRUE ) ;
+                                  BOOLEAN enableType = FALSE,
+                                  BOOLEAN strDelimiter = TRUE ) ;
 
       static INT32 _config2Ini( const bson::BSONObj &config,
                                 string &out,
                                 string &err,
                                 BOOLEAN noDelimiter = FALSE,
-                                BOOLEAN sensitive = FALSE,
-                                BOOLEAN delimiter = TRUE ) ;
+                                BOOLEAN enableType = FALSE,
+                                BOOLEAN strDelimiter = TRUE ) ;
    } ;
 }
 
