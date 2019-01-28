@@ -107,21 +107,21 @@
    指定实例名为myinst，该实例名映射相应的数据目录和日志路径，用户可以根据自己需要指定不同的实例名。
 
    ```lang-javascript
-   $ bin/sdb_sql_ctl addinst myinst -D pg_data/
+   $ bin/sdb_sql_ctl addinst myinst -D database/5432/
    ```
 
    若端口号5432被占用，用户可以使用-p参数指定实例端口号：
 
    ```lang-javascript
-   $ bin/sdb_sql_ctl addinst myinst -D pg_data/ -p 5433
+   $ bin/sdb_sql_ctl addinst myinst -D database/5442/ -p 5442
    ```
 
    查看实例：
 
    ```lang-javascript
    $ bin/sdb_sql_ctl listinst
-   NAME       PGDATA                                 PGLOG                                   
-   myinst     /opt/sequoiasql/postgresql/pg_data    /opt/sequoiasql/postgresql/myinst.log     
+   NAME       PGDATA                                       PGLOG
+   myinst     /opt/sequoiasql/postgresql/database/5432/    /opt/sequoiasql/postgresql/myinst.log
    Total: 1
    ```
 
@@ -130,15 +130,15 @@
    ```lang-javascript
    $ bin/sdb_sql_ctl start myinst
    Starting instance myinst ...
-   ok (PID: 20502)
+   ok (PID: 28115)
    ```
     
     查看实例状态
     
     ```lang-javascript
    $ bin/sdb_sql_ctl status
-   INSTANCE   PID      SVCNAME   PGDATA                            PGLOG                                   
-   myinst     20502    5432      /opt/sequoiasql/postgresql/pg_data   /opt/sequoiasql/postgresql/pg_data/myinst.log     
+   INSTANCE   PID        SVCNAME    PGDATA                                   PGLOG
+   myinst     28115      5432       /opt/sequoiasql/postgresql/database/5432/ /opt/sequoiasql/postgresql/myinst.log
    Total: 1; Run: 1
    ```
 
@@ -146,8 +146,8 @@
 
    ```lang-javascript
    $ netstat -nap | grep 5432
-   tcp   0   0 127.0.0.1:5432     0.0.0.0:*         LISTEN     20502/postgres
-   unix  2   [ ACC ]   STREAM    LISTENING   40776754 20502/postgres     /tmp/.s.PGSQL.5432
+   tcp   0   0 127.0.0.1:5432     0.0.0.0:*         LISTEN     28115/postgres
+   unix  2   [ ACC ]   STREAM    LISTENING   40776754 28115/postgres     /tmp/.s.PGSQL.5432
    ```
 
 6. 创建 SequoiaSQL PostgreSQL 的 database
@@ -172,7 +172,7 @@
    当添加一个新实例时，会自动加入 service 的管理中。
 
    ```lang-javascript
-   $ bin/sdb_sql_ctl addinst myinst -D pg_data
+   $ bin/sdb_sql_ctl addinst myinst -D database/5432/
    Adding instance myinst ...
    ok
    ```
@@ -188,7 +188,7 @@
    或者在添加实例的时候指定参数--addtosvc：
 
    ```lang-javascript
-   $ bin/sdb_sql_ctl addinst myinst -D pg_data --addtosvc=false
+   $ bin/sdb_sql_ctl addinst myinst -D database/5432/ --addtosvc=false
    Adding instance myinst ...
    ok
    ```
