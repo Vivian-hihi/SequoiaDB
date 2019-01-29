@@ -100,7 +100,8 @@ public class UserController {
         logger.info("delete user. admin={},user={},force={}",
                 adminUser.getUserName(), username, forceDelete);
         userService.deleteUser(username, forceDelete);
-
+        logger.info("delete user success. admin={},user={},force={}",
+                adminUser.getUserName(), username, forceDelete);
         return ResponseEntity.ok().build();
     }
 }
