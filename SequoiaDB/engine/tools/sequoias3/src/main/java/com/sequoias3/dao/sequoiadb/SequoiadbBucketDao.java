@@ -176,11 +176,11 @@ public class SequoiadbBucketDao implements BucketDao {
             logger.error("getBucketListByRegion failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
-            if (null == connection){
-                sdbDatasourceWrapper.releaseSequoiadb(sdb);
-            }
             if (cursor != null){
                 cursor.close();
+            }
+            if (null == connection){
+                sdbDatasourceWrapper.releaseSequoiadb(sdb);
             }
         }
     }
