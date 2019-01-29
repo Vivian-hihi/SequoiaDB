@@ -71,8 +71,7 @@ namespace engine
    class _rtnMsgHandler : public _netMsgHandler
    {
       public:
-         _rtnMsgHandler( _rtnRemoteMessenger *remoteMessenger,
-                         pmdRemoteSessionMgr *pRSManager ) ;
+         _rtnMsgHandler( pmdRemoteSessionMgr *pRSManager ) ;
          virtual ~_rtnMsgHandler() ;
 
          virtual INT32 handleMsg( const NET_HANDLE &handle,
@@ -84,7 +83,6 @@ namespace engine
                                       BOOLEAN isPositive ) ;
 
       protected:
-         _rtnRemoteMessenger     *_remoteMessenger ;
          _pmdRemoteSessionMgr    *_pRSManager ;
    } ;
    typedef _rtnMsgHandler rtnMsgHandler ;

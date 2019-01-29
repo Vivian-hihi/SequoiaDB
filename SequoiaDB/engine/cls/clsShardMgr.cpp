@@ -390,6 +390,7 @@ namespace engine
       _nodeID.value = 0 ;
       _seAdptID.value = INVALID_NODE_ID ;
       _upCatHandle = NET_INVALID_HANDLE ;
+      _seAdptHandle = NET_INVALID_HANDLE ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_DECONSTRUCTOR, "_clsShardMgr::~_clsShardMgr" )
@@ -2713,6 +2714,15 @@ namespace engine
          _upCatEvent.signalAll( SDB_NETWORK_CLOSE ) ;
       }
 
+      if ( handle == _seAdptHandle )
+      {
+         rtnRemoteMessenger *
+            messenger = pmdGetKRCB()->getRTNCB()->getRemoteMessenger() ;
+         SDB_ASSERT( messenger, "Remote messenger is NULL" ) ;
+         messenger->onDisconnect() ;
+         _seAdptHandle = NET_INVALID_HANDLE ;
+      }
+
       return SDB_OK ;
    }
 
@@ -2759,9 +2769,19 @@ namespace engine
                       rc ) ;
          messenger = rtnCB->getRemoteMessenger() ;
       }
-      else if ( messenger->isReady() )
+
+      // If the adapter handler is valid, there is some valid connection between
+      // this node and the adapter. In this case, no new connections are
+      // allowed.
+      if ( NET_INVALID_HANDLE != _seAdptHandle )
       {
-         // Someone else has registered and is still available.
+         if ( handle == _seAdptHandle )
+         {
+            // Send by the current valid adapter, just ignore.
+            goto done ;
+         }
+
+         // Another different adapter. Reject!
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Remote messenger is ready now. Reject new "
                           "registration" ) ;
@@ -2856,6 +2876,7 @@ namespace engine
          }
 
          myInfoObj = builder.done() ;
+         _seAdptHandle = handle ;
       }
       catch ( std::exception &e )
       {

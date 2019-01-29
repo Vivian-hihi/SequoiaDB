@@ -328,6 +328,7 @@ namespace engine
          // External search engine adapter route id. Set when the adapter starts
          // and registers on this data node.
          MsgRouteID                    _seAdptID ;
+         NET_HANDLE                    _seAdptHandle ;
    } ;
 
    typedef _clsShardMgr shardCB ;
