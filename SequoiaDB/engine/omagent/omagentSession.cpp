@@ -540,8 +540,13 @@ namespace engine
       builder.append( OP_ERRNOFIELD, rc ) ;
       builder.append( OP_ERRDESP_FIELD, getErrDesp( rc ) ) ;
 
-      if ( eduCB()->getInfo( EDU_INFO_ERROR ) &&
-           0 != *( eduCB()->getInfo( EDU_INFO_ERROR ) ) )
+      if ( String == retObj.getField( OP_ERR_DETAIL ).type() )
+      {
+         builder.append( OP_ERR_DETAIL,
+                         retObj.getStringField( OP_ERR_DETAIL ) ) ;
+      }
+      else if ( eduCB()->getInfo( EDU_INFO_ERROR ) &&
+                0 != *( eduCB()->getInfo( EDU_INFO_ERROR ) ) )
       {
          builder.append( OP_ERR_DETAIL,
                          eduCB()->getInfo( EDU_INFO_ERROR ) ) ;

@@ -133,10 +133,14 @@ namespace engine
       if( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         builder.append( OP_ERR_DETAIL, err ) ;
+         retObj = builder.obj() ;
          goto error ;
       }
+
       builder.append( "strOut", strOut ) ;
       retObj = builder.obj() ;
+
    done:
       return rc ;
    error:
