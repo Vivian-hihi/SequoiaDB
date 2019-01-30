@@ -608,12 +608,14 @@ namespace engine
          switch ( opCode )
          {
             case MSG_CAT_SPLIT_PREPARE_REQ :
-               rc = catSplitPrepare( boQuery, _pEduCB, returnGroupID, returnVersion ) ;
+               rc = catSplitPrepare( boQuery, _pEduCB, returnGroupID,
+                                     returnVersion ) ;
                break ;
             case MSG_CAT_SPLIT_READY_REQ :
                // Generate task ID
                taskID = assignTaskID() ;
-               rc = catSplitReady( boQuery, taskID, TRUE, _pEduCB, w, returnGroupID, returnVersion ) ;
+               rc = catSplitReady( boQuery, taskID, TRUE, _pEduCB, w,
+                                   returnGroupID, returnVersion ) ;
                break ;
             case MSG_CAT_SPLIT_CHGMETA_REQ :
                rc = catSplitChgMeta( boQuery, taskID, _pEduCB, w ) ;
@@ -628,7 +630,8 @@ namespace engine
                rc = catSplitFinish( taskID, _pEduCB, w ) ;
                break ;
             case MSG_CAT_SPLIT_CANCEL_REQ :
-               rc = catSplitCancel( boQuery, _pEduCB, taskID, w, returnGroupID ) ;
+               rc = catSplitCancel( boQuery, _pEduCB, taskID, w,
+                                    returnGroupID ) ;
                break ;
             default :
                rc = SDB_INVALIDARG ;
