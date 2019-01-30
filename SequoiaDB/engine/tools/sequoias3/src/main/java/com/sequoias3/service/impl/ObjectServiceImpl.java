@@ -597,13 +597,13 @@ public class ObjectServiceImpl implements ObjectService {
                     isSpecInnerVersionId = true;
                 }
             }
-            queryDbCursorCur = metaDao.queryMetaByBucket(metaHisCsName, metaClName,
+            queryDbCursorCur = metaDao.queryMetaByBucket(metaCsName, metaClName,
                     bucket.getBucketId(), prefix, keyMarker, isSpecInnerVersionId, true);
             if (queryDbCursorCur == null){
                 return listVersionsResult;
             }
 
-            queryDbCursorHis = metaDao.queryMetaByBucket(metaCsName, metaHisClName,
+            queryDbCursorHis = metaDao.queryMetaByBucket(metaHisCsName, metaHisClName,
                     bucket.getBucketId(), prefix, keyMarker, isSpecInnerVersionId, true);
             if (queryDbCursorHis != null){
                 if (queryDbCursorHis.hasNext()){
