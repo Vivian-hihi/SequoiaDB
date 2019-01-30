@@ -4,7 +4,7 @@
    
    <groupId>com.sequoiadb</groupId>
    <version>3.0.2</version>
-   <artifactId>sequoiadb-testcases-fuutext-java</artifactId>
+   <artifactId>sequoiadb-testcases-fulltext-java</artifactId>
    <packaging>jar</packaging>
    
    <properties>
