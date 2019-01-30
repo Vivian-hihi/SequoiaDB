@@ -246,7 +246,9 @@ const UINT32 MSG_SERVICE_MAX = 64 ;
    } ;
 
    /// msg : | --- MsgClsFSBegin --- | --- [ bson ] --- |
-   /// bson: { validcls: [ { fullname:"xx.xx", commitflag:[x,y,z], commitlsn:[X,Y,Z] }, ... ] }
+   /// bson:
+   ///   for fullsync: { validcls: [ { fullname:"xx.xx", commitflag:[x,y,z], commitlsn:[X,Y,Z] }, ... ] }
+   ///   for split: no-bson
    class _MsgClsFSBegin : public SDBObject
    {
    public :
@@ -267,9 +269,11 @@ const UINT32 MSG_SERVICE_MAX = 64 ;
    typedef class _MsgClsFSBegin MsgClsFSBegin ;
 
    /// msg: | -- MsgClsFSBeginRes -- | -- [bson] -- |
-   /// bson: { csnames: [ {csname:'xx', pagesize:x, logpagesize:y},... ],
-   ///         fullnames:[ {fullname:'yy'},... ],
-   ///         validcls:[ {fullname:'zz'}, ... ] }
+   /// bson:
+   ///   for fullsyc: { csnames: [ {csname:'xx', pagesize:x, logpagesize:y},... ],
+   ///                  fullnames:[ {fullname:'yy'},... ],
+   ///                  validcls:[ {fullname:'zz'}, ... ] }
+   ///   for split: no-bson
    class _MsgClsFSBeginRes : public SDBObject
    {
    public :
