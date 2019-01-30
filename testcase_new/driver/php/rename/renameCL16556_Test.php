@@ -1,7 +1,7 @@
 /****************************************************
 @description:      rename cl, check new clName
 @testlink cases:   seqDB-16556
-@input:        rename cs
+@input:        rename cl
 @output:     success
 @modify list:
         2018-11-13 Luweikang init

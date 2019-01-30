@@ -1,6 +1,7 @@
 /****************************************************
-@description:      rename cs, old cs name not exist
+@description:      rename cl, old cl name not exist, new cl name equal, new cl name exist
 @testlink cases:   seqDB-16554 seqDB-16555
+@input:        rename cl
 @output:     success
 @modify list:
         2018-11-13 Luweikang init

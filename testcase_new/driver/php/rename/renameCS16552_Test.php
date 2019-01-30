@@ -1,6 +1,6 @@
 /****************************************************
 @description:      rename cs, check new csName
-@testlink cases:   seqDB-16549
+@testlink cases:   seqDB-16552
 @input:        rename cs
 @output:     success
 @modify list:

@@ -1,6 +1,6 @@
 /****************************************************
-@description:      rename cs, old cs name not exist
-@testlink cases:   seqDB-16549
+@description:      rename cs, old cs name not exist, new cs name equal, new cs name exist
+@testlink cases:   seqDB-16550,seqDB-16551
 @input:        rename cs
 @output:     success
 @modify list:
@@ -41,6 +41,8 @@ class Rename16550_16551 extends PHPUnit_Framework_TestCase
       $this -> assertEquals( -34, self::$db -> getError()['errno'] );
       
       self::$db -> renameCS( self::$csName1, self::$csName1 );
+      $this -> assertEquals( -33, self::$db -> getError()['errno'] );
+      
       
       self::$db -> renameCS( self::$csName1, self::$csName2 );
       $this -> assertEquals( -33, self::$db -> getError()['errno'] );

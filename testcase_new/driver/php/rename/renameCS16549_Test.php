@@ -1,5 +1,5 @@
 /****************************************************
-@description:      rename cs
+@description:      test rename cs success
 @testlink cases:   seqDB-16549
 @input:        rename cs
 @output:     success
