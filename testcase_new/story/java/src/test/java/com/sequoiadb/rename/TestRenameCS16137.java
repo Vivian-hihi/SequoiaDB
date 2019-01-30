@@ -27,6 +27,7 @@ public class TestRenameCS16137 extends SdbTestBase{
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
+    private boolean createOneSuccess = false;
     
     @BeforeClass
     public void setUp() {
@@ -54,7 +55,8 @@ public class TestRenameCS16137 extends SdbTestBase{
         if (renameCSThread.isSuccess() && !createIndexThread.isSuccess()){
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             RenameUtil.checkRenameCSResult(sdb, csName, newCSName, 1);
-            checkCLIndex(sdb, newCSName, clName, 3);
+            int expIndexNum = createOneSuccess ? 3 : 4; 
+            checkCLIndex(sdb, newCSName, clName, expIndexNum);
             BaseException e = (BaseException)createIndexThread.getExceptions().get(0);
             if (e.getErrorCode() != -23 && e.getErrorCode() != -34) {
                 Assert.fail("errcode not expected : " + e.getMessage());
@@ -93,8 +95,8 @@ public class TestRenameCS16137 extends SdbTestBase{
         DBCursor cur = localCL.getIndexes();
         int indexnum = 0;
         while (cur.hasNext()){
-            indexnum++;
             cur.getNext();
+            indexnum++;
         }
         Assert.assertEquals(indexnum, expected+1);
     }
@@ -121,6 +123,7 @@ public class TestRenameCS16137 extends SdbTestBase{
                 CollectionSpace localcs = db.getCollectionSpace(csName);
                 DBCollection localcl = localcs.getCollection(clName);
                 localcl.createIndex("index3", "{a3:1}", false, false);
+                createOneSuccess = true;
                 localcl.createIndex("index4", "{a4:1}", false, false);
             }finally{
                 db.close();
