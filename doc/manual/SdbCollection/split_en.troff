@@ -10,7 +10,9 @@ replica groups. This operation is a synchronous operation, so it
 will terminate and return after finishing the data split.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.collectionspace.collection.split(<source group>,<target group>,<percent(0~100)|cond>,[endcondition])\f[]\f[]
+\f[B]\f[I]db.collectionspace.collection.split(<source group>,<target group>,<percent>)\f[]\f[]
+.PP
+\f[B]\f[I]db.collectionspace.collection.split(<source group>,<target group>,<cond>,[endcondition])\f[]\f[]
 .SH CATEGORY
 .PP
 Collection
@@ -30,20 +32,17 @@ terminate and return after finishing the data split.
 .br
        The target replica group.
 .sp 2
-\fBpercent(0~100) (double)\fR
+\fBpercent (double)\fR
 .br
-       percentage split condition. (Either "percent" or
-       "condition".)
+       percentage split condition. Value:(0,100].
 .sp 2
 \fBcond (json object)\fR
 .br
-       Range split condition. (Either "condition" or "percent".)
+       Range split condition.
 .sp 2
 \fBendcondition (json object)\fR
 .br
-       End of the range condition. (Optional, and it is effective
-       when using range split, useless when using percentage
-       split.)
+       End of the range condition. 
 .sp 2
        \fBFormat\fR
 .br
@@ -63,10 +62,10 @@ terminate and return after finishing the data split.
               ending point is the maximum data range of the split
               source.
 .br
-              ("<source shard>","<target shard>",<condition>)
+              ("<source group>","<target group>",<condition>)
 .br
               \fBPercentage split:\fR db.foo.bar.split("<source
-              shard>","<target shard>",<percent>)
+              group>","<target group>",<percent>)
 .sp 2
 
 .sp 2
