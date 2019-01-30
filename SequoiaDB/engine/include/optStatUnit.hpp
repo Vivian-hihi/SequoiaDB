@@ -42,7 +42,7 @@
 #include "dmsSUCache.hpp"
 #include "rtnPredicate.hpp"
 #include "ixm.hpp"
-#include "utilList.hpp"
+#include "ossMemPool.hpp"
 #include "../bson/bson.h"
 
 using namespace std ;
@@ -56,12 +56,12 @@ namespace engine
    class _optCollectionStat ;
    typedef _optCollectionStat optCollectionStat ;
 
-   typedef _utilList<rtnPredicate *> rtnStatPredList ;
+   typedef ossPoolList<rtnPredicate *> rtnStatPredList ;
 
    /*
       _optStatListKey define
     */
-   class _optStatListKey : public _utilList<const rtnKeyBoundary *>,
+   class _optStatListKey : public ossPoolList<const rtnKeyBoundary *>,
                            public _dmsStatKey
    {
       public :
@@ -79,7 +79,7 @@ namespace engine
 
          OSS_INLINE virtual UINT32 size ()
          {
-            return _utilList<const rtnKeyBoundary *>::size() ;
+            return ossPoolList<const rtnKeyBoundary *>::size() ;
          }
 
          OSS_INLINE virtual const BSONElement &firstElement ()
@@ -176,6 +176,7 @@ namespace engine
       protected :
          INT32 _evalKeyPair ( const dmsIndexStat *pIndexStat,
                               rtnStatPredList::iterator &predIter,
+                              rtnStatPredList::iterator &endIter,
                               optStatListKey &startKeys,
                               optStatListKey &stopKeys,
                               BOOLEAN isEqual,

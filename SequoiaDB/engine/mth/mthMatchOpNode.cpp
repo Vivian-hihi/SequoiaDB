@@ -2323,10 +2323,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != func, "func can't be null!" ) ;
-      rc = _funcList.push_back( func ) ;
-      if ( SDB_OK != rc )
+	    try
+		  {
+         _funcList.push_back( func ) ;
+			}
+      catch( std::exception & )
       {
-         PD_LOG( PDERROR, "add funciton failed:rc=%d", rc ) ;
+         rc = SDB_OOM;
+         PD_LOG( PDERROR, "add function failed:rc=%d", rc ) ;
          goto error ;
       }
 

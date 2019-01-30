@@ -40,6 +40,7 @@
 
 #include "coordCommandBase.hpp"
 #include "coordFactory.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -82,7 +83,7 @@ namespace engine
    */
    class _coordCMDGetIndexes : public _coordCMDStatisticsBase
    {
-      typedef _utilMap< string, BSONObj, 10 >      CoordIndexMap ;
+      typedef ossPoolMap< string, BSONObj>      CoordIndexMap ;
 
       COORD_DECLARE_CMD_AUTO_REGISTER() ;
       public:

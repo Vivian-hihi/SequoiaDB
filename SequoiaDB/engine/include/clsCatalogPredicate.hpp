@@ -39,14 +39,14 @@
 #define CLSCATALOGPREDICATE_HPP_
 
 #include "rtnPredicate.hpp"
-#include "utilMap.hpp"
+#include "ossMemPool.hpp"
 
 namespace engine
 {
    class clsCatalogPredicateTree;
    class _clsCatalogItem;
 
-   typedef _utilMap< std::string, rtnStartStopKey*, 10 > MAP_CLSCATAPREDICATEFIELD ;
+   typedef ossPoolMap< std::string, rtnStartStopKey*> MAP_CLSCATAPREDICATEFIELD ;
    typedef std::vector< clsCatalogPredicateTree * >      VEC_CLSCATAPREDICATESET ;
 
    /*

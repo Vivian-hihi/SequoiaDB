@@ -2128,7 +2128,7 @@ namespace engine
          }
          // rtn delete
          _pRtnCB->contextDelete( iterMap->first, _pEDUCB ) ;
-         iterMap =  _contextLst.erase( iterMap ) ;
+         _contextLst.erase( iterMap++ ) ;
       }
    }
 
@@ -2152,7 +2152,7 @@ namespace engine
          }
          // rtn delete
          _pRtnCB->contextDelete( iterMap->first, _pEDUCB ) ;
-         iterMap = _contextLst.erase( iterMap ) ;
+         _contextLst.erase( iterMap++ ) ;
       }
    }
 

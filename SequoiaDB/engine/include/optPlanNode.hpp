@@ -105,7 +105,7 @@ namespace engine
    typedef _utilAllocator< OPT_NODE_ALLOCATOR_SIZE > optPlanAllocator ;
 
    // Store explain results of sub-contexts
-   typedef _utilList< BSONObj > optExplainResultList ;
+   typedef ossPoolList< BSONObj > optExplainResultList ;
 
    typedef struct _optChildNodeSummary
    {
@@ -132,7 +132,7 @@ namespace engine
       double         _waitTime ;
    } optChildNodeSummary ;
 
-   typedef _utilList< optChildNodeSummary > optChildSummaryList ;
+   typedef ossPoolList< optChildNodeSummary > optChildSummaryList ;
 
    /*
       _optPlanNode define
@@ -140,7 +140,7 @@ namespace engine
    class _optPlanNode ;
    typedef class _optPlanNode optPlanNode ;
 
-   typedef _utilList< optPlanNode * > optPlanNodeList ;
+   typedef ossPoolList< optPlanNode * > optPlanNodeList ;
 
    class _optPlanNode
    {

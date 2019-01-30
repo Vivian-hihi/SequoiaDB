@@ -41,6 +41,7 @@
 #include "pmdRemoteSession.hpp"
 #include "coordRemoteHandle.hpp"
 #include "rtnSessionProperty.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -169,7 +170,7 @@ namespace engine
 
       protected :
          typedef _utilArray< UINT8, CLS_REPLSET_MAX_NODE_SIZE > COORD_POS_ARRAY ;
-         typedef _utilList< UINT8, CLS_REPLSET_MAX_NODE_SIZE > COORD_POS_LIST ;
+         typedef ossPoolList< UINT8> COORD_POS_LIST ;
       private:
          INT32    _calcBeginPos( clsGroupItem *pGroupItem,
                                  const rtnInstanceOption & instanceOption,

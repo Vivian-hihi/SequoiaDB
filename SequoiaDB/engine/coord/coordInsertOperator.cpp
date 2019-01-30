@@ -43,6 +43,7 @@
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 #include "coordSequenceAgent.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -1000,7 +1001,7 @@ namespace engine
                                                  BOOLEAN &hasExplicitKey )
    {
       PD_TRACE_ENTRY( COORD_INSERTOPR__ADD_AUTOINC_TO_OBJ ) ;
-      typedef _utilSet<_utilMapStringKey, 1>    StringKeySet ;
+      typedef ossPoolSet<_utilMapStringKey>    StringKeySet ;
 
       INT32                      rc = SDB_OK ;
       BSONElement                ele ;

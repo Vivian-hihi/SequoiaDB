@@ -43,7 +43,6 @@
 #include "rtnQueryOptions.hpp"
 #include "rtnContextMain.hpp"
 #include "rtnContextExplain.hpp"
-#include "utilMap.hpp"
 
 namespace engine
 {
@@ -97,7 +96,7 @@ namespace engine
    */
    class _rtnContextMainCL : public _rtnContextMain
    {
-   typedef _utilMap< INT64, _rtnSubCLContext*, 20 >    SUBCL_CTX_MAP ;
+   typedef ossPoolMap< INT64, _rtnSubCLContext*>    SUBCL_CTX_MAP ;
       DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextMainCL( INT64 contextID, UINT64 eduID ) ;

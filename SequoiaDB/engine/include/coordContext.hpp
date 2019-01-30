@@ -44,6 +44,7 @@
 #include "rtnContextExplain.hpp"
 #include "coordDef.hpp"
 #include "coordRemoteHandle.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -98,8 +99,8 @@ namespace engine
    } ;
    typedef _coordSubContext coordSubContext ;
 
-   typedef _utilMap< UINT64, coordSubContext*, 20 >         EMPTY_CONTEXT_MAP ;
-   typedef _utilMap< UINT64, MsgRouteID, 20 >               PREPARE_NODES_MAP ;
+   typedef ossPoolMap< UINT64, coordSubContext*>         EMPTY_CONTEXT_MAP ;
+   typedef ossPoolMap< UINT64, MsgRouteID>               PREPARE_NODES_MAP ;
 
    /*
       _rtnContextCoord define

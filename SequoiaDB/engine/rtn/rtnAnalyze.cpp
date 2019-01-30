@@ -43,7 +43,6 @@
 #include "pmdCB.hpp"
 #include "dmsStorageUnit.hpp"
 #include "dpsOp2Record.hpp"
-#include "utilMap.hpp"
 #include "rtnInternalSorting.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"

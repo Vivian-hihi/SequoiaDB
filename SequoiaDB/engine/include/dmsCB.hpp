@@ -54,7 +54,6 @@
 #include "ossEvent.hpp"
 #include "sdbInterface.hpp"
 #include "dmsIxmKeySorter.hpp"
-#include "utilMap.hpp"
 #include "dmsStorageJob.hpp"
 #include "ossMemPool.hpp"
 

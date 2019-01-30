@@ -923,7 +923,7 @@ namespace engine
               ( !pRoleFilter[ SDB_ROLE_COORD ] &&
                 COORD_GROUPID == it->second ) )
          {
-            it = groupList.erase( it ) ;
+            groupList.erase( it++ ) ;
          }
          else
          {

@@ -373,7 +373,7 @@ namespace engine
          if ( -1 == emptyIter->second->contextID() )
          {
             SDB_OSS_DEL emptyIter->second ;
-            emptyIter = _emptyContextMap.erase( emptyIter ) ;
+            _emptyContextMap.erase( emptyIter++ ) ;
             continue ;
          }
 
@@ -400,7 +400,7 @@ namespace engine
 
          _prepareContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
                                     emptyIter->first, emptyIter->second ) ) ;
-         emptyIter = _emptyContextMap.erase( emptyIter ) ;
+         _emptyContextMap.erase( emptyIter++ ) ;
       }
 
    done:

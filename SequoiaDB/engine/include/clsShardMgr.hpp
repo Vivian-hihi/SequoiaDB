@@ -43,7 +43,6 @@
 #include "clsCatalogAgent.hpp"
 #include "sdbInterface.hpp"
 #include "clsDCMgr.hpp"
-#include "utilMap.hpp"
 #include "monDMS.hpp"
 
 using namespace bson ;
@@ -112,7 +111,7 @@ namespace engine
    class _clsFreezingWindow : public SDBObject
    {
       typedef std::set< UINT64 > OP_SET ;
-      typedef _utilMap< std::string, OP_SET > MAP_WINDOW ;
+      typedef ossPoolMap< std::string, OP_SET > MAP_WINDOW ;
 
       public:
          _clsFreezingWindow() ;

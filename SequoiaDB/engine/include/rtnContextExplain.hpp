@@ -44,7 +44,7 @@
 #include "rtnContext.hpp"
 #include "rtnContextDataDispatcher.hpp"
 #include "optAccessPlanRuntime.hpp"
-#include "utilSet.hpp"
+#include "ossMemPool.hpp"
 
 using namespace std ;
 using namespace bson ;
@@ -317,8 +317,8 @@ namespace engine
          virtual optExplainMergePathBase* getExplainMergePath() = 0 ;
 
       protected :
-         typedef _utilMap< INT64, ossTick > rtnExplainTimestampList ;
-         typedef _utilSet< INT64 > rtnExplainIDList ;
+         typedef ossPoolMap< INT64, ossTick > rtnExplainTimestampList ;
+         typedef ossPoolSet< INT64 > rtnExplainIDList ;
 
       protected :
          ossTick                    _tempTimestamp ;

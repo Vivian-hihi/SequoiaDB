@@ -48,11 +48,11 @@
 #include "msgMessage.hpp"
 #include "ixmExtent.hpp"
 #include "rtnInternalSorting.hpp"
-#include "utilList.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "rtnExtDataHandler.hpp"
 #include "rtnContextDel.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -392,7 +392,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      _utilList< dmsExtentID, 32 > extentIDStack ;
+      ossPoolList< dmsExtentID> extentIDStack ;
       UINT32 targetLevelKeyCount = 0 ;
       UINT64 curLevelKeyCount = 0, curLevelExtCount = 0,
              nextLevelExtCount = 0 ;

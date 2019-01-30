@@ -36,8 +36,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
-#include "utilList.hpp"
-#include "utilMap.hpp"
+#include "ossMemPool.hpp"
 #include "utilCompression.hpp"
 #include "utilArguments.hpp"
 #include "../bson/bson.hpp"
@@ -907,7 +906,7 @@ namespace engine
       _rtnAlterDomainTask define
     */
 
-   typedef _utilList< const CHAR * > RTN_DOMAIN_GROUP_LIST ;
+   typedef ossPoolList< const CHAR * > RTN_DOMAIN_GROUP_LIST ;
 
    class _rtnAlterDomainTask : public _rtnAlterTask
    {

@@ -45,6 +45,7 @@
 #include "netRouteAgent.hpp"
 #include "pmdRemoteSession.hpp"
 #include "pmdRemoteMsgEventHandler.hpp"
+#include "ossMemPool.hpp"
 
 #include <vector>
 #include <string>
@@ -84,7 +85,7 @@ namespace engine
       typedef map< string, omAgentInfo >     MAP_HOST2ID ;
       typedef MAP_HOST2ID::iterator          MAP_HOST2ID_IT ;
 
-      typedef _utilMap< SINT64, UINT64, 20 >    CONTEXT_LIST ;
+      typedef ossPoolMap< SINT64, UINT64>    CONTEXT_LIST ;
 
       public:
          _omManager() ;

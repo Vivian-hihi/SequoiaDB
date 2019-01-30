@@ -50,7 +50,7 @@
 #include "catCatalogManager.hpp"
 #include "catNodeManager.hpp"
 #include "catEventHandler.hpp"
-#include "utilMap.hpp"
+#include "ossMemPool.hpp"
 
 #include <vector>
 
@@ -81,7 +81,7 @@ namespace engine
                              public _netTimeoutHandler,
                              public _catEventHandler
    {
-   typedef _utilMap< SINT64, UINT64, 20 >    CONTEXT_LIST ;
+   typedef ossPoolMap< SINT64, UINT64>    CONTEXT_LIST ;
    typedef std::vector< pmdEDUEvent >        VEC_EVENT ;
 
 

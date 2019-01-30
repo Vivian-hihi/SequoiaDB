@@ -40,7 +40,7 @@
 #include "rtn.hpp"
 #include "pdTrace.hpp"
 #include "catTrace.hpp"
-#include "utilList.hpp"
+#include "ossMemPool.hpp"
 
 namespace engine
 {
@@ -114,7 +114,7 @@ namespace engine
       INT32 type = CLS_TASK_UNKNOW ;
 
       PD_TRACE_ENTRY( SDB_CATCTXALTERCLTASK_CLEARPOSTTASK ) ;
-      for ( _utilList<UINT64>::const_iterator iterTask = _postTasks.begin() ;
+      for ( ossPoolList<UINT64>::const_iterator iterTask = _postTasks.begin() ;
             iterTask != _postTasks.end() ;
             iterTask ++ )
       {
@@ -301,7 +301,7 @@ namespace engine
       clsCatalogSet cataSet( _dataName.c_str() ) ;
       BSONObj setObject, unsetObject ;
 
-      for ( _utilList< UINT64 >::const_iterator iter = _postTasks.begin() ;
+      for ( ossPoolList< UINT64 >::const_iterator iter = _postTasks.begin() ;
             iter != _postTasks.end() ;
             iter ++ )
       {
@@ -1794,7 +1794,7 @@ namespace engine
       return rc ;
 
    error :
-      for ( _utilList< UINT64 >::const_iterator iter = _postTasks.begin() ;
+      for ( ossPoolList< UINT64 >::const_iterator iter = _postTasks.begin() ;
             iter != _postTasks.end() ;
             iter ++ )
       {
@@ -1858,7 +1858,7 @@ namespace engine
       return rc ;
 
    error :
-      for ( _utilList< UINT64 >::const_iterator iter = _postTasks.begin() ;
+      for ( ossPoolList< UINT64 >::const_iterator iter = _postTasks.begin() ;
             iter != _postTasks.end() ;
             iter ++ )
       {
@@ -2656,7 +2656,7 @@ namespace engine
       sdbCatalogueCB * catCB = pmdGetKRCB()->getCATLOGUECB() ;
       const CHAR * collectionSpace = _dataName.c_str() ;
       BSONObj boDomain ;
-      _utilSet< UINT32 > occupiedGroups ;
+      ossPoolSet< UINT32 > occupiedGroups ;
       map< string, UINT32 > domainGroups ;
 
       rc = catGetAndLockDomain( domain, boDomain, cb, &lockMgr, SHARED ) ;
@@ -2675,7 +2675,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to get group list of collection "
                    "space [%s], rc: %d", collectionSpace, rc ) ;
 
-      for ( _utilSet< UINT32 >::iterator iterGroup = occupiedGroups.begin() ;
+      for ( ossPoolSet< UINT32 >::iterator iterGroup = occupiedGroups.begin() ;
             iterGroup != occupiedGroups.end() ;
             iterGroup ++ )
       {
@@ -3278,7 +3278,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_CATCTXALTERDOMAINTASK__CHKRMGROUPS ) ;
 
       sdbCatalogueCB * catCB = pmdGetKRCB()->getCATLOGUECB() ;
-      _utilSet< UINT32 > removingGroups ;
+      ossPoolSet< UINT32 > removingGroups ;
 
       for ( RTN_DOMAIN_GROUP_LIST::const_iterator iterGroup = groups.begin();
             iterGroup != groups.end();
@@ -3298,15 +3298,15 @@ namespace engine
 
       if ( !removingGroups.empty() )
       {
-         _utilList< string > collectionSpaces ;
-         _utilSet< UINT32 > occupiedGroups ;
+         ossPoolList< string > collectionSpaces ;
+         ossPoolSet< UINT32 > occupiedGroups ;
 
          /// Get collection spaces for domain
          rc = catGetDomainCSs( _dataName.c_str(), cb, collectionSpaces ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get collection spaces for "
                       "domain [%s], rc: %d", _dataName.c_str(), rc ) ;
 
-         for ( _utilList< string >::iterator iterCS = collectionSpaces.begin() ;
+         for ( ossPoolList< string >::iterator iterCS = collectionSpaces.begin() ;
                iterCS != collectionSpaces.end() ;
                iterCS ++ )
          {
@@ -3322,7 +3322,7 @@ namespace engine
                          "collection space [%s]: rc: %d", collectionSpace, rc ) ;
          }
 
-         for ( _utilSet< UINT32 >::iterator iterGroup = removingGroups.begin() ;
+         for ( ossPoolSet< UINT32 >::iterator iterGroup = removingGroups.begin() ;
                iterGroup != removingGroups.end() ;
                iterGroup ++ )
          {

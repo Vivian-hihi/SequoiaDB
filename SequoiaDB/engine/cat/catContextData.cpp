@@ -42,6 +42,7 @@
 #include "catTrace.hpp"
 #include "pmdCB.hpp"
 #include "rtn.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 using namespace std ;
@@ -1084,7 +1085,7 @@ namespace engine
 
       BOOLEAN newCSExist = FALSE ;
       BSONObj boCollectionspace ;
-      _utilSet< UINT32 > occupiedGroups ;
+      ossPoolSet< UINT32 > occupiedGroups ;
       INT64 taskCount = 0 ;
 
       /// check new cs name whether invaild
@@ -3167,8 +3168,8 @@ namespace engine
                // Generate task list
                BSONObjBuilder replyBuilder ;
                BSONArrayBuilder taskBuilder( replyBuilder.subarrayStart( CAT_TASKID_NAME ) ) ;
-               const _utilList< UINT64 > & postTasks = task->getPostTasks() ;
-               for ( _utilList<UINT64>::const_iterator iterTask = postTasks.begin() ;
+               const ossPoolList< UINT64 > & postTasks = task->getPostTasks() ;
+               for ( ossPoolList<UINT64>::const_iterator iterTask = postTasks.begin() ;
                      iterTask != postTasks.end() ;
                      iterTask ++ )
                {

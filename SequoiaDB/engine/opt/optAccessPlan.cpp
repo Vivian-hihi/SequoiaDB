@@ -1131,7 +1131,7 @@ namespace engine
 
       _deleteSearchPaths() ;
 
-      _searchPaths = SDB_OSS_NEW optScanPathList() ;
+      _searchPaths = new optScanPathList() ;
       PD_CHECK( NULL != _searchPaths, SDB_OOM, error, PDERROR,
                 "Failed to allocate search list" ) ;
 

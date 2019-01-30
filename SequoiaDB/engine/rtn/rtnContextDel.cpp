@@ -41,6 +41,7 @@
 #include "dpsOp2Record.hpp"
 #include "clsMgr.hpp"
 #include "rtnTrace.hpp"
+#include "ossMemPool.hpp"
 
 namespace engine
 {
@@ -176,8 +177,8 @@ namespace engine
       clsTaskMgr *pTaskMgr = pmdGetKRCB()->getClsCB()->getTaskMgr() ;
       vector< string > subCLs ;
       vector< string >::iterator it ;
-      _utilSet< string > mainCLs ;
-      _utilSet< string >::iterator mainIter ;
+      ossPoolSet< string > mainCLs ;
+      ossPoolSet< string >::iterator mainIter ;
 
       if ( !isOpened() )
       {
@@ -638,7 +639,7 @@ namespace engine
          {
             _pRtncb->contextDelete( iter->second, cb );
          }
-         iter = _subContextList.erase( iter );
+         _subContextList.erase( iter++ );
       }
    }
 
@@ -756,7 +757,7 @@ namespace engine
                    "Failed to del sub-collection, rc: %d",
                    rc ) ;
          rc = SDB_OK ;
-         iterCtx = _subContextList.erase( iterCtx ) ;
+         _subContextList.erase( iterCtx++ ) ;
       }
 
       /// clear main collection's catalog info
@@ -941,8 +942,8 @@ namespace engine
       shardCB *pShdMgr = pClsCB->getShardCB() ;
       vector< string > subCLs ;
       vector< string >::iterator it ;
-      _utilSet< string > mainCLs ;
-      _utilSet< string >::iterator mainIter ;
+      ossPoolSet< string > mainCLs ;
+      ossPoolSet< string >::iterator mainIter ;
 
       if ( !isOpened() )
       {

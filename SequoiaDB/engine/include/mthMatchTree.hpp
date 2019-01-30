@@ -42,7 +42,6 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
-#include "utilMap.hpp"
 #include "../bson/bson.hpp"
 #include "mthMatchNode.hpp"
 #include "mthMatchLogicNode.hpp"
@@ -87,7 +86,7 @@ namespace engine
       EN_MATCH_OP_FUNC_TYPE   getMatchNodeType( const CHAR *opStr ) ;
 
    private:
-      typedef _utilMap< string, mthMatchOpMapping* > MTH_OPSTRMAP ;
+      typedef ossPoolMap< string, mthMatchOpMapping* > MTH_OPSTRMAP ;
       MTH_OPSTRMAP _opstrMap ;
    } ;
 

@@ -730,7 +730,7 @@ namespace engine
 
 
    // PD_TRACE_DECLARE_FUNCTION( COORD_DATAALTER__BLDPOSTTASKS, "_coordDataCMDAlter::_buildPostTasks" )
-   INT32 _coordDataCMDAlter::_buildPostTasks ( const _utilList< UINT64 > & postTasks,
+   INT32 _coordDataCMDAlter::_buildPostTasks ( const ossPoolList< UINT64 > & postTasks,
                                                      BSONObj & taskDesc )
    {
       INT32 rc = SDB_OK ;
@@ -740,7 +740,7 @@ namespace engine
       BSONObjBuilder builder ;
       BSONObjBuilder taskBuilder( builder.subobjStart( FIELD_NAME_TASKID ) ) ;
       BSONArrayBuilder arrBuilder( taskBuilder.subarrayStart( "$in" ) ) ;
-      for ( _utilList<UINT64>::const_iterator iter = postTasks.begin() ;
+      for ( ossPoolList<UINT64>::const_iterator iter = postTasks.begin() ;
             iter != postTasks.end() ;
             iter ++ )
       {
@@ -756,7 +756,7 @@ namespace engine
    }
 
    INT32 _coordDataCMDAlter::_executePostTasks ( const CHAR * name,
-                                                 const _utilList< UINT64 > & postTasks,
+                                                 const ossPoolList< UINT64 > & postTasks,
                                                  pmdEDUCB * cb,
                                                  CLS_TASK_TYPE *type )
    {
@@ -764,7 +764,7 @@ namespace engine
    }
 
    INT32 _coordDataCMDAlter::_cancelPostTasks ( const CHAR * name,
-                                                const _utilList< UINT64 > & postTasks,
+                                                const ossPoolList< UINT64 > & postTasks,
                                                 pmdEDUCB * cb )
    {
       return SDB_OK ;
@@ -2181,7 +2181,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCL__EXECPOSTTASKS, "_coordCMDAlterCollection::_executePostTasks" )
    INT32 _coordCMDAlterCollection::_executePostTasks ( const CHAR * name,
-                                                       const _utilList< UINT64 > & postTasks,
+                                                       const ossPoolList< UINT64 > & postTasks,
                                                        pmdEDUCB * cb,
                                                        CLS_TASK_TYPE *type )
    {
@@ -2303,14 +2303,14 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCL__CANCELPOSTTASKS, "_coordCMDAlterCollection::_cancelPostTasks" )
    INT32 _coordCMDAlterCollection::_cancelPostTasks ( const CHAR * name,
-                                                      const _utilList< UINT64 > & postTasks,
+                                                      const ossPoolList< UINT64 > & postTasks,
                                                       pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( COORD_ALTERCL__CANCELPOSTTASKS ) ;
 
-      for ( _utilList< UINT64 >::const_iterator iterTask = postTasks.begin() ;
+      for ( ossPoolList< UINT64 >::const_iterator iterTask = postTasks.begin() ;
             iterTask != postTasks.end() ;
             iterTask ++ )
       {

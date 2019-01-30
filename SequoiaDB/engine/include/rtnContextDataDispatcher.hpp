@@ -41,7 +41,6 @@
 #define RTNCONTEXTDATADISPATCHER_HPP_
 
 #include "rtnContext.hpp"
-#include "utilList.hpp"
 
 namespace engine
 {
@@ -91,7 +90,7 @@ namespace engine
          }
    } ;
 
-   typedef _utilList< _IRtnCtxDataProcessor * > rtnCtxDataProcessorList ;
+   typedef ossPoolList< _IRtnCtxDataProcessor * > rtnCtxDataProcessorList ;
 
    /*
       _rtnCtxDataDispatcher define

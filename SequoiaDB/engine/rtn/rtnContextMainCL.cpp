@@ -624,7 +624,7 @@ namespace engine
             {
                rtnCB->contextDelete( subCtx->contextID(), cb );
                SDB_OSS_DEL iter->second ;
-               iter = _subContextMap.erase( iter ) ;
+               _subContextMap.erase( iter++ ) ;
                rc = SDB_OK ;
                continue ;
             }
@@ -637,7 +637,7 @@ namespace engine
 
          SDB_ASSERT( subCtx->recordNum() > 0, "no data for sub ctx" ) ;
 
-         iter = _subContextMap.erase( iter ) ;
+         _subContextMap.erase( iter++ ) ;
 
          rc = _saveNonEmptyOrderedSubCtx( subCtx ) ;
          if ( rc != SDB_OK )

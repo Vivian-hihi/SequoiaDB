@@ -37,7 +37,6 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
-#include "utilList.hpp"
 #include "utilMap.hpp"
 #include "rtnAlterTask.hpp"
 #include "rtnAlter.hpp"
@@ -47,7 +46,7 @@ namespace engine
 {
 
    typedef _utilStringMap< rtnAlterTaskSchema, RTN_ALTER_MAX_ACTION > RTN_ALTER_TASK_MAP ;
-   typedef _utilList< rtnAlterTask * > RTN_ALTER_TASK_LIST ;
+   typedef ossPoolList< rtnAlterTask * > RTN_ALTER_TASK_LIST ;
 
    /*
       _rtnAlterTaskMap define

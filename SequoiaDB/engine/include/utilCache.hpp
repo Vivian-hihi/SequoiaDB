@@ -38,8 +38,8 @@
 #include "oss.hpp"
 #include "ossLatch.hpp"
 #include "ossRWMutex.hpp"
-#include "utilMap.hpp"
 #include "ossEvent.hpp"
+#include "ossUtil.hpp"
 #include "sdbInterface.hpp"
 #include <vector>
 #include <list>

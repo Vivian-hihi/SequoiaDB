@@ -1150,7 +1150,7 @@ retry :
          }
          // rtn delete
          _pRtnCB->contextDelete( iterMap->first, _pEDUCB );
-         iterMap =  _contextLst.erase( iterMap ) ;
+         _contextLst.erase( iterMap++ ) ;
       }
 
       PD_TRACE_EXIT ( SDB__COORDCB__DELCTXHDL );
@@ -1177,7 +1177,7 @@ retry :
          }
          // rtn delete
          _pRtnCB->contextDelete( iterMap->first, _pEDUCB ) ;
-         iterMap = _contextLst.erase( iterMap ) ;
+         _contextLst.erase( iterMap++ ) ;
       }
 
       PD_TRACE_EXIT ( SDB__COORDCB__DELCTX );

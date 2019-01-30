@@ -50,6 +50,7 @@
 #include "pmdObjBase.hpp"
 #include "rtn.hpp"
 #include "clsRegAssit.hpp"
+#include "ossMemPool.hpp"
 
 using namespace std ;
 
@@ -62,7 +63,7 @@ namespace engine
    {
       DECLARE_OBJ_MSG_MAP()
 
-      typedef _utilMap< SINT64, UINT64, 20 >    CONTEXT_LIST ;
+      typedef ossPoolMap< SINT64, UINT64>    CONTEXT_LIST ;
 
       public:
          _CoordCB() ;

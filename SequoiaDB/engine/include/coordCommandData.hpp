@@ -175,7 +175,7 @@ namespace engine
             _postTasks.push_back( postTask ) ;
          }
 
-         OSS_INLINE const _utilList<UINT64> & getPostTasks () const
+         OSS_INLINE const ossPoolList<UINT64> & getPostTasks () const
          {
             return _postTasks ;
          }
@@ -194,7 +194,7 @@ namespace engine
 
       protected :
          const rtnAlterTask * _task ;
-         _utilList<UINT64>    _postTasks ;
+         ossPoolList<UINT64>    _postTasks ;
          vector<BSONObj>      _postTasksObj ;
    } ;
 
@@ -266,16 +266,16 @@ namespace engine
          virtual INT32 _extractPostTasks ( const bson::BSONObj & reply ) ;
          INT32 _getPostTasksObj ( pmdEDUCB * cb ) ;
 
-         virtual INT32 _buildPostTasks ( const _utilList< UINT64 > & postTasks,
+         virtual INT32 _buildPostTasks ( const ossPoolList< UINT64 > & postTasks,
                                          bson::BSONObj & taskDesc ) ;
 
          virtual INT32 _executePostTasks ( const CHAR * name,
-                                           const _utilList< UINT64 > & postTasks,
+                                           const ossPoolList< UINT64 > & postTasks,
                                            pmdEDUCB * cb,
                                            CLS_TASK_TYPE *type ) ;
 
          virtual INT32 _cancelPostTasks ( const CHAR * name,
-                                          const _utilList< UINT64 > & postTasks,
+                                          const ossPoolList< UINT64 > & postTasks,
                                           pmdEDUCB * cb ) ;
 
       protected :
@@ -652,12 +652,12 @@ namespace engine
          }
 
          virtual INT32 _executePostTasks ( const CHAR * name,
-                                           const _utilList< UINT64 > & postTasks,
+                                           const ossPoolList< UINT64 > & postTasks,
                                            pmdEDUCB * cb,
                                            CLS_TASK_TYPE *type ) ;
 
          virtual INT32 _cancelPostTasks ( const CHAR * name,
-                                          const _utilList< UINT64 > & postTasks,
+                                          const ossPoolList< UINT64 > & postTasks,
                                           pmdEDUCB * cb ) ;
 
          INT32 _waitPostTasks ( const bson::BSONObj & taskDesc,

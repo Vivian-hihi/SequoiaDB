@@ -40,14 +40,14 @@
 #define QGMEXTENDPLAN_HPP_
 
 #include "qgmOptiTree.hpp"
+#include "ossMemPool.hpp"
 #include <queue>
-#include "utilMap.hpp"
 
 namespace engine
 {
 
    typedef INT32 QGM_EXTEND_ID ;
-   typedef _utilMap<QGM_EXTEND_ID, qgmOptiTreeNode*, 8 > QGM_EXTEND_TABLE ;
+   typedef ossPoolMap<QGM_EXTEND_ID, qgmOptiTreeNode*> QGM_EXTEND_TABLE ;
 
    class _qgmExtendPlan : public SDBObject
    {

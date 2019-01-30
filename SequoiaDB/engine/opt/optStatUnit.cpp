@@ -61,7 +61,7 @@ namespace engine
       _optStatListKey implement
     */
    _optStatListKey::_optStatListKey ()
-   : _utilList<const rtnKeyBoundary *> (),
+   : ossPoolList<const rtnKeyBoundary *> (),
      _dmsStatKey( TRUE )
    {
    }
@@ -379,6 +379,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTSTATUNIT__EVALKEYPAIR, "_optStatUnit::_evalKeyPair" )
    INT32 _optStatUnit::_evalKeyPair ( const dmsIndexStat *pIndexStat,
                                       rtnStatPredList::iterator &predIter,
+                                      rtnStatPredList::iterator &endIter,
                                       optStatListKey &startKeys,
                                       optStatListKey &stopKeys,
                                       BOOLEAN isEqual,
@@ -392,8 +393,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__OPTSTATUNIT__EVALKEYPAIR ) ;
 
       rtnStatPredList::iterator curPred = predIter ;
-      rtnStatPredList::iterator nextPred = ++ predIter ;
-      if ( curPred == nextPred )
+
+      if ( curPred == endIter )
       {
          if ( isEqual && startKeys.size() == pIndexStat->getNumKeys() )
          {
@@ -408,6 +409,7 @@ namespace engine
       else
       {
          rtnPredicate *pPredicate = *curPred ;
+         rtnStatPredList::iterator nextPred = ++ predIter ;
 
          BOOLEAN startIncluded = startKeys.isIncluded() ;
          BOOLEAN stopIncluded = stopKeys.isIncluded() ;
@@ -438,7 +440,7 @@ namespace engine
                startKeys.pushKeyBound( &(iterSSKey->_startKey) ) ;
                stopKeys.pushKeyBound( &(iterSSKey->_stopKey) ) ;
 
-               rc = _evalKeyPair( pIndexStat, nextPred,
+               rc = _evalKeyPair( pIndexStat, nextPred, endIter,
                                   startKeys, stopKeys,
                                   subIsEqual, subPredSel, subScanSel ) ;
                if ( SDB_OK != rc )
@@ -464,7 +466,7 @@ namespace engine
             startKeys.pushKeyBound( &minKeyBound ) ;
             stopKeys.pushKeyBound( &maxKeyBound ) ;
 
-            rc = _evalKeyPair( pIndexStat, nextPred, startKeys, stopKeys,
+            rc = _evalKeyPair( pIndexStat, nextPred, endIter, startKeys, stopKeys,
                                FALSE, predSelectivity, scanSelectivity ) ;
 
             startKeys.popElement( startIncluded ) ;
@@ -513,8 +515,9 @@ namespace engine
       else if ( isValid() )
       {
          rtnStatPredList::iterator predIter = predList.begin() ;
+         rtnStatPredList::iterator endIter = predList.end() ;
          optStatListKey startKeys, stopKeys ;
-         rc = _evalKeyPair( _pIndexStat, predIter, startKeys, stopKeys,
+         rc = _evalKeyPair( _pIndexStat, predIter, endIter, startKeys, stopKeys,
                             TRUE, predSelectivity, scanSelectivity ) ;
       }
 
@@ -681,8 +684,9 @@ namespace engine
          }
 
          rtnStatPredList::iterator predIter = predicateList.begin() ;
+         rtnStatPredList::iterator endIter = predicateList.end() ;
          optStatListKey startKeys, stopKeys ;
-         INT32 rc = _optStatUnit::_evalKeyPair( pIndexStat, predIter,
+         INT32 rc = _optStatUnit::_evalKeyPair( pIndexStat, predIter, endIter,
                                                 startKeys, stopKeys,
                                                 TRUE, selectivity,
                                                 scanSelectivity ) ;

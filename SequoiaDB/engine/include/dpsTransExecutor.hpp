@@ -43,7 +43,7 @@
 #include "sdbInterface.hpp"
 #include "dpsTransLockDef.hpp"
 #include "utilSegment.hpp"
-#include "utilMap.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 using namespace std ;
@@ -66,7 +66,7 @@ namespace engine
    */
    class _dpsTransExecutor
    {
-      typedef _utilMap<dpsTransLockId,UTIL_OBJIDX,20>    DPS_LOCKID_MAP ;
+      typedef ossPoolMap<dpsTransLockId,UTIL_OBJIDX>    DPS_LOCKID_MAP ;
       typedef DPS_LOCKID_MAP::iterator                   DPS_LOCKID_MAP_IT ;
       typedef DPS_LOCKID_MAP::const_iterator             DPS_LOCKID_MAP_CIT ;
 

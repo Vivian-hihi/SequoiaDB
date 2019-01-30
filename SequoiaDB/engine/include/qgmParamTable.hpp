@@ -40,7 +40,6 @@
 #define QGMPARAMTABLE_HPP_
 
 #include "qgmDef.hpp"
-#include "utilMap.hpp"
 #include <vector>
 
 using namespace bson ;

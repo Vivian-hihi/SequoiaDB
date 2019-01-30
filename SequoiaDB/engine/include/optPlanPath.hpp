@@ -44,6 +44,7 @@
 #include "oss.hpp"
 #include "optCommon.hpp"
 #include "optPlanNode.hpp"
+#include "ossMemPool.hpp"
 
 using namespace std ;
 using namespace bson ;
@@ -118,7 +119,7 @@ namespace engine
    typedef class _optScanPath optScanPath ;
 
    // Store searched paths during optimization
-   typedef _utilList< optScanPath, OPT_MAX_CANDIDATE_COUNT > optScanPathList ;
+   typedef ossPoolList< optScanPath> optScanPathList ;
 
    class _optScanPath : public _optPlanPath
    {

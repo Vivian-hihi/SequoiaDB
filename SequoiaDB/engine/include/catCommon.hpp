@@ -38,6 +38,7 @@
 #include "pd.hpp"
 #include "oss.hpp"
 #include "ossErr.h"
+#include "ossMemPool.hpp"
 #include "../bson/bson.h"
 #include "catDef.hpp"
 #include "catContext.hpp"
@@ -191,7 +192,7 @@ namespace engine
                              BSONObj &obj,
                              pmdEDUCB *cb ) ;
    INT32 catGetDomainCSs ( const CHAR * domain, pmdEDUCB * cb,
-                           _utilList< std::string > & collectionSpaces ) ;
+                           ossPoolList< std::string > & collectionSpaces ) ;
 
    /* Collection[CAT_COLLECTION_INFO_COLLECTION] functions: */
    INT32 catRemoveCL( const CHAR *clFullName, pmdEDUCB *cb, _SDB_DMSCB * dmsCB,
@@ -218,7 +219,7 @@ namespace engine
                                 BOOLEAN includeSubCLGroups = FALSE ) ;
    INT32 catGetCSGroups ( const CHAR * csName,
                           pmdEDUCB * cb,
-                          _utilSet< UINT32 > & groups,
+                          ossPoolSet< UINT32 > & groups,
                           BOOLEAN includeSubCLGroups = FALSE ) ;
 
    /* Collection[CAT_TASK_INFO_COLLECTION] functions: */
@@ -239,7 +240,7 @@ namespace engine
                                   vector< UINT32 > &groups ) ;
    INT32 catGetCSTaskGroups ( const CHAR * csName,
                               pmdEDUCB * cb,
-                              _utilSet< UINT32 > & groups ) ;
+                              ossPoolSet< UINT32 > & groups ) ;
 
    /* Collection[CAT_HISTORY_COLLECTION] functions */
    INT32 catGetBucketVersion( const CHAR *pCLName, pmdEDUCB *cb ) ;

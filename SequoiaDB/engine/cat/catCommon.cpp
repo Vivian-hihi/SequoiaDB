@@ -42,6 +42,7 @@
 #include "utilCommon.hpp"
 #include "utilArguments.hpp"
 #include "catGTSDef.hpp"
+#include "ossMemPool.hpp"
 
 #include "../bson/lib/md5.hpp"
 
@@ -1375,7 +1376,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETDOMAINCSS, "catGetDomainCSs" )
    INT32 catGetDomainCSs ( const CHAR * domain, pmdEDUCB * cb,
-                           _utilList< string > & collectionSpaces )
+                           ossPoolList< string > & collectionSpaces )
    {
       INT32 rc = SDB_OK ;
 
@@ -1602,7 +1603,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      _utilSet< UINT32 > groupSet ;
+      ossPoolSet< UINT32 > groupSet ;
 
       rc = catGetCSGroups( csName, cb, groupSet, includeSubCLGroups ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get groups of "
@@ -1613,7 +1614,7 @@ namespace engine
          groupSet.insert( groups[ i ] ) ;
       }
       groups.clear() ;
-      for ( _utilSet< UINT32 >::iterator iterGroup = groupSet.begin() ;
+      for ( ossPoolSet< UINT32 >::iterator iterGroup = groupSet.begin() ;
             iterGroup != groupSet.end() ;
             iterGroup ++ )
       {
@@ -1629,7 +1630,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETCSGRPS, "catGetCSGroups" )
    INT32 catGetCSGroups ( const CHAR * csName,
                           pmdEDUCB * cb,
-                          _utilSet< UINT32 > & groups,
+                          ossPoolSet< UINT32 > & groups,
                           BOOLEAN includeSubCLGroups )
    {
       INT32 rc = SDB_OK ;
@@ -2074,7 +2075,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      _utilSet< UINT32 > groupSet ;
+      ossPoolSet< UINT32 > groupSet ;
 
       rc = catGetCSTaskGroups( csName, cb, groupSet ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get task groups of "
@@ -2085,7 +2086,7 @@ namespace engine
          groupSet.insert( groups[ i ] ) ;
       }
       groups.clear() ;
-      for ( _utilSet< UINT32 >::iterator iterGroup = groupSet.begin() ;
+      for ( ossPoolSet< UINT32 >::iterator iterGroup = groupSet.begin() ;
             iterGroup != groupSet.end() ;
             iterGroup ++ )
       {
@@ -2101,7 +2102,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETCSTASKGRPS, "catGetCSTaskGroups" )
    INT32 catGetCSTaskGroups ( const CHAR * csName,
                               pmdEDUCB * cb,
-                              _utilSet< UINT32 > & groups )
+                              ossPoolSet< UINT32 > & groups )
    {
       INT32 rc = SDB_OK ;
 

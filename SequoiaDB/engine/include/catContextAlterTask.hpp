@@ -82,7 +82,7 @@ namespace engine
                                 INT16 w ) ;
          INT32 clearPostTasks ( _pmdEDUCB * cb, INT16 w ) ;
 
-         OSS_INLINE const _utilList< UINT64 > & getPostTasks () const
+         OSS_INLINE const ossPoolList< UINT64 > & getPostTasks () const
          {
             return _postTasks ;
          }
@@ -216,7 +216,7 @@ namespace engine
                                     INT16 w ) ;
 
       protected :
-         _utilList< UINT64 >     _postTasks ;
+         ossPoolList< UINT64 >     _postTasks ;
          BOOLEAN                 _subCLOFMainCL ;
          rtnCLShardingArgument   _rollbackShardArgument ;
          autoIncFieldsList       _rollbackAutoIncFields ;

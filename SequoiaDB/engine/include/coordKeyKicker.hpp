@@ -39,6 +39,7 @@
 
 #include "coordResource.hpp"
 #include "../bson/bson.h"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -75,7 +76,7 @@ namespace engine
          }
       } ;
 
-      typedef _utilSet< strContainner >  SET_KEEPKEY ;
+      typedef ossPoolSet< strContainner >  SET_KEEPKEY ;
 
    public:
       _coordKeyKicker() ;
@@ -127,7 +128,7 @@ namespace engine
       BOOLEAN     _isKey( const CHAR *pField, BSONObj &boKey ) ;
 
    private:
-      typedef _utilMap< UINT32, BOOLEAN > SiteIDSet ;
+      typedef ossPoolMap< UINT32, BOOLEAN > SiteIDSet ;
       SiteIDSet                  _skSiteIDs ;
       SET_KEEPKEY                _setKeys ;
 

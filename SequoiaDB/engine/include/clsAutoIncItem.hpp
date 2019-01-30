@@ -42,9 +42,8 @@
 #include "../bson/bson.h"
 #include "clsBase.hpp"
 #include "utilMap.hpp"
-#include "utilList.hpp"
 #include "utilGlobalID.hpp"
-#include "utilSet.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -77,9 +76,14 @@ namespace engine
       {
          return ossMemcmp( data, r.data, sizeof(data) ) < 0 ? TRUE : FALSE ;
       }
+
+      BOOLEAN operator== ( const _clsAutoIncID &r ) const
+      {
+         return ossMemcmp( data, r.data, sizeof(data) ) == 0 ? TRUE : FALSE ;
+      }
    } ;
    typedef union _clsAutoIncID clsAutoIncID ;
-   typedef _utilSet< clsAutoIncID, 1 > clsAutoIncIDSet ;
+   typedef ossPoolSet< clsAutoIncID > clsAutoIncIDSet ;
 
    /*
       define _clsAutoIncItem
@@ -216,8 +220,8 @@ namespace engine
       MODE _mode ;
       const AUTOINC_ITEM_MAP*    _pMap ;
       AUTOINC_ITEM_MAP_CONST_IT  _it ;
-      _utilList< const AUTOINC_ITEM_MAP*, 1 >   _mapTrace ;
-      _utilList< AUTOINC_ITEM_MAP_CONST_IT, 1 > _itTrace ;
+      ossPoolList< const AUTOINC_ITEM_MAP*>   _mapTrace ;
+      ossPoolList< AUTOINC_ITEM_MAP_CONST_IT> _itTrace ;
    } ;
    typedef _clsAutoIncIterator clsAutoIncIterator ;
 

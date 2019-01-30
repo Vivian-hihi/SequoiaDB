@@ -42,7 +42,7 @@
 #include "clsCataHashMatcher.hpp"
 #include "utilBsonHash.hpp"
 #include "utilCommon.hpp"
-#include <set>
+#include "ossMemPool.hpp"
 
 #include "../bson/lib/md5.hpp"
 #include "../bson/lib/md5.h"
@@ -2769,7 +2769,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CRBYSPACENAME, "_clsCatalogAgent::clearBySpaceName" )
    INT32 _clsCatalogAgent::clearBySpaceName ( const CHAR * csName,
                                               vector< string > *pSubCLs,
-                                              _utilSet< string > * pMainCLs )
+                                              ossPoolSet< string > * pMainCLs )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT_CRBYSPACENAME ) ;
       _clsCatalogSet *preSet = NULL ;
@@ -2777,8 +2777,8 @@ namespace engine
       _clsCatalogSet *tmpSet = NULL ;
       UINT32 nameLen = ossStrlen(csName) ;
       BOOLEAN itAdd  = TRUE ;
-      _utilSet< string > mainCLList ;
-      _utilSet< string >::iterator iterMain ;
+      ossPoolSet< string > mainCLList ;
+      ossPoolSet< string >::iterator iterMain ;
       CAT_MAP_IT it = _mapCatalog.begin() ;
       utilCLUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
 

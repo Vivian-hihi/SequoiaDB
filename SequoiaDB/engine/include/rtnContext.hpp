@@ -50,7 +50,6 @@
 #include "mthSelector.hpp"
 #include "rtnContextBuff.hpp"
 #include "rtnQueryOptions.hpp"
-#include "utilMap.hpp"
 #include <string>
 
 using namespace bson ;

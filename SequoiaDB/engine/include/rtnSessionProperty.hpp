@@ -39,7 +39,7 @@
 
 #include "msg.hpp"
 #include "utilArray.hpp"
-#include "utilList.hpp"
+#include "ossMemPool.hpp"
 #include "../bson/bson.h"
 
 namespace engine
@@ -69,7 +69,7 @@ namespace engine
       PREFER_INSTANCE_MODE_ORDERED,
    } RTN_PREFER_INSTANCE_MODE ;
 
-   typedef _utilList< UINT8 > RTN_INSTANCE_LIST ;
+   typedef ossPoolList< UINT8 > RTN_INSTANCE_LIST ;
 
    /*
       _rtnInstanceOption define

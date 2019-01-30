@@ -39,6 +39,7 @@
 #include "pmdEDU.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -110,7 +111,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       UINT32 skSiteID = cataInfo->getShardingKeySiteID() ;
-      _utilSet< strContainner, 1 > doneFields ;
+      ossPoolSet< strContainner > doneFields ;
 
       if ( skSiteID > 0 )
       {

@@ -45,7 +45,6 @@
 #include "../bson/bson.h"
 #include "ossUtil.hpp"
 #include "utilHashTable.hpp"
-#include "utilList.hpp"
 #include "rtnQueryOptions.hpp"
 #include "dms.hpp"
 #include "dmsStorageUnit.hpp"

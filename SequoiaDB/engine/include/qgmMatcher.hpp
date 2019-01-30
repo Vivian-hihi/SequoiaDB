@@ -40,7 +40,8 @@
 #define QGMMATCHER_HPP_
 
 #include "qgmDef.hpp"
-#include <utilMap.hpp>
+#include "ossMemPool.hpp"
+
 
 using namespace bson ;
 
@@ -66,7 +67,7 @@ namespace engine
    */
    class _qgmMatcher : public SDBObject
    {
-   typedef _utilMap< void*, qgmMatcherDataNode, 8 >      MAP_DATA_NODE ;
+   typedef ossPoolMap< void*, qgmMatcherDataNode>      MAP_DATA_NODE ;
    typedef MAP_DATA_NODE::iterator                       MAP_DATA_NODE_IT ;
 
    public:

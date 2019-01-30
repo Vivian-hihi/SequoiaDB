@@ -42,7 +42,6 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
-#include "utilList.hpp"
 #include <set>
 #include <boost/shared_ptr.hpp>
 #include "../bson/bson.hpp"
@@ -458,7 +457,7 @@ namespace engine
       private:
    } ;
 
-   typedef _utilList< _mthMatchFunc* > MTH_FUNC_LIST ;
+   typedef ossPoolList< _mthMatchFunc* > MTH_FUNC_LIST ;
 
    class _mthMatchOpNode : public _mthMatchNode
    {

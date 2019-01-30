@@ -885,7 +885,7 @@ namespace engine
                if ( ctrlParam._specialGrps.find( itGrp->first ) ==
                     ctrlParam._specialGrps.end() )
                {
-                 itGrp = expectGrpLst.erase( itGrp ) ;
+                 expectGrpLst.erase( itGrp++ ) ;
                }
                else
                {

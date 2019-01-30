@@ -48,7 +48,7 @@
 #include "../bson/ordering.h"
 #include "msgCatalogDef.h"
 #include "utilCompression.hpp"
-#include "utilSet.hpp"
+#include "ossMemPool.hpp"
 #include "dms.hpp"
 #include "utilUniqueID.hpp"
 #include "clsAutoIncItem.hpp"
@@ -381,7 +381,7 @@ namespace engine
                          CHAR* mainCL = NULL ) ;
          INT32   clearBySpaceName ( const CHAR* csName,
                                     vector< string > *pSubCLs = NULL,
-                                    _utilSet< string > * pMainCLs = NULL ) ;
+                                    ossPoolSet< string > * pMainCLs = NULL ) ;
          /// caller need to hold the write lock
          INT32   clearAll () ;
 

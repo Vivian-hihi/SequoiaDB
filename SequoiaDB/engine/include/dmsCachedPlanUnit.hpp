@@ -43,7 +43,6 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "dms.hpp"
-#include "utilList.hpp"
 #include "utilSUCache.hpp"
 #include "utilHashTable.hpp"
 #include "../bson/bson.h"

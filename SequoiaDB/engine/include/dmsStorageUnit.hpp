@@ -49,6 +49,7 @@
 #include "dmsExtDataHandler.hpp"
 #include "dmsStatUnit.hpp"
 #include "dmsCachedPlanUnit.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -248,7 +249,7 @@ namespace engine
          }
 
       protected :
-         typedef _utilList<_IDmsEventHandler *> HANDLER_LIST ;
+         typedef ossPoolList<_IDmsEventHandler *> HANDLER_LIST ;
 
          dmsStorageUnit *     _su ;
          dmsCacheHolder *     _pCacheHolder ;
