@@ -21,6 +21,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
+import org.testng.Assert;
 import org.testng.SkipException;
 
 import java.text.SimpleDateFormat;
@@ -351,4 +352,26 @@ public class RegionUtils extends S3TestBase {
 		}
 		return count;
 	}
+	
+	public static void checkRegionWithLocation(String regionName, String metaLocation, String metaHisLocation, String dataLocation) throws Exception {
+		GetRegionResult result = RegionUtils.getRegion(regionName);
+		Region regionInfo = result.getRegion();
+		Assert.assertEquals(regionInfo.getMetaLocation(), metaLocation);
+		Assert.assertEquals(regionInfo.getMetaHisLocation(), metaHisLocation);
+		Assert.assertEquals(regionInfo.getDataLocation(), dataLocation);
+	}
+	
+	public static void checkRegionWithShardingType(String regionName, String clShardingType,String csShardingType) throws Exception {
+		GetRegionResult result = RegionUtils.getRegion(regionName);
+		Region regionInfo = result.getRegion();
+		Assert.assertEquals(regionInfo.getDataCLShardingType(), clShardingType);
+		// get the region infor to take the default value
+		Assert.assertEquals(regionInfo.getDataCSShardingType(), csShardingType);
+		Assert.assertEquals(regionInfo.getMetaDomain(), "");
+		Assert.assertEquals(regionInfo.getDataDomain(), "");
+		Assert.assertEquals(regionInfo.getMetaLocation(), "");
+		Assert.assertEquals(regionInfo.getMetaHisLocation(), "");
+		Assert.assertEquals(regionInfo.getDataLocation(), "");
+	}
+	
 }
