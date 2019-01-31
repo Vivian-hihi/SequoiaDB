@@ -27,8 +27,8 @@ public class CreateRegion17291 extends S3TestBase {
 	private String regionName = "region17291";
 	private AmazonS3 s3Client = null;
 	private String[] csNames = { "metaCS17291", "dataCS17291" };
-	private String[] dataclNames = { "metaCL17291", "metaHistroyCL17291" };
-	private String[] metaclNames = { "dataCL17291" };
+	private String[] metaclNames = { "metaCL17291", "metaHistroyCL17291" };
+	private String[] dataclNames = { "dataCL17291" };
 	private int fileSize = 1024 * 1024 * 3;
 	private File localPath = null;
 	private String filePath = null;
@@ -53,9 +53,9 @@ public class CreateRegion17291 extends S3TestBase {
 	@Test
 	public void testRegion() throws Exception {
 		Region region = new Region();
-		String metaLocation = "metaCS17291.metaCL17291";
-		String metaHisLocation = "metaCS17291.metaHistroyCL17291";
-		String dataLocation = "dataCS17291.dataCL17291";
+		String metaLocation = csNames[0] + "." + metaclNames[0];
+		String metaHisLocation = csNames[0] + "." + metaclNames[1];
+		String dataLocation = csNames[1] + "." + dataclNames[0];
 		region.withMetaLocation(metaLocation).withDataLocation(dataLocation).withMetaHisLocation(metaHisLocation)
 				.withName(regionName);
 		RegionUtils.putRegion(region);
