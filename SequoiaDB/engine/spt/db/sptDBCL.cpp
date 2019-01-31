@@ -1655,6 +1655,13 @@ namespace engine
          detail = BSON( SPT_ERR << "Length must be number" ) ;
          goto error ;
       }
+      if ( !utilIsValidOID( oidStr.c_str() ) )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Oid string invalid" ) ;
+         goto error ;
+      }
+
       oid.init( oidStr ) ;
       rc = _cl.truncateLob( oid, length ) ;
       if( SDB_OK != rc )
