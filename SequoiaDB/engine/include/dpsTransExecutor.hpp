@@ -122,7 +122,8 @@ namespace engine
                                                BOOLEAN enableMask = TRUE ) ;
          void                 setTransWaitLock( BOOLEAN waitLock,
                                                 BOOLEAN enableMask = TRUE ) ;
-         void                 setUseRollbackSemgent( BOOLEAN use ) ;
+         void                 setUseRollbackSemgent( BOOLEAN use,
+                                                     BOOLEAN enableMask = TRUE ) ;
 
          void                 setUseTransLock( BOOLEAN use ) ;
 

@@ -259,9 +259,14 @@ namespace engine
       }
    }
 
-   void _dpsTransExecutor::setUseRollbackSemgent( BOOLEAN use )
+   void _dpsTransExecutor::setUseRollbackSemgent( BOOLEAN use,
+                                                  BOOLEAN enableMask )
    {
       _useRollbackSegment = use ;
+      if ( enableMask )
+      {
+         _transConfMask |= TRANS_CONF_MASK_USERBS ;
+      }
    }
 
    void _dpsTransExecutor::setUseTransLock( BOOLEAN use )
@@ -277,8 +282,8 @@ namespace engine
       setTransIsolation( isolation, FALSE ) ;
       setTransTimeout( timeout, FALSE ) ;
       setTransWaitLock( waitLock, FALSE ) ;
+      setUseRollbackSemgent( TRUE, FALSE ) ;
 
-      _useRollbackSegment  = TRUE ;
       _useTransLock        = TRUE ;
    }
 
@@ -297,6 +302,10 @@ namespace engine
       if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_WAITLOCK ) )
       {
          setTransWaitLock( waitLock, FALSE ) ;
+      }
+      if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_USERBS ) )
+      {
+         setUseRollbackSemgent( TRUE, FALSE ) ;
       }
    }
 

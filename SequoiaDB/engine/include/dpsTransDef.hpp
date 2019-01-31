@@ -69,6 +69,7 @@ namespace engine
    #define TRANS_CONF_MASK_ISOLATION         0x00000001
    #define TRANS_CONF_MASK_TIMEOUT           0x00000002
    #define TRANS_CONF_MASK_WAITLOCK          0x00000004
+   #define TRANS_CONF_MASK_USERBS            0x00000008
 
 }
 
