@@ -268,28 +268,6 @@ public class RegionUtils extends S3TestBase {
 		return clNames.contains(csName+"." + clName);
 	}
 
-	public static List<String> getDomainNames() {
-		Sequoiadb sdb = null;
-		DBCursor cursor = null;
-		List<String> domainNames = new ArrayList<>();
-		try {
-			sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
-			cursor = sdb.listDomains(null, null, null, null);
-			while (cursor.hasNext()) {
-				String name = (String) cursor.getNext().get("Name");
-				domainNames.add(name);
-			}
-		} finally {
-			if (null != cursor) {
-				cursor.close();
-			}
-			if (null != sdb) {
-				sdb.close();
-			}
-		}
-		return domainNames;
-	}
-
 	public static void createDomain(String domainName) {
 		Sequoiadb sdb = null;
 		try {
@@ -373,5 +351,4 @@ public class RegionUtils extends S3TestBase {
 		Assert.assertEquals(regionInfo.getMetaHisLocation(), "");
 		Assert.assertEquals(regionInfo.getDataLocation(), "");
 	}
-	
 }
