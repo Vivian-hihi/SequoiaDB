@@ -55,7 +55,7 @@ public class TestRenameCS16137 extends SdbTestBase{
         if (renameCSThread.isSuccess() && !createIndexThread.isSuccess()){
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             RenameUtil.checkRenameCSResult(sdb, csName, newCSName, 1);
-            int expIndexNum = createOneSuccess ? 3 : 4; 
+            int expIndexNum = createOneSuccess ? 4 : 3; 
             checkCLIndex(sdb, newCSName, clName, expIndexNum);
             BaseException e = (BaseException)createIndexThread.getExceptions().get(0);
             if (e.getErrorCode() != -23 && e.getErrorCode() != -34) {
