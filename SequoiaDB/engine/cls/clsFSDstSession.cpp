@@ -1513,7 +1513,7 @@ namespace engine
       if ( _repeatCount >= CLS_FS_MAX_REPEAT_CNT )
       {
          MsgClsFSBegin msg ;
-         msg.type = CLS_FS_TYPE_IN_SET ;
+         msg.type = _dataSessionType() ;
          msg.header.TID = CLS_TID( _sessionID ) ;
          MsgRouteID lastID = _selector.src() ;
          MsgRouteID src = _selector.selected( TRUE ) ;
@@ -1630,7 +1630,7 @@ namespace engine
       return 1 ;
    }
 
-   INT32 _clsFSDstSession::_dataSessionType () const
+   CLS_FS_TYPE _clsFSDstSession::_dataSessionType () const
    {
       return CLS_FS_TYPE_IN_SET ;
    }
@@ -2313,7 +2313,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSSPLDS__ONDTH );
    }
 
-   INT32 _clsSplitDstSession::_dataSessionType () const
+   CLS_FS_TYPE _clsSplitDstSession::_dataSessionType () const
    {
       return CLS_FS_TYPE_BETWEEN_SETS ;
    }
@@ -2392,7 +2392,7 @@ namespace engine
       else
       {
          MsgClsFSBegin msg ;
-         msg.type = CLS_FS_TYPE_BETWEEN_SETS ;
+         msg.type = _dataSessionType() ;
          msg.header.TID = CLS_TID( _sessionID ) ;
          MsgRouteID lastID = _selector.src() ;
          // pickup the source group id

@@ -615,6 +615,13 @@ namespace engine
          }
       }
 
+      /// When in transaction, can't enable prefetch and paralled query
+      if ( DPS_INVALID_TRANS_ID != cb->getTransID() )
+      {
+         enablePrefetch = FALSE ;
+         options.clearFlag( FLG_QUERY_PARALLED ) ;
+      }
+
       if ( options.testFlag( FLG_QUERY_MODIFY ) )
       {
          rc = _rtnParseQueryModify( hintTmp, &queryModifier ) ;
@@ -1000,7 +1007,8 @@ namespace engine
       {
          *ppContext = context ;
       }
-      if ( enablePrefetch )
+      /// In transaction, can't use prefetch
+      if ( enablePrefetch && DPS_INVALID_TRANS_ID == cb->getTransID() )
       {
          context->enablePrefetch ( cb ) ;
       }

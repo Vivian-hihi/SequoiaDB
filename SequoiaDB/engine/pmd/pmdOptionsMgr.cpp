@@ -50,6 +50,7 @@
 #include "dpsLogWrapper.hpp"
 #include "omStrategyDef.hpp"
 #include "optCommon.hpp"
+#include "dpsTransDef.hpp"
 
 #include "rtnSortDef.hpp"
 #include "clsUtil.hpp"
@@ -81,7 +82,6 @@ namespace engine
    #define PMD_DFT_START_SHIFT_TIME    (600)
    #define PMD_MAX_NUMPAGECLEAN        (50)
    #define PMD_MIN_PAGECLEANINTERVAL   (1000)
-   #define PMD_DFT_TRANS_TIMEOUT       (60)  // 1 minute
    #define PMD_DFT_OVERFLOW_RETIO      (12)
    #define PMD_DFT_EXTEND_THRESHOLD    (32)
    #define PMD_DFT_MAX_CACHE_JOB       (10)
@@ -1861,7 +1861,9 @@ done:
       _traceOn             = FALSE ;
       _traceBufSz          = TRACE_DFT_BUFFER_SIZE ;
       _transactionOn       = FALSE ;
-      _transTimeout        = PMD_DFT_TRANS_TIMEOUT ;
+      _transIsolation      = DPS_TRANS_ISOLATION_DFT ;
+      _transWaitLock       = DPS_TRANS_WAITLOCK_DFT ;
+      _transTimeout        = DPS_TRANS_DFT_TIMEOUT ;
       _sharingBreakTime    = PMD_OPTION_BRK_TIME_DEFAULT ;
       _startShiftTime      = PMD_DFT_START_SHIFT_TIME ;
       _logBuffSize         = DPS_DFT_LOG_BUF_SZ ;
@@ -2087,19 +2089,24 @@ done:
       rdxBooleanS( pEX, PMD_OPTION_TRANSACTIONON, _transactionOn, FALSE,
                    PMD_CFG_CHANGE_REBOOT, FALSE ) ;
       // --transactiontimeout
-      rdxUInt( pEX, PMD_OPTION_TRANSTIMEOUT, _transTimeout, FALSE, PMD_CFG_CHANGE_RUN,
-               PMD_DFT_TRANS_TIMEOUT, FALSE ) ;
+      rdxUInt( pEX, PMD_OPTION_TRANSTIMEOUT, _transTimeout, FALSE,
+               PMD_CFG_CHANGE_RUN, DPS_TRANS_DFT_TIMEOUT, FALSE ) ;
       rdvMinMax( pEX, _transTimeout, 0, 3600, TRUE ) ;
       // --transisolation
-      rdxUInt( pEX, PMD_OPTION_TRANS_ISOLATION, _transIsolation, FALSE,
-               PMD_CFG_CHANGE_REBOOT, 0, FALSE ) ;
+      rdxInt( pEX, PMD_OPTION_TRANS_ISOLATION, _transIsolation, FALSE,
+              PMD_CFG_CHANGE_RUN, DPS_TRANS_ISOLATION_DFT, FALSE ) ;
+      rdvMinMax( pEX, _transIsolation,
+                 TRANS_ISOLATION_RU, TRANS_ISOLATION_MAX - 1, TRUE ) ;
+      // --transwaitlock
+      rdxBooleanS( pEX, PMD_OPTION_TRANS_WAITLOCK, _transWaitLock, FALSE,
+                   PMD_CFG_CHANGE_RUN, DPS_TRANS_WAITLOCK_DFT, FALSE ) ;
       // --sharingBreak
-      rdxUInt( pEX, PMD_OPTION_SHARINGBRK, _sharingBreakTime, FALSE, PMD_CFG_CHANGE_RUN,
-               PMD_OPTION_BRK_TIME_DEFAULT, TRUE ) ;
+      rdxUInt( pEX, PMD_OPTION_SHARINGBRK, _sharingBreakTime, FALSE,
+               PMD_CFG_CHANGE_RUN, PMD_OPTION_BRK_TIME_DEFAULT, TRUE ) ;
       rdvMinMax( pEX, _sharingBreakTime, 5000, 300000, TRUE ) ;
       // --startshifttime
-      rdxUInt( pEX, PMD_OPTION_START_SHIFT_TIME, _startShiftTime, FALSE, PMD_CFG_CHANGE_RUN,
-               PMD_DFT_START_SHIFT_TIME, TRUE ) ;
+      rdxUInt( pEX, PMD_OPTION_START_SHIFT_TIME, _startShiftTime, FALSE,
+               PMD_CFG_CHANGE_RUN, PMD_DFT_START_SHIFT_TIME, TRUE ) ;
       rdvMinMax( pEX, _startShiftTime, 0, 7200, TRUE ) ;
       // --catalogaddr
       rdxString( pEX, PMD_OPTION_CATALOG_ADDR, _catAddrLine,
@@ -2296,12 +2303,6 @@ done:
          std::cerr << "db role: " << _krcbRole << " error" << std::endl ;
          rc = SDB_INVALIDARG ;
          goto error ;
-      }
-
-      // transisolation check
-      if ( _transIsolation != TRANS_ISOLATION_RC )
-      {
-         _transIsolation = TRANS_ISOLATION_RU ;
       }
 
       // replbucketsize check

@@ -109,7 +109,7 @@ namespace engine
          virtual BSONObj _keyObjB () = 0 ;
          virtual BSONObj _keyObjE () = 0 ;
          virtual INT32   _needData () const = 0 ;
-         virtual INT32   _dataSessionType () const = 0 ;
+         virtual CLS_FS_TYPE _dataSessionType () const = 0 ;
          virtual BOOLEAN _isReady () = 0 ;
          /*
             return FALSE, will not continue to run after
@@ -231,7 +231,7 @@ namespace engine
       virtual INT32     _needData () const ;
       virtual BSONObj   _keyObjB () ;
       virtual BSONObj   _keyObjE () ;
-      virtual INT32     _dataSessionType () const ;
+      virtual CLS_FS_TYPE _dataSessionType () const ;
       virtual BOOLEAN   _isReady () ;
       virtual BOOLEAN   _onNotify ( MsgClsFSNotifyRes *pMsg ) ;
 
@@ -295,7 +295,7 @@ namespace engine
          virtual BSONObj   _keyObjE () ;
          virtual void      _onAttach () ;
          virtual void      _onDetach () ;
-         virtual INT32     _dataSessionType () const ;
+         virtual CLS_FS_TYPE _dataSessionType () const ;
          virtual BOOLEAN   _isReady () ;
          virtual BOOLEAN   _onNotify ( MsgClsFSNotifyRes *pMsg ) ;
 

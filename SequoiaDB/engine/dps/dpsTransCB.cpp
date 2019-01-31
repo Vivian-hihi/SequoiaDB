@@ -57,7 +57,6 @@ namespace engine
    {
       _TransIDH16          = 0;
       _isOn                = FALSE ;
-      _lockEnabled         = FALSE ;
       _doRollback          = FALSE ;
       _isNeedSyncTrans     = TRUE ;
       _maxUsedSize         = 0 ;
@@ -138,8 +137,6 @@ namespace engine
             PD_LOG( PDERROR, "Failed to initialize lock manager, rc: %d", rc ) ;
             goto error ;
          }
-         // Initial lock timeout setting
-         _transLockMgr.setLockTimeout( pmdGetOptionCB()->transTimeout() * 1000);
 
          rc = sdbGetDPSCB()->readOldestBeginLsnOffset( startLsnOffset ) ;
          PD_RC_CHECK( rc, PDERROR, "Read oldest begin lsn offset failed:rc=%d",
@@ -193,7 +190,6 @@ namespace engine
 
    void dpsTransCB::onConfigChange()
    {
-      _transLockMgr.setLockTimeout( pmdGetOptionCB()->transTimeout() * 1000 ) ;
    }
 
    DPS_TRANS_ID dpsTransCB::allocTransID()
@@ -221,7 +217,6 @@ namespace engine
       {
          if ( SDB_EVT_OCCUR_BEFORE == occurType )
          {
-            _lockEnabled = TRUE ;
             _doRollback = TRUE ;
             _rollbackEvent.reset() ;
          }
@@ -235,7 +230,6 @@ namespace engine
       {
          if ( SDB_EVT_OCCUR_AFTER == occurType )
          {
-            _lockEnabled = FALSE ;
             stopRollbackTask() ;
             termAllTrans() ;
          }
@@ -656,7 +650,7 @@ namespace engine
                                     _IContext *pContext,
                                     dpsTransRetInfo * pdpsTxResInfo )
    {
-      if ( !_isOn || !_lockEnabled )
+      if ( !_isOn )
       {
          return SDB_OK ;
       }
@@ -672,7 +666,7 @@ namespace engine
                                     _IContext *pContext,
                                     dpsTransRetInfo * pdpsTxResInfo )
    {
-      if ( !_isOn || !_lockEnabled )
+      if ( !_isOn )
       {
          return SDB_OK ;
       }
@@ -689,7 +683,7 @@ namespace engine
                                     _IContext *pContext,
                                     dpsTransRetInfo * pdpsTxResInfo )
    {
-      if ( !_isOn || !_lockEnabled )
+      if ( !_isOn )
       {
          return SDB_OK ;
       }
@@ -704,7 +698,7 @@ namespace engine
                                      _IContext *pContext,
                                      dpsTransRetInfo * pdpsTxResInfo )
    {
-      if ( !_isOn || !_lockEnabled )
+      if ( !_isOn )
       {
          return SDB_OK ;
       }
@@ -719,7 +713,7 @@ namespace engine
                                      _IContext *pContext,
                                      dpsTransRetInfo * pdpsTxResInfo )
    {
-      if ( !_isOn || !_lockEnabled )
+      if ( !_isOn )
       {
          return SDB_OK ;
       }
@@ -733,9 +727,7 @@ namespace engine
                                       UINT16 collectionID,
                                       const dmsRecordID *recordID )
    {
-      /// When release, can't use || _lockEnabled, because the node maybe
-      /// primary down to slave, so some session will own locks.
-      if ( !_isOn )
+      if ( 0 == eduCB->getTransExecutor()->getLockCount() )
       {
          return ;
       }
@@ -745,9 +737,7 @@ namespace engine
 
    void dpsTransCB::transLockReleaseAll( _pmdEDUCB *eduCB )
    {
-      /// When release, can't use || _lockEnabled, because the node maybe
-      /// primary down to slave, so some session will own locks.
-      if ( !_isOn )
+      if ( 0 == eduCB->getTransExecutor()->getLockCount() )
       {
          return ;
       }
@@ -764,7 +754,7 @@ namespace engine
                                      const dmsRecordID *recordID,
                                      dpsTransRetInfo * pdpsTxResInfo )
    {
-      if ( !_isOn || !_lockEnabled )
+      if ( !_isOn )
       {
          return SDB_OK ;
       }
@@ -779,7 +769,7 @@ namespace engine
                                       const dmsRecordID *recordID,
                                       dpsTransRetInfo * pdpsTxResInfo )
    {
-      if ( !_isOn || !_lockEnabled )
+      if ( !_isOn )
       {
          return SDB_OK ;
       }
@@ -794,7 +784,7 @@ namespace engine
                                      const dmsRecordID *recordID,
                                      dpsTransRetInfo * pdpsTxResInfo )
    {
-      if ( !_isOn || !_lockEnabled )
+      if ( !_isOn )
       {
          return SDB_OK ;
       }
@@ -809,7 +799,7 @@ namespace engine
                                      const dmsRecordID *recordID,
                                      dpsTransRetInfo * pdpsTxResInfo )
    {
-      if ( !_isOn || !_lockEnabled )
+      if ( !_isOn )
       {
          return SDB_OK ;
       }
@@ -824,7 +814,7 @@ namespace engine
                                       const dmsRecordID *recordID,
                                       dpsTransRetInfo * pdpsTxResInfo )
    {
-      if ( !_isOn || !_lockEnabled )
+      if ( !_isOn )
       {
          return SDB_OK ;
       }
@@ -839,7 +829,7 @@ namespace engine
                                     const dmsRecordID *recordID,
                                     dpsTransRetInfo * pdpsTxResInfo )
    {
-      if ( !_isOn || !_lockEnabled )
+      if ( !_isOn )
       {
          return SDB_OK ;
       }
@@ -854,7 +844,7 @@ namespace engine
                                     const dmsRecordID *recordID,
                                     dpsTransRetInfo * pdpsTxResInfo )
    {
-      if ( !_isOn || !_lockEnabled )
+      if ( !_isOn )
       {
          return SDB_OK ;
       }
@@ -869,7 +859,7 @@ namespace engine
                                     const dmsRecordID *recordID,
                                     dpsTransRetInfo * pdpsTxResInfo )
    {
-      if ( !_isOn || !_lockEnabled )
+      if ( !_isOn )
       {
          return SDB_OK ;
       }

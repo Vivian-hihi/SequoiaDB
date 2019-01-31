@@ -804,7 +804,8 @@ namespace engine
          _writingDB = TRUE ;
          _writingID = pmdAcquireGlobalID() ;
       }
-      else if ( !writing && 0 == getLockItem(SDB_LOCK_DMS)->lockCount() )
+      else if ( !writing && 0 == getLockItem(SDB_LOCK_DMS)->lockCount() &&
+                DPS_INVALID_TRANS_ID == _curTransID )
       {
          _writingDB = FALSE ;
          _writingID = 0 ;
@@ -898,6 +899,32 @@ namespace engine
       {
          _monApplCB.recordConnectTimestamp() ;
       }
+   }
+
+   void _pmdEDUCB::initTransConf()
+   {
+#if defined ( SDB_ENGINE )
+      pmdOptionsCB *optCB = pmdGetOptionCB() ;
+      if ( optCB->transactionOn() )
+      {
+         _transExecutor.initTransConf( optCB->transIsolation(),
+                                       optCB->transTimeout() * OSS_ONE_SEC,
+                                       optCB->transWaitLock() ) ;
+      }
+#endif //SDB_ENGINE
+   }
+
+   void _pmdEDUCB::updateTransConf()
+   {
+#if defined ( SDB_ENGINE )
+      pmdOptionsCB *optCB = pmdGetOptionCB() ;
+      if ( optCB->transactionOn() )
+      {
+         _transExecutor.updateTransConf( optCB->transIsolation(),
+                                         optCB->transTimeout() * OSS_ONE_SEC,
+                                         optCB->transWaitLock() ) ;
+      }
+#endif //SDB_ENGINE
    }
 
    void _pmdEDUCB::incEventCount( UINT32 step )

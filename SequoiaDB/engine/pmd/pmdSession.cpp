@@ -101,6 +101,7 @@ namespace engine
          _pEDUCB->resetInterrupt() ;
          _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
          _pEDUCB->resetLsn() ;
+         _pEDUCB->updateTransConf() ;
 
          // recv msg
          rc = recvData( (CHAR*)&msgSize, sizeof(UINT32) ) ;

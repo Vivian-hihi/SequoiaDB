@@ -263,7 +263,6 @@ namespace engine
       ossSpinXLatch     _CBMapMutex ;
       TRANS_CB_MAP      _cbMap ;
       BOOLEAN           _isOn ;
-      BOOLEAN           _lockEnabled ;
       BOOLEAN           _doRollback ;
       ossEvent          _rollbackEvent ;
       ossSpinXLatch     _lsnMapMutex ;

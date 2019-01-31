@@ -239,6 +239,8 @@ namespace engine
       void        resetDisconnect () ;
       BOOLEAN     isOnlySelfWhenInterrupt() const ;
 
+      void        updateTransConf() ;
+
       INT32       printInfo ( EDU_INFO_TYPE type, const CHAR *format, ... ) ;
       const CHAR* getInfo ( EDU_INFO_TYPE type ) ;
       void        resetInfo ( EDU_INFO_TYPE type ) ;
@@ -409,6 +411,8 @@ namespace engine
    #endif
 
       void        initMonAppCB() ;
+
+      void        initTransConf() ;
 
    private :
       _pmdEDUMgr     *_eduMgr ;

@@ -224,6 +224,9 @@ namespace engine
 
       // full sync to repl sync, need to reset repl bucket
       _pReplBucket->reset() ;
+
+      // not use trans lock
+      eduCB()->getTransExecutor()->setUseTransLock( FALSE ) ;
    }
 
    void _clsReplDstSession::_onDetach()

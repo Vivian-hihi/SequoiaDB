@@ -51,6 +51,15 @@ using namespace bson ;
 namespace engine
 {
 
+   #define DMS_IS_WRITE_OPR(accessType)   \
+      ( DMS_ACCESS_TYPE_UPDATE == accessType || \
+        DMS_ACCESS_TYPE_DELETE == accessType ||\
+        DMS_ACCESS_TYPE_INSERT == accessType )
+
+   #define DMS_IS_READ_OPR(accessType) \
+      ( DMS_ACCESS_TYPE_QUERY == accessType || \
+        DMS_ACCESS_TYPE_FETCH == accessType )
+
    /*
       _dmsScanner implement
    */
@@ -65,10 +74,11 @@ namespace engine
       _matchRuntime = matchRuntime ;
       _accessType = accessType ;
       _mbLockType = SHARED ;
+      _transIsolation = TRANS_ISOLATION_RU ;
+      _waitLock = FALSE ;
+      _useRollbackSegment = TRUE ;
 
-      if ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
-           DMS_ACCESS_TYPE_DELETE == _accessType ||
-           DMS_ACCESS_TYPE_INSERT == _accessType )
+      if ( DMS_IS_WRITE_OPR( _accessType ) )
       {
          _mbLockType = EXCLUSIVE ;
       }
@@ -109,19 +119,6 @@ namespace engine
       if ( OSS_BIT_TEST( flag, FLG_QUERY_FOR_UPDATE ) )
       {
          _selectForUpdate = TRUE ;
-      }
-
-      if ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
-           DMS_ACCESS_TYPE_DELETE == _accessType ||
-           DMS_ACCESS_TYPE_INSERT == _accessType )
-      {
-         _recordLock = DPS_TRANSLOCK_X ;
-      }
-      else if ( ( DMS_ACCESS_TYPE_QUERY == _accessType ||
-                  DMS_ACCESS_TYPE_FETCH == _accessType ) &&
-                 TRANS_ISOLATION_RU != pmdGetOptionCB()->transIsolation() )
-      {
-         _recordLock = _selectForUpdate ? DPS_TRANSLOCK_U : DPS_TRANSLOCK_S ;
       }
    }
 
@@ -247,19 +244,66 @@ namespace engine
       _pTransCB         = pmdGetKRCB()->getTransCB() ;
       SDB_BPSCB *pBPSCB = pmdGetKRCB()->getBPSCB () ;
       BOOLEAN   bPreLoadEnabled = pBPSCB->isPreLoadEnabled() ;
+      dpsTransExecutor *pExe = cb->getTransExecutor() ;
 
-      /// no trans or read(not for update) in trans need to unlock
-      if ( DPS_TRANSLOCK_MAX != _recordLock )
+      _transIsolation = pExe->getTransIsolation() ;
+      _waitLock = pExe->isTransWaitLock() ;
+      _useRollbackSegment = pExe->useRollbackSegment() ;
+
+      /// When not use trans lock
+      if ( !pExe->useTransLock() )
       {
-         if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
+         _recordLock = DPS_TRANSLOCK_MAX ;
+         _selectForUpdate = FALSE ;
+      }
+      /// When not in transaction
+      else if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
+      {
+         /// Write operation should release lock right now
+         if ( DMS_IS_WRITE_OPR( _accessType ) )
          {
+            _recordLock = DPS_TRANSLOCK_X ;
             _needUnLock = TRUE ;
+            _useRollbackSegment = FALSE ;
          }
-         else if ( ( DMS_ACCESS_TYPE_QUERY == _accessType ||
-                     DMS_ACCESS_TYPE_FETCH == _accessType ) &&
-                   !_selectForUpdate )
+         /// Read is always no lock
+         else
          {
-            _needUnLock = TRUE ;
+            _recordLock = DPS_TRANSLOCK_MAX ;
+            _selectForUpdate = FALSE ;
+         }
+      }
+      /// In transaction
+      else
+      {
+         if ( DMS_IS_WRITE_OPR( _accessType ) )
+         {
+            _recordLock = DPS_TRANSLOCK_X ;
+            _needUnLock = FALSE ;
+         }
+         else if ( TRANS_ISOLATION_RU == _transIsolation )
+         {
+            _recordLock = DPS_TRANSLOCK_MAX ;
+            _selectForUpdate = FALSE ;
+         }
+         else
+         {
+            _recordLock = _selectForUpdate ? DPS_TRANSLOCK_U :
+                                             DPS_TRANSLOCK_S ;
+            if ( TRANS_ISOLATION_RS == _transIsolation ||
+                 _selectForUpdate )
+            {
+               _needUnLock = FALSE ;
+            }
+            else
+            {
+               _needUnLock = TRUE ;
+            }
+
+            if ( _selectForUpdate )
+            {
+               _waitLock = TRUE ;
+            }
          }
       }
 
@@ -502,7 +546,7 @@ namespace engine
             }
          }
 
-         if ( _recordLock != DPS_TRANSLOCK_MAX )
+         if ( lockedRecord )
          {
             _pTransCB->transLockRelease( cb, _pSu->logicalID(),
                                          _context->mbID(), &_curRID ) ;
@@ -1058,19 +1102,6 @@ namespace engine
       {
          _selectForUpdate = TRUE ;
       }
-
-      if ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
-           DMS_ACCESS_TYPE_DELETE == _accessType ||
-           DMS_ACCESS_TYPE_INSERT == _accessType )
-      {
-         _recordLock = DPS_TRANSLOCK_X ;
-      }
-      else if ( ( DMS_ACCESS_TYPE_QUERY == _accessType ||
-                  DMS_ACCESS_TYPE_FETCH == _accessType ) &&
-                 TRANS_ISOLATION_RU != pmdGetOptionCB()->transIsolation() )
-      {
-         _recordLock = _selectForUpdate ? DPS_TRANSLOCK_U : DPS_TRANSLOCK_S ;
-      }
    }
 
    _dmsIXSecScanner::~_dmsIXSecScanner ()
@@ -1161,18 +1192,66 @@ namespace engine
    {
       INT32 rc          = SDB_OK ;
       _pTransCB         = pmdGetKRCB()->getTransCB() ;
-      /// no trans or read(not for update) in trans need to unlock
-      if ( DPS_TRANSLOCK_MAX != _recordLock )
+      dpsTransExecutor *pExe = cb->getTransExecutor() ;
+
+      _transIsolation = pExe->getTransIsolation() ;
+      _waitLock = pExe->isTransWaitLock() ;
+      _useRollbackSegment = pExe->useRollbackSegment() ;
+
+      /// When not use trans lock
+      if ( !pExe->useTransLock() )
       {
-         if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
+         _recordLock = DPS_TRANSLOCK_MAX ;
+         _selectForUpdate = FALSE ;
+      }
+      /// When not in transaction
+      else if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
+      {
+         /// Write operation should release lock right now
+         if ( DMS_IS_WRITE_OPR( _accessType ) )
          {
+            _recordLock = DPS_TRANSLOCK_X ;
             _needUnLock = TRUE ;
+            _useRollbackSegment = FALSE ;
          }
-         else if ( ( DMS_ACCESS_TYPE_QUERY == _accessType ||
-                     DMS_ACCESS_TYPE_FETCH == _accessType ) &&
-                   !_selectForUpdate )
+         /// Read is always no lock
+         else
          {
-            _needUnLock = TRUE ;
+            _recordLock = DPS_TRANSLOCK_MAX ;
+            _selectForUpdate = FALSE ;
+         }
+      }
+      /// In transaction
+      else
+      {
+         if ( DMS_IS_WRITE_OPR( _accessType ) )
+         {
+            _recordLock = DPS_TRANSLOCK_X ;
+            _needUnLock = FALSE ;
+         }
+         else if ( TRANS_ISOLATION_RU == _transIsolation )
+         {
+            _recordLock = DPS_TRANSLOCK_MAX ;
+            _selectForUpdate = FALSE ;
+         }
+         else
+         {
+            _recordLock = _selectForUpdate ? DPS_TRANSLOCK_U :
+                                             DPS_TRANSLOCK_S ;
+            if ( TRANS_ISOLATION_RS == _transIsolation ||
+                 _selectForUpdate )
+            {
+               _needUnLock = FALSE ;
+            }
+            else
+            {
+               _needUnLock = TRUE ;
+            }
+
+            if ( _selectForUpdate )
+            {
+               _waitLock = TRUE ;
+            }
          }
       }
 
@@ -1511,7 +1590,7 @@ namespace engine
             }
          }
 
-         if ( _recordLock != DPS_TRANSLOCK_MAX )
+         if ( lockedRecord )
          {
             _pTransCB->transLockRelease( cb, _pSu->logicalID(),
                                          _context->mbID(), &_curRID ) ;
@@ -1716,10 +1795,8 @@ namespace engine
          }
          else
          {
-            rc = _context->mbLock( ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
-                                     DMS_ACCESS_TYPE_DELETE == _accessType ||
-                                     DMS_ACCESS_TYPE_INSERT == _accessType ) ?
-                                    EXCLUSIVE : SHARED ) ;
+            rc = _context->mbLock( DMS_IS_WRITE_OPR( _accessType ) ?
+                                   EXCLUSIVE : SHARED ) ;
          }
          PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
 

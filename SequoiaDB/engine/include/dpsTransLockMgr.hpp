@@ -148,10 +148,6 @@ namespace engine
          dpsTransRetInfo          * pdpsTxResInfo = NULL
       ) ;
 
-      void setLockTimeout( UINT32 timeout ) { _lockTimeout.swap( timeout ) ; }
-
-      UINT32 getLockTimeout() { return _lockTimeout.fetch() ; }
-
       // Latching for monitoring / dumping locking info of an EDU.
       //   . latch _rwMutext in exclusive mode
       OSS_INLINE void acquireMonLatch() { _rwMutex.lock_w() ; }
@@ -483,9 +479,6 @@ namespace engine
 
       // flag mark if lock manager has been initialized
       BOOLEAN                _initialized ;
-
-      // lock timeout 
-      ossAtomic32            _lockTimeout ;
 
       //
       // monitor/dump EDU locking info latch

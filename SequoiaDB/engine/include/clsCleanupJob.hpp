@@ -80,6 +80,9 @@ namespace engine
 
          void  _makeName () ;
 
+      protected:
+         virtual void _onAttach() ;
+
       private:
          INT32 _filterDel( const _dmsLobInfoOnPage &page,
                            BOOLEAN &need2Remove ) ;

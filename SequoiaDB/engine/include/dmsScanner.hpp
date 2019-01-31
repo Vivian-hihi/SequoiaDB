@@ -99,6 +99,10 @@ namespace engine
          DMS_ACCESS_TYPE         _accessType ;
          INT32                   _mbLockType ;
 
+         INT32                   _transIsolation ;
+         BOOLEAN                 _waitLock ;
+         BOOLEAN                 _useRollbackSegment ;
+
    } ;
    typedef _dmsScanner dmsScanner ;
 

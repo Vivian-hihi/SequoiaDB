@@ -244,6 +244,7 @@ namespace engine
          _pEDUCB->resetInterrupt() ;
          _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
          _pEDUCB->resetLsn() ;
+         _pEDUCB->updateTransConf() ;
 
          rc = request.init() ;
          if ( rc )

@@ -1163,6 +1163,12 @@ namespace engine
       return SDB_OK ;
    }
 
+   void _clsBucketSyncJob::_onAttach()
+   {
+      /// not use trans lock
+      eduCB()->getTransExecutor()->setUseTransLock( FALSE ) ;
+   }
+
    void _clsBucketSyncJob::_onDetach()
    {
       if ( _pBucket )

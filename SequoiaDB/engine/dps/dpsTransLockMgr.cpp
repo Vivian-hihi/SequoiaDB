@@ -47,9 +47,9 @@ namespace engine
    #define DPS_LOCKID_STRING_MAX_SIZE ( 128 ) 
    dpsTransLockManager::dpsTransLockManager() : _pLRBMgr( NULL ),
                                                 _pLRBHdrMgr( NULL ),
-                                                _initialized( FALSE ),
-                                                _lockTimeout( 0 ) { }
-
+                                                _initialized( FALSE )
+   {
+   }
 
    dpsTransLockManager::~dpsTransLockManager() 
    {
@@ -155,9 +155,6 @@ namespace engine
                  "Failed to allocate memory for LRB Header, rc: %d", rc ) ;
          goto error ;
       }
-
-      // init _lockTimeout
-      _lockTimeout.swap( DPS_LOCK_TIMEOUT_DEFAULT ) ;
 
       // set initialized flag
       _initialized = TRUE ;
@@ -2698,7 +2695,7 @@ namespace engine
 #ifdef _DEBUG
       SDB_ASSERT( dpsTxExectr, "dpsTransExecutor can't be NULL" ) ;
 #endif
-      rc = dpsTxExectr->wait( _lockTimeout.fetch() ) ;
+      rc = dpsTxExectr->wait( dpsTxExectr->getTransTimeout() ) ;
 
       PD_TRACE_EXITRC( SDB_DPSTRANSLOCKMANAGER__WAITLOCK, rc ) ;
       return rc ;

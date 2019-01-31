@@ -39,7 +39,6 @@
 
 #include "dpsTransExecutor.hpp"
 
-
 namespace engine
 {
 
@@ -52,6 +51,14 @@ namespace engine
       _waiterQueType    = DPS_QUE_NULL ;
       _lastLRBIdx       = UTIL_INVALID_OBJ_INDEX ;
       _lockCount        = 0 ;
+
+      _transIsolation   = DPS_TRANS_ISOLATION_DFT ;
+      _transTimeout     = DPS_TRANS_DFT_TIMEOUT ;
+      _transWaitLock    = DPS_TRANS_WAITLOCK_DFT ;
+      _useRollbackSegment = TRUE ;
+      _transConfMask    = 0 ;
+
+      _useTransLock     = TRUE ;
    }
 
    _dpsTransExecutor::~_dpsTransExecutor()
@@ -180,6 +187,117 @@ namespace engine
    UINT32 _dpsTransExecutor::getLockCount() const
    {
       return _lockCount ;
+   }
+
+   INT32 _dpsTransExecutor::getTransIsolation() const
+   {
+      return _transIsolation ;
+   }
+
+   UINT32 _dpsTransExecutor::getTransTimeout() const
+   {
+      return _transTimeout ;
+   }
+
+   BOOLEAN _dpsTransExecutor::isTransWaitLock() const
+   {
+      return _transWaitLock ;
+   }
+
+   BOOLEAN _dpsTransExecutor::useRollbackSegment() const
+   {
+      return _useRollbackSegment ;
+   }
+
+   BOOLEAN _dpsTransExecutor::useTransLock() const
+   {
+      return _useTransLock ;
+   }
+
+   UINT32 _dpsTransExecutor::getTransConfMask() const
+   {
+      return _transConfMask ;
+   }
+
+   void _dpsTransExecutor::setTransIsolation( INT32 isolation,
+                                              BOOLEAN enableMask )
+   {
+      if ( isolation >= TRANS_ISOLATION_RU &&
+           isolation <= TRANS_ISOLATION_MAX - 1 )
+      {
+         _transIsolation = isolation ;
+      }
+      else
+      {
+         _transIsolation = DPS_TRANS_ISOLATION_DFT ;
+      }
+
+      if ( enableMask )
+      {
+         _transConfMask |= TRANS_CONF_MASK_ISOLATION ;
+      }
+   }
+
+   void _dpsTransExecutor::setTransTimeout( UINT32 timeout,
+                                            BOOLEAN enableMask )
+   {
+      _transTimeout = timeout ;
+
+      if ( enableMask )
+      {
+         _transConfMask |= TRANS_CONF_MASK_TIMEOUT ;
+      }
+   }
+
+   void _dpsTransExecutor::setTransWaitLock( BOOLEAN waitLock,
+                                             BOOLEAN enableMask )
+   {
+      _transWaitLock = waitLock ;
+      if ( enableMask )
+      {
+         _transConfMask |= TRANS_CONF_MASK_WAITLOCK ;
+      }
+   }
+
+   void _dpsTransExecutor::setUseRollbackSemgent( BOOLEAN use )
+   {
+      _useRollbackSegment = use ;
+   }
+
+   void _dpsTransExecutor::setUseTransLock( BOOLEAN use )
+   {
+      _useTransLock = use ;
+   }
+
+   void _dpsTransExecutor::initTransConf( INT32 isolation,
+                                          UINT32 timeout,
+                                          BOOLEAN waitLock )
+   {
+      _transConfMask = 0 ;
+      setTransIsolation( isolation, FALSE ) ;
+      setTransTimeout( timeout, FALSE ) ;
+      setTransWaitLock( waitLock, FALSE ) ;
+
+      _useRollbackSegment  = TRUE ;
+      _useTransLock        = TRUE ;
+   }
+
+   void _dpsTransExecutor::updateTransConf( INT32 isolation,
+                                            UINT32 timeout,
+                                            BOOLEAN waitLock )
+   {
+      if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_ISOLATION ) )
+      {
+         setTransIsolation( isolation, FALSE ) ;
+      }
+      if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_TIMEOUT ) )
+      {
+         setTransTimeout( timeout, FALSE ) ;
+      }
+      if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_WAITLOCK ) )
+      {
+         setTransWaitLock( waitLock, FALSE ) ;
+      }
    }
 
 }

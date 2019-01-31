@@ -42,6 +42,7 @@
 
 #include "sdbInterface.hpp"
 #include "dpsTransLockDef.hpp"
+#include "dpsTransDef.hpp"
 #include "utilSegment.hpp"
 #include "ossMemPool.hpp"
 
@@ -69,6 +70,8 @@ namespace engine
       typedef ossPoolMap<dpsTransLockId,UTIL_OBJIDX>    DPS_LOCKID_MAP ;
       typedef DPS_LOCKID_MAP::iterator                   DPS_LOCKID_MAP_IT ;
       typedef DPS_LOCKID_MAP::const_iterator             DPS_LOCKID_MAP_CIT ;
+
+      friend class _pmdEDUCB ;
 
       public:
          _dpsTransExecutor() ;
@@ -102,6 +105,36 @@ namespace engine
          void                 clearLockCount() ;
          UINT32               getLockCount() const ;
 
+         /*
+            Transaction Related
+         */
+         INT32                getTransIsolation() const ;
+         UINT32               getTransTimeout() const ;
+         BOOLEAN              isTransWaitLock() const ;
+         BOOLEAN              useRollbackSegment() const ;
+         BOOLEAN              useTransLock() const ;
+
+         UINT32               getTransConfMask() const ;
+
+         void                 setTransIsolation( INT32 isolation,
+                                                 BOOLEAN enableMask = TRUE ) ;
+         void                 setTransTimeout( UINT32 timeout,
+                                               BOOLEAN enableMask = TRUE ) ;
+         void                 setTransWaitLock( BOOLEAN waitLock,
+                                                BOOLEAN enableMask = TRUE ) ;
+         void                 setUseRollbackSemgent( BOOLEAN use ) ;
+
+         void                 setUseTransLock( BOOLEAN use ) ;
+
+      protected:
+         void                 initTransConf( INT32 isolation,
+                                             UINT32 timeout,
+                                             BOOLEAN waitLock ) ;
+
+         void                 updateTransConf( INT32 isolation,
+                                               UINT32 timeout,
+                                               BOOLEAN waitLock ) ;
+
       public:
          /*
             Interface
@@ -118,6 +151,16 @@ namespace engine
 
          DPS_LOCKID_MAP          _mapLockID ;
          UINT32                  _lockCount ;
+
+      private:
+         /// transaction configs
+         INT32                   _transIsolation ;
+         UINT32                  _transTimeout ;      /// Unit:ms
+         BOOLEAN                 _transWaitLock ;
+         BOOLEAN                 _useRollbackSegment ;
+         UINT32                  _transConfMask ;
+
+         BOOLEAN                 _useTransLock ;
 
    } ;
    typedef _dpsTransExecutor dpsTransExecutor ;

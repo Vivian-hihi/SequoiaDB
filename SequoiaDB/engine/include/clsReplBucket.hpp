@@ -266,6 +266,7 @@ namespace engine
          virtual BOOLEAN reuseEDU() const { return TRUE ; }
 
       protected:
+         virtual void _onAttach() ;
          virtual void _onDetach() ;
 
       private:
