@@ -1,17 +1,17 @@
 /******************************************************************************
-@Description :    seqDB-17731:  increment为负值，插入值大于当前coord缓存范围，但在其它coord缓存范围内 
+@Description :    seqDB-17732:increment为负值，插入值小于所有缓存值
 @Modify list :   2018-1-25    Zhao Xiaoni  Init
 ******************************************************************************/
 function main()
 {
-   var coordNodes = getCoordNodeNames();
-   if(coordNodes.length < 3 || commIsStandalone( db ))
-   {
-      println("Deploy is standalone or coord nodes is less than 3!");
-      return;
-   }
+    var coordNodes = getCoordNodeNames();
+    if(coordNodes.length < 3 || commIsStandalone( db ))
+    {
+       println("Deploy is standalone or coord nodes is less than 3!");
+       return;
+    }
     
-   var clName = COMMCLNAME + "_17731";
+   var clName = COMMCLNAME + "_17732";
    var increment = -1;
    var acquireSize = 100;
    
@@ -29,13 +29,13 @@ function main()
       coord[i] = new Sdb(coordNodes[i]);
       cl[i] = coord[i].getCS(COMMCSNAME).getCL(clName);
       cl[i].insert({a : i});
-      expRecs.push({a : i, id : -1 + i*increment*acquireSize});
+      expRecs.push({a : i, id : -1 - i*acquireSize});
    }
    
-   //coordB指定自增字段值id:-205大于当前coord缓存范围，但在其它coord缓存范围内,此时丢弃本coord缓存，获取新缓存[-400,-301]
-   var insertR1 = {a : 205, id : -205};
+   //coordB指定自增字段值id:-500小于所有coord缓存的最小值插入记录，丢弃本coord缓存，获取新的缓存[-401,-302]
+   var insertR1 = {a : 301, id : -301};
    cl[1].insert(insertR1);
-   expRecs.push(insertR1);
+   expRecs.push(insertR1);     
    
    //coordA不指定自增字段插入记录，耗尽本coord缓存[-100,-1]
    for(var i = 0; i < 99; i++)
@@ -44,32 +44,39 @@ function main()
       expRecs.push({a : i, id : -2 + i*increment}); 
    }
    
-   //coordA不指定自增字段插入记录，获取新的缓存[-500,-401]
+   //coordA不指定自增字段插入记录，获取新的缓存[-501,-402]
    for(var i = 0; i < 99; i++)
    {
       cl[0].insert({a : i});
-      expRecs.push({a : i, id : -401 + i*increment}); 
+      expRecs.push({a : i, id : -402 + i*increment}); 
    }
    
-   //coordB不指定自增字段插入记录
+   //coordB不指定自增字段插入记录，耗尽本coord缓存[-401,-302]
    for(var i = 0; i < 100; i++)
    {
       cl[1].insert({a : i});
-      expRecs.push({a : i, id : -301 + i*increment}); 
+      expRecs.push({a : i, id : -302 + i*increment}); 
    }
    
-   //coordC不指定自增字段插入记录
-   for(var i = 0; i < 3; i++)
+   //coordB不指定自增字段插入记录，获取新的缓存[-601,-502]
+   for(var i = 0; i < 100; i++)
+   {
+      cl[1].insert({a : i});
+      expRecs.push({a : i, id : -502 + i*increment}); 
+   }
+   
+   //coordC不指定自增字段插入记录，耗尽本coord缓存[-300,-201]
+   for(var i = 0; i < 99; i++)
    {
       cl[2].insert({a : i});
       expRecs.push({a : i, id : -202 + i*increment}); 
    }
    
-   //coordC不指定自增字段插入记录，由于冲突，获取新的缓存[-600,-501]
+   //coordC不指定自增字段插入记录，由于冲突，获取新的缓存[-701,-602]
    for(var i = 0; i < 100; i++)
    {
       cl[2].insert({a : i});
-      expRecs.push({a : i, id : -501 + i*increment}); 
+      expRecs.push({a : i, id : -602 + i*increment}); 
    }
    
    var rc = dbcl.find().sort({id:1});

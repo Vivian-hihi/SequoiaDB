@@ -15,40 +15,47 @@ function main()
    var increment = -1;
    var acquireSize = 100;
    
-   var coordB = new Sdb(coordNodes[1]);
-   commDropCL( coordB, COMMCSNAME, clName );
+   commDropCL( db, COMMCSNAME, clName );
    
-   var coordBcl = commCreateCLByOption( coordB, COMMCSNAME, clName, { AutoIncrement : { Field : "id", Increment : increment, AcquireSize : acquireSize } } );
-   commCreateIndex( coordBcl, "a", {id : 1}, true )
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id", Increment : increment, AcquireSize : acquireSize } } );
+   commCreateIndex( dbcl, "a", {id : 1}, true )
    
    var expRecs = [];
-   var insertR1 = {a : 20, id : -20};
-   coordBcl.insert(insertR1);
-   expRecs.push(insertR1);
-   
+   var cl = new Array();
+   var coord  = new Array();
    for(var i = 0; i < coordNodes.length; i++)
    {
-      var coord = new Sdb(coordNodes[i]);
-      var cl = coord.getCS(COMMCSNAME).getCL(clName);
-      for(var j = 0; j < 50; j++)
-      {
-         cl.insert({a : j});
-         if(i == 0)
-         {
-            expRecs.push({a : j, id : -1 + j*increment + (i+1)*increment*acquireSize});
-         }
-         if(i == 1)
-         {
-            expRecs.push({a : j, id : -21 + j*increment});
-         }
-         if(i == 2)
-         {
-            expRecs.push({a : j, id : -1 + j*increment + i*increment*acquireSize});
-         }
-      }
+      coord[i] = new Sdb(coordNodes[i]);
+      cl[i] = coord[i].getCS(COMMCSNAME).getCL(clName);
    }
    
-   var rc = coordBcl.find().sort({id:1});
+   //自增字段序列值还未使用，coordB指定自增字段插入记录
+   var insertR1 = {a : 20, id : -20};
+   cl[1].insert(insertR1);
+   expRecs.push(insertR1);
+   
+   //coordA不指定自增字段插入记录
+   for(var i = 0; i < 50; i++)
+   {
+      cl[0].insert({a : i});
+      expRecs.push({a : i, id : -101 + i*increment}); 
+   }
+   
+   //coordB不指定自增字段插入记录
+   for(var i = 0; i < 50; i++)
+   {
+      cl[1].insert({a : i});
+      expRecs.push({a : i, id : -21 + i*increment}); 
+   }
+   
+   //coordC不指定自增字段插入记录，耗尽本coord缓存[-300,-201]
+   for(var i = 0; i < 50; i++)
+   {
+      cl[2].insert({a : i});
+      expRecs.push({a : i, id : -201 + i*increment}); 
+   }
+   
+   var rc = dbcl.find().sort({id:1});
    checkRec(rc, expRecs.sort(compare("id")));
    
    commDropCL( db, COMMCSNAME, clName );

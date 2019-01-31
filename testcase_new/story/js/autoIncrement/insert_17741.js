@@ -17,48 +17,51 @@ function main()
    var acquireSize = 100;
    var minValue = -1000;
    
-   var coordB = new Sdb(coordNodes[1]);
-   commDropCL( coordB, COMMCSNAME, clName );
+   commDropCL( db, COMMCSNAME, clName );
    
-   var coordBcl = commCreateCLByOption( coordB, COMMCSNAME, clName, { AutoIncrement : { Field : "id", Increment : increment, 
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id", Increment : increment, 
                                         CacheSize : 500, AcquireSize : acquireSize, MinValue : minValue, Cycled : true } } );
-   commCreateIndex( coordBcl, "a", {id : 1}, true );
+   commCreateIndex( dbcl, "a", {id : 1}, true );
    
+   //连接所有coord插入部分记录,coord缓存分别为[-200,-1],[-400,-201],[-600,-401]
    var expRecs = [];
-   coordBcl.insert({a : 1});
+   var cl = new Array();
+   var coord  = new Array();
+   for(var i = 0; i < coordNodes.length; i++)
+   {
+      coord[i] = new Sdb(coordNodes[i]);
+      cl[i] = coord[i].getCS(COMMCSNAME).getCL(clName);
+   }
+   cl[1].insert({a : 1});
    expRecs.push({a : 1, id : -1});
    
    //coordB指定自增字段值比MinValue稍大插入记录,此时coord上的所有缓存被丢弃
    var insertR1 = {a : 999, id : -999};
-   coordBcl.insert(insertR1);
+   cl[1].insert(insertR1);
    expRecs.push(insertR1);
    
-   //coordB不指定自增字段再次插入记录，翻转获取缓存[-200,-1],唯一索引冲突，再次取缓存范围[-400,-201],自增字段生成值由201开始
-   for(var j = 0; j < 20; j++)
+   //coordB不指定自增字段再次插入记录，翻转获取缓存[-200,-1],生成id:-1导致唯一索引冲突，再次取缓存范围[-400,-201],自增字段生成值由201开始
+   for(var i = 0; i < 20; i++)
    {
-      coordBcl.insert({a : "coordA"+j});
-      expRecs.push({a : "coordA"+j, id : -201 + j*increment});
+      cl[1].insert({a : i});
+      expRecs.push({a : i, id : -201 + i*increment});
    } 
    
    //coordA不指定自增字段插入
-   var coordA = new Sdb(coordNodes[0]);
-   var coordAcl = coordA.getCS(COMMCSNAME).getCL(clName);
-   for(var j = 0; j < 50; j++)
+   for(var i = 0; i < 50; i++)
    {
-      coordAcl.insert({a : "coordA"+j});
-      expRecs.push({a : "coordA"+j, id : -401 + j*increment});
+      cl[0].insert({a : i});
+      expRecs.push({a : i, id : -401 + i*increment});
    } 
    
    //coordC不指定自增字段插入
-   var coordC = new Sdb(coordNodes[2]);
-   var coordCcl = coordC.getCS(COMMCSNAME).getCL(clName);
-   for(var j = 0; j < 50; j++)
+   for(var i = 0; i < 50; i++)
    {
-      coordCcl.insert({a : "coordC"+j});
-      expRecs.push({a : "coordC"+j, id : -601 + j*increment});
+      cl[2].insert({a : i});
+      expRecs.push({a : i, id : -601 + i*increment});
    } 
    
-   var rc = coordBcl.find().sort({id:1});
+   var rc = dbcl.find().sort({id:1});
    checkRec(rc, expRecs.sort(compare("id")));
    
    commDropCL( db, COMMCSNAME, clName );

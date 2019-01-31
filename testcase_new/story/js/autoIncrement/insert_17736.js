@@ -15,26 +15,29 @@ function main()
    var increment = -1;
    var acquireSize = 100;
    
-   var coordB = new Sdb(coordNodes[1]);
-   commDropCL( coordB, COMMCSNAME, clName );
+   commDropCL( db, COMMCSNAME, clName );
    
-   var coordBcl = commCreateCLByOption( coordB, COMMCSNAME, clName, { AutoIncrement : { Field : "id", Increment : increment, AcquireSize : acquireSize } } );
-   commCreateIndex( coordBcl, "a", {id : 1}, true )
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id", Increment : increment, AcquireSize : acquireSize } } );
+   commCreateIndex( dbcl, "a", {id : 1}, true )
    
+   //连接所有coord插入部分记录,coord缓存分别为[-100,-1],[-200,-101],[-300,-201]
    var expRecs = [];
+   var cl = new Array();
+   var coord  = new Array();
    for(var i = 0; i < coordNodes.length; i++)
    {
-      var coord = new Sdb(coordNodes[i]);
-      var cl = coord.getCS(COMMCSNAME).getCL(clName);
-      cl.insert({a : i});
-      expRecs.push({a : i, id : - 1 - i*acquireSize});
+      coord[i] = new Sdb(coordNodes[i]);
+      cl[i] = coord[i].getCS(COMMCSNAME).getCL(clName);
+      cl[i].insert({a : i});
+      expRecs.push({a : i, id : -1 + i*increment*acquireSize});
    }
    
-   //coordB指定自增字段值为本coord缓存的nextValue插入记录
+   //coordB指定自增字段值为本序列的currentValue插入记录，catalog丢弃老的缓存，coordB获取新的缓存[-1101,-1002]
    var insertR1 = {a : 1001, id : -1001};
-   coordBcl.insert(insertR1);
+   cl[1].insert(insertR1);
    expRecs.push(insertR1);
    
+   //检查catalog已丢弃老的缓存，重新生成新的缓存
    var clID = getCLID(COMMCSNAME, clName);
    var sequenceName = "SYS_" + clID + "_id_SEQ";
    var cursor = db.snapshot(SDB_SNAP_SEQUENCES, { Name : sequenceName });
@@ -43,37 +46,43 @@ function main()
       throw "failed!";
    }
    
-   for(var i = 0; i < coordNodes.length; i++)
+   //coordA不指定自增字段插入记录，耗尽本coord缓存[-100,-1]
+   for(var i = 0; i < 99; i++)
    {
-      var coord = new Sdb(coordNodes[i]);
-      var cl = coord.getCS(COMMCSNAME).getCL(clName);
-      for(var j = 0; j < 110; j++)
-      {
-         cl.insert({a : j});
-         if(i == 1)
-         {
-            if(j < 100)
-            {
-               expRecs.push({a : j, id : -1002 + j*increment});  
-            }else
-            {
-               expRecs.push({a : j, id : -1102 + (j-100)*increment + i*acquireSize*increment});  
-            }
-         }else
-         {
-            if(j < 99)
-            {   
-               expRecs.push({a : j, id : -2 + j*increment + i*acquireSize*increment});
-            }else
-            {
-               expRecs.push({a : j, id : -1102 + (j-99)*increment + i*acquireSize*increment});
-            }
-         }
-      }
+      cl[0].insert({a : i});
+      expRecs.push({a : i, id : -2 + i*increment}); 
    }
    
-   var rc = coordBcl.find();
-   checkRec(rc, expRecs);
+   //coordA不指定自增字段插入记录，获取新的缓存[-1201,-1102]
+   for(var i = 0; i < 99; i++)
+   {
+      cl[0].insert({a : i});
+      expRecs.push({a : i, id : -1102 + i*increment}); 
+   }
+   
+   //coordB不指定自增字段插入记录
+   for(var i = 0; i < 100; i++)
+   {
+      cl[1].insert({a : i});
+      expRecs.push({a : i, id : -1002 + i*increment}); 
+   }
+  
+   //coordC不指定自增字段插入记录，耗尽本coord缓存[-300,-201]
+   for(var i = 0; i < 99; i++)
+   {
+      cl[2].insert({a : i});
+      expRecs.push({a : i, id : -202 + i*increment}); 
+   }
+   
+   //coordC不指定自增字段插入记录，由于冲突，获取新的缓存[-1301,-1202]
+   for(var i = 0; i < 100; i++)
+   {
+      cl[2].insert({a : i});
+      expRecs.push({a : i, id : -1202 + i*increment}); 
+   }
+   
+   var rc = dbcl.find().sort({id : 1});
+   checkRec(rc, expRecs.sort(compare("id")));
    
    commDropCL( db, COMMCSNAME, clName );
 }

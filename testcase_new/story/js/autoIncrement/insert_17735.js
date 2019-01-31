@@ -15,33 +15,34 @@ function main()
    var increment = -1;
    var acquireSize = 100;
    
-   var coordB = new Sdb(coordNodes[1]);
-   commDropCL( coordB, COMMCSNAME, clName );
+   commDropCL( db, COMMCSNAME, clName );
    
-   var coordBcl = commCreateCLByOption( coordB, COMMCSNAME, clName, { AutoIncrement : { Field : "id", Increment : increment, AcquireSize : acquireSize } } );
-   commCreateIndex( coordBcl, "a", {id : 1}, true )
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id", Increment : increment, AcquireSize : acquireSize } } );
+   commCreateIndex( dbcl, "a", {id : 1}, true )
    
+   //连接所有coord插入部分记录,coord缓存分别为[-100,-1],[-200,-101],[-300,-201]
    var expRecs = [];
+   var cl = new Array();
+   var coord  = new Array();
    for(var i = 0; i < coordNodes.length; i++)
    {
-      var coord = new Sdb(coordNodes[i]);
-      var cl = coord.getCS(COMMCSNAME).getCL(clName);
-      cl.insert({a : i});
-      expRecs.push({a : i, id : - 1 - i*acquireSize});
+      coord[i] = new Sdb(coordNodes[i]);
+      cl[i] = coord[i].getCS(COMMCSNAME).getCL(clName);
+      cl[i].insert({a : i});
+      expRecs.push({a : i, id : -1 + i*increment*acquireSize});
    }
    
    //coordB指定自增字段值为本coord缓存的nextValue插入记录
    var insertR1 = {a : 102, id : -102};
-   coordBcl.insert(insertR1);
+   cl[1].insert(insertR1);
    expRecs.push(insertR1);
    
+   //连接所有coord插入记录,其中coordB从userValue开始
    for(var i = 0; i < coordNodes.length; i++)
    {
-      var coord = new Sdb(coordNodes[i]);
-      var cl = coord.getCS(COMMCSNAME).getCL(clName);
       for(var j = 0; j < 50; j++)
       {
-         cl.insert({a : j});
+         cl[i].insert({a : j});
          if(i == 1)
          {
             expRecs.push({a : j, id : -103 + j*increment});
@@ -52,7 +53,7 @@ function main()
       }
    }
    
-   var rc = coordBcl.find().sort({id:1});
+   var rc = dbcl.find().sort({id:1});
    checkRec(rc, expRecs.sort(compare("id")));
    
    commDropCL( db, COMMCSNAME, clName );

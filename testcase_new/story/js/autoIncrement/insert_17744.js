@@ -23,27 +23,25 @@ function main()
    commCreateIndex( dbcl, "a", {id : 1}, true );
    
    var expRecs = [];
+   var cl = new Array();
+   var coord  = new Array();
    for(var i = 0; i < coordNodes.length; i++)
    {
-      var coord = new Sdb(coordNodes[i]);
-      var cl = coord.getCS(COMMCSNAME).getCL(clName);
-      cl.insert({a : i});
+      coord[i] = new Sdb(coordNodes[i]);
+      cl[i] = coord[i].getCS(COMMCSNAME).getCL(clName);
+      cl[i].insert({a : i});
       expRecs.push({a : i, id : -1 - i*acquireSize});
    }
    
    dbcl.setAttributes({AutoIncrement : {Field : "id", CurrentValue : 2147483647}});
    
-   var coordA = new Sdb(coordNodes[0]);
-   var coordAcl = coordA.getCS(COMMCSNAME).getCL(clName);
    var insertR1 = {a : 3, id : -2147483648 }
-   coordAcl.insert(insertR1);
+   cl[0].insert(insertR1);
    expRecs.push(insertR1);
    
    for(var i = 0; i < coordNodes.length; i++)
    {
-      var coord = new Sdb(coordNodes[i]);
-      var cl = coord.getCS(COMMCSNAME).getCL(clName);
-      cl.insert({a : i});
+      cl[i].insert({a : i});
       expRecs.push({a : i, id : -2147483649 - i*acquireSize});
    }
    
