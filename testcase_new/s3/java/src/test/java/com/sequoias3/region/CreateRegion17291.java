@@ -42,8 +42,8 @@ public class CreateRegion17291 extends S3TestBase {
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
 
-		RegionUtils.createCSAndCL(csNames[0], dataclNames);
-		RegionUtils.createCSAndCL(csNames[1], metaclNames);
+		RegionUtils.createCSAndCL(csNames[0], metaclNames);
+		RegionUtils.createCSAndCL(csNames[1], dataclNames);
 
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
