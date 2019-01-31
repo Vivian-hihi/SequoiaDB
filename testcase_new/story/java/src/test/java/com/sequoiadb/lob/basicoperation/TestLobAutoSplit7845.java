@@ -82,7 +82,7 @@ public class TestLobAutoSplit7845 extends SdbTestBase {
 	
 	@Test( dependsOnMethods = "testAutoSplitLob")
 	public void checkSplitResult(){	
-		double expErrorValue = 0.8;	
+		double expErrorValue = 0.95;	
 		LobOprUtils.checkSplitResult(sdb, csName, clName, groupList, expErrorValue);		
 	}
 	
