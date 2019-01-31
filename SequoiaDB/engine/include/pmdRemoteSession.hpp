@@ -41,8 +41,7 @@
 #include "sdbInterface.hpp"
 #include "netRouteAgent.hpp"
 
-#include <map>
-#include <set>
+#include "ossMemPool.hpp"
 #include <vector>
 #include "../bson/bson.h"
 
@@ -213,16 +212,16 @@ namespace engine
    } ;
    typedef _pmdSubSession pmdSubSession ;
 
-   typedef map< UINT64, pmdSubSession >            MAP_SUB_SESSION ;
+   typedef ossPoolMap< UINT64, pmdSubSession >     MAP_SUB_SESSION ;
    typedef MAP_SUB_SESSION::iterator               MAP_SUB_SESSION_IT ;
 
-   typedef map< UINT64, pmdSubSession* >           MAP_SUB_SESSIONPTR ;
+   typedef ossPoolMap< UINT64, pmdSubSession* >    MAP_SUB_SESSIONPTR ;
    typedef MAP_SUB_SESSIONPTR::iterator            MAP_SUB_SESSIONPTR_IT ;
 
    typedef vector< pmdSubSession* >                VEC_SUB_SESSIONPTR ;
 
-   typedef set< UINT64 >                           SET_NODEID ;
-   typedef map< UINT64, NET_HANDLE >               MAP_NODE2NET ;
+   typedef ossPoolSet< UINT64 >                    SET_NODEID ;
+   typedef ossPoolMap< UINT64, NET_HANDLE >        MAP_NODE2NET ;
 
    /*
       PMD_SUB_SESSION_FILTER define
@@ -405,13 +404,16 @@ namespace engine
       friend class _pmdRemoteSessionMgr ;
       friend class _pmdRemoteSession ;
 
-      typedef map< UINT64, pmdRemoteSession >         MAP_REMOTE_SESSION ;
+      typedef ossPoolMap< UINT64, pmdRemoteSession >  MAP_REMOTE_SESSION ;
       typedef MAP_REMOTE_SESSION::iterator            MAP_REMOTE_SESSION_IT ;
 
-      typedef map< UINT64, INT32 >                    MAP_NODE_2_SHCEDVER ;
+      typedef ossPoolMap< UINT64, INT32 >             MAP_NODE_2_SHCEDVER ;
       typedef MAP_NODE_2_SHCEDVER::iterator           MAP_NODE_2_SHCEDVER_IT ;
 
-      typedef set< UINT16 >                           SET_NODES ;
+      typedef ossPoolMap< UINT64, INT32 >             MAP_NODE_2_SESSIONVER ;
+      typedef MAP_NODE_2_SESSIONVER::iterator         MAP_NODE_2_SESSIONVER_IT ;
+
+      typedef ossPoolSet< UINT16 >                    SET_NODES ;
 
       struct posAndNode
       {
@@ -497,8 +499,8 @@ namespace engine
    */
    class _pmdRemoteSessionMgr : public SDBObject
    {
-      typedef map< UINT32, pmdRemoteSessionSite >     MAP_TID_2_EDU ;
-      typedef MAP_TID_2_EDU::iterator                 MAP_TID_2_EDU_IT ;
+      typedef ossPoolMap< UINT32, pmdRemoteSessionSite >    MAP_TID_2_EDU ;
+      typedef MAP_TID_2_EDU::iterator                       MAP_TID_2_EDU_IT ;
 
       public:
          _pmdRemoteSessionMgr() ;
