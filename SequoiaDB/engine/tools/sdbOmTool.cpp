@@ -52,9 +52,15 @@
 #include <vector>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include "boost/filesystem.hpp"
+#include "boost/filesystem/operations.hpp"
+#include "boost/filesystem/path.hpp"
+
 
 
 using namespace std ;
+namespace fs = boost::filesystem ;
+
 
 namespace engine
 {
@@ -374,35 +380,114 @@ namespace engine
    INT32 writeHostsFile( VEC_HOST_ITEM &vecItems, string &err )
    {
       INT32 rc = SDB_OK ;
-      std::string tmpFile = HOSTS_FILE ;
-      tmpFile += ".tmp" ;
+      const CHAR *pFilePath = NULL ;
+      std::string tmpFile ;
       OSSFILE file ;
       stringstream ss ;
+      fs::perms permissions = fs::no_perms ;
 
       // 1. first create the file if not exist
-      if ( SDB_OK != ossAccess( HOSTS_FILE ) )
+      pFilePath = HOSTS_FILE ;
+      if ( SDB_OK != ossAccess( pFilePath ) )
       {
-         rc = ossOpen ( HOSTS_FILE, OSS_READWRITE|OSS_SHAREWRITE|OSS_REPLACE,
-                     OSS_RU|OSS_WU|OSS_RG|OSS_RO, file ) ;
+         rc = ossOpen ( pFilePath, OSS_READWRITE|OSS_SHAREWRITE|OSS_REPLACE,
+                        OSS_RU|OSS_WU|OSS_RG|OSS_RO, file ) ;
          if ( rc )
          {
-            ss << "open file[" <<  HOSTS_FILE << "] failed: " << rc ;
+            ss << "open file[" << pFilePath << "] failed: " << rc ;
             goto error ;
          }
+         ossClose( file ) ;
+      }
+      // get the permissions for hosts file
+      try
+      {
+         fs::path hostsFilePath ( pFilePath ) ;
+         fs::file_status fileStatus = fs::status( hostsFilePath ) ;
+         if ( fileStatus.type() == fs::file_not_found )
+         {
+            rc = SDB_FNE ;
+            ss << "get file[" << pFilePath << "]'s status failed, rc = " << rc ;
+            goto error ;
+         }
+         else if ( fileStatus.type() == fs::type_unknown )
+         {
+            rc = SDB_IO ;
+            ss << "get file[" << pFilePath 
+               << "]'s status failed, the attributes cannot be determind" ;
+            goto error ;
+         }
+         permissions = fileStatus.permissions() ;
+      }
+      catch ( fs::filesystem_error& e )
+      {
+         if ( e.code() == boost::system::errc::permission_denied ||
+              e.code() == boost::system::errc::operation_not_permitted )
+         {
+            rc = SDB_PERM ;
+            ss << "no permission to access file[" << pFilePath << "], rc = " 
+               << rc ;
+         }
+         else
+         {
+            rc = SDB_IO ;
+            ss << "get file[" << pFilePath << "]'s permission failed, errno: "
+               << e.code().value() << ", rc = " << rc ;
+         }
+         goto error ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         ss << "get file[" << pFilePath << "]'s permission failed, error: "
+            << e.what() << ", rc = " << rc ;
+         goto error ;
       }
 
       // 2. remove the tmp file
-      if ( SDB_OK == ossAccess( tmpFile.c_str() ) )
+      tmpFile = tmpFile + HOSTS_FILE + ".tmp" ;
+      pFilePath = tmpFile.c_str() ;
+      if ( SDB_OK == ossAccess( pFilePath ) )
       {
-         ossDelete( tmpFile.c_str() ) ;
+         ossDelete( pFilePath ) ;
       }
 
-      // 3. Create the tmp file
-      rc = ossOpen ( tmpFile.c_str(), OSS_READWRITE|OSS_SHAREWRITE|OSS_REPLACE,
+      // 3. Create the tmp file and change it's permissions
+      rc = ossOpen ( pFilePath, OSS_READWRITE|OSS_SHAREWRITE|OSS_REPLACE,
                      OSS_RU|OSS_WU|OSS_RG|OSS_RO, file ) ;
       if ( rc )
       {
-         ss << "open file[" <<  tmpFile.c_str() << "] failed: " << rc ;
+         ss << "open file[" << pFilePath << "] failed: " << rc ;
+         goto error ;
+      }
+      /// set permission
+      try
+      {      
+         fs::path tmpHostsFilePath ( pFilePath ) ;
+         fs::permissions( tmpHostsFilePath, permissions ) ;
+      }
+      catch ( fs::filesystem_error& e )
+      {
+         if ( e.code() == boost::system::errc::permission_denied ||
+              e.code() == boost::system::errc::operation_not_permitted )
+         {
+            rc = SDB_PERM ;
+            ss << "no permission to access file[" << pFilePath << "], rc = " 
+               << rc ;
+         }
+         else
+         {
+            rc = SDB_IO ;
+            ss << "set file[" << pFilePath << "]'s permission failed, error: "
+               << e.what() << ", rc = " << rc ;
+         }
+         goto error ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         ss << "set file[" << pFilePath << "]'s permission failed, error: "
+            << e.what() << ", rc = " << rc ;
          goto error ;
       }
 
@@ -424,7 +509,7 @@ namespace engine
             if ( rc )
             {
                ossClose( file ) ;
-               ss << "write context[" << text << "] to file[" << tmpFile.c_str()
+               ss << "write context[" << text << "] to file[" << pFilePath
                   << "] failed: " << rc ;
                goto error ;
             }
@@ -451,11 +536,11 @@ namespace engine
       }
 
       // 5. commit the file
-      rc = ossRenamePath( tmpFile.c_str(), HOSTS_FILE ) ;
+      rc = ossRenamePath( pFilePath, HOSTS_FILE ) ;
       if ( SDB_OK != rc )
       {
-         ss << "commit file:" << tmpFile << " to file:" << HOSTS_FILE << 
-            " failed" ;
+         ss << "commit file:" << pFilePath << " to file:" << HOSTS_FILE << 
+               " failed" ;
          goto error ;
       }
 
