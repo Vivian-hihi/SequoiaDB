@@ -1,30 +1,31 @@
 /*
  * Copyright 2018 SequoiaDB Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
-*/
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
 
 package com.sequoiadb.util;
 
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.SDBError;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.types.BSONDecimal;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.security.MessageDigest;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 
 public final class Helper {
     private Helper() {
@@ -36,7 +37,8 @@ public final class Helper {
         MessageDigest md5;
         try {
             md5 = MessageDigest.getInstance("MD5");
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new BaseException(SDBError.SDB_SYS, e);
         }
 
@@ -49,7 +51,7 @@ public final class Helper {
         byte[] md5Bytes = md5.digest(byteArray);
         StringBuilder hexValue = new StringBuilder();
         for (byte md5Byte : md5Bytes) {
-            int val = ((int) md5Byte) & 0xff;
+            int val = (md5Byte) & 0xff;
             if (val < 16) {
                 hexValue.append("0");
             }
@@ -90,7 +92,8 @@ public final class Helper {
         if (length < in.remaining()) {
             int alignedSize = alignedSize(length);
             in.position(alignedSize + position);
-        } else {
+        }
+        else {
             in.position(length + position);
         }
 
@@ -124,7 +127,8 @@ public final class Helper {
         ByteBuffer bb = ByteBuffer.wrap(byteArray);
         if (endianConvert) {
             bb.order(ByteOrder.LITTLE_ENDIAN);
-        } else {
+        }
+        else {
             bb.order(ByteOrder.BIG_ENDIAN);
         }
 
@@ -148,8 +152,7 @@ public final class Helper {
     // for sending to remote, we set l2r to be true; when we
     // receive message from remote, and we need to handle endian,
     // we set l2r to be false
-    public static void bsonEndianConvert(byte[] inBytes, int offset,
-                                         int objSize, boolean l2r) {
+    public static void bsonEndianConvert(byte[] inBytes, int offset, int objSize, boolean l2r) {
         int begin = offset;
         arrayReverse(inBytes, offset, 4);
         offset += 4;
@@ -159,8 +162,9 @@ public final class Helper {
             type = inBytes[offset];
             // move offset to next to skip type
             ++offset;
-            if (type == BSON.EOO)
+            if (type == BSON.EOO) {
                 break;
+            }
             // skip element name: '...\0'
             offset += getStrLength(inBytes, offset) + 1;
             switch (type) {
@@ -271,8 +275,8 @@ public final class Helper {
                     arrayReverse(inBytes, offset, 2);
                     offset += 2;
                     // digits
-                    int ndigits = ((l2r ? newLength : length) -
-                        BSONDecimal.DECIMAL_HEADER_SIZE) / (Short.SIZE / Byte.SIZE);
+                    int ndigits = ((l2r ? newLength : length) - BSONDecimal.DECIMAL_HEADER_SIZE)
+                            / (Short.SIZE / Byte.SIZE);
                     for (int i = 0; i < ndigits; i++) {
                         arrayReverse(inBytes, offset, 2);
                         offset += 2;
@@ -287,11 +291,11 @@ public final class Helper {
         }
     }
 
-    private static int getBsonLength(byte[] inBytes, int offset,
-                                     boolean endianConvert) {
+    private static int getBsonLength(byte[] inBytes, int offset, boolean endianConvert) {
         byte[] tmp = new byte[4];
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 4; i++) {
             tmp[i] = inBytes[offset + i];
+        }
 
         return Helper.byteToInt(tmp, endianConvert);
     }
@@ -316,5 +320,43 @@ public final class Helper {
             ++begin;
         }
         return length;
+    }
+
+    public static byte[] hexToByte(String hexValue) {
+        if (null == hexValue || hexValue.isEmpty()) {
+            return new byte[0];
+        }
+        int bLen = hexValue.length() / 2;
+        byte[] b = new byte[bLen];
+        for (int i = 0; i < bLen; i++) {
+            String subStr = hexValue.substring(i * 2, i * 2 + 2);
+            b[i] = (byte) Integer.parseInt(subStr, 16);
+        }
+
+        return b;
+    }
+
+    public static byte[] sha256(String original)
+            throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        return sha256(original.getBytes("UTF-8"));
+    }
+
+    public static byte[] sha256(byte[] original) {
+        try {
+            MessageDigest md;
+            md = MessageDigest.getInstance("SHA-256");
+            md.update(original);
+            return md.digest();
+        }
+        catch (Exception e) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "sha256 failed", e);
+        }
+    }
+
+    public static void main(String[] args) {
+        byte[] b = Helper.hexToByte(new String("7F01"));
+        for (int i = 0; i < b.length; i++) {
+            System.out.println(b[i]);
+        }
     }
 }
