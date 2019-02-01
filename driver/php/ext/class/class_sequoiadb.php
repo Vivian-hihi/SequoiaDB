@@ -573,20 +573,21 @@ class SequoiaDB
     * Get the snapshot.
     *
     * @param $type	an integer argument. The snapshot type as below: @code
-    *                                                               SDB_SNAP_CONTEXTS
-    *                                                               SDB_SNAP_CONTEXTS_CURRENT
-    *                                                               SDB_SNAP_SESSIONS
-    *                                                               SDB_SNAP_SESSIONS_CURRENT
-    *                                                               SDB_SNAP_COLLECTIONS
-    *                                                               SDB_SNAP_COLLECTIONSPACES
-    *                                                               SDB_SNAP_DATABASE
-    *                                                               SDB_SNAP_SYSTEM
-    *                                                               SDB_SNAP_CATALOG
-    *                                                               SDB_SNAP_TRANSACTIONS
-    *                                                               SDB_SNAP_TRANSACTIONS_CURRENT
-    *                                                               SDB_SNAP_ACCESSPLANS
-    *                                                               SDB_SNAP_HEALTH
-    *                                                               SDB_SNAP_CONFIGS
+    *                                                               SDB_SNAP_CONTEXTS              : Get the snapshot of all the contexts
+    *                                                               SDB_SNAP_CONTEXTS_CURRENT      : Get the snapshot of current context
+    *                                                               SDB_SNAP_SESSIONS              : Get the snapshot of all the sessions
+    *                                                               SDB_SNAP_SESSIONS_CURRENT      : Get the snapshot of current session
+    *                                                               SDB_SNAP_COLLECTIONS           : Get the snapshot of all the collections
+    *                                                               SDB_SNAP_COLLECTIONSPACES      : Get the snapshot of all the collection spaces
+    *                                                               SDB_SNAP_DATABASE              : Get the snapshot of the database
+    *                                                               SDB_SNAP_SYSTEM                : Get the snapshot of the system
+    *                                                               SDB_SNAP_CATALOG               : Get the snapshot of the catalog
+    *                                                               SDB_SNAP_TRANSACTIONS          : Get snapshot of transactions
+    *                                                               SDB_SNAP_TRANSACTIONS_CURRENT  : Get snapshot of all the transactions in current session
+    *                                                               SDB_SNAP_ACCESSPLANS           : Get the snapshot of cached access plans
+    *                                                               SDB_SNAP_HEALTH                : Get snapshot of node health detection
+    *                                                               SDB_SNAP_CONFIGS               : Get snapshot of node configurations
+    *                                                               SDB_SNAP_SEQUENCES             : Get the snapshot of sequences
     *                                                               @endcode
     *
     * @param $condition an array or the string argument. The matching rule, match all the documents if null.
