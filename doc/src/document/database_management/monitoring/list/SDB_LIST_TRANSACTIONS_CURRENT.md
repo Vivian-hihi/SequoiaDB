@@ -38,14 +38,16 @@ WaitLock 字段中锁对象的信息：
 | ------------ | ---- | ------------------------ |
 | CSID         | 整型 | 锁对象所在集合空间的 ID  |
 | CLID         | 整型 | 锁对象所在集合的 ID      |
-| recordID     | 整型 | 锁对象所在记录的ID       |
-| recordOffset | 整型 | 锁对象所在记录的偏移量   |
+| ExtentID     | 整型 | 锁对象所在记录的 ID      |
+| Offset       | 整型 | 锁对象所在记录的偏移量   |
+| Mode         | 字符串 | 锁的类型，对应有"IS","IX","S","U"和"X" |
+| Duration     | 整型 | 锁的持有或等待时间，单位：毫秒 |
 
 ###锁对象的描述###
 
 锁对象每个字段取值不同表示不同的锁对象：
 
-| 锁对象       | CSID | CLID  | recordID | recordOffset | 备注 |
+| 锁对象       | CSID | CLID  | ExtentID | Offset | 备注 |
 | ------------ | ---- | ----- | ---- | ---- | ------------ |
 | 没有锁对象   | -1   | 65535 | -1   | -1   | 一般在WaitLock为没有锁对象时，表示当前事务没有在等待锁 |
 | 集合空间锁   | >= 0 | 65535 | -1   | -1   | |
@@ -57,20 +59,15 @@ WaitLock 字段中锁对象的信息：
 ```lang-javascript
 > db.list(SDB_LIST_TRANSACTIONS_CURRENT)
 {
-  "NodeName": "susetzb:20000",
+  "NodeName": "ubuntu1604-xjh:20000",
   "GroupName": "db1",
-  "SessionID": 80,
-  "TransactionID": "03e80000000022",
+  "SessionID": 89,
+  "TransactionID": "03e80000000001",
   "IsRollback": false,
-  "CurrentTransLSN": 1893229680,
-  "WaitLock": {
-    "CSID": -1,
-    "CLID": 65535,
-    "recordID": -1,
-    "recordOffset": -1
-  },
+  "CurrentTransLSN": -1,
+  "WaitLock": {},
   "TransactionLocksNum": 3,
-  "RelatedID": "c0a8142ac35000001d50"
+  "RelatedID": "c0a81457c35000006b75"
 }
 Return 1 row(s).
 ```
