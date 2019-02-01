@@ -898,6 +898,8 @@ namespace engine
          /// flush mme
          INT32          flushMME( BOOLEAN sync = FALSE ) ;
 
+         BOOLEAN        isTransSupport() const ;
+
       public:
 
          // create a new collection for given name, returns collectionID

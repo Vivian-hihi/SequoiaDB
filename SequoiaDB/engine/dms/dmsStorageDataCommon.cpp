@@ -600,6 +600,15 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATACOMMON_SYNCMEMTOMMAP ) ;
    }
 
+   BOOLEAN _dmsStorageDataCommon::isTransSupport() const
+   {
+      if ( DMS_STORAGE_CAPPED == getStorageType() )
+      {
+         return FALSE ;
+      }
+      return TRUE ;
+   }
+
    INT32 _dmsStorageDataCommon::flushMME( BOOLEAN sync )
    {
       syncMemToMmap() ;
@@ -2953,6 +2962,13 @@ namespace engine
       UINT32 textIdxNum             = 0 ;
       IDmsExtDataHandler * handler  = NULL ;
 
+      if ( !isTransSupport() )
+      {
+         transID = DPS_INVALID_TRANS_ID ;
+         preTransLsn = DPS_INVALID_LSN_OFFSET ;
+         relatedLsn = DPS_INVALID_LSN_OFFSET ;
+      }
+
       try
       {
          rc = _prepareInsertData( record, mustOID, cb, recordData,
@@ -3115,7 +3131,7 @@ namespace engine
          }
          recordRW = record2RW( foundRID, context->mbID() ) ;
 
-         if ( dpscb )
+         if ( dpscb && isTransSupport() )
          {
             dpsTransRetInfo lockConflict ;
             rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID(),
@@ -3260,6 +3276,13 @@ namespace engine
          goto error ;
       }
 #endif //_DEBUG
+
+      if ( !isTransSupport() )
+      {
+         transID = DPS_INVALID_TRANS_ID ;
+         preLsn = DPS_INVALID_LSN_OFFSET ;
+         relatedLSN = DPS_INVALID_LSN_OFFSET ;
+      }
 
       try
       {
@@ -3518,6 +3541,13 @@ namespace engine
                  context->toString().c_str() ) ;
          rc = SDB_SYS ;
          goto error ;
+      }
+
+      if ( !isTransSupport() )
+      {
+         transID = DPS_INVALID_TRANS_ID ;
+         preTransLsn = DPS_INVALID_LSN_OFFSET ;
+         relatedLSN = DPS_INVALID_LSN_OFFSET ;
       }
 
       try
