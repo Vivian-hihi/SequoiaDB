@@ -2164,7 +2164,6 @@ namespace engine
          isTransLocked = TRUE ;
       }
 
-#ifdef _WINDOWS
       rc = renameCollectionSpaceP1( pName, pNewName, cb, dpsCB ) ;
       if ( rc )
       {
@@ -2177,16 +2176,6 @@ namespace engine
          renameCollectionSpaceP1Cancel( pName, pNewName, cb, dpsCB ) ;
          goto error ;
       }
-#else
-      rc = _CSCBRename( pName, pNewName, cb, dpsCB ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-
-      PD_LOG( PDEVENT, "Rename collection space[%s] to [%s] succeed",
-              pName, pNewName ) ;
-#endif
 
    done:
       if ( isTransLocked )
@@ -2208,6 +2197,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__SDB_DMSCB_RENAMECSP1 ) ;
+
+#ifdef _WINDOWS
 
       INT32 rcNew = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
@@ -2262,6 +2253,13 @@ namespace engine
       return rc ;
    error:
       goto done ;
+
+#else
+
+   PD_TRACE_EXITRC( SDB__SDB_DMSCB_RENAMECSP1, rc ) ;
+   return rc ;
+
+#endif
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_RENAMECSP1C, "_SDB_DMSCB::renameCollectionSpaceP1Cancel" )
@@ -2272,6 +2270,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__SDB_DMSCB_RENAMECSP1C ) ;
+
+#ifdef _WINDOWS
 
       INT32 rcNew = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
@@ -2326,6 +2326,13 @@ namespace engine
       return rc ;
    error:
       goto done ;
+
+#else
+
+   PD_TRACE_EXITRC( SDB__SDB_DMSCB_RENAMECSP1, rc ) ;
+   return rc ;
+
+#endif
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_RENAMECSP2, "_SDB_DMSCB::renameCollectionSpaceP2" )
@@ -2337,10 +2344,13 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__SDB_DMSCB_RENAMECSP2 ) ;
 
+      BOOLEAN aquired = FALSE ;
+
+#ifdef _WINDOWS
+
       INT32 rcNew = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
       SDB_DMS_CSCB *pNewCSCB = NULL ;
-      BOOLEAN aquired = FALSE ;
       IDmsExtDataHandler *extHandler = NULL ;
 
       if ( !pName || !pNewName )
@@ -2400,6 +2410,16 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to rename collection space at phase 2 [%s] to [%s], "
                    "rc: %d", pName, pNewName, rc ) ;
+
+#else
+
+      rc = _CSCBRename( pName, pNewName, cb, dpsCB ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+#endif
 
       PD_LOG( PDEVENT, "Rename collection space[%s] to [%s] succeed",
               pName, pNewName ) ;
