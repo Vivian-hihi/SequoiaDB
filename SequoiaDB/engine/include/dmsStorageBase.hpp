@@ -443,7 +443,7 @@ namespace engine
                                            INT32 extentID,
                                            DMS_CHG_STEP step ) ;
 
-         OSS_INLINE DMS_STORAGE_TYPE getStorageType()
+         OSS_INLINE DMS_STORAGE_TYPE getStorageType() const
          {
             return _pStorageInfo->_type ;
          }
