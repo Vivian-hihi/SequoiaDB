@@ -16,7 +16,7 @@ DataSyncTestCase.prototype.execTest = function()
    this.dbcl.createIndex("idxa",{'inta':1,'str':1},true);  
    this.dbcl.createIndex("idxb",{'fc':1},true);
    
-   var expRecs = insertData( this.dbcl );  
+   var expRecs = buckInsertData( this.dbcl, 20000);  
    updateDatas( this.dbcl, expRecs);  
    getUpdateExpRecs(expRecs);  
    this.dbcl.dropIndex("idxfull");  
@@ -52,3 +52,41 @@ function getUpdateExpRecs(expRecs)
    return expRecs;
 }
 
+//ignore the error code:-321,bugID:SEQUOIADBMAINSTREAM-3827
+function buckInsertData( dbcl, insertNums, beginNums)
+{	
+   if( undefined == beginNums ){ beginNums = 0 ; }
+	try
+   {
+      println( "---begin to buckInsert data." ) ;
+      var batchNums = 10000;     
+      var recs = [];
+      var times = insertNums/batchNums;
+      
+      for(var k = 0; k < times; k++)
+      {        
+         var doc = [];  
+         for( var i = 0; i < batchNums; ++i )
+         {    
+            var count = beginNums++  
+            var no = count ;
+            var str = getRandomString(100) +  "teststr_" + count ;         
+            var inta = count ;         
+            var fc = count + 0.7898;
+            var objs = { "no":no, "str":str, "inta":inta, "fc":fc};         
+            doc.push(objs);             
+            recs.push(objs);              
+         }	
+         dbcl.insert( doc );  
+      }    
+      println("---end bulkInsert data.")
+      return recs;
+   }
+   catch ( e )
+   {      
+      if(e !== -321)
+      {
+         throw buildException("insertRecords", "insert records fail", "fail", e, e);  
+      }   
+   }
+}
