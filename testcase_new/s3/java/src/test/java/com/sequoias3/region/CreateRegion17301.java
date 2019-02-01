@@ -4,14 +4,12 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.List;
 
 
 /**
@@ -29,13 +27,16 @@ public class CreateRegion17301 extends S3TestBase{
     }
     @DataProvider(name="range-provider")
     private Object[][] rangeData(){
-        List<String> domains = RegionUtils.getDomainNames();
-        if(domains.size() < 1){
-            throw new SkipException("domains.size() < 1,At least one domain is required");
-        }
+       // List<String> domains = RegionUtils.getDomainNames();
+        //if(domains.size() < 1){
+           // throw new SkipException("domains.size() < 1,At least one domain is required");
+       // }
         return new Object[][]{
-                {regionNames[0],domainName,domains.get(0)},
-                {regionNames[1],domains.get(0),domainName},
+//                {regionNames[0],domainName,domains.get(0)},
+//                {regionNames[1],domains.get(0),domainName},
+//                {regionNames[2],domainName,domainName}
+                {regionNames[0],domainName,domainName},
+                {regionNames[1],domainName,domainName},
                 {regionNames[2],domainName,domainName}
         };
     }
