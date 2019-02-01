@@ -281,7 +281,8 @@ namespace engine
             _recordLock = DPS_TRANSLOCK_X ;
             _needUnLock = FALSE ;
          }
-         else if ( TRANS_ISOLATION_RU == _transIsolation )
+         else if ( TRANS_ISOLATION_RU == _transIsolation &&
+                   !_selectForUpdate )
          {
             _recordLock = DPS_TRANSLOCK_MAX ;
             _selectForUpdate = FALSE ;
@@ -1229,7 +1230,8 @@ namespace engine
             _recordLock = DPS_TRANSLOCK_X ;
             _needUnLock = FALSE ;
          }
-         else if ( TRANS_ISOLATION_RU == _transIsolation )
+         else if ( TRANS_ISOLATION_RU == _transIsolation &&
+                   !_selectForUpdate )
          {
             _recordLock = DPS_TRANSLOCK_MAX ;
             _selectForUpdate = FALSE ;
