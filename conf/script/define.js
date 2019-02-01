@@ -373,6 +373,9 @@ var FIELD_NODE_INFO                        = "NodeInfo" ;
 var FIELD_ERR_NODES                        = "ErrNodes" ;
 var FIELD_DESCRIPTION                      = Description ;
 var FIELD_DESCRIPTION2                     = "description" ;
+var FIELD_SEQUOIADB_CONN_ADDR              = "sequoiadb_conn_addr" ;
+var FIELD_SEQUOIADB_USER                   = "sequoiadb_user" ;
+var FIELD_SEQUOIADB_PASSWORD               = "sequoiadb_password" ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;
