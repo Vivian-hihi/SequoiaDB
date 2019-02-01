@@ -3001,7 +3001,7 @@ namespace engine
       {
          dpsTransLRB *pLRB = _getLRBPtrByIdx( idx ) ;
 
-         UINT32 seconds, microseconds ;
+         UINT32 seconds = 0, microseconds = 0 ;
          ossTickConversionFactor factor ;
          ossTick endTick ;
          endTick.sample() ;
@@ -3043,7 +3043,7 @@ namespace engine
       {
          dpsTransLRB *pLRB = _getLRBPtrByIdx( idx ) ;
 
-         UINT32 seconds, microseconds ;
+         UINT32 seconds = 0, microseconds = 0 ;
          ossTickConversionFactor factor ;
          ossTick endTick ; 
          endTick.sample() ;
