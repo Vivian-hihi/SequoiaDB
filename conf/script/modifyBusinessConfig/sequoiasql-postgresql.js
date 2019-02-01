@@ -160,7 +160,7 @@ function _modifyConfig( PD_LOGGER, command )
    var timeout       = 600000 ;
    var original      = null ;
    var oma           = null ;
-   var options       = { 'enableType': true, 'strDelimiter': false } ;
+   var options       = { 'EnableType': true, 'StrDelimiter': false } ;
 
    try
    {

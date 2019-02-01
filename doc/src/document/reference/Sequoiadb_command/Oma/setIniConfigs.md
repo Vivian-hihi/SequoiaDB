@@ -28,9 +28,9 @@ Oma
 
    解析配置文件的参数项.
 
-   enableType: true 是开启数据类型, false 是所有类型都视为字符串, 默认 false.
+   EnableType: true 是开启数据类型, false 是所有类型都视为字符串, 默认 false.
 
-   strDelimiter: true 是字符串用双引号, false 是字符串用单引号, null 是不输出字符串分隔符, 默认 true.
+   StrDelimiter: true 是字符串用双引号, false 是字符串用单引号, null 是不输出字符串分隔符, 默认 true.
 
 ##返回值##
 
@@ -53,5 +53,5 @@ v3.0.2及以上版本。
 2. 写入 INI 配置文件，并且开启数据类型。
 
 	```lang-javascript
-	> Oma.setIniConfigs( { "a": 1, "b": true, "c": "hello"}, "/opt/config.ini", { enableType: true } )
+	> Oma.setIniConfigs( { "a": 1, "b": true, "c": "hello"}, "/opt/config.ini", { EnableType: true } )
 	```

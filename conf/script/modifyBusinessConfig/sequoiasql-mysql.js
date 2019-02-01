@@ -127,7 +127,7 @@ function _modifyConfig( PD_LOGGER, command )
    var configFile    = dbpath + '/auto.cnf' ;
    var original      = null ;
    var oma           = null ;
-   var options       = { 'strDelimiter': null } ;
+   var options       = { 'StrDelimiter': null } ;
 
    try
    {

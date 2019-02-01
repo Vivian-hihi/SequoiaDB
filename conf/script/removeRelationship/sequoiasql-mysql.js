@@ -171,7 +171,7 @@ function _resetConfigOffline( PD_LOGGER, hostName, agentPort, path )
          'mysqld.sequoiadb_debug_log': 'OFF'
       } ;
       var newConfig = {} ;
-      var options = { 'enableType': true, 'strDelimiter': false } ;
+      var options = { 'EnableType': true, 'StrDelimiter': false } ;
 
       original = oma.getIniConfigs( path, options ).toObj() ;
 
@@ -185,7 +185,7 @@ function _resetConfigOffline( PD_LOGGER, hostName, agentPort, path )
          newConfig[key] = config[key] ;
       }
 
-      oma.setIniConfigs( newConfig, path, { 'strDelimiter': null } ) ;
+      oma.setIniConfigs( newConfig, path, { 'StrDelimiter': null } ) ;
    }
    catch( e )
    {
@@ -194,7 +194,7 @@ function _resetConfigOffline( PD_LOGGER, hostName, agentPort, path )
 
       if ( original != null )
       {
-         oma.setIniConfigs( original, path, { 'strDelimiter': null } ) ;
+         oma.setIniConfigs( original, path, { 'StrDelimiter': null } ) ;
       }
 
       throw error ;

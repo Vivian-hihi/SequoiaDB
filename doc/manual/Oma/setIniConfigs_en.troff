@@ -28,10 +28,10 @@ The path of INI file.
 .PP
 Options for parsing configuration items.
 .PP
-enableType: true is enable type, false is all types are treated as strings,
+EnableType: true is enable type, false is all types are treated as strings,
 default false.
 .PP
-strDelimiter: true is string with double quotes, false is string with single
+StrDelimiter: true is string with double quotes, false is string with single
 quotes, null is no string delimiter, default true.
 .SH RETURN VALUE
 .PP
@@ -54,7 +54,7 @@ set the configuration information of INI file.
 set the configuration information of INI file and enable type.
 .nf
 \f[C]
->\ Oma.setIniConfigs(\ {\ "a":\ 1,\ "b":\ true,\ "c":\ "hello"},\ "/opt/config.ini",\ {\ enableType:\ true\ }\ )
+>\ Oma.setIniConfigs(\ {\ "a":\ 1,\ "b":\ true,\ "c":\ "hello"},\ "/opt/config.ini",\ {\ EnableType:\ true\ }\ )
 \f[]
 .fi
 .RE

@@ -255,7 +255,7 @@ function _updateConfigOffline( PD_LOGGER, hostName, agentPort, path, config )
          'mysqld.sequoiadb_use_autocommit': 'ON',
          'mysqld.sequoiadb_debug_log': 'OFF'
       } ;
-      var options = { 'enableType': true, 'strDelimiter': false } ;
+      var options = { 'EnableType': true, 'StrDelimiter': false } ;
 
       original = oma.getIniConfigs( path, options ).toObj() ;
 
@@ -274,7 +274,7 @@ function _updateConfigOffline( PD_LOGGER, hostName, agentPort, path, config )
          }
       }
 
-      oma.setIniConfigs( newConfig, path, { 'strDelimiter': null } ) ;
+      oma.setIniConfigs( newConfig, path, { 'StrDelimiter': null } ) ;
    }
    catch( e )
    {
@@ -283,7 +283,7 @@ function _updateConfigOffline( PD_LOGGER, hostName, agentPort, path, config )
 
       if ( original != null )
       {
-         oma.setIniConfigs( original, path, { 'strDelimiter': null } ) ;
+         oma.setIniConfigs( original, path, { 'StrDelimiter': null } ) ;
       }
 
       throw error ;

@@ -406,28 +406,28 @@ namespace engine
 
       confFile = arg.getStringField( "confFile" ) ;
 
-      if( arg.hasField( "enableType" ) )
+      if( arg.hasField( "EnableType" ) )
       {
-         if( Bool != arg.getField( "enableType" ).type() )
+         if( Bool != arg.getField( "EnableType" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "enableType must be BOOLEAN" ;
+            err = "EnableType must be BOOLEAN" ;
             goto error ;
          }
 
-         enableType = arg.getBoolField( "enableType" ) ;
+         enableType = arg.getBoolField( "EnableType" ) ;
       }
 
-      if( arg.hasField( "strDelimiter" ) )
+      if( arg.hasField( "StrDelimiter" ) )
       {
-         if( Bool != arg.getField( "strDelimiter" ).type() )
+         if( Bool != arg.getField( "StrDelimiter" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "strDelimiter must be BOOLEAN" ;
+            err = "StrDelimiter must be BOOLEAN" ;
             goto error ;
          }
 
-         strDelimiter = arg.getBoolField( "strDelimiter" ) ;
+         strDelimiter = arg.getBoolField( "StrDelimiter" ) ;
       }
 
       rc = _getConfInfo( confFile, conf, err, FALSE, FALSE,
@@ -520,32 +520,32 @@ namespace engine
 
       confFile = arg.getStringField( "confFile" ) ;
 
-      if( arg.hasField( "enableType" ) )
+      if( arg.hasField( "EnableType" ) )
       {
-         if( Bool != arg.getField( "enableType" ).type() )
+         if( Bool != arg.getField( "EnableType" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "enableType must be BOOLEAN" ;
+            err = "EnableType must be BOOLEAN" ;
             goto error ;
          }
 
-         enableType = arg.getBoolField( "enableType" ) ;
+         enableType = arg.getBoolField( "EnableType" ) ;
       }
 
-      if( arg.hasField( "strDelimiter" ) )
+      if( arg.hasField( "StrDelimiter" ) )
       {
-         if( jstNULL == arg.getField( "strDelimiter" ).type() )
+         if( jstNULL == arg.getField( "StrDelimiter" ).type() )
          {
             noDelimiter = TRUE ;
          }
-         else if( Bool == arg.getField( "strDelimiter" ).type() )
+         else if( Bool == arg.getField( "StrDelimiter" ).type() )
          {
-            strDelimiter = arg.getBoolField( "strDelimiter" ) ;
+            strDelimiter = arg.getBoolField( "StrDelimiter" ) ;
          }
          else
          {
             rc = SDB_INVALIDARG ;
-            err = "strDelimiter must be BOOLEAN" ;
+            err = "StrDelimiter must be BOOLEAN" ;
             goto error ;
          }
       }
