@@ -98,8 +98,8 @@ namespace engine
 
    static UINT64 calDurationInMicroseconds( const ossTick beginTick )
    {
-      UINT64 durationInMicroseconds ;
-      UINT32 seconds, microseconds ;
+      UINT64 durationInMicroseconds = 0 ;
+      UINT32 seconds = 0, microseconds = 0 ;
       ossTickConversionFactor factor ;
       ossTick endTick ;
       ossTickDelta delta ;
