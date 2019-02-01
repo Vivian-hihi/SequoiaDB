@@ -27,7 +27,9 @@ DataSyncTestCase.prototype.execTest = function()
    
    var sortCond = {'inta':1};
    var expRecs = expRecs.concat(expRecsAfterInsert); 
-   this.checkResult( sortCond, expRecs, "16997");
+   //this.checkResult( sortCond, expRecs, "16997");
+   checkConsistency(this.csName, this.clName);        
+   checkInspectResult(this.csName, this.clName);
 }
 main();
 
@@ -74,10 +76,10 @@ function buckInsertData( dbcl, insertNums, beginNums)
             var inta = count ;         
             var fc = count + 0.7898;
             var objs = { "no":no, "str":str, "inta":inta, "fc":fc};         
-            doc.push(objs);             
-            recs.push(objs);              
+            doc.push(objs);                            
          }	
-         dbcl.insert( doc );  
+         dbcl.insert( doc );
+         recs.push(objs);   
       }    
       println("---end bulkInsert data.")
       return recs;

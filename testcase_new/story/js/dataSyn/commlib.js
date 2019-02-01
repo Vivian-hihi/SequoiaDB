@@ -384,7 +384,7 @@ function getSlaveNodeLSNs(groups)
 }
 
 /*****************************************************************
-*@Description : check consistency: LSNs consistency of all nodes, ES consistency
+*@Description : check consistency: LSNs consistency of all nodes
 @input:         csName
                 clName
 ******************************************************************/
