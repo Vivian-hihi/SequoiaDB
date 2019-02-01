@@ -105,6 +105,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT64 taskID = -1 ;
       omDatabaseTool dbTool( _cb ) ;
+      string formBuzType ;
 
       //get from business info
       rc = dbTool.getOneBusinessInfo( _fromBuzName, fromBuzInfo ) ;
@@ -122,6 +123,8 @@ namespace engine
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
+
+      formBuzType = fromBuzInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
 
       //get to business info
       rc = dbTool.getOneBusinessInfo( _toBuzName, toBuzInfo ) ;
@@ -145,6 +148,17 @@ namespace engine
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "relationship already exist: from=%s, to=%s",
                              _fromBuzName.c_str(), _toBuzName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      if (  OM_BUSINESS_SEQUOIASQL_MYSQL == formBuzType &&
+            dbTool.isRelationshipExistByBusiness( _fromBuzName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "Can't be relationship multiple times: "
+                                   "from=%s, type=%s",
+                             _fromBuzName.c_str(), formBuzType.c_str() ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
