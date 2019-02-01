@@ -47,8 +47,21 @@
          <div ng-windows="form as UnbindModuleWindow.config" windows-callback="UnbindModuleWindow.callback">
             <div form-create para="form"></div>
          </div>
-         <div ng-windows="form as CreateRelationWindow.config" windows-callback="CreateRelationWindow.callback">
-            <div form-create para="form"></div>
+         <div ng-windows="config as CreateRelationWindow.config" windows-callback="CreateRelationWindow.callback">
+            <div class="underlineTab" style="height:50px;">
+               <ul class="left">
+                  <li ng-class="{true:'active'}[config.ShowType == 1]">
+                     <a class="linkButton" ng-click="config.ShowType=1">{{autoLanguage('普通')}}</a>
+                     <span class="badge badge-danger" ng-if="config.inputErrNum1 > 0">{{config.inputErrNum1}}</span>
+                  </li>
+                  <li ng-class="{true:'active'}[config.ShowType == 2]">
+                     <a class="linkButton" ng-click="config.ShowType=2">{{autoLanguage('高级')}}</a>
+                     <span class="badge badge-danger" ng-if="config.inputErrNum2 > 0">{{config.inputErrNum2}}</span>
+                  </li>
+               </ul>
+            </div>
+            <div form-create para="config.normal"  ng-show="config.ShowType == 1"></div>
+            <div form-create para="config.advance" ng-show="config.ShowType == 2"></div>
          </div>
          <div ng-windows="form as RemoveRelationWindow.config" windows-callback="RemoveRelationWindow.callback">
             <div form-create para="form"></div>

@@ -2508,31 +2508,20 @@
       }
 
       //创建关联
-      var createRelation = function( config ){
-         var option = {} ;
-         option['transaction']      = config['transaction'] ;
-         option['preferedinstance'] = config['preferedinstance'] ;
-         option['DbName']           = config['DbName'] ;
-
-         if( config['address'].length > 0 )
-         {
-            option['address'] = '' ;
-            $.each( config['address'], function( index, value ){
-               option['address'].length == 0 ? option['address'] = value : option['address'] = option['address'] + ',' + value ;
-            } ) ;
-         }
-
+      function createRelation( name, from, to, options )
+      {
          var data = {
             'cmd'    : 'create relationship',
-            'Name'   : config['Name'],
-            'From'   : config['From'],
-            'To'     : config['To'],
-            'Options': JSON.stringify( option )
-         }
+            'Name'   : name,
+            'From'   : from,
+            'To'     : to,
+            'Options': JSON.stringify( options )
+         } ;
+
          SdbRest.OmOperation( data, {
             'success': function( result ){
                $scope.Components.Confirm.type = 4 ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '创建关联成功：?' ), config['Name'] ) ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '创建关联成功：?' ), name ) ;
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.noClose = true ;
                $scope.Components.Confirm.normalOK = true ;
@@ -2546,7 +2535,7 @@
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  createRelation( config ) ;
+                  createRelation( name, from, to, options ) ;
                   return true ;
                } ) ;
             }
@@ -2556,33 +2545,27 @@
       }
 
       //解除关联
-      var removeRelation = function( name, createInfo ){
+      function removeRelation( name )
+      {
          var data = {
             'cmd' : 'remove relationship',
             'Name'  : name
-         }
+         } ;
+
          SdbRest.OmOperation( data, {
             'success': function(){
-               if( typeof( createInfo ) != 'undefined' )
-               {
-                  createRelation( createInfo ) ;
+               $scope.Components.Confirm.type = 4 ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '解除关联成功：?' ), name ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+               $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
+                  $scope.Components.Confirm.normalOK = false ;
+                  SdbSwap.getRelationship() ;
                }
-               else
-               {
-                  $scope.Components.Confirm.type = 4 ;
-                  $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '解除关联成功：?' ), name ) ;
-                  $scope.Components.Confirm.isShow = true ;
-                  $scope.Components.Confirm.noClose = true ;
-                  $scope.Components.Confirm.normalOK = true ;
-                  $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
-                  $scope.Components.Confirm.ok = function(){
-                     $scope.Components.Confirm.isShow = false ;
-                     $scope.Components.Confirm.noClose = false ;
-                     $scope.Components.Confirm.normalOK = false ;
-                     SdbSwap.getRelationship() ;
-                  }
-               }
-               
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -2656,304 +2639,353 @@
 
       //创建关联 弹窗
       $scope.CreateRelationWindow = {
-         'config': {},
+         'config': {
+            'ShowType': 1,
+            'inputErrNum1': 0,
+            'inputErrNum2': 0,
+            'normal': {
+               'inputList': [
+                  {
+                     "name": 'Name',
+                     "webName": $scope.autoLanguage( '关联名' ),
+                     "type": "string",
+                     "required": true,
+                     "value": '',
+                     "valid": {
+                        "min": 1,
+                        "max": 63,
+                        "regex": "^[a-zA-Z]+[0-9a-zA-Z_]*$"
+                     }
+                  },
+                  {
+                     "name": "Type",
+                     "webName": $scope.autoLanguage( '关联类型' ),
+                     "required": true,
+                     "type": "select",
+                     "value": 'sdb-pg',
+                     "valid": []
+                  },
+                  {
+                     "name": "From",
+                     "webName": $scope.autoLanguage( '关联服务名' ),
+                     "required": true,
+                     "type": "select",
+                     "value": '',
+                     "valid": []
+                  },
+                  {
+                     "name": 'DbName',
+                     "webName": $scope.autoLanguage( '关联服务的数据库' ),
+                     "type": "select",
+                     "required": true,
+                     "value": "",
+                     "valid": []
+                  },
+                  {
+                     "name": "To",
+                     "webName": $scope.autoLanguage( '被关联服务名' ),
+                     "required": true,
+                     "type": "select",
+                     "value": '',
+                     "valid":[]
+                  }
+               ]
+            },
+            'advance': {
+               'inputList': [
+                  {
+                     "name": "preferedinstance",
+                     "webName": "preferedinstance",
+                     "type": "select",
+                     "required": true,
+                     "value": 'a',
+                     "valid":[
+                        { 'key': 's', 'value': 's' },
+                        { 'key': 'm', 'value': 'm' },
+                        { 'key': 'a', 'value': 'a' },
+                        { 'key': '1', 'value': '1' },
+                        { 'key': '2', 'value': '2' },
+                        { 'key': '3', 'value': '3' },
+                        { 'key': '4', 'value': '4' },
+                        { 'key': '5', 'value': '5' },
+                        { 'key': '6', 'value': '6' },
+                        { 'key': '7', 'value': '7' }
+                     ]
+                  },
+                  {
+                     "name": "transaction",
+                     "webName": "transaction",
+                     "type": "select",
+                     "required": true,
+                     "value": "OFF",
+                     "valid":[
+                        { 'key': 'ON', 'value': 'ON' },
+                        { 'key': 'OFF', 'value': 'OFF' }
+                     ]
+                  },
+                  {
+                     "name": "sequoiadb_use_partition",
+                     "webName": $scope.autoLanguage( "自动分区" ),
+                     "type": "select",
+                     "required": true,
+                     "value": "ON",
+                     "valid":[
+                        { 'key': 'ON', 'value': 'ON' },
+                        { 'key': 'OFF', 'value': 'OFF' }
+                     ]
+                  },
+                  {
+                     "name": "sequoiadb_use_bulk_insert",
+                     "webName": $scope.autoLanguage( "批量插入" ),
+                     "type": "select",
+                     "required": true,
+                     "value": "ON",
+                     "valid":[
+                        { 'key': 'ON', 'value': 'ON' },
+                        { 'key': 'OFF', 'value': 'OFF' }
+                     ]
+                  },
+                  {
+                     "name": "sequoiadb_bulk_insert_size",
+                     "webName": $scope.autoLanguage( "批量插入的最大记录数" ),
+                     "type": "int",
+                     "required": true,
+                     "value": 100,
+                     "valid": {
+                        'min': 1,
+                        'max': 100000
+                     }
+                  },
+                  {
+                     "name": "sequoiadb_use_autocommit",
+                     "webName": $scope.autoLanguage( "自动提交模式" ),
+                     "type": "select",
+                     "required": true,
+                     "value": "ON",
+                     "valid":[
+                        { 'key': 'ON', 'value': 'ON' },
+                        { 'key': 'OFF', 'value': 'OFF' }
+                     ]
+                  },
+                  {
+                     "name": "sequoiadb_debug_log",
+                     "webName": $scope.autoLanguage( "打印debug日志" ),
+                     "type": "select",
+                     "required": true,
+                     "value": "OFF",
+                     "valid":[
+                        { 'key': 'ON', 'value': 'ON' },
+                        { 'key': 'OFF', 'value': 'OFF' }
+                     ]
+                  },
+                  {
+                     "name": "address",
+                     "webName": $scope.autoLanguage( '选择被关联节点' ),
+                     "type": "multiple",
+                     "required": true,
+                     "value": [],
+                     "valid": {}
+                  }
+               ]
+            }
+         },
          'callback': {}
       } ;
 
+      //获取postgresql数据库列表
+      function getPostgresqlDB( clusterName, serviceName, func )
+      {
+         var sql = 'SELECT datname FROM pg_database WHERE datname NOT LIKE \'template0\' AND datname NOT LIKE \'template1\'' ;
+         var data = { 'Sql': sql, 'IsAll': 'true' } ;
+
+         SdbRest.DataOperationV21( clusterName, serviceName, '/sql', data, {
+            'success': func,
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getPostgresqlDB( clusterName, serviceName, func ) ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
+      }
+
+      //设置关联窗口的节点地址
+      function setCreateRelationAddress( serviceName, advanceInput )
+      {
+         var serviceInfo = getArrayItem( $scope.ModuleList, 'BusinessName', serviceName ) ;
+
+         if( serviceInfo && isObject( serviceInfo['BusinessInfo'] ) && isArray( serviceInfo['BusinessInfo']['NodeList'] ) )
+         {
+            var nodeInputList = [] ;
+
+            $.each( serviceInfo['BusinessInfo']['NodeList'], function( index, nodeInfo ){
+               if( nodeInfo['Role'] == 'coord' || nodeInfo['Role'] == 'standalone' )
+               {
+                  nodeInputList.push( {
+                     'key': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
+                     'value': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
+                     'checked': true
+                  } ) ;
+               }
+            } ) ;
+
+            setArrayItemValue( advanceInput, 'name', 'address', { 'valid': { 'min': 0, 'list': nodeInputList } } ) ;
+         }
+      }
+
       //打开 创建关联 弹窗
-      $scope.OpenCreateRelation= function(){
+      $scope.OpenCreateRelation = function() {
          if( createRelationDisabled == true )
          {
             return ;
          }
-         var pgsqlDbList = [] ;
+
+         $scope.CreateRelationWindow['config'].ShowType = 1 ;
+
          var pgsqlBusList = [] ;
          var mysqlBusList = [] ;
 
-         //获取postgresql数据库列表
-         var queryPgsqlDatabase = function( cluster, module ){
-            var sql = 'SELECT datname FROM pg_database WHERE datname NOT LIKE \'template0\' AND datname NOT LIKE \'template1\'' ;
-            var data = { 'Sql': sql, 'IsAll': 'true' } ;
-            SdbRest.DataOperationV21( cluster, module, '/sql', data, {
-               'success': function( dbList ){
+         var typeValid = [] ;
+         var fromValid = [] ;
+         var toValid = [] ;
+         var dbValid = [] ;
+
+         var normalInput  = $scope.CreateRelationWindow['config']['normal']['inputList'] ;
+         var advanceInput = $scope.CreateRelationWindow['config']['advance']['inputList'] ;
+
+         //修改关联类型的事件
+         function switchCreateRelationType( name, key, value )
+         {
+            var to = $scope.CreateRelationWindow['config']['normal'].getValueByOne( 'To' ) ;
+
+            if( value == 'pg-sdb' )
+            {
+               //切换配置项
+               $scope.CreateRelationWindow['config']['normal'] .EnableItem( 'DbName' ) ;
+               $scope.CreateRelationWindow['config']['advance'].EnableItem( 'preferedinstance' ) ;
+               $scope.CreateRelationWindow['config']['advance'].EnableItem( 'transaction' ) ;
+
+               $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_use_partition' ) ;
+               $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_use_bulk_insert' ) ;
+               $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_bulk_insert_size' ) ;
+               $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_use_autocommit' ) ;
+               $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_debug_log' ) ;
+
+               fromValid = pgsqlBusList ;
+               
+               getPostgresqlDB( $scope.ClusterList[$scope.CurrentCluster]['ClusterName'], fromValid[0]['value'], function( dbList ){
+
+                  clearArray( dbValid ) ;
+
                   $.each( dbList, function( index, dbInfo ){
-                     pgsqlDbList.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
+                     dbValid.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
                   } ) ;
-                  $scope.CreateRelationWindow['config']['inputList'][4]['valid'] = pgsqlDbList ;
-                  $scope.CreateRelationWindow['config']['inputList'][4]['value'] = pgsqlDbList[0]['value'] ;
-                  $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
-                     '?_?_?',
-                     $scope.CreateRelationWindow['config']['inputList'][2]['value'],
-                     $scope.ModuleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName'],
-                     $scope.CreateRelationWindow['config']['inputList'][4]['value']
-                  ) ;
-               },
-               'failed': function( errorInfo ){
-                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                     queryDbList() ;
-                     return true ;
-                  } ) ;
-               }
-            } ) ;
+
+                  var relationName = sprintf( '?_?_?', fromValid[0]['value'], to, dbValid[0]['value'] ) ;
+
+                  setArrayItemValue( normalInput, 'name', 'Name',   { 'value': relationName } ) ;
+                  setArrayItemValue( normalInput, 'name', 'DbName', { 'value': dbValid[0]['value'], 'valid': dbValid } ) ;
+               } ) ;
+            }  
+            else if( value == 'mysql-sdb' )
+            {
+               //切换配置项
+               $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_use_partition' ) ;
+               $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_use_bulk_insert' ) ;
+               $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_bulk_insert_size' ) ;
+               $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_use_autocommit' ) ;
+               $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_debug_log' ) ;
+
+               $scope.CreateRelationWindow['config']['normal'] .DisableItem( 'DbName' ) ;
+               $scope.CreateRelationWindow['config']['advance'].DisableItem( 'preferedinstance' ) ;
+               $scope.CreateRelationWindow['config']['advance'].DisableItem( 'transaction' ) ;
+
+               fromValid = mysqlBusList ;
+               
+               var relationName = sprintf( '?_?', fromValid[0]['value'], to ) ;
+
+               setArrayItemValue( normalInput, 'name', 'Name', { 'value': relationName } ) ;
+            }
+
+            setArrayItemValue( normalInput, 'name', 'From', { 'value': fromValid[0]['value'], 'valid': fromValid } ) ;
          }
 
-         //被关联的服务
-         var chooseModule = -1 ;
+         //修改关联服务名的事件
+         function switchCreateRelationFrom( name, key, value )
+         {
+            var current = $scope.CreateRelationWindow['config']['normal'].getValue() ;
+            var type = current['Type'] ;
+            var to = current['To'] ;
 
-         //选择被关联服务之后查询该服务下的coord节点
-         var listCoordNodes = function( index ){
-            var type = 0 ;
-            if( $scope.CreateRelationWindow['config']['inputList'][1]['value'] == 0 )
+            if( type == 'pg-sdb' )
             {
-               type = 7 ;
-            }
-            else
-            {
-               type = 4 ;
-            }
-            var eachNodeList = function( nodeList ){
-               $.each( nodeList, function( nodeIndex, nodeInfo ){
-                  if( nodeInfo['Role'] == 'coord' || nodeInfo['Role'] == 'standalone' )
-                  {
-                     $scope.CreateRelationWindow['config']['inputList'][type]['valid']['list'].push( {
-                        'key': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
-                        'value': nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'],
-                        'checked': false
-                     } ) ;
-                  }
-                  else
-                  {
-                     return ;
-                  }
+               getPostgresqlDB( $scope.ClusterList[$scope.CurrentCluster]['ClusterName'], value, function( dbList ){
+
+                  clearArray( dbValid ) ;
+
+                  $.each( dbList, function( index, dbInfo ){
+                     dbValid.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
+                  } ) ;
+
+                  var relationName = sprintf( '?_?_?', value, to, dbValid[0]['value'] ) ;
+
+                  setArrayItemValue( normalInput, 'name', 'Name',   { 'value': relationName } ) ;
+                  setArrayItemValue( normalInput, 'name', 'DbName', { 'value': dbValid[0]['value'], 'valid': dbValid } ) ;
                } ) ;
-            }
-            $scope.CreateRelationWindow['config']['inputList'][type]['valid']['list'] = [] ;
-            if( typeof( $scope.ModuleList[index]['BusinessInfo'] ) == 'undefined' )
+            }  
+            else if( type == 'mysql-sdb' )
             {
-               var moduleName = $scope.ModuleList[index]['BusinessName'] ;
-               var data = { 'cmd': 'list nodes', 'BusinessName': moduleName } ;
-               SdbRest.OmOperation( data, {
-                  'success': function( nodeList ){
-                     eachNodeList( nodeList ) ;
-                  },
-                  'failed': function( errorInfo ){
-                     _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                        getNodesList( moduleIndex ) ;
-                        return true ;
-                     } ) ;
-                  }
-               }, {
-                  'showLoading': false
-               } ) ;
-            }
-            else
-            {
-               eachNodeList( $scope.ModuleList[index]['BusinessInfo']['NodeList'] ) ;
+               var relationName = sprintf( '?_?', value, to ) ;    
+               
+               setArrayItemValue( normalInput, 'name', 'Name', { 'value': relationName } ) ;
             }
          }
 
-         $scope.CreateRelationWindow['config'] = {
-            inputList: [
-               {
-                  "name": 'Name',
-                  "webName": $scope.autoLanguage( '关联名' ),
-                  "type": "string",
-                  "required": true,
-                  "value": '',
-                  "valid": {
-                     "min": 1,
-                     "max": 63,
-                     "regex": "^[a-zA-Z]+[0-9a-zA-Z_]*$"
-                  }
-               },
-               {
-                  "name": "Type",
-                  "webName": $scope.autoLanguage( '关联类型' ),
-                  "required": true,
-                  "type": "select",
-                  "value": 0,
-                  "valid": [
-                     { 'key': 'SequoiaSQL-PostgreSQL - SequoiaDB', 'value': 0 },
-                     { 'key': 'SequoiaSQL-MySQL - SequoiaDB', 'value': 1 }
-                  ],
-                  "onChange": function( name, key, value ){
-                     if( value == 0 )
-                     {
-                        $scope.CreateRelationWindow['config']['inputList'].splice( 4, 0, {
-                           "name": 'DbName',
-                           "webName": $scope.autoLanguage( '数据库' ),
-                           "type": "select",
-                           "required": true,
-                           "value": pgsqlDbList[0]['value'],
-                           "valid": pgsqlDbList,
-                           "onChange": function( name, key, value ){
-                              $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
-                                 '?_?_?',
-                                 $scope.CreateRelationWindow['config']['inputList'][2]['value'],
-                                 $scope.ModuleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName'],
-                                 key
-                              ) ;
-                           }
-                        },
-                        {
-                           "name": "preferedinstance",
-                           "webName": "preferedinstance",
-                           "type": "select",
-                           "value": 'a',
-                           "valid":[
-                              { 'key': 's', 'value': 's' },
-                              { 'key': 'm', 'value': 'm' },
-                              { 'key': 'a', 'value': 'a' },
-                              { 'key': '1', 'value': '1' },
-                              { 'key': '2', 'value': '2' },
-                              { 'key': '3', 'value': '3' },
-                              { 'key': '4', 'value': '4' },
-                              { 'key': '5', 'value': '5' },
-                              { 'key': '6', 'value': '6' },
-                              { 'key': '7', 'value': '7' }
-                           ]
-                        },
-                        {
-                           "name": "transaction",
-                           "webName": "transaction",
-                           "type": "select",
-                           "value": "off",
-                           "valid":[
-                              { 'key': 'on', 'value': 'on' },
-                              { 'key': 'off', 'value': 'off' }
-                           ]
-                        } ) ;
-                        
-                        $scope.CreateRelationWindow['config']['inputList'][2]['valid'] = pgsqlBusList ;
-                        $scope.CreateRelationWindow['config']['inputList'][2]['value'] = pgsqlBusList[0]['value'] ;
-                        $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
-                           '?_?_?',
-                           $scope.CreateRelationWindow['config']['inputList'][2]['value'],
-                           $scope.ModuleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName'],
-                           $scope.CreateRelationWindow['config']['inputList'][4]['value']
-                        ) ;
-                     }  
-                     else
-                     {
-                        $scope.CreateRelationWindow['config']['inputList'].splice( 4, 3 ) ;
-                        $scope.CreateRelationWindow['config']['inputList'][2]['valid'] = mysqlBusList ;
-                        $scope.CreateRelationWindow['config']['inputList'][2]['value'] = mysqlBusList[0]['value'] ;
-                        $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
-                           '?_?',
-                           $scope.CreateRelationWindow['config']['inputList'][2]['value'],
-                           $scope.ModuleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName']
-                        ) ;
-                     }
-                  }
-               },
-               {
-                  "name": "From",
-                  "webName": $scope.autoLanguage( '关联服务名' ),
-                  "required": true,
-                  "type": "select",
-                  "value": '',
-                  "valid": [],
-                  "onChange": function( name, key, value ){
-                     if( $scope.CreateRelationWindow['config']['inputList'][1]['value'] == 0 )
-                     {
-                        queryPgsqlDatabase( $scope.ClusterList[$scope.CurrentCluster]['ClusterName'], value ) ;
-                     }
-                     else
-                     {
-                        $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
-                           '?_?',
-                           $scope.CreateRelationWindow['config']['inputList'][2]['value'],
-                           $scope.ModuleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName']
-                        ) ;
-                     }
-                  }
-               },
-               {
-                  "name": "To",
-                  "webName": $scope.autoLanguage( '被关联服务名' ),
-                  "required": true,
-                  "type": "select",
-                  "value": chooseModule,
-                  "valid":[],
-                  "onChange": function( name, key, value ){
-                     listCoordNodes( value ) ;
-                     if( $scope.CreateRelationWindow['config']['inputList'][1]['value'] == 1 )
-                     {
-                        $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
-                           '?_?',
-                           $scope.CreateRelationWindow['config']['inputList'][2]['value'],
-                           $scope.ModuleList[value]['BusinessName']
-                        ) ;
-                     }
-                     else
-                     {
-                        $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
-                           '?_?_?',
-                           $scope.CreateRelationWindow['config']['inputList'][2]['value'],
-                           $scope.ModuleList[value]['BusinessName'],
-                           $scope.CreateRelationWindow['config']['inputList'][4]['value']
-                        ) ;
-                     }
-                     
-                  }
-               },
-               {
-                  "name": 'DbName',
-                  "webName": $scope.autoLanguage( '数据库' ),
-                  "type": "select",
-                  "required": true,
-                  "value": "",
-                  "valid":pgsqlDbList,
-                  "onChange": function( name, key, value ){
-                     $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
-                        '?_?_?',
-                        $scope.CreateRelationWindow['config']['inputList'][2]['value'],
-                        $scope.ModuleList[$scope.CreateRelationWindow['config']['inputList'][3]['value']]['BusinessName'],
-                        key
-                     ) ;
-                  }
-               },
-               {
-                  "name": "preferedinstance",
-                  "webName": "preferedinstance",
-                  "type": "select",
-                  "value": 'a',
-                  "valid":[
-                     { 'key': 's', 'value': 's' },
-                     { 'key': 'm', 'value': 'm' },
-                     { 'key': 'a', 'value': 'a' },
-                     { 'key': '1', 'value': '1' },
-                     { 'key': '2', 'value': '2' },
-                     { 'key': '3', 'value': '3' },
-                     { 'key': '4', 'value': '4' },
-                     { 'key': '5', 'value': '5' },
-                     { 'key': '6', 'value': '6' },
-                     { 'key': '7', 'value': '7' }
-                  ]
-               },
-               {
-                  "name": "transaction",
-                  "webName": "transaction",
-                  "type": "select",
-                  "value": "off",
-                  "valid":[
-                     { 'key': 'on', 'value': 'on' },
-                     { 'key': 'off', 'value': 'off' }
-                  ]
-               },
-               {
-                  "name": "address",
-                  "webName": $scope.autoLanguage( '选择被关联节点' ),
-                  "type": "multiple",
-                  "value": [],
-                  "valid": {
-                     'min': 0,
-                     'list': []
-                  }
-               }
-            ]
-         } ;
+         //修改关联服务名的数据库的事件
+         function switchCreateRelationDbName( name, key, value )
+         {
+            var relationName = '' ;
+            var current = $scope.CreateRelationWindow['config']['normal'].getValue() ;
+            var type = current['Type'] ;
+            var from = current['From'] ;
+            var to = current['To'] ;
 
+            if( type == 'pg-sdb' )
+            {
+               relationName = sprintf( '?_?_?', from, to, value ) ;
+            }  
+            else if( type == 'mysql-sdb' )
+            {
+               relationName = sprintf( '?_?', from, to ) ;             
+            }
+
+            setArrayItemValue( normalInput, 'name', 'Name', { 'value': relationName } ) ;
+         }
+
+         //修改被关联服务名的事件
+         function switchCreateRelationTo( name, key, value )
+         {
+            var relationName = '' ;
+            var current = $scope.CreateRelationWindow['config']['normal'].getValue() ;
+            var type = current['Type'] ;
+            var from = current['From'] ;
+
+            if( type == 'pg-sdb' )
+            {
+               var dbName = current['DbName'] ;
+
+               relationName = sprintf( '?_?_?', from, value, dbName ) ;
+            }  
+            else if( type == 'mysql-sdb' )
+            {
+               relationName = sprintf( '?_?', from, value ) ;             
+            }
+
+            setArrayItemValue( normalInput, 'name', 'Name', { 'value': relationName } ) ;
+            setCreateRelationAddress( value, advanceInput ) ;
+         }
+
+         //获取业务列表
          $.each( $scope.ModuleList, function( index, moduleInfo ){
             if( moduleInfo['BusinessType'] == 'sequoiasql-postgresql' )
             {
@@ -2965,95 +2997,132 @@
             }
             else if( moduleInfo['BusinessType'] == 'sequoiadb' )
             {
-               //将第一个服务作为默认选项
-               if( chooseModule == -1 )
+               toValid.push( { 'key': moduleInfo['BusinessName'], 'value': moduleInfo['BusinessName'] } ) ;
+            }
+         } ) ;
+
+         if ( pgsqlBusList.length > 0 )
+         {
+            typeValid.push( { 'key': $scope.autoLanguage( 'SequoiaSQL-PostgreSQL 关联 SequoiaDB' ), 'value': 'pg-sdb' } ) ;
+         }
+         if ( mysqlBusList.length > 0 )
+         {
+            typeValid.push( { 'key': $scope.autoLanguage( 'SequoiaSQL-MySQL 关联 SequoiaDB' ), 'value': 'mysql-sdb' } ) ;
+         }
+
+         if ( typeValid[0]['value'] == 'pg-sdb' )
+         {
+            fromValid = pgsqlBusList ;
+
+            setArrayItemValue( normalInput,  'name', 'DbName',           { 'enable': true } ) ;
+            setArrayItemValue( advanceInput, 'name', 'preferedinstance', { 'enable': true } ) ;
+            setArrayItemValue( advanceInput, 'name', 'transaction',      { 'enable': true } ) ;
+
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_partition',     { 'enable': false } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_bulk_insert',   { 'enable': false } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_bulk_insert_size',  { 'enable': false } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_autocommit',    { 'enable': false } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_debug_log',         { 'enable': false } ) ;
+
+            getPostgresqlDB( $scope.ClusterList[$scope.CurrentCluster]['ClusterName'], fromValid[0]['value'], function( dbList ){
+
+               clearArray( dbValid ) ;
+
+               $.each( dbList, function( index, dbInfo ){
+                  dbValid.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
+               } ) ;
+
+               var relationName = sprintf( '?_?_?', fromValid[0]['value'], toValid[0]['value'], dbValid[0]['value'] ) ;
+
+               setArrayItemValue( normalInput, 'name', 'Name',   { 'value': relationName } ) ;
+               setArrayItemValue( normalInput, 'name', 'DbName', { 'value': dbValid[0]['value'], 'valid': dbValid } ) ;
+            } ) ;
+         }
+         else if ( typeValid[0]['value'] == 'mysql-sdb' )
+         {
+            fromValid = mysqlBusList ;
+
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_partition',     { 'enable': true } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_bulk_insert',   { 'enable': true } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_bulk_insert_size',  { 'enable': true } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_autocommit',    { 'enable': true } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_debug_log',         { 'enable': true } ) ;
+
+            setArrayItemValue( normalInput,  'name', 'DbName',           { 'enable': false } ) ;
+            setArrayItemValue( advanceInput, 'name', 'preferedinstance', { 'enable': false } ) ;
+            setArrayItemValue( advanceInput, 'name', 'transaction',      { 'enable': false } ) ;
+
+            var relationName = sprintf( '?_?', fromValid[0]['value'], toValid[0]['value'] ) ;
+            setArrayItemValue( normalInput, 'name', 'Name', { 'value': relationName } ) ;
+         }
+
+         //设置表单规则,默认值,事件
+         setArrayItemValue( normalInput, 'name', 'Type',   { 'value': typeValid[0]['value'], 'valid': typeValid, 'onChange': switchCreateRelationType } ) ;
+         setArrayItemValue( normalInput, 'name', 'From',   { 'value': fromValid[0]['value'], 'valid': fromValid, 'onChange': switchCreateRelationFrom } ) ;
+         setArrayItemValue( normalInput, 'name', 'DbName', { 'onChange': switchCreateRelationDbName } ) ;
+         setArrayItemValue( normalInput, 'name', 'To',     { 'value': toValid[0]['value'],   'valid': toValid,   'onChange': switchCreateRelationTo   } ) ;
+
+         setCreateRelationAddress( toValid[0]['value'], advanceInput ) ;
+
+         $scope.CreateRelationWindow['config']['normal']['inputList']  = normalInput ;
+         $scope.CreateRelationWindow['config']['advance']['inputList'] = advanceInput ;
+
+         $scope.CreateRelationWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var inputErrNum1 = $scope.CreateRelationWindow['config']['normal'].getErrNum() ;
+            var inputErrNum2 = $scope.CreateRelationWindow['config']['advance'].getErrNum() ;
+            var isAllClear   = ( inputErrNum1 == 0 && inputErrNum2 == 0 ) ;
+
+            $scope.CreateRelationWindow['config'].inputErrNum1 = inputErrNum1 ;
+            $scope.CreateRelationWindow['config'].inputErrNum2 = inputErrNum2 ;
+
+            if( isAllClear )
+            {
+               var options  = {} ;
+               var formVal1 = $scope.CreateRelationWindow['config']['normal'].getValue() ;
+               var formVal2 = $scope.CreateRelationWindow['config']['advance'].getValue() ;
+               var address  = formVal2['address'].join( ',' ) ;
+
+               for ( var key in formVal2 )
                {
-                  chooseModule = index ;
-                  $scope.CreateRelationWindow['config']['inputList'][3]['value'] = chooseModule ;
-                  listCoordNodes( chooseModule ) ;
+                  if ( key == 'address' )
+                  {
+                     continue ;
+                  }
+                  options[key] = formVal2[key] ;
                }
-               $scope.CreateRelationWindow['config']['inputList'][3]['valid'].push(
-                  { 'key': moduleInfo['BusinessName'], 'value': index }
-               ) ;
+
+               if ( formVal1['Type'] == 'pg-sdb' )
+               {
+                  options['DbName']  = formVal1['DbName'] ;
+                  options['address'] = address ;
+               }
+               else if ( formVal1['Type'] == 'mysql-sdb' )
+               {
+                  options['sequoiadb_conn_addr'] = address ;
+               }
+
+               createRelation( formVal1['Name'], formVal1['From'], formVal1['To'], options ) ;               
             }
             else
             {
-               return ;
-            }
-         } ) ;
-
-         if( pgsqlBusList.length > 0 )
-         {
-            if( mysqlBusList.length == 0 )
-            {
-               $scope.CreateRelationWindow['config']['inputList'][1]['valid'] = [
-                  { 'key': 'SequoiaSQL-PostgreSQL - SequoiaDB', 'value': 0 }
-               ] ;
-            }
-            $scope.CreateRelationWindow['config']['inputList'][2]['valid'] = pgsqlBusList ;
-            queryPgsqlDatabase( $scope.ClusterList[$scope.CurrentCluster]['ClusterName'], $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['key'] ) ;
-         }
-         else
-         {
-            $scope.CreateRelationWindow['config']['inputList'][2]['valid'] = mysqlBusList ;
-            $scope.CreateRelationWindow['config']['inputList'][0]['value'] = sprintf(
-               '?_?',
-               $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['key'],
-               $scope.CreateRelationWindow['config']['inputList'][3]['valid'][0]['key']
-            ) ;
-            $scope.CreateRelationWindow['config']['inputList'][1]['valid'] = [
-               { 'key': 'SequoiaSQL-MySQL - SequoiaDB', 'value': 1 }
-            ] ;
-            $scope.CreateRelationWindow['config']['inputList'][1]['value'] = 1 ;
-            $scope.CreateRelationWindow['config']['inputList'].splice( 4, 3 ) ;
-         }
-
-         $scope.CreateRelationWindow['config']['inputList'][2]['value'] = $scope.CreateRelationWindow['config']['inputList'][2]['valid'][0]['value'] ;
-         $scope.CreateRelationWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-            var isAllClear = $scope.CreateRelationWindow['config'].check() ;
-            if( isAllClear )
-            {
-               var formVal = $scope.CreateRelationWindow['config'].getValue() ;
-               formVal['To'] = $scope.ModuleList[formVal['To']]['BusinessName'] ;
-               if( formVal['Type'] == 1 )
+               if ( inputErrNum1 > 0 )
                {
-                  var isDropRelation = false ;
-                  $.each( SdbSwap.relationshipList, function( index, relationInfo ){
-                     if( relationInfo['From'] == formVal['From'] )
-                     {
-                        isDropRelation = true ;
-                        $scope.Components.Confirm.type = 1 ;
-                        $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '?服务已跟?进行关联，继续进行该操作将解除旧的关联并创建新的关联和重启MySQL服务。' ), relationInfo['From'], relationInfo['To']  ) ;
-                        $scope.Components.Confirm.isShow = true ;
-                        $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
-                        $scope.Components.Confirm.ok = function(){
-                           $scope.Components.Confirm.isShow = false ;
-                           removeRelation( relationInfo['Name'], formVal ) ;               
-                        }
-                     }
-                  } ) ;
-                  if( isDropRelation === false )
-                  {
-                     $scope.Components.Confirm.type = 1 ;
-                     $scope.Components.Confirm.context = $scope.autoLanguage( '创建关联将重启MySQL服务，是否继续？' ) ;
-                     $scope.Components.Confirm.isShow = true ;
-                     $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
-                     $scope.Components.Confirm.ok = function(){
-                        $scope.Components.Confirm.isShow = false ;
-                        createRelation( formVal ) ;               
-                     }
-                  }
+                  $scope.CreateRelationWindow['config'].ShowType = 1 ;
+                  $scope.CreateRelationWindow['config']['normal'].scrollToError( null ) ;
                }
-               else
+               else if ( inputErrNum2 > 0 )
                {
-                  createRelation( formVal ) ;               
+                  $scope.CreateRelationWindow['config'].ShowType = 2 ;
+                  $scope.CreateRelationWindow['config']['advance'].scrollToError( null ) ;
                }
             }
+
             return isAllClear ;
          } ) ;
+
          $scope.CreateRelationWindow['callback']['SetTitle']( $scope.autoLanguage( '创建关联' ) ) ;
          $scope.CreateRelationWindow['callback']['Open']() ;
-      }
+      } ;
 
       //解除关联 弹窗
       $scope.RemoveRelationWindow = {

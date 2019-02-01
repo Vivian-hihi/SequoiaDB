@@ -951,7 +951,7 @@
                   }
 
                   //恢复原来
-                  var recoveryModal = function(){
+                  var recoveryModal = function( forceRestore ){
                      scope.Setting.Status = 1 ;
                      var modalWidth = scope.Setting.Temp.width ;
                      var modalHeight = scope.Setting.Temp.height ;
@@ -959,7 +959,7 @@
                      var top = scope.Setting.Temp.top ;
                      var bodyWidth = $( window ).width() ;
                      var bodyHeight = $( window ).height() ;
-                     if( top + modalHeight + 5 >= bodyHeight || left + modalWidth + 5 >= bodyWidth )
+                     if( top + modalHeight + 5 >= bodyHeight || left + modalWidth + 5 >= bodyWidth || forceRestore === true )
                      {
                         var width = bodyWidth * 0.5 ;
                         var height = bodyHeight * 0.5 ;
@@ -1002,6 +1002,7 @@
                         $animate.leave( scope.Setting.Modal ) ;
                         scope.Setting.Modal = null ;
                      }
+                     recoveryModal( true ) ;
                      scope.Setting.isShow = false ;
                      IsOpen = false ;
                      $( scope.Setting.Mask ).detach() ;
@@ -1997,6 +1998,10 @@
                                        }
 
              para           必填 {}    指令会把回调函数传回来
+                                       EnableItem( name )                  //开启指定配置项
+
+                                       DisableItem( name )                 //关闭指定配置项
+
                                        check( customCheckFun )             //校验输入值
                                                                              customCheckFun: 自定义检查值的函数
 
@@ -2004,6 +2009,8 @@
                                                                              customCheckFun: 自定义检查值的函数
 
                                        getValue()                          //获取输入值
+
+                                       getValueByOne( name )               //获取指定项的输入值
 
                                        scrollToError( containerEle, offset )  //自动控制容器的滚动条，移动到第一个错误的地方
                                                                              containerEle: 容器的dom元素，如果是父元素，可以填 null
@@ -2019,18 +2026,18 @@
             ban: $rootScope.autoLanguage( '?不能有?字符。' )
          },
          'int': {
-            min: $rootScope.autoLanguage( '?的值不能小于?。' ),
-            max: $rootScope.autoLanguage( '?的值不能大于?。' ),
-            ban: $rootScope.autoLanguage( '?的值不能取?。' ),
-            step: $rootScope.autoLanguage( '?的值必须是?的倍数。' ),
-            format: $rootScope.autoLanguage( '?的值必须是整数。' )
+            min: $rootScope.autoLanguage( '?不能小于?。' ),
+            max: $rootScope.autoLanguage( '?不能大于?。' ),
+            ban: $rootScope.autoLanguage( '?不能取?。' ),
+            step: $rootScope.autoLanguage( '?必须是?的倍数。' ),
+            format: $rootScope.autoLanguage( '?必须是整数。' )
          },
          'double': {
-            min: $rootScope.autoLanguage( '?的值不能小于?。' ),
-            max: $rootScope.autoLanguage( '?的值不能大于?。' ),
-            ban: $rootScope.autoLanguage( '?的值不能取?。' ),
-            step: $rootScope.autoLanguage( '?的值必须是?的倍数。' ),
-            format: $rootScope.autoLanguage( '?的值必须是数字。' )
+            min: $rootScope.autoLanguage( '?不能小于?。' ),
+            max: $rootScope.autoLanguage( '?不能大于?。' ),
+            ban: $rootScope.autoLanguage( '?不能取?。' ),
+            step: $rootScope.autoLanguage( '?必须是?的倍数。' ),
+            format: $rootScope.autoLanguage( '?必须是数字。' )
          },
          'port':{
             min: $rootScope.autoLanguage( '?不能小于?。' ),
@@ -2079,7 +2086,17 @@
                if( typeof( $scope.data ) == 'object' )
                {
                   $.each( $scope.data.inputList, function( index ){
+
                      $scope.data.inputList[index]['isClick'] = false ;
+
+                     if( $scope.data.type != 'grid' && $scope.data.type != 'table' )
+                     {
+                        if( !isBoolean( $scope.data.inputList[index]['enable']) )
+                        {
+                           $scope.data.inputList[index]['enable'] = true ;
+                        }
+                     }
+
                      if( $scope.data.inputList[index]['type'] == 'list' )
                      {
                         $.each( $scope.data.inputList[index]['child'], function( index2 ){
@@ -2132,17 +2149,43 @@
                      $scope.Setting['Table']['options']['tools'] = false ;
                      $scope.Setting['Table']['options']['height'] = 'auto' ;
                   }
+
+                  $scope.data.EnableItem = function( name ){
+                     for ( var i in $scope.Setting.inputList )
+                     {
+                        if ( $scope.Setting.inputList[i]['name'] == name )
+                        {
+                           $scope.Setting.inputList[i]['enable'] = true ;
+                           break ;
+                        }
+                     }
+                  }
+
+                  $scope.data.DisableItem = function( name ){
+                     for ( var i in $scope.Setting.inputList )
+                     {
+                        if ( $scope.Setting.inputList[i]['name'] == name )
+                        {
+                           $scope.Setting.inputList[i]['enable'] = false ;
+                           break ;
+                        }
+                     }
+                  }
+
                   $scope.data.check = function( customCheckFun ){
                      return $scope.Setting.checkInput( $scope.Setting.inputList, customCheckFun ) ;
                   }
+
                   $scope.data.getErrNum = function( customCheckFun ){
                      return $scope.Setting.getErrNum( $scope.Setting.inputList, customCheckFun ) ;
                   }
+
                   $scope.data.scrollToError = function( containerEle, offset ){
                      $timeout( function(){
                           $scope.Setting.scrollToError( containerEle, $scope.Setting.inputList, offset ) ;
                      }, 1 ) ;
                   }
+
                   $scope.data.getValue = function(){
                      if( $scope.Setting.Type == 'grid' || $scope.Setting.Type == 'table' )
                      {
@@ -2152,6 +2195,11 @@
                      {
                         return $scope.Setting.getValue( $scope.Setting.inputList ) ;
                      }
+                  }
+
+                  $scope.data.getValueByOne = function( name ){
+                     var rv = $scope.data.getValue() ;
+                     return rv[name] ;
                   }
                }
             }
@@ -2424,6 +2472,10 @@
                getErrNum: function( inputList, customCheckFun ){
                   var errNum = 0 ;
                   $.each( inputList, function( index, inputInfo ){
+                     if ( inputInfo.enable == false )
+                     {
+                        return true ;
+                     }
                      inputInfo.error = '' ;
                      var rv = { rc: true, error: '' } ;
                      var showName = ( inputInfo.showName === true ? inputInfo.name : inputInfo.webName ) ;
@@ -2519,6 +2571,10 @@
                getValue: function( inputList ){
                   var returnValue = {} ;
                   $.each( inputList, function( index, inputInfo ){
+                     if ( inputInfo.enable == false )
+                     {
+                        return true ;
+                     }
                      switch( inputInfo.type )
                      {
                      case 'string':
@@ -2595,6 +2651,10 @@
                getValue2: function( inputList ){
                   var returnValue = [] ;
                   $.each( inputList, function( index, inputLine ){
+                     if ( inputLine.enable == false )
+                     {
+                        return true ;
+                     }
                      var returnLine = [] ;
                      $.each( inputLine, function( index2, inputInfo ){
                         switch( inputInfo.type )

@@ -263,6 +263,12 @@ function isNumber( val )
    return typeof( val ) == 'number' ;
 }
 
+//是不是布尔
+function isBoolean( val )
+{
+   return typeof( val ) == 'boolean' ;
+}
+
 //是不是对象
 function isObject( obj )
 {
@@ -309,6 +315,68 @@ function isArray( object )
    //判断length属性是否是可枚举的 对于数组 将得到false
    return object && typeof( object ) === 'object' && typeof( object.length ) === 'number' &&
             typeof( object.splice ) === 'function' && !( object.propertyIsEnumerable( 'length' ) ) ;
+}
+
+//设置变量值，变量仅为undefined才赋值
+function initVar( variable, initValue )
+{
+   if ( isUndefined( variable ) )
+   {
+      return initValue ;
+   }
+   
+   return variable ;
+}
+
+/*
+找到数组中指定索引匹配的值，修改该项的指定的值
+   arr: 数组
+   indexName:  索引名
+   indexValue: 索引值
+   setting:    设置的值
+   isAll:      是否全部修改
+*/
+function setArrayItemValue( arr, indexName, indexValue, setting, isAll )
+{
+   for( var i in arr )
+   {
+      var itemName = arr[i][indexName] ;
+
+      if ( itemName === indexValue )
+      {
+         for( var k in setting )
+         {
+            arr[i][k] = setting[k] ;
+         }
+
+         if ( !isAll )
+         {
+            break ;
+         }
+      }
+   }
+
+   return arr ;
+}
+
+/*
+找到数组中指定索引匹配的值，获取该项
+   arr: 数组
+   indexName:  索引名
+   indexValue: 索引值
+*/
+function getArrayItem( arr, indexName, indexValue )
+{
+   for( var i in arr )
+   {
+      var itemName = arr[i][indexName] ;
+
+      if ( itemName === indexValue )
+      {
+         return arr[i] ;
+      }
+   }
+   return null ;
 }
 
 //保留多少位小数
