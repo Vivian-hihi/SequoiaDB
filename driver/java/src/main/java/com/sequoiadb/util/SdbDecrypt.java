@@ -66,7 +66,7 @@ public class SdbDecrypt {
         return userInfo;
     }
 
-    private String decryptPasswd(String encryptPasswd, String token) {
+    public String decryptPasswd(String encryptPasswd, String token) {
         final int DECRYPT_LENGTH = 8;
         final int KEY_LENGTH = 8;
         KeyValuePair kv = parsePasswd(encryptPasswd);
@@ -307,5 +307,8 @@ public class SdbDecrypt {
         SdbDecryptUserInfo info = sd.parseCipherFile(user, token, f);
         // call another function without token, parseCipherFile(user, f);
         System.out.println(info);
+
+        System.out.println(sd.decryptPasswd(
+                "000B36FFE9EDB1C3FFFAEE67821256E3A31C75016E163C0417B6281C6F72", token));
     }
 }
