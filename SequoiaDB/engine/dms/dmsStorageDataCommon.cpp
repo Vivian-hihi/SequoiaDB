@@ -3179,7 +3179,10 @@ namespace engine
                                insertObj.toString().c_str() ) ;
 
          /// enable trans
-         info.enableTrans() ;
+         if ( isTransSupport() )
+         {
+            info.enableTrans() ;
+         }
          rc = _logDPS( dpscb, info, cb, context,
                        pExtent->_logicID, canUnLock,
                        DMS_FILE_DATA ) ;
@@ -3466,7 +3469,10 @@ namespace engine
             /// ignore the error
          }
 
-         info.enableTrans() ;
+         if ( isTransSupport() )
+         {
+            info.enableTrans() ;
+         }
          rc = _logDPS( dpscb, info, cb, context, pExtent->_logicID, FALSE,
                        DMS_FILE_DATA ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert record into log, rc: %d",
@@ -3716,7 +3722,10 @@ namespace engine
                                newMatch.toString().c_str(),
                                newChg.toString().c_str() ) ;
 
-         info.enableTrans() ;
+         if ( isTransSupport() )
+         {
+            info.enableTrans() ;
+         }
          rc = _logDPS( dpscb, info, cb, context, pExtent->_logicID, FALSE,
                        DMS_FILE_DATA ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert update record into log, "
