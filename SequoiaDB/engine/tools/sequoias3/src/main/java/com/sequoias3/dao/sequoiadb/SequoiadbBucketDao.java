@@ -117,6 +117,7 @@ public class SequoiadbBucketDao implements BucketDao {
     @Override
     public List<Bucket> getBucketListByOwnerID(int ownerId) throws S3ServerException {
         Sequoiadb sdb = null;
+        DBCursor cursor = null;
         ArrayList<Bucket> bucketList = new ArrayList<Bucket>();
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -129,18 +130,19 @@ public class SequoiadbBucketDao implements BucketDao {
             BSONObject orderBy = new BasicBSONObject();
             orderBy.put(Bucket.BUCKET_NAME, 1);
 
-            DBCursor cursor = cl.query(matcher, null,orderBy,null);
+            cursor = cl.query(matcher, null,orderBy,null);
             while (cursor.hasNext()){
                 BSONObject record = cursor.getNext();
                 Bucket bucket = convertBsonToBucket(record);
                 bucketList.add(bucket);
             }
-            cursor.close();
+
             return bucketList;
         }catch (Exception e) {
             logger.error("getBucketListByOwnerID failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
+            sdbDatasourceWrapper.releaseDBCursor(cursor);
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
     }
@@ -176,9 +178,7 @@ public class SequoiadbBucketDao implements BucketDao {
             logger.error("getBucketListByRegion failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
-            if (cursor != null){
-                cursor.close();
-            }
+            sdbDatasourceWrapper.releaseDBCursor(cursor);
             if (null == connection){
                 sdbDatasourceWrapper.releaseSequoiadb(sdb);
             }

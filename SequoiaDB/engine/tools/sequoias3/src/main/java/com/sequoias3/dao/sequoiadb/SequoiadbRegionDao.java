@@ -132,9 +132,8 @@ public class SequoiadbRegionDao implements RegionDao {
             logger.error("queryRegionList failed. errorMessage = " + e.getMessage());
             throw e;
         }finally {
-            if (cursor != null){
-                cursor.close();
-            }
+            sdbDatasourceWrapper.releaseDBCursor(cursor);
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
     }
 
@@ -190,6 +189,7 @@ public class SequoiadbRegionDao implements RegionDao {
                         break;
                     }
                 }
+                cursor.close();
 
                 if (findIndex == false) {
                     BSONObject indexKey = new BasicBSONObject();

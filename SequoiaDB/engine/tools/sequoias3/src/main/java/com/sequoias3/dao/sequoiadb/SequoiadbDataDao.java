@@ -118,7 +118,7 @@ public class SequoiadbDataDao implements DataDao {
                 sdbDatasourceWrapper.createCL(sdb, csName, clName, null);
                 return createLob(sdb, csName, clName);
             } else {
-                logger.error("create lob failed. error:", e);
+                logger.error("create lob failed. error:"+e);
                 throw e;
             }
         }

@@ -93,9 +93,7 @@ public class SequoiadbRegionSpaceDao implements RegionSpaceDao {
             logger.error("queryRegionCSList failed. error message:"+ e.getMessage());
             throw e;
         }finally {
-            if (cursor != null){
-                cursor.close();
-            }
+            sdbDatasourceWrapper.releaseDBCursor(cursor);
             if (null == connection) {
                 sdbDatasourceWrapper.releaseSequoiadb(sdb);
             }
