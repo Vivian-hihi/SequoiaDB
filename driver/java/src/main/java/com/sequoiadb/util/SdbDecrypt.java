@@ -66,6 +66,10 @@ public class SdbDecrypt {
         return userInfo;
     }
 
+    public String decryptPasswd(String encryptPasswd) {
+        return decryptPasswd(encryptPasswd, null);
+    }
+
     public String decryptPasswd(String encryptPasswd, String token) {
         final int DECRYPT_LENGTH = 8;
         final int KEY_LENGTH = 8;
@@ -309,6 +313,7 @@ public class SdbDecrypt {
         System.out.println(info);
 
         System.out.println(sd.decryptPasswd(
-                "000B36FFE9EDB1C3FFFAEE67821256E3A31C75016E163C0417B6281C6F72", token));
+                "0435E09730063C52E3A76A190D43058124E5578F18492054AD05E78BA4E03A11169DA4CA2FB4",
+                null));
     }
 }
