@@ -3759,7 +3759,7 @@
                   {
                      "id": 1509430536,
                      "dir": "modify_module",
-                     "cn": "修改服务",
+                     "cn": "服务操作",
                      "en": "Modify service",
                      "contents": [
                         {
@@ -3773,6 +3773,12 @@
                            "file": "shrink_module",
                            "cn": "服务减容",
                            "en": "Shrink service"
+                        },
+                        {
+                           "id": 1548829161,
+                           "file": "restart_module",
+                           "cn": "重启服务",
+                           "en": "Restart service"
                         },
                         {
                            "id": 1501731656,
@@ -3947,6 +3953,32 @@
                            "en": "Host info"
                         }
                      ]
+                  }
+               ]
+            },
+            {
+               "id": 1548829157,
+               "dir": "configs",
+               "cn": "配置",
+               "en": "Configs",
+               "contents": [
+                  {
+                     "id": 1548829158,
+                     "file": "sequoiadb_configs",
+                     "cn": "SequoiaDB修改配置",
+                     "en": "Attribute"
+                  },
+                  {
+                     "id": 1548829159,
+                     "file": "mysql_configs",
+                     "cn": "SequoiaSQL-MySQL修改配置",
+                     "en": "SequoiaSQL-MySQL Configs"
+                  },
+                  {
+                     "id": 1548829160,
+                     "file": "postgresql_configs",
+                     "cn": "SequoiaSQL-PostgreSQL修改配置",
+                     "en": "SequoiaSQL-PostgreSQL Configs"
                   }
                ]
             },
