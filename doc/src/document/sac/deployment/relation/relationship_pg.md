@@ -32,13 +32,15 @@ SequoiaSQL-MySQL 服务关联 SequoiaDB 服务。
 
    ![关联服务](sac/deployment/relation/pg_sdb_3.png)
 
+   ![关联服务](sac/deployment/relation/pg_sdb_4.png)
+
 4. 创建关联成功。
 
-   ![关联服务](sac/deployment/relation/pg_sdb_4.png)
+   ![关联服务](sac/deployment/relation/pg_sdb_5.png)
 
 5. 在 **部署** 页面可以看到服务的关联信息。
 
-   ![关联服务](sac/deployment/relation/pg_sdb_5.png)
+   ![关联服务](sac/deployment/relation/pg_sdb_6.png)
 
 ###解除关联
 

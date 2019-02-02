@@ -24,15 +24,13 @@ SequoiaSQL-MySQL 服务关联 SequoiaDB 服务。
 
    ![关联服务](sac/deployment/relation/mysql_sdb_3.png)
 
-4. SequoiaSQL-MySQL 服务关联 SequoiaDB 服务需要重启，点击 **确定** 按钮。
-
    ![关联服务](sac/deployment/relation/mysql_sdb_4.png)
 
-5. 创建关联成功。
+4. 创建关联成功。
 
    ![关联服务](sac/deployment/relation/mysql_sdb_5.png)
 
-6. 在 **部署** 页面可以看到服务的关联信息。
+5. 在 **部署** 页面可以看到服务的关联信息。
 
    ![关联服务](sac/deployment/relation/mysql_sdb_6.png)
 
