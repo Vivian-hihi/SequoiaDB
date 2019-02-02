@@ -1821,7 +1821,6 @@ namespace engine
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
       BOOLEAN isTransLocked = FALSE ;
       SDB_DMS_CSCB* pCSCB = NULL ;
-      BOOLEAN doneP1 = FALSE ;
 
       // get cs cb
       _mutex.get_shared() ;
@@ -1871,20 +1870,16 @@ namespace engine
       {
          goto error ;
       }
-      doneP1 = TRUE ;
 
       // drop phase 2
       rc = _delCollectionSpaceP2( pName, cb, dpsCB, removeFile ) ;
       if ( rc )
       {
+         _delCollectionSpaceP1Cancel( pName, cb, dpsCB ) ;
          goto error ;
       }
 
    done:
-      if ( doneP1 )
-      {
-         _delCollectionSpaceP1Cancel( pName, cb, dpsCB ) ;
-      }
       if ( isTransLocked )
       {
          pTransCB->transLockRelease( cb, csLID ) ;
