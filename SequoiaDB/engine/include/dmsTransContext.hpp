@@ -42,6 +42,8 @@
 #include "sdbInterface.hpp"
 #include "dms.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -84,6 +86,11 @@ namespace engine
                              BOOLEAN isReadonly ) ;
          virtual ~_dmsIXTransContext() ;
 
+         BOOLEAN  isCursorValid() const ;
+         void     resetCursorValid() ;
+
+         const dmsRecordID& getSaveRID() const { return _saveRID ; }
+
       public:
          virtual INT32 pause() ;
          virtual INT32 resume() ;
@@ -91,6 +98,10 @@ namespace engine
       protected:
          _rtnIXScanner           *_pScanner ;
          BOOLEAN                 _isReadonly ;
+
+         dmsRecordID             _saveRID ;
+         BSONObj                 _saveObj ;
+         BOOLEAN                 _isValid ;
 
    } ;
    typedef _dmsIXTransContext dmsIXTransContext ;

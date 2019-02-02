@@ -41,6 +41,8 @@
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -76,7 +78,7 @@ namespace engine
    }
 
    // change the scanner's current location to a given key and rid
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_RELORID1, "_rtnIXScanner::relocateRID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_RELORID1, "_rtnIXScanner::relocateRID" )
    INT32 _rtnIXScanner::relocateRID ( const BSONObj &keyObj,
                                       const dmsRecordID &rid )
    {
@@ -119,7 +121,7 @@ namespace engine
       goto done ;
    }
    
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_RELORID2, "_rtnIXScanner::relocateRID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_RELORID2, "_rtnIXScanner::relocateRID" )
    INT32 _rtnIXScanner::relocateRID ()
    {
       INT32 rc = SDB_OK ;
@@ -153,11 +155,12 @@ namespace engine
    // advance() must be called between resumeScan() and pauseScan()
    // caller must make sure the table is locked before calling resumeScan, and
    // must release the table lock right after pauseScan
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_ADVANCE, "_rtnIXScanner::advance" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_ADVANCE, "_rtnIXScanner::advance" )
    INT32 _rtnIXScanner::advance ( dmsRecordID &rid, BOOLEAN isReadOnly )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNIXSCAN_ADVANCE ) ;
+
       monAppCB * pMonAppCB = _cb ? _cb->getMonAppCB() : NULL ;
       ixmRecordID lastRID ;
 
@@ -230,89 +233,45 @@ namespace engine
             // if it's update or delete index scan, the index structure may get
             // changed so everytime we have to compare _curIndexRID and ondisk
             // rid, as well as the stored object
-            dmsRecordID onDiskRID = indexExtent.getRID (
-                  _curIndexRID._slot ) ;
-            // is the index rid still in valid slot?
-            if ( onDiskRID.isNull() )
+
+            BOOLEAN isValid = FALSE ;
+            BOOLEAN hasRead = FALSE ;
+
+            rc = _isCursorSame( &indexExtent, _savedObj, _savedRID,
+                                isValid, &hasRead ) ;
+            if ( rc )
             {
-               // if _curIndexRID is no longer exist, for example if there's
-               // page split so that the slot is not pointing to any valid
-               // record, let's relocate rid
-               rc = relocateRID () ;
+               goto error ;
+            }
+
+            // if not the same, we must have something changed in
+            // the index, let's relocate RID
+            if ( !isValid )
+            {
+               rc = relocateRID() ;
                if ( rc )
                {
                   PD_LOG ( PDERROR, "Failed to relocate RID, rc: %d", rc ) ;
                   goto error ;
                }
             }
-            // if it's still valid slot, let's see if it matches the last scan
-            else if ( onDiskRID == _savedRID )
-            {
-               // if the RID it's pointing to looks the same, then we need to
-               // compare the index key
-               const CHAR *dataBuffer =
-                  indexExtent.getKeyData ( _curIndexRID._slot );
-               if ( dataBuffer )
-               {
-                  try
-                  {
-                     // get the key that the current RID is pointing to
-                     _curKeyObj = ixmKey(dataBuffer).toBson() ;
-                     DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
-                     DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
-                     // if both on recordRID and key object are the same, let's
-                     // say the index is not changed
-                     if ( _curKeyObj.shallowEqual(_savedObj) )
-                     {
-                        // if both key and rid are the same, that means we
-                        // should move on to the next
-                        rc = indexExtent.advance ( _curIndexRID, _direction ) ;
-                        if ( rc )
-                        {
-                           PD_LOG ( PDERROR, "Failed to advance, rc: %d", rc ) ;
-                           goto error ;
-                        }
-                     }
-                     // if the rid are the same but key object not, that means
-                     // we got something changed in the index, let's relocate
-                     // the RID
-                     else
-                     {
-                        rc = relocateRID () ;
-                        if ( rc )
-                        {
-                           PD_LOG ( PDERROR, "Failed to relocate RID, rc: :%d",
-                                    rc ) ;
-                           goto error ;
-                        }
-                     }
-                  }
-                  catch ( std::exception &e )
-                  {
-                     PD_LOG ( PDERROR, "Failed to convert buffer to bson from "
-                              "current rid: %d,%d: %s", _curIndexRID._extent,
-                              _curIndexRID._slot, e.what() ) ;
-                     rc = SDB_SYS ;
-                     goto error ;
-                  }
-               } // if ( dataBuffer )
-               else
-               {
-                  PD_LOG ( PDERROR, "Unable to get buffer" ) ;
-                  rc = SDB_SYS ;
-                  goto error ;
-               }
-            } // if ( onDiskRID == _savedRID )
-            // if the rid are not the same, we must have something changed in
-            // the index, let's relocate RID
+            // if both on recordRID and key object are the same, let's
+            // say the index is not changed, that means we should move on
+            // to the next
             else
             {
-               rc = relocateRID () ;
+               rc = indexExtent.advance ( _curIndexRID, _direction ) ;
                if ( rc )
                {
-                  PD_LOG ( PDERROR, "Failed to relocate RID, rc: %d", rc ) ;
+                  PD_LOG ( PDERROR, "Failed to advance, rc: %d", rc ) ;
                   goto error ;
                }
+            }
+
+            if ( hasRead )
+            {
+               DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
+               DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
             }
          } // if ( !isReadOnly )
          // readonly scan with _savedRID not NULL
@@ -340,7 +299,7 @@ namespace engine
          }
          // now let's get the binary key and create BSONObj from it
          ixmExtent indexExtent ( _curIndexRID._extent, _su->index() ) ;
-         const CHAR *dataBuffer = indexExtent.getKeyData ( _curIndexRID._slot ) ;
+         const CHAR *dataBuffer = indexExtent.getKeyData( _curIndexRID._slot ) ;
          if ( !dataBuffer )
          {
             PD_LOG ( PDERROR, "Failed to get buffer from current rid: %d,%d",
@@ -510,11 +469,13 @@ namespace engine
    // can move on the from the current index rid. Otherwise we have to locate
    // the new position for the saved key+rid
    // this is used in query scan only
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_RESUMESCAN, "_rtnIXScanner::resumeScan" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_RESUMESCAN, "_rtnIXScanner::resumeScan" )
    INT32 _rtnIXScanner::resumeScan( BOOLEAN isReadOnly )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNIXSCAN_RESUMESCAN ) ;
+
+      BOOLEAN isValid = FALSE ;
 
       if ( !_indexCB )
       {
@@ -555,37 +516,109 @@ namespace engine
          rc = SDB_RTN_INDEX_NOTEXIST ;
          goto done ;
       }
+
+      rc = isCursorSame( _savedObj, _savedRID, isValid ) ;
+      if ( rc )
       {
-      // we assume _indexCB remains valid as long as the indexCBExtent still
-      // pointing to the same index oid (which should be unique against each
-      // index) because the storage unit should never be remapped in memory
-      // during its run
-      ixmExtent indexExtent ( _curIndexRID._extent, _su->index() ) ;
-      const CHAR *dataBuffer = NULL ;
-      if ( indexExtent.isStillValid( _indexCB->getMBID() ) )
-      {
-         dataBuffer = indexExtent.getKeyData ( _curIndexRID._slot ) ;
+         goto error ;
       }
 
+      if ( isValid )
+      {
+         // this means the last scaned record is still here, so let's
+         // reset _savedRID so that we'll call advance()
+         _savedRID.reset() ;
+      }
+      else
+      {
+         // when we get here, it means something changed and we need to
+         // relocateRID
+         // note relocateRID may relocate to the index that already read.
+         // However after advance() returning the RID we'll check if the
+         // index already has been read, so we should be save to not
+         // reset _savedRID
+         rc = relocateRID() ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to relocate RID, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB__RTNIXSCAN_RESUMESCAN, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _rtnIXScanner::isCursorSame( const BSONObj &saveObj,
+                                      const dmsRecordID &saveRID,
+                                      BOOLEAN &isSame )
+   {
+      INT32 rc = SDB_OK ;
+
+      isSame = FALSE ;
+
+      if ( _init && !_curIndexRID.isNull() )
+      {
+         ixmExtent indexExtent ( _curIndexRID._extent, _su->index() ) ;
+         if ( indexExtent.isStillValid( _indexCB->getMBID() ) )
+         {
+            rc = _isCursorSame( &indexExtent, saveObj, saveRID, isSame ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _rtnIXScanner::removeDuplicatRID( const dmsRecordID &rid )
+   {
+      _dupBuffer.erase( rid ) ;
+   }
+
+   INT32 _rtnIXScanner::_isCursorSame( ixmExtent *pExtent,
+                                       const BSONObj &saveObj,
+                                       const dmsRecordID &saveRID,
+                                       BOOLEAN &isSame,
+                                       BOOLEAN *hasRead )
+   {
+      INT32 rc = SDB_OK ;
+      dmsRecordID onDiskRID ;
+      const CHAR *dataBuffer = NULL ;
+
+      isSame = FALSE ;
+
+      onDiskRID = pExtent->getRID ( _curIndexRID._slot ) ;
+
+      if ( onDiskRID.isNull() || onDiskRID != saveRID )
+      {
+         goto done ;
+      }
+
+      dataBuffer = pExtent->getKeyData ( _curIndexRID._slot );
       if ( dataBuffer )
       {
          try
          {
-            BSONObj curObj = ixmKey(dataBuffer).toBson() ;
-            // make sure key is the same
-            if ( curObj.shallowEqual(_savedObj) )
+            BSONObj obj = ixmKey(dataBuffer).toBson() ;
+            if ( hasRead  )
             {
-               dmsRecordID onDiskRID = indexExtent.getRID (
-                     _curIndexRID._slot ) ;
-               // make sure rid is the same
-               if ( onDiskRID == _savedRID )
-               {
-                  // this means the last scaned record is still here, so let's
-                  // reset _savedRID so that we'll call advance()
-                  _savedRID.reset() ;
-                  // if both key and rid are not changed, let's continue
-                  goto done ;
-               }
+               *hasRead = TRUE ;
+            }
+
+            /// compare
+            if ( obj.shallowEqual( saveObj ) )
+            {
+               isSame = TRUE ;
+               goto done ;
             }
          }
          catch ( std::exception &e )
@@ -597,25 +630,17 @@ namespace engine
             goto error ;
          }
       }
-      // when we get here, it means something changed and we need to
-      // relocateRID
-      // note relocateRID may relocate to the index that already read. However
-      // after advance() returning the RID we'll check if the index already has
-      // been read, so we should be save to not reset _savedRID
+      else
       {
-         rc = relocateRID () ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to relocate RID, rc: %d", rc ) ;
-            goto error ;
-         }
-      }
+         PD_LOG ( PDERROR, "Unable to get buffer from current rid: %s,%d",
+                  _curIndexRID._extent, _curIndexRID._slot ) ;
+         rc = SDB_SYS ;
+         goto error ;
       }
 
-   done :
-      PD_TRACE_EXITRC ( SDB__RTNIXSCAN_RESUMESCAN, rc ) ;
+   done:
       return rc ;
-   error :
+   error:
       goto done ;
    }
 

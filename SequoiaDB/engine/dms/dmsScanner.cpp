@@ -1472,6 +1472,18 @@ namespace engine
                          lockModeToString( lockConflict._lockType ) ) ;
 
             lockedRecord = TRUE ;
+
+            if ( !ixTxContext.isCursorValid() )
+            {
+               /// release lock and continue
+               _pTransCB->transLockRelease( cb, _pSu->logicalID(),
+                                            _context->mbID(),
+                                            &_curRID ) ;
+               lockedRecord = FALSE ;
+               /// remove the duplicate key
+               _scanner->removeDuplicatRID( ixTxContext.getSaveRID() ) ;
+               continue ;
+            }
          }
 
          if ( _curRecordPtr->isDeleting() )

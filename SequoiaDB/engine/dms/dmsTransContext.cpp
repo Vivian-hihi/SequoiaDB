@@ -122,6 +122,7 @@ namespace engine
 
       _pScanner      = pScanner ;
       _isReadonly    = isReadonly ;
+      _isValid       = TRUE ;
    }
 
    _dmsIXTransContext::~_dmsIXTransContext()
@@ -135,6 +136,10 @@ namespace engine
       rc = _pScanner->pauseScan( _isReadonly ) ;
       if ( SDB_OK == rc )
       {
+         /// save info
+         _saveRID = _pScanner->getSavedRID() ;
+         _saveObj = _pScanner->getSavedObj() ;
+
          rc = _dmsTBTransContext::pause() ;
       }
 
@@ -163,11 +168,24 @@ namespace engine
          goto error ;
       }
 
+      /// valid check
+      _pScanner->isCursorSame( _saveObj, _saveRID, _isValid ) ;
+
    done:
       PD_TRACE_EXITRC ( SDB__DMSIXTRANSCONTEXT_RESUME, rc ) ;
       return rc ;
    error:
       goto done ;
+   }
+
+   BOOLEAN _dmsIXTransContext::isCursorValid() const
+   {
+      return _isValid ;
+   }
+
+   void _dmsIXTransContext::resetCursorValid()
+   {
+      _isValid = TRUE ;
    }
 
 }

@@ -51,6 +51,8 @@
 #include "monCB.hpp"
 #include <set>
 
+using namespace bson ;
+
 namespace engine
 {
    class _dmsStorageUnit ;
@@ -100,6 +102,13 @@ namespace engine
       dmsExtentID _indexCBExtent ;
       dmsExtentID _indexLID ;
 
+   protected:
+      INT32    _isCursorSame( ixmExtent *pExtent,
+                              const BSONObj &saveObj,
+                              const dmsRecordID &saveRID,
+                              BOOLEAN &isSame,
+                              BOOLEAN *hasRead = NULL ) ;
+
    public :
       _rtnIXScanner ( ixmIndexCB *indexCB, rtnPredicateList *predList,
                       _dmsStorageUnit *su, _pmdEDUCB *cb ) ;
@@ -144,6 +153,12 @@ namespace engine
       {
          return _curKeyObj.woCompare( keyObj, _order, false ) * _direction ;
       }
+
+      INT32 isCursorSame( const BSONObj &saveObj,
+                          const dmsRecordID &saveRID,
+                          BOOLEAN &isSame ) ;
+
+      void  removeDuplicatRID( const dmsRecordID &rid ) ; 
 
       void reset()
       {
