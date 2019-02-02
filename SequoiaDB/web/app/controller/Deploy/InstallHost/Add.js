@@ -156,9 +156,19 @@
                      hostInfo['CanNotUseNum'] = 0 ;
                      hostInfo['DiskWarning']  = 0 ;
 
+                     var tmpUseNum = 0 ;
+                     var useSumSize = 0 ;
                      var filterDiskList = [] ;
                      var diskNameList = {} ;
                      $.each( hostInfo['Disk'], function( index2, diskInfo ){
+                        if( diskInfo['CanUse'] == true && diskInfo['IsLocal'] == true )
+                        {
+                           ++tmpUseNum ;
+                        }
+                     } ) ;
+
+                     $.each( hostInfo['Disk'], function( index2, diskInfo ){
+                        //防止重复挂载盘
                         if( diskNameList[diskInfo['Name']] === 0 || diskNameList[diskInfo['Name']] === 1 )
                         {
                            diskNameList[diskInfo['Name']] = 1 ;
@@ -167,40 +177,46 @@
                         {
                            diskNameList[diskInfo['Name']] = 0 ;
                         }
+
+                        if ( diskInfo['Mount'] == '/' && tmpUseNum > 1 )
+                        {
+                           //多个符合条件的挂载盘，默认不选根路径
+                           diskInfo['IsUse'] = false ;
+                        }
+                        else if( diskNameList[diskInfo['Name']] === 1 )
+                        {
+                           diskInfo['IsUse'] = false ;
+                        }
+                        else if ( diskInfo['CanUse'] == true && diskInfo['IsLocal'] == true )
+                        {
+                           useSumSize += diskInfo['Size'] ;
+                        }
+                        filterDiskList.push( diskInfo ) ;
+                     } ) ;
+
+                     $.each( filterDiskList, function( index2, diskInfo ){
                         if( diskInfo['CanUse'] == true )
                         {
-                           if( diskInfo['IsLocal'] == true )
+                           if( diskInfo['IsLocal'] == true && diskInfo['IsUse'] !== false )
                            {
-                              diskInfo['IsUse'] = true ;
+                              if ( diskInfo['Size'] < useSumSize * 0.2 )
+                              {
+                                 filterDiskList[index2]['IsUse'] = false ;
+                              }
+                              else
+                              {
+                                 filterDiskList[index2]['IsUse'] = true ;
+                                 ++hostInfo['IsUseNum'] ;
+                              }
                               hostInfo['CanUse'] = true ;
-                              ++hostInfo['IsUseNum'] ;
                            }
-                           filterDiskList.push( diskInfo ) ;
                         }
                         else
                         {
                            ++hostInfo['CanNotUseNum'] ;
-                           filterDiskList.push( diskInfo ) ;
                         }
                      } ) ;
-                     $.each( filterDiskList, function( index2, diskInfo ){
-                        if( diskNameList[diskInfo['Name']] === 1 )
-                        {
-                           if( diskInfo['CanUse'] == true && diskInfo['IsLocal'] == true )
-                           {
-                              //磁盘出现大于1次
-                              diskInfo['IsUse'] = false ;
-                              if( hostInfo['IsUseNum'] > 0 )
-                              {
-                                 --hostInfo['IsUseNum'] ;
-                              }
-                              if( hostInfo['IsUseNum'] == 0 )
-                              {
-                                 hostInfo['CanUse'] = false ;
-                              }
-                           }
-                        }
-                     } ) ;
+
                      hostInfo['Disk'] = filterDiskList ;
                      hostInfo['DiskWarning'] = sprintf( $scope.autoLanguage( '有?个磁盘剩余容量不足。' ), hostInfo['CanNotUseNum'] ) ;
                      hostInfo['IsUse'] = hostInfo['CanUse'] ;
