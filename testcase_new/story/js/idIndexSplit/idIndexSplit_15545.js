@@ -4,8 +4,13 @@
 ******************************************************************************/
 function main()
 {
+   if(commIsStandalone( db ))
+   {
+      println( "standalone environment!" );  
+   }
+   
    var groupNames = getGroupNames();
-   if(commIsStandalone(db) || groupNames.length < 2)
+   if(groupNames.length < 2)
    {
       println( "Only one group or standalone environment!" );
       return;
