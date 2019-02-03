@@ -2,7 +2,7 @@
 
    ![打开重启](sac/deployment/modify_module/restart_1.jpg)
 
-2.  在弹出的窗口中选择需要重启的服务，点击确定。
+2.  在弹出的窗口中选择需要重启的服务，点击 **确定**。
 
    ![重启弹窗](sac/deployment/modify_module/restart_2.jpg)
 
