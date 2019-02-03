@@ -43,7 +43,9 @@ int versionGenForPython::_genPythonFile( fileOutStream &fout, string &outputPath
         << "version = '"
         << SDB_ENGINE_VERISON_CURRENT
         << "." << SDB_ENGINE_SUBVERSION_CURRENT
+#ifdef SDB_ENGINE_FIXVERSION_CURRENT
         << "." << SDB_ENGINE_FIXVERSION_CURRENT
+#endif
         << "'"
         << endl ;
    return 0 ;
