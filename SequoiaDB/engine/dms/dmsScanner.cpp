@@ -1481,7 +1481,7 @@ namespace engine
                                             &_curRID ) ;
                lockedRecord = FALSE ;
                /// remove the duplicate key
-               _scanner->removeDuplicatRID( ixTxContext.getSaveRID() ) ;
+               _scanner->removeDuplicatRID( _curRID ) ;
                continue ;
             }
          }

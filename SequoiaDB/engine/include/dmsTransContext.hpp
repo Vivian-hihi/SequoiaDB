@@ -89,8 +89,6 @@ namespace engine
          BOOLEAN  isCursorValid() const ;
          void     resetCursorValid() ;
 
-         const dmsRecordID& getSaveRID() const { return _saveRID ; }
-
       public:
          virtual INT32 pause() ;
          virtual INT32 resume() ;
