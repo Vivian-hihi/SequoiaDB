@@ -7,6 +7,7 @@ function main()
    if(commIsStandalone( db ))
    {
       println( "standalone environment!" );  
+      return ; 
    }
    
    var groupNames = getGroupNames();
