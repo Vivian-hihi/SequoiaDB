@@ -134,5 +134,5 @@ function checkCount( expectCount, actCount )
    }
    println("check result success!");
 }
-main();
+//main();
 

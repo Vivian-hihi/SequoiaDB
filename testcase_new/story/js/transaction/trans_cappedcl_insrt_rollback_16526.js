@@ -36,5 +36,5 @@ function main()
 
    commDropCS(db, csName, true, "drop cs in ending");
 }
-main();
+//main();
 
