@@ -963,7 +963,7 @@ namespace engine
             }
             else
             {
-               _curScanKeyObj = _context->getIXScanner()->getSavedObj().copy() ;
+               _curScanKeyObj = _context->getIXScanner()->getSavedObj()->copy() ;
                PD_LOG ( PDDEBUG, "Session[%s]: scan cur key obj: %s",
                         sessionName(), _curScanKeyObj.toString().c_str() ) ;
             }

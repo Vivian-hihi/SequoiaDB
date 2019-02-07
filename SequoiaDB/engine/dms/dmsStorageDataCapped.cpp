@@ -56,6 +56,7 @@ namespace engine
    {
       ossMemset( (CHAR *)_options, 0, sizeof(_options) ) ;
       _disableBlockScan() ;
+      _isCapped = TRUE;
    }
 
    _dmsStorageDataCapped::~_dmsStorageDataCapped()
@@ -1164,7 +1165,8 @@ namespace engine
                                                       dmsRecordRW &recordRW,
                                                       const dmsRecordData &recordData,
                                                       const BSONObj &newObj,
-                                                      pmdEDUCB *cb )
+                                                      pmdEDUCB *cb,
+                                                      _dpsITransLockCallback * callback )
    {
       SDB_ASSERT( FALSE, "Should not be here" ) ;
       return SDB_OPERATION_INCOMPATIBLE ;

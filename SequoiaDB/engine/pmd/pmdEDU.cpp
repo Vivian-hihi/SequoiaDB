@@ -910,7 +910,7 @@ namespace engine
       {
          _transExecutor.initTransConf( optCB->transIsolation(),
                                        optCB->transTimeout() * OSS_ONE_SEC,
-                                       optCB->transWaitLock() ) ;
+                                       optCB->transLockwait() ) ;
       }
 #endif //SDB_ENGINE
    }
@@ -923,7 +923,7 @@ namespace engine
       {
          _transExecutor.updateTransConf( optCB->transIsolation(),
                                          optCB->transTimeout() * OSS_ONE_SEC,
-                                         optCB->transWaitLock() ) ;
+                                         optCB->transLockwait() ) ;
       }
 #endif //SDB_ENGINE
    }

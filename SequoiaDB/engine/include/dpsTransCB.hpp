@@ -48,6 +48,7 @@
 #include "dms.hpp"
 #include "dpsTransLockMgr.hpp"
 #include "dpsLogRecord.hpp"
+#include "dpsTransVersionCtrl.hpp"
 #include "dpsTransCBLockInfo.hpp" //DpsTransCBLockList
 #include "sdbInterface.hpp"
 #include "ossEvent.hpp"
@@ -63,6 +64,9 @@ namespace engine
    class _pmdEDUCB;
    class _dmsExtScanner ;
    class _dmsIXSecScanner ;
+   class oldVersionCB;;
+   class dpsTransLockManager;
+   class _dpsITransLockCallback;
 
    typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET> TRANS_MAP;
    typedef ossPoolMap<DPS_TRANS_ID, _pmdEDUCB * >   TRANS_CB_MAP;
@@ -104,6 +108,10 @@ namespace engine
       DPS_TRANS_ID allocTransID() ;
       DPS_TRANS_ID getRollbackID( DPS_TRANS_ID transID ) ;
       DPS_TRANS_ID getTransID( DPS_TRANS_ID rollbackID ) ;
+      oldVersionCB * getOldVCB ()
+      {
+         return _oldVCB;
+      }
 
       BOOLEAN isRollback( DPS_TRANS_ID transID ) ;
       BOOLEAN isFirstOp( DPS_TRANS_ID transID );
@@ -145,7 +153,8 @@ namespace engine
                            UINT16 collectionID = DMS_INVALID_MBID,
                            const dmsRecordID *recordID = NULL,
                            _IContext *pContext = NULL,
-                           dpsTransRetInfo * pdpsTxResInfo = NULL );
+                           dpsTransRetInfo * pdpsTxResInfo = NULL,
+                           _dpsITransLockCallback * callback = NULL );
 
       // get record-U-lock: also get the space-IS-lock and collection-IS-lock
       INT32 transLockGetU( _pmdEDUCB *eduCB, UINT32 logicCSID,
@@ -160,7 +169,8 @@ namespace engine
                            UINT16 collectionID = DMS_INVALID_MBID,
                            const dmsRecordID *recordID = NULL,
                            _IContext *pContext = NULL,
-                           dpsTransRetInfo * pdpsTxResInfo = NULL );
+                           dpsTransRetInfo * pdpsTxResInfo = NULL,
+                           _dpsITransLockCallback * callback = NULL );
 
       // also get the space-IS-lock
       INT32 transLockGetIX( _pmdEDUCB *eduCB, UINT32 logicCSID,
@@ -178,9 +188,10 @@ namespace engine
       // release collection-lock: also release the space-lock
       void transLockRelease( _pmdEDUCB *eduCB, UINT32 logicCSID,
                              UINT16 collectionID = DMS_INVALID_MBID,
-                             const dmsRecordID *recordID = NULL ) ;
+                             const dmsRecordID *recordID = NULL, 
+                             _dpsITransLockCallback * callback = NULL ) ;
 
-      void transLockReleaseAll( _pmdEDUCB *eduCB ) ;
+      void transLockReleaseAll( _pmdEDUCB *eduCB );
 
       BOOLEAN isTransOn() const ;
 
@@ -223,7 +234,8 @@ namespace engine
       INT32 transLockTryX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                            UINT16 collectionID = DMS_INVALID_MBID,
                            const dmsRecordID *recordID = NULL,
-                           dpsTransRetInfo * pdpsTxResInfo = NULL );
+                           dpsTransRetInfo * pdpsTxResInfo = NULL,
+                           _dpsITransLockCallback * callback = NULL ) ;
 
 
       // try to get record-U-lock: also try to get the space-IS-lock and
@@ -239,7 +251,8 @@ namespace engine
       INT32 transLockTryS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                            UINT16 collectionID = DMS_INVALID_MBID,
                            const dmsRecordID *recordID = NULL,
-                           dpsTransRetInfo * pdpsTxResInfo = NULL );
+                           dpsTransRetInfo * pdpsTxResInfo = NULL,
+                           _dpsITransLockCallback * callback = NULL );
 
       BOOLEAN hasWait( UINT32 logicCSID, UINT16 collectionID,
                        const dmsRecordID *recordID) ;
@@ -275,7 +288,9 @@ namespace engine
       UINT64            _accquiredSpace ;
 
       TRANS_ID_LSN_MAP    _rollbackInfo ;
-      dpsTransLockManager _transLockMgr ;
+      dpsTransLockManager *_transLockMgr ;
+      oldVersionCB     *_oldVCB ; // control block holding old(last committed)
+                              // version of record and index key value
 
    } ;
 

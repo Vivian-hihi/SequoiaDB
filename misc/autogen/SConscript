@@ -186,7 +186,8 @@ elif "win32" == guess_os:
                               [ "v7.1", "v7.0A", "v7.0", "v6.1", "v6.0a", "v6.0" ] )
     print( "Windows SDK Root '" + winSDKHome + "'" )
 
-    env.Append( EXTRACPPPATH=[ winSDKHome + "/Include" ] )
+    env.Append( CPPPATH=[ winSDKHome + "/Include" ] )
+    env.Append( CPPPATH=[ "C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/include" ] )
 
     # consider adding /MP build with multiple processes option.
 
@@ -196,9 +197,10 @@ elif "win32" == guess_os:
     env.Append( CPPFLAGS=" /EHsc /W3 " ) #  /WX " )
 
     if guess_arch == "ia64" and not force32:
-        env.Append( EXTRALIBPATH=[ winSDKHome + "/Lib/x64" ] )
+        env.Append( LIBPATH=[ winSDKHome + "/Lib/x64" ] )
     else:
-        env.Append( EXTRALIBPATH=[ winSDKHome + "/Lib" ] )
+        env.Append( LIBPATH=[ winSDKHome + "/Lib" ] )
+    env.Append( LIBPATH=[ "C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/lib/amd64" ] )
 
     winLibString = "ws2_32.lib kernel32.lib advapi32.lib Psapi.lib"
 

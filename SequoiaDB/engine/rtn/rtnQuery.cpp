@@ -40,7 +40,7 @@
 #include "dmsStorageUnit.hpp"
 #include "mthSelector.hpp"
 #include "optAPM.hpp"
-#include "rtnIXScanner.hpp"
+#include "rtnIXScannerFactory.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "rtnContextData.hpp"
@@ -948,7 +948,8 @@ namespace engine
 
       // start building scanner
       {
-         dmsRecordID rid ;
+         scannerFactory   f;
+         dmsRecordID      rid ;
          if ( -1 == dir )
          {
             rid.resetMax() ;
@@ -975,8 +976,11 @@ namespace engine
          // set the traversal direction
          predList->setDirection ( dir ) ;
 
+         // FIXME: should we consider using MergeIXScanner here?
+         // we should take lock into consideration as well
          // scanner should be deleted in context destructor
-         scanner = SDB_OSS_NEW rtnIXScanner ( &indexCB, predList, su, cb ) ;
+         scanner = f.getScanner( SCANNER_TYPE_DISK,
+                                 &indexCB, predList, su, cb ) ;
          PD_CHECK ( scanner, SDB_OOM, error, PDERROR,
                     "Unable to allocate memory for scanner" ) ;
 

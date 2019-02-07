@@ -1825,19 +1825,27 @@
    </opt>
 
    <opt>
-      <name>PMD_OPTION_TRANS_WAITLOCK</name>
-      <long>transwaitlock</long>
+      <name>PMD_OPTION_TRANS_LOCKWAIT</name>
+      <long>translockwait</long>
       <description>
-         <en>Specify whether the isolation need to wait lock or not in rc level. Default is 'FALSE'.</en>
-         <cn>事务在RC隔离级别下是否需要等锁，默认为'FALSE'。</cn>
+         <en>Specify the lock wait behavior within transaction under RC isolation level. FALSE for NO WAIT, 'TRUE' for WAIT. Default is FALSE</en>
+         <cn>事务在RC隔离级别下是否需要等锁，FALSE为不等锁，TRUE为等锁。默认为FALSE。</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>Specify whether the isolation need to wait lock or not in rc level. Default is 'FALSE'.</en>
-         <cn>事务在RC隔离级别下是否需要等锁，默认为'FALSE'。</cn>
+         <en>1. Specify the record lock wait behavior within transaction under RC isolation level. Value is TRUE/FALSE. Default is FALSE. Should be used in conjunction with transisolation<fig></fig>
+           2. Value enumeration:<fig></fig>
+             ● FALSE: NOWAIT, retrieve last committed version of record from system directly.<fig></fig>
+             ● TRUE: WAIT, wait for the lock to be released and get the newly committed version.<fig></fig>
+          </en>
+          <cn>1. 指定事务在RC隔离级别下记录锁的等待行为，默认是FALSE。需要与transisolation配合使用<fig></fig>
+            2. 取值列表：<fig></fig>
+              ● FALSE: NOWAIT，不等待记录锁，直接从系统读取最后一次提交的版本。<fig></fig>
+              ● TRUE: WAIT, 等待记录锁，读取最新提交版本的数据<fig></fig>
+        </cn>
       </detail>
       <default>false</default>
       <typeofweb>boolean</typeofweb>

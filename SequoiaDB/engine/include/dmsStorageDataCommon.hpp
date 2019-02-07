@@ -618,6 +618,7 @@ namespace engine
          OSS_INLINE  dmsMBStatInfo* mbStat() { return _mbStat ; }
          OSS_INLINE  UINT32 clLID () const { return _clLID ; }
          OSS_INLINE  UINT32 startLID() const { return _startLID ; }
+         OSS_INLINE  INT32  mbLockType() const { return _mbLockType ; }
 
       private:
          dmsMB             *_mb ;
@@ -729,6 +730,8 @@ namespace engine
    class _dmsRecordRW
    {
       friend class _dmsStorageDataCommon ;
+      friend class dmsTransLockCallback ;
+      friend class _dmsIXSecScanner;
 
       public:
          _dmsRecordRW() ;
@@ -742,6 +745,11 @@ namespace engine
 
          void              setNothrow( BOOLEAN nothrow ) ;
          BOOLEAN           isNothrow() const ;
+         // if the rid was set to special one, we won't have _rw setup
+         BOOLEAN           hasNoExt() 
+         { 
+            return (_rid.isIDXRid() );
+         }
 
          dmsRecordID       getRecordID() const { return _rid ; }
 
@@ -750,6 +758,7 @@ namespace engine
          */
          const dmsRecord*  readPtr( UINT32 len = sizeof( dmsRecord ) ) ;
          dmsRecord*        writePtr( UINT32 len = sizeof( dmsRecord ) ) ;
+
 
          template< typename T >
          const T*          readPtr( UINT32 len = sizeof(T) )
@@ -868,7 +877,9 @@ namespace engine
          OSS_INLINE UINT32 getCollectionNum() ;
 
          OSS_INLINE dmsRecordRW record2RW( const dmsRecordID &record,
-                                           UINT16 collectionID ) ;
+                                           UINT16 collectionID );
+
+         BOOLEAN isCapped () { return _isCapped; }
 
          // update extent logical id and expanded meta
          // must hold mb exclusive lock
@@ -958,7 +969,9 @@ namespace engine
                               const dmsRecordID &recordID,
                               ossValuePtr deletedDataPtr,
                               _pmdEDUCB * cb,
-                              SDB_DPSCB *dpscb ) ;
+                              SDB_DPSCB *dpscb,
+                              BOOLEAN    RCDoDelete = FALSE, 
+                              _dpsITransLockCallback * callback = NULL ) ;
 
          // if updatedDataPtr = 0, will get from recordID
          // must hold mb exclusive lock
@@ -968,7 +981,8 @@ namespace engine
                               _pmdEDUCB *cb,
                               SDB_DPSCB *dpscb,
                               _mthModifier &modifier,
-                              BSONObj* newRecord = NULL ) ;
+                              BSONObj* newRecord = NULL,
+                              _dpsITransLockCallback * callback = NULL ) ;
 
          virtual INT32 popRecord( dmsMBContext *context,
                                   INT64 targetID,
@@ -1066,7 +1080,8 @@ namespace engine
                                              dmsRecordRW &recordRW,
                                              const dmsRecordData &recordData,
                                              const BSONObj &newObj,
-                                             _pmdEDUCB *cb ) = 0 ;
+                                             _pmdEDUCB *cb,
+                                             _dpsITransLockCallback * callback = NULL ) = 0 ;
 
          virtual INT32 _extentRemoveRecord( dmsMBContext *context,
                                             dmsExtRW &extRW,
@@ -1190,6 +1205,7 @@ namespace engine
          dmsStorageUnitID                    _CSID ;
 
          UINT32                              _mmeSegID ;
+         BOOLEAN                             _isCapped ;
 
          vector<dmsMBContext*>               _vecContext ;
          ossSpinXLatch                       _latchContext ;
@@ -1278,15 +1294,28 @@ namespace engine
       return (UINT32)_collectionNameMap.size() ;
    }
    OSS_INLINE dmsRecordRW _dmsStorageDataCommon::record2RW( const dmsRecordID &record,
-                                                            UINT16 collectionID )
+                                                 UINT16 collectionID )
    {
       dmsRecordRW rRW ;
       rRW._pData = this ;
       rRW._rid = record ;
-      rRW._rw = extent2RW( record._extent, collectionID ) ;
-      rRW._doneAddr() ;
+      // only setup extent address if this is regular extent, not the special
+      // in memory index record
+      if( !(record.isIDXRid()) )
+      {
+         rRW._rw = extent2RW( record._extent, collectionID ) ;
+         rRW._doneAddr() ;
+      }
+      else
+      {
+         // set the extent to(extid=DMS_IDX_RID_MASK, clid=DMS_INVALID_CLID)
+         // _ptr is set to NULL with DMS_INVALID_EXTENT. Caller need to set
+         // it up
+         rRW._rw = extent2RW( DMS_INVALID_EXTENT, DMS_INVALID_CLID ) ;
+      }
       return rRW ;
    }
+
    OSS_INLINE const CHAR* _dmsStorageDataCommon::_clFullName( const CHAR *clName,
                                                               CHAR * clFullName,
                                                               UINT32 fullNameLen )

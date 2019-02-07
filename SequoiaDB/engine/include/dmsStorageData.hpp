@@ -178,7 +178,8 @@ namespace engine
                                    dmsRecordRW &recordRW,
                                    const dmsRecordData &recordData,
                                    const BSONObj &newObj,
-                                   _pmdEDUCB *cb ) ;
+                                   _pmdEDUCB *cb,
+                                   _dpsITransLockCallback * callback = NULL ) ;
 
    } ;
    typedef _dmsStorageData dmsStorageData ;

@@ -42,6 +42,7 @@
 #include "dmsStorageLob.hpp"
 #include "pmd.hpp"
 #include "dpsTransCB.hpp"
+#include "dpsTransLockCallback.hpp"
 #include "dpsOp2Record.hpp"
 #include "mthModifier.hpp"
 #include "ixm.hpp"
@@ -393,6 +394,15 @@ namespace engine
          }
          throw pdGeneralException( SDB_SYS, text ) ;
       }
+      // special case when we don't read through extent but use in memory
+      // old version (off lrbHdr) directly
+      // record2RW already set the _prt to record directly based on rid
+      // here we would use 0 offset directly
+      if( hasNoExt() )
+      {
+         // use the _ptr we set up in callback, 
+         return (const dmsRecord*)_ptr;
+      }
       if ( 0 == len )
       {
          len = _ptr->getSize() ;
@@ -485,6 +495,7 @@ namespace engine
       _mmeSegID         = 0 ;
       _pEventHolder     = pEventHolder ;
       _pExtDataHandler  = NULL ;
+      _isCapped         = FALSE;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATACOMMON ) ;
    }
 
@@ -2962,6 +2973,16 @@ namespace engine
       UINT32 textIdxNum             = 0 ;
       IDmsExtDataHandler * handler  = NULL ;
 
+      dpsTransLockCallbackFactory f;
+      _dpsITransLockCallback * callback = NULL;
+
+      PD_TRACE6 ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD,
+                  PD_PACK_UINT( mustOID ),
+                  PD_PACK_UINT( canUnLock ),
+                  PD_PACK_UINT( position ),
+                  PD_PACK_ULONG( transID ),
+                  PD_PACK_ULONG( preTransLsn ),
+                  PD_PACK_ULONG( dpscb ) );
       if ( !isTransSupport() )
       {
          transID = DPS_INVALID_TRANS_ID ;
@@ -3134,8 +3155,12 @@ namespace engine
          if ( dpscb && isTransSupport() )
          {
             dpsTransRetInfo lockConflict ;
+            // callback is created when transactionon
+            callback = f.create( LOCK_CALLBACK_TYPE_DMS,
+                                 cb, NULL );
+
             rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID(),
-                                          &foundRID, &lockConflict ) ;
+                                          &foundRID, &lockConflict, callback ) ;
             SDB_ASSERT( SDB_OK == rc, "Failed to get record-X-LOCK" );
             PD_RC_CHECK( rc, PDERROR, "Failed to insert the record, get "
                         "transaction-X-lock of record failed, rc: %d"OSS_NEWLINE
@@ -3149,7 +3174,28 @@ namespace engine
                         lockModeToString( lockConflict._lockType ) ) ;
 
             isTransLocked = TRUE ;
+         
+
+            // Mark the oldVer of this lock to be newly created record, 
+            // protected by mbLatch
+            // FIXME: we now do it on LRBHeader, will change this to update a 
+            // local memory from callback
+            if ( pTransCB->isTransOn() && 
+                 cb->getTransExecutor()->useTransLock() )
+            {
+               OBJIDX      hdrIdx;
+               dpsTransLRBHeader *lrbHdr = NULL;
+               dpsTransLockId lockId( _logicalCSID, context->mbID(), 
+                                      &foundRID );
+               pTransCB->getLockMgrHandle()->
+                          getLRBHdrByLockId( lockId, hdrIdx, lrbHdr );
+               lrbHdr->setNewRecord();
+               PD_TRACE2 ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD,
+                           PD_PACK_STRING ( "Setting record new" ),
+                           PD_PACK_UINT ( _logicalCSID ) );
+            }
          }
+
          // insert to extent
          rc = _extentInsertRecord( context, extRW, recordRW, recordData,
                                    dmsRecordSize, cb, TRUE ) ;
@@ -3208,7 +3254,7 @@ namespace engine
       if ( isTransLocked && ( transID == DPS_INVALID_TRANS_ID || rc ) )
       {
          pTransCB->transLockRelease( cb, _logicalCSID, context->mbID(),
-                                     &foundRID ) ;
+                                     &foundRID, callback ) ;
       }
       if ( 0 != logRecSize )
       {
@@ -3230,12 +3276,22 @@ namespace engine
       goto done ;
    }
 
+   // Description:
+   //    Based on the passed in record ID, delete a single record, write
+   //    corresponding log records and delete related indexes.
+   // Input:
+   //    RCDoDelete:  in RC isolation level, we can only delete the record
+   //                 if caller knows that transaction has committed. 
+   // Dependency:
+   //    Record lock should be held in X. MBlatch should be held.
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_DELETERECORD, "_dmsStorageDataCommon::deleteRecord" )
    INT32 _dmsStorageDataCommon::deleteRecord( dmsMBContext *context,
                                               const dmsRecordID &recordID,
                                               ossValuePtr deletedDataPtr,
                                               pmdEDUCB *cb,
-                                              SDB_DPSCB * dpscb )
+                                              SDB_DPSCB * dpscb,
+                                              BOOLEAN     RCDoDelete, 
+                                              _dpsITransLockCallback * callback)
    {
       INT32 rc                      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_DELETERECORD ) ;
@@ -3243,6 +3299,9 @@ namespace engine
       monAppCB * pMonAppCB          = cb ? cb->getMonAppCB() : NULL ;
       BOOLEAN isDeleting            = FALSE ;
       BOOLEAN isNeedToSetDeleting   = FALSE ;
+      // save old version when transaction is turned on
+      BOOLEAN isNeedToSaveOldVer    = ( pTransCB->isTransOn() && 
+                                    cb->getTransExecutor()->useTransLock() );
 
       dmsRecordID ovfRID ;
       BSONObj delObject ;
@@ -3294,6 +3353,19 @@ namespace engine
          recordRW = record2RW( recordID, context->mbID() ) ;
          pRecord = recordRW.writePtr() ;
 
+         // call the function to setup the last committed version record
+         // if it does not already exist
+         if ( callback )
+         {
+            rc = callback->saveOldVersionRecord ( &recordRW ) ;
+
+            if( SDB_OK != rc )
+            { 
+               PD_LOG ( PDERROR, "Failed to setup old version record" );
+               goto error ;
+            }
+         }
+
          if ( pRecord->isOvf() )
          {
             ovfRID = pRecord->getOvfRID() ;
@@ -3314,11 +3386,25 @@ namespace engine
             goto error ;
          }
 
+         // if need to save old verion, we should not immediately delete the
+         // record, otherwise TB scan won't be able to find this record even if
+         // the current transaction has not committed.
+         // In case caller know that this is not the original transaction 
+         // marking delete, we can do he actual delete.
+         // Capped collection is special, we don't take record lock and we 
+         // always immediately delete.
+         if ( isNeedToSaveOldVer && !RCDoDelete && !isCapped() )
+         {
+            isNeedToSetDeleting = TRUE ;
+         }
+
          // don't delete the record, someone are waitting for the record-X-Lock,
          // mark the record's attr to DMS_RECORD_FLAG_DELETING and write the log
-         // the last one who get the record-X-Lock will delete the record.
+         // the last one who get the record-X-Lock will delete the record while 
+         // those who gets record-S-Lock will skip the record.
          if ( pTransCB->hasWait( _logicalCSID, context->mbID(), &recordID ) )
          {
+            // someone else already marked it deleting, nothing need to be done
             if ( pRecord->isDeleting() )
             {
                rc = SDB_OK ;
@@ -3331,7 +3417,8 @@ namespace engine
             isDeleting = TRUE ;
          }
 
-         if ( FALSE == isDeleting ) // first delete the record
+         // first time deletion of the record write the LR and delete indexes
+         if ( FALSE == isDeleting )
          {
             if ( deletedDataPtr )
             {
@@ -3398,9 +3485,10 @@ namespace engine
                   }
                }
 
-               // then delete indexes
+               // then delete indexes. Note that the old version indexes
+               // would be kept in the in memory tree under the cover
                rc = _pIdxSU->indexesDelete( context, pExtent->_logicID,
-                                            delObject, recordID, cb ) ;
+                                            delObject, recordID, cb, callback );
                if ( rc )
                {
                   // if index delete fail, let's continue remove the record
@@ -3512,7 +3600,8 @@ namespace engine
                                               pmdEDUCB *cb,
                                               SDB_DPSCB *dpscb,
                                               mthModifier &modifier,
-                                              BSONObj* newRecord )
+                                              BSONObj* newRecord,
+                                              _dpsITransLockCallback * callback )
    {
       INT32 rc                      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_UPDATERECORD ) ;
@@ -3579,6 +3668,19 @@ namespace engine
             goto error ;
          }
 #endif //_DEBUG
+
+         // call the function to setup the last committed version record
+         // if it does not already exist
+         if ( callback )
+         {
+            rc = callback->saveOldVersionRecord ( &recordRW ) ;
+
+            if( SDB_OK != rc )
+            {
+               PD_LOG ( PDERROR, "Failed to setup old version record" );
+               goto error ;
+            }
+         }
 
          // get data
          if ( updatedDataPtr )
@@ -3675,7 +3777,7 @@ namespace engine
             }
 
             rc = _extentUpdatedRecord( context, extRW, recordRW,
-                                       recordData, newobj, cb ) ;
+                                       recordData, newobj, cb, callback ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to update record, rc: %d", rc ) ;

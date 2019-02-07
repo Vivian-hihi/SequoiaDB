@@ -44,6 +44,7 @@
 #include "dpsLogPage.hpp"
 #include "ossLatch.hpp"
 #include "dpsMergeBlock.hpp"
+#include "dpsTransCB.hpp"
 #include "ossAtomic.hpp"
 #include "dpsLogFileMgr.hpp"
 #include "ossUtil.hpp"

@@ -187,7 +187,8 @@ namespace engine
                                                 dmsRecordRW &recordRW,
                                                 const dmsRecordData &recordData,
                                                 const BSONObj &newObj,
-                                                _pmdEDUCB *cb )
+                                                _pmdEDUCB *cb,
+                                                _dpsITransLockCallback * callback )
    {
       INT32 rc                     = SDB_OK ;
       UINT32 dmsRecordSize         = 0 ;
@@ -270,7 +271,7 @@ namespace engine
             rc = _pIdxSU->indexesUpdate( context, pExtent->_logicID,
                                          oriObj, newObj,
                                          recordRW.getRecordID(),
-                                         cb, FALSE ) ;
+                                         cb, FALSE, callback ) ;
             rollbackIndex = TRUE ;
             if ( rc )
             {
@@ -973,6 +974,8 @@ namespace engine
 
       if ( hasInsert )
       {
+         // we won't touch old verion if it's insert failure. 
+         // No callback needed
          rc = deleteRecord( context, rid, dataPtr, cb, dpscb ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to rollback, rc: %d", rc ) ;
       }

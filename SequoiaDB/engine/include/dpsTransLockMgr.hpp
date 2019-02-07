@@ -49,18 +49,19 @@
 namespace engine
 {
    class _dpsTransExecutor ;
+   class _dpsITransLockCallback ;
    class _IContext ;
 
-   // lock bucket, 512K slots for testing
-   #define MAX_LOCKBUCKET_NUM             ( (UTIL_OBJIDX)( 524288  ) )
-   // LRB 256K for testing
-   #define DPS_INIT_NUM_OF_LRB            ( (UTIL_OBJIDX)( 262144  ) )
-   // LRB MAX 2M 
-   #define DPS_INIT_NUM_OF_LRB_MAX        ( (UTIL_OBJIDX)( 2097152 ) )
+   // lock bucket, 1M slots for testing
+   #define MAX_LOCKBUCKET_NUM             ( (UTIL_OBJIDX)( 1048576  ) )
+   // LRB 512K for testing
+   #define DPS_INIT_NUM_OF_LRB            ( (UTIL_OBJIDX)( 524288  ) )
+   // LRB MAX 2G 
+   #define DPS_INIT_NUM_OF_LRB_MAX        ( (UTIL_OBJIDX)( 2147483648 ) )
    // LRB Header 256K for testing
    #define DPS_INIT_NUM_OF_LRB_HEADER     ( (UTIL_OBJIDX)( 262144  ) )
-   // LRB Header MAX 2M
-   #define DPS_INIT_NUM_OF_LRB_HEADER_MAX ( (UTIL_OBJIDX)( 2097152 ) )
+   // LRB Header MAX 2G
+   #define DPS_INIT_NUM_OF_LRB_HEADER_MAX ( (UTIL_OBJIDX)( 2147483648 ) )
    // lock timeout, 5 seconds by default
    #define DPS_LOCK_TIMEOUT_DEFAULT       ( (UINT32) ( 5 * OSS_ONE_SEC ) )
 
@@ -73,6 +74,7 @@ namespace engine
 
    class dpsTransLockManager : public SDBObject
    {
+      friend class _dpsTransExecutor ;
    public:
       dpsTransLockManager();
 
@@ -104,7 +106,8 @@ namespace engine
          const dpsTransLockId     & lockId,
          const DPS_TRANSLOCK_TYPE   requestLockMode,
          _IContext                * pContext      = NULL,
-         dpsTransRetInfo          * pdpsTxResInfo = NULL
+         dpsTransRetInfo          * pdpsTxResInfo = NULL,
+         _dpsITransLockCallback   * callback = NULL
       ) ;
 
       // release a lock. The higher level intent lock will be also released
@@ -112,16 +115,21 @@ namespace engine
       // waiter queue if it is necessary.
       void release
       (
-         _dpsTransExecutor    * dpsTxExectr,
-         const dpsTransLockId & lockId,
-         const BOOLEAN          bForceRelease = FALSE
+         _dpsTransExecutor      * dpsTxExectr,
+         const dpsTransLockId   & lockId,
+         const BOOLEAN            bForceRelease = FALSE,
+         _dpsITransLockCallback * callback = NULL
       ) ;
 
       // release all locks an executor ( EDU ) holding. The executor ( EDU )
       // walks through its EDU LRB chain ( all locks acquired within a tx ),
       // and release all locks its holding and wake up the first one in waiter
       // or upgrade queue if it is necessary.
-      void releaseAll( _dpsTransExecutor * dpsTxExectr ) ;
+      void releaseAll
+      (
+         _dpsTransExecutor      * dpsTxExectr, 
+         _dpsITransLockCallback * callback = NULL
+      ) ;
 
       // try to acquire a lock with given mode and will try to acquire higher
       // level intent lock respectively.
@@ -132,7 +140,8 @@ namespace engine
          _dpsTransExecutor        * dpsTxExectr,
          const dpsTransLockId     & lockId,
          const DPS_TRANSLOCK_TYPE   requestLockMode,
-         dpsTransRetInfo          * pdpsTxResInfo = NULL
+         dpsTransRetInfo          * pdpsTxResInfo = NULL,
+         _dpsITransLockCallback   * callback = NULL
       ) ;
 
       // test if a lock with give lock mode can be acquired, higher level intent
@@ -217,14 +226,14 @@ namespace engine
       }
 
       // acquire lock bucket latch, wrapper of _acquireOpLatch()
-      OSS_INLINE void acquireLockBktLatch( const dpsTransLockId & lockId )
+      void acquireLockBktLatch( const dpsTransLockId & lockId )
       {
          const UTIL_OBJIDX bktIdx = _getBucketNo( lockId ) ;
          _acquireOpLatch( bktIdx ) ;
       }
 
       // release lock bucket latch, wrapper of _releaseOpLatch
-      OSS_INLINE void releaseLockBktLatch( const dpsTransLockId & lockId )
+      void releaseLockBktLatch( const dpsTransLockId & lockId )
       {
          const UTIL_OBJIDX bktIdx = _getBucketNo( lockId ) ;
          _releaseOpLatch( bktIdx ) ;
@@ -389,7 +398,8 @@ namespace engine
          const DPS_TRANSLOCK_OP_MODE_TYPE   opMode,
          const UTIL_OBJIDX                  bktIdx,
          const BOOLEAN                      bktLatched,
-         dpsTransRetInfo                  * pdpsTxResInfo
+         dpsTransRetInfo                  * pdpsTxResInfo,
+         _dpsITransLockCallback           * callback = NULL
       ) ;
 
 
@@ -398,7 +408,8 @@ namespace engine
       (
          _dpsTransExecutor       * dpsTxExectr,
          const dpsTransLockId    & lockId,
-         const BOOLEAN             bForceRelease
+         const BOOLEAN             bForceRelease,
+         _dpsITransLockCallback * callback = NULL
       ) ;
 
 
@@ -406,7 +417,8 @@ namespace engine
       void _releaseAll
       (
          _dpsTransExecutor    * dpsTxExectr,
-         const dpsTransLockId & lockId
+         const dpsTransLockId & lockId,
+         _dpsITransLockCallback * callback = NULL
       ) ;
 
 

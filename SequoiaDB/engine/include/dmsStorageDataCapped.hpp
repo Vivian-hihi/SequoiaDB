@@ -265,7 +265,8 @@ namespace engine
                                           dmsRecordRW &recordRW,
                                           const dmsRecordData &recordData,
                                           const BSONObj &newObj,
-                                          _pmdEDUCB *cb ) ;
+                                          _pmdEDUCB *cb,
+                                          _dpsITransLockCallback * callback = NULL ) ;
 
       virtual INT32 _extentRemoveRecord( dmsMBContext *context,
                                          dmsExtRW &extRW,

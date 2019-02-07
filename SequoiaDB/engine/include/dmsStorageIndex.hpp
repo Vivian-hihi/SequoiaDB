@@ -113,12 +113,14 @@ namespace engine
          INT32    indexesUpdate ( _dmsMBContext *context, dmsExtentID extLID,
                                   BSONObj &originalObj, BSONObj &newObj,
                                   const dmsRecordID &rid, _pmdEDUCB *cb,
-                                  BOOLEAN isRollback ) ;
+                                  BOOLEAN isRollback,
+                                  _dpsITransLockCallback * callback = NULL ) ;
 
          // Caller must hold mb exclusive lock
          INT32    indexesDelete ( _dmsMBContext *context, dmsExtentID extLID,
                                   BSONObj &inputObj, const dmsRecordID &rid,
-                                  _pmdEDUCB *cb ) ;
+                                  _pmdEDUCB *cb,
+                                  _dpsITransLockCallback * callback = NULL ) ;
 
          INT32    truncateIndexes ( _dmsMBContext *context, _pmdEDUCB *cb ) ;
 
@@ -179,11 +181,13 @@ namespace engine
          INT32    _indexUpdate ( _dmsMBContext *context, _ixmIndexCB *indexCB,
                                  BSONObj &originalObj, BSONObj &newObj,
                                  const dmsRecordID &rid, _pmdEDUCB *cb,
-                                 BOOLEAN isRollback ) ;
+                                 BOOLEAN isRollback,
+                                 _dpsITransLockCallback * callback = NULL ) ;
 
          INT32    _indexDelete ( _dmsMBContext *context, _ixmIndexCB *indexCB,
                                  BSONObj &inputObj, const dmsRecordID &rid,
-                                 _pmdEDUCB *cb ) ;
+                                 _pmdEDUCB *cb,
+                                 _dpsITransLockCallback * callback = NULL ) ;
 
       private:
          virtual UINT64 _dataOffset() ;
@@ -211,6 +215,11 @@ namespace engine
                                const CHAR *indexName,
                                const BSONObj &index,
                                INT32 &indexID ) ;
+
+         BOOLEAN _inMemDupKeyCheck( _pmdEDUCB   * cb,
+                                    preIdxTree * memTree,
+                                    const BSONObj&  key,
+                                    dpsTransCB *pTransCB );
 
       private:
          _dmsStorageData         *_pDataSu ;

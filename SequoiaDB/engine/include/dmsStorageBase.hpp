@@ -569,7 +569,7 @@ namespace engine
 
       protected:
          dmsStorageUnitHeader          *_dmsHeader ;     // 64KB
-         dmsSpaceManagementExtent      *_dmsSME ;        // 8MB
+         dmsSpaceManagementExtent      *_dmsSME ;        // 16MB
          CHAR                          _suFileName[ DMS_SU_FILENAME_SZ + 1 ] ;
 
          dmsStorageInfo                *_pStorageInfo ;

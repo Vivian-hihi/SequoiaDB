@@ -162,8 +162,8 @@ namespace engine
    */
    // 0~3 bit for STATE
    #define DMS_RECORD_FLAG_NORMAL            0x00
-   #define DMS_RECORD_FLAG_OVERFLOWF         0x01
-   #define DMS_RECORD_FLAG_OVERFLOWT         0x02
+   #define DMS_RECORD_FLAG_OVERFLOWF         0x01 // Overflow from record
+   #define DMS_RECORD_FLAG_OVERFLOWT         0x02 // Overflow to record
    #define DMS_RECORD_FLAG_DELETED           0x04
    // 4~7 bit for ATTR
    #define DMS_RECORD_FLAG_COMPRESSED        0x10

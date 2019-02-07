@@ -96,7 +96,6 @@ namespace engine
       protected:
          _rtnIXScanner           *_pScanner ;
          BOOLEAN                 _isReadonly ;
-
          dmsRecordID             _saveRID ;
          BSONObj                 _saveObj ;
          BOOLEAN                 _isValid ;

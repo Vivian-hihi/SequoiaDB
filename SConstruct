@@ -750,6 +750,8 @@ elif guess_os == "win32":
 
     env.Append( EXTRACPPPATH=[ winSDKHome + "/Include" ] )
 
+    env.Append( EXTRACPPPATH=[ "C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/include" ] )
+
     env.Append( CPPFLAGS=" /EHsc /W3 " )
     # disable warning
     env.Append( CPPFLAGS=" /wd4355 /wd4800 /wd4267 /wd4244 /wd4200 /wd4251 /wd4275 /wd4273 " )
@@ -773,6 +775,7 @@ elif guess_os == "win32":
 
     if guess_arch == "ia64":
         env.Append( EXTRALIBPATH=[ winSDKHome + "/Lib/x64" ] )
+        env.Append( EXTRALIBPATH=[ "C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/lib/amd64" ] )
     else:
         env.Append( EXTRALIBPATH=[ winSDKHome + "/Lib" ] )
 

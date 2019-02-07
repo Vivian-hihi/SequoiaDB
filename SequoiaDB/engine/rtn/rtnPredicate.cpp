@@ -2743,6 +2743,15 @@ namespace engine
       PD_TRACE_EXIT ( SDB__RTNPREDLISTITE_RESET ) ;
    }
 
+   // Description: 
+   //   Based on the current index key object, advance the predicate list 
+   //   iterator if needed
+   // Input:
+   //   curr: current index key object
+   // Return:
+   //   -1: selected
+   //   -2: hit end of iterator
+   //  >=0: the key is not selected
    //PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLISTITE_ADVANCE, "_rtnPredicateListIterator::advance" )
    INT32 _rtnPredicateListIterator::advance ( const BSONObj &curr )
    {

@@ -42,7 +42,7 @@
 #include "pmdCB.hpp"
 #include "dmsStorageUnit.hpp"
 #include "dmsScanner.hpp"
-#include "rtnIXScanner.hpp"
+#include "rtnDiskIXScanner.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"
@@ -51,6 +51,7 @@
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "rtnExtDataHandler.hpp"
+#include "rtnIXScannerFactory.hpp"
 
 namespace fs = boost::filesystem ;
 namespace engine
@@ -1394,6 +1395,10 @@ namespace engine
                              pCollectionFullName ;
       }
 
+      PD_TRACE2 ( SDB_RTNRESOLVECLNAL, 
+                  PD_PACK_UINT ( lockType ),
+                  PD_PACK_STRING ( strCollectionFullName ) );
+
       rc = rtnCollectionSpaceLock ( strCollectionFullName, dmsCB,
                                     FALSE, ppsu, suID, lockType, millisec ) ;
       if ( rc )
@@ -1627,13 +1632,19 @@ namespace engine
       return fullPathName ;
    }
 
+   // Note that Only delete and update are calling this interface
+   // In the future, if there are other cases, we should carefully 
+   // review the usage and decide what scanner to initialize with.
+   // For now, we directly invoke rtnDiskIXScanner as we won't use
+   // in memory index which is from last committed value.
    INT32 rtnGetIXScanner ( const CHAR *pCollectionShortName,
                            optAccessPlanRuntime *planRuntime,
                            dmsStorageUnit *su,
                            dmsMBContext *mbContext,
                            pmdEDUCB *cb,
                            dmsScanner **ppScanner,
-                           DMS_ACCESS_TYPE accessType )
+                           DMS_ACCESS_TYPE accessType,
+                           _dpsITransLockCallback * callback )
    {
       INT32 rc = SDB_OK ;
 
@@ -1645,7 +1656,11 @@ namespace engine
       SDB_ASSERT ( ppScanner, "Scanner can't be NULL" ) ;
 
       mthMatchRuntime *matchRuntime = NULL ;
-      rtnIXScanner * scanner     = NULL ;
+
+      scannerFactory    f;
+      // delete and update should also use scanner properly
+      //rtnDiskIXScanner * scanner     = NULL ;
+      _rtnIXScanner * scanner     = NULL ;
 
       // first shared lock to get metadata
       rc = mbContext->mbLock( SHARED ) ;
@@ -1683,19 +1698,41 @@ namespace engine
          matchRuntime = planRuntime->getMatchRuntime( TRUE ) ;
 
          // allocate scanner, delete at end of the function
-         scanner = SDB_OSS_NEW rtnIXScanner ( &indexCB, predList, su, cb ) ;
-         if ( !scanner )
+         // as long as transaction is enabled, we must use merge scan
+         // otherwise initialize to to disk scanner.
+         if( ( DPS_INVALID_TRANS_ID != cb->getTransID() ) &&
+             ( TRUE == pmdGetOptionCB()->transactionOn() ) )
          {
-            PD_LOG ( PDERROR, "Unable to allocate memory for scanner" ) ;
-            rc = SDB_OOM ;
-            goto error ;
+            scanner = f.getScanner ( SCANNER_TYPE_MERGE, &indexCB, 
+                                     predList, su, cb ) ;
+            if ( !scanner )
+            {
+               PD_LOG ( PDERROR, "Unable to allocate memory for scanner" ) ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
+            rtnMergeIXScanner * mergeScanner = (rtnMergeIXScanner *)scanner;
+            mergeScanner->setMergeScanner(
+                       SCANNER_TYPE_MEM_TREE, SCANNER_TYPE_DISK,
+                       &indexCB, predList, su, cb );
+         }
+         else
+         {
+            scanner = f.getScanner ( SCANNER_TYPE_DISK, &indexCB, 
+                                     predList, su, cb ) ;
+            if ( !scanner )
+            {
+               PD_LOG ( PDERROR, "Unable to allocate memory for scanner" ) ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
          }
       }
       mbContext->mbUnlock() ;
 
       *ppScanner = SDB_OSS_NEW dmsIXScanner( su->data(), mbContext,
                                              matchRuntime, scanner, TRUE,
-                                             accessType ) ;
+                                             accessType, -1, 0, 0, callback ) ;
       if ( !(*ppScanner) )
       {
          PD_LOG( PDERROR, "Unable to allocate memory for dms ixscanner" ) ;
@@ -1721,7 +1758,8 @@ namespace engine
                            dmsMBContext *mbContext,
                            pmdEDUCB *cb,
                            dmsScanner **ppScanner,
-                           DMS_ACCESS_TYPE accessType )
+                           DMS_ACCESS_TYPE accessType,
+                           _dpsITransLockCallback * callback )
    {
       INT32 rc                 = SDB_OK ;
       mthMatchRuntime *matchRuntime = planRuntime->getMatchRuntime() ;
@@ -1733,7 +1771,8 @@ namespace engine
       SDB_ASSERT ( ppScanner, "scanner can't be NULL" ) ;
 
       *ppScanner = SDB_OSS_NEW dmsTBScanner( su->data(), mbContext,
-                                             matchRuntime, accessType ) ;
+                                             matchRuntime, accessType,
+                                             -1, 0, 0, callback ) ;
       if ( !(*ppScanner) )
       {
          PD_LOG( PDERROR, "Unable to allocate memory for dms tbscanner" ) ;

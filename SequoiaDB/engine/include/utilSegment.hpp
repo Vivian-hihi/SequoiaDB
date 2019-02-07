@@ -194,6 +194,7 @@ namespace engine
          UTIL_OBJIDX i    = 0 ;
          UTIL_OBJIDX j    = 0 ;
 #ifdef _DEBUG
+
          SDB_ASSERT( ( idx < _numOfObjs ) && IS_VALID_SEG_OBJ_INDEX( idx ),
                      "Invalid object index." ) ;
 #endif

@@ -16,9 +16,9 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-   Source File Name = dpsTransDef.hpp 
+   Source File Name = dpsTransLockCallback.cpp
 
-   Descriptive Name =
+   Descriptive Name = DPS Transaction Lock Callback
 
    When/how to use: this program may be used on binary and text-formatted
    versions of OSS component. This file contains declare for data types used in
@@ -31,47 +31,55 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          01/28/2019  XJH Initial Draft
+          19/01/2019  CYX Initial Draft
 
    Last Changed =
 
 *******************************************************************************/
 
-#ifndef DPS_TRANS_DEF_HPP__
-#define DPS_TRANS_DEF_HPP__
-
-#include "core.hpp"
-#include "oss.hpp"
+#include "dpsTransLockCallback.hpp"
+#include "pmdEDU.hpp"
+#include "dpsTransCB.hpp"
+#include "dmsScanner.hpp"
+#include "dmsStorageDataCommon.hpp"
 
 namespace engine
 {
 
-   /*
-      TRANS_ISOLATION_LEVEL define
-   */
-   enum TRANS_ISOLATION_LEVEL
+   _dpsITransLockCallback * dpsTransLockCallbackFactory::create
+   (
+      const INT32    type,
+      pmdEDUCB     * eduCB,
+      dmsRecordRW  * recordRW
+   )
    {
-      TRANS_ISOLATION_RU = 0, // READ UNCOMMITTED
-      TRANS_ISOLATION_RC = 1, // READ COMMITTED
-      TRANS_ISOLATION_RS = 2, // READ STABILITY
-    //TRANS_ISOLATION_RR = 3, // REPEATABLE READ
+      dpsTransCB   * transCB = pmdGetKRCB()->getTransCB() ;
+      _dpsITransLockCallback * callback = NULL;
 
-      TRANS_ISOLATION_MAX
-   } ;
+      // don't setup callback if transaction is not enabled
+      if( !transCB->isTransOn() )
+      {
+         goto done;
+      }
 
-   #define DPS_TRANS_ISOLATION_DFT        TRANS_ISOLATION_RU
-   #define DPS_TRANS_DFT_TIMEOUT          (60)  // 1 minute
-   #define DPS_TRANS_LOCKWAIT_DFT         FALSE
+      if( LOCK_CALLBACK_TYPE_DMS == type )
+      {
+         callback = SDB_OSS_NEW dmsTransLockCallback( transCB,
+                                                      eduCB,
+                                                      recordRW );
+      }
 
-   /*
-      TRANS CONFIG MASK
-   */
-   #define TRANS_CONF_MASK_ISOLATION         0x00000001
-   #define TRANS_CONF_MASK_TIMEOUT           0x00000002
-   #define TRANS_CONF_MASK_WAITLOCK          0x00000004
-   #define TRANS_CONF_MASK_USERBS            0x00000008
+      if ( !callback )
+      {
+         PD_LOG( PDERROR, "Allocate memory for callback functions failed" ) ;
+         goto error ;
+      }
+      done:
+      return callback;
+
+      error:
+      goto done;
+   }
 
 }
-
-#endif // DPS_TRANS_DEF_HPP__
 

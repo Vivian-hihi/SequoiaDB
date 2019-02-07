@@ -81,7 +81,7 @@ namespace engine
       dmsExtentID _logicID ;
       dmsExtentID _prevExtent ;
       dmsExtentID _nextExtent ;
-      UINT32      _recCount ;
+      UINT32      _recCount ;    // record count in the extent
       dmsOffset   _firstRecordOffset ;
       dmsOffset   _lastRecordOffset ;
       INT32       _freeSpace ;

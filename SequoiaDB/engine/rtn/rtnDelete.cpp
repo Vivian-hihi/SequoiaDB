@@ -47,6 +47,7 @@
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "dmsScanner.hpp"
+#include "dpsTransLockCallback.hpp"
 
 using namespace bson ;
 
@@ -115,6 +116,8 @@ namespace engine
       dmsScanner *pScanner                = NULL ;
       BOOLEAN writable                    = FALSE ;
       INT64 delNum                        = 0 ;
+      dpsTransLockCallbackFactory f;
+      _dpsITransLockCallback * callback   = NULL;
 
       optAccessPlanRuntime planRuntime ;
 
@@ -148,6 +151,12 @@ namespace engine
 
       try
       {
+         // create local call back
+        
+         callback = f.create( LOCK_CALLBACK_TYPE_DMS,
+                              cb,
+                              NULL );
+
          apm = rtnCB->getAPM() ;
          SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
@@ -160,13 +169,15 @@ namespace engine
          {
             rc = rtnGetTBScanner( pCollectionShortName, &planRuntime, su,
                                   mbContext, cb, &pScanner,
-                                  DMS_ACCESS_TYPE_DELETE ) ;
+                                  DMS_ACCESS_TYPE_DELETE, 
+                                  callback ) ;
          }
          else if ( planRuntime.getScanType() == IXSCAN )
          {
             rc = rtnGetIXScanner( pCollectionShortName, &planRuntime, su,
                                   mbContext, cb, &pScanner,
-                                  DMS_ACCESS_TYPE_DELETE ) ;
+                                  DMS_ACCESS_TYPE_DELETE, 
+                                  callback ) ;
          }
          else
          {
@@ -197,11 +208,13 @@ namespace engine
             while ( SDB_OK == ( rc = pScanner->advance( recordID, generator,
                                                         cb ) ) )
             {
+               // by now, we have a qualified record to delete, and already hold
+               // the record lock in X
                execStartTime = krcb->getCurTime() ;
 
                generator.getDataPtr( recordDataPtr ) ;
                rc = su->data()->deleteRecord( mbContext, recordID, recordDataPtr,
-                                              cb, dpsCB ) ;
+                                              cb, dpsCB, FALSE, callback ) ;
                PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
                ++delNum ;
 
@@ -243,6 +256,10 @@ namespace engine
       if ( pScanner )
       {
          SDB_OSS_DEL pScanner ;
+      }
+      if ( callback )
+      {
+         SDB_OSS_DEL callback;
       }
       if ( mbContext )
       {
@@ -345,6 +362,8 @@ namespace engine
          // set traversal direction
          planRuntime.getPredList()->setDirection ( dir ) ;
 
+         // we do NOT need to create callback for this code path now because
+         // of the complexity of split
          rc = rtnGetIXScanner( pCollectionShortName, &planRuntime, su, mbContext,
                                cb, &pScanner, DMS_ACCESS_TYPE_DELETE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get dms ixscanner, rc: %d", rc ) ;

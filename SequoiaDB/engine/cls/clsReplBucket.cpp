@@ -900,6 +900,8 @@ namespace engine
          rc = _replayer->replay( pHeader, cb, FALSE ) ;
          if ( rc )
          {
+            PD_LOG( PDERROR, "replay encountered error: %d", rc );
+                    
             SDB_ASSERT( SDB_OOM == rc || SDB_NOSPC == rc,
                         "Unexpect error occured" ) ;
             if ( CLS_BUCKET_WAIT_ROLLBACK != _status )

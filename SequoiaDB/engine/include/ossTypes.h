@@ -181,6 +181,10 @@ typedef UINT64 EDUID ;
 #define OSS_INVALID_UID       ( ( OSSUID )-1 )
 #define OSS_INVALID_GID       ( ( OSSGID )-1 )
 
+// FIXME: need to move to util
+typedef UINT32 OBJIDX ;
+#define OSS_INVALID_OBJIDX    ( ( OBJIDX ) -1 )
+
 
 // return the minimum of two values
 #define OSS_MIN(a, b) (((a) < (b)) ? (a) : (b))

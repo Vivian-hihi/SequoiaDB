@@ -31,7 +31,7 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          09/14/2012  TW  Initial Draft
+          11/09/2018  YXC Initial Draft
 
    Last Changed =
 
@@ -39,43 +39,81 @@
 #ifndef RTNIXSCANNER_HPP__
 #define RTNIXSCANNER_HPP__
 
-#include "core.hpp"
 #include "oss.hpp"
+#include "dms.hpp"
 #include "ixm.hpp"
-#include "ixmExtent.hpp"
+#include "monCB.hpp"
 #include "rtnPredicate.hpp"
-#include "pmdEDU.hpp"
 #include "../bson/ordering.h"
 #include "../bson/oid.h"
-#include "dms.hpp"
-#include "monCB.hpp"
-#include <set>
 
 using namespace bson ;
 
 namespace engine
 {
-   class _dmsStorageUnit ;
+   class _dmsStorageUnit;
+   class _pmdEDUCB;
 
    #define RTN_IXSCANNER_DEDUPBUFSZ_DFT      (1024*1024)
-
-   /*
-      _rtnIXScanner define
-   */
-   class _rtnIXScanner : public SDBObject
+ 
+   // define type of index scanners
+   enum IXScannerType
    {
-   private :
-      ixmIndexCB *_indexCB ;
-      rtnPredicateList *_predList ;
-      rtnPredicateListIterator _listIterator ;
-      Ordering _order ;
-      _dmsStorageUnit *_su ;
-      monContextCB *_pMonCtxCB ;
-      _pmdEDUCB *_cb ;
-      INT32 _direction ;
+      SCANNER_TYPE_DISK      = 0,
+      SCANNER_TYPE_MEM_TREE,
+      SCANNER_TYPE_MERGE,
+      SCANNER_TYPE_MAX
+   };
 
-      ixmRecordID _curIndexRID ;
-      BOOLEAN _init ;
+   class _scannerSharedInfo
+   {
+      public:
+      ~_scannerSharedInfo()
+      {
+         this->free();
+      }
+
+      INT32 init()
+      {
+         INT32 rc = SDB_OK;
+         _dedupBufferSize = RTN_IXSCANNER_DEDUPBUFSZ_DFT;
+         _savedRID.reset();
+         _dupBuffer = new dmsRecIDSet();
+         SDB_ASSERT( _dupBuffer, "_dupBuffer creation failed" );
+         if( _dupBuffer == NULL )
+         {
+            rc = SDB_OOM;
+         }
+         _bufIsLocal = TRUE;
+         return rc;
+      }
+
+      void init( _scannerSharedInfo* sharedInfo )
+      {
+         this->_dedupBufferSize = sharedInfo->getBufSize();
+         this->_dupBuffer = sharedInfo->getDupBuf();
+         this->_bufIsLocal = FALSE;
+         _savedRID.reset();
+      }
+
+      void free()
+      {
+         if ( _bufIsLocal && (_dupBuffer != NULL) )
+         {
+            delete _dupBuffer;
+            _dupBuffer = NULL;
+         }
+      }
+
+
+      void update();
+
+
+      dmsRecIDSet * getDupBuf() { return _dupBuffer; }
+
+      UINT64 getBufSize()  { return _dedupBufferSize; }
+
+      private:
       // need to store a duplicate buffer for dmsRecordID for each ixscan,
       // because each record may be refered by more than one index key (say
       // {c1:[1,2,3,4,5]}, there will be 5 index keys pointing to the same
@@ -85,107 +123,96 @@ namespace engine
       // already scanned.
       // note that a record id will not be changed during update because it will
       // use overflowed record with existing record head
-      UINT64 _dedupBufferSize ;
-      set<dmsRecordID> _dupBuffer ;
+      // we used a pointer here because the memIXTreeScanner are likely used
+      // together with another scanner (like disk scanner), we should share
+      // the same dupBuffer.
+      UINT64                    _dedupBufferSize ;
+      dmsRecIDSet              *_dupBuffer ;
+      BOOLEAN                   _bufIsLocal;
 
-      // after the caller release X latch, another session may change the index
-      // structure. So everytime before releasing X latch, the caller must store
-      // the current obj, and then verify if it's still remaining the same after
-      // next check. If the object doens't match the on-disk obj, something must
-      // goes changed and we should relocate
-      BSONObj _savedObj ;
-      dmsRecordID _savedRID ;
+      // After releas mbLatch, another session may change the index structure
+      // So everytime before pause, we must store the current index key value
+      // and the rid. We must keep this information in shared structure in
+      // merge scan because the memory tree scan might not exist in previous
+      // interval and now the mem tree was created due to new update. We need
+      // the saved information to locate the key.
+      // After resume, verify if it's still remaining the same. If the
+      // object/rid doens't match, something must have changed. we should
+      // relocate key.
+      // Because malloc is involved during the saving, we should only setup
+      // the BSONObj during pause(), otherwise it would affect runtime perf.
+      BSONObj                   _savedObj;
+      dmsRecordID               _savedRID ;
 
-      BSONObj _curKeyObj ;
+   };
+   typedef class _scannerSharedInfo scannerSharedInfo;
 
-      OID _indexOID ;
-      dmsExtentID _indexCBExtent ;
-      dmsExtentID _indexLID ;
+   /*
+      _rtnIXScanner define
+      This is a super class for all index scanners to inherit from
+   */
+   class _rtnIXScanner : public SDBObject
+   {
+      
+      public:
+      _rtnIXScanner() {};
+      _rtnIXScanner( ixmIndexCB       *indexCB, 
+                     rtnPredicateList *predList,
+                     _dmsStorageUnit  *su, 
+                     _pmdEDUCB        *cb,
+                     scannerSharedInfo * sharedInfo = NULL ) {};
 
-   protected:
-      INT32    _isCursorSame( ixmExtent *pExtent,
-                              const BSONObj &saveObj,
-                              const dmsRecordID &saveRID,
-                              BOOLEAN &isSame,
-                              BOOLEAN *hasRead = NULL ) ;
+      virtual ~_rtnIXScanner() {};
 
-   public :
-      _rtnIXScanner ( ixmIndexCB *indexCB, rtnPredicateList *predList,
-                      _dmsStorageUnit *su, _pmdEDUCB *cb ) ;
-      ~_rtnIXScanner () ;
+      public:
+      virtual INT32 advance ( dmsRecordID &rid ) = 0;
+      virtual INT32 resumeScan( ) = 0 ;
+      virtual INT32 pauseScan( ) = 0;
+      virtual void setIsReadOnly(BOOLEAN v) = 0;
+      virtual void setMonCtxCB(monContextCB *monCtxCB) = 0;
 
-      void setMonCtxCB ( monContextCB *monCtxCB )
+      virtual INT32 relocateRID () = 0;
+      virtual INT32 relocateRID ( const BSONObj &keyObj, const dmsRecordID &rid ) = 0 ;
+
+      virtual const BOOLEAN initialized() const = 0;
+      virtual INT32 getDirection () const = 0 ;
+      virtual const BSONObj* getCurKeyObj() const = 0;
+      virtual dmsExtentID getIdxLID() const = 0;
+
+      virtual dmsRecordID getSavedRID () const = 0;
+      virtual const BSONObj * getSavedObj () const = 0;
+
+      // Dummy virtual functions. Defined here so that not all derived 
+      // class need to implement them. But we are not suppose to invoke them
+      virtual INT32 compareWithCurKeyObj ( const BSONObj &keyObj ) const 
+                    {return 0;}
+      virtual rtnPredicateList* getPredicateList () { return NULL; }
+      virtual dmsRecIDSet * getDupBuff() { return NULL; }
+ 
+      const UINT32 type() const
       {
-         _pMonCtxCB = monCtxCB ;
+         return _type;
       }
 
-      BSONObj getSavedObj () const
+      const BOOLEAN eof() const
       {
-         return _savedObj ;
+         return _eof;
       }
 
-      dmsRecordID getSavedRID () const
-      {
-         return _savedRID ;
-      }
+      virtual INT32 isCursorSame( const BSONObj &saveObj,
+                                  const dmsRecordID &saveRID,
+                                  BOOLEAN &isSame ) = 0 ;
 
-      ixmRecordID getCurIndexRID () const
-      {
-         return _curIndexRID ;
-      }
+      virtual void  removeDuplicatRID( const dmsRecordID &rid ) = 0;
 
-      const BSONObj& getCurKeyObj () const
-      {
-         return _curKeyObj ;
-      }
 
-      INT32 getDirection () const
-      {
-         return _direction ;
-      }
+      protected:
+      IXScannerType  _type;
+      BOOLEAN        _eof;
 
-      rtnPredicateList* getPredicateList ()
-      {
-         return _predList ;
-      }
-
-      INT32 compareWithCurKeyObj ( const BSONObj &keyObj ) const
-      {
-         return _curKeyObj.woCompare( keyObj, _order, false ) * _direction ;
-      }
-
-      INT32 isCursorSame( const BSONObj &saveObj,
-                          const dmsRecordID &saveRID,
-                          BOOLEAN &isSame ) ;
-
-      void  removeDuplicatRID( const dmsRecordID &rid ) ; 
-
-      void reset()
-      {
-         _curIndexRID.reset() ;
-         _listIterator.reset() ;
-         _dupBuffer.clear() ;
-         _init    = FALSE ;
-      }
-      // save the bson key for the current index rid, before releasing X latch
-      // on the collection
-      // we have to call resumeScan after getting X latch again just in case
-      // other sessions changed tree structure
-      INT32 pauseScan( BOOLEAN isReadOnly = TRUE ) ;
-      // restoring the bson key and rid for the current index rid. This is done
-      // by comparing the current key/rid pointed by _curIndexRID still same as
-      // previous saved one. If so it means there's no change in this key, and
-      // we can move on the from the current index rid. Otherwise we have to
-      // locate the new position for the saved key+rid
-      INT32 resumeScan( BOOLEAN isReadOnly = TRUE ) ;
-
-      // return SDB_IXM_EOC for end of index
-      // otherwise rid is set to dmsRecordID
-      INT32 advance ( dmsRecordID &rid, BOOLEAN isReadOnly = TRUE ) ;
-      INT32 relocateRID () ;
-      INT32 relocateRID ( const BSONObj &keyObj, const dmsRecordID &rid ) ;
-   } ;
+   };
    typedef class _rtnIXScanner rtnIXScanner ;
+
 
 }
 

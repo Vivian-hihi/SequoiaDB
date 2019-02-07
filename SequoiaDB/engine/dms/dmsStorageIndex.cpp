@@ -42,12 +42,16 @@
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "dpsOp2Record.hpp"
+#include "dpsTransCB.hpp"
+#include "dpsTransVersionCtrl.hpp"
 #include "ixmExtent.hpp"
 #include "bpsPrefetch.hpp"
 #include "dmsCompress.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
+#include "dpsTransLockMgr.hpp"
 #include "dmsIndexBuilder.hpp"
+#include "dpsTransLockCallback.hpp"
 
 using namespace bson ;
 
@@ -638,9 +642,11 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEINDEX_DROPALLIDXES, "_dmsStorageIndex::dropAllIndexes" )
    INT32 _dmsStorageIndex::dropAllIndexes( dmsMBContext *context, pmdEDUCB *cb,
                                            SDB_DPSCB * dpscb )
    {
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEINDEX_DROPALLIDXES );
       INT32 rc = SDB_OK ;
 
       rc = context->mbLock( EXCLUSIVE ) ;
@@ -657,15 +663,18 @@ namespace engine
       context->mbStat()->_totalIndexFreeSpace = 0 ;
 
    done:
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEINDEX_DROPALLIDXES, rc );
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEINDEX_DROPIDX1, "_dmsStorageIndex::dropIndex" )
    INT32 _dmsStorageIndex::dropIndex( dmsMBContext *context, OID &indexOID,
                                       pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                       BOOLEAN isSys )
    {
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEINDEX_DROPIDX1 );
       INT32 rc                     = SDB_OK ;
       INT32  indexID               = 0 ;
       BOOLEAN found                = FALSE ;
@@ -733,6 +742,7 @@ namespace engine
       }
 
    done :
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEINDEX_DROPIDX1, rc );
       return rc ;
    error :
       goto done ;
@@ -809,10 +819,13 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEINDEX_DROPIDX2, "_dmsStorageIndex::dropIndex" )
    INT32 _dmsStorageIndex::dropIndex( dmsMBContext *context, INT32 indexID,
                                       dmsExtentID indexLID, pmdEDUCB *cb,
                                       SDB_DPSCB *dpscb, BOOLEAN isSys )
    {
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEINDEX_DROPIDX2 );
+
       INT32 rc                     = SDB_OK ;
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
       dpsTransCB *pTransCB         = pmdGetKRCB()->getTransCB() ;
@@ -821,6 +834,10 @@ namespace engine
       UINT32 logRecSize            = 0 ;
       BSONObj indexDef ;
       IDmsExtDataHandler *extDataHandler = NULL ;
+
+      PD_TRACE2( SDB__DMSSTORAGEINDEX_DROPIDX2,
+                 PD_PACK_INT(indexID),
+                 PD_PACK_INT(indexLID) );
 
       rc = context->mbLock( EXCLUSIVE ) ;
       if ( rc )
@@ -928,6 +945,28 @@ namespace engine
                          "text index failed[ %d ]", rc ) ;
          }
 
+         // free up the in memory idx tree if exist
+         if ( TRANS_ISOLATION_RC == pmdGetOptionCB()->transIsolation() )
+         {
+            globIdxID      gID;
+            oldVersionCB  *oldVCB   = pTransCB->getOldVCB();
+
+            gID._csID = _pDataSu->logicalID();
+            gID._clID = context->mbID();
+            gID._idxLID = indexLID;
+
+            PD_LOG ( PDDEBUG, "Drop index delete in memory idx tree:(%d,%d,%d)",
+                     gID._csID, gID._clID, gID._idxLID ) ;
+            PD_TRACE4( SDB__DMSSTORAGEINDEX_DROPIDX2,
+                       PD_PACK_INT(gID._csID),
+                       PD_PACK_INT(gID._clID),
+                       PD_PACK_INT(indexID),
+                       PD_PACK_INT(indexLID) );
+
+            // delete the idx tree for this index
+            oldVCB->delIdxTree(gID);
+         }
+
          // truncate index, do remove root
          rc = indexCB.truncate ( TRUE ) ;
          if ( rc )
@@ -1010,6 +1049,7 @@ namespace engine
       {
          _pDataSu->flushMME( isSyncDeep() ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEINDEX_DROPIDX2, rc );
       return rc ;
    error :
       goto done ;
@@ -1548,6 +1588,47 @@ namespace engine
       goto done ;
    }
 
+   BOOLEAN _dmsStorageIndex::_inMemDupKeyCheck( _pmdEDUCB   * cb,
+                                                preIdxTree  * memTree,
+                                                const BSONObj& key,
+                                                dpsTransCB  * pTransCB )
+   {
+      preIdxTreeNodeValue idxTreeNodeValue( UTIL_INVALID_OBJ_INDEX ) ;
+      BOOLEAN hasDup = FALSE;
+
+      if ( memTree->ixObjExist(key, idxTreeNodeValue) )
+      {
+         // test X lock on the record to avoid duplicate key false alarm
+         // for example:
+         //   db.cs.createCL( "c1" )
+         //   db.cs.c1.createIndex( "a", {a:1})
+         //   db.cs.c1.insert( {a:1, b:1} )
+         //   db.transBegin()
+         //   db.cs.c1.remove() // or delete { a:1, b:1 }
+         //   db.cs.c1.insert({a:1, b:1}) ==> fails due to dupblicate key
+         //
+         // if we can X lock on the record means we are changing this
+         // record
+         SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX(idxTreeNodeValue.getLRBHdrIdx()),
+                     "Invalid preIdxTree node value" ) ;
+         dpsTransLRBHeader * pLRBHdr =
+            pTransCB->getLockMgrHandle()
+                    ->getLRBHdrPtrByIdx(idxTreeNodeValue.getLRBHdrIdx());
+         SDB_ASSERT( ( NULL != pLRBHdr ), "Invalide LRB Header" ) ;
+         dmsRecordID recId( pLRBHdr->lockId.extentID(),
+                            pLRBHdr->lockId.offset()) ;
+         if ( SDB_OK != pTransCB->transLockTestX( cb,
+                                                  pLRBHdr->lockId.csID(),
+                                                  pLRBHdr->lockId.clID(),
+                                                  &recId ) )
+         {
+            hasDup = TRUE;
+         }
+      }
+      return hasDup;
+
+   }
+
    INT32 _dmsStorageIndex::_indexInsert( _ixmIndexCB *indexCB,
                                          const ixmKey &key,
                                          const dmsRecordID &rid,
@@ -1562,12 +1643,6 @@ namespace engine
       // get root in each loop, since root page may change after each
       // insert (root split)
       ixmExtent rootidx ( indexCB->getRoot(), this ) ;
-
-      /// TODO: temp for trans rollback
-      if ( !dupAllowed && ( cb->getTransID() & DPS_TRANSID_ROLLBACKTAG_BIT ) )
-      {
-         dupAllowed = TRUE ;
-      }
 
       rc = rootidx.insert ( key, rid, order, dupAllowed, indexCB ) ;
       if ( rc )
@@ -1593,36 +1668,82 @@ namespace engine
                                          BOOLEAN dupAllowed,
                                          BOOLEAN dropDups )
    {
+      SDB_ASSERT ( indexCB, "indexCB can't be NULL" ) ;
       INT32 rc = SDB_OK ;
       BSONObjSet keySet ;
 
-      SDB_ASSERT ( indexCB, "indexCB can't be NULL" ) ;
+      dpsTransCB *pTransCB    = pmdGetKRCB()->getTransCB() ;
 
       rc = indexCB->getKeysFromObject ( inputObj, keySet ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to get keys from object %s",
                     inputObj.toString().c_str() ) ;
-/*
-#if defined (_DEBUG)
-      PD_LOG ( PDDEBUG, "IndexInsert\nIndex: %s\nRecord: %s",
-               indexCB->keyPattern().toString().c_str(),
-               inputObj.toString().c_str() ) ;
-#endif*/
-
       {
          BSONObjSet::iterator it ;
          Ordering order = Ordering::make( indexCB->keyPattern() ) ;
+         oldVersionCB *oldVCB = pTransCB->getOldVCB();
+         BOOLEAN checkKey = FALSE;
+         preIdxTree        *memTree = NULL;
+
+         // If there is an old verion of the index in our in memory tree, we 
+         // should not insert the index because the update/delete transaction 
+         // has not committed yet. 
+
+         // oldVCB is currently initialized for RC
+         // We don't need to check if it's rolling back of delete
+         if ( !dupAllowed && oldVCB && oldVCB->isInitialized() &&
+              !(cb->getTransID() & DPS_TRANSID_ROLLBACKTAG_BIT) )
+         {
+            globIdxID gID;
+
+            gID._csID = _pDataSu->logicalID() ;
+            gID._clID = context->mbID() ;
+            gID._idxLID = indexCB->getLogicalID() ;
+
+            // check if the in memory tree for this idx exist or not.
+            // if not, there is no old version
+            oldVCB->latchS();
+            memTree = oldVCB->getIdxTree(gID);
+            if ( NULL != memTree && !memTree->empty() )
+            {
+               // Need to through the in memory tree to see if any index match
+               checkKey = TRUE;
+            }
+            oldVCB->releaseS();
+         }
 
          for ( it = keySet.begin() ; it != keySet.end() ; ++it )
-         {/*
-#if defined (_DEBUG)
-            PD_LOG ( PDDEBUG, "Key %s", (*it).toString().c_str() ) ;
-#endif*/
+         {
+            // check if the key match old version index object
+            if( checkKey && _inMemDupKeyCheck( cb, memTree, *it, pTransCB ) )
+            {
+               // Internally will test X lock on the record to make sure key
+               // does not exist and avoid duplicate key false alarm 
+               // for example:
+               //   db.cs.createCL( "c1" )
+               //   db.cs.c1.createIndex( "a", {a:1})
+               //   db.cs.c1.insert( {a:1, b:1} )
+               //   db.transBegin()
+               //   db.cs.c1.remove() // or delete { a:1, b:1 }
+               //   db.cs.c1.insert({a:1, b:1}) ==> fails due to dupblicate key
+               //
+               // if we can X lock on the record means we are changing this
+               // record
+               // memTree->printTree();  Enable if need to debug
+               rc = SDB_IXM_DUP_KEY;
+               PD_LOG ( PDERROR, "Failed to insert index(%s), rc: %d", 
+                                    it->toString().c_str(), rc ) ;
+               SDB_ASSERT( ( !(cb->getTransID() & DPS_TRANSID_ROLLBACKTAG_BIT) ),
+                           "Duplicate key during rollback of delete" );
+               goto error ;
+            }
+
             ixmKeyOwned ko ((*it)) ;
 
             rc = _indexInsert ( indexCB, ko, rid, order, cb, dupAllowed, dropDups ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR, "Failed to insert index, rc: %d", rc ) ;
+               PD_LOG ( PDERROR, "Failed to insert index(%d, %d), dupAllowed:%d, rc: %d",
+                        rid._extent, rid._offset, dupAllowed, rc ) ;
                goto error ;
             }
          }
@@ -1655,6 +1776,7 @@ namespace engine
          goto error ;
       }
 
+      // loops through all potential indexes for the record
       for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
       {
          if ( DMS_INVALID_EXTENT == context->mb()->_indexExtent[indexID] )
@@ -1721,21 +1843,41 @@ namespace engine
       goto done ;
    }
 
+   // Description: 
+   //    Given original object and new object, update the on disk index slots
+   // for a specific index. 
+   // Input:
+   //    context:  DMS Meta data block information
+   //    indexCB:  The index to update
+   //    originalObj: original data
+   //    newObj: new data value
+   //    dmsRecordID:  record ID 
+   //    pmdEDUCB:  edu CB
+   //    isRollback: is this rollback or not
+   // Return: 
+   //    SDB_OK:  normal return
+   // Dependency: 
+   // 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEINDEX__INDEXUPDATE, "_dmsStorageIndex::_indexUpdate" )
    INT32 _dmsStorageIndex::_indexUpdate( dmsMBContext *context,
                                          ixmIndexCB *indexCB,
                                          BSONObj &originalObj,
                                          BSONObj &newObj,
                                          const dmsRecordID &rid,
                                          pmdEDUCB *cb,
-                                         BOOLEAN isRollback )
+                                         BOOLEAN isRollback,
+                                         _dpsITransLockCallback * callback )
    {
       INT32 rc             = SDB_OK ;
       BSONObjSet keySetOri ;
       BSONObjSet keySetNew ;
       BOOLEAN unique       = FALSE ;
       BOOLEAN found        = FALSE ;
+      BOOLEAN  storeOldVer = FALSE;
       monAppCB * pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
+      dpsTransCB *pTransCB    = pmdGetKRCB()->getTransCB() ;
 
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEINDEX__INDEXUPDATE );
       SDB_ASSERT ( indexCB, "indexCB can't be NULL" ) ;
 
       rc = indexCB->getKeysFromObject ( originalObj, keySetOri ) ;
@@ -1770,6 +1912,58 @@ namespace engine
          BSONObjSet::iterator itori ;
          BSONObjSet::iterator itnew ;
          Ordering order = Ordering::make(indexCB->keyPattern()) ;
+         BOOLEAN  checkKey = FALSE;
+
+         // get a globalID to find the tree
+         globIdxID gID;
+         oldVersionCB      *oldVCB  = callback ? callback->getOldVCB() : NULL;
+         preIdxTree        *memTree = NULL;
+         oldVersionContainer *oldVer = NULL;
+
+         gID._csID   = _pDataSu->logicalID() ;
+         gID._clID   = context->mbID() ;
+         gID._idxLID = indexCB->getLogicalID() ;
+
+         // logic to figure if need to insert the index into the in memory
+         // old version tree. if we are not rolling back an insert, AND 
+         // this index does not already exist in the tree, AND we are 
+         // configured to store the old version. We only store old verion
+         // index if callback if setup to store data.
+         // Protections already have are: mbLatch, record Lock(X),
+         // we need to check if transisolation is set to RC(1) and
+         // translockwait is set to NW(0)
+         if( callback && !isRollback && oldVCB && oldVCB->isInitialized() )
+         {
+            // this flag is used for later to check new index key values
+            checkKey = TRUE;
+
+            oldVer = (oldVersionContainer*)callback->getWorkingArea();
+
+            // 1. check if the in memory tree for this idx exist or not.
+            // if not, create one
+            oldVCB->latchX();
+            memTree = oldVCB->getIdxTree(gID);
+            if ( NULL == memTree )
+            {
+               // create the new tree
+               oldVCB->addIdxTree(gID, indexCB);
+               memTree = oldVCB->getIdxTree(gID);
+            }
+
+            // Note that once the tree is created, it won't be deleted
+            // until system shutdown
+            oldVCB->releaseX();
+
+            // 2. try insert if old version exist
+            if( oldVer )
+            {
+               // 3. check if oldVer has the index in idxObjSet, insert to
+               //    there if not exist.
+               storeOldVer = oldVer->insertOldIdxLid( gID._idxLID, indexCB );
+            }
+         }// if( oldVCB->isInitialized())
+
+
          itori = keySetOri.begin() ;
          itnew = keySetNew.begin() ;
          while ( keySetOri.end() != itori && keySetNew.end() != itnew )
@@ -1792,6 +1986,17 @@ namespace engine
             {
                // original smaller than new, that means the original doesn't
                // appear in the new list anymore, let's delete it
+
+               // Before deleting the original index, try to insert the
+               // original index into the in-memory old version tree if 
+               // this index does not already exist in the tree
+               if ( storeOldVer )
+               {
+                     // 4. time insert the index to the tree. Do this under
+                     // the tree latch
+                     oldVCB->insertIdxObj( gID, (*itori), rid, oldVer );
+               }
+
                ixmExtent rootidx ( indexCB->getRoot(), this ) ;
                ixmKeyOwned ko ((*itori)) ;
                rc = rootidx.unindex ( ko, rid, order, indexCB, found ) ;
@@ -1814,6 +2019,34 @@ namespace engine
             }
             else
             {
+               // Check if the new index value exist in the index memory tree
+               // when index is unique
+               if( unique && checkKey &&
+                   _inMemDupKeyCheck( cb, memTree, *itnew, pTransCB ) )
+               {
+                  // Internally will test X lock on the record to make sure key
+                  // does not exist and avoid duplicate key false alarm 
+                  // for example:
+                  //   db.cs.createCL( "c1" )
+                  //   db.cs.c1.createIndex( "a", {a:1})
+                  //   db.cs.c1.insert( {a:1, b:1} )
+                  //   db.cs.c1.insert( {a:2, b:2} )
+                  //   db.transBegin()
+                  //   db.cs.c1.remove() // or delete { a:1, b:1 }
+                  //   db.cs.c1.update({$set{a:1, b:1},{a:2}}) ==> fails due 
+                  //                                               to dup key
+                  //
+                  // if we can X lock on the record means we are changing this
+                  // record
+                  // memTree->printTree();  Enable if need to debug
+                  rc = SDB_IXM_DUP_KEY;
+                  PD_LOG ( PDERROR, "Failed to update to index(%s), rc: %d", 
+                                    itnew->toString().c_str(), rc ) ;
+                  SDB_ASSERT( !( cb->getTransID() & DPS_TRANSID_ROLLBACKTAG_BIT) ,
+                           "Duplicate key during rollback" );
+                  goto error ;
+               }
+
                // new smaller than original, that means the new one doesn't
                // appear in the original list, let's add it
                ixmExtent rootidx ( indexCB->getRoot(), this ) ;
@@ -1845,6 +2078,13 @@ namespace engine
 #if defined (_DEBUG)
             PD_LOG ( PDDEBUG, "Key From %s", (*itori).toString().c_str() ) ;
 #endif
+            if ( storeOldVer )
+            {
+                  // 4. time insert the index to the tree. Do this under
+                  // the tree latch
+                  oldVCB->insertIdxObj( gID, (*itori), rid, oldVer ) ;
+            }
+
             ixmExtent rootidx ( indexCB->getRoot(), this ) ;
             ixmKeyOwned ko ((*itori)) ;
             rc = rootidx.unindex ( ko, rid, order, indexCB, found ) ;
@@ -1871,6 +2111,20 @@ namespace engine
 #if defined (_DEBUG)
             PD_LOG ( PDDEBUG, "Key To %s", (*itnew).toString().c_str() ) ;
 #endif
+            // Check if the new index value exist in the index memory tree
+            // when index is unique
+            if( unique && checkKey &&
+                _inMemDupKeyCheck( cb, memTree, *itnew, pTransCB ) )
+            {
+               // memTree->printTree();  Enable if need to debug
+               rc = SDB_IXM_DUP_KEY;
+               PD_LOG ( PDERROR, "Failed to update to index(%s), rc: %d", 
+                                 itnew->toString().c_str(), rc ) ;
+               SDB_ASSERT( !( cb->getTransID() & DPS_TRANSID_ROLLBACKTAG_BIT ),
+                           "Duplicate key during rollback of delete" );
+               goto error ;
+            }
+
             ixmExtent rootidx ( indexCB->getRoot(), this ) ;
             ixmKeyOwned ko ((*itnew)) ;
             rc = rootidx.insert ( ko, rid, order, !unique, indexCB ) ;
@@ -1894,19 +2148,25 @@ namespace engine
       }
 
    done :
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEINDEX__INDEXUPDATE, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // caller is responsible to rollback the change
+   // Description:
+   //    Based on the passed in original and new object, update all the
+   // corresponding indexes.  
+   // caller is responsible to rollback the change by calling the function
+   // with reversed object.
    INT32 _dmsStorageIndex::indexesUpdate( dmsMBContext *context,
                                           dmsExtentID extLID,
                                           BSONObj &originalObj,
                                           BSONObj &newObj,
                                           const dmsRecordID &rid,
                                           pmdEDUCB *cb,
-                                          BOOLEAN isRollback )
+                                          BOOLEAN isRollback, 
+                                          _dpsITransLockCallback * callback )
    {
       INT32 rc                     = SDB_OK ;
       INT32 indexID                = 0 ;
@@ -1953,7 +2213,7 @@ namespace engine
          else
          {
             rc = _indexUpdate ( context, &indexCB, originalObj, newObj, rid, cb,
-                                isRollback ) ;
+                                isRollback, callback ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to update index, rc: %d", rc ) ;
          }
       }
@@ -1985,16 +2245,24 @@ namespace engine
       goto done ;
    }
 
+   // Description: delete all the indexes from the record to be deleted
+   // Input: 
+   //    inputObj: BSON containing the record
+   //    rid:      The record ID to be deleted
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEINDEX__INDEXDELETE, "_dmsStorageIndex::_indexDelete" )
    INT32 _dmsStorageIndex::_indexDelete( dmsMBContext *context,
                                          ixmIndexCB *indexCB,
                                          BSONObj &inputObj,
                                          const dmsRecordID &rid,
-                                         pmdEDUCB * cb )
+                                         pmdEDUCB * cb,
+                                         _dpsITransLockCallback * callback )
    {
-      INT32 rc = SDB_OK ;
-      BSONObjSet keySet ;
-      BOOLEAN result = FALSE ;
-      monAppCB * pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEINDEX__INDEXDELETE ) ;
+      INT32       rc          = SDB_OK ;
+      BSONObjSet  keySet ;
+      BOOLEAN     result      = FALSE ;
+      BOOLEAN     storeOldVer = FALSE;
+      monAppCB   *pMonAppCB   = cb ? cb->getMonAppCB() : NULL ;
 
       SDB_ASSERT ( indexCB, "indexCB can't be NULL" ) ;
 
@@ -2007,20 +2275,79 @@ namespace engine
       }
 
 #if defined (_DEBUG)
-      PD_LOG ( PDDEBUG, "IndexDelete\nIndex: %s\nRecord: %s",
-               indexCB->keyPattern().toString().c_str(),
-               inputObj.toString().c_str() ) ;
+   //   PD_LOG ( PDDEBUG, "IndexDelete\nIndex: %s\nRecord: %s",
+   //            indexCB->keyPattern().toString().c_str(),
+   //            inputObj.toString().c_str() ) ;
 #endif
+
 
       {
          BSONObjSet::iterator it ;
+         // get a globalID to find the tree
+         globIdxID gID;
+
          Ordering order = Ordering::make(indexCB->keyPattern()) ;
+         oldVersionCB *oldVCB = callback ? callback->getOldVCB() : NULL;
+         preIdxTree * memTree = NULL;
+         oldVersionContainer *oldVer = NULL;
+
+         //gID._csID = _pDataSu->CSID() ;   // FIXME: code review, which id to use
+         gID._csID = _pDataSu->logicalID() ;
+         gID._clID = context->mbID() ; 
+         gID._idxLID = indexCB->getLogicalID() ;
+
+
+         // logic to figure if need to insert the index into the in memory
+         // old version tree if this index does not already exist in the tree
+         // Protections already have are: mbLatch, record Lock(X), 
+         // we need to check if callback was fully loaded
+         // We only store old verion index if callback if setup to store data.
+         if( callback && oldVCB && oldVCB->isInitialized() )
+         //     !( cb->getTransID() & DPS_TRANSID_ROLLBACKTAG_BIT ) )
+         {
+            oldVer = (oldVersionContainer*)callback->getWorkingArea();
+
+            // 1. check if the in memory tree for this idx exist or not.
+            // if not, create one
+            oldVCB->latchX();
+            memTree = oldVCB->getIdxTree(gID);
+            if ( NULL == memTree )
+            {
+               // create the tree
+               oldVCB->addIdxTree(gID, indexCB);
+            }
+
+            // Note that once the tree is created, it won't be deleted 
+            // until system shutdown
+            oldVCB->releaseX();
+
+            // 2. if oldVer exist in callback
+            if( oldVer )
+            {
+               // 3. check if oldVer has the index in idxObjSet, insert to
+               //    there if not exist. Note that if it exist in the set,
+               //    the index must exist in the tree as well. This is valid
+               //    scenario because one transaction can do multiple update
+               //    of the same record. But we only need to keep the last
+               //    committed version which happened to be the first copy. 
+               //    Return FALSE if already exist and NOOP for the future.
+               storeOldVer = oldVer->insertOldIdxLid( gID._idxLID, indexCB );
+            }
+         }
+
+         // go through each index in the set 
          for ( it = keySet.begin() ; it != keySet.end() ; ++it )
          {
 
 #if defined (_DEBUG)
             PD_LOG ( PDDEBUG, "Key %s", (*it).toString().c_str() ) ;
 #endif
+            if ( storeOldVer )
+            {
+               // 4. time insert the index to the tree. Do this under
+               // the tree latch
+               oldVCB->insertIdxObj( gID, (*it), rid, oldVer );
+            }
 
             // get root in each loop, since root page may change after each
             // insert (root split)
@@ -2037,16 +2364,20 @@ namespace engine
       }
 
    done :
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEINDEX__INDEXDELETE, rc ) ;
       return rc ;
    error :
+      PD_LOG ( PDERROR, "Failed to deleteindex, rc: %d", rc ) ;
       goto done ;
    }
 
+   // delete all indexes for an oject
    INT32 _dmsStorageIndex::indexesDelete( dmsMBContext *context,
                                           dmsExtentID extLID,
                                           BSONObj &inputObj,
                                           const dmsRecordID &rid,
-                                          pmdEDUCB * cb )
+                                          pmdEDUCB * cb, 
+                                          _dpsITransLockCallback * callback )
    {
       INT32 rc                     = SDB_OK ;
       INT32 indexID                = 0 ;
@@ -2095,7 +2426,8 @@ namespace engine
          }
          else
          {
-            rc = _indexDelete ( context, &indexCB, inputObj, rid, cb ) ;
+            rc = _indexDelete ( context, &indexCB, inputObj, 
+                                rid, cb, callback ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to delete index, rc: %d", rc ) ;

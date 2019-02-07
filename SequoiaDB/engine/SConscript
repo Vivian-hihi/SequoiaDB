@@ -211,7 +211,9 @@ rtnFiles = [
       "rtn/rtnCommandSnapshot.cpp",
       "rtn/rtnCommandList.cpp",
       "rtn/rtnPredicate.cpp",
-      "rtn/rtnIXScanner.cpp",
+      "rtn/rtnDiskIXScanner.cpp",
+      "rtn/rtnMemIXTreeScanner.cpp",
+      "rtn/rtnMergeIXScanner.cpp",
       "rtn/rtnBackup.cpp",
       "rtn/rtnReorg.cpp",
       "rtn/rtnRecover.cpp",
@@ -449,13 +451,15 @@ dpsFiles = [
 
       "dps/dpsTransCBLockInfo.cpp",
       "dps/dpsTransExecutor.cpp",
+      "dps/dpsTransLockCallback.cpp",
+      "dps/dpsTransVersionCtrl.cpp",
+      "dps/dpsTransLockMgr.cpp",
       "dps/dpsOp2Record.cpp",
       "dps/dpsDump.cpp",
       "dps/dpsArchiveMgr.cpp",
       "dps/dpsArchiveInfo.cpp",
       "dps/dpsArchiveFile.cpp",
-      "dps/dpsArchiveFileMgr.cpp",
-      "dps/dpsTransLockMgr.cpp"
+      "dps/dpsArchiveFileMgr.cpp"
       ]
 
 omsvcFiles = [

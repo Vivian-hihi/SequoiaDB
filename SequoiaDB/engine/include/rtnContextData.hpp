@@ -47,7 +47,7 @@
 namespace engine
 {
    class _rtnIXScanner ;
-
+   class _dpsITransLockCallback ;
    /*
       _rtnContextData define
    */
@@ -104,7 +104,8 @@ namespace engine
          INT32 _queryModify( _pmdEDUCB* eduCB,
                              const dmsRecordID& recordID,
                              ossValuePtr recordDataPtr,
-                             BSONObj& obj ) ;
+                             BSONObj& obj,
+                             _dpsITransLockCallback * callback = NULL ) ;
          virtual INT32     _prepareData( _pmdEDUCB *cb ) ;
          virtual BOOLEAN   _canPrefetch () const
          {

@@ -1862,7 +1862,7 @@ done:
       _traceBufSz          = TRACE_DFT_BUFFER_SIZE ;
       _transactionOn       = FALSE ;
       _transIsolation      = DPS_TRANS_ISOLATION_DFT ;
-      _transWaitLock       = DPS_TRANS_WAITLOCK_DFT ;
+      _transLockwait       = DPS_TRANS_LOCKWAIT_DFT ;
       _transTimeout        = DPS_TRANS_DFT_TIMEOUT ;
       _sharingBreakTime    = PMD_OPTION_BRK_TIME_DEFAULT ;
       _startShiftTime      = PMD_DFT_START_SHIFT_TIME ;
@@ -2097,9 +2097,9 @@ done:
               PMD_CFG_CHANGE_RUN, DPS_TRANS_ISOLATION_DFT, FALSE ) ;
       rdvMinMax( pEX, _transIsolation,
                  TRANS_ISOLATION_RU, TRANS_ISOLATION_MAX - 1, TRUE ) ;
-      // --transwaitlock
-      rdxBooleanS( pEX, PMD_OPTION_TRANS_WAITLOCK, _transWaitLock, FALSE,
-                   PMD_CFG_CHANGE_RUN, DPS_TRANS_WAITLOCK_DFT, FALSE ) ;
+      // --translockwait
+      rdxBooleanS( pEX, PMD_OPTION_TRANS_LOCKWAIT, _transLockwait, FALSE,
+                   PMD_CFG_CHANGE_RUN, DPS_TRANS_LOCKWAIT_DFT, FALSE ) ;
       // --sharingBreak
       rdxUInt( pEX, PMD_OPTION_SHARINGBRK, _sharingBreakTime, FALSE,
                PMD_CFG_CHANGE_RUN, PMD_OPTION_BRK_TIME_DEFAULT, TRUE ) ;

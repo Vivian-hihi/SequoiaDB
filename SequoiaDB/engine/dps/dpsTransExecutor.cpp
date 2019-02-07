@@ -38,6 +38,9 @@
 *******************************************************************************/
 
 #include "dpsTransExecutor.hpp"
+#include "dpsTransLockDef.hpp"
+#include "dpsTransCB.hpp"
+#include "dpsTransLRB.hpp"
 
 namespace engine
 {
@@ -54,7 +57,7 @@ namespace engine
 
       _transIsolation   = DPS_TRANS_ISOLATION_DFT ;
       _transTimeout     = DPS_TRANS_DFT_TIMEOUT ;
-      _transWaitLock    = DPS_TRANS_WAITLOCK_DFT ;
+      _transWaitLock    = DPS_TRANS_LOCKWAIT_DFT ;
       _useRollbackSegment = TRUE ;
       _transConfMask    = 0 ;
 

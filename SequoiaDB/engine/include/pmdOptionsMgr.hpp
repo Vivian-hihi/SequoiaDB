@@ -577,7 +577,7 @@ namespace engine
          OSS_INLINE BOOLEAN transactionOn () const { return _transactionOn ; }
          OSS_INLINE UINT32 transTimeout () const { return _transTimeout; }
          OSS_INLINE INT32 transIsolation () const { return _transIsolation; }
-         OSS_INLINE BOOLEAN transWaitLock() const { return _transWaitLock ; }
+         OSS_INLINE BOOLEAN transLockwait () const { return _transLockwait; }
          OSS_INLINE BOOLEAN memDebugEnabled () const { return _memDebugEnabled ; }
          OSS_INLINE UINT32 memDebugSize () const { return _memDebugSize ; }
          OSS_INLINE UINT32 indexScanStep () const { return _indexScanStep ; }
@@ -680,7 +680,7 @@ namespace engine
          BOOLEAN     _transactionOn ;
          UINT32      _transTimeout ;
          INT32       _transIsolation ;
-         BOOLEAN     _transWaitLock ;
+         BOOLEAN     _transLockwait;
          UINT32      _sharingBreakTime ;
          UINT32      _startShiftTime ;
          UINT32      _logBuffSize ;

@@ -122,6 +122,7 @@ namespace engine
 
       _pScanner      = pScanner ;
       _isReadonly    = isReadonly ;
+      _pScanner->setIsReadOnly(_isReadonly);
       _isValid       = TRUE ;
    }
 
@@ -133,12 +134,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      rc = _pScanner->pauseScan( _isReadonly ) ;
+      rc = _pScanner->pauseScan( ) ;
       if ( SDB_OK == rc )
       {
          /// save info
          _saveRID = _pScanner->getSavedRID() ;
-         _saveObj = _pScanner->getSavedObj() ;
+         _saveObj = _pScanner->getSavedObj()->copy() ;
 
          rc = _dmsTBTransContext::pause() ;
       }
@@ -160,14 +161,13 @@ namespace engine
       }
 
       /// then resume scanner
-      rc = _pScanner->resumeScan( _isReadonly ) ;
+      rc = _pScanner->resumeScan( ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Resume index scanner failed, rc: %d",
                  rc ) ;
          goto error ;
       }
-
       /// valid check
       _pScanner->isCursorSame( _saveObj, _saveRID, _isValid ) ;
 

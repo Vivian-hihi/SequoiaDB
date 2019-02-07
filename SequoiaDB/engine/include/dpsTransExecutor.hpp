@@ -43,6 +43,7 @@
 #include "sdbInterface.hpp"
 #include "dpsTransLockDef.hpp"
 #include "dpsTransDef.hpp"
+#include "dpsTransLockMgr.hpp"
 #include "utilSegment.hpp"
 #include "ossMemPool.hpp"
 
@@ -51,6 +52,8 @@ using namespace std ;
 
 namespace engine
 {
+
+   class dpsTransLRBHeader;
 
    /*
       DPS_TRANS_QUE_TYPE define
@@ -61,6 +64,7 @@ namespace engine
       DPS_QUE_UPGRADE,
       DPS_QUE_WAITER
    } ;
+
 
    /*
       _dpsTransExecutor define
@@ -157,7 +161,9 @@ namespace engine
          /// transaction configs
          INT32                   _transIsolation ;
          UINT32                  _transTimeout ;      /// Unit:ms
-         BOOLEAN                 _transWaitLock ;
+         // if transaction wait for lock
+         BOOLEAN                 _transWaitLock ;  
+         // if transaction use old copy in rollback segment
          BOOLEAN                 _useRollbackSegment ;
          UINT32                  _transConfMask ;
 

@@ -43,6 +43,7 @@
 #include "utilUniqueID.hpp"
 
 #include <string>
+#include <set>
 
 namespace engine
 {
@@ -153,6 +154,11 @@ namespace engine
    typedef SINT32 dmsExtentID ;
    typedef SINT32 dmsOffset ;
 
+   // max extent number is 128M, which uses 27bits, leaving higher 5 bits
+   // unused. we use these 5bits as the mask to tell if this is a regular
+   // recordID or reused for index record. The index scanner might setup 
+   // dmsRecordID differently. see rtnMemIXTreeScanner::advance for details
+   #define DMS_IDX_RID_MASK       0x08000000
    /*
       _dmsRecordID defined
    */
@@ -161,6 +167,7 @@ namespace engine
    public :
       dmsExtentID _extent ;
       dmsOffset   _offset ;
+
       _dmsRecordID ()
       {
          _extent = DMS_INVALID_EXTENT ;
@@ -179,11 +186,15 @@ namespace engine
       }
       BOOLEAN isNull () const
       {
-         return DMS_INVALID_EXTENT == _extent ;
+         return (DMS_INVALID_EXTENT == _extent) ;
       }
       BOOLEAN isValid () const
       {
          return DMS_INVALID_EXTENT != _extent ;
+      }
+      BOOLEAN isIDXRid () const
+      {
+         return ( (DMS_IDX_RID_MASK & _extent) == DMS_IDX_RID_MASK);
       }
       BOOLEAN operator!=(const _dmsRecordID &rhs) const
       {
@@ -229,6 +240,8 @@ namespace engine
       }
    } ;
    typedef class _dmsRecordID dmsRecordID ;
+
+   typedef set<dmsRecordID>   dmsRecIDSet;
 
    /*
       DMS_FILE_TYPE define

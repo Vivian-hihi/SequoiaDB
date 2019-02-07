@@ -1655,6 +1655,9 @@ namespace engine
       goto done ;
    }
 
+   // NOTE: this funciton is currently only used by dmsMmapTest, not real code,
+   // so we don't use callback. In case we use it for runtime, we need to
+   // consider old copy and callback functions. 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DELETERECORDS, "_dmsStorageUnit::deleteRecords" )
    INT32 _dmsStorageUnit::deleteRecords ( const CHAR *pName,
                                           pmdEDUCB * cb,

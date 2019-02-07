@@ -49,6 +49,7 @@
 #include "pmdEDU.hpp"
 #include "dmsStorageBase.hpp"
 #include "dmsPageMap.hpp"
+#include "dpsTransVersionCtrl.hpp"
 
 using namespace bson ;
 
@@ -139,6 +140,8 @@ namespace engine
    */
    class _ixmExtent : public SDBObject
    {
+   friend class preIdxTree;
+
    protected:
       const ixmExtentHead  *_extentHead ;
       dmsExtentID          _me ;
@@ -212,6 +215,15 @@ namespace engine
                       BOOLEAN &found, INT32 direction,
                       const ixmIndexCB *indexCB ) const ;
 
+      INT32 _keyFind ( UINT16 low, UINT16 high, const BSONObj &prevKey,
+                       INT32 keepFieldsNum, BOOLEAN skipToNext,
+                       const vector < const BSONElement *> &matchEle,
+                       const vector < BOOLEAN > &matchInclusive,
+                       const Ordering &o,
+                       INT32 direction,
+                       ixmRecordID &bestIxmRID,
+                       dmsExtentID &resultExtent, _pmdEDUCB *cb ) const ;
+   public:
       // currentKey is the key from current disk location that trying to
       // be matched
       // prevKey is the key examed from previous run
@@ -225,20 +237,14 @@ namespace engine
       // c1:1 and match whatever the next (for example c1:1.1); otherwise we
       // want
       // to continue match the elements from matchEle )
-      INT32 _keyCmp ( const BSONObj &currentKey, const BSONObj &prevKey,
-                      INT32 keepFieldsNum, BOOLEAN skipToNext,
-                      const vector < const BSONElement *> &matchEle,
-                      const vector < BOOLEAN > &matchInclusive,
-                      const Ordering &o, INT32 direction ) const ;
+      // Make this member function static so that other class can reuse the
+      // key compare outside of the class or without an instance
+      static INT32 _keyCmp ( const BSONObj &currentKey, const BSONObj &prevKey,
+                             INT32 keepFieldsNum, BOOLEAN skipToNext,
+                             const vector < const BSONElement *> &matchEle,
+                             const vector < BOOLEAN > &matchInclusive,
+                             const Ordering &o, INT32 direction ) ;
 
-      INT32 _keyFind ( UINT16 low, UINT16 high, const BSONObj &prevKey,
-                       INT32 keepFieldsNum, BOOLEAN skipToNext,
-                       const vector < const BSONElement *> &matchEle,
-                       const vector < BOOLEAN > &matchInclusive,
-                       const Ordering &o,
-                       INT32 direction,
-                       ixmRecordID &bestIxmRID,
-                       dmsExtentID &resultExtent, _pmdEDUCB *cb ) const ;
    public:
       // create new extent id without parent
       _ixmExtent ( dmsExtentID extentID, UINT16 mbID,

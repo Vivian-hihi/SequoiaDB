@@ -37,18 +37,22 @@
 
 *******************************************************************************/
 #include "rtnIXScanner.hpp"
+#include "rtnDiskIXScanner.hpp"
 #include "dmsStorageUnit.hpp"
+#include "rtnPredicate.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
+#include "dpsTransCB.hpp"
 
-using namespace bson ;
+using namespace bson;
 
 namespace engine
 {
 
-   _rtnIXScanner::_rtnIXScanner ( ixmIndexCB *indexCB,
-                                  rtnPredicateList *predList,
-                                  dmsStorageUnit *su, pmdEDUCB *cb )
+   _rtnDiskIXScanner::_rtnDiskIXScanner ( ixmIndexCB *indexCB,
+                                          rtnPredicateList *predList,
+                                          _dmsStorageUnit *su, _pmdEDUCB *cb,
+                                          scannerSharedInfo *sharedInfo )
    : _predList(predList),
      _listIterator(*predList),
      _order(Ordering::make(indexCB->keyPattern())),
@@ -60,17 +64,32 @@ namespace engine
       SDB_ASSERT ( indexCB && _predList && _su,
                    "indexCB, predList and su can't be NULL" ) ;
 
-      _dedupBufferSize = RTN_IXSCANNER_DEDUPBUFSZ_DFT ;
+      _type = SCANNER_TYPE_DISK;
+      if ( NULL != sharedInfo )
+      {
+         _sharedInfo.init(sharedInfo);
+      }
+      else
+      {
+         INT32 rc = SDB_OK;
+         rc = _sharedInfo.init();
+         SDB_ASSERT( (rc == SDB_OK), "_sharedInfo init failed");
+      }
+      _eof = FALSE;
       indexCB->getIndexID ( _indexOID ) ;
       _indexCBExtent = indexCB->getExtentID () ;
       _indexLID = indexCB->getLogicalID() ;
       _indexCB = SDB_OSS_NEW ixmIndexCB ( _indexCBExtent, su->index(),
                                           NULL ) ;
+      SDB_ASSERT ( _indexCB, "_indexCB can't be NULL" ) ;
+      _initialized = TRUE;
       reset() ;
+      PD_LOG ( PDDEBUG, "Created Disk IX Scanner" );
    }
 
-   _rtnIXScanner::~_rtnIXScanner ()
+   _rtnDiskIXScanner::~_rtnDiskIXScanner ()
    {
+      PD_LOG ( PDDEBUG, "Freeing Disk IX Scanner" );
       if ( _indexCB )
       {
          SDB_OSS_DEL _indexCB ;
@@ -78,12 +97,12 @@ namespace engine
    }
 
    // change the scanner's current location to a given key and rid
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_RELORID1, "_rtnIXScanner::relocateRID" )
-   INT32 _rtnIXScanner::relocateRID ( const BSONObj &keyObj,
-                                      const dmsRecordID &rid )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDISKIXSCAN_RELORID1, "_rtnDiskIXScanner::relocateRID" )
+   INT32 _rtnDiskIXScanner::relocateRID ( const BSONObj &keyObj,
+                                          const dmsRecordID &rid )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__RTNIXSCAN_RELORID1 ) ;
+      PD_TRACE_ENTRY ( SDB__RTNDISKIXSCAN_RELORID1 ) ;
 
       PD_CHECK ( _indexCB, SDB_OOM, error, PDERROR,
                  "Failed to allocate memory for indexCB" ) ;
@@ -115,17 +134,17 @@ namespace engine
       _init = TRUE ;
 
    done :
-      PD_TRACE_EXITRC ( SDB__RTNIXSCAN_RELORID1, rc ) ;
+      PD_TRACE_EXITRC ( SDB__RTNDISKIXSCAN_RELORID1, rc ) ;
       return rc ;
    error :
       goto done ;
    }
    
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_RELORID2, "_rtnIXScanner::relocateRID" )
-   INT32 _rtnIXScanner::relocateRID ()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDISKIXSCAN_RELORID2, "_rtnDiskIXScanner::relocateRID" )
+   INT32 _rtnDiskIXScanner::relocateRID ()
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__RTNIXSCAN_RELORID2 ) ;
+      PD_TRACE_ENTRY ( SDB__RTNDISKIXSCAN_RELORID2 ) ;
       monAppCB * pMonAppCB = _cb ? _cb->getMonAppCB() : NULL ;
       // either the key doesn't exist, or we got key/rid not match,
       // or the key is psuedo-deleted, we all get here
@@ -144,22 +163,23 @@ namespace engine
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
       DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
    done :
-      PD_TRACE_EXITRC ( SDB__RTNIXSCAN_RELORID2, rc ) ;
+      PD_TRACE_EXITRC ( SDB__RTNDISKIXSCAN_RELORID2, rc ) ;
       return rc ;
    error :
       goto done ;
    }
+
    // return SDB_IXM_EOC for end of index
    // return SDB_IXM_DEDUP_BUF_MAX if hit max dedup buffer
    // otherwise rid is set to dmsRecordID
    // advance() must be called between resumeScan() and pauseScan()
    // caller must make sure the table is locked before calling resumeScan, and
    // must release the table lock right after pauseScan
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_ADVANCE, "_rtnIXScanner::advance" )
-   INT32 _rtnIXScanner::advance ( dmsRecordID &rid, BOOLEAN isReadOnly )
+   //PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDISKIXSCAN_ADVANCE, "_rtnDiskIXScanner::advance" )
+   INT32 _rtnDiskIXScanner::advance ( dmsRecordID &rid )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__RTNIXSCAN_ADVANCE ) ;
+      PD_TRACE_ENTRY ( SDB__RTNDISKIXSCAN_ADVANCE ) ;
 
       monAppCB * pMonAppCB = _cb ? _cb->getMonAppCB() : NULL ;
       ixmRecordID lastRID ;
@@ -180,7 +200,9 @@ namespace engine
                                _order, _direction, _cb ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "failed to locate first key, rc: %d", rc ) ;
+            PD_LOG ( PDERROR, 
+                     "failed to locate first key, rc: %d, rootExtent: %d",
+                     rc, rootExtent ) ;
             goto error ;
          }
          _init = TRUE ;
@@ -192,7 +214,7 @@ namespace engine
          // make sure the current _curIndexRID is not NULL
          if ( _curIndexRID.isNull() )
          {
-            // if doing goto here, compile will get error for the following
+            // if we do come here, compiler will give error for the following
             // indexExtent object declare
             rc = SDB_IXM_EOC ;
             goto done ;
@@ -215,7 +237,11 @@ namespace engine
             rc = indexExtent.advance ( _curIndexRID, _direction ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR, "Failed to advance to next key, rc: %d", rc ) ;
+               if( SDB_IXM_KEY_NOTEXIST == rc )
+               {
+                  // not exist means finished
+                  rc = SDB_IXM_EOC;
+               }
                goto error ;
             }
             if ( lastRID == _curIndexRID )
@@ -228,7 +254,7 @@ namespace engine
          // in this case _savedRID can't be NULL
          // advance happened only when both _savedRID and _savedObj matches on
          // disk version
-         else if ( !isReadOnly )
+         else if ( !_isReadOnly )
          {
             // if it's update or delete index scan, the index structure may get
             // changed so everytime we have to compare _curIndexRID and ondisk
@@ -273,7 +299,8 @@ namespace engine
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
                DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
             }
-         } // if ( !isReadOnly )
+
+         } // if ( !_isReadOnly )
          // readonly scan with _savedRID not NULL
          else
          {
@@ -357,7 +384,8 @@ namespace engine
                _savedRID = indexExtent.getRID ( _curIndexRID._slot ) ;
                // make sure the RID we read is not psuedo-deleted
                if ( _savedRID.isNull() ||
-                    _dupBuffer.end() != _dupBuffer.find ( _savedRID ) )
+                    ( _sharedInfo.getDupBuf()->end() != 
+                      _sharedInfo.getDupBuf()->find ( _savedRID ) ) )
                {
                   // usually this means a psuedo-deleted rid, we should jump
                   // back to beginning of the function and advance to next
@@ -370,16 +398,24 @@ namespace engine
                   goto begin ;
                }
                // make sure we don't hit maximum size of dedup buffer
-               /*if ( _dupBuffer.size() >= _dedupBufferSize )
+               /*if ( _sharedInfo.getDupBuf()->size() >= _sharedInfo.getBufSize() )
                {
                   rc = SDB_IXM_DEDUP_BUF_MAX ;
                   goto error ;
                }*/
-               _dupBuffer.insert ( _savedRID ) ;
+               _sharedInfo.getDupBuf()->insert ( _savedRID ) ;
                // ready to return to caller
                rid = _savedRID ;
+#ifdef _DEBUG
+               {
+                  SINT32 ext = rid._extent;
+                  SINT32 offset = rid._offset;
+                  PD_TRACE2( SDB__RTNDISKIXSCAN_ADVANCE, 
+                             PD_PACK_INT(ext), PD_PACK_INT(offset) ) ;
+               }
+#endif
                // if we are write mode, let's record the _savedObj as well
-               if ( !isReadOnly )
+               if ( !_isReadOnly )
                {
                   _savedObj = _curKeyObj.getOwned() ;
                }
@@ -402,7 +438,12 @@ namespace engine
          }
       } // while ( TRUE )
    done :
-      PD_TRACE_EXITRC( SDB__RTNIXSCAN_ADVANCE, rc ) ;
+      if ( SDB_IXM_EOC == rc )
+      {
+         _eof = TRUE;
+      }
+
+      PD_TRACE_EXITRC( SDB__RTNDISKIXSCAN_ADVANCE, rc ) ;
       return rc ;
    error :
       goto done ;
@@ -413,11 +454,11 @@ namespace engine
    // we have to call resumeScan after getting X latch again just in case
    // other sessions changed tree structure
    // this is used for query scan only
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_PAUSESCAN, "_rtnIXScanner::pauseScan" )
-   INT32 _rtnIXScanner::pauseScan( BOOLEAN isReadOnly )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDISKIXSCAN_PAUSESCAN, "_rtnDiskIXScanner::pauseScan" )
+   INT32 _rtnDiskIXScanner::pauseScan( )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__RTNIXSCAN_PAUSESCAN ) ;
+      PD_TRACE_ENTRY ( SDB__RTNDISKIXSCAN_PAUSESCAN ) ;
       if ( !_init || _curIndexRID.isNull() )
       {
          goto done ;
@@ -425,7 +466,7 @@ namespace engine
 
       // for write mode, since we write _savedRID and _savedObj in advance, we
       // don't do it here, so let's jump to done directly
-      if ( !isReadOnly )
+      if ( !_isReadOnly )
       {
          goto done ;
       }
@@ -454,10 +495,11 @@ namespace engine
             goto error ;
          }
          _savedRID = indexExtent.getRID ( _curIndexRID._slot ) ;
+
       }
 
    done:
-      PD_TRACE_EXITRC ( SDB__RTNIXSCAN_PAUSESCAN, rc ) ;
+      PD_TRACE_EXITRC ( SDB__RTNDISKIXSCAN_PAUSESCAN, rc ) ;
       return rc ;
    error :
       goto done ;
@@ -469,13 +511,21 @@ namespace engine
    // can move on the from the current index rid. Otherwise we have to locate
    // the new position for the saved key+rid
    // this is used in query scan only
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNIXSCAN_RESUMESCAN, "_rtnIXScanner::resumeScan" )
-   INT32 _rtnIXScanner::resumeScan( BOOLEAN isReadOnly )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDISKIXSCAN_RESUMESCAN, "_rtnDiskIXScanner::resumeScan" )
+   INT32 _rtnDiskIXScanner::resumeScan( )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__RTNIXSCAN_RESUMESCAN ) ;
+      PD_TRACE_ENTRY ( SDB__RTNDISKIXSCAN_RESUMESCAN ) ;
 
       BOOLEAN isValid = FALSE ;
+
+      if ( !initialized() )
+      {
+         PD_LOG ( PDDEBUG, "DISK IX Scanner not initialized, skip resume" ) ;
+
+         rc = SDB_OK ;
+         goto done ;
+      }
 
       if ( !_indexCB )
       {
@@ -501,12 +551,18 @@ namespace engine
          goto done ;
       }
 
+/*    // Another transaction might have updated the record and index under us
+      // while we are waiting for the record lock. We must re-evaluate the 
+      // index value with the savedObj to make sure we are still looking at
+      // the same index value.  
       // for write mode, since we write _savedRID and _savedObj in advance, we
       // don't do it here, so let's jump to done directly
-      if ( !isReadOnly )
+
+      if ( !_isReadOnly )
       {
          goto done ;
       }
+*/
 
       // compare the historical index OID with the current index oid, to make
       // sure the index is not changed during the time
@@ -546,13 +602,14 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB__RTNIXSCAN_RESUMESCAN, rc ) ;
+
+      PD_TRACE_EXITRC ( SDB__RTNDISKIXSCAN_RESUMESCAN, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   INT32 _rtnIXScanner::isCursorSame( const BSONObj &saveObj,
+   INT32 _rtnDiskIXScanner::isCursorSame( const BSONObj &saveObj,
                                       const dmsRecordID &saveRID,
                                       BOOLEAN &isSame )
    {
@@ -579,12 +636,12 @@ namespace engine
       goto done ;
    }
 
-   void _rtnIXScanner::removeDuplicatRID( const dmsRecordID &rid )
+   void _rtnDiskIXScanner::removeDuplicatRID( const dmsRecordID &rid )
    {
-      _dupBuffer.erase( rid ) ;
+      _sharedInfo.getDupBuf()->erase( rid ) ;
    }
 
-   INT32 _rtnIXScanner::_isCursorSame( ixmExtent *pExtent,
+   INT32 _rtnDiskIXScanner::_isCursorSame( ixmExtent *pExtent,
                                        const BSONObj &saveObj,
                                        const dmsRecordID &saveRID,
                                        BOOLEAN &isSame,
@@ -645,4 +702,3 @@ namespace engine
    }
 
 }
-

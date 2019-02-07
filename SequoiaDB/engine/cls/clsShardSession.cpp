@@ -35,6 +35,7 @@
 #include "pmd.hpp"
 #include "clsMgr.hpp"
 #include "msgMessage.hpp"
+#include "pd.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 #include "rtnDataSet.hpp"
@@ -345,6 +346,7 @@ namespace engine
    INT32 _clsShdSession::_onOPMsg ( NET_HANDLE handle, MsgHeader * msg )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONOPMSG ) ;
+
       BOOLEAN loop = TRUE ;
       INT32 loopTime = 0 ;
       INT32 rc = SDB_OK ;
@@ -358,6 +360,9 @@ namespace engine
       _isMainCL        = FALSE ;
       _hasUpdateCataInfo = FALSE ;
       BOOLEAN isNeedRollback = FALSE;
+
+      PD_TRACE1( SDB__CLSSHDSESS__ONOPMSG, 
+                 PD_PACK_INT ( opCode ) );
 
       _primaryID.value = MSG_INVALID_ROUTEID ;
 
@@ -1237,10 +1242,9 @@ namespace engine
                                           INT32 &startingPos,
                                           INT64 &contextID )
    {
-      PD_LOG ( PDDEBUG, "session[%s] _onQueryReqMsg", sessionName() ) ;
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONQYREQMSG ) ;
 
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONQYREQMSG ) ;
       INT32 flags = 0 ;
       CHAR *pCollectionName = NULL ;
       CHAR *pQueryBuff = NULL ;

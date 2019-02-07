@@ -43,6 +43,7 @@
 #include "ossLatch.hpp"         // ossSpinXLatch
 #include "utilSegment.hpp"      // UTIL_UTIL_OBJIDX
 #include "dpsTransLockDef.hpp"  // DPS_TRANSLOCK_TYPE, dpsTransLockId
+#include "dpsTransVersionCtrl.hpp" // oldVersionContainer
 
 namespace engine
 {
@@ -62,19 +63,79 @@ namespace engine
       UINT32 refCounter ;           // lock reference counter
       DPS_TRANSLOCK_TYPE lockMode ; // lock mode, UINT8, 1 byte
       UINT8 pad[3] ;                // 3 byte for padding
-   } ;
+   } ;  // 40 bytes in total
 
 
    // Lock Request Block Header ( LRB Header )
    class dpsTransLRBHeader : public SDBObject
    {
    public :
-      UTIL_OBJIDX nextLRBHdrIdx ;// index of next LRB Header in the chain
-      UTIL_OBJIDX ownerLRBIdx ;  // index of the first owner LRB in its chain
-      UTIL_OBJIDX waiterLRBIdx ; // index of the first waiter LRB in its chain
-      UTIL_OBJIDX upgradeLRBIdx; // index of the first upgrader LRB in its chain
-      dpsTransLockId lockId ;    // lockId, 16 bytes
-   } ;
+      UTIL_OBJIDX nextLRBHdrIdx ;   // index of next LRB Header in the chain
+      UTIL_OBJIDX ownerLRBIdx ;     // index of the first owner LRB in its chain
+      UTIL_OBJIDX waiterLRBIdx ;    // index of the first waiter LRB in its chain
+      UTIL_OBJIDX upgradeLRBIdx;    // index of the first upgrader LRB in its chain
+      dpsTransLockId lockId ;  // lockId, 16 bytes
+      oldVersionContainer *oldVer ;   // a pointer to the structure containing
+                                      // version page/index information
+   public :
+      // is this lock for a newly created record or not
+      BOOLEAN isNewRecord()
+      { return oldVer ? oldVer->isRecordNew() : FALSE ;  }
+
+      void setNewRecord()
+      {
+         if( oldVer )
+         { 
+            oldVer->setRecordNew();
+         }
+      }
+      void unsetNewRecord()
+      {
+         if( oldVer )
+         { 
+            oldVer->unsetRecordNew();
+         }
+      }
+
+      // access to oldVersionContainer element
+      const dmsRecord * getOldRecord() const 
+      { return oldVer ? oldVer->getOldRecord() : NULL; }
+
+      void setOldRecord(dmsRecord * r) { oldVer->setOldRecord(r); }
+
+      MEMBLOCKPOOL_TYPE &oldRecordMemType() { return oldVer->getRecordMemType(); }
+
+      // try to insert to lid set. The caller should hold record lock in X
+      // as the protection
+      // Return TRUE if succeeded. return FALSE if already exist.
+      BOOLEAN  insertOldIdxLid( const  SINT32 lid, ixmIndexCB* indexCB )
+      { 
+         return oldVer->insertOldIdxLid(lid, indexCB); 
+      }
+
+      BOOLEAN idxLidExist(SINT32 id)
+      {
+         BOOLEAN found  = FALSE;
+         if ( oldVer != NULL )
+         {
+            found = oldVer->idxLidExist(id);
+         }
+         return found;
+      }
+
+      // given logical idx id, return the index value 
+      BSONObj* getOldIdxValue(const  SINT32 lid ) 
+      { 
+         BSONObj * obj = NULL;
+         if ( oldVer != NULL )
+         {
+            obj = oldVer->getOldIdxValue(lid);
+         }
+         return obj;
+      }
+
+      //MEMBLOCKPOOL_TYPE &oldIdxMemType() { return oldVer->_idxMemType; }
+   } ;  // 48 bytes in total
 
 
    class dpsTransLRBHeaderHash : public SDBObject
@@ -82,7 +143,7 @@ namespace engine
    public :
       UTIL_OBJIDX    lrbHdrIdx    ; // index of 1st LRB Header in the chain
       ossSpinXLatch  hashHdrLatch ; // ossSpinXLatch, 48 bytes
-   } ;
+   } ; // 56 bytes in total
 #pragma pack()
 }
 

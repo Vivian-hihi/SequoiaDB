@@ -113,6 +113,7 @@ namespace bson {
     }
 
     // deep (full) equality
+    // return true if exactly equal
     inline bool BSONObj::equal(const BSONObj &rhs) const {
         BSONObjIterator i(*this);
         BSONObjIterator j(rhs);

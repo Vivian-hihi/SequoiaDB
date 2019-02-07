@@ -74,7 +74,8 @@ namespace engine
                            _dmsMBContext *mbContext,
                            _pmdEDUCB *cb,
                            _dmsScanner **ppScanner,
-                           DMS_ACCESS_TYPE accessType ) ;
+                           DMS_ACCESS_TYPE accessType,
+                           _dpsITransLockCallback * callback = NULL ) ;
 
    INT32 rtnGetTBScanner ( const CHAR *pCollectionShortName,
                            optAccessPlanRuntime *planRuntime,
@@ -82,7 +83,8 @@ namespace engine
                            _dmsMBContext *mbContext,
                            _pmdEDUCB *cb,
                            _dmsScanner **ppScanner,
-                           DMS_ACCESS_TYPE accessType ) ;
+                           DMS_ACCESS_TYPE accessType,
+                           _dpsITransLockCallback * callback = NULL ) ;
 
    INT32 rtnGetIndexSeps( optAccessPlanRuntime *planRuntime,
                           _dmsStorageUnit *su,

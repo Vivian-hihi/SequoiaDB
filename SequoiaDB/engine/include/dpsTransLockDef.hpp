@@ -476,11 +476,15 @@ namespace engine
       dpsTransLockId       _lockID ;
       DPS_TRANSLOCK_TYPE   _lockType ;
       EDUID                _eduID ;
+      BOOLEAN              _useOldVersion ;
+      BOOLEAN              _newAcquire ;
 
       _dpsTransRetInfo()
       {
          _lockType   = DPS_TRANSLOCK_IS ;
          _eduID      = 0 ;
+         _useOldVersion = FALSE ;
+         _newAcquire =FALSE ;
       }
    } ;
    typedef _dpsTransRetInfo dpsTransRetInfo ;

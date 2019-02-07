@@ -53,6 +53,7 @@
 #include "../bson/bsonobj.h"
 #include "mthMatchRuntime.hpp"
 #include "ossMemPool.hpp"
+#include "dpsTransLockCallback.hpp"
 
 using namespace bson ;
 
@@ -68,6 +69,7 @@ namespace engine
    class _pmdEDUCB ;
    class _monAppCB ;
    class dpsTransCB ;
+   class _dpsTransExecutor;
 
    /*
       _dmsScanner define
@@ -77,13 +79,22 @@ namespace engine
       public:
          _dmsScanner ( _dmsStorageDataCommon *su, _dmsMBContext *context,
                        mthMatchRuntime *matchRuntime,
-                       DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH ) ;
+                       DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
+                       _dpsITransLockCallback * callback = NULL );
          virtual ~_dmsScanner () ;
 
          BOOLEAN  isReadOnly() const
          {
             return SHARED == _mbLockType ? TRUE : FALSE ;
          }
+
+         void setupTransLockCallback( dmsRecordRW* recordRW );
+
+         BOOLEAN isIdxChanged( dmsExtentID    lid,
+                               const BSONObj* value );
+
+         void setNeedWaitForLock( const BOOLEAN w ) { _waitLock = w; }
+         const BOOLEAN needWaitForLock() const { return _waitLock ; }
 
       public:
          virtual INT32 advance ( dmsRecordID &recordID,
@@ -98,7 +109,7 @@ namespace engine
          mthMatchRuntime        *_matchRuntime ;
          DMS_ACCESS_TYPE         _accessType ;
          INT32                   _mbLockType ;
-
+         _dpsITransLockCallback *_callback ;
          INT32                   _transIsolation ;
          BOOLEAN                 _waitLock ;
          BOOLEAN                 _useRollbackSegment ;
@@ -120,7 +131,8 @@ namespace engine
                               DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                               INT64 maxRecords = -1,
                               INT64 skipNum = 0,
-                              INT32 flag = 0 ) ;
+                              INT32 flag = 0,
+                              _dpsITransLockCallback * callback = NULL ) ;
          virtual ~_dmsExtScannerBase () ;
 
          const dmsExtent* curExtent () const { return _extent ; }
@@ -158,6 +170,8 @@ namespace engine
          INT32                _recordLock ;
          BOOLEAN              _needUnLock ;
          BOOLEAN              _selectForUpdate ;
+         // indicate if the scanner need to wait for record lock
+         //BOOLEAN              _transLockwait;
          _pmdEDUCB            *_cb ;
    };
    typedef _dmsExtScannerBase dmsExtScannerBase ;
@@ -171,7 +185,8 @@ namespace engine
                          DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                          INT64 maxRecords = -1,
                          INT64 skipNum = 0,
-                         INT32 flag = 0 ) ;
+                         INT32 flag = 0,
+                         _dpsITransLockCallback * callback = NULL ) ;
          virtual ~_dmsExtScanner() ;
 
       private:
@@ -239,7 +254,8 @@ namespace engine
                          DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                          INT64 maxRecords = -1,
                          INT64 skipNum = 0,
-                         INT32 flag = 0 ) ;
+                         INT32 flag = 0,
+                         _dpsITransLockCallback * callback = NULL ) ;
          ~_dmsTBScanner () ;
 
       public:
@@ -270,6 +286,7 @@ namespace engine
    class _dmsIXScanner ;
    /*
       _dmsIXSecScanner define
+      dms index section scanner
    */
    class _dmsIXSecScanner : public _dmsScanner
    {
@@ -282,7 +299,8 @@ namespace engine
                             DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                             INT64 maxRecords = -1,
                             INT64 skipNum = 0,
-                            INT32 flag = 0 ) ;
+                            INT32 flag = 0,
+                            _dpsITransLockCallback * callback = NULL ) ;
          virtual ~_dmsIXSecScanner () ;
 
          void  enableIndexBlockScan( const BSONObj &startKey,
@@ -324,6 +342,8 @@ namespace engine
          INT8                 _recordLock ;
          BOOLEAN              _needUnLock ;
          BOOLEAN              _selectForUpdate ;
+         // indicate if the scanner need to wait for record lock
+         //BOOLEAN              _transLockwait;
          _pmdEDUCB            *_cb ;
          _rtnIXScanner        *_scanner ;
          INT64                _onceRestNum ;
@@ -357,7 +377,8 @@ namespace engine
                          DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                          INT64 maxRecords = -1,
                          INT64 skipNum = 0,
-                         INT32 flag = 0 ) ;
+                         INT32 flag = 0,
+                         _dpsITransLockCallback * callback = NULL ) ;
          ~_dmsIXScanner () ;
 
          _rtnIXScanner* getScanner () { return _scanner ; }
@@ -426,11 +447,67 @@ namespace engine
                                     DMS_ACCESS_TYPE accessType,
                                     INT64 maxRecords,
                                     INT64 skipNum,
-                                    INT32 flag ) ;
+                                    INT32 flag,
+                                    _dpsITransLockCallback * callback = NULL ) ;
    } ;
    typedef _dmsExtScannerFactory dmsExtScannerFactory ;
 
    dmsExtScannerFactory* dmsGetScannerFactory() ;
+
+   // Class to implment lock call back funtions for DMS scanner
+   class dmsTransLockCallback : public _dpsITransLockCallback
+   {
+      public:
+      //dmsTransLockCallback() {};
+      dmsTransLockCallback( dpsTransCB  * transCB, 
+                            _pmdEDUCB   * eduCB,
+                            _dmsRecordRW * recordRW ) ;
+
+      virtual ~dmsTransLockCallback() {};
+
+      virtual void beforeLockAcquire( const dpsTransLockId    &lockId,
+                                      const INT32              irc,
+                                      const DPS_TRANSLOCK_TYPE requestLockMode,
+                                 const DPS_TRANSLOCK_OP_MODE_TYPE opMode
+                                ) {};
+      virtual void afterLockAcquire( const dpsTransLockId     &lockId,
+                                           INT32              &irc,
+                                     const DPS_TRANSLOCK_TYPE  requestLockMode,
+                                     const DPS_TRANSLOCK_OP_MODE_TYPE opMode,
+                                           dpsTransRetInfo *pdpsTxResInfo) ;
+
+      virtual void beforeLockRelease( const dpsTransLockId     &lockId,
+                                      const DPS_TRANSLOCK_TYPE  lockMode,
+                                      const UINT64              refCounter,
+                                      oldVersionContainer      *oldVer ) ;
+
+      virtual void afterLockRelease( const dpsTransLockId &lockId ) {};
+
+      void setRecordRW ( dmsRecordRW * recordRW ) { _recordRW = recordRW; }
+      
+      CHAR * getWorkingArea () { return (CHAR *) _oldVer ; }
+      void resetWorkingArea () { _oldVer = NULL ; }
+      UINT32 isolationLevel() const { return _isolationLevel ; }
+      BOOLEAN lockwaitLevel() const { return _lockwaitLevel ; }
+
+      INT32 saveOldVersionRecord( _dmsRecordRW *recordRW );
+      oldVersionCB * getOldVCB() { return _transCB->getOldVCB(); }
+
+      // INT32 saveOldVersionIndexes( );
+
+      private:
+      dpsTransCB        * _transCB;   // use it to access global old copy tree
+      pmdEDUCB          * _eduCB;
+      UINT32              _isolationLevel;
+      BOOLEAN              _lockwaitLevel;
+      _dpsTransExecutor * _transExecutor;  // use it to access thread local buf
+      // DMS related information
+      dmsRecordRW       * _recordRW;
+      // working area to be setup by callback function so the update can
+      // put proper old copy into the area right before the update
+      oldVersionContainer *_oldVer;
+   };
+
 }
 
 #endif //DMSSCANNER_HPP__

@@ -9,8 +9,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Affero General Public License for more details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the   GNU Affero General Public License for more details.
 
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -36,11 +35,18 @@
 *******************************************************************************/
 #include "dpsTransLockMgr.hpp"
 #include "dpsTransExecutor.hpp"
+#include "dpsTransLockCallback.hpp"
 #include "dpsTrace.hpp"
 #include "pd.hpp"
+#include "dpsTrace.hpp"
 #include "pdTrace.hpp"
 #include "sdbInterface.hpp"   // IContext
 #include <stdio.h>
+
+#if 0
+//#ifdef _DEBUG    // once we upgrade the boost, we might want to have this
+#include <boost/stacktrace.hpp>
+#endif
 
 namespace engine
 {
@@ -193,7 +199,7 @@ namespace engine
    // Output:      none
    // Return:      the pointer of the object or NULL
    // Dependency:  the lock manager must be initialized
-   OSS_INLINE dpsTransLRBHeader * dpsTransLockManager::_getLRBHdrPtrByIdx
+   dpsTransLRBHeader * dpsTransLockManager::_getLRBHdrPtrByIdx
    (
       const UTIL_OBJIDX hdrIdx
    )
@@ -264,7 +270,24 @@ namespace engine
       pLRBHdr->ownerLRBIdx   = UTIL_INVALID_OBJ_INDEX ;
       pLRBHdr->waiterLRBIdx  = UTIL_INVALID_OBJ_INDEX ;
       pLRBHdr->upgradeLRBIdx = UTIL_INVALID_OBJ_INDEX ;
+      if ( pLRBHdr->oldVer )
+      {
+         // debug code to track the guy freeing oldVer
+         if ( pLRBHdr->oldVer->getOldRecord() != NULL )
+         {
+#if 0
+            PD_LOG ( PDDEBUG, "Freeing oldver while freeing LRBHdr for (%s)."
+                     " Stack is:\n %s",
+                     lockId.toString(), boost::stacktrace::stacktrace() );
+#endif
+            PD_LOG ( PDDEBUG, "Freeing oldver while freeing LRBHdr for (%s).",
+                     pLRBHdr->lockId.toString() );
+         }
+         SDB_OSS_DEL pLRBHdr->oldVer;
+         pLRBHdr->oldVer = NULL;
+      }
       pLRBHdr->lockId.reset() ;
+
       // release LRB Header
       INT32 rc = _pLRBHdrMgr->release( hdrIdx );
 #ifdef _DEBUG
@@ -1257,7 +1280,8 @@ namespace engine
       const DPS_TRANSLOCK_OP_MODE_TYPE   opMode,
       const UTIL_OBJIDX                  bktIdx,
       const BOOLEAN                      bktLatched,
-      dpsTransRetInfo                  * pdpsTxResInfo
+      dpsTransRetInfo                  * pdpsTxResInfo,
+      _dpsITransLockCallback           * callback 
    )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST ) ;
@@ -1323,6 +1347,12 @@ namespace engine
 #endif
          bFreeLRB       = TRUE ;
          bFreeLRBHeader = TRUE ;
+         if ( pdpsTxResInfo )
+         {
+            // default mark this edu has newly aquired/granted the lock
+            // we will mark it false if we found the lock been covered
+            pdpsTxResInfo->_newAcquire = TRUE;
+         }
 #ifdef _DEBUG
          PD_TRACE4( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
                     PD_PACK_STRING("Acquired LRB Header:"),
@@ -1353,6 +1383,7 @@ namespace engine
             // mark the new LRB and LRB Header are used
             bFreeLRB       = FALSE ;
             bFreeLRBHeader = FALSE ;
+
          }
 #ifdef _DEBUG
          PD_TRACE1( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
@@ -1438,6 +1469,10 @@ namespace engine
                   PD_TRACE1( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
                              PD_PACK_STRING( "CS,CL lock coverage chk passed"));
 #endif
+                  if( pdpsTxResInfo )
+                  {
+                     pdpsTxResInfo->_newAcquire = FALSE;
+                  }
                   goto done ;
                }
             }
@@ -1501,6 +1536,10 @@ namespace engine
                        PD_PACK_STRING( "Current mode covers requesting" ),
                        PD_PACK_BYTE( pLRB->lockMode ) ) ; 
 #endif
+            if ( pdpsTxResInfo )
+            {
+               pdpsTxResInfo->_newAcquire = FALSE;
+            }
             goto done ; 
          }
 
@@ -1745,6 +1784,7 @@ namespace engine
 
                   // mark the new LRB is used
                   bFreeLRB = FALSE ;
+
                }
                else
                {
@@ -1791,6 +1831,14 @@ namespace engine
          }  // if request lock mode is compatible with other owners
       }  // if in owner list
    done:
+      if( callback )
+      {
+         callback->afterLockAcquire( lockId, rc, 
+                                     requestLockMode,
+                                     opMode,
+                                     pdpsTxResInfo );
+      }
+
       if ( bLatched )
       {
          _releaseOpLatch( bktIdx ) ;
@@ -1854,7 +1902,9 @@ namespace engine
 #ifdef _DEBUG
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 #endif
-      INT32 rc = SDB_OK ;
+      INT32   rc             = SDB_OK ;
+      BOOLEAN lrbAcquired    = FALSE;
+      BOOLEAN lrbHdrAcquired = FALSE;
 
       // acquire a free LRB
       rc = _pLRBMgr->acquire( lrbIdxNew, pLRBNew ) ;
@@ -1867,15 +1917,12 @@ namespace engine
       SDB_ASSERT( pLRBNew,
                   "_prepareNewLRBAndHeader: LRB can't be null" ) ;
 #endif
+      lrbAcquired = TRUE;
+
       // acuqire a free LRB Header
       rc = _pLRBHdrMgr->acquire( hdrIdxNew, pLRBHdrNew ) ;
       if ( SDB_OK != rc )
       {
-         // release LRB in case failed to acquire LRB Header
-         _releaseLRB( lrbIdxNew ) ;
-
-         PD_LOG( PDERROR,
-                 "Failed to acquire a free LRB Header (rc=%d)", rc );
          goto error ;
       }
 #ifdef _DEBUG
@@ -1901,8 +1948,33 @@ namespace engine
       pLRBHdrNew->upgradeLRBIdx = UTIL_INVALID_OBJ_INDEX ;
       pLRBHdrNew->nextLRBHdrIdx = UTIL_INVALID_OBJ_INDEX ;
 
-   error :
+      pLRBHdrNew->oldVer = SDB_OSS_NEW oldVersionContainer(hdrIdxNew);
+      if ( pLRBHdrNew->oldVer == NULL )
+      {
+         rc = SDB_OOM;
+         PD_LOG( PDERROR,
+                 "Failed to acquire oldVer (rc=%d)", rc );
+         goto error;
+      }
+
+   done:
       return rc ;
+   error :
+      if( lrbAcquired )
+      {
+         // release LRB in case failed to acquire LRB Header
+         _releaseLRB( lrbIdxNew ) ;
+      }
+
+      if( lrbHdrAcquired )
+      {
+         // release LRB in case failed to acquire LRB Header
+         _releaseLRBHdr( hdrIdxNew ) ;
+      }
+
+      PD_LOG( PDERROR,
+                 "Failed to acquire a free LRB & Header (rc=%d)", rc );
+      goto done;
    }
 
 
@@ -1929,6 +2001,7 @@ namespace engine
    //    pContext        -- pointer to context :
    //                         dmsTBTransContext
    //                         dmsIXTransContext
+   //    callback        -- pointer to trans lock callback
    // Output:
    //    pdpsTxResInfo   -- pointer to dpsTransRetInfo, a structure used to
    //                       save the conflict lock info
@@ -1949,7 +2022,8 @@ namespace engine
       const dpsTransLockId     & lockId,
       const DPS_TRANSLOCK_TYPE   requestLockMode,
       IContext                 * pContext,
-      dpsTransRetInfo          * pdpsTxResInfo    
+      dpsTransRetInfo          * pdpsTxResInfo,
+      _dpsITransLockCallback   * callback
    )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_ACQUIRE ) ;
@@ -1999,7 +2073,8 @@ namespace engine
                     PD_PACK_STRING( iLockIdStr ),
                     PD_PACK_BYTE( iLockMode )  ) ;
 #endif
-         rc = acquire(dpsTxExectr, iLockId, iLockMode, pContext, pdpsTxResInfo);
+         rc = acquire( dpsTxExectr, iLockId, iLockMode, 
+                       pContext, pdpsTxResInfo );
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -2018,7 +2093,8 @@ namespace engine
                               DPS_TRANSLOCK_OP_MODE_ACQUIRE,
                               bktIdx,
                               bLatched,
-                              pdpsTxResInfo ) ;
+                              pdpsTxResInfo,
+                              callback ) ;
       // _tryAcquireOrTest acquires bucket latch by default unless the input
       // parameter, bLatched, is set to TRUE; and it always releases the latch
       // before returns
@@ -2194,6 +2270,7 @@ namespace engine
    //    dpsTxExectr     -- dpsTransExecutor
    //    lockId          -- lock id
    //    bForceRelease   -- force release flag
+   //    callback        -- pointer to translock callback
    // Output :
    //    none
    // Dependency:  the lock manager must be initialized
@@ -2204,7 +2281,8 @@ namespace engine
    (
       _dpsTransExecutor       * dpsTxExectr,
       const dpsTransLockId    & lockId,
-      const BOOLEAN             bForceRelease
+      const BOOLEAN             bForceRelease,
+      _dpsITransLockCallback  * callback
    )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASE ) ;
@@ -2214,8 +2292,9 @@ namespace engine
       CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
       ossSnprintf( lockIdStr, sizeof( lockIdStr ),
                    "%s", lockId.toString().c_str() ) ;
-      PD_TRACE3( SDB_DPSTRANSLOCKMANAGER__RELEASE,
+      PD_TRACE4( SDB_DPSTRANSLOCKMANAGER__RELEASE,
                  PD_PACK_ULONG( dpsTxExectr ),
+                 PD_PACK_ULONG( callback ),
                  PD_PACK_STRING( lockIdStr ),
                  PD_PACK_UINT( bForceRelease ) ) ;
 
@@ -2336,6 +2415,23 @@ namespace engine
                pOwnerLRB->refCounter -- ; 
             }
 
+#ifdef _DEBUG
+               PD_LOG( PDDEBUG, "releasing lock before callback,"
+                       " lockid=%s,bForceRelease=%d, callback=%x,refcounter=%d",
+                       lockIdStr, bForceRelease, callback, pOwnerLRB->refCounter);
+
+#endif
+
+            // invoke call back function before release
+            if( callback )
+            {
+               callback->
+                  beforeLockRelease( lockId,
+                                     pOwnerLRB->lockMode,
+                                     pOwnerLRB->refCounter,
+                                     pLRBHdr->oldVer );
+            }
+
             if ( 0 == pOwnerLRB->refCounter )
             {
 #ifdef _DEBUG
@@ -2397,6 +2493,16 @@ namespace engine
                }
             }
          }
+         else
+         {
+#ifdef _DEBUG
+            // FIXME: should this LRBHdr existing?
+               PD_LOG( PDDEBUG, "LRBHdr not found/valid, releasing lock skipped,"
+                       " lockid=%s,bForceRelease=%d, callback=%x,hdrIdx=%d",
+                       lockIdStr, bForceRelease, callback, hdrIdx);
+
+#endif
+         }
       }
    done: 
       // release the bucket latch
@@ -2439,9 +2545,10 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER_RELEASE, "dpsTransLockManager::release" )
    void dpsTransLockManager::release
    (
-      _dpsTransExecutor    * dpsTxExectr,
-      const dpsTransLockId & lockId,
-      const BOOLEAN          bForceRelease
+      _dpsTransExecutor      * dpsTxExectr,
+      const dpsTransLockId   & lockId,
+      const BOOLEAN            bForceRelease,
+      _dpsITransLockCallback * callback 
    )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_RELEASE ) ;
@@ -2449,9 +2556,10 @@ namespace engine
       CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
       ossSnprintf( lockIdStr, sizeof( lockIdStr ),
                    "%s", lockId.toString().c_str() ) ;
-      PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_RELEASE,
+      PD_TRACE4( SDB_DPSTRANSLOCKMANAGER_RELEASE,
                  PD_PACK_ULONG( dpsTxExectr ),
                  PD_PACK_STRING( lockIdStr ),
+                 PD_PACK_ULONG( callback ),
                  PD_PACK_UINT( bForceRelease ) ) ;
 
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
@@ -2463,7 +2571,7 @@ namespace engine
          dpsTransLockId iLockId ;
 
          // main logic of release by lockId
-         _release( dpsTxExectr, lockId, bForceRelease ) ;
+         _release( dpsTxExectr, lockId, bForceRelease, callback ) ;
 
          // release the intent lock
          if ( ! lockId.isRootLevel() )
@@ -2508,7 +2616,8 @@ namespace engine
    void dpsTransLockManager::_releaseAll
    (
       _dpsTransExecutor    * dpsTxExectr,
-      const dpsTransLockId & lockId
+      const dpsTransLockId & lockId,
+      _dpsITransLockCallback * callback
    )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASEALL ) ;
@@ -2528,7 +2637,7 @@ namespace engine
       if ( lockId.isValid() )
       { 
          // main logic of release by lockId, force release mode
-         _release( dpsTxExectr, lockId, TRUE ) ;
+         _release( dpsTxExectr, lockId, TRUE, callback ) ;
 
          // release the intent lock
          if ( ! lockId.isRootLevel() )
@@ -2563,13 +2672,15 @@ namespace engine
    //           . release the upper level intent lock
    // Input:
    //    dpsTxExectr     -- pointer to _dpsTransExecutor 
+   //    callback        -- pointer to call back function
    // Output:
    //    none
    // Dependency:  the lock manager must be initialized
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER_RELEASEALL, "dpsTransLockManager::releaseAll" )
-   void dpsTransLockManager::releaseAll( _dpsTransExecutor *dpsTxExectr )
+   void dpsTransLockManager::releaseAll( _dpsTransExecutor *dpsTxExectr,
+                                         _dpsITransLockCallback * callback )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_RELEASEALL ) ;
 #ifdef _DEBUG
@@ -2615,7 +2726,7 @@ namespace engine
 #endif
 
                // release the lock 
-               _releaseAll( dpsTxExectr, lockId ) ;
+               _releaseAll( dpsTxExectr, lockId, callback ) ;
             }
 
             // _releaseAll will remove LRB from EDU list
@@ -2645,7 +2756,7 @@ namespace engine
    // Return:
    //    index to the LRB Header bucket
    //
-   OSS_INLINE UTIL_OBJIDX dpsTransLockManager::_getBucketNo
+   UTIL_OBJIDX dpsTransLockManager::_getBucketNo
    (
       const dpsTransLockId &lockId
    )
@@ -2734,7 +2845,8 @@ namespace engine
       _dpsTransExecutor        * dpsTxExectr,
       const dpsTransLockId     & lockId,
       const DPS_TRANSLOCK_TYPE   requestLockMode,
-      dpsTransRetInfo          * pdpsTxResInfo
+      dpsTransRetInfo          * pdpsTxResInfo,
+      _dpsITransLockCallback   * callback
    )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_TRYACQUIRE ) ;
@@ -2799,7 +2911,8 @@ namespace engine
                               DPS_TRANSLOCK_OP_MODE_TRY,
                               bktIdx,
                               FALSE,
-                              pdpsTxResInfo ) ;
+                              pdpsTxResInfo, 
+                              callback ) ;
       if ( SDB_OK != rc )
       {
          goto error ;

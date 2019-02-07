@@ -1264,6 +1264,7 @@ namespace engine
       goto done ;
    }
 
+   // Find and remove specific key from an index
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT_UNINDEX, "_ixmExtent::unindex" )
    INT32 _ixmExtent::unindex ( const ixmKey &key, const dmsRecordID &rid,
                                const Ordering &order, ixmIndexCB *indexCB,
@@ -1353,6 +1354,9 @@ namespace engine
          goto error ;
       }
       left = getKeyNode( pos )->_left ;
+
+      // All code path within this block will endup jumping to either 
+      // done or error
       if ( 1 == getNumKeyNode() )
       {
          if ( DMS_INVALID_EXTENT == left &&
@@ -1403,10 +1407,12 @@ namespace engine
             goto error ;
          }
          goto done ;
-      }
+      }  // end of if ( 1 == getNumKeyNode() )
+
       // when we get there, that means we have more than 1 key in the extent
       if ( DMS_INVALID_EXTENT == left )
       {
+         // No left, we can remove the key from the extent
          rc = _delKeyAtPos ( pos ) ;
          if ( rc )
          {
@@ -1422,7 +1428,8 @@ namespace engine
       }
       else
       {
-         // if the left pointer is not null, let's do internal delete
+         // if the left pointer is not null, let's do internal delete, this may
+         // touch/move the next key
          rc = _deleteInternalKey ( pos, order, indexCB ) ;
          if ( rc )
          {
@@ -1653,7 +1660,8 @@ namespace engine
          else
          {
             // if there's no child for the next key, let's replace the next key
-            // to the current keynode
+            // to the current keynode and remove the next key from its original
+            // extent
             const ixmKeyNode *kn = nextExtent.getKeyNode
                   ( nextIndexKey._slot ) ;
             ixmKey nextKey ( nextExtent.getKeyData(nextIndexKey._slot)) ;
@@ -1688,6 +1696,8 @@ namespace engine
    error :
       goto done ;
    }
+
+   // Move to the next key based on the direction
    // keyRID is for input and output
    // direction=1 means forward, -1 means backward
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT_ADVANCE, "_ixmExtent::advance" )
@@ -2187,11 +2197,12 @@ namespace engine
    // c1:1 and match whatever the next (for example c1:1.1); otherwise we want
    // to continue match the elements from matchEle )
    // PD_TRACE_DECLARE_FUNCTION ( SDB_IXMEXT__KEYCMP, "_ixmExtent::_keyCmp" )
-   INT32 _ixmExtent::_keyCmp ( const BSONObj &currentKey, const BSONObj &prevKey,
+   INT32 _ixmExtent::_keyCmp ( const BSONObj &currentKey,
+                               const BSONObj &prevKey,
                                INT32 keepFieldsNum, BOOLEAN skipToNext,
                                const vector < const BSONElement *> &matchEle,
                                const vector < BOOLEAN > &matchInclusive,
-                               const Ordering &o, INT32 direction ) const
+                               const Ordering &o, INT32 direction ) 
    {
       PD_TRACE_ENTRY ( SDB_IXMEXT__KEYCMP );
       BSONObjIterator ll ( currentKey ) ;

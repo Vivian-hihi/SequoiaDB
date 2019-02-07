@@ -121,6 +121,7 @@ namespace engine
       _id.toBson( builder ) ;
 
       builder.append( MON_TRANS_LOCK_MODE, lockModeToString( _mode ) ) ;
+
       if ( showCount )
       {
          builder.append( MON_TRANS_LOCK_COUNT, (INT32)_count ) ;
