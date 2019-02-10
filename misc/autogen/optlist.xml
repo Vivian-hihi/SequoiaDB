@@ -1851,5 +1851,53 @@
       <typeofweb>boolean</typeofweb>
    </opt>
 
-</optlist>
+   <opt>
+      <name>PMD_OPTION_TRANS_LRB_TOTAL</name>
+      <long>translrbtotal</long>
+      <description>
+        <en>Specify the total number of LRBs ( Lock Request Block ). defalut:536870912, value range:[8192, 2^31 - 1]</en>
+        <cn> 指定系统中 LRB 总数。默认为 536870912 取值范围[ 8192, 2^31 - 1 ]</cn>
+      </description>
+      <reloadable>
+         <en>Take effect after restart</en>
+         <cn>重启生效</cn>
+      </reloadable>
+      <detail>
+        <en>Specify the total number of LRBs ( Lock Request Block ). defalut:536870912, value range:[8192, 2^31 - 1]<fig></fig>
+        </en>
+        <cn>指定系统中 LRB 总数。默认为 536870912 取值范围[ 8192, 2^31 - 1 ]<fig></fig>
+        </cn>
+      </detail>
+      <type>int</type>
+      <default>536870912</default>
+      <hidden>true</hidden>
+      <typeofweb>num</typeofweb>
+   </opt>
 
+   <opt>
+      <name>PMD_OPTION_TRANS_LRB_PER_SEGMENT</name>
+      <long>translrbpersegment</long>
+      <description>
+        <en>Specify the number of LRBs ( Lock Request Block ) in a LRB segment. defalut:1048576, value range:[8192, 2^31 - 1]</en>
+        <cn>每个LRB ( Lock Request Block ) Segment 所含 LRB 个数。默认为 1048576 取值范围[ 8192, 2^31 - 1 ]</cn>
+      </description>
+      <reloadable>
+         <en>Take effect after restart</en>
+         <cn>重启生效</cn>
+      </reloadable>
+      <detail>
+        <en>Specify the number of LRBs ( Lock Request Block ) in a LRB segment, system will round it up to the nearest next power of 2. When more LRBs are needed, a new segment will be added till the total LRBs reaches the threshold defined by parameter translrbtotal. defalut:1048576, value range:[8192, 2^31 - 1]
+            The number of LRB Header in a LRB Header segment is set to translrbpersegment / 4, the total number of LRB Header is equal to translrbtotal.<fig></fig>
+        </en>
+        <cn>每个LRB ( Lock Request Block ) Segment 所含 LRB 个数，系统会将其舍入到最近的下一个2的次幂。当系统需要更多的锁请求块 ( LRB ) 时会增加一个新的 LRB Segment, 直至达到由参数 translrbtotal 定义的上限。默认为 1048576 取值范围[ 8192, 2^31 - 1 ] 
+            每个LRB Header Segment 所含 LRB Header 个数设定为 translrbpersegment / 4，LRB Header 总数设定为与 translrbtotal 相同。<fig></fig>
+        </cn>
+      </detail>
+      <type>int</type>
+      <default>1048576</default>
+      <hidden>true</hidden>
+      <typeofweb>num</typeofweb>
+   </opt>
+
+
+</optlist>

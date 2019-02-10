@@ -60,7 +60,7 @@ namespace engine
    } ;
 
    #define DPS_TRANS_ISOLATION_DFT        TRANS_ISOLATION_RU
-   #define DPS_TRANS_DFT_TIMEOUT          (60)  // 1 minute
+   #define DPS_TRANS_DFT_TIMEOUT          (60)  /* 1 minute */
    #define DPS_TRANS_LOCKWAIT_DFT         FALSE
 
    /*
@@ -71,6 +71,13 @@ namespace engine
    #define TRANS_CONF_MASK_WAITLOCK          0x00000004
    #define TRANS_CONF_MASK_USERBS            0x00000008
 
+   /*
+      TRANS LRB AND LRB HEADER
+   */
+   #define DPS_TRANS_LRB_PER_SEG_DFT      ( 1048576 )
+   #define DPS_TRANS_LRB_TOTAL_DFT        ( 536870912 )
+   #define DPS_TRANS_LRB_MIN              ( 8192 )
+   #define DPS_TRANS_LRB_MAX              ( 4294967295 )
 }
 
 #endif // DPS_TRANS_DEF_HPP__

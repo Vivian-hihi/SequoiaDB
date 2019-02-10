@@ -1864,6 +1864,8 @@ done:
       _transIsolation      = DPS_TRANS_ISOLATION_DFT ;
       _transLockwait       = DPS_TRANS_LOCKWAIT_DFT ;
       _transTimeout        = DPS_TRANS_DFT_TIMEOUT ;
+      _transLRBPerSegment  = DPS_TRANS_LRB_PER_SEG_DFT ;
+      _transLRBTotal       = DPS_TRANS_LRB_TOTAL_DFT ;
       _sharingBreakTime    = PMD_OPTION_BRK_TIME_DEFAULT ;
       _startShiftTime      = PMD_DFT_START_SHIFT_TIME ;
       _logBuffSize         = DPS_DFT_LOG_BUF_SZ ;
@@ -2100,6 +2102,16 @@ done:
       // --translockwait
       rdxBooleanS( pEX, PMD_OPTION_TRANS_LOCKWAIT, _transLockwait, FALSE,
                    PMD_CFG_CHANGE_RUN, DPS_TRANS_LOCKWAIT_DFT, FALSE ) ;
+      // --translrbpersegment
+      rdxUInt( pEX, PMD_OPTION_TRANS_LRB_PER_SEGMENT, _transLRBPerSegment,FALSE,
+               PMD_CFG_CHANGE_REBOOT, DPS_TRANS_LRB_PER_SEG_DFT, FALSE ) ;
+      rdvMinMax( pEX, _transLRBPerSegment ,
+                 DPS_TRANS_LRB_MIN, DPS_TRANS_LRB_MAX, TRUE ) ;
+      // --translrbtotal
+      rdxUInt( pEX, PMD_OPTION_TRANS_LRB_TOTAL, _transLRBTotal, FALSE,
+               PMD_CFG_CHANGE_REBOOT, DPS_TRANS_LRB_TOTAL_DFT, FALSE ) ;
+      rdvMinMax( pEX, _transLRBTotal ,
+                 DPS_TRANS_LRB_MIN, DPS_TRANS_LRB_MAX, TRUE ) ;
       // --sharingBreak
       rdxUInt( pEX, PMD_OPTION_SHARINGBRK, _sharingBreakTime, FALSE,
                PMD_CFG_CHANGE_RUN, PMD_OPTION_BRK_TIME_DEFAULT, TRUE ) ;

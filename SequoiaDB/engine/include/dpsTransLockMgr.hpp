@@ -52,18 +52,8 @@ namespace engine
    class _dpsITransLockCallback ;
    class _IContext ;
 
-   // lock bucket, 1M slots for testing
-   #define MAX_LOCKBUCKET_NUM             ( (UTIL_OBJIDX)( 1048576  ) )
-   // LRB 512K for testing
-   #define DPS_INIT_NUM_OF_LRB            ( (UTIL_OBJIDX)( 524288  ) )
-   // LRB MAX 2G 
-   #define DPS_INIT_NUM_OF_LRB_MAX        ( (UTIL_OBJIDX)( 2147483648 ) )
-   // LRB Header 256K for testing
-   #define DPS_INIT_NUM_OF_LRB_HEADER     ( (UTIL_OBJIDX)( 262144  ) )
-   // LRB Header MAX 2G
-   #define DPS_INIT_NUM_OF_LRB_HEADER_MAX ( (UTIL_OBJIDX)( 2147483648 ) )
-   // lock timeout, 5 seconds by default
-   #define DPS_LOCK_TIMEOUT_DEFAULT       ( (UINT32) ( 5 * OSS_ONE_SEC ) )
+   // lock bucket, 1M slots for now
+   #define DPS_TRANS_LOCKBUCKET_SLOTS_MAX ( (UTIL_OBJIDX)( 1048576 ) )
 
    enum DPS_TRANSLOCK_OP_MODE_TYPE
    {
@@ -487,7 +477,7 @@ namespace engine
       //      UTIL_OBJIDX    lrbHdrIdx ;     -- LRB Header index
       //      ossSpinXLatch  hashHdrLatch ;  -- bucket slot latch
       //   } ;
-      dpsTransLRBHeaderHash  _LockHdrBkt[ MAX_LOCKBUCKET_NUM ] ;
+      dpsTransLRBHeaderHash  _LockHdrBkt[ DPS_TRANS_LOCKBUCKET_SLOTS_MAX ] ;
 
       // flag mark if lock manager has been initialized
       BOOLEAN                _initialized ;

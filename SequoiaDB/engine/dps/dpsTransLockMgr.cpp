@@ -36,11 +36,13 @@
 #include "dpsTransLockMgr.hpp"
 #include "dpsTransExecutor.hpp"
 #include "dpsTransLockCallback.hpp"
+#include "dpsTransDef.hpp"
 #include "dpsTrace.hpp"
 #include "pd.hpp"
 #include "dpsTrace.hpp"
 #include "pdTrace.hpp"
 #include "sdbInterface.hpp"   // IContext
+#include "pmd.hpp"            // pmdGetOptionCB
 #include <stdio.h>
 
 #if 0
@@ -116,9 +118,13 @@ namespace engine
    INT32 dpsTransLockManager::init()
    {
       INT32 rc = SDB_OK;
+      UINT32 initLRB  = pmdGetOptionCB()->transLRBPerSegment(),
+             totalLRB = pmdGetOptionCB()->transLRBTotal(),
+             roundUp  = ossNextPowerOf2( initLRB ) ;
+       
 
       // init lock header bucket
-      for ( UINT32 i = 0; i < MAX_LOCKBUCKET_NUM; i++ )
+      for ( UINT32 i = 0; i < DPS_TRANS_LOCKBUCKET_SLOTS_MAX; i++ )
       {
          _LockHdrBkt[i].lrbHdrIdx = UTIL_INVALID_OBJ_INDEX ;
       }
@@ -133,8 +139,20 @@ namespace engine
          goto error ;
       }
 
+      if ( totalLRB < roundUp )
+      {
+         totalLRB = roundUp ;
+      }
+      PD_LOG( PDEVENT, 
+              "Lock manager initializing"OSS_NEWLINE
+              "  LRBs per segment        : %u"OSS_NEWLINE
+              "  LRBs Max                : %u"OSS_NEWLINE
+              "  LRB Headers per segment : %u"OSS_NEWLINE
+              "  LRB Headers Max         : %u",
+              roundUp, totalLRB, roundUp / 4, totalLRB ) ;
+
       // init LRB manager
-      rc = _pLRBMgr->init( DPS_INIT_NUM_OF_LRB, DPS_INIT_NUM_OF_LRB_MAX ) ;
+      rc = _pLRBMgr->init( roundUp, totalLRB ) ;
       if ( rc )
       {
          PD_LOG( PDERROR,
@@ -153,8 +171,7 @@ namespace engine
       }
 
       // init LRB Header manager
-      rc = _pLRBHdrMgr->init( DPS_INIT_NUM_OF_LRB_HEADER,
-                              DPS_INIT_NUM_OF_LRB_HEADER_MAX );
+      rc = _pLRBHdrMgr->init( roundUp / 4, totalLRB );
       if ( rc )
       {
          PD_LOG( PDERROR,
@@ -2761,7 +2778,7 @@ namespace engine
       const dpsTransLockId &lockId
    )
    {
-      return (UTIL_OBJIDX)( lockId.lockIdHash() % MAX_LOCKBUCKET_NUM );
+      return (UTIL_OBJIDX)( lockId.lockIdHash() % DPS_TRANS_LOCKBUCKET_SLOTS_MAX );
    }
 
 
