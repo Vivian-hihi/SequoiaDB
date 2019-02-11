@@ -138,8 +138,7 @@ function main()
 	checkSnapShotAccessPlans( clFullName2, expAccessPlan, actAccessPlan );
 
    //清空环境
-   commDropCL( db, csName, clName1, true, true,"drop CL in the end" ) ;
-   commDropCL( db, csName, clName2, true, true,"drop CL in the end" ) ;
+   commDropCS( db, csName, true, "drop subcs in the end" );   
    db1.close();
    db2.close();
    
