@@ -248,6 +248,11 @@
                  <compareText logic="equals" text="${program_exit_code}" value="0"/>
              </ruleList>
         </setInstallerVariable>
+        <changeOwnerAndGroup>
+            <files>${sys_conf_file}</files>
+            <group>${groupname}</group>
+            <owner>${username}</owner>
+        </changeOwnerAndGroup>
         <changePermissions files="${sys_conf_file}" permissions="0644"/>
         <propertiesFileSet>
             <file>${sys_conf_file}</file>
