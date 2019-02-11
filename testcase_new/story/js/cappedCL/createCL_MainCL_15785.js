@@ -24,6 +24,8 @@ function main()
    //check IsMainCL : true
    var options1 = { Capped : true, Size:1024, IsMainCL:true, ShardingKey:{a:1}};
    checkCreateCLOptions( csName, clName1, options1, true );
+   
+   commDropCS( db, csName, true, "drop subcs in the end" );   
 }
 
 function checkCreateCLOptions( csName, clName, options, result )
