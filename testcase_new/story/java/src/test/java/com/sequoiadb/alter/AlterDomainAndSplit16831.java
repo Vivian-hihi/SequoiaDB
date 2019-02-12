@@ -90,7 +90,7 @@ public class AlterDomainAndSplit16831 extends SdbTestBase{
             CollectionSpace localCS = localDB.getCollectionSpace(localCSName);
             DBCollection srcCL = localCS.getCollection(clName);
             //目标组
-            rg = sdb.getReplicaGroup(rgList.get(0));
+            rg = sdb.getReplicaGroup(rgList.get(1));
             Node destGroupMaster = rg.getMaster();
             localDB = destGroupMaster.connect();
             localCS = localDB.getCollectionSpace(localCSName);
