@@ -2347,6 +2347,25 @@ namespace engine
          // lookup LRB Header list to find the LRB Header with same lockId
          if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
          {
+            // remove the LRB Header if onwer, waiter,
+            // and upgrade list are all empty
+            if (    ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx   ) )
+                 && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
+                 && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx  ) ) )
+            {
+               _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdrIdx,
+                                         hdrIdx ) ;
+               // save index of LRB Header to be released
+               lrbHdrToRelase = hdrIdx ;
+#ifdef _DEBUG
+               PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASE,
+                          PD_PACK_STRING( "Remove empty LRB Header" ),
+                          PD_PACK_UINT( hdrIdx ) ) ;
+               PD_LOG( PDERROR, "Remove empty LRB Header %u", hdrIdx ) ;
+#endif
+               goto done ;
+            }
+
             // get the waiter LRB pointer
             if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
             {
@@ -2407,7 +2426,7 @@ namespace engine
 #endif
             if ( ! ( pOwnerLRB && IS_VALID_SEG_OBJ_INDEX( ownerLrbIdx ) ) )
             {
-               
+#ifdef _DEBUG
                PD_LOG( PDERROR,
                        "Owner LRB is not found."OSS_NEWLINE
                        "EDU:%llu lockId:%s"OSS_NEWLINE
@@ -2416,6 +2435,7 @@ namespace engine
                        eduId,lockId.toString().c_str(),
                        hdrIdx, ownerLrbIdx, waiterIdx,
                        foundIncomp ) ;
+#endif
                goto done ;
             }
             
