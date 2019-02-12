@@ -31,11 +31,10 @@ public class Snapshot13626 extends SdbTestBase {
 	public void setUp(){
 		sdb = new Sequoiadb(coordUrl, "", "");
 		// 跳过 standAlone 和数据组不足的环境
-		CommLib commlib = new CommLib();
-		if (commlib.isStandAlone(sdb)) {
+		if (CommLib.isStandAlone(sdb)) {
 			throw new SkipException("skip StandAlone");
 		}
-		List<String> groupsName = commlib.getDataGroupNames( sdb );
+		List<String> groupsName = CommLib.getDataGroupNames( sdb );
 		if (groupsName.size() < 1) {
 			throw new SkipException("current environment less than tow groups ");
 		}
@@ -68,14 +67,15 @@ public class Snapshot13626 extends SdbTestBase {
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl,"","");
-			DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-			for(int i=0; i<70; i++){
-				db.beginTransaction();
-				for(int j=0; j<10; j++){
-					cl.insert(new BasicBSONObject("a", i));
-				}
-				db.rollback();
+			try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+			    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+			    for(int i=0; i<70; i++){
+			        db.beginTransaction();
+			        for(int j=0; j<10; j++){
+			            cl.insert(new BasicBSONObject("a", i));
+			        }
+			        db.rollback();
+			    }
 			}
 		}
 	}
@@ -84,13 +84,14 @@ public class Snapshot13626 extends SdbTestBase {
 
 		@Override
 		public void exec() throws Exception {
-			Sequoiadb data = new Sequoiadb( master, "", "" );
-			for (int i = 0; i < 500; i++) {
-				DBCursor cursor = data.getSnapshot(data.SDB_SNAP_TRANSACTIONS, "", "", "");
-				while(cursor.hasNext()){
-					cursor.getNext().toString();
-				}
-				cursor.close();
+			try(Sequoiadb db = new Sequoiadb(master, "", "")){
+    			for (int i = 0; i < 500; i++) {
+    				DBCursor cursor = db.getSnapshot(Sequoiadb.SDB_SNAP_TRANSACTIONS, "", "", "");
+    				while(cursor.hasNext()){
+    					cursor.getNext().toString();
+    				}
+    				cursor.close();
+    			}
 			}
 		}
 		
