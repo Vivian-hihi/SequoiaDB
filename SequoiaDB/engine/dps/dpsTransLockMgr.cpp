@@ -298,7 +298,7 @@ namespace engine
                      lockId.toString(), boost::stacktrace::stacktrace() );
 #endif
             PD_LOG ( PDDEBUG, "Freeing oldver while freeing LRBHdr for (%s).",
-                     pLRBHdr->lockId.toString() );
+                     pLRBHdr->lockId.toString().c_str() );
          }
          SDB_OSS_DEL pLRBHdr->oldVer;
          pLRBHdr->oldVer = NULL;

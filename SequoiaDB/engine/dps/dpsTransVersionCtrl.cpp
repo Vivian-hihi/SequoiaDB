@@ -656,9 +656,9 @@ namespace engine
       return rc;
 
       err:
-      PD_LOG( PDERROR, "Failed to locate the key:%s", prevKey.toString() );
+      PD_LOG( PDERROR, "Failed to locate the key:%s",
+              prevKey.toString().c_str() );
       goto done;
-    
    }
 
    // Description:
@@ -777,10 +777,9 @@ namespace engine
       return rc;
 
       err:
-      PD_LOG( PDERROR, "Failed to advance the key:%s", prevKey.toString() );
+      PD_LOG( PDERROR, "Failed to advance the key:%s",
+              prevKey.toString().c_str() );
       goto done;
-    
-
    }
 
    // Traverse the tree to see if the key exist, caller need to hold
