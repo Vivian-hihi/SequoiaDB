@@ -2,7 +2,8 @@
 # @testlink:   seqDB-12476
 # @interface:  create_index(self,index_def,idx_name,is_unique,is_enforced,buffer_size)
 #              drop_index(self,idx_name)
-#              get_indexes(self,idx_name)
+#              get_index_info(self,idx_name)
+#              is_index_exist(self,idx_name)
 # @author:     liuxiaoxuan 2017-8-30
 
 from lib import testlib
@@ -39,6 +40,10 @@ class TestIndex12476(testlib.SdbTestBase):
 
          expectIdxResult = {"expIdName": expIdxName, "expKey": aIndex, "expUnique": isOption, "expEnforced": isOption}
          self.check_indexes(expectIdxResult, aIdxName)
+         
+         # check is_index_exist
+         self.assertTrue(self.cl.is_index_exist(aIdxName))
+         self.assertFalse(self.cl.is_index_exist('b'))
 
          self.drop_index(aIdxName)
          expScanType = 'tbscan'
@@ -85,24 +90,15 @@ class TestIndex12476(testlib.SdbTestBase):
 
    def check_indexes(self, expectResult, index_name):
       try:
-         if index_name == None:
-            cursor = self.cl.get_indexes();
-         else:
-            cursor = self.cl.get_indexes(index_name);
-         idxs = []
-         while True:
-            try:
-               rec = cursor.next()
-               index_name = rec['IndexDef']['name']
-               key = rec['IndexDef']['key']
-               isUnique = rec['IndexDef']['unique']
-               isEnforced = rec['IndexDef']['enforced']
-               self.assertEqual(index_name, expectResult['expIdName'])
-               self.assertEqual(key, expectResult['expKey'])
-               self.assertEqual(isUnique, expectResult['expUnique'])
-               self.assertEqual(isEnforced, expectResult['expEnforced'])
-            except SDBEndOfCursor:
-               break
+         rec = self.cl.get_index_info(index_name)
+         index_name = rec['IndexDef']['name']
+         key = rec['IndexDef']['key']
+         isUnique = rec['IndexDef']['unique']
+         isEnforced = rec['IndexDef']['enforced']
+         self.assertEqual(index_name, expectResult['expIdName'])
+         self.assertEqual(key, expectResult['expKey'])
+         self.assertEqual(isUnique, expectResult['expUnique'])
+         self.assertEqual(isEnforced, expectResult['expEnforced'])
       except SDBBaseError as e:
          self.fail('check index fail: ' + e.detail)
 

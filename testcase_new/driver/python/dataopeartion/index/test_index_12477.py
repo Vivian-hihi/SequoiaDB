@@ -2,7 +2,8 @@
 # @testlink:   seqDB-12477
 # @interface:  create_id_index(self,options)
 #              drop_id_index(self)
-#              get_indexes(self,idx_name)
+#              get_index_info(self,idx_name)
+#              is_index_exist(self,idx_name)
 # @author:     liuxiaoxuan 2017-8-30
 
 from lib import testlib
@@ -22,11 +23,11 @@ class TestIdIndex12477(testlib.SdbTestBase):
       # create index without option
       option = None
       self.create_id_index(option)
+      self.assertTrue(self.cl.is_index_exist('$id'))
       # drop index
       self.drop_id_index()
       # check index
-      expect_idx_name = ''
-      self.check_id_index(expect_idx_name)
+      self.assertFalse(self.cl.is_index_exist('$id'))
       # check drop result
       is_success = True
       self.check_update_result(not is_success)
@@ -35,6 +36,7 @@ class TestIdIndex12477(testlib.SdbTestBase):
       self.create_id_index(option)
       # check index
       expect_idx_name = '$id'
+      self.assertTrue(self.cl.is_index_exist(expect_idx_name))
       self.check_id_index(expect_idx_name)
       self.check_update_result(is_success)
 
@@ -87,14 +89,8 @@ class TestIdIndex12477(testlib.SdbTestBase):
    def check_id_index(self, expect_name):
       act_name = ''
       try:
-         cursor = self.cl.get_indexes(expect_name)
-         while True:
-            try:
-               rec = cursor.next()
-               act_name = rec['IndexDef']['name']
-            except SDBEndOfCursor:
-               cursor.close()
-               break
+         rec = self.cl.get_index_info(expect_name)
+         act_name = rec['IndexDef']['name']
          self.assertEqual(expect_name, act_name, expect_name + ' not equal to ' + act_name)
       except SDBBaseError as e:
          self.fail('check id index fail: ' + e.detail)
