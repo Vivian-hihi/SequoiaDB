@@ -547,35 +547,48 @@ namespace engine
                continue ;
             }
          }
-         //catalog has the collection, so need to create, no compression
          else if ( (SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc) &&
-                   _pCollectionName && _pReplSet->primaryIsMe() )
+                   _pCollectionName )
          {
-            /// if main collection, need update catalog info first
-            if ( _isMainCL )
+            if ( _pReplSet->primaryIsMe() )
             {
-               if ( !_hasUpdateCataInfo )
+               // catalog has the collection, so need to create, no compression
+               if ( _isMainCL )
                {
-                  rc = _pShdMgr->syncUpdateCatalog( _pCollectionName ) ;
-                  if ( SDB_OK == rc )
+                  /// if main collection, need update catalog info first
+                  if ( !_hasUpdateCataInfo )
                   {
-                     ++loopTime ;
-                     _hasUpdateCataInfo = TRUE ;
+                     rc = _pShdMgr->syncUpdateCatalog( _pCollectionName ) ;
+                     if ( SDB_OK == rc )
+                     {
+                        ++loopTime ;
+                        _hasUpdateCataInfo = TRUE ;
+                     }
                   }
                }
-            }
-            else if ( SDB_DMS_CS_NOTEXIST == rc )
-            {
-               rc = _createCSByCatalog( _pCollectionName ) ;
-            }
-            else if ( SDB_DMS_NOTEXIST == rc )
-            {
-               rc = _createCLByCatalog( _pCollectionName ) ;
-            }
+               else if ( SDB_DMS_CS_NOTEXIST == rc )
+               {
+                  rc = _createCSByCatalog( _pCollectionName ) ;
+               }
+               else if ( SDB_DMS_NOTEXIST == rc )
+               {
+                  rc = _createCLByCatalog( _pCollectionName ) ;
+               }
 
-            if ( SDB_OK == rc )
+               if ( SDB_OK == rc )
+               {
+                  continue ;
+               }
+            }
+            else
             {
-               continue ;
+               // if slave data node doesn't have the cs/cl, but catalog has the
+               // cs/cl, it may be that rename operation hasn't been replayed.
+               rc = _pShdMgr->syncUpdateCatalog( _pCollectionName ) ;
+               if ( SDB_OK == rc )
+               {
+                  rc = SDB_CLS_DATA_NOT_SYNC ;
+               }
             }
          }
 

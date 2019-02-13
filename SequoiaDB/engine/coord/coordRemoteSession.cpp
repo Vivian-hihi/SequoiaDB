@@ -1174,7 +1174,7 @@ namespace engine
                                                  TRUE, &preStat ) )
          {
             /// when primay's crash has not discoverd by other nodes,
-            /// new primary's nodeid may still be old one. 
+            /// new primary's nodeid may still be old one.
             /// To avoid send msg to crashed node frequently,
             /// sleep some times.
             if ( NET_NODE_STAT_NORMAL != preStat )
@@ -1236,6 +1236,12 @@ namespace engine
             groupPtr->updateNodeStat( nodeID.columns.nodeID,
                                       netResult2Status( flag ) ) ;
          }
+      }
+      else if ( SDB_CLS_DATA_NOT_SYNC == flag )
+      {
+         // it may be that rename operation hasn't been replayed on slave data,
+         // so change to primary data.
+         _pGroupSel->setPrimary( TRUE ) ;
       }
       else if ( ( SDB_UNKNOWN_MESSAGE == flag ||
                   SDB_CLS_UNKNOW_MSG == flag ) &&

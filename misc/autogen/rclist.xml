@@ -2706,5 +2706,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_CLS_DATA_NOT_SYNC</name>
+         <description>
+            <en>Data not yet synchronized</en>
+            <cn>数据未同步</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
