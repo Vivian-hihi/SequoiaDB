@@ -150,7 +150,7 @@ namespace engine
    class _SDB_RTNCB;
    class _rtnContextDelMainCL : public _rtnContextBase
    {
-   typedef ossPoolMap< std::string, SINT64>  SUBCL_CONTEXT_LIST ;
+      typedef ossPoolMap< std::string, SINT64>  SUBCL_CONTEXT_LIST ;
       DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextDelMainCL( SINT64 contextID, UINT64 eduID );

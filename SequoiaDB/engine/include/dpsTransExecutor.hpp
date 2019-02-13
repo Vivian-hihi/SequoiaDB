@@ -71,7 +71,7 @@ namespace engine
    */
    class _dpsTransExecutor
    {
-      typedef ossPoolMap<dpsTransLockId,UTIL_OBJIDX>    DPS_LOCKID_MAP ;
+      typedef ossPoolMap<dpsTransLockId,UTIL_OBJIDX>     DPS_LOCKID_MAP ;
       typedef DPS_LOCKID_MAP::iterator                   DPS_LOCKID_MAP_IT ;
       typedef DPS_LOCKID_MAP::const_iterator             DPS_LOCKID_MAP_CIT ;
 

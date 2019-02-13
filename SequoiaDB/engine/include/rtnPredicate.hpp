@@ -45,16 +45,20 @@
 #include "pd.hpp"
 #include <string>
 #include <vector>
-#include <map>
-#include <set>
+#include "ossMemPool.hpp"
+
 using namespace bson ;
 using namespace std ;
+
 namespace engine
 {
 
    // Each query could have no more than 16 parameters
    #define RTN_MAX_PARAM_NUM                    ( 16 )
 
+   /*
+      _rtnParamList define
+   */
    class _rtnParamList : public SDBObject
    {
       protected :
@@ -147,19 +151,25 @@ namespace engine
          _inclusive = inclusive ;
          _parameterized = FALSE ;
       }
-      BSONElement _bound ;
-      BOOLEAN _inclusive ;
-      BOOLEAN _parameterized ;
+
       BOOLEAN operator==( const rtnKeyBoundary &r ) const
       {
          return _inclusive == r._inclusive &&
                 _bound.woCompare ( r._bound ) == 0 ;
       }
-      void flipInclusive ()
+      void reverseInclusive ()
       {
          _inclusive = !_inclusive ;
       }
+
+      BSONElement _bound ;
+      BOOLEAN _inclusive ;
+      BOOLEAN _parameterized ;
    } ;
+
+   /*
+      RTN_SSK_VALUE_POS define
+   */
    enum RTN_SSK_VALUE_POS
    {
       RTN_SSK_VALUE_POS_LT = -2,
@@ -176,6 +186,9 @@ namespace engine
              pos == RTN_SSK_VALUE_POS_GET ;
    }
 
+   /*
+      RTN_SSK_RANGE_POS define
+   */
    enum RTN_SSK_RANGE_POS
    {
       RTN_SSK_RANGE_POS_LT = -3,
@@ -458,10 +471,10 @@ namespace engine
       INT32 _initMinRange ( BOOLEAN startIncluded ) ;
    } ;
 
-   typedef vector< rtnPredicate > RTN_PREDICATE_LIST ;
-   typedef vector< RTN_PREDICATE_LIST > RTN_PARAM_PREDICATE_LIST ;
-   typedef map< string, rtnPredicate > RTN_PREDICATE_MAP ;
-   typedef map< string, RTN_PREDICATE_LIST > RTN_PARAM_PREDICATE_MAP ;
+   typedef vector< rtnPredicate >                     RTN_PREDICATE_LIST ;
+   typedef vector< RTN_PREDICATE_LIST >               RTN_PARAM_PREDICATE_LIST ;
+   typedef ossPoolMap< string, rtnPredicate >         RTN_PREDICATE_MAP ;
+   typedef ossPoolMap< string, RTN_PREDICATE_LIST >   RTN_PARAM_PREDICATE_MAP ;
 
    // This set is created when receiving a query. It contains user search
    // condition predicates from user input for all fields
@@ -488,7 +501,7 @@ namespace engine
       BSONObj toBson() const ;
 
    private:
-      RTN_PREDICATE_MAP _predicates ;
+      RTN_PREDICATE_MAP       _predicates ;
       RTN_PARAM_PREDICATE_MAP _paramPredicates ;
    } ;
    typedef class _rtnPredicateSet rtnPredicateSet ;

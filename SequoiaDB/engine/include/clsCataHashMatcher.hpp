@@ -47,7 +47,7 @@ namespace engine
    */
    class clsCataHashPredTree : public SDBObject
    {
-   typedef std::vector< clsCataHashPredTree * >             VEC_CLSCATAHASHPREDSET ;
+   typedef std::vector< clsCataHashPredTree * >          VEC_CLSCATAHASHPREDSET ;
    typedef ossPoolMap< std::string, bson::BSONElement>   MAP_CLSCATAHASHPREDFIELDS ;
    public:
       clsCataHashPredTree( bson::BSONObj shardingKey );

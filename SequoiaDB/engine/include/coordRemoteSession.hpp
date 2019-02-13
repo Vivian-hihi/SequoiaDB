@@ -169,8 +169,8 @@ namespace engine
          INT32    _selOtherBegin( MsgRouteID &nodeID ) ;
 
       protected :
-         typedef _utilArray< UINT8, CLS_REPLSET_MAX_NODE_SIZE > COORD_POS_ARRAY ;
-         typedef ossPoolList< UINT8> COORD_POS_LIST ;
+         typedef _utilArray< UINT8, CLS_REPLSET_MAX_NODE_SIZE >   COORD_POS_ARRAY ;
+         typedef ossPoolList< UINT8>                              COORD_POS_LIST ;
       private:
          INT32    _calcBeginPos( clsGroupItem *pGroupItem,
                                  const rtnInstanceOption & instanceOption,

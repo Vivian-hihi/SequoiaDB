@@ -183,9 +183,9 @@ namespace engine
             RETRY_TAG_REOPEN = 0x00002,
          } ;
 
-         typedef ossPoolMap<UINT32, subStream>  SUB_STREAMS ;
+         typedef ossPoolMap<UINT32, subStream>     SUB_STREAMS ;
          typedef std::set<ossValuePtr>             DONE_LST ;
-         typedef ossPoolMap<UINT32, dataGroup>  DATA_GROUPS ;
+         typedef ossPoolMap<UINT32, dataGroup>     DATA_GROUPS ;
 
       private:
          INT32 _openSubStreams( const CHAR *fullName,

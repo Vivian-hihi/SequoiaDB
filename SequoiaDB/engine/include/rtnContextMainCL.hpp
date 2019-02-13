@@ -96,7 +96,7 @@ namespace engine
    */
    class _rtnContextMainCL : public _rtnContextMain
    {
-   typedef ossPoolMap< INT64, _rtnSubCLContext*>    SUBCL_CTX_MAP ;
+      typedef ossPoolMap< INT64, _rtnSubCLContext*>    SUBCL_CTX_MAP ;
       DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextMainCL( INT64 contextID, UINT64 eduID ) ;

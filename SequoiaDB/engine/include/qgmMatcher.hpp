@@ -67,7 +67,7 @@ namespace engine
    */
    class _qgmMatcher : public SDBObject
    {
-   typedef ossPoolMap< void*, qgmMatcherDataNode>      MAP_DATA_NODE ;
+   typedef ossPoolMap< void*, qgmMatcherDataNode>        MAP_DATA_NODE ;
    typedef MAP_DATA_NODE::iterator                       MAP_DATA_NODE_IT ;
 
    public:

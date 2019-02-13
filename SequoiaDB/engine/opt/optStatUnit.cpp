@@ -398,12 +398,14 @@ namespace engine
       {
          if ( isEqual && startKeys.size() == pIndexStat->getNumKeys() )
          {
-            rc = pIndexStat->evalETOperator( startKeys, predSelectivity, scanSelectivity ) ;
+            rc = pIndexStat->evalETOperator( startKeys, predSelectivity,
+                                             scanSelectivity ) ;
          }
          else
          {
             rc = pIndexStat->evalRangeOperator( startKeys, stopKeys,
-                                                predSelectivity, scanSelectivity ) ;
+                                                predSelectivity,
+                                                scanSelectivity ) ;
          }
       }
       else

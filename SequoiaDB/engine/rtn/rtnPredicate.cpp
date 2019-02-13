@@ -55,6 +55,9 @@ namespace bson
    extern BSONObj minKey ;
    extern BSONObj maxKey ;
 }
+
+using namespace bson ;
+
 namespace engine
 {
    /*
@@ -492,9 +495,10 @@ namespace engine
       PD_TRACE_EXIT ( SDB_RTNSSKEY_RESET ) ;
    }
 
-#define RTN_START_STOP_KEY_START "a"
-#define RTN_START_STOP_KEY_STOP  "o"
-#define RTN_START_STOP_KEY_INCL  "i"
+   #define RTN_START_STOP_KEY_START "a"
+   #define RTN_START_STOP_KEY_STOP  "o"
+   #define RTN_START_STOP_KEY_INCL  "i"
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_FROMBSON, "rtnStartStopKey::fromBson" )
    BOOLEAN rtnStartStopKey::fromBson ( BSONObj &ob )
    {
@@ -538,27 +542,25 @@ namespace engine
    BSONObj rtnStartStopKey::toBson() const
    {
       PD_TRACE_ENTRY ( SDB_RTNSSKEY_TOBSON ) ;
-      BSONObjBuilder ob ;
+
+      BSONObjBuilder ob( 128 ) ;
+
+      BSONObjBuilder startOB( ob.subobjStart( RTN_START_STOP_KEY_START ) ) ;
+      startOB.append ( _startKey._bound ) ;
+      if ( _startKey._inclusive )
       {
-         BSONObjBuilder startOB ;
-         startOB.append ( _startKey._bound ) ;
-         if ( _startKey._inclusive )
-         {
-            startOB.append ( RTN_START_STOP_KEY_INCL, TRUE ) ;
-         }
-         ob.append ( RTN_START_STOP_KEY_START,
-                     startOB.obj () ) ;
+         startOB.append ( RTN_START_STOP_KEY_INCL, TRUE ) ;
       }
+      startOB.done() ;
+
+      BSONObjBuilder stopOB( ob.subobjStart( RTN_START_STOP_KEY_STOP ) ) ;
+      stopOB.append ( _stopKey._bound ) ;
+      if ( _stopKey._inclusive )
       {
-         BSONObjBuilder stopOB ;
-         stopOB.append ( _stopKey._bound ) ;
-         if ( _stopKey._inclusive )
-         {
-            stopOB.append ( RTN_START_STOP_KEY_INCL, TRUE ) ;
-         }
-         ob.append ( RTN_START_STOP_KEY_STOP,
-                     stopOB.obj () ) ;
+         stopOB.append ( RTN_START_STOP_KEY_INCL, TRUE ) ;
       }
+      stopOB.done() ;
+
       PD_TRACE_EXIT ( SDB_RTNSSKEY_TOBSON ) ;
       return ob.obj () ;
    }
@@ -589,10 +591,15 @@ namespace engine
       INT32 posStop  = 0 ;
       RTN_SSK_VALUE_POS pos ;
       SDB_ASSERT ( isValid (), "this object is not valid" ) ;
+
       if ( dir >= 0 )
+      {
          posStart = rtnKeyCompare ( ele, _startKey._bound ) ;
+      }
       else
+      {
          posStart = rtnKeyCompare ( ele, _stopKey._bound ) ;
+      }
       // case:
       //       e
       //           { range ?
@@ -606,19 +613,27 @@ namespace engine
       else if ( posStart == 0 )
       {
          if ( dir >= 0 )
-            pos = _startKey._inclusive?
-                    RTN_SSK_VALUE_POS_LET:RTN_SSK_VALUE_POS_LT ;
+         {
+            pos = _startKey._inclusive ?
+                    RTN_SSK_VALUE_POS_LET : RTN_SSK_VALUE_POS_LT ;
+         }
          else
-            pos = _stopKey._inclusive?
-                    RTN_SSK_VALUE_POS_LET:RTN_SSK_VALUE_POS_LT ;
+         {
+            pos = _stopKey._inclusive ?
+                    RTN_SSK_VALUE_POS_LET : RTN_SSK_VALUE_POS_LT ;
+         }
       }
       // case :
       //       e
       //     { range ?
       if ( dir >= 0 )
+      {
          posStop  = rtnKeyCompare ( ele, _stopKey._bound ) ;
+      }
       else
+      {
          posStop = rtnKeyCompare ( ele, _startKey._bound ) ;
+      }
       // case :
       //       e
       //    { range }
@@ -632,11 +647,15 @@ namespace engine
       else if ( posStop == 0 )
       {
          if ( dir >= 0 )
-            pos = _stopKey._inclusive?
-                     RTN_SSK_VALUE_POS_GET:RTN_SSK_VALUE_POS_GT ;
+         {
+            pos = _stopKey._inclusive ?
+                     RTN_SSK_VALUE_POS_GET : RTN_SSK_VALUE_POS_GT ;
+         }
          else
-            pos = _startKey._inclusive?
-                     RTN_SSK_VALUE_POS_GET:RTN_SSK_VALUE_POS_GT ;
+         {
+            pos = _startKey._inclusive ?
+                     RTN_SSK_VALUE_POS_GET : RTN_SSK_VALUE_POS_GT ;
+         }
       }
       // case :
       //             e
@@ -646,7 +665,10 @@ namespace engine
          pos = RTN_SSK_VALUE_POS_GT ;
       }
       if ( dir < 0 )
+      {
          pos = (RTN_SSK_VALUE_POS)(((INT32)pos) * -1) ;
+      }
+
       PD_TRACE_EXIT ( SDB_RTNSSKEY_COMPARE1 ) ;
       return pos ;
    }
@@ -660,6 +682,7 @@ namespace engine
       RTN_SSK_VALUE_POS posStop ;
       RTN_SSK_RANGE_POS pos = RTN_SSK_RANGE_POS_RT ;
       SDB_ASSERT ( key.isValid (), "key is not valid!" ) ;
+
       if ( dir >= 0 )
       {
          posStart = compare ( key._startKey._bound, 1 ) ;
@@ -692,11 +715,15 @@ namespace engine
             //     [ key )
             //           [ this ]
             if ( dir >= 0 )
-               pos = key._stopKey._inclusive?
-                   RTN_SSK_RANGE_POS_LET:RTN_SSK_RANGE_POS_LT ;
+            {
+               pos = key._stopKey._inclusive ?
+                   RTN_SSK_RANGE_POS_LET : RTN_SSK_RANGE_POS_LT ;
+            }
             else
-               pos = key._startKey._inclusive?
-                   RTN_SSK_RANGE_POS_LET:RTN_SSK_RANGE_POS_LT ;
+            {
+               pos = key._startKey._inclusive ?
+                   RTN_SSK_RANGE_POS_LET : RTN_SSK_RANGE_POS_LT ;
+            }
          }
          else if ( RTN_SSK_VALUE_POS_WITHIN == posStop )
          {
@@ -768,11 +795,15 @@ namespace engine
          //         ( key ]
          //  [ this ]
          if ( dir >= 0 )
-            pos = key._startKey._inclusive?
-                   RTN_SSK_RANGE_POS_RET:RTN_SSK_RANGE_POS_RT ;
+         {
+            pos = key._startKey._inclusive ?
+                   RTN_SSK_RANGE_POS_RET : RTN_SSK_RANGE_POS_RT ;
+         }
          else
-            pos = key._stopKey._inclusive?
-                   RTN_SSK_RANGE_POS_RET:RTN_SSK_RANGE_POS_RT ;
+         {
+            pos = key._stopKey._inclusive ?
+                   RTN_SSK_RANGE_POS_RET : RTN_SSK_RANGE_POS_RT ;
+         }
       }
       // in this case we must be right than
       // case :
@@ -781,7 +812,6 @@ namespace engine
       PD_TRACE_EXIT ( SDB_RTNSSKEY_COMPARE2 ) ;
       return pos ;
    }
-
 
    // input: regex for regular expression string
    // input: flags for re flag
@@ -1020,14 +1050,13 @@ namespace engine
 
    // intersection operation for two keysets
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_OPEQU, "rtnPredicate::operator&=" )
-   const rtnPredicate &rtnPredicate::operator&=
-                      (rtnPredicate &right)
+   const rtnPredicate &rtnPredicate::operator&= ( rtnPredicate &right )
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_OPEQU ) ;
       RTN_SSKEY_LIST newKeySet ;
       RTN_SSKEY_LIST::iterator i = _startStopKeys.begin() ;
       RTN_SSKEY_LIST::iterator j = right._startStopKeys.begin() ;
-      while ( i != _startStopKeys.end() && j != right._startStopKeys.end())
+      while ( i != _startStopKeys.end() && j != right._startStopKeys.end() )
       {
          rtnStartStopKey overlap ;
          if ( predicatesOverlap ( *i, *j, overlap ) )
@@ -1048,8 +1077,7 @@ namespace engine
       return *this ;
    }
 
-   const rtnPredicate &rtnPredicate::operator=
-                      (const rtnPredicate &right)
+   const rtnPredicate &rtnPredicate::operator=(const rtnPredicate &right)
    {
       finishOperation(right._startStopKeys, right) ;
       _paramIndex = right._paramIndex ;
@@ -1060,8 +1088,7 @@ namespace engine
 
    // union operation for two keysets
    // PD_TRACE_DECLARE_FUNCTION (SDB_RTNPRED_OPOREQ, "rtnPredicate::operator|=" )
-   const rtnPredicate &rtnPredicate::operator|=
-                      (const rtnPredicate &right)
+   const rtnPredicate &rtnPredicate::operator|=(const rtnPredicate &right)
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_OPOREQ ) ;
       startStopKeyUnionBuilder b ;
@@ -1158,8 +1185,8 @@ namespace engine
                // i and j are intersects
                // set i's stop key to j's start key
                newKeySet.back()._stopKey = j->_startKey ;
-               // flip inclusive
-               newKeySet.back()._stopKey.flipInclusive() ;
+               // revrese inclusive
+               newKeySet.back()._stopKey.reverseInclusive() ;
                // check i's stop key and j's stop key
                INT32 cmp2 = i->_stopKey._bound.woCompare (
                                j->_stopKey._bound, FALSE ) ;
@@ -1183,7 +1210,7 @@ namespace engine
                   // let's update i and use it in the next round, and move to
                   // next j
                   i->_startKey = j->_stopKey ;
-                  i->_startKey.flipInclusive() ;
+                  i->_startKey.reverseInclusive() ;
                   ++j ;
                }
             }
@@ -1234,7 +1261,7 @@ namespace engine
                   // i:    [start stop]
                   // j: [start stop]
                   i->_startKey = j->_stopKey ;
-                  i->_startKey.flipInclusive() ;
+                  i->_startKey.reverseInclusive() ;
                   ++j ;
                }
             }
@@ -1442,7 +1469,9 @@ namespace engine
       {
          // for IN statement without isNot or if the element type is array
          // and we want equality match {c1:{$et:[1,2,3]}}
-         set<BSONElement, element_cmp_lt> vals ;
+         ossPoolSet<BSONElement, element_cmp_lt> vals ;
+         ossPoolSet<BSONElement,element_cmp_lt>::iterator iterSet ;
+
          RTN_PREDICATE_LIST regexes ;
          BSONObjIterator i ( e.embeddedObject() ) ;
 
@@ -1485,10 +1514,9 @@ namespace engine
 
          // after going through all elements, let's push all in $in into
          // start/stopkey list
-         for ( set<BSONElement,element_cmp_lt>::const_iterator i = vals.begin();
-               i!=vals.end(); i++ )
+         for ( iterSet = vals.begin() ; iterSet != vals.end() ; iterSet++ )
          {
-            _startStopKeys.push_back ( rtnStartStopKey ( *i ) ) ;
+            _startStopKeys.push_back ( rtnStartStopKey ( *iterSet ) ) ;
          }
 
          // and then union with regular expression

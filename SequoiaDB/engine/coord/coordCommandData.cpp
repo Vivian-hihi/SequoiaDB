@@ -731,7 +731,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( COORD_DATAALTER__BLDPOSTTASKS, "_coordDataCMDAlter::_buildPostTasks" )
    INT32 _coordDataCMDAlter::_buildPostTasks ( const ossPoolList< UINT64 > & postTasks,
-                                                     BSONObj & taskDesc )
+                                               BSONObj & taskDesc )
    {
       INT32 rc = SDB_OK ;
 

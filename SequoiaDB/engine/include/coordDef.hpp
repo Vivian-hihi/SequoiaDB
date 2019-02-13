@@ -49,7 +49,6 @@ using namespace bson ;
 
 namespace engine
 {
-   #define COORD_GROUPS_AVG_NUM              ( 20 )
 
    struct coordErrorInfo
    {
@@ -83,24 +82,24 @@ namespace engine
          }
       }
    } ;
-   typedef std::queue<CHAR *>                                        REPLY_QUE ;
-   typedef ossPoolMap< UINT64, coordErrorInfo>  ROUTE_RC_MAP ;
-   typedef ossPoolMap< UINT64, MsgHeader*>      ROUTE_REPLY_MAP ;
-   typedef ossPoolMap< UINT32, netIOVec>        GROUP_2_IOVEC ;
-   typedef std::set< INT32 >                                         SET_RC ;
-   typedef std::set< UINT64 >                                        SET_ROUTEID ;
+   typedef std::queue<CHAR *>                         REPLY_QUE ;
+   typedef ossPoolMap< UINT64, coordErrorInfo>        ROUTE_RC_MAP ;
+   typedef ossPoolMap< UINT64, MsgHeader*>            ROUTE_REPLY_MAP ;
+   typedef ossPoolMap< UINT32, netIOVec>              GROUP_2_IOVEC ;
+   typedef ossPoolSet< INT32 >                        SET_RC ;
+   typedef ossPoolSet< UINT64 >                       SET_ROUTEID ;
 
-   typedef ossPoolMap< UINT32, UINT32>          CoordGroupList ;
-   typedef clsNodeItem                                               CoordNodeInfo ;
-   typedef VEC_NODE_INFO                                             CoordVecNodeInfo ;
+   typedef ossPoolMap< UINT32, UINT32>                CoordGroupList ;
+   typedef clsNodeItem                                CoordNodeInfo ;
+   typedef VEC_NODE_INFO                              CoordVecNodeInfo ;
 
-   typedef clsGroupItem                                              CoordGroupInfo ;
+   typedef clsGroupItem                               CoordGroupInfo ;
 
-   typedef boost::shared_ptr<CoordGroupInfo>                         CoordGroupInfoPtr;
-   typedef ossPoolMap< UINT32, CoordGroupInfoPtr>  CoordGroupMap;
-   typedef std::vector< CoordGroupInfoPtr >                          GROUP_VEC ;
-   typedef std::vector<std::string>                                  CoordSubCLlist;
-   typedef ossPoolMap< UINT32, CoordSubCLlist>  CoordGroupSubCLMap;
+   typedef boost::shared_ptr<CoordGroupInfo>          CoordGroupInfoPtr;
+   typedef ossPoolMap< UINT32, CoordGroupInfoPtr>     CoordGroupMap;
+   typedef std::vector< CoordGroupInfoPtr >           GROUP_VEC ;
+   typedef std::vector<std::string>                   CoordSubCLlist;
+   typedef ossPoolMap< UINT32, CoordSubCLlist>        CoordGroupSubCLMap;
 
    /*
       _CoordCataInfo define

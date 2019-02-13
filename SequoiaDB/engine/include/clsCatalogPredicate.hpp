@@ -46,7 +46,7 @@ namespace engine
    class clsCatalogPredicateTree;
    class _clsCatalogItem;
 
-   typedef ossPoolMap< std::string, rtnStartStopKey*> MAP_CLSCATAPREDICATEFIELD ;
+   typedef ossPoolMap< std::string, rtnStartStopKey*>    MAP_CLSCATAPREDICATEFIELD ;
    typedef std::vector< clsCatalogPredicateTree * >      VEC_CLSCATAPREDICATESET ;
 
    /*
