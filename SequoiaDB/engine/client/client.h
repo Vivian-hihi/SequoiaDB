@@ -364,6 +364,7 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
         SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
         SDB_SNAP_HEALTH           : Get snapshot of node health detection
         SDB_SNAP_CONFIGS          : Get snapshot of node configurations
+        SDB_SNAP_SVCTASKS         : Get all the information of schedule task
         SDB_SNAP_SEQUENCES        : Get the snapshot of sequences
 
     \param [in] condition The matching rule, match all the documents if null
@@ -407,6 +408,7 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
         SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
         SDB_SNAP_HEALTH           : Get snapshot of node health detection
         SDB_SNAP_CONFIGS          : Get snapshot of node configurations
+        SDB_SNAP_SVCTASKS         : Get all the information of schedule task
         SDB_SNAP_SEQUENCES        : Get the snapshot of sequences
 
     \param [in] condition The matching rule, match all the documents if null
