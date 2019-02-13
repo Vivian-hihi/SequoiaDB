@@ -156,6 +156,7 @@
                      hostInfo['CanNotUseNum'] = 0 ;
                      hostInfo['DiskWarning']  = 0 ;
 
+                     var useHostNum = 0 ;
                      var tmpUseNum = 0 ;
                      var useSumSize = 0 ;
                      var filterDiskList = [] ;
@@ -190,16 +191,20 @@
                         else if ( diskInfo['CanUse'] == true && diskInfo['IsLocal'] == true )
                         {
                            useSumSize += diskInfo['Size'] ;
+                           ++useHostNum ;
                         }
                         filterDiskList.push( diskInfo ) ;
                      } ) ;
+
+                     //可用磁盘的基准值大小
+                     var baseSize = ( useSumSize / useHostNum ) * 0.2 ;
 
                      $.each( filterDiskList, function( index2, diskInfo ){
                         if( diskInfo['CanUse'] == true )
                         {
                            if( diskInfo['IsLocal'] == true && diskInfo['IsUse'] !== false )
                            {
-                              if ( diskInfo['Size'] < useSumSize * 0.2 )
+                              if ( diskInfo['Size'] < baseSize )
                               {
                                  filterDiskList[index2]['IsUse'] = false ;
                               }
@@ -207,8 +212,10 @@
                               {
                                  filterDiskList[index2]['IsUse'] = true ;
                                  ++hostInfo['IsUseNum'] ;
+
+                                 //至少有一个磁盘选中，主机可以用
+                                 hostInfo['CanUse'] = true ;
                               }
-                              hostInfo['CanUse'] = true ;
                            }
                         }
                         else
