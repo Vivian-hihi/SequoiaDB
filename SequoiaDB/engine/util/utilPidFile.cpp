@@ -75,17 +75,6 @@ namespace engine
 
    INT32 removePIDFile( const CHAR *pOutputPath )
    {
-      INT32 rc = SDB_OK ;
-
-      rc = ossFile::deleteFileIfExists( pOutputPath ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return ossFile::deleteFileIfExists( pOutputPath ) ;
    }
 }
