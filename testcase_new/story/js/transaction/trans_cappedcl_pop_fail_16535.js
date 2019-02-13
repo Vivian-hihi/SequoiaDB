@@ -87,7 +87,7 @@ function main()
    db.transRollback();
 
    // check result
-   var expectResult = [{a : 0}, {a : 1}];
+   var expectResult = [{a : 0}, {a : 1}, {a : 2}];
    var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
    checkResult(expectResult, actResult);  
 
@@ -109,10 +109,11 @@ function main()
    db.transRollback();
 
    // check result
+   var expectResult = [{a : 0}, {a : 1}, {a : 2}, {a : 3}];
    var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
    checkResult(expectResult, actResult);
 
    commDropCS(db, csName, true, "drop cs in ending");
 }
-//main();
+main();
 

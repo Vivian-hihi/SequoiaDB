@@ -17,17 +17,17 @@ function main()
    var clName = COMMCLNAME + "_capped_16534";
    commDropCL(db, COMMCSNAME, clName, true, true);
 
-   var cappedcl = commCreateCLByOption( db, csName, clName, {Capped: true, Size: 1, Max: 31000, AutoIndexId: false} );
+   var cappedcl = commCreateCLByOption( db, csName, clName, {Capped: true, Size: 1, Max: 50, AutoIndexId: false} );
 
    // insert records
    var str = "";
    for(var i = 0; i < 1024; i++)
    {
-     str += 'a';
+     str += 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
    }
 
    var objs = new Array();
-   for(var i = 0; i < 30 * 1024; i++)
+   for(var i = 0; i < 31 ; i++)
    {
       objs.push({a : str});
    }
@@ -50,11 +50,11 @@ function main()
    db.transCommit();
  
    // check result
-   checkCount(30720, cappedcl.count());
+   checkCount(31, cappedcl.count());
 
    // insert fail up to max, commit
    var maxObjs = new Array();
-   for(var i = 0; i < 1000; i++)
+   for(var i = 0; i < 30; i++)
    {
       maxObjs.push({a : 'a'});
    }
@@ -75,7 +75,7 @@ function main()
    db.transCommit();
 
    // check result
-   checkCount(30720, cappedcl.count());
+   checkCount(50, cappedcl.count());
 
    cappedcl.truncate();
    cappedcl.insert(objs);
@@ -97,11 +97,11 @@ function main()
    db.transRollback();
 
    // check result
-   checkCount(30720, cappedcl.count());
+   checkCount(31, cappedcl.count());
 
    // insert fail up to max, rollback
    var maxObjs = new Array();
-   for(var i = 0; i < 1000; i++)
+   for(var i = 0; i < 30; i++)
    {
       maxObjs.push({a : 'a'});
    }
@@ -122,7 +122,7 @@ function main()
    db.transRollback();
 
    // check result
-   checkCount(30720, cappedcl.count());
+   checkCount(50, cappedcl.count());
 
    commDropCS(db, csName, true, "drop cs in ending");
 }
@@ -134,5 +134,5 @@ function checkCount( expectCount, actCount )
    }
    println("check result success!");
 }
-//main();
+main();
 

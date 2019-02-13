@@ -1,36 +1,36 @@
 /************************************
-*@Description: 开启事务，执行插入操作并回滚事务 
+*@Description: 开启事务，执行remove操作并提交事务
 *@author:      liuxiaoxuan
-*@createdate:  2018.11.08
-*@testlinkCase: seqDB-16526
+*@createdate:  2019.2.13
+*@testlinkCase: seqDB-17841
 **************************************/
 function main()
 {
    if(commIsStandalone(db))  {   return ;   }  
 
    // create capped cs
-   var csName = COMMCSNAME + "_capped_16526";
+   var csName = COMMCSNAME + "_capped_17841";
    commDropCS(db, csName, true, "drop cs in beginning");
    commCreateCS(db, csName, true, "", {Capped: true});
 
    // create capped cl
-   var clName = COMMCLNAME + "_capped_16526";
+   var clName = COMMCLNAME + "_capped_17841";
    commDropCL(db, COMMCSNAME, clName, true, true);
 
-   var cappedcl = commCreateCLByOption( db, csName, clName, {Capped: true, Size: 1024, AutoIndexId: false} );
+   var cappedcl = commCreateCLByOption( db, csName, clName, {Capped: true, Size: 1, AutoIndexId: false} );
 
-   cappedcl.insert([{a : 0}, {a : 1}]);
+   cappedcl.insert([{a : 0}, {a : 1}, {a : 2}, {a : 3}, {a : 4}]);
 
    db.transBegin();
 
-   // insert
-   cappedcl.insert([{a : 2}, {a : 3}, {a : 4}]);
+   // remove
+   cappedcl.remove({a : 4});
 
-   // rollback
-   db.transRollback();
+   // commit
+   db.transCommit();
 
    // check result
-   var expectResult = [{a : 0}, {a : 1}, {a : 2}, {a : 3}, {a : 4}];
+   var expectResult = [{a : 0}, {a : 1}, {a : 2}, {a : 3}];
    var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
    checkResult(expectResult, actResult);
 
