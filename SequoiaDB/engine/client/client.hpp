@@ -725,7 +725,7 @@ namespace sdbclient
 
       /** \fn INT32 insert ( bson::BSONObj &obj, bson::OID *pId = NULL )
           \brief Insert a bson object into current collection
-          \param [in] obj The inserted bson object
+          \param [in] obj The bson object to be inserted.
           \param [out] pId The object id of inserted bson object. Can be the 
                            follow value:
                <ul>
@@ -742,8 +742,8 @@ namespace sdbclient
                      when the inserted bson object has "_id" field and its type
                      is not an "ObjectId" type, pId gets a invalid value which 
                      is "000000000000000000000000".
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
+          \retval SDB_OK Operation Success.
+          \retval Others Operation Fail.
       */
       INT32 insert ( const bson::BSONObj &obj, bson::OID *pId = NULL )
       {
@@ -756,7 +756,7 @@ namespace sdbclient
                              INT32 flags,
                              bson::BSONObj *pResult = NULL )
           \brief Insert a bson object into current collection.
-          \param [in] obj The inserted bson object.
+          \param [in] obj The bson object to be inserted.
           \param [in] flags The flag to control the behavior of inserting. The
                             value of flag default to be 0, and it can choose
                             the follow values:
@@ -782,8 +782,8 @@ namespace sdbclient
                      when flag "FLG_INSERT_RETURN_OID" is set, return the 
                      value of "_id" field of the inserted record. 
                      e.g.: { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } }
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
+          \retval SDB_OK Operation Success.
+          \retval Others Operation Fail.
       */
       INT32 insert ( const bson::BSONObj &obj,
                      INT32 flags,
@@ -798,7 +798,7 @@ namespace sdbclient
                              INT32 flags = 0,
                              bson::BSONObj *pResult = NULL )
           \brief Insert a bson object into current collection.
-          \param [in] objs The inserted bson objects.
+          \param [in] objs The bson objects to be inserted.
           \param [in] flags The flag to control the behavior of inserting. The
                             value of flag default to be 0, and it can choose
                             the follow values:
@@ -825,8 +825,8 @@ namespace sdbclient
                      values of "_id" field in a bson array. 
                      e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" }, 
                                       { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
+          \retval SDB_OK Operation Success.
+          \retval Others Operation Fail.
       */
       INT32 insert ( std::vector<bson::BSONObj> &objs,
                      INT32 flags = 0,
@@ -842,7 +842,7 @@ namespace sdbclient
                              INT32 flags = 0,
                              bson::BSONObj *pResult = NULL )
           \brief Insert bson objects into current collection.
-          \param [in] objs The array of inserted bson object.
+          \param [in] objs The array of bson objects to be inserted.
           \param [in] size The size of the array.
           \param [in] flags The flag to control the behavior of inserting. The
                             value of flag default to be 0, and it can choose
@@ -871,8 +871,8 @@ namespace sdbclient
                      values of "_id" field in a bson array. 
                      e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" }, 
                                       { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
+          \retval SDB_OK Operation Success.
+          \retval Others Operation Fail.
       */
       INT32 insert ( const bson::BSONObj objs[], 
                      INT32 size, 
@@ -885,8 +885,8 @@ namespace sdbclient
       }
 
       /** \fn  INT32 bulkInsert ( SINT32 flags,
-                                  std::vector<bson::BSONObj> &obj )
-          \brief Insert a bulk of bson objects into current collection
+                                  std::vector<bson::BSONObj> &objs )
+          \brief Insert a bulk of bson objects into current collection.
           \param [in] flags The flag to control the behavior of inserting. The
                             value of flag default to be 0, and it can choose
                             the follow values:
@@ -901,16 +901,16 @@ namespace sdbclient
                                      error, database will skip them and go on 
                                      inserting.
 
-          \param [in] obj The array of inserted bson objects
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
+          \param [in] objs The bson objects to be inserted.
+          \retval SDB_OK Operation Success.
+          \retval Others Operation Fail.
       */
       INT32 bulkInsert ( SINT32 flags,
-                         std::vector<bson::BSONObj> &obj )
+                         std::vector<bson::BSONObj> &objs )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->bulkInsert ( flags, obj ) ;
+         return pCollection->bulkInsert ( flags, objs ) ;
       }
 
       /** \fn  INT32 update ( const bson::BSONObj &rule,

@@ -1550,20 +1550,20 @@ SDB_EXPORT INT32 sdbGetCount1 ( sdbCollectionHandle cHandle,
 
 /** \fn INT32 sdbInsert ( sdbCollectionHandle cHandle,
                           bson *obj )
-    \brief Insert a bson object into current collection
-    \param [in] cHandle The collection handle
-    \param [in] obj The inserted bson object, cannot be null
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
+    \brief Insert a bson object into current collection.
+    \param [in] cHandle The collection handle.
+    \param [in] obj The bson object to be inserted, cannot be null.
+    \retval SDB_OK Operation Success.
+    \retval Others Operation Fail.
 */
 SDB_EXPORT INT32 sdbInsert ( sdbCollectionHandle cHandle,
                              bson *obj ) ;
 
 /** \fn INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
                            bson *obj, bson_iterator *pId )
-    \brief Insert a bson object into current collection
-    \param [in] cHandle The collection handle
-    \param [in] obj The inserted bson object, cannot be null
+    \brief Insert a bson object into current collection.
+    \param [in] cHandle The collection handle.
+    \param [in] obj The bson object to be inserted, cannot be null.
     \param [out] pId The object id of inserted bson object. Can be the 
                      follow value:
          <ul>
@@ -1574,8 +1574,8 @@ SDB_EXPORT INT32 sdbInsert ( sdbCollectionHandle cHandle,
                the value of "_id" field is. Note that: the memory of pId 
                will be invalidated when next insert/bulkInsert is 
                performed or the inserted bson object is destroyed.
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
+    \retval SDB_OK Operation Success.
+    \retval Others Operation Fail.
 */
 SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
                               bson *obj, bson_iterator *pId ) ;
@@ -1584,9 +1584,9 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
 /** \fn INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
                            bson *obj, INT32 flags, 
                            bson *pResullt )
-    \brief Insert a bson object into current collection
-    \param [in] cHandle The collection handle
-    \param [in] obj The inserted bson object, cannot be null
+    \brief Insert a bson object into current collection.
+    \param [in] cHandle The collection handle.
+    \param [in] obj The bson object to be inserted, cannot be null.
     \param [in] flags The flag to control the behavior of inserting. The
                       value of flags default to be 0, and it can choose
                       the follow values:
@@ -1612,16 +1612,16 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
                when flag "FLG_INSERT_RETURN_OID" is set, return the 
                value of "_id" field of the inserted record. 
                e.g.: { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } }
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
+    \retval SDB_OK Operation Success.
+    \retval Others Operation Fail.
 */
 SDB_EXPORT INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
                               bson *obj, INT32 flags, bson *pResult ) ;
 
 /** \fn INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
-                              SINT32 flags, bson **obj, SINT32 num )
-    \brief Insert a bulk of bson objects into current collection
-    \param [in] cHandle The collection handle
+                              SINT32 flags, bson **objs, SINT32 num )
+    \brief Insert a bulk of bson objects into current collection.
+    \param [in] cHandle The collection handle.
     \param [in] flags The flag to control the behavior of inserting. The
                       value of flags default to be 0, and it can choose
                       the follow values:
@@ -1636,10 +1636,10 @@ SDB_EXPORT INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
                                error, database will skip them and go on 
                                inserting.
 
-    \param [in] obj The array of inserted bson objects, cannot be null
-    \param [in] num The number of inserted bson objects
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
+    \param [in] objs The array of bson objects to be inserted, cannot be null.
+    \param [in] num The number of inserted bson objects.
+    \retval SDB_OK Operation Success.
+    \retval Others Operation Fail.
     \code
       INT32 rc = 0 ;
       INT32 i = 0 ;
@@ -1669,14 +1669,14 @@ SDB_EXPORT INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
 
 */
 SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
-                                 SINT32 flags, bson **obj, SINT32 num ) ;
+                                 SINT32 flags, bson **objs, SINT32 num ) ;
 
 /** \fn INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
                                   SINT32 flags, bson **objs, 
                                   SINT32 num,
                                   bson *pResult )
-    \brief Insert a bulk of bson objects into current collection
-    \param [in] cHandle The collection handle
+    \brief Insert a bulk of bson objects into current collection.
+    \param [in] cHandle The collection handle.
     \param [in] flags The flag to control the behavior of inserting. The
                       value of flags default to be 0, and it can choose
                       the follow values:
@@ -1692,7 +1692,7 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                                inserting.
          <li>
          FLG_INSERT_RETURN_OID: return the value of "_id" field in the records.
-    \param [in] objs The array of inserted bson objects, cannot be null.
+    \param [in] objs The array of bson objects to be inserted, cannot be null.
     \param [in] num The number of inserted bson objects.
     \param [out] pResult The result of inserting. Can be NULL or a bson:
          <ul>
@@ -1705,8 +1705,8 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                values of "_id" field in a bson array. 
                e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" }, 
                                 { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
+    \retval SDB_OK Operation Success.
+    \retval Others Operation Fail.
 */
 SDB_EXPORT INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
                                   SINT32 flags, bson **objs, 
