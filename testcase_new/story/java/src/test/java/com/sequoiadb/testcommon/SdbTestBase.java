@@ -97,7 +97,7 @@ public class SdbTestBase {
    
     private static void modifyNodeConf(boolean transactionon, 
                                        int transisolation, 
-                                       int translockwait ){
+                                       boolean translockwait ){
         BasicBSONObject configs  = new BasicBSONObject() ;
         configs.append( TRANSACTIONON,  true ) ;
         configs.append( TRANSISOLATION, transisolation ) ;
@@ -120,7 +120,7 @@ public class SdbTestBase {
     @BeforeTest(enabled=false)
     public static void initTest(boolean transactionon, 
                                 int transisolation, 
-                                int translockwait){
+                                boolean translockwait){
         if ( !transactionon ){
             return ;
         }
@@ -141,7 +141,7 @@ public class SdbTestBase {
         }
         
         try{
-            modifyNodeConf(!transactionon, 0, 0 ) ;
+            modifyNodeConf(!transactionon, 0, false ) ;
         }catch(BaseException e){
             e.printStackTrace() ;
             throw new SkipException("initTest failed!!!") ;
@@ -153,7 +153,7 @@ public class SdbTestBase {
     @BeforeGroups(groups = "ru", inheritGroups = true )
     public static void initRuGroups(){
         int transisolation = 0 ; 
-        int translockwait = 0;
+        boolean translockwait = false;
         try{
             modifyNodeConf( true, transisolation, translockwait ) ;
         }catch(BaseException e){
@@ -165,7 +165,7 @@ public class SdbTestBase {
     @BeforeGroups(groups = "rc", inheritGroups = true)
     public static void initRcGroups(){
         int transisolation = 1 ; 
-        int translockwait = 0;
+        boolean translockwait = false;
         try{
             modifyNodeConf( true, transisolation, translockwait ) ;
         }catch(BaseException e){
@@ -177,7 +177,7 @@ public class SdbTestBase {
     @BeforeGroups(groups = "rcwaitlock", inheritGroups = true)
     public static void initRcLockwaitGroups(){
         int transisolation = 1 ; 
-        int translockwait = 1;
+        boolean translockwait = true;
         try{
             modifyNodeConf( true, transisolation, translockwait ) ;
         }catch(BaseException e){
@@ -190,7 +190,7 @@ public class SdbTestBase {
     @AfterGroups(groups = {"ru", "rc", "rcwaitlock"},inheritGroups = true, alwaysRun=true)
     public static void finiGroups(){
         try{
-            modifyNodeConf( false, 0, 0 );
+            modifyNodeConf( false, 0, false );
         }catch(BaseException e){
             e.printStackTrace() ;
             throw e ;
