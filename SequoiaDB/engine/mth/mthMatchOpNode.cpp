@@ -2323,8 +2323,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != func, "func can't be null!" ) ;
-	   try
-		{
+       try
+      {
          _funcList.push_back( func ) ;
       }
       catch( std::exception & )
