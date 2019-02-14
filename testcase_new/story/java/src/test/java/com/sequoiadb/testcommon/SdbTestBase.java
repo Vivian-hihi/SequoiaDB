@@ -183,7 +183,12 @@ public class SdbTestBase {
         try {
             sequoiadb.updateConfig( configs, options ) ;
         } catch ( BaseException e ) {
-            if ( e.getErrorCode() != SDBError.SDB_COORD_NOT_ALL_DONE
+            if ( CommLib.isStandAlone( sequoiadb ) 
+                 &&  e.getErrorCode() != SDBError.SDB_RTN_CONF_NOT_TAKE_EFFECT
+                 .getErrorCode() ){
+                e.printStackTrace() ;
+                throw e ;
+            }else if ( e.getErrorCode() != SDBError.SDB_COORD_NOT_ALL_DONE
                     .getErrorCode() ) {
                 e.printStackTrace() ;
                 throw e ;
