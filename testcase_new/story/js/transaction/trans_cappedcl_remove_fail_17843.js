@@ -47,31 +47,6 @@ function main()
    var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
    checkResult(expectResult, actResult);
 
-   // remove fail, rollback
-   db.transBegin();
-   try
-   {
-      // remove success
-      cappedcl.remove({a : 4});
-      println("remove success in transaction");
-      // remove fail
-      cappedcl.remove();
-      throw "remove should be failure!";
-   }
-   catch(e)
-   {
-      if(-6 != e)
-      {
-         throw buildException("remove()", "remove", "remove", -6, e);
-      }
-   }
-   db.transRollback();
-
-    // check result
-   var expectResult = [{a : 0}, {a : 1}, {a : 2}, {a : 3}];
-   var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
-   checkResult(expectResult, actResult);
-
    commDropCS(db, csName, true, "drop cs in ending");
 }
 main();

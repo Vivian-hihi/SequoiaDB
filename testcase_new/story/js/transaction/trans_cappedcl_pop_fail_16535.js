@@ -20,95 +20,14 @@ function main()
    var cappedcl = commCreateCLByOption( db, csName, clName, {Capped: true, Size: 1, Max: 100, AutoIndexId: false} );
 
    // insert records
-   cappedcl.insert([{a : 0}, {a : 1}, {a : 2}]);
-
-   // pop fail with wrong arguments, commit
-   db.transBegin();
-   try
-   {
-      // pop success
-      cappedcl.pop({LogicalID : 112, Direction : -1});
-      println("pop success in transaction");
-      // pop fail
-      cappedcl.pop({Logical : 0});
-      throw "pop should be failure!";
-   }
-   catch(e)
-   {
-      if(-6 != e)
-      {
-         throw buildException("pop", "pop", "pop", -6, e);
-      }
-   }
-   cappedcl.insert({a : 2});
-   db.transCommit();
-   
-   // check result 
-   var expectResult = [{a : 0}, {a : 1}, {a : 2}];
-   var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
-   checkResult(expectResult, actResult);
+   cappedcl.insert([{a : 0}, {a : 1}, {a : 2}, {a : 3}]);
 
    // pop fail with not exist record, commit
-   db.transBegin();
-   try
-   {
-      // pop success
-      cappedcl.pop({LogicalID : 112, Direction : -1});
-      println("pop success in transaction");
-      // pop fail
-      cappedcl.pop({LogicalID : 10000, Direction: -1});
-      throw "pop should be failure!";
-   }
-   catch(e)
-   {
-      if(-6 != e)
-      {
-         throw buildException("pop", "pop", "pop", -6, e);
-      }
-   }
-   cappedcl.insert({a : 3});
-   db.transCommit();
-
-   // check result
-   var expectResult = [{a : 0}, {a : 1}, {a : 3}];
-   var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
-   checkResult(expectResult, actResult);
-
-   cappedcl.truncate();
-   cappedcl.insert([{a : 0}, {a : 1}, {a : 2}]);
- 
-   // pop fail with wrong arguments, rollback
-   db.transBegin();
-   try
-   {
-      // pop success
-      cappedcl.pop({LogicalID : 112, Direction : -1});
-      println("pop success in transaction");
-      // pop fail
-      cappedcl.pop({Logical : 0});
-      throw "pop should be failure!";
-   }
-   catch(e)
-   {
-      if(-6 != e)
-      {
-         throw buildException("pop", "pop", "pop", -6, e);
-      }
-   }
-   cappedcl.insert({a : 2});
-   db.transRollback();
-
-   // check result
-   var expectResult = [{a : 0}, {a : 1}, {a : 2}];
-   var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
-   checkResult(expectResult, actResult);  
-
-    // pop fail with not exist record, rollback
    db.transBegin();
    try 
    {   
       // pop success
-      cappedcl.pop({LogicalID : 112, Direction : -1});
+      cappedcl.pop({LogicalID : 168, Direction : -1});
       println("pop success in transaction");
       // pop fail  
       cappedcl.pop({LogicalID : 10000, Direction: -1});
@@ -121,11 +40,10 @@ function main()
          throw buildException("pop", "pop", "pop", -6, e); 
       }   
    }   
-   cappedcl.insert({a : 3});
-   db.transRollback();
+   db.transCommit();
 
    // check result
-   var expectResult = [{a : 0}, {a : 1}, {a : 3}];
+   var expectResult = [{a : 0}, {a : 1}, {a : 2}];
    var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
    checkResult(expectResult, actResult);
 
