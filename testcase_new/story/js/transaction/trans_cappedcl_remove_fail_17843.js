@@ -20,8 +20,11 @@ function main()
    var cappedcl = commCreateCLByOption( db, csName, clName, {Capped: true, Size: 1, Max: 50, AutoIndexId: false} );
 
    // insert records
-   cappedcl.insert([{a : 0}, {a : 1}, {a : 2}, {a : 3}, {a : 4}]);
+   cappedcl.insert([{a : 0}, {a : 1}, {a : 2}, {a : 3}, {a : 4}, {a : 5}]);
 
+   // remove
+   cappedcl.remove({a : 5});
+   
    // remove fail, commit
    db.transBegin();
    try

@@ -20,7 +20,10 @@ function main()
    var cappedcl = commCreateCLByOption( db, csName, clName, {Capped: true, Size: 1, Max: 100, AutoIndexId: false} );
 
    // insert records
-   cappedcl.insert([{a : 0}, {a : 1}]);
+   cappedcl.insert([{a : 0}, {a : 1}, {a : 2}]);
+   
+   // pop 
+   cappedcl.pop({LogicalID : 112, Direction : -1});
 
    // pop fail with wrong arguments, commit
    db.transBegin();
