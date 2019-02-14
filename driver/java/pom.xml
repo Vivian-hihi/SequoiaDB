@@ -145,7 +145,11 @@
                 </executions>
                 <configuration>
                     <nodeprecated>true</nodeprecated>
-                    <excludePackageNames>com.sequoiadb.message:com.sequoiadb.net:com.sequoiadb.util:org.bson.io:org.bson.util:org.bson.util.annotations</excludePackageNames>
+                    <excludePackageNames>com.sequoiadb.message:com.sequoiadb.net:org.bson.io:org.bson.util:org.bson.util.annotations</excludePackageNames>
+                    <sourceFileExcludes>
+                        <exclude></exclude>
+                        <exclude>com/sequoiadb/util/Helper.java</exclude>
+                    </sourceFileExcludes>
                 </configuration>
             </plugin>
         </plugins>

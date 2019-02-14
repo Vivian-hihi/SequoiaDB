@@ -340,24 +340,4 @@ public class SdbDecrypt {
             }
         }
     }
-
-    public static void main(String[] args) {
-        //[userName, token]: ([haha, 123], [sdbadmin, sdkjdkfplandlmc])
-        //cat aa.pwd 
-        //haha:02C55B03F783D40BDF99EB7608F02583F329B35C1D169A05531FAB4CF6E1
-        //sdbadmin:000B36FFE9EDB1C3FFFAEE67821256E3A31C75016E163C0417B6281C6F72
-        String passwdFile = "D:\\work\\sequoiadb\\aa.pwd";
-        String user = "sdbadmin";
-        String token = "sdkjdkfplandlmc";
-
-        SdbDecrypt sd = new SdbDecrypt();
-        File f = new File(passwdFile);
-        SdbDecryptUserInfo info = sd.parseCipherFile(user, token, f);
-        // call another function without token, parseCipherFile(user, f);
-        System.out.println(info);
-
-        System.out.println(sd.decryptPasswd(
-                "0435E09730063C52E3A76A190D43058124E5578F18492054AD05E78BA4E03A11169DA4CA2FB4",
-                null));
-    }
 }
