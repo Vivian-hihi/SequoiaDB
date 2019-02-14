@@ -74,8 +74,7 @@
                "value": "root",
                "valid": {
                   "min": 1
-               },
-               'disabled': true
+               }
             },
             {
                "name": "Passwd",
@@ -297,8 +296,7 @@
                   "value": hostInfo['User'],
                   "valid": {
                      "min": 1
-                  },
-                  'disabled': true
+                  }
                },
                {
                   "name": "Passwd",
