@@ -18,7 +18,7 @@
 /*
 @description: deploy sequoiasql-mysql package
 @modify list:
-   2017-09-12 JiaWen He  Init
+   2018-06-12 JiaWen He  Init
 
 1. Generate plan
    @parameter
@@ -223,6 +223,90 @@ function GeneratePlan( taskID )
    return plan ;
 }
 
+function getExpectPath()
+{
+   try
+   {
+      return adaptPath( System.getEWD() ) + '../tools/expect/' ;
+   }
+   catch( e )
+   {
+      return '/opt/sequoiadb/tools/expect/'
+   }
+}
+
+function getPathList( path )
+{
+   try
+   {
+      var result = File.list( { 'pathname': path } ).toArray() ;
+      for ( var i in result )
+      {
+         result[i] = JSON.parse( result[i] ) ;
+      }
+      return result ;
+   }
+   catch( e )
+   {
+      return [] ;
+   }
+}
+
+function copyAllFile( file, hostName, agentPort, srcPath, dstPath )
+{
+   var error = null ;
+   var list = getPathList( srcPath ) ;
+
+   for ( var i in list )
+   {
+      var tmpSrcPath = adaptPath( srcPath ) + list[i]['name'] ;
+      var tmpDstPath = adaptPath( dstPath ) + list[i]['name'] ;
+
+      if ( File.isDir( tmpSrcPath ) )
+      {
+         try
+         {
+            file.mkdir( tmpDstPath ) ;
+         }
+         catch( e )
+         {
+         }
+
+         error = copyAllFile( file, hostName, agentPort, tmpSrcPath, tmpDstPath ) ;
+         if ( error !== null )
+         {
+            break ;
+         }
+      }
+      else
+      {
+         try
+         {
+            File.scp( tmpSrcPath, hostName + ':' + agentPort + '@' + tmpDstPath ) ;
+            file.chmod( tmpDstPath, 0755 ) ;
+         }
+         catch( e )
+         {
+            error = _getErrorMsg( getLastError(), e,
+                                  sprintf( "Failed to copy file: host [?:?], " +
+                                           "file [?]",
+                                           hostName, agentPort, tmpSrcPath ) ) ;
+            break ;
+         }
+      }
+   }
+
+   return error ;
+}
+
+function sendExpect( file, hostName, agentPort )
+{
+   var srcPath = getExpectPath() ;
+   var dstPath = OMA_TEMP_EXPECT_PATH ;
+
+   return copyAllFile( file, hostName, agentPort, srcPath, dstPath ) ;
+}
+
 function SendPackage( taskID )
 {
    var PD_LOGGER = new Logger( "sequoiasql-mysql.js" ) ;
@@ -234,7 +318,7 @@ function SendPackage( taskID )
    var installPacket = taskInfo[FIELD_INSTALL_PACKET] ;
    var hostName      = hostInfo[FIELD_HOSTNAME] ;
    var agentPort     = _getAgentPort( hostName ) ;
-   var destPath      = '/tmp/packet' ;
+   var destPath      = OMA_TEMP_PACKET_PATH ;
    var destFileAddr  = hostName + ':' + agentPort + '@' + destPath +
                        '/sequoiasql-mysql.run' ;
    var remote        = null ;
@@ -308,6 +392,18 @@ function SendPackage( taskID )
       return resultInfo ;
    }
 
+   error = sendExpect( file, hostName, agentPort ) ;
+   if ( error !== null )
+   {
+      resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
+      resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
+      resultInfo[FIELD_STATUS] = STATUS_FAIL ;
+      resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
+      resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
+      PD_LOGGER.logTask( PDERROR, error ) ;
+      return resultInfo ;
+   }
+
    PD_LOGGER.logTask( PDEVENT, sprintf( "Finish to Send packet: host [?]",
                                         hostName ) ) ;
    resultInfo[FIELD_FLOW].push( sprintf( "Finish to Send packet: host [?]",
@@ -357,8 +453,13 @@ function InstallPackage( taskID )
    var sshPort       = hostInfo[FIELD_SSH_PORT] ;
    var user          = hostInfo[FIELD_USER] ;
    var pwd           = hostInfo[FIELD_PASSWD] ;
-   var destPath      = '/tmp/packet/sequoiasql-mysql.run' ;
-   var options = "" ;
+   var destPath      = OMA_TEMP_PACKET_PATH + '/sequoiasql-mysql.run' ;
+   var ssh ;
+
+   var expectTimeout = 30 ;
+   var expectPath    = OMA_TEMP_EXPECT_PATH + '/bin/expect' ;
+   var expectShell   = OMA_TEMP_EXPECT_PATH + '/shell/sudo_cmd.sh' ;
+   var expectExec    = expectPath + ' ' + expectShell + ' ' + expectTimeout + ' ' + pwd + ' ' ;
 
    PD_LOGGER.setTaskId( taskID ) ;
 
@@ -367,10 +468,53 @@ function InstallPackage( taskID )
    resultInfo[FIELD_FLOW].push( sprintf( "Begin to install packet: host [?]",
                                          hostName ) ) ;
 
-   var cmd = 'chmod u+x ' + destPath ;
    try
    {
-      var ssh = new Ssh( hostName, user, pwd, parseInt( sshPort ) ) ;
+      ssh = new Ssh( hostName, user, pwd, parseInt( sshPort ) ) ;
+   }
+   catch( e )
+   {
+      error = _getErrorMsg( getLastError(), e,
+                            sprintf( "Failed to call ssh: host [?], detail[?]",
+                                     hostName, getLastErrMsg() ) ) ;
+      resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
+      resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
+      resultInfo[FIELD_STATUS] = STATUS_FAIL ;
+      resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
+      resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
+      PD_LOGGER.logTask( PDERROR, error ) ;
+      return resultInfo ;
+   }
+
+   if ( user != 'root' )
+   {
+      try
+      {
+         var cmd = expectExec + 'ls' ;
+         ssh.exec( cmd ) ;
+      }
+      catch( e )
+      {
+         error = _getErrorMsg( getLastError(), e,
+                               sprintf( "Account ? does not have administrator privileges", user ) ) ;
+         resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
+         resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
+         resultInfo[FIELD_STATUS] = STATUS_FAIL ;
+         resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
+         resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
+         PD_LOGGER.logTask( PDERROR, error ) ;
+         return resultInfo ;
+      }
+   }
+
+   try
+   {
+      var cmd = 'chmod u+x ' + destPath ;
+
+      if ( user != 'root' )
+      {
+         cmd = expectExec + cmd ;
+      }
 
       ssh.exec( cmd ) ;
    }
@@ -389,14 +533,19 @@ function InstallPackage( taskID )
       return resultInfo ;
    }
 
-   options += " --mode unattended --prefix " + installPath ;
-   options += " --username " + sdbUser + " --userpasswd " + sdbPasswd ;
-   options += " --groupname " + sdbUserGroup ;
-
-   var cmd = destPath + options ;
    try
    {
-      var ssh = new Ssh( hostName, user, pwd, parseInt( sshPort ) ) ;
+      var options = "" ;
+      options += " --mode unattended --prefix " + installPath ;
+      options += " --username " + sdbUser + " --userpasswd " + sdbPasswd ;
+      options += " --groupname " + sdbUserGroup ;
+
+      var cmd = destPath + options ;
+
+      if ( user != 'root' )
+      {
+         cmd = expectExec + cmd ;
+      }
 
       ssh.exec( cmd ) ;
 

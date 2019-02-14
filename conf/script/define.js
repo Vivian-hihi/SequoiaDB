@@ -245,6 +245,10 @@ var OMA_PATH_TEMP_LOCAL_DIR                = "/tmp/omatmp/conf/local/" ;
 var OMA_PATH_TEMP_SPT_DIR                  = "/tmp/omatmp/conf/script/" ;
 var OMA_PATH_BIN                           = "bin/";
 
+var OMA_TEMP_ROOT_PATH                     = "/tmp/omatmp"
+var OMA_TEMP_PACKET_PATH                   = "/tmp/omatmp/packet"
+var OMA_TEMP_EXPECT_PATH                   = "/tmp/omatmp/expect"
+
 var OMA_PATH_OMA_WORK_DIR                  = "/tmp/omagent" ;
 var OMA_PATH_OMA_WORK_TASK_DIR             = "/tmp/omagent/task" ;
 //  /tmp/omagent/task/$taskID/pid.txt
