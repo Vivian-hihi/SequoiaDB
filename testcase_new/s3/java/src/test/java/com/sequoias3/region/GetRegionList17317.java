@@ -85,6 +85,7 @@ public class GetRegionList17317 extends S3TestBase{
 			boolean isRepeat = unRepeatRegionNames.add(regionName);
 			Assert.assertTrue(isRepeat, "the region name " + regionName + " is repeated!");
 		}
+		//TODO:1、测试检测结果方式不严谨，如果创建区域有重复则无法校验，另外实际和预期结果不一致，建议抛出不一致的记录，方便定位
 		Assert.assertTrue(actRegions.containsAll(regionNames));
 		
     	runSuccess = true;

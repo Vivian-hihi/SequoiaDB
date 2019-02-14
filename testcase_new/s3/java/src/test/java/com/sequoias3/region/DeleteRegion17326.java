@@ -25,7 +25,7 @@ public class DeleteRegion17326 extends S3TestBase{
 	@BeforeClass
 	private void setUp() throws Exception {
 		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
-		
+		//TODO:1、没有创建区域，不需要判读该区域是否存在
 		if(RegionUtils.headRegion(NonexistentRegion)){
 			RegionUtils.deleteRegion(NonexistentRegion);
 		}

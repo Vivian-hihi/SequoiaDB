@@ -35,6 +35,7 @@ public class GetRegionMessage17315 extends S3TestBase{
 		if(RegionUtils.headRegion(regionName)){
 			RegionUtils.deleteRegion(regionName);
 		}
+		//TODO:1、此处不需要创建region
 		// create region
 		Region region = new Region();
 		region.withName(regionName);

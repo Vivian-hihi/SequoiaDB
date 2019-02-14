@@ -37,7 +37,7 @@ public class CreateRegionByNormalUser17309 extends S3TestBase{
 		CommLib.clearUser(userName);
 		accessKeys = UserUtils.createUser(userName, roleName);
 		CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
-		
+		//TODO:1、公共方法中已new sdb（），建议用例中不用重新建连接
 		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
 		RegionUtils.createCSAndCL(metaCSName, metaClNames);
 		RegionUtils.createCSAndCL(dataCSName, dataClName);

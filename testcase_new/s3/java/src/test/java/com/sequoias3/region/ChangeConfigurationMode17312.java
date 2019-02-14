@@ -30,6 +30,7 @@ public class ChangeConfigurationMode17312 extends S3TestBase{
 
 	@BeforeClass
 	private void setUp() throws Exception {
+		//TODO:1、公共方法中已new sdb（），建议用例中不用重新建连接
 		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
 		RegionUtils.createCSAndCL(metaCSName, metaClNames);
 		RegionUtils.createCSAndCL(dataCSName, dataClName);
@@ -44,6 +45,7 @@ public class ChangeConfigurationMode17312 extends S3TestBase{
 	
 	@Test
 	public void testCreateRegion() throws Exception {
+		//TODO:2、测试结果和文本用例测试结果不一致
 		//test a : change the specified mode to ShardingType mode
         Region oldRegion_1 = new Region();
         oldRegion_1.withName(specifiedRegionName)

@@ -60,6 +60,7 @@ public class TestGetRegion17354 extends S3TestBase{
         //合法值
         GetRegionResult result = RegionUtils.getRegion(regionName);
         Region region = result.getRegion();
+        //TODO:1、用例中没有特别要求，region名没有必要大写，这里就不需要再转换大小写
         Assert.assertEquals(region.getName(), regionName.toLowerCase());
     	Assert.assertEquals(region.getMetaLocation(), metaCSName + "." + metaClNames[0]);
 		Assert.assertEquals(region.getMetaHisLocation(), metaCSName + "." + metaClNames[1]);

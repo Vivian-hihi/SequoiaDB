@@ -99,6 +99,7 @@ public class GetRegionMessage17320 extends S3TestBase{
 	
 	@Test
 	public void testCreateRegion() throws Exception {
+		//TODO:1、没有校验桶列表信息
 		//specified mode : get region
 		GetRegionResult spResult = RegionUtils.getRegion(specifiedModeRegion);
 		Region spRegion = spResult.getRegion();

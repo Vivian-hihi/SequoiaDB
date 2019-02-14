@@ -48,7 +48,7 @@ public class GetRegionMessage17313 extends S3TestBase{
 			RegionUtils.deleteRegion(shardingTypeRegionName);
 		}
 	}
-	
+	//TODO:1、测试点和文本用例不相符，请参考文本用例测试点
 	@Test
 	public void testGetRegionMessage() throws Exception {
 		String metaLocation = metaCSName + "." + metaClNames[0];
