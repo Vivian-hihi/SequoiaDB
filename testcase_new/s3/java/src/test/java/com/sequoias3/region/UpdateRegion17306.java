@@ -55,6 +55,7 @@ public class UpdateRegion17306 extends S3TestBase {
                 .withDataDomain(upDataDomain)
                 .withMetaDomain(upMeatDomain)
                 .withName(regionName);
+        //TODO:1、这里的判断条件，建议给出说明
         if (!regionName.equals(regionNames[2])) {
             try {
                 RegionUtils.putRegion(region);

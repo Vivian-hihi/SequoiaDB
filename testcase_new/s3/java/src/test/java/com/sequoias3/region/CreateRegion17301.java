@@ -27,6 +27,7 @@ public class CreateRegion17301 extends S3TestBase{
     }
     @DataProvider(name="range-provider")
     private Object[][] rangeData(){
+    	//TODO:1、该部分代码为编译失败注释，需要更新代码
        // List<String> domains = RegionUtils.getDomainNames();
         //if(domains.size() < 1){
            // throw new SkipException("domains.size() < 1,At least one domain is required");

@@ -85,6 +85,7 @@ public class CreateRegion17300 extends S3TestBase{
     private void tearDown() throws Exception {
         try {
             if (runSuccess) {
+            	//TODO:1、这里不需要清理bucketName，没有创建该桶
                 CommLib.clearBucket(s3Client, bucketName);
                 for(String domainName : domainNames){
                     RegionUtils.dropDomain(domainName);

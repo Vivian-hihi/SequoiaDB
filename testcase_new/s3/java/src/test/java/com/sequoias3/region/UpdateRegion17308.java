@@ -54,7 +54,7 @@ public class UpdateRegion17308 extends S3TestBase{
         RegionUtils.deleteRegion(regionName);
         RegionUtils.createDomain(domainName);
     }
-
+   
     @Test
     private void test() throws Exception {
         //create region
