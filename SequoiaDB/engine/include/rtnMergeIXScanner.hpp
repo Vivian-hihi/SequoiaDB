@@ -52,6 +52,7 @@
 #include "monCB.hpp"
 #include "rtnIXScanner.hpp"
 #include "dmsStorageUnit.hpp"
+#include "dmsTransLockCallback.hpp"
 
 
 namespace engine
@@ -206,6 +207,11 @@ namespace engine
          return _sharedInfo.getDupBuf();
       }
 
+      const MEMTREE_LATCH_MODE getMemtreeLatchMode()
+      {
+         return _leftIXScanner->getMemtreeLatchMode(); 
+      }
+
       virtual INT32 isCursorSame( const BSONObj &saveObj,
                                   const dmsRecordID &saveRID,
                                   BOOLEAN &isSame )
@@ -217,9 +223,8 @@ namespace engine
 
       virtual void  removeDuplicatRID( const dmsRecordID &rid ) 
       {
-         return _wasFromLeft  
-             ?  _leftIXScanner->removeDuplicatRID( rid )
-             :  _rightIXScanner->removeDuplicatRID( rid ) ; 
+         // do local remove inside merge Scanner
+         _sharedInfo.getDupBuf()->erase( rid ) ;
       }
 
    };

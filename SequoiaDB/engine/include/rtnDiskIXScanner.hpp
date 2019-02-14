@@ -223,7 +223,10 @@ namespace engine
       {
          _curIndexRID.reset() ;
          _listIterator.reset() ;
-         _sharedInfo.getDupBuf()->clear() ;
+         if ( _sharedInfo.checkDup() )
+         { 
+            _sharedInfo.getDupBuf()->clear() ;
+         }
          _init    = FALSE ;
       }
       // save the bson key for the current index rid, before releasing X latch

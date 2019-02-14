@@ -783,7 +783,7 @@ namespace engine
          dmsExtRW          _rw ;
          _dmsStorageDataCommon   *_pData ;
    } ;
-   typedef _dmsRecordRW dmsRecordRW ;
+   typedef class _dmsRecordRW dmsRecordRW ;
 
    #define DMS_MME_OFFSET                 ( DMS_SME_OFFSET + DMS_SME_SZ )
    #define DMS_DATASU_EYECATCHER          "SDBDATA"

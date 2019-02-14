@@ -110,10 +110,16 @@ namespace engine
       INT32     rc        = SDB_OK;  // return rc
       INT32     rcl       = SDB_OK;  // rc from left scanner
       INT32     rcr       = SDB_OK;  // rc from right scanner
-      BOOLEAN   leftDone  = _leftIXScanner->eof();  
-      BOOLEAN   rightDone = _rightIXScanner->eof();  
-      BOOLEAN   leftInit  = _leftIXScanner->initialized();
-      BOOLEAN   rightInit = _rightIXScanner->initialized();
+      BOOLEAN   leftDone  ;
+      BOOLEAN   rightDone ;
+      BOOLEAN   leftInit  ;
+      BOOLEAN   rightInit ;
+
+   begin:
+      leftDone  = _leftIXScanner->eof();  
+      rightDone = _rightIXScanner->eof();  
+      leftInit  = _leftIXScanner->initialized();
+      rightInit = _rightIXScanner->initialized();
 
       SDB_ASSERT( ( leftInit || rightInit ), 
                   "At least one scanner must be initilized"); 
@@ -129,14 +135,28 @@ namespace engine
       // initialized at all
       if ( leftDone || !leftInit )
       {
+         // only advance if last time was from right
+         if( !_wasFromLeft )
+         {
+            rc = _rightIXScanner->advance( _rrid ) ;
+         }
+         // else 
+         
+         rid =  _rrid;
          _wasFromLeft = FALSE;
-         return _rightIXScanner->advance( rid ) ;
+         goto done ;
       }
 
       if ( rightDone || !rightInit )
       {
+         // only advance if last time was from left
+         if( _wasFromLeft )
+         {
+            rc = _leftIXScanner->advance( _lrid ) ;
+         }
+         rid = _lrid;
          _wasFromLeft = TRUE;
-         return _leftIXScanner->advance( rid ) ;
+         goto done ;
       }
 
       if( _firstRun )
@@ -214,6 +234,22 @@ namespace engine
          }
       }
    done :
+      // before we decide to return the rid, try to put it in dup buffer
+      if( SDB_OK == rc )
+      {
+         if ( _sharedInfo.checkDup() &&
+              ( _sharedInfo.getDupBuf()->end() !=
+                _sharedInfo.getDupBuf()->find ( rid ) ) )
+         {
+            // if we are able to find the recordid in dupBuffer, that
+            // means we've already processed the record, so let's also
+            // jump back to begin
+            rid.reset() ;
+            goto begin ;
+         }
+         _sharedInfo.getDupBuf()->insert ( rid ) ;
+      }
+
       PD_TRACE1 ( SDB__RTNMERGEIXSCAN_ADVANCE, 
                   PD_PACK_INT(_wasFromLeft) ) ;
       PD_TRACE_EXITRC ( SDB__RTNMERGEIXSCAN_ADVANCE, rc ) ;

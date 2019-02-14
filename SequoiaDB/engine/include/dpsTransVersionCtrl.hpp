@@ -66,17 +66,14 @@ namespace engine
    typedef  char    element1K[1024];
    typedef  char    element4K[4096];
 
-   // FIXME: decide the proper size
-   // default seg size for small record (16B/32B/128B)
-   //#define  DEFAULT_SEG_SIZE_FOR_SMALL_REC   1000000 
-   #define  DEFAULT_SEG_SIZE_FOR_SMALL_REC   100000 
-   //#define  MAX_SEG_SIZE_FOR_SMALL_REC   10000000 
-   #define  MAX_SEG_SIZE_FOR_SMALL_REC   1000000 
+   // FIXME: provide nub to update through config
+   // All these numbers should be power of 2
    // default seg size for large record (1K/4K)
-   //#define  DEFAULT_SEG_SIZE_FOR_LARGE_REC   100000
-   #define  DEFAULT_SEG_SIZE_FOR_LARGE_REC   10000
-   //#define  MAX_SEG_SIZE_FOR_LARGE_REC   1000000
-   #define  MAX_SEG_SIZE_FOR_LARGE_REC   100000
+   #define  DEFAULT_SEG_SIZE_FOR_LARGE_REC   8192
+   #define  MAX_SEG_SIZE_FOR_LARGE_REC   (DEFAULT_SEG_SIZE_FOR_LARGE_REC * 16)
+   // default seg size for small record (16B/32B/128B)
+   #define  DEFAULT_SEG_SIZE_FOR_SMALL_REC   (DEFAULT_SEG_SIZE_FOR_LARGE_REC*8)
+   #define  MAX_SEG_SIZE_FOR_SMALL_REC   (MAX_SEG_SIZE_FOR_LARGE_REC*8)
 
    enum MEMBLOCKPOOL_TYPE
    {
@@ -220,27 +217,27 @@ namespace engine
    {
       public:
       // constructor
-      preIdxTreeNodeValue( const OBJIDX & lrbHdrIdx )
+      preIdxTreeNodeValue( const UTIL_OBJIDX & lrbHdrIdx )
       {
          _lrbHdrIdx = lrbHdrIdx;
       }
 
       ~preIdxTreeNodeValue()
       {
-         _lrbHdrIdx = OSS_INVALID_OBJIDX;
+         _lrbHdrIdx = UTIL_INVALID_OBJ_INDEX;
       }
 
       BOOLEAN isValid() const
       {
-         return  ( OSS_INVALID_OBJIDX != _lrbHdrIdx ) ;
+         return  ( UTIL_INVALID_OBJ_INDEX != _lrbHdrIdx ) ;
       }
 
-      void setValue( const OBJIDX lrbHdrIdx )
+      void setValue( const UTIL_OBJIDX lrbHdrIdx )
       {
          _lrbHdrIdx = lrbHdrIdx ;
       }
 
-      const OBJIDX & getLRBHdrIdx()
+      const UTIL_OBJIDX & getLRBHdrIdx()
       {
          return _lrbHdrIdx;
       }
@@ -251,7 +248,7 @@ namespace engine
       // private member
       private:
       // index to lock LRB header, which contain old version record
-      OBJIDX        _lrbHdrIdx;
+      UTIL_OBJIDX   _lrbHdrIdx;
 
    };
 
@@ -597,9 +594,11 @@ namespace engine
       void addIdxTree( const globIdxID &gid, const ixmIndexCB * indexCB );
       void delIdxTree( const globIdxID &gid );
 
-      INT32 insertIdxObj( const globIdxID &gid, const BSONObj &obj,
-                          const dmsRecordID &rid,
-                          oldVersionContainer *oldVer );
+      INT32 insertIdxObj( const globIdxID     &gid, 
+                          const BSONObj       &obj,
+                          const dmsRecordID   &rid,
+                          oldVersionContainer *oldVer,
+                          const BOOLEAN       takeLock = TRUE );
 
       preIdxTree * getIdxTree( const globIdxID & gIdxID );
       
@@ -780,11 +779,11 @@ namespace engine
       }
 
       idxObjSet & getIdxSet ()  { return _oldIdx; }
-      OBJIDX const getLrbHdrIdx()  { return _lrbHdrIdx; }
+      UTIL_OBJIDX  const getLrbHdrIdx()  { return _lrbHdrIdx; }
 
       private:
       dmsRecord * _oldRecord;   // pointer to copy of old record
-      OBJIDX      _lrbHdrIdx;   // LRB header index
+      UTIL_OBJIDX _lrbHdrIdx;   // LRB header index
       BOOLEAN     _isNewRecord; // is this a newly created record or not
       // A set of index Lids (up to 64) associated to this record.
       // We use this to figure out if the idx was already stored in the tree

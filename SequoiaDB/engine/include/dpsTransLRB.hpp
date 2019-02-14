@@ -99,7 +99,9 @@ namespace engine
 
       // access to oldVersionContainer element
       const dmsRecord * getOldRecord() const 
-      { return oldVer ? oldVer->getOldRecord() : NULL; }
+      {
+         return oldVer ? oldVer->getOldRecord() : NULL;
+      }
 
       void setOldRecord(dmsRecord * r) { oldVer->setOldRecord(r); }
 

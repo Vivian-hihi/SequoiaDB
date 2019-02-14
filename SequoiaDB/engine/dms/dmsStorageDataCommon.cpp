@@ -50,6 +50,7 @@
 #include "dmsTrace.hpp"
 #include "pd.hpp"
 #include "utilCompressor.hpp"
+#include "utilSegment.hpp"
 
 using namespace bson ;
 
@@ -3183,7 +3184,7 @@ namespace engine
             if ( pTransCB->isTransOn() && 
                  cb->getTransExecutor()->useTransLock() )
             {
-               OBJIDX      hdrIdx;
+               UTIL_OBJIDX  hdrIdx;
                dpsTransLRBHeader *lrbHdr = NULL;
                dpsTransLockId lockId( _logicalCSID, context->mbID(), 
                                       &foundRID );

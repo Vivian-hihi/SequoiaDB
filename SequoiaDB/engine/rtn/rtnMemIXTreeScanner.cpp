@@ -92,15 +92,11 @@ namespace engine
    // destructor
    _rtnMemIXTreeScanner::~_rtnMemIXTreeScanner()
    {
-      PD_LOG ( PDDEBUG,
-               "Freeing rtnMemIXTreeScanner (%d, %d, %d ),latchHeld(%d),"
-               " _initialized(%d)",
-               _csID, _clID, _indexLID, _treeLatchHeld, _initialized );
-      // when finish scan unlatch the tree
       if ( _treeLatchHeld )
       {
-         _memIdxTree->unlockS();
+         _latchX ? _memIdxTree->unlockX() :  _memIdxTree->unlockS();
          _treeLatchHeld = FALSE;
+         _initialized   = FALSE;
       }
       // Only delete the object we created.
       if ( _indexCB )
@@ -126,7 +122,8 @@ namespace engine
       dpsTransCB * pTransCB,
       UINT32       csID,
       UINT32       clID,
-      scannerSharedInfo *sharedInfo
+      scannerSharedInfo *sharedInfo,
+      BOOLEAN      latchX
    )
    {
       oldVersionCB * oldVCB     = NULL;
@@ -153,6 +150,7 @@ namespace engine
       _pTransCB        = pTransCB;
       _csID            = csID;
       _clID            = clID;
+      _latchX          = latchX;
       _sharedInfo.init(sharedInfo);
 
       gIdxID._csID = csID;
@@ -172,15 +170,19 @@ namespace engine
          _curIndexIter = _memIdxTree->end();
          _initialized = TRUE;
 
+#ifdef _DEBUG
          PD_LOG ( PDDEBUG, "rtnMemIXTreeScanner initialized (%d,%d, %d)",
                   csID, clID, _indexLID ) ;
+#endif
       }
       else
       {
          oldVCB->releaseS();
          _initialized = FALSE;
+#ifdef _DEBUG
          PD_LOG ( PDDEBUG, "rtnMemIXTreeScanner init skipped (%d,%d, %d)",
                   csID, clID, _indexLID ) ;
+#endif
       }
 
       done:
@@ -236,7 +238,7 @@ namespace engine
          if( _curIndexIter != _memIdxTree->end() )
          {
             // find the best match, save the object from the tree key value
-            OBJIDX hdrIdx = _curIndexIter->second.getLRBHdrIdx() ;
+            UTIL_OBJIDX hdrIdx = _curIndexIter->second.getLRBHdrIdx() ;
             dpsTransLRBHeader * lrbHdr = _pTransCB->getLockMgrHandle()
                                          ->getLRBHdrPtrByIdx(hdrIdx);
            
@@ -268,7 +270,7 @@ namespace engine
             //_eof = TRUE;
             rc = SDB_IXM_EOC ;
             _curIndexIter = _memIdxTree->end();
-            goto error;
+            goto done;
          }
       }
 
@@ -316,7 +318,7 @@ namespace engine
    //    SDB_IXM_EOC: hit the end of index
    //    SDB_IXM_DEDUP_BUF_MAX:  hit max dedup buffer
    // Dependency:
-   //    mbLatch is held
+   //    mbLatch is held, tree latch is held
    //PD_TRACE_DECLARE_FUNCTION ( SDB__RTNMEMIXTREESCAN_ADVANCE, "_rtnMemIXTreeScanner::advance" )
    INT32 _rtnMemIXTreeScanner::advance ( dmsRecordID &rid )
    {
@@ -332,7 +334,7 @@ namespace engine
       {
          // hold the tree latch from first round in. It is only released
          // during pause, but re-acquired by resume.
-         _memIdxTree->lockS();
+         _latchX ? _memIdxTree->lockX() :  _memIdxTree->lockS();
          _treeLatchHeld = TRUE;
 
          // early exit if there is no index on this tree
@@ -378,12 +380,6 @@ namespace engine
       // we should start from there
       else
       {
-         if ( _treeLatchHeld == FALSE )
-         {
-            _memIdxTree->lockS();
-            _treeLatchHeld = TRUE;
-         }
-
          // if the tree is empty, consider as EOC. We should check during each
          // round because as soon as we pause, someone else can 
          // commit the deletion of certain keys.
@@ -429,7 +425,7 @@ namespace engine
             // _savedRID plus CSID and CLID to build the lockID and retrieve
             // the lrbHdr from lock manager
             dpsTransLockId lockId( _csID, _clID, &_savedRID );
-            OBJIDX  hdrIdx;
+            UTIL_OBJIDX        hdrIdx;
             dpsTransLRBHeader *lrbHdr;
             if( !_pTransCB->getLockMgrHandle()->getLRBHdrByLockId( lockId, 
                                                               hdrIdx,
@@ -561,33 +557,38 @@ namespace engine
                            "The RID from curIndexIter should not be NULL");
 
                // make sure the RID we read is not psuedo-deleted
-               if ( _sharedInfo.getDupBuf()->end() != 
-                    _sharedInfo.getDupBuf()->find ( _savedRID ) )
+               if ( _sharedInfo.checkDup() )
                {
-                  // if we are able to find the recordid in dupBuffer, that
-                  // means we've already processed the record, so let's also
-                  // jump back to begin
-                  _savedRID.reset() ;
-                  goto begin ;
+                  if ( _sharedInfo.getDupBuf()->end() != 
+                       _sharedInfo.getDupBuf()->find ( _savedRID ) )
+                  {
+                     // if we are able to find the recordid in dupBuffer, that
+                     // means we've already processed the record, so let's also
+                     // jump back to begin
+                     _savedRID.reset() ;
+                     goto begin ;
+                  }
+
+                  // FIXME: why is this commented out in original disk code
+                  // make sure we don't hit maximum size of dedup buffer
+                  /*if ( _sharedInfo.getDupBuf()->size() >= _sharedInfo.getBufSize())
+                  {
+                     rc = SDB_IXM_DEDUP_BUF_MAX ;
+                     goto error ;
+                  }*/
+
+                  _sharedInfo.getDupBuf()->insert ( _savedRID ) ;
                }
-
-               // FIXME: why is this commented out in original disk code
-               // make sure we don't hit maximum size of dedup buffer
-               /*if ( _sharedInfo.getDupBuf()->size() >= _sharedInfo.getBufSize())
-               {
-                  rc = SDB_IXM_DEDUP_BUF_MAX ;
-                  goto error ;
-               }*/
-
-               _sharedInfo.getDupBuf()->insert ( _savedRID ) ;
-
+/*  FIXME
                // set up the return value. For in memory idx tree scan, 
                // the return is a special structure including a 32b flag
                // and 32b index
                // ready to return to caller
                rid._extent = DMS_IDX_RID_MASK;
                rid._offset = _curIndexIter->second.getLRBHdrIdx();
-
+*/
+               rid._extent = _savedRID._extent; 
+               rid._offset = _savedRID._offset; 
                // update monitor counters under latch
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
                DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
@@ -610,28 +611,24 @@ namespace engine
       SDB_ASSERT( ( rid.isValid()  || (rc != SDB_OK) ),
                     "rid is invalid" );
 
-      // FIXME:  we have to unlock the tree here, otherwise the update/delete
-      // of the returned RID will dead lock itself when it tries to insert 
-      // the old verion into mem tree. To prevent the index and record from
-      // being deleted by commit/rollback, we need to acquire a new latch on 
-      // old record itself. The commit/rollback must take that latch in X
-      // before freeing the old record. Meanwhile, the caller of the scanner 
-      // can release this latch if it would wait on the record lock. Or it
-      // can release the latch after TryS copied out the old record. 
-      if ( _treeLatchHeld == TRUE )
-      {
-         _memIdxTree->unlockS();
-         _treeLatchHeld = FALSE;
-      }
-
       if ( rc == SDB_IXM_EOC )
       {
+         SDB_ASSERT( (_treeLatchHeld == TRUE), "tree latch should be held" );
          _eof = TRUE;
       }
       PD_TRACE_EXITRC( SDB__RTNMEMIXTREESCAN_ADVANCE, rc ) ;
       return rc ;
    error :
-      PD_LOG ( PDERROR, "Error during MemIXTree advance,  rc=%d", rc ) ;
+      // done't release tree latch if just EOC because we will do proper
+      // pause and there is a chance we might resume the scan next round
+      if ( ( rc != SDB_IXM_EOC ) && ( _treeLatchHeld == TRUE ) )
+      {
+         _latchX ? _memIdxTree->unlockX() :  _memIdxTree->unlockS();
+         _treeLatchHeld = FALSE;
+      }
+
+      PD_LOG ( PDERROR, "Error during MemIXTree advance,  rc=%d, latchHeld=%d",
+               rc, _treeLatchHeld ) ;
       goto done ;
    }
 
@@ -654,6 +651,19 @@ namespace engine
          goto done ;
       }
 
+#ifdef _DEBUG
+      if ( FALSE == _treeLatchHeld )
+      {
+         PD_LOG ( PDSEVERE, "Tree latch not held, _latchX: %d, keydata is %p"
+                  " _curIndexIter->rid: %d,%d ", 
+                  _latchX, _curIndexIter->first.data(),
+                  _curIndexIter->first.getRID()._extent,
+                  _curIndexIter->first.getRID()._offset ) ;
+         _memIdxTree->printTree();
+         SDB_ASSERT( ( _treeLatchHeld == TRUE ), "tree latch should be held" );
+      }
+#endif
+
       // for read mode, let's copy savedInMemobj 
       try
       {
@@ -675,10 +685,13 @@ namespace engine
       // Release latch on the tree
       if (_treeLatchHeld)
       {
-         _memIdxTree->unlockS();
+         _latchX ? _memIdxTree->unlockX() :  _memIdxTree->unlockS();
          _treeLatchHeld = FALSE;
       }
 
+#ifdef _DEBUG
+      PD_LOG ( PDDEBUG, "MemIXTree pauseScan, rc=%d", rc );
+#endif
       PD_TRACE_EXITRC ( SDB__RTNMEMIXTREESCAN_PAUSESCAN, rc ) ;
       return rc ;
    error :
@@ -719,15 +732,25 @@ namespace engine
          if  ( _initialized == TRUE )
          {
             _initialized = FALSE;
+#ifdef _DEBUG
             PD_LOG ( PDDEBUG, "Memory idx tree not exist, rtnMemIXTreeScanner "
                      "resume skipped (%d,%d, %d)",
                      _csID, _clID, _indexLID ) ;
+#endif
          }
          goto done;
       }
 
+      // haven't locate the rid in the tree yet, the first run of advance 
+      // will handle it
+      if ( !_init )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+
       // tree lock is held in S through out the scan. Pausescan will release it
-      _memIdxTree->lockS();
+      _latchX ? _memIdxTree->lockX() :  _memIdxTree->lockS();
       _treeLatchHeld = TRUE;
 
       // Tree just become valid, initialized it by setting _curIndexIter
@@ -739,14 +762,6 @@ namespace engine
          _initialized = TRUE;
          // force the keyLocate logic to find the starting place
          _init = FALSE;
-      }
-
-      if ( !_init )
-      {
-         rc = SDB_OK ;
-         _memIdxTree->unlockS();
-         _treeLatchHeld = FALSE;
-         goto done ;
       }
 
       // We need to verify both LID and OID to make sure the index 
@@ -771,7 +786,7 @@ the only way is to bring back the index CB and access the index definition page
           ( _curIndexIter == _memIdxTree->find( &_savedInMemObj,
                                               _savedRID ) ) )
       {
-         OBJIDX hdrIdx ;
+         UTIL_OBJIDX   hdrIdx ;
          dpsTransLockId lockId( _csID, _clID, &_savedRID );
          dpsTransLRBHeader * lrbHdr;
          if( !_pTransCB->getLockMgrHandle()->getLRBHdrByLockId(
@@ -799,9 +814,12 @@ the only way is to bring back the index CB and access the index definition page
          // EOC is acceptable exit condition, not real error
          if( SDB_IXM_EOC == rc )
          {
-            //_eof = TRUE;
-            _memIdxTree->unlockS();
+            // Note that we can't claim we have done  the scan, it's possible
+            // that next time when we pause, new node can be added to the tree.
+            // so simply unlock and set uninitialized.  
+            _latchX ? _memIdxTree->unlockX() :  _memIdxTree->unlockS();
             _treeLatchHeld = FALSE;
+            _initialized = FALSE;
             goto done;
          }
          else
@@ -813,14 +831,18 @@ the only way is to bring back the index CB and access the index definition page
       
 
    done :
-
+#ifdef _DEBUG
+      PD_LOG ( PDDEBUG, "memIXTree resumeScan rc=%d, latchHeld=%d, _initialized=%d", 
+               rc, _treeLatchHeld, _initialized );
+#endif
       PD_TRACE_EXITRC ( SDB__RTNMEMIXTREESCAN_RESUMESCAN, rc ) ;
       return rc ;
    error :
       if( _treeLatchHeld == TRUE )
       {
-         _memIdxTree->unlockS();
+         _latchX ? _memIdxTree->unlockX() :  _memIdxTree->unlockS();
          _treeLatchHeld = FALSE;
+         _initialized = FALSE;
       }
       PD_LOG ( PDERROR, "Failed to resumeScan, rc: %d", rc ) ;
       goto done ;
@@ -853,7 +875,7 @@ the only way is to bring back the index CB and access the index definition page
           ( _curIndexIter == _memIdxTree->find( &saveObj,
                                                 saveRID) ) )
       {
-         OBJIDX hdrIdx ;
+         UTIL_OBJIDX    hdrIdx ;
          dpsTransLockId lockId( _csID, _clID, &saveRID );
          dpsTransLRBHeader * lrbHdr;
          if( !_pTransCB->getLockMgrHandle()->getLRBHdrByLockId(

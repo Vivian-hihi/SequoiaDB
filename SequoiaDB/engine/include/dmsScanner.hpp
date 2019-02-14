@@ -53,7 +53,7 @@
 #include "../bson/bsonobj.h"
 #include "mthMatchRuntime.hpp"
 #include "ossMemPool.hpp"
-#include "dpsTransLockCallback.hpp"
+#include "dmsTransLockCallback.hpp"
 
 using namespace bson ;
 
@@ -109,7 +109,7 @@ namespace engine
          mthMatchRuntime        *_matchRuntime ;
          DMS_ACCESS_TYPE         _accessType ;
          INT32                   _mbLockType ;
-         _dpsITransLockCallback *_callback ;
+         dmsTransLockCallback  *_callback ;
          INT32                   _transIsolation ;
          BOOLEAN                 _waitLock ;
          BOOLEAN                 _useRollbackSegment ;
@@ -170,8 +170,6 @@ namespace engine
          INT32                _recordLock ;
          BOOLEAN              _needUnLock ;
          BOOLEAN              _selectForUpdate ;
-         // indicate if the scanner need to wait for record lock
-         //BOOLEAN              _transLockwait;
          _pmdEDUCB            *_cb ;
    };
    typedef _dmsExtScannerBase dmsExtScannerBase ;
@@ -310,10 +308,10 @@ namespace engine
                                      INT32 direction ) ;
 
          void  enableCountMode() { _countOnly = TRUE ; }
-
+         void setMemTreeLatchMode() ;
          INT64 getMaxRecords() const { return _maxRecords ; }
          INT64 getSkipNum () const { return _skipNum ; }
-
+         BOOLEAN paused () const { return _paused ; }
          BOOLEAN eof () const { return _eof ; }
 
       public:
@@ -342,8 +340,6 @@ namespace engine
          INT8                 _recordLock ;
          BOOLEAN              _needUnLock ;
          BOOLEAN              _selectForUpdate ;
-         // indicate if the scanner need to wait for record lock
-         //BOOLEAN              _transLockwait;
          _pmdEDUCB            *_cb ;
          _rtnIXScanner        *_scanner ;
          INT64                _onceRestNum ;
@@ -358,7 +354,7 @@ namespace engine
          BOOLEAN              _judgeStartKey ;
          BOOLEAN              _includeStartKey ;
          BOOLEAN              _includeEndKey ;
-
+         BOOLEAN              _paused;
          BOOLEAN              _countOnly ;
    } ;
    typedef _dmsIXSecScanner dmsIXSecScanner ;
@@ -454,59 +450,6 @@ namespace engine
 
    dmsExtScannerFactory* dmsGetScannerFactory() ;
 
-   // Class to implment lock call back funtions for DMS scanner
-   class dmsTransLockCallback : public _dpsITransLockCallback
-   {
-      public:
-      //dmsTransLockCallback() {};
-      dmsTransLockCallback( dpsTransCB  * transCB, 
-                            _pmdEDUCB   * eduCB,
-                            _dmsRecordRW * recordRW ) ;
-
-      virtual ~dmsTransLockCallback() {};
-
-      virtual void beforeLockAcquire( const dpsTransLockId    &lockId,
-                                      const INT32              irc,
-                                      const DPS_TRANSLOCK_TYPE requestLockMode,
-                                 const DPS_TRANSLOCK_OP_MODE_TYPE opMode
-                                ) {};
-      virtual void afterLockAcquire( const dpsTransLockId     &lockId,
-                                           INT32              &irc,
-                                     const DPS_TRANSLOCK_TYPE  requestLockMode,
-                                     const DPS_TRANSLOCK_OP_MODE_TYPE opMode,
-                                           dpsTransRetInfo *pdpsTxResInfo) ;
-
-      virtual void beforeLockRelease( const dpsTransLockId     &lockId,
-                                      const DPS_TRANSLOCK_TYPE  lockMode,
-                                      const UINT64              refCounter,
-                                      oldVersionContainer      *oldVer ) ;
-
-      virtual void afterLockRelease( const dpsTransLockId &lockId ) {};
-
-      void setRecordRW ( dmsRecordRW * recordRW ) { _recordRW = recordRW; }
-      
-      CHAR * getWorkingArea () { return (CHAR *) _oldVer ; }
-      void resetWorkingArea () { _oldVer = NULL ; }
-      UINT32 isolationLevel() const { return _isolationLevel ; }
-      BOOLEAN lockwaitLevel() const { return _lockwaitLevel ; }
-
-      INT32 saveOldVersionRecord( _dmsRecordRW *recordRW );
-      oldVersionCB * getOldVCB() { return _transCB->getOldVCB(); }
-
-      // INT32 saveOldVersionIndexes( );
-
-      private:
-      dpsTransCB        * _transCB;   // use it to access global old copy tree
-      pmdEDUCB          * _eduCB;
-      UINT32              _isolationLevel;
-      BOOLEAN              _lockwaitLevel;
-      _dpsTransExecutor * _transExecutor;  // use it to access thread local buf
-      // DMS related information
-      dmsRecordRW       * _recordRW;
-      // working area to be setup by callback function so the update can
-      // put proper old copy into the area right before the update
-      oldVersionContainer *_oldVer;
-   };
 
 }
 

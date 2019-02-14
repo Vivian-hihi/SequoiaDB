@@ -51,7 +51,7 @@
 #include "dmsTrace.hpp"
 #include "dpsTransLockMgr.hpp"
 #include "dmsIndexBuilder.hpp"
-#include "dpsTransLockCallback.hpp"
+#include "dmsTransLockCallback.hpp"
 
 using namespace bson ;
 
@@ -946,25 +946,27 @@ namespace engine
          }
 
          // free up the in memory idx tree if exist
-         if ( TRANS_ISOLATION_RC == pmdGetOptionCB()->transIsolation() )
+         if ( pTransCB->isTransOn() )
          {
-            globIdxID      gID;
             oldVersionCB  *oldVCB   = pTransCB->getOldVCB();
-
-            gID._csID = _pDataSu->logicalID();
-            gID._clID = context->mbID();
-            gID._idxLID = indexLID;
-
-            PD_LOG ( PDDEBUG, "Drop index delete in memory idx tree:(%d,%d,%d)",
-                     gID._csID, gID._clID, gID._idxLID ) ;
-            PD_TRACE4( SDB__DMSSTORAGEINDEX_DROPIDX2,
-                       PD_PACK_INT(gID._csID),
-                       PD_PACK_INT(gID._clID),
-                       PD_PACK_INT(indexID),
-                       PD_PACK_INT(indexLID) );
-
-            // delete the idx tree for this index
-            oldVCB->delIdxTree(gID);
+            if ( NULL != oldVCB )
+            {
+               globIdxID      gID;
+               gID._csID = _pDataSu->logicalID();
+               gID._clID = context->mbID();
+               gID._idxLID = indexLID;
+#ifdef _DEBUG
+               PD_LOG ( PDDEBUG, "Drop index delete in memory idx tree:(%d,%d,%d)",
+                        gID._csID, gID._clID, gID._idxLID ) ;
+               PD_TRACE4( SDB__DMSSTORAGEINDEX_DROPIDX2,
+                          PD_PACK_INT(gID._csID),
+                          PD_PACK_INT(gID._clID),
+                          PD_PACK_INT(indexID),
+                          PD_PACK_INT(indexLID) );
+#endif
+               // delete the idx tree for this index
+               oldVCB->delIdxTree(gID);
+            }
          }
 
          // truncate index, do remove root
@@ -1913,6 +1915,7 @@ namespace engine
          BSONObjSet::iterator itnew ;
          Ordering order = Ordering::make(indexCB->keyPattern()) ;
          BOOLEAN  checkKey = FALSE;
+         BOOLEAN  memTreeLatchHeld = FALSE;
 
          // get a globalID to find the tree
          globIdxID gID;
@@ -1936,23 +1939,27 @@ namespace engine
          {
             // this flag is used for later to check new index key values
             checkKey = TRUE;
+            memTreeLatchHeld = 
+                       ((dmsTransLockCallback*)callback)->memTreeLatchHeld();
 
             oldVer = (oldVersionContainer*)callback->getWorkingArea();
 
             // 1. check if the in memory tree for this idx exist or not.
-            // if not, create one
-            oldVCB->latchX();
+            // if not, create one. MBLatch protect us to do a dirty lookup
+            // because no one else can come in to update same record/index
+            // or create the same tree
             memTree = oldVCB->getIdxTree(gID);
             if ( NULL == memTree )
             {
                // create the new tree
+               oldVCB->latchX();
                oldVCB->addIdxTree(gID, indexCB);
+               oldVCB->releaseX();
                memTree = oldVCB->getIdxTree(gID);
             }
 
             // Note that once the tree is created, it won't be deleted
             // until system shutdown
-            oldVCB->releaseX();
 
             // 2. try insert if old version exist
             if( oldVer )
@@ -1992,9 +1999,9 @@ namespace engine
                // this index does not already exist in the tree
                if ( storeOldVer )
                {
-                     // 4. time insert the index to the tree. Do this under
-                     // the tree latch
-                     oldVCB->insertIdxObj( gID, (*itori), rid, oldVer );
+                     // 4. time insert the index to the tree. 
+                     oldVCB->insertIdxObj( gID, (*itori), rid,
+                                           oldVer, !memTreeLatchHeld);
                }
 
                ixmExtent rootidx ( indexCB->getRoot(), this ) ;
@@ -2080,9 +2087,10 @@ namespace engine
 #endif
             if ( storeOldVer )
             {
-                  // 4. time insert the index to the tree. Do this under
-                  // the tree latch
-                  oldVCB->insertIdxObj( gID, (*itori), rid, oldVer ) ;
+                  // 4. time insert the index to the tree.
+                  // Scanner already hold tree latch
+                  oldVCB->insertIdxObj( gID, (*itori), rid, 
+                                        oldVer, !memTreeLatchHeld ) ;
             }
 
             ixmExtent rootidx ( indexCB->getRoot(), this ) ;
@@ -2274,12 +2282,6 @@ namespace engine
          goto error ;
       }
 
-#if defined (_DEBUG)
-   //   PD_LOG ( PDDEBUG, "IndexDelete\nIndex: %s\nRecord: %s",
-   //            indexCB->keyPattern().toString().c_str(),
-   //            inputObj.toString().c_str() ) ;
-#endif
-
 
       {
          BSONObjSet::iterator it ;
@@ -2289,9 +2291,9 @@ namespace engine
          Ordering order = Ordering::make(indexCB->keyPattern()) ;
          oldVersionCB *oldVCB = callback ? callback->getOldVCB() : NULL;
          preIdxTree * memTree = NULL;
+         BOOLEAN memTreeLatchHeld = FALSE;
          oldVersionContainer *oldVer = NULL;
 
-         //gID._csID = _pDataSu->CSID() ;   // FIXME: code review, which id to use
          gID._csID = _pDataSu->logicalID() ;
          gID._clID = context->mbID() ; 
          gID._idxLID = indexCB->getLogicalID() ;
@@ -2306,6 +2308,8 @@ namespace engine
          //     !( cb->getTransID() & DPS_TRANSID_ROLLBACKTAG_BIT ) )
          {
             oldVer = (oldVersionContainer*)callback->getWorkingArea();
+            memTreeLatchHeld = 
+                       ((dmsTransLockCallback*)callback)->memTreeLatchHeld();
 
             // 1. check if the in memory tree for this idx exist or not.
             // if not, create one
@@ -2346,7 +2350,8 @@ namespace engine
             {
                // 4. time insert the index to the tree. Do this under
                // the tree latch
-               oldVCB->insertIdxObj( gID, (*it), rid, oldVer );
+               oldVCB->insertIdxObj( gID, (*it), rid,
+                                     oldVer, !memTreeLatchHeld );
             }
 
             // get root in each loop, since root page may change after each

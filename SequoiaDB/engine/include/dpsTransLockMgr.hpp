@@ -266,7 +266,15 @@ namespace engine
          const EDUID       eduId,
          const UTIL_OBJIDX lrbBegin,
          UTIL_OBJIDX     & idxEduId,
-         dpsTransLRB *   & pLRBEduId,
+         dpsTransLRB *   & pLRBEduId
+      ) ;
+
+      // search LRB list ( owner, waiter or upgrade list ) and find
+      // the LRB previous the given eduId
+      BOOLEAN _getPreviousLRB
+      (
+         const EDUID       eduId,
+         const UTIL_OBJIDX lrbBegin,
          UTIL_OBJIDX     & indexPrev,
          dpsTransLRB *   & pLRBPrev
       ) ;
@@ -282,6 +290,18 @@ namespace engine
          const UTIL_OBJIDX         lrbBegin,
          UTIL_OBJIDX             & idxEduId,
          dpsTransLRB *           & pLRBEduId,
+         UTIL_OBJIDX             & indexPrev,
+         dpsTransLRB *           & pLRBPrev,
+         BOOLEAN                 & foundIncomp
+      ) ;
+
+      // walk through the owner LRB list check if the input
+      // lockMode is compatible with other owners
+      void _checkWaiterLockModeWithOwners
+      (
+         const EDUID               eduId,
+         const DPS_TRANSLOCK_TYPE  lockMode,
+         const UTIL_OBJIDX         lrbBegin,
          UTIL_OBJIDX             & indexPrev,
          dpsTransLRB *           & pLRBPrev,
          BOOLEAN                 & foundIncomp

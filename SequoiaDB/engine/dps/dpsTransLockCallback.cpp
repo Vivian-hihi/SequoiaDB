@@ -38,6 +38,7 @@
 *******************************************************************************/
 
 #include "dpsTransLockCallback.hpp"
+#include "dmsTransLockCallback.hpp"
 #include "pmdEDU.hpp"
 #include "dpsTransCB.hpp"
 #include "dmsScanner.hpp"

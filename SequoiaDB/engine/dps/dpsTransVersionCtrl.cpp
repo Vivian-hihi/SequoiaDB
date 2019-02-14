@@ -388,10 +388,6 @@ namespace engine
       INT32 numDeleted = 0;
 
       lockX();
-#ifdef _DEBUG
-      PD_LOG( PDDEBUG, "print tree before remove, size=%d", size() );
-      //printTree();
-#endif
 
       numDeleted = _tree->erase( keyNode );
       unlockX();
@@ -399,6 +395,7 @@ namespace engine
 #ifdef _DEBUG
       if ( 1 != numDeleted )
       {
+         PD_LOG( PDERROR, "preIdxTree:removed %d nodes", numDeleted );
          printTree();
       }
 #endif
@@ -411,9 +408,12 @@ namespace engine
    INT32 preIdxTree::remove( const BSONObj * keyData, const dmsRecordID & rid )
    {
       preIdxTreeNodeKey keyNode( keyData, rid, getOrdering() );
+#if 0   
+      // can be used for debug purpose
       PD_LOG( PDDEBUG, "preIdxTree:removing keyData(%s), rid=(%d, %d)",
               keyData->toString().c_str(),
               rid._extent, rid._offset );
+#endif
       return remove(keyNode);
    }
 
@@ -516,7 +516,7 @@ namespace engine
 
       INT32               rc           = SDB_OK;
       const BSONObj     * data         = NULL;
-      OBJIDX              hdrIdx       = 0;
+      UTIL_OBJIDX         hdrIdx       = 0;
       dpsTransLRBHeader * lrbHeaderPtr = NULL;
       BOOLEAN             first        = TRUE;
       
@@ -701,7 +701,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_PREIDXTREE_KEYADVANCE );
       INT32               rc           = SDB_OK;
       const BSONObj     * data         = NULL;
-      OBJIDX              hdrIdx       = 0;
+      UTIL_OBJIDX         hdrIdx       = 0;
       dpsTransLRBHeader * lrbHeaderPtr = NULL;
       
       if( direction > 0 )
@@ -926,8 +926,7 @@ namespace engine
               gid._csID,
               gid._clID,
               gid._idxLID );
-      PD_LOG( PDDEBUG, "There are %d idx trees in _idxTrees before insert",
-                 _idxTrees->size() );
+
       // FIXME: Optimization to be considered
       // It's ok to have local variable t as the map will do memory allocation
       // However, this has performance overhead. 
@@ -935,36 +934,9 @@ namespace engine
       pair<IDXID_TO_TREE_MAP::iterator, bool> rv = 
          _idxTrees->insert( IDXID_TO_TREE_MAP_PAIR(gid, t) );
 
-#ifdef _DEBUG
-      {
-         if( rv.second == false )
-         { 
-            printTrees( TRUE );
-            SDB_ASSERT( ( rv.second == true ), 
-                        "Insertion of a memory tree failed");
-         }
-      }
-#endif
       // setup the order in the preIdxTree
       (const_cast<preIdxTree *> (rv.first->second))->setOrder(indexCB);
       
-#ifdef _DEBUG
-      {
-         if( getIdxTree(gid) == NULL)
-         { 
-            printTrees( TRUE );
-            SDB_ASSERT( (getIdxTree(gid) != NULL), 
-                        "Just added idx tree, but couldn't find it");
-         }
-         PD_LOG( PDDEBUG, "Created in memory Index tree for (%d,%d,%d)",
-                 gid._csID,
-                 gid._clID,
-                 gid._idxLID );
-         PD_LOG( PDDEBUG, "There are %d idx trees in _idxTrees after insert",
-                 _idxTrees->size() );
-      }
-#endif
-
       PD_TRACE_EXIT( SDB_OLDVERSIONCB_ADDIDXTREE );
    }
 
@@ -975,15 +947,15 @@ namespace engine
    {
       preIdxTree * memTree = NULL;
       PD_TRACE_ENTRY( SDB_OLDVERSIONCB_DELIDXTREE );
+#if 0
+      // can enable this for debug purpose
       PD_LOG( PDDEBUG, "Going to delete in memory Index tree for (%d,%d,%d)",
               gid._csID,
               gid._clID,
               gid._idxLID );
-
+#endif
 
       // Latch oldVCB and get the index tree
-      // FIXME: do we want to delete the tree or leave it? We only need 
-      // S latch if we leave the empty tree. For now, we will delete it.
       latchX();
       memTree = getIdxTree( gid );
 
@@ -991,9 +963,8 @@ namespace engine
       {
          memTree->clear();
          _idxTrees->erase(gid);
+         SDB_OSS_DEL memTree;
       }
-
-      SDB_OSS_DEL memTree;
 
       releaseX();
       PD_TRACE_EXIT ( SDB_OLDVERSIONCB_DELIDXTREE );
@@ -1014,14 +985,14 @@ namespace engine
          UINT32 i = 0;
          // loop through each inner tree and clear them before clear
          // the outter tree
-         PD_LOG( PDDEBUG, "There are %d idx trees in _idxTrees, they are:",
+         PD_LOG( PDINFO, "There are %d idx trees in _idxTrees, they are:",
                  _idxTrees->size() );
 
          for ( IDXID_TO_TREE_MAP::iterator it = _idxTrees->begin();
             it != _idxTrees->end(); it++, i++ )
          {
             idxTree = it->second;
-            PD_LOG( PDDEBUG, "==>Idx tree (%d): gid=(%d, %d, %d)",
+            PD_LOG( PDINFO, "==>Idx tree (%d): gid=(%d, %d, %d)",
                     i, it->first._csID, it->first._clID, it->first._idxLID );
             // print each idx in the tree
             idxTree->printTree();
@@ -1046,27 +1017,31 @@ namespace engine
    //   
    // Dependency:
    //   The index tree should already exist. (addIdxTree() should have been
-   // called by the caller earlier). No tree latch should have been held.
+   // called by the caller earlier). Tree latch MUST have already been held.
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OLDVERSIONCB_INSERTIDXOBJ, "oldVersionCB::insertIdxObj" )
    INT32 oldVersionCB::insertIdxObj( const globIdxID &gid, const BSONObj &obj,
                                      const dmsRecordID &rid, 
-                                     oldVersionContainer *oldVer )
+                                     oldVersionContainer *oldVer,
+                                     const BOOLEAN takeLock )
    {
       INT32       rc      = SDB_OK;
       preIdxTree *idxTree = NULL;
       BOOLEAN     locked  = FALSE;
 
       PD_TRACE_ENTRY( SDB_OLDVERSIONCB_INSERTIDXOBJ );
-      // get S latch on outter tree to search 
-      latchS(); 
+
+      // search for the tree without latch as tree latch might have already
+      // been held and tree is gurantee to exist
       idxTree = getIdxTree(gid);
-      releaseS();
 
       SDB_ASSERT( ( NULL != idxTree ), "index tree not exist" ); 
 
       // lock the inner idx tree for both find and insert
-      idxTree->lockX();
-      locked = TRUE;
+      if ( takeLock )
+      {
+         idxTree->lockX();
+         locked = TRUE;
+      }
 
       // check if it exist. We might be able to save this check if all 
       // callers did the check.

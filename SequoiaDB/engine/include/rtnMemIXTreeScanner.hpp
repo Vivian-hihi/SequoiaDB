@@ -50,6 +50,7 @@
 #include "dpsTransLockMgr.hpp"
 #include "dmsStorageUnit.hpp"
 #include "monCB.hpp"
+#include "dmsTransLockCallback.hpp"
 
 namespace engine
 {
@@ -72,14 +73,12 @@ namespace engine
       rtnPredicateListIterator  _listIterator ;
       Ordering                  _order ;
 
-      // indicate if the transaction need to wait for lock
-//FIXME      BOOLEAN                   _transLockwait;
-
       _dmsStorageUnit          *_su ;
       monContextCB             *_pMonCtxCB ;
       _pmdEDUCB                *_cb ;
       INT32                     _direction ;
       dpsTransCB               *_pTransCB;
+      // set to true by relocateRID or first run of advance.
       // indicate if have done first run which will call keyLocate to point
       // _curIndexIter to a best starting point
       BOOLEAN                   _init ; 
@@ -137,7 +136,16 @@ namespace engine
       BOOLEAN                   _initialized;
       // pointer to the in memory index tree. It's hanging off dpsTransCB
       preIdxTree               *_memIdxTree;
+      // Protocal to take and hold tree latch:
+      // During tree scan (advance), we will hold the treeLatch so that commit
+      // or rollback won't remove the nodes from the tree while scanner is 
+      // walking over the tree. The latch is aquired by resume and released
+      // by pause.
       BOOLEAN                   _treeLatchHeld;
+      // if we need to take and hold memIdxTree latch in X or not. Read only
+      // scanner take the latch in S, intended update must acquire tree latch
+      // in X. Otherwise the update can cause self dead latch
+      BOOLEAN                   _latchX;
 
    public :
       _rtnMemIXTreeScanner ( ixmIndexCB *indexCB, rtnPredicateList *predList,
@@ -154,12 +162,7 @@ namespace engine
       {
          _isReadOnly = readOnly;
       }
-/* FIXME
-      void setNeedWaitForLock( BOOLEAN w )
-      {
-         _transLockwait = w;
-      }
-*/
+
       const BSONObj* getSavedObj () const
       {
          return &_savedInMemObj;
@@ -174,12 +177,7 @@ namespace engine
       {
          return _indexLID ;
       }
-/*
-      const BOOLEAN needWaitForLock() const
-      {
-         return _transLockwait ;
-      }
-*/
+
       INDEX_BINARY_TREE::iterator getCurIndexIter () 
       {
          return _curIndexIter;
@@ -229,11 +227,21 @@ namespace engine
 
       const BSONObj  getCurIdxKeyObjFromIter();
 
+      const MEMTREE_LATCH_MODE getMemtreeLatchMode()
+      {
+         MEMTREE_LATCH_MODE m = MEMTREE_LATCH_NONE;
+         if( _treeLatchHeld ) 
+         {
+            m = _latchX ? MEMTREE_LATCH_X : MEMTREE_LATCH_S;
+         }
+         return m;
+      }
 
       const BOOLEAN initMemIXScan( dpsTransCB * pTransCB,
                                    UINT32       csID,
                                    UINT32       clID,
-                                   scannerSharedInfo *sharedInfo );
+                                   scannerSharedInfo *sharedInfo,
+                                   BOOLEAN      latchX = FALSE );
 
       // save the bson key for the current index rid, before releasing X latch
       // on the collection

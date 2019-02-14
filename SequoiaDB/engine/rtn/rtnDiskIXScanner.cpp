@@ -383,9 +383,10 @@ namespace engine
             {
                _savedRID = indexExtent.getRID ( _curIndexRID._slot ) ;
                // make sure the RID we read is not psuedo-deleted
-               if ( _savedRID.isNull() ||
-                    ( _sharedInfo.getDupBuf()->end() != 
-                      _sharedInfo.getDupBuf()->find ( _savedRID ) ) )
+               if ( _savedRID.isNull()                       ||
+                    ( _sharedInfo.checkDup() &&
+                      ( _sharedInfo.getDupBuf()->end() != 
+                        _sharedInfo.getDupBuf()->find ( _savedRID ) ) ) )
                {
                   // usually this means a psuedo-deleted rid, we should jump
                   // back to beginning of the function and advance to next
@@ -403,7 +404,11 @@ namespace engine
                   rc = SDB_IXM_DEDUP_BUF_MAX ;
                   goto error ;
                }*/
-               _sharedInfo.getDupBuf()->insert ( _savedRID ) ;
+               if ( _sharedInfo.checkDup() )
+               { 
+                  _sharedInfo.getDupBuf()->insert ( _savedRID ) ;
+               }
+
                // ready to return to caller
                rid = _savedRID ;
 #ifdef _DEBUG

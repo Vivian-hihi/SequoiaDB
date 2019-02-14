@@ -46,6 +46,8 @@
 #include "rtnPredicate.hpp"
 #include "../bson/ordering.h"
 #include "../bson/oid.h"
+#include "dmsTransLockCallback.hpp"
+
 
 using namespace bson ;
 
@@ -90,8 +92,10 @@ namespace engine
 
       void init( _scannerSharedInfo* sharedInfo )
       {
-         this->_dedupBufferSize = sharedInfo->getBufSize();
-         this->_dupBuffer = sharedInfo->getDupBuf();
+         // when dupBuff is created in merge scan, don't store and do 
+         // dedup in local scanner
+         this->_dedupBufferSize = 0;
+         this->_dupBuffer = NULL;
          this->_bufIsLocal = FALSE;
          _savedRID.reset();
       }
@@ -108,6 +112,7 @@ namespace engine
 
       void update();
 
+      BOOLEAN checkDup () const { return _bufIsLocal ; }
 
       dmsRecIDSet * getDupBuf() { return _dupBuffer; }
 
@@ -188,6 +193,10 @@ namespace engine
                     {return 0;}
       virtual rtnPredicateList* getPredicateList () { return NULL; }
       virtual dmsRecIDSet * getDupBuff() { return NULL; }
+      virtual const MEMTREE_LATCH_MODE  getMemtreeLatchMode() 
+      {
+         return MEMTREE_LATCH_NONE; 
+      }
  
       const UINT32 type() const
       {

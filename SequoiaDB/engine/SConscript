@@ -311,6 +311,7 @@ dmsFiles = [
       "dms/dmsStatSUMgr.cpp",
       "dms/dmsStatUnit.cpp",
       "dms/dmsCachedPlanUnit.cpp",
+      "dms/dmsTransLockCallback.cpp",
       "dms/dmsSUCache.cpp"
       ]
 
