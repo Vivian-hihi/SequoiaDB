@@ -16,16 +16,13 @@ spawn sudo su -l -c "$args"
 
 expect {
    "*sudo] password for *" {
-      send "$pwd\n"
-      interact
+      send "$pwd\r"
    }
    "root's password*" {
-      send "$pwd\n"
-      interact
+      send "$pwd\r"
    }
    "*assword*" {
-      send "$pwd\n"
-      interact
+      send "$pwd\r"
    }
    timeout {
       send \x03
@@ -35,4 +32,26 @@ expect {
    eof { }
 }
 
-exit 0
+expect {
+   "*sudo] password for *" {
+      send \x03
+      exit 2
+   }
+   "root's password*" {
+      send \x03
+      exit 2
+   }
+   "*assword*" {
+      send \x03
+      exit 2
+   }
+   timeout {
+      foreach {pid spawnid os_error_flag value} [wait] break
+   }
+   eof {
+      foreach {pid spawnid os_error_flag value} [wait] break
+   }
+}
+
+exit $value
+
