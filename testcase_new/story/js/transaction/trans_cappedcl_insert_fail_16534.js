@@ -37,6 +37,10 @@ function main()
    db.transBegin();
    try
    {
+      // insert success
+      cappedcl.insert({a : 'test1'});
+      println("insert success in transaction");
+      // insert fail
       cappedcl.insert(objs);
       throw "insert should be failure!";
    }
@@ -50,11 +54,11 @@ function main()
    db.transCommit();
  
    // check result
-   checkCount(31, cappedcl.count());
+   checkCount(32, cappedcl.count());
 
    // insert fail up to max, commit
    var maxObjs = new Array();
-   for(var i = 0; i < 30; i++)
+   for(var i = 0; i < 18; i++)
    {
       maxObjs.push({a : 'a'});
    }
@@ -62,7 +66,11 @@ function main()
    db.transBegin();
    try
    {
+      // insert success
       cappedcl.insert(maxObjs);
+      println("insert success in transaction");
+      // insert fail
+      cappedcl.insert({a : 'test2'});
       throw "insert should be failure!";
    }
    catch(e)
@@ -84,6 +92,10 @@ function main()
    db.transBegin();
    try
    {
+      // insert success
+      cappedcl.insert({a : 'test3'});
+      println("insert success in transaction");
+      // insert fail
       cappedcl.insert(objs);
       throw "insert should be failure!";
    }
@@ -97,19 +109,16 @@ function main()
    db.transRollback();
 
    // check result
-   checkCount(31, cappedcl.count());
+   checkCount(32, cappedcl.count());
 
    // insert fail up to max, rollback
-   var maxObjs = new Array();
-   for(var i = 0; i < 30; i++)
-   {
-      maxObjs.push({a : 'a'});
-   }
-
-   db.transBegin();
    try
    {
+      // insert success
       cappedcl.insert(maxObjs);
+      println("insert success in transaction");
+      // insert fail
+      cappedcl.insert({a : 'test4'});
       throw "insert should be failure!";
    }
    catch(e)

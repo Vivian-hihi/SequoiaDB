@@ -21,14 +21,15 @@ function main()
 
    // insert records
    cappedcl.insert([{a : 0}, {a : 1}, {a : 2}, {a : 3}, {a : 4}, {a : 5}]);
-
-   // remove
-   cappedcl.remove({a : 5});
    
    // remove fail, commit
    db.transBegin();
    try
    {
+      // remove success
+      cappedcl.remove({a : 5});
+      println("remove success in transaction");
+      // remove fail
       cappedcl.remove();
       throw "remove should be failure!";
    }
@@ -50,6 +51,10 @@ function main()
    db.transBegin();
    try
    {
+      // remove success
+      cappedcl.remove({a : 4});
+      println("remove success in transaction");
+      // remove fail
       cappedcl.remove();
       throw "remove should be failure!";
    }
@@ -63,6 +68,7 @@ function main()
    db.transRollback();
 
     // check result
+   var expectResult = [{a : 0}, {a : 1}, {a : 2}, {a : 3}];
    var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
    checkResult(expectResult, actResult);
 

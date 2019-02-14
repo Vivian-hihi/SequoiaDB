@@ -21,14 +21,15 @@ function main()
 
    // insert records
    cappedcl.insert([{a : 0}, {a : 1}, {a : 2}]);
-   
-   // pop 
-   cappedcl.pop({LogicalID : 112, Direction : -1});
 
    // pop fail with wrong arguments, commit
    db.transBegin();
    try
    {
+      // pop success
+      cappedcl.pop({LogicalID : 112, Direction : -1});
+      println("pop success in transaction");
+      // pop fail
       cappedcl.pop({Logical : 0});
       throw "pop should be failure!";
    }
@@ -39,7 +40,7 @@ function main()
          throw buildException("pop", "pop", "pop", -6, e);
       }
    }
-   cappedcl.insert({a : 2})
+   cappedcl.insert({a : 2});
    db.transCommit();
    
    // check result 
@@ -51,6 +52,10 @@ function main()
    db.transBegin();
    try
    {
+      // pop success
+      cappedcl.pop({LogicalID : 112, Direction : -1});
+      println("pop success in transaction");
+      // pop fail
       cappedcl.pop({LogicalID : 10000, Direction: -1});
       throw "pop should be failure!";
    }
@@ -65,17 +70,21 @@ function main()
    db.transCommit();
 
    // check result
-   var expectResult = [{a : 0}, {a : 1}, {a : 2}, {a : 3}];
+   var expectResult = [{a : 0}, {a : 1}, {a : 3}];
    var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
    checkResult(expectResult, actResult);
 
    cappedcl.truncate();
-   cappedcl.insert([{a : 0}, {a : 1}]);
+   cappedcl.insert([{a : 0}, {a : 1}, {a : 2}]);
  
    // pop fail with wrong arguments, rollback
    db.transBegin();
    try
    {
+      // pop success
+      cappedcl.pop({LogicalID : 112, Direction : -1});
+      println("pop success in transaction");
+      // pop fail
       cappedcl.pop({Logical : 0});
       throw "pop should be failure!";
    }
@@ -98,6 +107,10 @@ function main()
    db.transBegin();
    try 
    {   
+      // pop success
+      cappedcl.pop({LogicalID : 112, Direction : -1});
+      println("pop success in transaction");
+      // pop fail  
       cappedcl.pop({LogicalID : 10000, Direction: -1});
       throw "pop should be failure!";
    }   
@@ -112,7 +125,7 @@ function main()
    db.transRollback();
 
    // check result
-   var expectResult = [{a : 0}, {a : 1}, {a : 2}, {a : 3}];
+   var expectResult = [{a : 0}, {a : 1}, {a : 3}];
    var actResult = new DBOperator().findFromCL(cappedcl, {}, {a : {$include : 1}}, {a : 1});
    checkResult(expectResult, actResult);
 
