@@ -459,7 +459,7 @@ function InstallPackage( taskID )
    var expectTimeout = 30 ;
    var expectPath    = OMA_TEMP_EXPECT_PATH + '/bin/expect' ;
    var expectShell   = OMA_TEMP_EXPECT_PATH + '/shell/sudo_cmd.sh' ;
-   var expectExec    = expectPath + ' ' + expectShell + ' ' + expectTimeout + ' ' + pwd + ' ' ;
+   var expectExec    = 'LC_ALL=C;' + expectPath + ' ' + expectShell + ' ' + expectTimeout + ' ' + pwd + ' ' ;
 
    PD_LOGGER.setTaskId( taskID ) ;
 
