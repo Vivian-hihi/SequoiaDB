@@ -1,231 +1,309 @@
-package com.sequoiadb.testcommon;
+package com.sequoiadb.testcommon ;
 
-import java.io.File;
+import java.io.File ;
 import java.util.concurrent.atomic.AtomicInteger ;
 
+import org.bson.BSONObject ;
 import org.bson.BasicBSONObject ;
+import org.bson.types.BasicBSONList ;
 import org.testng.Assert ;
 import org.testng.SkipException ;
 import org.testng.annotations.AfterGroups ;
-import org.testng.annotations.AfterSuite;
+import org.testng.annotations.AfterSuite ;
 import org.testng.annotations.AfterTest ;
 import org.testng.annotations.BeforeGroups ;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeSuite ;
 import org.testng.annotations.BeforeTest ;
-import org.testng.annotations.Parameters;
+import org.testng.annotations.Parameters ;
 
 import com.sequoiadb.base.ConfigOptions ;
 import com.sequoiadb.base.DBCursor ;
-import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.base.Sequoiadb ;
 import com.sequoiadb.exception.BaseException ;
 import com.sequoiadb.exception.SDBError ;
 
-
 public class SdbTestBase {
-    protected static String coordUrl;
-    protected static String hostName;
-    protected static String serviceName;
-    protected static String csName;
-    protected static int reservedPortBegin;
-    protected static int reservedPortEnd;
-    protected static String reservedDir;
-    protected static String workDir;
-    private static Sequoiadb sequoiadb = null;
-    //private static Sequoiadb sdb = null ;
+    protected static String coordUrl ;
+    protected static String hostName ;
+    protected static String serviceName ;
+    protected static String csName ;
+    protected static int reservedPortBegin ;
+    protected static int reservedPortEnd ;
+    protected static String reservedDir ;
+    protected static String workDir ;
+    private static Sequoiadb sequoiadb = null ;
+    // private static Sequoiadb sdb = null ;
     private static final String ROLE = "Role" ;
     private static final String DATA = "data" ;
-    private static final String TRANSACTIONON  = "transactionon" ;
+    private static final String TRANSACTIONON = "transactionon" ;
     private static final String TRANSISOLATION = "transisolation" ;
-    private static final String TRANSLOCKWAIT  = "translockwait" ;
-    private static AtomicInteger count = new AtomicInteger(0) ;
-    private static ConfigOptions options = new ConfigOptions();
+    private static final String TRANSLOCKWAIT = "translockwait" ;
+    private static AtomicInteger count = new AtomicInteger( 0 ) ;
+    private static ConfigOptions options = new ConfigOptions() ;
 
-    @Parameters({"HOSTNAME", "SVCNAME", "CHANGEDPREFIX",
-            "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR"})
-    @BeforeSuite(groups={"ru", "rc", "rcwaitlock"},inheritGroups = true)
-    public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME,  
-                                 int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR,
-                                 String WORKDIR) {
-        hostName = HOSTNAME;
-        serviceName = SVCNAME;
-        csName = COMMCSNAME;
-        reservedPortBegin = RSRVPORTBEGIN;
-        reservedPortEnd = RSRVPORTEND;
-        reservedDir = RSRVNODEDIR;
-        workDir = WORKDIR;
-        coordUrl = HOSTNAME + ":" + SVCNAME;
-        
+    @Parameters( { "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN",
+            "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR" } )
+    @BeforeSuite( groups = { "ru", "rc", "rcwaitlock" }, inheritGroups = true )
+    public static void initSuite( String HOSTNAME, String SVCNAME,
+            String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
+            String RSRVNODEDIR, String WORKDIR ) {
+        hostName = HOSTNAME ;
+        serviceName = SVCNAME ;
+        csName = COMMCSNAME ;
+        reservedPortBegin = RSRVPORTBEGIN ;
+        reservedPortEnd = RSRVPORTEND ;
+        reservedDir = RSRVNODEDIR ;
+        workDir = WORKDIR ;
+        coordUrl = HOSTNAME + ":" + SVCNAME ;
+
         try {
             options.setSocketKeepAlive( true ) ;
-            sequoiadb = new Sequoiadb(coordUrl, "", "", options);
-           // sdb = new Sequoiadb(coordUrl, "", "");
-            if (sequoiadb.isCollectionSpaceExist(csName)){ 
-                sequoiadb.dropCollectionSpace(csName);
+            sequoiadb = new Sequoiadb( coordUrl, "", "", options ) ;
+            // sdb = new Sequoiadb(coordUrl, "", "");
+            if ( sequoiadb.isCollectionSpaceExist( csName ) ) {
+                sequoiadb.dropCollectionSpace( csName ) ;
             }
-            sequoiadb.createCollectionSpace(csName);
-            
-            File workDirFile = new File(workDir);
-            if (!workDirFile.exists()) {
-                workDirFile.mkdir();
+            sequoiadb.createCollectionSpace( csName ) ;
+
+            File workDirFile = new File( workDir ) ;
+            if ( !workDirFile.exists() ) {
+                workDirFile.mkdir() ;
             }
-        } catch(BaseException e){
+        } catch ( BaseException e ) {
             e.printStackTrace() ;
-            throw new SkipException("initSuite failed") ;
+            throw new SkipException( "initSuite failed" ) ;
         }
     }
-    
-    public static void restartAllDataGroup(){
+
+    public static void restartAllDataGroup() {
         final String GROUPID = "GroupID" ;
         final int COORDGROUPID = 2 ;
         final String GT = "$gt" ;
-        
-        if (sequoiadb == null || !sequoiadb.isValid()){
-            sequoiadb = new Sequoiadb( coordUrl, "", "", options) ;
+
+        if ( sequoiadb == null || !sequoiadb.isValid() ) {
+            sequoiadb = new Sequoiadb( coordUrl, "", "", options ) ;
         }
-        
+
         BasicBSONObject cond = new BasicBSONObject() ;
         BasicBSONObject subCond = new BasicBSONObject() ;
-        subCond.put( GT, COORDGROUPID );
+        subCond.put( GT, COORDGROUPID ) ;
         cond.put( GROUPID, subCond ) ;
-        DBCursor cursor = sequoiadb.getList( Sequoiadb.SDB_LIST_GROUPS , cond, null, null ) ;
-        while ( cursor.hasNext() ){
+        DBCursor cursor = sequoiadb.getList( Sequoiadb.SDB_LIST_GROUPS, cond,
+                null, null ) ;
+        while ( cursor.hasNext() ) {
             BasicBSONObject doc = ( BasicBSONObject ) cursor.getNext() ;
-            sequoiadb.getReplicaGroup( doc.getInt( GROUPID ) ).stop();
-            sequoiadb.getReplicaGroup( doc.getInt( GROUPID ) ).start();
+            sequoiadb.getReplicaGroup( doc.getInt( GROUPID ) ).stop() ;
+            sequoiadb.getReplicaGroup( doc.getInt( GROUPID ) ).start() ;
+            
+            isGroupNormal( doc ) ;
         }
     }
-   
-    private static void modifyNodeConf(boolean transactionon, 
-                                       int transisolation, 
-                                       boolean translockwait ){
-        BasicBSONObject configs  = new BasicBSONObject() ;
-        configs.append( TRANSACTIONON,  true ) ;
+    
+    public static void isGroupNormal( BasicBSONObject groupInfo ) {
+        boolean hasPrimary = false ;
+        boolean isOk = true ;
+        long prevLsn = -1 ;
+        int prevVersion = -1 ;
+        int totalTimeLen = 6000 ;
+        int alreadySleepTime = 0 ;
+        
+        BasicBSONList nodes = ( BasicBSONList ) groupInfo.get( "Group" ) ;
+        BSONObject nullObj = null ;
+        
+        do {
+            for ( int pos = 0; pos < nodes.size(); ++pos ) {
+                BasicBSONObject node = ( BasicBSONObject ) nodes.get( pos ) ;
+                
+                String srvHost = node.getString( "HostName" ) ;
+                String    srvName = ( ( BasicBSONObject ) ( ( BasicBSONList ) node
+                        .get( "Service" ) ).get( 0 ) ).getString( "Name" ) ;
+                
+                String url = srvHost + ":" + srvName ;
+                try ( Sequoiadb dataDb = new Sequoiadb( url, "", "" ) ) {
+                    DBCursor cursor = dataDb.getSnapshot(
+                            Sequoiadb.SDB_SNAP_DATABASE, nullObj, nullObj,
+                            nullObj ) ;
+                    while ( cursor.hasNext() ) {
+                        BasicBSONObject doc = ( BasicBSONObject ) cursor
+                                .getNext() ;
+                        if ( doc.getBoolean( "IsPrimary" ) ) {
+                            hasPrimary = true ;
+                        }
+
+                        if ( prevLsn == -1 ) {
+                            prevLsn = doc.getLong( "CompleteLSN" ) ;
+                        }
+
+                        int curVersion = ( ( BasicBSONObject ) doc
+                                .get( "CurrentLSN" ) ).getInt( "Version" ) ;
+                        if ( prevVersion == -1 ) {
+                            prevVersion = curVersion ;
+                            continue ;
+                        }
+
+                        if ( prevLsn != doc.getLong( "CompleteLSN" )
+                                || prevVersion != curVersion ) {
+                            isOk = false ;
+                        }
+                    }
+                    cursor.close() ;
+                }
+
+                if ( !isOk ) {
+                    break ;
+                }
+            }
+
+            if ( (hasPrimary && isOk)) {
+                break ;
+            } else if (alreadySleepTime > totalTimeLen){
+                throw new SkipException("group restart restore failed!!!!") ;
+            }
+            else {
+                try {
+                    Thread.sleep( 100 ) ;
+                    alreadySleepTime += 1;
+                } catch ( InterruptedException e ) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace() ;
+                }
+            }
+        } while ( true ) ;
+    }
+
+    private static void modifyNodeConf( boolean transactionon,
+            int transisolation, boolean translockwait ) {
+        BasicBSONObject configs = new BasicBSONObject() ;
+        configs.append( TRANSACTIONON, true ) ;
         configs.append( TRANSISOLATION, transisolation ) ;
         configs.append( TRANSLOCKWAIT, translockwait ) ;
         BasicBSONObject options = new BasicBSONObject() ;
-        options.put( ROLE, DATA ) ; 
-        
-        try{
+        options.put( ROLE, DATA ) ;
+
+        try {
             sequoiadb.updateConfig( configs, options ) ;
-        }catch(BaseException e){
-            if ( e.getErrorCode() != SDBError.SDB_COORD_NOT_ALL_DONE.getErrorCode()){
+        } catch ( BaseException e ) {
+            if ( e.getErrorCode() != SDBError.SDB_COORD_NOT_ALL_DONE
+                    .getErrorCode() ) {
                 e.printStackTrace() ;
                 throw e ;
             }
         }
         restartAllDataGroup() ;
     }
-    
-    @Parameters({"TRANSACTIONON", "TRANSISOLATION", "TRANSLOCKWAIT"})
-    @BeforeTest(enabled=false)
-    public static void initTest(boolean transactionon, 
-                                int transisolation, 
-                                boolean translockwait){
-        if ( !transactionon ){
-            return ;
-        }
-        
-        try{
-            modifyNodeConf(transactionon, transisolation, translockwait ) ;
-        }catch(BaseException e){
-            e.printStackTrace() ;
-            throw new SkipException("initTest failed!!!") ;
-        }
-    }
-    
-    @Parameters({"TRANSACTIONON"})
-    @AfterTest(enabled=false)
-    public static void finiTest(boolean transactionon){
-        if ( !transactionon ){
-            return ;
-        }
-        
-        try{
-            modifyNodeConf(!transactionon, 0, false ) ;
-        }catch(BaseException e){
-            e.printStackTrace() ;
-            throw new SkipException("initTest failed!!!") ;
-        }
-    }
-    
-    
-    @Parameters({"TRANSACTIONON"})
-    @BeforeGroups(groups = "ru", inheritGroups = true )
-    public static void initRuGroups(){
-        int transisolation = 0 ; 
-        boolean translockwait = false;
-        try{
-            modifyNodeConf( true, transisolation, translockwait ) ;
-        }catch(BaseException e){
-            e.printStackTrace() ;
-            throw new SkipException("initGroups failed!!!") ;
-        }
-    }
-    
-    @BeforeGroups(groups = "rc", inheritGroups = true)
-    public static void initRcGroups(){
-        int transisolation = 1 ; 
-        boolean translockwait = false;
-        try{
-            modifyNodeConf( true, transisolation, translockwait ) ;
-        }catch(BaseException e){
-            e.printStackTrace() ;
-            throw new SkipException("initGroups failed!!!") ;
-        }
-    }
-    
-    @BeforeGroups(groups = "rcwaitlock", inheritGroups = true)
-    public static void initRcLockwaitGroups(){
-        int transisolation = 1 ; 
-        boolean translockwait = true;
-        try{
-            modifyNodeConf( true, transisolation, translockwait ) ;
-        }catch(BaseException e){
-            e.printStackTrace() ;
-            throw new SkipException("initGroups failed!!!") ;
-        }
-    }
-    
 
-    @AfterGroups(groups = {"ru", "rc", "rcwaitlock"},inheritGroups = true, alwaysRun=true)
-    public static void finiGroups(){
-        try{
-            modifyNodeConf( false, 0, false );
-        }catch(BaseException e){
+    @Parameters( { "TRANSACTIONON", "TRANSISOLATION", "TRANSLOCKWAIT" } )
+    @BeforeTest( enabled = false )
+    public static void initTest( boolean transactionon, int transisolation,
+            boolean translockwait ) {
+        if ( !transactionon ) {
+            return ;
+        }
+
+        try {
+            modifyNodeConf( transactionon, transisolation, translockwait ) ;
+        } catch ( BaseException e ) {
+            e.printStackTrace() ;
+            throw new SkipException( "initTest failed!!!" ) ;
+        }
+    }
+
+    @Parameters( { "TRANSACTIONON" } )
+    @AfterTest( enabled = false )
+    public static void finiTest( boolean transactionon ) {
+        if ( !transactionon ) {
+            return ;
+        }
+
+        try {
+            modifyNodeConf( !transactionon, 0, false ) ;
+        } catch ( BaseException e ) {
+            e.printStackTrace() ;
+            throw new SkipException( "initTest failed!!!" ) ;
+        }
+    }
+
+    @Parameters( { "TRANSACTIONON" } )
+    @BeforeGroups( groups = "ru", inheritGroups = true )
+    public static void initRuGroups() {
+        int transisolation = 0 ;
+        boolean translockwait = false ;
+        try {
+            modifyNodeConf( true, transisolation, translockwait ) ;
+        } catch ( BaseException e ) {
+            e.printStackTrace() ;
+            throw new SkipException( "initGroups failed!!!" ) ;
+        }
+    }
+
+    @BeforeGroups( groups = "rc", inheritGroups = true )
+    public static void initRcGroups() {
+        int transisolation = 1 ;
+        boolean translockwait = false ;
+        try {
+            modifyNodeConf( true, transisolation, translockwait ) ;
+        } catch ( BaseException e ) {
+            e.printStackTrace() ;
+            throw new SkipException( "initGroups failed!!!" ) ;
+        }
+    }
+
+    @BeforeGroups( groups = "rcwaitlock", inheritGroups = true )
+    public static void initRcLockwaitGroups() {
+        int transisolation = 1 ;
+        boolean translockwait = true ;
+        try {
+            modifyNodeConf( true, transisolation, translockwait ) ;
+        } catch ( BaseException e ) {
+            e.printStackTrace() ;
+            throw new SkipException( "initGroups failed!!!" ) ;
+        }
+    }
+
+    @AfterGroups( groups = { "ru", "rc", "rcwaitlock" }, inheritGroups = true, alwaysRun = true )
+    public static void finiGroups() {
+        try {
+            modifyNodeConf( false, 0, false ) ;
+        } catch ( BaseException e ) {
             e.printStackTrace() ;
             throw e ;
         }
     }
 
-    @AfterSuite(groups={"ru", "rc", "rcwaitlock"},inheritGroups = true)
+    @AfterSuite( groups = { "ru", "rc", "rcwaitlock" }, inheritGroups = true )
     public static void finiSuite() {
         count.getAndIncrement() ;
         try {
-            if ( !sequoiadb.isValid() ){
-                sequoiadb = new Sequoiadb(coordUrl, "", "", options);
+            if ( !sequoiadb.isValid() ) {
+                sequoiadb = new Sequoiadb( coordUrl, "", "", options ) ;
             }
-            
-            if (sequoiadb.isCollectionSpaceExist(csName)) {
-                sequoiadb.dropCollectionSpace(csName);
+
+            if ( sequoiadb.isCollectionSpaceExist( csName ) ) {
+                sequoiadb.dropCollectionSpace( csName ) ;
             }
-            //sdb.close() ;
-        } catch(BaseException e){
+            // sdb.close() ;
+        } catch ( BaseException e ) {
             e.printStackTrace() ;
             Assert.fail( e.getMessage() + " called: " + count.get() ) ;
-        }finally {
-            if (sequoiadb != null) {
-                sequoiadb.close();
+        } finally {
+            if ( sequoiadb != null ) {
+                sequoiadb.close() ;
             }
-            
+
             SdbThreadBase.shutdown() ;
         }
     }
 
     public static String getDefaultCoordUrl() {
-        return coordUrl;
+        return coordUrl ;
     }
 
     public static String getWorkDir() {
-        return workDir;
+        return workDir ;
+    }
+    
+    public static void main(String[] args){
+        SdbTestBase.coordUrl = "192.168.30.62:50000" ;
+        SdbTestBase.restartAllDataGroup() ;
     }
 }
