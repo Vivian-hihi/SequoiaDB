@@ -40,6 +40,19 @@ public class SdbDecrypt {
     private static final String SEP_CLUSTER = "@";
     private static final String SEP_PASSWORD = ":";
 
+    /**
+     * parse cipher file, get the specify user's password.
+     *
+     * @param user
+     *            the user's name
+     * @param token
+     *            password encryption token
+     * @param passwdFile
+     *            the password's file
+     * @return the parsed SdbDecryptUserInfo
+     * @throws BaseException
+     *             when parse failed
+     */
     public SdbDecryptUserInfo parseCipherFile(String user, String token, File passwdFile) {
         // token can be null
         if (null == user || null == passwdFile) {
@@ -66,10 +79,30 @@ public class SdbDecrypt {
         return userInfo;
     }
 
+    /**
+     * decrypt encrypted password
+     *
+     * @param encryptPasswd
+     *            the encrypted password
+     * @return the decrypted password
+     * @throws BaseException
+     *             when parse failed
+     */
     public String decryptPasswd(String encryptPasswd) {
         return decryptPasswd(encryptPasswd, null);
     }
 
+    /**
+     * decrypt encrypted password
+     *
+     * @param encryptPasswd
+     *            the encrypted password
+     * @param token
+     *            password encryption token
+     * @return the decrypted password
+     * @throws BaseException
+     *             when parse failed
+     */
     public String decryptPasswd(String encryptPasswd, String token) {
         final int DECRYPT_LENGTH = 8;
         final int KEY_LENGTH = 8;
@@ -283,6 +316,17 @@ public class SdbDecrypt {
         return EN_MATCH_RESULT.mismatch;
     }
 
+    /**
+     * parse cipher file, get the specify user's password.
+     *
+     * @param user
+     *            the user's name
+     * @param passwdFile
+     *            the password's file
+     * @return the parsed SdbDecryptUserInfo
+     * @throws BaseException
+     *             when parse failed
+     */
     public SdbDecryptUserInfo parseCipherFile(String user, File passwdFile) {
         return parseCipherFile(user, null, passwdFile);
     }

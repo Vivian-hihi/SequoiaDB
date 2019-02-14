@@ -5,6 +5,11 @@ public class SdbDecryptUserInfo {
     private String clusterName;
     private String passwd;
 
+    /**
+     * Get the cluster name
+     *
+     * @return cluster name
+     */
     public String getClusterName() {
         return clusterName;
     }
@@ -13,6 +18,11 @@ public class SdbDecryptUserInfo {
         this.clusterName = clusterName;
     }
 
+    /**
+     * Get the user name
+     *
+     * @return user name
+     */
     public String getUserName() {
         return userName;
     }
@@ -21,6 +31,11 @@ public class SdbDecryptUserInfo {
         this.userName = userName;
     }
 
+    /**
+     * Get the password
+     *
+     * @return password
+     */
     public String getPasswd() {
         return passwd;
     }
