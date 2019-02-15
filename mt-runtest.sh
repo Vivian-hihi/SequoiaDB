@@ -139,7 +139,7 @@ function filterTestcase()
 {
    local testRoot=$1
 
-   pathLists=(`sed -n '2,6p' $testRoot/testcase.conf |awk -F '=' '{print $2}'`)
+   pathLists=(`sed -n '2,7p' $testRoot/testcase.conf |awk -F '=' '{print $2}'`)
    for pathList in ${pathLists[@]}
    do
       path2Space=${pathList//,/ }
