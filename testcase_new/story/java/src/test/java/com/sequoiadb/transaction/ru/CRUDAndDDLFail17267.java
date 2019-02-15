@@ -102,7 +102,7 @@ public class CRUDAndDDLFail17267 extends SdbTestBase {
                }
           }
           try {
-               sdb.dropCollectionSpace("cs");
+               sdb.dropCollectionSpace("cs17267");
                throw new BaseException(-999, "DROPCS ERROR");
           } catch (BaseException e) {
                if (e.getErrorCode() != -34) {
