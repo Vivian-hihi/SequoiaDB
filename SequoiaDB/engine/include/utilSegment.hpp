@@ -503,7 +503,7 @@ namespace engine
          // exceed the lock resorce limitation
          rc = SDB_OSS_UP_TO_LIMIT ;
       }
-      
+
       return rc ;
    }
 
