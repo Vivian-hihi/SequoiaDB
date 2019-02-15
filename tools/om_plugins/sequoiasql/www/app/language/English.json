@@ -1,4 +1,6 @@
 ﻿{
+   "? 配置需要重启生效。": "? configuration needs to be restarted to take effect",
+   "修改的配置会自动同步到配置文件。": "The modified configuration is automatically synced to the configuration file.",
    "修改配置项": "Modify configs",
    "查看配置": "View config",
    "该操作将重启服务，是否确定继续？": "This operation will restart the service, are you sure to continue?",
@@ -6,7 +8,7 @@
    "生效类型": "Reloadable",
    "配置项": "Config",
    "修改配置": "Modify config",
-   "重启服务": "Restart Service",
+   "重启服务": "Restart service",
    "查看详细配置": "View details",
    "数据库列表": "Database List",
    "操作": "Operation",
