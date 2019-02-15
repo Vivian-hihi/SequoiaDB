@@ -46,6 +46,7 @@ class TestIndex12476(testlib.SdbTestBase):
          self.assertFalse(self.cl.is_index_exist('b'))
 
          self.drop_index(aIdxName)
+         self.assertFalse(self.cl.is_index_exist(aIdxName))
          expScanType = 'tbscan'
          expIdxName = ''
          expectExplainRec = {"expScanType": expScanType, "expIdxName": expIdxName, "Query": expQuery}
