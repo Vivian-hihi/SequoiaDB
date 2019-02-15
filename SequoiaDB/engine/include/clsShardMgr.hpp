@@ -284,7 +284,7 @@ namespace engine
                                 const CHAR *hostName,
                                 const std::string &service,
                                 NodeID &id ) ;
-         INT32 _sendToSeAdpt( NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32 _sendToRemoteEndpoint( NET_HANDLE handle, MsgHeader *msg ) ;
 
       //msg functions
       protected:
@@ -301,6 +301,9 @@ namespace engine
                                  BSONObjBuilder &builder ) ;
          INT32 _dumpTextIdxInfo( INT64 localVersion, BSONObj &obj,
                                  BOOLEAN onlyVersion = FALSE ) ;
+         INT32 _updateRemoteEndpointInfo( NET_HANDLE handle,
+                                          const BSONObj &regInfo ) ;
+         INT32 _genAuthReplyInfo( BSONObj &replyInfo ) ;
 
       private:
          _netRouteAgent                *_pNetRtAgent ;
@@ -324,10 +327,10 @@ namespace engine
          ossSpinSLatch                 _shardLatch ;
 
          MsgRouteID                    _nodeID ;
-         // External search engine adapter route id. Set when the adapter starts
-         // and registers on this data node.
-         MsgRouteID                    _seAdptID ;
-         NET_HANDLE                    _seAdptHandle ;
+
+         // Currently remote endpoint refers to the search engine adapter.
+         // It works as a client for indexing and server for searching.
+         NET_HANDLE                    _remoteEndpointHandle ;
    } ;
 
    typedef _clsShardMgr shardCB ;

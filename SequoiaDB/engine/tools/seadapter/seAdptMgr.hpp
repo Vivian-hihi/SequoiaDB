@@ -241,6 +241,9 @@ namespace seadapter
       INT32 _onRemoteDisconnect( NET_HANDLE handle, MsgHeader *msg ) ;
       INT32 _setTimers() ;
       void  _killTimer( UINT32 timerID ) ;
+
+      INT32 _syncUpdateCataInfo( INT64 millsec ) ;
+
       INT32 _onCatalogResMsg( NET_HANDLE handle, MsgHeader *msg ) ;
       INT32 _sendCataQueryReq( const BSONObj &query, const BSONObj &selector,
                                UINT64 requestID, _pmdEDUCB *cb ) ;
@@ -286,6 +289,7 @@ namespace seadapter
       INT32                   _clVersion ;
       ossSpinSLatch           _verUpdateLock ;
       ossEvent                _cataEvent ;
+      ossEvent                _registerEvent ;
 
       INT64                   _localIdxVer ;
       seIdxMetaMgr            _idxMetaCache ;

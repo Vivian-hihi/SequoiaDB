@@ -388,9 +388,8 @@ namespace engine
 
       _catVerion = 0 ;
       _nodeID.value = 0 ;
-      _seAdptID.value = INVALID_NODE_ID ;
       _upCatHandle = NET_INVALID_HANDLE ;
-      _seAdptHandle = NET_INVALID_HANDLE ;
+      _remoteEndpointHandle = NET_INVALID_HANDLE ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_DECONSTRUCTOR, "_clsShardMgr::~_clsShardMgr" )
@@ -2714,13 +2713,13 @@ namespace engine
          _upCatEvent.signalAll( SDB_NETWORK_CLOSE ) ;
       }
 
-      if ( handle == _seAdptHandle )
+      if ( handle == _remoteEndpointHandle )
       {
          rtnRemoteMessenger *
             messenger = pmdGetKRCB()->getRTNCB()->getRemoteMessenger() ;
          SDB_ASSERT( messenger, "Remote messenger is NULL" ) ;
          messenger->onDisconnect() ;
-         _seAdptHandle = NET_INVALID_HANDLE ;
+         _remoteEndpointHandle = NET_INVALID_HANDLE ;
       }
 
       return SDB_OK ;
@@ -2735,154 +2734,39 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDMGR__ONAUTHREQMSG ) ;
-      BSONObj bodyObj ;
-      BSONElement ele ;
-      const CHAR *peerHost = NULL ;
-      const CHAR *peerSvc = NULL ;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      rtnRemoteMessenger *messenger = NULL ;
       BSONObj myInfoObj ;
-      BSONObjBuilder builder ;
       MsgAuthReply *reply = NULL ;
       INT32 replySize = 0 ;
-      UINT32 tmpPos = CLS_RG_NODE_POS_INVALID ;
-      MsgRouteID cataRouteID ;
-      string cataHost ;
-      string cataSvc ;
-      MSG_ROUTE_SERVICE_TYPE svcType = MSG_ROUTE_CAT_SERVICE ;
-      CHAR groupName[ OSS_MAX_GROUPNAME_SIZE + 1 ] = { 0 } ;
-
-      pmdGetKRCB()->getGroupName( groupName, OSS_MAX_GROUPNAME_SIZE + 1 ) ;
-      if ( 0 == ossStrlen( groupName ) )
-      {
-         rc = SDB_REPL_GROUP_NOT_ACTIVE ;
-         goto error ;
-      }
-
-      // The remote messenger will be initialized and activated when the adapter
-      // registers for the first time.
-      messenger = rtnCB->getRemoteMessenger() ;
-      if ( !messenger )
-      {
-         rc = rtnCB->prepareRemoteMessenger() ;
-         PD_RC_CHECK( rc, PDERROR, "Prepare remote messenger failed[ %d ]",
-                      rc ) ;
-         messenger = rtnCB->getRemoteMessenger() ;
-      }
 
       // If the adapter handler is valid, there is some valid connection between
-      // this node and the adapter. In this case, no new connections are
-      // allowed.
-      if ( NET_INVALID_HANDLE != _seAdptHandle )
+      // this node and the adapter. In this case, no new connections with a
+      // different handle is allowed.
+      // If it's the current valid connection, it's the adapter to try to
+      // register again. This will happen when the catalogue primary changed,
+      // and the adapter wants to know the new primary node.
+      if ( NET_INVALID_HANDLE != _remoteEndpointHandle &&
+           handle != _remoteEndpointHandle )
       {
-         if ( handle == _seAdptHandle )
-         {
-            // Send by the current valid adapter, just ignore.
-            goto done ;
-         }
-
          // Another different adapter. Reject!
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Remote messenger is ready now. Reject new "
+         PD_LOG( PDERROR, "Remote endpoint is ready now. Reject new "
                           "registration" ) ;
          goto error ;
       }
 
-      rc = extractAuthMsg( msg, bodyObj ) ;
-      PD_RC_CHECK( rc, PDERROR, "Extract auth message failed[ %d ]", rc ) ;
+      rc = _genAuthReplyInfo( myInfoObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Generate auth reply information failed[%d]",
+                   rc ) ;
 
-      try
+      if ( NET_INVALID_HANDLE == _remoteEndpointHandle )
       {
-         BSONElement ele ;
-         // Add the route of search engine adapter into rtnCB's net route agent.
-         peerHost = bodyObj.getStringField( FIELD_NAME_HOST ) ;
-         peerSvc = bodyObj.getStringField( FIELD_NAME_SERVICE_NAME ) ;
-
-         ele = bodyObj.getField( FIELD_NAME_GROUPID ) ;
-         if ( !ele.isNumber() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Group id field type error, type[ %d ]",
-                    ele.type() ) ;
-            goto error ;
-         }
-         _seAdptID.columns.groupID = ele.numberLong() ;
-
-         ele = bodyObj.getField( FIELD_NAME_NODEID ) ;
-         if ( NumberInt != ele.type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Node id field type error, type[ %d ]",
-                    ele.type() ) ;
-            goto error ;
-         }
-         _seAdptID.columns.nodeID = ele.numberInt() ;
-
-         ele = bodyObj.getField( FIELD_NAME_SERVICE_TYPE ) ;
-         if ( NumberInt != ele.type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Service type field type error, type[ %d ]",
-                    ele.type() ) ;
-            goto error ;
-         }
-         _seAdptID.columns.serviceID = ele.numberInt() ;
-
-         if ( MSG_INVALID_ROUTEID == _seAdptID.value )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Route id is invalid" ) ;
-            goto error ;
-         }
-
-         // Update both the route agent of rtn and shard.
-         rc = messenger->setTarget( _seAdptID, peerHost, peerSvc ) ;
-         PD_RC_CHECK( rc, PDERROR, "Add remote target failed[ %d ]", rc ) ;
-
-         // Set the local id of route agent in rtn.
-         rc = messenger->setLocalID( _nodeID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Set local id failed[ %d ]", rc ) ;
-
-         rc = _pNetRtAgent->updateRoute( _seAdptID, peerHost, peerSvc ) ;
-         if ( rc && SDB_NET_UPDATE_EXISTING_NODE != rc )
-         {
-            PD_LOG( PDERROR, "Update route failed[ %d ], host[ %s ], "
-                    "service[ %s ]", rc, peerHost, peerSvc ) ;
-            goto error ;
-         }
-
-         // Need to reply with following information:
-         // Whether master node?
-         // Group name( used as type of index in ES )
-         // Catalog information( Currently only send the catalog primary node
-         // information ). The search engine adapter needs the catalog information
-         // to get collection version when query.
-         builder.appendBool( FIELD_NAME_IS_PRIMARY, pmdIsPrimary() ) ;
-         builder.append( FIELD_NAME_GROUPNAME, groupName ) ;
-
-         tmpPos = _cataGrpItem.getPrimaryPos() ;
-         rc = _cataGrpItem.getNodeInfo( tmpPos, cataRouteID, cataHost,
-                                        cataSvc, svcType ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get catalog node info failed[ %d ]", rc ) ;
-         {
-            BSONObjBuilder subBuilder(
-               builder.subobjStart( FIELD_NAME_CATALOGINFO ) ) ;
-            subBuilder.append( FIELD_NAME_HOST, cataHost ) ;
-            subBuilder.append( FIELD_NAME_SERVICE_NAME, cataSvc ) ;
-            subBuilder.append( FIELD_NAME_GROUPID, cataRouteID.columns.groupID ) ;
-            subBuilder.append( FIELD_NAME_NODEID, cataRouteID.columns.nodeID ) ;
-            subBuilder.append( FIELD_NAME_SERVICE, cataRouteID.columns.serviceID ) ;
-            subBuilder.done() ;
-         }
-
-         myInfoObj = builder.done() ;
-         _seAdptHandle = handle ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         BSONObj bodyObj ;
+         rc = extractAuthMsg( msg, bodyObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Extract auth message failed[%d]", rc ) ;
+         rc = _updateRemoteEndpointInfo( handle, bodyObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update remote endpoint information by "
+                                   "registration information failed[%d]",
+                      rc ) ;
       }
 
    done:
@@ -2907,14 +2791,18 @@ namespace engine
          reply->header.requestID = msg->requestID ;
          reply->flags = rc ;
          reply->startFrom = 0 ;
-         reply->numReturned = rc ? -1 : 1 ;
          if ( SDB_OK == rc && !myInfoObj.isEmpty() )
          {
+            reply->numReturned = 1 ;
             ossMemcpy( (CHAR *)reply + sizeof( MsgAuthReply ),
                        myInfoObj.objdata(), myInfoObj.objsize() ) ;
          }
+         else
+         {
+            reply->numReturned = 0 ;
+         }
 
-         rc = _sendToSeAdpt( handle, (MsgHeader *)reply ) ;
+         rc = _sendToRemoteEndpoint( handle, (MsgHeader *)reply ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Send message to search engine adapter "
@@ -3032,7 +2920,7 @@ namespace engine
                        textIdxInfo.objdata(), textIdxInfo.objsize() ) ;
          }
 
-         rc = _sendToSeAdpt( handle, (MsgHeader *)reply ) ;
+         rc = _sendToRemoteEndpoint( handle, (MsgHeader *)reply ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Send message to search engine adapter "
@@ -3241,11 +3129,11 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__SENDTOSEADPT, "_clsShardMgr::_sendToSeAdpt" )
-   INT32 _clsShardMgr::_sendToSeAdpt( NET_HANDLE handle, MsgHeader *msg )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__SENDTOREMOTEENDPOINT, "_clsShardMgr::_sendToRemoteEndpoint" )
+   INT32 _clsShardMgr::_sendToRemoteEndpoint( NET_HANDLE handle, MsgHeader *msg )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__CLSSHDMGR__SENDTOSEADPT ) ;
+      PD_TRACE_ENTRY( SDB__CLSSHDMGR__SENDTOREMOTEENDPOINT ) ;
       BOOLEAN hasLock = FALSE ;
 
       _shardLatch.get_shared() ;
@@ -3260,7 +3148,167 @@ namespace engine
       {
          _shardLatch.release_shared() ;
       }
-      PD_TRACE_EXITRC( SDB__CLSSHDMGR__SENDTOSEADPT, rc ) ;
+      PD_TRACE_EXITRC( SDB__CLSSHDMGR__SENDTOREMOTEENDPOINT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__UPDATEREMOTEENDPOINTINFO, "_clsShardMgr::_updateRemoteEndpointInfo" )
+   INT32 _clsShardMgr::_updateRemoteEndpointInfo( NET_HANDLE handle,
+                                                  const BSONObj &regInfo )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSSHDMGR__UPDATEREMOTEENDPOINTINFO ) ;
+      MsgRouteID remoteID ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      rtnRemoteMessenger *messenger = NULL ;
+
+      // The remote messenger will be initialized and activated when the adapter
+      // registers for the first time.
+      messenger = rtnCB->getRemoteMessenger() ;
+      if ( !messenger )
+      {
+         rc = rtnCB->prepareRemoteMessenger() ;
+         PD_RC_CHECK( rc, PDERROR, "Prepare remote messenger failed[%d]", rc ) ;
+         messenger = rtnCB->getRemoteMessenger() ;
+      }
+
+      try
+      {
+         // Add the route of search engine adapter into rtnCB's net route agent.
+         const CHAR *peerHost = regInfo.getStringField( FIELD_NAME_HOST ) ;
+         const CHAR *peerSvc =
+               regInfo.getStringField( FIELD_NAME_SERVICE_NAME ) ;
+
+         BSONElement ele = regInfo.getField( FIELD_NAME_GROUPID ) ;
+         if ( !ele.isNumber() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Group id field type error, type[%d]",
+                    ele.type() ) ;
+            goto error ;
+         }
+         remoteID.columns.groupID = ele.numberLong() ;
+
+         ele = regInfo.getField( FIELD_NAME_NODEID ) ;
+         if ( NumberInt != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Node id field type error, type[%d]",
+                    ele.type() ) ;
+            goto error ;
+         }
+         remoteID.columns.nodeID = ele.numberInt() ;
+
+         ele = regInfo.getField( FIELD_NAME_SERVICE_TYPE ) ;
+         if ( NumberInt != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Service type field type error, type[%d]",
+                    ele.type() ) ;
+            goto error ;
+         }
+         remoteID.columns.serviceID = ele.numberInt() ;
+
+         if ( MSG_INVALID_ROUTEID == remoteID.value )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Route id is invalid" ) ;
+            goto error ;
+         }
+
+         // Update both the route agent of rtn and shard.
+         rc = messenger->setTarget( remoteID, peerHost, peerSvc ) ;
+         PD_RC_CHECK( rc, PDERROR, "Add remote target failed[%d]", rc ) ;
+
+         // Set the local id of route agent in rtn.
+         rc = messenger->setLocalID( _nodeID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Set local id failed[%d]", rc ) ;
+
+         rc = _pNetRtAgent->updateRoute( remoteID, peerHost, peerSvc ) ;
+         if ( rc && SDB_NET_UPDATE_EXISTING_NODE != rc )
+         {
+            PD_LOG( PDERROR, "Update route failed[%d], host[%s], "
+                             "service[%s]", rc, peerHost, peerSvc ) ;
+            goto error ;
+         }
+         _remoteEndpointHandle = handle ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__CLSSHDMGR__UPDATEREMOTEENDPOINTINFO, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__GENAUTHREPLYINFO, "_clsShardMgr::_genAuthReplyInfo" )
+   INT32 _clsShardMgr::_genAuthReplyInfo( BSONObj &replyInfo )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSSHDMGR__GENAUTHREPLYINFO ) ;
+      BSONObjBuilder builder ;
+      UINT32 tmpPos = CLS_RG_NODE_POS_INVALID ;
+      MsgRouteID cataRouteID ;
+      string cataHost ;
+      string cataSvc ;
+      MSG_ROUTE_SERVICE_TYPE svcType = MSG_ROUTE_CAT_SERVICE ;
+      CHAR groupName[ OSS_MAX_GROUPNAME_SIZE + 1 ] = { 0 } ;
+
+      pmdGetKRCB()->getGroupName( groupName, OSS_MAX_GROUPNAME_SIZE + 1 ) ;
+      if ( 0 == ossStrlen( groupName ) )
+      {
+         rc = SDB_REPL_GROUP_NOT_ACTIVE ;
+         goto error ;
+      }
+
+      try
+      {
+         // Need to reply with following information:
+         // Whether master node?
+         // Group name( used as type of index in ES )
+         // Catalog information( Currently only send the catalog primary node
+         // information ). The search engine adapter needs the catalog
+         // information to get collection version when query.
+         builder.appendBool( FIELD_NAME_IS_PRIMARY, pmdIsPrimary() ) ;
+         builder.append( FIELD_NAME_GROUPNAME, groupName ) ;
+
+         tmpPos = _cataGrpItem.getPrimaryPos() ;
+         rc = _cataGrpItem.getNodeInfo( tmpPos, cataRouteID, cataHost,
+                                        cataSvc, svcType ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get catalog node info failed[%d]", rc ) ;
+         {
+            BSONObjBuilder subBuilder(
+                  builder.subobjStart( FIELD_NAME_CATALOGINFO ) ) ;
+            subBuilder.append( FIELD_NAME_HOST, cataHost ) ;
+            subBuilder.append( FIELD_NAME_SERVICE_NAME, cataSvc ) ;
+            subBuilder.append( FIELD_NAME_GROUPID,
+                               cataRouteID.columns.groupID ) ;
+            subBuilder.append( FIELD_NAME_NODEID,
+                               cataRouteID.columns.nodeID ) ;
+            subBuilder.append( FIELD_NAME_SERVICE,
+                               cataRouteID.columns.serviceID ) ;
+            subBuilder.done() ;
+         }
+
+         replyInfo = builder.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__CLSSHDMGR__GENAUTHREPLYINFO, rc ) ;
       return rc ;
    error:
       goto done ;

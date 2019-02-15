@@ -38,8 +38,6 @@
 *******************************************************************************/
 #include "msgMessage.hpp"
 #include "seAdptIndexSession.hpp"
-#include "seAdptMgr.hpp"
-#include "seAdptDef.hpp"
 #include "utilESUtil.hpp"
 
 #define SEADPT_FIELD_NAME_LID        "_lid"
@@ -155,7 +153,11 @@ namespace seadapter
       else if ( SDB_OK != reply->flags )
       {
          rc = reply->flags ;
-         PD_LOG( PDERROR, "Query failed[ %d ]. Current status[ %s ]",
+         // If local version of collection is old, or catalogue node is not
+         // primary, it will be updated in next round.
+         PD_LOG( ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc ||
+                   SDB_CLS_NOT_PRIMARY == rc ) ? PDDEBUG : PDERROR,
+                 "Query request failed[ %d ]. Current status[ %s ]",
                  rc, _seadptStatus2Desp( _status ) ) ;
          goto error ;
       }
@@ -165,7 +167,7 @@ namespace seadapter
                                &numReturned, docObjs ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Failed to extract query result, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Extract query result failed[%d]", rc ) ;
             goto error ;
          }
 
@@ -348,9 +350,9 @@ namespace seadapter
          case SEADPT_SESSION_STAT_BEGIN:
             {
                INT32 clVersion = -1 ;
-               rc = sdbGetSeAdapterCB()->syncUpdateCLVersion( _meta.getOrigCLName().c_str(),
-                                                              OSS_ONE_SEC, eduCB(),
-                                                              clVersion ) ;
+               rc = sdbGetSeAdapterCB()->
+                     syncUpdateCLVersion( _meta.getOrigCLName().c_str(),
+                                          OSS_ONE_SEC, eduCB(), clVersion ) ;
                PD_RC_CHECK( rc, PDERROR, "Update collection version failed" ) ;
                PD_LOG( PDDEBUG, "Change cl[ %s ] version from [ %d ] to [ %d ]"
                        "accorrding to catalog", _meta.getOrigCLName().c_str(),
@@ -365,9 +367,9 @@ namespace seadapter
             if ( !_isQueryBusy() )
             {
                INT32 clVersion = -1 ;
-               rc = sdbGetSeAdapterCB()->syncUpdateCLVersion( _meta.getOrigCLName().c_str(),
-                                                              OSS_ONE_SEC, eduCB(),
-                                                              clVersion ) ;
+               rc = sdbGetSeAdapterCB()->
+                     syncUpdateCLVersion( _meta.getOrigCLName().c_str(),
+                                          OSS_ONE_SEC, eduCB(), clVersion ) ;
                PD_RC_CHECK( rc, PDERROR, "Update collection version "
                             "failed[ %d ]", rc ) ;
                PD_LOG( PDDEBUG, "Change cl[ %s ] version from [ %d ] to [ %d ]"
@@ -415,6 +417,18 @@ namespace seadapter
    done:
       return ;
    error:
+      // If the original/capped collection space or collection dose not exist
+      // any more, let's quit.
+      if ( ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc ) && !_quit )
+      {
+         INT32 rcTmp = _dropIndex() ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Drop index on search engine failed[%d] when "
+                             "collection not exists", rcTmp ) ;
+         }
+         _quit = TRUE ;
+      }
       goto done ;
    }
 

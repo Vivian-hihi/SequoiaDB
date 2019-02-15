@@ -661,6 +661,8 @@ namespace seadapter
       }
 
    retry:
+      ++retryTimes ;
+      needRetry = FALSE ;
       _verUpdateLock.get() ;
       _clVersion = -1 ;
       if ( !hasSent )
@@ -690,7 +692,16 @@ namespace seadapter
             }
             else if ( SDB_CLS_NOT_PRIMARY == rc )
             {
-               needRetry = TRUE ;
+               rc = _syncUpdateCataInfo( millsec ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Update catalogue information failed[%d]",
+                          rc ) ;
+               }
+               else
+               {
+                  needRetry = TRUE ;
+               }
                hasSent = FALSE ;
             }
          }
@@ -705,12 +716,6 @@ namespace seadapter
          {
             needRetry = TRUE ;
          }
-         else if ( rc && SDB_DMS_NOTEXIST != rc )
-
-         {
-            needRetry = FALSE ;
-         }
-
       }
 
       _verUpdateLock.release() ;
@@ -729,6 +734,25 @@ namespace seadapter
    void _seAdptCB::resetIdxVersion()
    {
       _localIdxVer = SEADPT_INIT_TEXT_INDEX_VERSION ;
+   }
+
+   // Update catalogue address by registering again.
+   INT32 _seAdptCB::_syncUpdateCataInfo( INT64 millsec )
+   {
+      INT32 rc = SDB_OK ;
+
+      _registerEvent.reset() ;
+
+      rc = _resumeRegister() ;
+      PD_RC_CHECK( rc, PDERROR, "Resume register failed[%d]", rc ) ;
+
+      rc = _registerEvent.wait( millsec ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update catalogue info failed[%d]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _seAdptCB::_onCatalogResMsg( NET_HANDLE handle, MsgHeader *msg )
@@ -1282,10 +1306,9 @@ namespace seadapter
       vector<BSONObj> objVec ;
       BSONObj cataInfoObj ;
 
-      string cataHost ;
-      string cataSvc ;
+      const CHAR *cataHost = NULL ;
+      const CHAR *cataSvc = NULL ;
       const CHAR *peerGrpName = NULL ;
-      MsgOpReply *res = (MsgOpReply *)msg ;
 
       // Adapter has registered successfully.
       if ( NET_INVALID_TIMER_ID == _regTimerID )
@@ -1293,18 +1316,19 @@ namespace seadapter
          goto done ;
       }
 
-      rc = res->flags ;
-      PD_RC_CHECK( rc, PDERROR, "Adapter register on data node failed[ %d ]",
-                   rc ) ;
-
       try
       {
          // Get the role, group id of the node.
          rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
                                &numReturned, objVec ) ;
          PD_RC_CHECK( rc, PDERROR, "Extract register reply failed[ %d ]", rc ) ;
-         rc = flag ;
-         PD_RC_CHECK( rc, PDERROR, "Error returned from data node[ %d ]", rc ) ;
+         if ( SDB_OK != flag )
+         {
+            PD_LOG( PDERROR, "Adapter register on data node failed[%d]",
+                    flag ) ;
+            goto error ;
+         }
+
          if ( 1 != objVec.size() )
          {
             PD_LOG( PDERROR, "Register reply is not as expected" ) ;
@@ -1314,7 +1338,7 @@ namespace seadapter
 
          _peerPrimary = objVec[0].getBoolField( FIELD_NAME_IS_PRIMARY ) ;
          peerGrpName = objVec[0].getStringField( FIELD_NAME_GROUPNAME ) ;
-         if ( !peerGrpName )
+         if ( 0 == ossStrlen( peerGrpName ) )
          {
             PD_LOG( PDERROR, "Find peer node group name failed" ) ;
             rc = SDB_SYS ;
@@ -1335,11 +1359,11 @@ namespace seadapter
          cataHost = cataInfoObj.getStringField( FIELD_NAME_HOST ) ;
          cataSvc = cataInfoObj.getStringField( FIELD_NAME_SERVICE_NAME ) ;
          _cataNodeID.columns.groupID =
-            cataInfoObj.getIntField( FIELD_NAME_GROUPID ) ;
+               (UINT32)cataInfoObj.getIntField( FIELD_NAME_GROUPID ) ;
          _cataNodeID.columns.nodeID =
-            cataInfoObj.getIntField( FIELD_NAME_NODEID ) ;
+               (UINT16)cataInfoObj.getIntField( FIELD_NAME_NODEID ) ;
          _cataNodeID.columns.serviceID =
-            cataInfoObj.getIntField( FIELD_NAME_SERVICE ) ;
+               (UINT16)cataInfoObj.getIntField( FIELD_NAME_SERVICE ) ;
       }
       catch ( std::exception &e )
       {
@@ -1348,8 +1372,7 @@ namespace seadapter
          goto error ;
       }
 
-      rc = _indexNetRtAgent.updateRoute( _cataNodeID, cataHost.c_str(),
-                                         cataSvc.c_str() ) ;
+      rc = _indexNetRtAgent.updateRoute( _cataNodeID, cataHost, cataSvc ) ;
       if ( rc && SDB_NET_UPDATE_EXISTING_NODE != rc )
       {
          PD_LOG( PDERROR, "Update route failed[ %d ]", rc ) ;
@@ -1364,27 +1387,34 @@ namespace seadapter
          pmdGetKRCB()->setBusinessOK( TRUE ) ;
       }
 
-      PD_LOG( PDEVENT, "Search engine adapter registered on SequoiaDB data "
-              "node successfully" ) ;
-      if ( TRUE == _peerPrimary )
+      // Registration forcefully triggered when the service is ok. That may
+      // happen when the adapter try to update the catalogue information. In
+      // that case, the following actions should not be done.
+      if ( !_indexerOn )
       {
-         PD_LOG( PDEVENT, "Peer node is primary. Search engine adapter is "
-                 "running in READWRITE mode" ) ;
-      }
-      else
-      {
-         PD_LOG( PDEVENT, "Peer node is not primary. Search engine adapter is "
-                 "running in READONLY mode" ) ;
-      }
+         PD_LOG( PDEVENT, "Search engine adapter registered on SequoiaDB data "
+                          "node successfully" ) ;
+         if ( TRUE == _peerPrimary )
+         {
+            PD_LOG( PDEVENT, "Peer node is primary. Search engine adapter is "
+                             "running in READWRITE mode" ) ;
+         }
+         else
+         {
+            PD_LOG( PDEVENT, "Peer node is not primary. Search engine adapter "
+                             "is running in READONLY mode" ) ;
+         }
 
-      // New register means new connections. Refresh the index information
-      // forcefully.
-      _localIdxVer = SEADPT_INIT_TEXT_INDEX_VERSION ;
-      // When connect to any node, start the index update timer.
-      rc = _indexNetRtAgent.addTimer( SEADPT_IDX_UPDATE_INTERVAL,
-                                      &_indexTimerHandler,
-                                      _idxUpdateTimerID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Register timer failed[ %d ]", rc ) ;
+         // New register means new connections. Refresh the index information
+         // forcefully.
+         _localIdxVer = SEADPT_INIT_TEXT_INDEX_VERSION ;
+         // When connect to any node, start the index update timer.
+         rc = _indexNetRtAgent.addTimer( SEADPT_IDX_UPDATE_INTERVAL,
+                                         &_indexTimerHandler,
+                                         _idxUpdateTimerID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Register timer failed[ %d ]", rc ) ;
+      }
+      _registerEvent.signalAll() ;
 
    done:
       return rc ;
