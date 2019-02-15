@@ -5,6 +5,7 @@
 # @author:     zhaoyu 2017-9-9
 
 import unittest
+import time
 from lib import testlib
 from lib import sdbconfig
 from commlib import *
@@ -53,6 +54,11 @@ class TestDataNode12499(testlib.SdbTestBase):
       cs = self.db.create_collection_space(self.cs_name)
       cl = cs.create_collection(self.cl_name, {"Group":self.data_rg_name})
       
+      #get cl from slave node
+      slave_node = rg_slave.connect()
+      cl_full_name = self.cl_name_qualified
+      self.assertTrue(self.get_cl_from_slave_node(slave_node, cl_full_name))
+      
       # detach node
       data_rg_slave_service = data_rg.get_slave().get_servicename()
       data_rg.detach_node(data_hostname, data_rg_slave_service, {"KeepData": True})
@@ -62,7 +68,6 @@ class TestDataNode12499(testlib.SdbTestBase):
       spare_rg.start()
             
       # check data
-      cl_full_name = self.cl_name_qualified
       spare_data = client(data_hostname, data_rg_slave_service)
       get_full_name = spare_data.get_collection(cl_full_name).get_full_name()
       self.assertEqual(get_full_name, cl_full_name)
@@ -75,14 +80,30 @@ class TestDataNode12499(testlib.SdbTestBase):
       self.db.remove_replica_group("SYSSpare")
    
    def tearDown(self):
-      self.remove_rg(self.data_rg_name, 'tear_down_fail')
-      self.remove_rg('SYSSpare', 'tear_down_fail')
+      testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
+      self.remove_rg(self.data_rg_name)
+      self.remove_rg('SYSSpare')
       self.db.disconnect()
       
-   def remove_rg(self, rg, msg):
+   def remove_rg(self, rg):
       try:
          self.db.remove_replica_group(rg)
       except SDBBaseError as e:
          if -154 != e.code:
-            print(e.detail)
-            self.fail(msg)
+            self.fail(e.code)
+            
+   def get_cl_from_slave_node(self, data_node, cl_full_name):
+      get_cl_flag = False
+      for i in range(10):
+         try:
+            cl = data_node.get_collection(cl_full_name)
+            get_cl_flag = True
+            break
+         except SDBBaseError as e:
+            if -23 != e.code and -34 != e.code :
+               self.fail(e.code)
+            else:
+               print("get cl from slave %d times"%i)
+               time.sleep(2)
+               continue
+      return get_cl_flag
