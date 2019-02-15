@@ -164,21 +164,23 @@ public class Insert15973 extends SdbTestBase{
 			}
 		}
 		
-		//在自增字段上创建唯一索引
+		//在自增字段上创建唯一索引,并比较自增字段递增
 		for(int i=0; i<arrList.size(); i++){
 			cl.createIndex("id" + i, "{" + arrList.get(i) + ":1}", true, false);
+			DBCursor cursorR = cl.query(null, null, "{" + arrList.get(i) + ":1}", null);
+            checkAutoIncrementValue(cursorR, arrList.get(i));
 		}
 		
-		//比较记录自增字段值的正确性
-		DBCursor cursorR = cl.query("{'mustCheckAutoIncrement':{$exists:1}}", null, "{'id0':1}", null);
-		int increment = 2;
-		while(cursorR.hasNext()){
-			BSONObject record = cursorR.getNext();
-			for(int i=0; i<arrList.size(); i++){
-				long autoIncrementValue = (long) record.get(arrList.get(i));
-				Assert.assertEquals(autoIncrementValue, cacheSize + increment);
-			}
-			increment++;
-		}
+	}
+	
+	public void checkAutoIncrementValue(DBCursor cursor, String fieldName){
+        long currentValue = (long) cursor.getNext().get("id0");
+        while(cursor.hasNext()){
+            long nextValue = (long) cursor.getNext().get("id0");
+            if(currentValue > nextValue){
+                Assert.fail("check autoIncrement value failed: currentValue:" + currentValue + ",nextValue:" + nextValue);
+            }
+            currentValue = nextValue;
+        }
 	}
 }
