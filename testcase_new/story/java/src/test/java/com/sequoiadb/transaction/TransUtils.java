@@ -168,4 +168,12 @@ public class TransUtils {
 		}
 	}
 
+	public static ArrayList<BSONObject> getReadActList(DBCursor cursor) throws BaseException{
+          ArrayList<BSONObject> actRList = new ArrayList<BSONObject>();
+          while(cursor.hasNext()){
+               BSONObject record = cursor.getNext();
+               actRList.add(record);
+          }
+          return actRList;
+     }
 }
