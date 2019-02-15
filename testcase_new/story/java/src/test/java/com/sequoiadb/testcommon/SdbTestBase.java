@@ -1,6 +1,13 @@
 package com.sequoiadb.testcommon ;
 
+import java.io.BufferedReader ;
+import java.io.BufferedWriter ;
 import java.io.File ;
+import java.io.IOException ;
+import java.io.InputStreamReader ;
+import java.io.OutputStreamWriter ;
+import java.util.ArrayList ;
+import java.util.List ;
 import java.util.concurrent.atomic.AtomicInteger ;
 
 import org.bson.BSONObject ;
@@ -38,8 +45,13 @@ public class SdbTestBase {
     private static final String TRANSACTIONON = "transactionon" ;
     private static final String TRANSISOLATION = "transisolation" ;
     private static final String TRANSLOCKWAIT = "translockwait" ;
+    private static final String INDEXSCANSTEP = "indexscanstep" ;
+    
     private static AtomicInteger count = new AtomicInteger( 0 ) ;
     private static ConfigOptions options = new ConfigOptions() ;
+    
+    private static final int newIndexScanStep = 3 ;
+    private static final int originalIndexScanStep = 100 ;
 
     @Parameters( { "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN",
             "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR" } )
@@ -172,11 +184,13 @@ public class SdbTestBase {
     }
 
     private static void modifyNodeConf( boolean transactionon,
-            int transisolation, boolean translockwait ) {
+            int transisolation, boolean translockwait, int indexscanstep ) {
         BasicBSONObject configs = new BasicBSONObject() ;
         configs.append( TRANSACTIONON, true ) ;
         configs.append( TRANSISOLATION, transisolation ) ;
         configs.append( TRANSLOCKWAIT, translockwait ) ;
+        configs.append( INDEXSCANSTEP, indexscanstep ) ;
+        
         BasicBSONObject options = new BasicBSONObject() ;
         options.put( ROLE, DATA ) ;
 
@@ -194,7 +208,12 @@ public class SdbTestBase {
                 throw e ;
             }
         }
-        restartAllDataGroup() ;
+        
+        if ( CommLib.isStandAlone( sequoiadb )){
+            restartStandAlone(sequoiadb.getHost()) ;
+        }else{
+            restartAllDataGroup() ;
+        }
     }
 
     @Parameters( { "TRANSACTIONON", "TRANSISOLATION", "TRANSLOCKWAIT" } )
@@ -206,7 +225,7 @@ public class SdbTestBase {
         }
 
         try {
-            modifyNodeConf( transactionon, transisolation, translockwait ) ;
+            modifyNodeConf( transactionon, transisolation, translockwait, 3 ) ;
         } catch ( BaseException e ) {
             e.printStackTrace() ;
             throw new SkipException( "initTest failed!!!" ) ;
@@ -221,11 +240,44 @@ public class SdbTestBase {
         }
 
         try {
-            modifyNodeConf( !transactionon, 0, false ) ;
+            modifyNodeConf( !transactionon, 0, false, 3 ) ;
         } catch ( BaseException e ) {
             e.printStackTrace() ;
             throw new SkipException( "initTest failed!!!" ) ;
         }
+    }
+    
+    public static void restartStandAlone(String hostIp){
+            if ( System.getProperty("os.name").contains("Windows")){
+                return ;
+            }
+            try{
+                List< String > cmdLine = new ArrayList< String >() ; 
+                cmdLine.add( "ssh" ) ;
+                cmdLine.add("root@" + hostIp) ;
+                cmdLine.add( "service sdbcm stop && service sdbcm start") ;
+                
+                ProcessBuilder pb = new ProcessBuilder( cmdLine ) ;
+                pb.redirectError( ProcessBuilder.Redirect.INHERIT ) ;
+
+                Process startProc = pb.start() ;  
+                BufferedReader input = new BufferedReader( new InputStreamReader( startProc.getInputStream() ) );
+                String line = "";
+                while( (line = input.readLine()) != null ){
+                    System.out.println(line);
+                }
+             
+                int exitValue = startProc.waitFor();
+                if( 0 != exitValue ){
+                    System.out.println( "fail to restart sdbcm, return code=" + exitValue );
+                }
+                
+                input.close() ;
+            }
+            catch( InterruptedException | IOException e ){
+                e.printStackTrace();
+                System.out.println( "fail to restart sdbcm" );
+            }
     }
 
     @Parameters( { "TRANSACTIONON" } )
@@ -234,7 +286,7 @@ public class SdbTestBase {
         int transisolation = 0 ;
         boolean translockwait = false ;
         try {
-            modifyNodeConf( true, transisolation, translockwait ) ;
+            modifyNodeConf( true, transisolation, translockwait, newIndexScanStep ) ;
         } catch ( BaseException e ) {
             e.printStackTrace() ;
             throw new SkipException( "initGroups failed!!!" ) ;
@@ -246,7 +298,7 @@ public class SdbTestBase {
         int transisolation = 1 ;
         boolean translockwait = false ;
         try {
-            modifyNodeConf( true, transisolation, translockwait ) ;
+            modifyNodeConf( true, transisolation, translockwait, newIndexScanStep ) ;
         } catch ( BaseException e ) {
             e.printStackTrace() ;
             throw new SkipException( "initGroups failed!!!" ) ;
@@ -258,7 +310,7 @@ public class SdbTestBase {
         int transisolation = 1 ;
         boolean translockwait = true ;
         try {
-            modifyNodeConf( true, transisolation, translockwait ) ;
+            modifyNodeConf( true, transisolation, translockwait, newIndexScanStep ) ;
         } catch ( BaseException e ) {
             e.printStackTrace() ;
             throw new SkipException( "initGroups failed!!!" ) ;
@@ -268,7 +320,7 @@ public class SdbTestBase {
     @AfterGroups( groups = { "ru", "rc", "rcwaitlock" }, inheritGroups = true, alwaysRun = true )
     public static void finiGroups() {
         try {
-            modifyNodeConf( false, 0, false ) ;
+            modifyNodeConf( false, 0, false, originalIndexScanStep ) ;
         } catch ( BaseException e ) {
             e.printStackTrace() ;
             throw e ;
@@ -309,6 +361,7 @@ public class SdbTestBase {
     
     public static void main(String[] args){
         SdbTestBase.coordUrl = "192.168.30.62:50000" ;
-        SdbTestBase.restartAllDataGroup() ;
+        //SdbTestBase.restartAllDataGroup() ;
+        SdbTestBase.restartStandAlone( "192.168.30.62") ;
     }
 }
