@@ -218,12 +218,18 @@ namespace engine
          return _initialized;
       }
 
+      const BOOLEAN isValid () const 
+      {
+         // when we haven't done first run, consider it as valid
+         return ( _isValid || !_init );
+      }
+
       // clear buffer and set the scanner to initial state
       void reset()
       {
          _curIndexRID.reset() ;
          _listIterator.reset() ;
-         if ( _sharedInfo.checkDup() )
+         if ( _sharedInfo.isLocal() )
          { 
             _sharedInfo.getDupBuf()->clear() ;
          }

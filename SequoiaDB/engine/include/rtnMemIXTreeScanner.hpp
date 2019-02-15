@@ -225,6 +225,12 @@ namespace engine
          _init    = FALSE ;
       }
 
+      const BOOLEAN isValid () const
+      {
+         // when we haven't done first run, consider it as valid
+         return (_isValid || !_init);
+      }
+
       const BSONObj  getCurIdxKeyObjFromIter();
 
       const MEMTREE_LATCH_MODE getMemtreeLatchMode()

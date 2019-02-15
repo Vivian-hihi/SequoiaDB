@@ -86,6 +86,20 @@ namespace engine
 
       scannerSharedInfo _sharedInfo;  // shared information for both scanners
 
+      // After releas mbLatch, another session may change the index structure
+      // So everytime before pause, we must store the current index key value
+      // and the rid. We must keep this information in shared structure in
+      // merge scan because the memory tree scan might not exist in previous
+      // interval and now the mem tree was created due to new update. We need
+      // the saved information to locate the key.
+      // After resume, verify if it's still remaining the same. If the
+      // object/rid doens't match, something must have changed. we should
+      // relocate key.
+      // Because malloc is involved during the saving, we should only setup
+      // the BSONObj during pause(), otherwise it would affect runtime perf.
+      BSONObj                   _savedObj;
+      dmsRecordID               _savedRID ;
+
       // pointer to left and right scanners to merge
       rtnIXScanner *    _leftIXScanner;
       rtnIXScanner *    _rightIXScanner;
@@ -136,14 +150,19 @@ namespace engine
             _rightIXScanner->setMonCtxCB( monCtxCB );
          }
       }
-      const BSONObj * getSavedObj () const
+
+      const BSONObj * getSavedObj () const { return &_savedObj ; }
+
+      dmsRecordID getSavedRID () const { return _savedRID; }
+
+      const BSONObj * getSavedObjFromChild () const
       {
          return _wasFromLeft 
               ?  _leftIXScanner->getSavedObj()
               :  _rightIXScanner->getSavedObj();
       }
 
-      dmsRecordID getSavedRID () const
+      dmsRecordID getSavedRIDFromChild () const
       {
          return _wasFromLeft 
               ?  _leftIXScanner->getSavedRID()

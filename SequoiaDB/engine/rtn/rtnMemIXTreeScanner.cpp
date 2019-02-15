@@ -86,7 +86,9 @@ namespace engine
                                           su->index(), NULL );
       reset();
       SDB_ASSERT ( _indexCB, "_indexCB creation failed" ) ;
+#ifdef _DEBUG
       PD_LOG ( PDDEBUG, "Created Mem IXTree Scanner" );
+#endif
    }
 
    // destructor
@@ -435,8 +437,6 @@ namespace engine
                // the transaction has committed. We should call relocate
                // to find the next best key. We can also assert that
                // the key does not exist in the in memory tree.
-               PD_LOG ( PDDEBUG, "Saved RID's lock no longer exist" ) ;
-
                rc = relocateRID();
                if ( SDB_OK != rc )
                {
@@ -557,7 +557,7 @@ namespace engine
                            "The RID from curIndexIter should not be NULL");
 
                // make sure the RID we read is not psuedo-deleted
-               if ( _sharedInfo.checkDup() )
+               if ( _sharedInfo.isLocal() )
                {
                   if ( _sharedInfo.getDupBuf()->end() != 
                        _sharedInfo.getDupBuf()->find ( _savedRID ) )
@@ -644,25 +644,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNMEMIXTREESCAN_PAUSESCAN ) ;
       // do nothing if the in memory tree is not initialized or haven't done 
-      // first round
-      if ( !_initialized || !_init ||
+      // first round or we don't have tree latch. There are special boundary 
+      // case in IXSec scan where we may call pause scan twice, the second 
+      // pause may become no op due to the treeLatch held condition. 
+      if ( !_initialized || !_init || !_treeLatchHeld ||
            ( _curIndexIter == _memIdxTree->end() ) )
       {
          goto done ;
       }
-
-#ifdef _DEBUG
-      if ( FALSE == _treeLatchHeld )
-      {
-         PD_LOG ( PDSEVERE, "Tree latch not held, _latchX: %d, keydata is %p"
-                  " _curIndexIter->rid: %d,%d ", 
-                  _latchX, _curIndexIter->first.data(),
-                  _curIndexIter->first.getRID()._extent,
-                  _curIndexIter->first.getRID()._offset ) ;
-         _memIdxTree->printTree();
-         SDB_ASSERT( ( _treeLatchHeld == TRUE ), "tree latch should be held" );
-      }
-#endif
 
       // for read mode, let's copy savedInMemobj 
       try
@@ -689,9 +678,6 @@ namespace engine
          _treeLatchHeld = FALSE;
       }
 
-#ifdef _DEBUG
-      PD_LOG ( PDDEBUG, "MemIXTree pauseScan, rc=%d", rc );
-#endif
       PD_TRACE_EXITRC ( SDB__RTNMEMIXTREESCAN_PAUSESCAN, rc ) ;
       return rc ;
    error :
@@ -716,6 +702,14 @@ namespace engine
       SDB_ASSERT( ( _treeLatchHeld == FALSE ), 
                     "Tree latch shouldn't be held" );
       
+      // haven't locate the rid in the tree yet, the first run of advance 
+      // will handle it
+      if ( !_init )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+
       gIdxID._csID = _csID;
       gIdxID._clID = _clID;
       gIdxID._idxLID = _indexLID;
@@ -739,14 +733,6 @@ namespace engine
 #endif
          }
          goto done;
-      }
-
-      // haven't locate the rid in the tree yet, the first run of advance 
-      // will handle it
-      if ( !_init )
-      {
-         rc = SDB_OK ;
-         goto done ;
       }
 
       // tree lock is held in S through out the scan. Pausescan will release it

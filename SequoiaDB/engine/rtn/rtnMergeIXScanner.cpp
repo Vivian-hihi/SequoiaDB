@@ -55,6 +55,7 @@ namespace engine
       _direction = predList->getDirection();
       _firstRun = TRUE;
       _wasFromLeft = FALSE;
+      _isValid = TRUE;
       //_transLockwait = TRUE;  // default wait for lock
       _type = SCANNER_TYPE_MERGE;
       if ( sharedInfo == NULL )
@@ -65,6 +66,7 @@ namespace engine
       {
          _sharedInfo.init(sharedInfo);
       }
+      _savedRID.reset();
       PD_LOG ( PDDEBUG, "IX Merge Scanner created." );
    }
 
@@ -237,7 +239,7 @@ namespace engine
       // before we decide to return the rid, try to put it in dup buffer
       if( SDB_OK == rc )
       {
-         if ( _sharedInfo.checkDup() &&
+         if ( _sharedInfo.isLocal() &&
               ( _sharedInfo.getDupBuf()->end() !=
                 _sharedInfo.getDupBuf()->find ( rid ) ) )
          {
@@ -297,11 +299,38 @@ namespace engine
          rc = SDB_IXM_EOC;
          goto done;
       }
+
+      // trigger relocateRID if anything changed from either side
+      if ( !_leftIXScanner->isValid() || !_rightIXScanner->isValid() )
+      {
+         if ( _leftIXScanner->initialized() )
+         {
+            rcl = _leftIXScanner->relocateRID( _savedObj,
+                                               _savedRID );
+            if( SDB_OK != rcl && (SDB_IXM_EOC != rcl) )
+            {
+               rc = rcl;
+               goto error;
+            }
+         }
+
+         if ( _rightIXScanner->initialized() )
+         {
+            rcr = _rightIXScanner->relocateRID( _savedObj,
+                                                _savedRID );
+            if( SDB_OK != rcr && (SDB_IXM_EOC != rcr) )
+            {
+               rc = rcr;
+               goto error;
+            }
+         }
+      }
    done :
       PD_TRACE_EXITRC ( SDB__RTNMERGEIXSCAN_RESUMESCAN, rc ) ;
       return rc ;
    error :
-      PD_LOG ( PDERROR, "Error during merge resume. rc=%d", rc );
+      PD_LOG ( PDERROR, "Error during merge resume. rc=%d, rcr=%d, rcl=%d",
+               rc, rcr, rcl );
       goto done ;
    }
 
@@ -322,6 +351,11 @@ namespace engine
          goto error;
       }
 
+      // globally save the obj and rid incase things changed after resume, 
+      // at which time we need to do relocateRID based on these saved value
+      _savedRID = getSavedRIDFromChild() ;
+      _savedObj = getSavedObjFromChild()->copy() ;
+      
    done :
       PD_TRACE_EXITRC ( SDB__RTNMERGEIXSCAN_PAUSESCAN, rc ) ;
       return rc ;

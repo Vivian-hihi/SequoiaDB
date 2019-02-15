@@ -384,7 +384,7 @@ namespace engine
                _savedRID = indexExtent.getRID ( _curIndexRID._slot ) ;
                // make sure the RID we read is not psuedo-deleted
                if ( _savedRID.isNull()                       ||
-                    ( _sharedInfo.checkDup() &&
+                    ( _sharedInfo.isLocal() &&
                       ( _sharedInfo.getDupBuf()->end() != 
                         _sharedInfo.getDupBuf()->find ( _savedRID ) ) ) )
                {
@@ -404,7 +404,7 @@ namespace engine
                   rc = SDB_IXM_DEDUP_BUF_MAX ;
                   goto error ;
                }*/
-               if ( _sharedInfo.checkDup() )
+               if ( _sharedInfo.isLocal() )
                { 
                   _sharedInfo.getDupBuf()->insert ( _savedRID ) ;
                }
@@ -522,7 +522,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNDISKIXSCAN_RESUMESCAN ) ;
 
-      BOOLEAN isValid = FALSE ;
+      _isValid = FALSE ;
 
       if ( !initialized() )
       {
@@ -578,19 +578,21 @@ namespace engine
          goto done ;
       }
 
-      rc = isCursorSame( _savedObj, _savedRID, isValid ) ;
+      rc = isCursorSame( _savedObj, _savedRID, _isValid ) ;
       if ( rc )
       {
          goto error ;
       }
 
-      if ( isValid )
+      if ( _isValid )
       {
          // this means the last scaned record is still here, so let's
          // reset _savedRID so that we'll call advance()
          _savedRID.reset() ;
       }
-      else
+      // do relocate if this is local disk scan. Otherwise the mergescan 
+      // will do relocateRID call based on globally saved obj/rid. 
+      else if ( _sharedInfo.isLocal() )  
       {
          // when we get here, it means something changed and we need to
          // relocateRID

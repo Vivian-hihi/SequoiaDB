@@ -1259,7 +1259,6 @@ namespace engine
       _includeEndKey       = FALSE ;
       _blockScanDir        = 1 ;
       _countOnly           = FALSE ;
-      _paused              = FALSE ;
 
       if ( OSS_BIT_TEST( flag, FLG_QUERY_FOR_UPDATE ) )
       {
@@ -1445,7 +1444,6 @@ namespace engine
 
       rc = _scanner->resumeScan( ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to resum ixscan, rc: %d", rc ) ;
-      _paused = FALSE;
       _cb   = cb ;
 
       // unset first run
@@ -1817,7 +1815,6 @@ namespace engine
                   rc = _scanner->pauseScan( ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to pause ixscan, rc: %d", rc ) ;
 
-                  _paused = TRUE ;
                   rc = _pSu->deleteRecord( _context, _curRID, 0, 
                                            cb, NULL, newXAcquire, _callback ) ;
                   if ( SDB_OK != rc )
@@ -1829,7 +1826,6 @@ namespace engine
                   rc = _scanner->resumeScan( ) ;
                   PD_RC_CHECK( rc, PDERROR, 
                                "Failed to resume ixscan, rc: %d", rc ) ;
-                  _paused = FALSE ;
 
             }
 
@@ -1975,7 +1971,6 @@ namespace engine
       } // while
 
       rc = SDB_DMS_EOC ;
-      if ( FALSE ==_paused )
       {
          INT32 rcTmp = _scanner->pauseScan(  ) ;
          if ( rcTmp )
@@ -1983,7 +1978,6 @@ namespace engine
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rcTmp ) ;
             rc = rcTmp ;
          }
-         _paused = TRUE;
       }
       goto error ;
 
@@ -1995,7 +1989,6 @@ namespace engine
          {
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rc ) ;
          }
-         _paused = TRUE;
       }
 
       // set up memTree latch held mode in callback
@@ -2043,7 +2036,6 @@ namespace engine
          {
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rc ) ;
          }
-         _paused = TRUE;
       }
       _curRID._offset = DMS_INVALID_OFFSET ;
    }

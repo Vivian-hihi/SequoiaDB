@@ -2340,7 +2340,7 @@ namespace engine
          }
 
          // go through each index in the set 
-         for ( it = keySet.begin() ; it != keySet.end() ; ++it )
+         for ( it = keySet.begin() ; it != keySet.end() ; it++ )
          {
 
 #if defined (_DEBUG)

@@ -328,7 +328,7 @@ namespace engine
       // Now remove all indexes from the in memory index tree and free the
       // indexes. We can't simply do set clear because of the memory allocated
       for( idxObjSet::iterator it = oldVer->getIdxSet().begin();
-           it != oldVer->getIdxSet().end(); ++it )
+           it != oldVer->getIdxSet().end(); )
       {
          gID._idxLID = it->_idxLID;
 
@@ -358,7 +358,7 @@ namespace engine
          //                                     it->_recordMemType );
 
          // free the entry from index set protected by lrbhashbkt latch
-         oldVer->deleteIdx(it);
+         oldVer->deleteIdx(it++);
       } // end of for
 
       // Now free index LID set

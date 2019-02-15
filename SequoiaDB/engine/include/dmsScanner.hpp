@@ -311,7 +311,6 @@ namespace engine
          void setMemTreeLatchMode() ;
          INT64 getMaxRecords() const { return _maxRecords ; }
          INT64 getSkipNum () const { return _skipNum ; }
-         BOOLEAN paused () const { return _paused ; }
          BOOLEAN eof () const { return _eof ; }
 
       public:
@@ -354,7 +353,6 @@ namespace engine
          BOOLEAN              _judgeStartKey ;
          BOOLEAN              _includeStartKey ;
          BOOLEAN              _includeEndKey ;
-         BOOLEAN              _paused;
          BOOLEAN              _countOnly ;
    } ;
    typedef _dmsIXSecScanner dmsIXSecScanner ;

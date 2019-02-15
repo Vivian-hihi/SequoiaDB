@@ -79,7 +79,6 @@ namespace engine
       {
          INT32 rc = SDB_OK;
          _dedupBufferSize = RTN_IXSCANNER_DEDUPBUFSZ_DFT;
-         _savedRID.reset();
          _dupBuffer = new dmsRecIDSet();
          SDB_ASSERT( _dupBuffer, "_dupBuffer creation failed" );
          if( _dupBuffer == NULL )
@@ -97,7 +96,6 @@ namespace engine
          this->_dedupBufferSize = 0;
          this->_dupBuffer = NULL;
          this->_bufIsLocal = FALSE;
-         _savedRID.reset();
       }
 
       void free()
@@ -112,7 +110,7 @@ namespace engine
 
       void update();
 
-      BOOLEAN checkDup () const { return _bufIsLocal ; }
+      BOOLEAN isLocal () const { return _bufIsLocal ; }
 
       dmsRecIDSet * getDupBuf() { return _dupBuffer; }
 
@@ -134,20 +132,6 @@ namespace engine
       UINT64                    _dedupBufferSize ;
       dmsRecIDSet              *_dupBuffer ;
       BOOLEAN                   _bufIsLocal;
-
-      // After releas mbLatch, another session may change the index structure
-      // So everytime before pause, we must store the current index key value
-      // and the rid. We must keep this information in shared structure in
-      // merge scan because the memory tree scan might not exist in previous
-      // interval and now the mem tree was created due to new update. We need
-      // the saved information to locate the key.
-      // After resume, verify if it's still remaining the same. If the
-      // object/rid doens't match, something must have changed. we should
-      // relocate key.
-      // Because malloc is involved during the saving, we should only setup
-      // the BSONObj during pause(), otherwise it would affect runtime perf.
-      BSONObj                   _savedObj;
-      dmsRecordID               _savedRID ;
 
    };
    typedef class _scannerSharedInfo scannerSharedInfo;
@@ -208,6 +192,11 @@ namespace engine
          return _eof;
       }
 
+      virtual const BOOLEAN isValid() const
+      {
+         return _isValid;
+      }
+
       virtual INT32 isCursorSame( const BSONObj &saveObj,
                                   const dmsRecordID &saveRID,
                                   BOOLEAN &isSame ) = 0 ;
@@ -218,6 +207,7 @@ namespace engine
       protected:
       IXScannerType  _type;
       BOOLEAN        _eof;
+      BOOLEAN        _isValid;
 
    };
    typedef class _rtnIXScanner rtnIXScanner ;
