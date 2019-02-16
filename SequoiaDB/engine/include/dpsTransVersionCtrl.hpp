@@ -182,12 +182,7 @@ namespace engine
       {
          return _order;
       }
-/*
-      void setOrdering( Ordering * o ) 
-      {
-         _order = o;
-      }
-*/
+
       const dmsRecordID & getRID() const
       {
          return _rid;
@@ -206,8 +201,7 @@ namespace engine
       // Original rid. This is used to differ duplicated keys when index is 
       // not unique
       dmsRecordID       _rid;
-      // FIXME:  to be optimized. can we figure out way to put on the tree 
-      // attribute as it's shared for the index. Check clsCataOrder()
+      // it's shared from the tree. Check clsCataOrder()
       bson::Ordering   *_order;
    };
 

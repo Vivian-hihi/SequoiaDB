@@ -382,6 +382,7 @@ namespace engine
       // we should start from there
       else
       {
+         SDB_ASSERT( (_treeLatchHeld == TRUE), "tree latch should be held" );
          // if the tree is empty, consider as EOC. We should check during each
          // round because as soon as we pause, someone else can 
          // commit the deletion of certain keys.
@@ -702,13 +703,6 @@ namespace engine
       SDB_ASSERT( ( _treeLatchHeld == FALSE ), 
                     "Tree latch shouldn't be held" );
       
-      // haven't locate the rid in the tree yet, the first run of advance 
-      // will handle it
-      if ( !_init )
-      {
-         rc = SDB_OK ;
-         goto done ;
-      }
 
       gIdxID._csID = _csID;
       gIdxID._clID = _clID;
@@ -725,6 +719,8 @@ namespace engine
       { 
          if  ( _initialized == TRUE )
          {
+            // by setting this, mergescan will not come into memIXtree 
+            // scan at all. we also don't hold any latch.
             _initialized = FALSE;
 #ifdef _DEBUG
             PD_LOG ( PDDEBUG, "Memory idx tree not exist, rtnMemIXTreeScanner "
@@ -734,6 +730,17 @@ namespace engine
          }
          goto done;
       }
+
+      // haven't locate the rid in the tree yet, the first run of advance 
+      // will handle it
+      if ( !_init )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+
+      // when tree exist, we preset _isValid to TRUE
+      _isValid = FALSE;
 
       // tree lock is held in S through out the scan. Pausescan will release it
       _latchX ? _memIdxTree->lockX() :  _memIdxTree->lockS();
@@ -782,6 +789,7 @@ the only way is to bring back the index CB and access the index definition page
             // this means the last scaned record is still here, so let's
             // reset _savedRID so that we'll call advance()
             _savedRID.reset() ;
+            _isValid = TRUE;
             // if both key and rid are not changed, let's continue
             goto done ;
 
@@ -802,10 +810,10 @@ the only way is to bring back the index CB and access the index definition page
          {
             // Note that we can't claim we have done  the scan, it's possible
             // that next time when we pause, new node can be added to the tree.
-            // so simply unlock and set uninitialized.  
-            _latchX ? _memIdxTree->unlockX() :  _memIdxTree->unlockS();
-            _treeLatchHeld = FALSE;
-            _initialized = FALSE;
+            // simply set the _curIndexIter, next advance will be able to handl
+            // EOC
+            _curIndexIter = _direction ? _memIdxTree->end() : 
+                                         _memIdxTree->begin() ;
             goto done;
          }
          else
@@ -818,8 +826,9 @@ the only way is to bring back the index CB and access the index definition page
 
    done :
 #ifdef _DEBUG
-      PD_LOG ( PDDEBUG, "memIXTree resumeScan rc=%d, latchHeld=%d, _initialized=%d", 
-               rc, _treeLatchHeld, _initialized );
+      PD_LOG ( PDDEBUG, "memIXTree resumeScan rc=%d, latchHeld=%d, " 
+               "_initialized=%d, _init=%d, _isValid=%d", 
+               rc, _treeLatchHeld, _initialized, _init, _isValid );
 #endif
       PD_TRACE_EXITRC ( SDB__RTNMEMIXTREESCAN_RESUMESCAN, rc ) ;
       return rc ;
