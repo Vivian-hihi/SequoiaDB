@@ -20,36 +20,36 @@
 
    <!--The testcases of different configure should be placed in different <test> -->
    <test name="rc" parallel="classes" thread-count="5">
-      <packages>
-         <package name="com.sequoiadb.transaction.rc" />
-      </packages>
       <groups>
          <run>
             <include name="rc" />
          </run>
       </groups>
+      <packages>
+         <package name="com.sequoiadb.transaction.rc" />
+      </packages>
    </test>
 
    <test name="ru" parallel="classes" thread-count="5">
-      <packages>
-         <package name="com.sequoiadb.transaction.ru" />
-      </packages>
       <groups>
          <run>
             <include name="ru" />
          </run>
       </groups>
+      <packages>
+         <package name="com.sequoiadb.transaction.ru" />
+      </packages>
    </test>
 
    <test name="rcwaitlock" parallel="classes" thread-count="5">
-      <packages>
-         <package name="com.sequoiadb.transaction.rcwaitlock" />
-      </packages>
       <groups>
          <run>
             <include name="rcwaitlock" />
          </run>
       </groups>
+      <packages>
+         <package name="com.sequoiadb.transaction.rcwaitlock" />
+      </packages>
    </test>
    
 </suite>
