@@ -2766,8 +2766,18 @@ namespace engine
  
       if ( lockId.isValid() )
       { 
-         // main logic of release by lockId, force release mode
-         _release( dpsTxExectr, lockId, TRUE, callback ) ;
+         // main logic of release by lockId
+         if ( lockId.isLeafLevel() )
+         {
+            // force release mode for record lock only,
+            // otherwise it may cause CS, CL lock be released earlier if
+            // there are mulitple record locks under that CL
+            _release( dpsTxExectr, lockId, TRUE, callback ) ;
+         }
+         else
+         {
+            _release( dpsTxExectr, lockId, FALSE, callback ) ;
+         }
 
          // release the intent lock
          if ( ! lockId.isRootLevel() )
