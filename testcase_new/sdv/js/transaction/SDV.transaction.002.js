@@ -35,6 +35,5 @@ function main()
       }
    }
 }
-// SEQUOIADBMAINSTREAM-4182
-// main();
+main();
 
