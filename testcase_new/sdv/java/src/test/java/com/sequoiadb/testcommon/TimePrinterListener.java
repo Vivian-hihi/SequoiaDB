@@ -2,7 +2,7 @@ package com.sequoiadb.testcommon;
 
 import org.testng.ITestResult;
 import org.testng.TestListenerAdapter;
-
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.base.Sequoiadb;
 
 import java.text.SimpleDateFormat;

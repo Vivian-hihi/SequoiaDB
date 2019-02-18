@@ -4,7 +4,7 @@ import org.testng.ITestResult;
 import org.testng.TestListenerAdapter;
 
 import com.sequoiadb.base.Sequoiadb;
-
+import com.sequoiadb.exception.BaseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
