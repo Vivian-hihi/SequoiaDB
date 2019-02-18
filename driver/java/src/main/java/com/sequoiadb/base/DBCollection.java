@@ -142,17 +142,23 @@ public class DBCollection {
     /**
      * Insert a document into current collection.
      *
-     * @param insertor The Bson object of insertor, can't be null
+     * @param insertor The bson object to be inserted, can't be null.
      * @param flags The flag to control the behavior of inserting. The
      *              value of flags default to be 0, and it can choose
      *              the follow values:
      *              <ul>
-     *                  <li>0: default value</li>
+     *                  <li>0: default value.</li>
      *                  <li>FLG_INSERT_CONTONDUP: if the record hit index key duplicate error,
      *                                            database will skip them and go on inserting.</li>
      *                  <li>FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.</li>
      *              </ul>
-     * @return The result of insert or null for no result.
+     * @return The result of inserting, can be the follow values:
+     *              <ul>
+     *                   <li> null: when there is no result to return.</li>
+     *                   <li> bson which contains the "_id" field: when flag "FLG_INSERT_RETURN_OID" is set, return the
+     *                   value of "_id" field of the inserted record.
+     *                   e.g.: { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } } </li>
+     *              </ul>
      * @throws BaseException If error happens.
      */
     public BSONObject insert(BSONObject insertor, int flags) throws BaseException {
@@ -214,12 +220,21 @@ public class DBCollection {
      *              value of flags default to be 0, and it can choose
      *              the follow values:
      *              <ul>
-     *                  <li>0: default value</li>
+     *                  <li>0: default value.</li>
      *                  <li>FLG_INSERT_CONTONDUP: if the record hit index key duplicate error,
      *                                            database will skip them and go on inserting.</li>
      *                  <li>FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.
      *                                             When set this flag, ensureOID() will be set to true.</li>
      *              </ul>
+     * @return The result of inserting, can be the follow values:
+     *          <ul>
+     *               <li> null: when there is no result to return.</li>
+     *               <li> bson which contains the "_id" field:
+     *               when flag "FLG_INSERT_RETURN_OID" is set, return all the
+     *               values of "_id" field in a bson array.
+     *               e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" },
+     *               { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }</li>
+     *           </ul>
      * @throws BaseException If error happens.
      * @since 3.0.2
      */
