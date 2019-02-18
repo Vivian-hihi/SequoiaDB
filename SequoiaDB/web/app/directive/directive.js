@@ -2470,7 +2470,7 @@
                   return $scope.Setting.getErrNum( inputList, customCheckFun ) == 0 ;
                },
                getErrNum: function( inputList, customCheckFun ){
-                  var errNum = 0 ;
+                  var errName = {} ;
                   $.each( inputList, function( index, inputInfo ){
                      if ( inputInfo.enable == false )
                      {
@@ -2506,14 +2506,14 @@
                         var tmp = $scope.Setting.getErrNum( inputInfo.child ) ;
                         if( tmp > 0 )
                         {
-                           ++errNum ;
+                           errName[inputInfo.name] = 1 ;
                         }
                         break ;
                      case 'inline':
                         var tmp = $scope.Setting.getErrNum( inputInfo.child ) ;
                         if( tmp > 0 )
                         {
-                           ++errNum ;
+                           errName[inputInfo.name] = 1 ;
                         }
                         break ;
                      case 'list':
@@ -2532,7 +2532,7 @@
                               var rc = $scope.Setting.getErrNum( inputInfo.child[index2] ) ;
                               if( rc > 0 )
                               {
-                                 ++errNum ;
+                                 errName[inputInfo.name + '.' + index2] = 1 ;
                                  hasError = true ;
                               }
                            } ) ;
@@ -2545,7 +2545,7 @@
                      }
                      if( rv.rc == false )
                      {
-                        ++errNum ;
+                        errName[inputInfo.name] = 1 ;
                         inputInfo.error = rv.error ;
                      }
                   } ) ;
@@ -2555,6 +2555,7 @@
                      if( rvs.length > 0 )
                      {
                         $.each( rvs, function( index2, errInfo ){
+                           errName[errInfo.name] = 1 ;
                            $.each( inputList, function( index3, inputInfo ){
                               if( inputInfo.name == errInfo.name )
                               {
@@ -2563,10 +2564,9 @@
                               }
                            } ) ;
                         } ) ;
-                        errNum += rvs.length ;
                      }
                   }
-                  return errNum ;
+                  return getObjectSize( errName ) ;
                },
                getValue: function( inputList ){
                   var returnValue = {} ;

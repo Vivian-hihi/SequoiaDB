@@ -220,7 +220,7 @@
             var error = [] ;
             if( checkPort( formVal['port'] ) == false )
             {
-               error.push( { 'name': 'port', 'error': sprintf( $scope.autoLanguage( '?格式错误。' ), $scope.autoLanguage( '服务名' ) ) } ) ;
+               error.push( { 'name': 'port', 'error': sprintf( $scope.autoLanguage( '?格式错误。' ), $scope.autoLanguage( '端口' ) ) } ) ;
             }
             if( formVal['dbpath'].length == 0 )
             {
