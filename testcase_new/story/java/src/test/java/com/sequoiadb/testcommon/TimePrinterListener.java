@@ -66,12 +66,20 @@ public class TimePrinterListener extends TestListenerAdapter {
     }
     
     private void dbMsgBeginTime(ITestResult tr) {
-        Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb.msg(getCurTimeStr() + "\tBegin testcase: " + getTestMethodName(tr));
+        try {
+            Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            sdb.msg(getCurTimeStr() + "\tBegin testcase: " + getTestMethodName(tr));
+        } catch (BaseException e) {
+            e.printStackTrace();
+        }
     }
     
     private void dbMsgEndTime(ITestResult tr) {
-        Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb.msg(getCurTimeStr() + "\tEnd testcase: " + getTestMethodName(tr));
+        try {
+            Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            sdb.msg(getCurTimeStr() + "\tEnd testcase: " + getTestMethodName(tr));
+        } catch (BaseException e) {
+            e.printStackTrace();
+        }
     }
 }
