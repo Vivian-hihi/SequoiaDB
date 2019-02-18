@@ -342,7 +342,13 @@ namespace SequoiaDB
          *               <li>SDBConst.FLG_INSERT_RETURN_OID:
          *                      return the value of "_id" field in the record.
          *               </ul>
-         *  \return Return the result of inserting or null.
+         *  \return The result of inserting, can be the follow value:
+         *              <ul>
+         *                   <li> null: when there is no result to return.</li>
+         *                   <li> bson which contains the "_id" field: when flag "FLG_INSERT_RETURN_OID" is set, return the
+         *                   value of "_id" field of the inserted record.
+         *                   e.g.: { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } } </li>
+         *              </ul>
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -415,7 +421,15 @@ namespace SequoiaDB
          *                      return the value of "_id" field in the record.
          *                      When set this flag, "EnsureOID" will be set to true.
          *              </ul>
-         *  \return Return the result of inserting or null.
+         *  \return The result of inserting, can be the follow value:
+         *          <ul>
+         *               <li> null: when there is no result to return.</li>
+         *               <li> bson which contains the "_id" field:
+         *               when flag "FLG_INSERT_RETURN_OID" is set, return all the
+         *               values of "_id" field in a bson array.
+         *               e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" },
+         *               { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }</li>
+         *           </ul>
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
