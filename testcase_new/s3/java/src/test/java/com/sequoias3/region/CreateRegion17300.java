@@ -28,7 +28,7 @@ public class CreateRegion17300 extends S3TestBase{
     private String bucketName = "bucket17300";
     private String objectName = "object17300";
     private String[] domainNames = {"domain17300A","domain17300B"};
-    private String[] regionNames = new String[]{"region17300a","region17300b","region17300c","region17300d"};
+    private String[] regionNames = {"region17300a","region17300b","region17300c","region17300d"};
     private AmazonS3 s3Client = null;
     private boolean runSuccess = false;
     @BeforeClass
@@ -42,6 +42,7 @@ public class CreateRegion17300 extends S3TestBase{
             RegionUtils.createDomain(domainName);
         }
         return new Object[][]{
+                //regionName dataDomain metaDomain expDataDomain expMetaDomain
                 {regionNames[0],domainNames[0],null,domainNames[0],""},
                 {regionNames[1],null,domainNames[1],"",domainNames[1]},
                 {regionNames[2],domainNames[1],domainNames[1],domainNames[1],domainNames[1]},
@@ -61,7 +62,7 @@ public class CreateRegion17300 extends S3TestBase{
 
         //create bucket for check
         String randomBucketName = bucketName+"-"+ UUID.randomUUID();
-        Bucket bucket = s3Client.createBucket(new CreateBucketRequest(randomBucketName, regionName));
+        s3Client.createBucket(new CreateBucketRequest(randomBucketName, regionName));
         s3Client.putObject(randomBucketName, objectName,String.valueOf(UUID.randomUUID()));
 
         GetRegionResult result = RegionUtils.getRegion(regionName);
@@ -73,8 +74,9 @@ public class CreateRegion17300 extends S3TestBase{
                 .withDataLocation("")
                 .withMetaHisLocation("")
                 .withMetaLocation("");
-         List<String> expBuckets = new ArrayList<>();
+        List<String> expBuckets = new ArrayList<>();
         expBuckets.add(randomBucketName);
+        //check
         checkGetResult(result, expRegion,expBuckets);
         CommLib.clearBucket(s3Client,randomBucketName);
         RegionUtils.deleteRegion(regionName);
@@ -85,8 +87,6 @@ public class CreateRegion17300 extends S3TestBase{
     private void tearDown() throws Exception {
         try {
             if (runSuccess) {
-            	//TODO:1、这里不需要清理bucketName，没有创建该桶
-                CommLib.clearBucket(s3Client, bucketName);
                 for(String domainName : domainNames){
                     RegionUtils.dropDomain(domainName);
                 }

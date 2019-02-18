@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
  */
 public class UpdateRegion17306 extends S3TestBase {
     private String[] domainNames = {"domain17306A", "domain17306B"};
-    private String[] regionNames = new String[]{"region17306a", "region17306b", "region17306c"};
+    private String[] regionNames = {"region17306a", "region17306b", "region17306c"};
     private boolean runSuccess = false;
 
     @BeforeClass
@@ -34,7 +34,7 @@ public class UpdateRegion17306 extends S3TestBase {
             RegionUtils.createDomain(domainName);
         }
         return new Object[][]{
-                //regionName  dataDomain  metaDomain  upDataDomain upMeatDomain
+                //regionName  dataDomain  metaDomain  updateDataDomain updateMeatDomain
                 {regionNames[0], domainNames[0], domainNames[1], domainNames[1], domainNames[1]},
                 {regionNames[1], domainNames[0], domainNames[1], domainNames[0], domainNames[0]},
                 {regionNames[2], domainNames[0], domainNames[1], domainNames[0], domainNames[1]},
@@ -55,9 +55,10 @@ public class UpdateRegion17306 extends S3TestBase {
                 .withDataDomain(upDataDomain)
                 .withMetaDomain(upMeatDomain)
                 .withName(regionName);
-        //TODO:1、这里的判断条件，建议给出说明
+        // Updated domain is not same as before when the index of regionName is not equal to 2
         if (!regionName.equals(regionNames[2])) {
             try {
+                //update region
                 RegionUtils.putRegion(region);
                 Assert.fail("exp failed but act success,region = " + region.toString());
             } catch (AmazonS3Exception e) {
@@ -66,6 +67,7 @@ public class UpdateRegion17306 extends S3TestBase {
                 }
             }
         } else {
+            //update region
             RegionUtils.putRegion(region);
             GetRegionResult result = RegionUtils.getRegion(regionName);
             Assert.assertEquals(result.getRegion().getDataDomain(), upDataDomain);

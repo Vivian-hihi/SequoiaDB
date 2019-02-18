@@ -20,25 +20,20 @@ import java.io.IOException;
  */
 public class CreateRegion17301 extends S3TestBase{
     private String[] regionNames = new String[]{"region17301a","region17301b","region17301c"};
-    private String domainName = "doesNotExist17301";
+    private String domainName1 = "doesNotExist17301";
+    private String domainName2 = "Exist17301";
 
     @BeforeClass
     private void setUp() throws IOException {
     }
     @DataProvider(name="range-provider")
     private Object[][] rangeData(){
-    	//TODO:1、该部分代码为编译失败注释，需要更新代码
-       // List<String> domains = RegionUtils.getDomainNames();
-        //if(domains.size() < 1){
-           // throw new SkipException("domains.size() < 1,At least one domain is required");
-       // }
+        RegionUtils.createDomain(domainName2);
         return new Object[][]{
-//                {regionNames[0],domainName,domains.get(0)},
-//                {regionNames[1],domains.get(0),domainName},
-//                {regionNames[2],domainName,domainName}
-                {regionNames[0],domainName,domainName},
-                {regionNames[1],domainName,domainName},
-                {regionNames[2],domainName,domainName}
+                //regionName  dataDomain metaDomain
+                {regionNames[0],domainName1,domainName2},
+                {regionNames[1],domainName2,domainName1},
+                {regionNames[2],domainName1,domainName1}
         };
     }
 
@@ -65,5 +60,6 @@ public class CreateRegion17301 extends S3TestBase{
 
     @AfterClass
     private void tearDown() throws Exception {
+        RegionUtils.dropDomain(domainName2);
     }
 }
