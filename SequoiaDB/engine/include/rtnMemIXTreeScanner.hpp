@@ -231,6 +231,11 @@ namespace engine
          return (_isValid || !_init);
       }
 
+      const BOOLEAN firstKeylocateDone() const
+      {
+         return _init ;
+      }
+
       const BSONObj  getCurIdxKeyObjFromIter();
 
       const MEMTREE_LATCH_MODE getMemtreeLatchMode()

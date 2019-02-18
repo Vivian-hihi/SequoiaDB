@@ -303,7 +303,10 @@ namespace engine
       // trigger relocateRID if anything changed from either side
       if ( !_leftIXScanner->isValid() || !_rightIXScanner->isValid() )
       {
-         if ( _leftIXScanner->initialized() )
+         // tree latch is held only after first keylocate done
+         if ( _leftIXScanner->initialized() &&
+              ((_rtnMemIXTreeScanner*) _leftIXScanner )
+                 ->firstKeylocateDone() )
          {
             rcl = _leftIXScanner->relocateRID( _savedObj,
                                                _savedRID );

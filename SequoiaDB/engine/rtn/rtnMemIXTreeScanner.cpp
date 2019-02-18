@@ -81,6 +81,7 @@ namespace engine
       _memIdxTree    = NULL;
       _treeLatchHeld = FALSE;
       _initialized   = FALSE;
+      _isValid       = FALSE;
       _sharedInfo.init(sharedInfo);
       _indexCB = SDB_OSS_NEW ixmIndexCB ( indexCB->getExtentID(), 
                                           su->index(), NULL );

@@ -257,8 +257,12 @@ namespace engine
                          const preIdxTreeNodeKey & rhk ) const
       {
          bool rv = false;
+         const bson::Ordering * pOrdering = 
+            ( NULL != lhk.getOrdering() ) ? lhk.getOrdering()
+                                          : rhk.getOrdering() ;
+         
          // compare key value using ixmKey compare
-         INT32 rt = lhk.woCompare( rhk, *(lhk.getOrdering()) ); 
+         INT32 rt = lhk.woCompare( rhk, *( pOrdering ) ) ; 
          if ( rt < 0 )
          {
             rv = true;
