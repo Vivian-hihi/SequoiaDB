@@ -52,7 +52,7 @@ public class SdbTestBase {
 
     @Parameters( { "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN",
             "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR" } )
-    @BeforeSuite( groups = { "ru", "rc", "rcwaitlock" }, inheritGroups = true )
+    @BeforeSuite( groups = { "ru", "rc", "rcwaitlock" }, inheritGroups = true, alwaysRun = true)
     public static void initSuite( String HOSTNAME, String SVCNAME,
             String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
             String RSRVNODEDIR, String WORKDIR ) {
@@ -278,8 +278,9 @@ public class SdbTestBase {
     }
 
     @Parameters( { "TRANSACTIONON" } )
-    @BeforeGroups( groups = "ru", inheritGroups = true )
+    @BeforeGroups( groups = "ru", inheritGroups = true, alwaysRun = true )
     public static void initRuGroups() {
+        System.out.println("initRuGroups...........");
         int transisolation = 0 ;
         boolean translockwait = false ;
         try {
@@ -290,8 +291,9 @@ public class SdbTestBase {
         }
     }
 
-    @BeforeGroups( groups = "rc", inheritGroups = true )
+    @BeforeGroups( groups = "rc", inheritGroups = true,alwaysRun = true )
     public static void initRcGroups() {
+        System.out.println("initRcGroups...........");
         int transisolation = 1 ;
         boolean translockwait = false ;
         try {
@@ -302,8 +304,9 @@ public class SdbTestBase {
         }
     }
 
-    @BeforeGroups( groups = "rcwaitlock", inheritGroups = true )
+    @BeforeGroups( groups = "rcwaitlock", inheritGroups = true, alwaysRun = true)
     public static void initRcLockwaitGroups() {
+        System.out.println("initRcLockwaitGroups...........");
         int transisolation = 1 ;
         boolean translockwait = true ;
         try {
@@ -316,6 +319,7 @@ public class SdbTestBase {
 
     @AfterGroups( groups = { "ru", "rc", "rcwaitlock" }, inheritGroups = true, alwaysRun = true )
     public static void finiGroups() {
+        System.out.println("finiGroups...........");
         try {
             modifyNodeConf( false, 0, false, originalIndexScanStep ) ;
         } catch ( BaseException e ) {
