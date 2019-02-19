@@ -192,12 +192,6 @@ public class SdbTestBase {
         try {
             sequoiadb = new Sequoiadb( coordUrl, "", "" ) ;
             sequoiadb.updateConfig( configs, options ) ;
-            
-            if ( CommLib.isStandAlone( sequoiadb )){
-                restartStandAlone(sequoiadb.getHost()) ;
-            }else{
-                restartAllDataGroup() ;
-            }
         } catch ( BaseException e ) {
             if ( CommLib.isStandAlone( sequoiadb ) 
                  &&  e.getErrorCode() != SDBError.SDB_RTN_CONF_NOT_TAKE_EFFECT
@@ -208,6 +202,12 @@ public class SdbTestBase {
                     .getErrorCode() ) {
                 e.printStackTrace() ;
                 throw e ;
+            }
+            
+            if ( CommLib.isStandAlone( sequoiadb )){
+                restartStandAlone(sequoiadb.getHost()) ;
+            }else{
+                restartAllDataGroup() ;
             }
         }finally{
             sequoiadb.close() ;
