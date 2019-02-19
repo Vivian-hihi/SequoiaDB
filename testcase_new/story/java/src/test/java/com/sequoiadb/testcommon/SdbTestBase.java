@@ -67,7 +67,7 @@ public class SdbTestBase {
 
         try {
             options.setSocketKeepAlive( true ) ;
-            sequoiadb = new Sequoiadb( coordUrl, "", "", options ) ;
+            sequoiadb = new Sequoiadb( SdbTestBase.coordUrl, "", "", options ) ;
             if ( sequoiadb.isCollectionSpaceExist( csName ) ) {
                 sequoiadb.dropCollectionSpace( csName ) ;
             }
@@ -189,7 +189,7 @@ public class SdbTestBase {
         options.put( ROLE, DATA ) ;
 
         try {
-            sequoiadb = new Sequoiadb( coordUrl, "", "" ) ;
+            sequoiadb = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ;
             sequoiadb.updateConfig( configs, options ) ;
         } catch ( BaseException e ) {
             if ( CommLib.isStandAlone( sequoiadb ) 
@@ -332,7 +332,7 @@ public class SdbTestBase {
     public static void finiSuite() {
         count.getAndIncrement() ;
         try {
-            sequoiadb = new Sequoiadb( coordUrl, "", "", options ) ;
+            sequoiadb = new Sequoiadb( SdbTestBase.coordUrl, "", "", options ) ;
             if ( sequoiadb.isCollectionSpaceExist( csName ) ) {
                 sequoiadb.dropCollectionSpace( csName ) ;
             }
@@ -356,10 +356,5 @@ public class SdbTestBase {
     public static String getWorkDir() {
         return workDir ;
     }
-    
-    public static void main(String[] args){
-        SdbTestBase.coordUrl = "192.168.30.62:50000" ;
-        //SdbTestBase.restartAllDataGroup() ;
-        SdbTestBase.restartStandAlone( "192.168.30.62") ;
-    }
+
 }
