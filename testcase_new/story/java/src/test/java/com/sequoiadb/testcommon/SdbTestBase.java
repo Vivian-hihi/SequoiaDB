@@ -1,11 +1,9 @@
 package com.sequoiadb.testcommon ;
 
 import java.io.BufferedReader ;
-import java.io.BufferedWriter ;
 import java.io.File ;
 import java.io.IOException ;
 import java.io.InputStreamReader ;
-import java.io.OutputStreamWriter ;
 import java.util.ArrayList ;
 import java.util.List ;
 import java.util.concurrent.atomic.AtomicInteger ;
@@ -71,7 +69,6 @@ public class SdbTestBase {
         try {
             options.setSocketKeepAlive( true ) ;
             sequoiadb = new Sequoiadb( coordUrl, "", "", options ) ;
-            // sdb = new Sequoiadb(coordUrl, "", "");
             if ( sequoiadb.isCollectionSpaceExist( csName ) ) {
                 sequoiadb.dropCollectionSpace( csName ) ;
             }
@@ -84,6 +81,8 @@ public class SdbTestBase {
         } catch ( BaseException e ) {
             e.printStackTrace() ;
             throw new SkipException( "initSuite failed" ) ;
+        }finally{
+            sequoiadb.close() ;
         }
     }
 
@@ -91,10 +90,6 @@ public class SdbTestBase {
         final String GROUPID = "GroupID" ;
         final int COORDGROUPID = 2 ;
         final String GT = "$gt" ;
-
-        if ( sequoiadb == null || !sequoiadb.isValid() ) {
-            sequoiadb = new Sequoiadb( coordUrl, "", "", options ) ;
-        }
 
         BasicBSONObject cond = new BasicBSONObject() ;
         BasicBSONObject subCond = new BasicBSONObject() ;
@@ -186,7 +181,7 @@ public class SdbTestBase {
     private static void modifyNodeConf( boolean transactionon,
             int transisolation, boolean translockwait, int indexscanstep ) {
         BasicBSONObject configs = new BasicBSONObject() ;
-        configs.append( TRANSACTIONON, true ) ;
+        configs.append( TRANSACTIONON, transactionon ) ;
         configs.append( TRANSISOLATION, transisolation ) ;
         configs.append( TRANSLOCKWAIT, translockwait ) ;
         configs.append( INDEXSCANSTEP, indexscanstep ) ;
@@ -195,7 +190,14 @@ public class SdbTestBase {
         options.put( ROLE, DATA ) ;
 
         try {
+            sequoiadb = new Sequoiadb( coordUrl, "", "" ) ;
             sequoiadb.updateConfig( configs, options ) ;
+            
+            if ( CommLib.isStandAlone( sequoiadb )){
+                restartStandAlone(sequoiadb.getHost()) ;
+            }else{
+                restartAllDataGroup() ;
+            }
         } catch ( BaseException e ) {
             if ( CommLib.isStandAlone( sequoiadb ) 
                  &&  e.getErrorCode() != SDBError.SDB_RTN_CONF_NOT_TAKE_EFFECT
@@ -207,12 +209,8 @@ public class SdbTestBase {
                 e.printStackTrace() ;
                 throw e ;
             }
-        }
-        
-        if ( CommLib.isStandAlone( sequoiadb )){
-            restartStandAlone(sequoiadb.getHost()) ;
-        }else{
-            restartAllDataGroup() ;
+        }finally{
+            sequoiadb.close() ;
         }
     }
 
@@ -331,10 +329,7 @@ public class SdbTestBase {
     public static void finiSuite() {
         count.getAndIncrement() ;
         try {
-            if ( !sequoiadb.isValid() ) {
-                sequoiadb = new Sequoiadb( coordUrl, "", "", options ) ;
-            }
-
+            sequoiadb = new Sequoiadb( coordUrl, "", "", options ) ;
             if ( sequoiadb.isCollectionSpaceExist( csName ) ) {
                 sequoiadb.dropCollectionSpace( csName ) ;
             }
