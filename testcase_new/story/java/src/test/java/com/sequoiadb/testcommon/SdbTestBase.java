@@ -78,6 +78,13 @@ public class SdbTestBase {
             if ( !workDirFile.exists() ) {
                 workDirFile.mkdir() ;
             }
+            
+            try {
+                Thread.sleep( 500000 ) ;
+            } catch ( InterruptedException e ) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         } catch ( BaseException e ) {
             e.printStackTrace() ;
             throw new SkipException( "initSuite failed" ) ;
@@ -280,7 +287,7 @@ public class SdbTestBase {
     }
 
     @Parameters( { "TRANSACTIONON" } )
-    @BeforeGroups( groups = "ru", inheritGroups = true, alwaysRun = true )
+    @BeforeGroups( groups = "ru", alwaysRun = true )
     public static void initRuGroups() {
         System.out.println("initRuGroups...........");
         int transisolation = 0 ;
@@ -293,7 +300,7 @@ public class SdbTestBase {
         }
     }
 
-    @BeforeGroups( groups = "rc", inheritGroups = true,alwaysRun = true )
+    @BeforeGroups( groups = "rc", alwaysRun = true )
     public static void initRcGroups() {
         System.out.println("initRcGroups...........");
         int transisolation = 1 ;
@@ -306,7 +313,7 @@ public class SdbTestBase {
         }
     }
 
-    @BeforeGroups( groups = "rcwaitlock", inheritGroups = true, alwaysRun = true)
+    @BeforeGroups( groups = "rcwaitlock", alwaysRun = true)
     public static void initRcLockwaitGroups() {
         System.out.println("initRcLockwaitGroups...........");
         int transisolation = 1 ;
@@ -319,7 +326,7 @@ public class SdbTestBase {
         }
     }
 
-    @AfterGroups( groups = { "ru", "rc", "rcwaitlock" }, inheritGroups = true, alwaysRun = true )
+    @AfterGroups( groups = { "ru", "rc", "rcwaitlock" }, alwaysRun = true )
     public static void finiGroups() {
         System.out.println("finiGroups...........");
         try {
