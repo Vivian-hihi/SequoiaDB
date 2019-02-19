@@ -520,7 +520,8 @@ class SequoiaCL
     *                                    SDB_FLG_INSERT_RETURN_OID   :  return the value of "_id" field in the record.
     *                                    @endcode
     *
-    * @return Returns the result, default return array.
+    * @return Returns the result, default return array. When flag SDB_FLG_INSERT_RETURN_OID is set,
+    * return the value of "_id" field of the inserted record.
     *
     * @retval array   array( 'errno' => 0, '_id' => &lt;24 hexadecimal characters&gt; )
     * @retval string  { "errno": 0, "_id": &lt;24 hexadecimal characters&gt; }
