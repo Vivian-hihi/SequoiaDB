@@ -3436,17 +3436,32 @@ SDB_EXPORT void sdbSetConnectionInterruptFunc(
 SDB_EXPORT INT32 sdbAnalyze( sdbConnectionHandle cHandle,
                              bson *options ) ;
 
-/** \fn void sdbGetLastErrorObj ( sdbConnectionHandle cHandle, bson *obj )
+/** \fn void sdbGetLastErrorObj ( sdbConnectionHandle cHandle, bson *errObj )
     \brief Get the error object(only return by engine) of the last operation.
            The error object will not be clean up automatically until the next
            error object cover it.
     \param [in] cHandle The handle of current connection.
-    \param [out] obj The return error bson object.
-    \retval SDB_OK Get error object Success
-    \retval SDB_DMS_EOC There is no error object
-    \retval Others Get error object Fail
+    \param [out] errObj The return error bson object. 
+                        It contains the follow fields:
+                         <ul>
+                         <li>
+                         errno:       the error number.
+                         <li>
+                         description: the description of the errno.
+                         <li>
+                         detail:      the error detail.
+                         </ul>
+                 Actrally, the follow extended fields may return from the 
+                 database depend on the operations:
+                         <ul>
+                         <li>
+                         ErrNodes:    More detailed error message.  
+                         </ul>
+    \retval SDB_OK Get error object Success.
+    \retval SDB_DMS_EOC There is no error object.
+    \retval Others Get error object Fail.
 */
-SDB_EXPORT INT32 sdbGetLastErrorObj( sdbConnectionHandle cHandle, bson *obj ) ;
+SDB_EXPORT INT32 sdbGetLastErrorObj( sdbConnectionHandle cHandle, bson *errObj ) ;
 
 /** \fn void sdbCleanLastErrorObj ( sdbConnectionHandle cHandle )
     \brief Clean the last error object(returned by engine) of current connection.

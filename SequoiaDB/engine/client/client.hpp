@@ -6065,19 +6065,35 @@ namespace sdbclient
          return pSDB->renameCollectionSpace( oldName, newName, options ) ;
       }
 
-      /** \fn INT32 getLastErrorObj( bson::BSONObj &result )
+      /** \fn INT32 getLastErrorObj( bson::BSONObj &errObj )
           \brief Get the error object(only return by engine) of the last operation.
                  The error object will not be clean up automatically until the next
                  error object cover it.
-          \param [out] result The return error bson object.
-          \retval SDB_OK Operation Success
-          \retval Others Operation Fail
+          \param [out] errObj The return error bson object. 
+                              It contains the follow fields:
+                               <ul>
+                               <li>
+                               errno:       the error number.
+                               <li>
+                               description: the description of the errno.
+                               <li>
+                               detail:      the error detail.
+                               </ul>
+                       Actrally, the follow extended fields may return from the 
+                       database depend on the operations:
+                               <ul>
+                               <li>
+                               ErrNodes:    More detailed error message.  
+                               </ul>
+          \retval SDB_OK Operation Success.
+          \retval SDB_DMS_EOC There is no error object.
+          \retval Others Operation Fail.
       */
-      INT32 getLastErrorObj( bson::BSONObj &result )
+      INT32 getLastErrorObj( bson::BSONObj &errObj )
       {
          if( !pSDB )
             return SDB_NOT_CONNECTED ;
-         return pSDB->getLastErrorObj( result ) ;
+         return pSDB->getLastErrorObj( errObj ) ;
       }
 
       /** \fn void cleanLastErrorObj()
