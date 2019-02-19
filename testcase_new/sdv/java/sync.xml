@@ -2,7 +2,7 @@
 <!--this xml is for ci, please don't modify it-->
 <!--sync testcase, which should be excute serially-->
 
-<suite name="sdv" verbose="1" stop-all-when-occur-failure="false"> 
+<suite name="sdv" verbose="1"> 
    <parameter name="HOSTNAME"       value="${HOSTNAME}" />
    <parameter name="SVCNAME"        value="${SVCNAME}" />
    <parameter name="CHANGEDPREFIX"  value="story_java_test" />
