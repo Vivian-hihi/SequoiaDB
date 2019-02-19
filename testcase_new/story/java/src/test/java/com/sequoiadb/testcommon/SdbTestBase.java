@@ -37,7 +37,6 @@ public class SdbTestBase {
     protected static String reservedDir ;
     protected static String workDir ;
     private static Sequoiadb sequoiadb = null ;
-    // private static Sequoiadb sdb = null ;
     private static final String ROLE = "Role" ;
     private static final String DATA = "data" ;
     private static final String TRANSACTIONON = "transactionon" ;
